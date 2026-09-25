@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { hasGoogleVerifiedAddress } from "@/services/users/registration-completion.server";
 import { ROLE_POST_LOGIN_PATHS } from "@/lib/constants/roles";
 import { ROUTES } from "@/lib/constants";
 import { isSupportedLocale } from "@/lib/constants/locales";
@@ -56,7 +58,8 @@ export async function GET(request: Request) {
   const finishTarget = next ? readCompleteRegistrationTarget(next) : null;
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data: exchanged, error } =
+    await supabase.auth.exchangeCodeForSession(code);
   if (error) return toLogin("auth_callback_error");
 
   // Read the just-exchanged session's claims to determine the role.
@@ -66,13 +69,22 @@ export async function GET(request: Request) {
   const userId = claimsData?.claims.sub;
   if (!userId) return toLogin("auth_callback_error");
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("role, locale, registration_completed_at")
+    .select("role, locale, registration_completed_at, email, email_verified_at")
     .eq("id", userId)
     .single();
 
-  const role = profile?.role;
+  // **No profile, no sign-in.** Every routing decision below — the gamer
+  // refusal, the owed registration — is read off this row, so a session whose
+  // row could not be read has not been checked for either, and is revoked
+  // rather than guessed at. `local` scope, for the gamer case's reason.
+  if (profileError) {
+    await supabase.auth.signOut({ scope: "local" });
+    return toLogin("auth_callback_error");
+  }
+
+  const role = profile.role;
 
   // **A gamer never signs in with Google.** A child's account is reached by
   // username or through the parent's account; a Google identity that lands on
@@ -86,8 +98,23 @@ export async function GET(request: Request) {
     return toLogin("google_gamer");
   }
 
+  // **A Google sign-in into an account whose address was never proven takes
+  // the account over for the prover.** Confirmations are off, so anyone can
+  // register a password account under an address that is not theirs, and
+  // Google then links the real owner's identity to that account. Google has
+  // just proven the address belongs to this person, so every other session —
+  // including a squatter's — is revoked, as a completed password reset
+  // revokes them, and the address is recorded verified. `others` scope keeps
+  // this session.
+  if (
+    profile.email_verified_at === null &&
+    hasGoogleVerifiedAddress(exchanged.user.identities, profile.email)
+  ) {
+    await claimAddressProvenByGoogle(supabase, userId);
+  }
+
   let redirectPath: string;
-  if (role === "customer" && profile?.registration_completed_at == null) {
+  if (role === "customer" && profile.registration_completed_at === null) {
     // **An account that still owes its registration goes to the finish page,
     // whatever `next` said.** Google hands over no name, terms or consents, so
     // nothing else is useful until they are given. The page keeps the locale
@@ -106,9 +133,7 @@ export async function GET(request: Request) {
     // already finished (an existing account pressing a register page's Google
     // button). Customers land on /select-profile (the family selector); other
     // roles go straight to their dashboard. See ROLE_POST_LOGIN_PATHS.
-    redirectPath = role
-      ? ROLE_POST_LOGIN_PATHS[role]
-      : ROLE_POST_LOGIN_PATHS.customer;
+    redirectPath = ROLE_POST_LOGIN_PATHS[role];
   }
 
   const response = NextResponse.redirect(`${origin}${redirectPath}`);
@@ -120,7 +145,7 @@ export async function GET(request: Request) {
   // rides on the profile read that was already happening; a null value means
   // "auto-detect from the browser" and is deliberately left unwritten, since
   // the header leg is what that reader asked for.
-  if (isSupportedLocale(profile?.locale)) {
+  if (isSupportedLocale(profile.locale)) {
     response.cookies.set(
       LOCALE_COOKIE_NAME,
       profile.locale,
@@ -129,4 +154,43 @@ export async function GET(request: Request) {
   }
 
   return response;
+}
+
+/**
+ * The two writes a Google-proven address earns an unverified account: every
+ * other session revoked, and the verification stamp.
+ *
+ * **Neither failure blocks the sign-in**, only logs: the person signing in has
+ * proven the address either way, so refusing them would lock the owner out of
+ * their own account while leaving a squatter's session exactly where it was.
+ * A failed revoke is retried by the next Google sign-in, since the stamp that
+ * would skip it is written after it and only on its success.
+ */
+async function claimAddressProvenByGoogle(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<void> {
+  // The session's own client, not the Admin API: GoTrue identifies whose
+  // other sessions to end from the access token itself, and the Admin API's
+  // sign-out takes the same token.
+  const { error: revokeError } = await supabase.auth.signOut({ scope: "others" });
+  if (revokeError) {
+    console.error(
+      `[auth/callback] could not revoke other sessions for ${userId}`,
+      revokeError,
+    );
+    return;
+  }
+
+  // email_verified_at has no authenticated UPDATE grant: service role only.
+  const { error: stampError } = await createAdminClient()
+    .from("profiles")
+    .update({ email_verified_at: new Date().toISOString() })
+    .eq("id", userId);
+  if (stampError) {
+    console.error(
+      `[auth/callback] could not record the Google-verified address for ${userId}`,
+      stampError,
+    );
+  }
 }

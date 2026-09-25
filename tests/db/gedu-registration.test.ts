@@ -41,6 +41,7 @@ describe("gedu registration + certification RPCs", () => {
   describe("register_gedu", () => {
     let createdUserId: string | null = null;
     let gameAccountUserId: string | null = null;
+    const stampUserIds: string[] = [];
 
     afterAll(async () => {
       // Cascade-deletes profiles, gedu_profiles, gedu_locations and both
@@ -49,6 +50,86 @@ describe("gedu registration + certification RPCs", () => {
       if (gameAccountUserId) {
         await admin.auth.admin.deleteUser(gameAccountUserId);
       }
+      for (const id of stampUserIds) await admin.auth.admin.deleteUser(id);
+    });
+
+    /**
+     * A fresh customer whose registration stamp is set to `stamp`. The Admin
+     * API makes a password account, which the new-user trigger stamps at
+     * creation; setting NULL afterwards stands in for a Google-created one.
+     */
+    async function customerWithStamp(stamp: string | null): Promise<string> {
+      const { data: created, error } = await admin.auth.admin.createUser({
+        email: `gedu-stamp-${Date.now()}-${stampUserIds.length}@test.local`,
+        password: "testpassword123",
+        email_confirm: true,
+      });
+      expect(error).toBeNull();
+      const id = created.user!.id;
+      stampUserIds.push(id);
+      const { error: stampError } = await admin
+        .from("profiles")
+        .update({ registration_completed_at: stamp })
+        .eq("id", id);
+      expect(stampError).toBeNull();
+      return id;
+    }
+
+    function promote(userId: string) {
+      return admin.rpc("register_gedu", {
+        p_user_id: userId,
+        p_first_name: "Stamp",
+        p_last_name: "Tester",
+        p_locale: "en",
+        p_phone: "",
+        p_spoken_languages: [],
+        p_location_ids: [],
+        p_minecraft_username: "",
+        p_minecraft_uuid: "",
+        p_roblox_username: "",
+        p_roblox_user_id: "",
+      });
+    }
+
+    async function stampOf(userId: string): Promise<string | null> {
+      const { data } = await admin
+        .from("profiles")
+        .select("registration_completed_at")
+        .eq("id", userId)
+        .single();
+      return data?.registration_completed_at ?? null;
+    }
+
+    it("stamps an account that still owes its registration, in the promotion itself", async () => {
+      const id = await customerWithStamp(null);
+
+      const { error } = await promote(id);
+
+      expect(error).toBeNull();
+      expect(await stampOf(id)).not.toBeNull();
+    });
+
+    it("keeps the original stamp of an account that already had one", async () => {
+      const original = "2020-01-02T03:04:05+00:00";
+      const id = await customerWithStamp(original);
+
+      const { error } = await promote(id);
+
+      expect(error).toBeNull();
+      expect(new Date((await stampOf(id))!).toISOString()).toBe(
+        new Date(original).toISOString(),
+      );
+    });
+
+    it("refuses a second promotion of the same account", async () => {
+      // A double submit of the finish page: the first call promoted the row,
+      // so the second finds no customer to operate on.
+      const id = await customerWithStamp(null);
+      expect((await promote(id)).error).toBeNull();
+
+      const { error } = await promote(id);
+
+      expect(error).not.toBeNull();
     });
 
     it("atomically promotes a new customer profile into an uncertified gedu", async () => {

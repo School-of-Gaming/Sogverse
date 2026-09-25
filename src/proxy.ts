@@ -102,9 +102,10 @@ function isNonPagePath(pathname: string): boolean {
 // then opens the mail an hour later, or on their phone, where the session has
 // re-locked or never existed.
 //
-// `completeRegistration` is exempt because the account standing on it has no
-// PIN yet: choosing one is part of what it is there to finish, so the unlock
-// gate would be asking for four digits that do not exist.
+// `completeRegistration` is exempt because the account it is for owes its
+// registration and so has no PIN yet — the unlock gate would be asking for
+// four digits that do not exist. The page creates no PIN; it sends a visitor
+// who has already registered on to where their role belongs.
 function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
   if (isNonPagePath(pathname) || isAuthRoute) return true;
   const exempt = [
@@ -514,13 +515,16 @@ export async function proxy(request: NextRequest) {
       // Registration gate: an account created through Google owes its name,
       // the terms and the consents until the finish page has them, and it is
       // sent there from every protected page. Only a customer can owe — every
-      // account is born one, and completing is what promotes a gedu — and the
-      // unlock-cookie short-circuit above never skips an owing session, which
-      // cannot have entered a PIN it has not chosen yet. That is also why this
-      // runs instead of the PIN gate rather than after it. Public pages stay
-      // readable, because the finish page links to the terms it asks them to
-      // accept; `/api/*` is public here, so the sign-out form and the
-      // completion routes are never caught.
+      // account is born one, and completing is what promotes a gedu. The
+      // unlock-cookie short-circuit above never skips an owing session, and
+      // that holds because the API refuses to mint one: requireRole answers
+      // an owing customer REGISTRATION_REQUIRED on every route but the two
+      // that finish the registration, the PIN routes included, so no unlock
+      // cookie can exist before the stamp does. An owing account has no PIN,
+      // which is why this runs instead of the PIN gate rather than after it.
+      // Public pages stay readable, because the finish page links to the terms
+      // it asks them to accept; `/api/*` is public here, so the sign-out form
+      // and the completion routes are never caught.
       const registrationOwed =
         !profileError &&
         profile.role === "customer" &&

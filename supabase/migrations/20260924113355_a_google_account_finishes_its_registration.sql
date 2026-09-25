@@ -25,15 +25,20 @@
 --    the registration-completion routes as the second service-role writer
 --    each column now has. utm_medium and utm_campaign defer to utm_source's
 --    rules, so theirs stand.
+-- 6. register_gedu stamps registration_completed_at, keeping a stamp already
+--    there, in the same UPDATE that promotes the profile — so an educator
+--    finishing a Google registration is registered in the promotion's own
+--    transaction, and a failure after it can never leave a Gedu owing.
 --
 -- WHAT DID NOT CHANGE
 --
 -- handle_new_user's sanitising, its role assignment and its customer_profiles
--- row are as they were; CREATE OR REPLACE keeps its grants, and the view's
--- grants and comments. SELECT on profiles
--- is granted at table level, so authenticated reads the new column through the
--- same policies it reads role through, and the column-scoped UPDATE list for
--- authenticated does not gain it: after creation only service_role writes it.
+-- row are as they were, and so is everything else register_gedu does; CREATE
+-- OR REPLACE keeps both functions' grants, and the view's grants and comments.
+-- SELECT on profiles is granted at table level, so authenticated reads the new
+-- column through the same policies it reads role through, and the
+-- column-scoped UPDATE list for authenticated does not gain it: after creation
+-- only service_role writes it.
 
 ALTER TABLE public.profiles
   ADD COLUMN registration_completed_at timestamp with time zone;
@@ -189,3 +194,64 @@ $$;
 COMMENT ON COLUMN public.profiles.email_verified_at IS 'When the address in profiles.email was last proven to reach this account''s owner, or NULL for "not verified" — the resting state for gamer rows, whose synthetic <token>@gamer.sogverse.internal address no inbox answers. Written only by service_role: the route that validates a signed verification link, and the registration-completion routes when the identity provider that created the account reports the same address verified. There is deliberately no UPDATE grant at any level for authenticated or anon, because a marker its own subject can set proves nothing. Reset to NULL by trg_reset_email_verification whenever profiles.email changes — the value is a claim about one address, not about the account.';
 
 COMMENT ON COLUMN public.profiles.utm_source IS 'Optional marketing provenance: the utm_source from the link this account arrived through, or NULL (the large majority). Written once and never updatable — there is deliberately no UPDATE grant, at any level, for any role but service_role. The one write is handle_new_user() from the signup metadata, except for an account created by an identity provider (Google), whose round trip carries no signup metadata: there it is the registration-completion route that makes it. Case is preserved, because Vercel reports UTM values case-sensitively. Labels only: it grants nothing, is never used for profiling or to decide what anyone is shown or charged, and gamer rows always hold NULL.';
+
+-- register_gedu: the promotion also stamps the registration.
+
+CREATE OR REPLACE FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages public.spoken_language[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+BEGIN
+  -- Only operate on a freshly-created customer profile (the role the new-user
+  -- trigger seeds). Refusing anything else stops this from being used to mutate
+  -- an established account of any role.
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = p_user_id AND role = 'customer'
+  ) THEN
+    RAISE EXCEPTION 'register_gedu: % is not a newly-created customer profile', p_user_id;
+  END IF;
+
+  -- Callers pass '' for absent optional text (the generated RPC arg types are
+  -- non-null `string`); NULLIF turns those back into SQL NULL so e.g. an empty
+  -- phone stays NULL rather than tripping the profiles.phone format CHECK.
+  UPDATE public.profiles
+  SET role             = 'gedu',
+      first_name       = p_first_name,
+      last_name        = p_last_name,
+      locale           = NULLIF(p_locale, ''),
+      phone            = NULLIF(p_phone, ''),
+      spoken_languages = COALESCE(p_spoken_languages, '{}'),
+      -- A password account arrives stamped by handle_new_user; a Google one
+      -- arrives owing, and is registered the moment this promotion commits.
+      -- COALESCE keeps an existing stamp's original moment.
+      registration_completed_at = COALESCE(registration_completed_at, now())
+  WHERE id = p_user_id;
+
+  -- Swap the trigger-created customer extension row for a gedu one.
+  DELETE FROM public.customer_profiles WHERE user_id = p_user_id;
+  INSERT INTO public.gedu_profiles (user_id) VALUES (p_user_id);
+
+  -- Coverage areas (empty = remote-only, which is valid).
+  IF p_location_ids IS NOT NULL AND array_length(p_location_ids, 1) IS NOT NULL THEN
+    INSERT INTO public.gedu_locations (gedu_id, location_id)
+    SELECT p_user_id, unnest(p_location_ids);
+  END IF;
+
+  -- Optional Minecraft account. A duplicate uuid is allowed (an educator may
+  -- share an account with someone else on the platform), so this insert has no
+  -- rejection path of its own.
+  IF p_minecraft_username IS NOT NULL AND p_minecraft_username <> '' THEN
+    INSERT INTO public.minecraft_accounts (user_id, minecraft_username, minecraft_uuid)
+    VALUES (p_user_id, p_minecraft_username, NULLIF(p_minecraft_uuid, ''));
+  END IF;
+
+  -- Optional Roblox account, on the same terms. The account id arrives as text
+  -- carrying the same '' sentinel and is cast once here; a non-numeric value
+  -- would raise, which is correct — the only caller resolves it from Roblox's
+  -- own answer, so anything else is a bug rather than a user's typo.
+  IF p_roblox_username IS NOT NULL AND p_roblox_username <> '' THEN
+    INSERT INTO public.roblox_accounts (user_id, roblox_username, roblox_user_id)
+    VALUES (p_user_id, p_roblox_username, NULLIF(p_roblox_user_id, '')::bigint);
+  END IF;
+END;
+$$;

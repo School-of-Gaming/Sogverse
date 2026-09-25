@@ -1369,7 +1369,7 @@
         "tooManyAttempts": "För många inloggningsförsök. Vänta en stund och försök igen.",
         "oauthCancelled": "Inloggningen med Google avbröts. Du kan försöka igen eller logga in med ditt lösenord.",
         "authCallbackError": "Inloggningen med Google slutfördes inte. Försök igen.",
-        "googleGamer": "Spelarkonton loggar in med ett användarnamn eller via en förälders konto, inte med Google. Fråga din förälder om du är osäker på hur det går till."
+        "googleGamer": "Spelarkonton loggar in med e-postadress eller användarnamn och lösenord, eller via en förälders konto, inte med Google. Fråga din förälder om du är osäker på hur det går till."
       },
       "identifierLabel": "E-postadress eller användarnamn",
       "identifierPlaceholder": "du@example.com eller ett användarnamn"

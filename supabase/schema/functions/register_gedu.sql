@@ -25,7 +25,11 @@ BEGIN
       last_name        = p_last_name,
       locale           = NULLIF(p_locale, ''),
       phone            = NULLIF(p_phone, ''),
-      spoken_languages = COALESCE(p_spoken_languages, '{}')
+      spoken_languages = COALESCE(p_spoken_languages, '{}'),
+      -- A password account arrives stamped by handle_new_user; a Google one
+      -- arrives owing, and is registered the moment this promotion commits.
+      -- COALESCE keeps an existing stamp's original moment.
+      registration_completed_at = COALESCE(registration_completed_at, now())
   WHERE id = p_user_id;
 
   -- Swap the trigger-created customer extension row for a gedu one.

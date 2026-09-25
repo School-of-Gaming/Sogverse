@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient, UserIdentity } from "@supabase/supabase-js";
 import { parseConsentCookieHeader } from "@/lib/consent";
 import { UTM_QUERY_PARAMS, utmMetadataForConsent } from "@/lib/utm";
 import type { Database } from "@/types/database.types";
@@ -31,7 +31,20 @@ export async function isEmailVerifiedByGoogle(
     console.error("[registration-completion] could not read the auth user", error);
     return false;
   }
-  const google = (data.user.identities ?? []).find(
+  return hasGoogleVerifiedAddress(data.user.identities, profileEmail);
+}
+
+/**
+ * The comparison itself, over identities already in hand: a `google` identity
+ * that reports its email verified, the email being `profileEmail`, compared
+ * case-insensitively. The OAuth callback asks this of the user its code
+ * exchange returned, so it needs no second read.
+ */
+export function hasGoogleVerifiedAddress(
+  identities: readonly UserIdentity[] | undefined,
+  profileEmail: string,
+): boolean {
+  const google = (identities ?? []).find(
     (identity) => identity.provider === "google",
   );
   const identityData: Record<string, unknown> = google?.identity_data ?? {};

@@ -56,9 +56,11 @@ Google button creates a customer account owing its registration, and the finish 
 Gedu variant posts the same fields minus address and password to
 `POST /api/gedu/complete-registration`. That route refuses an account that has finished
 registering, resolves the handles and calls `register_gedu` through the same shared
-helpers as the register route, then writes the consent-gated attribution, Google's
-verification of the address and the registration stamp in one statement, and sends the
-welcome mail — without a verification link when Google verified the address. **A failed
+helpers as the register route. `register_gedu` stamps `registration_completed_at` itself
+(keeping a stamp already there), so a Google-created educator is complete the moment the
+promotion commits; the route then writes the consent-gated attribution and Google's
+verification of the address as a best-effort follow-up, and sends the welcome mail —
+without a verification link when Google verified the address. **A failed
 promotion is a 500 and no `deleteUser`**: the account is the person's own, the RPC is one
 transaction, so it is left a customer still owing registration, and they retry.
 

@@ -25,6 +25,8 @@ vi.mock("@/lib/auth", () => ({
 const writes: string[] = [];
 const mockGetUserById = vi.fn();
 const mockProfileUpdate = vi.fn();
+/** The registration stamp: a conditional update that returns the rows it changed. */
+const mockStamp = vi.fn();
 const mockAccountConsentRpc = vi.fn();
 const mockMarketingConsentRpc = vi.fn();
 
@@ -42,10 +44,17 @@ vi.mock("@/lib/supabase/admin", () => ({
       return {
         update: (row: Record<string, unknown>) => ({
           eq: (column: string, value: string) => {
-            writes.push(
-              "registration_completed_at" in row ? "stamp" : "profile",
-            );
-            return mockProfileUpdate({ row, column, value });
+            if (!("registration_completed_at" in row)) {
+              writes.push("profile");
+              return mockProfileUpdate({ row, column, value });
+            }
+            writes.push("stamp");
+            return {
+              is: (isColumn: string, isValue: unknown) => ({
+                select: (columns: string) =>
+                  mockStamp({ row, column, value, isColumn, isValue, columns }),
+              }),
+            };
           },
         }),
       };
@@ -162,17 +171,13 @@ function googleIdentity(identityData: Record<string, unknown> | null) {
 
 /** The row of the first profile write — the names, extras and attribution. */
 function profileRow(): Record<string, unknown> {
-  const call = mockProfileUpdate.mock.calls.find(
-    ([arg]) => !("registration_completed_at" in arg.row),
-  );
+  const call = mockProfileUpdate.mock.calls.at(0);
   if (!call) throw new Error("no profile write");
   return call[0].row;
 }
 
 function stampCall() {
-  return mockProfileUpdate.mock.calls.find(
-    ([arg]) => "registration_completed_at" in arg.row,
-  );
+  return mockStamp.mock.calls.at(0);
 }
 
 function sentHtml(): string {
@@ -187,6 +192,7 @@ describe("POST /api/auth/complete-registration", () => {
     signedInCustomer();
     googleIdentity({ email: EMAIL, email_verified: true });
     mockProfileUpdate.mockResolvedValue({ error: null });
+    mockStamp.mockResolvedValue({ data: [{ id: USER_ID }], error: null });
     mockAccountConsentRpc.mockResolvedValue({ data: 1, error: null });
     mockMarketingConsentRpc.mockResolvedValue({ error: null });
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
@@ -199,7 +205,10 @@ describe("POST /api/auth/complete-registration", () => {
 
     expect(mockRequireRole).toHaveBeenCalledWith(
       "customer",
-      expect.objectContaining({ allowUnverified: true }),
+      expect.objectContaining({
+        allowUnverified: true,
+        allowRegistrationOwed: true,
+      }),
     );
   });
 
@@ -284,6 +293,10 @@ describe("POST /api/auth/complete-registration", () => {
     expect(stamp?.[0].column).toBe("id");
     expect(stamp?.[0].value).toBe(USER_ID);
     expect(typeof stamp?.[0].row.registration_completed_at).toBe("string");
+    // Only a row still owing is stamped, and the route reads back which.
+    expect(stamp?.[0].isColumn).toBe("registration_completed_at");
+    expect(stamp?.[0].isValue).toBeNull();
+    expect(stamp?.[0].columns).toBe("id");
 
     // The consents are recorded before the stamp, and the stamp is the last
     // write the route makes.
@@ -409,6 +422,33 @@ describe("POST /api/auth/complete-registration", () => {
 
     expect(response.status).toBe(200);
     expect(stampCall()).toBeDefined();
+  });
+
+  it("answers 500 when the stamp fails, sending nothing", async () => {
+    mockStamp.mockResolvedValue({
+      data: null,
+      error: { code: "XX000", message: "boom" },
+    });
+
+    const response = await POST(request(validBody, { marketing: true }));
+
+    expect(response.status).toBe(500);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    expect(deferred).toHaveLength(0);
+  });
+
+  it("answers the guard's 409 when a concurrent submission stamped first", async () => {
+    // Both requests passed the guard while the column was NULL; this one's
+    // conditional stamp found it set and changed no row.
+    mockStamp.mockResolvedValue({ data: [], error: null });
+
+    const response = await POST(request(validBody, { marketing: true }));
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).code).toBe(REGISTRATION_ALREADY_COMPLETE);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    expect(deferred).toHaveLength(0);
+    expect(mockReportMetaConversion).not.toHaveBeenCalled();
   });
 
   // -- Mail and conversion --

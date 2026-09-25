@@ -1369,7 +1369,7 @@
         "tooManyAttempts": "Too many sign-in attempts. Please wait a moment and try again.",
         "oauthCancelled": "Google sign-in was cancelled. You can try again or sign in with your password.",
         "authCallbackError": "Google sign-in did not complete. Please try again.",
-        "googleGamer": "Gamer accounts sign in with a username or through a parent’s account, not with Google. Ask your parent if you are not sure how."
+        "googleGamer": "Gamer accounts sign in with their email or username and password, or through a parent’s account, not with Google. Ask your parent if you are not sure how."
       },
       "identifierLabel": "Email or username",
       "identifierPlaceholder": "you@example.com or a username"

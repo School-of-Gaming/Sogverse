@@ -6,8 +6,8 @@ import { NextResponse } from "next/server";
 // and owes its registration. What this file pins: only such an account can be
 // promoted through here, the promotion is the register route's own call with
 // the register route's own parameters, a failed promotion never deletes the
-// account, and the attribution, Google's verification and the stamp land in
-// one write after the promotion.
+// account, the stamp is the promotion's own (register_gedu writes it), and the
+// attribution and Google's verification follow in one best-effort write.
 
 process.env.PIN_COOKIE_SECRET = "route-test-gedu-complete-registration-secret";
 process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
@@ -185,7 +185,10 @@ describe("POST /api/gedu/complete-registration", () => {
 
     expect(mockRequireRole).toHaveBeenCalledWith(
       "customer",
-      expect.objectContaining({ allowUnverified: true }),
+      expect.objectContaining({
+        allowUnverified: true,
+        allowRegistrationOwed: true,
+      }),
     );
   });
 
@@ -240,7 +243,7 @@ describe("POST /api/gedu/complete-registration", () => {
 
   // -- The happy path --
 
-  it("promotes with the register route's parameters, then writes and stamps in one statement", async () => {
+  it("promotes with the register route's parameters, then writes what the promotion does not", async () => {
     const response = await POST(request(validBody, { marketing: true }));
 
     expect(response.status).toBe(200);
@@ -268,7 +271,8 @@ describe("POST /api/gedu/complete-registration", () => {
     });
     expect(row).not.toHaveProperty("utm_medium");
     expect(typeof row.email_verified_at).toBe("string");
-    expect(typeof row.registration_completed_at).toBe("string");
+    // register_gedu stamps it inside the promotion's transaction.
+    expect(row).not.toHaveProperty("registration_completed_at");
     expect(mockProfileUpdate.mock.calls[0][0].value).toBe(USER_ID);
   });
 
@@ -278,13 +282,21 @@ describe("POST /api/gedu/complete-registration", () => {
     const row = profileRow();
     expect(row).not.toHaveProperty("utm_source");
     expect(row).not.toHaveProperty("utm_campaign");
-    expect(typeof row.registration_completed_at).toBe("string");
+  });
+
+  it("writes nothing after the promotion when there is nothing to add", async () => {
+    googleIdentity({ email: EMAIL, email_verified: false });
+
+    const response = await POST(request(validBody, { marketing: false }));
+
+    expect(response.status).toBe(200);
+    expect(writes).toEqual(["register_gedu"]);
   });
 
   it("leaves the address unverified, and mails a link, when Google did not verify it", async () => {
     googleIdentity({ email: EMAIL, email_verified: false });
 
-    await POST(request(validBody));
+    await POST(request(validBody, { marketing: true }));
 
     expect(profileRow()).not.toHaveProperty("email_verified_at");
     expect(sentHtml()).toContain(`${ROUTES.verifyEmail}?token=`);
@@ -293,7 +305,7 @@ describe("POST /api/gedu/complete-registration", () => {
   it("leaves the address unverified when Google's address is a different one", async () => {
     googleIdentity({ email: "other@example.test", email_verified: true });
 
-    await POST(request(validBody));
+    await POST(request(validBody, { marketing: true }));
 
     expect(profileRow()).not.toHaveProperty("email_verified_at");
   });
@@ -326,6 +338,42 @@ describe("POST /api/gedu/complete-registration", () => {
     const response = await POST(request(validBody));
 
     expect(response.status).toBe(200);
-    expect(typeof profileRow().registration_completed_at).toBe("string");
+    expect(writes).toEqual(["register_gedu", "profile"]);
+  });
+
+  it("still completes, and logs, when the follow-up write fails", async () => {
+    // The registration committed with the promotion; the attribution and the
+    // verification are not worth failing it over.
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockProfileUpdate.mockResolvedValue({ error: { message: "db down" } });
+
+    const response = await POST(request(validBody, { marketing: true }));
+
+    expect(response.status).toBe(200);
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining(USER_ID),
+      expect.anything(),
+    );
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+    consoleError.mockRestore();
+  });
+
+  it("refuses a second submission the first already promoted, with no 200", async () => {
+    // A double submit where both requests passed the gate while the account
+    // still owed its registration: register_gedu refuses the second, whose
+    // row is no longer a customer (or whose gedu_profiles row already exists),
+    // and the route answers that as the failure it is.
+    mockRpc.mockResolvedValue({
+      error: {
+        code: "P0001",
+        message: `register_gedu: ${USER_ID} is not a newly-created customer profile`,
+      },
+    });
+
+    const response = await POST(request(validBody));
+
+    expect(response.status).toBe(500);
+    expect(mockProfileUpdate).not.toHaveBeenCalled();
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 });

@@ -72,6 +72,13 @@ type Posture =
       roles: readonly UserRole[];
       /** Skips the parent-PIN gate, for routes a locked customer must reach. */
       allowUnverified?: true;
+      /**
+       * Admits a customer that still owes its registration (a Google-created
+       * account before the finish page), which the gate otherwise refuses on
+       * every route. Carries its reason, because each one is a door past the
+       * terms: only the routes that finish a registration may hold it.
+       */
+      allowRegistrationOwed?: string;
       /** Refuses an uncertified educator, for gedu actions that are a boundary. */
       requireCertifiedGedu?: true;
     }
@@ -495,12 +502,14 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // --- Auth ----------------------------------------------------------------
 
   "src/app/api/auth/callback/route.ts": {
+    adminClient:
+      "one write, on the signed-in caller's own profile: email_verified_at, which authenticated has no UPDATE grant on, when the account's address was never proven and the Google identity just signed in with reports that same address verified. A Google sign-in proves the address, and the account must be left holding only the prover's session — the revoke of every other session runs first, on the session's own client, and the stamp is written only after it succeeds",
     handlers: {
       GET: {
         posture: {
           kind: "session-mutating-public",
           reason:
-            "the Google sign-in redirect target: it exchanges the provider's code for a session, so it must be reachable before one exists. Returns only redirects, on the trusted origin. Its caller-supplied `next` must resolve to an internal path and pass the post-auth allowlist (product pages, plus the registration finish page); a customer account that has not finished registering is sent to the finish page whatever `next` says, and a gamer account's freshly minted session is signed out and refused",
+            "the Google sign-in redirect target: it exchanges the provider's code for a session, so it must be reachable before one exists. Returns only redirects, on the trusted origin. Its caller-supplied `next` must resolve to an internal path and pass the post-auth allowlist (product pages, plus the registration finish page); a customer account that has not finished registering is sent to the finish page whatever `next` says, and a gamer account's freshly minted session is signed out and refused, as is any session whose profile cannot be read. A non-gamer account whose address was never verified, signed into by a Google identity that verified the same address, has every other session revoked and the address stamped verified",
         },
         body: { kind: "none" },
         test: TESTS.callback,
@@ -520,6 +529,8 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           // the PIN gate's place. The handler's own guard is the narrowing —
           // it writes nothing unless registration_completed_at is still NULL.
           allowUnverified: true,
+          allowRegistrationOwed:
+            "this is where a parent's owed registration is paid: it records the names, terms and consents and then stamps registration_completed_at",
         },
         body: { kind: "json", schema: "completeParentRegistrationBody" },
         test: TESTS.completeRegistration,
@@ -892,7 +903,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/gedu/complete-registration/route.ts": {
     adminClient:
-      "finishes an educator registration begun with Google, on the caller's own account and only while it still owes one: register_gedu (service_role only, because it grants the gedu role) promotes it exactly as the register route does, then the profile columns authenticated has no UPDATE grant on — the three utm_* columns (their one consent-gated write), email_verified_at (when Google verified the same address) and registration_completed_at (the stamp, written last) — plus the auth user read (getUserById) for the Google identity's verification. It never deletes the user: the account is the person's own, and a failed promotion leaves it owing registration for a retry",
+      "finishes an educator registration begun with Google, on the caller's own account and only while it still owes one: register_gedu (service_role only, because it grants the gedu role) promotes it exactly as the register route does and stamps registration_completed_at in the same transaction, then the profile columns authenticated has no UPDATE grant on — the three utm_* columns (their one consent-gated write) and email_verified_at (when Google verified the same address) — plus the auth user read (getUserById) for the Google identity's verification. It never deletes the user: the account is the person's own, and a failed promotion leaves it owing registration for a retry",
     handlers: {
       POST: {
         posture: {
@@ -902,6 +913,8 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           // fresh Google account has no PIN yet, and the handler's guard on
           // registration_completed_at is the narrowing.
           allowUnverified: true,
+          allowRegistrationOwed:
+            "this is where an educator's owed registration is paid: register_gedu promotes the account and stamps registration_completed_at in the same transaction",
         },
         body: { kind: "json", schema: "completeGeduRegistrationBody" },
         test: TESTS.geduCompleteRegistration,
@@ -1645,6 +1658,47 @@ describe("check 2 — static conformance: gated routes contain the primitive", (
     expect(
       runsKeyCheck("export function GET() {\n  return Response.json({});\n}", "requirePartnerKey"),
     ).toBe(false);
+  });
+
+  // The two role-gate opt-outs are what a route's audience really is, so the
+  // registry has to say the same as the file. Per file rather than per handler,
+  // because the source is read per file: a file declares an option when any of
+  // its handlers does. `allowRegistrationOwed` matters most — every route that
+  // holds it is reachable by an account that has not accepted the terms.
+  const GATE_OPTIONS = ["allowUnverified", "allowRegistrationOwed"] as const;
+
+  function declaresGateOption(
+    path: string,
+    option: (typeof GATE_OPTIONS)[number],
+  ): boolean {
+    return Object.values(ROUTE_REGISTRY[path].handlers).some(
+      (handler) =>
+        handler.posture.kind === "role-gated" &&
+        handler.posture[option] !== undefined,
+    );
+  }
+
+  it.each(
+    gatedPaths.flatMap((path) =>
+      GATE_OPTIONS.map((option) => [path, option] as const),
+    ),
+  )("%s declares %s exactly when its source sets it", (path, option) => {
+    const sets = readSource(path).includes(`${option}: true`);
+    expect(
+      sets,
+      `${path}: the registry and the source disagree on ${option}`,
+    ).toBe(declaresGateOption(path, option));
+  });
+
+  it.each(
+    REGISTERED_HANDLERS.flatMap((h) =>
+      h.handler.posture.kind === "role-gated" &&
+      h.handler.posture.allowRegistrationOwed !== undefined
+        ? [[h.label, h.handler.posture.allowRegistrationOwed] as const]
+        : [],
+    ),
+  )("%s gives a reason for admitting an owed registration", (_label, reason) => {
+    expect(reason.trim().length).toBeGreaterThan(0);
   });
 
   // The wrapper reads the request body only when a body schema is declared, so

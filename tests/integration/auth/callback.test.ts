@@ -30,6 +30,23 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
+const mockAdminProfileUpdate = vi.fn();
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({
+    from: (table: string) => {
+      if (table !== "profiles") {
+        throw new Error(`Unexpected table in admin mock: ${table}`);
+      }
+      return {
+        update: (row: Record<string, unknown>) => ({
+          eq: (column: string, value: string) =>
+            mockAdminProfileUpdate({ row, column, value }),
+        }),
+      };
+    },
+  }),
+}));
+
 // --- Helpers ---
 
 const SITE_URL = "https://sogverse.example";
@@ -58,8 +75,14 @@ function destination(response: Response): string {
 }
 
 /** A successful exchange for an account whose profile reads as given. */
-function signedInAs(profile: Record<string, unknown> | null) {
-  mockExchangeCodeForSession.mockResolvedValue({ error: null });
+function signedInAs(
+  profile: Record<string, unknown> | null,
+  identities: Array<{ provider: string; identity_data: Record<string, unknown> }> = [],
+) {
+  mockExchangeCodeForSession.mockResolvedValue({
+    data: { user: { id: "user-123", identities }, session: {} },
+    error: null,
+  });
   mockGetClaims.mockResolvedValue({
     data: { claims: { sub: "user-123" } },
   });
@@ -75,6 +98,8 @@ describe("GET /api/auth/callback", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_URL);
+    mockSignOut.mockResolvedValue({ error: null });
+    mockAdminProfileUpdate.mockResolvedValue({ error: null });
   });
 
   afterEach(() => {
@@ -151,6 +176,38 @@ describe("GET /api/auth/callback", () => {
     const response = await GET(createCallbackRequest({ code: "valid-code" }));
 
     expect(destination(response)).toBe("/login?error=auth_callback_error");
+  });
+
+  // Every routing decision is read off the profile row, so a session whose
+  // row cannot be read is revoked rather than routed by a guess.
+  describe("a profile that cannot be read", () => {
+    // A single-row read never answers "no row" with a null body: PostgREST
+    // reports the missing row as an error, and that is the shape pinned here.
+    it("signs out and refuses when the row is missing", async () => {
+      signedInAs(null);
+      mockProfileQuery.mockResolvedValue({
+        data: null,
+        error: { code: "PGRST116", message: "The result contains 0 rows" },
+      });
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "local" });
+      expect(destination(response)).toBe("/login?error=auth_callback_error");
+    });
+
+    it("signs out and refuses when the read fails", async () => {
+      signedInAs(null);
+      mockProfileQuery.mockResolvedValue({
+        data: null,
+        error: { message: "connection reset" },
+      });
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "local" });
+      expect(destination(response)).toBe("/login?error=auth_callback_error");
+    });
   });
 
   describe("a gamer account", () => {
@@ -269,14 +326,6 @@ describe("GET /api/auth/callback", () => {
       expect(destination(response)).toBe(path);
     });
 
-    it("routes by the customer default when there is no profile", async () => {
-      signedInAs(null);
-
-      const response = await GET(createCallbackRequest({ code: "valid-code" }));
-
-      expect(destination(response)).toBe("/select-profile");
-    });
-
     it("honours an allowlisted product-page next", async () => {
       signedInAs({ role: "customer", registration_completed_at: COMPLETED });
 
@@ -374,8 +423,139 @@ describe("GET /api/auth/callback", () => {
       await signedInWithLocale("fi");
 
       expect(mockProfileSelect).toHaveBeenCalledWith(
-        "role, locale, registration_completed_at",
+        "role, locale, registration_completed_at, email, email_verified_at",
       );
+    });
+  });
+
+  /**
+   * **A Google sign-in proves the address.** Confirmations are off, so a
+   * password account can be opened under someone else's address, and Google
+   * then links the real owner's identity to it. Such a sign-in into an account
+   * whose address was never verified leaves the account holding only the
+   * prover's session, as a completed password reset does.
+   */
+  describe("an unverified address proven by Google", () => {
+    const EMAIL = "owner@example.test";
+    const googleVerified = [
+      {
+        provider: "google",
+        identity_data: { email: "Owner@Example.TEST", email_verified: true },
+      },
+    ];
+
+    function unverifiedAccount(
+      identities: Parameters<typeof signedInAs>[1],
+      extra: Record<string, unknown> = {},
+    ) {
+      signedInAs(
+        {
+          role: "customer",
+          registration_completed_at: COMPLETED,
+          email: EMAIL,
+          email_verified_at: null,
+          ...extra,
+        },
+        identities,
+      );
+    }
+
+    it("revokes every other session and stamps the address verified", async () => {
+      unverifiedAccount(googleVerified);
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledTimes(1);
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "others" });
+      expect(mockAdminProfileUpdate).toHaveBeenCalledTimes(1);
+      const [{ row, column, value }] = mockAdminProfileUpdate.mock.calls[0];
+      expect(Object.keys(row)).toEqual(["email_verified_at"]);
+      expect(typeof row.email_verified_at).toBe("string");
+      expect(column).toBe("id");
+      expect(value).toBe("user-123");
+      expect(destination(response)).toBe("/select-profile");
+    });
+
+    it("does neither for an address already verified", async () => {
+      unverifiedAccount(googleVerified, {
+        email_verified_at: "2026-09-01T12:00:00Z",
+      });
+
+      await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
+    });
+
+    it("does neither when Google's address is a different one", async () => {
+      unverifiedAccount([
+        {
+          provider: "google",
+          identity_data: { email: "someone.else@example.test", email_verified: true },
+        },
+      ]);
+
+      await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
+    });
+
+    it("does neither when Google did not verify the address", async () => {
+      unverifiedAccount([
+        {
+          provider: "google",
+          identity_data: { email: EMAIL, email_verified: false },
+        },
+      ]);
+
+      await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
+    });
+
+    it("never runs for a gamer, whose session is refused instead", async () => {
+      unverifiedAccount(googleVerified, { role: "gamer" });
+
+      await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "local" });
+      expect(mockSignOut).not.toHaveBeenCalledWith({ scope: "others" });
+      expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
+    });
+
+    it("logs a failed revoke, skips the stamp, and still signs the owner in", async () => {
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      unverifiedAccount(googleVerified);
+      mockSignOut.mockResolvedValue({ error: { message: "gotrue down" } });
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining("user-123"),
+        expect.anything(),
+      );
+      // The stamp would stop the next Google sign-in retrying the revoke.
+      expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
+      expect(destination(response)).toBe("/select-profile");
+      consoleError.mockRestore();
+    });
+
+    it("logs a failed stamp and still signs the owner in", async () => {
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      unverifiedAccount(googleVerified);
+      mockAdminProfileUpdate.mockResolvedValue({ error: { message: "db down" } });
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "others" });
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining("user-123"),
+        expect.anything(),
+      );
+      expect(destination(response)).toBe("/select-profile");
+      consoleError.mockRestore();
     });
   });
 });

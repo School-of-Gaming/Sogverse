@@ -1369,7 +1369,7 @@
         "tooManyAttempts": "Liian monta kirjautumisyritystä. Odota hetki ja yritä uudelleen.",
         "oauthCancelled": "Google-kirjautuminen peruutettiin. Voit yrittää uudelleen tai kirjautua salasanallasi.",
         "authCallbackError": "Google-kirjautuminen ei onnistunut. Yritä uudelleen.",
-        "googleGamer": "Pelaajatilit kirjautuvat käyttäjätunnuksella tai vanhemman tilin kautta, eivät Google-tilillä. Kysy vanhemmaltasi, jos et ole varma, miten kirjaudut."
+        "googleGamer": "Pelaajatilit kirjautuvat sähköpostiosoitteella tai käyttäjätunnuksella ja salasanalla tai vanhemman tilin kautta, eivät Google-tilillä. Kysy vanhemmaltasi, jos et ole varma, miten kirjaudut."
       },
       "identifierLabel": "Sähköpostiosoite tai käyttäjätunnus",
       "identifierPlaceholder": "sinä@example.com tai käyttäjätunnus"

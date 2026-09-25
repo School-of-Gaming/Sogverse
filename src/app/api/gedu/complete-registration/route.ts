@@ -29,7 +29,9 @@ import {
  * new-user trigger makes of every account, and owes its registration; this
  * route asks for what `/register-gedu` asks minus the address and password,
  * promotes it to an uncertified Gedu through the same `register_gedu` call the
- * register route makes, and then marks it registered.
+ * register route makes. That call also marks it registered, inside the
+ * promotion's own transaction, so the account can never be a Gedu that still
+ * owes its registration.
  *
  * It records no consents and shows no terms, exactly as the register route
  * does not: an educator's terms are their contract, signed later on its own
@@ -42,6 +44,9 @@ export const POST = defineRoute({
   // gate's place — so the PIN lock would refuse the only caller this route
   // exists for. The registration guard below narrows the audience instead.
   allowUnverified: true,
+  // The role gate refuses an account that owes its registration everywhere
+  // else; this route is where it pays what it owes.
+  allowRegistrationOwed: true,
   body: completeGeduRegistrationBody,
 
   handler: async ({ request, body, user, profile }) => {
@@ -109,31 +114,33 @@ export const POST = defineRoute({
     }
 
     // The rest the register route gets from signup metadata or never needs:
-    // the attribution (consent-gated, the columns' one write), Google's word on
-    // the address, and the stamp. One statement, so the stamp cannot land
-    // without the rest. The profile is a Gedu's now.
+    // the attribution (consent-gated, the columns' one write) and Google's word
+    // on the address. Best effort: the registration itself committed with the
+    // promotion, and neither is worth failing a registration that has already
+    // happened — a lost attribution under-reports, and an unverified address
+    // is mailed a link below.
     const emailVerifiedByGoogle = await isEmailVerifiedByGoogle(
       admin,
       userId,
       profile.email,
     );
-    const now = new Date().toISOString();
-    const { error: stampError } = await admin
-      .from("profiles")
-      .update({
-        ...utmProfileColumns(request, utm),
-        ...(emailVerifiedByGoogle ? { email_verified_at: now } : {}),
-        registration_completed_at: now,
-      })
-      .eq("id", userId);
-    if (stampError) {
-      // The promotion stands and the account is a Gedu that the proxy no
-      // longer holds (its gate is for customers), so a retry would be refused
-      // by the role gate; the stamp is logged with the id for a hand repair.
-      console.error(
-        `[gedu/complete-registration] registration stamp failed for ${userId}`,
-        stampError,
-      );
+    const followUp = {
+      ...utmProfileColumns(request, utm),
+      ...(emailVerifiedByGoogle
+        ? { email_verified_at: new Date().toISOString() }
+        : {}),
+    };
+    if (Object.keys(followUp).length > 0) {
+      const { error: followUpError } = await admin
+        .from("profiles")
+        .update(followUp)
+        .eq("id", userId);
+      if (followUpError) {
+        console.error(
+          `[gedu/complete-registration] attribution/verification write failed for ${userId}`,
+          followUpError,
+        );
+      }
     }
 
     // The welcome mail, swallowed on failure like every product send.

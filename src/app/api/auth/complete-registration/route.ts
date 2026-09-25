@@ -49,6 +49,9 @@ export const POST = defineRoute({
   // exists for. The guard below is what narrows the audience instead: nothing
   // is written unless the account still owes its registration.
   allowUnverified: true,
+  // The role gate refuses an account that owes its registration everywhere
+  // else; this route is where it pays what it owes.
+  allowRegistrationOwed: true,
   body: completeParentRegistrationBody,
 
   handler: async ({ request, body, user, profile }) => {
@@ -146,10 +149,21 @@ export const POST = defineRoute({
     }
 
     // The stamp, last: from here the proxy lets the account through.
-    const { error: stampError } = await admin
+    //
+    // **Conditional, because the guard above is a read.** Two submissions of
+    // the finish page (a double click, two tabs) can both pass it while the
+    // column is still NULL. Everything before this point is safe to run twice:
+    // the profile write sets the same person's own answers again, the terms
+    // record is ON CONFLICT DO NOTHING, and the marketing write only records a
+    // change of state. The stamp is where the two part: only one statement
+    // finds the column NULL, and the other request gets the guard's 409 — so
+    // the welcome mail and the conversion below go out exactly once.
+    const { data: stamped, error: stampError } = await admin
       .from("profiles")
       .update({ registration_completed_at: now })
-      .eq("id", userId);
+      .eq("id", userId)
+      .is("registration_completed_at", null)
+      .select("id");
     if (stampError) {
       console.error(
         `[auth/complete-registration] registration stamp failed for ${userId}`,
@@ -158,6 +172,15 @@ export const POST = defineRoute({
       return NextResponse.json(
         { error: "Registration could not be completed. Please try again." },
         { status: 500 },
+      );
+    }
+    if (stamped.length === 0) {
+      return NextResponse.json(
+        {
+          error: "This account has already finished registering.",
+          code: REGISTRATION_ALREADY_COMPLETE,
+        },
+        { status: 409 },
       );
     }
 
@@ -203,9 +226,9 @@ export const POST = defineRoute({
     }
 
     // The account-creation conversion, reported here because this is where a
-    // Google account becomes a registered one — exactly once, since the guard
-    // above refuses a second run. After the response, and only with the
-    // request's own marketing consent (the reporter decides).
+    // Google account becomes a registered one — exactly once, since only the
+    // request whose stamp changed a row gets this far. After the response, and
+    // only with the request's own marketing consent (the reporter decides).
     after(
       reportMetaConversion(request, {
         event: "account_created",
