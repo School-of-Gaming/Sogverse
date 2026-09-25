@@ -764,7 +764,7 @@
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
         "longDescription": "Optional. The full pitch, shown only on the product’s detail page. Headings, lists, emphasis and links are all available.",
-        "topicHint": "What this product is about. Families see it as the Subject filter in the shop and on the product page’s About card.",
+        "topicHint": "What this product is about. Families see it as the Topic filter in the shop and on the product page’s About card.",
         "materialUrlHint": "Optional. For Gedus only — families never see this.",
         "requiresGamerCreationsHint": "For products a contract requires it of. The final session keeps a needs-attention mark until every gamer in the group has a creation recorded. Families see nothing different.",
         "seatAudienceHint": "Pick at least one. Both means a product a parent and their gamer take part in together — the shop labels it “For families”.",
@@ -2404,7 +2404,7 @@
       "typeClubs": "Clubs",
       "typeCamps": "Camps",
       "typeEvents": "Events",
-      "subject": "Subject",
+      "topic": "Topic",
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "In person",

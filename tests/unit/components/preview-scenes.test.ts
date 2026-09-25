@@ -1837,7 +1837,7 @@ describe("the topic prep scene", () => {
 
   it("has a label-only guide to add to the remote column, and none in person", () => {
     // The extra card the scene draws under "Any other topic". It is one card
-    // for five topics because their guides are identical — nothing in the
+    // for every label-only topic because their guides are identical — nothing in the
     // one-step form is keyed by topic — and it belongs to the remote column
     // alone, which is what the scene's `isRemote` guard around it says.
     const labelOnly = PRODUCT_TOPIC_VALUES.filter((t) => !topicHasPrep(t));
