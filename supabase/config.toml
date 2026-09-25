@@ -47,7 +47,10 @@ file_size_limit = "50MiB"
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = ["http://127.0.0.1:3000/**", "http://localhost:3000/**"]
+# A worktree's dev server runs on whatever port was free, so localhost is allowed on any
+# port: `*` matches any run of characters short of `.` or `/`, which is exactly a port.
+# 127.0.0.1 needs no entry of its own — GoTrue accepts any redirect on site_url's host.
+additional_redirect_urls = ["http://127.0.0.1:3000/**", "http://localhost:3000/**", "http://localhost:*/**"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
@@ -70,11 +73,13 @@ enable_confirmations = false
 enabled = false
 
 [auth.external.google]
-# Off locally: the stack is started inside WSL, where nothing supplies these two variables,
-# and an enabled provider cannot work without them. To try Google sign-in
-# against the local stack, export both (a Google OAuth client whose redirect URI is
-# http://127.0.0.1:54321/auth/v1/callback) in the shell that starts it and flip this on.
-# `redirect_uri` stays unset: the CLI defaults it to that callback.
+# Off in this file, and it must stay off here: CI's `supabase start` and every `db push`
+# read it with nothing set, and an enabled provider whose env() is unset still starts —
+# it just sends Google the literal text "env(...)" as its client id. `npm run db -- up`
+# turns it on for a local stack when .env.local carries both variables, by handing the
+# CLI SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED=true, which overrides this key; `up` prints
+# the stack's callback URI, whose port is per stack. `redirect_uri` stays unset: the CLI
+# defaults it to that callback.
 enabled = false
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"

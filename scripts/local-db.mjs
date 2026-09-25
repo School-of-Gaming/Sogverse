@@ -92,11 +92,14 @@ const COULD_NOT_RUN = 2;
  * words a command accepts after its name, and anything else is refused here
  * rather than passed into the distro to be ignored; a command with
  * `ownsGenerateId` runs against the second identity described under `portBase`
- * rather than the stack's.
+ * rather than the stack's; a command with `createsServices` may have the CLI
+ * create the stack's containers, which is when the Google provider's settings
+ * (below) are read, so it is the one handed them.
  */
 const COMMANDS = {
   up: {
     flags: ['--no-rich-seed'],
+    createsServices: true,
     summary: [
       'Build this checkout\'s local Supabase stack from supabase/migrations/,',
       'supabase/rich-seed.sql and its product images, and point this',
@@ -116,6 +119,7 @@ const COMMANDS = {
     ],
   },
   reset: {
+    createsServices: true,
     summary: [
       'Rebuild the running stack\'s database in place from migrations/ and',
       'whichever seeds it was built with (about a minute). This is what an',
@@ -361,6 +365,53 @@ const releaseKeepAlive = () => {
   rmSync(keepAlivePidFile, { force: true });
 };
 
+/**
+ * The Google sign-in provider, switched on for this checkout's stack when
+ * .env.local carries both of its credentials, and left off — config.toml's own
+ * `enabled = false` — when it does not, so a checkout without them gets exactly
+ * the stack it always did.
+ *
+ * config.toml cannot do the switching itself: an `enabled = "env(…)"` that is
+ * unset fails the CLI's config parse, which would break CI's `supabase start`
+ * and every `db push`. What works is the CLI's own override, which takes any
+ * `SUPABASE_<SECTION>_<KEY>` variable over the file's value — the credentials'
+ * names are those overrides too. They reach the distro through WSLENV, which
+ * carries the variables' names across the boundary and never their values:
+ * those are secrets, and on a command line they would be shell text.
+ */
+const GOOGLE_CREDENTIALS = ['SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID', 'SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET'];
+
+/** The credentials out of .env.local, or null unless both are there and non-empty. */
+const readGoogleCredentials = () => {
+  let text;
+  try {
+    text = readFileSync(path.join(checkout, '.env.local'), 'utf8');
+  } catch {
+    return null;
+  }
+  const found = {};
+  for (const line of text.split(/\r?\n/)) {
+    const match = /^([A-Z0-9_]+)=(.*)$/.exec(line);
+    if (!match || !GOOGLE_CREDENTIALS.includes(match[1])) continue;
+    // The last assignment wins, as it does for the dotenv reader the app uses.
+    const value = match[2].trim();
+    found[match[1]] = /^(["'])(.*)\1$/.exec(value)?.[2] ?? value;
+  }
+  return GOOGLE_CREDENTIALS.every((name) => found[name]) ? found : null;
+};
+
+const googleCredentials = readGoogleCredentials();
+
+const distroEnv = () => {
+  if (!spec.createsServices || googleCredentials === null) return process.env;
+  const forwarded = { ...googleCredentials, SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED: 'true' };
+  return {
+    ...process.env,
+    ...forwarded,
+    WSLENV: [process.env.WSLENV, ...Object.keys(forwarded)].filter(Boolean).join(':'),
+  };
+};
+
 /** Run one of the shell files inside the distro. */
 const runInDistro = (shellFile, args) =>
   new Promise((resolve) => {
@@ -370,7 +421,7 @@ const runInDistro = (shellFile, args) =>
     const child = spawn(
       'wsl.exe',
       ['-d', DISTRO, '--', 'bash', `${checkoutWsl}/scripts/local-db/${shellFile}`, ...args],
-      { stdio: ['ignore', 'pipe', 'pipe'] },
+      { stdio: ['ignore', 'pipe', 'pipe'], env: distroEnv() },
     );
 
     const onSentinel = (line) => {
@@ -441,4 +492,37 @@ if (code !== 0) {
     exitCode,
   );
 }
+/**
+ * Whether Google is on, asked of the running stack rather than inferred from
+ * .env.local: a stack that was already up kept the settings it started with.
+ * The API port is config.toml's, shifted into this checkout's block the way
+ * lib.sh shifts it when it rewrites the file.
+ */
+const reportGoogle = async () => {
+  const config = readFileSync(path.join(checkout, 'supabase', 'config.toml'), 'utf8');
+  const apiSection = /^\[api\]\s*$([\s\S]*?)(?=^\[)/m.exec(config)?.[1] ?? '';
+  const configPort = Number(/^\s*port\s*=\s*(\d+)/m.exec(apiSection)?.[1]);
+  const apiUrl = `http://127.0.0.1:${runPortBase + (configPort % 100)}`;
+  let enabled;
+  try {
+    const response = await fetch(`${apiUrl}/auth/v1/settings`, { signal: AbortSignal.timeout(5000) });
+    enabled = (await response.json())?.external?.google === true;
+  } catch {
+    console.log(`  Google       could not ask ${apiUrl}/auth/v1/settings whether it is on.`);
+    return;
+  }
+  if (enabled) {
+    console.log(`  Google       on. The Google OAuth client's authorized redirect URI: ${apiUrl}/auth/v1/callback`);
+  } else if (googleCredentials === null) {
+    console.log(`  Google       off — .env.local does not carry both ${GOOGLE_CREDENTIALS.join(' and ')}.`);
+  } else {
+    console.log('  Google       off, although .env.local carries its credentials.');
+  }
+  if (enabled !== (googleCredentials !== null)) {
+    console.log('               The stack was already up and kept the settings it started with;');
+    console.log('               `npm run db -- park` and `up` again to apply .env.local.');
+  }
+};
+
+if (command === 'up') await reportGoogle();
 console.log(`${command}: done in ${seconds}s`);

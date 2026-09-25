@@ -323,6 +323,17 @@ every command does — the things its usage text does not say:
   the seed. A file is named for a `product_topic` value, so which picture a product gets
   follows its topic; a topic with no file fails the step by name rather than leaving a
   stack with holes in it.
+- **Google sign-in works on a stack whose checkout's `.env.local` carries
+  `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`** —
+  a Google Cloud OAuth client of your own; its consent screen can stay in testing mode,
+  with your account as a test user. `up` switches the provider on when both are there,
+  and prints the redirect URI the client needs; the port in it is per stack, so a new
+  worktree means adding its URI to the client. Without both, the provider stays off.
+  `config.toml` keeps `enabled = false` on purpose: CI and `db push` read it with nothing
+  set. A stack picks the setting up only when its containers are created, so `park` and
+  `up` after changing the two lines. The redirect allow-list is different: it lives in
+  the stack's copy of `config.toml`, taken when the stack was created, so a stack older
+  than a change to that list needs `down` and `up` to see it.
 - **A stack can host the DB tests, but only one built with `up --no-rich-seed`.**
   `npm run test:db:local` runs the `tests/db/` suite against this checkout's stack, taking
   its URL and keys from the stack rather than from `.env.local`, and refuses a stack
