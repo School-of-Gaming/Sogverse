@@ -1,6 +1,7 @@
 /**
- * Export a set of app pages — as the staging admin, in several locales, at both
- * widths — into **a handful of images you can drop into a Slack thread**.
+ * Export a set of app pages — as the staging admin or as a signed-out visitor,
+ * in several locales, at both widths — into **a handful of images you can drop
+ * into a Slack thread**.
  *
  * The owner's words for what it is for: *"It works well if I need to see a lot
  * of versions of a page with a given account and it would be too many steps to
@@ -12,12 +13,12 @@
  * can easily view in Slack."*
  *
  * So the tool is generic and the *list of pages is the input*: a *preset* names
- * the surfaces, and the tool signs in once, walks them, shoots each one, and
- * composes them into one image per group. `presets/topic-copy.mjs` is the first
- * one; a second review is a second preset, not a second script.
+ * the surfaces, and the tool walks them, shoots each one, and composes them into
+ * one image per group. A review is a preset under `presets/`, not a script.
  *
  *   node scripts/preview-export/export.mjs --preset topic-copy
  *   node scripts/preview-export/export.mjs --preset topic-copy --locales en,fi --viewports mobile
+ *   node scripts/preview-export/export.mjs --preset public-pages --base https://sogverse.sog.gg
  *   node scripts/preview-export/export.mjs --pages ./my-pages.mjs --only minecraft_java--about
  *   node scripts/preview-export/export.mjs --selftest       # no app, no login
  *
@@ -30,7 +31,7 @@
  *
  * A module whose default export is
  *
- *   { title, description, groups: [ { label, entries: [entry, …] } ] }
+ *   { title, description, signedOut?, groups: [ { label, entries: [entry, …] } ] }
  *
  * and an entry is
  *
@@ -41,33 +42,59 @@
  *                                //   the /{locale}/ prefix is added for you
  *     capture,                   // "viewport" | "fullPage" | { selector }
  *     waitFor?,                  // a selector to wait for before shooting
+ *     banner?,                   // signed-out only: "rejected" (default) | "up"
  *   }
  *
  * **A group is one image**, so grouping is how a preset decides what a reader
  * receives as a unit — and the tool refuses more than ten groups, because ten
  * files is what one Slack message takes.
  *
- * ## Sign-in, and the one guard
+ * ## Signed in or signed out — the preset decides
  *
- * `/preview/*` and every dashboard are gated, so the run needs an admin account
- * on staging (which is what local dev points at). It reads
- * **`STAGING_ADMIN_EMAIL`** and **`STAGING_ADMIN_PASSWORD`** from `.env.local`
- * (the shell wins if it exports them), drives the real login form once, and
- * reuses that session for every shot. Neither value is ever printed.
+ * **Signed in** is the default. `/preview/*` and every dashboard are gated, so
+ * the run needs an admin account on staging (which is what local dev points
+ * at). It reads **`STAGING_ADMIN_EMAIL`** and **`STAGING_ADMIN_PASSWORD`** from
+ * `.env.local` (the shell wins if it exports them), drives the real login form
+ * once, and reuses that session for every shot. Neither value is ever printed.
+ * The consent banner is answered with a stored refusal, so it never mounts.
  *
- * Because it types that password into whatever `--base` names, `--base` is
- * checked against a loopback allowlist before the browser starts, and there is
- * no override flag.
+ * **Signed out** is a property of the preset, `signedOut: true`, never a flag:
+ * the public pages are only worth photographing as a visitor sees them — a
+ * signed-in reader of `/` is sent to their dashboard, and the consent banner a
+ * newcomer meets never appears for anyone who has answered it — so a preset
+ * about them is signed out by what it is, not by what its caller remembers. A
+ * signed-out run never loads `.env.local`, never reads the credentials and
+ * never visits the login form. **Every shot gets a fresh browser context**, the
+ * way a first-time visitor arrives, speaking the shot's locale; and after each
+ * shot the context is checked for a Supabase session cookie, so a run that
+ * somehow was signed in fails that shot rather than labelling it signed out.
+ *
+ * In a signed-out run the consent banner is answered **through its own
+ * buttons**, never by writing the cookie: an entry's `banner` is `"rejected"`
+ * by default (wait for the banner, press its "Reject all" — named from the
+ * locale's own message catalogue — wait for it to go, then shoot) or `"up"`
+ * (shoot the first screen with the banner still showing, which is what a first
+ * visit looks like; only a `"viewport"` capture may ask for it). A page on which
+ * no banner appears fails the shot: a first visit without the question is a
+ * finding, not a picture.
+ *
+ * ## The one guard, and its reason
+ *
+ * **A signed-in run only ever points a browser at loopback, and there is no
+ * override flag — because it types a real admin password into whatever
+ * `--base` names.** A signed-out run types nothing, so it accepts any `http` or
+ * `https` origin: production, a Vercel preview deployment, a local server. The
+ * guard runs before the browser starts and before the credentials are read.
  *
  * ## The sibling
  *
- * `scripts/page-capture/` (on `feat/brand-palette-design-pass`) photographs the
- * whole app per role against a seeded staging fleet. Different job — whole
- * pages, one language, a directory of PNGs — but the same machinery underneath,
- * so this tool copies its **viewports verbatim**, its **loopback guard**, and
- * its **locale-cookie pinning**. When that branch lands, the sign-in and the
- * guard belong in its `lib.mjs` and this file should import them rather than
- * keep a second copy.
+ * `scripts/page-capture/` (on `feat/brand-palette-design-pass`, not on `dev` as
+ * of 2026-09-25) photographs the whole app per role against a seeded staging
+ * fleet. Different job — whole pages, one language, a directory of PNGs — but
+ * the same machinery underneath, so this tool copies its **viewports
+ * verbatim**, its **loopback guard**, and its **locale-cookie pinning**. When
+ * that branch lands, the sign-in and the guard belong in its `lib.mjs` and this
+ * file should import them rather than keep a second copy.
  */
 import { execFileSync } from "node:child_process";
 import {
@@ -130,23 +157,30 @@ const list = (value) =>
 const SELFTEST = process.argv.includes("--selftest");
 
 /**
- * The hosts this tool may point a browser at — **loopback only, and there is no
- * override flag.**
+ * The hosts a **signed-in** run may point a browser at — **loopback only, and
+ * there is no override flag.**
  *
- * The run types a real admin password into the login form at whatever `--base`
- * names, so that one flag decides who receives a working staging credential. A
- * typo, a URL pasted out of a chat message or a copied command line is all it
- * would take to hand it to a stranger's server, and the person running it would
- * see nothing but an ordinary sign-in failure afterwards.
+ * A signed-in run types a real admin password into the login form at whatever
+ * `--base` names, so that one flag decides who receives a working staging
+ * credential. A typo, a URL pasted out of a chat message or a copied command
+ * line is all it would take to hand it to a stranger's server, and the person
+ * running it would see nothing but an ordinary sign-in failure afterwards.
  *
  * Same list, same reasoning and the same absent flag as `assertCaptureOrigin`
- * in `scripts/page-capture/lib.mjs`. A deployed origin, if one is ever wanted,
- * is added here as a literal — never as a flag, an environment variable, or a
- * suffix pattern, since anyone can register a hostname that ends the right way.
+ * in `scripts/page-capture/lib.mjs`. A deployed origin, if one is ever wanted
+ * for a signed-in run, is added here as a literal — never as a flag, an
+ * environment variable, or a suffix pattern, since anyone can register a
+ * hostname that ends the right way.
+ *
+ * **A signed-out run is not held to it, because the reason does not reach
+ * it**: it reads no credential and types nothing, so the worst a wrong `--base`
+ * can do is photograph the wrong site. That is decided by the preset's
+ * `signedOut`, and a signed-out run never reads the credentials at all — the
+ * two halves of the exemption are the same property.
  */
 const ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
 
-function assertLoopback(raw) {
+function resolveBase(raw, signedOut) {
   let parsed;
   try {
     parsed = new URL(raw);
@@ -158,18 +192,19 @@ function assertLoopback(raw) {
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     fail(`--base must be http or https, not "${parsed.protocol}" (${raw}).`);
   }
-  if (!ALLOWED_HOSTS.includes(parsed.hostname)) {
+  if (!signedOut && !ALLOWED_HOSTS.includes(parsed.hostname)) {
     fail(
       `--base points at "${parsed.hostname}", which is not a local dev server\n` +
         `  (allowed: ${ALLOWED_HOSTS.join(", ")}, on any port).\n` +
-        `  This run signs in with a real staging admin password, so it only ever\n` +
-        `  types it into a server on this machine. There is no override flag.`,
+        `  This preset signs in with a real staging admin password, so it only\n` +
+        `  ever types it into a server on this machine. There is no override flag.`,
     );
   }
   return parsed.origin;
 }
 
-const BASE = assertLoopback(arg("base", "http://localhost:3005"));
+/** Set once the preset is loaded and says whether the run signs in. */
+let BASE = null;
 
 /** `tlh` is the Klingon easter egg — a test locale, never a review locale. */
 const LOCALES = list(arg("locales", "en,fi,sv,fr"));
@@ -233,12 +268,57 @@ async function loadPreset() {
   return preset;
 }
 
+/**
+ * What an entry asks of the consent banner, checked before anything launches.
+ *
+ * Only a signed-out run meets the banner — a signed-in one stores a refusal so
+ * it never mounts — and a banner-up picture is the first screen and nothing
+ * else: a full-page shot would print a strip pinned to the bottom of the
+ * viewport somewhere in the middle of the document.
+ */
+const BANNER_MODES = ["rejected", "up"];
+
+function bannerFor(entry, signedOut) {
+  if (entry.banner === undefined) return signedOut ? "rejected" : null;
+  if (!signedOut) {
+    fail(
+      `Entry "${entry.slug}" sets \`banner\`, which only a signed-out preset ` +
+        `can ask for — a signed-in run stores a consent refusal and never sees ` +
+        `the banner.`,
+    );
+  }
+  if (!BANNER_MODES.includes(entry.banner)) {
+    fail(
+      `Entry "${entry.slug}" sets banner "${entry.banner}"; expected one of ` +
+        `${BANNER_MODES.join(", ")}.`,
+    );
+  }
+  if (entry.banner === "up" && (entry.capture ?? "viewport") !== "viewport") {
+    fail(
+      `Entry "${entry.slug}" asks for the banner up on a non-viewport capture. ` +
+        `A banner-up shot is the first screen only.`,
+    );
+  }
+  return entry.banner;
+}
+
+/**
+ * The locale's home is `/{locale}`, not `/{locale}/` — the trailing slash is
+ * one more redirect for nothing. Any other internal path is handed to the
+ * proxy as it is, and a translated public slug (`/fi/shop` → `/fi/kauppa`) is
+ * reached by the proxy's own redirect, so no preset keeps a second copy of the
+ * pathnames map.
+ */
+const pageUrl = (locale, route) =>
+  route === "/" ? `${BASE}/${locale}` : `${BASE}/${locale}${route}`;
+
 /** Every shot the run will attempt, in the order the sheet prints them. */
-function planShots(preset) {
+function planShots(preset, signedOut) {
   const shots = [];
   for (const group of preset.groups) {
     for (const entry of group.entries) {
       if (ONLY.length > 0 && !ONLY.includes(entry.slug)) continue;
+      const banner = bannerFor(entry, signedOut);
       for (const locale of LOCALES) {
         const route =
           typeof entry.route === "function" ? entry.route(locale) : entry.route;
@@ -250,9 +330,10 @@ function planShots(preset) {
             notes: entry.notes ?? null,
             capture: entry.capture ?? "viewport",
             waitFor: entry.waitFor ?? null,
+            banner,
             locale,
             viewport: viewport.name,
-            url: `${BASE}/${locale}${route}`,
+            url: pageUrl(locale, route),
             file: `${entry.slug}--${locale}--${viewport.name}.png`,
           });
         }
@@ -414,6 +495,11 @@ async function shoot(page, shot) {
       .catch(() => {});
   }
 
+  if (shot.banner) await answerBanner(page, shot);
+
+  if (shot.capture === "fullPage") await revealLazyContent(page);
+  else await imagesLoaded(page);
+
   const dest = path.join(OUT, shot.file);
 
   if (shot.capture === "viewport" || shot.capture === "fullPage") {
@@ -456,6 +542,142 @@ async function shoot(page, shot) {
     width: Math.round(box?.width ?? 0),
     height: Math.round(box?.height ?? 0),
   };
+}
+
+/**
+ * The banner's own words in a locale, read from the message catalogue the app
+ * renders them from — so the button pressed is the one a visitor reading that
+ * language presses, and a reworded button cannot leave this tool clicking at
+ * nothing. A locale whose catalogue lacks them (the Klingon one is partial)
+ * falls back to English, as the app does.
+ */
+const bannerStrings = new Map();
+
+function bannerStringsFor(locale) {
+  if (bannerStrings.has(locale)) return bannerStrings.get(locale);
+  const read = (l) => {
+    try {
+      return JSON.parse(
+        readFileSync(path.join(REPO_ROOT, "messages", `${l}.json`), "utf8"),
+      ).consent;
+    } catch {
+      return undefined;
+    }
+  };
+  const own = read(locale);
+  const en = read("en");
+  const strings = {
+    heading: own?.heading ?? en?.heading,
+    rejectAll: own?.rejectAll ?? en?.rejectAll,
+  };
+  if (!strings.heading || !strings.rejectAll) {
+    fail(
+      "Could not read the consent banner's heading and reject button from " +
+        "messages/*.json.",
+    );
+  }
+  bannerStrings.set(locale, strings);
+  return strings;
+}
+
+/**
+ * Meet the consent banner the way a first-time visitor does: it must appear,
+ * and for a `"rejected"` shot it is dismissed by pressing its own "Reject all".
+ *
+ * Found by role and accessible name — the banner is a `region` named by its
+ * heading — rather than by a class list, which is styling and moves. The
+ * click waits for React to own the button, for the same reason the sign-in
+ * waits for the form: a click before hydration lands on a button with no
+ * handler, does nothing, and the wait for the banner to go would then blame the
+ * banner.
+ *
+ * Against a deployed site the answer is the visitor's own and stays in this
+ * throwaway context; a refusal loads nothing, analytics included.
+ */
+async function answerBanner(page, shot) {
+  const { heading, rejectAll } = bannerStringsFor(shot.locale);
+  const region = page.getByRole("region", { name: heading, exact: true });
+  try {
+    await region.waitFor({ state: "visible", timeout: 15_000 });
+  } catch {
+    throw new Error(
+      `no cookie banner ("${heading}") appeared — a first visit should always see one`,
+    );
+  }
+  if (shot.banner === "up") return;
+
+  const button = region.getByRole("button", { name: rejectAll, exact: true });
+  await button.waitFor({ state: "visible", timeout: 10_000 });
+  await button
+    .elementHandle()
+    .then((handle) =>
+      page.waitForFunction(
+        (el) => Object.keys(el).some((k) => k.startsWith("__react")),
+        handle,
+        { timeout: 30_000 },
+      ),
+    );
+  await button.click();
+  try {
+    await region.waitFor({ state: "hidden", timeout: 10_000 });
+  } catch {
+    throw new Error(`the cookie banner stayed up after "${rejectAll}"`);
+  }
+}
+
+/**
+ * Wait, capped, for the images the shot will actually contain to finish.
+ *
+ * Only images that are rendered and fall inside the area being shot: a lazy
+ * image nobody has scrolled near has not started loading and never reports
+ * complete, and one hidden by a breakpoint never loads at all — waiting on
+ * every image in the document would sit out the whole cap on every shot.
+ */
+async function imagesLoaded(page, wholePage = false) {
+  await page
+    .waitForFunction(
+      (whole) => {
+        const bottom = whole
+          ? document.documentElement.scrollHeight
+          : window.innerHeight;
+        return Array.from(document.images).every((img) => {
+          const rect = img.getBoundingClientRect();
+          const shown =
+            rect.width > 0 &&
+            rect.height > 0 &&
+            rect.bottom + window.scrollY > 0 &&
+            rect.top + window.scrollY < bottom;
+          return !shown || img.complete;
+        });
+      },
+      wholePage,
+      { timeout: 15_000 },
+    )
+    .catch(() => {});
+}
+
+/**
+ * Scroll the whole document once before a full-page shot, so what is below the
+ * fold is painted rather than a row of empty frames.
+ *
+ * Images below the fold load lazily, on approach to the viewport; a full-page
+ * capture draws the document in one pass and never approaches anything, so on
+ * a long page — the shop is about twenty phone screens of cards — most of the
+ * pictures would be blank. Walking the page at most a screen at a time
+ * triggers each one the way a reader scrolling would, and the shot then waits
+ * for the network and the images to settle before returning to the top.
+ */
+async function revealLazyContent(page) {
+  await page.evaluate(async () => {
+    const step = Math.max(200, Math.floor(window.innerHeight * 0.8));
+    for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
+      window.scrollTo(0, y);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    window.scrollTo(0, 0);
+  });
+  await page.waitForLoadState("networkidle").catch(() => {});
+  await imagesLoaded(page, true);
 }
 
 /**
@@ -966,8 +1188,6 @@ async function selftest(browser, dir) {
 // Run
 // ---------------------------------------------------------------------------
 
-loadEnvLocal();
-
 const DATE = new Date().toISOString().slice(0, 10);
 
 /**
@@ -986,23 +1206,29 @@ function freshOutputDir() {
   }
 }
 
-const OUT = arg("out") ?? freshOutputDir();
-mkdirSync(OUT, { recursive: true });
-
 if (SELFTEST) {
+  const dir = arg("out") ?? freshOutputDir();
   const browser = await chromium.launch();
-  await selftest(browser, OUT);
+  await selftest(browser, dir);
   await browser.close();
   process.exit(0);
 }
 
-// Before the browser, before the preset: a run with no credentials cannot see a
-// single page, and finding that out after a launch is noise in front of the one
-// line that matters.
-credentials();
-
+// The preset first, because it decides whether the run signs in — and so
+// which guard `--base` answers to, and whether the credentials are read at all.
 const preset = await loadPreset();
-const planned = planShots(preset);
+const SIGNED_OUT = preset.signedOut === true;
+BASE = resolveBase(arg("base", "http://localhost:3005"), SIGNED_OUT);
+
+// Before the browser: a signed-in run with no credentials cannot see a single
+// page, and finding that out after a launch is noise in front of the one line
+// that matters. A signed-out run never loads the file that holds them.
+if (!SIGNED_OUT) {
+  loadEnvLocal();
+  credentials();
+}
+
+const planned = planShots(preset, SIGNED_OUT);
 if (planned.length === 0) {
   fail(
     `Nothing to shoot. ${
@@ -1013,30 +1239,38 @@ if (planned.length === 0) {
   );
 }
 
+// Created only once the run is known to be going ahead, so a refused `--base`
+// or a missing credential leaves no empty folder behind.
+const OUT = arg("out") ?? freshOutputDir();
+mkdirSync(OUT, { recursive: true });
+
 console.error(
-  `[preview-export] ${preset.title} · ${BASE} · ${LOCALES.join(",")} · ` +
-    `${planned.length} shots → ${OUT}`,
+  `[preview-export] ${preset.title} · ${BASE} · ` +
+    `${SIGNED_OUT ? "signed out" : "signed in as the staging admin"} · ` +
+    `${LOCALES.join(",")} · ${planned.length} shots → ${OUT}`,
 );
 
 const browser = await chromium.launch();
 
-const contextOptions = (viewport, storageState) => ({
+const contextOptions = (viewport, extra = {}) => ({
   viewport: { width: viewport.width, height: viewport.height },
   deviceScaleFactor: viewport.deviceScaleFactor,
   isMobile: viewport.isMobile ?? false,
   hasTouch: viewport.hasTouch ?? false,
-  ...(storageState ? { storageState } : {}),
+  ...extra,
 });
 
 /**
  * Prepare a context so what it photographs is the product and nothing else.
  *
- * - **The consent banner.** It is a fixed overlay pinned to the bottom of the
- *   viewport, and at a phone width it covers most of the page. Answering it by
- *   clicking would be a click per context and a race against hydration on every
- *   one; a stored answer means the banner never mounts. It stores a *refusal*,
- *   which is both the smaller consent to fake and the one that loads no
- *   third-party script into the shot.
+ * - **The consent banner, in a signed-in run.** It is a fixed overlay pinned
+ *   to the bottom of the viewport, and at a phone width it covers most of the
+ *   page. Answering it by clicking would be a click per context and a race
+ *   against hydration on every one; a stored answer means the banner never
+ *   mounts. It stores a *refusal*, which is both the smaller consent to fake
+ *   and the one that loads no third-party script into the shot. A signed-out
+ *   run stores nothing: the banner is part of what it photographs, and it is
+ *   answered through its own buttons.
  * - **The dev overlay, animations and carets** — the same suppression, and the
  *   same reasons, as `scripts/page-capture/capture.mjs`: the Next badge lands in
  *   the corner of a full-page shot, and anything that moves is a difference
@@ -1054,21 +1288,23 @@ const CHROME_SUPPRESSION = `
   * { caret-color: transparent !important; }
 `;
 
-async function prepareContext(context) {
-  await context.addCookies([
-    {
-      name: "sog_consent",
-      value: encodeURIComponent(
-        JSON.stringify({
-          v: 1,
-          at: new Date().toISOString(),
-          analytics: false,
-          marketing: false,
-        }),
-      ),
-      url: BASE,
-    },
-  ]);
+async function prepareContext(context, { storeRefusal }) {
+  if (storeRefusal) {
+    await context.addCookies([
+      {
+        name: "sog_consent",
+        value: encodeURIComponent(
+          JSON.stringify({
+            v: 1,
+            at: new Date().toISOString(),
+            analytics: false,
+            marketing: false,
+          }),
+        ),
+        url: BASE,
+      },
+    ]);
+  }
   await context.addInitScript(
     ([css]) => {
       const apply = () => {
@@ -1083,19 +1319,53 @@ async function prepareContext(context) {
   );
 }
 
-// One context per viewport, all carrying the one sign-in: signing in per
-// viewport would be several sessions for no reason, and the login form is not
-// what this tool is exercising.
-const first = await browser.newContext(contextOptions(VIEWPORTS[0]));
-await prepareContext(first);
-await signIn(first);
-const state = await first.storageState();
+/**
+ * A signed-out shot is a first visit: a context of its own, with no cookie but
+ * the locale pin `shoot` adds, speaking the shot's language as the visitor's
+ * browser would. Closed after the one shot, and checked first for a Supabase
+ * session cookie — a signed-out picture that was in fact signed in would be
+ * the one mistake this mode exists to rule out, so it fails the shot by name.
+ */
+async function shootSignedOut(shot) {
+  const viewport = VIEWPORTS.find((v) => v.name === shot.viewport);
+  const context = await browser.newContext(
+    contextOptions(viewport, { locale: shot.locale }),
+  );
+  try {
+    await prepareContext(context, { storeRefusal: false });
+    const result = await shoot(await context.newPage(), shot);
+    const session = (await context.cookies()).find((c) =>
+      /^sb-.*auth-token/.test(c.name),
+    );
+    if (session) {
+      throw new Error(
+        `a session cookie (${session.name}) was present — this shot was not signed out`,
+      );
+    }
+    return result;
+  } finally {
+    await context.close();
+  }
+}
 
-const contexts = { [VIEWPORTS[0].name]: first };
-for (const viewport of VIEWPORTS.slice(1)) {
-  const context = await browser.newContext(contextOptions(viewport, state));
-  await prepareContext(context);
-  contexts[viewport.name] = context;
+// Signed in: one context per viewport, all carrying the one sign-in. Signing
+// in per viewport would be several sessions for no reason, and the login form
+// is not what this tool is exercising.
+const contexts = {};
+if (!SIGNED_OUT) {
+  const first = await browser.newContext(contextOptions(VIEWPORTS[0]));
+  await prepareContext(first, { storeRefusal: true });
+  await signIn(first);
+  const storageState = await first.storageState();
+
+  contexts[VIEWPORTS[0].name] = first;
+  for (const viewport of VIEWPORTS.slice(1)) {
+    const context = await browser.newContext(
+      contextOptions(viewport, { storageState }),
+    );
+    await prepareContext(context, { storeRefusal: true });
+    contexts[viewport.name] = context;
+  }
 }
 
 const pages = {};
@@ -1106,7 +1376,9 @@ for (const [name, context] of Object.entries(contexts)) {
 const results = [];
 for (const shot of planned) {
   try {
-    const result = await shoot(pages[shot.viewport], shot);
+    const result = SIGNED_OUT
+      ? await shootSignedOut(shot)
+      : await shoot(pages[shot.viewport], shot);
     results.push(result);
     console.error(
       `  ${result.state === "ok" ? "✓" : "·"} ${shot.file}` +
@@ -1137,7 +1409,7 @@ writeIndex(OUT, composites, {
   title: preset.title,
   preset: PRESET_NAME,
   date: DATE,
-  base: BASE,
+  base: `${BASE} · ${SIGNED_OUT ? "signed out" : "signed in"}`,
   branch,
   sha,
   ok,
