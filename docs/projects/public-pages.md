@@ -78,47 +78,58 @@ The Finnish pages were captured but only checked for layout, not for copy.
 
 **Across all three pages, on a first visit:** the cookie banner is a fixed bottom bar
 covering 17% of a desktop screen (20% in Finnish) and **43% of a phone screen (48% in
-Finnish)**. On a phone it hides the hero's subhead and both of its buttons; only the
-headline shows. What the banner must say is a privacy decision and is not this project's
+Finnish)**. On a phone it hides About's and the shop's first screen below the heading,
+and on the home page everything under the hero's button. What the banner must say is a privacy decision and is not this project's
 to cut, but how much of a phone it covers is a layout decision.
 
 ### Home
 
-**Works:** the tagline "Where Screen Time Becomes Quality Time" is the strongest line on
-the site. It meets the parent's guilt and offers a trade. The page is short and fast.
+Rewritten 2026-09-25 on `feat/home-first-screen-proof-safety` (the first round of the
+proposed structure below); this describes that branch's page. Order: hero, one testimonial,
+the features, safety, three more testimonials, "How it works", the closing card.
+
+**Works:**
+
+- **The hero states the offer in one sentence**: weekly clubs for ages 7–17, online and in
+  person, from €59 per month, a Game Educator leading every 90-minute lesson in Minecraft,
+  Roblox, Fortnite and more. Its one call to action is "Find a club", to the shop's clubs,
+  with the risk reversal directly under it: cancel any time at no cost, 30-day money-back
+  guarantee. The closing card repeats that button and line, so the page opens and closes on
+  the same ask.
+- **Proof:** T4 sits large under the hero; T13 and T12 sit beside the safety facts; T5, T3
+  and T2 form a row further down. Role and country only, in the serif italic. Each quote
+  takes an optional image beside it, so photos can arrive without restructuring.
+- **Safety is five checkable facts**, each worded from the About FAQ and linking to its
+  FAQ section: Gedus show a criminal record extract before certification; no private
+  messages, chat goes to the whole room; a voice room opens five minutes either side of
+  its lesson, to its group, its Gedus and staff only; no voice or video of a lesson is
+  recorded; buying anything or changing a child's account needs the parent PIN. "Nothing is
+  recorded" is deliberately not claimed: session chat is kept for moderation.
 
 **Costs conversions:**
 
-- **No imagery at all.** Text, four icons and three numbered circles. A parent cannot
-  picture a lesson with a live Game Educator from prose.
-- **No proof.** No testimonial, number, face or partner. The scale on the legacy site (100
-  municipalities, 250 schools) is not mentioned.
-- **The offer is absent.** No price, lesson length, age range or format. The
-  differentiators exist only as shop listings: neuroinclusive clubs, language-immersion
-  clubs (English, Swedish, French), Fortnite esports, Roblox game-making, in-person clubs in
-  Lauttasaari.
-- **Safety gets one word**, "safe", in the closing card, and as a slogan.
-- **The risk reversal is missing.** The 30-day money-back guarantee and cancel-anytime
-  billing live only in About FAQ answers.
+- **No imagery at all.** Text, icons and three numbered circles. A parent cannot picture a
+  lesson with a live Game Educator from prose.
+- **No numbers or partners.** The scale on the legacy site (100 municipalities, 250
+  schools) is not mentioned, and no headline number is cleared to publish.
+- **The differentiators are still only shop listings**: neuroinclusive clubs,
+  language-immersion clubs (English, Swedish, French), Fortnite esports, Roblox
+  game-making, in-person clubs in Lauttasaari.
 - **Skills are unnamed.** "Designed to build real skills" never says which.
-- **The subhead is 45 words** against a 15–30 target, and abstract ("skilfully designed",
-  "playful learning experience").
-- **Every call to action is account creation**, including step 1 of "How it works", though
-  the shop is public and a parent wants to choose a club first. The secondary hero call to
-  action is "Learn more about us".
+- **Step 1 of "How it works" is still "Create your account"**, though every button now
+  leads to the shop first.
+- **The route to About left the hero** with the banned "Learn more about us"; the page
+  reaches About only through the safety section's FAQ link and the header.
 
-**How it looks:**
+**How it looks** (screenshots 2026-09-25 of the branch served locally, same capture
+settings as production's; re-pull by pointing the capture script at a preview):
 
-- **Desktop:** the whole page is 2,910 px, about three screens. The hero is centred
-  text on a flat dark ground with a purple rule; about 200 px of empty space separates it
-  from the next section. The four feature cards are grey body text on dark grey, and every
-  section below the hero has the same shape: a centred heading, a grey subheading, then
-  text.
-- **Phone:** the header drops the "School of Gaming" wordmark and shows only the SOG
-  badge. The hero opens with about 170 px of empty space, and the subhead renders at
-  roughly 20 px over eight lines, so the buttons sit at the very bottom of the first
-  screen. The banner hides them completely. The four cards then stack into roughly one and
-  a half screens of text.
+- **Desktop:** about 4,500 px (English), five screens. The hero, button and trust line
+  clear the cookie banner at 1440×900.
+- **Phone:** about 6,250 px in English and 6,600 in Finnish. The hero's top padding is cut
+  and the subhead is smaller, so at 390×844 the headline, subhead, button and trust line
+  are all on the first screen once the banner is dismissed; with the banner up, the button
+  still shows above it and the trust line is covered.
 - **The shop already has the imagery the home page lacks:** every club card carries a
   bright in-game scene. The home page uses none of it.
 
