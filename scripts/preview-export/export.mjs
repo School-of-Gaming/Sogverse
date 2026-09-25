@@ -102,6 +102,7 @@ import {
   readFileSync,
   writeFileSync,
   mkdirSync,
+  rmSync,
   statSync,
 } from "node:fs";
 import path from "node:path";
@@ -642,9 +643,14 @@ async function imagesLoaded(page, wholePage = false) {
           : window.innerHeight;
         return Array.from(document.images).every((img) => {
           const rect = img.getBoundingClientRect();
+          // Horizontally the shot is always the viewport's width, so an image
+          // off to the side in an overflowing row is outside it and, being
+          // lazy, never loads.
           const shown =
             rect.width > 0 &&
             rect.height > 0 &&
+            rect.right > 0 &&
+            rect.left < window.innerWidth &&
             rect.bottom + window.scrollY > 0 &&
             rect.top + window.scrollY < bottom;
           return !shown || img.complete;
@@ -1338,6 +1344,10 @@ async function shootSignedOut(shot) {
       /^sb-.*auth-token/.test(c.name),
     );
     if (session) {
+      // The PNG is already written, and a reader checks the per-capture files
+      // as well as the composites — so the picture this check exists to rule
+      // out must not be left behind looking like a signed-out one.
+      rmSync(path.join(OUT, shot.file), { force: true });
       throw new Error(
         `a session cookie (${session.name}) was present — this shot was not signed out`,
       );

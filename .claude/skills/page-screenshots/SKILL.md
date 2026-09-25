@@ -18,12 +18,9 @@ node scripts/preview-export/export.mjs --preset <name> --only <slug,…> --viewp
 node scripts/preview-export/export.mjs --selftest    # proves the pipeline, no app needed
 ```
 
-| Preset | Signed | Shoots |
-|---|---|---|
-| `public-pages` | out | Home, About, shop: first screen with the cookie banner up, first screen after "Reject all", whole page. |
-| `topic-copy` | in | Every topic's About card and "Before the first session" guide, on the admin preview scenes. |
-
-Key flags: `--base` (default `http://localhost:3005`), `--locales` (default
+The presets live in `scripts/preview-export/presets/`; the README's table says what each
+shoots. `public-pages` (Home, About, shop — banner up, after "Reject all", whole page) is
+signed out; `topic-copy` is signed in. Key flags: `--base` (default `http://localhost:3005`), `--locales` (default
 `en,fi,sv,fr`), `--viewports desktop|mobile`, `--only` (entry slugs), `--out`. The full
 public-pages run in four locales takes about three minutes.
 
