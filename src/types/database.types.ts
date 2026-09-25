@@ -3713,6 +3713,7 @@ export type Database = {
         | "ai"
         | "esports"
         | "game_studio"
+        | "digital_safety"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       spoken_language: "fi" | "sv" | "en" | "fr"
       substitution_reason: "sick" | "other"
@@ -3875,6 +3876,7 @@ export const Constants = {
         "ai",
         "esports",
         "game_studio",
+        "digital_safety",
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       spoken_language: ["fi", "sv", "en", "fr"],

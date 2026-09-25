@@ -186,7 +186,8 @@ CREATE TYPE public.product_topic AS ENUM (
     'programming',
     'ai',
     'esports',
-    'game_studio'
+    'game_studio',
+    'digital_safety'
 );
 
 
