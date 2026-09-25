@@ -136,6 +136,14 @@ interface AccountMenuProps {
    */
   firstName: string;
   /**
+   * Whether the viewer still owes the registration a Google-created account
+   * finishes on /complete-registration. Until it is done, every gated route
+   * refuses the account, the household read included, so the menu holds that
+   * read back the way it does for roles that have no household — otherwise the
+   * finish page fires a refused request per mount, retry and window focus.
+   */
+  registrationOwed?: boolean;
+  /**
    * The header's nav override, handed down unchanged — preview scenes only,
    * and documented on `Header`. It decides one thing here and nothing else:
    * whether this menu carries the nav row the gedu's phone strip gave up. The
@@ -149,6 +157,7 @@ export function AccountMenu({
   userId,
   role,
   firstName,
+  registrationOwed = false,
   navRole,
 }: AccountMenuProps) {
   const pathname = usePathname();
@@ -311,10 +320,11 @@ export function AccountMenu({
   }, [switchError]);
 
   // Fetched on mount rather than on open, so the menu opens with its family
-  // rows already in hand. Held back entirely for admins and gedus:
-  // /api/family/list is gated to customers and gamers and would 403 for them
-  // on every navigation.
-  const wantsFamily = listsFamily(role);
+  // rows already in hand. Held back entirely for admins and gedus, and for an
+  // account whose registration is still owed: /api/family/list is gated to
+  // customers and gamers who have finished registering, and would 403 for
+  // anyone else on every navigation.
+  const wantsFamily = listsFamily(role) && !registrationOwed;
   const family = useFamily({ enabled: wantsFamily });
   /**
    * Where this session came from, out of the same cache entry as the list above

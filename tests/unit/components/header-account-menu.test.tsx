@@ -128,6 +128,8 @@ interface MenuProps {
   userId: string;
   role: UserRole;
   firstName: string;
+  /** Whether the viewer still owes the registration a Google account finishes. */
+  registrationOwed?: boolean;
   /** The header's scene-only nav override, handed down unchanged. */
   navRole?: UserRole;
 }
@@ -422,6 +424,19 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
     // /api/family/list is gated to customers and gamers; asking would 403 on
     // every navigation.
     expect(mockUseFamily).toHaveBeenCalledWith({ enabled: false });
+  });
+
+  it("gives a parent who still owes their registration no member rows, and never asks for a household", () => {
+    renderMenu({ ...PARENT, registrationOwed: true });
+    openMenu();
+
+    // On the finish page the household read would be refused like every other
+    // gated route, and refused on every mount, retry and window focus. The
+    // household comes into the menu the moment registration is done, because
+    // completing it is a full-page navigation that re-reads the profile.
+    expect(rowTexts()).toEqual([MY_SOG, SETTINGS, SIGN_OUT]);
+    expect(mockUseFamily).toHaveBeenCalledWith({ enabled: false });
+    expect(mockUseFamily).not.toHaveBeenCalledWith({ enabled: true });
   });
 
   it("calls the admin's dashboard a Dashboard, and gives them no member rows either", () => {
