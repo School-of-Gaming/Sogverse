@@ -63,6 +63,17 @@
 
 - [ ] **A sub is always paid the role's base fee, so there is no lever to make an awkward session worth standing in for.** Every substitution earns the product's per-session fee for the role substituted — the same amount the absent gedu would have earned — and when a session sits in the pool with no offers the office has nothing to put behind the second ask. Where it would live is already settled: a nullable per-session-substitution-request override, so the raised amount belongs to the one substitution rather than to the product, to the role, or to the person. Nothing writes it today, and nothing is shaped for it: the column does not exist, both the gedu pool and the admin queue read the role's fee straight off the product, and gedu invoicing has to learn to prefer an override over the base fee before one can safely be offered.
 
+- [ ] **Translate the common-noun topic labels, so a Finnish parent stops seeing "Programming" on the shop's Topic filter.** Every topic label is an English literal in every locale — the chips, the admin picker, the product cards and the product page all show it verbatim. That is right for the brand and product names and wrong for the plain nouns. Proposed split (2026-09-25):
+
+  | Topic | fi | sv | fr | tlh |
+  |---|---|---|---|---|
+  | Programming | Ohjelmointi | Programmering | Programmation | ngoq chenmoH |
+  | AI | Tekoäly | AI | IA | De'wI' val |
+  | Esports | E-urheilu | E-sport | E-sport | Quj may' |
+  | Digital Safety | Digiturvallisuus | Digital säkerhet | Sécurité numérique | De'wI' Hung |
+
+  Everything else stays English everywhere: Minecraft Java/Education/Bedrock, Fortnite, Rocket League, Pokémon GO and Roblox Studio are product names, and the grouped "Minecraft" chip stays "Minecraft". **Open question before building: Creator Studio and Game Studio** are treated as our own programme names; if they are marketed under local names in Finland or Sweden, they move to the translated side under those names. **The shape is already sketched in the header of `src/lib/products/topics.ts`**: a topic carries either a literal label or a message key (the `labelKey` variant), so brand names can never be translated by accident, and label resolution changes in one place because nearly every read goes through the topic-label hook. The work: the variant in the registry, a `topics` namespace in all five catalogues, the hook resolving either form, a check of the few places that read a label directly (anything rendering outside React, such as a mail, needs a translator-taking resolver instead of the hook), a topic unit test asserting every keyed topic has a message in every locale, and rewriting the comments and `docs/architecture/products.md` that call the English-only decision settled.
+
 ### Locations: one seeded table, browsed and searched on the server
 
 Every supported country is seeded complete from GeoNames and admins never hand-type a place name: everything above a `site` is seed data, and a site is the only row the app creates (see `src/services/locations/CLAUDE.md`). Follow-ups:
