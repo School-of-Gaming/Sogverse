@@ -63,7 +63,7 @@ export function GamerDashboardPageBody({
    */
   prepDismissed: ReadonlySet<string>;
   /**
-   * The ask-for-help-or-send-feedback form, in its child-facing wording. A node
+   * The help form, in its child-facing wording. A node
    * so the shell owns the POST behind it and a preview scene can hand over an
    * inert one — a scene must never gain a live submit that emails the support
    * inbox.
@@ -189,9 +189,6 @@ export function GamerDashboardPageBody({
             difference between the three sections and lives in the copy rather
             than in a prop on the form.
 
-            The heading is written to a child while the pill chip above stays
-            the short shared word.
-
             Last section gets viewport-height min so clicking its pill can
             actually scroll it to the top — without this the page bottoms out
             mid-scroll and the heading stays in the middle of the viewport. */}
@@ -202,7 +199,7 @@ export function GamerDashboardPageBody({
         >
           <div className="mx-auto max-w-3xl space-y-6">
             <h2 id="help-heading" className="text-3xl font-bold">
-              {h("gamerHeading")}
+              {h("heading")}
             </h2>
             {helpForm}
             <GamerHelpFaq />

@@ -53,9 +53,9 @@ import { GamerFlairDialog, NewcomerBadge } from "@/components/member-flair";
 import { ConsentBannerView } from "@/components/consent";
 import type { ConsentChoice } from "@/lib/consent";
 import {
-  HelpFeedbackCardView,
-  type HelpFeedbackAudience,
-} from "@/components/help/help-feedback-card-view";
+  HelpRequestCardView,
+  type HelpRequestAudience,
+} from "@/components/help/help-request-card-view";
 import { MinecraftPasswordResetCardView } from "@/components/tools/minecraft-password-reset-card-view";
 import type { MinecraftPasswordResetResult } from "@/services/minecraft-education/minecraft-education.contracts";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
@@ -3292,7 +3292,7 @@ export default function AdminUIComponentsPage() {
         <MinecraftPasswordResetDemo />
       </Section>
 
-      <Section title="Help & feedback form">
+      <Section title="Help form">
         {/* One card, rendered unchanged in the parent, gamer and gedu Help
             sections. Every state is here because the three preview scenes can
             only ever show the idle one — a scene must never gain a live submit
@@ -3309,7 +3309,7 @@ export default function AdminUIComponentsPage() {
           shown as the route&rsquo;s own English sentence, which is written for
           a developer reading a log.
         </p>
-        <HelpFeedbackDemo />
+        <HelpRequestDemo />
       </Section>
 
       <Section title="Gedu contract — settings card">
@@ -3490,7 +3490,7 @@ function MinecraftPasswordResetDemo() {
 function noopSubmit() {}
 
 /* ------------------------------------------------------------------ */
-/*  Help & feedback form                                               */
+/*  Help form                                                          */
 /* ------------------------------------------------------------------ */
 
 /**
@@ -3502,13 +3502,13 @@ function noopSubmit() {}
  * The idle card of each audience holds its own message so typing works; the
  * others are driven by props alone, because no click can reach them here.
  */
-function HelpFeedbackDemo() {
+function HelpRequestDemo() {
   return (
     <div className="space-y-6">
       <SubSection title="Adult — parent and gedu">
         <div className="grid gap-4 lg:grid-cols-2">
-          <LiveHelpFeedbackDemoCard audience="adult" />
-          <HelpFeedbackCardView
+          <LiveHelpRequestDemoCard audience="adult" />
+          <HelpRequestCardView
             audience="adult"
             message="My daughter cannot hear anyone in the club room."
             onMessageChange={noopMessage}
@@ -3517,7 +3517,7 @@ function HelpFeedbackDemo() {
             error={null}
             onSubmit={noopSubmit}
           />
-          <HelpFeedbackCardView
+          <HelpRequestCardView
             audience="adult"
             message=""
             onMessageChange={noopMessage}
@@ -3526,7 +3526,7 @@ function HelpFeedbackDemo() {
             error={null}
             onSubmit={noopSubmit}
           />
-          <HelpFeedbackCardView
+          <HelpRequestCardView
             audience="adult"
             message="My daughter cannot hear anyone in the club room."
             onMessageChange={noopMessage}
@@ -3540,8 +3540,8 @@ function HelpFeedbackDemo() {
 
       <SubSection title="Gamer">
         <div className="grid gap-4 lg:grid-cols-2">
-          <LiveHelpFeedbackDemoCard audience="gamer" />
-          <HelpFeedbackCardView
+          <LiveHelpRequestDemoCard audience="gamer" />
+          <HelpRequestCardView
             audience="gamer"
             message="My mic does not work."
             onMessageChange={noopMessage}
@@ -3557,15 +3557,15 @@ function HelpFeedbackDemo() {
 }
 
 /** The card a reader can actually type into, over local state. */
-function LiveHelpFeedbackDemoCard({
+function LiveHelpRequestDemoCard({
   audience,
 }: {
-  audience: HelpFeedbackAudience;
+  audience: HelpRequestAudience;
 }) {
   const [message, setMessage] = useState("");
 
   return (
-    <HelpFeedbackCardView
+    <HelpRequestCardView
       audience={audience}
       message={message}
       onMessageChange={setMessage}

@@ -224,6 +224,97 @@ const gtagCommand: (
   signals: ConsentSignals,
 ) => IArguments = gtagArguments;
 
+/** The two fields gtag reads for the page when it builds an event of its own. */
+interface PinnedPage {
+  page_location: string;
+  page_title: string;
+}
+
+/**
+ * The same typed front door for the `set` command, which writes into the data
+ * model that every later event is read against. It is a second alias rather
+ * than a widening of the one above because the arity and the field shape
+ * differ; the function it reaches is still the zero-parameter one, so what
+ * lands in the queue is a real `arguments` object either way.
+ */
+const gtagSet: (command: "set", page: PinnedPage) => IArguments = gtagArguments;
+
+/**
+ * The title pinned with every page view: a constant, deliberately, rather than
+ * `document.title`.
+ *
+ * The report below is made from an effect that runs just after the route
+ * changed, while the App Router updates the document title on a schedule of its
+ * own — so reading the title here can capture the *previous* page's, and the
+ * previous page may have been a private one naming a child. A constant cannot
+ * be wrong at any moment. What it costs is the page-title dimension in
+ * analytics, which is a price worth paying: `page_path` is our authoritative
+ * identity for a page, and a title could only ever restate it.
+ */
+const PINNED_PAGE_TITLE = "Sogverse";
+
+/**
+ * Pin the page gtag will name in the events it generates for itself.
+ *
+ * **The defect this prevents.** Every event this app pushes states its own
+ * `page_path`, so no tag of ours needs the address bar — but gtag also emits
+ * events that pass through no tag at all, `user_engagement` above all, and it
+ * fills those from `document.location` and `document.title` at the moment it
+ * sends them. A container lives as long as its document, and this app
+ * client-navigates without building a new one, so a visitor who arrives on a
+ * marketing page and then walks into a signed-in area leaves a loaded container
+ * sitting on a private URL. On unload gtag reports the page the tab ended on —
+ * which on a gamer page is a child's record id, under a title carrying a
+ * child's first name.
+ *
+ * **Why `set` and not the container's configuration.** Pinning the same two
+ * fields in the Google tag's configuration settings was tried on the wire: the
+ * settings published correctly and gtag went on reading the live document for
+ * its automatic events. `set` writes into the shared data model that every
+ * subsequent event is read against, including the ones gtag generates itself,
+ * which is the difference between the two.
+ *
+ * **Sticky by design, and that is what makes refusing to pin the worst of the
+ * available answers.** A value written here stands until it is written again,
+ * so the question at a call site is never "pin or don't" — it is "which page
+ * does the event this app cannot suppress name". Declining to answer does not
+ * leave gtag silent; it leaves `document.location` in place, which is the one
+ * value we already know we will not stand behind. So this is called as soon as
+ * there is a container to pin against, and what it names is the marketing page
+ * the caller vetted — a page the visitor genuinely was on, and one we were
+ * willing to disclose — whatever the tab has drifted to since.
+ *
+ * **The query travels with the path, and that is not a widening.** `search` is
+ * the query string the marketing-page allowlist approved, captured at the
+ * moment of approval: the campaign parameters and click ids an ad link carries,
+ * which is what an analytics property derives its attribution from. Dropping
+ * them would discard measurement the policy has already blessed while
+ * protecting nothing the same policy had not already cleared — and it would do
+ * it silently, visible only in a reporting property weeks later.
+ *
+ * Gated on `armed` like every other push: a value queued for a container that
+ * will never arrive is a record of the visit sitting in a global for any later
+ * script to read.
+ */
+function pinGtmPage(internalPath: string, search: string): void {
+  if (typeof window === "undefined") return;
+  if (!armed) return;
+  // Built from the internal path — the same value the page view states —
+  // against the document's own origin, so staging and production are one piece
+  // of code and no host is written down here. The query is assigned through the
+  // parser rather than concatenated, and it is the vetted one handed in rather
+  // than a fresh read of the address bar: by now the tab may be carrying a
+  // query string nobody ever checked.
+  const pinned = new URL(internalPath, window.location.origin);
+  pinned.search = search;
+  window.dataLayer?.push(
+    gtagSet("set", {
+      page_location: pinned.href,
+      page_title: PINNED_PAGE_TITLE,
+    }),
+  );
+}
+
 /**
  * Install the container and initialise it for `containerId`. Idempotent: a
  * second call returns the first call's promise, so a caller may load on every
@@ -333,6 +424,18 @@ export function pushGtmEvent(event: GtmEvent): void {
  * **internal path** — locale prefix removed and the slug untranslated, with the
  * record's own id kept — which is the value every other event states too, so a
  * view and the enrolment that followed it name one page rather than two.
+ *
+ * **The pin for gtag's own events sits ahead of those re-checks, on purpose.**
+ * The checks decide whether a *report* may be sent; the pin decides which page
+ * the events this app cannot suppress will name, and that is a different
+ * question settled on different grounds. By the time the checks run the
+ * container is in the document and gtag's engagement timer is already running,
+ * so a return with nothing pinned does not withhold a page — it leaves the live
+ * document as the answer, which is the leak this file exists to close, arriving
+ * through the one window the report guards cannot cover. Pinning the vetted
+ * marketing path instead costs exactly one thing, and it is accepted:
+ * engagement time spent on a private page is attributed to the marketing page
+ * the visitor came from. The alternative is naming the private page.
  */
 export async function reportGtmPageView(
   containerId: string,
@@ -343,7 +446,8 @@ export async function reportGtmPageView(
   // not travel gets no container at all, not merely no report. The proxy's
   // bounce to the login page is the case — a marketing page by pathname,
   // carrying a private path in its query.
-  if (!isReportableQuery(window.location.search)) return;
+  const authorisedSearch = window.location.search;
+  if (!isReportableQuery(authorisedSearch)) return;
   // A URL matching no route of ours is the last thing that should be reported
   // anywhere, and a null template is how the normalizer says so. The caller's
   // allowlist check has already refused it; this is the function standing on
@@ -352,6 +456,12 @@ export async function reportGtmPageView(
   if (template === null) return;
   const ready = await loadGtm(containerId, consent);
   if (!ready) return;
+  // Before the re-checks below, never after them — the docblock says why, and
+  // tidying it down under the guards reopens the leak the pin exists to close.
+  // The query handed over is the one approved at the top of this function, not
+  // a fresh read: the address bar is exactly what has stopped being trusted by
+  // the time these lines run.
+  pinGtmPage(internalPath, authorisedSearch);
   // Both sides resolved through the URL parser, so a slug with a non-ASCII
   // character compares the same whether the router hands it over encoded or
   // not.

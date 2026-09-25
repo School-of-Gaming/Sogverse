@@ -126,9 +126,9 @@ export function GeduDashboardPageBody({
    */
   instantRoomCard: React.ReactNode;
   /**
-   * The ask-for-help-or-send-feedback form, shown to every gedu — certified or
-   * not. A node for the same reason the two tool panels are: it is a
-   * self-contained panel with a backend action behind it, and handing it in is
+   * The help form, shown to every gedu — certified or not. A node for the same
+   * reason the two tool panels are: it is a self-contained panel with a backend
+   * action behind it, and handing it in is
    * what lets the preview scene render the real form with the submit inert.
    */
   helpForm: React.ReactNode;
@@ -302,7 +302,7 @@ export function GeduDashboardPageBody({
           </div>
         </section>
 
-        {/* Help & feedback — the same section the two family dashboards carry,
+        {/* Help — the same section the two family dashboards carry,
             in the same order: the message form, with the support address inside
             its lead paragraph, and this role's own FAQ beneath it.
 

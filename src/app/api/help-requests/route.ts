@@ -4,9 +4,9 @@ import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import {
-  buildFeedbackEmail,
-  feedbackReplyToAddress,
-} from "@/lib/email-templates/feedback";
+  buildHelpRequestEmail,
+  helpRequestReplyToAddress,
+} from "@/lib/email-templates/help-request";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import {
@@ -16,7 +16,7 @@ import {
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { gamerHoldsOwnMailbox } from "@/lib/email/family-recipients.server";
 
-const feedbackSchema = z.object({
+const helpRequestSchema = z.object({
   message: z
     .string()
     .min(10, "Message must be at least 10 characters")
@@ -24,7 +24,7 @@ const feedbackSchema = z.object({
 });
 
 /**
- * POST /api/feedback
+ * POST /api/help-requests
  *
  * Naming all four roles is this gate's way of spelling "any authenticated
  * caller", and it stays that way deliberately: it loads the profile (the email
@@ -34,7 +34,7 @@ const feedbackSchema = z.object({
 export const POST = defineRoute({
   posture: "role-gated",
   roles: ["admin", "customer", "gamer", "gedu"],
-  body: feedbackSchema,
+  body: helpRequestSchema,
 
   // The submission RPC is self-scoping and its only failure is "the write did
   // not happen", which the shared table answers as a logged, generic 500. The
@@ -43,17 +43,17 @@ export const POST = defineRoute({
 
   handler: async ({ request, supabase, user, profile, body }) => {
     // Atomic rate-limit check + insert via a self-scoping RPC on the USER-bound
-    // client: `submit_my_feedback` writes a row for `auth.uid()` and has no
-    // parameter naming a user, so this handler cannot file feedback as anyone
+    // client: `submit_my_help_request` writes a row for `auth.uid()` and has no
+    // parameter naming a user, so this handler cannot file a request as anyone
     // else. It re-checks the same length bounds the schema above enforces.
     const { data: accepted, error: rpcError } = await supabase.rpc(
-      "submit_my_feedback",
+      "submit_my_help_request",
       { p_message: body.message },
     );
     if (rpcError) throw rpcError;
     if (!accepted) {
       return NextResponse.json(
-        { error: "Too many feedback submissions. Please try again later." },
+        { error: "Too many help requests. Please try again later." },
         { status: 429 },
       );
     }
@@ -138,13 +138,13 @@ export const POST = defineRoute({
       parentEmail,
       gamerOwnMailbox,
     };
-    const htmlContent = buildFeedbackEmail(t, locale, mailOptions);
+    const htmlContent = buildHelpRequestEmail(t, locale, mailOptions);
 
     await sendTransactionalEmail({
       fromEmail: SENDER_EMAIL,
       fromName: SENDER_NAME,
       toEmail: SUPPORT_EMAIL,
-      subject: t("feedback.subject", {
+      subject: t("helpRequest.subject", {
         displayName,
         role: t(ROLE_LABEL_KEYS[role]),
       }),
@@ -160,7 +160,7 @@ export const POST = defineRoute({
       // to their linked parent whatever sign-in the child holds, because we
       // never answer a child alone, and everyone else is answered at their own
       // address. See the helper for what an unlinked gamer falls back to.
-      replyToEmail: feedbackReplyToAddress(mailOptions) || undefined,
+      replyToEmail: helpRequestReplyToAddress(mailOptions) || undefined,
     });
 
     return { success: true };

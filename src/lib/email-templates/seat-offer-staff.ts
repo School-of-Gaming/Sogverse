@@ -42,7 +42,7 @@ export interface SeatOfferStaffEmailOptions {
  * The staff mail that turns one family's answer into the next family's
  * invitation.
  *
- * It goes to **the shared support inbox**, the same place the help & feedback
+ * It goes to **the shared support inbox**, the same place the help-request
  * mail goes, and for the same reason: whoever is on the inbox picks it up, and
  * a recipient list assembled from the profiles table changes whenever staff do.
  * See the send site for its Reply-To.
@@ -68,7 +68,7 @@ export function buildSeatOfferStaffEmail(
   const rows: Array<[string, string]> = [
     [t("seatOfferStaff.participant"), escapeHtml(opts.participantName)],
     [t("seatOfferStaff.contact"), escapeHtml(opts.contactName)],
-    // Displayed, never linked — the same treatment the feedback mail gives an
+    // Displayed, never linked — the same treatment the help-request mail gives an
     // address, and for the same reason: a client that invents its own link
     // paints a link we did not write in a colour we did not choose. This mail
     // replies to the support inbox rather than to the family, so the address

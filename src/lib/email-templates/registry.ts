@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { buildFeedbackEmail, feedbackReplyToAddress } from "./feedback";
+import { buildHelpRequestEmail, helpRequestReplyToAddress } from "./help-request";
 import { buildPasswordResetEmail } from "./password-reset";
 import { buildWelcomeParentEmail, buildWelcomeGeduEmail } from "./welcome";
 import {
@@ -467,18 +467,18 @@ function resolveProductConfirmationParams(params: Record<string, string>): Templ
  * two modes that share an answer share an option, and the form's default is the
  * one nearly every gamer is on.
  */
-const FEEDBACK_GAMER_MAILBOX_OPTIONS = [
+const HELP_REQUEST_GAMER_MAILBOX_OPTIONS = [
   { label: "No email of their own (parent or username sign-in)", value: "none" },
   { label: "Their own email (the email sign-in)", value: "own" },
 ];
 
 /**
- * The help-and-feedback form's two gamer-only fields. The parent's address is
+ * The help form's two gamer-only fields. The parent's address is
  * where a reply to a child's message goes, so an untouched text input posting
  * its placeholder means "none" has to be typed as an empty field, which becomes
  * null here; the sign-in select becomes the boolean the builder takes.
  */
-function resolveFeedback(params: Record<string, string>): TemplateParams {
+function resolveHelpRequest(params: Record<string, string>): TemplateParams {
   const { parentEmail, gamerMailbox, ...rest } = params;
   return {
     ...rest,
@@ -765,7 +765,7 @@ const passwordResetParamsSchema = z.object({
  * fit the registry's param bag. It and the mailbox flag only mean anything on a
  * gamer's message — the builder ignores both for every other role.
  */
-const feedbackParamsSchema = z.object({
+const helpRequestParamsSchema = z.object({
   userName: z.string().min(1),
   userRole: z.enum(Constants.public.Enums.user_role),
   userEmail: z.string().email(),
@@ -1426,11 +1426,8 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     build: (p, t, locale) => buildPasswordResetEmail(t, p.resetLink, locale),
     subject: (_p, t) => t("passwordReset.subject"),
   }),
-  // The registry key stays `feedback` — it is the API's template identifier and
-  // renaming it would break every caller for a word only we read. The label is
-  // what an admin picks from, so that is where the form's real name goes.
-  feedback: defineTemplate({
-    label: "Help & Feedback",
+  helpRequest: defineTemplate({
+    label: "Help request",
     fields: [
       { key: "userName", label: "User Name", placeholder: "Marja Virtanen" },
       {
@@ -1459,11 +1456,11 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         key: "gamerMailbox",
         label: "Gamer's sign-in (gamer only)",
         type: "select",
-        options: FEEDBACK_GAMER_MAILBOX_OPTIONS,
+        options: HELP_REQUEST_GAMER_MAILBOX_OPTIONS,
       },
     ],
-    schema: feedbackParamsSchema,
-    build: (p, t, locale) => buildFeedbackEmail(t, locale, {
+    schema: helpRequestParamsSchema,
+    build: (p, t, locale) => buildHelpRequestEmail(t, locale, {
       userName: p.userName,
       userRole: p.userRole,
       userEmail: p.userEmail,
@@ -1473,12 +1470,12 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       parentEmail: p.parentEmail ?? undefined,
       gamerOwnMailbox: p.gamerOwnMailbox,
     }),
-    subject: (p, t) => t("feedback.subject", { displayName: p.userName, role: t(ROLE_LABEL_KEYS[p.userRole]) }),
-    resolveParams: resolveFeedback,
+    subject: (p, t) => t("helpRequest.subject", { displayName: p.userName, role: t(ROLE_LABEL_KEYS[p.userRole]) }),
+    resolveParams: resolveHelpRequest,
     // The same resolver the mail's own "Reply to" row reads, so a test send
     // replies exactly where the live one does — a gamer's to their linked
     // parent, everyone else's to themselves.
-    replyTo: (p) => feedbackReplyToAddress({
+    replyTo: (p) => helpRequestReplyToAddress({
       isGamer: p.userRole === "gamer",
       parentEmail: p.parentEmail ?? undefined,
       userEmail: p.userEmail,

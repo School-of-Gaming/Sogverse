@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { POST } from "@/app/api/feedback/route";
+import { POST } from "@/app/api/help-requests/route";
 import { NextResponse } from "next/server";
 
 // --- Mocks ---
@@ -14,7 +14,7 @@ vi.mock("@/lib/brevo", () => ({
   sendTransactionalEmail: (...args: unknown[]) => mockSendTransactionalEmail(...args),
 }));
 
-// The feedback WRITE now runs on the user-bound client (`submit_my_feedback`);
+// The help-request WRITE now runs on the user-bound client (`submit_my_help_request`);
 // the admin client survives only to resolve a gamer's reply-to (their parent's
 // address), which is not in the submitter's RLS view.
 const mockFrom = vi.fn();
@@ -29,7 +29,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 // --- Helpers ---
 
 function createRequest(body: Record<string, unknown>, headers?: Record<string, string>): Request {
-  return new Request("http://localhost:3000/api/feedback", {
+  return new Request("http://localhost:3000/api/help-requests", {
     method: "POST",
     headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
@@ -119,11 +119,11 @@ function setupGamerParentLookup(
   });
 }
 
-const validBody = { message: "This is a valid feedback message for testing." };
+const validBody = { message: "This is a valid help request for testing." };
 
 // --- Tests ---
 
-describe("POST /api/feedback", () => {
+describe("POST /api/help-requests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-123" });
@@ -186,7 +186,7 @@ describe("POST /api/feedback", () => {
     expect(data.error).toContain("Too many");
 
     // The whole point of the rate limit is the support inbox, not the status
-    // code: the RPC's per-hour cap is the only throttle on feedback mail, since
+    // code: the RPC's per-hour cap is the only throttle on help-request mail, since
     // a caller can reach the RPC through PostgREST without this route at all.
     // Sending the mail before the accepted check — or ignoring it — would keep
     // every other assertion in this file green while unbounding the spam.
@@ -195,7 +195,7 @@ describe("POST /api/feedback", () => {
 
   // -- Happy path --
 
-  it("should send feedback and return success for customer", async () => {
+  it("should send the help request and return success for customer", async () => {
     mockAuthenticatedAs("customer");
     setupHappyPath();
 
@@ -359,7 +359,7 @@ describe("POST /api/feedback", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: expect.stringContaining("Apua tai palautetta käyttäjältä"),
+        subject: expect.stringContaining("Avunpyyntö käyttäjältä"),
       })
     );
   });
@@ -376,7 +376,7 @@ describe("POST /api/feedback", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: expect.stringContaining("Help & feedback from"),
+        subject: expect.stringContaining("Help request from"),
       })
     );
   });
@@ -392,7 +392,7 @@ describe("POST /api/feedback", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: expect.stringContaining("Apua tai palautetta käyttäjältä"),
+        subject: expect.stringContaining("Avunpyyntö käyttäjältä"),
       })
     );
   });
@@ -413,16 +413,16 @@ describe("POST /api/feedback", () => {
 
   // -- RPC --
 
-  it("calls submit_my_feedback on the user client, with no user parameter", async () => {
+  it("calls submit_my_help_request on the user client, with no user parameter", async () => {
     mockAuthenticatedAs("customer");
     setupHappyPath();
 
     await POST(createRequest(validBody));
 
     // The absence of a user id here is the point: the row is attributed by the
-    // database from auth.uid(), so this handler cannot file feedback as anyone
+    // database from auth.uid(), so this handler cannot file a request as anyone
     // else even if `user.id` were wrong.
-    expect(mockRpc).toHaveBeenCalledWith("submit_my_feedback", {
+    expect(mockRpc).toHaveBeenCalledWith("submit_my_help_request", {
       p_message: validBody.message,
     });
   });
@@ -435,7 +435,7 @@ describe("POST /api/feedback", () => {
     setupHappyPath();
     mockRpc.mockResolvedValue({
       data: null,
-      error: { code: "23514", message: "feedback message must be between..." },
+      error: { code: "23514", message: "help request message must be between..." },
     });
 
     const response = await POST(createRequest(validBody));

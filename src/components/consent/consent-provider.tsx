@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -13,7 +14,7 @@ import {
   advertisingCookieNames,
   CONSENT_COOKIE_NAME,
   CONSENT_MAX_AGE_SECONDS,
-  clearPixelStorage,
+  clearAdvertisingStorage,
   consentForChoice,
   isWithdrawal,
   serialiseConsent,
@@ -43,6 +44,39 @@ interface ConsentContextValue {
 const ConsentContext = createContext<ConsentContextValue | undefined>(
   undefined,
 );
+
+/**
+ * Take away everything an advertising script left on this browser: its cookies,
+ * and what either vendor keeps in web storage.
+ *
+ * Both stores are swept although only one of them has ever been seen to hold
+ * anything. They are blocked together, cleared together and cost one call
+ * each, so sweeping the pair is what stops the empty one from being a standing
+ * promise to go and look at a real browser again.
+ *
+ * Both callers below hand it the same job, so it is one function rather than
+ * two copies — and the failure is owned here because it is the same failure
+ * either way. Reading either store **throws outright** where site data is
+ * blocked, which is a browser that has nothing stored to clear anyway, so the
+ * cookies above it are already done by the time it can fail and nothing either
+ * caller does depends on it.
+ */
+function clearAdvertisingTraces(): void {
+  // Read back off the document rather than expired from a fixed list: the
+  // container's analytics cookies carry a property id in their names.
+  for (const name of advertisingCookieNames(document.cookie)) {
+    deleteCookie(name);
+  }
+  try {
+    clearAdvertisingStorage(window.localStorage);
+    clearAdvertisingStorage(window.sessionStorage);
+  } catch (error) {
+    console.error(
+      "[consent] could not clear the advertising scripts' storage",
+      error,
+    );
+  }
+}
 
 interface ConsentProviderProps {
   /**
@@ -79,21 +113,15 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
       // purpose needs none of that:
       // the gated components mount and the scripts arrive.
       if (isWithdrawal(consent, next)) {
-        // Read back off the document rather than expired from a fixed list:
-        // the container's analytics cookies carry a property id in their names.
-        for (const name of advertisingCookieNames(document.cookie)) {
-          deleteCookie(name);
-        }
-        // The other half of what the pixel left behind. Best-effort, and both
-        // steps can fail: reading `window.localStorage` throws outright where
-        // site data is blocked, which is a browser that has nothing of Meta's to
-        // clear anyway. Nothing about the withdrawal depends on it — the cookie
-        // above is the answer, and the reload below is what stops the script.
-        try {
-          clearPixelStorage(window.localStorage);
-        } catch (error) {
-          console.error("[consent] could not clear the pixel's storage", error);
-        }
+        // Best-effort and immediate, which is the half of the pair this one
+        // can be: it races the very scripts it is clearing up after. A tag
+        // container writes its session cookie on activity, including as the
+        // page is torn down, so a name expired here can be written straight
+        // back before the reload lands. Worth doing all the same — it narrows
+        // the window to a few hundred milliseconds, and for the pixel, which
+        // does not rewrite on unload, it is the whole of the clean-up. The
+        // guarantee is the mount effect below, in the document after this one.
+        clearAdvertisingTraces();
         // Deliberately no `setConsent`/`setIsOpen` before this: the document is
         // on its way out, and the banner's own committing flag is what keeps
         // its buttons disabled until it goes. A state update here would repaint
@@ -113,6 +141,40 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
     },
     [consent],
   );
+
+  // **Advertising cookies may exist only in a document where marketing is
+  // granted**, and this is where that is made true rather than hoped for.
+  //
+  // It is stated as a standing invariant, checked on every mount, instead of as
+  // a step bolted onto the withdrawal above, because the withdrawal cannot win
+  // its own race: it runs while the scripts are still in the document, and a
+  // tag container rewrites its session cookie on the way out, after the
+  // deletion and before the reload. Here there is nothing to race — marketing
+  // is not granted, so the components that load those scripts loaded none of
+  // them, and no code of either vendor's is running to put anything back.
+  //
+  // Two things fall out of it that the withdrawal path never covered. Cookies
+  // already stranded on real browsers by that race are cleared on the visitor's
+  // next page, with nothing to migrate; and so are cookies this app never set,
+  // which matters because the legacy sog.gg site does not gate its tags behind
+  // consent and writes on the registrable domain our pages can read and expire.
+  //
+  // Not granted covers a refusal, analytics-only, *and* a visitor who has not
+  // answered yet — the answer is only ever `marketing: true` or nothing doing.
+  // The inverse is the part that would be dangerous to get wrong: where
+  // marketing *is* granted the scripts are about to run in this very document,
+  // and clearing here would be clearing their state out from under them.
+  //
+  // React runs child effects before parent effects, so the gated components'
+  // effects have already run by the time this one does. That is safe rather
+  // than lucky, and it is not an ordering to "fix": those components load a
+  // script only when marketing is `true`, this clears only when it is not, so
+  // no document can ever see both act.
+  const marketingGranted = consent?.marketing === true;
+  useEffect(() => {
+    if (marketingGranted) return;
+    clearAdvertisingTraces();
+  }, [marketingGranted]);
 
   const value = useMemo<ConsentContextValue>(
     () => ({ consent, isOpen, open, choose }),

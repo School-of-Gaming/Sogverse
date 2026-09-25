@@ -764,7 +764,7 @@
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
         "longDescription": "Optional. The full pitch, shown only on the product’s detail page. Headings, lists, emphasis and links are all available.",
-        "topicHint": "What this product is about. Families see it as the Subject filter in the shop and on the product page’s About card.",
+        "topicHint": "What this product is about. Families see it as the Topic filter in the shop and on the product page’s About card.",
         "materialUrlHint": "Optional. For Gedus only — families never see this.",
         "requiresGamerCreationsHint": "For products a contract requires it of. The final session keeps a needs-attention mark until every gamer in the group has a creation recorded. Families see nothing different.",
         "seatAudienceHint": "Pick at least one. Both means a product a parent and their gamer take part in together — the shop labels it “For families”.",
@@ -1872,22 +1872,21 @@
     "loadingAssignments": "Loading your clubs, camps and events."
   },
   "helpSection": {
-    "heading": "Help & feedback",
-    "gamerHeading": "Need help?",
+    "heading": "Need help?",
     "faqHeading": "Frequently asked questions",
     "form": {
       "messageLabel": "Message",
       "charactersNeeded": "{count} more characters needed",
       "submit": "Send message",
       "adult": {
-        "description": "Ask us for help, or send a suggestion or a bug report — every message reaches the School of Gaming team. We’re happy to help with anything from picking the right club to questions about how it all works, or you can email us at <link>{email}</link>.",
+        "description": "Ask us for help — every message reaches the School of Gaming team. You can also email us at <link>{email}</link>.",
         "placeholder": "What can we help with?",
         "thankYou": "Thank you — your message is with us, and we’re glad you wrote.",
         "failed": "We could not send your message. Please try again.",
         "tooManyRequests": "You have sent us several messages already. Please try again a little later."
       },
       "gamer": {
-        "description": "Stuck on something, or got an idea for us? Write it here and we will read it.",
+        "description": "Stuck on something? Write to us here and we will help.",
         "replyNote": "If we write back, we will email your parent.",
         "placeholder": "What do you need help with?",
         "thankYou": "Thank you — we got your message.",
@@ -2276,7 +2275,7 @@
       "items": {
         "certification": {
           "question": "What does certification mean, and what can I not do until then?",
-          "answer": "<p>Certification is an admin confirming your account is ready to work with children. Two things come before it: accepting your Gedu contract, and presenting a criminal record extract for working with children (rikosrekisteriote) that is less than six months old. You order the extract yourself from the Legal Register Centre. We keep no copy of it and record nothing out of it — only that an acceptable one was shown, and when. Your contract page shows where both of them stand.</p><p>Until you are certified you cannot be assigned to a group, and your Tools section stays closed: you cannot start an instant voice room, and you cannot reset Minecraft Education passwords. You also cannot email a session report to families or add photos to one.</p><p>Everything else is open now: signing in, My SOG, your profile and coverage areas, and reading and accepting the contract. Help & feedback is here whether or not you are certified — use the form above if you are waiting and want to know where you stand.</p>"
+          "answer": "<p>Certification is an admin confirming your account is ready to work with children. Two things come before it: accepting your Gedu contract, and presenting a criminal record extract for working with children (rikosrekisteriote) that is less than six months old. You order the extract yourself from the Legal Register Centre. We keep no copy of it and record nothing out of it — only that an acceptable one was shown, and when. Your contract page shows where both of them stand.</p><p>Until you are certified you cannot be assigned to a group, and your Tools section stays closed: you cannot start an instant voice room, and you cannot reset Minecraft Education passwords. You also cannot email a session report to families or add photos to one.</p><p>Everything else is open now: signing in, My SOG, your profile and coverage areas, and reading and accepting the contract. Help is here whether or not you are certified — use the form above if you are waiting and want to know where you stand.</p>"
         },
         "groupAssignment": {
           "question": "How do I get assigned to a group?",
@@ -2424,7 +2423,7 @@
       "typeClubs": "Clubs",
       "typeCamps": "Camps",
       "typeEvents": "Events",
-      "subject": "Subject",
+      "topic": "Topic",
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "In person",
@@ -4069,10 +4068,10 @@
       "ignore": "If you didn’t request a PIN reset, you can safely ignore this email. Your PIN will not be changed.",
       "button": "Reset PIN"
     },
-    "feedback": {
-      "subject": "Help & feedback from {displayName} ({role})",
-      "heading": "New help & feedback message",
-      "intro": "Someone has asked for help or sent us feedback. Reply to this email to answer them — your reply goes to the address below.",
+    "helpRequest": {
+      "subject": "Help request from {displayName} ({role})",
+      "heading": "New help request",
+      "intro": "Someone has asked for help. Reply to this email to answer them — your reply goes to the address below.",
       "from": "From",
       "role": "Role",
       "replyToLabel": "Reply to",

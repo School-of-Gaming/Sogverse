@@ -206,8 +206,8 @@ describe("the lit count and summary on the shop", () => {
     expect(bar.summary).toEqual([
       "Remove Type Clubs",
       "Remove Type Camps",
-      "Remove Subject Minecraft",
-      "Remove Subject Fortnite",
+      "Remove Topic Minecraft",
+      "Remove Topic Fortnite",
       "Remove Price Free",
       "Remove Language FI Finnish",
       "Remove Days Monday",

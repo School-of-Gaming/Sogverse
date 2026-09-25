@@ -119,7 +119,7 @@ const CALENDAR_INVITATION_FIXTURE = {
 const PARAMS: Record<string, Record<string, string | boolean | null>> = {
   componentsReference: {},
   passwordReset: { resetLink: "https://sogverse.sog.gg/reset-password?code=abc123" },
-  feedback: {
+  helpRequest: {
     userName: "Marja Virtanen",
     userRole: "customer",
     userEmail: "marja@example.com",
@@ -302,9 +302,9 @@ const MAILS: Record<string, () => [string, string][]> = {
   "password-reset": () => fromRegistry("passwordReset"),
   // The plain mail, and the gamer case with the note that names a child's own
   // address — a row of markup no other render reaches.
-  feedback: () => [
-    ...fromRegistry("feedback"),
-    ...fromRegistry("feedback", "feedback (gamer, own mailbox)", {
+  "help-request": () => [
+    ...fromRegistry("helpRequest"),
+    ...fromRegistry("helpRequest", "helpRequest (gamer, own mailbox)", {
       userRole: "gamer",
       userEmail: "aino@example.com",
       parentEmail: "marja@example.com",
@@ -456,7 +456,7 @@ describe("house style, over every mail we can send", () => {
    */
   it("emits no anchor a helper did not build", () => {
     for (const [name, html] of allMails()) {
-      // A mail with no link is fine — the feedback mail is written to us about
+      // A mail with no link is fine — the help-request mail is written to us about
       // a person and asks the reader for nothing.
       const anchors = styleAttributes(html).filter((s) => s.tag === "a");
       for (const { style } of anchors) {

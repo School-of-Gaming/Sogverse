@@ -312,7 +312,7 @@ describe("POST /api/participations/seat-offer", () => {
 
     await settleDeferred();
     expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
-    // The shared support inbox, exactly where the help & feedback mail goes.
+    // The shared support inbox, exactly where the help-request mail goes.
     expect(mockSendTransactionalEmail.mock.calls[0][0].toEmail).toBe("help@sog.gg");
     // No seat, so no signup confirmation — the mail follows the seat rather
     // than the answer.

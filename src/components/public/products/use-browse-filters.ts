@@ -59,7 +59,7 @@ function parseDays(raw: string | null): number[] {
   return [...seen].sort((a, b) => a - b);
 }
 
-// The subject chips, on the same terms as the tags and languages below: deduped
+// The topic chips, on the same terms as the tags and languages below: deduped
 // and narrowed to the topic enum, so a hand-edited or stale `?topic=` reads as
 // no selection. Every topic has a chip, so a value this keeps always lights
 // one — which is what stops a topic the row cannot show from emptying the grid

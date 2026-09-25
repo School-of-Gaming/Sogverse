@@ -48,7 +48,7 @@ measurement, where a page wrongly on it costs a secret. That asymmetry is why th
 completeness test demanding every route be classified: such a test only adds a place for a
 new page to be waved through.
 
-Five knobs hold that promise, and all five are load-bearing:
+Six knobs hold that promise, and all six are load-bearing:
 
 - **The allowlist** decides where a page view may be reported from at all.
 - **Each script's automatic page view on client navigation is turned off** in the loader,
@@ -71,6 +71,36 @@ Five knobs hold that promise, and all five are load-bearing:
   measurement, which reports page views, scrolls and outbound clicks from inside the tag.
   That switch lives in the analytics property, no code here can touch it, and it is the
   first of the constraints at the bottom of this file.
+- **The page identity the analytics library holds is pinned, from the moment the container
+  loads.** The blocklist reaches *triggers*, and the analytics tag's own automatic page
+  view is turned off where that switch lives — in the container's configuration, not in
+  any code here — but neither reaches the events the library **generates for itself**, an
+  engagement event on unload above all, which is nobody's tag, answers to no trigger, and
+  reads the live document at the moment it sends. So a container loaded on a marketing
+  page and then client-navigated into a private one names that private page; on a child's
+  page that is the child's record id, and the page title can be the child's name. The app
+  therefore pins `page_location` and `page_title` through a `set` command, whose values are
+  **sticky** — they stand until the next pin replaces them.
+
+  **The pin is not a report, and is deliberately not gated like one.** It goes in as soon
+  as the container has loaded, on the marketing path and the vetted query that authorised
+  that load, and *before* the checks that decide whether a page view may still be sent. A
+  visitor who navigates away mid-load gets no page view — but the library will still hold
+  *something*, and the only alternative to a page we chose is the page it reads for
+  itself. Refusing to pin is refusing to answer, and the default answer is the live
+  document, which is the worst value available rather than a neutral one. The cost is that
+  engagement time spent on a private page is attributed to the marketing page the visitor
+  came from, which is the right way round.
+
+  The pinned location keeps its query string, because that is the same allowlist that
+  permitted the report: the campaign keys and click ids may travel, the analytics platform
+  derives attribution from them, and stripping them would discard what the policy already
+  blessed while protecting nothing. The title is pinned to a fixed string rather than the
+  document's own, because the router updates `document.title` on its own schedule and
+  reading it here can capture the *previous* page's — which is precisely the private one.
+  Pinning the same two fields through the container's configuration settings instead does
+  **not** work: they are honoured for the tags' own sends and ignored for the generated
+  events, which was tested on the wire before this was built.
 - **`Referrer-Policy: strict-origin`** site-wide (set in `next.config.ts`), so a
   same-origin navigation — from a reset link to the login page, say — cannot hand the next
   document a referrer carrying the token.
@@ -141,7 +171,7 @@ each script is handed the new answer as it loads.
 **Revoking one is not the mirror image of that, and no message can stand in for it.** A
 script that has already installed itself on the document goes on running whatever it has
 installed, and what it has already sent has already been sent — so a withdrawal deletes
-the advertising scripts' own cookies, clears what the pixel keeps in local storage, and
+the advertising scripts' own cookies, clears what either of them keeps in web storage, and
 reloads. The new document has neither script in it, and starts from everything denied like
 any other.
 
@@ -160,6 +190,31 @@ expired from a list**: the container's analytics cookies carry a property id in 
 names, decided in the Tag Manager UI and unknowable here. A cookie that survives a
 withdrawal goes on identifying the same browser to the same platform — including from our
 own server-side reports, which read these back off a later request.
+
+**Web storage is not a second copy of the cookie list, and it cannot be derived from
+it.** Both vendors keep a storage twin of a click id they also write to a cookie, under a
+name the cookie list would never predict, so the two halves are separate lists kept
+separately, and the storage half spans both vendors rather than the pixel alone. A click
+id deleted from the cookie and left in storage is the same click id, and leaves the device
+re-identifiable the moment the scripts are allowed to run again — which is the whole of
+what a withdrawal is for. So this half is pinned to a browser rather than reasoned out:
+the keys are whatever the two libraries were observed to write on a granted visit arriving
+from an ad, both stores are swept because an observation cannot say the empty one will
+stay empty, and the tests pin what was seen.
+
+**And the clearing happens in two places, which is not belt and braces but two different
+jobs.** Deleting before the reload races a script that is still running: the analytics
+library rewrites its own session cookie as the document is torn down — measured at about a
+third of a second after the deletion — and the reload then arrives too late to matter,
+leaving a cookie no later document will ever remove, because consent is now refused and
+the script never loads again. So the deletion before the reload is best-effort, and the
+guarantee is a standing invariant checked on every mount: **an advertising cookie may
+exist only in a document where marketing is granted.** In a document where it is not,
+nothing is running to undo the clearing, which is the whole of why it holds. Stating it as
+an invariant rather than as a step in the withdrawal also buys two things the withdrawal
+path could not: it clears whatever an earlier failure stranded, with no migration and no
+list of affected browsers, and it clears what the legacy site leaves on the registrable
+domain, which sets its tags without asking anybody.
 
 ## What a new recipient does and does not cost
 

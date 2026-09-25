@@ -644,13 +644,13 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/family-product-feed.test.ts",
     why: "the family club/camp/event page, keyed on ONE participation. Two roles reach the same document — the participation's participant, and any parent linked to them — so a role guard could only name both and would prove nothing; the real gate is the ownership predicate, which is keyed entirely to auth.uid(). That participant may be an adult holding a seat of their own, in which case the first arm of the same predicate matches directly and the parent-link fallback is never reached. A row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. The scope test is where the interesting half lives: a sibling in the SAME group is refused (the key is the participation, not the group), a parent of another family is refused, a child cannot read their own parent's seat in the group they share, and the document's attendance field carries one answer — the named participant's — rather than a roster map",
   },
-  submit_my_feedback: {
-    scopeTest: "tests/db/feedback-submission.test.ts",
-    why: "writes a feedback row for auth.uid(); no parameter names a user, and every role may send feedback",
+  submit_my_help_request: {
+    scopeTest: "tests/db/help-request.test.ts",
+    why: "writes a help request for auth.uid(); no parameter names a user, and every role may ask for help",
   },
   request_my_verification_email: {
     scopeTest: "tests/db/verification-email-rate-limit.test.ts",
-    why: "the rate-limit gate on the verification-email send, and the same shape as submit_my_feedback one table over: it takes no argument at all, so the row it writes and the rows it counts are alike keyed to auth.uid() and a caller can neither spend nor clear anyone else's hourly allowance. No role gate by design — every role with a real inbox may ask for the mail, and the route is what excludes gamers, because the reason to exclude them is that nobody reads their synthetic address rather than anything about authority",
+    why: "the rate-limit gate on the verification-email send, and the same shape as submit_my_help_request one table over: it takes no argument at all, so the row it writes and the rows it counts are alike keyed to auth.uid() and a caller can neither spend nor clear anyone else's hourly allowance. No role gate by design — every role with a real inbox may ask for the mail, and the route is what excludes gamers, because the reason to exclude them is that nobody reads their synthetic address rather than anything about authority",
   },
   request_gamer_verification_email: {
     scopeTest: "tests/db/verification-email-rate-limit.test.ts",

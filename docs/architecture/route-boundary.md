@@ -115,7 +115,7 @@ integration test that renders both cards instead.
 The db-auth refactor's Phase 3 triage CSV (`docs/architecture/db-authorization.md` §5,
 "The triage, machine-readably") classifies every module that used the service-role
 client, with one-clause justifications: 14 route modules justified as Model A, one
-partial (feedback: user-client write, admin-client notification fan-out), 3 non-route
+partial (help requests: user-client write, admin-client notification fan-out), 3 non-route
 modules, plus the factory. Verified 2026-08-01: its route set exactly matches today's
 `createAdminClient` importers — **no drift**. It seeds §3.3 check 3. (The CSV keeps a
 row per module that used the client *at triage time*, so a module that has since
@@ -421,7 +421,7 @@ places and is wrong about the other two.
 - **Response localization** and any change to the `{ error, code }` wire contract.
 - **Changing what any route actually authorizes.** Posture changes were findings for a
   human decision, not sweep work — and none were made. The one posture question the
-  sweep surfaced and left alone: the feedback route names all four roles, which is the
+  sweep surfaced and left alone: the help-request route names all four roles, which is the
   shared gate's way of spelling "any authenticated caller", and it stays role-gated
   because that is what the code does. It loads the profile the notification email needs
   and applies the parent-PIN gate on the way, neither of which the any-authenticated

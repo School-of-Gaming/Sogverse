@@ -231,7 +231,7 @@ export function useBrowseFilterRows(surface: BrowseSurface): BrowseFilterRow[] {
 
   rows.push({
     id: "topics",
-    label: t("subject"),
+    label: t("topic"),
     chips: TOPIC_FILTER_CHIPS.map((chip) => ({
       key: chip.key,
       // A multi-topic group (Minecraft) carries a literal brand label; a

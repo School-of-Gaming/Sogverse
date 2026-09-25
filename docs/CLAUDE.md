@@ -17,6 +17,7 @@ read that file before adding or editing a doc there. Pick the category by what t
 | A living description of a cross-cutting system or repo-wide topic, definitive and current | `architecture/` |
 | An open exploration — researched, nothing decided | `investigations/` |
 | A decided, ready-to-build piece of work | `plans/` |
+| The working context of a multi-session project still being shaped — decisions, ideas and tasks; deleted when it is done | `projects/` |
 | A frozen story behind how something got the way it is | `records/` |
 | Input from outside the repo — things to consider, not things to do | `feedback/` |
 

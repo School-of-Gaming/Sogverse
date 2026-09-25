@@ -81,7 +81,7 @@ export function GeduDashboardSkeleton({
           <div className="h-40 animate-pulse rounded-lg border border-border bg-lifted" />
         </section>
 
-        {/* Help & feedback: two cards under a heading. Ghosted like the rest
+        {/* Help: two cards under a heading. Ghosted like the rest
             rather than rendered for real, even though nothing in it waits on a
             network call — a real section here would outlive the swap and then
             be pushed down the page by the sections landing above it, which is

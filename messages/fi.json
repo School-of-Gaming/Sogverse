@@ -1872,22 +1872,21 @@
     "loadingAssignments": "Ladataan kerhojasi, leirejäsi ja tapahtumiasi."
   },
   "helpSection": {
-    "heading": "Apu ja palaute",
-    "gamerHeading": "Tarvitsetko apua?",
+    "heading": "Tarvitsetko apua?",
     "faqHeading": "Usein kysytyt kysymykset",
     "form": {
       "messageLabel": "Viesti",
       "charactersNeeded": "{count} merkkiä vielä tarvitaan",
       "submit": "Lähetä viesti",
       "adult": {
-        "description": "Pyydä meiltä apua tai lähetä ehdotus tai vikailmoitus – jokainen viesti tulee School of Gamingin tiimille. Autamme mielellämme kaikessa oikean kerhon valinnasta siihen, miten kaikki toimii, tai voit lähettää meille sähköpostia osoitteeseen <link>{email}</link>.",
+        "description": "Pyydä meiltä apua – jokainen viesti tulee School of Gamingin tiimille. Voit myös lähettää meille sähköpostia osoitteeseen <link>{email}</link>.",
         "placeholder": "Missä voimme auttaa?",
         "thankYou": "Kiitos – viestisi on perillä, ja on hienoa, että kirjoitit.",
         "failed": "Viestin lähettäminen epäonnistui. Yritä uudelleen.",
         "tooManyRequests": "Olet lähettänyt jo useita viestejä. Yritä hetken kuluttua uudelleen."
       },
       "gamer": {
-        "description": "Jäitkö jumiin tai keksitkö meille idean? Kirjoita se tähän, niin luemme sen.",
+        "description": "Jäitkö jumiin johonkin? Kirjoita meille tähän, niin autamme.",
         "replyNote": "Jos vastaamme, lähetämme sähköpostia vanhemmallesi.",
         "placeholder": "Missä tarvitset apua?",
         "thankYou": "Kiitos — saimme viestisi.",
@@ -2276,7 +2275,7 @@
       "items": {
         "certification": {
           "question": "Mitä hyväksyntä tarkoittaa, ja mitä en voi tehdä ennen sitä?",
-          "answer": "<p>Hyväksyntä tarkoittaa, että ylläpitäjä vahvistaa tilisi olevan valmis lasten kanssa työskentelyyn. Sitä edeltää kaksi asiaa: Gedu-sopimuksesi hyväksyminen ja lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen esittäminen alle kuusi kuukautta vanhana. Tilaat otteen itse Oikeusrekisterikeskuksesta. Emme säilytä siitä kopiota emmekä kirjaa siitä mitään – ainoastaan sen, että asianmukainen ote on näytetty ja milloin. Molempien tilanteen näet sopimussivultasi.</p><p>Ennen hyväksyntää sinua ei voi liittää ryhmään, ja Työkalut-osio pysyy suljettuna: et voi avata pikaäänihuonetta etkä nollata Minecraft Education -salasanoja. Et voi myöskään lähettää kertaraporttia perheille sähköpostitse etkä lisätä siihen kuvia.</p><p>Kaikki muu on jo auki: kirjautuminen, Oma SOG, profiilisi ja kattamasi alueet sekä sopimuksen lukeminen ja hyväksyminen. Apu ja palaute on käytettävissäsi riippumatta siitä, onko sinut hyväksytty – käytä yllä olevaa lomaketta, jos odotat ja haluat tietää, missä mennään.</p>"
+          "answer": "<p>Hyväksyntä tarkoittaa, että ylläpitäjä vahvistaa tilisi olevan valmis lasten kanssa työskentelyyn. Sitä edeltää kaksi asiaa: Gedu-sopimuksesi hyväksyminen ja lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen esittäminen alle kuusi kuukautta vanhana. Tilaat otteen itse Oikeusrekisterikeskuksesta. Emme säilytä siitä kopiota emmekä kirjaa siitä mitään – ainoastaan sen, että asianmukainen ote on näytetty ja milloin. Molempien tilanteen näet sopimussivultasi.</p><p>Ennen hyväksyntää sinua ei voi liittää ryhmään, ja Työkalut-osio pysyy suljettuna: et voi avata pikaäänihuonetta etkä nollata Minecraft Education -salasanoja. Et voi myöskään lähettää kertaraporttia perheille sähköpostitse etkä lisätä siihen kuvia.</p><p>Kaikki muu on jo auki: kirjautuminen, Oma SOG, profiilisi ja kattamasi alueet sekä sopimuksen lukeminen ja hyväksyminen. Apua saat riippumatta siitä, onko sinut hyväksytty – käytä yllä olevaa lomaketta, jos odotat ja haluat tietää, missä mennään.</p>"
         },
         "groupAssignment": {
           "question": "Miten minut liitetään ryhmään?",
@@ -2424,7 +2423,7 @@
       "typeClubs": "Kerhot",
       "typeCamps": "Leirit",
       "typeEvents": "Tapahtumat",
-      "subject": "Aihe",
+      "topic": "Aihe",
       "format": "Muoto",
       "formatOnline": "Verkossa",
       "formatInPerson": "Paikan päällä",
@@ -3382,10 +3381,10 @@
       "ignore": "Jos et pyytänyt PIN-koodin nollausta, voit jättää tämän sähköpostin huomiotta. PIN-koodiasi ei muuteta.",
       "button": "Nollaa PIN-koodi"
     },
-    "feedback": {
-      "subject": "Apua tai palautetta käyttäjältä {displayName} ({role})",
-      "heading": "Uusi apu- tai palauteviesti",
-      "intro": "Joku on pyytänyt apua tai lähettänyt palautetta. Vastaa tähän viestiin, niin vastaus menee alla olevaan osoitteeseen.",
+    "helpRequest": {
+      "subject": "Avunpyyntö käyttäjältä {displayName} ({role})",
+      "heading": "Uusi avunpyyntö",
+      "intro": "Joku on pyytänyt apua. Vastaa tähän viestiin, niin vastaus menee alla olevaan osoitteeseen.",
       "from": "Lähettäjä",
       "role": "Rooli",
       "replyToLabel": "Vastausosoite",

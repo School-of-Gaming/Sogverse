@@ -198,7 +198,7 @@ describe("POST /api/admin/seat-offers/sweep", () => {
     await settleDeferred();
     expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(2);
     const sent = mockSendTransactionalEmail.mock.calls[0][0];
-    // The shared support inbox, exactly where the help & feedback mail goes.
+    // The shared support inbox, exactly where the help-request mail goes.
     expect(sent.toEmail).toBe("help@sog.gg");
     expect(sent.subject).toContain("No answer");
   });
