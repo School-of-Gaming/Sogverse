@@ -146,11 +146,13 @@ export async function GET(request: Request) {
   } else if (next && !finishTarget) {
     redirectPath = next;
   } else {
-    // No usable `next` — including a finish page sent for an account that has
-    // already finished (an existing account pressing a register page's Google
-    // button). Customers land on /select-profile (the family selector); other
-    // roles go straight to their dashboard. See ROLE_POST_LOGIN_PATHS.
-    redirectPath = ROLE_POST_LOGIN_PATHS[role];
+    // No usable `next`, or a finish page sent for an account that has already
+    // finished: an existing account pressing a register page's Google button.
+    // That page has nothing left to ask, but the product page it carried is
+    // still where the person was going, so it wins over the role's default.
+    // Otherwise customers land on /select-profile (the family selector) and
+    // other roles go straight to their dashboard. See ROLE_POST_LOGIN_PATHS.
+    redirectPath = finishTarget?.redirect ?? ROLE_POST_LOGIN_PATHS[role];
   }
 
   const response = NextResponse.redirect(`${origin}${redirectPath}`);

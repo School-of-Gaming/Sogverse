@@ -451,6 +451,35 @@ describe("GET /api/auth/callback", () => {
 
       expect(destination(response)).toBe("/gedu");
     });
+
+    it("returns an existing account to the product the register page carried", async () => {
+      // The register page's Google button puts the product page inside the
+      // finish page's own `redirect`; an account with nothing to finish still
+      // wants that product, not the family selector.
+      signedInAs({ role: "customer", registration_completed_at: COMPLETED });
+
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: "/fi/complete-registration?redirect=%2Ffi%2Fkauppa%2Fabc-123",
+        }),
+      );
+
+      expect(destination(response)).toBe("/fi/kauppa/abc-123");
+    });
+
+    it("does not let that carried redirect leave the allowlist", async () => {
+      signedInAs({ role: "customer", registration_completed_at: COMPLETED });
+
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: "/en/complete-registration?redirect=%2Fadmin",
+        }),
+      );
+
+      expect(destination(response)).toBe("/select-profile");
+    });
   });
 
   /**
