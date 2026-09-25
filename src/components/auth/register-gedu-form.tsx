@@ -193,6 +193,29 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          {/* The finish page's Gedu variant, in this page's language: a
+              Google account arrives with none of the fields below. The visit's
+              attribution rides on the address, since the round trip through
+              Google unloads the tab that holds it. */}
+          <ContinueWithGoogle
+            next={getPathname({
+              href: {
+                pathname: ROUTES.completeRegistration,
+                query: completeRegistrationQuery({ asGedu: true, utm }),
+              },
+              locale,
+            })}
+            disabled={isLoading}
+            onBegin={() => {
+              setError(null);
+              setGooglePending(true);
+            }}
+            onFailed={(message) => {
+              setGooglePending(false);
+              setError(message);
+            }}
+            note={t("google.finishNote")}
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={c("firstName")} htmlFor="firstName">
               <Input
@@ -328,29 +351,6 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
           <Button type="submit" className="w-full" disabled={isLoading || googlePending}>
             {status ?? (isLoading ? t("registerGedu.creatingAccount") : c("createAccount"))}
           </Button>
-          {/* The finish page's Gedu variant, in this page's language: a
-              Google account arrives with none of the fields above. The visit's
-              attribution rides on the address, since the round trip through
-              Google unloads the tab that holds it. */}
-          <ContinueWithGoogle
-            next={getPathname({
-              href: {
-                pathname: ROUTES.completeRegistration,
-                query: completeRegistrationQuery({ asGedu: true, utm }),
-              },
-              locale,
-            })}
-            disabled={isLoading}
-            onBegin={() => {
-              setError(null);
-              setGooglePending(true);
-            }}
-            onFailed={(message) => {
-              setGooglePending(false);
-              setError(message);
-            }}
-            note={t("google.finishNote")}
-          />
           <div className="space-y-2 text-center text-sm text-muted-foreground">
             <div>
               {t.rich("registerGedu.alreadyHaveAccount", {

@@ -390,6 +390,28 @@ describe("RegisterForm", () => {
 });
 
 describe("the parent register page's Google button", () => {
+  // The parent-account alert is read first, because it is context for either
+  // path; the Google button comes directly after it and before any field, then
+  // the "or" divider, then the fields, then the submit at the bottom.
+  it("sits under the parent-account alert, above the divider, the fields and the submit", () => {
+    const view = render(<RegisterForm redirect={null} />);
+
+    const alert = view.getByText("register.parentAccountAlertTitle");
+    const google = view.getByRole("button", { name: "continue" });
+    const divider = view.getByText("or");
+    const firstName = view.container.querySelector("#firstName");
+    if (!firstName) throw new Error("no first name field");
+    const submit = view.container.querySelector('button[type="submit"]');
+    if (!submit) throw new Error("no submit");
+
+    const precedes = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(precedes(alert, google)).toBe(true);
+    expect(precedes(google, divider)).toBe(true);
+    expect(precedes(divider, firstName)).toBe(true);
+    expect(precedes(firstName, submit)).toBe(true);
+  });
+
   // The round trip through Google unloads the tab holding the visit's
   // attribution in memory, so it travels on the finish page's address — the
   // parent variant, so no `as`.

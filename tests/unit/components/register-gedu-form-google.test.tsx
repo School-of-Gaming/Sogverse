@@ -67,6 +67,11 @@ import { RegisterGeduForm } from "@/components/auth/register-gedu-form";
 
 const signInWithOAuth = vi.mocked(mockSupabaseClient.auth.signInWithOAuth);
 
+/** Whether `a` comes before `b` in document order. */
+function precedes(a: Element, b: Element): boolean {
+  return Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockUtm = { source: null, medium: null, campaign: null };
@@ -77,6 +82,25 @@ beforeEach(() => {
 });
 
 describe("the Gedu register page's Google button", () => {
+  // The certification alert is read first, because it is context for either
+  // path; the Google button comes directly after it and before any field, then
+  // the "or" divider, then the fields, then the submit at the bottom.
+  it("sits under the certification alert, above the divider, the fields and the submit", () => {
+    const view = render(<RegisterGeduForm redirect={null} />);
+
+    const alert = screen.getByText("registerGedu.certificationAlertTitle");
+    const google = screen.getByRole("button", { name: "continue" });
+    const divider = screen.getByText("or");
+    const firstName = view.container.querySelector("#firstName");
+    if (!firstName) throw new Error("no first name field");
+    const submit = screen.getByRole("button", { name: "createAccount" });
+
+    expect(precedes(alert, google)).toBe(true);
+    expect(precedes(google, divider)).toBe(true);
+    expect(precedes(divider, firstName)).toBe(true);
+    expect(precedes(firstName, submit)).toBe(true);
+  });
+
   it("sends the Gedu finish page as next", async () => {
     render(<RegisterGeduForm redirect={null} />);
 

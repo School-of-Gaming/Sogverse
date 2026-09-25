@@ -26,11 +26,12 @@ interface ContinueWithGoogleProps {
 }
 
 /**
- * The Google alternative beneath an auth form's primary submit: a divider
- * reading "or", then the button, full width.
+ * The Google alternative at the top of an auth form, before any field: the
+ * button, full width, then a divider reading "or" that separates it from the
+ * fields below.
  *
- * It is an alternative rather than the negative half of a pair, so it stacks
- * below the submit instead of taking the Button Order positions.
+ * It is an alternative path rather than the negative half of a pair, so it
+ * takes no Button Order position; the form's own submit stays at the bottom.
  *
  * **No `freezeUntilNavigation()` here, unlike password sign-in.** That freeze
  * exists because `signInWithPassword` fires SIGNED_IN inside the call, before
@@ -74,11 +75,6 @@ export function ContinueWithGoogle({
 
   return (
     <div className="w-full space-y-4">
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span aria-hidden className="h-px flex-1 bg-border" />
-        <span>{t("or")}</span>
-        <span aria-hidden className="h-px flex-1 bg-border" />
-      </div>
       <div className="space-y-2">
         <Button
           type="button"
@@ -104,6 +100,11 @@ export function ContinueWithGoogle({
         {note && (
           <p className="text-center text-sm text-muted-foreground">{note}</p>
         )}
+      </div>
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <span aria-hidden className="h-px flex-1 bg-border" />
+        <span>{t("or")}</span>
+        <span aria-hidden className="h-px flex-1 bg-border" />
       </div>
     </div>
   );

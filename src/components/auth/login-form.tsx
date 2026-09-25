@@ -177,6 +177,21 @@ export function LoginForm({
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          {/* The page's own safe `?redirect=` rides along — onto the finish
+              page, too, for an account that still owes its registration;
+              without one the callback routes by role. */}
+          <ContinueWithGoogle
+            next={safeRedirect}
+            disabled={isLoading}
+            onBegin={() => {
+              setError(null);
+              setGooglePending(true);
+            }}
+            onFailed={(message) => {
+              setGooglePending(false);
+              setError(message);
+            }}
+          />
           {/* `type="text"`, not `type="email"`: the browser's own validation
               would refuse a username outright, before the form ever ran. The
               soft-keyboard hint stays `email`, because an address is what the
@@ -225,21 +240,6 @@ export function LoginForm({
           <Button type="submit" className="w-full" disabled={isLoading || googlePending}>
             {status ?? (isLoading ? t('login.signingIn') : c('signIn'))}
           </Button>
-          {/* The page's own safe `?redirect=` rides along — onto the finish
-              page, too, for an account that still owes its registration;
-              without one the callback routes by role. */}
-          <ContinueWithGoogle
-            next={safeRedirect}
-            disabled={isLoading}
-            onBegin={() => {
-              setError(null);
-              setGooglePending(true);
-            }}
-            onFailed={(message) => {
-              setGooglePending(false);
-              setError(message);
-            }}
-          />
           <div className="space-y-2 text-center text-sm text-muted-foreground">
             <div>
               {t.rich('login.noAccountSignUp', {

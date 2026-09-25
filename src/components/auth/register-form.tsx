@@ -281,6 +281,35 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          {/* A Google account arrives with no name, terms or consents, so it
+              lands on the finish page, in the language this page is read in —
+              the ticks below are this form's and do not travel with it. The
+              visit's attribution does, on the address: the round trip through
+              Google unloads the tab that holds it. So does the product page
+              this visit came from, which the finish page lands on. */}
+          <ContinueWithGoogle
+            next={getPathname({
+              href: {
+                pathname: ROUTES.completeRegistration,
+                query: completeRegistrationQuery({
+                  asGedu: false,
+                  utm,
+                  redirect: safeRedirect,
+                }),
+              },
+              locale,
+            })}
+            disabled={isLoading}
+            onBegin={() => {
+              setError(null);
+              setGooglePending(true);
+            }}
+            onFailed={(message) => {
+              setGooglePending(false);
+              setError(message);
+            }}
+            note={t('google.finishNote')}
+          />
           {/* The two halves of one name, side by side from `sm` and stacked
               below it — the educator form's arrangement, for the same reason it
               has it: a first and last name are one answer split in two, and a
@@ -433,35 +462,6 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           <Button type="submit" className="w-full" disabled={isLoading || googlePending}>
             {status ?? (isLoading ? t('register.creatingAccount') : c('createAccount'))}
           </Button>
-          {/* A Google account arrives with no name, terms or consents, so it
-              lands on the finish page, in the language this page is read in —
-              the ticks above are this form's and do not travel with it. The
-              visit's attribution does, on the address: the round trip through
-              Google unloads the tab that holds it. So does the product page
-              this visit came from, which the finish page lands on. */}
-          <ContinueWithGoogle
-            next={getPathname({
-              href: {
-                pathname: ROUTES.completeRegistration,
-                query: completeRegistrationQuery({
-                  asGedu: false,
-                  utm,
-                  redirect: safeRedirect,
-                }),
-              },
-              locale,
-            })}
-            disabled={isLoading}
-            onBegin={() => {
-              setError(null);
-              setGooglePending(true);
-            }}
-            onFailed={(message) => {
-              setGooglePending(false);
-              setError(message);
-            }}
-            note={t('google.finishNote')}
-          />
           <div className="space-y-2 text-center text-sm text-muted-foreground">
             <div>
               {t.rich('register.alreadyHaveAccount', {

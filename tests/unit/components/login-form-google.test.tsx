@@ -42,6 +42,11 @@ import { LoginForm } from "@/components/auth/login-form";
 
 const signInWithOAuth = vi.mocked(mockSupabaseClient.auth.signInWithOAuth);
 
+/** Whether `a` comes before `b` in document order. */
+function precedes(a: Element, b: Element): boolean {
+  return Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+}
+
 function googleButton(): HTMLButtonElement {
   return screen.getByRole("button", { name: "continue" });
 }
@@ -68,6 +73,22 @@ beforeEach(() => {
 });
 
 describe("the login form's Google button", () => {
+  // The Google path is offered before any field, so a person meets it before
+  // filling in the form rather than after: the button, then the "or" divider,
+  // then the fields, then the password submit at the bottom.
+  it("sits at the top of the form, above the divider, the fields and the submit", () => {
+    const view = render(<LoginForm redirect={null} />);
+
+    const divider = screen.getByText("or");
+    const identifier = view.container.querySelector("#identifier");
+    if (!identifier) throw new Error("no identifier field");
+    const submit = screen.getByRole("button", { name: "signIn" });
+
+    expect(precedes(googleButton(), divider)).toBe(true);
+    expect(precedes(divider, identifier)).toBe(true);
+    expect(precedes(identifier, submit)).toBe(true);
+  });
+
   it("sends the browser to Google, back to the callback on this origin", async () => {
     render(<LoginForm redirect={null} />);
 
