@@ -1435,8 +1435,7 @@
     "google": {
       "continue": "Continue with Google",
       "or": "or",
-      "failed": "Google sign-in could not start. Please try again.",
-      "finishNote": "With Google, you finish your School of Gaming account on the next page."
+      "failed": "Google sign-in could not start. Please try again."
     },
     "completeRegistration": {
       "title": "Finish your School of Gaming account",

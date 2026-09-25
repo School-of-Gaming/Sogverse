@@ -1435,8 +1435,7 @@
     "google": {
       "continue": "Jatka Google-tilillä",
       "or": "tai",
-      "failed": "Google-kirjautumista ei voitu aloittaa. Yritä uudelleen.",
-      "finishNote": "Google-tiliä käyttäessäsi viimeistelet School of Gaming -tilisi seuraavalla sivulla."
+      "failed": "Google-kirjautumista ei voitu aloittaa. Yritä uudelleen."
     },
     "completeRegistration": {
       "title": "Viimeistele School of Gaming -tilisi",

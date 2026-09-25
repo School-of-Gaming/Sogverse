@@ -214,7 +214,6 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
               setGooglePending(false);
               setError(message);
             }}
-            note={t("google.finishNote")}
           />
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={c("firstName")} htmlFor="firstName">

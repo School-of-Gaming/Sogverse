@@ -1435,8 +1435,7 @@
     "google": {
       "continue": "Continuer avec Google",
       "or": "ou",
-      "failed": "La connexion avec Google n’a pas pu démarrer. Veuillez réessayer.",
-      "finishNote": "Avec Google, vous finalisez votre compte School of Gaming à la page suivante."
+      "failed": "La connexion avec Google n’a pas pu démarrer. Veuillez réessayer."
     },
     "completeRegistration": {
       "title": "Finalisez votre compte School of Gaming",

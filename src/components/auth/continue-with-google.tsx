@@ -21,8 +21,6 @@ interface ContinueWithGoogleProps {
   onBegin: () => void;
   /** Supabase refused before redirecting: the form shows `message`. */
   onFailed: (message: string) => void;
-  /** One sentence under the button, where the page needs to say what follows. */
-  note?: string;
 }
 
 /**
@@ -45,7 +43,6 @@ export function ContinueWithGoogle({
   disabled,
   onBegin,
   onFailed,
-  note,
 }: ContinueWithGoogleProps) {
   const t = useTranslations("auth.google");
   const [committing, setCommitting] = useState(false);
@@ -75,32 +72,27 @@ export function ContinueWithGoogle({
 
   return (
     <div className="w-full space-y-4">
-      <div className="space-y-2">
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          disabled={disabled || committing}
-          onClick={handleClick}
-        >
-          {/* Google's mark at the size and colours Google ships it; their
-              rules forbid resizing or recolouring it. `unoptimized` because the
-              optimizer refuses SVG, and a bundled 18px file needs no pass.
-              The spinner that replaces it keeps the same 18px box, so the
-              label does not shift under the pointer that just pressed it. */}
-          {committing ? (
-            <span className="flex size-[18px] items-center justify-center">
-              <Loader2 className="animate-spin" />
-            </span>
-          ) : (
-            <Image src={googleG} alt="" width={18} height={18} unoptimized />
-          )}
-          {t("continue")}
-        </Button>
-        {note && (
-          <p className="text-center text-sm text-muted-foreground">{note}</p>
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        disabled={disabled || committing}
+        onClick={handleClick}
+      >
+        {/* Google's mark at the size and colours Google ships it; their
+            rules forbid resizing or recolouring it. `unoptimized` because the
+            optimizer refuses SVG, and a bundled 18px file needs no pass.
+            The spinner that replaces it keeps the same 18px box, so the
+            label does not shift under the pointer that just pressed it. */}
+        {committing ? (
+          <span className="flex size-[18px] items-center justify-center">
+            <Loader2 className="animate-spin" />
+          </span>
+        ) : (
+          <Image src={googleG} alt="" width={18} height={18} unoptimized />
         )}
-      </div>
+        {t("continue")}
+      </Button>
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span aria-hidden className="h-px flex-1 bg-border" />
         <span>{t("or")}</span>

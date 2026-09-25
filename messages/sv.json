@@ -1435,8 +1435,7 @@
     "google": {
       "continue": "Fortsätt med Google",
       "or": "eller",
-      "failed": "Inloggningen med Google kunde inte startas. Försök igen.",
-      "finishNote": "Med Google slutför du ditt School of Gaming-konto på nästa sida."
+      "failed": "Inloggningen med Google kunde inte startas. Försök igen."
     },
     "completeRegistration": {
       "title": "Slutför ditt School of Gaming-konto",

@@ -308,7 +308,6 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               setGooglePending(false);
               setError(message);
             }}
-            note={t('google.finishNote')}
           />
           {/* The two halves of one name, side by side from `sm` and stacked
               below it — the educator form's arrangement, for the same reason it

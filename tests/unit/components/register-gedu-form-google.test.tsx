@@ -141,10 +141,4 @@ describe("the Gedu register page's Google button", () => {
     expect(nextUrl.searchParams.get("utm_campaign")).toBe("gedu-autumn");
     expect(nextUrl.searchParams.has("utm_medium")).toBe(false);
   });
-
-  it("says the account is finished on the next page", () => {
-    render(<RegisterGeduForm redirect={null} />);
-
-    expect(screen.getByText("google.finishNote")).toBeTruthy();
-  });
 });
