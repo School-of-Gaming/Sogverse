@@ -11,19 +11,32 @@ the authority on voice, summarised here only where it binds these three pages.
 within eight seconds, knows what to do within thirty, and trusts us enough to enrol a
 child.** Conversion to a paying club is the measure, not time on page.
 
+**Rules for the whole project (owner, 2026-09-25):**
+
+- **Every locale, persuading its own audience.** English, Finnish, Swedish and French
+  each get the same care (`tlh` is a test locale). What persuades differs by culture
+  and country, so a locale's copy is written to convince its own readers, not translated
+  from the English case; which testimonials and proof lead may differ per locale too.
+- **Nothing about the pages is fixed.** Structure, layout, which pages exist, copy,
+  imagery, navigation and the shop's design may all change if it serves the goal. The
+  one requirement is the brand guidelines (the Guidebook and SOG-UI). A guideline can be
+  challenged when breaking it would clearly work better: bring it to the owner as a
+  proposal (the rule, why it is in the way, the alternative), never work around it
+  quietly. An overruling is recorded where the rule lives, so the brand stays one system.
+
 ## Where it stands (2026-09-25)
 
-- **In flight:** the first round of the home page is built on
-  `feat/home-first-screen-proof-safety`, in the worktree
-  `.claude/worktrees/home-first-screen-proof-safety`. It is finished, reviewed by an
-  independent agent with every finding fixed, passes `npm run gates`, and is **waiting on
-  the owner's go-ahead to merge**. This doc is newest on that branch; `dev` holds an older
-  copy.
+- **The project lives on `feat/public-pages`,** a branch dedicated to it, with no worktree
+  of its own (cut one from the branch to work on it). All public-pages work lands there,
+  and the branch merges into `dev` when the owner decides, not after each change. This doc
+  is newest on that branch; `dev` holds an older copy.
+- **On the branch so far:** the first round of the home page: a concrete hero, parent
+  testimonials and a safety section (see Home). Reviewed by an independent agent, every
+  finding fixed, `npm run gates` passing.
 - **Waiting on others:** images from Sonja, who owns the image collection (see Assets);
   a native Swedish and French check of the branch's new strings.
-- **Next, once the branch lands:** the About page (a button to Clubs, the FAQ reordered
-  by what parents ask first), then the owner's rulings on the proposals under "Ideas not
-  yet decided".
+- **Next:** the About page (a button to Clubs, the FAQ reordered by what parents ask
+  first), then the owner's rulings on the proposals under "Ideas not yet decided".
 
 ## Who reads these pages
 
@@ -67,7 +80,11 @@ one is currently broken somewhere on these pages or was nearly broken in the fir
 **Rule (owner, 2026-09-25): every look-and-feel decision is judged at both desktop and
 mobile widths.** A layout, section order or visual that works on one and not the other is
 not done. The first screen is judged twice, because a parent on a phone sees far less of it
-before scrolling, and a cookie banner covers more of it there.
+before scrolling, and a cookie banner covers more of it there. Capture with the
+`page-screenshots` skill and its `public-pages` preset, which runs signed out against
+production or any preview and shoots each page with the banner up, after rejecting it,
+and whole. Its phone width is the repo's standard 360 px; the 2026-09-25 review below
+was captured at 390 px, so its pixel heights are not directly comparable.
 
 ## Each page's job
 
@@ -99,8 +116,8 @@ layout decision.
 
 ### Home
 
-Rewritten 2026-09-25 on `feat/home-first-screen-proof-safety` (the first round of the
-proposed structure below); this describes that branch's page. Order: hero, one testimonial,
+Rewritten 2026-09-25 on the project branch (the first round of the proposed structure
+below); this describes that branch's page. Order: hero, one testimonial,
 the features, safety, three more testimonials, "How it works", the closing card.
 
 **Works:**
@@ -324,9 +341,19 @@ decided.**
   widths: the sale happens there. It touches auth and money, so any change gets a plan.
 - **Light or dark.** SOG-UI has one theme, dark, by the owner's earlier decision. The
   Guidebook says parent-facing pages take "white and off-white grounds… Calm surfaces carry
-  credibility", and the legacy site, the one page built for marketing, is light. The public
-  pages are the one place the reader is always a parent. A library-level decision for the
-  owner, possibly one to test.
+  credibility", and the legacy site, the one page built for marketing, is light. The case
+  for light on the goal alone: a parent judging whether to trust us with a child reads
+  calm and light as a service, dark and neon as a game; these pages are read at length on
+  phones; real photography sits warmer on light. For dark: children sway the purchase,
+  in-game art shines on it, it is distinctive, and one theme is cheaper to keep correct.
+  **If light, the boundary is parent versus child, never page by page:** switching per
+  page would flip a signed-in parent between My SOG and Clubs mid-task. The parent side
+  (public pages, Clubs, enrolment, My SOG, billing) would be light and the child and Gedu
+  side dark, with the only switch at "switch to my child", already a deliberate step
+  into another space. That is larger than this project and a SOG-UI decision. A cheaper
+  middle path: stay dark but calmer on the public pages (photography, softer grounds,
+  fewer neon accents). Proposed: settle it with light and dark mock-ups of the home page
+  shown to a handful of real parents in two locales.
 - **Credit testimonials with context** ("Mum of a Roblox club gamer, Finland") where the
   source card gives it.
 
@@ -398,9 +425,11 @@ and has lost its rating digit to a missing glyph; the English card says a summer
       check (and auditing older Gedus) is a safeguarding change for the owner to decide.
 - [ ] Free trial: the legacy Finnish page promised one; Sogverse has the guarantee only.
       Owner to decide whether to offer one; until then no page promises it.
-- [ ] Re-screenshot at both widths after every change to these pages. The capture script is not in the repo yet; decide whether it belongs there.
-- [ ] Finnish copy: review the Finnish versions of all three pages; the review above read
-      only the English.
+- [ ] Which country or audience each locale serves: Swedish for Swedish-speaking Finns
+      or families in Sweden; French for France or francophone families elsewhere. How a
+      locale persuades depends on the answer. Owner to answer.
+- [ ] Copy in every locale: review Finnish, Swedish and French versions of all three pages
+      for persuasion as well as correctness; the review above read only the English.
 - [ ] Municipality clubs: whether the home page mentions them at all, given the goal is
       paying families. Proposed: no, leave them to the header and the FAQ.
 
@@ -414,3 +443,5 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-09-25 | The home page states the criminal record check as a requirement, not as something every Gedu has done (owner). |
 | 2026-09-25 | The home page does not state a lesson length (owner). |
 | 2026-09-25 | "Find a club" is the home page's button for every reader, signed in or not (owner). |
+| 2026-09-25 | Every locale persuades its own audience; the pages are open to any change within the brand guidelines, and a guideline may be challenged through the owner (owner). |
+| 2026-09-25 | The project lives on its own branch, `feat/public-pages`, and merges into `dev` when the owner decides (owner). |
