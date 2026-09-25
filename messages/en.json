@@ -1446,7 +1446,9 @@
       "signOut": "Sign out",
       "submit": "Finish setting up",
       "finishing": "Finishing...",
-      "alreadyComplete": "This account is already set up. Sign in again to continue."
+      "alreadyComplete": "This account is already set up. Sign in again to continue.",
+      "switchToGedu": "Registering as a Game Educator (Gedu)? <link>Switch to the Gedu form</link>",
+      "switchToParent": "Not a Gedu? <link>Create a parent account instead</link>"
     }
   },
   "pin": {

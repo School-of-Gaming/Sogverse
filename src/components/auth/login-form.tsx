@@ -225,8 +225,9 @@ export function LoginForm({
           <Button type="submit" className="w-full" disabled={isLoading || googlePending}>
             {status ?? (isLoading ? t('login.signingIn') : c('signIn'))}
           </Button>
-          {/* The page's own safe `?redirect=` rides along; without one the
-              callback routes by role. */}
+          {/* The page's own safe `?redirect=` rides along — onto the finish
+              page, too, for an account that still owes its registration;
+              without one the callback routes by role. */}
           <ContinueWithGoogle
             next={safeRedirect}
             disabled={isLoading}

@@ -2,6 +2,7 @@ import { ROUTES } from "@/lib/constants";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
 import { toInternalPathname } from "@/lib/navigation/locale-path";
 import {
+  hasUtmAttribution,
   readUtmFromSearchParams,
   utmQueryParams,
   type UtmAttribution,
@@ -80,27 +81,71 @@ export function resolveSafeRedirect(
 
 /**
  * The query that asks the finish page for its Gedu variant — sent by the Gedu
- * register page, and the only query the callback carries onto the finish page.
+ * register page, and carried by the callback and by the proxy's bounce off
+ * `/register-gedu`.
  */
 export const COMPLETE_REGISTRATION_GEDU_QUERY = { as: "gedu" } as const;
 
-/** The finish page's parts, as the callback rebuilds its address from them. */
-export interface CompleteRegistrationTarget {
-  pathname: string;
-  asGedu: boolean;
+/**
+ * The query that asks for the parent variant outright. Only the finish page's
+ * own switch link sends it: an address without `as` means "whatever this
+ * account set out to register as", which the intent cookie may say is a Gedu.
+ */
+export const COMPLETE_REGISTRATION_PARENT_QUERY = { as: "parent" } as const;
+
+/** The finish page's param naming the product page to land on afterwards. */
+const REDIRECT_PARAM = "redirect";
+
+/** What the finish page's address carries, each part already sanitised. */
+export interface CompleteRegistrationIntent {
+  /**
+   * The variant asked for: `true` for the Gedu form, `false` for the parent
+   * form asked for outright, `null` when the address does not say.
+   */
+  asGedu: boolean | null;
   /**
    * The landing link's attribution, carried across the Google round trip,
    * which unloads the tab that held it in memory. Sanitised on the way in.
    */
   utm: UtmAttribution;
+  /**
+   * The product page the account set out from, to land on once registered —
+   * only ever a value `resolveSafeRedirect` admitted.
+   */
+  redirect: string | null;
+}
+
+/** The finish page's parts, as the callback rebuilds its address from them. */
+export interface CompleteRegistrationTarget extends CompleteRegistrationIntent {
+  pathname: string;
+}
+
+/**
+ * The finish page's intent as a query carries it: the variant, the
+ * attribution through its sanitiser and the redirect through the post-auth
+ * allowlist. Anything else in the query is ignored.
+ */
+export function readCompleteRegistrationIntent(
+  params: URLSearchParams,
+): CompleteRegistrationIntent {
+  const as = params.get("as");
+  return {
+    asGedu:
+      as === COMPLETE_REGISTRATION_GEDU_QUERY.as
+        ? true
+        : as === COMPLETE_REGISTRATION_PARENT_QUERY.as
+          ? false
+          : null,
+    utm: readUtmFromSearchParams(params),
+    redirect: resolveSafeRedirect(params.get(REDIRECT_PARAM)),
+  };
 }
 
 /**
  * The finish page a safe `next` names, split into the raw (locale-prefixed)
- * pathname, whether it asked for the Gedu variant and the attribution it
- * carried — or `null` when `next` is some other page. The callback rebuilds
- * the destination from these parts rather than forwarding the query, so
- * nothing else a caller appended survives the trip.
+ * pathname and the intent it carried — or `null` when `next` is some other
+ * page. The callback rebuilds the destination from these parts rather than
+ * forwarding the query, so nothing else a caller appended survives the trip.
  */
 export function readCompleteRegistrationTarget(
   safePath: string,
@@ -111,26 +156,53 @@ export function readCompleteRegistrationTarget(
   }
   return {
     pathname: url.pathname,
-    asGedu:
-      url.searchParams.get("as") === COMPLETE_REGISTRATION_GEDU_QUERY.as,
-    utm: readUtmFromSearchParams(url.searchParams),
+    ...readCompleteRegistrationIntent(url.searchParams),
+  };
+}
+
+/**
+ * What the finish page shows: its own address first and, for each part the
+ * address lacks, the intent cookie the callback set — so a bounce that drops
+ * the query still shows a would-be Gedu the Gedu form, and keeps the product
+ * page and the attribution. The attribution falls back whole, never field by
+ * field, so one landing link's values are never mixed with another's. The
+ * cookie is read through the same sanitisers as the address.
+ */
+export function resolveCompleteRegistrationIntent(
+  address: URLSearchParams,
+  cookieValue: string | null | undefined,
+): { asGedu: boolean; utm: UtmAttribution; redirect: string | null } {
+  const fromAddress = readCompleteRegistrationIntent(address);
+  const fromCookie = readCompleteRegistrationIntent(
+    new URLSearchParams(cookieValue ?? ""),
+  );
+  return {
+    asGedu: fromAddress.asGedu ?? fromCookie.asGedu ?? false,
+    utm: hasUtmAttribution(fromAddress.utm) ? fromAddress.utm : fromCookie.utm,
+    redirect: fromAddress.redirect ?? fromCookie.redirect,
   };
 }
 
 /**
  * The finish page's query: the Gedu variant when asked for, then the
- * attribution — the whole of what its address may carry. Shared by the
- * register pages that build `next` and the callback that rebuilds it.
+ * attribution, then the product page to return to — the whole of what its
+ * address may carry. Shared by the register pages that build `next`, the
+ * callback that rebuilds it and the finish page's switch link. The redirect
+ * passes the post-auth allowlist here too, so no caller can emit a raw path.
  */
 export function completeRegistrationQuery({
   asGedu,
   utm,
+  redirect = null,
 }: {
   asGedu: boolean;
   utm: UtmAttribution;
+  redirect?: string | null;
 }): Record<string, string> {
+  const safeRedirect = resolveSafeRedirect(redirect);
   return {
     ...(asGedu ? COMPLETE_REGISTRATION_GEDU_QUERY : {}),
     ...utmQueryParams(utm),
+    ...(safeRedirect ? { [REDIRECT_PARAM]: safeRedirect } : {}),
   };
 }

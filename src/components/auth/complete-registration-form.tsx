@@ -23,6 +23,10 @@ import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import type { UtmAttribution } from "@/lib/utm";
+import {
+  COMPLETE_REGISTRATION_PARENT_QUERY,
+  completeRegistrationQuery,
+} from "@/lib/navigation/post-auth-redirect";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import type { SpokenLanguageCode } from "@/types";
 
@@ -49,6 +53,12 @@ export interface CompleteRegistrationFormProps {
   initialLastName: string;
   /** The landing link's attribution, carried here on the address. */
   utm: UtmAttribution;
+  /**
+   * The product page the account set out from, to land on once registered in
+   * place of the variant's own landing. It still passes the post-auth
+   * allowlist before anything navigates to it.
+   */
+  redirect: string | null;
 }
 
 /**
@@ -96,6 +106,46 @@ async function refusal(
   };
 }
 
+/**
+ * The line under the submit that swaps variants, keeping the attribution and
+ * the product page. The parent form's link asks for the Gedu form; the Gedu
+ * form's asks for the parent one outright, since an address that says nothing
+ * falls back to the intent cookie, which says Gedu.
+ */
+function VariantSwitch({
+  to,
+  utm,
+  redirect,
+}: {
+  to: CompleteRegistrationFormProps["variant"];
+  utm: UtmAttribution;
+  redirect: string | null;
+}) {
+  const t = useTranslations("auth.completeRegistration");
+  const query =
+    to === "gedu"
+      ? completeRegistrationQuery({ asGedu: true, utm, redirect })
+      : {
+          ...COMPLETE_REGISTRATION_PARENT_QUERY,
+          ...completeRegistrationQuery({ asGedu: false, utm, redirect }),
+        };
+
+  return (
+    <p className="text-center text-sm text-muted-foreground">
+      {t.rich(to === "gedu" ? "switchToGedu" : "switchToParent", {
+        link: (chunks) => (
+          <Link
+            href={{ pathname: ROUTES.completeRegistration, query }}
+            className="text-act hover:underline"
+          >
+            {chunks}
+          </Link>
+        ),
+      })}
+    </p>
+  );
+}
+
 function CompletionShell({
   title,
   email,
@@ -104,6 +154,7 @@ function CompletionShell({
   submitLabel,
   isLoading,
   onSubmit,
+  variantSwitch,
   children,
 }: {
   title: string;
@@ -113,6 +164,8 @@ function CompletionShell({
   submitLabel: string;
   isLoading: boolean;
   onSubmit: (e: React.FormEvent) => void;
+  /** The way to the other variant, a muted line under the submit. */
+  variantSwitch: React.ReactNode;
   children: React.ReactNode;
 }) {
   const t = useTranslations("auth.completeRegistration");
@@ -160,10 +213,11 @@ function CompletionShell({
           )}
           {children}
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? t("finishing") : submitLabel}
           </Button>
+          {variantSwitch}
         </CardFooter>
       </form>
     </Card>
@@ -222,11 +276,12 @@ function ParentCompletion({
   initialFirstName,
   initialLastName,
   utm,
+  redirect,
 }: CompleteRegistrationFormProps) {
   const t = useTranslations("auth");
   const c = useTranslations("common");
   const locale = useLocale();
-  const { navigateAfterAuth } = useAuthRedirect(null);
+  const { navigateAfterAuth } = useAuthRedirect(redirect);
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const [homeLocation, setHomeLocation] = useState<LocationPick | null>(null);
@@ -313,6 +368,7 @@ function ParentCompletion({
       isLoading={isLoading}
       submitLabel={t("completeRegistration.submit")}
       onSubmit={handleSubmit}
+      variantSwitch={<VariantSwitch to="gedu" utm={utm} redirect={redirect} />}
       alert={
         <Alert variant="info">
           <div>
@@ -385,12 +441,13 @@ function GeduCompletion({
   initialFirstName,
   initialLastName,
   utm,
+  redirect,
 }: CompleteRegistrationFormProps) {
   const t = useTranslations("auth");
   const g = useTranslations("gameAccount");
   const c = useTranslations("common");
   const locale = useLocale();
-  const { navigateAfterAuth } = useAuthRedirect(null);
+  const { navigateAfterAuth } = useAuthRedirect(redirect);
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const [minecraftUsername, setMinecraftUsername] = useState<string | null>(null);
@@ -471,6 +528,7 @@ function GeduCompletion({
       isLoading={isLoading}
       submitLabel={t("completeRegistration.submit")}
       onSubmit={handleSubmit}
+      variantSwitch={<VariantSwitch to="parent" utm={utm} redirect={redirect} />}
       alert={
         <Alert variant="info">
           <div>

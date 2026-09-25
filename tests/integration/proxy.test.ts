@@ -597,6 +597,23 @@ describe("proxy", () => {
       expect(getRedirectUrl(response).pathname).toBe("/en/complete-registration");
     });
 
+    it("carries no query on an ordinary bounce", async () => {
+      mockUser("customer", null);
+      const response = await proxy(createNextRequest("/register"));
+      expect(getRedirectUrl(response).search).toBe("");
+    });
+
+    it("asks for the Gedu form when bouncing off the Gedu register page", async () => {
+      // Its Google button pressed a second time: the would-be Gedu must never
+      // be shown the parent form.
+      mockUser("customer", null);
+      const response = await proxy(createNextRequest("/fi/register-gedu"));
+      expect(response.status).toBe(307);
+      const url = getRedirectUrl(response);
+      expect(url.pathname).toBe("/fi/complete-registration");
+      expect(url.searchParams.get("as")).toBe("gedu");
+    });
+
     it("keeps the bounce in the locale the request was made in", async () => {
       mockUser("customer", null);
       const response = await proxy(createNextRequest("/fi/parent"));

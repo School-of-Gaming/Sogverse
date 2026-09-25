@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
+  completeRegistrationQuery,
   readCompleteRegistrationTarget,
+  resolveCompleteRegistrationIntent,
   resolveSafeRedirect,
 } from "@/lib/navigation/post-auth-redirect";
 
@@ -108,13 +110,29 @@ describe("resolveSafeRedirect with the finish page allowed", () => {
 describe("readCompleteRegistrationTarget", () => {
   const NO_UTM = { source: null, medium: null, campaign: null };
 
-  it("splits the raw pathname from the Gedu flag", () => {
+  it("splits the raw pathname from the variant it asked for", () => {
     expect(readCompleteRegistrationTarget("/fr/complete-registration")).toEqual(
-      { pathname: "/fr/complete-registration", asGedu: false, utm: NO_UTM },
+      {
+        pathname: "/fr/complete-registration",
+        asGedu: null,
+        utm: NO_UTM,
+        redirect: null,
+      },
     );
     expect(
       readCompleteRegistrationTarget("/fi/complete-registration?as=gedu&x=1"),
-    ).toEqual({ pathname: "/fi/complete-registration", asGedu: true, utm: NO_UTM });
+    ).toEqual({
+      pathname: "/fi/complete-registration",
+      asGedu: true,
+      utm: NO_UTM,
+      redirect: null,
+    });
+    expect(
+      readCompleteRegistrationTarget("/complete-registration?as=parent"),
+    ).toMatchObject({ asGedu: false });
+    expect(
+      readCompleteRegistrationTarget("/complete-registration?as=admin"),
+    ).toMatchObject({ asGedu: null });
   });
 
   it("reads the attribution through the sanitiser", () => {
@@ -124,12 +142,130 @@ describe("readCompleteRegistrationTarget", () => {
       ),
     ).toEqual({
       pathname: "/complete-registration",
-      asGedu: false,
+      asGedu: null,
       utm: { source: "Lynx", medium: null, campaign: null },
+      redirect: null,
     });
+  });
+
+  it("reads the product page through the post-auth allowlist", () => {
+    expect(
+      readCompleteRegistrationTarget(
+        `/complete-registration?redirect=${encodeURIComponent("/fi/kauppa/abc-123")}`,
+      ),
+    ).toMatchObject({ redirect: "/fi/kauppa/abc-123" });
+    for (const unsafe of [
+      "/admin",
+      "//evil.example/shop/abc",
+      "/shop/../admin",
+      "/complete-registration",
+    ]) {
+      expect(
+        readCompleteRegistrationTarget(
+          `/complete-registration?redirect=${encodeURIComponent(unsafe)}`,
+        ),
+      ).toMatchObject({ redirect: null });
+    }
   });
 
   it("is null for any other page", () => {
     expect(readCompleteRegistrationTarget("/shop/abc-123")).toBe(null);
+  });
+});
+
+describe("completeRegistrationQuery", () => {
+  const UTM = { source: "Lynx", medium: null, campaign: "summer" };
+
+  it("puts the variant first, then the attribution, then the product page", () => {
+    expect(
+      Object.entries(
+        completeRegistrationQuery({
+          asGedu: true,
+          utm: UTM,
+          redirect: "/fi/kauppa/abc-123",
+        }),
+      ),
+    ).toEqual([
+      ["as", "gedu"],
+      ["utm_source", "Lynx"],
+      ["utm_campaign", "summer"],
+      ["redirect", "/fi/kauppa/abc-123"],
+    ]);
+  });
+
+  it("emits a redirect only once it has passed the allowlist", () => {
+    for (const unsafe of ["/admin", "https://evil.example/shop/x", "/shop/../admin"]) {
+      expect(
+        completeRegistrationQuery({ asGedu: false, utm: UTM, redirect: unsafe }),
+      ).not.toHaveProperty("redirect");
+    }
+  });
+
+  it("is empty for a parent with nothing to carry", () => {
+    expect(
+      completeRegistrationQuery({
+        asGedu: false,
+        utm: { source: null, medium: null, campaign: null },
+      }),
+    ).toEqual({});
+  });
+});
+
+/**
+ * The proxy's registration gate bounces an owing account to a bare finish
+ * page, so the page falls back to the intent cookie the callback set for
+ * whatever its own address lacks.
+ */
+describe("resolveCompleteRegistrationIntent", () => {
+  const COOKIE =
+    "as=gedu&utm_source=Lynx&utm_campaign=summer&redirect=%2Ffi%2Fkauppa%2Fabc-123";
+
+  it("falls back to the cookie for everything a bare address lacks", () => {
+    expect(
+      resolveCompleteRegistrationIntent(new URLSearchParams(), COOKIE),
+    ).toEqual({
+      asGedu: true,
+      utm: { source: "Lynx", medium: null, campaign: "summer" },
+      redirect: "/fi/kauppa/abc-123",
+    });
+  });
+
+  it("lets the address win for each part it carries", () => {
+    expect(
+      resolveCompleteRegistrationIntent(
+        new URLSearchParams(
+          "as=parent&utm_medium=email&redirect=%2Fshop%2Fxyz",
+        ),
+        COOKIE,
+      ),
+    ).toEqual({
+      asGedu: false,
+      // Whole, never merged field by field with the cookie's.
+      utm: { source: null, medium: "email", campaign: null },
+      redirect: "/shop/xyz",
+    });
+  });
+
+  it("is the parent form, with nothing carried, when neither says", () => {
+    expect(
+      resolveCompleteRegistrationIntent(new URLSearchParams(), undefined),
+    ).toEqual({
+      asGedu: false,
+      utm: { source: null, medium: null, campaign: null },
+      redirect: null,
+    });
+  });
+
+  it("reads the cookie through the same sanitisers as the address", () => {
+    expect(
+      resolveCompleteRegistrationIntent(
+        new URLSearchParams(),
+        "as=admin&utm_source=%3Dformula&redirect=%2Fadmin",
+      ),
+    ).toEqual({
+      asGedu: false,
+      utm: { source: null, medium: null, campaign: null },
+      redirect: null,
+    });
   });
 });

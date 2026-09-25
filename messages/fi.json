@@ -1446,7 +1446,9 @@
       "signOut": "Kirjaudu ulos",
       "submit": "Viimeistele",
       "finishing": "Viimeistellään...",
-      "alreadyComplete": "Tämä tili on jo valmis. Kirjaudu uudelleen sisään jatkaaksesi."
+      "alreadyComplete": "Tämä tili on jo valmis. Kirjaudu uudelleen sisään jatkaaksesi.",
+      "switchToGedu": "Rekisteröidytkö pelikasvattajaksi? <link>Siirry pelikasvattajan lomakkeeseen</link>",
+      "switchToParent": "Etkö ole pelikasvattaja? <link>Luo sen sijaan vanhemman tili</link>"
     }
   },
   "pin": {

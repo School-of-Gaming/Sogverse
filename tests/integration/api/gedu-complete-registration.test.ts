@@ -248,6 +248,10 @@ describe("POST /api/gedu/complete-registration", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true });
+    // Registered: the intent the callback kept for the finish page expires.
+    const setCookie = response.headers.get("set-cookie") ?? "";
+    expect(setCookie).toContain("sog_registration_intent=;");
+    expect(setCookie).toContain("Max-Age=0");
     expect(writes).toEqual(["register_gedu", "profile"]);
 
     expect(mockRpc).toHaveBeenCalledWith({

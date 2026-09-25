@@ -4,8 +4,9 @@ import { getTranslations } from "next-intl/server";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import { ROUTES } from "@/lib/constants";
 import { ROLE_POST_LOGIN_PATHS } from "@/lib/constants/roles";
-import { COMPLETE_REGISTRATION_GEDU_QUERY } from "@/lib/navigation/post-auth-redirect";
-import { readUtmFromSearchParams } from "@/lib/utm";
+import { cookies } from "next/headers";
+import { resolveCompleteRegistrationIntent } from "@/lib/navigation/post-auth-redirect";
+import { REGISTRATION_INTENT_COOKIE_NAME } from "@/lib/registration-intent-cookie";
 import { CompleteRegistrationForm } from "@/components/auth";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,9 +24,12 @@ type SearchParams = Record<string, string | string[] | undefined>;
  * holds such a customer here from every protected page; anyone else who lands
  * here is sent where their role belongs.
  *
- * `?as=gedu` asks for the Gedu variant, and the `utm_*` params carry the
- * landing link's attribution across the Google round trip — both put on the
- * address by the register page's button and carried by the callback.
+ * `?as=gedu` asks for the Gedu variant (`?as=parent` for the parent one,
+ * outright), the `utm_*` params carry the landing link's attribution across
+ * the Google round trip and `?redirect=` names the product page to land on
+ * afterwards — put on the address by the register page's button and carried by
+ * the callback, which also keeps them in the intent cookie this page falls
+ * back to for whatever its address lacks.
  */
 export default async function CompleteRegistrationPage({
   searchParams,
@@ -49,6 +53,11 @@ export default async function CompleteRegistrationPage({
     }
   }
 
+  const intent = resolveCompleteRegistrationIntent(
+    query,
+    (await cookies()).get(REGISTRATION_INTENT_COOKIE_NAME)?.value,
+  );
+
   // Google's name for the account, off the verified token's metadata. The
   // halves when Google gave them, else the full name split at its last space.
   const supabase = await createClient();
@@ -57,13 +66,12 @@ export default async function CompleteRegistrationPage({
 
   return (
     <CompleteRegistrationForm
-      variant={
-        query.get("as") === COMPLETE_REGISTRATION_GEDU_QUERY.as ? "gedu" : "parent"
-      }
+      variant={intent.asGedu ? "gedu" : "parent"}
       email={profile.email}
       initialFirstName={firstName}
       initialLastName={lastName}
-      utm={readUtmFromSearchParams(query)}
+      utm={intent.utm}
+      redirect={intent.redirect}
     />
   );
 }

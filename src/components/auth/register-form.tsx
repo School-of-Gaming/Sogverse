@@ -83,7 +83,8 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const t = useTranslations('auth');
   const c = useTranslations('common');
   const locale = useLocale();
-  const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
+  const { redirect, safeRedirect, status, navigateAfterAuth } =
+    useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
   // Where this visit came from, if a marketing link carried UTM params. Held in
   // memory by the root provider since the landing page, so it survives browsing
@@ -436,12 +437,17 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               lands on the finish page, in the language this page is read in —
               the ticks above are this form's and do not travel with it. The
               visit's attribution does, on the address: the round trip through
-              Google unloads the tab that holds it. */}
+              Google unloads the tab that holds it. So does the product page
+              this visit came from, which the finish page lands on. */}
           <ContinueWithGoogle
             next={getPathname({
               href: {
                 pathname: ROUTES.completeRegistration,
-                query: completeRegistrationQuery({ asGedu: false, utm }),
+                query: completeRegistrationQuery({
+                  asGedu: false,
+                  utm,
+                  redirect: safeRedirect,
+                }),
               },
               locale,
             })}

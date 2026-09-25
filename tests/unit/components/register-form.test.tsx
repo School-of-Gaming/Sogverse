@@ -57,8 +57,9 @@ vi.mock("@/providers", () => ({
 // fallback.
 const mockNavigateAfterAuth = vi.fn();
 vi.mock("@/hooks/use-auth-redirect", () => ({
-  useAuthRedirect: () => ({
-    redirect: null,
+  useAuthRedirect: (redirect: string | null) => ({
+    redirect,
+    safeRedirect: redirect,
     status: null,
     navigateAfterAuth: (...args: unknown[]) => mockNavigateAfterAuth(...args),
   }),
@@ -417,5 +418,32 @@ describe("the parent register page's Google button", () => {
     expect(nextUrl.searchParams.get("utm_source")).toBe("Lynx");
     expect(nextUrl.searchParams.get("utm_campaign")).toBe("lynx-summer-a");
     expect(nextUrl.searchParams.has("utm_medium")).toBe(false);
+    expect(nextUrl.searchParams.has("redirect")).toBe(false);
+  });
+
+  // A parent who came from a product lands back on it once registered, so
+  // the page's safe `?redirect=` rides the finish page's address too.
+  it("carries the page's product-page redirect onto the finish page", async () => {
+    vi.mocked(mockSupabaseClient.auth.signInWithOAuth).mockResolvedValue({
+      data: { provider: "google", url: "https://accounts.google.test" },
+      error: null,
+    });
+    const view = render(<RegisterForm redirect="/fi/kauppa/abc-123" />);
+    const button = [...view.container.querySelectorAll("button")].find(
+      (candidate) => candidate.textContent.includes("continue"),
+    );
+    if (!button) throw new Error("no Google button");
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    const [args] = vi.mocked(mockSupabaseClient.auth.signInWithOAuth).mock
+      .calls[0];
+    const next = new URL(args.options?.redirectTo ?? "").searchParams.get("next");
+    if (!next) throw new Error("no next");
+    const nextUrl = new URL(next, "https://internal.invalid");
+    expect(nextUrl.pathname).toBe(ROUTES.completeRegistration);
+    expect(nextUrl.searchParams.get("redirect")).toBe("/fi/kauppa/abc-123");
   });
 });

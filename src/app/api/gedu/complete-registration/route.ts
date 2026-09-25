@@ -8,6 +8,7 @@ import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";
 import { buildWelcomeGeduEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
+import { registrationCompletedResponse } from "@/lib/registration-intent-cookie";
 import { getOrigin } from "@/lib/url";
 import { completeGeduRegistrationBody } from "@/services/gedu/gedu-registration.contracts";
 import {
@@ -180,6 +181,6 @@ export const POST = defineRoute({
       console.error("[gedu/complete-registration] welcome email failed", error);
     }
 
-    return { ok: true };
+    return registrationCompletedResponse();
   },
 });

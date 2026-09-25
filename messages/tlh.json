@@ -1490,7 +1490,9 @@
       "signOut": "yImej",
       "submit": "yIrInmoH",
       "finishing": "vIrInmoH...",
-      "alreadyComplete": "account’vam rInta’. yI’el’qa’ ’ej yItaH."
+      "alreadyComplete": "account’vam rInta’. yI’el’qa’ ’ej yItaH.",
+      "switchToGedu": "Gedu DaDaq DaghoS’a’? <link>Gedu ghItlh yIwIv</link>",
+      "switchToParent": "Gedu SoHbe’’a’? <link>vav/SoS account yIchenmoH</link>"
     }
   },
   "pin": {

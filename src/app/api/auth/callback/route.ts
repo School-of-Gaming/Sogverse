@@ -6,6 +6,7 @@ import { ROLE_POST_LOGIN_PATHS } from "@/lib/constants/roles";
 import { ROUTES } from "@/lib/constants";
 import { isSupportedLocale } from "@/lib/constants/locales";
 import { getOrigin } from "@/lib/url";
+import { NO_UTM_ATTRIBUTION } from "@/lib/utm";
 import type { OAuthLoginError } from "@/lib/google-sign-in";
 import {
   completeRegistrationQuery,
@@ -16,6 +17,10 @@ import {
   LOCALE_COOKIE_NAME,
   localeCookieOptions,
 } from "@/lib/locale-cookie";
+import {
+  REGISTRATION_INTENT_COOKIE_NAME,
+  registrationIntentCookieOptions,
+} from "@/lib/registration-intent-cookie";
 
 /**
  * The one way into a Google sign-in: Google sends the browser back here with
@@ -114,18 +119,30 @@ export async function GET(request: Request) {
   }
 
   let redirectPath: string;
+  // The finish page's query, when this sign-in is sent there — kept in the
+  // intent cookie below as well as on the address.
+  let registrationIntent: string | null = null;
   if (role === "customer" && profile.registration_completed_at === null) {
     // **An account that still owes its registration goes to the finish page,
     // whatever `next` said.** Google hands over no name, terms or consents, so
     // nothing else is useful until they are given. The page keeps the locale
     // the register page was read in when `next` carried one, the Gedu variant
-    // only when the Gedu register page asked for it, and the landing link's
-    // attribution, which the round trip through Google would otherwise lose.
+    // only when the Gedu register page asked for it, the landing link's
+    // attribution, which the round trip through Google would otherwise lose,
+    // and the product page the account set out from: the finish page's own
+    // `redirect` when `next` was the finish page, or `next` itself when it was
+    // a product page (the login page's Google button sends its `?redirect=`).
     const pathname = finishTarget?.pathname ?? ROUTES.completeRegistration;
-    const query = finishTarget
-      ? new URLSearchParams(completeRegistrationQuery(finishTarget)).toString()
-      : "";
-    redirectPath = query ? `${pathname}?${query}` : pathname;
+    registrationIntent = new URLSearchParams(
+      completeRegistrationQuery({
+        asGedu: finishTarget?.asGedu ?? false,
+        utm: finishTarget?.utm ?? NO_UTM_ATTRIBUTION,
+        redirect: finishTarget ? finishTarget.redirect : next,
+      }),
+    ).toString();
+    redirectPath = registrationIntent
+      ? `${pathname}?${registrationIntent}`
+      : pathname;
   } else if (next && !finishTarget) {
     redirectPath = next;
   } else {
@@ -150,6 +167,19 @@ export async function GET(request: Request) {
       LOCALE_COOKIE_NAME,
       profile.locale,
       localeCookieOptions(),
+    );
+  }
+
+  // **The intent outlives the address.** The proxy's registration gate
+  // bounces an owing account to a bare finish page, so the page falls back to
+  // this cookie for whatever its address lacks. An intent with nothing in it
+  // expires any earlier one rather than leaving it to speak for this sign-in.
+  if (registrationIntent !== null) {
+    const options = registrationIntentCookieOptions();
+    response.cookies.set(
+      REGISTRATION_INTENT_COOKIE_NAME,
+      registrationIntent,
+      registrationIntent ? options : { ...options, maxAge: 0 },
     );
   }
 

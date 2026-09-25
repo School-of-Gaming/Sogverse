@@ -296,12 +296,89 @@ describe("GET /api/auth/callback", () => {
       );
     });
 
-    it("ignores any other next", async () => {
+    // The login page's Google button sends its own `?redirect=` as `next`: a
+    // parent who came from a product lands back on it once registered.
+    it("carries an allowlisted product-page next onto the finish page", async () => {
       const response = await GET(
-        createCallbackRequest({ code: "valid-code", next: "/shop/abc-123" }),
+        createCallbackRequest({ code: "valid-code", next: "/fi/kauppa/abc-123" }),
+      );
+
+      expect(destination(response)).toBe(
+        "/complete-registration?redirect=%2Ffi%2Fkauppa%2Fabc-123",
+      );
+    });
+
+    it("drops a next outside the allowlist", async () => {
+      const response = await GET(
+        createCallbackRequest({ code: "valid-code", next: "/admin" }),
       );
 
       expect(destination(response)).toBe("/complete-registration");
+    });
+
+    it("carries the finish page's own redirect, allowlisted, and nothing else", async () => {
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: `/fi/complete-registration?redirect=${encodeURIComponent("/shop/abc-123")}`,
+        }),
+      );
+
+      expect(destination(response)).toBe(
+        "/fi/complete-registration?redirect=%2Fshop%2Fabc-123",
+      );
+
+      const refused = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: `/fi/complete-registration?redirect=${encodeURIComponent("/admin")}`,
+        }),
+      );
+
+      expect(destination(refused)).toBe("/fi/complete-registration");
+    });
+
+    // The proxy's registration gate bounces to a bare finish page, so the
+    // query the callback built is kept in a cookie the page falls back to.
+    describe("the registration intent cookie", () => {
+      it("holds the finish page's query, httpOnly and SameSite=Lax", async () => {
+        const response = await GET(
+          createCallbackRequest({
+            code: "valid-code",
+            next: "/sv/complete-registration?as=gedu&utm_campaign=recruit&redirect=%2Fshop%2Fabc&extra=1",
+          }),
+        );
+
+        const cookie = response.cookies.get("sog_registration_intent");
+        expect(cookie?.value).toBe(
+          "as=gedu&utm_campaign=recruit&redirect=%2Fshop%2Fabc",
+        );
+        expect(cookie?.httpOnly).toBe(true);
+        expect(cookie?.sameSite).toBe("lax");
+        expect(cookie?.path).toBe("/");
+        expect(cookie?.maxAge).toBeGreaterThan(0);
+      });
+
+      it("expires an earlier intent when this one carries nothing", async () => {
+        const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+        const cookie = response.cookies.get("sog_registration_intent");
+        expect(cookie?.value).toBe("");
+        expect(cookie?.maxAge).toBe(0);
+      });
+
+      it("is not written for an account that has finished registering", async () => {
+        signedInAs({ role: "customer", registration_completed_at: COMPLETED });
+
+        const response = await GET(
+          createCallbackRequest({
+            code: "valid-code",
+            next: "/complete-registration?as=gedu",
+          }),
+        );
+
+        expect(response.cookies.get("sog_registration_intent")).toBeUndefined();
+      });
     });
   });
 

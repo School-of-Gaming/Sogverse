@@ -16,20 +16,32 @@ import { act, fireEvent, render } from "@testing-library/react";
 vi.mock("next-intl", () => ({
   useTranslations: () => {
     const t = (key: string) => key;
-    t.rich = (key: string) => key;
+    // A `link` tag renders its link around the key, so the switch line's
+    // address can be asserted on; every other rich string is just its key.
+    t.rich = (
+      key: string,
+      values?: { link?: (chunks: string) => React.ReactNode },
+    ) => (values?.link ? values.link(key) : key);
     return t;
   },
   useLocale: () => "fi",
 }));
 
+// The hook's own job — the allowlist, then the redirect or the fallback — is
+// not this file's; what is, is which redirect the form hands it and which
+// fallback it asks for.
+const mockUseAuthRedirect = vi.fn<(redirect: string | null) => void>();
 const mockNavigateAfterAuth = vi.fn();
 vi.mock("@/hooks/use-auth-redirect", () => ({
-  useAuthRedirect: () => ({
-    redirect: null,
-    safeRedirect: null,
-    status: null,
-    navigateAfterAuth: (...args: unknown[]) => mockNavigateAfterAuth(...args),
-  }),
+  useAuthRedirect: (redirect: string | null) => {
+    mockUseAuthRedirect(redirect);
+    return {
+      redirect,
+      safeRedirect: redirect,
+      status: null,
+      navigateAfterAuth: (...args: unknown[]) => mockNavigateAfterAuth(...args),
+    };
+  },
 }));
 
 const mockPushGtmEvent = vi.fn();
@@ -66,7 +78,10 @@ const mockFetch = vi.fn();
 
 const UTM = { source: "Lynx", medium: null, campaign: "lynx-summer-a" };
 
-function renderForm(variant: "parent" | "gedu") {
+function renderForm(
+  variant: "parent" | "gedu",
+  { redirect = null }: { redirect?: string | null } = {},
+) {
   const view = render(
     <CompleteRegistrationForm
       variant={variant}
@@ -74,6 +89,7 @@ function renderForm(variant: "parent" | "gedu") {
       initialFirstName="Marja"
       initialLastName="Virtanen"
       utm={UTM}
+      redirect={redirect}
     />,
   );
   const form = view.container.querySelector<HTMLFormElement>(
@@ -203,5 +219,53 @@ describe("CompleteRegistrationForm", () => {
     });
     expect(mockPushGtmEvent).not.toHaveBeenCalled();
     expect(mockNavigateAfterAuth).toHaveBeenCalledWith(ROUTES.gedu.dashboard);
+  });
+
+  it.each(["parent", "gedu"] as const)(
+    "hands the %s variant's navigation the product page it came from",
+    async (variant) => {
+      const { view, submit } = renderForm(variant, {
+        redirect: "/fi/kauppa/abc-123",
+      });
+      if (variant === "parent") tickTerms(view);
+
+      await submit();
+
+      expect(mockUseAuthRedirect).toHaveBeenLastCalledWith("/fi/kauppa/abc-123");
+      expect(mockNavigateAfterAuth).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  function switchLink(view: ReturnType<typeof render>) {
+    const link = [...view.container.querySelectorAll("a")].find((anchor) =>
+      anchor.textContent.startsWith("switchTo"),
+    );
+    if (!link) throw new Error("no switch link");
+    return {
+      text: link.textContent,
+      url: new URL(link.getAttribute("href") ?? "", "https://internal.invalid"),
+    };
+  }
+
+  it("offers the parent form a way to the Gedu one, keeping what it carries", () => {
+    const { view } = renderForm("parent", { redirect: "/shop/abc-123" });
+
+    const { text, url } = switchLink(view);
+    expect(text).toBe("switchToGedu");
+    expect(url.pathname).toBe(ROUTES.completeRegistration);
+    expect(url.searchParams.get("as")).toBe("gedu");
+    expect(url.searchParams.get("utm_source")).toBe("Lynx");
+    expect(url.searchParams.get("redirect")).toBe("/shop/abc-123");
+  });
+
+  it("offers the Gedu form a way to the parent one, asked for outright", () => {
+    // A bare address would fall back to the intent cookie, which says Gedu.
+    const { view } = renderForm("gedu", { redirect: "/shop/abc-123" });
+
+    const { text, url } = switchLink(view);
+    expect(text).toBe("switchToParent");
+    expect(url.searchParams.get("as")).toBe("parent");
+    expect(url.searchParams.get("utm_campaign")).toBe("lynx-summer-a");
+    expect(url.searchParams.get("redirect")).toBe("/shop/abc-123");
   });
 });

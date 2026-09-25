@@ -20,6 +20,7 @@ import {
   normalizeExternalPath,
 } from "@/lib/navigation/locale-path";
 import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
+import { COMPLETE_REGISTRATION_GEDU_QUERY } from "@/lib/navigation/post-auth-redirect";
 import { UTM_HEADER, readUtmFromSearchParams, serialiseUtm } from "@/lib/utm";
 
 /**
@@ -532,7 +533,16 @@ export async function proxy(request: NextRequest) {
 
       if (registrationOwed) {
         if (!isPublicRoute && pathname !== ROUTES.completeRegistration) {
-          return redirect(localizedUrl(ROUTES.completeRegistration));
+          const finishUrl = localizedUrl(ROUTES.completeRegistration);
+          // Bounced off the Gedu register page (its Google button pressed a
+          // second time): the Gedu form, said on the address as well as in
+          // the intent cookie the callback set.
+          if (pathname === ROUTES.registerGedu) {
+            for (const [key, value] of Object.entries(COMPLETE_REGISTRATION_GEDU_QUERY)) {
+              finishUrl.searchParams.set(key, value);
+            }
+          }
+          return redirect(finishUrl);
         }
       } else if (userRole === "customer" && !isPinExemptPath(pathname, isAuthRoute)) {
         // Parent-PIN gate: a locked customer session may not act as the parent

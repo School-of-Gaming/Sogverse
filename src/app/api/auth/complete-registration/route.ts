@@ -10,6 +10,7 @@ import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
+import { registrationCompletedResponse } from "@/lib/registration-intent-cookie";
 import { getOrigin } from "@/lib/url";
 import {
   REGISTRATION_ALREADY_COMPLETE,
@@ -236,6 +237,6 @@ export const POST = defineRoute({
       }),
     );
 
-    return { ok: true };
+    return registrationCompletedResponse();
   },
 });

@@ -244,6 +244,7 @@ describe("POST /api/auth/complete-registration", () => {
     expect(writes).toEqual([]);
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
     expect(deferred).toHaveLength(0);
+    expect(response.headers.get("set-cookie")).toBeNull();
   });
 
   // -- Input --
@@ -276,6 +277,10 @@ describe("POST /api/auth/complete-registration", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true });
+    // Registered: the intent the callback kept for the finish page expires.
+    const setCookie = response.headers.get("set-cookie") ?? "";
+    expect(setCookie).toContain("sog_registration_intent=;");
+    expect(setCookie).toContain("Max-Age=0");
 
     const row = profileRow();
     expect(row).toMatchObject({
