@@ -420,6 +420,15 @@ export const ROUTES = {
   seatOffer: "/seat-offer",
   selectProfile: "/select-profile",
   /**
+   * Where an account created through Google finishes registering — its name,
+   * the terms and the consents, none of which Google hands over. Signed-in
+   * only, and not an auth route: an auth route bounces a signed-in visitor to
+   * their dashboard, and this page's every visitor is signed in. The proxy
+   * sends a customer whose `profiles.registration_completed_at` is NULL here
+   * from every protected page.
+   */
+  completeRegistration: "/complete-registration",
+  /**
    * Public identity page — who School of Gaming is, what Yty is, and the
    * public FAQ. Reached from the header in both auth states: it is the one
    * page carrying this copy, and the home page it used to live on is

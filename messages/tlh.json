@@ -1410,7 +1410,10 @@
         "passwordTooShort": "{count} mu’mey law’ law’ Hutlhbe’ mu’mey’lIj.",
         "invalidCredentials": "QIn Daq, pong pagh mu’mey lughbe’. tugh!",
         "emailNotConfirmed": "QIn-HutlIj yIngu’ ’el qaSpa’.",
-        "tooManyAttempts": "law’ ’el wIv DataH! loSpa’ tugh ghIq yInID."
+        "tooManyAttempts": "law’ ’el wIv DataH! loSpa’ tugh ghIq yInID.",
+        "oauthCancelled": "Google ’el DamevmoH. yInIDqa’, pagh mu’mey’lIj yIlo’.",
+        "authCallbackError": "Google ’el rInbe’. yInIDqa’!",
+        "googleGamer": "Google lo’be’ toy’wI’ account: QIn Daq pagh pong, mu’mey je lo’; pagh vav account lo’. DaSovbe’chugh, vavlI’ yIghel."
       },
       "identifierLabel": "QIn Daq pagh pong",
       "identifierPlaceholder": "SoH@example.com pagh pong"
@@ -1472,6 +1475,22 @@
       "invalidPhone": "HablI’ HSDu’ nIvbe’ yIchel",
       "creatingAccount": "account vIchenmoH...",
       "alreadyHaveAccount": "account Daghaj’a’? <link>yI’el</link>"
+    },
+    "google": {
+      "continue": "Google yIlo’, yItaH!",
+      "or": "pagh",
+      "failed": "Google ’el Qapbe’. yInIDqa’!"
+    },
+    "completeRegistration": {
+      "title": "School of Gaming account-lIj yIrInmoH",
+      "geduTitle": "noH Quj yejHaD Gedu account-lIj yIrInmoH",
+      "description": "Google account-lIj Dalo’ ’ej Dayel. School of Gaming account-lIj DarInmoH De’vammo’.",
+      "notYou": "SoHbe’’a’?",
+      "signOut": "yImej",
+      "submit": "yIrInmoH",
+      "finishing": "vIrInmoH...",
+      "alreadyComplete": "account’vam rInta’. yI’el’qa’ ’ej yItaH.",
+      "switchToParent": "Gedu SoHbe’’a’? <link>vav/SoS account yIchenmoH</link>"
     }
   },
   "pin": {

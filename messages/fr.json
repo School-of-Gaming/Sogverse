@@ -1366,7 +1366,10 @@
         "passwordTooShort": "Le mot de passe doit contenir au moins {count} caractères.",
         "invalidCredentials": "L’adresse e-mail, l’identifiant ou le mot de passe saisi est incorrect.",
         "emailNotConfirmed": "Veuillez confirmer votre adresse e-mail avant de vous connecter.",
-        "tooManyAttempts": "Trop de tentatives de connexion. Patientez un instant et réessayez."
+        "tooManyAttempts": "Trop de tentatives de connexion. Patientez un instant et réessayez.",
+        "oauthCancelled": "La connexion avec Google a été annulée. Vous pouvez réessayer ou vous connecter avec votre mot de passe.",
+        "authCallbackError": "La connexion avec Google n’a pas abouti. Veuillez réessayer.",
+        "googleGamer": "Les comptes joueur se connectent avec leur adresse e-mail ou leur identifiant et leur mot de passe, ou par le compte d’un parent, pas avec Google. En cas de doute, demande à ton parent comment faire."
       },
       "identifierLabel": "Adresse e-mail ou identifiant",
       "identifierPlaceholder": "vous@exemple.com ou un identifiant"
@@ -1428,6 +1431,22 @@
       "invalidPhone": "Veuillez saisir un numéro de téléphone valide",
       "creatingAccount": "Création du compte...",
       "alreadyHaveAccount": "Vous avez déjà un compte ? <link>Connectez-vous</link>"
+    },
+    "google": {
+      "continue": "Continuer avec Google",
+      "or": "ou",
+      "failed": "La connexion avec Google n’a pas pu démarrer. Veuillez réessayer."
+    },
+    "completeRegistration": {
+      "title": "Finalisez votre compte School of Gaming",
+      "geduTitle": "Finalisez votre compte Gedu chez School of Gaming",
+      "description": "Votre compte Google vous a connecté. Les informations ci-dessous finalisent votre compte School of Gaming.",
+      "notYou": "Ce n’est pas vous ?",
+      "signOut": "Se déconnecter",
+      "submit": "Terminer",
+      "finishing": "Finalisation...",
+      "alreadyComplete": "Ce compte est déjà configuré. Reconnectez-vous pour continuer.",
+      "switchToParent": "Vous n’êtes pas Gedu ? <link>Créer plutôt un compte parent</link>"
     }
   },
   "pin": {

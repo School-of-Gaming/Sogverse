@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { GET } from "@/app/api/auth/callback/route";
 
 // --- Mocks ---
 
 const mockExchangeCodeForSession = vi.fn();
 const mockGetClaims = vi.fn();
+const mockSignOut = vi.fn();
 const mockProfileQuery = vi.fn();
 /** The columns the route asked `profiles` for, as one string. */
 const mockProfileSelect = vi.fn<(columns: string) => void>();
@@ -14,6 +15,7 @@ vi.mock("@/lib/supabase/server", () => ({
     auth: {
       exchangeCodeForSession: mockExchangeCodeForSession,
       getClaims: mockGetClaims,
+      signOut: mockSignOut,
     },
     from: vi.fn(() => ({
       select: vi.fn((columns: string) => {
@@ -28,14 +30,38 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
+const mockAdminProfileUpdate = vi.fn();
+const mockAdminRpc = vi.fn();
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({
+    rpc: (fn: string, args: Record<string, unknown>) => mockAdminRpc(fn, args),
+    from: (table: string) => {
+      if (table !== "profiles") {
+        throw new Error(`Unexpected table in admin mock: ${table}`);
+      }
+      return {
+        update: (row: Record<string, unknown>) => ({
+          eq: (column: string, value: string) =>
+            mockAdminProfileUpdate({ row, column, value }),
+        }),
+      };
+    },
+  }),
+}));
+
 // --- Helpers ---
 
-function createCallbackRequest(params: Record<string, string> = {}): Request {
-  const url = new URL("http://localhost:3000/api/auth/callback");
+const SITE_URL = "https://sogverse.example";
+
+function createCallbackRequest(
+  params: Record<string, string> = {},
+  { host = "localhost:3000" }: { host?: string } = {},
+): Request {
+  const url = new URL(`http://${host}/api/auth/callback`);
   Object.entries(params).forEach(([key, value]) =>
     url.searchParams.set(key, value)
   );
-  return new Request(url.toString());
+  return new Request(url.toString(), { headers: { host } });
 }
 
 function getRedirectUrl(response: Response): URL {
@@ -44,21 +70,93 @@ function getRedirectUrl(response: Response): URL {
   return new URL(location);
 }
 
+/** Where the redirect goes, as a path plus query. */
+function destination(response: Response): string {
+  const url = getRedirectUrl(response);
+  return `${url.pathname}${url.search}`;
+}
+
+/** A successful exchange for an account whose profile reads as given. */
+function signedInAs(
+  profile: Record<string, unknown> | null,
+  identities: Array<{ provider: string; identity_data: Record<string, unknown> }> = [],
+) {
+  mockExchangeCodeForSession.mockResolvedValue({
+    data: { user: { id: "user-123", identities }, session: {} },
+    error: null,
+  });
+  mockGetClaims.mockResolvedValue({
+    data: { claims: { sub: "user-123" } },
+  });
+  mockProfileQuery.mockResolvedValue({ data: profile, error: null });
+}
+
+/** A customer who has finished registering. */
+const COMPLETED = "2026-09-01T12:00:00Z";
+
 // --- Tests ---
 
 describe("GET /api/auth/callback", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_URL);
+    mockSignOut.mockResolvedValue({ error: null });
+    mockAdminProfileUpdate.mockResolvedValue({ error: null });
+    mockAdminRpc.mockResolvedValue({ data: null, error: null });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  describe("the origin", () => {
+    it("keeps a trusted host", async () => {
+      signedInAs({ role: "customer", registration_completed_at: COMPLETED });
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(getRedirectUrl(response).origin).toBe("http://localhost:3000");
+    });
+
+    it("falls back to the site URL for a spoofed host", async () => {
+      // The Host header is the attacker's to choose; `getOrigin` refuses one
+      // it does not trust rather than bouncing the session somewhere else.
+      signedInAs({ role: "customer", registration_completed_at: COMPLETED });
+
+      const response = await GET(
+        createCallbackRequest({ code: "valid-code" }, { host: "evil.example" }),
+      );
+
+      expect(getRedirectUrl(response).origin).toBe(SITE_URL);
+    });
+  });
+
+  describe("errors from the provider", () => {
+    it("tells a cancelled consent screen apart", async () => {
+      const response = await GET(
+        createCallbackRequest({ error: "access_denied" }),
+      );
+
+      expect(response.status).toBe(307);
+      expect(destination(response)).toBe("/login?error=oauth_cancelled");
+      expect(mockExchangeCodeForSession).not.toHaveBeenCalled();
+    });
+
+    it("reports any other provider error generically", async () => {
+      const response = await GET(
+        createCallbackRequest({ error: "server_error", code: "valid-code" }),
+      );
+
+      expect(destination(response)).toBe("/login?error=auth_callback_error");
+      expect(mockExchangeCodeForSession).not.toHaveBeenCalled();
+    });
   });
 
   it("redirects to login error when no code param", async () => {
     const response = await GET(createCallbackRequest());
 
     expect(response.status).toBe(307);
-    expect(getRedirectUrl(response).pathname).toBe("/login");
-    expect(getRedirectUrl(response).searchParams.get("error")).toBe(
-      "auth_callback_error"
-    );
+    expect(destination(response)).toBe("/login?error=auth_callback_error");
   });
 
   it("redirects to login error when exchangeCodeForSession fails", async () => {
@@ -71,105 +169,320 @@ describe("GET /api/auth/callback", () => {
     );
 
     expect(response.status).toBe(307);
-    expect(getRedirectUrl(response).pathname).toBe("/login");
-    expect(getRedirectUrl(response).searchParams.get("error")).toBe(
-      "auth_callback_error"
-    );
+    expect(destination(response)).toBe("/login?error=auth_callback_error");
   });
 
-  it("redirects to /select-profile for customer role", async () => {
+  it("redirects to login error when the session has no claims", async () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetClaims.mockResolvedValue({
-      data: { claims: { sub: "user-123" } },
-    });
-    mockProfileQuery.mockResolvedValue({
-      data: { role: "customer" },
-      error: null,
-    });
+    mockGetClaims.mockResolvedValue({ data: null });
 
     const response = await GET(createCallbackRequest({ code: "valid-code" }));
 
-    expect(response.status).toBe(307);
-    expect(getRedirectUrl(response).pathname).toBe("/select-profile");
+    expect(destination(response)).toBe("/login?error=auth_callback_error");
   });
 
-  it("redirects to /admin for admin role", async () => {
-    mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetClaims.mockResolvedValue({
-      data: { claims: { sub: "user-123" } },
-    });
-    mockProfileQuery.mockResolvedValue({
-      data: { role: "admin" },
-      error: null,
+  // Every routing decision is read off the profile row, so a session whose
+  // row cannot be read is revoked rather than routed by a guess.
+  describe("a profile that cannot be read", () => {
+    // A single-row read never answers "no row" with a null body: PostgREST
+    // reports the missing row as an error, and that is the shape pinned here.
+    it("signs out and refuses when the row is missing", async () => {
+      signedInAs(null);
+      mockProfileQuery.mockResolvedValue({
+        data: null,
+        error: { code: "PGRST116", message: "The result contains 0 rows" },
+      });
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "local" });
+      expect(destination(response)).toBe("/login?error=auth_callback_error");
     });
 
-    const response = await GET(createCallbackRequest({ code: "valid-code" }));
+    it("signs out and refuses when the read fails", async () => {
+      signedInAs(null);
+      mockProfileQuery.mockResolvedValue({
+        data: null,
+        error: { message: "connection reset" },
+      });
 
-    expect(response.status).toBe(307);
-    expect(getRedirectUrl(response).pathname).toBe("/admin");
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "local" });
+      expect(destination(response)).toBe("/login?error=auth_callback_error");
+    });
   });
 
-  it("redirects to /gedu for gedu role", async () => {
-    mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetClaims.mockResolvedValue({
-      data: { claims: { sub: "user-123" } },
-    });
-    mockProfileQuery.mockResolvedValue({
-      data: { role: "gedu" },
-      error: null,
+  describe("a gamer account", () => {
+    it("is signed out again and refused", async () => {
+      signedInAs({ role: "gamer", registration_completed_at: COMPLETED });
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledTimes(1);
+      // Only this session: the gamer's sign-ins elsewhere did nothing wrong.
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "local" });
+      expect(destination(response)).toBe("/login?error=google_gamer");
     });
 
-    const response = await GET(createCallbackRequest({ code: "valid-code" }));
+    it("is refused even with an allowed next", async () => {
+      signedInAs({ role: "gamer", registration_completed_at: COMPLETED });
 
-    expect(response.status).toBe(307);
-    expect(getRedirectUrl(response).pathname).toBe("/gedu");
+      const response = await GET(
+        createCallbackRequest({ code: "valid-code", next: "/shop/abc-123" }),
+      );
+
+      expect(destination(response)).toBe("/login?error=google_gamer");
+    });
   });
 
-  it("redirects to /gamer for gamer role", async () => {
-    mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetClaims.mockResolvedValue({
-      data: { claims: { sub: "user-123" } },
-    });
-    mockProfileQuery.mockResolvedValue({
-      data: { role: "gamer" },
-      error: null,
+  describe("a customer who has not finished registering", () => {
+    beforeEach(() => {
+      signedInAs({ role: "customer", registration_completed_at: null });
     });
 
-    const response = await GET(createCallbackRequest({ code: "valid-code" }));
+    it("goes to the finish page when no next was sent", async () => {
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
 
-    expect(response.status).toBe(307);
-    expect(getRedirectUrl(response).pathname).toBe("/gamer");
+      expect(destination(response)).toBe("/complete-registration");
+      expect(mockSignOut).not.toHaveBeenCalled();
+    });
+
+    it("keeps the locale the register page sent", async () => {
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: "/fi/complete-registration",
+        }),
+      );
+
+      expect(destination(response)).toBe("/fi/complete-registration");
+    });
+
+    it("carries the Gedu variant only when next asked for it", async () => {
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: "/sv/complete-registration?as=gedu&extra=1",
+        }),
+      );
+
+      expect(destination(response)).toBe("/sv/complete-registration?as=gedu");
+    });
+
+    // The Google round trip unloads the tab that held the landing link's
+    // attribution in memory, so the register page puts it on `next` and the
+    // callback carries it onto the finish page — sanitised, and nothing else.
+    it("carries the landing link's attribution, sanitised", async () => {
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: "/fi/complete-registration?utm_source=Lynx&utm_medium=%3Dformula&utm_campaign=lynx-summer-a&extra=1",
+        }),
+      );
+
+      expect(destination(response)).toBe(
+        "/fi/complete-registration?utm_source=Lynx&utm_campaign=lynx-summer-a",
+      );
+    });
+
+    it("puts the Gedu variant ahead of the attribution", async () => {
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: "/complete-registration?utm_campaign=recruit&as=gedu",
+        }),
+      );
+
+      expect(destination(response)).toBe(
+        "/complete-registration?as=gedu&utm_campaign=recruit",
+      );
+    });
+
+    // The login page's Google button sends its own `?redirect=` as `next`: a
+    // parent who came from a product lands back on it once registered.
+    it("carries an allowlisted product-page next onto the finish page", async () => {
+      const response = await GET(
+        createCallbackRequest({ code: "valid-code", next: "/fi/kauppa/abc-123" }),
+      );
+
+      expect(destination(response)).toBe(
+        "/complete-registration?redirect=%2Ffi%2Fkauppa%2Fabc-123",
+      );
+    });
+
+    it("drops a next outside the allowlist", async () => {
+      const response = await GET(
+        createCallbackRequest({ code: "valid-code", next: "/admin" }),
+      );
+
+      expect(destination(response)).toBe("/complete-registration");
+    });
+
+    it("carries the finish page's own redirect, allowlisted, and nothing else", async () => {
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: `/fi/complete-registration?redirect=${encodeURIComponent("/shop/abc-123")}`,
+        }),
+      );
+
+      expect(destination(response)).toBe(
+        "/fi/complete-registration?redirect=%2Fshop%2Fabc-123",
+      );
+
+      const refused = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: `/fi/complete-registration?redirect=${encodeURIComponent("/admin")}`,
+        }),
+      );
+
+      expect(destination(refused)).toBe("/fi/complete-registration");
+    });
+
+    // The proxy's registration gate bounces to a bare finish page, so the
+    // query the callback built is kept in a cookie the page falls back to.
+    describe("the registration intent cookie", () => {
+      it("holds the finish page's query, httpOnly and SameSite=Lax", async () => {
+        const response = await GET(
+          createCallbackRequest({
+            code: "valid-code",
+            next: "/sv/complete-registration?as=gedu&utm_campaign=recruit&redirect=%2Fshop%2Fabc&extra=1",
+          }),
+        );
+
+        const cookie = response.cookies.get("sog_registration_intent");
+        expect(cookie?.value).toBe(
+          "as=gedu&utm_campaign=recruit&redirect=%2Fshop%2Fabc",
+        );
+        expect(cookie?.httpOnly).toBe(true);
+        expect(cookie?.sameSite).toBe("lax");
+        expect(cookie?.path).toBe("/");
+        expect(cookie?.maxAge).toBeGreaterThan(0);
+      });
+
+      it("expires an earlier intent when this one carries nothing", async () => {
+        const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+        const cookie = response.cookies.get("sog_registration_intent");
+        expect(cookie?.value).toBe("");
+        expect(cookie?.maxAge).toBe(0);
+      });
+
+      it("is not written for an account that has finished registering", async () => {
+        signedInAs({ role: "customer", registration_completed_at: COMPLETED });
+
+        const response = await GET(
+          createCallbackRequest({
+            code: "valid-code",
+            next: "/complete-registration?as=gedu",
+          }),
+        );
+
+        expect(response.cookies.get("sog_registration_intent")).toBeUndefined();
+      });
+    });
   });
 
-  it("redirects to /select-profile when profile is null (fallback)", async () => {
-    mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetClaims.mockResolvedValue({
-      data: { claims: { sub: "user-123" } },
-    });
-    mockProfileQuery.mockResolvedValue({ data: null, error: null });
+  describe("an account that has finished registering", () => {
+    it("routes a customer to the family selector", async () => {
+      signedInAs({ role: "customer", registration_completed_at: COMPLETED });
 
-    const response = await GET(createCallbackRequest({ code: "valid-code" }));
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
 
-    expect(response.status).toBe(307);
-    expect(getRedirectUrl(response).pathname).toBe("/select-profile");
-  });
-
-  it("redirects to next param when set", async () => {
-    mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetClaims.mockResolvedValue({
-      data: { claims: { sub: "user-123" } },
-    });
-    mockProfileQuery.mockResolvedValue({
-      data: { role: "customer" },
-      error: null,
+      expect(response.status).toBe(307);
+      expect(destination(response)).toBe("/select-profile");
     });
 
-    const response = await GET(
-      createCallbackRequest({ code: "valid-code", next: "/some-page" })
-    );
+    it.each([
+      ["admin", "/admin"],
+      ["gedu", "/gedu"],
+    ])("routes a %s to their dashboard", async (role, path) => {
+      signedInAs({ role, registration_completed_at: COMPLETED });
 
-    expect(response.status).toBe(307);
-    expect(getRedirectUrl(response).pathname).toBe("/some-page");
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(destination(response)).toBe(path);
+    });
+
+    it("honours an allowlisted product-page next", async () => {
+      signedInAs({ role: "customer", registration_completed_at: COMPLETED });
+
+      const response = await GET(
+        createCallbackRequest({ code: "valid-code", next: "/fi/kauppa/abc-123" }),
+      );
+
+      expect(destination(response)).toBe("/fi/kauppa/abc-123");
+    });
+
+    it("ignores a next outside the allowlist", async () => {
+      signedInAs({ role: "customer", registration_completed_at: COMPLETED });
+
+      const response = await GET(
+        createCallbackRequest({ code: "valid-code", next: "/admin" }),
+      );
+
+      expect(destination(response)).toBe("/select-profile");
+    });
+
+    it("ignores an off-site next", async () => {
+      signedInAs({ role: "customer", registration_completed_at: COMPLETED });
+
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: "//evil.example/shop/abc",
+        }),
+      );
+
+      expect(getRedirectUrl(response).origin).toBe("http://localhost:3000");
+      expect(destination(response)).toBe("/select-profile");
+    });
+
+    it("skips the finish page it no longer needs", async () => {
+      // An existing account pressing a register page's Google button sends
+      // the finish page as `next`; it has nothing left to finish.
+      signedInAs({ role: "gedu", registration_completed_at: COMPLETED });
+
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: "/en/complete-registration?as=gedu",
+        }),
+      );
+
+      expect(destination(response)).toBe("/gedu");
+    });
+
+    it("returns an existing account to the product the register page carried", async () => {
+      // The register page's Google button puts the product page inside the
+      // finish page's own `redirect`; an account with nothing to finish still
+      // wants that product, not the family selector.
+      signedInAs({ role: "customer", registration_completed_at: COMPLETED });
+
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: "/fi/complete-registration?redirect=%2Ffi%2Fkauppa%2Fabc-123",
+        }),
+      );
+
+      expect(destination(response)).toBe("/fi/kauppa/abc-123");
+    });
+
+    it("does not let that carried redirect leave the allowlist", async () => {
+      signedInAs({ role: "customer", registration_completed_at: COMPLETED });
+
+      const response = await GET(
+        createCallbackRequest({
+          code: "valid-code",
+          next: "/en/complete-registration?redirect=%2Fadmin",
+        }),
+      );
+
+      expect(destination(response)).toBe("/select-profile");
+    });
   });
 
   /**
@@ -181,13 +494,10 @@ describe("GET /api/auth/callback", () => {
    */
   describe("the locale cookie", () => {
     function signedInWithLocale(locale: string | null) {
-      mockExchangeCodeForSession.mockResolvedValue({ error: null });
-      mockGetClaims.mockResolvedValue({
-        data: { claims: { sub: "user-123" } },
-      });
-      mockProfileQuery.mockResolvedValue({
-        data: { role: "customer", locale },
-        error: null,
+      signedInAs({
+        role: "customer",
+        locale,
+        registration_completed_at: COMPLETED,
       });
       return GET(createCallbackRequest({ code: "valid-code" }));
     }
@@ -217,24 +527,174 @@ describe("GET /api/auth/callback", () => {
     });
 
     it("reads it on the profile query the route already made", async () => {
-      // No second round trip: `locale` joins the select that resolves the
-      // post-login destination.
+      // No second round trip: `locale` and the registration stamp join the
+      // select that resolves the post-login destination.
       await signedInWithLocale("fi");
 
-      expect(mockProfileSelect).toHaveBeenCalledWith("role, locale");
+      expect(mockProfileSelect).toHaveBeenCalledWith(
+        "role, locale, registration_completed_at, email, email_verified_at",
+      );
     });
   });
 
-  it("redirects to login error when the session has no claims", async () => {
-    mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetClaims.mockResolvedValue({ data: null });
+  /**
+   * **A Google sign-in proves the address.** Confirmations are off, so a
+   * password account can be opened under someone else's address, and Google
+   * then links the real owner's identity to it. Such a sign-in into an account
+   * whose address was never verified leaves the account holding only the
+   * prover's session and no password: the one it had may be a squatter's.
+   */
+  describe("an unverified address proven by Google", () => {
+    const EMAIL = "owner@example.test";
+    const googleVerified = [
+      {
+        provider: "google",
+        identity_data: { email: "Owner@Example.TEST", email_verified: true },
+      },
+    ];
 
-    const response = await GET(createCallbackRequest({ code: "valid-code" }));
+    function unverifiedAccount(
+      identities: Parameters<typeof signedInAs>[1],
+      extra: Record<string, unknown> = {},
+    ) {
+      signedInAs(
+        {
+          role: "customer",
+          registration_completed_at: COMPLETED,
+          email: EMAIL,
+          email_verified_at: null,
+          ...extra,
+        },
+        identities,
+      );
+    }
 
-    expect(response.status).toBe(307);
-    expect(getRedirectUrl(response).pathname).toBe("/login");
-    expect(getRedirectUrl(response).searchParams.get("error")).toBe(
-      "auth_callback_error"
-    );
+    it("revokes every other session, forfeits the password and stamps the address verified", async () => {
+      unverifiedAccount(googleVerified);
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledTimes(1);
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "others" });
+      expect(mockAdminRpc).toHaveBeenCalledTimes(1);
+      expect(mockAdminRpc).toHaveBeenCalledWith("forfeit_password", {
+        p_user_id: "user-123",
+      });
+      expect(mockAdminProfileUpdate).toHaveBeenCalledTimes(1);
+      const [{ row, column, value }] = mockAdminProfileUpdate.mock.calls[0];
+      expect(Object.keys(row)).toEqual(["email_verified_at"]);
+      expect(typeof row.email_verified_at).toBe("string");
+      expect(column).toBe("id");
+      expect(value).toBe("user-123");
+      expect(destination(response)).toBe("/select-profile");
+    });
+
+    it("does none of it for an address already verified", async () => {
+      unverifiedAccount(googleVerified, {
+        email_verified_at: "2026-09-01T12:00:00Z",
+      });
+
+      await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
+    });
+
+    it("does none of it when Google's address is a different one", async () => {
+      unverifiedAccount([
+        {
+          provider: "google",
+          identity_data: { email: "someone.else@example.test", email_verified: true },
+        },
+      ]);
+
+      await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
+    });
+
+    it("does none of it when Google did not verify the address", async () => {
+      unverifiedAccount([
+        {
+          provider: "google",
+          identity_data: { email: EMAIL, email_verified: false },
+        },
+      ]);
+
+      await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).not.toHaveBeenCalled();
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
+    });
+
+    it("never runs for a gamer, whose session is refused instead", async () => {
+      unverifiedAccount(googleVerified, { role: "gamer" });
+
+      await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "local" });
+      expect(mockSignOut).not.toHaveBeenCalledWith({ scope: "others" });
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
+    });
+
+    it("logs a failed revoke, skips the forfeit and the stamp, and still signs the owner in", async () => {
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      unverifiedAccount(googleVerified);
+      mockSignOut.mockResolvedValue({ error: { message: "gotrue down" } });
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining("user-123"),
+        expect.anything(),
+      );
+      // The stamp would stop the next Google sign-in retrying the revoke.
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
+      expect(destination(response)).toBe("/select-profile");
+      consoleError.mockRestore();
+    });
+
+    it("logs a failed forfeit, skips the stamp, and still signs the owner in", async () => {
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      unverifiedAccount(googleVerified);
+      mockAdminRpc.mockResolvedValue({ data: null, error: { message: "db down" } });
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "others" });
+      expect(mockAdminRpc).toHaveBeenCalledWith("forfeit_password", {
+        p_user_id: "user-123",
+      });
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining("user-123"),
+        expect.anything(),
+      );
+      // The stamp would stop the next Google sign-in retrying the forfeit.
+      expect(mockAdminProfileUpdate).not.toHaveBeenCalled();
+      expect(destination(response)).toBe("/select-profile");
+      consoleError.mockRestore();
+    });
+
+    it("logs a failed stamp and still signs the owner in", async () => {
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      unverifiedAccount(googleVerified);
+      mockAdminProfileUpdate.mockResolvedValue({ error: { message: "db down" } });
+
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "others" });
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining("user-123"),
+        expect.anything(),
+      );
+      expect(destination(response)).toBe("/select-profile");
+      consoleError.mockRestore();
+    });
   });
 });

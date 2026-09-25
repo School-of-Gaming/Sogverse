@@ -2093,6 +2093,7 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
+          registration_completed_at: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
@@ -2111,6 +2112,7 @@ export type Database = {
           last_name?: string
           locale?: string | null
           phone?: string | null
+          registration_completed_at?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
@@ -2129,6 +2131,7 @@ export type Database = {
           last_name?: string
           locale?: string | null
           phone?: string | null
+          registration_completed_at?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
@@ -2784,6 +2787,7 @@ export type Database = {
           linked_gamers: Json | null
           locale: string | null
           phone: string | null
+          registration_completed_at: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           spoken_languages:
             | Database["public"]["Enums"]["spoken_language"][]
@@ -2808,6 +2812,7 @@ export type Database = {
           linked_gamers?: never
           locale?: string | null
           phone?: string | null
+          registration_completed_at?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           spoken_languages?:
             | Database["public"]["Enums"]["spoken_language"][]
@@ -2832,6 +2837,7 @@ export type Database = {
           linked_gamers?: never
           locale?: string | null
           phone?: string | null
+          registration_completed_at?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           spoken_languages?:
             | Database["public"]["Enums"]["spoken_language"][]
@@ -3155,6 +3161,7 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
       }
+      forfeit_password: { Args: { p_user_id: string }; Returns: undefined }
       gedu_holds_seat_at_session: {
         Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
@@ -3246,6 +3253,7 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
+          registration_completed_at: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
@@ -3277,6 +3285,7 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
+          registration_completed_at: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string

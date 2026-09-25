@@ -39,7 +39,8 @@ CREATE VIEW public.user_list_entries WITH (security_invoker='true') AS
              JOIN public.profiles g ON ((g.id = pg.gamer_id)))
              LEFT JOIN public.minecraft_accounts gmc ON ((gmc.user_id = g.id)))
              LEFT JOIN public.roblox_accounts grb ON ((grb.user_id = g.id)))
-          WHERE (pg.parent_id = p.id))) AS family_search_blob
+          WHERE (pg.parent_id = p.id))) AS family_search_blob,
+    registration_completed_at
    FROM public.profiles p
   WHERE ((role <> 'gamer'::public.user_role) OR (NOT (EXISTS ( SELECT 1
            FROM public.parent_gamer pg

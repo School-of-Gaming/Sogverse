@@ -1366,7 +1366,10 @@
         "passwordTooShort": "Lösenordet måste vara minst {count} tecken långt.",
         "invalidCredentials": "E-postadressen, användarnamnet eller lösenordet du angav är felaktigt.",
         "emailNotConfirmed": "Bekräfta din e-postadress innan du loggar in.",
-        "tooManyAttempts": "För många inloggningsförsök. Vänta en stund och försök igen."
+        "tooManyAttempts": "För många inloggningsförsök. Vänta en stund och försök igen.",
+        "oauthCancelled": "Inloggningen med Google avbröts. Du kan försöka igen eller logga in med ditt lösenord.",
+        "authCallbackError": "Inloggningen med Google slutfördes inte. Försök igen.",
+        "googleGamer": "Spelarkonton loggar in med e-postadress eller användarnamn och lösenord, eller via en förälders konto, inte med Google. Fråga din förälder om du är osäker på hur det går till."
       },
       "identifierLabel": "E-postadress eller användarnamn",
       "identifierPlaceholder": "du@example.com eller ett användarnamn"
@@ -1428,6 +1431,22 @@
       "invalidPhone": "Ange ett giltigt telefonnummer",
       "creatingAccount": "Skapar konto...",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
+    },
+    "google": {
+      "continue": "Fortsätt med Google",
+      "or": "eller",
+      "failed": "Inloggningen med Google kunde inte startas. Försök igen."
+    },
+    "completeRegistration": {
+      "title": "Slutför ditt School of Gaming-konto",
+      "geduTitle": "Slutför ditt spelfostrarkonto hos School of Gaming",
+      "description": "Du loggade in med ditt Google-konto. Uppgifterna nedan slutför ditt School of Gaming-konto.",
+      "notYou": "Inte du?",
+      "signOut": "Logga ut",
+      "submit": "Slutför",
+      "finishing": "Slutförs...",
+      "alreadyComplete": "Det här kontot är redan klart. Logga in igen för att fortsätta.",
+      "switchToParent": "Inte spelfostrare? <link>Skapa ett föräldrakonto i stället</link>"
     }
   },
   "pin": {

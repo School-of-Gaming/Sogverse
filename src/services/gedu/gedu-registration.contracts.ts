@@ -60,3 +60,17 @@ export const registerGeduBody = z.object({
 });
 
 export type RegisterGeduBody = z.infer<typeof registerGeduBody>;
+
+/**
+ * Request body for finishing an educator registration that began with Google
+ * (`POST /api/gedu/complete-registration`): the register body without the
+ * address and the password, which the Google account already supplied.
+ */
+export const completeGeduRegistrationBody = registerGeduBody.omit({
+  email: true,
+  password: true,
+});
+
+export type CompleteGeduRegistrationBody = z.infer<
+  typeof completeGeduRegistrationBody
+>;

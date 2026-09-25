@@ -86,6 +86,7 @@ function candidate(id: string, firstName: string): UserListEntry {
     role: "gedu",
     spoken_languages: ["fi"],
     utm_campaign: null,
+    registration_completed_at: "2026-01-01T00:00:00.000Z",
     utm_medium: null,
     utm_source: null,
     certified: true,

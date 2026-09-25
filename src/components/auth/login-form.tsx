@@ -15,15 +15,32 @@ import { ROLE_POST_LOGIN_PATHS, ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { isSupportedLocale } from "@/lib/constants/locales";
 import { setCookie } from "@/lib/cookies";
 import { LOCALE_COOKIE_NAME } from "@/lib/locale-cookie";
+import type { OAuthLoginError } from "@/lib/google-sign-in";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth } from "@/providers";
+import { ContinueWithGoogle } from "./continue-with-google";
 
 const PASSWORD_MIN_LENGTH = 6;
 
-export function LoginForm({ redirect: redirectParam }: { redirect: string | null }) {
+/** The sentence each code the OAuth callback sends back to `/login` shows. */
+const OAUTH_ERROR_KEYS = {
+  oauth_cancelled: "login.errors.oauthCancelled",
+  auth_callback_error: "login.errors.authCallbackError",
+  google_gamer: "login.errors.googleGamer",
+} as const satisfies Record<OAuthLoginError, string>;
+
+export function LoginForm({
+  redirect: redirectParam,
+  oauthError = null,
+}: {
+  redirect: string | null;
+  /** A failed Google sign-in the callback bounced here, already validated. */
+  oauthError?: OAuthLoginError | null;
+}) {
   const t = useTranslations('auth');
   const c = useTranslations('common');
-  const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
+  const { redirect, safeRedirect, status, navigateAfterAuth } =
+    useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
 
   // One field for two kinds of value. An adult types an address; a child in
@@ -33,8 +50,13 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
   // this is one field rather than a mode switch the person has to find.
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  // Seeded with the callback's refusal, if there was one, so it is on screen
+  // from the first paint; the next submit clears it like any other error.
+  const [error, setError] = useState<string | null>(() =>
+    oauthError ? t(OAUTH_ERROR_KEYS[oauthError]) : null,
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [googlePending, setGooglePending] = useState(false);
 
   const supabase = getClient();
 
@@ -155,6 +177,21 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          {/* The page's own safe `?redirect=` rides along — onto the finish
+              page, too, for an account that still owes its registration;
+              without one the callback routes by role. */}
+          <ContinueWithGoogle
+            next={safeRedirect}
+            disabled={isLoading}
+            onBegin={() => {
+              setError(null);
+              setGooglePending(true);
+            }}
+            onFailed={(message) => {
+              setGooglePending(false);
+              setError(message);
+            }}
+          />
           {/* `type="text"`, not `type="email"`: the browser's own validation
               would refuse a username outright, before the form ever ran. The
               soft-keyboard hint stays `email`, because an address is what the
@@ -200,7 +237,7 @@ export function LoginForm({ redirect: redirectParam }: { redirect: string | null
           </Field>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || googlePending}>
             {status ?? (isLoading ? t('login.signingIn') : c('signIn'))}
           </Button>
           <div className="space-y-2 text-center text-sm text-muted-foreground">

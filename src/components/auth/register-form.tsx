@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "@/i18n/navigation";
+import { Link, getPathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -21,6 +21,8 @@ import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.con
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
+import { completeRegistrationQuery } from "@/lib/navigation/post-auth-redirect";
+import { ContinueWithGoogle } from "./continue-with-google";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -81,7 +83,8 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const t = useTranslations('auth');
   const c = useTranslations('common');
   const locale = useLocale();
-  const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
+  const { redirect, safeRedirect, status, navigateAfterAuth } =
+    useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
   // Where this visit came from, if a marketing link carried UTM params. Held in
   // memory by the root provider since the landing page, so it survives browsing
@@ -106,6 +109,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [googlePending, setGooglePending] = useState(false);
 
   const supabase = getClient();
 
@@ -277,6 +281,34 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          {/* A Google account arrives with no name, terms or consents, so it
+              lands on the finish page, in the language this page is read in —
+              the ticks below are this form's and do not travel with it. The
+              visit's attribution does, on the address: the round trip through
+              Google unloads the tab that holds it. So does the product page
+              this visit came from, which the finish page lands on. */}
+          <ContinueWithGoogle
+            next={getPathname({
+              href: {
+                pathname: ROUTES.completeRegistration,
+                query: completeRegistrationQuery({
+                  asGedu: false,
+                  utm,
+                  redirect: safeRedirect,
+                }),
+              },
+              locale,
+            })}
+            disabled={isLoading}
+            onBegin={() => {
+              setError(null);
+              setGooglePending(true);
+            }}
+            onFailed={(message) => {
+              setGooglePending(false);
+              setError(message);
+            }}
+          />
           {/* The two halves of one name, side by side from `sm` and stacked
               below it — the educator form's arrangement, for the same reason it
               has it: a first and last name are one answer split in two, and a
@@ -426,7 +458,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           />
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || googlePending}>
             {status ?? (isLoading ? t('register.creatingAccount') : c('createAccount'))}
           </Button>
           <div className="space-y-2 text-center text-sm text-muted-foreground">

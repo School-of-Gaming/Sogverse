@@ -559,3 +559,100 @@ describe("the profiles.utm_* columns are write-once", () => {
     expect(longError?.code).toBe("23514");
   });
 });
+
+/**
+ * `profiles.registration_completed_at` says whether an account still owes its
+ * name, the terms and the consents, and the proxy holds a customer on the
+ * finish page while it is NULL. The trigger decides the starting value from the
+ * auth provider: a password account is registered the moment it exists, any
+ * other provider (Google) starts owing.
+ *
+ * Only the `email` half is exercised here. Every account this suite can create
+ * goes through the Admin API, which stamps `provider: "email"` on the row it
+ * inserts and merges any `app_metadata` it was handed only afterwards, in an
+ * UPDATE the AFTER INSERT trigger never sees — so there is no way to put a
+ * Google-provider row in front of the trigger from here.
+ */
+describe("handle_new_user() registration_completed_at", () => {
+  let admin: SupabaseClient<Database>;
+  let customerClient: SupabaseClient<Database>;
+  const createdUserIds: string[] = [];
+
+  beforeAll(async () => {
+    admin = createAdminTestClient();
+    customerClient = await createAuthenticatedClient(
+      TEST_CREDENTIALS.CUSTOMER.email,
+      TEST_CREDENTIALS.CUSTOMER.password,
+    );
+  });
+
+  afterEach(async () => {
+    for (const userId of createdUserIds.reverse()) {
+      await admin.from("customer_profiles").delete().eq("user_id", userId);
+      await admin.from("profiles").delete().eq("id", userId);
+      await admin.auth.admin.deleteUser(userId);
+    }
+    createdUserIds.length = 0;
+  });
+
+  it("registers a password account the moment it is created", async () => {
+    const before = Date.now();
+    const { data, error } = await admin.auth.admin.createUser({
+      email: "registration-password@test.local",
+      password: "testpassword123",
+      email_confirm: true,
+      user_metadata: { first_name: "Password", last_name: "Parent" },
+    });
+    expect(error).toBeNull();
+    createdUserIds.push(data.user!.id);
+    expect(data.user!.app_metadata.provider).toBe("email");
+
+    const { data: profile, error: profileError } = await admin
+      .from("profiles")
+      .select("registration_completed_at")
+      .eq("id", data.user!.id)
+      .single();
+
+    expect(profileError).toBeNull();
+    expect(profile!.registration_completed_at).not.toBeNull();
+    // Stamped at creation. The slack absorbs clock skew between the test
+    // runner and the database.
+    expect(
+      new Date(profile!.registration_completed_at!).getTime(),
+    ).toBeGreaterThan(before - 60_000);
+  });
+
+  it("a parent can read their own value", async () => {
+    const { data, error } = await customerClient
+      .from("profiles")
+      .select("registration_completed_at")
+      .eq("id", TEST_IDS.CUSTOMER)
+      .single();
+
+    expect(error).toBeNull();
+    expect(data!.registration_completed_at).not.toBeNull();
+  });
+
+  it("a parent can neither clear it nor set it", async () => {
+    // 42501: no UPDATE grant reaches the column, so the statement fails outright
+    // rather than scoping to zero rows.
+    const cleared = await customerClient
+      .from("profiles")
+      .update({ registration_completed_at: null })
+      .eq("id", TEST_IDS.CUSTOMER);
+    expect(cleared.error?.code).toBe("42501");
+
+    const set = await customerClient
+      .from("profiles")
+      .update({ registration_completed_at: new Date().toISOString() })
+      .eq("id", TEST_IDS.CUSTOMER);
+    expect(set.error?.code).toBe("42501");
+
+    const { data } = await admin
+      .from("profiles")
+      .select("registration_completed_at")
+      .eq("id", TEST_IDS.CUSTOMER)
+      .single();
+    expect(data!.registration_completed_at).not.toBeNull();
+  });
+});

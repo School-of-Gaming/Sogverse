@@ -288,3 +288,42 @@ describe("Header nav — the scene-only navRole override", () => {
     expect(accountMenuProps.at(-1)?.navRole).toBeUndefined();
   });
 });
+
+describe("Header — an account that still owes its registration", () => {
+  it("tells the menu so, from the profile's own completion stamp", () => {
+    mockAuth.mockReturnValue({
+      user: USER,
+      profile: {
+        id: USER.id,
+        role: "customer",
+        first_name: "New User",
+        registration_completed_at: null,
+      },
+      isLoading: false,
+    });
+    renderHeader();
+
+    // The menu holds its household read back on this: every gated route
+    // refuses the account until the finish page is done.
+    expect(accountMenuProps.at(-1)).toMatchObject({
+      role: "customer",
+      registrationOwed: true,
+    });
+  });
+
+  it("and not otherwise", () => {
+    mockAuth.mockReturnValue({
+      user: USER,
+      profile: {
+        id: USER.id,
+        role: "customer",
+        first_name: "Riikka",
+        registration_completed_at: "2026-01-01T00:00:00.000Z",
+      },
+      isLoading: false,
+    });
+    renderHeader();
+
+    expect(accountMenuProps.at(-1)?.registrationOwed).toBe(false);
+  });
+});

@@ -57,8 +57,9 @@ vi.mock("@/providers", () => ({
 // fallback.
 const mockNavigateAfterAuth = vi.fn();
 vi.mock("@/hooks/use-auth-redirect", () => ({
-  useAuthRedirect: () => ({
-    redirect: null,
+  useAuthRedirect: (redirect: string | null) => ({
+    redirect,
+    safeRedirect: redirect,
     status: null,
     navigateAfterAuth: (...args: unknown[]) => mockNavigateAfterAuth(...args),
   }),
@@ -385,5 +386,86 @@ describe("RegisterForm", () => {
     expect(mockFetch).not.toHaveBeenCalled();
     expect(form.container.textContent).toContain("Passwords do not match");
     expect(form.button().disabled).toBe(false);
+  });
+});
+
+describe("the parent register page's Google button", () => {
+  // The parent-account alert is read first, because it is context for either
+  // path; the Google button comes directly after it and before any field, then
+  // the "or" divider, then the fields, then the submit at the bottom.
+  it("sits under the parent-account alert, above the divider, the fields and the submit", () => {
+    const view = render(<RegisterForm redirect={null} />);
+
+    const alert = view.getByText("register.parentAccountAlertTitle");
+    const google = view.getByRole("button", { name: "continue" });
+    const divider = view.getByText("or");
+    const firstName = view.container.querySelector("#firstName");
+    if (!firstName) throw new Error("no first name field");
+    const submit = view.container.querySelector('button[type="submit"]');
+    if (!submit) throw new Error("no submit");
+
+    const precedes = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(precedes(alert, google)).toBe(true);
+    expect(precedes(google, divider)).toBe(true);
+    expect(precedes(divider, firstName)).toBe(true);
+    expect(precedes(firstName, submit)).toBe(true);
+  });
+
+  // The round trip through Google unloads the tab holding the visit's
+  // attribution in memory, so it travels on the finish page's address — the
+  // parent variant, so no `as`.
+  it("sends the finish page, carrying the visit's attribution, as next", async () => {
+    vi.mocked(mockSupabaseClient.auth.signInWithOAuth).mockResolvedValue({
+      data: { provider: "google", url: "https://accounts.google.test" },
+      error: null,
+    });
+    const view = render(<RegisterForm redirect={null} />);
+    const button = [...view.container.querySelectorAll("button")].find(
+      (candidate) => candidate.textContent.includes("continue"),
+    );
+    if (!button) throw new Error("no Google button");
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    const [args] = vi.mocked(mockSupabaseClient.auth.signInWithOAuth).mock
+      .calls[0];
+    const next = new URL(args.options?.redirectTo ?? "").searchParams.get("next");
+    if (!next) throw new Error("no next");
+    const nextUrl = new URL(next, "https://internal.invalid");
+    expect(nextUrl.pathname).toBe(ROUTES.completeRegistration);
+    expect(nextUrl.searchParams.has("as")).toBe(false);
+    expect(nextUrl.searchParams.get("utm_source")).toBe("Lynx");
+    expect(nextUrl.searchParams.get("utm_campaign")).toBe("lynx-summer-a");
+    expect(nextUrl.searchParams.has("utm_medium")).toBe(false);
+    expect(nextUrl.searchParams.has("redirect")).toBe(false);
+  });
+
+  // A parent who came from a product lands back on it once registered, so
+  // the page's safe `?redirect=` rides the finish page's address too.
+  it("carries the page's product-page redirect onto the finish page", async () => {
+    vi.mocked(mockSupabaseClient.auth.signInWithOAuth).mockResolvedValue({
+      data: { provider: "google", url: "https://accounts.google.test" },
+      error: null,
+    });
+    const view = render(<RegisterForm redirect="/fi/kauppa/abc-123" />);
+    const button = [...view.container.querySelectorAll("button")].find(
+      (candidate) => candidate.textContent.includes("continue"),
+    );
+    if (!button) throw new Error("no Google button");
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    const [args] = vi.mocked(mockSupabaseClient.auth.signInWithOAuth).mock
+      .calls[0];
+    const next = new URL(args.options?.redirectTo ?? "").searchParams.get("next");
+    if (!next) throw new Error("no next");
+    const nextUrl = new URL(next, "https://internal.invalid");
+    expect(nextUrl.pathname).toBe(ROUTES.completeRegistration);
+    expect(nextUrl.searchParams.get("redirect")).toBe("/fi/kauppa/abc-123");
   });
 });

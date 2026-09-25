@@ -173,6 +173,7 @@ export function Header({ navRole }: HeaderProps) {
         userId={profile.id}
         role={profile.role}
         firstName={profile.first_name}
+        registrationOwed={profile.registration_completed_at === null}
         // Carried through rather than resolved here: the menu's copy of the
         // override governs only its own nav row (the rehoused About), exactly
         // as this one governs only the strip.
