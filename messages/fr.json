@@ -113,8 +113,6 @@
     "signIn": "Connexion",
     "signOut": "Déconnexion",
     "getStarted": "C’est parti !",
-    "goToMySog": "Accéder à Mon SOG",
-    "goToDashboard": "Accéder au tableau de bord",
     "viewDetails": "Voir les détails",
     "learnMore": "En savoir plus",
     "exploreClubs": "Découvrir les clubs",
@@ -2831,7 +2829,7 @@
   "home": {
     "hero": {
       "title": "Du temps d’écran<br></br>au temps qui<br></br>fait<br></br><act>grandir</act>",
-      "subtitle": "Des clubs chaque semaine pour les 7 à 17 ans, en ligne et en présentiel, à partir de 59 € par mois : un animateur mène chaque séance de 90 minutes sur Minecraft, Roblox, Fortnite et bien d’autres."
+      "subtitle": "Des clubs chaque semaine pour les 7 à 17 ans, en ligne et en présentiel, à partir de 59 € par mois : un animateur mène chaque séance sur Minecraft, Roblox, Fortnite et bien d’autres."
     },
     "findClub": "Trouver un club",
     "trust": {
@@ -2891,16 +2889,16 @@
       "heading": "Comment mon enfant est-il protégé ?",
       "facts": {
         "vetted": {
-          "title": "Des animateurs contrôlés",
-          "description": "Chaque animateur nous présente un extrait de casier judiciaire pour le travail auprès d’enfants avant que nous le certifiions."
+          "title": "Extrait de casier judiciaire exigé",
+          "description": "Nous exigeons que chaque Gedu nous présente un extrait de casier judiciaire pour le travail auprès d’enfants avant que nous le certifiions."
         },
         "noDirectMessages": {
           "title": "Aucun message privé",
-          "description": "Il n’y a de messages privés nulle part : le chat d’une séance s’adresse à toute la salle, où l’animateur le voit."
+          "description": "Il n’y a de messages privés nulle part : le chat d’une séance s’adresse à toute la salle, où le Gedu le voit."
         },
         "groupOnlyRooms": {
           "title": "Réservé au groupe",
-          "description": "La salle vocale d’un club ouvre cinq minutes avant la séance et ferme cinq minutes après, et seuls le groupe, ses animateurs et notre équipe peuvent y entrer."
+          "description": "La salle vocale d’un club ouvre cinq minutes avant la séance et ferme cinq minutes après, et seuls le groupe, ses Gedus et notre équipe peuvent y entrer."
         },
         "notRecorded": {
           "title": "Aucune séance enregistrée",
@@ -2931,7 +2929,7 @@
     },
     "cta": {
       "heading": "Prêt à transformer le temps d’écran en temps qui fait grandir ?",
-      "subheading": "Offrez à votre enfant un rendez-vous chaque semaine pour jouer, apprendre et se faire des amis, avec un animateur à chaque séance et aucun message privé."
+      "subheading": "Offrez à votre enfant un rendez-vous chaque semaine pour jouer, apprendre et se faire des amis, avec un Gedu à chaque séance et aucun message privé."
     }
   },
   "locations": {

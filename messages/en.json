@@ -113,8 +113,6 @@
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "getStarted": "Get Started",
-    "goToMySog": "Go to My SOG",
-    "goToDashboard": "Go to Dashboard",
     "viewDetails": "View Details",
     "learnMore": "Learn More",
     "exploreClubs": "Explore Clubs",
@@ -2831,7 +2829,7 @@
   "home": {
     "hero": {
       "title": "Where<br></br>Screen Time<br></br>Becomes<br></br><act>Quality Time</act>",
-      "subtitle": "Weekly clubs for ages 7–17, online and in person, from €59 per month: a Game Educator leads every 90-minute lesson in Minecraft, Roblox, Fortnite and more."
+      "subtitle": "Weekly clubs for ages 7–17, online and in person, from €59 per month: a Game Educator leads every lesson in Minecraft, Roblox, Fortnite and more."
     },
     "findClub": "Find a club",
     "trust": {
@@ -2891,8 +2889,8 @@
       "heading": "How is my child kept safe?",
       "facts": {
         "vetted": {
-          "title": "Vetted Game Educators",
-          "description": "Every Gedu shows us a criminal record extract for working with children before we certify them."
+          "title": "Record checks required",
+          "description": "We require every Gedu to show us a criminal record extract for working with children before we certify them."
         },
         "noDirectMessages": {
           "title": "No direct messages",

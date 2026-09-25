@@ -113,8 +113,6 @@
     "signIn": "Kirjaudu sisään",
     "signOut": "Kirjaudu ulos",
     "getStarted": "Aloita tästä",
-    "goToMySog": "Avaa Oma SOG",
-    "goToDashboard": "Avaa hallintapaneeli",
     "viewDetails": "Näytä tiedot",
     "learnMore": "Lue lisää",
     "exploreClubs": "Tutustu kerhoihin",
@@ -2831,7 +2829,7 @@
   "home": {
     "hero": {
       "title": "Ruutuajasta<br></br><act>laatuaikaa</act>",
-      "subtitle": "Viikoittaiset kerhot 7–17-vuotiaille verkossa ja paikan päällä alkaen 59 € kuukaudessa: pelikasvattaja ohjaa jokaisen 90 minuutin kerran Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä."
+      "subtitle": "Viikoittaiset kerhot 7–17-vuotiaille verkossa ja paikan päällä alkaen 59 € kuukaudessa: pelikasvattaja ohjaa jokaista kertaa Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä."
     },
     "findClub": "Etsi kerho",
     "trust": {
@@ -2891,8 +2889,8 @@
       "heading": "Miten lapseni turvallisuudesta huolehditaan?",
       "facts": {
         "vetted": {
-          "title": "Taustatarkastetut pelikasvattajat",
-          "description": "Jokainen Gedu näyttää meille lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen, ennen kuin hyväksymme hänet."
+          "title": "Rikosrekisteriote vaaditaan",
+          "description": "Edellytämme, että jokainen Gedu näyttää meille lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen, ennen kuin hyväksymme hänet."
         },
         "noDirectMessages": {
           "title": "Ei yksityisviestejä",

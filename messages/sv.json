@@ -113,8 +113,6 @@
     "signIn": "Logga in",
     "signOut": "Logga ut",
     "getStarted": "Kom igång",
-    "goToMySog": "Gå till Min SOG",
-    "goToDashboard": "Gå till översikten",
     "viewDetails": "Visa detaljer",
     "learnMore": "Läs mer",
     "exploreClubs": "Utforska klubbar",
@@ -2831,7 +2829,7 @@
   "home": {
     "hero": {
       "title": "Där<br></br>skärmtid<br></br>blir<br></br><act>kvalitetstid</act>",
-      "subtitle": "Klubbar varje vecka för 7–17-åringar, online och på plats, från 59 € per månad: en spelfostrare leder varje tillfälle på 90 minuter i Minecraft, Roblox, Fortnite och mer."
+      "subtitle": "Klubbar varje vecka för 7–17-åringar, online och på plats, från 59 € per månad: en spelfostrare leder varje tillfälle i Minecraft, Roblox, Fortnite och mer."
     },
     "findClub": "Hitta en klubb",
     "trust": {
@@ -2891,8 +2889,8 @@
       "heading": "Hur hålls mitt barn tryggt?",
       "facts": {
         "vetted": {
-          "title": "Granskade spelfostrare",
-          "description": "Varje Gedu visar oss ett straffregisterutdrag för arbete med barn innan vi certifierar hen."
+          "title": "Krav på straffregisterutdrag",
+          "description": "Vi kräver att varje Gedu visar oss ett straffregisterutdrag för arbete med barn innan vi certifierar hen."
         },
         "noDirectMessages": {
           "title": "Inga direktmeddelanden",

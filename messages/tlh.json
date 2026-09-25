@@ -102,8 +102,6 @@
     "signIn": "yI’el",
     "signOut": "yImej",
     "getStarted": "DaH yIqet",
-    "goToMySog": "jIH SOG yIghoS",
-    "goToDashboard": "QaD yIghoS",
     "viewDetails": "tIqel",
     "learnMore": "bIghojnIS",
     "exploreClubs": "ghom’a’mey tIghoS",
@@ -2871,7 +2869,7 @@
   "home": {
     "hero": {
       "title": "naDev<br></br>Daq tIv<br></br>moj<br></br><act>Qap tIv</act>",
-      "subtitle": "Hoch Hogh ghom’a’mey, 7–17 ben puqpu’, De’wI’Daq naDevDaq je, 59 € jar Hoch vo’ Suq: Hoch 90-tup qep Gedu’ DevtaH — Minecraft, Roblox, Fortnite latlh je."
+      "subtitle": "Hoch Hogh ghom’a’mey, 7–17 ben puqpu’, De’wI’Daq naDevDaq je, 59 € jar Hoch vo’ Suq: Hoch qep Gedu’ DevtaH — Minecraft, Roblox, Fortnite latlh je."
     },
     "findClub": "ghom’a’ yInej",
     "trust": {

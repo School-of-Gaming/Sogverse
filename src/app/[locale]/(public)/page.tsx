@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { HomeCtaLink } from "@/components/home/cta-link";
 import { Testimonial } from "@/components/home/testimonial";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -38,9 +37,11 @@ const featureKeys = ["minecraftClubs", "screenTime", "newFriends", "parents"] as
 /**
  * The safety facts, in the order a parent asks them: who is with my child,
  * who can reach them, where, what is kept, and what they can spend. Each one
- * is a mechanism the About FAQ states and the product enforces — `src/CLAUDE.md`,
- * "Safety copy: mechanisms, never intentions" — so a new entry is checked
- * against the FAQ answer and the code before it is written, never the reverse.
+ * is checked against the About FAQ answer and the code before it is written —
+ * `src/CLAUDE.md`, "Safety copy: mechanisms, never intentions". Four are
+ * mechanisms the product enforces. The record check is not: certification does
+ * not wait on it, so that fact is worded as the requirement it is, never as an
+ * outcome every Gedu has met.
  */
 const safetyFacts = [
   { key: "vetted", icon: ShieldCheck },
@@ -131,16 +132,17 @@ export default function HomePage() {
               {t('hero.subtitle')}
             </p>
             {/* One call to action: the home page's job is to send a parent to
-                choose a club, and the shop is public. A signed-in reader the
-                server did not see gets the same button aimed at My SOG. */}
+                choose a club, and the shop is public. It is the same link for
+                every reader, signed in or not, so the trust line under it is
+                always true of the button it sits under. */}
             <div className="mt-7 flex justify-center sm:mt-10">
-              <HomeCtaLink
-                signedOutHref={findClubHref}
-                signedOutLabel={t('findClub')}
+              <Link
+                href={findClubHref}
                 className={buttonVariants({ size: "lg", className: "gap-2" })}
               >
+                {t('findClub')}
                 <ArrowRight className="h-4 w-4" />
-              </HomeCtaLink>
+              </Link>
             </div>
             <TrustLine className="mt-4" />
           </div>
@@ -313,13 +315,13 @@ export default function HomePage() {
             {/* The page closes on the hero's own call to action and its trust
                 line, so the two ends of the page ask for the same thing. */}
             <div className="mt-8 flex justify-center">
-              <HomeCtaLink
-                signedOutHref={findClubHref}
-                signedOutLabel={t('findClub')}
+              <Link
+                href={findClubHref}
                 className={buttonVariants({ size: "lg", className: "gap-2" })}
               >
+                {t('findClub')}
                 <ArrowRight className="h-4 w-4" />
-              </HomeCtaLink>
+              </Link>
             </div>
             <TrustLine className="mt-4" />
           </CardContent>
