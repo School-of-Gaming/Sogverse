@@ -200,7 +200,16 @@ function CompletionShell({
             </form>
           }
         >
-          <Input id="email" type="email" value={email} readOnly />
+          {/* `readOnly`, not `disabled`, so the address can be tabbed to and
+              copied; `bg-lifted` is how every read-back field in the app says
+              it is not for editing. */}
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            readOnly
+            className="bg-lifted"
+          />
         </Field>
       </div>
       <form onSubmit={onSubmit}>
