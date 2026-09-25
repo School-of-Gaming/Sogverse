@@ -11,6 +11,20 @@ the authority on voice, summarised here only where it binds these three pages.
 within eight seconds, knows what to do within thirty, and trusts us enough to enrol a
 child.** Conversion to a paying club is the measure, not time on page.
 
+## Where it stands (2026-09-25)
+
+- **In flight:** the first round of the home page is built on
+  `feat/home-first-screen-proof-safety`, in the worktree
+  `.claude/worktrees/home-first-screen-proof-safety`. It is finished, reviewed by an
+  independent agent with every finding fixed, passes `npm run gates`, and is **waiting on
+  the owner's go-ahead to merge**. This doc is newest on that branch; `dev` holds an older
+  copy.
+- **Waiting on others:** images from Sonja, who owns the image collection (see Assets);
+  a native Swedish and French check of the branch's new strings.
+- **Next, once the branch lands:** the About page (a button to Clubs, the FAQ reordered
+  by what parents ask first), then the owner's rulings on the proposals under "Ideas not
+  yet decided".
+
 ## Who reads these pages
 
 Only prospective families. The proxy sends a signed-in reader from `/` to their dashboard,
@@ -96,8 +110,8 @@ the features, safety, three more testimonials, "How it works", the closing card.
   Fortnite and more. Lesson length is left out because it is set per club, not
   fixed. Its one call to action is "Find a club", to the shop's clubs, the same for every
   reader signed in or not, with the risk reversal directly under it: cancel any time at
-  no cost, 30-day money-back guarantee. The closing card repeats that button and line, so the page opens and closes on
-  the same ask.
+  no cost, 30-day money-back guarantee. The closing card repeats that button and line, so
+  the page opens and closes on the same ask.
 - **Proof:** T4 sits large under the hero; T13 and T12 sit beside the safety facts; T5, T3
   and T2 form a row further down. Role and country only, in the serif italic. Each quote
   takes an optional image beside it, so photos can arrive without restructuring.
@@ -234,6 +248,100 @@ exactly the facts a parent compares.
    time?"), linking to the full FAQ.
 10. **Closing call to action:** price and the guarantee.
 
+## The legacy site
+
+Reviewed 2026-09-25: `www.sog.gg` (English at `/`, Finnish at `/fi`), the marketing site
+Sogverse replaces. **The owner controls when it goes down** and will port what is worth
+keeping first, so nothing here is urgent. What it does that the public pages should learn
+from:
+
+- **Imagery everywhere:** Minecraft art in the hero and an embedded YouTube video,
+  "Ruutuajasta laatuaikaa.". The video is an asset we already own, but whether it still
+  shows how lessons run today (the old copy describes a "communication server", the
+  Discord era) is an open question to Sonja. The photos of children look AI-generated;
+  also asked.
+- **The guarantee is the second thing on the page**, with its own heading: "30-days
+  money-back guarantee … No questions asked." Finnish: "30 päivän rahat takaisin -takuu".
+- **A testimonial mid-page attributed "Mom of a Minecraft gamer"** ("Minecraft-pelaajan
+  äiti"): context without a name, stronger than role and country alone.
+- **A call to action closes almost every section.**
+- **It keeps undecided parents:** free parent webinars ("Secure your spot") and a weekly
+  newsletter signup. Sogverse has neither, so a parent not ready to buy today is lost.
+  Whether Sogverse has a mailing list or a sending setup to build this on is unchecked.
+- **A light, warm palette**, closer to the Guidebook's parent-facing rule than Sogverse's
+  dark theme (see "Ideas not yet decided").
+- **Offers Sogverse does not show yet:** birthday parties in Minecraft (a banner across the
+  top; the Guidebook's Finnish nav has *Syntymäpäivät*), a Staff page and a Library (see
+  "Planned additions").
+- **The Finnish page promised a free trial** ("Kokeile kerhoa maksutta"); the English one
+  did not. Sogverse offers the money-back guarantee, not a trial. Open question for the
+  owner.
+
+Not to copy: its copy breaks today's Guidebook ("world class instructors", "21st century
+skills", Minecraft as the whole offer, "verkkokursseja" for camps), it spends four loud
+accent colours, and on a phone its promo bar, menu bar and logo take about 530 px before
+the hero while the Finnish headline runs off the left edge. Every Finnish headline on
+Sogverse needs checking at phone width for the same reason: long compounds.
+
+## Planned additions (owner, 2026-09-25)
+
+- **A Staff page.** The legacy one lists three staff members with photo, full name, gamer
+  tag, title and skills. The Sogverse one should put Gedus beside leadership, since they
+  are who parents trust their child to; link it from About and the home page's safety
+  section.
+- **A Gedu spotlight** on the home and For-parents pages, one Gedu at a time in their own
+  words. **Decided: a Gedu is featured only by opting in and giving the extra details**
+  (photo, gamer tag, a short bio, games, languages); Sogverse stores none of these today.
+  The same profile can later feed the Staff page and a "Meet your Gedu" on each club page.
+  Open: whether an admin approves a profile before it is public (proposed: yes). It
+  touches personal data and access control, so it gets a plan before it is built.
+- **A Library**, the legacy site's blog: about 50 articles, several answering exactly what
+  parents search ("Is Roblox Safe for 8 Year Olds?"). **The owner chooses what is
+  ported**; each ported article gets a permanent redirect from its sog.gg URL so it keeps
+  its ranking. Open: who writes new articles and where they are stored (non-developers
+  need an admin editor, not repo files), and categories named for parents rather than the
+  legacy ones ("Serious Business", "Adventure logbook").
+
+## Ideas not yet decided
+
+**Proposed 2026-09-25, when the owner opened all three pages to any change. None is
+decided.**
+
+- **The first screen starts the choice:** "How old is your child?" as age buttons, each
+  opening the shop filtered to fitting clubs. The shop keeps its filter state in the URL;
+  whether age can be set from a link is unchecked.
+- **The shop becomes "Clubs" and is restructured:** one card per club with its times as
+  choices (today "Cozy Adventures" repeats as many near-identical cards); curated rows above
+  the full grid by what a parent needs (shy or neurodivergent children, a language,
+  building and coding, esports, in person in Helsinki); a strip saying what every club
+  includes, with the guarantee. Unchecked: whether grouping can be done in the display or
+  needs a data change, since each listing is its own product.
+- **About splits into "For parents" and a short "About"**, matching the Guidebook's nav.
+  For parents: safety, what a lesson is, the report afterwards, parent game education, the
+  FAQ ordered by worry, and a button to Clubs. About: who we are, the Gedus, the mission.
+  Yty leaves the public pages or appears only as Human Skills.
+- **Review the enrolment path** (club page, signup, adding a child, paying) at both
+  widths: the sale happens there. It touches auth and money, so any change gets a plan.
+- **Light or dark.** SOG-UI has one theme, dark, by the owner's earlier decision. The
+  Guidebook says parent-facing pages take "white and off-white grounds… Calm surfaces carry
+  credibility", and the legacy site, the one page built for marketing, is light. The public
+  pages are the one place the reader is always a parent. A library-level decision for the
+  owner, possibly one to test.
+- **Credit testimonials with context** ("Mum of a Roblox club gamer, Finland") where the
+  source card gives it.
+
+## Assets
+
+- **Images:** asked of Sonja on 2026-09-25, in priority order. Home: a lesson in action (a
+  short silent loop plus a still), 3–4 screenshots of what a lesson looks like, a sample
+  session report, a parent and child at the screen. Shop and About: one image per club
+  category, the Lauttasaari space, a team photo. Later: portraits for the Staff page and
+  spotlight, and Library images. Rules sent with it: real people only, consent for every
+  identifiable child and Gedu, test accounts in screenshots, originals at least 2400 px
+  wide with room to crop both ways, and working on the dark background. Her answers on the
+  legacy video and photos are pending.
+- **Numbers:** no headline figure (customers, municipalities) is cleared to publish.
+
 ## Testimonial bank
 
 Thirteen distinct parent testimonials, exported from the company Google Drive as two
@@ -276,7 +384,20 @@ and has lost its rating digit to a missing glyph; the English card says a summer
       numbers safe to publish are still needed.
 - [ ] Testimonials: resolve T9; ask for the child's age where it can still be had.
 - [ ] Shop: review the product detail page and the enrolment panel at both widths.
-- [ ] Cookie banner on phones: bring its footprint down from 43–48% of the first screen without changing what it says.
+- [ ] Cookie banner on phones: bring its footprint down from 43–48% of the first screen.
+      A layout change (spacing, type size, the three buttons compact but equally
+      weighted) is safe. Rewording is not this project's call: per
+      `src/components/consent/CLAUDE.md`, a change to what the visitor agrees to forces a
+      consent-version bump that asks everyone again.
+- [ ] Home, "How it works": step 1 is still "Create your account", though every button now
+      leads to the shop. Proposed: pick a club first. Owner has not ruled.
+- [ ] Native check of the Swedish and French strings on the home page branch; the six
+      quotes there were translated from the English, not the Finnish originals.
+- [ ] The criminal record check is not enforced: certification does not wait on it. The
+      home page now claims only the requirement. Making certification wait on a recorded
+      check (and auditing older Gedus) is a safeguarding change for the owner to decide.
+- [ ] Free trial: the legacy Finnish page promised one; Sogverse has the guarantee only.
+      Owner to decide whether to offer one; until then no page promises it.
 - [ ] Re-screenshot at both widths after every change to these pages. The capture script is not in the repo yet; decide whether it belongs there.
 - [ ] Finnish copy: review the Finnish versions of all three pages; the review above read
       only the English.
