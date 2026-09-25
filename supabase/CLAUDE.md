@@ -298,7 +298,10 @@ every command does — the things its usage text does not say:
   If `down` never ran and the worktree is gone, the main checkout's `.env.local` is where
   the three original values are recovered from. A `git merge origin/dev` that brings
   migrations with it wants `reset`, not `migrate`: `migrate` applies them on top of what
-  the stack already has, where every other database replays them underneath.
+  the stack already has, where every other database replays them underneath. While any
+  stack is running, a terminal window titled "Sogverse local database (WSL)" stays open:
+  it is what keeps WSL up, and closing it lets WSL shut down with every stack inside, so
+  minimise it rather than close it.
 - **Memory:** about 660 MB settled, in a distro capped at 12 GB and shared with everything
   else running on this machine. Two stacks are comfortable, three tight; `list` shows them
   all with their memory.

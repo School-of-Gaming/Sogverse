@@ -293,11 +293,20 @@ const lineFilter = (sink, onSentinel) => {
 /**
  * The keep-alive.
  *
- * A stack has to outlive the command that started it, and whether the distro
- * stays up with nothing attached to it from the Windows side could not be
- * established. So this does not depend on the answer: a hidden, detached
- * `wsl.exe -- sleep infinity` is held for as long as any stack of ours is
- * running anywhere on the machine, and released with the last one.
+ * A stack has to outlive the command that started it, and WSL shuts the distro
+ * down once nothing on the Windows side is attached to it, taking every
+ * container with it. So a `wsl.exe` running keepalive.sh is held for as long
+ * as any stack of ours is running anywhere on the machine, and released with
+ * the last one.
+ *
+ * It gets a console window of its own, on purpose: that window is the one
+ * thing on screen that says a local database is running, and closing it is
+ * closing the keep-alive, so the shell file fills it with a banner that says
+ * so rather than leaving it empty. It is launched through Start-Process
+ * because that is what gives a program a console when its launcher has none
+ * to hand down — a detached spawn from here gets no console at all, and the
+ * banner goes nowhere. The distro name and the file path reach the launcher
+ * through the environment, never as shell text.
  *
  * The pid is kept on the Windows side because the process is a Windows one.
  * Beside it goes the boot time, so a pid left behind by a crash cannot be
@@ -336,24 +345,32 @@ const readKeepAlive = () => {
   return /^"wsl\.exe"/i.test((listed.stdout ?? '').trim()) ? Number(pid) : null;
 };
 
+const KEEPALIVE_LAUNCHER =
+  "(Start-Process -FilePath wsl.exe -ArgumentList @('-d', $env:SOG_LOCALDB_DISTRO, '--', 'bash', $env:SOG_LOCALDB_KEEPALIVE) -PassThru).Id";
+
 const holdKeepAlive = () => {
   if (readKeepAlive() !== null) return;
-  const child = spawn('wsl.exe', ['-d', DISTRO, '--', 'sleep', 'infinity'], {
-    detached: true,
+  const launched = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', KEEPALIVE_LAUNCHER], {
+    encoding: 'utf8',
     windowsHide: true,
-    stdio: 'ignore',
+    env: {
+      ...process.env,
+      SOG_LOCALDB_DISTRO: DISTRO,
+      SOG_LOCALDB_KEEPALIVE: `${checkoutWsl}/scripts/local-db/keepalive.sh`,
+    },
   });
-  // A spawn failure arrives as an event, and on a detached child there is
-  // nothing to catch it: unhandled, it would throw out of the process long
-  // after the command it belongs to succeeded. The stack is up either way; the
-  // most that is lost is the guarantee that the distro outlives this shell.
-  child.on('error', (error) => {
-    console.error(`Could not hold the distro open (${error.message}); the stack may not outlive this shell.`);
-  });
-  child.unref();
-  if (child.pid === undefined) return;
+  const pid = Number((launched.stdout ?? '').trim());
+  if (launched.status !== 0 || !Number.isInteger(pid) || pid <= 0) {
+    // The stack is up either way; the most that is lost is the guarantee that
+    // the distro outlives this shell.
+    const detail = (launched.stderr ?? '').trim();
+    console.error(
+      `Could not hold the distro open${detail ? ` (${detail})` : ''}; the stack may not outlive this shell.`,
+    );
+    return;
+  }
   mkdirSync(keepAliveDir, { recursive: true });
-  writeFileSync(keepAlivePidFile, `${child.pid} ${bootTime()}\n`);
+  writeFileSync(keepAlivePidFile, `${pid} ${bootTime()}\n`);
 };
 
 const releaseKeepAlive = () => {
