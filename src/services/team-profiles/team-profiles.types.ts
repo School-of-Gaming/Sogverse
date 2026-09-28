@@ -203,6 +203,14 @@ export const TEAM_PROFILE_INCOMPLETE_SQLSTATE = "P0026";
  */
 export const TEAM_PROFILE_PHOTO_GONE_SQLSTATE = "P0027";
 
+/**
+ * The SQLSTATE `set_team_profile_approval` raises when an admin approves a
+ * profile that is not marked ready. The admin page keeps Approve disabled
+ * until it is, so this reaches a page whose read is older than someone
+ * unticking ready.
+ */
+export const TEAM_PROFILE_NOT_READY_SQLSTATE = "P0028";
+
 function hasCode(error: unknown, code: string): boolean {
   return (
     typeof error === "object" &&
@@ -220,4 +228,9 @@ export function isTeamProfileIncompleteError(error: unknown): boolean {
 /** Whether a rejected save named a photo that is no longer stored. */
 export function isTeamProfilePhotoGoneError(error: unknown): boolean {
   return hasCode(error, TEAM_PROFILE_PHOTO_GONE_SQLSTATE);
+}
+
+/** Whether a refused approval was for a profile not marked ready. */
+export function isTeamProfileNotReadyError(error: unknown): boolean {
+  return hasCode(error, TEAM_PROFILE_NOT_READY_SQLSTATE);
 }

@@ -138,8 +138,10 @@ export class TeamProfilesService {
   }
 
   /**
-   * An admin approves a Gedu's profile, or takes the approval back. Either
-   * way at any time; the checkbox is untouched.
+   * An admin approves a Gedu's profile, or takes the approval back. Approving
+   * needs the profile marked ready, and the database refuses one that is not
+   * (`isTeamProfileNotReadyError`); taking it back is open at any time. The
+   * checkbox is untouched.
    */
   async setGeduTeamProfileApproval(
     geduId: string,

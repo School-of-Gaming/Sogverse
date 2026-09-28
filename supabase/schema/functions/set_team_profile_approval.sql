@@ -8,6 +8,7 @@ CREATE FUNCTION public.set_team_profile_approval(p_user_id uuid, p_approved bool
     AS $$
 DECLARE
   v_current boolean;
+  v_ready   boolean;
   v_role    public.user_role;
 BEGIN
   PERFORM public.assert_admin();
@@ -17,7 +18,7 @@ BEGIN
       USING ERRCODE = '22004';
   END IF;
 
-  SELECT tp.approved, p.role INTO v_current, v_role
+  SELECT tp.approved, tp.opted_in, p.role INTO v_current, v_ready, v_role
     FROM public.team_profiles tp
     JOIN public.profiles p ON p.id = tp.user_id
    WHERE tp.user_id = p_user_id
@@ -31,9 +32,18 @@ BEGIN
     RAISE EXCEPTION 'Only a Gedu''s profile is approved' USING ERRCODE = '22023';
   END IF;
 
-  -- Saying it again changes nothing, and keeps who last changed it.
+  -- Saying it again changes nothing, and keeps who last changed it — an
+  -- approval standing on a profile whose ready has since been unticked
+  -- included: repeating it is not a new approval.
   IF v_current = p_approved THEN
     RETURN;
+  END IF;
+
+  -- An admin approves what the profile's editor has marked ready, never ahead
+  -- of it. Taking an approval back is open at any time.
+  IF p_approved AND NOT v_ready THEN
+    RAISE EXCEPTION 'A profile is approved only once it is marked ready'
+      USING ERRCODE = 'P0028';
   END IF;
 
   UPDATE public.team_profiles
@@ -49,7 +59,7 @@ $$;
 -- Name: FUNCTION set_team_profile_approval(p_user_id uuid, p_approved boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_team_profile_approval(p_user_id uuid, p_approved boolean) IS 'An admin approves a Gedu''s team profile (true) or takes the approval back (false), stamping who changed it and when. Admin-only, guard-first. Either way at any time; repeating the current value is a no-op that keeps the stamp. Refuses a NULL decision (22004), an admin''s profile (22023) and a person with no profile row (P0002). Independent of the checkbox, which it never touches.';
+COMMENT ON FUNCTION public.set_team_profile_approval(p_user_id uuid, p_approved boolean) IS 'An admin approves a Gedu''s team profile (true) or takes the approval back (false), stamping who changed it and when. Admin-only, guard-first. Approving needs the profile marked ready (opted_in) and refuses one that is not with P0028; taking the approval back is open at any time. Repeating the current value is a no-op that keeps the stamp, even for an approval whose profile has since been unmarked. Refuses a NULL decision (22004), an admin''s profile (22023) and a person with no profile row (P0002). Never touches the checkbox, and unticking it leaves the approval standing, so ticking it again makes the profile public with no second approval.';
 
 
 --

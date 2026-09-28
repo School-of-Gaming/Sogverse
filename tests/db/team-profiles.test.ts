@@ -5,8 +5,10 @@ import { TeamProfilesService } from "@/services/team-profiles/team-profiles.serv
 import {
   TEAM_PHOTOS_BUCKET,
   TEAM_PROFILE_INCOMPLETE_SQLSTATE,
+  TEAM_PROFILE_NOT_READY_SQLSTATE,
   TEAM_PROFILE_PHOTO_GONE_SQLSTATE,
   TeamPhotoUploadError,
+  isTeamProfileNotReadyError,
   isTeamProfilePhotoGoneError,
   isTeamProfilePublic,
   type TeamProfileSaveInput,
@@ -882,10 +884,11 @@ describe("team profiles", () => {
     }
 
     it("goes yes and no either way, stamping who last changed it", async () => {
+      const photo = await seedPhoto(TEST_IDS.GEDU);
       await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
-        content(),
-        false,
+        content({ photoPath: photo }),
+        true,
       );
       expect(await stamp()).toEqual({
         approved: false,
@@ -915,6 +918,41 @@ describe("team profiles", () => {
 
       expect((await set(true)).error).toBeNull();
       expect((await stamp())?.approved).toBe(true);
+    });
+
+    it("refuses to approve a profile not marked ready, until it is", async () => {
+      const photo = await seedPhoto(TEST_IDS.GEDU);
+      const service = new TeamProfilesService(geduAuth);
+      await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), false);
+
+      const early = await set(true);
+      expect(early.error?.code).toBe(TEAM_PROFILE_NOT_READY_SQLSTATE);
+      expect(isTeamProfileNotReadyError(early.error)).toBe(true);
+      expect(await stamp()).toEqual({
+        approved: false,
+        approval_decided_by: null,
+        approval_decided_at: null,
+      });
+
+      await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), true);
+      expect((await set(true)).error).toBeNull();
+      expect((await stamp())?.approved).toBe(true);
+    });
+
+    it("takes an approval back, and repeats one, while the profile is not ready", async () => {
+      const photo = await seedPhoto(TEST_IDS.GEDU);
+      const service = new TeamProfilesService(geduAuth);
+      await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), true);
+      expect((await set(true)).error).toBeNull();
+      const approved = await stamp();
+      await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), false);
+
+      // Approving again is a no-op, not a refusal: the approval already stands.
+      expect((await set(true)).error).toBeNull();
+      expect(await stamp()).toEqual(approved);
+
+      expect((await set(false)).error).toBeNull();
+      expect((await stamp())?.approved).toBe(false);
     });
 
     it("refuses a decision that is neither yes nor no", async () => {

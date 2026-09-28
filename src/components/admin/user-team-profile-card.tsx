@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import Image from "next/image";
 import { IdCard, Loader2, Pencil } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -19,6 +19,7 @@ import { ROUTES } from "@/lib/constants";
 import { LOCALE_CONFIG, resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
+  isTeamProfileNotReadyError,
   useSetGeduTeamProfileApproval,
   useTeamProfile,
   type TeamProfileRecord,
@@ -42,6 +43,11 @@ import {
  * no, Take off while it is yes. Taking off is the one that asks first: it can
  * remove something from the public website. Approving does not: it is undone
  * with the other button.
+ *
+ * **Approve waits for ready.** An admin approves what has been marked ready
+ * and never ahead of it, which the database enforces; until then Approve is
+ * there but disabled, with the way to ready written under it. Take off stays
+ * open whenever the profile is approved, ready or not.
  */
 export function UserTeamProfileCard({
   userId,
@@ -92,7 +98,7 @@ export function UserTeamProfileCard({
           isViewer={isViewer}
           approval={
             record.role === "gedu"
-              ? { approved: record.approved, canDecide: written }
+              ? { approved: record.approved, ready: record.ready }
               : null
           }
         />
@@ -176,28 +182,38 @@ function ProfileActions({
   name: string;
   isViewer: boolean;
   /**
-   * A Gedu's approval, or `null` for an admin's profile, which has none.
-   * `canDecide` is false while nothing has been written: there is nothing to
-   * decide about yet.
+   * A Gedu's approval and whether the profile is marked ready, or `null` for
+   * an admin's profile, which has no approval. A profile with nothing written
+   * is never ready, so there is nothing to approve yet.
    */
-  approval: { approved: boolean; canDecide: boolean } | null;
+  approval: { approved: boolean; ready: boolean } | null;
 }) {
   const t = useTranslations("team.admin.userPage");
+  const hintId = useId();
   const setApproval = useSetGeduTeamProfileApproval();
   // Set before the write and cleared once it settles: the card stays, and the
   // re-read that the write waits for is what swaps the button.
   const [approving, setApproving] = useState(false);
-  const [approveFailed, setApproveFailed] = useState(false);
+  const [approveError, setApproveError] = useState<
+    "notReady" | "failed" | null
+  >(null);
   const [confirmingTakeOff, setConfirmingTakeOff] = useState(false);
+  const awaitingReady = approval !== null && !approval.approved && !approval.ready;
 
   function approve() {
     setApproving(true);
-    setApproveFailed(false);
+    setApproveError(null);
     void setApproval
       .mutateAsync({ geduId: userId, approved: true })
       .catch((error: unknown) => {
+        // Someone unticked ready after this page was read; the hook has
+        // re-read the profile, so the button is already disabled with its hint.
+        if (isTeamProfileNotReadyError(error)) {
+          setApproveError("notReady");
+          return;
+        }
         console.error("[team-profile] approval failed:", error);
-        setApproveFailed(true);
+        setApproveError("failed");
       })
       .finally(() => setApproving(false));
   }
@@ -218,21 +234,35 @@ function ProfileActions({
           <Pencil aria-hidden />
           {t("edit")}
         </Link>
-        {approval?.canDecide &&
+        {approval &&
           (approval.approved ? (
             <Button variant="outline" onClick={() => setConfirmingTakeOff(true)}>
               {t("takeOff")}
             </Button>
           ) : (
-            <Button onClick={approve} disabled={approving}>
+            <Button
+              onClick={approve}
+              disabled={approving || awaitingReady}
+              aria-describedby={awaitingReady ? hintId : undefined}
+            >
               {approving && <Loader2 className="animate-spin" aria-hidden />}
               {t("approve")}
             </Button>
           ))}
       </div>
-      {approveFailed && (
+      {/* Why Approve is disabled, for as long as it is: a greyed button with
+          no reason beside it reads as broken. Not an alert — it describes the
+          profile as it stands, not an answer to a click. */}
+      {awaitingReady && (
+        <p id={hintId} className="text-right text-xs text-muted-foreground">
+          {t("approveNeedsReady")}
+        </p>
+      )}
+      {approveError !== null && (
         <StatusLine status="destructive" role="alert">
-          {t("approvalError")}
+          {approveError === "notReady"
+            ? t("approveNotReady", { name })
+            : t("approvalError")}
         </StatusLine>
       )}
       {approval && (

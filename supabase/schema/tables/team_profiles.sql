@@ -68,7 +68,7 @@ COMMENT ON COLUMN public.team_profiles.opted_in IS 'The profile''s readiness mar
 -- Name: COLUMN team_profiles.approved; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.team_profiles.approved IS 'An admin''s yes or no to a Gedu''s profile being public, independent of the checkbox and surviving it being turned off and on: while it is true, the Gedu''s later edits go live with no second look. Written only by set_team_profile_approval. Always false for an admin''s profile, which has no approval.';
+COMMENT ON COLUMN public.team_profiles.approved IS 'An admin''s yes or no to a Gedu''s profile being public, given only while the checkbox is on and surviving it being turned off and on: while it is true, the Gedu''s later edits go live with no second look. Written only by set_team_profile_approval. Always false for an admin''s profile, which has no approval.';
 
 
 --

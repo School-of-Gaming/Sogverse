@@ -5084,6 +5084,8 @@
         "nothingWritten": "Ei vielä tekstiä",
         "edit": "Muokkaa profiilia",
         "approve": "Hyväksy",
+        "approveNeedsReady": "Merkitse profiili valmiiksi kohdassa Muokkaa profiilia, jotta voit hyväksyä sen.",
+        "approveNotReady": "Profiilia ({name}) ei ole enää merkitty valmiiksi, joten sitä ei hyväksytty.",
         "takeOff": "Poista näkyvistä",
         "approvalError": "Profiilin hyväksynnän päivittäminen ei onnistunut. Yritä uudelleen.",
         "takeOffConfirm": {

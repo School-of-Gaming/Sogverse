@@ -5084,6 +5084,8 @@
         "nothingWritten": "Rien de rédigé pour l’instant",
         "edit": "Modifier le profil",
         "approve": "Approuver",
+        "approveNeedsReady": "Marquez le profil comme prêt dans « Modifier le profil » pour pouvoir l’approuver.",
+        "approveNotReady": "Le profil de {name} n’est plus marqué comme prêt, il n’a donc pas été approuvé.",
         "takeOff": "Retirer",
         "approvalError": "Impossible de mettre à jour l’approbation du profil. Veuillez réessayer.",
         "takeOffConfirm": {

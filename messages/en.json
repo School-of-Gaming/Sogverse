@@ -5084,6 +5084,8 @@
         "nothingWritten": "Nothing written yet",
         "edit": "Edit profile",
         "approve": "Approve",
+        "approveNeedsReady": "Mark the profile ready under Edit profile to be able to approve it.",
+        "approveNotReady": "{name}’s profile is no longer marked ready, so it wasn’t approved.",
         "takeOff": "Take off",
         "approvalError": "Couldn’t update the profile’s approval. Please try again.",
         "takeOffConfirm": {

@@ -5084,6 +5084,8 @@
         "nothingWritten": "Inget skrivet än",
         "edit": "Redigera profil",
         "approve": "Godkänn",
+        "approveNeedsReady": "Markera profilen som klar under Redigera profil för att kunna godkänna den.",
+        "approveNotReady": "Profilen för {name} är inte längre markerad som klar, så den godkändes inte.",
         "takeOff": "Ta ner",
         "approvalError": "Det gick inte att uppdatera profilens godkännande. Försök igen.",
         "takeOffConfirm": {

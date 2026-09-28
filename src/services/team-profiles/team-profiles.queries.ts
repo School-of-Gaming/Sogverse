@@ -3,9 +3,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { TeamProfilesService } from "./team-profiles.service";
-import type {
-  TeamProfileRecord,
-  TeamProfileSaveInput,
+import {
+  isTeamProfileNotReadyError,
+  type TeamProfileRecord,
+  type TeamProfileSaveInput,
 } from "./team-profiles.types";
 
 export const teamProfileKeys = {
@@ -56,7 +57,11 @@ export function useSaveTeamProfile() {
   });
 }
 
-/** An admin approves a Gedu's profile, or takes the approval back. */
+/**
+ * An admin approves a Gedu's profile, or takes the approval back. A refusal
+ * for a profile no longer marked ready re-reads it too: the page's read was
+ * stale, and the re-read is what disables Approve.
+ */
 export function useSetGeduTeamProfileApproval() {
   const queryClient = useQueryClient();
   const service = new TeamProfilesService(getClient());
@@ -66,5 +71,9 @@ export function useSetGeduTeamProfileApproval() {
       service.setGeduTeamProfileApproval(geduId, approved),
     onSuccess: (_data, { geduId }) =>
       queryClient.invalidateQueries({ queryKey: teamProfileKeys.detail(geduId) }),
+    onError: (error, { geduId }) =>
+      isTeamProfileNotReadyError(error)
+        ? queryClient.invalidateQueries({ queryKey: teamProfileKeys.detail(geduId) })
+        : undefined,
   });
 }

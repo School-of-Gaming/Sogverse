@@ -22,7 +22,9 @@
 --    complete (SQLSTATE P0026), and a photo path with no object behind it
 --    (P0027).
 -- 5. `set_team_profile_approval(uuid, boolean)` — the one writer of the
---    approval, admin-only.
+--    approval, admin-only. An admin approves only a profile marked ready
+--    (P0028 otherwise) and may take an approval back at any time; unticking
+--    ready leaves the approval standing.
 -- 6. The private `team-photos` storage bucket and its policies: the owner and
 --    an admin read; whoever may edit the profile writes and deletes. Objects
 --    live at `<person's id>/<name>`.
@@ -79,7 +81,7 @@ COMMENT ON COLUMN public.team_profiles.title IS 'An admin''s office title, e.g. 
 COMMENT ON COLUMN public.team_profiles.pick IS 'The accent colour the person picked, a SOG-UI pick id from 1 to 16, or NULL for none: the page then carries the brand''s colours alone.';
 COMMENT ON COLUMN public.team_profiles.photo_path IS 'The photo''s object name in the team-photos bucket, always inside the person''s own folder: <user_id>/<name>. The client crops every upload to an 800 × 1000 portrait before it is stored. NULL for none, which keeps the profile incomplete.';
 COMMENT ON COLUMN public.team_profiles.opted_in IS 'The profile''s readiness mark: a Gedu''s "ready", an admin''s "show". Not consent: the person or any admin may save it, only while the profile is complete; while it is on, every save has to leave the profile complete. A save that passes NULL keeps it as stored.';
-COMMENT ON COLUMN public.team_profiles.approved IS 'An admin''s yes or no to a Gedu''s profile being public, independent of the checkbox and surviving it being turned off and on: while it is true, the Gedu''s later edits go live with no second look. Written only by set_team_profile_approval. Always false for an admin''s profile, which has no approval.';
+COMMENT ON COLUMN public.team_profiles.approved IS 'An admin''s yes or no to a Gedu''s profile being public, given only while the checkbox is on and surviving it being turned off and on: while it is true, the Gedu''s later edits go live with no second look. Written only by set_team_profile_approval. Always false for an admin''s profile, which has no approval.';
 COMMENT ON COLUMN public.team_profiles.approval_decided_by IS 'The admin who last changed the approval, or NULL before any admin has, or once that admin''s account is gone (ON DELETE SET NULL: losing the admin must never take a Gedu''s profile down).';
 COMMENT ON COLUMN public.team_profiles.approval_decided_at IS 'When an admin last changed the approval, or NULL before any admin has. Never NULL while approved.';
 
@@ -320,6 +322,7 @@ CREATE FUNCTION public.set_team_profile_approval(
     AS $$
 DECLARE
   v_current boolean;
+  v_ready   boolean;
   v_role    public.user_role;
 BEGIN
   PERFORM public.assert_admin();
@@ -329,7 +332,7 @@ BEGIN
       USING ERRCODE = '22004';
   END IF;
 
-  SELECT tp.approved, p.role INTO v_current, v_role
+  SELECT tp.approved, tp.opted_in, p.role INTO v_current, v_ready, v_role
     FROM public.team_profiles tp
     JOIN public.profiles p ON p.id = tp.user_id
    WHERE tp.user_id = p_user_id
@@ -343,9 +346,18 @@ BEGIN
     RAISE EXCEPTION 'Only a Gedu''s profile is approved' USING ERRCODE = '22023';
   END IF;
 
-  -- Saying it again changes nothing, and keeps who last changed it.
+  -- Saying it again changes nothing, and keeps who last changed it — an
+  -- approval standing on a profile whose ready has since been unticked
+  -- included: repeating it is not a new approval.
   IF v_current = p_approved THEN
     RETURN;
+  END IF;
+
+  -- An admin approves what the profile's editor has marked ready, never ahead
+  -- of it. Taking an approval back is open at any time.
+  IF p_approved AND NOT v_ready THEN
+    RAISE EXCEPTION 'A profile is approved only once it is marked ready'
+      USING ERRCODE = 'P0028';
   END IF;
 
   UPDATE public.team_profiles
@@ -356,7 +368,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.set_team_profile_approval(uuid, boolean) IS 'An admin approves a Gedu''s team profile (true) or takes the approval back (false), stamping who changed it and when. Admin-only, guard-first. Either way at any time; repeating the current value is a no-op that keeps the stamp. Refuses a NULL decision (22004), an admin''s profile (22023) and a person with no profile row (P0002). Independent of the checkbox, which it never touches.';
+COMMENT ON FUNCTION public.set_team_profile_approval(uuid, boolean) IS 'An admin approves a Gedu''s team profile (true) or takes the approval back (false), stamping who changed it and when. Admin-only, guard-first. Approving needs the profile marked ready (opted_in) and refuses one that is not with P0028; taking the approval back is open at any time. Repeating the current value is a no-op that keeps the stamp, even for an approval whose profile has since been unmarked. Refuses a NULL decision (22004), an admin''s profile (22023) and a person with no profile row (P0002). Never touches the checkbox, and unticking it leaves the approval standing, so ticking it again makes the profile public with no second approval.';
 
 REVOKE EXECUTE ON FUNCTION public.set_team_profile_approval(uuid, boolean) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.set_team_profile_approval(uuid, boolean) TO authenticated;

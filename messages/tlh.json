@@ -4185,6 +4185,8 @@
         "nothingWritten": "pagh ghItlhlu’",
         "edit": "Del’a’ yIchoH",
         "approve": "yIchaw’",
+        "approveNeedsReady": "Del’a’ yIchoH ’ej yIghuHmoH; vaj DachawlaH.",
+        "approveNotReady": "{name} Del’a’ ghuHbe’choH; vaj chaw’lu’be’.",
         "takeOff": "yIteq",
         "approvalError": "chaw’ choHlaHbe’. yInID.",
         "takeOffConfirm": {
