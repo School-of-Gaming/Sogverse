@@ -303,6 +303,10 @@ unpacking an archive would be. Revisit it when a month's customer count makes th
 
 ## How the month is read
 
+**The parts this ledger is drawn from are shared with gedu invoicing**
+(`src/components/invoicing-ledger/`), so the rules below bind both pages and a change to one
+of those parts changes both.
+
 **This is a ledger, and it is read the way a ledger is read: down the columns.** A month
 runs to a hundred clubs across twenty municipalities, and the reader is a finance officer
 checking figures against each other rather than somebody being introduced to a page. So

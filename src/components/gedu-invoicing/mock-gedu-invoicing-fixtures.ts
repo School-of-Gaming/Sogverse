@@ -220,3 +220,60 @@ export function geduInvoicingMonthFixture(
     products: PRODUCTS.filter((product) => productIds.has(product.id)),
   };
 }
+
+/**
+ * The admin scene's one scenario. An empty month is not a second one: the
+ * ledger carries a month stepper, and every month but the working one is empty,
+ * so stepping off it is how the empty ledger is reached — on the same page.
+ */
+export const ADMIN_GEDU_INVOICING_SCENARIOS = ["working-month"] as const;
+
+export type AdminGeduInvoicingPreviewScenario =
+  (typeof ADMIN_GEDU_INVOICING_SCENARIOS)[number];
+
+export function isAdminGeduInvoicingScenario(
+  value: string,
+): value is AdminGeduInvoicingPreviewScenario {
+  return (ADMIN_GEDU_INVOICING_SCENARIOS as readonly string[]).includes(value);
+}
+
+/**
+ * The gedu scene's scenarios are its viewers, because the gedu's own read
+ * answers for one gedu and no single one of them holds every line kind: the
+ * absent gedu carries a covered absence and a missed session, and the one who
+ * covered carries the substitution, a cancellation and a club whose fee nobody
+ * set. A different viewer is a state the page cannot show beside another.
+ */
+export const MY_GEDU_INVOICING_SCENARIOS = ["was-away", "stood-in"] as const;
+
+export type MyGeduInvoicingPreviewScenario =
+  (typeof MY_GEDU_INVOICING_SCENARIOS)[number];
+
+/** Who each gedu scenario is signed in as. */
+export const MY_GEDU_INVOICING_VIEWERS: Record<
+  MyGeduInvoicingPreviewScenario,
+  string
+> = {
+  "was-away": AINO,
+  "stood-in": MIKAEL,
+};
+
+export function isMyGeduInvoicingScenario(
+  value: string,
+): value is MyGeduInvoicingPreviewScenario {
+  return (MY_GEDU_INVOICING_SCENARIOS as readonly string[]).includes(value);
+}
+
+/** `YYYY-MM`, with the year inside this century — the live routes' own shape. */
+const PREVIEW_MONTH_PARAM = /^20\d{2}-(0[1-9]|1[0-2])$/;
+
+/**
+ * Which month a scene is showing: the one its `?month=` names, or the working
+ * month — the month the fixtures have anything in, rather than the live routes'
+ * last month, because a scene that opened empty would show the reviewer
+ * nothing.
+ */
+export function resolvePreviewGeduInvoicingMonth(raw: string | null): string {
+  if (raw !== null && PREVIEW_MONTH_PARAM.test(raw)) return `${raw}-01`;
+  return GEDU_INVOICING_WORKING_MONTH;
+}

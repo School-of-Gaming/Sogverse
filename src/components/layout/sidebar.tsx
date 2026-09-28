@@ -16,6 +16,7 @@ import {
   ChevronRight,
   MapPin,
   Receipt,
+  ReceiptText,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
@@ -31,7 +32,7 @@ type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "whatsapp" | "testing" | "settings"
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
-  | "invoiceCustomers"
+  | "invoiceCustomers" | "geduInvoicing"
   | "camps" | "events"
   | "sites" | "substitutions";
 
@@ -77,6 +78,9 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     // because an invoice is being raised, and the ledger is where a club with
     // no customer is reported.
     { href: ROUTES.admin.invoiceCustomers, labelKey: "invoiceCustomers", icon: <Building2 className="h-5 w-5" /> },
+    // Below the municipality ledger and its customers: the other half of the
+    // month's money, what the gedus invoice us for.
+    { href: ROUTES.admin.geduInvoicing, labelKey: "geduInvoicing", icon: <ReceiptText className="h-5 w-5" /> },
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },

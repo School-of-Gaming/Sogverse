@@ -31,6 +31,19 @@ import {
   resolvePreviewInvoicingMonth,
 } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
 import { buildMunicipalityInvoicing } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
+import {
+  ADMIN_GEDU_INVOICING_SCENARIOS,
+  GEDU_INVOICING_NOW,
+  GEDU_INVOICING_WORKING_MONTH,
+  MY_GEDU_INVOICING_SCENARIOS,
+  MY_GEDU_INVOICING_VIEWERS,
+  geduInvoicingMonthFixture,
+  resolvePreviewGeduInvoicingMonth,
+} from "@/components/gedu-invoicing/mock-gedu-invoicing-fixtures";
+import {
+  buildGeduInvoicing,
+  type GeduInvoicingView,
+} from "@/components/gedu-invoicing/build-gedu-invoicing";
 import { finvoiceReadiness } from "@/lib/finvoice";
 import {
   INVOICE_CUSTOMER_EDIT_FIXTURE,
@@ -209,6 +222,15 @@ describe("registry scenarios match their fixtures", () => {
   it("municipality invoicing", () => {
     expect(slugsFor("municipality-invoicing")).toEqual([
       ...MUNICIPALITY_INVOICING_SCENARIOS,
+    ]);
+  });
+
+  it("gedu invoicing, both readers", () => {
+    expect(slugsFor("gedu-invoicing")).toEqual([
+      ...ADMIN_GEDU_INVOICING_SCENARIOS,
+    ]);
+    expect(slugsFor("gedu-my-invoicing")).toEqual([
+      ...MY_GEDU_INVOICING_SCENARIOS,
     ]);
   });
 
@@ -2229,5 +2251,63 @@ describe("the invoice customers scene", () => {
       (row) => row.fennoa_customer_no,
     );
     expect(new Set(numbers).size).toBe(numbers.length);
+  });
+});
+
+/**
+ * The gedu invoicing scenes exist to show every kind of line a month can hold.
+ * The admin's month has them all at once; a gedu's own month shows one gedu, so
+ * the two viewers between them must — which is the whole reason there are two.
+ */
+describe("the gedu invoicing scenes cover every line kind", () => {
+  const KINDS = ["paid", "unrecorded", "upcoming", "cancelled", "absent"];
+
+  function build(geduId?: string): GeduInvoicingView {
+    return buildGeduInvoicing({
+      snapshot: geduInvoicingMonthFixture(GEDU_INVOICING_WORKING_MONTH, geduId),
+      locale: "en",
+      now: GEDU_INVOICING_NOW,
+    });
+  }
+
+  function lines(view: GeduInvoicingView) {
+    return view.gedus.flatMap((gedu) => gedu.clubs.flatMap((club) => club.lines));
+  }
+
+  it("shows every kind, both segments and an unset fee in the admin month", () => {
+    const view = build();
+    const all = lines(view);
+    expect(new Set(all.map((line) => line.kind))).toEqual(new Set(KINDS));
+    expect(all.some((line) => line.coveringFor !== null)).toBe(true);
+    const absences = all.filter((line) => line.kind === "absent");
+    expect(absences.some((line) => line.substitute !== null)).toBe(true);
+    expect(absences.some((line) => line.substitute === null)).toBe(true);
+    expect(view.clubsWithoutFee).toBeGreaterThan(0);
+    expect(view.municipalityTotalCents).toBeGreaterThan(0);
+    expect(view.consumerTotalCents).toBeGreaterThan(0);
+  });
+
+  it("narrows each gedu scenario to its one viewer, and the two cover every kind", () => {
+    const seen = new Set<string>();
+    for (const scenario of MY_GEDU_INVOICING_SCENARIOS) {
+      const view = build(MY_GEDU_INVOICING_VIEWERS[scenario]);
+      expect(view.gedus.map((gedu) => gedu.id), scenario).toEqual([
+        MY_GEDU_INVOICING_VIEWERS[scenario],
+      ]);
+      for (const line of lines(view)) seen.add(line.kind);
+    }
+    expect(seen).toEqual(new Set(KINDS));
+  });
+
+  it("opens on the working month, and every other month is empty", () => {
+    expect(resolvePreviewGeduInvoicingMonth(null)).toBe(
+      GEDU_INVOICING_WORKING_MONTH,
+    );
+    expect(resolvePreviewGeduInvoicingMonth("nonsense")).toBe(
+      GEDU_INVOICING_WORKING_MONTH,
+    );
+    const next = monthsAfter(GEDU_INVOICING_WORKING_MONTH, 1);
+    expect(resolvePreviewGeduInvoicingMonth(next.slice(0, 7))).toBe(next);
+    expect(geduInvoicingMonthFixture(next).gedus).toEqual([]);
   });
 });
