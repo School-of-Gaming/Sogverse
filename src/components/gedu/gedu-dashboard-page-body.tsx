@@ -199,7 +199,13 @@ export function GeduDashboardPageBody({
           provider) so reading it from a client component throws at render, and
           this body is a client component. Page copy belongs in a page namespace
           regardless — `metadata` names documents, not headings. */}
-      <h1 className="sr-only">{t("pageTitle")}</h1>
+      {/* Also the scrollbar-gutter marker: My SOG, Substitutions and Invoicing
+          all reserve it, so moving between the gedu's destinations never
+          shifts the page sideways by a scrollbar's width, whichever of them
+          happens to be taller than the window. */}
+      <h1 className="sr-only" data-reserve-scroll-gutter>
+        {t("pageTitle")}
+      </h1>
 
       {/* Above the pill, and above everything a gedu came here to do. These are
           the errands on this page that are not optional, so whichever is

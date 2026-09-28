@@ -70,7 +70,10 @@ export function GeduSubstitutionsPageBody({
   const t = useTranslations("gedu.substitution");
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 pb-24">
+    // Reserved like My SOG and Invoicing: this page usually fits the window
+    // while they usually do not, so without it every move between them shifts
+    // the page sideways by a scrollbar's width.
+    <div className="mx-auto max-w-5xl space-y-10 pb-24" data-reserve-scroll-gutter>
       {/* The way back, because this page is reached from My SOG and is not a
           step in anything — the same escape the contract page carries. */}
       <Link
