@@ -14,6 +14,8 @@ import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { AdminGroupDetailsPage } from "@/components/admin/products/group-details/admin-group-details-page";
 import type { AdminProductSessions } from "@/services/admin-sessions";
+import type { SessionFeedEntry } from "@/components/gedu/session-feed";
+import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import type { GeduGroupFeed } from "@/services/gedu-sessions";
 import type { ProductAdminDetailRow } from "@/services/products";
 import type { ProductGroupsSnapshot, ProductType } from "@/types";
@@ -101,6 +103,12 @@ const reads = vi.hoisted(() => ({
 
 const setNote = vi.hoisted(() => vi.fn());
 const setCreations = vi.hoisted(() => vi.fn());
+const cancelSession = vi.hoisted(() => vi.fn());
+const restoreSession = vi.hoisted(() => vi.fn());
+/** What the calendar merge hands the page — empty unless a case says otherwise. */
+const feedEntries = vi.hoisted(() => ({ value: [] as unknown[] }));
+/** The dates the admin record holds a stored row on. */
+const recordedDates = vi.hoisted(() => ({ value: [] as string[] }));
 
 const noopMutation = vi.hoisted(() => () => ({
   mutate: vi.fn(),
@@ -125,6 +133,14 @@ vi.mock("@/services/admin-sessions", async (importOriginal) => ({
   useAdminDeleteSessionImage: noopMutation,
   useAdminSetGroupNotes: noopMutation,
   useAdminSetSiteNotes: noopMutation,
+  useAdminCancelSession: () => ({
+    mutateAsync: cancelSession,
+    isPending: false,
+  }),
+  useAdminRestoreSession: () => ({
+    mutateAsync: restoreSession,
+    isPending: false,
+  }),
 }));
 
 // The hooks are stubbed; everything else — the SQLSTATEs the shared save module
@@ -177,10 +193,13 @@ vi.mock("@/services/member-flair", () => ({
   }),
 }));
 
-// The calendar merge is a pure module with its own suite, and this page's
-// sessions are not what is under test — an empty feed renders its empty line
-// and leaves the rail, which is where the flair lives, untouched.
-vi.mock("@/lib/gedu-session-feed", () => ({ buildGeduSessionFeed: () => [] }));
+// The calendar merge is a pure module with its own suite. Most cases here are
+// not about the sessions — an empty feed renders its empty line and leaves the
+// rail, which is where the flair lives, untouched — and the cancellation cases
+// hand over the entries they are about.
+vi.mock("@/lib/gedu-session-feed", () => ({
+  buildGeduSessionFeed: () => feedEntries.value,
+}));
 
 // --------------------------------------------------------------------------
 // Fixtures
@@ -322,7 +341,7 @@ function adminSessions(): AdminProductSessions {
           { participant_id: IDS.oskar, first_name: "Oskar" },
           { participant_id: IDS.emil, first_name: "Emil" },
         ],
-        sessions: [],
+        sessions: recordedDates.value.map((date) => storedRow(date)),
         // The staffing derivation's two inputs. Empty: this suite is about the
         // admin shell's wiring, not about who is running the sessions.
         gedus: [],
@@ -382,6 +401,62 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     gedus: [],
     substitutions: [],
     cancellations: [],
+  };
+}
+
+/** A stored session row on one date — a record, which a cancel is refused for. */
+function storedRow(
+  sessionDate: string,
+): AdminProductSessions["groups"][number]["sessions"][number] {
+  return {
+    id: `row-${sessionDate}`,
+    session_date: sessionDate,
+    starts_at: `${sessionDate}T14:30:00.000Z`,
+    ends_at: `${sessionDate}T16:00:00.000Z`,
+    report: "Built a castle.",
+    gedu_note: null,
+    created_at: `${sessionDate}T16:05:00.000Z`,
+    updated_at: `${sessionDate}T16:05:00.000Z`,
+    created_by: null,
+    updated_by: null,
+    updated_by_first_name: null,
+    report_emailed_at: null,
+    images: [],
+    attendance: {},
+  };
+}
+
+/** Next Monday's session, with nothing recorded on it. */
+const UPCOMING_DATE = "2026-03-23";
+function upcomingEntry(): SessionFeedEntry {
+  return {
+    kind: "future",
+    id: `${IDS.group}:${UPCOMING_DATE}`,
+    startsAt: new Date(`${UPCOMING_DATE}T14:30:00.000Z`),
+    endsAt: new Date(`${UPCOMING_DATE}T16:00:00.000Z`),
+    staffing: NO_SESSION_STAFFING,
+    report: null,
+    staffNote: null,
+    attendance: {},
+    images: [],
+    lastEditedBy: null,
+  };
+}
+
+/** The Monday after, already cancelled by an admin. */
+const CANCELLED_DATE = "2026-03-30";
+function cancelledEntry(): SessionFeedEntry {
+  return {
+    kind: "cancelled",
+    id: `${IDS.group}:${CANCELLED_DATE}`,
+    sessionDate: CANCELLED_DATE,
+    startsAt: new Date(`${CANCELLED_DATE}T13:30:00.000Z`),
+    endsAt: new Date(`${CANCELLED_DATE}T15:00:00.000Z`),
+    staffing: NO_SESSION_STAFFING,
+    upcoming: true,
+    reason: "Venue closed for the holidays",
+    cancelledAt: new Date("2026-03-10T09:00:00.000Z"),
+    cancelledBy: { id: "5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f", firstName: "Aino" },
   };
 }
 
@@ -491,6 +566,12 @@ function noteBox() {
 }
 
 beforeEach(() => {
+  feedEntries.value = [];
+  recordedDates.value = [];
+  cancelSession.mockReset();
+  cancelSession.mockResolvedValue(undefined);
+  restoreSession.mockReset();
+  restoreSession.mockResolvedValue(undefined);
   setNote.mockReset();
   setNote.mockResolvedValue({
     group_id: IDS.group,
@@ -681,5 +762,131 @@ describe("admin group details — writing a note and creations", () => {
         screen.queryByRole("heading", { name: FLAIR_DIALOG_TITLE }),
       ).toBeNull(),
     );
+  });
+});
+
+/**
+ * Cancelling and restoring a session — the admin's power over the session
+ * itself, offered in the card's own `⋯`.
+ */
+describe("admin group details — cancelling a session", () => {
+  /** Open a card's `⋯` by its accessible name and pick one row. */
+  function pickFromMenu(menuLabel: string, item: string) {
+    fireEvent.click(screen.getByRole("button", { name: menuLabel }));
+    fireEvent.click(screen.getByRole("menuitem", { name: item }));
+  }
+
+  it("cancels a session with no record, with the trimmed reason", async () => {
+    feedEntries.value = [upcomingEntry()];
+    renderPage("consumer_club");
+
+    pickFromMenu("More actions for this session", "Cancel session");
+    expect(
+      screen.getByText(/Families and Gedus will see this session as cancelled/),
+    ).toBeTruthy();
+    fireEvent.change(screen.getByRole("textbox", { name: /Reason/ }), {
+      target: { value: "  Venue closed  " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel the session" }));
+
+    await waitFor(() => expect(cancelSession).toHaveBeenCalledTimes(1));
+    expect(cancelSession).toHaveBeenCalledWith({
+      sessionDate: UPCOMING_DATE,
+      reason: "Venue closed",
+    });
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Cancel this session?" }),
+      ).toBeNull(),
+    );
+  });
+
+  it("keeps the dialog committing from the press until the write lands", async () => {
+    let settle = (): void => {};
+    cancelSession.mockReturnValue(
+      new Promise<void>((resolve) => {
+        settle = resolve;
+      }),
+    );
+    feedEntries.value = [upcomingEntry()];
+    renderPage("consumer_club");
+
+    pickFromMenu("More actions for this session", "Cancel session");
+    const confirm = screen.getByRole("button", { name: "Cancel the session" });
+    fireEvent.click(confirm);
+    expect(confirm).toHaveProperty("disabled", true);
+    expect(screen.getByRole("textbox", { name: /Reason/ })).toHaveProperty(
+      "disabled",
+      true,
+    );
+    fireEvent.click(confirm);
+    expect(cancelSession).toHaveBeenCalledTimes(1);
+
+    settle();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Cancel this session?" }),
+      ).toBeNull(),
+    );
+  });
+
+  it("says why when the session turns out to have a record", async () => {
+    cancelSession.mockRejectedValue({ code: "P0027", message: "has record" });
+    feedEntries.value = [upcomingEntry()];
+    renderPage("consumer_club");
+
+    pickFromMenu("More actions for this session", "Cancel session");
+    fireEvent.click(screen.getByRole("button", { name: "Cancel the session" }));
+
+    expect(
+      await screen.findByText(/already has a report, a note, a photo or attendance/),
+    ).toBeTruthy();
+    // Still open, with the button handed back for another go.
+    expect(
+      screen.getByRole("button", { name: "Cancel the session" }),
+    ).toHaveProperty("disabled", false);
+  });
+
+  it("does not offer a cancel on a session with a stored record", () => {
+    feedEntries.value = [upcomingEntry()];
+    recordedDates.value = [UPCOMING_DATE];
+    renderPage("consumer_club");
+
+    // Nothing else is on this card's menu either, so there is no `⋯` at all.
+    expect(
+      screen.queryByRole("button", { name: "More actions for this session" }),
+    ).toBeNull();
+  });
+
+  it("shows a cancelled session's reason and stamp, and restores it", async () => {
+    feedEntries.value = [cancelledEntry()];
+    renderPage("consumer_club");
+
+    expect(screen.getByText("Cancelled")).toBeTruthy();
+    expect(screen.getByText("Venue closed for the holidays")).toBeTruthy();
+    expect(screen.getByText(/^Cancelled by Aino, /)).toBeTruthy();
+
+    pickFromMenu("More actions for this cancelled session", "Restore session");
+    fireEvent.click(screen.getByRole("button", { name: "Restore the session" }));
+
+    await waitFor(() => expect(restoreSession).toHaveBeenCalledTimes(1));
+    expect(restoreSession).toHaveBeenCalledWith({ sessionDate: CANCELLED_DATE });
+  });
+
+  it("re-words a cancelled session's reason through the same write", async () => {
+    feedEntries.value = [cancelledEntry()];
+    renderPage("consumer_club");
+
+    pickFromMenu("More actions for this cancelled session", "Change the reason");
+    const box = screen.getByRole("textbox", { name: /Reason/ });
+    expect(box).toHaveProperty("value", "Venue closed for the holidays");
+    fireEvent.change(box, { target: { value: "Heating broken" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save the reason" }));
+
+    await waitFor(() => expect(cancelSession).toHaveBeenCalledTimes(1));
+    expect(cancelSession).toHaveBeenCalledWith({
+      sessionDate: CANCELLED_DATE,
+      reason: "Heating broken",
+    });
   });
 });

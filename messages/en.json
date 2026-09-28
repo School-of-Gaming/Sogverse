@@ -1160,6 +1160,29 @@
         "loadFailed": "The session record could not be loaded. Reload the page to try again.",
         "loading": "Loading this product's session record.",
         "railGroupHeading": "Group"
+      },
+      "cancellation": {
+        "menuLabel": "More actions for this cancelled session",
+        "cancelSession": "Cancel session",
+        "addReason": "Add a reason",
+        "changeReason": "Change the reason",
+        "restoreSession": "Restore session",
+        "cancelTitle": "Cancel this session?",
+        "cancelBody": "{date}. Families and Gedus will see this session as cancelled, and nothing can be recorded on it. Nobody is notified.",
+        "reasonTitle": "Change the reason",
+        "reasonBody": "{date}. The session stays cancelled.",
+        "reasonLabel": "Reason",
+        "reasonHint": "Only admins see the reason. {count, plural, one {# character left} other {# characters left}}",
+        "reasonPlaceholder": "For example: the venue is closed for the holidays.",
+        "keepSession": "Keep the session",
+        "cancelConfirm": "Cancel the session",
+        "reasonConfirm": "Save the reason",
+        "hasRecord": "This session already has a report, a note, a photo or attendance recorded on it, so it cannot be cancelled.",
+        "cancelFailed": "That could not be saved. Try again.",
+        "restoreTitle": "Restore this session?",
+        "restoreBody": "{date}. Families and Gedus will see this session as scheduled again, and it can be recorded as usual. Nobody is notified.",
+        "restoreConfirm": "Restore the session",
+        "restoreFailed": "The session could not be restored. Try again."
       }
     },
     "users": {
@@ -2184,7 +2207,8 @@
       "substitutionWithdrawTitle": "Take this back?",
       "substitutionWithdrawBody": "You go back to running the session, and any offers to substitute are dropped.",
       "substitutionWithdrawConfirm": "Take it back",
-      "substitutionWithdrawFailed": "That didn’t save. Try again."
+      "substitutionWithdrawFailed": "That didn’t save. Try again.",
+      "cancelledByOn": "Cancelled by {name}, {when}"
     },
     "groupNotes": {
       "heading": "About this group",
@@ -2314,7 +2338,8 @@
   "sessionBadge": {
     "live": "Live",
     "nextSession": "Next session",
-    "upcoming": "Upcoming"
+    "upcoming": "Upcoming",
+    "cancelled": "Cancelled"
   },
   "sessionFeed": {
     "readMore": "Read more",

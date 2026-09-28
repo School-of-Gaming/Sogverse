@@ -313,9 +313,16 @@ export type EntrySpec =
        * in the room while it is being built.
        */
       photos?: readonly SessionPhoto[];
+      /**
+       * Called off by an admin: drawn as the cancelled line in its place, as a
+       * gedu sees it — the date and nothing about why.
+       */
+      cancelled?: true;
     }
   | {
       kind: "past";
+      /** Called off by an admin — see the future spec's own note. */
+      cancelled?: true;
       /**
        * The session report, as **markdown** — a title line, a section or two,
        * usually a list. Real ones run 500–1500 characters, and several here are
@@ -932,6 +939,22 @@ function toEntry(
   roster: readonly SessionFeedGamer[],
 ): SessionFeedEntry {
   const { id, startsAt, endsAt } = base;
+  if (spec.kind !== "no_record" && spec.cancelled === true) {
+    return {
+      kind: "cancelled",
+      id,
+      sessionDate: formatInTimeZone(startsAt, TIMEZONE, "yyyy-MM-dd"),
+      startsAt,
+      endsAt,
+      staffing: NO_SESSION_STAFFING,
+      upcoming: spec.kind === "future",
+      // A gedu's document nulls the detail: they learn the session is off and
+      // nothing about why.
+      reason: null,
+      cancelledAt: null,
+      cancelledBy: null,
+    };
+  }
   switch (spec.kind) {
     case "future":
       return {

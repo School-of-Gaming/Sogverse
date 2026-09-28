@@ -1160,6 +1160,29 @@
         "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
         "loading": "Laddar dokumentationen av produktens tillfällen.",
         "railGroupHeading": "Grupp"
+      },
+      "cancellation": {
+        "menuLabel": "Fler åtgärder för det här inställda tillfället",
+        "cancelSession": "Ställ in tillfället",
+        "addReason": "Lägg till en orsak",
+        "changeReason": "Ändra orsaken",
+        "restoreSession": "Återställ tillfället",
+        "cancelTitle": "Ställa in det här tillfället?",
+        "cancelBody": "{date}. Familjer och Geduer ser tillfället som inställt, och ingenting kan registreras på det. Ingen meddelas.",
+        "reasonTitle": "Ändra orsaken",
+        "reasonBody": "{date}. Tillfället förblir inställt.",
+        "reasonLabel": "Orsak",
+        "reasonHint": "Bara administratörer ser orsaken. {count} tecken kvar",
+        "reasonPlaceholder": "Till exempel: lokalen är stängd under lovet.",
+        "keepSession": "Behåll tillfället",
+        "cancelConfirm": "Ställ in tillfället",
+        "reasonConfirm": "Spara orsaken",
+        "hasRecord": "Tillfället har redan en rapport, en anteckning, ett foto eller närvaro registrerad, så det kan inte ställas in.",
+        "cancelFailed": "Det gick inte att spara. Försök igen.",
+        "restoreTitle": "Återställa det här tillfället?",
+        "restoreBody": "{date}. Familjer och Geduer ser tillfället som schemalagt igen, och det kan registreras som vanligt. Ingen meddelas.",
+        "restoreConfirm": "Återställ tillfället",
+        "restoreFailed": "Tillfället kunde inte återställas. Försök igen."
       }
     },
     "users": {
@@ -2184,7 +2207,8 @@
       "substitutionWithdrawTitle": "Ta tillbaka det här?",
       "substitutionWithdrawBody": "Du leder tillfället igen, och alla erbjudanden om att vikariera stryks.",
       "substitutionWithdrawConfirm": "Ta tillbaka",
-      "substitutionWithdrawFailed": "Det sparades inte. Försök igen."
+      "substitutionWithdrawFailed": "Det sparades inte. Försök igen.",
+      "cancelledByOn": "Inställt av {name}, {when}"
     },
     "groupNotes": {
       "heading": "Om gruppen",
@@ -2314,7 +2338,8 @@
   "sessionBadge": {
     "live": "Pågår",
     "nextSession": "Nästa tillfälle",
-    "upcoming": "Kommande tillfälle"
+    "upcoming": "Kommande tillfälle",
+    "cancelled": "Inställt"
   },
   "sessionFeed": {
     "readMore": "Läs mer",

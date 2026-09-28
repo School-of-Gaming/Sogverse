@@ -27,6 +27,16 @@ is the *current* session, not history. The builders stay separate — they emit 
 shapes, and that is where the privacy line is drawn — but they must never disagree about
 which side of the present a session is on. They are one timeline read by two audiences.
 
+**Rule: a cancelled session keeps its dated place on both feeds, drawn as the shared
+cancelled line, and is never the next session.** It is its own entry kind rather than a
+flag on the others, so no card, editor, register or send can be offered on a date the
+database refuses every write for. It sits on the side of the present its end instant puts
+it, like every other kind; the partition names the soonest session that *runs* as next, and
+a cancelled date sooner than that sits between it and the past, always on screen, because a
+family whose next date is off has to see it without opening anything. The reason and who
+cancelled travel only in the staff document's admin fields, so a gedu's line and a family's
+read the same.
+
 The staff feed used to split on the session's *start*, because its kind was standing in
 for "may I take the register yet": making the running session `past` was how it reached
 the record editor. That conflation is gone. Editability is asked directly now, against the
@@ -127,7 +137,8 @@ gets nothing.
 **Rule: exactly one session of a run can owe a fourth thing, and it is the last
 one.** On a product flagged as requiring a creation from every member, the run's
 **final session** — the last occurrence the schedule projects on or before the
-end date — is not finished until every roster member that session EXPECTED has
+end date that the group has not cancelled — is not finished until every roster
+member that session EXPECTED has
 at least one (the join-date rule below scopes this exactly as it scopes the
 register).
 The framing is what makes it fit: creations are that session's work, so they
@@ -264,9 +275,11 @@ session the card calls finished is worse than either being wrong alone. The two
 places already share the whitespace-trimmed test for "has a report"; they also
 share the emailed test and its epoch gate, and now the creations condition —
 which means they share a **third** derivation as well, the one that says which
-occurrence is a run's last. Both walk the seven days ending at the end date,
-floored at the start date, and take the greatest whose weekday a slot names;
-seven is enough because slots are weekly. The creations condition sits inside
+occurrence is a run's last. Both walk the year ending at the end date, floored at
+the start date, and take the greatest date whose weekday a slot names and the
+group has not cancelled; a year is enough because slots are weekly, unless a whole
+year of the group's sessions is cancelled. A cancelled date is never owed on
+either side. The creations condition sits inside
 the epoch-floored half on both sides, exactly as the emailed test does, so a
 pre-epoch final session keeps its check rather than losing it to a term that
 finished before the platform asked. There is a **fourth** thing they must agree

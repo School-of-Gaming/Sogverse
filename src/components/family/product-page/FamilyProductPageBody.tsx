@@ -305,9 +305,28 @@ export function FamilyProductPageBody({
     [schedule, locale, timeZone, now],
   );
 
+  // A cancelled session opens no room, so the Join names the soonest one that
+  // is going to run. The feed carries every cancelled date the room could land
+  // on: it holds the same forward horizon the room's walk does.
+  const cancelledDates = useMemo(
+    () =>
+      new Set(
+        entries.flatMap((entry) =>
+          entry.kind === "cancelled" ? [entry.sessionDate] : [],
+        ),
+      ),
+    [entries],
+  );
   const voiceState = useMemo(
-    () => computeVoiceState({ product: schedule, now, locale, timeZone }),
-    [schedule, now, locale, timeZone],
+    () =>
+      computeVoiceState({
+        product: schedule,
+        now,
+        locale,
+        timeZone,
+        cancelledDates,
+      }),
+    [schedule, now, locale, timeZone, cancelledDates],
   );
 
   // A room only exists on a remote product, and only while the product still

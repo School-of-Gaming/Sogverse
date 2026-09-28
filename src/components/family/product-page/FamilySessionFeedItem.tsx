@@ -14,10 +14,11 @@ import {
   type SessionLabels,
 } from "@/components/session-feed";
 import { cn } from "@/lib/utils";
-import type { FamilySessionEntry } from "./types";
+import type { FamilyFutureSessionEntry, FamilyPastSessionEntry } from "./types";
 
 interface FamilySessionFeedItemProps {
-  entry: FamilySessionEntry;
+  /** A cancelled session never reaches a card — the feed draws it as a line. */
+  entry: FamilyFutureSessionEntry | FamilyPastSessionEntry;
   labels: SessionLabels;
   /**
    * Whether this is the soonest session still ahead. Changes the tag's wording,

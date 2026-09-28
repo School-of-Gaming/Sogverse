@@ -40,6 +40,12 @@ substituted.
 unfilled — derived from the date, so nothing sweeps and no clock runs. The queue simply
 stops returning it.
 
+**A request on a cancelled session is hidden, not withdrawn.** The queue and the pool leave
+it out, the session card draws no staffing on a cancelled date, and filing, offering and
+seating a sub there are all refused — a session that is not happening needs no cover. The
+row itself is untouched, so a restore brings the request back exactly as it was; withdrawing
+it on cancel would have thrown away a filing the restore then could not return.
+
 ## Who is expected is derived, never stored
 
 *A gedu is expected at (group, date) iff they hold no non-withdrawn request for it, and

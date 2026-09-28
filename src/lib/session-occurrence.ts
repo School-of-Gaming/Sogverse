@@ -59,26 +59,37 @@ export interface SlotShape {
 }
 
 /**
+ * How far back from the end date the final-session search walks: a year, the
+ * same window the assignment-summaries RPC generates.
+ */
+const FINAL_SESSION_SEARCH_DAYS = 366;
+
+/**
  * The **last occurrence a product's schedule projects on or before its end
- * date**, as a bare `YYYY-MM-DD`, or `null` when the run has no final session
- * at all.
+ * date that the group has not had cancelled**, as a bare `YYYY-MM-DD`, or
+ * `null` when the run has no final session at all.
  *
  * There is no stored final-session flag anywhere — occurrences come from the
  * schedule — so "the final session" has to be derived, and it is derived here
  * so the one client that needs it and the SQL that computes the dashboard's
  * count answer the same question the same way. **The two are twins and must
- * stay so**: the assignment-summaries RPC walks the same seven-day window with
- * the same weekday test, and a change to either half is a change to both.
+ * stay so**: the assignment-summaries RPC walks the same year-long window with
+ * the same weekday test and the same cancellation test, and a change to either
+ * half is a change to both.
  *
- * Three properties, each of which the SQL shares:
+ * Four properties, each of which the SQL shares:
  *
  * - **An open-ended product has none.** A club with no end date has no last
  *   session, so this answers `null` and anything gated on it never fires. That
  *   is documented behaviour, not an error.
- * - **Seven days ending at `endDate`, floored at `startDate`, is the whole
- *   search.** Slots are weekly, so a run of a week or more has every weekday
- *   inside that window and a shorter run is wholly inside it — which makes the
- *   maximum over the window the maximum over the run, at a bounded cost.
+ * - **A cancelled last session hands the obligation to the one before it**
+ *   rather than dropping it: the creations are that run's work, and the run
+ *   still has a last session that actually happens.
+ * - **A year ending at `endDate`, floored at `startDate`, is the whole
+ *   search.** Slots are weekly, so any week inside it holds every weekday and
+ *   the greatest uncancelled date in the window is the greatest in the run
+ *   unless a whole year of the group's sessions is cancelled — a bounded cost
+ *   either way.
  * - **Pure calendar arithmetic, UTC-pinned.** Both bounds are bare dates with no
  *   time of day, so there is no zone to convert through and no DST to step over;
  *   the walk is `Date.UTC` day arithmetic, exactly as `src/CLAUDE.md` asks
@@ -91,22 +102,26 @@ export function finalSessionDate(args: {
   startDate: string | null;
   /** Product-local `YYYY-MM-DD`, or `null` on an open-ended run. */
   endDate: string | null;
+  /** The group's cancelled dates, product-local `YYYY-MM-DD`. */
+  cancelledDates: ReadonlySet<string>;
 }): string | null {
-  const { slots, startDate, endDate } = args;
+  const { slots, startDate, endDate, cancelledDates } = args;
   if (endDate === null || slots.length === 0) return null;
 
   const weekdays = new Set(slots.map((slot) => slot.weekday));
   const end = Date.parse(`${endDate}T00:00:00.000Z`);
   if (Number.isNaN(end)) return null;
 
-  for (let back = 0; back < 7; back++) {
+  for (let back = 0; back <= FINAL_SESSION_SEARCH_DAYS; back++) {
     const day = new Date(end - back * 86_400_000);
     const date = utcCalendarDate(day);
     // Below the product's own start there is nothing left to find: the run had
     // not begun. Bare-date string comparison is a calendar comparison.
     if (startDate !== null && date < startDate) return null;
     // `getUTCDay()` is 0 = Sunday; the app's slots are 0 = Monday.
-    if (weekdays.has((day.getUTCDay() + 6) % 7)) return date;
+    if (weekdays.has((day.getUTCDay() + 6) % 7) && !cancelledDates.has(date)) {
+      return date;
+    }
   }
   return null;
 }

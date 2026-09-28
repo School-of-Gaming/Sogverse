@@ -16,7 +16,10 @@ import type {
   FamilyProductGedu,
   FamilySessionEntry,
 } from "@/components/family/product-page/types";
-import type { FamilyFeedSession } from "@/services/family-product-feed/family-product-feed.contracts";
+import type {
+  FamilyFeedCancellation,
+  FamilyFeedSession,
+} from "@/services/family-product-feed/family-product-feed.contracts";
 
 /**
  * Turning one group's stored session rows and its product's weekly schedule
@@ -74,6 +77,12 @@ export interface FamilySessionFeedArgs {
   endDate: string | null;
   /** Every stored row for the group, in any order. */
   sessions: readonly FamilyFeedSession[];
+  /**
+   * The group's cancelled sessions. Each replaces its date's entry with a
+   * cancelled one, and one on a date the feed would not otherwise show is
+   * inert.
+   */
+  cancellations: readonly FamilyFeedCancellation[];
   now: Date;
   /**
    * The instant paid access ends, when the parent has cancelled this
@@ -111,6 +120,7 @@ export function buildFamilySessionFeed(
     startDate,
     endDate,
     sessions,
+    cancellations,
     now,
     accessUntil = null,
   } = args;
@@ -175,6 +185,9 @@ export function buildFamilySessionFeed(
   const rowsByDate = new Map(
     sessions.map((session) => [session.session_date, session]),
   );
+  const cancelledDates = new Set(
+    cancellations.map((cancellation) => cancellation.session_date),
+  );
 
   const dates = new Set([...projected.keys(), ...rowsByDate.keys()]);
   const entries: FamilySessionEntry[] = [];
@@ -200,6 +213,22 @@ export function buildFamilySessionFeed(
       accessUntil !== null &&
       when.startsAt.getTime() > accessUntil.getTime()
     ) {
+      continue;
+    }
+
+    // A cancelled session stays in the feed in its dated place, so a family
+    // sees that the date is off rather than finding it missing. The database
+    // never lets a cancellation share a date with a stored row; if one somehow
+    // did, the cancellation wins, as it does on every other reader.
+    if (cancelledDates.has(date)) {
+      entries.push({
+        kind: "cancelled",
+        id: sessionEntryId(groupId, date),
+        sessionDate: date,
+        startsAt: when.startsAt,
+        endsAt: when.endsAt,
+        upcoming: when.endsAt.getTime() > now.getTime(),
+      });
       continue;
     }
 

@@ -304,10 +304,20 @@ function Workspace({
         // a card offers "I can't make this session" at all.
         gedus: feed.gedus,
         substitutions: feed.substitutions,
+        cancellations: feed.cancellations,
         viewerId,
         now,
       }),
-    [groupId, feed.product, feed.sessions, feed.gedus, feed.substitutions, viewerId, now],
+    [
+      groupId,
+      feed.product,
+      feed.sessions,
+      feed.gedus,
+      feed.substitutions,
+      feed.cancellations,
+      viewerId,
+      now,
+    ],
   );
 
   /**

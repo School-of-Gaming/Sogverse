@@ -86,6 +86,7 @@ function build(overrides: Partial<Parameters<typeof buildGeduSessionFeed>[0]> = 
     // by overriding one or both.
     gedus: [GEDU_A],
     substitutions: [],
+    cancellations: [],
     now: NOW,
     epoch: EPOCH,
     ...overrides,
@@ -438,6 +439,7 @@ describe("buildGeduSessionFeed — the in-progress session", () => {
       sessions: [],
       gedus: [GEDU_A],
       substitutions: [],
+      cancellations: [],
       now,
       epoch: EPOCH,
     });
@@ -504,6 +506,7 @@ describe("buildGeduSessionFeed — the in-progress session", () => {
       sessions: [],
       gedus: [GEDU_A],
       substitutions: [],
+      cancellations: [],
       // 14:00 Helsinki - six hours in, nine hours to go.
       now: new Date("2026-03-16T12:00:00.000Z"),
       epoch: EPOCH,
@@ -671,6 +674,94 @@ describe("buildGeduSessionFeed — staffing", () => {
     // instants to render with, and the admin queue is where it is cleared.
     const entries = build({ substitutions: [substitution("2026-03-19")] });
     expect(dates(entries)).not.toContain("2026-03-19");
+  });
+});
+
+/**
+ * A cancelled session replaces its date's entry, on the side of now its end
+ * instant puts it — never owed, never editable, never the headline.
+ */
+describe("buildGeduSessionFeed — cancelled sessions", () => {
+  const ADMIN_ID = "dddd4444-4444-4444-8444-444444444444";
+
+  function cancellation(
+    sessionDate: string,
+    admin: boolean,
+  ): Parameters<typeof buildGeduSessionFeed>[0]["cancellations"][number] {
+    return {
+      session_date: sessionDate,
+      reason: admin ? "Venue closed" : null,
+      cancelled_at: admin ? "2026-03-10T09:00:00.000Z" : null,
+      cancelled_by: admin ? ADMIN_ID : null,
+      cancelled_by_first_name: admin ? "Aino" : null,
+    };
+  }
+
+  it("carries the admin detail when the document has it", () => {
+    const entry = byDate(
+      build({ cancellations: [cancellation("2026-03-23", true)] }),
+      "2026-03-23",
+    );
+    expect(entry).toMatchObject({
+      kind: "cancelled",
+      sessionDate: "2026-03-23",
+      upcoming: true,
+      reason: "Venue closed",
+      cancelledAt: new Date("2026-03-10T09:00:00.000Z"),
+      cancelledBy: { id: ADMIN_ID, firstName: "Aino" },
+    });
+  });
+
+  it("carries only the date for a gedu, whose document nulls the rest", () => {
+    const entry = byDate(
+      build({ cancellations: [cancellation("2026-03-23", false)] }),
+      "2026-03-23",
+    );
+    expect(entry).toMatchObject({
+      kind: "cancelled",
+      reason: null,
+      cancelledAt: null,
+      cancelledBy: null,
+    });
+  });
+
+  it("is never owed: a finished, in-enforcement cancelled date is not a past entry", () => {
+    const entry = byDate(
+      build({ cancellations: [cancellation("2026-03-09", false)] }),
+      "2026-03-09",
+    );
+    expect(entry?.kind).toBe("cancelled");
+    expect(entry).toMatchObject({ upcoming: false });
+    expect(entry).not.toHaveProperty("owed");
+  });
+
+  it("is never the headline next session", () => {
+    const partition = partitionFeedEntries(
+      build({ cancellations: [cancellation("2026-03-23", false)] }),
+    );
+    expect(partition.nextSession?.id).toBe(sessionEntryId(GROUP, "2026-03-30"));
+    expect(partition.soonerCancelled.map((entry) => entry.id)).toEqual([
+      sessionEntryId(GROUP, "2026-03-23"),
+    ]);
+  });
+
+  it("keeps a request filed on the date out of sight rather than dropping it", () => {
+    // The card draws no staffing on a cancelled date; the request is still
+    // there, so a restore brings it back as it was.
+    const entry = byDate(
+      build({
+        cancellations: [cancellation("2026-03-23", false)],
+        substitutions: [substitution("2026-03-23")],
+      }),
+      "2026-03-23",
+    );
+    expect(entry?.kind).toBe("cancelled");
+    expect(entry?.staffing.requests).toHaveLength(1);
+  });
+
+  it("ignores a cancellation on a date the schedule does not project", () => {
+    const entries = build({ cancellations: [cancellation("2026-03-17", true)] });
+    expect(byDate(entries, "2026-03-17")).toBeUndefined();
   });
 });
 

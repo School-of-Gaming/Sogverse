@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import {
+  SessionCancelledLine,
   SessionFeedShell,
   formatSessionLabels,
   hasReport,
@@ -112,24 +113,32 @@ export function FamilySessionFeed({
       entries={entries}
       className={className}
       markerClass={markerClass}
-      renderItem={(entry, { prominent }) => (
-        <FamilySessionFeedItem
-          entry={entry}
-          prominent={prominent}
-          live={
-            entry.kind === "future" &&
-            entry.startsAt.getTime() <= now.getTime() &&
-            now.getTime() < entry.endsAt.getTime()
-          }
-          showAttendance={showAttendance}
-          labels={formatSessionLabels(entry, {
-            locale,
-            timeZone,
-            sourceTimeZone,
-            now,
-          })}
-        />
-      )}
+      renderItem={(entry, { prominent }) => {
+        const labels = formatSessionLabels(entry, {
+          locale,
+          timeZone,
+          sourceTimeZone,
+          now,
+        });
+        // The date and the tag, nothing else: a family is told the session is
+        // off and never why.
+        if (entry.kind === "cancelled") {
+          return <SessionCancelledLine labels={labels} />;
+        }
+        return (
+          <FamilySessionFeedItem
+            entry={entry}
+            prominent={prominent}
+            live={
+              entry.kind === "future" &&
+              entry.startsAt.getTime() <= now.getTime() &&
+              now.getTime() < entry.endsAt.getTime()
+            }
+            showAttendance={showAttendance}
+            labels={labels}
+          />
+        );
+      }}
     />
   );
 }
@@ -147,6 +156,9 @@ export function FamilySessionFeed({
  * height.
  */
 function isQuiet(entry: FamilySessionEntry, showAttendance: boolean): boolean {
+  // A cancelled session is drawn as a line too, so its dot sits at a line's
+  // height.
+  if (entry.kind === "cancelled") return true;
   return (
     entry.kind === "past" &&
     !hasReport(entry.report) &&

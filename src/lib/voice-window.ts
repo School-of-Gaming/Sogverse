@@ -3,6 +3,7 @@ import {
   endDateToCutoff,
   enumerateRowOccurrences,
   OPEN_ENDED_OCCURRENCE_CAP,
+  productLocalDate,
   startDateToCutoff,
 } from "@/lib/session-occurrence";
 import { formatDate, formatTime } from "@/lib/utils";
@@ -70,19 +71,25 @@ export interface VoiceWindowProduct {
  * Answers "is the *window* open" from the schedule alone, independent of
  * `is_remote`. In-person products have no voice room, so callers gate the
  * Join affordance on `is_remote` themselves rather than relying on this.
+ *
+ * `cancelledDates` are one group's cancelled sessions, and a surface that knows
+ * them passes them: a cancelled session opens no room — the database refuses
+ * one — so the next occurrence is the soonest one that is not cancelled.
  */
 export function computeVoiceState(args: {
   product: VoiceWindowProduct;
   now: Date;
   locale: string;
   timeZone: string;
+  /** Product-local `YYYY-MM-DD` dates of the group's cancelled sessions. */
+  cancelledDates?: ReadonlySet<string>;
 }): {
   voiceIsOpen: boolean;
   opensDate: string;
   opensTime: string;
   hasUpcomingSession: boolean;
 } {
-  const { product, now, locale, timeZone } = args;
+  const { product, now, locale, timeZone, cancelledDates } = args;
   const windowCloseMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
 
   const slots = product.schedule_slots.map((s) => ({
@@ -102,7 +109,11 @@ export function computeVoiceState(args: {
         ? OPEN_ENDED_OCCURRENCE_CAP
         : Number.POSITIVE_INFINITY,
     windowCloseMs,
-  });
+  }).filter(
+    (occurrence) =>
+      cancelledDates === undefined ||
+      !cancelledDates.has(productLocalDate(occurrence.start, product.timezone)),
+  );
   occurrences.sort((a, b) => a.start.getTime() - b.start.getTime());
 
   if (occurrences.length === 0) {

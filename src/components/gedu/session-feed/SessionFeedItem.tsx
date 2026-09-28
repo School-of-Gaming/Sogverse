@@ -42,12 +42,12 @@ import type { SessionSubstitutionRequestDraft } from "./SessionSubstitutionReque
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type {
   SessionEntryDraft,
-  SessionFeedEntry,
+  ScheduledSessionFeedEntry,
   SessionFeedGamer,
 } from "./types";
 
 interface SessionFeedItemProps {
-  entry: SessionFeedEntry;
+  entry: ScheduledSessionFeedEntry;
   roster: readonly SessionFeedGamer[];
   labels: SessionLabels;
   /**
@@ -710,7 +710,7 @@ function SessionEntryBody({
   reportAction,
   creationsBlock,
 }: {
-  entry: SessionFeedEntry;
+  entry: ScheduledSessionFeedEntry;
   roster: readonly SessionFeedGamer[];
   /** Whether this is the session in progress — see the attendance note below. */
   live: boolean;
@@ -850,7 +850,7 @@ function WrittenFields({
   clampReport,
   reportAction = null,
 }: {
-  entry: Extract<SessionFeedEntry, { kind: "future" | "past" }>;
+  entry: Extract<ScheduledSessionFeedEntry, { kind: "future" | "past" }>;
   clampReport: boolean;
   /** Rendered inside the report block, under the write-up itself. */
   reportAction?: ReactNode;

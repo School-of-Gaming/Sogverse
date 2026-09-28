@@ -1160,6 +1160,29 @@
         "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
         "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
         "railGroupHeading": "Ryhmä"
+      },
+      "cancellation": {
+        "menuLabel": "Lisää toimintoja tälle perutulle kerralle",
+        "cancelSession": "Peru kerta",
+        "addReason": "Lisää syy",
+        "changeReason": "Muuta syytä",
+        "restoreSession": "Palauta kerta",
+        "cancelTitle": "Perutaanko kerta?",
+        "cancelBody": "{date}. Perheet ja Gedut näkevät kerran perutuksi, eikä sille voi kirjata mitään. Kenellekään ei ilmoiteta.",
+        "reasonTitle": "Muuta syytä",
+        "reasonBody": "{date}. Kerta pysyy peruttuna.",
+        "reasonLabel": "Syy",
+        "reasonHint": "Vain ylläpitäjät näkevät syyn. {count} merkkiä jäljellä",
+        "reasonPlaceholder": "Esimerkiksi: tila on suljettu lomien ajan.",
+        "keepSession": "Pidä kerta",
+        "cancelConfirm": "Peru kerta",
+        "reasonConfirm": "Tallenna syy",
+        "hasRecord": "Kerralle on jo kirjattu raportti, muistiinpano, kuva tai läsnäolo, joten sitä ei voi perua.",
+        "cancelFailed": "Tallentaminen ei onnistunut. Yritä uudelleen.",
+        "restoreTitle": "Palautetaanko kerta?",
+        "restoreBody": "{date}. Perheet ja Gedut näkevät kerran taas aikataulussa, ja sille voi kirjata tavalliseen tapaan. Kenellekään ei ilmoiteta.",
+        "restoreConfirm": "Palauta kerta",
+        "restoreFailed": "Kerran palauttaminen ei onnistunut. Yritä uudelleen."
       }
     },
     "users": {
@@ -2184,7 +2207,8 @@
       "substitutionWithdrawTitle": "Perutaanko ilmoitus?",
       "substitutionWithdrawBody": "Ohjaat kerran taas itse, ja kaikki tuuraustarjoukset raukeavat.",
       "substitutionWithdrawConfirm": "Peru ilmoitus",
-      "substitutionWithdrawFailed": "Tallennus epäonnistui. Yritä uudelleen."
+      "substitutionWithdrawFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "cancelledByOn": "Perui {name}, {when}"
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
@@ -2314,7 +2338,8 @@
   "sessionBadge": {
     "live": "Käynnissä",
     "nextSession": "Seuraava kerta",
-    "upcoming": "Tuleva kerta"
+    "upcoming": "Tuleva kerta",
+    "cancelled": "Peruttu"
   },
   "sessionFeed": {
     "readMore": "Lue lisää",

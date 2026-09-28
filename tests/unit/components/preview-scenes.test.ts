@@ -1350,18 +1350,17 @@ describe("the club scenario shows every state a past session can wear", () => {
   });
 
   /**
-   * The skip states went with the didn't-run editor: declaring a session off is
-   * inseparable from the cancellation and billing flows nobody has designed, so
-   * skip is a schema intention with no trace in the mock. A fixture quietly
-   * reintroducing one would put an unrenderable kind back into the feed.
+   * A cancelled session on each side of the present, as a gedu sees it: the
+   * date and nothing about why, and nothing owed on the one behind.
    */
-  it("authors no skipped session anywhere, in either scenario", () => {
-    const RENDERABLE = ["future", "past", "no_record"];
-    for (const scenario of GROUP_WORKSPACE_SCENARIOS) {
-      const { entries } = buildGroupWorkspaceFixture(now, scenario);
-      for (const entry of entries) {
-        expect(RENDERABLE, `${scenario}/${entry.id}`).toContain(entry.kind);
-      }
+  it("draws a cancelled session on each side of the present, as a gedu sees it", () => {
+    const { entries, feedRoster } = buildGroupWorkspaceFixture(now, "club");
+    const cancelled = entries.filter((e) => e.kind === "cancelled");
+
+    expect(cancelled.map((e) => e.upcoming)).toEqual([true, false]);
+    for (const entry of cancelled) {
+      expect(entry).toMatchObject({ reason: null, cancelledBy: null });
+      expect(entryCompleteness(entry, feedRoster)).toBeNull();
     }
   });
 });

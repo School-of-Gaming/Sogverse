@@ -23,11 +23,18 @@ type ShapeEntry =
   | { kind: "future"; id: string }
   | { kind: "past"; id: string }
   /** A kind that recorded nothing — the gedu feed's pre-epoch gap. */
-  | { kind: "no_record"; id: string };
+  | { kind: "no_record"; id: string }
+  /** A cancelled session, on either side of the present. */
+  | { kind: "cancelled"; id: string; upcoming: boolean };
 
 const future = (id: string): ShapeEntry => ({ kind: "future", id });
 const past = (id: string): ShapeEntry => ({ kind: "past", id });
 const noRecord = (id: string): ShapeEntry => ({ kind: "no_record", id });
+const cancelled = (id: string, upcoming: boolean): ShapeEntry => ({
+  kind: "cancelled",
+  id,
+  upcoming,
+});
 
 describe("partitionFeedEntries", () => {
   it("reads the next session off position — the last of the leading future run", () => {
@@ -80,8 +87,48 @@ describe("partitionFeedEntries", () => {
     expect(partitionFeedEntries([])).toEqual({
       laterFuture: [],
       nextSession: null,
+      soonerCancelled: [],
       past: [],
     });
+  });
+
+  it("never makes a cancelled session the next one", () => {
+    // The soonest date is off: the next session is the soonest that runs, and
+    // the cancelled one sits between it and the past, always on screen.
+    const partition = partitionFeedEntries([
+      future("f3"),
+      cancelled("c2", true),
+      future("f1"),
+      cancelled("c0", true),
+      past("p1"),
+    ]);
+    expect(partition.laterFuture.map((e) => e.id)).toEqual(["f3", "c2"]);
+    expect(partition.nextSession?.id).toBe("f1");
+    expect(partition.soonerCancelled.map((e) => e.id)).toEqual(["c0"]);
+    expect(partition.past.map((e) => e.id)).toEqual(["p1"]);
+  });
+
+  it("shows every upcoming cancelled session when nothing ahead will run", () => {
+    const partition = partitionFeedEntries([
+      cancelled("c2", true),
+      cancelled("c1", true),
+      past("p1"),
+    ]);
+    expect(partition.laterFuture).toEqual([]);
+    expect(partition.nextSession).toBeNull();
+    expect(partition.soonerCancelled.map((e) => e.id)).toEqual(["c2", "c1"]);
+    expect(partition.past.map((e) => e.id)).toEqual(["p1"]);
+  });
+
+  it("files a cancelled session that has passed with the past", () => {
+    const partition = partitionFeedEntries([
+      future("f1"),
+      cancelled("c1", false),
+      past("p1"),
+    ]);
+    expect(partition.nextSession?.id).toBe("f1");
+    expect(partition.soonerCancelled).toEqual([]);
+    expect(partition.past.map((e) => e.id)).toEqual(["c1", "p1"]);
   });
 });
 

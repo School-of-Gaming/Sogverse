@@ -1204,6 +1204,29 @@
         "loadFailed": "may’mey qonta’ghach laDlaHbe’. nIteb yIchu’qa’.",
         "loading": "ngIq vamvaD may’mey qonta’ghach laDlu’…",
         "railGroupHeading": "ghom"
+      },
+      "cancellation": {
+        "menuLabel": "may’ qIllu’bogh vamvaD latlh vumghachmey",
+        "cancelSession": "may’ yIqIl",
+        "addReason": "meq yIchel",
+        "changeReason": "meq yIchoH",
+        "restoreSession": "may’ yIchu’qa’",
+        "cancelTitle": "may’vam DaqIl’a’?",
+        "cancelBody": "{date}. may’vam qIllu’ legh qorDu’pu’ Gedupu’ je, ’ej pagh qonlu’laH. vay’ ghelbe’lu’.",
+        "reasonTitle": "meq yIchoH",
+        "reasonBody": "{date}. qIllu’taH may’.",
+        "reasonLabel": "meq",
+        "reasonHint": "meq legh loHwI’pu’ neH. {count} ngutlh ratlh",
+        "reasonPlaceholder": "mIw: Datlhpu’ SoQlu’.",
+        "keepSession": "may’ yIpol",
+        "cancelConfirm": "may’ yIqIl",
+        "reasonConfirm": "meq yIpol",
+        "hasRecord": "may’vamDaq ja’, qon, mIllogh, ghaH pawlu’ghach je qonlu’pu’. qIllu’laHbe’.",
+        "cancelFailed": "polmoHlu’laHbe’. yInID je.",
+        "restoreTitle": "may’vam Dachu’qa’’a’?",
+        "restoreBody": "{date}. may’vam nab legh qorDu’pu’ Gedupu’ je, ’ej motlh qonlu’laH. vay’ ghelbe’lu’.",
+        "restoreConfirm": "may’ yIchu’qa’",
+        "restoreFailed": "may’ chu’qa’lu’laHbe’. yInID je."
       }
     },
     "users": {
@@ -2224,7 +2247,8 @@
       "substitutionWithdrawTitle": "DaH Danatlh’a’?",
       "substitutionWithdrawBody": "may’ DaDevqa’, ’ej Hoch lIw nob lunatlhlu’.",
       "substitutionWithdrawConfirm": "yInatlh",
-      "substitutionWithdrawFailed": "pollu’be’. yIboq."
+      "substitutionWithdrawFailed": "pollu’be’. yIboq.",
+      "cancelledByOn": "qIl {name}, {when}"
     },
     "groupNotes": {
       "heading": "ghom’a’vam",
@@ -2354,7 +2378,8 @@
   "sessionBadge": {
     "live": "qaStaH",
     "nextSession": "may’ veb",
-    "upcoming": "may’ pIq"
+    "upcoming": "may’ pIq",
+    "cancelled": "qIllu’"
   },
   "sessionFeed": {
     "readMore": "latlh yIlaD",

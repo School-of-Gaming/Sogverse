@@ -1160,6 +1160,29 @@
         "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
         "loading": "Chargement du suivi des séances de ce produit.",
         "railGroupHeading": "Groupe"
+      },
+      "cancellation": {
+        "menuLabel": "Plus d’actions pour cette séance annulée",
+        "cancelSession": "Annuler la séance",
+        "addReason": "Ajouter un motif",
+        "changeReason": "Modifier le motif",
+        "restoreSession": "Rétablir la séance",
+        "cancelTitle": "Annuler cette séance ?",
+        "cancelBody": "{date}. Les familles et les Gedus verront cette séance comme annulée, et rien ne pourra y être enregistré. Personne n’est prévenu.",
+        "reasonTitle": "Modifier le motif",
+        "reasonBody": "{date}. La séance reste annulée.",
+        "reasonLabel": "Motif",
+        "reasonHint": "Seuls les administrateurs voient le motif. {count} caractères restants",
+        "reasonPlaceholder": "Par exemple : le lieu est fermé pendant les vacances.",
+        "keepSession": "Garder la séance",
+        "cancelConfirm": "Annuler la séance",
+        "reasonConfirm": "Enregistrer le motif",
+        "hasRecord": "Cette séance a déjà un compte rendu, une note, une photo ou des présences enregistrés, elle ne peut donc pas être annulée.",
+        "cancelFailed": "L’enregistrement n’a pas abouti. Réessayez.",
+        "restoreTitle": "Rétablir cette séance ?",
+        "restoreBody": "{date}. Les familles et les Gedus verront à nouveau cette séance au programme, et elle pourra être enregistrée comme d’habitude. Personne n’est prévenu.",
+        "restoreConfirm": "Rétablir la séance",
+        "restoreFailed": "La séance n’a pas pu être rétablie. Réessayez."
       }
     },
     "users": {
@@ -2184,7 +2207,8 @@
       "substitutionWithdrawTitle": "Annuler ce signalement ?",
       "substitutionWithdrawBody": "Vous animez de nouveau la séance et toutes les propositions de remplacement sont abandonnées.",
       "substitutionWithdrawConfirm": "Annuler le signalement",
-      "substitutionWithdrawFailed": "Cela n’a pas été enregistré. Réessayez."
+      "substitutionWithdrawFailed": "Cela n’a pas été enregistré. Réessayez.",
+      "cancelledByOn": "Annulée par {name}, {when}"
     },
     "groupNotes": {
       "heading": "À propos du groupe",
@@ -2314,7 +2338,8 @@
   "sessionBadge": {
     "live": "En direct",
     "nextSession": "Prochaine séance",
-    "upcoming": "Séance à venir"
+    "upcoming": "Séance à venir",
+    "cancelled": "Annulée"
   },
   "sessionFeed": {
     "readMore": "Lire la suite",

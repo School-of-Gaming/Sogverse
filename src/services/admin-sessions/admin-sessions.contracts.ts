@@ -117,6 +117,20 @@ export const cancelSessionResult = sessionCancellation.extend({
  */
 export const SESSION_HAS_RECORD_SQLSTATE = "P0027";
 
+/**
+ * Whether a rejected cancel was refused because the session already has a
+ * record. PostgREST hands the SQLSTATE back on the error's `code`, and a thrown
+ * value is `unknown` at the boundary, so the guard narrows rather than asserts.
+ */
+export function isSessionHasRecordError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === SESSION_HAS_RECORD_SQLSTATE
+  );
+}
+
 export type AdminProductSessions = z.infer<typeof adminProductSessions>;
 export type AdminSessionGroup = z.infer<typeof adminSessionGroup>;
 export type CancelSessionResult = z.infer<typeof cancelSessionResult>;

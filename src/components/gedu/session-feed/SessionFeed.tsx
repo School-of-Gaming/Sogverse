@@ -11,6 +11,7 @@ import {
   useViewportAnchor,
   type SessionFeedRowContext,
 } from "@/components/session-feed";
+import { CancelledSessionItem } from "./CancelledSessionItem";
 import { SessionFeedItem } from "./SessionFeedItem";
 import type { SessionSubstitutionRequestDraft } from "./SessionSubstitutionRequestDialog";
 import {
@@ -734,7 +735,9 @@ export function SessionFeed({
     { prominent }: SessionFeedRowContext,
   ) =>
     cn(
-      entry.kind === "no_record" ? "top-3.5" : "top-5",
+      entry.kind === "no_record" || entry.kind === "cancelled"
+        ? "top-3.5"
+        : "top-5",
       markerTone(entry, completenessById.get(entry.id) ?? null, prominent),
     );
 
@@ -748,6 +751,20 @@ export function SessionFeed({
       }}
       markerClass={markerClass}
       renderItem={(entry, { prominent, newestPast }) => {
+        if (entry.kind === "cancelled") {
+          return (
+            <CancelledSessionItem
+              entry={entry}
+              labels={formatSessionLabels(entry, {
+                locale,
+                timeZone,
+                sourceTimeZone,
+                now,
+              })}
+              sessionMenu={renderSessionMenu?.(entry) ?? null}
+            />
+          );
+        }
         const editing = editingEntryId === entry.id;
         return (
           <SessionFeedItem
@@ -906,6 +923,7 @@ function markerTone(
           return "bg-muted-foreground";
       }
     case "no_record":
+    case "cancelled":
       return "bg-border";
   }
 }
