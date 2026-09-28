@@ -37,12 +37,15 @@ family whose next date is off has to see it without opening anything. The reason
 cancelled travel only in the staff document's admin fields, so a gedu's line and a family's
 read the same.
 
-**Rule: a cancelled date still ahead wears the warning tone; one already behind stays
-muted.** A family who misses an upcoming cancellation turns up for a session that is not
-running, so the line's own edge, its tag and its rail marker take the warning hue and the
-date goes bold, while a past one is history with nothing left to act on. The tone goes on
-the entry itself — never a status panel nested inside it — so the timeline still reads one
-entry per date, and it is the same on both feeds and in both future slots.
+**Rule: a cancelled date still ahead is drawn as the kit's warning panel; one already
+behind stays a muted line.** A family who misses an upcoming cancellation turns up for a
+session that is not running, so the entry becomes the same warning panel, with the same
+calendar-cross glyph, that the My SOG card uses for the same news — one look for "a session
+ahead is off" wherever it is met — and its rail marker takes the warning hue. The panel
+*is* the entry, never a panel nested inside a line, so the timeline still reads one entry
+per date; and it carries no badge of its own, because a pill inside the panel's edge
+doubles the border and reads as noise rather than emphasis. A past cancellation is history
+with nothing left to act on. Both are the same on both feeds and in both future slots.
 
 **Rule: a cancellation beats a record.** An admin may cancel a date that was already
 written up, and the cancelled line replaces the card: nothing recorded on the date —

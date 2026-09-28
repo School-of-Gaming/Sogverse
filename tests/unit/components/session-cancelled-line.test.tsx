@@ -38,10 +38,13 @@ describe("SessionCancelledLine", () => {
   it("draws an upcoming cancellation in the warning tone", () => {
     const { line, date, tag, time } = renderLine(true);
     expect(line.dataset.tone).toBe("warning");
+    // The kit's warning panel, whole: its edge in the hue, the title in the hue,
+    // and one glyph — no pill inside it to double the border.
     expect(line.className).toContain("border-warning");
+    expect(tag.tagName).toBe("H5");
     expect(tag.className).toContain("text-warning");
-    expect(tag.className).toContain("border-warning");
-    expect(tag.querySelector("svg")).not.toBeNull();
+    expect(line.querySelectorAll("svg")).toHaveLength(1);
+    expect(line.getAttribute("role")).toBeNull();
     expect(date.className).toContain("font-semibold");
     expect(time.className).toContain("line-through");
   });
