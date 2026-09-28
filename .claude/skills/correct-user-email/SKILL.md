@@ -12,6 +12,14 @@ refuses exactly one case — the target address already belongs to another accou
 that case is this skill's reason to exist. The script also remains for scripted or bulk
 changes, and for when there is no admin session to hand.
 
+**A gamer's address is in scope only in `email` sign-in mode.** A child in `parent` or
+`username` mode holds a synthetic `@gamer.sogverse.internal` handle, and moving it to a real
+mailbox is a privilege change, not a correction: a `parent`-mode child could then set a
+password and sign in without the parent. The page refuses it, and the script does not
+check, so don't use the script to get around the refusal — changing how a child signs in
+is the parent's, from their own settings. A `username`-mode child's username is renamed
+in-app, from the personal-details pencil on their admin page.
+
 `scripts/correct-user-email.ts` is the how; this skill is the why. Report-only unless
 told otherwise, and safe to repeat:
 

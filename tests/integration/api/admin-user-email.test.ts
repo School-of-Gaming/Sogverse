@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { PATCH } from "@/app/api/admin/users/[id]/email/route";
 
 /**
- * An admin correcting another account's sign-in address.
+ * An admin correcting another account's sign-in address, or a username-mode
+ * child's username. Which of the two a gamer admits is decided by their
+ * sign-in mode, and every other pairing is refused before anything is written.
  *
  * The route is two writes that must not drift apart, so beyond the usual gate
  * and input cases these tests pin the ORDER (auth, then a fresh identity read,
@@ -22,6 +24,7 @@ vi.mock("@/lib/auth", () => ({
 const TARGET = "3f1d0e2a-9c44-4b6e-9a7d-1c2b3d4e5f60";
 const OLD = "aino@gmial.com";
 const NEW = "aino@gmail.com";
+const SYNTHETIC = "g0123456789abcdef@gamer.sogverse.internal";
 
 /** Every auth and profiles call, in the order the route made them. */
 let calls: string[] = [];
@@ -45,6 +48,14 @@ vi.mock("@/lib/supabase/admin", () => ({
       },
     },
     from: (table: string) => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: () => {
+            calls.push(`${table}.select`);
+            return Promise.resolve({ data: gamerProfileRow, error: null });
+          },
+        }),
+      }),
       update: (values: unknown) => {
         calls.push(`${table}.update`);
         mockProfileUpdate(values);
@@ -57,6 +68,9 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 let profileWriteResult: { error: { message: string } | null } = { error: null };
+
+/** The target's `gamer_profiles` row as the service-role client reads it. */
+let gamerProfileRow: { sign_in: "parent" | "username" | "email" } | null = null;
 
 /** An auth user as `getUserById` answers, with its identities' addresses. */
 function authUser(email: string, identityEmail: string = email) {
@@ -72,12 +86,16 @@ function authUser(email: string, identityEmail: string = email) {
   };
 }
 
-/** The target's profile as the user-bound client reads it. */
-function mockAdmin(profile: { email: string } | null) {
+/** The target's profile as the user-bound client reads it; an adult by default. */
+function mockAdmin(profile: { email: string; role?: string } | null) {
   const from = vi.fn(() => ({
     select: () => ({
       eq: () => ({
-        maybeSingle: () => Promise.resolve({ data: profile, error: null }),
+        maybeSingle: () =>
+          Promise.resolve({
+            data: profile && { role: "customer", ...profile },
+            error: null,
+          }),
       }),
     }),
   }));
@@ -108,6 +126,7 @@ describe("PATCH /api/admin/users/[id]/email", () => {
     vi.clearAllMocks();
     calls = [];
     profileWriteResult = { error: null };
+    gamerProfileRow = null;
   });
 
   // -- Auth --
@@ -217,20 +236,134 @@ describe("PATCH /api/admin/users/[id]/email", () => {
     expect(mockProfileUpdate).toHaveBeenCalledWith({ email: NEW });
   });
 
-  it("accepts a gamer target — every role is editable", async () => {
-    // The route never reads the target's role: a child is corrected like
-    // anyone else, and the synthetic-domain fence is the body schema's.
-    const { from } = mockAdmin({ email: "g0123456789abcdef@gamer.sogverse.internal" });
+  // -- Sign-in modes --
+
+  it("moves an email-mode gamer's address, reading the mode on the service-role client", async () => {
+    mockAdmin({ email: OLD, role: "gamer" });
+    gamerProfileRow = { sign_in: "email" };
     mockGetUserById
-      .mockResolvedValueOnce(authUser("g0123456789abcdef@gamer.sogverse.internal"))
+      .mockResolvedValueOnce(authUser(OLD))
       .mockResolvedValueOnce(authUser(NEW));
     mockUpdateUserById.mockResolvedValue(authUser(NEW));
 
     const response = await PATCH(...createRequest(TARGET, { email: NEW }));
 
     expect(response.status).toBe(200);
-    expect(from).toHaveBeenCalledWith("profiles");
+    expect(calls).toEqual([
+      "gamer_profiles.select",
+      "auth.getUserById",
+      "auth.updateUserById",
+      "auth.getUserById",
+      "profiles.update",
+    ]);
     expect(mockProfileUpdate).toHaveBeenCalledWith({ email: NEW });
+  });
+
+  it.each(["parent", "username"] as const)(
+    "refuses to move a %s-mode gamer onto a mailbox, writing nothing",
+    async (mode) => {
+      // A synthetic-mode child given a real mailbox would change how they sign
+      // in rather than correct an address: a parent-mode child could gain a
+      // password of their own.
+      mockAdmin({ email: SYNTHETIC, role: "gamer" });
+      gamerProfileRow = { sign_in: mode };
+
+      const response = await PATCH(...createRequest(TARGET, { email: NEW }));
+
+      expect(response.status).toBe(400);
+      expect(calls).toEqual(["gamer_profiles.select"]);
+    },
+  );
+
+  it("refuses a gamer with no gamer_profiles row, writing nothing", async () => {
+    mockAdmin({ email: SYNTHETIC, role: "gamer" });
+
+    const response = await PATCH(...createRequest(TARGET, { email: NEW }));
+
+    expect(response.status).toBe(400);
+    expect(calls).toEqual(["gamer_profiles.select"]);
+  });
+
+  it("renames a username-mode gamer: the handle moves, the mode and password are untouched", async () => {
+    const OLD_HANDLE = "aino@gamer.sogverse.internal";
+    const NEW_HANDLE = "ainok@gamer.sogverse.internal";
+    mockAdmin({ email: OLD_HANDLE, role: "gamer" });
+    gamerProfileRow = { sign_in: "username" };
+    mockGetUserById
+      .mockResolvedValueOnce(authUser(OLD_HANDLE))
+      .mockResolvedValueOnce(authUser(NEW_HANDLE));
+    mockUpdateUserById.mockResolvedValue(authUser(NEW_HANDLE));
+
+    // Normalised the way the parent's own rename is.
+    const response = await PATCH(
+      ...createRequest(TARGET, { username: " AinoK " }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ success: true, email: NEW_HANDLE });
+    // Address only: no password, and no write to the mode.
+    expect(mockUpdateUserById).toHaveBeenCalledWith(TARGET, {
+      email: NEW_HANDLE,
+      email_confirm: true,
+    });
+    expect(calls).toEqual([
+      "gamer_profiles.select",
+      "auth.getUserById",
+      "auth.updateUserById",
+      "auth.getUserById",
+      "profiles.update",
+    ]);
+    expect(mockProfileUpdate).toHaveBeenCalledWith({ email: NEW_HANDLE });
+  });
+
+  it("refuses a taken username with 409 and its own code, leaving profiles untouched", async () => {
+    mockAdmin({ email: "aino@gamer.sogverse.internal", role: "gamer" });
+    gamerProfileRow = { sign_in: "username" };
+    mockGetUserById.mockResolvedValueOnce(
+      authUser("aino@gamer.sogverse.internal"),
+    );
+    mockUpdateUserById.mockResolvedValue({
+      data: { user: null },
+      error: { code: "email_exists", message: "A user with this email address has already been registered" },
+    });
+
+    const response = await PATCH(...createRequest(TARGET, { username: "taken" }));
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).code).toBe("USERNAME_TAKEN");
+    expect(mockProfileUpdate).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["an adult", { email: OLD }, null],
+    ["a parent-mode gamer", { email: SYNTHETIC, role: "gamer" }, "parent"],
+    ["an email-mode gamer", { email: OLD, role: "gamer" }, "email"],
+  ] as const)(
+    "refuses a username for %s, writing nothing",
+    async (_label, profile, mode) => {
+      mockAdmin(profile);
+      gamerProfileRow = mode === null ? null : { sign_in: mode };
+
+      const response = await PATCH(
+        ...createRequest(TARGET, { username: "ainok" }),
+      );
+
+      expect(response.status).toBe(400);
+      expect(calls.filter((call) => !call.endsWith(".select"))).toEqual([]);
+    },
+  );
+
+  it.each([
+    ["a username too short", { username: "ab" }],
+    ["a username with a symbol", { username: "aino_k" }],
+    ["both forms at once", { email: NEW, username: "ainok" }],
+  ])("returns 400 for a body with %s", async (_label, body) => {
+    mockAdmin({ email: OLD });
+
+    const response = await PATCH(...createRequest(TARGET, body));
+
+    expect(response.status).toBe(400);
+    expect(calls).toEqual([]);
   });
 
   // -- Failures --

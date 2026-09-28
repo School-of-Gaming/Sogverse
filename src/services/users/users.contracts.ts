@@ -4,6 +4,7 @@ import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
 import { Constants } from "@/types";
 import type { Profile } from "@/types";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
+import { gamerUsernameValue } from "@/services/gamers/gamers.contracts";
 import { realEmailValue } from "./parent-registration.contracts";
 
 /**
@@ -228,19 +229,40 @@ export type AdminGameAccountWriteResult = z.infer<
 >;
 
 /**
- * Wire shapes for an admin correcting somebody else's sign-in address
- * (`PATCH /api/admin/users/[id]/email`).
+ * Wire shapes for an admin changing somebody else's sign-in address
+ * (`PATCH /api/admin/users/[id]/email`), in the one of two forms the target's
+ * account admits.
  *
- * The address travels under `realEmailValue`, the rule every address a person
- * types to open an account already obeys: trimmed, folded to lowercase the way
- * GoTrue stores it, and fenced off our own synthetic gamer domain. An admin's
- * correction therefore produces exactly the row a signup with the right address
- * would have, and the dialog parses with the same schema before sending, so a
- * malformed address is answered in place rather than a round trip later.
+ * **A real mailbox** travels under `realEmailValue`, the rule every address a
+ * person types to open an account already obeys: trimmed, folded to lowercase
+ * the way GoTrue stores it, and fenced off our own synthetic gamer domain. An
+ * admin's correction therefore produces exactly the row a signup with the right
+ * address would have.
+ *
+ * **A username** is the other form, for a child who signs in with one: the
+ * address is then the synthetic handle built from it, so it travels as the
+ * username under the rule a parent's own rename obeys, and the route builds the
+ * handle.
+ *
+ * Each half is strict, so a body naming both is refused rather than read as
+ * whichever branch happened to match first. The dialogs parse with the same
+ * schemas before sending, so a malformed value is answered in place rather than
+ * a round trip later.
  */
-export const adminUserEmailBody = z.object({ email: realEmailValue });
+export const adminUserEmailBody = z.object({ email: realEmailValue }).strict();
 
-export type AdminUserEmailBody = z.infer<typeof adminUserEmailBody>;
+export const adminUserUsernameBody = z
+  .object({ username: gamerUsernameValue })
+  .strict();
+
+export const adminUserSignInAddressBody = z.union([
+  adminUserEmailBody,
+  adminUserUsernameBody,
+]);
+
+export type AdminUserSignInAddressBody = z.infer<
+  typeof adminUserSignInAddressBody
+>;
 
 /** What the write answers with: the address both halves now hold. */
 export const adminUserEmailWriteResult = z.object({
@@ -260,3 +282,10 @@ export type AdminUserEmailWriteResult = z.infer<
  * admin to handle it by hand.
  */
 export const USER_EMAIL_TAKEN = "EMAIL_TAKEN";
+
+/**
+ * The same refusal for a username: another account already signs in with it.
+ * Unlike an address, a username is the admin's to choose, so the dialog asks
+ * for another one.
+ */
+export const USER_USERNAME_TAKEN = "USERNAME_TAKEN";

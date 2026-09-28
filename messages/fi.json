@@ -1233,12 +1233,21 @@
           "girl": "Tyttö",
           "non_binary": "Muunsukupuolinen"
         },
-        "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}"
+        "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}",
+        "usernameLabel": "Käyttäjätunnus",
+        "usernameHint": "Vain kirjaimia ja numeroita, 3–20 merkkiä. Salasana pysyy samana.",
+        "usernameInvalid": "Käytä 3–20 kirjainta tai numeroa ilman välilyöntejä.",
+        "usernameTaken": "Käyttäjätunnus on jo varattu. Kokeile toista.",
+        "usernameSaveError": "Käyttäjätunnuksen vaihtaminen epäonnistui, joten mitään ei tallennettu. Yritä uudelleen.",
+        "usernameSavedDetailsFailed": "Käyttäjätunnus vaihdettiin, mutta syntymäaikaa ja sukupuolta ei tallennettu. Yritä uudelleen.",
+        "emailHint": "Kirjautumistapa ei muutu. Uusi osoite näkyy vahvistamattomana, kunnes se on vahvistettu.",
+        "emailSaveError": "Sähköpostiosoitteen vaihtaminen epäonnistui, joten mitään ei tallennettu. Yritä uudelleen.",
+        "emailSavedDetailsFailed": "Sähköpostiosoite vaihdettiin, mutta syntymäaikaa ja sukupuolta ei tallennettu. Yritä uudelleen."
       },
       "emailEdit": {
         "edit": "Vaihda sähköpostiosoite",
         "title": "Vaihda sähköpostiosoite",
-        "description": "Käyttäjä kirjautuu jatkossa uudella osoitteella ja samalla salasanalla. Uusi osoite näkyy vahvistamattomana, kunnes käyttäjä vahvistaa sen.",
+        "description": "Tili siirtyy uuteen osoitteeseen, eikä kirjautumistapa muutu. Uusi osoite näkyy vahvistamattomana, kunnes käyttäjä vahvistaa sen.",
         "label": "Sähköpostiosoite",
         "invalid": "Anna kelvollinen sähköpostiosoite.",
         "taken": "Osoite kuuluu jo toiselle tilille. Toisen tilin yhdistämistä tai poistamista ei voi tehdä täällä – pyydä kehittäjää hoitamaan asia.",

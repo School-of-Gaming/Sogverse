@@ -288,11 +288,11 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/admin/users/[id]/email/route.ts": {
     adminClient:
-      "the Auth Admin API, which alone moves auth.users and auth.identities together and enforces the address's uniqueness, and the profiles.email write that follows it, which authenticated holds no UPDATE grant on. The caller is established as an admin by this route's own role gate, and the target's profile is read on the user client first",
+      "the Auth Admin API, which alone moves auth.users and auth.identities together and enforces the address's uniqueness, and the profiles.email write that follows it, which authenticated holds no UPDATE grant on; and a read of the target gamer's gamer_profiles.sign_in, which decides whether the account admits a mailbox, a username or neither and so must come from the authoritative row. The caller is established as an admin by this route's own role gate, and the target's profile is read on the user client first",
     handlers: {
       PATCH: {
         posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "adminUserEmailBody" },
+        body: { kind: "json", schema: "adminUserSignInAddressBody" },
         test: TESTS.adminUserEmail,
       },
     },

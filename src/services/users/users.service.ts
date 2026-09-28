@@ -18,7 +18,7 @@ import {
   USER_LIST_SEARCH_MIN_QUERY,
   type AdminGameAccountBody,
   type AdminGameAccountWriteResult,
-  type AdminUserEmailBody,
+  type AdminUserSignInAddressBody,
   type AdminUserEmailWriteResult,
   type UserListEntry,
 } from "./users.contracts";
@@ -166,16 +166,17 @@ export class UsersService {
   }
 
   /**
-   * An admin correcting another account's sign-in address.
+   * An admin changing another account's sign-in address — a real mailbox, or a
+   * username-mode child's username, which is the address's local part.
    *
    * A route rather than a `.from("profiles")` write, because the address lives
    * on the auth record too and `authenticated` cannot write `profiles.email` at
    * all. A refusal is thrown as an `ApiError` so its `code` reaches the dialog,
-   * which tells the duplicate-account case apart from every other failure.
+   * which tells the value-already-taken case apart from every other failure.
    */
-  async updateUserEmail(
+  async updateUserSignInAddress(
     userId: string,
-    edit: AdminUserEmailBody,
+    edit: AdminUserSignInAddressBody,
   ): Promise<AdminUserEmailWriteResult> {
     const response = await fetch(
       `/api/admin/users/${encodeURIComponent(userId)}/email`,
@@ -187,7 +188,7 @@ export class UsersService {
     );
 
     if (!response.ok) {
-      throw await readApiError(response, "Failed to change the email address");
+      throw await readApiError(response, "Failed to change the sign-in address");
     }
 
     return parseJsonResponse(response, adminUserEmailWriteResult);

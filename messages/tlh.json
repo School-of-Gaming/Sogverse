@@ -1277,12 +1277,21 @@
           "girl": "be’Hom",
           "non_binary": "ghob ghajbe’"
         },
-        "ageYears": "{age, plural, one {# DIS} other {# DIS}}"
+        "ageYears": "{age, plural, one {# DIS} other {# DIS}}",
+        "usernameLabel": "pongwIj",
+        "usernameHint": "QIn ghItlh mI’ je neH, 3–20. mu’ wuS rap lo’taH.",
+        "usernameInvalid": "3–20 QIn ghItlh mI’ ghap yIlo’. chIm Daq yIlo’Qo’!",
+        "usernameTaken": "pongvam ghaj latlh SuvwI’. latlh yIwIv!",
+        "usernameSaveError": "pong choHlaHbe’; pagh pollu’. yInIDqa’!",
+        "usernameSavedDetailsFailed": "pong choHlu’, ’ach bogh jaj Segh je pollu’be’. yInIDqa’!",
+        "emailHint": "ngaQHa’moHmeH mIw choHbe’lu’. chu’ Daq ngu’be’lu’, ghaH ngu’pa’.",
+        "emailSaveError": "QIn Daq choHlaHbe’; pagh pollu’. yInIDqa’!",
+        "emailSavedDetailsFailed": "QIn Daq choHlu’, ’ach bogh jaj Segh je pollu’be’. yInIDqa’!"
       },
       "emailEdit": {
         "edit": "QIn Daq yIchoH",
         "title": "QIn Daq yIchoH",
-        "description": "DaH chu’ Daq lo’taH ghaH; mu’ wuS rap lo’taH. chu’ Daq ngu’be’lu’, ghaH ngu’pa’.",
+        "description": "chu’ Daq lo’ mab; mab ngaQHa’moHmeH mIw choHbe’lu’. chu’ Daq ngu’be’lu’, ghaH ngu’pa’.",
         "label": "QIn Daq",
         "invalid": "QIn Daq lugh yInob.",
         "taken": "latlh mab ghaj Daqvam. naDev mab DamuvmoHlaHbe’ — ghun yIghel!",

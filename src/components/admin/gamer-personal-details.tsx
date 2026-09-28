@@ -15,16 +15,36 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { useTimezone } from "@/providers";
 import { useGamerProfile, useUpdateGamerProfile } from "@/services/gamers";
+import {
+  adminUserEmailBody,
+  adminUserUsernameBody,
+  useProfile,
+  useUpdateUserSignInAddress,
+  USER_EMAIL_TAKEN,
+  USER_USERNAME_TAKEN,
+  type AdminUserSignInAddressBody,
+} from "@/services/users";
+import { ApiError } from "@/lib/api/api-error";
 import {
   assembleGamerDateOfBirth,
   gamerBirthMonthOptions,
   gamerBirthYearOptionsIncluding,
   splitGamerDateOfBirth,
 } from "@/lib/gamer-birth";
+import {
+  GAMER_USERNAME_MAX_LENGTH,
+  gamerUsernameFromEmail,
+} from "@/lib/gamer-sign-in";
 import { computeAge } from "@/lib/utils";
-import { Constants, type GamerProfile, type GenderType } from "@/types";
+import {
+  Constants,
+  type GamerProfile,
+  type GenderType,
+  type Profile,
+} from "@/types";
 
 /**
  * Narrows a select's raw value against codegen rather than asserting it. The
@@ -38,7 +58,8 @@ function toGender(value: string): GenderType | "" {
 
 /**
  * The "11 years old · Boy" line under a gamer's name on their admin detail
- * page, with a pencil beside it that opens the editor.
+ * page, with a pencil beside it that opens the editor — the one editor a
+ * gamer's page has.
  *
  * **Why an admin can write these at all:** the pair is chosen once, by a parent
  * filling in the Add Gamer form, and never asked about again — so a mistyped
@@ -47,34 +68,48 @@ function toGender(value: string): GenderType | "" {
  * the fix (`gamer_profiles` carries a `FOR ALL` admin policy over `is_admin()`);
  * this is the surface that uses it.
  *
- * **A dialog rather than a card, and the line stays where it was.** These two
+ * **The dialog also edits what the child signs in with, where their mode has
+ * one to edit**: the address of a child in `email` mode, the username of one in
+ * `username` mode, and nothing for one in `parent` mode, whose address is a
+ * handle nobody types. The mode itself is never changed here — that is the
+ * parent's, where the mode and the credentials move together — and the route
+ * behind the identifier refuses any pairing this dialog would not offer.
+ *
+ * **A dialog rather than a card, and the line stays where it was.** These
  * values are corrected once in an account's life, and a permanently-open card
- * of three selects spends a whole band of a page on that. The Game accounts
+ * of four controls spends a whole band of a page on that. The Game accounts
  * card below had to take the summary's Minecraft row with it because a card is
  * a second home the summary would go stale against; a dialog is not — it is the
- * *same* line's editor, reading and writing the values the line renders, so
- * there is nothing for the two to disagree about.
+ * *same* lines' editor, reading and writing the values they render, so there is
+ * nothing for them to disagree about.
  *
- * **The RSC/client seam.** The page already reads the row to decide what to
- * render, so it hands it down as `initialProfile` and the query is seeded with
- * it: the first frame is complete, nothing arrives late, nothing moves. A save
- * rewrites the line underneath the dialog, which is the direct result of the
- * admin confirming it — the one kind of change the layout rule permits.
+ * **The RSC/client seam.** The page already reads both rows to decide what to
+ * render, so it hands them down and the two queries are seeded with them: the
+ * first frame is complete, nothing arrives late, nothing moves. A save rewrites
+ * the lines underneath the dialog, which is the direct result of the admin
+ * confirming it — the one kind of change the layout rule permits.
  */
 export function GamerPersonalDetails({
   gamerId,
   initialProfile,
+  initialAccount,
 }: {
   gamerId: string;
   initialProfile: GamerProfile;
+  /** The gamer's `profiles` row, whose address holds the sign-in identifier. */
+  initialAccount: Profile;
 }) {
   const t = useTranslations("admin.users.gamerDetails");
   const timeZone = useTimezone();
 
   const { data } = useGamerProfile(gamerId, { initialData: initialProfile });
-  // The seed makes this unconditional in practice; the fallback is what tells
+  const { data: accountData } = useProfile(gamerId, {
+    initialData: initialAccount,
+  });
+  // The seeds make these unconditional in practice; the fallbacks are what tell
   // the compiler so, without an assertion.
   const profile = data ?? initialProfile;
+  const account = accountData ?? initialAccount;
 
   const [editing, setEditing] = useState(false);
   // The form below owns the save, but the dialog's dismissal lives up here — so
@@ -117,8 +152,8 @@ export function GamerPersonalDetails({
       </div>
 
       {/* `Dialog` renders nothing while closed, so the form below only mounts
-          when it opens — which is what seeds its three controls from the row as
-          it stands right now, every time, with no effect syncing them. */}
+          when it opens — which is what seeds its controls from the rows as they
+          stand right now, every time, with no effect syncing them. */}
       <Dialog
         open={editing}
         // A save in flight owns the dialog until it resolves. Escape and a
@@ -134,6 +169,7 @@ export function GamerPersonalDetails({
         <GamerPersonalDetailsForm
           gamerId={gamerId}
           profile={profile}
+          account={account}
           busyRef={busyRef}
           onClose={close}
         />
@@ -142,32 +178,142 @@ export function GamerPersonalDetails({
   );
 }
 
+/** Which sign-in identifier the child's mode gives the dialog, if any. */
+type IdentifierKind = "email" | "username";
+
+function identifierKindOf(profile: GamerProfile): IdentifierKind | null {
+  if (profile.sign_in === "email") return "email";
+  if (profile.sign_in === "username") return "username";
+  return null;
+}
+
+/** The identifier as it stands, in the form the field shows it. */
+function currentIdentifier(kind: IdentifierKind, account: Profile): string {
+  return kind === "email"
+    ? account.email
+    : (gamerUsernameFromEmail(account.email) ?? "");
+}
+
 /**
- * The dialog's body: birth month, birth year, gender, and a save.
+ * Which sentence the form is showing under its controls, if any. Each tells
+ * the admin something different about what was and was not saved, so they are
+ * distinct keys rather than one error with its detail filled in.
+ *
+ * - `invalid` / `taken` — the identifier was refused; nothing was saved.
+ * - `identifierFailed` — its write failed for any other reason; nothing was saved.
+ * - `detailsFailedAfterIdentifier` — the identifier landed, the birth date and
+ *   gender did not.
+ * - `detailsFailed` — only the birth date and gender were being saved, and did
+ *   not take.
+ */
+type Problem =
+  | "invalid"
+  | "taken"
+  | "identifierFailed"
+  | "detailsFailedAfterIdentifier"
+  | "detailsFailed";
+
+/** Keys under `admin.users` for the problems that name the identifier. */
+const IDENTIFIER_PROBLEM_KEYS = {
+  email: {
+    invalid: "emailEdit.invalid",
+    taken: "emailEdit.taken",
+    identifierFailed: "gamerDetails.emailSaveError",
+    detailsFailedAfterIdentifier: "gamerDetails.emailSavedDetailsFailed",
+  },
+  username: {
+    invalid: "gamerDetails.usernameInvalid",
+    taken: "gamerDetails.usernameTaken",
+    identifierFailed: "gamerDetails.usernameSaveError",
+    detailsFailedAfterIdentifier: "gamerDetails.usernameSavedDetailsFailed",
+  },
+} as const satisfies Record<
+  IdentifierKind,
+  Record<Exclude<Problem, "detailsFailed">, string>
+>;
+
+function problemKey(problem: Problem, kind: IdentifierKind | null) {
+  // Only `detailsFailed` can arise without an identifier on the form.
+  if (problem === "detailsFailed" || kind === null) {
+    return "gamerDetails.saveError";
+  }
+  return IDENTIFIER_PROBLEM_KEYS[kind][problem];
+}
+
+/** The refusals that mean the identifier already signs somebody else in. */
+const TAKEN_CODES: ReadonlySet<string> = new Set([
+  USER_EMAIL_TAKEN,
+  USER_USERNAME_TAKEN,
+]);
+
+/**
+ * The identifier edit to send: `null` when the value is unchanged, `"invalid"`
+ * when it would not pass the route's schema.
+ *
+ * Unchanged is decided before anything is parsed — trimmed and folded to
+ * lowercase, as both schemas normalise — so a value the admin never touched is
+ * never judged, and never sent.
+ */
+function identifierEdit(
+  kind: IdentifierKind,
+  value: string,
+  current: string,
+): AdminUserSignInAddressBody | "invalid" | null {
+  if (value.trim().toLowerCase() === current.toLowerCase()) return null;
+  const parsed =
+    kind === "email"
+      ? adminUserEmailBody.safeParse({ email: value })
+      : adminUserUsernameBody.safeParse({ username: value });
+  return parsed.success ? parsed.data : "invalid";
+}
+
+/**
+ * The dialog's body: the sign-in identifier where the child's mode has one,
+ * birth month, birth year, gender, and one save.
  *
  * **Month granularity, not a date input.** The column is a full `date` but no
  * form in the product ever asks for the day — a parent picks a month and a year,
  * and the stored value is anchored to the 1st. An admin editing it picks the
  * same two, through the same enrollment year band, so a correction cannot
  * introduce a shape the create path could not have produced.
+ *
+ * **Two writes behind one Save, each sent only when its values changed, the
+ * identifier first.** The identifier goes through the admin sign-in-address
+ * route and the rest straight to `gamer_profiles`, so they cannot be one
+ * transaction. The identifier leads because it is the one write that can be
+ * refused for a reason the admin has to act on — a taken username — and a
+ * refusal there leaves nothing saved, which is the easy thing to say. When it
+ * lands and the second write fails, the dialog says exactly that and keeps
+ * every field as typed; a retry resends only the details, because the
+ * identifier's field now matches what is stored.
  */
 function GamerPersonalDetailsForm({
   gamerId,
   profile,
+  account,
   busyRef,
   onClose,
 }: {
   gamerId: string;
   profile: GamerProfile;
+  account: Profile;
   /** Set true for as long as a save is in flight; see the parent. */
   busyRef: RefObject<boolean>;
   onClose: () => void;
 }) {
   const t = useTranslations("admin.users.gamerDetails");
+  const u = useTranslations("admin.users");
   const c = useTranslations("common");
   const locale = useLocale();
   const timeZone = useTimezone();
   const updateProfile = useUpdateGamerProfile();
+  const updateAddress = useUpdateUserSignInAddress();
+
+  const kind = identifierKindOf(profile);
+  // Read on every render rather than seeded: once an identifier write lands,
+  // the refetched row is the new baseline, so a retry after a later failure
+  // does not send it again.
+  const storedIdentifier = kind ? currentIdentifier(kind, account) : "";
 
   /**
    * The stored date is split textually rather than parsed — a bare calendar
@@ -180,7 +326,8 @@ function GamerPersonalDetailsForm({
   );
 
   // Seeded once, because this component exists only while the dialog is open:
-  // reopening it mounts a fresh form over whatever the row now holds.
+  // reopening it mounts a fresh form over whatever the rows now hold.
+  const [identifier, setIdentifier] = useState(storedIdentifier);
   const [month, setMonth] = useState(String(stored.month));
   const [year, setYear] = useState(String(stored.year));
   // `""` is the gender's "not specified" — a real answer, stored as NULL.
@@ -191,7 +338,7 @@ function GamerPersonalDetailsForm({
   // left set on that path and the unmount disposes of it; only a failure, which
   // leaves the admin standing in front of the form to retry, clears it.
   const [committing, setCommitting] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [problem, setProblem] = useState<Problem | null>(null);
 
   // Today as the *viewer* reads it, which is the calendar the CHECK behind this
   // write is compared against from their side. The dialog is short-lived and
@@ -234,34 +381,88 @@ function GamerPersonalDetailsForm({
     [stored.year],
   );
 
+  function fail(next: Problem) {
+    setProblem(next);
+    setCommitting(false);
+    busyRef.current = false;
+  }
+
+  async function save(
+    addressEdit: AdminUserSignInAddressBody | null,
+    detailsChanged: boolean,
+  ) {
+    if (addressEdit) {
+      try {
+        // Resolves only once the refetched profile has landed, so the lines
+        // under the dialog already read the new value when it closes.
+        await updateAddress.mutateAsync({ userId: gamerId, edit: addressEdit });
+      } catch (caught: unknown) {
+        // The route's message is English for the log; only its code is read,
+        // to tell the one refusal the admin can act on from everything else.
+        fail(
+          caught instanceof ApiError &&
+            caught.code !== undefined &&
+            TAKEN_CODES.has(caught.code)
+            ? "taken"
+            : "identifierFailed",
+        );
+        return;
+      }
+    }
+
+    if (detailsChanged) {
+      try {
+        await updateProfile.mutateAsync({
+          gamerId,
+          edit: {
+            dateOfBirth: assembleGamerDateOfBirth(Number(year), Number(month)),
+            gender: gender === "" ? null : gender,
+          },
+        });
+      } catch {
+        // Whatever the rejection carries says the same thing to the person in
+        // front of it — the change did not take — and reading its `message`
+        // would only put server-authored English on screen in every locale.
+        fail(addressEdit ? "detailsFailedAfterIdentifier" : "detailsFailed");
+        return;
+      }
+    }
+
+    // No success sentence: both writes refresh the queries the lines read, so
+    // closing reveals them already restating the new values.
+    onClose();
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (committing) return;
-    setFailed(false);
+
+    const addressEdit = kind
+      ? identifierEdit(kind, identifier, storedIdentifier)
+      : null;
+    if (addressEdit === "invalid") {
+      setProblem("invalid");
+      return;
+    }
+    const detailsChanged =
+      Number(month) !== stored.month ||
+      Number(year) !== stored.year ||
+      gender !== (profile.gender ?? "");
+
+    if (!addressEdit && !detailsChanged) {
+      onClose();
+      return;
+    }
+
+    setProblem(null);
     setCommitting(true);
     // Beside the state, not after it: the parent reads this from an Escape or a
     // backdrop click that can arrive before React has rendered anything.
     busyRef.current = true;
-    void updateProfile
-      .mutateAsync({
-        gamerId,
-        edit: {
-          dateOfBirth: assembleGamerDateOfBirth(Number(year), Number(month)),
-          gender: gender === "" ? null : gender,
-        },
-      })
-      // No success sentence: the mutation seeds the profile cache with the row
-      // it wrote, so closing reveals the line already restating the new values.
-      .then(onClose)
-      // Whatever the rejection carries says the same thing to the person in
-      // front of it — the change did not take — and reading its `message` would
-      // only put server-authored English on screen in every locale.
-      .catch(() => {
-        setFailed(true);
-        setCommitting(false);
-        busyRef.current = false;
-      });
+    void save(addressEdit, detailsChanged);
   }
+
+  const identifierProblem = problem === "invalid" || problem === "taken";
 
   return (
     <DialogContent>
@@ -269,8 +470,53 @@ function GamerPersonalDetailsForm({
         <DialogTitle>{t("title")}</DialogTitle>
       </DialogHeader>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <div className="space-y-4 py-4">
+          {kind === "email" && (
+            <Field
+              label={u("emailEdit.label")}
+              htmlFor="gamer-email"
+              hint={t("emailHint")}
+            >
+              {({ hintId }) => (
+                <Input
+                  id="gamer-email"
+                  type="email"
+                  autoComplete="off"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  disabled={committing}
+                  aria-describedby={hintId}
+                  aria-invalid={identifierProblem || undefined}
+                />
+              )}
+            </Field>
+          )}
+
+          {kind === "username" && (
+            <Field
+              label={t("usernameLabel")}
+              htmlFor="gamer-username"
+              hint={t("usernameHint")}
+            >
+              {({ hintId }) => (
+                <Input
+                  id="gamer-username"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  // The bound belongs to the pattern that judges the value.
+                  maxLength={GAMER_USERNAME_MAX_LENGTH}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  disabled={committing}
+                  aria-describedby={hintId}
+                  aria-invalid={identifierProblem || undefined}
+                />
+              )}
+            </Field>
+          )}
+
           {/* Paired across, matching the Add Gamer form these two values are
               first entered in, so a correction reads like the original. */}
           <div className="grid grid-cols-2 gap-3">
@@ -330,11 +576,13 @@ function GamerPersonalDetailsForm({
           </Field>
 
           {/* Below the controls rather than above them: a sentence above would
-              push the very selects the admin just used. It only ever appears
-              after they pressed Save and it did not take. */}
-          {failed && (
+              push the very controls the admin just used. It only ever appears
+              after they pressed Save and something did not take. */}
+          {problem && (
             <Alert variant="destructive">
-              <AlertDescription>{t("saveError")}</AlertDescription>
+              <AlertDescription>
+                {u(problemKey(problem, kind))}
+              </AlertDescription>
             </Alert>
           )}
         </div>

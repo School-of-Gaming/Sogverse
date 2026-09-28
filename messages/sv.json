@@ -1233,12 +1233,21 @@
           "girl": "Flicka",
           "non_binary": "Icke-binär"
         },
-        "ageYears": "{age, plural, one {# år} other {# år}}"
+        "ageYears": "{age, plural, one {# år} other {# år}}",
+        "usernameLabel": "Användarnamn",
+        "usernameHint": "Endast bokstäver och siffror, 3–20 tecken. Lösenordet förblir detsamma.",
+        "usernameInvalid": "Använd 3–20 bokstäver eller siffror, utan mellanslag.",
+        "usernameTaken": "Användarnamnet är redan upptaget. Prova ett annat.",
+        "usernameSaveError": "Det gick inte att byta användarnamnet, så inget sparades. Försök igen.",
+        "usernameSavedDetailsFailed": "Användarnamnet byttes, men födelsedatum och kön sparades inte. Försök igen.",
+        "emailHint": "Sättet att logga in förblir detsamma. Den nya adressen visas som overifierad tills den har bekräftats.",
+        "emailSaveError": "Det gick inte att byta e-postadressen, så inget sparades. Försök igen.",
+        "emailSavedDetailsFailed": "E-postadressen byttes, men födelsedatum och kön sparades inte. Försök igen."
       },
       "emailEdit": {
         "edit": "Byt e-postadress",
         "title": "Byt e-postadress",
-        "description": "Personen loggar in med den nya adressen från och med nu, med samma lösenord. Den nya adressen visas som overifierad tills den har bekräftats.",
+        "description": "Kontot flyttas till den nya adressen, och sättet att logga in förblir detsamma. Den nya adressen visas som overifierad tills den har bekräftats.",
         "label": "E-postadress",
         "invalid": "Ange en giltig e-postadress.",
         "taken": "Adressen tillhör redan ett annat konto. Att slå ihop eller ta bort det kontot går inte här – be en utvecklare att hantera det.",

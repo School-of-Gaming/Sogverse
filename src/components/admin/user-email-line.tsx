@@ -17,18 +17,18 @@ import {
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ApiError } from "@/lib/api/api-error";
+import { gamerUsernameFromEmail } from "@/lib/gamer-sign-in";
 import {
   adminUserEmailBody,
   useProfile,
-  useUpdateUserEmail,
+  useUpdateUserSignInAddress,
   USER_EMAIL_TAKEN,
 } from "@/services/users";
 import type { Profile } from "@/types";
 
 /**
  * The address line under a person's name on their admin detail page, with its
- * verification mark and — where the address may be corrected here — a pencil
- * that opens the editor.
+ * verification mark and — for an adult — a pencil that opens the editor.
  *
  * **Why an admin can change it at all:** a parent who signs up with a typo in
  * their address can neither verify it nor reset a forgotten password, because
@@ -36,11 +36,11 @@ import type { Profile } from "@/types";
  * the fix has to be staff's; the route behind the dialog moves the sign-in
  * record and the profile together.
  *
- * **Every account's line carries the pencil, a gamer's included.** For a child
- * whose address is one of our synthetic handles the line shows that handle,
- * because that is what the editor would replace, and it carries no
- * verification mark: no inbox answers a synthetic address, so "not verified"
- * would be a fact about nothing (`showVerification`).
+ * **Only a mailbox gets this line.** A child whose address is one of our
+ * synthetic handles has nothing here worth reading, so the page does not render
+ * it for them. A child in `email` mode does get it, without the pencil: a
+ * gamer's page carries one editor, the personal-details dialog, and their
+ * address is one of its fields (`editable`).
  *
  * **The same seam as the personal-details line.** The page hands down the row it
  * already read and the query is seeded with it, so the line paints complete; a
@@ -50,12 +50,12 @@ import type { Profile } from "@/types";
 export function UserEmailLine({
   userId,
   initialProfile,
-  showVerification,
+  editable,
 }: {
   userId: string;
   initialProfile: Profile;
-  /** False where the address is not a mailbox; see above. */
-  showVerification: boolean;
+  /** False for a gamer, whose address is edited in the personal-details dialog. */
+  editable: boolean;
 }) {
   const t = useTranslations("admin.users");
 
@@ -83,45 +83,79 @@ export function UserEmailLine({
             ways, because an admin looking at ONE user is asking the question
             and deserves a definite answer rather than having to know that
             silence means no. */}
-        {showVerification &&
-          (profile.email_verified_at ? (
-            <MailCheck
-              className="h-4 w-4 shrink-0 text-success"
-              aria-label={t("emailVerified")}
-            />
-          ) : (
-            <MailX
-              className="h-4 w-4 shrink-0 text-warning"
-              aria-label={t("emailNotVerified")}
-            />
-          ))}
+        {profile.email_verified_at ? (
+          <MailCheck
+            className="h-4 w-4 shrink-0 text-success"
+            aria-label={t("emailVerified")}
+          />
+        ) : (
+          <MailX
+            className="h-4 w-4 shrink-0 text-warning"
+            aria-label={t("emailNotVerified")}
+          />
+        )}
         {/* Last in a left-packed row, so a save that changes the address's
             length moves it — the direct result of the admin confirming the
             dialog they opened from here, which the layout rule permits. */}
-        <EditPencilButton
-          label={t("emailEdit.edit")}
-          onClick={() => setEditing(true)}
-        />
+        {editable && (
+          <EditPencilButton
+            label={t("emailEdit.edit")}
+            onClick={() => setEditing(true)}
+          />
+        )}
       </div>
 
-      <Dialog
-        open={editing}
-        // A save in flight owns the dialog until it resolves: Escape or a
-        // backdrop click would otherwise unmount the form mid-write and leave
-        // its outcome with nowhere to be reported.
-        onOpenChange={(open) => {
-          if (!open && busyRef.current) return;
-          setEditing(open);
-        }}
-      >
-        <UserEmailForm
-          userId={userId}
-          currentEmail={profile.email}
-          busyRef={busyRef}
-          onClose={close}
-        />
-      </Dialog>
+      {editable && (
+        <Dialog
+          open={editing}
+          // A save in flight owns the dialog until it resolves: Escape or a
+          // backdrop click would otherwise unmount the form mid-write and leave
+          // its outcome with nowhere to be reported.
+          onOpenChange={(open) => {
+            if (!open && busyRef.current) return;
+            setEditing(open);
+          }}
+        >
+          <UserEmailForm
+            userId={userId}
+            currentEmail={profile.email}
+            busyRef={busyRef}
+            onClose={close}
+          />
+        </Dialog>
+      )}
     </>
+  );
+}
+
+/**
+ * A username-mode child's username, which lives in the local part of their
+ * synthetic address and nowhere else. Labelled, so it is not read as a mangled
+ * email; no verification mark, because there is no inbox behind it to have
+ * confirmed anything; no pencil, because the personal-details dialog edits it.
+ *
+ * A client island on the same seeded profile query as the address line, so a
+ * rename from that dialog restates itself here when the dialog closes.
+ */
+export function GamerUsernameLine({
+  userId,
+  initialProfile,
+}: {
+  userId: string;
+  initialProfile: Profile;
+}) {
+  const t = useTranslations("admin.users");
+  const { data } = useProfile(userId, { initialData: initialProfile });
+  const username = gamerUsernameFromEmail((data ?? initialProfile).email);
+  if (!username) return null;
+
+  return (
+    <p className="flex items-baseline gap-1.5 text-muted-foreground">
+      <span className="text-[10px] uppercase tracking-wide">
+        {t("usernameLabel")}
+      </span>
+      <span>{username}</span>
+    </p>
   );
 }
 
@@ -141,10 +175,11 @@ const PROBLEM_KEYS = {
 /**
  * The dialog's body: one address field and a save.
  *
- * The address is parsed with the route's own body schema before it is sent, so
- * what is judged here is exactly what the route would accept — trimmed, folded
- * to lowercase and fenced off our synthetic gamer domain — and an address that
- * normalises to the one already stored closes the dialog with no request.
+ * An address that normalises to the one already stored closes the dialog with
+ * no request, and that is checked before the address is parsed. Otherwise it is
+ * parsed with the route's own body schema before it is sent, so what is judged
+ * here is exactly what the route would accept — trimmed, folded to lowercase and
+ * fenced off our synthetic gamer domain.
  */
 function UserEmailForm({
   userId,
@@ -160,7 +195,7 @@ function UserEmailForm({
 }) {
   const t = useTranslations("admin.users");
   const c = useTranslations("common");
-  const updateEmail = useUpdateUserEmail();
+  const updateAddress = useUpdateUserSignInAddress();
 
   // Seeded once, because this component exists only while the dialog is open.
   const [value, setValue] = useState(currentEmail);
@@ -175,13 +210,13 @@ function UserEmailForm({
     e.preventDefault();
     if (committing) return;
 
+    if (value.trim().toLowerCase() === currentEmail.toLowerCase()) {
+      onClose();
+      return;
+    }
     const parsed = adminUserEmailBody.safeParse({ email: value });
     if (!parsed.success) {
       setProblem("invalid");
-      return;
-    }
-    if (parsed.data.email === currentEmail) {
-      onClose();
       return;
     }
 
@@ -190,7 +225,7 @@ function UserEmailForm({
     // Beside the state, not after it: the parent reads this from an Escape or a
     // backdrop click that can arrive before React has rendered anything.
     busyRef.current = true;
-    void updateEmail
+    void updateAddress
       .mutateAsync({ userId, edit: parsed.data })
       .then(onClose)
       // The route's message is English for the log; only its code is read, to

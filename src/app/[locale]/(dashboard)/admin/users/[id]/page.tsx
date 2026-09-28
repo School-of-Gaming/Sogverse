@@ -16,8 +16,8 @@ import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card
 import { UserMarketingCard } from "@/components/admin/user-marketing-card";
 import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-consent-card";
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
-import { UserEmailLine } from "@/components/admin/user-email-line";
-import { gamerUsernameFromEmail, hasRealEmail } from "@/lib/gamer-sign-in";
+import { GamerUsernameLine, UserEmailLine } from "@/components/admin/user-email-line";
+import { hasRealEmail } from "@/lib/gamer-sign-in";
 import { formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
@@ -240,16 +240,12 @@ export default async function AdminUserDetailPage({
 
   // Whether this account's stored address is a mailbox rather than one of our
   // synthetic handles. True for every adult by construction, and for a child
-  // only in sign-in mode `email` — which is also the only child whose
-  // verification state means anything.
+  // only in sign-in mode `email` — which is also the only child whose address is
+  // worth printing or whose verification state means anything.
   const accountHasMailbox = hasRealEmail({
     role: profile.role,
     sign_in: gamerProfile?.sign_in ?? null,
   });
-  const gamerUsername =
-    gamerProfile?.sign_in === "username"
-      ? gamerUsernameFromEmail(profile.email)
-      : null;
 
   const uiLocale = resolveLocale(locale);
   const statusLabels: Record<ParticipationStatus, string> = {
@@ -296,36 +292,36 @@ export default async function AdminUserDetailPage({
             <h1 className="text-2xl font-bold">
               {[profile.first_name, profile.last_name].filter(Boolean).join(" ")}
             </h1>
-            {/* A username-mode child's username, which lives in the local part
-                of their synthetic address and nowhere else. Labelled, so it is
-                not read as a mangled email; no verification mark, because there
-                is no inbox behind it to have confirmed anything. */}
-            {gamerUsername && (
-              <p className="flex items-baseline gap-1.5 text-muted-foreground">
-                <span className="text-[10px] uppercase tracking-wide">
-                  {t('usernameLabel')}
-                </span>
-                <span>{gamerUsername}</span>
-              </p>
+            {/* A username-mode child's username. A synthetic handle is never
+                printed as an address: it names no inbox, and for a child in
+                `parent` mode nobody ever types it. */}
+            {gamerProfile?.sign_in === "username" && (
+              <GamerUsernameLine userId={userId} initialProfile={profile} />
             )}
-            {/* The address and the pencil that corrects it, for every role. A
-                child's synthetic handle is shown too, since it is what the
-                editor replaces; the verification mark only where a mailbox
-                stands behind the address. */}
-            {profile.email && (
+            {/* The address wherever a mailbox stands behind it. An adult's line
+                carries the pencil that corrects it; a child's does not, because
+                a gamer's one editor is the personal-details dialog below, which
+                edits their sign-in identifier alongside the rest. */}
+            {accountHasMailbox && profile.email && (
               <UserEmailLine
                 userId={userId}
                 initialProfile={profile}
-                showVerification={accountHasMailbox}
+                editable={!isGamer}
               />
             )}
-            {/* Age and gender, with a pencil that opens their editor. The line
-                itself is a client island seeded with the row this page already
-                read, so it paints complete and restates itself after a save
-                without a reload. Absent only when that read failed, which is
-                what the read-only line before it did with a missing row. */}
+            {/* Age and gender, with a pencil that opens their editor — which
+                also edits the child's email address or username where their
+                sign-in mode has one. The line itself is a client island seeded
+                with the rows this page already read, so it paints complete and
+                restates itself after a save without a reload. Absent only when
+                that read failed, which is what the read-only line before it did
+                with a missing row. */}
             {isGamer && gamerProfile && (
-              <GamerPersonalDetails gamerId={userId} initialProfile={gamerProfile} />
+              <GamerPersonalDetails
+                gamerId={userId}
+                initialProfile={gamerProfile}
+                initialAccount={profile}
+              />
             )}
             {/* The Minecraft row used to sit here, read-only. It moved into the
                 editable Game accounts card below: an admin who can change these

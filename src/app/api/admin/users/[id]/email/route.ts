@@ -6,16 +6,20 @@ import {
   identitiesHoldEmail,
   isEmailAlreadyRegistered,
 } from "@/lib/auth-email.server";
+import { hasRealEmail, usernameToSyntheticEmail } from "@/lib/gamer-sign-in";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
-  adminUserEmailBody,
+  adminUserSignInAddressBody,
   adminUserEmailWriteResult,
   USER_EMAIL_TAKEN,
+  USER_USERNAME_TAKEN,
+  type AdminUserSignInAddressBody,
 } from "@/services/users/users.contracts";
+import type { GamerSignIn, UserRole } from "@/types";
 
 /**
  * PATCH /api/admin/users/[id]/email — an admin correcting the address another
- * account signs in with. The case it exists for is the signup typo: a parent
+ * account signs in with, or a username-mode child's username. The case it exists for is the signup typo: a parent
  * who registered as `aino@gmial.com` and can neither verify nor reset a
  * password until somebody moves the account to the address they meant.
  *
@@ -55,32 +59,51 @@ import {
  * on `profiles.email` would be a second opinion from the one half that is
  * allowed to lag.
  *
- * **Every role may be edited, a gamer included** — the owner's ruling. What the
- * route does not do is touch a child's `gamer_profiles.sign_in`: it moves the
- * address and nothing else. For an `email`-mode child that is the whole story.
- * For the two synthetic modes the address is the sign-in handle — a
- * username-mode child's username *is* its local part — so moving it to a real
- * mailbox changes what the child types to sign in while the mode still names
- * the old shape. The body schema refuses our synthetic domain, so this route
- * cannot rename a username; that stays with the parent's own settings.
+ * **What an account admits depends on how it signs in** — the owner's ruling,
+ * and read here from `gamer_profiles.sign_in` on the service-role client
+ * because that row, not the caller, is the authority on it:
+ *
+ * - **An adult, or a child in `email` mode, takes a real mailbox** (`{ email }`).
+ * - **A child in `username` mode takes a new username** (`{ username }`), which
+ *   the route turns into the synthetic handle that *is* the child's address.
+ *   The mode stays `username` and the password is untouched: only what the
+ *   child types changes. GoTrue's uniqueness on the address is what makes a
+ *   username unique, so a taken one is the same refusal as a taken address,
+ *   under its own code.
+ * - **A child in `parent` mode takes neither.** Its address is a random handle
+ *   nobody types, and there is nothing to rename.
+ *
+ * Every other pairing is refused before anything is written. Moving a
+ * synthetic-mode child onto a real mailbox is not an address correction but a
+ * privilege change: password reset refuses only the synthetic *string*, so a
+ * `parent`-mode child given a mailbox could gain a password and sign in
+ * without the parent, and a `username`-mode child would be locked out of the
+ * name they type. Changing a child's sign-in mode is the parent's, through
+ * their own settings, where the mode and the credentials move together.
+ *
+ * A username change carries no compensation of the kind the parent's own
+ * rename does, because nothing about it outruns the record: the mode was
+ * `username` before the write and still is, and the password the child holds
+ * is the one it always was. What a failure between the halves leaves is the
+ * same lagging `profiles.email` an address change can leave, and a retry
+ * finishes it the same way.
  */
 export const PATCH = defineRoute({
   posture: "role-gated",
   roles: "admin",
-  forbiddenMessage: "Only admins can change another user's email address",
+  forbiddenMessage: "Only admins can change another user's sign-in address",
   params: z.object({ id: z.string().uuid() }),
-  body: adminUserEmailBody,
+  body: adminUserSignInAddressBody,
   response: adminUserEmailWriteResult,
 
   handler: async ({ supabase, params, body }) => {
     const userId = params.id;
-    const { email } = body;
 
     // Read the target on the user-bound client: an admin may read every
     // profile, so a miss here really is "no such user".
     const { data: target, error: targetError } = await supabase
       .from("profiles")
-      .select("email")
+      .select("email, role")
       .eq("id", userId)
       .maybeSingle();
 
@@ -91,6 +114,15 @@ export const PATCH = defineRoute({
     }
 
     const admin = createAdminClient();
+
+    const resolved = await resolveTargetAddress({
+      admin,
+      userId,
+      role: target.role,
+      body,
+    });
+    if (resolved instanceof NextResponse) return resolved;
+    const { email, takenCode } = resolved;
 
     const { data: current, error: readError } =
       await admin.auth.admin.getUserById(userId);
@@ -116,7 +148,7 @@ export const PATCH = defineRoute({
           throw new ApiError(
             `user ${userId}: ${email} already belongs to another account`,
             409,
-            USER_EMAIL_TAKEN,
+            takenCode,
           );
         }
         throw new ApiError(
@@ -159,3 +191,62 @@ export const PATCH = defineRoute({
     return { success: true as const, email };
   },
 });
+
+type AdminClient = ReturnType<typeof createAdminClient>;
+
+/**
+ * The address the request asks the account to move to, if the account admits
+ * that form at all — or the refusal saying why not. See the route's doc comment
+ * for the rules.
+ *
+ * The mode is read on the service-role client, never taken from the request: it
+ * is what decides whether a mailbox is a correction or a privilege change. A
+ * gamer with no `gamer_profiles` row has no mode to admit anything under, so it
+ * meets the same refusals as a synthetic one.
+ */
+async function resolveTargetAddress(args: {
+  admin: AdminClient;
+  userId: string;
+  role: UserRole;
+  body: AdminUserSignInAddressBody;
+}): Promise<NextResponse | { email: string; takenCode: string }> {
+  const { admin, userId, role, body } = args;
+
+  let signIn: GamerSignIn | null = null;
+  if (role === "gamer") {
+    const { data: gamerProfile, error: modeError } = await admin
+      .from("gamer_profiles")
+      .select("sign_in")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (modeError) throw modeError;
+    signIn = gamerProfile?.sign_in ?? null;
+  }
+
+  if ("email" in body) {
+    if (!hasRealEmail({ role, sign_in: signIn })) {
+      return NextResponse.json(
+        {
+          error:
+            "This gamer does not sign in with an email address, so their address cannot be changed. Their parent changes how they sign in.",
+        },
+        { status: 400 },
+      );
+    }
+    return { email: body.email, takenCode: USER_EMAIL_TAKEN };
+  }
+
+  if (signIn !== "username") {
+    return NextResponse.json(
+      {
+        error:
+          "Only a gamer who signs in with a username has a username to change.",
+      },
+      { status: 400 },
+    );
+  }
+  return {
+    email: usernameToSyntheticEmail(body.username),
+    takenCode: USER_USERNAME_TAKEN,
+  };
+}
