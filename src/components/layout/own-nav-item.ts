@@ -6,8 +6,9 @@ import { ROUTES } from "@/lib/constants";
  *
  * Each is role-gated by living under the gedu dashboard's path, which is what
  * makes it look like a page *of* that dashboard to any prefix test — and it is
- * not one: it has a nav item of its own (Substitutions on the strip, Invoicing
- * in the account menu), and the chrome must name the reader's position once.
+ * not one: it has a nav item of its own (Substitutions on the strip; Invoicing
+ * on the strip from `lg` up and in the account menu below it), and the chrome
+ * must name the reader's position once.
  */
 const PAGES_WITH_THEIR_OWN_NAV_ITEM = [
   ROUTES.gedu.substitutions,

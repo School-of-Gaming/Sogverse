@@ -86,7 +86,9 @@ async function GeduInvoicingLoadFailure({ reason }: { reason: string | null }) {
   const t = await getTranslations("geduInvoicing");
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-24">
+    // Reserved like the page it stands in for, so a failed read shifts nothing
+    // either (see the gutter rule in `src/components/layout/CLAUDE.md`).
+    <div className="mx-auto max-w-5xl space-y-6 pb-24" data-reserve-scroll-gutter>
       <MyGeduInvoicingHeading />
       <Alert variant="destructive">
         <AlertDescription>
