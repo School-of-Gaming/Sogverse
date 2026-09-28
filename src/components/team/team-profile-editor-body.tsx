@@ -146,7 +146,7 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
   const crops = useOwnedCrops(form.photo?.src, props.profile.photo?.src);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 pb-24">
+    <div className="mx-auto max-w-7xl space-y-8 pb-24" data-reserve-scroll-gutter>
       {/* A person's own page's home is settings, beside the account facts
           the profile shows but does not edit; an admin editing someone
           else's came from that person's user page. */}

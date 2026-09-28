@@ -421,7 +421,7 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
     renderMenu(GEDU);
     openMenu();
 
-    // Invoicing is the gedu's own account destination; the About and Your
+    // Invoicing is the gedu's own account destination; the About and My
     // profile rows after it are the header's doing — none is a household's.
     // See their cases below.
     expect(rowTexts()).toEqual([

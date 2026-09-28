@@ -120,7 +120,7 @@ Because the document is the single scroll container, a page that flips between f
 
 **Rule: To reserve the scrollbar gutter, render `data-reserve-scroll-gutter` on the page's root element — do not set `scrollbar-gutter` on a page-level `<div>`.** The gutter only has effect on the actual scroll container (the root element), so `globals.css` carries `html:has([data-reserve-scroll-gutter]) { scrollbar-gutter: stable; }`. The `:has()` keeps it opt-in: only pages that render the marker pay for the gutter, instead of forcing it on every route. Current opt-ins: the admin users page, the shared admin `ProductListPage` (the four product-list routes), and the shared public browse results (`/shop` and the `/schools/<municipality>` pages, whose chip filters can shrink the sections back above the fold). It's a no-op on overlay-scrollbar OSes (nothing to reserve).
 
-**Pages a reader moves between from one nav opt in together, or not at all.** The marker also decides the gutter *between* pages: one that reserves it and one that fits the window without it are a scrollbar's width apart, header included, so every move between them shifts the page sideways. The gedu's own destinations — My SOG, Substitutions and Invoicing — all opt in for that reason, and a new gedu destination joins them.
+**Pages a reader moves between from one nav opt in together, or not at all.** The marker also decides the gutter *between* pages: one that reserves it and one that fits the window without it are a scrollbar's width apart, header included, so every move between them shifts the page sideways. The gedu's own destinations — My SOG, Substitutions, Invoicing and My profile — all opt in for that reason, and a new gedu destination joins them.
 
 ## Modal scroll lock
 
