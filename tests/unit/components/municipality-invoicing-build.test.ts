@@ -64,6 +64,9 @@ function club(
     invoice_customer: null,
     sessions: [],
     cancelled_sessions: [],
+    // One group unless a case says otherwise: the cancellation cases that need
+    // a sibling name both.
+    group_ids: ["g1"],
     ...overrides,
   };
 }
@@ -406,6 +409,7 @@ describe("buildMunicipalityInvoicing", () => {
       const built = onlyClub([
         club({
           id: "a",
+          group_ids: ["g1", "g2"],
           sessions: [{ group_id: "g2", session_date: "2026-09-09" }],
           cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
         }),
@@ -422,6 +426,7 @@ describe("buildMunicipalityInvoicing", () => {
       const built = onlyClub([
         club({
           id: "a",
+          group_ids: ["g1", "g2"],
           sessions: [{ group_id: "g2", session_date: "2026-09-02" }],
           cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
         }),
@@ -431,10 +436,27 @@ describe("buildMunicipalityInvoicing", () => {
       expect(built.unrecordedCount).toBe(1);
     });
 
+    it("leaves the date missed when a silent sibling group has nothing all month", () => {
+      // g2 recorded nothing and cancelled nothing anywhere in the month, so
+      // neither the rows nor the cancellations name it — only the club's own
+      // list of groups does. g1's cancellation must not hide g2's missed date.
+      const built = onlyClub([
+        club({
+          id: "a",
+          group_ids: ["g1", "g2"],
+          cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(kindOn(built, "2026-09-09")).toBe("unrecorded");
+      expect(built.unrecordedCount).toBe(2);
+    });
+
     it("is cancelled when every group of the club cancelled it", () => {
       const built = onlyClub([
         club({
           id: "a",
+          group_ids: ["g1", "g2"],
           sessions: [
             { group_id: "g1", session_date: "2026-09-02" },
             { group_id: "g2", session_date: "2026-09-02" },

@@ -1728,7 +1728,8 @@ BEGIN
                            )
                  END,
                'sessions',               se.items,
-               'cancelled_sessions',     cx.items
+               'cancelled_sessions',     cx.items,
+               'group_ids',              gr.items
              ) AS doc
         FROM candidate c
         LEFT JOIN public.locations l ON l.id = c.location_id
@@ -1805,6 +1806,20 @@ BEGIN
                       AND sc.session_date <= v_month_end
                  ), '[]'::jsonb) AS items
         ) cx
+        -- Every group the club has, whether or not the month says anything
+        -- about it. A date is cancelled for the club only when every one of its
+        -- groups cancelled it, and a group that neither met nor cancelled is
+        -- exactly the one neither list above can name — without this a
+        -- sibling's cancellation would hide its missed session. Every row, with
+        -- no filter: a group has no archived state and no start date, so any
+        -- group the product holds is one its schedule is due to meet.
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(g.id ORDER BY g.id)
+                     FROM public.product_groups g
+                    WHERE g.product_id = c.id
+                 ), '[]'::jsonb) AS items
+        ) gr
     ) club;
 
   -- Every club on the invoice belongs to a municipality, or there is no invoice.

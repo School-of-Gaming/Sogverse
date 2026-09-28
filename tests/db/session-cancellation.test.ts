@@ -44,7 +44,8 @@ import {
  * says. It started thirty days ago and never ends. The seeded gedu is assigned
  * to its one group and the seeded gamer holds a seat there. CLUB is a
  * municipality club in a month far from anything any other file seeds, so the
- * invoicing read over that month sees this file's rows alone.
+ * invoicing read over that month sees this file's rows alone; it has two
+ * groups, one of which never meets or cancels.
  */
 
 const PRODUCT = "00000000-0000-0000-0000-00000000ca01";
@@ -52,6 +53,8 @@ const GROUP = "00000000-0000-0000-0000-00000000ca02";
 const PARTICIPATION = "00000000-0000-0000-0000-00000000ca03";
 const CLUB = "00000000-0000-0000-0000-00000000ca04";
 const CLUB_GROUP = "00000000-0000-0000-0000-00000000ca05";
+/** The club's second group, which neither meets nor cancels in the month. */
+const CLUB_SILENT_GROUP = "00000000-0000-0000-0000-00000000ca06";
 const ALL_PRODUCTS = [PRODUCT, CLUB];
 
 const CLUB_MONTH = "2031-02-01";
@@ -127,6 +130,11 @@ describe("session cancellation", () => {
     const groups = await admin.from("product_groups").insert([
       { id: GROUP, product_id: PRODUCT, name: "Cancellation cohort" },
       { id: CLUB_GROUP, product_id: CLUB, name: "Cancellation club cohort" },
+      {
+        id: CLUB_SILENT_GROUP,
+        product_id: CLUB,
+        name: "Cancellation club silent cohort",
+      },
     ]);
     expect(groups.error).toBeNull();
 
@@ -448,7 +456,7 @@ describe("session cancellation", () => {
     ).toEqual([IN_THREE_DAYS]);
   });
 
-  it("hands the invoicing page the month's cancelled pairs", async () => {
+  it("hands the invoicing page the month's cancelled pairs and every group of the club", async () => {
     const cancelled = await adminAuth.rpc("cancel_session", {
       p_group_id: CLUB_GROUP,
       p_session_date: CLUB_DATE,
@@ -466,5 +474,8 @@ describe("session cancellation", () => {
       { group_id: CLUB_GROUP, session_date: CLUB_DATE },
     ]);
     expect(club?.sessions).toEqual([]);
+    // The silent group appears in neither list above, and is still named: a
+    // date only one group cancelled is not cancelled for the club.
+    expect(club?.group_ids).toEqual([CLUB_GROUP, CLUB_SILENT_GROUP]);
   });
 });

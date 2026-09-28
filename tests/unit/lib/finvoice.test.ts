@@ -121,6 +121,7 @@ function club(spec: ClubSpec): MunicipalityInvoicingClub {
       group_id: `${spec.id}-g1`,
       session_date: date,
     })),
+    group_ids: [`${spec.id}-g1`],
   };
 }
 

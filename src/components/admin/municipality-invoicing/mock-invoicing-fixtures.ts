@@ -848,6 +848,7 @@ function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
         session_date: date,
       })),
     ),
+    group_ids: groupIds(spec),
   };
 }
 

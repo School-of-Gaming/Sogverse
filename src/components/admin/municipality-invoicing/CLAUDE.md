@@ -48,8 +48,10 @@ billing a cancellation:
   schedule or term change is ignored completely and renders no line, the same way every
   other surface treats it.
 - **A club cancels per group and is invoiced per date, so a date is cancelled only when
-  every group the month's document names for the club cancelled it.** A group is named by
-  holding a stored row or an applicable cancellation anywhere in the month. One group
+  every group the club has cancelled it.** The document lists every group of the club,
+  including one that neither met nor cancelled all month — the rows and cancellations alone
+  cannot name that group, and it is exactly the one whose miss a sibling's cancellation
+  would otherwise hide. One group
   cancelling while a sibling was due and recorded nothing leaves the date unrecorded: a
   half-cancelled date reported as missed is a question somebody can answer, and a real
   miss hidden behind a sibling's cancellation is not. If any group ran the date, it bills

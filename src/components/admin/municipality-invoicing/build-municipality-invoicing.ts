@@ -624,27 +624,20 @@ function pairKey(groupId: string, date: string): string {
  * The projected dates that are cancelled for the club as a whole.
  *
  * A cancellation is per group and the invoice is per club, so a date qualifies
- * only when every group the month's document names for the club — every group
- * with a stored row or an applicable cancellation anywhere in the month —
- * cancelled it. One group cancelling while a sibling was due and recorded
- * nothing leaves the date unrecorded: of the two ways to be wrong, reporting a
- * missed session that was half cancelled is the one somebody can check. A
- * cancellation on a date the schedule does not project is ignored entirely,
- * here as on every other surface, and so does not make its group count either.
+ * only when every group the club has cancelled it — including a group the
+ * month otherwise says nothing about. One group cancelling while a sibling was
+ * due and recorded nothing leaves the date unrecorded: of the two ways to be
+ * wrong, reporting a missed session that was half cancelled is the one
+ * somebody can check. A cancellation on a date the schedule does not project
+ * is ignored entirely, here as on every other surface.
  */
 function cancelledClubDates(
   club: MunicipalityInvoicingClub,
   projected: ReadonlySet<string>,
 ): Set<string> {
-  const applicable = club.cancelled_sessions.filter((one) =>
-    projected.has(one.session_date),
-  );
-  const groups = new Set(
-    [...club.sessions, ...applicable].map((one) => one.group_id),
-  );
-
   const byDate = new Map<string, Set<string>>();
-  for (const one of applicable) {
+  for (const one of club.cancelled_sessions) {
+    if (!projected.has(one.session_date)) continue;
     const cancelledGroups = byDate.get(one.session_date) ?? new Set<string>();
     cancelledGroups.add(one.group_id);
     byDate.set(one.session_date, cancelledGroups);
@@ -652,7 +645,9 @@ function cancelledClubDates(
 
   return new Set(
     [...byDate]
-      .filter(([, cancelledGroups]) => cancelledGroups.size === groups.size)
+      .filter(([, cancelledGroups]) =>
+        club.group_ids.every((groupId) => cancelledGroups.has(groupId)),
+      )
       .map(([date]) => date),
   );
 }
