@@ -3220,6 +3220,10 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
       }
+      gedu_invoicing_document: {
+        Args: { p_gedu_id: string; p_month_start: string }
+        Returns: Json
+      }
       gedu_is_expected_at_session: {
         Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
@@ -3245,6 +3249,10 @@ export type Database = {
         Returns: boolean
       }
       get_admin_dashboard: { Args: never; Returns: Json }
+      get_admin_gedu_invoicing: {
+        Args: { p_month_start: string }
+        Returns: Json
+      }
       get_admin_municipality_invoicing: {
         Args: { p_month_start: string }
         Returns: Json
@@ -3324,6 +3332,7 @@ export type Database = {
         Args: { p_epoch_date?: string }
         Returns: Json
       }
+      get_my_gedu_invoicing: { Args: { p_month_start: string }; Returns: Json }
       get_my_parents: {
         Args: never
         Returns: {

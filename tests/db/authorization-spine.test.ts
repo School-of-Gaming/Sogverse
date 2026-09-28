@@ -115,6 +115,12 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // the first-of-month check with `check_violation` — an error, but not the
   // forbidden one.
   get_admin_municipality_invoicing: { permittedRoles: ["admin"] },
+  // One month of every gedu's invoicing. The same guard-then-month-check
+  // order as the municipality read above, so the positive half is assertable
+  // the same way: an admin passes the guard and is refused by the
+  // first-of-month check with `check_violation`, which is not the forbidden
+  // error.
+  get_admin_gedu_invoicing: { permittedRoles: ["admin"] },
   // The two writers of invoice_customers — the Fennoa customers a
   // municipality club's invoice is addressed to. They exist as RPCs rather than
   // as table writes for the §3.3 reason: the table carries no write grant for
@@ -264,6 +270,13 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // enforcement epoch, so a gedu with no assignments gets an empty list rather
   // than a refusal.
   get_my_gedu_assignment_summaries: { permittedRoles: ["gedu"] },
+  // The caller's own month of invoicing, the gedu twin of the admin read.
+  // Role-gated rather than self-scoping because its body is guard-first; past
+  // the guard it is keyed to auth.uid() alone, and gedu-invoicing.test.ts
+  // proves a gedu never reads another gedu's seats. A NULL month is refused by
+  // the first-of-month check with `check_violation`, so the positive half is
+  // assertable with no fixture.
+  get_my_gedu_invoicing: { permittedRoles: ["gedu"] },
 
   // --- the gedu half of session substitutions ------------------------------
   //
