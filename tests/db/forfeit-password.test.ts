@@ -9,10 +9,12 @@ import {
 import { TEST_CREDENTIALS } from "./constants";
 
 /**
- * forfeit_password() — the password half of a Google claim. When a Google
- * identity proves the address of an account whose address was never
- * verified, the password on it may be a squatter's, so it is set to NULL and
- * the account is left Google-only. What matters is that a password sign-in
+ * forfeit_password() — sets a password to NULL wherever a credential must
+ * stop working: the password half of a Google claim, and a parent's changes
+ * to how a child signs in. In a Google claim, when a Google identity proves
+ * the address of an account whose address was never verified, the password
+ * on it may be a squatter's, so it is set to NULL and the account is left
+ * Google-only. What matters is that a password sign-in
  * then fails, that nobody else's password moves, and that nobody but the
  * service role can call it: it bypasses every check on who is asking.
  *

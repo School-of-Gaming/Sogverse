@@ -18,9 +18,12 @@ const mockAdminAuthAdmin = {
   // generated column, and the update's own payload reports it stale.
   getUserById: vi.fn(),
 };
+// Removing a password is the database's: GoTrue's Admin API cannot write NULL.
+const mockAdminRpc = vi.fn<(fn: string, args: { p_user_id: string }) => unknown>();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     from: (...args: unknown[]) => mockAdminFrom(...args),
+    rpc: (fn: string, args: { p_user_id: string }) => mockAdminRpc(fn, args),
     auth: { admin: mockAdminAuthAdmin },
   })),
 }));
@@ -874,9 +877,17 @@ describe("PATCH /api/gamers/[id]", () => {
       mockAuthenticated("customer-123");
       mockParentGamerLookup(true);
       mockSendGamerWelcomeEmail.mockResolvedValue(undefined);
+      mockAdminRpc.mockResolvedValue({ data: null, error: null });
     });
 
-    it("→ parent: a fresh synthetic handle, and the password scrambled away", async () => {
+    /** Whether the route took the password away — NULL, through the database. */
+    function passwordRemoved(): boolean {
+      return mockAdminRpc.mock.calls.some(
+        ([fn, args]) => fn === "forfeit_password" && args.p_user_id === GAMER_ID,
+      );
+    }
+
+    it("→ parent: a fresh synthetic handle, and the password removed", async () => {
       currentSignIn = "username";
       const { emailUpdate } = mockCredentialChange();
 
@@ -889,10 +900,10 @@ describe("PATCH /api/gamers/[id]", () => {
       // username the family chose, and it should not stay attached to an account
       // that is no longer reachable through it.
       expect(written.email).toMatch(/@gamer\.sogverse\.internal$/);
-      // GoTrue cannot unset a password, so it is overwritten with a value nobody
-      // holds. That is what "switch-only" means here.
-      expect(typeof written.password).toBe("string");
-      expect(String(written.password).length).toBeGreaterThan(32);
+      // The password is set to NULL, never to a random value: an unknown
+      // password is still a credential. That is what "switch-only" means here.
+      expect(written).not.toHaveProperty("password");
+      expect(passwordRemoved()).toBe(true);
       expect(emailUpdate.update).toHaveBeenCalledWith({ email: written.email });
       expect(mockSignInUpdate).toHaveBeenCalledWith({ sign_in: "parent" });
       expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
@@ -916,6 +927,7 @@ describe("PATCH /api/gamers/[id]", () => {
         email_confirm: true,
         password: "a good password",
       });
+      expect(passwordRemoved()).toBe(false);
       expect(mockSignInUpdate).toHaveBeenCalledWith({ sign_in: "username" });
     });
 
@@ -977,7 +989,7 @@ describe("PATCH /api/gamers/[id]", () => {
       expect(mockSignInUpdate).not.toHaveBeenCalled();
     });
 
-    it("→ email: the real address, the password scrambled, and the mail sent", async () => {
+    it("→ email: the real address, the password removed, and the mail sent", async () => {
       currentSignIn = "username";
       const { emailUpdate } = mockCredentialChange();
 
@@ -991,7 +1003,8 @@ describe("PATCH /api/gamers/[id]", () => {
       const written = authWrite();
       expect(written.email).toBe("aino@example.com");
       // The password set against the OLD address must not survive the move.
-      expect(typeof written.password).toBe("string");
+      expect(written).not.toHaveProperty("password");
+      expect(passwordRemoved()).toBe(true);
       expect(emailUpdate.update).toHaveBeenCalledWith({ email: "aino@example.com" });
       expect(mockSignInUpdate).toHaveBeenCalledWith({ sign_in: "email" });
       expect(mockSendGamerWelcomeEmail).toHaveBeenCalledWith(
@@ -1047,11 +1060,11 @@ describe("PATCH /api/gamers/[id]", () => {
     });
 
     it("within email mode: an address change is refused, not written", async () => {
-      // Changing an account's email address is not something the platform
-      // supports for any role (owner ruling), and the route is where that is
-      // enforced: it is the only layer that can tell a child *entering* the mode
-      // from one already in it. The card offers no field for this, so a body
-      // shaped like this is a caller working around the product decision.
+      // Moving an account to another mailbox is an admin's correction, made
+      // from the admin user page, and this route is where the parent's side of
+      // that is enforced: it is the only layer that can tell a child *entering*
+      // the mode from one already in it. The card offers no field for this, so a
+      // body shaped like this is a caller working around the product decision.
       currentSignIn = "email";
       mockCredentialChange();
 
@@ -1201,16 +1214,14 @@ describe("PATCH /api/gamers/[id]", () => {
 
       expect(response.status).toBe(500);
 
-      // Two auth writes: the credential, then the compensation that takes it
-      // away again. The second carries a password nobody holds and no address —
-      // the address is deliberately left where it landed, because moving it back
-      // is another write that can fail the same way.
+      // One auth write, the credential; then the compensation that takes it
+      // away again by setting the password to NULL. The address is deliberately
+      // left where it landed, because moving it back is another write that can
+      // fail the same way.
       const writes = mockAdminAuthAdmin.updateUserById.mock.calls.map(([, p]) => p);
-      expect(writes).toHaveLength(2);
+      expect(writes).toHaveLength(1);
       expect(writes[0]).toMatchObject({ password: "a good password" });
-      expect(Object.keys(writes[1])).toEqual(["password"]);
-      expect(writes[1].password).not.toBe("a good password");
-      expect(String(writes[1].password)).toHaveLength(64);
+      expect(passwordRemoved()).toBe(true);
 
       spy.mockRestore();
     });
@@ -1321,16 +1332,55 @@ describe("PATCH /api/gamers/[id]", () => {
       const response = await PATCH(req, ctx);
 
       expect(response.status).toBe(500);
-      // The mode was never recorded, so the credential must not survive: two
-      // auth writes, the second a password nobody holds and no address.
+      // The mode was never recorded, so the credential must not survive: the
+      // password the parent just chose is set to NULL again.
       expect(mockSignInUpdate).not.toHaveBeenCalled();
       const writes = mockAdminAuthAdmin.updateUserById.mock.calls.map(([, p]) => p);
-      expect(writes).toHaveLength(2);
+      expect(writes).toHaveLength(1);
       expect(writes[0]).toMatchObject({ password: "a good password" });
-      expect(Object.keys(writes[1])).toEqual(["password"]);
-      expect(writes[1].password).not.toBe("a good password");
-      expect(String(writes[1].password)).toHaveLength(64);
+      expect(passwordRemoved()).toBe(true);
       spy.mockRestore();
+    });
+
+    it("→ email: a password that cannot be removed fails the change before the mode moves", async () => {
+      // The removal runs inside the compensated window: the address has already
+      // moved, so a failure there is answered like any other in the window —
+      // the compensation tries the removal once more and the mode stays put.
+      currentSignIn = "username";
+      const { emailUpdate } = mockCredentialChange();
+      mockAdminRpc.mockResolvedValue({ data: null, error: { message: "timeout" } });
+      const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "aino@example.com",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(500);
+      expect(emailUpdate.update).not.toHaveBeenCalled();
+      expect(mockSignInUpdate).not.toHaveBeenCalled();
+      expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
+      expect(mockAdminRpc).toHaveBeenCalledTimes(2);
+      spy.mockRestore();
+    });
+
+    it("→ email: a taken address removes nothing, so the child keeps the mode they are in", async () => {
+      currentSignIn = "username";
+      mockCredentialChange();
+      mockAdminAuthAdmin.updateUserById.mockResolvedValue({
+        data: null,
+        error: { code: "email_exists", message: "email already registered" },
+      });
+
+      const [req, ctx] = createRequest(GAMER_ID, {
+        signIn: "email",
+        email: "taken@example.com",
+      });
+      const response = await PATCH(req, ctx);
+
+      expect(response.status).toBe(409);
+      expect(mockAdminRpc).not.toHaveBeenCalled();
     });
 
     it("fails loudly when auth.users moved and auth.identities did not", async () => {

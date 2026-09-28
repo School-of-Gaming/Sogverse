@@ -44,11 +44,12 @@
  */
 
 import { spawn, spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { stackIdentity } from './lib/local-db-identity.mjs';
 
 const DISTRO = 'Ubuntu-24.04';
 
@@ -207,21 +208,7 @@ if (!cliVersion || !/^\d+\.\d+\.\d+$/.test(cliVersion)) {
  * first thirty of the hundred this checkout owns, so shifting `generate` half a
  * block up keeps both inside it and clear of every other checkout's.
  */
-const digest = createHash('sha256').update(checkoutWsl).digest();
-const slug = path.basename(checkout).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-const fullLabel = slug.startsWith('sogverse') ? slug : `sogverse-${slug || 'checkout'}`;
-/**
- * The CLI silently cuts a project id to 40 characters when it names the
- * containers, and the shell files address those containers by the id they
- * were handed — so an id longer than that starts a stack this script can
- * never find again. The hash and the `-gen` suffix are fixed, so the label is
- * what gives way: a long worktree name loses its tail rather than its hash,
- * because the hash is the half that keeps two checkouts apart.
- */
-const PROJECT_ID_MAX_LENGTH = 40;
-const LABEL_MAX_LENGTH = PROJECT_ID_MAX_LENGTH - '-'.length - 6 - '-gen'.length;
-const label = fullLabel.slice(0, LABEL_MAX_LENGTH).replace(/-+$/g, '');
-const projectId = `${label}-${digest.toString('hex').slice(0, 6)}`;
+const { projectId, digest } = stackIdentity(checkout, checkoutWsl);
 const portBase = 61000 + (digest.readUInt16BE(0) % 40) * 100;
 const GENERATE_PORT_OFFSET = 50;
 

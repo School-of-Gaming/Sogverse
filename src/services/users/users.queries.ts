@@ -16,8 +16,9 @@ import { nextKeysetCursor, type KeysetCursor } from "@/lib/supabase/keyset";
 import {
   USER_LIST_SEARCH_MIN_QUERY,
   type AdminGameAccountBody,
+  type AdminUserSignInAddressBody,
 } from "./users.contracts";
-import type { ProfileUpdate, UserRole } from "@/types";
+import type { Profile, ProfileUpdate, UserRole } from "@/types";
 
 /**
  * The people cache's key hierarchy.
@@ -45,7 +46,15 @@ export const userKeys = {
   byRole: (role: UserRole) => [...userKeys.all, "role", role] as const,
 };
 
-export function useProfile(userId: string) {
+/**
+ * One profile row. `initialData` seeds it with a row a server component has
+ * already read, so a client island paints complete on its first frame and
+ * still refetches when a write invalidates it.
+ */
+export function useProfile(
+  userId: string,
+  options?: { initialData?: Profile },
+) {
   const supabase = getClient();
   const service = new UsersService(supabase);
 
@@ -53,6 +62,7 @@ export function useProfile(userId: string) {
     queryKey: userKeys.detail(userId),
     queryFn: () => service.getProfile(userId),
     enabled: !!userId,
+    ...(options?.initialData && { initialData: options.initialData }),
   });
 }
 
@@ -195,6 +205,41 @@ export function useUpdateUserGameAccount() {
         queryClient.invalidateQueries({ queryKey: robloxKeys.account(userId) });
       }
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
+}
+
+/**
+ * An admin changing another account's sign-in address, or a username-mode
+ * child's username (the local part of theirs).
+ *
+ * **`onSuccess` returns the refetch, so the mutation resolves only once it has
+ * landed.** The admin page's address and username lines read the profile
+ * query, and the dialog closes when the mutation resolves; awaiting the detail
+ * refetch is what makes closing reveal the new value (and the verification mark
+ * the trigger just cleared) rather than the old one for a round trip. The
+ * people lists are only marked stale — the address is one of the strings a
+ * person is found by, and nothing holding a list is mounted on the page this
+ * runs from.
+ */
+export function useUpdateUserSignInAddress() {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new UsersService(supabase);
+
+  return useMutation({
+    mutationFn: ({
+      userId,
+      edit,
+    }: {
+      userId: string;
+      edit: AdminUserSignInAddressBody;
+    }) => service.updateUserSignInAddress(userId, edit),
+    onSuccess: (_result, { userId }) => {
+      void queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      return queryClient.invalidateQueries({
+        queryKey: userKeys.detail(userId),
+      });
     },
   });
 }

@@ -58,9 +58,10 @@
 //
 // The changed-address reset watches `profiles.email` (a DB trigger), which is
 // the only email this app ever changes. An auth-side change that bypassed
-// profiles (dashboard edit, a future auth.updateUser flow) would leave the
-// stamp and the binding pointing at the stale string — if an email-change flow
-// is ever built, it must write through profiles.email for the reset to hold.
+// profiles (a dashboard edit, an auth.updateUser call) would leave the stamp
+// and the binding pointing at the stale string — so every email-change path
+// (the admin user page's editor, a parent's change to a child's sign-in, the
+// hand-correction script) writes through profiles.email for the reset to hold.
 //
 // Web Crypto (not node:crypto) for the same reason as pin-session: this has to
 // keep working if the check ever moves to the Edge runtime.

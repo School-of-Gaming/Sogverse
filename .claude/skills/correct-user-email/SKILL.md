@@ -1,13 +1,24 @@
 ---
 name: correct-user-email
-description: Change or correct a user's email address on staging or prod (a signup typo, or a duplicate account already holding the right address) — there is no in-app flow. Runs scripts/correct-user-email.ts and covers the duplicate-account case.
+description: Resolve a user's email change the admin user page refuses — a duplicate account already holding the right address — or change addresses from a script (bulk, or with no admin session). A plain signup typo is fixed in-app, from the pencil beside the address on the admin user page. Runs scripts/correct-user-email.ts.
 ---
 
 # Correcting a user's email by hand
 
-There is no email-change flow in the app — `profiles.email` carries no UPDATE grant for
-`authenticated`, so even an admin session cannot write it through PostgREST. The signup
-typo is therefore a hand operation.
+**A plain signup typo is not a hand operation any more.** An admin fixes it from the
+pencil beside the address on the user's admin page (`/admin/users/<id>`), which runs the
+same two writes described below through `PATCH /api/admin/users/[id]/email`. That page
+refuses exactly one case — the target address already belongs to another account — and
+that case is this skill's reason to exist. The script also remains for scripted or bulk
+changes, and for when there is no admin session to hand.
+
+**A gamer's address is in scope only in `email` sign-in mode.** A child in `parent` or
+`username` mode holds a synthetic `@gamer.sogverse.internal` handle, and moving it to a real
+mailbox is a privilege change, not a correction: a `parent`-mode child could then set a
+password and sign in without the parent. The page refuses it, and the script does not
+check, so don't use the script to get around the refusal — changing how a child signs in
+is the parent's, from their own settings. A `username`-mode child's username is renamed
+in-app, from the personal-details pencil on their admin page.
 
 `scripts/correct-user-email.ts` is the how; this skill is the why. Report-only unless
 told otherwise, and safe to repeat:
@@ -43,8 +54,8 @@ hand check reads `auth.identities` over psql.
 
 ## When the target address is already taken
 
-That is the duplicate-account case, not a typo, and the script refuses it rather than
-guessing. Someone registered twice — once with the typo, once correctly — and the second
+That is the duplicate-account case, not a typo, and both the admin page and the script
+refuse it rather than guessing. Someone registered twice — once with the typo, once correctly — and the second
 account has to be dealt with before the address is free. Inventory both sides first
 (every FK to `public.profiles`, so nothing is missed), then decide:
 
@@ -71,10 +82,14 @@ re-insert it against the surviving account, preserving the original timestamp.
 - **Verification state.** `trg_reset_email_verification` nulls `profiles.email_verified_at`
   on any email change, and every outstanding verification link self-invalidates (its HMAC
   re-derives from the current address).
-- **The password**, which is untouched. Worst case is one re-login. Note the surviving
-  account keeps *its own* credentials: after a duplicate purge the user's password and
-  parent PIN are the ones from the account that survived, which may not be the one they
-  most recently registered — worth telling them.
+- **The password and sessions, which neither the page nor the script touches**, whatever
+  the role, and nothing is mailed. That is by design: securing the account is the user's
+  own job, through a password reset to the address that is now theirs. An `email`-mode
+  child whose welcome mail went to the typo gets it again from the parent's resend on
+  the child's card, or uses forgot-password. Note the surviving account keeps *its own*
+  credentials: after a
+  duplicate purge the user's password and parent PIN are the ones from the account that
+  survived, which may not be the one they most recently registered — worth telling them.
 - **Every identity** is provider `email` with `provider_id = user_id`, so there is no
   email-keyed unique index to collide with there.
 
