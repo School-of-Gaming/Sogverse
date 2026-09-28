@@ -69,7 +69,7 @@
       "geduSubstitutions": "Vikariat",
       "geduInvoicing": "Fakturering",
       "adminSubstitutions": "Vikariat",
-      "teamProfile": "Profil",
+      "teamProfile": "Min profil",
       "adminTeamProfile": "Profil"
     },
     "descriptions": {
@@ -2472,7 +2472,7 @@
     "continueToAccount": "Fortsätt till ditt konto",
     "switchTo": "Byt profil",
     "invoicing": "Fakturering",
-    "teamProfile": "Profil"
+    "teamProfile": "Min profil"
   },
   "schools": {
     "hero": {
@@ -3188,7 +3188,7 @@
       "notGranted": "Din förälder har sagt att foton och videor på dig inte får användas, så en Gedu håller dig utanför tillfällenas foton. Bara din förälder kan ändra det här."
     },
     "teamProfile": {
-      "title": "Profil",
+      "title": "Min profil",
       "description": "Din offentliga profil på School of Gamings webbplats: ett foto av dig och några ord om vem du är.",
       "edit": "Redigera profil"
     }
@@ -4947,7 +4947,7 @@
     },
     "edit": {
       "back": "Tillbaka till inställningar",
-      "pageTitle": "Profil",
+      "pageTitle": "Min profil",
       "status": {
         "privateTitle": "Privat",
         "privateBody": "Din profil finns inte på webbplatsen. När du är nöjd kryssar du i ”Min profil är redo att bli offentlig” nedan och sparar.",

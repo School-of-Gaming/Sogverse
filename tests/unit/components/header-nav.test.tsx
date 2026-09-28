@@ -232,12 +232,12 @@ describe("Header nav — About gives way on a phone, for gedus only", () => {
 });
 
 /**
- * The gedu's Profile item sits between Substitutions and About, and only
+ * The gedu's My profile item sits between Substitutions and About, and only
  * from `md` up: below that it is a row in the avatar menu, so the phone strip
  * and its measured table are exactly what they were. An admin has a profile too
  * but reaches it from settings, never from the strip.
  */
-describe("Header nav — the gedu's Profile item", () => {
+describe("Header nav — the gedu's My profile item", () => {
   it("is on the strip from md up for a gedu, and links to the profile page", () => {
     signedInAs("gedu");
     renderHeader();

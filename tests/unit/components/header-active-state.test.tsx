@@ -108,7 +108,7 @@ describe("Header — where a gedu is told they are", () => {
     expect(currentLinks()).toEqual([en.header.invoicing]);
   });
 
-  it("marks Profile alone on the profile page", () => {
+  it("marks My profile alone on the profile page", () => {
     renderAt("/settings/profile");
     expect(currentLinks()).toEqual([en.header.teamProfile]);
   });
@@ -154,7 +154,7 @@ describe("the account menu on the profile page", () => {
     fireEvent.click(screen.getByRole("button", { name: /Mikko|Kyle/ }));
   }
 
-  it("marks a gedu's Profile row current, and not Settings", () => {
+  it("marks a gedu's My profile row current, and not Settings", () => {
     renderAt("/settings/profile");
     openRows();
     expect(

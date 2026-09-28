@@ -460,11 +460,11 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
 
 /**
  * The other rehoused nav row, and like About the other half of a header decision: a
- * gedu's Profile item is on the strip from `md` up and here below it. An
+ * gedu's My profile item is on the strip from `md` up and here below it. An
  * admin reaches their profile from settings and their user page, never from the
  * chrome, and the roles without a profile never see it.
  */
-describe("AccountMenu — the rehoused Profile row", () => {
+describe("AccountMenu — the rehoused My profile row", () => {
   it("follows About for a gedu, below md only", () => {
     renderMenu(GEDU);
     openMenu();

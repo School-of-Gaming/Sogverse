@@ -62,7 +62,7 @@
       "geduSubstitutions": "lIwmey",
       "geduInvoicing": "DIlmeH ghItlh",
       "adminSubstitutions": "lIwmey",
-      "teamProfile": "Del’a’",
+      "teamProfile": "Del’a’wIj",
       "adminTeamProfile": "Del’a’"
     },
     "descriptions": {
@@ -2512,7 +2512,7 @@
     "continueToAccount": "qa’lIj yIghoS",
     "switchTo": "pong yIchoH",
     "invoicing": "DIlmeH ghItlh",
-    "teamProfile": "Del’a’"
+    "teamProfile": "Del’a’wIj"
   },
   "schools": {
     "hero": {
@@ -3228,7 +3228,7 @@
       "notGranted": "chaw’be’ SoSlI’ vavlI’ joq. vaj poH mIloghmeyvo’ DuchoprupmoH Gedu. SoSlI’ vavlI’ joq neH choHlaH."
     },
     "teamProfile": {
-      "title": "Del’a’",
+      "title": "Del’a’wIj",
       "description": "School of Gaming Qu’mey Hoch legh: mInDu’lIj mIllogh, ’ej bIpong nuq ’e’ ghItlh.",
       "edit": "Del’a’ yIchoH"
     }
@@ -4048,7 +4048,7 @@
     },
     "edit": {
       "back": "SeHlaw’Daq yIchegh",
-      "pageTitle": "Del’a’",
+      "pageTitle": "Del’a’wIj",
       "status": {
         "privateTitle": "So’lu’",
         "privateBody": "Qu’mey Daq Del’a’lIj leghlaHbe’ vay’. bIQuchDI’, bIng “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIwIv ’ej yIpol.",
