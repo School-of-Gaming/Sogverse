@@ -99,14 +99,13 @@ export class TeamProfilesService {
   }
 
   /**
-   * Save a profile together with its checkbox — a Gedu's "ready", an admin's
-   * "show": the caller's own, or any admin's or Gedu's for an admin. The
-   * checkbox is a readiness mark, not consent, so whoever may edit the profile
-   * sets it. The database refuses it on while the profile is incomplete
-   * (`isTeamProfileIncompleteError`). A save that leaves a Gedu's profile
-   * not ready also hides it, whoever saves, so ticking ready again waits for
-   * an admin to make it public; a save that keeps it ready leaves it as it
-   * was.
+   * Save a profile together with its "ready" checkbox: the caller's own, or
+   * any admin's or Gedu's for an admin. The checkbox is a readiness mark, not
+   * consent, so whoever may edit the profile sets it. The database refuses it
+   * on while the profile is incomplete (`isTeamProfileIncompleteError`). A
+   * save that leaves the profile not ready also hides it, whoever saves, so
+   * ticking ready again waits for an admin to make it public; a save that
+   * keeps it ready leaves it as it was.
    *
    * A new crop is stored first and named by the save; a refused save removes
    * it again. A landed save — one that clears the photo included — then
@@ -137,17 +136,17 @@ export class TeamProfilesService {
   }
 
   /**
-   * An admin makes a Gedu's profile public, or hides it. Making public needs
-   * the profile marked ready, and the database refuses one that is not
-   * (`isTeamProfileNotReadyError`); hiding is open whenever it is public. The
-   * checkbox is untouched.
+   * An admin makes an admin's or a Gedu's profile public, or hides it — their
+   * own included. Making public needs the profile marked ready, and the
+   * database refuses one that is not (`isTeamProfileNotReadyError`); hiding is
+   * open whenever it is public. The checkbox is untouched.
    */
-  async setGeduTeamProfileApproval(
-    geduId: string,
+  async setTeamProfileApproval(
+    userId: string,
     approved: boolean,
   ): Promise<void> {
     const { error } = await this.supabase.rpc("set_team_profile_approval", {
-      p_user_id: geduId,
+      p_user_id: userId,
       p_approved: approved,
     });
     if (error) throw error;
@@ -353,29 +352,25 @@ export class TeamProfilesService {
       translations,
       spokenLanguages: row.spoken_languages,
     };
-    const on = saved?.opted_in ?? false;
+    const visibility = {
+      photoPath,
+      ready: saved?.opted_in ?? false,
+      approved: saved?.approved ?? false,
+    };
 
     switch (row.role) {
       case "admin":
         return {
-          role: "admin",
           profile: {
             ...common,
             kind: "admin",
             lastName: row.last_name,
             title: saved?.title ?? "",
           },
-          photoPath,
-          shown: on,
+          ...visibility,
         };
       case "gedu":
-        return {
-          role: "gedu",
-          profile: { ...common, kind: "gedu" },
-          photoPath,
-          ready: on,
-          approved: saved?.approved ?? false,
-        };
+        return { profile: { ...common, kind: "gedu" }, ...visibility };
       default:
         return null;
     }

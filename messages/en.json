@@ -4954,11 +4954,7 @@
         "waitingTitle": "Ready, waiting for an admin",
         "waitingBody": "An admin makes your profile public once they have looked at it. You can keep editing in the meantime.",
         "liveTitle": "Public",
-        "liveBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away. To hide it, untick “My profile is ready to be public” and save; once you tick it again, an admin makes it public again.",
-        "shownTitle": "Public",
-        "shownBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away.",
-        "hiddenTitle": "Private",
-        "hiddenBody": "Your profile isn’t on the website. When it is ready, tick “Show my profile publicly” below and save."
+        "liveBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away. To hide it, untick “My profile is ready to be public” and save; once you tick it again, an admin makes it public again."
       },
       "actions": {
         "save": "Save changes",
@@ -4968,8 +4964,6 @@
         "heading": "Public profile",
         "readyLabel": "My profile is ready to be public",
         "readyHint": "Ticking this and saving marks your profile ready for School of Gaming’s website, and an admin makes it public once they have looked at it. Untick it and save at any time, and it is hidden straight away; once you tick it again, an admin makes it public again.",
-        "showLabel": "Show my profile publicly",
-        "showHint": "Ticking this and saving puts your profile on School of Gaming’s public website straight away. Untick it and save at any time, and it comes down.",
         "complete": "Your profile has everything it needs to go public.",
         "mustStayComplete": "While this is ticked your profile has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box to keep working on it privately.",
         "missing": {
@@ -5052,19 +5046,13 @@
         "waitingTitle": "Ready, waiting to be made public",
         "waitingBody": "{name}’s profile is marked ready to be public. It goes on School of Gaming’s website as soon as an admin makes it public.",
         "liveTitle": "Public",
-        "liveBody": "Anyone can see {name}’s profile on School of Gaming’s website. Changes saved to it go live straight away.",
-        "shownTitle": "Public",
-        "shownBody": "Anyone can see {name}’s profile on School of Gaming’s website. Changes saved to it go live straight away.",
-        "hiddenTitle": "Not shown yet",
-        "hiddenBody": "{name}’s profile isn’t on the website. Once it is complete, {name} or any admin can choose to show it publicly."
+        "liveBody": "Anyone can see {name}’s profile on School of Gaming’s website. Changes saved to it go live straight away."
       },
       "edit": {
         "back": "Back to {name}",
         "pageTitle": "{name}’s profile",
         "readyLabel": "The profile is ready to be public",
         "readyHint": "Ticking this and saving marks {name}’s profile ready for School of Gaming’s website; it goes up once an admin makes it public. Untick it and save at any time, and it is hidden straight away until it is marked ready and made public again.",
-        "showLabel": "Show the profile publicly",
-        "showHint": "Ticking this and saving puts {name}’s profile on School of Gaming’s public website straight away. Untick it and save at any time, and it comes down.",
         "complete": "The profile has everything it needs to go public.",
         "mustStayComplete": "While this is ticked the profile has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box.",
         "missing": {

@@ -1460,9 +1460,12 @@ COMMIT;
 -- =============================================================================
 -- 13. Team profiles
 -- =============================================================================
--- The owner's admin, shown, the second admin, also shown, and the owner's
--- gedu, ready and waiting for an admin's approval, in English and Finnish.
--- Each is saved by its own person through save_team_profile, which will not
+-- The owner's admin and the second admin, both public, and the owner's gedu,
+-- ready and waiting for an admin to make it public, in English and Finnish.
+-- Each is saved by its own person through save_team_profile, marked ready,
+-- and the owner's admin then makes the two admin profiles public — their own
+-- included — through set_team_profile_approval, as any profile goes public.
+-- save_team_profile will not
 -- take a checkbox that is on without a photo, nor a photo path the bucket
 -- holds no object for — so each photo's object row is put in place here,
 -- empty, and `scripts/local-db/rich-images.sh` replaces it with the real
@@ -1542,6 +1545,14 @@ BEGIN
     p_pick         => 6::smallint,
     p_photo_path   => v_gedu::text || '/seed.jpg',
     p_opted_in     => true);
+
+  -- The owner's admin makes both admin profiles public; the gedu's stays
+  -- waiting, so the user page shows Make public live.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', v_admin::text, 'role', 'authenticated')::text, true);
+
+  PERFORM public.set_team_profile_approval(v_admin, true);
+  PERFORM public.set_team_profile_approval(v_admin2, true);
 END;
 $$;
 
@@ -1575,5 +1586,15 @@ BEGIN
     (SELECT count(*) FROM public.participations WHERE status = 'waitlisted'),
     (SELECT count(*) FROM public.session_substitution_requests),
     (SELECT count(*) FROM public.session_cancellations);
+
+  RAISE NOTICE 'rich-seed: team profiles';
+  FOR r IN SELECT p.email || ' (' || p.role::text || ')' AS k,
+                  CASE WHEN tp.approved THEN 'public'
+                       WHEN tp.opted_in THEN 'ready, waiting to be made public'
+                       ELSE 'private' END AS n
+             FROM public.team_profiles tp
+             JOIN public.profiles p ON p.id = tp.user_id
+            ORDER BY p.email
+  LOOP RAISE NOTICE '  % : %', r.k, r.n; END LOOP;
 END;
 $$;

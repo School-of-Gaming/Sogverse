@@ -123,40 +123,33 @@ export function pickFromId(id: number | null): PickId | null {
  * shows — the same fields the editor takes as props, plus the photo's object
  * path, which a save hands back.
  *
- * A person who has never saved reads as an empty profile with the checkbox off
- * and, for a Gedu, not public.
+ * A person who has never saved reads as an empty profile, not ready and not
+ * public.
  *
- * The checkbox is a readiness mark, not consent: the person or any admin may
- * save it, while the profile is complete.
+ * Every profile, an admin's or a Gedu's, goes public the same way: whoever
+ * edits it marks it ready, and an admin makes it public. The checkbox is a
+ * readiness mark, not consent: the person or any admin may save it, while the
+ * profile is complete.
  */
-export type TeamProfileRecord =
-  | {
-      role: "gedu";
-      profile: GeduTeamProfile;
-      /** The photo's object name in the bucket, or `null` for none. */
-      photoPath: string | null;
-      /** The saved checkbox: the profile is marked ready to be public. */
-      ready: boolean;
-      /**
-       * An admin has made the profile public. Only ever true while `ready`:
-       * unticking ready hides the profile, and ticking it again waits for an
-       * admin. While it is true, saved edits go live with no second look.
-       */
-      approved: boolean;
-    }
-  | {
-      role: "admin";
-      profile: AdminTeamProfile;
-      photoPath: string | null;
-      /** The saved checkbox: the whole decision, with no admin step. */
-      shown: boolean;
-    };
+export interface TeamProfileRecord {
+  profile: TeamProfile;
+  /** The photo's object name in the bucket, or `null` for none. */
+  photoPath: string | null;
+  /** The saved checkbox: the profile is marked ready to be public. */
+  ready: boolean;
+  /**
+   * An admin has made the profile public. Only ever true while `ready`:
+   * unticking ready hides the profile, and ticking it again waits for an
+   * admin. While it is true, saved edits go live with no second look.
+   */
+  approved: boolean;
+}
 
-/** Whether a saved profile is on the public page. */
+/**
+ * Whether a saved profile is on the public page: once an admin has made it
+ * so, which the database allows only while it is marked ready.
+ */
 export function isTeamProfilePublic(record: TeamProfileRecord): boolean {
-  if (record.role === "admin") return record.shown;
-  // A Gedu's is public once an admin has made it so, which the database
-  // allows only while it is marked ready.
   return record.approved;
 }
 

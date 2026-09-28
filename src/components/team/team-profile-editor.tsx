@@ -13,7 +13,6 @@ import {
   isTeamProfilePhotoGoneError,
   useSaveTeamProfile,
   type TeamPhotoToSave,
-  type TeamProfile,
   type TeamProfilePhoto,
   type TeamProfileRecord,
   type TeamProfileSaveInput,
@@ -23,6 +22,8 @@ import {
 interface LastSave {
   content: TeamProfileContent;
   on: boolean;
+  /** Whether it is public after that save, which an admin decides elsewhere. */
+  approved: boolean;
   photoPath: string | null;
 }
 
@@ -94,7 +95,13 @@ function useTeamProfileEditor(
         },
         on,
       );
-      setLastSave({ content, on, photoPath });
+      // As the database does: a save that leaves it not ready hides it.
+      setLastSave({
+        content,
+        on,
+        approved: (lastSave ? lastSave.approved : record.approved) && on,
+        photoPath,
+      });
     } catch (error) {
       // The reader gets a translated line; the server's own words go to the
       // console for whoever is debugging it.
@@ -115,13 +122,13 @@ function useTeamProfileEditor(
 
   return {
     /** The saved profile the body compares the form against. */
-    savedProfile<P extends TeamProfile>(opened: P): P {
-      return lastSave ? profileWithContent(opened, lastSave.content) : opened;
-    },
+    profile: lastSave
+      ? profileWithContent(record.profile, lastSave.content)
+      : record.profile,
     /** The saved checkbox, as last saved in this visit or as opened. */
-    savedOn(opened: boolean): boolean {
-      return lastSave ? lastSave.on : opened;
-    },
+    ready: lastSave ? lastSave.on : record.ready,
+    /** Whether it is public, as the last save in this visit left it or as opened. */
+    approved: lastSave ? lastSave.approved : record.approved,
     saving,
     saveError,
     actions: { onSave },
@@ -144,23 +151,12 @@ export function TeamProfileEditor({
   const editor = useTeamProfileEditor(record, (input, on) =>
     save.mutateAsync({ userId: record.profile.id, input, on }),
   );
-  return record.role === "admin" ? (
+  return (
     <TeamProfileEditorBody
-      role="admin"
       editedByAdmin={editedByAdmin}
-      profile={editor.savedProfile(record.profile)}
-      shown={editor.savedOn(record.shown)}
-      actions={editor.actions}
-      saving={editor.saving}
-      saveError={editor.saveError}
-    />
-  ) : (
-    <TeamProfileEditorBody
-      role="gedu"
-      editedByAdmin={editedByAdmin}
-      profile={editor.savedProfile(record.profile)}
-      ready={editor.savedOn(record.ready)}
-      approved={record.approved}
+      profile={editor.profile}
+      ready={editor.ready}
+      approved={editor.approved}
       actions={editor.actions}
       saving={editor.saving}
       saveError={editor.saveError}

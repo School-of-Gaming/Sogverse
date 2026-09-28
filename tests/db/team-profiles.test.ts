@@ -215,7 +215,6 @@ describe("team profiles", () => {
         TEST_IDS.GEDU,
       );
       expect(record).toMatchObject({
-        role: "gedu",
         ready: false,
         approved: false,
         photoPath: null,
@@ -237,8 +236,8 @@ describe("team profiles", () => {
       expect(savedPath !== null && (await stored(savedPath))).toBe(true);
 
       const record = await service.getTeamProfile(TEST_IDS.GEDU);
-      expect(record?.role).toBe("gedu");
-      if (record?.role !== "gedu") return;
+      expect(record?.profile.kind).toBe("gedu");
+      if (!record) return;
       expect(record.ready).toBe(true);
       expect(record.approved).toBe(false);
       expect(record.photoPath).toBe(savedPath);
@@ -383,7 +382,7 @@ describe("team profiles", () => {
       const record = await new TeamProfilesService(adminAuth).getTeamProfile(
         TEST_IDS.ADMIN,
       );
-      expect(record?.role === "admin" && record.profile.title).toBe(
+      expect(record?.profile.kind === "admin" && record.profile.title).toBe(
         "Chief Engineer",
       );
     });
@@ -465,7 +464,6 @@ describe("team profiles", () => {
 
       const record = await service.getTeamProfile(TEST_IDS.GEDU);
       expect(record).toMatchObject({
-        role: "gedu",
         photoPath: null,
         profile: { photo: null, nickname: "Creeperhug" },
       });
@@ -609,17 +607,32 @@ describe("team profiles", () => {
       expect(own.error).toBeNull();
     });
 
-    it("cannot make a profile public, their own included", async () => {
-      await new TeamProfilesService(geduAuth).saveTeamProfile(
-        TEST_IDS.GEDU,
-        content(),
-        false,
-      );
-      const { error } = await geduAuth.rpc("set_team_profile_approval", {
+    it("cannot make anyone's profile public, their own included", async () => {
+      for (const [client, target] of [
+        [geduAuth, TEST_IDS.GEDU],
+        [adminAuth, TEST_IDS.ADMIN],
+        [otherGeduAuth, otherGeduId],
+      ] as const) {
+        const photo = await seedPhoto(target);
+        await new TeamProfilesService(client).saveTeamProfile(
+          target,
+          content({ photoPath: photo }),
+          true,
+        );
+      }
+      for (const target of [TEST_IDS.GEDU, TEST_IDS.ADMIN, otherGeduId]) {
+        const { error } = await geduAuth.rpc("set_team_profile_approval", {
+          p_user_id: target,
+          p_approved: true,
+        });
+        expect(error?.code).toBe(FORBIDDEN);
+      }
+      // …while an admin makes the same ready profile public.
+      const { error } = await adminAuth.rpc("set_team_profile_approval", {
         p_user_id: TEST_IDS.GEDU,
         p_approved: true,
       });
-      expect(error?.code).toBe(FORBIDDEN);
+      expect(error).toBeNull();
     });
 
     it("cannot upload into another person's folder, or read another's photo", async () => {
@@ -672,7 +685,7 @@ describe("team profiles", () => {
         content({ photoPath: photo }),
         true,
       );
-      await new TeamProfilesService(adminAuth).setGeduTeamProfileApproval(
+      await new TeamProfilesService(adminAuth).setTeamProfileApproval(
         TEST_IDS.GEDU,
         true,
       );
@@ -685,8 +698,8 @@ describe("team profiles", () => {
       );
 
       const record = await service.getTeamProfile(TEST_IDS.GEDU);
-      expect(record?.role).toBe("gedu");
-      if (record?.role !== "gedu") return;
+      expect(record?.profile.kind).toBe("gedu");
+      if (!record) return;
       expect(record.profile.nickname).toBe("Edited by the office");
       expect(record.ready).toBe(true);
       expect(record.approved).toBe(true);
@@ -720,7 +733,7 @@ describe("team profiles", () => {
         true,
       );
       const ticked = await service.getTeamProfile(TEST_IDS.GEDU);
-      expect(ticked?.role === "gedu" && ticked.ready).toBe(true);
+      expect(ticked?.ready).toBe(true);
 
       await service.saveTeamProfile(
         TEST_IDS.GEDU,
@@ -728,10 +741,10 @@ describe("team profiles", () => {
         false,
       );
       const unticked = await service.getTeamProfile(TEST_IDS.GEDU);
-      expect(unticked?.role === "gedu" && unticked.ready).toBe(false);
+      expect(unticked?.ready).toBe(false);
     });
 
-    it("cannot keep an incomplete Gedu profile shown", async () => {
+    it("cannot keep an incomplete Gedu profile marked ready", async () => {
       const photo = await seedPhoto(TEST_IDS.GEDU);
       await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
@@ -757,10 +770,11 @@ describe("team profiles", () => {
       const record = await new TeamProfilesService(otherAdminAuth).getTeamProfile(
         otherAdminId,
       );
+      // Marked ready, and not public until an admin makes it so.
       expect(record).toMatchObject({
-        role: "admin",
-        shown: true,
-        profile: { title: "Head of Clubs" },
+        ready: true,
+        approved: false,
+        profile: { kind: "admin", title: "Head of Clubs" },
       });
       expect(record?.photoPath?.startsWith(`${otherAdminId}/`)).toBe(true);
 
@@ -790,9 +804,9 @@ describe("team profiles", () => {
         otherAdminId,
       );
       expect(record).toMatchObject({
-        role: "admin",
-        shown: true,
-        profile: { title: "Head of Clubs", lastName: "admin" },
+        ready: true,
+        approved: false,
+        profile: { kind: "admin", title: "Head of Clubs", lastName: "admin" },
       });
       expect(record?.profile.photo?.src).toContain("token=");
     });
@@ -913,23 +927,23 @@ describe("team profiles", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Make public and hide
+  // Make public and hide — the same for an admin's profile as for a Gedu's
   // -------------------------------------------------------------------------
 
-  describe("making a Gedu's profile public", () => {
-    async function stamp() {
+  describe("making a profile public", () => {
+    async function stamp(userId: string = TEST_IDS.GEDU) {
       const { data, error } = await admin
         .from("team_profiles")
         .select("approved, approval_decided_by, approval_decided_at")
-        .eq("user_id", TEST_IDS.GEDU)
+        .eq("user_id", userId)
         .single();
       expect(error).toBeNull();
       return data;
     }
 
-    function set(approved: boolean) {
+    function set(approved: boolean, userId: string = TEST_IDS.GEDU) {
       return adminAuth.rpc("set_team_profile_approval", {
-        p_user_id: TEST_IDS.GEDU,
+        p_user_id: userId,
         p_approved: approved,
       });
     }
@@ -1109,23 +1123,95 @@ describe("team profiles", () => {
       expect(ready.error).toBeNull();
     });
 
-    it("refuses an admin's profile and a person with no profile", async () => {
+    it("makes another admin's profile public and hides it, stamping who did it", async () => {
+      const photo = await seedPhoto(otherAdminId);
+      await new TeamProfilesService(otherAdminAuth).saveTeamProfile(
+        otherAdminId,
+        content({ photoPath: photo, title: "Head of Clubs" }),
+        true,
+      );
+      // Marked ready is not public: an admin's profile waits like a Gedu's.
+      expect(await stamp(otherAdminId)).toEqual({
+        approved: false,
+        approval_decided_by: null,
+        approval_decided_at: null,
+      });
+
+      expect((await set(true, otherAdminId)).error).toBeNull();
+      const madePublic = await stamp(otherAdminId);
+      expect(madePublic?.approved).toBe(true);
+      expect(madePublic?.approval_decided_by).toBe(TEST_IDS.ADMIN);
+      const record = await new TeamProfilesService(otherAdminAuth).getTeamProfile(
+        otherAdminId,
+      );
+      expect(record !== null && isTeamProfilePublic(record)).toBe(true);
+
+      expect((await set(false, otherAdminId)).error).toBeNull();
+      expect((await stamp(otherAdminId))?.approved).toBe(false);
+    });
+
+    it("lets an admin make their own profile public and hide it", async () => {
+      const photo = await seedPhoto(TEST_IDS.ADMIN);
       await new TeamProfilesService(adminAuth).saveTeamProfile(
         TEST_IDS.ADMIN,
-        content(),
-        false,
+        content({ photoPath: photo, title: "Chief Engineer" }),
+        true,
       );
-      const adminsOwn = await adminAuth.rpc("set_team_profile_approval", {
-        p_user_id: TEST_IDS.ADMIN,
-        p_approved: true,
-      });
-      expect(adminsOwn.error?.code).toBe("22023");
 
-      const none = await adminAuth.rpc("set_team_profile_approval", {
-        p_user_id: otherGeduId,
-        p_approved: true,
-      });
+      expect((await set(true, TEST_IDS.ADMIN)).error).toBeNull();
+      const madePublic = await stamp(TEST_IDS.ADMIN);
+      expect(madePublic?.approved).toBe(true);
+      expect(madePublic?.approval_decided_by).toBe(TEST_IDS.ADMIN);
+
+      expect((await set(false, TEST_IDS.ADMIN)).error).toBeNull();
+      expect((await stamp(TEST_IDS.ADMIN))?.approved).toBe(false);
+    });
+
+    it("refuses to make public an admin's profile not marked ready, until it is", async () => {
+      const photo = await seedPhoto(otherAdminId);
+      const service = new TeamProfilesService(otherAdminAuth);
+      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo }), false);
+
+      const early = await set(true, otherAdminId);
+      expect(early.error?.code).toBe(TEAM_PROFILE_NOT_READY_SQLSTATE);
+      expect((await stamp(otherAdminId))?.approved).toBe(false);
+
+      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo }), true);
+      expect((await set(true, otherAdminId)).error).toBeNull();
+      expect((await stamp(otherAdminId))?.approved).toBe(true);
+    });
+
+    it("is hidden when an admin unticks ready on their own profile, and waits once re-ticked", async () => {
+      const photo = await seedPhoto(otherAdminId);
+      const service = new TeamProfilesService(otherAdminAuth);
+      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo }), true);
+      expect((await set(true, otherAdminId)).error).toBeNull();
+      const madePublic = await stamp(otherAdminId);
+
+      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo }), false);
+      expect(await stamp(otherAdminId)).toEqual({ ...madePublic, approved: false });
+
+      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo }), true);
+      expect((await stamp(otherAdminId))?.approved).toBe(false);
+    });
+
+    it("refuses a person with no profile, and a profile row whose person can have none", async () => {
+      const none = await set(true, otherGeduId);
       expect(none.error?.code).toBe("P0002");
+
+      // A row no writer would leave for a parent, put there directly to reach
+      // the role check behind the lookup.
+      const planted = await admin
+        .from("team_profiles")
+        .insert({ user_id: TEST_IDS.CUSTOMER, opted_in: true });
+      expect(planted.error).toBeNull();
+      try {
+        const parents = await set(true, TEST_IDS.CUSTOMER);
+        expect(parents.error?.code).toBe("22023");
+        expect((await stamp(TEST_IDS.CUSTOMER))?.approved).toBe(false);
+      } finally {
+        await admin.from("team_profiles").delete().eq("user_id", TEST_IDS.CUSTOMER);
+      }
     });
   });
 

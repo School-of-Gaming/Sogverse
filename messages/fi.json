@@ -4954,11 +4954,7 @@
         "waitingTitle": "Valmis, odottaa ylläpitäjää",
         "waitingBody": "Ylläpitäjä julkaisee profiilisi katsottuaan sen. Voit jatkaa muokkaamista sillä välin.",
         "liveTitle": "Julkinen",
-        "liveBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti. Jos haluat piilottaa profiilin, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna. Kun rastitat sen uudelleen, ylläpitäjä julkaisee sen taas.",
-        "shownTitle": "Julkinen",
-        "shownBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti.",
-        "hiddenTitle": "Yksityinen",
-        "hiddenBody": "Profiilisi ei ole verkkosivuilla. Kun se on valmis, rastita alta ”Näytä profiilini julkisesti” ja tallenna."
+        "liveBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti. Jos haluat piilottaa profiilin, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna. Kun rastitat sen uudelleen, ylläpitäjä julkaisee sen taas."
       },
       "actions": {
         "save": "Tallenna muutokset",
@@ -4968,8 +4964,6 @@
         "heading": "Julkinen profiili",
         "readyLabel": "Profiilini on valmis julkaistavaksi",
         "readyHint": "Rastittamalla ja tallentamalla merkitset profiilisi valmiiksi julkaistavaksi School of Gamingin verkkosivuilla, ja ylläpitäjä julkaisee sen katsottuaan sen. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili piilotetaan heti. Kun rastitat sen uudelleen, ylläpitäjä julkaisee sen taas.",
-        "showLabel": "Näytä profiilini julkisesti",
-        "showHint": "Rastittamalla ja tallentamalla profiilisi tulee heti School of Gamingin julkisille verkkosivuille. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili poistuu.",
         "complete": "Profiilissasi on kaikki, mitä julkaisuun tarvitaan.",
         "mustStayComplete": "Kun tämä on rastitettu, profiilisi täytyy pysyä täydellisenä, joten tallennus on pois käytöstä, kunnes se on. Täydennä puuttuvat kohdat tai poista rasti jatkaaksesi yksityisesti.",
         "missing": {
@@ -5052,19 +5046,13 @@
         "waitingTitle": "Valmis, odottaa julkaisua",
         "waitingBody": "Profiili ({name}) on merkitty valmiiksi julkaistavaksi. Se tulee näkyviin School of Gamingin verkkosivuille heti, kun ylläpitäjä julkaisee sen.",
         "liveTitle": "Julkinen",
-        "liveBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti.",
-        "shownTitle": "Julkinen",
-        "shownBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti.",
-        "hiddenTitle": "Ei vielä näkyvissä",
-        "hiddenBody": "Profiili ({name}) ei ole verkkosivuilla. Kun se on täydellinen, {name} tai kuka tahansa ylläpitäjä voi valita sen näyttämisen julkisesti."
+        "liveBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti."
       },
       "edit": {
         "back": "Takaisin: {name}",
         "pageTitle": "Profiili: {name}",
         "readyLabel": "Profiili on valmis julkaistavaksi",
         "readyHint": "Rastittamalla ja tallentamalla merkitset profiilin ({name}) valmiiksi julkaistavaksi School of Gamingin verkkosivuilla. Se tulee näkyviin, kun ylläpitäjä julkaisee sen. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili piilotetaan heti ja pysyy piilossa, kunnes se merkitään uudelleen valmiiksi ja julkaistaan.",
-        "showLabel": "Näytä profiili julkisesti",
-        "showHint": "Rastittamalla ja tallentamalla profiili ({name}) tulee heti School of Gamingin julkisille verkkosivuille. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili poistuu.",
         "complete": "Profiilissa on kaikki, mitä julkaisemiseen tarvitaan.",
         "mustStayComplete": "Kun tämä on rastitettu, profiilin täytyy pysyä täydellisenä, joten tallennus on pois käytöstä, kunnes se on. Täydennä puuttuvat kohdat tai poista rasti.",
         "missing": {

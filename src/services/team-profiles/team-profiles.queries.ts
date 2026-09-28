@@ -58,22 +58,22 @@ export function useSaveTeamProfile() {
 }
 
 /**
- * An admin makes a Gedu's profile public, or hides it. A refusal for a
- * profile no longer marked ready re-reads it too: the page's read was stale,
- * and the re-read is what disables Make public.
+ * An admin makes an admin's or a Gedu's profile public, or hides it. A
+ * refusal for a profile no longer marked ready re-reads it too: the page's
+ * read was stale, and the re-read is what disables Make public.
  */
-export function useSetGeduTeamProfileApproval() {
+export function useSetTeamProfileApproval() {
   const queryClient = useQueryClient();
   const service = new TeamProfilesService(getClient());
 
   return useMutation({
-    mutationFn: ({ geduId, approved }: { geduId: string; approved: boolean }) =>
-      service.setGeduTeamProfileApproval(geduId, approved),
-    onSuccess: (_data, { geduId }) =>
-      queryClient.invalidateQueries({ queryKey: teamProfileKeys.detail(geduId) }),
-    onError: (error, { geduId }) =>
+    mutationFn: ({ userId, approved }: { userId: string; approved: boolean }) =>
+      service.setTeamProfileApproval(userId, approved),
+    onSuccess: (_data, { userId }) =>
+      queryClient.invalidateQueries({ queryKey: teamProfileKeys.detail(userId) }),
+    onError: (error, { userId }) =>
       isTeamProfileNotReadyError(error)
-        ? queryClient.invalidateQueries({ queryKey: teamProfileKeys.detail(geduId) })
+        ? queryClient.invalidateQueries({ queryKey: teamProfileKeys.detail(userId) })
         : undefined,
   });
 }

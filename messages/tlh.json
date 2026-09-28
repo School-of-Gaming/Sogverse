@@ -4055,11 +4055,7 @@
         "waitingTitle": "ghuHmoHlu’, loHwI’ loS",
         "waitingBody": "Del’a’lIj legh loHwI’, vaj Hoch leghmoH. loStaHvIS, choHlaH.",
         "liveTitle": "Hoch leghDaq leghlu’",
-        "liveBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. So’meH, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIteq ’ej yIpol. DawIvqa’DI’, Hoch leghmoHqa’ loHwI’.",
-        "shownTitle": "Hoch leghDaq",
-        "shownBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’.",
-        "hiddenTitle": "Hoch leghDaq Dabbe’",
-        "hiddenBody": "Qu’mey Daq Del’a’lIj leghlaHbe’ vay’. ghuHmoHDI’, bIng “Hoch leghDaq jIH yIcha’” yIwIv ’ej yIpol."
+        "liveBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. So’meH, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIteq ’ej yIpol. DawIvqa’DI’, Hoch leghmoHqa’ loHwI’."
       },
       "actions": {
         "save": "choHmey yIpol",
@@ -4069,8 +4065,6 @@
         "heading": "Hoch legh",
         "readyLabel": "jIH ’oH: DaH leghlu’ ’e’ vIQap",
         "readyHint": "DawIvDI’ ’ej DapolDI’, Del’a’lIj DaghuHmoH; legh loHwI’ ’ej Hoch leghmoH. Dateq ’ej DapolDI’, SIbI’ So’lu’. DawIvqa’DI’, Hoch leghmoHqa’ loHwI’.",
-        "showLabel": "Hoch leghmeH jIH yIcha’",
-        "showHint": "DawIvDI’ ’ej DapolDI’, SIbI’ School of Gaming Qum’a’Daq cha’lu’. Dateq ’ej DapolDI’, So’lu’.",
         "complete": "Hoch Daghaj. Qapla’!",
         "mustStayComplete": "wIvlu’taHvIS, naQnIS Del’a’lIj. naQbe’chugh, polbe’lu’. yIchu’ pagh yIteq.",
         "missing": {
@@ -4153,19 +4147,13 @@
         "waitingTitle": "ghuHmoHlu’, leghmoH loS",
         "waitingBody": "{name} Del’a’ ghuHmoHlu’. Hoch leghmoH loHwI’DI’, SIbI’ Hoch legh.",
         "liveTitle": "Hoch legh",
-        "liveBody": "{name} Del’a’ legh Hoch. DapolmoHbogh choHmey DaH lInlu’.",
-        "shownTitle": "Hoch legh",
-        "shownBody": "{name} Del’a’ legh Hoch. DapolmoHbogh choHmey DaH lInlu’.",
-        "hiddenTitle": "cha’be’lu’ rIntaHbe’",
-        "hiddenBody": "{name} Del’a’ Qu’mey Daq Dalegh’be’. naQDI’, cha’laH {name} pagh loHwI’ Hoch."
+        "liveBody": "{name} Del’a’ legh Hoch. DapolmoHbogh choHmey DaH lInlu’."
       },
       "edit": {
         "back": "{name} yIchegh",
         "pageTitle": "{name} Del’a’",
         "readyLabel": "Del’a’ ghuHmoHlu’: DaH leghlu’",
         "readyHint": "DawIvDI’ ’ej DapolDI’, {name} Del’a’ DaghuHmoH. Hoch leghmoH loHwI’DI’, Hoch legh. Dateq ’ej DapolDI’, SIbI’ So’lu’ — ghuHmoHqa’lu’ ’ej leghmoHqa’lu’ neH chegh.",
-        "showLabel": "Hoch leghmeH Del’a’ yIcha’",
-        "showHint": "DawIvDI’ ’ej DapolDI’, SIbI’ School of Gaming Qum’a’Daq {name} Del’a’ cha’lu’. Dateq ’ej DapolDI’, So’lu’.",
         "complete": "Hoch legh Del’a’ ’e’ laH. naQ.",
         "mustStayComplete": "wIvlu’taHvIS, naQnIS Del’a’. naQbe’chugh, polbe’lu’. yIchu’ pagh yIteq.",
         "missing": {

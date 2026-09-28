@@ -514,7 +514,8 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // null_value_not_allowed (22004) before the target half is asked, for either
   // role.
   save_team_profile: { permittedRoles: ["gedu", "admin"] },
-  // An admin making a Gedu's profile public, or hiding it. Past the admin
+  // An admin making an admin's or a Gedu's profile public, or hiding it — their
+  // own included. Past the admin
   // guard, a NULL decision is refused with null_value_not_allowed (22004) — an
   // error, but not the forbidden one. Both actions: team-profiles.test.ts.
   set_team_profile_approval: { permittedRoles: ["admin"] },

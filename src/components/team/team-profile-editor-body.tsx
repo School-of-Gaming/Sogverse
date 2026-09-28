@@ -32,11 +32,7 @@ import {
   teamProfileStatus,
   type TeamProfileStatus,
 } from "@/components/team/team-profile-status";
-import type {
-  AdminTeamProfile,
-  GeduTeamProfile,
-  TeamProfile,
-} from "@/services/team-profiles/team-profiles.types";
+import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 
 /**
  * The writes the page makes. Each is a backend action, so each is the
@@ -44,10 +40,10 @@ import type {
  */
 export interface TeamProfileActions {
   /**
-   * Save the profile and its checkbox together — a Gedu's "ready", an
-   * admin's "show". The checkbox is a field like any other, so ticking or
-   * unticking it does nothing until this runs, and what goes public is
-   * exactly what the editor was looking at when they saved.
+   * Save the profile and its "ready" checkbox together. The checkbox is a
+   * field like any other, so ticking or unticking it does nothing until this
+   * runs, and what an admin makes public is exactly what the editor was
+   * looking at when they saved.
    *
    * `crop` is the bytes behind `content.photo` when this page cropped it, and
    * `null` when the photo is the saved one or there is none: nothing is
@@ -74,23 +70,13 @@ export type TeamProfileEditorProps = TeamProfileSaveState & {
    */
   editedByAdmin?: boolean;
   actions: TeamProfileActions;
-} & (
-    | {
-        role: "gedu";
-        /** The saved profile — what the form opens on. */
-        profile: GeduTeamProfile;
-        /** The saved checkbox: the profile is marked ready to be public. */
-        ready: boolean;
-        /** An admin has made it public, decided on the user page and only read here. */
-        approved: boolean;
-      }
-    | {
-        role: "admin";
-        profile: AdminTeamProfile;
-        /** Office staff are trusted, so their one checkbox is the whole decision. */
-        shown: boolean;
-      }
-  );
+  /** The saved profile — what the form opens on. */
+  profile: TeamProfile;
+  /** The saved checkbox: the profile is marked ready to be public. */
+  ready: boolean;
+  /** An admin has made it public, decided on the user page and only read here. */
+  approved: boolean;
+};
 
 /**
  * The page a public profile is edited on — office staff's and Gedus' alike,
@@ -98,8 +84,8 @@ export type TeamProfileEditorProps = TeamProfileSaveState & {
  * its props.
  *
  * **A profile is public only while two things are true**: its checkbox is
- * saved on, and — for a Gedu — an admin has made it public, which is decided
- * elsewhere and only read here. The checkbox is an ordinary field that Save
+ * saved on, and an admin has made it public, which is decided elsewhere and
+ * only read here. The checkbox is an ordinary field that Save
  * commits with everything else: ticking or unticking it dirties the form, and
  * nothing takes effect until Save. It can only be ticked once the profile is
  * complete, and while it is ticked the profile has to stay complete to save.
@@ -127,7 +113,7 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
   const uiLocale = resolveLocale(useLocale());
   const byAdmin = props.editedByAdmin === true;
   const saving = props.saving ?? false;
-  const savedOn = props.role === "gedu" ? props.ready : props.shown;
+  const savedOn = props.ready;
   const [form, setForm] = useState<TeamProfileForm>(() =>
     formFromProfile(props.profile, uiLocale),
   );
@@ -140,8 +126,8 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
   const tooLong = teamProfileTooLong(content);
   const status = teamProfileStatus(props);
   // An admin page carries the sidebar, so the two columns wait for the width
-  // that leaves room for both.
-  const wide = props.role === "admin" || byAdmin ? "xl" : "lg";
+  // that leaves room for both. Only an admin edits an admin's profile.
+  const wide = props.profile.kind === "admin" || byAdmin ? "xl" : "lg";
 
   const crops = useOwnedCrops(form.photo?.src, props.profile.photo?.src);
 
@@ -188,7 +174,6 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
           <TeamProfileWritingSection form={form} update={setForm} />
 
           <PublicSection
-            role={props.role}
             byAdmin={byAdmin}
             name={props.profile.firstName}
             status={status}
@@ -296,7 +281,6 @@ function useOwnedCrops(
  * every word addressed to them about the person rather than to the person.
  */
 function PublicSection({
-  role,
   byAdmin,
   name,
   status,
@@ -304,7 +288,6 @@ function PublicSection({
   gap,
   onChange,
 }: {
-  role: "gedu" | "admin";
   byAdmin: boolean;
   name: string;
   status: TeamProfileStatus;
@@ -318,11 +301,8 @@ function PublicSection({
     ? {
         title: ta(`status.${status}Title`),
         body: ta(`status.${status}Body`, { name }),
-        label: role === "gedu" ? ta("edit.readyLabel") : ta("edit.showLabel"),
-        hint:
-          role === "gedu"
-            ? ta("edit.readyHint", { name })
-            : ta("edit.showHint", { name }),
+        label: ta("edit.readyLabel"),
+        hint: ta("edit.readyHint", { name }),
         complete: ta("edit.complete"),
         mustStayComplete: ta("edit.mustStayComplete"),
         missing: gap === null ? null : ta(`edit.missing.${gap}`),
@@ -330,8 +310,8 @@ function PublicSection({
     : {
         title: t(`status.${status}Title`),
         body: t(`status.${status}Body`),
-        label: role === "gedu" ? t("switch.readyLabel") : t("switch.showLabel"),
-        hint: role === "gedu" ? t("switch.readyHint") : t("switch.showHint"),
+        label: t("switch.readyLabel"),
+        hint: t("switch.readyHint"),
         complete: t("switch.complete"),
         mustStayComplete: t("switch.mustStayComplete"),
         missing: gap === null ? null : t(`switch.missing.${gap}`),

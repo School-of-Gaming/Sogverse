@@ -28,8 +28,11 @@ BEGIN
     RAISE EXCEPTION 'No team profile for this person' USING ERRCODE = 'P0002';
   END IF;
 
-  IF v_role IS DISTINCT FROM 'gedu' THEN
-    RAISE EXCEPTION 'Only a Gedu''s profile is made public by an admin' USING ERRCODE = '22023';
+  -- An admin's or a Gedu's, the admin's own included; a profile row left
+  -- behind by someone whose role has since changed is not made public.
+  IF v_role NOT IN ('admin', 'gedu') THEN
+    RAISE EXCEPTION 'Only an admin''s or a Gedu''s profile is made public'
+      USING ERRCODE = '22023';
   END IF;
 
   -- Saying it again changes nothing, and keeps who last changed it.
@@ -57,7 +60,7 @@ $$;
 -- Name: FUNCTION set_team_profile_approval(p_user_id uuid, p_approved boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_team_profile_approval(p_user_id uuid, p_approved boolean) IS 'An admin''s two actions on a Gedu''s team profile: make it public (true) or hide it (false), stamping who did it and when. Admin-only, guard-first. Making public needs the profile marked ready (opted_in) and refuses one that is not with P0028; hiding is open whenever it is public. Repeating the current value is a no-op that keeps the stamp. Refuses a NULL decision (22004), an admin''s profile (22023) and a person with no profile row (P0002). Never touches the checkbox; unticking it (save_team_profile) hides the profile itself, so ticking it again waits for an admin to make it public.';
+COMMENT ON FUNCTION public.set_team_profile_approval(p_user_id uuid, p_approved boolean) IS 'An admin''s two actions on any admin''s or Gedu''s team profile, their own included: make it public (true) or hide it (false), stamping who did it and when. Admin-only, guard-first. Making public needs the profile marked ready (opted_in) and refuses one that is not with P0028; hiding is open whenever it is public. Repeating the current value is a no-op that keeps the stamp. Refuses a NULL decision (22004), the profile of a person who is neither an admin nor a Gedu (22023) and a person with no profile row (P0002). Never touches the checkbox; unticking it (save_team_profile) hides the profile itself, so ticking it again waits for an admin to make it public.';
 
 
 --

@@ -5,7 +5,7 @@ export {
   teamProfileKeys,
   useTeamProfile,
   useSaveTeamProfile,
-  useSetGeduTeamProfileApproval,
+  useSetTeamProfileApproval,
 } from "./team-profiles.queries";
 export * from "./team-profiles.types";
 export { saveTeamProfileResult } from "./team-profiles.contracts";

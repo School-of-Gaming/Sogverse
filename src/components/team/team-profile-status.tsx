@@ -2,37 +2,30 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 /**
  * Where a saved profile stands, as one word — the combined state of the
- * checkbox as last saved and, for a Gedu, whether an admin has made it
- * public, so nobody has to work out from two facts whether the public can see
- * it.
+ * checkbox as last saved and whether an admin has made it public, so nobody
+ * has to work out from two facts whether the public can see it.
  *
- * A Gedu controls readiness and an admin visibility, and visibility is gated
- * behind readiness, so a Gedu's profile is in one of three:
+ * Whoever edits a profile controls readiness and an admin visibility, and
+ * visibility is gated behind readiness, so every profile, an admin's or a
+ * Gedu's, is in one of three:
  *
  * - `private` — not marked ready. Unticking ready also hides it.
  * - `waiting` — marked ready, not yet made public by an admin.
  * - `live` — made public by an admin, which it can be only while ready.
  *
- * An admin's has no admin step, so it is `shown` or `hidden`.
- *
  * The editor tells the person themselves; the admin user page and an admin
  * editing someone else's profile tell an admin, in words addressed to them,
  * off the same states.
  */
-export type TeamProfileStatus =
-  | "private"
-  | "waiting"
-  | "live"
-  | "shown"
-  | "hidden";
+export type TeamProfileStatus = "private" | "waiting" | "live";
 
 /** The saved switches a status is read from — a record and the editor's props both fit. */
-export type TeamProfileSwitches =
-  | { role: "admin"; shown: boolean }
-  | { role: "gedu"; ready: boolean; approved: boolean };
+export interface TeamProfileSwitches {
+  ready: boolean;
+  approved: boolean;
+}
 
 export function teamProfileStatus(switches: TeamProfileSwitches): TeamProfileStatus {
-  if (switches.role === "admin") return switches.shown ? "shown" : "hidden";
   if (!switches.ready) return "private";
   return switches.approved ? "live" : "waiting";
 }
@@ -44,8 +37,6 @@ const STATUS_VARIANT: Record<
   private: "default",
   waiting: "info",
   live: "success",
-  shown: "success",
-  hidden: "default",
 };
 
 /**

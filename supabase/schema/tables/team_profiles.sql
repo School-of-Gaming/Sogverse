@@ -27,7 +27,7 @@ CREATE TABLE public.team_profiles (
 -- Name: TABLE team_profiles; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.team_profiles IS 'One member of staff''s team profile: an admin''s or a Gedu''s, keyed by their profile id. Name and spoken languages are not stored here; they are read from profiles. Written only by save_team_profile (content and the checkbox) and set_team_profile_approval (an admin making a Gedu''s profile public or hiding it); authenticated holds SELECT alone. An admin''s profile is public when opted_in; a Gedu''s when an admin has made it public (approved), which a CHECK allows only while opted_in.';
+COMMENT ON TABLE public.team_profiles IS 'One member of staff''s team profile: an admin''s or a Gedu''s, keyed by their profile id. Name and spoken languages are not stored here; they are read from profiles. Written only by save_team_profile (content and the checkbox) and set_team_profile_approval (an admin making a profile public or hiding it); authenticated holds SELECT alone. A profile is public when an admin has made it public (approved), which a CHECK allows only while it is marked ready (opted_in).';
 
 
 --
@@ -62,21 +62,21 @@ COMMENT ON COLUMN public.team_profiles.photo_path IS 'The photo''s object name i
 -- Name: COLUMN team_profiles.opted_in; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.team_profiles.opted_in IS 'The profile''s readiness mark: a Gedu''s "ready", an admin''s "show". Not consent: the person or any admin may save it, only while the profile is complete; while it is on, every save has to leave the profile complete. A save that passes NULL keeps it as stored. Saving a Gedu''s profile not ready also hides it (approved becomes false).';
+COMMENT ON COLUMN public.team_profiles.opted_in IS 'The profile''s "ready" mark. Not consent: the person or any admin may save it, only while the profile is complete; while it is on, every save has to leave the profile complete. A save that passes NULL keeps it as stored. Saving the profile not ready also hides it (approved becomes false).';
 
 
 --
 -- Name: COLUMN team_profiles.approved; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.team_profiles.approved IS 'Whether an admin has made a Gedu''s profile public. Set true only by set_team_profile_approval and only while the checkbox is on; set false by that function (an admin hiding it) or by save_team_profile whenever a save leaves the checkbox off, so re-ticking ready waits for an admin again. Never true while opted_in is false (CHECK team_profiles_public_only_when_ready). While it is true, the Gedu''s later edits go live with no second look. Always false for an admin''s profile, whose checkbox alone decides.';
+COMMENT ON COLUMN public.team_profiles.approved IS 'Whether an admin has made the profile public. Set true only by set_team_profile_approval and only while the checkbox is on; set false by that function (an admin hiding it) or by save_team_profile whenever a save leaves the checkbox off, so re-ticking ready waits for an admin again. Never true while opted_in is false (CHECK team_profiles_public_only_when_ready). While it is true, later edits go live with no second look.';
 
 
 --
 -- Name: COLUMN team_profiles.approval_decided_by; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.team_profiles.approval_decided_by IS 'The admin who last made the profile public or hid it, or NULL before any admin has, or once that admin''s account is gone (ON DELETE SET NULL: losing the admin must never take a Gedu''s profile down). Unticking ready hides the profile without being an admin''s decision, and leaves this as it was.';
+COMMENT ON COLUMN public.team_profiles.approval_decided_by IS 'The admin who last made the profile public or hid it, or NULL before any admin has, or once that admin''s account is gone (ON DELETE SET NULL: losing the admin must never take a profile down). Unticking ready hides the profile without being an admin''s decision, and leaves this as it was.';
 
 
 --

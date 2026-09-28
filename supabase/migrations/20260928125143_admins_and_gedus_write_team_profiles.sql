@@ -8,9 +8,9 @@
 --
 -- 1. `team_profiles`, one row per person, keyed by their profile id: the
 --    optional nickname, an admin's free-text title, the optional accent colour,
---    the photo's object path, the checkbox (`opted_in`: a Gedu's "ready", an
---    admin's "show") and, for a Gedu, whether an admin has made it public
---    (`approved`) with who last made it public or hid it, and when.
+--    the photo's object path, the "ready" checkbox (`opted_in`) and whether
+--    an admin has made it public (`approved`) with who last made it public or
+--    hid it, and when.
 -- 2. `team_profile_translations`, one row per (person, site locale): the short
 --    description, the long description (markdown) and the optional fun fact.
 -- 3. `can_edit_team_profile(uuid)` — whether the caller may write this person's
@@ -20,10 +20,11 @@
 --    profile row, the whole translation set and the checkbox, in one
 --    transaction, refusing a checkbox that is on while the profile is not
 --    complete (SQLSTATE P0026), and a photo path with no object behind it
---    (P0027). A save that leaves a Gedu's profile not ready also hides it.
--- 5. `set_team_profile_approval(uuid, boolean)` — an admin's two actions on a
---    Gedu's profile: make it public (true), only while it is marked ready
---    (P0028 otherwise), and hide it (false), whenever it is public.
+--    (P0027). A save that leaves the profile not ready also hides it.
+-- 5. `set_team_profile_approval(uuid, boolean)` — an admin's two actions on
+--    any admin's or Gedu's profile, their own included: make it public
+--    (true), only while it is marked ready (P0028 otherwise), and hide it
+--    (false), whenever it is public.
 -- 6. The private `team-photos` storage bucket and its policies: the owner and
 --    an admin read; whoever may edit the profile writes and deletes. Objects
 --    live at `<person's id>/<name>`.
@@ -31,20 +32,20 @@
 -- WHY FUNCTIONS WRITE AND THE TABLES CARRY NO WRITE GRANT
 --
 -- The rule that a profile which is on must be complete spans both tables, and
--- making a Gedu's profile public is an admin's alone while the rest is the
--- editor's. A table
--- grant would make each of those a policy written half-right; functions hold
--- them, and `authenticated` gets SELECT alone. Reads are plain queries under
--- the SELECT policies.
+-- making a profile public is an admin's alone while the rest is the editor's.
+-- A table grant would make each of those a policy written half-right;
+-- functions hold them, and `authenticated` gets SELECT alone. Reads are plain
+-- queries under the SELECT policies.
 --
--- ADMINS DECIDE VISIBILITY, GEDUS DECIDE READINESS
+-- ADMINS DECIDE VISIBILITY, EDITORS DECIDE READINESS
 --
--- A Gedu's profile is public only while it is both marked ready and made
--- public by an admin, and the second is gated behind the first: an admin makes
--- public only what is ready, and unticking ready hides the profile again, so
--- ticking it once more waits for an admin. "Made public but not ready" is not
--- a state a profile can be in, and a CHECK holds that. An admin's own profile
--- has no such step: its checkbox alone decides.
+-- Every profile, an admin's or a Gedu's, is public only while it is both
+-- marked ready and made public by an admin, and the second is gated behind
+-- the first: an admin makes public only what is ready, and unticking ready
+-- hides the profile again, so ticking it once more waits for an admin. "Made
+-- public but not ready" is not a state a profile can be in, and a CHECK holds
+-- that. An admin may make their own profile public: admins are trusted, and a
+-- second admin's look adds nothing.
 --
 -- WHY AN ADMIN MAY SET SOMEONE ELSE'S CHECKBOX
 --
@@ -78,7 +79,7 @@ CREATE TABLE public.team_profiles (
     CONSTRAINT team_profiles_pick_check CHECK (pick IS NULL OR pick BETWEEN 1 AND 16),
     CONSTRAINT team_profiles_photo_path_in_own_folder CHECK (
       photo_path IS NULL OR photo_path ~ ('^' || user_id::text || '/[^/]+$')),
-    -- A public Gedu profile always says which admin made it public and when;
+    -- A public profile always says which admin made it public and when;
     -- only a profile no admin has ever decided about carries no stamp.
     CONSTRAINT team_profiles_approval_stamped CHECK (
       NOT approved OR approval_decided_at IS NOT NULL),
@@ -87,14 +88,14 @@ CREATE TABLE public.team_profiles (
       NOT approved OR opted_in)
 );
 
-COMMENT ON TABLE public.team_profiles IS 'One member of staff''s team profile: an admin''s or a Gedu''s, keyed by their profile id. Name and spoken languages are not stored here; they are read from profiles. Written only by save_team_profile (content and the checkbox) and set_team_profile_approval (an admin making a Gedu''s profile public or hiding it); authenticated holds SELECT alone. An admin''s profile is public when opted_in; a Gedu''s when an admin has made it public (approved), which a CHECK allows only while opted_in.';
+COMMENT ON TABLE public.team_profiles IS 'One member of staff''s team profile: an admin''s or a Gedu''s, keyed by their profile id. Name and spoken languages are not stored here; they are read from profiles. Written only by save_team_profile (content and the checkbox) and set_team_profile_approval (an admin making a profile public or hiding it); authenticated holds SELECT alone. A profile is public when an admin has made it public (approved), which a CHECK allows only while it is marked ready (opted_in).';
 COMMENT ON COLUMN public.team_profiles.nickname IS 'What gamers know the person as. A name they chose, never translated. NULL for none.';
 COMMENT ON COLUMN public.team_profiles.title IS 'An admin''s office title, e.g. "Chief Engineer". Always NULL for a Gedu, whose title is the role itself; save_team_profile refuses one.';
 COMMENT ON COLUMN public.team_profiles.pick IS 'The accent colour the person picked, a SOG-UI pick id from 1 to 16, or NULL for none: the page then carries the brand''s colours alone.';
 COMMENT ON COLUMN public.team_profiles.photo_path IS 'The photo''s object name in the team-photos bucket, always inside the person''s own folder: <user_id>/<name>. The client crops every upload to an 800 × 1000 portrait before it is stored. NULL for none, which keeps the profile incomplete.';
-COMMENT ON COLUMN public.team_profiles.opted_in IS 'The profile''s readiness mark: a Gedu''s "ready", an admin''s "show". Not consent: the person or any admin may save it, only while the profile is complete; while it is on, every save has to leave the profile complete. A save that passes NULL keeps it as stored. Saving a Gedu''s profile not ready also hides it (approved becomes false).';
-COMMENT ON COLUMN public.team_profiles.approved IS 'Whether an admin has made a Gedu''s profile public. Set true only by set_team_profile_approval and only while the checkbox is on; set false by that function (an admin hiding it) or by save_team_profile whenever a save leaves the checkbox off, so re-ticking ready waits for an admin again. Never true while opted_in is false (CHECK team_profiles_public_only_when_ready). While it is true, the Gedu''s later edits go live with no second look. Always false for an admin''s profile, whose checkbox alone decides.';
-COMMENT ON COLUMN public.team_profiles.approval_decided_by IS 'The admin who last made the profile public or hid it, or NULL before any admin has, or once that admin''s account is gone (ON DELETE SET NULL: losing the admin must never take a Gedu''s profile down). Unticking ready hides the profile without being an admin''s decision, and leaves this as it was.';
+COMMENT ON COLUMN public.team_profiles.opted_in IS 'The profile''s "ready" mark. Not consent: the person or any admin may save it, only while the profile is complete; while it is on, every save has to leave the profile complete. A save that passes NULL keeps it as stored. Saving the profile not ready also hides it (approved becomes false).';
+COMMENT ON COLUMN public.team_profiles.approved IS 'Whether an admin has made the profile public. Set true only by set_team_profile_approval and only while the checkbox is on; set false by that function (an admin hiding it) or by save_team_profile whenever a save leaves the checkbox off, so re-ticking ready waits for an admin again. Never true while opted_in is false (CHECK team_profiles_public_only_when_ready). While it is true, later edits go live with no second look.';
+COMMENT ON COLUMN public.team_profiles.approval_decided_by IS 'The admin who last made the profile public or hid it, or NULL before any admin has, or once that admin''s account is gone (ON DELETE SET NULL: losing the admin must never take a profile down). Unticking ready hides the profile without being an admin''s decision, and leaves this as it was.';
 COMMENT ON COLUMN public.team_profiles.approval_decided_at IS 'When an admin last made the profile public or hid it, or NULL before any admin has. Never NULL while approved. Left as it was when unticking ready hides the profile.';
 
 CREATE TRIGGER team_profiles_updated_at BEFORE UPDATE ON public.team_profiles
@@ -308,7 +309,7 @@ BEGIN
     INTO v_complete;
 
   IF v_opted_in AND NOT v_complete THEN
-    RAISE EXCEPTION 'A profile that is shown has to be complete: a photo, and both descriptions in every language written'
+    RAISE EXCEPTION 'A profile marked ready has to be complete: a photo, and both descriptions in every language written'
       USING ERRCODE = 'P0026';
   END IF;
 
@@ -319,7 +320,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.save_team_profile(uuid, jsonb, text, text, smallint, text, boolean) IS 'The one writer of a team profile''s content: nickname, title (an admin''s only; a Gedu''s raises 22023), pick, photo path, the whole translation set (a JSON array of {locale, short_description, long_description, fun_fact}, replacing what was stored) and the checkbox, in one transaction. Guard-first for an admin or a Gedu; the target half is can_edit_team_profile — their own, or any admin''s or Gedu''s for an admin. The checkbox is a readiness mark, not consent, so any editor may set it; NULL keeps the stored value. Refuses with P0026 when the checkbox would be on while the profile is incomplete (no photo, no language, or a language missing either description), and with P0027 a photo path that has no object in the team-photos bucket (a save from a page opened before another save replaced and removed that photo). A save that leaves the checkbox off also hides a Gedu''s profile (approved false, the admin decision stamp left as it was), so ticking it again waits for an admin to make it public; a save that leaves it on does not change whether it is public, whoever saves. Returns the photo path the save replaced, or NULL, so the caller can remove that object through the storage API.';
+COMMENT ON FUNCTION public.save_team_profile(uuid, jsonb, text, text, smallint, text, boolean) IS 'The one writer of a team profile''s content: nickname, title (an admin''s only; a Gedu''s raises 22023), pick, photo path, the whole translation set (a JSON array of {locale, short_description, long_description, fun_fact}, replacing what was stored) and the checkbox, in one transaction. Guard-first for an admin or a Gedu; the target half is can_edit_team_profile — their own, or any admin''s or Gedu''s for an admin. The checkbox is a readiness mark, not consent, so any editor may set it; NULL keeps the stored value. Refuses with P0026 when the checkbox would be on while the profile is incomplete (no photo, no language, or a language missing either description), and with P0027 a photo path that has no object in the team-photos bucket (a save from a page opened before another save replaced and removed that photo). A save that leaves the checkbox off also hides the profile (approved false, the admin decision stamp left as it was), so ticking it again waits for an admin to make it public; a save that leaves it on does not change whether it is public, whoever saves. Returns the photo path the save replaced, or NULL, so the caller can remove that object through the storage API.';
 
 REVOKE EXECUTE ON FUNCTION public.save_team_profile(uuid, jsonb, text, text, smallint, text, boolean) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.save_team_profile(uuid, jsonb, text, text, smallint, text, boolean) TO authenticated;
@@ -358,8 +359,11 @@ BEGIN
     RAISE EXCEPTION 'No team profile for this person' USING ERRCODE = 'P0002';
   END IF;
 
-  IF v_role IS DISTINCT FROM 'gedu' THEN
-    RAISE EXCEPTION 'Only a Gedu''s profile is made public by an admin' USING ERRCODE = '22023';
+  -- An admin's or a Gedu's, the admin's own included; a profile row left
+  -- behind by someone whose role has since changed is not made public.
+  IF v_role NOT IN ('admin', 'gedu') THEN
+    RAISE EXCEPTION 'Only an admin''s or a Gedu''s profile is made public'
+      USING ERRCODE = '22023';
   END IF;
 
   -- Saying it again changes nothing, and keeps who last changed it.
@@ -382,7 +386,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.set_team_profile_approval(uuid, boolean) IS 'An admin''s two actions on a Gedu''s team profile: make it public (true) or hide it (false), stamping who did it and when. Admin-only, guard-first. Making public needs the profile marked ready (opted_in) and refuses one that is not with P0028; hiding is open whenever it is public. Repeating the current value is a no-op that keeps the stamp. Refuses a NULL decision (22004), an admin''s profile (22023) and a person with no profile row (P0002). Never touches the checkbox; unticking it (save_team_profile) hides the profile itself, so ticking it again waits for an admin to make it public.';
+COMMENT ON FUNCTION public.set_team_profile_approval(uuid, boolean) IS 'An admin''s two actions on any admin''s or Gedu''s team profile, their own included: make it public (true) or hide it (false), stamping who did it and when. Admin-only, guard-first. Making public needs the profile marked ready (opted_in) and refuses one that is not with P0028; hiding is open whenever it is public. Repeating the current value is a no-op that keeps the stamp. Refuses a NULL decision (22004), the profile of a person who is neither an admin nor a Gedu (22023) and a person with no profile row (P0002). Never touches the checkbox; unticking it (save_team_profile) hides the profile itself, so ticking it again waits for an admin to make it public.';
 
 REVOKE EXECUTE ON FUNCTION public.set_team_profile_approval(uuid, boolean) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.set_team_profile_approval(uuid, boolean) TO authenticated;

@@ -135,10 +135,11 @@ export const TEAM_PROFILE_FIXTURES = {
 // ---------------------------------------------------------------------------
 
 /**
- * One scenario per state a Gedu is told their profile is in, and no more.
- * Private-and-incomplete stands for private in general — a complete private
- * profile is the same render with the switch enabled, which filling in the
- * form reaches locally.
+ * One scenario per state a person is told their profile is in, and no more —
+ * the same three for an admin's own profile as for a Gedu's, so they render on
+ * the Gedu's page. Private-and-incomplete stands for private in general — a
+ * complete private profile is the same render with the switch enabled, which
+ * filling in the form reaches locally.
  */
 export const GEDU_TEAM_PROFILE_EDITOR_SCENARIOS = [
   "private",
@@ -158,12 +159,15 @@ export function isGeduTeamProfileEditorScenario(
 /**
  * Two: an admin's own profile, and someone else's edited from the admin panel,
  * which is a different page — every word addressed to the admin about the
- * person, and the sidebar back link to their user page. A Gedu's stands for
- * another admin's too, which differs only in the checkbox's words and the
- * title field; its status, like the rest, is a click away on the same render.
+ * person, and the sidebar back link to their user page. The admin's own is
+ * the Gedu's page in the admin chrome with a title field, and opens waiting,
+ * the state the Gedu scene's live page does not show; the other states are
+ * its words on the Gedu scene. A Gedu's stands for another admin's too, which
+ * differs only in the title field; its status, like the rest, is a click away
+ * on the same render.
  */
 export const ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS = [
-  "shown",
+  "own",
   "editing-gedu",
 ] as const;
 
@@ -176,9 +180,9 @@ export function isAdminTeamProfileEditorScenario(
   return (ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS as readonly string[]).includes(s);
 }
 
-/** A Gedu's profile as the editor receives it: the profile and both switches. */
-export interface GeduTeamProfileEditorFixture {
-  profile: GeduTeamProfile;
+/** A profile as the editor receives it: the profile and both switches. */
+export interface TeamProfileEditorFixture {
+  profile: TeamProfile;
   ready: boolean;
   approved: boolean;
 }
@@ -203,22 +207,25 @@ const SAANA_NEW: GeduTeamProfile = {
 
 export const GEDU_TEAM_PROFILE_EDITOR_FIXTURES: Record<
   GeduTeamProfileEditorScenario,
-  GeduTeamProfileEditorFixture
+  TeamProfileEditorFixture
 > = {
   private: { profile: SAANA_NEW, ready: false, approved: false },
   waiting: { profile: SAANA, ready: true, approved: false },
   live: { profile: EETU, ready: true, approved: true },
 };
 
-/** A profile as the editor receives it on an admin's page. */
-export type AdminTeamProfileEditorFixture =
-  | { editing: "own"; profile: AdminTeamProfile; shown: boolean }
-  | { editing: "gedu"; gedu: GeduTeamProfileEditorFixture };
+/**
+ * A profile as the editor receives it on an admin's page, and whether the
+ * admin is editing their own or someone else's from the admin panel.
+ */
+export interface AdminTeamProfileEditorFixture extends TeamProfileEditorFixture {
+  editedByAdmin: boolean;
+}
 
 export const ADMIN_TEAM_PROFILE_EDITOR_FIXTURES: Record<
   AdminTeamProfileEditorScenario,
   AdminTeamProfileEditorFixture
 > = {
-  shown: { editing: "own", profile: LAURA, shown: true },
-  "editing-gedu": { editing: "gedu", gedu: GEDU_TEAM_PROFILE_EDITOR_FIXTURES.live },
+  own: { profile: LAURA, ready: true, approved: false, editedByAdmin: false },
+  "editing-gedu": { ...GEDU_TEAM_PROFILE_EDITOR_FIXTURES.live, editedByAdmin: true },
 };

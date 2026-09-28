@@ -23,7 +23,7 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cn } from "@/lib/utils";
 import {
   isTeamProfileNotReadyError,
-  useSetGeduTeamProfileApproval,
+  useSetTeamProfileApproval,
   useTeamProfile,
   type TeamProfile,
   type TeamProfileRecord,
@@ -32,7 +32,8 @@ import {
 /**
  * The team profile on an admin's or a Gedu's `/admin/users/[id]` page: where
  * it stands publicly, the profile as the public will see it, an edit of the
- * whole profile (checkbox included) and — for a Gedu — whether it is public.
+ * whole profile (checkbox included) and whether it is public — the viewing
+ * admin's own included.
  *
  * Seeded with the page's server read, so it paints complete; making public or
  * hiding re-reads the record, so the status and the button follow it.
@@ -48,8 +49,8 @@ import {
  * the profile, then Edit and Make public or Hide, so the button is where the
  * reader finishes.
  *
- * **Admins decide visibility, the Gedu readiness, so an admin has exactly two
- * actions, one button**: Make public while the profile is not public, Hide
+ * **Admins decide visibility, whoever edits the profile readiness, so an admin
+ * has exactly two actions, one button**: Make public while the profile is not public, Hide
  * while it is. Neither asks first: each is undone with the other.
  *
  * **Make public waits for ready.** An admin makes public what has been marked
@@ -105,11 +106,8 @@ export function UserTeamProfileCard({
           userId={userId}
           name={name}
           isViewer={isViewer}
-          visibility={
-            record.role === "gedu"
-              ? { isPublic: record.approved, ready: record.ready }
-              : null
-          }
+          isPublic={record.approved}
+          ready={record.ready}
         />
       </CardContent>
     </Card>
@@ -180,42 +178,44 @@ function ProfilePreview({ profile }: { profile: TeamProfile }) {
 }
 
 /**
- * Edit, and for a Gedu the one visibility button. It is last, on the right, as
- * the row's primary action.
+ * Edit, and the one visibility button. It is last, on the right, as the row's
+ * primary action. An admin's own profile has it too: admins are trusted, so
+ * making their own public needs no second admin.
  */
 function ProfileActions({
   userId,
   name,
   isViewer,
-  visibility,
+  isPublic,
+  ready,
 }: {
   userId: string;
   name: string;
   isViewer: boolean;
+  /** An admin has made the profile public. */
+  isPublic: boolean;
   /**
-   * Whether a Gedu's profile is public and whether it is marked ready, or
-   * `null` for an admin's profile, whose own checkbox decides. A profile with
-   * nothing written is never ready, so there is nothing to make public yet.
+   * The profile is marked ready. A profile with nothing written is never
+   * ready, so there is nothing to make public yet.
    */
-  visibility: { isPublic: boolean; ready: boolean } | null;
+  ready: boolean;
 }) {
   const t = useTranslations("team.admin.userPage");
   const hintId = useId();
-  const setVisibility = useSetGeduTeamProfileApproval();
+  const setVisibility = useSetTeamProfileApproval();
   // Set before the write and cleared once it settles: the card stays, and the
   // re-read that the write waits for is what swaps the button.
   const [committing, setCommitting] = useState(false);
   const [visibilityError, setVisibilityError] = useState<
     "notReady" | "failed" | null
   >(null);
-  const awaitingReady =
-    visibility !== null && !visibility.isPublic && !visibility.ready;
+  const awaitingReady = !isPublic && !ready;
 
   function setPublic(approved: boolean) {
     setCommitting(true);
     setVisibilityError(null);
     void setVisibility
-      .mutateAsync({ geduId: userId, approved })
+      .mutateAsync({ userId, approved })
       .catch((error: unknown) => {
         // Someone unticked ready after this page was read; the hook has
         // re-read the profile, so the button is already disabled with its hint.
@@ -248,26 +248,25 @@ function ProfileActions({
           <Pencil aria-hidden />
           {t("edit")}
         </Link>
-        {visibility &&
-          (visibility.isPublic ? (
-            <Button
-              variant="outline"
-              onClick={() => setPublic(false)}
-              disabled={committing}
-            >
-              {committing && <Loader2 className="animate-spin" aria-hidden />}
-              {t("hide")}
-            </Button>
-          ) : (
-            <Button
-              onClick={() => setPublic(true)}
-              disabled={committing || awaitingReady}
-              aria-describedby={awaitingReady ? hintId : undefined}
-            >
-              {committing && <Loader2 className="animate-spin" aria-hidden />}
-              {t("makePublic")}
-            </Button>
-          ))}
+        {isPublic ? (
+          <Button
+            variant="outline"
+            onClick={() => setPublic(false)}
+            disabled={committing}
+          >
+            {committing && <Loader2 className="animate-spin" aria-hidden />}
+            {t("hide")}
+          </Button>
+        ) : (
+          <Button
+            onClick={() => setPublic(true)}
+            disabled={committing || awaitingReady}
+            aria-describedby={awaitingReady ? hintId : undefined}
+          >
+            {committing && <Loader2 className="animate-spin" aria-hidden />}
+            {t("makePublic")}
+          </Button>
+        )}
       </div>
       {/* Why Make public is disabled, for as long as it is: a greyed button
           with no reason beside it reads as broken. Not an alert — it describes

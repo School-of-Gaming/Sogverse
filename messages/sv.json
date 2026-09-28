@@ -4954,11 +4954,7 @@
         "waitingTitle": "Klar, väntar på en administratör",
         "waitingBody": "En administratör gör din profil offentlig när den har tittat på den. Du kan fortsätta redigera under tiden.",
         "liveTitle": "Offentlig",
-        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du dölja den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar. När du kryssar i den igen gör en administratör den offentlig på nytt.",
-        "shownTitle": "Offentlig",
-        "shownBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt.",
-        "hiddenTitle": "Privat",
-        "hiddenBody": "Din profil finns inte på webbplatsen. När den är klar kryssar du i ”Visa min profil offentligt” nedan och sparar."
+        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du dölja den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar. När du kryssar i den igen gör en administratör den offentlig på nytt."
       },
       "actions": {
         "save": "Spara ändringarna",
@@ -4968,8 +4964,6 @@
         "heading": "Offentlig profil",
         "readyLabel": "Min profil är redo att bli offentlig",
         "readyHint": "Genom att kryssa i detta och spara markerar du din profil som klar att visas på School of Gamings webbplats, och en administratör gör den offentlig när den har tittat på den. Ta bort krysset och spara när som helst så döljs den direkt. När du kryssar i den igen gör en administratör den offentlig på nytt.",
-        "showLabel": "Visa min profil offentligt",
-        "showHint": "Genom att kryssa i detta och spara hamnar din profil direkt på School of Gamings offentliga webbplats. Ta bort krysset och spara när som helst så försvinner den.",
         "complete": "Din profil har allt som behövs för att bli offentlig.",
         "mustStayComplete": "Medan detta är ikryssat måste din profil vara komplett, så det går inte att spara förrän den är det. Fyll i det som saknas, eller ta bort krysset för att fortsätta privat.",
         "missing": {
@@ -5052,19 +5046,13 @@
         "waitingTitle": "Klar, väntar på att göras offentlig",
         "waitingBody": "Profilen för {name} är markerad som klar att visas offentligt. Den kommer upp på School of Gamings webbplats så snart en administratör gör den offentlig.",
         "liveTitle": "Offentlig",
-        "liveBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt.",
-        "shownTitle": "Offentlig",
-        "shownBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt.",
-        "hiddenTitle": "Visas inte än",
-        "hiddenBody": "Profilen för {name} finns inte på webbplatsen. När den är komplett kan {name} eller vilken administratör som helst välja att visa den offentligt."
+        "liveBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt."
       },
       "edit": {
         "back": "Tillbaka till {name}",
         "pageTitle": "Profil för {name}",
         "readyLabel": "Profilen är redo att bli offentlig",
         "readyHint": "Genom att kryssa i detta och spara markeras profilen för {name} som klar att visas på School of Gamings webbplats. Den kommer upp när en administratör gör den offentlig. Ta bort krysset och spara när som helst så döljs den direkt, och den förblir dold tills den markeras som klar och görs offentlig igen.",
-        "showLabel": "Visa profilen offentligt",
-        "showHint": "Genom att kryssa i detta och spara hamnar profilen för {name} direkt på School of Gamings offentliga webbplats. Ta bort krysset och spara när som helst så försvinner den.",
         "complete": "Profilen har allt den behöver för att visas offentligt.",
         "mustStayComplete": "Medan detta är ikryssat måste profilen vara komplett, så det går inte att spara förrän den är det. Fyll i det som saknas, eller ta bort krysset.",
         "missing": {

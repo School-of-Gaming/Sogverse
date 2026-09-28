@@ -268,7 +268,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-profile-editor",
     title: "Profile editor — Gedu (draft)",
     description:
-      "The page a Gedu edits their own public profile on, beside a live preview of it. Typing, the photo crop, saving and the ready switch work locally; the upload is inert.",
+      "The page a Gedu or an admin edits their own public profile on, beside a live preview of it. Typing, the photo crop, saving and the ready switch work locally; the upload is inert.",
     chrome: "dashboard",
     navRole: "gedu",
     scenarios: [
@@ -286,10 +286,10 @@ export const PREVIEW_SCENES = [
     surface: "admin-profile-editor",
     title: "Profile editor — office staff (draft)",
     description:
-      "The same page as office staff meet it: their own profile with one switch, and a Gedu's profile edited from the admin panel, switch included, in words addressed to the admin.",
+      "The same page as office staff meet it: their own profile, and a Gedu's profile edited from the admin panel, switch included, in words addressed to the admin.",
     chrome: "admin",
     scenarios: [
-      { slug: "shown", label: "Own profile, public" },
+      { slug: "own", label: "Own profile, ready, waiting for an admin" },
       { slug: "editing-gedu", label: "Editing a Gedu's profile" },
     ],
   },
