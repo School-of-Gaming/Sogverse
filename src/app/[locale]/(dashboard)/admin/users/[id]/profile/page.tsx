@@ -10,6 +10,16 @@ import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 // references.
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
 
+/** Whether Postgres refused a value as malformed for its type — here, the id. */
+function isInvalidTextRepresentation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "22P02"
+  );
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
   return { title: t("adminTeamProfile") };
@@ -35,11 +45,15 @@ export default async function AdminUserTeamProfilePage({
   }
 
   const supabase = await createClient();
-  // A malformed id is refused by the database rather than matched to nobody;
-  // either way there is no profile here, which is what the user page says too.
+  // A malformed id is refused by the database (22P02) rather than matched to
+  // nobody; either way there is no profile here. Any other failure is a
+  // failed read, not a missing profile, and takes the page's error path.
   const record = await new TeamProfilesService(supabase)
     .getTeamProfile(id)
-    .catch(() => null);
+    .catch((error: unknown) => {
+      if (isInvalidTextRepresentation(error)) return null;
+      throw error;
+    });
   if (record === null) notFound();
 
   return <TeamProfileEditor record={record} editedByAdmin />;

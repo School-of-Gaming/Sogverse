@@ -1,4 +1,4 @@
-import type { QueryData } from "@supabase/supabase-js";
+import { StorageApiError, type QueryData } from "@supabase/supabase-js";
 import { SUPPORTED_LOCALES, isSupportedLocale } from "@/lib/constants/locales";
 import type { AppSupabaseClient } from "@/types";
 import {
@@ -74,6 +74,34 @@ function photoExtension(type: string): string | null {
   }
 }
 
+/**
+ * Whether storage answered that the object does not exist. It says so as a
+ * 404, carried either as the response status or, from a server that answers
+ * 400, as the body's `statusCode`.
+ */
+function isStorageObjectMissing(error: unknown): boolean {
+  return (
+    error instanceof StorageApiError &&
+    (error.status === 404 || error.statusCode === "404")
+  );
+}
+
+/**
+ * Whether the database definitely refused a write: PostgREST answered with an
+ * error code — the SQLSTATE Postgres raised, or its own — so nothing
+ * committed. A failure with no code (supabase-js reports a dropped connection
+ * or a timeout with an empty one) leaves open that it did.
+ */
+function isDatabaseRefusal(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string" &&
+    error.code.length > 0
+  );
+}
+
 function photoOf(src: string): TeamProfilePhoto {
   return { src, width: TEAM_PHOTO_WIDTH, height: TEAM_PHOTO_HEIGHT };
 }
@@ -107,8 +135,10 @@ export class TeamProfilesService {
    * ticking ready again waits for an admin to make it public; a save that
    * keeps it ready leaves it as it was.
    *
-   * A new crop is stored first and named by the save; a refused save removes
-   * it again. A landed save — one that clears the photo included — then
+   * A new crop is stored first and named by the save. A save the database
+   * refused removes it again; one that failed without the database's answer
+   * (a dropped connection) may have committed, so it keeps the crop the row
+   * may now name. A landed save — one that clears the photo included — then
    * sweeps the person's folder (`sweepFolder`).
    *
    * Resolves to the saved photo's object path, or `null` for none.
@@ -124,10 +154,14 @@ export class TeamProfilesService {
     try {
       await this.write(userId, input, photoPath, on);
     } catch (error) {
-      // Nothing names the photo this save stored, so it goes with the save.
-      // Best effort: the refusal is what the caller needs to hear, and one
-      // left behind is collected by the person's next save.
-      if (stored?.isNew) await this.removePhotos([stored.path]);
+      // A refused save names nothing, so the photo it stored goes with it.
+      // A failure without the database's answer may have committed, and the
+      // row may now name the photo: it stays, and if it is an orphan after
+      // all the person's next save collects it. Best effort either way: the
+      // failure is what the caller needs to hear.
+      if (stored?.isNew && isDatabaseRefusal(error)) {
+        await this.removePhotos([stored.path]);
+      }
       throw error;
     }
 
@@ -300,16 +334,22 @@ export class TeamProfilesService {
   }
 
   /**
-   * The saved photo, or `null` when it cannot be signed. The save refuses a
-   * path with no object behind it, but an object can still go missing after
-   * the row names it, and a profile with no photo is one the person can fix
-   * from the editor; a page that throws is one they cannot open at all.
+   * The saved photo, or `null` when storage says it no longer exists. The save
+   * refuses a path with no object behind it, but an object can still go
+   * missing after the row names it, and a profile with no photo is one the
+   * person can fix from the editor; a page that throws is one they cannot
+   * open at all.
+   *
+   * Any other failure throws. Reading a photo that is still stored as none
+   * would open the editor without it, and the next save would clear the path
+   * and let the folder sweep remove the real object.
    */
   private async savedPhoto(path: string): Promise<TeamProfilePhoto | null> {
     try {
       return photoOf(await this.signedUrl(path));
     } catch (error) {
-      console.error("[team-profile] saved photo could not be signed:", error);
+      if (!isStorageObjectMissing(error)) throw error;
+      console.error("[team-profile] saved photo is no longer stored:", error);
       return null;
     }
   }
@@ -321,8 +361,8 @@ export class TeamProfilesService {
     const storedPhotoPath = saved?.photo_path ?? null;
     const photo =
       storedPhotoPath === null ? null : await this.savedPhoto(storedPhotoPath);
-    // A photo that could not be signed reads as none, path included: the
-    // editor would otherwise save the missing path back and be refused.
+    // A photo no longer stored reads as none, path included: the editor would
+    // otherwise save the missing path back and be refused.
     const photoPath = photo === null ? null : storedPhotoPath;
 
     const translations: TeamProfileTranslation[] = [];

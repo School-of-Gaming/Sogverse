@@ -223,7 +223,9 @@ team_bucket=team-photos
 for pair in "admin@example.com:session-badge.jpg" "admin2@example.com:session-arena.jpg" "gedu@example.com:session-tower.jpg"; do
   email=${pair%%:*}
   art="$checkout/public/preview-art/${pair#*:}"
-  path=$(docker exec -i "supabase_db_$project"     psql -U postgres -d postgres -v ON_ERROR_STOP=1 -tAq     -c "SELECT tp.photo_path FROM public.team_profiles tp JOIN public.profiles p ON p.id = tp.user_id WHERE p.email = '$email'")
+  path=$(docker exec -i "supabase_db_$project" \
+    psql -U postgres -d postgres -v ON_ERROR_STOP=1 -tAq \
+    -c "SELECT tp.photo_path FROM public.team_profiles tp JOIN public.profiles p ON p.id = tp.user_id WHERE p.email = '$email'")
   if [ -z "$path" ]; then
     echo "The rich seed saved no team profile photo for $email." >&2
     exit 1
@@ -233,7 +235,12 @@ for pair in "admin@example.com:session-badge.jpg" "admin2@example.com:session-ar
   # object that fails to download, so the API removes that row first.
   curl -sS -o /dev/null -X DELETE "$api_url/storage/v1/object/$team_bucket/$path" \
     -H "Authorization: Bearer $service_key"
-  status=$(curl -sS -o "$work/upload.out" -w '%{http_code}'     -X POST "$api_url/storage/v1/object/$team_bucket/$path"     -H "Authorization: Bearer $service_key"     -H "Content-Type: image/jpeg"     -H "x-upsert: true"     --data-binary "@$art")
+  status=$(curl -sS -o "$work/upload.out" -w '%{http_code}' \
+    -X POST "$api_url/storage/v1/object/$team_bucket/$path" \
+    -H "Authorization: Bearer $service_key" \
+    -H "Content-Type: image/jpeg" \
+    -H "x-upsert: true" \
+    --data-binary "@$art")
   case "$status" in
     200 | 201) ;;
     *)

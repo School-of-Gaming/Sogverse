@@ -220,9 +220,11 @@ export default async function AdminUserDetailPage({
       ? new GeduContractService(supabase).getAcceptances(userId).catch(() => null)
       : Promise.resolve<GeduContractAcceptance[] | null>(null),
     // The team profile, read here so its card paints complete: its status
-    // and summary differ in height from one profile to the next.
+    // and summary differ in height from one profile to the next. Not caught:
+    // the id has already matched a profile, so it cannot be malformed, and a
+    // failed read shown as no profile would be the wrong answer.
     hasTeamProfile
-      ? new TeamProfilesService(supabase).getTeamProfile(userId).catch(() => null)
+      ? new TeamProfilesService(supabase).getTeamProfile(userId)
       : Promise.resolve<TeamProfileRecord | null>(null),
     // Who is looking, so the card can send an admin to their own profile
     // through settings. Cached for the request: the layout has read it.

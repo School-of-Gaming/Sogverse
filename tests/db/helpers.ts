@@ -32,10 +32,13 @@ export function createAnonTestClient(): SupabaseClient<Database> {
  */
 export async function createAuthenticatedClient(
   email: string,
-  password: string
+  password: string,
+  /** Stands in for the network, to fail chosen requests. */
+  customFetch?: typeof fetch
 ): Promise<SupabaseClient<Database>> {
   const client = createClient<Database>(supabaseUrl, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    ...(customFetch ? { global: { fetch: customFetch } } : {}),
   });
 
   const { error } = await client.auth.signInWithPassword({ email, password });

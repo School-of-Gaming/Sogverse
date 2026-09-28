@@ -35,8 +35,14 @@ export function useTeamProfile(
 /**
  * Save a profile and its checkbox — the caller's own, or any admin's or
  * Gedu's for an admin — storing a newly cropped photo first. Resolves to the
- * saved photo's path. The invalidation is returned so `mutateAsync` settles
- * only once the saved profile is re-read.
+ * saved photo's path.
+ *
+ * **The saved profile's cached read is removed, not invalidated.** The one
+ * reader, the admin user page's card, is not mounted while the editor is, so
+ * an invalidation would re-read nothing, and returning to the page would
+ * paint the pre-edit record before the refetch swapped it. A seed passed as
+ * `initialData` is ignored while the key holds data; with the key empty, the
+ * page's fresh server read is what paints.
  */
 export function useSaveTeamProfile() {
   const queryClient = useQueryClient();
@@ -53,7 +59,7 @@ export function useSaveTeamProfile() {
       on: boolean;
     }) => service.saveTeamProfile(userId, input, on),
     onSuccess: (_data, { userId }) =>
-      queryClient.invalidateQueries({ queryKey: teamProfileKeys.detail(userId) }),
+      queryClient.removeQueries({ queryKey: teamProfileKeys.detail(userId) }),
   });
 }
 

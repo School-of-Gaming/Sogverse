@@ -65,7 +65,7 @@ export function UserTeamProfileCard({
   isViewer,
 }: {
   userId: string;
-  /** The page's server read — `null` where that read failed. */
+  /** The page's server read — `null` where the person has no profile. */
   initial: TeamProfileRecord | null;
   /** The page is the viewer's own, whose profile is edited from settings. */
   isViewer: boolean;

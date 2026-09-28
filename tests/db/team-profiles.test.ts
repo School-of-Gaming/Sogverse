@@ -469,6 +469,32 @@ describe("team profiles", () => {
       });
     });
 
+    it("throws, rather than reading no photo, when signing fails for any other reason", async () => {
+      const photo = await seedPhoto(TEST_IDS.GEDU);
+      await new TeamProfilesService(geduAuth).saveTeamProfile(
+        TEST_IDS.GEDU,
+        content({ photoPath: photo }),
+        false,
+      );
+      // The database answers; storage is unreachable.
+      const offline = await createAuthenticatedClient(
+        TEST_CREDENTIALS.GEDU.email,
+        TEST_CREDENTIALS.GEDU.password,
+        (input, init) =>
+          String(input instanceof Request ? input.url : input).includes(
+            "/storage/v1/",
+          )
+            ? Promise.reject(new TypeError("fetch failed"))
+            : fetch(input, init),
+      );
+
+      await expect(
+        new TeamProfilesService(offline).getTeamProfile(TEST_IDS.GEDU),
+      ).rejects.toThrow();
+      // The photo is still stored, and still named.
+      expect(await stored(photo)).toBe(true);
+    });
+
     it("keeps the stored checkbox when a save passes none", async () => {
       const photo = await seedPhoto(TEST_IDS.GEDU);
       await new TeamProfilesService(geduAuth).saveTeamProfile(
