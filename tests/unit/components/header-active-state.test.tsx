@@ -103,9 +103,9 @@ describe("Header — where a gedu is told they are", () => {
     expect(currentLinks()).toEqual([en.header.nav.substitutions]);
   });
 
-  it("marks nothing on the strip on a page whose item is in the account menu", () => {
+  it("marks Invoicing alone on its page, never Substitutions or My SOG", () => {
     renderAt("/gedu/invoicing");
-    expect(currentLinks()).toEqual([]);
+    expect(currentLinks()).toEqual([en.header.invoicing]);
   });
 });
 

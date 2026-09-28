@@ -617,6 +617,10 @@ export function AccountMenu({
                   onNavigate={() => setOpen(false)}
                   icon={<ReceiptText className="h-4 w-4 shrink-0" />}
                   label={t("invoicing")}
+                  // From `lg` up Invoicing is on the header strip instead, so
+                  // the row gives way there — the About row's shape, at the
+                  // breakpoint where the strip link appears.
+                  className="lg:hidden"
                 />
               )}
 

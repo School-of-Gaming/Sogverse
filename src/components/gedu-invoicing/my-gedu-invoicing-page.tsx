@@ -110,8 +110,8 @@ export function MyGeduInvoicingHeading() {
 
   return (
     <div className="space-y-6">
-      {/* The way back, because this page is reached from the account menu and
-          is not a place on the strip. */}
+      {/* The way back, because below `lg` this page is reached from the
+          account menu and is not a place on the strip. */}
       <Link
         href={ROUTES.gedu.dashboard}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"

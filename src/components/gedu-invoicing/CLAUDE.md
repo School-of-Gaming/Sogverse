@@ -2,7 +2,7 @@
 
 What each gedu invoices School of Gaming for, one calendar month at a time, on two pages
 over one document: the admin's page reads every gedu, and a gedu's own **Invoicing** page
-(reached from their account menu) reads them alone — the database narrows that read to the
+(on the header strip at desktop width, in their account menu below it) reads them alone — the database narrows that read to the
 caller's own seats, and the two pages run the same pure build over it. It **writes
 nothing, snapshots nothing and exports nothing**: every figure is recomputed from today's
 facts each time it is read. There is no approval workflow in v1 — no submitted, approved or
