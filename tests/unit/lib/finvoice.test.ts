@@ -115,6 +115,7 @@ function club(spec: ClubSpec): MunicipalityInvoicingClub {
       group_id: `${spec.id}-g1`,
       session_date: date,
     })),
+    cancelled_sessions: [],
   };
 }
 

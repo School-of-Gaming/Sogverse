@@ -96,6 +96,10 @@ BEGIN
                  'substituted'::public.substitution_request_status
                )
            AND r.session_date >= (now() AT TIME ZONE p.timezone)::date
+           -- Cancellation: a cancelled session needs no cover, so its requests
+           -- leave both lists. They are kept, not withdrawn, so restoring the
+           -- session brings them back as they were.
+           AND NOT public.group_session_is_cancelled(r.group_id, r.session_date)
       ) q
   ), '[]'::jsonb);
 END;

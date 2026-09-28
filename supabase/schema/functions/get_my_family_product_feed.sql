@@ -18,6 +18,7 @@ DECLARE
   v_gedus          jsonb;
   v_sessions       jsonb;
   v_creations      jsonb;
+  v_cancellations  jsonb;
 BEGIN
   -- No caller, no answer. This function is scoped entirely to auth.uid(); with
   -- no uid there is nobody for it to be scoped TO, so there is no correct
@@ -225,6 +226,21 @@ BEGIN
        WHERE s.group_id = v_group_id
     ) AS session_rows;
 
+  -- Cancellation: the group's cancelled sessions the schedule still projects,
+  -- newest first, as a date and NOTHING ELSE. The reason and who cancelled are
+  -- admin-only; a family is told the session is off, not why.
+  SELECT COALESCE(
+           jsonb_agg(
+             jsonb_build_object('session_date', sc.session_date)
+             ORDER BY sc.session_date DESC
+           ),
+           '[]'::jsonb
+         )
+    INTO v_cancellations
+    FROM public.session_cancellations sc
+   WHERE sc.group_id = v_group_id
+     AND public.group_session_date_is_scheduled(sc.group_id, sc.session_date);
+
   RETURN jsonb_build_object(
     'participant', v_participant,
     'product',     v_product,
@@ -232,7 +248,8 @@ BEGIN
     'site',        v_site,
     'gedus',       v_gedus,
     'creations',   v_creations,
-    'sessions',    v_sessions
+    'sessions',    v_sessions,
+    'cancellations', v_cancellations
   );
 END;
 $$;

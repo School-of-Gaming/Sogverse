@@ -98,16 +98,20 @@ BEGIN
       -- product, and NULL for a run whose schedule projects nothing at all;
       -- either way the equality below never holds and nothing ever owes.
       --
-      -- Seven days ending at end_date, floored at start_date. Slots are weekly,
-      -- so a run of a week or more has every weekday in that window and a
-      -- shorter run is wholly inside it — which makes the max over the window
-      -- the max over the whole run, at a bounded cost.
+      -- Cancellation: the final session is the last projected occurrence this
+      -- GROUP has not had cancelled, so a cancelled last session hands the
+      -- creations condition to the one before it rather than dropping it.
+      -- The window is therefore a year ending at end_date, floored at
+      -- start_date, rather than the week that sufficed before cancellations:
+      -- slots are weekly, so any week inside it holds every weekday and the
+      -- max over the window is the max over the run unless a whole year of
+      -- the group's sessions is cancelled — a bounded cost either way.
       CROSS JOIN LATERAL (
         SELECT max(d::date) AS session_date
           FROM generate_series(
                  GREATEST(
-                   COALESCE(p.start_date, p.end_date - 6),
-                   p.end_date - 6
+                   COALESCE(p.start_date, p.end_date - 366),
+                   p.end_date - 366
                  )::timestamp,
                  p.end_date::timestamp,
                  interval '1 day'
@@ -121,6 +125,12 @@ BEGIN
                FROM public.schedule_slots s
               WHERE s.product_id = p.id
                 AND s.weekday = (EXTRACT(ISODOW FROM d)::integer - 1)
+           )
+           AND NOT EXISTS (
+             SELECT 1
+               FROM public.session_cancellations sc
+              WHERE sc.group_id     = g.id
+                AND sc.session_date = d::date
            )
       ) AS final_occurrence
 
@@ -253,6 +263,18 @@ BEGIN
                 AND rq.session_date = occurrence.session_date
                 AND rq.requested_by = v_uid
                 AND rq.status <> 'withdrawn'::public.substitution_request_status
+           )
+           -- Cancellation: a cancelled session owes nothing — nothing ran, so
+           -- there is no register, report or mail to ask for. A raw existence
+           -- test is the same answer group_session_is_cancelled would give:
+           -- the projected arm's dates are projected by construction, and a
+           -- stored row's date can never carry a cancellation. This has the
+           -- same TypeScript twin as the rule above, and it learns it too.
+           AND NOT EXISTS (
+             SELECT 1
+               FROM public.session_cancellations sc
+              WHERE sc.group_id     = g.id
+                AND sc.session_date = occurrence.session_date
            )
            -- "Needs attention" is FOUR questions joined by OR, and any one
            -- alone keeps the session on the list.

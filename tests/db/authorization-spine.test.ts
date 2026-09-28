@@ -162,6 +162,15 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // second refusal, and every other role is stopped by the guard.
   get_admin_substitution_requests: { permittedRoles: ["admin"] },
 
+  // --- session cancellation ------------------------------------------------
+  //
+  // An admin cancels a session and restores it. Both are assertable on both
+  // halves with no fixture: past the admin guard, a NULL group or date is
+  // refused with check_violation before anything is looked up, which is an
+  // error but not the forbidden one.
+  cancel_session: { permittedRoles: ["admin"] },
+  restore_session: { permittedRoles: ["admin"] },
+
   // --- customer-gated ------------------------------------------------------
   // Phase 3's grant-plus-guard conversion. Past the role guard, a customer
   // reaches the engine with a NULL product id and is refused with

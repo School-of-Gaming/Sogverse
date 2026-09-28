@@ -63,6 +63,7 @@ function club(
     // cases below pin.
     invoice_customer: null,
     sessions: [],
+    cancelled_sessions: [],
     ...overrides,
   };
 }

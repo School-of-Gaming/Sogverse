@@ -327,6 +327,7 @@ function adminSessions(): AdminProductSessions {
         // admin shell's wiring, not about who is running the sessions.
         gedus: [],
         substitutions: [],
+        cancellations: [],
       },
       {
         id: IDS.peerGroup,
@@ -340,6 +341,7 @@ function adminSessions(): AdminProductSessions {
         // admin shell's wiring, not about who is running the sessions.
         gedus: [],
         substitutions: [],
+        cancellations: [],
       },
     ],
   };
@@ -379,6 +381,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     sessions: [],
     gedus: [],
     substitutions: [],
+    cancellations: [],
   };
 }
 

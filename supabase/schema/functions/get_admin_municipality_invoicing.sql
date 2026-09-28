@@ -137,7 +137,8 @@ BEGIN
                              'invoice_text',       ic.invoice_text
                            )
                  END,
-               'sessions',               se.items
+               'sessions',               se.items,
+               'cancelled_sessions',     cx.items
              ) AS doc
         FROM candidate c
         LEFT JOIN public.locations l ON l.id = c.location_id
@@ -189,6 +190,31 @@ BEGIN
                       AND gs.session_date <= v_month_end
                  ), '[]'::jsonb) AS items
         ) se
+        -- Cancellation: the month's cancelled (group, date) pairs, raw and in
+        -- the same shape as `sessions`, so the page can show a cancelled date
+        -- as Cancelled rather than as unrecorded and never bill it. Raw on
+        -- purpose: the page already walks the dates the schedule projects and
+        -- applies these to those alone, which is what keeps a cancellation
+        -- orphaned by a weekday move inert here as everywhere else. A pair
+        -- never also appears in `sessions` — cancelling refuses a date with a
+        -- stored row and materializing refuses a cancelled one — and if one
+        -- somehow did, the cancellation wins.
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(
+                            jsonb_build_object(
+                              'group_id',     sc.group_id,
+                              'session_date', sc.session_date
+                            )
+                            ORDER BY sc.session_date, sc.group_id
+                          )
+                     FROM public.session_cancellations sc
+                     JOIN public.product_groups g ON g.id = sc.group_id
+                    WHERE g.product_id = c.id
+                      AND sc.session_date >= p_month_start
+                      AND sc.session_date <= v_month_end
+                 ), '[]'::jsonb) AS items
+        ) cx
     ) club;
 
   -- Every club on the invoice belongs to a municipality, or there is no invoice.

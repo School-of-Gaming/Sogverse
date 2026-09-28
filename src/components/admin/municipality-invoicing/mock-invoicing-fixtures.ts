@@ -829,6 +829,7 @@ function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
     },
     invoice_customer: invoiceCustomerOf(spec),
     sessions: storedRows(spec, { startDate, endDate, slots }),
+    cancelled_sessions: [],
   };
 }
 
