@@ -30,8 +30,10 @@ import {
  *   - a cancelled date in effect is carried as cancelled and never as a
  *     stored session, even when a row is stored on it
  *   - a date outside the month is in neither list
- *   - no substitution reason ever reaches the document, and a gedu's own read
- *     names no other gedu at all
+ *   - each side of a substitution names the other: the sub's seat names the
+ *     absent gedu, the absent gedu's absence names the sub, and an open
+ *     absence names nobody
+ *   - no substitution reason, category or note ever reaches the document
  *
  * **Every assertion is scoped to this file's own fixtures**: the seeded gedu is
  * shared with other files running in parallel, so claims about them are made
@@ -60,6 +62,29 @@ const UNTAUGHT = "00000000-0000-0000-0000-000000000824";
 const ALL_PRODUCTS = [CONSUMER, MUNI, UNTAUGHT];
 
 const REASON_NOTE = "Gedu invoicing fixture: private reason note";
+
+/**
+ * Why anybody was away never reaches the document: no reason, category or note
+ * key anywhere in the raw RPC output (the contract parse would strip one), and
+ * not the fixture's reason values.
+ */
+function expectNoReason(doc: unknown) {
+  const keys = new Set<string>();
+  const walk = (value: unknown) => {
+    if (Array.isArray(value)) value.forEach(walk);
+    else if (value && typeof value === "object") {
+      for (const [key, child] of Object.entries(value)) {
+        keys.add(key);
+        walk(child);
+      }
+    }
+  };
+  walk(doc);
+  expect([...keys].filter((key) => /reason|category|note/.test(key))).toEqual([]);
+  const text = JSON.stringify(doc);
+  expect(text).not.toContain(REASON_NOTE);
+  expect(text).not.toContain("sick");
+}
 
 function sessionWindow(date: string) {
   return {
@@ -99,6 +124,8 @@ describe("gedu invoicing", () => {
   let adminDoc: GeduInvoicingSnapshot;
   let geduDoc: GeduInvoicingSnapshot;
   let subDoc: GeduInvoicingSnapshot;
+  // The unparsed documents, for the checks a parse would hide.
+  let raw: { admin: unknown; gedu: unknown; sub: unknown };
 
   beforeAll(async () => {
     admin = createAdminTestClient();
@@ -214,8 +241,8 @@ describe("gedu invoicing", () => {
     expect(cancellation.error).toBeNull();
 
     // The seeded gedu is out on the 18th and the minted sub stands in, in the
-    // primary role the request records. A second absence past the month's end
-    // must not reach the document.
+    // primary role the request records. An open absence on the 4th has nobody
+    // seated yet, and a third past the month's end must not reach the document.
     const requests = await admin.from("session_substitution_requests").insert([
       {
         group_id: GROUP_CONSUMER,
@@ -228,6 +255,18 @@ describe("gedu invoicing", () => {
         substitute_id: subId,
         approved_by: TEST_IDS.ADMIN,
         approved_at: "2026-03-10T09:00:00Z",
+      },
+      {
+        group_id: GROUP_CONSUMER,
+        session_date: RAN,
+        requested_by: TEST_IDS.GEDU,
+        role: "primary",
+        reason: "other",
+        reason_note: null,
+        status: "open",
+        substitute_id: null,
+        approved_by: null,
+        approved_at: null,
       },
       {
         group_id: GROUP_CONSUMER,
@@ -255,6 +294,7 @@ describe("gedu invoicing", () => {
     adminDoc = geduInvoicingSnapshot.parse(reads[0].data);
     geduDoc = geduInvoicingSnapshot.parse(reads[1].data);
     subDoc = geduInvoicingSnapshot.parse(reads[2].data);
+    raw = { admin: reads[0].data, gedu: reads[1].data, sub: reads[2].data };
   });
 
   afterAll(async () => {
@@ -310,12 +350,15 @@ describe("gedu invoicing", () => {
       expect(
         gedu?.assignments.filter((a) => a.group_id === GROUP_CONSUMER),
       ).toEqual([{ group_id: GROUP_CONSUMER, role: "primary" }]);
-      // Only the in-month absence: the one filed for April is outside.
+      // Only the in-month absences: the one filed for April is outside.
       expect(
         gedu?.absences
           .filter((a) => a.group_id === GROUP_CONSUMER)
           .map(({ session_date, role, status }) => ({ session_date, role, status })),
-      ).toEqual([{ session_date: SUBSTITUTED, role: "primary", status: "substituted" }]);
+      ).toEqual([
+        { session_date: RAN, role: "primary", status: "open" },
+        { session_date: SUBSTITUTED, role: "primary", status: "substituted" },
+      ]);
     });
 
     it("carries the sub with the role recorded on the request", () => {
@@ -369,11 +412,23 @@ describe("gedu invoicing", () => {
       expect(adminDoc.products.some((p) => p.id === UNTAUGHT)).toBe(false);
     });
 
+    it("names both sides of a substitution to the admin", () => {
+      const sub = adminDoc.gedus.find((g) => g.id === subId);
+      expect(sub?.substitutions[0]?.absent_gedu.id).toBe(TEST_IDS.GEDU);
+      const absence = adminDoc.gedus
+        .find((g) => g.id === TEST_IDS.GEDU)
+        ?.absences.find(
+          (a) => a.group_id === GROUP_CONSUMER && a.session_date === SUBSTITUTED,
+        );
+      expect(absence?.substitute).toEqual({
+        id: subId,
+        first_name: "Sanni",
+        last_name: "Sijainen",
+      });
+    });
+
     it("never carries a substitution reason", () => {
-      const text = JSON.stringify(adminDoc);
-      expect(text).not.toContain(REASON_NOTE);
-      expect(text).not.toContain("reason");
-      expect(text).not.toContain("sick");
+      expectNoReason(raw.admin);
     });
   });
 
@@ -402,16 +457,39 @@ describe("gedu invoicing", () => {
       );
     });
 
-    it("names no other gedu and no reason", () => {
-      // The sub's read is about a session somebody else was absent from, and
-      // it must not say who; the absent gedu's read must not say who stood in.
-      const subText = JSON.stringify(subDoc);
-      expect(subText).not.toContain(TEST_IDS.GEDU);
-      expect(subText).not.toContain(REASON_NOTE);
-      expect(subText).not.toContain("reason");
-      const geduText = JSON.stringify(geduDoc);
-      expect(geduText).not.toContain(subId);
-      expect(geduText).not.toContain(REASON_NOTE);
+    it("names the absent gedu on the sub's seat", async () => {
+      // A seated sub is staff on the group, to whom the absent gedu is
+      // disclosed, so the sub's own read says whom they covered for.
+      const { data: absentGedu, error } = await admin
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", TEST_IDS.GEDU)
+        .single();
+      expect(error).toBeNull();
+      expect(subDoc.gedus[0].substitutions[0].absent_gedu).toEqual({
+        id: TEST_IDS.GEDU,
+        first_name: absentGedu?.first_name,
+        last_name: absentGedu?.last_name,
+      });
+    });
+
+    it("names the sub on the absent gedu's absence, and nobody on an open one", () => {
+      const absences = geduDoc.gedus[0].absences.filter(
+        (a) => a.group_id === GROUP_CONSUMER,
+      );
+      expect(absences.find((a) => a.session_date === SUBSTITUTED)?.substitute).toEqual({
+        id: subId,
+        first_name: "Sanni",
+        last_name: "Sijainen",
+      });
+      const open = absences.find((a) => a.session_date === RAN);
+      expect(open?.status).toBe("open");
+      expect(open?.substitute).toBeNull();
+    });
+
+    it("carries no reason on either side", () => {
+      expectNoReason(raw.sub);
+      expectNoReason(raw.gedu);
     });
 
     it("does not show the sub another gedu's groups", () => {

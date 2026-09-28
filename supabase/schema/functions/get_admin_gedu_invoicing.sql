@@ -18,7 +18,7 @@ $$;
 -- Name: FUNCTION get_admin_gedu_invoicing(p_month_start date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_gedu_invoicing(p_month_start date) IS 'One calendar month of gedu invoicing for EVERY gedu with a seat in it, as the document gedu_invoicing_document builds. Admin-only, guard-first on assert_admin, and deliberately not STRICT so the guard cannot be skipped on NULL input; the month check runs after the guard, so an unauthorized caller learns nothing about the argument shape. Crosses the boundary that assignments, substitution requests, stored sessions and cancellations of every gedu are not all readable by one policy, and hands back only the invoicing facts — never a substitution reason. Staffing is read from today''s assignments, which carry no history.';
+COMMENT ON FUNCTION public.get_admin_gedu_invoicing(p_month_start date) IS 'One calendar month of gedu invoicing for EVERY gedu with a seat in it, as the document gedu_invoicing_document builds. Admin-only, guard-first on assert_admin, and deliberately not STRICT so the guard cannot be skipped on NULL input; the month check runs after the guard, so an unauthorized caller learns nothing about the argument shape. Crosses the boundary that assignments, substitution requests, stored sessions and cancellations of every gedu are not all readable by one policy, and hands back only the invoicing facts — who covered for whom, but never a substitution reason. Staffing is read from today''s assignments, which carry no history.';
 
 
 --

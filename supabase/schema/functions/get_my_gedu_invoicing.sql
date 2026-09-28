@@ -27,7 +27,7 @@ $$;
 -- Name: FUNCTION get_my_gedu_invoicing(p_month_start date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_gedu_invoicing(p_month_start date) IS 'The calling gedu''s own month of invoicing, as the document gedu_invoicing_document builds, scoped to auth.uid(): its gedus array holds the caller alone, or is empty when they held no seat that month. Gedu-only, guard-first on assert_role(''gedu''), and deliberately not STRICT. Crosses the boundary that a gedu has no policy on substitution requests, stored sessions or cancellations, and narrows them to the caller''s own seats: the substitutions they ran, their own absences, and the groups and products those touch — never another gedu''s absence and never a reason. Staffing is read from today''s assignments, which carry no history.';
+COMMENT ON FUNCTION public.get_my_gedu_invoicing(p_month_start date) IS 'The calling gedu''s own month of invoicing, as the document gedu_invoicing_document builds, scoped to auth.uid(): its gedus array holds the caller alone, or is empty when they held no seat that month. Gedu-only, guard-first on assert_role(''gedu''), and deliberately not STRICT. Crosses the boundary that a gedu has no policy on substitution requests, stored sessions or cancellations, and narrows them to the caller''s own seats: the substitutions they ran (naming the gedu they covered for), their own absences (naming the seated sub), and the groups and products those touch — never another gedu''s absence they had no part in, and never a reason. Staffing is read from today''s assignments, which carry no history.';
 
 
 --

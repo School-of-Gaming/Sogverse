@@ -47,9 +47,11 @@ BEGIN
            )
   ),
   -- Dated seats: every live substitution inside the month, in the role the
-  -- request records — the absent gedu's role when it was filed.
+  -- request records — the absent gedu's role when it was filed — and naming
+  -- the absent gedu the sub stood in for.
   subbed AS (
-    SELECT r.id, r.substitute_id AS gedu_id, r.group_id, r.session_date, r.role
+    SELECT r.id, r.substitute_id AS gedu_id, r.group_id, r.session_date, r.role,
+           r.requested_by AS absent_gedu_id
       FROM public.session_substitution_requests r
      WHERE r.status = 'substituted'::public.substitution_request_status
        AND r.substitute_id IS NOT NULL
@@ -64,11 +66,11 @@ BEGIN
   ),
   -- The gedu's OWN live absences inside the month, on groups they hold a seat
   -- on — the first half of the derivation, which takes them out of those
-  -- sessions. No reason and no sub: the document never says why anybody was
-  -- away, and a gedu's absence is carried only on that gedu's own entry.
+  -- sessions — naming the sub who covered, once one is seated. Never the
+  -- reason: the document does not say why anybody was away.
   absent AS (
     SELECT r.id, r.requested_by AS gedu_id, r.group_id, r.session_date,
-           r.role, r.status
+           r.role, r.status, r.substitute_id
       FROM public.session_substitution_requests r
       JOIN seat s ON s.gedu_id = r.requested_by AND s.group_id = r.group_id
      WHERE r.status <> 'withdrawn'::public.substitution_request_status
@@ -136,11 +138,17 @@ BEGIN
                                      'request_id',   s.id,
                                      'group_id',     s.group_id,
                                      'session_date', s.session_date,
-                                     'role',         s.role
+                                     'role',         s.role,
+                                     'absent_gedu',  jsonb_build_object(
+                                                       'id',         ap.id,
+                                                       'first_name', ap.first_name,
+                                                       'last_name',  ap.last_name
+                                                     )
                                    )
                                    ORDER BY s.session_date, s.group_id, s.id
                                  )
                             FROM subbed s
+                            JOIN public.profiles ap ON ap.id = s.absent_gedu_id
                            WHERE s.gedu_id = pr.id
                         ), '[]'::jsonb),
                         'absences', COALESCE((
@@ -150,11 +158,21 @@ BEGIN
                                      'group_id',     ab.group_id,
                                      'session_date', ab.session_date,
                                      'role',         ab.role,
-                                     'status',       ab.status
+                                     'status',       ab.status,
+                                     -- Null while the request is open.
+                                     'substitute',
+                                       CASE WHEN sp.id IS NULL THEN NULL
+                                            ELSE jsonb_build_object(
+                                                   'id',         sp.id,
+                                                   'first_name', sp.first_name,
+                                                   'last_name',  sp.last_name
+                                                 )
+                                       END
                                    )
                                    ORDER BY ab.session_date, ab.group_id, ab.id
                                  )
                             FROM absent ab
+                            LEFT JOIN public.profiles sp ON sp.id = ab.substitute_id
                            WHERE ab.gedu_id = pr.id
                         ), '[]'::jsonb)
                       )
@@ -263,7 +281,7 @@ $$;
 -- Name: FUNCTION gedu_invoicing_document(p_month_start date, p_gedu_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.gedu_invoicing_document(p_month_start date, p_gedu_id uuid) IS 'Internal builder behind gedu invoicing: one calendar month of the raw facts a gedu''s invoice is computed from, for one gedu (p_gedu_id) or for every gedu (NULL — only the admin wrapper passes that). Not granted to `authenticated`: the two guarded wrappers get_admin_gedu_invoicing and get_my_gedu_invoicing are its only client paths. p_month_start must be the first day of a month; anything else raises check_violation. Nothing is written or snapshotted — every figure is recomputed from today''s facts by a pure TypeScript builder, as municipality invoicing is. Per gedu it carries their SEATS: `assignments` (every group they are assigned to whose product''s term overlaps the month or which stored a session row in it, with the assignment role), `substitutions` (every `substituted` request inside the month naming them as the sub, with the role recorded on the request — the absent gedu''s at filing time) and `absences` (their own non-withdrawn requests inside the month on a group they hold a seat on). Those are exactly the facts the substitution derivation needs to decide whether THIS gedu was expected at a (group, date); the builder runs the TypeScript twin of gedu_is_expected_at_session over them rather than this function re-deriving it. A request''s REASON never appears, and neither does who else was absent: a substitution carries no requester and an absence no sub, so a gedu''s document names no other gedu''s absence. STAFFING IS TODAY''S: assignments carry no history (removing one deletes the row, a role change overwrites it), so a past month is computed from current assignments — a known, accepted limitation of v1, not an oversight. Beside the gedus ride every group their seats touch (with its stored group_sessions dates in the month that no cancellation in effect covers — the evidence a session ran — and the month''s cancelled dates in effect, both by group_session_is_cancelled, so a date is never in both) and every product of those groups (type, timezone, term, both current gedu fees — NULL means not set, never zero — the whole product_translations array, weekly schedule slots so the builder can project past and upcoming dates, its own location and the nearest ancestor-or-self municipality, null where the chain reaches none). Every array ships as [] rather than null.';
+COMMENT ON FUNCTION public.gedu_invoicing_document(p_month_start date, p_gedu_id uuid) IS 'Internal builder behind gedu invoicing: one calendar month of the raw facts a gedu''s invoice is computed from, for one gedu (p_gedu_id) or for every gedu (NULL — only the admin wrapper passes that). Not granted to `authenticated`: the two guarded wrappers get_admin_gedu_invoicing and get_my_gedu_invoicing are its only client paths. p_month_start must be the first day of a month; anything else raises check_violation. Nothing is written or snapshotted — every figure is recomputed from today''s facts by a pure TypeScript builder, as municipality invoicing is. Per gedu it carries their SEATS: `assignments` (every group they are assigned to whose product''s term overlaps the month or which stored a session row in it, with the assignment role), `substitutions` (every `substituted` request inside the month naming them as the sub, with the role recorded on the request — the absent gedu''s at filing time — and the absent gedu''s id and name) and `absences` (their own non-withdrawn requests inside the month on a group they hold a seat on, with the seated sub''s id and name, or null while the request is open). Those are exactly the facts the substitution derivation needs to decide whether THIS gedu was expected at a (group, date); the builder runs the TypeScript twin of gedu_is_expected_at_session over them rather than this function re-deriving it. WHO covered for whom is named on both sides, so an admin can see why one gedu is not paid for a session another was, and a gedu can see who covered for them: that follows the substitution feature''s disclosure rule (src/services/session-substitution/CLAUDE.md) — the absent gedu is named to admins, to the requester, and to staff on the group, which a seated sub is; only the volunteer pool withholds it, and an unseated volunteer never reaches invoicing. A request''s REASON — its category and note — never appears. STAFFING IS TODAY''S: assignments carry no history (removing one deletes the row, a role change overwrites it), so a past month is computed from current assignments — a known, accepted limitation of v1, not an oversight. Beside the gedus ride every group their seats touch (with its stored group_sessions dates in the month that no cancellation in effect covers — the evidence a session ran — and the month''s cancelled dates in effect, both by group_session_is_cancelled, so a date is never in both) and every product of those groups (type, timezone, term, both current gedu fees — NULL means not set, never zero — the whole product_translations array, weekly schedule slots so the builder can project past and upcoming dates, its own location and the nearest ancestor-or-self municipality, null where the chain reaches none). Every array ships as [] rather than null.';
 
 
 --

@@ -44,22 +44,35 @@ export const geduInvoicingAssignment = z.object({
 });
 
 /**
+ * The other gedu on a substitution — the one absent, or the one who covered.
+ * Named on both reads: a seated sub is staff on the group, to whom the absent
+ * gedu is disclosed (`src/services/session-substitution/CLAUDE.md`). Why
+ * anybody was away is never carried.
+ */
+export const geduInvoicingCounterpart = z.object({
+  id: z.string(),
+  first_name: z.string(),
+  last_name: z.string(),
+});
+
+/**
  * A dated seat: a `substituted` request inside the month naming this gedu as
  * the sub. `role` is the one recorded on the request — the absent gedu's role
- * when it was filed — which is the role the sub is paid in. Who was absent is
- * deliberately not carried.
+ * when it was filed — which is the role the sub is paid in.
  */
 export const geduInvoicingSubstitution = z.object({
   request_id: z.string(),
   group_id: z.string(),
   session_date: z.string(),
   role: geduRole,
+  /** The gedu this one stood in for — the request's requester. */
+  absent_gedu: geduInvoicingCounterpart,
 });
 
 /**
  * One of the gedu's OWN live absences inside the month, on a group they hold a
- * seat on — the half of the derivation that takes them out of a session. No
- * reason and no sub.
+ * seat on — the half of the derivation that takes them out of a session. Never
+ * the reason.
  */
 export const geduInvoicingAbsence = z.object({
   request_id: z.string(),
@@ -68,6 +81,8 @@ export const geduInvoicingAbsence = z.object({
   role: geduRole,
   /** Never `withdrawn`: a withdrawn request is history and is not sent. */
   status: z.enum(["open", "substituted"]),
+  /** The seated sub who covered, or null while the request is `open`. */
+  substitute: geduInvoicingCounterpart.nullable(),
 });
 
 /** One gedu with a seat in the month, and every seat they hold in it. */
@@ -127,6 +142,9 @@ export const geduInvoicingSnapshot = z.object({
   products: z.array(geduInvoicingProduct),
 });
 
+export type GeduInvoicingCounterpart = z.infer<
+  typeof geduInvoicingCounterpart
+>;
 export type GeduInvoicingAssignment = z.infer<typeof geduInvoicingAssignment>;
 export type GeduInvoicingSubstitution = z.infer<
   typeof geduInvoicingSubstitution
