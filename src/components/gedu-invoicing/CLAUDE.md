@@ -41,16 +41,20 @@ they filed in, so it lands under the club line it would have paid on.
 
 **An unset fee is never zero.** It shows as "fee not set" in warning tone in place of the
 fee and the club's total, and the club is outside both subtotals and the total; the counts
-beside a total say how many clubs and sessions were left out. On the admin page the club's
-name links to its admin product page, which is the repair. The gedu page links into no
-admin page and tells the gedu to contact the office instead. A fee of zero is a real zero
-and pays zero.
+beside a total say how many clubs and sessions were left out. The month's club count is
+distinct products — one unpriced club staffed by five gedus is one fee to set — while its
+session count sums every gedu's, because each seat is a session left out. On the admin page
+the club's name links to its admin product page, which is the repair. The gedu page links
+into no admin page and tells the gedu to contact the office instead. A fee of zero is a
+real zero and pays zero.
 
 ## Absences and substitutions
 
 An absent gedu's own date renders as a quiet zero line — "away, and who substituted", or
 "away, no substitute" — so they can see why a date they hold did not pay. A sub's lines
-name the gedu they stood in for, whatever became of the date.
+name the gedu they stood in for, whatever became of the date. An absence claims its date
+just as the sub's booking does, so the two gedus' pages show the same dates even where the
+schedule no longer projects one, and a cancelled one reads cancelled on both.
 
 **Both names are shown on both pages, and that is consistent with the substitution
 feature's disclosure rules rather than an exception to them.** The absent gedu is disclosed

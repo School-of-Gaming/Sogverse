@@ -607,6 +607,13 @@ export const ROUTES = {
      */
     municipalityInvoicing: "/admin/municipality-invoicing",
     /**
+     * The month each gedu invoices School of Gaming for: every session they
+     * recorded (a stored session row), in which role, and what that comes to at
+     * the product's current fee. The admin's read of every gedu; the gedu's own
+     * month is `ROUTES.gedu.invoicing`.
+     */
+    geduInvoicing: "/admin/gedu-invoicing",
+    /**
      * The Fennoa customers a municipality club can be invoiced to — the contract
      * parties the CFO's monthly files are addressed to.
      *
@@ -616,13 +623,6 @@ export const ROUTES = {
      * is not. It sits beside the invoicing ledger because that is the page its
      * gaps are reported on.
      */
-    /**
-     * The month each gedu invoices School of Gaming for: every session they
-     * ran, in which role, and what that comes to at the product's current fee.
-     * The admin's read of every gedu; the gedu's own month is
-     * `ROUTES.gedu.invoicing`.
-     */
-    geduInvoicing: "/admin/gedu-invoicing",
     invoiceCustomers: "/admin/invoice-customers",
     /** The create form. */
     invoiceCustomerNew: "/admin/invoice-customers/new",

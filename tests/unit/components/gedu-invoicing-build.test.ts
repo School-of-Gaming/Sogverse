@@ -400,6 +400,68 @@ describe("buildGeduInvoicing", () => {
     });
   });
 
+  describe("an absence the schedule does not project", () => {
+    // Friday the 4th: the weekly Wednesday slot never lands on it, and no row
+    // was stored — Celia's page shows it, so Aino's must too.
+    function absentOnThe4th(cancelled: string[]) {
+      return build({
+        gedus: [
+          gedu({
+            id: AINO,
+            assignments: [{ group_id: "g1", role: "primary" }],
+            absences: [
+              {
+                request_id: "r1",
+                group_id: "g1",
+                session_date: "2026-09-04",
+                role: "primary",
+                status: "substituted",
+                substitute: CELIA_ROW,
+              },
+            ],
+          }),
+          gedu({
+            id: CELIA,
+            substitutions: [
+              {
+                request_id: "r1",
+                group_id: "g1",
+                session_date: "2026-09-04",
+                role: "primary",
+                absent_gedu: { id: AINO, first_name: "Aino", last_name: "Tester" },
+              },
+            ],
+          }),
+        ],
+        groups: [
+          group({ id: "g1", product_id: "p1", cancelled_sessions: cancelled }),
+        ],
+        products: [product({ id: "p1" })],
+      });
+    }
+
+    function lineOn4th(view: ReturnType<typeof build>, id: string) {
+      return geduOf(view, id).clubs[0].lines.find(
+        (line) => line.date === "2026-09-04",
+      );
+    }
+
+    it("renders the absent gedu's line, as the sub's page renders the date", () => {
+      const view = absentOnThe4th([]);
+      expect(lineOn4th(view, AINO)).toMatchObject({
+        kind: "absent",
+        substitute: CELIA_PERSON,
+      });
+      expect(lineOn4th(view, CELIA)?.kind).toBe("unrecorded");
+    });
+
+    it("reads cancelled on both pages when the date was cancelled", () => {
+      const view = absentOnThe4th(["2026-09-04"]);
+      expect(lineOn4th(view, AINO)?.kind).toBe("cancelled");
+      expect(lineOn4th(view, CELIA)?.kind).toBe("cancelled");
+    });
+  });
+
   describe("fees and money", () => {
     it("leaves an unset fee out of every total and counts it", () => {
       const view = build({
@@ -431,6 +493,26 @@ describe("buildGeduInvoicing", () => {
       expect(view.clubsWithoutFee).toBe(1);
       expect(view.sessionsWithoutFee).toBe(2);
       expect(view.totalCents).toBe(6_000);
+    });
+
+    it("counts an unpriced club once for the month, however many gedus it has", () => {
+      const view = build({
+        gedus: [
+          gedu({ id: AINO, assignments: [{ group_id: "g1", role: "primary" }] }),
+          gedu({ id: BENJAMIN, assignments: [{ group_id: "g2", role: "primary" }] }),
+        ],
+        groups: [
+          group({ id: "g1", product_id: "p1", sessions: ["2026-09-09"] }),
+          group({ id: "g2", product_id: "p1", sessions: ["2026-09-02", "2026-09-09"] }),
+        ],
+        products: [product({ id: "p1", primary_gedu_fee_cents: null })],
+      });
+
+      expect(geduOf(view, AINO).clubsWithoutFee).toBe(1);
+      expect(geduOf(view, BENJAMIN).clubsWithoutFee).toBe(1);
+      // One fee to set, but every seat it left out.
+      expect(view.clubsWithoutFee).toBe(1);
+      expect(view.sessionsWithoutFee).toBe(3);
     });
 
     it("pays a fee of zero as a real zero", () => {
