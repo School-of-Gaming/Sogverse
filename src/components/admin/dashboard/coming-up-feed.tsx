@@ -164,6 +164,7 @@ function ItemRow({
   verb: string | null;
 }) {
   const tType = useTranslations("admin.products.types");
+  const tCancellation = useTranslations("admin.dashboard.cancellation");
   const presentation = PRODUCT_TYPE_PRESENTATION[cohort.productType];
   const Icon = presentation.icon;
   const title = `${tType(`${presentation.i18nKey}.label`)} · ${item.name}`;
@@ -174,9 +175,13 @@ function ItemRow({
       title={title}
       className={cn(
         "flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-hover",
-        // Every group's session on this date is off: the line stays in its
-        // dated place, muted, because the milestone itself still stands.
-        item.cancellation.kind === "all" && "text-muted-foreground",
+        // A single-date run whose one session is off is itself off, so its
+        // line mutes. A club's start or end still stands when its first or
+        // last session is cancelled, so that line reads as normal and only
+        // its note says which session is off.
+        cohort.kind === "runs" &&
+          item.cancellation.kind === "all" &&
+          "text-muted-foreground",
       )}
     >
       <Icon
@@ -192,7 +197,10 @@ function ItemRow({
         </span>
         {item.cancellation.kind !== "none" && (
           <span className="text-xs">
-            <DateCancellationNote cancellation={item.cancellation} />
+            <DateCancellationNote
+              cancellation={item.cancellation}
+              allLabel={tCancellation(`allComingUp.${cohort.kind}`)}
+            />
           </span>
         )}
       </span>

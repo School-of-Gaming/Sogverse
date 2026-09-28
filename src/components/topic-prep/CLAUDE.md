@@ -232,12 +232,6 @@ nothing.
 did not attend that one, so it teaches them nothing and must not spend half their window.
 A family placed a quarter of an hour before one gets that session and the one after it.
 
-**A cancelled session does not count either**, for the same reason: nobody set anything up
-at a session that did not happen, so the window runs on to the next one that does. The
-cancelled dates are the ones the card already carries — its group's, from the day before
-today onwards — so a cancellation older than that is not known and its date still counts;
-by then the sessions after it have almost always closed the window anyway.
-
 **No occurrences means no end at all, and that is the deliberate answer rather than a
 degenerate one.** A seat nobody has been placed in yet, and a product with nothing on its
 schedule, are both a family with the whole setup ahead of them and no date to measure it

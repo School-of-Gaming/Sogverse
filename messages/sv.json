@@ -341,7 +341,12 @@
       },
       "cancellation": {
         "allTitle": "Tillfället är inställt för alla grupper den här dagen",
-        "some": "{cancelled} av {groups, plural, one {# grupp} other {# grupper}} inställda"
+        "some": "{cancelled} av {groups, plural, one {# grupp} other {# grupper}} inställda",
+        "allComingUp": {
+          "starts": "första tillfället inställt",
+          "ends": "sista tillfället inställt",
+          "runs": "inställt"
+        }
       },
       "comingUp": {
         "label": "På gång",

@@ -341,7 +341,12 @@
       },
       "cancellation": {
         "allTitle": "La séance de ce jour est annulée pour tous les groupes",
-        "some": "{cancelled, plural, one {# groupe annulé} other {# groupes annulés}} sur {groups}"
+        "some": "{cancelled, plural, one {# groupe annulé} other {# groupes annulés}} sur {groups}",
+        "allComingUp": {
+          "starts": "première séance annulée",
+          "ends": "dernière séance annulée",
+          "runs": "séance annulée"
+        }
       },
       "comingUp": {
         "label": "À venir",

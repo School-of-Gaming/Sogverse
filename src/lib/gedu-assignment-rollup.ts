@@ -556,7 +556,7 @@ export function rollUpGeduSubstitutions({
             row.product.timezone,
           ).getTime() - SUBSTITUTION_ACCESS_LEAD_MS,
         ),
-        cancelled: row.cancelledDates.includes(row.substitutionDate),
+        cancelled: row.substitutionCancelled,
         hasVoiceRoom,
         voiceHref: hasVoiceRoom
           ? (voiceHrefByAssignment?.[key] ?? INERT_HREF)

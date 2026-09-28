@@ -675,6 +675,7 @@ function assignmentRow(opts: {
     kind: opts.kind ?? "assignment",
     substitutionDate: opts.substitutionDate ?? null,
     cancelledDates: opts.cancelledDates ?? [],
+    substitutionCancelled: false,
     groupCount: opts.groupCount,
     participantCount: opts.participantCount,
     groupName: opts.groupName,

@@ -63,6 +63,7 @@ function row(overrides: {
     kind: overrides.kind ?? "assignment",
     substitutionDate: overrides.substitutionDate ?? null,
     cancelledDates: overrides.cancelledDates ?? [],
+    substitutionCancelled: false,
     slots: overrides.slots,
     groupCount: 1,
     participantCount: 8,

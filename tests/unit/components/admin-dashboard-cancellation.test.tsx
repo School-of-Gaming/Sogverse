@@ -11,8 +11,10 @@ import type {
 
 /**
  * How the admin dashboard draws a date its groups cancelled: every group — the
- * chip and the coming-up line stay, muted and labelled, and the session is out
- * of the week's count; some groups — a note, and the session still counts.
+ * chip and the coming-up line stay, labelled, and the session is out of the
+ * week's count; some groups — a note, and the session still counts. A club's
+ * start or end line names the session that is off rather than reading as the
+ * club being cancelled.
  */
 
 const WEEK_START = "2026-08-17";
@@ -109,13 +111,14 @@ describe("a cancelled date on the coming-up feed", () => {
     date: string,
     id: string,
     cancellation: DateCancellation,
+    kind: ComingUpDay["cohorts"][number]["kind"] = "runs",
   ): ComingUpDay {
     return {
       date,
       cohorts: [
         {
-          id: `${date}-runs-event`,
-          kind: "runs",
+          id: `${date}-${kind}-event`,
+          kind,
           productType: "event",
           items: [
             {
@@ -132,15 +135,33 @@ describe("a cancelled date on the coming-up feed", () => {
     };
   }
 
-  it("keeps the line in its dated place, muted and labelled", () => {
+  it("keeps a cancelled single-date run in its dated place, muted and labelled", () => {
     const { container } = renderPanel(
       [],
       [day("2026-08-19", "lan", { kind: "all" })],
     );
 
     const link = chipLink(container, "Event lan");
-    expect(within(link).getByText("Cancelled")).toBeTruthy();
+    expect(within(link).getByText("cancelled")).toBeTruthy();
     expect(link.className).toContain("text-muted-foreground");
+  });
+
+  it("names the first or last session on a start or end line, which reads as normal", () => {
+    const { container } = renderPanel(
+      [],
+      [
+        day("2026-08-19", "open", { kind: "all" }, "starts"),
+        day("2026-08-21", "close", { kind: "all" }, "ends"),
+      ],
+    );
+
+    const starts = chipLink(container, "Event open");
+    expect(within(starts).getByText("first session cancelled")).toBeTruthy();
+    expect(starts.className).not.toContain("text-muted-foreground");
+
+    const ends = chipLink(container, "Event close");
+    expect(within(ends).getByText("last session cancelled")).toBeTruthy();
+    expect(ends.className).not.toContain("text-muted-foreground");
   });
 
   it("notes a partly cancelled date on an ordinary line", () => {

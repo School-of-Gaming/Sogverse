@@ -341,7 +341,12 @@
       },
       "cancellation": {
         "allTitle": "Every group’s session on this date is cancelled",
-        "some": "{cancelled} of {groups, plural, one {# group} other {# groups}} cancelled"
+        "some": "{cancelled} of {groups, plural, one {# group} other {# groups}} cancelled",
+        "allComingUp": {
+          "starts": "first session cancelled",
+          "ends": "last session cancelled",
+          "runs": "cancelled"
+        }
       },
       "comingUp": {
         "label": "Coming up",

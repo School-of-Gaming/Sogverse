@@ -385,7 +385,12 @@
       },
       "cancellation": {
         "allTitle": "jajvam Hoch ghommey poH qIllu’ – yay’ Dun",
-        "some": "{cancelled}/{groups} ghom poH qIllu’"
+        "some": "{cancelled}/{groups} ghom poH qIllu’",
+        "allComingUp": {
+          "starts": "wa’DIch poH qIllu’",
+          "ends": "Qav poH qIllu’",
+          "runs": "qIllu’"
+        }
       },
       "comingUp": {
         "label": "ghoS",

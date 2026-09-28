@@ -298,14 +298,6 @@ export function topicPrepWindowEnd(
  * slot. Asking for `slots.length` more than the window is therefore exactly
  * what guarantees the second qualifying occurrence survives the trim, on a
  * product with any number of slots overlapping the moment of placement.
- *
- * **A cancelled session is not one of the family's first two**: nobody set
- * anything up at a session that did not happen, so the window runs on to the
- * next one that does, and the cap grows by what the cancellations could remove.
- * The dates are the ones the card already carries — its group's cancellations
- * from the day before today onwards — so a cancellation older than that is not
- * known here and its date still counts. By then the window it would have
- * extended has almost always closed on the sessions that followed it.
  */
 export function topicPrepWindowEndFromSchedule(args: {
   slots: SlotShape[];
@@ -314,28 +306,17 @@ export function topicPrepWindowEndFromSchedule(args: {
   startMoment: Date;
   startBoundary: Date | null;
   endBoundary: Date | null;
-  /** The group's cancelled product-local dates; none when absent. */
-  cancelledDates?: ReadonlySet<string>;
 }): Date | null {
-  const cancelledDates = args.cancelledDates ?? new Set<string>();
   const occurrences = enumerateRowOccurrences({
     slots: args.slots,
     timezone: args.timezone,
     now: args.startMoment,
     startBoundary: args.startBoundary,
     endBoundary: args.endBoundary,
-    cap: capPastCancellations(
-      TOPIC_PREP_WINDOW_SESSIONS + args.slots.length,
-      cancelledDates.size,
-      args.slots.length,
-    ),
+    cap: TOPIC_PREP_WINDOW_SESSIONS + args.slots.length,
     windowCloseMs: VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
   });
-  const running = occurrences.filter(
-    (occurrence) =>
-      !cancelledDates.has(productLocalDate(occurrence.start, args.timezone)),
-  );
-  return topicPrepWindowEnd(running, args.startMoment);
+  return topicPrepWindowEnd(occurrences, args.startMoment);
 }
 
 /**
@@ -360,7 +341,6 @@ export function prepWindowEndForRow(row: MyUpcomingSessionRow): Date | null {
     startMoment: laterStamp(row.signedUpAt, row.groupJoinedAt),
     startBoundary: startDateToCutoff(product.startDate, product.timezone),
     endBoundary: endDateToCutoff(product.endDate, product.timezone),
-    cancelledDates: new Set(row.cancelledDates),
   });
 }
 

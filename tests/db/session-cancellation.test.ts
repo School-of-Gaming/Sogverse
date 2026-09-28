@@ -854,6 +854,74 @@ describe("session cancellation", () => {
     }
   });
 
+  it("keeps a substitution card's date cancelled after it leaves the upcoming window", async () => {
+    // The card stands for days after its date, and `cancelled_dates` starts
+    // the day before today, so the substitution row asks of its own date. The
+    // seeded gedu's certification belongs to another file, so the sub is a
+    // certified gedu minted here.
+    const email = "cancellation-sub@test.local";
+    const { data: created, error: createError } =
+      await admin.auth.admin.createUser({
+        email,
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Cancel", last_name: "Sub" },
+      });
+    expect(createError).toBeNull();
+    const subId = created.user?.id ?? "";
+    expect(subId).toBeTruthy();
+
+    try {
+      await admin.from("profiles").update({ role: "gedu" }).eq("id", subId);
+      await admin.from("customer_profiles").delete().eq("user_id", subId);
+      await admin
+        .from("gedu_profiles")
+        .insert({ user_id: subId, certified: true });
+
+      const SIX_DAYS_AGO = dayOffset(-6);
+      const seeded = await admin.from("session_substitution_requests").insert(
+        [LAST_WEEK, SIX_DAYS_AGO].map((date) => ({
+          group_id: GROUP,
+          session_date: date,
+          requested_by: TEST_IDS.GEDU,
+          role: "primary" as const,
+          reason: "other" as const,
+          status: "substituted" as const,
+          substitute_id: subId,
+          approved_by: TEST_IDS.ADMIN,
+          approved_at: new Date().toISOString(),
+        })),
+      );
+      expect(seeded.error).toBeNull();
+      expect((await cancel(LAST_WEEK, "Holiday")).error).toBeNull();
+
+      const subAuth = await createAuthenticatedClient(email, "testpassword123");
+      const { data, error } = await subAuth.rpc("get_my_assigned_products");
+      expect(error).toBeNull();
+      const cards = myAssignedProductRows
+        .parse(data)
+        .filter((row) => row.group_id === GROUP && row.kind === "substitution");
+      expect(
+        cards
+          .map((row) => [row.substitution_date, row.substitution_cancelled])
+          .sort(),
+      ).toEqual([
+        [LAST_WEEK, true],
+        [SIX_DAYS_AGO, false],
+      ]);
+      // Out of the window the next-session reads use, and cancelled all the same.
+      expect(cards.every((row) => !row.cancelled_dates.includes(LAST_WEEK))).toBe(
+        true,
+      );
+    } finally {
+      await admin
+        .from("session_substitution_requests")
+        .delete()
+        .eq("substitute_id", subId);
+      await admin.auth.admin.deleteUser(subId);
+    }
+  });
+
   it("hands a family its own seats' upcoming cancelled dates and nothing more", async () => {
     for (const date of [LAST_WEEK, TOMORROW]) {
       expect((await cancel(date, "Holiday")).error).toBeNull();

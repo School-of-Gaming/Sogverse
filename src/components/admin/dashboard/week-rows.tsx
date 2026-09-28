@@ -190,12 +190,17 @@ function SessionChip({ chip }: { chip: ScheduleChip }) {
  *
  * Neutral ink either way. A cancellation is news, not a fault, and the row
  * already has one mark that means "needs you"; this must not compete with it.
- * Shared with the coming-up feed, whose lines name the same dates.
+ * Shared with the coming-up feed, whose lines name the same dates — and which
+ * passes its own words for the all-cancelled case, because beside "starts" a
+ * bare "Cancelled" reads as the whole club being called off.
  */
 export function DateCancellationNote({
   cancellation,
+  allLabel,
 }: {
   cancellation: DateCancellation;
+  /** What to say when every group cancelled; the feeds' "Cancelled" when absent. */
+  allLabel?: string;
 }) {
   const b = useTranslations("sessionBadge");
   const t = useTranslations("admin.dashboard.cancellation");
@@ -209,7 +214,7 @@ export function DateCancellationNote({
         className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-muted-foreground"
       >
         <CalendarX className="h-3 w-3 shrink-0" aria-hidden />
-        {b("cancelled")}
+        {allLabel ?? b("cancelled")}
       </span>
     );
   }

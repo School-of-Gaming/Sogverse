@@ -53,6 +53,12 @@ export const myAssignedProductRows = z.array(
      * product-local today onwards, ascending — dates only, never a reason.
      */
     cancelled_dates: z.array(z.string()),
+    /**
+     * Whether a `substitution` row's own date is cancelled, asked of that date
+     * rather than of `cancelled_dates`, whose window the card outlives; false
+     * on an `assignment` row.
+     */
+    substitution_cancelled: z.boolean(),
   })
 );
 

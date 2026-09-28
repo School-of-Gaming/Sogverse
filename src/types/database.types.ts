@@ -3283,6 +3283,7 @@ export type Database = {
           product_type: Database["public"]["Enums"]["product_type"]
           schedule_slots: Json
           start_date: string
+          substitution_cancelled: boolean
           substitution_date: string
           timezone: string
         }[]

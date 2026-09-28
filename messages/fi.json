@@ -341,7 +341,12 @@
       },
       "cancellation": {
         "allTitle": "Tämän päivän kerta on peruttu kaikilta ryhmiltä",
-        "some": "Peruttu: {cancelled}/{groups} ryhmää"
+        "some": "Peruttu: {cancelled}/{groups} ryhmää",
+        "allComingUp": {
+          "starts": "ensimmäinen kerta peruttu",
+          "ends": "viimeinen kerta peruttu",
+          "runs": "peruttu"
+        }
       },
       "comingUp": {
         "label": "Tulossa",

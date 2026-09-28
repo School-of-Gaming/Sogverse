@@ -51,6 +51,7 @@ function row(over: {
     kind: "assignment",
     substitutionDate: null,
     cancelledDates: over.cancelledDates ?? [],
+    substitutionCancelled: false,
     groupCount: 2,
     participantCount: 14,
     groupName: `${over.name} A`,
@@ -649,15 +650,29 @@ describe("rollUpGeduSubstitutions", () => {
     const [cancelled, running] = rollUpSubstitutions([
       {
         ...substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
-        cancelledDates: ["2026-02-16"],
+        substitutionCancelled: true,
       },
       {
+        // Another date of the group being cancelled says nothing about this one.
         ...substitutionRow({ id: "p2", name: "Other Club", substitutionDate: "2026-02-23" }),
         cancelledDates: ["2026-03-02"],
       },
     ]);
     expect(cancelled.cancelled).toBe(true);
     expect(running.cancelled).toBe(false);
+  });
+
+  it("keeps a cancelled substitution cancelled once its date leaves the upcoming window", () => {
+    // `cancelledDates` runs from the day before today, and the card outlives
+    // that by days: the row's own flag is what the card reads.
+    const [substitution] = rollUpSubstitutions([
+      {
+        ...substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
+        cancelledDates: [],
+        substitutionCancelled: true,
+      },
+    ]);
+    expect(substitution.cancelled).toBe(true);
   });
 
   it("opens the workspace 48 hours before the substituted session's own start", () => {
