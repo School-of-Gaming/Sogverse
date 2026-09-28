@@ -928,7 +928,7 @@ function ClubRows({ club, locale }: { club: InvoiceClub; locale: string }) {
               them would make the club's dates read as a different kind of thing
               from the club. */}
           <td />
-          <td colSpan={5} className="pb-2">
+          <td colSpan={5} className="pb-2 pt-1">
             <ClubSessionDetail club={club} locale={locale} />
           </td>
         </tr>
@@ -981,7 +981,7 @@ function ClubSessionDetail({
             spoken for. */}
         {club.locationName !== null && (
           <tr>
-            <td colSpan={2} className="pb-1 text-muted-foreground">
+            <td colSpan={2} className="py-1 text-muted-foreground">
               {club.locationName}
             </td>
           </tr>
