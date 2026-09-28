@@ -4929,10 +4929,13 @@
       "nameWithNickname": "{firstName} “<nick>{nickname}</nick>” {lastName}",
       "firstNameWithNickname": "{firstName} “<nick>{nickname}</nick>”",
       "geduTitle": "Gedu · Game Educator",
-      "languages": "Languages",
-      "writtenIn": "Written in {language}",
+      "speaks": "Speaks",
       "aboutMe": "About me",
-      "funFact": "Fun fact"
+      "funFact": "Fun fact",
+      "draft": {
+        "shortDescription": "Your one-line intro appears here",
+        "longDescription": "What you write in “About me” appears here"
+      }
     },
     "edit": {
       "back": "Back to settings",
@@ -4941,17 +4944,17 @@
       "introAdmin": "Your card on School of Gaming’s public team page. While it is switched on, changes you save go live straight away.",
       "status": {
         "privateTitle": "Private",
-        "privateBody": "Only you can see your card. When you are happy with it, tick “My profile is ready to be public” at the end of the form.",
+        "privateBody": "Only you can see your card. When you are happy with it, tick “My profile is ready to be public” below and save.",
         "waitingTitle": "Ready, waiting for an admin",
         "waitingBody": "An admin will look at your card and put it on the team page. You can keep editing in the meantime.",
         "liveTitle": "Live on the team page",
-        "liveBody": "Anyone can see your card. Changes you save go live straight away, and unticking “My profile is ready to be public” takes it down at once.",
+        "liveBody": "Anyone can see your card. Changes you save go live straight away. To take it down, untick “My profile is ready to be public” and save.",
         "takenOffTitle": "Ready, but an admin has taken it off the team page",
         "takenOffBody": "Your card is not public at the moment. Contact the office if you would like to know why, or to get it back up.",
         "shownTitle": "On the team page",
         "shownBody": "Anyone can see your card. Changes you save go live straight away.",
         "hiddenTitle": "Not on the team page",
-        "hiddenBody": "Only you can see your card. Tick “Show my profile on the team page” at the end of the form when it is ready."
+        "hiddenBody": "Only you can see your card. When it is ready, tick “Show my profile on the team page” below and save."
       },
       "actions": {
         "save": "Save changes",
@@ -4960,11 +4963,12 @@
       "switch": {
         "heading": "Team page",
         "readyLabel": "My profile is ready to be public",
-        "readyHint": "Ticking this means you agree to School of Gaming showing your profile publicly on its website. An admin looks at it before it first goes up. Untick it at any time and it comes down straight away.",
+        "readyHint": "Ticking this and saving means you agree to School of Gaming showing your profile publicly on its website. An admin looks at it before it first goes up. Untick it and save at any time, and it comes down straight away.",
         "showLabel": "Show my profile on the team page",
-        "showHint": "Ticking this puts your profile on School of Gaming’s public website straight away. Untick it at any time and it comes down.",
+        "showHint": "Ticking this and saving puts your profile on School of Gaming’s public website straight away. Untick it and save at any time, and it comes down.",
         "complete": "Your card has everything the team page needs.",
         "mustStayComplete": "While this is ticked your card has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box to keep working on it privately.",
+        "takesEffectOnSave": "This change takes effect when you save.",
         "missing": {
           "photo": "Add a photo to be able to tick this.",
           "text": "Fill in “Introduce yourself in one line” and “About me” in every language you write in to be able to tick this.",
@@ -4976,7 +4980,25 @@
         "upload": "Upload photo",
         "replace": "Replace photo",
         "remove": "Remove photo",
-        "hint": "A portrait photo of you, which you crop to fit the frame. JPEG, PNG or WebP.",
+        "guidance": {
+          "intro": "Families and gamers meet you here first, so let them see the real you. You crop the photo to fit the frame once you have picked it.",
+          "doHeading": "Do",
+          "dontHeading": "Don’t",
+          "do": {
+            "you": "Just you, head and shoulders, with your face clearly visible",
+            "light": "Good light: facing a window works wonders",
+            "smile": "A real smile",
+            "gear": "Your gaming setup, headset or controller: all welcome",
+            "background": "A tidy or plain background"
+          },
+          "dont": {
+            "others": "Children or anyone else in the frame. This is a safeguarding rule: a photo with a child in it cannot be used.",
+            "hidden": "Sunglasses, masks or anything hiding your face",
+            "group": "Group shots, or yourself cropped out of one",
+            "avatar": "Avatars, cartoons or heavy filters instead of you",
+            "blurry": "Blurry or dark shots"
+          }
+        },
         "crop": {
           "title": "Crop your photo",
           "description": "Drag the photo to place it in the frame, and zoom to fit.",
@@ -4990,10 +5012,12 @@
       "about": {
         "heading": "About you",
         "nickname": "Gamers know me as",
-        "nicknamePlaceholder": "For example: Creeperhug",
+        "nicknamePlaceholder": "PixelPirate",
         "nicknameHint": "Shown in quotes in your name, exactly as you write it.",
         "title": "Title",
-        "titleHint": "Your job at School of Gaming, for example Head of Clubs."
+        "titleHint": "Your job at School of Gaming, for example Head of Clubs.",
+        "pick": "Your colour",
+        "pickHint": "Frames your photo and underlines your name on the team page. We have picked one to start you off; choose any you like."
       },
       "writing": {
         "heading": "In your own words",
@@ -5002,12 +5026,12 @@
         "addLocale": "Add a language",
         "removeLocale": "Remove {locale}",
         "shortDescription": "Introduce yourself in one line",
-        "shortDescriptionPlaceholder": "For example: Redstone nerd and build-challenge enthusiast",
+        "shortDescriptionPlaceholder": "Redstone nerd and speedrun fan",
         "longDescription": "About me",
         "longDescriptionHint": "What you do in sessions, what you play, and what families might like to know about you.",
         "longDescriptionPlaceholder": "Tell families a little about yourself",
         "funFact": "Fun fact",
-        "funFactPlaceholder": "For example: I once built a working calculator in Minecraft.",
+        "funFactPlaceholder": "I once built a working calculator in Minecraft.",
         "count": "{count}/{max}"
       },
       "preview": {

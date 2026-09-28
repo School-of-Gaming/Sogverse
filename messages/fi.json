@@ -4929,10 +4929,13 @@
       "nameWithNickname": "{firstName} ”<nick>{nickname}</nick>” {lastName}",
       "firstNameWithNickname": "{firstName} ”<nick>{nickname}</nick>”",
       "geduTitle": "Gedu · pelikasvattaja",
-      "languages": "Kielet",
-      "writtenIn": "Kirjoitettu kielellä {language}",
+      "speaks": "Puhuu",
       "aboutMe": "Minusta",
-      "funFact": "Hauska fakta"
+      "funFact": "Hauska fakta",
+      "draft": {
+        "shortDescription": "Yhden rivin esittelysi näkyy tässä",
+        "longDescription": "”Minusta”-tekstisi näkyy tässä"
+      }
     },
     "edit": {
       "back": "Takaisin asetuksiin",
@@ -4941,17 +4944,17 @@
       "introAdmin": "Korttisi School of Gamingin julkisella tiimisivulla. Kun se on näkyvissä, tallentamasi muutokset tulevat voimaan heti.",
       "status": {
         "privateTitle": "Yksityinen",
-        "privateBody": "Vain sinä näet korttisi. Kun olet siihen tyytyväinen, rastita lomakkeen lopussa ”Profiilini on valmis julkaistavaksi”.",
+        "privateBody": "Vain sinä näet korttisi. Kun olet siihen tyytyväinen, rastita alta ”Profiilini on valmis julkaistavaksi” ja tallenna.",
         "waitingTitle": "Valmis, odottaa ylläpitäjää",
         "waitingBody": "Ylläpitäjä katsoo korttisi ja lisää sen tiimisivulle. Voit jatkaa muokkaamista sillä välin.",
         "liveTitle": "Julkaistu tiimisivulla",
-        "liveBody": "Kuka tahansa näkee korttisi. Tallentamasi muutokset tulevat voimaan heti, ja kun poistat rastin kohdasta ”Profiilini on valmis julkaistavaksi”, kortti poistuu sivulta saman tien.",
+        "liveBody": "Kuka tahansa näkee korttisi. Tallentamasi muutokset tulevat voimaan heti. Jos haluat poistaa kortin sivulta, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna.",
         "takenOffTitle": "Valmis, mutta ylläpitäjä on poistanut sen tiimisivulta",
         "takenOffBody": "Korttisi ei ole tällä hetkellä julkinen. Ota yhteyttä toimistoon, jos haluat tietää syyn tai saada sen takaisin sivulle.",
         "shownTitle": "Tiimisivulla",
         "shownBody": "Kuka tahansa näkee korttisi. Tallentamasi muutokset tulevat voimaan heti.",
         "hiddenTitle": "Ei tiimisivulla",
-        "hiddenBody": "Vain sinä näet korttisi. Rastita lomakkeen lopussa ”Näytä profiilini tiimisivulla”, kun se on valmis."
+        "hiddenBody": "Vain sinä näet korttisi. Kun se on valmis, rastita alta ”Näytä profiilini tiimisivulla” ja tallenna."
       },
       "actions": {
         "save": "Tallenna muutokset",
@@ -4960,11 +4963,12 @@
       "switch": {
         "heading": "Tiimisivu",
         "readyLabel": "Profiilini on valmis julkaistavaksi",
-        "readyHint": "Rastittamalla hyväksyt, että School of Gaming näyttää profiilisi julkisesti verkkosivuillaan. Ylläpitäjä katsoo sen ennen kuin se julkaistaan ensimmäisen kerran. Voit poistaa rastin milloin tahansa, ja profiili poistuu heti.",
+        "readyHint": "Rastittamalla ja tallentamalla hyväksyt, että School of Gaming näyttää profiilisi julkisesti verkkosivuillaan. Ylläpitäjä katsoo sen ennen kuin se julkaistaan ensimmäisen kerran. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili poistuu heti.",
         "showLabel": "Näytä profiilini tiimisivulla",
-        "showHint": "Rastittamalla profiilisi tulee heti School of Gamingin julkisille verkkosivuille. Voit poistaa rastin milloin tahansa, ja profiili poistuu.",
+        "showHint": "Rastittamalla ja tallentamalla profiilisi tulee heti School of Gamingin julkisille verkkosivuille. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili poistuu.",
         "complete": "Kortissasi on kaikki, mitä tiimisivu tarvitsee.",
         "mustStayComplete": "Kun tämä on rastitettu, korttisi täytyy pysyä täydellisenä, joten tallennus on pois käytöstä, kunnes se on. Täydennä puuttuvat kohdat tai poista rasti jatkaaksesi yksityisesti.",
+        "takesEffectOnSave": "Muutos tulee voimaan, kun tallennat.",
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
           "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
@@ -4976,7 +4980,25 @@
         "upload": "Lataa kuva",
         "replace": "Vaihda kuva",
         "remove": "Poista kuva",
-        "hint": "Pystykuva sinusta, jonka rajaat kehykseen sopivaksi. JPEG, PNG tai WebP.",
+        "guidance": {
+          "intro": "Perheet ja pelaajat tapaavat sinut ensimmäisenä täällä, joten näytä heille oikea sinä. Rajaat kuvan kehykseen sopivaksi, kun olet valinnut sen.",
+          "doHeading": "Tee näin",
+          "dontHeading": "Vältä",
+          "do": {
+            "you": "Vain sinä, pää ja hartiat, kasvot selvästi näkyvissä",
+            "light": "Hyvä valo: ikkunaa kohti kääntyminen tekee ihmeitä",
+            "smile": "Aito hymy",
+            "gear": "Pelisetuppisi, kuulokkeet tai ohjain ovat tervetulleita",
+            "background": "Siisti tai pelkistetty tausta"
+          },
+          "dont": {
+            "others": "Lapsia tai muita ihmisiä kuvassa. Tämä on lastensuojelusääntö: kuvaa, jossa on lapsi, ei voi käyttää.",
+            "hidden": "Aurinkolaseja, maskeja tai mitään, mikä peittää kasvosi",
+            "group": "Ryhmäkuvia tai itseäsi rajattuna ryhmäkuvasta",
+            "avatar": "Avatareja, piirroshahmoja tai raskaita filttereitä oman kuvasi sijaan",
+            "blurry": "Sumeita tai tummia kuvia"
+          }
+        },
         "crop": {
           "title": "Rajaa kuvasi",
           "description": "Vedä kuva paikalleen kehyksessä ja zoomaa sopivaksi.",
@@ -4990,10 +5012,12 @@
       "about": {
         "heading": "Sinusta",
         "nickname": "Pelaajat tuntevat minut nimellä",
-        "nicknamePlaceholder": "Esimerkiksi: Creeperhug",
+        "nicknamePlaceholder": "PixelPirate",
         "nicknameHint": "Näkyy lainausmerkeissä nimesi keskellä juuri niin kuin sen kirjoitat.",
         "title": "Titteli",
-        "titleHint": "Tehtäväsi School of Gamingissa, esimerkiksi kerhovastaava."
+        "titleHint": "Tehtäväsi School of Gamingissa, esimerkiksi kerhovastaava.",
+        "pick": "Värisi",
+        "pickHint": "Kehystää kuvasi ja alleviivaa nimesi tiimisivulla. Valitsimme sinulle yhden valmiiksi, mutta voit valita minkä tahansa."
       },
       "writing": {
         "heading": "Omin sanoin",
@@ -5002,12 +5026,12 @@
         "addLocale": "Lisää kieli",
         "removeLocale": "Poista {locale}",
         "shortDescription": "Esittele itsesi yhdellä rivillä",
-        "shortDescriptionPlaceholder": "Esimerkiksi: Redstone-nörtti ja rakennushaasteiden ystävä",
+        "shortDescriptionPlaceholder": "Redstone-nörtti ja speedrun-fani",
         "longDescription": "Minusta",
         "longDescriptionHint": "Mitä teet sessioissa, mitä pelaat ja mitä perheet voisivat haluta tietää sinusta.",
         "longDescriptionPlaceholder": "Kerro perheille vähän itsestäsi",
         "funFact": "Hauska fakta",
-        "funFactPlaceholder": "Esimerkiksi: Rakensin kerran toimivan laskimen Minecraftissa.",
+        "funFactPlaceholder": "Rakensin kerran toimivan laskimen Minecraftissa.",
         "count": "{count}/{max}"
       },
       "preview": {

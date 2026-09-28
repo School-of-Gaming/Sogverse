@@ -14,12 +14,13 @@ import type { GeduTeamCardApproval } from "@/components/team/team-card-editor-bo
  * picture of a person. A real upload is cropped to 4:5 before it is stored;
  * this art is square, tall and wide, and the frame covers it, which is also
  * what shows a crop of the wrong shape would still sit right. Ids are real
- * UUIDs because a card with no photo draws an identicon from its id.
+ * UUIDs because a card with no pick derives its colour from its id.
  *
  * The languages are chosen so the translation fallback shows: Laura writes in
  * English only, Eetu in English and Finnish, and Saana in Finnish only — so an
- * English, Swedish or French reader of Saana's page meets her Finnish with a
- * caption saying so. Eetu and Laura have a fun fact; Saana does not.
+ * English, Swedish or French reader of Saana's page meets her Finnish. Eetu and
+ * Laura have a fun fact; Saana does not. Laura and Eetu picked a colour; Saana
+ * has not, so her card shows the one her id derives.
  */
 
 const LAURA: AdminTeamProfile = {
@@ -29,6 +30,7 @@ const LAURA: AdminTeamProfile = {
   lastName: "Virtanen",
   nickname: "Nightowl",
   title: "Head of Clubs",
+  pick: 11,
   photo: { src: "/preview-art/session-badge.jpg", width: 1200, height: 1200 },
   translations: [
     {
@@ -58,6 +60,7 @@ const EETU: GeduTeamProfile = {
   id: "eadea095-24f1-40cd-bc31-e898edc9ab3a",
   firstName: "Eetu",
   nickname: "Creeperhug",
+  pick: 6,
   photo: { src: "/preview-art/session-tower.jpg", width: 900, height: 1600 },
   translations: [
     {
@@ -67,7 +70,7 @@ const EETU: GeduTeamProfile = {
       longDescription: [
         "I run Minecraft and Rocket League sessions, mostly in Helsinki and Espoo.",
         "",
-        "## In my sessions",
+        "**In my sessions:**",
         "",
         "- Build challenges where every team finishes something they are proud of",
         "- Redstone doors, traps and the occasional very loud machine",
@@ -85,7 +88,7 @@ const EETU: GeduTeamProfile = {
       longDescription: [
         "Vedän Minecraft- ja Rocket League -sessioita, enimmäkseen Helsingissä ja Espoossa.",
         "",
-        "## Sessioissani",
+        "**Sessioissani:**",
         "",
         "- Rakennushaasteita, joissa jokainen tiimi saa valmiiksi jotain, mistä on ylpeä",
         "- Redstone-ovia, ansoja ja välillä tosi äänekkäitä koneita",
@@ -105,6 +108,7 @@ const SAANA: GeduTeamProfile = {
   id: "e401c5af-f126-4e16-bf00-784b8fc438c7",
   firstName: "Saana",
   nickname: null,
+  pick: null,
   photo: { src: "/preview-art/session-parkour.jpg", width: 1440, height: 810 },
   translations: [
     {
@@ -176,7 +180,7 @@ export interface GeduTeamCardFixture {
 /**
  * Saana's card the day she opens the editor: a few words in Finnish and no
  * photo, so the switch is disabled with both reasons, and the preview shows
- * the identicon and the half-written text.
+ * the drawn placeholder, her one line, and "About me" holding its place.
  */
 const SAANA_NEW: GeduTeamProfile = {
   ...SAANA,

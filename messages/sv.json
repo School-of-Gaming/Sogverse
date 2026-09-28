@@ -4929,10 +4929,13 @@
       "nameWithNickname": "{firstName} ”<nick>{nickname}</nick>” {lastName}",
       "firstNameWithNickname": "{firstName} ”<nick>{nickname}</nick>”",
       "geduTitle": "Gedu · spelfostrare",
-      "languages": "Språk",
-      "writtenIn": "Skrivet på {language}",
+      "speaks": "Talar",
       "aboutMe": "Om mig",
-      "funFact": "Kul fakta"
+      "funFact": "Kul fakta",
+      "draft": {
+        "shortDescription": "Din presentation på en rad visas här",
+        "longDescription": "Det du skriver under ”Om mig” visas här"
+      }
     },
     "edit": {
       "back": "Tillbaka till inställningar",
@@ -4941,17 +4944,17 @@
       "introAdmin": "Ditt kort på School of Gamings offentliga teamsida. När det är påslaget syns ändringar du sparar direkt.",
       "status": {
         "privateTitle": "Privat",
-        "privateBody": "Bara du ser ditt kort. När du är nöjd kryssar du i ”Min profil är redo att bli offentlig” i slutet av formuläret.",
+        "privateBody": "Bara du ser ditt kort. När du är nöjd kryssar du i ”Min profil är redo att bli offentlig” nedan och sparar.",
         "waitingTitle": "Klart, väntar på en administratör",
         "waitingBody": "En administratör tittar på ditt kort och lägger upp det på teamsidan. Du kan fortsätta redigera under tiden.",
         "liveTitle": "Publicerat på teamsidan",
-        "liveBody": "Vem som helst kan se ditt kort. Ändringar du sparar syns direkt, och tar du bort krysset vid ”Min profil är redo att bli offentlig” försvinner det genast.",
+        "liveBody": "Vem som helst kan se ditt kort. Ändringar du sparar syns direkt. Vill du ta ner det tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar.",
         "takenOffTitle": "Klart, men en administratör har tagit bort det från teamsidan",
         "takenOffBody": "Ditt kort är inte offentligt just nu. Kontakta kontoret om du vill veta varför eller få upp det igen.",
         "shownTitle": "På teamsidan",
         "shownBody": "Vem som helst kan se ditt kort. Ändringar du sparar syns direkt.",
         "hiddenTitle": "Inte på teamsidan",
-        "hiddenBody": "Bara du ser ditt kort. Kryssa i ”Visa min profil på teamsidan” i slutet av formuläret när det är klart."
+        "hiddenBody": "Bara du ser ditt kort. När det är klart kryssar du i ”Visa min profil på teamsidan” nedan och sparar."
       },
       "actions": {
         "save": "Spara ändringarna",
@@ -4960,11 +4963,12 @@
       "switch": {
         "heading": "Teamsidan",
         "readyLabel": "Min profil är redo att bli offentlig",
-        "readyHint": "Genom att kryssa i detta godkänner du att School of Gaming visar din profil offentligt på sin webbplats. En administratör tittar på den innan den publiceras första gången. Ta bort krysset när som helst så försvinner den direkt.",
+        "readyHint": "Genom att kryssa i detta och spara godkänner du att School of Gaming visar din profil offentligt på sin webbplats. En administratör tittar på den innan den publiceras första gången. Ta bort krysset och spara när som helst så försvinner den direkt.",
         "showLabel": "Visa min profil på teamsidan",
-        "showHint": "Genom att kryssa i detta hamnar din profil direkt på School of Gamings offentliga webbplats. Ta bort krysset när som helst så försvinner den.",
+        "showHint": "Genom att kryssa i detta och spara hamnar din profil direkt på School of Gamings offentliga webbplats. Ta bort krysset och spara när som helst så försvinner den.",
         "complete": "Ditt kort har allt som teamsidan behöver.",
         "mustStayComplete": "Medan detta är ikryssat måste ditt kort vara komplett, så det går inte att spara förrän det är det. Fyll i det som saknas, eller ta bort krysset för att fortsätta privat.",
+        "takesEffectOnSave": "Ändringen gäller när du sparar.",
         "missing": {
           "photo": "Lägg till ett foto för att kunna kryssa i detta.",
           "text": "Fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
@@ -4976,7 +4980,25 @@
         "upload": "Ladda upp foto",
         "replace": "Byt foto",
         "remove": "Ta bort foto",
-        "hint": "Ett porträttfoto av dig, som du beskär så att det passar ramen. JPEG, PNG eller WebP.",
+        "guidance": {
+          "intro": "Familjer och gamers möter dig först här, så visa dem den riktiga du. Du beskär fotot så att det passar ramen när du har valt det.",
+          "doHeading": "Gör så här",
+          "dontHeading": "Undvik",
+          "do": {
+            "you": "Bara du, huvud och axlar, med ansiktet väl synligt",
+            "light": "Bra ljus: att vända dig mot ett fönster gör underverk",
+            "smile": "Ett äkta leende",
+            "gear": "Din gaming-setup, ditt headset eller din handkontroll är välkomna",
+            "background": "En städad eller enkel bakgrund"
+          },
+          "dont": {
+            "others": "Barn eller andra personer i bilden. Det här är en regel för barns trygghet: ett foto med ett barn i kan inte användas.",
+            "hidden": "Solglasögon, masker eller något som döljer ansiktet",
+            "group": "Gruppbilder, eller du själv beskuren ur en",
+            "avatar": "Avatarer, tecknade bilder eller kraftiga filter i stället för dig",
+            "blurry": "Suddiga eller mörka bilder"
+          }
+        },
         "crop": {
           "title": "Beskär ditt foto",
           "description": "Dra fotot för att placera det i ramen och zooma så att det passar.",
@@ -4990,10 +5012,12 @@
       "about": {
         "heading": "Om dig",
         "nickname": "Gamers känner mig som",
-        "nicknamePlaceholder": "Till exempel: Creeperhug",
+        "nicknamePlaceholder": "PixelPirate",
         "nicknameHint": "Visas inom citattecken i ditt namn, precis som du skriver den.",
         "title": "Titel",
-        "titleHint": "Ditt jobb på School of Gaming, till exempel klubbansvarig."
+        "titleHint": "Ditt jobb på School of Gaming, till exempel klubbansvarig.",
+        "pick": "Din färg",
+        "pickHint": "Ramar in ditt foto och stryker under ditt namn på teamsidan. Vi har valt en åt dig till att börja med, men du kan välja vilken du vill."
       },
       "writing": {
         "heading": "Med egna ord",
@@ -5002,12 +5026,12 @@
         "addLocale": "Lägg till språk",
         "removeLocale": "Ta bort {locale}",
         "shortDescription": "Presentera dig på en rad",
-        "shortDescriptionPlaceholder": "Till exempel: Redstone-nörd och byggutmaningsentusiast",
+        "shortDescriptionPlaceholder": "Redstone-nörd och speedrun-fan",
         "longDescription": "Om mig",
         "longDescriptionHint": "Vad du gör på sessionerna, vad du spelar och vad familjer kan vilja veta om dig.",
         "longDescriptionPlaceholder": "Berätta lite om dig själv för familjerna",
         "funFact": "Kul fakta",
-        "funFactPlaceholder": "Till exempel: Jag har byggt en fungerande miniräknare i Minecraft.",
+        "funFactPlaceholder": "Jag har byggt en fungerande miniräknare i Minecraft.",
         "count": "{count}/{max}"
       },
       "preview": {

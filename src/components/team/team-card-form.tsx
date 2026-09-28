@@ -1,16 +1,17 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
-import { Trash2, Upload, X } from "lucide-react";
+import { Check, Trash2, Upload, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { PICKS, type PickId } from "@sog/ui";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { RichNoteField } from "@/components/gedu/session-feed/RichNoteField";
+import { ZoneColorPicker } from "@/components/voice/ZoneColorPicker";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import {
   LOCALE_CONFIG,
@@ -31,6 +32,8 @@ import {
   decodeTeamPhoto,
   type TeamPhotoSource,
 } from "@/components/team/team-photo-crop-dialog";
+import { TeamPhotoPlaceholder } from "@/components/team/team-photo-placeholder";
+import { derivedTeamPick, teamPick } from "@/components/team/team-pick";
 
 // ---------------------------------------------------------------------------
 // The form's state, and the conversions around it
@@ -76,6 +79,12 @@ export interface TeamCardForm {
   nickname: string;
   /** The office title. Unused for a Gedu, whose title is the role. */
   title: string;
+  /**
+   * The swatch shown selected: the person's pick, or the one their id derives
+   * while they have not chosen, so the picker always opens on the colour the
+   * card is actually drawn in.
+   */
+  pick: PickId;
   photo: TeamProfilePhoto | null;
   translations: Partial<Record<SupportedLocale, TeamCardTranslationDraft>>;
   activeLocale: SupportedLocale;
@@ -92,6 +101,12 @@ export interface TeamCardForm {
 export interface TeamCardContent {
   nickname: string | null;
   title: string | null;
+  /**
+   * `null` while the person's colour is the one their id derives — whether
+   * they never touched the picker or chose that same swatch — so choosing the
+   * colour the card already has is not a change.
+   */
+  pick: PickId | null;
   photo: TeamProfilePhoto | null;
   translations: readonly TeamProfileTranslation[];
 }
@@ -115,6 +130,7 @@ export function formFromProfile(
   return {
     nickname: profile.nickname ?? "",
     title: profile.kind === "admin" ? profile.title : "",
+    pick: teamPick(profile),
     photo: profile.photo,
     translations,
     activeLocale: first ?? uiLocale,
@@ -123,7 +139,7 @@ export function formFromProfile(
 
 export function contentFromForm(
   form: TeamCardForm,
-  kind: TeamProfile["kind"],
+  card: Pick<TeamProfile, "id" | "kind">,
 ): TeamCardContent {
   const translations: TeamProfileTranslation[] = [];
   for (const locale of SUPPORTED_LOCALES) {
@@ -144,7 +160,8 @@ export function contentFromForm(
   }
   return {
     nickname: form.nickname.trim() || null,
-    title: kind === "admin" ? form.title.trim() : null,
+    title: card.kind === "admin" ? form.title.trim() : null,
+    pick: form.pick === derivedTeamPick(card.id) ? null : form.pick,
     photo: form.photo,
     translations,
   };
@@ -152,7 +169,7 @@ export function contentFromForm(
 
 export function contentFromProfile(profile: TeamProfile): TeamCardContent {
   // The locale only picks an empty first tab, which is not content.
-  return contentFromForm(formFromProfile(profile, "en"), profile.kind);
+  return contentFromForm(formFromProfile(profile, "en"), profile);
 }
 
 /** Whether two cards say the same thing. */
@@ -168,6 +185,7 @@ export function profileWithContent<P extends TeamProfile>(
   return {
     ...base,
     nickname: content.nickname,
+    pick: content.pick,
     photo: content.photo,
     translations: content.translations,
     ...(base.kind === "admin" && content.title !== null
@@ -200,6 +218,30 @@ export function teamCardGap(content: TeamCardContent): TeamCardGap {
 // ---------------------------------------------------------------------------
 // The sections
 // ---------------------------------------------------------------------------
+
+/**
+ * Height of the writing surface, matched by the placeholder that stands in for
+ * it while the chunk is in flight: the toolbar (`h-10`) plus the editor body's
+ * `min-h-40`, so the box does not change size when the editor arrives.
+ */
+const RICH_EDITOR_MIN_HEIGHT = "min-h-[12.5rem]";
+
+/**
+ * The rich editor, loaded on demand and never rendered on the server: it is
+ * the heaviest thing on the page, and only the open language tab mounts one.
+ */
+const AboutMeEditor = dynamic(
+  () => import("@/components/ui/rich-text-editor").then((m) => m.RichTextEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        aria-hidden
+        className={`w-full rounded-md border border-border bg-background ${RICH_EDITOR_MIN_HEIGHT}`}
+      />
+    ),
+  },
+);
 
 type FormUpdate = (update: (form: TeamCardForm) => TeamCardForm) => void;
 
@@ -245,12 +287,10 @@ export function FormSection({
  * shows it any more.
  */
 export function TeamCardPhotoSection({
-  personId,
   photo,
   onCropped,
   update,
 }: {
-  personId: string;
   photo: TeamProfilePhoto | null;
   /** A new crop's bytes and the object URL made for them. */
   onCropped: (blob: Blob, url: string) => void;
@@ -292,7 +332,7 @@ export function TeamCardPhotoSection({
       <div className="flex items-center gap-5">
         <div
           aria-hidden
-          className="relative flex aspect-[4/5] w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-card"
+          className="relative aspect-[4/5] w-24 shrink-0 overflow-hidden rounded-2xl border border-border bg-card"
         >
           {photo ? (
             <Image
@@ -304,10 +344,11 @@ export function TeamCardPhotoSection({
               className="h-full w-full object-cover"
             />
           ) : (
-            <Identicon id={personId} size={96} className="h-auto w-full" />
+            <TeamPhotoPlaceholder className="h-full w-full" />
           )}
         </div>
         <div className="min-w-0 space-y-3">
+          <p className="text-sm">{t("guidance.intro")}</p>
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
@@ -328,9 +369,9 @@ export function TeamCardPhotoSection({
               </Button>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">{t("hint")}</p>
         </div>
       </div>
+      <PhotoGuidance />
       <input
         ref={fileInput}
         type="file"
@@ -363,11 +404,94 @@ export function TeamCardPhotoSection({
   );
 }
 
+const PHOTO_DOS = ["you", "light", "smile", "gear", "background"] as const;
+const PHOTO_DONTS = ["others", "hidden", "group", "avatar", "blurry"] as const;
+
+/**
+ * What makes a good team photo, as a do and a don't list.
+ *
+ * In place of the accepted file types, which the picker already enforces: what
+ * the person needs before choosing a file is what kind of picture we want. The
+ * two lists are marked by a check and a cross in the success and destructive
+ * hues, never by colour alone, and each has small drawn examples at the photo's
+ * own 4:5 — the same figure as the empty frame, so the set reads as one. The
+ * first "don't" is a safeguarding rule and is worded as one.
+ */
+function PhotoGuidance() {
+  const t = useTranslations("team.edit.photo.guidance");
+  return (
+    <div className="grid gap-5 sm:grid-cols-2">
+      <GuidanceList
+        heading={t("doHeading")}
+        tone="do"
+        examples={["you"]}
+        items={PHOTO_DOS.map((key) => ({ key, text: t(`do.${key}`) }))}
+      />
+      <GuidanceList
+        heading={t("dontHeading")}
+        tone="dont"
+        examples={["group", "hidden"]}
+        items={PHOTO_DONTS.map((key) => ({ key, text: t(`dont.${key}`) }))}
+      />
+    </div>
+  );
+}
+
+function GuidanceList({
+  heading,
+  tone,
+  examples,
+  items,
+}: {
+  heading: string;
+  tone: "do" | "dont";
+  examples: readonly ("you" | "group" | "hidden")[];
+  items: readonly { key: string; text: string }[];
+}) {
+  const headingId = useId();
+  const Glyph = tone === "do" ? Check : X;
+  const ink = tone === "do" ? "text-success" : "text-destructive";
+  return (
+    <section aria-labelledby={headingId}>
+      <div className="flex gap-2" aria-hidden>
+        {examples.map((kind) => (
+          <div
+            key={kind}
+            className="aspect-[4/5] w-12 overflow-hidden rounded-md border border-border"
+          >
+            <TeamPhotoPlaceholder kind={kind} className="h-full w-full" />
+          </div>
+        ))}
+      </div>
+      <h3
+        id={headingId}
+        className="mt-3 flex items-center gap-1.5 text-sm font-semibold"
+      >
+        <Glyph className={cn("h-4 w-4", ink)} aria-hidden />
+        {heading}
+      </h3>
+      <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+        {items.map((item) => (
+          <li key={item.key} className="flex items-start gap-2">
+            <Glyph className={cn("mt-0.5 h-4 w-4 shrink-0", ink)} aria-hidden />
+            <span className="min-w-0">{item.text}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 /**
  * The nickname and, for office staff, the title they write for themselves.
  * Everything else the card shows about the person — their name, a Gedu's
  * title, their spoken languages — comes from the account, and the preview
  * beside the form already shows it.
+ *
+ * **Their colour is chosen here too**, from SOG-UI's sixteen picks, through
+ * the same swatch grid a moderator colours a voice zone with. It opens on the
+ * colour the card is drawn in, which is the one their id derives until they
+ * choose.
  */
 export function TeamCardAboutSection({
   kind,
@@ -421,6 +545,19 @@ export function TeamCardAboutSection({
           )}
         </Field>
       )}
+
+      <Field label={t("pick")} hint={t("pickHint")}>
+        {({ labelId }) => (
+          <ZoneColorPicker
+            value={`${form.pick}` as const}
+            labelledBy={labelId}
+            onChange={(key) => {
+              const pick = PICKS.find((p) => `${p.id}` === key)?.id;
+              if (pick !== undefined) update((prev) => ({ ...prev, pick }));
+            }}
+          />
+        )}
+      </Field>
     </FormSection>
   );
 }
@@ -436,9 +573,9 @@ export function TeamCardAboutSection({
  * remains, an "add a language" select for the rest, and the rule of at least
  * one — here enforced by the ready switch rather than by the save.
  *
- * **"About me" is the session feed's rich note field**, which is the no-links
- * editor loaded on demand behind a same-sized placeholder: staff-authored copy
- * on a page families read takes the conservative variant. The editor reads its
+ * **"About me" is the shared rich-text editor in its `profile` variant** — no
+ * links and no headings, matching the public page's renderer of the same name
+ * — loaded on demand behind a same-sized placeholder. The editor reads its
  * content once, at mount, so the locale is its key and switching tabs remounts
  * it on that locale's draft.
  */
@@ -584,16 +721,19 @@ export function TeamCardWritingSection({
         />
       </Field>
 
-      <RichNoteField
-        key={locale}
-        label={t("longDescription")}
-        hint={t("longDescriptionHint")}
-        placeholder={t("longDescriptionPlaceholder")}
-        value={draft.longDescription}
-        seed={0}
-        ready
-        onChange={(longDescription) => setActive({ longDescription })}
-      />
+      <Field label={t("longDescription")} hint={t("longDescriptionHint")}>
+        {({ hintId }) => (
+          <AboutMeEditor
+            key={locale}
+            variant="profile"
+            initialValue={draft.longDescription}
+            placeholder={t("longDescriptionPlaceholder")}
+            ariaLabel={t("longDescription")}
+            describedBy={hintId}
+            onChange={(longDescription) => setActive({ longDescription })}
+          />
+        )}
+      </Field>
 
       <Field
         label={t("funFact")}

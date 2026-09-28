@@ -52,7 +52,9 @@ import { cn } from "@/lib/utils";
  * `feed` is a staff-authored, family-facing note: no links, and headings scaled
  * to the card a report renders in. `marketing` is a product's long description
  * on our own public pages: links are part of the copy's job there, and headings
- * are scaled to a page. Whichever a field stores, both ends of it use the same
+ * are scaled to a page. `profile` is a team member's "About me": no links and
+ * no headings, because the page already titles it. Whichever a field stores,
+ * both ends of it use the same
  * name — a toolbar wider than the renderer is a trap, and a renderer wider than
  * the toolbar is a construct that can only arrive by paste.
  *
@@ -68,7 +70,7 @@ import { cn } from "@/lib/utils";
  * it with a changed React key, which is both cheaper and less surprising than an
  * effect racing the user's typing.
  */
-export type RichTextEditorVariant = "feed" | "marketing";
+export type RichTextEditorVariant = "feed" | "marketing" | "profile";
 
 export function RichTextEditor({
   initialValue,
@@ -105,6 +107,7 @@ export function RichTextEditor({
 }) {
   const t = useTranslations("richText");
   const linksAllowed = variant === "marketing";
+  const headingsAllowed = variant !== "profile";
 
   /**
    * The URL row's draft, and whether it is open.
@@ -151,7 +154,7 @@ export function RichTextEditor({
           "[&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mt-2 [&_ol]:list-decimal [&_ol]:pl-5",
           "[&_li]:leading-relaxed",
           "[&_strong]:font-semibold",
-          linksAllowed ? MARKETING_PROSE : FEED_PROSE,
+          VARIANT_PROSE[variant],
           // Placeholder: the extension marks the first empty node, and the
           // text is drawn as a non-selectable pseudo-element so it never
           // becomes content.
@@ -276,56 +279,59 @@ export function RichTextEditor({
   // Built as data rather than as near-identical JSX blocks: the toolbar is a
   // list, the separators are where the list changes subject, and describing it
   // that way is what keeps "add a button" from meaning "paste twelve lines".
-  const toolGroups: ToolbarTool[][] = [
-    [
-      {
-        key: "bold",
-        label: t("bold"),
-        icon: Bold,
-        run: () => editor?.chain().focus().toggleBold().run(),
-      },
-      {
-        key: "italic",
-        label: t("italic"),
-        icon: Italic,
-        run: () => editor?.chain().focus().toggleItalic().run(),
-      },
-    ],
-    [
-      {
-        key: "title",
-        label: t("title"),
-        icon: Heading1,
-        run: () => editor?.chain().focus().toggleHeading({ level: 1 }).run(),
-      },
-      {
-        key: "heading",
-        label: t("heading"),
-        icon: Heading2,
-        run: () => editor?.chain().focus().toggleHeading({ level: 2 }).run(),
-      },
-      {
-        key: "subheading",
-        label: t("subheading"),
-        icon: Heading3,
-        run: () => editor?.chain().focus().toggleHeading({ level: 3 }).run(),
-      },
-    ],
-    [
-      {
-        key: "bulletList",
-        label: t("bulletList"),
-        icon: List,
-        run: () => editor?.chain().focus().toggleBulletList().run(),
-      },
-      {
-        key: "orderedList",
-        label: t("orderedList"),
-        icon: ListOrdered,
-        run: () => editor?.chain().focus().toggleOrderedList().run(),
-      },
-    ],
+  const markTools: ToolbarTool[] = [
+    {
+      key: "bold",
+      label: t("bold"),
+      icon: Bold,
+      run: () => editor?.chain().focus().toggleBold().run(),
+    },
+    {
+      key: "italic",
+      label: t("italic"),
+      icon: Italic,
+      run: () => editor?.chain().focus().toggleItalic().run(),
+    },
   ];
+  const headingTools: ToolbarTool[] = [
+    {
+      key: "title",
+      label: t("title"),
+      icon: Heading1,
+      run: () => editor?.chain().focus().toggleHeading({ level: 1 }).run(),
+    },
+    {
+      key: "heading",
+      label: t("heading"),
+      icon: Heading2,
+      run: () => editor?.chain().focus().toggleHeading({ level: 2 }).run(),
+    },
+    {
+      key: "subheading",
+      label: t("subheading"),
+      icon: Heading3,
+      run: () => editor?.chain().focus().toggleHeading({ level: 3 }).run(),
+    },
+  ];
+  const listTools: ToolbarTool[] = [
+    {
+      key: "bulletList",
+      label: t("bulletList"),
+      icon: List,
+      run: () => editor?.chain().focus().toggleBulletList().run(),
+    },
+    {
+      key: "orderedList",
+      label: t("orderedList"),
+      icon: ListOrdered,
+      run: () => editor?.chain().focus().toggleOrderedList().run(),
+    },
+  ];
+  // The headings group exists only where the field has headings: a `profile`
+  // field is already titled by the page it renders on.
+  const toolGroups: ToolbarTool[][] = headingsAllowed
+    ? [markTools, headingTools, listTools]
+    : [markTools, listTools];
 
   // Last, and only where the field allows one: the link is the only tool that
   // needs a value typed rather than a state toggled, so it is the one that
@@ -493,8 +499,9 @@ export function richTextExtensions({
           : false,
       // Three levels, because a real write-up opens with a title line and then
       // sections under it. Anything deeper is switched off at the schema, so it
-      // cannot be typed, pasted or undone into existence.
-      heading: { levels: [1, 2, 3] },
+      // cannot be typed, pasted or undone into existence — and a `profile`
+      // field has none at all, so a pasted heading lands as a paragraph.
+      heading: variant === "profile" ? false : { levels: [1, 2, 3] },
     }),
     Placeholder.configure({ placeholder }),
     MarkdownExtension.configure({
@@ -562,6 +569,13 @@ const MARKETING_PROSE = cn(
   "[&_h3]:mt-5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:leading-snug",
   "[&_a]:font-medium [&_a]:text-act [&_a]:underline [&_a]:underline-offset-4",
 );
+
+/** The scale each variant restates; `profile` has no headings to scale. */
+const VARIANT_PROSE: Record<RichTextEditorVariant, string> = {
+  feed: FEED_PROSE,
+  marketing: MARKETING_PROSE,
+  profile: "",
+};
 
 /**
  * **The schemes a link may carry — one decision, and the other half of it is

@@ -4030,10 +4030,13 @@
       "nameWithNickname": "{firstName} “<nick>{nickname}</nick>” {lastName}",
       "firstNameWithNickname": "{firstName} “<nick>{nickname}</nick>”",
       "geduTitle": "Gedu · Quj ghojmoHwI’",
-      "languages": "Holmey",
-      "writtenIn": "{language} Hol ghItlhlu’pu’",
+      "speaks": "jatlh",
       "aboutMe": "jIH",
-      "funFact": "De’ Quch"
+      "funFact": "De’ Quch",
+      "draft": {
+        "shortDescription": "naDev wa’ tlhegh jIH DaghItlhbogh",
+        "longDescription": "naDev “jIH” DaghItlhbogh"
+      }
     },
     "edit": {
       "back": "SeHlaw’Daq yIchegh",
@@ -4042,17 +4045,17 @@
       "introAdmin": "School of Gaming ghom QIn’ay’Daq QIn’ay’lIj. cha’lu’taHvIS, choHmey DapolDI’ SIbI’ leghlu’.",
       "status": {
         "privateTitle": "So’lu’",
-        "privateBody": "SoH neH QIn’ay’lIj Dalegh. bIQuchDI’, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIwIv.",
+        "privateBody": "SoH neH QIn’ay’lIj Dalegh. bIQuchDI’, bIng “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIwIv ’ej yIpol.",
         "waitingTitle": "ghuHmoHlu’, loHwI’ loS",
         "waitingBody": "QIn’ay’lIj legh loHwI’ ’ej ghom QIn’ay’Daq lan. loStaHvIS, choHlaH.",
         "liveTitle": "ghom QIn’ay’Daq leghlu’",
-        "liveBody": "QIn’ay’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. “jIH ’oH: DaH leghlu’ ’e’ vIQap” Dateqchugh, SIbI’ So’lu’.",
+        "liveBody": "QIn’ay’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. So’meH, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIteq ’ej yIpol.",
         "takenOffTitle": "ghuHmoHlu’, ’ach loHwI’ teq",
         "takenOffBody": "DaH QIn’ay’lIj leghlaHbe’ vay’. qatlh? yej’an yIjatlh.",
         "shownTitle": "ghom QIn’ay’Daq",
         "shownBody": "QIn’ay’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’.",
         "hiddenTitle": "ghom QIn’ay’Daq Dabbe’",
-        "hiddenBody": "SoH neH QIn’ay’lIj Dalegh. ghuHmoHDI’, “ghom QIn’ay’Daq jIH yIcha’” yIwIv."
+        "hiddenBody": "SoH neH QIn’ay’lIj Dalegh. ghuHmoHDI’, bIng “ghom QIn’ay’Daq jIH yIcha’” yIwIv ’ej yIpol."
       },
       "actions": {
         "save": "choHmey yIpol",
@@ -4061,11 +4064,12 @@
       "switch": {
         "heading": "ghom QIn’ay’",
         "readyLabel": "jIH ’oH: DaH leghlu’ ’e’ vIQap",
-        "readyHint": "DawIvDI’, School of Gaming Qum’a’Daq jIH cha’ ’e’ Dachaw’. wa’DIch cha’pa’, legh loHwI’. Dateqchugh, SIbI’ So’lu’.",
+        "readyHint": "DawIvDI’ ’ej DapolDI’, School of Gaming Qum’a’Daq jIH cha’ ’e’ Dachaw’. wa’DIch cha’pa’, legh loHwI’. Dateq ’ej DapolDI’, SIbI’ So’lu’.",
         "showLabel": "ghom QIn’ay’Daq jIH yIcha’",
-        "showHint": "DawIvDI’, SIbI’ School of Gaming Qum’a’Daq cha’lu’. Dateqchugh, So’lu’.",
+        "showHint": "DawIvDI’ ’ej DapolDI’, SIbI’ School of Gaming Qum’a’Daq cha’lu’. Dateq ’ej DapolDI’, So’lu’.",
         "complete": "Hoch Daghaj. Qapla’!",
         "mustStayComplete": "wIvlu’taHvIS, naQnIS QIn’ay’lIj. naQbe’chugh, polbe’lu’. yIchu’ pagh yIteq.",
+        "takesEffectOnSave": "DapolDI’ neH choH. Qapla’!",
         "missing": {
           "photo": "mIllogh yIlab, vaj DawIvlaH.",
           "text": "“wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
@@ -4077,7 +4081,25 @@
         "upload": "mIllogh yIlab",
         "replace": "mIllogh yIchoH",
         "remove": "mIllogh yIteq",
-        "hint": "mIllogh ’ab. Dape’. JPEG, PNG, WebP.",
+        "guidance": {
+          "intro": "naDev wa’DIch Du ghom qorDu’pu’ QujwI’pu’ je. vaj nIteb SoH yI’ang! DawIvDI’, mIllogh Dape’.",
+          "doHeading": "yIruch",
+          "dontHeading": "yImev",
+          "do": {
+            "you": "SoH neH: nach ’ej volchaHmey, qab leghlu’",
+            "light": "wov QaQ: HaSta yIbej",
+            "smile": "Hagh teH",
+            "gear": "Quj jan, QoymeH jan, SeHwI’: Hoch Quch",
+            "background": "’em Say’ pagh Dab"
+          },
+          "dont": {
+            "others": "puqpu’ pagh latlhpu’ mIlloghDaq. puq Qan chut ’oH: puq ngaSchugh mIllogh, lo’lu’be’.",
+            "hidden": "Hov leghwI’ ’oy’, QaD mIn pagh qab So’wI’ Hoch",
+            "group": "ghom mIllogh pagh ghom mIlloghvo’ SoH pe’lu’bogh",
+            "avatar": "SoH Daghoch: avatar, Dijlu’bogh ghot pagh mIllogh choHwI’ HoS",
+            "blurry": "mIllogh Hurgh pagh HeSlaw"
+          }
+        },
         "crop": {
           "title": "mIllogh yIpe’",
           "description": "mIllogh yItlhe’ ’ej yItIn’moH.",
@@ -4091,10 +4113,12 @@
       "about": {
         "heading": "SoH",
         "nickname": "QujwI’pu’ jIH ponglu’:",
-        "nicknamePlaceholder": "mu’tlheghvam: Creeperhug",
+        "nicknamePlaceholder": "PixelPirate",
         "nicknameHint": "ponglIjDaq cha’lu’, DaghItlhbogh rur.",
         "title": "patlh",
-        "titleHint": "School of Gaming Daq Qu’lIj. mu’tlheghvam: Head of Clubs."
+        "titleHint": "School of Gaming Daq Qu’lIj. mu’tlheghvam: Head of Clubs.",
+        "pick": "nguvlIj",
+        "pickHint": "mIllogh’a’lIj ’ej ponglIj ghoS. DaH wa’ DIwIv; latlh DawIvlaH."
       },
       "writing": {
         "heading": "mu’meylIj",
@@ -4103,12 +4127,12 @@
         "addLocale": "Hol chu’",
         "removeLocale": "{locale} yIteq",
         "shortDescription": "wa’ tlhegh: jIH",
-        "shortDescriptionPlaceholder": "mu’tlheghvam: redstone Qun ’ej chenmoHwI’",
+        "shortDescriptionPlaceholder": "redstone Qun ’ej chenmoHwI’",
         "longDescription": "jIH",
         "longDescriptionHint": "Quj Dachenmo’, Quj DaQujmo’. qorDu’pu’ yIja’.",
         "longDescriptionPlaceholder": "qorDu’pu’ yIja’",
         "funFact": "De’ Quch",
-        "funFactPlaceholder": "mu’tlheghvam: Minecraft Daq SIvwI’ vIchenmoH.",
+        "funFactPlaceholder": "Minecraft Daq SIvwI’ vIchenmoH.",
         "count": "{count}/{max}"
       },
       "preview": {

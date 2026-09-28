@@ -17,11 +17,11 @@ import type { TeamProfile } from "@/components/team/team-profile-body";
 /**
  * The page a person edits their own team card on, over fixtures — once as a
  * Gedu meets it and once as office staff do, because the two are different
- * chrome (an admin's page carries the sidebar) and a different switch.
+ * chrome (an admin's page carries the sidebar) and a different checkbox.
  *
- * The scene stands in for the route's data shell: saving and the person's own
- * switch update the card and the switch it hands the body, as a refetch would,
- * so save, discard and the status line all behave. The upload is inert — the
+ * The scene stands in for the route's data shell: saving updates the card and
+ * the checkbox it hands the body, as a refetch would, so save, discard and the
+ * status all behave. The upload is inert — the
  * crop runs for real and the form shows the result, but no bytes go anywhere.
  * An admin's approval is the fixture's and does not move here.
  */
@@ -69,9 +69,8 @@ function localActions<P extends TeamProfile>(
 ): TeamCardActions {
   return {
     onUploadPhoto: noop,
-    onSave: (content) => setCard(profileWithContent(card, content)),
-    onSwitch: (on, content) => {
-      if (on) setCard(profileWithContent(card, content));
+    onSave: (content, on) => {
+      setCard(profileWithContent(card, content));
       setSwitch(on);
     },
   };

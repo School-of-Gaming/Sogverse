@@ -39,11 +39,11 @@ import {
 
 /**
  * Where an admin's decision about a Gedu's card stands. It is independent of
- * the Gedu's own switch and survives it being turned off and on again:
+ * the Gedu's own checkbox and survives it being turned off and on again:
  *
  * - `pending` — no admin has approved the card yet.
- * - `approved` — an admin put it up; while the Gedu's switch is on it is live,
- *   and their later edits go live on save, with no second look.
+ * - `approved` — an admin put it up; while the Gedu's checkbox is on it is
+ *   live, and their later edits go live on save, with no second look.
  * - `withdrawn` — an admin took an approved card down.
  */
 export type GeduTeamCardApproval = "pending" | "approved" | "withdrawn";
@@ -55,14 +55,13 @@ export type GeduTeamCardApproval = "pending" | "approved" | "withdrawn";
 export interface TeamCardActions {
   /** A freshly cropped photo's bytes. The form already shows it. */
   onUploadPhoto: (photo: Blob) => void;
-  onSave: (content: TeamCardContent) => void;
   /**
-   * The person's own switch — a Gedu's "ready", an admin's "show". Turning it
-   * on saves what is in the form with it, so what the person agreed to show
-   * is what they were looking at; turning it off saves nothing and takes
-   * effect at once.
+   * Save the card and the person's own checkbox together — a Gedu's "ready",
+   * an admin's "show". The checkbox is a field like any other, so ticking or
+   * unticking it does nothing until this runs, and what the person agreed to
+   * show is exactly what they were looking at when they saved.
    */
-  onSwitch: (on: boolean, content: TeamCardContent) => void;
+  onSave: (content: TeamCardContent, on: boolean) => void;
 }
 
 export type TeamCardEditorProps =
@@ -70,7 +69,7 @@ export type TeamCardEditorProps =
       role: "gedu";
       /** The saved card — what the form opens on. */
       card: GeduTeamProfile;
-      /** The Gedu's own switch: their consent to the card being public. */
+      /** The Gedu's saved checkbox: their consent to the card being public. */
       ready: boolean;
       approval: GeduTeamCardApproval;
       actions: TeamCardActions;
@@ -78,12 +77,12 @@ export type TeamCardEditorProps =
   | {
       role: "admin";
       card: AdminTeamProfile;
-      /** Office staff are trusted, so their one switch is the whole decision. */
+      /** Office staff are trusted, so their one checkbox is the whole decision. */
       shown: boolean;
       actions: TeamCardActions;
     };
 
-/** The combined state, as the person is told it. */
+/** The combined saved state, as the person is told it. */
 type CardStatus = "private" | "waiting" | "live" | "takenOff" | "shown" | "hidden";
 
 function cardStatus(props: TeamCardEditorProps): CardStatus {
@@ -103,19 +102,22 @@ function cardStatus(props: TeamCardEditorProps): CardStatus {
  * The page a person edits their own team card on — office staff and Gedus
  * alike, one body with the differences in its props.
  *
- * **A card is public only while two switches are on**: the person's own, and
- * — for a Gedu — an admin's approval, which is made elsewhere and only read
- * here. Saving never needs anybody. The person's switch is their consent, so
- * it acts at once in both directions, and it can only be turned on once the
- * card is complete; while it is on, the card has to stay complete to save.
+ * **A card is public only while two things are true**: the person's own
+ * checkbox is saved on, and — for a Gedu — an admin has approved it, which is
+ * decided elsewhere and only read here. The checkbox is an ordinary field that
+ * Save commits with everything else: ticking or unticking it dirties the form,
+ * and nothing takes effect until Save. It can only be ticked once the card is
+ * complete, and while it is ticked the card has to stay complete to save.
  *
  * Desktop-default, as a Gedu and admin surface is: the form on one side and
  * the live preview on the other, sticky, so what the public will see is in
  * view while typing. Below the wide breakpoint the two stack, form first.
  *
- * **The switch sits at the foot of the form, after the fields**, because the
- * line under it changes as the card is completed: at the foot, that change
- * moves nothing but the save row, rather than every field below it.
+ * **The "Team page" section sits at the foot of the form, after the fields**,
+ * and holds everything about being public: where the saved card stands, the
+ * checkbox, and whether the card is complete enough for it. The lines under
+ * the checkbox change as the card is completed and as it is ticked; at the
+ * foot, that moves nothing but the save row.
  *
  * The form's state is local UI state. Every write goes out through `actions`,
  * which the route owns.
@@ -123,15 +125,17 @@ function cardStatus(props: TeamCardEditorProps): CardStatus {
 export function TeamCardEditorBody(props: TeamCardEditorProps) {
   const t = useTranslations("team.edit");
   const uiLocale = resolveLocale(useLocale());
+  const savedOn = props.role === "gedu" ? props.ready : props.shown;
   const [form, setForm] = useState<TeamCardForm>(() =>
     formFromProfile(props.card, uiLocale),
   );
+  const [on, setOn] = useState(savedOn);
 
-  const content = contentFromForm(form, props.card.kind);
-  const dirty = !sameContent(content, contentFromProfile(props.card));
+  const content = contentFromForm(form, props.card);
+  const dirty =
+    on !== savedOn || !sameContent(content, contentFromProfile(props.card));
   const gap = teamCardGap(content);
   const status = cardStatus(props);
-  const on = props.role === "gedu" ? props.ready : props.shown;
   const isPublic = status === "live" || status === "shown";
 
   const trackUrl = useOwnedObjectUrls(form.photo?.src, props.card.photo?.src);
@@ -155,8 +159,6 @@ export function TeamCardEditorBody(props: TeamCardEditorProps) {
         </p>
       </header>
 
-      <StatusPanel status={status} />
-
       <div
         className={cn(
           "grid gap-8",
@@ -169,7 +171,6 @@ export function TeamCardEditorBody(props: TeamCardEditorProps) {
       >
         <div className="min-w-0 space-y-6">
           <TeamCardPhotoSection
-            personId={props.card.id}
             photo={form.photo}
             onCropped={(blob, url) => {
               trackUrl(url);
@@ -184,24 +185,29 @@ export function TeamCardEditorBody(props: TeamCardEditorProps) {
           />
           <TeamCardWritingSection form={form} update={setForm} />
 
-          <PublicSwitch
+          <TeamPageSection
             role={props.role}
+            status={status}
             on={on}
+            savedOn={savedOn}
             gap={gap}
-            onChange={(next) => props.actions.onSwitch(next, content)}
+            onChange={setOn}
           />
 
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
               disabled={!dirty}
-              onClick={() => setForm(formFromProfile(props.card, uiLocale))}
+              onClick={() => {
+                setForm(formFromProfile(props.card, uiLocale));
+                setOn(savedOn);
+              }}
             >
               {t("actions.discard")}
             </Button>
             <Button
               disabled={!dirty || (on && gap !== null)}
-              onClick={() => props.actions.onSave(content)}
+              onClick={() => props.actions.onSave(content, on)}
             >
               {t("actions.save")}
             </Button>
@@ -270,61 +276,69 @@ const STATUS_VARIANT: Record<
 };
 
 /**
- * Where the card stands, in words. The title names the combined state of the
- * two switches, so a Gedu never has to work out from two facts which of four
- * things is true.
+ * Everything about the card being public, in one section.
+ *
+ * **The status names the saved state**, the combined state of the checkbox as
+ * last saved and, for a Gedu, an admin's approval, so a Gedu never has to work
+ * out from two facts which of four things is true. It is a state message, so
+ * it is the status panel even inside this card.
+ *
+ * **The checkbox is the form's value**, and the line under it is always there
+ * — the reason while it is off and cannot be ticked, a confirmation once the
+ * card is complete, and a warning while it is ticked and something has since
+ * been emptied — so the row never grows or shrinks as fields are filled in.
+ * While the checkbox differs from what is saved, one more line says the change
+ * waits for Save; it appears as the direct result of the click that made it.
  */
-function StatusPanel({ status }: { status: CardStatus }) {
-  const t = useTranslations("team.edit.status");
-  return (
-    <Alert variant={STATUS_VARIANT[status]}>
-      <div className="min-w-0 space-y-1.5">
-        <AlertTitle>{t(`${status}Title`)}</AlertTitle>
-        <AlertDescription>{t(`${status}Body`)}</AlertDescription>
-      </div>
-    </Alert>
-  );
-}
-
-/**
- * The person's own switch, with the line that says whether the card is
- * complete enough for it. The line is always there — the reason while it is
- * off and cannot be turned on, a confirmation once the card is complete, and
- * a warning while it is on and something has since been emptied — so the
- * switch's row never grows or shrinks as fields are filled in.
- */
-function PublicSwitch({
+function TeamPageSection({
   role,
+  status,
   on,
+  savedOn,
   gap,
   onChange,
 }: {
   role: "gedu" | "admin";
+  status: CardStatus;
   on: boolean;
+  savedOn: boolean;
   gap: TeamCardGap;
   onChange: (next: boolean) => void;
 }) {
-  const t = useTranslations("team.edit.switch");
+  const t = useTranslations("team.edit");
   return (
-    <FormSection heading={t("heading")}>
-      <CheckboxRow
-        checked={on}
-        disabled={!on && gap !== null}
-        onCheckedChange={onChange}
-        label={role === "gedu" ? t("readyLabel") : t("showLabel")}
-        hint={role === "gedu" ? t("readyHint") : t("showHint")}
-      />
-      {gap === null ? (
-        <StatusLine status="success" muted>
-          {t("complete")}
-        </StatusLine>
-      ) : on ? (
-        <StatusLine status="warning">{t("mustStayComplete")}</StatusLine>
-      ) : (
-        <StatusLine status="info" muted>
-          {t(`missing.${gap}`)}
-        </StatusLine>
-      )}
+    <FormSection heading={t("switch.heading")}>
+      <Alert variant={STATUS_VARIANT[status]}>
+        <div className="min-w-0 space-y-1.5">
+          <AlertTitle>{t(`status.${status}Title`)}</AlertTitle>
+          <AlertDescription>{t(`status.${status}Body`)}</AlertDescription>
+        </div>
+      </Alert>
+      <div className="space-y-3">
+        <CheckboxRow
+          checked={on}
+          disabled={!on && gap !== null}
+          onCheckedChange={onChange}
+          label={role === "gedu" ? t("switch.readyLabel") : t("switch.showLabel")}
+          hint={role === "gedu" ? t("switch.readyHint") : t("switch.showHint")}
+        />
+        {gap === null ? (
+          <StatusLine status="success" muted>
+            {t("switch.complete")}
+          </StatusLine>
+        ) : on ? (
+          <StatusLine status="warning">{t("switch.mustStayComplete")}</StatusLine>
+        ) : (
+          <StatusLine status="info" muted>
+            {t(`switch.missing.${gap}`)}
+          </StatusLine>
+        )}
+        {on !== savedOn && (
+          <StatusLine status="info" muted>
+            {t("switch.takesEffectOnSave")}
+          </StatusLine>
+        )}
+      </div>
     </FormSection>
   );
 }
@@ -337,8 +351,8 @@ function PublicSwitch({
  * under the heading, because a preview that looks exactly like a public page
  * is the easiest thing on this screen to misread.
  *
- * The frame is framed content — the page as it will appear — so the body's
- * own card sits inside it on the page ground, as it will on the team page.
+ * The frame is framed content — the page as it will appear — so the body sits
+ * inside it on the page ground, as it will on the team page.
  */
 function TeamCardPreview({
   profile,
