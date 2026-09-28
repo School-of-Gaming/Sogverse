@@ -4952,7 +4952,7 @@
         "privateTitle": "Private",
         "privateBody": "Your profile isn’t on the website. When you are happy with it, tick “My profile is ready to be public” below and save.",
         "waitingTitle": "Ready, waiting for an admin",
-        "waitingBody": "An admin makes your profile public once they have looked at it. You can keep editing in the meantime.",
+        "waitingBody": "An admin will review your profile page before it becomes public.",
         "liveTitle": "Public",
         "liveBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away. To hide it, untick “My profile is ready to be public” and save; once you tick it again, an admin makes it public again."
       },
@@ -4968,8 +4968,12 @@
         "mustStayComplete": "While this is ticked your profile has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box to keep working on it privately.",
         "missing": {
           "photo": "Add a photo to be able to tick this.",
+          "title": "Add your title to be able to tick this.",
           "text": "Fill in “Introduce yourself in one line” and “About me” in every language you write in to be able to tick this.",
-          "both": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this."
+          "photoTitle": "Add a photo and your title to be able to tick this.",
+          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this.",
+          "titleText": "Add your title, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this.",
+          "photoTitleText": "Add a photo and your title, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this."
         }
       },
       "photo": {
@@ -5057,8 +5061,12 @@
         "mustStayComplete": "While this is ticked the profile has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box.",
         "missing": {
           "photo": "Add a photo to be able to tick this.",
+          "title": "Add a title to be able to tick this.",
           "text": "Fill in “Introduce yourself in one line” and “About me” in every language written to be able to tick this.",
-          "both": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this."
+          "photoTitle": "Add a photo and a title to be able to tick this.",
+          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this.",
+          "titleText": "Add a title, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this.",
+          "photoTitleText": "Add a photo and a title, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this."
         }
       },
       "userPage": {

@@ -4952,7 +4952,7 @@
         "privateTitle": "Yksityinen",
         "privateBody": "Profiilisi ei ole verkkosivuilla. Kun olet siihen tyytyväinen, rastita alta ”Profiilini on valmis julkaistavaksi” ja tallenna.",
         "waitingTitle": "Valmis, odottaa ylläpitäjää",
-        "waitingBody": "Ylläpitäjä julkaisee profiilisi katsottuaan sen. Voit jatkaa muokkaamista sillä välin.",
+        "waitingBody": "Ylläpitäjä tarkistaa profiilisivusi ennen kuin se tulee julkiseksi.",
         "liveTitle": "Julkinen",
         "liveBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti. Jos haluat piilottaa profiilin, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna. Kun rastitat sen uudelleen, ylläpitäjä julkaisee sen taas."
       },
@@ -4968,8 +4968,12 @@
         "mustStayComplete": "Kun tämä on rastitettu, profiilisi täytyy pysyä täydellisenä, joten tallennus on pois käytöstä, kunnes se on. Täydennä puuttuvat kohdat tai poista rasti jatkaaksesi yksityisesti.",
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
+          "title": "Lisää tittelisi, jotta voit rastittaa tämän.",
           "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
-          "both": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän."
+          "photoTitle": "Lisää kuva ja tittelisi, jotta voit rastittaa tämän.",
+          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "titleText": "Lisää tittelisi ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "photoTitleText": "Lisää kuva ja tittelisi sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän."
         }
       },
       "photo": {
@@ -5057,8 +5061,12 @@
         "mustStayComplete": "Kun tämä on rastitettu, profiilin täytyy pysyä täydellisenä, joten tallennus on pois käytöstä, kunnes se on. Täydennä puuttuvat kohdat tai poista rasti.",
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
+          "title": "Lisää titteli, jotta voit rastittaa tämän.",
           "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
-          "both": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän."
+          "photoTitle": "Lisää kuva ja titteli, jotta voit rastittaa tämän.",
+          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "titleText": "Lisää titteli ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "photoTitleText": "Lisää kuva ja titteli sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän."
         }
       },
       "userPage": {

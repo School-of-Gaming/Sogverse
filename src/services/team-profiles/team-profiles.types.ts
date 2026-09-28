@@ -184,8 +184,8 @@ export class TeamPhotoUploadError extends Error {}
 
 /**
  * The SQLSTATE `save_team_profile` raises when the checkbox would be on while
- * the profile is incomplete: no photo, no language, or a language missing
- * either description. The editor already stops anyone saving that,
+ * the profile is incomplete: no photo, an admin's profile with no title, no
+ * language, or a language missing either description. The editor already stops anyone saving that,
  * so this is the database's own guarantee behind it.
  */
 export const TEAM_PROFILE_INCOMPLETE_SQLSTATE = "P0026";

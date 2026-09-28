@@ -207,6 +207,7 @@ DECLARE
   v_opted_in    boolean;
   v_old_photo   text;
   v_new_photo   text := NULLIF(btrim(p_photo_path), '');
+  v_title       text;
   v_complete    boolean;
 BEGIN
   -- An admin or a Gedu; everyone else is refused on the first statement.
@@ -240,6 +241,9 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
+  -- An admin's title as stored: trimmed, and NULL when blank.
+  v_title := CASE WHEN v_target_role = 'admin' THEN NULLIF(btrim(p_title), '') END;
+
   IF p_translations IS NULL OR jsonb_typeof(p_translations) <> 'array' THEN
     RAISE EXCEPTION 'p_translations must be a JSON array'
       USING ERRCODE = '22023';
@@ -260,7 +264,7 @@ BEGIN
          (user_id, nickname, title, pick, photo_path, opted_in)
   VALUES (p_user_id,
           NULLIF(btrim(p_nickname), ''),
-          CASE WHEN v_target_role = 'admin' THEN NULLIF(btrim(p_title), '') END,
+          v_title,
           p_pick,
           v_new_photo,
           v_opted_in)
@@ -297,10 +301,12 @@ BEGIN
          long_description  = EXCLUDED.long_description,
          fun_fact          = EXCLUDED.fun_fact;
 
-  -- Complete: a photo, at least one language, and both descriptions in every
-  -- language written — a reader of any of them would otherwise meet half a
-  -- profile. The same rule the editor shows the person before they save.
+  -- Complete: a photo, an admin's title, at least one language, and both
+  -- descriptions in every language written — a reader of any of them would
+  -- otherwise meet half a profile. A Gedu has no title to write. The same
+  -- rule the editor shows the person before they save.
   SELECT v_new_photo IS NOT NULL
+         AND (v_target_role <> 'admin' OR v_title IS NOT NULL)
          AND EXISTS (SELECT 1 FROM public.team_profile_translations t
                       WHERE t.user_id = p_user_id)
          AND NOT EXISTS (SELECT 1 FROM public.team_profile_translations t
@@ -309,7 +315,7 @@ BEGIN
     INTO v_complete;
 
   IF v_opted_in AND NOT v_complete THEN
-    RAISE EXCEPTION 'A profile marked ready has to be complete: a photo, and both descriptions in every language written'
+    RAISE EXCEPTION 'A profile marked ready has to be complete: a photo, an admin''s title, and both descriptions in every language written'
       USING ERRCODE = 'P0026';
   END IF;
 
@@ -320,7 +326,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.save_team_profile(uuid, jsonb, text, text, smallint, text, boolean) IS 'The one writer of a team profile''s content: nickname, title (an admin''s only; a Gedu''s raises 22023), pick, photo path, the whole translation set (a JSON array of {locale, short_description, long_description, fun_fact}, replacing what was stored) and the checkbox, in one transaction. Guard-first for an admin or a Gedu; the target half is can_edit_team_profile — their own, or any admin''s or Gedu''s for an admin. The checkbox is a readiness mark, not consent, so any editor may set it; NULL keeps the stored value. Refuses with P0026 when the checkbox would be on while the profile is incomplete (no photo, no language, or a language missing either description), and with P0027 a photo path that has no object in the team-photos bucket (a save from a page opened before another save replaced and removed that photo). A save that leaves the checkbox off also hides the profile (approved false, the admin decision stamp left as it was), so ticking it again waits for an admin to make it public; a save that leaves it on does not change whether it is public, whoever saves. Returns the photo path the save replaced, or NULL, so the caller can remove that object through the storage API.';
+COMMENT ON FUNCTION public.save_team_profile(uuid, jsonb, text, text, smallint, text, boolean) IS 'The one writer of a team profile''s content: nickname, title (an admin''s only; a Gedu''s raises 22023), pick, photo path, the whole translation set (a JSON array of {locale, short_description, long_description, fun_fact}, replacing what was stored) and the checkbox, in one transaction. Guard-first for an admin or a Gedu; the target half is can_edit_team_profile — their own, or any admin''s or Gedu''s for an admin. The checkbox is a readiness mark, not consent, so any editor may set it; NULL keeps the stored value. Refuses with P0026 when the checkbox would be on while the profile is incomplete (no photo, an admin''s profile with no title, no language, or a language missing either description), and with P0027 a photo path that has no object in the team-photos bucket (a save from a page opened before another save replaced and removed that photo). A save that leaves the checkbox off also hides the profile (approved false, the admin decision stamp left as it was), so ticking it again waits for an admin to make it public; a save that leaves it on does not change whether it is public, whoever saves. Returns the photo path the save replaced, or NULL, so the caller can remove that object through the storage API.';
 
 REVOKE EXECUTE ON FUNCTION public.save_team_profile(uuid, jsonb, text, text, smallint, text, boolean) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.save_team_profile(uuid, jsonb, text, text, smallint, text, boolean) TO authenticated;

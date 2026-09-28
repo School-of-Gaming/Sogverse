@@ -4952,7 +4952,7 @@
         "privateTitle": "Privé",
         "privateBody": "Votre profil n’est pas sur le site. Quand il vous convient, cochez « Mon profil est prêt à être public » ci-dessous et enregistrez.",
         "waitingTitle": "Prêt, en attente d’un administrateur",
-        "waitingBody": "Un administrateur rendra votre profil public après l’avoir examiné. Vous pouvez continuer à le modifier en attendant.",
+        "waitingBody": "Un administrateur examinera votre page de profil avant qu’elle ne devienne publique.",
         "liveTitle": "Public",
         "liveBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement. Pour le masquer, décochez « Mon profil est prêt à être public » et enregistrez ; une fois la case recochée, un administrateur le rendra de nouveau public."
       },
@@ -4968,8 +4968,12 @@
         "mustStayComplete": "Tant que cette case est cochée, votre profil doit rester complet : l’enregistrement est désactivé jusqu’à ce qu’il le soit. Complétez ce qui manque, ou décochez la case pour continuer en privé.",
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
+          "title": "Ajoutez votre titre pour pouvoir cocher cette case.",
           "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
-          "both": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case."
+          "photoTitle": "Ajoutez une photo et votre titre pour pouvoir cocher cette case.",
+          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez votre titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et votre titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez, pour pouvoir cocher cette case."
         }
       },
       "photo": {
@@ -5057,8 +5061,12 @@
         "mustStayComplete": "Tant que cette case est cochée, le profil doit rester complet : l’enregistrement est désactivé jusqu’à ce qu’il le soit. Complétez ce qui manque, ou décochez la case.",
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
+          "title": "Ajoutez un titre pour pouvoir cocher cette case.",
           "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
-          "both": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case."
+          "photoTitle": "Ajoutez une photo et un titre pour pouvoir cocher cette case.",
+          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez un titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et un titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée, pour pouvoir cocher cette case."
         }
       },
       "userPage": {

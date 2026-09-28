@@ -4952,7 +4952,7 @@
         "privateTitle": "Privat",
         "privateBody": "Din profil finns inte på webbplatsen. När du är nöjd kryssar du i ”Min profil är redo att bli offentlig” nedan och sparar.",
         "waitingTitle": "Klar, väntar på en administratör",
-        "waitingBody": "En administratör gör din profil offentlig när den har tittat på den. Du kan fortsätta redigera under tiden.",
+        "waitingBody": "En administratör granskar din profilsida innan den blir offentlig.",
         "liveTitle": "Offentlig",
         "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du dölja den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar. När du kryssar i den igen gör en administratör den offentlig på nytt."
       },
@@ -4968,8 +4968,12 @@
         "mustStayComplete": "Medan detta är ikryssat måste din profil vara komplett, så det går inte att spara förrän den är det. Fyll i det som saknas, eller ta bort krysset för att fortsätta privat.",
         "missing": {
           "photo": "Lägg till ett foto för att kunna kryssa i detta.",
+          "title": "Lägg till din titel för att kunna kryssa i detta.",
           "text": "Fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
-          "both": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta."
+          "photoTitle": "Lägg till ett foto och din titel för att kunna kryssa i detta.",
+          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
+          "titleText": "Lägg till din titel och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
+          "photoTitleText": "Lägg till ett foto och din titel, och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på, för att kunna kryssa i detta."
         }
       },
       "photo": {
@@ -5057,8 +5061,12 @@
         "mustStayComplete": "Medan detta är ikryssat måste profilen vara komplett, så det går inte att spara förrän den är det. Fyll i det som saknas, eller ta bort krysset.",
         "missing": {
           "photo": "Lägg till ett foto för att kunna kryssa i detta.",
+          "title": "Lägg till en titel för att kunna kryssa i detta.",
           "text": "Fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
-          "both": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta."
+          "photoTitle": "Lägg till ett foto och en titel för att kunna kryssa i detta.",
+          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
+          "titleText": "Lägg till en titel och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
+          "photoTitleText": "Lägg till ett foto och en titel, och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits, för att kunna kryssa i detta."
         }
       },
       "userPage": {

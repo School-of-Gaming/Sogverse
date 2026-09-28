@@ -596,6 +596,50 @@ describe("team profiles", () => {
       expect(off.error).toBeNull();
     });
 
+    it("refuses it on for an admin with no title, blank included, and accepts it with one", async () => {
+      const photo = await seedPhoto(TEST_IDS.ADMIN);
+      const saveAdminOn = (title: string | undefined) =>
+        adminAuth.rpc("save_team_profile", {
+          p_user_id: TEST_IDS.ADMIN,
+          p_translations: [
+            {
+              locale: EN_COMPLETE.locale,
+              short_description: EN_COMPLETE.shortDescription,
+              long_description: EN_COMPLETE.longDescription,
+            },
+          ],
+          p_title: title,
+          p_photo_path: photo,
+          p_opted_in: true,
+        });
+
+      expect((await saveAdminOn(undefined)).error?.code).toBe(
+        TEAM_PROFILE_INCOMPLETE_SQLSTATE,
+      );
+      expect((await saveAdminOn("   ")).error?.code).toBe(
+        TEAM_PROFILE_INCOMPLETE_SQLSTATE,
+      );
+      const { count } = await admin
+        .from("team_profiles")
+        .select("user_id", { count: "exact", head: true })
+        .eq("user_id", TEST_IDS.ADMIN);
+      expect(count).toBe(0);
+
+      expect((await saveAdminOn(" Chief Engineer ")).error).toBeNull();
+      const { data } = await admin
+        .from("team_profiles")
+        .select("title, opted_in")
+        .eq("user_id", TEST_IDS.ADMIN)
+        .single();
+      expect(data).toEqual({ title: "Chief Engineer", opted_in: true });
+    });
+
+    it("never asks a Gedu for a title", async () => {
+      const photo = await seedPhoto(TEST_IDS.GEDU);
+      const { error } = await saveOn(content({ photoPath: photo }));
+      expect(error).toBeNull();
+    });
+
     it("stores a half-written language while the checkbox is off", async () => {
       await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
@@ -642,7 +686,10 @@ describe("team profiles", () => {
         const photo = await seedPhoto(target);
         await new TeamProfilesService(client).saveTeamProfile(
           target,
-          content({ photoPath: photo }),
+          content({
+            photoPath: photo,
+            title: target === TEST_IDS.ADMIN ? "Chief Engineer" : null,
+          }),
           true,
         );
       }
@@ -1196,13 +1243,13 @@ describe("team profiles", () => {
     it("refuses to make public an admin's profile not marked ready, until it is", async () => {
       const photo = await seedPhoto(otherAdminId);
       const service = new TeamProfilesService(otherAdminAuth);
-      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo }), false);
+      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo, title: "Head of Clubs" }), false);
 
       const early = await set(true, otherAdminId);
       expect(early.error?.code).toBe(TEAM_PROFILE_NOT_READY_SQLSTATE);
       expect((await stamp(otherAdminId))?.approved).toBe(false);
 
-      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo }), true);
+      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo, title: "Head of Clubs" }), true);
       expect((await set(true, otherAdminId)).error).toBeNull();
       expect((await stamp(otherAdminId))?.approved).toBe(true);
     });
@@ -1210,14 +1257,14 @@ describe("team profiles", () => {
     it("is hidden when an admin unticks ready on their own profile, and waits once re-ticked", async () => {
       const photo = await seedPhoto(otherAdminId);
       const service = new TeamProfilesService(otherAdminAuth);
-      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo }), true);
+      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo, title: "Head of Clubs" }), true);
       expect((await set(true, otherAdminId)).error).toBeNull();
       const madePublic = await stamp(otherAdminId);
 
-      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo }), false);
+      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo, title: "Head of Clubs" }), false);
       expect(await stamp(otherAdminId)).toEqual({ ...madePublic, approved: false });
 
-      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo }), true);
+      await service.saveTeamProfile(otherAdminId, content({ photoPath: photo, title: "Head of Clubs" }), true);
       expect((await stamp(otherAdminId))?.approved).toBe(false);
     });
 

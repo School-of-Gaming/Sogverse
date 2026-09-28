@@ -199,22 +199,40 @@ export function profileWithContent<P extends TeamProfile>(
 }
 
 /**
- * What stops a profile going public: a photo, and at least one language
- * with both descriptions — in every language written, because a reader of any
- * of them would otherwise meet half a profile. The fun fact is optional and never
- * counts.
+ * What stops a profile going public: a photo, an admin's title, and at least
+ * one language with both descriptions — in every language written, because a
+ * reader of any of them would otherwise meet half a profile. A Gedu has no
+ * title to write. The fun fact is optional and never counts.
+ *
+ * The gap names every part still missing, in the form's order, so the line
+ * under the checkbox lists all of them at once. `save_team_profile` holds the
+ * same rule, over the same trimmed values.
  */
-export type TeamProfileGap = "photo" | "text" | "both" | null;
+export type TeamProfileGap =
+  | "photo"
+  | "title"
+  | "text"
+  | "photoTitle"
+  | "photoText"
+  | "titleText"
+  | "photoTitleText"
+  | null;
 
 export function teamProfileGap(content: TeamProfileContent): TeamProfileGap {
   const missingPhoto = content.photo === null;
+  // `title` is already trimmed, and `null` for a Gedu, who writes none.
+  const missingTitle = content.title === "";
   const missingText =
     content.translations.length === 0 ||
     content.translations.some(
       (row) => row.shortDescription === "" || row.longDescription === "",
     );
-  if (missingPhoto && missingText) return "both";
+  if (missingPhoto && missingTitle && missingText) return "photoTitleText";
+  if (missingPhoto && missingTitle) return "photoTitle";
+  if (missingPhoto && missingText) return "photoText";
+  if (missingTitle && missingText) return "titleText";
   if (missingPhoto) return "photo";
+  if (missingTitle) return "title";
   if (missingText) return "text";
   return null;
 }
