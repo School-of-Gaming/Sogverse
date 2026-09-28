@@ -10,6 +10,7 @@ import { getClient } from "@/lib/supabase/client";
 import { familyProductFeedKeys } from "@/services/family-product-feed/family-product-feed.keys";
 import type { AttendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { geduSessionKeys } from "@/services/gedu-sessions/gedu-sessions.keys";
+import { municipalityInvoicingKeys } from "@/services/municipality-invoicing/municipality-invoicing.keys";
 import { sessionSubstitutionKeys } from "@/services/session-substitution/session-substitution.keys";
 import { adminSessionKeys } from "./admin-sessions.keys";
 import { AdminSessionsService } from "./admin-sessions.service";
@@ -170,8 +171,10 @@ export function useAdminDeleteSessionImage(productId: string) {
  * The exception to this file's one-key rule, because a cancellation is not an
  * edit to the admin's record but a change to the session itself — the gedu feed
  * and the dashboard's owed counts, the substitution queues that hide a
- * cancelled date's requests, and the family feed all read it. Roots, because a
- * cancelled date moves documents this client cannot name the leaves of.
+ * cancelled date's requests, the family feed, and the municipality invoicing
+ * ledger, where a cancelled date shows as Cancelled and never bills, all read
+ * it. Roots, because a cancelled date moves documents this client cannot name
+ * the leaves of.
  *
  * The admin document's refetch is **returned**, so the dialog holding its
  * committing flag across the await lets go only once the card it was opened
@@ -182,6 +185,7 @@ function invalidateCancellationWrite(queryClient: QueryClient) {
     geduSessionKeys.all,
     sessionSubstitutionKeys.all,
     familyProductFeedKeys.all,
+    municipalityInvoicingKeys.all,
   ]) {
     void queryClient.invalidateQueries({ queryKey });
   }

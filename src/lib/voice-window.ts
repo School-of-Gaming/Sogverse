@@ -73,8 +73,9 @@ export interface VoiceWindowProduct {
  * Join affordance on `is_remote` themselves rather than relying on this.
  *
  * `cancelledDates` are one group's cancelled sessions, and a surface that knows
- * them passes them: a cancelled session opens no room — the database refuses
- * one — so the next occurrence is the soonest one that is not cancelled.
+ * them passes them: a cancelled session opens no room — the voice token route
+ * refuses its token and the database refuses its chat — so the next occurrence
+ * is the soonest one that is not cancelled.
  */
 export function computeVoiceState(args: {
   product: VoiceWindowProduct;
