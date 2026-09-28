@@ -2384,8 +2384,8 @@
   "activityCard": {
     "endedOn": "{date} rIntaH",
     "noSchedule": "poH nabta’ tu’lu’be’",
-    "cancelledAhead": "{count, plural, one {{dates} qIllu’} other {{dates} qIllu’pu’}}",
-    "cancelledAheadMore": "{first} {more, plural, one {# may’ latlh je} other {# may’mey latlh je}} qIllu’pu’"
+    "cancelledAhead": "{count, plural, one {<b>{dates}</b> qIllu’!} other {<b>{dates}</b> qIllu’pu’!}}",
+    "cancelledAheadMore": "<b>{first}</b> {more, plural, one {# may’ latlh je} other {# may’mey latlh je}} qIllu’pu’!"
   },
   "sessionBadge": {
     "live": "qaStaH",

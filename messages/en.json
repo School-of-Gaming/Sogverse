@@ -2344,8 +2344,8 @@
   "activityCard": {
     "endedOn": "Ended {date}",
     "noSchedule": "No schedule set yet",
-    "cancelledAhead": "{count, plural, one {{dates} is cancelled} other {{dates} are cancelled}}",
-    "cancelledAheadMore": "{first} and {more, plural, one {# more session} other {# more sessions}} are cancelled"
+    "cancelledAhead": "{count, plural, one {<b>{dates}</b> is cancelled.} other {<b>{dates}</b> are cancelled.}}",
+    "cancelledAheadMore": "<b>{first}</b> and {more, plural, one {# more session} other {# more sessions}} are cancelled."
   },
   "sessionBadge": {
     "live": "Live",

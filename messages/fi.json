@@ -2344,8 +2344,8 @@
   "activityCard": {
     "endedOn": "Päättyi {date}",
     "noSchedule": "Aikataulua ei ole vielä sovittu",
-    "cancelledAhead": "{count, plural, one {Peruttu: {dates}} other {Peruttu: {dates}}}",
-    "cancelledAheadMore": "Peruttu: {first} ja {more, plural, one {# muu kerta} other {# muuta kertaa}}"
+    "cancelledAhead": "{count, plural, one {Peruttu: <b>{dates}</b>.} other {Peruttu: <b>{dates}</b>.}}",
+    "cancelledAheadMore": "Peruttu: <b>{first}</b> ja {more, plural, one {# muu kerta} other {# muuta kertaa}}."
   },
   "sessionBadge": {
     "live": "Käynnissä",

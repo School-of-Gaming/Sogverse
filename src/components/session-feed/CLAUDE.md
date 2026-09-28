@@ -37,6 +37,13 @@ family whose next date is off has to see it without opening anything. The reason
 cancelled travel only in the staff document's admin fields, so a gedu's line and a family's
 read the same.
 
+**Rule: a cancelled date still ahead wears the warning tone; one already behind stays
+muted.** A family who misses an upcoming cancellation turns up for a session that is not
+running, so the line's own edge, its tag and its rail marker take the warning hue and the
+date goes bold, while a past one is history with nothing left to act on. The tone goes on
+the entry itself — never a status panel nested inside it — so the timeline still reads one
+entry per date, and it is the same on both feeds and in both future slots.
+
 **Rule: a cancellation beats a record.** An admin may cancel a date that was already
 written up, and the cancelled line replaces the card: nothing recorded on the date —
 report, photos, attendance — is drawn on either feed, and the family document does not

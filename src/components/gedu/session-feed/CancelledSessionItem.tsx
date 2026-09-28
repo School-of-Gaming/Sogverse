@@ -58,7 +58,11 @@ export function CancelledSessionItem({
       : null;
 
   return (
-    <SessionCancelledLine labels={labels} trailing={sessionMenu}>
+    <SessionCancelledLine
+      labels={labels}
+      upcoming={entry.upcoming}
+      trailing={sessionMenu}
+    >
       {(entry.reason !== null || stamp !== null) && (
         <div className="mt-1.5 space-y-0.5">
           {entry.reason !== null && (

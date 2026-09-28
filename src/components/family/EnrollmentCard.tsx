@@ -27,7 +27,7 @@ import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
 import { PaymentProblemBadge } from "@/components/parent/PaymentProblemBadge";
 import { seatOfferState, type SeatOfferState } from "@/lib/seat-offer-state";
 import type { SeatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
-import { CancelledAheadLine } from "@/components/session-feed/CancelledAheadLine";
+import { CancelledAheadNotice } from "@/components/session-feed/CancelledAheadNotice";
 import { SeatOfferBlock } from "./SeatOfferBlock";
 import {
   enrollmentEndedOn,
@@ -656,6 +656,21 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
             </div>
           </div>
 
+          {/* The cancelled sessions the card passes over before the next one
+              the Join names, as a warning panel read before anything else in
+              the body — the schedule line below still claims those dates, and
+              a family who misses the notice turns up for nothing. Present only
+              while there are some, and only on a seat in a group on a run still
+              going, which is the only card with sessions to pass over.
+
+              **First in the body is safe only because the dates arrive with
+              the card**: they are part of the same enrollment read, so the
+              panel is on the first paint or never. Fed from a read of its own,
+              it would land above rows already painted and push them down —
+              such a source would have to be joined to this one, not moved
+              lower. */}
+          {running && <CancelledAheadNotice starts={enrollment.cancelledAhead} />}
+
           {/* The product's schedule in words, from the same formatter the public
               product page and the gedu dashboard use, in the viewer's zone
               wherever it appears. It is not the next session restated: the next
@@ -734,12 +749,6 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               </span>
             </p>
           )}
-
-          {/* The cancelled sessions the card passes over before the next one
-              the Join names — present only while there are some, since the
-              schedule line above still claims those dates. Only a seat in a
-              group on a run still going has sessions to pass over. */}
-          {running && <CancelledAheadLine starts={enrollment.cancelledAhead} />}
 
           {/* Four flat conditions rather than a nested chain — they are mutually
               exclusive by construction, and a run that is over has neither a

@@ -889,7 +889,8 @@ export function SessionFeed({
  *
  * The loud markers are deliberately on **different hues** rather than different
  * saturations of one: info blue for what is coming, the warning tone for what is
- * owed, success green for what is finished end to end. When "next" was
+ * owed (and for a cancelled date still ahead, which must not be missed either),
+ * success green for what is finished end to end. When "next" was
  * act-toned the rail read as one graded run of warm dots, and the single
  * most useful thing a glance down it can tell you — where the gaps are — was the
  * thing hardest to see.
@@ -922,8 +923,11 @@ function markerTone(
         default:
           return "bg-muted-foreground";
       }
-    case "no_record":
     case "cancelled":
+      // Ahead of now it is news the reader must not miss, in its line's
+      // warning tone; behind, it is as quiet as a week with no record.
+      return entry.upcoming ? "bg-warning" : "bg-border";
+    case "no_record":
       return "bg-border";
   }
 }

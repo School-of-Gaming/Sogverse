@@ -2344,8 +2344,8 @@
   "activityCard": {
     "endedOn": "Terminé le {date}",
     "noSchedule": "Horaires à venir",
-    "cancelledAhead": "{count, plural, one {Séance annulée : {dates}} other {Séances annulées : {dates}}}",
-    "cancelledAheadMore": "Séances annulées : {first} et {more, plural, one {# autre} other {# autres}}"
+    "cancelledAhead": "{count, plural, one {Séance annulée : <b>{dates}</b>.} other {Séances annulées : <b>{dates}</b>.}}",
+    "cancelledAheadMore": "Séances annulées : <b>{first}</b> et {more, plural, one {# autre} other {# autres}}."
   },
   "sessionBadge": {
     "live": "En direct",
