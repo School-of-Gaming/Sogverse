@@ -111,7 +111,7 @@ export function Header({ navRole }: HeaderProps) {
     pathname === ROUTES.gedu.invoicing ||
     pathname.startsWith(ROUTES.gedu.invoicing + "/");
   /**
-   * The gedu's Your profile item: their own public profile, which they come back to
+   * The gedu's Profile item: their own public profile, which they come back to
    * rather than set once. Only from `md` up — below that it is a row in the
    * avatar menu (`account-menu.tsx`), for the width reasons in the nav group's
    * note. Admins have one too but reach it from settings and their user page,
@@ -384,12 +384,12 @@ export function Header({ navRole }: HeaderProps) {
           that gives way on a phone: of the three it is the one a gedu is least
           likely to want, and it is still one tap away in the avatar menu.
 
-          **The gedu's Your profile item is not in that table, because it is
+          **The gedu's Profile item is not in that table, because it is
           never on the strip below `md`** — it is a row in the avatar menu there,
           so the phone strip above is exactly what it was. It joins at `md`
           rather than `sm` because `sm`'s 608px of content is not enough for
           four words plus the "My SOG" lockup in French: "Remplacements",
-          "Votre profil", "À propos" and "Boutique" at 14px with their 16px of
+          "Profil", "À propos" and "Boutique" at 14px with their 16px of
           padding come to roughly 400px, and the logo, the picker and the
           avatar take most of the rest. At `md` (736px of content) the same row
           fits in every locale with room to spare. From `lg` up Invoicing

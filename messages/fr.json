@@ -69,7 +69,7 @@
       "geduSubstitutions": "Remplacements",
       "geduInvoicing": "Facturation",
       "adminSubstitutions": "Remplacements",
-      "teamProfile": "Votre profil",
+      "teamProfile": "Profil",
       "adminTeamProfile": "Profil"
     },
     "descriptions": {
@@ -2472,7 +2472,7 @@
     "continueToAccount": "Continuer vers votre compte",
     "switchTo": "Changer de profil",
     "invoicing": "Facturation",
-    "teamProfile": "Votre profil"
+    "teamProfile": "Profil"
   },
   "schools": {
     "hero": {
@@ -3188,9 +3188,9 @@
       "notGranted": "Ton parent n’a pas autorisé l’utilisation des photos et vidéos où tu apparais. Un Gedu te gardera donc en dehors des photos de séance. Seul ton parent peut changer cela."
     },
     "teamProfile": {
-      "title": "Votre profil",
+      "title": "Profil",
       "description": "Votre profil public sur le site de School of Gaming : une photo de vous et quelques mots sur qui vous êtes.",
-      "edit": "Modifier votre profil"
+      "edit": "Modifier le profil"
     }
   },
   "tools": {
@@ -4947,7 +4947,7 @@
     },
     "edit": {
       "back": "Retour aux paramètres",
-      "pageTitle": "Votre profil",
+      "pageTitle": "Profil",
       "status": {
         "privateTitle": "Privé",
         "privateBody": "Votre profil n’est pas sur le site. Quand il vous convient, cochez « Mon profil est prêt à être public » ci-dessous et enregistrez.",

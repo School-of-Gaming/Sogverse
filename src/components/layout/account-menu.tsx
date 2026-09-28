@@ -116,7 +116,7 @@ const FOCUSABLE_ITEMS =
  * The rows the arrow keys may land on, in DOM order.
  *
  * **A row the current width does not render is not one of them.** A gedu's
- * Invoicing, About and Your profile rows are narrow-only, each hidden from the
+ * Invoicing, About and Profile rows are narrow-only, each hidden from the
  * breakpoint where the header's strip takes it, and there it is
  * `display: none` — and `.focus()` on such an element does nothing at
  * all, which would leave ArrowDown reading the same index forever and the
@@ -156,7 +156,7 @@ interface AccountMenuProps {
    * The header's nav override, handed down unchanged — preview scenes only,
    * and documented on `Header`. It decides one thing here and nothing else:
    * whether this menu carries the nav rows the gedu's strip gives up (About and
-   * Your profile). The dashboard row, Invoicing, the household and every label
+   * Profile). The dashboard row, Invoicing, the household and every label
    * still follow `role`, because the account really does belong to whoever is
    * signed in.
    */
@@ -374,7 +374,7 @@ export function AccountMenu({
     pathname === ROUTES.gedu.invoicing ||
     pathname.startsWith(ROUTES.gedu.invoicing + "/");
   /**
-   * Whether this menu carries the gedu's Your profile — the other nav row
+   * Whether this menu carries the gedu's Profile — the other nav row
    * handed down by the header the same way About is. From `md` up it is an
    * item on the strip; below that it lives here. An admin's profile is reached
    * from settings and from their user page, never from the chrome.
