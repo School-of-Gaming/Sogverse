@@ -104,7 +104,9 @@ export function Header({ navRole }: HeaderProps) {
    * role has a page to send here.
    */
   const showsSubstitutions = navFor === "gedu";
-  const isOnSubstitutions = hasOwnNavItem(pathname);
+  const isOnSubstitutions =
+    pathname === ROUTES.gedu.substitutions ||
+    pathname.startsWith(ROUTES.gedu.substitutions + "/");
 
   const isHome = pathname === ROUTES.home;
 
@@ -124,7 +126,7 @@ export function Header({ navRole }: HeaderProps) {
     logoHref === ROUTES.home
       ? isHome
       : (pathname === logoHref || pathname.startsWith(logoHref + "/")) &&
-        !isOnSubstitutions;
+        !hasOwnNavItem(pathname);
   // What the logo's destination is called — "Dashboard" for the admin, whose
   // panel is genuinely an admin panel, and "My SOG" for every other role.
   const dashboardLabel =
