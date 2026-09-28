@@ -313,6 +313,9 @@ export function buildParentDashboardFixture(
               enrolledDaysAgo: 63,
               endsInDays: null,
               cancelledAccessInDays: 18,
+              // An admin called off this week's session: the locked Join names
+              // the one after it, and the card says which date is off.
+              cancelledUpcomingSessions: 1,
             },
             {
               participationId: "mock-enrollment-summer-camp",

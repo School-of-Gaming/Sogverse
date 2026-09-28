@@ -24,6 +24,7 @@ import {
   NO_SESSION_STAFFING,
 } from "@/lib/session-staffing";
 import type {
+  CancelledSessionFeedEntry,
   FutureSessionFeedEntry,
   NoRecordSessionFeedEntry,
   PastSessionFeedEntry,
@@ -1665,5 +1666,48 @@ describe("applyDraftToEntry", () => {
       ROSTER,
     );
     expect(applyDraftToEntry(entry, draft)).toEqual(entry);
+  });
+});
+
+/**
+ * A cancelled session takes nothing: no editor on either side of the present,
+ * nothing owed, and a draft folded into it changes nothing.
+ */
+describe("a cancelled session", () => {
+  function cancelled(upcoming: boolean): CancelledSessionFeedEntry {
+    return {
+      kind: "cancelled",
+      id: "x",
+      sessionDate: "2026-03-02",
+      ...WHEN,
+      staffing: NO_SESSION_STAFFING,
+      upcoming,
+      reason: null,
+      cancelledAt: null,
+      cancelledBy: null,
+    };
+  }
+
+  it("opens neither editor, before, during or after its hour", () => {
+    for (const now of [BEFORE_START, MID_SESSION, AFTER_END]) {
+      expect(isEditableEntry(cancelled(now < END), now)).toBe(false);
+      expect(isPlannableEntry(cancelled(now < END), now)).toBe(false);
+    }
+  });
+
+  it("never needs attention and never counts toward the badge", () => {
+    const entry = cancelled(false);
+    expect(entryCompleteness(entry, ROSTER)).toBeNull();
+    expect(entryNeedsAttention(entry, ROSTER)).toBe(false);
+    expect(countEntriesNeedingAttention([entry, past("p")], ROSTER)).toBe(1);
+  });
+
+  it("is left untouched by a draft", () => {
+    const entry = cancelled(false);
+    const draft = draftFromEditorState(
+      { attendance: { a: "present" }, report: "Ran after all", staffNote: "" },
+      ROSTER,
+    );
+    expect(applyDraftToEntry(entry, draft)).toBe(entry);
   });
 });

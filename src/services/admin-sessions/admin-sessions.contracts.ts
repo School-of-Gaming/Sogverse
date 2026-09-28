@@ -3,6 +3,7 @@ import {
   geduFeedSession,
   geduFeedSite,
   scheduleSlotSummary,
+  sessionCancellation,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
   substitutionRequestDocument,
@@ -68,6 +69,12 @@ export const adminSessionGroup = z.object({
    */
   gedus: z.array(sessionStaffGedu),
   substitutions: z.array(substitutionRequestDocument),
+  /**
+   * The group's cancelled sessions the schedule still projects, newest first,
+   * in the gedu feed's shape — with every admin field filled, because this
+   * document is admin-only end to end.
+   */
+  cancellations: z.array(sessionCancellation),
 });
 
 /**
@@ -94,5 +101,15 @@ export const adminProductSessions = z.object({
   groups: z.array(adminSessionGroup),
 });
 
+/**
+ * What `cancel_session` returns: the cancellation with every admin field, plus
+ * the group it belongs to. Cancelling a cancelled session re-words it — the
+ * reason is replaced and the stamp moves to the calling admin.
+ */
+export const cancelSessionResult = sessionCancellation.extend({
+  group_id: z.string(),
+});
+
 export type AdminProductSessions = z.infer<typeof adminProductSessions>;
 export type AdminSessionGroup = z.infer<typeof adminSessionGroup>;
+export type CancelSessionResult = z.infer<typeof cancelSessionResult>;

@@ -1003,13 +1003,15 @@ function ClubSessionDetail({
  * One dated line: when it was and what became of it, read as one phrase, and
  * what it is worth.
  *
- * The three kinds read differently on purpose. A recorded session carries the
+ * The four kinds read differently on purpose. A recorded session carries the
  * fee and nothing else in the way of explanation — it is the ordinary case and
  * should be quiet. An unrecorded one is drawn in warning tone and says so in
  * words, because a zero with no explanation beside it is indistinguishable from
  * a free session. An upcoming one carries no amount at all: it has not
  * happened, and printing €0 against a date in the future would invite somebody
- * to go looking for a session nobody has missed.
+ * to go looking for a session nobody has missed. A cancelled one is muted and
+ * worth €0, past or future: it is settled, nothing about it is wrong, and the
+ * word beside the zero is what tells it apart from a missed one.
  *
  * The tone is the whole row's rather than the status word's, which is what keeps
  * the phrase one phrase: a warning-toned word after a plain date would read as
@@ -1031,7 +1033,8 @@ function SessionRow({
     <tr
       className={cn(
         "align-baseline",
-        session.kind === "upcoming" && "text-muted-foreground",
+        (session.kind === "upcoming" || session.kind === "cancelled") &&
+          "text-muted-foreground",
         session.kind === "unrecorded" && "text-warning",
       )}
     >
@@ -1064,6 +1067,7 @@ function SessionRow({
             {session.kind === "recorded" && t("recorded")}
             {session.kind === "unrecorded" && t("notRecorded")}
             {session.kind === "upcoming" && t("upcoming")}
+            {session.kind === "cancelled" && t("cancelled")}
           </span>
         </span>
       </td>
@@ -1078,7 +1082,7 @@ function SessionRow({
             ) : (
               formatCurrencyFromCents(feeCents, "eur", locale)
             ))}
-          {session.kind === "unrecorded" &&
+          {(session.kind === "unrecorded" || session.kind === "cancelled") &&
             formatCurrencyFromCents(0, "eur", locale)}
         </span>
       </td>

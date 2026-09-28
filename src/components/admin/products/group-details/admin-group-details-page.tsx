@@ -21,20 +21,24 @@ import {
   type SessionFeedGamer,
 } from "@/components/gedu/session-feed";
 import { showsNewcomerBadge } from "@/components/member-flair";
+import type { SetSessionSubstitutionDraft } from "@/components/admin/products/session-staffing-editor";
 import {
-  SessionStaffingEditor,
-  type SetSessionSubstitutionDraft,
-} from "@/components/admin/products/session-staffing-editor";
+  AdminCancelledSessionMenu,
+  AdminSessionMenu,
+  type SessionExistingRecord,
+} from "@/components/admin/products/session-cancellation";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { sessionEntryId } from "@/lib/session-occurrence";
 import { ROUTES } from "@/lib/constants";
 import { useNow } from "@/providers";
 import {
   useAdminAddSessionImage,
+  useAdminCancelSession,
   useAdminDeleteSessionImage,
   useAdminEmailSessionReport,
   useAdminProductSessions,
   useAdminRecordAttendance,
+  useAdminRestoreSession,
   useAdminSetGroupNotes,
   useAdminSetSessionNotes,
   useAdminSetSiteNotes,
@@ -231,6 +235,11 @@ function PageFrame({
   );
 }
 
+/** Whether a stored note holds anything once whitespace is set aside. */
+function hasText(value: string | null): boolean {
+  return value !== null && value.trim() !== "";
+}
+
 function NoticeCard({ children }: { children: React.ReactNode }) {
   return (
     <Card>
@@ -388,6 +397,34 @@ function Workspace({
   const setSessionSubstitution = useSetSessionSubstitution();
   const clearSessionSubstitution = useClearSessionSubstitution();
   const withdrawSubstitutionRequest = useWithdrawSessionSubstitutionRequestAsAdmin();
+  // Cancelling and restoring a session — the other power this shell holds that
+  // the gedu's does not. Both settle by awaiting this page's own document, as
+  // the staffing writes do.
+  const cancelSession = useAdminCancelSession(groupId);
+  const restoreSession = useAdminRestoreSession(groupId);
+
+  /**
+   * What each date already holds, for the cancel dialog's line about it. Read
+   * off the record itself rather than from what a card shows, and counted only
+   * when something is on it: a row with everything cleared off it has nothing
+   * for a cancellation to keep.
+   */
+  const existingRecords = useMemo(() => {
+    const byDate = new Map<string, SessionExistingRecord>();
+    for (const session of group.sessions) {
+      if (session.report_emailed_at !== null) {
+        byDate.set(session.session_date, "emailed");
+      } else if (
+        hasText(session.report) ||
+        hasText(session.gedu_note) ||
+        session.images.length > 0 ||
+        Object.keys(session.attendance).length > 0
+      ) {
+        byDate.set(session.session_date, "recorded");
+      }
+    }
+    return byDate;
+  }, [group.sessions]);
 
   /**
    * The account ids whose Roblox figure this roster needs — verified rows only,
@@ -425,6 +462,8 @@ function Workspace({
         // one card component renders both.
         gedus: group.gedus,
         substitutions: group.substitutions,
+        // With every admin field filled — this document is admin-only.
+        cancellations: group.cancellations,
         // **No viewer.** An admin is not a member of the group's staff, so
         // there is nobody here for "am I expected" to be about: the shell
         // supplies the staffing editor in that slot instead, as it already does
@@ -432,7 +471,15 @@ function Workspace({
         viewerId: null,
         now,
       }),
-    [groupId, sessions.product, group.sessions, group.gedus, group.substitutions, now],
+    [
+      groupId,
+      sessions.product,
+      group.sessions,
+      group.gedus,
+      group.substitutions,
+      group.cancellations,
+      now,
+    ],
   );
 
   // The attendance checklist takes id + first name and the instant from which
@@ -704,13 +751,34 @@ function Workspace({
    */
   const renderSessionMenu = (entry: SessionFeedEntry) => {
     const sessionDate = entry.id.slice(sessionEntryId(groupId, "").length);
+    const handleCancelSession = async (reason: string) => {
+      await cancelSession.mutateAsync({ sessionDate, reason });
+    };
+
+    // A cancelled session carries no staffing to edit — its requests are hidden
+    // until it is restored — so its menu is the cancellation's own.
+    if (entry.kind === "cancelled") {
+      return (
+        <AdminCancelledSessionMenu
+          sessionDate={sessionDate}
+          reason={entry.reason}
+          onCancelSession={handleCancelSession}
+          onRestoreSession={async () => {
+            await restoreSession.mutateAsync({ sessionDate });
+          }}
+        />
+      );
+    }
+
     return (
-      <SessionStaffingEditor
+      <AdminSessionMenu
         staffing={entry.staffing}
         sessionDate={sessionDate}
         onSetSubstitution={(draft) => handleSetSubstitution(sessionDate, draft)}
         onClearSubstitution={handleClearSubstitution}
         onWithdrawRequest={handleWithdrawRequest}
+        existingRecord={existingRecords.get(sessionDate) ?? "none"}
+        onCancelSession={handleCancelSession}
       />
     );
   };

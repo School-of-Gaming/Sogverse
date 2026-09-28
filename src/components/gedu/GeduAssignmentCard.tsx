@@ -13,6 +13,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
+import { CancelledAheadNotice } from "@/components/session-feed/CancelledAheadNotice";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
@@ -338,6 +339,16 @@ export function GeduAssignmentCard({
               />
             </div>
           </div>
+
+          {/* The cancelled sessions the card passes over before the next one
+              it names, as a warning panel read first in the body — the schedule
+              line below still claims those dates. Present only while there are
+              some; a finished run has nothing ahead to pass over. First in the
+              body is safe because the dates come in the same assignments read
+              as the card itself, so the panel is on the first paint or never. */}
+          {endedOn === null && (
+            <CancelledAheadNotice starts={assignment.cancelledAhead} />
+          )}
 
           {/* The product's schedule, in words — the cadence for a club, the date
               range and running days for a camp, the day and time for an event.

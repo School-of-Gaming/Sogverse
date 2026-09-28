@@ -40,6 +40,8 @@ BEGIN
                 WHERE g.product_id = p.id
                   AND gs.session_date >= p_month_start
                   AND gs.session_date <= v_month_end
+                  -- Cancellation: the same exclusion as `sessions` below.
+                  AND NOT public.group_session_is_cancelled(gs.group_id, gs.session_date)
              )
           OR (
                p.start_date IS NOT NULL
@@ -137,7 +139,9 @@ BEGIN
                              'invoice_text',       ic.invoice_text
                            )
                  END,
-               'sessions',               se.items
+               'sessions',               se.items,
+               'cancelled_sessions',     cx.items,
+               'group_ids',              gr.items
              ) AS doc
         FROM candidate c
         LEFT JOIN public.locations l ON l.id = c.location_id
@@ -187,8 +191,49 @@ BEGIN
                     WHERE g.product_id = c.id
                       AND gs.session_date >= p_month_start
                       AND gs.session_date <= v_month_end
+                      -- Cancellation: a row kept under a cancellation is not a
+                      -- session that ran, so it never reaches the bill. Left
+                      -- out here rather than trusted to the page, so no reader
+                      -- of this document can count one.
+                      AND NOT public.group_session_is_cancelled(gs.group_id, gs.session_date)
                  ), '[]'::jsonb) AS items
         ) se
+        -- Cancellation: the month's cancelled (group, date) pairs in effect,
+        -- in the same shape as `sessions`, so the page can show a cancelled
+        -- date as Cancelled rather than as unrecorded and never bill it. The
+        -- same predicate `sessions` excludes by, so a pair here never also
+        -- appears there, and an inert cancellation appears in neither.
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(
+                            jsonb_build_object(
+                              'group_id',     sc.group_id,
+                              'session_date', sc.session_date
+                            )
+                            ORDER BY sc.session_date, sc.group_id
+                          )
+                     FROM public.session_cancellations sc
+                     JOIN public.product_groups g ON g.id = sc.group_id
+                    WHERE g.product_id = c.id
+                      AND sc.session_date >= p_month_start
+                      AND sc.session_date <= v_month_end
+                      AND public.group_session_is_cancelled(sc.group_id, sc.session_date)
+                 ), '[]'::jsonb) AS items
+        ) cx
+        -- Every group the club has, whether or not the month says anything
+        -- about it. A date is cancelled for the club only when every one of its
+        -- groups cancelled it, and a group that neither met nor cancelled is
+        -- exactly the one neither list above can name — without this a
+        -- sibling's cancellation would hide its missed session. Every row, with
+        -- no filter: a group has no archived state and no start date, so any
+        -- group the product holds is one its schedule is due to meet.
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(g.id ORDER BY g.id)
+                     FROM public.product_groups g
+                    WHERE g.product_id = c.id
+                 ), '[]'::jsonb) AS items
+        ) gr
     ) club;
 
   -- Every club on the invoice belongs to a municipality, or there is no invoice.

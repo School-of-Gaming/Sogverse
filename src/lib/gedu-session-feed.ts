@@ -22,7 +22,10 @@ import type {
   SessionEditor,
   SessionFeedEntry,
 } from "@/components/gedu/session-feed";
-import type { GeduFeedSession } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import type {
+  GeduFeedSession,
+  SessionCancellation,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import type {
   SubstitutionRequestDocument,
   SessionStaffGedu,
@@ -39,7 +42,7 @@ import type {
  * backward, the merge of rows over projections and the derivation of what kind
  * of entry each date is all happen here, once, in front of one clock.
  *
- * Three ideas do all the work:
+ * Four ideas do all the work:
  *
  * - **A session is a (group, product-local date).** That is the row's unique key
  *   in Postgres and it is the entry's identity here, so a projection and a row
@@ -52,6 +55,14 @@ import type {
  *   next term must not retroactively rewrite what happened last term. A row the
  *   schedule no longer projects at all — a weekday move orphans one — still
  *   renders, for the same reason.
+ * - **A cancellation replaces its date's entry — and beats a record too.** An
+ *   admin's word that the session did not happen wins over anything stored
+ *   for the date, which stays in the database and returns on a restore —
+ *   including a record the schedule no longer projects, which the document's
+ *   cancellations still name. It applies only to a date the feed would
+ *   otherwise show, so one with neither a projection nor a row stays inert,
+ *   and the cancelled entry keeps its dated place on whichever side of the
+ *   present its end instant puts it.
  * - **Kind comes from dates, never from a column.** `now` against the session's
  *   *end* splits future from past, so a session in progress is the **current**
  *   one rather than history — the same rule the family feed uses, because the
@@ -90,6 +101,12 @@ export interface GeduSessionFeedArgs {
    */
   substitutions: readonly SubstitutionRequestDocument[];
   /**
+   * The group's cancelled sessions, as either staff document emits them. The
+   * detail fields are filled for an admin and null for a gedu, and ride through
+   * to the entry unchanged.
+   */
+  cancellations: readonly SessionCancellation[];
+  /**
    * The signed-in gedu, where the surface has one. `null` on the admin shell
    * and in the preview scenes, which is the honest answer rather than a guess:
    * it is what gates the "I can't make this session" action, so a wrong id
@@ -126,6 +143,7 @@ export function buildGeduSessionFeed(
     sessions,
     gedus,
     substitutions,
+    cancellations,
     viewerId = null,
     now,
     epoch = SESSION_RECORDING_EPOCH,
@@ -188,6 +206,12 @@ export function buildGeduSessionFeed(
   const rowsByDate = new Map(
     sessions.map((session) => [session.session_date, session]),
   );
+  const cancellationsByDate = new Map(
+    cancellations.map((cancellation) => [
+      cancellation.session_date,
+      cancellation,
+    ]),
+  );
 
   // A substitution request contributes no date of its own, deliberately. One filed
   // against a date the schedule no longer projects and that nobody recorded
@@ -210,6 +234,36 @@ export function buildGeduSessionFeed(
         : { startsAt: new Date(row.starts_at), endsAt: new Date(row.ends_at) };
     if (when === undefined) continue;
 
+    // The whole array goes in and the derivation picks its own date out — one
+    // call per entry, and no second place that decides what "this date's
+    // requests" means.
+    const staffing = deriveSessionStaffing({
+      gedus: staffingGedus,
+      requests: staffingRequests,
+      sessionDate: date,
+      viewerId,
+    });
+
+    // A cancellation wins over a stored row on the same date. The record is
+    // kept in the database and comes back on a restore, but the cancelled
+    // entry carries none of it: the session did not happen, so there is
+    // nothing on the card to read or edit.
+    const cancellation = cancellationsByDate.get(date);
+    if (cancellation !== undefined) {
+      entries.push(
+        toCancelledEntry({
+          id: sessionEntryId(groupId, date),
+          date,
+          startsAt: when.startsAt,
+          endsAt: when.endsAt,
+          staffing,
+          cancellation,
+          now,
+        }),
+      );
+      continue;
+    }
+
     entries.push(
       toEntry({
         id: sessionEntryId(groupId, date),
@@ -217,15 +271,7 @@ export function buildGeduSessionFeed(
         startsAt: when.startsAt,
         endsAt: when.endsAt,
         row,
-        // The whole array goes in and the derivation picks its own date out —
-        // one call per entry, and no second place that decides what "this
-        // date's requests" means.
-        staffing: deriveSessionStaffing({
-          gedus: staffingGedus,
-          requests: staffingRequests,
-          sessionDate: date,
-          viewerId,
-        }),
+        staffing,
         now,
         epoch,
       }),
@@ -348,6 +394,49 @@ function toEntry(args: {
     // database already ordered.
     images: row?.images ?? [],
     lastEditedBy: toLastEditedBy(row),
+  };
+}
+
+/**
+ * One cancelled session, on the side of the present its end instant puts it —
+ * the same instant every other kind is classified on.
+ *
+ * The staffing is carried because every entry carries it; a substitution
+ * request filed before the cancellation is hidden rather than withdrawn, since
+ * the card draws no staffing and a restore brings the request back as it was.
+ */
+function toCancelledEntry(args: {
+  id: string;
+  date: string;
+  startsAt: Date;
+  endsAt: Date;
+  staffing: SessionStaffing;
+  cancellation: SessionCancellation;
+  now: Date;
+}): SessionFeedEntry {
+  const { id, date, startsAt, endsAt, staffing, cancellation, now } = args;
+  return {
+    kind: "cancelled",
+    id,
+    sessionDate: date,
+    startsAt,
+    endsAt,
+    staffing,
+    upcoming: endsAt.getTime() > now.getTime(),
+    reason: cancellation.reason,
+    cancelledAt:
+      cancellation.cancelled_at === null
+        ? null
+        : new Date(cancellation.cancelled_at),
+    // Both halves or nobody, exactly as the last editor is.
+    cancelledBy:
+      cancellation.cancelled_by !== null &&
+      cancellation.cancelled_by_first_name !== null
+        ? {
+            id: cancellation.cancelled_by,
+            firstName: cancellation.cancelled_by_first_name,
+          }
+        : null,
   };
 }
 

@@ -291,9 +291,13 @@ type FamilyEntrySpec =
       report?: string;
       photos?: readonly SessionPhoto[];
       lastEditedBy?: FamilyProductGedu;
+      /** Called off by an admin: drawn as the cancelled line, in its place. */
+      cancelled?: true;
     }
   | {
       kind: "past";
+      /** Called off by an admin: drawn as the cancelled line, in its place. */
+      cancelled?: true;
       report?: string;
       /**
        * The session's photos, oldest first. Omitted is a session nobody
@@ -390,7 +394,8 @@ const ACTIVE_CLUB_SPECS: readonly FamilyEntrySpec[] = [
     attendance: "present",
     lastEditedBy: SANNA,
   },
-  { kind: "past", attendance: "present" },
+  // A week that was called off, deep in the history.
+  { kind: "past", cancelled: true },
   {
     kind: "past",
     report: SHORT_REPORTS[5],
@@ -440,7 +445,9 @@ const IN_PERSON_CLUB_SPECS: readonly FamilyEntrySpec[] = [
   { kind: "future" },
   { kind: "future" },
   { kind: "future" },
-  { kind: "future" },
+  // The soonest date is off: the next session is the one after it, and this
+  // line sits between it and the past.
+  { kind: "future", cancelled: true },
   {
     kind: "past",
     report: SHORT_REPORTS[4],
@@ -1005,6 +1012,17 @@ function toEntry(
   // occurrence with no stored row behind it looks like, and the state the chip
   // renders nothing for.
   const lastEditedBy = spec.lastEditedBy ?? null;
+
+  if (spec.cancelled === true) {
+    return {
+      kind: "cancelled",
+      id,
+      sessionDate: dateIn(startsAt),
+      startsAt,
+      endsAt,
+      upcoming: spec.kind === "future",
+    };
+  }
 
   if (spec.kind === "future") {
     return {

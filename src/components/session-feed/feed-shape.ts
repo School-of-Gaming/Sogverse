@@ -17,10 +17,15 @@
 /**
  * The minimum an entry has to be for the helpers below to shape it: an identity
  * and which side of the present it is on.
+ *
+ * `upcoming` is read only on a `cancelled` entry, the one kind that can sit on
+ * either side of the present: a cancelled session keeps its place in date order,
+ * so the partition has to know which side of the divider it belongs on.
  */
 interface FeedShapedEntry {
   id: string;
   kind: string;
+  upcoming?: boolean;
 }
 
 /** A generic feed entry narrowed to the future side of the present. */
@@ -28,17 +33,27 @@ type FutureOf<T extends FeedShapedEntry> = Extract<T, { kind: "future" }>;
 
 export interface FeedPartition<T extends FeedShapedEntry> {
   /**
-   * Future sessions beyond the next one, still in the caller's descending
-   * order (furthest away first). These collapse behind one row above the next
-   * session, so the feed opens on "what's next and what just happened" rather
-   * than on two months of empty calendar.
+   * Entries beyond the next session, still in the caller's descending order
+   * (furthest away first) — cancelled ones included, in their dated places.
+   * These collapse behind one row above the next session, so the feed opens on
+   * "what's next and what just happened" rather than on two months of empty
+   * calendar.
    */
-  laterFuture: FutureOf<T>[];
+  laterFuture: T[];
   /**
-   * The soonest session still ahead of us — the prominent entry at the head of
-   * the feed. `null` once a product's schedule has run out.
+   * The soonest session still ahead of us that is going to run — the prominent
+   * entry at the head of the feed. `null` once a product's schedule has run
+   * out. **Never a cancelled session**: the headline answers "when is the next
+   * one", and a date that is off is not an answer to that.
    */
   nextSession: FutureOf<T> | null;
+  /**
+   * Cancelled sessions still ahead of us but **sooner** than the next session,
+   * descending — or every upcoming cancelled one when nothing ahead is going to
+   * run. Always on screen, between the next session and the past: a family
+   * whose next date is off has to see that without opening anything.
+   */
+  soonerCancelled: T[];
   /** Everything that has already happened, still descending. */
   past: T[];
 }
@@ -53,15 +68,25 @@ function isFutureEntry<T extends FeedShapedEntry>(entry: T): entry is FutureOf<T
   return entry.kind === "future";
 }
 
+/** A future session, or a cancelled one whose date has not yet passed. */
+function isAheadOfNow<T extends FeedShapedEntry>(entry: T): boolean {
+  return (
+    isFutureEntry(entry) ||
+    (entry.kind === "cancelled" && entry.upcoming === true)
+  );
+}
+
 /**
- * Split a descending feed into its three structural parts.
+ * Split a descending feed into its four structural parts.
  *
- * The feed is handed to us strictly newest-first, so the future sessions are
- * the leading run and the next session is the *last* of them — the one closest
- * to now, sitting directly above the most recent past entry. Reading "next" off
- * position rather than off a flag is what guarantees the collapsed later-block
- * reads continuously down into the prominent entry beneath it, with global date
- * order never violated.
+ * The feed is handed to us strictly newest-first, so the sessions still ahead
+ * are the leading run and the next session is the *last* future entry in it —
+ * the soonest one that is going to run. Reading "next" off position rather than
+ * off a flag is what guarantees the collapsed later-block reads continuously
+ * down into the prominent entry beneath it, with global date order never
+ * violated. Cancelled dates keep their places in that order: one beyond the
+ * next session collapses with the later block, and one sooner than it sits
+ * between it and the past.
  *
  * Any future entry appearing *after* a past one would be a caller ordering bug;
  * it stays where it was put (this function does not sort) and simply counts as
@@ -71,18 +96,28 @@ function isFutureEntry<T extends FeedShapedEntry>(entry: T): entry is FutureOf<T
 export function partitionFeedEntries<T extends FeedShapedEntry>(
   entries: readonly T[],
 ): FeedPartition<T> {
-  // Collected by walking rather than sliced-and-cast, so the narrowing is the
+  let ahead = 0;
+  while (ahead < entries.length && isAheadOfNow(entries[ahead])) ahead += 1;
+
+  // The next session is the soonest of the leading run that is going to run.
+  // Found by walking rather than sliced-and-cast, so the narrowing is the
   // loop's own and no assertion has to be trusted.
-  const future: FutureOf<T>[] = [];
-  for (const entry of entries) {
-    if (!isFutureEntry(entry)) break;
-    future.push(entry);
+  let nextIndex = -1;
+  let nextSession: FutureOf<T> | null = null;
+  for (let index = ahead - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (isFutureEntry(entry)) {
+      nextIndex = index;
+      nextSession = entry;
+      break;
+    }
   }
 
   return {
-    laterFuture: future.slice(0, Math.max(future.length - 1, 0)),
-    nextSession: future.length > 0 ? future[future.length - 1] : null,
-    past: entries.slice(future.length),
+    laterFuture: nextIndex < 0 ? [] : entries.slice(0, nextIndex),
+    nextSession,
+    soonerCancelled: entries.slice(nextIndex + 1, ahead),
+    past: entries.slice(ahead),
   };
 }
 

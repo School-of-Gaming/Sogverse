@@ -162,7 +162,7 @@ export function SessionFeedShell<T extends FeedShellEntry>({
   /** Named so the divider's toggle can say which region it reveals into. */
   const listId = useId();
 
-  const { laterFuture, nextSession, past } = useMemo(
+  const { laterFuture, nextSession, soonerCancelled, past } = useMemo(
     () => partitionFeedEntries(entries),
     [entries],
   );
@@ -187,6 +187,7 @@ export function SessionFeedShell<T extends FeedShellEntry>({
     const visible: T[] = [
       ...(laterOpen ? laterFuture : []),
       ...(nextSession === null ? [] : [nextSession]),
+      ...soonerCancelled,
       ...past.slice(0, pastWindow.visible),
     ];
     const dated = withMonthDividers(visible, timeZone);
@@ -205,7 +206,15 @@ export function SessionFeedShell<T extends FeedShellEntry>({
       { kind: "divider", key: DIVIDER_KEY },
       ...dated.slice(insertAt),
     ];
-  }, [laterOpen, laterFuture, nextSession, past, pastWindow.visible, timeZone]);
+  }, [
+    laterOpen,
+    laterFuture,
+    nextSession,
+    soonerCancelled,
+    past,
+    pastWindow.visible,
+    timeZone,
+  ]);
 
   /**
    * Reveal the next chunk of history as the sentinel comes into view.

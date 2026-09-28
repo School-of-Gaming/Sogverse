@@ -2283,6 +2283,52 @@ export type Database = {
           },
         ]
       }
+      session_cancellations: {
+        Row: {
+          cancelled_at: string
+          cancelled_by: string
+          group_id: string
+          reason: string | null
+          session_date: string
+        }
+        Insert: {
+          cancelled_at?: string
+          cancelled_by: string
+          group_id: string
+          reason?: string | null
+          session_date: string
+        }
+        Update: {
+          cancelled_at?: string
+          cancelled_by?: string
+          group_id?: string
+          reason?: string | null
+          session_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_cancellations_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_cancellations_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_cancellations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_feedback: {
         Row: {
           answers: Json
@@ -3007,6 +3053,10 @@ export type Database = {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
       }
+      cancel_session: {
+        Args: { p_group_id: string; p_reason?: string; p_session_date: string }
+        Returns: Json
+      }
       cascade_withdraw_orphaned_substitution_requests: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: undefined
@@ -3221,6 +3271,7 @@ export type Database = {
       get_my_assigned_products: {
         Args: never
         Returns: {
+          cancelled_dates: string[]
           end_date: string
           group_count: number
           group_id: string
@@ -3232,6 +3283,7 @@ export type Database = {
           product_type: Database["public"]["Enums"]["product_type"]
           schedule_slots: Json
           start_date: string
+          substitution_cancelled: boolean
           substitution_date: string
           timezone: string
         }[]
@@ -3308,6 +3360,13 @@ export type Database = {
           status: string
         }[]
       }
+      get_my_session_cancellations: {
+        Args: never
+        Returns: {
+          participation_id: string
+          session_date: string
+        }[]
+      }
       get_my_waitlist_positions: {
         Args: never
         Returns: {
@@ -3320,6 +3379,13 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Json
       }
+      get_session_cancellations_in_effect: {
+        Args: { p_group_ids: string[] }
+        Returns: {
+          group_id: string
+          session_date: string
+        }[]
+      }
       get_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
@@ -3328,9 +3394,21 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: number
       }
+      group_session_date_is_scheduled: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
       group_session_date_is_writable: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
+      }
+      group_session_is_cancelled: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
+      group_upcoming_cancelled_dates: {
+        Args: { p_group_id: string }
+        Returns: string[]
       }
       has_active_participation_in_group: {
         Args: { p_group_id: string }
@@ -3394,6 +3472,10 @@ export type Database = {
         Returns: string
       }
       location_search_separator: { Args: never; Returns: string }
+      lock_group_session_key: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: undefined
+      }
       mark_chat_image_stored: { Args: { p_id: string }; Returns: string }
       offer_session_substitution: {
         Args: { p_request_id: string }
@@ -3481,6 +3563,10 @@ export type Database = {
         Returns: Json
       }
       restore_chat_message: { Args: { p_id: string }; Returns: undefined }
+      restore_session: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
       search_locations: {
         Args: {
           p_country?: string
@@ -3510,6 +3596,13 @@ export type Database = {
         Returns: string
       }
       send_seat_offer: { Args: { p_participation_id: string }; Returns: Json }
+      session_cancellation_document: {
+        Args: {
+          p_cancellation: Database["public"]["Tables"]["session_cancellations"]["Row"]
+          p_include_detail: boolean
+        }
+        Returns: Json
+      }
       set_chat_lock: {
         Args: { p_channel_id: string; p_locked: boolean; p_user_id: string }
         Returns: undefined

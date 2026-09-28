@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
+import { CalendarX } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -127,6 +128,26 @@ describe("Alert", () => {
       const title = sentence.getByText("This is a parent account");
       expect(title.className).toContain("text-foreground");
       expect(title.className).not.toContain(ink);
+    },
+  );
+
+  it.each(STATUSES)(
+    "$variant takes the event's mark in place of its glyph, and keeps its hue",
+    ({ variant, ink }) => {
+      const { container } = render(
+        <Alert variant={variant} icon={CalendarX}>
+          <AlertDescription>Something to say.</AlertDescription>
+        </Alert>,
+      );
+      const reference = render(<CalendarX />).container.querySelector("svg");
+
+      // Exactly one glyph: the event's mark replaces the status's rather than
+      // standing beside it, and the colour is still the status's own.
+      const glyphs = container.querySelectorAll('[role="alert"] > svg');
+      expect(glyphs).toHaveLength(1);
+      expect(glyphs[0].innerHTML).toBe(reference?.innerHTML);
+      expect(glyphs[0].getAttribute("class")).toContain(ink);
+      expect(glyphs[0].getAttribute("aria-hidden")).toBe("true");
     },
   );
 

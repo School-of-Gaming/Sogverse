@@ -249,6 +249,38 @@ export const geduFeedSession = z.object({
   attendance: z.record(z.string(), attendanceStatus),
 });
 
+/**
+ * One cancelled session on a group, as the staff documents carry it.
+ *
+ * Only dates the schedule still projects travel: a cancellation left behind by
+ * a weekday move is inert and is never surfaced on its own. A cancelled date
+ * never also has a stored session row — cancelling refuses a date with one, and
+ * no row is materialized on a cancelled date.
+ *
+ * **The last four keys are admin-only**, keyed to the caller exactly as a
+ * substitution reason is: they are JSON null for a gedu, who learns that the
+ * session is off and nothing about why. The admin product document always
+ * fills them.
+ */
+export const sessionCancellation = z.object({
+  /** Product-local calendar date, `YYYY-MM-DD`. */
+  session_date: z.string(),
+  reason: z.string().nullable(),
+  cancelled_at: z.string().nullable(),
+  cancelled_by: z.string().nullable(),
+  cancelled_by_first_name: z.string().nullable(),
+});
+
+export type SessionCancellation = z.infer<typeof sessionCancellation>;
+
+/**
+ * SQLSTATE raised by every session write (notes, attendance, adding or
+ * removing a photo, the report mail's claim, a substitution request or an
+ * admin-set sub) aimed at a cancelled session — including one whose record was
+ * kept when it was cancelled.
+ */
+export const SESSION_CANCELLED_SQLSTATE = "P0026";
+
 /** The site, on in-person products. `null` on anything remote. */
 export const geduFeedSite = z.object({
   location_id: z.string(),
@@ -319,6 +351,12 @@ export const geduGroupFeed = z.object({
    * and that rule lives with the element's own schema.
    */
   substitutions: z.array(substitutionRequestDocument),
+  /**
+   * The group's cancelled sessions the schedule still projects, newest first.
+   * The client lays these over its projected entries by date; the admin-only
+   * fields inside each element are keyed to the caller, as above.
+   */
+  cancellations: z.array(sessionCancellation),
 });
 
 export type GeduGroupFeed = z.infer<typeof geduGroupFeed>;

@@ -383,6 +383,15 @@
         "needsAttention": "poQ Qu’ – De’vam tu’lu’ ’etlhDaq QaDDaq",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
+      "cancellation": {
+        "allTitle": "jajvam Hoch ghommey poH qIllu’ – yay’ Dun",
+        "some": "{cancelled}/{groups} ghom poH qIllu’",
+        "allComingUp": {
+          "starts": "wa’DIch poH qIllu’",
+          "ends": "Qav poH qIllu’",
+          "runs": "qIllu’"
+        }
+      },
       "comingUp": {
         "label": "ghoS",
         "heading": "ghoS",
@@ -440,6 +449,7 @@
       "feeNotSet": "DIl wIvlu’pu’be’",
       "notRecorded": "qonlu’pu’be’",
       "upcoming": "qaSbe’lI’",
+      "cancelled": "qIllu’",
       "unrecordedSessions": "{count, plural, one {# qonlu’pu’be’} other {# qonlu’pu’be’}}",
       "sessionsFor": "{club} qaSpu'",
       "clubsIn": "{municipality} ghomHommey",
@@ -1203,6 +1213,30 @@
         "loadFailed": "may’mey qonta’ghach laDlaHbe’. nIteb yIchu’qa’.",
         "loading": "ngIq vamvaD may’mey qonta’ghach laDlu’…",
         "railGroupHeading": "ghom"
+      },
+      "cancellation": {
+        "menuLabel": "may’ qIllu’bogh vamvaD latlh vumghachmey",
+        "cancelSession": "may’ yIqIl",
+        "addReason": "meq yIchel",
+        "changeReason": "meq yIchoH",
+        "restoreSession": "may’ yIchu’qa’",
+        "cancelTitle": "may’vam DaqIl’a’?",
+        "cancelBody": "{date}. may’vam qIllu’ legh qorDu’pu’ Gedupu’ je, ’ej pagh qonlu’laH. vay’ ghelbe’lu’.",
+        "reasonTitle": "meq yIchoH",
+        "reasonBody": "{date}. qIllu’taH may’.",
+        "reasonLabel": "meq",
+        "reasonHint": "meq legh loHwI’pu’ neH. {count} ngutlh ratlh",
+        "reasonPlaceholder": "qatlh ghom qIllu’?",
+        "keepSession": "may’ yIpol",
+        "cancelConfirm": "may’ yIqIl",
+        "reasonConfirm": "meq yIpol",
+        "recordKept": "may’vam qonmey, mIlloghmey, pawlu’ghach je polmoHlu’. qIllu’taHvIS may’, bIH leghbe’ qorDu’pu’. may’ chu’qa’lu’chugh, chegh.",
+        "recordKeptEmailed": "may’vam qonmey, mIlloghmey, pawlu’ghach je polmoHlu’. qIllu’taHvIS may’, bIH leghbe’ qorDu’pu’. may’ chu’qa’lu’chugh, chegh. qorDu’pu’vaD ja’ ngeHlu’pu’, ’ej QIn lI’ qa’laHbe’lu’.",
+        "cancelFailed": "polmoHlu’laHbe’. yInID je.",
+        "restoreTitle": "may’vam Dachu’qa’’a’?",
+        "restoreBody": "{date}. may’vam nab legh qorDu’pu’ Gedupu’ je, ’ej motlh qonlu’laH. vay’ ghelbe’lu’.",
+        "restoreConfirm": "may’ yIchu’qa’",
+        "restoreFailed": "may’ chu’qa’lu’laHbe’. yInID je."
       }
     },
     "users": {
@@ -1779,7 +1813,7 @@
         },
         "sessions": {
           "title": "Hoch ghomDaq qaSbogh",
-          "intro": "mIw'a' ghom ghItlhpu'bogh Hoch poH, tu'lu' ghItlhmey je ja'chuqDaq Gedu' chelbogh nagh beQmey je. Gedu' ja'chuq ghItlhDI' qoj tu'wI'pu' ghItlhDI' ghItlh ghaj poH; vaj qaSpa' qaSmoHlu'bogh poH naDev tu'be'lu'. poH nIteb leghmeH yIlo' — Qam chIlbogh He rur; puq mI'mey muvmoHghachDaq tu'lu' vaj.",
+          "intro": "mIw'a' ghom ghItlhpu'bogh Hoch poH, tu'lu' ghItlhmey je ja'chuqDaq Gedu' chelbogh nagh beQmey je. Gedu' ja'chuq ghItlhDI' qoj tu'wI'pu' ghItlhDI' ghItlh ghaj poH; vaj qaSpa' qaSmoHlu'bogh poH naDev tu'be'lu'; loHwI' qIlbogh poH naDev tu'be'lu' je. poH nIteb leghmeH yIlo' — Qam chIlbogh He rur; puq mI'mey muvmoHghachDaq tu'lu' vaj.",
           "params": {
             "productId": "De'wI'vam ghommey poHmey neH.",
             "groupId": "ghomvam poHmey neH.",
@@ -2223,7 +2257,8 @@
       "substitutionWithdrawTitle": "DaH Danatlh’a’?",
       "substitutionWithdrawBody": "may’ DaDevqa’, ’ej Hoch lIw nob lunatlhlu’.",
       "substitutionWithdrawConfirm": "yInatlh",
-      "substitutionWithdrawFailed": "pollu’be’. yIboq."
+      "substitutionWithdrawFailed": "pollu’be’. yIboq.",
+      "cancelledByOn": "qIl {name}, {when}"
     },
     "groupNotes": {
       "heading": "ghom’a’vam",
@@ -2348,12 +2383,15 @@
   },
   "activityCard": {
     "endedOn": "{date} rIntaH",
-    "noSchedule": "poH nabta’ tu’lu’be’"
+    "noSchedule": "poH nabta’ tu’lu’be’",
+    "cancelledAhead": "{count, plural, one {<b>{dates}</b> qIllu’!} other {<b>{dates}</b> qIllu’pu’!}}",
+    "cancelledAheadMore": "<b>{first}</b> {more, plural, one {# may’ latlh je} other {# may’mey latlh je}} qIllu’pu’!"
   },
   "sessionBadge": {
     "live": "qaStaH",
     "nextSession": "may’ veb",
-    "upcoming": "may’ pIq"
+    "upcoming": "may’ pIq",
+    "cancelled": "qIllu’"
   },
   "sessionFeed": {
     "readMore": "latlh yIlaD",

@@ -25,6 +25,14 @@ type AlertStatus = "destructive" | "success" | "info" | "warning";
  * hand-rolled callout that carries a status draws from this map rather than
  * picking a glyph of its own, which is what keeps one meaning per mark across
  * the app.
+ *
+ * **One exception, and only on the panel: an alert may name the event instead
+ * of the status**, through `Alert`'s `icon`, when the status alone is ambiguous
+ * about what happened and the app already has a mark for that event elsewhere —
+ * a cancelled session wears the calendar-cross the session feeds draw it with,
+ * so a reader meets one mark for one event wherever it appears. The status still
+ * owns the colour, which is never the caller's; a glyph chosen for looks, or for
+ * an event with no mark of its own elsewhere, takes the status glyph.
  */
 export const STATUS_GLYPH: Record<AlertStatus, LucideIcon> = {
   destructive: AlertCircle,
@@ -96,11 +104,13 @@ const alertVariants = cva(
 function AlertGlyph({
   status,
   align,
+  icon,
 }: {
   status: AlertStatus;
   align?: "left" | "center" | null;
+  icon?: LucideIcon;
 }) {
-  const Glyph = STATUS_GLYPH[status];
+  const Glyph = icon ?? STATUS_GLYPH[status];
   return (
     <Glyph
       className={cn(
@@ -120,8 +130,17 @@ const AlertVariantContext = React.createContext<AlertStatus | "default">(
 
 const Alert = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, align, children, ...props }, ref) => {
+  React.HTMLAttributes<HTMLDivElement> &
+    VariantProps<typeof alertVariants> & {
+      /**
+       * The event's own mark in place of the status glyph, inked in the
+       * status's hue. Only where the status alone would not say what happened
+       * — the rule is on `STATUS_GLYPH`. Ignored on the neutral default, which
+       * has no glyph.
+       */
+      icon?: LucideIcon;
+    }
+>(({ className, variant, align, icon, children, ...props }, ref) => {
   const status = variant && variant !== "default" ? variant : null;
   return (
     <AlertVariantContext.Provider value={status ?? "default"}>
@@ -131,7 +150,7 @@ const Alert = React.forwardRef<
         className={cn(alertVariants({ variant, align }), className)}
         {...props}
       >
-        {status === null ? null : <AlertGlyph status={status} align={align} />}
+        {status === null ? null : <AlertGlyph status={status} align={align} icon={icon} />}
         {children}
       </div>
     </AlertVariantContext.Provider>

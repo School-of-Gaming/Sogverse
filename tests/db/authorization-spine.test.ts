@@ -162,6 +162,15 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // second refusal, and every other role is stopped by the guard.
   get_admin_substitution_requests: { permittedRoles: ["admin"] },
 
+  // --- session cancellation ------------------------------------------------
+  //
+  // An admin cancels a session and restores it. Both are assertable on both
+  // halves with no fixture: past the admin guard, a NULL group or date is
+  // refused with check_violation before anything is looked up, which is an
+  // error but not the forbidden one.
+  cancel_session: { permittedRoles: ["admin"] },
+  restore_session: { permittedRoles: ["admin"] },
+
   // --- customer-gated ------------------------------------------------------
   // Phase 3's grant-plus-guard conversion. Past the role guard, a customer
   // reaches the engine with a NULL product id and is refused with
@@ -639,6 +648,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   get_my_participation_subscription_states: {
     scopeTest: "tests/db/get-my-participation-subscription-states.test.ts",
     why: "billing-state signals for participations the caller is party to",
+  },
+  get_my_session_cancellations: {
+    scopeTest: "tests/db/session-cancellation.test.ts",
+    why: "takes no argument at all: the seats it answers for are the active, placed participations whose customer_id or participant_id is auth.uid(), so a caller learns the cancelled upcoming dates of their own seats' groups and of nobody else's. It returns dates only — never the reason, the stamp or the author, which stay admin-only. The scope test asks it as the seat's child, as the paying parent and as another family's parent, and requires the third to see nothing",
   },
   get_my_family_product_feed: {
     scopeTest: "tests/db/family-product-feed.test.ts",

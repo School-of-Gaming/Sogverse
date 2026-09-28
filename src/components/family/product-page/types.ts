@@ -146,12 +146,36 @@ export interface FamilyPastSessionEntry extends FamilySessionEntryBase {
 }
 
 /**
- * One occurrence in a family's feed. Two kinds, because the only question a
- * family surface asks about a session is which side of now it is on.
+ * A session that has been called off, in its dated place on either side of now.
+ *
+ * **The date and nothing else.** A family is told that the session is off,
+ * never why: the reason and who cancelled it are staff facts, and this type has
+ * no field for them to arrive in. It has no report, photos or mark either: a
+ * record kept under the cancellation stays hidden until the session is
+ * restored.
+ */
+export interface FamilyCancelledSessionEntry {
+  kind: "cancelled";
+  id: string;
+  /** Product-local `YYYY-MM-DD` the cancellation is keyed by. */
+  sessionDate: string;
+  startsAt: Date;
+  endsAt: Date;
+  /**
+   * Whether the session had not yet ended at the feed's `now` — the same
+   * end-instant split the other two kinds are classified on.
+   */
+  upcoming: boolean;
+}
+
+/**
+ * One occurrence in a family's feed: which side of now it is on, or that it
+ * has been called off.
  */
 export type FamilySessionEntry =
   | FamilyFutureSessionEntry
-  | FamilyPastSessionEntry;
+  | FamilyPastSessionEntry
+  | FamilyCancelledSessionEntry;
 
 /**
  * The site an in-person product runs at, as a family may read it.

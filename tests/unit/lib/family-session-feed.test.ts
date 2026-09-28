@@ -8,6 +8,7 @@ import {
 } from "@/lib/session-occurrence";
 import type { FamilyFeedSession } from "@/services/family-product-feed";
 import type { FamilySessionEntry } from "@/components/family/product-page";
+import { partitionFeedEntries } from "@/components/session-feed";
 
 /**
  * The merge that makes a family's feed: the schedule walked both ways, stored
@@ -40,6 +41,7 @@ function build(
     startDate: "2026-01-05",
     endDate: null,
     sessions: [],
+    cancellations: [],
     now: NOW,
     ...overrides,
   });
@@ -568,5 +570,89 @@ describe("buildFamilySessionFeed — clamping at the paid window", () => {
     // falls inside the paid window.
     expect(future.at(0)).toBe("2026-06-29");
     expect(future.at(-1)).toBe("2026-03-23");
+  });
+});
+
+/**
+ * A cancelled session stays in the feed in its dated place, carrying the date
+ * and nothing else — the family is told the session is off, never why.
+ */
+describe("buildFamilySessionFeed — cancelled sessions", () => {
+  it("replaces the date's entry with a cancelled one, on the right side of now", () => {
+    const entries = build({
+      cancellations: [
+        { session_date: "2026-03-23" },
+        { session_date: "2026-03-09" },
+      ],
+    });
+    expect(byDate(entries, "2026-03-23")).toEqual({
+      kind: "cancelled",
+      id: sessionEntryId(GROUP, "2026-03-23"),
+      sessionDate: "2026-03-23",
+      startsAt: new Date("2026-03-23T14:30:00.000Z"),
+      endsAt: new Date("2026-03-23T16:00:00.000Z"),
+      upcoming: true,
+    });
+    expect(byDate(entries, "2026-03-09")).toMatchObject({
+      kind: "cancelled",
+      upcoming: false,
+    });
+    // Still one entry per date, still strictly descending.
+    const emitted = dates(entries);
+    expect(new Set(emitted).size).toBe(emitted.length);
+    expect([...emitted].sort().reverse()).toEqual(emitted);
+  });
+
+  it("never makes a cancelled date the headline next session", () => {
+    // The soonest Monday is off, so the next session is the one after it, and
+    // the cancelled date sits between it and the past.
+    const partition = partitionFeedEntries(
+      build({ cancellations: [{ session_date: "2026-03-23" }] }),
+    );
+    expect(partition.nextSession?.id).toBe(sessionEntryId(GROUP, "2026-03-30"));
+    expect(partition.soonerCancelled.map((entry) => entry.id)).toEqual([
+      sessionEntryId(GROUP, "2026-03-23"),
+    ]);
+    expect(partition.past[0]?.id).toBe(sessionEntryId(GROUP, "2026-03-16"));
+  });
+
+  it("ignores a cancellation on a date the feed does not show", () => {
+    // A Tuesday: the schedule does not project it, so it is inert.
+    const entries = build({ cancellations: [{ session_date: "2026-03-17" }] });
+    expect(byDate(entries, "2026-03-17")).toBeUndefined();
+    expect(entries.some((entry) => entry.kind === "cancelled")).toBe(false);
+  });
+
+  it("wins over a record on the date, and shows the family none of it", () => {
+    // The family document leaves such a row out; handed one anyway, the entry
+    // still carries no report, photo or mark.
+    const entries = build({
+      sessions: [
+        row("2026-03-09", {
+          report: "We built a castle.",
+          images: [{ id: "img-1", width: 800, height: 600 }],
+          attendance: "present",
+        }),
+      ],
+      cancellations: [{ session_date: "2026-03-09" }],
+    });
+
+    const entry = byDate(entries, "2026-03-09");
+    expect(entry).toEqual({
+      kind: "cancelled",
+      id: sessionEntryId(GROUP, "2026-03-09"),
+      sessionDate: "2026-03-09",
+      startsAt: new Date("2026-03-09T14:30:00.000Z"),
+      endsAt: new Date("2026-03-09T16:00:00.000Z"),
+      upcoming: false,
+    });
+  });
+
+  it("clamps a cancelled date past the paid window like any other", () => {
+    const entries = build({
+      accessUntil: new Date("2026-04-01T00:00:00.000Z"),
+      cancellations: [{ session_date: "2026-04-06" }],
+    });
+    expect(byDate(entries, "2026-04-06")).toBeUndefined();
   });
 });

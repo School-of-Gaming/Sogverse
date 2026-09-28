@@ -855,8 +855,16 @@ function yearlongSpecs(): readonly EntrySpec[] {
   }
 
   return [
-    ...CLUB_FUTURE_SPECS,
+    // One date ahead is called off — in the later block, so the divider's
+    // reveal shows it in its dated place without taking the next session.
+    ...CLUB_FUTURE_SPECS.map((spec, index): EntrySpec =>
+      index === 1 ? { kind: "future", cancelled: true } : spec,
+    ),
     ...past.map((spec, index) => {
+      // And one behind: a cancelled week owes nothing and takes no editor.
+      if (index === 5) {
+        return { kind: "past", cancelled: true } satisfies EntrySpec;
+      }
       const photos = PHOTOS_AT.get(index);
       return photos ? { ...spec, photos } : spec;
     }),

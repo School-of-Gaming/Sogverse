@@ -267,6 +267,7 @@ describe("readRecordedSessionsByGroup", () => {
         { session_id: S3, participant_id: GAMER, status: "present" },
         { session_id: S3, participant_id: GAMER_2, status: "absent" },
       ],
+      "rpc/get_session_cancellations_in_effect": () => [],
     });
     const sessions = await readRecordedSessionsByGroup(createFetchStubbedClient(fetch), [G1, G2]);
 
@@ -276,5 +277,36 @@ describe("readRecordedSessionsByGroup", () => {
       { participant_id: GAMER, status: "present" },
       { participant_id: GAMER_2, status: "absent" },
     ]);
+  });
+
+  it("drops a recorded session the database says is cancelled, and asks it once for every group", async () => {
+    // Both sessions are on the 10th. Which cancellations are in effect is the
+    // database's answer — schedule edits included — so the read takes it as
+    // given: G1's date comes back cancelled, G2's does not.
+    const session = (id: string, group_id: string) => ({
+      id,
+      group_id,
+      session_date: "2026-09-10",
+      starts_at: "2026-09-10T15:00:00+00:00",
+      ends_at: "2026-09-10T16:30:00+00:00",
+      report: "Written up",
+    });
+    const fetch = postgrestTables({
+      group_sessions: () => [session(S1, G1), session(S3, G2)],
+      session_attendance: () => [],
+      "rpc/get_session_cancellations_in_effect": () => [
+        { group_id: G1, session_date: "2026-09-10" },
+      ],
+    });
+    const sessions = await readRecordedSessionsByGroup(createFetchStubbedClient(fetch), [G1, G2]);
+
+    expect([...sessions.keys()]).toEqual([G2]);
+
+    const asked = fetch.mock.calls.filter(([input]) =>
+      requestedUrl(input).pathname.endsWith("/rpc/get_session_cancellations_in_effect"),
+    );
+    expect(asked).toHaveLength(1);
+    const body: unknown = JSON.parse(String(asked[0][1]?.body));
+    expect(body).toEqual({ p_group_ids: [G1, G2] });
   });
 });

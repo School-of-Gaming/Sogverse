@@ -319,6 +319,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     // same way to everything under test here.
     gedus: [],
     substitutions: [],
+    cancellations: [],
   };
 }
 

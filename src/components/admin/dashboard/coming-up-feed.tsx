@@ -12,6 +12,7 @@ import type {
 } from "./admin-dashboard-data";
 import { DayLabel, MonthHeading, startsMonth } from "@/components/admin/day-label";
 import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
+import { DateCancellationNote } from "./week-rows";
 
 /**
  * What is lined up over the coming months: one dated line per thing that starts
@@ -163,6 +164,7 @@ function ItemRow({
   verb: string | null;
 }) {
   const tType = useTranslations("admin.products.types");
+  const tCancellation = useTranslations("admin.dashboard.cancellation");
   const presentation = PRODUCT_TYPE_PRESENTATION[cohort.productType];
   const Icon = presentation.icon;
   const title = `${tType(`${presentation.i18nKey}.label`)} · ${item.name}`;
@@ -171,16 +173,35 @@ function ItemRow({
     <Link
       href={item.href}
       title={title}
-      className="flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-hover"
+      className={cn(
+        "flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-hover",
+        // A single-date run whose one session is off is itself off, so its
+        // line mutes. A club's start or end still stands when its first or
+        // last session is cancelled, so that line reads as normal and only
+        // its note says which session is off.
+        cohort.kind === "runs" &&
+          item.cancellation.kind === "all" &&
+          "text-muted-foreground",
+      )}
     >
       <Icon
         className={cn("h-3.5 w-3.5 shrink-0", presentation.text)}
         aria-hidden
       />
-      <span className="min-w-0 flex-1 text-sm">
-        {item.name}
-        {verb !== null && (
-          <span className="text-muted-foreground"> {verb}</span>
+      <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 text-sm">
+        <span>
+          {item.name}
+          {verb !== null && (
+            <span className="text-muted-foreground"> {verb}</span>
+          )}
+        </span>
+        {item.cancellation.kind !== "none" && (
+          <span className="text-xs">
+            <DateCancellationNote
+              cancellation={item.cancellation}
+              allLabel={tCancellation(`allComingUp.${cohort.kind}`)}
+            />
+          </span>
         )}
       </span>
       <span className="shrink-0 text-xs tabular-nums text-muted-foreground">

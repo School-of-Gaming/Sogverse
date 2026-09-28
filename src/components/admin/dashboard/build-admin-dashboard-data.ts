@@ -18,6 +18,7 @@ import type {
   ComingUpCohort,
   ComingUpDay,
   ComingUpItem,
+  DateCancellation,
   ProductAttention,
   ProductIssue,
   ScheduleChip,
@@ -423,6 +424,7 @@ function resolveWeeks({
   for (const product of products) {
     const name = productName(product.translations, locale);
     const href = ROUTES.admin.product(product.product_type, product.id);
+    const cancellationOn = productCancellations(product);
 
     for (const occurrence of productOccurrences(product, now)) {
       const { date, time } = viewerPlacement(
@@ -448,6 +450,9 @@ function resolveWeeks({
         activeCount: product.active_count,
         seatCount: product.seat_count,
         needsAttention: flagged.has(product.id),
+        // Keyed on the product-zone date: that is the date a cancellation
+        // names, whichever viewer weekday the chip lands on.
+        cancellation: cancellationOn(occurrence.date),
         href,
       });
       chipsByWeek.set(weekStart, chips);
@@ -664,12 +669,16 @@ function buildComingUp(
   const inHorizon = (date: string) => date >= today && date < horizonEnd;
 
   const byDate = new Map<string, Map<string, ComingUpCohort>>();
+  const cancellationsByProduct = new Map(
+    products.map((product) => [product.id, productCancellations(product)]),
+  );
 
   const add = (
     date: string,
     kind: ComingUpCohort["kind"],
     product: AdminDashboardScheduleProduct,
   ) => {
+    const cancellationOn = cancellationsByProduct.get(product.id);
     const cohortKey = `${kind}-${product.product_type}`;
     let day = byDate.get(date);
     if (day === undefined) {
@@ -682,6 +691,9 @@ function buildComingUp(
       href: ROUTES.admin.product(product.product_type, product.id),
       activeCount: product.active_count,
       seatCount: product.seat_count,
+      // A term's first and last day are product-zone calendar dates, the same
+      // dates a cancellation is keyed to.
+      cancellation: cancellationOn?.(date) ?? NOT_CANCELLED,
     };
     const existing = day.get(cohortKey);
     if (existing === undefined) {
@@ -741,6 +753,38 @@ export function compareComingUpCohorts(
 // ---------------------------------------------------------------------------
 // Shared bits
 // ---------------------------------------------------------------------------
+
+const NOT_CANCELLED: DateCancellation = { kind: "none" };
+
+/**
+ * A product's dates, decided against its whole group list.
+ *
+ * The wire carries every group the product has and every cancelled (group,
+ * date) in effect, and a date is cancelled only when **every** group cancelled
+ * it — a group with no cancellation on the date is simply running. A
+ * cancellation naming a group outside the list cannot count towards "every",
+ * so it is ignored rather than trusted; and a product with no groups has
+ * nothing that could have been cancelled.
+ */
+export function productCancellations(
+  product: Pick<AdminDashboardScheduleProduct, "group_ids" | "cancelled_sessions">,
+): (date: string) => DateCancellation {
+  const groups = new Set(product.group_ids);
+  const cancelledByDate = new Map<string, Set<string>>();
+  for (const { group_id: groupId, session_date: date } of product.cancelled_sessions) {
+    if (!groups.has(groupId)) continue;
+    const cancelled = cancelledByDate.get(date) ?? new Set<string>();
+    cancelled.add(groupId);
+    cancelledByDate.set(date, cancelled);
+  }
+
+  return (date) => {
+    const cancelled = cancelledByDate.get(date)?.size ?? 0;
+    if (cancelled === 0) return NOT_CANCELLED;
+    if (cancelled === groups.size) return { kind: "all" };
+    return { kind: "some", cancelled, groups: groups.size };
+  };
+}
 
 /**
  * A product's name in the reader's locale, through the admin surfaces' own

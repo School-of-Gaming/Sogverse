@@ -118,6 +118,22 @@ export const municipalityInvoicingClub = z.object({
   municipality: municipalityInvoicingMunicipality,
   invoice_customer: invoiceCustomerRow.nullable(),
   sessions: z.array(municipalityInvoicingSession),
+  /**
+   * The month's cancelled sessions, raw (group, date) pairs in the same shape
+   * as `sessions`: a cancelled session is shown as Cancelled rather than as
+   * unrecorded, and is never billed. Raw on purpose — a cancellation applies
+   * only to a date the schedule projects, so the builder applies these to the
+   * dates it projects and ignores the rest. A pair never also appears in
+   * `sessions`; if one somehow did, the cancellation wins.
+   */
+  cancelled_sessions: z.array(municipalityInvoicingSession),
+  /**
+   * Every group the club has, whether or not the month's rows or
+   * cancellations mention it. A date is cancelled for the club only when every
+   * one of these cancelled it, so a group that neither met nor cancelled still
+   * counts — a sibling's cancellation must not hide its missed session.
+   */
+  group_ids: z.array(z.string()),
 });
 
 /** The whole document `get_admin_municipality_invoicing` returns. */

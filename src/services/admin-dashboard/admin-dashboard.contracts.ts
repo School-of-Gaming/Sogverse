@@ -175,6 +175,16 @@ export const adminDashboardScheduleSlot = z.object({
 });
 
 /**
+ * One cancelled session in effect: a (group, date) on which the database's
+ * cancellation predicate holds. The date is a bare calendar date in the
+ * product's own zone, the zone its slots are authored in.
+ */
+export const adminDashboardCancelledSession = z.object({
+  group_id: z.string(),
+  session_date: z.string(),
+});
+
+/**
  * One product the schedule window still has something to say about, with the
  * calendar facts a week resolves from.
  *
@@ -197,6 +207,19 @@ export const adminDashboardScheduleProduct = z.object({
   active_count: z.number(),
   waitlist_count: z.number(),
   schedule_slots: z.array(adminDashboardScheduleSlot),
+  /**
+   * Every group the product has — including a group nothing else on the page
+   * mentions, because "every group cancelled this date" is a statement about
+   * all of them.
+   */
+  group_ids: z.array(z.string()),
+  /**
+   * Every cancelled session in effect inside the schedule window, over the
+   * groups above. A cancellation is per group while this page is per product,
+   * so the page decides each date from the two together: every group
+   * cancelled, some of them, or none.
+   */
+  cancelled_sessions: z.array(adminDashboardCancelledSession),
 });
 
 /** The whole document `get_admin_dashboard` returns. */
@@ -227,6 +250,9 @@ export type AdminDashboardAttentionProduct = z.infer<
 >;
 export type AdminDashboardScheduleSlot = z.infer<
   typeof adminDashboardScheduleSlot
+>;
+export type AdminDashboardCancelledSession = z.infer<
+  typeof adminDashboardCancelledSession
 >;
 export type AdminDashboardScheduleProduct = z.infer<
   typeof adminDashboardScheduleProduct

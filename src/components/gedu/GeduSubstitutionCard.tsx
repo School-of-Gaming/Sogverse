@@ -1,6 +1,12 @@
 "use client";
 
-import { CalendarClock, ChevronRight, Lock, MapPin } from "lucide-react";
+import {
+  CalendarClock,
+  CalendarX,
+  ChevronRight,
+  Lock,
+  MapPin,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -69,6 +75,7 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
   const t = useTranslations("gedu.substitution");
   const p = useTranslations("productType");
   const d = useTranslations("gedu.sessionDetails");
+  const b = useTranslations("sessionBadge");
   const locale = useLocale();
   const timeZone = useTimezone();
   const now = useNow();
@@ -81,6 +88,7 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
     startsAt,
     endsAt,
     accessOpensAt,
+    cancelled,
     hasVoiceRoom,
     voiceHref,
     siteName,
@@ -181,7 +189,15 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
               is shut the answer is when it opens; the room or the building take
               the zone back the moment it does, and the height never moves. */}
           <div className="mt-auto flex min-h-9 items-center justify-center">
-            {locked && (
+            {cancelled && (
+              // A session an admin called off: nothing to join and nowhere to
+              // go, so the footer says so in the feed's own neutral word.
+              <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                <CalendarX className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="min-w-0">{b("cancelled")}</span>
+              </span>
+            )}
+            {!cancelled && locked && (
               // The same words and the same lock the Join wears when its room
               // is shut, because a sub reading one has already read the other.
               <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
@@ -204,7 +220,7 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
                 </span>
               </span>
             )}
-            {!locked && hasVoiceRoom && startsAt !== null && (
+            {!cancelled && !locked && hasVoiceRoom && startsAt !== null && (
               <span className="relative z-10">
                 <JoinVoiceButton
                   voiceIsOpen={voiceIsOpen}
@@ -228,7 +244,7 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
                 />
               </span>
             )}
-            {!locked && !hasVoiceRoom && siteName !== null && (
+            {!cancelled && !locked && !hasVoiceRoom && siteName !== null && (
               <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 shrink-0" aria-hidden />
                 <span className="truncate">{siteName}</span>

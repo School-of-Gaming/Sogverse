@@ -199,6 +199,7 @@ describe("the coming-up feed", () => {
               },
               activeCount: 9,
               seatCount: 12,
+              cancellation: { kind: "none" },
             },
           ],
         },

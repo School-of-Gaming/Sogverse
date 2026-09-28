@@ -7,7 +7,8 @@
 -- database with enough of a catalogue that the admin, gedu and family
 -- dashboards look like a real platform — products of every type and lifecycle
 -- state, families with children, certified and uncertified educators, groups
--- with sessions, reports, attendance, feedback and a substitution. It exists so
+-- with sessions, reports, attendance, feedback, a substitution and a few
+-- cancelled sessions. It exists so
 -- a human can look at the UI. Nothing asserts anything here.
 --
 -- THE TWO SEEDS NEVER SHARE A DATABASE. What makes a good fixture for a DB test
@@ -1336,7 +1337,115 @@ $$;
 COMMIT;
 
 -- =============================================================================
--- 12. What landed
+-- 12. Cancelled sessions
+-- =============================================================================
+-- Three sessions an admin called off, through the admin's own RPC, each on a
+-- group one of parent@example.com's children sits in, so the family's My SOG,
+-- the gedu's and the admin's all have one to show:
+--
+--   * a PAST session of the Schools Game Club that had already been written up
+--     — the record is kept, frozen and hidden, and the date is never billed;
+--   * an upcoming Minecraft Java Club session that is NOT the next one, so it
+--     shows in its dated place on the feeds without touching the card's next
+--     session (or the substitution section 11 seated on the next one);
+--   * the NEXT session of the Creator Studio Club, the online club Otso and Nea
+--     attend, so their cards name the session after it and say which is off.
+--
+-- Every date is derived from the schedule rather than written out. `cancel_session`
+-- itself refuses a date the schedule does not project and that holds no record.
+-- group_sessions has no grant for `authenticated`, so the past date is derived
+-- exactly as section 9 derived the dates it wrote up — the second most recent of
+-- them — rather than looked up.
+
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+DO $$
+DECLARE
+  r       record;
+  v_group uuid;
+  v_date  date;
+BEGIN
+  -- The past one. Section 9 wrote up the six most recent dates up to yesterday.
+  v_group := (SELECT pa.group_id
+                FROM public.participations pa
+                JOIN public.profiles pr ON pr.id = pa.participant_id
+                JOIN public.product_translations t
+                  ON t.product_id = pa.product_id AND t.locale = 'en'
+               WHERE t.name = 'Schools Game Club'
+                 AND pr.email = 'milo@gamer.example.com'
+                 AND pa.status = 'active');
+  v_date := (SELECT dd::date
+               FROM public.product_groups g
+               JOIN public.products p ON p.id = g.product_id
+               JOIN public.schedule_slots s ON s.product_id = p.id
+              CROSS JOIN LATERAL generate_series(
+                      p.start_date,
+                      LEAST(current_date - 1, COALESCE(p.end_date, current_date - 1)),
+                      interval '1 day') dd
+              WHERE g.id = v_group
+                AND EXTRACT(ISODOW FROM dd)::integer - 1 = s.weekday
+              ORDER BY dd DESC
+             OFFSET 1 LIMIT 1);
+  IF v_group IS NULL OR v_date IS NULL THEN
+    RAISE NOTICE 'rich-seed: no written-up Schools Game Club session to cancel';
+  ELSE
+    PERFORM public.cancel_session(v_group, v_date,
+      'The school closed for an exam day. Logged by mistake; the city was told in advance.');
+  END IF;
+
+  -- The upcoming ones: the nth session still to finish, counted from
+  -- product-local today on the product's own slots and term.
+  FOR r IN SELECT * FROM (VALUES
+    ('Minecraft Java Club', 'milo@gamer.example.com', 2,
+     'The Java server is down for an upgrade that week.'),
+    ('Creator Studio Club', 'otso@gamer.example.com', 1,
+     'The educator is at a training day; the group meets again the week after.')
+  ) AS t(product_name, gamer_email, nth, reason)
+  LOOP
+    v_group := (SELECT pa.group_id
+                  FROM public.participations pa
+                  JOIN public.profiles pr ON pr.id = pa.participant_id
+                  JOIN public.product_translations t
+                    ON t.product_id = pa.product_id AND t.locale = 'en'
+                 WHERE t.name = r.product_name
+                   AND pr.email = r.gamer_email
+                   AND pa.status = 'active');
+    v_date := (SELECT upcoming.day
+                 FROM (SELECT DISTINCT p.local_today + i AS day
+                         FROM (SELECT pp.id, pp.timezone, pp.start_date, pp.end_date,
+                                      (now() AT TIME ZONE pp.timezone)::date AS local_today
+                                 FROM public.products pp
+                                 JOIN public.product_groups g ON g.product_id = pp.id
+                                WHERE g.id = v_group) p
+                         JOIN public.schedule_slots s ON s.product_id = p.id
+                        CROSS JOIN generate_series(0, 70) i
+                        WHERE EXTRACT(ISODOW FROM p.local_today + i)::integer - 1 = s.weekday
+                          AND (p.start_date IS NULL OR p.local_today + i >= p.start_date)
+                          AND (p.end_date   IS NULL OR p.local_today + i <= p.end_date)
+                          AND ((p.local_today + i) + s.start_time
+                                 + make_interval(mins => s.duration_minutes))
+                                AT TIME ZONE p.timezone > now()
+                      ) upcoming
+                ORDER BY upcoming.day
+               OFFSET r.nth - 1 LIMIT 1);
+    IF v_group IS NULL OR v_date IS NULL THEN
+      RAISE NOTICE 'rich-seed: no upcoming % session to cancel', r.product_name;
+    ELSE
+      PERFORM public.cancel_session(v_group, v_date, r.reason);
+    END IF;
+  END LOOP;
+END;
+$$;
+
+COMMIT;
+
+-- =============================================================================
+-- 13. What landed
 -- =============================================================================
 
 DO $$
@@ -1355,12 +1464,13 @@ BEGIN
              FROM public.products p GROUP BY 1 ORDER BY 1
   LOOP RAISE NOTICE '  % : %', r.k, r.n; END LOOP;
 
-  RAISE NOTICE 'rich-seed: groups %, sessions %, attendance marks %, participations %, waitlisted %, substitutions %',
+  RAISE NOTICE 'rich-seed: groups %, sessions %, attendance marks %, participations %, waitlisted %, substitutions %, cancelled sessions %',
     (SELECT count(*) FROM public.product_groups),
     (SELECT count(*) FROM public.group_sessions),
     (SELECT count(*) FROM public.session_attendance),
     (SELECT count(*) FROM public.participations WHERE status = 'active'),
     (SELECT count(*) FROM public.participations WHERE status = 'waitlisted'),
-    (SELECT count(*) FROM public.session_substitution_requests);
+    (SELECT count(*) FROM public.session_substitution_requests),
+    (SELECT count(*) FROM public.session_cancellations);
 END;
 $$;

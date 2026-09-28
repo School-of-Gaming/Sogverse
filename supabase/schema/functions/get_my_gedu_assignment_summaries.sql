@@ -98,16 +98,20 @@ BEGIN
       -- product, and NULL for a run whose schedule projects nothing at all;
       -- either way the equality below never holds and nothing ever owes.
       --
-      -- Seven days ending at end_date, floored at start_date. Slots are weekly,
-      -- so a run of a week or more has every weekday in that window and a
-      -- shorter run is wholly inside it — which makes the max over the window
-      -- the max over the whole run, at a bounded cost.
+      -- Cancellation: the final session is the last projected occurrence this
+      -- GROUP has not had cancelled, so a cancelled last session hands the
+      -- creations condition to the one before it rather than dropping it.
+      -- The window is therefore a year ending at end_date, floored at
+      -- start_date, rather than the week that sufficed before cancellations:
+      -- slots are weekly, so any week inside it holds every weekday and the
+      -- max over the window is the max over the run unless a whole year of
+      -- the group's sessions is cancelled — a bounded cost either way.
       CROSS JOIN LATERAL (
         SELECT max(d::date) AS session_date
           FROM generate_series(
                  GREATEST(
-                   COALESCE(p.start_date, p.end_date - 6),
-                   p.end_date - 6
+                   COALESCE(p.start_date, p.end_date - 366),
+                   p.end_date - 366
                  )::timestamp,
                  p.end_date::timestamp,
                  interval '1 day'
@@ -122,6 +126,7 @@ BEGIN
               WHERE s.product_id = p.id
                 AND s.weekday = (EXTRACT(ISODOW FROM d)::integer - 1)
            )
+           AND NOT public.group_session_is_cancelled(g.id, d::date)
       ) AS final_occurrence
 
       LEFT JOIN LATERAL (
@@ -254,6 +259,14 @@ BEGIN
                 AND rq.requested_by = v_uid
                 AND rq.status <> 'withdrawn'::public.substitution_request_status
            )
+           -- Cancellation: a cancelled session owes nothing — nothing ran, so
+           -- there is no register, report or mail to ask for, and a record
+           -- kept under the cancellation is frozen rather than owed — and
+           -- stays so when the stored-row arm reaches it on a date the
+           -- schedule no longer projects, because a cancellation over a
+           -- record stays in effect. This has the same TypeScript twin as the
+           -- rule above, and it learns it too.
+           AND NOT public.group_session_is_cancelled(g.id, occurrence.session_date)
            -- "Needs attention" is FOUR questions joined by OR, and any one
            -- alone keeps the session on the list.
            --
@@ -404,7 +417,7 @@ $$;
 -- Name: FUNCTION get_my_gedu_assignment_summaries(p_epoch_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s participant count (an active seat may be held by an adult as well as by a child), the venue name on in-person products, and how many past sessions still need attention. A finished session on or after the epoch counts until ALL of: the register is in, a family-facing report is written, the mail telling the families it is there has been sent, and — on the run''s FINAL session of a product with requires_gamer_creations set — every current roster member has at least one creation. The register condition is scoped to the members who had JOINED the group before that occurrence ended: both the marks counted and the size they are compared against, off participations.group_joined_at against an end instant resolved once per occurrence (the stored row''s ends_at, else the min slot end for that weekday, which is the same instant the "has it finished" test already used). group_participant_count and the empty-roster guard deliberately keep measuring the WHOLE current roster — a card''s headcount and the empty-group exemption are not per-occurrence questions. The report and mail conditions are unscoped because a session owes those whoever was in the room. The creations condition carries the SAME join-date scoping as the register condition, on the owner''s principle that a gedu owes a creation for every gamer who was in the group at the time of the last session — so a seat placed into the group after the final session ended owes nothing, and one occurrence cannot answer "who was this for" two different ways. Only the JOIN half of that principle is expressible: a member who has since LEFT owes nothing, because the roster is active seats and a departure leaves no trace. The final session is the last occurrence the schedule projects on or before end_date, derived here rather than stored; an open-ended product (end_date NULL) has none and therefore never owes creations, which is documented behaviour rather than an error. The badge''s unit is the SESSION: it counts sessions needing attention, and the final one simply has one more way to need it. The enforcement epoch travels in as an argument because it is a code constant, not a column. This count has a twin in TypeScript — the gedu feed''s entry-state derivation, which answers the same question for one card — and the two must be changed together, on all four conditions and on who a session is for, which scopes two of them. A SECOND KIND OF SEAT feeds the same machinery: a `substitution` row per substitution date, carrying `kind` and `substitution_date`, whose owed count is the same four conditions applied to a set of one occurrence — so it is 0 or 1 and never a term''s worth. That arm asks gedu_holds_unexpired_substitution rather than gedu_substitutes_session: the card stands from approval, where the workspace behind it opens 48 hours before the substituted session, and a card that waited for the workspace would hide from a sub the afternoon they had agreed to take. A substitution still locked owes nothing by construction, because every occurrence this count ranges over has already ended.';
+COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s participant count (an active seat may be held by an adult as well as by a child), the venue name on in-person products, and how many past sessions still need attention. A finished session on or after the epoch counts until ALL of: the register is in, a family-facing report is written, the mail telling the families it is there has been sent, and — on the run''s FINAL session of a product with requires_gamer_creations set — every current roster member has at least one creation. The register condition is scoped to the members who had JOINED the group before that occurrence ended: both the marks counted and the size they are compared against, off participations.group_joined_at against an end instant resolved once per occurrence (the stored row''s ends_at, else the min slot end for that weekday, which is the same instant the "has it finished" test already used). group_participant_count and the empty-roster guard deliberately keep measuring the WHOLE current roster — a card''s headcount and the empty-group exemption are not per-occurrence questions. The report and mail conditions are unscoped because a session owes those whoever was in the room. The creations condition carries the SAME join-date scoping as the register condition, on the owner''s principle that a gedu owes a creation for every gamer who was in the group at the time of the last session — so a seat placed into the group after the final session ended owes nothing, and one occurrence cannot answer "who was this for" two different ways. Only the JOIN half of that principle is expressible: a member who has since LEFT owes nothing, because the roster is active seats and a departure leaves no trace. The final session is the last occurrence the schedule projects on or before end_date that the group has not cancelled, derived here rather than stored — so a cancelled last session hands the creations condition to the one before it; an open-ended product (end_date NULL) has none and therefore never owes creations, which is documented behaviour rather than an error. A CANCELLED occurrence is never owed, by group_session_is_cancelled — including a cancelled record the schedule no longer projects, which the stored-row arm would otherwise reach: nothing ran, and a record kept under a cancellation is frozen. The badge''s unit is the SESSION: it counts sessions needing attention, and the final one simply has one more way to need it. The enforcement epoch travels in as an argument because it is a code constant, not a column. This count has a twin in TypeScript — the gedu feed''s entry-state derivation, which answers the same question for one card — and the two must be changed together, on all four conditions and on who a session is for, which scopes two of them. A SECOND KIND OF SEAT feeds the same machinery: a `substitution` row per substitution date, carrying `kind` and `substitution_date`, whose owed count is the same four conditions applied to a set of one occurrence — so it is 0 or 1 and never a term''s worth. That arm asks gedu_holds_unexpired_substitution rather than gedu_substitutes_session: the card stands from approval, where the workspace behind it opens 48 hours before the substituted session, and a card that waited for the workspace would hide from a sub the afternoon they had agreed to take. A substitution still locked owes nothing by construction, because every occurrence this count ranges over has already ended.';
 
 
 --

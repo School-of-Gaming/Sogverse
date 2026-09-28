@@ -2,7 +2,9 @@ import { GeduSessionsService } from "@/services/gedu-sessions/gedu-sessions.serv
 import type { AppSupabaseClient } from "@/types";
 import {
   adminProductSessions,
+  cancelSessionResult,
   type AdminProductSessions,
+  type CancelSessionResult,
 } from "./admin-sessions.contracts";
 
 /**
@@ -55,6 +57,41 @@ export class AdminSessionsService {
 
     if (error) throw error;
     return adminProductSessions.parse(data);
+  }
+
+  /**
+   * Cancel one session, or re-word a cancelled one's reason — the RPC is an
+   * upsert, so both are this call. A date that already holds a record is
+   * cancelled all the same; the record is kept, frozen and hidden until a
+   * restore.
+   */
+  async cancelSession(args: {
+    groupId: string;
+    sessionDate: string;
+    reason: string;
+  }): Promise<CancelSessionResult> {
+    const { data, error } = await this.supabase.rpc("cancel_session", {
+      p_group_id: args.groupId,
+      p_session_date: args.sessionDate,
+      // Blank is "no reason": the RPC trims and nulls it.
+      p_reason: args.reason,
+    });
+
+    if (error) throw error;
+    return cancelSessionResult.parse(data);
+  }
+
+  /** Remove a session's cancellation, reopening every write on the date. */
+  async restoreSession(args: {
+    groupId: string;
+    sessionDate: string;
+  }): Promise<void> {
+    const { error } = await this.supabase.rpc("restore_session", {
+      p_group_id: args.groupId,
+      p_session_date: args.sessionDate,
+    });
+
+    if (error) throw error;
   }
 
   /** @see GeduSessionsService.setSessionNotes */

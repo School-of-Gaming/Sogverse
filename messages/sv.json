@@ -339,6 +339,15 @@
         "needsAttention": "Behöver åtgärd – den här produkten finns i kön högst upp på sidan",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
+      "cancellation": {
+        "allTitle": "Tillfället är inställt för alla grupper den här dagen",
+        "some": "{cancelled} av {groups, plural, one {# grupp} other {# grupper}} inställda",
+        "allComingUp": {
+          "starts": "första tillfället inställt",
+          "ends": "sista tillfället inställt",
+          "runs": "inställt"
+        }
+      },
       "comingUp": {
         "label": "På gång",
         "heading": "På gång",
@@ -396,6 +405,7 @@
       "feeNotSet": "Avgift saknas",
       "notRecorded": "Inte registrerat",
       "upcoming": "Kommande",
+      "cancelled": "Inställt",
       "unrecordedSessions": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
       "sessionsFor": "Tillfällen för {club}",
       "clubsIn": "Klubbar i {municipality}",
@@ -1159,6 +1169,30 @@
         "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
         "loading": "Laddar dokumentationen av produktens tillfällen.",
         "railGroupHeading": "Grupp"
+      },
+      "cancellation": {
+        "menuLabel": "Fler åtgärder för det här inställda tillfället",
+        "cancelSession": "Ställ in tillfället",
+        "addReason": "Lägg till en orsak",
+        "changeReason": "Ändra orsaken",
+        "restoreSession": "Återställ tillfället",
+        "cancelTitle": "Ställa in det här tillfället?",
+        "cancelBody": "{date}. Familjer och Geduer ser tillfället som inställt, och ingenting kan registreras på det. Ingen meddelas.",
+        "reasonTitle": "Ändra orsaken",
+        "reasonBody": "{date}. Tillfället förblir inställt.",
+        "reasonLabel": "Orsak",
+        "reasonHint": "Bara administratörer ser orsaken. {count} tecken kvar",
+        "reasonPlaceholder": "Varför ställs passet in?",
+        "keepSession": "Behåll tillfället",
+        "cancelConfirm": "Ställ in tillfället",
+        "reasonConfirm": "Spara orsaken",
+        "recordKept": "Anteckningar, foton och närvaro som redan registrerats för tillfället sparas. Familjerna ser dem inte medan tillfället är inställt, och de kommer tillbaka om tillfället återställs.",
+        "recordKeptEmailed": "Anteckningar, foton och närvaro som redan registrerats för tillfället sparas. Familjerna ser dem inte medan tillfället är inställt, och de kommer tillbaka om tillfället återställs. Rapporten har redan mejlats till familjerna, och det mejlet kan inte återkallas.",
+        "cancelFailed": "Det gick inte att spara. Försök igen.",
+        "restoreTitle": "Återställa det här tillfället?",
+        "restoreBody": "{date}. Familjer och Geduer ser tillfället som schemalagt igen, och det kan registreras som vanligt. Ingen meddelas.",
+        "restoreConfirm": "Återställ tillfället",
+        "restoreFailed": "Tillfället kunde inte återställas. Försök igen."
       }
     },
     "users": {
@@ -1735,7 +1769,7 @@
         },
         "sessions": {
           "title": "vad som hände i varje grupp",
-          "intro": "Varje session en grupp i Programmet har antecknat, med närvaromarkeringarna och de fotografier spelfostraren bifogade rapporten. En session har en anteckning så snart en spelfostrare skriver ihop den eller markerar närvaro, så en schemalagd session som ännu inte ägt rum finns inte här. Använd den för vyer per session, som en avhoppskurva; totalerna per barn finns redan på anmälan.",
+          "intro": "Varje session en grupp i Programmet har antecknat, med närvaromarkeringarna och de fotografier spelfostraren bifogade rapporten. En session har en anteckning så snart en spelfostrare skriver ihop den eller markerar närvaro, så en schemalagd session som ännu inte ägt rum finns inte här, och inte heller en som en administratör har ställt in, även om den skrivits ihop. Använd den för vyer per session, som en avhoppskurva; totalerna per barn finns redan på anmälan.",
           "params": {
             "productId": "Bara sessioner i den här produktens grupper.",
             "groupId": "Bara den här gruppens sessioner.",
@@ -2183,7 +2217,8 @@
       "substitutionWithdrawTitle": "Ta tillbaka det här?",
       "substitutionWithdrawBody": "Du leder tillfället igen, och alla erbjudanden om att vikariera stryks.",
       "substitutionWithdrawConfirm": "Ta tillbaka",
-      "substitutionWithdrawFailed": "Det sparades inte. Försök igen."
+      "substitutionWithdrawFailed": "Det sparades inte. Försök igen.",
+      "cancelledByOn": "Inställt av {name}, {when}"
     },
     "groupNotes": {
       "heading": "Om gruppen",
@@ -2308,12 +2343,15 @@
   },
   "activityCard": {
     "endedOn": "Avslutades {date}",
-    "noSchedule": "Inget schema ännu"
+    "noSchedule": "Inget schema ännu",
+    "cancelledAhead": "{count, plural, one {<b>{dates}</b> är inställt.} other {<b>{dates}</b> är inställda.}}",
+    "cancelledAheadMore": "<b>{first}</b> och {more, plural, one {# tillfälle till} other {# tillfällen till}} är inställda."
   },
   "sessionBadge": {
     "live": "Pågår",
     "nextSession": "Nästa tillfälle",
-    "upcoming": "Kommande tillfälle"
+    "upcoming": "Kommande tillfälle",
+    "cancelled": "Inställt"
   },
   "sessionFeed": {
     "readMore": "Läs mer",

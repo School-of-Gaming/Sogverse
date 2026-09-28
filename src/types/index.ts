@@ -477,6 +477,11 @@ export type GroupSession = Database["public"]["Tables"]["group_sessions"]["Row"]
 export type GroupSessionInsert = Database["public"]["Tables"]["group_sessions"]["Insert"];
 export type GroupSessionUpdate = Database["public"]["Tables"]["group_sessions"]["Update"];
 
+// session_cancellations — one row per cancelled (group, date). No client grant
+// and RLS on with no policy: written by cancel_session / restore_session and
+// read through the feed RPCs, so this alias is for the service-role side.
+export type SessionCancellationRow = Database["public"]["Tables"]["session_cancellations"]["Row"];
+
 // session_attendance — one row per explicit mark. A roster member with NO row
 // is unanswered, which is why the status column has no "unmarked" member: that
 // state is the absence of a row, not a value.
@@ -503,6 +508,7 @@ export type {
   GeduFeedSession,
   GeduFeedSite,
   GeduGroupFeed,
+  SessionCancellation,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 // ---------------------------------------------------------------------------

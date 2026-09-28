@@ -339,6 +339,15 @@
         "needsAttention": "Needs attention — this product is in the queue at the top of the page",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
+      "cancellation": {
+        "allTitle": "Every group’s session on this date is cancelled",
+        "some": "{cancelled} of {groups, plural, one {# group} other {# groups}} cancelled",
+        "allComingUp": {
+          "starts": "first session cancelled",
+          "ends": "last session cancelled",
+          "runs": "cancelled"
+        }
+      },
       "comingUp": {
         "label": "Coming up",
         "heading": "Coming up",
@@ -396,6 +405,7 @@
       "feeNotSet": "Fee not set",
       "notRecorded": "Not recorded",
       "upcoming": "Upcoming",
+      "cancelled": "Cancelled",
       "unrecordedSessions": "{count, plural, one {# not recorded} other {# not recorded}}",
       "sessionsFor": "Sessions of {club}",
       "clubsIn": "Clubs in {municipality}",
@@ -1159,6 +1169,30 @@
         "loadFailed": "The session record could not be loaded. Reload the page to try again.",
         "loading": "Loading this product's session record.",
         "railGroupHeading": "Group"
+      },
+      "cancellation": {
+        "menuLabel": "More actions for this cancelled session",
+        "cancelSession": "Cancel session",
+        "addReason": "Add a reason",
+        "changeReason": "Change the reason",
+        "restoreSession": "Restore session",
+        "cancelTitle": "Cancel this session?",
+        "cancelBody": "{date}. Families and Gedus will see this session as cancelled, and nothing can be recorded on it. Nobody is notified.",
+        "reasonTitle": "Change the reason",
+        "reasonBody": "{date}. The session stays cancelled.",
+        "reasonLabel": "Reason",
+        "reasonHint": "Only admins see the reason. {count, plural, one {# character left} other {# characters left}}",
+        "reasonPlaceholder": "Why is this session cancelled?",
+        "keepSession": "Keep the session",
+        "cancelConfirm": "Cancel the session",
+        "reasonConfirm": "Save the reason",
+        "recordKept": "The notes, photos and attendance already recorded for this session are kept. Families will not see them while it is cancelled, and they come back if the session is restored.",
+        "recordKeptEmailed": "The notes, photos and attendance already recorded for this session are kept. Families will not see them while it is cancelled, and they come back if the session is restored. The report has already been emailed to families, and that email cannot be recalled.",
+        "cancelFailed": "That could not be saved. Try again.",
+        "restoreTitle": "Restore this session?",
+        "restoreBody": "{date}. Families and Gedus will see this session as scheduled again, and it can be recorded as usual. Nobody is notified.",
+        "restoreConfirm": "Restore the session",
+        "restoreFailed": "The session could not be restored. Try again."
       }
     },
     "users": {
@@ -1735,7 +1769,7 @@
         },
         "sessions": {
           "title": "what happened in each group",
-          "intro": "Every session a Programme group has recorded, with the attendance marks and the photographs the Game Educator attached to its report. A session has a record once a Game Educator writes it up or marks attendance, so a scheduled session that has not happened yet is not here. Use it for per-session views such as a drop-off curve; the per-child totals are already on the enrolment.",
+          "intro": "Every session a Programme group has recorded, with the attendance marks and the photographs the Game Educator attached to its report. A session has a record once a Game Educator writes it up or marks attendance, so a scheduled session that has not happened yet is not here, and neither is one an admin has cancelled, even if it was written up. Use it for per-session views such as a drop-off curve; the per-child totals are already on the enrolment.",
           "params": {
             "productId": "Only sessions of this product’s groups.",
             "groupId": "Only this group’s sessions.",
@@ -2183,7 +2217,8 @@
       "substitutionWithdrawTitle": "Take this back?",
       "substitutionWithdrawBody": "You go back to running the session, and any offers to substitute are dropped.",
       "substitutionWithdrawConfirm": "Take it back",
-      "substitutionWithdrawFailed": "That didn’t save. Try again."
+      "substitutionWithdrawFailed": "That didn’t save. Try again.",
+      "cancelledByOn": "Cancelled by {name}, {when}"
     },
     "groupNotes": {
       "heading": "About this group",
@@ -2308,12 +2343,15 @@
   },
   "activityCard": {
     "endedOn": "Ended {date}",
-    "noSchedule": "No schedule set yet"
+    "noSchedule": "No schedule set yet",
+    "cancelledAhead": "{count, plural, one {<b>{dates}</b> is cancelled.} other {<b>{dates}</b> are cancelled.}}",
+    "cancelledAheadMore": "<b>{first}</b> and {more, plural, one {# more session} other {# more sessions}} are cancelled."
   },
   "sessionBadge": {
     "live": "Live",
     "nextSession": "Next session",
-    "upcoming": "Upcoming"
+    "upcoming": "Upcoming",
+    "cancelled": "Cancelled"
   },
   "sessionFeed": {
     "readMore": "Read more",

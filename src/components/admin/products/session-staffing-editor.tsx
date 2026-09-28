@@ -64,6 +64,13 @@ export interface SessionStaffingEditorProps {
   onClearSubstitution: (requestId: string) => Promise<void>;
   /** "Attending after all." Resolves and rejects on the same terms. */
   onWithdrawRequest: (requestId: string) => Promise<void>;
+  /**
+   * Rows the surface adds after the staffing ones, in the same `⋯` — the
+   * cancel action. One menu per card, whatever it holds.
+   */
+  extraItems?: readonly SessionCardMenuItem[];
+  /** Whether an overlay one of `extraItems` opened is up, for focus return. */
+  extraFlowOpen?: boolean;
 }
 
 /**
@@ -115,6 +122,8 @@ export function SessionStaffingEditor({
   onSetSubstitution,
   onClearSubstitution,
   onWithdrawRequest,
+  extraItems = [],
+  extraFlowOpen = false,
 }: SessionStaffingEditorProps) {
   const t = useTranslations("admin.products.staffing");
   const [flow, setFlow] = useState<SetSubFlow | null>(null);
@@ -195,6 +204,7 @@ export function SessionStaffingEditor({
       onSelect: () => setPending({ kind: "withdraw", request }),
     });
   }
+  items.push(...extraItems);
 
   // **No wrapper of its own.** This lands in the card header's trailing
   // cluster, beside Edit, exactly where a gedu's `⋯` lands — a box around it
@@ -205,7 +215,7 @@ export function SessionStaffingEditor({
       <SessionCardMenu
         label={t("menuLabel")}
         items={items}
-        flowOpen={flow !== null || pending !== null}
+        flowOpen={flow !== null || pending !== null || extraFlowOpen}
       />
 
       {flow !== null && (

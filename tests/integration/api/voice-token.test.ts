@@ -15,9 +15,11 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockAdminFrom = vi.fn();
+const mockAdminRpc = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     from: (...args: unknown[]) => mockAdminFrom(...args),
+    rpc: (...args: unknown[]) => mockAdminRpc(...args),
   })),
 }));
 
@@ -70,6 +72,9 @@ const gameAccountReads: string[] = [];
 // cannot distinguish "asked for the session's date" from "asked for today and
 // the two happened to match".
 const substitutionDatesAsked: string[] = [];
+
+// Every session date the route asked the cancellation predicate about.
+const cancellationDatesAsked: string[] = [];
 
 /**
  * A calendar date in the fixture product's zone.
@@ -149,9 +154,29 @@ function mockTables(opts: {
   substitutionsByDate?: Record<string, boolean>;
   /** Whether the joining gedu is still certified. Defaults to true. */
   certified?: boolean;
+  /**
+   * Product-local dates the database answers cancelled on this group. The
+   * predicate answers true only when the route asked about one of these dates
+   * for this group, and records every date asked on `cancellationDatesAsked`.
+   */
+  cancelledDates?: string[];
   minecraftAccount?: { minecraft_username: string | null; minecraft_uuid: string | null } | null;
   robloxAccount?: { roblox_username: string | null; roblox_user_id: number | null } | null;
 }) {
+  mockAdminRpc.mockImplementation(
+    (fn: string, args: { p_group_id: string; p_session_date: string }) => {
+      if (fn !== "group_session_is_cancelled") {
+        return Promise.resolve({ data: null, error: { message: `unexpected rpc ${fn}` } });
+      }
+      cancellationDatesAsked.push(args.p_session_date);
+      return Promise.resolve(
+        mockSupabaseSuccess(
+          args.p_group_id === GROUP_ID &&
+            (opts.cancelledDates?.includes(args.p_session_date) ?? false),
+        ),
+      );
+    },
+  );
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "product_groups") {
       const row = opts.group
@@ -290,6 +315,7 @@ describe("POST /api/voice/token", () => {
     vi.clearAllMocks();
     gameAccountReads.length = 0;
     substitutionDatesAsked.length = 0;
+    cancellationDatesAsked.length = 0;
     // Rebuild the prune chain each test (clearAllMocks wipes return values).
     placementLt.mockResolvedValue({ error: null });
     placementEq.mockReturnValue({ lt: placementLt });
@@ -612,6 +638,87 @@ describe("POST /api/voice/token", () => {
         .mockReturnValueOnce(openWindow);
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       expect(res.status).toBe(200);
+    });
+  });
+
+  describe("cancelled session", () => {
+    it("refuses a member on a cancelled session, and never touches Daily", async () => {
+      const sessionStart = new Date();
+      openWindowFor(sessionStart);
+      const sessionDate = dateInProductZone(sessionStart);
+      authAs("gamer-id", { role: "gamer", first_name: "Kid" });
+      mockTables({
+        group: {},
+        participation: { id: "participation-1" },
+        cancelledDates: [sessionDate],
+      });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+      expect(res.status).toBe(403);
+      expect(data.error).toBe("This session is cancelled");
+      expect(cancellationDatesAsked).toEqual([sessionDate]);
+      expect(mockGetOrCreateDailyRoom).not.toHaveBeenCalled();
+      expect(mockCreateMeetingToken).not.toHaveBeenCalled();
+    });
+
+    it("refuses an admin too: a cancelled session has no room for anyone", async () => {
+      const sessionStart = new Date();
+      openWindowFor(sessionStart);
+      authAs("admin-id", { role: "admin", first_name: "Admin" });
+      mockTables({ group: {}, cancelledDates: [dateInProductZone(sessionStart)] });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(403);
+      expect(mockCreateMeetingToken).not.toHaveBeenCalled();
+    });
+
+    it("reads a session running past local midnight as its own start date", async () => {
+      // A Monday 23:30 Helsinki session, joined at 00:10 on Tuesday, is still
+      // Monday's session: a cancellation of Tuesday leaves it open, and the
+      // date asked about is Monday's. The window is mocked, so the wall clock
+      // at test time plays no part.
+      openWindowFor(new Date("2026-03-09T21:30:00.000Z")); // 23:30 Helsinki
+      authAs("gamer-id", { role: "gamer", first_name: "Kid" });
+      mockTables({
+        group: {},
+        participation: { id: "participation-1" },
+        cancelledDates: ["2026-03-10"],
+      });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(200);
+      expect(cancellationDatesAsked).toEqual(["2026-03-09"]);
+    });
+
+    it("admits a member when only another date of the group is cancelled", async () => {
+      const sessionStart = new Date();
+      openWindowFor(sessionStart);
+      const [year, month, day] = dateInProductZone(sessionStart).split("-").map(Number);
+      const otherDate = new Date(Date.UTC(year, month - 1, day + 7))
+        .toISOString()
+        .slice(0, 10);
+      authAs("gamer-id", { role: "gamer", first_name: "Kid" });
+      mockTables({
+        group: {},
+        participation: { id: "participation-1" },
+        cancelledDates: [otherDate],
+      });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(200);
+    });
+
+    it("refuses a non-member as a non-member, without revealing the cancellation", async () => {
+      const sessionStart = new Date();
+      openWindowFor(sessionStart);
+      authAs("gamer-id", { role: "gamer", first_name: "Kid" });
+      mockTables({
+        group: {},
+        participation: null,
+        cancelledDates: [dateInProductZone(sessionStart)],
+      });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+      expect(res.status).toBe(403);
+      expect(data.error).toBe("You are not enrolled in this group");
+      expect(cancellationDatesAsked).toEqual([]);
     });
   });
 

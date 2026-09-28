@@ -97,6 +97,7 @@ function enrollment(
     prepWindowEnd: new Date(NOW.getTime() + 10 * 86_400_000),
     nextSessionStart: new Date(NOW.getTime() + 3 * 86_400_000),
     nextSessionEnd: new Date(NOW.getTime() + 3 * 86_400_000 + 5_400_000),
+    cancelledAhead: [],
     hasVoiceRoom: true,
     voiceHref: INERT_HREF,
     siteName: null,

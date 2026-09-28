@@ -7,6 +7,7 @@ import type {
   ComingUpCohort,
   ComingUpDay,
   ComingUpItem,
+  DateCancellation,
   ProductAttention,
   ProductIssue,
   ProductIssueFact,
@@ -146,6 +147,8 @@ interface ProductSpec {
     startTime: string;
     durationMinutes: number;
   }[];
+  /** Cancelled dates by product-local date; absent is none. */
+  cancellations?: Readonly<Record<string, DateCancellation>>;
 }
 
 // ---------------------------------------------------------------------------
@@ -921,6 +924,7 @@ function resolveWeeks(
           activeCount: spec.activeCount,
           seatCount: spec.seatCount,
           needsAttention: flagged.has(spec.id),
+          cancellation: fixtureCancellation(spec, date),
           href: ROUTES.admin.product(spec.productType, spec.id),
         });
       }
@@ -930,6 +934,36 @@ function resolveWeeks(
   }
 
   return { weeks, currentWeekIndex: WEEKS_BEFORE };
+}
+
+/**
+ * The cancelled dates in the busy term, by product and product-local date.
+ *
+ * Both shapes a date can take, placed where a reviewer meets them without
+ * stepping: the Wednesday LAN evening is off for every group — muted in this
+ * week's rows, out of the session count and muted again on the coming-up feed —
+ * and one of the two groups of a Tuesday club and of a camp's opening day have
+ * cancelled, so those still run with a note. The quiet scenario has none.
+ */
+const CANCELLED_DATES: Readonly<
+  Record<string, Readonly<Record<string, DateCancellation>>>
+> = {
+  "event-1": { "2026-08-19": { kind: "all" } },
+  "consumer-club-1": {
+    "2026-08-18": { kind: "some", cancelled: 1, groups: 2 },
+  },
+  "camp-2": { "2026-08-24": { kind: "some", cancelled: 1, groups: 2 } },
+};
+
+function withCancellations(specs: readonly ProductSpec[]): ProductSpec[] {
+  return specs.map((spec) => ({
+    ...spec,
+    cancellations: CANCELLED_DATES[spec.id],
+  }));
+}
+
+function fixtureCancellation(spec: ProductSpec, date: string): DateCancellation {
+  return spec.cancellations?.[date] ?? { kind: "none" };
 }
 
 function withinRun(spec: ProductSpec, date: string): boolean {
@@ -981,6 +1015,7 @@ function buildComingUp(specs: readonly ProductSpec[]): ComingUpDay[] {
       href: ROUTES.admin.product(spec.productType, spec.id),
       activeCount: spec.activeCount,
       seatCount: spec.seatCount,
+      cancellation: fixtureCancellation(spec, date),
     };
     if (existing === undefined) {
       day.set(cohortKey, {
@@ -1035,7 +1070,12 @@ export function buildAdminDashboardFixture(
 
   const specs = quiet
     ? quietCatalogue()
-    : [...consumerClubs(), ...municipalityClubs(), ...camps(), ...events()];
+    : withCancellations([
+        ...consumerClubs(),
+        ...municipalityClubs(),
+        ...camps(),
+        ...events(),
+      ]);
 
   const byId = new Map(specs.map((spec) => [spec.id, spec]));
   const products = quiet ? [] : buildProductAttention(byId);

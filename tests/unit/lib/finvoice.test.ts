@@ -86,6 +86,8 @@ interface ClubSpec {
   slots?: MunicipalityInvoicingClub["schedule_slots"];
   /** Dates with a stored row. Mondays in May 2026 are 4, 11, 18 and 25. */
   dates?: readonly string[];
+  /** Dates an admin cancelled for the club's one group. */
+  cancelled?: readonly string[];
 }
 
 function club(spec: ClubSpec): MunicipalityInvoicingClub {
@@ -115,6 +117,11 @@ function club(spec: ClubSpec): MunicipalityInvoicingClub {
       group_id: `${spec.id}-g1`,
       session_date: date,
     })),
+    cancelled_sessions: (spec.cancelled ?? []).map((date) => ({
+      group_id: `${spec.id}-g1`,
+      session_date: date,
+    })),
+    group_ids: [`${spec.id}-g1`],
   };
 }
 
@@ -223,6 +230,22 @@ describe("the money rule", () => {
 
     expect(invoice.rows[0].sessions).toBe(2);
     expect(invoice.rows[0].netCents).toBe(13_000);
+  });
+
+  it("bills nothing for a cancelled session", () => {
+    // The ledger shows a cancelled date at €0; the file must not carry it in a
+    // row's count or its money.
+    const invoice = invoiceFor([
+      club({
+        id: "a",
+        name: "Klubi A",
+        dates: ["2026-05-04"],
+        cancelled: ["2026-05-11"],
+      }),
+    ]);
+
+    expect(invoice.rows[0].sessions).toBe(1);
+    expect(invoice.netCents).toBe(6_500);
   });
 
   it("leaves a club that recorded nothing off the invoice entirely", () => {
@@ -546,6 +569,28 @@ describe("what refuses a file", () => {
 
   it("refuses a customer whose clubs all recorded nothing", () => {
     const result = buildFor([club({ id: "a", name: "Klubi A", dates: [] })]);
+
+    expect(result).toEqual({
+      ok: false,
+      reason: "nothing_to_invoice",
+      clubsWithoutFee: 0,
+    });
+  });
+
+  it("refuses a customer whose clubs have only cancelled sessions", () => {
+    // A month of cancellations is a month with nothing to invoice, and a club
+    // with no fee that was only cancelled never ran, so it does not change the
+    // reason.
+    const result = buildFor([
+      club({ id: "a", name: "Klubi A", dates: [], cancelled: ["2026-05-04"] }),
+      club({
+        id: "b",
+        name: "Klubi B",
+        feeCents: null,
+        dates: [],
+        cancelled: ["2026-05-11"],
+      }),
+    ]);
 
     expect(result).toEqual({
       ok: false,

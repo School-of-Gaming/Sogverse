@@ -307,12 +307,19 @@ BEGIN
   -- Slots carry the weekday exactly as the column stores it (0 = Monday) and the
   -- start time as a bare HH:MM wall clock in the product's own zone — the admin
   -- schedule is deliberately read in the zone it was authored in.
+  --
+  -- Cancellation is per (group, date) and the schedule is per product, so each
+  -- product carries both halves the page decides a date from: `group_ids`, every
+  -- group the product has (not only groups some other fact mentions), and
+  -- `cancelled_sessions`, every (group, date) inside the window on which
+  -- group_session_is_cancelled holds. A date every group cancelled is a
+  -- cancelled date; a date some cancelled still runs for the rest.
   -- ---------------------------------------------------------------------------
   SELECT COALESCE(jsonb_agg(s.doc ORDER BY s.product_id), '[]'::jsonb)
     INTO v_schedule
     FROM (
       WITH candidate AS (
-        SELECT p.*
+        SELECT p.*, w.window_start, w.window_end
           FROM public.products p
           CROSS JOIN LATERAL (
             SELECT (now() AT TIME ZONE p.timezone)::date - 30 AS window_start,
@@ -337,7 +344,9 @@ BEGIN
                'seat_count',     c.seat_count,
                'active_count',   COALESCE(psc.active_count, 0),
                'waitlist_count', COALESCE(psc.waitlist_count, 0),
-               'schedule_slots', sl.items
+               'schedule_slots', sl.items,
+               'group_ids',      gr.items,
+               'cancelled_sessions', cx.items
              ) AS doc
         FROM candidate c
         LEFT JOIN public.product_seat_counts psc ON psc.product_id = c.id
@@ -365,6 +374,30 @@ BEGIN
                     WHERE ss.product_id = c.id
                  ), '[]'::jsonb) AS items
         ) sl
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(g.id ORDER BY g.id)
+                     FROM public.product_groups g
+                    WHERE g.product_id = c.id
+                 ), '[]'::jsonb) AS items
+        ) gr
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(
+                            jsonb_build_object(
+                              'group_id',     sc.group_id,
+                              'session_date', sc.session_date
+                            )
+                            ORDER BY sc.session_date, sc.group_id
+                          )
+                     FROM public.session_cancellations sc
+                     JOIN public.product_groups g ON g.id = sc.group_id
+                    WHERE g.product_id = c.id
+                      AND sc.session_date >= c.window_start
+                      AND sc.session_date <  c.window_end
+                      AND public.group_session_is_cancelled(sc.group_id, sc.session_date)
+                 ), '[]'::jsonb) AS items
+        ) cx
     ) s;
 
   RETURN jsonb_build_object(
@@ -381,7 +414,7 @@ $$;
 -- Name: FUNCTION get_admin_dashboard(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — either can be NULL, where the stat has no meaning: certified only means something for an educator, and verified is NULL for a role none of whose accounts holds a real address, which is every gamer unless their parent chose sign-in mode email), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. The waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. An unstaffed group with NO active member is named too, in its own empty_groups_without_gedu array beside groups_without_gedu, and can put a product in the queue by itself: an admin pre-building next term has not made a mistake, and that reasoning decides the item''s RANK on the page rather than hiding it. The two arrays are disjoint by construction and neither holds a group somebody is assigned to. Both product sections ask effective_status() and nothing else: there is no stored status to pre-filter on, so the derived answer is the only lifecycle test either candidate set makes, and every date window is computed in the product''s own timezone. Each attention candidate also carries missing_invoice_customer — municipality clubs only, true when the club names no Fennoa invoice customer, and false everywhere else by construction because the CHECK forbids the column on any other product type. It puts a club in the queue on its own, exactly as the municipality fee beside it does: the link is nullable because a club is created before anybody has agreed who pays for it, and by the time it starts both the fee and the buyer are meant to be set, so a club still missing one is an admin omission rather than an ordinary state. The two are the bottom of the page''s ranking and sit together there, because both are a blank field on one form with one consequence — a month of invoices that cannot be written for that buyer. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
+COMMENT ON FUNCTION public.get_admin_dashboard() IS 'The whole admin dashboard in one document: per-role user counts (email-verified and, for gedus, certified — either can be NULL, where the stat has no meaning: certified only means something for an educator, and verified is NULL for a role none of whose accounts holds a real address, which is every gamer unless their parent chose sign-in mode email), the uncertified-gedu queue, live products carrying at least one ops issue, and the calendar facts the schedule and coming-up feed resolve weeks from. Admin-only, guard-first on assert_admin. Each queue candidate also carries contract_accepted_at — when they accepted the current gedu contract, or NULL — which informs the certification decision without gating it; that standing is judged on the version''s BASE, so either equally binding language of the current version counts, and a candidate holding both carries the earlier of the two signatures. Each candidate additionally carries criminal_record_check_at — when an admin recorded seeing their criminal record extract, or NULL — which informs the same decision on the same terms and gates nothing either; the flag beside it is not shipped because the stamp is non-NULL exactly when the flag is true. The waitlist attention item asks whether there is something for an admin to DO rather than what state the product is in: an open seat that already carries a live seat offer is subtracted, so a product whose every open seat has been offered drops out of the queue, and a decline or an expiry raises it again on its own. The count rides in the emitted object as live_offer_count so the page can explain the absence. An unstaffed group with NO active member is named too, in its own empty_groups_without_gedu array beside groups_without_gedu, and can put a product in the queue by itself: an admin pre-building next term has not made a mistake, and that reasoning decides the item''s RANK on the page rather than hiding it. The two arrays are disjoint by construction and neither holds a group somebody is assigned to. Both product sections ask effective_status() and nothing else: there is no stored status to pre-filter on, so the derived answer is the only lifecycle test either candidate set makes, and every date window is computed in the product''s own timezone. Each attention candidate also carries missing_invoice_customer — municipality clubs only, true when the club names no Fennoa invoice customer, and false everywhere else by construction because the CHECK forbids the column on any other product type. It puts a club in the queue on its own, exactly as the municipality fee beside it does: the link is nullable because a club is created before anybody has agreed who pays for it, and by the time it starts both the fee and the buyer are meant to be set, so a club still missing one is an admin omission rather than an ordinary state. The two are the bottom of the page''s ranking and sit together there, because both are a blank field on one form with one consequence — a month of invoices that cannot be written for that buyer. Each schedule product also carries group_ids, every group it has, and cancelled_sessions, every (group_id, session_date) inside its window on which group_session_is_cancelled holds, so the page can tell a date every group cancelled from one only some did. Product names are shipped as the whole product_translations array because which one to read is a property of the reader, exactly as every other admin surface treats them.';
 
 
 --

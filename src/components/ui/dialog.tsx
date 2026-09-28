@@ -20,6 +20,11 @@ import { cn } from "@/lib/utils";
  * Measured rather than assumed because a page that opted into
  * `scrollbar-gutter: stable` reclaims nothing — the gutter stays reserved — and
  * padding it anyway would produce the very shift this is here to prevent.
+ * **The measure is the root's layout box, never `clientWidth`**: once the
+ * overflow is hidden, Chrome reports the root's `clientWidth` as the whole
+ * viewport even while a stable gutter still holds the content in from the
+ * edge, so that reading pays a gutter's width that never came back and pulls
+ * the page left. The box is also fractional, where `clientWidth` rounds.
  *
  * **No `touchmove` guard, deliberately.** The trick that needs one is the older
  * `document.body` lock, which iOS Safari lets a touch drag through; hiding the
@@ -44,12 +49,12 @@ function acquireScrollLock() {
     paddingRight: root.style.paddingRight,
   };
   const paddingBefore = parseFloat(getComputedStyle(root).paddingRight) || 0;
-  const widthBefore = root.clientWidth;
+  const widthBefore = root.getBoundingClientRect().width;
   root.style.overflow = "hidden";
   // Read after the write: the difference is exactly what the vanished scrollbar
   // handed to the content, which is 0 on an overlay-scrollbar OS and on a page
   // holding a stable gutter open.
-  const reclaimed = root.clientWidth - widthBefore;
+  const reclaimed = root.getBoundingClientRect().width - widthBefore;
   if (reclaimed > 0) {
     root.style.paddingRight = `${paddingBefore + reclaimed}px`;
   }

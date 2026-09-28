@@ -9,9 +9,12 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { runEndedOn, runLiveness, type RunLiveness } from "@/lib/product-run";
 import {
+  capPastCancellations,
   earlierBoundary,
   endDateToCutoff,
   enumerateRowOccurrences,
+  productLocalDate,
+  splitAtNextRunning,
   startDateToCutoff,
   type SlotShape,
 } from "@/lib/session-occurrence";
@@ -104,6 +107,13 @@ export interface FamilyEnrollmentSummary {
   nextSessionStart: Date | null;
   /** End of that session. `null` exactly when `nextSessionStart` is. */
   nextSessionEnd: Date | null;
+  /**
+   * The starts of the cancelled sessions that fall before the next one that
+   * runs, soonest first, one per date — or every cancelled one left when none
+   * runs. The next session is never a cancelled one, so neither is the Join
+   * or the Live badge it drives. Empty on a card with no group behind it.
+   */
+  cancelledAhead: readonly Date[];
   /**
    * Whether this product has a voice room at all — true only for a remote one.
    * An in-person enrollment renders **no** Join affordance rather than a locked
@@ -802,6 +812,7 @@ function sessionSummary(
   const hasVoiceRoom = product.isRemote;
   const subEnd = row.subscriptionEndsAt;
 
+  const cancelledDates = new Set(row.cancelledDates);
   const occurrences = enumerateRowOccurrences({
     slots: row.slots,
     timezone: product.timezone,
@@ -811,19 +822,32 @@ function sessionSummary(
       endDateToCutoff(product.endDate, product.timezone),
       subEnd,
     ),
-    // One occurrence is all a card states — except on a cancelled membership,
-    // where the *last* covered session has to be identified as the last, and
-    // that cannot be known without walking to the end of the window. The walk
-    // is finite either way: a cancelled sub always supplies a terminal instant,
-    // so the uncapped branch is bounded by the boundary above.
-    cap: subEnd === null ? 1 : Infinity,
+    // One running occurrence is all a card states, so the walk goes one past
+    // whatever the cancellations could remove — except on a cancelled
+    // membership, where the *last* covered session has to be identified as the
+    // last, and that cannot be known without walking to the end of the window.
+    // The walk is finite either way: a cancelled sub always supplies a
+    // terminal instant, so the uncapped branch is bounded by the boundary above.
+    cap:
+      subEnd === null
+        ? capPastCancellations(1, cancelledDates.size, row.slots.length)
+        : Infinity,
     windowCloseMs: VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
   });
-  // Guarded on the length rather than on the element, because indexed access is
-  // typed as always-present here — an `?? null` would read as a check the
-  // compiler has already refused to make.
-  const empty = occurrences.length === 0;
-  const next = empty ? null : occurrences[0];
+  // A cancelled session is never the next one: the card names, joins and
+  // lights up for the first session that runs, and names the cancelled ones
+  // before it on a line of their own.
+  const { next, cancelledAhead } = splitAtNextRunning(
+    occurrences,
+    product.timezone,
+    cancelledDates,
+  );
+  // What the paid window still covers, for the winding-down line: the family
+  // does not attend a cancelled session, so it cannot be their last one.
+  const running = occurrences.filter(
+    (occurrence) =>
+      !cancelledDates.has(productLocalDate(occurrence.start, product.timezone)),
+  );
 
   const precomputedPrepWindowEnd = prepWindowEnds?.get(row.participationId);
 
@@ -848,6 +872,7 @@ function sessionSummary(
     isRemote: product.isRemote,
     nextSessionStart: next === null ? null : next.start,
     nextSessionEnd: next === null ? null : next.end,
+    cancelledAhead: cancelledAhead.map((occurrence) => occurrence.start),
     hasVoiceRoom,
     // The room is keyed by group, so an unplaced seat has no destination —
     // the same inert `"#"` an in-person product gets, and for the same reason:
@@ -886,7 +911,7 @@ function sessionSummary(
     // likely to be looking. What varies is whether it carries a date: only the
     // forward walk can supply one this surface is entitled to state. See
     // `cancellationFor`.
-    cancellation: cancellationFor(subEnd, occurrences),
+    cancellation: cancellationFor(subEnd, running),
     scheduleLines: scheduleLinesFor(
       {
         type: product.type,
@@ -929,6 +954,7 @@ function waitlistSummary(
     prepWindowEnd: null,
     nextSessionStart: null,
     nextSessionEnd: null,
+    cancelledAhead: [],
     hasVoiceRoom: product.isRemote,
     voiceHref: INERT_HREF,
     siteName: null,

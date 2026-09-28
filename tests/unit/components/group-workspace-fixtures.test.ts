@@ -50,6 +50,12 @@ function obligationFor(
     slots: product.schedule_slots,
     startDate: product.start_date,
     endDate: product.end_date,
+    // Read off the fixture's own feed, exactly as the workspace body reads it.
+    cancelledDates: new Set(
+      fixture.entries.flatMap((entry) =>
+        entry.kind === "cancelled" ? [entry.sessionDate] : [],
+      ),
+    ),
   });
   return {
     finalEntryId: date === null ? null : sessionEntryId(groupId, date),
