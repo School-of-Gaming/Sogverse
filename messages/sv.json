@@ -2339,7 +2339,7 @@
   },
   "geduInvoicing": {
     "adminTitle": "Gedufakturering",
-    "adminDescription": "En månads tillfällen: vad varje Gedu höll och vad hen fakturerar School of Gaming för det.",
+    "adminDescription": "En månad: de tillfällen varje Gedu har registrerat och vad hen fakturerar School of Gaming för dem.",
     "myTitle": "Fakturering",
     "myDescription": "Vad du fakturerar School of Gaming för, en månad i taget. Ett tillfälle räknas med när något har registrerats för det – närvaro, en rapport eller en anteckning.",
     "backToDashboard": "Tillbaka till Min SOG",

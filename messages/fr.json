@@ -2339,7 +2339,7 @@
   },
   "geduInvoicing": {
     "adminTitle": "Facturation des Gedus",
-    "adminDescription": "Un mois de séances : ce que chaque Gedu a assuré, et le montant facturé à School of Gaming pour cela.",
+    "adminDescription": "Un mois : les séances enregistrées par chaque Gedu, et le montant facturé à School of Gaming pour celles-ci.",
     "myTitle": "Facturation",
     "myDescription": "Ce que vous facturez à School of Gaming, mois par mois. Une séance est comptée dès que quelque chose est enregistré pour elle : présences, compte rendu ou note.",
     "backToDashboard": "Retour à Mon SOG",

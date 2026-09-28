@@ -2339,7 +2339,7 @@
   },
   "geduInvoicing": {
     "adminTitle": "Gedu invoicing",
-    "adminDescription": "One month of sessions: what each Gedu ran, and what they invoice School of Gaming for it.",
+    "adminDescription": "One month: the sessions each Gedu recorded, and what they invoice School of Gaming for them.",
     "myTitle": "Invoicing",
     "myDescription": "What you invoice School of Gaming for, one month at a time. A session counts once something is recorded for it — attendance, a report or a note.",
     "backToDashboard": "Back to My SOG",

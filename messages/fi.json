@@ -2339,7 +2339,7 @@
   },
   "geduInvoicing": {
     "adminTitle": "Gedujen laskutus",
-    "adminDescription": "Kuukauden kerrat: mitä kukin Gedu veti ja mitä hän laskuttaa niistä School of Gamingilta.",
+    "adminDescription": "Kuukausi: kunkin Gedun kirjaamat kerrat ja mitä hän laskuttaa niistä School of Gamingilta.",
     "myTitle": "Laskutus",
     "myDescription": "Mitä laskutat School of Gamingilta, kuukausi kerrallaan. Kerta lasketaan mukaan, kun siitä on kirjattu jotain – läsnäolot, raportti tai muistiinpano.",
     "backToDashboard": "Takaisin Omaan SOGiin",
