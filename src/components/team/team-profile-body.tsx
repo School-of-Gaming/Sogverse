@@ -2,7 +2,6 @@
 
 import { useId } from "react";
 import Image from "next/image";
-import { Sparkles } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type { PickId } from "@sog/ui";
 import { LanguageFlag } from "@/components/ui/language-flag";
@@ -121,8 +120,8 @@ export type TeamProfile = AdminTeamProfile | GeduTeamProfile;
  * and the voice zones' own glow (`.zone-glow`, spilling in from the frame),
  * and the fun fact's side rule. It is only ever an edge, a rule or that glow,
  * never a fill with words on it, and it sits outside the page's colour budget
- * (SOG-UI's `picks.ts`). With no pick, the frame and the side rule are the
- * neutral edge and there is no glow. Poppins throughout: this is a person
+ * (SOG-UI's `picks.ts`). With no pick, the frame is the neutral edge, there
+ * is no glow, and the side rule falls back to act. Poppins throughout: this is a person
  * introducing themselves, not a quotation.
  *
  * **Which of the person's languages is shown follows the product page**: the
@@ -266,17 +265,17 @@ export function TeamProfileBody({
         {funFact !== "" && (
           <aside
             aria-labelledby={funFactId}
-            // The pick's edge colours every side; only the left one has width.
+            // The edge colours every side; only the left one has width. With no
+            // pick the rule is act, so the aside keeps its accent either way.
             className={cn(
               "mt-10 border-l-4 pl-4",
-              pick === null ? "border-border" : pick.edge,
+              pick === null ? "border-act" : pick.edge,
             )}
           >
             <h2
               id={funFactId}
-              className="flex items-center gap-2 text-sm font-semibold text-muted-foreground"
+              className="text-sm font-semibold text-muted-foreground"
             >
-              <Sparkles className="h-4 w-4" aria-hidden />
               {t("funFact")}
             </h2>
             <p lang={lang} className="mt-1 text-lg leading-relaxed">
