@@ -3,13 +3,13 @@
  *
  *   node scripts/diff-geonames.mjs GB
  *   node scripts/diff-geonames.mjs FI --unretire
- *   node scripts/diff-geonames.mjs GB --from-migration supabase/migrations/00161_seed_uk_geonames.sql
+ *   node scripts/diff-geonames.mjs NO --from-migration supabase/migrations/<version>_seed_norway_geonames.sql
  *
  * One procedure for every country — Finland and France included since the
  * cutover, which is why there is no annual national-classification diff any
  * more. It reads the config's dumps and the live table (**read-only, always**)
  * and produces two things: a report on stdout for a human to read, and a
- * reconciliation migration for that human to renumber and push.
+ * reconciliation migration for that human to read and push.
  *
  * ## The run procedure
  *
@@ -21,12 +21,12 @@
  *     upstream name is fixed *in GeoNames*, never by hand-editing the emitted
  *     migration into a local override. **Read the unkeyed list too** — see
  *     below; the expected answer is either "none" or "exactly the fixtures".
- *  3. **Renumber the migration and move it into `supabase/migrations/`.** It is
- *     written to `supabase/reconciliations/` under a name with no version
- *     number at all, because this script cannot know the next free one: an
- *     already-used version is silently treated as applied, so the number has to
- *     be picked against *remote* migration history at the moment of pushing,
- *     not at the moment of emitting. The file name says so loudly.
+ *  3. **Move the migration into `supabase/migrations/`.** It is written to
+ *     `supabase/reconciliations/`, which is ignored, so that it is read by a
+ *     human before it becomes a migration — this is the one thing the location
+ *     tooling emits that rewrites live rows. The name it already carries is the
+ *     name it keeps: a version is a timestamp, and the one that counts is the
+ *     one the landing restamp assigns.
  *  4. **Push it through the normal workflow.**
  *
  * ## What it may emit, and what it may never emit
@@ -96,6 +96,12 @@
  * other, and this reads the SQL back and asserts the round trip is closed. The
  * parser is deliberately narrow — it reads only the shape this repository's
  * generator emits, and fails loudly on anything else.
+ *
+ * Which means the file it is pointed at is one `generate-geonames-seed.mjs` has
+ * just written, for a country genuinely new to the repo. Every country seeded
+ * before the numbered migration history was squashed is in the baseline
+ * migration instead — a pg_dump, not a shape this parser reads — and the
+ * generator refuses to write a second copy of a tree already sitting there.
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -105,6 +111,7 @@ import { fail } from "./lib/geonames/cache.mjs";
 import { countryConfig } from "./lib/geonames/config.mjs";
 import { ingestCountry } from "./lib/geonames/ingest.mjs";
 import { commentSafe, locationInsert, sqlBigint, sqlJsonb, sqlText } from "./lib/geonames/sql.mjs";
+import { stamp } from "./lib/migration-version.mjs";
 
 const ROOT = join(import.meta.dirname, "..");
 const OUT_DIR = join(ROOT, "supabase", "reconciliations");
@@ -148,7 +155,7 @@ if (!iso) {
 
 const emitUnretire = args.includes("--unretire");
 const fromMigration = flagValue("--from-migration");
-const outPath = flagValue("--out") ?? join(OUT_DIR, `RENUMBER_ME_reconcile_${iso.toLowerCase()}_geonames.sql`);
+const outPath = flagValue("--out") ?? join(OUT_DIR, `${stamp()}_reconcile_${iso.toLowerCase()}_geonames.sql`);
 
 /* ------------------------------------------------------- the upstream image */
 
@@ -802,15 +809,13 @@ if (checks.length > 0) {
 
 const migration = `-- Reconciles ${iso}'s location tree with GeoNames as published ${dumpDate}.
 --
--- RENUMBER THIS FILE BEFORE PUSHING IT
+-- MOVE THIS FILE INTO supabase/migrations/ BEFORE PUSHING IT
 --
--- It is deliberately named with no version number and written outside
--- supabase/migrations/, because the differ that emitted it cannot know the next
--- free number: an already-used version is silently treated as applied, so the
--- number has to be checked against REMOTE migration history at the moment of
--- pushing rather than guessed at the moment of emitting. Pick it, rename this
--- file to <NNNNN>_reconcile_${iso.toLowerCase()}_geonames.sql, and move it into
--- supabase/migrations/.
+-- It is written outside supabase/migrations/, into an ignored directory, so
+-- that a human reads it before it becomes a migration: a reconciliation is the
+-- one thing the location tooling emits that rewrites live rows. The name it
+-- already carries is the name it keeps — a version is a timestamp, and the one
+-- that counts is the one the landing restamp assigns.
 --
 -- REGENERATING
 --
@@ -859,4 +864,4 @@ mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, migration, "utf8");
 
 console.log(`\n  Wrote ${outPath}`);
-console.log(`  Renumber it against remote migration history, then move it into supabase/migrations/.\n`);
+console.log(`  Read it, then move it into supabase/migrations/ — the name it carries is the one it keeps.\n`);

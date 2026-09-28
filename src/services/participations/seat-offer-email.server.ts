@@ -499,7 +499,7 @@ async function sendStaff({
   await sendTransactionalEmail({
     fromEmail: SENDER_EMAIL,
     fromName: SENDER_NAME,
-    // The shared support inbox, exactly where the help & feedback mail goes:
+    // The shared support inbox, exactly where the help-request mail goes:
     // whoever is on the inbox invites the next family, and a recipient list
     // assembled from the profiles table changes whenever staff do.
     toEmail: SUPPORT_EMAIL,

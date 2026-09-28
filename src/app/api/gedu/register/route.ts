@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { lookupMinecraftUser } from "@/lib/mojang";
-import { lookupRobloxProfile } from "@/lib/roblox";
-import { toE164Digits } from "@/lib/utils";
 import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";
 import { registerGeduBody } from "@/services/gedu/gedu-registration.contracts";
+import {
+  geduPhoneDigits,
+  promoteToGedu,
+  resolveGeduGameHandles,
+} from "@/services/gedu/gedu-registration.server";
 import { utmMetadataForConsent } from "@/lib/utm";
 import { parseConsentCookieHeader } from "@/lib/consent";
 import { sendTransactionalEmail } from "@/lib/brevo";
@@ -69,50 +71,25 @@ export const POST = defineRoute({
       utm,
     );
 
-    // Phone → digits to match the profiles.phone CHECK (^\d{7,15}$). Empty or
-    // absent stays "" and the RPC NULLIFs it.
-    let phoneDigits = "";
-    if (phone && phone.trim()) {
-      const digits = toE164Digits(phone);
-      if (!digits || !/^\d{7,15}$/.test(digits)) {
-        return NextResponse.json(
-          { error: "Invalid phone number" },
-          { status: 400 },
-        );
-      }
-      phoneDigits = digits;
+    // Phone → digits to match the profiles.phone CHECK. Empty or absent stays
+    // "" and the RPC NULLIFs it.
+    const phoneDigits = geduPhoneDigits(phone);
+    if (phoneDigits === null) {
+      return NextResponse.json(
+        { error: "Invalid phone number" },
+        { status: 400 },
+      );
     }
 
     const admin = createAdminClient();
 
-    // Both handles arrived trimmed and length-bounded, with an empty field
-    // already collapsed to null by the shared value schemas. All that is left
-    // here is to read "absent" out of the shapes it can take.
-    //
-    // **Nothing about either name gates the registration.** We do not judge what
-    // a Minecraft or Roblox handle may look like — the platform does — and even
-    // its answer decides only whether an account key is stored: an unresolvable
-    // name is kept with a null key, and another account already holding it is
-    // allowed.
-    const mcName = minecraftUsername || null;
-    const robloxName = robloxUsername || null;
-
-    // Two unrelated third parties, so the lookups run together rather than in
-    // sequence — an educator who gave both handles waits for the slower one.
-    const [resolvedMc, resolvedRoblox] = await Promise.all([
-      mcName
-        ? lookupMinecraftUser(mcName).then((mojang) => ({
-            username: mcName,
-            uuid: mojang?.uuid ?? null,
-          }))
-        : null,
-      robloxName
-        ? lookupRobloxProfile(robloxName).then((profile) => ({
-            username: robloxName,
-            userId: profile?.userId ?? null,
-          }))
-        : null,
-    ]);
+    // Before the account exists: nothing about either name can refuse the
+    // registration, and `createUser` below is the step that cannot be undone
+    // cheaply, so everything else goes first.
+    const handles = await resolveGeduGameHandles({
+      minecraftUsername,
+      robloxUsername,
+    });
 
     // Step 1: create the auth user. The handle_new_user trigger seeds a
     // customer-role profile + customer_profiles row; email_confirm
@@ -159,25 +136,12 @@ export const POST = defineRoute({
     // failure we delete the auth user so no half-promoted debris survives — the
     // narrow remaining gap (process death between createUser and the RPC) is
     // far smaller than the old multi-step invite route's exposure.
-    const { error: rpcError } = await admin.rpc("register_gedu", {
-      p_user_id: userId,
-      p_first_name: firstName,
-      p_last_name: lastName,
-      p_locale: locale,
-      p_phone: phoneDigits,
-      p_spoken_languages: spokenLanguages ?? [],
-      p_location_ids: locationIds ?? [],
-      p_minecraft_username: resolvedMc?.username ?? "",
-      p_minecraft_uuid: resolvedMc?.uuid ?? "",
-      // The empty string is this RPC's "absent" sentinel for every optional
-      // text argument, and the account id travels as text for exactly that
-      // reason — a bigint parameter could not carry it. The RPC NULLIFs and
-      // casts on the other side.
-      p_roblox_username: resolvedRoblox?.username ?? "",
-      p_roblox_user_id:
-        resolvedRoblox?.userId === null || resolvedRoblox?.userId === undefined
-          ? ""
-          : String(resolvedRoblox.userId),
+    const { error: rpcError } = await promoteToGedu(admin, {
+      userId,
+      fields: { firstName, lastName, spokenLanguages, locationIds },
+      locale,
+      phoneDigits,
+      handles,
     });
 
     if (rpcError) {

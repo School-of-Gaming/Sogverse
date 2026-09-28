@@ -45,7 +45,7 @@ vi.mock("next-intl", () => ({
 
 const READY: AuthState = { kind: "ready", participants: [], gamerCount: 0 };
 
-function clubStarting(startDate: string | null): ProductBrowseRow {
+function clubStarting(startDate: string): ProductBrowseRow {
   // A real paid consumer club off the shared fixtures, so the pricing option
   // resolves to `subscription` the way the live row does. Only the date moves.
   const { product } = buildScenarioFixture("consumer-club");
@@ -79,10 +79,9 @@ describe("the signup panel's first-charge date", () => {
     expect(firstChargeDateFor(clubStarting("2027-06-01"))).toBe("Mar 4, 2027");
   });
 
-  it("says nothing for a club that has already started, or has no date", () => {
+  it("says nothing for a club that has already started", () => {
     viewerZone.value = "Europe/Helsinki";
     expect(firstChargeDateFor(clubStarting("2027-01-05"))).toBeNull();
-    expect(firstChargeDateFor(clubStarting(null))).toBeNull();
   });
 
   it("says nothing for a product that is not sold as a subscription", () => {
@@ -99,7 +98,7 @@ describe("the signup panel's first-charge date", () => {
 describe("the confirmation's first-charge line", () => {
   function renderConfirmation(
     firstChargeAt: string | null,
-    startDate: string | null = "2027-06-01",
+    startDate = "2027-06-01",
   ) {
     const { product } = buildScenarioFixture("consumer-club");
     return render(

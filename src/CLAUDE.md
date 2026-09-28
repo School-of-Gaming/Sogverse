@@ -46,9 +46,11 @@ is the one UI rule this file keeps. What is adopted so far, and in what order th
 follows, is `packages/sog-ui/docs/adoption.md`. For a construct not yet adopted, the rule
 written below for it still governs Sogverse's code exactly as written; the adoption that
 retires the construct deletes its rule from this file in the same change. No new UI rule
-is added here: a new opinion goes to SOG-UI, and the construct joins the adoption order.
-The UI sections below (layout and scrolling, loading and disabled state, button order, the
-headings rule, the UI component reference and preview scenes) are that
+is added here: a new opinion goes to SOG-UI, and the construct joins the adoption order —
+except where the owner places one here because the library has no home for it yet, and
+such a rule leaves with its adoption like the rest.
+The UI sections below (layout and scrolling, loading and disabled state, button order,
+cards, the headings rule, the UI component reference and preview scenes) are that
 transitional state.
 
 Colour and the faces have already left: the tokens, the grounds, the one-theme rule, the
@@ -60,7 +62,7 @@ none of its own are stated in `packages/sog-ui/CLAUDE.md` and held by lint and b
 
 - **Every page lives under `src/app/[locale]/`** — each page URL carries its locale, and a bare path is a detector the proxy redirects (`src/i18n/CLAUDE.md`). Only `api/`, `sitemap.ts`, `robots.ts`, `llms.txt/`, the OG card handlers, `globals.css`, the static icons and a pass-through root layout plus its not-found sit at the app root.
 - Within `[locale]`, routes are grouped: `(auth)`, `(dashboard)`, `(public)`, `(voice)`, `(preview)`
-- **Name a route through the app's wrapped navigation module (`src/i18n/navigation.ts`), not `next/link` / `next/navigation`** — hrefs are typed against the route map and emitted locale-prefixed. The exception, and the rule for it, is in `src/i18n/CLAUDE.md`: comparing a pathname → wrapped; embedding one in a URL → raw, with a comment.
+- **Name a route through the app's wrapped navigation module (`src/i18n/navigation.tsx`), not `next/link` / `next/navigation`** — hrefs are typed against the route map and emitted locale-prefixed. The exception, and the rule for it, is in `src/i18n/CLAUDE.md`: comparing a pathname → wrapped; embedding one in a URL → raw, with a comment.
 - Components are organized by role: `components/[role]/`, shared UI in `components/ui/`
 - Supabase clients: `lib/supabase/` — `client.ts` (browser), `server.ts` (RSC), `admin.ts` (privileged)
 - Auto-generated types in `types/database.types.ts`, convenience aliases in `types/index.ts`
@@ -87,6 +89,12 @@ Proxy (`src/proxy.ts`) refreshes tokens server-side on every request and enforce
 **Rule: After any auth state change (sign-in, sign-out, account switch), the browser must do a full-page navigation — `window.location.href`, a form POST that the server answers with a redirect, or any other nav that unloads the document. `router.push()` is not enough.** The browser Supabase client keeps its session in an in-memory singleton seeded from cookies at construction time. Cookies changed by a server response (the `/api/auth/signout` route, OAuth callback, `/api/auth/switch-account`, password reset completion) don't fire `onAuthStateChange`, so the singleton stays stale until the document reloads. A soft navigation leaves the stale singleton in place and the UI keeps thinking the user is signed in (or signed in as the wrong person). This is downstream of mutating auth on the server (POST routes, for CSRF safety): a client-side `supabase.auth.signOut()` would fire `onAuthStateChange` and let a `router.refresh()` suffice, but our routes change cookies the browser client never sees, so only a document reload rebuilds it.
 
 The canonical sign-out shape is an HTML `<form method="post" action="/api/auth/signout">` — the route calls `supabase.auth.signOut()` server-side and returns a 303, the browser follows it as a full-page GET. No client-side fetch, no React state transition on the outgoing page, no intermediate "sidebar gone but still on dashboard" frame.
+
+**`profiles.registration_completed_at` NULL means the account still owes its registration** — its name, the terms and the consents. Only an account created through Google starts that way (the new-user trigger stamps every password account at creation), only `service_role` writes it afterwards, and the proxy sends a customer who owes it to `/complete-registration` from every protected page in place of the PIN gate, since such an account has no PIN yet. At the API boundary `requireRole` refuses such a customer (403 `REGISTRATION_REQUIRED`) on every route but the two completion routes, which opt in with `allowRegistrationOwed` — the PIN routes included, so an owing account can never mint the unlock cookie the proxy's short-circuit trusts.
+
+**The finish page asks what the register page would have, minus the address and password** — a parent's names, home location, terms and marketing answer, or with `?as=gedu` the Gedu register form's fields — and posts them to `/api/auth/complete-registration` or `/api/gedu/complete-registration`. Those two routes are the only writers of `registration_completed_at` after creation; they refuse (409) any account that no longer owes it, and they stamp it **last**, after the consents, so an account is never registered without the record of what it was opened under — a parent whose terms record fails is left owing and simply retries. The Gedu route's stamp is written by `register_gedu` itself, inside the promotion's transaction. Attribution and the product page a parent set out from (`?redirect=`, allowlisted, landed on once registered) survive the Google round trip on the address: the register pages put them on the finish page's `next`, and the callback carries them over — and also keeps them, with the variant, in an httpOnly intent cookie the finish page falls back to, because the proxy's gate bounces to a bare finish page.
+
+**Google sign-in has one entry, `/api/auth/callback`, and its `redirectTo` is always the current `window.location.origin`** — the PKCE verifier is a cookie on the origin the button was pressed on, so a callback on the configured site URL cannot exchange the code. The callback refuses gamer accounts (it signs the fresh session out and bounces to `/login` with an error), and sends a customer who still owes their registration to the finish page whatever `next` says, carrying an allowlisted product-page `next` along as its `redirect`; any other `next` passes the same post-auth allowlist as the login form's `?redirect=`. A Google sign-in into an account whose address was never verified, by a Google identity that verified that same address, revokes every other session of the account, sets its password to NULL and stamps the address verified — confirmations are off, so a password account can be opened under someone else's address, and GoTrue links the real owner's Google identity to it. The account is then Google-only, like one created through Google; a password comes back only through the reset email. A failed revoke or password forfeit withholds the stamp, so the next Google sign-in repeats the claim.
 
 **Rule: Never make Supabase data queries inside `onAuthStateChange` callbacks.** Only do synchronous React state updates in the callback.
 
@@ -138,6 +146,8 @@ Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late a
 
 The pattern stays inline per screen — **do not extract it into a shared `useCommittingMutation`-style hook.** It was tried and dissolved into per-call-site configuration: screens differ in how they leave (full unload vs. view swap vs. `useTransition`), in which outcomes clear the flag, and in what other pending states compose in.
 
+**Rule: whether a confirm dialog waits for its write is the caller's decision, stated on the dialog — never inferred from the handler.** A pure confirm whose outcome the person needs before they move on — a refusal they have to read, a result whatever they do next depends on — passes `holdWhileCommitting` to the shared `ConfirmDialog` and hands it a promise-returning confirm handler; the dialog then owns the latch, the disabled buttons and the failure line, and the handler resolves only once the surface behind the dialog is ready to be looked at again. Where that surface already carries the pending or optimistic state, the dialog closes on the press and the write runs behind it. A dialog carrying **form content** is not this shape: its fields are disabled by the same flag, so it keeps the flag inline and closes itself.
+
 **Rule: the loading affordance is a property of the call, chosen when you write it — never something discovered at runtime.** You are the one writing the query. You know whether it is a cached read, an indexed lookup of a bounded set, or a heavy aggregate over a third party. That knowledge picks the affordance; a timer that waits to find out does not. There are three categories and nothing else:
 
 1. **Already cached, or resolvable synchronously** → **no loading state at all**, ever. React Query knows this for you, and it is the strongest signal available because it costs nothing.
@@ -161,6 +171,23 @@ The pattern stays inline per screen — **do not extract it into a shared `useCo
 **A button followed by a muted text link is not a pair, and must not be col-reversed.** A submit button with a quiet "Back to login" beneath it is one primary action plus an escape hatch — the link is typographically subordinate, not the other half of a choice — so it stays DOM `[affirmative, link]` under plain `flex-col` with the link below, which is where a reader expects the way out. The rule engages when both halves are *buttons*; a future sweep that flips these on pattern alone would be reversing them wrongly.
 
 **In an emailed button row the *position* carries over unconditionally; the emphasis is decided per mail, inside what the row's type allows.** A mail's two-button row is a fixed 50/50 table that is a row at every width, so there is nothing for `col-reverse` to do and the affirmative goes in the right-hand cell, reading the way the app has already taught. What the type forbids is the *primary* brand button, so a row can never hold two amber (act) cells competing for the same click (two violet `secondary` halves still compile; the type does not reach them) — but the right-hand half may still carry the emphasis the row does allow, wherever one of the two actions is genuinely the thing being asked for: the seat-offer mail fills Accept and outlines Decline. Where the halves are equal alternatives with no ask between them — the welcome mail's shop-or-My-SOG pair — both stay outlined and neither is weighted. Position is settled by the convention; emphasis is settled by whether the mail is asking a question.
+
+## Cards
+
+**Rule: a card does not contain a card.** A card's edge says *this is one thing*. Put bordered things inside it and the reader can no longer tell which box is the object, and every level spends a border and two paddings — width a 360px screen does not have. Inside a card, group with spacing, a heading, a divider or a tinted row.
+
+**Which level keeps its edge follows what the reader acts on.** Where the items are peers, each with an action or a destination of its own — a queue of requests, a grid of groups — the *items* are the cards and what holds them is a heading over a grid or a stack, with no edge of its own. Where the items are facts about one thing, that thing is the card and the items are rows in it, told apart by dividers. The test for an outer edge is to take it away: if the heading and the spacing already say "these belong together", it was saying nothing.
+
+**A list of repeated items inside a card is the case this rule exists for, not an exception to it.** Boxing each row of a list that is already inside a box is how the pattern usually arrives, one reasonable-looking step at a time.
+
+**The exceptions are boxes doing a different job from a card's, and each has to look like that job rather than like a card:**
+
+- **An overlay starts a new layer.** A dialog, sheet, popover or menu sits above the page, so a card inside one is first-level on its own layer. Nesting inside the overlay is still nesting.
+- **An audience boundary.** An inset region marking *who can see this* rather than *what belongs together* — staff-only notes inside a family-visible card. It reads as a well: dashed or tinted, never lifted, and it says whose it is.
+- **A state message.** An alert or status panel inside a card is a message, not a container: it wears a status colour and it is there only while the state is.
+- **A boxed control.** Inputs, selects, chips, and rows a reader chooses among — a radio group drawn as boxes is a control, and its edge is the control's affordance.
+- **Framed content.** An image, a map, a quoted message, a file preview, a code block: the frame belongs to the content and would travel with it.
+- **An object moved between containers.** Where a reader drags things from one container to another, the container is a drop zone and the thing is an object, and each needs its edge for the gesture to be legible.
 
 ## Date & Time Formatting
 

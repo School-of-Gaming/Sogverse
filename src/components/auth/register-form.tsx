@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "@/i18n/navigation";
+import { Link, getPathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -14,11 +14,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { HomeLocationField } from "@/components/locations/home-location-field";
 import { getClient } from "@/lib/supabase/client";
 import { readErrorMessage } from "@/lib/api/json-response";
+import { pushGtmEvent } from "@/lib/gtm";
+import { GTM_EVENTS } from "@/lib/gtm-events";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
 import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
+import { completeRegistrationQuery } from "@/lib/navigation/post-auth-redirect";
+import { ContinueWithGoogle } from "./continue-with-google";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -79,7 +83,8 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const t = useTranslations('auth');
   const c = useTranslations('common');
   const locale = useLocale();
-  const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
+  const { redirect, safeRedirect, status, navigateAfterAuth } =
+    useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
   // Where this visit came from, if a marketing link carried UTM params. Held in
   // memory by the root provider since the landing page, so it survives browsing
@@ -104,6 +109,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [googlePending, setGooglePending] = useState(false);
 
   const supabase = getClient();
 
@@ -190,6 +196,24 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
         return;
       }
 
+      // The account exists and nothing has been signed up *for* — which is
+      // exactly what `sign_up` names, and why it carries nothing but the page
+      // it happened on: nothing else is known at this moment.
+      //
+      // Pushed here rather than after the sign-in because here is where the
+      // outcome is certain and the document is certainly still ours. The
+      // `signInWithPassword` round trip below sits between this line and the
+      // navigation that unloads the page, so a tag reading this event has a
+      // full network leg of headroom before the document goes.
+      //
+      // No consent check belongs at this call site. `pushGtmEvent` decides for
+      // itself whether the container was ever armed, and a second opinion here
+      // could only disagree with it.
+      pushGtmEvent({
+        event: GTM_EVENTS.accountCreated,
+        page_path: ROUTES.register,
+      });
+
       // The account exists but this browser is not signed in — the route used
       // the admin client, so no session was ever issued here. Sign in now.
       // Freeze auth state *before* the call: Supabase fires SIGNED_IN
@@ -257,6 +281,34 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          {/* A Google account arrives with no name, terms or consents, so it
+              lands on the finish page, in the language this page is read in —
+              the ticks below are this form's and do not travel with it. The
+              visit's attribution does, on the address: the round trip through
+              Google unloads the tab that holds it. So does the product page
+              this visit came from, which the finish page lands on. */}
+          <ContinueWithGoogle
+            next={getPathname({
+              href: {
+                pathname: ROUTES.completeRegistration,
+                query: completeRegistrationQuery({
+                  asGedu: false,
+                  utm,
+                  redirect: safeRedirect,
+                }),
+              },
+              locale,
+            })}
+            disabled={isLoading}
+            onBegin={() => {
+              setError(null);
+              setGooglePending(true);
+            }}
+            onFailed={(message) => {
+              setGooglePending(false);
+              setError(message);
+            }}
+          />
           {/* The two halves of one name, side by side from `sm` and stacked
               below it — the educator form's arrangement, for the same reason it
               has it: a first and last name are one answer split in two, and a
@@ -372,7 +424,6 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               terms: (chunks) => (
                 <Link
                   href={ROUTES.termsAndConditions}
-                  prefetch={false}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-act hover:underline"
@@ -383,7 +434,6 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               privacy: (chunks) => (
                 <Link
                   href={ROUTES.privacy}
-                  prefetch={false}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-act hover:underline"
@@ -408,7 +458,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           />
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || googlePending}>
             {status ?? (isLoading ? t('register.creatingAccount') : c('createAccount'))}
           </Button>
           <div className="space-y-2 text-center text-sm text-muted-foreground">

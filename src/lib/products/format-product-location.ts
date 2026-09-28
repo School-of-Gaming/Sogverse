@@ -2,8 +2,8 @@ import type { Json, ProductType } from "@/types";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 
 // Resolve the location strings the parent-facing card and detail page
-// render. The schema invariants (validate_products_location trigger,
-// migration 00030) constrain what's possible:
+// render. The schema invariants (the validate_products_location trigger)
+// constrain what's possible:
 //
 //   - In-person (any type): location_id required, must be type='site'.
 //   - Online municipality_club: location_id required, type ∈

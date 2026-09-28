@@ -114,7 +114,7 @@ describe("isSeatOfferTokenExpired", () => {
 
   /**
    * The far end is exclusive: live while `sentAt + window > now`, which is how
-   * the SQL predicates in migration 00207 are written too. The boundary is
+   * the SQL predicates behind the offer are written too. The boundary is
    * asserted rather than assumed because the two ends of this rule are in two
    * languages and only agree by hand.
    */

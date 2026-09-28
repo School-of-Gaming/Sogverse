@@ -143,6 +143,7 @@ export async function requireRole<const R extends UserRole>(
   options?: {
     forbiddenMessage?: string;
     allowUnverified?: boolean;
+    allowRegistrationOwed?: boolean;
     requireCertifiedGedu?: boolean;
   },
 ): Promise<AuthSuccess<R> | NextResponse> {
@@ -177,6 +178,27 @@ export async function requireRole<const R extends UserRole>(
   if (!profileHasRole(profile, roles)) {
     return NextResponse.json(
       { error: options?.forbiddenMessage ?? "Forbidden" },
+      { status: 403 },
+    );
+  }
+
+  // Registration gate (mirrors the page gate in src/proxy.ts): a customer
+  // whose `registration_completed_at` is NULL was created through Google and
+  // has not yet given its name, accepted the terms or answered the consents,
+  // so it may act as a parent nowhere — not even through a route a locked
+  // session may reach, which is why this is its own option rather than a
+  // reading of `allowUnverified`. Without it, an owing account could mint a PIN
+  // and an unlock cookie, and from there every customer route would open to an
+  // account that never accepted the terms. `allowRegistrationOwed` opts in
+  // only the routes that finish the registration. Checked before the PIN gate
+  // because an owing account has no PIN to ask for.
+  if (
+    profile.role === "customer" &&
+    profile.registration_completed_at === null &&
+    !options?.allowRegistrationOwed
+  ) {
+    return NextResponse.json(
+      { error: "Registration must be completed first", code: "REGISTRATION_REQUIRED" },
       { status: 403 },
     );
   }

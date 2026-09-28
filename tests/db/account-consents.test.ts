@@ -10,7 +10,7 @@ import {
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
- * Account-level consents (00249): what an account was opened under, and which
+ * Account-level consents: what an account was opened under, and which
  * text the holder was shown when they opened it.
  *
  * The claims these cases exist to pin, in the order they matter:
@@ -40,8 +40,8 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 const TERMS = "terms-and-conditions";
 /**
- * The guardian declaration, which 00250 moved off the account and onto each
- * child — the register route no longer names it, and `create_gamer` records it
+ * The guardian declaration, which belongs to each child rather than to the
+ * account — the register route does not name it, and `create_gamer` records it
  * per gamer instead.
  *
  * It stays here as a second published document because these cases are about
@@ -77,7 +77,7 @@ const CHECK_VIOLATION = "23514";
 /** The canonical forbidden SQLSTATE a missing grant produces. */
 const FORBIDDEN = "42501";
 
-describe("account consents (00249)", () => {
+describe("account consents", () => {
   let admin: SupabaseClient<Database>;
   let anon: SupabaseClient<Database>;
   let customer: SupabaseClient<Database>;
@@ -114,7 +114,7 @@ describe("account consents (00249)", () => {
         TEST_IDS.GEDU,
         TEST_IDS.GAMER,
       ]);
-    // The document takes its versions with it (ON DELETE CASCADE from 00210).
+    // The document takes its versions with it (ON DELETE CASCADE).
     await admin.from("consent_documents").delete().eq("slug", OWN_DOC);
   });
 

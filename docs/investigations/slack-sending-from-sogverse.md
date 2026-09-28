@@ -1,7 +1,8 @@
 # Sending Slack messages from Sogverse
 
 **Status: design sketch, not committed — nothing is built.** Extracted 2026-08-28 from
-the Slack runbook (`../runbooks/slack-integration.md`), which covers the one Slack path
+the Slack runbook, since split into `../architecture/slack-purchase-notifications.md`
+and the `slack-purchase-notifications` skill, which cover the one Slack path
 that *does* exist: purchase notifications via a Stripe Dashboard Workflow, with no
 Sogverse code in the path. Building this sketch is **not** required for those. If this
 is ever committed to, it becomes a `docs/plans/` plan and this file is deleted.
@@ -48,7 +49,7 @@ rejects `--sensitive` on Development).
 ## Slack app setup
 
 Done once at [api.slack.com/apps](https://api.slack.com/apps) — this is a **separate app**
-from the Stripe Workflows for Slack app the runbook covers:
+from the Stripe Workflows for Slack app that doc covers:
 
 1. Create a Slack app for the workspace
 2. Add the **Bot Token Scope** `chat:write` (add `chat:write.public` to post to public

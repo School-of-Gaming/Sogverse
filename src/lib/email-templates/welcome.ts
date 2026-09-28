@@ -29,6 +29,12 @@ import type { EmailTranslator } from "./translator";
  * copy promises. The Gedu's mail has one place to go rather than two, so its
  * buttons simply stack; there is no pair to balance.
  *
+ * **An address that is already verified gets no verification ask at all** —
+ * an account created through Google, whose address Google vouched for. The
+ * paragraph and the button go together; the parent's pair of doors stays as it
+ * is, and the Gedu's one door takes the fill, since it is then the only thing
+ * the mail offers.
+ *
  * Settings is the exception, and deliberately not a button. The sentence that
  * says the verification can wait already has to name where to do it later, so
  * the link rides on that word rather than becoming a fourth thing to choose
@@ -40,8 +46,12 @@ import type { EmailTranslator } from "./translator";
 
 interface WelcomeParentEmailOptions {
   firstName: string;
-  /** App-generated verification link. */
-  verificationUrl: string;
+  /**
+   * App-generated verification link — absent when the address is already
+   * verified (the identity provider that created the account vouched for it),
+   * and then the mail asks nothing: the verify paragraph and button go.
+   */
+  verificationUrl?: string;
   /** App-generated My SOG link. */
   dashboardUrl: string;
   /** App-generated shop link. */
@@ -59,24 +69,31 @@ export function buildWelcomeParentEmail(
     ${heading(t("welcomeParent.heading"))}
     ${paragraph(t("welcomeParent.greeting", { firstName: styledName(firstName) }))}
     ${paragraph(t("welcomeParent.platform"))}
-    ${paragraph(
-      t("welcomeParent.verifyBody", {
-        settingsLink: inlineLink(settingsUrl, t("welcomeParent.settingsLinkLabel")),
-      }),
-    )}
+    ${
+      verificationUrl
+        ? paragraph(
+            t("welcomeParent.verifyBody", {
+              settingsLink: inlineLink(settingsUrl, t("welcomeParent.settingsLinkLabel")),
+            }),
+          )
+        : ""
+    }
     ${ctaButtonRow(
       { href: shopUrl, label: t("welcomeParent.shopButton"), variant: "outline" },
       { href: dashboardUrl, label: t("welcomeParent.dashboardButton"), variant: "outline" },
     )}
-    ${ctaButton({ href: verificationUrl, label: t("welcomeParent.verifyButton") })}
+    ${verificationUrl ? ctaButton({ href: verificationUrl, label: t("welcomeParent.verifyButton") }) : ""}
   `;
   return wrapInLayout({ title: t("welcomeParent.heading"), content, locale, t });
 }
 
 interface WelcomeGeduEmailOptions {
   firstName: string;
-  /** App-generated verification link. */
-  verificationUrl: string;
+  /**
+   * App-generated verification link — absent when the address is already
+   * verified, exactly as in the parent's mail.
+   */
+  verificationUrl?: string;
   /** App-generated My SOG link. */
   dashboardUrl: string;
   /** App-generated settings link. */
@@ -101,13 +118,21 @@ export function buildWelcomeGeduEmail(
     ${heading(t("welcomeGedu.heading"))}
     ${paragraph(t("welcomeGedu.greeting", { firstName: styledName(firstName) }))}
     ${paragraph(t("welcomeGedu.certification"))}
-    ${paragraph(
-      t("welcomeGedu.verifyBody", {
-        settingsLink: inlineLink(settingsUrl, t("welcomeGedu.settingsLinkLabel")),
-      }),
-    )}
-    ${ctaButton({ href: verificationUrl, label: t("welcomeGedu.verifyButton") })}
-    ${ctaButton({ href: dashboardUrl, label: t("welcomeGedu.dashboardButton"), variant: "outline" })}
+    ${
+      verificationUrl
+        ? paragraph(
+            t("welcomeGedu.verifyBody", {
+              settingsLink: inlineLink(settingsUrl, t("welcomeGedu.settingsLinkLabel")),
+            }),
+          )
+        : ""
+    }
+    ${verificationUrl ? ctaButton({ href: verificationUrl, label: t("welcomeGedu.verifyButton") }) : ""}
+    ${ctaButton({
+      href: dashboardUrl,
+      label: t("welcomeGedu.dashboardButton"),
+      variant: verificationUrl ? "outline" : "primary",
+    })}
   `;
   return wrapInLayout({ title: t("welcomeGedu.heading"), content, locale, t });
 }

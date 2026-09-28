@@ -37,8 +37,7 @@ export interface ConsentDocumentOption {
  *
  * A direct read through the caller's own client: the table is a list of
  * published document slugs with no personal data in it, readable by `anon` and
- * `authenticated` alike under migration 00210, so a route would add nothing but
- * a hop.
+ * `authenticated` alike, so a route would add nothing but a hop.
  *
  * The "current version" is resolved here rather than in SQL because PostgREST
  * has no greatest-n-per-group: the versions ride in on the embed and the

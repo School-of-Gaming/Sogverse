@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       account_consent_acceptances: {
@@ -45,7 +40,7 @@ export type Database = {
             foreignKeyName: "account_consent_acceptances_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -98,7 +93,7 @@ export type Database = {
             foreignKeyName: "chat_channel_locks_locked_by_fkey"
             columns: ["locked_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -112,7 +107,7 @@ export type Database = {
             foreignKeyName: "chat_channel_locks_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -214,7 +209,7 @@ export type Database = {
             foreignKeyName: "chat_messages_hidden_by_fkey"
             columns: ["hidden_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -235,7 +230,7 @@ export type Database = {
             foreignKeyName: "chat_messages_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -288,7 +283,7 @@ export type Database = {
             foreignKeyName: "chat_reactions_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -336,7 +331,7 @@ export type Database = {
             foreignKeyName: "consent_acceptances_accepted_by_fkey"
             columns: ["accepted_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -350,7 +345,7 @@ export type Database = {
             foreignKeyName: "consent_acceptances_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -371,7 +366,7 @@ export type Database = {
             foreignKeyName: "consent_acceptances_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -452,7 +447,7 @@ export type Database = {
             foreignKeyName: "customer_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -509,7 +504,7 @@ export type Database = {
             foreignKeyName: "family_subscriptions_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -517,42 +512,6 @@ export type Database = {
             columns: ["participation_id"]
             isOneToOne: true
             referencedRelation: "participations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      feedback_submissions: {
-        Row: {
-          created_at: string
-          id: string
-          message: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          message: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          message?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "feedback_submissions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "feedback_submissions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_search_index"
             referencedColumns: ["id"]
           },
         ]
@@ -591,7 +550,7 @@ export type Database = {
             foreignKeyName: "gamer_consent_acceptances_accepted_by_fkey"
             columns: ["accepted_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -654,7 +613,7 @@ export type Database = {
             foreignKeyName: "gamer_group_creations_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -668,7 +627,7 @@ export type Database = {
             foreignKeyName: "gamer_group_creations_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -717,7 +676,7 @@ export type Database = {
             foreignKeyName: "gamer_group_notes_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -731,7 +690,7 @@ export type Database = {
             foreignKeyName: "gamer_group_notes_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -776,7 +735,7 @@ export type Database = {
             foreignKeyName: "gamer_photo_consent_events_answered_by_fkey"
             columns: ["answered_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -848,7 +807,7 @@ export type Database = {
             foreignKeyName: "gamer_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -910,18 +869,21 @@ export type Database = {
           gedu_id: string
           group_id: string
           product_id: string
+          role: Database["public"]["Enums"]["gedu_assignment_role"]
         }
         Insert: {
           created_at?: string
           gedu_id: string
           group_id: string
           product_id: string
+          role?: Database["public"]["Enums"]["gedu_assignment_role"]
         }
         Update: {
           created_at?: string
           gedu_id?: string
           group_id?: string
           product_id?: string
+          role?: Database["public"]["Enums"]["gedu_assignment_role"]
         }
         Relationships: [
           {
@@ -935,7 +897,7 @@ export type Database = {
             foreignKeyName: "gedu_group_assignments_gedu_id_fkey"
             columns: ["gedu_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -982,7 +944,7 @@ export type Database = {
             foreignKeyName: "gedu_locations_gedu_id_fkey"
             columns: ["gedu_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1034,7 +996,7 @@ export type Database = {
             foreignKeyName: "gedu_profiles_certified_by_fkey"
             columns: ["certified_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1048,7 +1010,7 @@ export type Database = {
             foreignKeyName: "gedu_profiles_criminal_record_check_by_fkey"
             columns: ["criminal_record_check_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1062,7 +1024,7 @@ export type Database = {
             foreignKeyName: "gedu_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1104,7 +1066,7 @@ export type Database = {
             foreignKeyName: "group_session_images_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1174,7 +1136,7 @@ export type Database = {
             foreignKeyName: "group_sessions_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1195,7 +1157,7 @@ export type Database = {
             foreignKeyName: "group_sessions_report_emailed_by_fkey"
             columns: ["report_emailed_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1209,10 +1171,88 @@ export type Database = {
             foreignKeyName: "group_sessions_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
+      }
+      help_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "help_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_customers: {
+        Row: {
+          city: string
+          country_code: string
+          created_at: string
+          fennoa_customer_no: string
+          id: string
+          invoice_name: string
+          invoice_text: string | null
+          postal_code: string
+          street: string
+          updated_at: string
+          your_reference: string | null
+        }
+        Insert: {
+          city: string
+          country_code?: string
+          created_at?: string
+          fennoa_customer_no: string
+          id?: string
+          invoice_name: string
+          invoice_text?: string | null
+          postal_code: string
+          street: string
+          updated_at?: string
+          your_reference?: string | null
+        }
+        Update: {
+          city?: string
+          country_code?: string
+          created_at?: string
+          fennoa_customer_no?: string
+          id?: string
+          invoice_name?: string
+          invoice_text?: string | null
+          postal_code?: string
+          street?: string
+          updated_at?: string
+          your_reference?: string | null
+        }
+        Relationships: []
       }
       locations: {
         Row: {
@@ -1307,7 +1347,7 @@ export type Database = {
             foreignKeyName: "marketing_consent_events_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1343,7 +1383,7 @@ export type Database = {
             foreignKeyName: "marketing_consents_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1376,7 +1416,7 @@ export type Database = {
             foreignKeyName: "minecraft_accounts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1415,7 +1455,7 @@ export type Database = {
             foreignKeyName: "parent_gamer_gamer_id_fkey"
             columns: ["gamer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1429,7 +1469,7 @@ export type Database = {
             foreignKeyName: "parent_gamer_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1495,7 +1535,7 @@ export type Database = {
             foreignKeyName: "participations_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1516,7 +1556,7 @@ export type Database = {
             foreignKeyName: "participations_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1577,7 +1617,7 @@ export type Database = {
             foreignKeyName: "payments_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1918,6 +1958,7 @@ export type Database = {
           id: string
           image_id: string | null
           image_path: string | null
+          invoice_customer_id: string | null
           is_remote: boolean
           is_visible: boolean
           location_id: string | null
@@ -1930,9 +1971,8 @@ export type Database = {
           registration_opens_at: string
           requires_gamer_creations: boolean
           seat_count: number | null
-          signup_threshold: number | null
           spoken_language_code: Database["public"]["Enums"]["spoken_language"]
-          start_date: string | null
+          start_date: string
           tag: Database["public"]["Enums"]["product_tag"] | null
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
@@ -1950,6 +1990,7 @@ export type Database = {
           id?: string
           image_id?: string | null
           image_path?: string | null
+          invoice_customer_id?: string | null
           is_remote: boolean
           is_visible?: boolean
           location_id?: string | null
@@ -1962,9 +2003,8 @@ export type Database = {
           registration_opens_at: string
           requires_gamer_creations?: boolean
           seat_count?: number | null
-          signup_threshold?: number | null
           spoken_language_code: Database["public"]["Enums"]["spoken_language"]
-          start_date?: string | null
+          start_date: string
           tag?: Database["public"]["Enums"]["product_tag"] | null
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
@@ -1982,6 +2022,7 @@ export type Database = {
           id?: string
           image_id?: string | null
           image_path?: string | null
+          invoice_customer_id?: string | null
           is_remote?: boolean
           is_visible?: boolean
           location_id?: string | null
@@ -1994,9 +2035,8 @@ export type Database = {
           registration_opens_at?: string
           requires_gamer_creations?: boolean
           seat_count?: number | null
-          signup_threshold?: number | null
           spoken_language_code?: Database["public"]["Enums"]["spoken_language"]
-          start_date?: string | null
+          start_date?: string
           tag?: Database["public"]["Enums"]["product_tag"] | null
           timezone?: string
           topic?: Database["public"]["Enums"]["product_topic"]
@@ -2015,7 +2055,7 @@ export type Database = {
             foreignKeyName: "products_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2023,6 +2063,13 @@ export type Database = {
             columns: ["image_id"]
             isOneToOne: false
             referencedRelation: "product_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_invoice_customer_id_fkey"
+            columns: ["invoice_customer_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_customers"
             referencedColumns: ["id"]
           },
           {
@@ -2046,6 +2093,7 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
+          registration_completed_at: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
@@ -2064,6 +2112,7 @@ export type Database = {
           last_name?: string
           locale?: string | null
           phone?: string | null
+          registration_completed_at?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
@@ -2082,6 +2131,7 @@ export type Database = {
           last_name?: string
           locale?: string | null
           phone?: string | null
+          registration_completed_at?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
@@ -2127,7 +2177,7 @@ export type Database = {
             foreignKeyName: "roblox_accounts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -2207,7 +2257,7 @@ export type Database = {
             foreignKeyName: "session_attendance_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2221,7 +2271,7 @@ export type Database = {
             foreignKeyName: "session_attendance_recorded_by_fkey"
             columns: ["recorded_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2280,7 +2330,148 @@ export type Database = {
             foreignKeyName: "session_feedback_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_substitution_offers: {
+        Row: {
+          created_at: string
+          gedu_id: string
+          id: string
+          request_id: string
+        }
+        Insert: {
+          created_at?: string
+          gedu_id: string
+          id?: string
+          request_id: string
+        }
+        Update: {
+          created_at?: string
+          gedu_id?: string
+          id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_substitution_offers_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_substitution_offers_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_substitution_offers_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "session_substitution_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_substitution_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          group_id: string
+          id: string
+          reason: Database["public"]["Enums"]["substitution_reason"]
+          reason_note: string | null
+          requested_by: string
+          role: Database["public"]["Enums"]["gedu_assignment_role"]
+          session_date: string
+          status: Database["public"]["Enums"]["substitution_request_status"]
+          substitute_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          group_id: string
+          id?: string
+          reason: Database["public"]["Enums"]["substitution_reason"]
+          reason_note?: string | null
+          requested_by: string
+          role: Database["public"]["Enums"]["gedu_assignment_role"]
+          session_date: string
+          status?: Database["public"]["Enums"]["substitution_request_status"]
+          substitute_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          group_id?: string
+          id?: string
+          reason?: Database["public"]["Enums"]["substitution_reason"]
+          reason_note?: string | null
+          requested_by?: string
+          role?: Database["public"]["Enums"]["gedu_assignment_role"]
+          session_date?: string
+          status?: Database["public"]["Enums"]["substitution_request_status"]
+          substitute_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_substitution_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_substitution_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_substitution_requests_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_substitution_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_substitution_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_substitution_requests_substitute_id_fkey"
+            columns: ["substitute_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_substitution_requests_substitute_id_fkey"
+            columns: ["substitute_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -2374,7 +2565,7 @@ export type Database = {
             foreignKeyName: "verification_email_requests_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -2426,7 +2617,7 @@ export type Database = {
             foreignKeyName: "voice_private_zone_occupants_placed_by_fkey"
             columns: ["placed_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2440,7 +2631,7 @@ export type Database = {
             foreignKeyName: "voice_private_zone_occupants_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2501,7 +2692,7 @@ export type Database = {
             foreignKeyName: "voice_zones_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_search_index"
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
           {
@@ -2580,20 +2771,24 @@ export type Database = {
       }
     }
     Views: {
-      user_search_index: {
+      user_list_entries: {
         Row: {
+          certified: boolean | null
           created_at: string | null
+          criminal_record_check_passed: boolean | null
           currency: string | null
           email: string | null
           email_verified_at: string | null
+          family_search_blob: string | null
           first_name: string | null
           home_location_id: string | null
           id: string | null
           last_name: string | null
+          linked_gamers: Json | null
           locale: string | null
           phone: string | null
+          registration_completed_at: string | null
           role: Database["public"]["Enums"]["user_role"] | null
-          search_blob: string | null
           spoken_languages:
             | Database["public"]["Enums"]["spoken_language"][]
             | null
@@ -2601,6 +2796,56 @@ export type Database = {
           utm_campaign: string | null
           utm_medium: string | null
           utm_source: string | null
+        }
+        Insert: {
+          certified?: never
+          created_at?: string | null
+          criminal_record_check_passed?: never
+          currency?: string | null
+          email?: string | null
+          email_verified_at?: string | null
+          family_search_blob?: never
+          first_name?: string | null
+          home_location_id?: string | null
+          id?: string | null
+          last_name?: string | null
+          linked_gamers?: never
+          locale?: string | null
+          phone?: string | null
+          registration_completed_at?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          spoken_languages?:
+            | Database["public"]["Enums"]["spoken_language"][]
+            | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          certified?: never
+          created_at?: string | null
+          criminal_record_check_passed?: never
+          currency?: string | null
+          email?: string | null
+          email_verified_at?: string | null
+          family_search_blob?: never
+          first_name?: string | null
+          home_location_id?: string | null
+          id?: string | null
+          last_name?: string | null
+          linked_gamers?: never
+          locale?: string | null
+          phone?: string | null
+          registration_completed_at?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          spoken_languages?:
+            | Database["public"]["Enums"]["spoken_language"][]
+            | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
@@ -2641,6 +2886,14 @@ export type Database = {
           function_name: string
           is_security_definer: boolean
           is_strict: boolean
+        }[]
+      }
+      _list_policy_expressions: {
+        Args: never
+        Returns: {
+          expression: string
+          policy_name: string
+          table_name: string
         }[]
       }
       _list_replicated_tables: {
@@ -2735,6 +2988,10 @@ export type Database = {
         }
         Returns: Json
       }
+      approve_session_substitution_offer: {
+        Args: { p_offer_id: string }
+        Returns: Json
+      }
       assert_admin: { Args: never; Returns: undefined }
       assert_can_delete_session_image: {
         Args: { p_image_id: string }
@@ -2749,6 +3006,10 @@ export type Database = {
       cancel_participation: {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
+      }
+      cascade_withdraw_orphaned_substitution_requests: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: undefined
       }
       chat_body_mentions_are_roster: {
         Args: { p_body: string; p_channel_id: string }
@@ -2768,6 +3029,10 @@ export type Database = {
       }
       claim_group_session_report_email: {
         Args: { p_group_id: string; p_session_date: string }
+        Returns: Json
+      }
+      clear_session_substitution: {
+        Args: { p_request_id: string }
         Returns: Json
       }
       confirm_paid_participation: {
@@ -2797,6 +3062,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_invoice_customer: {
+        Args: {
+          p_city: string
+          p_country_code?: string
+          p_fennoa_customer_no: string
+          p_invoice_name: string
+          p_invoice_text?: string
+          p_postal_code: string
+          p_street: string
+          p_your_reference?: string
+        }
+        Returns: string
+      }
       create_participation: {
         Args: {
           p_consented_documents?: string[]
@@ -2815,6 +3093,7 @@ export type Database = {
           p_end_date?: string
           p_for_gamers: boolean
           p_for_parents: boolean
+          p_invoice_customer_id?: string
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
@@ -2831,7 +3110,6 @@ export type Database = {
           p_requires_gamer_creations?: boolean
           p_schedule_slots?: Json
           p_seat_count?: number
-          p_signup_threshold?: number
           p_spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           p_start_date?: string
           p_tag?: Database["public"]["Enums"]["product_tag"]
@@ -2883,6 +3161,33 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
       }
+      forfeit_password: { Args: { p_user_id: string }; Returns: undefined }
+      gedu_holds_seat_at_session: {
+        Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
+      gedu_holds_unexpired_substitution: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
+      gedu_is_expected_at_session: {
+        Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
+      gedu_may_substitute_session: {
+        Args: {
+          p_absent_gedu_id: string
+          p_gedu_id: string
+          p_group_id: string
+          p_session_date: string
+        }
+        Returns: boolean
+      }
+      gedu_substitutes_group: { Args: { p_group_id: string }; Returns: boolean }
+      gedu_substitutes_session: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
       gedu_teaches_gamer: { Args: { p_gamer_id: string }; Returns: boolean }
       gedu_teaches_group: { Args: { p_group_id: string }; Returns: boolean }
       gedu_teaches_group_product: {
@@ -2898,6 +3203,7 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Json
       }
+      get_admin_substitution_requests: { Args: never; Returns: Json }
       get_chat_channel_roster: {
         Args: { p_channel_id: string }
         Returns: {
@@ -2907,7 +3213,7 @@ export type Database = {
         }[]
       }
       get_gedu_assigned_product: {
-        Args: { p_product_id: string }
+        Args: { p_group_id?: string; p_product_id: string }
         Returns: Json
       }
       get_gedu_group_feed: { Args: { p_group_id: string }; Returns: Json }
@@ -2919,12 +3225,14 @@ export type Database = {
           group_count: number
           group_id: string
           is_remote: boolean
+          kind: string
           participant_count: number
           product_id: string
           product_translations: Json
           product_type: Database["public"]["Enums"]["product_type"]
           schedule_slots: Json
           start_date: string
+          substitution_date: string
           timezone: string
         }[]
       }
@@ -2945,6 +3253,7 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
+          registration_completed_at: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
@@ -2976,6 +3285,7 @@ export type Database = {
           last_name: string
           locale: string | null
           phone: string | null
+          registration_completed_at: string | null
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
@@ -3005,6 +3315,7 @@ export type Database = {
           waitlist_position: number
         }[]
       }
+      get_open_substitution_requests: { Args: never; Returns: Json }
       get_product_groups_with_details: {
         Args: { p_product_id: string }
         Returns: Json
@@ -3084,6 +3395,10 @@ export type Database = {
       }
       location_search_separator: { Args: never; Returns: string }
       mark_chat_image_stored: { Args: { p_id: string }; Returns: string }
+      offer_session_substitution: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
       participation_state: {
         Args: {
           p_group_id: string
@@ -3148,6 +3463,15 @@ export type Database = {
         Returns: boolean
       }
       request_my_verification_email: { Args: never; Returns: boolean }
+      request_session_substitution: {
+        Args: {
+          p_group_id: string
+          p_reason?: Database["public"]["Enums"]["substitution_reason"]
+          p_reason_note?: string
+          p_session_date: string
+        }
+        Returns: Json
+      }
       respond_seat_offer: {
         Args: {
           p_accept: boolean
@@ -3265,6 +3589,17 @@ export type Database = {
         Args: { p_product_id: string; p_slugs: string[] }
         Returns: undefined
       }
+      set_session_substitution: {
+        Args: {
+          p_absent_gedu_id: string
+          p_group_id: string
+          p_reason?: Database["public"]["Enums"]["substitution_reason"]
+          p_reason_note?: string
+          p_session_date: string
+          p_sub_gedu_id: string
+        }
+        Returns: Json
+      }
       set_site_notes: {
         Args: {
           p_gedu_note: string
@@ -3273,14 +3608,37 @@ export type Database = {
         }
         Returns: Json
       }
-      submit_feedback: {
+      submit_help_request: {
         Args: { p_message: string; p_user_id: string }
         Returns: boolean
       }
-      submit_my_feedback: { Args: { p_message: string }; Returns: boolean }
+      submit_my_help_request: { Args: { p_message: string }; Returns: boolean }
+      substitution_request_document: {
+        Args: {
+          p_include_reason: boolean
+          p_request: Database["public"]["Tables"]["session_substitution_requests"]["Row"]
+          p_reveal_requester?: boolean
+          p_viewer_id: string
+        }
+        Returns: Json
+      }
       toggle_chat_reaction: {
         Args: { p_code: string; p_message_id: string }
         Returns: boolean
+      }
+      update_invoice_customer: {
+        Args: {
+          p_city: string
+          p_country_code?: string
+          p_fennoa_customer_no: string
+          p_id: string
+          p_invoice_name: string
+          p_invoice_text?: string
+          p_postal_code: string
+          p_street: string
+          p_your_reference?: string
+        }
+        Returns: string
       }
       update_product: {
         Args: {
@@ -3290,6 +3648,7 @@ export type Database = {
           p_for_gamers: boolean
           p_for_parents: boolean
           p_id: string
+          p_invoice_customer_id?: string
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
@@ -3305,7 +3664,6 @@ export type Database = {
           p_requires_gamer_creations?: boolean
           p_schedule_slots?: Json
           p_seat_count?: number
-          p_signup_threshold?: number
           p_spoken_language_code: Database["public"]["Enums"]["spoken_language"]
           p_start_date?: string
           p_tag?: Database["public"]["Enums"]["product_tag"]
@@ -3321,13 +3679,26 @@ export type Database = {
         Args: { p_pin: string; p_user_ids: string[] }
         Returns: string
       }
+      withdraw_session_substitution_offer: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
+      withdraw_session_substitution_request: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
+      withdraw_session_substitution_request_as_admin: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
       chat_channel_type: "group_session"
-      effective_product_status: "pending" | "running" | "completed" | "expired"
+      effective_product_status: "pending" | "running" | "completed"
       gamer_photo_consent_type: "lynx_educate"
       gamer_sign_in: "parent" | "username" | "email"
+      gedu_assignment_role: "primary" | "assistant"
       gender_type: "boy" | "girl" | "non_binary"
       location_type: "country" | "region" | "municipality" | "district" | "site"
       marketing_consent_type: "school_of_gaming" | "lynx_educate"
@@ -3351,8 +3722,11 @@ export type Database = {
         | "ai"
         | "esports"
         | "game_studio"
+        | "digital_safety"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       spoken_language: "fi" | "sv" | "en" | "fr"
+      substitution_reason: "sick" | "other"
+      substitution_request_status: "open" | "substituted" | "withdrawn"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
     CompositeTypes: {
@@ -3483,9 +3857,10 @@ export const Constants = {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
       chat_channel_type: ["group_session"],
-      effective_product_status: ["pending", "running", "completed", "expired"],
+      effective_product_status: ["pending", "running", "completed"],
       gamer_photo_consent_type: ["lynx_educate"],
       gamer_sign_in: ["parent", "username", "email"],
+      gedu_assignment_role: ["primary", "assistant"],
       gender_type: ["boy", "girl", "non_binary"],
       location_type: ["country", "region", "municipality", "district", "site"],
       marketing_consent_type: ["school_of_gaming", "lynx_educate"],
@@ -3510,10 +3885,14 @@ export const Constants = {
         "ai",
         "esports",
         "game_studio",
+        "digital_safety",
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       spoken_language: ["fi", "sv", "en", "fr"],
+      substitution_reason: ["sick", "other"],
+      substitution_request_status: ["open", "substituted", "withdrawn"],
       user_role: ["admin", "customer", "gamer", "gedu"],
     },
   },
 } as const
+

@@ -3,8 +3,8 @@
  *
  * There is no email-change flow in the app (`profiles.email` carries no UPDATE
  * grant for `authenticated`, so not even an admin session can write it), which
- * makes this a recurring hand operation. The runbook is
- * `docs/runbooks/correct-user-email.md`; this script is the mechanism that
+ * makes this a recurring hand operation. The procedure is the
+ * `correct-user-email` skill; this script is the mechanism that
  * keeps the two writes in step.
  *
  * Report-only unless told otherwise:
@@ -26,7 +26,7 @@
  *    therefore reads the identity back and fails loudly if it did not move.
  * 2. **`public.profiles`.** Nothing syncs it; the signup trigger copies the
  *    address on INSERT only. `service_role` does hold UPDATE on the column, so
- *    both writes happen here and the psql step the runbook used to require is
+ *    both writes happen here and the psql step the procedure used to require is
  *    gone.
  *
  * Auth goes **first**, because it is the only write that enforces uniqueness
@@ -43,7 +43,7 @@
  *
  * Note the keys are new-format (`sb_secret_…`). They authenticate through
  * `supabase-js` but are rejected by hand-rolled REST calls against
- * `/rest/v1/` and `/auth/v1/` — see the runbook.
+ * `/rest/v1/` and `/auth/v1/` — see the `remote-supabase` skill.
  *
  * ## What it refuses
  *
@@ -223,7 +223,7 @@ async function main() {
     throw new Error(
       `REFUSING: ${newEmail} already belongs to auth user ${conflict.id}.\n` +
         "That is the duplicate-account case. Decide what happens to that account's data\n" +
-        "first (see the runbook); this script will not free the address for you.",
+        "first (see the correct-user-email skill); this script will not free the address for you.",
     );
   }
 
@@ -261,7 +261,7 @@ async function main() {
   if (!identities.some((email) => email.toLowerCase() === newEmail.toLowerCase())) {
     throw new Error(
       "auth.users moved but auth.identities did not. Sign-in will still answer to\n" +
-        "the old address. Do not treat this as done — see the runbook.",
+        "the old address. Do not treat this as done — see the correct-user-email skill.",
     );
   }
 

@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
@@ -25,10 +27,11 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
  * same variable for Supabase itself (the URL resolver throws on it too), so
  * there is no tooling context that legitimately loads it without one.
  *
- * **If this ever points at a local stack (`http://127.0.0.1:54321`), every
- * banner 400s**: the optimizer refuses to fetch a local-IP origin unless
- * `images.dangerouslyAllowLocalIP` is set, and the error names neither this
- * file nor the flag. No local stack exists today, so the flag is not set here.
+ * **Pointed at a local stack (`http://127.0.0.1:61023`), every banner 400s
+ * unless `images.dangerouslyAllowLocalIP` is set**, and the error names neither
+ * this file nor the flag. `npm run db -- up` writes exactly such a URL into
+ * `.env.local`, and the rich seed puts a picture on every product, so the flag
+ * is set — see `supabaseIsLocal` below for the one condition under which.
  */
 function bucketPattern(bucket: string) {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -47,7 +50,63 @@ function bucketPattern(bucket: string) {
   };
 }
 
+/**
+ * Is the configured Supabase a local stack? Loopback and nothing else — a name
+ * that resolves to one is not covered and does not need to be, because the
+ * local-stack script writes a literal `http://127.0.0.1:<port>`.
+ *
+ * Missing env is `false` rather than a throw: `bucketPattern` above already
+ * fails the build loudly on it, and one failure is enough.
+ */
+function supabaseIsLocal() {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return false;
+  const { hostname } = new URL(base);
+  return hostname === "127.0.0.1" || hostname === "localhost" || hostname === "[::1]";
+}
+
+/**
+ * The directory Turbopack treats as the workspace root: the nearest one, from
+ * here upward, that actually holds the installed `next` package.
+ *
+ * **Computed, because a checkout can have a lockfile and no install.** Work in
+ * flight lives in checkouts nested inside the main one, which resolve
+ * `node_modules` upward rather than carrying their own. Turbopack's default is
+ * the directory of the *nearest lockfile*, it compiles nothing outside its
+ * root, and a nested checkout's nearest lockfile is its own — so left to the
+ * default, its dev server cannot find `next` and answers 500 on every route.
+ * In the main checkout and in CI this resolves to the repo root, which is what
+ * the default picks there anyway; in a nested checkout it resolves to the main
+ * one, which still contains it, so every file being compiled stays inside the
+ * root.
+ *
+ * Falls back to this directory when no ancestor holds the package, which is
+ * the default's own answer and leaves a missing install to fail as itself.
+ */
+function workspaceRoot(): string {
+  let dir = __dirname;
+  for (;;) {
+    if (existsSync(path.join(dir, "node_modules", "next", "package.json"))) {
+      return dir;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) return __dirname;
+    dir = parent;
+  }
+}
+
 const nextConfig: NextConfig = {
+  turbopack: { root: workspaceRoot() },
+  // `next dev` otherwise writes a managed `nextjs-agent-rules` block into
+  // `CLAUDE.md` and `AGENTS.md` whenever it detects a coding agent, pointing it
+  // at the version-matched docs vendored in `node_modules/next/dist/docs/`.
+  // Those docs are worth reading — they are what identified `partialPrefetching`
+  // as the App Shell mechanism this app's `<Link>` prefetch default is waiting
+  // on (`src/i18n/navigation.tsx`) — but they are worth reading at the moment a
+  // version-specific question comes up, from the package, not as standing
+  // instructions committed to the repo. Left on, the block reappears in
+  // `git status` after every `next dev` and rewrites itself on every upgrade.
+  agentRules: false,
   // `sharp` is a native module: it loads a platform-specific binary at require
   // time, which a bundler cannot trace and must not try to inline. Naming it
   // here leaves it as a plain runtime `require` in the two upload routes that
@@ -63,6 +122,11 @@ const nextConfig: NextConfig = {
     "/opengraph-images/**": ["./src/assets/fonts/*.ttf"],
   },
   images: {
+    // Derived from the configured URL, never from NODE_ENV: what decides
+    // whether the optimizer may fetch a loopback origin is whether the bucket
+    // it is pointed at IS one. A deployment's URL is a public hostname, so this
+    // is false everywhere but a checkout running against `npm run db -- up`.
+    dangerouslyAllowLocalIP: supabaseIsLocal(),
     remotePatterns: [
       bucketPattern("product-images"),
       // Gedu session-report photos. They go through the optimizer for the same

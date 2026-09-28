@@ -243,7 +243,7 @@ export function SeatOfferBlock({
               stops a seat being claimed after we have offered it to somebody
               else, and none of that reasoning reaches a family telling us they
               cannot come — that answer is wanted whenever it arrives, and the
-              database honours it for as long as the row exists (00208). So this
+              database honours it for as long as the row exists. So this
               button stays live in the lapsed state and only `committing` can
               take it away. */}
           <Button

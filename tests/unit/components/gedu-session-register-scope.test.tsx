@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { SessionFeed } from "@/components/gedu/session-feed/SessionFeed";
@@ -49,7 +50,7 @@ vi.mock("@/components/ui/rich-text-editor", () =>
  * old session and presses Save. So this test mounts the real card, opens the
  * real editor, presses the real Save, and reads the draft that came out.
  *
- * **Do not delete this as redundant with the unit-level test.** The two cover
+ * **Do not delete this as redundant with the unit-level test.** The two substitution
  * different failures: that one covers the function, this one covers everything
  * between the props and the function.
  */
@@ -98,6 +99,7 @@ function pastEntry(): SessionFeedEntry {
     id: PAST_ID,
     startsAt: PAST_STARTS,
     endsAt: PAST_ENDS,
+    staffing: NO_SESSION_STAFFING,
     report: "# Redstone week\n\nWe built item sorters.",
     staffNote: null,
     attendance: { ...STORED_MARKS },

@@ -12,12 +12,12 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 /**
  * What guards `profiles.spoken_languages`, and which half guards what.
  *
- * Since 00199 the column is `spoken_language[]`, so **which values are legal is
+ * The column is `spoken_language[]`, so **which values are legal is
  * the column type's job** — a code we do not offer cannot be stored, and cannot
  * even be written from application code, because the generated types are the
  * enum. What the type cannot say is that a language appears at most once, so
- * `trg_validate_profile_spoken_languages` was trimmed to exactly that rule and
- * still fires on every write.
+ * `trg_validate_profile_spoken_languages` carries exactly that rule and
+ * fires on every write.
  *
  * Both halves are exercised here, from opposite directions. Uniqueness goes
  * through the typed client, because `['fi','fi']` is a perfectly well-typed

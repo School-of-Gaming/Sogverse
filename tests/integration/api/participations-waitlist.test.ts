@@ -357,10 +357,14 @@ describe("POST /api/participations/waitlist", () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
+    // The RPC's `idempotent` is relayed rather than kept here: the browser has
+    // its own once-per-place-in-line work to gate, and a replay is identical to
+    // a fresh join in every other field on this response.
     expect(data).toEqual({
       participationId: PARTICIPATION_ID,
       waitlistPosition: 3,
       status: "waitlisted",
+      idempotent: false,
     });
     expect(mockRpc).toHaveBeenCalledWith("join_product_waitlist", {
       p_product_id: PRODUCT_ID,
@@ -440,6 +444,9 @@ describe("POST /api/participations/waitlist", () => {
 
     expect(res.status).toBe(200);
     expect(data.waitlistPosition).toBe(1);
+    // And the browser is told it was a replay, which is what stops the second
+    // submission being counted as a second family joining the queue.
+    expect(data.idempotent).toBe(true);
   });
 
   // The flag is required, not optional: a shape that lost it must fail loudly
@@ -747,10 +754,14 @@ describe("POST /api/participations/waitlist", () => {
     );
 
     expect(res.status).toBe(200);
+    // The answer is otherwise identical to a fresh join, which is precisely why
+    // the flag is on it: it is the only field that tells the browser this place
+    // in line was already taken and already counted.
     expect(await res.json()).toEqual({
       participationId: PARTICIPATION_ID,
       waitlistPosition: 3,
       status: "waitlisted",
+      idempotent: true,
     });
     expect(deferred).toHaveLength(0);
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
@@ -840,6 +851,7 @@ describe("POST /api/participations/waitlist", () => {
       participationId: PARTICIPATION_ID,
       waitlistPosition: 3,
       status: "waitlisted",
+      idempotent: false,
     });
     // The helper swallows its own failure, so the deferred work settles rather
     // than rejecting — which is what makes it safe to hand to `after()` at all.

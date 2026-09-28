@@ -39,6 +39,9 @@
       "lynxApi": "Lynx Educate partner-API",
       "adminDashboard": "Administratörspanel",
       "adminMunicipalityInvoicing": "Kommunfakturering",
+      "adminInvoiceCustomers": "Faktureringskunder",
+      "adminInvoiceCustomerNew": "Ny faktureringskund",
+      "adminInvoiceCustomerEdit": "Redigera faktureringskund",
       "adminTools": "Verktyg",
       "parentDashboard": "Min SOG",
       "geduDashboard": "Min SOG",
@@ -61,7 +64,9 @@
       "robloxSafeguarding": "Barnskyddspolicy för Skaparnas akademi",
       "robloxTerms": "Användarvillkor för Skaparnas akademi",
       "geduContract": "Gedu-avtal",
-      "seatOffer": "Platserbjudande"
+      "seatOffer": "Platserbjudande",
+      "geduSubstitutions": "Vikariat",
+      "adminSubstitutions": "Vikariat"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -308,6 +313,7 @@
           "waitlistOpenSeats": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga",
           "missingGeduFee": "Gedu-arvode saknas",
           "missingMunicipalityFee": "Kommunavgift saknas",
+          "missingInvoiceCustomer": "Faktureringskund saknas",
           "waitlistOpenSeatsWithOffers": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga · {offers} väntar på svar"
         }
       },
@@ -392,8 +398,72 @@
       "upcoming": "Kommande",
       "unrecordedSessions": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
       "sessionsFor": "Tillfällen för {club}",
+      "clubsIn": "Klubbar i {municipality}",
+      "clubsWithoutCustomer": "{count, plural, one {# klubb utan faktureringskund} other {# klubbar utan faktureringskund}}",
+      "customerNotSet": "Faktureringskund saknas",
+      "downloadInvoiceFor": "Ladda ner Finvoice-filen för {customer}",
+      "fileBlockedByFee": "{count, plural, one {Ingen fil: # klubb hölls utan avgift} other {Ingen fil: # klubbar hölls utan avgift}}",
+      "fileBlockedByNothingToInvoice": "Ingen fil: inget registrerat",
       "loadError": "Det gick inte att läsa in faktureringsmånaden. Uppdatera sidan och försök igen.",
       "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen."
+    },
+    "invoiceCustomers": {
+      "title": "Faktureringskunder",
+      "subtitle": "Fennoa-kunderna som en kommunklubbs tillfällen faktureras till.",
+      "addCustomer": "Lägg till en kund",
+      "columns": {
+        "number": "Fennoa-nr",
+        "invoiceName": "Fakturanamn",
+        "city": "Ort",
+        "reference": "Referens"
+      },
+      "hasReference": "Har en referens",
+      "noReference": "Ingen referens",
+      "empty": "Inga faktureringskunder ännu. Lägg till den första.",
+      "backToList": "Tillbaka till faktureringskunder",
+      "notFound": "Det finns ingen faktureringskund med det här id:t.",
+      "newPage": {
+        "title": "Ny faktureringskund",
+        "submit": "Skapa kund"
+      },
+      "editPage": {
+        "title": "Redigera faktureringskund"
+      },
+      "fields": {
+        "number": "Fennoas kundnummer",
+        "invoiceName": "Fakturanamn",
+        "street": "Gatuadress",
+        "postalCode": "Postnummer",
+        "city": "Ort",
+        "country": "Land",
+        "yourReference": "Er referens",
+        "invoiceText": "Fakturatext"
+      },
+      "hints": {
+        "number": "Numret på kundens kort i Fennoa, till exempel F0037. Fennoa kopplar en importerad faktura till kunden med det här numret.",
+        "invoiceName": "Exakt som det står på kundkortet i Fennoa.",
+        "yourReference": "Ett inköpsordernummer eller en kontaktperson som kunden vill ha på varje faktura.",
+        "invoiceText": "Extra rader högst upp i fakturatexten, till exempel en hänvisning till ramavtalet. Ren text – den når fakturan precis som den skrivs."
+      },
+      "errors": {
+        "required": "{field} måste fyllas i.",
+        "countryShape": "Använd en tvåbokstavskod för landet, till exempel FI.",
+        "duplicateNumber": "Fennoas kundnummer {number} tillhör redan en annan kund.",
+        "saveFailed": "Kunden kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Kunden kunde inte sparas – {reason}",
+        "listUnavailable": "Kundlistan kunde inte läsas in. Uppdatera sidan för att välja en kund."
+      },
+      "picker": {
+        "label": "Faktureras till",
+        "hint": "Kunden som den här klubbens tillfällen faktureras till. En klubb utan kund flaggas på faktureringssidan och ger ingen fakturafil.",
+        "manage": "Hantera faktureringskunder",
+        "option": "{name} ({number})"
+      }
+    },
+    "geduRole": {
+      "primary": "Huvud-Gedu",
+      "assistant": "Assisterande Gedu",
+      "selectAria": "Roll för {name}"
     },
     "geduContract": {
       "heading": "Gedu-avtal",
@@ -458,10 +528,7 @@
         "missingMunicipalityFee": "Kommunavgift saknas",
         "pendingHint": {
           "registrationOpens": "Anmälan öppnar {date}",
-          "startDate": "Startar {date}",
-          "threshold": "Startar när {count, plural, one {# förälder anmäler} other {# föräldrar anmäler}} sig",
-          "dateAndThreshold": "Startar {date} om {count, plural, one {# förälder anmäler} other {# föräldrar anmäler}} sig",
-          "pastDateThreshold": "Startdatum passerat — väntar på {count, plural, one {# anmälan} other {# anmälningar}}"
+          "startDate": "Startar {date}"
         }
       },
       "translations": {
@@ -499,7 +566,6 @@
           "endDate": "Slutdatum",
           "firstSession": "Första tillfället",
           "lastSession": "Sista tillfället",
-          "signupThreshold": "Anmälningströskel",
           "termDates": "Period",
           "billingMode": "Fakturering",
           "seats": "Platser",
@@ -601,14 +667,12 @@
         "paidByMunicipality": "Betalas av kommunen",
         "seatCount": "Antal platser",
         "waitlistToggle": "Aktivera väntelista när platserna är fulla",
-        "signupThreshold": "Antal anmälningar för att starta",
         "makeVisible": "Lista produkten på sidorna Butik och Kommunklubbar",
         "seatLimit": "Platsgräns"
       },
       "placeholders": {
         "selectTopic": "Välj ett ämne…",
         "materialUrl": "https://drive.sog.gg/...",
-        "threshold": "t.ex. 8",
         "name": {
           "consumerClub": "t.ex. Minecraft Redstone-klubb",
           "municipalityClub": "t.ex. Tapiola Minecraft-klubb · Vår 2026",
@@ -660,15 +724,6 @@
           "volunteer": "Volontär (gratis)",
           "fee": "Ange ett belopp"
         }
-      },
-      "startModes": {
-        "label": "Hur startar detta?",
-        "date": "På ett specifikt datum",
-        "date_and_threshold": "På ett specifikt datum, endast om tillräckligt många anmäler sig",
-        "threshold": "När tillräckligt många spelare har anmält sig",
-        "dateDescription": "Körs på det valda datumet, oavsett hur många föräldrar som anmäler sig.",
-        "date_and_thresholdDescription": "Schemalagd för det valda datumet, men körs bara om tillräckligt många föräldrar anmäler sig i tid. Annars ställer du in den och föräldrar återbetalas automatiskt.",
-        "thresholdDescription": "Inget fast startdatum. Du väljer första tillfället när tillräckligt många föräldrar anmält sig — föräldrar ser en räknare och vet att du kontaktar dem."
       },
       "registrationModes": {
         "label": "När öppnar anmälan?",
@@ -723,8 +778,6 @@
         "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
         "siteHint": "Var tillfällena fysiskt äger rum.",
         "eventSingleDay": "Evenemang äger rum ett enda datum.",
-        "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare ”X av Y behövs” medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
-        "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneEntry": "Tiderna för tillfällena nedan anges i den här tidszonen. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
         "timezoneChangeMoves": "Tiderna för tillfällena nedan anges i den här tidszonen. Byter du zon flyttas varje kommande tillfälle till samma klockslag i den nya zonen, medan tillfällen som redan har en rapport eller närvaro registrerad behåller de tider de hölls på.",
         "timezoneIs": "Tider är i {timezone}. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
@@ -768,7 +821,6 @@
         "primaryGeduFeeInvalid": "Ange ett huvud-Gedu-arvode större än 0, eller välj Okänt eller Volontär",
         "assistantGeduFeeInvalid": "Ange ett assisterande Gedu-arvode större än 0, eller välj Inget eller Volontär",
         "municipalityFeeInvalid": "Ange en kommunavgift större än 0, eller välj Okänt",
-        "thresholdInvalid": "Antal anmälningar för att starta måste vara ett positivt heltal",
         "registrationOpensDateRequired": "Välj ett datum då anmälan ska öppnas",
         "createFailed": "Det gick inte att skapa produkten"
       },
@@ -779,8 +831,7 @@
       "status": {
         "pending": "Väntar på start",
         "running": "Pågår",
-        "completed": "Avslutat",
-        "expired": "Utgången"
+        "completed": "Avslutat"
       },
       "schedule": {
         "day": "Dag",
@@ -887,6 +938,8 @@
         "noResults": "Inga Geduer matchar din sökning.",
         "current": "Nuvarande",
         "alreadyAssigned": "Redan tilldelad",
+        "alreadyExpected": "Redan på tillfället",
+        "absentGedu": "Gedun som vikarieras",
         "notCertified": "Inte certifierad"
       },
       "participantPicker": {
@@ -1013,7 +1066,6 @@
             "seats": "{taken} av {capacity} platser tagna",
             "regionLocked": "Endast familjer i {country}",
             "notStarted": "Startar {date}. Familjen betalar från i dag, inte från startdatumet.",
-            "notStartedUndated": "Inget startdatum ännu. Familjen betalar från i dag.",
             "subscriptionEnding": "Familjen har sagt upp prenumerationen och den slutar {date}. Den här månadens prisskillnad faktureras inte."
           },
           "prices": {
@@ -1064,6 +1116,45 @@
         },
         "note": "Priset ovan innehåller moms. Stripe räknar ut det exakta beloppet när köpet sker, så det här är Finlands sats i dag."
       },
+      "staffing": {
+        "menuLabel": "Fler åtgärder för det här tillfället",
+        "setSubstitute": "Ange vikarie",
+        "changeSubstitute": "Byt vikarie",
+        "changeSubstituteFor": "Byt vikarie för {name}",
+        "clearSubstitute": "Ta bort vikarie",
+        "clearSubstituteFor": "Ta bort vikarie för {name}",
+        "withdrawRequest": "Dra tillbaka förfrågan",
+        "withdrawRequestFor": "Dra tillbaka förfrågan för {name}",
+        "withRole": "{name} · {role}",
+        "absentLabel": "Borta",
+        "subLabel": "Vikarie",
+        "changeChoice": "Byt",
+        "absentStepTitle": "Vem är borta?",
+        "absentStepBody": "Fler än en Gedu är inbokad på tillfället den {date}. Välj den som inte kan vara med.",
+        "pickerTitle": "Välj en vikarie",
+        "pickerDescription": "Välj vem som vikarierar för {name}. En Gedu som inte kan visas med orsaken.",
+        "confirmTitle": "Ange vikarie",
+        "confirmBody": "Registrera vem som håller tillfället den {date} i den frånvarande Gedu’ns ställe.",
+        "approvesOpenRequest": "Det här godkänner den öppna förfrågan i stället för att skapa en ny.",
+        "replacesCurrentSub": "Det här ersätter {name}, som vikarierar på tillfället just nu.",
+        "reasonKept": "Orsaken som redan angetts för frånvaron behålls.",
+        "reasonLabel": "Orsak",
+        "reasonSick": "Sjuk",
+        "reasonOther": "Något annat",
+        "noteLabel": "Kommentar till kontoret",
+        "notePlaceholder": "Vad kontoret behöver veta om det här vikariatet.",
+        "noteRemaining": "{count} tecken kvar",
+        "confirmAction": "Ange vikarien",
+        "setFailed": "Vikarien kunde inte anges. Försök igen.",
+        "clearTitle": "Ta bort vikarien?",
+        "clearBody": "{sub} vikarierar inte längre för {name} den {date}, och tillfället går tillbaka till kön och behöver en vikarie.",
+        "clearConfirm": "Ta bort vikarien",
+        "clearFailed": "Vikarien kunde inte tas bort. Försök igen.",
+        "withdrawTitle": "Dra tillbaka förfrågan?",
+        "withdrawBody": "{name} är med på tillfället den {date} ändå. Erbjudandena på förfrågan faller bort och ingen registreras som vikarie.",
+        "withdrawConfirm": "Dra tillbaka förfrågan",
+        "withdrawFailed": "Förfrågan kunde inte dras tillbaka. Försök igen."
+      },
       "sessions": {
         "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
         "loading": "Laddar dokumentationen av produktens tillfällen.",
@@ -1079,7 +1170,6 @@
       "all": "Alla",
       "noFilterResults": "Inga användare matchar dina filter.",
       "noUsers": "Inga användare hittades.",
-      "searchCapped": "Endast de {shown} senaste av {total} träffar tas med. Förfina sökningen för att se resten.",
       "backToUsers": "Tillbaka till användare",
       "userNotFound": "Användaren hittades inte.",
       "joined": "Gick med",
@@ -1222,6 +1312,47 @@
       "notDelivered": "Ej levererat",
       "today": "Idag",
       "yesterday": "Igår"
+    },
+    "substitutions": {
+      "title": "Vikariat",
+      "description": "Tillfällen som någon inte kan ta, och vem som hoppade in.",
+      "descriptionWithZone": "Tillfällen som någon inte kan ta, och vem som hoppade in. Tiderna visas i {zone}.",
+      "listLabel": "Tillfällen som behöver en vikarie",
+      "allClear": "Inget tillfälle behöver en vikarie.",
+      "substitutedLabel": "Tillfällen med en vikarie",
+      "substitute": "Vikarie:",
+      "approvedBy": "Godkänd av {name} · {when}",
+      "substitutedEmpty": "Inga kommande tillfällen har en vikarie.",
+      "justNow": "{count, plural, one {# vikarie godkänd nyss} other {# vikarier godkända nyss}}",
+      "offersLabel": "Geduer som erbjuder sig att vikariera",
+      "away": "Borta:",
+      "unnamed": "Namnlös Gedu",
+      "reason": {
+        "sick": "Sjuk",
+        "other": "Annat"
+      },
+      "noOffers": "Inga erbjudanden än.",
+      "openGroup": "Öppna gruppen",
+      "seatSomeoneElse": "Välj en annan vikarie",
+      "approve": "Godkänn",
+      "failed": "Godkännandet misslyckades – försök igen.",
+      "loadError": "Vikariaten kunde inte laddas.",
+      "loadErrorWithReason": "Vikariaten kunde inte laddas: {reason}",
+      "approveConfirmTitle": "Godkänn {name} som vikarie?",
+      "approveConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på My SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från de andra frivilligas lista, och på kortet står nu att {name} vikarierar för {absent}.",
+      "approveFailedOfferGone": "{name} har tagit tillbaka sitt erbjudande, så det finns inget att godkänna.",
+      "approveFailedAlreadySettled": "Någon annan har redan löst det här tillfället.",
+      "approveFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
+      "approveFailedIneligible": "{name} kan inte längre ta det här tillfället.",
+      "seatConfirmTitle": "Sätt in {name} som vikarie?",
+      "seatConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på My SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från listan där Geduer erbjuder sig, och på kortet står nu att {name} vikarierar för {absent}.",
+      "seatConfirm": "Sätt in vikarien",
+      "seatReasonLabel": "Angiven orsak",
+      "seatFailed": "Vikarien kunde inte sättas in – försök igen.",
+      "seatFailedIneligible": "{name} kan inte ta det här tillfället – hen är redan med på det eller kan inte längre vikariera.",
+      "seatFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
+      "seatFailedRequestWithdrawn": "{absent} har dragit tillbaka sin begäran om vikarie, så det finns inget att vikariera för.",
+      "seatFailedNotScheduled": "Gruppen har inte längre något tillfälle det här datumet."
     }
   },
   "auth": {
@@ -1235,7 +1366,10 @@
         "passwordTooShort": "Lösenordet måste vara minst {count} tecken långt.",
         "invalidCredentials": "E-postadressen, användarnamnet eller lösenordet du angav är felaktigt.",
         "emailNotConfirmed": "Bekräfta din e-postadress innan du loggar in.",
-        "tooManyAttempts": "För många inloggningsförsök. Vänta en stund och försök igen."
+        "tooManyAttempts": "För många inloggningsförsök. Vänta en stund och försök igen.",
+        "oauthCancelled": "Inloggningen med Google avbröts. Du kan försöka igen eller logga in med ditt lösenord.",
+        "authCallbackError": "Inloggningen med Google slutfördes inte. Försök igen.",
+        "googleGamer": "Spelarkonton loggar in med e-postadress eller användarnamn och lösenord, eller via en förälders konto, inte med Google. Fråga din förälder om du är osäker på hur det går till."
       },
       "identifierLabel": "E-postadress eller användarnamn",
       "identifierPlaceholder": "du@example.com eller ett användarnamn"
@@ -1297,6 +1431,22 @@
       "invalidPhone": "Ange ett giltigt telefonnummer",
       "creatingAccount": "Skapar konto...",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
+    },
+    "google": {
+      "continue": "Fortsätt med Google",
+      "or": "eller",
+      "failed": "Inloggningen med Google kunde inte startas. Försök igen."
+    },
+    "completeRegistration": {
+      "title": "Slutför ditt School of Gaming-konto",
+      "geduTitle": "Slutför ditt spelfostrarkonto hos School of Gaming",
+      "description": "Du loggade in med ditt Google-konto. Uppgifterna nedan slutför ditt School of Gaming-konto.",
+      "notYou": "Inte du?",
+      "signOut": "Logga ut",
+      "submit": "Slutför",
+      "finishing": "Slutförs...",
+      "alreadyComplete": "Det här kontot är redan klart. Logga in igen för att fortsätta.",
+      "switchToParent": "Inte spelfostrare? <link>Skapa ett föräldrakonto i stället</link>"
     }
   },
   "pin": {
@@ -1629,7 +1779,7 @@
           "fields": {
             "roblox": "Barnets Roblox-konto. <code>roblox_user_id</code> är <code>null</code> när Sogverse inte kunde verifiera användarnamnet; skicka bara vidare sådana rader om Roblox accepterar enbart ett användarnamn.",
             "location": "Hemkommun och land för föräldern vars konto håller platsen, enligt samma regel som <code>parents[].location</code> i <code>/families</code>. Båda är <code>null</code> när föräldern inte har angett någon hemort; bara <code>city</code> är <code>null</code> när hemorten inte ligger inom någon kommun.",
-            "age": "Barnets ålder i hela år på aktivitetens startdatum, som ett intervall: Sogverse har födelsemånaden och inte dagen, så <code>min</code> är det yngsta barnet kunde ha varit och <code>max</code> det äldsta, och de två är samma tal om inte startdatumet föll inom barnets födelsemånad. <code>null</code> så länge produkten saknar startdatum. Raden bär åldern i stället för födelsemånaden eftersom det är åldern forskningsdatamängden nämner.",
+            "age": "Barnets ålder i hela år på aktivitetens startdatum, som ett intervall: Sogverse har födelsemånaden och inte dagen, så <code>min</code> är det yngsta barnet kunde ha varit och <code>max</code> det äldsta, och de två är samma tal om inte startdatumet föll inom barnets födelsemånad. Raden bär åldern i stället för födelsemånaden eftersom det är åldern forskningsdatamängden nämner.",
             "activity": "Aktiviteten som deltogs i: produktens identifierare, dess namn på engelska där ett sådant har skrivits, annars på det språk produkten hålls på, och i sista hand på den språkversion vars kod kommer först i bokstavsordning, samt dess typ, leverans och startdatum. Typ och leverans är tillsammans det som Lynx egna namn på sina sätt att genomföra Programmet avbildas på, och startdatumet är det interventionsdatum forskningen efterfrågar.",
             "publishedGameUrl": "Den första roblox.com-länken bland barnets skapelser för den här produkten, eller <code>null</code> när ingen har antecknats."
           },
@@ -1722,22 +1872,21 @@
     "loadingAssignments": "Laddar dina klubbar, läger och evenemang."
   },
   "helpSection": {
-    "heading": "Hjälp och feedback",
-    "gamerHeading": "Behöver du hjälp?",
+    "heading": "Behöver du hjälp?",
     "faqHeading": "Vanliga frågor",
     "form": {
       "messageLabel": "Meddelande",
       "charactersNeeded": "{count} tecken till behövs",
       "submit": "Skicka meddelande",
       "adult": {
-        "description": "Be oss om hjälp, eller skicka ett förslag eller en felanmälan — varje meddelande når teamet på School of Gaming. Vi hjälper gärna till med allt från att välja rätt klubb till frågor om hur det hela fungerar, eller så kan du mejla oss på <link>{email}</link>.",
+        "description": "Be oss om hjälp — varje meddelande når teamet på School of Gaming. Du kan också mejla oss på <link>{email}</link>.",
         "placeholder": "Vad kan vi hjälpa till med?",
         "thankYou": "Tack — ditt meddelande är hos oss, och vi är glada att du hörde av dig.",
         "failed": "Vi kunde inte skicka ditt meddelande. Försök igen.",
         "tooManyRequests": "Du har redan skickat flera meddelanden. Försök igen om en stund."
       },
       "gamer": {
-        "description": "Har du fastnat på något, eller fått en idé till oss? Skriv den här så läser vi den.",
+        "description": "Har du fastnat på något? Skriv till oss här så hjälper vi dig.",
         "replyNote": "Om vi svarar skickar vi ett mejl till din förälder.",
         "placeholder": "Vad behöver du hjälp med?",
         "thankYou": "Tack — vi har fått ditt meddelande.",
@@ -1870,6 +2019,41 @@
     }
   },
   "gedu": {
+    "substitution": {
+      "cardEyebrow": "Vikariat",
+      "cardOpenLabel": "{product} – tillfälle du vikarierar på",
+      "cardLockedLabel": "{product} – tillfälle du vikarierar på. Gruppens arbetsyta öppnar 48 timmar innan det börjar.",
+      "accessOpens": "Arbetsytan öppnar {date} kl. {time}",
+      "poolHeading": "Tillfällen som behöver en vikarie",
+      "poolAllClear": "Inga tillfällen behöver en vikarie just nu.",
+      "poolRemote": "På distans",
+      "poolSiteUnknown": "Plats bekräftas senare",
+      "poolRolePrimary": "Huvud-Gedu",
+      "poolRoleAssistant": "Assisterande Gedu",
+      "poolFee": "{fee} per tillfälle",
+      "poolOfferAction": "Jag kan vikariera",
+      "poolWithdrawAction": "Dra tillbaka erbjudandet",
+      "poolWithdrawPending": "Drar tillbaka…",
+      "poolActionFailed": "Det sparades inte. Försök igen.",
+      "pageTitle": "Vikariat",
+      "back": "Tillbaka till Min SOG",
+      "mineHeading": "Dina vikariat",
+      "mineAllClear": "Du har inga kommande vikariat.",
+      "fileAction": "Kan du inte vara med på ett tillfälle?",
+      "filePickTitle": "Vilket tillfälle kan du inte vara med på?",
+      "filePickBody": "Välj tillfället du inte kan vara med på. Din orsak och din kommentar visas bara för administratörer.",
+      "fileAlreadyRequested": "Vikarie är redan efterfrågad",
+      "filePickWeekThis": "Den här veckan",
+      "filePickWeekNext": "Nästa vecka",
+      "filePickWeekOf": "Veckan från {date}",
+      "filePickShowLater": "Visa senare tillfällen",
+      "filePickGroupLabel": "Grupp",
+      "filePickAllGroups": "Alla grupper",
+      "fileFiled": "Vikarie efterfrågad för {product} den {when}. Det syns nu på det tillfällets kort.",
+      "fileFiledLink": "Öppna gruppens arbetsyta",
+      "offerConfirmTitle": "Erbjuda dig att vikariera?",
+      "offerConfirmBody": "Du erbjuder dig att hålla {product} {when}. School of Gaming väljer vikarien, och du kan dra tillbaka ditt erbjudande tills det har godkänts. När det har godkänts är tillfället ditt enligt ditt Gedu-avtal, precis som dina egna tillfällen, och du kan inte längre dra dig ur: kan du ändå inte vara med får du själv be om en vikarie, som för alla dina tillfällen. Gruppens arbetsyta öppnas för dig 48 timmar innan tillfället börjar."
+    },
     "coverage": {
       "title": "Områden du täcker",
       "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan Gedu inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
@@ -1968,7 +2152,38 @@
       "creationsAddedCount": "{added} av {total} tillagda",
       "creationsHint": "Det här är omgångens sista tillfälle, så det är inte klart förrän alla har en skapelse. Öppna ett namn för att lägga till en.",
       "creationsMemberDone": "{name} – skapelse tillagd",
-      "creationsMemberMissing": "{name} – skapelse saknas"
+      "creationsMemberMissing": "{name} – skapelse saknas",
+      "staffingExpectedLabel": "Leder det här tillfället:",
+      "staffingNobodyExpected": "Ingen leder det här tillfället än.",
+      "staffingWithRole": "{name} ({role})",
+      "staffingSubstitutionNeeded": "{name} behöver en vikarie.",
+      "staffingSubstitutedBy": "{sub} vikarierar för {name}.",
+      "substitutionRolePrimary": "Huvud-Gedu",
+      "substitutionRoleAssistant": "Assisterande Gedu",
+      "substitutionMenuLabel": "Fler åtgärder för det här tillfället",
+      "substitutionRequestAction": "Jag behöver en vikarie",
+      "substitutionRequestDialogTitle": "Jag kan inte vara med på det här tillfället",
+      "substitutionRequestDialogBody": "Tillfället hålls ändå – kontoret letar efter en vikarie som tar din plats. Din orsak och din notering syns bara för administratörer.",
+      "substitutionReasonLabel": "Orsak",
+      "substitutionReasonSick": "Sjuk",
+      "substitutionReasonOther": "Något annat",
+      "substitutionNoteLabel": "Notering till kontoret",
+      "substitutionNotePlaceholder": "Något kontoret bör veta",
+      "substitutionNoteRemaining": "{count, plural, one {# tecken kvar} other {# tecken kvar}}",
+      "substitutionRequestConfirm": "Bekräfta",
+      "substitutionRequestFailed": "Det sparades inte. Försök igen.",
+      "substitutionRequestFailedAlreadyAsked": "Du har redan bett om en vikarie för det här tillfället.",
+      "substitutionRequestFailedNotExpected": "Du har redan bett om en vikarie för det här tillfället, eller så är du inte längre inbokad på det.",
+      "substitutionRequestFailedPastSession": "Datumet för det här tillfället har redan passerat.",
+      "substitutionRequestFailedNotScheduled": "Det här tillfället finns inte längre i schemat.",
+      "substitutionRequestStatusOpen": "Du har bett om en vikarie för det här tillfället. Väntar på en vikarie.",
+      "substitutionRequestStatusOffers": "{count, plural, one {# erbjudande väntar} other {# erbjudanden väntar}}",
+      "substitutionRequestStatusSubstituted": "{name} vikarierar för dig.",
+      "substitutionWithdrawAction": "Jag kan ändå vara med",
+      "substitutionWithdrawTitle": "Ta tillbaka det här?",
+      "substitutionWithdrawBody": "Du leder tillfället igen, och alla erbjudanden om att vikariera stryks.",
+      "substitutionWithdrawConfirm": "Ta tillbaka",
+      "substitutionWithdrawFailed": "Det sparades inte. Försök igen."
     },
     "groupNotes": {
       "heading": "Om gruppen",
@@ -2060,7 +2275,7 @@
       "items": {
         "certification": {
           "question": "Vad innebär certifiering, och vad kan jag inte göra fram till dess?",
-          "answer": "<p>Certifiering är att en administratör bekräftar att ditt konto är redo att arbeta med barn. Två saker kommer före den: att godkänna ditt Gedu-avtal, och att uppvisa ett straffregisterutdrag för arbete med barn (rikosrekisteriote) som är högst sex månader gammalt. Utdraget beställer du själv från Rättsregistercentralen. Vi behåller ingen kopia av det och antecknar ingenting ur det — bara att ett godtagbart utdrag har visats, och när. Din avtalssida visar hur det står till med båda.</p><p>Tills du är certifierad kan du inte tilldelas en grupp, och din Verktyg-sektion förblir stängd: du kan inte starta ett direkt röstrum, och du kan inte återställa lösenord för Minecraft Education. Du kan inte heller mejla en rapport om ett tillfälle till familjerna eller lägga till bilder i en.</p><p>Allt annat är öppet redan nu: att logga in, Min SOG, din profil och dina områden, och att läsa och godkänna avtalet. Hjälp och feedback finns här oavsett om du är certifierad eller inte — använd formuläret ovan om du väntar och vill veta var du står.</p>"
+          "answer": "<p>Certifiering är att en administratör bekräftar att ditt konto är redo att arbeta med barn. Två saker kommer före den: att godkänna ditt Gedu-avtal, och att uppvisa ett straffregisterutdrag för arbete med barn (rikosrekisteriote) som är högst sex månader gammalt. Utdraget beställer du själv från Rättsregistercentralen. Vi behåller ingen kopia av det och antecknar ingenting ur det — bara att ett godtagbart utdrag har visats, och när. Din avtalssida visar hur det står till med båda.</p><p>Tills du är certifierad kan du inte tilldelas en grupp, och din Verktyg-sektion förblir stängd: du kan inte starta ett direkt röstrum, och du kan inte återställa lösenord för Minecraft Education. Du kan inte heller mejla en rapport om ett tillfälle till familjerna eller lägga till bilder i en.</p><p>Allt annat är öppet redan nu: att logga in, Min SOG, din profil och dina områden, och att läsa och godkänna avtalet. Hjälp finns här oavsett om du är certifierad eller inte — använd formuläret ovan om du väntar och vill veta var du står.</p>"
         },
         "groupAssignment": {
           "question": "Hur blir jag tilldelad en grupp?",
@@ -2158,7 +2373,9 @@
       "shop": "Butik",
       "yty": "Yty",
       "about": "Om oss",
-      "faq": "FAQ"
+      "faq": "FAQ",
+      "substitutions": "Vikariat",
+      "substitutionsPhone": "Vikariat"
     },
     "accountMenu": "Kontomeny – {name}",
     "continueToAccount": "Fortsätt till ditt konto",
@@ -2206,7 +2423,7 @@
       "typeClubs": "Klubbar",
       "typeCamps": "Läger",
       "typeEvents": "Evenemang",
-      "subject": "Ämne",
+      "topic": "Ämne",
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "På plats",
@@ -2597,6 +2814,7 @@
     "consumerClubs": "Konsumentklubbar",
     "municipalityClubs": "Kommunklubbar",
     "municipalityInvoicing": "Kommunfakturering",
+    "invoiceCustomers": "Faktureringskunder",
     "camps": "Läger",
     "events": "Evenemang",
     "sites": "Lokaler",
@@ -2607,7 +2825,8 @@
     "settings": "Inställningar",
     "tools": "Verktyg",
     "expandSidebar": "Expandera sidopanel",
-    "collapseSidebar": "Minimera sidopanel"
+    "collapseSidebar": "Minimera sidopanel",
+    "substitutions": "Vikariat"
   },
   "home": {
     "hero": {
@@ -3162,10 +3381,10 @@
       "ignore": "Om du inte begärde en PIN-återställning kan du ignorera detta e-postmeddelande. Din PIN-kod kommer inte att ändras.",
       "button": "Återställ PIN-kod"
     },
-    "feedback": {
-      "subject": "Hjälp eller feedback från {displayName} ({role})",
-      "heading": "Nytt meddelande om hjälp eller feedback",
-      "intro": "Någon har bett om hjälp eller skickat feedback. Svara på det här mejlet för att svara personen – ditt svar går till adressen nedan.",
+    "helpRequest": {
+      "subject": "Hjälpförfrågan från {displayName} ({role})",
+      "heading": "Ny hjälpförfrågan",
+      "intro": "Någon har bett om hjälp. Svara på det här mejlet för att svara personen – ditt svar går till adressen nedan.",
       "from": "Från",
       "role": "Roll",
       "replyToLabel": "Svarsadress",
@@ -3490,7 +3709,8 @@
           "Roblox – tar emot ditt barns Roblox-konto-id, så att vi kan bekräfta kontot, och din webbläsare hämtar barnets avatarbild direkt från Roblox.",
           "Mojang (Microsoft) – tar emot ditt barns Minecraft-användarnamn, så att vi kan bekräfta kontot.",
           "mc-heads.net – din webbläsare hämtar bilden av ditt barns Minecraft-figur direkt därifrån, utifrån barnets Minecraft-användarnamn, som är offentligt i spelet. Det är en gratis offentlig tjänst och inte en underleverantör till oss, och den ser bara den förfrågan.",
-          "Meta (Facebook och Instagram) – ser via Meta-pixeln i din webbläsare och rapporter från våra servrar hur du använder vår webbplats, så att vi kan visa dig våra annonser där och mäta hur de presterar. Bara om du tillåter cookies för marknadsföring."
+          "Meta (Facebook och Instagram) – ser via Meta-pixeln i din webbläsare och rapporter från våra servrar hur du använder vår webbplats, så att vi kan visa dig våra annonser där och mäta hur de presterar. Bara om du tillåter cookies för marknadsföring.",
+          "Google (Analytics och Ads) – ser, via en tagghanterare i din webbläsare, vilka av våra offentliga sidor du besöker och vad du har anmält dig till, så att vi kan mäta hur vår annonsering fungerar och visa dig våra annonser. Bara om du tillåter cookies för marknadsföring – inte analys: den analys du kan slå på är Vercels ensam."
         ]
       },
       "partners": {
@@ -3522,7 +3742,7 @@
         ],
         "bullets": [
           "Analys – Vercels, och bara om du väljer den. Den räknar besök, mäter hur snabbt sidorna laddas och tar emot några anonyma händelser om hur webbplatsen används: hur någon tar sig till sin My SOG och när språket byts. Den kan inte se vem du är, och vi lämnar den aldrig till annonsörer.",
-          "Marknadsföring – annonscookies, och bara om du väljer dem. De låter annonsplattformarna som nämns ovan – i dag Meta – se hur du använder vår webbplats, så att de kan visa dig våra annonser och vi kan se vilka annonser som fungerar. Om du skapar ett konto under ett besök sparas även kampanjkoden från länken du kom från på kontot. De är aldrig igång medan en spelare är inloggad. Att stänga av marknadsföring raderar dessa cookies, och den lilla mängd data som Metas skript sparar i din webbläsare vid sidan av dem, men inte det plattformarna redan har – du kan be dem radera det i dina inställningar hos dem."
+          "Marknadsföring – annonscookies, och bara om du väljer dem. De låter annonsplattformarna som nämns ovan – i dag Meta och Google – se hur du använder vår webbplats, så att de kan visa dig våra annonser och vi kan se vilka annonser som fungerar. Googles taggar når din webbläsare via en tagghanterare, som låter oss och den partner som sköter våra kampanjer lägga till eller ta bort en plattform utan att ändra webbplatsen; de plattformar den för tillfället bär står alltid namngivna i listan ovan, och den listan är daterad. Om du skapar ett konto under ett besök sparas även kampanjkoden från länken du kom från på kontot. De är aldrig igång medan en spelare är inloggad. Att stänga av marknadsföring raderar dessa cookies, och den lilla mängd data som dessa skript sparar i din webbläsare vid sidan av dem, men inte det plattformarna redan har – du kan be dem radera det i dina inställningar hos dem."
         ]
       },
       "voice": {

@@ -5,7 +5,7 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
- * Security-critical RLS coverage for gedu_locations (migration 00024).
+ * Security-critical RLS coverage for gedu_locations.
  * The three negative tests lock in the "both actor AND target authorized"
  * pattern from the access-control rule — they're the safety net if anyone
  * rewrites the policy. The two positive tests anchor them: without a

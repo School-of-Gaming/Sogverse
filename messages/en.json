@@ -39,6 +39,9 @@
       "lynxApi": "Lynx Educate Partner API",
       "adminDashboard": "Admin Dashboard",
       "adminMunicipalityInvoicing": "Municipality Invoicing",
+      "adminInvoiceCustomers": "Invoice Customers",
+      "adminInvoiceCustomerNew": "New Invoice Customer",
+      "adminInvoiceCustomerEdit": "Edit Invoice Customer",
       "adminTools": "Tools",
       "parentDashboard": "My SOG",
       "geduDashboard": "My SOG",
@@ -61,7 +64,9 @@
       "robloxSafeguarding": "Creator Academy Child Safeguarding Policy",
       "robloxTerms": "Creator Academy Terms & Conditions",
       "geduContract": "Gedu contract",
-      "seatOffer": "Seat offer"
+      "seatOffer": "Seat offer",
+      "geduSubstitutions": "Substitutions",
+      "adminSubstitutions": "Substitutions"
     },
     "descriptions": {
       "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
@@ -308,6 +313,7 @@
           "waitlistOpenSeats": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open",
           "missingGeduFee": "Gedu fee not set",
           "missingMunicipalityFee": "Municipality fee not set",
+          "missingInvoiceCustomer": "Invoice customer not set",
           "waitlistOpenSeatsWithOffers": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open · {offers} awaiting an answer"
         }
       },
@@ -392,8 +398,72 @@
       "upcoming": "Upcoming",
       "unrecordedSessions": "{count, plural, one {# not recorded} other {# not recorded}}",
       "sessionsFor": "Sessions of {club}",
+      "clubsIn": "Clubs in {municipality}",
+      "clubsWithoutCustomer": "{count, plural, one {# club with no customer} other {# clubs with no customer}}",
+      "customerNotSet": "Customer not set",
+      "downloadInvoiceFor": "Download the Finvoice file for {customer}",
+      "fileBlockedByFee": "{count, plural, one {No file: # club ran with no fee} other {No file: # clubs ran with no fee}}",
+      "fileBlockedByNothingToInvoice": "No file: nothing recorded",
       "loadError": "Could not load the invoicing month. Refresh to try again.",
       "loadErrorWithReason": "Could not load the invoicing month — {reason}. Refresh to try again."
+    },
+    "invoiceCustomers": {
+      "title": "Invoice customers",
+      "subtitle": "The Fennoa customers a municipality club’s sessions are invoiced to.",
+      "addCustomer": "Add a customer",
+      "columns": {
+        "number": "Fennoa no.",
+        "invoiceName": "Invoice name",
+        "city": "City",
+        "reference": "Reference"
+      },
+      "hasReference": "Has a reference",
+      "noReference": "No reference",
+      "empty": "No invoice customers yet. Add the first one.",
+      "backToList": "Back to invoice customers",
+      "notFound": "There is no invoice customer with this id.",
+      "newPage": {
+        "title": "New invoice customer",
+        "submit": "Create customer"
+      },
+      "editPage": {
+        "title": "Edit invoice customer"
+      },
+      "fields": {
+        "number": "Fennoa customer number",
+        "invoiceName": "Invoice name",
+        "street": "Street address",
+        "postalCode": "Postal code",
+        "city": "City",
+        "country": "Country",
+        "yourReference": "Your reference",
+        "invoiceText": "Invoice text"
+      },
+      "hints": {
+        "number": "The F0037-style number on the customer’s card in Fennoa. Fennoa matches an imported invoice to the customer on this number.",
+        "invoiceName": "Exactly as it reads on the Fennoa customer card.",
+        "yourReference": "A purchase order number or a contact person the customer wants printed on every invoice.",
+        "invoiceText": "Extra lines printed at the top of the invoice text, such as a framework agreement reference. Plain text — it reaches the invoice exactly as typed."
+      },
+      "errors": {
+        "required": "{field} is required.",
+        "countryShape": "Use a two-letter country code, such as FI.",
+        "duplicateNumber": "Fennoa customer number {number} already belongs to another customer.",
+        "saveFailed": "The customer could not be saved. Try again.",
+        "saveFailedWithReason": "The customer could not be saved — {reason}",
+        "listUnavailable": "The customer list could not be loaded. Reload the page to pick a customer."
+      },
+      "picker": {
+        "label": "Invoiced to",
+        "hint": "The customer this club’s sessions are invoiced to. A club without one is flagged on the invoicing page and produces no invoice file.",
+        "manage": "Manage invoice customers",
+        "option": "{name} ({number})"
+      }
+    },
+    "geduRole": {
+      "primary": "Primary",
+      "assistant": "Assistant",
+      "selectAria": "Role for {name}"
     },
     "geduContract": {
       "heading": "Gedu contract",
@@ -458,10 +528,7 @@
         "missingMunicipalityFee": "Municipality fee missing",
         "pendingHint": {
           "registrationOpens": "Registration opens {date}",
-          "startDate": "Starts {date}",
-          "threshold": "Starts when {count, plural, one {# parent signs} other {# parents sign}} up",
-          "dateAndThreshold": "Starts {date} if {count, plural, one {# parent signs} other {# parents sign}} up",
-          "pastDateThreshold": "Past start date — awaiting {count, plural, one {# sign-up} other {# sign-ups}}"
+          "startDate": "Starts {date}"
         }
       },
       "translations": {
@@ -499,7 +566,6 @@
           "endDate": "End date",
           "firstSession": "First session",
           "lastSession": "Last session",
-          "signupThreshold": "Signup threshold",
           "termDates": "Term dates",
           "billingMode": "Billing",
           "seats": "Seats",
@@ -601,14 +667,12 @@
         "paidByMunicipality": "Paid by the municipality",
         "seatCount": "Seat count",
         "waitlistToggle": "Enable waitlist when seats are full",
-        "signupThreshold": "Signups needed to start",
         "makeVisible": "List this product on the Shop and Municipality Clubs pages",
         "seatLimit": "Seat limit"
       },
       "placeholders": {
         "selectTopic": "Select a topic…",
         "materialUrl": "https://drive.sog.gg/...",
-        "threshold": "e.g. 8",
         "name": {
           "consumerClub": "e.g. Minecraft Redstone kerho",
           "municipalityClub": "e.g. Tapiola Minecraft Club · Spring 2026",
@@ -661,15 +725,6 @@
           "fee": "Set a fee"
         }
       },
-      "startModes": {
-        "label": "How does this start?",
-        "date": "On a specific date",
-        "date_and_threshold": "On a specific date, only if enough sign up",
-        "threshold": "When enough gamers have signed up",
-        "dateDescription": "Runs on the selected date, no matter how many parents sign up.",
-        "date_and_thresholdDescription": "Scheduled for the selected date, but only runs if enough parents sign up in time. Otherwise you cancel it and parents are refunded automatically.",
-        "thresholdDescription": "No fixed start date. You pick the first session date once enough parents have signed up — parents see a live counter and know you’ll contact them when it’s ready."
-      },
       "registrationModes": {
         "label": "When does registration open?",
         "immediately": "Right away",
@@ -709,7 +764,7 @@
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
         "longDescription": "Optional. The full pitch, shown only on the product’s detail page. Headings, lists, emphasis and links are all available.",
-        "topicHint": "What this product is about. Families see it as the Subject filter in the shop and on the product page’s About card.",
+        "topicHint": "What this product is about. Families see it as the Topic filter in the shop and on the product page’s About card.",
         "materialUrlHint": "Optional. For Gedus only — families never see this.",
         "requiresGamerCreationsHint": "For products a contract requires it of. The final session keeps a needs-attention mark until every gamer in the group has a creation recorded. Families see nothing different.",
         "seatAudienceHint": "Pick at least one. Both means a product a parent and their gamer take part in together — the shop labels it “For families”.",
@@ -723,8 +778,6 @@
         "municipalityHint": "Municipality clubs are always tied to a specific Finnish municipality — the one paying for it. Parents from that municipality will see it when they browse.",
         "siteHint": "Where sessions physically happen.",
         "eventSingleDay": "Events happen on a single date.",
-        "thresholdOnly": "No fixed start date yet. Parents see a “X of Y needed” counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
-        "thresholdWithDate": "If fewer than this many parents sign up by the start date, you’ll need to cancel and refund from the product’s page.",
         "timezoneEntry": "Session times below are entered in this timezone. Parents see them converted to their own automatically.",
         "timezoneChangeMoves": "Session times below are entered in this timezone. Changing it moves every upcoming session to the same clock time in the new zone, while sessions that already have a report or attendance recorded keep the times they were held at.",
         "timezoneIs": "Times are in {timezone}. Parents see them converted to their local timezone automatically.",
@@ -768,7 +821,6 @@
         "primaryGeduFeeInvalid": "Enter a primary Gedu fee greater than 0, or choose Unknown or Volunteer",
         "assistantGeduFeeInvalid": "Enter an assistant Gedu fee greater than 0, or choose None or Volunteer",
         "municipalityFeeInvalid": "Enter a municipality fee greater than 0, or choose Unknown",
-        "thresholdInvalid": "Signups needed to start must be a positive integer",
         "registrationOpensDateRequired": "Pick a date when registration should open",
         "createFailed": "Failed to create product"
       },
@@ -779,8 +831,7 @@
       "status": {
         "pending": "Awaiting start",
         "running": "Running",
-        "completed": "Completed",
-        "expired": "Expired"
+        "completed": "Completed"
       },
       "schedule": {
         "day": "Day",
@@ -887,6 +938,8 @@
         "noResults": "No Gedus match your search.",
         "current": "Current",
         "alreadyAssigned": "Already assigned",
+        "alreadyExpected": "Already at this session",
+        "absentGedu": "The Gedu being substituted for",
         "notCertified": "Not certified"
       },
       "participantPicker": {
@@ -1013,7 +1066,6 @@
             "seats": "{taken} of {capacity} seats taken",
             "regionLocked": "Families in {country} only",
             "notStarted": "Starts {date}. The family pays from today, not from the start date.",
-            "notStartedUndated": "No start date yet. The family pays from today.",
             "subscriptionEnding": "The family has cancelled this subscription; it ends on {date}. This month's price difference will not be invoiced."
           },
           "prices": {
@@ -1064,6 +1116,45 @@
         },
         "note": "The price above includes VAT. Stripe works out the exact amount when the sale happens, so this is Finland’s rate today."
       },
+      "staffing": {
+        "menuLabel": "More actions for this session",
+        "setSubstitute": "Set a substitute",
+        "changeSubstitute": "Change substitute",
+        "changeSubstituteFor": "Change substitute for {name}",
+        "clearSubstitute": "Clear substitute",
+        "clearSubstituteFor": "Clear substitute for {name}",
+        "withdrawRequest": "Withdraw request",
+        "withdrawRequestFor": "Withdraw request for {name}",
+        "withRole": "{name} · {role}",
+        "absentLabel": "Away",
+        "subLabel": "Substitute",
+        "changeChoice": "Change",
+        "absentStepTitle": "Who is away?",
+        "absentStepBody": "More than one Gedu is due at the session on {date}. Pick the one who will not be there.",
+        "pickerTitle": "Choose a substitute",
+        "pickerDescription": "Choose who substitutes for {name}. A Gedu who can’t is shown with the reason.",
+        "confirmTitle": "Set a substitute",
+        "confirmBody": "Record who runs the session on {date} in the absent Gedu’s place.",
+        "approvesOpenRequest": "This approves the open request, rather than filing a second one.",
+        "replacesCurrentSub": "This replaces {name}, who is substituting at the session at the moment.",
+        "reasonKept": "The reason already recorded for the absence is kept.",
+        "reasonLabel": "Reason",
+        "reasonSick": "Sick",
+        "reasonOther": "Something else",
+        "noteLabel": "Note for the office",
+        "notePlaceholder": "Anything the office should know about this substitution.",
+        "noteRemaining": "{count} characters left",
+        "confirmAction": "Set the substitute",
+        "setFailed": "The substitute could not be set. Try again.",
+        "clearTitle": "Clear the substitute?",
+        "clearBody": "{sub} stops substituting for {name} on {date}, and the session goes back to the queue as needing a substitute.",
+        "clearConfirm": "Clear the substitute",
+        "clearFailed": "The substitute could not be cleared. Try again.",
+        "withdrawTitle": "Withdraw the request?",
+        "withdrawBody": "{name} is attending the session on {date} after all. Any offers on the request are dropped and nobody is recorded as substituting.",
+        "withdrawConfirm": "Withdraw the request",
+        "withdrawFailed": "The request could not be withdrawn. Try again."
+      },
       "sessions": {
         "loadFailed": "The session record could not be loaded. Reload the page to try again.",
         "loading": "Loading this product's session record.",
@@ -1079,7 +1170,6 @@
       "all": "All",
       "noFilterResults": "No users match your filters.",
       "noUsers": "No users found.",
-      "searchCapped": "Only the {shown} newest of {total} matches are included. Narrow the search to see the rest.",
       "backToUsers": "Back to Users",
       "userNotFound": "User not found.",
       "joined": "Joined",
@@ -1222,6 +1312,47 @@
       "notDelivered": "Not delivered",
       "today": "Today",
       "yesterday": "Yesterday"
+    },
+    "substitutions": {
+      "title": "Substitutions",
+      "description": "Sessions somebody cannot make, and who stood in.",
+      "descriptionWithZone": "Sessions somebody cannot make, and who stood in. Times are shown in {zone}.",
+      "listLabel": "Sessions needing a substitute",
+      "allClear": "No session needs a substitute.",
+      "substitutedLabel": "Sessions with a substitute",
+      "substitute": "Substitute:",
+      "approvedBy": "Approved by {name} · {when}",
+      "substitutedEmpty": "No upcoming session has a substitute.",
+      "justNow": "{count, plural, one {# substitute approved just now} other {# substitutes approved just now}}",
+      "offersLabel": "Gedus offering to substitute",
+      "away": "Away:",
+      "unnamed": "Unnamed Gedu",
+      "reason": {
+        "sick": "Sick",
+        "other": "Other"
+      },
+      "noOffers": "No offers yet.",
+      "openGroup": "Open the group",
+      "seatSomeoneElse": "Seat someone else",
+      "approve": "Approve",
+      "failed": "Could not approve — try again.",
+      "loadError": "The substitutions could not be loaded.",
+      "loadErrorWithReason": "The substitutions could not be loaded: {reason}",
+      "approveConfirmTitle": "Approve {name} as the substitute?",
+      "approveConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. Nobody is notified: the session leaves the other volunteers’ list, and its card now says {name} is substituting for {absent}.",
+      "approveFailedOfferGone": "{name} has taken their offer back, so there is nobody to approve.",
+      "approveFailedAlreadySettled": "This session has already been settled by someone else.",
+      "approveFailedSeatGone": "{absent} no longer has this session, so there is nothing to substitute for.",
+      "approveFailedIneligible": "{name} can no longer take this session.",
+      "seatConfirmTitle": "Seat {name} as the substitute?",
+      "seatConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. Nobody is notified: the session leaves the list Gedus offer from, and its card now says {name} is substituting for {absent}.",
+      "seatConfirm": "Seat the substitute",
+      "seatReasonLabel": "Reason given",
+      "seatFailed": "The substitute could not be seated — try again.",
+      "seatFailedIneligible": "{name} can’t take this session — they are already due at it, or can no longer substitute.",
+      "seatFailedSeatGone": "{absent} no longer has this session, so there is nothing to substitute for.",
+      "seatFailedRequestWithdrawn": "{absent} has withdrawn their request, so there is no absence to cover.",
+      "seatFailedNotScheduled": "The group no longer has a session on this date."
     }
   },
   "auth": {
@@ -1235,7 +1366,10 @@
         "passwordTooShort": "Password must be at least {count} characters.",
         "invalidCredentials": "The email, username or password you entered is incorrect.",
         "emailNotConfirmed": "Please confirm your email address before signing in.",
-        "tooManyAttempts": "Too many sign-in attempts. Please wait a moment and try again."
+        "tooManyAttempts": "Too many sign-in attempts. Please wait a moment and try again.",
+        "oauthCancelled": "Google sign-in was cancelled. You can try again or sign in with your password.",
+        "authCallbackError": "Google sign-in did not complete. Please try again.",
+        "googleGamer": "Gamer accounts sign in with their email or username and password, or through a parent’s account, not with Google. Ask your parent if you are not sure how."
       },
       "identifierLabel": "Email or username",
       "identifierPlaceholder": "you@example.com or a username"
@@ -1297,6 +1431,22 @@
       "invalidPhone": "Please enter a valid phone number",
       "creatingAccount": "Creating account...",
       "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
+    },
+    "google": {
+      "continue": "Continue with Google",
+      "or": "or",
+      "failed": "Google sign-in could not start. Please try again."
+    },
+    "completeRegistration": {
+      "title": "Finish your School of Gaming account",
+      "geduTitle": "Finish your School of Gaming Gedu account",
+      "description": "Your Google account signed you in. The details below finish your School of Gaming account.",
+      "notYou": "Not you?",
+      "signOut": "Sign out",
+      "submit": "Finish setting up",
+      "finishing": "Finishing...",
+      "alreadyComplete": "This account is already set up. Sign in again to continue.",
+      "switchToParent": "Not a Gedu? <link>Create a parent account instead</link>"
     }
   },
   "pin": {
@@ -1629,7 +1779,7 @@
           "fields": {
             "roblox": "The child’s Roblox account. <code>roblox_user_id</code> is <code>null</code> when Sogverse could not verify the username; forward such rows only if Roblox accepts a username alone.",
             "location": "The home municipality and country of the parent whose account holds the seat, by the same rule as <code>parents[].location</code> in <code>/families</code>. Both are <code>null</code> when that parent has not set a home location; <code>city</code> alone is <code>null</code> when that location lies within no municipality.",
-            "age": "The child’s age in whole years on the activity’s start date, as a range: Sogverse holds the birth month and not the day, so <code>min</code> is the youngest the child could have been and <code>max</code> the oldest, and the two are the same number unless the start date fell inside the child’s birth month. <code>null</code> while the product has no start date. The row carries the age rather than the birth month because the age is what the research dataset names.",
+            "age": "The child’s age in whole years on the activity’s start date, as a range: Sogverse holds the birth month and not the day, so <code>min</code> is the youngest the child could have been and <code>max</code> the oldest, and the two are the same number unless the start date fell inside the child’s birth month. The row carries the age rather than the birth month because the age is what the research dataset names.",
             "activity": "The activity attended: the product’s identifier, its name in English where one has been written, otherwise in the language the product is delivered in, and failing both in whichever of its locales has the alphabetically first code, its type, delivery and start date. Type and delivery together are what Lynx’s names for its ways of delivering the Programme map onto, and the start date is the intervention date the research asks for.",
             "publishedGameUrl": "The first roblox.com link in the child’s creations for this product, or <code>null</code> when none has been recorded."
           },
@@ -1722,22 +1872,21 @@
     "loadingAssignments": "Loading your clubs, camps and events."
   },
   "helpSection": {
-    "heading": "Help & feedback",
-    "gamerHeading": "Need help?",
+    "heading": "Need help?",
     "faqHeading": "Frequently asked questions",
     "form": {
       "messageLabel": "Message",
       "charactersNeeded": "{count} more characters needed",
       "submit": "Send message",
       "adult": {
-        "description": "Ask us for help, or send a suggestion or a bug report — every message reaches the School of Gaming team. We’re happy to help with anything from picking the right club to questions about how it all works, or you can email us at <link>{email}</link>.",
+        "description": "Ask us for help — every message reaches the School of Gaming team. You can also email us at <link>{email}</link>.",
         "placeholder": "What can we help with?",
         "thankYou": "Thank you — your message is with us, and we’re glad you wrote.",
         "failed": "We could not send your message. Please try again.",
         "tooManyRequests": "You have sent us several messages already. Please try again a little later."
       },
       "gamer": {
-        "description": "Stuck on something, or got an idea for us? Write it here and we will read it.",
+        "description": "Stuck on something? Write to us here and we will help.",
         "replyNote": "If we write back, we will email your parent.",
         "placeholder": "What do you need help with?",
         "thankYou": "Thank you — we got your message.",
@@ -1870,9 +2019,44 @@
     }
   },
   "gedu": {
+    "substitution": {
+      "cardEyebrow": "Substitution",
+      "cardOpenLabel": "{product} — session you’re substituting for",
+      "cardLockedLabel": "{product} — session you’re substituting for. The group’s workspace opens 48 hours before it starts.",
+      "accessOpens": "Workspace opens {date} at {time}",
+      "poolHeading": "Sessions needing a substitute",
+      "poolAllClear": "No sessions need a substitute right now.",
+      "poolRemote": "Remote",
+      "poolSiteUnknown": "Place to be confirmed",
+      "poolRolePrimary": "Primary",
+      "poolRoleAssistant": "Assistant",
+      "poolFee": "{fee} per session",
+      "poolOfferAction": "Offer to substitute",
+      "poolWithdrawAction": "Withdraw offer",
+      "poolWithdrawPending": "Withdrawing…",
+      "poolActionFailed": "That didn’t save. Try again.",
+      "pageTitle": "Substitutions",
+      "back": "Back to My SOG",
+      "mineHeading": "You’re substituting",
+      "mineAllClear": "You have no substitutions coming up.",
+      "fileAction": "Can’t make a session?",
+      "filePickTitle": "Which session can’t you make?",
+      "filePickBody": "Pick the session you can’t make. Your reason and note are shown to admins only.",
+      "fileAlreadyRequested": "Already asked for a substitute",
+      "filePickWeekThis": "This week",
+      "filePickWeekNext": "Next week",
+      "filePickWeekOf": "Week of {date}",
+      "filePickShowLater": "Show later sessions",
+      "filePickGroupLabel": "Group",
+      "filePickAllGroups": "All groups",
+      "fileFiled": "Substitute requested for {product} on {when}. It now shows on that session’s card.",
+      "fileFiledLink": "Open the group’s workspace",
+      "offerConfirmTitle": "Offer to substitute?",
+      "offerConfirmBody": "You’re offering to run {product} on {when}. School of Gaming chooses who substitutes, and you can withdraw your offer until it is approved. Once it is approved, the session is yours under your Gedu contract, exactly like one of your own, and you can no longer withdraw: if you then can’t make it, ask for a substitute yourself, as for any of your sessions. The group’s workspace opens to you 48 hours before the session starts."
+    },
     "coverage": {
       "title": "Coverage areas",
-      "remoteOnlyNote": "Used to match you as a substitute when another Gedu can’t cover their club. Leave empty if you only sub remotely.",
+      "remoteOnlyNote": "Used to match you as a substitute when another Gedu can’t make their club. Leave empty if you only substitute remotely.",
       "selectedHeading": "Selected ({count})",
       "noneSelected": "No areas selected",
       "remove": "Remove {name}",
@@ -1968,7 +2152,38 @@
       "creationsAddedCount": "{added} of {total} added",
       "creationsHint": "This is the run’s last session, so it isn’t finished until everyone here has a creation. Open a name to add one.",
       "creationsMemberDone": "{name} — creation added",
-      "creationsMemberMissing": "{name} — creation still needed"
+      "creationsMemberMissing": "{name} — creation still needed",
+      "staffingExpectedLabel": "Running this session:",
+      "staffingNobodyExpected": "Nobody is running this session yet.",
+      "staffingWithRole": "{name} ({role})",
+      "staffingSubstitutionNeeded": "Substitute needed for {name}.",
+      "staffingSubstitutedBy": "{sub} is substituting for {name}.",
+      "substitutionRolePrimary": "Primary",
+      "substitutionRoleAssistant": "Assistant",
+      "substitutionMenuLabel": "More actions for this session",
+      "substitutionRequestAction": "I need a substitute",
+      "substitutionRequestDialogTitle": "I can’t make this session",
+      "substitutionRequestDialogBody": "The session still runs — the office looks for a substitute to take your place. Your reason and note are shown to admins only.",
+      "substitutionReasonLabel": "Reason",
+      "substitutionReasonSick": "Sick",
+      "substitutionReasonOther": "Something else",
+      "substitutionNoteLabel": "Note for the office",
+      "substitutionNotePlaceholder": "Anything the office should know",
+      "substitutionNoteRemaining": "{count, plural, one {# character left} other {# characters left}}",
+      "substitutionRequestConfirm": "Confirm",
+      "substitutionRequestFailed": "That didn’t save. Try again.",
+      "substitutionRequestFailedAlreadyAsked": "You’ve already asked for a substitute for this session.",
+      "substitutionRequestFailedNotExpected": "You’ve already asked for a substitute for this session, or you’re no longer down to run it.",
+      "substitutionRequestFailedPastSession": "This session’s date has already passed.",
+      "substitutionRequestFailedNotScheduled": "This session is no longer on the schedule.",
+      "substitutionRequestStatusOpen": "You’ve asked for a substitute for this session. Waiting for one.",
+      "substitutionRequestStatusOffers": "{count, plural, one {# offer waiting} other {# offers waiting}}",
+      "substitutionRequestStatusSubstituted": "{name} is substituting for you.",
+      "substitutionWithdrawAction": "I can make it after all",
+      "substitutionWithdrawTitle": "Take this back?",
+      "substitutionWithdrawBody": "You go back to running the session, and any offers to substitute are dropped.",
+      "substitutionWithdrawConfirm": "Take it back",
+      "substitutionWithdrawFailed": "That didn’t save. Try again."
     },
     "groupNotes": {
       "heading": "About this group",
@@ -2060,7 +2275,7 @@
       "items": {
         "certification": {
           "question": "What does certification mean, and what can I not do until then?",
-          "answer": "<p>Certification is an admin confirming your account is ready to work with children. Two things come before it: accepting your Gedu contract, and presenting a criminal record extract for working with children (rikosrekisteriote) that is less than six months old. You order the extract yourself from the Legal Register Centre. We keep no copy of it and record nothing out of it — only that an acceptable one was shown, and when. Your contract page shows where both of them stand.</p><p>Until you are certified you cannot be assigned to a group, and your Tools section stays closed: you cannot start an instant voice room, and you cannot reset Minecraft Education passwords. You also cannot email a session report to families or add photos to one.</p><p>Everything else is open now: signing in, My SOG, your profile and coverage areas, and reading and accepting the contract. Help & feedback is here whether or not you are certified — use the form above if you are waiting and want to know where you stand.</p>"
+          "answer": "<p>Certification is an admin confirming your account is ready to work with children. Two things come before it: accepting your Gedu contract, and presenting a criminal record extract for working with children (rikosrekisteriote) that is less than six months old. You order the extract yourself from the Legal Register Centre. We keep no copy of it and record nothing out of it — only that an acceptable one was shown, and when. Your contract page shows where both of them stand.</p><p>Until you are certified you cannot be assigned to a group, and your Tools section stays closed: you cannot start an instant voice room, and you cannot reset Minecraft Education passwords. You also cannot email a session report to families or add photos to one.</p><p>Everything else is open now: signing in, My SOG, your profile and coverage areas, and reading and accepting the contract. Help is here whether or not you are certified — use the form above if you are waiting and want to know where you stand.</p>"
         },
         "groupAssignment": {
           "question": "How do I get assigned to a group?",
@@ -2158,7 +2373,9 @@
       "shop": "Shop",
       "yty": "Yty",
       "about": "About",
-      "faq": "FAQ"
+      "faq": "FAQ",
+      "substitutions": "Substitutions",
+      "substitutionsPhone": "Substitutions"
     },
     "accountMenu": "Account menu – {name}",
     "continueToAccount": "Continue to your account",
@@ -2206,7 +2423,7 @@
       "typeClubs": "Clubs",
       "typeCamps": "Camps",
       "typeEvents": "Events",
-      "subject": "Subject",
+      "topic": "Topic",
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "In person",
@@ -2597,6 +2814,7 @@
     "consumerClubs": "Consumer Clubs",
     "municipalityClubs": "Municipality Clubs",
     "municipalityInvoicing": "Municipality Invoicing",
+    "invoiceCustomers": "Invoice Customers",
     "camps": "Camps",
     "events": "Events",
     "sites": "Sites",
@@ -2607,7 +2825,8 @@
     "settings": "Settings",
     "tools": "Tools",
     "expandSidebar": "Expand sidebar",
-    "collapseSidebar": "Collapse sidebar"
+    "collapseSidebar": "Collapse sidebar",
+    "substitutions": "Substitutions"
   },
   "home": {
     "hero": {
@@ -3849,10 +4068,10 @@
       "ignore": "If you didn’t request a PIN reset, you can safely ignore this email. Your PIN will not be changed.",
       "button": "Reset PIN"
     },
-    "feedback": {
-      "subject": "Help & feedback from {displayName} ({role})",
-      "heading": "New help & feedback message",
-      "intro": "Someone has asked for help or sent us feedback. Reply to this email to answer them — your reply goes to the address below.",
+    "helpRequest": {
+      "subject": "Help request from {displayName} ({role})",
+      "heading": "New help request",
+      "intro": "Someone has asked for help. Reply to this email to answer them — your reply goes to the address below.",
       "from": "From",
       "role": "Role",
       "replyToLabel": "Reply to",
@@ -4177,7 +4396,8 @@
           "Roblox — receives your child’s Roblox account id, so we can confirm the account, and your browser fetches their avatar picture from Roblox directly.",
           "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account.",
           "mc-heads.net — your browser fetches the picture of your child’s Minecraft character from it directly, using their Minecraft username, which is public in the game. It is a free public service rather than a contractor of ours, and it sees only that request.",
-          "Meta (Facebook and Instagram) — through the Meta Pixel in your browser and reports from our servers, sees how you use our site, so we can show you our ads there and measure how they perform. Only if you allow marketing cookies."
+          "Meta (Facebook and Instagram) — through the Meta Pixel in your browser and reports from our servers, sees how you use our site, so we can show you our ads there and measure how they perform. Only if you allow marketing cookies.",
+          "Google (Analytics and Ads) — through a tag manager in your browser, sees which of our public pages you visit and what you signed up for, so we can measure how our advertising performs and show you our ads. Only if you allow marketing cookies — not analytics: the analytics you can switch on is Vercel’s alone."
         ]
       },
       "partners": {
@@ -4209,7 +4429,7 @@
         ],
         "bullets": [
           "Analytics — Vercel’s, and only if you choose it. It counts visits, measures how quickly pages load, and receives a few anonymous events about how the site is used: how someone reached their My SOG, when someone changes the language. It can’t see who you are, and we never hand it to advertisers.",
-          "Marketing — advertising cookies, only if you choose them. They let the advertising platforms named above — today, Meta — see how you use our site, so they can show you our ads and we can tell which ads work. If you create an account during a visit, the campaign tag on the link you arrived from is stored on it too. They never run while a gamer is signed in. Switching marketing off deletes these cookies, and the small amount of data Meta’s script keeps in your browser alongside them, but not what the platforms already hold — you can ask them to delete it in your settings with them."
+          "Marketing — advertising cookies, only if you choose them. They let the advertising platforms named above — today, Meta and Google — see how you use our site, so they can show you our ads and we can tell which ads work. Google’s tags reach your browser through a tag manager, which lets us and the partner who runs our campaigns add or remove a platform without changing the site; whichever platforms it carries are named in the list above, and that list carries a date. If you create an account during a visit, the campaign tag on the link you arrived from is stored on it too. They never run while a gamer is signed in. Switching marketing off deletes these cookies, and the small amount of data these scripts keep in your browser alongside them, but not what the platforms already hold — you can ask them to delete it in your settings with them."
         ]
       },
       "voice": {

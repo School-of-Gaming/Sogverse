@@ -53,8 +53,7 @@ class UnexplainedFlairWriteError extends Error {
 
 /**
  * The per-member marks that have no other home — the group staff overlay, the
- * (group, member) note write, and since 00227 the (group, member) creations
- * write.
+ * (group, member) note write, and the (group, member) creations write.
  *
  * This service owns only those. The note, badge and creations *reads* that ride
  * the existing roster documents stay with the services that already own those

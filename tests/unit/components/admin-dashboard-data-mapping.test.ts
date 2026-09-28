@@ -61,6 +61,7 @@ function attentionProduct(
     waitlist: null,
     missing_gedu_fee: false,
     missing_municipality_fee: false,
+    missing_invoice_customer: false,
     ...overrides,
   };
 }
@@ -504,6 +505,7 @@ describe("the attention queue", () => {
             empty_groups_without_gedu: [{ id: "g3", name: "Tiistai C" }],
             waitlist: { waitlist_count: 3, open_seats: 1, live_offer_count: 0 },
             missing_gedu_fee: true,
+            missing_invoice_customer: true,
           }),
         ],
       }),
@@ -529,6 +531,9 @@ describe("the attention queue", () => {
       // where the queue says so.
       { kind: "empty-group-without-gedu", values: { group: "Tiistai C" } },
       { kind: "missing-gedu-fee" },
+      // Last, because it is the bottom of the ranking: a blank field on a form,
+      // below every line about a person.
+      { kind: "missing-invoice-customer" },
     ]);
     // The ids are asserted whole rather than counted, because a count only
     // proves they differ — it does not pin *how*. Each is product, kind and,
@@ -543,7 +548,51 @@ describe("the attention queue", () => {
       "club-waitlist-open-seats",
       "club-empty-group-without-gedu-g3",
       "club-missing-gedu-fee",
+      "club-missing-invoice-customer",
     ]);
+  });
+
+  it("emits the missing invoice customer as its own line, beside the fee and never instead of it", () => {
+    // The two invoicing gaps are one flag each on the wire and two lines on the
+    // card, and a club can be in either state without the other. A pass that
+    // folded them — or that read one flag for both — would produce a card
+    // missing a line the admin has to act on, which is the failure a count of
+    // issues would not catch.
+    const both = build(
+      snapshot({
+        attention_products: [
+          attentionProduct({
+            id: "club",
+            product_type: "municipality_club",
+            missing_municipality_fee: true,
+            missing_invoice_customer: true,
+          }),
+        ],
+      }),
+    );
+
+    expect(
+      both.products[0].issues.map(({ id: _id, ...issue }) => issue),
+    ).toEqual([
+      { kind: "missing-municipality-fee" },
+      { kind: "missing-invoice-customer" },
+    ]);
+
+    const customerOnly = build(
+      snapshot({
+        attention_products: [
+          attentionProduct({
+            id: "club",
+            product_type: "municipality_club",
+            missing_invoice_customer: true,
+          }),
+        ],
+      }),
+    );
+
+    expect(
+      customerOnly.products[0].issues.map(({ id: _id, ...issue }) => issue),
+    ).toEqual([{ kind: "missing-invoice-customer" }]);
   });
 
   it("keeps an empty unstaffed group out of the populated group's line", () => {

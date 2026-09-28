@@ -197,7 +197,7 @@ describe("the card is the wide viewport's addition, not the phone's loss", () =>
   /**
    * The other thing the ground changing has to move: every fill chosen *in
    * relation to* what is behind it. There are two intents — a tone off the
-   * ground (a photo's well, the quoted box in the staff feedback mail) and a
+   * ground (a photo's well, the quoted box in the staff help-request mail) and a
    * fill that means to *be* the ground (the outlined button) — and both come
    * from one table, so the query cannot restate one and forget the other.
    *

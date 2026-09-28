@@ -10,8 +10,9 @@ import {
 } from "@/services/admin-dashboard/admin-dashboard.contracts";
 
 /**
- * `get_admin_dashboard` (migration 00191) — the single JSONB document behind the
- * admin dashboard, parsed through the `adminDashboardSnapshot` contract that the
+ * `get_admin_dashboard` (`supabase/schema/functions/`) — the single JSONB
+ * document behind the admin dashboard, parsed through the
+ * `adminDashboardSnapshot` contract that the
  * service parses through in the browser. That parse is half the point of this
  * file: the schema is the wire contract's only definition, and CI is where it
  * meets real Postgres.
@@ -25,13 +26,13 @@ import {
  *     "accepted an older version" reads the same as "never accepted", either
  *     equally binding LANGUAGE of the current version counts, and a candidate
  *     holding both languages reports the first of the two signatures
- *   - the six product issues, each flagged only in the situation it names — a
- *     gedu fee of *zero* is a volunteer session, not a missing fee
+ *   - the seven product issues, each flagged only in the situation it names — a
+ *     gedu fee of *zero* is a volunteer session, not a missing fee, and the two
+ *     municipality-only flags are false on every other product type
  *   - the two unstaffed-group arrays, which are disjoint: a group somebody is in
  *     is in the first, a group nobody is in is in the second, and a group
- *     somebody teaches is in neither. Until 00241 the empty one was not reported
- *     at all, so the cases below are what keep the two halves from collapsing
- *     back into one
+ *     somebody teaches is in neither. The cases below are what keep the two
+ *     halves from collapsing into one
  *   - a live product with nothing wrong is absent from the queue entirely
  *   - a run that ended months ago is in neither product section
  *
@@ -41,7 +42,8 @@ import {
  * platform and would be false for reasons that are not bugs. The document is
  * read once, after seeding, and each test looks up its own row in it.
  *
- * Product UUIDs 620-629 (see the allocation registry in product-helpers.ts).
+ * Product UUIDs 620-629, plus 80d-80f for the invoice-customer fixtures (see the
+ * allocation registry in product-helpers.ts).
  */
 
 const P_UNASSIGNED = "00000000-0000-0000-0000-000000000620";
@@ -51,7 +53,7 @@ const P_WAITLIST = "00000000-0000-0000-0000-000000000623";
 const P_MUNI = "00000000-0000-0000-0000-000000000624";
 const P_CLEAN = "00000000-0000-0000-0000-000000000625";
 /**
- * The product whose ONLY problem is an empty unstaffed group (00241). Its fee is
+ * The product whose ONLY problem is an empty unstaffed group. Its fee is
  * set and it has no queue, so if it is in the attention list at all, it is there
  * for the one reason this fixture exists to prove.
  */
@@ -60,11 +62,31 @@ const GROUP_EMPTY = "00000000-0000-0000-0000-000000000627";
 const P_ENDED = "00000000-0000-0000-0000-000000000628";
 /**
  * A group on P_CLEAN with an educator assigned and nobody in it. It is what
- * keeps P_CLEAN clean *for a reason* — before 00241 an empty group was ignored
- * whatever its staffing, so a fixture that left this one unassigned would go on
- * passing while saying nothing.
+ * keeps P_CLEAN clean *for a reason* — an empty group is excused by its
+ * staffing and nothing else, so a fixture that left this one unassigned would
+ * go on passing while saying nothing.
  */
 const GROUP_STAFFED = "00000000-0000-0000-0000-000000000629";
+/**
+ * A municipality club whose fees are both set and which names no invoice
+ * customer. Its presence in the queue is the missing buyer and nothing
+ * else, which is what this fixture exists to prove.
+ */
+const P_MUNI_NO_CUSTOMER = "00000000-0000-0000-0000-00000000080d";
+/**
+ * The control: the same club with a buyer named. Everything else about it is
+ * fine, so it must not be in the queue at all — without it, "the flag is true
+ * here" would be provable and "the flag is what put it there" would not.
+ */
+const P_MUNI_INVOICEABLE = "00000000-0000-0000-0000-00000000080e";
+/** The buyer the complete club names. */
+const INVOICE_CUSTOMER = "00000000-0000-0000-0000-00000000080f";
+/**
+ * A number no other file uses. `fennoa_customer_no` is UNIQUE, which makes it
+ * the one column where two files sharing a value collide on an insert rather
+ * than on a primary key.
+ */
+const INVOICE_CUSTOMER_NUMBER = "F980F";
 
 /**
  * A contract version this file adds so it can seed an acceptance of something
@@ -72,7 +94,7 @@ const GROUP_STAFFED = "00000000-0000-0000-0000-000000000629";
  * from becoming the current version for every other test running against the
  * same database — current is the greatest `created_at`, and nothing is older
  * than this. It carries a language suffix because every version string does
- * (00202), and its BASE is shape-impossible for the same reason the fixture ids
+ * and its BASE is shape-impossible for the same reason the fixture ids
  * are: the whitelist holds document labels, and no document is labelled this.
  */
 const OLD_CONTRACT_VERSION = "not-a-version-1970-0000/fi";
@@ -94,6 +116,8 @@ const ALL_PRODUCTS = [
   P_CLEAN,
   P_EMPTY_GROUP,
   P_ENDED,
+  P_MUNI_NO_CUSTOMER,
+  P_MUNI_INVOICEABLE,
 ];
 
 /**
@@ -235,6 +259,44 @@ describe("get_admin_dashboard", () => {
       startDate: utcDay(-200),
       endDate: utcDay(-100),
     });
+    // The invoice-customer pair: two municipality clubs identical in
+    // every respect the queue reads except the buyer. One cannot be both, which
+    // is why there are two.
+    for (const id of [P_MUNI_NO_CUSTOMER, P_MUNI_INVOICEABLE]) {
+      await createTestProduct(admin, {
+        id,
+        productType: "municipality_club",
+        billingMode: "external_contract",
+        locationId: TEST_IDS.LOCATION_MUNICIPALITY,
+        endDate: utcDay(60),
+        seatCount: null,
+        waitlistEnabled: false,
+      });
+    }
+
+    // The buyer. Deleted by id AND by number first, because the number is
+    // UNIQUE and a run that died before its teardown would otherwise leave a
+    // row this insert collides with.
+    await admin.from("invoice_customers").delete().eq("id", INVOICE_CUSTOMER);
+    await admin
+      .from("invoice_customers")
+      .delete()
+      .eq("fennoa_customer_no", INVOICE_CUSTOMER_NUMBER);
+    const buyer = await admin.from("invoice_customers").insert({
+      id: INVOICE_CUSTOMER,
+      fennoa_customer_no: INVOICE_CUSTOMER_NUMBER,
+      invoice_name: "Admin dashboard fixture customer",
+      street: "Virastokuja 1",
+      postal_code: "02070",
+      city: "Espoo",
+    });
+    expect(buyer.error).toBeNull();
+
+    const named = await admin
+      .from("products")
+      .update({ invoice_customer_id: INVOICE_CUSTOMER })
+      .eq("id", P_MUNI_INVOICEABLE);
+    expect(named.error).toBeNull();
 
     // Fees. A *set* fee is what makes the "missing fee" flag mean anything, and
     // zero is the case the flag must not fire on.
@@ -249,6 +311,8 @@ describe("get_admin_dashboard", () => {
       [P_MUNI, 4000],
       [P_CLEAN, 3000],
       [P_EMPTY_GROUP, 3500],
+      [P_MUNI_NO_CUSTOMER, 4000],
+      [P_MUNI_INVOICEABLE, 4000],
     ] as const) {
       const set = await admin
         .from("products")
@@ -256,6 +320,16 @@ describe("get_admin_dashboard", () => {
         .eq("id", id);
       expect(set.error).toBeNull();
     }
+
+    // The municipality fee on the invoice-customer pair. Both carry it, so the
+    // only thing left that can differ between them is the buyer — which is what
+    // makes "the customer is why it is in the queue" a fact about the flag
+    // rather than about the fixture happening to be incomplete.
+    const muniFees = await admin
+      .from("products")
+      .update({ municipality_fee_cents: 6000 })
+      .in("id", [P_MUNI_NO_CUSTOMER, P_MUNI_INVOICEABLE]);
+    expect(muniFees.error).toBeNull();
 
     // Names live in product_translations, one row per locale, and the RPC ships
     // the whole array — so every fixture needs at least one.
@@ -344,7 +418,7 @@ describe("get_admin_dashboard", () => {
     // of "current", and that wants acceptances with chosen timestamps and
     // chosen versions. The RPC's own behaviour is gedu-contract.test.ts's job.
     //
-    // A version string is `<base>/<language>` (00202), and the languages of one
+    // A version string is `<base>/<language>`, and the languages of one
     // base are the same agreement published twice — so "current" is a BASE, and
     // both of its texts are it. The rows are read in the RPC's own order, which
     // is what lets the cases below speak of "the language the queue's pick
@@ -438,6 +512,9 @@ describe("get_admin_dashboard", () => {
       .from("gedu_contract_versions")
       .delete()
       .eq("version", OLD_CONTRACT_VERSION);
+    // After the products, because a club pointing at a customer holds it under
+    // an ON DELETE RESTRICT — the delete would refuse while the club stands.
+    await admin.from("invoice_customers").delete().eq("id", INVOICE_CUSTOMER);
   });
 
   it("refuses a non-admin caller", async () => {
@@ -452,7 +529,7 @@ describe("get_admin_dashboard", () => {
     });
 
     it("reports a verification stat wherever the role holds real addresses", async () => {
-      // Since 00235 the test is the ADDRESS, not the role. A gamer in sign-in
+      // The test is the ADDRESS, not the role. A gamer in sign-in
       // mode `parent` or `username` carries a synthetic
       // @gamer.sogverse.internal handle nobody will ever click a link in, so "0
       // verified" would report a problem that does not exist and NULL says the
@@ -605,10 +682,9 @@ describe("get_admin_dashboard", () => {
     });
 
     it("names an empty group with no educator, in its own array", () => {
-      // Until 00241 this group was reported nowhere: the group check skipped it
-      // for having no members, on the reasoning that an admin building next
-      // term's groups has not made a mistake. That reasoning now sets the line's
-      // rank on the page instead of hiding the group.
+      // An empty group is reported rather than skipped for having no members:
+      // the reasoning that an admin building next term's groups has not made a
+      // mistake sets the line's rank on the page instead of hiding the group.
       const product = attention(P_EMPTY_GROUP);
       expect(product?.empty_groups_without_gedu).toEqual([
         { id: GROUP_EMPTY, name: "Empty group" },
@@ -618,8 +694,7 @@ describe("get_admin_dashboard", () => {
 
     it("puts a product in the queue for an empty unstaffed group alone", () => {
       // Its fee is set, it has no cap and no queue, and nobody is enrolled on
-      // it — so its presence here is the empty group and nothing else. This is
-      // the whole behaviour change: before 00241 this product was absent.
+      // it — so its presence here is the empty group and nothing else.
       const product = attention(P_EMPTY_GROUP);
       expect(product).toBeDefined();
       expect(product?.unassigned_count).toBe(0);
@@ -633,7 +708,7 @@ describe("get_admin_dashboard", () => {
         waitlist_count: 1,
         open_seats: 2,
         // No offer has been sent in this fixture, so the seat-offer work
-        // (00207) contributes a zero: every open seat still needs an admin.
+        // contributes a zero: every open seat still needs an admin.
         live_offer_count: 0,
       });
     });
@@ -641,15 +716,52 @@ describe("get_admin_dashboard", () => {
     it("flags a municipality club with no municipality fee", () => {
       const product = attention(P_MUNI);
       expect(product?.missing_municipality_fee).toBe(true);
-      // Its gedu fee is set, so the municipality fee is the only thing wrong.
+      // Its gedu fee is set, so the municipality fee is the only fee wrong; it
+      // names no invoice customer either, which the next case covers on its own.
       expect(product?.missing_gedu_fee).toBe(false);
       expect(product?.unassigned_count).toBe(0);
     });
 
+    it("puts a municipality club in the queue for a missing invoice customer alone", () => {
+      // Both fees are set, it has no cap, no queue, no groups and nobody
+      // enrolled — so the buyer is the only thing it lacks, and its presence
+      // here is that and nothing else.
+      const product = attention(P_MUNI_NO_CUSTOMER);
+      expect(product).toBeDefined();
+      expect(product?.missing_invoice_customer).toBe(true);
+      expect(product?.missing_municipality_fee).toBe(false);
+      expect(product?.missing_gedu_fee).toBe(false);
+      expect(product?.unassigned_count).toBe(0);
+      expect(product?.groups_without_gedu).toEqual([]);
+      expect(product?.empty_groups_without_gedu).toEqual([]);
+      expect(product?.waitlist).toBeNull();
+    });
+
+    it("says nothing about the same club once it names a customer", () => {
+      // The control for the case above, and the reason there are two fixtures:
+      // it differs from P_MUNI_NO_CUSTOMER in the buyer and in nothing else, so
+      // a flag that fired on every municipality club — or a filter that let one
+      // through for some other reason — would fail here rather than pass
+      // quietly there.
+      expect(attention(P_MUNI_INVOICEABLE)).toBeUndefined();
+    });
+
+    it("never flags an invoice customer on a product that cannot have one", () => {
+      // The column is CHECKed to municipality clubs, so on a consumer club the
+      // question has no answer — and the flag has to be a plain false rather
+      // than a NULL the contract would refuse or a true nobody can act on.
+      // P_UNASSIGNED is a consumer club already in the queue for another
+      // reason, which is what makes this readable at all.
+      const product = attention(P_UNASSIGNED);
+      expect(product?.product_type).toBe("consumer_club");
+      expect(product?.missing_invoice_customer).toBe(false);
+      expect(product?.missing_municipality_fee).toBe(false);
+    });
+
     it("says nothing about a live product with nothing wrong", () => {
       // P_CLEAN has a fee, no queue, no unassigned seats — and one group that is
-      // empty but ASSIGNED, which is the case both group arrays exclude. Since
-      // 00241 that assignment is load-bearing: an empty group with no educator
+      // empty but ASSIGNED, which is the case both group arrays exclude. That
+      // assignment is load-bearing: an empty group with no educator
       // would put this product in the queue.
       expect(attention(P_CLEAN)).toBeUndefined();
     });

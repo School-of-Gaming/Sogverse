@@ -72,7 +72,7 @@ export class RobloxService {
 
   /**
    * A gedu correcting the Roblox username of a child in a group they teach —
-   * and, since 00205, an admin doing the same from the group details page,
+   * and an admin doing the same from the group details page,
    * which renders that roster and its editor unchanged.
    *
    * Deliberately a separate method from `updateMyRoblox` rather than a flag on

@@ -3,7 +3,7 @@ import { Constants } from "@/types";
 import { CHAT_REACTION_CODES } from "@/lib/constants/chat";
 
 /**
- * Wire contracts for the chat RPCs (00228 / 00229).
+ * Wire contracts for the chat RPCs.
  *
  * Two jobs, and they are the same job seen from each end: the schemas here are
  * what a service method parses an `.rpc()` result through, and what the db
@@ -157,10 +157,10 @@ export const chatChannelRoster = z.array(chatRosterEntry);
  *
  * Private, and read only through `GET /api/chat/images/[id]`, which downloads
  * the object ON THE VIEWER'S OWN SESSION — so the bucket's one SELECT policy
- * (00231) stays the whole read boundary for the bytes: membership, the family
+ * stays the whole read boundary for the bytes: membership, the family
  * time bound and the hidden state all ride on it, answered afresh on every
- * fetch. No signed URLs are minted anywhere (owner decision, 2026-09-01,
- * recorded in 00233): a signed URL is a bearer token any viewer could copy out
+ * fetch. No signed URLs are minted anywhere (owner decision, 2026-09-01):
+ * a signed URL is a bearer token any viewer could copy out
  * of devtools and share for its whole lifetime, and on a surface children use
  * that was a standing edge worth removing rather than accepting.
  */

@@ -13,9 +13,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function GeduCampDetailRoute({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ groupId?: string | string[] }>;
 }) {
-  const { id } = await params;
-  return <GeduProductWorkspace productId={id} />;
+  const [{ id }, { groupId }] = await Promise.all([params, searchParams]);
+  return <GeduProductWorkspace productId={id} groupIdParam={groupId} />;
 }

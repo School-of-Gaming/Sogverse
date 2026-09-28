@@ -301,7 +301,7 @@ describe("the bar", () => {
     const chips = screen.getAllByRole("button", { name: /^Remove / });
     expect(chips.map((chip) => chip.getAttribute("aria-label"))).toEqual([
       "Remove Type Clubs",
-      "Remove Subject Fortnite",
+      "Remove Topic Fortnite",
       "Remove Days Monday",
     ]);
     const summary = chips[0].parentElement;

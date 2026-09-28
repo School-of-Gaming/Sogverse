@@ -51,7 +51,7 @@ const PUBLIC_PRODUCT = "00000000-0000-0000-0000-0000000005a1";
 const ENROLLED_PRODUCT = "00000000-0000-0000-0000-0000000005a2";
 const GROUP_ID = "00000000-0000-0000-0000-0000000005a3";
 /**
- * Published but NOT listed: the shape 00168 exists for. Nobody is a party to
+ * Published but NOT listed. Nobody is a party to
  * it, so nothing but the product's own existence can answer for it.
  */
 const UNLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005aa";

@@ -9,16 +9,16 @@
 //   3. The first row present in the array.
 //
 // Every product is guaranteed to have ≥1 translation in **any** locale by a
-// non-empty check in the create/update RPC and a BEFORE-DELETE trigger
-// (migration 00047 relaxed this from the old "≥1 of en/fi" rule to "≥1 of
-// any"). So the array is never empty for products and the "first available"
+// non-empty check in the create/update RPC and a BEFORE-DELETE trigger — ≥1 in
+// ANY locale, with no particular one required. So the array is never empty for
+// products and the "first available"
 // step always resolves — even for a product that has neither the user's
 // locale nor en (e.g. an sv-only product).
 //
 // English is special-cased as the second step because it's our most-likely
 // shared lingua franca; beyond that, "first available" gives a predictable
 // answer without a longer hard-coded order. fi is deliberately NOT special:
-// under the relaxed rule it carries no more guarantee than any other locale.
+// under that rule it carries no more guarantee than any other locale.
 
 import type { SupportedLocale } from "@/lib/constants/locales";
 

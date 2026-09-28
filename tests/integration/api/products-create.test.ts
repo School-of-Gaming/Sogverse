@@ -103,8 +103,7 @@ const validBody = {
   material_url: null,
   location_id: null,
   is_remote: true,
-  signup_threshold: null,
-  start_date: null,
+  start_date: "2026-09-01",
   end_date: null,
   timezone: "Europe/Helsinki",
   seat_count: null,
@@ -119,6 +118,7 @@ const validBody = {
   primary_gedu_fee_cents: null,
   assistant_gedu_fee_cents: null,
   municipality_fee_cents: null,
+  invoice_customer_id: null,
 };
 
 function createRequest(
@@ -243,9 +243,9 @@ describe("POST /api/admin/products/create", () => {
     expect(mockUserUpdate).toHaveBeenCalledWith({ image_id: IMAGE_ID });
     expect(mockUserUpdateEq).toHaveBeenCalledWith("id", "new-prod-id");
     // The served path is never on the wire and never written here — a trigger
-    // derives it from the id this statement just wrote. Migration 00198 went
-    // further and dropped `p_image_path` from the RPC itself, so this now
-    // guards against reintroducing an argument the function no longer has.
+    // derives it from the id this statement just wrote. The RPC carries no
+    // `p_image_path` argument at all, so this
+    // guards against reintroducing one.
     expect(mockUserRpc.mock.calls[0][1]).not.toHaveProperty("p_image_path");
   });
 
@@ -302,6 +302,52 @@ describe("POST /api/admin/products/create", () => {
     // DEFAULT NULL fills in the omission — untagged reaches the column.
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_tag).toBeUndefined();
+  });
+
+  it("passes an invoice customer through, and sends an omission for a club with none", async () => {
+    const CUSTOMER_ID = "7c1f6a4e-2b58-4f0a-9d3c-51ae7b208f64";
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({
+        data: {
+          ...validBody,
+          product_type: "municipality_club",
+          invoice_customer_id: CUSTOMER_ID,
+        },
+      }),
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "create_product",
+      expect.objectContaining({ p_invoice_customer_id: CUSTOMER_ID }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(createRequest({ data: validBody }));
+    // Same shape as an untagged product: null maps to undefined, supabase-js
+    // drops the key, and the RPC's DEFAULT NULL writes "nobody has said who
+    // pays yet" — which is what a club looks like the day it is created.
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_invoice_customer_id).toBeUndefined();
+  });
+
+  it("returns 400 when the invoice customer field is missing", async () => {
+    // Required-nullable for the reason the tag is: the RPC parameter is
+    // defaulted, so a caller that forgets the field would unlink a club rather
+    // than leave it alone.
+    mockAuthenticatedAdmin();
+    const { invoice_customer_id: _id, ...noCustomer } = validBody;
+    const response = await POST(createRequest({ data: noCustomer }));
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when the invoice customer is not a uuid", async () => {
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      createRequest({ data: { ...validBody, invoice_customer_id: "F0204" } }),
+    );
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("returns 400 when the tag field is missing", async () => {

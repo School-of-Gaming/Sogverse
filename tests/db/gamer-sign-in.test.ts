@@ -10,7 +10,7 @@ import {
 } from "./product-helpers";
 
 /**
- * `gamer_profiles.sign_in` (00235) — who may write it, and what having a real
+ * `gamer_profiles.sign_in` — who may write it, and what having a real
  * address on a child does NOT change.
  *
  * The column decides how a child reaches their own account: switch-only from

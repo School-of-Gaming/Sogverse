@@ -80,12 +80,12 @@ function buildVisibleProductsQuery<Select extends string>(
  * (`buildProductDetailQuery`) and keeps `product_translations(*)`.
  */
 const BROWSE_SELECT =
-  "id, product_type, billing_mode, topic, tag, min_age, max_age, for_gamers, for_parents, spoken_language_code, image_path, is_remote, seat_count, waitlist_enabled, registration_opens_at, start_date, end_date, timezone, signup_threshold, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+  "id, product_type, billing_mode, topic, tag, min_age, max_age, for_gamers, for_parents, spoken_language_code, image_path, is_remote, seat_count, waitlist_enabled, registration_opens_at, start_date, end_date, timezone, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
 
 /**
  * The same listing read by a caller that wants only *where* each product is:
- * the location embed, plus the four lifecycle columns `effectiveStatus()` needs
- * to finish the visibility filter in JS. None of the twenty columns a card
+ * the location embed, plus the three lifecycle columns `effectiveStatus()`
+ * needs to finish the visibility filter in JS. None of the twenty columns a card
  * paints: no translations, no prices, no schedule slots.
  *
  * `/schools` is that caller — it groups municipality clubs by municipality and
@@ -93,7 +93,7 @@ const BROWSE_SELECT =
  * between this and the full row is most of its server fetch.
  */
 const LOCATION_ONLY_SELECT =
-  "start_date, end_date, signup_threshold, timezone, locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+  "start_date, end_date, timezone, locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
 
 function buildBrowseQuery(supabase: AppSupabaseClient, types: ProductType[]) {
   return buildVisibleProductsQuery(supabase, types, BROWSE_SELECT);
@@ -114,17 +114,12 @@ function buildVisibleLocationsQuery(
 // is a date question the row answers for itself. The comparison is date-only
 // against the product's *own* timezone (a finished-yesterday camp in Helsinki
 // must not linger for a UTC viewer — CLAUDE.md "Date & Time"), which is what
-// `effectiveStatus()` does: it projects `now` into `product.timezone`. The
-// active-participation count is irrelevant to the ended decision (only
-// `end_date` separates completed/expired from running/pending), so 0 is safe to
-// pass. A `.lte()` on `end_date` could not do this: the cut-off is per row,
-// because it is each product's own local calendar day.
+// `effectiveStatus()` does: it projects `now` into `product.timezone`. A
+// `.lte()` on `end_date` could not do this: the cut-off is per row, because it
+// is each product's own local calendar day.
 function dropEndedProducts<Row extends LifecycleInputs>(rows: Row[]): Row[] {
   const now = new Date();
-  return rows.filter((row) => {
-    const status = effectiveStatus(row, now, 0);
-    return status !== "completed" && status !== "expired";
-  });
+  return rows.filter((row) => effectiveStatus(row, now) !== "completed");
 }
 
 // Joined shape consumed by the parent-facing browse pages
@@ -180,8 +175,8 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
 // relationship between these two tables. A second foreign key — an FK on the
 // derived `image_path` column is the tempting one — makes this embed ambiguous
 // and PostgREST refuses the whole query with PGRST201, which the admin product
-// page shows as "product not found". The header of the migration that chose
-// not to add that key (supabase/migrations/00198) records the reasoning.
+// page shows as "product not found". That is why `image_path` carries no FK of
+// its own — see `src/services/product-images/CLAUDE.md`.
 function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
@@ -325,7 +320,8 @@ export type CreateProductInput = {
    * behind it re-checks: a location the blocked party can rewrite in their own
    * settings is not something a server-side gate could actually guarantee. A
    * family already enrolled keeps its seat if it later moves. Known and
-   * accepted — see the column comment in migration 00193.
+   * accepted — see the column's own comment in
+   * `supabase/schema/tables/products.sql`.
    */
   region_lock_country: string | null;
   /**
@@ -353,8 +349,7 @@ export type CreateProductInput = {
   material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
-  signup_threshold: number | null;
-  start_date: string | null;
+  start_date: string;
   end_date: string | null;
   timezone: string;
   seat_count: number | null;
@@ -400,6 +395,19 @@ export type CreateProductInput = {
   primary_gedu_fee_cents: number | null;
   assistant_gedu_fee_cents: number | null;
   municipality_fee_cents: number | null;
+  /**
+   * The Fennoa customer a municipality club is invoiced to, or `null` where
+   * nobody has agreed who pays yet — the ordinary state at creation, and the
+   * one the invoicing page flags before a file can be produced.
+   *
+   * Per club and never derived from the club's location: one city can be two
+   * customers, and an association can buy clubs sited in a municipality it is
+   * not. Required and nullable for the same reason `tag` is — the RPC parameter
+   * is `DEFAULT NULL`, so an omitted field would unlink a club rather than
+   * leave it alone. A non-municipality product may not carry one at all, which
+   * the database's own CHECK refuses.
+   */
+  invoice_customer_id: string | null;
   /**
    * The catalogue entry this product's picture comes from, or `null` for a
    * product with no picture. Required and nullable for the same reason `tag`
@@ -448,8 +456,7 @@ export type UpdateProductInput = {
   material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
-  signup_threshold: number | null;
-  start_date: string | null;
+  start_date: string;
   end_date: string | null;
   timezone: string;
   seat_count: number | null;
@@ -475,6 +482,10 @@ export type UpdateProductInput = {
   primary_gedu_fee_cents: number | null;
   assistant_gedu_fee_cents: number | null;
   municipality_fee_cents: number | null;
+  /** The club's Fennoa invoice customer — see CreateProductInput. Required and
+   *  nullable on the update half too, and that is the load-bearing one: the RPC
+   *  assigns every editable column, so an omitted id unlinks the club. */
+  invoice_customer_id: string | null;
   /** Catalogue entry id, or `null` for no picture — see CreateProductInput.
    *  Required and nullable on the update half too, and that is the
    *  load-bearing one: the route writes the column on every save. */

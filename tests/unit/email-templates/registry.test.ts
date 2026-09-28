@@ -1291,7 +1291,7 @@ describe("every template renders in every locale", () => {
   const TEMPLATE_PARAMS: Record<string, Record<string, string | boolean | null>> = {
     componentsReference: {},
     passwordReset: { resetLink: "https://sogverse.sog.gg/reset-password?code=abc123" },
-    feedback: {
+    helpRequest: {
       userName: "Marja Virtanen",
       userRole: "customer",
       userEmail: "marja@example.com",
@@ -1393,7 +1393,7 @@ describe("every template renders in every locale", () => {
     productConfirmation: [{ gamerCopy: false }, { gamerCopy: true, priceAmount: null }],
     // The gamer case's note has two variants, and each is a key nothing else
     // reaches.
-    feedback: [
+    helpRequest: [
       {},
       { userRole: "gamer", parentEmail: "marja@example.com", gamerOwnMailbox: false },
       {

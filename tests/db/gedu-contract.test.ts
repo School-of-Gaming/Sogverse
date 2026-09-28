@@ -10,7 +10,7 @@ import {
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
- * `accept_gedu_contract` and the two tables behind it (migrations 00201, 00202).
+ * `accept_gedu_contract` and the two tables behind it.
  *
  * The feature's whole claim is that an acceptance row is an *audit record*: the
  * version accepted, a moment nobody but the server chose, and the signer's name
@@ -19,7 +19,7 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
  * written any other way, and that it cannot be read by someone it is not about.
  *
  * **A version string carries the language of the text it names** — `<base>/<language>`
- * since 00202 — because the contract exists in two equally binding translations
+ * — because the contract exists in two equally binding translations
  * and which one a gedu read is part of what they signed. So the version accepted
  * is the whole encoded string, while "is this gedu current" is a question about
  * the BASE alone. Both halves are exercised below.
@@ -142,9 +142,9 @@ describe("gedu contract acceptance", () => {
     });
 
     it("names a language in every version it holds", async () => {
-      // The format is the whole of what 00202 added, and it is what lets an
-      // acceptance row say which of two equally binding texts was signed. A row
-      // with no suffix would be a document nobody can identify.
+      // The format is what lets an acceptance row say which of two equally
+      // binding texts was signed. A row with no suffix would be a document
+      // nobody can identify.
       const { data, error } = await admin
         .from("gedu_contract_versions")
         .select("version");
@@ -181,7 +181,7 @@ describe("gedu contract acceptance", () => {
 
     it("is readable by a signed-in gedu", async () => {
       // The other half — that `anon` cannot read it at all — is asserted by
-      // migration 00201's own DO block, which raises if the role ever holds
+      // the schema's own end-state block, which raises if the role ever holds
       // SELECT on either contract table. No anon client is built here.
       const readable = await gedu
         .from("gedu_contract_versions")

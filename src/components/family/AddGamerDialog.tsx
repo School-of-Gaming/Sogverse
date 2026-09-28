@@ -758,7 +758,6 @@ export function AddGamerFormCard({
                   privacy: (chunks) => (
                     <Link
                       href={ROUTES.privacy}
-                      prefetch={false}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-act hover:underline"

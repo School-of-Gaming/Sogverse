@@ -6,7 +6,7 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
- * Scope test for `request_my_verification_email` and, since 00235, for
+ * Scope test for `request_my_verification_email` and
  * `request_gamer_verification_email` — the self-scoping classification both
  * carry in the §3.4 spine's allowlist (authorization-spine.test.ts, check 5).
  * They share a file because they share a ledger: one keys it to the caller, the
@@ -179,7 +179,7 @@ describe("request_my_verification_email", () => {
   });
 
   /**
-   * `request_gamer_verification_email` (00235) — the parent-scoped sibling, and
+   * `request_gamer_verification_email` — the parent-scoped sibling, and
    * the self-scoping classification it carries in the same spine allowlist.
    *
    * Its subject is not its caller: a child in sign-in mode `email` cannot sign

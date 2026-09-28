@@ -19,9 +19,8 @@ import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboard.contracts";
 
 /**
- * The seat offer (migration 00207, carried forward by 00208 and 00209): the
- * three service-role RPCs, the two CHECK constraints behind them, and the two
- * readers they changed.
+ * The seat offer: the three service-role RPCs, the two CHECK constraints
+ * behind them, and the two readers that carry it.
  *
  * Product UUIDs 670-678 (see the product-helpers allocation registry). Five
  * differently-shaped products rather than one that gets reconfigured, because
@@ -548,7 +547,7 @@ describe("seat offers", () => {
 
   /**
    * The window is enforced here as well as in the token, because the in-app
-   * path carries no token at all — and since 00208 it binds ACCEPT and nothing
+   * path carries no token at all — and the window binds ACCEPT and nothing
    * else, which is why this case names the answer it is refusing.
    *
    * The stamp surviving is the load-bearing half. It is what the emailed link
@@ -575,8 +574,8 @@ describe("seat offers", () => {
   });
 
   /**
-   * The other direction through the same closed window, and the whole of
-   * 00208. The deadline exists to stop a seat being CLAIMED after we have
+   * The other direction through the same closed window.
+   * The deadline exists to stop a seat being CLAIMED after we have
    * offered it elsewhere; none of that reasoning reaches a family telling us
    * they cannot come, and that is the one answer that frees a row. So a decline
    * lands for as long as the participation exists, however late it is.
@@ -612,7 +611,7 @@ describe("seat offers", () => {
    * — it exists for the route and for no other reader.
    *
    * Neither row here has been swept, so `already_notified` is false on both:
-   * the flag is the OTHER half of the mail decision (00209) and is asserted on
+   * the flag is the OTHER half of the mail decision and is asserted on
    * its own below.
    */
   it("reports whether a decline beat the deadline", async () => {
@@ -645,7 +644,7 @@ describe("seat offers", () => {
   });
 
   /**
-   * The hole 00209 closes, seen from the database.
+   * The hole the notified stamp closes, seen from the database.
    *
    * Expiry here is OBSERVED, not scheduled: the no-response mail goes out the
    * first time somebody opens a page that would care. So "late" is no evidence
@@ -808,8 +807,8 @@ describe("seat offers", () => {
   });
 
   /**
-   * Silence costs the place in line, and the claim is where it is spent
-   * (00208). Asserted as a REORDERING against a family who was behind, because
+   * Silence costs the place in line, and the claim is where it is spent.
+   * Asserted as a REORDERING against a family who was behind, because
    * that is the only form the cost has: a lone row's `waitlisted_at` moving
    * proves a write happened, while the pair proves the queue can now make
    * progress past a family who stopped reading their mail. Without it the same

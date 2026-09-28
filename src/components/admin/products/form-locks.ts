@@ -1,11 +1,11 @@
 // Temporary UI-only locks on the admin product form.
 //
-// Several "When" / "Registration" behaviours are wired end-to-end but not yet
-// signed off for production. Rather than hide them, the form pins each to a
-// safe default and disables the control so an admin can't reach a not-ready
-// path. These are *UI blocks only* — the API trusts admins and enforces nothing
-// here. Flip a flag to `false` (and the disabled wiring that reads it falls
-// away, restoring the full control) when the feature ships.
+// A "When" / "Registration" behaviour that is wired end-to-end but not yet
+// signed off for production is not hidden: the form pins it to a safe default
+// and disables the control so an admin can't reach a not-ready path. These are
+// *UI blocks only* — the API trusts admins and enforces nothing here. Flip a
+// flag to `false` (and the disabled wiring that reads it falls away, restoring
+// the full control) when the feature ships.
 //
 // Locks can also lift per product — see `formLocksFor()` below, which unlocks
 // the registration window for municipality clubs and keeps it locked everywhere
@@ -20,21 +20,18 @@
 import type { ProductTypeConfig } from "./product-type-config";
 
 interface FormLocks {
-  /** Start trigger is pinned to "On a specific date" (no threshold launches). */
-  startMode: boolean;
   /** Registration always opens immediately (no scheduled ticket drop). */
   registrationTiming: boolean;
 }
 
 export const FORM_LOCKS: FormLocks = {
-  startMode: true,
   registrationTiming: true,
 };
 
 /**
  * The locks in effect for the product being edited. This is the single place
- * that decides which products have which features — the form sections and
- * `initialState` resolve through it rather than reading FORM_LOCKS directly.
+ * that decides which products have which features — the form sections resolve
+ * through it rather than reading FORM_LOCKS directly.
  *
  *   - **Municipality clubs** — the registration window is signed off.
  *   - **Everything else** keeps the global pre-prod locks. Events briefly

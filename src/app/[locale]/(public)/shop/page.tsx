@@ -31,9 +31,8 @@ export async function generateMetadata(): Promise<Metadata> {
  * initial render.
  *
  * The filters' Language row is deliberately absent from this: its
- * vocabulary is the `spoken_language` enum, a compile-time constant since
- * 00199, so the row is complete before any request is made. It used to be a
- * third read here, and is one no longer.
+ * vocabulary is the `spoken_language` enum, a compile-time constant, so the
+ * row is complete before any request is made and costs no read here.
  *
  * Both remaining reads sit inside one try/catch with empty fallbacks (mirroring
  * `parent/page.tsx`): on any failure the page still renders and the client

@@ -202,7 +202,7 @@ const browseTimer = BROWSE_RPS > 0
       for (let i = 0; i < BROWSE_RPS; i++) {
         const p = Math.random() < 0.35 ? "/shop" : `/shop/${PRODUCTS[Math.floor(Math.random() * PRODUCTS.length)]}`;
         fetch(`${TARGET}${p}`, { headers: { accept: "text/html" } })
-          .then((r) => { r.ok ? browse.ok++ : browse.fail++; return r.arrayBuffer(); })
+          .then((r) => { if (r.ok) { browse.ok++; } else { browse.fail++; } return r.arrayBuffer(); })
           .catch(() => browse.fail++);
       }
     }, 1000)

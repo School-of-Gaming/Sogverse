@@ -1,5 +1,10 @@
 import { z } from "zod";
 import { Constants } from "@/types";
+// The one definition of a Fennoa customer, imported rather than restated: the
+// RPC emits the stored row, so a second spelling of those nine fields here
+// would be a second thing to keep in step with the table and with the
+// serializer that reads them.
+import { invoiceCustomerRow } from "@/services/invoice-customers/invoice-customers.contracts";
 
 /**
  * Runtime contract for `get_admin_municipality_invoicing`, the single JSONB
@@ -91,6 +96,15 @@ export const municipalityInvoicingSession = z.object({
  * with no snapshotting, and null means the field has never been filled in. Null
  * is never worth zero: a club with no fee is excluded from its municipality's
  * total and named as something to fix.
+ *
+ * `invoice_customer` is the Fennoa customer this club is billed to, whole
+ * rather than by id — the caller turns it into a Finvoice file, so a second
+ * admin-gated round trip per club would buy nothing. **Nullable, and unlike a
+ * missing municipality it does not refuse the month**: a club nobody has named
+ * a buyer for renders on the page perfectly well and only its own file is
+ * blocked, so refusing would take every other file down with it. The link is
+ * the club's own and is never derived from its location — one city can be two
+ * customers, and an association can buy clubs sited in a municipality it is not.
  */
 export const municipalityInvoicingClub = z.object({
   id: z.string(),
@@ -102,6 +116,7 @@ export const municipalityInvoicingClub = z.object({
   schedule_slots: z.array(municipalityInvoicingScheduleSlot),
   location: municipalityInvoicingLocation.nullable(),
   municipality: municipalityInvoicingMunicipality,
+  invoice_customer: invoiceCustomerRow.nullable(),
   sessions: z.array(municipalityInvoicingSession),
 });
 

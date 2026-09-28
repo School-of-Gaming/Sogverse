@@ -66,11 +66,11 @@ function cookieDomainCandidates(hostname: string): string[] {
  * The walk is not defensive padding — it is the only thing that works. A cookie
  * is removed only by an expiry whose name, path *and* domain match the one that
  * set it, and the cookies this exists to clear were not set by us: withdrawing
- * marketing consent has to drop Meta's `_fbp` and `_fbc`, which its script
- * writes on the **registrable domain** (`.sog.gg`) while our pages are served
- * from a subdomain (`app.sog.gg`, `my.sog.gg`). Expiring at the document's own
- * host alone would match neither, and the withdrawal would look like it worked
- * while every pixel cookie survived.
+ * consent has to drop Meta's `_fbp` and `_fbc` and Google's `_ga` family, and
+ * every one of them is written on the **registrable domain** (`.sog.gg`) while
+ * our pages are served from a subdomain (`app.sog.gg`, `my.sog.gg`). Expiring
+ * at the document's own host alone would match neither, and the withdrawal
+ * would look like it worked while every advertising cookie survived.
  *
  * The domainless write is kept because a host-only cookie — the shape our own
  * `setCookie` produces — is *not* matched by an expiry that names a domain.

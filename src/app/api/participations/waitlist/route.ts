@@ -127,10 +127,18 @@ export const POST = defineRoute({
       after(reportWaitlistConversion(request, supabase, body.productId));
     }
 
+    // The flag travels on to the browser for the same reason it is read here:
+    // a replay is indistinguishable from a fresh join in every other field, and
+    // the panel has its own once-per-place-in-line work to gate — the marketing
+    // push, which would otherwise count a stale tab's resubmission as a second
+    // family joining the queue. Relaying the server's own answer is what keeps
+    // the two gates saying the same thing; deriving a second one in the browser
+    // would be a guess about a row it never saw.
     return {
       participationId: parsed.data.participation_id,
       waitlistPosition: parsed.data.waitlist_position,
       status: parsed.data.status,
+      idempotent: parsed.data.idempotent,
     };
   },
 });

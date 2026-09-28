@@ -12,7 +12,7 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
- * Gamer photo consents (00244): the marketing-consent system (00220) with the
+ * Gamer photo consents: the marketing-consent system with the
  * subject changed from an adult's mailbox to a CHILD'S IMAGE, and every claim
  * below is about one of the three things that change follows from.
  *
@@ -30,9 +30,9 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *     the roster's own predicate — the cases below pin both directions of it.
  *   * **A child may look and may never touch.** There is no writer that accepts
  *     a gamer, and none that accepts an admin either — the second deliberately,
- *     carried over from 00220.
+ *     carried over from marketing consents.
  *
- * Everything else is 00220's behaviour and is re-pinned here rather than
+ * Everything else is the marketing-consent behaviour and is re-pinned here rather than
  * assumed: revocability, an event log that records CHANGES and not calls, and a
  * first explicit "no" counting as a change because an absent row means nobody
  * ever asked.
@@ -75,7 +75,7 @@ const CHECK_VIOLATION = "23514";
  */
 const NOT_A_GAMER = "00000000-0000-0000-0000-0000000009ee";
 
-describe("gamer photo consents (00244)", () => {
+describe("gamer photo consents", () => {
   let admin: SupabaseClient<Database>;
   let anon: SupabaseClient<Database>;
   let customer: SupabaseClient<Database>;
@@ -468,8 +468,9 @@ describe("gamer photo consents (00244)", () => {
     });
 
     it("refuses an ADMIN too, which is the design and not an oversight", async () => {
-      // 00220's ruling, carried over: an admin editing another family's answer
-      // about their own child is not a thing this platform does. Admins read
+      // The marketing-consent ruling, carried over: an admin editing another
+      // family's answer about their own child is not a thing this platform
+      // does. Admins read
       // it on the gamer's admin page and that is the whole of their access.
       const res = await set(adminAuth, TEST_IDS.GAMER, true, "settings");
       expect(res.error?.code).toBe(FORBIDDEN);
@@ -825,8 +826,8 @@ describe("gamer photo consents (00244)", () => {
       // Raw PostgREST, because `gamer_photo_consent_type[]` cannot express an
       // array with a NULL in it and casting around the generated type would be
       // the suppression the code-style rule warns about. The assertion that
-      // matters is not the refusal but what survives it: 00211's three-valued
-      // `NOT (col = ANY (array))` would have made the replacing DELETE match
+      // matters is not the refusal but what survives it: a three-valued
+      // `NOT (col = ANY (array))` would make the replacing DELETE match
       // nothing and quietly degrade the wipe-and-replace into a merge.
       const res = await callRpcRaw(
         adminToken,

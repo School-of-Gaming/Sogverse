@@ -11,7 +11,9 @@ import {
 import {
   GeduAssignmentsSectionView,
   type GeduAssignmentCardData,
+  type GeduDashboardCard,
 } from "./GeduAssignmentsSectionView";
+import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
 import { UncertifiedToolsNotice } from "./uncertified-notice";
 
 /**
@@ -58,6 +60,7 @@ import { UncertifiedToolsNotice } from "./uncertified-notice";
  */
 export function GeduDashboardPageBody({
   assignments,
+  substitutions = [],
   certified,
   contractAccepted,
   criminalRecordCheckPassed,
@@ -67,6 +70,16 @@ export function GeduDashboardPageBody({
 }: {
   /** One roll-up per assignment, already sorted soonest-first. */
   assignments: readonly GeduAssignmentCardData[];
+  /**
+   * One summary per **live substitution** — a single session this gedu is standing in
+   * for — already sorted by substitution date ascending.
+   *
+   * A second list rather than a widened first one, because the two reduce
+   * differently and the cards answer different questions; they are merged into
+   * the type-noun sections below, substitutions first, because a gedu's week is one
+   * week whichever kind of seat put a session in it.
+   */
+  substitutions?: readonly GeduSubstitutionSummary[];
   /**
    * Has this gedu accepted the contract version in force? `false` puts the
    * notice band above everything else on the page.
@@ -113,9 +126,9 @@ export function GeduDashboardPageBody({
    */
   instantRoomCard: React.ReactNode;
   /**
-   * The ask-for-help-or-send-feedback form, shown to every gedu — certified or
-   * not. A node for the same reason the two tool panels are: it is a
-   * self-contained panel with a backend action behind it, and handing it in is
+   * The help form, shown to every gedu — certified or not. A node for the same
+   * reason the two tool panels are: it is a self-contained panel with a backend
+   * action behind it, and handing it in is
    * what lets the preview scene render the real form with the submit inert.
    */
   helpForm: React.ReactNode;
@@ -129,9 +142,22 @@ export function GeduDashboardPageBody({
    * pill, the headings and the bodies are three views of one list, so an empty
    * dashboard cannot end up with a heading the nav has no entry for.
    */
-  const activitySections = activityTypeSections(
-    assignments,
-    (item) => item.assignment.productType,
+  const activitySections = activityTypeSections<GeduDashboardCard>(
+    [
+      // Substitutions lead their section: they are dated, one-off and the thing most
+      // easily forgotten, where an assignment recurs and will be there again
+      // next week. Each list arrives already ordered, so this is a
+      // concatenation rather than a sort.
+      ...substitutions.map((substitution) => ({ kind: "substitution" as const, item: substitution })),
+      ...assignments.map((assignment) => ({
+        kind: "assignment" as const,
+        item: assignment,
+      })),
+    ],
+    (card) =>
+      card.kind === "substitution"
+        ? card.item.productType
+        : card.item.assignment.productType,
   );
 
   /**
@@ -276,7 +302,7 @@ export function GeduDashboardPageBody({
           </div>
         </section>
 
-        {/* Help & feedback — the same section the two family dashboards carry,
+        {/* Help — the same section the two family dashboards carry,
             in the same order: the message form, with the support address inside
             its lead paragraph, and this role's own FAQ beneath it.
 

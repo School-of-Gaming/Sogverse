@@ -25,7 +25,15 @@ import type { AppHref } from "@/lib/constants/routes";
  * what sorts the products against each other, so a card whose worst problem is
  * "nobody is teaching this group" always outranks one that is only missing a
  * fee. It runs from *a child is enrolled and nobody is looking after them* down
- * to *a number is missing from a form*.
+ * to *a number or a name is missing from a form*.
+ *
+ * **The invoice-customer line sits beside the municipality-fee line because they
+ * are the same omission twice**: two blank fields on one club's form, each
+ * costing the same thing — a month's invoice file the CFO cannot write for that
+ * buyer — and the fee ranks a hair higher only because it additionally leaves
+ * the invoicing ledger's own total short, which the missing customer does not.
+ * The order between the two is the one place in this list where nothing much
+ * turns on it.
  *
  * **The two unstaffed-group kinds are the ranking's clearest statement of what
  * it is measuring.** The same fact — this group has no educator — sits near the
@@ -65,6 +73,7 @@ export const PRODUCT_ISSUE_KINDS = [
   "empty-group-without-gedu",
   "missing-gedu-fee",
   "missing-municipality-fee",
+  "missing-invoice-customer",
 ] as const;
 
 export type ProductIssueKind = (typeof PRODUCT_ISSUE_KINDS)[number];
@@ -105,7 +114,13 @@ export type ProductIssueFact =
    */
   | { kind: "empty-group-without-gedu"; values: { group: string } }
   | { kind: "missing-gedu-fee" }
-  | { kind: "missing-municipality-fee" };
+  | { kind: "missing-municipality-fee" }
+  /**
+   * A municipality club naming no invoice customer. Valueless like the two fee
+   * kinds and for the same reason: the sentence is about the club the card is
+   * already titled with, and there is nothing to interpolate.
+   */
+  | { kind: "missing-invoice-customer" };
 
 /** One issue, keyed for React — a product can carry two group lines at once. */
 export type ProductIssue = { id: string } & ProductIssueFact;

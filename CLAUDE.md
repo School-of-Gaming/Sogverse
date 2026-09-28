@@ -1,5 +1,26 @@
 # CLAUDE.md
 
+**The next release owes production's migration history repair, before the release merge.**
+The numbered migration history has been squashed into two baseline files, `00266` and
+`00267`. Production already ran every migration they replace, so none of their SQL may run
+there — instead the history table is edited to say so. Until that is done, `main` still
+holds the old files, and the first `db push` from `main` after the squash lands would try
+to replay the whole numbered history against a database that has it.
+
+In the same sitting as the release, immediately before the merge: assert that the numbered
+versions production records as applied are exactly the numbered files being squashed, with
+`npx supabase migration list --linked`; then `npx supabase migration repair --status
+reverted <every version below 00266>`, leaving `00266` and `00267` applied. The rollback is
+`npx supabase migration repair --status applied` over the same list. The baselines
+deliberately take over `00266` and `00267`, two version numbers production had already
+applied under other names, so after the repair production's history goes on recording those
+two rows with the old files' names and statements while the repo holds the baselines under
+the same numbers: that mismatch is expected, not a fault to chase.
+
+A release that skips this fails safe rather than corrupting anything: production's `db push`
+refuses, and the production promotion is held until the repair is run. **The release that
+pays this deletes this notice.**
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
@@ -10,10 +31,24 @@ npm run dev:stripe       # Start dev server + Stripe webhook listener
 npm run build            # Production build
 npm run lint             # ESLint
 npm run type-check       # TypeScript check (tsc --noEmit)
+npm run gates            # All landing gates: lint + type-check + translations + tests (runs all, reports every failure)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
 npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
+npm run db -- generate   # Regenerate database.types.ts and supabase/schema/ from this checkout's migrations
+npm run db               # The local database commands (up, park, down, reset, migrate, list) — supabase/CLAUDE.md
 ```
+
+**When served output disagrees with the source, the `.next` cache is stale — delete it.**
+It shows as type-check errors in routes that no longer exist, CSS or JS lagging a branch
+switch, or a Turbopack panic on every page ("creating new process … 0xc0000142") after a dev
+server died mid-write. Restarting the server does not clear it, and a stale and a fresh
+build can serve the same chunk URL, so compare chunk contents against the source, never the
+URL. To prove the source innocent first, compile `src/app/globals.css` standalone through
+`postcss` with `@tailwindcss/postcss` from the repo root. Delete it from
+PowerShell with `cmd /c rmdir /s /q .next`, which never follows a link: a build leaves junctions into
+`node_modules` under `.next`, and a delete that follows one empties the real package.
+After deleting, hard-reload the browser.
 
 ## Where the rules live
 
@@ -63,6 +98,14 @@ Branches are named `feat/<kebab-summary>`; feature work merges back into `dev`
 with a real merge commit (`--no-ff`) whose subject reads `Merge the <thing> into
 dev`. Releases go `dev` → `main` through the `/pr-dev-to-main` command.
 
+**Rule: `dev` is always safe to push, including commits on it that are not
+yours.** A commit on `dev` means the work is ready for staging — that is what
+committing there says. An unpushed commit on local `dev` is a push delayed for
+convenience, because more was known to be arriving soon, never one held back for
+safety. So a session landing its own work does not stop to ask about somebody
+else's unpushed commit: when local `dev` and `origin/dev` have diverged, rebase
+the local commits onto `origin/dev`, merge, and push the lot.
+
 For work that wants its own worktree — the usual shape when several things are in
 flight at once — `/worktree-flow` runs the whole lifecycle, from cutting the
 branch to tearing the worktree down after the merge.
@@ -75,12 +118,13 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 |---|---|
 | Sogverse the web app — cross-cutting app rules | `src/` |
 | Layout & scrolling | `src/components/layout/` |
-| Cookie consent and the Meta Pixel | `src/components/consent/` |
+| Cookie consent and the advertising scripts (Meta Pixel, Tag Manager) | `src/components/consent/` |
 | Game accounts (Minecraft, Roblox) | `src/components/game-account/` |
 | Partner brand assets (Roblox, Lynx marks) | `src/assets/partners/` |
 | Billing portal | `src/services/billing/` |
 | Parent PIN | `src/services/pin/` |
 | Gedu profiles, certification and the record check | `src/services/gedu/` |
+| Session substitutions — absences, offers and the sub an admin seats | `src/services/session-substitution/` |
 | i18n | `src/i18n/` |
 | Email templates | `src/lib/email-templates/` |
 | Calendar invitations (the mailed `.ics`) | `src/lib/calendar-invitations/` |
@@ -90,7 +134,8 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |
-| Municipality invoicing — the CFO's monthly invoice page | `src/components/admin/municipality-invoicing/` |
+| Municipality invoicing — the CFO's monthly invoice page and its Finvoice export | `src/components/admin/municipality-invoicing/` |
+| Invoice customers — the Fennoa buyers a municipality club is invoiced to | `src/components/admin/invoice-customers/` |
 | Family product page (a family's club/camp/event page) | `src/components/family/product-page/` |
 | Topic prep — the "Before the first session" guide | `src/components/topic-prep/` |
 | Chat components | `src/components/chat/` |
@@ -103,10 +148,14 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Testing conventions | `tests/` |
 | Operational scripts — policy and the output folder | `scripts/` |
 
-- `docs/` holds the docs a human deliberately maintains and that don't map to one directory, organized by doc *type* — each subdirectory owns its rules in its own `CLAUDE.md`: `architecture/` (living cross-cutting systems and repo-wide topics), `investigations/` (researched, nothing decided), `plans/` (decided and ready to build; **deleted** when the work lands), `runbooks/` (procedures run against live systems), `records/` (frozen stories behind how something got the way it is), `feedback/` (outside input — things to consider, not to do). `docs/CLAUDE.md` carries the category map and house style; a doc fitting no category sits at `docs/` top level. When a topic is in neither a colocated `CLAUDE.md` nor `docs/`, treat the code as the source of truth.
+- `docs/` holds the docs a human deliberately maintains and that don't map to one directory, organized by doc *type* — each subdirectory owns its rules in its own `CLAUDE.md`: `architecture/` (living cross-cutting systems and repo-wide topics), `investigations/` (researched, nothing decided), `plans/` (decided and ready to build; **deleted** when the work lands), `projects/` (a multi-session project's working context — decisions, ideas and tasks; **deleted** when it is done), `records/` (frozen stories behind how something got the way it is), `feedback/` (outside input — things to consider, not to do). `docs/CLAUDE.md` carries the category map and house style; a doc fitting no category sits at `docs/` top level. When a topic is in neither a colocated `CLAUDE.md` nor `docs/`, treat the code as the source of truth.
 - `TODO.md` is the running list of cross-cutting work we know we want to come back to. Distinct from `docs/`. **When an item is fully done with nothing left to discuss, delete it — don't check it off (`[x]`).** `TODO.md` tracks open work, not a changelog; the record of what was done lives in git history and in the docs/code the work produced. Leave `[ ]`/`[x]` only for partially-done items where the checked sub-points still give context for the open ones. **Additions need the owner's explicit approval**: TODO.md is the owner's backlog — a statement of where the project's attention goes — so on finding something worth tracking, propose it with its justification and write it in only once approved. A mention in a work summary is not approval. (Items an approved plan or the owner's own instruction already names are fine.) **The approval is not written into the item** — no "owner-approved" stamp, no date: an item's presence in the file is the approval, and a stamp saying so is space spent on nothing the reader can act on.
 
 **Rule: Docs state their rules self-containedly — never cite a specific code symbol as an illustration.** A pointer like "see `getParticipationsForGamers` in `participations.service.ts`" rots silently: the function gets renamed, moved, or deleted, and the doc goes on citing something that no longer exists or no longer makes the point. Describe the *shape* of the code instead, so the rule stands on its own. Two things stay fair game: naming an API the rule mandates (a rule like "resolve redirect targets through `resolveInternalPath()`" *is* that name — it cannot be stated without it), and directory or module references used for navigation, which are stable.
+
+**Rule: A doc states only what a reader would otherwise get wrong — omit what Claude does by default.** Every line of a `CLAUDE.md` is in context whenever its directory is, so a rule guarding against a direction nobody would take costs every session and plants the idea it guards against. Before writing a line, ask whether Claude would get it wrong without it. Don't announce a new direction, a retired concept, or a migration from an old one — a future reader never knew the old way — and don't point at what is already in context, such as a skill, whose description loads in every session.
+
+**Rule: Knowledge about this repo goes in a `CLAUDE.md` (or a doc or skill), never in local memory.** Local memory is not version-controlled and is lost between machines. It holds only three things: preferences that belong to the owner alone, quirks of the machine the session runs on, and personal data about real people, which never enters the repo.
 
 ## Environment Variables
 
@@ -114,19 +163,23 @@ All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — in
 
 ## Database
 
-Migrations in `supabase/migrations/`. The migration workflow (push → regenerate types —
-`schema.sql` is CI-maintained and must not be dumped or edited by hand), the "read
-current state from `schema.sql`/`database.types.ts`, not migrations" rule, the
-generated-nullability fix patterns, and the access-control rules
-all live in **`supabase/CLAUDE.md`** (auto-loads when you work under `supabase/`). The
-always-on tripwires:
+Migrations in `supabase/migrations/`. The migration workflow, the same in a worktree as
+on `dev` directly, lives in **`supabase/CLAUDE.md`**, together with `supabase/schema/`
+(one file per object, generated alongside the types and committed by the branch that
+changed it, never hand-edited), the "read current state from
+`supabase/schema/`/`database.types.ts`, not migrations" rule, the generated-nullability fix
+patterns, and the access-control rules; that file auto-loads when you work under
+`supabase/`. The always-on tripwires:
 
-- **`database.types.ts` is purely auto-generated — never hand-edit it.** Push the
-  migration first, then regenerate. Convenience aliases (`Profile`, `UserRole`, …) live
-  in `src/types/index.ts`; after regenerating, add aliases for any new tables/enums.
-- **A migration that adds/modifies functions or tables must be pushed and types
-  regenerated before committing** — DB tests and type-check depend on
-  `database.types.ts` matching the schema.
+- **Agents never write to staging or prod on their own initiative** — a write a piece of
+  work needs goes to a seed file or to a local database. The rule and what authorizes a
+  write are in `supabase/CLAUDE.md`.
+- **`database.types.ts` is purely auto-generated — never hand-edit it.** Convenience
+  aliases (`Profile`, `UserRole`, …) live in `src/types/index.ts`; after regenerating, add
+  aliases for any new tables/enums.
+- **A migration that adds/modifies functions or tables regenerates `database.types.ts`
+  before committing, by the workflow in `supabase/CLAUDE.md`** — DB tests and type-check
+  depend on the generated file matching the schema.
 - **Every new object (table, view, sequence, function) needs an explicit `GRANT`** — no
   Data API access by default, not even for `service_role`. Grant per role. A function
   exposed to `authenticated`/`anon` additionally has to be **classified in the DB test
@@ -135,6 +188,11 @@ always-on tripwires:
   write-IDOR case. The spine's completeness checks fail the build otherwise.
 - **All new tables must enable RLS**, and **RLS INSERT/UPDATE policies must authorize
   both the actor AND the target** (checking only `column = auth.uid()` is an IDOR hole).
+- **The many database functions are the design, not drift.** The browser reads the
+  database directly, so a function is where a read crosses an access boundary and hands
+  back a narrowed slice. When something is a function, what it returns, and why moving the
+  logic into TypeScript was measured and turned down, are in `supabase/CLAUDE.md`
+  ("Logic lives in database functions on purpose").
 
 ## Testing
 
@@ -144,9 +202,9 @@ route-handler mocking, unit setup) live in **`tests/CLAUDE.md`** (auto-loads whe
 work under `tests/`). Two things worth knowing from anywhere:
 
 - **`npm run test` runs `unit/` + `integration/`** (node by default, jsdom for `.tsx`
-  component tests — see `tests/CLAUDE.md`). DB tests need a real Postgres
-  and run in **CI only** — we have no local stack — so exercise them by pushing your
-  branch, not locally.
+  component tests — see `tests/CLAUDE.md`). DB tests need a real Postgres: CI is the
+  authority on every push, and `npm run test:db:local` runs them against this
+  checkout's `--no-rich-seed` stack (`tests/CLAUDE.md` has the details).
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
 - **`smoke/` is the only CI job that builds the app**, and it asserts security headers
@@ -168,6 +226,17 @@ work under `tests/`). Two things worth knowing from anywhere:
 
 ## Code Style
 
+### Site copy is UK English; code and database identifiers are American English
+
+**Rule: what a reader sees is spelled the British way, and what a developer types is
+spelled the American way.** Strings in `messages/`, emails and every other user-facing
+sentence take `-ise`, `-our` and `-re`; identifiers — tables, columns, enum values,
+functions, types, variables, files, message *keys* — take the American spelling, because
+that is what the surrounding language, libraries and tooling already speak. The two
+halves may therefore name one thing with two different words, and that is the design
+rather than a slip to tidy up: a rename that "fixes" a spelling has to say which half it
+is changing, and changing one half never obliges the other.
+
 ### Lint must be clean — treat warnings as design signals
 
 **Rule: `npm run lint` must produce zero errors and zero warnings.** Our lint config is strict on purpose. When lint flags a line, resist the urge to silence it with a one-line patch (a cast, a disable comment, a throwaway rename). Stop and ask: *why* is the linter unhappy? The flagged line is usually a symptom — the real problem is often a design issue one or two levels up (wrong type at the boundary, a function doing two things, state living in the wrong place, a missing abstraction). Fix the underlying cause so the warning goes away naturally.
@@ -184,3 +253,14 @@ work under `tests/`). Two things worth knowing from anywhere:
 4. **Ship the primitive that makes conforming the cheapest path** — a guard function, a wrapper, a canonical template, giving step 3 a single greppable call site to require.
 
 The first two without the last two is an audit, not a fix: prose decays, a failing test doesn't, and fixing instances leaves the class alive. Keep the scope to one surface and one bug class per pass. Three standing instances show the shape: DB grants + RLS presence (the access-control DB test), DB function bodies (the authorization spine — `docs/architecture/db-authorization.md`), and the HTTP route layer (the posture registry — `docs/architecture/route-boundary.md`).
+
+### A comment describes current behaviour, never a migration number
+
+**Rule: a comment — in TypeScript, in SQL, or on a database object — says what the thing
+does now and why, and never cites a migration by number.** A number names a file that
+records one day's change, which is what git history is for; it also rots, because the
+numbered files are periodically squashed into a new baseline and the citation then points
+at nothing. Cite a decision by its date and ruling, or by the `docs/records/` entry that
+tells the story; cite a rule by the `CLAUDE.md` that holds it. A unit test sweeps the
+source tree, the schema dump and the seeds for five-digit migration citations and fails on
+any it finds.

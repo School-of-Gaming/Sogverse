@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
+import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { resolveGamerPhotoConsents } from "@/services/gamer-photo-consents/resolve-gamer-photo-consents";
@@ -92,6 +93,7 @@ const pastEntry: SessionFeedEntry = {
   id: PAST_ID,
   startsAt: new Date("2026-03-16T14:30:00.000Z"),
   endsAt: new Date("2026-03-16T16:00:00.000Z"),
+  staffing: NO_SESSION_STAFFING,
   report: "# Redstone week\n\nWe built item sorters.",
   staffNote: null,
   attendance: {},

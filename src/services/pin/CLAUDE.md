@@ -74,8 +74,10 @@ which account a session belongs to.
    the unlock gate (`/parent/unlock`) from every route, including public pages
    like `/shop`, except an explicit exempt set (the unlock gate,
    `/select-profile`, the emailed-link landing pages — `/reset-pin`,
-   `/verify-email`, `/reset-password`, `/forgot-password` — auth routes,
-   `/api/*`). The role
+   `/verify-email`, `/reset-password`, `/forgot-password` — the
+   `/complete-registration` page, auth routes, `/api/*`). A customer who still
+   owes their registration meets the registration gate in its place, having no
+   PIN to enter yet. The role
    lookup is skipped when a valid unlock cookie is already present, so
    logged-out and already-unlocked traffic pays no extra query.
 2. **API — `requireRole()` in `src/lib/auth.ts`.** Where the gate bites for

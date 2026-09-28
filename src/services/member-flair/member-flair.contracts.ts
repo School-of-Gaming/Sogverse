@@ -2,18 +2,18 @@ import { z } from "zod";
 import { Constants } from "@/types";
 
 /**
- * Wire contracts for the two member-flair RPCs (00203).
+ * Wire contracts for the two member-flair RPCs.
  *
  * Both return a JSONB document, which the type generator can only see as
- * `Json`, so these schemas — written from the function bodies in the migration
- * that defines them — are the structure. The db tests parse real RPC output
+ * `Json`, so these schemas — written from the function bodies under
+ * `supabase/schema/functions/` — are the structure. The db tests parse real RPC output
  * through the same schemas in CI, so Postgres and TypeScript cannot drift apart
  * quietly: a changed key fails the parse loudly instead of arriving as
  * `undefined` three components later.
  *
  * The staff-flair fields below are the *same fields* the roster documents
- * gained in the same migrations — the three of 00203 and `creations` since
- * 00227 — spelled identically on purpose. A surface reading either shape is
+ * carry — the three flair fields and `creations` — spelled identically on
+ * purpose. A surface reading either shape is
  * reading one fact about one (group, member) pair.
  *
  * This file is also the home of the **creation entry** shape itself, because
@@ -24,7 +24,7 @@ import { Constants } from "@/types";
  */
 
 // ---------------------------------------------------------------------------
-// Gamer creations (00227) — the list, and the one place its shape is written
+// Gamer creations — the list, and the one place its shape is written
 // ---------------------------------------------------------------------------
 
 /**
@@ -133,7 +133,7 @@ export const gamerCreationList = z
  * whose account is gone (`updated_by` is ON DELETE SET NULL), and the surface
  * then shows the note with no editor line.
  *
- * `creations` (00227) is the exception and is never null: a list has a real
+ * `creations` is the exception and is never null: a list has a real
  * empty value where a note does not, so the RPC emits `[]` and no reader has to
  * decide what an absent list means. It is also the one entry here that is **not
  * staff-only** — the member's own family reads the same list on their product

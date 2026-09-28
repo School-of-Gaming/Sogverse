@@ -141,7 +141,7 @@ export const DELETE = defineRoute({
  *    cleared). No seat-count gate — a deliberate admin capacity override.
  *  - `demote` — an active gamer dragged onto the waitlist. Sends them to the
  *    back via demote_to_waitlist (status→waitlisted, group cleared).
- *  - `invite` — the seat offer (00207). Grants nothing: it stamps the row and
+ *  - `invite` — the seat offer. Grants nothing: it stamps the row and
  *    mails the family to ask whether they can still come.
  *
  * The first two are the user-context client against an admin-guarded RPC. Both

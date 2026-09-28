@@ -9,7 +9,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  * The product_seat_counts rollup is the single source of truth for
  * Realtime-driven seat counters on parent surfaces (Supabase Realtime
  * filters by RLS, and participations hides other customers' rows, so
- * we can't subscribe directly — see migration 00039 for the rationale).
+ * we can't subscribe directly).
  *
  * Every test asserts the rollup row reflects the new counts *within the
  * same statement* — the trigger is AFTER INSERT/UPDATE/DELETE so it

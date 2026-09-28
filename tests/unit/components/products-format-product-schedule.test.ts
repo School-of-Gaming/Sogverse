@@ -13,7 +13,7 @@ type Args = Parameters<typeof formatProductSchedule>[0];
 function product(over: Partial<ProductBrowseRow>): Args["product"] {
   return {
     product_type: "consumer_club",
-    start_date: null,
+    start_date: "2026-01-05",
     end_date: null,
     timezone: "Europe/Helsinki",
     schedule_slots: [],
@@ -147,8 +147,11 @@ describe("formatProductSchedule — same-zone passthrough (camps)", () => {
     expect(s.groups).toEqual([]);
   });
 
-  it("returns tbd when a camp has no start_date", () => {
-    expect(summary({ product_type: "camp", start_date: null, end_date: null }).kind).toBe("tbd");
+  it("returns tbd when a camp has no end_date", () => {
+    expect(
+      summary({ product_type: "camp", start_date: "2026-06-15", end_date: null })
+        .kind,
+    ).toBe("tbd");
   });
 
   it("date range is UTC-pinned near a DST boundary (no previous-day slip)", () => {

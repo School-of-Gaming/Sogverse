@@ -145,8 +145,7 @@ describe("the slugs behind a row", () => {
 });
 
 /**
- * **What opening an account, and adding a child, commit an adult to** (00249,
- * 00250).
+ * **What opening an account, and adding a child, commit an adult to.**
  *
  * Two questions asked at two moments, recorded against two subjects: the terms
  * once for the account, and the guardian declaration once for each child. These
@@ -173,8 +172,8 @@ describe("the self-service consent sets", () => {
   });
 
   it("keeps the two subjects apart", () => {
-    // The guardian declaration left the registration set in 00250: ticked at
-    // registration it said the account holder is a parent or guardian of
+    // The guardian declaration is not in the registration set: ticked at
+    // registration it would say the account holder is a parent or guardian of
     // somebody, which says nothing about a child added a year later.
     expect(REGISTRATION_CONSENT_DOCUMENTS).not.toContain("guardian-declaration");
     expect(GAMER_CONSENT_DOCUMENTS).toContain("guardian-declaration");

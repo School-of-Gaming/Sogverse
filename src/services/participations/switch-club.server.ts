@@ -48,7 +48,7 @@ import type {
  * one module and the route stays a declaration of its posture.
  */
 
-/** The statuses the participations unique index covers, per migration 00245. */
+/** The statuses the participations unique index covers. */
 const OCCUPIED_STATUSES = ["active", "waitlisted", "completed"] as const;
 
 /** The target product columns every step of the switch needs. */
@@ -545,8 +545,8 @@ export async function commitSwitchClub({
     // The argument carries a SQL DEFAULT, so it is optional in the generated
     // type: `undefined` leaves the placement to the shared rule, which for a
     // paid target is the unassigned inbox. Passing an explicit null would say
-    // the same thing, but only `undefined` omits the argument, and omitting it
-    // is what keeps this call identical to every pre-00246 one.
+    // the same thing, but only `undefined` omits the argument, so the DEFAULT
+    // is what decides the placement rather than this call.
     p_group_id: groupId ?? undefined,
   });
 

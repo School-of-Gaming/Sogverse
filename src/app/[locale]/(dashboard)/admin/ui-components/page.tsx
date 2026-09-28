@@ -42,6 +42,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Identicon } from "@/components/ui/identicon";
 import {
   PersonChip,
@@ -52,9 +53,9 @@ import { GamerFlairDialog, NewcomerBadge } from "@/components/member-flair";
 import { ConsentBannerView } from "@/components/consent";
 import type { ConsentChoice } from "@/lib/consent";
 import {
-  HelpFeedbackCardView,
-  type HelpFeedbackAudience,
-} from "@/components/help/help-feedback-card-view";
+  HelpRequestCardView,
+  type HelpRequestAudience,
+} from "@/components/help/help-request-card-view";
 import { MinecraftPasswordResetCardView } from "@/components/tools/minecraft-password-reset-card-view";
 import type { MinecraftPasswordResetResult } from "@/services/minecraft-education/minecraft-education.contracts";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
@@ -713,6 +714,116 @@ function DialogDemo() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </Section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Confirm Dialog Demo                                                */
+/* ------------------------------------------------------------------ */
+
+/** Which of the three fixtures is up; `null` is the section at rest. */
+type ConfirmDemoWrite = "closes" | "holds" | "refused";
+
+/**
+ * The shared confirm dialog, in the two modes a caller picks between and the
+ * refusal only one of them can show.
+ *
+ * A dialog is an overlay, so the three fixtures are three triggers rather than
+ * three cards: only one of them can be on screen, and each is one press from
+ * the last. What they are for is the comparison the modes actually need —
+ * whether the dialog is still there after the press, and what the buttons are
+ * doing while the write is in the air.
+ *
+ * Every write here is a fake promise: `holds` is one that never settles, so the
+ * committing state can be looked at for as long as you like (Escape and the
+ * backdrop are refused — that is the state, not a stuck page; press Cancel
+ * after it, or reload), and `refused` is one that rejects at once, which is how
+ * the failure line arrives without a network.
+ */
+function ConfirmDialogDemo() {
+  const [write, setWrite] = useState<ConfirmDemoWrite | null>(null);
+  const [outcome, setOutcome] = useState<string | null>(null);
+
+  return (
+    <Section title="Confirm dialog">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          variant="outline"
+          onClick={() => {
+            setOutcome(null);
+            setWrite("closes");
+          }}
+        >
+          Closes on the press
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setOutcome(null);
+            setWrite("holds");
+          }}
+        >
+          Holds — write in flight
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setOutcome(null);
+            setWrite("refused");
+          }}
+        >
+          Holds — write refused
+        </Button>
+      </div>
+
+      {outcome !== null && (
+        <p className="text-sm text-muted-foreground">{outcome}</p>
+      )}
+
+      {write === "closes" && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setWrite(null)}
+          title="Remove Aino from Tuesday club"
+          description="Their seat goes back to the waiting list."
+          confirmLabel="Remove"
+          onConfirm={() =>
+            setOutcome(
+              "Closed in the same tick as the press — the write runs behind it, and the surface underneath shows that it is.",
+            )
+          }
+        />
+      )}
+
+      {write === "holds" && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setWrite(null)}
+          title="Withdraw the substitution request"
+          description="Every offer your colleagues have made is dropped."
+          confirmLabel="Withdraw"
+          confirmVariant="default"
+          holdWhileCommitting
+          onConfirm={() => new Promise<void>(() => {})}
+        />
+      )}
+
+      {write === "refused" && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setWrite(null)}
+          title="Withdraw the substitution request"
+          description="Every offer your colleagues have made is dropped."
+          confirmLabel="Withdraw"
+          confirmVariant="default"
+          holdWhileCommitting
+          describeError={() =>
+            "That could not be withdrawn. Refresh and try again."
+          }
+          onConfirm={() => Promise.reject(new Error("refused"))}
+        />
+      )}
     </Section>
   );
 }
@@ -2842,6 +2953,8 @@ export default function AdminUIComponentsPage() {
 
       <DialogDemo />
 
+      <ConfirmDialogDemo />
+
       <SwitchProfileDialogDemo />
 
       <SwitchGateDemo />
@@ -3020,9 +3133,10 @@ export default function AdminUIComponentsPage() {
             }}
             certified={false}
           />
-          {/* And the third state: the certification read failed, so nobody's
-              status is known. It has to look like the "no" above rather than
-              like the "yes" — a mark is a claim, and there is nobody here to
+          {/* An educator whose standing has not been answered yet: the two
+              warnings come from a read that lands after the rows do, and until
+              it does the row says nothing about them. A warning is a claim
+              that somebody has NOT done something, and there is nobody here to
               make it. */}
           <UserRow
             user={{
@@ -3033,7 +3147,8 @@ export default function AdminUIComponentsPage() {
               email_verified_at: null,
               role: "gedu",
             }}
-            certified={null}
+            certified={false}
+            standingWarnings={null}
           />
           {/* A parent who has never confirmed their address: no mark at all,
               which is the ordinary state of a new account. */}
@@ -3177,7 +3292,7 @@ export default function AdminUIComponentsPage() {
         <MinecraftPasswordResetDemo />
       </Section>
 
-      <Section title="Help & feedback form">
+      <Section title="Help form">
         {/* One card, rendered unchanged in the parent, gamer and gedu Help
             sections. Every state is here because the three preview scenes can
             only ever show the idle one — a scene must never gain a live submit
@@ -3194,7 +3309,7 @@ export default function AdminUIComponentsPage() {
           shown as the route&rsquo;s own English sentence, which is written for
           a developer reading a log.
         </p>
-        <HelpFeedbackDemo />
+        <HelpRequestDemo />
       </Section>
 
       <Section title="Gedu contract — settings card">
@@ -3375,7 +3490,7 @@ function MinecraftPasswordResetDemo() {
 function noopSubmit() {}
 
 /* ------------------------------------------------------------------ */
-/*  Help & feedback form                                               */
+/*  Help form                                                          */
 /* ------------------------------------------------------------------ */
 
 /**
@@ -3387,13 +3502,13 @@ function noopSubmit() {}
  * The idle card of each audience holds its own message so typing works; the
  * others are driven by props alone, because no click can reach them here.
  */
-function HelpFeedbackDemo() {
+function HelpRequestDemo() {
   return (
     <div className="space-y-6">
       <SubSection title="Adult — parent and gedu">
         <div className="grid gap-4 lg:grid-cols-2">
-          <LiveHelpFeedbackDemoCard audience="adult" />
-          <HelpFeedbackCardView
+          <LiveHelpRequestDemoCard audience="adult" />
+          <HelpRequestCardView
             audience="adult"
             message="My daughter cannot hear anyone in the club room."
             onMessageChange={noopMessage}
@@ -3402,7 +3517,7 @@ function HelpFeedbackDemo() {
             error={null}
             onSubmit={noopSubmit}
           />
-          <HelpFeedbackCardView
+          <HelpRequestCardView
             audience="adult"
             message=""
             onMessageChange={noopMessage}
@@ -3411,7 +3526,7 @@ function HelpFeedbackDemo() {
             error={null}
             onSubmit={noopSubmit}
           />
-          <HelpFeedbackCardView
+          <HelpRequestCardView
             audience="adult"
             message="My daughter cannot hear anyone in the club room."
             onMessageChange={noopMessage}
@@ -3425,8 +3540,8 @@ function HelpFeedbackDemo() {
 
       <SubSection title="Gamer">
         <div className="grid gap-4 lg:grid-cols-2">
-          <LiveHelpFeedbackDemoCard audience="gamer" />
-          <HelpFeedbackCardView
+          <LiveHelpRequestDemoCard audience="gamer" />
+          <HelpRequestCardView
             audience="gamer"
             message="My mic does not work."
             onMessageChange={noopMessage}
@@ -3442,15 +3557,15 @@ function HelpFeedbackDemo() {
 }
 
 /** The card a reader can actually type into, over local state. */
-function LiveHelpFeedbackDemoCard({
+function LiveHelpRequestDemoCard({
   audience,
 }: {
-  audience: HelpFeedbackAudience;
+  audience: HelpRequestAudience;
 }) {
   const [message, setMessage] = useState("");
 
   return (
-    <HelpFeedbackCardView
+    <HelpRequestCardView
       audience={audience}
       message={message}
       onMessageChange={setMessage}

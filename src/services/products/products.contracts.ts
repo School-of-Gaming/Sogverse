@@ -135,8 +135,11 @@ const productDataBase = z.object({
   material_url: z.string().nullable(),
   location_id: z.string().nullable(),
   is_remote: z.boolean(),
-  signup_threshold: z.number().nullable(),
-  start_date: z.string().nullable(),
+  // The day the product begins, and the whole of what starts it. Required and
+  // non-nullable, matching a NOT NULL column: a product nobody could point at a
+  // starting day is not a product, and the lifecycle every reader derives is a
+  // comparison against this date.
+  start_date: z.string(),
   end_date: z.string().nullable(),
   // The IANA zone the product's wall clocks are authored in — its schedule
   // slots and its registration drop.
@@ -214,6 +217,26 @@ const productDataBase = z.object({
   primary_gedu_fee_cents: z.number().int().nonnegative().nullable(),
   assistant_gedu_fee_cents: z.number().int().nonnegative().nullable(),
   municipality_fee_cents: z.number().int().nullable(),
+  // The Fennoa customer a municipality club is invoiced to, or null where
+  // nobody has agreed who pays yet — the ordinary state of a club that has just
+  // been created. Per club rather than per municipality: one city can be two
+  // customers (library clubs and school clubs bought under two agreements) and
+  // an association can buy clubs sited in a municipality it is not, so this is
+  // never derived from `location_id`.
+  //
+  // Required-nullable, exactly like `tag` and `region_lock_country` above, and
+  // the update half is the load-bearing one: the RPC parameter is `DEFAULT
+  // NULL` (it has to be — null is legal, no CHECK backstops its absence, and
+  // codegen cannot express an explicit null for a non-defaulted argument), so
+  // an omitted field would reach a function that assigns every editable column
+  // and unlink the club from its buyer without anybody asking.
+  //
+  // Only shape is checked here. Whether the id names a customer that exists is
+  // the foreign key's answer, and whether this product may carry one at all is
+  // `chk_products_invoice_customer_only_for_muni` — a non-municipality product
+  // with a customer is refused by the database rather than by a rule restated
+  // at the boundary.
+  invoice_customer_id: z.string().uuid().nullable(),
 });
 
 /** The JSON body of POST /api/admin/products/create. */

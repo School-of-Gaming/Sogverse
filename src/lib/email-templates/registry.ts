@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { buildFeedbackEmail, feedbackReplyToAddress } from "./feedback";
+import { buildHelpRequestEmail, helpRequestReplyToAddress } from "./help-request";
 import { buildPasswordResetEmail } from "./password-reset";
 import { buildWelcomeParentEmail, buildWelcomeGeduEmail } from "./welcome";
 import {
@@ -467,18 +467,18 @@ function resolveProductConfirmationParams(params: Record<string, string>): Templ
  * two modes that share an answer share an option, and the form's default is the
  * one nearly every gamer is on.
  */
-const FEEDBACK_GAMER_MAILBOX_OPTIONS = [
+const HELP_REQUEST_GAMER_MAILBOX_OPTIONS = [
   { label: "No email of their own (parent or username sign-in)", value: "none" },
   { label: "Their own email (the email sign-in)", value: "own" },
 ];
 
 /**
- * The help-and-feedback form's two gamer-only fields. The parent's address is
+ * The help form's two gamer-only fields. The parent's address is
  * where a reply to a child's message goes, so an untouched text input posting
  * its placeholder means "none" has to be typed as an empty field, which becomes
  * null here; the sign-in select becomes the boolean the builder takes.
  */
-function resolveFeedback(params: Record<string, string>): TemplateParams {
+function resolveHelpRequest(params: Record<string, string>): TemplateParams {
   const { parentEmail, gamerMailbox, ...rest } = params;
   return {
     ...rest,
@@ -765,7 +765,7 @@ const passwordResetParamsSchema = z.object({
  * fit the registry's param bag. It and the mailbox flag only mean anything on a
  * gamer's message — the builder ignores both for every other role.
  */
-const feedbackParamsSchema = z.object({
+const helpRequestParamsSchema = z.object({
   userName: z.string().min(1),
   userRole: z.enum(Constants.public.Enums.user_role),
   userEmail: z.string().email(),
@@ -774,9 +774,19 @@ const feedbackParamsSchema = z.object({
   gamerOwnMailbox: z.boolean(),
 });
 
+/**
+ * The welcome mails' verification link, or the typed `none` for an address
+ * that is already verified — an account created through Google, whose mail
+ * then asks for nothing.
+ */
+const welcomeVerificationUrlParam = z
+  .string()
+  .transform((value) => noneOrText(value) ?? undefined)
+  .pipe(z.string().url().optional());
+
 const welcomeParentParamsSchema = z.object({
   firstName: z.string().min(1),
-  verificationUrl: z.string().url(),
+  verificationUrl: welcomeVerificationUrlParam,
   dashboardUrl: z.string().url(),
   shopUrl: z.string().url(),
   settingsUrl: z.string().url(),
@@ -784,7 +794,7 @@ const welcomeParentParamsSchema = z.object({
 
 const welcomeGeduParamsSchema = z.object({
   firstName: z.string().min(1),
-  verificationUrl: z.string().url(),
+  verificationUrl: welcomeVerificationUrlParam,
   dashboardUrl: z.string().url(),
   settingsUrl: z.string().url(),
 });
@@ -1410,17 +1420,14 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
   passwordReset: defineTemplate({
     label: "Password Reset",
     fields: [
-      { key: "resetLink", label: "Reset Link", placeholder: "https://sogverse.sog.gg/api/auth/callback?next=/reset-password&code=abc123" },
+      { key: "resetLink", label: "Reset Link", placeholder: "https://sogverse.sog.gg/reset-password?token_hash=abc123&type=recovery&email=jane%40example.com" },
     ],
     schema: passwordResetParamsSchema,
     build: (p, t, locale) => buildPasswordResetEmail(t, p.resetLink, locale),
     subject: (_p, t) => t("passwordReset.subject"),
   }),
-  // The registry key stays `feedback` — it is the API's template identifier and
-  // renaming it would break every caller for a word only we read. The label is
-  // what an admin picks from, so that is where the form's real name goes.
-  feedback: defineTemplate({
-    label: "Help & Feedback",
+  helpRequest: defineTemplate({
+    label: "Help request",
     fields: [
       { key: "userName", label: "User Name", placeholder: "Marja Virtanen" },
       {
@@ -1449,11 +1456,11 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         key: "gamerMailbox",
         label: "Gamer's sign-in (gamer only)",
         type: "select",
-        options: FEEDBACK_GAMER_MAILBOX_OPTIONS,
+        options: HELP_REQUEST_GAMER_MAILBOX_OPTIONS,
       },
     ],
-    schema: feedbackParamsSchema,
-    build: (p, t, locale) => buildFeedbackEmail(t, locale, {
+    schema: helpRequestParamsSchema,
+    build: (p, t, locale) => buildHelpRequestEmail(t, locale, {
       userName: p.userName,
       userRole: p.userRole,
       userEmail: p.userEmail,
@@ -1463,12 +1470,12 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       parentEmail: p.parentEmail ?? undefined,
       gamerOwnMailbox: p.gamerOwnMailbox,
     }),
-    subject: (p, t) => t("feedback.subject", { displayName: p.userName, role: t(ROLE_LABEL_KEYS[p.userRole]) }),
-    resolveParams: resolveFeedback,
+    subject: (p, t) => t("helpRequest.subject", { displayName: p.userName, role: t(ROLE_LABEL_KEYS[p.userRole]) }),
+    resolveParams: resolveHelpRequest,
     // The same resolver the mail's own "Reply to" row reads, so a test send
     // replies exactly where the live one does — a gamer's to their linked
     // parent, everyone else's to themselves.
-    replyTo: (p) => feedbackReplyToAddress({
+    replyTo: (p) => helpRequestReplyToAddress({
       isGamer: p.userRole === "gamer",
       parentEmail: p.parentEmail ?? undefined,
       userEmail: p.userEmail,
@@ -1478,7 +1485,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Welcome (Parent)",
     fields: [
       { key: "firstName", label: "First Name", placeholder: "Jane" },
-      { key: "verificationUrl", label: "Verification URL", placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
+      { key: "verificationUrl", label: `Verification URL (\`${FORM_NONE_TOKEN}\` for an address Google already verified)`, placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
       { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
       { key: "shopUrl", label: "Shop URL", placeholder: "https://sogverse.sog.gg/shop" },
       { key: "settingsUrl", label: "Settings URL", placeholder: "https://sogverse.sog.gg/settings" },
@@ -1491,7 +1498,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Welcome (Gedu)",
     fields: [
       { key: "firstName", label: "First Name", placeholder: "Alice" },
-      { key: "verificationUrl", label: "Verification URL", placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
+      { key: "verificationUrl", label: `Verification URL (\`${FORM_NONE_TOKEN}\` for an address Google already verified)`, placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
       { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/gedu" },
       { key: "settingsUrl", label: "Settings URL", placeholder: "https://sogverse.sog.gg/settings" },
     ],

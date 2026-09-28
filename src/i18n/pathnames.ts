@@ -131,6 +131,7 @@ export const PATHNAMES = {
   "/seat-offer": "/seat-offer",
   "/verify-email": "/verify-email",
   "/select-profile": "/select-profile",
+  "/complete-registration": "/complete-registration",
 
   // --- Shared ---------------------------------------------------------------
   "/settings": "/settings",
@@ -160,8 +161,12 @@ export const PATHNAMES = {
   "/admin/municipality-clubs/[id]/groups/[groupId]":
     "/admin/municipality-clubs/[id]/groups/[groupId]",
   "/admin/municipality-invoicing": "/admin/municipality-invoicing",
+  "/admin/invoice-customers": "/admin/invoice-customers",
+  "/admin/invoice-customers/new": "/admin/invoice-customers/new",
+  "/admin/invoice-customers/[id]": "/admin/invoice-customers/[id]",
   "/admin/sites": "/admin/sites",
   "/admin/sites/[id]": "/admin/sites/[id]",
+  "/admin/substitutions": "/admin/substitutions",
   "/admin/testing": "/admin/testing",
   "/admin/tools": "/admin/tools",
   "/admin/ui-components": "/admin/ui-components",
@@ -192,6 +197,7 @@ export const PATHNAMES = {
   "/gedu/clubs/[id]": "/gedu/clubs/[id]",
   "/gedu/contract": "/gedu/contract",
   "/gedu/events/[id]": "/gedu/events/[id]",
+  "/gedu/substitutions": "/gedu/substitutions",
 
   // --- Voice ----------------------------------------------------------------
   "/voice/[code]": "/voice/[code]",

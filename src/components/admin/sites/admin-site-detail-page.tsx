@@ -332,11 +332,7 @@ function SiteEditor({
  * One product connected to this site, linking to its own admin page.
  *
  * The chip is derived from the row's own dates, like every other status chip in
- * the app. The sign-up count is the one input this read does not carry — it is
- * a reference list, not a lifecycle surface, and counting sign-ups per product
- * here would be a query per row — so a threshold-bearing club reads as pending
- * until its start date arrives. Its own page resolves the count and says
- * otherwise.
+ * the app.
  */
 function ConnectedProductRow({
   product,
@@ -370,7 +366,7 @@ function ConnectedProductRow({
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <ProductStatusChip status={effectiveStatus(product, now, 0)} />
+        <ProductStatusChip status={effectiveStatus(product, now)} />
         <NavChevron size="sm" />
       </div>
     </Link>

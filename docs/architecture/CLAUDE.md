@@ -1,7 +1,7 @@
 # docs/architecture
 
 Living docs for what is too cross-cutting for any one colocated `CLAUDE.md`: multi-system
-architecture (products, db-authorization, route-boundary) and repo-wide running topics
+architecture (products, db-authorization, route-boundary, slack-purchase-notifications) and repo-wide running topics
 (performance, security, discoverability).
 
 - **Definitive and current.** Each doc describes the system as it exists and is updated

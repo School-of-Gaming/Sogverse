@@ -86,9 +86,9 @@ function dashboardHtml(scenario: "typical" | "empty"): string {
 describe("a gamer with every kind of thing booked", () => {
   const html = dashboardHtml("typical");
 
-  it("ends in the Help section, headed in the child's own words", () => {
+  it("ends in the Help section, headed with the question every role sees", () => {
     expect(html).toContain('id="help"');
-    expect(html).toContain(`>${messages.helpSection.gamerHeading}</h2>`);
+    expect(html).toContain(`>${messages.helpSection.heading}</h2>`);
   });
 
   it("puts Help last in the pill, after every activity noun", () => {

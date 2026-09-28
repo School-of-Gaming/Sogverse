@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  FileDown,
   TriangleAlert,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
@@ -17,12 +18,14 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { monthsAfter } from "@/lib/calendar-date";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
 import { useNow } from "@/providers";
+import { finvoiceHref, finvoiceReadiness } from "@/lib/finvoice";
 import { cn, formatCurrencyFromCents, formatDateOnly } from "@/lib/utils";
 import type { MunicipalityInvoicingSnapshot } from "@/services/municipality-invoicing";
 import { useMunicipalityInvoicingMonth } from "@/services/municipality-invoicing";
 import {
   buildMunicipalityInvoicing,
   type InvoiceClub,
+  type InvoiceCustomerSummary,
   type InvoiceMunicipality,
   type InvoiceSession,
   type MunicipalityInvoicingView,
@@ -177,6 +180,7 @@ export function MunicipalityInvoicingPage({
               <MunicipalitySection
                 key={municipality.id}
                 municipality={municipality}
+                monthStart={invoice.monthStart}
                 locale={locale}
                 isOpen={openKeys.has(municipality.id)}
                 onToggle={() =>
@@ -274,6 +278,12 @@ function MonthSummaryRow({
             <ExcludedClubs count={invoice.clubsWithoutFee} />
           </>
         )}
+        {invoice.clubsWithoutCustomer > 0 && (
+          <>
+            {SCHEDULE_PART_SEPARATOR}
+            <ClubsWithoutCustomer count={invoice.clubsWithoutCustomer} />
+          </>
+        )}
       </p>
       <p className="ml-auto flex items-baseline gap-2">
         {/* Furniture: the one caption on the ledger, because a figure at the end
@@ -318,6 +328,27 @@ function ExcludedClubs({ count }: { count: number }) {
   );
 }
 
+/**
+ * The phrase that says a *file* is blocked, wherever a count of clubs is
+ * printed.
+ *
+ * Deliberately a second phrase beside `ExcludedClubs` rather than a wider
+ * version of it, because the two say opposite things about the figure they sit
+ * next to: a club with no fee is missing from the total on this line, and a
+ * club with no customer is missing from nothing at all — its sessions and its
+ * money are here in full, and what it lacks is somebody to address the invoice
+ * to. Read as one warning they would each be wrong about the other's clubs.
+ */
+function ClubsWithoutCustomer({ count }: { count: number }) {
+  const t = useTranslations("admin.municipalityInvoicing");
+
+  return (
+    <span className="font-medium text-warning">
+      {t("clubsWithoutCustomer", { count })}
+    </span>
+  );
+}
+
 /** A fee, or a total, that cannot be stated because nobody has set the fee. */
 function FeeNotSet() {
   const t = useTranslations("admin.municipalityInvoicing");
@@ -327,6 +358,119 @@ function FeeNotSet() {
       <TriangleAlert className="h-3 w-3 shrink-0" aria-hidden />
       {t("feeNotSet")}
     </span>
+  );
+}
+
+/**
+ * A club nobody has named a buyer for, flagged on its own line.
+ *
+ * The same shape as the missing fee beside it — triangle, warning tone, one
+ * phrase — because they are the same kind of thing to the reader: a gap in a
+ * club's setup that this page found and its own admin page repairs. It carries
+ * no link of its own; the club's name is already a link to exactly that page,
+ * and a second anchor on one row would give the reader two targets for one
+ * repair.
+ */
+function CustomerNotSet() {
+  const t = useTranslations("admin.municipalityInvoicing");
+
+  return (
+    <span className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium text-warning">
+      <TriangleAlert className="h-3 w-3 shrink-0" aria-hidden />
+      {t("customerNotSet")}
+    </span>
+  );
+}
+
+/**
+ * A municipality's Finvoice downloads: one per Fennoa customer among its clubs.
+ *
+ * **One control per customer, not per municipality**, because one file is one
+ * customer's whole month — a city that buys library clubs and school clubs
+ * under two agreements imports two files, and an association that buys clubs
+ * sited in three municipalities imports one. So the same control appears on
+ * every municipality the customer's clubs sit in and fetches the same file from
+ * each, which is the honest rendering of a buyer that spans sections.
+ *
+ * **A blocked file is shown as blocked rather than hidden**, with the reason in
+ * the same warning tone the rest of this page reports a gap in: a control that
+ * disappeared when a club lost its fee would leave the CFO looking for a file
+ * with nothing on the page saying why it is not there. It is a `span` rather
+ * than a disabled anchor because an anchor with no destination is not inert.
+ *
+ * The readiness comes from the export's own predicate, so the state of this
+ * control and the answer the download route gives cannot disagree.
+ */
+function CustomerFiles({
+  monthStart,
+  customers,
+}: {
+  monthStart: string;
+  customers: readonly InvoiceCustomerSummary[];
+}) {
+  if (customers.length === 0) return null;
+
+  return (
+    <span className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
+      {customers.map((summary) => (
+        <CustomerFile
+          key={summary.customer.id}
+          monthStart={monthStart}
+          summary={summary}
+        />
+      ))}
+    </span>
+  );
+}
+
+function CustomerFile({
+  monthStart,
+  summary,
+}: {
+  monthStart: string;
+  summary: InvoiceCustomerSummary;
+}) {
+  const t = useTranslations("admin.municipalityInvoicing");
+  const { customer } = summary;
+  const readiness = finvoiceReadiness(summary);
+
+  const label = (
+    <>
+      <span className="truncate">{customer.invoice_name}</span>
+      <span className="shrink-0 tabular-nums text-muted-foreground">
+        {customer.fennoa_customer_no}
+      </span>
+    </>
+  );
+
+  if (!readiness.ok) {
+    return (
+      <span className="flex min-w-0 items-baseline gap-1.5 text-xs text-warning">
+        <TriangleAlert className="h-3 w-3 shrink-0 self-center" aria-hidden />
+        {label}
+        <span className="shrink-0 font-medium">
+          {readiness.reason === "club_without_fee"
+            ? t("fileBlockedByFee", { count: readiness.clubsWithoutFee })
+            : t("fileBlockedByNothingToInvoice")}
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <a
+      href={finvoiceHref(monthStart, customer.id)}
+      download
+      // The row around this is listening for a click to open the municipality.
+      // Left to bubble, asking for a file would also expand the section it was
+      // asked for from.
+      onClick={(event) => event.stopPropagation()}
+      title={t("downloadInvoiceFor", { customer: customer.invoice_name })}
+      className="flex min-w-0 items-baseline gap-1.5 text-xs text-act hover:underline"
+    >
+      <FileDown className="h-3 w-3 shrink-0 self-center" aria-hidden />
+      {label}
+    </a>
   );
 }
 
@@ -411,17 +555,26 @@ function MonthLink({
  * whether a club had to be left out — and opening it is how the reader asks
  * *why*.
  *
+ * **It is also where a month is actually sent.** The line carries one download
+ * per Fennoa customer among its clubs, so the CFO works down the collapsed
+ * ledger taking one file per buyer without opening anything — which is what
+ * makes closing everything by default affordable for the half of this page that
+ * is a job rather than a report.
+ *
  * The line is identical open and closed, which is what keeps the layout rule
  * satisfied: expanding adds the clubs underneath and moves nothing the reader
  * was already looking at, and it is their own click that did it.
  */
 function MunicipalitySection({
   municipality,
+  monthStart,
   locale,
   isOpen,
   onToggle,
 }: {
   municipality: InvoiceMunicipality;
+  /** The month on screen — what a customer's file is asked for. */
+  monthStart: string;
   locale: string;
   isOpen: boolean;
   onToggle: () => void;
@@ -431,26 +584,43 @@ function MunicipalitySection({
 
   return (
     <section>
-      {/* The whole line is the control, so the inset lives on the button rather
-          than on a wrapper around it: a hit area that stops short of the row's
-          own edge is a row that ignores half the clicks aimed at it. */}
-      <button
-        type="button"
+      {/* The whole line takes the click, and the chevron inside it is the
+          keyboard target — the same arrangement the club rows below use, and
+          for the same reason they use it: the line carries links now, and an
+          anchor inside a button is the one arrangement that has no correct
+          answer for a keyboard or a screen reader. The row itself is a plain
+          element with a pointer convenience on it, the real disclosure is a
+          real button carrying its own name, `aria-expanded` and focus ring, and
+          the links stop their own clicks from travelling. The inset stays on
+          the row, so the hit area still reaches the row's own edges. */}
+      <div
         onClick={onToggle}
-        aria-expanded={isOpen}
-        aria-controls={regionId}
         className={cn(
-          "flex w-full items-baseline gap-2 py-2.5 text-left transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act",
+          "flex cursor-pointer items-baseline gap-2 py-2.5 text-left transition-colors hover:bg-hover",
           ROW_INSET,
         )}
       >
-        <ChevronDown
-          aria-hidden
-          className={cn(
-            "h-4 w-4 shrink-0 self-center text-muted-foreground transition-transform duration-200",
-            isOpen && "rotate-180",
-          )}
-        />
+        <button
+          type="button"
+          onClick={(event) => {
+            // The row is listening too; left to bubble the toggle would run
+            // twice and land back where it started.
+            event.stopPropagation();
+            onToggle();
+          }}
+          aria-expanded={isOpen}
+          aria-controls={regionId}
+          aria-label={t("clubsIn", { municipality: municipality.name })}
+          className="flex h-5 w-5 shrink-0 items-center justify-center self-center rounded text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+        >
+          <ChevronDown
+            aria-hidden
+            className={cn(
+              "h-4 w-4 transition-transform duration-200",
+              isOpen && "rotate-180",
+            )}
+          />
+        </button>
         <span className="shrink-0 text-sm font-semibold">
           {municipality.name}
         </span>
@@ -467,11 +637,26 @@ function MunicipalitySection({
               <ExcludedClubs count={municipality.clubsWithoutFee} />
             </>
           )}
+          {municipality.clubsWithoutCustomer > 0 && (
+            <>
+              {SCHEDULE_PART_SEPARATOR}
+              <ClubsWithoutCustomer count={municipality.clubsWithoutCustomer} />
+            </>
+          )}
         </span>
-        <span className="ml-auto shrink-0 text-sm font-semibold tabular-nums">
+        {/* The files sit between the counts and the money, which is where they
+            belong in the reading: what ran, what can be sent, what it comes to.
+            They take the line's slack and the total keeps the axis. */}
+        <span className="ml-auto flex min-w-0 justify-end">
+          <CustomerFiles
+            monthStart={monthStart}
+            customers={municipality.customers}
+          />
+        </span>
+        <span className="shrink-0 text-sm font-semibold tabular-nums">
           {formatCurrencyFromCents(municipality.totalCents, "eur", locale)}
         </span>
-      </button>
+      </div>
       {/* The region stays mounted while it is shut — inert, clipped to nothing —
           which is what lets the line above it name the region it controls at all
           times. A control pointing `aria-controls` at an element that only exists
@@ -638,15 +823,27 @@ function ClubRows({ club, locale }: { club: InvoiceClub; locale: string }) {
             baseline and would sit the name off the axis of the figures beside it.
             The click is stopped here and nowhere else, and the underline on hover
             marks exactly the text that leaves the row. */}
-        <td className="truncate py-2 pr-2">
-          <Link
-            href={ROUTES.admin.product("municipality_club", club.id)}
-            title={club.name}
-            onClick={(event) => event.stopPropagation()}
-            className="font-medium hover:underline"
-          >
-            {club.name}
-          </Link>
+        {/* The truncation moved one level in when the customer flag arrived, so
+            the name still clips to whatever the flag leaves it and the anchor
+            still sits inline inside the clipping box — the part that matters is
+            that the anchor is its own words rather than the cell's width. */}
+        <td className="py-2 pr-2">
+          <span className="flex items-baseline gap-2">
+            <span className="min-w-0 truncate">
+              <Link
+                href={ROUTES.admin.product("municipality_club", club.id)}
+                title={club.name}
+                onClick={(event) => event.stopPropagation()}
+                className="font-medium hover:underline"
+              >
+                {club.name}
+              </Link>
+            </span>
+            {/* Beside the name rather than in a column of its own: it is a fact
+                about who this club is billed to, and the repair is the link it
+                sits next to. */}
+            {club.invoiceCustomer === null && <CustomerNotSet />}
+          </span>
         </td>
         <td
           className="truncate py-2 pr-2 text-xs text-muted-foreground"

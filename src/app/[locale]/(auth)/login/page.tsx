@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { LoginForm } from "@/components/auth";
+import { isOAuthLoginError } from "@/lib/google-sign-in";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata");
@@ -21,12 +22,25 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** `?redirect=` is read server-side — see the note on the register page. */
+/**
+ * `?redirect=` is read server-side — see the note on the register page. So is
+ * `?error=`, the code the Google sign-in callback bounces a failure back with;
+ * only the codes that route sends are passed on, and anything else shows
+ * nothing.
+ */
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirect?: string | string[] }>;
+  searchParams: Promise<{
+    redirect?: string | string[];
+    error?: string | string[];
+  }>;
 }) {
-  const { redirect } = await searchParams;
-  return <LoginForm redirect={typeof redirect === "string" ? redirect : null} />;
+  const { redirect, error } = await searchParams;
+  return (
+    <LoginForm
+      redirect={typeof redirect === "string" ? redirect : null}
+      oauthError={isOAuthLoginError(error) ? error : null}
+    />
+  );
 }

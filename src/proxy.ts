@@ -20,6 +20,7 @@ import {
   normalizeExternalPath,
 } from "@/lib/navigation/locale-path";
 import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
+import { COMPLETE_REGISTRATION_GEDU_QUERY } from "@/lib/navigation/post-auth-redirect";
 import { UTM_HEADER, readUtmFromSearchParams, serialiseUtm } from "@/lib/utm";
 
 /**
@@ -101,6 +102,11 @@ function isNonPagePath(pathname: string): boolean {
 // case rather than the edge one: the parent presses the button while unlocked,
 // then opens the mail an hour later, or on their phone, where the session has
 // re-locked or never existed.
+//
+// `completeRegistration` is exempt because the account it is for owes its
+// registration and so has no PIN yet — the unlock gate would be asking for
+// four digits that do not exist. The page creates no PIN; it sends a visitor
+// who has already registered on to where their role belongs.
 function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
   if (isNonPagePath(pathname) || isAuthRoute) return true;
   const exempt = [
@@ -111,6 +117,7 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
     ROUTES.seatOffer,
     ROUTES.forgotPassword,
     ROUTES.resetPassword,
+    ROUTES.completeRegistration,
   ];
   return exempt.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
@@ -184,6 +191,10 @@ const SUPABASE_HOST = (() => {
     return "https://*.supabase.co";
   }
 })();
+// The same origin with a websocket scheme, for Realtime. Against a hosted
+// project both are inside the wildcards below; against a worktree's local stack
+// (an http://127.0.0.1 origin) they are the only entries that admit it.
+const SUPABASE_WS_HOST = SUPABASE_HOST.replace(/^http/, "ws");
 
 function buildCspHeader(nonce: string): string {
   const isProd = process.env.NODE_ENV === "production";
@@ -191,13 +202,15 @@ function buildCspHeader(nonce: string): string {
   return [
     "default-src 'self'",
     // Production needs no vendor host here: `strict-dynamic` trusts a script
-    // element created by code that was itself trusted, and the Meta Pixel is
-    // inserted by the app's own bundle rather than by an inline snippet.
-    // Development has no nonce and no `strict-dynamic`, so the host that serves
-    // fbevents.js has to be named.
+    // element created by code that was itself trusted, and both advertising
+    // scripts — the Meta Pixel and the Tag Manager container — are inserted by
+    // the app's own bundle rather than by an inline snippet. It also covers what
+    // those two load in turn, which is what keeps a container's own tags off
+    // this line. Development has no nonce and no `strict-dynamic`, so the hosts
+    // that serve fbevents.js and gtm.js have to be named.
     isProd
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://connect.facebook.net",
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://connect.facebook.net https://www.googletagmanager.com",
     "style-src 'self' 'unsafe-inline'",
     // mc-heads.net renders the Minecraft skin body, which the shared game-account
     // row derives straight from a username — so it loads anywhere an identity is
@@ -207,8 +220,24 @@ function buildCspHeader(nonce: string): string {
     // www.facebook.com is the Meta Pixel's own transport: fbevents.js reports by
     // requesting /tr/ as an image. `strict-dynamic` does not reach img-src, so
     // it is needed in production too — removing it silently stops the pixel in
-    // the one environment where it matters.
-    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com`,
+    // the one environment where it matters. The same holds for the four Google
+    // hosts, none of which is reached by `strict-dynamic` either:
+    // www.googletagmanager.com is the container's own image transport;
+    // *.google-analytics.com is the analytics collector, wildcarded because EU
+    // traffic is collected on a regional subdomain rather than on `www`;
+    // www.googleadservices.com, googleads.g.doubleclick.net and
+    // www.google.com are the three an Ads conversion pings, which it does as an
+    // image as readily as by fetch; stats.g.doubleclick.net is where an
+    // analytics property with advertising features sends its remarketing and
+    // demographics ping; and td.doubleclick.net is the conversion linker's own
+    // host. None of the three is reached by naming `googleads` alone, which is
+    // the trap: they share a registrable domain and nothing else. Google's own
+    // guidance also names a per-country `google.<TLD>` host for Ads and
+    // pagead2.googlesyndication.com for Display remarketing; we leave both out
+    // deliberately — what a block there costs is an advertising audience sync,
+    // not a conversion, and the alternative is a list of domains that rots
+    // quietly.
+    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com https://www.googletagmanager.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
     "font-src 'self'",
     // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting.
     // www.facebook.com is where the Meta Pixel sends events once its library has
@@ -216,8 +245,24 @@ function buildCspHeader(nonce: string): string {
     // covered by `strict-dynamic`, so both branches need it. Our own
     // server-side reports go to graph.facebook.com and are named nowhere here:
     // they leave a route handler, not the document.
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com",
-    "frame-src 'self' https://*.daily.co https://*.stripe.com",
+    // The Google side is the same story in five hosts:
+    // www.googletagmanager.com is where the container fetches its own
+    // configuration; *.google-analytics.com is where analytics events are
+    // beaconed, wildcarded for the regional collector EU traffic is sent to;
+    // www.googleadservices.com and googleads.g.doubleclick.net take an Ads
+    // conversion; www.google.com is the redirect that conversion goes through;
+    // and stats.g.doubleclick.net and td.doubleclick.net take the analytics
+    // property's remarketing beacon and the conversion linker's. Nothing here
+    // is reached by `strict-dynamic` either.
+    `connect-src 'self' ${SUPABASE_HOST} ${SUPABASE_WS_HOST} https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com https://www.googletagmanager.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
+    // The Google hosts here are the third directive `strict-dynamic` does not
+    // reach, and the one easiest to forget because nothing in the app's own
+    // markup is a frame: a conversion linker writes its cookie from a hidden
+    // iframe, and a remarketing tag injects one. www.googletagmanager.com is
+    // the host Google documents for it; td.doubleclick.net is the conversion
+    // linker's own, and a policy without it loads the tag and then blocks its
+    // pings silently. Nothing else frames anything, so nothing else is added.
+    "frame-src 'self' https://*.daily.co https://*.stripe.com https://www.googletagmanager.com https://td.doubleclick.net",
     // blob: workers used by Daily.co for WebRTC media processing
     "worker-src 'self' blob:",
     "frame-ancestors 'self'",
@@ -463,16 +508,47 @@ export async function proxy(request: NextRequest) {
     } else {
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, registration_completed_at")
         .eq("id", userId)
         .single();
       if (!profileError) userRole = profile.role;
 
-      // Parent-PIN gate: a locked customer session may not act as the parent
-      // ANYWHERE — including public pages like /shop — so this runs before the
-      // public-route early return. The boundary is the session's state, not the
-      // route. API routes are gated separately in requireRole().
-      if (userRole === "customer" && !isPinExemptPath(pathname, isAuthRoute)) {
+      // Registration gate: an account created through Google owes its name,
+      // the terms and the consents until the finish page has them, and it is
+      // sent there from every protected page. Only a customer can owe — every
+      // account is born one, and completing is what promotes a gedu. The
+      // unlock-cookie short-circuit above never skips an owing session, and
+      // that holds because the API refuses to mint one: requireRole answers
+      // an owing customer REGISTRATION_REQUIRED on every route but the two
+      // that finish the registration, the PIN routes included, so no unlock
+      // cookie can exist before the stamp does. An owing account has no PIN,
+      // which is why this runs instead of the PIN gate rather than after it.
+      // Public pages stay readable, because the finish page links to the terms
+      // it asks them to accept; `/api/*` is public here, so the sign-out form
+      // and the completion routes are never caught.
+      const registrationOwed =
+        !profileError &&
+        profile.role === "customer" &&
+        profile.registration_completed_at === null;
+
+      if (registrationOwed) {
+        if (!isPublicRoute && pathname !== ROUTES.completeRegistration) {
+          const finishUrl = localizedUrl(ROUTES.completeRegistration);
+          // Bounced off the Gedu register page (its Google button pressed a
+          // second time): the Gedu form, said on the address as well as in
+          // the intent cookie the callback set.
+          if (pathname === ROUTES.registerGedu) {
+            for (const [key, value] of Object.entries(COMPLETE_REGISTRATION_GEDU_QUERY)) {
+              finishUrl.searchParams.set(key, value);
+            }
+          }
+          return redirect(finishUrl);
+        }
+      } else if (userRole === "customer" && !isPinExemptPath(pathname, isAuthRoute)) {
+        // Parent-PIN gate: a locked customer session may not act as the parent
+        // ANYWHERE — including public pages like /shop — so this runs before the
+        // public-route early return. The boundary is the session's state, not the
+        // route. API routes are gated separately in requireRole().
         const unlockUrl = localizedUrl(ROUTES.customer.unlock);
         // The **raw external** path — what was in the address bar — so a parent
         // bounced off `/fi/kauppa` returns to `/fi/kauppa`, not to English

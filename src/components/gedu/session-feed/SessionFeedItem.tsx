@@ -36,6 +36,9 @@ import type { SessionPhotoEditing } from "./staged-photos";
 import { SessionPlanEditor } from "./SessionPlanEditor";
 import { SessionRecordEditor } from "./SessionRecordEditor";
 import { SessionReportSend } from "./SessionReportSend";
+import { SessionStaffingRegion } from "./SessionStaffingRegion";
+import { SessionSubstitutionMenu } from "./SessionSubstitutionMenu";
+import type { SessionSubstitutionRequestDraft } from "./SessionSubstitutionRequestDialog";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type {
   SessionEntryDraft,
@@ -146,6 +149,30 @@ interface SessionFeedItemProps {
    * whole feed.
    */
   registerEditButton: (node: HTMLButtonElement | null) => void;
+  /**
+   * File "I can't make this session" for **this** session — bound to the entry
+   * by the feed, so the card never has to turn its own id back into the (group,
+   * date) pair a substitution request is keyed by.
+   *
+   * Absent on a surface that is not a gedu looking at their own session, which
+   * is what withholds the action; see the staffing region's own note on why the
+   * surface decides by what it supplies.
+   */
+  onRequestSubstitution?: (draft: SessionSubstitutionRequestDraft) => void | Promise<void>;
+  /** Take the viewer's own open request back. Awaited, like the save. */
+  onWithdrawSubstitutionRequest?: (requestId: string) => void | Promise<void>;
+  /**
+   * This surface's own overflow menu for this entry, or nothing.
+   *
+   * **One slot, in the header's trailing cluster, for whoever is looking.** A
+   * gedu's card fills it from `onRequestSubstitution` below; an admin's is
+   * handed this node, which draws the same `⋯` over the office's actions and
+   * renders its flows behind it. The two are mutually exclusive — a surface
+   * supplies one or the other — so the cluster never holds two menus, and an
+   * admin's card is exactly the gedu's card with different rows in it
+   * *(owner, 2026-09)*.
+   */
+  sessionMenu?: ReactNode;
   /** Open this entry's editor (or close it if it is already open). */
   onToggleEdit: () => void;
   onCancelEdit: () => void;
@@ -181,6 +208,14 @@ interface SessionFeedItemProps {
  * same corner. A card whose whole header was the click target taught a
  * different gesture for one state, which is exactly the state a gedu meets
  * least often and would have to relearn each time.
+ *
+ * **Who is running the session is its own region, under the header and outside
+ * both collapsing ones.** It carries the staffing line on a date with something
+ * outstanding, the viewer's own "I can't make this session" or the status of
+ * the absence they already filed, and the slot a shell with more power than a
+ * gedu puts its staffing editor in. It draws nothing on an ordinary card, which
+ * is nearly all of them — see the region's own note for why the line is
+ * withheld on a date with no request on it.
  *
  * **A past session says one of two things, or nothing.** An owed session missing
  * either half — a register that is not finished, a report that was never written
@@ -275,6 +310,9 @@ export function SessionFeedItem({
   photoConsents,
   creations,
   registerEditButton,
+  onRequestSubstitution,
+  onWithdrawSubstitutionRequest,
+  sessionMenu = null,
   onToggleEdit,
   onCancelEdit,
   onSave,
@@ -363,6 +401,41 @@ export function SessionFeedItem({
       />
     );
 
+  /**
+   * Who is running this one, and what this surface may do about it.
+   *
+   * **Outside both collapsing regions**, so it is on the card whether an editor
+   * is open or not: staffing is a fact about the session rather than part of
+   * anybody's draft, and nothing in it is committed by the editor's Save.
+   */
+  const staffingRegion = (
+    <SessionStaffingRegion
+      staffing={entry.staffing}
+      onWithdrawSubstitutionRequest={onWithdrawSubstitutionRequest}
+    />
+  );
+
+  /**
+   * The filing action for this card, or `undefined` where there is none.
+   *
+   * Three conditions, and they are the same three the action has always
+   * carried. The **kind** is the date test: filing is for a session dated today
+   * or later in the product's zone, and a `future` entry is exactly that by
+   * construction — the kind flips at the session's *end*, so a future entry has
+   * not finished, and a session that has not finished cannot be dated before
+   * today in the zone its own day is measured in. Asking the clock a second
+   * time here would be a second answer free to disagree with the tag two inches
+   * away. **Expected** is the derivation's own sentence: a gedu who has already
+   * filed is no longer expected, which is what makes the menu and the status
+   * block below mutually exclusive without either of them testing for the
+   * other. And the **callback** is how a surface says whose card this is — the
+   * admin shell supplies a staffing editor in that slot instead.
+   */
+  const fileSubstitution =
+    entry.kind === "future" && entry.staffing.viewerIsExpected
+      ? onRequestSubstitution
+      : undefined;
+
   const recordEditor = recordable && (
     <CollapsibleRegion open={editing} instant id={editorId}>
       <SessionRecordEditor
@@ -408,6 +481,12 @@ export function SessionFeedItem({
             </Button>
           </div>
         </div>
+        {/* A pre-epoch gap carries the region like any other row, and on an
+            ordinary one it draws nothing at all: the line renders only on a
+            date with a request, and no gedu can file one on a date this far in
+            the past. What it is here for is the admin path, which may record an
+            off-platform substitution on any date the schedule projects. */}
+        {staffingRegion}
         {recordEditor}
       </div>
     );
@@ -475,7 +554,13 @@ export function SessionFeedItem({
         signedBy !== null && "pb-8 sm:pb-8",
       )}
     >
-      <div className="flex items-start justify-between gap-3">
+      {/* Wrapping, because the trailing cluster does not shrink: a badge, a
+          completeness mark, Edit and the overflow menu together are wider than
+          a 360px card leaves beside the date, and a row that cannot wrap would
+          push the card past its own container instead. Nothing about the
+          desktop arrangement changes — there is room there for all of it on one
+          line. */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <SessionDateLine labels={labels} />
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {entry.kind === "future" && (
@@ -520,8 +605,20 @@ export function SessionFeedItem({
               {t("edit")}
             </Button>
           )}
+          {/* Last in the trailing cluster, which is both the convention for an
+              overflow menu and what the layout rule asks of a control only some
+              cards carry: it grows the group leftward into the row's own slack
+              and every mark before it holds its position. */}
+          {fileSubstitution !== undefined && (
+            <SessionSubstitutionMenu onRequestSubstitution={fileSubstitution} />
+          )}
+          {/* The other role's menu, in the very same place: a surface supplies
+              this or the callback above, never both. */}
+          {sessionMenu}
         </div>
       </div>
+
+      {staffingRegion}
 
       <CollapsibleRegion open={!editing} instant>
         <SessionEntryBody

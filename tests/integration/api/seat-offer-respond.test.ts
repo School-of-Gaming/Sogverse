@@ -233,7 +233,7 @@ describe("POST /api/seat-offer/respond", () => {
   });
 
   /**
-   * The other half of the same token, and the whole of 00208 seen from the
+   * The other half of the same token, seen from the
    * route: the short-circuit above is scoped to `accept`, so a NO past the
    * deadline is not answered locally at all — it goes to the RPC, which
    * honours it and deletes the row.
@@ -375,7 +375,7 @@ describe("POST /api/seat-offer/respond", () => {
     await settleDeferred();
     expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
     const sent = mockSendTransactionalEmail.mock.calls[0][0];
-    // The shared support inbox, exactly where the help & feedback mail goes —
+    // The shared support inbox, exactly where the help-request mail goes —
     // and a Reply-To on that same inbox, because nothing here is waiting on the
     // family: the offer is over and the next step is inviting somebody else.
     expect(sent.toEmail).toBe("help@sog.gg");

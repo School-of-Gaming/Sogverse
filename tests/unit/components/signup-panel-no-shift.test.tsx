@@ -126,22 +126,6 @@ describe("the seat bar is present in every state a product can be signed up on",
     expect(bar?.getAttribute("aria-valuemax")).toBe("15");
   });
 
-  it("draws it on a threshold-pending product too", () => {
-    const { container } = render(
-      <SignupPanelView
-        {...panel({
-          kind: "pending_thr",
-          threshold: 6,
-          count: 2,
-          seatCount: 20,
-          seatsLeft: 18,
-          waitlistEnabled: false,
-        })}
-      />,
-    );
-    expect(seatBar(container)?.getAttribute("aria-valuenow")).toBe("18");
-  });
-
   it("draws it full-and-waitlisted at the other end of the range", () => {
     const { container } = render(
       <SignupPanelView {...panel({ kind: "full_waitlist", seatCount: 15 })} />,
@@ -204,26 +188,6 @@ describe("the pre-open → open swap is invisible", () => {
     for (const cell of Array.from(cells ?? [])) {
       expect(cell.textContent).toContain("--");
     }
-  });
-
-  it("survives the swap into threshold-pending, which is where a countdown lands when the intake is still short", () => {
-    const { container, rerender } = render(
-      <SignupPanelView {...panel({ kind: "closed_pre", opensAt: OPENS_AT, ...CAPPED })} />,
-    );
-    const clockBefore = clock(container);
-    const barBefore = seatBar(container);
-    rerender(
-      <SignupPanelView
-        {...panel({
-          kind: "pending_thr",
-          threshold: 6,
-          count: 2,
-          ...CAPPED,
-        })}
-      />,
-    );
-    expect(clock(container)).toBe(clockBefore);
-    expect(seatBar(container)).toBe(barBefore);
   });
 
   it("gives a page loaded after the doors opened no countdown at all", () => {

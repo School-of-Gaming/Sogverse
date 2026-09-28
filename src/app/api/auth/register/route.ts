@@ -251,7 +251,8 @@ export const POST = defineRoute({
     // can never make: `marketing_consents` carries no Data API write grant, and
     // `set_marketing_consent` refuses the `registration` source precisely so
     // that this provenance can only be claimed from here, with the service-role
-    // client, on the account this request has just created (see 00220's header).
+    // client, on the account this request has just created (see
+    // `supabase/schema/functions/set_marketing_consent.sql`).
     //
     // AFTER THE MAIL, deliberately, as the first of the two consent writes that
     // end this handler. Neither has a user-visible consequence if it fails, so
@@ -272,11 +273,11 @@ export const POST = defineRoute({
     // over.
     //
     // ONE RPC, AND THAT IS THE POINT. The state row and its event row are
-    // written by `record_registration_marketing_consent` (00221) in a single
-    // transaction. This used to be two PostgREST calls — an upsert then an
-    // insert — and two calls are two transactions: a failed second one left
+    // written by `record_registration_marketing_consent` in a single
+    // transaction. Two PostgREST calls — an upsert then an insert — would be
+    // two transactions: a failed second one leaves
     // `marketing_consents` asserting an answer that `marketing_consent_events`
-    // could not corroborate, which is the exact state 00220 built the log to
+    // could not corroborate, which is the exact state the event log exists to
     // rule out. On the one consent whose whole value is provable provenance, an
     // opt-in nobody can evidence is worse than an opt-in nobody recorded.
     //
@@ -300,7 +301,7 @@ export const POST = defineRoute({
 
     // What the account was opened under: the Terms and Conditions and the
     // guardian declaration, each recorded against the version that is current
-    // right now (00249). The contract already refused the request unless the
+    // right now. The contract already refused the request unless the
     // box was ticked, so reaching this line means the agreement happened; this
     // write is what makes it provable, and which TEXT it was given for.
     //

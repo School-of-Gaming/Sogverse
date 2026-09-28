@@ -10,18 +10,54 @@ import { Constants } from "@/types";
  * where it's consumed.
  */
 
+/**
+ * The pay class an assignment carries. Every assignment has one, and
+ * the panel's per-pill select is what writes it.
+ */
+export const geduAssignmentRole = z.enum(
+  Constants.public.Enums.gedu_assignment_role
+);
+
 export const groupChangeSet = z.object({
   addedGroups: z.array(
     z.object({
       tempId: z.string(),
       name: z.string(),
-      geduIds: z.array(z.string()),
+      /**
+       * The educators to create the group with, each with their role. An object
+       * rather than a bare id because there is no longer such a thing as an
+       * assignment without a pay class.
+       */
+      gedus: z.array(
+        z.object({ geduId: z.string(), role: geduAssignmentRole })
+      ),
+      /**
+       * The shape this replaced — a bare array of ids, every one a primary.
+       *
+       * It is still **accepted** rather than rejected, and only for the deploy
+       * window: a browser still running the previous bundle posts it, and the
+       * RPC reads it as primaries. Nothing in this app writes it. It is not a
+       * second way to say the same thing — a caller sending both gets both
+       * assignments — so it comes out once no deployed client can be sending it.
+       */
+      geduIds: z.array(z.string()).optional(),
     })
   ),
   renamedGroups: z.array(z.object({ groupId: z.string(), name: z.string() })),
   deletedGroupIds: z.array(z.string()),
+  /**
+   * Assignments to create **or re-state**. The RPC upserts on (group, gedu) and
+   * updates the role, so changing somebody's role is one added element rather
+   * than a remove plus an add — which is what lets the panel save a role change
+   * the moment it is made, as the one element of an otherwise empty change set.
+   * The panel stages nothing: every assignment action is its own save.
+   */
   geduAssignmentsAdded: z.array(
-    z.object({ groupId: z.string(), geduId: z.string() })
+    z.object({
+      groupId: z.string(),
+      geduId: z.string(),
+      role: geduAssignmentRole,
+    })
   ),
   geduAssignmentsRemoved: z.array(
     z.object({ groupId: z.string(), geduId: z.string() })
@@ -64,7 +100,7 @@ export const groupParticipationDetail = z.object({
   participant_minecraft_username: z.string().nullable(),
   participant_minecraft_uuid: z.string().nullable(),
   /**
-   * The Roblox half of the same story (00195), independent of the Minecraft
+   * The Roblox half of the same story, independent of the Minecraft
    * pair above it: a child may have given one handle, both, or neither, and
    * the chip draws whichever the product's topic is about.
    *
@@ -77,8 +113,8 @@ export const groupParticipationDetail = z.object({
   participant_roblox_user_id: z.number().nullable(),
   /**
    * The contact standing behind a *child's* seat — not the participant, which
-   * is why these two lost the `gamer_` prefix in 00175 rather than gaining a
-   * `participant_` one. Null on an adult seat, which has no linked parent.
+   * is why these two carry neither a `gamer_` nor a `participant_` prefix.
+   * Null on an adult seat, which has no linked parent.
    */
   parent_first_name: z.string().nullable(),
   parent_last_name: z.string().nullable(),
@@ -115,7 +151,7 @@ export const groupParticipationDetail = z.object({
    */
   has_payment_marker: z.boolean(),
   /**
-   * The staff-only flair (00203), emitted identically in all three arms of the
+   * The staff-only flair, emitted identically in all three arms of the
    * snapshot — grouped, unassigned and waitlist — from one shared LEFT JOIN.
    * On the two group-less arms it comes back null throughout, which is the
    * truth: a seat in no group is new to nothing and has no note filed under any
@@ -141,7 +177,7 @@ export const groupParticipationDetail = z.object({
   note: z.string().nullable(),
   note_updated_by_first_name: z.string().nullable(),
   /**
-   * The seat offer (00207), on exactly the terms the flair above it rides on:
+   * The seat offer, on exactly the terms the flair above it rides on:
    * emitted identically in all three arms, and non-null only on the waitlist
    * one — a CHECK forbids an offer stamp on any status but `waitlisted`, so
    * these are null on a grouped or unassigned chip by construction rather than
@@ -166,6 +202,13 @@ export const groupGeduDetail = z.object({
   id: z.string(),
   first_name: z.string(),
   email: z.string().nullable(),
+  /**
+   * The assignment role this pill carries, and what its role select reads and
+   * writes back. This panel is the **permanent** assignment editor; the session
+   * card's staffing editor is a different tool for a different question, and the
+   * two deliberately do not link to one another.
+   */
+  role: geduAssignmentRole,
 });
 
 export const productGroupWithDetails = z.object({
@@ -179,8 +222,8 @@ export const productGroupWithDetails = z.object({
 /**
  * The `get_product_groups_with_details` JSONB document backing the admin
  * Groups panel. The RPC returns `Json`; this schema is the structure,
- * written from the function body in supabase/schema.sql and re-verified
- * against real Postgres by the db tests that parse through it.
+ * written from the function body in supabase/schema/functions/ and
+ * re-verified against real Postgres by the db tests that parse through it.
  */
 export const productGroupsSnapshot = z.object({
   product_id: z.string(),
@@ -189,7 +232,7 @@ export const productGroupsSnapshot = z.object({
   /**
    * Waitlisted participants in derived order (waitlisted_at, id) — same detail shape
    * as a group/unassigned chip. Waitlist position is the array index + 1,
-   * computed in the UI; it is never stored. See migration 00118.
+   * computed in the UI; it is never stored.
    */
   waitlist: z.array(groupParticipationDetail),
 });

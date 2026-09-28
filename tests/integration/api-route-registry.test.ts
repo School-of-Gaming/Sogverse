@@ -72,6 +72,13 @@ type Posture =
       roles: readonly UserRole[];
       /** Skips the parent-PIN gate, for routes a locked customer must reach. */
       allowUnverified?: true;
+      /**
+       * Admits a customer that still owes its registration (a Google-created
+       * account before the finish page), which the gate otherwise refuses on
+       * every route. Carries its reason, because each one is a door past the
+       * terms: only the routes that finish a registration may hold it.
+       */
+      allowRegistrationOwed?: string;
       /** Refuses an uncertified educator, for gedu actions that are a boundary. */
       requireCertifiedGedu?: true;
     }
@@ -164,9 +171,9 @@ const TESTS = {
   chatImageRead: "tests/integration/api/chat-image-read.test.ts",
   chatImageUpload: "tests/integration/api/chat-image-upload.test.ts",
   checkout: "tests/integration/api/checkout-products-create.test.ts",
+  completeRegistration: "tests/integration/auth/complete-registration.test.ts",
   discordInteractions: "tests/integration/api/discord-interactions.test.ts",
   familyList: "tests/integration/api/family-list.test.ts",
-  feedback: "tests/integration/api/feedback.test.ts",
   forgotPassword: "tests/integration/auth/forgot-password.test.ts",
   gamersCreate: "tests/integration/api/gamers-create.test.ts",
   gamersUpdate: "tests/integration/api/gamers-update.test.ts",
@@ -174,18 +181,23 @@ const TESTS = {
     "tests/integration/api/gamers-verification-send.test.ts",
   geduGamerMinecraft: "tests/integration/api/gedu-gamer-minecraft.test.ts",
   geduGamerRoblox: "tests/integration/api/gedu-gamer-roblox.test.ts",
+  geduCompleteRegistration:
+    "tests/integration/api/gedu-complete-registration.test.ts",
   geduRegister: "tests/integration/api/gedu-register.test.ts",
   geduSessionEmailReport:
     "tests/integration/api/gedu-session-email-report.test.ts",
   geduSessionImageAdd: "tests/integration/api/gedu-session-image-add.test.ts",
   geduSessionImageRemove:
     "tests/integration/api/gedu-session-image-remove.test.ts",
+  helpRequests: "tests/integration/api/help-requests.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
   minecraftPasswordReset:
     "tests/integration/api/tools-minecraft-password-reset.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
+  municipalityInvoicingFinvoice:
+    "tests/integration/api/municipality-invoicing-finvoice.test.ts",
   // The partner API: one suite for what its resources share (the key, query
   // validation, the envelope, the catch-all), and one per resource for what
   // that resource answers. A resource entry names its own suite once that
@@ -279,6 +291,20 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "adminGameAccountBody" },
         test: TESTS.adminUserGameAccount,
+      },
+    },
+  },
+
+  // The one route on this surface that answers with a document rather than a
+  // payload: a Finvoice XML file, as an attachment. Query-only by nature — a
+  // download is a navigation the ledger links to, so there is no body to
+  // discipline and nothing is written, which is also why it is a GET.
+  "src/app/api/admin/municipality-invoicing/finvoice/route.ts": {
+    handlers: {
+      GET: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.municipalityInvoicingFinvoice,
       },
     },
   },
@@ -476,15 +502,38 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // --- Auth ----------------------------------------------------------------
 
   "src/app/api/auth/callback/route.ts": {
+    adminClient:
+      "one write, on the signed-in caller's own profile: email_verified_at, which authenticated has no UPDATE grant on, when the account's address was never proven and the Google identity just signed in with reports that same address verified. A Google sign-in proves the address, and the account must be left holding only the prover's session — the revoke of every other session runs first, on the session's own client, and the stamp is written only after it succeeds",
     handlers: {
       GET: {
         posture: {
           kind: "session-mutating-public",
           reason:
-            "the OAuth redirect target: it exchanges the provider's code for a session, so it must be reachable before one exists. Returns only redirects, and its caller-supplied `next` is resolved to an internal path before use",
+            "the Google sign-in redirect target: it exchanges the provider's code for a session, so it must be reachable before one exists. Returns only redirects, on the trusted origin. Its caller-supplied `next` must resolve to an internal path and pass the post-auth allowlist (product pages, plus the registration finish page); a customer account that has not finished registering is sent to the finish page whatever `next` says (carrying an allowlisted product-page `next` as the finish page's `redirect`), with the finish page's sanitised query also set in an httpOnly, SameSite=Lax intent cookie the finish page falls back to, and a gamer account's freshly minted session is signed out and refused, as is any session whose profile cannot be read. A non-gamer account whose address was never verified, signed into by a Google identity that verified the same address, has every other session revoked and the address stamped verified",
         },
         body: { kind: "none" },
         test: TESTS.callback,
+      },
+    },
+  },
+
+  "src/app/api/auth/complete-registration/route.ts": {
+    adminClient:
+      "finishes a registration begun with Google, on the caller's own profile and only while it still owes one: the profile columns authenticated has no UPDATE grant on — the three utm_* columns (their one consent-gated write, since a provider-created row has no signup metadata), email_verified_at (when Google verified the same address) and registration_completed_at (the stamp, written last); the auth user read (getUserById) for the Google identity's verification; and the two consent writes the register route makes for the same reason it makes them — record_account_consents and record_registration_marketing_consent are granted to service_role alone, because they take the customer as a parameter and claim the 'registration' provenance",
+    handlers: {
+      POST: {
+        posture: {
+          kind: "role-gated",
+          roles: ["customer"],
+          // A fresh Google account has no PIN yet: the finish page stands in
+          // the PIN gate's place. The handler's own guard is the narrowing —
+          // it writes nothing unless registration_completed_at is still NULL.
+          allowUnverified: true,
+          allowRegistrationOwed:
+            "this is where a parent's owed registration is paid: it records the names, terms and consents and then stamps registration_completed_at",
+        },
+        body: { kind: "json", schema: "completeParentRegistrationBody" },
+        test: TESTS.completeRegistration,
       },
     },
   },
@@ -511,7 +560,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/auth/register/route.ts": {
     adminClient:
-      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent (00221) is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here, plus the account-consent write — record_account_consents (00249) is granted to service_role alone for the same reason, and records what the account was opened under (the terms; the guardian declaration moved to create_gamer in 00250, where it is a statement about one named child) against the version that was current",
+      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here, plus the account-consent write — record_account_consents is granted to service_role alone for the same reason, and records what the account was opened under (the terms; the guardian declaration belongs to create_gamer, where it is a statement about one named child) against the version that was current",
     handlers: {
       POST: {
         posture: {
@@ -730,7 +779,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-  // --- Family and feedback -------------------------------------------------
+  // --- Family and help -----------------------------------------------------
 
   "src/app/api/family/list/route.ts": {
     adminClient:
@@ -748,7 +797,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-  "src/app/api/feedback/route.ts": {
+  "src/app/api/help-requests/route.ts": {
     adminClient:
       "the submission write runs on the user client; the admin client survives only to resolve a gamer's reply-to (their parent's address), which is not in the submitter's view and must not be returnable",
     handlers: {
@@ -761,8 +810,8 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           kind: "role-gated",
           roles: ["admin", "customer", "gamer", "gedu"],
         },
-        body: { kind: "json", schema: "inline: feedbackSchema" },
-        test: TESTS.feedback,
+        body: { kind: "json", schema: "inline: helpRequestSchema" },
+        test: TESTS.helpRequests,
       },
     },
   },
@@ -783,7 +832,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/gamers/create/route.ts": {
     adminClient:
-      "Auth Admin API (user creation, with delete-on-failure compensation), plus the promote-and-link RPC — create_gamer (00250) is granted to service_role alone because it takes both the gamer and the parent as parameters (the child has no session and the parent's own client cannot promote a profile), and it is what records the parent's guardian declaration about this child in the same transaction",
+      "Auth Admin API (user creation, with delete-on-failure compensation), plus the promote-and-link RPC — create_gamer is granted to service_role alone because it takes both the gamer and the parent as parameters (the child has no session and the parent's own client cannot promote a profile), and it is what records the parent's guardian declaration about this child in the same transaction",
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
@@ -813,14 +862,14 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // a group that caller is assigned to — so the gamer id in the path names a
   // target and grants nothing.
   //
-  // `admin` joined the roles in 00205, when the admin group details page began
-  // rendering the gedu workspace's roster body unchanged, inline username
+  // `admin` is among the roles because the admin group details page
+  // renders the gedu workspace's roster body unchanged, inline username
   // editor included: a surface that shows the control has to serve it. This
   // aligns two surfaces rather than granting a power — an admin already holds
   // this exact edit on /admin/users/[id], so nothing here is reachable to them
-  // that was not reachable before. The RPC is still the authorization: an admin
+  // that is not reachable elsewhere. The RPC is still the authorization: an admin
   // passes its "and you teach this group" half by role, exactly as they do on
-  // the session writers widened in 00200, and every other refusal in the
+  // the session writers, and every other refusal in the
   // function — the target must be a gamer, a customer or a gamer is refused on
   // the first statement — binds them identically.
   "src/app/api/gedu/gamers/[gamerId]/minecraft/route.ts": {
@@ -836,9 +885,9 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // The Roblox twin of the route above, and the same reasoning applies verbatim:
   // the role gate says "an educator or an admin", and `set_group_member_roblox`
   // says which children that caller may touch, re-deriving them from auth.uid()
-  // and letting an admin past the group half alone. Widened alongside its twin
-  // in 00205 — the editor the admin page renders is one component serving both
-  // platforms, so one of the two routes admitting an admin would have shipped a
+  // and letting an admin past the group half alone. It admits an admin alongside
+  // its twin — the editor the admin page renders is one component serving both
+  // platforms, so one of the two routes admitting an admin would ship a
   // control that works on Minecraft groups and 403s on Roblox ones.
   "src/app/api/gedu/gamers/[gamerId]/roblox/route.ts": {
     handlers: {
@@ -851,6 +900,27 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   },
 
   // --- Educator self-registration ------------------------------------------
+
+  "src/app/api/gedu/complete-registration/route.ts": {
+    adminClient:
+      "finishes an educator registration begun with Google, on the caller's own account and only while it still owes one: register_gedu (service_role only, because it grants the gedu role) promotes it exactly as the register route does and stamps registration_completed_at in the same transaction, then the profile columns authenticated has no UPDATE grant on — the three utm_* columns (their one consent-gated write) and email_verified_at (when Google verified the same address) — plus the auth user read (getUserById) for the Google identity's verification. It never deletes the user: the account is the person's own, and a failed promotion leaves it owing registration for a retry",
+    handlers: {
+      POST: {
+        posture: {
+          kind: "role-gated",
+          roles: ["customer"],
+          // The caller is still the customer the new-user trigger made; a
+          // fresh Google account has no PIN yet, and the handler's guard on
+          // registration_completed_at is the narrowing.
+          allowUnverified: true,
+          allowRegistrationOwed:
+            "this is where an educator's owed registration is paid: register_gedu promotes the account and stamps registration_completed_at in the same transaction",
+        },
+        body: { kind: "json", schema: "completeGeduRegistrationBody" },
+        test: TESTS.geduCompleteRegistration,
+      },
+    },
+  },
 
   "src/app/api/gedu/register/route.ts": {
     adminClient:
@@ -879,10 +949,10 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // auth.uid(), refuses a gedu a group they do not teach, and refuses anybody a
   // session with no report or one already sent.
   //
-  // `admin` joined the roles in 00200, when the same session panel arrived on
+  // `admin` is among the roles because the same session panel sits on
   // the admin product page over the same feed component and the same claim. The
   // claim is still the authorization: an admin passes its group half by role,
-  // exactly as they now do on the four other session writers, and every other
+  // exactly as they do on the four other session writers, and every other
   // refusal binds them identically.
   "src/app/api/gedu/sessions/email-report/route.ts": {
     adminClient:
@@ -955,7 +1025,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: {
           kind: "public",
           reason:
-            "the educator registration page asks an applicant where they can work before any account exists, so search cannot require a session. It reads two tables of public reference data — `locations` and, since 00165, `postal_codes` — and every row of both is already SELECTable by anon directly, under identical policies, so the route narrows that surface rather than widening it, and bounds the needle length and page size on the way in. It reads no session at all, which is what lets its answer be cached and shared",
+            "the educator registration page asks an applicant where they can work before any account exists, so search cannot require a session. It reads two tables of public reference data — `locations` and `postal_codes` — and every row of both is already SELECTable by anon directly, under identical policies, so the route narrows that surface rather than widening it, and bounds the needle length and page size on the way in. It reads no session at all, which is what lets its answer be cached and shared",
         },
         body: { kind: "none" },
         test: TESTS.locationsSearch,
@@ -1126,7 +1196,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: {
           kind: "public",
           reason:
-            "a family answers a seat offer from the link in their inbox, and the person clicking has no usable session: on a shared family tablet a parent is as likely to be signed in as their own child as as themselves, and bouncing them would simply lose the link. The signed token names one participation and one exact offer instant, both HMAC'd under PIN_COOKIE_SECRET with a `seat-offer:` domain prefix, and the RPC behind it compares that instant against the row before writing — so possession of the link authorizes exactly one answer to exactly one offer. THE DISCLOSURE BOUNDARY IS THE SIGNATURE, and this route is deliberately less uniform than it looks: a token whose HMAC does not verify is answered `invalid` and told nothing else, which is what keeps an unauthenticated prober from confirming that any participation id exists. A token whose HMAC does verify is one we minted for one exact offer, so its holder may be told that offer is spent — every consumed shape (accepted, admin-promoted, declined, withdrawn, superseded by a re-offer) comes back as the single `used`, which never says WHICH, and the page points at My SOG rather than narrating a family's history from a page with no session on it. Nothing acts on a GET: the emailed buttons land on a page that only renders, and this POST is what that page's own buttons call, so a mail scanner following the link cannot take a seat. Note the token's expiry now gates ACCEPT alone — a decline is honoured for as long as the row exists (00208), and a late one deliberately mails nobody",
+            "a family answers a seat offer from the link in their inbox, and the person clicking has no usable session: on a shared family tablet a parent is as likely to be signed in as their own child as as themselves, and bouncing them would simply lose the link. The signed token names one participation and one exact offer instant, both HMAC'd under PIN_COOKIE_SECRET with a `seat-offer:` domain prefix, and the RPC behind it compares that instant against the row before writing — so possession of the link authorizes exactly one answer to exactly one offer. THE DISCLOSURE BOUNDARY IS THE SIGNATURE, and this route is deliberately less uniform than it looks: a token whose HMAC does not verify is answered `invalid` and told nothing else, which is what keeps an unauthenticated prober from confirming that any participation id exists. A token whose HMAC does verify is one we minted for one exact offer, so its holder may be told that offer is spent — every consumed shape (accepted, admin-promoted, declined, withdrawn, superseded by a re-offer) comes back as the single `used`, which never says WHICH, and the page points at My SOG rather than narrating a family's history from a page with no session on it. Nothing acts on a GET: the emailed buttons land on a page that only renders, and this POST is what that page's own buttons call, so a mail scanner following the link cannot take a seat. Note the token's expiry now gates ACCEPT alone — a decline is honoured for as long as the row exists, and a late one deliberately mails nobody",
         },
         body: { kind: "json", schema: "seatOfferRespondBody" },
         test: TESTS.seatOfferRespond,
@@ -1588,6 +1658,47 @@ describe("check 2 — static conformance: gated routes contain the primitive", (
     expect(
       runsKeyCheck("export function GET() {\n  return Response.json({});\n}", "requirePartnerKey"),
     ).toBe(false);
+  });
+
+  // The two role-gate opt-outs are what a route's audience really is, so the
+  // registry has to say the same as the file. Per file rather than per handler,
+  // because the source is read per file: a file declares an option when any of
+  // its handlers does. `allowRegistrationOwed` matters most — every route that
+  // holds it is reachable by an account that has not accepted the terms.
+  const GATE_OPTIONS = ["allowUnverified", "allowRegistrationOwed"] as const;
+
+  function declaresGateOption(
+    path: string,
+    option: (typeof GATE_OPTIONS)[number],
+  ): boolean {
+    return Object.values(ROUTE_REGISTRY[path].handlers).some(
+      (handler) =>
+        handler.posture.kind === "role-gated" &&
+        handler.posture[option] !== undefined,
+    );
+  }
+
+  it.each(
+    gatedPaths.flatMap((path) =>
+      GATE_OPTIONS.map((option) => [path, option] as const),
+    ),
+  )("%s declares %s exactly when its source sets it", (path, option) => {
+    const sets = readSource(path).includes(`${option}: true`);
+    expect(
+      sets,
+      `${path}: the registry and the source disagree on ${option}`,
+    ).toBe(declaresGateOption(path, option));
+  });
+
+  it.each(
+    REGISTERED_HANDLERS.flatMap((h) =>
+      h.handler.posture.kind === "role-gated" &&
+      h.handler.posture.allowRegistrationOwed !== undefined
+        ? [[h.label, h.handler.posture.allowRegistrationOwed] as const]
+        : [],
+    ),
+  )("%s gives a reason for admitting an owed registration", (_label, reason) => {
+    expect(reason.trim().length).toBeGreaterThan(0);
   });
 
   // The wrapper reads the request body only when a body schema is declared, so

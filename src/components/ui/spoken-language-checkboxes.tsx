@@ -12,8 +12,8 @@
  * spoken language.
  *
  * Exports SpokenLanguageCheckboxes — multi-select, for user profile / settings.
- * It takes no options prop: the vocabulary is a compile-time constant since
- * 00199, so every box is on screen in the first frame with no query behind it
+ * It takes no options prop: the vocabulary is a compile-time constant, so
+ * every box is on screen in the first frame with no query behind it
  * and no loading state to design.
  */
 

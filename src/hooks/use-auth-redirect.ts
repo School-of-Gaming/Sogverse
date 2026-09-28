@@ -1,58 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ROUTES } from "@/lib/constants";
-import { resolveInternalPath } from "@/lib/navigation/internal-path";
-import { toInternalPathname } from "@/lib/navigation/locale-path";
-
-// `resolveInternalPath` hands back a path with its query and hash still on it,
-// and only the pathname is a route. Any absolute base works to split them; the
-// value has already been proved same-origin by the time it gets here.
-const SENTINEL = "https://internal.invalid";
-
-// Allowlisted prefixes for post-auth redirects. Anything else is dropped
-// and the user lands on the fallback (their dashboard). Public product detail
-// pages — which expose the "Sign in to enroll" CTA — live at `/shop/[id]` and
-// at `/schools/[municipalityName]/[id]` (the municipality-club variant; both
-// render the same ProductDetailPage), so both prefixes are allowlisted and
-// sign-in returns the user to the product they came from. A trailing slash is
-// required on each so the bare `/shop` / `/schools` root isn't itself a valid
-// target and so `/shopxyz`-style prefix confusion can't sneak through.
-// `/shop/` resolves to exactly the product pages; `/schools/` also admits the
-// per-municipality listing (`/schools/[municipalityName]`) since it shares the
-// segment — that's a harmless internal landing spot, and the destination is
-// guaranteed internal by `resolveInternalPath` regardless.
-const SAFE_REDIRECT_PREFIXES: readonly string[] = [
-  `${ROUTES.shop}/`, // /shop/[id]
-  `${ROUTES.schools}/`, // /schools/[municipalityName]/[id]
-];
-
-/**
- * Returns `redirect` if it points to a known safe destination, else `null`.
- *
- * Two-stage check: first normalize the candidate through `resolveInternalPath`
- * (WHATWG URL parser — collapses `..`, rejects every off-origin variant), then
- * apply the product-page allowlist to the *normalized* path. Normalizing first
- * is load-bearing: a raw `startsWith("/shop/")` passes `/shop/../admin`, which
- * the browser then navigates to `/admin` — the prefix check and the real
- * destination would disagree. Checking the post-normalization path closes that
- * gap while keeping the narrow product-page-only intent.
- */
-export function resolveSafeRedirect(redirect: string | null): string | null {
-  const path = resolveInternalPath(redirect, "");
-  if (!path) return null;
-  // **Matched on the internal pathname, navigated to raw.** The value arrives
-  // as the external URL the reader was actually on (`/fi/kauppa/<id>`), which
-  // no bare `/shop/` prefix would ever match — so the allowlist would silently
-  // drop it and strand a buyer on their dashboard. The normalizer strips the
-  // locale prefix and untranslates the slug for the *check*; what is returned
-  // is the original path, so the reader returns to the page they left, in the
-  // language they were reading it in.
-  const internal = toInternalPathname(new URL(path, SENTINEL).pathname);
-  return SAFE_REDIRECT_PREFIXES.some((p) => internal.startsWith(p))
-    ? path
-    : null;
-}
+import { resolveSafeRedirect } from "@/lib/navigation/post-auth-redirect";
 
 /**
  * Manages the redirect-after-auth flow (e.g. user clicks Buy → login/register → checkout).
@@ -67,6 +16,7 @@ export function resolveSafeRedirect(redirect: string | null): string | null {
  *
  * Returns:
  * - `status`: a user-facing message like "Redirecting to checkout..." (or null)
+ * - `safeRedirect`: the `?redirect=` once it has passed the post-auth allowlist, or null
  * - `navigateAfterAuth`: call this after successful login/signup with a fallback path
  */
 export function useAuthRedirect(redirect: string | null) {
@@ -81,5 +31,5 @@ export function useAuthRedirect(redirect: string | null) {
     window.location.href = safeRedirect || fallbackPath;
   };
 
-  return { redirect, status, navigateAfterAuth };
+  return { redirect, safeRedirect, status, navigateAfterAuth };
 }

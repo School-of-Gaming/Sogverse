@@ -100,8 +100,8 @@ interface IdorCase {
  * grant, so they are invisible to `_list_table_grants` and have to be named here
  * explicitly. The column-grant audit (spine check 4) pins which columns those
  * are; this pins that they are still only the caller's own. `gamer_profiles`
- * joined `profiles` here in 00235, when its table-wide UPDATE was traded for
- * two column grants so the new `sign_in` column would sit outside them.
+ * is here beside `profiles` because it carries two column grants rather than
+ * a table-wide UPDATE, so that `sign_in` sits outside them.
  */
 const COLUMN_GRANT_ONLY_TABLES = ["profiles", "gamer_profiles"];
 
@@ -621,9 +621,9 @@ describe("write-path IDOR (§3.4 check 3)", () => {
 
     await createTestProduct(admin, { id: PRODUCT, seatCount: null });
 
-    // Since 00198 the table CHECKs the shape of both columns — `sha256` is 64
+    // The table CHECKs the shape of both columns — `sha256` is 64
     // lowercase hex characters and `path` is that hash plus a stored extension
-    // — so a readable stand-in no longer inserts. Both are UNIQUE table-wide,
+    // — so a readable stand-in does not insert. Both are UNIQUE table-wide,
     // so the value is a hex word nothing real will collide with rather than
     // something shaped differently from a hash.
     const IDOR_SHA =

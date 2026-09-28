@@ -15,8 +15,8 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 //     Studio, and Creator Studio and Game Studio, which are School of Gaming's
 //     own brand words for those programmes rather than descriptions of what
 //     happens in them.
-//     Three are ordinary common nouns: Programming, AI and Esports. Those were
-//     looked at deliberately and left in English anyway, which is a decision
+//     The rest are ordinary common nouns (Programming, AI, Esports, Digital
+//     Safety). Those were looked at deliberately and left in English anyway, which is a decision
 //     that has been taken rather than one still open — a parent browsing in
 //     Finnish or French sees "Programming" verbatim, on the filter chips, in
 //     the admin picker and in any card heading. The escape hatch if that is
@@ -53,8 +53,8 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 // A how-to sentence in an About note, or a cost/PEGI fact in a prep step, is
 // the drift these definitions exist to catch.
 //
-// Exactly the seven topics that carry `info` carry `prep`, for the same reason:
-// the five label-only topics name subject matter rather than one piece of
+// Exactly the topics that carry `info` carry `prep`, for the same reason: the
+// label-only topics name subject matter rather than one piece of
 // software, so there is nothing single to install or sign into.
 //
 // **Every step declares a scope, because an in-person product supplies the
@@ -69,7 +69,7 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 // Gaming's Minecraft accounts and may not sign in with their own on our
 // devices, and municipality clubs run on School of Gaming's Minecraft
 // Education accounts — so those account steps are `ownDevice` and all three
-// topics render no guide at all in person. The other four topics keep
+// topics render no guide at all in person. The other topics with prep keep
 // `always` account steps, because those accounts are the family's own wherever
 // the sessions happen. A topic whose `always` steps come to nothing renders
 // nothing, which is what `resolveTopicPrep` returning null means.
@@ -78,9 +78,9 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 // ready for the voice room is a fact about a *remote* product — the session
 // happens in a browser room, and in person it does not happen at all — so it is
 // declared once, outside every topic's `steps`, and `resolveTopicPrep` appends
-// it as the last step of every remote guide. Written into the seven blocks it
-// would be seven copies of one paragraph, drifting apart the first time one of
-// them was edited. It is also why the five label-only topics now render a guide
+// it as the last step of every remote guide. Written into every topic's block it
+// would be one paragraph copied per topic, drifting apart the first time one of
+// them was edited. It is also why the label-only topics now render a guide
 // on a remote product where they rendered none before: there is exactly one
 // thing to do beforehand, and it is this.
 //
@@ -95,14 +95,13 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 // every topic and every step, most of which do not exist, and the compiler
 // would reject the composition that reads them.
 //
-// Five topics are label-only and render no card at all: creator_studio,
-// game_studio, programming, ai and esports. That is the design, not an omission
-// waiting to be filled. None of them is one piece of software a family installs
-// — three name subject matter, and Creator Studio and Game Studio name
-// programmes of ours — so there is nothing single to rate, price or link to. A
-// Game Studio group builds its own game, and which engine that takes belongs to
-// the product rather than to the topic. What a family needs for an
-// Esports club is a fact about *that* club, and an admin writes it into that
+// The topics without an `info` block are label-only and render no card at all.
+// That is the design, not an omission waiting to be filled. None of them is one
+// piece of software a family installs — most name subject matter, and Creator
+// Studio and Game Studio name programmes of ours — so there is nothing single
+// to rate, price or link to. A Game Studio group builds its own game, and which
+// engine that takes belongs to the product rather than to the topic. What a
+// family needs for an Esports club is a fact about *that* club, and an admin writes it into that
 // product's own description, where it can differ between two products sharing
 // the topic. A generic card would be the wrong altitude and would push the
 // specific answer further down the page.
@@ -450,7 +449,7 @@ export const PRODUCT_TOPICS = {
   // Label-only, for the reason in the header note: each names subject matter,
   // and the software (if any) varies by product. Creator Studio and Game Studio
   // are our own programme names, so they are proper nouns like the game brands
-  // above even though the two below them are common nouns.
+  // above even though the ones below them are common nouns.
   creator_studio: {
     label: "Creator Studio",
   },
@@ -462,6 +461,9 @@ export const PRODUCT_TOPICS = {
   },
   ai: {
     label: "AI",
+  },
+  digital_safety: {
+    label: "Digital Safety",
   },
 } as const satisfies Record<ProductTopic, TopicMeta>;
 
@@ -522,10 +524,10 @@ export function topicHasInfoCard(
  * The one prep step that is not a topic's: getting the microphone and camera
  * ready for the voice room.
  *
- * **Declared here rather than inside seven `steps` arrays** because it is a
- * fact about a *remote* product and not about any topic — the same paragraph
- * would otherwise be written seven times and be seven paragraphs to keep in
- * agreement. `resolveTopicPrep` appends it, last, to every remote guide, and a
+ * **Declared here rather than inside every topic's `steps` array** because it
+ * is a fact about a *remote* product and not about any topic — the same
+ * paragraph would otherwise be written once per topic and be that many
+ * paragraphs to keep in agreement. `resolveTopicPrep` appends it, last, to every remote guide, and a
  * label-only topic's remote guide is this step and nothing else.
  *
  * Its scope is `ownDevice` for the reason the scope axis exists: the room runs
@@ -711,7 +713,8 @@ export function resolveTopicPrep(
 //     it (Bedrock signs in with a Microsoft/Xbox gamertag, Education with a
 //     school tenant). Showing a Java handle on a Bedrock club would be
 //     asserting an identity we did not check and the child may not have.
-//   - `esports`, `creator_studio`, `game_studio`, `programming` and `ai` name
+//   - `esports`, `creator_studio`, `game_studio`, `programming`, `ai` and
+//     `digital_safety` name
 //     subject matter rather than one piece of software, so there is nothing
 //     single to hold an account on; `fortnite`, `rocket_league` and
 //     `pokemon_go` are real games we simply store no identity for.
@@ -740,6 +743,7 @@ export function platformForTopic(topic: ProductTopic): GamePlatform | null {
     case "game_studio":
     case "programming":
     case "ai":
+    case "digital_safety":
       return null;
   }
 }
@@ -771,6 +775,7 @@ export const PRODUCT_TOPIC_VALUES = [
   "game_studio",
   "programming",
   "ai",
+  "digital_safety",
 ] as const satisfies readonly ProductTopic[];
 
 // A topic filter chip groups one or more product topics behind a single chip.

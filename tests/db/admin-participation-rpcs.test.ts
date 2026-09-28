@@ -18,11 +18,11 @@ import {
  * What needs fixtures — and therefore lives here — is everything the routes used
  * to enforce in TypeScript and now enforce in SQL: the product-membership check
  * that stops a participation id from another product being cancelled through the
- * wrong URL, the parent resolution, and the two refusals migration 00166
- * re-keyed off the product type — enrollment refuses a *paid* consumer club
- * (the one seat that needs a subscription this RPC cannot create), and removal
- * refuses only a live subscription, so a CASCADE can never orphan one that
- * keeps billing. Migration 00170 then made "live" mean live: a
+ * wrong URL, the parent resolution, and the two refusals keyed off the
+ * subscription rather than the product type — enrollment refuses a *paid*
+ * consumer club (the one seat that needs a subscription this RPC cannot
+ * create), and removal refuses only a live subscription, so a CASCADE can
+ * never orphan one that keeps billing. "Live" means live: a
  * family_subscriptions row whose status is anything but `cancelled`. A
  * dunning-dead row must not refuse, because removal is the only exit a seat
  * behind one has.
@@ -82,8 +82,9 @@ describe("admin participation RPCs", () => {
       productType: "consumer_club",
       seatCount: null,
     });
-    // The shape 00166 unlocked: a consumer club billed free. It has no
-    // subscription behind any seat, so neither RPC has anything to protect.
+    // The shape the subscription-keyed refusal allows: a consumer club billed
+    // free. It has no subscription behind any seat, so neither RPC has
+    // anything to protect.
     await createTestProduct(admin, {
       id: FREE_CLUB,
       productType: "consumer_club",
@@ -136,8 +137,8 @@ describe("admin participation RPCs", () => {
     });
 
     it("enrolls onto a FREE consumer club, exactly like a free camp or event", async () => {
-      // The other half of the same rule. Before 00166 the type alone refused
-      // this, which would have made comp-enrollment impossible on a whole
+      // The other half of the same rule. Refusing on the product type alone
+      // would make comp-enrollment impossible on a whole
       // product shape for no reason a free event does not share.
       const { data, error } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: FREE_CLUB,
@@ -281,9 +282,9 @@ describe("admin participation RPCs", () => {
     }
 
     it("refuses a participation with a live Stripe subscription", async () => {
-      // Since 00166 this is the ONLY thing standing between an admin and a
-      // cancellation, on every product type — the consumer-club check that used
-      // to shadow it is gone. The failure mode it prevents is a subscription
+      // This is the ONLY thing standing between an admin and a
+      // cancellation, on every product type — no product-type check shadows
+      // it. The failure mode it prevents is a subscription
       // that keeps billing with no DB row behind it.
       const participationId = await seatWithSubscription("active");
 
@@ -302,7 +303,7 @@ describe("admin participation RPCs", () => {
     });
 
     it("still refuses a past_due subscription — Stripe has not given up on it", async () => {
-      // 00170 narrowed "live" to "status is not cancelled", and past_due is the
+      // "Live" is "status is not cancelled", and past_due is the
       // value most likely to be mistaken for dead. Stripe is still retrying it
       // and it can recover, so the CASCADE would still orphan something
       // billable.
@@ -323,7 +324,7 @@ describe("admin participation RPCs", () => {
     });
 
     it("removes a participation whose subscription is cancelled", async () => {
-      // The bug 00170 fixes, and it is sharper here than on the demote side:
+      // The bug the status test avoids, sharper here than on the demote side:
       // when Stripe exhausts dunning it moves the subscription to `unpaid`,
       // which we store as `cancelled`, and it never fires
       // subscription.deleted — so the row survives with nothing left to bill.

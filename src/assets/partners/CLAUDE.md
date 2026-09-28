@@ -1,7 +1,8 @@
 # Partner brand assets
 
-Third-party logos used in the `/roblox` lockup. The two relationships they stand for are
-not the same and the copy beside them must not blur them: School of Gaming **partners
+Third-party logos: the two in the `/roblox` lockup, and Google's "G" on the
+"Continue with Google" buttons of the auth pages. The two lockup marks stand for
+relationships that are not the same, and the copy beside them must not blur them: School of Gaming **partners
 with** Lynx Educate, and **collaborates with** Roblox — see the partner-brand rules in
 `src/CLAUDE.md`.
 
@@ -33,6 +34,19 @@ which is also what the Roblox guidelines require ("always at full resolution").
 | `roblox-wordmark-white.svg` | Official Roblox press kit → "Roblox Logo" pack, `about.roblox.com/press-kit` |
 | `lynx-educate.svg` | `lynxeducate.com/wp-content/uploads/2023/10/logo.svg` — as supplied, unmodified |
 | `lynx-educate-reversed.svg` | **Derived by us** from the file above — see below |
+| `google-g.svg` | **Written by us**: Google's standard four-colour 18x18 "G" (`#4285F4`, `#34A853`, `#FBBC05`, `#EA4335`) — see below |
+
+### The Google "G"
+
+Google's branding bundle (`signin-assets.zip`, from
+`developers.google.com/identity/branding-guidelines`) was checked on 2026-09-24 and holds
+no standalone mark: every SVG in it is a whole button, background and stroke included, and
+its "G" is drawn with a gradient inside an HTML `foreignObject`, which does not survive
+being cut out of the button or loaded as an image. So the file here is the well-known
+four-colour G written out by hand, at the 18px size Google's button spec gives it. Google's
+rule is that the G is never resized or recoloured and never rendered monochrome; it sits
+on the button's own fill, never on a coloured ground. If Google ever ships a standalone
+mark, prefer it over this file.
 
 The Roblox pack also ships the black wordmark and both Tilt colourways, plus the brand
 guidelines PDF. Only the white wordmark is vendored because the app renders dark-only

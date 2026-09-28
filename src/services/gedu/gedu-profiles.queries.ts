@@ -1,33 +1,30 @@
 "use client";
 
-import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
+import { userKeys } from "@/services/users";
 import {
   GeduProfilesService,
-  type GeduCertification,
   type GeduCertificationDetail,
 } from "./gedu-profiles.service";
 
 export const geduProfileKeys = {
   all: ["gedu-profiles"] as const,
-  lists: () => [...geduProfileKeys.all, "list"] as const,
   detail: (id: string) => [...geduProfileKeys.all, "detail", id] as const,
 };
 
-/** Certification state for every gedu. Admin-only (RLS). */
-export function useGeduProfiles() {
-  const supabase = getClient();
-  const service = new GeduProfilesService(supabase);
-
-  return useQuery({
-    queryKey: geduProfileKeys.lists(),
-    queryFn: () => service.getAll(),
-  });
-}
-
-/** Certification state for a single gedu. Seed `initialData` from a server fetch. */
+/**
+ * Certification state for a single gedu. Seed `initialData` from a server fetch.
+ *
+ * **There is deliberately no every-gedu read beside this one.** The two flags a
+ * *list* renders — certified, and whether a criminal record extract has been
+ * recorded — are columns of the admin people-list view, so they arrive with the
+ * row they are about; a second whole-table read existed only to feed those
+ * lists, and its truncation printed a wrong mark on every educator past the
+ * cap. This read is for the one surface that needs the whole row: the
+ * user-detail card, which also names the acting admins.
+ */
 export function useGeduProfile(
   geduId: string,
   options?: { initialData?: GeduCertificationDetail | null },
@@ -40,40 +37,6 @@ export function useGeduProfile(
     queryFn: () => service.getOne(geduId),
     initialData: options?.initialData,
   });
-}
-
-/**
- * The same data keyed by gedu id for O(1) lookup in lists and pickers.
- *
- * `isError` travels with the map because an absent entry is ambiguous on its
- * own: it means "this gedu is not certified" only when the read succeeded, and
- * "we do not know" when it failed. Callers that *assert* a state to the reader
- * (a badge) must say nothing while `isError`; callers that *gate* an action can
- * keep failing closed, which is the safe direction for a gate and the wrong one
- * for a claim.
- */
-export interface GeduCertificationLookup {
-  map: Map<string, GeduCertification>;
-  isError: boolean;
-  /**
-   * Whether the read has answered at all — either way. A caller that renders a
-   * *block* of marks atomically needs this: an entry that is absent because the
-   * read is still in flight and one that is absent because the educator has no
-   * row are the same `undefined` from the map, and only this tells them apart.
-   */
-  isPending: boolean;
-}
-
-export function useGeduCertificationMap(): GeduCertificationLookup {
-  const { data, isError, isPending } = useGeduProfiles();
-  const map = useMemo(
-    () => new Map((data ?? []).map((g) => [g.user_id, g])),
-    [data],
-  );
-  return useMemo(
-    () => ({ map, isError, isPending }),
-    [map, isError, isPending],
-  );
 }
 
 /**
@@ -90,6 +53,14 @@ export function useGeduCertificationMap(): GeduCertificationLookup {
  * here, because that is where the certify action's *other* effect lives: the
  * row leaving the queue and the strip's certified count are one fact the shell
  * already owns.
+ *
+ * **The people lists are invalidated too, because `certified` is a column of
+ * their rows.** It rides along on the admin list read rather than arriving from
+ * a certification read of its own, which is what deleted a whole-table read —
+ * and the price of that is exactly this line: the surfaces reading the flag are
+ * no longer reachable through this root, so a certify that did not invalidate
+ * theirs would leave the users list unmarked and the gedu picker refusing to
+ * offer an educator the admin has just approved.
  */
 export function useSetGeduCertified() {
   const queryClient = useQueryClient();
@@ -100,7 +71,10 @@ export function useSetGeduCertified() {
     mutationFn: ({ geduId, certified }: { geduId: string; certified: boolean }) =>
       service.setCertified(geduId, certified),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: geduProfileKeys.all }),
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: geduProfileKeys.all }),
+        queryClient.invalidateQueries({ queryKey: userKeys.lists() }),
+      ]),
   });
 }
 
@@ -109,8 +83,11 @@ export function useSetGeduCertified() {
  * criminal record extract for one educator.
  *
  * Invalidates the whole `gedu-profiles` root, exactly as certification does and
- * for the same reason: the flag lives on the same row, so the detail card, the
- * users list and the picker are all reading the value this call just changed.
+ * for the same reason: the flag lives on the same row, so the detail card is
+ * reading the value this call just changed. **And the people lists, because the
+ * users list renders this flag off its own row** — the same reason certification
+ * invalidates them, and the same failure without it: a warning mark still
+ * claiming no extract has been seen, minutes after an admin recorded one.
  *
  * **And the admin dashboard's key alongside it.** Recording a check moves
  * nobody in or out of the certification queue — it is a list of *uncertified*
@@ -144,6 +121,7 @@ export function useSetGeduCriminalRecordCheck() {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: geduProfileKeys.all }),
         queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: userKeys.lists() }),
       ]),
   });
 }

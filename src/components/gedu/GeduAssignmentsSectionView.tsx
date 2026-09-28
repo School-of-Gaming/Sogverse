@@ -1,7 +1,11 @@
 "use client";
 
 import { GeduAssignmentCard } from "./GeduAssignmentCard";
-import type { GeduAssignmentSummary } from "@/lib/gedu-assignment-rollup";
+import { GeduSubstitutionCard } from "./GeduSubstitutionCard";
+import type {
+  GeduAssignmentSummary,
+  GeduSubstitutionSummary,
+} from "@/lib/gedu-assignment-rollup";
 
 export interface GeduAssignmentCardData {
   assignment: GeduAssignmentSummary;
@@ -9,12 +13,26 @@ export interface GeduAssignmentCardData {
   scheduleLines: readonly string[];
 }
 
+/**
+ * One card in a type noun's grid, in the two shapes it comes in.
+ *
+ * A gedu's week is one week whichever kind of seat put a session in it, so the
+ * two share a grid rather than each getting a section: splitting them would put
+ * the same Monday in two places on one page and give a gedu with a single substitution
+ * a whole heading for one card. The tag is what lets one list carry both
+ * without either card growing a branch on the other's fields.
+ */
+export type GeduDashboardCard =
+  | { kind: "assignment"; item: GeduAssignmentCardData }
+  | { kind: "substitution"; item: GeduSubstitutionSummary };
+
 interface GeduAssignmentsSectionViewProps {
   /**
-   * One type noun's worth of assignments, already rolled up and sorted by
-   * soonest next session ascending. The view sorts nothing and fetches nothing.
+   * One type noun's worth of cards, already rolled up and ordered by the page:
+   * the substitutions first, by substitution date, then the assignments by soonest next
+   * session. The view sorts nothing and fetches nothing.
    */
-  items: readonly GeduAssignmentCardData[];
+  items: readonly GeduDashboardCard[];
 }
 
 /**
@@ -54,13 +72,22 @@ export function GeduAssignmentsSectionView({
 }: GeduAssignmentsSectionViewProps) {
   return (
     <div className="grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {items.map(({ assignment, scheduleLines }) => (
-        <GeduAssignmentCard
-          key={`${assignment.productId}-${assignment.groupId}`}
-          assignment={assignment}
-          scheduleLines={scheduleLines}
-        />
-      ))}
+      {items.map((card) =>
+        card.kind === "substitution" ? (
+          // A substitution's identity is (group, substitution date) — a sub may hold two
+          // Mondays of one group, and nothing else tells those two cards apart.
+          <GeduSubstitutionCard
+            key={`substitution-${card.item.groupId}-${card.item.substitutionDate}`}
+            substitution={card.item}
+          />
+        ) : (
+          <GeduAssignmentCard
+            key={`assignment-${card.item.assignment.productId}-${card.item.assignment.groupId}`}
+            assignment={card.item.assignment}
+            scheduleLines={card.item.scheduleLines}
+          />
+        ),
+      )}
     </div>
   );
 }

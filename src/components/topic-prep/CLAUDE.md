@@ -57,7 +57,7 @@ own venues the gamers play on School of Gaming's Minecraft accounts and are not 
 sign in with their own on our devices, and municipality clubs run on School of Gaming's
 Minecraft Education accounts. So the Minecraft account steps are scoped to the device
 alongside the installs, and all three Minecraft topics have nothing to say in person: no
-heading, no intro, no closing. The other four topics keep account steps that survive every
+heading, no intro, no closing. The other topics with prep keep account steps that survive every
 filter, because those accounts are the family's own wherever the sessions happen — the
 family creates them, holds them, and brings them to an in-person session the same way they
 bring them to a remote one.
@@ -67,13 +67,13 @@ bring them to a remote one.
 **Rule: getting the mic and camera ready for the voice room is declared once, outside every
 topic, and appended as the last step of every remote guide.** It is a fact about a *remote*
 product — the session happens in a browser room, and in person there is no room to join —
-so writing it into the seven topic blocks would be seven copies of one paragraph, drifting
+so writing it into every topic block would be one paragraph copied per topic, drifting
 apart the first time one of them was edited. Its scope is `ownDevice` for the reason the
 axis exists: the room runs on the family's own machine, and in person it does not run.
 
-**Consequence: a label-only topic now has a guide, on a remote product only.** The five
-topics that name subject matter rather than one piece of software (esports, creator studio,
-game studio, programming, AI) brought no steps and rendered nothing; remotely they now
+**Consequence: a label-only topic now has a guide, on a remote product only.** The
+topics that name subject matter rather than one piece of software (the ones without an
+`info` block) brought no steps and rendered nothing; remotely they now
 render exactly one step, under a generic intro of its own rather than a topic's. That makes
 `null` unreachable on a remote product: every remote guide has at least the room to get
 ready for, and the empty answer is now an in-person answer alone.

@@ -216,7 +216,7 @@ describe("family product feed", () => {
         // other row here is: this file tests the read, and the audience gate
         // that would police the write has its own coverage in the enrollment
         // suite. What matters here is that the row shape (participant =
-        // customer) is one the table has permitted since 00173.
+        // customer) is one the table permits.
         {
           product_id: PRODUCT_MINE,
           group_id: GROUP_MINE,
@@ -315,7 +315,7 @@ describe("family product feed", () => {
 
       const feed = familyProductFeed.parse(data);
 
-      // `participant`, not `gamer`, since 00174: the seat's occupant can be a
+      // `participant`, not `gamer`: the seat's occupant can be a
       // parent, and the contract is `.strict()`, so this parse is what would
       // fail if the RPC and the schema ever disagreed about the key again.
       expect(feed.participant.id).toBe(TEST_IDS.GAMER);
@@ -597,12 +597,12 @@ describe("family product feed", () => {
     });
 
     it("refuses the service-role client, which has EXECUTE but no identity", async () => {
-      // The regression pin for 00152. `service_role` keeps its grant, so this
-      // call reaches the function body — and a service-role JWT carries no
-      // `sub`, so auth.uid() is NULL inside it. Until 00152 that made the
-      // ownership predicate evaluate to NULL, which PL/pgSQL reads as false,
-      // so the guard never fired and the FULL family document came back for an
-      // arbitrary participation id: a complete cross-family read for any
+      // The regression pin for the NULL-uid hole. `service_role` keeps its
+      // grant, so this call reaches the function body — and a service-role JWT
+      // carries no `sub`, so auth.uid() is NULL inside it. An ownership
+      // predicate that evaluates to NULL is read as false by PL/pgSQL, which
+      // would leave the guard unfired and hand back the FULL family document
+      // for an arbitrary participation id: a complete cross-family read for any
       // server-side caller that passed through a URL-supplied id.
       //
       // `minePlaced` is a real, placed participation, which is what makes this
@@ -621,7 +621,7 @@ describe("family product feed", () => {
   // 5. The last editor, by id and by first name
   // -------------------------------------------------------------------------
   //
-  // 00194 gave the family document `updated_by` and the first name behind it,
+  // The family document carries `updated_by` and the first name behind it,
   // so a report card can say who wrote it. That is a deliberate widening of a
   // document whose omissions are otherwise its privacy contract: the page
   // already names every assigned gedu by id and first name, and this is the

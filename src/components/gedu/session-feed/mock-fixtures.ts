@@ -1,5 +1,6 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { getNextSessionStart } from "@/lib/enrollment";
+import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 import { isExpectedOnEntry } from "./entry-state";
 import type { GamerPhotoConsent } from "@/types";
@@ -938,6 +939,7 @@ function toEntry(
         id,
         startsAt,
         endsAt,
+        staffing: NO_SESSION_STAFFING,
         report: resolveReportDate(spec.report, startsAt),
         staffNote: spec.staffNote ?? null,
         // Empty on every ordinary future session — nothing can be marked
@@ -958,6 +960,7 @@ function toEntry(
         id,
         startsAt,
         endsAt,
+        staffing: NO_SESSION_STAFFING,
         owed: spec.owed ?? true,
         report: resolveReportDate(spec.report, startsAt),
         staffNote: spec.staffNote ?? null,
@@ -967,7 +970,13 @@ function toEntry(
         lastEditedBy: spec.lastEditedBy ?? null,
       };
     case "no_record":
-      return { kind: "no_record", id, startsAt, endsAt };
+      return {
+        kind: "no_record",
+        id,
+        startsAt,
+        endsAt,
+        staffing: NO_SESSION_STAFFING,
+      };
   }
 }
 

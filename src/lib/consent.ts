@@ -6,11 +6,13 @@
  * register API route has to read a decision without mounting anything.
  *
  * **Two purposes, three answers.** `analytics` covers Vercel Web Analytics and
- * Speed Insights; `marketing` covers the Meta Pixel in the browser and the
- * conversions our servers report to Meta. Marketing without analytics is
- * deliberately not offered — it would be a fourth button answering a question
- * nobody asks, and the advertising side already reports a superset of what the
- * analytics pair does.
+ * Speed Insights, which count visits without a cookie and without an
+ * identifier; `marketing` covers the Meta Pixel in the browser, the conversions
+ * our servers report to Meta, and the Tag Manager container, which mints a
+ * persistent client id and carries advertising tags. Marketing without
+ * analytics is deliberately not offered — it would be a fourth button answering
+ * a question nobody asks, and the advertising side already reports a superset
+ * of what the analytics pair does.
  */
 
 /** The cookie that remembers the answer. Named like `sog_pin_verified`. */
@@ -24,11 +26,16 @@ export const CONSENT_COOKIE_NAME = "sog_consent";
  * answer given to the old question is not an answer to the new one, and
  * silently re-using it would be consent we never collected.
  *
- * **The advertising platforms are named in the privacy policy, not in the
- * strip** — the policy is where recipients are identified and it is the thing
- * carrying a last-updated date. So adding one is a policy edit *plus* a bump
- * here: a new recipient is a new consent, and everyone who answered the old
- * question is asked again.
+ * **What forces a bump is the question changing, never who the answer reaches.**
+ * The strip asks about *purposes* and names no platform — it says the
+ * advertising platforms we work with — while the privacy policy carries the
+ * dated list of recipients. So a purpose added, a purpose withdrawn, or a
+ * purpose that comes to cover something a reader would not have taken it to
+ * cover is a different question, an answer to the old one is not an answer to
+ * it, and everyone is asked again. A further recipient *inside* a purpose that
+ * already covers it is a policy edit alone: the sentence the visitor agreed to
+ * is unchanged, and re-asking would put the banner back up to collect the same
+ * answer to the same words.
  */
 export const CONSENT_VERSION = 1;
 
@@ -43,48 +50,110 @@ export const CONSENT_VERSION = 1;
 export const CONSENT_MAX_AGE_SECONDS = 180 * 24 * 60 * 60;
 
 /**
- * The cookies Meta's pixel sets, cleared when a granted purpose is taken away
- * again. Not ours, which is exactly why they are named here: a script that has
- * already run keeps whatever it wrote until something removes it.
+ * The name prefixes the advertising scripts write their cookies under, cleared
+ * when a granted purpose is taken away again. Not ours, which is exactly why
+ * they are named here: a script that has already run keeps whatever it wrote
+ * until something removes it.
  *
- * `_fbp` is the browser identifier the library mints for this device, `_fbc`
- * records the ad click that brought the visitor here, and `_fbleid` is the
- * lead-event id it writes after reporting one. All three are also what a
- * server-side report reads back off a later request, so leaving one behind is
- * how a withdrawal keeps identifying the same browser to Meta from our own side.
+ * Meta's three are whole names. `_fbp` is the browser identifier the library
+ * mints for this device, `_fbc` records the ad click that brought the visitor
+ * here, and `_fbleid` is the lead-event id it writes after reporting one. All
+ * three are also what a server-side report reads back off a later request, so
+ * leaving one behind is how a withdrawal keeps identifying the same browser to
+ * Meta from our own side.
+ *
+ * Google's are the reason this is a list of prefixes rather than of names. The
+ * analytics client id lives in `_ga`, but the session state beside it lives in
+ * `_ga_<property id>` — a name that depends on which property the container is
+ * configured against and is therefore unknowable here. `_gid` is the day-scoped
+ * visitor id, and `_gcl_` covers the conversion linker's family, the ad click
+ * this device arrived on among them. Nothing we set ourselves begins with any
+ * of these.
  */
-export const PIXEL_COOKIE_NAMES = ["_fbp", "_fbc", "_fbleid"] as const;
+export const ADVERTISING_COOKIE_PREFIXES = [
+  "_fbp",
+  "_fbc",
+  "_fbleid",
+  "_ga",
+  "_gid",
+  "_gcl_",
+] as const;
 
 /**
- * What Meta's library keeps in `localStorage`, removed on withdrawal beside the
- * cookies above.
+ * The cookies an advertising script actually left on this document, read out of
+ * a `document.cookie` string.
  *
- * Easy to miss, and the reason it matters is that it is *not* a cookie: clearing
- * `_fbp` while `multiFbc` still holds the click ids, and the library's own
- * `fbevents^$…` and `pixel_mutex:…` entries still hold its state, leaves the
- * device re-identifiable the moment the pixel is allowed to run again. The
- * prefixes are matched rather than listed because the library appends a pixel id
- * and a purpose to each key.
+ * Reading the names back rather than expiring a fixed list is what the
+ * per-property Google names force, and it costs nothing: a cookie set on the
+ * registrable domain is readable from a page on a subdomain, so a withdrawal
+ * sees the whole set from wherever it happens. Takes the string rather than
+ * reaching for `document`, which keeps this module isomorphic and the rule
+ * testable.
  */
-const PIXEL_STORAGE_KEYS = ["multiFbc"] as const;
-const PIXEL_STORAGE_PREFIXES = ["fbevents^$", "pixel_mutex:"] as const;
+export function advertisingCookieNames(cookies: string): string[] {
+  const doomed: string[] = [];
+  for (const pair of cookies.split(";")) {
+    const separator = pair.indexOf("=");
+    const name = (separator === -1 ? pair : pair.slice(0, separator)).trim();
+    if (name === "") continue;
+    if (!ADVERTISING_COOKIE_PREFIXES.some((prefix) => name.startsWith(prefix))) {
+      continue;
+    }
+    doomed.push(name);
+  }
+  return doomed;
+}
 
 /**
- * Remove everything Meta's library has stored in the given `Storage`.
+ * What the advertising libraries keep in web storage, removed on withdrawal
+ * beside the cookies above.
+ *
+ * Easy to miss, and the reason it matters is that none of these is a cookie: a
+ * click id deleted from `_gcl_aw` or `_fbp` and left behind here is the same
+ * click id, and it makes the device re-identifiable the moment the scripts are
+ * allowed to run again. Both vendors keep such a twin - Google writes the raw
+ * `gclid` into `_gcl_ls`, Meta writes the `fbclid` into `multiFbc` - so a list
+ * covering one vendor is half a list.
+ *
+ * `lastExternalReferrer` and `lastExternalReferrerTime` are the pixel's as
+ * well, recording where the visitor arrived from and when. They read like
+ * nobody's in particular, which is the only reason they are worth a sentence:
+ * web storage is per-origin, so the only writers here are these two libraries
+ * and our own code, and our own code writes neither. Both are named in full,
+ * being fixed names that carry no id.
+ *
+ * The prefixed entries are matched rather than named: Meta appends a pixel id
+ * and a purpose to each of its keys, and Google's are taken on the prefix its
+ * cookies already use.
+ */
+const ADVERTISING_STORAGE_KEYS = [
+  "multiFbc",
+  "lastExternalReferrer",
+  "lastExternalReferrerTime",
+] as const;
+const ADVERTISING_STORAGE_PREFIXES = [
+  "fbevents^$",
+  "pixel_mutex:",
+  "_gcl_",
+] as const;
+
+/**
+ * Remove everything the advertising libraries have stored in the given
+ * `Storage`.
  *
  * Takes the storage rather than reaching for `window`, which keeps it testable
  * and keeps this module isomorphic. The caller owns the failure: reading
  * `window.localStorage` throws outright where site data is blocked, so the one
  * call site wraps both the access and this call.
  */
-export function clearPixelStorage(storage: Storage): void {
+export function clearAdvertisingStorage(storage: Storage): void {
   const doomed: string[] = [];
   for (let index = 0; index < storage.length; index++) {
     const key = storage.key(index);
     if (key === null) continue;
     if (
-      (PIXEL_STORAGE_KEYS as readonly string[]).includes(key) ||
-      PIXEL_STORAGE_PREFIXES.some((prefix) => key.startsWith(prefix))
+      (ADVERTISING_STORAGE_KEYS as readonly string[]).includes(key) ||
+      ADVERTISING_STORAGE_PREFIXES.some((prefix) => key.startsWith(prefix))
     ) {
       doomed.push(key);
     }
@@ -104,7 +173,10 @@ export type ConsentChoice =
 export interface ConsentState {
   /** Vercel Web Analytics and Speed Insights. */
   analytics: boolean;
-  /** The Meta Pixel, and the conversions our servers report to Meta. */
+  /**
+   * The Meta Pixel, the conversions our servers report to Meta, and the Tag
+   * Manager container.
+   */
   marketing: boolean;
   /** When the answer was given, ISO-8601. Stored so a refusal can age out. */
   decidedAt: string;

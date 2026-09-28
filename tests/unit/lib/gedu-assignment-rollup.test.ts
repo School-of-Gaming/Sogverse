@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  geduAssignmentKey,
+  geduSubstitutionKey,
   rollUpGeduAssignments,
+  rollUpGeduSubstitutions,
   type GeduAssignmentRow,
 } from "@/lib/gedu-assignment-rollup";
 // The roll-up's output is what the card asks its run-state questions of, so the
@@ -42,6 +45,10 @@ function row(over: {
       translations: [{ locale: "en", name: over.name, description: "" }],
     },
     groupId: `${over.id}-group`,
+    // A standing assignment: the rollup this suite is about is the recurring
+    // card's, and a live substitution is its own small card keyed to one date.
+    kind: "assignment",
+    substitutionDate: null,
     groupCount: 2,
     participantCount: 14,
     groupName: `${over.name} A`,
@@ -68,9 +75,9 @@ function rollUp(
     rows,
     now,
     locale: "en",
-    hrefByProductId: Object.fromEntries(
+    hrefByAssignment: Object.fromEntries(
       rows.map((r) => [
-        r.product.id,
+        geduAssignmentKey(r.product.id, r.groupId),
         {
           pathname: "/preview/[surface]/[scenario]",
           params: { surface: "gedu-product", scenario: r.product.id },
@@ -309,7 +316,7 @@ describe("rollUpGeduAssignments", () => {
     const summaries = rollUp(
       [row({ id: "p1", name: "A" }), row({ id: "p2", name: "B" })],
       now,
-      { attentionByProductId: { p1: 3 } },
+      { attentionByAssignment: { [geduAssignmentKey("p1", "p1-group")]: 3 } },
     );
     const byId = new Map(summaries.map((s) => [s.productId, s.attentionCount]));
     expect(byId.get("p1")).toBe(3);
@@ -321,8 +328,11 @@ describe("rollUpGeduAssignments", () => {
       [row({ id: "p1", name: "Remote Club", isRemote: true })],
       now,
       {
-        voiceHrefByProductId: {
-          p1: { pathname: "/voice/group/[id]", params: { id: "p1-group" } },
+        voiceHrefByAssignment: {
+          [geduAssignmentKey("p1", "p1-group")]: {
+            pathname: "/voice/group/[id]",
+            params: { id: "p1-group" },
+          },
         },
       },
     );
@@ -338,8 +348,8 @@ describe("rollUpGeduAssignments", () => {
       [row({ id: "onsite", name: "Onsite Club", isRemote: false })],
       now,
       {
-        voiceHrefByProductId: {
-          onsite: {
+        voiceHrefByAssignment: {
+          [geduAssignmentKey("onsite", "onsite-group")]: {
             pathname: "/voice/group/[id]",
             params: { id: "onsite-group" },
           },
@@ -407,5 +417,295 @@ describe("rollUpGeduAssignments", () => {
       now,
     );
     expect(summaries[0].siteName).toBeNull();
+  });
+
+  /**
+   * **The key moved from product to (product, group), and a substitution is why.**
+   *
+   * A gedu holds at most one assignment per product, which is what made a
+   * product id look like a key. It stops being one the moment the same gedu can
+   * also substitute on a *sibling* group of that product: under a product key the two
+   * seats share a badge count, a workspace link and a voice room, and whichever
+   * the caller wrote last wins.
+   */
+  it("keys per-seat facts by (product, group), not by product", () => {
+    const mine = row({ id: "p1", name: "Club" });
+    const sibling: GeduAssignmentRow = {
+      ...row({ id: "p1", name: "Club" }),
+      groupId: "p1-group-b",
+    };
+
+    const summaries = rollUpGeduAssignments({
+      rows: [mine, sibling],
+      now,
+      locale: "en",
+      attentionByAssignment: {
+        [geduAssignmentKey("p1", "p1-group")]: 3,
+        [geduAssignmentKey("p1", "p1-group-b")]: 0,
+      },
+      hrefByAssignment: {
+        [geduAssignmentKey("p1", "p1-group")]: {
+          pathname: "/gedu/clubs/[id]",
+          params: { id: "p1" },
+        },
+        [geduAssignmentKey("p1", "p1-group-b")]: {
+          pathname: "/gedu/clubs/[id]",
+          params: { id: "p1" },
+        },
+      },
+      voiceHrefByAssignment: {
+        [geduAssignmentKey("p1", "p1-group")]: {
+          pathname: "/voice/group/[id]",
+          params: { id: "p1-group" },
+        },
+        [geduAssignmentKey("p1", "p1-group-b")]: {
+          pathname: "/voice/group/[id]",
+          params: { id: "p1-group-b" },
+        },
+      },
+    });
+
+    const byGroup = new Map(summaries.map((s) => [s.groupId, s]));
+    expect(byGroup.get("p1-group")?.attentionCount).toBe(3);
+    expect(byGroup.get("p1-group-b")?.attentionCount).toBe(0);
+    // The room is the group's, so the two seats must never land in one.
+    expect(byGroup.get("p1-group")?.voiceHref).toEqual({
+      pathname: "/voice/group/[id]",
+      params: { id: "p1-group" },
+    });
+    expect(byGroup.get("p1-group-b")?.voiceHref).toEqual({
+      pathname: "/voice/group/[id]",
+      params: { id: "p1-group-b" },
+    });
+  });
+
+  it("ignores substitution rows — a substitution is one afternoon, not a run", () => {
+    const summaries = rollUp(
+      [
+        row({ id: "p1", name: "Club" }),
+        { ...row({ id: "p2", name: "Substituted Club" }), kind: "substitution" as const, substitutionDate: "2026-02-16" },
+      ],
+      now,
+    );
+    expect(summaries.map((s) => s.productId)).toEqual(["p1"]);
+  });
+});
+
+/**
+ * ============================================================================
+ * The substitution roll-up
+ * ============================================================================
+ *
+ * A substitution is one dated afternoon, so what has to hold is the opposite of the
+ * assignment roll-up's contract: no schedule walk, no run state, one card per
+ * substitution date, and a workspace link that names the group — because a sub has
+ * no assignment row for one to be resolved from.
+ */
+describe("rollUpGeduSubstitutions", () => {
+  // No clock: the database decides how long a substitution card lasts (the access
+  // window), so this roll-up takes no `now` and there is none to pin here.
+
+  function substitutionRow(over: {
+    id: string;
+    name: string;
+    groupId?: string;
+    substitutionDate: string;
+    isRemote?: boolean;
+    siteName?: string | null;
+    weekday?: number;
+    /** The PRODUCT's zone — every instant on the card is derived in it. */
+    timezone?: string;
+  }): GeduAssignmentRow {
+    const base = row({
+      id: over.id,
+      name: over.name,
+      weekday: over.weekday ?? 0,
+      isRemote: over.isRemote ?? true,
+      siteName: over.siteName ?? null,
+    });
+    return {
+      ...base,
+      product: { ...base.product, timezone: over.timezone ?? base.product.timezone },
+      groupId: over.groupId ?? `${over.id}-group`,
+      kind: "substitution",
+      substitutionDate: over.substitutionDate,
+    };
+  }
+
+  function rollUpSubstitutions(
+    rows: GeduAssignmentRow[],
+    extra: Partial<Parameters<typeof rollUpGeduSubstitutions>[0]> = {},
+  ) {
+    return rollUpGeduSubstitutions({
+      rows,
+      locale: "en",
+      hrefByAssignment: Object.fromEntries(
+        rows.map((r) => [
+          geduAssignmentKey(r.product.id, r.groupId),
+          { pathname: "/gedu/clubs/[id]", params: { id: r.product.id } },
+        ]),
+      ),
+      ...extra,
+    });
+  }
+
+  it("emits one card per substitution date and skips assignment rows", () => {
+    const substitutions = rollUpSubstitutions([
+      row({ id: "mine", name: "My Club" }),
+      // 16 Feb 2026 is a Monday, which is the weekday `row` slots by default.
+      substitutionRow({ id: "p1", name: "Substituted Club", substitutionDate: "2026-02-16" }),
+      substitutionRow({
+        id: "p1",
+        name: "Substituted Club",
+        groupId: "p1-group-b",
+        substitutionDate: "2026-02-23",
+      }),
+    ]);
+    expect(substitutions).toHaveLength(2);
+    expect(substitutions.map((c) => c.substitutionDate)).toEqual([
+      "2026-02-16",
+      "2026-02-23",
+    ]);
+  });
+
+  it("resolves the substituted session's instants from the date and the slots", () => {
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
+    ]);
+    // 16:30 Helsinki on 16 Feb is 14:30 UTC; the slot runs 90 minutes.
+    expect(substitution.startsAt?.toISOString()).toBe("2026-02-16T14:30:00.000Z");
+    expect(substitution.endsAt?.toISOString()).toBe("2026-02-16T16:00:00.000Z");
+  });
+
+  it("opens the workspace 48 hours before the substituted session's own start", () => {
+    // Not 48 hours before the substituted DAY: the card has to name the instant the
+    // database's own gates open, and those count back from the session's start.
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
+    ]);
+    expect(substitution.accessOpensAt.toISOString()).toBe("2026-02-14T14:30:00.000Z");
+    expect(
+      substitution.startsAt!.getTime() - substitution.accessOpensAt.getTime(),
+    ).toBe(48 * 60 * 60 * 1000);
+  });
+
+  it("counts an orphaned date back from product-local midnight, as the SQL does", () => {
+    // A Tuesday on a Monday club: there is no session start to count back from,
+    // so the predicate's own COALESCE falls to product-local midnight of the
+    // substitution date. 17 Feb 2026 00:00 Helsinki is 16 Feb 22:00 UTC, and 48
+    // hours before that is 14 Feb 22:00 UTC. Reading the missing start as "no
+    // lock at all" was the defect: it drew an unlocked, linked card for a
+    // workspace every gate behind it still refuses.
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-17" }),
+    ]);
+    expect(substitution.startsAt).toBeNull();
+    expect(substitution.accessOpensAt.toISOString()).toBe("2026-02-14T22:00:00.000Z");
+  });
+
+  it("takes that midnight in the PRODUCT's zone, not the runtime's", () => {
+    // The same orphaned Tuesday on a Los Angeles club. Midnight there is ten
+    // hours later than midnight in Helsinki, so a fallback resolved in the
+    // wrong zone unlocks most of a day early — and the whole point of the lock
+    // is that the card and the database agree to the minute.
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({
+        id: "p1",
+        name: "Club",
+        substitutionDate: "2026-02-17",
+        timezone: "America/Los_Angeles",
+      }),
+    ]);
+    expect(substitution.accessOpensAt.toISOString()).toBe("2026-02-15T08:00:00.000Z");
+  });
+
+  it("subtracts the 48 hours on the instant across a DST transition", () => {
+    // 30 March 2026 is the Monday after Europe's spring-forward, and the club
+    // meets on Wednesdays — so the date is an orphan whose local midnight falls
+    // in EEST (+3) while the instant 48 hours earlier is still in EET (+2).
+    // Stepping the calendar two days and taking midnight again would land an
+    // hour out; subtracting on the instant cannot.
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({
+        id: "p1",
+        name: "Club",
+        substitutionDate: "2026-03-30",
+        weekday: 2,
+      }),
+    ]);
+    expect(substitution.startsAt).toBeNull();
+    expect(substitution.accessOpensAt.toISOString()).toBe("2026-03-27T21:00:00.000Z");
+  });
+
+  it("carries a date the schedule no longer projects, with no instants", () => {
+    // A Tuesday, on a club whose only slot is a Monday — an orphaned request,
+    // which is history rather than a fault and must not take the card away.
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-17" }),
+    ]);
+    expect(substitution.substitutionDate).toBe("2026-02-17");
+    expect(substitution.startsAt).toBeNull();
+    expect(substitution.endsAt).toBeNull();
+  });
+
+  it("puts the group on the workspace link", () => {
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({
+        id: "p1",
+        name: "Club",
+        groupId: "sibling-group",
+        substitutionDate: "2026-02-16",
+      }),
+    ]);
+    expect(substitution.openHref).toEqual({
+      pathname: "/gedu/clubs/[id]",
+      params: { id: "p1" },
+      query: { groupId: "sibling-group" },
+    });
+  });
+
+  it("keys the attention count by (group, substitution date)", () => {
+    const substitutions = rollUpSubstitutions(
+      [
+        substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
+        substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-23" }),
+      ],
+      {
+        attentionBySubstitution: {
+          [geduSubstitutionKey("p1-group", "2026-02-16")]: 1,
+        },
+      },
+    );
+    const byDate = new Map(substitutions.map((c) => [c.substitutionDate, c.attentionCount]));
+    expect(byDate.get("2026-02-16")).toBe(1);
+    expect(byDate.get("2026-02-23")).toBe(0);
+  });
+
+  it("sorts soonest first and sinks an orphaned date to the foot", () => {
+    const substitutions = rollUpSubstitutions([
+      substitutionRow({ id: "c", name: "Later", substitutionDate: "2026-02-23" }),
+      substitutionRow({ id: "b", name: "Orphan", substitutionDate: "2026-02-17" }),
+      substitutionRow({ id: "a", name: "Sooner", substitutionDate: "2026-02-16" }),
+    ]);
+    expect(substitutions.map((c) => c.productName)).toEqual([
+      "Sooner",
+      "Later",
+      "Orphan",
+    ]);
+  });
+
+  it("gives an in-person substitution its site and no room", () => {
+    const [substitution] = rollUpSubstitutions([
+      substitutionRow({
+        id: "p1",
+        name: "Camp",
+        substitutionDate: "2026-02-16",
+        isRemote: false,
+        siteName: "Sello Library, Espoo",
+      }),
+    ]);
+    expect(substitution.hasVoiceRoom).toBe(false);
+    expect(substitution.siteName).toBe("Sello Library, Espoo");
+    expect(substitution.voiceHref).toBe(INERT_HREF);
   });
 });

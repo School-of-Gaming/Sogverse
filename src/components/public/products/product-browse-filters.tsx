@@ -9,7 +9,7 @@ import type { BrowseSurface } from "./browse-surface";
 import { useOfferedBrowseFilters } from "./use-browse-filters";
 
 // The filter control — the chip rows the page offers (type, audience,
-// designed-for, subject, format, price, language, age, days, less whatever the
+// designed-for, topic, format, price, language, age, days, less whatever the
 // page withholds), drawn from the row list in `browse-filter-rows.tsx`. What
 // the rows *are* lives there; this file decides only how they are drawn. Chips
 // are pill-shaped with a clear active state (filled act) so taps register on

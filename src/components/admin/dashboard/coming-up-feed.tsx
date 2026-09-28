@@ -2,16 +2,15 @@
 
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { cn, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type {
   ComingUpCohort,
   ComingUpDay,
   ComingUpItem,
 } from "./admin-dashboard-data";
-import { formatDayMonth } from "@/lib/calendar-date";
-import { isoWeekOf } from "@/lib/iso-week";
+import { DayLabel, MonthHeading, startsMonth } from "@/components/admin/day-label";
 import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
 
 /**
@@ -44,41 +43,18 @@ const COHORT_COLLAPSE_AT = 3;
 
 export function ComingUpFeed({ days }: { days: readonly ComingUpDay[] }) {
   const t = useTranslations("admin.dashboard.comingUp");
-  const locale = useLocale();
 
   if (days.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
   }
 
-  // Derived up front rather than accumulated while mapping: a variable
-  // reassigned inside a render's callback is state the compiler cannot reason
-  // about, and comparing against the previous element says the same thing
-  // without any. The comparison is on the bare `YYYY-MM` rather than on the
-  // rendered heading, so it does not depend on how a locale words a month.
-  const rows = days.map((day, index) => ({
-    day,
-    // A month name is date formatting, so it comes from `Intl` in the reader's
-    // locale rather than out of a label array.
-    month: formatDateOnly(day.date, locale, {
-      month: "long",
-      year: "numeric",
-    }),
-    startsMonth:
-      index === 0 || days[index - 1].date.slice(0, 7) !== day.date.slice(0, 7),
-  }));
+  const dates = days.map((day) => day.date);
 
   return (
     <ul className="space-y-1">
-      {rows.map(({ day, month, startsMonth }) => (
+      {days.map((day, index) => (
         <li key={day.date}>
-          {/* A month heading only where the month changes. Over three-odd months
-              of scattered dates the reader otherwise has to hold "which month am
-              I in" from the last row that happened to spell it out. */}
-          {startsMonth && (
-            <p className="mb-1 mt-4 border-b border-border pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground first:mt-0">
-              {month}
-            </p>
-          )}
+          {startsMonth(dates, index) && <MonthHeading date={day.date} />}
           <DayRow day={day} />
         </li>
       ))}
@@ -87,28 +63,9 @@ export function ComingUpFeed({ days }: { days: readonly ComingUpDay[] }) {
 }
 
 function DayRow({ day }: { day: ComingUpDay }) {
-  const locale = useLocale();
-  const c = useTranslations("common");
-
   return (
     <div className="flex flex-col gap-1 py-1 sm:flex-row sm:gap-3">
-      {/* `sm:w-32` — 128px — rather than the 96 this column used to take,
-          because the week number has to fit on the same line as the date in
-          every locale. The widest is French, whose weekday abbreviation keeps
-          its stop and whose week prefix is a bare letter: `lun. 17/08 · S34`
-          is sixteen characters at 12px, seven of them tabular digits, which
-          measures a little over 100px; Swedish (`mån 17/12 · v. 34`) is the
-          same order. 96 clipped both onto two lines. */}
-      <p className="shrink-0 text-xs font-medium tabular-nums sm:w-32">
-        {formatDateOnly(day.date, locale, { weekday: "short" })}{" "}
-        {formatDayMonth(day.date, locale)}
-        {/* The ISO week the date falls in — an admin plans in week numbers, and
-            this feed is the one place they read a run of dates months out.
-            Appended after the date, never instead of it. */}
-        <span className="text-muted-foreground">
-          {` · ${c("week", { week: isoWeekOf(day.date).week })}`}
-        </span>
-      </p>
+      <DayLabel date={day.date} />
       <ul className="min-w-0 flex-1 space-y-1">
         {day.cohorts.map((cohort) => (
           <li key={cohort.id}>

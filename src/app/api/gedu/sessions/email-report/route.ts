@@ -185,7 +185,7 @@ function failureName(reason: unknown): string {
  * parent's mail is the outcome the gedu is told about, and the copy's failure
  * is logged and changes nothing.
  *
- * **An admin may press it too** (00200). The same panel now sits on the admin
+ * **An admin may press it too.** The same panel sits on the admin
  * product page, over the same feed component and the same claim, so the route
  * admits both roles. Nothing about the family mail changes: an admin sending is
  * an admin sending *this group's* report, and the families receive exactly what

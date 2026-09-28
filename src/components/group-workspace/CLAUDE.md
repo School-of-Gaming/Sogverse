@@ -27,6 +27,21 @@ know. Note what none of them is — a *capability*. The body renders the same fi
 the same ones writable on both shells; where the shells differ is only in where they can
 send you.
 
+**Rule: staffing is the one place the shells hold different powers, and the body learns
+which by what it is handed — never by who is looking.** Two callbacks and one render prop
+travel together through the feed to every session card's staffing region: "I can't make
+this session", withdrawing that request, and the editor a surface may draw beside them.
+The gedu shell supplies the two callbacks and no editor, because a gedu may speak for
+their own seat and for nothing else; the admin shell supplies the editor and no
+callbacks, because an admin is not one of the group's staff and has no absence to file.
+A preview scene supplies whichever it is demonstrating. The editor is a render prop
+rather than a node because it acts on **one** session — a term of cards cannot share one
+node — and it lands in the same region as the gedu's own action, because the two are
+different answers to one question and a second slot for the second answer would put them
+on opposite sides of a card. This is a real departure from the paragraph above and the
+only one: everything else here still differs between the shells in where it can send you
+and in nothing more.
+
 **The photo-consent answers are a shell read, and the body takes them whole.** On a
 product that asks whether photographs of a child may be taken and used, the session
 editors' photo block lists the roster's permissions and the note telling a gedu to ask

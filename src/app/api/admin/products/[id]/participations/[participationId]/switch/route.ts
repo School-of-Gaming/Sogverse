@@ -279,7 +279,7 @@ function statusForFailedMove(code: string | null, message: string): number {
   // 23505 — the unique index over (product, participant): somebody else put
   // this participant on the target between the check and the write.
   if (code === "23505") return 409;
-  // The two expected-state guards (00247). A conflict rather than a bad
+  // The two expected-state guards. A conflict rather than a bad
   // request: the seat or the subscription is no longer what the sheet was
   // looking at, and no press can make it so again.
   if (isExpectedStateLost(code, message)) return 409;
@@ -323,8 +323,10 @@ function messageForFailedMove(code: string | null, message: string): string {
  * `23514` covers four of the RPC's guards, and Postgres gives a raised
  * `check_violation` no constraint name, so the raised message is what separates
  * them — the substrings below are the load-bearing halves of those
- * `RAISE EXCEPTION` lines (migration 00246). An unrecognised one falls back to
- * no refusal, which degrades to the generic wording rather than to a wrong one.
+ * `RAISE EXCEPTION` lines in the RPC's body
+ * (`supabase/schema/functions/admin_move_participation.sql`). An unrecognised
+ * one falls back to no refusal, which degrades to the generic wording rather
+ * than to a wrong one.
  *
  * The fourth — a group that is not the target's — deliberately maps to no
  * refusal. It is a malformed request from a client the sheet itself built, not
@@ -366,7 +368,7 @@ function isGroupNotOnTarget(code: string | null, message: string): boolean {
 }
 
 /**
- * The RPC's two expected-state guards (00247): the seat is no longer on the
+ * The RPC's two expected-state guards: the seat is no longer on the
  * product the check read it on, or the subscription row is no longer on the
  * price the check read. Both mean the world moved between the check and the
  * write, and neither has a refusal to give — the refusal vocabulary answers

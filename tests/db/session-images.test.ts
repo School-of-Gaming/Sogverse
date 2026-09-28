@@ -12,8 +12,8 @@ import {
 } from "./product-helpers";
 
 /**
- * Session-report photos (00222): the two write RPCs, the removal check 00224
- * put in front of them, the cap, and the photos' arrival on the gedu document.
+ * Session-report photos: the two write RPCs, the removal check in front of
+ * them, the cap, and the photos' arrival on the gedu document.
  *
  * `group_session_images` grants nothing to `authenticated` and carries no RLS
  * policy at all — the same posture as `group_sessions` itself — so these
@@ -34,7 +34,7 @@ import {
  * before the row — so a removal that did not remove the picture stays visible,
  * with the photo on the card to retry — and that storage call runs on the
  * service-role client, which must never act for a caller whose right to the
- * photo has not been proved. `assert_can_delete_session_image` (00224) is that
+ * photo has not been proved. `assert_can_delete_session_image` is that
  * proof: no mutation, and the delete RPC's gate byte for byte, oracle-free
  * refusal included.
  *
@@ -275,7 +275,7 @@ describe("session photos", () => {
         });
         expect(remove.error?.code).toBe("42501");
 
-        // The check-only half (00224) is refused on the same first statement.
+        // The check-only half is refused on the same first statement.
         // It is what the route calls BEFORE deleting the object with the
         // service-role client, so a family reaching past it would be a
         // privileged storage delete performed for an unauthorized caller.
@@ -385,7 +385,7 @@ describe("session photos", () => {
   });
 
   // -------------------------------------------------------------------------
-  // 2b. The removal check (00224)
+  // 2b. The removal check
   // -------------------------------------------------------------------------
   //
   // The route deletes the storage OBJECT before the row, so that a removal which

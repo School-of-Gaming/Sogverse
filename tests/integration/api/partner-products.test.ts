@@ -17,6 +17,30 @@ import {
 
 const db = vi.hoisted(() => ({ fetch: undefined as FetchMock | undefined }));
 
+/**
+ * A state the derivation does not produce today — the published tuple names
+ * every one it can reach — so the only way to exercise the API's refusal of an
+ * undescribed state is to force one. A product carrying this start date derives
+ * it; every other product derives normally.
+ */
+const UNDESCRIBED_START = "2026-01-02";
+const UNDESCRIBED_STATUS = "cancelled";
+
+vi.mock("@/lib/products/effective-status", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/products/effective-status")>();
+  return {
+    ...actual,
+    effectiveStatus: (
+      p: Parameters<typeof actual.effectiveStatus>[0],
+      now: Date,
+    ): string =>
+      p.start_date === UNDESCRIBED_START
+        ? UNDESCRIBED_STATUS
+        : actual.effectiveStatus(p, now),
+  };
+});
+
 vi.mock("@/lib/supabase/admin", async () => {
   const { createFetchStubbedClient } = await import("../../mocks/postgrest-fetch");
   return {
@@ -52,9 +76,8 @@ type ProductRow = {
   for_gamers: boolean;
   for_parents: boolean;
   location_id: string | null;
-  start_date: string | null;
+  start_date: string;
   end_date: string | null;
-  signup_threshold: number | null;
   timezone: string;
   min_age: number | null;
   max_age: number | null;
@@ -71,7 +94,6 @@ function product(id: string, overrides: Partial<ProductRow> = {}): ProductRow {
     location_id: "l-site",
     start_date: "2026-09-01",
     end_date: "2026-09-17",
-    signup_threshold: null,
     timezone: "Europe/Helsinki",
     min_age: 13,
     max_age: 17,
@@ -131,8 +153,6 @@ function tables(catalogue: ProductRow[] = CATALOGUE, { names = true } = {}) {
           programme_terms: [{ document_slug: "roblox-programme-terms" }],
         }));
     },
-    product_seat_counts: (url) =>
-      inList(url, "product_id").map((product_id) => ({ product_id, active_count: 0 })),
     product_translations: (url) =>
       (names ? inList(url, "product_id") : []).flatMap((product_id) => [
         { product_id, locale: "en", name: `Camp ${product_id.slice(-1)}` },
@@ -270,23 +290,24 @@ describe("GET /api/partner/v1/products", () => {
     expect((await readPage("?status=completed")).data.map((record) => record.id)).toEqual([COMPLETED]);
   });
 
-  it("refuses a status the API does not describe", async () => {
-    // The database derives a fourth state, `expired`; v1 describes only the
-    // lifecycle a product supports, so asking for it is a bad request.
-    const response = await GET(request("?status=expired"));
+  it("refuses a status that is not one of the three", async () => {
+    const response = await GET(request("?status=cancelled"));
     expect(response.status).toBe(400);
     const body = await response.json();
     expect(body.error.code).toBe("invalid_query");
     expect(body.error.message).toContain("status");
   });
 
-  it("answers internal_error for a product deriving expired, rather than publishing it", async () => {
-    // No start date and an end date in the past derives `expired`, a product
-    // the admin UI cannot produce: a loud 500, never a value the page states.
+  it("answers internal_error for a product deriving a state the API does not describe", async () => {
+    // A state the published tuple does not name has no value the page states,
+    // so the record cannot be answered at all: a loud 500, and nothing of the
+    // undescribed state over the wire.
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     db.fetch = tables([
       ...CATALOGUE,
-      product("10000000-0000-4000-8000-000000000006", { start_date: null, end_date: "2026-08-01" }),
+      product("10000000-0000-4000-8000-000000000006", {
+        start_date: UNDESCRIBED_START,
+      }),
     ]);
 
     for (const query of ["", "?status=running"]) {
@@ -294,7 +315,7 @@ describe("GET /api/partner/v1/products", () => {
       expect(response.status).toBe(500);
       const body = await response.json();
       expect(body.error.code).toBe("internal_error");
-      expect(JSON.stringify(body)).not.toContain("expired");
+      expect(JSON.stringify(body)).not.toContain(UNDESCRIBED_STATUS);
     }
     expect(consoleError).toHaveBeenCalled();
     consoleError.mockRestore();

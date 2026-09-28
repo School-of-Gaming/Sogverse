@@ -98,6 +98,7 @@ vi.mock("@/lib/supabase/client", () => ({
 const mockSupabaseClient = {
   auth: {
     signInWithPassword: vi.fn(),
+    signInWithOAuth: vi.fn(),
     signUp: vi.fn(),
     signOut: vi.fn(),
     getSession: vi.fn(),

@@ -13,7 +13,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import { createParticipationRpcResult } from "@/services/participations/participations.contracts";
 
 /**
- * Product-required consents (00210): the enrolment conditions a parent must
+ * Product-required consents: the enrolment conditions a parent must
  * agree to before a seat — or a place in line — is theirs.
  *
  * Both enrolment doors are covered here, and they are covered together on
@@ -29,14 +29,14 @@ import { createParticipationRpcResult } from "@/services/participations/particip
  *   * Acceptance is PER ENROLMENT, so a second child produces a second set of
  *     rows rather than inheriting the first child's agreement.
  *
- * Two later migrations are covered here as well, and both change what the gate
- * is for rather than merely extending it:
+ * Two further claims are covered here as well, and both are about what the
+ * gate is for rather than about how far it extends:
  *
- *   * 00211 — an array holding a NULL element is refused. Under 00210 that one
- *     value passed the gate for every required document AND had the platform
+ *   * An array holding a NULL element is refused. Unrefused, that one
+ *     value passes the gate for every required document AND has the platform
  *     write acceptance rows claiming agreements nobody had given, reachable by
  *     any signed-in customer through join_product_waitlist.
- *   * 00212 — `admin_enroll_participant` is the THIRD enrolment door, and it
+ *   * `admin_enroll_participant` is the THIRD enrolment door, and it
  *     neither prompts nor refuses: it supplies the product's required slugs
  *     itself and stamps `accepted_by` with the acting admin while leaving
  *     `customer_id` the family's.
@@ -61,7 +61,7 @@ const TERMS = "roblox-programme-terms";
 const PRIVACY = "roblox-privacy-policy";
 
 /**
- * The versions 00210 seeded, which are the "Last updated" dates the two live
+ * The seeded versions, which are the "Last updated" dates the two live
  * pages carry. They differ, and that difference is the point: an acceptance
  * names the version of the text the parent actually read, per document, so a
  * suite asserting one shared version would pass against a bug that recorded
@@ -73,13 +73,13 @@ const PRIVACY_VERSION = "2026-08-03";
 /** PostgreSQL SQLSTATE for check_violation, which the consent gate raises. */
 const CHECK_VIOLATION = "23514";
 
-describe("product required consents (00210)", () => {
+describe("product required consents", () => {
   let admin: SupabaseClient<Database>;
   let customer: SupabaseClient<Database>;
   /**
    * A signed-in admin, for every RPC here that is guard-first on
-   * `assert_admin` — the requirement-set writer and the comp-enrolment door
-   * (00212). It has to be a real session rather than the service-role client:
+   * `assert_admin` — the requirement-set writer and the comp-enrolment door.
+   * It has to be a real session rather than the service-role client:
    * the guard resolves the caller's role from their `profiles` row via
    * `auth.uid()`, and a service-role connection has no uid, so its role reads
    * NULL and every such call is refused with 42501 before its body runs.
@@ -166,7 +166,7 @@ describe("product required consents (00210)", () => {
   /**
    * Every acceptance recorded against one product, in slug order.
    *
-   * `accepted_by` (00212) is selected alongside `customer_id` everywhere rather
+   * `accepted_by` is selected alongside `customer_id` everywhere rather
    * than only in the admin cases: the claim that a family's own click is
    * attributed to the family is exactly as worth pinning as the claim that an
    * admin's is attributed to the admin, and a suite that read the column only
@@ -253,7 +253,7 @@ describe("product required consents (00210)", () => {
     });
 
     // -----------------------------------------------------------------------
-    // The NULL element (00211)
+    // The NULL element
     // -----------------------------------------------------------------------
     //
     // These two go through raw PostgREST rather than the typed client, and that
@@ -262,11 +262,11 @@ describe("product required consents (00210)", () => {
     // code-style rule warns about. A hand-built body is what a real attacker
     // sends anyway.
     //
-    // The bug they pin: 00210 tested membership with `NOT (r = ANY (array))`,
-    // which is three-valued — an array holding a NULL and matching nothing
+    // The bug they pin: testing membership with `NOT (r = ANY (array))` is
+    // three-valued — an array holding a NULL and matching nothing
     // answers SQL NULL, `NOT NULL` is NULL, the WHERE keeps no row, and the gate
-    // concludes every required document was agreed to. `ARRAY[NULL]` alone was
-    // therefore enough to enrol unconsented AND to have the platform write
+    // concludes every required document was agreed to. `ARRAY[NULL]` alone is
+    // then enough to enrol unconsented AND to have the platform write
     // acceptance rows saying the parent had agreed.
 
     it("refuses an array whose only element is NULL, writing nothing", async () => {
@@ -291,8 +291,8 @@ describe("product required consents (00210)", () => {
 
     it("refuses a NULL smuggled in beside a real slug", async () => {
       // The shape a caller would actually send: agree to the one document you
-      // are willing to agree to, and let the NULL cover the other. Under 00210
-      // this recorded acceptance of BOTH.
+      // are willing to agree to, and let the NULL cover the other. Through a
+      // three-valued membership test this records acceptance of BOTH.
       const res = await callServiceRoleRpcResult("create_participation", {
         p_product_id: PRODUCT_FREE_REQUIRES,
         p_participant_id: TEST_IDS.GAMER,
@@ -323,7 +323,7 @@ describe("product required consents (00210)", () => {
           customer_id: TEST_IDS.CUSTOMER,
           participant_id: TEST_IDS.GAMER,
           // The parent ticked the boxes themselves, so the two columns hold one
-          // id (00212). That coincidence is the whole point of having both:
+          // id. That coincidence is the whole point of having both:
           // it is what an admin-written row is told apart from.
           accepted_by: TEST_IDS.CUSTOMER,
           document_slug: PRIVACY,
@@ -481,7 +481,7 @@ describe("product required consents (00210)", () => {
     });
 
     it("refuses a NULL element on the queue path too, and it is the reachable one", async () => {
-      // This is the door that made the 00211 bug a live security defect rather
+      // This is the door that makes a NULL element a live security defect rather
       // than a theoretical one: `join_product_waitlist` is granted directly to
       // `authenticated` and passes its array straight through, so any signed-in
       // customer could send it. `create_participation` is service-role only and
@@ -600,11 +600,11 @@ describe("product required consents (00210)", () => {
     });
 
     it("refuses a NULL element and leaves the existing set intact", async () => {
-      // The same three-valued `ANY` construct 00211 fixed in the consent gate
-      // sat in this function's replacing DELETE, where a NULL element made the
-      // predicate match nothing: the wipe-and-replace quietly degraded into a
-      // merge before the INSERT died on the NOT NULL. So the assertion that
-      // matters is not the refusal — 00210 refused too, for the wrong reason —
+      // The same three-valued `ANY` construct the consent gate avoids would sit
+      // in this function's replacing DELETE, where a NULL element makes the
+      // predicate match nothing: the wipe-and-replace quietly degrades into a
+      // merge before the INSERT dies on the NOT NULL. So the assertion that
+      // matters is not the refusal — the NOT NULL refuses either way —
       // it is that the product still requires exactly what it did before.
       const res = await callRpcRaw(adminToken, "set_product_required_consents", {
         p_product_id: PRODUCT_FREE_REQUIRES,
@@ -717,7 +717,7 @@ describe("product required consents (00210)", () => {
   });
 
   // -------------------------------------------------------------------------
-  // The third door: admin comp-enrolment (00212)
+  // The third door: admin comp-enrolment
   // -------------------------------------------------------------------------
 
   describe("admin_enroll_participant", () => {

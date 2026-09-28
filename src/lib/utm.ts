@@ -402,3 +402,23 @@ export function parseUtmHeader(raw: string | null | undefined): UtmAttribution {
     campaign: readOne("campaign"),
   };
 }
+
+/**
+ * An attribution as the query params a landing link carries, keyed by their
+ * `utm_*` names — only the fields that are present.
+ *
+ * For the one place attribution has to leave this tab and come back: the
+ * Google sign-in round trip, which unloads the document and with it the
+ * in-memory copy the provider holds. The register pages put these on the
+ * finish page's address, the callback carries them onto its redirect, and the
+ * proxy reads them off that landing exactly as it reads any other link's.
+ * Nothing is persisted by this; the finish route's write is still gated on
+ * marketing consent like every other.
+ */
+export function utmQueryParams(utm: UtmAttribution): Record<string, string> {
+  const query: Record<string, string> = {};
+  if (utm.source !== null) query[UTM_QUERY_PARAMS.source] = utm.source;
+  if (utm.medium !== null) query[UTM_QUERY_PARAMS.medium] = utm.medium;
+  if (utm.campaign !== null) query[UTM_QUERY_PARAMS.campaign] = utm.campaign;
+  return query;
+}

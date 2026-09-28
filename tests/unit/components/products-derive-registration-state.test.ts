@@ -14,7 +14,6 @@ function product(
   return {
     start_date: "2026-04-01",
     end_date: "2026-12-31",
-    signup_threshold: null,
     timezone: "Europe/Helsinki",
     registration_opens_at: "2026-01-01T00:00:00Z",
     seat_count: null,
@@ -304,77 +303,17 @@ describe("deriveRegistrationState", () => {
     expect(state.kind).toBe("open");
   });
 
-  it("pending_thr → pending product with unmet threshold", () => {
+  it("open → a club whose start date has not arrived yet still takes signups", () => {
+    // A pending product is on sale: the doors open at `registration_opens_at`,
+    // which the default fixture has long past, and the start date is only
+    // about when the sessions begin.
     const state = deriveRegistrationState({
       product: product({
-        signup_threshold: 5,
-        // start_date in future so effectiveStatus stays pending
         start_date: "2026-06-01",
         end_date: "2026-08-30",
       }),
       now: NOW,
       participationsCount: 2,
-    });
-    expect(state.kind).toBe("pending_thr");
-    if (state.kind === "pending_thr") {
-      expect(state.threshold).toBe(5);
-      expect(state.count).toBe(2);
-    }
-  });
-
-  it("pending_thr carries the seat trio as well — a minimum and a maximum coexist", () => {
-    // A club can need six to run and hold twenty. The threshold-pending panel
-    // draws the same bar as an open one, and this state is also where a
-    // countdown lands when the product it opens into still wants signups — so
-    // it needs the trio for the same no-shift reason `closed_pre` does.
-    const state = deriveRegistrationState({
-      product: product({
-        signup_threshold: 6,
-        start_date: "2026-06-01",
-        end_date: "2026-08-30",
-        seat_count: 20,
-        waitlist_enabled: true,
-      }),
-      now: NOW,
-      participationsCount: 2,
-    });
-    expect(state.kind).toBe("pending_thr");
-    if (state.kind === "pending_thr") {
-      expect(state.threshold).toBe(6);
-      expect(state.seatCount).toBe(20);
-      expect(state.seatsLeft).toBe(18);
-      expect(state.waitlistEnabled).toBe(true);
-    }
-  });
-
-  it("pending_thr on an uncapped product reports no capacity", () => {
-    const state = deriveRegistrationState({
-      product: product({
-        signup_threshold: 6,
-        start_date: "2026-06-01",
-        end_date: "2026-08-30",
-        seat_count: null,
-      }),
-      now: NOW,
-      participationsCount: 2,
-    });
-    expect(state.kind).toBe("pending_thr");
-    if (state.kind === "pending_thr") {
-      expect(state.seatCount).toBeNull();
-      expect(state.seatsLeft).toBeNull();
-    }
-  });
-
-  it("pending_thr flips to open once threshold met (effectiveStatus promotes)", () => {
-    // start_date past + threshold met → effectiveStatus = running → open
-    const state = deriveRegistrationState({
-      product: product({
-        signup_threshold: 5,
-        start_date: "2026-04-01",
-        end_date: "2026-08-30",
-      }),
-      now: NOW,
-      participationsCount: 5,
     });
     expect(state.kind).toBe("open");
   });
@@ -436,7 +375,7 @@ describe("deriveRegistrationState", () => {
     expect(registrationCtaKind(state)).toBe("disabled");
   });
 
-  it("open → no cap, no threshold, just available", () => {
+  it("open → no cap, just available", () => {
     const state = deriveRegistrationState({
       product: product({
         seat_count: null,
@@ -496,24 +435,6 @@ describe("deriveRegistrationState", () => {
     expect(state.kind).toBe("ended");
   });
 
-  it("today, with no participations data, pending_thr still fires for threshold-only products", () => {
-    // Default participationsCount = 0 → 0 < threshold → pending_thr. The
-    // pill component drops the N/M caption when count is 0.
-    const state = deriveRegistrationState({
-      product: product({
-        signup_threshold: 8,
-        start_date: "2026-06-01",
-        end_date: "2026-08-30",
-      }),
-      now: NOW,
-      participationsCount: 0,
-    });
-    expect(state.kind).toBe("pending_thr");
-    if (state.kind === "pending_thr") {
-      expect(state.count).toBe(0);
-      expect(state.threshold).toBe(8);
-    }
-  });
 });
 
 describe("registrationCtaKind", () => {

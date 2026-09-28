@@ -22,13 +22,11 @@ describe("ProductsService.listVisibleByTypes", () => {
   function row(overrides: {
     id: string;
     end_date: string | null;
-    start_date?: string | null;
-    signup_threshold?: number | null;
+    start_date?: string;
     timezone?: string;
   }) {
     return {
-      start_date: null,
-      signup_threshold: null,
+      start_date: "2026-01-01",
       timezone: "Europe/Helsinki",
       ...overrides,
     };
@@ -77,14 +75,11 @@ describe("ProductsService.listVisibleByTypes", () => {
     expect(result.map((r) => r.id)).toEqual(["ends-today"]);
   });
 
-  it("hides a pending product whose end_date passed without ever starting (expired)", async () => {
+  it("keeps a product whose start date has not arrived yet", async () => {
+    // Only the end date takes a product off the storefront: one that has not
+    // begun is exactly what a parent is meant to be able to sign up for.
     const rows = [
-      row({
-        id: "expired",
-        start_date: "2026-01-01",
-        signup_threshold: 5,
-        end_date: "2026-06-03",
-      }),
+      row({ id: "done", start_date: "2026-01-01", end_date: "2026-06-03" }),
       row({
         id: "pending-future",
         start_date: "2026-07-01",
@@ -190,12 +185,7 @@ describe("ProductsService.listVisibleByTypes", () => {
       const select = selectOf(0);
       expect(select).toContain("locations(");
       expect(select).toContain("parent:parent_id(");
-      for (const column of [
-        "start_date",
-        "end_date",
-        "signup_threshold",
-        "timezone",
-      ]) {
+      for (const column of ["start_date", "end_date", "timezone"]) {
         expect(select).toContain(column);
       }
       // The payload the landing page was paying for and never opened.

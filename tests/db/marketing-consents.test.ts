@@ -13,8 +13,8 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
- * Marketing consents (00220): the REVOCABLE half of the consent story, and
- * deliberately not the same system as the enrolment conditions 00210 built.
+ * Marketing consents: the REVOCABLE half of the consent story, and
+ * deliberately not the same system as the enrolment conditions.
  *
  * The claims these cases exist to pin, in the order they matter:
  *
@@ -58,7 +58,7 @@ const FORBIDDEN = "42501";
 /** PostgreSQL SQLSTATE for check_violation, which the source gate raises. */
 const CHECK_VIOLATION = "23514";
 
-describe("marketing consents (00220)", () => {
+describe("marketing consents", () => {
   let admin: SupabaseClient<Database>;
   let anon: SupabaseClient<Database>;
   let customer: SupabaseClient<Database>;
@@ -321,7 +321,7 @@ describe("marketing consents (00220)", () => {
 
     it("refuses a gedu", async () => {
       // The role guard, not an empty result: a gedu's relationship with us is a
-      // contract (00201) rather than a mailing list, so there is no consent for
+      // contract rather than a mailing list, so there is no consent for
       // them to hold and the refusal says so.
       const res = await set(gedu, SOG, true, "settings");
       expect(res.error?.code).toBe(FORBIDDEN);
@@ -579,8 +579,8 @@ describe("marketing consents (00220)", () => {
       // Raw PostgREST, because `marketing_consent_type[]` cannot express an
       // array with a NULL in it and casting around the generated type would be
       // the suppression the code-style rule warns about. The assertion that
-      // matters is not the refusal but what survives it: 00211's three-valued
-      // `NOT (col = ANY (array))` would have made the replacing DELETE match
+      // matters is not the refusal but what survives it: a three-valued
+      // `NOT (col = ANY (array))` would make the replacing DELETE match
       // nothing and quietly degrade the wipe-and-replace into a merge.
       const res = await callRpcRaw(
         adminToken,
@@ -685,23 +685,23 @@ describe("marketing consents (00220)", () => {
   });
 
   // -------------------------------------------------------------------------
-  // The registration writer (00221)
+  // The registration writer
   // -------------------------------------------------------------------------
 
   /**
    * The register route's writer, and the one function in this system that names
    * its subject in an argument.
    *
-   * It exists because the route used to write the state row and its event row
-   * as two PostgREST calls, which is two transactions — a failed second one
-   * left `marketing_consents` asserting an answer `marketing_consent_events`
+   * It exists because writing the state row and its event row as two PostgREST
+   * calls is two transactions — a failed second one would
+   * leave `marketing_consents` asserting an answer `marketing_consent_events`
    * could not corroborate, on the one consent whose whole value is provable
-   * provenance. So the pair is one function call now, and the cases below pin
+   * provenance. The pair is one function call, and the cases below pin
    * the three properties that buys: both rows or neither, a retry that records
    * nothing twice, and — the load-bearing one — that a parameter naming the
    * subject is unreachable by anything but `service_role`.
    */
-  describe("record_registration_marketing_consent (00221)", () => {
+  describe("record_registration_marketing_consent", () => {
     function record(
       client: SupabaseClient<Database>,
       granted: boolean,

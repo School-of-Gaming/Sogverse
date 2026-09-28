@@ -1,15 +1,15 @@
 import type { QueryData } from "@supabase/supabase-js";
 import type { AppSupabaseClient } from "@/types";
-import { walkPages } from "@/lib/supabase/paging";
 
 // certifier joins through the certified_by FK (disambiguated from user_id, which
 // is the other FK to profiles). Nullable — an un-certified gedu, or a backfilled
 // one, has no certifier.
 //
-// The criminal record check's flag and moment ride the list read; the admin who
-// recorded it does not, because no list surface names them — the users list and
-// the assignment picker only ask *whether* the check stands. That name is read
-// by the detail select below.
+// **This is the standing of one educator, read one educator at a time.** No
+// surface reads every gedu's standing any more: the two flags a *list* renders
+// are columns of the admin people-list view, so they arrive with the row they
+// are about rather than as a second whole-table read whose truncation would
+// print a wrong mark on every educator past the cap.
 const GEDU_PROFILE_COLUMNS =
   "user_id, certified, certified_at, certified_by, criminal_record_check_passed, criminal_record_check_at, certifier:profiles!gedu_profiles_certified_by_fkey(first_name, last_name)";
 
@@ -28,27 +28,17 @@ const GEDU_PROFILE_COLUMNS =
 const GEDU_PROFILE_DETAIL_COLUMNS = `${GEDU_PROFILE_COLUMNS}, criminal_record_check_by, recorder:profiles!gedu_profiles_criminal_record_check_by_fkey(first_name, last_name)` as const;
 
 /**
- * Shared builder so the embedded-certifier row type is inferred, not
- * hand-written. It asks for the exact count because its one caller walks pages
- * and needs to know when to stop.
+ * Shared builder so the embedded row type is inferred rather than
+ * hand-written — a hand-written shape plus a cast would throw away exactly the
+ * protection the generator gives for an embed.
  */
-function geduProfilesQuery(supabase: AppSupabaseClient) {
-  return supabase
-    .from("gedu_profiles")
-    .select(GEDU_PROFILE_COLUMNS, { count: "exact" });
-}
-
-/** The same, for the one read that also names the two acting admins. */
 function geduProfileDetailQuery(supabase: AppSupabaseClient) {
   return supabase.from("gedu_profiles").select(GEDU_PROFILE_DETAIL_COLUMNS);
 }
 
-export type GeduCertification = QueryData<ReturnType<typeof geduProfilesQuery>>[number];
-
 /**
- * One gedu's row as the admin user-detail card reads it — the list shape plus
- * the certifying and recording admins' names. A superset of `GeduCertification`,
- * so anything taking the narrower shape takes this too.
+ * One gedu's row as the admin user-detail card reads it — the standing, the two
+ * moments, and both acting admins' names.
  */
 export type GeduCertificationDetail = QueryData<
   ReturnType<typeof geduProfileDetailQuery>
@@ -127,22 +117,6 @@ export async function getGeduCriminalRecordCheck(
 
 export class GeduProfilesService {
   constructor(private supabase: AppSupabaseClient) {}
-
-  /**
-   * Certification state for every gedu (admin-readable).
-   *
-   * Walked rather than selected: the admin users list marks a gedu as certified
-   * from the presence of a certified row here, so a read truncated at
-   * PostgREST's `max_rows` silently *drops* the mark from every certified gedu
-   * that fell off the end — they render identically to an educator nobody has
-   * approved, with nothing on screen to say the answer was cut short. Ordered by
-   * the table's primary key, which is the total order the walk needs.
-   */
-  async getAll(): Promise<GeduCertification[]> {
-    return walkPages("getAllGeduProfiles", (from, to) =>
-      geduProfilesQuery(this.supabase).order("user_id").range(from, to),
-    );
-  }
 
   /**
    * Certification state for a single gedu, or null if none exists — read

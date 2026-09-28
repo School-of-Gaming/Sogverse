@@ -17,7 +17,7 @@ read that file before adding or editing a doc there. Pick the category by what t
 | A living description of a cross-cutting system or repo-wide topic, definitive and current | `architecture/` |
 | An open exploration — researched, nothing decided | `investigations/` |
 | A decided, ready-to-build piece of work | `plans/` |
-| A procedure a person executes against live systems | `runbooks/` |
+| The working context of a multi-session project still being shaped — decisions, ideas and tasks; deleted when it is done | `projects/` |
 | A frozen story behind how something got the way it is | `records/` |
 | Input from outside the repo — things to consider, not things to do | `feedback/` |
 
@@ -32,7 +32,7 @@ developer — or a future session — get it wrong without this written down? Sk
 renames, typos, and isolated refactors with no behavior change. The categories above
 name the trigger: an architecture shift updates its architecture doc in the same change;
 a messy bug that left a lesson earns a record; research without a decision lands as an
-investigation; a changed procedure updates its runbook.
+investigation.
 
 ## House style
 
@@ -48,5 +48,12 @@ investigation; a changed procedure updates its runbook.
 - **Status headers on anything time-bound.** An investigation, record, or other
   point-in-time doc opens with a bolded status line and a date, so a reader knows what
   to re-verify before trusting it.
+- **A measured number carries the date it was taken, how to re-pull it, and the decision
+  it is evidence for.** Before writing one, ask whether a future session reading it would
+  be helped or confused — a bare magnitude reads as current however old it is, so it gets
+  quoted into a plan long after it stopped being true. Annotate a figure that has gone
+  stale rather than deleting it: a dated number a reader can calibrate against beats a
+  re-pull instruction they may never run. This is the rule above applied *inside* a living
+  doc, which has no status header to date its contents.
 - **Filenames are kebab-case, named for the subject**; point-in-time docs carry their
   date (`security-audit-2026-03.md`).

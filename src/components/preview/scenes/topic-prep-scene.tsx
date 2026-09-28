@@ -13,7 +13,7 @@ import type { ProductTopic } from "@/types";
  * Every topic's "Before the first session" guide, one after another.
  *
  * The guide's three real homes each show **one** guide, on a product that
- * happens to carry that topic — so reading all seven means opening seven pages,
+ * happens to carry that topic — so reading them all means opening a page per topic,
  * and comparing two of them means remembering the first. This scene is the
  * reading surface the writing needs: the whole set in one column, in the
  * locale of the URL, so the locale switcher in the header *is* the per-locale
@@ -37,12 +37,12 @@ import type { ProductTopic } from "@/types";
  * The `remote` column carries one card the topic registry cannot name: the
  * one-step guide every label-only topic gets, which is the shared
  * remote-session step under the generic intro. It is written once and rendered
- * on five topics, so it is read once here rather than five times — and it only
+ * on every label-only topic, so it is read once here rather than once per topic — and it only
  * exists in this column, which is why `in-person` is unchanged.
  */
 
 /**
- * Any one of the five label-only topics stands in for all of them: their guide
+ * Any one of the label-only topics stands in for all of them: their guide
  * is the shared step under the generic intro, with nothing keyed by topic in
  * it, so rendering a second would render the same words again.
  */
@@ -106,8 +106,8 @@ export function TopicPrepScene({
           );
         })}
 
-        {/* The five label-only topics render one identical guide, so they get
-            one card rather than five. Remote only: in person they have nothing
+        {/* The label-only topics render one identical guide, so they get
+            one card rather than one each. Remote only: in person they have nothing
             to say, which is what they had before the shared step existed. */}
         {isRemote && labelOnlyPlan !== null && (
           <Card>

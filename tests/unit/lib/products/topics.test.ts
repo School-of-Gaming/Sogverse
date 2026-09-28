@@ -148,7 +148,7 @@ describe("product topics", () => {
     expect(withoutCard.length).toBeGreaterThan(0);
 
     // Which topics land on the no-card side is a product decision, not an
-    // oversight: none of these five is one piece of software a family installs,
+    // oversight: none of these is one piece of software a family installs,
     // so what they need is written into that product's own description by an
     // admin instead. Giving one of them an info block is a decision to revisit,
     // and naming them here is what makes it a deliberate move rather than a
@@ -156,6 +156,7 @@ describe("product topics", () => {
     expect([...withoutCard].sort()).toEqual([
       "ai",
       "creator_studio",
+      "digital_safety",
       "esports",
       "game_studio",
       "programming",
@@ -228,7 +229,7 @@ describe("product topics", () => {
     const REMOTE_SESSION_KEY = "remoteSession";
 
     it("gives prep to exactly the topics that have an About card", () => {
-      // Same seven, and the reason is the same: the five label-only topics
+      // Same set, and the reason is the same: the label-only topics
       // name subject matter rather than one piece of software, so there is
       // nothing single to install or sign into. Asserting the two sets are
       // equal is what makes splitting them a deliberate decision later.
@@ -418,7 +419,7 @@ describe("product topics", () => {
     });
 
     it("gives a label-only topic a one-step guide remotely and none in person", () => {
-      // The five topics that name subject matter rather than one piece of
+      // The topics that name subject matter rather than one piece of
       // software bring no steps of their own. Remotely there is still the room
       // to get ready for, and it is the whole guide — under the generic intro,
       // because there is no topic sentence to open with.

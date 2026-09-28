@@ -6,6 +6,7 @@ import {
 import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
 import { CONSENT_SCENARIOS } from "@/components/public/products/required-consents-scenario";
 import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
+import type { UserRole } from "@/lib/constants";
 import type { ProductTopic } from "@/types";
 
 /**
@@ -84,6 +85,19 @@ export interface PreviewSceneMeta {
   /** One line on what the scene is for, shown above its links. */
   description: string;
   chrome: PreviewChromeKind;
+  /**
+   * Whose nav the composed header draws, where that is not the viewer's own.
+   *
+   * Every scene is opened by an **admin** — `/preview/*` is admin-gated — so
+   * the real header puts the admin's nav over whoever's page the scene is of.
+   * That was free while the nav was the same for every role, and stopped being
+   * free the moment one role got an entry of its own: a gedu scene would be
+   * judged against a strip no gedu ever sees, at the width where the strip is
+   * the tightest thing on the page. Naming the role here fixes the nav and
+   * nothing else — the avatar and the menu behind it stay the admin's, because
+   * it really is the admin looking.
+   */
+  navRole?: UserRole;
   /** Ordered; the first is the sensible default to open. */
   scenarios: readonly PreviewScenarioMeta[];
   /**
@@ -288,14 +302,15 @@ export const PREVIEW_SCENES = [
     surface: "gedu-dashboard",
     title: "Gedu dashboard",
     description:
-      "The body /gedu renders, over fixtures: the next-step band, one roll-up card per group grouped by type noun, the Tools section beneath, and Help & feedback last. Badge counts are counted out of the feed each card links to.",
+      "The body /gedu renders, over fixtures: the next-step band, one roll-up card per group grouped by type noun, the Tools section beneath, and Help last. Badge counts are counted out of the feed each card links to.",
     chrome: "dashboard",
+    navRole: "gedu",
     scenarios: [
       {
         slug: "default",
         label: "Working dashboard",
         description:
-          "The working dashboard: all three type nouns and every card state that can share a page, under an unsigned contract band.",
+          "The working dashboard: all three type nouns and every card state that can share a page — two substitution cards among them, one open and one whose workspace has not opened yet — under an unsigned contract band.",
       },
       {
         slug: "clubs-only",
@@ -307,7 +322,29 @@ export const PREVIEW_SCENES = [
         slug: "uncertified",
         label: "Awaiting certification",
         description:
-          "An account awaiting approval, which by definition has no assignments — under the criminal-record band, the other of the two.",
+          "An account awaiting approval, which by definition has no assignments at all — under the criminal-record band, the other of the two.",
+      },
+    ],
+  },
+  {
+    surface: "gedu-substitutions",
+    title: "Gedu substitutions",
+    description:
+      "The body /gedu/substitutions renders, over fixtures: the quiet way into filing an absence under the title, the sessions needing a substitute, soonest first and marked where one starts inside the day, then what this gedu has already taken. Every write is inert; the relative-time lines follow the real clock.",
+    chrome: "dashboard",
+    navRole: "gedu",
+    scenarios: [
+      {
+        slug: "populated",
+        label: "A queue and two substitutions",
+        description:
+          "Every way an open card differs — two inside the day, remote and in person, both roles, a fee and none, one already offered on — above a taken substitution and a locked one.",
+      },
+      {
+        slug: "empty",
+        label: "Nothing outstanding",
+        description:
+          "Both all-clear lines, which a page with anything on it cannot show.",
       },
     ],
   },
@@ -317,6 +354,7 @@ export const PREVIEW_SCENES = [
     description:
       "The page a Game Educator reads and signs their contract on: the criminal record extract explained above, the terms verbatim in your own locale's language, and the acceptance panel beneath. The signing dialog's sign and date steps work; accepting is inert.",
     chrome: "dashboard",
+    navRole: "gedu",
     scenarios: [
       {
         slug: "unaccepted",
@@ -336,12 +374,13 @@ export const PREVIEW_SCENES = [
     description:
       "The gedu's workspace for one product: masthead, standing notes, one continuous session feed with a now-divider, and the reference rail beside it. Every editor works against local state.",
     chrome: "dashboard",
+    navRole: "gedu",
     scenarios: [
       {
         slug: "club",
         label: "Club — remote, weekly",
         description:
-          "The kitchen sink: a year of history, every session state, and an unstaffed peer group.",
+          "The kitchen sink: a year of history, every session state, an unstaffed peer group, and every substitution state on the four soonest future cards — the viewer's own request waiting and answered, a colleague's each way, and the quiet overflow menu on every card carrying none.",
       },
       {
         slug: "camp",
@@ -501,15 +540,58 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "admin-substitutions",
+    title: "Admin substitutions",
+    description:
+      "The /admin/substitutions page over fixtures, pinned to the same Monday morning as the dashboard: the staffing queue soonest-first, with the sessions inside the day marked. A Stockholm club puts the viewer's zone on the page and makes the sort visible; Approve works against local state.",
+    chrome: "admin",
+    scenarios: [
+      {
+        slug: "queue",
+        label: "Sessions to staff",
+        description:
+          "Every state an open row can be in — inside the urgent day and outside it, several offers and none, both roles, and the request the schedule no longer projects.",
+      },
+      {
+        slug: "all-clear",
+        label: "Nothing to staff",
+        description:
+          "The all-clear, which a queue with something in it has no way to reach.",
+      },
+    ],
+  },
+  {
     surface: "municipality-invoicing",
     title: "Municipality invoicing",
     description:
-      "The CFO's monthly ledger over a fixture document, pinned to Thursday 21 May 2026: twelve municipalities, thirty-one clubs and every state a line on this page can be in. Expanding a municipality, opening a club's dated sessions and the expand-all control all work. The month stepper works too and stays in the preview — every month but May is empty, which is how the empty ledger is reached; the club names are real links out to the live admin pages.",
+      "The CFO's monthly ledger over a fixture document, pinned to Thursday 21 May 2026: twelve municipalities, thirty-one clubs and every state a line on this page can be in, including the per-customer Finvoice downloads — Tampere's two departments, the association buying Vantaa's clubs, Espoo refused for a club with no fee, Helsinki's youth department refused for having nothing to invoice, and a club nobody has named a buyer for. Expanding a municipality, opening a club's dated sessions and the expand-all control all work. The month stepper works too and stays in the preview — every month but May is empty, which is how the empty ledger is reached; the club names and the download links are real links out to the live admin pages and the live export route.",
     chrome: "admin",
     scenarios: [
       {
         slug: "working-month",
         label: "A month of invoicing",
+      },
+    ],
+  },
+  {
+    surface: "invoice-customers",
+    title: "Invoice customers",
+    description:
+      "The Fennoa buyers a municipality club is invoiced to: the list an admin manages them from, and the form behind it. Both bodies are the live ones over fixtures — typing works, the contract's refusals are real, and the save is inert except on the refused scenario, where it answers with the duplicate-number violation the database raises.",
+    chrome: "admin",
+    scenarios: [
+      { slug: "list", label: "Customers on file" },
+      {
+        slug: "list-empty",
+        label: "Nothing on file yet",
+        description: "The empty state, which a populated table cannot show.",
+      },
+      { slug: "form-new", label: "New customer" },
+      {
+        slug: "form-refused",
+        label: "Editing — the number is taken",
+        description:
+          "Every field filled, and the one refusal the form re-words rather than quoting.",
       },
     ],
   },

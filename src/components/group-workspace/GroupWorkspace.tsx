@@ -13,6 +13,7 @@ import {
   entryOwesCreations,
   isExpectedOnEntry,
   type CreationsObligation,
+  type SessionSubstitutionRequestDraft,
   type SessionEntryDraft,
   type SessionFeedEntry,
   type SessionFeedGamer,
@@ -329,6 +330,33 @@ interface GroupWorkspaceProps {
   /** Remove one photo by its stored id. Called by the same Save. */
   onRemovePhoto: (imageId: string) => Promise<void>;
   /**
+   * File "I can't make this session" against one session's card. **Awaited by
+   * the feed**, which holds the dialog open and disabled until it settles.
+   *
+   * Omitted, no card offers the action — which is the admin shell's answer, and
+   * a preview scene's. It is one half of the pair below; see
+   * {@link renderSessionMenu}.
+   */
+  onRequestSubstitution?: (
+    entry: SessionFeedEntry,
+    draft: SessionSubstitutionRequestDraft,
+  ) => void | Promise<void>;
+  /** Take the viewer's own open request back. Awaited on the same terms. */
+  onWithdrawSubstitutionRequest?: (requestId: string) => void | Promise<void>;
+  /**
+   * The staffing editor to draw on each session card, or nothing.
+   *
+   * **The pair with the two callbacks above is the whole of how a surface
+   * declares what it may do about staffing**, and neither half is a role flag:
+   * the gedu shell supplies the callbacks and no editor, the admin shell
+   * supplies the editor and no callbacks, and a scene supplies whichever it is
+   * demonstrating. It is a render prop rather than a node because the editor
+   * acts on one session — one node could not be a term of cards' editors — and
+   * it lands in the same region as the gedu action, because the two are
+   * different answers to one question.
+   */
+  renderSessionMenu?: (entry: SessionFeedEntry) => ReactNode;
+  /**
    * Save a roster member's game username, on whichever platform this product's
    * topic is about. A gedu is the person who finds out a name is wrong —
    * mid-session, when the server doesn't recognise it — so the roster is where
@@ -442,6 +470,9 @@ export function GroupWorkspace({
   onSendReport,
   onAddPhoto,
   onRemovePhoto,
+  onRequestSubstitution,
+  onWithdrawSubstitutionRequest,
+  renderSessionMenu,
   onSaveGameUsername,
   gameStatuses,
   robloxAvatarUrls,
@@ -778,6 +809,9 @@ export function GroupWorkspace({
               onAddPhoto={onAddPhoto}
               onRemovePhoto={onRemovePhoto}
               photoConsents={photoConsents}
+              onRequestSubstitution={onRequestSubstitution}
+              onWithdrawSubstitutionRequest={onWithdrawSubstitutionRequest}
+              renderSessionMenu={renderSessionMenu}
             />
           ) : (
             <Card>

@@ -60,7 +60,7 @@ function createRequest(body: Record<string, unknown>): Request {
  */
 const validBody = {
   toEmail: "test@example.com",
-  template: "feedback",
+  template: "helpRequest",
   params: {
     userName: "Jane Doe",
     userRole: "customer",
@@ -196,7 +196,7 @@ describe("POST /api/admin/send-test-email", () => {
    * defaulted to support would show an admin the wrong thing about the one
    * template that replies to a person.
    */
-  it("replies to the submitter for the feedback template", async () => {
+  it("replies to the submitter for the help-request template", async () => {
     mockAuthenticatedWithRole("admin");
 
     await POST(createRequest(validBody));

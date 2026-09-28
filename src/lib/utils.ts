@@ -111,6 +111,9 @@ export function formatTime(date: Date | string, locale: string, timeZone: string
   return new Intl.DateTimeFormat(locale, { ...TIME_OF_DAY, timeZone }).format(d);
 }
 
+/** A thin or narrow no-break space directly before or after a range's en dash. */
+const RANGE_DASH_SPACE = /[\u2009\u202f](?=\u2013)|(?<=\u2013)[\u2009\u202f]/g;
+
 /**
  * A start–end range — one session's clock face — in the given zone, with the
  * zone's short name appended ("16:30 – 18:00 GMT+3"). Both ends are formatted
@@ -123,6 +126,13 @@ export function formatTime(date: Date | string, locale: string, timeZone: string
  * viewer's own zone and omit the name when nothing was adjusted, but a mail can
  * only use the product's zone, and the reader has to be able to see which zone
  * that is.
+ *
+ * The space either side of the dash is rewritten to a plain one. Which space
+ * `formatRange` sets there is a property of the runtime's locale data — newer
+ * data sets a thin space, older a plain one — and the server and the browser
+ * do not carry the same data, so a range rendered on both sides of a hydration
+ * would otherwise differ by a character nobody can see. Only the spaces touching
+ * the dash are rewritten, so a locale that sets none still gets none.
  */
 export function formatTimeRange(
   start: Date | string,
@@ -136,7 +146,9 @@ export function formatTimeRange(
     ...TIME_OF_DAY,
     timeZone,
     timeZoneName: "short",
-  }).formatRange(s, e);
+  })
+    .formatRange(s, e)
+    .replace(RANGE_DASH_SPACE, " ");
 }
 
 // `options` is required and must carry a `timeZone`: an instant always renders
@@ -228,31 +240,16 @@ export function escapeLikePattern(str: string): string {
  * pattern ever reaches SQL, so a stray one would match everybody rather than
  * nobody. None of the three means anything inside a name, an email or a handle.
  *
- * **This lives here, rather than beside either caller, because two of them
- * exist**: the admin user search matches these terms in SQL, and the gedu
- * picker matches them in the browser over a list it already holds. What counts
- * as a term cannot be allowed to differ between the two — the failure is silent
- * and asymmetric, one surface quietly ceasing to find a person the other still
- * finds.
+ * **There is one implementation of a match, and it is in the database.** This
+ * function is its front half: it decides what counts as a term, and each term
+ * becomes one `ILIKE` the database ANDs with the rest. A browser-side companion
+ * lived beside it while a picker matched a list it already held, and the two
+ * agreed only by habit — which is how that picker once became unable to find a
+ * surname the users list could. Every people surface asks the shared read now,
+ * so nothing outside the database decides whether somebody matches.
  */
 export function searchTerms(query: string): string[] {
   return query.split(/[\s,*]+/).filter(Boolean);
-}
-
-/**
- * Whether every term appears somewhere in one person's searchable text.
- *
- * The rule is shared; the haystack is not. A caller assembles whichever fields
- * it can both see and match honestly — the database reaches a person's game
- * handles across two more tables, and recognises a phone number before it
- * tokenizes; a picker narrowing a list of profiles does neither — and this
- * decides what matching those fields *means*. Keeping the rule here and the
- * field list at the call site is what lets the two surfaces differ in reach
- * without differing in behaviour.
- */
-export function matchesAllTerms(haystack: string, terms: string[]): boolean {
-  const hay = haystack.toLowerCase();
-  return terms.every((term) => hay.includes(term.toLowerCase()));
 }
 
 export function capitalize(str: string): string {

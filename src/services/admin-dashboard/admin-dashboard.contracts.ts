@@ -32,7 +32,7 @@ const productName = z.object({
  * including roles nobody holds — a zero tile is a fact, a missing tile is a gap.
  *
  * `verified` is null rather than 0 where the stat has no meaning — and what
- * decides that is the ADDRESS, not the role (00235/00240). A gamer signing in
+ * decides that is the ADDRESS, not the role. A gamer signing in
  * through their parent or by username carries a synthetic
  * `@gamer.sogverse.internal` handle nobody will ever click a link in, so "0
  * verified" would report a problem that does not exist; a gamer whose parent
@@ -94,7 +94,7 @@ export const adminDashboardGroupWithoutGedu = z.object({
  * admin reads names both ("4 waitlisted · 2 seats open"). Null on a product
  * where the situation does not arise at all: no queue, no cap, or no free seat.
  *
- * Since 00207 there is a fourth way for it to be null, and it is the one worth
+ * There is a fourth way for it to be null, and it is the one worth
  * knowing about: **every open seat already carries a live seat offer.** The
  * attention queue is a list of things for an admin to do, and once the families
  * have been asked there is nothing to do but wait — so the product drops out,
@@ -116,7 +116,7 @@ export const adminDashboardWaitlistPressure = z.object({
 /**
  * A live product with at least one thing wrong with it. A product with nothing
  * wrong is absent from the list entirely, so every entry here has at least one
- * of the six issues populated.
+ * of the seven issues populated.
  *
  * The issues are facts, not sentences: the page words and orders them, because
  * the wording is translated copy and the order is a ranking the page owns.
@@ -130,7 +130,7 @@ export const adminDashboardAttentionProduct = z.object({
   /** Groups with at least one active member and no gedu assigned. */
   groups_without_gedu: z.array(adminDashboardGroupWithoutGedu),
   /**
-   * Groups with no gedu assigned and nobody in them either (00241).
+   * Groups with no gedu assigned and nobody in them either.
    *
    * A sibling key rather than a flag on the objects above, because the page
    * ranks the two differently — an empty unstaffed group is a loose end, not a
@@ -152,6 +152,17 @@ export const adminDashboardAttentionProduct = z.object({
   missing_gedu_fee: z.boolean(),
   /** Municipality clubs only; false everywhere else by construction. */
   missing_municipality_fee: z.boolean(),
+  /**
+   * The club names no invoice customer. Municipality clubs only, on the
+   * same terms as the fee above — the column the flag reads is one the CHECK
+   * forbids on every other product type.
+   *
+   * It puts a club in the queue on its own. The link is nullable because a club
+   * is created before anybody has agreed who pays for it, and by the time it
+   * starts both the fee and the buyer are meant to be set; a club still missing
+   * one is an admin omission rather than an ordinary state.
+   */
+  missing_invoice_customer: z.boolean(),
 });
 
 /** One recurring session slot, in the product's own timezone. */

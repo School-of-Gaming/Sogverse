@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { ApiError } from "@/lib/api/api-error";
+import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import type {
@@ -116,6 +117,7 @@ function pastEntry(
     id: PAST_ID,
     startsAt: PAST_STARTS,
     endsAt: PAST_ENDS,
+    staffing: NO_SESSION_STAFFING,
     report: "# Redstone week\n\nWe built item sorters.",
     staffNote: null,
     attendance: {},
@@ -134,6 +136,7 @@ function futureEntry(
     id: FUTURE_ID,
     startsAt: FUTURE_STARTS,
     endsAt: FUTURE_ENDS,
+    staffing: NO_SESSION_STAFFING,
     report: null,
     staffNote: null,
     attendance: {},
@@ -148,6 +151,7 @@ const gapEntry: SessionFeedEntry = {
   id: GAP_ID,
   startsAt: new Date("2025-09-01T13:30:00.000Z"),
   endsAt: new Date("2025-09-01T15:00:00.000Z"),
+  staffing: NO_SESSION_STAFFING,
 };
 
 interface FeedProps {

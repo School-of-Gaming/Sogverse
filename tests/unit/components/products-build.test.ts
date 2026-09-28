@@ -41,7 +41,6 @@ function validConsumerState(): FormState {
   s.spokenLanguageCode = "en";
   s.isRemote = true;
   s.locationId = null;
-  s.startMode = "date";
   s.startDate = "2026-09-01";
   s.endDate = "";
   s.scheduleSlots = [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }];
@@ -70,7 +69,6 @@ function validMuniState(): FormState {
   s.spokenLanguageCode = "en";
   s.isRemote = true;
   s.locationId = "00000000-0000-0000-0000-0000000000aa";
-  s.startMode = "date";
   s.startDate = "2026-09-01";
   s.endDate = "2026-12-01";
   s.scheduleSlots = [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }];
@@ -90,7 +88,6 @@ function validCampState(): FormState {
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
   s.isRemote = true;
-  s.startMode = "date";
   s.startDate = "2026-09-01";
   s.endDate = "2026-09-05";
   s.scheduleSlots = [
@@ -112,7 +109,6 @@ function validEventState(): FormState {
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
   s.isRemote = true;
-  s.startMode = "date";
   s.startDate = "2026-09-01";
   s.scheduleSlots = [{ weekday: 0, start_time: "18:00", duration_minutes: 90 }];
   s.seatCount = "30";
@@ -355,26 +351,16 @@ describe("validate", () => {
   });
 
   describe("when", () => {
-    it("requires startDate when startMode uses a date", () => {
+    it("requires a startDate", () => {
       const s = validConsumerState();
-      s.startMode = "date";
       s.startDate = "";
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "startDateRequired",
       });
     });
 
-    it("does not require startDate for threshold-only mode", () => {
-      const s = validConsumerState();
-      s.startMode = "threshold";
-      s.startDate = "";
-      s.signupThreshold = "5";
-      expect(validate(s, consumerConfig)).toBeNull();
-    });
-
     it("requires endDate for camps and municipality clubs", () => {
       const s = validConsumerState();
-      s.startMode = "date";
       s.startDate = "2026-09-01";
       s.endDate = "";
       // Camp uses multi_day_bounded — endDate is required.
@@ -410,7 +396,6 @@ describe("validate", () => {
       const s = validConsumerState();
       s.endDate = "";
       s.startDate = "2026-09-01";
-      s.startMode = "date";
       s.paidMode = "free";
       s.seatCount = "30";
       // Event needs a single slot.
@@ -418,16 +403,6 @@ describe("validate", () => {
         { weekday: 0, start_time: "18:00", duration_minutes: 90 },
       ];
       expect(validate(s, eventConfig)).toBeNull();
-    });
-
-    it("rejects threshold < 1", () => {
-      const s = validConsumerState();
-      s.startMode = "threshold";
-      s.startDate = "";
-      s.signupThreshold = "0";
-      expect(validate(s, consumerConfig)).toEqual({
-        messageKey: "thresholdInvalid",
-      });
     });
 
     it("requires at least one schedule slot", () => {
@@ -518,9 +493,9 @@ describe("validate", () => {
     });
 
     it("allows a paid consumer club to be uncapped (no seat count)", () => {
-      // Seat caps are now orthogonal to billing — any type may opt out of a
-      // seat count, not just free events. (DB constraint
-      // chk_products_seat_count_null_requires_free was dropped in 00083.)
+      // Seat caps are orthogonal to billing — any type may opt out of a
+      // seat count, not just free events, and no DB constraint ties a null
+      // seat count to a free product.
       const s = validConsumerState();
       s.uncapped = true;
       s.seatCount = "";
@@ -948,20 +923,6 @@ describe("buildCreateInput", () => {
     expect(out.prices).toEqual([]);
   });
 
-  it("only emits signup_threshold when the start mode uses one", () => {
-    const s = validConsumerState();
-    s.startMode = "date"; // no threshold
-    s.signupThreshold = "5"; // stale UI input
-    const out = buildCreateInput(s, "consumer_club", consumerConfig);
-    expect(out.signup_threshold).toBeNull();
-
-    s.startMode = "date_and_threshold";
-    s.signupThreshold = "5";
-    s.startDate = "2026-09-01";
-    const out2 = buildCreateInput(s, "consumer_club", consumerConfig);
-    expect(out2.signup_threshold).toBe(5);
-  });
-
   it("sends the zone the form holds, not a constant", () => {
     // The form used to pin every product to Helsinki. It is now a field, and
     // the whole point is that what the admin picked is what is written — a
@@ -1062,6 +1023,65 @@ describe("audience and ages on the wire", () => {
     expect(out.for_gamers).toBe(false);
     expect(out.for_parents).toBe(true);
     expect(out.min_age).toBeNull();
+  });
+});
+
+// The Fennoa invoice customer is the municipality fee's neighbour on the
+// payload — the same municipality-only shape, forced to null everywhere else so
+// a stale draft cannot trip the DB CHECK — and answers the other half of the
+// invoicing question: the fee says what a session costs, this says who is
+// billed for it.
+describe("the invoice customer on the wire", () => {
+  it("creates a club with no customer by default", () => {
+    const s = initialState(muniConfig, "en");
+    expect(s.invoiceCustomerId).toBeNull();
+
+    const out = buildCreateInput(
+      validConsumerState(),
+      "municipality_club",
+      muniConfig,
+    );
+    // Present and null, never absent: the wire schema requires the field and
+    // the RPC parameter is DEFAULT NULL, so a missing key would be a 400
+    // rather than a club quietly left with no buyer.
+    expect(out).toHaveProperty("invoice_customer_id");
+    expect(out.invoice_customer_id).toBeNull();
+  });
+
+  it("carries a chosen customer through to both payloads", () => {
+    const CUSTOMER_ID = "7c1f6a4e-2b58-4f0a-9d3c-51ae7b208f64";
+    const s = validConsumerState();
+    s.invoiceCustomerId = CUSTOMER_ID;
+    expect(
+      buildCreateInput(s, "municipality_club", muniConfig).invoice_customer_id,
+    ).toBe(CUSTOMER_ID);
+    expect(buildUpdateInput(s, muniConfig).invoice_customer_id).toBe(
+      CUSTOMER_ID,
+    );
+  });
+
+  it("emits an explicit null when a club is unlinked again", () => {
+    // The update RPC assigns the column on every call, so "leave the buyer
+    // alone" and "unlink the club" would be the same wire shape if the field
+    // could go missing.
+    const s = validConsumerState();
+    s.invoiceCustomerId = null;
+    const cleared = buildUpdateInput(s, muniConfig);
+    expect(cleared).toHaveProperty("invoice_customer_id");
+    expect(cleared.invoice_customer_id).toBeNull();
+  });
+
+  it("forces the customer to null for non-municipality products", () => {
+    // A stale draft carried across a type change must not leak — the DB CHECK
+    // (chk_products_invoice_customer_only_for_muni) refuses a customer on
+    // anything but a municipality club, exactly as it refuses a muni fee.
+    const s = validConsumerState();
+    s.invoiceCustomerId = "7c1f6a4e-2b58-4f0a-9d3c-51ae7b208f64";
+    expect(
+      buildCreateInput(s, "consumer_club", consumerConfig)
+        .invoice_customer_id,
+    ).toBeNull();
+    expect(buildUpdateInput(s, consumerConfig).invoice_customer_id).toBeNull();
   });
 });
 
@@ -1545,12 +1565,12 @@ function mockDetailRow(
     product_images: { label: "Original art", path: "products/original.png" },
     start_date: "2026-09-01",
     end_date: null,
-    signup_threshold: null,
     seat_count: 10,
     waitlist_enabled: false,
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
+    invoice_customer_id: null,
     registration_opens_at: "2020-01-01T00:00:00Z",
     timezone: "Europe/Helsinki",
     product_translations: [

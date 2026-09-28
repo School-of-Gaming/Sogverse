@@ -270,12 +270,11 @@ national-classification diff any more:
 2. Read the report. Anything ambiguous — a merge's coverage implications, a retirement
    something references, a rename that looks like vandalism — is a human decision made
    here, not by the tool.
-3. **Renumber the migration and move it into `supabase/migrations/`.** The differ writes
-   it to `supabase/reconciliations/` under a name with no version number at all, because
-   it cannot know the next free one: an already-used version is silently treated as
-   applied, so the number is picked against *remote* migration history at the moment of
-   pushing rather than guessed at the moment of emitting.
-4. Push it through the normal workflow.
+3. **Move the migration into `supabase/migrations/`.** The differ writes it to
+   `supabase/reconciliations/`, already timestamped, so a human reads it before it can
+   apply anywhere; the name it carries is the one it keeps, because the version is
+   restamped when the branch lands.
+4. Land it through the migration workflow in `supabase/CLAUDE.md`.
 5. **Bump the published version date for whichever dataset you re-sourced**, in the same
    change (see the rule below).
 

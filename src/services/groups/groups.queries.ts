@@ -12,6 +12,7 @@ import { getClient } from "@/lib/supabase/client";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
 import { GroupsService } from "./groups.service";
 import type {
+  GeduAssignmentRole,
   GroupGeduDetail,
   ProductGroupsSnapshot,
   ProductGroupWithDetails,
@@ -194,7 +195,18 @@ function withGeduAdded(
     ...snapshot,
     groups: snapshot.groups.map((g) => {
       if (g.id !== groupId) return g;
-      if (g.gedus.some((existing) => existing.id === gedu.id)) return g;
+      // Already on the pill list: this is a ROLE CHANGE, which the RPC applies
+      // as the same add (it upserts on the pair and updates the role). The old
+      // no-op would have left the select showing the value the admin just
+      // replaced until the settle refetch landed.
+      if (g.gedus.some((existing) => existing.id === gedu.id)) {
+        return {
+          ...g,
+          gedus: g.gedus.map((existing) =>
+            existing.id === gedu.id ? { ...existing, role: gedu.role } : existing,
+          ),
+        };
+      }
       return { ...g, gedus: [...g.gedus, gedu] };
     }),
   };
@@ -321,6 +333,13 @@ interface AddGeduVars {
   geduId: string;
   firstName: string;
   email: string | null;
+  /**
+   * The role to assign in, defaulting to `primary` — what every assignment was
+   * before roles existed, and what the add-gedu flow offers first. Passing an
+   * existing pill's id with a different role is how a role change is saved: the
+   * RPC upserts on (group, gedu) and updates the role.
+   */
+  role?: GeduAssignmentRole;
 }
 
 export function useAddGedu(productId: string) {
@@ -330,9 +349,9 @@ export function useAddGedu(productId: string) {
 
   return useMutation({
     mutationKey: [...groupMutationBase(productId), "addGedu"],
-    mutationFn: ({ groupId, geduId }: AddGeduVars) =>
-      service.addGedu(productId, groupId, geduId),
-    onMutate: async ({ groupId, geduId, firstName, email }) => {
+    mutationFn: ({ groupId, geduId, role }: AddGeduVars) =>
+      service.addGedu(productId, groupId, geduId, role ?? "primary"),
+    onMutate: async ({ groupId, geduId, firstName, email, role }) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<ProductGroupsSnapshot>(key);
       if (previous) {
@@ -342,6 +361,7 @@ export function useAddGedu(productId: string) {
             id: geduId,
             first_name: firstName,
             email,
+            role: role ?? "primary",
           }),
         );
       }

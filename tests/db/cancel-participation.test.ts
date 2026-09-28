@@ -8,8 +8,8 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import { getString } from "../helpers/json";
 
 /**
- * Behavior of the cancel_participation RPC (SECURITY DEFINER), recreated in
- * migration 00084 for the per-participation subscription model.
+ * Behavior of the cancel_participation RPC (SECURITY DEFINER), which serves
+ * the per-participation subscription model.
  *
  * Not a concurrency file — this is about the RPC's contract, which the Stripe
  * webhook's customer.subscription.deleted handler leans on:

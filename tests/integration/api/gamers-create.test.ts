@@ -547,7 +547,7 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
 });
 
 /**
- * **The guardian declaration** (00250): the adult states that this child is
+ * **The guardian declaration**: the adult states that this child is
  * theirs, or that they are the child's legal guardian, having been given the
  * Privacy Policy to read.
  *

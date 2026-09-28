@@ -3,6 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import {
+  ArrowLeftRight,
   LayoutDashboard,
   Users,
   Palette,
@@ -10,6 +11,7 @@ import {
   Settings,
   FlaskConical,
   MessageCircle,
+  Building2,
   ChevronLeft,
   ChevronRight,
   MapPin,
@@ -29,8 +31,9 @@ type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "whatsapp" | "testing" | "settings"
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
+  | "invoiceCustomers"
   | "camps" | "events"
-  | "sites";
+  | "sites" | "substitutions";
 
 interface NavItemDef {
   href: StaticAppHref;
@@ -60,12 +63,20 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
   admin: [
     { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: ROUTES.admin.users, labelKey: "users", icon: <Users className="h-5 w-5" /> },
+    // Above the product entries because it is the one page here that is a queue
+    // of work rather than a catalogue: a session with nobody teaching it is
+    // answered today, and the clubs are answered whenever.
+    { href: ROUTES.admin.substitutions, labelKey: "substitutions", icon: <ArrowLeftRight className="h-5 w-5" /> },
     { href: ROUTES.admin.consumerClubs, labelKey: "consumerClubs", icon: kindIcon("consumer_club") },
     { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: kindIcon("municipality_club") },
     { href: ROUTES.admin.camps, labelKey: "camps", icon: kindIcon("camp") },
     { href: ROUTES.admin.events, labelKey: "events", icon: kindIcon("event") },
     { href: ROUTES.admin.sites, labelKey: "sites", icon: <MapPin className="h-5 w-5" /> },
     { href: ROUTES.admin.municipalityInvoicing, labelKey: "municipalityInvoicing", icon: <Receipt className="h-5 w-5" /> },
+    // Directly under the ledger it serves: a customer is only ever looked up
+    // because an invoice is being raised, and the ledger is where a club with
+    // no customer is reported.
+    { href: ROUTES.admin.invoiceCustomers, labelKey: "invoiceCustomers", icon: <Building2 className="h-5 w-5" /> },
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },

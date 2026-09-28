@@ -12,7 +12,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  * What we cover:
  *   - admin happy path: parent fields update; child sets (translations,
  *     prices, schedule slots) wipe-and-replace.
- *   - the design tag (00178) round-trips, and an OMITTED p_tag clears it —
+ *   - the design tag round-trips, and an OMITTED p_tag clears it —
  *     the defaulted-parameter half that has no CHECK behind it.
  *   - non-admin denied (customer client gets 42501).
  *   - product_type is NOT mutable through this RPC.
@@ -20,11 +20,11 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *     fine); empty translation set is rejected.
  *   - translation BEFORE-DELETE trigger doesn't trip on wipe-and-replace
  *     (the upsert-then-delete-leftovers ordering is the load-bearing
- *     piece — see migration 00046 header comment).
- *   - the required-consent set (00210) replaces, clears on an empty array, and
+ *     piece).
+ *   - the required-consent set replaces, clears on an empty array, and
  *     clears on an OMITTED argument too — the tag's defaulted-parameter footgun
  *     landing on a legally-loaded field, recorded as such.
- *   - turning the waitlist off deletes the queue behind it (00171), with the
+ *   - turning the waitlist off deletes the queue behind it, with the
  *     live-subscription carve-out that stops the delete cascading a
  *     subscription Stripe still bills.
  */
@@ -34,7 +34,7 @@ const PRODUCT_ID = "00000000-0000-0000-0000-0000000005f1";
 // is meaningless on the consumer-club PRODUCT_ID and rejected by the muni-only
 // constraint). Muni clubs need a location, so it points at the seeded one.
 const MUNI_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f2";
-// Its own product for the 00171 waitlist-deletion cases: they seed
+// Its own product for the waitlist-deletion cases: they seed
 // participations (and, in two of them, a family_subscriptions row), which the
 // wipe-and-replace cases above have no business seeing.
 const WAITLIST_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f7";
@@ -46,12 +46,21 @@ const WAITLIST_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f7";
 // predicate that lost its product scoping — one uncap wiping every queue in
 // the database — would pass the migration's own assertions and every test.
 const DECOY_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f8";
-// The two consent documents 00210 seeded. Written out rather than imported from
+// The two seeded consent documents. Written out rather than imported from
 // the app's registry map: what these cases assert is that the RPC stored the
 // slug it was handed, and a constant shared with the code under test would let a
 // renamed slug pass on both sides at once.
 const CONSENT_TERMS = "roblox-programme-terms";
 const CONSENT_PRIVACY = "roblox-privacy-policy";
+/**
+ * The Fennoa invoice customer the municipality club is pointed at.
+ *
+ * Its own row and its own Fennoa number rather than a shared fixture: that
+ * column is UNIQUE, so two files sharing a value would race on an insert rather
+ * than on a primary key, and these files run in separate workers.
+ */
+const INVOICE_CUSTOMER = "00000000-0000-0000-0000-00000000080b";
+const INVOICE_CUSTOMER_NUMBER = "F980B";
 
 describe("update_product", () => {
   /** Service-role client — bypasses RLS, used to seed and to read back. */
@@ -59,7 +68,7 @@ describe("update_product", () => {
   /**
    * The RPC caller. It has to be a *signed-in* admin, not the service-role
    * client: the guard reads the caller's live role via get_user_role(), and
-   * since 00121 a caller with no profiles row (which is what a service-role
+   * a caller with no profiles row (which is what a service-role
    * connection is) is refused rather than waved through.
    */
   let adminAuth: SupabaseClient<Database>;
@@ -70,16 +79,98 @@ describe("update_product", () => {
       TEST_CREDENTIALS.ADMIN.email,
       TEST_CREDENTIALS.ADMIN.password,
     );
+
+    await admin.from("invoice_customers").delete().eq("id", INVOICE_CUSTOMER);
+    await admin
+      .from("invoice_customers")
+      .delete()
+      .eq("fennoa_customer_no", INVOICE_CUSTOMER_NUMBER);
+    const buyer = await admin.from("invoice_customers").insert({
+      id: INVOICE_CUSTOMER,
+      fennoa_customer_no: INVOICE_CUSTOMER_NUMBER,
+      invoice_name: "Update-product fixture customer",
+      street: "Virastokuja 1",
+      postal_code: "02070",
+      city: "Espoo",
+    });
+    expect(buyer.error).toBeNull();
   });
 
   afterAll(async () => {
+    // Products first: the invoice-customer foreign key is ON DELETE RESTRICT,
+    // so a customer a club still points at cannot go.
     await deleteTestProducts(admin, [
       PRODUCT_ID,
       MUNI_PRODUCT_ID,
       WAITLIST_PRODUCT_ID,
       DECOY_PRODUCT_ID,
     ]);
+    await admin.from("invoice_customers").delete().eq("id", INVOICE_CUSTOMER);
   });
+
+  /**
+   * A fresh municipality club, for the cases that need a product the muni-only
+   * CHECKs admit. Delete-and-insert like `freshProduct` below, so a case is
+   * never reading the residue of the one before it.
+   */
+  async function freshMuniProduct(): Promise<void> {
+    await deleteTestProducts(admin, [MUNI_PRODUCT_ID]);
+    const inserted = await admin.from("products").insert({
+      id: MUNI_PRODUCT_ID,
+      product_type: "municipality_club",
+      billing_mode: "external_contract",
+      topic: "minecraft_java",
+      min_age: 7,
+      max_age: 12,
+      spoken_language_code: "en",
+      is_remote: true,
+      // A municipality club needs a location, and an ONLINE one may point only
+      // at a country, region or municipality — so the seeded municipality.
+      location_id: TEST_IDS.LOCATION_MUNICIPALITY,
+      timezone: "Europe/Helsinki",
+      start_date: "2099-01-01",
+      registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      seat_count: 10,
+      waitlist_enabled: false,
+      // chk_products_non_consumer_has_end_date: a municipality club needs one,
+      // always — there is no stored status that exempts a row from it.
+      end_date: "2099-12-31",
+      is_visible: false,
+      created_by: TEST_IDS.ADMIN,
+    });
+    expect(inserted.error).toBeNull();
+  }
+
+  /**
+   * A complete, valid `update_product` call for the municipality club — every
+   * non-defaulted argument, plus `p_start_date`, which is defaulted but backed
+   * by a NOT NULL column and so has to be passed on every call, and nothing
+   * else. Cases add the one argument they are about, which is what makes an
+   * OMISSION assertable: the RPC assigns every editable column on every call,
+   * so the omitted arguments here are writing their defaults deliberately.
+   */
+  function muniUpdateArgs() {
+    return {
+      p_id: MUNI_PRODUCT_ID,
+      p_billing_mode: "external_contract" as const,
+      p_translations: [
+        { locale: "en", name: "Muni club", short_description: "" },
+      ],
+      p_topic: "minecraft_java" as const,
+      p_for_gamers: true,
+      p_for_parents: false,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_spoken_language_code: "en" as const,
+      p_is_remote: true,
+      p_location_id: TEST_IDS.LOCATION_MUNICIPALITY,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
+      p_end_date: "2099-12-31",
+      p_seat_count: 10,
+    };
+  }
 
   // Recreate a fresh product before each path so we're testing update,
   // not the residue of a previous test. Bypassing create_product() and
@@ -96,6 +187,7 @@ describe("update_product", () => {
       spoken_language_code: "en",
       is_remote: true,
       timezone: "Europe/Helsinki",
+      start_date: "2099-01-01",
       registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
       seat_count: 10,
       waitlist_enabled: true,
@@ -135,6 +227,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_is_visible: true,
       p_seat_count: 20,
       p_waitlist_enabled: false,
@@ -213,6 +306,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
     });
     expect(error).not.toBeNull();
     expect(error?.code).toBe("42501");
@@ -237,6 +331,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
     });
     expect(error).toBeNull();
@@ -264,6 +359,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
     });
     expect(error?.code).toBe("23514"); // check_violation
     expect(error?.message).toMatch(/at least one translation/i);
@@ -284,6 +380,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
     });
     // SQLSTATE P0002 — PL/pgSQL's `no_data_found` condition (the function
     // uses `USING ERRCODE = 'no_data_found'`, which maps to P0002, not the
@@ -322,6 +419,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
     });
     expect(error).toBeNull();
@@ -343,7 +441,7 @@ describe("update_product", () => {
     // Direct insert — admin bypasses RLS but not the CHECK. NULL is how a
     // locale says it has no long description, so a whitespace-only string
     // would be a second spelling of the same thing that every reader would
-    // then have to know about. The constraint (00183) refuses it, and the
+    // then have to know about. The constraint refuses it, and the
     // admin form folds a cleared editor to NULL rather than sending one.
     const { error } = await admin.from("product_translations").insert({
       product_id: PRODUCT_ID,
@@ -355,7 +453,7 @@ describe("update_product", () => {
     expect(error?.code).toBe("23514"); // check_violation
   });
 
-  // Per-session fees (00112). The RPC threads the three columns through; the
+  // Per-session fees. The RPC threads the three columns through; the
   // table CHECKs are the backstop the client form also enforces (gedu >= 0,
   // muni > 0 and muni-only).
   it("round-trips per-session fees through update_product", async () => {
@@ -374,6 +472,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
       // fee → cents, volunteer → 0. The muni-only column is left unset (the
       // RPC defaults it to NULL); the muni round-trip lives in the muni test.
@@ -421,28 +520,7 @@ describe("update_product", () => {
   });
 
   it("accepts a positive but rejects a zero municipality fee on a muni club", async () => {
-    await deleteTestProducts(admin, [MUNI_PRODUCT_ID]);
-    await admin.from("products").insert({
-      id: MUNI_PRODUCT_ID,
-      product_type: "municipality_club",
-      billing_mode: "external_contract",
-      topic: "minecraft_java",
-      min_age: 7,
-      max_age: 12,
-      spoken_language_code: "en",
-      is_remote: true,
-      location_id: TEST_IDS.LOCATION_MUNICIPALITY, // muni clubs need a location
-      timezone: "Europe/Helsinki",
-      registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
-      seat_count: 10,
-      waitlist_enabled: false,
-      // chk_products_non_consumer_has_end_date: a municipality club needs one,
-      // always. (Until 00169 a 'draft' row was exempt; that value and its escape
-      // hatch are both gone, and so is the stored status they belonged to.)
-      end_date: "2099-12-31",
-      is_visible: false,
-      created_by: TEST_IDS.ADMIN,
-    });
+    await freshMuniProduct();
 
     const positive = await admin
       .from("products")
@@ -459,7 +537,52 @@ describe("update_product", () => {
     expect(zero.error?.code).toBe("23514"); // check_violation
   });
 
-  // Design tag (00178). One nullable enum column, threaded through the RPC the
+  // The Fennoa invoice customer — the municipality fee's neighbour, and
+  // `tag`'s shape: a DEFAULTED parameter the RPC assigns on every call, so
+  // omitting it unlinks the club rather than leaving it alone.
+  it("round-trips an invoice customer through update_product, and unlinks on omission", async () => {
+    await freshMuniProduct();
+
+    const linked = await adminAuth.rpc("update_product", {
+      ...muniUpdateArgs(),
+      p_invoice_customer_id: INVOICE_CUSTOMER,
+    });
+    expect(linked.error).toBeNull();
+
+    const { data: withBuyer } = await admin
+      .from("products")
+      .select("invoice_customer_id")
+      .eq("id", MUNI_PRODUCT_ID)
+      .single();
+    expect(withBuyer?.invoice_customer_id).toBe(INVOICE_CUSTOMER);
+
+    // Omitted, which is the only expressible way to unlink one — the same
+    // `DEFAULT NULL` half the tag case below pins, and the reason the wire
+    // schema requires the field on every save.
+    const unlinked = await adminAuth.rpc("update_product", muniUpdateArgs());
+    expect(unlinked.error).toBeNull();
+
+    const { data: without } = await admin
+      .from("products")
+      .select("invoice_customer_id")
+      .eq("id", MUNI_PRODUCT_ID)
+      .single();
+    expect(without?.invoice_customer_id).toBeNull();
+  });
+
+  it("rejects an invoice customer on a non-municipality product", async () => {
+    await freshProduct(); // consumer_club
+    // chk_products_invoice_customer_only_for_muni — the twin of the muni-fee
+    // CHECK above, and the sole server-side guard of the invariant the form
+    // enforces by forcing the column to null for every non-muni type.
+    const { error } = await admin
+      .from("products")
+      .update({ invoice_customer_id: INVOICE_CUSTOMER })
+      .eq("id", PRODUCT_ID);
+    expect(error?.code).toBe("23514"); // check_violation
+  });
+
+  // Design tag. One nullable enum column, threaded through the RPC the
   // same way the fees above are — with one difference that earns its own case
   // below: `p_tag` is DEFAULTED, so omitting it is not "leave it alone", it is
   // "clear it".
@@ -479,6 +602,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
       p_tag: "neuroinclusive",
     });
@@ -519,6 +643,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
       // p_tag deliberately absent.
     });
@@ -532,7 +657,7 @@ describe("update_product", () => {
     expect(row?.tag).toBeNull();
   });
 
-  // Region lock (00193). Another nullable column on the defaulted tail, so it
+  // Region lock. Another nullable column on the defaulted tail, so it
   // has the tag's three cases — set it, read it back, clear it by omission —
   // plus one the tag cannot have: the column carries a CHECK, and a value that
   // is not an alpha-2 code has to fail loudly rather than be stored.
@@ -552,6 +677,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
       p_region_lock_country: "FI",
     });
@@ -594,6 +720,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
       // p_region_lock_country deliberately absent.
     });
@@ -629,6 +756,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
       p_region_lock_country: "Finland",
     });
@@ -652,7 +780,7 @@ describe("update_product", () => {
   });
 
   // -------------------------------------------------------------------------
-  // 00210 — the consent documents enrolling on the product requires
+  // The consent documents enrolling on the product requires
   // -------------------------------------------------------------------------
   //
   // A child SET rather than a column, so it has the wipe-and-replace shape the
@@ -660,7 +788,14 @@ describe("update_product", () => {
   // tag has, which is what makes the last case here a live footgun rather than
   // a curiosity.
 
-  /** Base arguments for a save that leaves the requirement set alone to vary. */
+  /**
+   * Base arguments for a save that leaves the requirement set alone to vary.
+   *
+   * `p_start_date` is passed although the parameter is defaulted: the column is
+   * NOT NULL, so omitting it fails the write with 23502 rather than leaving the
+   * date alone — and the compiler cannot see that, because the argument is
+   * optional on the wire.
+   */
   function consentUpdateArgs(name: string) {
     return {
       p_id: PRODUCT_ID,
@@ -675,6 +810,7 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_start_date: "2099-01-01",
       p_seat_count: 10,
     };
   }
@@ -753,7 +889,7 @@ describe("update_product", () => {
   });
 
   // -------------------------------------------------------------------------
-  // 00171 — turning the waitlist off deletes the queue behind it
+  // Turning the waitlist off deletes the queue behind it
   // -------------------------------------------------------------------------
   //
   // The flag goes off two ways in the admin form, and the RPC sees only one of
@@ -857,6 +993,7 @@ describe("update_product", () => {
         p_is_remote: true,
         p_timezone: "Europe/Helsinki",
         p_registration_opens_at: new Date().toISOString(),
+        p_start_date: "2099-01-01",
         p_seat_count: fields.seatCount,
         p_waitlist_enabled: fields.waitlistEnabled,
       });
@@ -966,11 +1103,11 @@ describe("update_product", () => {
     });
 
     it("deletes a waitlisted row whose subscription is cancelled", async () => {
-      // 00170's liveness predicate, applied to the carve-out: `cancelled` is
+      // The liveness predicate, applied to the carve-out: `cancelled` is
       // terminal (a dunning-dead subscription is stored that way and never
       // fires subscription.deleted), so such a row is not protected — otherwise
-      // a dead subscription would strand a queue entry forever, which is the
-      // failure 00170 removed from the two admin refusals.
+      // a dead subscription would strand a queue entry forever, the same
+      // failure the two admin refusals avoid.
       await freshWaitlistProduct();
       const ids = await seedParticipations([
         { gamerId: TEST_IDS.GAMER, status: "waitlisted" },

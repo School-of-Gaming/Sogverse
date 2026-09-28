@@ -3,17 +3,17 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
- * Behavioural cover for the §3.1 guard primitives (migration 00120).
+ * Behavioural cover for the §3.1 guard primitives.
  *
  * assert_role / assert_admin are granted to `authenticated` because
  * create_product is SECURITY INVOKER — its guard runs as the caller. (Its
- * cousin update_product ran the same way until 00171 made it SECURITY DEFINER
- * so it could delete a switched-off product's waitlist; a definer's body checks
- * EXECUTE as the definer, so it no longer needs the grant.) That grant is a
- * still-live exposed surface, so it is tested directly
+ * cousin update_product is SECURITY DEFINER, so it can delete a switched-off
+ * product's waitlist; a definer's body checks
+ * EXECUTE as the definer, so it does not need the grant.) That grant is a
+ * live exposed surface, so it is tested directly
  * here rather than only through the eight RPCs that call it: the primitives
- * must refuse every role they don't name, pass the one they do, and — since
- * migration 00121 — refuse a caller who holds no role at all.
+ * must refuse every role they don't name, pass the one they do, and refuse a
+ * caller who holds no role at all.
  *
  * Which functions are *exposed* is pinned mechanically by
  * authorization-spine.test.ts's completeness check (assert_self and the two §3.2
@@ -53,13 +53,11 @@ describe("guard primitives", () => {
 
     it("refuses a caller with no role", async () => {
       // service_role carries no `sub` claim, so get_user_role() is NULL. Under
-      // the `<>` comparison this primitive shipped with, `NULL <> 'admin'` was
-      // NULL, the IF never fired, and the caller went straight through — the
-      // pass-through Phase 1 inherited from the hand-written guards it replaced.
-      // 00121 switched the comparison to IS DISTINCT FROM, so a roleless caller
-      // is now refused like any other non-admin. This is the inverse of the
-      // KNOWN GAP assertion that stood here, kept in place so the closure is
-      // visible in the diff rather than just an absent test.
+      // a plain `<>` comparison `NULL <> 'admin'` is
+      // NULL, the IF never fires, and the caller goes straight through. The
+      // primitive compares with IS DISTINCT FROM, so a roleless caller
+      // is refused like any other non-admin, and this case is what holds it
+      // there.
       const admin = createAdminTestClient();
 
       const { error } = await admin.rpc("assert_admin");
@@ -92,7 +90,7 @@ describe("guard primitives", () => {
     });
 
     it("refuses a caller with no role, even for a role that exists", async () => {
-      // The direct test of the 00121 `<>` → IS DISTINCT FROM change: a real role
+      // The direct test of IS DISTINCT FROM rather than `<>`: a real role
       // name, a caller whose get_user_role() is NULL. The matrix in
       // authorization-spine.test.ts only ever hands this primitive a NULL role
       // name, so this case is only assertable here.

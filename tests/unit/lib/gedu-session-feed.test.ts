@@ -8,6 +8,7 @@ import {
   UNDATED_PRODUCT_PAST_HORIZON_DAYS,
 } from "@/lib/session-occurrence";
 import type { GeduFeedSession } from "@/services/gedu-sessions";
+import type { SubstitutionRequestDocument } from "@/services/session-substitution";
 import type { SessionFeedEntry } from "@/components/gedu/session-feed";
 
 /**
@@ -28,6 +29,50 @@ const MONDAY_SLOT = { weekday: 0, startTime: "16:30", durationMinutes: 90 };
 /** Comfortably before every date these tests care about. */
 const EPOCH = "2026-01-01";
 
+/** The group's own primary, and the viewer in every staffing case below. */
+const GEDU_A = {
+  id: "aaaa1111-1111-4111-8111-111111111111",
+  first_name: "Sanna",
+  role: "primary" as const,
+};
+
+/** A second primary, so a case can have somebody left standing. */
+const GEDU_B = {
+  id: "bbbb2222-2222-4222-8222-222222222222",
+  first_name: "Petra",
+  role: "primary" as const,
+};
+
+/** The sub — not on the group at all, seated only by a substituted request. */
+const SUB = {
+  id: "cccc3333-3333-4333-8333-333333333333",
+  firstName: "Joonas",
+};
+
+function substitution(
+  sessionDate: string,
+  fields: Partial<SubstitutionRequestDocument> = {},
+): SubstitutionRequestDocument {
+  return {
+    id: `substitution-${sessionDate}`,
+    group_id: GROUP,
+    session_date: sessionDate,
+    role: "primary",
+    status: "open",
+    created_at: `${sessionDate}T08:00:00.000Z`,
+    requested_by: GEDU_A.id,
+    requested_by_first_name: GEDU_A.first_name,
+    substitute_id: null,
+    substitute_first_name: null,
+    approved_at: null,
+    is_requester: false,
+    offer_count: null,
+    reason: null,
+    reason_note: null,
+    ...fields,
+  };
+}
+
 function build(overrides: Partial<Parameters<typeof buildGeduSessionFeed>[0]> = {}) {
   return buildGeduSessionFeed({
     groupId: GROUP,
@@ -36,6 +81,11 @@ function build(overrides: Partial<Parameters<typeof buildGeduSessionFeed>[0]> = 
     startDate: "2026-01-05",
     endDate: null,
     sessions: [],
+    // Staffed by one primary and nobody absent, which is what most cases here
+    // are about: they test the calendar merge, and a case about substitutions says so
+    // by overriding one or both.
+    gedus: [GEDU_A],
+    substitutions: [],
     now: NOW,
     epoch: EPOCH,
     ...overrides,
@@ -386,6 +436,8 @@ describe("buildGeduSessionFeed — the in-progress session", () => {
       startDate: "2026-01-05",
       endDate: null,
       sessions: [],
+      gedus: [GEDU_A],
+      substitutions: [],
       now,
       epoch: EPOCH,
     });
@@ -450,6 +502,8 @@ describe("buildGeduSessionFeed — the in-progress session", () => {
       startDate: "2026-03-02",
       endDate: null,
       sessions: [],
+      gedus: [GEDU_A],
+      substitutions: [],
       // 14:00 Helsinki - six hours in, nine hours to go.
       now: new Date("2026-03-16T12:00:00.000Z"),
       epoch: EPOCH,
@@ -524,3 +578,99 @@ describe("buildGeduSessionFeed — multi-slot products", () => {
     ]);
   });
 });
+
+describe("buildGeduSessionFeed — staffing", () => {
+  /** Two Mondays in this feed's window: one behind `now`, one ahead of it. */
+  const PAST = "2026-03-16";
+  const FUTURE = "2026-03-23";
+
+  it("attaches a staffing to every entry, of every kind", () => {
+    const entries = build({
+      startDate: "2026-03-02",
+      // A pre-epoch date with nothing recorded on it is the `no_record` kind,
+      // and it carries a staffing like the other two: a request is filed
+      // against a (group, date), and a projected date with no row is as
+      // substitutable as any other. The stored row on the last Monday is what makes
+      // the third kind appear beside it.
+      epoch: "2026-03-17",
+      sessions: [row(PAST)],
+    });
+    expect(entries.length).toBeGreaterThan(0);
+    for (const entry of entries) {
+      expect(entry.staffing.expected).toEqual([
+        { id: GEDU_A.id, firstName: GEDU_A.first_name, role: "primary" },
+      ]);
+    }
+    expect(new Set(entries.map((entry) => entry.kind))).toEqual(
+      new Set(["future", "past", "no_record"]),
+    );
+  });
+
+  it("scopes each entry's staffing to its own date", () => {
+    // One array in for the whole group; the derivation picks its own date out.
+    const entries = build({
+      gedus: [GEDU_A, GEDU_B],
+      substitutions: [substitution(FUTURE, { requested_by: GEDU_B.id, requested_by_first_name: GEDU_B.first_name })],
+    });
+
+    expect(byDate(entries, FUTURE)?.staffing.expected).toEqual([
+      { id: GEDU_A.id, firstName: GEDU_A.first_name, role: "primary" },
+    ]);
+    expect(byDate(entries, FUTURE)?.staffing.requests).toHaveLength(1);
+    // The neighbouring Monday is untouched by a request filed against another.
+    expect(byDate(entries, PAST)?.staffing.expected).toHaveLength(2);
+    expect(byDate(entries, PAST)?.staffing.requests).toEqual([]);
+  });
+
+  it("seats an approved sub in the absent gedu's place", () => {
+    const entries = build({
+      substitutions: [
+        substitution(FUTURE, {
+          status: "substituted",
+          substitute_id: SUB.id,
+          substitute_first_name: SUB.firstName,
+        }),
+      ],
+    });
+
+    expect(byDate(entries, FUTURE)?.staffing.expected).toEqual([
+      { id: SUB.id, firstName: SUB.firstName, role: "primary" },
+    ]);
+  });
+
+  it("answers the viewer's own questions from the viewer id", () => {
+    const entries = build({
+      substitutions: [substitution(FUTURE)],
+      viewerId: GEDU_A.id,
+    });
+
+    const staffing = byDate(entries, FUTURE)!.staffing;
+    // Absent by their own request, so not expected — and holding the request
+    // the card's status line and Withdraw action are rendered from.
+    expect(staffing.viewerIsExpected).toBe(false);
+    expect(staffing.viewerRequest?.status).toBe("open");
+
+    // Every other date of the same group still expects them.
+    expect(byDate(entries, PAST)!.staffing.viewerIsExpected).toBe(true);
+    expect(byDate(entries, PAST)!.staffing.viewerRequest).toBeNull();
+  });
+
+  it("answers `false` and `null` for a surface with no viewer", () => {
+    // The admin shell, and the preview scenes. The document's own
+    // `is_requester` was computed for whoever it was served to, so with no
+    // viewer named it is the fallback — and for an admin it is false.
+    const entries = build({ substitutions: [substitution(FUTURE)] });
+    const staffing = byDate(entries, FUTURE)!.staffing;
+    expect(staffing.viewerIsExpected).toBe(false);
+    expect(staffing.viewerRequest).toBeNull();
+    expect(staffing.requests).toHaveLength(1);
+  });
+
+  it("renders no entry for a request on a date the schedule no longer projects", () => {
+    // An orphaned request — a Thursday on a Monday club — is history: it has no
+    // instants to render with, and the admin queue is where it is cleared.
+    const entries = build({ substitutions: [substitution("2026-03-19")] });
+    expect(dates(entries)).not.toContain("2026-03-19");
+  });
+});
+

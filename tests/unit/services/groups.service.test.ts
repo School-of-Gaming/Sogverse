@@ -78,7 +78,9 @@ describe("GroupsService intent methods", () => {
       );
     });
 
-    const realId = await service.createGroup(PRODUCT_ID, "Group A", ["ge1"]);
+    const realId = await service.createGroup(PRODUCT_ID, "Group A", [
+      { geduId: "ge1", role: "primary" },
+    ]);
 
     expect(fetchMock).toHaveBeenCalledWith(APPLY_URL, expect.anything());
     expect(realId).toBe("real-group-id");
@@ -87,7 +89,8 @@ describe("GroupsService intent methods", () => {
     expect(sent.addedGroups).toHaveLength(1);
     expect(sent.addedGroups[0]).toMatchObject({
       name: "Group A",
-      geduIds: ["ge1"],
+      // Objects carrying a role, not bare ids: every assignment has a pay class.
+      gedus: [{ geduId: "ge1", role: "primary" }],
     });
     expect({ ...sent, addedGroups: [] }).toEqual(EMPTY);
   });
@@ -123,12 +126,24 @@ describe("GroupsService intent methods", () => {
     expect({ ...sent, participationMoves: [] }).toEqual(EMPTY);
   });
 
-  it("addGedu sends only geduAssignmentsAdded", async () => {
+  it("addGedu sends only geduAssignmentsAdded, defaulting to primary", async () => {
     mockApplyResponse();
     await service.addGedu(PRODUCT_ID, "G1", "ge1");
     const sent = sentChangeSet();
-    expect(sent.geduAssignmentsAdded).toEqual([{ groupId: "G1", geduId: "ge1" }]);
+    expect(sent.geduAssignmentsAdded).toEqual([
+      { groupId: "G1", geduId: "ge1", role: "primary" },
+    ]);
     expect({ ...sent, geduAssignmentsAdded: [] }).toEqual(EMPTY);
+  });
+
+  it("addGedu carries the role it was given", async () => {
+    // The same call is how a role CHANGE is saved: the RPC upserts on the pair
+    // and updates the role, so re-adding somebody already there re-states it.
+    mockApplyResponse();
+    await service.addGedu(PRODUCT_ID, "G1", "ge1", "assistant");
+    expect(sentChangeSet().geduAssignmentsAdded).toEqual([
+      { groupId: "G1", geduId: "ge1", role: "assistant" },
+    ]);
   });
 
   it("removeGedu sends only geduAssignmentsRemoved", async () => {

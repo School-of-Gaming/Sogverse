@@ -1,4 +1,8 @@
-import type { AppSupabaseClient, ProductGroupsSnapshot } from "@/types";
+import type {
+  AppSupabaseClient,
+  GeduAssignmentRole,
+  ProductGroupsSnapshot,
+} from "@/types";
 import {
   parseJsonResponse,
   readErrorMessage,
@@ -100,12 +104,12 @@ export class GroupsService {
   async createGroup(
     productId: string,
     name: string,
-    geduIds: string[] = [],
+    gedus: GroupChangeSet["addedGroups"][number]["gedus"] = [],
   ): Promise<string> {
     const tempId = `temp-${crypto.randomUUID()}`;
     const { tempMap } = await this.applyChanges(productId, {
       ...emptyChangeSet(),
-      addedGroups: [{ tempId, name, geduIds }],
+      addedGroups: [{ tempId, name, gedus }],
     });
     return tempMap[tempId];
   }
@@ -150,15 +154,24 @@ export class GroupsService {
     });
   }
 
-  /** Assigns a Gedu to a group. */
+  /**
+   * Assigns a Gedu to a group in a role — or re-states the role of one already
+   * there, which is the same call: the RPC upserts on (group, gedu), so a role
+   * change is one add rather than a remove followed by an add.
+   *
+   * `primary` is the default because it is what every assignment was before
+   * roles existed and what the add-gedu flow offers first; an `assistant` on a
+   * product with no assistant fee set is allowed and flags nothing.
+   */
   async addGedu(
     productId: string,
     groupId: string,
     geduId: string,
+    role: GeduAssignmentRole = "primary",
   ): Promise<void> {
     await this.applyChanges(productId, {
       ...emptyChangeSet(),
-      geduAssignmentsAdded: [{ groupId, geduId }],
+      geduAssignmentsAdded: [{ groupId, geduId, role }],
     });
   }
 

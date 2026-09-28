@@ -8,18 +8,16 @@ import {
 
 // effectiveStatus is the fact that drives the admin list status pill and what
 // parents see on browse. There is no stored status behind it: the answer is a
-// function of the dates, the threshold and the live sign-up count, so a
-// regression here is a page saying "awaiting start" about a club that began two
-// weeks ago, with nothing anywhere to contradict it. These tests pin the
-// derivation rules.
+// function of the two dates, so a regression here is a page saying "awaiting
+// start" about a club that began two weeks ago, with nothing anywhere to
+// contradict it. These tests pin the derivation rules.
 
 const NOW = new Date("2026-04-28T12:00:00Z");
 
 function lifecycle(over: Partial<LifecycleInputs>): LifecycleInputs {
   return {
-    start_date: null,
+    start_date: "2026-01-01",
     end_date: null,
-    signup_threshold: null,
     timezone: "Europe/Helsinki",
     ...over,
   };
@@ -29,103 +27,44 @@ describe("effectiveStatus", () => {
   describe("a run that has begun", () => {
     it("is running while end_date is in the future", () => {
       const p = lifecycle({ start_date: "2026-01-01", end_date: "2026-12-01" });
-      expect(effectiveStatus(p, NOW, 0)).toBe("running");
+      expect(effectiveStatus(p, NOW)).toBe("running");
     });
 
     it("is running indefinitely when end_date is null", () => {
       const p = lifecycle({ start_date: "2026-01-01" });
-      expect(effectiveStatus(p, NOW, 0)).toBe("running");
+      expect(effectiveStatus(p, NOW)).toBe("running");
     });
 
     it("is completed once end_date is in the past", () => {
       const p = lifecycle({ start_date: "2026-01-01", end_date: "2026-02-01" });
-      expect(effectiveStatus(p, NOW, 0)).toBe("completed");
-    });
-  });
-
-  describe("neither date nor threshold", () => {
-    it("stays pending forever — nothing could start it", () => {
-      expect(effectiveStatus(lifecycle({}), NOW, 0)).toBe("pending");
-    });
-
-    it("becomes expired once end_date passes", () => {
-      // No start date, no threshold, but end_date is set and has passed:
-      // whatever this product was waiting for can never happen now.
-      const p = lifecycle({ end_date: "2026-01-01" });
-      expect(effectiveStatus(p, NOW, 0)).toBe("expired");
+      expect(effectiveStatus(p, NOW)).toBe("completed");
     });
   });
 
   describe("pending → running", () => {
-    it("runs when start_date has passed and there's no threshold", () => {
+    it("runs once start_date has passed", () => {
       const p = lifecycle({ start_date: "2026-01-01" });
-      expect(effectiveStatus(p, NOW, 0)).toBe("running");
+      expect(effectiveStatus(p, NOW)).toBe("running");
     });
 
-    it("stays pending when start_date is in the future", () => {
+    it("stays pending while start_date is in the future", () => {
       const p = lifecycle({ start_date: "2026-12-01" });
-      expect(effectiveStatus(p, NOW, 0)).toBe("pending");
+      expect(effectiveStatus(p, NOW)).toBe("pending");
     });
 
-    it("stays pending until threshold is met (no date set)", () => {
-      const p = lifecycle({ signup_threshold: 10 });
-      expect(effectiveStatus(p, NOW, 5)).toBe("pending");
-      expect(effectiveStatus(p, NOW, 10)).toBe("running");
-    });
-
-    it("requires both date AND threshold when both are set", () => {
-      const p = lifecycle({
-        start_date: "2026-01-01", // passed
-        signup_threshold: 10,
-      });
-      expect(effectiveStatus(p, NOW, 5)).toBe("pending");
-      expect(effectiveStatus(p, NOW, 10)).toBe("running");
-    });
-
-    it("stays pending when threshold met but date hasn't been reached", () => {
-      const p = lifecycle({
-        start_date: "2026-12-01",
-        signup_threshold: 10,
-      });
-      expect(effectiveStatus(p, NOW, 50)).toBe("pending");
+    it("runs on the start date itself", () => {
+      const p = lifecycle({ start_date: "2026-04-28" });
+      expect(effectiveStatus(p, NOW)).toBe("running");
     });
   });
 
   describe("pending → running → completed (skip)", () => {
-    it("skips straight to completed when start passed AND end passed AND no threshold", () => {
+    it("skips straight to completed when both dates have passed", () => {
       const p = lifecycle({
         start_date: "2026-01-01",
         end_date: "2026-02-01",
       });
-      expect(effectiveStatus(p, NOW, 0)).toBe("completed");
-    });
-
-    it("skips to completed when both dates passed AND threshold was met", () => {
-      const p = lifecycle({
-        start_date: "2026-01-01",
-        end_date: "2026-02-01",
-        signup_threshold: 10,
-      });
-      expect(effectiveStatus(p, NOW, 10)).toBe("completed");
-    });
-  });
-
-  describe("expired — the window closed without it ever running", () => {
-    it("threshold-bearing product whose start passed and end passed without enough signups → expired", () => {
-      const p = lifecycle({
-        start_date: "2026-01-01",
-        end_date: "2026-02-01",
-        signup_threshold: 10,
-      });
-      expect(effectiveStatus(p, NOW, 5)).toBe("expired");
-    });
-
-    it("threshold-only product whose end passed without enough signups → expired", () => {
-      const p = lifecycle({
-        end_date: "2026-02-01",
-        signup_threshold: 10,
-      });
-      expect(effectiveStatus(p, NOW, 5)).toBe("expired");
+      expect(effectiveStatus(p, NOW)).toBe("completed");
     });
   });
 
@@ -140,7 +79,7 @@ describe("effectiveStatus", () => {
         start_date: "2026-01-01",
         end_date: "2026-04-28",
       });
-      expect(effectiveStatus(p, NOW, 0)).toBe("running");
+      expect(effectiveStatus(p, NOW)).toBe("running");
     });
 
     it("end_date is past once the next day starts in product TZ", () => {
@@ -151,7 +90,7 @@ describe("effectiveStatus", () => {
         start_date: "2026-01-01",
         end_date: "2026-04-28",
       });
-      expect(effectiveStatus(p, lateNight, 0)).toBe("completed");
+      expect(effectiveStatus(p, lateNight)).toBe("completed");
     });
 
     it("start_date has arrived on the product's own calendar day, not the reader's", () => {
@@ -160,13 +99,9 @@ describe("effectiveStatus", () => {
       // same start date has arrived for one product and not for the other.
       const midnightish = new Date("2026-06-14T22:00:00Z");
       const p = lifecycle({ start_date: "2026-06-15" });
-      expect(effectiveStatus(p, midnightish, 0)).toBe("running");
+      expect(effectiveStatus(p, midnightish)).toBe("running");
       expect(
-        effectiveStatus(
-          { ...p, timezone: "America/Los_Angeles" },
-          midnightish,
-          0,
-        ),
+        effectiveStatus({ ...p, timezone: "America/Los_Angeles" }, midnightish),
       ).toBe("pending");
     });
 
@@ -179,7 +114,7 @@ describe("effectiveStatus", () => {
         end_date: "2026-04-28",
         timezone: "America/Los_Angeles",
       });
-      expect(effectiveStatus(p, lateNight, 0)).toBe("running");
+      expect(effectiveStatus(p, lateNight)).toBe("running");
     });
   });
 });
@@ -190,10 +125,9 @@ describe("effectiveStatus", () => {
 
 function pending(over: Partial<PendingHintInputs>): PendingHintInputs {
   return {
-    start_date: null,
-    signup_threshold: null,
+    start_date: "2026-01-01",
     // registration_opens_at is NOT NULL in the schema; a past timestamp
-    // means "open since" and lets the other branches show through.
+    // means "open since" and lets the other branch show through.
     registration_opens_at: "1970-01-01T00:00:00Z",
     timezone: "Europe/Helsinki",
     ...over,
@@ -201,15 +135,10 @@ function pending(over: Partial<PendingHintInputs>): PendingHintInputs {
 }
 
 describe("pendingHintKey", () => {
-  it("returns null when nothing is scheduled", () => {
-    expect(pendingHintKey(pending({}), NOW)).toBeNull();
-  });
-
-  it("registrationOpens takes precedence over future startDate + threshold", () => {
+  it("registrationOpens takes precedence over a future startDate", () => {
     const p = pending({
       registration_opens_at: "2026-05-01T00:00:00Z",
       start_date: "2026-12-01",
-      signup_threshold: 10,
     });
     expect(pendingHintKey(p, NOW)).toEqual({
       key: "registrationOpens",
@@ -228,15 +157,7 @@ describe("pendingHintKey", () => {
     });
   });
 
-  it("future startDate with threshold → dateAndThreshold", () => {
-    const p = pending({ start_date: "2026-12-01", signup_threshold: 10 });
-    expect(pendingHintKey(p, NOW)).toEqual({
-      key: "dateAndThreshold",
-      values: { date: "2026-12-01", count: 10 },
-    });
-  });
-
-  it("future startDate without threshold → startDate", () => {
+  it("future startDate → startDate", () => {
     const p = pending({ start_date: "2026-12-01" });
     expect(pendingHintKey(p, NOW)).toEqual({
       key: "startDate",
@@ -244,23 +165,7 @@ describe("pendingHintKey", () => {
     });
   });
 
-  it("past startDate with threshold not met → pastDateThreshold", () => {
-    const p = pending({ start_date: "2026-01-01", signup_threshold: 10 });
-    expect(pendingHintKey(p, NOW)).toEqual({
-      key: "pastDateThreshold",
-      values: { count: 10 },
-    });
-  });
-
-  it("threshold-only → threshold", () => {
-    const p = pending({ signup_threshold: 10 });
-    expect(pendingHintKey(p, NOW)).toEqual({
-      key: "threshold",
-      values: { count: 10 },
-    });
-  });
-
-  it("past startDate alone → null (nothing meaningful to say)", () => {
+  it("past startDate → null (nothing meaningful to say)", () => {
     const p = pending({ start_date: "2026-01-01" });
     expect(pendingHintKey(p, NOW)).toBeNull();
   });

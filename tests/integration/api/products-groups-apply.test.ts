@@ -7,7 +7,7 @@ import type { GroupChangeSet } from "@/services/groups";
 // validates auth, parses the JSON body, and forwards the change set to the RPC.
 // Email notification + Daily.co provisioning live on the legacy route and stay
 // out of scope here. These tests verify auth gating, body parsing, and
-// error code mapping; the RPC's behavior is covered in db tests.
+// error code mapping; the RPC's behavior is substituted in db tests.
 
 const mockRequireRole = vi.fn();
 vi.mock("@/lib/auth", () => ({
@@ -92,10 +92,18 @@ describe("POST /api/admin/products/[id]/groups/apply", () => {
     mockRpc.mockResolvedValue({ data: { tempMap: {} }, error: null });
 
     const batch: GroupChangeSet = {
-      addedGroups: [{ tempId: "t1", name: "Group A", geduIds: ["g1"] }],
+      addedGroups: [
+        {
+          tempId: "t1",
+          name: "Group A",
+          gedus: [{ geduId: "g1", role: "primary" }],
+        },
+      ],
       renamedGroups: [{ groupId: "G1", name: "Renamed" }],
       deletedGroupIds: ["G2"],
-      geduAssignmentsAdded: [{ groupId: "G1", geduId: "g3" }],
+      geduAssignmentsAdded: [
+        { groupId: "G1", geduId: "g3", role: "assistant" },
+      ],
       geduAssignmentsRemoved: [{ groupId: "G1", geduId: "g4" }],
       participationMoves: [
         { participationId: "p1", toGroupId: "G1" },

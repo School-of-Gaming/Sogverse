@@ -71,7 +71,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   apply_group_changes: { permittedRoles: ["admin"] },
   create_product: { permittedRoles: ["admin"] },
   update_product: { permittedRoles: ["admin"] },
-  // The single writer of product_required_consents (00210). It exists as its own
+  // The single writer of product_required_consents. It exists as its own
   // RPC rather than as an inline INSERT because create_product is SECURITY
   // INVOKER: an inline write there would run as the admin's own session role and
   // would need a table write grant on the join table, which is the Data API
@@ -80,7 +80,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // the matrix IS assertable with no fixture: an admin passes the guard and the
   // all-NULL call deletes nothing and inserts nothing rather than raising.
   set_product_required_consents: { permittedRoles: ["admin"] },
-  // The single writer of product_marketing_consents (00220) — the revocable
+  // The single writer of product_marketing_consents — the revocable
   // consent system's mirror of the RPC directly above, and its own RPC for the
   // same reason: the admin product form reaches it as the admin's own session
   // role, and an inline INSERT would need a table write grant the migration
@@ -89,7 +89,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // product-existence check with `no_data_found`, which is an error but not the
   // forbidden one.
   admin_set_product_marketing_consents: { permittedRoles: ["admin"] },
-  // The single writer of product_gamer_photo_consents (00244) — the exact twin
+  // The single writer of product_gamer_photo_consents — the exact twin
   // of the RPC above, one consent system over, and its own RPC for the same
   // reason: the admin product form reaches it as the admin's own session role
   // and an inline INSERT would need a table write grant the migration
@@ -99,7 +99,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // forbidden one.
   admin_set_product_gamer_photo_consents: { permittedRoles: ["admin"] },
   get_product_groups_with_details: { permittedRoles: ["admin"] },
-  // The admin product page's whole session record (00200). Its second question
+  // The admin product page's whole session record. Its second question
   // is "does this product exist", which a NULL id answers with P0002 rather
   // than a second 42501 — so unlike every gedu read below, the positive half of
   // the matrix IS assertable here with no fixture.
@@ -108,17 +108,28 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // argument object and a permitted admin gets the whole document back — the
   // positive half of the matrix is assertable here without a fixture.
   get_admin_dashboard: { permittedRoles: ["admin"] },
-  // One month of municipality invoicing (00252). The guard runs before the
+  // One month of municipality invoicing. The guard runs before the
   // month check, which is what makes the all-NULL convention work on both
   // halves: a forbidden role is refused with 42501 and never reaches the
   // argument, while a permitted admin passes the guard and is then refused by
   // the first-of-month check with `check_violation` — an error, but not the
   // forbidden one.
   get_admin_municipality_invoicing: { permittedRoles: ["admin"] },
+  // The two writers of invoice_customers — the Fennoa customers a
+  // municipality club's invoice is addressed to. They exist as RPCs rather than
+  // as table writes for the §3.3 reason: the table carries no write grant for
+  // `authenticated` at all, so a guarded SECURITY DEFINER function is the only
+  // path in from a browser. The positive half of the matrix IS assertable with
+  // no fixture for both: past the admin guard, all-NULL arguments fail the
+  // field validation with `check_violation` — an error, but not the forbidden
+  // one — which is also what makes the guard's position provable, since a
+  // forbidden role never reaches the validation at all.
+  create_invoice_customer: { permittedRoles: ["admin"] },
+  update_invoice_customer: { permittedRoles: ["admin"] },
   promote_from_waitlist: { permittedRoles: ["admin"] },
   demote_to_waitlist: { permittedRoles: ["admin"] },
   set_gedu_certified: { permittedRoles: ["admin"] },
-  // Recording that an educator presented a criminal record extract (00213).
+  // Recording that an educator presented a criminal record extract.
   // Same shape as the certification RPC beside it: past the admin guard, a NULL
   // target is nobody's account and the "is not a gedu" raise answers with P0001
   // rather than a second 42501 — so the positive half of the matrix is
@@ -128,11 +139,28 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // "no such product" / "no such participation" — an error, but not 42501.
   admin_enroll_participant: { permittedRoles: ["admin"] },
   admin_remove_participation: { permittedRoles: ["admin"] },
-  // The database half of the admin club switch (00245). Past the admin guard,
+  // The database half of the admin club switch. Past the admin guard,
   // an all-NULL call hits "no such participation" — an error, but not 42501 —
   // so the positive half of the matrix is assertable here with no fixture,
   // exactly as it is for the two RPCs above.
   admin_move_participation: { permittedRoles: ["admin"] },
+
+  // --- the admin half of session substitutions -----------------------------
+  //
+  // The office's four staffing actions. All four are assertable on BOTH halves
+  // of the matrix with no fixture, which is unusual on this surface and worth
+  // naming: each asks "does this row exist" before it asks anything about the
+  // caller's reach, and a NULL id is nobody's row — so a permitted admin is
+  // refused with P0002 or check_violation rather than with a second 42501.
+  approve_session_substitution_offer: { permittedRoles: ["admin"] },
+  set_session_substitution: { permittedRoles: ["admin"] },
+  clear_session_substitution: { permittedRoles: ["admin"] },
+  withdraw_session_substitution_request_as_admin: { permittedRoles: ["admin"] },
+  // The Substitutions page's whole document. Assertable on both halves with no
+  // fixture for the reason the other argument-less reads here are: it takes no
+  // id, so a permitted admin gets a document — empty or not — rather than a
+  // second refusal, and every other role is stopped by the guard.
+  get_admin_substitution_requests: { permittedRoles: ["admin"] },
 
   // --- customer-gated ------------------------------------------------------
   // Phase 3's grant-plus-guard conversion. Past the role guard, a customer
@@ -140,7 +168,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // `no_data_found` — an error, but not the forbidden one, which is exactly what
   // the positive half of the matrix asserts.
   join_product_waitlist: { permittedRoles: ["customer"] },
-  // The one self-service writer of a marketing consent (00220). Role-gated
+  // The one self-service writer of a marketing consent. Role-gated
   // rather than self-scoping despite naming no subject — the same shape
   // `accept_gedu_contract` carries below, and the same reasoning: its first
   // statement IS a guard primitive, which is what check 1 reads, and the two
@@ -160,7 +188,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // passes the guard and is then refused by the NULL consent type with
   // check_violation, which is not the forbidden error.
   set_marketing_consent: { permittedRoles: ["customer"] },
-  // The one writer of a gamer photo consent (00244). Role-gated for the same
+  // The one writer of a gamer photo consent. Role-gated for the same
   // reason its marketing twin above is — its first statement IS a guard
   // primitive, which is what check 1 reads — but the role gate carries MORE
   // weight here, not less, because this function does name its subject in an
@@ -178,7 +206,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
 
   // --- gedu-gated ----------------------------------------------------------
   get_my_assigned_products: { permittedRoles: ["gedu"] },
-  // Accepting the gedu contract (00201). Role-gated rather than self-scoping
+  // Accepting the gedu contract. Role-gated rather than self-scoping
   // despite naming no subject: its first statement is the gedu role guard, which
   // is what check 1 reads, and the two classifications are exclusive. The
   // scoping property is still real and is enforced elsewhere — the row is keyed
@@ -205,7 +233,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // reason it is on get_gedu_assigned_product, and for the same reason it is
   // not a hole: each names the file that drives its permitted path against a
   // real fixture.
-  // Widened to admins by 00204, and for the same reason the writers below were:
+  // Widened to admins, for the same reason the writers below are:
   // the admin product page's per-group GROUP DETAILS page renders the gedu
   // workspace's page body unchanged, so it has to be fed the same document. An
   // admin passes the role guard AND the assignment half outright — that half is
@@ -227,7 +255,48 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // enforcement epoch, so a gedu with no assignments gets an empty list rather
   // than a refusal.
   get_my_gedu_assignment_summaries: { permittedRoles: ["gedu"] },
-  // Since 00200 the four writers below — and the site-notes writer further
+
+  // --- the gedu half of session substitutions ------------------------------
+  //
+  // Four writes and one read. The read is the assertable one, for the same
+  // reason the summaries RPC above is: it takes no id, so a gedu with nothing to
+  // substitute at gets an empty list rather than a refusal. An UNCERTIFIED gedu also
+  // gets an empty list rather than a refusal, which is deliberate — certification
+  // is one of the four refusals inside the may-substitute predicate the list filters
+  // on, not a gate on the function.
+  get_open_substitution_requests: { permittedRoles: ["gedu"] },
+  request_session_substitution: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the authorization here IS the derivation: past the role guard a gedu must " +
+      "be EXPECTED at the session, and nobody is expected at a NULL group on a " +
+      "NULL date, so the second question answers with a second 42501. Positive " +
+      "path: session-substitution.test.ts.",
+  },
+  withdraw_session_substitution_request: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "a NULL request id is no row, and a row that is not there is refused " +
+      "exactly as somebody else's is — 42501 either way, deliberately, so this " +
+      "cannot be used as an oracle for real request ids. Positive path: " +
+      "session-substitution.test.ts.",
+  },
+  offer_session_substitution: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the same no-such-row refusal as the withdraw above, and for the same " +
+      "anti-oracle reason: a NULL request id answers 42501 rather than " +
+      "distinguishing itself from a request the caller may not see. Positive " +
+      "path: session-substitution.test.ts.",
+  },
+  withdraw_session_substitution_offer: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "keyed on the REQUEST rather than the offer, so a NULL argument is the " +
+      "same no-such-row 42501 as the two above. Positive path: " +
+      "session-substitution.test.ts.",
+  },
+  // The four writers below — and the site-notes writer further
   // down — admit an ADMIN beside the assigned gedu. The guard itself is one
   // call that asserts whichever of the two roles the caller holds, so the
   // negative half of the matrix is unchanged: a customer and a gamer are still
@@ -253,7 +322,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "paths: gedu-session-feed.test.ts for the gedu, " +
       "admin-product-sessions.test.ts for the admin.",
   },
-  // The send's claim (00197). Same two-part gate as the notes writer above, and
+  // The send's claim. Same two-part gate as the notes writer above, and
   // the claim is the send's authorization in its own right: succeeding is what
   // lets the route go on to resolve parents' addresses with the service role.
   claim_group_session_report_email: {
@@ -265,7 +334,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "Positive paths: gedu-session-feed.test.ts for the gedu, " +
       "admin-product-sessions.test.ts for the admin.",
   },
-  // The session-photo pair (00222). The same two-part gate as every writer
+  // The session-photo pair. The same two-part gate as every writer
   // above — an admin or a gedu on the first statement, then "and do you teach
   // this group" — and the widening is the point: ANY gedu assigned to the group
   // may attach or remove a photo, matching how the report itself is edited.
@@ -294,7 +363,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "42501 deliberately rather than distinguishing itself from someone " +
       "else's row. Positive paths, for both roles: session-images.test.ts.",
   },
-  // The check-only half of removal (00224). It mutates nothing and answers one
+  // The check-only half of removal. It mutates nothing and answers one
   // question — may this caller remove this photo? — and it exists because the
   // route deletes the storage OBJECT before the row, on the service-role client:
   // an admin client must never act for a caller whose authorization has not been
@@ -331,10 +400,10 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "gedu-session-feed.test.ts for the gedu, admin-product-sessions.test.ts " +
       "for the admin.",
   },
-  // The two game-username writers, widened to admins by 00205 — the last pair
-  // on this surface to be, and for the reason the rest were: the admin group
-  // details page renders the gedu workspace's roster body unchanged, and that
-  // roster carries an inline username editor. A surface that draws the control
+  // The two game-username writers, widened to admins for the reason the rest
+  // are: the admin group details page renders the gedu workspace's roster body
+  // unchanged, and that roster carries an inline username editor. A surface
+  // that draws the control
   // has to serve it. The widening grants an admin nothing new — the same edit is
   // already theirs on /admin/users/[id], on any user and with no group involved
   // — so what moved is which surface the action is reachable from, not who may
@@ -349,7 +418,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "annotation is carried for the gedu alone; it is per function, not per " +
       "role. Positive paths: gedu-session-feed.test.ts for both roles.",
   },
-  // The Roblox twin (00195). Same guard, same scope check, same target role
+  // The Roblox twin. Same guard, same scope check, same target role
   // check — and therefore the same reason its permitted half cannot be asserted
   // on NULL arguments. Widened in the same change as its twin, deliberately:
   // one roster editor serves both platforms, so widening one alone would ship a
@@ -365,7 +434,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
 
   // --- the member flair ----------------------------------------------------
   //
-  // The two staff-only marks a gedu meets before a session starts (00203): the
+  // The two staff-only marks a gedu meets before a session starts: the
   // newcomer badge's join stamp and the per-(group, member) note. Both admit an
   // ADMIN beside any gedu assigned to ANY group of the group's product, with
   // full read/write parity between the two — a substitute standing in for
@@ -392,7 +461,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "write-IDOR loop entry, the notes table carrying no write grant for any " +
       "client role. Positive path, for both roles: member-flair.test.ts.",
   },
-  // The note's structural twin (00227): the list of things a member made during
+  // The note's structural twin: the list of things a member made during
   // this group's run, replaced whole. Same two roles, same two guards, same
   // reason for both — a substitute standing in for another group is exactly the
   // person who needs to record what a child finished today. The one thing that
@@ -415,10 +484,9 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
 
   // --- the guard primitives themselves -------------------------------------
   // Exposed to `authenticated` because create_product is SECURITY INVOKER, so
-  // its guard runs as the caller (see migration 00120; update_product was
-  // elevated to DEFINER by 00171 and no longer needs the grant, but its
-  // sibling still does). They are role-gated by definition, so the matrix
-  // covers them like any other.
+  // its guard runs as the caller (update_product is SECURITY DEFINER and does
+  // not need the grant, but its sibling does). They are role-gated by
+  // definition, so the matrix covers them like any other.
   assert_admin: { permittedRoles: ["admin"] },
   // No role passes: the all-NULL convention hands it a NULL role name, which it
   // refuses outright rather than letting the comparison swallow it. That refusal
@@ -455,7 +523,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   can_read_product: {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
-    why: "read predicate behind the product policies; anon-reachable on purpose, and since 00257 it answers TRUE for any product that exists and false only for an id no product has. Every product stays readable by direct link forever (owner decision 2026-09-15), because a parent following an old link should land on the product's page and read that it has ended rather than meet a not-found. That makes it self-scoping by the widest reading the category admits — the same one search_locations and the fold primitives sit on: it names no user, reads no uid, takes no argument that could be aimed at somebody else, and answers every caller identically. There is no scope to leak because there is no per-caller answer, and the scope test is what proves that rather than assumes it: an anonymous caller and a privileged one are asked the same ids and get the same answers. It stays a function rather than a USING (true) in each of the seven policies that call it — products plus its six satellite tables — so a future tightening is one edit; the arms it used to carry (admin, a party to an active or waitlisted participation, an assigned gedu, and the term test that bounded the public one) are removed rather than dormant, because with existence answering true none of them could decide anything. is_visible is not tested here either and never was — that column decides LISTING on the browse pages, which is a query filter, not a read rule",
+    why: "read predicate behind the product policies; anon-reachable on purpose, and it answers TRUE for any product that exists and false only for an id no product has. Every product stays readable by direct link forever (owner decision 2026-09-15), because a parent following an old link should land on the product's page and read that it has ended rather than meet a not-found. That makes it self-scoping by the widest reading the category admits — the same one search_locations and the fold primitives sit on: it names no user, reads no uid, takes no argument that could be aimed at somebody else, and answers every caller identically. There is no scope to leak because there is no per-caller answer, and the scope test is what proves that rather than assumes it: an anonymous caller and a privileged one are asked the same ids and get the same answers. It stays a function rather than a USING (true) in each of the seven policies that call it — products plus its six satellite tables — so a future tightening is one edit; the arms it used to carry (admin, a party to an active or waitlisted participation, an assigned gedu, and the term test that bounded the public one) are removed rather than dormant, because with existence answering true none of them could decide anything. is_visible is not tested here either and never was — that column decides LISTING on the browse pages, which is a query filter, not a read rule",
   },
   has_active_participation_on_product: {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
@@ -481,12 +549,26 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
     why: "boolean about the caller's own moderator standing in a voice group",
   },
+  // The one substitution predicate of the four that is exposed, and it is here
+  // for the reason gedu_teaches_gamer below is: the gedus_read_assigned_groups
+  // policy on product_groups calls it, and an RLS policy is evaluated as the
+  // querying role, so a policy cannot call a private helper. The plan had this
+  // inlined as an EXISTS to keep the predicate internal; inlining is what
+  // actually costs more, because a policy expression reads the table AS THE
+  // CALLER and would have needed both a SELECT grant and a read policy on
+  // session_substitution_requests. The three sibling policies on the same table already
+  // compose a granted SECURITY DEFINER predicate for this exact reason. The two
+  // new substitution TABLES still grant `authenticated` nothing at all.
+  gedu_substitutes_group: {
+    scopeTest: "tests/db/session-substitution.test.ts",
+    why: "boolean about the CALLER — do I hold a live substitution on this group — where 'live' means a `substituted` request whose holder is still certified and whose access window is open on BOTH bounds: open from 48 hours before the substituted session's own start (product-local midnight of that date where the schedule no longer projects it, which opens earlier than any real session that day would rather than opening on the spot), and closed 24 hours after that session's report is mailed or 15 product-local days after the date if it never is. A substitution approved further out than 48 hours is therefore visible to its holder on My SOG and reaches nothing. No argument can name a different asker: the substitute_id comparison is against auth.uid() inside the body, so a gedu handed another gedu's group id learns only about their own standing on it. Total: an unknown group id is false, never NULL, so the USING clause it feeds is never handed a three-valued answer. The scope test asks the same group of a substituting gedu, a non-substituting gedu and the absent gedu and requires three different answers, and walks both of the window's edges so the boolean is shown FLIPPING at each rather than merely being true once",
+  },
   gedu_teaches_gamer: {
     scopeTest: "tests/db/gamer-photo-consents.test.ts",
-    why: "boolean about the CALLER — is this gamer on a roster I can open — and the predicate behind the gedu read policy on gamer_photo_consents (00244). Exposed only because an RLS policy evaluates its USING clause as the querying role, so a policy cannot call a private helper. Deliberately composed from the roster's own two halves (gedu_teaches_group, plus the active-participation filter get_gedu_group_feed applies) rather than computed afresh, so the set of children a gedu may see a photo answer for cannot drift away from the set already on their rosters. Total: an unknown gamer id is false, never NULL, so a USING clause is never handed a three-valued answer",
+    why: "boolean about the CALLER — is this gamer on a roster I can open — and the predicate behind the gedu read policy on gamer_photo_consents. Exposed only because an RLS policy evaluates its USING clause as the querying role, so a policy cannot call a private helper. Deliberately composed from the roster's own two halves (gedu_teaches_group, plus the active-participation filter get_gedu_group_feed applies) rather than computed afresh, so the set of children a gedu may see a photo answer for cannot drift away from the set already on their rosters. Total: an unknown gamer id is false, never NULL, so a USING clause is never handed a three-valued answer",
   },
 
-  // --- chat (00228 / 00229 / 00233) ----------------------------------------
+  // --- chat ----------------------------------------------------------------
   //
   // Twelve entries, and every one of them is self-scoping for the same reason:
   // **chat authorization is a MEMBERSHIP question, not a role question.** A
@@ -560,15 +642,15 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   get_my_family_product_feed: {
     scopeTest: "tests/db/family-product-feed.test.ts",
-    why: "the family club/camp/event page, keyed on ONE participation. Two roles reach the same document — the participation's participant, and any parent linked to them — so a role guard could only name both and would prove nothing; the real gate is the ownership predicate, which is keyed entirely to auth.uid(). Since 00173 that participant may be an adult holding a seat of their own, in which case the first arm of the same predicate matches directly and the parent-link fallback is never reached. A row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. The scope test is where the interesting half lives: a sibling in the SAME group is refused (the key is the participation, not the group), a parent of another family is refused, a child cannot read their own parent's seat in the group they share, and the document's attendance field carries one answer — the named participant's — rather than a roster map",
+    why: "the family club/camp/event page, keyed on ONE participation. Two roles reach the same document — the participation's participant, and any parent linked to them — so a role guard could only name both and would prove nothing; the real gate is the ownership predicate, which is keyed entirely to auth.uid(). That participant may be an adult holding a seat of their own, in which case the first arm of the same predicate matches directly and the parent-link fallback is never reached. A row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. The scope test is where the interesting half lives: a sibling in the SAME group is refused (the key is the participation, not the group), a parent of another family is refused, a child cannot read their own parent's seat in the group they share, and the document's attendance field carries one answer — the named participant's — rather than a roster map",
   },
-  submit_my_feedback: {
-    scopeTest: "tests/db/feedback-submission.test.ts",
-    why: "writes a feedback row for auth.uid(); no parameter names a user, and every role may send feedback",
+  submit_my_help_request: {
+    scopeTest: "tests/db/help-request.test.ts",
+    why: "writes a help request for auth.uid(); no parameter names a user, and every role may ask for help",
   },
   request_my_verification_email: {
     scopeTest: "tests/db/verification-email-rate-limit.test.ts",
-    why: "the rate-limit gate on the verification-email send, and the same shape as submit_my_feedback one table over: it takes no argument at all, so the row it writes and the rows it counts are alike keyed to auth.uid() and a caller can neither spend nor clear anyone else's hourly allowance. No role gate by design — every role with a real inbox may ask for the mail, and the route is what excludes gamers, because the reason to exclude them is that nobody reads their synthetic address rather than anything about authority",
+    why: "the rate-limit gate on the verification-email send, and the same shape as submit_my_help_request one table over: it takes no argument at all, so the row it writes and the rows it counts are alike keyed to auth.uid() and a caller can neither spend nor clear anyone else's hourly allowance. No role gate by design — every role with a real inbox may ask for the mail, and the route is what excludes gamers, because the reason to exclude them is that nobody reads their synthetic address rather than anything about authority",
   },
   request_gamer_verification_email: {
     scopeTest: "tests/db/verification-email-rate-limit.test.ts",
@@ -600,7 +682,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   search_locations: {
     scopeTest: "tests/db/location-search.test.ts",
-    why: "SECURITY INVOKER over `locations` and, since 00165, `postal_codes` — two tables of public reference data whose policies grant every row to anon and authenticated alike, so the caller's own RLS decides every row it can see exactly as a direct select would. It cannot answer with anything a plain read of either table would not already return, and the scope test proves an anonymous caller and a privileged one get the identical answer. Self-scoping by the same reading as can_read_product: the scope is the caller's, not a uid the arguments could aim elsewhere. Its arguments — needle, levels, page size and, since 00155, an optional country — only ever NARROW that set; none of them names a user or widens what the caller's own RLS already permits",
+    why: "SECURITY INVOKER over `locations` and `postal_codes` — two tables of public reference data whose policies grant every row to anon and authenticated alike, so the caller's own RLS decides every row it can see exactly as a direct select would. It cannot answer with anything a plain read of either table would not already return, and the scope test proves an anonymous caller and a privileged one get the identical answer. Self-scoping by the same reading as can_read_product: the scope is the caller's, not a uid the arguments could aim elsewhere. Its arguments — needle, levels, page size and an optional country — only ever NARROW that set; none of them names a user or widens what the caller's own RLS already permits",
   },
   // The three fold primitives below are a third shape the category has to
   // admit, and the widest reading of it: they read *no table at all*. Each is a
@@ -642,9 +724,9 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
  * allow and nothing more.
  */
 const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
-  user_search_index: {
-    scopeTest: "tests/db/user-search-index.test.ts",
-    why: "security_invoker = true over `profiles`, `minecraft_accounts` and `roblox_accounts`, so the caller's own RLS decides every row exactly as a direct select of those three tables would. It cannot answer with anything a plain read of them would not already return — the search_blob is assembled from columns the caller can see or from nothing at all, because a row filtered out of a join contributes NULL rather than a leak. It carries no arguments at all, so there is nothing for a caller to aim at another user: the needle is an ordinary filter applied to whatever set RLS already handed them. The scope test is where the interesting half lives: from the identical query, a customer reaches their own linked gamer by that child's game handle and cannot reach another customer at all, and a second customer with no relationship to the child cannot find them by the same handle",
+  user_list_entries: {
+    scopeTest: "tests/db/user-list-entries.test.ts",
+    why: "security_invoker = true over `profiles`, `parent_gamer`, `gamer_profiles`, `gedu_profiles`, `minecraft_accounts` and `roblox_accounts`, so the caller's own RLS decides every row exactly as a direct select of those six tables would. It cannot answer with anything a plain read of them would not already return — every derived value is a correlated subquery over the same tables, so a row the caller's policies filter out contributes NULL or is simply absent from an array rather than leaking. It carries no arguments at all, so there is nothing for a caller to aim at another user: the needle, the role pill, the language chip and the keyset cursor are ordinary filters applied to whatever set RLS already handed them, and each of them only ever narrows it. Two of its own properties are worth stating because they are the ones an author could get wrong: `linked_gamers` is assembled from `parent_gamer` under the caller's policies, so a caller who cannot see a link gets an empty array rather than somebody else's children — and gets that child as a top-level row instead, which is the same set of people either way; and `family_search_blob` folds a child's strings into the parent's row, so the blob is only as wide as the family the caller can already read. It replaced `user_search_index`, and the scope test is where the interesting half lives: from the identical query, a customer reaches their own family row with their own child embedded and cannot reach another customer at all, and a second customer with no relationship to the child cannot find that family by the child's game handle",
   },
 };
 
@@ -655,13 +737,13 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  * policies are `TO anon, authenticated`, so anon evaluates it itself.
  * `search_locations` is reached by the public educator registration page before
  * any account exists; it is SECURITY INVOKER over two tables anon already holds
- * SELECT on for every row — `locations`, and `postal_codes` since 00165 gave the
- * search a postal match arm — so it narrows that surface rather than widening it.
- * Migration 00155 replaced its three-argument signature with a four-argument
- * one (the optional country filter) — a new object with no privileges of its
- * own, which is why that migration re-issues this grant in full. The allowlist
+ * SELECT on for every row — `locations` and `postal_codes`, the latter for the
+ * search's postal match arm — so it narrows that surface rather than widening
+ * it. A changed signature is a new object with no privileges of its own, so
+ * the grant has to be re-issued in full whenever one changes. The allowlist
  * keys on the name, so it covers whichever signature is live; the guarantee it
- * rests on is unchanged, because the new argument only narrows the result.
+ * rests on is unchanged, because the optional country argument only narrows
+ * the result.
  *
  * `immutable_unaccent` and `location_search_separator` are here because
  * `search_locations` calls them and runs as its caller — granting the entry
@@ -696,8 +778,13 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   ["profiles", "role"],
   // Proof that an address reaches its owner. A marker its own subject can set
   // says only that they wanted it to say something, so the column is written
-  // exclusively by the service-role verify route (00186).
+  // exclusively by the service-role verify route.
   ["profiles", "email_verified_at"],
+  // Whether the account finished registering — named itself, accepted the
+  // terms, answered the consents. Writable, a Google-created parent could mark
+  // themselves done and walk past the finish page with none of it given; only
+  // the service-role completion routes write it after creation.
+  ["profiles", "registration_completed_at"],
   // Certification gates gedu group assignment and voice-room moderation; the
   // audit columns are stamped server-side by set_gedu_certified.
   ["gedu_profiles", "certified"],
@@ -732,9 +819,9 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   ["product_seat_counts", "waitlist_count"],
   // The parent PIN hash.
   ["customer_profiles", "pin_hash"],
-  // How a child reaches their own account (00235). Writable, a gamer could hand
+  // How a child reaches their own account. Writable, a gamer could hand
   // themselves a login — `username` or `email` mode is a credential the switch
-  // gate no longer stands in front of — and their parent could do it from the
+  // gate does not stand in front of — and their parent could do it from the
   // browser without the PIN check the routes make. Written only by the API
   // routes on the service-role client.
   ["gamer_profiles", "sign_in"],
@@ -747,14 +834,14 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
  * `profiles` is pinned to the safe profile fields a user may edit — identity and
  * presentation, nothing that decides what they may do. `locale` joined them in
  * Phase 3 when the locale route stopped writing through the service-role
- * client; `home_location_id` in 00137, and it stays on the safe side of that
+ * client; `home_location_id` sits beside them, and it stays on the safe side of that
  * line — it is a reference to public, anon-readable seeded geography, it gates
  * nothing, and its FK is the only thing constraining what it may hold.
  *
- * `gamer_profiles` joined in 00235 and for the reason column scoping exists: the
- * table gained `sign_in`, which decides whether a child can sign in without
- * their parent at all. The self-update policy is unchanged; what changed is what
- * it can be used on. The two columns left are the child's own facts.
+ * `gamer_profiles` is column-scoped for the reason column scoping exists: the
+ * table carries `sign_in`, which decides whether a child can sign in without
+ * their parent at all. The self-update policy reaches only the two columns
+ * left, which are the child's own facts.
  */
 const COLUMN_SCOPED_UPDATE_TABLES: Record<string, readonly string[]> = {
   profiles: [

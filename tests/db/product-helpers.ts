@@ -38,7 +38,7 @@ import { TEST_IDS } from "./constants";
  *   5e5–5e8        products-purchaser-rls.test.ts (5e7 and 5e8 are FREE, for
  *                  the same reason as 5e3 and 5e4)
  *   5f1, 5f2, 5f7, 5f8, 5ff
- *                  update-product.test.ts (5f7 is the product its 00171
+ *                  update-product.test.ts (5f7 is the product its
  *                  waitlist-deletion cases seed participations on, kept apart
  *                  from 5f1 so the wipe-and-replace cases never see them;
  *                  5f8 is the decoy whose queue pins the delete's product
@@ -46,7 +46,7 @@ import { TEST_IDS } from "./constants";
  *   5f3            product-translations-trigger.test.ts
  *   5f4, 5f5       waitlist-self-service.test.ts
  *   5f6            waitlist-admin.test.ts (its FREE consumer_club product, for
- *                  the demote that 00132's type rule wrongly refused; the
+ *                  the demote a product-type rule would wrongly refuse; the
  *                  file's muni product is 5c7)
  *
  * The 5xx block has no tidy sub-range left below 5ff, so allocation continues
@@ -224,6 +224,42 @@ import { TEST_IDS } from "./constants";
  *                  rather than merely true — and club 802 with group 804, where
  *                  nobody is seated, so every "refused in a group they are not
  *                  in" case fails for the group clause alone)
+ *   805-809        invoice-customers.test.ts (805 is the municipality club the
+ *                  products-side cases hang off and 806 the consumer club that
+ *                  must refuse the column — one product cannot be both, since
+ *                  the CHECK is keyed on product_type; 807 and 808 are two
+ *                  `invoice_customers` rows rather than products, kept in this
+ *                  one registry for the reason the product_images ids are, and
+ *                  two because the RESTRICT-on-delete case needs a customer
+ *                  nothing points at beside the one a club does. 809 is a
+ *                  customer id that must NEVER exist, backing the case that the
+ *                  update RPC refuses an unknown id — declared here for the same
+ *                  reason 6ee and 6ff are)
+ *   80a            create-product.test.ts's invoice customer (see the note
+ *                  below: that file reserves no PRODUCT id and this is not one)
+ *   80b            update-product.test.ts's invoice customer, kept apart from
+ *                  80a because the two files run in separate workers and the
+ *                  Fennoa customer number is UNIQUE — one shared row would race
+ *                  on insert rather than on a primary key
+ *   80c            admin-municipality-invoicing.test.ts's invoice customer. That
+ *                  file owns the invoicing RPC and is the only one that may call
+ *                  it, because one of its cases seeds a club with no
+ *                  municipality and the function refuses every call while that
+ *                  club stands — so the "the document carries the customer"
+ *                  assertions live there rather than beside the table's own
+ *                  cases in invoice-customers.test.ts, which shares a database
+ *                  with that club and so could not call the RPC at all
+ *   80d-80f        admin-dashboard.test.ts's invoice-customer pair: two
+ *                  municipality clubs identical in everything the attention
+ *                  queue reads except the buyer — 80d names none and 80e names
+ *                  80f, which is an `invoice_customers` row rather than a
+ *                  product. Two clubs because one cannot be both named and
+ *                  unnamed, and the second is what makes "the missing buyer is
+ *                  why it is in the queue" provable rather than merely true.
+ *                  They sit apart from that file's own 620-629 block because the
+ *                  block was full when they arrived; the file is named twice
+ *                  here rather than the ids being squeezed in somewhere they
+ *                  would collide
  *   637           write-idor.test.ts's product_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather
@@ -235,12 +271,35 @@ import { TEST_IDS } from "./constants";
  *                  allocate it to a real fixture and that test quietly starts
  *                  pointing at a row that exists, which is the one thing it
  *                  must never do.
+ *   810-817        session-substitution.test.ts (the REMOTE club 810 with sister groups
+ *                  811 and 812 — two, because the whole point of the substitution model
+ *                  is that a gedu may substitute on a group of a product they already
+ *                  teach, and one group cannot be both the caller's own and the
+ *                  one they are substituting; the IN-PERSON club 813 at its own
+ *                  `locations` row 814 with group 815, its own site rather than
+ *                  the seeded Test School because site_details is keyed by
+ *                  location and shared across products, so writing notes on the
+ *                  seeded site would race the gedu feed's suite in a parallel
+ *                  worker; and the club 816 with group 817 that neither gedu
+ *                  touches, so a refusal there is the ACTOR half alone)
+ *   818-81b        session-substitution.test.ts again, for the window's NEAR edge: the
+ *                  evening club 818 with group 819 and its twin 81a with group
+ *                  81b. Both sit in a timezone the suite picks from the clock
+ *                  so that it is currently midday there, which is what lets a
+ *                  20:00 slot tell "48 hours before the session starts" apart
+ *                  from "48 hours before that date's local midnight" at any
+ *                  hour CI runs. The twins differ in one thing only — 81a's
+ *                  schedule skips the weekday the cases use — so the same
+ *                  date is an ordinary session on one and an orphan on the
+ *                  other
  *
- * One file reserves nothing and is listed anyway, so nobody goes looking for
- * its range: **create-product.test.ts**. It is the only file that calls
+ * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
+ * for its range: **create-product.test.ts**. It is the only file that calls
  * `create_product`, which mints its own id and accepts none, so it has no
- * fixture UUID to collide on — it collects the ids the RPC hands back and
- * deletes those.
+ * product UUID to collide on — it collects the ids the RPC hands back and
+ * deletes those. It does reserve 80a, which is an `invoice_customers` row: that
+ * table's rows are not minted by the RPC under test and its Fennoa number is
+ * unique, so it collides like any other fixture.
  */
 
 export interface ProductOptions {
@@ -251,8 +310,14 @@ export interface ProductOptions {
   billingMode?: Database["public"]["Enums"]["billing_mode"];
   /** null = unlimited seats. Default: 1 (small enough for race tests). */
   seatCount?: number | null;
-  signupThreshold?: number | null;
-  startDate?: string | null;
+  /**
+   * Calendar date in `timezone`. `products.start_date` is NOT NULL, so the
+   * helper always writes one: the caller's, else `endDate` when the caller gave
+   * one — a single-day product, which is what `chk_products_event_single_date`
+   * wants anyway and which keeps a fixture whose end date is in the past
+   * deriving as `completed` — else tomorrow, which derives as `pending`.
+   */
+  startDate?: string;
   endDate?: string | null;
   /**
    * Location FK. Default: null. Required (and must be a country/region/
@@ -269,8 +334,8 @@ export interface ProductOptions {
   waitlistEnabled?: boolean;
   isVisible?: boolean;
   /**
-   * Audience. Defaults to gamers-only, which is what every product was before
-   * 00173 and what the whole existing suite assumes.
+   * Audience. Defaults to gamers-only, which is what the whole existing suite
+   * assumes.
    *
    * The age range follows `forGamers` rather than being separately settable,
    * because `chk_products_ages_iff_for_gamers` gives it no freedom: 8–18 when
@@ -283,9 +348,27 @@ export interface ProductOptions {
 }
 
 /**
- * Creates a v2 product with sensible defaults: paid consumer_club, 1 seat, no
- * dates and no threshold — which derives as `pending`, so create_participation
- * accepts signups — and registration already open. Returns the product id.
+ * Tomorrow as a calendar date, read in the product's OWN zone. `start_date` is
+ * a calendar date in that zone and `effective_status` compares it against today
+ * there, so a date derived in UTC would land on the product's *current* day —
+ * and derive `running` rather than the `pending` this default promises — for a
+ * fixture in a zone ahead of UTC late in the UTC day.
+ */
+function tomorrow(timeZone: string): string {
+  // en-CA renders ISO-8601 (YYYY-MM-DD), which is the shape a date column wants.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(Date.now() + 86_400_000));
+}
+
+/**
+ * Creates a v2 product with sensible defaults: paid consumer_club, 1 seat,
+ * starting tomorrow and with no end date — which derives as `pending`, so
+ * create_participation accepts signups — and registration already open.
+ * Returns the product id.
  *
  * The caller is responsible for deletion (CASCADE handles participations
  * and the seat-count rollup row).
@@ -296,6 +379,9 @@ export async function createTestProduct(
 ): Promise<string> {
   const productId = options.id ?? crypto.randomUUID();
   const forGamers = options.forGamers ?? true;
+  // Resolved once: the default start date is a calendar date in this zone, so
+  // the two cannot be allowed to disagree about which zone that is.
+  const timezone = options.timezone ?? "UTC";
 
   const { error } = await admin.from("products").insert({
     id: productId,
@@ -303,13 +389,12 @@ export async function createTestProduct(
     product_type: options.productType ?? "consumer_club",
     billing_mode: options.billingMode ?? "paid",
     seat_count: options.seatCount === undefined ? 1 : options.seatCount,
-    signup_threshold: options.signupThreshold ?? null,
-    start_date: options.startDate ?? null,
+    start_date: options.startDate ?? options.endDate ?? tomorrow(timezone),
     end_date: options.endDate ?? null,
     location_id: options.locationId ?? null,
     registration_opens_at:
       options.registrationOpensAt ?? new Date(Date.now() - 60_000).toISOString(),
-    timezone: options.timezone ?? "UTC",
+    timezone,
     waitlist_enabled: options.waitlistEnabled ?? true,
     is_visible: options.isVisible ?? true,
     is_remote: true,

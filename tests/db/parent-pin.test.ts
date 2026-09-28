@@ -5,7 +5,7 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
- * Parent-PIN RPCs (00075/00076, plus verify_pin_for_any from 00235) against
+ * Parent-PIN RPCs, `verify_pin_for_any` included, against
  * real Postgres. Verifies the auth.uid()-scoping, the 4-digit guard, and that
  * the two service-role-only functions are not reachable by authenticated users.
  * Seed PIN state is reset around each test.
@@ -78,7 +78,7 @@ describe("Parent PIN RPCs", () => {
   });
 
   /**
-   * `verify_pin_for_any` (00235) — the account-switch gate's check. A child in
+   * `verify_pin_for_any` — the account-switch gate's check. A child in
    * a gamer session leaving it pays their PARENT's PIN, and a child may be
    * linked to more than one parent, so the question is "does this match ANY of
    * these" rather than "does this match theirs".

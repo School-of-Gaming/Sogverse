@@ -150,7 +150,8 @@ export async function resolveFamilyWithAdmin(
  *
  * The two `profiles` SELECT policies that apply to a customer —
  * `users_view_own_profile` (self) and `parents_view_linked_gamers` (their
- * linked gamers, see 00003_parent_gamer.sql) — OR together to exactly
+ * linked gamers, both in `supabase/schema/tables/profiles.sql`) — OR
+ * together to exactly
  * {self, gamers}, which is what {@link resolveFamilyWithAdmin} returns for a
  * customer. So the /parent dashboard prefetch gets the same result without
  * touching the service-role key, letting Postgres RLS be the access gate.

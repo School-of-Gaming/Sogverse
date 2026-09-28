@@ -21,84 +21,39 @@ command having failed.
 
 ## Phase 1 — Set up
 
-Run these from the **main checkout** — the repository root, not a worktree. If the
+Run from the **main checkout** — the repository root, not a worktree. If the
 session is already inside a worktree, stop and say so: a worktree-isolated
 session cannot create or modify another worktree, and the guard will refuse.
 
-1. **Verify the base — the latest `dev`, unless the user has said otherwise for
-   this piece of work.** That is a standing repo rule (see the Branching section of the
-   root `CLAUDE.md`), and this is the step that actually enforces it: no setting
-   can, because no setting fetches. `git fetch origin dev`, confirm local `dev`
-   matches `origin/dev`, fast-forward if behind. Never `main` — it trails `dev` by
-   hundreds of commits.
-
-   If they have named a different base, use it and say back which base you used,
-   so a deliberate choice and a mistake never look the same in the transcript.
-
-2. **Create the worktree**, branching from `dev` explicitly:
+1. **Create the worktree** — one call, from the PowerShell tool:
 
    ```
-   git worktree add .claude/worktrees/<short-name> -b feat/<kebab-summary> dev
+   .claude\scripts\worktree-setup.ps1 -Name <short-name>
    ```
 
-   `.claude/worktrees/` is the only correct location. It is gitignored, and
-   because it sits *inside* the checkout, Node resolves `node_modules` upward
-   from the parent — **so do not run `npm install`**, it is not needed and costs
-   several minutes and a gigabyte.
+   It verifies the base, creates the worktree at `.claude/worktrees/<short-name>`
+   on branch `feat/<short-name>`, junctions any nested install, and copies
+   `.env.local` in. **Do not run `npm install`** — the worktree resolves
+   `node_modules` upward from the parent checkout, so an install costs several
+   minutes and a gigabyte for nothing. The script's header carries the reasoning
+   for all of it, including the one case it cannot cover: a branch that *will*
+   change dependencies needs `npm install` inside the worktree after that change
+   lands, and only then.
 
-   Three things make the nested location safe, and only the first two are
-   visible from here: it is gitignored; lint and tests target explicit
-   directories that never reach into `.claude/`; and the root `tsconfig.json`
-   lists `".claude"` in its `exclude` — without that, the parent checkout
-   type-checks worktree files against its *own* branch's `@/*` resolution and
-   reports phantom errors at `.claude/worktrees/...` paths. If such errors
-   ever appear on a clean parent branch, that exclude has been dropped —
-   restore it rather than debugging the worktree.
+   **The base is the latest `dev` unless the user has said otherwise for this
+   piece of work.** That is a standing repo rule (the Branching section of the
+   root `CLAUDE.md`), and this is the step that enforces it, because no setting
+   fetches. Pass `-Base` for anything else and say back which base was used, so a
+   deliberate choice and a mistake never look alike in the transcript. Never
+   `main` — it trails `dev` by hundreds of commits.
 
-   **The one exception: a branch that changes dependencies.** Upward resolution
-   hands the worktree the *main checkout's* install, so a branch that edits
-   `package.json` / `package-lock.json` runs against the wrong dependency tree,
-   and the failures that follow do not look like this. If the work will change
-   deps, run `npm install` in the worktree after the change — and only then.
+   If type-check ever reports phantom errors at `.claude/worktrees/...` paths on
+   a clean parent branch, the root `tsconfig.json` has lost `".claude"` from its
+   `exclude` — restore it rather than debugging the worktree.
 
-   **Upward resolution stops at the root, so link the nested installs.** A
-   workspace package that pins a dependency at a different version from the
-   root gets its own copy under `packages/<name>/node_modules` (or
-   `services/<name>/node_modules`), and the worktree has no such folder — so
-   from inside it Node walks straight past to the root's copy, the wrong
-   version. It fails only where that package is loaded, and it looks like a
-   code error rather than an environment one — a missing export, from a
-   symbol the main checkout and CI both resolve fine. **No package pins a
-   split version today**, so this step is insurance against the next one
-   rather than a live fault; run it anyway, because the day one appears is
-   the day the failure it produces is hardest to read. Junction every nested
-   install into the worktree — run from the main checkout, in PowerShell,
-   before entering it:
-
-   ```
-   Get-ChildItem packages, services -Directory |
-     Where-Object { Test-Path (Join-Path $_.FullName "node_modules") } |
-     ForEach-Object {
-       New-Item -ItemType Junction `
-         -Path ".claude/worktrees/<short-name>/$($_.Parent.Name)/$($_.Name)/node_modules" `
-         -Target (Join-Path $_.FullName "node_modules") | Out-Null
-     }
-   ```
-
-   It finds nothing when no package has a nested install, which is the
-   intended end state; it errors harmlessly on a junction that already
-   exists. A junction is a link into the main checkout's real folder, so it
-   is removed by unlinking and never by `rm -rf` — Phase 5 says how.
-
-   Branch prefix is `feat/`. (`feature/` and bare names in the history are drift.)
-
-3. **Enter it** — `EnterWorktree` with `path` set to the absolute path just
-   created. Do not use `name`: that branches from `worktree.baseRef`, which is
+2. **Enter it** — `EnterWorktree` with `path` set to the absolute path the script
+   printed. Do not use `name`: that branches from `worktree.baseRef`, which is
    unset and defaults to `origin/main`.
-
-4. **Copy `.env.local`** from the main checkout into the worktree. It is
-   gitignored, so without it the app boots and silently cannot reach Supabase.
-
 ---
 
 ## Phase 2 — Build (interactive)
@@ -146,6 +101,26 @@ context?", and if the answer is yes it goes to an agent however simple it looks.
 Only the small interactive kind stays — a review-round fix, a two-file tweak, an
 edit you are already mid-way through.
 
+**One bounded deliverable per agent, then a fresh agent for the next piece.** An
+agent pays to re-read its whole accumulated context on every turn it takes, so its
+cost grows with roughly the square of its length — the Models section below has the
+measured shape. Size each piece so an agent can finish it and hand back; tell it to
+stop and report when the work turns out larger than its brief rather than expanding
+to fill it; and when the next piece is ready **launch a new agent rather than
+sending the finished one back to work**, because continuing keeps its context and
+keeps paying for it where a new one starts clean. Split on deliverable boundaries
+only — an agent stopped mid-refactor costs its successor more to pick up than the
+split saved.
+
+**Write the reading list into the prompt, not just the ownership list.** Reading is
+the largest single thing agents consume, and one left to find its own way in opens
+far more than the work needs, then carries all of it for the rest of its life. Name
+the files to start from, with line ranges where the relevant part is small. When
+several agents need the same background — a plan's section, a schema excerpt, a
+convention — paste the passage into each prompt rather than pointing at the file:
+pointed at one, every agent opens the whole of it. And say not to re-read a file it
+has just edited; the edit result already confirms the write.
+
 The unit of feedback is completed work, not elapsed time: run to done, report,
 take the rulings, fix, repeat. Block mid-build only on a question the work cannot
 proceed without; a judgment call with a buildable, reversible answer gets decided,
@@ -159,8 +134,11 @@ Before reporting any piece of work complete:
   the script also checks the workspace packages, which a bare `tsc` silently
   skips.
 - Unit tests with `npx vitest run <file>`. Never `npm run test -- --run`.
-- DB tests are CI-only. If the change needs them, push the branch and let CI run
-  them — never attempt them locally.
+- DB tests, when the change touches the database, with `npm run test:db:local`
+  against this worktree's own stack built by `npm run db -- up --no-rich-seed`
+  (`tests/CLAUDE.md`). It refuses a rich stack, so a stack Phase 3 brought up
+  for previewing cannot serve it. CI runs the suite on every push and remains
+  the authority.
 
 Commit as the work reaches coherent points rather than in one lump at the end.
 Multiline commit messages go through the Bash tool with a heredoc and
@@ -180,6 +158,29 @@ to start a second one.
   taken.
 - Start it backgrounded: `npx next dev --turbopack -p <port>`.
 - Report the specific URLs worth opening, not just the root.
+
+**A branch that also adds migrations previews against its own database.** `git diff
+--name-only --diff-filter=A origin/dev...HEAD -- supabase/migrations/` — non-empty
+output means `npm run db -- up` (about 50s) runs *before* the server, and it runs
+without asking: a stack is free, owner-less and per-checkout, exactly like this dev
+server. It repoints this worktree's `.env.local` at the stack — the three values the
+app reads, nothing else — so the server has to start after it, and a server already
+running has to be restarted to see it. A schema change with nothing to look at gets
+no stack: `npm run db -- generate` is all that kind of branch needs.
+
+- **Sign in as the rich seed's accounts.** `up` builds the stack on
+  `supabase/rich-seed.sql` alone — `seed.sql` is the DB tests' fixture set and never
+  runs on a rich stack — and that file's header lists the educators, parents and
+  children it creates. Sign in as `admin@example.com`, `parent@example.com` (PIN 1111)
+  or `gedu@example.com`, password `password`; every other seeded account is on
+  `testpassword123`. A trimmed stack runs no mail catcher, so nothing emailed — a magic
+  link, a reset — can be read on it; the seed's accounts are the only way in.
+- `npm run db -- list` shows every stack on the machine with its memory (a settled
+  one holds about 660 MB). Two beside the user's own work are comfortable, three
+  tight.
+- **Added a migration** with the stack up: `npm run db -- migrate` (a second).
+  **Edited one:** `npm run db -- reset` (about 45s) — the CLI only ever runs a version
+  once, so an edited file reaches a running stack no other way.
 
 ---
 
@@ -203,11 +204,25 @@ cadence was chosen and why at the moment the first build agent launches** — a
 silent deviation from "review each piece" is indistinguishable from forgetting
 to review at all, and the user can only veto a decision they can see.
 
-Run `/code-review` against the branch — but check first whether `dev` has moved
-since Phase 1. It usually has, on a session long enough to need this command,
-and a diff against moved `dev` pollutes the review with other work inverted.
-Diff from the merge-base (`git merge-base dev HEAD`) instead; the review is of
-this branch's commits, not of the gap between two moving points.
+**Launch the `code-reviewer` agent**, from inside this worktree, passing model
+`opus`. Naming the agent type is what makes the review brief arrive: it loads
+with the agent, in full, every time. A hand-written reviewer prompt carries only
+what the session happened to remember, which is how a review quietly loses its
+diff base or its security pass.
+
+So the brief already covers *how* to review — the merge-base diff, the
+twin-commit check, what to look for, and the `mechanical`/`fork` marking. The
+prompt carries only what the agent cannot know:
+
+- that it is already in the right directory, and must not `cd` or re-enter a
+  worktree — an agent inherits the session's worktree as its write root and
+  cannot be redirected into another one, even by calling `EnterWorktree` first;
+- what the change is for, and the decisions already settled with the user —
+  stated as decisions it may still challenge on the merits, never as findings it
+  is forbidden to make. Independence is the entire point of running it out of
+  process, and a prompt that fences off the contentious parts hands that back;
+- its reading list: the changed files, and any plan or convention passages
+  quoted inline rather than pointed at.
 
 **A branch that is the last stage of a plan landed in stages is reviewed
 together with the stages before it.** The plan records each landed stage's
@@ -230,31 +245,25 @@ text, and the defects it is least able to see are precisely the ones its own
 reasoning produced. A fresh agent meets the diff as the diff. Reviewing in the
 session does not produce a weaker review — it produces the same mind marking its
 own work, which is not a review at all, however long the output is.
-
-**Launch that agent from inside this worktree** — an agent inherits the
-session's worktree as its write root and cannot be redirected into another one,
-even by calling `EnterWorktree` first. Tell it explicitly that it is already in
-the right directory, and that it must not edit, stage or commit anything.
-
-Give it the branch's context and the decisions already settled with the user, so
-it spends its attention on defects rather than re-litigating choices — but state
-those as decisions it may still challenge on the merits, never as findings it is
-forbidden to make. Independence is the entire point of running it out of
-process; a prompt that fences off the contentious parts hands that back.
-
 Then **assess the findings before relaying them**. Say which you accept, which
 you think are wrong and why, and which are judgement calls for the user. A review
 relayed without an opinion has moved the work no further forward.
 
 **Findings accepted with no meaningful judgment call left open — mechanical
 correctness fixes, guard/assertion strengthening, test pinning, doc corrections,
-housekeeping merges — are applied immediately and reported as applied.** (This
-flow's rule, not `/code-review`'s ad-hoc default of waiting for the user to
-pick.) Surface, and wait on, only findings that create a real fork: anything
-touching product behavior, money/auth semantics, schema shape, user-facing copy,
-or the plan's step boundaries. The test is fork-ness, not confidence — if the
+housekeeping merges — are applied immediately and reported as applied.**
+Surface, and wait on, only findings that create a real fork: anything touching
+product behavior, money/auth semantics, schema shape, user-facing copy, or the
+plan's step boundaries. The test is fork-ness, not confidence — if the
 justification has to weigh two defensible options, it is the user's call
-however strongly the session prefers one of them. The triage is always shown
+however strongly the session prefers one of them.
+
+The reviewer marks each finding `mechanical` or `fork` on this same test, having
+just read the code. Take the marking as a starting sort, not a verdict: promoting
+one to a fork is cheap and always allowed, and a finding the reviewer called
+mechanical that turns out to foreclose a product decision is exactly what the
+session's own judgment is for. Demote sparingly, and never to avoid an
+interruption. The triage is always shown
 either way (applied findings in the past tense), and the Phase 5 merge gate
 remains the user's backstop: nothing reaches `dev` without their explicit
 instruction.
@@ -275,16 +284,55 @@ afterwards, stop and say so rather than landing the freeze.
 
 Order matters — several of these steps block the next one if skipped.
 
-1. **Confirm clean:** `npm run lint`, `npm run type-check`, and the full
-   `npm run test` all pass — plus `npm run check-translations` if the branch
-   touched `messages/` — and everything is committed. Phase 2's per-file test
-   runs were for iteration; landing gets the whole suite. A run is current
-   as long as HEAD hasn't moved: when the full gates already passed on the
-   exact commit being merged, say so and skip the re-run — the gate exists
-   to catch changes, not to ritualise. Any commit since, however small,
-   voids it.
+**These are the most expensive turns of the run.** Landing happens last, when the
+session's context is at its largest, so a command here costs several times what the
+same command cost in Phase 1. Batch what can be batched — independent commands
+belong in one call — and prefer the script wherever one exists.
 
-2. **Stop the dev server first, if Phase 3 started one — by port, with a tree
+1. **Confirm clean:** `npm run gates` — lint, type-check, translations and the
+   full suite, in one call. It runs every gate whatever the earlier ones did,
+   so one invocation returns the complete picture instead of one failure per
+   cycle, and prints nothing for a gate that passes. Phase 2's per-file test
+   runs were for iteration; landing gets the whole suite. Everything must be
+   committed too.
+
+   A run is current as long as HEAD hasn't moved: when the gates already
+   passed on the exact commit being merged, say so and skip the re-run — the
+   gate exists to catch changes, not to ritualise. Any commit since, however
+   small, voids it.
+
+2. **A branch carrying migrations lands synced.** `git fetch origin dev`, then
+   `git diff --name-only --diff-filter=A origin/dev...HEAD --
+   supabase/migrations/` — empty output means land exactly as today, so skip the
+   rest of this step. Otherwise, in the worktree, on the branch:
+
+   1. `git merge origin/dev` — resolve conflicts as usual, except in
+      `database.types.ts` and under `supabase/schema/`, which are never
+      hand-edited: regenerate and inspect (`supabase/CLAUDE.md`, "CI compares
+      the committed generated files against `migrations/`"). If this worktree's
+      stack is up, `npm run db -- reset` it after the merge — never `migrate`,
+      which would put the merged migrations on top of the branch's own.
+   2. `node scripts/restamp-migrations.mjs` — renames this branch's own
+      migrations to fresh timestamps, relative order kept, so they sort above
+      everything `dev` holds. Landing is serialised through one human, so the
+      stamp taken here is the queue position and two branches can never claim
+      one version. `--dry-run` shows the renames without making them.
+   3. `npm run db -- generate` — about a minute.
+   4. `git status` must show the renames and, at most, regenerated files
+      (`database.types.ts`, `supabase/schema/`) whose every hunk you can account
+      for. A difference in an object both sides touched is the conflict case
+      again: read both sides' changes and confirm each survives in the
+      regenerated output; where one is missing, write the migration that
+      combines them and regenerate.
+   5. Commit, and re-run the gates if the merge brought more than the renames.
+      **Do not push the branch again** — the regenerate-and-compare you just ran
+      is the gate, and `dev`'s own CI run follows the merge. The one exception is
+      the no-local-database path: push the synced branch, because CI is then the
+      generator, and commit both its artifacts —
+      `database-types-from-migrations` as `src/types/database.types.ts`, and
+      `schema-from-migrations` in place of `supabase/schema/`.
+
+3. **Stop the dev server first, if Phase 3 started one — by port, with a tree
    kill. Every time; this is the procedure, not a recovery.** On Windows,
    stopping the background task kills only the wrapper shell and the Next child
    *always* survives it holding the port (deterministic, not a race) — left
@@ -299,44 +347,68 @@ Order matters — several of these steps block the next one if skipped.
       whole process tree (route workers included), where `Stop-Process` has no
       tree mode and can leave grandchildren behind.
    5. Re-check the port is free, and that the user's own ports are still up.
+   6. `npm run db -- park` if Phase 3 brought a stack up — **a stack is parked
+      whenever its dev server is not running.** It keeps the data and frees the
+      memory, `.env.local` goes on pointing at it, and `up` brings it back in
+      about 30s, so a branch can wait for review at no cost. Step 6's teardown
+      script runs `npm run db -- down` for you, which is what removes it.
 
-3. **Leave the worktree** — `ExitWorktree` with `keep`, which returns the session
+   A server whose wrapper died but whose child survived serves broken pages
+   ("Jest worker encountered 2 child process exceptions, exceeding retry
+   limit"). That is the wounded server, not an app bug: kill it and start
+   clean rather than debugging the page.
+
+4. **Leave the worktree** — `ExitWorktree` with `keep`, which returns the session
    to the main checkout. `remove` will refuse here, because the worktree was
    created by hand rather than by `EnterWorktree`.
 
-4. **Merge and push**, from the main checkout on `dev`:
+5. **Merge and push**, from the main checkout — one call:
 
    ```
-   git branch --show-current        # must say dev — check out dev if not
-   git fetch origin dev             # dev moves while worktree work runs
-   git merge --ff-only origin/dev   # fast-forward local dev to the tip
-   git merge --no-ff feat/<branch>
-   git push origin dev
+   [ "$(git branch --show-current)" = dev ] &&
+     git fetch origin dev &&
+     git merge --ff-only origin/dev &&
+     git merge --no-ff feat/<branch> -m "Merge the <thing> into dev" &&
+     git push origin dev
    ```
+
+   The branch test gates everything after it: off `dev`, the chain is a no-op
+   rather than a merge into the wrong place. The fetch and `--ff-only` catch
+   local `dev` up, since it moves while worktree work runs. `-m` is required —
+   without it the merge opens an editor and the run hangs.
 
    The main checkout's home branch is `dev` — start there, end there, and
-   deviate only when the user explicitly says to. Subject line:
-   `Merge the <thing> into dev` — matching the house style, not git's default
-   text. If `dev` gained commits since Phase 1, the push publishes a union CI
+   deviate only when the user explicitly says to. The subject is house style,
+   not git's default text. If `dev` gained commits since Phase 1, the push publishes a union CI
    has not seen — that is accepted; CI on `dev` judges it (step 7).
 
-5. **Remove the worktree — junctions first.** Any nested-install junction
-   Phase 1 created is a link into the main checkout's real `node_modules`, and
-   Git Bash's `rm -rf` follows a junction and empties the folder behind it.
-   So unlink each one first, with a command that removes only the link:
+6. **Tear the worktree down and delete the branch** — one call, from the
+   PowerShell tool, in the main checkout:
 
    ```
-   cmd /c rmdir "<absolute-worktree-path>\packages\<name>\node_modules"
+   .claude\scripts\worktree-teardown.ps1 -Worktree <short-name> -DeleteRemote
    ```
 
-   Confirm the main checkout's `packages/<name>/node_modules` is still
-   populated, then `git worktree remove <absolute-path>`. If it refuses
-   because `node_modules` or `.next` are present, `rm -rf` the directory —
-   only now that no junction remains — and then `git worktree prune`.
+   It removes the worktree's local Supabase stack if it has one (a no-op when it
+   does not), unlinks every link inside the worktree — Phase 1's nested-install
+   junctions and the ones a build leaves under `.next` — refuses to run anything
+   recursive while one is still standing, deletes the worktree with a delete
+   that never follows a link, prunes it, checks the main checkout's
+   `node_modules` survived, and deletes the branch. Pass `-DeleteRemote`
+   whenever the branch was pushed for CI: delete it now rather than leaving it
+   to `cleanup-branches`, because the merge has just proved it safe to delete
+   and that certainty decays.
 
-6. **Delete the branch** — local, and the remote too if it was ever pushed for
-   CI. Do it now rather than leaving it for `cleanup-branches`; the merge just
-   proved it is safe to delete, and that certainty decays.
+   It stops rather than proceed when the worktree has uncommitted changes, or
+   when its `.env.local` holds keys the main checkout's does not — copy those
+   across first, since they die with the worktree otherwise. `-DryRun` reports
+   the whole teardown without touching anything.
+
+   **Do not hand-roll this sequence when the script is in the way, and never
+   reach for `git worktree remove`.** A worktree's junctions are links into the
+   main checkout's real `node_modules`; `git worktree remove` follows them and
+   empties the packages behind them. If the script refuses, read what it
+   refused about — that is the guard working.
 
 7. **Report** what landed, confirm the worktree, branch and server are all
    actually gone, and confirm the main checkout is back on `dev`. **Do not
@@ -366,7 +438,10 @@ edits to one file are a merge conflict manufactured on purpose.
 
 - The shared upward `node_modules` is what makes parallel worktrees cheap:
   no per-worktree install (same dependency-change exception as Phase 1, and
-  the same nested-install junctions, one set per worktree).
+  the same nested-install junctions, one set per worktree). Because it is
+  shared, never install or repair it while another npm or node process is
+  working the same tree — two concurrent `npm ci` runs kill each other with
+  EPERM unlinks. Check running node processes' command lines and wait.
 - Give each agent its **absolute** worktree path and tell it to work only
   there. An agent cannot be redirected from one worktree into another — if a
   piece has to move, relaunch a fresh agent rather than re-aiming a running
@@ -387,6 +462,25 @@ against unprompted agent use does not override it, and a session that quietly
 collapses into single-threaded work because of one has misread the request
 rather than made a judgment call.
 
+**What this command costs, and where it goes.** Measured across twelve runs of it
+(September 2026): the orchestrator was 48% of the spend and the agents 52%, and in
+both tiers 98% of every token was context being re-read rather than anything new
+arriving. Two consequences run underneath the rules below.
+
+A context's cost is its size multiplied by the number of turns it survives, so
+what there is to manage is *length*, not volume — an agent's cost grows with
+roughly the square of its turn count, and in these runs a turn inside a
+250-message agent cost more than twice the same turn inside a 50-message one. The
+longest single agent cost more than two entire orchestrator sessions.
+
+And the session's own turns are the dearest in the flow, because its context is
+the largest and it holds for hours — yet 35% of them went on shell commands and
+edits. That is the orchestrator paying the top rate in the flow to run `git` and
+`npm`. Its context is large *because* it is carrying the whole piece of work,
+which is exactly why cheap mechanical turns do not belong in it. Phase 5's gates
+and merge are the session's own and stay; anything else that is a command rather
+than a decision goes to the agent that wanted it, or to a script.
+
 **Two rules, two different reasons, and they are not interchangeable.**
 Conflating them is how both get weakened — the review rule inherits an escape
 hatch it must not have, and the build rule inherits a rigidity it does not need.
@@ -397,12 +491,9 @@ hatch it must not have, and the build rule inherits a rigidity it does not need.
   sweep is easy and expensive to hold; an intricate fix in an open file is hard
   and nearly free. Judge by what the work costs to *hold*, not to *solve*, and
   see Phase 2 for the full statement.
-- **The review is always delegated. No threshold, no exception.** This one is
-  not about context at all — it is about whether the review means anything. The
-  session that wrote the code knows what each line was for and reads intent
-  instead of text, so the defects it is least equipped to find are exactly the
-  ones its own reasoning introduced. Freshness is the property being bought, and
-  a review run in the authoring context has not bought it.
+- **The review is always delegated. No threshold, no exception.** Not for
+  context economy but for validity — Phase 4 carries the argument, and the two
+  rules are stated apart precisely because they are not interchangeable.
 
 Delegated work runs on **Opus**: pass `model` explicitly on every agent launch,
 because an agent silently inherits the session's model when none is passed, and
@@ -413,11 +504,22 @@ invisible unless you look.
   through the session's own judgment before being relayed or applied — that
   second tier comes free with orchestration, and is why an independent reviewer
   costs nothing in accuracy.
-- **Below Opus only for a specific task you are very confident does not need
-  it** — a mechanical sweep (locale keys, fixture regeneration, rename
-  plumbing) can run `sonnet` at low effort; the gates catch what it fumbles.
-  Confidence is the bar: when unsure, Opus. This applies to *implementation*
-  only — a review is never run below Opus.
+- **Below Opus only where a mechanical gate will catch the failure.** That is
+  the test, and unlike confidence it is decidable: lint, type-check, the test
+  suite and the schema either read every line this piece of work touches, or
+  they don't. A locale sweep, a fixture regeneration, rename plumbing — the gate
+  covers all of it, so `sonnet` is safe there. Where the failure would be silent
+  — a review that misses a defect, a decomposition that splits the work wrong, a
+  judgment about what lands — nothing downstream catches it and there is no
+  floor beneath Opus. This applies to *implementation* only: a review is never
+  run below Opus, whatever the gates cover.
+
+**Effort is a session setting, not a per-launch one.** An agent launch takes a
+model and no effort, so `model` is the only dial this command turns per agent.
+The session's own level governs the context that has to hold the piece of work
+for hours, and lower effort buys its saving partly by consolidating tool calls —
+a good trade inside a short agent, a poor one in the orchestrator, which is the
+context least able to afford a thinner judgment.
 
 ## Guardrails
 

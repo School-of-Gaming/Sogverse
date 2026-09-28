@@ -9,7 +9,7 @@ import {
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
- * `gamer_consent_acceptances` (00250) — who may READ a guardian declaration.
+ * `gamer_consent_acceptances` — who may READ a guardian declaration.
  *
  * The row says that a named adult declared a named child to be theirs, so it is
  * two people's personal data in one record and the read side is the whole of
@@ -28,7 +28,7 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
  * The child's own absence is deliberate and is asserted rather than assumed —
  * see the case for it.
  */
-describe("gamer_consent_acceptances read scoping (00250)", () => {
+describe("gamer_consent_acceptances read scoping", () => {
   let admin: SupabaseClient<Database>;
   let parentA: SupabaseClient<Database>;
   let parentB: SupabaseClient<Database>;
@@ -136,7 +136,7 @@ describe("gamer_consent_acceptances read scoping (00250)", () => {
     // policies, one for admins and one for a linked parent, and neither matches
     // a gamer. A declaration is a statement an ADULT makes about their own
     // standing, so the child is its subject and not a party to it — unlike the
-    // photo consents (00244), which the child may read because the answer is
+    // photo consents, which the child may read because the answer is
     // about what happens to them. A policy for gamers arriving here later is a
     // decision somebody has to make on purpose, and this case is what makes
     // them notice they are making it.

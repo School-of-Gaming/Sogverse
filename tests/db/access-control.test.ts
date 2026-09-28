@@ -64,8 +64,8 @@ describe("Access Control", () => {
     // the table — exactly how products/games writes regressed in the past.
     // profiles and gamer_profiles are intentionally NOT in this allowlist: both
     // use column-level UPDATE grants on the safe self-editable fields rather
-    // than table-level UPDATE. gamer_profiles moved off its table-wide grant in
-    // 00235, when it gained `sign_in` — a column that decides whether a child
+    // than table-level UPDATE. gamer_profiles is off a table-wide grant
+    // because of `sign_in` — a column that decides whether a child
     // can sign in without their parent, and so may not be reachable by the same
     // grant that lets them correct their own date of birth. Column privileges
     // live in information_schema.column_privileges — out of scope for
@@ -78,18 +78,18 @@ describe("Access Control", () => {
       ["parent_gamer", new Set(["DELETE"])],
       ["whatsapp_contacts", new Set(["INSERT", "UPDATE"])],
       // INSERT only: the outbound-send route inserts and never updates, and the
-      // dead UPDATE grant (no policy behind it) was revoked in 00123. Delivery
+      // an UPDATE grant would have no policy behind it. Delivery
       // status is stamped by the inbound webhook on the service-role client.
       ["whatsapp_messages", new Set(["INSERT"])],
-      // Admin-only reference data. The write policy was always there; the grant
-      // that made it reachable arrived in 00123 when the locations routes moved
-      // off the service-role client. No DELETE — there is no delete route.
+      // Admin-only reference data. The write policy needs a grant behind it
+      // because the locations routes write from the admin's own session
+      // client, not the service-role one. No DELETE — there is no delete route.
       ["locations", new Set(["INSERT", "UPDATE"])],
-      // Users link their own Minecraft account (00123). RLS derives the target
+      // Users link their own Minecraft account. RLS derives the target
       // row from auth.uid(), so actor and target are the same check. No DELETE:
       // unlinking clears the columns rather than removing the row.
       ["minecraft_accounts", new Set(["INSERT", "UPDATE"])],
-      // The same shape one platform over (00146). RLS derives the target row
+      // The same shape one platform over. RLS derives the target row
       // from auth.uid(), so actor and target are the same check, and there is
       // no DELETE for the same reason: unlinking clears the columns.
       ["roblox_accounts", new Set(["INSERT", "UPDATE"])],
@@ -107,11 +107,11 @@ describe("Access Control", () => {
       // create_product is SECURITY INVOKER, so the row is written by the
       // admin's own client and the grant has to be here; the admin-only RLS
       // policy is what actually authorizes it. (update_product writes the same
-      // row but has been SECURITY DEFINER since 00171 — the grant stands on
-      // create_product alone now.) DELETE because clearing the link removes the
+      // row but is SECURITY DEFINER — the grant stands on
+      // create_product alone.) DELETE because clearing the link removes the
       // row rather than storing a NULL.
       ["product_staff_details", new Set(["INSERT", "UPDATE", "DELETE"])],
-      // The picture catalogue (00196). Admin-only end to end: one FOR ALL
+      // The picture catalogue. Admin-only end to end: one FOR ALL
       // policy on is_admin(), no anon grant and no anon policy, because nothing
       // family-facing reads it — a product's picture is served from the derived
       // products.image_path. The admin dialog uploads, renames, repoints and
@@ -123,13 +123,13 @@ describe("Access Control", () => {
       ["site_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["site_staff_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_translations", new Set(["INSERT", "UPDATE", "DELETE"])],
-      // Voice zones (00103, 00108). Moderators create/edit/delete custom zones
+      // Voice zones. Moderators create/edit/delete custom zones
       // and write/clear private-zone occupancy directly from the browser under
       // RLS (is_voice_group_moderator). Occupancy is insert/delete only — no
       // UPDATE grant. RLS authorizes both actor and target.
       ["voice_zones", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["voice_private_zone_occupants", new Set(["INSERT", "DELETE"])],
-      // Session feedback (00254). The child writes their own row — an upsert on
+      // Session feedback. The child writes their own row — an upsert on
       // (group, participant, session window) — straight from the browser, so
       // there is no function and no route to hold the grant instead. INSERT and
       // UPDATE and nothing else: an emptied form is an update with an empty
@@ -182,8 +182,8 @@ describe("Access Control", () => {
     // Write grants for anon are never acceptable: RLS default-deny is the
     // only thing between a standing grant and an unauthenticated write path,
     // and a single future policy written without a TO clause (which defaults
-    // to PUBLIC, including anon) would arm it. 00097 revoked the legacy
-    // auto-expose leftovers; this test keeps the surface at zero.
+    // to PUBLIC, including anon) would arm it. This test keeps the surface
+    // at zero.
     const { data, error } = await admin.rpc("_list_table_grants", {
       p_grantee: "anon",
     });

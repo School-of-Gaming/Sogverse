@@ -440,8 +440,8 @@ downloads the object ON THE VIEWER'S OWN session — so membership, the family t
 (a participant can read a channel only around its own session window; staff have none,
 because after-the-fact review is the point of keeping the rows) and the hidden state are
 all enforced by one predicate, re-answered on every fetch, on a path nobody has to
-remember to call. **No signed URLs exist on this surface** *(owner decision, 2026-09-01,
-recorded in migration 00233)*: a signed URL is a bearer token any viewer could copy out of
+remember to call. **No signed URLs exist on this surface** *(owner decision, 2026-09-01)*:
+a signed URL is a bearer token any viewer could copy out of
 devtools and share for its whole lifetime, which is why the bytes are read through the
 authenticated route instead. The route's path is a pure function of the message id, with
 immutable bytes behind it, so a re-render, a remount or a reload costs nothing — but the
@@ -476,7 +476,6 @@ box, generates zero traffic, and a moderator's remove control is its repair.
 **Rule: reviewing a past session's chat is a psql session, not a screen.** Messages and
 image bytes are kept indefinitely and nothing deletes them, but the app reads only the
 latest 200 messages of the channel a room is currently in and never shows a past session's
-log at all — so an incident reported that evening is answered through
-`docs/runbooks/remote-supabase-psql.md`. That path is also why the row records who removed
-a message: nothing on this surface draws it, and "who took this down" still has to be
-answerable.
+log at all — so an incident reported that evening is answered over psql against prod.
+That path is also why the row records who removed a message: nothing on this surface
+draws it, and "who took this down" still has to be answerable.

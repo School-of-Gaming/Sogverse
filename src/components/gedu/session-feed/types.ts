@@ -16,6 +16,7 @@
  */
 
 import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
+import type { SessionStaffing } from "@/lib/session-staffing";
 
 /**
  * One person on the group's roster, as the workspace's session surfaces need
@@ -43,11 +44,10 @@ export interface SessionFeedGamer {
    * The instant from which this member counts as being in this group — the
    * floor the register's expectations are measured from.
    *
-   * It is `participations.group_joined_at` (00203) and nothing else. Every seat
-   * that holds a group carries one: the trigger stamps every write path, and
-   * the seats placed before the column existed were backfilled from their own
-   * product signup in the migration that introduced this rule — a *data* fix,
-   * argued on its own merits there, rather than a fallback smuggled into every
+   * It is `participations.group_joined_at` and nothing else. Every seat
+   * that holds a group carries one: a trigger stamps every write path, and any
+   * seat that predates the column was backfilled from its own product signup
+   * as a *data* fix, rather than by a fallback smuggled into every
    * reader.
    *
    * Non-nullable on purpose, which is what keeps that guarantee from
@@ -74,6 +74,23 @@ interface SessionFeedEntryBase {
   startsAt: Date;
   /** Absolute instant the session ends; rendered in the viewer's zone. */
   endsAt: Date;
+  /**
+   * Who is expected to run this one, what is outstanding about it, and what the
+   * viewer may do about it.
+   *
+   * **On the base, so every kind carries it**, including a `no_record` gap: a
+   * request is filed against a (group, date) and a date the schedule projects
+   * with nothing stored on it is as substitutable as any other. An entry whose
+   * group has no assignments and no requests carries an empty staffing rather
+   * than none, so no renderer has to decide what a missing one would mean.
+   *
+   * It is derived from the group's assignments and its substitution requests, not
+   * stored anywhere: the feed's builder attaches it per date from the two lists
+   * the document carries. A surface with no signed-in gedu — the admin shell,
+   * the preview scenes — gets honest `false`/`null` viewer fields rather than a
+   * guess.
+   */
+  staffing: SessionStaffing;
 }
 
 /**

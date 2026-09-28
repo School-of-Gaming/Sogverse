@@ -2,6 +2,10 @@ import { z } from "zod";
 import { Constants } from "@/types";
 import { NORMALIZE_IMAGE_ERROR_CODES } from "@/lib/images/normalize-image";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
+import {
+  substitutionRequestDocument,
+  sessionStaffGedu,
+} from "@/services/session-substitution/session-substitution.contracts";
 
 /**
  * Wire contracts for the gedu session-feed RPCs.
@@ -45,7 +49,7 @@ const productTranslationSummary = z.object({
  * One recurring slot in the product's schedule, as both session-feed reads emit
  * it and as the client's calendar walk consumes it.
  *
- * Exported because the admin product read (00200) returns the same three fields
+ * Exported because the admin product read returns the same three fields
  * for the same reason — its feed is built by the same merge, over the same
  * shape. One schema rather than two so a change to what a slot carries cannot
  * land on one surface and not the other.
@@ -59,17 +63,13 @@ export const scheduleSlotSummary = z.object({
 /**
  * One participant on the group's roster, as the workspace needs them.
  *
- * `parent_email` was declared **non-null** here as a deliberate tightening: a
- * gamer account is created by a parent who signed up with an email, so for a
- * child the link always exists, and a parse that fails loudly beat a roster row
- * silently rendering a blank address into a mail client.
- *
- * 00173 ended that invariant rather than broke it. A seat may now be held by an
- * adult, who has no linked parent at all, so the RPC emits null here for them
- * and their own address in `participant_email` instead. Exactly one of the two
- * fields is populated on any row, and both consumers of this one — the roster
- * cell and the copy-all-addresses affordance — already treat a missing address
- * as "no address", so the relaxation costs no caller a `?? ""`.
+ * `parent_email` is **nullable**, and exactly one of it and `participant_email`
+ * is populated on any row. For a child the link always exists — a gamer account
+ * is created by a parent who signed up with an email — but a seat may be held
+ * by an adult, who has no linked parent at all, so the RPC emits null here for
+ * them and their own address in `participant_email` instead. Both consumers of
+ * this one — the roster cell and the copy-all-addresses affordance — treat a
+ * missing address as "no address", so neither needs a `?? ""`.
  */
 export const geduFeedRosterEntry = z.object({
   participant_id: z.string(),
@@ -92,7 +92,7 @@ export const geduFeedRosterEntry = z.object({
   /** Present only once a username has been resolved against Mojang. */
   minecraft_uuid: z.string().nullable(),
   /**
-   * The Roblox pair (00195), on the same terms as the Minecraft one above and
+   * The Roblox pair, on the same terms as the Minecraft one above and
    * independent of it — a child may have given one handle, both, or neither,
    * and which one the roster draws is decided by the product's topic (which
    * this document does not carry; the page takes it from the assigned-product
@@ -115,7 +115,7 @@ export const geduFeedRosterEntry = z.object({
    */
   participant_email: z.string().nullable(),
   /**
-   * The staff-only flair (00203), emitted for every roster row — note or no
+   * The staff-only flair, emitted for every roster row — note or no
    * note, stamp or no stamp — and in deliberate parity with the assigned-product
    * RPC's roster, because this is the copy the page renders.
    *
@@ -145,7 +145,7 @@ export const geduFeedRosterEntry = z.object({
   note: z.string().nullable(),
   note_updated_by_first_name: z.string().nullable(),
   /**
-   * The things this member made during the group's run (00227), in the order
+   * The things this member made during the group's run, in the order
    * staff arranged them — and the one field on this roster that is **not
    * staff-only**: the member's own family reads the same list on their product
    * page. It rides here because the roster is where the per-gamer dialog is
@@ -189,11 +189,6 @@ export type SessionImageSummary = z.infer<typeof sessionImageSummary>;
  * `attendance` is the sparse per-gamer map exactly as stored — a roster id
  * missing from it is unmarked, which is the state a present-list cannot
  * express.
- *
- * Two reserved booleans stood here until 00151, parsed so the shape mirrored
- * the table. They belonged to a cancellation/substitution flow that was cut
- * from the gedu UI and is not being built, so the columns were dropped rather
- * than left advertising a feature that does not exist.
  */
 export const geduFeedSession = z.object({
   id: z.string(),
@@ -282,8 +277,8 @@ export const geduGroupFeed = z.object({
     /** Gedu/admin-only lesson material. Never rendered to a family. */
     material_url: z.string().nullable(),
     /**
-     * Does this product contractually require a creation from every member
-     * (00227)? Staff-facing only — no family document carries it, and a family
+     * Does this product contractually require a creation from every
+     * member? Staff-facing only — no family document carries it, and a family
      * sees nothing different on a flagged product.
      *
      * It is on this shell because the fourth completeness condition is derived
@@ -304,6 +299,26 @@ export const geduGroupFeed = z.object({
   site: geduFeedSite.nullable(),
   roster: z.array(geduFeedRosterEntry),
   sessions: z.array(geduFeedSession),
+  /**
+   * The group's staff, with the role each holds — the first of the two inputs
+   * the staffing derivation takes. It is on the document rather than derived
+   * from anything else here because nothing else on the workspace knows who
+   * teaches the group: the roster is the children.
+   */
+  gedus: z.array(sessionStaffGedu),
+  /**
+   * Every **non-withdrawn** substitution request on the group, unbounded and in no
+   * particular date order — exactly as this document already returns every
+   * stored session row. A withdrawn request changes nothing about who is
+   * expected, so it is the one status that does not travel.
+   *
+   * The client merges these onto its entries by date; a projected date with no
+   * session row carries its requests like any other, which is why the list is
+   * the group's rather than one date's. The admin-only fields inside each
+   * element are keyed to the caller — this document is served to an admin too —
+   * and that rule lives with the element's own schema.
+   */
+  substitutions: z.array(substitutionRequestDocument),
 });
 
 export type GeduGroupFeed = z.infer<typeof geduGroupFeed>;
@@ -335,6 +350,12 @@ export type GeduFeedSite = z.infer<typeof geduFeedSite>;
  * product (no `end_date`) has no final session, so it may be flagged and never
  * owes — documented behaviour, not an error.
  *
+ * **A date the caller holds a non-withdrawn substitution request on is not their work
+ * and is not counted**, whichever kind of seat the row is: they have said they
+ * cannot be there, whoever ends up running it. That holds while the request is
+ * still open, once it is substituted, and for the second link of a sub-of-sub
+ * chain alike.
+ *
  * **This derivation exists twice and the two must agree** — here in SQL for the
  * badge, and in TypeScript in the gedu feed's entry-state module for the card.
  * A change to either half is a change to both, in the same commit, or the badge
@@ -344,6 +365,28 @@ export const geduAssignmentSummary = z.object({
   product_id: z.string(),
   group_id: z.string(),
   group_name: z.string(),
+  /**
+   * Which kind of seat this row is. An `assignment` row is one per
+   * standing assignment; a `substitution` row is
+   * one per **unexpired substitution date** — substituted, the holder still certified,
+   * the window not yet closed — so a sub gets a card from the moment the substitution
+   * is theirs. The group's workspace opens later, 48 hours before the substituted
+   * session, and a card that waited for it would hide the afternoon a sub had
+   * agreed to take.
+   *
+   * The rollup keys on (product, group) rather than on product because of it: a
+   * substitution's identity is (group, date), and one gedu may substitute on a sibling group
+   * of a product they already teach.
+   */
+  kind: z.enum(["assignment", "substitution"]),
+  /**
+   * The date a `substitution` row is for; null on an `assignment` row.
+   *
+   * It is also what scopes the count beside it: a substitution owes exactly the one
+   * date it substitutes for, which is the same four conditions applied to a set of one
+   * occurrence rather than a second computation.
+   */
+  substitution_date: z.string().nullable(),
   /** Active participations in THIS group, not across the product. */
   group_participant_count: z.number(),
   /** The site name on in-person products; `null` when there is no building. */

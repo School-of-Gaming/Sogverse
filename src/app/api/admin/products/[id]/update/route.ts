@@ -57,8 +57,8 @@ function gamerPhotoConsentsWarning(err: { message: string }): string {
  * No storage, no file, no path. A product's picture is a catalogue entry it
  * points at, so the whole image half of this route is one `image_id` write
  * after the RPC; a trigger on `products` derives the served `image_path` from
- * it, and since migration 00198 the RPC has no image parameter at all —
- * nothing but that trigger writes the column.
+ * it, and the RPC has no image parameter at all — nothing but that trigger
+ * writes the column.
  */
 export const POST = defineRoute({
   posture: "role-gated",
@@ -116,8 +116,7 @@ export const POST = defineRoute({
       p_waitlist_enabled: body.waitlist_enabled,
       p_material_url: body.material_url ?? undefined,
       p_location_id: body.location_id ?? undefined,
-      p_signup_threshold: body.signup_threshold ?? undefined,
-      p_start_date: body.start_date ?? undefined,
+      p_start_date: body.start_date,
       p_end_date: body.end_date ?? undefined,
       p_seat_count: body.seat_count ?? undefined,
       p_schedule_slots: body.schedule_slots,
@@ -133,6 +132,11 @@ export const POST = defineRoute({
       p_primary_gedu_fee_cents: body.primary_gedu_fee_cents ?? undefined,
       p_assistant_gedu_fee_cents: body.assistant_gedu_fee_cents ?? undefined,
       p_municipality_fee_cents: body.municipality_fee_cents ?? undefined,
+      // Unlinking a club from its buyer IS an omission here, exactly as
+      // clearing a tag is — the RPC assigns `invoice_customer_id` on every call
+      // and its parameter defaults to NULL. Safe only because the contract
+      // demands the field: a caller that forgot it never reaches this line.
+      p_invoice_customer_id: body.invoice_customer_id ?? undefined,
     };
 
     const { data: productId, error: rpcError } = await supabase.rpc(

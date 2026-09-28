@@ -63,7 +63,7 @@ const ACTIVITIES = {
   [P_CLUB]: {
     product_type: "consumer_club",
     is_remote: true,
-    start_date: null,
+    start_date: "2026-09-14",
     spoken_language_code: "fi",
   },
   [P_EVENT]: {
@@ -116,7 +116,7 @@ const SEATS = [
     date_of_birth: "2012-10-01",
     home_location_id: L_SITE,
   }),
-  // No start date, no group, no home location, an unverified username.
+  // No group, no home location, an unverified username.
   seat(R2, { product_id: P_CLUB, participant_id: GAMER_B, status: "waitlisted" }),
   // A cleared username: no account, so no row.
   seat(R3, { product_id: P_CAMP, participant_id: GAMER_C, status: "completed" }),
@@ -252,14 +252,14 @@ describe("GET /api/partner/v1/roblox-research", () => {
         roblox_user_id: null,
         country_code: null,
         city: null,
-        age: null,
+        age: { min: 14, max: 14 },
         activity: {
           product_id: P_CLUB,
           // No English: the language the product is delivered in.
           name: "Roblox-kerho",
           type: "consumer_club",
           delivery: "online",
-          start_date: null,
+          start_date: "2026-09-14",
         },
         published_game_url: null,
       },
@@ -357,7 +357,7 @@ describe("GET /api/partner/v1/roblox-research", () => {
       expect(participationsUrls()[0].searchParams.get("product_id")).toBe(`eq.${P_EVENT}`);
     });
 
-    it("narrows on the product's start date, inclusive, leaving out undated products", async () => {
+    it("narrows on the product's start date, inclusive at both ends", async () => {
       const { body } = await get("?from=2026-10-19&to=2026-10-31");
       expect(usernames(body)).toEqual(["builder_leo"]);
       const url = participationsUrls()[0];
@@ -370,7 +370,10 @@ describe("GET /api/partner/v1/roblox-research", () => {
 
     it("takes from and to on their own", async () => {
       expect(usernames((await get("?from=2026-11-02")).body)).toEqual(["mika_builds"]);
-      expect(usernames((await get("?to=2026-11-01")).body)).toEqual(["builder_leo"]);
+      expect(usernames((await get("?to=2026-11-01")).body)).toEqual([
+        "builder_leo",
+        "obby_ana",
+      ]);
     });
   });
 

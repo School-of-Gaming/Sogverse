@@ -72,7 +72,7 @@ export function pinnedFill(color: string): string {
  * breakpoint the same content sits inside the card. Any fill chosen *in
  * relation to* what is behind it therefore has two correct values, and the
  * three surfaces that are in that position — a photo's reserved well, the
- * quoted message in the staff feedback mail, and the outlined button — were all
+ * quoted message in the staff help-request mail, and the outlined button — were all
  * written when there was only the card to sit on.
  *
  * There are exactly two intents, and naming them is what keeps this one

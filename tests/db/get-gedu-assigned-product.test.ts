@@ -15,11 +15,11 @@ import {
 } from "./product-helpers";
 
 /**
- * Auth + return-shape coverage for `get_gedu_assigned_product` (migrations
- * 00064 / 00065 / 00066). The RPC is SECURITY DEFINER and hands back gamer
- * first names, dates of birth, gender, both game identities (Minecraft and,
- * since 00195, Roblox), AND the primary parent's email — so this file is the regression gate for "who can
- * call it" and, just as important, "whose roster they can see."
+ * Auth + return-shape coverage for `get_gedu_assigned_product`. The RPC is
+ * SECURITY DEFINER and hands back gamer first names, dates of birth, gender,
+ * both game identities (Minecraft and Roblox), AND the primary parent's email
+ * — so this file is the regression gate for "who can call it" and, just as
+ * important, "whose roster they can see."
  *
  * The two guards being pinned (both raise 42501):
  *   1. role gate     — only `gedu` passes; admin/customer/gamer are refused
@@ -51,7 +51,7 @@ const NONEXISTENT_PRODUCT_ID = "00000000-0000-0000-0000-0000000007df";
 const GAMER_MINECRAFT_USERNAME = "TestGamerMC";
 const GAMER_MINECRAFT_UUID = "11111111-2222-3333-4444-555555555555";
 
-// The Roblox half of the same identity (00195). Independent of the Minecraft
+// The Roblox half of the same identity. Independent of the Minecraft
 // pair above — a child may hold one, both or neither — so the fixture gives
 // this gamer BOTH, which is what lets one roster row prove the two travel
 // side by side rather than one replacing the other.
@@ -275,7 +275,7 @@ describe("get_gedu_assigned_product", () => {
       expect(result.product.id).toBe(PRODUCT_GEDU_ON);
       expect(result.my_group_id).toBe(myGroupId);
       expect(result.groups).toHaveLength(2);
-      // The topic rides on the shell as of 00195, and it is the whole of how a
+      // The topic rides on the shell, and it is the whole of how a
       // gedu surface decides which game identity (if any) to show. The fixture
       // product is a minecraft_java one, which is the "show Minecraft" side of
       // that decision.
@@ -318,7 +318,7 @@ describe("get_gedu_assigned_product", () => {
       expect(entry?.gender).toBe("boy");
       expect(entry?.minecraft_username).toBe(GAMER_MINECRAFT_USERNAME);
       expect(entry?.minecraft_uuid).toBe(GAMER_MINECRAFT_UUID);
-      // Both platforms on one row (00195). The account id arrives as a JSON
+      // Both platforms on one row. The account id arrives as a JSON
       // NUMBER, not a string — Roblox's key is a bigint where Mojang's is a
       // dashed uuid in text — and `toBe` on a number is what pins that: a
       // stringified id would fail here rather than reaching a component.
@@ -377,7 +377,7 @@ describe("get_gedu_assigned_product", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // The staff-only flair (00203) — group_joined_at, note, note_updated_by_first
+  // The staff-only flair — group_joined_at, note, note_updated_by_first
   // _name. Widening a document's contract without running real output through it
   // is exactly the gap the contracts convention exists to close, so these parse
   // through `geduAssignedProduct` like everything above.

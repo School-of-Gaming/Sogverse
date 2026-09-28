@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextResponse } from "next/server";
 
 // pin-session reads the secret lazily; set before importing the routes.
 process.env.PIN_COOKIE_SECRET = "route-test-pin-secret";
@@ -181,6 +182,29 @@ describe("POST /api/auth/pin", () => {
     const res = await setPost(request("/api/auth/pin", { pin: "5678" }));
     expect(res.status).toBe(200);
     expect(mockRpc).toHaveBeenCalledWith("set_my_pin", { p_pin: "5678" });
+  });
+
+  it("refuses an account that still owes its registration, and mints nothing", async () => {
+    // The gate's registration check, reproduced against the options the route
+    // really passes: it answers REGISTRATION_REQUIRED unless the route opted in
+    // with allowRegistrationOwed. A PIN minted here would earn an unlock cookie
+    // that opens every customer route to an account that never took the terms.
+    mockRequireRole.mockImplementation(
+      async (_roles: unknown, options?: { allowRegistrationOwed?: boolean }) =>
+        options?.allowRegistrationOwed
+          ? { user: { id: "u1" }, profile: { id: "u1", role: "customer" } }
+          : NextResponse.json(
+              { error: "Registration must be completed first", code: "REGISTRATION_REQUIRED" },
+              { status: 403 },
+            ),
+    );
+    setRpc({ pin_is_set: { data: false, error: null }, set_my_pin: { data: null, error: null } });
+
+    const res = await setPost(request("/api/auth/pin", { pin: "1234" }));
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ code: "REGISTRATION_REQUIRED" });
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockCookieSet).not.toHaveBeenCalled();
   });
 });
 

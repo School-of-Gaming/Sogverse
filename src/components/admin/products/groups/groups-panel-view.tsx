@@ -43,6 +43,7 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupPending } from "@/services/groups";
 import type {
   BillingMode,
+  GeduAssignmentRole,
   ProductGroupsSnapshot,
   ProductTopic,
   ProductType,
@@ -69,6 +70,20 @@ export interface GroupsPanelActions {
   onDeleteGroup: (groupId: string) => void;
   onCreateGroup: (name: string) => void;
   onRemoveGedu: (groupId: string, geduId: string) => void;
+  /**
+   * Change one Gedu's pay class on one group — the pill's role select.
+   *
+   * Optional like the seat offer and the club switch below it: a shell with no
+   * write behind it draws the role as a label rather than a control that does
+   * nothing. It is an *add* on the service side, because the assignment writer
+   * upserts on (group, gedu) and updates the role, which is why this is one
+   * intent rather than a remove-and-re-add pair.
+   */
+  onSetGeduRole?: (
+    groupId: string,
+    geduId: string,
+    role: GeduAssignmentRole,
+  ) => void;
   /** Ask the shell to open its gedu picker for this group. */
   onRequestAddGedu: (groupId: string) => void;
   /** Ask the shell to open its participant picker. */
@@ -623,6 +638,7 @@ export function GroupsPanelView({
                 onDelete={actions.onDeleteGroup}
                 onAddGedu={actions.onRequestAddGedu}
                 onRemoveGedu={actions.onRemoveGedu}
+                onSetGeduRole={actions.onSetGeduRole}
               />
             ))
           ) : (

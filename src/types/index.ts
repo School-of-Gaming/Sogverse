@@ -7,7 +7,7 @@ export { Constants } from "./database.types";
 
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { Database, Json } from "./database.types";
-// The one definition of a creation entry (00227), imported rather than restated
+// The one definition of a creation entry, imported rather than restated
 // because the hand-written document interfaces below have to carry the same
 // shape the zod contracts do. Re-exported further down with the rest of the
 // member-flair types.
@@ -74,7 +74,7 @@ export type GeduContractAcceptance =
   Database["public"]["Tables"]["gedu_contract_acceptances"]["Row"];
 
 // consent_documents / consent_document_versions / product_required_consents /
-// consent_acceptances (00210) — the enrolment-consent feature.
+// consent_acceptances — the enrolment-consent feature.
 //
 // Row aliases only, for the same reason the gedu contract has none: not one of
 // these four tables carries a write grant for any Data API role. Documents and
@@ -95,9 +95,9 @@ export type ProductRequiredConsent =
 export type ConsentAcceptance =
   Database["public"]["Tables"]["consent_acceptances"]["Row"];
 
-// account_consent_acceptances (00249) — the ACCOUNT-level counterpart of the
+// account_consent_acceptances — the ACCOUNT-level counterpart of the
 // four aliases above, and the same system rather than a new one: the documents
-// and their versions are the 00210 registry, and a row is the same kind of
+// and their versions are that same registry, and a row is the same kind of
 // non-revocable statement about the past. What differs is the subject. A
 // ConsentAcceptance conditions one seat and carries a participant and a
 // product; an AccountConsentAcceptance conditions nothing and belongs to the
@@ -112,7 +112,7 @@ export type ConsentAcceptance =
 export type AccountConsentAcceptance =
   Database["public"]["Tables"]["account_consent_acceptances"]["Row"];
 
-// gamer_consent_acceptances (00250) — the third subject in the same system,
+// gamer_consent_acceptances — the third subject in the same system,
 // and the one the guardian declaration belongs to: what an adult stated about
 // ONE CHILD at the moment that child's account was created. It is neither of
 // the two above. A ConsentAcceptance conditions a seat; an
@@ -127,12 +127,12 @@ export type GamerConsentAcceptance =
   Database["public"]["Tables"]["gamer_consent_acceptances"]["Row"];
 
 // marketing_consents / marketing_consent_events / product_marketing_consents
-// (00220) — the REVOCABLE marketing-consent feature, and deliberately not the
+// — the REVOCABLE marketing-consent feature, and deliberately not the
 // same system as the four aliases above. A ConsentAcceptance is a
 // non-revocable enrolment condition keyed per seat; a MarketingConsent is
 // account-level, carries a current state, and can be switched off from
 // settings at any time. Nothing should ever widen one set of types into the
-// other — see 00210's header and 00220's.
+// other.
 //
 // Row aliases only, on the same reasoning as the enrolment-consent block: none
 // of these three tables carries a write grant for any Data API role. A parent's
@@ -150,7 +150,7 @@ export type ProductMarketingConsent =
   Database["public"]["Tables"]["product_marketing_consents"]["Row"];
 
 // gamer_photo_consents / gamer_photo_consent_events /
-// product_gamer_photo_consents (00244) — the twin of the three aliases above
+// product_gamer_photo_consents — the twin of the three aliases above
 // with the SUBJECT changed from an adult's mailbox to a child's image. A
 // MarketingConsent is held by the adult it is about; a GamerPhotoConsent is
 // held on the GAMER and answered by their parent, which is why the state row
@@ -184,12 +184,12 @@ export type RobloxAccountUpdate = Database["public"]["Tables"]["roblox_accounts"
 export type ParentGamer = Database["public"]["Tables"]["parent_gamer"]["Row"];
 export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["Insert"];
 
-// feedback_submissions
-export type FeedbackSubmission = Database["public"]["Tables"]["feedback_submissions"]["Row"];
+// help_requests
+export type HelpRequest = Database["public"]["Tables"]["help_requests"]["Row"];
 
 // verification_email_requests — the rate-limit ledger behind the
 // verification-email send, and the sibling of the table above in every respect
-// but one: a feedback row is the feedback, while these rows exist only to be
+// but one: a help-request row is the request, while these rows exist only to be
 // counted by `request_my_verification_email` (which prunes its own expired ones
 // on the way past). No application surface reads them; the alias is here
 // because the DB test asserts against the row shape.
@@ -270,6 +270,22 @@ export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
+// invoice_customers — the Fennoa customers municipality clubs are
+// invoiced to. A buyer is a CUSTOMER and not a municipality: one city can be
+// two customers, and an association can buy clubs sited in a municipality it is
+// not, so the link is per club (`products.invoice_customer_id`) and is never
+// derived from a location. The table deliberately holds its own postal address
+// rather than pointing at `locations`: location data is geography and has to
+// work for every country, while this is Finnish contract data.
+//
+// Row alias only. The table carries no write grant for any Data API role — the
+// only writers are `create_invoice_customer` and `update_invoice_customer` — so
+// an Insert type here would name a statement nothing in the app is allowed to
+// make. The two write SHAPES live in the feature's own zod contracts, which is
+// also where the trimming and country-code rules are stated.
+export type InvoiceCustomer =
+  Database["public"]["Tables"]["invoice_customers"]["Row"];
+
 // product_staff_details — the staff-only half of a product, split off `products`
 // because that table is readable by anon and by every parent, and PostgREST lets
 // a caller pick the columns it wants. Sparse: a product with nothing staff-only
@@ -288,7 +304,7 @@ export type ScheduleSlotInsert = Database["public"]["Tables"]["schedule_slots"][
 // resolveTranslation() in src/lib/i18n/resolve-translation.ts. (Topic names
 // are not DB-backed — see src/lib/products/topics.ts.)
 //
-// Two description columns (migration 00091): `short_description` (the teaser
+// Two description columns: `short_description` (the teaser
 // shown on cards, the detail hero, and admin lists) and `long_description`
 // (the optional marketing blurb rendered only on the shop detail page).
 //
@@ -346,7 +362,7 @@ export type BrowseRowLocation = {
 export type { ProductBrowseRow } from "@/services/products/products.service";
 
 // ---------------------------------------------------------------------------
-// products — participations, payments, family subs (00039)
+// products — participations, payments, family subs
 // See docs/architecture/products.md §§ 5.5, 5.7, 5.7a, 5.1a, 6.1.
 // ---------------------------------------------------------------------------
 
@@ -400,7 +416,7 @@ export type ProductSubscriptionPriceInsert = Database["public"]["Tables"]["produ
 export type ProductSeatCount = Database["public"]["Tables"]["product_seat_counts"]["Row"];
 
 // ---------------------------------------------------------------------------
-// products — groups & gedu assignments (00049)
+// products — groups & gedu assignments
 // See docs/architecture/products.md §4.1, §5.4, §6.1a.
 // ---------------------------------------------------------------------------
 
@@ -412,6 +428,41 @@ export type ProductGroupUpdate = Database["public"]["Tables"]["product_groups"][
 // gedu_group_assignments
 export type GeduGroupAssignment = Database["public"]["Tables"]["gedu_group_assignments"]["Row"];
 export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group_assignments"]["Insert"];
+
+// Which capacity an educator holds a group in. A group holds any number
+// of each, and the only thing the role decides is pay — the product carries a
+// per-session fee for each.
+export type GeduAssignmentRole = Database["public"]["Enums"]["gedu_assignment_role"];
+
+// ---------------------------------------------------------------------------
+// session substitutions — "I can't make this session", and who stood in
+// ---------------------------------------------------------------------------
+
+// session_substitution_requests — one row per (group, session date, ABSENT GEDU). The
+// seat is the person rather than the role, because two primaries of one group
+// may both be out the same day. Neither table grants anything to
+// `authenticated`: every read and write goes through the SECURITY DEFINER RPCs
+// in src/services/session-substitution/, so these aliases serve the service-role side
+// (db tests, admin tooling) rather than browser queries — the same posture as
+// GroupSession above.
+export type SessionSubstitutionRequest = Database["public"]["Tables"]["session_substitution_requests"]["Row"];
+export type SessionSubstitutionRequestInsert = Database["public"]["Tables"]["session_substitution_requests"]["Insert"];
+export type SessionSubstitutionRequestUpdate = Database["public"]["Tables"]["session_substitution_requests"]["Update"];
+
+// session_substitution_offers — "Offer to substitute", one row per (request, gedu).
+// Withdrawing an offer DELETES the row, so there is no status column and no
+// Update alias worth having.
+export type SessionSubstitutionOffer = Database["public"]["Tables"]["session_substitution_offers"]["Row"];
+export type SessionSubstitutionOfferInsert = Database["public"]["Tables"]["session_substitution_offers"]["Insert"];
+
+// Why the gedu is away — admin-visible only, and nullable on the row because
+// the gedu path requires it (RPC-enforced) while an admin recording an
+// off-platform substitution may not know it.
+export type SubstitutionReason = Database["public"]["Enums"]["substitution_reason"];
+// `open` -> `substituted` (an admin approved someone) or `withdrawn` (the absence is
+// off). "Unfilled" is deliberately NOT a value: it is a derived state of an open
+// request whose date has passed, and the date already says it.
+export type SubstitutionRequestStatus = Database["public"]["Enums"]["substitution_request_status"];
 
 // ---------------------------------------------------------------------------
 // products — session records (the gedu session feed)
@@ -455,7 +506,7 @@ export type {
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 // ---------------------------------------------------------------------------
-// member flair (00203) — the two staff-only marks a gedu reads off a roster
+// member flair — the two staff-only marks a gedu reads off a roster
 // before they read a single name: how new a member is to the group, and what
 // the last person to run it wrote down about them.
 // ---------------------------------------------------------------------------
@@ -484,7 +535,7 @@ export type {
 } from "@/services/member-flair/member-flair.contracts";
 
 // ---------------------------------------------------------------------------
-// gamer creations (00227) — the things a member made during a group's run, as a
+// gamer creations — the things a member made during a group's run, as a
 // list of {title, url}. The private note's structural twin, with one difference
 // that decides nothing here and everything downstream: the gamer's own family
 // reads this list, where the note is staff-only forever.
@@ -520,7 +571,7 @@ export type {
 } from "@/services/member-flair/member-flair.contracts";
 
 // ---------------------------------------------------------------------------
-// voice zones (00103) — the persisted half of the discrete-zone voice model.
+// voice zones — the persisted half of the discrete-zone voice model.
 // See src/components/voice/CLAUDE.md for the discrete-zone voice model.
 // Lobby + the 4 Yty zones stay virtual/hardcoded on the client; only these
 // mod-created rows persist, tied to a product_group.
@@ -543,7 +594,7 @@ export type VoiceZoneUpdate = Database["public"]["Tables"]["voice_zones"]["Updat
 export type VoicePrivateZoneOccupant = Database["public"]["Tables"]["voice_private_zone_occupants"]["Row"];
 export type VoicePrivateZoneOccupantInsert = Database["public"]["Tables"]["voice_private_zone_occupants"]["Insert"];
 
-// chat (00228/00229) — persisted messaging in the scheduled voice rooms. Rows
+// chat — persisted messaging in the scheduled voice rooms. Rows
 // only; the transport-free UI shapes (`ChatMessage`, `ChatAccount`) live in
 // src/components/chat/ and are deliberately not these.
 export type ChatChannelType = Database["public"]["Enums"]["chat_channel_type"];
@@ -644,7 +695,7 @@ export interface GeduAssignedProductRosterEntry {
    */
   note_updated_by_first_name: string | null;
   /**
-   * What this member made during the group's run (00227), in the order staff
+   * What this member made during the group's run, in the order staff
    * arranged them. Always an array — `[]` is what "no creations" looks like, and
    * the absence of a row is what produces it.
    *
@@ -658,6 +709,12 @@ export interface GeduAssignedProductRosterEntry {
 export interface GeduAssignedProductGroupGedu {
   id: string;
   first_name: string;
+  /**
+   * The assignment role this educator holds on the group — primary or
+   * assistant. Every staff read that lists a group's gedus carries it, and the
+   * rail's peer-group chips are one of them.
+   */
+  role: GeduAssignmentRole;
 }
 
 export interface GeduAssignedProductGroup {
@@ -685,8 +742,8 @@ export interface GeduAssignedProductShell {
   end_date: string | null;
   is_remote: boolean;
   /**
-   * Does this product contractually require a creation from every member
-   * (00227)? Staff-facing only, and carried in parity with the gedu group
+   * Does this product contractually require a creation from every
+   * member? Staff-facing only, and carried in parity with the gedu group
    * feed's product shell — the page composes both documents.
    */
   requires_gamer_creations: boolean;
@@ -731,7 +788,7 @@ export const WHATSAPP_DIRECTION = {
 } as const;
 export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAPP_DIRECTION];
 
-// session_feedback (00254) — the row a gamer writes on the way out of an online
+// session_feedback — the row a gamer writes on the way out of an online
 // session: the answers to the leave screen's statements and the note, keyed by
 // (group, participant, session window). Named "SessionFeedbackRow" rather than
 // "SessionFeedback" so it cannot be confused with the screen's own
@@ -744,21 +801,39 @@ export type SessionFeedbackRowInsert =
 
 // get_my_assigned_products RPC — the generator marks every column of an RPC
 // RETURNS TABLE row as non-nullable from the column type alone, missing
-// products columns that are actually nullable (start_date, end_date). It also
+// products columns that are actually nullable (end_date). It also
 // degrades the jsonb arrays (product_translations,
 // schedule_slots) to `Json`, which forces every consumer to cast. Tighten
 // both: nullability matches the underlying products schema, and the
 // arrays get structured shapes that mirror the jsonb_build_object calls in
 // the RPC body. Keep this alias adjacent to its source in
-// supabase/migrations/00061_get_my_assigned_products.sql.
+// supabase/schema/functions/get_my_assigned_products.sql.
 type _MyAssignedProductGenerated =
   Database["public"]["Functions"]["get_my_assigned_products"]["Returns"][number];
 export type MyAssignedProductRow = Omit<
   _MyAssignedProductGenerated,
-  "start_date" | "end_date" | "product_translations" | "schedule_slots"
+  | "start_date"
+  | "end_date"
+  | "product_translations"
+  | "schedule_slots"
+  | "kind"
+  | "substitution_date"
 > & {
   start_date: string | null;
   end_date: string | null;
+  /**
+   * Which kind of seat this row is. An `assignment` row is one per
+   * `gedu_group_assignments` row; a `substitution`
+   * row is one per live substitution date. Narrowed from the generated `string`
+   * because the RPC emits a closed pair and every consumer branches on it.
+   */
+  kind: "assignment" | "substitution";
+  /**
+   * The date a `substitution` row is for, and null on an `assignment` row — which the
+   * generator cannot see, because a RETURNS TABLE column is typed from the
+   * column type alone.
+   */
+  substitution_date: string | null;
   product_translations: Array<{
     locale: string;
     name: string;
@@ -771,14 +846,15 @@ export type MyAssignedProductRow = Omit<
   }>;
 };
 
-// get_my_participation_subscription_states RPC (00093) — money-free read of the
+// get_my_participation_subscription_states RPC — money-free read of the
 // caller's past_due/canceling subs feeding the dashboard payment-problem and
 // access-until badges. The generator types `current_period_end` non-nullable
 // from the RETURNS TABLE column alone, but family_subscriptions.current_period_end
 // IS nullable and no CHECK forbids null on these statuses, so the guarantee is
 // false. Loosen it to `string | null` so call sites are forced to handle the
 // (rare, Stripe-always-provides-it-in-practice) null. Keep adjacent to its
-// source in supabase/migrations/00093_subscription_states_rpc.sql.
+// source in
+// supabase/schema/functions/get_my_participation_subscription_states.sql.
 type _SubscriptionStateGenerated =
   Database["public"]["Functions"]["get_my_participation_subscription_states"]["Returns"][number];
 export type ParticipationSubscriptionState = Omit<

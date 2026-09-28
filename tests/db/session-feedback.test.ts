@@ -6,8 +6,7 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
- * `session_feedback` (00254, its answers shape tightened by 00255) — the row a
- * child writes on the way out of an
+ * `session_feedback` — the row a child writes on the way out of an
  * online session, and the scope test the write-IDOR loop deliberately does not
  * cover.
  *
@@ -433,7 +432,7 @@ describe("session_feedback RLS + shape constraints", () => {
       expect(error).not.toBeNull();
     });
 
-    // What lax mode let through, and what 00255's strict jsonpath refuses: a
+    // What lax mode would let through, and what the strict jsonpath refuses: a
     // member has to BE a level, not merely contain one or be empty of them.
     it("refuses a level wrapped in an array", async () => {
       const { error } = await insertShape({ answers: { learned: [3] } });

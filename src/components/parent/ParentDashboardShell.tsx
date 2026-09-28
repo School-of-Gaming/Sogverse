@@ -7,7 +7,7 @@ import { INERT_HREF } from "@/lib/constants/routes";
 import { AddGamerDialog } from "@/components/family/AddGamerDialog";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { useFamilyEnrollments } from "@/components/family/use-family-enrollments";
-import { HelpFeedbackCard } from "@/components/help/help-feedback-card";
+import { HelpRequestCard } from "@/components/help/help-request-card";
 import type { FamilyMember } from "@/services/family";
 import {
   useLeaveWaitlist,
@@ -224,7 +224,7 @@ export function ParentDashboardShell({
         // passed down from the server component above: it needs no server data
         // at all, and the body only asks for a node so a preview scene can hand
         // it an inert one.
-        helpForm={<HelpFeedbackCard audience="adult" />}
+        helpForm={<HelpRequestCard audience="adult" />}
         onAddGamer={() => setAddGamerOpen(true)}
         // No `onOpenPortal`: the payment badge opens the portal session for the
         // failing participation itself, which is the behaviour this page wants.

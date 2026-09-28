@@ -164,6 +164,91 @@ describe("requireRole parent-PIN gate", () => {
 });
 
 /**
+ * An account created through Google owes its name, terms and consents until
+ * the finish page has them. The gate refuses it on every route but the ones
+ * that finish it — including the PIN routes a locked parent may reach, since a
+ * PIN minted by an owing account would open everything else.
+ */
+describe("requireRole registration gate", () => {
+  function mockOwingCustomer() {
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { sub: "u1", session_id: "s1" } },
+      error: null,
+    });
+    mockSingle.mockResolvedValue({
+      data: { id: "u1", role: "customer", registration_completed_at: null },
+      error: null,
+    });
+  }
+
+  it("refuses an owing customer with 403 REGISTRATION_REQUIRED by default", async () => {
+    mockOwingCustomer();
+    mockCookieGet.mockReturnValue({ value: await pinTokenFor("u1", "s1") });
+
+    const res = expectResponse(await requireRole("customer"));
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ code: "REGISTRATION_REQUIRED" });
+  });
+
+  it("refuses an owing customer on a route that only skips the PIN gate", async () => {
+    mockOwingCustomer();
+    mockCookieGet.mockReturnValue(undefined);
+
+    const res = expectResponse(
+      await requireRole("customer", { allowUnverified: true }),
+    );
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ code: "REGISTRATION_REQUIRED" });
+  });
+
+  it("admits an owing customer on a route that opted in", async () => {
+    mockOwingCustomer();
+    mockCookieGet.mockReturnValue(undefined);
+
+    const res = await requireRole("customer", {
+      allowUnverified: true,
+      allowRegistrationOwed: true,
+    });
+    expect(res).not.toBeInstanceOf(NextResponse);
+  });
+
+  it("admits a registered customer with no opt-in", async () => {
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { sub: "u1", session_id: "s1" } },
+      error: null,
+    });
+    mockSingle.mockResolvedValue({
+      data: {
+        id: "u1",
+        role: "customer",
+        registration_completed_at: "2026-01-01T00:00:00Z",
+      },
+      error: null,
+    });
+    mockCookieGet.mockReturnValue({ value: await pinTokenFor("u1", "s1") });
+
+    expect(await requireRole("customer")).not.toBeInstanceOf(NextResponse);
+  });
+
+  it.each(["gedu", "admin", "gamer"] as const)(
+    "never applies to a %s, whose null would mean nothing",
+    async (role) => {
+      mockGetClaims.mockResolvedValue({
+        data: { claims: { sub: "x1", session_id: "s1" } },
+        error: null,
+      });
+      mockSingle.mockResolvedValue({
+        data: { id: "x1", role, registration_completed_at: null },
+        error: null,
+      });
+      mockCookieGet.mockReturnValue(undefined);
+
+      expect(await requireRole(role)).not.toBeInstanceOf(NextResponse);
+    },
+  );
+});
+
+/**
  * The one place a session is classified, and the reason it is a function rather
  * than a claim read: `family` means "the switch route minted a marker for THIS
  * session", and nothing about the token can say that. A password-recovery

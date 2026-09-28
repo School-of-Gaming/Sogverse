@@ -236,9 +236,7 @@ export function SwitchClubSheet({
       });
       return joinFacts([
         schedule.kind === "recurring" ? joinScheduleGroups(schedule.groups) : "",
-        product.start_date === null
-          ? ""
-          : formatDateOnly(product.start_date, uiLocale),
+        formatDateOnly(product.start_date, uiLocale),
       ]);
     };
   }, [uiLocale, timeZone, now]);
@@ -250,9 +248,8 @@ export function SwitchClubSheet({
 
   // One derivation of the chosen club's lifecycle, feeding both the chip beside
   // its name and the "has not started" fact below it — two statements about the
-  // same thing that must not be allowed to disagree. A sign-up count of 0 is
-  // the approximation: this sheet holds no count for the target.
-  const targetStatus = target === null ? null : effectiveStatus(target, now, 0);
+  // same thing that must not be allowed to disagree.
+  const targetStatus = target === null ? null : effectiveStatus(target, now);
 
   // The chosen club's own facts, stated as information under the money. The
   // seat count is the only one that arrives after the stage does, and it is
@@ -698,7 +695,7 @@ function ClubList({
                   {isHeld ? (
                     <Badge variant="outline">{t("alreadyHolds")}</Badge>
                   ) : (
-                    <ProductStatusChip status={effectiveStatus(row, now, 0)} />
+                    <ProductStatusChip status={effectiveStatus(row, now)} />
                   )}
                 </span>
               </span>
@@ -809,9 +806,7 @@ function factLine(
         country: countryDisplayName(fact.country, locale),
       });
     case "notStarted":
-      return fact.startDate === null
-        ? t("notStartedUndated")
-        : t("notStarted", { date: formatDateOnly(fact.startDate, locale) });
+      return t("notStarted", { date: formatDateOnly(fact.startDate, locale) });
   }
 }
 

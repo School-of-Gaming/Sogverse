@@ -121,6 +121,11 @@ interface RoleGatedPosture<R extends UserRole> {
   forbiddenMessage?: string;
   /** Skip the parent-PIN gate — for routes a locked customer must reach. */
   allowUnverified?: boolean;
+  /**
+   * Admit a customer who still owes its registration — for the routes that
+   * finish it, and nothing else. Separate from `allowUnverified`.
+   */
+  allowRegistrationOwed?: boolean;
   /** Refuse an uncertified gedu — for gedu actions that are a trust boundary. */
   requireCertifiedGedu?: boolean;
 }
@@ -279,6 +284,7 @@ interface ErasedRouteConfig {
   roles?: UserRole | readonly UserRole[];
   forbiddenMessage?: string;
   allowUnverified?: boolean;
+  allowRegistrationOwed?: boolean;
   requireCertifiedGedu?: boolean;
   reason?: string;
   body?: z.ZodType<unknown>;
@@ -336,6 +342,7 @@ async function runRoute(
     const gate = await requireRole(config.roles ?? [], {
       forbiddenMessage: config.forbiddenMessage,
       allowUnverified: config.allowUnverified,
+      allowRegistrationOwed: config.allowRegistrationOwed,
       requireCertifiedGedu: config.requireCertifiedGedu,
     });
     if (gate instanceof NextResponse) return gate;

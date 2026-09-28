@@ -225,7 +225,7 @@ describe("roblox_accounts RLS", () => {
 
   // -- Two accounts may share one Roblox account --
   //
-  // The column is born without a UNIQUE for the reason 00135 dropped Minecraft's:
+  // The column is born without a UNIQUE for the reason Minecraft's has none:
   // siblings sharing one game account from two Sogverse accounts is a reasonable
   // thing for a family to do, and a constraint here would forbid it outright
   // while never answering the question that makes uniqueness sound useful (which

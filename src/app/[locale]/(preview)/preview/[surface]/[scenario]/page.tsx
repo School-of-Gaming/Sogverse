@@ -7,6 +7,7 @@ import {
   findPreviewScene,
   parsePreviewTopic,
   sceneHasScenario,
+  type PreviewSceneMeta,
 } from "@/components/preview/scenes";
 
 /**
@@ -45,9 +46,14 @@ export default async function PreviewScenePage({
   if (!scene || !sceneHasScenario(scene, scenario)) {
     notFound();
   }
+  // Read through the declared interface, not off the `as const` literal: a
+  // scene that omits an optional field has no such property on its own literal
+  // type, so the union cannot be asked for one. The registry does the same
+  // widening for the scenario descriptions, and for the same reason.
+  const { navRole }: PreviewSceneMeta = scene;
 
   return (
-    <PreviewChrome chrome={scene.chrome}>
+    <PreviewChrome chrome={scene.chrome} navRole={navRole}>
       {renderPreviewScene(scene.surface, scenario, {
         topic: parsePreviewTopic(query[PREVIEW_TOPIC_PARAM]),
       })}

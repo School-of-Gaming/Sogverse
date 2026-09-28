@@ -420,6 +420,15 @@ export const ROUTES = {
   seatOffer: "/seat-offer",
   selectProfile: "/select-profile",
   /**
+   * Where an account created through Google finishes registering — its name,
+   * the terms and the consents, none of which Google hands over. Signed-in
+   * only, and not an auth route: an auth route bounces a signed-in visitor to
+   * their dashboard, and this page's every visitor is signed in. The proxy
+   * sends a customer whose `profiles.registration_completed_at` is NULL here
+   * from every protected page.
+   */
+  completeRegistration: "/complete-registration",
+  /**
    * Public identity page — who School of Gaming is, what Yty is, and the
    * public FAQ. Reached from the header in both auth states: it is the one
    * page carrying this copy, and the home page it used to live on is
@@ -597,6 +606,26 @@ export const ROUTES = {
      * entries and above the tooling.
      */
     municipalityInvoicing: "/admin/municipality-invoicing",
+    /**
+     * The Fennoa customers a municipality club can be invoiced to — the contract
+     * parties the CFO's monthly files are addressed to.
+     *
+     * A collection of its own rather than a field on a club, because a customer
+     * is bought from by several clubs and is not a place: one city can be two
+     * customers, and an association can buy clubs running in a municipality it
+     * is not. It sits beside the invoicing ledger because that is the page its
+     * gaps are reported on.
+     */
+    invoiceCustomers: "/admin/invoice-customers",
+    /** The create form. */
+    invoiceCustomerNew: "/admin/invoice-customers/new",
+    /**
+     * One customer's page, which is its edit form — there is no read-only
+     * detail page between the list and the form, because a customer is eight
+     * fields and the list already shows the ones that tell two apart.
+     */
+    invoiceCustomer: (id: string) =>
+      ({ pathname: "/admin/invoice-customers/[id]", params: { id } }) as const,
     camps: "/admin/camps",
     events: "/admin/events",
     /**
@@ -611,6 +640,15 @@ export const ROUTES = {
     sites: "/admin/sites",
     site: (id: string) =>
       ({ pathname: "/admin/sites/[id]", params: { id } }) as const,
+    /**
+     * Sessions somebody cannot make, and the offers to stand in — the office's
+     * staffing queue, and only that: what has been settled is off it.
+     *
+     * A page of its own rather than a band on the dashboard: every row is work
+     * an admin can finish here and now, and a session nobody has been found for
+     * is too easy to scroll past on a board of standing information.
+     */
+    substitutions: "/admin/substitutions",
     /**
      * Platform-operations tools that belong to no one product — the instant
      * voice room and the Minecraft Education password reset, both shared by
@@ -664,6 +702,8 @@ export const ROUTES = {
     dashboard: "/gedu",
     /** The terms a Game Educator works under, and where they are accepted. */
     contract: "/gedu/contract",
+    /** The sessions looking for a stand-in, and the ones this gedu took. */
+    substitutions: "/gedu/substitutions",
     assignedProduct: geduAssignedProductHref,
     /** The string form, for absolute URLs built server-side (email). */
     assignedProductPath: geduAssignedProductPath,

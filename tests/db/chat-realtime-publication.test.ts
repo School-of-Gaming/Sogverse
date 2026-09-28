@@ -3,18 +3,18 @@ import { z } from "zod";
 import { callServiceRoleRpcRaw } from "./helpers";
 
 /**
- * The chat tables' realtime wiring (00228), asserted because nothing else can.
+ * The chat tables' realtime wiring, asserted because nothing else can.
  *
  * **This is the cheapest correctness-by-mechanism win in the chat plan, and it
  * exists because the failure it catches is silent and total.** Realtime
- * delivery depends on two facts that live in the PostgreSQL catalogs and appear
- * in no other artifact:
+ * delivery depends on two facts that live in the PostgreSQL catalogs, and
+ * these cases read them from the LIVE one:
  *
- * 1. **Publication membership.** `pg_dump` does not emit `ALTER PUBLICATION`
- *    for the platform's own `supabase_realtime`, so `supabase/schema.sql` — the
- *    file every other schema-side guarantee is read from — says nothing about
- *    it. A table left out of the publication does not error, does not warn and
- *    does not fail any existing test: every client still renders its own
+ * 1. **Publication membership.** `supabase/schema/outside-public/`
+ *    `realtime-publication.sql` lists the tables in the platform's own
+ *    `supabase_realtime`, but a table left out of the publication does not
+ *    error, does not warn and does not fail any existing test: every client
+ *    still renders its own
  *    optimistic echo, and nothing anybody else sends ever arrives. The bug
  *    reads as "chat is broken for everyone but me", which is exactly the shape
  *    nobody reproduces locally.
@@ -27,7 +27,7 @@ import { callServiceRoleRpcRaw } from "./helpers";
  *    UPDATE to NULL — so FULL there would widen every WAL record for a delete
  *    that cannot happen.
  *
- * The catalog reader behind this is `_list_replicated_tables` (00230),
+ * The catalog reader behind this is `_list_replicated_tables`,
  * `service_role`-only like every other `_list_*` helper.
  */
 

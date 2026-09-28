@@ -4,20 +4,20 @@ import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
 
 /**
- * Tests for the create_gamer() RPC (migration 00113) — the atomic
+ * Tests for the create_gamer() RPC — the atomic
  * promote + link that the gamer-creation route calls after creating the auth
  * user. Four properties matter: it refuses a family that has no parent PIN, it
  * refuses a creation the parent has not attached their guardian declaration to,
  * it does the full promotion correctly, and it does all of it as ONE
  * transaction, so a mid-flight failure leaves nothing behind.
  *
- * Every call in this file therefore carries `p_guardian_attested: true` (00250),
+ * Every call in this file therefore carries `p_guardian_attested: true`,
  * including the PIN refusal — which is the point there: the PIN guard is what
  * must answer, and a call that was also missing the declaration would not prove
  * which of the two refused it.
  *
- * Every parent in this file is created WITH a PIN (00235), because a parent
- * without one can no longer acquire a gamer at all — the gate on leaving a
+ * Every parent in this file is created WITH a PIN, because a parent
+ * without one cannot acquire a gamer at all — the gate on leaving a
  * gamer session is that PIN, so the invariant is established at the only moment
  * it is cheap to establish. `createParentUser` is what makes that explicit;
  * `createCustomerUser` remains for the accounts that are about to become
@@ -482,7 +482,7 @@ describe("create_gamer() atomic promotion", () => {
   });
 
   it("links a Roblox account another user already holds", async () => {
-    // Born without a UNIQUE, for the reason 00135 dropped Minecraft's: siblings
+    // Born without a UNIQUE, for the reason Minecraft's has none either: siblings
     // sharing one game account across two Sogverse accounts is supported.
     const parent = await createParentUser("cg-rbx-share-parent@test.local");
     const first = await createCustomerUser("cg-rbx-share-1@test.local");
@@ -591,7 +591,7 @@ describe("create_gamer() atomic promotion", () => {
     expect(link).toBeNull();
   });
 
-  it("refuses to re-promote a profile that is no longer a customer (00114 guard)", async () => {
+  it("refuses to re-promote a profile that is no longer a customer", async () => {
     const parent = await createParentUser("cg-guard-parent@test.local");
     const gamer = await createCustomerUser("cg-guard-child@test.local");
 

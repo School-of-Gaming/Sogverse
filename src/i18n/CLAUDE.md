@@ -19,7 +19,7 @@ The two are fully independent: a Finnish-speaking parent can have `locale = "fi"
 
 - `routing.ts` — the routing contract (`defineRouting`): locales derived from `SUPPORTED_LOCALES`, `localePrefix: "always"`, next-intl's own detection, locale cookie and alternate-links header all off, and the pathnames map.
 - `pathnames.ts` — every route in the app keyed by its internal pathname, with the slug each locale serves it under. See "Routes: the pathnames map" below.
-- `navigation.ts` — the locale-aware `Link`, `redirect`, `usePathname`, `useRouter` and `getPathname` (`createNavigation`). Use these, not `next/link` / `next/navigation`, wherever a route is named.
+- `navigation.tsx` — the locale-aware `Link`, `redirect`, `usePathname`, `useRouter` and `getPathname` (`createNavigation`). Use these, not `next/link` / `next/navigation`, wherever a route is named.
 - `request.ts` — next-intl request config (SSR/RSC). Resolves the per-request locale and loads its messages.
 - `messages.ts` — `Messages` type (derived from `en.json`) and `loadMessages(locale)`, a static import map of `messages/<code>.json`. Static imports so a moved/deleted message file fails the build, not runtime. The `tlh` entry is the one that merges — it is the English-fallback mechanism described under the legal-copy rule below.
 - `types.ts` — module augmentation that registers `Messages` as next-intl's `AppConfig["Messages"]`, giving compile-time key validation and autocomplete in `useTranslations()`/`getTranslations()`.
@@ -50,7 +50,7 @@ A CI script (under `scripts/`) validates translation completeness on every push 
 
 ## Dead copy: orphaned keys
 
-The catalog only rots in one direction, and it is worth knowing which. A key that is **used but missing** is a build failure: `types.ts` registers the catalog as next-intl's `Messages`, so a translator's key parameter is the union of its namespace's keys. That has been verified by execution for a literal key, for one composed at the call site (`` t(`startModes.${option}`) ``, where the compiler expands the union and even suggests the nearest surviving member), for a key read as a plain property off a catalog object, and for one referenced only from `tests/`. So typos and stale references cannot ship.
+The catalog only rots in one direction, and it is worth knowing which. A key that is **used but missing** is a build failure: `types.ts` registers the catalog as next-intl's `Messages`, so a translator's key parameter is the union of its namespace's keys. That has been verified by execution for a literal key, for one composed at the call site (`` t(`endDateModes.${option}`) ``, where the compiler expands the union and even suggests the nearest surviving member), for a key read as a plain property off a catalog object, and for one referenced only from `tests/`. So typos and stale references cannot ship.
 
 Nothing guards the other direction. A key **defined but unreachable** breaks nothing, costs nothing at runtime, and shows up only as translation spend and as copy that reads like a shipping feature to whoever greps the catalog next. 139 such keys had accumulated before anyone counted.
 
@@ -120,6 +120,8 @@ product page is a confusion, and the carve-out is the cost of not editing a sign
 - **`vous` to adults, `tu` in child-facing strings.**
 - **Never use the middle dot (`Prêt·e`) to dodge gender agreement — reframe instead.** It is visually awkward on screen and contested in France. Open child-facing prompts with a construction that takes no agreement, and where inserting a name would force a participle to inflect, state the event as a noun phrase (an enrolment is confirmed) rather than agreeing with the person.
 
+**Rule: a placeholder never takes a case ending — in Finnish, the case goes on a role noun in front of the name.** A person's name arrives in its basic form and Finnish inflects names by rules a template cannot apply (consonant gradation, stem changes, foreign names), so `{name}:n` is both the wrong form — the colon ending belongs to abbreviations and numerals — and the only one a template can produce. Put the noun the person is there as ahead of the placeholder and let *it* carry the case: the player's settings, the Gedu's request, substituting for the Gedu, each followed by the uninflected name. The same holds for any value a sentence would want to decline — a product, a group, a place.
+
 ## Locale resolution: the URL decides
 
 **Rule: every page URL carries its locale, and the URL wins over cookie, profile and `Accept-Language` alike.** The prefix is `always`, so `/en/…` is as prefixed as `/fi/…` — one URL shape, no "bare means English" special case in the proxy, the normalizer, the picker or a test — and a link therefore pins a language for whoever receives it, crawler included. That is the whole point: a shared link and the social card scraped from it render the language they were sent in.
@@ -156,7 +158,7 @@ Which pages are promoted to crawlers, which are reachable but not promoted, and 
 
 **Klingon is excluded from `hreflang` and the sitemap, and its pages serve `noindex` instead of a robots disallow.** An easter egg does not belong in search results or in an alternate-language annotation; a disallow would be the wrong tool because a URL that is never fetched never reads the tag and can still be indexed bare. Pages that are `noindex` for their own reasons — product pages, the schools pages, the programme pages, the API docs — emit no alternates at all. The robots disallow covers each gated prefix bare **and** under every locale, Klingon included: a prefixed dashboard URL is as real as a bare one.
 
-**The analytics `route` dimension is supplied by the app, not computed by the framework's wrapper.** It is the internal template with the locale segment dropped, so every language of a page lands on one row while `request_path` keeps the per-language split (`docs/runbooks/vercel-analytics.md`).
+**The analytics `route` dimension is supplied by the app, not computed by the framework's wrapper.** It is the internal template with the locale segment dropped, so every language of a page lands on one row while `request_path` keeps the per-language split.
 
 ## Usage patterns
 

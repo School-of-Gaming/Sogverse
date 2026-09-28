@@ -6,14 +6,14 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboard.contracts";
 
 /**
- * `set_gedu_criminal_record_check` and the three columns behind it (00213).
+ * `set_gedu_criminal_record_check` and the three columns behind it.
  *
  * The feature records one fact and is forbidden by law from recording any
  * other: an admin saw an acceptable criminal record extract (rikostaustaote),
  * and when. The document is obtained by the educator and never reaches us, so
  * everything below tests the *record* rather than any content — that the audit
  * pair is stamped by the server, that withdrawing the check clears it, that the
- * stamp and the flag cannot be made to disagree (00214's CHECK), and that
+ * stamp and the flag cannot be made to disagree (a CHECK constraint), and that
  * nobody but an admin, calling the RPC, can write any of it.
  *
  * **Its own fixtures, not the seeded gedu.** The columns are ordinary columns on
@@ -214,7 +214,7 @@ describe("gedu criminal record check", () => {
 
   describe("the stamp and the flag cannot disagree", () => {
     /**
-     * The invariant the RPC maintains, enforced by a CHECK since 00214.
+     * The invariant the RPC maintains, enforced by a CHECK.
      *
      * Two admin surfaces read different halves of it — the dashboard's
      * certification queue ships only `criminal_record_check_at` and reads NULL

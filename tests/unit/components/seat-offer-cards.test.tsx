@@ -340,7 +340,7 @@ describe("EnrollmentCard — the family's seat offer", () => {
   });
 
   /**
-   * The window binds accepting and nothing else (00208), and the two buttons
+   * The window binds accepting and nothing else, and the two buttons
    * are where that shows on this card: the seat can no longer be claimed, but
    * a family telling us they cannot come is news we want whenever it arrives
    * and is the one answer that frees the row. So Accept goes inert and Decline

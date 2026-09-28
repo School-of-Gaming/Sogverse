@@ -68,8 +68,7 @@ async function readGroups(
  * One page of the Programme catalogue, ascending by product id.
  *
  * **`status` is derived, so it cannot be a database filter.** A product's
- * effective status is a function of its dates, its timezone and `now` (and of
- * the live seat count, for a threshold the admin UI blocks) — nothing
+ * effective status is a function of its dates, its timezone and `now` — nothing
  * is stored to filter on. The page reader walks every
  * Programme product in id order and the build drops the ones whose status does
  * not match, deciding each batch's statuses before enriching the survivors, so a
@@ -79,10 +78,7 @@ async function readGroups(
  *
  * A product with no translation at all, or a gamer product without its ages,
  * throws: the database refuses both, so either is a broken invariant, and a
- * loud 500 beats a record the contract would have to lie about. So does a
- * product deriving a status the API does not describe (`expired`): only a
- * signup threshold or a missing start date produces it, the admin UI blocks
- * both, and it is never mapped onto a state the page does state.
+ * loud 500 beats a record the contract would have to lie about.
  */
 export async function readPartnerProducts(
   db: PartnerDb,
@@ -116,13 +112,16 @@ export async function readPartnerProducts(
         if (derived === undefined) {
           throw new Error(`partner products: product ${id} has no effective status`);
         }
-        const status = PRODUCT_STATUS.find((value) => value === derived);
-        if (status === undefined) {
+        // The database may derive a state the published tuple does not name.
+        // Such a record is one the contract cannot describe, so it throws here
+        // rather than reaching the partner under a neighbouring value.
+        const published = PRODUCT_STATUS.find((status) => status === derived);
+        if (published === undefined) {
           throw new Error(
             `partner products: product ${id} derives ${derived}, which the API does not describe`,
           );
         }
-        return status;
+        return published;
       };
       const kept = rows.filter(
         (row) => query.status === undefined || statusOf(row.id) === query.status,

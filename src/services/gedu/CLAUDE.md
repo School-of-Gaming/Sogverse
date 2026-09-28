@@ -6,7 +6,7 @@ service + the registration contract; the flow spans a public page, an API route,
 three DB objects.
 
 **The word is "certified", and it is not the same thing as email verification.** These
-columns and identifiers were called `verified*` until 00187; the rename freed "verified"
+columns and identifiers were once called `verified*`; the rename freed "verified"
 for `profiles.email_verified_at`, which is about an address rather than a person. The two
 can be true independently and neither implies the other, so a surface showing both gives
 them different marks — a shield for the certified educator, a green check for the
@@ -51,9 +51,22 @@ Then the **client** signs in with the password and does a full-page nav to `/ged
 (`admin.createUser` doesn't sign the browser in; full-page nav is required after any auth
 change — see `src/CLAUDE.md`).
 
+**The Google path starts from an account that already exists.** The Gedu register page's
+Google button creates a customer account owing its registration, and the finish page's
+Gedu variant posts the same fields minus address and password to
+`POST /api/gedu/complete-registration`. That route refuses an account that has finished
+registering, resolves the handles and calls `register_gedu` through the same shared
+helpers as the register route. `register_gedu` stamps `registration_completed_at` itself
+(keeping a stamp already there), so a Google-created educator is complete the moment the
+promotion commits; the route then writes the consent-gated attribution and Google's
+verification of the address as a best-effort follow-up, and sends the welcome mail —
+without a verification link when Google verified the address. **A failed
+promotion is a 500 and no `deleteUser`**: the account is the person's own, the RPC is one
+transaction, so it is left a customer still owing registration, and they retry.
+
 **Rule: `register_gedu` is `service_role` only.** It grants the gedu role, so it must
-never be reachable by `authenticated`/`anon`. The API route (admin client) is the only
-caller. It guards that the target is a freshly-created `customer` profile so it can't
+never be reachable by `authenticated`/`anon`. The two registration routes (admin client)
+are its only callers. It guards that the target is a freshly-created `customer` profile so it can't
 mutate an established account.
 
 **Rule: callers pass `''`/`[]` for absent optional fields, not null.** The generated RPC
@@ -63,22 +76,35 @@ instead of tripping the `profiles.phone` CHECK).
 ## Certification
 
 A new gedu starts **uncertified but with broad platform access** — certification gates a
-gedu's **operational capabilities**: being assigned to work, and the tools that come with
-running a session. It does not gate the platform, and an uncertified gedu still signs in,
-reads My SOG, edits their profile and coverage, and accepts the contract. **The
-authoritative list of what it gates is the code**: the `requireCertifiedGedu` routes in
-the route posture registry plus the assignment gate below. An enumeration here would be a
+gedu's **operational capabilities**: being assigned to work, the tools that come with
+running a session, and offering or holding a substitution for somebody else's session. It does
+not gate the platform, and an uncertified gedu still signs in, reads My SOG, edits their
+profile and coverage, and accepts the contract. **The authoritative list of what it gates
+is the code**: the `requireCertifiedGedu` routes in the route posture registry plus the
+assignment and session-substitution gates below. An enumeration here would be a
 second list to keep current, and the last one was wrong.
 
 - **`set_gedu_certified(gedu_id, certified)` RPC** — admin-only (guard-first `assert_admin()`),
   stamps `certified_at = now()` / `certified_by = auth.uid()` server-side. Granted to
   `authenticated`; called from the admin user-detail page via the admin's own session.
 - **Assignment gate (UI-only, sufficient)**: the gedu picker disables uncertified gedus and
-  badges them. **This is a UI-only gate by design.** Assignment runs
-  through `apply_group_changes`, which does *not* re-check `certified`; the invariant holds
-  because admins are always trusted and assignment is an admin-only action driven entirely
-  by this picker. If a non-admin assignment path is ever added, move the `certified` check
-  into `apply_group_changes` — until then a DB-level check would be redundant.
+  badges them, reading the flag off the row it is drawing — the admin people list's paged
+  read carries it as a column, so the gate never waits on a second query and a row on
+  screen always carries its own verdict. **This is a UI-only gate by design.** Assignment
+  runs through `apply_group_changes`, which does *not* re-check `certified`; the invariant
+  holds because admins are always trusted and assignment is an admin-only action driven
+  entirely by this picker. If a non-admin assignment path is ever added, move the
+  `certified` check into `apply_group_changes` — until then a DB-level check would be
+  redundant.
+- **Session-substitution gate (server-side, required)**: substituting a session is *gedu-initiated*,
+  so unlike assignment this one is enforced in the database rather than in the picker.
+  Certification is part of the may-substitute guard every substitution write shares, the pool of open
+  requests reads back empty for an uncertified gedu, and the access a live substitution grants to
+  that group's workspace is re-checked on every read — so withdrawing certification
+  mid-substitution closes it at once rather than at the window's end. An admin arranging a sub by
+  hand passes the same guard, so no path seats an uncertified substitute. The contrast with the
+  bullet above is the whole rule: assignment has one caller and it is an admin, a substitution is
+  offered by any gedu who sees the request.
 - **Instant-voice-room gate (server-side, required)**: unlike assignment, spinning up,
   ending, or moderating an instant voice room is *gedu-initiated*, so a UI gate is not
   enough. An uncertified gedu is treated as a non-moderator across all three of that
@@ -98,9 +124,13 @@ second list to keep current, and the last one was wrong.
 - **Backfill**: every gedu that existed before this feature was marked certified
   (`certified_by` NULL) — they were all admin-invited and already trusted.
 
-Certification state is read via `useGeduProfiles` / `useGeduCertificationMap`
-(lists/picker) and `useGeduProfile` (detail, seeded with a server fetch).
-`useSetGeduCertified` invalidates the whole `gedu-profiles` key on success.
+Certification state reaches a surface two ways, and which one it uses is decided by
+whether the surface is a *list*. A list reads the flag as a column of its own paged
+people read — it is one of the two standing flags the admin list view carries — so no
+list or picker holds a certification map of its own; the detail card reads the whole
+extension row, seeded with a server fetch. The consequence for writes: the certify and
+record-check mutations invalidate the gedu-profiles root **and** the people-list key,
+because the fact now lives on rows under both.
 
 ## The criminal record check
 

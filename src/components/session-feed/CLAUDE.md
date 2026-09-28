@@ -507,9 +507,12 @@ that itself, because it does not know which thumbnail that was.
   captured synchronously in the click handler, the scroll corrected in a layout effect
   before paint. Nothing animates that geometry: a correction chasing a transition re-runs
   every frame and is how the pattern breaks.
-- **The past reveals downward by scrolling, over fully-loaded data.** An
-  IntersectionObserver sentinel below the list reveals the next already-loaded chunk and
-  re-arms after each reveal; it unmounts when nothing remains. Reveals are instant — no
+- **The past reveals downward by scrolling, over fully-loaded data.** A sentinel below the
+  list reveals the next already-loaded chunk and re-arms after each reveal; it unmounts when
+  nothing remains. The observer mechanics are the app's shared sentinel hook (`src/hooks/`)
+  rather than this module's — the re-arm, the disarm lever and the option to watch a scroll
+  container instead of the viewport all live there, and this shell is one of its callers.
+  Reveals are instant — no
   spinner, no skeleton — because the data is already in memory: feeds arrive as one
   document (a weekly club is ~52 sessions/year; paged fetching was rejected because the
   client projects past occurrences from the schedule, and a partial fetch makes stored

@@ -39,6 +39,9 @@
       "lynxApi": "Lynx Educaten kumppani-API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
       "adminMunicipalityInvoicing": "Kuntalaskutus",
+      "adminInvoiceCustomers": "Laskutusasiakkaat",
+      "adminInvoiceCustomerNew": "Uusi laskutusasiakas",
+      "adminInvoiceCustomerEdit": "Muokkaa laskutusasiakasta",
       "adminTools": "Työkalut",
       "parentDashboard": "Oma SOG",
       "geduDashboard": "Oma SOG",
@@ -61,7 +64,9 @@
       "robloxSafeguarding": "Luojien akatemian lasten turvallisuuden toimintaohje",
       "robloxTerms": "Luojien akatemian käyttöehdot",
       "geduContract": "Gedu-sopimus",
-      "seatOffer": "Paikkatarjous"
+      "seatOffer": "Paikkatarjous",
+      "geduSubstitutions": "Tuuraukset",
+      "adminSubstitutions": "Tuuraukset"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -308,6 +313,7 @@
           "waitlistOpenSeats": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana",
           "missingGeduFee": "Gedun palkkio puuttuu",
           "missingMunicipalityFee": "Kunnan maksu puuttuu",
+          "missingInvoiceCustomer": "Laskutusasiakas puuttuu",
           "waitlistOpenSeatsWithOffers": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana · {offers} odottaa vastausta"
         }
       },
@@ -392,8 +398,72 @@
       "upcoming": "Tulossa",
       "unrecordedSessions": "{count, plural, one {# kirjaamatta} other {# kirjaamatta}}",
       "sessionsFor": "Kerhon {club} kerrat",
+      "clubsIn": "Kerhot: {municipality}",
+      "clubsWithoutCustomer": "{count, plural, one {# kerholta puuttuu laskutusasiakas} other {# kerholta puuttuu laskutusasiakas}}",
+      "customerNotSet": "Laskutusasiakasta ei ole asetettu",
+      "downloadInvoiceFor": "Lataa Finvoice-tiedosto asiakkaalle {customer}",
+      "fileBlockedByFee": "{count, plural, one {Ei tiedostoa: # kerho kokoontui ilman maksua} other {Ei tiedostoa: # kerhoa kokoontui ilman maksua}}",
+      "fileBlockedByNothingToInvoice": "Ei tiedostoa: ei kirjattuja kertoja",
       "loadError": "Laskutuskuukauden lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
       "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen."
+    },
+    "invoiceCustomers": {
+      "title": "Laskutusasiakkaat",
+      "subtitle": "Fennoa-asiakkaat, joille kuntakerhojen kerrat laskutetaan.",
+      "addCustomer": "Lisää asiakas",
+      "columns": {
+        "number": "Fennoa-nro",
+        "invoiceName": "Laskutusnimi",
+        "city": "Postitoimipaikka",
+        "reference": "Viite"
+      },
+      "hasReference": "Viite on asetettu",
+      "noReference": "Ei viitettä",
+      "empty": "Ei vielä laskutusasiakkaita. Lisää ensimmäinen.",
+      "backToList": "Takaisin laskutusasiakkaisiin",
+      "notFound": "Tällä tunnuksella ei ole laskutusasiakasta.",
+      "newPage": {
+        "title": "Uusi laskutusasiakas",
+        "submit": "Luo asiakas"
+      },
+      "editPage": {
+        "title": "Muokkaa laskutusasiakasta"
+      },
+      "fields": {
+        "number": "Fennoan asiakasnumero",
+        "invoiceName": "Laskutusnimi",
+        "street": "Katuosoite",
+        "postalCode": "Postinumero",
+        "city": "Postitoimipaikka",
+        "country": "Maa",
+        "yourReference": "Asiakkaan viite",
+        "invoiceText": "Laskun teksti"
+      },
+      "hints": {
+        "number": "Fennoan asiakaskortilla oleva numero, esimerkiksi F0037. Fennoa yhdistää tuodun laskun asiakkaaseen tällä numerolla.",
+        "invoiceName": "Täsmälleen samassa muodossa kuin Fennoan asiakaskortilla.",
+        "yourReference": "Ostotilauksen numero tai yhteyshenkilö, jonka asiakas haluaa jokaiseen laskuun.",
+        "invoiceText": "Lisärivit laskun tekstin alkuun, esimerkiksi puitesopimuksen viite. Pelkkää tekstiä – se päätyy laskulle juuri niin kuin sen kirjoitat."
+      },
+      "errors": {
+        "required": "Täytä kenttä {field}.",
+        "countryShape": "Käytä kaksikirjaimista maatunnusta, esimerkiksi FI.",
+        "duplicateNumber": "Fennoan asiakasnumero {number} on jo toisella asiakkaalla.",
+        "saveFailed": "Asiakkaan tallennus epäonnistui. Yritä uudelleen.",
+        "saveFailedWithReason": "Asiakkaan tallennus epäonnistui – {reason}",
+        "listUnavailable": "Asiakaslistaa ei voitu ladata. Päivitä sivu, jotta voit valita asiakkaan."
+      },
+      "picker": {
+        "label": "Laskutusasiakas",
+        "hint": "Asiakas, jolle tämän kerhon kerrat laskutetaan. Ilman asiakasta kerho merkitään laskutussivulla puutteelliseksi, eikä siitä synny laskutiedostoa.",
+        "manage": "Hallinnoi laskutusasiakkaita",
+        "option": "{name} ({number})"
+      }
+    },
+    "geduRole": {
+      "primary": "Vastaava Gedu",
+      "assistant": "Avustava Gedu",
+      "selectAria": "{name} – rooli"
     },
     "geduContract": {
       "heading": "Gedu-sopimus",
@@ -458,10 +528,7 @@
         "missingMunicipalityFee": "Kunnan maksu puuttuu",
         "pendingHint": {
           "registrationOpens": "Ilmoittautuminen aukeaa {date}",
-          "startDate": "Alkaa {date}",
-          "threshold": "Alkaa kun {count, plural, one {# huoltaja ilmoittautuu} other {# huoltajaa on ilmoittautunut}}",
-          "dateAndThreshold": "Alkaa {date}, jos {count, plural, one {# huoltaja ilmoittautuu} other {# huoltajaa on ilmoittautunut}}",
-          "pastDateThreshold": "Aloituspäivä mennyt — odotetaan {count, plural, one {# ilmoittautumista} other {# ilmoittautumista}}"
+          "startDate": "Alkaa {date}"
         }
       },
       "translations": {
@@ -499,7 +566,6 @@
           "endDate": "Päättymispäivä",
           "firstSession": "Ensimmäinen kerta",
           "lastSession": "Viimeinen kerta",
-          "signupThreshold": "Ilmoittautumiskynnys",
           "termDates": "Kausi",
           "billingMode": "Laskutus",
           "seats": "Paikat",
@@ -601,14 +667,12 @@
         "paidByMunicipality": "Kunta maksaa",
         "seatCount": "Paikkamäärä",
         "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
-        "signupThreshold": "Ilmoittautumisraja aloitukseen",
         "makeVisible": "Listaa tuote Kauppa- ja Kuntakerhot-sivuille",
         "seatLimit": "Paikkaraja"
       },
       "placeholders": {
         "selectTopic": "Valitse aihe…",
         "materialUrl": "https://drive.sog.gg/...",
-        "threshold": "esim. 8",
         "name": {
           "consumerClub": "esim. Minecraft Redstone -kerho",
           "municipalityClub": "esim. Tapiolan Minecraft-kerho · Kevät 2026",
@@ -660,15 +724,6 @@
           "volunteer": "Vapaaehtoinen (ilmainen)",
           "fee": "Aseta summa"
         }
-      },
-      "startModes": {
-        "label": "Miten tämä alkaa?",
-        "date": "Tiettynä päivänä",
-        "date_and_threshold": "Tiettynä päivänä, jos tarpeeksi ilmoittautuu",
-        "threshold": "Kun tarpeeksi pelaajia on ilmoittautunut",
-        "dateDescription": "Alkaa valittuna päivänä riippumatta ilmoittautuneiden määrästä.",
-        "date_and_thresholdDescription": "Suunniteltu valitulle päivälle, mutta alkaa vain jos riittävästi vanhempia ilmoittautuu ajoissa. Muussa tapauksessa perut sen ja vanhemmille palautetaan automaattisesti.",
-        "thresholdDescription": "Ei kiinteää alkupäivää. Valitset ensimmäisen tapaamisen päivän, kun tarpeeksi vanhempia on ilmoittautunut — vanhemmat näkevät laskurin ja tietävät, että otat yhteyttä."
       },
       "registrationModes": {
         "label": "Milloin ilmoittautuminen avautuu?",
@@ -723,8 +778,6 @@
         "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
         "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
-        "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät ”X / Y tarvitaan” -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
-        "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
         "timezoneEntry": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
         "timezoneChangeMoves": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vaihto siirtää jokaisen tulevan kerran samaan kellonaikaan uudella aikavyöhykkeellä, mutta kerrat, joille on jo kirjattu raportti tai läsnäolot, säilyttävät ajat, joina ne pidettiin.",
         "timezoneIs": "Ajat ovat aikavyöhykkeellä {timezone}. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
@@ -768,7 +821,6 @@
         "primaryGeduFeeInvalid": "Anna vastaavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei tiedossa tai Vapaaehtoinen",
         "assistantGeduFeeInvalid": "Anna avustavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei ole tai Vapaaehtoinen",
         "municipalityFeeInvalid": "Anna kunnan maksu, joka on suurempi kuin 0, tai valitse Ei tiedossa",
-        "thresholdInvalid": "Ilmoittautumisrajan on oltava positiivinen kokonaisluku",
         "registrationOpensDateRequired": "Valitse päivämäärä, jolloin ilmoittautuminen avautuu",
         "createFailed": "Tuotteen luonti epäonnistui"
       },
@@ -779,8 +831,7 @@
       "status": {
         "pending": "Odottaa alkua",
         "running": "Käynnissä",
-        "completed": "Päättynyt",
-        "expired": "Vanhentunut"
+        "completed": "Päättynyt"
       },
       "schedule": {
         "day": "Päivä",
@@ -887,6 +938,8 @@
         "noResults": "Hakuehdoilla ei löytynyt Geduja.",
         "current": "Nykyinen",
         "alreadyAssigned": "Jo nimetty",
+        "alreadyExpected": "Jo tällä kerralla",
+        "absentGedu": "Tuurattava Gedu",
         "notCertified": "Ei hyväksytty"
       },
       "participantPicker": {
@@ -1013,7 +1066,6 @@
             "seats": "Paikkoja varattu {taken}/{capacity}",
             "regionLocked": "Maarajoitus: {country}",
             "notStarted": "Alkaa {date}. Perhe maksaa tästä päivästä, ei alkamispäivästä.",
-            "notStartedUndated": "Ei alkamispäivää. Perhe maksaa tästä päivästä.",
             "subscriptionEnding": "Perhe on irtisanonut tilauksen, ja se päättyy {date}. Tämän kuukauden hintaeroa ei laskuteta."
           },
           "prices": {
@@ -1064,6 +1116,45 @@
         },
         "note": "Yllä oleva hinta sisältää arvonlisäveron. Stripe laskee tarkan määrän myyntihetkellä, joten tässä näkyy Suomen tämänhetkinen verokanta."
       },
+      "staffing": {
+        "menuLabel": "Lisää toimintoja tälle kerralle",
+        "setSubstitute": "Aseta tuuraaja",
+        "changeSubstitute": "Vaihda tuuraajaa",
+        "changeSubstituteFor": "Vaihda Gedun {name} tuuraajaa",
+        "clearSubstitute": "Poista tuuraaja",
+        "clearSubstituteFor": "Poista Gedun {name} tuuraaja",
+        "withdrawRequest": "Peru pyyntö",
+        "withdrawRequestFor": "Peru Gedun {name} pyyntö",
+        "withRole": "{name} · {role}",
+        "absentLabel": "Poissa",
+        "subLabel": "Tuuraaja",
+        "changeChoice": "Vaihda",
+        "absentStepTitle": "Kuka on poissa?",
+        "absentStepBody": "Kerralla {date} on merkittynä useampi gedu. Valitse se, joka ei pääse.",
+        "pickerTitle": "Valitse tuuraaja",
+        "pickerDescription": "Valitse, kuka tuuraa Gedua {name}. Jos gedu ei voi tuurata, syy näkyy rivillä.",
+        "confirmTitle": "Aseta tuuraaja",
+        "confirmBody": "Merkitse, kuka pitää kerran {date} poissaolevan gedun sijasta.",
+        "approvesOpenRequest": "Tämä hyväksyy avoimen pyynnön eikä luo uutta.",
+        "replacesCurrentSub": "Tämä korvaa tuuraajan {name}, joka on nyt merkitty tälle kerralle.",
+        "reasonKept": "Poissaololle jo kirjattu syy säilyy ennallaan.",
+        "reasonLabel": "Syy",
+        "reasonSick": "Sairaana",
+        "reasonOther": "Jokin muu",
+        "noteLabel": "Viesti toimistolle",
+        "notePlaceholder": "Mitä toimiston olisi hyvä tietää tästä tuurauksesta.",
+        "noteRemaining": "{count} merkkiä jäljellä",
+        "confirmAction": "Aseta tuuraaja",
+        "setFailed": "Tuuraajan asettaminen ei onnistunut. Yritä uudelleen.",
+        "clearTitle": "Poistetaanko tuuraaja?",
+        "clearBody": "{sub} ei enää tuuraa Gedua {name} kerralla {date}, ja kerta palaa jonoon tuuraajaa vaille.",
+        "clearConfirm": "Poista tuuraaja",
+        "clearFailed": "Tuuraajan poistaminen ei onnistunut. Yritä uudelleen.",
+        "withdrawTitle": "Perutaanko pyyntö?",
+        "withdrawBody": "{name} pääseekään kerralle {date}. Pyynnön tarjoukset raukeavat eikä ketkään jää tuuraajaksi.",
+        "withdrawConfirm": "Peru pyyntö",
+        "withdrawFailed": "Pyynnön peruminen ei onnistunut. Yritä uudelleen."
+      },
       "sessions": {
         "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
         "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
@@ -1079,7 +1170,6 @@
       "all": "Kaikki",
       "noFilterResults": "Suodattimiasi vastaavia käyttäjiä ei löytynyt.",
       "noUsers": "Käyttäjiä ei löytynyt.",
-      "searchCapped": "Mukana on vain {shown} uusinta osumaa {total} osumasta. Tarkenna hakua nähdäksesi loput.",
       "backToUsers": "Takaisin käyttäjiin",
       "userNotFound": "Käyttäjää ei löytynyt.",
       "joined": "Liittynyt",
@@ -1222,6 +1312,47 @@
       "notDelivered": "Ei toimitettu",
       "today": "Tänään",
       "yesterday": "Eilen"
+    },
+    "substitutions": {
+      "title": "Tuuraukset",
+      "description": "Kerrat, joilta joku on poissa, ja niiden tuuraajat.",
+      "descriptionWithZone": "Kerrat, joilta joku on poissa, ja niiden tuuraajat. Ajat näkyvät aikavyöhykkeellä {zone}.",
+      "listLabel": "Kerrat, jotka tarvitsevat tuuraajan",
+      "allClear": "Yksikään kerta ei tarvitse tuuraajaa.",
+      "substitutedLabel": "Kerrat, joilla on tuuraaja",
+      "substitute": "Tuuraaja:",
+      "approvedBy": "Hyväksynyt {name} · {when}",
+      "substitutedEmpty": "Tulevilla kerroilla ei ole tuuraajia.",
+      "justNow": "{count, plural, one {# tuuraaja hyväksytty juuri nyt} other {# tuuraajaa hyväksytty juuri nyt}}",
+      "offersLabel": "Tuuraamista tarjoavat Gedut",
+      "away": "Poissa:",
+      "unnamed": "Nimetön Gedu",
+      "reason": {
+        "sick": "Sairaus",
+        "other": "Muu"
+      },
+      "noOffers": "Ei vielä tarjouksia.",
+      "openGroup": "Avaa ryhmä",
+      "seatSomeoneElse": "Valitse muu tuuraaja",
+      "approve": "Hyväksy",
+      "failed": "Hyväksyntä epäonnistui – yritä uudelleen.",
+      "loadError": "Tuurauksia ei voitu ladata.",
+      "loadErrorWithReason": "Tuurauksia ei voitu ladata: {reason}",
+      "approveConfirmTitle": "Hyväksytäänkö {name} tuuraajaksi?",
+      "approveConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja My SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Kenellekään ei lähetetä ilmoitusta: kerta poistuu muiden tarjoutuneiden listalta, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
+      "approveFailedOfferGone": "{name} on perunut tarjouksensa, joten hyväksyttävää ei ole.",
+      "approveFailedAlreadySettled": "Joku muu on jo hoitanut tämän kerran.",
+      "approveFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
+      "approveFailedIneligible": "{name} ei voi enää ottaa tätä kertaa.",
+      "seatConfirmTitle": "Asetetaanko {name} tuuraajaksi?",
+      "seatConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja My SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Kenellekään ei lähetetä ilmoitusta: kerta poistuu listalta, jolta Gedut tarjoutuvat tuuraamaan, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
+      "seatConfirm": "Aseta tuuraaja",
+      "seatReasonLabel": "Ilmoitettu syy",
+      "seatFailed": "Tuuraajan asettaminen epäonnistui – yritä uudelleen.",
+      "seatFailedIneligible": "{name} ei voi ottaa tätä kertaa – hän on jo merkitty sille tai ei voi enää tuurata.",
+      "seatFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
+      "seatFailedRequestWithdrawn": "{absent} on perunut tuurauspyyntönsä, joten tuurattavaa ei ole.",
+      "seatFailedNotScheduled": "Ryhmällä ei ole enää kertaa tänä päivänä."
     }
   },
   "auth": {
@@ -1235,7 +1366,10 @@
         "passwordTooShort": "Salasanan on oltava vähintään {count} merkkiä pitkä.",
         "invalidCredentials": "Antamasi sähköpostiosoite, käyttäjätunnus tai salasana on virheellinen.",
         "emailNotConfirmed": "Vahvista sähköpostiosoitteesi ennen kirjautumista.",
-        "tooManyAttempts": "Liian monta kirjautumisyritystä. Odota hetki ja yritä uudelleen."
+        "tooManyAttempts": "Liian monta kirjautumisyritystä. Odota hetki ja yritä uudelleen.",
+        "oauthCancelled": "Google-kirjautuminen peruutettiin. Voit yrittää uudelleen tai kirjautua salasanallasi.",
+        "authCallbackError": "Google-kirjautuminen ei onnistunut. Yritä uudelleen.",
+        "googleGamer": "Pelaajatilit kirjautuvat sähköpostiosoitteella tai käyttäjätunnuksella ja salasanalla tai vanhemman tilin kautta, eivät Google-tilillä. Kysy vanhemmaltasi, jos et ole varma, miten kirjaudut."
       },
       "identifierLabel": "Sähköpostiosoite tai käyttäjätunnus",
       "identifierPlaceholder": "sinä@example.com tai käyttäjätunnus"
@@ -1297,6 +1431,22 @@
       "invalidPhone": "Syötä kelvollinen puhelinnumero",
       "creatingAccount": "Luodaan tiliä...",
       "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"
+    },
+    "google": {
+      "continue": "Jatka Google-tilillä",
+      "or": "tai",
+      "failed": "Google-kirjautumista ei voitu aloittaa. Yritä uudelleen."
+    },
+    "completeRegistration": {
+      "title": "Viimeistele School of Gaming -tilisi",
+      "geduTitle": "Viimeistele School of Gaming -pelikasvattajatilisi",
+      "description": "Kirjauduit sisään Google-tililläsi. Alla olevilla tiedoilla viimeistelet School of Gaming -tilisi.",
+      "notYou": "Väärä tili?",
+      "signOut": "Kirjaudu ulos",
+      "submit": "Viimeistele",
+      "finishing": "Viimeistellään...",
+      "alreadyComplete": "Tämä tili on jo valmis. Kirjaudu uudelleen sisään jatkaaksesi.",
+      "switchToParent": "Etkö ole pelikasvattaja? <link>Luo sen sijaan vanhemman tili</link>"
     }
   },
   "pin": {
@@ -1629,7 +1779,7 @@
           "fields": {
             "roblox": "Lapsen Roblox-tili. <code>roblox_user_id</code> on <code>null</code>, kun Sogverse ei voinut varmistaa käyttäjänimeä; välitä tällaiset rivit vain, jos Roblox hyväksyy pelkän käyttäjänimen.",
             "location": "Sen vanhemman kotikunta ja maa, jonka tilillä paikka on, samalla säännöllä kuin <code>/families</code>-resurssin <code>parents[].location</code>. Molemmat ovat <code>null</code>, jos vanhempi ei ole ilmoittanut kotisijaintia; pelkkä <code>city</code> on <code>null</code>, jos sijainti ei ole minkään kunnan alueella.",
-            "age": "Lapsen ikä täysinä vuosina toiminnan alkamispäivänä vaihteluvälinä: Sogversessa on syntymäkuukausi eikä päivää, joten <code>min</code> on nuorin ja <code>max</code> vanhin mahdollinen ikä, ja luvut ovat samat, ellei alkamispäivä osunut lapsen syntymäkuukauteen. <code>null</code> niin kauan kuin tuotteella ei ole alkamispäivää. Rivillä on ikä eikä syntymäkuukausi, koska tutkimusaineisto nimeää nimenomaan iän.",
+            "age": "Lapsen ikä täysinä vuosina toiminnan alkamispäivänä vaihteluvälinä: Sogversessa on syntymäkuukausi eikä päivää, joten <code>min</code> on nuorin ja <code>max</code> vanhin mahdollinen ikä, ja luvut ovat samat, ellei alkamispäivä osunut lapsen syntymäkuukauteen. Rivillä on ikä eikä syntymäkuukausi, koska tutkimusaineisto nimeää nimenomaan iän.",
             "activity": "Toiminta, johon osallistuttiin: tuotteen tunniste, sen nimi englanniksi, jos sellainen on kirjoitettu, muutoin tuotteen toteutuskielellä ja viimeisenä vaihtoehtona sillä kieliversiolla, jonka koodi on aakkosjärjestyksessä ensimmäinen, sekä tyyppi, toteutustapa ja alkamispäivä. Tyyppi ja toteutustapa ovat yhdessä ne tiedot, joihin Lynxin omat nimet sen tavoille toteuttaa Ohjelmaa kiinnittyvät, ja alkamispäivä on tutkimuksen pyytämä interventiopäivä.",
             "publishedGameUrl": "Ensimmäinen roblox.com-linkki lapsen julkaisuissa tässä tuotteessa, tai <code>null</code>, jos sellaista ei ole kirjattu."
           },
@@ -1722,22 +1872,21 @@
     "loadingAssignments": "Ladataan kerhojasi, leirejäsi ja tapahtumiasi."
   },
   "helpSection": {
-    "heading": "Apu ja palaute",
-    "gamerHeading": "Tarvitsetko apua?",
+    "heading": "Tarvitsetko apua?",
     "faqHeading": "Usein kysytyt kysymykset",
     "form": {
       "messageLabel": "Viesti",
       "charactersNeeded": "{count} merkkiä vielä tarvitaan",
       "submit": "Lähetä viesti",
       "adult": {
-        "description": "Pyydä meiltä apua tai lähetä ehdotus tai vikailmoitus – jokainen viesti tulee School of Gamingin tiimille. Autamme mielellämme kaikessa oikean kerhon valinnasta siihen, miten kaikki toimii, tai voit lähettää meille sähköpostia osoitteeseen <link>{email}</link>.",
+        "description": "Pyydä meiltä apua – jokainen viesti tulee School of Gamingin tiimille. Voit myös lähettää meille sähköpostia osoitteeseen <link>{email}</link>.",
         "placeholder": "Missä voimme auttaa?",
         "thankYou": "Kiitos – viestisi on perillä, ja on hienoa, että kirjoitit.",
         "failed": "Viestin lähettäminen epäonnistui. Yritä uudelleen.",
         "tooManyRequests": "Olet lähettänyt jo useita viestejä. Yritä hetken kuluttua uudelleen."
       },
       "gamer": {
-        "description": "Jäitkö jumiin tai keksitkö meille idean? Kirjoita se tähän, niin luemme sen.",
+        "description": "Jäitkö jumiin johonkin? Kirjoita meille tähän, niin autamme.",
         "replyNote": "Jos vastaamme, lähetämme sähköpostia vanhemmallesi.",
         "placeholder": "Missä tarvitset apua?",
         "thankYou": "Kiitos — saimme viestisi.",
@@ -1870,9 +2019,44 @@
     }
   },
   "gedu": {
+    "substitution": {
+      "cardEyebrow": "Tuuraus",
+      "cardOpenLabel": "{product} – tuuraamasi kerta",
+      "cardLockedLabel": "{product} – tuuraamasi kerta. Ryhmän työtila avautuu 48 tuntia ennen kerran alkua.",
+      "accessOpens": "Työtila avautuu {date} klo {time}",
+      "poolHeading": "Kerrat, jotka tarvitsevat tuuraajan",
+      "poolAllClear": "Yksikään kerta ei tarvitse juuri nyt tuuraajaa.",
+      "poolRemote": "Etänä",
+      "poolSiteUnknown": "Paikka varmistuu myöhemmin",
+      "poolRolePrimary": "Vastaava Gedu",
+      "poolRoleAssistant": "Avustava Gedu",
+      "poolFee": "{fee} / kerta",
+      "poolOfferAction": "Voin tuurata",
+      "poolWithdrawAction": "Peru tarjous",
+      "poolWithdrawPending": "Perutaan…",
+      "poolActionFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "pageTitle": "Tuuraukset",
+      "back": "Takaisin Omaan SOGiin",
+      "mineHeading": "Tuurauksesi",
+      "mineAllClear": "Sinulla ei ole tulevia tuurauksia.",
+      "fileAction": "Etkö pääse jollekin kerralle?",
+      "filePickTitle": "Mille kerralle et pääse?",
+      "filePickBody": "Valitse kerta, jolle et pääse. Syy ja viesti näkyvät vain ylläpitäjille.",
+      "fileAlreadyRequested": "Tuuraajaa on jo pyydetty",
+      "filePickWeekThis": "Tämä viikko",
+      "filePickWeekNext": "Ensi viikko",
+      "filePickWeekOf": "Viikko {date} alkaen",
+      "filePickShowLater": "Näytä myöhemmät kerrat",
+      "filePickGroupLabel": "Ryhmä",
+      "filePickAllGroups": "Kaikki ryhmät",
+      "fileFiled": "Tuuraajaa pyydetty: {product} {when}. Pyyntö näkyy nyt kyseisen kerran kortilla.",
+      "fileFiledLink": "Avaa ryhmän työtila",
+      "offerConfirmTitle": "Tarjoudutko tuuraajaksi?",
+      "offerConfirmBody": "Tarjoudut vetämään kerran {product} {when}. School of Gaming valitsee tuuraajan, ja voit perua tarjouksesi siihen asti, kun se hyväksytään. Hyväksynnän jälkeen kerta on Gedu-sopimuksesi nojalla sinun vastuullasi aivan kuten omat kertasi, etkä voi enää perua tarjoustasi: jos et sittenkään pääse paikalle, pyydä itsellesi tuuraaja samoin kuin mille tahansa kerrallesi. Ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua."
+    },
     "coverage": {
       "title": "Kattamasi alueet",
-      "remoteOnlyNote": "Käytetään sijaisen etsimiseen, kun toinen Gedu ei pääse pitämään kerhoaan. Jätä tyhjäksi, jos toimit vain etänä.",
+      "remoteOnlyNote": "Käytetään tuuraajan etsimiseen, kun toinen Gedu ei pääse pitämään kerhoaan. Jätä tyhjäksi, jos tuuraat vain etänä.",
       "selectedHeading": "Valitut ({count})",
       "noneSelected": "Ei valittuja alueita",
       "remove": "Poista {name}",
@@ -1968,7 +2152,38 @@
       "creationsAddedCount": "{added}/{total} lisätty",
       "creationsHint": "Kauden viimeinen kerta on valmis vasta, kun jokaisella on teos. Avaa nimi ja lisää teos.",
       "creationsMemberDone": "{name} – teos lisätty",
-      "creationsMemberMissing": "{name} – teos puuttuu"
+      "creationsMemberMissing": "{name} – teos puuttuu",
+      "staffingExpectedLabel": "Tämän kerran ohjaajat:",
+      "staffingNobodyExpected": "Tälle kerralle ei ole vielä ohjaajaa.",
+      "staffingWithRole": "{name} ({role})",
+      "staffingSubstitutionNeeded": "{name} tarvitsee tuuraajan.",
+      "staffingSubstitutedBy": "Tuuraajana {sub}, poissa {name}.",
+      "substitutionRolePrimary": "Vastaava Gedu",
+      "substitutionRoleAssistant": "Avustava Gedu",
+      "substitutionMenuLabel": "Lisää toimintoja tälle kerralle",
+      "substitutionRequestAction": "Tarvitsen tuuraajan",
+      "substitutionRequestDialogTitle": "En pääse tälle kerralle",
+      "substitutionRequestDialogBody": "Kerta järjestetään silti – toimisto etsii tilallesi tuuraajan. Syyn ja viestin näkevät vain ylläpitäjät.",
+      "substitutionReasonLabel": "Syy",
+      "substitutionReasonSick": "Sairaus",
+      "substitutionReasonOther": "Jokin muu",
+      "substitutionNoteLabel": "Viesti toimistolle",
+      "substitutionNotePlaceholder": "Mitä toimiston on hyvä tietää",
+      "substitutionNoteRemaining": "{count, plural, one {# merkki jäljellä} other {# merkkiä jäljellä}}",
+      "substitutionRequestConfirm": "Vahvista",
+      "substitutionRequestFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "substitutionRequestFailedAlreadyAsked": "Olet jo pyytänyt tuuraajaa tälle kerralle.",
+      "substitutionRequestFailedNotExpected": "Olet jo pyytänyt tuuraajaa tälle kerralle, tai sinua ei enää odoteta paikalle.",
+      "substitutionRequestFailedPastSession": "Tämän kerran päivä on jo mennyt.",
+      "substitutionRequestFailedNotScheduled": "Tämä kerta ei ole enää aikataulussa.",
+      "substitutionRequestStatusOpen": "Olet pyytänyt tuuraajaa tälle kerralle. Odotetaan tuuraajaa.",
+      "substitutionRequestStatusOffers": "{count, plural, one {# tarjous odottaa} other {# tarjousta odottaa}}",
+      "substitutionRequestStatusSubstituted": "{name} tuuraa sinua.",
+      "substitutionWithdrawAction": "Pääsenkin paikalle",
+      "substitutionWithdrawTitle": "Perutaanko ilmoitus?",
+      "substitutionWithdrawBody": "Ohjaat kerran taas itse, ja kaikki tuuraustarjoukset raukeavat.",
+      "substitutionWithdrawConfirm": "Peru ilmoitus",
+      "substitutionWithdrawFailed": "Tallennus epäonnistui. Yritä uudelleen."
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
@@ -2060,7 +2275,7 @@
       "items": {
         "certification": {
           "question": "Mitä hyväksyntä tarkoittaa, ja mitä en voi tehdä ennen sitä?",
-          "answer": "<p>Hyväksyntä tarkoittaa, että ylläpitäjä vahvistaa tilisi olevan valmis lasten kanssa työskentelyyn. Sitä edeltää kaksi asiaa: Gedu-sopimuksesi hyväksyminen ja lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen esittäminen alle kuusi kuukautta vanhana. Tilaat otteen itse Oikeusrekisterikeskuksesta. Emme säilytä siitä kopiota emmekä kirjaa siitä mitään – ainoastaan sen, että asianmukainen ote on näytetty ja milloin. Molempien tilanteen näet sopimussivultasi.</p><p>Ennen hyväksyntää sinua ei voi liittää ryhmään, ja Työkalut-osio pysyy suljettuna: et voi avata pikaäänihuonetta etkä nollata Minecraft Education -salasanoja. Et voi myöskään lähettää kertaraporttia perheille sähköpostitse etkä lisätä siihen kuvia.</p><p>Kaikki muu on jo auki: kirjautuminen, Oma SOG, profiilisi ja kattamasi alueet sekä sopimuksen lukeminen ja hyväksyminen. Apu ja palaute on käytettävissäsi riippumatta siitä, onko sinut hyväksytty – käytä yllä olevaa lomaketta, jos odotat ja haluat tietää, missä mennään.</p>"
+          "answer": "<p>Hyväksyntä tarkoittaa, että ylläpitäjä vahvistaa tilisi olevan valmis lasten kanssa työskentelyyn. Sitä edeltää kaksi asiaa: Gedu-sopimuksesi hyväksyminen ja lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen esittäminen alle kuusi kuukautta vanhana. Tilaat otteen itse Oikeusrekisterikeskuksesta. Emme säilytä siitä kopiota emmekä kirjaa siitä mitään – ainoastaan sen, että asianmukainen ote on näytetty ja milloin. Molempien tilanteen näet sopimussivultasi.</p><p>Ennen hyväksyntää sinua ei voi liittää ryhmään, ja Työkalut-osio pysyy suljettuna: et voi avata pikaäänihuonetta etkä nollata Minecraft Education -salasanoja. Et voi myöskään lähettää kertaraporttia perheille sähköpostitse etkä lisätä siihen kuvia.</p><p>Kaikki muu on jo auki: kirjautuminen, Oma SOG, profiilisi ja kattamasi alueet sekä sopimuksen lukeminen ja hyväksyminen. Apua saat riippumatta siitä, onko sinut hyväksytty – käytä yllä olevaa lomaketta, jos odotat ja haluat tietää, missä mennään.</p>"
         },
         "groupAssignment": {
           "question": "Miten minut liitetään ryhmään?",
@@ -2158,7 +2373,9 @@
       "shop": "Kauppa",
       "yty": "Yty",
       "about": "Tietoa",
-      "faq": "UKK"
+      "faq": "UKK",
+      "substitutions": "Tuuraukset",
+      "substitutionsPhone": "Tuuraukset"
     },
     "accountMenu": "Tilivalikko – {name}",
     "continueToAccount": "Jatka tilillesi",
@@ -2206,7 +2423,7 @@
       "typeClubs": "Kerhot",
       "typeCamps": "Leirit",
       "typeEvents": "Tapahtumat",
-      "subject": "Aihe",
+      "topic": "Aihe",
       "format": "Muoto",
       "formatOnline": "Verkossa",
       "formatInPerson": "Paikan päällä",
@@ -2597,6 +2814,7 @@
     "consumerClubs": "Kuluttajakerhot",
     "municipalityClubs": "Kuntakerhot",
     "municipalityInvoicing": "Kuntalaskutus",
+    "invoiceCustomers": "Laskutusasiakkaat",
     "camps": "Leirit",
     "events": "Tapahtumat",
     "sites": "Toimipisteet",
@@ -2607,7 +2825,8 @@
     "settings": "Asetukset",
     "tools": "Työkalut",
     "expandSidebar": "Laajenna sivupalkki",
-    "collapseSidebar": "Pienennä sivupalkki"
+    "collapseSidebar": "Pienennä sivupalkki",
+    "substitutions": "Tuuraukset"
   },
   "home": {
     "hero": {
@@ -3162,10 +3381,10 @@
       "ignore": "Jos et pyytänyt PIN-koodin nollausta, voit jättää tämän sähköpostin huomiotta. PIN-koodiasi ei muuteta.",
       "button": "Nollaa PIN-koodi"
     },
-    "feedback": {
-      "subject": "Apua tai palautetta käyttäjältä {displayName} ({role})",
-      "heading": "Uusi apu- tai palauteviesti",
-      "intro": "Joku on pyytänyt apua tai lähettänyt palautetta. Vastaa tähän viestiin, niin vastaus menee alla olevaan osoitteeseen.",
+    "helpRequest": {
+      "subject": "Avunpyyntö käyttäjältä {displayName} ({role})",
+      "heading": "Uusi avunpyyntö",
+      "intro": "Joku on pyytänyt apua. Vastaa tähän viestiin, niin vastaus menee alla olevaan osoitteeseen.",
       "from": "Lähettäjä",
       "role": "Rooli",
       "replyToLabel": "Vastausosoite",
@@ -3490,7 +3709,8 @@
           "Roblox – vastaanottaa lapsesi Roblox-tilitunnisteen, jotta voimme varmistaa tilin, ja selaimesi hakee hänen hahmokuvansa suoraan Robloxilta.",
           "Mojang (Microsoft) – vastaanottaa lapsesi Minecraft-käyttäjätunnuksen, jotta voimme varmistaa tilin.",
           "mc-heads.net – selaimesi hakee kuvan lapsesi Minecraft-hahmosta suoraan siltä hänen Minecraft-käyttäjätunnuksensa perusteella, joka on pelissä julkinen. Se on ilmainen julkinen palvelu eikä meidän alihankkijamme, ja se näkee vain tämän pyynnön.",
-          "Meta (Facebook ja Instagram) – näkee selaimesi Meta-pikselin ja palvelimiltamme tulevien raporttien kautta, miten käytät sivustoamme, jotta voimme näyttää sinulle mainoksiamme siellä ja mitata, miten ne toimivat. Vain jos sallit markkinointievästeet."
+          "Meta (Facebook ja Instagram) – näkee selaimesi Meta-pikselin ja palvelimiltamme tulevien raporttien kautta, miten käytät sivustoamme, jotta voimme näyttää sinulle mainoksiamme siellä ja mitata, miten ne toimivat. Vain jos sallit markkinointievästeet.",
+          "Google (Analytics ja Ads) – näkee selaimeesi ladattavan tunnistehallinnan kautta, millä julkisilla sivuillamme käyt ja mihin olet ilmoittautunut, jotta voimme mitata mainontamme tuloksia ja näyttää sinulle mainoksiamme. Vain jos sallit markkinointievästeet – ei analytiikkaa: analytiikka, jonka voit ottaa käyttöön, on yksin Vercelin."
         ]
       },
       "partners": {
@@ -3522,7 +3742,7 @@
         ],
         "bullets": [
           "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit, mittaa sivujen latausnopeuden ja vastaanottaa muutamia nimettömiä tapahtumia siitä, miten sivustoa käytetään: miten oma My SOG avataan ja milloin kieltä vaihdetaan. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
-          "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Jos luot tilin käynnin aikana, myös sen linkin kampanjatunniste, jonka kautta saavuit, tallennetaan tilille. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet ja sen pienen tietomäärän, jota Metan skripti säilyttää selaimessasi niiden rinnalla, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
+          "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta ja Google – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Googlen tunnisteet tulevat selaimeesi tunnistehallinnan kautta, jonka ansiosta me ja kampanjoitamme hoitava kumppani voimme lisätä tai poistaa alustan muuttamatta sivustoa; kulloinkin mukana olevat alustat on nimetty yllä olevassa luettelossa, ja luettelossa on päivämäärä. Jos luot tilin käynnin aikana, myös sen linkin kampanjatunniste, jonka kautta saavuit, tallennetaan tilille. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet ja sen pienen tietomäärän, jota nämä skriptit säilyttävät selaimessasi niiden rinnalla, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
         ]
       },
       "voice": {

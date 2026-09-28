@@ -12,8 +12,8 @@ import {
  *
  * Admin-only comp-enrollment: drops a participant directly into a product with
  * status='active', bypassing payment, seat caps, registration windows, and
- * effective-status gates. The participant is a child or — since 00173, on a
- * for-parents product — an adult taking a seat on their own account.
+ * effective-status gates. The participant is a child or — on a for-parents
+ * product — an adult taking a seat on their own account.
  *
  * Model C. `participations` is grant-locked — `authenticated` holds SELECT and
  * nothing else, because a stray write there is a free seat — so this runs on the

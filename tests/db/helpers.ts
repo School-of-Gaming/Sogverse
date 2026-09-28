@@ -175,7 +175,7 @@ export async function callServiceRoleRpcResult(
  * the generated types forbid, and that prohibition is frequently the very
  * guarantee under test.
  *
- * An enum column is the clearest case. Since 00199 the compiler will not let
+ * An enum column is the clearest case. The compiler will not let
  * `profiles.spoken_languages` be written with a language we do not offer — but
  * `authenticated` holds a column-level UPDATE grant on it, so a hand-written
  * request is a real path a real caller has, and proving the *database* refuses
