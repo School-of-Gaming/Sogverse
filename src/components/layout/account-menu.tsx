@@ -12,6 +12,7 @@ import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  IdCard,
   LayoutDashboard,
   Loader2,
   LogOut,
@@ -370,8 +371,20 @@ export function AccountMenu({
   const isOnInvoicing =
     pathname === ROUTES.gedu.invoicing ||
     pathname.startsWith(ROUTES.gedu.invoicing + "/");
+  /**
+   * Office staff and Gedus have a public team profile, edited on a page of its
+   * own under settings; it is a row here because it is a page a person comes
+   * back to, not a setting they change once. Decided by role, before the panel
+   * opens, like every fixed row.
+   */
+  const carriesTeamProfile = role === "admin" || role === "gedu";
+  const isOnTeamProfile = pathname === ROUTES.settingsTeamProfile;
+  // The team profile page lives under settings but has its own row, so only
+  // one of the two marks itself current.
   const isOnSettings =
-    pathname === ROUTES.settings || pathname.startsWith(ROUTES.settings + "/");
+    (pathname === ROUTES.settings ||
+      pathname.startsWith(ROUTES.settings + "/")) &&
+    !isOnTeamProfile;
   // What the dashboard is called to the person using it — "Dashboard" for the
   // admin, whose panel is genuinely an admin panel, "My SOG" for everyone else.
   const dashboardLabel = role === "admin" ? c("dashboard") : d("pageTitle");
@@ -695,6 +708,17 @@ export function AccountMenu({
               )}
 
               <div role="separator" className="my-1 h-px bg-border" />
+
+              {carriesTeamProfile && (
+                <MenuLinkRow
+                  href={ROUTES.settingsTeamProfile}
+                  active={isOnTeamProfile}
+                  disabled={busy}
+                  onNavigate={() => setOpen(false)}
+                  icon={<IdCard className="h-4 w-4 shrink-0" />}
+                  label={t("teamProfile")}
+                />
+              )}
 
               <MenuLinkRow
                 href={ROUTES.settings}

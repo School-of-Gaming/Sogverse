@@ -68,7 +68,9 @@
       "seatOffer": "Proposition de place",
       "geduSubstitutions": "Remplacements",
       "geduInvoicing": "Facturation",
-      "adminSubstitutions": "Remplacements"
+      "adminSubstitutions": "Remplacements",
+      "teamProfile": "Votre profil",
+      "adminTeamProfile": "Profil d’équipe"
     },
     "descriptions": {
       "signIn": "Connectez-vous à votre compte School of Gaming pour suivre les séances à venir de vos joueurs, gérer les inscriptions et tenir vos informations à jour.",
@@ -2469,7 +2471,8 @@
     "accountMenu": "Menu du compte – {name}",
     "continueToAccount": "Continuer vers votre compte",
     "switchTo": "Changer de profil",
-    "invoicing": "Facturation"
+    "invoicing": "Facturation",
+    "teamProfile": "Votre profil"
   },
   "schools": {
     "hero": {
@@ -3183,6 +3186,11 @@
       "title": "Photos et vidéos",
       "granted": "Ton parent a autorisé l’utilisation des photos et vidéos où tu apparais dans les comptes rendus de séance, ainsi que par School of Gaming, Lynx Educate et Roblox. Un Gedu te demandera quand même ton accord avant de te prendre en photo.",
       "notGranted": "Ton parent n’a pas autorisé l’utilisation des photos et vidéos où tu apparais. Un Gedu te gardera donc en dehors des photos de séance. Seul ton parent peut changer cela."
+    },
+    "teamProfile": {
+      "title": "Votre profil",
+      "description": "Votre profil public sur le site de School of Gaming : une photo de vous et quelques mots sur qui vous êtes.",
+      "edit": "Modifier votre profil"
     }
   },
   "tools": {
@@ -5033,6 +5041,55 @@
       },
       "preview": {
         "heading": "Aperçu"
+      },
+      "errors": {
+        "save": "Impossible d’enregistrer le profil. Veuillez réessayer.",
+        "incomplete": "Le profil doit rester complet tant qu’il est marqué comme prêt à être public. Complétez ce qui manque et enregistrez à nouveau.",
+        "photoUpload": "La photo n’a pas été envoyée. Choisissez-la à nouveau, puis enregistrez."
+      }
+    },
+    "admin": {
+      "status": {
+        "privateTitle": "Privé",
+        "privateBody": "{name} n’a pas marqué le profil comme prêt à être public, il n’est donc pas sur le site.",
+        "waitingTitle": "Prêt, en attente d’approbation",
+        "waitingBody": "{name} a marqué le profil comme prêt à être public. Il apparaîtra sur le site de School of Gaming dès qu’un administrateur l’aura approuvé.",
+        "liveTitle": "Public",
+        "liveBody": "Tout le monde peut voir le profil de {name} sur le site de School of Gaming. Les modifications enregistrées sont en ligne immédiatement.",
+        "takenOffTitle": "Retiré",
+        "takenOffBody": "Un administrateur a retiré le profil de {name} du site. {name} l’a toujours marqué comme prêt, donc une nouvelle approbation le remet en ligne immédiatement.",
+        "shownTitle": "Public",
+        "shownBody": "Tout le monde peut voir le profil de {name} sur le site de School of Gaming.",
+        "hiddenTitle": "Privé",
+        "hiddenBody": "{name} n’a pas choisi d’afficher le profil publiquement, il n’est donc pas sur le site."
+      },
+      "edit": {
+        "back": "Retour à {name}",
+        "pageTitle": "Profil de {name}",
+        "complete": "Le profil contient tout ce qu’il faut pour être public.",
+        "mustStayComplete": "{name} a marqué ce profil comme prêt à être public : il doit donc rester complet, et l’enregistrement est désactivé tant qu’il ne l’est pas. Complétez ce qui manque.",
+        "missing": {
+          "photo": "Il lui faut une photo avant de pouvoir être public.",
+          "text": "Il lui faut « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée avant de pouvoir être public.",
+          "both": "Il lui faut une photo, ainsi que « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée, avant de pouvoir être public."
+        }
+      },
+      "userPage": {
+        "heading": "Profil d’équipe",
+        "nothingSaved": "{name} n’a pas encore rédigé de profil d’équipe.",
+        "photoAlt": "Photo de profil de {name}",
+        "nickname": "« {nickname} »",
+        "writtenIn": "Rédigé en {languages}",
+        "nothingWritten": "Rien de rédigé pour l’instant",
+        "edit": "Modifier le profil",
+        "approve": "Approuver",
+        "approveAgain": "Approuver à nouveau",
+        "takeOff": "Retirer",
+        "approvalError": "Impossible de mettre à jour l’approbation du profil. Veuillez réessayer.",
+        "takeOffConfirm": {
+          "title": "Retirer le profil de {name} du site ?",
+          "body": "Il cesse d’être public immédiatement et reste retiré jusqu’à ce qu’un administrateur l’approuve à nouveau, quoi que fasse {name}."
+        }
       }
     }
   }

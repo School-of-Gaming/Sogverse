@@ -1,14 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  StatusLine,
-} from "@/components/ui/alert";
+import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Link } from "@/i18n/navigation";
@@ -31,6 +26,11 @@ import {
   type TeamProfileGap,
 } from "@/components/team/team-profile-form";
 import { TeamProfileBody } from "@/components/team/team-profile-body";
+import {
+  TeamProfileStatusPanel,
+  teamProfileStatus,
+  type TeamProfileStatus,
+} from "@/components/team/team-profile-status";
 import type {
   AdminTeamProfile,
   GeduTeamProfile,
@@ -54,45 +54,41 @@ export interface TeamProfileActions {
   onSave: (content: TeamProfileContent, on: boolean) => void;
 }
 
-export type TeamProfileEditorProps =
-  | {
-      role: "gedu";
-      /** The saved profile — what the form opens on. */
-      profile: GeduTeamProfile;
-      /** The Gedu's saved checkbox: their consent to the profile being public. */
-      ready: boolean;
-      approval: GeduTeamProfileApproval;
-      actions: TeamProfileActions;
-    }
-  | {
-      role: "admin";
-      profile: AdminTeamProfile;
-      /** Office staff are trusted, so their one checkbox is the whole decision. */
-      shown: boolean;
-      actions: TeamProfileActions;
-    };
-
-/** The combined saved state, as the person is told it. */
-type ProfileStatus =
-  | "private"
-  | "waiting"
-  | "live"
-  | "takenOff"
-  | "shown"
-  | "hidden";
-
-function profileStatus(props: TeamProfileEditorProps): ProfileStatus {
-  if (props.role === "admin") return props.shown ? "shown" : "hidden";
-  if (!props.ready) return "private";
-  switch (props.approval) {
-    case "pending":
-      return "waiting";
-    case "approved":
-      return "live";
-    case "withdrawn":
-      return "takenOff";
-  }
+/** What the route tells the page about a save it is making. */
+interface TeamProfileSaveState {
+  /** A save is in flight: Save and Discard hold still until it settles. */
+  saving?: boolean;
+  /** Why the last save failed, in the reader's words, or nothing. */
+  saveError?: string | null;
 }
+
+export type TeamProfileEditorProps = TeamProfileSaveState &
+  (
+    | {
+        role: "gedu";
+        /** The saved profile — what the form opens on. */
+        profile: GeduTeamProfile;
+        /** The Gedu's saved checkbox: their consent to the profile being public. */
+        ready: boolean;
+        approval: GeduTeamProfileApproval;
+        /**
+         * An admin is editing this Gedu's content from the admin panel. The
+         * checkbox is the Gedu's consent and never the admin's to give, so it
+         * is shown as a status rather than a control, `onSave` is handed the
+         * saved value unchanged, and the page speaks to the admin about the
+         * Gedu and leads back to the Gedu's user page.
+         */
+        editedByAdmin?: boolean;
+        actions: TeamProfileActions;
+      }
+    | {
+        role: "admin";
+        profile: AdminTeamProfile;
+        /** Office staff are trusted, so their one checkbox is the whole decision. */
+        shown: boolean;
+        actions: TeamProfileActions;
+      }
+  );
 
 /**
  * The page a person edits their own public profile on — office staff and
@@ -124,7 +120,10 @@ function profileStatus(props: TeamProfileEditorProps): ProfileStatus {
  */
 export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
   const t = useTranslations("team.edit");
+  const ta = useTranslations("team.admin");
   const uiLocale = resolveLocale(useLocale());
+  const byAdmin = props.role === "gedu" && props.editedByAdmin === true;
+  const saving = props.saving ?? false;
   const savedOn = props.role === "gedu" ? props.ready : props.shown;
   const [form, setForm] = useState<TeamProfileForm>(() =>
     formFromProfile(props.profile, uiLocale),
@@ -135,7 +134,10 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
   const dirty =
     on !== savedOn || !sameContent(content, contentFromProfile(props.profile));
   const gap = teamProfileGap(content);
-  const status = profileStatus(props);
+  const status = teamProfileStatus(props);
+  // An admin page carries the sidebar, so the two columns wait for the width
+  // that leaves room for both.
+  const wide = props.role === "admin" || byAdmin ? "xl" : "lg";
 
   const trackUrl = useOwnedObjectUrls(
     form.photo?.src,
@@ -144,24 +146,29 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-24">
-      {/* The page's home is settings, beside the account facts the profile
-          shows but does not edit. */}
+      {/* A person's own page's home is settings, beside the account facts
+          the profile shows but does not edit; an admin editing a Gedu came
+          from that Gedu's user page. */}
       <Link
-        href={ROUTES.settings}
+        href={byAdmin ? ROUTES.admin.user(props.profile.id) : ROUTES.settings}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
-        {t("back")}
+        {byAdmin
+          ? ta("edit.back", { name: props.profile.firstName })
+          : t("back")}
       </Link>
 
-      <h1 className="text-3xl font-bold tracking-tight">{t("pageTitle")}</h1>
+      <h1 className="text-3xl font-bold tracking-tight">
+        {byAdmin
+          ? ta("edit.pageTitle", { name: props.profile.firstName })
+          : t("pageTitle")}
+      </h1>
 
       <div
         className={cn(
           "grid gap-8",
-          // An admin page carries the sidebar, so the two columns wait for the
-          // width that leaves room for both.
-          props.role === "gedu"
+          wide === "lg"
             ? "lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start"
             : "xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] xl:items-start",
         )}
@@ -182,18 +189,27 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
           />
           <TeamProfileWritingSection form={form} update={setForm} />
 
-          <PublicSection
-            role={props.role}
-            status={status}
-            on={on}
-            gap={gap}
-            onChange={setOn}
-          />
+          {byAdmin ? (
+            <AdminPublicSection
+              name={props.profile.firstName}
+              status={status}
+              ready={savedOn}
+              gap={gap}
+            />
+          ) : (
+            <PublicSection
+              role={props.role}
+              status={status}
+              on={on}
+              gap={gap}
+              onChange={setOn}
+            />
+          )}
 
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
-              disabled={!dirty}
+              disabled={!dirty || saving}
               onClick={() => {
                 setForm(formFromProfile(props.profile, uiLocale));
                 setOn(savedOn);
@@ -202,18 +218,26 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
               {t("actions.discard")}
             </Button>
             <Button
-              disabled={!dirty || (on && gap !== null)}
+              disabled={!dirty || saving || (on && gap !== null)}
               onClick={() => props.actions.onSave(content, on)}
             >
+              {saving && <Loader2 className="animate-spin" aria-hidden />}
               {t("actions.save")}
             </Button>
           </div>
+          {/* Last in the column, so a failed save adds a line below everything
+              the reader was looking at rather than moving any of it. */}
+          {props.saveError && (
+            <StatusLine status="destructive" role="alert">
+              {props.saveError}
+            </StatusLine>
+          )}
         </div>
 
         <TeamProfilePreview
           profile={profileWithContent(props.profile, content)}
           readerLocale={form.activeLocale}
-          wide={props.role === "gedu" ? "lg" : "xl"}
+          wide={wide}
         />
       </div>
     </div>
@@ -252,25 +276,11 @@ function useOwnedObjectUrls(
   };
 }
 
-const STATUS_VARIANT: Record<
-  ProfileStatus,
-  "default" | "info" | "success" | "warning"
-> = {
-  private: "default",
-  waiting: "info",
-  live: "success",
-  takenOff: "warning",
-  shown: "success",
-  hidden: "default",
-};
-
 /**
  * Everything about the profile being public, in one section.
  *
- * **The status names the saved state**, the combined state of the checkbox as
- * last saved and, for a Gedu, an admin's approval, so a Gedu never has to work
- * out from two facts which of four things is true. It is a state message, so
- * it is the status panel even inside this card.
+ * **The status names the saved state** (`teamProfileStatus`). It is a state
+ * message, so it is the status panel even inside this card.
  *
  * **The checkbox is the form's value**, and the line under it is always there
  * — the reason while it is off and cannot be ticked, a confirmation once the
@@ -288,7 +298,7 @@ function PublicSection({
   onChange,
 }: {
   role: "gedu" | "admin";
-  status: ProfileStatus;
+  status: TeamProfileStatus;
   on: boolean;
   gap: TeamProfileGap;
   onChange: (next: boolean) => void;
@@ -296,12 +306,11 @@ function PublicSection({
   const t = useTranslations("team.edit");
   return (
     <FormSection heading={t("switch.heading")}>
-      <Alert variant={STATUS_VARIANT[status]}>
-        <div className="min-w-0 space-y-1.5">
-          <AlertTitle>{t(`status.${status}Title`)}</AlertTitle>
-          <AlertDescription>{t(`status.${status}Body`)}</AlertDescription>
-        </div>
-      </Alert>
+      <TeamProfileStatusPanel
+        status={status}
+        title={t(`status.${status}Title`)}
+        body={t(`status.${status}Body`)}
+      />
       <div className="space-y-3">
         <CheckboxRow
           checked={on}
@@ -322,6 +331,53 @@ function PublicSection({
           </StatusLine>
         )}
       </div>
+    </FormSection>
+  );
+}
+
+/**
+ * The same section as an admin editing a Gedu meets it: the status in words
+ * addressed to the admin, and no checkbox, because it is the Gedu's consent.
+ *
+ * The line under the status is always there, as it is under the Gedu's own
+ * checkbox, so filling fields in never moves the save row: a confirmation once
+ * the profile is complete, a warning while the Gedu has it marked ready and
+ * something has been emptied (the save then refuses, as the Gedu's own does),
+ * and otherwise what is still missing before it can go up.
+ */
+function AdminPublicSection({
+  name,
+  status,
+  ready,
+  gap,
+}: {
+  name: string;
+  status: TeamProfileStatus;
+  ready: boolean;
+  gap: TeamProfileGap;
+}) {
+  const t = useTranslations("team.edit");
+  const ta = useTranslations("team.admin");
+  return (
+    <FormSection heading={t("switch.heading")}>
+      <TeamProfileStatusPanel
+        status={status}
+        title={ta(`status.${status}Title`)}
+        body={ta(`status.${status}Body`, { name })}
+      />
+      {gap === null ? (
+        <StatusLine status="success" muted>
+          {ta("edit.complete")}
+        </StatusLine>
+      ) : ready ? (
+        <StatusLine status="warning">
+          {ta("edit.mustStayComplete", { name })}
+        </StatusLine>
+      ) : (
+        <StatusLine status="info" muted>
+          {ta(`edit.missing.${gap}`)}
+        </StatusLine>
+      )}
     </FormSection>
   );
 }

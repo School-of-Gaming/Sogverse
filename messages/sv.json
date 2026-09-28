@@ -68,7 +68,9 @@
       "seatOffer": "Platserbjudande",
       "geduSubstitutions": "Vikariat",
       "geduInvoicing": "Fakturering",
-      "adminSubstitutions": "Vikariat"
+      "adminSubstitutions": "Vikariat",
+      "teamProfile": "Din profil",
+      "adminTeamProfile": "Teamprofil"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -2469,7 +2471,8 @@
     "accountMenu": "Kontomeny – {name}",
     "continueToAccount": "Fortsätt till ditt konto",
     "switchTo": "Byt profil",
-    "invoicing": "Fakturering"
+    "invoicing": "Fakturering",
+    "teamProfile": "Din profil"
   },
   "schools": {
     "hero": {
@@ -3183,6 +3186,11 @@
       "title": "Foton och videor",
       "granted": "Din förälder har sagt att foton och videor på dig får användas i rapporter från tillfällena och av School of Gaming, Lynx Educate och Roblox. En Gedu frågar dig ändå innan de tar ett foto på dig.",
       "notGranted": "Din förälder har sagt att foton och videor på dig inte får användas, så en Gedu håller dig utanför tillfällenas foton. Bara din förälder kan ändra det här."
+    },
+    "teamProfile": {
+      "title": "Din profil",
+      "description": "Din offentliga profil på School of Gamings webbplats: ett foto av dig och några ord om vem du är.",
+      "edit": "Redigera din profil"
     }
   },
   "tools": {
@@ -5033,6 +5041,55 @@
       },
       "preview": {
         "heading": "Förhandsvisning"
+      },
+      "errors": {
+        "save": "Det gick inte att spara profilen. Försök igen.",
+        "incomplete": "Profilen måste vara komplett så länge den är markerad som klar att visas offentligt. Fyll i det som saknas och spara igen.",
+        "photoUpload": "Fotot laddades inte upp. Välj det igen och spara sedan."
+      }
+    },
+    "admin": {
+      "status": {
+        "privateTitle": "Privat",
+        "privateBody": "{name} har inte markerat profilen som klar att visas offentligt, så den finns inte på webbplatsen.",
+        "waitingTitle": "Klar, väntar på godkännande",
+        "waitingBody": "{name} har markerat profilen som klar att visas offentligt. Den kommer upp på School of Gamings webbplats när en administratör godkänner den.",
+        "liveTitle": "Offentlig",
+        "liveBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt.",
+        "takenOffTitle": "Nedtagen",
+        "takenOffBody": "En administratör har tagit ner profilen för {name} från webbplatsen. {name} har den fortfarande markerad som klar, så ett nytt godkännande sätter upp den direkt igen.",
+        "shownTitle": "Offentlig",
+        "shownBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats.",
+        "hiddenTitle": "Privat",
+        "hiddenBody": "{name} har inte valt att visa profilen offentligt, så den finns inte på webbplatsen."
+      },
+      "edit": {
+        "back": "Tillbaka till {name}",
+        "pageTitle": "Profil för {name}",
+        "complete": "Profilen har allt den behöver för att visas offentligt.",
+        "mustStayComplete": "{name} har markerat profilen som klar att visas offentligt, så den måste förbli komplett och det går inte att spara förrän den är det. Fyll i det som saknas.",
+        "missing": {
+          "photo": "Den behöver ett foto innan den kan visas offentligt.",
+          "text": "Den behöver ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits innan den kan visas offentligt.",
+          "both": "Den behöver ett foto, och ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits, innan den kan visas offentligt."
+        }
+      },
+      "userPage": {
+        "heading": "Teamprofil",
+        "nothingSaved": "{name} har inte skrivit någon teamprofil än.",
+        "photoAlt": "Profilfoto för {name}",
+        "nickname": "”{nickname}”",
+        "writtenIn": "Skriven på {languages}",
+        "nothingWritten": "Inget skrivet än",
+        "edit": "Redigera profil",
+        "approve": "Godkänn",
+        "approveAgain": "Godkänn igen",
+        "takeOff": "Ta ner",
+        "approvalError": "Det gick inte att uppdatera profilens godkännande. Försök igen.",
+        "takeOffConfirm": {
+          "title": "Ta ner profilen för {name} från webbplatsen?",
+          "body": "Den slutar vara offentlig direkt och förblir nedtagen tills en administratör godkänner den igen, vad {name} än gör."
+        }
       }
     }
   }

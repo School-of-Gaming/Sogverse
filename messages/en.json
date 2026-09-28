@@ -68,7 +68,9 @@
       "seatOffer": "Seat offer",
       "geduSubstitutions": "Substitutions",
       "geduInvoicing": "Invoicing",
-      "adminSubstitutions": "Substitutions"
+      "adminSubstitutions": "Substitutions",
+      "teamProfile": "Your profile",
+      "adminTeamProfile": "Team profile"
     },
     "descriptions": {
       "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
@@ -2469,7 +2471,8 @@
     "accountMenu": "Account menu – {name}",
     "continueToAccount": "Continue to your account",
     "switchTo": "Switch to",
-    "invoicing": "Invoicing"
+    "invoicing": "Invoicing",
+    "teamProfile": "Your profile"
   },
   "schools": {
     "hero": {
@@ -3870,6 +3873,11 @@
       "title": "Photos and videos",
       "granted": "Your parent has said photos and videos of you may be included in session reports and used by School of Gaming, Lynx Educate and Roblox. A Gedu will still ask you before taking your photo.",
       "notGranted": "Your parent has said photos and videos of you are not to be used, so a Gedu will keep you out of session photos. Only your parent can change this."
+    },
+    "teamProfile": {
+      "title": "Your profile",
+      "description": "Your public profile on School of Gaming’s website: a photo of you and a few words about who you are.",
+      "edit": "Edit your profile"
     }
   },
   "tools": {
@@ -5033,6 +5041,55 @@
       },
       "preview": {
         "heading": "Preview"
+      },
+      "errors": {
+        "save": "Couldn’t save the profile. Please try again.",
+        "incomplete": "The profile has to be complete while it is marked ready to be public. Fill in what is missing and save again.",
+        "photoUpload": "The photo didn’t upload. Choose it again, then save."
+      }
+    },
+    "admin": {
+      "status": {
+        "privateTitle": "Private",
+        "privateBody": "{name} hasn’t marked the profile ready to be public, so it isn’t on the website.",
+        "waitingTitle": "Ready, waiting for approval",
+        "waitingBody": "{name} has marked the profile ready to be public. It goes up on School of Gaming’s website once an admin approves it.",
+        "liveTitle": "Public",
+        "liveBody": "Anyone can see {name}’s profile on School of Gaming’s website. Changes saved to it go live straight away.",
+        "takenOffTitle": "Taken off",
+        "takenOffBody": "An admin has taken {name}’s profile off the website. {name} still has it marked ready, so approving it again puts it straight back up.",
+        "shownTitle": "Public",
+        "shownBody": "Anyone can see {name}’s profile on School of Gaming’s website.",
+        "hiddenTitle": "Private",
+        "hiddenBody": "{name} hasn’t chosen to show the profile publicly, so it isn’t on the website."
+      },
+      "edit": {
+        "back": "Back to {name}",
+        "pageTitle": "{name}’s profile",
+        "complete": "The profile has everything it needs to go public.",
+        "mustStayComplete": "{name} has marked this profile ready to be public, so it has to stay complete and saving is off until it is. Fill in what is missing.",
+        "missing": {
+          "photo": "It needs a photo before it can go public.",
+          "text": "It needs “Introduce yourself in one line” and “About me” in every language written before it can go public.",
+          "both": "It needs a photo, and “Introduce yourself in one line” and “About me” in every language written, before it can go public."
+        }
+      },
+      "userPage": {
+        "heading": "Team profile",
+        "nothingSaved": "{name} hasn’t written a team profile yet.",
+        "photoAlt": "{name}’s profile photo",
+        "nickname": "“{nickname}”",
+        "writtenIn": "Written in {languages}",
+        "nothingWritten": "Nothing written yet",
+        "edit": "Edit profile",
+        "approve": "Approve",
+        "approveAgain": "Approve again",
+        "takeOff": "Take off",
+        "approvalError": "Couldn’t update the profile’s approval. Please try again.",
+        "takeOffConfirm": {
+          "title": "Take {name}’s profile off the website?",
+          "body": "It stops being public straight away, and stays off until an admin approves it again, whatever {name} does."
+        }
       }
     }
   }

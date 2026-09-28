@@ -7,8 +7,9 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 /**
  * The one remote host the image optimizer is allowed to fetch from: this
- * deployment's own Supabase Storage, and only the public buckets named below
- * inside it. **One pattern per bucket** — `remotePatterns` matches on the
+ * deployment's own Supabase Storage, and only the buckets named below inside
+ * it — a public bucket by its public path, a private one by its signed path.
+ * **One pattern per bucket** — `remotePatterns` matches on the
  * pathname, so a bucket that is not listed here is not optimizable, which is
  * the point: the host is shared, the permission is not.
  *
@@ -33,7 +34,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
  * `.env.local`, and the rich seed puts a picture on every product, so the flag
  * is set — see `supabaseIsLocal` below for the one condition under which.
  */
-function bucketPattern(bucket: string) {
+function bucketPattern(bucket: string, access: "public" | "sign" = "public") {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!base) {
     throw new Error(
@@ -46,7 +47,7 @@ function bucketPattern(bucket: string) {
     protocol: protocol.replace(/:$/, "") as "http" | "https",
     hostname,
     port,
-    pathname: `/storage/v1/object/public/${bucket}/**`,
+    pathname: `/storage/v1/object/${access}/${bucket}/**`,
   };
 }
 
@@ -134,6 +135,10 @@ const nextConfig: NextConfig = {
       // show five of them, unpaged, and serving ~300 KB masters into 200 px
       // thumbnails is the real delivery cost of the feature.
       bucketPattern("session-images"),
+      // Team profile photos. The bucket is private, so a photo is only ever
+      // shown through a short-lived signed URL, and the pattern is that
+      // signed path rather than a public one.
+      bucketPattern("team-photos", "sign"),
     ],
     // WebP only — AVIF was weighed and rejected (owner decision, 2026-08-18).
     // AVIF saves a further ~20–30% over WebP but its encode is far slower, and

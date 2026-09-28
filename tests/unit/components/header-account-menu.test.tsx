@@ -116,6 +116,7 @@ const ABOUT = messages.header.nav.about;
 /** The gedu's own invoicing month — a fixed row only their menu carries. */
 const INVOICING = messages.header.invoicing;
 const SETTINGS = messages.common.settings;
+const TEAM_PROFILE = messages.header.teamProfile;
 const SIGN_OUT = messages.common.signOut;
 const PARENT_ROLE = messages.common.roleParent;
 const SWITCH_TO = messages.header.switchTo;
@@ -420,10 +421,17 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
     renderMenu(GEDU);
     openMenu();
 
-    // Invoicing is the gedu's own account destination; the About row between
-    // it and Settings is the header's doing, not a household one — see the
-    // rehoused-nav-row cases below.
-    expect(rowTexts()).toEqual([MY_SOG, INVOICING, ABOUT, SETTINGS, SIGN_OUT]);
+    // Invoicing is the gedu's own account destination; the About row after it
+    // is the header's doing, and the team profile row a role one, not a
+    // household one — see their cases below.
+    expect(rowTexts()).toEqual([
+      MY_SOG,
+      INVOICING,
+      ABOUT,
+      TEAM_PROFILE,
+      SETTINGS,
+      SIGN_OUT,
+    ]);
     // /api/family/list is gated to customers and gamers; asking would 403 on
     // every navigation.
     expect(mockUseFamily).toHaveBeenCalledWith({ enabled: false });
@@ -446,8 +454,41 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
     renderMenu({ userId: IDS.gedu, role: "admin", firstName: "Kyle" });
     openMenu();
 
-    expect(rowTexts()).toEqual([messages.common.dashboard, SETTINGS, SIGN_OUT]);
+    expect(rowTexts()).toEqual([
+      messages.common.dashboard,
+      TEAM_PROFILE,
+      SETTINGS,
+      SIGN_OUT,
+    ]);
   });
+});
+
+/**
+ * Office staff and Gedus have a public team profile, and the menu takes them
+ * to it; the roles without one never see the row.
+ */
+describe("AccountMenu — the team profile row", () => {
+  it.each([["admin"], ["gedu"]] as const)(
+    "leads a %s to their own profile, just above Settings",
+    (role) => {
+      renderMenu({ userId: IDS.gedu, role, firstName: "Kyle" });
+      openMenu();
+
+      const texts = rowTexts();
+      expect(texts.indexOf(TEAM_PROFILE)).toBe(texts.indexOf(SETTINGS) - 1);
+      expect(row(TEAM_PROFILE).getAttribute("href")).toBe("/settings/team-profile");
+    },
+  );
+
+  it.each([["customer"], ["gamer"]] as const)(
+    "is absent for a %s, who has no team profile",
+    (role) => {
+      renderMenu({ userId: IDS.parent, role, firstName: "Riikka" });
+      openMenu();
+
+      expect(rowTexts()).not.toContain(TEAM_PROFILE);
+    },
+  );
 });
 
 /**
@@ -465,7 +506,14 @@ describe("AccountMenu — the rehoused About row", () => {
     renderMenu(GEDU);
     openMenu();
 
-    expect(rowTexts()).toEqual([MY_SOG, INVOICING, ABOUT, SETTINGS, SIGN_OUT]);
+    expect(rowTexts()).toEqual([
+      MY_SOG,
+      INVOICING,
+      ABOUT,
+      TEAM_PROFILE,
+      SETTINGS,
+      SIGN_OUT,
+    ]);
     // From `sm` up it is back on the strip, and two ways to one page in one
     // chrome is one too many.
     expect(aboutRow().className).toContain("sm:hidden");
@@ -484,7 +532,14 @@ describe("AccountMenu — the rehoused About row", () => {
     renderMenu(GEDU);
     openMenu();
 
-    for (const text of [MY_SOG, INVOICING, ABOUT, SETTINGS, SIGN_OUT]) {
+    for (const text of [
+      MY_SOG,
+      INVOICING,
+      ABOUT,
+      TEAM_PROFILE,
+      SETTINGS,
+      SIGN_OUT,
+    ]) {
       press("ArrowDown");
       expect(document.activeElement).toBe(row(text));
     }
@@ -531,6 +586,7 @@ describe("AccountMenu — the rehoused About row", () => {
     expect(rowTexts()).toEqual([
       messages.common.dashboard,
       ABOUT,
+      TEAM_PROFILE,
       SETTINGS,
       SIGN_OUT,
     ]);

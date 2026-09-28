@@ -551,6 +551,13 @@ export const ROUTES = {
   attributions: "/attributions",
   settings: "/settings",
   /**
+   * Where an admin or a Gedu edits their own public team profile. Under
+   * settings, beside the account facts the profile shows but does not edit;
+   * the proxy lets every signed-in role into `/settings`, so the page itself
+   * answers not-found to any other role.
+   */
+  settingsTeamProfile: "/settings/team-profile",
+  /**
    * Voice rooms. Two shapes share the `/voice` prefix:
    * - `forCode(code)` → `/voice/<code>` — public on-the-fly instant rooms,
    *   share-via-link by design (see src/components/voice/instant/CLAUDE.md).
@@ -580,6 +587,9 @@ export const ROUTES = {
       ({ pathname: "/admin/users/[id]", params: { id } }) as const,
     /** The string form, for absolute URLs built server-side (email). */
     userPath: (id: string) => `/admin/users/${id}`,
+    /** An admin editing a Gedu's team profile content. */
+    userTeamProfile: (id: string) =>
+      ({ pathname: "/admin/users/[id]/team-profile", params: { id } }) as const,
     product: adminProductHref,
     /** The string form, for absolute URLs built server-side (email). */
     productPath: adminProductPath,

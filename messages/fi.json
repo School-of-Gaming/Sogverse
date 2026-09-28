@@ -68,7 +68,9 @@
       "seatOffer": "Paikkatarjous",
       "geduSubstitutions": "Tuuraukset",
       "geduInvoicing": "Laskutus",
-      "adminSubstitutions": "Tuuraukset"
+      "adminSubstitutions": "Tuuraukset",
+      "teamProfile": "Profiilisi",
+      "adminTeamProfile": "Tiimiprofiili"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -2469,7 +2471,8 @@
     "accountMenu": "Tilivalikko – {name}",
     "continueToAccount": "Jatka tilillesi",
     "switchTo": "Vaihda profiiliin",
-    "invoicing": "Laskutus"
+    "invoicing": "Laskutus",
+    "teamProfile": "Profiilisi"
   },
   "schools": {
     "hero": {
@@ -3183,6 +3186,11 @@
       "title": "Kuvat ja videot",
       "granted": "Vanhempasi on sallinut, että sinusta otettuja kuvia ja videoita saa käyttää kertojen raporteissa ja että School of Gaming, Lynx Educate ja Roblox saavat käyttää niitä. Gedu kysyy silti sinulta ennen kuin ottaa sinusta kuvan.",
       "notGranted": "Vanhempasi ei ole sallinut sinusta otettujen kuvien ja videoiden käyttöä, joten Gedu jättää sinut pois kertojen kuvista. Vain vanhempasi voi muuttaa tämän."
+    },
+    "teamProfile": {
+      "title": "Profiilisi",
+      "description": "Julkinen profiilisi School of Gamingin verkkosivuilla: kuva sinusta ja muutama sana siitä, kuka olet.",
+      "edit": "Muokkaa profiiliasi"
     }
   },
   "tools": {
@@ -5033,6 +5041,55 @@
       },
       "preview": {
         "heading": "Esikatselu"
+      },
+      "errors": {
+        "save": "Profiilin tallentaminen ei onnistunut. Yritä uudelleen.",
+        "incomplete": "Profiilin on oltava valmis niin kauan kuin se on merkitty valmiiksi julkaistavaksi. Täydennä puuttuvat kohdat ja tallenna uudelleen.",
+        "photoUpload": "Kuvan lataus ei onnistunut. Valitse kuva uudelleen ja tallenna."
+      }
+    },
+    "admin": {
+      "status": {
+        "privateTitle": "Yksityinen",
+        "privateBody": "{name} ei ole merkinnyt profiilia valmiiksi julkaistavaksi, joten se ei näy verkkosivuilla.",
+        "waitingTitle": "Valmis, odottaa hyväksyntää",
+        "waitingBody": "{name} on merkinnyt profiilin valmiiksi julkaistavaksi. Se tulee näkyviin School of Gamingin verkkosivuille, kun ylläpitäjä hyväksyy sen.",
+        "liveTitle": "Julkinen",
+        "liveBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti.",
+        "takenOffTitle": "Poistettu näkyvistä",
+        "takenOffBody": "Ylläpitäjä on poistanut profiilin ({name}) verkkosivuilta. {name} on yhä merkinnyt sen valmiiksi, joten uusi hyväksyntä palauttaa sen heti näkyviin.",
+        "shownTitle": "Julkinen",
+        "shownBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla.",
+        "hiddenTitle": "Yksityinen",
+        "hiddenBody": "{name} ei ole valinnut profiilin näyttämistä julkisesti, joten se ei näy verkkosivuilla."
+      },
+      "edit": {
+        "back": "Takaisin: {name}",
+        "pageTitle": "Profiili: {name}",
+        "complete": "Profiilissa on kaikki, mitä julkaisemiseen tarvitaan.",
+        "mustStayComplete": "{name} on merkinnyt profiilin valmiiksi julkaistavaksi, joten sen on pysyttävä täydellisenä, eikä tallentaminen onnistu ennen sitä. Täydennä puuttuvat kohdat.",
+        "missing": {
+          "photo": "Profiili tarvitsee kuvan ennen kuin sen voi julkaista.",
+          "text": "Profiili tarvitsee kohdat ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä ennen kuin sen voi julkaista.",
+          "both": "Profiili tarvitsee kuvan sekä kohdat ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä ennen kuin sen voi julkaista."
+        }
+      },
+      "userPage": {
+        "heading": "Tiimiprofiili",
+        "nothingSaved": "{name} ei ole vielä kirjoittanut tiimiprofiilia.",
+        "photoAlt": "Profiilikuva: {name}",
+        "nickname": "”{nickname}”",
+        "writtenIn": "Kielet: {languages}",
+        "nothingWritten": "Ei vielä tekstiä",
+        "edit": "Muokkaa profiilia",
+        "approve": "Hyväksy",
+        "approveAgain": "Hyväksy uudelleen",
+        "takeOff": "Poista näkyvistä",
+        "approvalError": "Profiilin hyväksynnän päivittäminen ei onnistunut. Yritä uudelleen.",
+        "takeOffConfirm": {
+          "title": "Poistetaanko profiili ({name}) verkkosivuilta?",
+          "body": "Profiili lakkaa heti olemasta julkinen ja pysyy poissa, kunnes ylläpitäjä hyväksyy sen uudelleen, teki {name} mitä tahansa."
+        }
       }
     }
   }

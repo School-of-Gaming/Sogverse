@@ -159,10 +159,16 @@ export function isGeduTeamProfileEditorScenario(
 }
 
 /**
- * One, because office staff have a single switch and turning it off is a
- * click away on the same render.
+ * Two, one per profile an admin edits. Their own has a single switch, and
+ * turning it off is a click away on the same render. A Gedu's, edited from the
+ * admin panel, has no switch at all — it is the Gedu's — so it is a different
+ * page and its own scenario, one status standing for the rest, which differ
+ * only in the panel's words.
  */
-export const ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS = ["shown"] as const;
+export const ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS = [
+  "shown",
+  "editing-gedu",
+] as const;
 
 export type AdminTeamProfileEditorScenario =
   (typeof ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS)[number];
@@ -208,15 +214,15 @@ export const GEDU_TEAM_PROFILE_EDITOR_FIXTURES: Record<
   "taken-off": { profile: EETU, ready: true, approval: "withdrawn" },
 };
 
-/** An office profile as the editor receives it. */
-export interface AdminTeamProfileEditorFixture {
-  profile: AdminTeamProfile;
-  shown: boolean;
-}
+/** A profile as the editor receives it on an admin's page. */
+export type AdminTeamProfileEditorFixture =
+  | { editing: "own"; profile: AdminTeamProfile; shown: boolean }
+  | { editing: "gedu"; gedu: GeduTeamProfileEditorFixture };
 
 export const ADMIN_TEAM_PROFILE_EDITOR_FIXTURES: Record<
   AdminTeamProfileEditorScenario,
   AdminTeamProfileEditorFixture
 > = {
-  shown: { profile: LAURA, shown: true },
+  shown: { editing: "own", profile: LAURA, shown: true },
+  "editing-gedu": { editing: "gedu", gedu: GEDU_TEAM_PROFILE_EDITOR_FIXTURES.live },
 };

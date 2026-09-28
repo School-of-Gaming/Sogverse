@@ -61,7 +61,9 @@
       "seatOffer": "quS nob",
       "geduSubstitutions": "lIwmey",
       "geduInvoicing": "DIlmeH ghItlh",
-      "adminSubstitutions": "lIwmey"
+      "adminSubstitutions": "lIwmey",
+      "teamProfile": "Del’a’lIj",
+      "adminTeamProfile": "ghom Del’a’"
     },
     "descriptions": {
       "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
@@ -2509,7 +2511,8 @@
     "accountMenu": "qa’ De’wI’ – {name}",
     "continueToAccount": "qa’lIj yIghoS",
     "switchTo": "pong yIchoH",
-    "invoicing": "DIlmeH ghItlh"
+    "invoicing": "DIlmeH ghItlh",
+    "teamProfile": "Del’a’lIj"
   },
   "schools": {
     "hero": {
@@ -3223,6 +3226,11 @@
       "title": "mIloghmey HaSta je",
       "granted": "chaw’ SoSlI’ vavlI’ joq: poH ja’ghItlhmeyDaq mIloghlIj HaSta je lo’lu’laH, ’ej School of Gaming, Lynx Educate, Roblox je lo’laH. ’ach mIloghlIj tlhapmeH, SoH Dughel Gedu.",
       "notGranted": "chaw’be’ SoSlI’ vavlI’ joq. vaj poH mIloghmeyvo’ DuchoprupmoH Gedu. SoSlI’ vavlI’ joq neH choHlaH."
+    },
+    "teamProfile": {
+      "title": "Del’a’lIj",
+      "description": "School of Gaming Qu’mey Hoch legh: mInDu’lIj mIllogh, ’ej bIpong nuq ’e’ ghItlh.",
+      "edit": "Del’a’lIj yIchoH"
     }
   },
   "tools": {
@@ -4134,6 +4142,55 @@
       },
       "preview": {
         "heading": "wa’DIch legh"
+      },
+      "errors": {
+        "save": "Del’a’ polmoHlaHbe’. yInID.",
+        "incomplete": "ghuHmoHlu’ Del’a’, vaj naQnIS. chIlbogh yIteb ’ej yIpolmoH.",
+        "photoUpload": "mIllogh lIHlaHbe’. yIwIv ’ej yIpolmoH."
+      }
+    },
+    "admin": {
+      "status": {
+        "privateTitle": "pegh",
+        "privateBody": "Del’a’Daj ghuHmoHbe’ {name}. Qu’mey Daq Dalegh’be’.",
+        "waitingTitle": "ghuHmoHlu’, chaw’ loS",
+        "waitingBody": "Del’a’Daj ghuHmoH {name}. chaw’ loHwI’ ’ej Hoch legh.",
+        "liveTitle": "Hoch legh",
+        "liveBody": "{name} Del’a’ legh Hoch. DapolmoHbogh choHmey DaH lInlu’.",
+        "takenOffTitle": "teqlu’",
+        "takenOffBody": "{name} Del’a’ teq loHwI’. ghuHmoH {name} DaH, vaj chaw’ nIb Dayajchugh DaH chegh.",
+        "shownTitle": "Hoch legh",
+        "shownBody": "{name} Del’a’ legh Hoch.",
+        "hiddenTitle": "pegh",
+        "hiddenBody": "Del’a’Daj cha’be’ {name}. Qu’mey Daq Dalegh’be’."
+      },
+      "edit": {
+        "back": "{name} yIchegh",
+        "pageTitle": "{name} Del’a’",
+        "complete": "Hoch legh Del’a’ ’e’ laH. naQ.",
+        "mustStayComplete": "Del’a’Daj ghuHmoH {name}, vaj naQnIS. chIlbogh yIteb.",
+        "missing": {
+          "photo": "mIllogh poQ.",
+          "text": "“wa’ tlhegh: jIH” ’ej “jIH” poQ Hol Hoch.",
+          "both": "mIllogh ’ej “wa’ tlhegh: jIH” ’ej “jIH” poQ Hol Hoch."
+        }
+      },
+      "userPage": {
+        "heading": "ghom Del’a’",
+        "nothingSaved": "ghom Del’a’ ghItlhbe’ {name} rIntaHbe’.",
+        "photoAlt": "{name} mIllogh",
+        "nickname": "“{nickname}”",
+        "writtenIn": "Hol: {languages}",
+        "nothingWritten": "pagh ghItlhlu’",
+        "edit": "Del’a’ yIchoH",
+        "approve": "yIchaw’",
+        "approveAgain": "yIchaw’ nIb",
+        "takeOff": "yIteq",
+        "approvalError": "chaw’ choHlaHbe’. yInID.",
+        "takeOffConfirm": {
+          "title": "{name} Del’a’ DateqneS’a’?",
+          "body": "DaH Hoch legh’be’. chaw’ loHwI’ nIb ’ej neH chegh — nuq ta’ {name} ’e’ yIbuSHa’."
+        }
       }
     }
   }

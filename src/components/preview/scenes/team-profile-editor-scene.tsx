@@ -10,9 +10,13 @@ import {
   ADMIN_TEAM_PROFILE_EDITOR_FIXTURES,
   GEDU_TEAM_PROFILE_EDITOR_FIXTURES,
   type AdminTeamProfileEditorScenario,
+  type GeduTeamProfileEditorFixture,
   type GeduTeamProfileEditorScenario,
 } from "@/components/team/mock-team-fixtures";
-import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
+import type {
+  AdminTeamProfile,
+  TeamProfile,
+} from "@/services/team-profiles/team-profiles.types";
 
 /**
  * The page a person edits their own public profile on, over fixtures — once
@@ -24,7 +28,8 @@ import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
  * and the checkbox it hands the body, as a refetch would, so save, discard and
  * the status all behave. The upload is inert — the crop runs for real and the
  * form shows the result, but no bytes go anywhere. An admin's approval is the
- * fixture's and does not move here.
+ * fixture's and does not move here. The admin page also carries the one it
+ * edits a Gedu's profile on, whose switch is the Gedu's and so never moves.
  */
 export function GeduTeamProfileEditorScene({
   scenario,
@@ -51,14 +56,43 @@ export function AdminTeamProfileEditorScene({
   scenario: AdminTeamProfileEditorScenario;
 }) {
   const fixture = ADMIN_TEAM_PROFILE_EDITOR_FIXTURES[scenario];
-  const [profile, setProfile] = useState(fixture.profile);
-  const [shown, setShown] = useState(fixture.shown);
+  return fixture.editing === "own" ? (
+    <OwnAdminEditor profile={fixture.profile} shown={fixture.shown} />
+  ) : (
+    <GeduEditedByAdmin fixture={fixture.gedu} />
+  );
+}
+
+function OwnAdminEditor({
+  profile: opened,
+  shown: openedShown,
+}: {
+  profile: AdminTeamProfile;
+  shown: boolean;
+}) {
+  const [profile, setProfile] = useState(opened);
+  const [shown, setShown] = useState(openedShown);
   return (
     <TeamProfileEditorBody
       role="admin"
       profile={profile}
       shown={shown}
       actions={localActions(profile, setProfile, setShown)}
+    />
+  );
+}
+
+/** A Gedu's profile from the admin panel: the save never moves their switch. */
+function GeduEditedByAdmin({ fixture }: { fixture: GeduTeamProfileEditorFixture }) {
+  const [profile, setProfile] = useState(fixture.profile);
+  return (
+    <TeamProfileEditorBody
+      role="gedu"
+      editedByAdmin
+      profile={profile}
+      ready={fixture.ready}
+      approval={fixture.approval}
+      actions={localActions(profile, setProfile, noop)}
     />
   );
 }

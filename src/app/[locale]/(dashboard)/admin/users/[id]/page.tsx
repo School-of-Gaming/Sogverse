@@ -34,6 +34,9 @@ import {
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
+import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
+import type { TeamProfileRecord } from "@/services/team-profiles/team-profiles.types";
+import { UserTeamProfileCard } from "@/components/admin/user-team-profile-card";
 import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@/types";
 
 /**
@@ -158,6 +161,8 @@ export default async function AdminUserDetailPage({
   const isCustomer = profile.role === "customer";
   const isGamer = profile.role === "gamer";
   const isGedu = profile.role === "gedu";
+  // The two roles with a public team profile: office staff and Gedus.
+  const hasTeamProfile = isGedu || profile.role === "admin";
 
   // Game identities belong to the people who play — a child, and the educator
   // running the session. A parent's or another admin's account has none, which
@@ -185,6 +190,7 @@ export default async function AdminUserDetailPage({
     robloxAccount,
     geduCertification,
     geduAcceptances,
+    teamProfile,
   ] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
@@ -212,6 +218,11 @@ export default async function AdminUserDetailPage({
     isGedu
       ? new GeduContractService(supabase).getAcceptances(userId).catch(() => null)
       : Promise.resolve<GeduContractAcceptance[] | null>(null),
+    // The team profile, read here so its card paints complete: its status
+    // and summary differ in height from one profile to the next.
+    hasTeamProfile
+      ? new TeamProfilesService(supabase).getTeamProfile(userId).catch(() => null)
+      : Promise.resolve<TeamProfileRecord | null>(null),
   ]);
 
   // Products this user is assigned to. For a gamer, their own participations;
@@ -508,6 +519,13 @@ export default async function AdminUserDetailPage({
 
       {/* Coverage areas, for substitute matching. */}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
+
+      {/* The public team profile, for the two roles that have one. Seeded by
+          the read above, so it is in its final shape on first paint and sits
+          ahead of the marketing card, whose place at the end is load-bearing. */}
+      {hasTeamProfile && (
+        <UserTeamProfileCard userId={userId} initial={teamProfile} />
+      )}
 
       {/* Everything about marketing, in one card: where the account came from,
           and what its holder has agreed to since.

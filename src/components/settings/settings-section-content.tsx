@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "@/i18n/navigation";
-import { User, Lock, LogOut, MailCheck } from "lucide-react";
+import { Link, useRouter } from "@/i18n/navigation";
+import { IdCard, User, Lock, LogOut, MailCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Alert,
   AlertDescription,
   StatusLine,
 } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -691,6 +691,30 @@ export function SettingsSectionContent({
           </Button>
         </CardContent>
       </Card>
+
+      {/* The public team profile, for the two roles that have one. Straight
+          under the account card, whose name and spoken languages the profile
+          shows but does not edit. The role is seeded server-side, so the card
+          is there on first paint. */}
+      {(isGedu || profile?.role === "admin") && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <IdCard className="h-5 w-5" />
+              <CardTitle>{t('teamProfile.title')}</CardTitle>
+            </div>
+            <CardDescription>{t('teamProfile.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link
+              href={ROUTES.settingsTeamProfile}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              {t('teamProfile.edit')}
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
 

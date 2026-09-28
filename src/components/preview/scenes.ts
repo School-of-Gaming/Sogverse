@@ -286,9 +286,13 @@ export const PREVIEW_SCENES = [
   {
     surface: "admin-profile-editor",
     title: "Profile editor — office staff (draft)",
-    description: "The same page as office staff meet it: one switch, no approval.",
+    description:
+      "The same page as office staff meet it: their own profile with one switch, and a Gedu's profile edited from the admin panel with the Gedu's switch shown, not editable.",
     chrome: "admin",
-    scenarios: [{ slug: "shown", label: "Public" }],
+    scenarios: [
+      { slug: "shown", label: "Own profile, public" },
+      { slug: "editing-gedu", label: "Editing a Gedu's profile" },
+    ],
   },
   {
     surface: "parent-dashboard",
