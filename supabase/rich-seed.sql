@@ -56,7 +56,9 @@
 --
 -- Every other account this file creates exists to fill lists, and they all
 -- share the password `testpassword123`. These are the only accounts a stack
--- carrying this file has.
+-- carrying this file has. Among them is a second admin, admin2@example.com
+-- (Anni Salonen), so the admin team page has two admins to show — one
+-- viewing and editing the other's profile.
 --
 -- IDS ARE GENERATED, NEVER WRITTEN OUT. Every account gets `gen_random_uuid()`,
 -- because the avatar identicon derives its pattern from the id's hex bytes and
@@ -78,7 +80,7 @@ SET client_encoding TO 'UTF8';
 -- a local stack that gets the rich seed is created with the CLI's own seed
 -- switched off — and the single check covers all three ways of being somewhere
 -- else: a stack built for the DB tests carries seed.sql's fixtures, a second run
--- finds this file's own 40 accounts, and any real environment has users in it.
+-- finds this file's own 41 accounts, and any real environment has users in it.
 -- It stops the script before its first write.
 --
 -- It is a count and not a lookup for an account this file writes, because this
@@ -157,6 +159,17 @@ BEGIN
   UPDATE public.profiles SET role = 'admin', email_verified_at = now()
    WHERE id = v_admin;
   DELETE FROM public.customer_profiles WHERE user_id = v_admin;
+END;
+$$;
+
+-- A second admin, so the admin UI has one admin's profile for another admin
+-- to view and edit.
+DO $$
+DECLARE v_admin2 uuid := pg_temp.account('admin2@example.com', 'Anni', 'Salonen', 'testpassword123');
+BEGIN
+  UPDATE public.profiles SET role = 'admin', email_verified_at = now()
+   WHERE id = v_admin2;
+  DELETE FROM public.customer_profiles WHERE user_id = v_admin2;
 END;
 $$;
 
@@ -1447,20 +1460,21 @@ COMMIT;
 -- =============================================================================
 -- 13. Team profiles
 -- =============================================================================
--- The owner's admin, shown, and the owner's gedu, ready and waiting for an
--- admin's approval, in English and Finnish. Each is saved by its own person
--- through save_team_profile, which will not take a checkbox that is on without
--- a photo, nor a photo path the bucket holds no object for — so each photo's
--- object row is put in place here, empty, and
--- `scripts/local-db/rich-images.sh` replaces it with the real upload straight
--- after this file, from the preview art in `public/preview-art/`. Applying this
--- file by hand leaves both photos without their bytes.
+-- The owner's admin, shown, the second admin, also shown, and the owner's
+-- gedu, ready and waiting for an admin's approval, in English and Finnish.
+-- Each is saved by its own person through save_team_profile, which will not
+-- take a checkbox that is on without a photo, nor a photo path the bucket
+-- holds no object for — so each photo's object row is put in place here,
+-- empty, and `scripts/local-db/rich-images.sh` replaces it with the real
+-- upload straight after this file, from the preview art in
+-- `public/preview-art/`. Applying this file by hand leaves every photo
+-- without its bytes.
 
 BEGIN;
 INSERT INTO storage.objects (bucket_id, name)
 SELECT 'team-photos', p.id::text || '/seed.jpg'
   FROM public.profiles p
- WHERE p.email IN ('admin@example.com', 'gedu@example.com');
+ WHERE p.email IN ('admin@example.com', 'admin2@example.com', 'gedu@example.com');
 
 SELECT set_config('request.jwt.claims',
   json_build_object('sub', (SELECT id::text FROM public.profiles
@@ -1470,8 +1484,9 @@ SET LOCAL ROLE authenticated;
 
 DO $$
 DECLARE
-  v_admin uuid := (SELECT id FROM public.profiles WHERE email = 'admin@example.com');
-  v_gedu  uuid := (SELECT id FROM public.profiles WHERE email = 'gedu@example.com');
+  v_admin  uuid := (SELECT id FROM public.profiles WHERE email = 'admin@example.com');
+  v_admin2 uuid := (SELECT id FROM public.profiles WHERE email = 'admin2@example.com');
+  v_gedu   uuid := (SELECT id FROM public.profiles WHERE email = 'gedu@example.com');
 BEGIN
   PERFORM public.save_team_profile(
     p_user_id      => v_admin,
@@ -1484,6 +1499,27 @@ BEGIN
     p_title        => 'Chief Engineer',
     p_pick         => 11::smallint,
     p_photo_path   => v_admin::text || '/seed.jpg',
+    p_opted_in     => true);
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', v_admin2::text, 'role', 'authenticated')::text, true);
+
+  PERFORM public.save_team_profile(
+    p_user_id      => v_admin2,
+    p_translations => jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'I plan the club calendar and keep our two campuses running smoothly.',
+        'long_description', E'I coordinate club schedules, venues and the Gedus who run them.\n\nMost days I am:\n\n- **Booking** rooms and adjusting the calendar\n- *Checking in* with Gedus before a new term starts\n- Keeping the roster tidy so nothing double-books',
+        'fun_fact', 'My desk plant has outlived three office moves.'),
+      jsonb_build_object(
+        'locale', 'fi',
+        'short_description', 'Suunnittelen kerhojen aikataulut ja pidän kaksi toimipistettämme sujuvina.',
+        'long_description', E'Koordinoin kerhojen aikatauluja, tiloja ja niitä ohjaavia Geduja.\n\nUseimpina päivinä minä:\n\n- **Varaan** tiloja ja päivitän kalenteria\n- *Käyn läpi* asioita Gedujen kanssa ennen uuden kauden alkua\n- Pidän listat siistinä, ettei mikään mene päällekkäin')),
+    p_nickname     => 'Slotmaster',
+    p_title        => 'Head of Clubs',
+    p_pick         => 3::smallint,
+    p_photo_path   => v_admin2::text || '/seed.jpg',
     p_opted_in     => true);
 
   PERFORM set_config('request.jwt.claims',
