@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { CalendarX } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { useTimezone } from "@/providers";
@@ -21,10 +22,12 @@ const LISTED_DATES = 3;
  * card's schedule line goes on claiming the cancelled date, so a parent who
  * reads the card the way they always have would turn up for a session that is
  * not running; the notice has to be the first thing read, not a footnote under
- * the schedule. It is the kit's status panel in the warning tone, with the
- * kit's own warning glyph — the glyph that names a status is the kit's to
- * choose, never the call site's — and the dates carried in bold, since the date
- * is the one thing a reader has to take away. It carries no reason, which is
+ * the schedule. It is the kit's status panel in the warning tone, wearing the
+ * calendar-cross the session feeds mark a cancelled date with rather than the
+ * warning triangle — a triangle says only "careful", and one mark for a
+ * cancellation on every surface is what lets a reader recognise it — with the
+ * dates carried in bold, since the date is the one thing a reader has to take
+ * away. It carries no reason, which is
  * admin-only. The dates are session starts, so they are stated in the viewer's
  * zone, the same way the Join names the next one.
  *
@@ -73,7 +76,7 @@ export function CancelledAheadNotice({ starts }: { starts: readonly Date[] }) {
     // `status` rather than the panel's default `alert`: the notice is on the
     // card from its first paint, and a page of cards each interrupting a screen
     // reader as it loads would bury the one it is about.
-    <Alert variant="warning" role="status">
+    <Alert variant="warning" role="status" icon={CalendarX}>
       <p className="min-w-0 tabular-nums">{text}</p>
     </Alert>
   );

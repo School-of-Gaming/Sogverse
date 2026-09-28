@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
+import { CalendarX } from "lucide-react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import fi from "@/../messages/fi.json";
@@ -49,6 +50,17 @@ describe("CancelledAheadNotice", () => {
     ]);
     expect(getByRole("status").textContent).toBe("Tue, Sep 29 is cancelled.");
     expect(boldRuns(container)).toEqual(["Tue, Sep 29"]);
+  });
+
+  it("wears the cancellation's calendar-cross in the warning hue, not the triangle", () => {
+    const { getByRole } = renderNotice([new Date("2026-09-29T14:00:00Z")]);
+    const reference = render(<CalendarX />).container.querySelector("svg");
+
+    const glyphs = getByRole("status").querySelectorAll(":scope > svg");
+    expect(glyphs).toHaveLength(1);
+    expect(glyphs[0].innerHTML).toBe(reference?.innerHTML);
+    expect(glyphs[0].getAttribute("class")).toContain("text-warning");
+    expect(glyphs[0].getAttribute("aria-hidden")).toBe("true");
   });
 
   it("lists a few by name, as one sentence", () => {
