@@ -109,7 +109,7 @@ describe("Header — where a gedu is told they are", () => {
   });
 
   it("marks Your profile alone on the profile page", () => {
-    renderAt("/settings/team-profile");
+    renderAt("/settings/profile");
     expect(currentLinks()).toEqual([en.header.teamProfile]);
   });
 });
@@ -155,7 +155,7 @@ describe("the account menu on the profile page", () => {
   }
 
   it("marks a gedu's Your profile row current, and not Settings", () => {
-    renderAt("/settings/team-profile");
+    renderAt("/settings/profile");
     openRows();
     expect(
       screen
@@ -175,7 +175,7 @@ describe("the account menu on the profile page", () => {
       profile: { id: USER.id, role: "admin", first_name: "Kyle" },
       isLoading: false,
     });
-    renderAt("/settings/team-profile");
+    renderAt("/settings/profile");
     openRows();
     expect(
       screen.queryByRole("menuitem", { name: en.header.teamProfile }),

@@ -556,7 +556,7 @@ export const ROUTES = {
    * the proxy lets every signed-in role into `/settings`, so the page itself
    * answers not-found to any other role.
    */
-  settingsTeamProfile: "/settings/team-profile",
+  settingsTeamProfile: "/settings/profile",
   /**
    * Voice rooms. Two shapes share the `/voice` prefix:
    * - `forCode(code)` → `/voice/<code>` — public on-the-fly instant rooms,
@@ -589,7 +589,7 @@ export const ROUTES = {
     userPath: (id: string) => `/admin/users/${id}`,
     /** An admin editing another admin's or a Gedu's team profile. */
     userTeamProfile: (id: string) =>
-      ({ pathname: "/admin/users/[id]/team-profile", params: { id } }) as const,
+      ({ pathname: "/admin/users/[id]/profile", params: { id } }) as const,
     product: adminProductHref,
     /** The string form, for absolute URLs built server-side (email). */
     productPath: adminProductPath,

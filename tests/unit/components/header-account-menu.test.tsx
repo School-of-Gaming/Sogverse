@@ -479,7 +479,7 @@ describe("AccountMenu — the rehoused Your profile row", () => {
     ]);
     // From `md` up it is on the strip, so the menu hides it there.
     expect(row(TEAM_PROFILE).className).toContain("md:hidden");
-    expect(row(TEAM_PROFILE).getAttribute("href")).toBe("/settings/team-profile");
+    expect(row(TEAM_PROFILE).getAttribute("href")).toBe("/settings/profile");
   });
 
   it.each([["admin"], ["customer"], ["gamer"]] as const)(

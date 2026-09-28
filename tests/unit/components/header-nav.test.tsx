@@ -243,7 +243,7 @@ describe("Header nav — the gedu's Your profile item", () => {
     renderHeader();
 
     const link = teamProfileLink();
-    expect(link?.getAttribute("href")).toBe("/settings/team-profile");
+    expect(link?.getAttribute("href")).toBe("/settings/profile");
     expect(link?.className).toContain("hidden md:inline-flex");
   });
 });

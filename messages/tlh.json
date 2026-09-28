@@ -3189,14 +3189,14 @@
   },
   "settings": {
     "subtitle": "account ngoQmey tI’ang",
-    "profileDescription": "SoH De’ yIchoH",
+    "personalInformation": "SoH De’",
     "roleAccount": "{role, select, customer {vav/SoS account} gamer {toy’wI’ account} gedu {Gedu account} admin {ra’wI’ account} other {account}}",
     "firstNamePlaceholder": "wa’DIch pong yIchel",
     "lastNamePlaceholder": "qorDu’ pong yIchel",
     "invalidPhone": "HablI’ HSDu’ nIvbe’ yIchel.",
     "lastNameRequired": "qorDu’ pong {min} mu’tlhegh puS ghobe’.",
-    "profileUpdated": "SoQmoHwI’ choHlu’. Qapla’!",
-    "failedToUpdateProfile": "SoQmoHwI’ choH Dabe’lu’.",
+    "profileUpdated": "SoH De’ pollu’. Qapla’!",
+    "failedToUpdateProfile": "SoH De’ pollaHbe’lu’.",
     "securityDescription": "mu’mey je QaQ ngoQmey tI’ang",
     "resetPassword": "mu’mey yIchoH",
     "resetPasswordEmailSent": "{email}vaD chovmoH QIn ngeHlu’. QIn tepqengwI’lIj yIbej!",
@@ -4120,8 +4120,7 @@
         "nicknameHint": "ponglIjDaq cha’lu’, DaghItlhbogh rur.",
         "title": "patlh",
         "titleHint": "School of Gaming Daq Qu’lIj. mu’tlheghvam: Head of Clubs.",
-        "pick": "nguvlIj",
-        "pickHint": "Del’a’lIj nguv. mIllogh’a’lIj ghoS. yIwIvqa’, nguv pagh."
+        "pick": "nguvlIj"
       },
       "writing": {
         "heading": "mu’meylIj",

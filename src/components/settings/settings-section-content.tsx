@@ -488,11 +488,8 @@ export function SettingsSectionContent({
         <CardHeader>
           <div className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            <CardTitle>{c('profile')}</CardTitle>
+            <CardTitle>{t('personalInformation')}</CardTitle>
           </div>
-          <CardDescription>
-            {t('profileDescription')}
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4">

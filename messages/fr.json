@@ -3149,14 +3149,14 @@
   },
   "settings": {
     "subtitle": "Gérez les préférences de votre compte",
-    "profileDescription": "Mettez à jour vos informations personnelles",
+    "personalInformation": "Informations personnelles",
     "roleAccount": "{role, select, customer {Compte parent} gamer {Compte joueur} gedu {Compte Gedu} admin {Compte administrateur} other {Compte}}",
     "firstNamePlaceholder": "Saisissez votre prénom",
     "lastNamePlaceholder": "Saisissez votre nom",
     "invalidPhone": "Veuillez saisir un numéro de téléphone valide.",
     "lastNameRequired": "Le nom doit contenir au moins {min} caractères.",
-    "profileUpdated": "Profil mis à jour avec succès !",
-    "failedToUpdateProfile": "Échec de la mise à jour du profil.",
+    "profileUpdated": "Informations personnelles enregistrées.",
+    "failedToUpdateProfile": "Impossible d’enregistrer vos informations personnelles.",
     "securityDescription": "Gérez votre mot de passe et vos paramètres de sécurité",
     "resetPassword": "Réinitialiser le mot de passe",
     "resetPasswordEmailSent": "Lien de réinitialisation envoyé à {email} — consultez votre boîte de réception.",
@@ -5019,8 +5019,7 @@
         "nicknameHint": "Affiché entre guillemets dans votre nom, exactement comme vous l’écrivez.",
         "title": "Titre",
         "titleHint": "Votre poste chez School of Gaming, par exemple responsable des clubs.",
-        "pick": "Votre couleur",
-        "pickHint": "Une couleur d’accent pour votre profil, autour de votre photo. Choisissez-la à nouveau pour la retirer."
+        "pick": "Votre couleur"
       },
       "writing": {
         "heading": "Avec vos propres mots",

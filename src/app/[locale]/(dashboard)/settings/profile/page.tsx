@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * `/settings/team-profile` — an admin or a Gedu editing their own public
+ * `/settings/profile` — an admin or a Gedu editing their own public
  * profile.
  *
  * The proxy lets every signed-in role into `/settings`, so the role test is

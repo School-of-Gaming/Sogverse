@@ -3149,14 +3149,14 @@
   },
   "settings": {
     "subtitle": "Hantera dina kontoinställningar",
-    "profileDescription": "Uppdatera din personliga information",
+    "personalInformation": "Personuppgifter",
     "roleAccount": "{role, select, customer {Föräldrakonto} gamer {Spelarkonto} gedu {Gedu-konto} admin {Adminkonto} other {Konto}}",
     "firstNamePlaceholder": "Ange ditt förnamn",
     "lastNamePlaceholder": "Ange ditt efternamn",
     "invalidPhone": "Ange ett giltigt telefonnummer.",
     "lastNameRequired": "Efternamnet måste vara minst {min} tecken.",
-    "profileUpdated": "Profilen har uppdaterats!",
-    "failedToUpdateProfile": "Kunde inte uppdatera profilen.",
+    "profileUpdated": "Personuppgifterna har sparats.",
+    "failedToUpdateProfile": "Det gick inte att spara personuppgifterna.",
     "securityDescription": "Hantera ditt lösenord och säkerhetsinställningar",
     "resetPassword": "Återställ lösenord",
     "resetPasswordEmailSent": "Återställningslänk skickad till {email} – kolla din inkorg.",
@@ -5019,8 +5019,7 @@
         "nicknameHint": "Visas inom citattecken i ditt namn, precis som du skriver den.",
         "title": "Titel",
         "titleHint": "Ditt jobb på School of Gaming, till exempel klubbansvarig.",
-        "pick": "Din färg",
-        "pickHint": "En accentfärg för din profil, som ramar in ditt foto. Välj den igen för att ta bort den."
+        "pick": "Din färg"
       },
       "writing": {
         "heading": "Med egna ord",

@@ -129,8 +129,8 @@ function useTeamProfileEditor(
 }
 
 /**
- * `/settings/team-profile`, an admin or a Gedu editing their own profile, and
- * `/admin/users/[id]/team-profile`, an admin editing someone else's
+ * `/settings/profile`, an admin or a Gedu editing their own profile, and
+ * `/admin/users/[id]/profile`, an admin editing someone else's
  * (`editedByAdmin`). The save is the same either way, checkbox included.
  */
 export function TeamProfileEditor({

@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * `/admin/users/[id]/team-profile` — an admin editing another admin's or a
+ * `/admin/users/[id]/profile` — an admin editing another admin's or a
  * Gedu's profile, checkbox included. The proxy gates `/admin` to admins.
  *
  * The viewer's own profile is edited from their settings, where it speaks to

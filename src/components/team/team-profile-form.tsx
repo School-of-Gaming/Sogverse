@@ -569,7 +569,7 @@ export function TeamProfileAboutSection({
         </Field>
       )}
 
-      <Field label={t("pick")} optional hint={t("pickHint")}>
+      <Field label={t("pick")} optional>
         {({ labelId }) => (
           <ZoneColorPicker
             value={form.pick === null ? null : `${form.pick}`}

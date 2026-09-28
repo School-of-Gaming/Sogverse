@@ -3836,14 +3836,14 @@
   },
   "settings": {
     "subtitle": "Manage your account preferences",
-    "profileDescription": "Update your personal information",
+    "personalInformation": "Personal information",
     "roleAccount": "{role, select, customer {Parent account} gamer {Gamer account} gedu {Gedu account} admin {Admin account} other {Account}}",
     "firstNamePlaceholder": "Enter your first name",
     "lastNamePlaceholder": "Enter your last name",
     "invalidPhone": "Please enter a valid phone number.",
     "lastNameRequired": "Last name must be at least {min} characters.",
-    "profileUpdated": "Profile updated successfully!",
-    "failedToUpdateProfile": "Failed to update profile.",
+    "profileUpdated": "Personal information saved.",
+    "failedToUpdateProfile": "Your personal information could not be saved.",
     "securityDescription": "Manage your password and security settings",
     "resetPassword": "Reset password",
     "resetPasswordEmailSent": "Password reset link sent to {email} — check your inbox.",
@@ -5019,8 +5019,7 @@
         "nicknameHint": "Shown in quotes in your name, exactly as you write it.",
         "title": "Title",
         "titleHint": "Your job at School of Gaming, for example Head of Clubs.",
-        "pick": "Your colour",
-        "pickHint": "An accent colour for your profile, framing your photo. Choose it again to clear it."
+        "pick": "Your colour"
       },
       "writing": {
         "heading": "In your own words",

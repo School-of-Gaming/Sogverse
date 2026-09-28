@@ -3149,14 +3149,14 @@
   },
   "settings": {
     "subtitle": "Hallitse tilisi asetuksia",
-    "profileDescription": "Päivitä henkilötietosi",
+    "personalInformation": "Henkilötiedot",
     "roleAccount": "{role, select, customer {Vanhemman tili} gamer {Pelaajan tili} gedu {Gedun tili} admin {Ylläpitäjän tili} other {Tili}}",
     "firstNamePlaceholder": "Syötä etunimesi",
     "lastNamePlaceholder": "Syötä sukunimesi",
     "invalidPhone": "Syötä kelvollinen puhelinnumero.",
     "lastNameRequired": "Sukunimessä on oltava vähintään {min} merkkiä.",
-    "profileUpdated": "Profiili päivitetty onnistuneesti!",
-    "failedToUpdateProfile": "Profiilin päivittäminen epäonnistui.",
+    "profileUpdated": "Henkilötiedot tallennettu.",
+    "failedToUpdateProfile": "Henkilötietojen tallentaminen epäonnistui.",
     "securityDescription": "Hallitse salasanaasi ja turvallisuusasetuksiasi",
     "resetPassword": "Nollaa salasana",
     "resetPasswordEmailSent": "Salasanan nollauslinkki lähetetty osoitteeseen {email} – tarkista sähköpostisi.",
@@ -5019,8 +5019,7 @@
         "nicknameHint": "Näkyy lainausmerkeissä nimesi keskellä juuri niin kuin sen kirjoitat.",
         "title": "Titteli",
         "titleHint": "Tehtäväsi School of Gamingissa, esimerkiksi kerhovastaava.",
-        "pick": "Värisi",
-        "pickHint": "Profiilisi korostusväri, joka kehystää kuvasi. Poista väri valitsemalla se uudelleen."
+        "pick": "Värisi"
       },
       "writing": {
         "heading": "Omin sanoin",
