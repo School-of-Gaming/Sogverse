@@ -31,3 +31,29 @@ CREATE POLICY product_images_admin_update ON storage.objects
   TO authenticated
   USING (((bucket_id = 'product-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)))
   WITH CHECK (((bucket_id = 'product-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
+CREATE POLICY team_photos_editor_delete ON storage.objects
+  AS PERMISSIVE
+  FOR DELETE
+  TO authenticated
+  USING (((bucket_id = 'team-photos'::text) AND public.can_edit_team_profile(
+CASE
+    WHEN ((storage.foldername(name))[1] ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text) THEN ((storage.foldername(name))[1])::uuid
+    ELSE NULL::uuid
+END)));
+
+CREATE POLICY team_photos_editor_insert ON storage.objects
+  AS PERMISSIVE
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (((bucket_id = 'team-photos'::text) AND (array_length(storage.foldername(name), 1) = 1) AND public.can_edit_team_profile(
+CASE
+    WHEN ((storage.foldername(name))[1] ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text) THEN ((storage.foldername(name))[1])::uuid
+    ELSE NULL::uuid
+END)));
+
+CREATE POLICY team_photos_owner_or_admin_read ON storage.objects
+  AS PERMISSIVE
+  FOR SELECT
+  TO authenticated
+  USING (((bucket_id = 'team-photos'::text) AND (( SELECT public.is_admin() AS is_admin) OR ((storage.foldername(name))[1] = (( SELECT auth.uid() AS uid))::text))));

@@ -12,3 +12,7 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('session-images', 'session-images', true, NULL, NULL)
 ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('team-photos', 'team-photos', false, 2097152, ARRAY['image/jpeg', 'image/webp'])
+ON CONFLICT (id) DO NOTHING;

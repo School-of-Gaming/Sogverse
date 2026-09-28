@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
-# `rich-images` — give every product the rich seed created a picture.
+# `rich-images` — give every product the rich seed created a picture, and each
+# team profile it saved its photo (the second half, at the end of this file).
 #
 #   rich-images.sh <checkout-path> <project-id> <api-url> <service-role-key>
 #
@@ -210,3 +211,31 @@ docker exec -i "supabase_db_$project" \
   psql -U postgres -d postgres -v ON_ERROR_STOP=1 < "$work/link.sql" >/dev/null
 
 echo "Product images: $(wc -l < "$work/manifest") files, $uploaded newly uploaded to the $bucket bucket."
+
+# TEAM PHOTOS. The rich seed saves the owner's admin and gedu with their
+# checkbox on, which save_team_profile allows only with a photo, so the seed
+# names each photo's path and the bytes go up here, to exactly that path. The
+# pictures are the preview art the team fixtures borrow: abstract art, never a
+# picture of a person. `x-upsert: true` because a path names one person on one
+# database, and a second `up` over a storage volume that outlived its database
+# is writing the same bytes again.
+team_bucket=team-photos
+for pair in "admin@example.com:session-badge.jpg" "gedu@example.com:session-tower.jpg"; do
+  email=${pair%%:*}
+  art="$checkout/public/preview-art/${pair#*:}"
+  path=$(docker exec -i "supabase_db_$project"     psql -U postgres -d postgres -v ON_ERROR_STOP=1 -tAq     -c "SELECT tp.photo_path FROM public.team_profiles tp JOIN public.profiles p ON p.id = tp.user_id WHERE p.email = '$email'")
+  if [ -z "$path" ]; then
+    echo "The rich seed saved no team profile photo for $email." >&2
+    exit 1
+  fi
+  status=$(curl -sS -o "$work/upload.out" -w '%{http_code}'     -X POST "$api_url/storage/v1/object/$team_bucket/$path"     -H "Authorization: Bearer $service_key"     -H "Content-Type: image/jpeg"     -H "x-upsert: true"     --data-binary "@$art")
+  case "$status" in
+    200 | 201) ;;
+    *)
+      echo "Uploading the team photo for $email failed ($status):" >&2
+      cat "$work/upload.out" >&2
+      exit 1
+      ;;
+  esac
+done
+echo "Team photos: 2 uploaded to the $team_bucket bucket."

@@ -504,6 +504,20 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "roles: gamer-creations.test.ts.",
   },
 
+  // --- team profiles ---------------------------------------------------------
+  //
+  // The one writer of a team profile's content. The role half admits the two
+  // roles that have a profile; the target half — their own, or a Gedu's for an
+  // admin — is can_edit_team_profile, pinned with the checkbox and completeness
+  // rules by team-profiles.test.ts. Assertable on both halves with no fixture:
+  // past the guard, a NULL person is refused with null_value_not_allowed
+  // (22004) before the target half is asked, for either role.
+  save_team_profile: { permittedRoles: ["gedu", "admin"] },
+  // The admin's decision about a Gedu's profile. Past the admin guard, a NULL
+  // person has no profile row and is refused with P0002 — an error, but not the
+  // forbidden one. Transitions: team-profiles.test.ts.
+  set_team_profile_approval: { permittedRoles: ["admin"] },
+
   // --- the guard primitives themselves -------------------------------------
   // Exposed to `authenticated` because create_product is SECURITY INVOKER, so
   // its guard runs as the caller (update_product is SECURITY DEFINER and does
@@ -734,6 +748,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   location_search_blob: {
     scopeTest: "tests/db/search-fold-agreement.test.ts",
     why: "folds the strings it is handed into one delimited blob, reads nothing; reachable because the locations.search_blob generated column evaluates it under the writing role's privileges, so an admin creating a site needs it",
+  },
+  can_edit_team_profile: {
+    scopeTest: "tests/db/team-profiles.test.ts",
+    why: "the edit predicate the team-photos storage policies are evaluated with, so it has to be executable by the querying role. SECURITY INVOKER: it answers from the caller's own role and a profiles row the caller's RLS already shows them, so it says only what the caller could read for themselves — whether the named person is themselves, or a Gedu while the caller is an admin. The scope test asks it as a Gedu, an admin, a parent and a gamer about themselves and about each other",
   },
 };
 

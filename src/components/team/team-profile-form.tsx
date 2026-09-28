@@ -25,7 +25,7 @@ import {
   type TeamProfile,
   type TeamProfilePhoto,
   type TeamProfileTranslation,
-} from "@/components/team/team-profile-body";
+} from "@/services/team-profiles/team-profiles.types";
 import {
   TEAM_PHOTO_ACCEPT,
   TeamPhotoCropDialog,

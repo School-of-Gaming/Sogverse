@@ -3,7 +3,6 @@
 import { useId } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import type { PickId } from "@sog/ui";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { Markdown } from "@/components/ui/markdown";
 import { useLanguageNames } from "@/hooks/use-language-names";
@@ -12,89 +11,10 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cn } from "@/lib/utils";
 import { TeamPhotoPlaceholder } from "@/components/team/team-photo-placeholder";
 import { VOICE_ZONE_COLORS } from "@/lib/constants/voice-zones";
-import type { SpokenLanguageCode } from "@/types";
-
-/**
- * The person's photo. Uploads are cropped to a 4:5 portrait of
- * `TEAM_PHOTO_WIDTH` × `TEAM_PHOTO_HEIGHT` before they are stored, and the
- * frame covers whatever it is handed, so a photo of another shape (the preview
- * art the fixtures borrow) is cropped to the middle rather than distorted.
- */
-export interface TeamProfilePhoto {
-  src: string;
-  width: number;
-  height: number;
-}
-
-/** The size every uploaded photo is cropped to: 4:5, portrait. */
-export const TEAM_PHOTO_WIDTH = 800;
-export const TEAM_PHOTO_HEIGHT = 1000;
-
-/**
- * What the person wrote, in one site locale. The shape is the product
- * translation's — one row per locale, at least one row, any locale — so the
- * page picks the row to show with the product page's own resolver.
- */
-export interface TeamProfileTranslation {
-  locale: SupportedLocale;
-  /** One line, plain text: their friendly opening line under the name. */
-  shortDescription: string;
-  /** "About me": markdown, rendered in the `profile` variant. */
-  longDescription: string;
-  /** Optional. `null` leaves the aside off the page. */
-  funFact: string | null;
-}
-
-interface TeamProfileCommon {
-  /** The person's account id. */
-  id: string;
-  firstName: string;
-  /** What gamers know them as. A name the person chose: never translated. */
-  nickname: string | null;
-  /**
-   * The colour the person picked as their accent, or `null` for none, which
-   * is the default: the page then carries the brand's colours alone.
-   */
-  pick: PickId | null;
-  /**
-   * Never null on the public page, where a profile cannot go up without one.
-   * It is null only in the editor's preview of an unfinished profile.
-   */
-  photo: TeamProfilePhoto | null;
-  /**
-   * At least one on the public page. Empty only in the editor's preview of a
-   * profile with nothing written yet.
-   */
-  translations: readonly TeamProfileTranslation[];
-  spokenLanguages: readonly SpokenLanguageCode[];
-}
-
-/**
- * Office staff. The title is theirs to write ("Chief Engineer"), because
- * an office role is a job, not a platform role with a fixed name.
- */
-export interface AdminTeamProfile extends TeamProfileCommon {
-  kind: "admin";
-  lastName: string;
-  title: string;
-}
-
-/**
- * A Gedu. Two differences from an admin, both in the type rather than in the
- * render, so a Gedu's page cannot show them by accident:
- *
- * - **No last name.** Whether a Gedu's surname belongs on a public page is
- *   the owner's open decision; until it is made, a Gedu profile has nowhere to
- *   carry one, so the data shell cannot hand one over. Reversing it is a field
- *   here, not a rule in the render.
- * - **No free title.** Their title is the role, "Gedu", glossed on this page
- *   because it is public and the word is never used cold.
- */
-export interface GeduTeamProfile extends TeamProfileCommon {
-  kind: "gedu";
-}
-
-export type TeamProfile = AdminTeamProfile | GeduTeamProfile;
+import type {
+  TeamProfile,
+  TeamProfilePhoto,
+} from "@/services/team-profiles/team-profiles.types";
 
 /**
  * The public team profile page body: one person, admin or Gedu, on one page.

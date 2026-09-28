@@ -1,9 +1,9 @@
 import type {
   AdminTeamProfile,
   GeduTeamProfile,
+  GeduTeamProfileApproval,
   TeamProfile,
-} from "@/components/team/team-profile-body";
-import type { GeduTeamProfileApproval } from "@/components/team/team-profile-editor-body";
+} from "@/services/team-profiles/team-profiles.types";
 
 /**
  * The team fixtures: three invented people, shared by the public profile scene

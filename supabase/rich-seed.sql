@@ -1445,7 +1445,68 @@ $$;
 COMMIT;
 
 -- =============================================================================
--- 13. What landed
+-- 13. Team profiles
+-- =============================================================================
+-- The owner's admin, shown, and the owner's gedu, ready and waiting for an
+-- admin's approval, in English and Finnish. Each is saved by its own person
+-- through save_team_profile, which will not take a checkbox that is on without
+-- a photo — so each names its photo's path here, and
+-- `scripts/local-db/rich-images.sh` uploads the bytes to that path straight
+-- after this file, from the preview art in `public/preview-art/`. Applying this
+-- file by hand leaves both photos missing.
+
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+DO $$
+DECLARE
+  v_admin uuid := (SELECT id FROM public.profiles WHERE email = 'admin@example.com');
+  v_gedu  uuid := (SELECT id FROM public.profiles WHERE email = 'gedu@example.com');
+BEGIN
+  PERFORM public.save_team_profile(
+    p_user_id      => v_admin,
+    p_translations => jsonb_build_array(jsonb_build_object(
+      'locale', 'en',
+      'short_description', 'I keep the catalogue, the calendar and the Gedus pointed the same way.',
+      'long_description', E'I look after our clubs, camps and events from the first idea to the last session.\n\nMost of my week goes on:\n\n- **Planning** the calendar with schools and municipalities\n- **Training** new Gedus before their first session\n- **Answering** families when something needs sorting out',
+      'fun_fact', 'I still have the first Minecraft world I ever built, and it still has no roof.')),
+    p_nickname     => 'Blockkeeper',
+    p_title        => 'Chief Engineer',
+    p_pick         => 11::smallint,
+    p_photo_path   => v_admin::text || '/seed.jpg',
+    p_opted_in     => true);
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', v_gedu::text, 'role', 'authenticated')::text, true);
+
+  PERFORM public.save_team_profile(
+    p_user_id      => v_gedu,
+    p_translations => jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'Redstone nerd, speedrun cheerleader and the Gedu with one more build challenge up his sleeve.',
+        'long_description', E'I run Minecraft and Roblox sessions, mostly in Helsinki and Espoo.\n\n**In my sessions:**\n\n- Build challenges where every team finishes something they are proud of\n- Redstone doors, traps and the occasional very loud machine\n- Team games where the quiet players get the ball too',
+        'fun_fact', 'I once built a working calculator out of redstone. It could add up to seven.'),
+      jsonb_build_object(
+        'locale', 'fi',
+        'short_description', 'Punakivinörtti, speedrun-kannustaja ja Gedu, jolla on aina yksi rakennushaaste varalla.',
+        'long_description', E'Vedän Minecraft- ja Roblox-sessioita, enimmäkseen Helsingissä ja Espoossa.\n\n**Sessioissani:**\n\n- Rakennushaasteita, joissa jokainen tiimi saa valmiiksi jotain, mistä on ylpeä\n- Punakiviovia, ansoja ja silloin tällöin hyvin äänekäs kone\n- Joukkuepelejä, joissa myös hiljaisemmat pelaajat pääsevät mukaan',
+        'fun_fact', 'Rakensin kerran punakivestä toimivan laskimen. Se osasi laskea seitsemään asti.')),
+    p_nickname     => 'Creeperhug',
+    p_pick         => 6::smallint,
+    p_photo_path   => v_gedu::text || '/seed.jpg',
+    p_opted_in     => true);
+END;
+$$;
+
+COMMIT;
+
+-- =============================================================================
+-- 14. What landed
 -- =============================================================================
 
 DO $$

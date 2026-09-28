@@ -30,23 +30,13 @@ import {
   type TeamProfileForm,
   type TeamProfileGap,
 } from "@/components/team/team-profile-form";
-import {
-  TeamProfileBody,
-  type AdminTeamProfile,
-  type GeduTeamProfile,
-  type TeamProfile,
-} from "@/components/team/team-profile-body";
-
-/**
- * Where an admin's decision about a Gedu's profile stands. It is independent
- * of the Gedu's own checkbox and survives it being turned off and on again:
- *
- * - `pending` — no admin has approved the profile yet.
- * - `approved` — an admin put it up; while the Gedu's checkbox is on it is
- *   public, and their later edits go live on save, with no second look.
- * - `withdrawn` — an admin took an approved profile down.
- */
-export type GeduTeamProfileApproval = "pending" | "approved" | "withdrawn";
+import { TeamProfileBody } from "@/components/team/team-profile-body";
+import type {
+  AdminTeamProfile,
+  GeduTeamProfile,
+  GeduTeamProfileApproval,
+  TeamProfile,
+} from "@/services/team-profiles/team-profiles.types";
 
 /**
  * The writes the page makes. Each is a backend action, so each is the

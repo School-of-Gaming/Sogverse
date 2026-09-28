@@ -12,7 +12,7 @@ import {
   type AdminTeamProfileEditorScenario,
   type GeduTeamProfileEditorScenario,
 } from "@/components/team/mock-team-fixtures";
-import type { TeamProfile } from "@/components/team/team-profile-body";
+import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 
 /**
  * The page a person edits their own public profile on, over fixtures — once

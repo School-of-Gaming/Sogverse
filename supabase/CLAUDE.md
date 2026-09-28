@@ -325,7 +325,8 @@ every command does — the things its usage text does not say:
   claims, which is the split the real upload route makes. `up` and `reset` run it after
   the seed. A file is named for a `product_topic` value, so which picture a product gets
   follows its topic; a topic with no file fails the step by name rather than leaving a
-  stack with holes in it.
+  stack with holes in it. The same step uploads the two seeded team profiles' photos, from
+  `public/preview-art/`, to the paths the seed saved them under.
 - **Google sign-in works on a stack whose checkout's `.env.local` carries
   `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`** —
   a Google Cloud OAuth client of your own; its consent screen can stay in testing mode,

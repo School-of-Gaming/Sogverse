@@ -16,7 +16,7 @@ import {
 import {
   TEAM_PHOTO_HEIGHT,
   TEAM_PHOTO_WIDTH,
-} from "@/components/team/team-profile-body";
+} from "@/services/team-profiles/team-profiles.types";
 
 /** The file types the photo picker offers, and the only ones it accepts. */
 export const TEAM_PHOTO_ACCEPT = ["image/jpeg", "image/png", "image/webp"];
