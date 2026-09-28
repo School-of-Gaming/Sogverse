@@ -4929,108 +4929,92 @@
       "nameWithNickname": "{firstName} ”<nick>{nickname}</nick>” {lastName}",
       "firstNameWithNickname": "{firstName} ”<nick>{nickname}</nick>”",
       "geduTitle": "Gedu · pelikasvattaja",
-      "taglineLanguage": "Kirjoitettu kielellä {language}",
-      "whatIDo": "Mitä teen",
-      "atAGlance": "Lyhyesti",
       "languages": "Kielet",
-      "topics": "Pelit ja aiheet",
-      "areas": "Alueet"
+      "writtenIn": "Kirjoitettu kielellä {language}",
+      "aboutMe": "Minusta",
+      "funFact": "Hauska fakta"
     },
     "edit": {
       "back": "Takaisin asetuksiin",
       "pageTitle": "Tiimikorttisi",
-      "introGedu": "Korttisi School of Gamingin julkisella tiimisivulla, jolla perheet tutustuvat kertojen takana oleviin ihmisiin. Ylläpitäjä tarkistaa kortin ennen julkaisua ja uudelleen aina, kun muutat sitä.",
-      "introAdmin": "Korttisi School of Gamingin julkisella tiimisivulla. Julkaisemasi muutokset näkyvät heti.",
+      "introGedu": "Korttisi School of Gamingin julkisella tiimisivulla, jolla perheet tutustuvat sessioiden takana oleviin ihmisiin. Tallenna niin usein kuin haluat: kortti tulee sivulle vasta, kun merkitset sen valmiiksi ja ylläpitäjä on hyväksynyt sen.",
+      "introAdmin": "Korttisi School of Gamingin julkisella tiimisivulla. Kun se on näkyvissä, tallentamasi muutokset tulevat voimaan heti.",
       "status": {
-        "draftTitle": "Ei vielä tiimisivulla",
-        "draftBody": "Täytä korttisi ja lähetä se tarkistettavaksi. Se julkaistaan, kun ylläpitäjä hyväksyy sen.",
-        "inReviewTitle": "Odottaa tarkistusta",
-        "inReviewBody": "Ylläpitäjä tarkistaa korttiasi. Muokkaus on tauolla, jotta julkaistaan juuri se, minkä ylläpitäjä hyväksyy. Peru lähetys, jos haluat muuttaa jotain.",
+        "privateTitle": "Yksityinen",
+        "privateBody": "Vain sinä näet korttisi. Kun olet siihen tyytyväinen, rastita lomakkeen lopussa ”Profiilini on valmis julkaistavaksi”.",
+        "waitingTitle": "Valmis, odottaa ylläpitäjää",
+        "waitingBody": "Ylläpitäjä katsoo korttisi ja lisää sen tiimisivulle. Voit jatkaa muokkaamista sillä välin.",
         "liveTitle": "Julkaistu tiimisivulla",
-        "liveBody": "Kuka tahansa voi nähdä korttisi. Täällä tekemäsi muutokset julkaistaan, kun ylläpitäjä hyväksyy ne, ja nykyinen korttisi pysyy esillä siihen asti.",
-        "changesInReviewTitle": "Muutokset odottavat tarkistusta",
-        "changesInReviewBody": "Ylläpitäjä tarkistaa muutoksiasi, ja tiimisivulla näkyy nykyinen korttisi, kunnes ne hyväksytään. Muokkaus on siihen asti tauolla. Peru muutokset, jos haluat jatkaa niiden työstämistä.",
-        "returnedTitle": "Palautettu viestin kanssa",
-        "returnedBody": "Ylläpitäjä {name} palautti korttisi. Tee muutokset ja lähetä se uudelleen.",
-        "publishedTitle": "Tiimisivulla",
-        "publishedBody": "Kuka tahansa voi nähdä korttisi. Julkaisemasi muutokset näkyvät heti.",
-        "hiddenTitle": "Piilotettu tiimisivulta",
-        "hiddenBody": "Korttisi ei ole julkisella tiimisivulla. Tuo se näkyviin, kun se on valmis."
+        "liveBody": "Kuka tahansa näkee korttisi. Tallentamasi muutokset tulevat voimaan heti, ja kun poistat rastin kohdasta ”Profiilini on valmis julkaistavaksi”, kortti poistuu sivulta saman tien.",
+        "takenOffTitle": "Valmis, mutta ylläpitäjä on poistanut sen tiimisivulta",
+        "takenOffBody": "Korttisi ei ole tällä hetkellä julkinen. Ota yhteyttä toimistoon, jos haluat tietää syyn tai saada sen takaisin sivulle.",
+        "shownTitle": "Tiimisivulla",
+        "shownBody": "Kuka tahansa näkee korttisi. Tallentamasi muutokset tulevat voimaan heti.",
+        "hiddenTitle": "Ei tiimisivulla",
+        "hiddenBody": "Vain sinä näet korttisi. Rastita lomakkeen lopussa ”Näytä profiilini tiimisivulla”, kun se on valmis."
       },
       "actions": {
-        "withdraw": "Peru lähetys",
-        "withdrawChanges": "Peru muutokset",
-        "remove": "Poista tiimisivulta",
-        "hide": "Piilota tiimisivulta",
-        "show": "Näytä tiimisivulla",
-        "saveDraft": "Tallenna luonnos",
-        "submit": "Lähetä tarkistettavaksi",
-        "submitChanges": "Lähetä muutokset tarkistettavaksi",
-        "resubmit": "Lähetä uudelleen",
-        "publish": "Julkaise muutokset",
         "save": "Tallenna muutokset",
         "discard": "Hylkää muutokset"
       },
-      "removeDialog": {
-        "title": "Poistetaanko korttisi tiimisivulta?",
-        "description": "Kortti poistuu julkiselta sivulta heti. Saat sen takaisin lähettämällä sen uudelleen tarkistettavaksi.",
-        "confirm": "Poista kortti"
+      "switch": {
+        "heading": "Tiimisivu",
+        "readyLabel": "Profiilini on valmis julkaistavaksi",
+        "readyHint": "Rastittamalla hyväksyt, että School of Gaming näyttää profiilisi julkisesti verkkosivuillaan. Ylläpitäjä katsoo sen ennen kuin se julkaistaan ensimmäisen kerran. Voit poistaa rastin milloin tahansa, ja profiili poistuu heti.",
+        "showLabel": "Näytä profiilini tiimisivulla",
+        "showHint": "Rastittamalla profiilisi tulee heti School of Gamingin julkisille verkkosivuille. Voit poistaa rastin milloin tahansa, ja profiili poistuu.",
+        "complete": "Kortissasi on kaikki, mitä tiimisivu tarvitsee.",
+        "mustStayComplete": "Kun tämä on rastitettu, korttisi täytyy pysyä täydellisenä, joten tallennus on pois käytöstä, kunnes se on. Täydennä puuttuvat kohdat tai poista rasti jatkaaksesi yksityisesti.",
+        "missing": {
+          "photo": "Lisää kuva, jotta voit rastittaa tämän.",
+          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "both": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän."
+        }
       },
-      "consent": "Annan School of Gamingille luvan näyttää tämän kortin julkisella tiimisivullaan, jolla kuka tahansa voi nähdä sen. Voin poistaa sen milloin tahansa.",
       "photo": {
         "heading": "Kuva",
         "upload": "Lataa kuva",
         "replace": "Vaihda kuva",
         "remove": "Poista kuva",
-        "hint": "Tiimisivulla näkyy neliö kuvasi keskeltä. Ilman kuvaa sen paikalla on tilisi kuvio."
+        "hint": "Pystykuva sinusta, jonka rajaat kehykseen sopivaksi. JPEG, PNG tai WebP.",
+        "crop": {
+          "title": "Rajaa kuvasi",
+          "description": "Vedä kuva paikalleen kehyksessä ja zoomaa sopivaksi.",
+          "zoom": "Zoomaus",
+          "confirm": "Käytä kuvaa",
+          "unreadable": "Tätä tiedostoa ei voi avata kuvana tässä. Valitse JPEG-, PNG- tai WebP-kuva. iPhonen HEIC-kuvat pitää muuntaa ensin.",
+          "chooseAnother": "Valitse toinen kuva",
+          "failed": "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+        }
       },
       "about": {
         "heading": "Sinusta",
-        "nickname": "Pelinimi",
+        "nickname": "Pelaajat tuntevat minut nimellä",
+        "nicknamePlaceholder": "Esimerkiksi: Creeperhug",
         "nicknameHint": "Näkyy lainausmerkeissä nimesi keskellä juuri niin kuin sen kirjoitat.",
         "title": "Titteli",
-        "titleHint": "Tehtäväsi School of Gamingissa, esimerkiksi kerhovastaava.",
-        "tagline": "Esittelylause",
-        "taglineHint": "Yksi rivi itsestäsi omin sanoin.",
-        "taglineCount": "{count}/{max}",
-        "taglineLanguage": "Kirjoituskieli"
+        "titleHint": "Tehtäväsi School of Gamingissa, esimerkiksi kerhovastaava."
       },
-      "skills": {
-        "heading": "Mitä teen",
-        "hint": "Lyhyitä ilmauksia siinä järjestyksessä, jossa haluat ne näytettävän. Parhaiten toimii {min}–{max} ilmausta.",
-        "phrase": "Ilmaus {position}",
-        "placeholder": "Esimerkiksi: rakennushaasteet",
-        "add": "Lisää ilmaus",
-        "moveUp": "Siirrä ilmausta {position} ylöspäin",
-        "moveDown": "Siirrä ilmausta {position} alaspäin",
-        "remove": "Poista ilmaus {position}",
-        "count": "{count}/{max}"
-      },
-      "topics": {
-        "heading": "Pelit ja aiheet",
-        "hint": "Valitse pelit ja aiheet, joita ohjaat."
-      },
-      "account": {
-        "heading": "Tililtäsi",
-        "name": "Nimi",
-        "nameGeduHint": "Sukunimesi ei koskaan näy tiimisivulla.",
-        "title": "Titteli",
-        "titleGeduHint": "Määräytyy roolisi mukaan.",
+      "writing": {
+        "heading": "Omin sanoin",
         "languages": "Kielet",
-        "areas": "Alueet",
-        "none": "Ei vielä",
-        "settingsLink": "Muuta näitä asetuksissa"
+        "languagesHint": "Kirjoita niillä kielillä, jotka tuntuvat sinusta luontevilta. Vähintään yksi tarvitaan. Lukijat näkevät korttisi omalla kielellään, jos olet kirjoittanut sillä – muuten englanniksi tai sillä kielellä, jolla olet kirjoittanut.",
+        "addLocale": "Lisää kieli",
+        "removeLocale": "Poista {locale}",
+        "shortDescription": "Esittele itsesi yhdellä rivillä",
+        "shortDescriptionPlaceholder": "Esimerkiksi: Redstone-nörtti ja rakennushaasteiden ystävä",
+        "longDescription": "Minusta",
+        "longDescriptionHint": "Mitä teet sessioissa, mitä pelaat ja mitä perheet voisivat haluta tietää sinusta.",
+        "longDescriptionPlaceholder": "Kerro perheille vähän itsestäsi",
+        "funFact": "Hauska fakta",
+        "funFactPlaceholder": "Esimerkiksi: Rakensin kerran toimivan laskimen Minecraftissa.",
+        "count": "{count}/{max}"
       },
       "preview": {
         "heading": "Esikatselu",
-        "versions": "Esikatseltava versio",
-        "draft": "Luonnoksesi",
-        "live": "Julkaistu nyt",
         "liveNow": "Tämän yleisö näkee nyt.",
-        "draftOverLive": "Ei vielä julkaistu. Yleisö näkee nykyisen korttisi, kunnes ylläpitäjä hyväksyy nämä muutokset.",
-        "nothingLive": "Kukaan ei näe tätä vielä. Kortti julkaistaan, kun ylläpitäjä hyväksyy sen.",
-        "adminUnpublished": "Ei vielä julkaistu. Julkaise muutoksesi, niin tiimisivu päivittyy.",
-        "adminHidden": "Piilotettu. Tältä korttisi näyttää, kun tuot sen näkyviin."
+        "unsaved": "Tallentamattomat muutoksesi. Tiimisivulla näkyy viimeksi tallennettu versio, kunnes tallennat.",
+        "notPublic": "Ei tiimisivulla, joten vain sinä näet tämän."
       }
     }
   }

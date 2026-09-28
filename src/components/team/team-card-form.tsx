@@ -1,120 +1,123 @@
 "use client";
 
-import { useId, useRef } from "react";
+import { useId, useRef, useState } from "react";
 import Image from "next/image";
-import {
-  ArrowDown,
-  ArrowUp,
-  Check,
-  Plus,
-  Settings,
-  Trash2,
-  Upload,
-  X,
-} from "lucide-react";
-import { useFormatter, useTranslations } from "next-intl";
+import { Trash2, Upload, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
-import { LanguageFlag } from "@/components/ui/language-flag";
 import { Textarea } from "@/components/ui/textarea";
+import { RichNoteField } from "@/components/gedu/session-feed/RichNoteField";
 import { useLanguageNames } from "@/hooks/use-language-names";
-import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
-import { PRODUCT_TOPICS, PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
-import { cn } from "@/lib/utils";
-import type { ProductTopic, SpokenLanguageCode } from "@/types";
-import type {
-  TeamProfile,
-  TeamProfilePhoto,
+import {
+  LOCALE_CONFIG,
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
+import { cn, findOption } from "@/lib/utils";
+import {
+  TEAM_PHOTO_HEIGHT,
+  TEAM_PHOTO_WIDTH,
+  type TeamProfile,
+  type TeamProfilePhoto,
+  type TeamProfileTranslation,
 } from "@/components/team/team-profile-body";
+import {
+  TEAM_PHOTO_ACCEPT,
+  TeamPhotoCropDialog,
+  decodeTeamPhoto,
+  type TeamPhotoSource,
+} from "@/components/team/team-photo-crop-dialog";
 
 // ---------------------------------------------------------------------------
-// The form's state, and the two conversions around it
+// The form's state, and the conversions around it
 // ---------------------------------------------------------------------------
 
-/** How long a tagline may run. One line on the public page at its widest. */
-export const TAGLINE_MAX_LENGTH = 140;
+/** How long the one-line introduction may run. One line on the public page at its widest. */
+export const SHORT_DESCRIPTION_MAX_LENGTH = 140;
 
-/**
- * The "What I do" list's recommended range. The upper end is also a hard cap:
- * past eight the card stops being a glance and becomes a CV.
- */
-export const SKILLS_MIN_RECOMMENDED = 4;
-export const SKILLS_MAX = 8;
+/** A fun fact is one or two sentences. */
+export const FUN_FACT_MAX_LENGTH = 200;
 
-/** One phrase short enough to sit on one line of a half-width card. */
-export const SKILL_MAX_LENGTH = 40;
-
-/** A gamer tag's length, generous for any tag a platform allows. */
+/** A nickname's length, generous for any name a game platform allows. */
 const NICKNAME_MAX_LENGTH = 32;
 
 /** An office title, e.g. "Head of Clubs". */
 const TITLE_MAX_LENGTH = 60;
 
 /**
- * One "What I do" row. The key is the row's identity across reorders and
- * edits, which its text cannot be: two rows may say the same thing while one
- * is being typed, and a row's text changes on every keystroke.
+ * One locale's text as typed. The product form's `TranslationDraft` shape with
+ * this card's fields: two required descriptions and an optional fun fact.
  */
-interface SkillRow {
-  key: number;
-  text: string;
+export interface TeamCardTranslationDraft {
+  shortDescription: string;
+  longDescription: string;
+  funFact: string;
 }
 
+const EMPTY_TRANSLATION: TeamCardTranslationDraft = {
+  shortDescription: "",
+  longDescription: "",
+  funFact: "",
+};
+
 /**
- * What the person is typing, as they type it — untrimmed, with empty rows
- * allowed — so the form never rewrites a field under the cursor. It becomes a
- * card through `contentFromForm`, which is where trimming and dropping empties
- * happen.
+ * What the person is typing, as they type it — untrimmed — so the form never
+ * rewrites a field under the cursor. It becomes a card through
+ * `contentFromForm`, which is where trimming happens.
+ *
+ * The translations are the product form's per-locale map, with the open tab
+ * beside it, so switching tabs keeps what was typed in each.
  */
 export interface TeamCardForm {
   nickname: string;
   /** The office title. Unused for a Gedu, whose title is the role. */
   title: string;
   photo: TeamProfilePhoto | null;
-  tagline: string;
-  taglineLanguage: SpokenLanguageCode;
-  skills: readonly SkillRow[];
-  /** The next row key to hand out. Part of the state so adding stays pure. */
-  nextSkillKey: number;
-  topics: readonly ProductTopic[];
+  translations: Partial<Record<SupportedLocale, TeamCardTranslationDraft>>;
+  activeLocale: SupportedLocale;
 }
 
 /**
- * The part of a card a person writes, normalised: what gets saved, submitted
- * and compared. `title` is `null` for a Gedu.
+ * The part of a card a person writes, normalised: what gets saved and
+ * compared. `title` is `null` for a Gedu.
+ *
+ * A language tab with nothing typed in it is not content — it is a tab the
+ * person opened and has not used — so it is dropped here, and a brand-new
+ * card's first, empty tab neither dirties the form nor counts as a language.
  */
 export interface TeamCardContent {
   nickname: string | null;
   title: string | null;
   photo: TeamProfilePhoto | null;
-  tagline: TeamProfile["tagline"];
-  skills: readonly string[];
-  topics: readonly ProductTopic[];
+  translations: readonly TeamProfileTranslation[];
 }
 
-/**
- * Topics in the vocabulary's own order, whatever order they were ticked in, so
- * two cards naming the same topics are the same card.
- */
-function canonicalTopics(topics: readonly ProductTopic[]): ProductTopic[] {
-  return PRODUCT_TOPIC_VALUES.filter((topic) => topics.includes(topic));
-}
-
-export function formFromProfile(profile: TeamProfile): TeamCardForm {
+export function formFromProfile(
+  profile: TeamProfile,
+  uiLocale: SupportedLocale,
+): TeamCardForm {
+  const translations: TeamCardForm["translations"] = {};
+  for (const row of profile.translations) {
+    translations[row.locale] = {
+      shortDescription: row.shortDescription,
+      longDescription: row.longDescription,
+      funFact: row.funFact ?? "",
+    };
+  }
+  // A card with nothing written opens on one tab, in the reader's own UI
+  // locale, exactly as a new product does.
+  const first = profile.translations.at(0)?.locale;
+  if (first === undefined) translations[uiLocale] = EMPTY_TRANSLATION;
   return {
     nickname: profile.nickname ?? "",
     title: profile.kind === "admin" ? profile.title : "",
     photo: profile.photo,
-    tagline: profile.tagline?.text ?? "",
-    taglineLanguage:
-      profile.tagline?.spokenLanguage ?? profile.spokenLanguages.at(0) ?? "en",
-    skills: profile.skills.map((text, key) => ({ key, text })),
-    nextSkillKey: profile.skills.length,
-    topics: canonicalTopics(profile.topics),
+    translations,
+    activeLocale: first ?? uiLocale,
   };
 }
 
@@ -122,24 +125,34 @@ export function contentFromForm(
   form: TeamCardForm,
   kind: TeamProfile["kind"],
 ): TeamCardContent {
-  const tagline = form.tagline.trim();
+  const translations: TeamProfileTranslation[] = [];
+  for (const locale of SUPPORTED_LOCALES) {
+    const draft = form.translations[locale];
+    if (draft === undefined) continue;
+    const shortDescription = draft.shortDescription.trim();
+    const longDescription = draft.longDescription.trim();
+    const funFact = draft.funFact.trim();
+    if (shortDescription === "" && longDescription === "" && funFact === "") {
+      continue;
+    }
+    translations.push({
+      locale,
+      shortDescription,
+      longDescription,
+      funFact: funFact === "" ? null : funFact,
+    });
+  }
   return {
     nickname: form.nickname.trim() || null,
     title: kind === "admin" ? form.title.trim() : null,
     photo: form.photo,
-    tagline:
-      tagline === ""
-        ? null
-        : { text: tagline, spokenLanguage: form.taglineLanguage },
-    skills: form.skills
-      .map((skill) => skill.text.trim())
-      .filter((text) => text !== ""),
-    topics: canonicalTopics(form.topics),
+    translations,
   };
 }
 
 export function contentFromProfile(profile: TeamProfile): TeamCardContent {
-  return contentFromForm(formFromProfile(profile), profile.kind);
+  // The locale only picks an empty first tab, which is not content.
+  return contentFromForm(formFromProfile(profile, "en"), profile.kind);
 }
 
 /** Whether two cards say the same thing. */
@@ -148,20 +161,40 @@ export function sameContent(a: TeamCardContent, b: TeamCardContent): boolean {
 }
 
 /** The card as the public page would render it, with this content in it. */
-export function profileWithContent(
-  base: TeamProfile,
+export function profileWithContent<P extends TeamProfile>(
+  base: P,
   content: TeamCardContent,
-): TeamProfile {
-  const written = {
+): P {
+  return {
+    ...base,
     nickname: content.nickname,
     photo: content.photo,
-    tagline: content.tagline,
-    skills: content.skills,
-    topics: content.topics,
+    translations: content.translations,
+    ...(base.kind === "admin" && content.title !== null
+      ? { title: content.title }
+      : {}),
   };
-  return base.kind === "admin"
-    ? { ...base, ...written, title: content.title ?? base.title }
-    : { ...base, ...written };
+}
+
+/**
+ * What stops a card going on the team page: a photo, and at least one language
+ * with both descriptions — in every language written, because a reader of any
+ * of them would otherwise meet half a card. The fun fact is optional and never
+ * counts.
+ */
+export type TeamCardGap = "photo" | "text" | "both" | null;
+
+export function teamCardGap(content: TeamCardContent): TeamCardGap {
+  const missingPhoto = content.photo === null;
+  const missingText =
+    content.translations.length === 0 ||
+    content.translations.some(
+      (row) => row.shortDescription === "" || row.longDescription === "",
+    );
+  if (missingPhoto && missingText) return "both";
+  if (missingPhoto) return "photo";
+  if (missingText) return "text";
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -175,7 +208,7 @@ type FormUpdate = (update: (form: TeamCardForm) => TeamCardForm) => void;
  * person works through one at a time, so each is its own card and the column
  * holding them has no edge of its own.
  */
-function FormSection({
+export function FormSection({
   heading,
   children,
 }: {
@@ -198,65 +231,68 @@ function FormSection({
 }
 
 /**
- * A pressable chip for a choice among a few: a topic, a language, a version.
- * Boxed, because its edge is the control's affordance; a chosen chip says so
- * with its edge in act and a tick, never with colour alone.
- */
-export function ChoiceChip({
-  pressed,
-  onPress,
-  children,
-}: {
-  pressed: boolean;
-  onPress: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      onClick={onPress}
-      className={cn(
-        "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        pressed
-          ? "border-act text-foreground"
-          : "border-border text-muted-foreground hover:bg-hover hover:text-foreground",
-      )}
-    >
-      {pressed && <Check className="h-3.5 w-3.5" aria-hidden />}
-      {children}
-    </button>
-  );
-}
-
-/**
- * The photo, as the team page will crop it, with its three actions.
+ * The photo, in the team page's 4:5 frame, with its actions.
  *
- * Choosing a file is a backend round trip (an upload), so `onChoose` is the
- * caller's; removing one is a change to the draft like any other, so it
- * happens here and shows at once in the preview. With no photo the identicon
- * stands in, exactly as on the public page.
+ * **Picking a file opens the crop step, and the crop happens here, locally**:
+ * the framed area is drawn to a canvas at the stored size and shown in the
+ * frame and the preview at once through an object URL. The upload of the
+ * cropped bytes is the caller's (`onUpload`), because that is the backend
+ * round trip; what the form holds is the local URL either way.
+ *
+ * **Object URLs are owned in pairs.** The picked file's URL lives exactly as
+ * long as the crop dialog and is revoked when it closes; the cropped photo's
+ * URLs are handed to `onCropped`, whose owner revokes each one once nothing
+ * shows it any more.
  */
 export function TeamCardPhotoSection({
   personId,
   photo,
-  onChoose,
+  onCropped,
   update,
 }: {
   personId: string;
   photo: TeamProfilePhoto | null;
-  onChoose: () => void;
+  /** A new crop's bytes and the object URL made for them. */
+  onCropped: (blob: Blob, url: string) => void;
   update: FormUpdate;
 }) {
   const t = useTranslations("team.edit.photo");
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [source, setSource] = useState<TeamPhotoSource | null>(null);
+  /** The picked file's URL, revoked when the dialog lets go of it. */
+  const sourceUrl = useRef<string | null>(null);
+  /** Which pick is current, so a slow decode of an abandoned file lands nowhere. */
+  const pick = useRef(0);
+
+  function release() {
+    if (sourceUrl.current !== null) URL.revokeObjectURL(sourceUrl.current);
+    sourceUrl.current = null;
+  }
+
+  function close() {
+    pick.current += 1;
+    release();
+    setSource(null);
+  }
+
+  async function choose(file: File) {
+    release();
+    const url = URL.createObjectURL(file);
+    sourceUrl.current = url;
+    const thisPick = ++pick.current;
+    setSource({ kind: "decoding", url });
+    const readable = await decodeTeamPhoto(url, file.type);
+    if (pick.current !== thisPick) return;
+    if (!readable) release();
+    setSource(readable ? { kind: "ready", url } : { kind: "unreadable" });
+  }
+
   return (
     <FormSection heading={t("heading")}>
       <div className="flex items-center gap-5">
         <div
           aria-hidden
-          className="relative size-24 shrink-0 overflow-hidden rounded-2xl border border-border bg-card"
+          className="relative flex aspect-[4/5] w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-card"
         >
           {photo ? (
             <Image
@@ -268,12 +304,16 @@ export function TeamCardPhotoSection({
               className="h-full w-full object-cover"
             />
           ) : (
-            <Identicon id={personId} size={96} />
+            <Identicon id={personId} size={96} className="h-auto w-full" />
           )}
         </div>
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={onChoose}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInput.current?.click()}
+            >
               <Upload aria-hidden />
               {photo ? t("replace") : t("upload")}
             </Button>
@@ -291,47 +331,71 @@ export function TeamCardPhotoSection({
           <p className="text-xs text-muted-foreground">{t("hint")}</p>
         </div>
       </div>
+      <input
+        ref={fileInput}
+        type="file"
+        accept={TEAM_PHOTO_ACCEPT.join(",")}
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          // Cleared at once, so picking the same file again still fires.
+          e.target.value = "";
+          if (file !== undefined) void choose(file);
+        }}
+      />
+      <TeamPhotoCropDialog
+        source={source}
+        onCancel={close}
+        onChooseAnother={() => fileInput.current?.click()}
+        onConfirm={(blob) => {
+          close();
+          const url = URL.createObjectURL(blob);
+          onCropped(blob, url);
+          update((form) => ({
+            ...form,
+            photo: { src: url, width: TEAM_PHOTO_WIDTH, height: TEAM_PHOTO_HEIGHT },
+          }));
+        }}
+      />
     </FormSection>
   );
 }
 
 /**
- * Gamer tag, the office title (admins only) and the tagline with the spoken
- * language it is written in.
- *
- * The language choices are the person's own spoken languages from their
- * account — the languages they could plausibly write a line in — plus whatever
- * the saved tagline already says, so a card is never shown a choice it does not
- * currently hold.
+ * The nickname and, for office staff, the title they write for themselves.
+ * Everything else the card shows about the person — their name, a Gedu's
+ * title, their spoken languages — comes from the account, and the preview
+ * beside the form already shows it.
  */
 export function TeamCardAboutSection({
   kind,
   form,
-  spokenLanguages,
   update,
 }: {
   kind: TeamProfile["kind"];
   form: TeamCardForm;
-  spokenLanguages: readonly SpokenLanguageCode[];
   update: FormUpdate;
 }) {
   const t = useTranslations("team.edit.about");
-  const languageName = useLanguageNames();
   const nicknameId = useId();
   const titleId = useId();
-  const taglineId = useId();
-  const languages = spokenLanguages.includes(form.taglineLanguage)
-    ? spokenLanguages
-    : [...spokenLanguages, form.taglineLanguage];
 
   return (
     <FormSection heading={t("heading")}>
-      <Field label={t("nickname")} htmlFor={nicknameId} optional hint={t("nicknameHint")}>
+      <Field
+        label={t("nickname")}
+        htmlFor={nicknameId}
+        optional
+        hint={t("nicknameHint")}
+      >
         {({ hintId }) => (
           <Input
             id={nicknameId}
             value={form.nickname}
             maxLength={NICKNAME_MAX_LENGTH}
+            placeholder={t("nicknamePlaceholder")}
             aria-describedby={hintId}
             onChange={(e) => {
               const nickname = e.target.value;
@@ -357,321 +421,204 @@ export function TeamCardAboutSection({
           )}
         </Field>
       )}
+    </FormSection>
+  );
+}
+
+/**
+ * What the person writes about themselves, per locale.
+ *
+ * **The language tabs are the product form's, mirrored rather than imported.**
+ * The admin product form draws them inline in its identity section rather than
+ * as a component, so there is nothing to import without first extracting it
+ * from a form this change does not otherwise touch. The interaction is the
+ * same: a tab per locale written, a remove control on each while more than one
+ * remains, an "add a language" select for the rest, and the rule of at least
+ * one — here enforced by the ready switch rather than by the save.
+ *
+ * **"About me" is the session feed's rich note field**, which is the no-links
+ * editor loaded on demand behind a same-sized placeholder: staff-authored copy
+ * on a page families read takes the conservative variant. The editor reads its
+ * content once, at mount, so the locale is its key and switching tabs remounts
+ * it on that locale's draft.
+ */
+export function TeamCardWritingSection({
+  form,
+  update,
+}: {
+  form: TeamCardForm;
+  update: FormUpdate;
+}) {
+  const t = useTranslations("team.edit.writing");
+  const languageName = useLanguageNames();
+  const shortId = useId();
+  const funFactId = useId();
+
+  const locale = form.activeLocale;
+  const addedLocales = SUPPORTED_LOCALES.filter(
+    (l) => form.translations[l] !== undefined,
+  );
+  const addableLocales = SUPPORTED_LOCALES.filter(
+    (l) => form.translations[l] === undefined,
+  );
+  const draft = form.translations[locale] ?? EMPTY_TRANSLATION;
+
+  function setActive(patch: Partial<TeamCardTranslationDraft>) {
+    update((prev) => ({
+      ...prev,
+      translations: {
+        ...prev.translations,
+        [prev.activeLocale]: {
+          ...(prev.translations[prev.activeLocale] ?? EMPTY_TRANSLATION),
+          ...patch,
+        },
+      },
+    }));
+  }
+
+  function addLocale(next: SupportedLocale) {
+    update((prev) => ({
+      ...prev,
+      translations: { ...prev.translations, [next]: EMPTY_TRANSLATION },
+      activeLocale: next,
+    }));
+  }
+
+  function removeLocale(gone: SupportedLocale) {
+    update((prev) => {
+      const next = { ...prev.translations };
+      delete next[gone];
+      const remaining = SUPPORTED_LOCALES.filter((l) => next[l] !== undefined);
+      return {
+        ...prev,
+        translations: next,
+        activeLocale:
+          prev.activeLocale === gone
+            ? (remaining[0] ?? prev.activeLocale)
+            : prev.activeLocale,
+      };
+    });
+  }
+
+  return (
+    <FormSection heading={t("heading")}>
+      <Field label={t("languages")} hint={t("languagesHint")}>
+        <div className="flex flex-wrap items-center gap-1 border-b border-border">
+          {addedLocales.map((l) => {
+            const isActive = locale === l;
+            const canRemove = addedLocales.length > 1;
+            return (
+              <span
+                key={l}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-t-md border-b-2 border-border px-3 py-1.5 text-sm transition-colors",
+                  isActive
+                    ? "text-act"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <button
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => update((prev) => ({ ...prev, activeLocale: l }))}
+                >
+                  {LOCALE_CONFIG[l].nativeLabel}
+                </button>
+                {canRemove && (
+                  <button
+                    type="button"
+                    onClick={() => removeLocale(l)}
+                    className="rounded p-0.5 text-muted-foreground hover:text-destructive"
+                    aria-label={t("removeLocale", {
+                      locale: languageName(l, LOCALE_CONFIG[l].label),
+                    })}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
+            );
+          })}
+          {addableLocales.length > 0 && (
+            <select
+              value=""
+              aria-label={t("addLocale")}
+              onChange={(e) => {
+                const next = findOption(addableLocales, e.target.value);
+                if (next) addLocale(next);
+              }}
+              className="mb-1 ml-1 h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+            >
+              <option value="">{t("addLocale")}</option>
+              {addableLocales.map((l) => (
+                <option key={l} value={l}>
+                  {languageName(l, LOCALE_CONFIG[l].label)}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      </Field>
 
       <Field
-        label={t("tagline")}
-        htmlFor={taglineId}
-        optional
-        hint={t("taglineHint")}
+        label={t("shortDescription")}
+        htmlFor={shortId}
         labelAction={
           // The count sits on the label's row, right-packed, so it never
-          // pushes the field: tabular figures keep its own width steady as
-          // it counts.
+          // pushes the field: tabular figures keep its own width steady.
           <span className="text-xs tabular-nums text-muted-foreground">
-            {t("taglineCount", {
-              count: form.tagline.length,
-              max: TAGLINE_MAX_LENGTH,
+            {t("count", {
+              count: draft.shortDescription.length,
+              max: SHORT_DESCRIPTION_MAX_LENGTH,
             })}
           </span>
         }
       >
-        {({ hintId }) => (
-          <Textarea
-            id={taglineId}
-            rows={3}
-            value={form.tagline}
-            maxLength={TAGLINE_MAX_LENGTH}
-            lang={form.taglineLanguage}
-            aria-describedby={hintId}
-            className="resize-none"
-            onChange={(e) => {
-              const tagline = e.target.value;
-              update((prev) => ({ ...prev, tagline }));
-            }}
-          />
-        )}
+        <Input
+          id={shortId}
+          value={draft.shortDescription}
+          maxLength={SHORT_DESCRIPTION_MAX_LENGTH}
+          lang={locale}
+          placeholder={t("shortDescriptionPlaceholder")}
+          onChange={(e) => setActive({ shortDescription: e.target.value })}
+        />
       </Field>
 
-      <Field label={t("taglineLanguage")}>
-        {({ labelId }) => (
-          <div role="group" aria-labelledby={labelId} className="flex flex-wrap gap-2">
-            {languages.map((code) => (
-              <ChoiceChip
-                key={code}
-                pressed={form.taglineLanguage === code}
-                onPress={() =>
-                  update((prev) => ({ ...prev, taglineLanguage: code }))
-                }
-              >
-                <LanguageFlag code={code} showCode={false} />
-                {languageName(code)}
-              </ChoiceChip>
-            ))}
-          </div>
-        )}
-      </Field>
-    </FormSection>
-  );
-}
+      <RichNoteField
+        key={locale}
+        label={t("longDescription")}
+        hint={t("longDescriptionHint")}
+        placeholder={t("longDescriptionPlaceholder")}
+        value={draft.longDescription}
+        seed={0}
+        ready
+        onChange={(longDescription) => setActive({ longDescription })}
+      />
 
-/**
- * The "What I do" phrases: typed in place, moved up and down, removed, and
- * added up to the cap. A new row takes the focus, so adding a phrase is one
- * click and then typing.
- */
-export function TeamCardSkillsSection({
-  skills,
-  nextSkillKey,
-  update,
-}: {
-  skills: readonly SkillRow[];
-  nextSkillKey: number;
-  update: FormUpdate;
-}) {
-  const t = useTranslations("team.edit.skills");
-  /** The row to focus once it mounts — set by Add, spent by the row's ref. */
-  const focusOnMount = useRef<number | null>(null);
-
-  const setSkills = (next: (rows: readonly SkillRow[]) => SkillRow[]) =>
-    update((form) => ({ ...form, skills: next(form.skills) }));
-
-  const move = (index: number, by: -1 | 1) =>
-    setSkills((rows) => {
-      const next = [...rows];
-      const [row] = next.splice(index, 1);
-      next.splice(index + by, 0, row);
-      return next;
-    });
-
-  return (
-    <FormSection heading={t("heading")}>
-      <p className="text-sm text-muted-foreground">
-        {t("hint", { min: SKILLS_MIN_RECOMMENDED, max: SKILLS_MAX })}
-      </p>
-
-      {skills.length > 0 && (
-        <ol className="space-y-2">
-          {skills.map((skill, index) => {
-            const position = index + 1;
-            return (
-              <li key={skill.key} className="flex items-center gap-2">
-                <span
-                  aria-hidden
-                  className="w-4 shrink-0 text-right text-sm tabular-nums text-muted-foreground"
-                >
-                  {position}
-                </span>
-                <Input
-                  ref={(el) => {
-                    if (el !== null && focusOnMount.current === skill.key) {
-                      focusOnMount.current = null;
-                      el.focus();
-                    }
-                  }}
-                  value={skill.text}
-                  maxLength={SKILL_MAX_LENGTH}
-                  placeholder={t("placeholder")}
-                  aria-label={t("phrase", { position })}
-                  onChange={(e) => {
-                    const text = e.target.value;
-                    setSkills((rows) =>
-                      rows.map((row) =>
-                        row.key === skill.key ? { ...row, text } : row,
-                      ),
-                    );
-                  }}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0"
-                  aria-label={t("moveUp", { position })}
-                  disabled={index === 0}
-                  onClick={() => move(index, -1)}
-                >
-                  <ArrowUp aria-hidden />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0"
-                  aria-label={t("moveDown", { position })}
-                  disabled={index === skills.length - 1}
-                  onClick={() => move(index, 1)}
-                >
-                  <ArrowDown aria-hidden />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0"
-                  aria-label={t("remove", { position })}
-                  onClick={() =>
-                    setSkills((rows) =>
-                      rows.filter((row) => row.key !== skill.key),
-                    )
-                  }
-                >
-                  <X aria-hidden />
-                </Button>
-              </li>
-            );
-          })}
-        </ol>
-      )}
-
-      {/* The count is right-packed on the Add button's row, where the slack
-          is, so its digits changing never move the button. */}
-      <div className="flex items-center justify-between gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={skills.length >= SKILLS_MAX}
-          onClick={() => {
-            focusOnMount.current = nextSkillKey;
-            update((form) => ({
-              ...form,
-              skills: [...form.skills, { key: form.nextSkillKey, text: "" }],
-              nextSkillKey: form.nextSkillKey + 1,
-            }));
-          }}
-        >
-          <Plus aria-hidden />
-          {t("add")}
-        </Button>
-        <span className="text-xs tabular-nums text-muted-foreground">
-          {t("count", { count: skills.length, max: SKILLS_MAX })}
-        </span>
-      </div>
-    </FormSection>
-  );
-}
-
-/** The games and topics, as chips over the product-topic vocabulary. */
-export function TeamCardTopicsSection({
-  topics,
-  update,
-}: {
-  topics: readonly ProductTopic[];
-  update: FormUpdate;
-}) {
-  const t = useTranslations("team.edit.topics");
-  const hintId = useId();
-  return (
-    <FormSection heading={t("heading")}>
-      <p id={hintId} className="text-sm text-muted-foreground">
-        {t("hint")}
-      </p>
-      <div role="group" aria-describedby={hintId} className="flex flex-wrap gap-2">
-        {PRODUCT_TOPIC_VALUES.map((topic) => {
-          const chosen = topics.includes(topic);
-          return (
-            <ChoiceChip
-              key={topic}
-              pressed={chosen}
-              onPress={() =>
-                update((form) => ({
-                  ...form,
-                  topics: chosen
-                    ? form.topics.filter((other) => other !== topic)
-                    : [...form.topics, topic],
-                }))
-              }
-            >
-              {PRODUCT_TOPICS[topic].label}
-            </ChoiceChip>
-          );
-        })}
-      </div>
-    </FormSection>
-  );
-}
-
-/**
- * What the card shows that this page does not edit: the name, a Gedu's title,
- * the spoken languages and a Gedu's areas.
- *
- * The languages and areas already live on the account and have editors in
- * settings; a second editor here would be two places to change one fact, so
- * this states them and points at the one place they are changed. A Gedu's
- * name row says outright that the surname never appears, because that is the
- * question a Gedu reading their own card will have.
- */
-export function TeamCardAccountSection({ profile }: { profile: TeamProfile }) {
-  const t = useTranslations("team.edit.account");
-  const tProfile = useTranslations("team.profile");
-  const languageName = useLanguageNames();
-  const format = useFormatter();
-
-  return (
-    <FormSection heading={t("heading")}>
-      <dl className="divide-y divide-border">
-        <AccountRow
-          label={t("name")}
-          hint={profile.kind === "gedu" ? t("nameGeduHint") : undefined}
-        >
-          {profile.kind === "admin"
-            ? `${profile.firstName} ${profile.lastName}`
-            : profile.firstName}
-        </AccountRow>
-        {profile.kind === "gedu" && (
-          <AccountRow label={t("title")} hint={t("titleGeduHint")}>
-            {tProfile("geduTitle")}
-          </AccountRow>
-        )}
-        <AccountRow label={t("languages")}>
-          {profile.spokenLanguages.length === 0 ? (
-            <span className="text-muted-foreground">{t("none")}</span>
-          ) : (
-            <ul className="flex flex-wrap gap-x-4 gap-y-2">
-              {profile.spokenLanguages.map((code) => (
-                <li key={code} className="inline-flex items-center gap-2">
-                  <LanguageFlag code={code} showCode={false} />
-                  <span>{languageName(code)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </AccountRow>
-        {profile.kind === "gedu" && (
-          <AccountRow label={t("areas")}>
-            {profile.areas.length === 0 ? (
-              <span className="text-muted-foreground">{t("none")}</span>
-            ) : (
-              format.list(profile.areas, { type: "conjunction" })
-            )}
-          </AccountRow>
-        )}
-      </dl>
-      <Link
-        href={ROUTES.settings}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      <Field
+        label={t("funFact")}
+        htmlFor={funFactId}
+        optional
+        labelAction={
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {t("count", {
+              count: draft.funFact.length,
+              max: FUN_FACT_MAX_LENGTH,
+            })}
+          </span>
+        }
       >
-        <Settings className="h-4 w-4" aria-hidden />
-        {t("settingsLink")}
-      </Link>
+        <Textarea
+          id={funFactId}
+          rows={2}
+          value={draft.funFact}
+          maxLength={FUN_FACT_MAX_LENGTH}
+          lang={locale}
+          placeholder={t("funFactPlaceholder")}
+          className="resize-none"
+          onChange={(e) => setActive({ funFact: e.target.value })}
+        />
+      </Field>
     </FormSection>
-  );
-}
-
-function AccountRow({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="grid gap-1 py-3 first:pt-0 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-4">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd>
-        {children}
-        {hint !== undefined && (
-          <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
-        )}
-      </dd>
-    </div>
   );
 }

@@ -4929,108 +4929,92 @@
       "nameWithNickname": "{firstName} “<nick>{nickname}</nick>” {lastName}",
       "firstNameWithNickname": "{firstName} “<nick>{nickname}</nick>”",
       "geduTitle": "Gedu · Game Educator",
-      "taglineLanguage": "Written in {language}",
-      "whatIDo": "What I do",
-      "atAGlance": "At a glance",
       "languages": "Languages",
-      "topics": "Games and topics",
-      "areas": "Areas"
+      "writtenIn": "Written in {language}",
+      "aboutMe": "About me",
+      "funFact": "Fun fact"
     },
     "edit": {
       "back": "Back to settings",
       "pageTitle": "Your team card",
-      "introGedu": "Your card on School of Gaming’s public team page, where families get to know the people behind the sessions. An admin reviews it before it goes live, and again whenever you change it.",
-      "introAdmin": "Your card on School of Gaming’s public team page. Changes you publish go live straight away.",
+      "introGedu": "Your card on School of Gaming’s public team page, where families get to know the people behind the sessions. Save as often as you like: it only goes on the page once you mark it ready and an admin has approved it.",
+      "introAdmin": "Your card on School of Gaming’s public team page. While it is switched on, changes you save go live straight away.",
       "status": {
-        "draftTitle": "Not on the team page yet",
-        "draftBody": "Fill in your card and submit it for review. It goes live once an admin approves it.",
-        "inReviewTitle": "Waiting for review",
-        "inReviewBody": "An admin is reviewing your card. Editing is paused so that what they approve is exactly what goes live. Withdraw it if you want to change something.",
+        "privateTitle": "Private",
+        "privateBody": "Only you can see your card. When you are happy with it, tick “My profile is ready to be public” at the end of the form.",
+        "waitingTitle": "Ready, waiting for an admin",
+        "waitingBody": "An admin will look at your card and put it on the team page. You can keep editing in the meantime.",
         "liveTitle": "Live on the team page",
-        "liveBody": "Anyone can see your card. Changes you make here go live once an admin approves them, and your current card stays up until then.",
-        "changesInReviewTitle": "Changes waiting for review",
-        "changesInReviewBody": "An admin is reviewing your changes, and the team page shows your current card until they approve them. Editing is paused until then. Withdraw the changes if you want to keep working on them.",
-        "returnedTitle": "Returned with a note",
-        "returnedBody": "{name} sent your card back. Make the changes and submit it again.",
-        "publishedTitle": "On the team page",
-        "publishedBody": "Anyone can see your card. Changes you publish go live straight away.",
-        "hiddenTitle": "Hidden from the team page",
-        "hiddenBody": "Your card is not on the public team page. Show it when it is ready."
+        "liveBody": "Anyone can see your card. Changes you save go live straight away, and unticking “My profile is ready to be public” takes it down at once.",
+        "takenOffTitle": "Ready, but an admin has taken it off the team page",
+        "takenOffBody": "Your card is not public at the moment. Contact the office if you would like to know why, or to get it back up.",
+        "shownTitle": "On the team page",
+        "shownBody": "Anyone can see your card. Changes you save go live straight away.",
+        "hiddenTitle": "Not on the team page",
+        "hiddenBody": "Only you can see your card. Tick “Show my profile on the team page” at the end of the form when it is ready."
       },
       "actions": {
-        "withdraw": "Withdraw submission",
-        "withdrawChanges": "Withdraw changes",
-        "remove": "Remove from team page",
-        "hide": "Hide from team page",
-        "show": "Show on team page",
-        "saveDraft": "Save draft",
-        "submit": "Submit for review",
-        "submitChanges": "Submit changes for review",
-        "resubmit": "Submit again",
-        "publish": "Publish changes",
         "save": "Save changes",
         "discard": "Discard changes"
       },
-      "removeDialog": {
-        "title": "Remove your card from the team page?",
-        "description": "It comes off the public page straight away. To put it back, you submit it for review again.",
-        "confirm": "Remove card"
+      "switch": {
+        "heading": "Team page",
+        "readyLabel": "My profile is ready to be public",
+        "readyHint": "Ticking this means you agree to School of Gaming showing your profile publicly on its website. An admin looks at it before it first goes up. Untick it at any time and it comes down straight away.",
+        "showLabel": "Show my profile on the team page",
+        "showHint": "Ticking this puts your profile on School of Gaming’s public website straight away. Untick it at any time and it comes down.",
+        "complete": "Your card has everything the team page needs.",
+        "mustStayComplete": "While this is ticked your card has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box to keep working on it privately.",
+        "missing": {
+          "photo": "Add a photo to be able to tick this.",
+          "text": "Fill in “Introduce yourself in one line” and “About me” in every language you write in to be able to tick this.",
+          "both": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this."
+        }
       },
-      "consent": "I agree to School of Gaming showing this card on its public team page, where anyone can see it. I can remove it at any time.",
       "photo": {
         "heading": "Photo",
         "upload": "Upload photo",
         "replace": "Replace photo",
         "remove": "Remove photo",
-        "hint": "The team page shows a square from the middle of your photo. Without one, your account’s pattern stands in."
+        "hint": "A portrait photo of you, which you crop to fit the frame. JPEG, PNG or WebP.",
+        "crop": {
+          "title": "Crop your photo",
+          "description": "Drag the photo to place it in the frame, and zoom to fit.",
+          "zoom": "Zoom",
+          "confirm": "Use photo",
+          "unreadable": "This file can’t be opened as a picture here. Choose a JPEG, PNG or WebP photo. iPhone photos in HEIC format need converting first.",
+          "chooseAnother": "Choose another photo",
+          "failed": "The photo could not be cropped. Try again, or choose another photo."
+        }
       },
       "about": {
         "heading": "About you",
-        "nickname": "Gamer tag",
+        "nickname": "Gamers know me as",
+        "nicknamePlaceholder": "For example: Creeperhug",
         "nicknameHint": "Shown in quotes in your name, exactly as you write it.",
         "title": "Title",
-        "titleHint": "Your job at School of Gaming, for example Head of Clubs.",
-        "tagline": "Tagline",
-        "taglineHint": "One line about yourself, in your own words.",
-        "taglineCount": "{count}/{max}",
-        "taglineLanguage": "Written in"
+        "titleHint": "Your job at School of Gaming, for example Head of Clubs."
       },
-      "skills": {
-        "heading": "What I do",
-        "hint": "Short phrases, in the order you want them shown. Between {min} and {max} work best.",
-        "phrase": "Phrase {position}",
-        "placeholder": "For example: Build challenges",
-        "add": "Add a phrase",
-        "moveUp": "Move phrase {position} up",
-        "moveDown": "Move phrase {position} down",
-        "remove": "Remove phrase {position}",
-        "count": "{count} of {max}"
-      },
-      "topics": {
-        "heading": "Games and topics",
-        "hint": "Pick the games and topics you run."
-      },
-      "account": {
-        "heading": "From your account",
-        "name": "Name",
-        "nameGeduHint": "Your surname never appears on the team page.",
-        "title": "Title",
-        "titleGeduHint": "Set by your role.",
+      "writing": {
+        "heading": "In your own words",
         "languages": "Languages",
-        "areas": "Areas",
-        "none": "None yet",
-        "settingsLink": "Change these in settings"
+        "languagesHint": "Write in the languages you are comfortable with. At least one is needed. Readers see your card in their own language if you wrote it, otherwise in English, then in whichever language you did write.",
+        "addLocale": "Add a language",
+        "removeLocale": "Remove {locale}",
+        "shortDescription": "Introduce yourself in one line",
+        "shortDescriptionPlaceholder": "For example: Redstone nerd and build-challenge enthusiast",
+        "longDescription": "About me",
+        "longDescriptionHint": "What you do in sessions, what you play, and what families might like to know about you.",
+        "longDescriptionPlaceholder": "Tell families a little about yourself",
+        "funFact": "Fun fact",
+        "funFactPlaceholder": "For example: I once built a working calculator in Minecraft.",
+        "count": "{count}/{max}"
       },
       "preview": {
         "heading": "Preview",
-        "versions": "Version to preview",
-        "draft": "Your draft",
-        "live": "What’s live now",
         "liveNow": "This is what the public sees now.",
-        "draftOverLive": "Not live yet. The public sees your current card until an admin approves these changes.",
-        "nothingLive": "Nobody can see this yet. It goes live once an admin approves it.",
-        "adminUnpublished": "Not live yet. Publish your changes to update the team page.",
-        "adminHidden": "Hidden. This is how your card will look once you show it."
+        "unsaved": "Your unsaved changes. The team page shows your last saved version until you save.",
+        "notPublic": "Not on the team page, so only you can see this."
       }
     }
   }

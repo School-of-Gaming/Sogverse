@@ -3,10 +3,7 @@ import type {
   GeduTeamProfile,
   TeamProfile,
 } from "@/components/team/team-profile-body";
-import type {
-  AdminTeamCardState,
-  GeduTeamCardState,
-} from "@/components/team/team-card-editor-body";
+import type { GeduTeamCardApproval } from "@/components/team/team-card-editor-body";
 
 /**
  * The team fixtures: three invented people, shared by the public profile scene
@@ -14,9 +11,15 @@ import type {
  * are judged on the same cards.
  *
  * The photos are abstract preview art already in `public/preview-art/`, never a
- * picture of a person: one square, one tall and one wide, so the portrait's
- * crop is judged on every shape. Ids are real UUIDs because a card with no
- * photo draws an identicon from its id.
+ * picture of a person. A real upload is cropped to 4:5 before it is stored;
+ * this art is square, tall and wide, and the frame covers it, which is also
+ * what shows a crop of the wrong shape would still sit right. Ids are real
+ * UUIDs because a card with no photo draws an identicon from its id.
+ *
+ * The languages are chosen so the translation fallback shows: Laura writes in
+ * English only, Eetu in English and Finnish, and Saana in Finnish only — so an
+ * English, Swedish or French reader of Saana's page meets her Finnish with a
+ * caption saying so. Eetu and Laura have a fun fact; Saana does not.
  */
 
 const LAURA: AdminTeamProfile = {
@@ -27,19 +30,26 @@ const LAURA: AdminTeamProfile = {
   nickname: "Nightowl",
   title: "Head of Clubs",
   photo: { src: "/preview-art/session-badge.jpg", width: 1200, height: 1200 },
-  tagline: {
-    text: "I build the week every club runs on, and I still sneak into a Minecraft session whenever the calendar leaves me a gap.",
-    spokenLanguage: "en",
-  },
-  skills: [
-    "Club planning and scheduling",
-    "Partnerships with schools and municipalities",
-    "Gedu training",
-    "Family support",
-    "Minecraft world building",
-    "Event hosting",
+  translations: [
+    {
+      locale: "en",
+      shortDescription:
+        "I build the week every club runs on, and still sneak into a Minecraft session when the calendar lets me.",
+      longDescription: [
+        "I look after our clubs from the first idea to the last session of the term: which games we run, where, when, and with which Gedus.",
+        "",
+        "Most of my week goes on:",
+        "",
+        "- **Planning** the club calendar with schools and municipalities",
+        "- **Training** new Gedus before their first session",
+        "- **Answering** families when something needs sorting out",
+        "",
+        "Before School of Gaming I was a primary school teacher, which is where I learnt that a good game teaches more than any worksheet.",
+      ].join("\n"),
+      funFact:
+        "I have a Minecraft world I have played in since 2012, and I still have not finished the castle.",
+    },
   ],
-  topics: ["minecraft_java", "minecraft_education", "roblox_studio", "esports"],
   spokenLanguages: ["fi", "en", "sv"],
 };
 
@@ -49,20 +59,45 @@ const EETU: GeduTeamProfile = {
   firstName: "Eetu",
   nickname: "Creeperhug",
   photo: { src: "/preview-art/session-tower.jpg", width: 900, height: 1600 },
-  tagline: {
-    text: "Redstone nerd, speedrun cheerleader and the Gedu who always has one more build challenge up his sleeve for the last ten minutes.",
-    spokenLanguage: "en",
-  },
-  skills: [
-    "Redstone engineering",
-    "Build challenges",
-    "Team games",
-    "Rocket League coaching",
-    "Game design basics",
+  translations: [
+    {
+      locale: "en",
+      shortDescription:
+        "Redstone nerd, speedrun cheerleader and the Gedu with one more build challenge up his sleeve.",
+      longDescription: [
+        "I run Minecraft and Rocket League sessions, mostly in Helsinki and Espoo.",
+        "",
+        "## In my sessions",
+        "",
+        "- Build challenges where every team finishes something they are proud of",
+        "- Redstone doors, traps and the occasional very loud machine",
+        "- Team games where the quiet players get the ball too",
+        "",
+        "I have been gaming since I could hold a controller, and I study game design at university.",
+      ].join("\n"),
+      funFact:
+        "My longest redstone build is a working elevator that takes eleven minutes to reach the top.",
+    },
+    {
+      locale: "fi",
+      shortDescription:
+        "Redstone-nörtti, speedrun-tsemppari ja Gedu, jolla on aina vielä yksi rakennushaaste hihassa.",
+      longDescription: [
+        "Vedän Minecraft- ja Rocket League -sessioita, enimmäkseen Helsingissä ja Espoossa.",
+        "",
+        "## Sessioissani",
+        "",
+        "- Rakennushaasteita, joissa jokainen tiimi saa valmiiksi jotain, mistä on ylpeä",
+        "- Redstone-ovia, ansoja ja välillä tosi äänekkäitä koneita",
+        "- Joukkuepelejä, joissa hiljaisemmatkin pelaajat saavat pallon",
+        "",
+        "Olen pelannut siitä asti, kun pystyin pitelemään ohjainta, ja opiskelen pelisuunnittelua yliopistossa.",
+      ].join("\n"),
+      funFact:
+        "Pisin redstone-rakennelmani on toimiva hissi, jolla kestää yksitoista minuuttia päästä ylös.",
+    },
   ],
-  topics: ["minecraft_java", "minecraft_bedrock", "fortnite", "rocket_league"],
   spokenLanguages: ["fi", "en"],
-  areas: ["Helsinki", "Espoo", "Vantaa"],
 };
 
 const SAANA: GeduTeamProfile = {
@@ -70,21 +105,27 @@ const SAANA: GeduTeamProfile = {
   id: "e401c5af-f126-4e16-bf00-784b8fc438c7",
   firstName: "Saana",
   nickname: null,
-  photo: null,
-  tagline: {
-    text: "Rakennan mieluiten yhdessä muiden kanssa, ja parhaat ideat syntyvät aina viimeisellä minuutilla.",
-    spokenLanguage: "fi",
-  },
-  skills: ["Minecraft Education", "Storytelling"],
-  topics: ["minecraft_education"],
+  photo: { src: "/preview-art/session-parkour.jpg", width: 1440, height: 810 },
+  translations: [
+    {
+      locale: "fi",
+      shortDescription:
+        "Rakennan mieluiten yhdessä muiden kanssa, ja parhaat ideat syntyvät viimeisellä minuutilla.",
+      longDescription: [
+        "Vedän Minecraft Education -kerhoja Tampereella.",
+        "",
+        "Sessioissani rakennetaan tarinoita: jokainen maailma alkaa kysymyksellä, ja pelaajat päättävät, mihin se johtaa.",
+      ].join("\n"),
+      funFact: null,
+    },
+  ],
   spokenLanguages: ["fi"],
-  areas: ["Tampere"],
 };
 
 export const TEAM_PROFILE_FIXTURES = {
   admin: LAURA,
   gedu: EETU,
-  "gedu-sparse": SAANA,
+  "gedu-finnish-only": SAANA,
 } as const satisfies Record<string, TeamProfile>;
 
 // ---------------------------------------------------------------------------
@@ -92,17 +133,17 @@ export const TEAM_PROFILE_FIXTURES = {
 // ---------------------------------------------------------------------------
 
 /**
- * One scenario per state a Gedu's card can be in, and no more: each is a state
- * the others cannot share a render with. Unsubmitted edits to a live card are
- * not a sixth — they are what `live` becomes the moment somebody types, which
- * is the one state here reached by local interaction rather than by fixture.
+ * One scenario per state a Gedu is told their card is in, and no more: the
+ * four combinations of their switch and an admin's approval that read
+ * differently. Private-and-incomplete stands for private in general — a
+ * complete private card is the same render with the switch enabled, which
+ * filling in the form reaches locally.
  */
 export const GEDU_TEAM_CARD_SCENARIOS = [
-  "draft",
-  "in-review",
+  "private",
+  "waiting",
   "live",
-  "changes-in-review",
-  "returned",
+  "taken-off",
 ] as const;
 
 export type GeduTeamCardScenario = (typeof GEDU_TEAM_CARD_SCENARIOS)[number];
@@ -112,11 +153,10 @@ export function isGeduTeamCardScenario(s: string): s is GeduTeamCardScenario {
 }
 
 /**
- * Two, because an office card is either on the team page or it is not, and
- * those two carry different actions. The hidden one has no photo, which puts
- * the identicon fallback on the admin side too.
+ * One, because office staff have a single switch and turning it off is a
+ * click away on the same render.
  */
-export const ADMIN_TEAM_CARD_SCENARIOS = ["published", "hidden"] as const;
+export const ADMIN_TEAM_CARD_SCENARIOS = ["shown"] as const;
 
 export type AdminTeamCardScenario = (typeof ADMIN_TEAM_CARD_SCENARIOS)[number];
 
@@ -126,75 +166,50 @@ export function isAdminTeamCardScenario(
   return (ADMIN_TEAM_CARD_SCENARIOS as readonly string[]).includes(s);
 }
 
-/** A Gedu's card as the editor receives it: the draft, and its state. */
+/** A Gedu's card as the editor receives it: the card and both switches. */
 export interface GeduTeamCardFixture {
-  draft: GeduTeamProfile;
-  state: GeduTeamCardState;
+  card: GeduTeamProfile;
+  ready: boolean;
+  approval: GeduTeamCardApproval;
 }
 
 /**
- * Saana's card the day she opens the editor: only what her account already
- * says. Nothing written, no photo, so the editor's empty states and the public
- * body's left-out sections are both on screen.
+ * Saana's card the day she opens the editor: a few words in Finnish and no
+ * photo, so the switch is disabled with both reasons, and the preview shows
+ * the identicon and the half-written text.
  */
 const SAANA_NEW: GeduTeamProfile = {
   ...SAANA,
-  tagline: null,
-  skills: [],
-  topics: [],
-};
-
-/**
- * Eetu's edit to his live card: a new photo in the wide shape, a rewritten
- * tagline, a phrase added and a topic swapped — enough that the draft and the
- * live card are told apart at a glance in the preview.
- */
-const EETU_EDITED: GeduTeamProfile = {
-  ...EETU,
-  photo: { src: "/preview-art/session-build.jpg", width: 1600, height: 900 },
-  tagline: {
-    text: "I run the build challenges, and I have never once let a team leave without finishing their redstone door.",
-    spokenLanguage: "en",
-  },
-  skills: [...EETU.skills, "Speedrun races"],
-  topics: ["minecraft_java", "minecraft_bedrock", "rocket_league", "esports"],
+  photo: null,
+  translations: [
+    {
+      locale: "fi",
+      shortDescription: "Rakennan mieluiten yhdessä muiden kanssa.",
+      longDescription: "",
+      funFact: null,
+    },
+  ],
 };
 
 export const GEDU_TEAM_CARD_FIXTURES: Record<
   GeduTeamCardScenario,
   GeduTeamCardFixture
 > = {
-  draft: { draft: SAANA_NEW, state: { kind: "draft" } },
-  "in-review": { draft: EETU, state: { kind: "inReview" } },
-  live: { draft: EETU, state: { kind: "live", live: EETU } },
-  "changes-in-review": {
-    draft: EETU_EDITED,
-    state: { kind: "changesInReview", live: EETU },
-  },
-  returned: {
-    draft: SAANA,
-    state: {
-      kind: "returned",
-      live: null,
-      returnedBy: LAURA.firstName,
-      note: "Lovely start! Could you add a couple more things you do in your sessions, and a photo? Families like to see who they will meet.",
-    },
-  },
+  private: { card: SAANA_NEW, ready: false, approval: "pending" },
+  waiting: { card: SAANA, ready: true, approval: "pending" },
+  live: { card: EETU, ready: true, approval: "approved" },
+  "taken-off": { card: EETU, ready: true, approval: "withdrawn" },
 };
 
 /** An office card as the editor receives it. */
 export interface AdminTeamCardFixture {
   card: AdminTeamProfile;
-  state: AdminTeamCardState;
+  shown: boolean;
 }
 
 export const ADMIN_TEAM_CARD_FIXTURES: Record<
   AdminTeamCardScenario,
   AdminTeamCardFixture
 > = {
-  published: { card: LAURA, state: { kind: "published" } },
-  hidden: {
-    card: { ...LAURA, photo: null, skills: LAURA.skills.slice(0, 3) },
-    state: { kind: "hidden" },
-  },
+  shown: { card: LAURA, shown: true },
 };

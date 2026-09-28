@@ -1,19 +1,26 @@
 "use client";
 
 import Image from "next/image";
-import { MapPin } from "lucide-react";
-import { useFormatter, useLocale, useTranslations } from "next-intl";
-import { Badge } from "@/components/ui/badge";
+import { Lightbulb } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { LanguageFlag } from "@/components/ui/language-flag";
+import { Markdown } from "@/components/ui/markdown";
 import { useLanguageNames } from "@/hooks/use-language-names";
-import { PRODUCT_TOPICS } from "@/lib/products/topics";
-import type { ProductTopic, SpokenLanguageCode } from "@/types";
+import {
+  LOCALE_CONFIG,
+  resolveLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import type { SpokenLanguageCode } from "@/types";
 
 /**
- * One photo of the person, at its intrinsic size so the frame can crop it.
- * Any aspect ratio: the portrait is a square window over the middle of it.
+ * The person's photo. Uploads are cropped to a 4:5 portrait of
+ * `TEAM_PHOTO_WIDTH` × `TEAM_PHOTO_HEIGHT` before they are stored, and the
+ * frame covers whatever it is handed, so a photo of another shape (the preview
+ * art the fixtures borrow) is cropped to the middle rather than distorted.
  */
 export interface TeamProfilePhoto {
   src: string;
@@ -21,30 +28,41 @@ export interface TeamProfilePhoto {
   height: number;
 }
 
+/** The size every uploaded photo is cropped to: 4:5, portrait. */
+export const TEAM_PHOTO_WIDTH = 800;
+export const TEAM_PHOTO_HEIGHT = 1000;
+
 /**
- * The line the person writes about themselves, in the one spoken language
- * they wrote it in. The language is part of the value rather than inferred
- * from the reader: it is what lets the page label a line a reader might not
- * expect to be in another language, and put the right `lang` on it for a
- * screen reader.
+ * What the person wrote, in one site locale. The shape is the product
+ * translation's — one row per locale, at least one row, any locale — so the
+ * page picks the row to show with the product page's own resolver.
  */
-export interface TeamProfileTagline {
-  text: string;
-  spokenLanguage: SpokenLanguageCode;
+export interface TeamProfileTranslation {
+  locale: SupportedLocale;
+  /** One line, plain text, shown under the name. */
+  shortDescription: string;
+  /** "About me": markdown, rendered in the no-links variant. */
+  longDescription: string;
+  /** Optional. `null` leaves the section off the page. */
+  funFact: string | null;
 }
 
 interface TeamProfileCommon {
   /** The person's profile id. With no photo it seeds the identicon, so it is a real UUID. */
   id: string;
   firstName: string;
-  /** Gamer tag. A mark the person chose: never translated. */
+  /** What gamers know them as. A name the person chose: never translated. */
   nickname: string | null;
+  /**
+   * Never null on the public team page, where a card cannot go up without one.
+   * It is null only in the editor's preview of an unfinished card.
+   */
   photo: TeamProfilePhoto | null;
-  tagline: TeamProfileTagline | null;
-  /** The short "what I do" phrases, in the person's own words and order. */
-  skills: readonly string[];
-  /** The games and topics they run, from the product-topic vocabulary. */
-  topics: readonly ProductTopic[];
+  /**
+   * At least one on the public page. Empty only in the editor's preview of a
+   * card with nothing written yet.
+   */
+  translations: readonly TeamProfileTranslation[];
   spokenLanguages: readonly SpokenLanguageCode[];
 }
 
@@ -68,12 +86,9 @@ export interface AdminTeamProfile extends TeamProfileCommon {
  *   here, not a rule in the render.
  * - **No free title.** Their title is the role, "Gedu", glossed on this page
  *   because it is public and the word is never used cold.
- *
- * The areas are location names, proper nouns shown as written.
  */
 export interface GeduTeamProfile extends TeamProfileCommon {
   kind: "gedu";
-  areas: readonly string[];
 }
 
 export type TeamProfile = AdminTeamProfile | GeduTeamProfile;
@@ -81,56 +96,63 @@ export type TeamProfile = AdminTeamProfile | GeduTeamProfile;
 /**
  * The public team profile page body: one person, admin or Gedu, on one page.
  *
- * Presentational over props, so the preview scene and the future public route
- * render the same body.
+ * Presentational over props, so the preview scene, the editor's live preview
+ * and the future public route render the same body.
  *
  * **The headline is the page's hero** and takes the library's declared hero
- * departure: the name in ink with the gamer tag as the one act phrase, and the
+ * departure: the name in ink with the nickname as the one act phrase, and the
  * world rule beneath. Those are the page's two colours, which is the budget of
  * a page telling the story to a mixed audience, so nothing below the rule
- * spends a third: the role is a plain title line, and the chips are neutral.
+ * spends a third.
  *
- * **The tagline is set in the editorial serif** because it is a quote, the
- * person speaking in the first person. It carries its spoken language as
- * `lang`, and a caption names that language only when it differs from the
- * locale the reader is reading in. A spoken language equal to the locale needs
- * no label, and `tlh` equals none of them, so a Klingon reader is told.
+ * **Which of the person's languages is shown follows the product page**: the
+ * reader's locale, then English, then the first one written. Where the row
+ * shown is not in the reader's locale, a caption under the one-line
+ * introduction names its language — the product page has no such caption, but
+ * a product is written by us in our voice, and this is a person speaking in
+ * the first person, where a reader meeting another language deserves to be
+ * told it is the writer's choice rather than a missing translation. Every
+ * written block carries the row's locale as `lang` for a screen reader. `tlh`
+ * equals nobody's writing locale in practice, so a Klingon reader is told.
  *
  * **Nothing on this page is a safety or vetting claim.** No "certified", no
- * "background checked": the page states who the person is and what they do,
- * and a safety sentence would have to name a verified mechanism, which a
- * certification flag is not.
+ * "background checked": the page states who the person is, and a safety
+ * sentence would have to name a verified mechanism, which a profile is not.
  *
  * **It answers to its own width, not the viewport's.** Every step is a
- * container query at the width the viewport breakpoint used to name (40rem,
- * 48rem), so on the public page, where the body spans the viewport, nothing
- * changes — and in the team card editor, where the same body is a live preview
- * in a column beside the form, it lays out for the column it is actually in
- * rather than for a screen it only occupies part of.
+ * container query, so in the team card editor, where the same body is a live
+ * preview in a column beside the form, it lays out for the column it is in.
  *
- * Every section that can be empty is left out rather than drawn empty: a
- * profile with no skills has no "What I do" card, and a row with nothing in it
- * is not a row. There is no loading state inside it — the route renders it
- * from data it already has — so nothing here arrives after first paint.
+ * Every section that can be empty is left out rather than drawn empty, which
+ * only ever happens in the editor's preview and for the optional fun fact.
  */
-export function TeamProfileBody({ profile }: { profile: TeamProfile }) {
+export function TeamProfileBody({
+  profile,
+  readerLocale,
+}: {
+  profile: TeamProfile;
+  /**
+   * The locale to pick the written text for. Defaults to the page's own; the
+   * editor passes the language tab being edited, so its preview shows the
+   * text under the cursor.
+   */
+  readerLocale?: SupportedLocale;
+}) {
   const t = useTranslations("team.profile");
-  const locale = useLocale();
+  const pageLocale = resolveLocale(useLocale());
   const languageName = useLanguageNames();
-  const format = useFormatter();
+
+  const reader = readerLocale ?? pageLocale;
+  const written = resolveTranslation(profile.translations, reader);
+  const shortDescription = written?.shortDescription.trim() ?? "";
+  const longDescription = written?.longDescription.trim() ?? "";
+  const funFact = written?.funFact?.trim() ?? "";
 
   const displayName =
     profile.kind === "admin"
       ? `${profile.firstName} ${profile.lastName}`
       : profile.firstName;
   const title = profile.kind === "admin" ? profile.title : t("geduTitle");
-  const areas = profile.kind === "gedu" ? profile.areas : [];
-
-  const hasFacts =
-    profile.spokenLanguages.length > 0 ||
-    profile.topics.length > 0 ||
-    areas.length > 0;
-  const hasSkills = profile.skills.length > 0;
 
   return (
     <div className="@container">
@@ -164,103 +186,80 @@ export function TeamProfileBody({ profile }: { profile: TeamProfile }) {
               <span className="mt-4 block h-1.5 w-full rounded-full bg-world" />
             </div>
             <p className="mt-4 text-lg font-medium">{title}</p>
+            {profile.spokenLanguages.length > 0 && (
+              <ul
+                aria-label={t("languages")}
+                className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground"
+              >
+                {profile.spokenLanguages.map((code) => (
+                  <li key={code} className="inline-flex items-center gap-2">
+                    <LanguageFlag code={code} showCode={false} />
+                    <span>{languageName(code)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </header>
 
-        {profile.tagline && (
+        {shortDescription !== "" && written !== null && (
           <figure className="mt-10 max-w-2xl">
             <blockquote
-              lang={profile.tagline.spokenLanguage}
+              lang={written.locale}
               className="font-serif text-xl italic leading-relaxed @min-[40rem]:text-2xl"
             >
-              {profile.tagline.text}
+              {shortDescription}
             </blockquote>
-            {profile.tagline.spokenLanguage !== locale && (
+            {written.locale !== reader && (
               <figcaption className="mt-2 text-sm text-muted-foreground">
-                {t("taglineLanguage", {
-                  language: languageName(profile.tagline.spokenLanguage),
+                {t("writtenIn", {
+                  language: languageName(
+                    written.locale,
+                    LOCALE_CONFIG[written.locale].label,
+                  ),
                 })}
               </figcaption>
             )}
           </figure>
         )}
 
-        {(hasSkills || hasFacts) && (
-          <div
-            className={
-              hasSkills && hasFacts
-                ? "mt-10 grid gap-6 @min-[48rem]:grid-cols-2"
-                : "mt-10 grid gap-6"
-            }
-          >
-            {hasSkills && (
-              <Card>
-                <CardContent className="p-5 @min-[40rem]:p-6">
-                  <h2 className="text-lg font-semibold">{t("whatIDo")}</h2>
-                  <ul className="mt-4 list-disc space-y-2 pl-5 marker:text-muted-foreground">
-                    {profile.skills.map((skill) => (
-                      <li key={skill}>{skill}</li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
-
-            {hasFacts && (
-              <Card>
-                <CardContent className="p-5 @min-[40rem]:p-6">
-                  <h2 className="text-lg font-semibold">{t("atAGlance")}</h2>
-                  <dl className="mt-2 divide-y divide-border">
-                    {profile.spokenLanguages.length > 0 && (
-                      <FactRow label={t("languages")}>
-                        <ul className="flex flex-wrap gap-x-4 gap-y-2">
-                          {profile.spokenLanguages.map((code) => (
-                            <li
-                              key={code}
-                              className="inline-flex items-center gap-2"
-                            >
-                              <LanguageFlag
-                                code={code}
-                                showCode={false}
-                                title={languageName(code)}
-                              />
-                              <span>{languageName(code)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </FactRow>
-                    )}
-                    {profile.topics.length > 0 && (
-                      <FactRow label={t("topics")}>
-                        <ul className="flex flex-wrap gap-2">
-                          {profile.topics.map((topic) => (
-                            <li key={topic}>
-                              <Badge variant="outline" className="font-medium">
-                                {PRODUCT_TOPICS[topic].label}
-                              </Badge>
-                            </li>
-                          ))}
-                        </ul>
-                      </FactRow>
-                    )}
-                    {areas.length > 0 && (
-                      <FactRow label={t("areas")}>
-                        <p className="flex items-start gap-2">
-                          <MapPin
-                            aria-hidden
-                            className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
-                          />
-                          <span>
-                            {format.list(areas, { type: "conjunction" })}
-                          </span>
-                        </p>
-                      </FactRow>
-                    )}
-                  </dl>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+        {/* One card: "About me" and, where there is one, the fun fact as its
+            aside — told apart by a divider and a quieter voice, never by a box
+            of its own inside the card. */}
+        {(longDescription !== "" || funFact !== "") && written !== null && (
+          <Card className="mt-10 max-w-3xl">
+            <CardContent
+              lang={written.locale}
+              className="space-y-6 p-5 @min-[40rem]:p-6"
+            >
+              {longDescription !== "" && (
+                <section className="space-y-4">
+                  <h2 className="text-lg font-semibold">{t("aboutMe")}</h2>
+                  {/* `feed`, the no-links variant: staff-authored copy on a
+                      page families read. Its headings open at h3, under
+                      this h2. */}
+                  <Markdown variant="feed">{longDescription}</Markdown>
+                </section>
+              )}
+              {funFact !== "" && (
+                <section
+                  className={
+                    longDescription !== ""
+                      ? "border-t border-border pt-5"
+                      : undefined
+                  }
+                >
+                  <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                    <Lightbulb className="h-4 w-4" aria-hidden />
+                    {t("funFact")}
+                  </h2>
+                  <p className="mt-2 font-serif italic leading-relaxed">
+                    {funFact}
+                  </p>
+                </section>
+              )}
+            </CardContent>
+          </Card>
         )}
       </article>
     </div>
@@ -268,11 +267,11 @@ export function TeamProfileBody({ profile }: { profile: TeamProfile }) {
 }
 
 /**
- * The square the person is shown in: their photo cropped to the middle, or,
- * without one, their identicon — the same face the rest of the product
- * already gives an account with no picture, so it reads as "this person"
- * rather than as a missing image. Decorative either way: the name is the
- * heading beside it.
+ * The 4:5 portrait frame the person is shown in: their photo, or, in the
+ * editor's preview of a card that has none yet, their identicon — the same
+ * face the rest of the product gives an account with no picture. The public
+ * page never meets the fallback, because a card cannot go up without a photo.
+ * Decorative either way: the name is the heading beside it.
  */
 function Portrait({
   id,
@@ -284,7 +283,7 @@ function Portrait({
   return (
     <div
       aria-hidden
-      className="relative size-28 shrink-0 overflow-hidden rounded-2xl border border-border bg-card @min-[40rem]:size-40"
+      className="relative flex aspect-[4/5] w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-card @min-[40rem]:w-40"
     >
       {photo ? (
         <Image
@@ -297,28 +296,8 @@ function Portrait({
           priority
         />
       ) : (
-        <Identicon id={id} size={160} />
+        <Identicon id={id} size={160} className="h-auto w-full" />
       )}
-    </div>
-  );
-}
-
-/**
- * One fact about the person: a label over its value, stacked at every width
- * because the card is half the page from `md` up and a side-by-side label
- * would leave the values a sliver.
- */
-function FactRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="py-3 first:pt-2 last:pb-0">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd className="mt-1.5">{children}</dd>
     </div>
   );
 }

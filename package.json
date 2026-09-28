@@ -49,6 +49,7 @@
     "next-intl": "^4.9.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-easy-crop": "^6.2.3",
     "react-markdown": "^10.1.0",
     "react-phone-number-input": "^3.4.16",
     "remark-parse": "^11.0.0",

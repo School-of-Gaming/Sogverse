@@ -254,13 +254,13 @@ export const PREVIEW_SCENES = [
       "One person's public team card as a page, the same body for office staff and Gedus, before the /team route exists.",
     chrome: "public",
     scenarios: [
-      { slug: "admin", label: "Office staff — full, with photo" },
-      { slug: "gedu", label: "Gedu — full, with photo" },
+      { slug: "admin", label: "Office staff — English only, with a fun fact" },
+      { slug: "gedu", label: "Gedu — English and Finnish, with a fun fact" },
       {
-        slug: "gedu-sparse",
-        label: "Gedu — sparse",
+        slug: "gedu-finnish-only",
+        label: "Gedu — Finnish only, no fun fact",
         description:
-          "No photo, no gamer tag, two skills, and a tagline in Finnish.",
+          "Read it in any locale but Finnish to see the fallback and its caption.",
       },
     ],
   },
@@ -268,54 +268,27 @@ export const PREVIEW_SCENES = [
     surface: "gedu-team-card",
     title: "Team card editor — Gedu (draft)",
     description:
-      "The page a Gedu edits their own team card on, beside a live preview of the public page, in each state of its review. Typing, phrases, topics and the draft/live toggle work; every write is inert.",
+      "The page a Gedu edits their own team card on, beside a live preview of the public page. Typing, the photo crop, saving and the ready switch work locally; the upload is inert.",
     chrome: "dashboard",
     navRole: "gedu",
     scenarios: [
       {
-        slug: "draft",
-        label: "Not submitted — a new card",
+        slug: "private",
+        label: "Private — incomplete",
         description:
-          "Nothing written and nothing live: the empty sections, the identicon and the consent in the submit step.",
+          "No photo and half a language, so the ready switch is off with its reason.",
       },
-      {
-        slug: "in-review",
-        label: "Waiting for review",
-        description: "The locked form, with withdrawing as the way back in.",
-      },
-      {
-        slug: "live",
-        label: "Live",
-        description:
-          "The approved card is up; start typing and the draft/live toggle appears.",
-      },
-      {
-        slug: "changes-in-review",
-        label: "Live, changes waiting for review",
-        description:
-          "A changed draft under review while the old card stays up — the toggle shows both.",
-      },
-      {
-        slug: "returned",
-        label: "Returned with a note",
-        description: "An admin's note on a first submission, open for editing.",
-      },
+      { slug: "waiting", label: "Ready, waiting for an admin" },
+      { slug: "live", label: "Live on the team page" },
+      { slug: "taken-off", label: "Ready, but an admin took it off" },
     ],
   },
   {
     surface: "admin-team-card",
     title: "Team card editor — office staff (draft)",
-    description:
-      "The same page as office staff meet it: no review, so saving publishes, and hiding or showing the card is theirs.",
+    description: "The same page as office staff meet it: one switch, no approval.",
     chrome: "admin",
-    scenarios: [
-      { slug: "published", label: "On the team page" },
-      {
-        slug: "hidden",
-        label: "Hidden — no photo",
-        description: "Off the team page, with the identicon standing in.",
-      },
-    ],
+    scenarios: [{ slug: "shown", label: "On the team page" }],
   },
   {
     surface: "parent-dashboard",

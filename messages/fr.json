@@ -4929,108 +4929,92 @@
       "nameWithNickname": "{firstName} « <nick>{nickname}</nick> » {lastName}",
       "firstNameWithNickname": "{firstName} « <nick>{nickname}</nick> »",
       "geduTitle": "Gedu · animateur ou animatrice",
-      "taglineLanguage": "Écrit en {language}",
-      "whatIDo": "Ce que je fais",
-      "atAGlance": "En bref",
       "languages": "Langues",
-      "topics": "Jeux et thèmes",
-      "areas": "Secteurs"
+      "writtenIn": "Écrit en {language}",
+      "aboutMe": "À propos de moi",
+      "funFact": "Anecdote"
     },
     "edit": {
       "back": "Retour aux paramètres",
       "pageTitle": "Votre fiche d’équipe",
-      "introGedu": "Votre fiche sur la page d’équipe publique de School of Gaming, où les familles découvrent les personnes derrière les séances. Un administrateur la relit avant sa mise en ligne, puis à chaque modification.",
-      "introAdmin": "Votre fiche sur la page d’équipe publique de School of Gaming. Les modifications que vous publiez sont en ligne immédiatement.",
+      "introGedu": "Votre fiche sur la page d’équipe publique de School of Gaming, où les familles découvrent les personnes derrière les sessions. Enregistrez aussi souvent que vous le voulez : elle n’apparaît sur la page qu’une fois que vous l’avez marquée comme prête et qu’un administrateur l’a approuvée.",
+      "introAdmin": "Votre fiche sur la page d’équipe publique de School of Gaming. Tant qu’elle est affichée, les modifications que vous enregistrez sont en ligne immédiatement.",
       "status": {
-        "draftTitle": "Pas encore sur la page d’équipe",
-        "draftBody": "Remplissez votre fiche et soumettez-la pour relecture. Elle sera en ligne dès qu’un administrateur l’aura approuvée.",
-        "inReviewTitle": "En attente de relecture",
-        "inReviewBody": "Un administrateur relit votre fiche. La modification est suspendue pour que ce qui est approuvé soit exactement ce qui sera mis en ligne. Retirez-la si vous voulez changer quelque chose.",
+        "privateTitle": "Privée",
+        "privateBody": "Vous seul voyez votre fiche. Quand elle vous convient, cochez « Mon profil est prêt à être public » à la fin du formulaire.",
+        "waitingTitle": "Prête, en attente d’un administrateur",
+        "waitingBody": "Un administrateur va examiner votre fiche et la mettre sur la page d’équipe. Vous pouvez continuer à la modifier en attendant.",
         "liveTitle": "En ligne sur la page d’équipe",
-        "liveBody": "Tout le monde peut voir votre fiche. Vos modifications seront en ligne une fois approuvées par un administrateur ; d’ici là, votre fiche actuelle reste affichée.",
-        "changesInReviewTitle": "Modifications en attente de relecture",
-        "changesInReviewBody": "Un administrateur relit vos modifications, et la page d’équipe affiche votre fiche actuelle jusqu’à leur approbation. La modification est suspendue d’ici là. Retirez les modifications si vous voulez continuer à y travailler.",
-        "returnedTitle": "Renvoyée avec une note",
-        "returnedBody": "{name} vous a renvoyé votre fiche. Faites les modifications et soumettez-la à nouveau.",
-        "publishedTitle": "Sur la page d’équipe",
-        "publishedBody": "Tout le monde peut voir votre fiche. Les modifications que vous publiez sont en ligne immédiatement.",
-        "hiddenTitle": "Masquée de la page d’équipe",
-        "hiddenBody": "Votre fiche n’est pas sur la page d’équipe publique. Affichez-la quand elle est prête."
+        "liveBody": "Tout le monde peut voir votre fiche. Les modifications que vous enregistrez sont en ligne immédiatement, et décocher « Mon profil est prêt à être public » la retire aussitôt.",
+        "takenOffTitle": "Prête, mais un administrateur l’a retirée de la page d’équipe",
+        "takenOffBody": "Votre fiche n’est pas publique pour le moment. Contactez le bureau si vous voulez savoir pourquoi, ou pour la remettre en ligne.",
+        "shownTitle": "Sur la page d’équipe",
+        "shownBody": "Tout le monde peut voir votre fiche. Les modifications que vous enregistrez sont en ligne immédiatement.",
+        "hiddenTitle": "Pas sur la page d’équipe",
+        "hiddenBody": "Vous seul voyez votre fiche. Cochez « Afficher mon profil sur la page d’équipe » à la fin du formulaire quand elle est prête."
       },
       "actions": {
-        "withdraw": "Retirer la soumission",
-        "withdrawChanges": "Retirer les modifications",
-        "remove": "Retirer de la page d’équipe",
-        "hide": "Masquer de la page d’équipe",
-        "show": "Afficher sur la page d’équipe",
-        "saveDraft": "Enregistrer le brouillon",
-        "submit": "Soumettre pour relecture",
-        "submitChanges": "Soumettre les modifications",
-        "resubmit": "Soumettre à nouveau",
-        "publish": "Publier les modifications",
         "save": "Enregistrer les modifications",
         "discard": "Annuler les modifications"
       },
-      "removeDialog": {
-        "title": "Retirer votre fiche de la page d’équipe ?",
-        "description": "Elle disparaît immédiatement de la page publique. Pour la remettre, vous devrez la soumettre à nouveau pour relecture.",
-        "confirm": "Retirer la fiche"
+      "switch": {
+        "heading": "Page d’équipe",
+        "readyLabel": "Mon profil est prêt à être public",
+        "readyHint": "En cochant cette case, vous acceptez que School of Gaming affiche votre profil publiquement sur son site web. Un administrateur l’examine avant sa première mise en ligne. Décochez-la à tout moment et il est retiré aussitôt.",
+        "showLabel": "Afficher mon profil sur la page d’équipe",
+        "showHint": "En cochant cette case, votre profil apparaît immédiatement sur le site public de School of Gaming. Décochez-la à tout moment et il est retiré.",
+        "complete": "Votre fiche contient tout ce dont la page d’équipe a besoin.",
+        "mustStayComplete": "Tant que cette case est cochée, votre fiche doit rester complète : l’enregistrement est désactivé jusqu’à ce qu’elle le soit. Complétez ce qui manque, ou décochez la case pour continuer en privé.",
+        "missing": {
+          "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "both": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case."
+        }
       },
-      "consent": "J’accepte que School of Gaming affiche cette fiche sur sa page d’équipe publique, où tout le monde peut la voir. Je peux la retirer à tout moment.",
       "photo": {
         "heading": "Photo",
         "upload": "Importer une photo",
         "replace": "Remplacer la photo",
         "remove": "Supprimer la photo",
-        "hint": "La page d’équipe affiche un carré pris au centre de votre photo. Sans photo, le motif de votre compte la remplace."
+        "hint": "Une photo portrait de vous, que vous recadrez pour l’adapter au cadre. JPEG, PNG ou WebP.",
+        "crop": {
+          "title": "Recadrez votre photo",
+          "description": "Faites glisser la photo pour la placer dans le cadre, et zoomez pour l’ajuster.",
+          "zoom": "Zoom",
+          "confirm": "Utiliser la photo",
+          "unreadable": "Ce fichier ne peut pas être ouvert comme une image ici. Choisissez une photo JPEG, PNG ou WebP. Les photos d’iPhone au format HEIC doivent d’abord être converties.",
+          "chooseAnother": "Choisir une autre photo",
+          "failed": "La photo n’a pas pu être recadrée. Réessayez, ou choisissez une autre photo."
+        }
       },
       "about": {
         "heading": "À propos de vous",
-        "nickname": "Pseudo",
+        "nickname": "Les gamers me connaissent sous le nom de",
+        "nicknamePlaceholder": "Par exemple : Creeperhug",
         "nicknameHint": "Affiché entre guillemets dans votre nom, exactement comme vous l’écrivez.",
         "title": "Titre",
-        "titleHint": "Votre poste chez School of Gaming, par exemple responsable des clubs.",
-        "tagline": "Accroche",
-        "taglineHint": "Une ligne sur vous, avec vos propres mots.",
-        "taglineCount": "{count}/{max}",
-        "taglineLanguage": "Écrit en"
+        "titleHint": "Votre poste chez School of Gaming, par exemple responsable des clubs."
       },
-      "skills": {
-        "heading": "Ce que je fais",
-        "hint": "De courtes expressions, dans l’ordre où vous voulez les afficher. L’idéal : entre {min} et {max}.",
-        "phrase": "Expression {position}",
-        "placeholder": "Par exemple : défis de construction",
-        "add": "Ajouter une expression",
-        "moveUp": "Monter l’expression {position}",
-        "moveDown": "Descendre l’expression {position}",
-        "remove": "Supprimer l’expression {position}",
-        "count": "{count} sur {max}"
-      },
-      "topics": {
-        "heading": "Jeux et thèmes",
-        "hint": "Choisissez les jeux et les thèmes que vous animez."
-      },
-      "account": {
-        "heading": "Depuis votre compte",
-        "name": "Nom",
-        "nameGeduHint": "Votre nom de famille n’apparaît jamais sur la page d’équipe.",
-        "title": "Titre",
-        "titleGeduHint": "Défini par votre rôle.",
+      "writing": {
+        "heading": "Avec vos propres mots",
         "languages": "Langues",
-        "areas": "Secteurs",
-        "none": "Aucun pour l’instant",
-        "settingsLink": "Modifier dans les paramètres"
+        "languagesHint": "Écrivez dans les langues où vous êtes à l’aise. Au moins une est nécessaire. Les lecteurs voient votre fiche dans leur langue si vous l’avez écrite, sinon en anglais, puis dans la langue que vous avez utilisée.",
+        "addLocale": "Ajouter une langue",
+        "removeLocale": "Supprimer {locale}",
+        "shortDescription": "Présentez-vous en une ligne",
+        "shortDescriptionPlaceholder": "Par exemple : Passionné de redstone et de défis de construction",
+        "longDescription": "À propos de moi",
+        "longDescriptionHint": "Ce que vous faites en session, ce à quoi vous jouez, et ce que les familles aimeraient savoir sur vous.",
+        "longDescriptionPlaceholder": "Présentez-vous un peu aux familles",
+        "funFact": "Anecdote",
+        "funFactPlaceholder": "Par exemple : J’ai un jour construit une calculatrice qui fonctionne dans Minecraft.",
+        "count": "{count}/{max}"
       },
       "preview": {
         "heading": "Aperçu",
-        "versions": "Version à prévisualiser",
-        "draft": "Votre brouillon",
-        "live": "En ligne actuellement",
         "liveNow": "C’est ce que le public voit actuellement.",
-        "draftOverLive": "Pas encore en ligne. Le public voit votre fiche actuelle jusqu’à ce qu’un administrateur approuve ces modifications.",
-        "nothingLive": "Personne ne peut encore la voir. Elle sera en ligne dès qu’un administrateur l’aura approuvée.",
-        "adminUnpublished": "Pas encore en ligne. Publiez vos modifications pour mettre à jour la page d’équipe.",
-        "adminHidden": "Masquée. Voici à quoi ressemblera votre fiche une fois affichée."
+        "unsaved": "Vos modifications non enregistrées. La page d’équipe affiche votre dernière version enregistrée jusqu’à ce que vous enregistriez.",
+        "notPublic": "Pas sur la page d’équipe : vous seul voyez ceci."
       }
     }
   }

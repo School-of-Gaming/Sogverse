@@ -4030,108 +4030,92 @@
       "nameWithNickname": "{firstName} “<nick>{nickname}</nick>” {lastName}",
       "firstNameWithNickname": "{firstName} “<nick>{nickname}</nick>”",
       "geduTitle": "Gedu · Quj ghojmoHwI’",
-      "taglineLanguage": "{language} Hol ghItlhlu’pu’",
-      "whatIDo": "vIta’bogh",
-      "atAGlance": "nom yIlegh",
       "languages": "Holmey",
-      "topics": "Quj’mey",
-      "areas": "Sepmey"
+      "writtenIn": "{language} Hol ghItlhlu’pu’",
+      "aboutMe": "jIH",
+      "funFact": "De’ Quch"
     },
     "edit": {
       "back": "SeHlaw’Daq yIchegh",
       "pageTitle": "ghom QIn’ay’lIj",
-      "introGedu": "School of Gaming ghom QIn’ay’Daq Dagh. qorDu’pu’ tlhIH DaSovmeH, ’oH laDlu’. chenmoHlu’pa’, ’oH nuDnIS DevwI’. Dachoh, vaj nuDqa’nIS.",
-      "introAdmin": "School of Gaming ghom QIn’ay’Daq Dagh. choHmey Dacha’bogh DaH leghlu’.",
+      "introGedu": "School of Gaming ghom QIn’ay’Daq QIn’ay’lIj. naDev ghotpu’ Sov qorDu’pu’. not bIpolqa’ DaneHchugh yIpol! ghuHmoHlu’DI’ ’ej loHwI’ chaw’DI’ neH cha’lu’.",
+      "introAdmin": "School of Gaming ghom QIn’ay’Daq QIn’ay’lIj. cha’lu’taHvIS, choHmey DapolDI’ SIbI’ leghlu’.",
       "status": {
-        "draftTitle": "ghom QIn’ay’Daq tu’lu’be’ DaH",
-        "draftBody": "QIn’ay’lIj yIteb ’ej yInuDmoH. DevwI’ ’oH chaw’DI’, leghlu’.",
-        "inReviewTitle": "nuDlu’meH loS",
-        "inReviewBody": "QIn’ay’lIj nuD DevwI’. DaH Dachoh DaQeHlaHbe’, vaj chaw’bogh DevwI’ leghlu’. vay’ DachoHqang? yIHoH.",
+        "privateTitle": "So’lu’",
+        "privateBody": "SoH neH QIn’ay’lIj Dalegh. bIQuchDI’, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIwIv.",
+        "waitingTitle": "ghuHmoHlu’, loHwI’ loS",
+        "waitingBody": "QIn’ay’lIj legh loHwI’ ’ej ghom QIn’ay’Daq lan. loStaHvIS, choHlaH.",
         "liveTitle": "ghom QIn’ay’Daq leghlu’",
-        "liveBody": "Hoch QIn’ay’lIj leghlaH. choHmey chaw’ DevwI’; ghIq leghlu’. QIn’ay’ ngo’ ratlh.",
-        "changesInReviewTitle": "choHmey nuDlu’meH loS",
-        "changesInReviewBody": "choHmeylIj nuD DevwI’. QIn’ay’ ngo’ ratlh ghom QIn’ay’Daq. DaH Dachoh DaQeHlaHbe’. choHmey yIHoH, vaj bImuHqa’laH.",
-        "returnedTitle": "QIn ghajbogh QIn’ay’ nobHa’lu’",
-        "returnedBody": "QIn’ay’lIj nobHa’ {name}. yIchoH ’ej yInuDmoHqa’.",
-        "publishedTitle": "ghom QIn’ay’Daq",
-        "publishedBody": "Hoch QIn’ay’lIj leghlaH. choHmey Dacha’bogh DaH leghlu’.",
-        "hiddenTitle": "ghom QIn’ay’vo’ So’lu’",
-        "hiddenBody": "QIn’ay’lIj leghlu’be’. ghoS’eghDI’, yIcha’."
+        "liveBody": "QIn’ay’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. “jIH ’oH: DaH leghlu’ ’e’ vIQap” Dateqchugh, SIbI’ So’lu’.",
+        "takenOffTitle": "ghuHmoHlu’, ’ach loHwI’ teq",
+        "takenOffBody": "DaH QIn’ay’lIj leghlaHbe’ vay’. qatlh? yej’an yIjatlh.",
+        "shownTitle": "ghom QIn’ay’Daq",
+        "shownBody": "QIn’ay’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’.",
+        "hiddenTitle": "ghom QIn’ay’Daq Dabbe’",
+        "hiddenBody": "SoH neH QIn’ay’lIj Dalegh. ghuHmoHDI’, “ghom QIn’ay’Daq jIH yIcha’” yIwIv."
       },
       "actions": {
-        "withdraw": "nuDmoHghach yIHoH",
-        "withdrawChanges": "choHmey yIHoH",
-        "remove": "ghom QIn’ay’vo’ yIteq",
-        "hide": "ghom QIn’ay’vo’ yISo’",
-        "show": "ghom QIn’ay’Daq yIcha’",
-        "saveDraft": "nab yIpol",
-        "submit": "yInuDmoH",
-        "submitChanges": "choHmey yInuDmoH",
-        "resubmit": "yInuDmoHqa’",
-        "publish": "choHmey yIcha’",
         "save": "choHmey yIpol",
         "discard": "choHmey yIlon"
       },
-      "removeDialog": {
-        "title": "ghom QIn’ay’vo’ QIn’ay’lIj Dateq’a’?",
-        "description": "DaH leghlu’be’choH. DacheghmoHqang? yInuDmoHqa’.",
-        "confirm": "QIn’ay’ yIteq"
+      "switch": {
+        "heading": "ghom QIn’ay’",
+        "readyLabel": "jIH ’oH: DaH leghlu’ ’e’ vIQap",
+        "readyHint": "DawIvDI’, School of Gaming Qum’a’Daq jIH cha’ ’e’ Dachaw’. wa’DIch cha’pa’, legh loHwI’. Dateqchugh, SIbI’ So’lu’.",
+        "showLabel": "ghom QIn’ay’Daq jIH yIcha’",
+        "showHint": "DawIvDI’, SIbI’ School of Gaming Qum’a’Daq cha’lu’. Dateqchugh, So’lu’.",
+        "complete": "Hoch Daghaj. Qapla’!",
+        "mustStayComplete": "wIvlu’taHvIS, naQnIS QIn’ay’lIj. naQbe’chugh, polbe’lu’. yIchu’ pagh yIteq.",
+        "missing": {
+          "photo": "mIllogh yIlab, vaj DawIvlaH.",
+          "text": "“wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "both": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH."
+        }
       },
-      "consent": "School of Gaming ghom QIn’ay’Daq QIn’ay’vam cha’meH jIQoch be’. Hoch leghlaH. reH vIteqlaH.",
       "photo": {
         "heading": "mIllogh",
         "upload": "mIllogh yIlab",
         "replace": "mIllogh yIchoH",
         "remove": "mIllogh yIteq",
-        "hint": "mIllogh botlh neH cha’ ghom QIn’ay’. mIllogh tu’lu’be’chugh, mIw’a’lIj cha’lu’."
+        "hint": "mIllogh ’ab. Dape’. JPEG, PNG, WebP.",
+        "crop": {
+          "title": "mIllogh yIpe’",
+          "description": "mIllogh yItlhe’ ’ej yItIn’moH.",
+          "zoom": "tIn’moH",
+          "confirm": "mIllogh yIlo’",
+          "unreadable": "mIllogh ’oHbe’ De’vam! JPEG, PNG pagh WebP yIwIv. HEIC mIllogh yImugh wa’DIch.",
+          "chooseAnother": "latlh mIllogh yIwIv",
+          "failed": "mIllogh pe’lu’laHbe’. yInIDqa’ pagh latlh yIwIv."
+        }
       },
       "about": {
         "heading": "SoH",
-        "nickname": "Quj pong",
+        "nickname": "QujwI’pu’ jIH ponglu’:",
+        "nicknamePlaceholder": "mu’tlheghvam: Creeperhug",
         "nicknameHint": "ponglIjDaq cha’lu’, DaghItlhbogh rur.",
         "title": "patlh",
-        "titleHint": "School of Gaming Daq Qu’lIj. mu’tlheghvam: Head of Clubs.",
-        "tagline": "mu’tlhegh",
-        "taglineHint": "mu’tlhegh wa’ SoHvaD, mu’meylIj.",
-        "taglineCount": "{count}/{max}",
-        "taglineLanguage": "Hol"
+        "titleHint": "School of Gaming Daq Qu’lIj. mu’tlheghvam: Head of Clubs."
       },
-      "skills": {
-        "heading": "vIta’bogh",
-        "hint": "mu’tlheghmey ngaj, Danaghbogh mIw. {min} {max} joq ’IQ.",
-        "phrase": "mu’tlhegh {position}",
-        "placeholder": "mu’tlheghvam: qach qaD",
-        "add": "mu’tlhegh yIchel",
-        "moveUp": "mu’tlhegh {position} yIDoS Dung",
-        "moveDown": "mu’tlhegh {position} yIDoS bIng",
-        "remove": "mu’tlhegh {position} yIteq",
-        "count": "{count}/{max}"
-      },
-      "topics": {
-        "heading": "Quj’mey",
-        "hint": "Qujmey DaDevbogh yIwIv."
-      },
-      "account": {
-        "heading": "mI’lIjvo’",
-        "name": "pong",
-        "nameGeduHint": "ghom QIn’ay’Daq tuq ponglIj leghlu’be’ not.",
-        "title": "patlh",
-        "titleGeduHint": "Qu’lIj wIvlu’.",
+      "writing": {
+        "heading": "mu’meylIj",
         "languages": "Holmey",
-        "areas": "Sepmey",
-        "none": "pagh DaH",
-        "settingsLink": "SeHlaw’Daq yIchoH"
+        "languagesHint": "Hol DaQuchbogh yIghItlh. wa’ DoS poQ. Holchaj laD ghot; pagh, DIvI’ Hol; pagh, Hol DaghItlhbogh.",
+        "addLocale": "Hol chu’",
+        "removeLocale": "{locale} yIteq",
+        "shortDescription": "wa’ tlhegh: jIH",
+        "shortDescriptionPlaceholder": "mu’tlheghvam: redstone Qun ’ej chenmoHwI’",
+        "longDescription": "jIH",
+        "longDescriptionHint": "Quj Dachenmo’, Quj DaQujmo’. qorDu’pu’ yIja’.",
+        "longDescriptionPlaceholder": "qorDu’pu’ yIja’",
+        "funFact": "De’ Quch",
+        "funFactPlaceholder": "mu’tlheghvam: Minecraft Daq SIvwI’ vIchenmoH.",
+        "count": "{count}/{max}"
       },
       "preview": {
         "heading": "wa’DIch legh",
-        "versions": "leghmeH mu’mey",
-        "draft": "nablIj",
-        "live": "DaH leghlu’bogh",
         "liveNow": "DaH ’oH legh Hoch.",
-        "draftOverLive": "leghlu’be’ DaH. DevwI’ choHmey chaw’pa’, QIn’ay’ ngo’ legh Hoch.",
-        "nothingLive": "DaH legh pagh. DevwI’ chaw’DI’, leghlu’.",
-        "adminUnpublished": "leghlu’be’ DaH. choHmey yIcha’, vaj ghom QIn’ay’ choHlu’.",
-        "adminHidden": "So’lu’. yIcha’DI’, ’Iv rur QIn’ay’lIj."
+        "unsaved": "choHmey polbe’lu’bogh. DapolDI’ neH choH ghom QIn’ay’.",
+        "notPublic": "ghom QIn’ay’Daq Dabbe’, vaj SoH neH Dalegh."
       }
     }
   }
