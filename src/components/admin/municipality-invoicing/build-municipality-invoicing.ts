@@ -1,6 +1,12 @@
-import { addCalendarDays, monthsAfter, weekdayOf } from "@/lib/calendar-date";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import {
+  compareCalendarDates,
+  monthEndOf,
+  projectMonthDates,
+  recordHasHappened,
+  unrecordedOrUpcoming,
+} from "@/lib/invoicing/month";
 import { isoWeekOf } from "@/lib/iso-week";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import {
@@ -339,7 +345,7 @@ export function buildMunicipalityInvoicing({
   now,
 }: BuildMunicipalityInvoicingArgs): MunicipalityInvoicingView {
   const monthStart = snapshot.month_start;
-  const monthEnd = addCalendarDays(monthsAfter(monthStart, 1), -1);
+  const monthEnd = monthEndOf(monthStart);
 
   // Keyed by municipality id. Every club has one — the database refuses to
   // answer a month in which any club's location chain reaches no municipality —
@@ -564,7 +570,7 @@ function buildClub(
   // would otherwise be invoiced a week early — and an invoice that is too big is
   // the one error on this page nobody downstream can catch.
   const billableDates = new Set(
-    [...recordedDates].filter((date) => date <= today),
+    [...recordedDates].filter((date) => recordHasHappened(date, today)),
   );
 
   const lines: InvoiceSession[] = [];
@@ -584,12 +590,10 @@ function buildClub(
       // either side of today rather than reading as a date still to be reached.
       kind: cancelledDates.has(date)
         ? "cancelled"
-        : date < today
-          ? "unrecorded"
-          : "upcoming",
+        : unrecordedOrUpcoming(date, today),
     });
   }
-  lines.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  lines.sort((a, b) => compareCalendarDates(a.date, b.date));
 
   const feeCents = club.municipality_fee_cents;
   const recordedCount = billableDates.size;
@@ -667,18 +671,8 @@ function cancelledClubDates(
 
 /**
  * Every date the club's weekly schedule puts inside the month, clipped to its
- * own term.
- *
- * Two things decide whether there is anything to project at all. A club with no
- * start date has no day to start walking from, and guessing one would invent
- * sessions nobody was ever going to run. And a club with no slots has no weekly
- * claim to project. The start date is also what says whether the club had begun:
- * the walk is clipped to it, so a term starting after this month yields nothing
- * without a separate test for it.
- *
- * The walk itself is bare-date arithmetic on UTC-pinned dates, which is exact:
- * these are the club's own calendar dates, a weekday cannot drift under
- * `addCalendarDays`, and nothing here ever grows a clock face.
+ * own term — the shared projection (`@/lib/invoicing/month`), which the gedu
+ * invoice walks the same way.
  */
 function projectedDates(
   club: MunicipalityInvoicingClub,
@@ -686,30 +680,11 @@ function projectedDates(
   monthEnd: string,
 ): string[] {
   // Type-driven, not reachable: a municipality club always carries both ends of
-  // its term and a location by CHECK constraint, so these nulls exist only in
-  // the generated types. Handled rather than asserted, because a page that
-  // throws is a worse answer than one that projects nothing.
-  if (club.start_date === null) return [];
-
-  const from = club.start_date > monthStart ? club.start_date : monthStart;
-  // An open-ended club runs to the end of the month; a club whose term ends
-  // inside it stops on its last day, inclusive.
-  const until =
-    club.end_date !== null && club.end_date < monthEnd ? club.end_date : monthEnd;
-  if (from > until) return [];
-
-  const dates = new Set<string>();
-  for (const slot of club.schedule_slots) {
-    const offset = (slot.weekday - weekdayOf(from) + 7) % 7;
-    for (
-      let date = addCalendarDays(from, offset);
-      date <= until;
-      date = addCalendarDays(date, 7)
-    ) {
-      dates.add(date);
-    }
-  }
-  return [...dates];
+  // its term and a location by CHECK constraint, so a null start exists only in
+  // the generated types. The projection answers it with nothing rather than
+  // throwing, because a page that throws is a worse answer than one that
+  // projects nothing.
+  return projectMonthDates(club, monthStart, monthEnd);
 }
 
 /** A weekly schedule the formatter recognised — the only kind a club has. */
