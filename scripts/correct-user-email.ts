@@ -53,6 +53,13 @@
  * duplicate-account case, not a typo: the address cannot be freed without
  * deciding what happens to the other account's data, which is a judgement call
  * this script will not make for you. It names the blocking user and stops.
+ *
+ * ## What it does not check
+ *
+ * A gamer's sign-in mode. Moving a `parent`- or `username`-mode child off
+ * their synthetic handle onto a real mailbox is a privilege change the admin
+ * page refuses; this script would carry it out. Check `gamer_profiles.sign_in`
+ * first — the `correct-user-email` skill says why.
  */
 import fs from "fs";
 import path from "path";
