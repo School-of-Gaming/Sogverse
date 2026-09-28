@@ -144,7 +144,9 @@ export function MunicipalityInvoicingPage({
     <div className="space-y-3 pb-12" data-reserve-scroll-gutter>
       <MunicipalityInvoicingHeading />
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      {/* At least as tall as the small button, so a month with nothing to
+          expand does not lose it and pull the stepper up the page. */}
+      <div className="flex min-h-9 flex-wrap items-center justify-between gap-2">
         <MonthStepper
           monthStart={invoice.monthStart}
           locale={locale}
@@ -505,16 +507,51 @@ function MonthStepper({
       {/* Between its two controls, where the thing being stepped belongs: a
           label to one side of both arrows reads as a caption on the pair rather
           than as the value they move. */}
-      <span className="text-sm font-medium tabular-nums">
-        {formatDateOnly(monthStart, locale, {
-          month: "long",
-          year: "numeric",
-        })}
-      </span>
+      <MonthLabel monthStart={monthStart} locale={locale} />
+
       <MonthLink href={monthHref(next)} label={t("nextMonth")}>
         <ChevronRight className="h-4 w-4" aria-hidden />
       </MonthLink>
     </div>
+  );
+}
+
+/**
+ * The month's name, as wide as the widest month of its year.
+ *
+ * All twelve names share one grid cell and only the current one is visible, so
+ * the cell is sized by the longest name in the reader's own locale and the next
+ * arrow stays put while the reader clicks it — "May 2026" and "September 2026"
+ * would otherwise move it by a word's width on every step.
+ */
+function MonthLabel({
+  monthStart,
+  locale,
+}: {
+  monthStart: string;
+  locale: string;
+}) {
+  const yearStart = `${monthStart.slice(0, 4)}-01-01`;
+
+  return (
+    <span className="grid text-center text-sm font-medium tabular-nums">
+      {Array.from({ length: 12 }, (_, index) => {
+        const month = monthsAfter(yearStart, index);
+        const isCurrent = month === monthStart;
+        return (
+          <span
+            key={month}
+            aria-hidden={isCurrent ? undefined : true}
+            className={cn(
+              "col-start-1 row-start-1 whitespace-nowrap",
+              !isCurrent && "invisible",
+            )}
+          >
+            {formatDateOnly(month, locale, { month: "long", year: "numeric" })}
+          </span>
+        );
+      })}
+    </span>
   );
 }
 
@@ -891,7 +928,7 @@ function ClubRows({ club, locale }: { club: InvoiceClub; locale: string }) {
               them would make the club's dates read as a different kind of thing
               from the club. */}
           <td />
-          <td colSpan={5} className="pb-2">
+          <td colSpan={5} className="pb-2 pt-1">
             <ClubSessionDetail club={club} locale={locale} />
           </td>
         </tr>
@@ -944,7 +981,7 @@ function ClubSessionDetail({
             spoken for. */}
         {club.locationName !== null && (
           <tr>
-            <td colSpan={2} className="pb-1 text-muted-foreground">
+            <td colSpan={2} className="py-1 text-muted-foreground">
               {club.locationName}
             </td>
           </tr>

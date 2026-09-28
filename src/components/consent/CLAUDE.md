@@ -256,3 +256,30 @@ and each one is load-bearing rather than tidy.
   visibility, JavaScript error and YouTube. What is left is Google's own analytics and Ads
   tags, fired on the events the app pushes. A real need for one of the blocked ones is a
   conversation and a change in the loader, never a workaround in the UI.
+
+## Reading what the platforms received
+
+Checking a change against the vendors' own screens goes wrong in the same few ways, so
+they are written down here.
+
+- **Neither destination is Sogverse's alone.** The Sogverse and Sogverse Staging streams
+  are web data streams inside the **sog.gg - GA4** property, not properties of their own,
+  and the live Meta pixel is shared with the marketing site and School of Gaming's other
+  sites. Filter by stream, or by an event name only Sogverse sends, before reading a count.
+- **Judge delivery by GA4, never by the browser's network panel.** Google's tag holds
+  events for several seconds and sends whatever it holds as the page unloads. A push
+  followed by a full-page navigation is therefore delivered, but the request is not
+  visible in the tab afterwards. The collect endpoint also answers `204` whether it counts
+  a hit or discards it. DebugView and Realtime are the evidence. On a new stream Realtime
+  can lag 15 to 25 minutes, and the stream list's "No data received" badge lags far longer.
+- **GTM Preview and Tag Assistant cannot work here.** Preview adds a `gtm_debug` parameter
+  to the URL, and the query allowlist refuses any parameter it does not know before the
+  container is fetched, so a previewed page never loads the container. That is the
+  privacy gate doing its job. Admitting the parameter would leak nothing, but it widens a
+  deliberately narrow gate.
+- **The property carries an `Internal Traffic` data filter in Testing state.** No stream
+  defines internal-traffic rules for it to match, so it changes nothing. Switched to
+  Active, office traffic vanishes from the reports, which looks exactly like the site
+  having stopped reporting.
+- **Events Manager will not show the parameters we send.** Meta displays this dataset's
+  custom data and referring URLs as `_removed_`, so `outcome` cannot be read there.

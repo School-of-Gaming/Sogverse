@@ -220,11 +220,14 @@ function buildCspHeader(nonce: string): string {
     // www.facebook.com is the Meta Pixel's own transport: fbevents.js reports by
     // requesting /tr/ as an image. `strict-dynamic` does not reach img-src, so
     // it is needed in production too — removing it silently stops the pixel in
-    // the one environment where it matters. The same holds for the four Google
-    // hosts, none of which is reached by `strict-dynamic` either:
+    // the one environment where it matters. The same holds for every Google
+    // host below, none of which is reached by `strict-dynamic` either:
     // www.googletagmanager.com is the container's own image transport;
-    // *.google-analytics.com is the analytics collector, wildcarded because EU
-    // traffic is collected on a regional subdomain rather than on `www`;
+    // *.google-analytics.com and *.analytics.google.com are the analytics
+    // collectors, and a property sends to either: European traffic goes to a
+    // regional host such as region1.analytics.google.com, which the first
+    // wildcard does not cover. Both are wildcarded because the regional
+    // subdomain is Google's choice, not ours;
     // www.googleadservices.com, googleads.g.doubleclick.net and
     // www.google.com are the three an Ads conversion pings, which it does as an
     // image as readily as by fetch; stats.g.doubleclick.net is where an
@@ -232,12 +235,14 @@ function buildCspHeader(nonce: string): string {
     // demographics ping; and td.doubleclick.net is the conversion linker's own
     // host. None of the three is reached by naming `googleads` alone, which is
     // the trap: they share a registrable domain and nothing else. Google's own
-    // guidance also names a per-country `google.<TLD>` host for Ads and
-    // pagead2.googlesyndication.com for Display remarketing; we leave both out
-    // deliberately — what a block there costs is an advertising audience sync,
-    // not a conversion, and the alternative is a list of domains that rots
-    // quietly.
-    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com https://www.googletagmanager.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
+    // guidance also names a per-country `google.<TLD>` host and
+    // pagead2.googlesyndication.com for Google Signals and Display remarketing;
+    // we leave both out deliberately, so the analytics tag's
+    // www.google.<TLD>/ads/ga-audiences ping is blocked by design. What that
+    // block costs is an advertising audience sync, never an analytics event or
+    // a conversion, and CSP allows no wildcard on the TLD, so the alternative
+    // is a list of every Google country domain that rots quietly.
+    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
     "font-src 'self'",
     // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting.
     // www.facebook.com is where the Meta Pixel sends events once its library has
@@ -245,16 +250,17 @@ function buildCspHeader(nonce: string): string {
     // covered by `strict-dynamic`, so both branches need it. Our own
     // server-side reports go to graph.facebook.com and are named nowhere here:
     // they leave a route handler, not the document.
-    // The Google side is the same story in five hosts:
+    // The Google side is the same story, host for host:
     // www.googletagmanager.com is where the container fetches its own
-    // configuration; *.google-analytics.com is where analytics events are
-    // beaconed, wildcarded for the regional collector EU traffic is sent to;
+    // configuration; *.google-analytics.com and *.analytics.google.com are
+    // where analytics events are beaconed — European traffic goes to a
+    // regional host under the second, so without it GA4 receives nothing;
     // www.googleadservices.com and googleads.g.doubleclick.net take an Ads
     // conversion; www.google.com is the redirect that conversion goes through;
     // and stats.g.doubleclick.net and td.doubleclick.net take the analytics
     // property's remarketing beacon and the conversion linker's. Nothing here
     // is reached by `strict-dynamic` either.
-    `connect-src 'self' ${SUPABASE_HOST} ${SUPABASE_WS_HOST} https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com https://www.googletagmanager.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
+    `connect-src 'self' ${SUPABASE_HOST} ${SUPABASE_WS_HOST} https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
     // The Google hosts here are the third directive `strict-dynamic` does not
     // reach, and the one easiest to forget because nothing in the app's own
     // markup is a frame: a conversion linker writes its cookie from a hidden
