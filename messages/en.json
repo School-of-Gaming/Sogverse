@@ -68,7 +68,9 @@
       "seatOffer": "Seat offer",
       "geduSubstitutions": "Substitutions",
       "geduInvoicing": "Invoicing",
-      "adminSubstitutions": "Substitutions"
+      "adminSubstitutions": "Substitutions",
+      "teamProfile": "My profile",
+      "adminTeamProfile": "Profile"
     },
     "descriptions": {
       "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
@@ -2487,7 +2489,8 @@
     "accountMenu": "Account menu – {name}",
     "continueToAccount": "Continue to your account",
     "switchTo": "Switch to",
-    "invoicing": "Invoicing"
+    "invoicing": "Invoicing",
+    "teamProfile": "My profile"
   },
   "schools": {
     "hero": {
@@ -3851,14 +3854,14 @@
   },
   "settings": {
     "subtitle": "Manage your account preferences",
-    "profileDescription": "Update your personal information",
+    "personalInformation": "Personal information",
     "roleAccount": "{role, select, customer {Parent account} gamer {Gamer account} gedu {Gedu account} admin {Admin account} other {Account}}",
     "firstNamePlaceholder": "Enter your first name",
     "lastNamePlaceholder": "Enter your last name",
     "invalidPhone": "Please enter a valid phone number.",
     "lastNameRequired": "Last name must be at least {min} characters.",
-    "profileUpdated": "Profile updated successfully!",
-    "failedToUpdateProfile": "Failed to update profile.",
+    "profileUpdated": "Personal information saved.",
+    "failedToUpdateProfile": "Your personal information could not be saved.",
     "securityDescription": "Manage your password and security settings",
     "resetPassword": "Reset password",
     "resetPasswordEmailSent": "Password reset link sent to {email} — check your inbox.",
@@ -3888,6 +3891,11 @@
       "title": "Photos and videos",
       "granted": "Your parent has said photos and videos of you may be included in session reports and used by School of Gaming, Lynx Educate and Roblox. A Gedu will still ask you before taking your photo.",
       "notGranted": "Your parent has said photos and videos of you are not to be used, so a Gedu will keep you out of session photos. Only your parent can change this."
+    },
+    "teamProfile": {
+      "title": "My profile",
+      "description": "Your public profile on School of Gaming’s website: a photo of you and a few words about who you are.",
+      "edit": "Edit profile"
     }
   },
   "tools": {
@@ -4941,5 +4949,155 @@
     "rejectAll": "Reject all",
     "analyticsOnly": "Analytics only",
     "analyticsAndMarketing": "Marketing and analytics"
+  },
+  "team": {
+    "profile": {
+      "nameWithNickname": "{firstName} “<nick>{nickname}</nick>” {lastName}",
+      "firstNameWithNickname": "{firstName} “<nick>{nickname}</nick>”",
+      "geduTitle": "Gedu · Game Educator",
+      "speaks": "Speaks",
+      "aboutMe": "About me",
+      "funFact": "Fun fact",
+      "draft": {
+        "shortDescription": "Your one-line intro appears here",
+        "longDescription": "What you write in “About me” appears here"
+      }
+    },
+    "edit": {
+      "back": "Back to settings",
+      "pageTitle": "My profile",
+      "status": {
+        "privateTitle": "Private",
+        "privateBody": "Your profile isn’t on the website. When you are happy with it, tick “My profile is ready to be public” below and save.",
+        "waitingTitle": "Ready, waiting for an admin",
+        "waitingBody": "An admin will review your profile page before it becomes public.",
+        "liveTitle": "Public",
+        "liveBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away. To hide it, untick “My profile is ready to be public” and save; once you tick it again, an admin makes it public again."
+      },
+      "actions": {
+        "save": "Save changes",
+        "discard": "Discard changes"
+      },
+      "switch": {
+        "heading": "Public profile",
+        "readyLabel": "My profile is ready to be public",
+        "readyHint": "Ticking this and saving marks your profile ready for School of Gaming’s website, and an admin makes it public once they have looked at it. Untick it and save at any time, and it is hidden straight away; once you tick it again, an admin makes it public again.",
+        "complete": "Your profile has everything it needs to go public.",
+        "mustStayComplete": "While this is ticked your profile has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box to keep working on it privately.",
+        "missing": {
+          "photo": "Add a photo to be able to tick this.",
+          "title": "Add your title to be able to tick this.",
+          "text": "Fill in “Introduce yourself in one line” and “About me” in every language you write in to be able to tick this.",
+          "photoTitle": "Add a photo and your title to be able to tick this.",
+          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this.",
+          "titleText": "Add your title, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this.",
+          "photoTitleText": "Add a photo and your title, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this."
+        }
+      },
+      "photo": {
+        "heading": "Photo",
+        "upload": "Upload photo",
+        "replace": "Replace photo",
+        "remove": "Remove photo",
+        "guidance": {
+          "intro": "This is the first thing families and gamers see of you. Once you have chosen a photo, you crop it to fit the frame.",
+          "doHeading": "Do",
+          "dontHeading": "Don’t",
+          "do": {
+            "you": "Just you, head and shoulders, face clearly visible",
+            "light": "Soft, even light, for example facing a window",
+            "natural": "Relaxed and natural: look like yourself",
+            "gear": "A headset or controller in the shot is fine",
+            "background": "A plain or tidy background"
+          },
+          "dont": {
+            "others": "Anyone else in the frame. For safeguarding, a photo with a child in it can’t be used",
+            "hidden": "Sunglasses, masks or anything hiding your face",
+            "group": "Group shots, or yourself cropped out of one",
+            "avatar": "Avatars, cartoons or heavy filters",
+            "blurry": "Blurry or dark shots"
+          }
+        },
+        "crop": {
+          "title": "Crop your photo",
+          "description": "Drag the photo to place it in the frame, and zoom to fit.",
+          "zoom": "Zoom",
+          "confirm": "Use photo",
+          "unreadable": "This file can’t be opened as a picture here. Choose a JPEG, PNG or WebP photo. iPhone photos in HEIC format need converting first.",
+          "chooseAnother": "Choose another photo",
+          "failed": "The photo could not be cropped. Try again, or choose another photo."
+        }
+      },
+      "about": {
+        "heading": "About you",
+        "nickname": "Gamers know me as",
+        "nicknamePlaceholder": "PixelPirate",
+        "nicknameHint": "Shown in quotes in your name, exactly as you write it.",
+        "title": "Title",
+        "titleHint": "Your job at School of Gaming, for example Head of Clubs.",
+        "pick": "Your colour"
+      },
+      "writing": {
+        "heading": "In your own words",
+        "languages": "Languages",
+        "addLocale": "Add a language",
+        "removeLocale": "Remove {locale}",
+        "shortDescription": "Introduce yourself in one line",
+        "shortDescriptionPlaceholder": "Redstone nerd and speedrun fan",
+        "longDescription": "About me",
+        "longDescriptionHint": "What you do in sessions, what you play, and what families might like to know about you.",
+        "longDescriptionPlaceholder": "Tell families a little about yourself",
+        "funFact": "Fun fact",
+        "funFactPlaceholder": "I once built a working calculator in Minecraft.",
+        "count": "{count}/{max}"
+      },
+      "preview": {
+        "heading": "Preview"
+      },
+      "errors": {
+        "save": "Couldn’t save the profile. Please try again.",
+        "incomplete": "The profile has to be complete while it is marked ready to be public. Fill in what is missing and save again.",
+        "photoUpload": "The photo didn’t upload, so nothing was saved. Please try saving again.",
+        "photoGone": "The photo was changed somewhere else since you opened this page. Reload the page to see the profile as it is now."
+      }
+    },
+    "admin": {
+      "status": {
+        "privateTitle": "Not marked ready yet",
+        "privateBody": "{name}’s profile isn’t on the website. Once it is complete, {name} or any admin can mark it ready to be public.",
+        "waitingTitle": "Ready, waiting to be made public",
+        "waitingBody": "{name}’s profile is marked ready to be public. It goes on School of Gaming’s website as soon as an admin makes it public.",
+        "liveTitle": "Public",
+        "liveBody": "Anyone can see {name}’s profile on School of Gaming’s website. Changes saved to it go live straight away."
+      },
+      "edit": {
+        "back": "Back to {name}",
+        "pageTitle": "{name}’s profile",
+        "readyLabel": "The profile is ready to be public",
+        "readyHint": "Ticking this and saving marks {name}’s profile ready for School of Gaming’s website; it goes up once an admin makes it public. Untick it and save at any time, and it is hidden straight away until it is marked ready and made public again.",
+        "complete": "The profile has everything it needs to go public.",
+        "mustStayComplete": "While this is ticked the profile has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box.",
+        "missing": {
+          "photo": "Add a photo to be able to tick this.",
+          "title": "Add a title to be able to tick this.",
+          "text": "Fill in “Introduce yourself in one line” and “About me” in every language written to be able to tick this.",
+          "photoTitle": "Add a photo and a title to be able to tick this.",
+          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this.",
+          "titleText": "Add a title, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this.",
+          "photoTitleText": "Add a photo and a title, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this."
+        }
+      },
+      "userPage": {
+        "heading": "Profile",
+        "nothingSaved": "Nothing has been written for {name}’s profile yet.",
+        "writtenIn": "Written in",
+        "edit": "Edit profile",
+        "makePublic": "Make public",
+        "makePublicNeedsReady": "Mark the profile ready under Edit profile to be able to make it public.",
+        "makePublicNotReady": "{name}’s profile is no longer marked ready, so it wasn’t made public.",
+        "hide": "Hide",
+        "visibilityError": "Couldn’t change whether the profile is public. Please try again."
+      }
+    }
   }
 }

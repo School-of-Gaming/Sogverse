@@ -107,6 +107,11 @@ describe("Header — where a gedu is told they are", () => {
     renderAt("/gedu/invoicing");
     expect(currentLinks()).toEqual([en.header.invoicing]);
   });
+
+  it("marks My profile alone on the profile page", () => {
+    renderAt("/settings/profile");
+    expect(currentLinks()).toEqual([en.header.teamProfile]);
+  });
 });
 
 /**
@@ -136,5 +141,49 @@ describe("the account menu's My SOG row", () => {
   it("is not current on Invoicing, whose row is in the menu itself", () => {
     renderAt("/gedu/invoicing");
     expect(dashboardRow().getAttribute("aria-current")).toBeNull();
+  });
+});
+
+/**
+ * The profile page lives under settings, so the menu's Settings row would claim
+ * it too. For a gedu the chrome has an item of its own for the page, and that
+ * item is what marks it; an admin has no such item, so Settings still does.
+ */
+describe("the account menu on the profile page", () => {
+  function openRows() {
+    fireEvent.click(screen.getByRole("button", { name: /Mikko|Kyle/ }));
+  }
+
+  it("marks a gedu's My profile row current, and not Settings", () => {
+    renderAt("/settings/profile");
+    openRows();
+    expect(
+      screen
+        .getByRole("menuitem", { name: en.header.teamProfile })
+        .getAttribute("aria-current"),
+    ).toBe("page");
+    expect(
+      screen
+        .getByRole("menuitem", { name: en.common.settings })
+        .getAttribute("aria-current"),
+    ).toBeNull();
+  });
+
+  it("leaves an admin, who has no profile row, with Settings current", () => {
+    mockAuth.mockReturnValue({
+      user: USER,
+      profile: { id: USER.id, role: "admin", first_name: "Kyle" },
+      isLoading: false,
+    });
+    renderAt("/settings/profile");
+    openRows();
+    expect(
+      screen.queryByRole("menuitem", { name: en.header.teamProfile }),
+    ).toBeNull();
+    expect(
+      screen
+        .getByRole("menuitem", { name: en.common.settings })
+        .getAttribute("aria-current"),
+    ).toBe("page");
   });
 });

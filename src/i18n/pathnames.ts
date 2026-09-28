@@ -135,6 +135,7 @@ export const PATHNAMES = {
 
   // --- Shared ---------------------------------------------------------------
   "/settings": "/settings",
+  "/settings/profile": "/settings/profile",
 
   // --- Admin ----------------------------------------------------------------
   "/admin": "/admin",
@@ -174,6 +175,7 @@ export const PATHNAMES = {
   "/admin/ui-previews": "/admin/ui-previews",
   "/admin/users": "/admin/users",
   "/admin/users/[id]": "/admin/users/[id]",
+  "/admin/users/[id]/profile": "/admin/users/[id]/profile",
   "/admin/voice": "/admin/voice",
   "/admin/whatsapp": "/admin/whatsapp",
 

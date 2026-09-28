@@ -68,7 +68,9 @@
       "seatOffer": "Platserbjudande",
       "geduSubstitutions": "Vikariat",
       "geduInvoicing": "Fakturering",
-      "adminSubstitutions": "Vikariat"
+      "adminSubstitutions": "Vikariat",
+      "teamProfile": "Min profil",
+      "adminTeamProfile": "Profil"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -2487,7 +2489,8 @@
     "accountMenu": "Kontomeny – {name}",
     "continueToAccount": "Fortsätt till ditt konto",
     "switchTo": "Byt profil",
-    "invoicing": "Fakturering"
+    "invoicing": "Fakturering",
+    "teamProfile": "Min profil"
   },
   "schools": {
     "hero": {
@@ -3164,14 +3167,14 @@
   },
   "settings": {
     "subtitle": "Hantera dina kontoinställningar",
-    "profileDescription": "Uppdatera din personliga information",
+    "personalInformation": "Personuppgifter",
     "roleAccount": "{role, select, customer {Föräldrakonto} gamer {Spelarkonto} gedu {Gedu-konto} admin {Adminkonto} other {Konto}}",
     "firstNamePlaceholder": "Ange ditt förnamn",
     "lastNamePlaceholder": "Ange ditt efternamn",
     "invalidPhone": "Ange ett giltigt telefonnummer.",
     "lastNameRequired": "Efternamnet måste vara minst {min} tecken.",
-    "profileUpdated": "Profilen har uppdaterats!",
-    "failedToUpdateProfile": "Kunde inte uppdatera profilen.",
+    "profileUpdated": "Personuppgifterna har sparats.",
+    "failedToUpdateProfile": "Det gick inte att spara personuppgifterna.",
     "securityDescription": "Hantera ditt lösenord och säkerhetsinställningar",
     "resetPassword": "Återställ lösenord",
     "resetPasswordEmailSent": "Återställningslänk skickad till {email} – kolla din inkorg.",
@@ -3201,6 +3204,11 @@
       "title": "Foton och videor",
       "granted": "Din förälder har sagt att foton och videor på dig får användas i rapporter från tillfällena och av School of Gaming, Lynx Educate och Roblox. En Gedu frågar dig ändå innan de tar ett foto på dig.",
       "notGranted": "Din förälder har sagt att foton och videor på dig inte får användas, så en Gedu håller dig utanför tillfällenas foton. Bara din förälder kan ändra det här."
+    },
+    "teamProfile": {
+      "title": "Min profil",
+      "description": "Din offentliga profil på School of Gamings webbplats: ett foto av dig och några ord om vem du är.",
+      "edit": "Redigera profil"
     }
   },
   "tools": {
@@ -4941,5 +4949,155 @@
     "rejectAll": "Neka alla",
     "analyticsOnly": "Endast analys",
     "analyticsAndMarketing": "Marknadsföring och analys"
+  },
+  "team": {
+    "profile": {
+      "nameWithNickname": "{firstName} ”<nick>{nickname}</nick>” {lastName}",
+      "firstNameWithNickname": "{firstName} ”<nick>{nickname}</nick>”",
+      "geduTitle": "Gedu · spelfostrare",
+      "speaks": "Talar",
+      "aboutMe": "Om mig",
+      "funFact": "Kul fakta",
+      "draft": {
+        "shortDescription": "Din presentation på en rad visas här",
+        "longDescription": "Det du skriver under ”Om mig” visas här"
+      }
+    },
+    "edit": {
+      "back": "Tillbaka till inställningar",
+      "pageTitle": "Min profil",
+      "status": {
+        "privateTitle": "Privat",
+        "privateBody": "Din profil finns inte på webbplatsen. När du är nöjd kryssar du i ”Min profil är redo att bli offentlig” nedan och sparar.",
+        "waitingTitle": "Klar, väntar på en administratör",
+        "waitingBody": "En administratör granskar din profilsida innan den blir offentlig.",
+        "liveTitle": "Offentlig",
+        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du dölja den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar. När du kryssar i den igen gör en administratör den offentlig på nytt."
+      },
+      "actions": {
+        "save": "Spara ändringarna",
+        "discard": "Förkasta ändringarna"
+      },
+      "switch": {
+        "heading": "Offentlig profil",
+        "readyLabel": "Min profil är redo att bli offentlig",
+        "readyHint": "Genom att kryssa i detta och spara markerar du din profil som klar att visas på School of Gamings webbplats, och en administratör gör den offentlig när den har tittat på den. Ta bort krysset och spara när som helst så döljs den direkt. När du kryssar i den igen gör en administratör den offentlig på nytt.",
+        "complete": "Din profil har allt som behövs för att bli offentlig.",
+        "mustStayComplete": "Medan detta är ikryssat måste din profil vara komplett, så det går inte att spara förrän den är det. Fyll i det som saknas, eller ta bort krysset för att fortsätta privat.",
+        "missing": {
+          "photo": "Lägg till ett foto för att kunna kryssa i detta.",
+          "title": "Lägg till din titel för att kunna kryssa i detta.",
+          "text": "Fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
+          "photoTitle": "Lägg till ett foto och din titel för att kunna kryssa i detta.",
+          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
+          "titleText": "Lägg till din titel och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
+          "photoTitleText": "Lägg till ett foto och din titel, och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på, för att kunna kryssa i detta."
+        }
+      },
+      "photo": {
+        "heading": "Foto",
+        "upload": "Ladda upp foto",
+        "replace": "Byt foto",
+        "remove": "Ta bort foto",
+        "guidance": {
+          "intro": "Det här är det första familjer och gamers ser av dig. När du har valt ett foto beskär du det så att det passar ramen.",
+          "doHeading": "Gör så här",
+          "dontHeading": "Undvik",
+          "do": {
+            "you": "Bara du, huvud och axlar, ansiktet väl synligt",
+            "light": "Jämnt ljus, till exempel vänd mot ett fönster",
+            "natural": "Avslappnad och naturlig: se ut som dig själv",
+            "gear": "Ett headset eller en handkontroll i bild går bra",
+            "background": "En enkel eller städad bakgrund"
+          },
+          "dont": {
+            "others": "Andra personer i bilden. För barns trygghet kan ett foto med ett barn i inte användas",
+            "hidden": "Solglasögon, masker eller något som döljer ansiktet",
+            "group": "Gruppbilder, eller du själv beskuren ur en",
+            "avatar": "Avatarer, tecknade bilder eller kraftiga filter",
+            "blurry": "Suddiga eller mörka bilder"
+          }
+        },
+        "crop": {
+          "title": "Beskär ditt foto",
+          "description": "Dra fotot för att placera det i ramen och zooma så att det passar.",
+          "zoom": "Zoom",
+          "confirm": "Använd foto",
+          "unreadable": "Den här filen kan inte öppnas som en bild här. Välj ett JPEG-, PNG- eller WebP-foto. iPhone-foton i HEIC-format måste konverteras först.",
+          "chooseAnother": "Välj ett annat foto",
+          "failed": "Fotot kunde inte beskäras. Försök igen eller välj ett annat foto."
+        }
+      },
+      "about": {
+        "heading": "Om dig",
+        "nickname": "Gamers känner mig som",
+        "nicknamePlaceholder": "PixelPirate",
+        "nicknameHint": "Visas inom citattecken i ditt namn, precis som du skriver den.",
+        "title": "Titel",
+        "titleHint": "Ditt jobb på School of Gaming, till exempel klubbansvarig.",
+        "pick": "Din färg"
+      },
+      "writing": {
+        "heading": "Med egna ord",
+        "languages": "Språk",
+        "addLocale": "Lägg till språk",
+        "removeLocale": "Ta bort {locale}",
+        "shortDescription": "Presentera dig på en rad",
+        "shortDescriptionPlaceholder": "Redstone-nörd och speedrun-fan",
+        "longDescription": "Om mig",
+        "longDescriptionHint": "Vad du gör på sessionerna, vad du spelar och vad familjer kan vilja veta om dig.",
+        "longDescriptionPlaceholder": "Berätta lite om dig själv för familjerna",
+        "funFact": "Kul fakta",
+        "funFactPlaceholder": "Jag har byggt en fungerande miniräknare i Minecraft.",
+        "count": "{count}/{max}"
+      },
+      "preview": {
+        "heading": "Förhandsvisning"
+      },
+      "errors": {
+        "save": "Det gick inte att spara profilen. Försök igen.",
+        "incomplete": "Profilen måste vara komplett så länge den är markerad som klar att visas offentligt. Fyll i det som saknas och spara igen.",
+        "photoUpload": "Fotot laddades inte upp, så inget sparades. Försök spara igen.",
+        "photoGone": "Fotot har ändrats någon annanstans sedan du öppnade den här sidan. Ladda om sidan för att se profilen som den är nu."
+      }
+    },
+    "admin": {
+      "status": {
+        "privateTitle": "Inte markerad som klar än",
+        "privateBody": "Profilen för {name} finns inte på webbplatsen. När den är komplett kan {name} eller vilken administratör som helst markera den som klar att visas offentligt.",
+        "waitingTitle": "Klar, väntar på att göras offentlig",
+        "waitingBody": "Profilen för {name} är markerad som klar att visas offentligt. Den kommer upp på School of Gamings webbplats så snart en administratör gör den offentlig.",
+        "liveTitle": "Offentlig",
+        "liveBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt."
+      },
+      "edit": {
+        "back": "Tillbaka till {name}",
+        "pageTitle": "Profil för {name}",
+        "readyLabel": "Profilen är redo att bli offentlig",
+        "readyHint": "Genom att kryssa i detta och spara markeras profilen för {name} som klar att visas på School of Gamings webbplats. Den kommer upp när en administratör gör den offentlig. Ta bort krysset och spara när som helst så döljs den direkt, och den förblir dold tills den markeras som klar och görs offentlig igen.",
+        "complete": "Profilen har allt den behöver för att visas offentligt.",
+        "mustStayComplete": "Medan detta är ikryssat måste profilen vara komplett, så det går inte att spara förrän den är det. Fyll i det som saknas, eller ta bort krysset.",
+        "missing": {
+          "photo": "Lägg till ett foto för att kunna kryssa i detta.",
+          "title": "Lägg till en titel för att kunna kryssa i detta.",
+          "text": "Fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
+          "photoTitle": "Lägg till ett foto och en titel för att kunna kryssa i detta.",
+          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
+          "titleText": "Lägg till en titel och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
+          "photoTitleText": "Lägg till ett foto och en titel, och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits, för att kunna kryssa i detta."
+        }
+      },
+      "userPage": {
+        "heading": "Profil",
+        "nothingSaved": "Inget har skrivits i profilen för {name} än.",
+        "writtenIn": "Skriven på",
+        "edit": "Redigera profil",
+        "makePublic": "Gör offentlig",
+        "makePublicNeedsReady": "Markera profilen som klar under Redigera profil för att kunna göra den offentlig.",
+        "makePublicNotReady": "Profilen för {name} är inte längre markerad som klar, så den gjordes inte offentlig.",
+        "hide": "Dölj",
+        "visibilityError": "Det gick inte att ändra om profilen är offentlig. Försök igen."
+      }
+    }
   }
 }

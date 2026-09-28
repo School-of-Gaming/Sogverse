@@ -68,7 +68,9 @@
       "seatOffer": "Proposition de place",
       "geduSubstitutions": "Remplacements",
       "geduInvoicing": "Facturation",
-      "adminSubstitutions": "Remplacements"
+      "adminSubstitutions": "Remplacements",
+      "teamProfile": "Mon profil",
+      "adminTeamProfile": "Profil"
     },
     "descriptions": {
       "signIn": "Connectez-vous à votre compte School of Gaming pour suivre les séances à venir de vos joueurs, gérer les inscriptions et tenir vos informations à jour.",
@@ -2487,7 +2489,8 @@
     "accountMenu": "Menu du compte – {name}",
     "continueToAccount": "Continuer vers votre compte",
     "switchTo": "Changer de profil",
-    "invoicing": "Facturation"
+    "invoicing": "Facturation",
+    "teamProfile": "Mon profil"
   },
   "schools": {
     "hero": {
@@ -3164,14 +3167,14 @@
   },
   "settings": {
     "subtitle": "Gérez les préférences de votre compte",
-    "profileDescription": "Mettez à jour vos informations personnelles",
+    "personalInformation": "Informations personnelles",
     "roleAccount": "{role, select, customer {Compte parent} gamer {Compte joueur} gedu {Compte Gedu} admin {Compte administrateur} other {Compte}}",
     "firstNamePlaceholder": "Saisissez votre prénom",
     "lastNamePlaceholder": "Saisissez votre nom",
     "invalidPhone": "Veuillez saisir un numéro de téléphone valide.",
     "lastNameRequired": "Le nom doit contenir au moins {min} caractères.",
-    "profileUpdated": "Profil mis à jour avec succès !",
-    "failedToUpdateProfile": "Échec de la mise à jour du profil.",
+    "profileUpdated": "Informations personnelles enregistrées.",
+    "failedToUpdateProfile": "Impossible d’enregistrer vos informations personnelles.",
     "securityDescription": "Gérez votre mot de passe et vos paramètres de sécurité",
     "resetPassword": "Réinitialiser le mot de passe",
     "resetPasswordEmailSent": "Lien de réinitialisation envoyé à {email} — consultez votre boîte de réception.",
@@ -3201,6 +3204,11 @@
       "title": "Photos et vidéos",
       "granted": "Ton parent a autorisé l’utilisation des photos et vidéos où tu apparais dans les comptes rendus de séance, ainsi que par School of Gaming, Lynx Educate et Roblox. Un Gedu te demandera quand même ton accord avant de te prendre en photo.",
       "notGranted": "Ton parent n’a pas autorisé l’utilisation des photos et vidéos où tu apparais. Un Gedu te gardera donc en dehors des photos de séance. Seul ton parent peut changer cela."
+    },
+    "teamProfile": {
+      "title": "Mon profil",
+      "description": "Votre profil public sur le site de School of Gaming : une photo de vous et quelques mots sur qui vous êtes.",
+      "edit": "Modifier le profil"
     }
   },
   "tools": {
@@ -4941,5 +4949,155 @@
     "rejectAll": "Tout refuser",
     "analyticsOnly": "Statistiques uniquement",
     "analyticsAndMarketing": "Marketing et statistiques"
+  },
+  "team": {
+    "profile": {
+      "nameWithNickname": "{firstName} « <nick>{nickname}</nick> » {lastName}",
+      "firstNameWithNickname": "{firstName} « <nick>{nickname}</nick> »",
+      "geduTitle": "Gedu · animateur ou animatrice",
+      "speaks": "Parle",
+      "aboutMe": "À propos de moi",
+      "funFact": "Anecdote",
+      "draft": {
+        "shortDescription": "Votre présentation en une ligne apparaît ici",
+        "longDescription": "Ce que vous écrivez dans « À propos de moi » apparaît ici"
+      }
+    },
+    "edit": {
+      "back": "Retour aux paramètres",
+      "pageTitle": "Mon profil",
+      "status": {
+        "privateTitle": "Privé",
+        "privateBody": "Votre profil n’est pas sur le site. Quand il vous convient, cochez « Mon profil est prêt à être public » ci-dessous et enregistrez.",
+        "waitingTitle": "Prêt, en attente d’un administrateur",
+        "waitingBody": "Un administrateur examinera votre page de profil avant qu’elle ne devienne publique.",
+        "liveTitle": "Public",
+        "liveBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement. Pour le masquer, décochez « Mon profil est prêt à être public » et enregistrez ; une fois la case recochée, un administrateur le rendra de nouveau public."
+      },
+      "actions": {
+        "save": "Enregistrer les modifications",
+        "discard": "Annuler les modifications"
+      },
+      "switch": {
+        "heading": "Profil public",
+        "readyLabel": "Mon profil est prêt à être public",
+        "readyHint": "En cochant cette case et en enregistrant, vous marquez votre profil comme prêt à paraître sur le site de School of Gaming, et un administrateur le rend public après l’avoir examiné. Décochez-la et enregistrez à tout moment pour le masquer aussitôt ; une fois la case recochée, un administrateur le rendra de nouveau public.",
+        "complete": "Votre profil contient tout ce qu’il faut pour être public.",
+        "mustStayComplete": "Tant que cette case est cochée, votre profil doit rester complet : l’enregistrement est désactivé jusqu’à ce qu’il le soit. Complétez ce qui manque, ou décochez la case pour continuer en privé.",
+        "missing": {
+          "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
+          "title": "Ajoutez votre titre pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "photoTitle": "Ajoutez une photo et votre titre pour pouvoir cocher cette case.",
+          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez votre titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et votre titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez, pour pouvoir cocher cette case."
+        }
+      },
+      "photo": {
+        "heading": "Photo",
+        "upload": "Importer une photo",
+        "replace": "Remplacer la photo",
+        "remove": "Supprimer la photo",
+        "guidance": {
+          "intro": "C’est la première chose que les familles et les gamers voient de vous. Une fois la photo choisie, vous la recadrez pour l’adapter au cadre.",
+          "doHeading": "À faire",
+          "dontHeading": "À éviter",
+          "do": {
+            "you": "Vous seul, tête et épaules, le visage bien visible",
+            "light": "Une lumière douce et égale, par exemple face à une fenêtre",
+            "natural": "Détendu et naturel : ressemblez à vous-même",
+            "gear": "Un casque ou une manette dans le cadre, pas de souci",
+            "background": "Un arrière-plan neutre ou rangé"
+          },
+          "dont": {
+            "others": "D’autres personnes dans le cadre. Pour la protection de l’enfance, une photo où figure un enfant ne peut pas être utilisée",
+            "hidden": "Des lunettes de soleil, un masque ou tout ce qui cache votre visage",
+            "group": "Des photos de groupe, ou vous recadré à partir de l’une d’elles",
+            "avatar": "Des avatars, des dessins ou des filtres marqués",
+            "blurry": "Des photos floues ou sombres"
+          }
+        },
+        "crop": {
+          "title": "Recadrez votre photo",
+          "description": "Faites glisser la photo pour la placer dans le cadre, et zoomez pour l’ajuster.",
+          "zoom": "Zoom",
+          "confirm": "Utiliser la photo",
+          "unreadable": "Ce fichier ne peut pas être ouvert comme une image ici. Choisissez une photo JPEG, PNG ou WebP. Les photos d’iPhone au format HEIC doivent d’abord être converties.",
+          "chooseAnother": "Choisir une autre photo",
+          "failed": "La photo n’a pas pu être recadrée. Réessayez, ou choisissez une autre photo."
+        }
+      },
+      "about": {
+        "heading": "À propos de vous",
+        "nickname": "Les gamers me connaissent sous le nom de",
+        "nicknamePlaceholder": "PixelPirate",
+        "nicknameHint": "Affiché entre guillemets dans votre nom, exactement comme vous l’écrivez.",
+        "title": "Titre",
+        "titleHint": "Votre poste chez School of Gaming, par exemple responsable des clubs.",
+        "pick": "Votre couleur"
+      },
+      "writing": {
+        "heading": "Avec vos propres mots",
+        "languages": "Langues",
+        "addLocale": "Ajouter une langue",
+        "removeLocale": "Supprimer {locale}",
+        "shortDescription": "Présentez-vous en une ligne",
+        "shortDescriptionPlaceholder": "Fan de redstone et de speedrun",
+        "longDescription": "À propos de moi",
+        "longDescriptionHint": "Ce que vous faites en session, ce à quoi vous jouez, et ce que les familles aimeraient savoir sur vous.",
+        "longDescriptionPlaceholder": "Présentez-vous un peu aux familles",
+        "funFact": "Anecdote",
+        "funFactPlaceholder": "J’ai un jour construit une calculatrice qui fonctionne dans Minecraft.",
+        "count": "{count}/{max}"
+      },
+      "preview": {
+        "heading": "Aperçu"
+      },
+      "errors": {
+        "save": "Impossible d’enregistrer le profil. Veuillez réessayer.",
+        "incomplete": "Le profil doit rester complet tant qu’il est marqué comme prêt à être public. Complétez ce qui manque et enregistrez à nouveau.",
+        "photoUpload": "La photo n’a pas été envoyée, donc rien n’a été enregistré. Réessayez d’enregistrer.",
+        "photoGone": "La photo a été modifiée ailleurs depuis que vous avez ouvert cette page. Rechargez la page pour voir le profil tel qu’il est maintenant."
+      }
+    },
+    "admin": {
+      "status": {
+        "privateTitle": "Pas encore marqué comme prêt",
+        "privateBody": "Le profil de {name} n’est pas sur le site. Une fois complet, {name} ou n’importe quel administrateur peut le marquer comme prêt à être public.",
+        "waitingTitle": "Prêt, en attente d’être rendu public",
+        "waitingBody": "Le profil de {name} est marqué comme prêt à être public. Il apparaîtra sur le site de School of Gaming dès qu’un administrateur l’aura rendu public.",
+        "liveTitle": "Public",
+        "liveBody": "Tout le monde peut voir le profil de {name} sur le site de School of Gaming. Les modifications enregistrées sont en ligne immédiatement."
+      },
+      "edit": {
+        "back": "Retour à {name}",
+        "pageTitle": "Profil de {name}",
+        "readyLabel": "Le profil est prêt à être public",
+        "readyHint": "En cochant cette case et en enregistrant, vous marquez le profil de {name} comme prêt à paraître sur le site de School of Gaming ; il est mis en ligne dès qu’un administrateur le rend public. Décochez-la et enregistrez à tout moment pour le masquer aussitôt ; il reste masqué jusqu’à ce qu’il soit de nouveau marqué comme prêt et rendu public.",
+        "complete": "Le profil contient tout ce qu’il faut pour être public.",
+        "mustStayComplete": "Tant que cette case est cochée, le profil doit rester complet : l’enregistrement est désactivé jusqu’à ce qu’il le soit. Complétez ce qui manque, ou décochez la case.",
+        "missing": {
+          "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
+          "title": "Ajoutez un titre pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "photoTitle": "Ajoutez une photo et un titre pour pouvoir cocher cette case.",
+          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez un titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et un titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée, pour pouvoir cocher cette case."
+        }
+      },
+      "userPage": {
+        "heading": "Profil",
+        "nothingSaved": "Rien n’a encore été rédigé pour le profil de {name}.",
+        "writtenIn": "Rédigé en",
+        "edit": "Modifier le profil",
+        "makePublic": "Rendre public",
+        "makePublicNeedsReady": "Marquez le profil comme prêt dans « Modifier le profil » pour pouvoir le rendre public.",
+        "makePublicNotReady": "Le profil de {name} n’est plus marqué comme prêt, il n’a donc pas été rendu public.",
+        "hide": "Masquer",
+        "visibilityError": "Impossible de modifier la visibilité du profil. Veuillez réessayer."
+      }
+    }
   }
 }

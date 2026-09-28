@@ -113,6 +113,13 @@ COMMIT;
   is removed rather than updated. Storage objects are the exception: a SQL delete leaves
   the file in the bucket, so a storage hit in step 2 is removed through the Storage API
   first.
+- **A Gedu or admin also has a `team-photos` folder named for their id** (`<user-id>/`),
+  and deleting the account does not remove it: the profile row cascades away but nothing
+  links the objects to the user. An admin may have uploaded the photo on their behalf, so
+  the object's `owner` can be someone else and the scan can miss it — list that folder
+  and remove it through the Storage API before the delete. This procedure is written for
+  families; erasing staff also touches employment records, which is the owner's call
+  before anything here runs.
 
 ## 4. Verify
 

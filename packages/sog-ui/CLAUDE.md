@@ -178,6 +178,7 @@ spends all six, and act plus one is the default wherever no decision has been ma
 world is never the colour of quiet: it does not carry safety, safeguarding or
 trust-building copy on a parent surface, where the reader is being asked to trust us with
 a child and the page should sound settled rather than energetic.
+A person's own pick, on a surface about that person, is outside the budget: `picks.ts`.
 
 No lint holds this one. What a page spends is a property of the whole rendered page, and
 no class string can be asked how many colours its neighbours used; the place a check

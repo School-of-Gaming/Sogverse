@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 /**
  * The app's one markdown renderer, for authored prose that is *stored* as
  * markdown — a gedu's session report, a product's marketing long description,
- * and the email either is later converted into.
+ * a team member's "About me", and the email a report is later converted into.
  *
  * **A deliberately small subset, enforced twice.** Markdown's full grammar is
  * far wider than anything worth typing into these fields, and the wide half is
@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
  * one page and a dead label on another. A field picks its variant once, where
  * it is rendered, and every surface showing that field passes the same one.
  */
-export type MarkdownVariant = "feed" | "marketing";
+export type MarkdownVariant = "feed" | "marketing" | "profile";
 
 export function Markdown({
   children,
@@ -134,6 +134,35 @@ export const FEED_ELEMENTS = [
  * one decision in two places, and changing it means changing both.
  */
 const MARKETING_ELEMENTS = [...FEED_ELEMENTS, "a"];
+
+/**
+ * **The profile subset: a team member's "About me", on their public page.**
+ *
+ * The feed's subset with the headings taken out as well as the links. It is a
+ * few paragraphs a person writes about themselves under a heading the page
+ * already sets, so a heading of their own would be a second title competing
+ * with "About me"; and it is staff-authored copy families read, so it carries
+ * no links for the same reason a report does. A heading or link in a stored
+ * value unwraps to its words.
+ *
+ * Set as the page's own body copy — full size, ink, looser rhythm — because it
+ * is the body of the page it sits on, not a note in a card.
+ */
+const PROFILE_ELEMENTS = ["p", "strong", "em", "ul", "ol", "li", "br"];
+
+const PROFILE_COMPONENTS: Components = {
+  p: ({ children }) => <p className="leading-relaxed">{children}</p>,
+  ul: ({ children }) => (
+    <ul className="list-disc space-y-1 pl-5">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal space-y-1 pl-5">{children}</ol>
+  ),
+  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  strong: ({ children }) => (
+    <strong className="font-semibold">{children}</strong>
+  ),
+};
 
 /**
  * Semantic levels, one step down from the markdown level.
@@ -270,5 +299,10 @@ const VARIANT_STYLES: Record<MarkdownVariant, MarkdownVariantStyle> = {
     container: "text-sm leading-relaxed [&>*:first-child]:mt-0",
     allowedElements: MARKETING_ELEMENTS,
     components: MARKETING_COMPONENTS,
+  },
+  profile: {
+    container: "space-y-3 text-base leading-relaxed",
+    allowedElements: PROFILE_ELEMENTS,
+    components: PROFILE_COMPONENTS,
   },
 };

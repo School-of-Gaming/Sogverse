@@ -2583,6 +2583,115 @@ export type Database = {
           },
         ]
       }
+      team_profile_translations: {
+        Row: {
+          created_at: string
+          fun_fact: string | null
+          locale: string
+          long_description: string
+          short_description: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fun_fact?: string | null
+          locale: string
+          long_description?: string
+          short_description?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fun_fact?: string | null
+          locale?: string
+          long_description?: string
+          short_description?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_profile_translations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "team_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      team_profiles: {
+        Row: {
+          approval_decided_at: string | null
+          approval_decided_by: string | null
+          approved: boolean
+          created_at: string
+          nickname: string | null
+          opted_in: boolean
+          photo_path: string | null
+          pick: number | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approval_decided_at?: string | null
+          approval_decided_by?: string | null
+          approved?: boolean
+          created_at?: string
+          nickname?: string | null
+          opted_in?: boolean
+          photo_path?: string | null
+          pick?: number | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approval_decided_at?: string | null
+          approval_decided_by?: string | null
+          approved?: boolean
+          created_at?: string
+          nickname?: string | null
+          opted_in?: boolean
+          photo_path?: string | null
+          pick?: number | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_profiles_approval_decided_by_fkey"
+            columns: ["approval_decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_profiles_approval_decided_by_fkey"
+            columns: ["approval_decided_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verification_email_requests: {
         Row: {
           created_at: string
@@ -3048,6 +3157,7 @@ export type Database = {
         Returns: undefined
       }
       assert_self: { Args: { p_user_id: string }; Returns: undefined }
+      can_edit_team_profile: { Args: { p_user_id: string }; Returns: boolean }
       can_read_product: { Args: { p_product_id: string }; Returns: boolean }
       cancel_participation: {
         Args: { p_participation_id: string; p_reason: string }
@@ -3576,6 +3686,18 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
       }
+      save_team_profile: {
+        Args: {
+          p_nickname?: string
+          p_opted_in?: boolean
+          p_photo_path?: string
+          p_pick?: number
+          p_title?: string
+          p_translations: Json
+          p_user_id: string
+        }
+        Returns: string
+      }
       search_locations: {
         Args: {
           p_country?: string
@@ -3709,6 +3831,10 @@ export type Database = {
           p_public_note: string
         }
         Returns: Json
+      }
+      set_team_profile_approval: {
+        Args: { p_approved: boolean; p_user_id: string }
+        Returns: undefined
       }
       submit_help_request: {
         Args: { p_message: string; p_user_id: string }

@@ -286,6 +286,15 @@ export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 export type InvoiceCustomer =
   Database["public"]["Tables"]["invoice_customers"]["Row"];
 
+// team_profiles / team_profile_translations — an admin's or a Gedu's team
+// profile, one row per person and one per (person, site locale). Row aliases
+// only: neither table carries a write grant for any Data API role, and the only
+// writers are `save_team_profile` and `set_team_profile_approval` (an admin
+// making a Gedu's profile public or hiding it).
+export type TeamProfileRow = Database["public"]["Tables"]["team_profiles"]["Row"];
+export type TeamProfileTranslationRow =
+  Database["public"]["Tables"]["team_profile_translations"]["Row"];
+
 // product_staff_details — the staff-only half of a product, split off `products`
 // because that table is readable by anon and by every parent, and PostgREST lets
 // a caller pick the columns it wants. Sparse: a product with nothing staff-only

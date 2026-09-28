@@ -19,7 +19,7 @@ import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details"
 import { GamerUsernameLine, UserEmailLine } from "@/components/admin/user-email-line";
 import { hasRealEmail } from "@/lib/gamer-sign-in";
 import { formatDate } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users";
 import { GamerService } from "@/services/gamers";
@@ -35,6 +35,9 @@ import {
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
+import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
+import type { TeamProfileRecord } from "@/services/team-profiles/team-profiles.types";
+import { UserTeamProfileCard } from "@/components/admin/user-team-profile-card";
 import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@/types";
 
 /**
@@ -159,6 +162,8 @@ export default async function AdminUserDetailPage({
   const isCustomer = profile.role === "customer";
   const isGamer = profile.role === "gamer";
   const isGedu = profile.role === "gedu";
+  // The two roles with a public team profile: office staff and Gedus.
+  const hasTeamProfile = isGedu || profile.role === "admin";
 
   // Game identities belong to the people who play — a child, and the educator
   // running the session. A parent's or another admin's account has none, which
@@ -186,6 +191,8 @@ export default async function AdminUserDetailPage({
     robloxAccount,
     geduCertification,
     geduAcceptances,
+    teamProfile,
+    viewer,
   ] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
@@ -213,6 +220,16 @@ export default async function AdminUserDetailPage({
     isGedu
       ? new GeduContractService(supabase).getAcceptances(userId).catch(() => null)
       : Promise.resolve<GeduContractAcceptance[] | null>(null),
+    // The team profile, read here so its card paints complete: its status
+    // and summary differ in height from one profile to the next. Not caught:
+    // the id has already matched a profile, so it cannot be malformed, and a
+    // failed read shown as no profile would be the wrong answer.
+    hasTeamProfile
+      ? new TeamProfilesService(supabase).getTeamProfile(userId)
+      : Promise.resolve<TeamProfileRecord | null>(null),
+    // Who is looking, so the card can send an admin to their own profile
+    // through settings. Cached for the request: the layout has read it.
+    hasTeamProfile ? getUserWithProfile() : Promise.resolve(null),
   ]);
 
   // Products this user is assigned to. For a gamer, their own participations;
@@ -495,6 +512,17 @@ export default async function AdminUserDetailPage({
 
       {/* Coverage areas, for substitute matching. */}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
+
+      {/* The public team profile, for the two roles that have one. Seeded by
+          the read above, so it is in its final shape on first paint and sits
+          ahead of the marketing card, whose place at the end is load-bearing. */}
+      {hasTeamProfile && (
+        <UserTeamProfileCard
+          userId={userId}
+          initial={teamProfile}
+          isViewer={viewer?.user.id === userId}
+        />
+      )}
 
       {/* Everything about marketing, in one card: where the account came from,
           and what its holder has agreed to since.

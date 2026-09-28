@@ -24,6 +24,10 @@ import {
 } from "@/components/gedu/mock-dashboard-fixtures";
 import { GEDU_SUBSTITUTIONS_SCENARIOS } from "@/components/gedu/mock-substitutions-fixtures";
 import {
+  ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS,
+  GEDU_TEAM_PROFILE_EDITOR_SCENARIOS,
+} from "@/components/team/mock-team-fixtures";
+import {
   MUNICIPALITY_INVOICING_NOW,
   MUNICIPALITY_INVOICING_SCENARIOS,
   MUNICIPALITY_INVOICING_WORKING_MONTH,
@@ -216,6 +220,13 @@ describe("registry scenarios match their fixtures", () => {
   it("gedu substitutions", () => {
     expect(slugsFor("gedu-substitutions")).toEqual([
       ...GEDU_SUBSTITUTIONS_SCENARIOS,
+    ]);
+  });
+
+  it("profile editor, both roles", () => {
+    expect(slugsFor("gedu-profile-editor")).toEqual([...GEDU_TEAM_PROFILE_EDITOR_SCENARIOS]);
+    expect(slugsFor("admin-profile-editor")).toEqual([
+      ...ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS,
     ]);
   });
 
