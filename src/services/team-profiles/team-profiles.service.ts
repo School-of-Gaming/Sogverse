@@ -103,8 +103,10 @@ export class TeamProfilesService {
    * "show": the caller's own, or any admin's or Gedu's for an admin. The
    * checkbox is a readiness mark, not consent, so whoever may edit the profile
    * sets it. The database refuses it on while the profile is incomplete
-   * (`isTeamProfileIncompleteError`). An admin's save leaves a Gedu's
-   * approval alone.
+   * (`isTeamProfileIncompleteError`). A save that leaves a Gedu's profile
+   * not ready also hides it, whoever saves, so ticking ready again waits for
+   * an admin to make it public; a save that keeps it ready leaves it as it
+   * was.
    *
    * A new crop is stored first and named by the save; a refused save removes
    * it again. A landed save — one that clears the photo included — then
@@ -135,9 +137,9 @@ export class TeamProfilesService {
   }
 
   /**
-   * An admin approves a Gedu's profile, or takes the approval back. Approving
-   * needs the profile marked ready, and the database refuses one that is not
-   * (`isTeamProfileNotReadyError`); taking it back is open at any time. The
+   * An admin makes a Gedu's profile public, or hides it. Making public needs
+   * the profile marked ready, and the database refuses one that is not
+   * (`isTeamProfileNotReadyError`); hiding is open whenever it is public. The
    * checkbox is untouched.
    */
   async setGeduTeamProfileApproval(

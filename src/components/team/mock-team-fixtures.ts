@@ -138,8 +138,7 @@ export const TEAM_PROFILE_FIXTURES = {
  * One scenario per state a Gedu is told their profile is in, and no more.
  * Private-and-incomplete stands for private in general — a complete private
  * profile is the same render with the switch enabled, which filling in the
- * form reaches locally, and a private one an admin has already approved reads
- * no differently.
+ * form reaches locally.
  */
 export const GEDU_TEAM_PROFILE_EDITOR_SCENARIOS = [
   "private",

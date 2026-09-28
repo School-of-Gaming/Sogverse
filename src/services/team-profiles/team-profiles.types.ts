@@ -124,7 +124,7 @@ export function pickFromId(id: number | null): PickId | null {
  * path, which a save hands back.
  *
  * A person who has never saved reads as an empty profile with the checkbox off
- * and, for a Gedu, not approved.
+ * and, for a Gedu, not public.
  *
  * The checkbox is a readiness mark, not consent: the person or any admin may
  * save it, while the profile is complete.
@@ -138,9 +138,9 @@ export type TeamProfileRecord =
       /** The saved checkbox: the profile is marked ready to be public. */
       ready: boolean;
       /**
-       * An admin's yes or no, independent of the checkbox and surviving it
-       * being turned off and on. While it is yes, saved edits go live with no
-       * second look.
+       * An admin has made the profile public. Only ever true while `ready`:
+       * unticking ready hides the profile, and ticking it again waits for an
+       * admin. While it is true, saved edits go live with no second look.
        */
       approved: boolean;
     }
@@ -148,14 +148,16 @@ export type TeamProfileRecord =
       role: "admin";
       profile: AdminTeamProfile;
       photoPath: string | null;
-      /** The saved checkbox: the whole decision, with no approval. */
+      /** The saved checkbox: the whole decision, with no admin step. */
       shown: boolean;
     };
 
 /** Whether a saved profile is on the public page. */
 export function isTeamProfilePublic(record: TeamProfileRecord): boolean {
   if (record.role === "admin") return record.shown;
-  return record.ready && record.approved;
+  // A Gedu's is public once an admin has made it so, which the database
+  // allows only while it is marked ready.
+  return record.approved;
 }
 
 /**
@@ -204,10 +206,10 @@ export const TEAM_PROFILE_INCOMPLETE_SQLSTATE = "P0026";
 export const TEAM_PROFILE_PHOTO_GONE_SQLSTATE = "P0027";
 
 /**
- * The SQLSTATE `set_team_profile_approval` raises when an admin approves a
- * profile that is not marked ready. The admin page keeps Approve disabled
- * until it is, so this reaches a page whose read is older than someone
- * unticking ready.
+ * The SQLSTATE `set_team_profile_approval` raises when an admin makes public
+ * a profile that is not marked ready. The admin page keeps Make public
+ * disabled until it is, so this reaches a page whose read is older than
+ * someone unticking ready.
  */
 export const TEAM_PROFILE_NOT_READY_SQLSTATE = "P0028";
 
@@ -230,7 +232,7 @@ export function isTeamProfilePhotoGoneError(error: unknown): boolean {
   return hasCode(error, TEAM_PROFILE_PHOTO_GONE_SQLSTATE);
 }
 
-/** Whether a refused approval was for a profile not marked ready. */
+/** Whether a refused make-public was for a profile not marked ready. */
 export function isTeamProfileNotReadyError(error: unknown): boolean {
   return hasCode(error, TEAM_PROFILE_NOT_READY_SQLSTATE);
 }

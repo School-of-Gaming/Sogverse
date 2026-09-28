@@ -4952,9 +4952,9 @@
         "privateTitle": "Privé",
         "privateBody": "Votre profil n’est pas sur le site. Quand il vous convient, cochez « Mon profil est prêt à être public » ci-dessous et enregistrez.",
         "waitingTitle": "Prêt, en attente d’un administrateur",
-        "waitingBody": "Un administrateur va examiner votre profil avant qu’il soit public. Vous pouvez continuer à le modifier en attendant.",
+        "waitingBody": "Un administrateur rendra votre profil public après l’avoir examiné. Vous pouvez continuer à le modifier en attendant.",
         "liveTitle": "Public",
-        "liveBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement. Pour le retirer, décochez « Mon profil est prêt à être public » et enregistrez.",
+        "liveBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement. Pour le masquer, décochez « Mon profil est prêt à être public » et enregistrez ; une fois la case recochée, un administrateur le rendra de nouveau public.",
         "shownTitle": "Public",
         "shownBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement.",
         "hiddenTitle": "Privé",
@@ -4967,7 +4967,7 @@
       "switch": {
         "heading": "Profil public",
         "readyLabel": "Mon profil est prêt à être public",
-        "readyHint": "En cochant cette case et en enregistrant, vous marquez votre profil comme prêt à paraître sur le site de School of Gaming. Un administrateur l’examine avant sa première mise en ligne. Décochez-la et enregistrez à tout moment, et il est retiré aussitôt.",
+        "readyHint": "En cochant cette case et en enregistrant, vous marquez votre profil comme prêt à paraître sur le site de School of Gaming, et un administrateur le rend public après l’avoir examiné. Décochez-la et enregistrez à tout moment pour le masquer aussitôt ; une fois la case recochée, un administrateur le rendra de nouveau public.",
         "showLabel": "Afficher mon profil publiquement",
         "showHint": "En cochant cette case et en enregistrant, votre profil apparaît immédiatement sur le site public de School of Gaming. Décochez-la et enregistrez à tout moment, et il est retiré.",
         "complete": "Votre profil contient tout ce qu’il faut pour être public.",
@@ -5049,8 +5049,8 @@
       "status": {
         "privateTitle": "Pas encore marqué comme prêt",
         "privateBody": "Le profil de {name} n’est pas sur le site. Une fois complet, {name} ou n’importe quel administrateur peut le marquer comme prêt à être public.",
-        "waitingTitle": "Prêt, en attente d’approbation",
-        "waitingBody": "Le profil de {name} est marqué comme prêt à être public. Il apparaîtra sur le site de School of Gaming dès qu’un administrateur l’aura approuvé.",
+        "waitingTitle": "Prêt, en attente d’être rendu public",
+        "waitingBody": "Le profil de {name} est marqué comme prêt à être public. Il apparaîtra sur le site de School of Gaming dès qu’un administrateur l’aura rendu public.",
         "liveTitle": "Public",
         "liveBody": "Tout le monde peut voir le profil de {name} sur le site de School of Gaming. Les modifications enregistrées sont en ligne immédiatement.",
         "shownTitle": "Public",
@@ -5062,7 +5062,7 @@
         "back": "Retour à {name}",
         "pageTitle": "Profil de {name}",
         "readyLabel": "Le profil est prêt à être public",
-        "readyHint": "En cochant cette case et en enregistrant, vous marquez le profil de {name} comme prêt à paraître sur le site de School of Gaming. Il est mis en ligne dès qu’un administrateur l’approuve, ou immédiatement s’il est déjà approuvé. Décochez-la et enregistrez à tout moment, et il est retiré aussitôt.",
+        "readyHint": "En cochant cette case et en enregistrant, vous marquez le profil de {name} comme prêt à paraître sur le site de School of Gaming ; il est mis en ligne dès qu’un administrateur le rend public. Décochez-la et enregistrez à tout moment pour le masquer aussitôt ; il reste masqué jusqu’à ce qu’il soit de nouveau marqué comme prêt et rendu public.",
         "showLabel": "Afficher le profil publiquement",
         "showHint": "En cochant cette case et en enregistrant, le profil de {name} apparaît immédiatement sur le site public de School of Gaming. Décochez-la et enregistrez à tout moment, et il est retiré.",
         "complete": "Le profil contient tout ce qu’il faut pour être public.",
@@ -5081,14 +5081,14 @@
         "writtenIn": "Rédigé en {languages}",
         "nothingWritten": "Rien de rédigé pour l’instant",
         "edit": "Modifier le profil",
-        "approve": "Approuver",
-        "approveNeedsReady": "Marquez le profil comme prêt dans « Modifier le profil » pour pouvoir l’approuver.",
-        "approveNotReady": "Le profil de {name} n’est plus marqué comme prêt, il n’a donc pas été approuvé.",
-        "takeOff": "Retirer",
-        "approvalError": "Impossible de mettre à jour l’approbation du profil. Veuillez réessayer.",
-        "takeOffConfirm": {
-          "title": "Retirer le profil de {name} du site ?",
-          "body": "Retirer l’approbation le tient à l’écart du site de School of Gaming jusqu’à ce qu’un administrateur l’approuve à nouveau, qu’il soit marqué comme prêt ou non."
+        "makePublic": "Rendre public",
+        "makePublicNeedsReady": "Marquez le profil comme prêt dans « Modifier le profil » pour pouvoir le rendre public.",
+        "makePublicNotReady": "Le profil de {name} n’est plus marqué comme prêt, il n’a donc pas été rendu public.",
+        "hide": "Masquer",
+        "visibilityError": "Impossible de modifier la visibilité du profil. Veuillez réessayer.",
+        "hideConfirm": {
+          "title": "Masquer le profil de {name} ?",
+          "body": "Il disparaît du site de School of Gaming jusqu’à ce qu’un administrateur le rende de nouveau public."
         }
       }
     }

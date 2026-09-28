@@ -81,7 +81,7 @@ export type TeamProfileEditorProps = TeamProfileSaveState & {
         profile: GeduTeamProfile;
         /** The saved checkbox: the profile is marked ready to be public. */
         ready: boolean;
-        /** An admin's yes or no, decided on the user page and only read here. */
+        /** An admin has made it public, decided on the user page and only read here. */
         approved: boolean;
       }
     | {
@@ -98,7 +98,7 @@ export type TeamProfileEditorProps = TeamProfileSaveState & {
  * its props.
  *
  * **A profile is public only while two things are true**: its checkbox is
- * saved on, and — for a Gedu — an admin has approved it, which is decided
+ * saved on, and — for a Gedu — an admin has made it public, which is decided
  * elsewhere and only read here. The checkbox is an ordinary field that Save
  * commits with everything else: ticking or unticking it dirties the form, and
  * nothing takes effect until Save. It can only be ticked once the profile is

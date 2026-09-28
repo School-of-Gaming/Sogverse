@@ -4952,9 +4952,9 @@
         "privateTitle": "Private",
         "privateBody": "Your profile isn’t on the website. When you are happy with it, tick “My profile is ready to be public” below and save.",
         "waitingTitle": "Ready, waiting for an admin",
-        "waitingBody": "An admin will look at your profile before it goes public. You can keep editing in the meantime.",
+        "waitingBody": "An admin makes your profile public once they have looked at it. You can keep editing in the meantime.",
         "liveTitle": "Public",
-        "liveBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away. To take it down, untick “My profile is ready to be public” and save.",
+        "liveBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away. To hide it, untick “My profile is ready to be public” and save; once you tick it again, an admin makes it public again.",
         "shownTitle": "Public",
         "shownBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away.",
         "hiddenTitle": "Private",
@@ -4967,7 +4967,7 @@
       "switch": {
         "heading": "Public profile",
         "readyLabel": "My profile is ready to be public",
-        "readyHint": "Ticking this and saving marks your profile ready to go on School of Gaming’s website. An admin looks at it before it first goes up. Untick it and save at any time, and it comes down straight away.",
+        "readyHint": "Ticking this and saving marks your profile ready for School of Gaming’s website, and an admin makes it public once they have looked at it. Untick it and save at any time, and it is hidden straight away; once you tick it again, an admin makes it public again.",
         "showLabel": "Show my profile publicly",
         "showHint": "Ticking this and saving puts your profile on School of Gaming’s public website straight away. Untick it and save at any time, and it comes down.",
         "complete": "Your profile has everything it needs to go public.",
@@ -5049,8 +5049,8 @@
       "status": {
         "privateTitle": "Not marked ready yet",
         "privateBody": "{name}’s profile isn’t on the website. Once it is complete, {name} or any admin can mark it ready to be public.",
-        "waitingTitle": "Ready, waiting for approval",
-        "waitingBody": "{name}’s profile is marked ready to be public. It goes on School of Gaming’s website as soon as an admin approves it.",
+        "waitingTitle": "Ready, waiting to be made public",
+        "waitingBody": "{name}’s profile is marked ready to be public. It goes on School of Gaming’s website as soon as an admin makes it public.",
         "liveTitle": "Public",
         "liveBody": "Anyone can see {name}’s profile on School of Gaming’s website. Changes saved to it go live straight away.",
         "shownTitle": "Public",
@@ -5062,7 +5062,7 @@
         "back": "Back to {name}",
         "pageTitle": "{name}’s profile",
         "readyLabel": "The profile is ready to be public",
-        "readyHint": "Ticking this and saving marks {name}’s profile ready to go on School of Gaming’s website. It goes up once an admin approves it, or straight away if it is already approved. Untick it and save at any time, and it comes down straight away.",
+        "readyHint": "Ticking this and saving marks {name}’s profile ready for School of Gaming’s website; it goes up once an admin makes it public. Untick it and save at any time, and it is hidden straight away until it is marked ready and made public again.",
         "showLabel": "Show the profile publicly",
         "showHint": "Ticking this and saving puts {name}’s profile on School of Gaming’s public website straight away. Untick it and save at any time, and it comes down.",
         "complete": "The profile has everything it needs to go public.",
@@ -5081,14 +5081,14 @@
         "writtenIn": "Written in {languages}",
         "nothingWritten": "Nothing written yet",
         "edit": "Edit profile",
-        "approve": "Approve",
-        "approveNeedsReady": "Mark the profile ready under Edit profile to be able to approve it.",
-        "approveNotReady": "{name}’s profile is no longer marked ready, so it wasn’t approved.",
-        "takeOff": "Take off",
-        "approvalError": "Couldn’t update the profile’s approval. Please try again.",
-        "takeOffConfirm": {
-          "title": "Take {name}’s profile off the website?",
-          "body": "Taking the approval back keeps it off School of Gaming’s website until an admin approves it again, whether or not it is marked ready."
+        "makePublic": "Make public",
+        "makePublicNeedsReady": "Mark the profile ready under Edit profile to be able to make it public.",
+        "makePublicNotReady": "{name}’s profile is no longer marked ready, so it wasn’t made public.",
+        "hide": "Hide",
+        "visibilityError": "Couldn’t change whether the profile is public. Please try again.",
+        "hideConfirm": {
+          "title": "Hide {name}’s profile?",
+          "body": "It comes off School of Gaming’s website until an admin makes it public again."
         }
       }
     }

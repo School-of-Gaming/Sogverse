@@ -29,20 +29,18 @@ BEGIN
   END IF;
 
   IF v_role IS DISTINCT FROM 'gedu' THEN
-    RAISE EXCEPTION 'Only a Gedu''s profile is approved' USING ERRCODE = '22023';
+    RAISE EXCEPTION 'Only a Gedu''s profile is made public by an admin' USING ERRCODE = '22023';
   END IF;
 
-  -- Saying it again changes nothing, and keeps who last changed it — an
-  -- approval standing on a profile whose ready has since been unticked
-  -- included: repeating it is not a new approval.
+  -- Saying it again changes nothing, and keeps who last changed it.
   IF v_current = p_approved THEN
     RETURN;
   END IF;
 
-  -- An admin approves what the profile's editor has marked ready, never ahead
-  -- of it. Taking an approval back is open at any time.
+  -- An admin makes public what has been marked ready, never ahead of it.
+  -- Hiding is open whenever the profile is public.
   IF p_approved AND NOT v_ready THEN
-    RAISE EXCEPTION 'A profile is approved only once it is marked ready'
+    RAISE EXCEPTION 'A profile is made public only once it is marked ready'
       USING ERRCODE = 'P0028';
   END IF;
 
@@ -59,7 +57,7 @@ $$;
 -- Name: FUNCTION set_team_profile_approval(p_user_id uuid, p_approved boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_team_profile_approval(p_user_id uuid, p_approved boolean) IS 'An admin approves a Gedu''s team profile (true) or takes the approval back (false), stamping who changed it and when. Admin-only, guard-first. Approving needs the profile marked ready (opted_in) and refuses one that is not with P0028; taking the approval back is open at any time. Repeating the current value is a no-op that keeps the stamp, even for an approval whose profile has since been unmarked. Refuses a NULL decision (22004), an admin''s profile (22023) and a person with no profile row (P0002). Never touches the checkbox, and unticking it leaves the approval standing, so ticking it again makes the profile public with no second approval.';
+COMMENT ON FUNCTION public.set_team_profile_approval(p_user_id uuid, p_approved boolean) IS 'An admin''s two actions on a Gedu''s team profile: make it public (true) or hide it (false), stamping who did it and when. Admin-only, guard-first. Making public needs the profile marked ready (opted_in) and refuses one that is not with P0028; hiding is open whenever it is public. Repeating the current value is a no-op that keeps the stamp. Refuses a NULL decision (22004), an admin''s profile (22023) and a person with no profile row (P0002). Never touches the checkbox; unticking it (save_team_profile) hides the profile itself, so ticking it again waits for an admin to make it public.';
 
 
 --

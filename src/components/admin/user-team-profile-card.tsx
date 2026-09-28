@@ -28,10 +28,10 @@ import {
 /**
  * The team profile on an admin's or a Gedu's `/admin/users/[id]` page: where
  * it stands publicly, a compact read of what it says, an edit of the whole
- * profile (checkbox included) and — for a Gedu — the approval.
+ * profile (checkbox included) and — for a Gedu — whether it is public.
  *
- * Seeded with the page's server read, so it paints complete; the approval
- * write re-reads the record, so the status and the buttons follow it.
+ * Seeded with the page's server read, so it paints complete; making public or
+ * hiding re-reads the record, so the status and the button follow it.
  *
  * **A compact summary rather than the public page.** The editor frames the
  * whole public body beside its form because that is where it is being
@@ -39,15 +39,16 @@ import {
  * full page is one click away on the edit route. The photo is framed content,
  * so its edge is not a card inside this card.
  *
- * **The approval is one yes or no, so it is one button**: Approve while it is
- * no, Take off while it is yes. Taking off is the one that asks first: it can
- * remove something from the public website. Approving does not: it is undone
- * with the other button.
+ * **Admins decide visibility, the Gedu readiness, so an admin has exactly two
+ * actions, one button**: Make public while the profile is not public, Hide
+ * while it is. Hide is the one that asks first: it removes something from the
+ * public website. Make public does not: it is undone with the other button.
  *
- * **Approve waits for ready.** An admin approves what has been marked ready
- * and never ahead of it, which the database enforces; until then Approve is
- * there but disabled, with the way to ready written under it. Take off stays
- * open whenever the profile is approved, ready or not.
+ * **Make public waits for ready.** An admin makes public what has been marked
+ * ready and never ahead of it, which the database enforces; until then the
+ * button is there but disabled, with the way to ready written under it. A
+ * public profile is always ready — unticking ready hides it — so Hide never
+ * needs that caveat.
  */
 export function UserTeamProfileCard({
   userId,
@@ -96,9 +97,9 @@ export function UserTeamProfileCard({
           userId={userId}
           name={name}
           isViewer={isViewer}
-          approval={
+          visibility={
             record.role === "gedu"
-              ? { approved: record.approved, ready: record.ready }
+              ? { isPublic: record.approved, ready: record.ready }
               : null
           }
         />
@@ -169,53 +170,54 @@ function ProfileSummary({ record }: { record: TeamProfileRecord }) {
 }
 
 /**
- * Edit, and for a Gedu the approval's one button. The approval is last, on
- * the right, as the row's primary action.
+ * Edit, and for a Gedu the one visibility button. It is last, on the right, as
+ * the row's primary action.
  */
 function ProfileActions({
   userId,
   name,
   isViewer,
-  approval,
+  visibility,
 }: {
   userId: string;
   name: string;
   isViewer: boolean;
   /**
-   * A Gedu's approval and whether the profile is marked ready, or `null` for
-   * an admin's profile, which has no approval. A profile with nothing written
-   * is never ready, so there is nothing to approve yet.
+   * Whether a Gedu's profile is public and whether it is marked ready, or
+   * `null` for an admin's profile, whose own checkbox decides. A profile with
+   * nothing written is never ready, so there is nothing to make public yet.
    */
-  approval: { approved: boolean; ready: boolean } | null;
+  visibility: { isPublic: boolean; ready: boolean } | null;
 }) {
   const t = useTranslations("team.admin.userPage");
   const hintId = useId();
-  const setApproval = useSetGeduTeamProfileApproval();
+  const setVisibility = useSetGeduTeamProfileApproval();
   // Set before the write and cleared once it settles: the card stays, and the
   // re-read that the write waits for is what swaps the button.
-  const [approving, setApproving] = useState(false);
-  const [approveError, setApproveError] = useState<
+  const [makingPublic, setMakingPublic] = useState(false);
+  const [makePublicError, setMakePublicError] = useState<
     "notReady" | "failed" | null
   >(null);
-  const [confirmingTakeOff, setConfirmingTakeOff] = useState(false);
-  const awaitingReady = approval !== null && !approval.approved && !approval.ready;
+  const [confirmingHide, setConfirmingHide] = useState(false);
+  const awaitingReady =
+    visibility !== null && !visibility.isPublic && !visibility.ready;
 
-  function approve() {
-    setApproving(true);
-    setApproveError(null);
-    void setApproval
+  function makePublic() {
+    setMakingPublic(true);
+    setMakePublicError(null);
+    void setVisibility
       .mutateAsync({ geduId: userId, approved: true })
       .catch((error: unknown) => {
         // Someone unticked ready after this page was read; the hook has
         // re-read the profile, so the button is already disabled with its hint.
         if (isTeamProfileNotReadyError(error)) {
-          setApproveError("notReady");
+          setMakePublicError("notReady");
           return;
         }
-        console.error("[team-profile] approval failed:", error);
-        setApproveError("failed");
+        console.error("[team-profile] make public failed:", error);
+        setMakePublicError("failed");
       })
-      .finally(() => setApproving(false));
+      .finally(() => setMakingPublic(false));
   }
 
   return (
@@ -234,50 +236,50 @@ function ProfileActions({
           <Pencil aria-hidden />
           {t("edit")}
         </Link>
-        {approval &&
-          (approval.approved ? (
-            <Button variant="outline" onClick={() => setConfirmingTakeOff(true)}>
-              {t("takeOff")}
+        {visibility &&
+          (visibility.isPublic ? (
+            <Button variant="outline" onClick={() => setConfirmingHide(true)}>
+              {t("hide")}
             </Button>
           ) : (
             <Button
-              onClick={approve}
-              disabled={approving || awaitingReady}
+              onClick={makePublic}
+              disabled={makingPublic || awaitingReady}
               aria-describedby={awaitingReady ? hintId : undefined}
             >
-              {approving && <Loader2 className="animate-spin" aria-hidden />}
-              {t("approve")}
+              {makingPublic && <Loader2 className="animate-spin" aria-hidden />}
+              {t("makePublic")}
             </Button>
           ))}
       </div>
-      {/* Why Approve is disabled, for as long as it is: a greyed button with
-          no reason beside it reads as broken. Not an alert — it describes the
-          profile as it stands, not an answer to a click. */}
+      {/* Why Make public is disabled, for as long as it is: a greyed button
+          with no reason beside it reads as broken. Not an alert — it describes
+          the profile as it stands, not an answer to a click. */}
       {awaitingReady && (
         <p id={hintId} className="text-right text-xs text-muted-foreground">
-          {t("approveNeedsReady")}
+          {t("makePublicNeedsReady")}
         </p>
       )}
-      {approveError !== null && (
+      {makePublicError !== null && (
         <StatusLine status="destructive" role="alert">
-          {approveError === "notReady"
-            ? t("approveNotReady", { name })
-            : t("approvalError")}
+          {makePublicError === "notReady"
+            ? t("makePublicNotReady", { name })
+            : t("visibilityError")}
         </StatusLine>
       )}
-      {approval && (
+      {visibility && (
         <ConfirmDialog
-          open={confirmingTakeOff}
-          onOpenChange={setConfirmingTakeOff}
-          title={t("takeOffConfirm.title", { name })}
-          description={t("takeOffConfirm.body", { name })}
-          confirmLabel={t("takeOff")}
+          open={confirmingHide}
+          onOpenChange={setConfirmingHide}
+          title={t("hideConfirm.title", { name })}
+          description={t("hideConfirm.body")}
+          confirmLabel={t("hide")}
           confirmVariant="destructive"
           holdWhileCommitting
           onConfirm={() =>
-            setApproval.mutateAsync({ geduId: userId, approved: false })
+            setVisibility.mutateAsync({ geduId: userId, approved: false })
           }
-          describeError={() => t("approvalError")}
+          describeError={() => t("visibilityError")}
         />
       )}
     </div>

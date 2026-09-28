@@ -27,8 +27,9 @@ import type {
  * The scene stands in for the route's data shell: saving updates the profile
  * and the checkbox it hands the body, as a refetch would, so save, discard and
  * the status all behave. The crop runs for real and the form shows the
- * result, but a save sends its bytes nowhere. An admin's approval is the
- * fixture's and does not move here. The admin page also carries the one it
+ * result, but a save sends its bytes nowhere. Whether an admin has made a
+ * Gedu's profile public is the fixture's, and moves here only as the database
+ * moves it: saving not ready hides it. The admin page also carries the one it
  * edits a Gedu's profile on, checkbox included.
  */
 export function GeduTeamProfileEditorScene({
@@ -81,14 +82,19 @@ function GeduEditor({
 }) {
   const [profile, setProfile] = useState(fixture.profile);
   const [ready, setReady] = useState(fixture.ready);
+  const [approved, setApproved] = useState(fixture.approved);
   return (
     <TeamProfileEditorBody
       role="gedu"
       editedByAdmin={editedByAdmin}
       profile={profile}
       ready={ready}
-      approved={fixture.approved}
-      actions={localActions(profile, setProfile, setReady)}
+      approved={approved}
+      actions={localActions(profile, setProfile, (on) => {
+        setReady(on);
+        // As the database does: saving not ready hides the profile.
+        if (!on) setApproved(false);
+      })}
     />
   );
 }

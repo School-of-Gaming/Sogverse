@@ -4952,9 +4952,9 @@
         "privateTitle": "Privat",
         "privateBody": "Din profil finns inte på webbplatsen. När du är nöjd kryssar du i ”Min profil är redo att bli offentlig” nedan och sparar.",
         "waitingTitle": "Klar, väntar på en administratör",
-        "waitingBody": "En administratör tittar på din profil innan den blir offentlig. Du kan fortsätta redigera under tiden.",
+        "waitingBody": "En administratör gör din profil offentlig när den har tittat på den. Du kan fortsätta redigera under tiden.",
         "liveTitle": "Offentlig",
-        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du ta ner den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar.",
+        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du dölja den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar. När du kryssar i den igen gör en administratör den offentlig på nytt.",
         "shownTitle": "Offentlig",
         "shownBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt.",
         "hiddenTitle": "Privat",
@@ -4967,7 +4967,7 @@
       "switch": {
         "heading": "Offentlig profil",
         "readyLabel": "Min profil är redo att bli offentlig",
-        "readyHint": "Genom att kryssa i detta och spara markerar du din profil som klar att visas på School of Gamings webbplats. En administratör tittar på den innan den publiceras första gången. Ta bort krysset och spara när som helst så försvinner den direkt.",
+        "readyHint": "Genom att kryssa i detta och spara markerar du din profil som klar att visas på School of Gamings webbplats, och en administratör gör den offentlig när den har tittat på den. Ta bort krysset och spara när som helst så döljs den direkt. När du kryssar i den igen gör en administratör den offentlig på nytt.",
         "showLabel": "Visa min profil offentligt",
         "showHint": "Genom att kryssa i detta och spara hamnar din profil direkt på School of Gamings offentliga webbplats. Ta bort krysset och spara när som helst så försvinner den.",
         "complete": "Din profil har allt som behövs för att bli offentlig.",
@@ -5049,8 +5049,8 @@
       "status": {
         "privateTitle": "Inte markerad som klar än",
         "privateBody": "Profilen för {name} finns inte på webbplatsen. När den är komplett kan {name} eller vilken administratör som helst markera den som klar att visas offentligt.",
-        "waitingTitle": "Klar, väntar på godkännande",
-        "waitingBody": "Profilen för {name} är markerad som klar att visas offentligt. Den kommer upp på School of Gamings webbplats så snart en administratör godkänner den.",
+        "waitingTitle": "Klar, väntar på att göras offentlig",
+        "waitingBody": "Profilen för {name} är markerad som klar att visas offentligt. Den kommer upp på School of Gamings webbplats så snart en administratör gör den offentlig.",
         "liveTitle": "Offentlig",
         "liveBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt.",
         "shownTitle": "Offentlig",
@@ -5062,7 +5062,7 @@
         "back": "Tillbaka till {name}",
         "pageTitle": "Profil för {name}",
         "readyLabel": "Profilen är redo att bli offentlig",
-        "readyHint": "Genom att kryssa i detta och spara markeras profilen för {name} som klar att visas på School of Gamings webbplats. Den publiceras när en administratör godkänner den, eller direkt om den redan är godkänd. Ta bort krysset och spara när som helst så försvinner den direkt.",
+        "readyHint": "Genom att kryssa i detta och spara markeras profilen för {name} som klar att visas på School of Gamings webbplats. Den kommer upp när en administratör gör den offentlig. Ta bort krysset och spara när som helst så döljs den direkt, och den förblir dold tills den markeras som klar och görs offentlig igen.",
         "showLabel": "Visa profilen offentligt",
         "showHint": "Genom att kryssa i detta och spara hamnar profilen för {name} direkt på School of Gamings offentliga webbplats. Ta bort krysset och spara när som helst så försvinner den.",
         "complete": "Profilen har allt den behöver för att visas offentligt.",
@@ -5081,14 +5081,14 @@
         "writtenIn": "Skriven på {languages}",
         "nothingWritten": "Inget skrivet än",
         "edit": "Redigera profil",
-        "approve": "Godkänn",
-        "approveNeedsReady": "Markera profilen som klar under Redigera profil för att kunna godkänna den.",
-        "approveNotReady": "Profilen för {name} är inte längre markerad som klar, så den godkändes inte.",
-        "takeOff": "Ta ner",
-        "approvalError": "Det gick inte att uppdatera profilens godkännande. Försök igen.",
-        "takeOffConfirm": {
-          "title": "Ta ner profilen för {name} från webbplatsen?",
-          "body": "När godkännandet tas tillbaka hålls profilen borta från School of Gamings webbplats tills en administratör godkänner den igen, oavsett om den är markerad som klar."
+        "makePublic": "Gör offentlig",
+        "makePublicNeedsReady": "Markera profilen som klar under Redigera profil för att kunna göra den offentlig.",
+        "makePublicNotReady": "Profilen för {name} är inte längre markerad som klar, så den gjordes inte offentlig.",
+        "hide": "Dölj",
+        "visibilityError": "Det gick inte att ändra om profilen är offentlig. Försök igen.",
+        "hideConfirm": {
+          "title": "Dölja profilen för {name}?",
+          "body": "Den försvinner från School of Gamings webbplats tills en administratör gör den offentlig igen."
         }
       }
     }

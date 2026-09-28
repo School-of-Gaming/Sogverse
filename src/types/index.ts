@@ -289,7 +289,8 @@ export type InvoiceCustomer =
 // team_profiles / team_profile_translations — an admin's or a Gedu's team
 // profile, one row per person and one per (person, site locale). Row aliases
 // only: neither table carries a write grant for any Data API role, and the only
-// writers are `save_team_profile` and `set_team_profile_approval`.
+// writers are `save_team_profile` and `set_team_profile_approval` (an admin
+// making a Gedu's profile public or hiding it).
 export type TeamProfileRow = Database["public"]["Tables"]["team_profiles"]["Row"];
 export type TeamProfileTranslationRow =
   Database["public"]["Tables"]["team_profile_translations"]["Row"];

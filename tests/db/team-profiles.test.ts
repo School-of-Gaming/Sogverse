@@ -18,8 +18,8 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
- * Team profiles: the two writers (`save_team_profile`,
- * `set_team_profile_approval`), the edit predicate the storage policies and
+ * Team profiles: the two writers (`save_team_profile`, and
+ * `set_team_profile_approval` — an admin's make public and hide), the edit predicate the storage policies and
  * the save share (`can_edit_team_profile` — this file is its scope test), the
  * read policies, and the `team-photos` bucket's policies.
  *
@@ -609,7 +609,7 @@ describe("team profiles", () => {
       expect(own.error).toBeNull();
     });
 
-    it("cannot set an approval, their own included", async () => {
+    it("cannot make a profile public, their own included", async () => {
       await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
         content(),
@@ -665,7 +665,7 @@ describe("team profiles", () => {
   });
 
   describe("an admin", () => {
-    it("edits a Gedu's profile and leaves the approval alone", async () => {
+    it("edits a public Gedu profile and leaves it public", async () => {
       const photo = await seedPhoto(TEST_IDS.GEDU);
       await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
@@ -806,7 +806,7 @@ describe("team profiles", () => {
   });
 
   describe("a parent and a gamer", () => {
-    it("can neither write, approve, read, nor upload", async () => {
+    it("can neither write, make public, read, nor upload", async () => {
       const photo = await seedPhoto(TEST_IDS.GEDU);
       await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
@@ -825,11 +825,11 @@ describe("team profiles", () => {
         });
         expect(own.error?.code).toBe(FORBIDDEN);
 
-        const approve = await client.rpc("set_team_profile_approval", {
+        const makePublic = await client.rpc("set_team_profile_approval", {
           p_user_id: TEST_IDS.GEDU,
           p_approved: true,
         });
-        expect(approve.error?.code).toBe(FORBIDDEN);
+        expect(makePublic.error?.code).toBe(FORBIDDEN);
 
         const rows = await client.from("team_profiles").select("user_id");
         expect(rows.data).toEqual([]);
@@ -913,10 +913,10 @@ describe("team profiles", () => {
   });
 
   // -------------------------------------------------------------------------
-  // The approval
+  // Make public and hide
   // -------------------------------------------------------------------------
 
-  describe("the approval", () => {
+  describe("making a Gedu's profile public", () => {
     async function stamp() {
       const { data, error } = await admin
         .from("team_profiles")
@@ -934,7 +934,7 @@ describe("team profiles", () => {
       });
     }
 
-    it("goes yes and no either way, stamping who last changed it", async () => {
+    it("makes public and hides either way, stamping who last did it", async () => {
       const photo = await seedPhoto(TEST_IDS.GEDU);
       await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
@@ -947,31 +947,31 @@ describe("team profiles", () => {
         approval_decided_at: null,
       });
 
-      // No to a profile no admin has decided about changes nothing.
+      // Hiding a profile that is not public changes nothing.
       expect((await set(false)).error).toBeNull();
       expect((await stamp())?.approval_decided_at).toBeNull();
 
       expect((await set(true)).error).toBeNull();
-      const approved = await stamp();
-      expect(approved?.approved).toBe(true);
-      expect(approved?.approval_decided_by).toBe(TEST_IDS.ADMIN);
-      expect(approved?.approval_decided_at).not.toBeNull();
+      const madePublic = await stamp();
+      expect(madePublic?.approved).toBe(true);
+      expect(madePublic?.approval_decided_by).toBe(TEST_IDS.ADMIN);
+      expect(madePublic?.approval_decided_at).not.toBeNull();
 
       // Saying it again is a no-op, not a refusal, and keeps the stamp.
       expect((await set(true)).error).toBeNull();
-      expect(await stamp()).toEqual(approved);
+      expect(await stamp()).toEqual(madePublic);
 
       expect((await set(false)).error).toBeNull();
-      const takenBack = await stamp();
-      expect(takenBack?.approved).toBe(false);
-      expect(takenBack?.approval_decided_by).toBe(TEST_IDS.ADMIN);
-      expect(takenBack?.approval_decided_at).not.toBeNull();
+      const hidden = await stamp();
+      expect(hidden?.approved).toBe(false);
+      expect(hidden?.approval_decided_by).toBe(TEST_IDS.ADMIN);
+      expect(hidden?.approval_decided_at).not.toBeNull();
 
       expect((await set(true)).error).toBeNull();
       expect((await stamp())?.approved).toBe(true);
     });
 
-    it("refuses to approve a profile not marked ready, until it is", async () => {
+    it("refuses to make public a profile not marked ready, until it is", async () => {
       const photo = await seedPhoto(TEST_IDS.GEDU);
       const service = new TeamProfilesService(geduAuth);
       await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), false);
@@ -990,20 +990,59 @@ describe("team profiles", () => {
       expect((await stamp())?.approved).toBe(true);
     });
 
-    it("takes an approval back, and repeats one, while the profile is not ready", async () => {
+    it("is hidden when the Gedu unticks ready, and waits for an admin once re-ticked", async () => {
       const photo = await seedPhoto(TEST_IDS.GEDU);
       const service = new TeamProfilesService(geduAuth);
       await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), true);
       expect((await set(true)).error).toBeNull();
-      const approved = await stamp();
+      const madePublic = await stamp();
+
       await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), false);
+      // Hidden, with the last admin decision's stamp left as it was: unticking
+      // is the Gedu's act, not an admin's.
+      expect(await stamp()).toEqual({ ...madePublic, approved: false });
 
-      // Approving again is a no-op, not a refusal: the approval already stands.
-      expect((await set(true)).error).toBeNull();
-      expect(await stamp()).toEqual(approved);
+      // Making it public again is refused until it is ready once more.
+      expect((await set(true)).error?.code).toBe(TEAM_PROFILE_NOT_READY_SQLSTATE);
 
-      expect((await set(false)).error).toBeNull();
+      await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), true);
       expect((await stamp())?.approved).toBe(false);
+      expect((await set(true)).error).toBeNull();
+      expect((await stamp())?.approved).toBe(true);
+    });
+
+    it("is hidden when an admin unticks ready for the Gedu", async () => {
+      const photo = await seedPhoto(TEST_IDS.GEDU);
+      await new TeamProfilesService(geduAuth).saveTeamProfile(
+        TEST_IDS.GEDU,
+        content({ photoPath: photo }),
+        true,
+      );
+      expect((await set(true)).error).toBeNull();
+
+      await new TeamProfilesService(adminAuth).saveTeamProfile(
+        TEST_IDS.GEDU,
+        content({ photoPath: photo }),
+        false,
+      );
+      expect((await stamp())?.approved).toBe(false);
+    });
+
+    it("stays public across a save that keeps the checkbox as stored", async () => {
+      const photo = await seedPhoto(TEST_IDS.GEDU);
+      const service = new TeamProfilesService(geduAuth);
+      await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), true);
+      expect((await set(true)).error).toBeNull();
+
+      const { error } = await geduAuth.rpc("save_team_profile", {
+        p_user_id: TEST_IDS.GEDU,
+        p_translations: [
+          { locale: "en", short_description: "Still here", long_description: "Still ready." },
+        ],
+        p_photo_path: photo,
+      });
+      expect(error).toBeNull();
+      expect((await stamp())?.approved).toBe(true);
     });
 
     it("refuses a decision that is neither yes nor no", async () => {
@@ -1021,27 +1060,53 @@ describe("team profiles", () => {
       expect((await stamp())?.approved).toBe(false);
     });
 
-    it("keeps an approval stamped, even for a direct write", async () => {
+    it("keeps a public profile stamped, even for a direct write", async () => {
       await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
         content(),
         false,
       );
-      const { error } = await admin
+      // Ready, so only the stamp is missing.
+      const unstamped = await admin
         .from("team_profiles")
-        .update({ approved: true })
+        .update({ approved: true, opted_in: true })
         .eq("user_id", TEST_IDS.GEDU);
-      expect(error?.code).toBe("23514");
+      expect(unstamped.error?.code).toBe("23514");
+      expect(unstamped.error?.message).toContain("team_profiles_approval_stamped");
+      expect((await stamp())?.approved).toBe(false);
     });
 
-    it("survives the Gedu turning their checkbox off and on", async () => {
-      const photo = await seedPhoto(TEST_IDS.GEDU);
-      const service = new TeamProfilesService(geduAuth);
-      await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), true);
-      expect((await set(true)).error).toBeNull();
-      await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), false);
-      await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), true);
-      expect((await stamp())?.approved).toBe(true);
+    it("never holds a profile public while it is not ready, even for a direct write", async () => {
+      await new TeamProfilesService(geduAuth).saveTeamProfile(
+        TEST_IDS.GEDU,
+        content(),
+        false,
+      );
+      // Stamped, so only readiness is missing.
+      const notReady = await admin
+        .from("team_profiles")
+        .update({
+          approved: true,
+          approval_decided_by: TEST_IDS.ADMIN,
+          approval_decided_at: new Date().toISOString(),
+        })
+        .eq("user_id", TEST_IDS.GEDU);
+      expect(notReady.error?.code).toBe("23514");
+      expect(notReady.error?.message).toContain("team_profiles_public_only_when_ready");
+      expect((await stamp())?.approved).toBe(false);
+
+      // The same write with ready ticked is allowed: the CHECK is the only
+      // thing refusing it above.
+      const ready = await admin
+        .from("team_profiles")
+        .update({
+          approved: true,
+          opted_in: true,
+          approval_decided_by: TEST_IDS.ADMIN,
+          approval_decided_at: new Date().toISOString(),
+        })
+        .eq("user_id", TEST_IDS.GEDU);
+      expect(ready.error).toBeNull();
     });
 
     it("refuses an admin's profile and a person with no profile", async () => {

@@ -58,9 +58,9 @@ export function useSaveTeamProfile() {
 }
 
 /**
- * An admin approves a Gedu's profile, or takes the approval back. A refusal
- * for a profile no longer marked ready re-reads it too: the page's read was
- * stale, and the re-read is what disables Approve.
+ * An admin makes a Gedu's profile public, or hides it. A refusal for a
+ * profile no longer marked ready re-reads it too: the page's read was stale,
+ * and the re-read is what disables Make public.
  */
 export function useSetGeduTeamProfileApproval() {
   const queryClient = useQueryClient();

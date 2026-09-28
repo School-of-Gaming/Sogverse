@@ -2,18 +2,18 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 /**
  * Where a saved profile stands, as one word — the combined state of the
- * checkbox as last saved and, for a Gedu, an admin's approval, so nobody has
- * to work out from two facts whether the public can see it.
+ * checkbox as last saved and, for a Gedu, whether an admin has made it
+ * public, so nobody has to work out from two facts whether the public can see
+ * it.
  *
- * A Gedu's profile is in one of three:
+ * A Gedu controls readiness and an admin visibility, and visibility is gated
+ * behind readiness, so a Gedu's profile is in one of three:
  *
- * - `private` — not marked ready. Whether an admin has already approved it
- *   changes nothing anyone sees, so it is not a state of its own: the
- *   approval only decides whether ticking ready later needs another look.
- * - `waiting` — marked ready, not approved.
- * - `live` — marked ready and approved: public.
+ * - `private` — not marked ready. Unticking ready also hides it.
+ * - `waiting` — marked ready, not yet made public by an admin.
+ * - `live` — made public by an admin, which it can be only while ready.
  *
- * An admin's has no approval, so it is `shown` or `hidden`.
+ * An admin's has no admin step, so it is `shown` or `hidden`.
  *
  * The editor tells the person themselves; the admin user page and an admin
  * editing someone else's profile tell an admin, in words addressed to them,
