@@ -161,8 +161,8 @@ export function FamilySessionFeed({
  * height.
  */
 function isQuiet(entry: FamilySessionEntry, showAttendance: boolean): boolean {
-  // A cancelled session is drawn as a line too, so its dot sits at a line's
-  // height.
+  // A cancelled session is a line when past and a panel when ahead; both open
+  // on one short row, so its dot sits at a line's height either way.
   if (entry.kind === "cancelled") return true;
   return (
     entry.kind === "past" &&

@@ -59,7 +59,10 @@ export function SessionCancelledLine({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             <AlertTitle>{b("cancelled")}</AlertTitle>
-            {trailing}
+            {/* The admin's `⋯` is a 44px target whose own negative margins were
+                sized for the quiet line's padding; this absorbs the rest, so the
+                row stays the title's height and the title level with the glyph. */}
+            {trailing === null ? null : <div className="-my-2.5">{trailing}</div>}
           </div>
           <p className="mt-1 flex items-center gap-2 text-xs tabular-nums">
             <span className="font-semibold">{labels.date}</span>

@@ -70,7 +70,11 @@ export function CancelledSessionItem({
               {entry.reason}
             </p>
           )}
-          {stamp !== null && <p>{stamp}</p>}
+          {stamp !== null && (
+            // Stated rather than inherited: the upcoming panel's body is
+            // full-size ink, and the stamp is a footnote to the reason in both.
+            <p className="text-xs text-muted-foreground">{stamp}</p>
+          )}
         </div>
       )}
     </SessionCancelledLine>
