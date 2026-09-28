@@ -228,6 +228,11 @@ for pair in "admin@example.com:session-badge.jpg" "gedu@example.com:session-towe
     echo "The rich seed saved no team profile photo for $email." >&2
     exit 1
   fi
+  # The seed put an empty object row at the path so save_team_profile would
+  # take it. An upload over a row the storage API did not make leaves an
+  # object that fails to download, so the API removes that row first.
+  curl -sS -o /dev/null -X DELETE "$api_url/storage/v1/object/$team_bucket/$path" \
+    -H "Authorization: Bearer $service_key"
   status=$(curl -sS -o "$work/upload.out" -w '%{http_code}'     -X POST "$api_url/storage/v1/object/$team_bucket/$path"     -H "Authorization: Bearer $service_key"     -H "Content-Type: image/jpeg"     -H "x-upsert: true"     --data-binary "@$art")
   case "$status" in
     200 | 201) ;;

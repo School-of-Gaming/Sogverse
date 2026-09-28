@@ -5,6 +5,8 @@ import { TeamProfilesService } from "@/services/team-profiles/team-profiles.serv
 import {
   TEAM_PHOTOS_BUCKET,
   TEAM_PROFILE_INCOMPLETE_SQLSTATE,
+  TEAM_PROFILE_PHOTO_GONE_SQLSTATE,
+  isTeamProfilePhotoGoneError,
   isTeamProfilePublic,
   type TeamProfileSaveInput,
 } from "@/services/team-profiles/team-profiles.types";
@@ -120,6 +122,16 @@ describe("team profiles", () => {
       .upload(path, photoBlob(), { contentType: "image/jpeg" });
     expect(error).toBeNull();
     return path;
+  }
+
+  /** Whether an object is still in the bucket, asked as the service role. */
+  async function stored(path: string): Promise<boolean> {
+    const [folder, name] = path.split("/");
+    const { data, error } = await admin.storage
+      .from(TEAM_PHOTOS_BUCKET)
+      .list(folder);
+    expect(error).toBeNull();
+    return (data ?? []).some((object) => object.name === name);
   }
 
   beforeAll(async () => {
@@ -296,6 +308,88 @@ describe("team profiles", () => {
       expect(record?.role === "admin" && record.profile.title).toBe(
         "Chief Engineer",
       );
+    });
+
+    it("refuses a photo path with no object behind it, and writes nothing", async () => {
+      const { error } = await geduAuth.rpc("save_team_profile", {
+        p_user_id: TEST_IDS.GEDU,
+        p_translations: [],
+        p_photo_path: `${TEST_IDS.GEDU}/${crypto.randomUUID()}.jpg`,
+        p_opted_in: false,
+      });
+      expect(error?.code).toBe(TEAM_PROFILE_PHOTO_GONE_SQLSTATE);
+      expect(isTeamProfilePhotoGoneError(error)).toBe(true);
+      const { count } = await admin
+        .from("team_profiles")
+        .select("user_id", { count: "exact", head: true })
+        .eq("user_id", TEST_IDS.GEDU);
+      expect(count).toBe(0);
+
+      // …while a path the bucket holds goes through.
+      const photo = await seedPhoto(TEST_IDS.GEDU);
+      const ok = await geduAuth.rpc("save_team_profile", {
+        p_user_id: TEST_IDS.GEDU,
+        p_translations: [],
+        p_photo_path: photo,
+        p_opted_in: false,
+      });
+      expect(ok.error).toBeNull();
+    });
+
+    it("refuses a stale page's save of a photo another save removed, and keeps the new one", async () => {
+      // Two pages open on one profile saved with the first photo.
+      const pageA = new TeamProfilesService(geduAuth);
+      const pageB = new TeamProfilesService(adminAuth);
+      const original = await seedPhoto(TEST_IDS.GEDU);
+      await pageA.saveOwnTeamProfile(
+        TEST_IDS.GEDU,
+        content({ photoPath: original }),
+        false,
+      );
+
+      // A saves a new photo, which removes the original.
+      const replacement = await seedPhoto(TEST_IDS.GEDU);
+      await pageA.saveOwnTeamProfile(
+        TEST_IDS.GEDU,
+        content({ photoPath: replacement }),
+        false,
+      );
+      expect(await stored(original)).toBe(false);
+
+      // B still names the original.
+      await expect(
+        pageB.saveGeduTeamProfile(
+          TEST_IDS.GEDU,
+          content({ photoPath: original, nickname: "Stale" }),
+        ),
+      ).rejects.toMatchObject({ code: TEAM_PROFILE_PHOTO_GONE_SQLSTATE });
+
+      expect(await stored(replacement)).toBe(true);
+      const { data } = await admin
+        .from("team_profiles")
+        .select("photo_path, nickname")
+        .eq("user_id", TEST_IDS.GEDU)
+        .single();
+      expect(data).toEqual({ photo_path: replacement, nickname: "Creeperhug" });
+    });
+
+    it("reads a saved photo that can no longer be signed as no photo", async () => {
+      const photo = await seedPhoto(TEST_IDS.GEDU);
+      const service = new TeamProfilesService(geduAuth);
+      await service.saveOwnTeamProfile(
+        TEST_IDS.GEDU,
+        content({ photoPath: photo }),
+        false,
+      );
+      // The object goes behind the row's back.
+      await admin.storage.from(TEAM_PHOTOS_BUCKET).remove([photo]);
+
+      const record = await service.getTeamProfile(TEST_IDS.GEDU);
+      expect(record).toMatchObject({
+        role: "gedu",
+        photoPath: null,
+        profile: { photo: null, nickname: "Creeperhug" },
+      });
     });
 
     it("refuses the owner a save that does not state their checkbox", async () => {
@@ -621,6 +715,59 @@ describe("team profiles", () => {
           });
         expect(upload.error).not.toBeNull();
       }
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Removing a photo
+  // -------------------------------------------------------------------------
+
+  describe("removing a photo", () => {
+    /**
+     * Try to remove `path` as `client`. A remove the delete policy refuses
+     * matches no row, so the storage API reports no error and removes nothing:
+     * whether the object is still there is the only answer.
+     */
+    async function removeAs(
+      client: SupabaseClient<Database>,
+      path: string,
+    ): Promise<void> {
+      await client.storage.from(TEAM_PHOTOS_BUCKET).remove([path]);
+    }
+
+    it("leaves another Gedu's photo and an admin's to a Gedu", async () => {
+      const otherGedus = await seedPhoto(otherGeduId);
+      const admins = await seedPhoto(TEST_IDS.ADMIN);
+      await removeAs(geduAuth, otherGedus);
+      await removeAs(geduAuth, admins);
+      expect(await stored(otherGedus)).toBe(true);
+      expect(await stored(admins)).toBe(true);
+
+      // …while their own goes.
+      const own = await seedPhoto(TEST_IDS.GEDU);
+      await removeAs(geduAuth, own);
+      expect(await stored(own)).toBe(false);
+    });
+
+    it("leaves another admin's photo to an admin, and lets them remove a Gedu's", async () => {
+      const otherAdmins = await seedPhoto(otherAdminId);
+      await removeAs(adminAuth, otherAdmins);
+      expect(await stored(otherAdmins)).toBe(true);
+
+      const gedus = await seedPhoto(TEST_IDS.GEDU);
+      await removeAs(adminAuth, gedus);
+      expect(await stored(gedus)).toBe(false);
+    });
+
+    it("leaves everyone's photo to a parent and a gamer", async () => {
+      const gedus = await seedPhoto(TEST_IDS.GEDU);
+      const admins = await seedPhoto(TEST_IDS.ADMIN);
+      for (const client of [customerAuth, gamerAuth]) {
+        await removeAs(client, gedus);
+        await removeAs(client, admins);
+      }
+      expect(await stored(gedus)).toBe(true);
+      expect(await stored(admins)).toBe(true);
     });
   });
 

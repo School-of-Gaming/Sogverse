@@ -62,6 +62,17 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
+  -- The photo named has to be in the bucket. A save from a page opened before
+  -- another save replaced the photo still names the old one, which that save
+  -- removed; writing it would point the profile at nothing, and the path it
+  -- returned as superseded would be the other save's photo.
+  IF v_new_photo IS NOT NULL AND NOT EXISTS (
+       SELECT 1 FROM storage.objects o
+        WHERE o.bucket_id = 'team-photos' AND o.name = v_new_photo) THEN
+    RAISE EXCEPTION 'The photo this save names is no longer stored'
+      USING ERRCODE = 'P0027';
+  END IF;
+
   INSERT INTO public.team_profiles AS tp
          (user_id, nickname, title, pick, photo_path, opted_in)
   VALUES (p_user_id,
@@ -127,7 +138,7 @@ $$;
 -- Name: FUNCTION save_team_profile(p_user_id uuid, p_translations jsonb, p_nickname text, p_title text, p_pick smallint, p_photo_path text, p_opted_in boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.save_team_profile(p_user_id uuid, p_translations jsonb, p_nickname text, p_title text, p_pick smallint, p_photo_path text, p_opted_in boolean) IS 'The one writer of a team profile''s content: nickname, title (an admin''s only; a Gedu''s raises 22023), pick, photo path, the whole translation set (a JSON array of {locale, short_description, long_description, fun_fact}, replacing what was stored) and the owner''s checkbox, in one transaction. Guard-first for an admin or a Gedu; the target half is can_edit_team_profile — their own, or a Gedu''s for an admin. The owner must pass p_opted_in; anyone else must pass NULL and the stored value stands, because the checkbox is the owner''s consent. Refuses with P0026 when the checkbox would be on while the profile is incomplete (no photo, no language, or a language missing either description). An admin''s edit does not touch the approval: admins are trusted. Returns the photo path the save replaced, or NULL, so the caller can remove that object through the storage API.';
+COMMENT ON FUNCTION public.save_team_profile(p_user_id uuid, p_translations jsonb, p_nickname text, p_title text, p_pick smallint, p_photo_path text, p_opted_in boolean) IS 'The one writer of a team profile''s content: nickname, title (an admin''s only; a Gedu''s raises 22023), pick, photo path, the whole translation set (a JSON array of {locale, short_description, long_description, fun_fact}, replacing what was stored) and the owner''s checkbox, in one transaction. Guard-first for an admin or a Gedu; the target half is can_edit_team_profile — their own, or a Gedu''s for an admin. The owner must pass p_opted_in; anyone else must pass NULL and the stored value stands, because the checkbox is the owner''s consent. Refuses with P0026 when the checkbox would be on while the profile is incomplete (no photo, no language, or a language missing either description), and with P0027 a photo path that has no object in the team-photos bucket (a save from a page opened before another save replaced and removed that photo). An admin''s edit does not touch the approval: admins are trusted. Returns the photo path the save replaced, or NULL, so the caller can remove that object through the storage API.';
 
 
 --

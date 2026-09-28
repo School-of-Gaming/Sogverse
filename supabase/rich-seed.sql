@@ -1450,12 +1450,18 @@ COMMIT;
 -- The owner's admin, shown, and the owner's gedu, ready and waiting for an
 -- admin's approval, in English and Finnish. Each is saved by its own person
 -- through save_team_profile, which will not take a checkbox that is on without
--- a photo — so each names its photo's path here, and
--- `scripts/local-db/rich-images.sh` uploads the bytes to that path straight
+-- a photo, nor a photo path the bucket holds no object for — so each photo's
+-- object row is put in place here, empty, and
+-- `scripts/local-db/rich-images.sh` replaces it with the real upload straight
 -- after this file, from the preview art in `public/preview-art/`. Applying this
--- file by hand leaves both photos missing.
+-- file by hand leaves both photos without their bytes.
 
 BEGIN;
+INSERT INTO storage.objects (bucket_id, name)
+SELECT 'team-photos', p.id::text || '/seed.jpg'
+  FROM public.profiles p
+ WHERE p.email IN ('admin@example.com', 'gedu@example.com');
+
 SELECT set_config('request.jwt.claims',
   json_build_object('sub', (SELECT id::text FROM public.profiles
                              WHERE email = 'admin@example.com'),

@@ -9,6 +9,7 @@ import {
 } from "@/components/team/team-profile-form";
 import {
   isTeamProfileIncompleteError,
+  isTeamProfilePhotoGoneError,
   useSaveGeduTeamProfile,
   useSaveOwnTeamProfile,
   useUploadTeamPhoto,
@@ -115,7 +116,9 @@ function useTeamProfileEditor(
           ? t("photoUpload")
           : isTeamProfileIncompleteError(error)
             ? t("incomplete")
-            : t("save"),
+            : isTeamProfilePhotoGoneError(error)
+              ? t("photoGone")
+              : t("save"),
       );
     } finally {
       setSaving(false);

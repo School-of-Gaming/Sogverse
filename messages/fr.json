@@ -5045,7 +5045,8 @@
       "errors": {
         "save": "Impossible d’enregistrer le profil. Veuillez réessayer.",
         "incomplete": "Le profil doit rester complet tant qu’il est marqué comme prêt à être public. Complétez ce qui manque et enregistrez à nouveau.",
-        "photoUpload": "La photo n’a pas été envoyée. Choisissez-la à nouveau, puis enregistrez."
+        "photoUpload": "La photo n’a pas été envoyée. Choisissez-la à nouveau, puis enregistrez.",
+        "photoGone": "La photo a été modifiée ailleurs depuis que vous avez ouvert cette page. Rechargez la page pour voir le profil tel qu’il est maintenant."
       }
     },
     "admin": {

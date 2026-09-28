@@ -5045,7 +5045,8 @@
       "errors": {
         "save": "Profiilin tallentaminen ei onnistunut. Yritä uudelleen.",
         "incomplete": "Profiilin on oltava valmis niin kauan kuin se on merkitty valmiiksi julkaistavaksi. Täydennä puuttuvat kohdat ja tallenna uudelleen.",
-        "photoUpload": "Kuvan lataus ei onnistunut. Valitse kuva uudelleen ja tallenna."
+        "photoUpload": "Kuvan lataus ei onnistunut. Valitse kuva uudelleen ja tallenna.",
+        "photoGone": "Kuvaa on muutettu muualla sen jälkeen, kun avasit tämän sivun. Lataa sivu uudelleen nähdäksesi profiilin nykyisen version."
       }
     },
     "admin": {

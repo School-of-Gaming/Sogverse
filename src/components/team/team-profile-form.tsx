@@ -45,6 +45,18 @@ export const SHORT_DESCRIPTION_MAX_LENGTH = 140;
 /** A fun fact is one or two sentences. */
 export const FUN_FACT_MAX_LENGTH = 200;
 
+/**
+ * How long "About me" may run, as its stored markdown: the database's own
+ * limit. The rich editor cannot cap its input the way a text field can, so
+ * the form counts it and Save waits until every language is back under it.
+ */
+export const LONG_DESCRIPTION_MAX_LENGTH = 5000;
+
+/** Whether a language's "About me" runs past what can be saved. */
+function longDescriptionTooLong(longDescription: string): boolean {
+  return longDescription.trim().length > LONG_DESCRIPTION_MAX_LENGTH;
+}
+
 /** A nickname's length, generous for any name a game platform allows. */
 const NICKNAME_MAX_LENGTH = 32;
 
@@ -205,6 +217,16 @@ export function teamProfileGap(content: TeamProfileContent): TeamProfileGap {
   if (missingPhoto) return "photo";
   if (missingText) return "text";
   return null;
+}
+
+/**
+ * Whether any language's text runs past what the database stores. The other
+ * fields cap their own input; "About me" cannot, so a save waits on this.
+ */
+export function teamProfileTooLong(content: TeamProfileContent): boolean {
+  return content.translations.some((row) =>
+    longDescriptionTooLong(row.longDescription),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -643,14 +665,21 @@ export function TeamProfileWritingSection({
           {addedLocales.map((l) => {
             const isActive = locale === l;
             const canRemove = addedLocales.length > 1;
+            // A language whose "About me" is too long to save is marked on
+            // its tab, since Save waits on it while another tab is open.
+            const tooLong = longDescriptionTooLong(
+              form.translations[l]?.longDescription ?? "",
+            );
             return (
               <span
                 key={l}
                 className={cn(
                   "inline-flex items-center gap-1 rounded-t-md border-b-2 border-border px-3 py-1.5 text-sm transition-colors",
-                  isActive
-                    ? "text-act"
-                    : "text-muted-foreground hover:text-foreground",
+                  tooLong
+                    ? "text-destructive"
+                    : isActive
+                      ? "text-act"
+                      : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 <button
@@ -720,7 +749,27 @@ export function TeamProfileWritingSection({
         />
       </Field>
 
-      <Field label={t("longDescription")} hint={t("longDescriptionHint")}>
+      <Field
+        label={t("longDescription")}
+        hint={t("longDescriptionHint")}
+        labelAction={
+          // Always there, as the other two counts are, so going over the
+          // limit recolours it and moves nothing.
+          <span
+            className={cn(
+              "text-xs tabular-nums",
+              longDescriptionTooLong(draft.longDescription)
+                ? "text-destructive"
+                : "text-muted-foreground",
+            )}
+          >
+            {t("count", {
+              count: draft.longDescription.trim().length,
+              max: LONG_DESCRIPTION_MAX_LENGTH,
+            })}
+          </span>
+        }
+      >
         {({ hintId }) => (
           <AboutMeEditor
             key={locale}

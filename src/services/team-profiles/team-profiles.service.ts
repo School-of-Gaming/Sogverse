@@ -189,13 +189,31 @@ export class TeamProfilesService {
     return data.signedUrl;
   }
 
+  /**
+   * The saved photo, or `null` when it cannot be signed. The save refuses a
+   * path with no object behind it, but an object can still go missing after
+   * the row names it, and a profile with no photo is one the person can fix
+   * from the editor; a page that throws is one they cannot open at all.
+   */
+  private async savedPhoto(path: string): Promise<TeamProfilePhoto | null> {
+    try {
+      return photoOf(await this.signedUrl(path));
+    } catch (error) {
+      console.error("[team-profile] saved photo could not be signed:", error);
+      return null;
+    }
+  }
+
   private async toRecord(
     row: TeamProfileQueryRow,
   ): Promise<TeamProfileRecord | null> {
     const saved = row.team_profile;
-    const photoPath = saved?.photo_path ?? null;
+    const storedPhotoPath = saved?.photo_path ?? null;
     const photo =
-      photoPath === null ? null : photoOf(await this.signedUrl(photoPath));
+      storedPhotoPath === null ? null : await this.savedPhoto(storedPhotoPath);
+    // A photo that could not be signed reads as none, path included: the
+    // editor would otherwise save the missing path back and be refused.
+    const photoPath = photo === null ? null : storedPhotoPath;
 
     const translations: TeamProfileTranslation[] = [];
     for (const t of saved?.translations ?? []) {

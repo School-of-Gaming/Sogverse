@@ -21,6 +21,7 @@ import {
   profileWithContent,
   sameContent,
   teamProfileGap,
+  teamProfileTooLong,
   type TeamProfileContent,
   type TeamProfileForm,
   type TeamProfileGap,
@@ -134,6 +135,7 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
   const dirty =
     on !== savedOn || !sameContent(content, contentFromProfile(props.profile));
   const gap = teamProfileGap(content);
+  const tooLong = teamProfileTooLong(content);
   const status = teamProfileStatus(props);
   // An admin page carries the sidebar, so the two columns wait for the width
   // that leaves room for both.
@@ -218,7 +220,7 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
               {t("actions.discard")}
             </Button>
             <Button
-              disabled={!dirty || saving || (on && gap !== null)}
+              disabled={!dirty || saving || tooLong || (on && gap !== null)}
               onClick={() => props.actions.onSave(content, on)}
             >
               {saving && <Loader2 className="animate-spin" aria-hidden />}

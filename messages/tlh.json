@@ -4146,7 +4146,8 @@
       "errors": {
         "save": "Del’a’ polmoHlaHbe’. yInID.",
         "incomplete": "ghuHmoHlu’ Del’a’, vaj naQnIS. chIlbogh yIteb ’ej yIpolmoH.",
-        "photoUpload": "mIllogh lIHlaHbe’. yIwIv ’ej yIpolmoH."
+        "photoUpload": "mIllogh lIHlaHbe’. yIwIv ’ej yIpolmoH.",
+        "photoGone": "latlh Daq mIllogh choHlu’pu’. nav yIchu’qa’ ’ej DaH Del’a’ yIlegh."
       }
     },
     "admin": {

@@ -195,12 +195,29 @@ export interface UploadedTeamPhoto {
  */
 export const TEAM_PROFILE_INCOMPLETE_SQLSTATE = "P0026";
 
-/** Whether a rejected save was refused for being incomplete. */
-export function isTeamProfileIncompleteError(error: unknown): boolean {
+/**
+ * The SQLSTATE `save_team_profile` raises when the photo path it is given has
+ * no object in the bucket. That is a save from a page opened before another
+ * save replaced the photo and removed the one this page still names; the page
+ * has to be reloaded to see the profile as it now is.
+ */
+export const TEAM_PROFILE_PHOTO_GONE_SQLSTATE = "P0027";
+
+function hasCode(error: unknown, code: string): boolean {
   return (
     typeof error === "object" &&
     error !== null &&
     "code" in error &&
-    error.code === TEAM_PROFILE_INCOMPLETE_SQLSTATE
+    error.code === code
   );
+}
+
+/** Whether a rejected save was refused for being incomplete. */
+export function isTeamProfileIncompleteError(error: unknown): boolean {
+  return hasCode(error, TEAM_PROFILE_INCOMPLETE_SQLSTATE);
+}
+
+/** Whether a rejected save named a photo that is no longer stored. */
+export function isTeamProfilePhotoGoneError(error: unknown): boolean {
+  return hasCode(error, TEAM_PROFILE_PHOTO_GONE_SQLSTATE);
 }
