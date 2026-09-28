@@ -1,26 +1,5 @@
 # CLAUDE.md
 
-**The next release owes production's migration history repair, before the release merge.**
-The numbered migration history has been squashed into two baseline files, `00266` and
-`00267`. Production already ran every migration they replace, so none of their SQL may run
-there — instead the history table is edited to say so. Until that is done, `main` still
-holds the old files, and the first `db push` from `main` after the squash lands would try
-to replay the whole numbered history against a database that has it.
-
-In the same sitting as the release, immediately before the merge: assert that the numbered
-versions production records as applied are exactly the numbered files being squashed, with
-`npx supabase migration list --linked`; then `npx supabase migration repair --status
-reverted <every version below 00266>`, leaving `00266` and `00267` applied. The rollback is
-`npx supabase migration repair --status applied` over the same list. The baselines
-deliberately take over `00266` and `00267`, two version numbers production had already
-applied under other names, so after the repair production's history goes on recording those
-two rows with the old files' names and statements while the repo holds the baselines under
-the same numbers: that mismatch is expected, not a fault to chase.
-
-A release that skips this fails safe rather than corrupting anything: production's `db push`
-refuses, and the production promotion is held until the repair is run. **The release that
-pays this deletes this notice.**
-
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands

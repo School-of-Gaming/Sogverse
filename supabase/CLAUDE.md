@@ -151,7 +151,7 @@ moment nothing else runs there.
 ## Linking (first time only)
 
 Linking is for the operator commands that address the hosted project by ref — `npx
-supabase migration list --linked`, `migration repair` during the squash's history step,
+supabase migration list --linked`, `migration repair` when a squash rewrites the history,
 and `supabase inspect` in the database-inspection skill. Nothing in the migration
 workflow below needs it: `generate` builds in a shadow workdir, so a linked checkout's
 `.temp/` pins never reach it.
