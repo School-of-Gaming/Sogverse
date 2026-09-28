@@ -15,6 +15,7 @@ import { municipalityInvoicingSnapshot } from "@/services/municipality-invoicing
 import { adminSubstitutionRequests } from "@/services/session-substitution/session-substitution.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
 import { mySessionCancellations } from "@/services/participations/participations.contracts";
+import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboard.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -886,6 +887,73 @@ describe("session cancellation", () => {
         .parse(stranger.data)
         .filter((row) => row.participation_id === PARTICIPATION),
     ).toEqual([]);
+  });
+
+  // -------------------------------------------------------------------------
+  // the admin dashboard's schedule
+  // -------------------------------------------------------------------------
+
+  async function dashboardScheduleProduct(productId: string) {
+    const { data, error } = await adminAuth.rpc("get_admin_dashboard");
+    expect(error).toBeNull();
+    const product = adminDashboardSnapshot
+      .parse(data)
+      .schedule_products.find((entry) => entry.id === productId);
+    if (product === undefined) {
+      throw new Error(`${productId} missing from the dashboard's schedule set`);
+    }
+    return product;
+  }
+
+  it("hands the admin dashboard every cancelled pair in its window, past as well as future", async () => {
+    for (const date of [LAST_WEEK, TOMORROW, IN_THREE_DAYS]) {
+      expect((await cancel(date)).error).toBeNull();
+    }
+
+    const product = await dashboardScheduleProduct(PRODUCT);
+    expect(product.group_ids).toEqual([GROUP]);
+    // Unlike the My SOG reads, the dashboard's window reaches thirty days
+    // back, so last week's cancellation is carried too.
+    expect(product.cancelled_sessions).toEqual([
+      { group_id: GROUP, session_date: LAST_WEEK },
+      { group_id: GROUP, session_date: TOMORROW },
+      { group_id: GROUP, session_date: IN_THREE_DAYS },
+    ]);
+  });
+
+  it("hands the admin dashboard every group of a product, including one nothing else names", async () => {
+    // The silent group has no member, no gedu and no cancellation; the page
+    // still needs it to know a date one group cancelled is not every group's.
+    const club = await dashboardScheduleProduct(CLUB);
+    expect(club.group_ids).toEqual([CLUB_GROUP, CLUB_SILENT_GROUP]);
+    expect(club.cancelled_sessions).toEqual([]);
+  });
+
+  it("drops an inert cancellation from the admin dashboard", async () => {
+    expect((await cancel(IN_THREE_DAYS)).error).toBeNull();
+    const weekday = weekdayOf(IN_THREE_DAYS);
+    const removed = await admin
+      .from("schedule_slots")
+      .delete()
+      .eq("product_id", PRODUCT)
+      .eq("weekday", weekday);
+    expect(removed.error).toBeNull();
+
+    try {
+      expect(
+        (await dashboardScheduleProduct(PRODUCT)).cancelled_sessions,
+      ).toEqual([]);
+    } finally {
+      await createScheduleSlot(admin, PRODUCT, {
+        weekday,
+        startTime: "23:00",
+        durationMinutes: 60,
+      });
+    }
+
+    expect(
+      (await dashboardScheduleProduct(PRODUCT)).cancelled_sessions,
+    ).toEqual([{ group_id: GROUP, session_date: IN_THREE_DAYS }]);
   });
 
   it("keeps the shared window helper private", async () => {

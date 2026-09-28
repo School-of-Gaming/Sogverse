@@ -339,6 +339,10 @@
         "needsAttention": "Needs attention — this product is in the queue at the top of the page",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
+      "cancellation": {
+        "allTitle": "Every group’s session on this date is cancelled",
+        "some": "{cancelled} of {groups, plural, one {# group} other {# groups}} cancelled"
+      },
       "comingUp": {
         "label": "Coming up",
         "heading": "Coming up",

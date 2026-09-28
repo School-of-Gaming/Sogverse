@@ -339,6 +339,10 @@
         "needsAttention": "Vaatii huomiota – tämä tuote on sivun yläreunan jonossa",
         "chipTitle": "{type} · {name} · klo {time}, {minutes} min · {counts}"
       },
+      "cancellation": {
+        "allTitle": "Tämän päivän kerta on peruttu kaikilta ryhmiltä",
+        "some": "Peruttu: {cancelled}/{groups} ryhmää"
+      },
       "comingUp": {
         "label": "Tulossa",
         "heading": "Tulossa",

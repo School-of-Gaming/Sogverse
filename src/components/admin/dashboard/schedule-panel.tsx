@@ -7,7 +7,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, formatDateOnly } from "@/lib/utils";
 import type { ProductType } from "@/types";
-import type { ComingUpDay, ScheduleWeek } from "./admin-dashboard-data";
+import {
+  runningSessionCount,
+  type ComingUpDay,
+  type ScheduleWeek,
+} from "./admin-dashboard-data";
 import { addCalendarDays, formatDayMonth } from "@/lib/calendar-date";
 import { isoWeekOf } from "@/lib/iso-week";
 import { ComingUpFeed } from "./coming-up-feed";
@@ -199,7 +203,7 @@ function ThisWeek({
             {weekRange}
           </span>
           <span className="ml-2 text-xs text-muted-foreground">
-            {t("sessionCount", { count: filtered.chips.length })}
+            {t("sessionCount", { count: runningSessionCount(filtered.chips) })}
           </span>
           {/* Only when the schedule was authored somewhere other than where it
               is being read. Every time on this page has already been converted

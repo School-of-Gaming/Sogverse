@@ -383,6 +383,10 @@
         "needsAttention": "poQ Qu’ – De’vam tu’lu’ ’etlhDaq QaDDaq",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
+      "cancellation": {
+        "allTitle": "jajvam Hoch ghommey poH qIllu’ – yay’ Dun",
+        "some": "{cancelled}/{groups} ghom poH qIllu’"
+      },
       "comingUp": {
         "label": "ghoS",
         "heading": "ghoS",

@@ -339,6 +339,10 @@
         "needsAttention": "Behöver åtgärd – den här produkten finns i kön högst upp på sidan",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
+      "cancellation": {
+        "allTitle": "Tillfället är inställt för alla grupper den här dagen",
+        "some": "{cancelled} av {groups, plural, one {# grupp} other {# grupper}} inställda"
+      },
       "comingUp": {
         "label": "På gång",
         "heading": "På gång",

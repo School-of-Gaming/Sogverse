@@ -1070,6 +1070,45 @@ describe("toFamilyEnrollments — the prep window on a row", () => {
     );
   });
 
+  /**
+   * Nobody sets anything up at a session that did not happen, so a cancelled
+   * one is not among the family's first two and the window runs on to the next
+   * session that does.
+   */
+  it("skips a cancelled session when counting the family's first two", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          signedUpAt: new Date("2026-02-13T16:45:00.000Z"),
+          groupJoinedAt: new Date("2026-02-13T16:45:00.000Z"),
+          cancelledDates: ["2026-02-20"],
+        }),
+      ],
+    });
+
+    // 13 February is theirs, 20 February is cancelled, so the second session
+    // they actually attend is 27 February.
+    expect(summary.prepWindowEnd?.toISOString()).toBe(
+      "2026-02-27T18:30:00.000Z",
+    );
+  });
+
+  it("ignores a cancellation that falls after the family's first two", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          signedUpAt: new Date("2026-02-13T16:45:00.000Z"),
+          groupJoinedAt: new Date("2026-02-13T16:45:00.000Z"),
+          cancelledDates: ["2026-02-27"],
+        }),
+      ],
+    });
+
+    expect(summary.prepWindowEnd?.toISOString()).toBe(
+      "2026-02-20T18:30:00.000Z",
+    );
+  });
+
   it("takes the sign-up stamp when it is the later of the two", () => {
     const summary = mapOne({
       sessionRows: [

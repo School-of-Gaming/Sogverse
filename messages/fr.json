@@ -339,6 +339,10 @@
         "needsAttention": "À traiter – ce produit figure dans la file en haut de la page",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
+      "cancellation": {
+        "allTitle": "La séance de ce jour est annulée pour tous les groupes",
+        "some": "{cancelled, plural, one {# groupe annulé} other {# groupes annulés}} sur {groups}"
+      },
       "comingUp": {
         "label": "À venir",
         "heading": "À venir",

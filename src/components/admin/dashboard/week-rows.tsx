@@ -2,9 +2,13 @@
 
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CalendarX } from "lucide-react";
 import { cn, formatDateOnly } from "@/lib/utils";
-import type { ScheduleChip, ScheduleWeek } from "./admin-dashboard-data";
+import type {
+  DateCancellation,
+  ScheduleChip,
+  ScheduleWeek,
+} from "./admin-dashboard-data";
 import { addCalendarDays, formatDayMonth } from "@/lib/calendar-date";
 import { PRODUCT_TYPE_PRESENTATION } from "./product-type-presentation";
 
@@ -148,22 +152,75 @@ function SessionChip({ chip }: { chip: ScheduleChip }) {
         : `${chip.activeCount}/${chip.seatCount}`,
   });
 
+  const cancelled = chip.cancellation.kind === "all";
+
   return (
     <Link
       href={chip.href}
       title={title}
-      className="flex items-center gap-1.5 rounded border border-border py-1 pl-1.5 pr-2 text-xs leading-tight transition-colors hover:bg-hover"
+      className={cn(
+        "flex items-center gap-1.5 rounded border border-border py-1 pl-1.5 pr-2 text-xs leading-tight transition-colors hover:bg-hover",
+        cancelled && "text-muted-foreground",
+      )}
     >
       <Icon
         className={cn("h-3.5 w-3.5 shrink-0", presentation.text)}
         aria-hidden
       />
-      <span className="shrink-0 font-medium tabular-nums text-muted-foreground">
+      <span
+        className={cn(
+          "shrink-0 font-medium tabular-nums text-muted-foreground",
+          cancelled && "line-through",
+        )}
+      >
         {chip.startTime}
       </span>
       <span className="whitespace-nowrap">{chip.productName}</span>
+      <DateCancellationNote cancellation={chip.cancellation} />
       {chip.needsAttention && <AttentionMark />}
     </Link>
+  );
+}
+
+/**
+ * What a date's cancellations say beside its name: nothing when no group
+ * cancelled, the feeds' own neutral "Cancelled" when every group did, and a
+ * count when only some did — that date still runs for the rest, so it is a note
+ * rather than a state.
+ *
+ * Neutral ink either way. A cancellation is news, not a fault, and the row
+ * already has one mark that means "needs you"; this must not compete with it.
+ * Shared with the coming-up feed, whose lines name the same dates.
+ */
+export function DateCancellationNote({
+  cancellation,
+}: {
+  cancellation: DateCancellation;
+}) {
+  const b = useTranslations("sessionBadge");
+  const t = useTranslations("admin.dashboard.cancellation");
+
+  if (cancellation.kind === "none") return null;
+
+  if (cancellation.kind === "all") {
+    return (
+      <span
+        title={t("allTitle")}
+        className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-muted-foreground"
+      >
+        <CalendarX className="h-3 w-3 shrink-0" aria-hidden />
+        {b("cancelled")}
+      </span>
+    );
+  }
+
+  return (
+    <span className="shrink-0 whitespace-nowrap text-muted-foreground">
+      {t("some", {
+        cancelled: cancellation.cancelled,
+        groups: cancellation.groups,
+      })}
+    </span>
   );
 }
 
