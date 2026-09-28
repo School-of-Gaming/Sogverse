@@ -3271,6 +3271,7 @@ export type Database = {
       get_my_assigned_products: {
         Args: never
         Returns: {
+          cancelled_dates: string[]
           end_date: string
           group_count: number
           group_id: string
@@ -3358,6 +3359,13 @@ export type Database = {
           status: string
         }[]
       }
+      get_my_session_cancellations: {
+        Args: never
+        Returns: {
+          participation_id: string
+          session_date: string
+        }[]
+      }
       get_my_waitlist_positions: {
         Args: never
         Returns: {
@@ -3396,6 +3404,10 @@ export type Database = {
       group_session_is_cancelled: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
+      }
+      group_upcoming_cancelled_dates: {
+        Args: { p_group_id: string }
+        Returns: string[]
       }
       has_active_participation_in_group: {
         Args: { p_group_id: string }

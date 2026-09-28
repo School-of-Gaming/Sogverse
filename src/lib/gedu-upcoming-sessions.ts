@@ -73,6 +73,8 @@ export interface GeduUpcomingSession {
  * admits — a sub asking for a sub is the case — so the picker and the cards
  * offer the same set.
  *
+ * A cancelled session is not in the list either, on either kind of seat.
+ *
  * A session already finished is not in the list: the walk carries no window
  * past an occurrence's end (`windowCloseMs: 0`), which is the card's rule too —
  * the entry's kind flips at the session's end, and a finished card offers
@@ -122,6 +124,11 @@ export function buildGeduUpcomingSessions({
 
     for (const occurrence of occurrences) {
       const sessionDate = productLocalDate(occurrence.start, timezone);
+      // A cancelled session is not one anybody is expected at, and the write
+      // is refused on it — so it is not offered. It still counts towards an
+      // open-ended run's cap, as it does in the group's feed, where it stands
+      // as a cancelled line: the picker's horizon stays the feed's.
+      if (row.cancelledDates.includes(sessionDate)) continue;
       const key = sessionEntryId(row.groupId, sessionDate);
       const existing = bySession.get(key);
       if (

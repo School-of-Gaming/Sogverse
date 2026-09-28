@@ -649,6 +649,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/get-my-participation-subscription-states.test.ts",
     why: "billing-state signals for participations the caller is party to",
   },
+  get_my_session_cancellations: {
+    scopeTest: "tests/db/session-cancellation.test.ts",
+    why: "takes no argument at all: the seats it answers for are the active, placed participations whose customer_id or participant_id is auth.uid(), so a caller learns the cancelled upcoming dates of their own seats' groups and of nobody else's. It returns dates only — never the reason, the stamp or the author, which stay admin-only. The scope test asks it as the seat's child, as the paying parent and as another family's parent, and requires the third to see nothing",
+  },
   get_my_family_product_feed: {
     scopeTest: "tests/db/family-product-feed.test.ts",
     why: "the family club/camp/event page, keyed on ONE participation. Two roles reach the same document — the participation's participant, and any parent linked to them — so a role guard could only name both and would prove nothing; the real gate is the ownership predicate, which is keyed entirely to auth.uid(). That participant may be an adult holding a seat of their own, in which case the first arm of the same predicate matches directly and the parent-link fallback is never reached. A row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. The scope test is where the interesting half lives: a sibling in the SAME group is refused (the key is the participation, not the group), a parent of another family is refused, a child cannot read their own parent's seat in the group they share, and the document's attendance field carries one answer — the named participant's — rather than a roster map",

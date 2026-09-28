@@ -264,6 +264,9 @@ export function buildGeduDashboardFixture(
       participantCount: 28,
       groupName: "Wednesday C",
       groupParticipantCount: 6,
+      // An admin called off this week's session: the locked Join names the
+      // one after it, and the card says which date is off.
+      cancelledDates: [calendarDate(now, 2, SESSION_FEED_TIMEZONE)],
     }),
     assignmentRow({
       now,
@@ -649,6 +652,8 @@ function assignmentRow(opts: {
   kind?: GeduAssignmentRow["kind"];
   /** The substitution date, on a `substitution` row — product-local `YYYY-MM-DD`. */
   substitutionDate?: string;
+  /** The group's cancelled upcoming dates, product-local `YYYY-MM-DD`. */
+  cancelledDates?: readonly string[];
 }): GeduAssignmentRow {
   return {
     product: {
@@ -669,6 +674,7 @@ function assignmentRow(opts: {
     // with its own date, and the pair of fields below is what makes one.
     kind: opts.kind ?? "assignment",
     substitutionDate: opts.substitutionDate ?? null,
+    cancelledDates: opts.cancelledDates ?? [],
     groupCount: opts.groupCount,
     participantCount: opts.participantCount,
     groupName: opts.groupName,

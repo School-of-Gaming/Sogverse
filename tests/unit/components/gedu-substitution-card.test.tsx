@@ -122,6 +122,22 @@ describe("GeduSubstitutionCard", () => {
     expect(html).not.toMatch(/<button/);
   });
 
+  it("offers no Join on a substitution whose session is cancelled", () => {
+    const cancelled: GeduSubstitutionSummary = {
+      ...fixtureLockedSubstitution(),
+      accessOpensAt: new Date(NOW.getTime() - 60_000),
+      // In its voice window, so the Join would otherwise be lit.
+      startsAt: new Date(NOW.getTime() - 10 * 60_000),
+      endsAt: new Date(NOW.getTime() + 80 * 60_000),
+      hasVoiceRoom: true,
+      cancelled: true,
+    };
+    const html = cardHtml(cancelled);
+    expect(html).toContain(messages.sessionBadge.cancelled);
+    expect(html).not.toMatch(/<button/);
+    expect(html).not.toContain(messages.voiceButton.joinVoice);
+  });
+
   it("links the same substitution once its workspace has opened", () => {
     const opened: GeduSubstitutionSummary = {
       ...fixtureLockedSubstitution(),

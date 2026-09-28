@@ -13,6 +13,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
+import { CancelledAheadLine } from "@/components/session-feed/CancelledAheadLine";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
@@ -372,6 +373,14 @@ export function GeduAssignmentCard({
               )}
             </span>
           </div>
+
+          {/* The cancelled sessions the card passes over before the next one
+              it names — present only while there are some, since the schedule
+              line above still claims those dates. A finished run has nothing
+              ahead to pass over. */}
+          {endedOn === null && (
+            <CancelledAheadLine starts={assignment.cancelledAhead} />
+          )}
 
           {/* Pinned to the bottom: the day it ended on a finished run, the room
               on a remote product, the building on an in-person one. Three flat

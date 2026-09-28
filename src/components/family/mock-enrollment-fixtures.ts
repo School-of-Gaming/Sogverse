@@ -6,8 +6,11 @@ import {
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import {
+  capPastCancellations,
   endDateToCutoff,
   enumerateRowOccurrences,
+  productLocalDate,
+  splitAtNextRunning,
   startDateToCutoff,
 } from "@/lib/session-occurrence";
 import type { ProductTopic, ProductType } from "@/types";
@@ -132,6 +135,12 @@ export interface EnrollmentFixtureSpec {
    * happened. Only meaningful alongside `cancelledAccessInDays`.
    */
   cancelledWithNoSessionLeft?: boolean;
+  /**
+   * How many of the soonest upcoming session dates an admin has cancelled. The
+   * card then names the next session after them and lists them on their own
+   * line — the same split the live roll-up makes.
+   */
+  cancelledUpcomingSessions?: number;
 }
 
 export function buildEnrollmentFixture(
@@ -152,10 +161,16 @@ export function buildEnrollmentFixture(
   // A waitlisted family holds no seat, so no occurrence of this product is
   // theirs to turn up to — the schedule still renders (it is a fact about the
   // product), but the next session does not.
-  const next =
+  const { next, cancelledAhead } =
     waitlistPosition !== null
-      ? null
-      : nextOccurrence({ now, slots: spec.slots, startDate, endDate });
+      ? { next: null, cancelledAhead: [] }
+      : nextOccurrence({
+          now,
+          slots: spec.slots,
+          startDate,
+          endDate,
+          cancelledUpcoming: spec.cancelledUpcomingSessions ?? 0,
+        });
 
   const scheduleLines = scheduleCardLines(
     formatProductSchedule({
@@ -208,6 +223,7 @@ export function buildEnrollmentFixture(
     isRemote: spec.isRemote,
     nextSessionStart: next?.start ?? null,
     nextSessionEnd: next?.end ?? null,
+    cancelledAhead: cancelledAhead.map((occurrence) => occurrence.start),
     hasVoiceRoom: spec.isRemote,
     // Left inert on purpose: a preview has no room to join, so the Join button
     // collapses to its inert form while still rendering its real open/locked
@@ -250,30 +266,46 @@ export function buildEnrollmentFixture(
 }
 
 /**
- * The soonest occurrence still worth showing, capped at one — the same walk the
- * roll-up behind the live dashboards does, including an in-progress session,
- * which is precisely when the Join button matters.
+ * The soonest occurrence still worth showing that is not cancelled, and the
+ * cancelled ones ahead of it — the same walk and split the roll-up behind the
+ * live dashboards does, including an in-progress session, which is precisely
+ * when the Join button matters. The first `cancelledUpcoming` session dates are
+ * the cancelled ones.
  */
 function nextOccurrence({
   now,
   slots,
   startDate,
   endDate,
+  cancelledUpcoming,
 }: {
   now: Date;
   slots: FixtureSlot[];
   startDate: string;
   endDate: string | null;
-}): { start: Date; end: Date } | null {
-  if (slots.length === 0) return null;
+  cancelledUpcoming: number;
+}): {
+  next: { start: Date; end: Date } | null;
+  cancelledAhead: { start: Date; end: Date }[];
+} {
+  if (slots.length === 0) return { next: null, cancelledAhead: [] };
   const occurrences = enumerateRowOccurrences({
     slots,
     timezone: FIXTURE_TIMEZONE,
     now,
     startBoundary: startDateToCutoff(startDate, FIXTURE_TIMEZONE),
     endBoundary: endDateToCutoff(endDate, FIXTURE_TIMEZONE),
-    cap: 1,
+    cap: capPastCancellations(1, cancelledUpcoming, slots.length),
     windowCloseMs: VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
   });
-  return occurrences[0] ?? null;
+  const cancelledDates = new Set(
+    [
+      ...new Set(
+        occurrences.map((occurrence) =>
+          productLocalDate(occurrence.start, FIXTURE_TIMEZONE),
+        ),
+      ),
+    ].slice(0, cancelledUpcoming),
+  );
+  return splitAtNextRunning(occurrences, FIXTURE_TIMEZONE, cancelledDates);
 }

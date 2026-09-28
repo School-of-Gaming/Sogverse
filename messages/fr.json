@@ -1173,7 +1173,7 @@
         "reasonBody": "{date}. La séance reste annulée.",
         "reasonLabel": "Motif",
         "reasonHint": "Seuls les administrateurs voient le motif. {count} caractères restants",
-        "reasonPlaceholder": "Par exemple : le lieu est fermé pendant les vacances.",
+        "reasonPlaceholder": "Pourquoi cette séance est-elle annulée ?",
         "keepSession": "Garder la séance",
         "cancelConfirm": "Annuler la séance",
         "reasonConfirm": "Enregistrer le motif",
@@ -2334,7 +2334,9 @@
   },
   "activityCard": {
     "endedOn": "Terminé le {date}",
-    "noSchedule": "Horaires à venir"
+    "noSchedule": "Horaires à venir",
+    "cancelledAhead": "{count, plural, one {Séance annulée : {dates}} other {Séances annulées : {dates}}}",
+    "cancelledAheadMore": "Séances annulées : {first} et {more, plural, one {# autre} other {# autres}}"
   },
   "sessionBadge": {
     "live": "En direct",

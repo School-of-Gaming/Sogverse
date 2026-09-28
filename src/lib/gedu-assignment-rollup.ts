@@ -5,8 +5,10 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { runEndedOn } from "@/lib/product-run";
 import { occurrenceOnDate } from "@/lib/session-date-occurrence";
 import {
+  capPastCancellations,
   endDateToCutoff,
   enumerateRowOccurrences,
+  splitAtNextRunning,
   startDateToCutoff,
 } from "@/lib/session-occurrence";
 import type { MyAssignedProductSessionRow } from "@/services/assignments";
@@ -144,6 +146,13 @@ export interface GeduAssignmentSummary {
   /** End of that session — drives the start–end range label. */
   nextSessionEnd: Date | null;
   /**
+   * The starts of the cancelled sessions that fall before the next one that
+   * runs, soonest first, one per date — or every cancelled one left when none
+   * runs. The next session is never a cancelled one, so neither is the Join
+   * or the Live badge it drives.
+   */
+  cancelledAhead: readonly Date[];
+  /**
    * Whether this assignment has a voice room at all — true only for a remote
    * product. **An in-person assignment renders no Join affordance**, rather
    * than a locked one: a locked button promises it will unlock, and a camp in a
@@ -223,7 +232,7 @@ export function rollUpGeduAssignments({
     // claiming they teach the club every week.
     .filter((row) => row.kind === "assignment")
     .map((row) => {
-    const next = nextOccurrenceFor(row, now, windowCloseMs);
+    const { next, cancelledAhead } = nextOccurrenceFor(row, now, windowCloseMs);
     const hasVoiceRoom = row.product.isRemote === true;
     const key = geduAssignmentKey(row.product.id, row.groupId);
     return {
@@ -238,6 +247,7 @@ export function rollUpGeduAssignments({
       timezone: row.product.timezone,
       nextSessionStart: next?.start ?? null,
       nextSessionEnd: next?.end ?? null,
+      cancelledAhead: cancelledAhead.map((occurrence) => occurrence.start),
       hasVoiceRoom,
       // Only meaningful when there is a room; an in-person assignment renders no
       // Join at all, so its href is never read.
@@ -266,32 +276,40 @@ export function rollUpGeduAssignments({
 }
 
 /**
- * The soonest occurrence still worth showing for one assignment.
+ * The soonest occurrence still worth showing for one assignment, and the
+ * cancelled ones ahead of it.
  *
- * Capped at one occurrence per walk: the roll-up only needs the head of the
- * list, and asking for the full horizon here would rebuild the very enumeration
- * this module exists to stop producing. An in-progress session is included —
- * that is the soonest meaningful moment for the card, and it is precisely when
- * the Join button matters.
+ * Capped at one *running* occurrence per walk: the roll-up only needs the head
+ * of the list, and asking for the full horizon here would rebuild the very
+ * enumeration this module exists to stop producing. The walk goes one past
+ * whatever the group's cancellations could remove, and a cancelled session is
+ * skipped rather than named, so the Join never lights for a session that is
+ * not happening. An in-progress session is included — that is the soonest
+ * meaningful moment for the card, and it is precisely when the Join button
+ * matters.
  */
 function nextOccurrenceFor(
   row: GeduAssignmentRow,
   now: Date,
   windowCloseMs: number,
-): { start: Date; end: Date } | null {
-  if (row.slots.length === 0) return null;
+): {
+  next: { start: Date; end: Date } | null;
+  cancelledAhead: { start: Date; end: Date }[];
+} {
+  if (row.slots.length === 0) return { next: null, cancelledAhead: [] };
 
+  const cancelledDates = new Set(row.cancelledDates);
   const occurrences = enumerateRowOccurrences({
     slots: row.slots,
     timezone: row.product.timezone,
     now,
     startBoundary: startDateToCutoff(row.product.startDate, row.product.timezone),
     endBoundary: endDateToCutoff(row.product.endDate, row.product.timezone),
-    cap: 1,
+    cap: capPastCancellations(1, cancelledDates.size, row.slots.length),
     windowCloseMs,
   });
 
-  return occurrences[0] ?? null;
+  return splitAtNextRunning(occurrences, row.product.timezone, cancelledDates);
 }
 
 /** A summary paired with the ended test's answer, resolved once. */
@@ -400,6 +418,12 @@ export interface GeduSubstitutionSummary {
    * subtraction of two days would say across a DST transition.
    */
   accessOpensAt: Date;
+  /**
+   * An admin has cancelled the substituted session. The card stands — the
+   * request is hidden rather than withdrawn, so a restore brings it back — but
+   * it offers no Join and no building for a session that is not happening.
+   */
+  cancelled: boolean;
   /** Whether there is a room at all — true only on a remote product. */
   hasVoiceRoom: boolean;
   /** Where the Join navigates. `"#"` keeps it inert. */
@@ -532,6 +556,7 @@ export function rollUpGeduSubstitutions({
             row.product.timezone,
           ).getTime() - SUBSTITUTION_ACCESS_LEAD_MS,
         ),
+        cancelled: row.cancelledDates.includes(row.substitutionDate),
         hasVoiceRoom,
         voiceHref: hasVoiceRoom
           ? (voiceHrefByAssignment?.[key] ?? INERT_HREF)

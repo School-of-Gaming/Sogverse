@@ -48,6 +48,11 @@ export const myAssignedProductRows = z.array(
     kind: z.enum(["assignment", "substitution"]),
     /** The substitution date on a `substitution` row; null on an `assignment` row. */
     substitution_date: z.string().nullable(),
+    /**
+     * The row's group's cancelled session dates from the day before
+     * product-local today onwards, ascending — dates only, never a reason.
+     */
+    cancelled_dates: z.array(z.string()),
   })
 );
 

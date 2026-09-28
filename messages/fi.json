@@ -1173,7 +1173,7 @@
         "reasonBody": "{date}. Kerta pysyy peruttuna.",
         "reasonLabel": "Syy",
         "reasonHint": "Vain ylläpitäjät näkevät syyn. {count} merkkiä jäljellä",
-        "reasonPlaceholder": "Esimerkiksi: tila on suljettu lomien ajan.",
+        "reasonPlaceholder": "Miksi istunto perutaan?",
         "keepSession": "Pidä kerta",
         "cancelConfirm": "Peru kerta",
         "reasonConfirm": "Tallenna syy",
@@ -2334,7 +2334,9 @@
   },
   "activityCard": {
     "endedOn": "Päättyi {date}",
-    "noSchedule": "Aikataulua ei ole vielä sovittu"
+    "noSchedule": "Aikataulua ei ole vielä sovittu",
+    "cancelledAhead": "{count, plural, one {Peruttu: {dates}} other {Peruttu: {dates}}}",
+    "cancelledAheadMore": "Peruttu: {first} ja {more, plural, one {# muu kerta} other {# muuta kertaa}}"
   },
   "sessionBadge": {
     "live": "Käynnissä",

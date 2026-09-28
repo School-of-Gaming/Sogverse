@@ -1173,7 +1173,7 @@
         "reasonBody": "{date}. Tillfället förblir inställt.",
         "reasonLabel": "Orsak",
         "reasonHint": "Bara administratörer ser orsaken. {count} tecken kvar",
-        "reasonPlaceholder": "Till exempel: lokalen är stängd under lovet.",
+        "reasonPlaceholder": "Varför ställs passet in?",
         "keepSession": "Behåll tillfället",
         "cancelConfirm": "Ställ in tillfället",
         "reasonConfirm": "Spara orsaken",
@@ -2334,7 +2334,9 @@
   },
   "activityCard": {
     "endedOn": "Avslutades {date}",
-    "noSchedule": "Inget schema ännu"
+    "noSchedule": "Inget schema ännu",
+    "cancelledAhead": "{count, plural, one {{dates} är inställt} other {{dates} är inställda}}",
+    "cancelledAheadMore": "{first} och {more, plural, one {# tillfälle till} other {# tillfällen till}} är inställda"
   },
   "sessionBadge": {
     "live": "Pågår",

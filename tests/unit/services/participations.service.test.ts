@@ -86,17 +86,22 @@ describe("ParticipationsService.getParticipationsForGamers", () => {
 
 describe("ParticipationsService.getMyUpcomingSessions", () => {
   const RPC_PATH = "/rest/v1/rpc/get_my_participation_subscription_states";
+  const CANCELLATIONS_PATH = "/rest/v1/rpc/get_my_session_cancellations";
 
   let fetchMock: FetchMock;
   let service: ParticipationsService;
 
   /**
-   * Routes the two concurrent backend calls the method makes: the
-   * participations select and the subscription-state RPC.
+   * Routes the three concurrent backend calls the method makes: the
+   * participations select, the subscription-state RPC and the session
+   * cancellations RPC (nothing cancelled unless a case says otherwise).
    */
   function mockBackend(
     participations: unknown[],
     subscriptionStates: { rows: unknown[] } | { errorMessage: string },
+    cancellations: { rows: unknown[] } | { errorMessage: string } = {
+      rows: [],
+    },
   ) {
     fetchMock.mockImplementation((input) => {
       const url = requestedUrl(input);
@@ -105,6 +110,13 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
           "rows" in subscriptionStates
             ? postgrestJson(subscriptionStates.rows)
             : postgrestError(subscriptionStates.errorMessage),
+        );
+      }
+      if (url.pathname === CANCELLATIONS_PATH) {
+        return Promise.resolve(
+          "rows" in cancellations
+            ? postgrestJson(cancellations.rows)
+            : postgrestError(cancellations.errorMessage),
         );
       }
       if (url.pathname === "/rest/v1/participations") {
@@ -230,6 +242,34 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
 
     expect(result[0].paymentProblem).toBe(false);
     expect(result[0].subscriptionEndsAt).toBeNull();
+    consoleError.mockRestore();
+  });
+
+  it("hands each seat its own group's cancelled dates", async () => {
+    mockBackend([rawRow("p1", "Alex"), rawRow("p2", "Bobby")], { rows: [] }, {
+      rows: [
+        { participation_id: "p1", session_date: "2026-10-13" },
+        { participation_id: "p1", session_date: "2026-10-20" },
+      ],
+    });
+
+    const result = await service.getMyUpcomingSessions("customer");
+
+    const alex = result.find((r) => r.participationId === "p1");
+    const bobby = result.find((r) => r.participationId === "p2");
+    expect(alex?.cancelledDates).toEqual(["2026-10-13", "2026-10-20"]);
+    expect(bobby?.cancelledDates).toEqual([]);
+  });
+
+  it("degrades to nothing cancelled (and does not throw) when the cancellations read errors", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    mockBackend([rawRow("p1", "Alex")], { rows: [] }, { errorMessage: "boom" });
+
+    const result = await service.getMyUpcomingSessions("customer");
+
+    expect(result[0].cancelledDates).toEqual([]);
     consoleError.mockRestore();
   });
 

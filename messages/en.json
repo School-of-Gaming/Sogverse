@@ -1173,7 +1173,7 @@
         "reasonBody": "{date}. The session stays cancelled.",
         "reasonLabel": "Reason",
         "reasonHint": "Only admins see the reason. {count, plural, one {# character left} other {# characters left}}",
-        "reasonPlaceholder": "For example: the venue is closed for the holidays.",
+        "reasonPlaceholder": "Why is this session cancelled?",
         "keepSession": "Keep the session",
         "cancelConfirm": "Cancel the session",
         "reasonConfirm": "Save the reason",
@@ -2334,7 +2334,9 @@
   },
   "activityCard": {
     "endedOn": "Ended {date}",
-    "noSchedule": "No schedule set yet"
+    "noSchedule": "No schedule set yet",
+    "cancelledAhead": "{count, plural, one {{dates} is cancelled} other {{dates} are cancelled}}",
+    "cancelledAheadMore": "{first} and {more, plural, one {# more session} other {# more sessions}} are cancelled"
   },
   "sessionBadge": {
     "live": "Live",

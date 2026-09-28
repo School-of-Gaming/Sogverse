@@ -1217,7 +1217,7 @@
         "reasonBody": "{date}. qIllu’taH may’.",
         "reasonLabel": "meq",
         "reasonHint": "meq legh loHwI’pu’ neH. {count} ngutlh ratlh",
-        "reasonPlaceholder": "mIw: Datlhpu’ SoQlu’.",
+        "reasonPlaceholder": "qatlh ghom qIllu’?",
         "keepSession": "may’ yIpol",
         "cancelConfirm": "may’ yIqIl",
         "reasonConfirm": "meq yIpol",
@@ -2374,7 +2374,9 @@
   },
   "activityCard": {
     "endedOn": "{date} rIntaH",
-    "noSchedule": "poH nabta’ tu’lu’be’"
+    "noSchedule": "poH nabta’ tu’lu’be’",
+    "cancelledAhead": "{count, plural, one {{dates} qIllu’} other {{dates} qIllu’pu’}}",
+    "cancelledAheadMore": "{first} {more, plural, one {# may’ latlh je} other {# may’mey latlh je}} qIllu’pu’"
   },
   "sessionBadge": {
     "live": "qaStaH",

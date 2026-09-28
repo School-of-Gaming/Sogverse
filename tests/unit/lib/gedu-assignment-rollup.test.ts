@@ -33,6 +33,7 @@ function row(over: {
   isRemote?: boolean;
   siteName?: string | null;
   slots?: GeduAssignmentRow["slots"];
+  cancelledDates?: string[];
 }): GeduAssignmentRow {
   return {
     product: {
@@ -49,6 +50,7 @@ function row(over: {
     // card's, and a live substitution is its own small card keyed to one date.
     kind: "assignment",
     substitutionDate: null,
+    cancelledDates: over.cancelledDates ?? [],
     groupCount: 2,
     participantCount: 14,
     groupName: `${over.name} A`,
@@ -149,6 +151,72 @@ describe("rollUpGeduAssignments", () => {
       90 * 60_000,
     );
     expect(nextSessionEnd!.getTime()).toBeGreaterThan(midSession.getTime());
+  });
+
+  it("skips a cancelled session in progress: no Join, and the next one is named", () => {
+    // Wednesday 16:45 Helsinki, inside a cancelled 16:30–18:00 Wednesday slot.
+    const midSession = new Date("2026-02-11T14:45:00Z");
+    const [summary] = rollUp(
+      [
+        row({
+          id: "p1",
+          name: "Wednesday Club",
+          weekday: 2,
+          cancelledDates: ["2026-02-11"],
+        }),
+      ],
+      midSession,
+    );
+    expect(summary.nextSessionStart?.toISOString()).toBe(
+      "2026-02-18T14:30:00.000Z",
+    );
+    expect(runLiveness(summary, midSession)).toEqual({
+      inProgress: false,
+      voiceIsOpen: false,
+    });
+    expect(summary.cancelledAhead.map((d) => d.toISOString())).toEqual([
+      "2026-02-11T14:30:00.000Z",
+    ]);
+  });
+
+  it("names the cancelled sessions before the next one and none after it", () => {
+    // Mondays 16:30 Helsinki; the next two Mondays are off, the fourth too.
+    const [summary] = rollUp(
+      [
+        row({
+          id: "p1",
+          name: "Monday Club",
+          weekday: 0,
+          cancelledDates: ["2026-02-16", "2026-02-23", "2026-03-09"],
+        }),
+      ],
+      now,
+    );
+    expect(summary.nextSessionStart?.toISOString()).toBe(
+      "2026-03-02T14:30:00.000Z",
+    );
+    expect(summary.cancelledAhead.map((d) => d.toISOString())).toEqual([
+      "2026-02-16T14:30:00.000Z",
+      "2026-02-23T14:30:00.000Z",
+    ]);
+  });
+
+  it("has no next session when every remaining one is cancelled", () => {
+    const [summary] = rollUp(
+      [
+        row({
+          id: "camp",
+          name: "Builders Camp",
+          weekday: 3,
+          startDate: "2026-02-09",
+          endDate: "2026-02-13",
+          cancelledDates: ["2026-02-12"],
+        }),
+      ],
+      now,
+    );
+    expect(summary.nextSessionStart).toBeNull();
+    expect(summary.cancelledAhead).toHaveLength(1);
   });
 
   it("carries the end of a session still ahead of us too", () => {
@@ -575,6 +643,21 @@ describe("rollUpGeduSubstitutions", () => {
     // 16:30 Helsinki on 16 Feb is 14:30 UTC; the slot runs 90 minutes.
     expect(substitution.startsAt?.toISOString()).toBe("2026-02-16T14:30:00.000Z");
     expect(substitution.endsAt?.toISOString()).toBe("2026-02-16T16:00:00.000Z");
+  });
+
+  it("marks a substitution whose session an admin has cancelled, and only that one", () => {
+    const [cancelled, running] = rollUpSubstitutions([
+      {
+        ...substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
+        cancelledDates: ["2026-02-16"],
+      },
+      {
+        ...substitutionRow({ id: "p2", name: "Other Club", substitutionDate: "2026-02-23" }),
+        cancelledDates: ["2026-03-02"],
+      },
+    ]);
+    expect(cancelled.cancelled).toBe(true);
+    expect(running.cancelled).toBe(false);
   });
 
   it("opens the workspace 48 hours before the substituted session's own start", () => {

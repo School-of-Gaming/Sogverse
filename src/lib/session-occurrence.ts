@@ -378,6 +378,52 @@ export function enumerateRowOccurrences(args: {
 }
 
 /**
+ * How far a walk that only wants the next session has to go once cancelled
+ * dates may be skipped: the requested cap, plus every occurrence the
+ * cancellations could remove.
+ *
+ * A slot is weekly, so it lands on a given date at most once, and a cancelled
+ * date therefore removes at most one occurrence per slot. Walking that many
+ * further is what guarantees the first occurrence that runs is inside the walk
+ * whenever the schedule has one. An uncapped walk stays uncapped.
+ */
+export function capPastCancellations(
+  cap: number,
+  cancelledDateCount: number,
+  slotCount: number,
+): number {
+  if (!Number.isFinite(cap)) return cap;
+  return cap + cancelledDateCount * slotCount;
+}
+
+/**
+ * The first occurrence that actually runs, and the cancelled ones ahead of it.
+ *
+ * `occurrences` are soonest first, as every walk emits them, and a cancellation
+ * is keyed by the occurrence's product-local date. `next` is `null` when every
+ * occurrence given is cancelled, and `cancelledAhead` is then all of them.
+ * `cancelledAhead` holds one occurrence per date: two slots on one cancelled
+ * day are one cancelled session day, and a reader is told the date once.
+ */
+export function splitAtNextRunning<T extends { start: Date }>(
+  occurrences: readonly T[],
+  timezone: string,
+  cancelledDates: ReadonlySet<string>,
+): { next: T | null; cancelledAhead: T[] } {
+  const cancelledAhead: T[] = [];
+  const seen = new Set<string>();
+  for (const occurrence of occurrences) {
+    const date = productLocalDate(occurrence.start, timezone);
+    if (!cancelledDates.has(date)) return { next: occurrence, cancelledAhead };
+    if (!seen.has(date)) {
+      seen.add(date);
+      cancelledAhead.push(occurrence);
+    }
+  }
+  return { next: null, cancelledAhead };
+}
+
+/**
  * Walk a row's slots **backward** from `now`, emitting every occurrence whose
  * start falls at or after `floor`.
  *

@@ -2,7 +2,7 @@
 -- Name: get_my_assigned_products(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, participant_count integer, kind text, substitution_date date)
+CREATE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, participant_count integer, kind text, substitution_date date, cancelled_dates date[])
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -61,7 +61,8 @@ BEGIN
          AND part.status     = 'active'
     ) AS participant_count,
     'assignment'::text AS kind,
-    NULL::date         AS substitution_date
+    NULL::date         AS substitution_date,
+    public.group_upcoming_cancelled_dates(a.group_id) AS cancelled_dates
   FROM gedu_group_assignments a
   JOIN products p ON p.id = a.product_id
   WHERE a.gedu_id = v_gedu_id
@@ -125,7 +126,8 @@ BEGIN
          AND part.status     = 'active'
     ) AS participant_count,
     'substitution'::text   AS kind,
-    r.session_date  AS substitution_date
+    r.session_date  AS substitution_date,
+    public.group_upcoming_cancelled_dates(r.group_id) AS cancelled_dates
   FROM session_substitution_requests r
   JOIN product_groups g ON g.id = r.group_id
   JOIN products p       ON p.id = g.product_id
@@ -140,7 +142,7 @@ $$;
 -- Name: FUNCTION get_my_assigned_products(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_assigned_products() IS 'Every product the calling gedu has a seat on, one row per seat, with the product shell, its schedule slots, how many groups it has and how many active seats (participant_count — a seat may be held by an adult as well as by a child). Gedu-gated on its first statement. TWO KINDS OF SEAT, discriminated by `kind`: an `assignment` row per gedu_group_assignments row, with `substitution_date` null; and a `substitution` row per UNEXPIRED substitution date, with `substitution_date` set — a `substituted` request whose holder is still certified and whose window has not closed, which is the whole of what gedu_holds_unexpired_substitution decides. That predicate rather than gedu_substitutes_session, and the difference is the point: this read draws the substitution CARD on My SOG, which stands from approval, where the workspace the card links to opens 48 hours before the substituted session. A substitution row therefore reaches a sub who cannot yet open the group, and carries nothing that would not be theirs to read then: names, a type, a date, the schedule, and two head counts. One RPC rather than two because the two kinds share every product-shell column and the dashboard card differs in its chrome rather than in the facts it needs.';
+COMMENT ON FUNCTION public.get_my_assigned_products() IS 'Every product the calling gedu has a seat on, one row per seat, with the product shell, its schedule slots, how many groups it has and how many active seats (participant_count — a seat may be held by an adult as well as by a child). Gedu-gated on its first statement. TWO KINDS OF SEAT, discriminated by `kind`: an `assignment` row per gedu_group_assignments row, with `substitution_date` null; and a `substitution` row per UNEXPIRED substitution date, with `substitution_date` set — a `substituted` request whose holder is still certified and whose window has not closed, which is the whole of what gedu_holds_unexpired_substitution decides. That predicate rather than gedu_substitutes_session, and the difference is the point: this read draws the substitution CARD on My SOG, which stands from approval, where the workspace the card links to opens 48 hours before the substituted session. A substitution row therefore reaches a sub who cannot yet open the group, and carries nothing that would not be theirs to read then: names, a type, a date, the schedule, two head counts, and `cancelled_dates` — the row''s group''s upcoming cancelled dates (group_upcoming_cancelled_dates), dates only, which the card skips when naming the next session and the absence picker never offers. One RPC rather than two because the two kinds share every product-shell column and the dashboard card differs in its chrome rather than in the facts it needs.';
 
 
 --

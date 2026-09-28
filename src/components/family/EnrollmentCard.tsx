@@ -27,6 +27,7 @@ import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
 import { PaymentProblemBadge } from "@/components/parent/PaymentProblemBadge";
 import { seatOfferState, type SeatOfferState } from "@/lib/seat-offer-state";
 import type { SeatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
+import { CancelledAheadLine } from "@/components/session-feed/CancelledAheadLine";
 import { SeatOfferBlock } from "./SeatOfferBlock";
 import {
   enrollmentEndedOn,
@@ -733,6 +734,12 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               </span>
             </p>
           )}
+
+          {/* The cancelled sessions the card passes over before the next one
+              the Join names — present only while there are some, since the
+              schedule line above still claims those dates. Only a seat in a
+              group on a run still going has sessions to pass over. */}
+          {running && <CancelledAheadLine starts={enrollment.cancelledAhead} />}
 
           {/* Four flat conditions rather than a nested chain — they are mutually
               exclusive by construction, and a run that is over has neither a
