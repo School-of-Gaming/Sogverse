@@ -2381,7 +2381,10 @@
     "itemiseNote": "Détaillez séparément sur votre facture le montant municipal et le montant grand public.",
     "myUnrecorded": "{count, plural, one {# séance passée n’a rien d’enregistré : elle n’est donc pas comptée. Enregistrez-la dans l’espace de travail du groupe pour qu’elle le soit.} other {# séances passées n’ont rien d’enregistré : elles ne sont donc pas comptées. Enregistrez-les dans l’espace de travail du groupe pour qu’elles le soient.}}",
     "loadError": "Impossible de charger le mois de facturation. Actualisez la page pour réessayer.",
-    "loadErrorWithReason": "Impossible de charger le mois de facturation – {reason}. Actualisez la page pour réessayer."
+    "loadErrorWithReason": "Impossible de charger le mois de facturation – {reason}. Actualisez la page pour réessayer.",
+    "searchPlaceholder": "Rechercher par nom ou e-mail…",
+    "searchAriaLabel": "Rechercher des Gedus",
+    "searchNoMatches": "Aucun Gedu de ce mois ne correspond à « {query} »."
   },
   "productType": {
     "consumer_club": "Club",

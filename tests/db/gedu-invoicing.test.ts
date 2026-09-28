@@ -86,6 +86,32 @@ function expectNoReason(doc: unknown) {
   expect(text).not.toContain("sick");
 }
 
+/**
+ * The keys of every counterpart the raw RPC output names — the absent gedu on
+ * a substitution and the seated sub on an absence — read before the contract
+ * parse, which would strip an extra one.
+ */
+function counterpartKeys(doc: unknown): string[][] {
+  const found: string[][] = [];
+  const walk = (value: unknown) => {
+    if (Array.isArray(value)) value.forEach(walk);
+    else if (value && typeof value === "object") {
+      for (const [key, child] of Object.entries(value)) {
+        if (
+          (key === "absent_gedu" || key === "substitute") &&
+          child &&
+          typeof child === "object"
+        ) {
+          found.push(Object.keys(child).sort());
+        }
+        walk(child);
+      }
+    }
+  };
+  walk(doc);
+  return found;
+}
+
 function sessionWindow(date: string) {
   return {
     starts_at: `${date}T14:00:00Z`,
@@ -430,6 +456,27 @@ describe("gedu invoicing", () => {
     it("never carries a substitution reason", () => {
       expectNoReason(raw.admin);
     });
+
+    it("carries each gedu's own email, and none on a counterpart", async () => {
+      const { data: profiles, error } = await admin
+        .from("profiles")
+        .select("id, email")
+        .in("id", [TEST_IDS.GEDU, subId]);
+      expect(error).toBeNull();
+      expect(profiles).toHaveLength(2);
+      for (const profile of profiles ?? []) {
+        expect(adminDoc.gedus.find((g) => g.id === profile.id)?.email).toBe(
+          profile.email,
+        );
+      }
+      // Both sides of the substitution are named here, so the check is not
+      // vacuous: a counterpart is named, never addressed.
+      const counterparts = counterpartKeys(raw.admin);
+      expect(counterparts.length).toBeGreaterThanOrEqual(2);
+      for (const keys of counterparts) {
+        expect(keys).toEqual(["first_name", "id", "last_name"]);
+      }
+    });
   });
 
   describe("a gedu's own read", () => {
@@ -490,6 +537,27 @@ describe("gedu invoicing", () => {
     it("carries no reason on either side", () => {
       expectNoReason(raw.sub);
       expectNoReason(raw.gedu);
+    });
+
+    it("carries the caller's own email, and none on a counterpart", async () => {
+      const { data: profiles, error } = await admin
+        .from("profiles")
+        .select("id, email")
+        .in("id", [TEST_IDS.GEDU, subId]);
+      expect(error).toBeNull();
+      const emailOf = (id: string) =>
+        profiles?.find((profile) => profile.id === id)?.email;
+      expect(geduDoc.gedus[0].email).toBe(emailOf(TEST_IDS.GEDU));
+      expect(subDoc.gedus[0].email).toBe(emailOf(subId));
+      // Each side names the other: the gedu's absence its sub, the sub's
+      // seat the absent gedu.
+      for (const doc of [raw.gedu, raw.sub]) {
+        const counterparts = counterpartKeys(doc);
+        expect(counterparts.length).toBeGreaterThan(0);
+        for (const keys of counterparts) {
+          expect(keys).toEqual(["first_name", "id", "last_name"]);
+        }
+      }
     });
 
     it("does not show the sub another gedu's groups", () => {

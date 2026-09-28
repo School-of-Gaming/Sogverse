@@ -143,6 +143,7 @@ export interface GeduInvoice {
   id: string;
   firstName: string;
   lastName: string;
+  email: string;
   /** Municipality clubs first, then by name, then primary before assistant. */
   clubs: readonly GeduInvoiceClub[];
   /** The municipality clubs with a fee, summed. */
@@ -314,6 +315,7 @@ function buildGedu(gedu: GeduInvoicingGedu, context: BuildContext): GeduInvoice 
     id: gedu.id,
     firstName: gedu.first_name,
     lastName: gedu.last_name,
+    email: gedu.email,
     clubs,
     municipalityTotalCents,
     consumerTotalCents,

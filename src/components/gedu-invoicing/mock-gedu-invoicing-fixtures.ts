@@ -138,6 +138,7 @@ const GROUPS: GeduInvoicingGroup[] = [
 const GEDUS: GeduInvoicingGedu[] = [
   {
     ...PEOPLE.aino,
+    email: "aino.kallio@example.com",
     assignments: [
       { group_id: "preview-group-kivikko", role: "primary" },
       { group_id: "preview-group-seikkailijat-1", role: "primary" },
@@ -156,6 +157,7 @@ const GEDUS: GeduInvoicingGedu[] = [
   },
   {
     ...PEOPLE.mikael,
+    email: "mikael.rinne@example.com",
     assignments: [
       { group_id: "preview-group-mantyranta", role: "primary" },
       { group_id: "preview-group-seikkailijat-2", role: "assistant" },
@@ -173,6 +175,7 @@ const GEDUS: GeduInvoicingGedu[] = [
   },
   {
     ...PEOPLE.sara,
+    email: "sara.vuorela@example.com",
     assignments: [{ group_id: "preview-group-kivikko", role: "assistant" }],
     substitutions: [],
     // Nobody picked it up.

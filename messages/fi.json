@@ -2381,7 +2381,10 @@
     "itemiseNote": "Erittele laskullasi kunta- ja kuluttajalaskutusten summat omille riveilleen.",
     "myUnrecorded": "{count, plural, one {# mennyt kerta on kirjaamatta, joten se ei ole mukana. Kun kirjaat sen ryhmän työtilassa, se lasketaan mukaan.} other {# mennyttä kertaa on kirjaamatta, joten ne eivät ole mukana. Kun kirjaat ne ryhmän työtilassa, ne lasketaan mukaan.}}",
     "loadError": "Laskutuskuukauden lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
-    "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen."
+    "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen.",
+    "searchPlaceholder": "Hae nimellä tai sähköpostilla…",
+    "searchAriaLabel": "Hae Geduja",
+    "searchNoMatches": "Hakua ”{query}” vastaavaa Gedua ei löydy tältä kuulta."
   },
   "productType": {
     "consumer_club": "Kerho",

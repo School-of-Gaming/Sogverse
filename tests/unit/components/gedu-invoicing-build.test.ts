@@ -80,6 +80,7 @@ function gedu(
   return {
     first_name: overrides.id === BENJAMIN ? "Benjamin" : "Aino",
     last_name: "Tester",
+    email: `${overrides.id}@example.com`,
     assignments: [],
     substitutions: [],
     absences: [],

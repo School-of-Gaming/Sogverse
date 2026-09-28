@@ -85,11 +85,16 @@ export const geduInvoicingAbsence = z.object({
   substitute: geduInvoicingCounterpart.nullable(),
 });
 
-/** One gedu with a seat in the month, and every seat they hold in it. */
+/**
+ * One gedu with a seat in the month, and every seat they hold in it. Only this
+ * entry carries an email — a counterpart is named, never addressed — and on the
+ * gedu's own read it is the caller's own address.
+ */
 export const geduInvoicingGedu = z.object({
   id: z.string(),
   first_name: z.string(),
   last_name: z.string(),
+  email: z.string(),
   assignments: z.array(geduInvoicingAssignment),
   substitutions: z.array(geduInvoicingSubstitution),
   absences: z.array(geduInvoicingAbsence),

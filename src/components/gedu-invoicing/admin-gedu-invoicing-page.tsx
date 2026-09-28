@@ -1,13 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   CountLine,
   CountLineWarning,
+  LEDGER_ROW_INSET,
   LedgerSection,
   LedgerSummaryLine,
 } from "@/components/invoicing-ledger/ledger";
@@ -17,7 +20,7 @@ import {
 } from "@/components/invoicing-ledger/month-stepper";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { cn, formatCurrencyFromCents } from "@/lib/utils";
 import { useNow } from "@/providers";
 import {
   useAdminGeduInvoicingMonth,
@@ -28,6 +31,7 @@ import {
   type GeduInvoice,
   type GeduInvoicingView,
 } from "./build-gedu-invoicing";
+import { filterGeduInvoices } from "./filter-gedu-invoices";
 import { GeduClubTable, fullName } from "./gedu-invoicing-clubs";
 
 /**
@@ -35,13 +39,18 @@ import { GeduClubTable, fullName } from "./gedu-invoicing-clubs";
  *
  * What each gedu invoices School of Gaming for, recomputed from today's facts
  * every time it is read: nothing here writes, snapshots or exports anything.
- * The shell owns the month the URL names, the clock, the reader's locale and
- * which gedus are open; everything else is one pure build over the document the
+ * The shell owns the month the URL names, the clock, the reader's locale, the
+ * search and which gedus are open; everything else is one pure build over the document the
  * route already fetched, which is why there is no loading state below this line.
  *
  * It is the municipality ledger's shape turned to the other side of the money —
  * one card, a summary line, one closed line per gedu, a club table under each —
  * and it is drawn from the same ledger parts, so the two read alike.
+ *
+ * The search narrows the list of gedus, never the month: the summary line
+ * states the whole month whatever is typed, and expand-all acts on the gedus
+ * the search left. The query outlives a step to another month, because the
+ * reader stepping through months is usually following one gedu.
  */
 export function AdminGeduInvoicingPage({
   monthStart,
@@ -89,9 +98,14 @@ export function AdminGeduInvoicingPage({
     setOpenIds(new Set<string>());
   }
 
+  const [query, setQuery] = useState("");
+  const shownGedus = useMemo(
+    () => filterGeduInvoices(invoice.gedus, query),
+    [invoice.gedus, query],
+  );
+
   const allOpen =
-    invoice.gedus.length > 0 &&
-    invoice.gedus.every((gedu) => openIds.has(gedu.id));
+    shownGedus.length > 0 && shownGedus.every((gedu) => openIds.has(gedu.id));
 
   return (
     // The gutter is reserved because opening a gedu is itself what makes the
@@ -109,19 +123,38 @@ export function AdminGeduInvoicingPage({
           nextLabel={t("nextMonth")}
         />
         {invoice.gedus.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setOpenIds(
-                allOpen
-                  ? new Set<string>()
-                  : new Set(invoice.gedus.map((gedu) => gedu.id)),
-              )
-            }
-          >
-            {allOpen ? t("collapseAll") : t("expandAll")}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={t("searchPlaceholder")}
+                aria-label={t("searchAriaLabel")}
+                className="h-9 pl-10"
+              />
+            </div>
+            {/* Kept in place while the search matches nobody, so the row does
+                not reflow under the reader's typing. */}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={shownGedus.length === 0}
+              onClick={() =>
+                setOpenIds((ids) => {
+                  const next = new Set(ids);
+                  for (const gedu of shownGedus) {
+                    if (allOpen) next.delete(gedu.id);
+                    else next.add(gedu.id);
+                  }
+                  return next;
+                })
+              }
+            >
+              {allOpen ? t("collapseAll") : t("expandAll")}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -130,8 +163,18 @@ export function AdminGeduInvoicingPage({
       ) : (
         <Card className="overflow-hidden">
           <MonthSummaryLine invoice={invoice} locale={locale} />
+          {shownGedus.length === 0 && (
+            <p
+              className={cn(
+                "border-t border-border py-2.5 text-sm text-muted-foreground",
+                LEDGER_ROW_INSET,
+              )}
+            >
+              {t("searchNoMatches", { query: query.trim() })}
+            </p>
+          )}
           <div className="divide-y divide-border border-t border-border">
-            {invoice.gedus.map((gedu) => (
+            {shownGedus.map((gedu) => (
               <GeduSection
                 key={gedu.id}
                 gedu={gedu}

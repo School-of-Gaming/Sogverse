@@ -2421,7 +2421,10 @@
     "itemiseNote": "ghItlhlIjDaq veng Huch tlhIngan Huch je yIwav.",
     "myUnrecorded": "{count, plural, one {# SeSSIy’ ret ghItlhlu’be’, vaj togh’be’lu’. ghom Qu’meH DaqDaq yIghItlh, vaj toghlu’.} other {# SeSSIy’mey ret ghItlhlu’be’, vaj togh’be’lu’. ghom Qu’meH DaqDaq yIghItlh, vaj toghlu’.}}",
     "loadError": "DIlmeH jar lI’laHbe’. yIchu’qa’.",
-    "loadErrorWithReason": "DIlmeH jar lI’laHbe’ — {reason}. yIchu’qa’."
+    "loadErrorWithReason": "DIlmeH jar lI’laHbe’ — {reason}. yIchu’qa’.",
+    "searchPlaceholder": "pong qoj QIn yInej…",
+    "searchAriaLabel": "Gedupu’ yInej",
+    "searchNoMatches": "pagh! jarvam ”{query}” rurbogh Gedu tu’lu’be’."
   },
   "productType": {
     "consumer_club": "ghom’a’",

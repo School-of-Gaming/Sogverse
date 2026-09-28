@@ -2381,7 +2381,10 @@
     "itemiseNote": "Specificera kommun- och konsumentsummorna var för sig på din faktura.",
     "myUnrecorded": "{count, plural, one {# tidigare tillfälle har inget registrerat, så det ingår inte. Registrera det i gruppens arbetsyta så räknas det med.} other {# tidigare tillfällen har inget registrerat, så de ingår inte. Registrera dem i gruppens arbetsyta så räknas de med.}}",
     "loadError": "Det gick inte att läsa in faktureringsmånaden. Uppdatera sidan och försök igen.",
-    "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen."
+    "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen.",
+    "searchPlaceholder": "Sök på namn eller e-post…",
+    "searchAriaLabel": "Sök Geduer",
+    "searchNoMatches": "Ingen Gedu den här månaden matchar ”{query}”."
   },
   "productType": {
     "consumer_club": "Klubb",
