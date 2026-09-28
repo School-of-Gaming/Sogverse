@@ -220,7 +220,9 @@ export function buildFamilySessionFeed(
     // sees that the date is off rather than finding it missing. The
     // cancellation wins over any stored row on the date: the family document
     // already leaves such a row out, and the entry carries nothing of one if
-    // it arrives anyway, so a report on a cancelled session never shows.
+    // it arrives anyway, so a report on a cancelled session never shows. A
+    // cancelled record the schedule no longer projects has no instants here
+    // at all — its row does not travel — so that date simply is not drawn.
     if (cancelledDates.has(date)) {
       entries.push({
         kind: "cancelled",

@@ -267,7 +267,7 @@ describe("readRecordedSessionsByGroup", () => {
         { session_id: S3, participant_id: GAMER, status: "present" },
         { session_id: S3, participant_id: GAMER_2, status: "absent" },
       ],
-      session_cancellations: () => [],
+      "rpc/get_session_cancellations_in_effect": () => [],
     });
     const sessions = await readRecordedSessionsByGroup(createFetchStubbedClient(fetch), [G1, G2]);
 
@@ -279,8 +279,10 @@ describe("readRecordedSessionsByGroup", () => {
     ]);
   });
 
-  it("drops a recorded session an admin cancelled, unless the cancellation is inert", async () => {
-    // Both sessions are on Thursday the 10th (weekday 3).
+  it("drops a recorded session the database says is cancelled, and asks it once for every group", async () => {
+    // Both sessions are on the 10th. Which cancellations are in effect is the
+    // database's answer — schedule edits included — so the read takes it as
+    // given: G1's date comes back cancelled, G2's does not.
     const session = (id: string, group_id: string) => ({
       id,
       group_id,
@@ -289,32 +291,22 @@ describe("readRecordedSessionsByGroup", () => {
       ends_at: "2026-09-10T16:30:00+00:00",
       report: "Written up",
     });
-    const cancellation = (
-      group_id: string,
-      product: { start_date: string; end_date: string | null; weekdays: number[] },
-    ) => ({
-      group_id,
-      session_date: "2026-09-10",
-      group: {
-        product: {
-          start_date: product.start_date,
-          end_date: product.end_date,
-          schedule_slots: product.weekdays.map((weekday) => ({ weekday })),
-        },
-      },
-    });
     const fetch = postgrestTables({
       group_sessions: () => [session(S1, G1), session(S3, G2)],
       session_attendance: () => [],
-      session_cancellations: () => [
-        // G1 still meets on Thursdays: the cancellation applies.
-        cancellation(G1, { start_date: "2026-09-01", end_date: null, weekdays: [3] }),
-        // G2 has moved to Mondays: the cancellation left behind is inert.
-        cancellation(G2, { start_date: "2026-09-01", end_date: null, weekdays: [0] }),
+      "rpc/get_session_cancellations_in_effect": () => [
+        { group_id: G1, session_date: "2026-09-10" },
       ],
     });
     const sessions = await readRecordedSessionsByGroup(createFetchStubbedClient(fetch), [G1, G2]);
 
     expect([...sessions.keys()]).toEqual([G2]);
+
+    const asked = fetch.mock.calls.filter(([input]) =>
+      requestedUrl(input).pathname.endsWith("/rpc/get_session_cancellations_in_effect"),
+    );
+    expect(asked).toHaveLength(1);
+    const body: unknown = JSON.parse(String(asked[0][1]?.body));
+    expect(body).toEqual({ p_group_ids: [G1, G2] });
   });
 });

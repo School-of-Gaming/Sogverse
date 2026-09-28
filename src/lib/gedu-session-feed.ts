@@ -57,10 +57,12 @@ import type {
  *   renders, for the same reason.
  * - **A cancellation replaces its date's entry — and beats a record too.** An
  *   admin's word that the session did not happen wins over anything stored
- *   for the date, which stays in the database and returns on a restore. It
- *   applies only to a date the feed would otherwise show, so one left behind by
- *   a weekday move stays inert, and the cancelled entry keeps its dated place
- *   on whichever side of the present its end instant puts it.
+ *   for the date, which stays in the database and returns on a restore —
+ *   including a record the schedule no longer projects, which the document's
+ *   cancellations still name. It applies only to a date the feed would
+ *   otherwise show, so one with neither a projection nor a row stays inert,
+ *   and the cancelled entry keeps its dated place on whichever side of the
+ *   present its end instant puts it.
  * - **Kind comes from dates, never from a column.** `now` against the session's
  *   *end* splits future from past, so a session in progress is the **current**
  *   one rather than history — the same rule the family feed uses, because the

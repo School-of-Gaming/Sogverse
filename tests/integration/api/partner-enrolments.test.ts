@@ -185,7 +185,7 @@ const TABLES = {
     session(S3, GROUP_1, null),
     session(S4, GROUP_2, "Final showcase"),
   ]),
-  session_cancellations: filteringTable([]),
+  "rpc/get_session_cancellations_in_effect": filteringTable([]),
   session_attendance: filteringTable([
     { session_id: S1, participant_id: GAMER_A, status: "present" },
     { session_id: S2, participant_id: GAMER_A, status: "absent" },
@@ -411,22 +411,12 @@ describe("GET /api/partner/v1/enrolments", () => {
   });
 
   it("does not count a recorded session an admin cancelled", async () => {
-    // S4 is GROUP_2's one recorded session, on Thursday the 10th of a product
-    // that meets on Thursdays: cancelled, it did not happen.
+    // S4 is GROUP_2's one recorded session, and the database answers its date
+    // cancelled: it did not happen.
     db.fetch = postgrestTables({
       ...TABLES,
-      session_cancellations: filteringTable([
-        {
-          group_id: GROUP_2,
-          session_date: "2026-09-10",
-          group: {
-            product: {
-              start_date: "2026-09-01",
-              end_date: null,
-              schedule_slots: [{ weekday: 3 }],
-            },
-          },
-        },
+      "rpc/get_session_cancellations_in_effect": filteringTable([
+        { group_id: GROUP_2, session_date: "2026-09-10" },
       ]),
     });
     const { response, body } = await get();

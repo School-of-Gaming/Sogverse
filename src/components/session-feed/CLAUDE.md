@@ -42,7 +42,12 @@ written up, and the cancelled line replaces the card: nothing recorded on the da
 report, photos, attendance — is drawn on either feed, and the family document does not
 carry the row at all. The record stays in the database, frozen, and a restore brings the
 card back as it was, because the admin's word that the session did not happen is trusted
-over anything written about it.
+over anything written about it. That holds after the schedule stops projecting the date:
+the staff feed still gets the cancellation and draws the cancelled line at the record's
+own instants, while the family feed, which has neither the row nor a projection to place
+the date by, draws nothing there rather than the report. The feeds draw whatever
+cancellations the document carries on a date they show; which cancellations are in effect
+is decided in the database, never re-derived here.
 
 The staff feed used to split on the session's *start*, because its kind was standing in
 for "may I take the register yet": making the running session `past` was how it reached

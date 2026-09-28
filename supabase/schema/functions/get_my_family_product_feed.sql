@@ -230,9 +230,12 @@ BEGIN
          AND NOT public.group_session_is_cancelled(s.group_id, s.session_date)
     ) AS session_rows;
 
-  -- Cancellation: the group's cancelled sessions the schedule still projects,
-  -- newest first, as a date and NOTHING ELSE. The reason and who cancelled are
-  -- admin-only; a family is told the session is off, not why.
+  -- Cancellation: the group's cancelled sessions in effect, newest first, as a
+  -- date and NOTHING ELSE. The reason and who cancelled are admin-only; a
+  -- family is told the session is off, not why. One kept over a record the
+  -- schedule no longer projects travels too, and the record beside it does
+  -- not (above): the family has no instants to draw it at, so the date
+  -- simply stops being shown rather than showing the report.
   SELECT COALESCE(
            jsonb_agg(
              jsonb_build_object('session_date', sc.session_date)
@@ -243,7 +246,7 @@ BEGIN
     INTO v_cancellations
     FROM public.session_cancellations sc
    WHERE sc.group_id = v_group_id
-     AND public.group_session_date_is_scheduled(sc.group_id, sc.session_date);
+     AND public.group_session_is_cancelled(sc.group_id, sc.session_date);
 
   RETURN jsonb_build_object(
     'participant', v_participant,

@@ -458,12 +458,10 @@ export async function readAttendance(
  *
  * An admin may cancel a session that was already recorded, and the admin's
  * word wins: the record is kept, but the session did not happen, so no
- * resource reports it as held. Only a cancellation on a date the group's
- * schedule still projects counts — on or after the product's start, on or
- * before its end where it has one,
- * on a weekday it has a slot for — exactly as the database decides it
- * everywhere else; one orphaned by a weekday move is inert, and the row beside
- * it is history.
+ * resource reports it as held — whatever the schedule has done since. Which
+ * cancellations are in effect is the database's one answer, read here rather
+ * than re-derived, so this cannot drift from the feeds, the invoice or the
+ * owed count.
  */
 export async function readCancelledSessions(
   db: PartnerDb,
@@ -473,24 +471,17 @@ export async function readCancelledSessions(
   for (const chunk of chunkKeys(unique(groupIds))) {
     const rows = await walkPages("partner session cancellations", (from, to) =>
       db
-        .from("session_cancellations")
-        .select(
-          "group_id, session_date, group:product_groups!inner(product:products!inner(start_date, end_date, schedule_slots(weekday)))",
+        .rpc(
+          "get_session_cancellations_in_effect",
+          { p_group_ids: chunk },
           { count: "exact" },
         )
-        .in("group_id", chunk)
         .order("group_id")
         .order("session_date")
         .range(from, to),
     );
     for (const row of rows) {
-      const { start_date, end_date, schedule_slots } = row.group.product;
-      const date = row.session_date;
-      const scheduled =
-        date >= start_date &&
-        (end_date === null || date <= end_date) &&
-        schedule_slots.some((slot) => slot.weekday === isoWeekdayIndex(date));
-      if (scheduled) cancelled.add(cancelledSessionKey(row.group_id, date));
+      cancelled.add(cancelledSessionKey(row.group_id, row.session_date));
     }
   }
   return cancelled;
@@ -499,14 +490,6 @@ export async function readCancelledSessions(
 /** The key `readCancelledSessions` answers in: one (group, product-local date). */
 export function cancelledSessionKey(groupId: string, sessionDate: string): string {
   return `${groupId}|${sessionDate}`;
-}
-
-/**
- * A bare `YYYY-MM-DD`'s weekday as a schedule slot numbers it, 0 = Monday.
- * UTC-pinned: the date has no time of day, so there is no zone to convert.
- */
-function isoWeekdayIndex(date: string): number {
-  return (new Date(`${date}T00:00:00.000Z`).getUTCDay() + 6) % 7;
 }
 
 /**

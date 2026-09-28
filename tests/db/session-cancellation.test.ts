@@ -35,9 +35,11 @@ import {
  *   2. **The reason is admin-only.** The admin documents carry it; a gedu's
  *      feed carries the date with the detail nulled, and a family's carries the
  *      date and nothing else.
- *   3. **A cancellation only subtracts from projected dates.** Once the schedule
- *      stops projecting a cancelled date, nothing surfaces it; moving the
- *      schedule back makes it apply again.
+ *   3. **A cancellation is in effect on a projected date or over a record.** A
+ *      cancelled record stays cancelled on every surface when a slot is removed
+ *      or the term narrowed; a cancellation with neither a projection nor a
+ *      record is inert and surfaces nowhere, and moving the schedule back makes
+ *      it apply again.
  *
  * Layout. PRODUCT runs a 23:00 UTC hour every day of the week, so any date in
  * the run is a session date and "yesterday" has finished whatever the clock
@@ -224,6 +226,59 @@ describe("session cancellation", () => {
     if (row === undefined) throw new Error("fixture assignment missing");
     return row.attention_count;
   }
+
+  /** The partner API's read: GROUP's cancelled dates in effect. */
+  async function cancellationsInEffect(): Promise<string[]> {
+    const { data, error } = await admin.rpc("get_session_cancellations_in_effect", {
+      p_group_ids: [GROUP],
+    });
+    expect(error).toBeNull();
+    return (data ?? []).map((row) => row.session_date);
+  }
+
+  /**
+   * The two schedule edits that stop the schedule projecting YESTERDAY for
+   * PRODUCT (and CLUB_DATE for CLUB), each with the edit that puts it back.
+   */
+  const UNPROJECTIONS = [
+    {
+      name: "its weekday's slot is removed",
+      async apply(product: string, date: string) {
+        const { error } = await admin
+          .from("schedule_slots")
+          .delete()
+          .eq("product_id", product)
+          .eq("weekday", weekdayOf(date));
+        expect(error).toBeNull();
+      },
+      async undo(product: string, date: string) {
+        await createScheduleSlot(admin, product, {
+          weekday: weekdayOf(date),
+          startTime: product === CLUB ? "14:00" : "23:00",
+          durationMinutes: 60,
+        });
+      },
+    },
+    {
+      name: "the term is narrowed to end before it",
+      async apply(product: string, date: string) {
+        const end = new Date(`${date}T12:00:00Z`);
+        end.setUTCDate(end.getUTCDate() - 1);
+        const { error } = await admin
+          .from("products")
+          .update({ end_date: end.toISOString().slice(0, 10) })
+          .eq("id", product);
+        expect(error).toBeNull();
+      },
+      async undo(product: string) {
+        const { error } = await admin
+          .from("products")
+          .update({ end_date: product === CLUB ? "2031-05-30" : null })
+          .eq("id", product);
+        expect(error).toBeNull();
+      },
+    },
+  ] as const;
 
   // -------------------------------------------------------------------------
   // cancel / restore
@@ -543,6 +598,7 @@ describe("session cancellation", () => {
       expect((await adminDocumentGroup()).cancellations).toEqual([]);
       expect((await geduFeedAs(geduAuth)).cancellations).toEqual([]);
       expect((await familyFeed()).cancellations).toEqual([]);
+      expect(await cancellationsInEffect()).toEqual([]);
       // The row itself is kept, not swept.
       const kept = await admin
         .from("session_cancellations")
@@ -608,5 +664,152 @@ describe("session cancellation", () => {
       { group_id: CLUB_GROUP, session_date: CLUB_DATE },
     ]);
     expect(restored?.cancelled_sessions).toEqual([]);
+  });
+
+  // -------------------------------------------------------------------------
+  // a cancelled record stays cancelled through a schedule edit
+  // -------------------------------------------------------------------------
+
+  for (const unprojection of UNPROJECTIONS) {
+    it(`keeps a cancelled record cancelled everywhere when ${unprojection.name}, and a restore brings it back as history`, async () => {
+      const notes = await geduAuth.rpc("set_group_session_notes", {
+        p_group_id: GROUP,
+        p_session_date: YESTERDAY,
+        p_report: "We built a castle.",
+        p_gedu_note: "",
+      });
+      expect(notes.error).toBeNull();
+      const photo = await geduAuth.rpc("add_group_session_image", {
+        p_group_id: GROUP,
+        p_session_date: YESTERDAY,
+        p_width: 800,
+        p_height: 600,
+        p_max_images: 8,
+      });
+      expect(photo.error).toBeNull();
+      const imageId = photo.data;
+      if (imageId === null) throw new Error("the photo was not attached");
+      expect((await cancel(YESTERDAY, "Venue flooded")).error).toBeNull();
+
+      await unprojection.apply(PRODUCT, YESTERDAY);
+      try {
+        // The family still gets no report, and is told the date is off.
+        const family = await familyFeed();
+        expect(family.sessions.map((s) => s.session_date)).not.toContain(YESTERDAY);
+        expect(family.cancellations).toEqual([{ session_date: YESTERDAY }]);
+
+        // The staff feed keeps the row and still names the cancellation, so
+        // the card draws it cancelled; the admin page lists it to restore.
+        const staff = await geduFeedAs(geduAuth);
+        expect(staff.sessions.map((s) => s.session_date)).toContain(YESTERDAY);
+        expect(staff.cancellations.map((c) => c.session_date)).toEqual([YESTERDAY]);
+        expect((await adminDocumentGroup()).cancellations).toEqual([
+          expect.objectContaining({ session_date: YESTERDAY, reason: "Venue flooded" }),
+        ]);
+        expect(await cancellationsInEffect()).toEqual([YESTERDAY]);
+
+        // Still frozen. The writes that do not ask the schedule are refused
+        // by the cancellation itself; the ones that do are refused already.
+        const refusedRemovalCheck = await geduAuth.rpc(
+          "assert_can_delete_session_image",
+          { p_image_id: imageId },
+        );
+        expect(refusedRemovalCheck.error?.code).toBe(SESSION_CANCELLED_SQLSTATE);
+        const refusedRemoval = await geduAuth.rpc("delete_group_session_image", {
+          p_image_id: imageId,
+        });
+        expect(refusedRemoval.error?.code).toBe(SESSION_CANCELLED_SQLSTATE);
+        const claim = await geduAuth.rpc("claim_group_session_report_email", {
+          p_group_id: GROUP,
+          p_session_date: YESTERDAY,
+        });
+        expect(claim.error?.code).toBe(SESSION_CANCELLED_SQLSTATE);
+        const refusedNotes = await geduAuth.rpc("set_group_session_notes", {
+          p_group_id: GROUP,
+          p_session_date: YESTERDAY,
+          p_report: "Should not land",
+          p_gedu_note: "",
+        });
+        expect(refusedNotes.error).not.toBeNull();
+
+        // Still cancellable: an admin can re-word it where it stands.
+        const reworded = await cancel(YESTERDAY, "Venue closed");
+        expect(reworded.error).toBeNull();
+
+        // Not owed while cancelled; owed again as history once restored.
+        const owedCancelled = await attentionCount();
+        const restored = await adminAuth.rpc("restore_session", {
+          p_group_id: GROUP,
+          p_session_date: YESTERDAY,
+        });
+        expect(restored.data).toBe(true);
+        expect(await attentionCount()).toBe(owedCancelled + 1);
+
+        const back = await familyFeed();
+        expect(back.sessions.find((s) => s.session_date === YESTERDAY)).toMatchObject({
+          report: "We built a castle.",
+        });
+        expect(back.cancellations).toEqual([]);
+        expect((await geduFeedAs(geduAuth)).cancellations).toEqual([]);
+        expect(await cancellationsInEffect()).toEqual([]);
+      } finally {
+        await unprojection.undo(PRODUCT, YESTERDAY);
+      }
+    });
+
+    it(`keeps a cancelled record off the invoice when ${unprojection.name}`, async () => {
+      const notes = await adminAuth.rpc("set_group_session_notes", {
+        p_group_id: CLUB_GROUP,
+        p_session_date: CLUB_DATE,
+        p_report: "Built a bridge.",
+        p_gedu_note: "",
+      });
+      expect(notes.error).toBeNull();
+      const cancelled = await adminAuth.rpc("cancel_session", {
+        p_group_id: CLUB_GROUP,
+        p_session_date: CLUB_DATE,
+      });
+      expect(cancelled.error).toBeNull();
+
+      async function clubDocument() {
+        const { data, error } = await adminAuth.rpc("get_admin_municipality_invoicing", {
+          p_month_start: CLUB_MONTH,
+        });
+        expect(error).toBeNull();
+        return municipalityInvoicingSnapshot
+          .parse(data)
+          .clubs.find((c) => c.id === CLUB);
+      }
+
+      await unprojection.apply(CLUB, CLUB_DATE);
+      try {
+        const club = await clubDocument();
+        expect(club?.sessions).toEqual([]);
+        expect(club?.cancelled_sessions).toEqual([
+          { group_id: CLUB_GROUP, session_date: CLUB_DATE },
+        ]);
+
+        // Restored, it is a recorded session the schedule no longer projects,
+        // and records beat projections: it bills.
+        await adminAuth.rpc("restore_session", {
+          p_group_id: CLUB_GROUP,
+          p_session_date: CLUB_DATE,
+        });
+        const restored = await clubDocument();
+        expect(restored?.sessions).toEqual([
+          { group_id: CLUB_GROUP, session_date: CLUB_DATE },
+        ]);
+        expect(restored?.cancelled_sessions).toEqual([]);
+      } finally {
+        await unprojection.undo(CLUB, CLUB_DATE);
+      }
+    });
+  }
+
+  it("keeps the partner API's cancellation read to the service role", async () => {
+    const { error } = await adminAuth.rpc("get_session_cancellations_in_effect", {
+      p_group_ids: [GROUP],
+    });
+    expect(error?.code).toBe("42501");
   });
 });

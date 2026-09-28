@@ -24,7 +24,7 @@ $$;
 -- Name: FUNCTION group_session_date_is_scheduled(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.group_session_date_is_scheduled(p_group_id uuid, p_session_date date) IS 'Does the CURRENT schedule project a session on this date: inside the product''s start and end dates and on a weekday it has a slot for. The writable-date check minus its visible horizon — what a cancellation is validated against, and what decides whether a stored cancellation still applies.';
+COMMENT ON FUNCTION public.group_session_date_is_scheduled(p_group_id uuid, p_session_date date) IS 'Does the CURRENT schedule project a session on this date: inside the product''s start and end dates and on a weekday it has a slot for. The writable-date check minus its visible horizon — what a new cancellation is validated against, and one of the two ways a stored cancellation stays in effect (group_session_is_cancelled).';
 
 
 --

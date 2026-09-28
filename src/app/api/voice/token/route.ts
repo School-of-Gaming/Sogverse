@@ -201,9 +201,7 @@ export const POST = defineRoute({
     // it no chat. Asked after the membership gate, so only a member learns the
     // session was cancelled. The date is the product-local date of the open
     // slot's own start — the session's date however its window straddles
-    // midnight, as the substitution arm reads it — and the schedule projected
-    // it, so a raw existence test is the same answer
-    // `group_session_is_cancelled` would give.
+    // midnight, as the substitution arm reads it.
     if (
       await sessionIsCancelled(
         admin,
@@ -427,25 +425,24 @@ async function holdsSubstitutionOn(
 /**
  * Has an admin cancelled this group's session on this product-local date?
  *
- * Read straight off the table: this route runs on the service-role client, the
- * only role the table is granted to. A failed read throws rather than answering
- * "not cancelled", so an outage refuses the join instead of opening a room the
- * database would have kept shut.
+ * The database's one answer, asked rather than re-derived: this route runs on
+ * the service-role client, the only role the predicate is granted to, and the
+ * chat room's own gate asks the same function. A failed read throws rather than
+ * answering "not cancelled", so an outage refuses the join instead of opening a
+ * room the database would have kept shut.
  */
 async function sessionIsCancelled(
   admin: ReturnType<typeof createAdminClient>,
   groupId: string,
   sessionDate: string,
 ): Promise<boolean> {
-  const { data, error } = await admin
-    .from("session_cancellations")
-    .select("group_id")
-    .eq("group_id", groupId)
-    .eq("session_date", sessionDate)
-    .maybeSingle();
+  const { data, error } = await admin.rpc("group_session_is_cancelled", {
+    p_group_id: groupId,
+    p_session_date: sessionDate,
+  });
 
   if (error) throw error;
-  return data !== null;
+  return data;
 }
 
 /**

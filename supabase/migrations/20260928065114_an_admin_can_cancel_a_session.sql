@@ -20,15 +20,19 @@
 -- the same (group, date) advisory lock, so a write cannot land past a
 -- cancellation committed beside it.
 --
--- A CANCELLATION ONLY SUBTRACTS FROM PROJECTED DATES
+-- WHEN A CANCELLATION IS IN EFFECT
 --
--- A cancellation on a date the current schedule no longer projects (the admin
--- moved the weekday afterwards) is inert: it is never surfaced on its own, and
--- the feeds emit only cancellations the schedule still projects. The row is
--- kept rather than swept, so moving the weekday back makes the cancellation
--- apply again. The invoicing document is the one exception and returns the raw
--- pairs, because its builder already walks the projected dates and applies
--- them there.
+-- One predicate answers it everywhere: a cancellation row exists AND either
+-- the current schedule projects the date or the date holds a stored session
+-- row. So a cancellation on a recorded date keeps winning over the record
+-- whatever later happens to the schedule — removing the weekday's slot or
+-- narrowing the term cannot bring a kept report back to the families, back
+-- onto an invoice or back onto the owed count. A cancellation on a date with
+-- neither a projection nor a row (the weekday moved before anything was
+-- recorded) is inert: it renders nothing and is never surfaced. The row is
+-- kept rather than swept, so moving the schedule back makes it apply again.
+-- Every reader and writer below asks that one predicate, and the feeds and the
+-- invoicing document emit exactly the cancellations it holds true for.
 --
 -- WHO SEES WHAT
 --
@@ -56,7 +60,7 @@ CREATE TABLE public.session_cancellations (
       FOREIGN KEY (cancelled_by) REFERENCES public.profiles(id) ON DELETE RESTRICT
 );
 
-COMMENT ON TABLE public.session_cancellations IS 'One row per cancelled session, keyed exactly as group_sessions is: (group, product-local date). Written and removed only by cancel_session and restore_session (admin-only); no client role holds a grant, and RLS is on with no policy. A cancellation may share its key with a group_sessions row, and then it wins: the row is kept but frozen (every write on a cancelled date is refused with P0026, under the advisory lock cancel_session also takes), the family feed stops carrying it, and every reader that treats a stored row as "the session ran" excludes it until the session is restored. A cancellation on a date the schedule no longer projects is INERT — it subtracts only from projected dates and is never surfaced by itself — and is kept so that moving the schedule back re-applies it.';
+COMMENT ON TABLE public.session_cancellations IS 'One row per cancelled session, keyed exactly as group_sessions is: (group, product-local date). Written and removed only by cancel_session and restore_session (admin-only); no client role holds a grant, and RLS is on with no policy. A cancellation may share its key with a group_sessions row, and then it wins: the row is kept but frozen (every write on a cancelled date is refused with P0026, under the advisory lock cancel_session also takes), the family feed stops carrying it, and every reader that treats a stored row as "the session ran" excludes it until the session is restored — whatever the schedule does afterwards. Whether a row is in effect is group_session_is_cancelled''s answer and no reader''s own: a cancellation on a date with neither a schedule projection nor a stored row is INERT, never surfaced, and kept so that moving the schedule back re-applies it.';
 COMMENT ON COLUMN public.session_cancellations.reason IS 'Why the session was cancelled, admin-only on every read, exactly as a substitution reason is. Trimmed and nulled when blank by cancel_session; the CHECK caps it at 500 characters.';
 COMMENT ON COLUMN public.session_cancellations.cancelled_by IS 'The admin who cancelled (or last re-worded) the cancellation. RESTRICT rather than SET NULL because the column is NOT NULL: who called a session off is part of the record.';
 
@@ -100,7 +104,7 @@ CREATE FUNCTION public.group_session_date_is_scheduled(p_group_id uuid, p_sessio
      AND public.derive_group_session_window(p_group_id, p_session_date) IS NOT NULL;
 $$;
 
-COMMENT ON FUNCTION public.group_session_date_is_scheduled(p_group_id uuid, p_session_date date) IS 'Does the CURRENT schedule project a session on this date: inside the product''s start and end dates and on a weekday it has a slot for. The writable-date check minus its visible horizon — what a cancellation is validated against, and what decides whether a stored cancellation still applies.';
+COMMENT ON FUNCTION public.group_session_date_is_scheduled(p_group_id uuid, p_session_date date) IS 'Does the CURRENT schedule project a session on this date: inside the product''s start and end dates and on a weekday it has a slot for. The writable-date check minus its visible horizon — what a new cancellation is validated against, and one of the two ways a stored cancellation stays in effect (group_session_is_cancelled).';
 
 REVOKE ALL ON FUNCTION public.group_session_date_is_scheduled(p_group_id uuid, p_session_date date) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.group_session_date_is_scheduled(p_group_id uuid, p_session_date date) TO service_role;
@@ -116,10 +120,22 @@ CREATE FUNCTION public.group_session_is_cancelled(p_group_id uuid, p_session_dat
             WHERE c.group_id     = p_group_id
               AND c.session_date = p_session_date
          )
-     AND public.group_session_date_is_scheduled(p_group_id, p_session_date);
+     AND (
+           public.group_session_date_is_scheduled(p_group_id, p_session_date)
+           -- A kept record holds its cancellation whatever the schedule does
+           -- next: without this arm, removing the slot or narrowing the term
+           -- would hand a cancelled session's report back to the families and
+           -- its date back to the invoice.
+           OR EXISTS (
+                SELECT 1
+                  FROM public.group_sessions s
+                 WHERE s.group_id     = p_group_id
+                   AND s.session_date = p_session_date
+              )
+         );
 $$;
 
-COMMENT ON FUNCTION public.group_session_is_cancelled(p_group_id uuid, p_session_date date) IS 'Is this (group, date) a cancelled session: a cancellation row exists AND the current schedule still projects the date. A cancellation on a date the schedule no longer projects is inert and answers false here.';
+COMMENT ON FUNCTION public.group_session_is_cancelled(p_group_id uuid, p_session_date date) IS 'THE test for whether a (group, date) is a cancelled session, asked by every reader and writer: a cancellation row exists AND either the current schedule projects the date or a group_sessions row is stored on it. A cancellation over a stored record therefore stays in effect through any later schedule or term edit. One on a date with neither a projection nor a row is inert and answers false here; it is kept, and applies again if the schedule moves back.';
 
 REVOKE ALL ON FUNCTION public.group_session_is_cancelled(p_group_id uuid, p_session_date date) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.group_session_is_cancelled(p_group_id uuid, p_session_date date) TO service_role;
@@ -178,11 +194,23 @@ BEGIN
     RAISE EXCEPTION 'Group not found' USING ERRCODE = 'P0002';
   END IF;
 
-  -- The schedule must project the date, but there is deliberately no visible
-  -- horizon: an admin calling off a session months ahead inside the term (a
-  -- holiday, a closed venue) is the ordinary case, and a past session is
-  -- cancellable too.
-  IF NOT public.group_session_date_is_scheduled(p_group_id, p_session_date) THEN
+  -- The date must be a session: one the schedule projects, or one holding a
+  -- stored record — exactly the dates group_session_is_cancelled can answer
+  -- true for, so a cancellation written here is never born inert. The record
+  -- arm is what lets an admin re-word the reason on a cancelled record whose
+  -- slot has since been removed, and call off a record the schedule no longer
+  -- projects. There is deliberately no visible horizon: an admin calling off a
+  -- session months ahead inside the term (a holiday, a closed venue) is the
+  -- ordinary case, and a past session is cancellable too.
+  IF NOT (
+       public.group_session_date_is_scheduled(p_group_id, p_session_date)
+       OR EXISTS (
+            SELECT 1
+              FROM public.group_sessions s
+             WHERE s.group_id     = p_group_id
+               AND s.session_date = p_session_date
+          )
+     ) THEN
     RAISE EXCEPTION 'No scheduled session on % for this group', p_session_date
       USING ERRCODE = 'check_violation';
   END IF;
@@ -209,7 +237,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.cancel_session(p_group_id uuid, p_session_date date, p_reason text) IS 'An admin cancels one session — a (group, date) the current schedule projects, past or future, with no visible-horizon bound. The optional reason is trimmed and nulled when blank. A date that already holds a record (report, note, photo or attendance) is cancelled all the same: the admin''s word wins, nothing is deleted, and the record stays frozen and hidden until a restore. Taken under the (group, date) advisory lock every session write also takes. Cancelling an already-cancelled session is an UPSERT: the reason is replaced and cancelled_by / cancelled_at move to the caller. Returns the cancellation document with every admin field, plus group_id. Admin-only, guard-first.';
+COMMENT ON FUNCTION public.cancel_session(p_group_id uuid, p_session_date date, p_reason text) IS 'An admin cancels one session — a (group, date) the current schedule projects or that holds a stored record, past or future, with no visible-horizon bound; those are exactly the dates on which group_session_is_cancelled can hold, so no cancellation is written inert. The optional reason is trimmed and nulled when blank. A date that already holds a record (report, note, photo or attendance) is cancelled all the same: the admin''s word wins, nothing is deleted, and the record stays frozen and hidden until a restore. Taken under the (group, date) advisory lock every session write also takes. Cancelling an already-cancelled session is an UPSERT: the reason is replaced and cancelled_by / cancelled_at move to the caller. Returns the cancellation document with every admin field, plus group_id. Admin-only, guard-first.';
 
 REVOKE ALL ON FUNCTION public.cancel_session(p_group_id uuid, p_session_date date, p_reason text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.cancel_session(p_group_id uuid, p_session_date date, p_reason text) TO authenticated;
@@ -238,7 +266,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.restore_session(p_group_id uuid, p_session_date date) IS 'An admin restores a cancelled session by removing its cancellation, which reopens every write on that date and brings back any record kept on it. Idempotent: returns true when a cancellation was removed and false when there was none. Deliberately no schedule check, so an inert cancellation on a date the schedule no longer projects can still be cleared. Admin-only, guard-first.';
+COMMENT ON FUNCTION public.restore_session(p_group_id uuid, p_session_date date) IS 'An admin restores a cancelled session by removing its cancellation, which reopens every write on that date and brings back any record kept on it. Idempotent: returns true when a cancellation was removed and false when there was none. Deliberately no schedule check, so a cancellation on a date the schedule no longer projects — in effect over a kept record, or inert — can still be cleared. Admin-only, guard-first.';
 
 REVOKE ALL ON FUNCTION public.restore_session(p_group_id uuid, p_session_date date) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.restore_session(p_group_id uuid, p_session_date date) TO authenticated;
@@ -266,14 +294,15 @@ BEGIN
   -- committed beside it. Every session write that names a date (notes,
   -- attendance, a photo) reaches the table through here, which is what makes
   -- this the one refusal they share.
+  --
+  -- The effective test, as every other writer asks it. It refuses every date
+  -- holding a row under a cancellation, whatever the schedule now says. The
+  -- one date it lets through with a cancellation on it — no row and no
+  -- projection — is refused anyway below, because the schedule derives no
+  -- window for it.
   PERFORM public.lock_group_session_key(p_group_id, p_session_date);
 
-  IF EXISTS (
-       SELECT 1
-         FROM public.session_cancellations c
-        WHERE c.group_id     = p_group_id
-          AND c.session_date = p_session_date
-     ) THEN
+  IF public.group_session_is_cancelled(p_group_id, p_session_date) THEN
     RAISE EXCEPTION 'The session on % is cancelled', p_session_date
       USING ERRCODE = 'P0026';
   END IF;
@@ -642,16 +671,9 @@ BEGIN
           JOIN public.schedule_slots s ON s.product_id = v_product_id
            -- schedule_slots.weekday is 0 = Monday; ISODOW is 1 = Monday.
            WHERE s.weekday = (EXTRACT(ISODOW FROM cd.session_date)::integer - 1)
-             -- Cancellation: a cancelled session opens no room. The dates
-             -- here are schedule-projected by the join above, so a raw
-             -- existence test is the same answer group_session_is_cancelled
-             -- would give.
-             AND NOT EXISTS (
-                   SELECT 1
-                     FROM public.session_cancellations sc
-                    WHERE sc.group_id     = p_group_id
-                      AND sc.session_date = cd.session_date
-                 )
+             -- Cancellation: a cancelled session opens no room, by the one
+             -- effective test every other reader asks.
+             AND NOT public.group_session_is_cancelled(p_group_id, cd.session_date)
       ) o
      WHERE now() >= o.opens_at
        AND now() <  o.closes_at
@@ -973,9 +995,10 @@ BEGIN
         ), '[]'::jsonb),
 
         -- Cancellation: the group's cancelled sessions, newest first, with
-        -- every admin field — this document is admin-only end to end. Only
-        -- dates the schedule still projects travel: a cancellation left behind
-        -- by a weekday move is inert and is never surfaced on its own.
+        -- every admin field — this document is admin-only end to end. Exactly
+        -- the ones in effect: a cancellation over a kept record travels even
+        -- where the schedule no longer projects its date, so the page can
+        -- still restore it, and an inert one is never surfaced.
         'cancellations', COALESCE((
           SELECT jsonb_agg(
                    public.session_cancellation_document(sc, true)
@@ -983,7 +1006,7 @@ BEGIN
                  )
             FROM public.session_cancellations sc
            WHERE sc.group_id = g.id
-             AND public.group_session_date_is_scheduled(sc.group_id, sc.session_date)
+             AND public.group_session_is_cancelled(sc.group_id, sc.session_date)
         ), '[]'::jsonb)
       ) AS entry
         FROM public.product_groups g
@@ -1304,8 +1327,10 @@ BEGIN
    WHERE r.group_id = p_group_id
      AND r.status <> 'withdrawn'::public.substitution_request_status;
 
-  -- Cancellation: the group's cancelled sessions the schedule still projects,
-  -- newest first. The reason, who cancelled and when ride for an ADMIN caller
+  -- Cancellation: the group's cancelled sessions in effect, newest first —
+  -- including one over a kept record the schedule no longer projects, which
+  -- the feed draws as cancelled in the record's place rather than as the
+  -- record. The reason, who cancelled and when ride for an ADMIN caller
   -- only, keyed to the caller exactly as a substitution reason is: a gedu
   -- learns that the session is off and nothing about why.
   SELECT COALESCE(
@@ -1318,7 +1343,7 @@ BEGIN
     INTO v_cancellations
     FROM public.session_cancellations sc
    WHERE sc.group_id = p_group_id
-     AND public.group_session_date_is_scheduled(sc.group_id, sc.session_date);
+     AND public.group_session_is_cancelled(sc.group_id, sc.session_date);
 
   RETURN jsonb_build_object(
     'product',  v_product,
@@ -1562,9 +1587,12 @@ BEGIN
          AND NOT public.group_session_is_cancelled(s.group_id, s.session_date)
     ) AS session_rows;
 
-  -- Cancellation: the group's cancelled sessions the schedule still projects,
-  -- newest first, as a date and NOTHING ELSE. The reason and who cancelled are
-  -- admin-only; a family is told the session is off, not why.
+  -- Cancellation: the group's cancelled sessions in effect, newest first, as a
+  -- date and NOTHING ELSE. The reason and who cancelled are admin-only; a
+  -- family is told the session is off, not why. One kept over a record the
+  -- schedule no longer projects travels too, and the record beside it does
+  -- not (above): the family has no instants to draw it at, so the date
+  -- simply stops being shown rather than showing the report.
   SELECT COALESCE(
            jsonb_agg(
              jsonb_build_object('session_date', sc.session_date)
@@ -1575,7 +1603,7 @@ BEGIN
     INTO v_cancellations
     FROM public.session_cancellations sc
    WHERE sc.group_id = v_group_id
-     AND public.group_session_date_is_scheduled(sc.group_id, sc.session_date);
+     AND public.group_session_is_cancelled(sc.group_id, sc.session_date);
 
   RETURN jsonb_build_object(
     'participant', v_participant,
@@ -1787,13 +1815,11 @@ BEGIN
                       AND NOT public.group_session_is_cancelled(gs.group_id, gs.session_date)
                  ), '[]'::jsonb) AS items
         ) se
-        -- Cancellation: the month's cancelled (group, date) pairs, raw and in
-        -- the same shape as `sessions`, so the page can show a cancelled date
-        -- as Cancelled rather than as unrecorded and never bill it. Raw on
-        -- purpose: the page already walks the dates the schedule projects and
-        -- applies these to those alone, which is what keeps a cancellation
-        -- orphaned by a weekday move inert here as everywhere else. A pair
-        -- the schedule still projects never also appears in `sessions`.
+        -- Cancellation: the month's cancelled (group, date) pairs in effect,
+        -- in the same shape as `sessions`, so the page can show a cancelled
+        -- date as Cancelled rather than as unrecorded and never bill it. The
+        -- same predicate `sessions` excludes by, so a pair here never also
+        -- appears there, and an inert cancellation appears in neither.
         CROSS JOIN LATERAL (
           SELECT COALESCE((
                    SELECT jsonb_agg(
@@ -1808,6 +1834,7 @@ BEGIN
                     WHERE g.product_id = c.id
                       AND sc.session_date >= p_month_start
                       AND sc.session_date <= v_month_end
+                      AND public.group_session_is_cancelled(sc.group_id, sc.session_date)
                  ), '[]'::jsonb) AS items
         ) cx
         -- Every group the club has, whether or not the month says anything
@@ -1984,12 +2011,7 @@ BEGIN
               WHERE s.product_id = p.id
                 AND s.weekday = (EXTRACT(ISODOW FROM d)::integer - 1)
            )
-           AND NOT EXISTS (
-             SELECT 1
-               FROM public.session_cancellations sc
-              WHERE sc.group_id     = g.id
-                AND sc.session_date = d::date
-           )
+           AND NOT public.group_session_is_cancelled(g.id, d::date)
       ) AS final_occurrence
 
       LEFT JOIN LATERAL (
@@ -2124,10 +2146,10 @@ BEGIN
            )
            -- Cancellation: a cancelled session owes nothing — nothing ran, so
            -- there is no register, report or mail to ask for, and a record
-           -- kept under the cancellation is frozen rather than owed. The
-           -- effective test, not a raw one, because the stored-row arm can
-           -- reach a date the schedule no longer projects, where a
-           -- cancellation is inert. This has the same TypeScript twin as the
+           -- kept under the cancellation is frozen rather than owed — and
+           -- stays so when the stored-row arm reaches it on a date the
+           -- schedule no longer projects, because a cancellation over a
+           -- record stays in effect. This has the same TypeScript twin as the
            -- rule above, and it learns it too.
            AND NOT public.group_session_is_cancelled(g.id, occurrence.session_date)
            -- "Needs attention" is FOUR questions joined by OR, and any one
@@ -2276,7 +2298,9 @@ END;
 $$;
 
 
-COMMENT ON FUNCTION public.ensure_group_session(p_group_id uuid, p_session_date date) IS 'Find-or-create the session row for a (group, date), snapshotting the schedule instants at first write and never re-deriving them afterwards. Refuses a CANCELLED date with SQLSTATE P0026 whether or not it already holds a row — a record kept under a cancellation is frozen until a restore — asked first, under the (group, date) advisory lock cancel_session also takes. That is the one refusal every dated session write (notes, attendance, a photo) shares, since each reaches the table through here.';
+COMMENT ON FUNCTION public.ensure_group_session(p_group_id uuid, p_session_date date) IS 'Find-or-create the session row for a (group, date), snapshotting the schedule instants at first write and never re-deriving them afterwards. Refuses a CANCELLED date (group_session_is_cancelled) with SQLSTATE P0026 whether or not it already holds a row — a record kept under a cancellation is frozen until a restore, whatever the schedule does meanwhile — asked first, under the (group, date) advisory lock cancel_session also takes. That is the one refusal every dated session write (notes, attendance, a photo) shares, since each reaches the table through here.';
+
+COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s participant count (an active seat may be held by an adult as well as by a child), the venue name on in-person products, and how many past sessions still need attention. A finished session on or after the epoch counts until ALL of: the register is in, a family-facing report is written, the mail telling the families it is there has been sent, and — on the run''s FINAL session of a product with requires_gamer_creations set — every current roster member has at least one creation. The register condition is scoped to the members who had JOINED the group before that occurrence ended: both the marks counted and the size they are compared against, off participations.group_joined_at against an end instant resolved once per occurrence (the stored row''s ends_at, else the min slot end for that weekday, which is the same instant the "has it finished" test already used). group_participant_count and the empty-roster guard deliberately keep measuring the WHOLE current roster — a card''s headcount and the empty-group exemption are not per-occurrence questions. The report and mail conditions are unscoped because a session owes those whoever was in the room. The creations condition carries the SAME join-date scoping as the register condition, on the owner''s principle that a gedu owes a creation for every gamer who was in the group at the time of the last session — so a seat placed into the group after the final session ended owes nothing, and one occurrence cannot answer "who was this for" two different ways. Only the JOIN half of that principle is expressible: a member who has since LEFT owes nothing, because the roster is active seats and a departure leaves no trace. The final session is the last occurrence the schedule projects on or before end_date that the group has not cancelled, derived here rather than stored — so a cancelled last session hands the creations condition to the one before it; an open-ended product (end_date NULL) has none and therefore never owes creations, which is documented behaviour rather than an error. A CANCELLED occurrence is never owed, by group_session_is_cancelled — including a cancelled record the schedule no longer projects, which the stored-row arm would otherwise reach: nothing ran, and a record kept under a cancellation is frozen. The badge''s unit is the SESSION: it counts sessions needing attention, and the final one simply has one more way to need it. The enforcement epoch travels in as an argument because it is a code constant, not a column. This count has a twin in TypeScript — the gedu feed''s entry-state derivation, which answers the same question for one card — and the two must be changed together, on all four conditions and on who a session is for, which scopes two of them. A SECOND KIND OF SEAT feeds the same machinery: a `substitution` row per substitution date, carrying `kind` and `substitution_date`, whose owed count is the same four conditions applied to a set of one occurrence — so it is 0 or 1 and never a term''s worth. That arm asks gedu_holds_unexpired_substitution rather than gedu_substitutes_session: the card stands from approval, where the workspace behind it opens 48 hours before the substituted session, and a card that waited for the workspace would hide from a sub the afternoon they had agreed to take. A substitution still locked owes nothing by construction, because every occurrence this count ranges over has already ended.';
 
 COMMENT ON FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid) IS 'Internal predicate: may this gedu be seated as the sub for this (group, date)? Five refusals: (1) not the absent gedu, (2) a certified gedu — the ONLY eligibility test there is, with coverage area, language and schedule clash all deliberately left to follow-ups, (3) not already expected at that session, (4) holding no non-withdrawn request of their own on that (group, date), and (5) the session is not cancelled. Together (3) and (4) stop a sub covering their own substitute and stop two seats collapsing onto one person, which would make "who did which job" unanswerable. Asked by offer_session_substitution, again by approve_session_substitution_offer under the request''s lock, by set_session_substitution, and by get_open_substitution_requests as its exclusion — the pool list shows a gedu exactly the requests they could actually take, and never one on a cancelled session. Not granted to `authenticated`.';
 
@@ -2481,3 +2505,24 @@ COMMENT ON FUNCTION public.delete_group_session_image(p_image_id uuid) IS 'Remov
 REVOKE ALL ON FUNCTION public.delete_group_session_image(p_image_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.delete_group_session_image(p_image_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.delete_group_session_image(p_image_id uuid) TO service_role;
+
+-- ---------------------------------------------------------------------------
+-- The partner API's read of the same answer. It runs on the service role with
+-- no user to scope to, and asks the one predicate rather than re-deriving the
+-- schedule in TypeScript, so its answer cannot drift from every other surface.
+-- ---------------------------------------------------------------------------
+
+CREATE FUNCTION public.get_session_cancellations_in_effect(p_group_ids uuid[]) RETURNS TABLE(group_id uuid, session_date date)
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+  SELECT c.group_id, c.session_date
+    FROM public.session_cancellations c
+   WHERE c.group_id = ANY (p_group_ids)
+     AND public.group_session_is_cancelled(c.group_id, c.session_date);
+$$;
+
+COMMENT ON FUNCTION public.get_session_cancellations_in_effect(p_group_ids uuid[]) IS 'Every cancelled (group, date) in effect among the given groups — group_session_is_cancelled holding — and no reason, stamp or author: the partner API needs only which of its recorded sessions did not happen. Service-role only: its caller has no Sogverse user, and no client role is granted the table behind it.';
+
+REVOKE ALL ON FUNCTION public.get_session_cancellations_in_effect(p_group_ids uuid[]) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_session_cancellations_in_effect(p_group_ids uuid[]) TO service_role;

@@ -15,9 +15,11 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockAdminFrom = vi.fn();
+const mockAdminRpc = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     from: (...args: unknown[]) => mockAdminFrom(...args),
+    rpc: (...args: unknown[]) => mockAdminRpc(...args),
   })),
 }));
 
@@ -71,7 +73,7 @@ const gameAccountReads: string[] = [];
 // the two happened to match".
 const substitutionDatesAsked: string[] = [];
 
-// Every session date the route asked the cancellation table about.
+// Every session date the route asked the cancellation predicate about.
 const cancellationDatesAsked: string[] = [];
 
 /**
@@ -153,14 +155,28 @@ function mockTables(opts: {
   /** Whether the joining gedu is still certified. Defaults to true. */
   certified?: boolean;
   /**
-   * Product-local dates an admin cancelled on this group. The mock answers a
-   * row only when the route asked about one of these dates, and records every
-   * date asked on `cancellationDatesAsked`.
+   * Product-local dates the database answers cancelled on this group. The
+   * predicate answers true only when the route asked about one of these dates
+   * for this group, and records every date asked on `cancellationDatesAsked`.
    */
   cancelledDates?: string[];
   minecraftAccount?: { minecraft_username: string | null; minecraft_uuid: string | null } | null;
   robloxAccount?: { roblox_username: string | null; roblox_user_id: number | null } | null;
 }) {
+  mockAdminRpc.mockImplementation(
+    (fn: string, args: { p_group_id: string; p_session_date: string }) => {
+      if (fn !== "group_session_is_cancelled") {
+        return Promise.resolve({ data: null, error: { message: `unexpected rpc ${fn}` } });
+      }
+      cancellationDatesAsked.push(args.p_session_date);
+      return Promise.resolve(
+        mockSupabaseSuccess(
+          args.p_group_id === GROUP_ID &&
+            (opts.cancelledDates?.includes(args.p_session_date) ?? false),
+        ),
+      );
+    },
+  );
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "product_groups") {
       const row = opts.group
@@ -243,27 +259,6 @@ function mockTables(opts: {
             );
           },
         }),
-      };
-      return { select: vi.fn().mockReturnValue(chain) };
-    }
-    if (table === "session_cancellations") {
-      // The route's chain is .select().eq(group_id).eq(session_date).maybeSingle().
-      let askedDate: string | null = null;
-      const chain = {
-        eq: (column: string, value: string) => {
-          if (column === "session_date") askedDate = value;
-          return chain;
-        },
-        maybeSingle: () => {
-          if (askedDate !== null) cancellationDatesAsked.push(askedDate);
-          return Promise.resolve(
-            mockSupabaseSuccess(
-              askedDate !== null && opts.cancelledDates?.includes(askedDate)
-                ? { group_id: GROUP_ID }
-                : null,
-            ),
-          );
-        },
       };
       return { select: vi.fn().mockReturnValue(chain) };
     }

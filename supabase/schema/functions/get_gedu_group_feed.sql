@@ -307,8 +307,10 @@ BEGIN
    WHERE r.group_id = p_group_id
      AND r.status <> 'withdrawn'::public.substitution_request_status;
 
-  -- Cancellation: the group's cancelled sessions the schedule still projects,
-  -- newest first. The reason, who cancelled and when ride for an ADMIN caller
+  -- Cancellation: the group's cancelled sessions in effect, newest first —
+  -- including one over a kept record the schedule no longer projects, which
+  -- the feed draws as cancelled in the record's place rather than as the
+  -- record. The reason, who cancelled and when ride for an ADMIN caller
   -- only, keyed to the caller exactly as a substitution reason is: a gedu
   -- learns that the session is off and nothing about why.
   SELECT COALESCE(
@@ -321,7 +323,7 @@ BEGIN
     INTO v_cancellations
     FROM public.session_cancellations sc
    WHERE sc.group_id = p_group_id
-     AND public.group_session_date_is_scheduled(sc.group_id, sc.session_date);
+     AND public.group_session_is_cancelled(sc.group_id, sc.session_date);
 
   RETURN jsonb_build_object(
     'product',  v_product,

@@ -759,9 +759,26 @@ describe("buildGeduSessionFeed — cancelled sessions", () => {
     expect(entry?.staffing.requests).toHaveLength(1);
   });
 
-  it("ignores a cancellation on a date the schedule does not project", () => {
+  it("ignores a cancellation on a date with neither a projection nor a row", () => {
     const entries = build({ cancellations: [cancellation("2026-03-17", true)] });
     expect(byDate(entries, "2026-03-17")).toBeUndefined();
+  });
+
+  it("draws a cancelled record the schedule no longer projects as cancelled, at the record's instants", () => {
+    // A Tuesday session was written up and cancelled, and the club has since
+    // moved to Mondays. The document still names the cancellation, and the
+    // card shows it in the record's place rather than the report.
+    const stored = row("2026-03-17", { report: "We built a castle." });
+    const entry = byDate(
+      build({ sessions: [stored], cancellations: [cancellation("2026-03-17", true)] }),
+      "2026-03-17",
+    );
+    expect(entry).toMatchObject({
+      kind: "cancelled",
+      startsAt: new Date(stored.starts_at),
+      reason: "Venue closed",
+    });
+    expect(entry).not.toHaveProperty("report");
   });
 
   it("wins over a record stored on the date, and carries none of it", () => {

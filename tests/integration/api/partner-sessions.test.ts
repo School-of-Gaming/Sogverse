@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { GET } from "@/app/api/partner/v1/sessions/route";
 import { encodeCursor } from "@/lib/api/partner-cursor.server";
 import { partnerSessionsResponse } from "@/services/partner/partner.contracts";
-import type { FetchMock } from "../../mocks/postgrest-fetch";
+import { requestedUrl, type FetchMock } from "../../mocks/postgrest-fetch";
 import {
   PARTNER_TEST_KEY,
   columnFilters,
@@ -120,35 +120,16 @@ function seatRow(n: number, seat: SeatRow) {
   };
 }
 
-type CancellationRow = {
-  group_id: string;
-  session_date: string;
-  group: {
-    product: {
-      start_date: string;
-      end_date: string | null;
-      schedule_slots: { weekday: number }[];
-    };
-  };
-};
+/** One (group, date) the database answers is a cancellation in effect. */
+type CancellationRow = { group_id: string; session_date: string };
 
-/**
- * An admin's cancellation of one of GROUP's dates, on a product that meets on
- * the given weekdays (0 = Monday) — Mondays only unless told otherwise.
- */
-function cancellation(sessionDate: string, weekdays: number[] = [0]): CancellationRow {
-  return {
-    group_id: GROUP,
-    session_date: sessionDate,
-    group: {
-      product: {
-        start_date: "2026-09-01",
-        end_date: null,
-        schedule_slots: weekdays.map((weekday) => ({ weekday })),
-      },
-    },
-  };
+/** A cancellation of one of GROUP's dates that the database holds in effect. */
+function cancellation(sessionDate: string): CancellationRow {
+  return { group_id: GROUP, session_date: sessionDate };
 }
+
+/** The read the page's cancellations come from. */
+const CANCELLATIONS_RPC = "rpc/get_session_cancellations_in_effect";
 
 /**
  * The fixture database: `group_sessions` applies the filters, keyset and limit
@@ -163,7 +144,7 @@ function tables(
 ) {
   return postgrestTables({
     participations: filteringTable(seats.map((seat, i) => seatRow(i + 1, seat))),
-    session_cancellations: filteringTable(cancellations),
+    [CANCELLATIONS_RPC]: filteringTable(cancellations),
     group_sessions: (url) => {
       const matches = (row: SessionRow) => {
         const checks: [string, string][] = [
@@ -279,24 +260,22 @@ describe("GET /api/partner/v1/sessions", () => {
     expect(body.next_cursor).toBeNull();
   });
 
-  it("leaves out a recorded session an admin cancelled, and keeps one whose cancellation is inert", async () => {
-    // The 12th and the 19th are Mondays. The 19th is cancelled on a schedule
-    // that still meets on Mondays; the 12th's cancellation sits on a schedule
-    // that has since moved to Tuesdays, so it no longer applies.
-    db.fetch = tables(SESSIONS, ATTENDANCE, SEATS, [
-      cancellation("2026-10-19"),
-      cancellation("2026-10-12", [1]),
-    ]);
+  it("leaves out a recorded session the database answers cancelled", async () => {
+    // Whether a cancellation is in effect — schedule edits included — is the
+    // database's one answer, so the page takes it as given: the 19th comes
+    // back cancelled and drops out, the 12th does not and stays.
+    db.fetch = tables(SESSIONS, ATTENDANCE, SEATS, [cancellation("2026-10-19")]);
 
     const body = await readPage();
     expect(ids(body)).toEqual([REPORTED, OTHER_GROUPS]);
 
     // One batched read, scoped to the page's groups.
-    const cancellationReads = readsOf(db.fetch, "session_cancellations");
-    expect(cancellationReads).toHaveLength(1);
-    expect(inList(cancellationReads[0], "group_id").sort()).toEqual(
-      [GROUP, OTHER_GROUP].sort(),
+    const cancellationReads = db.fetch.mock.calls.filter(([input]) =>
+      requestedUrl(input).pathname.endsWith(`/${CANCELLATIONS_RPC}`),
     );
+    expect(cancellationReads).toHaveLength(1);
+    const sent: unknown = JSON.parse(String(cancellationReads[0][1]?.body));
+    expect(sent).toEqual({ p_group_ids: expect.arrayContaining([GROUP, OTHER_GROUP]) });
   });
 
   it("scopes the read to Programme groups and orders it by id", async () => {

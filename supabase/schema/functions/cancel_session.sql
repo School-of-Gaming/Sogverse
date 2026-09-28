@@ -22,11 +22,23 @@ BEGIN
     RAISE EXCEPTION 'Group not found' USING ERRCODE = 'P0002';
   END IF;
 
-  -- The schedule must project the date, but there is deliberately no visible
-  -- horizon: an admin calling off a session months ahead inside the term (a
-  -- holiday, a closed venue) is the ordinary case, and a past session is
-  -- cancellable too.
-  IF NOT public.group_session_date_is_scheduled(p_group_id, p_session_date) THEN
+  -- The date must be a session: one the schedule projects, or one holding a
+  -- stored record — exactly the dates group_session_is_cancelled can answer
+  -- true for, so a cancellation written here is never born inert. The record
+  -- arm is what lets an admin re-word the reason on a cancelled record whose
+  -- slot has since been removed, and call off a record the schedule no longer
+  -- projects. There is deliberately no visible horizon: an admin calling off a
+  -- session months ahead inside the term (a holiday, a closed venue) is the
+  -- ordinary case, and a past session is cancellable too.
+  IF NOT (
+       public.group_session_date_is_scheduled(p_group_id, p_session_date)
+       OR EXISTS (
+            SELECT 1
+              FROM public.group_sessions s
+             WHERE s.group_id     = p_group_id
+               AND s.session_date = p_session_date
+          )
+     ) THEN
     RAISE EXCEPTION 'No scheduled session on % for this group', p_session_date
       USING ERRCODE = 'check_violation';
   END IF;
@@ -58,7 +70,7 @@ $$;
 -- Name: FUNCTION cancel_session(p_group_id uuid, p_session_date date, p_reason text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.cancel_session(p_group_id uuid, p_session_date date, p_reason text) IS 'An admin cancels one session — a (group, date) the current schedule projects, past or future, with no visible-horizon bound. The optional reason is trimmed and nulled when blank. A date that already holds a record (report, note, photo or attendance) is cancelled all the same: the admin''s word wins, nothing is deleted, and the record stays frozen and hidden until a restore. Taken under the (group, date) advisory lock every session write also takes. Cancelling an already-cancelled session is an UPSERT: the reason is replaced and cancelled_by / cancelled_at move to the caller. Returns the cancellation document with every admin field, plus group_id. Admin-only, guard-first.';
+COMMENT ON FUNCTION public.cancel_session(p_group_id uuid, p_session_date date, p_reason text) IS 'An admin cancels one session — a (group, date) the current schedule projects or that holds a stored record, past or future, with no visible-horizon bound; those are exactly the dates on which group_session_is_cancelled can hold, so no cancellation is written inert. The optional reason is trimmed and nulled when blank. A date that already holds a record (report, note, photo or attendance) is cancelled all the same: the admin''s word wins, nothing is deleted, and the record stays frozen and hidden until a restore. Taken under the (group, date) advisory lock every session write also takes. Cancelling an already-cancelled session is an UPSERT: the reason is replaced and cancelled_by / cancelled_at move to the caller. Returns the cancellation document with every admin field, plus group_id. Admin-only, guard-first.';
 
 
 --

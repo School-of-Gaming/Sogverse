@@ -179,9 +179,10 @@ BEGIN
         ), '[]'::jsonb),
 
         -- Cancellation: the group's cancelled sessions, newest first, with
-        -- every admin field — this document is admin-only end to end. Only
-        -- dates the schedule still projects travel: a cancellation left behind
-        -- by a weekday move is inert and is never surfaced on its own.
+        -- every admin field — this document is admin-only end to end. Exactly
+        -- the ones in effect: a cancellation over a kept record travels even
+        -- where the schedule no longer projects its date, so the page can
+        -- still restore it, and an inert one is never surfaced.
         'cancellations', COALESCE((
           SELECT jsonb_agg(
                    public.session_cancellation_document(sc, true)
@@ -189,7 +190,7 @@ BEGIN
                  )
             FROM public.session_cancellations sc
            WHERE sc.group_id = g.id
-             AND public.group_session_date_is_scheduled(sc.group_id, sc.session_date)
+             AND public.group_session_is_cancelled(sc.group_id, sc.session_date)
         ), '[]'::jsonb)
       ) AS entry
         FROM public.product_groups g

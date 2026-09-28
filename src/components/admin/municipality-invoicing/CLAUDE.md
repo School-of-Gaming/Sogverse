@@ -44,9 +44,11 @@ as missed. Nothing about it is wrong, so it takes no warning; it is settled, so 
 one says cancelled rather than upcoming. Three rules keep it from hiding a real miss or
 billing a cancellation:
 
-- **It applies only to a date the schedule projects.** A cancellation orphaned by a later
-  schedule or term change is ignored completely and renders no line, the same way every
-  other surface treats it.
+- **Only a projected date gets a cancelled line.** The document carries only the
+  cancellations in effect — the database's one answer, the same every surface reads — so
+  one left with neither a projection nor a record is never on it. One over a record the
+  schedule has since stopped projecting is on it and keeps that record off the bill, but
+  it has no projected date to mark, so it renders no line.
 - **A club cancels per group and is invoiced per date, so a date is cancelled only when
   every group the club has cancelled it.** The document lists every group of the club,
   including one that neither met nor cancelled all month — the rows and cancellations alone
@@ -57,9 +59,9 @@ billing a cancellation:
   miss hidden behind a sibling's cancellation is not. If any group ran the date, it bills
   as recorded exactly as before.
 - **A cancelled (group, date) pair never bills, even beside a stored row.** An admin may
-  cancel a session that was recorded, and the admin's word wins: the document leaves such
-  a row out of its sessions altogether, so no reader can bill it, and a restore puts it
-  back.
+  cancel a session that was recorded, and the admin's word wins — whatever the schedule
+  or the term does afterwards: the document leaves such a row out of its sessions
+  altogether, so no reader can bill it, and a restore puts it back.
 
 The month's session count, every total and every Finvoice row are the stored rows no
 cancellation covers; a customer whose clubs were only cancelled has nothing to invoice and
@@ -523,8 +525,8 @@ live page would build — and an anchor is fetched when it is followed, not when
 rendered, so the scene still reaches the network exactly as often as it did before: never.
 The fixtures carry a customer whose file is blocked by a club with no fee and one whose
 file is blocked by having nothing to invoice, because a month of ordinary clubs would show
-neither. They also carry cancellations on both sides of the pinned today and one orphaned
-on a date nothing projects, which must render no line.
+neither. They also carry cancellations on both sides of the pinned today and one on a
+date nothing projects and nothing is recorded on, which must render no line.
 
 **The month stepper stays inside the preview, and it is how the empty ledger is reached.**
 The stepper is one of the page's own controls rather than a way out of a row, so the shell

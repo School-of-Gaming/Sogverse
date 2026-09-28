@@ -488,13 +488,35 @@ describe("buildMunicipalityInvoicing", () => {
       expect(built.totalCents).toBe(0);
     });
 
-    it("bills a stored row beside a cancellation the schedule no longer projects", () => {
-      // A Thursday row orphaned by a move to Wednesdays: the cancellation on it
-      // is inert, and the row is history that ran.
+    it("never bills a cancelled record the schedule no longer projects", () => {
+      // A Thursday session was recorded, cancelled, and then the club moved to
+      // Wednesdays. The cancellation holds over the record whatever the
+      // schedule did next: nothing bills, and with no projection there is no
+      // line to mark cancelled either.
       const built = onlyClub([
         club({
           id: "a",
           sessions: [{ group_id: "g1", session_date: "2026-09-10" }],
+          cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-10" }],
+        }),
+      ]);
+
+      expect(kindOn(built, "2026-09-10")).toBeUndefined();
+      expect(built.recordedCount).toBe(0);
+      expect(built.totalCents).toBe(0);
+    });
+
+    it("bills a sibling group's row beside another group's cancelled record off the projection", () => {
+      // g1's Thursday record is cancelled; g2 recorded the same Thursday and
+      // was never cancelled, so the club still delivered the date.
+      const built = onlyClub([
+        club({
+          id: "a",
+          group_ids: ["g1", "g2"],
+          sessions: [
+            { group_id: "g1", session_date: "2026-09-10" },
+            { group_id: "g2", session_date: "2026-09-10" },
+          ],
           cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-10" }],
         }),
       ]);

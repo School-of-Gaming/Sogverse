@@ -18,14 +18,15 @@ BEGIN
   -- committed beside it. Every session write that names a date (notes,
   -- attendance, a photo) reaches the table through here, which is what makes
   -- this the one refusal they share.
+  --
+  -- The effective test, as every other writer asks it. It refuses every date
+  -- holding a row under a cancellation, whatever the schedule now says. The
+  -- one date it lets through with a cancellation on it — no row and no
+  -- projection — is refused anyway below, because the schedule derives no
+  -- window for it.
   PERFORM public.lock_group_session_key(p_group_id, p_session_date);
 
-  IF EXISTS (
-       SELECT 1
-         FROM public.session_cancellations c
-        WHERE c.group_id     = p_group_id
-          AND c.session_date = p_session_date
-     ) THEN
+  IF public.group_session_is_cancelled(p_group_id, p_session_date) THEN
     RAISE EXCEPTION 'The session on % is cancelled', p_session_date
       USING ERRCODE = 'P0026';
   END IF;
@@ -70,7 +71,7 @@ $$;
 -- Name: FUNCTION ensure_group_session(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.ensure_group_session(p_group_id uuid, p_session_date date) IS 'Find-or-create the session row for a (group, date), snapshotting the schedule instants at first write and never re-deriving them afterwards. Refuses a CANCELLED date with SQLSTATE P0026 whether or not it already holds a row — a record kept under a cancellation is frozen until a restore — asked first, under the (group, date) advisory lock cancel_session also takes. That is the one refusal every dated session write (notes, attendance, a photo) shares, since each reaches the table through here.';
+COMMENT ON FUNCTION public.ensure_group_session(p_group_id uuid, p_session_date date) IS 'Find-or-create the session row for a (group, date), snapshotting the schedule instants at first write and never re-deriving them afterwards. Refuses a CANCELLED date (group_session_is_cancelled) with SQLSTATE P0026 whether or not it already holds a row — a record kept under a cancellation is frozen until a restore, whatever the schedule does meanwhile — asked first, under the (group, date) advisory lock cancel_session also takes. That is the one refusal every dated session write (notes, attendance, a photo) shares, since each reaches the table through here.';
 
 
 --

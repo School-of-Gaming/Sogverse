@@ -3370,6 +3370,13 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Json
       }
+      get_session_cancellations_in_effect: {
+        Args: { p_group_ids: string[] }
+        Returns: {
+          group_id: string
+          session_date: string
+        }[]
+      }
       get_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]

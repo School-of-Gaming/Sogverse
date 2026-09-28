@@ -198,13 +198,11 @@ BEGIN
                       AND NOT public.group_session_is_cancelled(gs.group_id, gs.session_date)
                  ), '[]'::jsonb) AS items
         ) se
-        -- Cancellation: the month's cancelled (group, date) pairs, raw and in
-        -- the same shape as `sessions`, so the page can show a cancelled date
-        -- as Cancelled rather than as unrecorded and never bill it. Raw on
-        -- purpose: the page already walks the dates the schedule projects and
-        -- applies these to those alone, which is what keeps a cancellation
-        -- orphaned by a weekday move inert here as everywhere else. A pair
-        -- the schedule still projects never also appears in `sessions`.
+        -- Cancellation: the month's cancelled (group, date) pairs in effect,
+        -- in the same shape as `sessions`, so the page can show a cancelled
+        -- date as Cancelled rather than as unrecorded and never bill it. The
+        -- same predicate `sessions` excludes by, so a pair here never also
+        -- appears there, and an inert cancellation appears in neither.
         CROSS JOIN LATERAL (
           SELECT COALESCE((
                    SELECT jsonb_agg(
@@ -219,6 +217,7 @@ BEGIN
                     WHERE g.product_id = c.id
                       AND sc.session_date >= p_month_start
                       AND sc.session_date <= v_month_end
+                      AND public.group_session_is_cancelled(sc.group_id, sc.session_date)
                  ), '[]'::jsonb) AS items
         ) cx
         -- Every group the club has, whether or not the month says anything
