@@ -8,12 +8,12 @@ import { TeamProfileBody } from "@/components/team/team-profile-body";
  * title and surname, a Gedu who wrote in two languages and added a fun fact,
  * and a Gedu who wrote in Finnish alone, with no fun fact and no colour of her
  * own — so a reader in any other locale meets the Finnish fallback, and her
- * card shows the colour her id derives. Switching the site's locale is the
- * axis the fallback is read along.
+ * page carries no accent. Switching the site's locale is the axis the fallback
+ * is read along.
  *
- * The people are invented, and shared with the team card editor scenes
+ * The people are invented, and shared with the profile editor scenes
  * (`mock-team-fixtures.ts`), so the editor's preview and this page are judged on
- * the same cards.
+ * the same profiles.
  */
 
 export const TEAM_PROFILE_SCENARIOS = [

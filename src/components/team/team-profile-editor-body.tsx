@@ -17,19 +17,19 @@ import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/utils";
 import {
   FormSection,
-  TeamCardAboutSection,
-  TeamCardPhotoSection,
-  TeamCardWritingSection,
+  TeamProfileAboutSection,
+  TeamProfilePhotoSection,
+  TeamProfileWritingSection,
   contentFromForm,
   contentFromProfile,
   formFromProfile,
   profileWithContent,
   sameContent,
-  teamCardGap,
-  type TeamCardContent,
-  type TeamCardForm,
-  type TeamCardGap,
-} from "@/components/team/team-card-form";
+  teamProfileGap,
+  type TeamProfileContent,
+  type TeamProfileForm,
+  type TeamProfileGap,
+} from "@/components/team/team-profile-form";
 import {
   TeamProfileBody,
   type AdminTeamProfile,
@@ -38,54 +38,60 @@ import {
 } from "@/components/team/team-profile-body";
 
 /**
- * Where an admin's decision about a Gedu's card stands. It is independent of
- * the Gedu's own checkbox and survives it being turned off and on again:
+ * Where an admin's decision about a Gedu's profile stands. It is independent
+ * of the Gedu's own checkbox and survives it being turned off and on again:
  *
- * - `pending` — no admin has approved the card yet.
+ * - `pending` — no admin has approved the profile yet.
  * - `approved` — an admin put it up; while the Gedu's checkbox is on it is
- *   live, and their later edits go live on save, with no second look.
- * - `withdrawn` — an admin took an approved card down.
+ *   public, and their later edits go live on save, with no second look.
+ * - `withdrawn` — an admin took an approved profile down.
  */
-export type GeduTeamCardApproval = "pending" | "approved" | "withdrawn";
+export type GeduTeamProfileApproval = "pending" | "approved" | "withdrawn";
 
 /**
  * The writes the page makes. Each is a backend action, so each is the
  * caller's; the scenes pass ones that only move local state.
  */
-export interface TeamCardActions {
+export interface TeamProfileActions {
   /** A freshly cropped photo's bytes. The form already shows it. */
   onUploadPhoto: (photo: Blob) => void;
   /**
-   * Save the card and the person's own checkbox together — a Gedu's "ready",
-   * an admin's "show". The checkbox is a field like any other, so ticking or
-   * unticking it does nothing until this runs, and what the person agreed to
-   * show is exactly what they were looking at when they saved.
+   * Save the profile and the person's own checkbox together — a Gedu's
+   * "ready", an admin's "show". The checkbox is a field like any other, so
+   * ticking or unticking it does nothing until this runs, and what the person
+   * agreed to show is exactly what they were looking at when they saved.
    */
-  onSave: (content: TeamCardContent, on: boolean) => void;
+  onSave: (content: TeamProfileContent, on: boolean) => void;
 }
 
-export type TeamCardEditorProps =
+export type TeamProfileEditorProps =
   | {
       role: "gedu";
-      /** The saved card — what the form opens on. */
-      card: GeduTeamProfile;
-      /** The Gedu's saved checkbox: their consent to the card being public. */
+      /** The saved profile — what the form opens on. */
+      profile: GeduTeamProfile;
+      /** The Gedu's saved checkbox: their consent to the profile being public. */
       ready: boolean;
-      approval: GeduTeamCardApproval;
-      actions: TeamCardActions;
+      approval: GeduTeamProfileApproval;
+      actions: TeamProfileActions;
     }
   | {
       role: "admin";
-      card: AdminTeamProfile;
+      profile: AdminTeamProfile;
       /** Office staff are trusted, so their one checkbox is the whole decision. */
       shown: boolean;
-      actions: TeamCardActions;
+      actions: TeamProfileActions;
     };
 
 /** The combined saved state, as the person is told it. */
-type CardStatus = "private" | "waiting" | "live" | "takenOff" | "shown" | "hidden";
+type ProfileStatus =
+  | "private"
+  | "waiting"
+  | "live"
+  | "takenOff"
+  | "shown"
+  | "hidden";
 
-function cardStatus(props: TeamCardEditorProps): CardStatus {
+function profileStatus(props: TeamProfileEditorProps): ProfileStatus {
   if (props.role === "admin") return props.shown ? "shown" : "hidden";
   if (!props.ready) return "private";
   switch (props.approval) {
@@ -99,50 +105,57 @@ function cardStatus(props: TeamCardEditorProps): CardStatus {
 }
 
 /**
- * The page a person edits their own team card on — office staff and Gedus
- * alike, one body with the differences in its props.
+ * The page a person edits their own public profile on — office staff and
+ * Gedus alike, one body with the differences in its props.
  *
- * **A card is public only while two things are true**: the person's own
+ * **A profile is public only while two things are true**: the person's own
  * checkbox is saved on, and — for a Gedu — an admin has approved it, which is
  * decided elsewhere and only read here. The checkbox is an ordinary field that
  * Save commits with everything else: ticking or unticking it dirties the form,
- * and nothing takes effect until Save. It can only be ticked once the card is
- * complete, and while it is ticked the card has to stay complete to save.
+ * and nothing takes effect until Save. It can only be ticked once the profile
+ * is complete, and while it is ticked the profile has to stay complete to save.
+ *
+ * **No introduction.** The page explains itself: the title, the preview
+ * beside the form and its caption, and the "Public profile" section, whose
+ * checkbox hint is the one place the two-switch model is spelt out.
  *
  * Desktop-default, as a Gedu and admin surface is: the form on one side and
  * the live preview on the other, sticky, so what the public will see is in
  * view while typing. Below the wide breakpoint the two stack, form first.
  *
- * **The "Team page" section sits at the foot of the form, after the fields**,
- * and holds everything about being public: where the saved card stands, the
- * checkbox, and whether the card is complete enough for it. The lines under
- * the checkbox change as the card is completed and as it is ticked; at the
- * foot, that moves nothing but the save row.
+ * **The "Public profile" section sits at the foot of the form, after the
+ * fields**, and holds everything about being public: where the saved profile
+ * stands, the checkbox, and whether the profile is complete enough for it. The
+ * lines under the checkbox change as the profile is completed and as it is
+ * ticked; at the foot, that moves nothing but the save row.
  *
  * The form's state is local UI state. Every write goes out through `actions`,
  * which the route owns.
  */
-export function TeamCardEditorBody(props: TeamCardEditorProps) {
+export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
   const t = useTranslations("team.edit");
   const uiLocale = resolveLocale(useLocale());
   const savedOn = props.role === "gedu" ? props.ready : props.shown;
-  const [form, setForm] = useState<TeamCardForm>(() =>
-    formFromProfile(props.card, uiLocale),
+  const [form, setForm] = useState<TeamProfileForm>(() =>
+    formFromProfile(props.profile, uiLocale),
   );
   const [on, setOn] = useState(savedOn);
 
-  const content = contentFromForm(form, props.card);
+  const content = contentFromForm(form, props.profile);
   const dirty =
-    on !== savedOn || !sameContent(content, contentFromProfile(props.card));
-  const gap = teamCardGap(content);
-  const status = cardStatus(props);
+    on !== savedOn || !sameContent(content, contentFromProfile(props.profile));
+  const gap = teamProfileGap(content);
+  const status = profileStatus(props);
   const isPublic = status === "live" || status === "shown";
 
-  const trackUrl = useOwnedObjectUrls(form.photo?.src, props.card.photo?.src);
+  const trackUrl = useOwnedObjectUrls(
+    form.photo?.src,
+    props.profile.photo?.src,
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-24">
-      {/* The page's home is settings, beside the account facts the card
+      {/* The page's home is settings, beside the account facts the profile
           shows but does not edit. */}
       <Link
         href={ROUTES.settings}
@@ -152,12 +165,7 @@ export function TeamCardEditorBody(props: TeamCardEditorProps) {
         {t("back")}
       </Link>
 
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">{t("pageTitle")}</h1>
-        <p className="max-w-3xl text-muted-foreground">
-          {props.role === "gedu" ? t("introGedu") : t("introAdmin")}
-        </p>
-      </header>
+      <h1 className="text-3xl font-bold tracking-tight">{t("pageTitle")}</h1>
 
       <div
         className={cn(
@@ -170,7 +178,7 @@ export function TeamCardEditorBody(props: TeamCardEditorProps) {
         )}
       >
         <div className="min-w-0 space-y-6">
-          <TeamCardPhotoSection
+          <TeamProfilePhotoSection
             photo={form.photo}
             onCropped={(blob, url) => {
               trackUrl(url);
@@ -178,14 +186,14 @@ export function TeamCardEditorBody(props: TeamCardEditorProps) {
             }}
             update={setForm}
           />
-          <TeamCardAboutSection
-            kind={props.card.kind}
+          <TeamProfileAboutSection
+            kind={props.profile.kind}
             form={form}
             update={setForm}
           />
-          <TeamCardWritingSection form={form} update={setForm} />
+          <TeamProfileWritingSection form={form} update={setForm} />
 
-          <TeamPageSection
+          <PublicSection
             role={props.role}
             status={status}
             on={on}
@@ -199,7 +207,7 @@ export function TeamCardEditorBody(props: TeamCardEditorProps) {
               variant="outline"
               disabled={!dirty}
               onClick={() => {
-                setForm(formFromProfile(props.card, uiLocale));
+                setForm(formFromProfile(props.profile, uiLocale));
                 setOn(savedOn);
               }}
             >
@@ -214,8 +222,8 @@ export function TeamCardEditorBody(props: TeamCardEditorProps) {
           </div>
         </div>
 
-        <TeamCardPreview
-          profile={profileWithContent(props.card, content)}
+        <TeamProfilePreview
+          profile={profileWithContent(props.profile, content)}
           readerLocale={form.activeLocale}
           caption={
             !isPublic
@@ -233,7 +241,7 @@ export function TeamCardEditorBody(props: TeamCardEditorProps) {
 
 /**
  * The object URLs this page made for cropped photos, each revoked once
- * neither the form nor the saved card shows it, and all of them on unmount.
+ * neither the form nor the saved profile shows it, and all of them on unmount.
  * Returns the function that hands a new one over.
  */
 function useOwnedObjectUrls(
@@ -264,7 +272,7 @@ function useOwnedObjectUrls(
 }
 
 const STATUS_VARIANT: Record<
-  CardStatus,
+  ProfileStatus,
   "default" | "info" | "success" | "warning"
 > = {
   private: "default",
@@ -276,7 +284,7 @@ const STATUS_VARIANT: Record<
 };
 
 /**
- * Everything about the card being public, in one section.
+ * Everything about the profile being public, in one section.
  *
  * **The status names the saved state**, the combined state of the checkbox as
  * last saved and, for a Gedu, an admin's approval, so a Gedu never has to work
@@ -285,12 +293,13 @@ const STATUS_VARIANT: Record<
  *
  * **The checkbox is the form's value**, and the line under it is always there
  * — the reason while it is off and cannot be ticked, a confirmation once the
- * card is complete, and a warning while it is ticked and something has since
- * been emptied — so the row never grows or shrinks as fields are filled in.
- * While the checkbox differs from what is saved, one more line says the change
- * waits for Save; it appears as the direct result of the click that made it.
+ * profile is complete, and a warning while it is ticked and something has
+ * since been emptied — so the row never grows or shrinks as fields are filled
+ * in. While the checkbox differs from what is saved, one more line says the
+ * change waits for Save; it appears as the direct result of the click that
+ * made it.
  */
-function TeamPageSection({
+function PublicSection({
   role,
   status,
   on,
@@ -299,10 +308,10 @@ function TeamPageSection({
   onChange,
 }: {
   role: "gedu" | "admin";
-  status: CardStatus;
+  status: ProfileStatus;
   on: boolean;
   savedOn: boolean;
-  gap: TeamCardGap;
+  gap: TeamProfileGap;
   onChange: (next: boolean) => void;
 }) {
   const t = useTranslations("team.edit");
@@ -352,9 +361,9 @@ function TeamPageSection({
  * is the easiest thing on this screen to misread.
  *
  * The frame is framed content — the page as it will appear — so the body sits
- * inside it on the page ground, as it will on the team page.
+ * inside it on the page ground, as it will on the public page.
  */
-function TeamCardPreview({
+function TeamProfilePreview({
   profile,
   readerLocale,
   caption,
@@ -368,7 +377,7 @@ function TeamCardPreview({
   const t = useTranslations("team.edit.preview");
   return (
     <section
-      aria-labelledby="team-card-preview-heading"
+      aria-labelledby="team-profile-preview-heading"
       className={cn(
         "space-y-3",
         wide === "lg"
@@ -376,7 +385,7 @@ function TeamCardPreview({
           : "xl:sticky xl:top-[calc(var(--header-height)+1.5rem)] xl:flex xl:max-h-[calc(100vh-var(--header-height)-3rem)] xl:flex-col",
       )}
     >
-      <h2 id="team-card-preview-heading" className="text-lg font-semibold">
+      <h2 id="team-profile-preview-heading" className="text-lg font-semibold">
         {t("heading")}
       </h2>
       <p className="text-sm text-muted-foreground">{caption}</p>

@@ -4939,35 +4939,33 @@
     },
     "edit": {
       "back": "Retour aux paramètres",
-      "pageTitle": "Votre fiche d’équipe",
-      "introGedu": "Votre fiche sur la page d’équipe publique de School of Gaming, où les familles découvrent les personnes derrière les sessions. Enregistrez aussi souvent que vous le voulez : elle n’apparaît sur la page qu’une fois que vous l’avez marquée comme prête et qu’un administrateur l’a approuvée.",
-      "introAdmin": "Votre fiche sur la page d’équipe publique de School of Gaming. Tant qu’elle est affichée, les modifications que vous enregistrez sont en ligne immédiatement.",
+      "pageTitle": "Votre profil",
       "status": {
-        "privateTitle": "Privée",
-        "privateBody": "Vous seul voyez votre fiche. Quand elle vous convient, cochez « Mon profil est prêt à être public » ci-dessous et enregistrez.",
-        "waitingTitle": "Prête, en attente d’un administrateur",
-        "waitingBody": "Un administrateur va examiner votre fiche et la mettre sur la page d’équipe. Vous pouvez continuer à la modifier en attendant.",
-        "liveTitle": "En ligne sur la page d’équipe",
-        "liveBody": "Tout le monde peut voir votre fiche. Les modifications que vous enregistrez sont en ligne immédiatement. Pour la retirer, décochez « Mon profil est prêt à être public » et enregistrez.",
-        "takenOffTitle": "Prête, mais un administrateur l’a retirée de la page d’équipe",
-        "takenOffBody": "Votre fiche n’est pas publique pour le moment. Contactez le bureau si vous voulez savoir pourquoi, ou pour la remettre en ligne.",
-        "shownTitle": "Sur la page d’équipe",
-        "shownBody": "Tout le monde peut voir votre fiche. Les modifications que vous enregistrez sont en ligne immédiatement.",
-        "hiddenTitle": "Pas sur la page d’équipe",
-        "hiddenBody": "Vous seul voyez votre fiche. Quand elle est prête, cochez « Afficher mon profil sur la page d’équipe » ci-dessous et enregistrez."
+        "privateTitle": "Privé",
+        "privateBody": "Vous seul voyez votre profil. Quand il vous convient, cochez « Mon profil est prêt à être public » ci-dessous et enregistrez.",
+        "waitingTitle": "Prêt, en attente d’un administrateur",
+        "waitingBody": "Un administrateur va examiner votre profil avant qu’il soit public. Vous pouvez continuer à le modifier en attendant.",
+        "liveTitle": "Public",
+        "liveBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement. Pour le retirer, décochez « Mon profil est prêt à être public » et enregistrez.",
+        "takenOffTitle": "Prêt, mais un administrateur l’a retiré",
+        "takenOffBody": "Votre profil n’est pas public pour le moment. Contactez le bureau si vous voulez savoir pourquoi, ou pour le remettre en ligne.",
+        "shownTitle": "Public",
+        "shownBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement.",
+        "hiddenTitle": "Privé",
+        "hiddenBody": "Vous seul voyez votre profil. Quand il est prêt, cochez « Afficher mon profil publiquement » ci-dessous et enregistrez."
       },
       "actions": {
         "save": "Enregistrer les modifications",
         "discard": "Annuler les modifications"
       },
       "switch": {
-        "heading": "Page d’équipe",
+        "heading": "Profil public",
         "readyLabel": "Mon profil est prêt à être public",
         "readyHint": "En cochant cette case et en enregistrant, vous acceptez que School of Gaming affiche votre profil publiquement sur son site web. Un administrateur l’examine avant sa première mise en ligne. Décochez-la et enregistrez à tout moment, et il est retiré aussitôt.",
-        "showLabel": "Afficher mon profil sur la page d’équipe",
+        "showLabel": "Afficher mon profil publiquement",
         "showHint": "En cochant cette case et en enregistrant, votre profil apparaît immédiatement sur le site public de School of Gaming. Décochez-la et enregistrez à tout moment, et il est retiré.",
-        "complete": "Votre fiche contient tout ce dont la page d’équipe a besoin.",
-        "mustStayComplete": "Tant que cette case est cochée, votre fiche doit rester complète : l’enregistrement est désactivé jusqu’à ce qu’elle le soit. Complétez ce qui manque, ou décochez la case pour continuer en privé.",
+        "complete": "Votre profil contient tout ce qu’il faut pour être public.",
+        "mustStayComplete": "Tant que cette case est cochée, votre profil doit rester complet : l’enregistrement est désactivé jusqu’à ce qu’il le soit. Complétez ce qui manque, ou décochez la case pour continuer en privé.",
         "takesEffectOnSave": "Ce changement prend effet quand vous enregistrez.",
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
@@ -4981,21 +4979,21 @@
         "replace": "Remplacer la photo",
         "remove": "Supprimer la photo",
         "guidance": {
-          "intro": "Les familles et les gamers vous découvrent d’abord ici : montrez-leur qui vous êtes vraiment. Vous recadrez la photo pour l’adapter au cadre une fois choisie.",
+          "intro": "C’est la première chose que les familles et les gamers voient de vous. Une fois la photo choisie, vous la recadrez pour l’adapter au cadre.",
           "doHeading": "À faire",
           "dontHeading": "À éviter",
           "do": {
             "you": "Vous seul, tête et épaules, le visage bien visible",
-            "light": "Une bonne lumière : face à une fenêtre, c’est idéal",
-            "smile": "Un vrai sourire",
-            "gear": "Votre setup de jeu, un casque ou une manette : tout est bienvenu",
-            "background": "Un arrière-plan rangé ou neutre"
+            "light": "Une lumière douce et égale, par exemple face à une fenêtre",
+            "natural": "Détendu et naturel : ressemblez à vous-même",
+            "gear": "Un casque ou une manette dans le cadre, pas de souci",
+            "background": "Un arrière-plan neutre ou rangé"
           },
           "dont": {
-            "others": "Des enfants ou d’autres personnes dans le cadre. C’est une règle de protection de l’enfance : une photo où figure un enfant ne peut pas être utilisée.",
+            "others": "D’autres personnes dans le cadre. Pour la protection de l’enfance, une photo où figure un enfant ne peut pas être utilisée",
             "hidden": "Des lunettes de soleil, un masque ou tout ce qui cache votre visage",
             "group": "Des photos de groupe, ou vous recadré à partir de l’une d’elles",
-            "avatar": "Des avatars, des dessins ou des filtres marqués à la place de vous",
+            "avatar": "Des avatars, des dessins ou des filtres marqués",
             "blurry": "Des photos floues ou sombres"
           }
         },
@@ -5017,12 +5015,12 @@
         "title": "Titre",
         "titleHint": "Votre poste chez School of Gaming, par exemple responsable des clubs.",
         "pick": "Votre couleur",
-        "pickHint": "Elle encadre votre photo et souligne votre nom sur la page d’équipe. Nous en avons choisi une pour commencer, mais vous pouvez prendre celle que vous voulez."
+        "pickHint": "Une couleur d’accent pour votre profil, autour de votre photo.",
+        "noPick": "Aucune couleur"
       },
       "writing": {
         "heading": "Avec vos propres mots",
         "languages": "Langues",
-        "languagesHint": "Écrivez dans les langues où vous êtes à l’aise. Au moins une est nécessaire. Les lecteurs voient votre fiche dans leur langue si vous l’avez écrite, sinon en anglais, puis dans la langue que vous avez utilisée.",
         "addLocale": "Ajouter une langue",
         "removeLocale": "Supprimer {locale}",
         "shortDescription": "Présentez-vous en une ligne",
@@ -5037,8 +5035,8 @@
       "preview": {
         "heading": "Aperçu",
         "liveNow": "C’est ce que le public voit actuellement.",
-        "unsaved": "Vos modifications non enregistrées. La page d’équipe affiche votre dernière version enregistrée jusqu’à ce que vous enregistriez.",
-        "notPublic": "Pas sur la page d’équipe : vous seul voyez ceci."
+        "unsaved": "Vos modifications non enregistrées. Le public voit votre dernière version enregistrée jusqu’à ce que vous enregistriez.",
+        "notPublic": "Pas public : vous seul voyez ceci."
       }
     }
   }

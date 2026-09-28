@@ -12,7 +12,7 @@ import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cn } from "@/lib/utils";
 import { TeamPhotoPlaceholder } from "@/components/team/team-photo-placeholder";
-import { TEAM_PICK_CLASSES, teamPick } from "@/components/team/team-pick";
+import { VOICE_ZONE_COLORS } from "@/lib/constants/voice-zones";
 import type { SpokenLanguageCode } from "@/types";
 
 /**
@@ -47,24 +47,24 @@ export interface TeamProfileTranslation {
 }
 
 interface TeamProfileCommon {
-  /** The person's profile id. With no pick chosen it derives their colour. */
+  /** The person's account id. */
   id: string;
   firstName: string;
   /** What gamers know them as. A name the person chose: never translated. */
   nickname: string | null;
   /**
-   * The colour the person picked for their card, or `null` while they have
-   * not, in which case one is derived from their id (`team-pick.ts`).
+   * The colour the person picked as their accent, or `null` for none, which
+   * is the default: the page then carries the brand's colours alone.
    */
   pick: PickId | null;
   /**
-   * Never null on the public team page, where a card cannot go up without one.
-   * It is null only in the editor's preview of an unfinished card.
+   * Never null on the public page, where a profile cannot go up without one.
+   * It is null only in the editor's preview of an unfinished profile.
    */
   photo: TeamProfilePhoto | null;
   /**
    * At least one on the public page. Empty only in the editor's preview of a
-   * card with nothing written yet.
+   * profile with nothing written yet.
    */
   translations: readonly TeamProfileTranslation[];
   spokenLanguages: readonly SpokenLanguageCode[];
@@ -113,12 +113,17 @@ export type TeamProfile = AdminTeamProfile | GeduTeamProfile;
  * **One reading column.** Every section shares the article's measure; nothing
  * narrows itself, so the page has one left edge and one right edge.
  *
- * **Colour: act plus the person's pick.** The headline takes the hero
- * treatment — the name in ink with the nickname as the one act phrase — and the
- * rule beneath it, the photo's frame and the fun fact's side rule are drawn in
- * the person's pick. A pick is only ever an edge or a rule here, never a fill
- * with words on it. Poppins throughout: this is a person introducing
- * themselves, not a quotation.
+ * **Colour: the brand first, the person's pick as an optional accent.** The
+ * headline takes the public hero treatment declared in SOG-UI's `brand.ts` —
+ * the name in ink, the nickname as the one act phrase, the world rule beneath
+ * — so the page reads as School of Gaming before it reads as anyone's. A
+ * person who picked a colour gets it as an accent on top: the photo's frame
+ * and the voice zones' own glow (`.zone-glow`, spilling in from the frame),
+ * and the fun fact's side rule. It is only ever an edge, a rule or that glow,
+ * never a fill with words on it, and it sits outside the page's colour budget
+ * (SOG-UI's `picks.ts`). With no pick, the frame and the side rule are the
+ * neutral edge and there is no glow. Poppins throughout: this is a person
+ * introducing themselves, not a quotation.
  *
  * **Which of the person's languages is shown follows the product page**: the
  * reader's locale, then English, then the first one written, through the same
@@ -130,12 +135,12 @@ export type TeamProfile = AdminTeamProfile | GeduTeamProfile;
  * sentence would have to name a verified mechanism, which a profile is not.
  *
  * **It answers to its own width, not the viewport's.** Every step is a
- * container query, so in the team card editor, where the same body is a live
+ * container query, so in the profile editor, where the same body is a live
  * preview in a column beside the form, it lays out for the column it is in.
  *
  * **The required sections always hold their place.** The one-line intro and
  * "About me" render a muted placeholder while empty, which only ever happens
- * in the editor's preview (a card cannot go public without both), so the
+ * in the editor's preview (a profile cannot go public without both), so the
  * preview does not jump when the person starts typing. The fun fact is
  * optional and appears only when there is one.
  */
@@ -166,7 +171,8 @@ export function TeamProfileBody({
   const shortDescription = written?.shortDescription.trim() ?? "";
   const longDescription = written?.longDescription.trim() ?? "";
   const funFact = written?.funFact?.trim() ?? "";
-  const pick = TEAM_PICK_CLASSES[teamPick(profile)];
+  const pick =
+    profile.pick === null ? null : VOICE_ZONE_COLORS[`${profile.pick}`];
 
   const displayName =
     profile.kind === "admin"
@@ -178,7 +184,7 @@ export function TeamProfileBody({
     <div className="@container">
       <article className="mx-auto w-full max-w-3xl px-4 py-8 @min-[40rem]:px-6 @min-[40rem]:py-12">
         <header className="flex flex-col gap-6 @min-[40rem]:flex-row @min-[40rem]:items-center @min-[40rem]:gap-8">
-          <Portrait photo={profile.photo} frame={pick.frame} />
+          <Portrait photo={profile.photo} pick={pick} />
           <div className="min-w-0 flex-1">
             {/* The wrapper shrinks to the headline's longest line, so the rule
                 runs exactly the headline's measure, as on the home hero. */}
@@ -205,7 +211,7 @@ export function TeamProfileBody({
               </h1>
               <span
                 aria-hidden
-                className={cn("mt-4 block h-1.5 w-full rounded-full", pick.rule)}
+                className="mt-4 block h-1.5 w-full rounded-full bg-world"
               />
             </div>
             <p className="mt-3 font-medium text-muted-foreground">{title}</p>
@@ -260,7 +266,11 @@ export function TeamProfileBody({
         {funFact !== "" && (
           <aside
             aria-labelledby={funFactId}
-            className={cn("mt-10 border-l-4 pl-4", pick.sideRule)}
+            // The pick's edge colours every side; only the left one has width.
+            className={cn(
+              "mt-10 border-l-4 pl-4",
+              pick === null ? "border-border" : pick.edge,
+            )}
           >
             <h2
               id={funFactId}
@@ -280,25 +290,32 @@ export function TeamProfileBody({
 }
 
 /**
- * The 4:5 portrait frame the person is shown in, edged in their pick: their
- * photo, or, in the editor's preview of a card that has none yet, the drawn
- * placeholder. The body keeps the placeholder because the editor's preview is
- * this same body; the public page never meets it, since a card cannot go up
- * without a photo. Decorative either way: the name is the heading beside it.
+ * The 4:5 portrait frame the person is shown in: their photo, or, in the
+ * editor's preview of a profile that has none yet, the drawn placeholder. The
+ * body keeps the placeholder because the editor's preview is this same body;
+ * the public page never meets it, since a profile cannot go up without a
+ * photo. Decorative either way: the name is the heading beside it.
+ *
+ * **With a pick, the frame is edged in it and glows with it**, through the
+ * voice zones' own `glow` classes, unchanged. That glow is an inset shadow, and
+ * an inset shadow paints beneath an element's content, so it is laid over the
+ * photo on its own layer rather than on the frame, where the photo would cover
+ * it. With no pick the frame is the neutral edge, at the same width, so
+ * choosing or clearing a colour in the editor moves nothing.
  */
 function Portrait({
   photo,
-  frame,
+  pick,
 }: {
   photo: TeamProfilePhoto | null;
-  frame: string;
+  pick: { edge: string; glow: string } | null;
 }) {
   return (
     <div
       aria-hidden
       className={cn(
         "relative aspect-[4/5] w-36 shrink-0 overflow-hidden rounded-2xl border-4 bg-card @min-[40rem]:w-48",
-        frame,
+        pick === null ? "border-border" : pick.edge,
       )}
     >
       {photo ? (
@@ -313,6 +330,9 @@ function Portrait({
         />
       ) : (
         <TeamPhotoPlaceholder className="h-full w-full" />
+      )}
+      {pick !== null && (
+        <span className={cn("absolute inset-0 rounded-xl", pick.glow)} />
       )}
     </div>
   );

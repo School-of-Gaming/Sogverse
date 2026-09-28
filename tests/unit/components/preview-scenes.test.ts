@@ -24,8 +24,8 @@ import {
 } from "@/components/gedu/mock-dashboard-fixtures";
 import { GEDU_SUBSTITUTIONS_SCENARIOS } from "@/components/gedu/mock-substitutions-fixtures";
 import {
-  ADMIN_TEAM_CARD_SCENARIOS,
-  GEDU_TEAM_CARD_SCENARIOS,
+  ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS,
+  GEDU_TEAM_PROFILE_EDITOR_SCENARIOS,
 } from "@/components/team/mock-team-fixtures";
 import {
   MUNICIPALITY_INVOICING_NOW,
@@ -223,10 +223,10 @@ describe("registry scenarios match their fixtures", () => {
     ]);
   });
 
-  it("team card editor, both roles", () => {
-    expect(slugsFor("gedu-team-card")).toEqual([...GEDU_TEAM_CARD_SCENARIOS]);
-    expect(slugsFor("admin-team-card")).toEqual([
-      ...ADMIN_TEAM_CARD_SCENARIOS,
+  it("profile editor, both roles", () => {
+    expect(slugsFor("gedu-profile-editor")).toEqual([...GEDU_TEAM_PROFILE_EDITOR_SCENARIOS]);
+    expect(slugsFor("admin-profile-editor")).toEqual([
+      ...ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS,
     ]);
   });
 

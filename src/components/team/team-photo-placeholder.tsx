@@ -1,12 +1,13 @@
 /**
  * A drawn stand-in for a team photo, at the photo's own 4:5.
  *
- * `you` is the placeholder a card shows before it has a photo: a friendly
+ * `you` is the placeholder a profile shows before it has a photo: a friendly
  * head-and-shoulders figure wearing a gaming headset, in the theme's neutrals,
- * so an unfinished card reads as "your photo goes here" rather than as a broken
- * image or somebody else's face. The other two are the photo guidance's
- * examples of what not to upload, drawn from the same figure so the three read
- * as one set: a group shot, and a face hidden behind sunglasses.
+ * so an unfinished profile reads as "your photo goes here" rather than as a
+ * broken image or somebody else's face. The others are the photo guidance's
+ * examples, drawn from the same figure so the set reads as one: `plain`, the
+ * same figure without the headset, is a second good photo; a group shot and a
+ * face hidden behind sunglasses are what not to upload.
  *
  * Neutrals only. The figure is a surface and an edge, never a colour, so it sits
  * in any frame — including one edged in the person's pick — without competing
@@ -16,7 +17,7 @@ export function TeamPhotoPlaceholder({
   kind = "you",
   className,
 }: {
-  kind?: "you" | "group" | "hidden";
+  kind?: "you" | "plain" | "group" | "hidden";
   className?: string;
 }) {
   return (

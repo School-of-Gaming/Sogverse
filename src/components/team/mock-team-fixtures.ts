@@ -3,24 +3,23 @@ import type {
   GeduTeamProfile,
   TeamProfile,
 } from "@/components/team/team-profile-body";
-import type { GeduTeamCardApproval } from "@/components/team/team-card-editor-body";
+import type { GeduTeamProfileApproval } from "@/components/team/team-profile-editor-body";
 
 /**
  * The team fixtures: three invented people, shared by the public profile scene
- * and the team card editor scenes, so the editor's preview and the public page
- * are judged on the same cards.
+ * and the profile editor scenes, so the editor's preview and the public page
+ * are judged on the same profiles.
  *
  * The photos are abstract preview art already in `public/preview-art/`, never a
  * picture of a person. A real upload is cropped to 4:5 before it is stored;
  * this art is square, tall and wide, and the frame covers it, which is also
- * what shows a crop of the wrong shape would still sit right. Ids are real
- * UUIDs because a card with no pick derives its colour from its id.
+ * what shows a crop of the wrong shape would still sit right.
  *
  * The languages are chosen so the translation fallback shows: Laura writes in
  * English only, Eetu in English and Finnish, and Saana in Finnish only — so an
  * English, Swedish or French reader of Saana's page meets her Finnish. Eetu and
  * Laura have a fun fact; Saana does not. Laura and Eetu picked a colour; Saana
- * has not, so her card shows the one her id derives.
+ * has not, so her page shows the brand's colours alone.
  */
 
 const LAURA: AdminTeamProfile = {
@@ -133,52 +132,56 @@ export const TEAM_PROFILE_FIXTURES = {
 } as const satisfies Record<string, TeamProfile>;
 
 // ---------------------------------------------------------------------------
-// The team card editor
+// The profile editor
 // ---------------------------------------------------------------------------
 
 /**
- * One scenario per state a Gedu is told their card is in, and no more: the
+ * One scenario per state a Gedu is told their profile is in, and no more: the
  * four combinations of their switch and an admin's approval that read
  * differently. Private-and-incomplete stands for private in general — a
- * complete private card is the same render with the switch enabled, which
+ * complete private profile is the same render with the switch enabled, which
  * filling in the form reaches locally.
  */
-export const GEDU_TEAM_CARD_SCENARIOS = [
+export const GEDU_TEAM_PROFILE_EDITOR_SCENARIOS = [
   "private",
   "waiting",
   "live",
   "taken-off",
 ] as const;
 
-export type GeduTeamCardScenario = (typeof GEDU_TEAM_CARD_SCENARIOS)[number];
+export type GeduTeamProfileEditorScenario =
+  (typeof GEDU_TEAM_PROFILE_EDITOR_SCENARIOS)[number];
 
-export function isGeduTeamCardScenario(s: string): s is GeduTeamCardScenario {
-  return (GEDU_TEAM_CARD_SCENARIOS as readonly string[]).includes(s);
+export function isGeduTeamProfileEditorScenario(
+  s: string,
+): s is GeduTeamProfileEditorScenario {
+  return (GEDU_TEAM_PROFILE_EDITOR_SCENARIOS as readonly string[]).includes(s);
 }
 
 /**
  * One, because office staff have a single switch and turning it off is a
  * click away on the same render.
  */
-export const ADMIN_TEAM_CARD_SCENARIOS = ["shown"] as const;
+export const ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS = ["shown"] as const;
 
-export type AdminTeamCardScenario = (typeof ADMIN_TEAM_CARD_SCENARIOS)[number];
+export type AdminTeamProfileEditorScenario =
+  (typeof ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS)[number];
 
-export function isAdminTeamCardScenario(
+export function isAdminTeamProfileEditorScenario(
   s: string,
-): s is AdminTeamCardScenario {
-  return (ADMIN_TEAM_CARD_SCENARIOS as readonly string[]).includes(s);
+): s is AdminTeamProfileEditorScenario {
+  return (ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS as readonly string[]).includes(s);
 }
 
-/** A Gedu's card as the editor receives it: the card and both switches. */
-export interface GeduTeamCardFixture {
-  card: GeduTeamProfile;
+/** A Gedu's profile as the editor receives it: the profile and both switches. */
+export interface GeduTeamProfileEditorFixture {
+  profile: GeduTeamProfile;
   ready: boolean;
-  approval: GeduTeamCardApproval;
+  approval: GeduTeamProfileApproval;
 }
 
 /**
- * Saana's card the day she opens the editor: a few words in Finnish and no
+ * Saana's profile the day she opens the editor: a few words in Finnish and no
  * photo, so the switch is disabled with both reasons, and the preview shows
  * the drawn placeholder, her one line, and "About me" holding its place.
  */
@@ -195,25 +198,25 @@ const SAANA_NEW: GeduTeamProfile = {
   ],
 };
 
-export const GEDU_TEAM_CARD_FIXTURES: Record<
-  GeduTeamCardScenario,
-  GeduTeamCardFixture
+export const GEDU_TEAM_PROFILE_EDITOR_FIXTURES: Record<
+  GeduTeamProfileEditorScenario,
+  GeduTeamProfileEditorFixture
 > = {
-  private: { card: SAANA_NEW, ready: false, approval: "pending" },
-  waiting: { card: SAANA, ready: true, approval: "pending" },
-  live: { card: EETU, ready: true, approval: "approved" },
-  "taken-off": { card: EETU, ready: true, approval: "withdrawn" },
+  private: { profile: SAANA_NEW, ready: false, approval: "pending" },
+  waiting: { profile: SAANA, ready: true, approval: "pending" },
+  live: { profile: EETU, ready: true, approval: "approved" },
+  "taken-off": { profile: EETU, ready: true, approval: "withdrawn" },
 };
 
-/** An office card as the editor receives it. */
-export interface AdminTeamCardFixture {
-  card: AdminTeamProfile;
+/** An office profile as the editor receives it. */
+export interface AdminTeamProfileEditorFixture {
+  profile: AdminTeamProfile;
   shown: boolean;
 }
 
-export const ADMIN_TEAM_CARD_FIXTURES: Record<
-  AdminTeamCardScenario,
-  AdminTeamCardFixture
+export const ADMIN_TEAM_PROFILE_EDITOR_FIXTURES: Record<
+  AdminTeamProfileEditorScenario,
+  AdminTeamProfileEditorFixture
 > = {
-  shown: { card: LAURA, shown: true },
+  shown: { profile: LAURA, shown: true },
 };

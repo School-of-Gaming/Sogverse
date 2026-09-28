@@ -4040,35 +4040,33 @@
     },
     "edit": {
       "back": "SeHlaw’Daq yIchegh",
-      "pageTitle": "ghom QIn’ay’lIj",
-      "introGedu": "School of Gaming ghom QIn’ay’Daq QIn’ay’lIj. naDev ghotpu’ Sov qorDu’pu’. not bIpolqa’ DaneHchugh yIpol! ghuHmoHlu’DI’ ’ej loHwI’ chaw’DI’ neH cha’lu’.",
-      "introAdmin": "School of Gaming ghom QIn’ay’Daq QIn’ay’lIj. cha’lu’taHvIS, choHmey DapolDI’ SIbI’ leghlu’.",
+      "pageTitle": "Del’a’lIj",
       "status": {
         "privateTitle": "So’lu’",
-        "privateBody": "SoH neH QIn’ay’lIj Dalegh. bIQuchDI’, bIng “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIwIv ’ej yIpol.",
+        "privateBody": "SoH neH Del’a’lIj Dalegh. bIQuchDI’, bIng “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIwIv ’ej yIpol.",
         "waitingTitle": "ghuHmoHlu’, loHwI’ loS",
-        "waitingBody": "QIn’ay’lIj legh loHwI’ ’ej ghom QIn’ay’Daq lan. loStaHvIS, choHlaH.",
-        "liveTitle": "ghom QIn’ay’Daq leghlu’",
-        "liveBody": "QIn’ay’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. So’meH, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIteq ’ej yIpol.",
+        "waitingBody": "Del’a’lIj legh loHwI’ ’ej Hoch leghDaq lan. loStaHvIS, choHlaH.",
+        "liveTitle": "Hoch leghDaq leghlu’",
+        "liveBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. So’meH, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIteq ’ej yIpol.",
         "takenOffTitle": "ghuHmoHlu’, ’ach loHwI’ teq",
-        "takenOffBody": "DaH QIn’ay’lIj leghlaHbe’ vay’. qatlh? yej’an yIjatlh.",
-        "shownTitle": "ghom QIn’ay’Daq",
-        "shownBody": "QIn’ay’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’.",
-        "hiddenTitle": "ghom QIn’ay’Daq Dabbe’",
-        "hiddenBody": "SoH neH QIn’ay’lIj Dalegh. ghuHmoHDI’, bIng “ghom QIn’ay’Daq jIH yIcha’” yIwIv ’ej yIpol."
+        "takenOffBody": "DaH Del’a’lIj leghlaHbe’ vay’. qatlh? yej’an yIjatlh.",
+        "shownTitle": "Hoch leghDaq",
+        "shownBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’.",
+        "hiddenTitle": "Hoch leghDaq Dabbe’",
+        "hiddenBody": "SoH neH Del’a’lIj Dalegh. ghuHmoHDI’, bIng “Hoch leghDaq jIH yIcha’” yIwIv ’ej yIpol."
       },
       "actions": {
         "save": "choHmey yIpol",
         "discard": "choHmey yIlon"
       },
       "switch": {
-        "heading": "ghom QIn’ay’",
+        "heading": "Hoch legh",
         "readyLabel": "jIH ’oH: DaH leghlu’ ’e’ vIQap",
         "readyHint": "DawIvDI’ ’ej DapolDI’, School of Gaming Qum’a’Daq jIH cha’ ’e’ Dachaw’. wa’DIch cha’pa’, legh loHwI’. Dateq ’ej DapolDI’, SIbI’ So’lu’.",
-        "showLabel": "ghom QIn’ay’Daq jIH yIcha’",
+        "showLabel": "Hoch leghmeH jIH yIcha’",
         "showHint": "DawIvDI’ ’ej DapolDI’, SIbI’ School of Gaming Qum’a’Daq cha’lu’. Dateq ’ej DapolDI’, So’lu’.",
         "complete": "Hoch Daghaj. Qapla’!",
-        "mustStayComplete": "wIvlu’taHvIS, naQnIS QIn’ay’lIj. naQbe’chugh, polbe’lu’. yIchu’ pagh yIteq.",
+        "mustStayComplete": "wIvlu’taHvIS, naQnIS Del’a’lIj. naQbe’chugh, polbe’lu’. yIchu’ pagh yIteq.",
         "takesEffectOnSave": "DapolDI’ neH choH. Qapla’!",
         "missing": {
           "photo": "mIllogh yIlab, vaj DawIvlaH.",
@@ -4082,21 +4080,21 @@
         "replace": "mIllogh yIchoH",
         "remove": "mIllogh yIteq",
         "guidance": {
-          "intro": "naDev wa’DIch Du ghom qorDu’pu’ QujwI’pu’ je. vaj nIteb SoH yI’ang! DawIvDI’, mIllogh Dape’.",
+          "intro": "naDev wa’DIch Du ghom qorDu’pu’ QujwI’pu’ je. DawIvDI’, mIllogh Dape’.",
           "doHeading": "yIruch",
           "dontHeading": "yImev",
           "do": {
             "you": "SoH neH: nach ’ej volchaHmey, qab leghlu’",
             "light": "wov QaQ: HaSta yIbej",
-            "smile": "Hagh teH",
-            "gear": "Quj jan, QoymeH jan, SeHwI’: Hoch Quch",
+            "natural": "yIjot: SoH yIDa",
+            "gear": "QoymeH jan pagh SeHwI’: lo’laH",
             "background": "’em Say’ pagh Dab"
           },
           "dont": {
             "others": "puqpu’ pagh latlhpu’ mIlloghDaq. puq Qan chut ’oH: puq ngaSchugh mIllogh, lo’lu’be’.",
             "hidden": "Hov leghwI’ ’oy’, QaD mIn pagh qab So’wI’ Hoch",
             "group": "ghom mIllogh pagh ghom mIlloghvo’ SoH pe’lu’bogh",
-            "avatar": "SoH Daghoch: avatar, Dijlu’bogh ghot pagh mIllogh choHwI’ HoS",
+            "avatar": "avatar, Dijlu’bogh ghot pagh mIllogh choHwI’ HoS",
             "blurry": "mIllogh Hurgh pagh HeSlaw"
           }
         },
@@ -4118,12 +4116,12 @@
         "title": "patlh",
         "titleHint": "School of Gaming Daq Qu’lIj. mu’tlheghvam: Head of Clubs.",
         "pick": "nguvlIj",
-        "pickHint": "mIllogh’a’lIj ’ej ponglIj ghoS. DaH wa’ DIwIv; latlh DawIvlaH."
+        "pickHint": "Del’a’lIj nguv. mIllogh’a’lIj ghoS.",
+        "noPick": "nguv pagh"
       },
       "writing": {
         "heading": "mu’meylIj",
         "languages": "Holmey",
-        "languagesHint": "Hol DaQuchbogh yIghItlh. wa’ DoS poQ. Holchaj laD ghot; pagh, DIvI’ Hol; pagh, Hol DaghItlhbogh.",
         "addLocale": "Hol chu’",
         "removeLocale": "{locale} yIteq",
         "shortDescription": "wa’ tlhegh: jIH",
@@ -4138,8 +4136,8 @@
       "preview": {
         "heading": "wa’DIch legh",
         "liveNow": "DaH ’oH legh Hoch.",
-        "unsaved": "choHmey polbe’lu’bogh. DapolDI’ neH choH ghom QIn’ay’.",
-        "notPublic": "ghom QIn’ay’Daq Dabbe’, vaj SoH neH Dalegh."
+        "unsaved": "choHmey polbe’lu’bogh. DapolDI’ neH choH Del’a’lIj.",
+        "notPublic": "leghlu’be’, vaj SoH neH Dalegh."
       }
     }
   }

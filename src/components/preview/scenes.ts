@@ -251,7 +251,7 @@ export const PREVIEW_SCENES = [
     surface: "team-profile",
     title: "Team profile (draft)",
     description:
-      "One person's public team card as a page, the same body for office staff and Gedus, before the /team route exists.",
+      "One person's public profile as a page, the same body for office staff and Gedus, before the public route exists.",
     chrome: "public",
     scenarios: [
       { slug: "admin", label: "Office staff — English only, with a fun fact" },
@@ -265,10 +265,10 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
-    surface: "gedu-team-card",
-    title: "Team card editor — Gedu (draft)",
+    surface: "gedu-profile-editor",
+    title: "Profile editor — Gedu (draft)",
     description:
-      "The page a Gedu edits their own team card on, beside a live preview of the public page. Typing, the photo crop, saving and the ready switch work locally; the upload is inert.",
+      "The page a Gedu edits their own public profile on, beside a live preview of it. Typing, the photo crop, saving and the ready switch work locally; the upload is inert.",
     chrome: "dashboard",
     navRole: "gedu",
     scenarios: [
@@ -279,16 +279,16 @@ export const PREVIEW_SCENES = [
           "No photo and half a language, so the ready switch is off with its reason.",
       },
       { slug: "waiting", label: "Ready, waiting for an admin" },
-      { slug: "live", label: "Live on the team page" },
-      { slug: "taken-off", label: "Ready, but an admin took it off" },
+      { slug: "live", label: "Public" },
+      { slug: "taken-off", label: "Ready, but an admin took it down" },
     ],
   },
   {
-    surface: "admin-team-card",
-    title: "Team card editor — office staff (draft)",
+    surface: "admin-profile-editor",
+    title: "Profile editor — office staff (draft)",
     description: "The same page as office staff meet it: one switch, no approval.",
     chrome: "admin",
-    scenarios: [{ slug: "shown", label: "On the team page" }],
+    scenarios: [{ slug: "shown", label: "Public" }],
   },
   {
     surface: "parent-dashboard",

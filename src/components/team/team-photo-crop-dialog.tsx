@@ -53,7 +53,7 @@ export async function decodeTeamPhoto(url: string, type: string) {
 }
 
 /**
- * **The crop step between picking a photo and seeing it on the card.**
+ * **The crop step between picking a photo and seeing it on the profile.**
  *
  * A fixed 4:5 frame, the photo dragged to position under it and zoomed with
  * the slider, the wheel or a pinch. Confirming draws the framed area onto a

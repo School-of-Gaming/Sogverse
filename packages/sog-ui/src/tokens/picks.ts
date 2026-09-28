@@ -18,6 +18,12 @@
  * later surface letting a gamer colour their own profile draws from the same
  * sixteen and needs no new palette.
  *
+ * **A person's pick is not a spend of the page's colour budget.** On a surface
+ * that is about that person, their pick is their identity sitting beside the
+ * brand, not the brand speaking, so the budget in the package's `CLAUDE.md`
+ * does not count it: a public page about one person may carry act and world
+ * plus that person's pick.
+ *
  * ## Why these sixteen
  *
  * They are designed to be told apart from each other at a glance, because the

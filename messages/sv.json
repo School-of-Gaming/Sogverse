@@ -4939,35 +4939,33 @@
     },
     "edit": {
       "back": "Tillbaka till inställningar",
-      "pageTitle": "Ditt teamkort",
-      "introGedu": "Ditt kort på School of Gamings offentliga teamsida, där familjer lär känna personerna bakom sessionerna. Spara så ofta du vill: kortet hamnar på sidan först när du har markerat det som klart och en administratör har godkänt det.",
-      "introAdmin": "Ditt kort på School of Gamings offentliga teamsida. När det är påslaget syns ändringar du sparar direkt.",
+      "pageTitle": "Din profil",
       "status": {
         "privateTitle": "Privat",
-        "privateBody": "Bara du ser ditt kort. När du är nöjd kryssar du i ”Min profil är redo att bli offentlig” nedan och sparar.",
-        "waitingTitle": "Klart, väntar på en administratör",
-        "waitingBody": "En administratör tittar på ditt kort och lägger upp det på teamsidan. Du kan fortsätta redigera under tiden.",
-        "liveTitle": "Publicerat på teamsidan",
-        "liveBody": "Vem som helst kan se ditt kort. Ändringar du sparar syns direkt. Vill du ta ner det tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar.",
-        "takenOffTitle": "Klart, men en administratör har tagit bort det från teamsidan",
-        "takenOffBody": "Ditt kort är inte offentligt just nu. Kontakta kontoret om du vill veta varför eller få upp det igen.",
-        "shownTitle": "På teamsidan",
-        "shownBody": "Vem som helst kan se ditt kort. Ändringar du sparar syns direkt.",
-        "hiddenTitle": "Inte på teamsidan",
-        "hiddenBody": "Bara du ser ditt kort. När det är klart kryssar du i ”Visa min profil på teamsidan” nedan och sparar."
+        "privateBody": "Bara du ser din profil. När du är nöjd kryssar du i ”Min profil är redo att bli offentlig” nedan och sparar.",
+        "waitingTitle": "Klar, väntar på en administratör",
+        "waitingBody": "En administratör tittar på din profil innan den blir offentlig. Du kan fortsätta redigera under tiden.",
+        "liveTitle": "Offentlig",
+        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du ta ner den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar.",
+        "takenOffTitle": "Klar, men en administratör har tagit ner den",
+        "takenOffBody": "Din profil är inte offentlig just nu. Kontakta kontoret om du vill veta varför eller få upp den igen.",
+        "shownTitle": "Offentlig",
+        "shownBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt.",
+        "hiddenTitle": "Privat",
+        "hiddenBody": "Bara du ser din profil. När den är klar kryssar du i ”Visa min profil offentligt” nedan och sparar."
       },
       "actions": {
         "save": "Spara ändringarna",
         "discard": "Förkasta ändringarna"
       },
       "switch": {
-        "heading": "Teamsidan",
+        "heading": "Offentlig profil",
         "readyLabel": "Min profil är redo att bli offentlig",
         "readyHint": "Genom att kryssa i detta och spara godkänner du att School of Gaming visar din profil offentligt på sin webbplats. En administratör tittar på den innan den publiceras första gången. Ta bort krysset och spara när som helst så försvinner den direkt.",
-        "showLabel": "Visa min profil på teamsidan",
+        "showLabel": "Visa min profil offentligt",
         "showHint": "Genom att kryssa i detta och spara hamnar din profil direkt på School of Gamings offentliga webbplats. Ta bort krysset och spara när som helst så försvinner den.",
-        "complete": "Ditt kort har allt som teamsidan behöver.",
-        "mustStayComplete": "Medan detta är ikryssat måste ditt kort vara komplett, så det går inte att spara förrän det är det. Fyll i det som saknas, eller ta bort krysset för att fortsätta privat.",
+        "complete": "Din profil har allt som behövs för att bli offentlig.",
+        "mustStayComplete": "Medan detta är ikryssat måste din profil vara komplett, så det går inte att spara förrän den är det. Fyll i det som saknas, eller ta bort krysset för att fortsätta privat.",
         "takesEffectOnSave": "Ändringen gäller när du sparar.",
         "missing": {
           "photo": "Lägg till ett foto för att kunna kryssa i detta.",
@@ -4981,21 +4979,21 @@
         "replace": "Byt foto",
         "remove": "Ta bort foto",
         "guidance": {
-          "intro": "Familjer och gamers möter dig först här, så visa dem den riktiga du. Du beskär fotot så att det passar ramen när du har valt det.",
+          "intro": "Det här är det första familjer och gamers ser av dig. När du har valt ett foto beskär du det så att det passar ramen.",
           "doHeading": "Gör så här",
           "dontHeading": "Undvik",
           "do": {
-            "you": "Bara du, huvud och axlar, med ansiktet väl synligt",
-            "light": "Bra ljus: att vända dig mot ett fönster gör underverk",
-            "smile": "Ett äkta leende",
-            "gear": "Din gaming-setup, ditt headset eller din handkontroll är välkomna",
-            "background": "En städad eller enkel bakgrund"
+            "you": "Bara du, huvud och axlar, ansiktet väl synligt",
+            "light": "Jämnt ljus, till exempel vänd mot ett fönster",
+            "natural": "Avslappnad och naturlig: se ut som dig själv",
+            "gear": "Ett headset eller en handkontroll i bild går bra",
+            "background": "En enkel eller städad bakgrund"
           },
           "dont": {
-            "others": "Barn eller andra personer i bilden. Det här är en regel för barns trygghet: ett foto med ett barn i kan inte användas.",
+            "others": "Andra personer i bilden. För barns trygghet kan ett foto med ett barn i inte användas",
             "hidden": "Solglasögon, masker eller något som döljer ansiktet",
             "group": "Gruppbilder, eller du själv beskuren ur en",
-            "avatar": "Avatarer, tecknade bilder eller kraftiga filter i stället för dig",
+            "avatar": "Avatarer, tecknade bilder eller kraftiga filter",
             "blurry": "Suddiga eller mörka bilder"
           }
         },
@@ -5017,12 +5015,12 @@
         "title": "Titel",
         "titleHint": "Ditt jobb på School of Gaming, till exempel klubbansvarig.",
         "pick": "Din färg",
-        "pickHint": "Ramar in ditt foto och stryker under ditt namn på teamsidan. Vi har valt en åt dig till att börja med, men du kan välja vilken du vill."
+        "pickHint": "En accentfärg för din profil, som ramar in ditt foto.",
+        "noPick": "Ingen färg"
       },
       "writing": {
         "heading": "Med egna ord",
         "languages": "Språk",
-        "languagesHint": "Skriv på de språk du känner dig bekväm med. Minst ett behövs. Läsare ser ditt kort på sitt eget språk om du har skrivit på det, annars på engelska, och annars på det språk du har skrivit på.",
         "addLocale": "Lägg till språk",
         "removeLocale": "Ta bort {locale}",
         "shortDescription": "Presentera dig på en rad",
@@ -5037,8 +5035,8 @@
       "preview": {
         "heading": "Förhandsvisning",
         "liveNow": "Så här ser allmänheten det nu.",
-        "unsaved": "Dina osparade ändringar. Teamsidan visar din senast sparade version tills du sparar.",
-        "notPublic": "Inte på teamsidan, så bara du ser detta."
+        "unsaved": "Dina osparade ändringar. Allmänheten ser din senast sparade version tills du sparar.",
+        "notPublic": "Inte offentlig, så bara du ser detta."
       }
     }
   }

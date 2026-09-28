@@ -4939,35 +4939,33 @@
     },
     "edit": {
       "back": "Back to settings",
-      "pageTitle": "Your team card",
-      "introGedu": "Your card on School of Gaming’s public team page, where families get to know the people behind the sessions. Save as often as you like: it only goes on the page once you mark it ready and an admin has approved it.",
-      "introAdmin": "Your card on School of Gaming’s public team page. While it is switched on, changes you save go live straight away.",
+      "pageTitle": "Your profile",
       "status": {
         "privateTitle": "Private",
-        "privateBody": "Only you can see your card. When you are happy with it, tick “My profile is ready to be public” below and save.",
+        "privateBody": "Only you can see your profile. When you are happy with it, tick “My profile is ready to be public” below and save.",
         "waitingTitle": "Ready, waiting for an admin",
-        "waitingBody": "An admin will look at your card and put it on the team page. You can keep editing in the meantime.",
-        "liveTitle": "Live on the team page",
-        "liveBody": "Anyone can see your card. Changes you save go live straight away. To take it down, untick “My profile is ready to be public” and save.",
-        "takenOffTitle": "Ready, but an admin has taken it off the team page",
-        "takenOffBody": "Your card is not public at the moment. Contact the office if you would like to know why, or to get it back up.",
-        "shownTitle": "On the team page",
-        "shownBody": "Anyone can see your card. Changes you save go live straight away.",
-        "hiddenTitle": "Not on the team page",
-        "hiddenBody": "Only you can see your card. When it is ready, tick “Show my profile on the team page” below and save."
+        "waitingBody": "An admin will look at your profile before it goes public. You can keep editing in the meantime.",
+        "liveTitle": "Public",
+        "liveBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away. To take it down, untick “My profile is ready to be public” and save.",
+        "takenOffTitle": "Ready, but an admin has taken it down",
+        "takenOffBody": "Your profile is not public at the moment. Contact the office if you would like to know why, or to get it back up.",
+        "shownTitle": "Public",
+        "shownBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away.",
+        "hiddenTitle": "Private",
+        "hiddenBody": "Only you can see your profile. When it is ready, tick “Show my profile publicly” below and save."
       },
       "actions": {
         "save": "Save changes",
         "discard": "Discard changes"
       },
       "switch": {
-        "heading": "Team page",
+        "heading": "Public profile",
         "readyLabel": "My profile is ready to be public",
         "readyHint": "Ticking this and saving means you agree to School of Gaming showing your profile publicly on its website. An admin looks at it before it first goes up. Untick it and save at any time, and it comes down straight away.",
-        "showLabel": "Show my profile on the team page",
+        "showLabel": "Show my profile publicly",
         "showHint": "Ticking this and saving puts your profile on School of Gaming’s public website straight away. Untick it and save at any time, and it comes down.",
-        "complete": "Your card has everything the team page needs.",
-        "mustStayComplete": "While this is ticked your card has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box to keep working on it privately.",
+        "complete": "Your profile has everything it needs to go public.",
+        "mustStayComplete": "While this is ticked your profile has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box to keep working on it privately.",
         "takesEffectOnSave": "This change takes effect when you save.",
         "missing": {
           "photo": "Add a photo to be able to tick this.",
@@ -4981,21 +4979,21 @@
         "replace": "Replace photo",
         "remove": "Remove photo",
         "guidance": {
-          "intro": "Families and gamers meet you here first, so let them see the real you. You crop the photo to fit the frame once you have picked it.",
+          "intro": "This is the first thing families and gamers see of you. Once you have chosen a photo, you crop it to fit the frame.",
           "doHeading": "Do",
           "dontHeading": "Don’t",
           "do": {
-            "you": "Just you, head and shoulders, with your face clearly visible",
-            "light": "Good light: facing a window works wonders",
-            "smile": "A real smile",
-            "gear": "Your gaming setup, headset or controller: all welcome",
-            "background": "A tidy or plain background"
+            "you": "Just you, head and shoulders, face clearly visible",
+            "light": "Soft, even light, for example facing a window",
+            "natural": "Relaxed and natural: look like yourself",
+            "gear": "A headset or controller in the shot is fine",
+            "background": "A plain or tidy background"
           },
           "dont": {
-            "others": "Children or anyone else in the frame. This is a safeguarding rule: a photo with a child in it cannot be used.",
+            "others": "Anyone else in the frame. For safeguarding, a photo with a child in it can’t be used",
             "hidden": "Sunglasses, masks or anything hiding your face",
             "group": "Group shots, or yourself cropped out of one",
-            "avatar": "Avatars, cartoons or heavy filters instead of you",
+            "avatar": "Avatars, cartoons or heavy filters",
             "blurry": "Blurry or dark shots"
           }
         },
@@ -5017,12 +5015,12 @@
         "title": "Title",
         "titleHint": "Your job at School of Gaming, for example Head of Clubs.",
         "pick": "Your colour",
-        "pickHint": "Frames your photo and underlines your name on the team page. We have picked one to start you off; choose any you like."
+        "pickHint": "An accent colour for your profile, framing your photo.",
+        "noPick": "No colour"
       },
       "writing": {
         "heading": "In your own words",
         "languages": "Languages",
-        "languagesHint": "Write in the languages you are comfortable with. At least one is needed. Readers see your card in their own language if you wrote it, otherwise in English, then in whichever language you did write.",
         "addLocale": "Add a language",
         "removeLocale": "Remove {locale}",
         "shortDescription": "Introduce yourself in one line",
@@ -5037,8 +5035,8 @@
       "preview": {
         "heading": "Preview",
         "liveNow": "This is what the public sees now.",
-        "unsaved": "Your unsaved changes. The team page shows your last saved version until you save.",
-        "notPublic": "Not on the team page, so only you can see this."
+        "unsaved": "Your unsaved changes. The public sees your last saved version until you save.",
+        "notPublic": "Not public, so only you can see this."
       }
     }
   }

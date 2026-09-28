@@ -33,7 +33,7 @@ import {
   type TeamPhotoSource,
 } from "@/components/team/team-photo-crop-dialog";
 import { TeamPhotoPlaceholder } from "@/components/team/team-photo-placeholder";
-import { derivedTeamPick, teamPick } from "@/components/team/team-pick";
+import type { VoiceZoneColor } from "@/types";
 
 // ---------------------------------------------------------------------------
 // The form's state, and the conversions around it
@@ -53,15 +53,15 @@ const TITLE_MAX_LENGTH = 60;
 
 /**
  * One locale's text as typed. The product form's `TranslationDraft` shape with
- * this card's fields: two required descriptions and an optional fun fact.
+ * this profile's fields: two required descriptions and an optional fun fact.
  */
-export interface TeamCardTranslationDraft {
+export interface TeamProfileTranslationDraft {
   shortDescription: string;
   longDescription: string;
   funFact: string;
 }
 
-const EMPTY_TRANSLATION: TeamCardTranslationDraft = {
+const EMPTY_TRANSLATION: TeamProfileTranslationDraft = {
   shortDescription: "",
   longDescription: "",
   funFact: "",
@@ -69,43 +69,35 @@ const EMPTY_TRANSLATION: TeamCardTranslationDraft = {
 
 /**
  * What the person is typing, as they type it — untrimmed — so the form never
- * rewrites a field under the cursor. It becomes a card through
+ * rewrites a field under the cursor. It becomes a profile through
  * `contentFromForm`, which is where trimming happens.
  *
  * The translations are the product form's per-locale map, with the open tab
  * beside it, so switching tabs keeps what was typed in each.
  */
-export interface TeamCardForm {
+export interface TeamProfileForm {
   nickname: string;
   /** The office title. Unused for a Gedu, whose title is the role. */
   title: string;
-  /**
-   * The swatch shown selected: the person's pick, or the one their id derives
-   * while they have not chosen, so the picker always opens on the colour the
-   * card is actually drawn in.
-   */
-  pick: PickId;
+  /** The person's accent colour, or `null` for none. */
+  pick: PickId | null;
   photo: TeamProfilePhoto | null;
-  translations: Partial<Record<SupportedLocale, TeamCardTranslationDraft>>;
+  translations: Partial<Record<SupportedLocale, TeamProfileTranslationDraft>>;
   activeLocale: SupportedLocale;
 }
 
 /**
- * The part of a card a person writes, normalised: what gets saved and
+ * The part of a profile a person writes, normalised: what gets saved and
  * compared. `title` is `null` for a Gedu.
  *
  * A language tab with nothing typed in it is not content — it is a tab the
  * person opened and has not used — so it is dropped here, and a brand-new
- * card's first, empty tab neither dirties the form nor counts as a language.
+ * profile's first, empty tab neither dirties the form nor counts as a language.
  */
-export interface TeamCardContent {
+export interface TeamProfileContent {
   nickname: string | null;
   title: string | null;
-  /**
-   * `null` while the person's colour is the one their id derives — whether
-   * they never touched the picker or chose that same swatch — so choosing the
-   * colour the card already has is not a change.
-   */
+  /** `null` for no accent colour, which is the default. */
   pick: PickId | null;
   photo: TeamProfilePhoto | null;
   translations: readonly TeamProfileTranslation[];
@@ -114,8 +106,8 @@ export interface TeamCardContent {
 export function formFromProfile(
   profile: TeamProfile,
   uiLocale: SupportedLocale,
-): TeamCardForm {
-  const translations: TeamCardForm["translations"] = {};
+): TeamProfileForm {
+  const translations: TeamProfileForm["translations"] = {};
   for (const row of profile.translations) {
     translations[row.locale] = {
       shortDescription: row.shortDescription,
@@ -123,14 +115,14 @@ export function formFromProfile(
       funFact: row.funFact ?? "",
     };
   }
-  // A card with nothing written opens on one tab, in the reader's own UI
+  // A profile with nothing written opens on one tab, in the reader's own UI
   // locale, exactly as a new product does.
   const first = profile.translations.at(0)?.locale;
   if (first === undefined) translations[uiLocale] = EMPTY_TRANSLATION;
   return {
     nickname: profile.nickname ?? "",
     title: profile.kind === "admin" ? profile.title : "",
-    pick: teamPick(profile),
+    pick: profile.pick,
     photo: profile.photo,
     translations,
     activeLocale: first ?? uiLocale,
@@ -138,9 +130,9 @@ export function formFromProfile(
 }
 
 export function contentFromForm(
-  form: TeamCardForm,
-  card: Pick<TeamProfile, "id" | "kind">,
-): TeamCardContent {
+  form: TeamProfileForm,
+  profile: Pick<TeamProfile, "kind">,
+): TeamProfileContent {
   const translations: TeamProfileTranslation[] = [];
   for (const locale of SUPPORTED_LOCALES) {
     const draft = form.translations[locale];
@@ -160,27 +152,27 @@ export function contentFromForm(
   }
   return {
     nickname: form.nickname.trim() || null,
-    title: card.kind === "admin" ? form.title.trim() : null,
-    pick: form.pick === derivedTeamPick(card.id) ? null : form.pick,
+    title: profile.kind === "admin" ? form.title.trim() : null,
+    pick: form.pick,
     photo: form.photo,
     translations,
   };
 }
 
-export function contentFromProfile(profile: TeamProfile): TeamCardContent {
+export function contentFromProfile(profile: TeamProfile): TeamProfileContent {
   // The locale only picks an empty first tab, which is not content.
   return contentFromForm(formFromProfile(profile, "en"), profile);
 }
 
-/** Whether two cards say the same thing. */
-export function sameContent(a: TeamCardContent, b: TeamCardContent): boolean {
+/** Whether two profiles say the same thing. */
+export function sameContent(a: TeamProfileContent, b: TeamProfileContent): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-/** The card as the public page would render it, with this content in it. */
+/** The profile as the public page would render it, with this content in it. */
 export function profileWithContent<P extends TeamProfile>(
   base: P,
-  content: TeamCardContent,
+  content: TeamProfileContent,
 ): P {
   return {
     ...base,
@@ -195,14 +187,14 @@ export function profileWithContent<P extends TeamProfile>(
 }
 
 /**
- * What stops a card going on the team page: a photo, and at least one language
+ * What stops a profile going public: a photo, and at least one language
  * with both descriptions — in every language written, because a reader of any
- * of them would otherwise meet half a card. The fun fact is optional and never
+ * of them would otherwise meet half a profile. The fun fact is optional and never
  * counts.
  */
-export type TeamCardGap = "photo" | "text" | "both" | null;
+export type TeamProfileGap = "photo" | "text" | "both" | null;
 
-export function teamCardGap(content: TeamCardContent): TeamCardGap {
+export function teamProfileGap(content: TeamProfileContent): TeamProfileGap {
   const missingPhoto = content.photo === null;
   const missingText =
     content.translations.length === 0 ||
@@ -243,7 +235,7 @@ const AboutMeEditor = dynamic(
   },
 );
 
-type FormUpdate = (update: (form: TeamCardForm) => TeamCardForm) => void;
+type FormUpdate = (update: (form: TeamProfileForm) => TeamProfileForm) => void;
 
 /**
  * One section of the form: a card with a heading. The sections are peers the
@@ -273,7 +265,7 @@ export function FormSection({
 }
 
 /**
- * The photo, in the team page's 4:5 frame, with its actions.
+ * The photo, in the public page's 4:5 frame, with its actions.
  *
  * **Picking a file opens the crop step, and the crop happens here, locally**:
  * the framed area is drawn to a canvas at the stored size and shown in the
@@ -286,7 +278,7 @@ export function FormSection({
  * URLs are handed to `onCropped`, whose owner revokes each one once nothing
  * shows it any more.
  */
-export function TeamCardPhotoSection({
+export function TeamProfilePhotoSection({
   photo,
   onCropped,
   update,
@@ -404,11 +396,11 @@ export function TeamCardPhotoSection({
   );
 }
 
-const PHOTO_DOS = ["you", "light", "smile", "gear", "background"] as const;
+const PHOTO_DOS = ["you", "light", "natural", "gear", "background"] as const;
 const PHOTO_DONTS = ["others", "hidden", "group", "avatar", "blurry"] as const;
 
 /**
- * What makes a good team photo, as a do and a don't list.
+ * What makes a good profile photo, as a do and a don't list.
  *
  * In place of the accepted file types, which the picker already enforces: what
  * the person needs before choosing a file is what kind of picture we want. The
@@ -416,6 +408,10 @@ const PHOTO_DONTS = ["others", "hidden", "group", "avatar", "blurry"] as const;
  * hues, never by colour alone, and each has small drawn examples at the photo's
  * own 4:5 — the same figure as the empty frame, so the set reads as one. The
  * first "don't" is a safeguarding rule and is worded as one.
+ *
+ * **The two are a matched pair**: side by side from the small breakpoint, the
+ * same number of lines and of examples in each, and every line kept short, so
+ * neither column runs on past the other. They stack below it.
  */
 function PhotoGuidance() {
   const t = useTranslations("team.edit.photo.guidance");
@@ -424,7 +420,7 @@ function PhotoGuidance() {
       <GuidanceList
         heading={t("doHeading")}
         tone="do"
-        examples={["you"]}
+        examples={["you", "plain"]}
         items={PHOTO_DOS.map((key) => ({ key, text: t(`do.${key}`) }))}
       />
       <GuidanceList
@@ -445,7 +441,7 @@ function GuidanceList({
 }: {
   heading: string;
   tone: "do" | "dont";
-  examples: readonly ("you" | "group" | "hidden")[];
+  examples: readonly ("you" | "plain" | "group" | "hidden")[];
   items: readonly { key: string; text: string }[];
 }) {
   const headingId = useId();
@@ -484,22 +480,21 @@ function GuidanceList({
 
 /**
  * The nickname and, for office staff, the title they write for themselves.
- * Everything else the card shows about the person — their name, a Gedu's
+ * Everything else the profile shows about the person — their name, a Gedu's
  * title, their spoken languages — comes from the account, and the preview
  * beside the form already shows it.
  *
- * **Their colour is chosen here too**, from SOG-UI's sixteen picks, through
- * the same swatch grid a moderator colours a voice zone with. It opens on the
- * colour the card is drawn in, which is the one their id derives until they
- * choose.
+ * **An optional accent colour is chosen here too**, from SOG-UI's sixteen
+ * picks, through the same swatch grid a moderator colours a voice zone with,
+ * with "No colour" as its first choice and the one a new profile starts on.
  */
-export function TeamCardAboutSection({
+export function TeamProfileAboutSection({
   kind,
   form,
   update,
 }: {
   kind: TeamProfile["kind"];
-  form: TeamCardForm;
+  form: TeamProfileForm;
   update: FormUpdate;
 }) {
   const t = useTranslations("team.edit.about");
@@ -546,14 +541,18 @@ export function TeamCardAboutSection({
         </Field>
       )}
 
-      <Field label={t("pick")} hint={t("pickHint")}>
+      <Field label={t("pick")} optional hint={t("pickHint")}>
         {({ labelId }) => (
           <ZoneColorPicker
-            value={`${form.pick}` as const}
+            value={form.pick === null ? null : `${form.pick}`}
             labelledBy={labelId}
-            onChange={(key) => {
-              const pick = PICKS.find((p) => `${p.id}` === key)?.id;
-              if (pick !== undefined) update((prev) => ({ ...prev, pick }));
+            noneLabel={t("noPick")}
+            onChange={(key: VoiceZoneColor | null) => {
+              const pick =
+                key === null
+                  ? null
+                  : (PICKS.find((p) => `${p.id}` === key)?.id ?? null);
+              update((prev) => ({ ...prev, pick }));
             }}
           />
         )}
@@ -579,11 +578,11 @@ export function TeamCardAboutSection({
  * content once, at mount, so the locale is its key and switching tabs remounts
  * it on that locale's draft.
  */
-export function TeamCardWritingSection({
+export function TeamProfileWritingSection({
   form,
   update,
 }: {
-  form: TeamCardForm;
+  form: TeamProfileForm;
   update: FormUpdate;
 }) {
   const t = useTranslations("team.edit.writing");
@@ -600,7 +599,7 @@ export function TeamCardWritingSection({
   );
   const draft = form.translations[locale] ?? EMPTY_TRANSLATION;
 
-  function setActive(patch: Partial<TeamCardTranslationDraft>) {
+  function setActive(patch: Partial<TeamProfileTranslationDraft>) {
     update((prev) => ({
       ...prev,
       translations: {
@@ -639,7 +638,7 @@ export function TeamCardWritingSection({
 
   return (
     <FormSection heading={t("heading")}>
-      <Field label={t("languages")} hint={t("languagesHint")}>
+      <Field label={t("languages")}>
         <div className="flex flex-wrap items-center gap-1 border-b border-border">
           {addedLocales.map((l) => {
             const isActive = locale === l;

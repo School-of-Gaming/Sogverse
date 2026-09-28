@@ -4939,35 +4939,33 @@
     },
     "edit": {
       "back": "Takaisin asetuksiin",
-      "pageTitle": "Tiimikorttisi",
-      "introGedu": "Korttisi School of Gamingin julkisella tiimisivulla, jolla perheet tutustuvat sessioiden takana oleviin ihmisiin. Tallenna niin usein kuin haluat: kortti tulee sivulle vasta, kun merkitset sen valmiiksi ja ylläpitäjä on hyväksynyt sen.",
-      "introAdmin": "Korttisi School of Gamingin julkisella tiimisivulla. Kun se on näkyvissä, tallentamasi muutokset tulevat voimaan heti.",
+      "pageTitle": "Profiilisi",
       "status": {
         "privateTitle": "Yksityinen",
-        "privateBody": "Vain sinä näet korttisi. Kun olet siihen tyytyväinen, rastita alta ”Profiilini on valmis julkaistavaksi” ja tallenna.",
+        "privateBody": "Vain sinä näet profiilisi. Kun olet siihen tyytyväinen, rastita alta ”Profiilini on valmis julkaistavaksi” ja tallenna.",
         "waitingTitle": "Valmis, odottaa ylläpitäjää",
-        "waitingBody": "Ylläpitäjä katsoo korttisi ja lisää sen tiimisivulle. Voit jatkaa muokkaamista sillä välin.",
-        "liveTitle": "Julkaistu tiimisivulla",
-        "liveBody": "Kuka tahansa näkee korttisi. Tallentamasi muutokset tulevat voimaan heti. Jos haluat poistaa kortin sivulta, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna.",
-        "takenOffTitle": "Valmis, mutta ylläpitäjä on poistanut sen tiimisivulta",
-        "takenOffBody": "Korttisi ei ole tällä hetkellä julkinen. Ota yhteyttä toimistoon, jos haluat tietää syyn tai saada sen takaisin sivulle.",
-        "shownTitle": "Tiimisivulla",
-        "shownBody": "Kuka tahansa näkee korttisi. Tallentamasi muutokset tulevat voimaan heti.",
-        "hiddenTitle": "Ei tiimisivulla",
-        "hiddenBody": "Vain sinä näet korttisi. Kun se on valmis, rastita alta ”Näytä profiilini tiimisivulla” ja tallenna."
+        "waitingBody": "Ylläpitäjä katsoo profiilisi ennen kuin se julkaistaan. Voit jatkaa muokkaamista sillä välin.",
+        "liveTitle": "Julkinen",
+        "liveBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti. Jos haluat poistaa profiilin näkyvistä, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna.",
+        "takenOffTitle": "Valmis, mutta ylläpitäjä on poistanut sen näkyvistä",
+        "takenOffBody": "Profiilisi ei ole tällä hetkellä julkinen. Ota yhteyttä toimistoon, jos haluat tietää syyn tai saada sen takaisin näkyviin.",
+        "shownTitle": "Julkinen",
+        "shownBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti.",
+        "hiddenTitle": "Yksityinen",
+        "hiddenBody": "Vain sinä näet profiilisi. Kun se on valmis, rastita alta ”Näytä profiilini julkisesti” ja tallenna."
       },
       "actions": {
         "save": "Tallenna muutokset",
         "discard": "Hylkää muutokset"
       },
       "switch": {
-        "heading": "Tiimisivu",
+        "heading": "Julkinen profiili",
         "readyLabel": "Profiilini on valmis julkaistavaksi",
         "readyHint": "Rastittamalla ja tallentamalla hyväksyt, että School of Gaming näyttää profiilisi julkisesti verkkosivuillaan. Ylläpitäjä katsoo sen ennen kuin se julkaistaan ensimmäisen kerran. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili poistuu heti.",
-        "showLabel": "Näytä profiilini tiimisivulla",
+        "showLabel": "Näytä profiilini julkisesti",
         "showHint": "Rastittamalla ja tallentamalla profiilisi tulee heti School of Gamingin julkisille verkkosivuille. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili poistuu.",
-        "complete": "Kortissasi on kaikki, mitä tiimisivu tarvitsee.",
-        "mustStayComplete": "Kun tämä on rastitettu, korttisi täytyy pysyä täydellisenä, joten tallennus on pois käytöstä, kunnes se on. Täydennä puuttuvat kohdat tai poista rasti jatkaaksesi yksityisesti.",
+        "complete": "Profiilissasi on kaikki, mitä julkaisuun tarvitaan.",
+        "mustStayComplete": "Kun tämä on rastitettu, profiilisi täytyy pysyä täydellisenä, joten tallennus on pois käytöstä, kunnes se on. Täydennä puuttuvat kohdat tai poista rasti jatkaaksesi yksityisesti.",
         "takesEffectOnSave": "Muutos tulee voimaan, kun tallennat.",
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
@@ -4981,21 +4979,21 @@
         "replace": "Vaihda kuva",
         "remove": "Poista kuva",
         "guidance": {
-          "intro": "Perheet ja pelaajat tapaavat sinut ensimmäisenä täällä, joten näytä heille oikea sinä. Rajaat kuvan kehykseen sopivaksi, kun olet valinnut sen.",
+          "intro": "Perheet ja pelaajat näkevät tämän sinusta ensimmäisenä. Kun olet valinnut kuvan, rajaat sen kehykseen sopivaksi.",
           "doHeading": "Tee näin",
           "dontHeading": "Vältä",
           "do": {
             "you": "Vain sinä, pää ja hartiat, kasvot selvästi näkyvissä",
-            "light": "Hyvä valo: ikkunaa kohti kääntyminen tekee ihmeitä",
-            "smile": "Aito hymy",
-            "gear": "Pelisetuppisi, kuulokkeet tai ohjain ovat tervetulleita",
-            "background": "Siisti tai pelkistetty tausta"
+            "light": "Tasainen valo, esimerkiksi kasvot ikkunaan päin",
+            "natural": "Rento ja luonteva: näytät omalta itseltäsi",
+            "gear": "Kuulokkeet tai ohjain saavat näkyä kuvassa",
+            "background": "Pelkistetty tai siisti tausta"
           },
           "dont": {
-            "others": "Lapsia tai muita ihmisiä kuvassa. Tämä on lastensuojelusääntö: kuvaa, jossa on lapsi, ei voi käyttää.",
+            "others": "Muita ihmisiä kuvassa. Lastensuojelun vuoksi kuvaa, jossa on lapsi, ei voi käyttää",
             "hidden": "Aurinkolaseja, maskeja tai mitään, mikä peittää kasvosi",
             "group": "Ryhmäkuvia tai itseäsi rajattuna ryhmäkuvasta",
-            "avatar": "Avatareja, piirroshahmoja tai raskaita filttereitä oman kuvasi sijaan",
+            "avatar": "Avatareja, piirroshahmoja tai raskaita filttereitä",
             "blurry": "Sumeita tai tummia kuvia"
           }
         },
@@ -5017,12 +5015,12 @@
         "title": "Titteli",
         "titleHint": "Tehtäväsi School of Gamingissa, esimerkiksi kerhovastaava.",
         "pick": "Värisi",
-        "pickHint": "Kehystää kuvasi ja alleviivaa nimesi tiimisivulla. Valitsimme sinulle yhden valmiiksi, mutta voit valita minkä tahansa."
+        "pickHint": "Profiilisi korostusväri, joka kehystää kuvasi.",
+        "noPick": "Ei väriä"
       },
       "writing": {
         "heading": "Omin sanoin",
         "languages": "Kielet",
-        "languagesHint": "Kirjoita niillä kielillä, jotka tuntuvat sinusta luontevilta. Vähintään yksi tarvitaan. Lukijat näkevät korttisi omalla kielellään, jos olet kirjoittanut sillä – muuten englanniksi tai sillä kielellä, jolla olet kirjoittanut.",
         "addLocale": "Lisää kieli",
         "removeLocale": "Poista {locale}",
         "shortDescription": "Esittele itsesi yhdellä rivillä",
@@ -5037,8 +5035,8 @@
       "preview": {
         "heading": "Esikatselu",
         "liveNow": "Tämän yleisö näkee nyt.",
-        "unsaved": "Tallentamattomat muutoksesi. Tiimisivulla näkyy viimeksi tallennettu versio, kunnes tallennat.",
-        "notPublic": "Ei tiimisivulla, joten vain sinä näet tämän."
+        "unsaved": "Tallentamattomat muutoksesi. Julkisesti näkyy viimeksi tallennettu versio, kunnes tallennat.",
+        "notPublic": "Ei julkinen, joten vain sinä näet tämän."
       }
     }
   }
