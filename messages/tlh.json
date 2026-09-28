@@ -4036,6 +4036,103 @@
       "languages": "Holmey",
       "topics": "Quj’mey",
       "areas": "Sepmey"
+    },
+    "edit": {
+      "back": "SeHlaw’Daq yIchegh",
+      "pageTitle": "ghom QIn’ay’lIj",
+      "introGedu": "School of Gaming ghom QIn’ay’Daq Dagh. qorDu’pu’ tlhIH DaSovmeH, ’oH laDlu’. chenmoHlu’pa’, ’oH nuDnIS DevwI’. Dachoh, vaj nuDqa’nIS.",
+      "introAdmin": "School of Gaming ghom QIn’ay’Daq Dagh. choHmey Dacha’bogh DaH leghlu’.",
+      "status": {
+        "draftTitle": "ghom QIn’ay’Daq tu’lu’be’ DaH",
+        "draftBody": "QIn’ay’lIj yIteb ’ej yInuDmoH. DevwI’ ’oH chaw’DI’, leghlu’.",
+        "inReviewTitle": "nuDlu’meH loS",
+        "inReviewBody": "QIn’ay’lIj nuD DevwI’. DaH Dachoh DaQeHlaHbe’, vaj chaw’bogh DevwI’ leghlu’. vay’ DachoHqang? yIHoH.",
+        "liveTitle": "ghom QIn’ay’Daq leghlu’",
+        "liveBody": "Hoch QIn’ay’lIj leghlaH. choHmey chaw’ DevwI’; ghIq leghlu’. QIn’ay’ ngo’ ratlh.",
+        "changesInReviewTitle": "choHmey nuDlu’meH loS",
+        "changesInReviewBody": "choHmeylIj nuD DevwI’. QIn’ay’ ngo’ ratlh ghom QIn’ay’Daq. DaH Dachoh DaQeHlaHbe’. choHmey yIHoH, vaj bImuHqa’laH.",
+        "returnedTitle": "QIn ghajbogh QIn’ay’ nobHa’lu’",
+        "returnedBody": "QIn’ay’lIj nobHa’ {name}. yIchoH ’ej yInuDmoHqa’.",
+        "publishedTitle": "ghom QIn’ay’Daq",
+        "publishedBody": "Hoch QIn’ay’lIj leghlaH. choHmey Dacha’bogh DaH leghlu’.",
+        "hiddenTitle": "ghom QIn’ay’vo’ So’lu’",
+        "hiddenBody": "QIn’ay’lIj leghlu’be’. ghoS’eghDI’, yIcha’."
+      },
+      "actions": {
+        "withdraw": "nuDmoHghach yIHoH",
+        "withdrawChanges": "choHmey yIHoH",
+        "remove": "ghom QIn’ay’vo’ yIteq",
+        "hide": "ghom QIn’ay’vo’ yISo’",
+        "show": "ghom QIn’ay’Daq yIcha’",
+        "saveDraft": "nab yIpol",
+        "submit": "yInuDmoH",
+        "submitChanges": "choHmey yInuDmoH",
+        "resubmit": "yInuDmoHqa’",
+        "publish": "choHmey yIcha’",
+        "save": "choHmey yIpol",
+        "discard": "choHmey yIlon"
+      },
+      "removeDialog": {
+        "title": "ghom QIn’ay’vo’ QIn’ay’lIj Dateq’a’?",
+        "description": "DaH leghlu’be’choH. DacheghmoHqang? yInuDmoHqa’.",
+        "confirm": "QIn’ay’ yIteq"
+      },
+      "consent": "School of Gaming ghom QIn’ay’Daq QIn’ay’vam cha’meH jIQoch be’. Hoch leghlaH. reH vIteqlaH.",
+      "photo": {
+        "heading": "mIllogh",
+        "upload": "mIllogh yIlab",
+        "replace": "mIllogh yIchoH",
+        "remove": "mIllogh yIteq",
+        "hint": "mIllogh botlh neH cha’ ghom QIn’ay’. mIllogh tu’lu’be’chugh, mIw’a’lIj cha’lu’."
+      },
+      "about": {
+        "heading": "SoH",
+        "nickname": "Quj pong",
+        "nicknameHint": "ponglIjDaq cha’lu’, DaghItlhbogh rur.",
+        "title": "patlh",
+        "titleHint": "School of Gaming Daq Qu’lIj. mu’tlheghvam: Head of Clubs.",
+        "tagline": "mu’tlhegh",
+        "taglineHint": "mu’tlhegh wa’ SoHvaD, mu’meylIj.",
+        "taglineCount": "{count}/{max}",
+        "taglineLanguage": "Hol"
+      },
+      "skills": {
+        "heading": "vIta’bogh",
+        "hint": "mu’tlheghmey ngaj, Danaghbogh mIw. {min} {max} joq ’IQ.",
+        "phrase": "mu’tlhegh {position}",
+        "placeholder": "mu’tlheghvam: qach qaD",
+        "add": "mu’tlhegh yIchel",
+        "moveUp": "mu’tlhegh {position} yIDoS Dung",
+        "moveDown": "mu’tlhegh {position} yIDoS bIng",
+        "remove": "mu’tlhegh {position} yIteq",
+        "count": "{count}/{max}"
+      },
+      "topics": {
+        "heading": "Quj’mey",
+        "hint": "Qujmey DaDevbogh yIwIv."
+      },
+      "account": {
+        "heading": "mI’lIjvo’",
+        "name": "pong",
+        "nameGeduHint": "ghom QIn’ay’Daq tuq ponglIj leghlu’be’ not.",
+        "title": "patlh",
+        "titleGeduHint": "Qu’lIj wIvlu’.",
+        "languages": "Holmey",
+        "areas": "Sepmey",
+        "none": "pagh DaH",
+        "settingsLink": "SeHlaw’Daq yIchoH"
+      },
+      "preview": {
+        "heading": "wa’DIch legh",
+        "versions": "leghmeH mu’mey",
+        "draft": "nablIj",
+        "live": "DaH leghlu’bogh",
+        "liveNow": "DaH ’oH legh Hoch.",
+        "draftOverLive": "leghlu’be’ DaH. DevwI’ choHmey chaw’pa’, QIn’ay’ ngo’ legh Hoch.",
+        "nothingLive": "DaH legh pagh. DevwI’ chaw’DI’, leghlu’.",
+        "adminUnpublished": "leghlu’be’ DaH. choHmey yIcha’, vaj ghom QIn’ay’ choHlu’.",
+        "adminHidden": "So’lu’. yIcha’DI’, ’Iv rur QIn’ay’lIj."
+      }
     }
   }
 }

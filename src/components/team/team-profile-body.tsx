@@ -101,6 +101,13 @@ export type TeamProfile = AdminTeamProfile | GeduTeamProfile;
  * and a safety sentence would have to name a verified mechanism, which a
  * certification flag is not.
  *
+ * **It answers to its own width, not the viewport's.** Every step is a
+ * container query at the width the viewport breakpoint used to name (40rem,
+ * 48rem), so on the public page, where the body spans the viewport, nothing
+ * changes — and in the team card editor, where the same body is a live preview
+ * in a column beside the form, it lays out for the column it is actually in
+ * rather than for a screen it only occupies part of.
+ *
  * Every section that can be empty is left out rather than drawn empty: a
  * profile with no skills has no "What I do" card, and a row with nothing in it
  * is not a row. There is no loading state inside it — the route renders it
@@ -126,135 +133,137 @@ export function TeamProfileBody({ profile }: { profile: TeamProfile }) {
   const hasSkills = profile.skills.length > 0;
 
   return (
-    <article className="container mx-auto max-w-4xl px-4 py-8 sm:py-12">
-      <header className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
-        <Portrait id={profile.id} photo={profile.photo} />
-        <div className="min-w-0">
-          {/* The wrapper shrinks to the headline's longest line, so the world
-              rule runs exactly the headline's measure, as on the home hero. */}
-          <div className="inline-block max-w-full">
-            <h1 className="break-words text-h1-mobile font-bold tracking-tight md:text-5xl">
-              {profile.nickname === null
-                ? displayName
-                : profile.kind === "admin"
-                  ? t.rich("nameWithNickname", {
-                      firstName: profile.firstName,
-                      lastName: profile.lastName,
-                      nickname: profile.nickname,
-                      nick: (chunks) => (
-                        <span className="text-act">{chunks}</span>
-                      ),
-                    })
-                  : t.rich("firstNameWithNickname", {
-                      firstName: profile.firstName,
-                      nickname: profile.nickname,
-                      nick: (chunks) => (
-                        <span className="text-act">{chunks}</span>
-                      ),
-                    })}
-            </h1>
-            <span className="mt-4 block h-1.5 w-full rounded-full bg-world" />
+    <div className="@container">
+      <article className="container mx-auto max-w-4xl px-4 py-8 @min-[40rem]:py-12">
+        <header className="flex flex-col gap-6 @min-[40rem]:flex-row @min-[40rem]:items-center @min-[40rem]:gap-8">
+          <Portrait id={profile.id} photo={profile.photo} />
+          <div className="min-w-0">
+            {/* The wrapper shrinks to the headline's longest line, so the world
+                rule runs exactly the headline's measure, as on the home hero. */}
+            <div className="inline-block max-w-full">
+              <h1 className="break-words text-h1-mobile font-bold tracking-tight @min-[48rem]:text-5xl">
+                {profile.nickname === null
+                  ? displayName
+                  : profile.kind === "admin"
+                    ? t.rich("nameWithNickname", {
+                        firstName: profile.firstName,
+                        lastName: profile.lastName,
+                        nickname: profile.nickname,
+                        nick: (chunks) => (
+                          <span className="text-act">{chunks}</span>
+                        ),
+                      })
+                    : t.rich("firstNameWithNickname", {
+                        firstName: profile.firstName,
+                        nickname: profile.nickname,
+                        nick: (chunks) => (
+                          <span className="text-act">{chunks}</span>
+                        ),
+                      })}
+              </h1>
+              <span className="mt-4 block h-1.5 w-full rounded-full bg-world" />
+            </div>
+            <p className="mt-4 text-lg font-medium">{title}</p>
           </div>
-          <p className="mt-4 text-lg font-medium">{title}</p>
-        </div>
-      </header>
+        </header>
 
-      {profile.tagline && (
-        <figure className="mt-10 max-w-2xl">
-          <blockquote
-            lang={profile.tagline.spokenLanguage}
-            className="font-serif text-xl italic leading-relaxed sm:text-2xl"
+        {profile.tagline && (
+          <figure className="mt-10 max-w-2xl">
+            <blockquote
+              lang={profile.tagline.spokenLanguage}
+              className="font-serif text-xl italic leading-relaxed @min-[40rem]:text-2xl"
+            >
+              {profile.tagline.text}
+            </blockquote>
+            {profile.tagline.spokenLanguage !== locale && (
+              <figcaption className="mt-2 text-sm text-muted-foreground">
+                {t("taglineLanguage", {
+                  language: languageName(profile.tagline.spokenLanguage),
+                })}
+              </figcaption>
+            )}
+          </figure>
+        )}
+
+        {(hasSkills || hasFacts) && (
+          <div
+            className={
+              hasSkills && hasFacts
+                ? "mt-10 grid gap-6 @min-[48rem]:grid-cols-2"
+                : "mt-10 grid gap-6"
+            }
           >
-            {profile.tagline.text}
-          </blockquote>
-          {profile.tagline.spokenLanguage !== locale && (
-            <figcaption className="mt-2 text-sm text-muted-foreground">
-              {t("taglineLanguage", {
-                language: languageName(profile.tagline.spokenLanguage),
-              })}
-            </figcaption>
-          )}
-        </figure>
-      )}
+            {hasSkills && (
+              <Card>
+                <CardContent className="p-5 @min-[40rem]:p-6">
+                  <h2 className="text-lg font-semibold">{t("whatIDo")}</h2>
+                  <ul className="mt-4 list-disc space-y-2 pl-5 marker:text-muted-foreground">
+                    {profile.skills.map((skill) => (
+                      <li key={skill}>{skill}</li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
 
-      {(hasSkills || hasFacts) && (
-        <div
-          className={
-            hasSkills && hasFacts
-              ? "mt-10 grid gap-6 md:grid-cols-2"
-              : "mt-10 grid gap-6"
-          }
-        >
-          {hasSkills && (
-            <Card>
-              <CardContent className="p-5 sm:p-6">
-                <h2 className="text-lg font-semibold">{t("whatIDo")}</h2>
-                <ul className="mt-4 list-disc space-y-2 pl-5 marker:text-muted-foreground">
-                  {profile.skills.map((skill) => (
-                    <li key={skill}>{skill}</li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
-
-          {hasFacts && (
-            <Card>
-              <CardContent className="p-5 sm:p-6">
-                <h2 className="text-lg font-semibold">{t("atAGlance")}</h2>
-                <dl className="mt-2 divide-y divide-border">
-                  {profile.spokenLanguages.length > 0 && (
-                    <FactRow label={t("languages")}>
-                      <ul className="flex flex-wrap gap-x-4 gap-y-2">
-                        {profile.spokenLanguages.map((code) => (
-                          <li
-                            key={code}
-                            className="inline-flex items-center gap-2"
-                          >
-                            <LanguageFlag
-                              code={code}
-                              showCode={false}
-                              title={languageName(code)}
-                            />
-                            <span>{languageName(code)}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </FactRow>
-                  )}
-                  {profile.topics.length > 0 && (
-                    <FactRow label={t("topics")}>
-                      <ul className="flex flex-wrap gap-2">
-                        {profile.topics.map((topic) => (
-                          <li key={topic}>
-                            <Badge variant="outline" className="font-medium">
-                              {PRODUCT_TOPICS[topic].label}
-                            </Badge>
-                          </li>
-                        ))}
-                      </ul>
-                    </FactRow>
-                  )}
-                  {areas.length > 0 && (
-                    <FactRow label={t("areas")}>
-                      <p className="flex items-start gap-2">
-                        <MapPin
-                          aria-hidden
-                          className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
-                        />
-                        <span>
-                          {format.list(areas, { type: "conjunction" })}
-                        </span>
-                      </p>
-                    </FactRow>
-                  )}
-                </dl>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-    </article>
+            {hasFacts && (
+              <Card>
+                <CardContent className="p-5 @min-[40rem]:p-6">
+                  <h2 className="text-lg font-semibold">{t("atAGlance")}</h2>
+                  <dl className="mt-2 divide-y divide-border">
+                    {profile.spokenLanguages.length > 0 && (
+                      <FactRow label={t("languages")}>
+                        <ul className="flex flex-wrap gap-x-4 gap-y-2">
+                          {profile.spokenLanguages.map((code) => (
+                            <li
+                              key={code}
+                              className="inline-flex items-center gap-2"
+                            >
+                              <LanguageFlag
+                                code={code}
+                                showCode={false}
+                                title={languageName(code)}
+                              />
+                              <span>{languageName(code)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </FactRow>
+                    )}
+                    {profile.topics.length > 0 && (
+                      <FactRow label={t("topics")}>
+                        <ul className="flex flex-wrap gap-2">
+                          {profile.topics.map((topic) => (
+                            <li key={topic}>
+                              <Badge variant="outline" className="font-medium">
+                                {PRODUCT_TOPICS[topic].label}
+                              </Badge>
+                            </li>
+                          ))}
+                        </ul>
+                      </FactRow>
+                    )}
+                    {areas.length > 0 && (
+                      <FactRow label={t("areas")}>
+                        <p className="flex items-start gap-2">
+                          <MapPin
+                            aria-hidden
+                            className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                          />
+                          <span>
+                            {format.list(areas, { type: "conjunction" })}
+                          </span>
+                        </p>
+                      </FactRow>
+                    )}
+                  </dl>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+      </article>
+    </div>
   );
 }
 
@@ -275,7 +284,7 @@ function Portrait({
   return (
     <div
       aria-hidden
-      className="relative size-28 shrink-0 overflow-hidden rounded-2xl border border-border bg-card sm:size-40"
+      className="relative size-28 shrink-0 overflow-hidden rounded-2xl border border-border bg-card @min-[40rem]:size-40"
     >
       {photo ? (
         <Image

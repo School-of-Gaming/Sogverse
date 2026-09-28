@@ -4935,6 +4935,103 @@
       "languages": "Languages",
       "topics": "Games and topics",
       "areas": "Areas"
+    },
+    "edit": {
+      "back": "Back to settings",
+      "pageTitle": "Your team card",
+      "introGedu": "Your card on School of Gaming’s public team page, where families get to know the people behind the sessions. An admin reviews it before it goes live, and again whenever you change it.",
+      "introAdmin": "Your card on School of Gaming’s public team page. Changes you publish go live straight away.",
+      "status": {
+        "draftTitle": "Not on the team page yet",
+        "draftBody": "Fill in your card and submit it for review. It goes live once an admin approves it.",
+        "inReviewTitle": "Waiting for review",
+        "inReviewBody": "An admin is reviewing your card. Editing is paused so that what they approve is exactly what goes live. Withdraw it if you want to change something.",
+        "liveTitle": "Live on the team page",
+        "liveBody": "Anyone can see your card. Changes you make here go live once an admin approves them, and your current card stays up until then.",
+        "changesInReviewTitle": "Changes waiting for review",
+        "changesInReviewBody": "An admin is reviewing your changes, and the team page shows your current card until they approve them. Editing is paused until then. Withdraw the changes if you want to keep working on them.",
+        "returnedTitle": "Returned with a note",
+        "returnedBody": "{name} sent your card back. Make the changes and submit it again.",
+        "publishedTitle": "On the team page",
+        "publishedBody": "Anyone can see your card. Changes you publish go live straight away.",
+        "hiddenTitle": "Hidden from the team page",
+        "hiddenBody": "Your card is not on the public team page. Show it when it is ready."
+      },
+      "actions": {
+        "withdraw": "Withdraw submission",
+        "withdrawChanges": "Withdraw changes",
+        "remove": "Remove from team page",
+        "hide": "Hide from team page",
+        "show": "Show on team page",
+        "saveDraft": "Save draft",
+        "submit": "Submit for review",
+        "submitChanges": "Submit changes for review",
+        "resubmit": "Submit again",
+        "publish": "Publish changes",
+        "save": "Save changes",
+        "discard": "Discard changes"
+      },
+      "removeDialog": {
+        "title": "Remove your card from the team page?",
+        "description": "It comes off the public page straight away. To put it back, you submit it for review again.",
+        "confirm": "Remove card"
+      },
+      "consent": "I agree to School of Gaming showing this card on its public team page, where anyone can see it. I can remove it at any time.",
+      "photo": {
+        "heading": "Photo",
+        "upload": "Upload photo",
+        "replace": "Replace photo",
+        "remove": "Remove photo",
+        "hint": "The team page shows a square from the middle of your photo. Without one, your account’s pattern stands in."
+      },
+      "about": {
+        "heading": "About you",
+        "nickname": "Gamer tag",
+        "nicknameHint": "Shown in quotes in your name, exactly as you write it.",
+        "title": "Title",
+        "titleHint": "Your job at School of Gaming, for example Head of Clubs.",
+        "tagline": "Tagline",
+        "taglineHint": "One line about yourself, in your own words.",
+        "taglineCount": "{count}/{max}",
+        "taglineLanguage": "Written in"
+      },
+      "skills": {
+        "heading": "What I do",
+        "hint": "Short phrases, in the order you want them shown. Between {min} and {max} work best.",
+        "phrase": "Phrase {position}",
+        "placeholder": "For example: Build challenges",
+        "add": "Add a phrase",
+        "moveUp": "Move phrase {position} up",
+        "moveDown": "Move phrase {position} down",
+        "remove": "Remove phrase {position}",
+        "count": "{count} of {max}"
+      },
+      "topics": {
+        "heading": "Games and topics",
+        "hint": "Pick the games and topics you run."
+      },
+      "account": {
+        "heading": "From your account",
+        "name": "Name",
+        "nameGeduHint": "Your surname never appears on the team page.",
+        "title": "Title",
+        "titleGeduHint": "Set by your role.",
+        "languages": "Languages",
+        "areas": "Areas",
+        "none": "None yet",
+        "settingsLink": "Change these in settings"
+      },
+      "preview": {
+        "heading": "Preview",
+        "versions": "Version to preview",
+        "draft": "Your draft",
+        "live": "What’s live now",
+        "liveNow": "This is what the public sees now.",
+        "draftOverLive": "Not live yet. The public sees your current card until an admin approves these changes.",
+        "nothingLive": "Nobody can see this yet. It goes live once an admin approves it.",
+        "adminUnpublished": "Not live yet. Publish your changes to update the team page.",
+        "adminHidden": "Hidden. This is how your card will look once you show it."
+      }
     }
   }
 }

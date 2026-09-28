@@ -18,6 +18,10 @@ import { isParentDashboardScenario } from "@/components/parent/mock-dashboard-fi
 import { isSeatOfferScenario } from "@/components/seat-offer/mock-seat-offer-fixtures";
 import { isVoiceRoomScenario } from "@/components/voice/mock-room-fixtures";
 import {
+  isAdminTeamCardScenario,
+  isGeduTeamCardScenario,
+} from "@/components/team/mock-team-fixtures";
+import {
   findConfirmationNotice,
   isPreviewScenario,
   isShopBrowseScenario,
@@ -58,6 +62,10 @@ import {
   TeamProfileScene,
   isTeamProfileScenario,
 } from "./scenes/team-profile-scene";
+import {
+  AdminTeamCardScene,
+  GeduTeamCardScene,
+} from "./scenes/team-card-editor-scene";
 import { isSessionFeedbackScenario } from "./scenes/session-feedback-scenarios";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
 import { VoiceRoomScene } from "./scenes/voice-room-scene";
@@ -153,6 +161,14 @@ const SCENE_RENDERERS: Record<
   "team-profile": (scenario) => {
     if (!isTeamProfileScenario(scenario)) notFound();
     return <TeamProfileScene scenario={scenario} />;
+  },
+  "gedu-team-card": (scenario) => {
+    if (!isGeduTeamCardScenario(scenario)) notFound();
+    return <GeduTeamCardScene scenario={scenario} />;
+  },
+  "admin-team-card": (scenario) => {
+    if (!isAdminTeamCardScenario(scenario)) notFound();
+    return <AdminTeamCardScene scenario={scenario} />;
   },
   "parent-dashboard": (scenario) => {
     if (!isParentDashboardScenario(scenario)) notFound();

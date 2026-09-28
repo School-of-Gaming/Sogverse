@@ -4935,6 +4935,103 @@
       "languages": "Språk",
       "topics": "Spel och ämnen",
       "areas": "Områden"
+    },
+    "edit": {
+      "back": "Tillbaka till inställningar",
+      "pageTitle": "Ditt teamkort",
+      "introGedu": "Ditt kort på School of Gamings offentliga teamsida, där familjer lär känna människorna bakom tillfällena. En admin granskar det innan det publiceras, och igen varje gång du ändrar det.",
+      "introAdmin": "Ditt kort på School of Gamings offentliga teamsida. Ändringar du publicerar syns direkt.",
+      "status": {
+        "draftTitle": "Inte på teamsidan än",
+        "draftBody": "Fyll i ditt kort och skicka det för granskning. Det publiceras när en admin godkänner det.",
+        "inReviewTitle": "Väntar på granskning",
+        "inReviewBody": "En admin granskar ditt kort. Redigeringen är pausad så att det som godkänns är exakt det som publiceras. Dra tillbaka det om du vill ändra något.",
+        "liveTitle": "Publicerat på teamsidan",
+        "liveBody": "Vem som helst kan se ditt kort. Ändringar du gör här publiceras när en admin godkänner dem, och ditt nuvarande kort ligger kvar tills dess.",
+        "changesInReviewTitle": "Ändringar väntar på granskning",
+        "changesInReviewBody": "En admin granskar dina ändringar, och teamsidan visar ditt nuvarande kort tills de godkänns. Redigeringen är pausad tills dess. Dra tillbaka ändringarna om du vill fortsätta arbeta med dem.",
+        "returnedTitle": "Skickat tillbaka med en kommentar",
+        "returnedBody": "{name} skickade tillbaka ditt kort. Gör ändringarna och skicka det igen.",
+        "publishedTitle": "På teamsidan",
+        "publishedBody": "Vem som helst kan se ditt kort. Ändringar du publicerar syns direkt.",
+        "hiddenTitle": "Dolt från teamsidan",
+        "hiddenBody": "Ditt kort finns inte på den offentliga teamsidan. Visa det när det är klart."
+      },
+      "actions": {
+        "withdraw": "Dra tillbaka",
+        "withdrawChanges": "Dra tillbaka ändringarna",
+        "remove": "Ta bort från teamsidan",
+        "hide": "Dölj från teamsidan",
+        "show": "Visa på teamsidan",
+        "saveDraft": "Spara utkast",
+        "submit": "Skicka för granskning",
+        "submitChanges": "Skicka ändringarna för granskning",
+        "resubmit": "Skicka igen",
+        "publish": "Publicera ändringarna",
+        "save": "Spara ändringarna",
+        "discard": "Förkasta ändringarna"
+      },
+      "removeDialog": {
+        "title": "Ta bort ditt kort från teamsidan?",
+        "description": "Det försvinner från den offentliga sidan direkt. För att få tillbaka det skickar du det för granskning igen.",
+        "confirm": "Ta bort kortet"
+      },
+      "consent": "Jag godkänner att School of Gaming visar det här kortet på sin offentliga teamsida, där vem som helst kan se det. Jag kan ta bort det när som helst.",
+      "photo": {
+        "heading": "Foto",
+        "upload": "Ladda upp foto",
+        "replace": "Byt foto",
+        "remove": "Ta bort foto",
+        "hint": "Teamsidan visar en kvadrat från mitten av ditt foto. Utan foto visas ditt kontos mönster."
+      },
+      "about": {
+        "heading": "Om dig",
+        "nickname": "Gamertag",
+        "nicknameHint": "Visas inom citattecken i ditt namn, precis som du skriver den.",
+        "title": "Titel",
+        "titleHint": "Ditt jobb på School of Gaming, till exempel klubbansvarig.",
+        "tagline": "Presentationsrad",
+        "taglineHint": "En rad om dig själv, med dina egna ord.",
+        "taglineCount": "{count}/{max}",
+        "taglineLanguage": "Skrivet på"
+      },
+      "skills": {
+        "heading": "Vad jag gör",
+        "hint": "Korta fraser, i den ordning du vill visa dem. Mellan {min} och {max} fungerar bäst.",
+        "phrase": "Fras {position}",
+        "placeholder": "Till exempel: byggutmaningar",
+        "add": "Lägg till en fras",
+        "moveUp": "Flytta fras {position} uppåt",
+        "moveDown": "Flytta fras {position} nedåt",
+        "remove": "Ta bort fras {position}",
+        "count": "{count} av {max}"
+      },
+      "topics": {
+        "heading": "Spel och ämnen",
+        "hint": "Välj de spel och ämnen du leder."
+      },
+      "account": {
+        "heading": "Från ditt konto",
+        "name": "Namn",
+        "nameGeduHint": "Ditt efternamn visas aldrig på teamsidan.",
+        "title": "Titel",
+        "titleGeduHint": "Bestäms av din roll.",
+        "languages": "Språk",
+        "areas": "Områden",
+        "none": "Inga ännu",
+        "settingsLink": "Ändra dessa i inställningarna"
+      },
+      "preview": {
+        "heading": "Förhandsvisning",
+        "versions": "Version att förhandsvisa",
+        "draft": "Ditt utkast",
+        "live": "Det som visas nu",
+        "liveNow": "Så här ser allmänheten det nu.",
+        "draftOverLive": "Inte publicerat än. Allmänheten ser ditt nuvarande kort tills en admin godkänner ändringarna.",
+        "nothingLive": "Ingen kan se det här än. Det publiceras när en admin godkänner det.",
+        "adminUnpublished": "Inte publicerat än. Publicera dina ändringar för att uppdatera teamsidan.",
+        "adminHidden": "Dolt. Så här ser ditt kort ut när du visar det."
+      }
     }
   }
 }

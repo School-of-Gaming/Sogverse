@@ -4935,6 +4935,103 @@
       "languages": "Langues",
       "topics": "Jeux et thèmes",
       "areas": "Secteurs"
+    },
+    "edit": {
+      "back": "Retour aux paramètres",
+      "pageTitle": "Votre fiche d’équipe",
+      "introGedu": "Votre fiche sur la page d’équipe publique de School of Gaming, où les familles découvrent les personnes derrière les séances. Un administrateur la relit avant sa mise en ligne, puis à chaque modification.",
+      "introAdmin": "Votre fiche sur la page d’équipe publique de School of Gaming. Les modifications que vous publiez sont en ligne immédiatement.",
+      "status": {
+        "draftTitle": "Pas encore sur la page d’équipe",
+        "draftBody": "Remplissez votre fiche et soumettez-la pour relecture. Elle sera en ligne dès qu’un administrateur l’aura approuvée.",
+        "inReviewTitle": "En attente de relecture",
+        "inReviewBody": "Un administrateur relit votre fiche. La modification est suspendue pour que ce qui est approuvé soit exactement ce qui sera mis en ligne. Retirez-la si vous voulez changer quelque chose.",
+        "liveTitle": "En ligne sur la page d’équipe",
+        "liveBody": "Tout le monde peut voir votre fiche. Vos modifications seront en ligne une fois approuvées par un administrateur ; d’ici là, votre fiche actuelle reste affichée.",
+        "changesInReviewTitle": "Modifications en attente de relecture",
+        "changesInReviewBody": "Un administrateur relit vos modifications, et la page d’équipe affiche votre fiche actuelle jusqu’à leur approbation. La modification est suspendue d’ici là. Retirez les modifications si vous voulez continuer à y travailler.",
+        "returnedTitle": "Renvoyée avec une note",
+        "returnedBody": "{name} vous a renvoyé votre fiche. Faites les modifications et soumettez-la à nouveau.",
+        "publishedTitle": "Sur la page d’équipe",
+        "publishedBody": "Tout le monde peut voir votre fiche. Les modifications que vous publiez sont en ligne immédiatement.",
+        "hiddenTitle": "Masquée de la page d’équipe",
+        "hiddenBody": "Votre fiche n’est pas sur la page d’équipe publique. Affichez-la quand elle est prête."
+      },
+      "actions": {
+        "withdraw": "Retirer la soumission",
+        "withdrawChanges": "Retirer les modifications",
+        "remove": "Retirer de la page d’équipe",
+        "hide": "Masquer de la page d’équipe",
+        "show": "Afficher sur la page d’équipe",
+        "saveDraft": "Enregistrer le brouillon",
+        "submit": "Soumettre pour relecture",
+        "submitChanges": "Soumettre les modifications",
+        "resubmit": "Soumettre à nouveau",
+        "publish": "Publier les modifications",
+        "save": "Enregistrer les modifications",
+        "discard": "Annuler les modifications"
+      },
+      "removeDialog": {
+        "title": "Retirer votre fiche de la page d’équipe ?",
+        "description": "Elle disparaît immédiatement de la page publique. Pour la remettre, vous devrez la soumettre à nouveau pour relecture.",
+        "confirm": "Retirer la fiche"
+      },
+      "consent": "J’accepte que School of Gaming affiche cette fiche sur sa page d’équipe publique, où tout le monde peut la voir. Je peux la retirer à tout moment.",
+      "photo": {
+        "heading": "Photo",
+        "upload": "Importer une photo",
+        "replace": "Remplacer la photo",
+        "remove": "Supprimer la photo",
+        "hint": "La page d’équipe affiche un carré pris au centre de votre photo. Sans photo, le motif de votre compte la remplace."
+      },
+      "about": {
+        "heading": "À propos de vous",
+        "nickname": "Pseudo",
+        "nicknameHint": "Affiché entre guillemets dans votre nom, exactement comme vous l’écrivez.",
+        "title": "Titre",
+        "titleHint": "Votre poste chez School of Gaming, par exemple responsable des clubs.",
+        "tagline": "Accroche",
+        "taglineHint": "Une ligne sur vous, avec vos propres mots.",
+        "taglineCount": "{count}/{max}",
+        "taglineLanguage": "Écrit en"
+      },
+      "skills": {
+        "heading": "Ce que je fais",
+        "hint": "De courtes expressions, dans l’ordre où vous voulez les afficher. L’idéal : entre {min} et {max}.",
+        "phrase": "Expression {position}",
+        "placeholder": "Par exemple : défis de construction",
+        "add": "Ajouter une expression",
+        "moveUp": "Monter l’expression {position}",
+        "moveDown": "Descendre l’expression {position}",
+        "remove": "Supprimer l’expression {position}",
+        "count": "{count} sur {max}"
+      },
+      "topics": {
+        "heading": "Jeux et thèmes",
+        "hint": "Choisissez les jeux et les thèmes que vous animez."
+      },
+      "account": {
+        "heading": "Depuis votre compte",
+        "name": "Nom",
+        "nameGeduHint": "Votre nom de famille n’apparaît jamais sur la page d’équipe.",
+        "title": "Titre",
+        "titleGeduHint": "Défini par votre rôle.",
+        "languages": "Langues",
+        "areas": "Secteurs",
+        "none": "Aucun pour l’instant",
+        "settingsLink": "Modifier dans les paramètres"
+      },
+      "preview": {
+        "heading": "Aperçu",
+        "versions": "Version à prévisualiser",
+        "draft": "Votre brouillon",
+        "live": "En ligne actuellement",
+        "liveNow": "C’est ce que le public voit actuellement.",
+        "draftOverLive": "Pas encore en ligne. Le public voit votre fiche actuelle jusqu’à ce qu’un administrateur approuve ces modifications.",
+        "nothingLive": "Personne ne peut encore la voir. Elle sera en ligne dès qu’un administrateur l’aura approuvée.",
+        "adminUnpublished": "Pas encore en ligne. Publiez vos modifications pour mettre à jour la page d’équipe.",
+        "adminHidden": "Masquée. Voici à quoi ressemblera votre fiche une fois affichée."
+      }
     }
   }
 }

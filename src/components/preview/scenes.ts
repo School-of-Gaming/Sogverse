@@ -265,6 +265,59 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "gedu-team-card",
+    title: "Team card editor — Gedu (draft)",
+    description:
+      "The page a Gedu edits their own team card on, beside a live preview of the public page, in each state of its review. Typing, phrases, topics and the draft/live toggle work; every write is inert.",
+    chrome: "dashboard",
+    navRole: "gedu",
+    scenarios: [
+      {
+        slug: "draft",
+        label: "Not submitted — a new card",
+        description:
+          "Nothing written and nothing live: the empty sections, the identicon and the consent in the submit step.",
+      },
+      {
+        slug: "in-review",
+        label: "Waiting for review",
+        description: "The locked form, with withdrawing as the way back in.",
+      },
+      {
+        slug: "live",
+        label: "Live",
+        description:
+          "The approved card is up; start typing and the draft/live toggle appears.",
+      },
+      {
+        slug: "changes-in-review",
+        label: "Live, changes waiting for review",
+        description:
+          "A changed draft under review while the old card stays up — the toggle shows both.",
+      },
+      {
+        slug: "returned",
+        label: "Returned with a note",
+        description: "An admin's note on a first submission, open for editing.",
+      },
+    ],
+  },
+  {
+    surface: "admin-team-card",
+    title: "Team card editor — office staff (draft)",
+    description:
+      "The same page as office staff meet it: no review, so saving publishes, and hiding or showing the card is theirs.",
+    chrome: "admin",
+    scenarios: [
+      { slug: "published", label: "On the team page" },
+      {
+        slug: "hidden",
+        label: "Hidden — no photo",
+        description: "Off the team page, with the identicon standing in.",
+      },
+    ],
+  },
+  {
     surface: "parent-dashboard",
     title: "Parent dashboard",
     description:
