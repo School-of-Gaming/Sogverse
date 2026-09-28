@@ -49,7 +49,8 @@ export const userKeys = {
 /**
  * One profile row. `initialData` seeds it with a row a server component has
  * already read, so a client island paints complete on its first frame and
- * still refetches when a write invalidates it.
+ * still refetches when a write invalidates it. A seeded row is held fresh
+ * rather than refetched on mount: the server read it for this very render.
  */
 export function useProfile(
   userId: string,
@@ -62,7 +63,10 @@ export function useProfile(
     queryKey: userKeys.detail(userId),
     queryFn: () => service.getProfile(userId),
     enabled: !!userId,
-    initialData: options?.initialData,
+    ...(options?.initialData && {
+      initialData: options.initialData,
+      staleTime: Infinity,
+    }),
   });
 }
 
