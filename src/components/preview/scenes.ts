@@ -248,6 +248,23 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "team-profile",
+    title: "Team profile (draft)",
+    description:
+      "One person's public team card as a page, the same body for office staff and Gedus, before the /team route exists.",
+    chrome: "public",
+    scenarios: [
+      { slug: "admin", label: "Office staff — full, with photo" },
+      { slug: "gedu", label: "Gedu — full, with photo" },
+      {
+        slug: "gedu-sparse",
+        label: "Gedu — sparse",
+        description:
+          "No photo, no gamer tag, two skills, and a tagline in Finnish.",
+      },
+    ],
+  },
+  {
     surface: "parent-dashboard",
     title: "Parent dashboard",
     description:

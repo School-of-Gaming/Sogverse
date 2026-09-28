@@ -4923,5 +4923,18 @@
     "rejectAll": "Reject all",
     "analyticsOnly": "Analytics only",
     "analyticsAndMarketing": "Marketing and analytics"
+  },
+  "team": {
+    "profile": {
+      "nameWithNickname": "{firstName} “<nick>{nickname}</nick>” {lastName}",
+      "firstNameWithNickname": "{firstName} “<nick>{nickname}</nick>”",
+      "geduTitle": "Gedu · Game Educator",
+      "taglineLanguage": "Written in {language}",
+      "whatIDo": "What I do",
+      "atAGlance": "At a glance",
+      "languages": "Languages",
+      "topics": "Games and topics",
+      "areas": "Areas"
+    }
   }
 }

@@ -4923,5 +4923,18 @@
     "rejectAll": "Hylkää kaikki",
     "analyticsOnly": "Vain analytiikka",
     "analyticsAndMarketing": "Markkinointi ja analytiikka"
+  },
+  "team": {
+    "profile": {
+      "nameWithNickname": "{firstName} ”<nick>{nickname}</nick>” {lastName}",
+      "firstNameWithNickname": "{firstName} ”<nick>{nickname}</nick>”",
+      "geduTitle": "Gedu · pelikasvattaja",
+      "taglineLanguage": "Kirjoitettu kielellä {language}",
+      "whatIDo": "Mitä teen",
+      "atAGlance": "Lyhyesti",
+      "languages": "Kielet",
+      "topics": "Pelit ja aiheet",
+      "areas": "Alueet"
+    }
   }
 }

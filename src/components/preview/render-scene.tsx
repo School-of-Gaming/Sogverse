@@ -54,6 +54,10 @@ import {
   isTopicPrepScenario,
 } from "./scenes/topic-prep-scene";
 import { SessionFeedbackScene } from "./scenes/session-feedback-scene";
+import {
+  TeamProfileScene,
+  isTeamProfileScenario,
+} from "./scenes/team-profile-scene";
 import { isSessionFeedbackScenario } from "./scenes/session-feedback-scenarios";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
 import { VoiceRoomScene } from "./scenes/voice-room-scene";
@@ -145,6 +149,10 @@ const SCENE_RENDERERS: Record<
     if (notice) return <PurchaseConfirmationNotice kind={notice.kind} />;
     if (!isPreviewScenario(scenario)) notFound();
     return <PurchaseConfirmationScene scenario={scenario} topic={topic} />;
+  },
+  "team-profile": (scenario) => {
+    if (!isTeamProfileScenario(scenario)) notFound();
+    return <TeamProfileScene scenario={scenario} />;
   },
   "parent-dashboard": (scenario) => {
     if (!isParentDashboardScenario(scenario)) notFound();

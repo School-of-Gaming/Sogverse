@@ -4024,5 +4024,18 @@
     "emailRequired": "QIn Daq yIchel!",
     "emailInvalid": "QIn Daq rurbe’ vam.",
     "emailTaken": "account ghaj QIn Daqvam."
+  },
+  "team": {
+    "profile": {
+      "nameWithNickname": "{firstName} “<nick>{nickname}</nick>” {lastName}",
+      "firstNameWithNickname": "{firstName} “<nick>{nickname}</nick>”",
+      "geduTitle": "Gedu · Quj ghojmoHwI’",
+      "taglineLanguage": "{language} Hol ghItlhlu’pu’",
+      "whatIDo": "vIta’bogh",
+      "atAGlance": "nom yIlegh",
+      "languages": "Holmey",
+      "topics": "Quj’mey",
+      "areas": "Sepmey"
+    }
   }
 }

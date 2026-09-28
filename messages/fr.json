@@ -4923,5 +4923,18 @@
     "rejectAll": "Tout refuser",
     "analyticsOnly": "Statistiques uniquement",
     "analyticsAndMarketing": "Marketing et statistiques"
+  },
+  "team": {
+    "profile": {
+      "nameWithNickname": "{firstName} « <nick>{nickname}</nick> » {lastName}",
+      "firstNameWithNickname": "{firstName} « <nick>{nickname}</nick> »",
+      "geduTitle": "Gedu · animateur ou animatrice",
+      "taglineLanguage": "Écrit en {language}",
+      "whatIDo": "Ce que je fais",
+      "atAGlance": "En bref",
+      "languages": "Langues",
+      "topics": "Jeux et thèmes",
+      "areas": "Secteurs"
+    }
   }
 }

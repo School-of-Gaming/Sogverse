@@ -4923,5 +4923,18 @@
     "rejectAll": "Neka alla",
     "analyticsOnly": "Endast analys",
     "analyticsAndMarketing": "Marknadsföring och analys"
+  },
+  "team": {
+    "profile": {
+      "nameWithNickname": "{firstName} ”<nick>{nickname}</nick>” {lastName}",
+      "firstNameWithNickname": "{firstName} ”<nick>{nickname}</nick>”",
+      "geduTitle": "Gedu · spelfostrare",
+      "taglineLanguage": "Skrivet på {language}",
+      "whatIDo": "Vad jag gör",
+      "atAGlance": "I korthet",
+      "languages": "Språk",
+      "topics": "Spel och ämnen",
+      "areas": "Områden"
+    }
   }
 }
