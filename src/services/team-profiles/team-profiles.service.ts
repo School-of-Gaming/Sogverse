@@ -14,15 +14,15 @@ import {
   type TeamProfileSaveInput,
   type TeamProfileTranslation,
 } from "./team-profiles.types";
-import { saveTeamProfileResult } from "./team-profiles.contracts";
 
 /*
  * Team profiles: read, save, and the photos behind them.
  *
  * **A photo reaches storage only inside a save.** A crop stays in the browser
  * until the person saves; the save stores it, names it, and removes it again
- * if the database refuses the save, so the bucket holds no photo of a real
- * person that no profile names.
+ * if the database refuses the save. Every landed save then empties the
+ * person's folder of all but the photo their profile names, so whatever an
+ * interrupted or failed cleanup left behind lasts only until their next save.
  *
  * **Photos are private and are read through short-lived signed URLs**, drawn
  * without the image optimiser: it would cache each one for a year under an
@@ -107,7 +107,8 @@ export class TeamProfilesService {
    * approval alone.
    *
    * A new crop is stored first and named by the save; a refused save removes
-   * it again, and a landed one removes the photo it replaced.
+   * it again. A landed save — one that clears the photo included — then
+   * sweeps the person's folder (`sweepFolder`).
    *
    * Resolves to the saved photo's object path, or `null` for none.
    */
@@ -119,21 +120,17 @@ export class TeamProfilesService {
     const stored = await this.storedPhotoPath(userId, input.photo);
     const photoPath = stored?.path ?? null;
 
-    let supersededPath: string | null;
     try {
-      supersededPath = await this.write(userId, input, photoPath, on);
+      await this.write(userId, input, photoPath, on);
     } catch (error) {
       // Nothing names the photo this save stored, so it goes with the save.
-      // Best effort: the refusal is what the caller needs to hear, and a
-      // leftover object in a private bucket is unreadable to anyone else.
-      if (stored?.isNew) await this.removePhoto(stored.path);
+      // Best effort: the refusal is what the caller needs to hear, and one
+      // left behind is collected by the person's next save.
+      if (stored?.isNew) await this.removePhotos([stored.path]);
       throw error;
     }
 
-    // The photo the save replaced is referenced by nothing now. Removing it is
-    // tidying, not part of the save: the save has landed, and a failure here
-    // leaves an unreferenced object in a private bucket, which nobody can see.
-    if (supersededPath !== null) await this.removePhoto(supersededPath);
+    await this.sweepFolder(userId);
     return photoPath;
   }
 
@@ -197,21 +194,86 @@ export class TeamProfilesService {
     return path;
   }
 
-  private async removePhoto(path: string): Promise<void> {
-    const { error } = await this.supabase.storage
-      .from(TEAM_PHOTOS_BUCKET)
-      .remove([path]);
-    if (error) console.error("[team-profile] photo not removed:", error);
+  /**
+   * Remove every object in the person's folder but the photo their profile
+   * names, run after each landed save. That collects the photo the save
+   * replaced, and with it anything an earlier save left behind: a crop whose
+   * refused save could not remove it, a replaced photo whose removal failed,
+   * a crop from a tab closed between its upload and its save. A failure here
+   * is logged, never thrown — the save has landed — and the next save retries.
+   *
+   * What is kept is what the row names when the sweep runs, not what this
+   * save wrote: when another tab's save lands between this save and its
+   * sweep, the row names that tab's photo, and keeping this save's instead
+   * would leave the profile pointing at nothing. The listing is taken before
+   * the row is read, so only a save landing inside that short window, naming
+   * a crop uploaded before the listing, can still lose its photo — which then
+   * reads as none, as any missing photo does.
+   *
+   * Two tabs on one profile are last write wins, and the sweep is part of
+   * that: one tab's sweep can remove the other's crop between its upload and
+   * its save. That save is then refused as naming a photo that is no longer
+   * stored (P0027), and the person is asked to reload — the accepted outcome.
+   */
+  private async sweepFolder(userId: string): Promise<void> {
+    try {
+      const names = await this.folderObjects(userId);
+      if (names.length === 0) return;
+      const { data, error } = await this.supabase
+        .from("team_profiles")
+        .select("photo_path")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      const kept = data?.photo_path ?? null;
+      await this.removePhotos(
+        names.map((name) => `${userId}/${name}`).filter((path) => path !== kept),
+      );
+    } catch (error) {
+      console.error("[team-profile] photo folder not swept:", error);
+    }
   }
 
-  /** The database save. Resolves to the photo path it replaced, or `null`. */
+  /** The names of the objects in the person's folder, every page of them. */
+  private async folderObjects(userId: string): Promise<string[]> {
+    const pageSize = 100;
+    const names: string[] = [];
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await this.supabase.storage
+        .from(TEAM_PHOTOS_BUCKET)
+        .list(userId, {
+          limit: pageSize,
+          offset,
+          sortBy: { column: "name", order: "asc" },
+        });
+      if (error) throw error;
+      // A folder entry has no id. The write policy admits no subfolder, so
+      // there is nothing under one to collect.
+      for (const object of data) if (object.id !== null) names.push(object.name);
+      if (data.length < pageSize) return names;
+    }
+  }
+
+  /** Remove objects from the bucket, logging rather than throwing a failure. */
+  private async removePhotos(paths: string[]): Promise<void> {
+    if (paths.length === 0) return;
+    const { error } = await this.supabase.storage
+      .from(TEAM_PHOTOS_BUCKET)
+      .remove(paths);
+    if (error) console.error("[team-profile] photos not removed:", error);
+  }
+
+  /**
+   * The database save. It also returns the photo path it replaced, which the
+   * folder sweep collects along with everything else, so it is not read here.
+   */
   private async write(
     userId: string,
     input: TeamProfileSaveInput,
     photoPath: string | null,
     on: boolean,
-  ): Promise<string | null> {
-    const { data, error } = await this.supabase.rpc("save_team_profile", {
+  ): Promise<void> {
+    const { error } = await this.supabase.rpc("save_team_profile", {
       p_user_id: userId,
       p_translations: input.translations.map((row) => ({
         locale: row.locale,
@@ -226,7 +288,6 @@ export class TeamProfilesService {
       p_opted_in: on,
     });
     if (error) throw error;
-    return saveTeamProfileResult.parse(data);
   }
 
   private async signedUrl(path: string): Promise<string> {

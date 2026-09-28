@@ -142,6 +142,15 @@ describe("team profiles", () => {
     return (data ?? []).some((object) => object.name === name);
   }
 
+  /** Every object path in a person's folder, asked as the service role. */
+  async function folder(userId: string): Promise<string[]> {
+    const { data, error } = await admin.storage
+      .from(TEAM_PHOTOS_BUCKET)
+      .list(userId);
+    expect(error).toBeNull();
+    return (data ?? []).map((object) => `${userId}/${object.name}`);
+  }
+
   beforeAll(async () => {
     admin = createAdminTestClient();
     const otherGeduEmail = await mint("gedu", "gedu");
@@ -245,13 +254,14 @@ describe("team profiles", () => {
     it("replaces the translation set whole and hands back the photo it replaced", async () => {
       const service = new TeamProfilesService(geduAuth);
       const first = await seedPhoto(TEST_IDS.GEDU);
-      const second = await seedPhoto(TEST_IDS.GEDU);
 
       await service.saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: first, translations: [EN_COMPLETE, FI_COMPLETE] }),
         false,
       );
+      // Stored after the save above, whose sweep would otherwise collect it.
+      const second = await seedPhoto(TEST_IDS.GEDU);
       const { data: replaced, error } = await geduAuth.rpc("save_team_profile", {
         p_user_id: TEST_IDS.GEDU,
         p_translations: [
@@ -275,24 +285,52 @@ describe("team profiles", () => {
     it("removes the replaced photo from the bucket when the service saves", async () => {
       const service = new TeamProfilesService(geduAuth);
       const first = await seedPhoto(TEST_IDS.GEDU);
-      const second = await seedPhoto(TEST_IDS.GEDU);
       await service.saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: first }),
         false,
       );
+      const second = await seedPhoto(TEST_IDS.GEDU);
       await service.saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: second }),
         false,
       );
 
-      const { data } = await admin.storage
-        .from(TEAM_PHOTOS_BUCKET)
-        .list(TEST_IDS.GEDU);
-      expect((data ?? []).map((o) => `${TEST_IDS.GEDU}/${o.name}`)).toEqual([
-        second,
-      ]);
+      expect(await folder(TEST_IDS.GEDU)).toEqual([second]);
+    });
+
+    it("sweeps a stray object from the folder when a save lands", async () => {
+      const service = new TeamProfilesService(geduAuth);
+      // A crop left behind by a tab closed between its upload and its save.
+      const stray = await seedPhoto(TEST_IDS.GEDU);
+      const kept = await seedPhoto(TEST_IDS.GEDU);
+      await service.saveTeamProfile(
+        TEST_IDS.GEDU,
+        content({ photoPath: kept }),
+        false,
+      );
+
+      expect(await stored(stray)).toBe(false);
+      expect(await folder(TEST_IDS.GEDU)).toEqual([kept]);
+    });
+
+    it("leaves the folder empty when a save clears the photo", async () => {
+      const service = new TeamProfilesService(geduAuth);
+      const photo = await seedPhoto(TEST_IDS.GEDU);
+      await service.saveTeamProfile(
+        TEST_IDS.GEDU,
+        content({ photoPath: photo }),
+        false,
+      );
+      await seedPhoto(TEST_IDS.GEDU);
+
+      await service.saveTeamProfile(
+        TEST_IDS.GEDU,
+        content({ photoPath: null }),
+        false,
+      );
+      expect(await folder(TEST_IDS.GEDU)).toEqual([]);
     });
 
     it("removes a new crop from the bucket when the save it came with is refused", async () => {
@@ -653,6 +691,19 @@ describe("team profiles", () => {
       expect(record.ready).toBe(true);
       expect(record.approved).toBe(true);
       expect(isTeamProfilePublic(record)).toBe(true);
+    });
+
+    it("sweeps the Gedu's folder when saving their profile", async () => {
+      const stray = await seedPhoto(TEST_IDS.GEDU);
+      const saved = await new TeamProfilesService(adminAuth).saveTeamProfile(
+        TEST_IDS.GEDU,
+        content({ photo: { crop: photoBlob() } }),
+        false,
+      );
+
+      expect(saved?.startsWith(`${TEST_IDS.GEDU}/`)).toBe(true);
+      expect(await stored(stray)).toBe(false);
+      expect(await folder(TEST_IDS.GEDU)).toEqual([saved]);
     });
 
     it("sets a Gedu's checkbox, once the profile is complete", async () => {
