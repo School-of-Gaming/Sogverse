@@ -396,6 +396,7 @@
       "feeNotSet": "Avgift saknas",
       "notRecorded": "Inte registrerat",
       "upcoming": "Kommande",
+      "cancelled": "Inställt",
       "unrecordedSessions": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
       "sessionsFor": "Tillfällen för {club}",
       "clubsIn": "Klubbar i {municipality}",

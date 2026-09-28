@@ -384,6 +384,12 @@ interface ClubSpec {
    * projection at all — the whole of its evidence.
    */
   extraDates?: readonly string[];
+  /**
+   * Dates an admin cancelled, for every group of the club. They carry no stored
+   * row. A projected one renders as Cancelled; one the schedule does not
+   * project is an orphan the invoice ignores, and renders nothing at all.
+   */
+  cancelledDates?: readonly string[];
 }
 
 /** The default slot length, so a spec line carries only what varies. */
@@ -409,6 +415,11 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     site: { name: "Purolan koulu" },
     feeCents: 8000,
     slots: [{ weekday: MON, startTime: "15:00" }],
+    // A Monday already cancelled for next week: Cancelled rather than upcoming,
+    // because the cancellation is known now. And a Tuesday cancelled before the
+    // club moved to Mondays — an orphan on a date nothing projects, which the
+    // invoice ignores and the preview therefore shows no line for.
+    cancelledDates: ["2026-05-25", "2026-05-19"],
   },
   {
     id: "preview-club-haavikallio",
@@ -441,6 +452,8 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     // A Saturday the schedule does not project, with a row on it: an orphan
     // that still bills, because records beat projections.
     extraDates: ["2026-05-16"],
+    // Ascension Day, cancelled: a passed date worth nothing and not missed.
+    cancelledDates: ["2026-05-14"],
   },
   {
     id: "preview-club-kaislaranta",
@@ -829,7 +842,12 @@ function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
     },
     invoice_customer: invoiceCustomerOf(spec),
     sessions: storedRows(spec, { startDate, endDate, slots }),
-    cancelled_sessions: [],
+    cancelled_sessions: (spec.cancelledDates ?? []).flatMap((date) =>
+      groupIds(spec).map((groupId) => ({
+        group_id: groupId,
+        session_date: date,
+      })),
+    ),
   };
 }
 
@@ -868,7 +886,7 @@ function invoiceCustomerOf(spec: ClubSpec): InvoiceCustomerRow | null {
  * per group and date, exactly as the RPC sends them.
  *
  * A row exists for every date the club's schedule projected that has arrived,
- * minus the ones the spec says nobody wrote up, plus whatever dates the spec
+ * minus the ones the spec says nobody wrote up or were cancelled, plus whatever dates the spec
  * adds by hand. That last part is the whole of a club with no projection: a club
  * whose term falls outside the month, or one whose slots were never filled in,
  * reaches the invoice on its rows alone.
@@ -881,21 +899,33 @@ function storedRows(
     slots: readonly MunicipalityInvoicingScheduleSlot[];
   },
 ): MunicipalityInvoicingSession[] {
-  const missed = new Set(spec.missedDates ?? []);
+  // A cancelled date is never also a stored row: the database refuses to
+  // write one on it, and to cancel a date that already has one.
+  const absent = new Set([
+    ...(spec.missedDates ?? []),
+    ...(spec.cancelledDates ?? []),
+  ]);
   const dates = new Set(
-    projectedDates(context).filter((date) => date <= TODAY && !missed.has(date)),
+    projectedDates(context).filter((date) => date <= TODAY && !absent.has(date)),
   );
   for (const date of spec.extraDates ?? []) dates.add(date);
 
-  const groups = spec.groups ?? 1;
   return [...dates]
     .sort()
     .flatMap((date) =>
-      Array.from({ length: groups }, (_unused, index) => ({
-        group_id: `${spec.id}-group-${index + 1}`,
+      groupIds(spec).map((groupId) => ({
+        group_id: groupId,
         session_date: date,
       })),
     );
+}
+
+/** The club's group ids, one unless the spec says otherwise. */
+function groupIds(spec: ClubSpec): string[] {
+  return Array.from(
+    { length: spec.groups ?? 1 },
+    (_unused, index) => `${spec.id}-group-${index + 1}`,
+  );
 }
 
 /**

@@ -58,6 +58,14 @@ import type {
  * club's own local day, and an educator writing a session up in the afternoon is
  * recording one that ran.
  *
+ * **A cancellation turns a projected date into `cancelled`, and nothing else.**
+ * It is never billed and never counted as missed, and it applies only to a date
+ * the schedule projects — one orphaned by a schedule change is ignored. A club
+ * cancels per group while the invoice counts per club, so the date is cancelled
+ * only where no group ran it and every group the month's document names for the
+ * club cancelled it: a sibling group that was due and recorded nothing is still
+ * a missed session, and the doubt always falls on the side of reporting one.
+ *
  * **Projection is offered wherever the club has a start date to clip against.**
  * That date is the whole of the "has it begun" rule: the walk starts at the
  * later of it and the month, so a club whose term starts after this month
@@ -93,7 +101,13 @@ export type InvoiceSessionKind =
    * stored row already sits on it. A row written ahead of its own session is
    * something the database permits and the invoice must not bill.
    */
-  | "upcoming";
+  | "upcoming"
+  /**
+   * The schedule projected it, an admin cancelled it, and no group of the club
+   * ran it. Never billed and never missed — past or future, it is a known fact
+   * about the day rather than something to investigate or wait for.
+   */
+  | "cancelled";
 
 export interface InvoiceSession {
   /** The club-local calendar date, `YYYY-MM-DD`. */
@@ -508,10 +522,23 @@ function buildClub(
   club: MunicipalityInvoicingClub,
   { locale, now, monthStart, monthEnd }: ClubContext,
 ): InvoiceClub {
-  // One session per club per date, whatever number of groups met on it.
-  const recordedDates = new Set(
-    club.sessions.map((session) => session.session_date),
+  const projected = projectedDates(club, monthStart, monthEnd);
+  const projectedSet = new Set(projected);
+
+  // The database never returns a pair both stored and cancelled — each write
+  // refuses the other — but if one ever arrived, the cancellation wins: a
+  // cancelled session must never bill.
+  const cancelledPairs = new Set(
+    club.cancelled_sessions.map((one) => pairKey(one.group_id, one.session_date)),
   );
+  const ran = club.sessions.filter(
+    (session) => !cancelledPairs.has(pairKey(session.group_id, session.session_date)),
+  );
+
+  // One session per club per date, whatever number of groups met on it.
+  const recordedDates = new Set(ran.map((session) => session.session_date));
+
+  const cancelledDates = cancelledClubDates(club, projectedSet);
 
   // The club's own today. The dates on both sides of this comparison are
   // club-local calendar dates, so the clock has to be read in the club's zone —
@@ -535,12 +562,18 @@ function buildClub(
       kind: billableDates.has(date) ? "recorded" : "upcoming",
     });
   }
-  for (const date of projectedDates(club, monthStart, monthEnd)) {
+  for (const date of projected) {
     if (recordedDates.has(date)) continue;
     lines.push({
       date,
       isoWeek: isoWeekOf(date).week,
-      kind: date < today ? "unrecorded" : "upcoming",
+      // A cancellation is known whether or not the day has come, so it says so
+      // either side of today rather than reading as a date still to be reached.
+      kind: cancelledDates.has(date)
+        ? "cancelled"
+        : date < today
+          ? "unrecorded"
+          : "upcoming",
     });
   }
   lines.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
@@ -581,6 +614,47 @@ function buildClub(
     totalCents: feeCents === null ? null : sumCents([feeCents * recordedCount]),
     sessions: lines,
   };
+}
+
+function pairKey(groupId: string, date: string): string {
+  return `${groupId}|${date}`;
+}
+
+/**
+ * The projected dates that are cancelled for the club as a whole.
+ *
+ * A cancellation is per group and the invoice is per club, so a date qualifies
+ * only when every group the month's document names for the club — every group
+ * with a stored row or an applicable cancellation anywhere in the month —
+ * cancelled it. One group cancelling while a sibling was due and recorded
+ * nothing leaves the date unrecorded: of the two ways to be wrong, reporting a
+ * missed session that was half cancelled is the one somebody can check. A
+ * cancellation on a date the schedule does not project is ignored entirely,
+ * here as on every other surface, and so does not make its group count either.
+ */
+function cancelledClubDates(
+  club: MunicipalityInvoicingClub,
+  projected: ReadonlySet<string>,
+): Set<string> {
+  const applicable = club.cancelled_sessions.filter((one) =>
+    projected.has(one.session_date),
+  );
+  const groups = new Set(
+    [...club.sessions, ...applicable].map((one) => one.group_id),
+  );
+
+  const byDate = new Map<string, Set<string>>();
+  for (const one of applicable) {
+    const cancelledGroups = byDate.get(one.session_date) ?? new Set<string>();
+    cancelledGroups.add(one.group_id);
+    byDate.set(one.session_date, cancelledGroups);
+  }
+
+  return new Set(
+    [...byDate]
+      .filter(([, cancelledGroups]) => cancelledGroups.size === groups.size)
+      .map(([date]) => date),
+  );
 }
 
 /**

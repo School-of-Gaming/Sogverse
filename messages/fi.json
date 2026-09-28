@@ -396,6 +396,7 @@
       "feeNotSet": "Maksua ei ole asetettu",
       "notRecorded": "Ei kirjattu",
       "upcoming": "Tulossa",
+      "cancelled": "Peruttu",
       "unrecordedSessions": "{count, plural, one {# kirjaamatta} other {# kirjaamatta}}",
       "sessionsFor": "Kerhon {club} kerrat",
       "clubsIn": "Kerhot: {municipality}",

@@ -1899,11 +1899,35 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     );
   });
 
-  it("carries all three kinds of session line", () => {
+  it("carries all four kinds of session line", () => {
     const kinds = new Set(
       clubs.flatMap((club) => club.sessions.map((session) => session.kind)),
     );
-    expect(kinds).toEqual(new Set(["recorded", "unrecorded", "upcoming"]));
+    expect(kinds).toEqual(
+      new Set(["recorded", "unrecorded", "upcoming", "cancelled"]),
+    );
+  });
+
+  it("shows a cancellation either side of today, and none that is orphaned", () => {
+    const shown = new Set(
+      clubs.flatMap((club) =>
+        club.sessions
+          .filter((session) => session.kind === "cancelled")
+          .map((session) => session.date),
+      ),
+    );
+    const sent = new Set(
+      snapshot.clubs.flatMap((club) =>
+        club.cancelled_sessions.map((one) => one.session_date),
+      ),
+    );
+    const today = "2026-05-21";
+
+    expect([...shown].some((date) => date < today)).toBe(true);
+    expect([...shown].some((date) => date > today)).toBe(true);
+    // At least one cancellation in the document sits on a date its club does
+    // not project, and the ledger has no line for it.
+    expect([...sent].some((date) => !shown.has(date))).toBe(true);
   });
 
   it("has clubs reporting missed sessions on their own line", () => {

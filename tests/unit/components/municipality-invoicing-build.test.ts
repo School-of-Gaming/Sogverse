@@ -329,6 +329,176 @@ describe("buildMunicipalityInvoicing", () => {
     });
   });
 
+  describe("a cancelled session", () => {
+    // Wednesdays: 2, 9, 16, 23, 30; today is the 16th. Admins cancel per
+    // (group, date), and the invoice counts per club per date.
+    function kindOn(
+      built: ReturnType<typeof onlyClub>,
+      date: string,
+    ): string | undefined {
+      return built.sessions.find((s) => s.date === date)?.kind;
+    }
+
+    it("is shown as cancelled, not billed, and not missed", () => {
+      const built = onlyClub([
+        club({
+          id: "a",
+          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
+          cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(kindOn(built, "2026-09-09")).toBe("cancelled");
+      expect(built.recordedCount).toBe(1);
+      expect(built.unrecordedCount).toBe(0);
+      expect(built.totalCents).toBe(8_750);
+    });
+
+    it("is cancelled rather than upcoming when the date is still ahead", () => {
+      // A cancellation is known now; calling the date upcoming would promise a
+      // session that is not going to happen.
+      const built = onlyClub([
+        club({
+          id: "a",
+          cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-23" }],
+        }),
+      ]);
+
+      expect(kindOn(built, "2026-09-23")).toBe("cancelled");
+      expect(kindOn(built, "2026-09-30")).toBe("upcoming");
+    });
+
+    it("ignores a cancellation on a date the schedule does not project", () => {
+      // A Thursday, orphaned by a schedule that now meets on Wednesdays: no
+      // line at all, and the club's own dates are untouched by it.
+      const built = onlyClub([
+        club({
+          id: "a",
+          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
+          cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-10" }],
+        }),
+      ]);
+
+      expect(kindOn(built, "2026-09-10")).toBeUndefined();
+      expect(built.sessions.map((s) => s.kind)).toEqual([
+        "recorded",
+        "unrecorded",
+        "upcoming",
+        "upcoming",
+        "upcoming",
+      ]);
+    });
+
+    it("ignores a cancellation outside the club's term", () => {
+      const built = onlyClub([
+        club({
+          id: "a",
+          end_date: "2026-09-20",
+          cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-23" }],
+        }),
+      ]);
+
+      expect(kindOn(built, "2026-09-23")).toBeUndefined();
+    });
+
+    it("bills the date as recorded when a sibling group ran it", () => {
+      // One group cancelled, the other met: the club delivered that date.
+      const built = onlyClub([
+        club({
+          id: "a",
+          sessions: [{ group_id: "g2", session_date: "2026-09-09" }],
+          cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(kindOn(built, "2026-09-09")).toBe("recorded");
+      expect(built.recordedCount).toBe(1);
+    });
+
+    it("leaves the date missed when a sibling group neither ran nor cancelled it", () => {
+      // g2 is a group of this club — it recorded the 2nd — and on the 9th it
+      // recorded nothing and cancelled nothing. Half a cancellation does not
+      // excuse the other half, so the date is still a missed session.
+      const built = onlyClub([
+        club({
+          id: "a",
+          sessions: [{ group_id: "g2", session_date: "2026-09-02" }],
+          cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(kindOn(built, "2026-09-09")).toBe("unrecorded");
+      expect(built.unrecordedCount).toBe(1);
+    });
+
+    it("is cancelled when every group of the club cancelled it", () => {
+      const built = onlyClub([
+        club({
+          id: "a",
+          sessions: [
+            { group_id: "g1", session_date: "2026-09-02" },
+            { group_id: "g2", session_date: "2026-09-02" },
+          ],
+          cancelled_sessions: [
+            { group_id: "g1", session_date: "2026-09-09" },
+            { group_id: "g2", session_date: "2026-09-09" },
+          ],
+        }),
+      ]);
+
+      expect(kindOn(built, "2026-09-09")).toBe("cancelled");
+      expect(built.unrecordedCount).toBe(0);
+    });
+
+    it("wins over a stored row for the same group and date", () => {
+      // The database refuses the pair, but if it ever arrived a cancelled
+      // session must still not bill.
+      const built = onlyClub([
+        club({
+          id: "a",
+          sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
+          cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(kindOn(built, "2026-09-09")).toBe("cancelled");
+      expect(built.recordedCount).toBe(0);
+      expect(built.totalCents).toBe(0);
+    });
+
+    it("leaves the month's counts to the sessions that ran", () => {
+      const view = build([
+        club({
+          id: "a",
+          sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
+          cancelled_sessions: [
+            { group_id: "g1", session_date: "2026-09-09" },
+            { group_id: "g1", session_date: "2026-09-16" },
+          ],
+        }),
+      ]);
+
+      expect(view.recordedCount).toBe(1);
+      expect(view.municipalities[0].recordedCount).toBe(1);
+      expect(view.totalCents).toBe(8_750);
+    });
+
+    it("keeps a club with only cancelled dates on the invoice, billing nothing", () => {
+      const built = onlyClub([
+        club({
+          id: "a",
+          start_date: "2026-09-08",
+          end_date: "2026-09-10",
+          cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
+        }),
+      ]);
+
+      expect(built.sessions.map((s) => s.kind)).toEqual(["cancelled"]);
+      expect(built.recordedCount).toBe(0);
+      expect(built.totalCents).toBe(0);
+    });
+  });
+
   describe("the term clips the projection", () => {
     it("starts projecting at the club's start date", () => {
       const built = onlyClub([club({ id: "a", start_date: "2026-09-10" })]);

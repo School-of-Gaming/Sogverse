@@ -37,6 +37,30 @@ shown, never counted, and its treatment splits on whether it has passed:
 - **Today or later — upcoming.** Shown muted with no amount at all. It has not happened;
   printing zero against it would send somebody looking for a session nobody has missed.
 
+**A cancelled date is a third answer, and it holds either side of today.** An admin can
+cancel a session, and a projected date no group of the club ran and that is cancelled is
+shown as **cancelled**: worth nothing, printed at zero in a muted tone, and never counted
+as missed. Nothing about it is wrong, so it takes no warning; it is settled, so a future
+one says cancelled rather than upcoming. Three rules keep it from hiding a real miss or
+billing a cancellation:
+
+- **It applies only to a date the schedule projects.** A cancellation orphaned by a later
+  schedule or term change is ignored completely and renders no line, the same way every
+  other surface treats it.
+- **A club cancels per group and is invoiced per date, so a date is cancelled only when
+  every group the month's document names for the club cancelled it.** A group is named by
+  holding a stored row or an applicable cancellation anywhere in the month. One group
+  cancelling while a sibling was due and recorded nothing leaves the date unrecorded: a
+  half-cancelled date reported as missed is a question somebody can answer, and a real
+  miss hidden behind a sibling's cancellation is not. If any group ran the date, it bills
+  as recorded exactly as before.
+- **A cancelled (group, date) pair never bills, even beside a stored row.** The database
+  refuses to hold both, and if it ever did, the cancellation wins for that group.
+
+The month's session count, every total and every Finvoice row are stored rows alone, so a
+cancellation changes none of them; a customer whose clubs were only cancelled has nothing
+to invoice and is refused on that ground.
+
 "Today" is **the club's own local today**, resolved in the club's timezone, because every
 date on either side of that comparison is one of the club's own local dates. A UTC "today"
 is off by one for several hours of every day, and the error always lands on the newest
@@ -361,9 +385,9 @@ repair.
 **A club that missed sessions says so on its own line.** The count column carries the missed
 count beside the recorded one, in warning tone — so the problems in a month are visible with
 every club still closed, which is what makes closing them by default affordable. Dates still
-ahead of the club are never mentioned there: nothing is wrong with a session nobody has
-missed, and a note about one would be indistinguishable at a glance from a note about one
-that was.
+ahead of the club and cancelled dates are never mentioned there: nothing is wrong with a
+session nobody has missed, and a note about one would be indistinguishable at a glance from
+a note about one that was.
 
 **The dates behind a club's number are a second disclosure, under its own line.** A compact
 table of the club's month, two columns wide: the day, its ISO week and what became of it as
@@ -495,7 +519,8 @@ live page would build — and an anchor is fetched when it is followed, not when
 rendered, so the scene still reaches the network exactly as often as it did before: never.
 The fixtures carry a customer whose file is blocked by a club with no fee and one whose
 file is blocked by having nothing to invoice, because a month of ordinary clubs would show
-neither.
+neither. They also carry cancellations on both sides of the pinned today and one orphaned
+on a date nothing projects, which must render no line.
 
 **The month stepper stays inside the preview, and it is how the empty ledger is reached.**
 The stepper is one of the page's own controls rather than a way out of a row, so the shell

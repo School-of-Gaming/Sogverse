@@ -440,6 +440,7 @@
       "feeNotSet": "DIl wIvlu’pu’be’",
       "notRecorded": "qonlu’pu’be’",
       "upcoming": "qaSbe’lI’",
+      "cancelled": "qIllu’",
       "unrecordedSessions": "{count, plural, one {# qonlu’pu’be’} other {# qonlu’pu’be’}}",
       "sessionsFor": "{club} qaSpu'",
       "clubsIn": "{municipality} ghomHommey",

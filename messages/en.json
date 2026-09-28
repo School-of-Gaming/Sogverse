@@ -396,6 +396,7 @@
       "feeNotSet": "Fee not set",
       "notRecorded": "Not recorded",
       "upcoming": "Upcoming",
+      "cancelled": "Cancelled",
       "unrecordedSessions": "{count, plural, one {# not recorded} other {# not recorded}}",
       "sessionsFor": "Sessions of {club}",
       "clubsIn": "Clubs in {municipality}",
