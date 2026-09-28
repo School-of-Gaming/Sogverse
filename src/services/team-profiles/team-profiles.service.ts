@@ -7,7 +7,6 @@ import {
   TEAM_PHOTO_URL_TTL_SECONDS,
   TEAM_PHOTO_WIDTH,
   pickFromId,
-  type GeduTeamProfileDecision,
   type TeamProfilePhoto,
   type TeamProfileRecord,
   TeamPhotoUploadError,
@@ -55,7 +54,7 @@ function teamProfileQuery(supabase: AppSupabaseClient) {
     .select(
       `id, role, first_name, last_name, spoken_languages,
        team_profile:team_profiles!team_profiles_user_id_fkey(
-         nickname, title, pick, photo_path, opted_in, approval,
+         nickname, title, pick, photo_path, opted_in, approved,
          translations:team_profile_translations(locale, short_description, long_description, fun_fact)
        )`,
     );
@@ -100,58 +99,22 @@ export class TeamProfilesService {
   }
 
   /**
-   * Save the caller's own profile together with their checkbox — a Gedu's
-   * "ready", an admin's "show". The database refuses the checkbox on while the
-   * profile is incomplete (`isTeamProfileIncompleteError`).
+   * Save a profile together with its checkbox — a Gedu's "ready", an admin's
+   * "show": the caller's own, or any admin's or Gedu's for an admin. The
+   * checkbox is a readiness mark, not consent, so whoever may edit the profile
+   * sets it. The database refuses it on while the profile is incomplete
+   * (`isTeamProfileIncompleteError`). An admin's save leaves a Gedu's
+   * approval alone.
+   *
+   * A new crop is stored first and named by the save; a refused save removes
+   * it again, and a landed one removes the photo it replaced.
    *
    * Resolves to the saved photo's object path, or `null` for none.
    */
-  async saveOwnTeamProfile(
+  async saveTeamProfile(
     userId: string,
     input: TeamProfileSaveInput,
     on: boolean,
-  ): Promise<string | null> {
-    return this.save(userId, input, on);
-  }
-
-  /**
-   * An admin saves a Gedu's profile content. The Gedu's own checkbox is their
-   * consent and is left exactly as they saved it; the approval is untouched
-   * too, because admins are trusted.
-   *
-   * Resolves to the saved photo's object path, or `null` for none.
-   */
-  async saveGeduTeamProfile(
-    geduId: string,
-    input: TeamProfileSaveInput,
-  ): Promise<string | null> {
-    return this.save(geduId, input, null);
-  }
-
-  /**
-   * An admin approves a Gedu's profile, or withdraws an approved one. A
-   * profile never goes back to pending.
-   */
-  async setGeduTeamProfileApproval(
-    geduId: string,
-    approval: GeduTeamProfileDecision,
-  ): Promise<void> {
-    const { error } = await this.supabase.rpc("set_team_profile_approval", {
-      p_user_id: geduId,
-      p_approval: approval,
-    });
-    if (error) throw error;
-  }
-
-  /**
-   * Store the photo if it is a new crop, then save the profile naming it. A
-   * refused save removes the photo it has just stored, and a landed one
-   * removes the photo it replaced.
-   */
-  private async save(
-    userId: string,
-    input: TeamProfileSaveInput,
-    on: boolean | null,
   ): Promise<string | null> {
     const stored = await this.storedPhotoPath(userId, input.photo);
     const photoPath = stored?.path ?? null;
@@ -172,6 +135,21 @@ export class TeamProfilesService {
     // leaves an unreferenced object in a private bucket, which nobody can see.
     if (supersededPath !== null) await this.removePhoto(supersededPath);
     return photoPath;
+  }
+
+  /**
+   * An admin approves a Gedu's profile, or takes the approval back. Either
+   * way at any time; the checkbox is untouched.
+   */
+  async setGeduTeamProfileApproval(
+    geduId: string,
+    approved: boolean,
+  ): Promise<void> {
+    const { error } = await this.supabase.rpc("set_team_profile_approval", {
+      p_user_id: geduId,
+      p_approved: approved,
+    });
+    if (error) throw error;
   }
 
   /** The photo's object path, storing a new crop first; `null` for none. */
@@ -229,7 +207,7 @@ export class TeamProfilesService {
     userId: string,
     input: TeamProfileSaveInput,
     photoPath: string | null,
-    on: boolean | null,
+    on: boolean,
   ): Promise<string | null> {
     const { data, error } = await this.supabase.rpc("save_team_profile", {
       p_user_id: userId,
@@ -243,7 +221,7 @@ export class TeamProfilesService {
       p_title: input.title ?? undefined,
       p_pick: input.pick ?? undefined,
       p_photo_path: photoPath ?? undefined,
-      p_opted_in: on ?? undefined,
+      p_opted_in: on,
     });
     if (error) throw error;
     return saveTeamProfileResult.parse(data);
@@ -331,7 +309,7 @@ export class TeamProfilesService {
           profile: { ...common, kind: "gedu" },
           photoPath,
           ready: on,
-          approval: saved?.approval ?? "pending",
+          approved: saved?.approved ?? false,
         };
       default:
         return null;

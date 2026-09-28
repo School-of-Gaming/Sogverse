@@ -22,9 +22,9 @@ import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
  * read policies, and the `team-photos` bucket's policies.
  *
  * The seeded admin and Gedu own the profiles under test. Two more accounts are
- * minted per run — a second Gedu and a second admin — because the sharpest
- * refusals are between peers: a Gedu against another Gedu's profile, an admin
- * against another admin's.
+ * minted per run — a second Gedu and a second admin — because the lines worth
+ * pinning run between peers: a Gedu is refused another Gedu's profile, while an
+ * admin manages another admin's, checkbox included.
  *
  * Every refusal is paired with the call that must still succeed, so nothing
  * here passes because a fixture was missing.
@@ -206,7 +206,7 @@ describe("team profiles", () => {
       expect(record).toMatchObject({
         role: "gedu",
         ready: false,
-        approval: "pending",
+        approved: false,
         photoPath: null,
         profile: { kind: "gedu", nickname: null, photo: null, translations: [] },
       });
@@ -214,7 +214,7 @@ describe("team profiles", () => {
 
     it("stores a new crop with the save, and reads back what it saved", async () => {
       const service = new TeamProfilesService(geduAuth);
-      const savedPath = await service.saveOwnTeamProfile(
+      const savedPath = await service.saveTeamProfile(
         TEST_IDS.GEDU,
         content({
           photo: { crop: photoBlob() },
@@ -229,7 +229,7 @@ describe("team profiles", () => {
       expect(record?.role).toBe("gedu");
       if (record?.role !== "gedu") return;
       expect(record.ready).toBe(true);
-      expect(record.approval).toBe("pending");
+      expect(record.approved).toBe(false);
       expect(record.photoPath).toBe(savedPath);
       expect(record.profile.photo).toMatchObject({ width: 800, height: 1000 });
       expect(record.profile.photo?.src).toContain("token=");
@@ -245,7 +245,7 @@ describe("team profiles", () => {
       const first = await seedPhoto(TEST_IDS.GEDU);
       const second = await seedPhoto(TEST_IDS.GEDU);
 
-      await service.saveOwnTeamProfile(
+      await service.saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: first, translations: [EN_COMPLETE, FI_COMPLETE] }),
         false,
@@ -274,12 +274,12 @@ describe("team profiles", () => {
       const service = new TeamProfilesService(geduAuth);
       const first = await seedPhoto(TEST_IDS.GEDU);
       const second = await seedPhoto(TEST_IDS.GEDU);
-      await service.saveOwnTeamProfile(
+      await service.saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: first }),
         false,
       );
-      await service.saveOwnTeamProfile(
+      await service.saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: second }),
         false,
@@ -297,7 +297,7 @@ describe("team profiles", () => {
       const service = new TeamProfilesService(geduAuth);
       // On with no language: refused as incomplete, after the crop is stored.
       await expect(
-        service.saveOwnTeamProfile(
+        service.saveTeamProfile(
           TEST_IDS.GEDU,
           content({ photo: { crop: photoBlob() }, translations: [] }),
           true,
@@ -313,7 +313,7 @@ describe("team profiles", () => {
     it("refuses a save whose crop cannot be stored, and writes nothing", async () => {
       const notAPhoto = new Blob(["hello"], { type: "text/plain" });
       await expect(
-        new TeamProfilesService(geduAuth).saveOwnTeamProfile(
+        new TeamProfilesService(geduAuth).saveTeamProfile(
           TEST_IDS.GEDU,
           content({ photo: { crop: notAPhoto } }),
           false,
@@ -335,7 +335,7 @@ describe("team profiles", () => {
       });
       expect(refused.error?.code).toBe("22023");
 
-      await new TeamProfilesService(adminAuth).saveOwnTeamProfile(
+      await new TeamProfilesService(adminAuth).saveTeamProfile(
         TEST_IDS.ADMIN,
         content({ title: "Chief Engineer" }),
         false,
@@ -379,7 +379,7 @@ describe("team profiles", () => {
       const pageA = new TeamProfilesService(geduAuth);
       const pageB = new TeamProfilesService(adminAuth);
       const original = await seedPhoto(TEST_IDS.GEDU);
-      await pageA.saveOwnTeamProfile(
+      await pageA.saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: original }),
         false,
@@ -387,7 +387,7 @@ describe("team profiles", () => {
 
       // A saves a new photo, which removes the original.
       const replacement = await seedPhoto(TEST_IDS.GEDU);
-      await pageA.saveOwnTeamProfile(
+      await pageA.saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: replacement }),
         false,
@@ -396,9 +396,10 @@ describe("team profiles", () => {
 
       // B still names the original.
       await expect(
-        pageB.saveGeduTeamProfile(
+        pageB.saveTeamProfile(
           TEST_IDS.GEDU,
           content({ photoPath: original, nickname: "Stale" }),
+          false,
         ),
       ).rejects.toMatchObject({ code: TEAM_PROFILE_PHOTO_GONE_SQLSTATE });
 
@@ -414,7 +415,7 @@ describe("team profiles", () => {
     it("reads a saved photo that can no longer be signed as no photo", async () => {
       const photo = await seedPhoto(TEST_IDS.GEDU);
       const service = new TeamProfilesService(geduAuth);
-      await service.saveOwnTeamProfile(
+      await service.saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: photo }),
         false,
@@ -430,12 +431,31 @@ describe("team profiles", () => {
       });
     });
 
-    it("refuses the owner a save that does not state their checkbox", async () => {
+    it("keeps the stored checkbox when a save passes none", async () => {
+      const photo = await seedPhoto(TEST_IDS.GEDU);
+      await new TeamProfilesService(geduAuth).saveTeamProfile(
+        TEST_IDS.GEDU,
+        content({ photoPath: photo }),
+        true,
+      );
       const { error } = await geduAuth.rpc("save_team_profile", {
         p_user_id: TEST_IDS.GEDU,
-        p_translations: [],
+        p_translations: [
+          {
+            locale: EN_COMPLETE.locale,
+            short_description: EN_COMPLETE.shortDescription,
+            long_description: EN_COMPLETE.longDescription,
+          },
+        ],
+        p_photo_path: photo,
       });
-      expect(error?.code).toBe("22004");
+      expect(error).toBeNull();
+      const { data } = await admin
+        .from("team_profiles")
+        .select("opted_in")
+        .eq("user_id", TEST_IDS.GEDU)
+        .single();
+      expect(data?.opted_in).toBe(true);
     });
   });
 
@@ -513,7 +533,7 @@ describe("team profiles", () => {
     });
 
     it("stores a half-written language while the checkbox is off", async () => {
-      await new TeamProfilesService(geduAuth).saveOwnTeamProfile(
+      await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
         content({ translations: [{ ...EN_COMPLETE, longDescription: "" }] }),
         false,
@@ -550,14 +570,14 @@ describe("team profiles", () => {
     });
 
     it("cannot set an approval, their own included", async () => {
-      await new TeamProfilesService(geduAuth).saveOwnTeamProfile(
+      await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
         content(),
         false,
       );
       const { error } = await geduAuth.rpc("set_team_profile_approval", {
         p_user_id: TEST_IDS.GEDU,
-        p_approval: "approved",
+        p_approved: true,
       });
       expect(error?.code).toBe(FORBIDDEN);
     });
@@ -586,7 +606,7 @@ describe("team profiles", () => {
     });
 
     it("cannot read another person's profile rows", async () => {
-      await new TeamProfilesService(otherGeduAuth).saveOwnTeamProfile(
+      await new TeamProfilesService(otherGeduAuth).saveTeamProfile(
         otherGeduId,
         content(),
         false,
@@ -605,22 +625,23 @@ describe("team profiles", () => {
   });
 
   describe("an admin", () => {
-    it("edits a Gedu's content and leaves their checkbox and approval alone", async () => {
+    it("edits a Gedu's profile and leaves the approval alone", async () => {
       const photo = await seedPhoto(TEST_IDS.GEDU);
-      await new TeamProfilesService(geduAuth).saveOwnTeamProfile(
+      await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: photo }),
         true,
       );
       await new TeamProfilesService(adminAuth).setGeduTeamProfileApproval(
         TEST_IDS.GEDU,
-        "approved",
+        true,
       );
 
       const service = new TeamProfilesService(adminAuth);
-      await service.saveGeduTeamProfile(
+      await service.saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: photo, nickname: "Edited by the office" }),
+        true,
       );
 
       const record = await service.getTeamProfile(TEST_IDS.GEDU);
@@ -628,65 +649,86 @@ describe("team profiles", () => {
       if (record?.role !== "gedu") return;
       expect(record.profile.nickname).toBe("Edited by the office");
       expect(record.ready).toBe(true);
-      expect(record.approval).toBe("approved");
+      expect(record.approved).toBe(true);
       expect(isTeamProfilePublic(record)).toBe(true);
     });
 
-    it("cannot set a Gedu's checkbox", async () => {
-      await new TeamProfilesService(geduAuth).saveOwnTeamProfile(
+    it("sets a Gedu's checkbox, once the profile is complete", async () => {
+      const service = new TeamProfilesService(adminAuth);
+      // The same completeness rule as the Gedu's own: no photo, no tick.
+      await expect(
+        service.saveTeamProfile(TEST_IDS.GEDU, content(), true),
+      ).rejects.toMatchObject({ code: TEAM_PROFILE_INCOMPLETE_SQLSTATE });
+
+      const photo = await seedPhoto(TEST_IDS.GEDU);
+      await service.saveTeamProfile(
         TEST_IDS.GEDU,
-        content(),
+        content({ photoPath: photo }),
+        true,
+      );
+      const ticked = await service.getTeamProfile(TEST_IDS.GEDU);
+      expect(ticked?.role === "gedu" && ticked.ready).toBe(true);
+
+      await service.saveTeamProfile(
+        TEST_IDS.GEDU,
+        content({ photoPath: photo }),
         false,
       );
-      const { error } = await adminAuth.rpc("save_team_profile", {
-        p_user_id: TEST_IDS.GEDU,
-        p_translations: [],
-        p_opted_in: false,
-      });
-      expect(error?.code).toBe(FORBIDDEN);
+      const unticked = await service.getTeamProfile(TEST_IDS.GEDU);
+      expect(unticked?.role === "gedu" && unticked.ready).toBe(false);
     });
 
     it("cannot keep an incomplete Gedu profile shown", async () => {
       const photo = await seedPhoto(TEST_IDS.GEDU);
-      await new TeamProfilesService(geduAuth).saveOwnTeamProfile(
+      await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: photo }),
         true,
       );
       await expect(
-        new TeamProfilesService(adminAuth).saveGeduTeamProfile(
+        new TeamProfilesService(adminAuth).saveTeamProfile(
           TEST_IDS.GEDU,
           content({ photoPath: null }),
+          true,
         ),
       ).rejects.toMatchObject({ code: TEAM_PROFILE_INCOMPLETE_SQLSTATE });
     });
 
-    it("cannot write another admin's profile, or upload into their folder", async () => {
+    it("writes another admin's profile and checkbox, photo included", async () => {
+      // A new crop, stored into the other admin's folder by this admin.
+      await new TeamProfilesService(adminAuth).saveTeamProfile(
+        otherAdminId,
+        content({ photo: { crop: photoBlob() }, title: "Head of Clubs" }),
+        true,
+      );
+      const record = await new TeamProfilesService(otherAdminAuth).getTeamProfile(
+        otherAdminId,
+      );
+      expect(record).toMatchObject({
+        role: "admin",
+        shown: true,
+        profile: { title: "Head of Clubs" },
+      });
+      expect(record?.photoPath?.startsWith(`${otherAdminId}/`)).toBe(true);
+
+      // …while a parent, who has no profile to have, stays out of reach.
       const { error } = await adminAuth.rpc("save_team_profile", {
-        p_user_id: otherAdminId,
+        p_user_id: TEST_IDS.CUSTOMER,
         p_translations: [],
+        p_opted_in: false,
       });
       expect(error?.code).toBe(FORBIDDEN);
-
       const upload = await adminAuth.storage
         .from(TEAM_PHOTOS_BUCKET)
-        .upload(`${otherAdminId}/${crypto.randomUUID()}.jpg`, photoBlob(), {
+        .upload(`${TEST_IDS.CUSTOMER}/${crypto.randomUUID()}.jpg`, photoBlob(), {
           contentType: "image/jpeg",
         });
       expect(upload.error).not.toBeNull();
-
-      // …while a Gedu's folder takes one.
-      const intoGedu = await adminAuth.storage
-        .from(TEAM_PHOTOS_BUCKET)
-        .upload(`${TEST_IDS.GEDU}/${crypto.randomUUID()}.jpg`, photoBlob(), {
-          contentType: "image/jpeg",
-        });
-      expect(intoGedu.error).toBeNull();
     });
 
     it("reads any admin's or Gedu's profile and photo", async () => {
       const photo = await seedPhoto(otherAdminId);
-      await new TeamProfilesService(otherAdminAuth).saveOwnTeamProfile(
+      await new TeamProfilesService(otherAdminAuth).saveTeamProfile(
         otherAdminId,
         content({ photoPath: photo, title: "Head of Clubs" }),
         true,
@@ -713,7 +755,7 @@ describe("team profiles", () => {
   describe("a parent and a gamer", () => {
     it("can neither write, approve, read, nor upload", async () => {
       const photo = await seedPhoto(TEST_IDS.GEDU);
-      await new TeamProfilesService(geduAuth).saveOwnTeamProfile(
+      await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
         content({ photoPath: photo }),
         true,
@@ -732,7 +774,7 @@ describe("team profiles", () => {
 
         const approve = await client.rpc("set_team_profile_approval", {
           p_user_id: TEST_IDS.GEDU,
-          p_approval: "approved",
+          p_approved: true,
         });
         expect(approve.error?.code).toBe(FORBIDDEN);
 
@@ -789,14 +831,20 @@ describe("team profiles", () => {
       expect(await stored(own)).toBe(false);
     });
 
-    it("leaves another admin's photo to an admin, and lets them remove a Gedu's", async () => {
+    it("lets an admin remove another admin's photo and a Gedu's", async () => {
       const otherAdmins = await seedPhoto(otherAdminId);
       await removeAs(adminAuth, otherAdmins);
-      expect(await stored(otherAdmins)).toBe(true);
+      expect(await stored(otherAdmins)).toBe(false);
 
       const gedus = await seedPhoto(TEST_IDS.GEDU);
       await removeAs(adminAuth, gedus);
       expect(await stored(gedus)).toBe(false);
+
+      // …while a parent's folder, which no profile has, keeps its object.
+      const customers = await seedPhoto(TEST_IDS.CUSTOMER);
+      await removeAs(adminAuth, customers);
+      expect(await stored(customers)).toBe(true);
+      await admin.storage.from(TEAM_PHOTOS_BUCKET).remove([customers]);
     });
 
     it("leaves everyone's photo to a parent and a gamer", async () => {
@@ -816,78 +864,112 @@ describe("team profiles", () => {
   // -------------------------------------------------------------------------
 
   describe("the approval", () => {
-    async function approval(): Promise<string | undefined> {
-      const { data } = await admin
+    async function stamp() {
+      const { data, error } = await admin
         .from("team_profiles")
-        .select("approval, approval_decided_by, approval_decided_at")
+        .select("approved, approval_decided_by, approval_decided_at")
         .eq("user_id", TEST_IDS.GEDU)
         .single();
-      return data?.approval;
+      expect(error).toBeNull();
+      return data;
     }
 
-    function set(decision: Database["public"]["Enums"]["team_profile_approval"]) {
+    function set(approved: boolean) {
       return adminAuth.rpc("set_team_profile_approval", {
         p_user_id: TEST_IDS.GEDU,
-        p_approval: decision,
+        p_approved: approved,
       });
     }
 
-    it("moves pending → approved → withdrawn → approved, and never back to pending", async () => {
-      await new TeamProfilesService(geduAuth).saveOwnTeamProfile(
+    it("goes yes and no either way, stamping who last changed it", async () => {
+      await new TeamProfilesService(geduAuth).saveTeamProfile(
         TEST_IDS.GEDU,
         content(),
         false,
       );
+      expect(await stamp()).toEqual({
+        approved: false,
+        approval_decided_by: null,
+        approval_decided_at: null,
+      });
 
-      expect((await set("withdrawn")).error?.code).toBe("22023");
-      expect(await approval()).toBe("pending");
+      // No to a profile no admin has decided about changes nothing.
+      expect((await set(false)).error).toBeNull();
+      expect((await stamp())?.approval_decided_at).toBeNull();
 
-      expect((await set("approved")).error).toBeNull();
-      const { data: stamped } = await admin
+      expect((await set(true)).error).toBeNull();
+      const approved = await stamp();
+      expect(approved?.approved).toBe(true);
+      expect(approved?.approval_decided_by).toBe(TEST_IDS.ADMIN);
+      expect(approved?.approval_decided_at).not.toBeNull();
+
+      // Saying it again is a no-op, not a refusal, and keeps the stamp.
+      expect((await set(true)).error).toBeNull();
+      expect(await stamp()).toEqual(approved);
+
+      expect((await set(false)).error).toBeNull();
+      const takenBack = await stamp();
+      expect(takenBack?.approved).toBe(false);
+      expect(takenBack?.approval_decided_by).toBe(TEST_IDS.ADMIN);
+      expect(takenBack?.approval_decided_at).not.toBeNull();
+
+      expect((await set(true)).error).toBeNull();
+      expect((await stamp())?.approved).toBe(true);
+    });
+
+    it("refuses a decision that is neither yes nor no", async () => {
+      await new TeamProfilesService(geduAuth).saveTeamProfile(
+        TEST_IDS.GEDU,
+        content(),
+        false,
+      );
+      const { error } = await adminAuth.rpc("set_team_profile_approval", {
+        p_user_id: TEST_IDS.GEDU,
+        // @ts-expect-error -- the generated argument type forbids NULL; the call proves the function refuses one anyway
+        p_approved: null,
+      });
+      expect(error?.code).toBe("22004");
+      expect((await stamp())?.approved).toBe(false);
+    });
+
+    it("keeps an approval stamped, even for a direct write", async () => {
+      await new TeamProfilesService(geduAuth).saveTeamProfile(
+        TEST_IDS.GEDU,
+        content(),
+        false,
+      );
+      const { error } = await admin
         .from("team_profiles")
-        .select("approval_decided_by, approval_decided_at")
-        .eq("user_id", TEST_IDS.GEDU)
-        .single();
-      expect(stamped?.approval_decided_by).toBe(TEST_IDS.ADMIN);
-      expect(stamped?.approval_decided_at).not.toBeNull();
-
-      expect((await set("withdrawn")).error).toBeNull();
-      expect(await approval()).toBe("withdrawn");
-
-      expect((await set("approved")).error).toBeNull();
-      expect(await approval()).toBe("approved");
-      // Saying it again is a no-op, not a refusal.
-      expect((await set("approved")).error).toBeNull();
-
-      expect((await set("pending")).error?.code).toBe("22023");
-      expect(await approval()).toBe("approved");
+        .update({ approved: true })
+        .eq("user_id", TEST_IDS.GEDU);
+      expect(error?.code).toBe("23514");
     });
 
     it("survives the Gedu turning their checkbox off and on", async () => {
       const photo = await seedPhoto(TEST_IDS.GEDU);
       const service = new TeamProfilesService(geduAuth);
-      await service.saveOwnTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), true);
-      expect((await set("approved")).error).toBeNull();
-      await service.saveOwnTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), false);
-      await service.saveOwnTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), true);
-      expect(await approval()).toBe("approved");
+      await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), true);
+      expect((await set(true)).error).toBeNull();
+      await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), false);
+      await service.saveTeamProfile(TEST_IDS.GEDU, content({ photoPath: photo }), true);
+      expect((await stamp())?.approved).toBe(true);
     });
 
     it("refuses an admin's profile and a person with no profile", async () => {
-      await new TeamProfilesService(adminAuth).saveOwnTeamProfile(
+      await new TeamProfilesService(adminAuth).saveTeamProfile(
         TEST_IDS.ADMIN,
         content(),
         false,
       );
       const adminsOwn = await adminAuth.rpc("set_team_profile_approval", {
         p_user_id: TEST_IDS.ADMIN,
-        p_approval: "approved",
+        p_approved: true,
       });
       expect(adminsOwn.error?.code).toBe("22023");
 
       const none = await adminAuth.rpc("set_team_profile_approval", {
         p_user_id: otherGeduId,
-        p_approval: "approved",
+        p_approved: true,
       });
       expect(none.error?.code).toBe("P0002");
     });
@@ -915,11 +997,12 @@ describe("team profiles", () => {
       expect(await canEdit(geduAuth, TEST_IDS.ADMIN)).toBe(false);
     });
 
-    it("answers an admin for their own and a Gedu's, never another admin's", async () => {
+    it("answers an admin for any admin's or Gedu's, never a parent's or a gamer's", async () => {
       expect(await canEdit(adminAuth, TEST_IDS.ADMIN)).toBe(true);
       expect(await canEdit(adminAuth, TEST_IDS.GEDU)).toBe(true);
-      expect(await canEdit(adminAuth, otherAdminId)).toBe(false);
+      expect(await canEdit(adminAuth, otherAdminId)).toBe(true);
       expect(await canEdit(adminAuth, TEST_IDS.CUSTOMER)).toBe(false);
+      expect(await canEdit(adminAuth, TEST_IDS.GAMER)).toBe(false);
     });
 
     it("answers false to a parent and a gamer, about themselves too", async () => {

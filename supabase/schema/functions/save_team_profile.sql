@@ -7,7 +7,6 @@ CREATE FUNCTION public.save_team_profile(p_user_id uuid, p_translations jsonb, p
     SET search_path TO ''
     AS $$
 DECLARE
-  v_caller      uuid := (SELECT auth.uid());
   v_target_role public.user_role;
   v_opted_in    boolean;
   v_old_photo   text;
@@ -24,7 +23,7 @@ BEGIN
       USING ERRCODE = '22004';
   END IF;
 
-  -- The target half: their own, or a Gedu's for an admin.
+  -- The target half: their own, or any admin's or Gedu's for an admin.
   IF NOT public.can_edit_team_profile(p_user_id) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -36,21 +35,9 @@ BEGIN
    WHERE tp.user_id = p_user_id
      FOR UPDATE;
 
-  -- The checkbox is the owner's consent. The owner always states it; anyone
-  -- else editing the content leaves it exactly as the owner saved it.
-  IF p_user_id = v_caller THEN
-    IF p_opted_in IS NULL THEN
-      RAISE EXCEPTION 'The owner saves their own checkbox with their profile'
-        USING ERRCODE = '22004';
-    END IF;
-    v_opted_in := p_opted_in;
-  ELSE
-    IF p_opted_in IS NOT NULL THEN
-      RAISE EXCEPTION 'Only the person themselves sets whether their profile is shown'
-        USING ERRCODE = '42501';
-    END IF;
-    v_opted_in := COALESCE(v_opted_in, false);
-  END IF;
+  -- The checkbox is a readiness mark, not consent: whoever may edit the
+  -- profile may set it. NULL keeps it as stored (off for a new profile).
+  v_opted_in := COALESCE(p_opted_in, v_opted_in, false);
 
   IF v_target_role = 'gedu' AND NULLIF(btrim(p_title), '') IS NOT NULL THEN
     RAISE EXCEPTION 'A Gedu''s title is the role; it is not written'
@@ -138,7 +125,7 @@ $$;
 -- Name: FUNCTION save_team_profile(p_user_id uuid, p_translations jsonb, p_nickname text, p_title text, p_pick smallint, p_photo_path text, p_opted_in boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.save_team_profile(p_user_id uuid, p_translations jsonb, p_nickname text, p_title text, p_pick smallint, p_photo_path text, p_opted_in boolean) IS 'The one writer of a team profile''s content: nickname, title (an admin''s only; a Gedu''s raises 22023), pick, photo path, the whole translation set (a JSON array of {locale, short_description, long_description, fun_fact}, replacing what was stored) and the owner''s checkbox, in one transaction. Guard-first for an admin or a Gedu; the target half is can_edit_team_profile — their own, or a Gedu''s for an admin. The owner must pass p_opted_in; anyone else must pass NULL and the stored value stands, because the checkbox is the owner''s consent. Refuses with P0026 when the checkbox would be on while the profile is incomplete (no photo, no language, or a language missing either description), and with P0027 a photo path that has no object in the team-photos bucket (a save from a page opened before another save replaced and removed that photo). An admin''s edit does not touch the approval: admins are trusted. Returns the photo path the save replaced, or NULL, so the caller can remove that object through the storage API.';
+COMMENT ON FUNCTION public.save_team_profile(p_user_id uuid, p_translations jsonb, p_nickname text, p_title text, p_pick smallint, p_photo_path text, p_opted_in boolean) IS 'The one writer of a team profile''s content: nickname, title (an admin''s only; a Gedu''s raises 22023), pick, photo path, the whole translation set (a JSON array of {locale, short_description, long_description, fun_fact}, replacing what was stored) and the checkbox, in one transaction. Guard-first for an admin or a Gedu; the target half is can_edit_team_profile — their own, or any admin''s or Gedu''s for an admin. The checkbox is a readiness mark, not consent, so any editor may set it; NULL keeps the stored value. Refuses with P0026 when the checkbox would be on while the profile is incomplete (no photo, no language, or a language missing either description), and with P0027 a photo path that has no object in the team-photos bucket (a save from a page opened before another save replaced and removed that photo). An admin''s edit does not touch the approval: admins are trusted. Returns the photo path the save replaced, or NULL, so the caller can remove that object through the storage API.';
 
 
 --

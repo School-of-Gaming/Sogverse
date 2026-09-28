@@ -280,14 +280,13 @@ export const PREVIEW_SCENES = [
       },
       { slug: "waiting", label: "Ready, waiting for an admin" },
       { slug: "live", label: "Public" },
-      { slug: "taken-off", label: "Ready, but an admin took it down" },
     ],
   },
   {
     surface: "admin-profile-editor",
     title: "Profile editor — office staff (draft)",
     description:
-      "The same page as office staff meet it: their own profile with one switch, and a Gedu's profile edited from the admin panel with the Gedu's switch shown, not editable.",
+      "The same page as office staff meet it: their own profile with one switch, and a Gedu's profile edited from the admin panel, switch included, in words addressed to the admin.",
     chrome: "admin",
     scenarios: [
       { slug: "shown", label: "Own profile, public" },

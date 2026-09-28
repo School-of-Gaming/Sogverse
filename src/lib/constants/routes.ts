@@ -587,7 +587,7 @@ export const ROUTES = {
       ({ pathname: "/admin/users/[id]", params: { id } }) as const,
     /** The string form, for absolute URLs built server-side (email). */
     userPath: (id: string) => `/admin/users/${id}`,
-    /** An admin editing a Gedu's team profile content. */
+    /** An admin editing another admin's or a Gedu's team profile. */
     userTeamProfile: (id: string) =>
       ({ pathname: "/admin/users/[id]/team-profile", params: { id } }) as const,
     product: adminProductHref,

@@ -2577,9 +2577,9 @@ export type Database = {
       }
       team_profiles: {
         Row: {
-          approval: Database["public"]["Enums"]["team_profile_approval"]
           approval_decided_at: string | null
           approval_decided_by: string | null
+          approved: boolean
           created_at: string
           nickname: string | null
           opted_in: boolean
@@ -2590,9 +2590,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          approval?: Database["public"]["Enums"]["team_profile_approval"]
           approval_decided_at?: string | null
           approval_decided_by?: string | null
+          approved?: boolean
           created_at?: string
           nickname?: string | null
           opted_in?: boolean
@@ -2603,9 +2603,9 @@ export type Database = {
           user_id: string
         }
         Update: {
-          approval?: Database["public"]["Enums"]["team_profile_approval"]
           approval_decided_at?: string | null
           approval_decided_by?: string | null
+          approved?: boolean
           created_at?: string
           nickname?: string | null
           opted_in?: boolean
@@ -3731,10 +3731,7 @@ export type Database = {
         Returns: Json
       }
       set_team_profile_approval: {
-        Args: {
-          p_approval: Database["public"]["Enums"]["team_profile_approval"]
-          p_user_id: string
-        }
+        Args: { p_approved: boolean; p_user_id: string }
         Returns: undefined
       }
       submit_help_request: {
@@ -3856,7 +3853,6 @@ export type Database = {
       spoken_language: "fi" | "sv" | "en" | "fr"
       substitution_reason: "sick" | "other"
       substitution_request_status: "open" | "substituted" | "withdrawn"
-      team_profile_approval: "pending" | "approved" | "withdrawn"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
     CompositeTypes: {
@@ -4021,7 +4017,6 @@ export const Constants = {
       spoken_language: ["fi", "sv", "en", "fr"],
       substitution_reason: ["sick", "other"],
       substitution_request_status: ["open", "substituted", "withdrawn"],
-      team_profile_approval: ["pending", "approved", "withdrawn"],
       user_role: ["admin", "customer", "gamer", "gedu"],
     },
   },

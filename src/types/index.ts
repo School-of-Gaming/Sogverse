@@ -293,9 +293,6 @@ export type InvoiceCustomer =
 export type TeamProfileRow = Database["public"]["Tables"]["team_profiles"]["Row"];
 export type TeamProfileTranslationRow =
   Database["public"]["Tables"]["team_profile_translations"]["Row"];
-// An admin's decision about a Gedu's profile: pending, approved or withdrawn.
-export type TeamProfileApproval =
-  Database["public"]["Enums"]["team_profile_approval"];
 
 // product_staff_details — the staff-only half of a product, split off `products`
 // because that table is readable by anon and by every parent, and PostgREST lets

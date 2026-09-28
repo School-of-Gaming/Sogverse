@@ -29,25 +29,14 @@ import type {
  * the status all behave. The crop runs for real and the form shows the
  * result, but a save sends its bytes nowhere. An admin's approval is the
  * fixture's and does not move here. The admin page also carries the one it
- * edits a Gedu's profile on, whose switch is the Gedu's and so never moves.
+ * edits a Gedu's profile on, checkbox included.
  */
 export function GeduTeamProfileEditorScene({
   scenario,
 }: {
   scenario: GeduTeamProfileEditorScenario;
 }) {
-  const fixture = GEDU_TEAM_PROFILE_EDITOR_FIXTURES[scenario];
-  const [profile, setProfile] = useState(fixture.profile);
-  const [ready, setReady] = useState(fixture.ready);
-  return (
-    <TeamProfileEditorBody
-      role="gedu"
-      profile={profile}
-      ready={ready}
-      approval={fixture.approval}
-      actions={localActions(profile, setProfile, setReady)}
-    />
-  );
+  return <GeduEditor fixture={GEDU_TEAM_PROFILE_EDITOR_FIXTURES[scenario]} />;
 }
 
 export function AdminTeamProfileEditorScene({
@@ -59,7 +48,7 @@ export function AdminTeamProfileEditorScene({
   return fixture.editing === "own" ? (
     <OwnAdminEditor profile={fixture.profile} shown={fixture.shown} />
   ) : (
-    <GeduEditedByAdmin fixture={fixture.gedu} />
+    <GeduEditor fixture={fixture.gedu} editedByAdmin />
   );
 }
 
@@ -82,17 +71,24 @@ function OwnAdminEditor({
   );
 }
 
-/** A Gedu's profile from the admin panel: the save never moves their switch. */
-function GeduEditedByAdmin({ fixture }: { fixture: GeduTeamProfileEditorFixture }) {
+/** A Gedu's profile, as the Gedu meets it or from the admin panel. */
+function GeduEditor({
+  fixture,
+  editedByAdmin = false,
+}: {
+  fixture: GeduTeamProfileEditorFixture;
+  editedByAdmin?: boolean;
+}) {
   const [profile, setProfile] = useState(fixture.profile);
+  const [ready, setReady] = useState(fixture.ready);
   return (
     <TeamProfileEditorBody
       role="gedu"
-      editedByAdmin
+      editedByAdmin={editedByAdmin}
       profile={profile}
-      ready={fixture.ready}
-      approval={fixture.approval}
-      actions={localActions(profile, setProfile, noop)}
+      ready={ready}
+      approved={fixture.approved}
+      actions={localActions(profile, setProfile, setReady)}
     />
   );
 }
@@ -109,5 +105,3 @@ function localActions<P extends TeamProfile>(
     },
   };
 }
-
-function noop() {}

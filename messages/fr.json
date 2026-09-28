@@ -70,7 +70,7 @@
       "geduInvoicing": "Facturation",
       "adminSubstitutions": "Remplacements",
       "teamProfile": "Votre profil",
-      "adminTeamProfile": "Profil d’équipe"
+      "adminTeamProfile": "Profil"
     },
     "descriptions": {
       "signIn": "Connectez-vous à votre compte School of Gaming pour suivre les séances à venir de vos joueurs, gérer les inscriptions et tenir vos informations à jour.",
@@ -4950,17 +4950,15 @@
       "pageTitle": "Votre profil",
       "status": {
         "privateTitle": "Privé",
-        "privateBody": "Vous seul voyez votre profil. Quand il vous convient, cochez « Mon profil est prêt à être public » ci-dessous et enregistrez.",
+        "privateBody": "Votre profil n’est pas sur le site. Quand il vous convient, cochez « Mon profil est prêt à être public » ci-dessous et enregistrez.",
         "waitingTitle": "Prêt, en attente d’un administrateur",
         "waitingBody": "Un administrateur va examiner votre profil avant qu’il soit public. Vous pouvez continuer à le modifier en attendant.",
         "liveTitle": "Public",
         "liveBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement. Pour le retirer, décochez « Mon profil est prêt à être public » et enregistrez.",
-        "takenOffTitle": "Prêt, mais un administrateur l’a retiré",
-        "takenOffBody": "Votre profil n’est pas public pour le moment. Contactez le bureau si vous voulez savoir pourquoi, ou pour le remettre en ligne.",
         "shownTitle": "Public",
         "shownBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement.",
         "hiddenTitle": "Privé",
-        "hiddenBody": "Vous seul voyez votre profil. Quand il est prêt, cochez « Afficher mon profil publiquement » ci-dessous et enregistrez."
+        "hiddenBody": "Votre profil n’est pas sur le site. Quand il est prêt, cochez « Afficher mon profil publiquement » ci-dessous et enregistrez."
       },
       "actions": {
         "save": "Enregistrer les modifications",
@@ -4969,7 +4967,7 @@
       "switch": {
         "heading": "Profil public",
         "readyLabel": "Mon profil est prêt à être public",
-        "readyHint": "En cochant cette case et en enregistrant, vous acceptez que School of Gaming affiche votre profil publiquement sur son site web. Un administrateur l’examine avant sa première mise en ligne. Décochez-la et enregistrez à tout moment, et il est retiré aussitôt.",
+        "readyHint": "En cochant cette case et en enregistrant, vous marquez votre profil comme prêt à paraître sur le site de School of Gaming. Un administrateur l’examine avant sa première mise en ligne. Décochez-la et enregistrez à tout moment, et il est retiré aussitôt.",
         "showLabel": "Afficher mon profil publiquement",
         "showHint": "En cochant cette case et en enregistrant, votre profil apparaît immédiatement sur le site public de School of Gaming. Décochez-la et enregistrez à tout moment, et il est retiré.",
         "complete": "Votre profil contient tout ce qu’il faut pour être public.",
@@ -5051,45 +5049,46 @@
     },
     "admin": {
       "status": {
-        "privateTitle": "Privé",
-        "privateBody": "{name} n’a pas marqué le profil comme prêt à être public, il n’est donc pas sur le site.",
+        "privateTitle": "Pas encore marqué comme prêt",
+        "privateBody": "Le profil de {name} n’est pas sur le site. Une fois complet, {name} ou n’importe quel administrateur peut le marquer comme prêt à être public.",
         "waitingTitle": "Prêt, en attente d’approbation",
-        "waitingBody": "{name} a marqué le profil comme prêt à être public. Il apparaîtra sur le site de School of Gaming dès qu’un administrateur l’aura approuvé.",
+        "waitingBody": "Le profil de {name} est marqué comme prêt à être public. Il apparaîtra sur le site de School of Gaming dès qu’un administrateur l’aura approuvé.",
         "liveTitle": "Public",
         "liveBody": "Tout le monde peut voir le profil de {name} sur le site de School of Gaming. Les modifications enregistrées sont en ligne immédiatement.",
-        "takenOffTitle": "Retiré",
-        "takenOffBody": "Un administrateur a retiré le profil de {name} du site. {name} l’a toujours marqué comme prêt, donc une nouvelle approbation le remet en ligne immédiatement.",
         "shownTitle": "Public",
-        "shownBody": "Tout le monde peut voir le profil de {name} sur le site de School of Gaming.",
-        "hiddenTitle": "Privé",
-        "hiddenBody": "{name} n’a pas choisi d’afficher le profil publiquement, il n’est donc pas sur le site."
+        "shownBody": "Tout le monde peut voir le profil de {name} sur le site de School of Gaming. Les modifications enregistrées sont en ligne immédiatement.",
+        "hiddenTitle": "Pas encore affiché",
+        "hiddenBody": "Le profil de {name} n’est pas sur le site. Une fois complet, {name} ou n’importe quel administrateur peut choisir de l’afficher publiquement."
       },
       "edit": {
         "back": "Retour à {name}",
         "pageTitle": "Profil de {name}",
+        "readyLabel": "Le profil est prêt à être public",
+        "readyHint": "En cochant cette case et en enregistrant, vous marquez le profil de {name} comme prêt à paraître sur le site de School of Gaming. Il est mis en ligne dès qu’un administrateur l’approuve, ou immédiatement s’il est déjà approuvé. Décochez-la et enregistrez à tout moment, et il est retiré aussitôt.",
+        "showLabel": "Afficher le profil publiquement",
+        "showHint": "En cochant cette case et en enregistrant, le profil de {name} apparaît immédiatement sur le site public de School of Gaming. Décochez-la et enregistrez à tout moment, et il est retiré.",
         "complete": "Le profil contient tout ce qu’il faut pour être public.",
-        "mustStayComplete": "{name} a marqué ce profil comme prêt à être public : il doit donc rester complet, et l’enregistrement est désactivé tant qu’il ne l’est pas. Complétez ce qui manque.",
+        "mustStayComplete": "Tant que cette case est cochée, le profil doit rester complet : l’enregistrement est désactivé jusqu’à ce qu’il le soit. Complétez ce qui manque, ou décochez la case.",
         "missing": {
-          "photo": "Il lui faut une photo avant de pouvoir être public.",
-          "text": "Il lui faut « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée avant de pouvoir être public.",
-          "both": "Il lui faut une photo, ainsi que « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée, avant de pouvoir être public."
+          "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "both": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case."
         }
       },
       "userPage": {
-        "heading": "Profil d’équipe",
-        "nothingSaved": "{name} n’a pas encore rédigé de profil d’équipe.",
+        "heading": "Profil",
+        "nothingSaved": "Rien n’a encore été rédigé pour le profil de {name}.",
         "photoAlt": "Photo de profil de {name}",
         "nickname": "« {nickname} »",
         "writtenIn": "Rédigé en {languages}",
         "nothingWritten": "Rien de rédigé pour l’instant",
         "edit": "Modifier le profil",
         "approve": "Approuver",
-        "approveAgain": "Approuver à nouveau",
         "takeOff": "Retirer",
         "approvalError": "Impossible de mettre à jour l’approbation du profil. Veuillez réessayer.",
         "takeOffConfirm": {
           "title": "Retirer le profil de {name} du site ?",
-          "body": "Il cesse d’être public immédiatement et reste retiré jusqu’à ce qu’un administrateur l’approuve à nouveau, quoi que fasse {name}."
+          "body": "Retirer l’approbation le tient à l’écart du site de School of Gaming jusqu’à ce qu’un administrateur l’approuve à nouveau, qu’il soit marqué comme prêt ou non."
         }
       }
     }

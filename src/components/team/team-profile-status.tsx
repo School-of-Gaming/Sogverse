@@ -1,49 +1,49 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import type { GeduTeamProfileApproval } from "@/services/team-profiles/team-profiles.types";
 
 /**
  * Where a saved profile stands, as one word — the combined state of the
- * person's own checkbox as last saved and, for a Gedu, an admin's approval, so
- * nobody has to work out from two facts which of four things is true.
+ * checkbox as last saved and, for a Gedu, an admin's approval, so nobody has
+ * to work out from two facts whether the public can see it.
  *
- * The editor tells the person themselves; the admin user page and the admin's
- * edit of a Gedu tell an admin, in words addressed to them, off the same
- * states.
+ * A Gedu's profile is in one of three:
+ *
+ * - `private` — not marked ready. Whether an admin has already approved it
+ *   changes nothing anyone sees, so it is not a state of its own: the
+ *   approval only decides whether ticking ready later needs another look.
+ * - `waiting` — marked ready, not approved.
+ * - `live` — marked ready and approved: public.
+ *
+ * An admin's has no approval, so it is `shown` or `hidden`.
+ *
+ * The editor tells the person themselves; the admin user page and an admin
+ * editing someone else's profile tell an admin, in words addressed to them,
+ * off the same states.
  */
 export type TeamProfileStatus =
   | "private"
   | "waiting"
   | "live"
-  | "takenOff"
   | "shown"
   | "hidden";
 
 /** The saved switches a status is read from — a record and the editor's props both fit. */
 export type TeamProfileSwitches =
   | { role: "admin"; shown: boolean }
-  | { role: "gedu"; ready: boolean; approval: GeduTeamProfileApproval };
+  | { role: "gedu"; ready: boolean; approved: boolean };
 
 export function teamProfileStatus(switches: TeamProfileSwitches): TeamProfileStatus {
   if (switches.role === "admin") return switches.shown ? "shown" : "hidden";
   if (!switches.ready) return "private";
-  switch (switches.approval) {
-    case "pending":
-      return "waiting";
-    case "approved":
-      return "live";
-    case "withdrawn":
-      return "takenOff";
-  }
+  return switches.approved ? "live" : "waiting";
 }
 
 const STATUS_VARIANT: Record<
   TeamProfileStatus,
-  "default" | "info" | "success" | "warning"
+  "default" | "info" | "success"
 > = {
   private: "default",
   waiting: "info",
   live: "success",
-  takenOff: "warning",
   shown: "success",
   hidden: "default",
 };

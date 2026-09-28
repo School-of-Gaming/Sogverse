@@ -244,24 +244,6 @@ CREATE TYPE public.substitution_request_status AS ENUM (
 
 
 --
--- Name: team_profile_approval; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.team_profile_approval AS ENUM (
-    'pending',
-    'approved',
-    'withdrawn'
-);
-
-
---
--- Name: TYPE team_profile_approval; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TYPE public.team_profile_approval IS 'An admin''s decision about a Gedu''s team profile, independent of the Gedu''s own checkbox: pending (no admin has approved it yet), approved (public while the Gedu''s checkbox is on; their later edits go live with no second review), withdrawn (an admin took an approved profile down). Written only by set_team_profile_approval. An admin''s own profile has no approval and stays pending.';
-
-
---
 -- Name: user_role; Type: TYPE; Schema: public; Owner: -
 --
 

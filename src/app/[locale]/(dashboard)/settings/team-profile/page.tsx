@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { OwnTeamProfileEditor } from "@/components/team/team-profile-editor";
+import { TeamProfileEditor } from "@/components/team/team-profile-editor";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 // The service module, not the package index: the index re-exports the
 // `"use client"` query hooks, which a Server Component would pull in as client
@@ -37,5 +37,5 @@ export default async function TeamProfileSettingsPage() {
   );
   if (record === null) notFound();
 
-  return <OwnTeamProfileEditor record={record} />;
+  return <TeamProfileEditor record={record} />;
 }

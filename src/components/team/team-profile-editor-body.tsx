@@ -35,7 +35,6 @@ import {
 import type {
   AdminTeamProfile,
   GeduTeamProfile,
-  GeduTeamProfileApproval,
   TeamProfile,
 } from "@/services/team-profiles/team-profiles.types";
 
@@ -45,10 +44,10 @@ import type {
  */
 export interface TeamProfileActions {
   /**
-   * Save the profile and the person's own checkbox together — a Gedu's
-   * "ready", an admin's "show". The checkbox is a field like any other, so
-   * ticking or unticking it does nothing until this runs, and what the person
-   * agreed to show is exactly what they were looking at when they saved.
+   * Save the profile and its checkbox together — a Gedu's "ready", an
+   * admin's "show". The checkbox is a field like any other, so ticking or
+   * unticking it does nothing until this runs, and what goes public is
+   * exactly what the editor was looking at when they saved.
    *
    * `crop` is the bytes behind `content.photo` when this page cropped it, and
    * `null` when the photo is the saved one or there is none: nothing is
@@ -65,44 +64,45 @@ interface TeamProfileSaveState {
   saveError?: string | null;
 }
 
-export type TeamProfileEditorProps = TeamProfileSaveState &
-  (
+export type TeamProfileEditorProps = TeamProfileSaveState & {
+  /**
+   * An admin is editing someone else's profile from the admin panel — any
+   * admin's or Gedu's. The page is the same, checkbox included: it marks the
+   * profile ready, it is not the person's consent, and admins manage profiles
+   * for busy staff. What changes is who is addressed: the page speaks to the
+   * admin about the person and leads back to that person's user page.
+   */
+  editedByAdmin?: boolean;
+  actions: TeamProfileActions;
+} & (
     | {
         role: "gedu";
         /** The saved profile — what the form opens on. */
         profile: GeduTeamProfile;
-        /** The Gedu's saved checkbox: their consent to the profile being public. */
+        /** The saved checkbox: the profile is marked ready to be public. */
         ready: boolean;
-        approval: GeduTeamProfileApproval;
-        /**
-         * An admin is editing this Gedu's content from the admin panel. The
-         * checkbox is the Gedu's consent and never the admin's to give, so it
-         * is shown as a status rather than a control, `onSave` is handed the
-         * saved value unchanged, and the page speaks to the admin about the
-         * Gedu and leads back to the Gedu's user page.
-         */
-        editedByAdmin?: boolean;
-        actions: TeamProfileActions;
+        /** An admin's yes or no, decided on the user page and only read here. */
+        approved: boolean;
       }
     | {
         role: "admin";
         profile: AdminTeamProfile;
         /** Office staff are trusted, so their one checkbox is the whole decision. */
         shown: boolean;
-        actions: TeamProfileActions;
       }
   );
 
 /**
- * The page a person edits their own public profile on — office staff and
- * Gedus alike, one body with the differences in its props.
+ * The page a public profile is edited on — office staff's and Gedus' alike,
+ * by the person themselves or by an admin, one body with the differences in
+ * its props.
  *
- * **A profile is public only while two things are true**: the person's own
- * checkbox is saved on, and — for a Gedu — an admin has approved it, which is
- * decided elsewhere and only read here. The checkbox is an ordinary field that
- * Save commits with everything else: ticking or unticking it dirties the form,
- * and nothing takes effect until Save. It can only be ticked once the profile
- * is complete, and while it is ticked the profile has to stay complete to save.
+ * **A profile is public only while two things are true**: its checkbox is
+ * saved on, and — for a Gedu — an admin has approved it, which is decided
+ * elsewhere and only read here. The checkbox is an ordinary field that Save
+ * commits with everything else: ticking or unticking it dirties the form, and
+ * nothing takes effect until Save. It can only be ticked once the profile is
+ * complete, and while it is ticked the profile has to stay complete to save.
  *
  * **No introduction.** The page explains itself: the title, the preview
  * beside the form and its caption, and the "Public profile" section, whose
@@ -125,7 +125,7 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
   const t = useTranslations("team.edit");
   const ta = useTranslations("team.admin");
   const uiLocale = resolveLocale(useLocale());
-  const byAdmin = props.role === "gedu" && props.editedByAdmin === true;
+  const byAdmin = props.editedByAdmin === true;
   const saving = props.saving ?? false;
   const savedOn = props.role === "gedu" ? props.ready : props.shown;
   const [form, setForm] = useState<TeamProfileForm>(() =>
@@ -148,8 +148,8 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-24">
       {/* A person's own page's home is settings, beside the account facts
-          the profile shows but does not edit; an admin editing a Gedu came
-          from that Gedu's user page. */}
+          the profile shows but does not edit; an admin editing someone
+          else's came from that person's user page. */}
       <Link
         href={byAdmin ? ROUTES.admin.user(props.profile.id) : ROUTES.settings}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -187,22 +187,15 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
           />
           <TeamProfileWritingSection form={form} update={setForm} />
 
-          {byAdmin ? (
-            <AdminPublicSection
-              name={props.profile.firstName}
-              status={status}
-              ready={savedOn}
-              gap={gap}
-            />
-          ) : (
-            <PublicSection
-              role={props.role}
-              status={status}
-              on={on}
-              gap={gap}
-              onChange={setOn}
-            />
-          )}
+          <PublicSection
+            role={props.role}
+            byAdmin={byAdmin}
+            name={props.profile.firstName}
+            status={status}
+            on={on}
+            gap={gap}
+            onChange={setOn}
+          />
 
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
@@ -298,95 +291,74 @@ function useOwnedCrops(
  * in. An unsaved change to the checkbox says nothing more here: Save
  * enabling is the signal, and a line appearing under the checkbox pushed the
  * form's buttons down under the pointer.
+ *
+ * **An admin editing someone else's profile meets the same section**, with
+ * every word addressed to them about the person rather than to the person.
  */
 function PublicSection({
   role,
+  byAdmin,
+  name,
   status,
   on,
   gap,
   onChange,
 }: {
   role: "gedu" | "admin";
+  byAdmin: boolean;
+  name: string;
   status: TeamProfileStatus;
   on: boolean;
   gap: TeamProfileGap;
   onChange: (next: boolean) => void;
 }) {
   const t = useTranslations("team.edit");
+  const ta = useTranslations("team.admin");
+  const copy = byAdmin
+    ? {
+        title: ta(`status.${status}Title`),
+        body: ta(`status.${status}Body`, { name }),
+        label: role === "gedu" ? ta("edit.readyLabel") : ta("edit.showLabel"),
+        hint:
+          role === "gedu"
+            ? ta("edit.readyHint", { name })
+            : ta("edit.showHint", { name }),
+        complete: ta("edit.complete"),
+        mustStayComplete: ta("edit.mustStayComplete"),
+        missing: gap === null ? null : ta(`edit.missing.${gap}`),
+      }
+    : {
+        title: t(`status.${status}Title`),
+        body: t(`status.${status}Body`),
+        label: role === "gedu" ? t("switch.readyLabel") : t("switch.showLabel"),
+        hint: role === "gedu" ? t("switch.readyHint") : t("switch.showHint"),
+        complete: t("switch.complete"),
+        mustStayComplete: t("switch.mustStayComplete"),
+        missing: gap === null ? null : t(`switch.missing.${gap}`),
+      };
   return (
     <FormSection heading={t("switch.heading")}>
-      <TeamProfileStatusPanel
-        status={status}
-        title={t(`status.${status}Title`)}
-        body={t(`status.${status}Body`)}
-      />
+      <TeamProfileStatusPanel status={status} title={copy.title} body={copy.body} />
       <div className="space-y-3">
         <CheckboxRow
           checked={on}
           disabled={!on && gap !== null}
           onCheckedChange={onChange}
-          label={role === "gedu" ? t("switch.readyLabel") : t("switch.showLabel")}
-          hint={role === "gedu" ? t("switch.readyHint") : t("switch.showHint")}
+          label={copy.label}
+          hint={copy.hint}
         />
-        {gap === null ? (
+        {copy.missing === null ? (
           <StatusLine status="success" muted>
-            {t("switch.complete")}
+            {copy.complete}
           </StatusLine>
         ) : on ? (
-          <StatusLine status="warning">{t("switch.mustStayComplete")}</StatusLine>
+          <StatusLine status="warning">{copy.mustStayComplete}</StatusLine>
         ) : (
           <StatusLine status="info" muted>
-            {t(`switch.missing.${gap}`)}
+            {copy.missing}
           </StatusLine>
         )}
       </div>
-    </FormSection>
-  );
-}
-
-/**
- * The same section as an admin editing a Gedu meets it: the status in words
- * addressed to the admin, and no checkbox, because it is the Gedu's consent.
- *
- * The line under the status is always there, as it is under the Gedu's own
- * checkbox, so filling fields in never moves the save row: a confirmation once
- * the profile is complete, a warning while the Gedu has it marked ready and
- * something has been emptied (the save then refuses, as the Gedu's own does),
- * and otherwise what is still missing before it can go up.
- */
-function AdminPublicSection({
-  name,
-  status,
-  ready,
-  gap,
-}: {
-  name: string;
-  status: TeamProfileStatus;
-  ready: boolean;
-  gap: TeamProfileGap;
-}) {
-  const t = useTranslations("team.edit");
-  const ta = useTranslations("team.admin");
-  return (
-    <FormSection heading={t("switch.heading")}>
-      <TeamProfileStatusPanel
-        status={status}
-        title={ta(`status.${status}Title`)}
-        body={ta(`status.${status}Body`, { name })}
-      />
-      {gap === null ? (
-        <StatusLine status="success" muted>
-          {ta("edit.complete")}
-        </StatusLine>
-      ) : ready ? (
-        <StatusLine status="warning">
-          {ta("edit.mustStayComplete", { name })}
-        </StatusLine>
-      ) : (
-        <StatusLine status="info" muted>
-          {ta(`edit.missing.${gap}`)}
-        </StatusLine>
-      )}
     </FormSection>
   );
 }

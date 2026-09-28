@@ -9,12 +9,12 @@ CREATE TABLE public.team_profiles (
     pick smallint,
     photo_path text,
     opted_in boolean DEFAULT false NOT NULL,
-    approval public.team_profile_approval DEFAULT 'pending'::public.team_profile_approval NOT NULL,
+    approved boolean DEFAULT false NOT NULL,
     approval_decided_by uuid,
     approval_decided_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT team_profiles_approval_stamped CHECK (((approval = 'pending'::public.team_profile_approval) = (approval_decided_at IS NULL))),
+    CONSTRAINT team_profiles_approval_stamped CHECK (((NOT approved) OR (approval_decided_at IS NOT NULL))),
     CONSTRAINT team_profiles_nickname_check CHECK (((nickname IS NULL) OR ((nickname = btrim(nickname)) AND ((char_length(nickname) >= 1) AND (char_length(nickname) <= 32))))),
     CONSTRAINT team_profiles_photo_path_in_own_folder CHECK (((photo_path IS NULL) OR (photo_path ~ (('^'::text || (user_id)::text) || '/[^/]+$'::text)))),
     CONSTRAINT team_profiles_pick_check CHECK (((pick IS NULL) OR ((pick >= 1) AND (pick <= 16)))),
@@ -26,7 +26,7 @@ CREATE TABLE public.team_profiles (
 -- Name: TABLE team_profiles; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.team_profiles IS 'One member of staff''s team profile: an admin''s or a Gedu''s, keyed by their profile id. Name and spoken languages are not stored here; they are read from profiles. Written only by save_team_profile (content and the owner''s checkbox) and set_team_profile_approval (the approval); authenticated holds SELECT alone. Public when opted_in, and for a Gedu also approval = approved.';
+COMMENT ON TABLE public.team_profiles IS 'One member of staff''s team profile: an admin''s or a Gedu''s, keyed by their profile id. Name and spoken languages are not stored here; they are read from profiles. Written only by save_team_profile (content and the checkbox) and set_team_profile_approval (the approval); authenticated holds SELECT alone. Public when opted_in, and for a Gedu also approved.';
 
 
 --
@@ -61,21 +61,28 @@ COMMENT ON COLUMN public.team_profiles.photo_path IS 'The photo''s object name i
 -- Name: COLUMN team_profiles.opted_in; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.team_profiles.opted_in IS 'The person''s own checkbox: a Gedu''s consent to being public ("ready"), an admin''s "show". Only the person saves it, and only while the profile is complete; while it is on, every save has to leave the profile complete. An admin editing a Gedu''s content never changes it.';
+COMMENT ON COLUMN public.team_profiles.opted_in IS 'The profile''s readiness mark: a Gedu''s "ready", an admin''s "show". Not consent: the person or any admin may save it, only while the profile is complete; while it is on, every save has to leave the profile complete. A save that passes NULL keeps it as stored.';
 
 
 --
--- Name: COLUMN team_profiles.approval; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN team_profiles.approved; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.team_profiles.approval IS 'An admin''s decision about a Gedu''s profile. Meaningless for an admin''s own profile, which stays pending.';
+COMMENT ON COLUMN public.team_profiles.approved IS 'An admin''s yes or no to a Gedu''s profile being public, independent of the checkbox and surviving it being turned off and on: while it is true, the Gedu''s later edits go live with no second look. Written only by set_team_profile_approval. Always false for an admin''s profile, which has no approval.';
 
 
 --
 -- Name: COLUMN team_profiles.approval_decided_by; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.team_profiles.approval_decided_by IS 'The admin who last moved the approval, or NULL while pending, or once that admin''s account is gone (ON DELETE SET NULL: losing the admin must never take a Gedu''s profile down).';
+COMMENT ON COLUMN public.team_profiles.approval_decided_by IS 'The admin who last changed the approval, or NULL before any admin has, or once that admin''s account is gone (ON DELETE SET NULL: losing the admin must never take a Gedu''s profile down).';
+
+
+--
+-- Name: COLUMN team_profiles.approval_decided_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.team_profiles.approval_decided_at IS 'When an admin last changed the approval, or NULL before any admin has. Never NULL while approved.';
 
 
 --

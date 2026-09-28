@@ -26,8 +26,8 @@ import {
 
 /**
  * The team profile on an admin's or a Gedu's `/admin/users/[id]` page: where
- * it stands publicly, a compact read of what it says, and — for a Gedu — the
- * admin's two levers, the approval and an edit of the content.
+ * it stands publicly, a compact read of what it says, an edit of the whole
+ * profile (checkbox included) and — for a Gedu — the approval.
  *
  * Seeded with the page's server read, so it paints complete; the approval
  * write re-reads the record, so the status and the buttons follow it.
@@ -38,20 +38,21 @@ import {
  * full page is one click away on the edit route. The photo is framed content,
  * so its edge is not a card inside this card.
  *
- * **Only the valid moves are offered.** A profile goes pending → approved,
- * approved → withdrawn and withdrawn → approved, never back to pending, so
- * the card shows exactly one decision button for a Gedu. Taking a profile down
- * is the one that asks first: it removes something from the public website.
- * Approving does not: it puts up nothing the Gedu has not already asked for,
- * and it is undone with the other button.
+ * **The approval is one yes or no, so it is one button**: Approve while it is
+ * no, Take off while it is yes. Taking off is the one that asks first: it can
+ * remove something from the public website. Approving does not: it is undone
+ * with the other button.
  */
 export function UserTeamProfileCard({
   userId,
   initial,
+  isViewer,
 }: {
   userId: string;
   /** The page's server read — `null` where that read failed. */
   initial: TeamProfileRecord | null;
+  /** The page is the viewer's own, whose profile is edited from settings. */
+  isViewer: boolean;
 }) {
   const t = useTranslations("team.admin");
   const { data: record } = useTeamProfile(userId, { initialData: initial });
@@ -85,14 +86,16 @@ export function UserTeamProfileCard({
             {t("userPage.nothingSaved", { name })}
           </p>
         )}
-        {record.role === "gedu" && (
-          <GeduProfileActions
-            geduId={userId}
-            name={name}
-            approval={record.approval}
-            canDecide={written}
-          />
-        )}
+        <ProfileActions
+          userId={userId}
+          name={name}
+          isViewer={isViewer}
+          approval={
+            record.role === "gedu"
+              ? { approved: record.approved, canDecide: written }
+              : null
+          }
+        />
       </CardContent>
     </Card>
   );
@@ -160,20 +163,24 @@ function ProfileSummary({ record }: { record: TeamProfileRecord }) {
 }
 
 /**
- * Edit, and the one approval decision valid from where the profile stands.
- * The decision is last, on the right, as the row's primary action.
+ * Edit, and for a Gedu the approval's one button. The approval is last, on
+ * the right, as the row's primary action.
  */
-function GeduProfileActions({
-  geduId,
+function ProfileActions({
+  userId,
   name,
+  isViewer,
   approval,
-  canDecide,
 }: {
-  geduId: string;
+  userId: string;
   name: string;
-  approval: Extract<TeamProfileRecord, { role: "gedu" }>["approval"];
-  /** Nothing to decide about while the Gedu has written nothing. */
-  canDecide: boolean;
+  isViewer: boolean;
+  /**
+   * A Gedu's approval, or `null` for an admin's profile, which has none.
+   * `canDecide` is false while nothing has been written: there is nothing to
+   * decide about yet.
+   */
+  approval: { approved: boolean; canDecide: boolean } | null;
 }) {
   const t = useTranslations("team.admin.userPage");
   const setApproval = useSetGeduTeamProfileApproval();
@@ -187,7 +194,7 @@ function GeduProfileActions({
     setApproving(true);
     setApproveFailed(false);
     void setApproval
-      .mutateAsync({ geduId, approval: "approved" })
+      .mutateAsync({ geduId: userId, approved: true })
       .catch((error: unknown) => {
         console.error("[team-profile] approval failed:", error);
         setApproveFailed(true);
@@ -198,22 +205,28 @@ function GeduProfileActions({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap justify-end gap-2">
+        {/* An admin's own profile is edited from settings, where the page
+            speaks to them rather than about them. */}
         <Link
-          href={ROUTES.admin.userTeamProfile(geduId)}
+          href={
+            isViewer
+              ? ROUTES.settingsTeamProfile
+              : ROUTES.admin.userTeamProfile(userId)
+          }
           className={buttonVariants({ variant: "outline" })}
         >
           <Pencil aria-hidden />
           {t("edit")}
         </Link>
-        {canDecide &&
-          (approval === "approved" ? (
+        {approval?.canDecide &&
+          (approval.approved ? (
             <Button variant="outline" onClick={() => setConfirmingTakeOff(true)}>
               {t("takeOff")}
             </Button>
           ) : (
             <Button onClick={approve} disabled={approving}>
               {approving && <Loader2 className="animate-spin" aria-hidden />}
-              {approval === "withdrawn" ? t("approveAgain") : t("approve")}
+              {t("approve")}
             </Button>
           ))}
       </div>
@@ -222,19 +235,21 @@ function GeduProfileActions({
           {t("approvalError")}
         </StatusLine>
       )}
-      <ConfirmDialog
-        open={confirmingTakeOff}
-        onOpenChange={setConfirmingTakeOff}
-        title={t("takeOffConfirm.title", { name })}
-        description={t("takeOffConfirm.body", { name })}
-        confirmLabel={t("takeOff")}
-        confirmVariant="destructive"
-        holdWhileCommitting
-        onConfirm={() =>
-          setApproval.mutateAsync({ geduId, approval: "withdrawn" })
-        }
-        describeError={() => t("approvalError")}
-      />
+      {approval && (
+        <ConfirmDialog
+          open={confirmingTakeOff}
+          onOpenChange={setConfirmingTakeOff}
+          title={t("takeOffConfirm.title", { name })}
+          description={t("takeOffConfirm.body", { name })}
+          confirmLabel={t("takeOff")}
+          confirmVariant="destructive"
+          holdWhileCommitting
+          onConfirm={() =>
+            setApproval.mutateAsync({ geduId: userId, approved: false })
+          }
+          describeError={() => t("approvalError")}
+        />
+      )}
     </div>
   );
 }

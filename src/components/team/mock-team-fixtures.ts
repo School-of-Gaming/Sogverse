@@ -1,7 +1,6 @@
 import type {
   AdminTeamProfile,
   GeduTeamProfile,
-  GeduTeamProfileApproval,
   TeamProfile,
 } from "@/services/team-profiles/team-profiles.types";
 
@@ -136,17 +135,16 @@ export const TEAM_PROFILE_FIXTURES = {
 // ---------------------------------------------------------------------------
 
 /**
- * One scenario per state a Gedu is told their profile is in, and no more: the
- * four combinations of their switch and an admin's approval that read
- * differently. Private-and-incomplete stands for private in general — a
- * complete private profile is the same render with the switch enabled, which
- * filling in the form reaches locally.
+ * One scenario per state a Gedu is told their profile is in, and no more.
+ * Private-and-incomplete stands for private in general — a complete private
+ * profile is the same render with the switch enabled, which filling in the
+ * form reaches locally, and a private one an admin has already approved reads
+ * no differently.
  */
 export const GEDU_TEAM_PROFILE_EDITOR_SCENARIOS = [
   "private",
   "waiting",
   "live",
-  "taken-off",
 ] as const;
 
 export type GeduTeamProfileEditorScenario =
@@ -159,11 +157,11 @@ export function isGeduTeamProfileEditorScenario(
 }
 
 /**
- * Two, one per profile an admin edits. Their own has a single switch, and
- * turning it off is a click away on the same render. A Gedu's, edited from the
- * admin panel, has no switch at all — it is the Gedu's — so it is a different
- * page and its own scenario, one status standing for the rest, which differ
- * only in the panel's words.
+ * Two: an admin's own profile, and someone else's edited from the admin panel,
+ * which is a different page — every word addressed to the admin about the
+ * person, and the sidebar back link to their user page. A Gedu's stands for
+ * another admin's too, which differs only in the checkbox's words and the
+ * title field; its status, like the rest, is a click away on the same render.
  */
 export const ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS = [
   "shown",
@@ -183,7 +181,7 @@ export function isAdminTeamProfileEditorScenario(
 export interface GeduTeamProfileEditorFixture {
   profile: GeduTeamProfile;
   ready: boolean;
-  approval: GeduTeamProfileApproval;
+  approved: boolean;
 }
 
 /**
@@ -208,10 +206,9 @@ export const GEDU_TEAM_PROFILE_EDITOR_FIXTURES: Record<
   GeduTeamProfileEditorScenario,
   GeduTeamProfileEditorFixture
 > = {
-  private: { profile: SAANA_NEW, ready: false, approval: "pending" },
-  waiting: { profile: SAANA, ready: true, approval: "pending" },
-  live: { profile: EETU, ready: true, approval: "approved" },
-  "taken-off": { profile: EETU, ready: true, approval: "withdrawn" },
+  private: { profile: SAANA_NEW, ready: false, approved: false },
+  waiting: { profile: SAANA, ready: true, approved: false },
+  live: { profile: EETU, ready: true, approved: true },
 };
 
 /** A profile as the editor receives it on an admin's page. */

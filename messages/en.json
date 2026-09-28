@@ -70,7 +70,7 @@
       "geduInvoicing": "Invoicing",
       "adminSubstitutions": "Substitutions",
       "teamProfile": "Your profile",
-      "adminTeamProfile": "Team profile"
+      "adminTeamProfile": "Profile"
     },
     "descriptions": {
       "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
@@ -4950,17 +4950,15 @@
       "pageTitle": "Your profile",
       "status": {
         "privateTitle": "Private",
-        "privateBody": "Only you can see your profile. When you are happy with it, tick “My profile is ready to be public” below and save.",
+        "privateBody": "Your profile isn’t on the website. When you are happy with it, tick “My profile is ready to be public” below and save.",
         "waitingTitle": "Ready, waiting for an admin",
         "waitingBody": "An admin will look at your profile before it goes public. You can keep editing in the meantime.",
         "liveTitle": "Public",
         "liveBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away. To take it down, untick “My profile is ready to be public” and save.",
-        "takenOffTitle": "Ready, but an admin has taken it down",
-        "takenOffBody": "Your profile is not public at the moment. Contact the office if you would like to know why, or to get it back up.",
         "shownTitle": "Public",
         "shownBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away.",
         "hiddenTitle": "Private",
-        "hiddenBody": "Only you can see your profile. When it is ready, tick “Show my profile publicly” below and save."
+        "hiddenBody": "Your profile isn’t on the website. When it is ready, tick “Show my profile publicly” below and save."
       },
       "actions": {
         "save": "Save changes",
@@ -4969,7 +4967,7 @@
       "switch": {
         "heading": "Public profile",
         "readyLabel": "My profile is ready to be public",
-        "readyHint": "Ticking this and saving means you agree to School of Gaming showing your profile publicly on its website. An admin looks at it before it first goes up. Untick it and save at any time, and it comes down straight away.",
+        "readyHint": "Ticking this and saving marks your profile ready to go on School of Gaming’s website. An admin looks at it before it first goes up. Untick it and save at any time, and it comes down straight away.",
         "showLabel": "Show my profile publicly",
         "showHint": "Ticking this and saving puts your profile on School of Gaming’s public website straight away. Untick it and save at any time, and it comes down.",
         "complete": "Your profile has everything it needs to go public.",
@@ -5051,45 +5049,46 @@
     },
     "admin": {
       "status": {
-        "privateTitle": "Private",
-        "privateBody": "{name} hasn’t marked the profile ready to be public, so it isn’t on the website.",
+        "privateTitle": "Not marked ready yet",
+        "privateBody": "{name}’s profile isn’t on the website. Once it is complete, {name} or any admin can mark it ready to be public.",
         "waitingTitle": "Ready, waiting for approval",
-        "waitingBody": "{name} has marked the profile ready to be public. It goes up on School of Gaming’s website once an admin approves it.",
+        "waitingBody": "{name}’s profile is marked ready to be public. It goes on School of Gaming’s website as soon as an admin approves it.",
         "liveTitle": "Public",
         "liveBody": "Anyone can see {name}’s profile on School of Gaming’s website. Changes saved to it go live straight away.",
-        "takenOffTitle": "Taken off",
-        "takenOffBody": "An admin has taken {name}’s profile off the website. {name} still has it marked ready, so approving it again puts it straight back up.",
         "shownTitle": "Public",
-        "shownBody": "Anyone can see {name}’s profile on School of Gaming’s website.",
-        "hiddenTitle": "Private",
-        "hiddenBody": "{name} hasn’t chosen to show the profile publicly, so it isn’t on the website."
+        "shownBody": "Anyone can see {name}’s profile on School of Gaming’s website. Changes saved to it go live straight away.",
+        "hiddenTitle": "Not shown yet",
+        "hiddenBody": "{name}’s profile isn’t on the website. Once it is complete, {name} or any admin can choose to show it publicly."
       },
       "edit": {
         "back": "Back to {name}",
         "pageTitle": "{name}’s profile",
+        "readyLabel": "The profile is ready to be public",
+        "readyHint": "Ticking this and saving marks {name}’s profile ready to go on School of Gaming’s website. It goes up once an admin approves it, or straight away if it is already approved. Untick it and save at any time, and it comes down straight away.",
+        "showLabel": "Show the profile publicly",
+        "showHint": "Ticking this and saving puts {name}’s profile on School of Gaming’s public website straight away. Untick it and save at any time, and it comes down.",
         "complete": "The profile has everything it needs to go public.",
-        "mustStayComplete": "{name} has marked this profile ready to be public, so it has to stay complete and saving is off until it is. Fill in what is missing.",
+        "mustStayComplete": "While this is ticked the profile has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box.",
         "missing": {
-          "photo": "It needs a photo before it can go public.",
-          "text": "It needs “Introduce yourself in one line” and “About me” in every language written before it can go public.",
-          "both": "It needs a photo, and “Introduce yourself in one line” and “About me” in every language written, before it can go public."
+          "photo": "Add a photo to be able to tick this.",
+          "text": "Fill in “Introduce yourself in one line” and “About me” in every language written to be able to tick this.",
+          "both": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this."
         }
       },
       "userPage": {
-        "heading": "Team profile",
-        "nothingSaved": "{name} hasn’t written a team profile yet.",
+        "heading": "Profile",
+        "nothingSaved": "Nothing has been written for {name}’s profile yet.",
         "photoAlt": "{name}’s profile photo",
         "nickname": "“{nickname}”",
         "writtenIn": "Written in {languages}",
         "nothingWritten": "Nothing written yet",
         "edit": "Edit profile",
         "approve": "Approve",
-        "approveAgain": "Approve again",
         "takeOff": "Take off",
         "approvalError": "Couldn’t update the profile’s approval. Please try again.",
         "takeOffConfirm": {
           "title": "Take {name}’s profile off the website?",
-          "body": "It stops being public straight away, and stays off until an admin approves it again, whatever {name} does."
+          "body": "Taking the approval back keeps it off School of Gaming’s website until an admin approves it again, whether or not it is marked ready."
         }
       }
     }

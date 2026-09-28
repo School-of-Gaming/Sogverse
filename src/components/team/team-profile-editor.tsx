@@ -11,8 +11,7 @@ import {
   TeamPhotoUploadError,
   isTeamProfileIncompleteError,
   isTeamProfilePhotoGoneError,
-  useSaveGeduTeamProfile,
-  useSaveOwnTeamProfile,
+  useSaveTeamProfile,
   type TeamPhotoToSave,
   type TeamProfile,
   type TeamProfilePhoto,
@@ -129,15 +128,26 @@ function useTeamProfileEditor(
   };
 }
 
-/** `/settings/team-profile`: an admin or a Gedu editing their own profile. */
-export function OwnTeamProfileEditor({ record }: { record: TeamProfileRecord }) {
-  const save = useSaveOwnTeamProfile();
+/**
+ * `/settings/team-profile`, an admin or a Gedu editing their own profile, and
+ * `/admin/users/[id]/team-profile`, an admin editing someone else's
+ * (`editedByAdmin`). The save is the same either way, checkbox included.
+ */
+export function TeamProfileEditor({
+  record,
+  editedByAdmin = false,
+}: {
+  record: TeamProfileRecord;
+  editedByAdmin?: boolean;
+}) {
+  const save = useSaveTeamProfile();
   const editor = useTeamProfileEditor(record, (input, on) =>
     save.mutateAsync({ userId: record.profile.id, input, on }),
   );
   return record.role === "admin" ? (
     <TeamProfileEditorBody
       role="admin"
+      editedByAdmin={editedByAdmin}
       profile={editor.savedProfile(record.profile)}
       shown={editor.savedOn(record.shown)}
       actions={editor.actions}
@@ -147,37 +157,10 @@ export function OwnTeamProfileEditor({ record }: { record: TeamProfileRecord }) 
   ) : (
     <TeamProfileEditorBody
       role="gedu"
+      editedByAdmin={editedByAdmin}
       profile={editor.savedProfile(record.profile)}
       ready={editor.savedOn(record.ready)}
-      approval={record.approval}
-      actions={editor.actions}
-      saving={editor.saving}
-      saveError={editor.saveError}
-    />
-  );
-}
-
-/**
- * `/admin/users/[id]/team-profile`: an admin editing a Gedu's content. The
- * Gedu's checkbox is theirs: the save never writes it, and the body shows it
- * as a status.
- */
-export function AdminGeduTeamProfileEditor({
-  record,
-}: {
-  record: Extract<TeamProfileRecord, { role: "gedu" }>;
-}) {
-  const save = useSaveGeduTeamProfile();
-  const editor = useTeamProfileEditor(record, (input) =>
-    save.mutateAsync({ geduId: record.profile.id, input }),
-  );
-  return (
-    <TeamProfileEditorBody
-      role="gedu"
-      editedByAdmin
-      profile={editor.savedProfile(record.profile)}
-      ready={record.ready}
-      approval={record.approval}
+      approved={record.approved}
       actions={editor.actions}
       saving={editor.saving}
       saveError={editor.saveError}

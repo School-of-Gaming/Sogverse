@@ -63,7 +63,7 @@
       "geduInvoicing": "DIlmeH ghItlh",
       "adminSubstitutions": "lIwmey",
       "teamProfile": "Del’a’lIj",
-      "adminTeamProfile": "ghom Del’a’"
+      "adminTeamProfile": "Del’a’"
     },
     "descriptions": {
       "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
@@ -4051,17 +4051,15 @@
       "pageTitle": "Del’a’lIj",
       "status": {
         "privateTitle": "So’lu’",
-        "privateBody": "SoH neH Del’a’lIj Dalegh. bIQuchDI’, bIng “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIwIv ’ej yIpol.",
+        "privateBody": "Qu’mey Daq Del’a’lIj leghlaHbe’ vay’. bIQuchDI’, bIng “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIwIv ’ej yIpol.",
         "waitingTitle": "ghuHmoHlu’, loHwI’ loS",
         "waitingBody": "Del’a’lIj legh loHwI’ ’ej Hoch leghDaq lan. loStaHvIS, choHlaH.",
         "liveTitle": "Hoch leghDaq leghlu’",
         "liveBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. So’meH, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIteq ’ej yIpol.",
-        "takenOffTitle": "ghuHmoHlu’, ’ach loHwI’ teq",
-        "takenOffBody": "DaH Del’a’lIj leghlaHbe’ vay’. qatlh? yej’an yIjatlh.",
         "shownTitle": "Hoch leghDaq",
         "shownBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’.",
         "hiddenTitle": "Hoch leghDaq Dabbe’",
-        "hiddenBody": "SoH neH Del’a’lIj Dalegh. ghuHmoHDI’, bIng “Hoch leghDaq jIH yIcha’” yIwIv ’ej yIpol."
+        "hiddenBody": "Qu’mey Daq Del’a’lIj leghlaHbe’ vay’. ghuHmoHDI’, bIng “Hoch leghDaq jIH yIcha’” yIwIv ’ej yIpol."
       },
       "actions": {
         "save": "choHmey yIpol",
@@ -4070,7 +4068,7 @@
       "switch": {
         "heading": "Hoch legh",
         "readyLabel": "jIH ’oH: DaH leghlu’ ’e’ vIQap",
-        "readyHint": "DawIvDI’ ’ej DapolDI’, School of Gaming Qum’a’Daq jIH cha’ ’e’ Dachaw’. wa’DIch cha’pa’, legh loHwI’. Dateq ’ej DapolDI’, SIbI’ So’lu’.",
+        "readyHint": "DawIvDI’ ’ej DapolDI’, Del’a’lIj DaghuHmoH. wa’DIch cha’pa’, legh loHwI’. Dateq ’ej DapolDI’, SIbI’ So’lu’.",
         "showLabel": "Hoch leghmeH jIH yIcha’",
         "showHint": "DawIvDI’ ’ej DapolDI’, SIbI’ School of Gaming Qum’a’Daq cha’lu’. Dateq ’ej DapolDI’, So’lu’.",
         "complete": "Hoch Daghaj. Qapla’!",
@@ -4152,45 +4150,46 @@
     },
     "admin": {
       "status": {
-        "privateTitle": "pegh",
-        "privateBody": "Del’a’Daj ghuHmoHbe’ {name}. Qu’mey Daq Dalegh’be’.",
+        "privateTitle": "ghuHmoHbe’lu’ rIntaHbe’",
+        "privateBody": "{name} Del’a’ Qu’mey Daq Dalegh’be’. naQDI’, ghuHmoHlaH {name} pagh loHwI’ Hoch.",
         "waitingTitle": "ghuHmoHlu’, chaw’ loS",
-        "waitingBody": "Del’a’Daj ghuHmoH {name}. chaw’ loHwI’ ’ej Hoch legh.",
+        "waitingBody": "{name} Del’a’ ghuHmoHlu’. chaw’ loHwI’DI’, SIbI’ Hoch legh.",
         "liveTitle": "Hoch legh",
         "liveBody": "{name} Del’a’ legh Hoch. DapolmoHbogh choHmey DaH lInlu’.",
-        "takenOffTitle": "teqlu’",
-        "takenOffBody": "{name} Del’a’ teq loHwI’. ghuHmoH {name} DaH, vaj chaw’ nIb Dayajchugh DaH chegh.",
         "shownTitle": "Hoch legh",
-        "shownBody": "{name} Del’a’ legh Hoch.",
-        "hiddenTitle": "pegh",
-        "hiddenBody": "Del’a’Daj cha’be’ {name}. Qu’mey Daq Dalegh’be’."
+        "shownBody": "{name} Del’a’ legh Hoch. DapolmoHbogh choHmey DaH lInlu’.",
+        "hiddenTitle": "cha’be’lu’ rIntaHbe’",
+        "hiddenBody": "{name} Del’a’ Qu’mey Daq Dalegh’be’. naQDI’, cha’laH {name} pagh loHwI’ Hoch."
       },
       "edit": {
         "back": "{name} yIchegh",
         "pageTitle": "{name} Del’a’",
+        "readyLabel": "Del’a’ ghuHmoHlu’: DaH leghlu’",
+        "readyHint": "DawIvDI’ ’ej DapolDI’, {name} Del’a’ DaghuHmoH. chaw’ loHwI’DI’ Hoch legh — chaw’lu’pu’chugh, SIbI’. Dateq ’ej DapolDI’, SIbI’ So’lu’.",
+        "showLabel": "Hoch leghmeH Del’a’ yIcha’",
+        "showHint": "DawIvDI’ ’ej DapolDI’, SIbI’ School of Gaming Qum’a’Daq {name} Del’a’ cha’lu’. Dateq ’ej DapolDI’, So’lu’.",
         "complete": "Hoch legh Del’a’ ’e’ laH. naQ.",
-        "mustStayComplete": "Del’a’Daj ghuHmoH {name}, vaj naQnIS. chIlbogh yIteb.",
+        "mustStayComplete": "wIvlu’taHvIS, naQnIS Del’a’. naQbe’chugh, polbe’lu’. yIchu’ pagh yIteq.",
         "missing": {
-          "photo": "mIllogh poQ.",
-          "text": "“wa’ tlhegh: jIH” ’ej “jIH” poQ Hol Hoch.",
-          "both": "mIllogh ’ej “wa’ tlhegh: jIH” ’ej “jIH” poQ Hol Hoch."
+          "photo": "mIllogh yIlab, vaj DawIvlaH.",
+          "text": "“wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "both": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH."
         }
       },
       "userPage": {
-        "heading": "ghom Del’a’",
-        "nothingSaved": "ghom Del’a’ ghItlhbe’ {name} rIntaHbe’.",
+        "heading": "Del’a’",
+        "nothingSaved": "{name} Del’a’Daq pagh ghItlhlu’pu’.",
         "photoAlt": "{name} mIllogh",
         "nickname": "“{nickname}”",
         "writtenIn": "Hol: {languages}",
         "nothingWritten": "pagh ghItlhlu’",
         "edit": "Del’a’ yIchoH",
         "approve": "yIchaw’",
-        "approveAgain": "yIchaw’ nIb",
         "takeOff": "yIteq",
         "approvalError": "chaw’ choHlaHbe’. yInID.",
         "takeOffConfirm": {
           "title": "{name} Del’a’ DateqneS’a’?",
-          "body": "DaH Hoch legh’be’. chaw’ loHwI’ nIb ’ej neH chegh — nuq ta’ {name} ’e’ yIbuSHa’."
+          "body": "chaw’ DateqDI’, Qu’mey Daq So’lu’taH — chaw’ loHwI’ nIb neH chegh. ghuHmoHlu’ ’e’ yIbuSHa’."
         }
       }
     }

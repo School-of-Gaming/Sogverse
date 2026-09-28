@@ -18,7 +18,7 @@ import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-c
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
 import { gamerUsernameFromEmail, hasRealEmail } from "@/lib/gamer-sign-in";
 import { formatDate } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users";
 import { GamerService } from "@/services/gamers";
@@ -191,6 +191,7 @@ export default async function AdminUserDetailPage({
     geduCertification,
     geduAcceptances,
     teamProfile,
+    viewer,
   ] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
@@ -223,6 +224,9 @@ export default async function AdminUserDetailPage({
     hasTeamProfile
       ? new TeamProfilesService(supabase).getTeamProfile(userId).catch(() => null)
       : Promise.resolve<TeamProfileRecord | null>(null),
+    // Who is looking, so the card can send an admin to their own profile
+    // through settings. Cached for the request: the layout has read it.
+    hasTeamProfile ? getUserWithProfile() : Promise.resolve(null),
   ]);
 
   // Products this user is assigned to. For a gamer, their own participations;
@@ -524,7 +528,11 @@ export default async function AdminUserDetailPage({
           the read above, so it is in its final shape on first paint and sits
           ahead of the marketing card, whose place at the end is load-bearing. */}
       {hasTeamProfile && (
-        <UserTeamProfileCard userId={userId} initial={teamProfile} />
+        <UserTeamProfileCard
+          userId={userId}
+          initial={teamProfile}
+          isViewer={viewer?.user.id === userId}
+        />
       )}
 
       {/* Everything about marketing, in one card: where the account came from,

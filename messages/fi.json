@@ -70,7 +70,7 @@
       "geduInvoicing": "Laskutus",
       "adminSubstitutions": "Tuuraukset",
       "teamProfile": "Profiilisi",
-      "adminTeamProfile": "Tiimiprofiili"
+      "adminTeamProfile": "Profiili"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -4950,17 +4950,15 @@
       "pageTitle": "Profiilisi",
       "status": {
         "privateTitle": "Yksityinen",
-        "privateBody": "Vain sinä näet profiilisi. Kun olet siihen tyytyväinen, rastita alta ”Profiilini on valmis julkaistavaksi” ja tallenna.",
+        "privateBody": "Profiilisi ei ole verkkosivuilla. Kun olet siihen tyytyväinen, rastita alta ”Profiilini on valmis julkaistavaksi” ja tallenna.",
         "waitingTitle": "Valmis, odottaa ylläpitäjää",
         "waitingBody": "Ylläpitäjä katsoo profiilisi ennen kuin se julkaistaan. Voit jatkaa muokkaamista sillä välin.",
         "liveTitle": "Julkinen",
         "liveBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti. Jos haluat poistaa profiilin näkyvistä, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna.",
-        "takenOffTitle": "Valmis, mutta ylläpitäjä on poistanut sen näkyvistä",
-        "takenOffBody": "Profiilisi ei ole tällä hetkellä julkinen. Ota yhteyttä toimistoon, jos haluat tietää syyn tai saada sen takaisin näkyviin.",
         "shownTitle": "Julkinen",
         "shownBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti.",
         "hiddenTitle": "Yksityinen",
-        "hiddenBody": "Vain sinä näet profiilisi. Kun se on valmis, rastita alta ”Näytä profiilini julkisesti” ja tallenna."
+        "hiddenBody": "Profiilisi ei ole verkkosivuilla. Kun se on valmis, rastita alta ”Näytä profiilini julkisesti” ja tallenna."
       },
       "actions": {
         "save": "Tallenna muutokset",
@@ -4969,7 +4967,7 @@
       "switch": {
         "heading": "Julkinen profiili",
         "readyLabel": "Profiilini on valmis julkaistavaksi",
-        "readyHint": "Rastittamalla ja tallentamalla hyväksyt, että School of Gaming näyttää profiilisi julkisesti verkkosivuillaan. Ylläpitäjä katsoo sen ennen kuin se julkaistaan ensimmäisen kerran. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili poistuu heti.",
+        "readyHint": "Rastittamalla ja tallentamalla merkitset profiilisi valmiiksi julkaistavaksi School of Gamingin verkkosivuilla. Ylläpitäjä katsoo sen ennen kuin se julkaistaan ensimmäisen kerran. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili poistuu heti.",
         "showLabel": "Näytä profiilini julkisesti",
         "showHint": "Rastittamalla ja tallentamalla profiilisi tulee heti School of Gamingin julkisille verkkosivuille. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili poistuu.",
         "complete": "Profiilissasi on kaikki, mitä julkaisuun tarvitaan.",
@@ -5051,45 +5049,46 @@
     },
     "admin": {
       "status": {
-        "privateTitle": "Yksityinen",
-        "privateBody": "{name} ei ole merkinnyt profiilia valmiiksi julkaistavaksi, joten se ei näy verkkosivuilla.",
+        "privateTitle": "Ei vielä merkitty valmiiksi",
+        "privateBody": "Profiili ({name}) ei ole verkkosivuilla. Kun se on täydellinen, {name} tai kuka tahansa ylläpitäjä voi merkitä sen valmiiksi julkaistavaksi.",
         "waitingTitle": "Valmis, odottaa hyväksyntää",
-        "waitingBody": "{name} on merkinnyt profiilin valmiiksi julkaistavaksi. Se tulee näkyviin School of Gamingin verkkosivuille, kun ylläpitäjä hyväksyy sen.",
+        "waitingBody": "Profiili ({name}) on merkitty valmiiksi julkaistavaksi. Se tulee näkyviin School of Gamingin verkkosivuille heti, kun ylläpitäjä hyväksyy sen.",
         "liveTitle": "Julkinen",
         "liveBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti.",
-        "takenOffTitle": "Poistettu näkyvistä",
-        "takenOffBody": "Ylläpitäjä on poistanut profiilin ({name}) verkkosivuilta. {name} on yhä merkinnyt sen valmiiksi, joten uusi hyväksyntä palauttaa sen heti näkyviin.",
         "shownTitle": "Julkinen",
-        "shownBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla.",
-        "hiddenTitle": "Yksityinen",
-        "hiddenBody": "{name} ei ole valinnut profiilin näyttämistä julkisesti, joten se ei näy verkkosivuilla."
+        "shownBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti.",
+        "hiddenTitle": "Ei vielä näkyvissä",
+        "hiddenBody": "Profiili ({name}) ei ole verkkosivuilla. Kun se on täydellinen, {name} tai kuka tahansa ylläpitäjä voi valita sen näyttämisen julkisesti."
       },
       "edit": {
         "back": "Takaisin: {name}",
         "pageTitle": "Profiili: {name}",
+        "readyLabel": "Profiili on valmis julkaistavaksi",
+        "readyHint": "Rastittamalla ja tallentamalla merkitset profiilin ({name}) valmiiksi julkaistavaksi School of Gamingin verkkosivuilla. Se julkaistaan, kun ylläpitäjä hyväksyy sen, tai heti, jos se on jo hyväksytty. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili poistuu heti.",
+        "showLabel": "Näytä profiili julkisesti",
+        "showHint": "Rastittamalla ja tallentamalla profiili ({name}) tulee heti School of Gamingin julkisille verkkosivuille. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili poistuu.",
         "complete": "Profiilissa on kaikki, mitä julkaisemiseen tarvitaan.",
-        "mustStayComplete": "{name} on merkinnyt profiilin valmiiksi julkaistavaksi, joten sen on pysyttävä täydellisenä, eikä tallentaminen onnistu ennen sitä. Täydennä puuttuvat kohdat.",
+        "mustStayComplete": "Kun tämä on rastitettu, profiilin täytyy pysyä täydellisenä, joten tallennus on pois käytöstä, kunnes se on. Täydennä puuttuvat kohdat tai poista rasti.",
         "missing": {
-          "photo": "Profiili tarvitsee kuvan ennen kuin sen voi julkaista.",
-          "text": "Profiili tarvitsee kohdat ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä ennen kuin sen voi julkaista.",
-          "both": "Profiili tarvitsee kuvan sekä kohdat ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä ennen kuin sen voi julkaista."
+          "photo": "Lisää kuva, jotta voit rastittaa tämän.",
+          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "both": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän."
         }
       },
       "userPage": {
-        "heading": "Tiimiprofiili",
-        "nothingSaved": "{name} ei ole vielä kirjoittanut tiimiprofiilia.",
+        "heading": "Profiili",
+        "nothingSaved": "Profiiliin ({name}) ei ole vielä kirjoitettu mitään.",
         "photoAlt": "Profiilikuva: {name}",
         "nickname": "”{nickname}”",
         "writtenIn": "Kielet: {languages}",
         "nothingWritten": "Ei vielä tekstiä",
         "edit": "Muokkaa profiilia",
         "approve": "Hyväksy",
-        "approveAgain": "Hyväksy uudelleen",
         "takeOff": "Poista näkyvistä",
         "approvalError": "Profiilin hyväksynnän päivittäminen ei onnistunut. Yritä uudelleen.",
         "takeOffConfirm": {
           "title": "Poistetaanko profiili ({name}) verkkosivuilta?",
-          "body": "Profiili lakkaa heti olemasta julkinen ja pysyy poissa, kunnes ylläpitäjä hyväksyy sen uudelleen, teki {name} mitä tahansa."
+          "body": "Hyväksynnän peruminen pitää profiilin poissa School of Gamingin verkkosivuilta, kunnes ylläpitäjä hyväksyy sen uudelleen, oli se merkitty valmiiksi tai ei."
         }
       }
     }

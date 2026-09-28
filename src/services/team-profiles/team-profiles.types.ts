@@ -1,6 +1,6 @@
 import { PICKS, type PickId } from "@sog/ui";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { SpokenLanguageCode, TeamProfileApproval } from "@/types";
+import type { SpokenLanguageCode } from "@/types";
 
 /**
  * The team profile's shapes, shared by the service that reads and writes them
@@ -108,20 +108,6 @@ export interface GeduTeamProfile extends TeamProfileCommon {
 
 export type TeamProfile = AdminTeamProfile | GeduTeamProfile;
 
-/**
- * Where an admin's decision about a Gedu's profile stands. It is independent
- * of the Gedu's own checkbox and survives it being turned off and on again:
- *
- * - `pending` — no admin has approved the profile yet.
- * - `approved` — an admin put it up; while the Gedu's checkbox is on it is
- *   public, and their later edits go live on save, with no second look.
- * - `withdrawn` — an admin took an approved profile down.
- */
-export type GeduTeamProfileApproval = TeamProfileApproval;
-
-/** The two decisions an admin can make; a profile never goes back to pending. */
-export type GeduTeamProfileDecision = Exclude<GeduTeamProfileApproval, "pending">;
-
 /** The pick a stored id names, or `null` for none or for an id no pick has. */
 export function pickFromId(id: number | null): PickId | null {
   if (id === null) return null;
@@ -138,7 +124,10 @@ export function pickFromId(id: number | null): PickId | null {
  * path, which a save hands back.
  *
  * A person who has never saved reads as an empty profile with the checkbox off
- * and, for a Gedu, `pending`.
+ * and, for a Gedu, not approved.
+ *
+ * The checkbox is a readiness mark, not consent: the person or any admin may
+ * save it, while the profile is complete.
  */
 export type TeamProfileRecord =
   | {
@@ -146,22 +135,27 @@ export type TeamProfileRecord =
       profile: GeduTeamProfile;
       /** The photo's object name in the bucket, or `null` for none. */
       photoPath: string | null;
-      /** The Gedu's saved checkbox: their consent to being public. */
+      /** The saved checkbox: the profile is marked ready to be public. */
       ready: boolean;
-      approval: GeduTeamProfileApproval;
+      /**
+       * An admin's yes or no, independent of the checkbox and surviving it
+       * being turned off and on. While it is yes, saved edits go live with no
+       * second look.
+       */
+      approved: boolean;
     }
   | {
       role: "admin";
       profile: AdminTeamProfile;
       photoPath: string | null;
-      /** The admin's saved checkbox: the whole decision, with no approval. */
+      /** The saved checkbox: the whole decision, with no approval. */
       shown: boolean;
     };
 
 /** Whether a saved profile is on the public page. */
 export function isTeamProfilePublic(record: TeamProfileRecord): boolean {
   if (record.role === "admin") return record.shown;
-  return record.ready && record.approval === "approved";
+  return record.ready && record.approved;
 }
 
 /**
@@ -194,9 +188,9 @@ export class TeamPhotoUploadError extends Error {}
 // ---------------------------------------------------------------------------
 
 /**
- * The SQLSTATE `save_team_profile` raises when the person's checkbox would be
- * on while the profile is incomplete: no photo, no language, or a language
- * missing either description. The editor already stops a person saving that,
+ * The SQLSTATE `save_team_profile` raises when the checkbox would be on while
+ * the profile is incomplete: no photo, no language, or a language missing
+ * either description. The editor already stops anyone saving that,
  * so this is the database's own guarantee behind it.
  */
 export const TEAM_PROFILE_INCOMPLETE_SQLSTATE = "P0026";

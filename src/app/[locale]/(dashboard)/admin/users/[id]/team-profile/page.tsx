@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
-import { AdminGeduTeamProfileEditor } from "@/components/team/team-profile-editor";
-import { createClient } from "@/lib/supabase/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import { TeamProfileEditor } from "@/components/team/team-profile-editor";
+import { redirect } from "@/i18n/navigation";
+import { ROUTES } from "@/lib/constants";
+import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 // The service module, not the package index: the index re-exports the
 // `"use client"` query hooks, which a Server Component would pull in as client
 // references.
@@ -14,12 +16,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * `/admin/users/[id]/team-profile` — an admin editing a Gedu's profile
- * content. The proxy gates `/admin` to admins.
+ * `/admin/users/[id]/team-profile` — an admin editing another admin's or a
+ * Gedu's profile, checkbox included. The proxy gates `/admin` to admins.
  *
- * Only a Gedu's profile is edited here. An admin's profile is theirs to write
- * from their own settings, so another admin's page, like any role without a
- * profile, is not found.
+ * The viewer's own profile is edited from their settings, where it speaks to
+ * them rather than about them, so their own id redirects there. A role with no
+ * profile is not found.
  */
 export default async function AdminUserTeamProfilePage({
   params,
@@ -27,13 +29,18 @@ export default async function AdminUserTeamProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const viewer = await getUserWithProfile();
+  if (viewer?.user.id === id) {
+    redirect({ href: ROUTES.settingsTeamProfile, locale: await getLocale() });
+  }
+
   const supabase = await createClient();
   // A malformed id is refused by the database rather than matched to nobody;
-  // either way there is no Gedu here, which is what the user page says too.
+  // either way there is no profile here, which is what the user page says too.
   const record = await new TeamProfilesService(supabase)
     .getTeamProfile(id)
     .catch(() => null);
-  if (record?.role !== "gedu") notFound();
+  if (record === null) notFound();
 
-  return <AdminGeduTeamProfileEditor record={record} />;
+  return <TeamProfileEditor record={record} editedByAdmin />;
 }
