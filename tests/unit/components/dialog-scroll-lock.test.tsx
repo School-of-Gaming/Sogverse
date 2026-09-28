@@ -15,9 +15,10 @@ import { Sheet } from "@/components/ui/sheet";
  * reclaims is measured across the lock and paid back as padding.
  *
  * The measurements are what a test has to stand in for: jsdom lays nothing out,
- * so `clientWidth` here is a stub that widens exactly when the overflow is
- * hidden, which is what a real scrollbar-bearing document does. A page holding
- * the stable gutter open is the same stub with nothing to reclaim.
+ * so the root's layout box here is a stub that widens exactly when the overflow
+ * is hidden, which is what a real scrollbar-bearing document does. A page
+ * holding the stable gutter open is the same stub with nothing to reclaim — and
+ * a `clientWidth` that widens anyway, because that is what Chrome reports there.
  *
  * The rest is the counter: two modals up at once are one lock, and it is the
  * last one to leave that hands the page back — by whatever route it leaves,
@@ -31,16 +32,27 @@ const root = () => document.documentElement;
 const isLocked = () => root().style.overflow === "hidden";
 
 /**
- * Stand in for layout: the root's content box is the viewport less the
- * scrollbar until something hides the overflow, and the whole viewport after.
- * `reclaims` is 0 for a page that reserves the gutter, where the scrollbar's
- * width never returns to the content.
+ * Stand in for layout: the root's box is the viewport less the scrollbar until
+ * something hides the overflow, and the whole viewport after. `reclaims` is 0
+ * for a page that reserves the gutter, where the scrollbar's width never
+ * returns to the content. `clientWidth` widens on the lock either way, as it
+ * does in Chrome, so a lock that trusted it would pad the gutter page too.
  */
 function stubMeasurements(reclaims: number) {
   Object.defineProperty(root(), "clientWidth", {
     configurable: true,
-    get: () => (isLocked() ? VIEWPORT : VIEWPORT - reclaims),
+    get: () => (isLocked() ? VIEWPORT : VIEWPORT - SCROLLBAR),
   });
+  Object.defineProperty(root(), "getBoundingClientRect", {
+    configurable: true,
+    value: () =>
+      new DOMRect(0, 0, isLocked() ? VIEWPORT - SCROLLBAR + reclaims : VIEWPORT - SCROLLBAR, 0),
+  });
+}
+
+function clearMeasurements() {
+  Reflect.deleteProperty(root(), "clientWidth");
+  Reflect.deleteProperty(root(), "getBoundingClientRect");
 }
 
 beforeEach(() => {
@@ -48,7 +60,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  Reflect.deleteProperty(root(), "clientWidth");
+  clearMeasurements();
   root().style.removeProperty("overflow");
   root().style.removeProperty("padding-right");
 });
@@ -67,8 +79,8 @@ describe("the document scroll lock", () => {
     view.unmount();
   });
 
-  it("adds no padding on a page that already reserves the gutter", () => {
-    Reflect.deleteProperty(root(), "clientWidth");
+  it("adds no padding on a page that already reserves the gutter, whatever clientWidth says", () => {
+    clearMeasurements();
     stubMeasurements(0);
 
     const view = render(
@@ -79,6 +91,21 @@ describe("the document scroll lock", () => {
 
     expect(root().style.overflow).toBe("hidden");
     expect(root().style.paddingRight).toBe("");
+
+    view.unmount();
+  });
+
+  it("pays back a fractional width exactly, as display scaling produces", () => {
+    clearMeasurements();
+    stubMeasurements(12.5);
+
+    const view = render(
+      <Dialog open onOpenChange={() => {}}>
+        <DialogContent>body</DialogContent>
+      </Dialog>,
+    );
+
+    expect(root().style.paddingRight).toBe("12.5px");
 
     view.unmount();
   });
