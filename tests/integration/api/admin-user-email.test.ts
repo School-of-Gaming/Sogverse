@@ -7,14 +7,16 @@ import { PATCH } from "@/app/api/admin/users/[id]/email/route";
  * child's username. Which of the two a gamer admits is decided by their
  * sign-in mode, and every other pairing is refused before anything is written.
  *
- * The route is a run of writes that must not drift apart, so beyond the usual
- * gate and input cases these tests pin the ORDER (auth, a fresh identity read,
- * an email-mode child's password removed, every session ended, then profiles,
- * then the child's welcome mail), what a failure at each step leaves behind,
- * and that a retry finishes a half-done change instead of tripping over it. The unverified reset
+ * The route is two writes that must not drift apart, so beyond the usual gate
+ * and input cases these tests pin the ORDER (auth, then a fresh identity read,
+ * then profiles), what a failure at each step leaves behind, and that a retry
+ * finishes a half-done change instead of tripping over it. The unverified reset
  * on the new address is the database's (`trg_reset_email_verification`, its own
  * DB test); what is pinned here is that the route writes through
  * `profiles.email`, which is what fires it.
+ *
+ * The correction moves the address and nothing else: no password is cleared,
+ * no session is ended and nothing is mailed, whatever the role.
  */
 
 const mockRequireRole = vi.fn();
@@ -37,10 +39,7 @@ const mockRpc = vi.fn();
 
 const mockSendGamerWelcomeEmail = vi.fn();
 vi.mock("@/lib/gamer-welcome.server", () => ({
-  sendGamerWelcomeEmail: (...args: unknown[]) => {
-    calls.push("mail.welcome");
-    return mockSendGamerWelcomeEmail(...args);
-  },
+  sendGamerWelcomeEmail: (...args: unknown[]) => mockSendGamerWelcomeEmail(...args),
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -57,10 +56,7 @@ vi.mock("@/lib/supabase/admin", () => ({
         },
       },
     },
-    rpc: (fn: string, args: unknown) => {
-      calls.push(`rpc.${fn}`);
-      return mockRpc(fn, args);
-    },
+    rpc: (...args: unknown[]) => mockRpc(...args),
     from: (table: string) => ({
       select: () => ({
         eq: () => ({
@@ -141,8 +137,6 @@ describe("PATCH /api/admin/users/[id]/email", () => {
     calls = [];
     profileWriteResult = { error: null };
     gamerProfileRow = null;
-    mockRpc.mockResolvedValue({ data: null, error: null });
-    mockSendGamerWelcomeEmail.mockResolvedValue(undefined);
   });
 
   // -- Auth --
@@ -205,7 +199,7 @@ describe("PATCH /api/admin/users/[id]/email", () => {
 
   // -- Happy path --
 
-  it("moves auth, verifies the identity, signs the account out everywhere, then writes profiles", async () => {
+  it("moves auth, verifies the identity on a fresh read, then writes profiles", async () => {
     mockAdmin({ email: OLD });
     mockGetUserById
       .mockResolvedValueOnce(authUser(OLD))
@@ -218,17 +212,12 @@ describe("PATCH /api/admin/users/[id]/email", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true, email: NEW });
-    // An adult keeps the password they chose at signup: no removal, no mail.
     expect(calls).toEqual([
       "auth.getUserById",
       "auth.updateUserById",
       "auth.getUserById",
-      "rpc.end_every_session",
       "profiles.update",
     ]);
-    expect(mockRpc).toHaveBeenCalledWith("end_every_session", {
-      p_user_id: TARGET,
-    });
     expect(mockUpdateUserById).toHaveBeenCalledWith(TARGET, {
       email: NEW,
       email_confirm: true,
@@ -259,7 +248,7 @@ describe("PATCH /api/admin/users/[id]/email", () => {
 
   // -- Sign-in modes --
 
-  it("moves an email-mode gamer's address, removes the password, signs out and sends the welcome mail", async () => {
+  it("moves an email-mode gamer's address, reading the mode on the service-role client", async () => {
     mockAdmin({ email: OLD, role: "gamer" });
     gamerProfileRow = { sign_in: "email" };
     mockGetUserById
@@ -270,50 +259,40 @@ describe("PATCH /api/admin/users/[id]/email", () => {
     const response = await PATCH(...createRequest(TARGET, { email: NEW }));
 
     expect(response.status).toBe(200);
-    // The password set against the old address must not carry over to an
-    // unproven one; the welcome mail is how the child sets a new one, and it
-    // goes last, once profiles.email holds the address its link is signed over.
     expect(calls).toEqual([
       "gamer_profiles.select",
       "auth.getUserById",
       "auth.updateUserById",
       "auth.getUserById",
-      "rpc.forfeit_password",
-      "rpc.end_every_session",
       "profiles.update",
-      "mail.welcome",
     ]);
-    expect(mockRpc).toHaveBeenCalledWith("forfeit_password", {
-      p_user_id: TARGET,
-    });
-    // Address only: the password is NULLed by the database, never set to a
-    // random value through GoTrue.
-    expect(mockUpdateUserById).toHaveBeenCalledWith(TARGET, {
-      email: NEW,
-      email_confirm: true,
-    });
     expect(mockProfileUpdate).toHaveBeenCalledWith({ email: NEW });
-    expect(mockSendGamerWelcomeEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ gamerId: TARGET }),
-    );
   });
 
-  it("answers success when the welcome mail fails, because the move has committed", async () => {
-    mockAdmin({ email: OLD, role: "gamer" });
-    gamerProfileRow = { sign_in: "email" };
-    mockGetUserById
-      .mockResolvedValueOnce(authUser(OLD))
-      .mockResolvedValueOnce(authUser(NEW));
-    mockUpdateUserById.mockResolvedValue(authUser(NEW));
-    mockSendGamerWelcomeEmail.mockRejectedValue(new Error("brevo is down"));
-    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  it.each([
+    ["an adult", { email: OLD }, null],
+    ["an email-mode gamer", { email: OLD, role: "gamer" }, { sign_in: "email" }],
+  ] as const)(
+    "moves only the address for %s: no password cleared, nobody signed out, nothing mailed",
+    async (_label, profile, row) => {
+      mockAdmin(profile);
+      gamerProfileRow = row;
+      mockGetUserById
+        .mockResolvedValueOnce(authUser(OLD))
+        .mockResolvedValueOnce(authUser(NEW));
+      mockUpdateUserById.mockResolvedValue(authUser(NEW));
 
-    const response = await PATCH(...createRequest(TARGET, { email: NEW }));
+      const response = await PATCH(...createRequest(TARGET, { email: NEW }));
 
-    expect(response.status).toBe(200);
-    expect(spy).toHaveBeenCalled();
-    spy.mockRestore();
-  });
+      expect(response.status).toBe(200);
+      expect(mockRpc).not.toHaveBeenCalled();
+      expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
+      expect(mockUpdateUserById).toHaveBeenCalledWith(TARGET, {
+        email: NEW,
+        email_confirm: true,
+      });
+    },
+  );
 
   it.each(["parent", "username"] as const)(
     "refuses to move a %s-mode gamer onto a mailbox, writing nothing",
@@ -340,7 +319,7 @@ describe("PATCH /api/admin/users/[id]/email", () => {
     expect(calls).toEqual(["gamer_profiles.select"]);
   });
 
-  it("renames a username-mode gamer: the handle moves and the account is signed out, the mode and password kept", async () => {
+  it("renames a username-mode gamer: the handle moves, the mode and password are untouched", async () => {
     const OLD_HANDLE = "aino@gamer.sogverse.internal";
     const NEW_HANDLE = "ainok@gamer.sogverse.internal";
     mockAdmin({ email: OLD_HANDLE, role: "gamer" });
@@ -367,11 +346,9 @@ describe("PATCH /api/admin/users/[id]/email", () => {
       "auth.getUserById",
       "auth.updateUserById",
       "auth.getUserById",
-      "rpc.end_every_session",
       "profiles.update",
     ]);
     expect(mockProfileUpdate).toHaveBeenCalledWith({ email: NEW_HANDLE });
-    expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
   });
 
   it("refuses a taken username with 409 and its own code, leaving profiles untouched", async () => {
@@ -390,7 +367,6 @@ describe("PATCH /api/admin/users/[id]/email", () => {
     expect(response.status).toBe(409);
     expect((await response.json()).code).toBe("USERNAME_TAKEN");
     expect(mockProfileUpdate).not.toHaveBeenCalled();
-    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -439,7 +415,6 @@ describe("PATCH /api/admin/users/[id]/email", () => {
 
     expect(response.status).toBe(409);
     expect((await response.json()).code).toBe("EMAIL_TAKEN");
-    // Refused: nothing moved, so nobody is signed out.
     expect(calls).toEqual(["auth.getUserById", "auth.updateUserById"]);
   });
 
@@ -470,7 +445,6 @@ describe("PATCH /api/admin/users/[id]/email", () => {
     expect(response.status).toBe(500);
     expect((await response.json()).code).toBeUndefined();
     expect(mockProfileUpdate).not.toHaveBeenCalled();
-    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("fails loudly when auth.users moved but the identity did not, leaving profiles untouched", async () => {
@@ -485,7 +459,6 @@ describe("PATCH /api/admin/users/[id]/email", () => {
 
     expect(response.status).toBe(500);
     expect(mockProfileUpdate).not.toHaveBeenCalled();
-    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("fails when the auth write cannot be verified, leaving profiles untouched", async () => {
@@ -499,7 +472,6 @@ describe("PATCH /api/admin/users/[id]/email", () => {
 
     expect(response.status).toBe(500);
     expect(mockProfileUpdate).not.toHaveBeenCalled();
-    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("reports a profiles failure after the auth move as a server error", async () => {
@@ -515,70 +487,16 @@ describe("PATCH /api/admin/users/[id]/email", () => {
     expect(response.status).toBe(500);
   });
 
-  it("stops before profiles when the sessions cannot be ended, so a retry ends them", async () => {
-    mockAdmin({ email: OLD });
-    mockGetUserById
-      .mockResolvedValueOnce(authUser(OLD))
-      .mockResolvedValueOnce(authUser(NEW));
-    mockUpdateUserById.mockResolvedValue(authUser(NEW));
-    mockRpc.mockResolvedValue({ data: null, error: { message: "timeout" } });
-
-    const response = await PATCH(...createRequest(TARGET, { email: NEW }));
-
-    // profiles.email is the record that the change is done: left lagging, it
-    // is what makes the repeat run the sign-out again.
-    expect(response.status).toBe(500);
-    expect(mockProfileUpdate).not.toHaveBeenCalled();
-  });
-
-  it("stops before the sign-out when an email-mode gamer's password cannot be removed", async () => {
-    mockAdmin({ email: OLD, role: "gamer" });
-    gamerProfileRow = { sign_in: "email" };
-    mockGetUserById
-      .mockResolvedValueOnce(authUser(OLD))
-      .mockResolvedValueOnce(authUser(NEW));
-    mockUpdateUserById.mockResolvedValue(authUser(NEW));
-    mockRpc.mockResolvedValue({ data: null, error: { message: "timeout" } });
-
-    const response = await PATCH(...createRequest(TARGET, { email: NEW }));
-
-    expect(response.status).toBe(500);
-    expect(calls).not.toContain("rpc.end_every_session");
-    expect(mockProfileUpdate).not.toHaveBeenCalled();
-    expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
-  });
-
-  it("sends no welcome mail when profiles fails after the auth move", async () => {
-    mockAdmin({ email: OLD, role: "gamer" });
-    gamerProfileRow = { sign_in: "email" };
-    mockGetUserById
-      .mockResolvedValueOnce(authUser(OLD))
-      .mockResolvedValueOnce(authUser(NEW));
-    mockUpdateUserById.mockResolvedValue(authUser(NEW));
-    profileWriteResult = { error: { message: "connection reset" } };
-
-    const response = await PATCH(...createRequest(TARGET, { email: NEW }));
-
-    // The mail's link is signed over profiles.email, which still holds the old
-    // address.
-    expect(response.status).toBe(500);
-    expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
-  });
-
   // -- Idempotence --
 
-  it("finishes a half-done change: auth already moved, sessions ended and profiles brought into line", async () => {
+  it("finishes a half-done change: auth already moved, profiles brought into line", async () => {
     mockAdmin({ email: OLD });
     mockGetUserById.mockResolvedValueOnce(authUser(NEW));
 
     const response = await PATCH(...createRequest(TARGET, { email: NEW }));
 
     expect(response.status).toBe(200);
-    expect(calls).toEqual([
-      "auth.getUserById",
-      "rpc.end_every_session",
-      "profiles.update",
-    ]);
+    expect(calls).toEqual(["auth.getUserById", "profiles.update"]);
     expect(mockUpdateUserById).not.toHaveBeenCalled();
     expect(mockProfileUpdate).toHaveBeenCalledWith({ email: NEW });
   });
@@ -594,32 +512,13 @@ describe("PATCH /api/admin/users/[id]/email", () => {
     expect(mockProfileUpdate).not.toHaveBeenCalled();
   });
 
-  it("finishes an email-mode gamer's half-done change: the password removal runs again", async () => {
-    mockAdmin({ email: OLD, role: "gamer" });
-    gamerProfileRow = { sign_in: "email" };
+  it("writes nothing when both halves already hold the address", async () => {
+    mockAdmin({ email: NEW });
     mockGetUserById.mockResolvedValueOnce(authUser(NEW));
 
     const response = await PATCH(...createRequest(TARGET, { email: NEW }));
 
     expect(response.status).toBe(200);
-    expect(calls).toEqual([
-      "gamer_profiles.select",
-      "auth.getUserById",
-      "rpc.forfeit_password",
-      "rpc.end_every_session",
-      "profiles.update",
-      "mail.welcome",
-    ]);
-  });
-
-  it("writes nothing, signs nobody out and mails nothing when both halves already hold the address", async () => {
-    mockAdmin({ email: NEW, role: "gamer" });
-    gamerProfileRow = { sign_in: "email" };
-    mockGetUserById.mockResolvedValueOnce(authUser(NEW));
-
-    const response = await PATCH(...createRequest(TARGET, { email: NEW }));
-
-    expect(response.status).toBe(200);
-    expect(calls).toEqual(["gamer_profiles.select", "auth.getUserById"]);
+    expect(calls).toEqual(["auth.getUserById"]);
   });
 });

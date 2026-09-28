@@ -18,9 +18,9 @@ import { getOrigin } from "@/lib/url";
  * Send a child the mail that welcomes them to their own account and carries the
  * link that verifies its address.
  *
- * Four routes send this exact mail, so it lives here rather than four times
+ * Three routes send this exact mail, so it lives here rather than three times
  * over. What is NOT here is the decision about whether to send — each caller
- * makes it, and the four do not make the same one:
+ * makes it, and the three do not make the same one:
  *
  *  - **Creating a gamer in `email` mode** charges nothing. The account did not
  *    exist a moment ago, so the mail cannot repeat without a second account
@@ -33,10 +33,6 @@ import { getOrigin } from "@/lib/url";
  *    committed and the parent can resend from the child's card.
  *  - **The parent's explicit resend** charges the same RPC, and there a refusal
  *    is the answer — a 429, because the send IS what was asked for.
- *  - **An admin moving an `email`-mode child to another mailbox** charges
- *    nothing: admins are trusted, and the allowance is guarded on the caller
- *    being the child's parent. A failure is logged and swallowed, because the
- *    move has committed.
  *
  * **It throws, and the caller decides what that means.** After a creation the
  * account already exists and a Brevo outage must not unwind it, so that caller

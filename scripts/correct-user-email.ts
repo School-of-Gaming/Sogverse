@@ -9,12 +9,10 @@
  * procedure is the `correct-user-email` skill; this script is the mechanism
  * that keeps the two writes in step.
  *
- * **It does only the two writes — less than the page does.** The page also
- * signs the account out of every device, and for an `email`-mode child it
- * removes the password and sends the welcome mail to the new address. This
- * script does none of that: sessions stay signed in, and every password stays
- * as it was. For an `email`-mode child that means the old password still opens
- * the account at its new address, so prefer the page for one.
+ * **It does only the two writes, exactly as the page does.** Neither touches
+ * the password or the account's sessions, and neither mails anything. That is
+ * by design: securing the account is the user's own job, through a password
+ * reset to the address that is now theirs.
  *
  * Report-only unless told otherwise:
  *
@@ -294,11 +292,11 @@ async function main() {
   }
   console.log(`  profiles        : ${newEmail}`);
 
-  console.log("\nDone. What followed, and what did not:");
+  console.log("\nDone. Two follow-ons, both expected and needing no action:");
   console.log("  - profiles.email_verified_at is nulled by trg_reset_email_verification,");
   console.log("    and any outstanding verification link self-invalidates.");
-  console.log("  - unlike the admin page, nothing was signed out and no password was");
-  console.log("    touched, so an email-mode child's old password still opens the account.");
+  console.log("  - the password and sessions are untouched, by design: the user secures");
+  console.log("    their own account with a password reset.");
 }
 
 main().catch((error: unknown) => {
