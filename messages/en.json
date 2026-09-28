@@ -4966,7 +4966,6 @@
         "showHint": "Ticking this and saving puts your profile on School of Gaming’s public website straight away. Untick it and save at any time, and it comes down.",
         "complete": "Your profile has everything it needs to go public.",
         "mustStayComplete": "While this is ticked your profile has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box to keep working on it privately.",
-        "takesEffectOnSave": "This change takes effect when you save.",
         "missing": {
           "photo": "Add a photo to be able to tick this.",
           "text": "Fill in “Introduce yourself in one line” and “About me” in every language you write in to be able to tick this.",
@@ -5033,10 +5032,7 @@
         "count": "{count}/{max}"
       },
       "preview": {
-        "heading": "Preview",
-        "liveNow": "This is what the public sees now.",
-        "unsaved": "Your unsaved changes. The public sees your last saved version until you save.",
-        "notPublic": "Not public, so only you can see this."
+        "heading": "Preview"
       }
     }
   }

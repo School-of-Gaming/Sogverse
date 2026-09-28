@@ -146,7 +146,6 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
     on !== savedOn || !sameContent(content, contentFromProfile(props.profile));
   const gap = teamProfileGap(content);
   const status = profileStatus(props);
-  const isPublic = status === "live" || status === "shown";
 
   const trackUrl = useOwnedObjectUrls(
     form.photo?.src,
@@ -197,7 +196,6 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
             role={props.role}
             status={status}
             on={on}
-            savedOn={savedOn}
             gap={gap}
             onChange={setOn}
           />
@@ -225,13 +223,6 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
         <TeamProfilePreview
           profile={profileWithContent(props.profile, content)}
           readerLocale={form.activeLocale}
-          caption={
-            !isPublic
-              ? t("preview.notPublic")
-              : dirty
-                ? t("preview.unsaved")
-                : t("preview.liveNow")
-          }
           wide={props.role === "gedu" ? "lg" : "xl"}
         />
       </div>
@@ -295,22 +286,20 @@ const STATUS_VARIANT: Record<
  * — the reason while it is off and cannot be ticked, a confirmation once the
  * profile is complete, and a warning while it is ticked and something has
  * since been emptied — so the row never grows or shrinks as fields are filled
- * in. While the checkbox differs from what is saved, one more line says the
- * change waits for Save; it appears as the direct result of the click that
- * made it.
+ * in. An unsaved change to the checkbox says nothing more here: Save
+ * enabling is the signal, and a line appearing under the checkbox pushed the
+ * form's buttons down under the pointer.
  */
 function PublicSection({
   role,
   status,
   on,
-  savedOn,
   gap,
   onChange,
 }: {
   role: "gedu" | "admin";
   status: ProfileStatus;
   on: boolean;
-  savedOn: boolean;
   gap: TeamProfileGap;
   onChange: (next: boolean) => void;
 }) {
@@ -342,11 +331,6 @@ function PublicSection({
             {t(`switch.missing.${gap}`)}
           </StatusLine>
         )}
-        {on !== savedOn && (
-          <StatusLine status="info" muted>
-            {t("switch.takesEffectOnSave")}
-          </StatusLine>
-        )}
       </div>
     </FormSection>
   );
@@ -356,9 +340,9 @@ function PublicSection({
  * The live preview: the public page's own body, over whatever is in the form,
  * in the language tab being edited.
  *
- * **Whether the public sees this is always stated in words**, in the line
- * under the heading, because a preview that looks exactly like a public page
- * is the easiest thing on this screen to misread.
+ * It carries no caption: whether the public sees the profile is the status in
+ * the "Public profile" section, and a caption here whose length followed the
+ * form's state moved the whole preview every time it changed.
  *
  * The frame is framed content — the page as it will appear — so the body sits
  * inside it on the page ground, as it will on the public page.
@@ -366,12 +350,10 @@ function PublicSection({
 function TeamProfilePreview({
   profile,
   readerLocale,
-  caption,
   wide,
 }: {
   profile: TeamProfile;
   readerLocale: SupportedLocale;
-  caption: string;
   wide: "lg" | "xl";
 }) {
   const t = useTranslations("team.edit.preview");
@@ -388,7 +370,6 @@ function TeamProfilePreview({
       <h2 id="team-profile-preview-heading" className="text-lg font-semibold">
         {t("heading")}
       </h2>
-      <p className="text-sm text-muted-foreground">{caption}</p>
       <div
         className={cn(
           "overflow-hidden rounded-xl border border-border bg-background",

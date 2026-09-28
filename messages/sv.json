@@ -4966,7 +4966,6 @@
         "showHint": "Genom att kryssa i detta och spara hamnar din profil direkt på School of Gamings offentliga webbplats. Ta bort krysset och spara när som helst så försvinner den.",
         "complete": "Din profil har allt som behövs för att bli offentlig.",
         "mustStayComplete": "Medan detta är ikryssat måste din profil vara komplett, så det går inte att spara förrän den är det. Fyll i det som saknas, eller ta bort krysset för att fortsätta privat.",
-        "takesEffectOnSave": "Ändringen gäller när du sparar.",
         "missing": {
           "photo": "Lägg till ett foto för att kunna kryssa i detta.",
           "text": "Fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
@@ -5033,10 +5032,7 @@
         "count": "{count}/{max}"
       },
       "preview": {
-        "heading": "Förhandsvisning",
-        "liveNow": "Så här ser allmänheten det nu.",
-        "unsaved": "Dina osparade ändringar. Allmänheten ser din senast sparade version tills du sparar.",
-        "notPublic": "Inte offentlig, så bara du ser detta."
+        "heading": "Förhandsvisning"
       }
     }
   }

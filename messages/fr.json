@@ -4966,7 +4966,6 @@
         "showHint": "En cochant cette case et en enregistrant, votre profil apparaît immédiatement sur le site public de School of Gaming. Décochez-la et enregistrez à tout moment, et il est retiré.",
         "complete": "Votre profil contient tout ce qu’il faut pour être public.",
         "mustStayComplete": "Tant que cette case est cochée, votre profil doit rester complet : l’enregistrement est désactivé jusqu’à ce qu’il le soit. Complétez ce qui manque, ou décochez la case pour continuer en privé.",
-        "takesEffectOnSave": "Ce changement prend effet quand vous enregistrez.",
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
           "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
@@ -5033,10 +5032,7 @@
         "count": "{count}/{max}"
       },
       "preview": {
-        "heading": "Aperçu",
-        "liveNow": "C’est ce que le public voit actuellement.",
-        "unsaved": "Vos modifications non enregistrées. Le public voit votre dernière version enregistrée jusqu’à ce que vous enregistriez.",
-        "notPublic": "Pas public : vous seul voyez ceci."
+        "heading": "Aperçu"
       }
     }
   }

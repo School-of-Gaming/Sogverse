@@ -4966,7 +4966,6 @@
         "showHint": "Rastittamalla ja tallentamalla profiilisi tulee heti School of Gamingin julkisille verkkosivuille. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili poistuu.",
         "complete": "Profiilissasi on kaikki, mitä julkaisuun tarvitaan.",
         "mustStayComplete": "Kun tämä on rastitettu, profiilisi täytyy pysyä täydellisenä, joten tallennus on pois käytöstä, kunnes se on. Täydennä puuttuvat kohdat tai poista rasti jatkaaksesi yksityisesti.",
-        "takesEffectOnSave": "Muutos tulee voimaan, kun tallennat.",
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
           "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
@@ -5033,10 +5032,7 @@
         "count": "{count}/{max}"
       },
       "preview": {
-        "heading": "Esikatselu",
-        "liveNow": "Tämän yleisö näkee nyt.",
-        "unsaved": "Tallentamattomat muutoksesi. Julkisesti näkyy viimeksi tallennettu versio, kunnes tallennat.",
-        "notPublic": "Ei julkinen, joten vain sinä näet tämän."
+        "heading": "Esikatselu"
       }
     }
   }

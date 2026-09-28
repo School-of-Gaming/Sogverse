@@ -4067,7 +4067,6 @@
         "showHint": "DawIvDI’ ’ej DapolDI’, SIbI’ School of Gaming Qum’a’Daq cha’lu’. Dateq ’ej DapolDI’, So’lu’.",
         "complete": "Hoch Daghaj. Qapla’!",
         "mustStayComplete": "wIvlu’taHvIS, naQnIS Del’a’lIj. naQbe’chugh, polbe’lu’. yIchu’ pagh yIteq.",
-        "takesEffectOnSave": "DapolDI’ neH choH. Qapla’!",
         "missing": {
           "photo": "mIllogh yIlab, vaj DawIvlaH.",
           "text": "“wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
@@ -4134,10 +4133,7 @@
         "count": "{count}/{max}"
       },
       "preview": {
-        "heading": "wa’DIch legh",
-        "liveNow": "DaH ’oH legh Hoch.",
-        "unsaved": "choHmey polbe’lu’bogh. DapolDI’ neH choH Del’a’lIj.",
-        "notPublic": "leghlu’be’, vaj SoH neH Dalegh."
+        "heading": "wa’DIch legh"
       }
     }
   }
