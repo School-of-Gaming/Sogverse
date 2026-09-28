@@ -1221,7 +1221,8 @@
         "keepSession": "may’ yIpol",
         "cancelConfirm": "may’ yIqIl",
         "reasonConfirm": "meq yIpol",
-        "hasRecord": "may’vamDaq ja’, qon, mIllogh, ghaH pawlu’ghach je qonlu’pu’. qIllu’laHbe’.",
+        "recordKept": "may’vam qonmey, mIlloghmey, pawlu’ghach je polmoHlu’. qIllu’taHvIS may’, bIH leghbe’ qorDu’pu’. may’ chu’qa’lu’chugh, chegh.",
+        "recordKeptEmailed": "may’vam qonmey, mIlloghmey, pawlu’ghach je polmoHlu’. qIllu’taHvIS may’, bIH leghbe’ qorDu’pu’. may’ chu’qa’lu’chugh, chegh. qorDu’pu’vaD ja’ ngeHlu’pu’, ’ej QIn lI’ qa’laHbe’lu’.",
         "cancelFailed": "polmoHlu’laHbe’. yInID je.",
         "restoreTitle": "may’vam Dachu’qa’’a’?",
         "restoreBody": "{date}. may’vam nab legh qorDu’pu’ Gedupu’ je, ’ej motlh qonlu’laH. vay’ ghelbe’lu’.",
@@ -1803,7 +1804,7 @@
         },
         "sessions": {
           "title": "Hoch ghomDaq qaSbogh",
-          "intro": "mIw'a' ghom ghItlhpu'bogh Hoch poH, tu'lu' ghItlhmey je ja'chuqDaq Gedu' chelbogh nagh beQmey je. Gedu' ja'chuq ghItlhDI' qoj tu'wI'pu' ghItlhDI' ghItlh ghaj poH; vaj qaSpa' qaSmoHlu'bogh poH naDev tu'be'lu'. poH nIteb leghmeH yIlo' — Qam chIlbogh He rur; puq mI'mey muvmoHghachDaq tu'lu' vaj.",
+          "intro": "mIw'a' ghom ghItlhpu'bogh Hoch poH, tu'lu' ghItlhmey je ja'chuqDaq Gedu' chelbogh nagh beQmey je. Gedu' ja'chuq ghItlhDI' qoj tu'wI'pu' ghItlhDI' ghItlh ghaj poH; vaj qaSpa' qaSmoHlu'bogh poH naDev tu'be'lu'; loHwI' qIlbogh poH naDev tu'be'lu' je. poH nIteb leghmeH yIlo' — Qam chIlbogh He rur; puq mI'mey muvmoHghachDaq tu'lu' vaj.",
           "params": {
             "productId": "De'wI'vam ghommey poHmey neH.",
             "groupId": "ghomvam poHmey neH.",

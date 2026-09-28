@@ -267,6 +267,7 @@ describe("readRecordedSessionsByGroup", () => {
         { session_id: S3, participant_id: GAMER, status: "present" },
         { session_id: S3, participant_id: GAMER_2, status: "absent" },
       ],
+      session_cancellations: () => [],
     });
     const sessions = await readRecordedSessionsByGroup(createFetchStubbedClient(fetch), [G1, G2]);
 
@@ -276,5 +277,44 @@ describe("readRecordedSessionsByGroup", () => {
       { participant_id: GAMER, status: "present" },
       { participant_id: GAMER_2, status: "absent" },
     ]);
+  });
+
+  it("drops a recorded session an admin cancelled, unless the cancellation is inert", async () => {
+    // Both sessions are on Thursday the 10th (weekday 3).
+    const session = (id: string, group_id: string) => ({
+      id,
+      group_id,
+      session_date: "2026-09-10",
+      starts_at: "2026-09-10T15:00:00+00:00",
+      ends_at: "2026-09-10T16:30:00+00:00",
+      report: "Written up",
+    });
+    const cancellation = (
+      group_id: string,
+      product: { start_date: string; end_date: string | null; weekdays: number[] },
+    ) => ({
+      group_id,
+      session_date: "2026-09-10",
+      group: {
+        product: {
+          start_date: product.start_date,
+          end_date: product.end_date,
+          schedule_slots: product.weekdays.map((weekday) => ({ weekday })),
+        },
+      },
+    });
+    const fetch = postgrestTables({
+      group_sessions: () => [session(S1, G1), session(S3, G2)],
+      session_attendance: () => [],
+      session_cancellations: () => [
+        // G1 still meets on Thursdays: the cancellation applies.
+        cancellation(G1, { start_date: "2026-09-01", end_date: null, weekdays: [3] }),
+        // G2 has moved to Mondays: the cancellation left behind is inert.
+        cancellation(G2, { start_date: "2026-09-01", end_date: null, weekdays: [0] }),
+      ],
+    });
+    const sessions = await readRecordedSessionsByGroup(createFetchStubbedClient(fetch), [G1, G2]);
+
+    expect([...sessions.keys()]).toEqual([G2]);
   });
 });

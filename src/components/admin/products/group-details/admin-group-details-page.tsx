@@ -25,6 +25,7 @@ import type { SetSessionSubstitutionDraft } from "@/components/admin/products/se
 import {
   AdminCancelledSessionMenu,
   AdminSessionMenu,
+  type SessionExistingRecord,
 } from "@/components/admin/products/session-cancellation";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { sessionEntryId } from "@/lib/session-occurrence";
@@ -234,6 +235,11 @@ function PageFrame({
   );
 }
 
+/** Whether a stored note holds anything once whitespace is set aside. */
+function hasText(value: string | null): boolean {
+  return value !== null && value.trim() !== "";
+}
+
 function NoticeCard({ children }: { children: React.ReactNode }) {
   return (
     <Card>
@@ -398,14 +404,27 @@ function Workspace({
   const restoreSession = useAdminRestoreSession(groupId);
 
   /**
-   * The dates this group has a stored record on, which a cancel would be
-   * refused for. Read off the record itself rather than guessed from what a
-   * card shows: a row with everything cleared off it is still a record.
+   * What each date already holds, for the cancel dialog's line about it. Read
+   * off the record itself rather than from what a card shows, and counted only
+   * when something is on it: a row with everything cleared off it has nothing
+   * for a cancellation to keep.
    */
-  const recordedDates = useMemo(
-    () => new Set(group.sessions.map((session) => session.session_date)),
-    [group.sessions],
-  );
+  const existingRecords = useMemo(() => {
+    const byDate = new Map<string, SessionExistingRecord>();
+    for (const session of group.sessions) {
+      if (session.report_emailed_at !== null) {
+        byDate.set(session.session_date, "emailed");
+      } else if (
+        hasText(session.report) ||
+        hasText(session.gedu_note) ||
+        session.images.length > 0 ||
+        Object.keys(session.attendance).length > 0
+      ) {
+        byDate.set(session.session_date, "recorded");
+      }
+    }
+    return byDate;
+  }, [group.sessions]);
 
   /**
    * The account ids whose Roblox figure this roster needs — verified rows only,
@@ -758,7 +777,7 @@ function Workspace({
         onSetSubstitution={(draft) => handleSetSubstitution(sessionDate, draft)}
         onClearSubstitution={handleClearSubstitution}
         onWithdrawRequest={handleWithdrawRequest}
-        cancellable={!recordedDates.has(sessionDate)}
+        existingRecord={existingRecords.get(sessionDate) ?? "none"}
         onCancelSession={handleCancelSession}
       />
     );

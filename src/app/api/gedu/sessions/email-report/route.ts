@@ -28,6 +28,7 @@ import {
   emailSessionReportBody,
   emailSessionReportResponse,
   sessionReportEmailClaim,
+  SESSION_CANCELLED_SQLSTATE,
   SESSION_REPORT_ALREADY_SENT_SQLSTATE,
   SESSION_REPORT_NO_REPORT_SQLSTATE,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
@@ -245,11 +246,11 @@ export const POST = defineRoute({
     );
 
     if (claimError) {
-      // Two refusals the gedu can act on, told apart by SQLSTATE rather than by
+      // The refusals the gedu can act on, told apart by SQLSTATE rather than by
       // message: a reworded RAISE must never silently reclassify one. Answered
       // here rather than through the shared error table because that table maps
-      // a code to a status, and these two share a status while needing
-      // different things said about them.
+      // a code to a status, and these share a status while needing different
+      // things said about them.
       if (claimError.code === SESSION_REPORT_NO_REPORT_SQLSTATE) {
         return NextResponse.json(
           {
@@ -264,6 +265,19 @@ export const POST = defineRoute({
           {
             error: "This session's report has already been emailed.",
             code: SESSION_REPORT_ALREADY_SENT_SQLSTATE,
+          },
+          { status: 409 },
+        );
+      }
+      // An admin cancelled the session, which may still hold a report: the
+      // families were told it is off, so its write-up is never mailed. The
+      // card offers no send on a cancelled date, so this is a page that was a
+      // moment out of date, and the button's ordinary failure is its answer.
+      if (claimError.code === SESSION_CANCELLED_SQLSTATE) {
+        return NextResponse.json(
+          {
+            error: "This session is cancelled.",
+            code: SESSION_CANCELLED_SQLSTATE,
           },
           { status: 409 },
         );

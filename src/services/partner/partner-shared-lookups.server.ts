@@ -454,8 +454,65 @@ export async function readAttendance(
 }
 
 /**
+ * The cancelled sessions among a set of groups, as `cancelledSessionKey`s.
+ *
+ * An admin may cancel a session that was already recorded, and the admin's
+ * word wins: the record is kept, but the session did not happen, so no
+ * resource reports it as held. Only a cancellation on a date the group's
+ * schedule still projects counts — on or after the product's start, on or
+ * before its end where it has one,
+ * on a weekday it has a slot for — exactly as the database decides it
+ * everywhere else; one orphaned by a weekday move is inert, and the row beside
+ * it is history.
+ */
+export async function readCancelledSessions(
+  db: PartnerDb,
+  groupIds: readonly string[],
+): Promise<Set<string>> {
+  const cancelled = new Set<string>();
+  for (const chunk of chunkKeys(unique(groupIds))) {
+    const rows = await walkPages("partner session cancellations", (from, to) =>
+      db
+        .from("session_cancellations")
+        .select(
+          "group_id, session_date, group:product_groups!inner(product:products!inner(start_date, end_date, schedule_slots(weekday)))",
+          { count: "exact" },
+        )
+        .in("group_id", chunk)
+        .order("group_id")
+        .order("session_date")
+        .range(from, to),
+    );
+    for (const row of rows) {
+      const { start_date, end_date, schedule_slots } = row.group.product;
+      const date = row.session_date;
+      const scheduled =
+        date >= start_date &&
+        (end_date === null || date <= end_date) &&
+        schedule_slots.some((slot) => slot.weekday === isoWeekdayIndex(date));
+      if (scheduled) cancelled.add(cancelledSessionKey(row.group_id, date));
+    }
+  }
+  return cancelled;
+}
+
+/** The key `readCancelledSessions` answers in: one (group, product-local date). */
+export function cancelledSessionKey(groupId: string, sessionDate: string): string {
+  return `${groupId}|${sessionDate}`;
+}
+
+/**
+ * A bare `YYYY-MM-DD`'s weekday as a schedule slot numbers it, 0 = Monday.
+ * UTC-pinned: the date has no time of day, so there is no zone to convert.
+ */
+function isoWeekdayIndex(date: string): number {
+  return (new Date(`${date}T00:00:00.000Z`).getUTCDay() + 6) % 7;
+}
+
+/**
  * Each group's recorded sessions — a written report or at least one attendance
- * mark (`isRecordedSession`) — keyed by group id, ascending by session id, with
+ * mark (`isRecordedSession`), on a date no admin cancelled
+ * (`readCancelledSessions`) — keyed by group id, ascending by session id, with
  * the marks attached. A group with none is absent from the map.
  *
  * Recorded is decided on every mark the session carries, whoever it is for:
@@ -494,13 +551,19 @@ export async function readRecordedSessionsByGroup(
     );
   }
 
-  const marks = await readAttendance(
-    db,
-    sessions.map((session) => session.id),
-  );
+  const [marks, cancelled] = await Promise.all([
+    readAttendance(
+      db,
+      sessions.map((session) => session.id),
+    ),
+    readCancelledSessions(db, groupIds),
+  ]);
 
   const byGroup = new Map<string, RecordedSession[]>();
   for (const session of [...sessions].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
+    if (cancelled.has(cancelledSessionKey(session.group_id, session.session_date))) {
+      continue;
+    }
     const attendance = marks.get(session.id) ?? [];
     if (!isRecordedSession(session.report, attendance.length)) continue;
     const list = byGroup.get(session.group_id) ?? [];

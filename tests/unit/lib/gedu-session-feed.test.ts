@@ -763,5 +763,32 @@ describe("buildGeduSessionFeed — cancelled sessions", () => {
     const entries = build({ cancellations: [cancellation("2026-03-17", true)] });
     expect(byDate(entries, "2026-03-17")).toBeUndefined();
   });
+
+  it("wins over a record stored on the date, and carries none of it", () => {
+    // An admin cancelled a session that was already written up. The record
+    // stays in the database; the card shows the cancellation, not the report.
+    const stored = row("2026-03-09", {
+      report: "We built a castle.",
+      gedu_note: "Quiet group.",
+      report_emailed_at: "2026-03-09T17:00:00.000Z",
+      images: [{ id: "img-1", width: 800, height: 600 }],
+      attendance: { "aaaa1111-1111-4111-8111-111111111111": "present" },
+    });
+    const entries = build({
+      sessions: [stored],
+      cancellations: [cancellation("2026-03-09", false)],
+    });
+
+    const entry = byDate(entries, "2026-03-09");
+    expect(entry).toMatchObject({ kind: "cancelled", upcoming: false });
+    expect(entry).not.toHaveProperty("report");
+    expect(entry).not.toHaveProperty("images");
+    expect(entry).not.toHaveProperty("attendance");
+    expect(entries.filter((e) => e.id === sessionEntryId(GROUP, "2026-03-09"))).toHaveLength(1);
+
+    // Restored, the record is back as it was.
+    const restored = byDate(build({ sessions: [stored] }), "2026-03-09");
+    expect(restored).toMatchObject({ kind: "past", report: "We built a castle." });
+  });
 });
 

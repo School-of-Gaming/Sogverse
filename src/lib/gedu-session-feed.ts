@@ -42,7 +42,7 @@ import type {
  * backward, the merge of rows over projections and the derivation of what kind
  * of entry each date is all happen here, once, in front of one clock.
  *
- * Three ideas do all the work:
+ * Four ideas do all the work:
  *
  * - **A session is a (group, product-local date).** That is the row's unique key
  *   in Postgres and it is the entry's identity here, so a projection and a row
@@ -55,10 +55,12 @@ import type {
  *   next term must not retroactively rewrite what happened last term. A row the
  *   schedule no longer projects at all — a weekday move orphans one — still
  *   renders, for the same reason.
- * - **A cancellation replaces its date's entry.** It applies only to a date
- *   the feed would otherwise show, so one left behind by a weekday move stays
- *   inert, and the cancelled entry keeps its dated place on whichever side of
- *   the present its end instant puts it.
+ * - **A cancellation replaces its date's entry — and beats a record too.** An
+ *   admin's word that the session did not happen wins over anything stored
+ *   for the date, which stays in the database and returns on a restore. It
+ *   applies only to a date the feed would otherwise show, so one left behind by
+ *   a weekday move stays inert, and the cancelled entry keeps its dated place
+ *   on whichever side of the present its end instant puts it.
  * - **Kind comes from dates, never from a column.** `now` against the session's
  *   *end* splits future from past, so a session in progress is the **current**
  *   one rather than history — the same rule the family feed uses, because the
@@ -240,8 +242,10 @@ export function buildGeduSessionFeed(
       viewerId,
     });
 
-    // The database never lets a cancellation and a stored row share a date; if
-    // one somehow did, the cancellation wins, as it does on every other reader.
+    // A cancellation wins over a stored row on the same date. The record is
+    // kept in the database and comes back on a restore, but the cancelled
+    // entry carries none of it: the session did not happen, so there is
+    // nothing on the card to read or edit.
     const cancellation = cancellationsByDate.get(date);
     if (cancellation !== undefined) {
       entries.push(

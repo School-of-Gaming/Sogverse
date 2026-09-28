@@ -1177,7 +1177,8 @@
         "keepSession": "Pidä kerta",
         "cancelConfirm": "Peru kerta",
         "reasonConfirm": "Tallenna syy",
-        "hasRecord": "Kerralle on jo kirjattu raportti, muistiinpano, kuva tai läsnäolo, joten sitä ei voi perua.",
+        "recordKept": "Kerralle jo kirjatut muistiinpanot, kuvat ja läsnäolot säilyvät. Perheet eivät näe niitä, kun kerta on peruttu, ja ne palaavat, jos kerta palautetaan.",
+        "recordKeptEmailed": "Kerralle jo kirjatut muistiinpanot, kuvat ja läsnäolot säilyvät. Perheet eivät näe niitä, kun kerta on peruttu, ja ne palaavat, jos kerta palautetaan. Raportti on jo lähetetty perheille sähköpostilla, eikä viestiä voi perua.",
         "cancelFailed": "Tallentaminen ei onnistunut. Yritä uudelleen.",
         "restoreTitle": "Palautetaanko kerta?",
         "restoreBody": "{date}. Perheet ja Gedut näkevät kerran taas aikataulussa, ja sille voi kirjata tavalliseen tapaan. Kenellekään ei ilmoiteta.",
@@ -1759,7 +1760,7 @@
         },
         "sessions": {
           "title": "mitä kussakin ryhmässä tapahtui",
-          "intro": "Jokainen istunto, jonka Ohjelman ryhmä on kirjannut, sekä läsnäolomerkinnät ja valokuvat, jotka pelikasvattaja liitti istuntoraporttiin. Istunnosta on merkintä heti kun pelikasvattaja kirjoittaa siitä raportin tai merkitsee läsnäolot, joten aikataulutettu istunto, jota ei ole vielä pidetty, ei ole täällä. Käytä sitä istuntokohtaisiin näkymiin, kuten poistumakäyrään; lapsikohtaiset summat ovat jo ilmoittautumisessa.",
+          "intro": "Jokainen istunto, jonka Ohjelman ryhmä on kirjannut, sekä läsnäolomerkinnät ja valokuvat, jotka pelikasvattaja liitti istuntoraporttiin. Istunnosta on merkintä heti kun pelikasvattaja kirjoittaa siitä raportin tai merkitsee läsnäolot, joten aikataulutettu istunto, jota ei ole vielä pidetty, ei ole täällä, eikä myöskään ylläpitäjän peruma istunto, vaikka siitä olisi kirjoitettu raportti. Käytä sitä istuntokohtaisiin näkymiin, kuten poistumakäyrään; lapsikohtaiset summat ovat jo ilmoittautumisessa.",
           "params": {
             "productId": "Vain tämän tuotteen ryhmien istunnot.",
             "groupId": "Vain tämän ryhmän istunnot.",

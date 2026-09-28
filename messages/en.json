@@ -1177,7 +1177,8 @@
         "keepSession": "Keep the session",
         "cancelConfirm": "Cancel the session",
         "reasonConfirm": "Save the reason",
-        "hasRecord": "This session already has a report, a note, a photo or attendance recorded on it, so it cannot be cancelled.",
+        "recordKept": "The notes, photos and attendance already recorded for this session are kept. Families will not see them while it is cancelled, and they come back if the session is restored.",
+        "recordKeptEmailed": "The notes, photos and attendance already recorded for this session are kept. Families will not see them while it is cancelled, and they come back if the session is restored. The report has already been emailed to families, and that email cannot be recalled.",
         "cancelFailed": "That could not be saved. Try again.",
         "restoreTitle": "Restore this session?",
         "restoreBody": "{date}. Families and Gedus will see this session as scheduled again, and it can be recorded as usual. Nobody is notified.",
@@ -1759,7 +1760,7 @@
         },
         "sessions": {
           "title": "what happened in each group",
-          "intro": "Every session a Programme group has recorded, with the attendance marks and the photographs the Game Educator attached to its report. A session has a record once a Game Educator writes it up or marks attendance, so a scheduled session that has not happened yet is not here. Use it for per-session views such as a drop-off curve; the per-child totals are already on the enrolment.",
+          "intro": "Every session a Programme group has recorded, with the attendance marks and the photographs the Game Educator attached to its report. A session has a record once a Game Educator writes it up or marks attendance, so a scheduled session that has not happened yet is not here, and neither is one an admin has cancelled, even if it was written up. Use it for per-session views such as a drop-off curve; the per-child totals are already on the enrolment.",
           "params": {
             "productId": "Only sessions of this product’s groups.",
             "groupId": "Only this group’s sessions.",

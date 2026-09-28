@@ -37,6 +37,13 @@ family whose next date is off has to see it without opening anything. The reason
 cancelled travel only in the staff document's admin fields, so a gedu's line and a family's
 read the same.
 
+**Rule: a cancellation beats a record.** An admin may cancel a date that was already
+written up, and the cancelled line replaces the card: nothing recorded on the date —
+report, photos, attendance — is drawn on either feed, and the family document does not
+carry the row at all. The record stays in the database, frozen, and a restore brings the
+card back as it was, because the admin's word that the session did not happen is trusted
+over anything written about it.
+
 The staff feed used to split on the session's *start*, because its kind was standing in
 for "may I take the register yet": making the running session `past` was how it reached
 the record editor. That conflation is gone. Editability is asked directly now, against the

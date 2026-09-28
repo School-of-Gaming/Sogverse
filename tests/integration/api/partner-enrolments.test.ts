@@ -185,6 +185,7 @@ const TABLES = {
     session(S3, GROUP_1, null),
     session(S4, GROUP_2, "Final showcase"),
   ]),
+  session_cancellations: filteringTable([]),
   session_attendance: filteringTable([
     { session_id: S1, participant_id: GAMER_A, status: "present" },
     { session_id: S2, participant_id: GAMER_A, status: "absent" },
@@ -406,6 +407,38 @@ describe("GET /api/partner/v1/enrolments", () => {
       expect(response.status).toBe(400);
       expect(body.error.code).toBe("invalid_query");
       expect(body.error.message).toMatch(/different filters/);
+    });
+  });
+
+  it("does not count a recorded session an admin cancelled", async () => {
+    // S4 is GROUP_2's one recorded session, on Thursday the 10th of a product
+    // that meets on Thursdays: cancelled, it did not happen.
+    db.fetch = postgrestTables({
+      ...TABLES,
+      session_cancellations: filteringTable([
+        {
+          group_id: GROUP_2,
+          session_date: "2026-09-10",
+          group: {
+            product: {
+              start_date: "2026-09-01",
+              end_date: null,
+              schedule_slots: [{ weekday: 3 }],
+            },
+          },
+        },
+      ]),
+    });
+    const { response, body } = await get();
+
+    expect(response.status).toBe(200);
+    expect(body.data[0]).toMatchObject({
+      id: E1,
+      attendance: { sessions_recorded: 2, sessions_present: 1 },
+    });
+    expect(body.data[1]).toMatchObject({
+      id: E2,
+      attendance: { sessions_recorded: 0, sessions_present: 0 },
     });
   });
 

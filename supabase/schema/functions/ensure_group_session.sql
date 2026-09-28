@@ -11,20 +11,13 @@ DECLARE
   v_session_id uuid;
   v_uid        uuid := (SELECT auth.uid());
 BEGIN
-  SELECT id INTO v_session_id
-    FROM public.group_sessions
-   WHERE group_id = p_group_id AND session_date = p_session_date;
-
-  IF v_session_id IS NOT NULL THEN
-    RETURN v_session_id;
-  END IF;
-
-  -- Cancellation: a row is never materialized on a cancelled date. Asked under
-  -- the (group, date) lock cancel_session also takes, so a cancellation and a
-  -- stored record cannot be written past each other. An existing row above
-  -- needs no check: cancelling a date with a row is refused, so the two never
-  -- coexist. Every session write (notes, attendance, photos) reaches the table
-  -- through here, which is what makes this the one refusal they all share.
+  -- Cancellation: nothing is written on a cancelled date, whether or not it
+  -- already holds a row — a record kept under a cancellation is frozen until
+  -- the session is restored. Asked first, under the (group, date) lock
+  -- cancel_session also takes, so a write cannot land past a cancellation
+  -- committed beside it. Every session write that names a date (notes,
+  -- attendance, a photo) reaches the table through here, which is what makes
+  -- this the one refusal they share.
   PERFORM public.lock_group_session_key(p_group_id, p_session_date);
 
   IF EXISTS (
@@ -35,6 +28,14 @@ BEGIN
      ) THEN
     RAISE EXCEPTION 'The session on % is cancelled', p_session_date
       USING ERRCODE = 'P0026';
+  END IF;
+
+  SELECT id INTO v_session_id
+    FROM public.group_sessions
+   WHERE group_id = p_group_id AND session_date = p_session_date;
+
+  IF v_session_id IS NOT NULL THEN
+    RETURN v_session_id;
   END IF;
 
   v_window := public.derive_group_session_window(p_group_id, p_session_date);
@@ -69,7 +70,7 @@ $$;
 -- Name: FUNCTION ensure_group_session(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.ensure_group_session(p_group_id uuid, p_session_date date) IS 'Find-or-create the session row for a (group, date), snapshotting the schedule instants at first write and never re-deriving them afterwards. Refuses to materialize a row on a CANCELLED date with SQLSTATE P0026, asked under the (group, date) advisory lock cancel_session also takes — which is the one refusal every session write (notes, attendance, photos) shares, since each reaches the table through here.';
+COMMENT ON FUNCTION public.ensure_group_session(p_group_id uuid, p_session_date date) IS 'Find-or-create the session row for a (group, date), snapshotting the schedule instants at first write and never re-deriving them afterwards. Refuses a CANCELLED date with SQLSTATE P0026 whether or not it already holds a row — a record kept under a cancellation is frozen until a restore — asked first, under the (group, date) advisory lock cancel_session also takes. That is the one refusal every dated session write (notes, attendance, a photo) shares, since each reaches the table through here.';
 
 
 --

@@ -40,6 +40,8 @@ BEGIN
                 WHERE g.product_id = p.id
                   AND gs.session_date >= p_month_start
                   AND gs.session_date <= v_month_end
+                  -- Cancellation: the same exclusion as `sessions` below.
+                  AND NOT public.group_session_is_cancelled(gs.group_id, gs.session_date)
              )
           OR (
                p.start_date IS NOT NULL
@@ -189,6 +191,11 @@ BEGIN
                     WHERE g.product_id = c.id
                       AND gs.session_date >= p_month_start
                       AND gs.session_date <= v_month_end
+                      -- Cancellation: a row kept under a cancellation is not a
+                      -- session that ran, so it never reaches the bill. Left
+                      -- out here rather than trusted to the page, so no reader
+                      -- of this document can count one.
+                      AND NOT public.group_session_is_cancelled(gs.group_id, gs.session_date)
                  ), '[]'::jsonb) AS items
         ) se
         -- Cancellation: the month's cancelled (group, date) pairs, raw and in
@@ -197,9 +204,7 @@ BEGIN
         -- purpose: the page already walks the dates the schedule projects and
         -- applies these to those alone, which is what keeps a cancellation
         -- orphaned by a weekday move inert here as everywhere else. A pair
-        -- never also appears in `sessions` — cancelling refuses a date with a
-        -- stored row and materializing refuses a cancelled one — and if one
-        -- somehow did, the cancellation wins.
+        -- the schedule still projects never also appears in `sessions`.
         CROSS JOIN LATERAL (
           SELECT COALESCE((
                    SELECT jsonb_agg(

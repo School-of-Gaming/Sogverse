@@ -16,7 +16,7 @@ $$;
 -- Name: FUNCTION lock_group_session_key(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.lock_group_session_key(p_group_id uuid, p_session_date date) IS 'Transaction-scoped advisory lock on one (group, date) session key. Taken by ensure_group_session before it materializes a row and by cancel_session / restore_session, so a cancellation and a stored session record can never be created past each other.';
+COMMENT ON FUNCTION public.lock_group_session_key(p_group_id uuid, p_session_date date) IS 'Transaction-scoped advisory lock on one (group, date) session key. Taken by ensure_group_session on every session write and by cancel_session / restore_session, so no write can land past a cancellation committed beside it.';
 
 
 --

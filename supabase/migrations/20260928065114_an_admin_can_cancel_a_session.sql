@@ -5,17 +5,20 @@
 -- A session is a (group, product-local date) pair the schedule projects. An
 -- admin may cancel one — past or future, on any product type — with an
 -- optional reason, and restore it by removing the cancellation. It lives in its
--- own table rather than as columns on group_sessions, and that is the design:
--- every reader of group_sessions treats a stored row as "the session ran"
--- (municipality invoicing bills it, the feeds render it as held), so keeping
--- cancellations out of that table means no existing reader can mis-bill one by
--- not knowing about a new column.
+-- own table rather than as columns on group_sessions, so cancelling and
+-- restoring never touch the session's record.
 --
--- A cancellation and a stored session record never coexist. Cancelling is
--- refused when the date already has a group_sessions row (a report, a note, a
--- photo or an attendance mark lives there), and materializing a row is refused
--- on a cancelled date. Both sides take the same (group, date) advisory lock, so
--- the two cannot race past each other.
+-- THE ADMIN'S WORD WINS OVER THE RECORD
+--
+-- An admin may cancel a date that already holds a record (a report, a note, a
+-- photo, attendance): if an admin says it was cancelled, it was. Nothing is
+-- deleted. The record is kept but frozen — every write on a cancelled date is
+-- refused, the family feed stops carrying it, and every reader that treats a
+-- stored row as "the session ran" (the feeds, the owed count, invoicing, the
+-- report mail) lets the cancellation win. Restoring removes the cancellation,
+-- and the record comes back as it was. Both the cancel and every write take
+-- the same (group, date) advisory lock, so a write cannot land past a
+-- cancellation committed beside it.
 --
 -- A CANCELLATION ONLY SUBTRACTS FROM PROJECTED DATES
 --
@@ -53,7 +56,7 @@ CREATE TABLE public.session_cancellations (
       FOREIGN KEY (cancelled_by) REFERENCES public.profiles(id) ON DELETE RESTRICT
 );
 
-COMMENT ON TABLE public.session_cancellations IS 'One row per cancelled session, keyed exactly as group_sessions is: (group, product-local date). Written and removed only by cancel_session and restore_session (admin-only); no client role holds a grant, and RLS is on with no policy. A cancellation and a group_sessions row for the same key never coexist: cancelling refuses a date that has a stored record, and ensure_group_session refuses to materialize one on a cancelled date, both under the same advisory lock. A cancellation on a date the schedule no longer projects is INERT — it subtracts only from projected dates and is never surfaced by itself — and is kept so that moving the schedule back re-applies it.';
+COMMENT ON TABLE public.session_cancellations IS 'One row per cancelled session, keyed exactly as group_sessions is: (group, product-local date). Written and removed only by cancel_session and restore_session (admin-only); no client role holds a grant, and RLS is on with no policy. A cancellation may share its key with a group_sessions row, and then it wins: the row is kept but frozen (every write on a cancelled date is refused with P0026, under the advisory lock cancel_session also takes), the family feed stops carrying it, and every reader that treats a stored row as "the session ran" excludes it until the session is restored. A cancellation on a date the schedule no longer projects is INERT — it subtracts only from projected dates and is never surfaced by itself — and is kept so that moving the schedule back re-applies it.';
 COMMENT ON COLUMN public.session_cancellations.reason IS 'Why the session was cancelled, admin-only on every read, exactly as a substitution reason is. Trimmed and nulled when blank by cancel_session; the CHECK caps it at 500 characters.';
 COMMENT ON COLUMN public.session_cancellations.cancelled_by IS 'The admin who cancelled (or last re-worded) the cancellation. RESTRICT rather than SET NULL because the column is NOT NULL: who called a session off is part of the record.';
 
@@ -74,7 +77,7 @@ CREATE FUNCTION public.lock_group_session_key(p_group_id uuid, p_session_date da
   SELECT pg_advisory_xact_lock(hashtext(p_group_id::text), hashtext(p_session_date::text));
 $$;
 
-COMMENT ON FUNCTION public.lock_group_session_key(p_group_id uuid, p_session_date date) IS 'Transaction-scoped advisory lock on one (group, date) session key. Taken by ensure_group_session before it materializes a row and by cancel_session / restore_session, so a cancellation and a stored session record can never be created past each other.';
+COMMENT ON FUNCTION public.lock_group_session_key(p_group_id uuid, p_session_date date) IS 'Transaction-scoped advisory lock on one (group, date) session key. Taken by ensure_group_session on every session write and by cancel_session / restore_session, so no write can land past a cancellation committed beside it.';
 
 REVOKE ALL ON FUNCTION public.lock_group_session_key(p_group_id uuid, p_session_date date) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.lock_group_session_key(p_group_id uuid, p_session_date date) TO service_role;
@@ -184,20 +187,11 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
+  -- The lock every session write takes, so a write in flight either lands
+  -- before this cancellation or is refused after it. A stored record on the
+  -- date is no bar: the admin's word wins, and the record is kept, frozen and
+  -- hidden until a restore.
   PERFORM public.lock_group_session_key(p_group_id, p_session_date);
-
-  -- A stored record means the session is on file as having run: somebody wrote
-  -- a report or a note, attached a photo, or took the register. Cancelling it
-  -- would contradict that record, so it is refused rather than overridden.
-  IF EXISTS (
-       SELECT 1
-         FROM public.group_sessions s
-        WHERE s.group_id     = p_group_id
-          AND s.session_date = p_session_date
-     ) THEN
-    RAISE EXCEPTION 'The session on % already has a stored record (a report, a note, a photo or attendance) and cannot be cancelled', p_session_date
-      USING ERRCODE = 'P0027';
-  END IF;
 
   -- Cancelling a cancelled session re-words it: the reason is replaced and the
   -- stamp moves to this admin, so the record names who wrote the reason shown.
@@ -215,7 +209,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.cancel_session(p_group_id uuid, p_session_date date, p_reason text) IS 'An admin cancels one session — a (group, date) the current schedule projects, past or future, with no visible-horizon bound. The optional reason is trimmed and nulled when blank. Refused with SQLSTATE P0027 when the date already has a stored group_sessions row (report, note, photo or attendance), under the (group, date) advisory lock that ensure_group_session also takes, so a cancellation and a stored record never coexist. Cancelling an already-cancelled session is an UPSERT: the reason is replaced and cancelled_by / cancelled_at move to the caller. Returns the cancellation document with every admin field, plus group_id. Admin-only, guard-first.';
+COMMENT ON FUNCTION public.cancel_session(p_group_id uuid, p_session_date date, p_reason text) IS 'An admin cancels one session — a (group, date) the current schedule projects, past or future, with no visible-horizon bound. The optional reason is trimmed and nulled when blank. A date that already holds a record (report, note, photo or attendance) is cancelled all the same: the admin''s word wins, nothing is deleted, and the record stays frozen and hidden until a restore. Taken under the (group, date) advisory lock every session write also takes. Cancelling an already-cancelled session is an UPSERT: the reason is replaced and cancelled_by / cancelled_at move to the caller. Returns the cancellation document with every admin field, plus group_id. Admin-only, guard-first.';
 
 REVOKE ALL ON FUNCTION public.cancel_session(p_group_id uuid, p_session_date date, p_reason text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.cancel_session(p_group_id uuid, p_session_date date, p_reason text) TO authenticated;
@@ -244,7 +238,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.restore_session(p_group_id uuid, p_session_date date) IS 'An admin restores a cancelled session by removing its cancellation, which reopens every write on that date. Idempotent: returns true when a cancellation was removed and false when there was none. Deliberately no schedule check, so an inert cancellation on a date the schedule no longer projects can still be cleared. Admin-only, guard-first.';
+COMMENT ON FUNCTION public.restore_session(p_group_id uuid, p_session_date date) IS 'An admin restores a cancelled session by removing its cancellation, which reopens every write on that date and brings back any record kept on it. Idempotent: returns true when a cancellation was removed and false when there was none. Deliberately no schedule check, so an inert cancellation on a date the schedule no longer projects can still be cleared. Admin-only, guard-first.';
 
 REVOKE ALL ON FUNCTION public.restore_session(p_group_id uuid, p_session_date date) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.restore_session(p_group_id uuid, p_session_date date) TO authenticated;
@@ -265,20 +259,13 @@ DECLARE
   v_session_id uuid;
   v_uid        uuid := (SELECT auth.uid());
 BEGIN
-  SELECT id INTO v_session_id
-    FROM public.group_sessions
-   WHERE group_id = p_group_id AND session_date = p_session_date;
-
-  IF v_session_id IS NOT NULL THEN
-    RETURN v_session_id;
-  END IF;
-
-  -- Cancellation: a row is never materialized on a cancelled date. Asked under
-  -- the (group, date) lock cancel_session also takes, so a cancellation and a
-  -- stored record cannot be written past each other. An existing row above
-  -- needs no check: cancelling a date with a row is refused, so the two never
-  -- coexist. Every session write (notes, attendance, photos) reaches the table
-  -- through here, which is what makes this the one refusal they all share.
+  -- Cancellation: nothing is written on a cancelled date, whether or not it
+  -- already holds a row — a record kept under a cancellation is frozen until
+  -- the session is restored. Asked first, under the (group, date) lock
+  -- cancel_session also takes, so a write cannot land past a cancellation
+  -- committed beside it. Every session write that names a date (notes,
+  -- attendance, a photo) reaches the table through here, which is what makes
+  -- this the one refusal they share.
   PERFORM public.lock_group_session_key(p_group_id, p_session_date);
 
   IF EXISTS (
@@ -289,6 +276,14 @@ BEGIN
      ) THEN
     RAISE EXCEPTION 'The session on % is cancelled', p_session_date
       USING ERRCODE = 'P0026';
+  END IF;
+
+  SELECT id INTO v_session_id
+    FROM public.group_sessions
+   WHERE group_id = p_group_id AND session_date = p_session_date;
+
+  IF v_session_id IS NOT NULL THEN
+    RETURN v_session_id;
   END IF;
 
   v_window := public.derive_group_session_window(p_group_id, p_session_date);
@@ -1561,6 +1556,10 @@ BEGIN
       ) AS entry
         FROM public.group_sessions s
        WHERE s.group_id = v_group_id
+         -- Cancellation: a record kept under a cancellation does not travel. A
+         -- family is told the session is off, and a report on it would say
+         -- otherwise; a restore brings the row back here as it was.
+         AND NOT public.group_session_is_cancelled(s.group_id, s.session_date)
     ) AS session_rows;
 
   -- Cancellation: the group's cancelled sessions the schedule still projects,
@@ -1630,6 +1629,8 @@ BEGIN
                 WHERE g.product_id = p.id
                   AND gs.session_date >= p_month_start
                   AND gs.session_date <= v_month_end
+                  -- Cancellation: the same exclusion as `sessions` below.
+                  AND NOT public.group_session_is_cancelled(gs.group_id, gs.session_date)
              )
           OR (
                p.start_date IS NOT NULL
@@ -1779,6 +1780,11 @@ BEGIN
                     WHERE g.product_id = c.id
                       AND gs.session_date >= p_month_start
                       AND gs.session_date <= v_month_end
+                      -- Cancellation: a row kept under a cancellation is not a
+                      -- session that ran, so it never reaches the bill. Left
+                      -- out here rather than trusted to the page, so no reader
+                      -- of this document can count one.
+                      AND NOT public.group_session_is_cancelled(gs.group_id, gs.session_date)
                  ), '[]'::jsonb) AS items
         ) se
         -- Cancellation: the month's cancelled (group, date) pairs, raw and in
@@ -1787,9 +1793,7 @@ BEGIN
         -- purpose: the page already walks the dates the schedule projects and
         -- applies these to those alone, which is what keeps a cancellation
         -- orphaned by a weekday move inert here as everywhere else. A pair
-        -- never also appears in `sessions` — cancelling refuses a date with a
-        -- stored row and materializing refuses a cancelled one — and if one
-        -- somehow did, the cancellation wins.
+        -- the schedule still projects never also appears in `sessions`.
         CROSS JOIN LATERAL (
           SELECT COALESCE((
                    SELECT jsonb_agg(
@@ -2119,17 +2123,13 @@ BEGIN
                 AND rq.status <> 'withdrawn'::public.substitution_request_status
            )
            -- Cancellation: a cancelled session owes nothing — nothing ran, so
-           -- there is no register, report or mail to ask for. A raw existence
-           -- test is the same answer group_session_is_cancelled would give:
-           -- the projected arm's dates are projected by construction, and a
-           -- stored row's date can never carry a cancellation. This has the
-           -- same TypeScript twin as the rule above, and it learns it too.
-           AND NOT EXISTS (
-             SELECT 1
-               FROM public.session_cancellations sc
-              WHERE sc.group_id     = g.id
-                AND sc.session_date = occurrence.session_date
-           )
+           -- there is no register, report or mail to ask for, and a record
+           -- kept under the cancellation is frozen rather than owed. The
+           -- effective test, not a raw one, because the stored-row arm can
+           -- reach a date the schedule no longer projects, where a
+           -- cancellation is inert. This has the same TypeScript twin as the
+           -- rule above, and it learns it too.
+           AND NOT public.group_session_is_cancelled(g.id, occurrence.session_date)
            -- "Needs attention" is FOUR questions joined by OR, and any one
            -- alone keeps the session on the list.
            --
@@ -2276,6 +2276,208 @@ END;
 $$;
 
 
-COMMENT ON FUNCTION public.ensure_group_session(p_group_id uuid, p_session_date date) IS 'Find-or-create the session row for a (group, date), snapshotting the schedule instants at first write and never re-deriving them afterwards. Refuses to materialize a row on a CANCELLED date with SQLSTATE P0026, asked under the (group, date) advisory lock cancel_session also takes — which is the one refusal every session write (notes, attendance, photos) shares, since each reaches the table through here.';
+COMMENT ON FUNCTION public.ensure_group_session(p_group_id uuid, p_session_date date) IS 'Find-or-create the session row for a (group, date), snapshotting the schedule instants at first write and never re-deriving them afterwards. Refuses a CANCELLED date with SQLSTATE P0026 whether or not it already holds a row — a record kept under a cancellation is frozen until a restore — asked first, under the (group, date) advisory lock cancel_session also takes. That is the one refusal every dated session write (notes, attendance, a photo) shares, since each reaches the table through here.';
 
 COMMENT ON FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid) IS 'Internal predicate: may this gedu be seated as the sub for this (group, date)? Five refusals: (1) not the absent gedu, (2) a certified gedu — the ONLY eligibility test there is, with coverage area, language and schedule clash all deliberately left to follow-ups, (3) not already expected at that session, (4) holding no non-withdrawn request of their own on that (group, date), and (5) the session is not cancelled. Together (3) and (4) stop a sub covering their own substitute and stop two seats collapsing onto one person, which would make "who did which job" unanswerable. Asked by offer_session_substitution, again by approve_session_substitution_offer under the request''s lock, by set_session_substitution, and by get_open_substitution_requests as its exclusion — the pool list shows a gedu exactly the requests they could actually take, and never one on a cancelled session. Not granted to `authenticated`.';
+
+-- ---------------------------------------------------------------------------
+-- The writes that do not pass through ensure_group_session: the report mail's
+-- claim and a photo's removal. A record kept under a cancellation is frozen,
+-- so both refuse a cancelled date as every other session write does.
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_row public.group_sessions;
+BEGIN
+  -- The same two-part gate every write on this surface opens with: the role
+  -- first, then the assignment. Guard-first is what the authorization spine
+  -- reads, and the assignment half is what makes a NULL group a refusal rather
+  -- than a lookup — for a gedu. An admin passes the second half by role.
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
+
+  -- The assignment half is spelled out INLINE here rather than through
+  -- gedu_teaches_group. gedu_teaches_group admits a live substitution on ANY of
+  -- the group's dates; the family report mail is at-most-once and has no
+  -- resend, so a sub must not be able to send the mail for a session they did
+  -- not run. The substitution arm is therefore DATE-SCOPED to the session being
+  -- claimed.
+  IF NOT public.is_admin()
+     AND NOT EXISTS (
+           SELECT 1
+             FROM public.gedu_group_assignments ga
+            WHERE ga.group_id = p_group_id
+              AND ga.gedu_id  = (SELECT auth.uid())
+         )
+     AND NOT public.gedu_substitutes_session(p_group_id, p_session_date) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- Cancellation: a cancelled session's report is never mailed. The record
+  -- may still hold one — an admin can cancel a session that was written up —
+  -- but the families were told the session is off. Asked under the lock
+  -- cancel_session takes, so a claim cannot land past a cancellation.
+  PERFORM public.lock_group_session_key(p_group_id, p_session_date);
+
+  IF public.group_session_is_cancelled(p_group_id, p_session_date) THEN
+    RAISE EXCEPTION 'The session on % is cancelled', p_session_date
+      USING ERRCODE = 'P0026';
+  END IF;
+
+  -- FOR UPDATE is the whole of the concurrency argument. Two writers (or one
+  -- writer with two tabs) serialize here; the second reads the marker the first
+  -- committed and is refused below rather than claiming a second time.
+  SELECT * INTO v_row
+    FROM public.group_sessions s
+   WHERE s.group_id     = p_group_id
+     AND s.session_date = p_session_date
+     FOR UPDATE;
+
+  -- A session row is lazily materialized, so "no row" and "a row with a blank
+  -- report" are the same answer to the only question that matters: there is
+  -- nothing here to send. The character list matches the summaries SQL exactly
+  -- — bare btrim() strips spaces only, and a report of one newline is not a
+  -- report.
+  IF NOT FOUND
+     OR btrim(COALESCE(v_row.report, ''), E' \t\r\n\v\f') = '' THEN
+    RAISE EXCEPTION 'No report to email for group % on %', p_group_id, p_session_date
+      USING ERRCODE = 'P0021';
+  END IF;
+
+  IF v_row.report_emailed_at IS NOT NULL THEN
+    RAISE EXCEPTION 'The report for group % on % was already emailed at %',
+                    p_group_id, p_session_date, v_row.report_emailed_at
+      USING ERRCODE = 'P0022';
+  END IF;
+
+  -- `updated_by` is deliberately NOT stamped: claiming the send is not an edit
+  -- of the write-up, and moving the author chip onto whoever pressed the button
+  -- would misattribute somebody else's report. The updated_at trigger still
+  -- fires, which is the honest record that the row changed.
+  UPDATE public.group_sessions
+     SET report_emailed_at = now(),
+         report_emailed_by = (SELECT auth.uid())
+   WHERE id = v_row.id
+  RETURNING * INTO v_row;
+
+  -- The report travels back so the route composes the mail from what the claim
+  -- committed, not from what the client believed was saved.
+  RETURN jsonb_build_object(
+    'id',                v_row.id,
+    'group_id',          v_row.group_id,
+    'session_date',      v_row.session_date,
+    'starts_at',         v_row.starts_at,
+    'ends_at',           v_row.ends_at,
+    'report',            v_row.report,
+    'report_emailed_at', v_row.report_emailed_at
+  );
+END;
+$$;
+
+COMMENT ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) IS 'Claim the one send of a session report to the group''s families, and hand back the row it claimed. Open to an ADMIN or to the gedu assigned to the group, exactly as the session-notes writer is. Refuses a CANCELLED session with SQLSTATE P0026 — a record kept under a cancellation may hold a report, but the families were told the session is off — asked under the (group, date) advisory lock cancel_session takes. Then takes the row''s lock and refuses with P0021 when there is no report to send (no row, or a report that is empty after the same whitespace trim the summaries SQL applies) and with P0022 when report_emailed_at is already set — every refusal binds an admin identically; otherwise stamps report_emailed_at = now() and report_emailed_by = auth.uid(). The claim is the FIRST write of the send and is also its authorization: succeeding proves the caller may send for this group, which is what lets the route resolve recipients with the service role afterwards. Releasing a claim is the route''s job and happens only when every single mail failed. The assignment half is spelled out INLINE here instead of calling gedu_teaches_group, and that is a security decision rather than a convenience: gedu_teaches_group admits a live substitution on ANY of the group''s dates, while this mail is at-most-once with no resend, so a sub must not be able to send the families a write-up of a session they did not run. The substitution arm here is therefore DATE-SCOPED to the session being claimed — one of exactly two places on this surface that is, the other being the voice room.';
+
+REVOKE ALL ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) TO authenticated;
+GRANT ALL ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) TO service_role;
+
+
+CREATE OR REPLACE FUNCTION public.assert_can_delete_session_image(p_image_id uuid) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_group_id     uuid;
+  v_session_date date;
+BEGIN
+  -- An admin, or a gedu. Guard-first on the first statement, in the shape the
+  -- authorization spine reads and every other session RPC carries.
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
+
+  SELECT s.group_id, s.session_date
+    INTO v_group_id, v_session_date
+    FROM public.group_session_images i
+    JOIN public.group_sessions s ON s.id = i.session_id
+   WHERE i.id = p_image_id;
+
+  -- No row and somebody else's row answer the same way, exactly as they do in
+  -- delete_group_session_image. The caller has no right to learn which it was.
+  IF v_group_id IS NULL
+     OR (NOT public.is_admin() AND NOT public.gedu_teaches_group(v_group_id))
+  THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- Cancellation: a photo on a cancelled session is frozen with the rest of
+  -- the record. Asked here as well as on the delete, because the route removes
+  -- the object between the two and must not start on one it cannot finish.
+  IF public.group_session_is_cancelled(v_group_id, v_session_date) THEN
+    RAISE EXCEPTION 'The session on % is cancelled', v_session_date
+      USING ERRCODE = 'P0026';
+  END IF;
+
+  -- The id it validated, so a caller has a positive answer rather than the
+  -- absence of an error. Returning it discloses nothing: it is the id the caller
+  -- just sent, and it comes back only on the path where they were allowed.
+  RETURN p_image_id;
+END;
+$$;
+
+COMMENT ON FUNCTION public.assert_can_delete_session_image(p_image_id uuid) IS 'May this caller remove this photo? A CHECK-ONLY function: it mutates nothing, and it exists because the route deletes the storage object BEFORE the row, on the service-role client, and an admin client must never act for a caller whose authorization has not been proved. Object-first is what makes a failed removal visible and retryable — the row is what every surface reads, so deleting it first would take the tile away and leave the object standing in a public bucket with nothing left to retry against. The gate is byte for byte delete_group_session_image''s: guard-first on assert_role for an ADMIN or a gedu, then the group resolved from the image''s own session row, with a photo id belonging to another group and one belonging to nothing refused IDENTICALLY with 42501 — never distinguish them, or this becomes an oracle for real photo ids, which name objects whose unguessable names are the access control. A photo on a CANCELLED session is refused with P0026 after that gate, exactly as the delete refuses it, so the route never removes an object whose row it may not delete. Returns the id it validated. It does not replace the delete RPC''s own guard, which still runs on the actual delete afterwards; the window between the two is cosmetic, because nothing inside it can widen what a caller may do.';
+
+REVOKE ALL ON FUNCTION public.assert_can_delete_session_image(p_image_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.assert_can_delete_session_image(p_image_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.assert_can_delete_session_image(p_image_id uuid) TO service_role;
+
+
+CREATE OR REPLACE FUNCTION public.delete_group_session_image(p_image_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_group_id     uuid;
+  v_session_date date;
+BEGIN
+  PERFORM public.assert_role(
+    CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
+  );
+
+  SELECT s.group_id, s.session_date
+    INTO v_group_id, v_session_date
+    FROM public.group_session_images i
+    JOIN public.group_sessions s ON s.id = i.session_id
+   WHERE i.id = p_image_id;
+
+  -- No row and somebody else's row answer the same way. Deliberate: the caller
+  -- has no right to learn which of the two it was.
+  IF v_group_id IS NULL
+     OR (NOT public.is_admin() AND NOT public.gedu_teaches_group(v_group_id))
+  THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- Cancellation: a photo on a cancelled session is frozen with the rest of
+  -- the record, and comes back with it on a restore. Asked under the lock
+  -- cancel_session takes, so a removal cannot land past a cancellation.
+  PERFORM public.lock_group_session_key(v_group_id, v_session_date);
+
+  IF public.group_session_is_cancelled(v_group_id, v_session_date) THEN
+    RAISE EXCEPTION 'The session on % is cancelled', v_session_date
+      USING ERRCODE = 'P0026';
+  END IF;
+
+  DELETE FROM public.group_session_images WHERE id = p_image_id;
+END;
+$$;
+
+COMMENT ON FUNCTION public.delete_group_session_image(p_image_id uuid) IS 'Remove one photo''s ROW from a session''s report. Open to an ADMIN or to ANY gedu assigned to the group — there is no per-photo ownership, matching how the report itself is edited under the last-editor model. Guard-first on assert_role; the group is then resolved from the image''s own session row, and that resolution is the second half of the gate. A photo id that belongs to another group and one that belongs to nothing are refused identically with 42501, so this cannot be used as an oracle for real photo ids. A photo on a CANCELLED session is refused with P0026 after that gate, under the (group, date) advisory lock cancel_session takes: it is frozen with the rest of the record until a restore. The route calls this LAST: it authorizes with assert_can_delete_session_image, removes the OBJECT through the Storage API (never with SQL against storage.objects, which orphans the backing file), and only then deletes the row here — so that a removal which failed to remove the picture leaves the photo on the card, visible and retryable, instead of taking the tile away while the object stands in a public bucket. This function''s own guard is not replaced by that check; it runs again on the actual delete. A row that survives a failed delete after its object is gone renders as a broken thumbnail, and the ordinary remove control is its repair: the storage API answers a delete of an absent object as success, so the retry reaches here and clears the row.';
+
+REVOKE ALL ON FUNCTION public.delete_group_session_image(p_image_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.delete_group_session_image(p_image_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.delete_group_session_image(p_image_id uuid) TO service_role;

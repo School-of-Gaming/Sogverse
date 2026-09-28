@@ -315,8 +315,9 @@ export interface NoRecordSessionFeedEntry extends SessionFeedEntryBase {
  * cancelled date takes nothing: no register, no write-up, no photo, no owed
  * state, no substitution action. The database refuses every write on it, and a
  * kind with no field for any of those is what keeps a card from offering one.
- * A cancelled date never has a stored record — cancelling is refused on a date
- * that has one — so there is nothing of the session itself to carry.
+ * A record already stored on the date is kept in the database, frozen, and
+ * comes back on a restore, but the entry carries none of it: the admin's word
+ * that the session did not happen wins over anything written about it.
  *
  * The three detail fields are **admin-only**, filled for an admin caller and
  * `null` for a gedu, who learns that the session is off and nothing about why.

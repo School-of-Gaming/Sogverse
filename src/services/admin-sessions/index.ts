@@ -12,10 +12,7 @@ export {
   useAdminSetSessionNotes,
   useAdminSetSiteNotes,
 } from "./admin-sessions.queries";
-export {
-  adminProductSessions,
-  isSessionHasRecordError,
-} from "./admin-sessions.contracts";
+export { adminProductSessions } from "./admin-sessions.contracts";
 export type {
   AdminProductSessions,
   AdminSessionGroup,

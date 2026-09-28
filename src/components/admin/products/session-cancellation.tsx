@@ -21,7 +21,6 @@ import {
   type SessionCardMenuItem,
 } from "@/components/gedu/session-feed";
 import { formatDateOnly } from "@/lib/utils";
-import { isSessionHasRecordError } from "@/services/admin-sessions";
 import {
   SessionStaffingEditor,
   type SessionStaffingEditorProps,
@@ -31,24 +30,30 @@ import {
 const CANCELLATION_REASON_MAX_LENGTH = 500;
 
 /**
+ * What the date already holds, which the cancel dialog tells the admin about:
+ * nothing, a record (notes, photos or attendance), or a record whose report has
+ * already been mailed to the families.
+ */
+export type SessionExistingRecord = "none" | "recorded" | "emailed";
+
+/**
  * The admin's `⋯` on a session that is going to run, or ran: the staffing rows,
- * then "Cancel session" where the session may be cancelled.
+ * then "Cancel session".
  *
  * **One menu per card.** The cancel row joins the staffing editor's own menu
  * rather than drawing a second `⋯` beside it.
  *
- * **Not offered on a session with a record.** A stored report, note, photo or
- * attendance mark says the session ran, and the database refuses to cancel it;
- * a row that could only ever be refused is not offered, which is the menu's own
- * rule — it has no disabled state, because a row is a promise.
+ * **Always offered, past or future.** The admin's word wins over anything
+ * recorded on the date; the record is kept, hidden while the session is
+ * cancelled, and the dialog says so.
  */
 export function AdminSessionMenu({
-  cancellable,
+  existingRecord,
   onCancelSession,
   ...staffing
 }: Omit<SessionStaffingEditorProps, "extraItems" | "extraFlowOpen"> & {
-  /** Whether the date has no stored record, so a cancel would be accepted. */
-  cancellable: boolean;
+  /** What the date already holds, for the dialog's one line about it. */
+  existingRecord: SessionExistingRecord;
   /**
    * Cancel with this reason. Resolves only once the card has been rebuilt from
    * the new answer; rejects when the write did not land.
@@ -58,15 +63,13 @@ export function AdminSessionMenu({
   const t = useTranslations("admin.products.cancellation");
   const [cancelling, setCancelling] = useState(false);
 
-  const items: SessionCardMenuItem[] = cancellable
-    ? [
-        {
-          key: "cancel-session",
-          label: t("cancelSession"),
-          onSelect: () => setCancelling(true),
-        },
-      ]
-    : [];
+  const items: SessionCardMenuItem[] = [
+    {
+      key: "cancel-session",
+      label: t("cancelSession"),
+      onSelect: () => setCancelling(true),
+    },
+  ];
 
   return (
     <>
@@ -80,6 +83,7 @@ export function AdminSessionMenu({
           mode="cancel"
           sessionDate={staffing.sessionDate}
           initialReason=""
+          existingRecord={existingRecord}
           onClose={() => setCancelling(false)}
           onSubmit={onCancelSession}
         />
@@ -135,6 +139,7 @@ export function AdminCancelledSessionMenu({
           mode="reason"
           sessionDate={sessionDate}
           initialReason={reason ?? ""}
+          existingRecord="none"
           onClose={() => setOpen(null)}
           onSubmit={onCancelSession}
         />
@@ -164,20 +169,25 @@ export function AdminCancelledSessionMenu({
  * **It carries form content, so it keeps its committing flag inline** and
  * closes itself: the reason field is disabled by the same flag the buttons are,
  * and the dialog closes only once the card behind it has been rebuilt. A
- * refusal keeps it open with one line saying why — the "already has a record"
- * refusal in words the admin can act on, since the card they opened it from can
- * be a moment out of date.
+ * failure keeps it open with one line saying so.
+ *
+ * **A date that already holds a record gets one more line**, saying what the
+ * families will see: the record is kept, hidden while the session is
+ * cancelled, and back on a restore — and a report already mailed stays in
+ * their inboxes.
  */
 function CancelSessionDialog({
   mode,
   sessionDate,
   initialReason,
+  existingRecord,
   onClose,
   onSubmit,
 }: {
   mode: "cancel" | "reason";
   sessionDate: string;
   initialReason: string;
+  existingRecord: SessionExistingRecord;
   onClose: () => void;
   onSubmit: (reason: string) => Promise<void>;
 }) {
@@ -196,11 +206,9 @@ function CancelSessionDialog({
     onSubmit(reason.trim()).then(
       // Left set on success: the dialog unmounts with the close.
       onClose,
-      (cause: unknown) => {
+      () => {
         setCommitting(false);
-        setError(
-          isSessionHasRecordError(cause) ? t("hasRecord") : t("cancelFailed"),
-        );
+        setError(t("cancelFailed"));
       },
     );
   };
@@ -227,6 +235,14 @@ function CancelSessionDialog({
         </DialogHeader>
 
         <div className="mt-4 space-y-4">
+          {existingRecord !== "none" && (
+            <StatusLine status="info" size="xs" muted>
+              {existingRecord === "emailed"
+                ? t("recordKeptEmailed")
+                : t("recordKept")}
+            </StatusLine>
+          )}
+
           <Field
             label={t("reasonLabel")}
             htmlFor={reasonId}

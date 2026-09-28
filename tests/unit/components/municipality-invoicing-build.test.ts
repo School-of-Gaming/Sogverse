@@ -473,8 +473,8 @@ describe("buildMunicipalityInvoicing", () => {
     });
 
     it("wins over a stored row for the same group and date", () => {
-      // The database refuses the pair, but if it ever arrived a cancelled
-      // session must still not bill.
+      // An admin may cancel a session that was recorded. The document leaves
+      // such a row out, and a reader handed one anyway still must not bill it.
       const built = onlyClub([
         club({
           id: "a",
@@ -486,6 +486,21 @@ describe("buildMunicipalityInvoicing", () => {
       expect(kindOn(built, "2026-09-09")).toBe("cancelled");
       expect(built.recordedCount).toBe(0);
       expect(built.totalCents).toBe(0);
+    });
+
+    it("bills a stored row beside a cancellation the schedule no longer projects", () => {
+      // A Thursday row orphaned by a move to Wednesdays: the cancellation on it
+      // is inert, and the row is history that ran.
+      const built = onlyClub([
+        club({
+          id: "a",
+          sessions: [{ group_id: "g1", session_date: "2026-09-10" }],
+          cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-10" }],
+        }),
+      ]);
+
+      expect(kindOn(built, "2026-09-10")).toBe("recorded");
+      expect(built.recordedCount).toBe(1);
     });
 
     it("leaves the month's counts to the sessions that ran", () => {

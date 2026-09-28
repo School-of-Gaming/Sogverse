@@ -274,8 +274,10 @@ export const sessionCancellation = z.object({
 export type SessionCancellation = z.infer<typeof sessionCancellation>;
 
 /**
- * SQLSTATE raised by every session write (notes, attendance, photos, a
- * substitution request or an admin-set sub) aimed at a cancelled session.
+ * SQLSTATE raised by every session write (notes, attendance, adding or
+ * removing a photo, the report mail's claim, a substitution request or an
+ * admin-set sub) aimed at a cancelled session — including one whose record was
+ * kept when it was cancelled.
  */
 export const SESSION_CANCELLED_SQLSTATE = "P0026";
 

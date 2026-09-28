@@ -61,8 +61,9 @@ export class AdminSessionsService {
 
   /**
    * Cancel one session, or re-word a cancelled one's reason — the RPC is an
-   * upsert, so both are this call. Refused with `SESSION_HAS_RECORD_SQLSTATE`
-   * when the date already has a stored record.
+   * upsert, so both are this call. A date that already holds a record is
+   * cancelled all the same; the record is kept, frozen and hidden until a
+   * restore.
    */
   async cancelSession(args: {
     groupId: string;

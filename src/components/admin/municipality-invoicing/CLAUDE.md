@@ -56,12 +56,14 @@ billing a cancellation:
   half-cancelled date reported as missed is a question somebody can answer, and a real
   miss hidden behind a sibling's cancellation is not. If any group ran the date, it bills
   as recorded exactly as before.
-- **A cancelled (group, date) pair never bills, even beside a stored row.** The database
-  refuses to hold both, and if it ever did, the cancellation wins for that group.
+- **A cancelled (group, date) pair never bills, even beside a stored row.** An admin may
+  cancel a session that was recorded, and the admin's word wins: the document leaves such
+  a row out of its sessions altogether, so no reader can bill it, and a restore puts it
+  back.
 
-The month's session count, every total and every Finvoice row are stored rows alone, so a
-cancellation changes none of them; a customer whose clubs were only cancelled has nothing
-to invoice and is refused on that ground.
+The month's session count, every total and every Finvoice row are the stored rows no
+cancellation covers; a customer whose clubs were only cancelled has nothing to invoice and
+is refused on that ground.
 
 "Today" is **the club's own local today**, resolved in the club's timezone, because every
 date on either side of that comparison is one of the club's own local dates. A UTC "today"

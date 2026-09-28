@@ -7,14 +7,15 @@ CREATE FUNCTION public.delete_group_session_image(p_image_id uuid) RETURNS void
     SET search_path TO ''
     AS $$
 DECLARE
-  v_group_id uuid;
+  v_group_id     uuid;
+  v_session_date date;
 BEGIN
   PERFORM public.assert_role(
     CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
   );
 
-  SELECT s.group_id
-    INTO v_group_id
+  SELECT s.group_id, s.session_date
+    INTO v_group_id, v_session_date
     FROM public.group_session_images i
     JOIN public.group_sessions s ON s.id = i.session_id
    WHERE i.id = p_image_id;
@@ -27,6 +28,16 @@ BEGIN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
+  -- Cancellation: a photo on a cancelled session is frozen with the rest of
+  -- the record, and comes back with it on a restore. Asked under the lock
+  -- cancel_session takes, so a removal cannot land past a cancellation.
+  PERFORM public.lock_group_session_key(v_group_id, v_session_date);
+
+  IF public.group_session_is_cancelled(v_group_id, v_session_date) THEN
+    RAISE EXCEPTION 'The session on % is cancelled', v_session_date
+      USING ERRCODE = 'P0026';
+  END IF;
+
   DELETE FROM public.group_session_images WHERE id = p_image_id;
 END;
 $$;
@@ -36,7 +47,7 @@ $$;
 -- Name: FUNCTION delete_group_session_image(p_image_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.delete_group_session_image(p_image_id uuid) IS 'Remove one photo''s ROW from a session''s report. Open to an ADMIN or to ANY gedu assigned to the group — there is no per-photo ownership, matching how the report itself is edited under the last-editor model. Guard-first on assert_role; the group is then resolved from the image''s own session row, and that resolution is the second half of the gate. A photo id that belongs to another group and one that belongs to nothing are refused identically with 42501, so this cannot be used as an oracle for real photo ids. The route calls this LAST: it authorizes with assert_can_delete_session_image, removes the OBJECT through the Storage API (never with SQL against storage.objects, which orphans the backing file), and only then deletes the row here — so that a removal which failed to remove the picture leaves the photo on the card, visible and retryable, instead of taking the tile away while the object stands in a public bucket. This function''s own guard is not replaced by that check; it runs again on the actual delete. A row that survives a failed delete after its object is gone renders as a broken thumbnail, and the ordinary remove control is its repair: the storage API answers a delete of an absent object as success, so the retry reaches here and clears the row.';
+COMMENT ON FUNCTION public.delete_group_session_image(p_image_id uuid) IS 'Remove one photo''s ROW from a session''s report. Open to an ADMIN or to ANY gedu assigned to the group — there is no per-photo ownership, matching how the report itself is edited under the last-editor model. Guard-first on assert_role; the group is then resolved from the image''s own session row, and that resolution is the second half of the gate. A photo id that belongs to another group and one that belongs to nothing are refused identically with 42501, so this cannot be used as an oracle for real photo ids. A photo on a CANCELLED session is refused with P0026 after that gate, under the (group, date) advisory lock cancel_session takes: it is frozen with the rest of the record until a restore. The route calls this LAST: it authorizes with assert_can_delete_session_image, removes the OBJECT through the Storage API (never with SQL against storage.objects, which orphans the backing file), and only then deletes the row here — so that a removal which failed to remove the picture leaves the photo on the card, visible and retryable, instead of taking the tile away while the object stands in a public bucket. This function''s own guard is not replaced by that check; it runs again on the actual delete. A row that survives a failed delete after its object is gone renders as a broken thumbnail, and the ordinary remove control is its repair: the storage API answers a delete of an absent object as success, so the retry reaches here and clears the row.';
 
 
 --

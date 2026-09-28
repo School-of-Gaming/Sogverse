@@ -623,6 +623,31 @@ describe("buildFamilySessionFeed — cancelled sessions", () => {
     expect(entries.some((entry) => entry.kind === "cancelled")).toBe(false);
   });
 
+  it("wins over a record on the date, and shows the family none of it", () => {
+    // The family document leaves such a row out; handed one anyway, the entry
+    // still carries no report, photo or mark.
+    const entries = build({
+      sessions: [
+        row("2026-03-09", {
+          report: "We built a castle.",
+          images: [{ id: "img-1", width: 800, height: 600 }],
+          attendance: "present",
+        }),
+      ],
+      cancellations: [{ session_date: "2026-03-09" }],
+    });
+
+    const entry = byDate(entries, "2026-03-09");
+    expect(entry).toEqual({
+      kind: "cancelled",
+      id: sessionEntryId(GROUP, "2026-03-09"),
+      sessionDate: "2026-03-09",
+      startsAt: new Date("2026-03-09T14:30:00.000Z"),
+      endsAt: new Date("2026-03-09T16:00:00.000Z"),
+      upcoming: false,
+    });
+  });
+
   it("clamps a cancelled date past the paid window like any other", () => {
     const entries = build({
       accessUntil: new Date("2026-04-01T00:00:00.000Z"),

@@ -150,8 +150,9 @@ export interface FamilyPastSessionEntry extends FamilySessionEntryBase {
  *
  * **The date and nothing else.** A family is told that the session is off,
  * never why: the reason and who cancelled it are staff facts, and this type has
- * no field for them to arrive in. It has no report, photos or mark either — a
- * cancelled date never has a stored record.
+ * no field for them to arrive in. It has no report, photos or mark either: a
+ * record kept under the cancellation stays hidden until the session is
+ * restored.
  */
 export interface FamilyCancelledSessionEntry {
   kind: "cancelled";

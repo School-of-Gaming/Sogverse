@@ -1177,7 +1177,8 @@
         "keepSession": "Behåll tillfället",
         "cancelConfirm": "Ställ in tillfället",
         "reasonConfirm": "Spara orsaken",
-        "hasRecord": "Tillfället har redan en rapport, en anteckning, ett foto eller närvaro registrerad, så det kan inte ställas in.",
+        "recordKept": "Anteckningar, foton och närvaro som redan registrerats för tillfället sparas. Familjerna ser dem inte medan tillfället är inställt, och de kommer tillbaka om tillfället återställs.",
+        "recordKeptEmailed": "Anteckningar, foton och närvaro som redan registrerats för tillfället sparas. Familjerna ser dem inte medan tillfället är inställt, och de kommer tillbaka om tillfället återställs. Rapporten har redan mejlats till familjerna, och det mejlet kan inte återkallas.",
         "cancelFailed": "Det gick inte att spara. Försök igen.",
         "restoreTitle": "Återställa det här tillfället?",
         "restoreBody": "{date}. Familjer och Geduer ser tillfället som schemalagt igen, och det kan registreras som vanligt. Ingen meddelas.",
@@ -1759,7 +1760,7 @@
         },
         "sessions": {
           "title": "vad som hände i varje grupp",
-          "intro": "Varje session en grupp i Programmet har antecknat, med närvaromarkeringarna och de fotografier spelfostraren bifogade rapporten. En session har en anteckning så snart en spelfostrare skriver ihop den eller markerar närvaro, så en schemalagd session som ännu inte ägt rum finns inte här. Använd den för vyer per session, som en avhoppskurva; totalerna per barn finns redan på anmälan.",
+          "intro": "Varje session en grupp i Programmet har antecknat, med närvaromarkeringarna och de fotografier spelfostraren bifogade rapporten. En session har en anteckning så snart en spelfostrare skriver ihop den eller markerar närvaro, så en schemalagd session som ännu inte ägt rum finns inte här, och inte heller en som en administratör har ställt in, även om den skrivits ihop. Använd den för vyer per session, som en avhoppskurva; totalerna per barn finns redan på anmälan.",
           "params": {
             "productId": "Bara sessioner i den här produktens grupper.",
             "groupId": "Bara den här gruppens sessioner.",

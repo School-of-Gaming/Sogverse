@@ -217,9 +217,10 @@ export function buildFamilySessionFeed(
     }
 
     // A cancelled session stays in the feed in its dated place, so a family
-    // sees that the date is off rather than finding it missing. The database
-    // never lets a cancellation share a date with a stored row; if one somehow
-    // did, the cancellation wins, as it does on every other reader.
+    // sees that the date is off rather than finding it missing. The
+    // cancellation wins over any stored row on the date: the family document
+    // already leaves such a row out, and the entry carries nothing of one if
+    // it arrives anyway, so a report on a cancelled session never shows.
     if (cancelledDates.has(date)) {
       entries.push({
         kind: "cancelled",

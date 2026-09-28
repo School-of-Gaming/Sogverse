@@ -525,11 +525,16 @@ function buildClub(
   const projected = projectedDates(club, monthStart, monthEnd);
   const projectedSet = new Set(projected);
 
-  // The database never returns a pair both stored and cancelled — each write
-  // refuses the other — but if one ever arrived, the cancellation wins: a
-  // cancelled session must never bill.
+  // A cancellation wins over a stored row for its group: an admin may cancel a
+  // session that was recorded, and a cancelled session must never bill. The
+  // document already leaves such rows out; this holds the rule for any reader
+  // handed one anyway. Only on a projected date, as everywhere else — a
+  // cancellation the schedule no longer projects is inert, and the row beside
+  // it is history that bills.
   const cancelledPairs = new Set(
-    club.cancelled_sessions.map((one) => pairKey(one.group_id, one.session_date)),
+    club.cancelled_sessions
+      .filter((one) => projectedSet.has(one.session_date))
+      .map((one) => pairKey(one.group_id, one.session_date)),
   );
   const ran = club.sessions.filter(
     (session) => !cancelledPairs.has(pairKey(session.group_id, session.session_date)),

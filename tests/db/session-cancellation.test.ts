@@ -4,7 +4,6 @@ import type { Database } from "@/types/database.types";
 import {
   adminProductSessions,
   cancelSessionResult,
-  SESSION_HAS_RECORD_SQLSTATE,
 } from "@/services/admin-sessions/admin-sessions.contracts";
 import {
   geduAssignmentSummaries,
@@ -28,10 +27,11 @@ import {
  *
  * Three claims, in order:
  *
- *   1. **A cancellation and a stored session record never coexist.** Cancelling
- *      a date that has a record is refused, and every write that would
- *      materialize a record on a cancelled date is refused — until the session
- *      is restored, which reopens them.
+ *   1. **The admin's word wins over the record.** Cancelling a date that
+ *      already holds a record succeeds and deletes nothing; the record is
+ *      frozen — every write on a cancelled date is refused, the report mail
+ *      included — and hidden from every reader that treats a row as "the
+ *      session ran", until the session is restored, which brings it back.
  *   2. **The reason is admin-only.** The admin documents carry it; a gedu's
  *      feed carries the date with the detail nulled, and a family's carries the
  *      date and nothing else.
@@ -170,7 +170,10 @@ describe("session cancellation", () => {
       .from("session_cancellations")
       .delete()
       .in("group_id", [GROUP, CLUB_GROUP]);
-    await admin.from("group_sessions").delete().eq("group_id", GROUP);
+    await admin
+      .from("group_sessions")
+      .delete()
+      .in("group_id", [GROUP, CLUB_GROUP]);
   });
 
   async function cancel(date: string, reason: string | null = null) {
@@ -271,23 +274,126 @@ describe("session cancellation", () => {
     expect(error?.code).toBe("23514");
   });
 
-  it("refuses a date that already has a stored session record", async () => {
+  it("cancels a date that already has a record, keeping it frozen and hidden until a restore", async () => {
     const notes = await geduAuth.rpc("set_group_session_notes", {
       p_group_id: GROUP,
       p_session_date: YESTERDAY,
       p_report: "We built a castle.",
-      p_gedu_note: "",
+      p_gedu_note: "Quiet group.",
     });
     expect(notes.error).toBeNull();
+    const mark = await geduAuth.rpc("record_attendance", {
+      p_group_id: GROUP,
+      p_session_date: YESTERDAY,
+      p_participant_id: TEST_IDS.GAMER,
+      p_status: "present",
+    });
+    expect(mark.error).toBeNull();
+    const photo = await geduAuth.rpc("add_group_session_image", {
+      p_group_id: GROUP,
+      p_session_date: YESTERDAY,
+      p_width: 800,
+      p_height: 600,
+      p_max_images: 8,
+    });
+    expect(photo.error).toBeNull();
+    const imageId = photo.data;
+    if (imageId === null) throw new Error("the photo was not attached");
 
-    const { error } = await cancel(YESTERDAY);
-    expect(error?.code).toBe(SESSION_HAS_RECORD_SQLSTATE);
+    // A written-up, unmailed past session is owed until it is mailed.
+    const owedBefore = await attentionCount();
 
-    const rows = await admin
-      .from("session_cancellations")
-      .select("session_date")
-      .eq("group_id", GROUP);
-    expect(rows.data).toEqual([]);
+    // The admin's word wins: the cancel lands, and nothing is deleted.
+    expect((await cancel(YESTERDAY, "Venue flooded")).error).toBeNull();
+    const kept = await admin
+      .from("group_sessions")
+      .select("report, gedu_note")
+      .eq("group_id", GROUP)
+      .eq("session_date", YESTERDAY);
+    expect(kept.data).toEqual([
+      { report: "We built a castle.", gedu_note: "Quiet group." },
+    ]);
+
+    // Frozen: every write on the date is refused, an admin's included.
+    for (const client of [geduAuth, adminAuth]) {
+      const refusedNotes = await client.rpc("set_group_session_notes", {
+        p_group_id: GROUP,
+        p_session_date: YESTERDAY,
+        p_report: "Should not land",
+        p_gedu_note: "",
+      });
+      expect(refusedNotes.error?.code).toBe(SESSION_CANCELLED_SQLSTATE);
+      const refusedMark = await client.rpc("record_attendance", {
+        p_group_id: GROUP,
+        p_session_date: YESTERDAY,
+        p_participant_id: TEST_IDS.GAMER,
+        p_status: "absent",
+      });
+      expect(refusedMark.error?.code).toBe(SESSION_CANCELLED_SQLSTATE);
+    }
+    const refusedPhoto = await geduAuth.rpc("add_group_session_image", {
+      p_group_id: GROUP,
+      p_session_date: YESTERDAY,
+      p_width: 800,
+      p_height: 600,
+      p_max_images: 8,
+    });
+    expect(refusedPhoto.error?.code).toBe(SESSION_CANCELLED_SQLSTATE);
+    const refusedRemovalCheck = await geduAuth.rpc(
+      "assert_can_delete_session_image",
+      { p_image_id: imageId },
+    );
+    expect(refusedRemovalCheck.error?.code).toBe(SESSION_CANCELLED_SQLSTATE);
+    const refusedRemoval = await geduAuth.rpc("delete_group_session_image", {
+      p_image_id: imageId,
+    });
+    expect(refusedRemoval.error?.code).toBe(SESSION_CANCELLED_SQLSTATE);
+
+    // The report is never mailed, and the claim stamps nothing.
+    const claim = await geduAuth.rpc("claim_group_session_report_email", {
+      p_group_id: GROUP,
+      p_session_date: YESTERDAY,
+    });
+    expect(claim.error?.code).toBe(SESSION_CANCELLED_SQLSTATE);
+    const unstamped = await admin
+      .from("group_sessions")
+      .select("report_emailed_at")
+      .eq("group_id", GROUP)
+      .eq("session_date", YESTERDAY)
+      .single();
+    expect(unstamped.data?.report_emailed_at).toBeNull();
+
+    // Hidden: the family is told the session is off and handed nothing of the
+    // record; the staff document keeps the row, and the feed draws the
+    // cancellation over it.
+    const family = await familyFeed();
+    expect(family.sessions.map((s) => s.session_date)).not.toContain(YESTERDAY);
+    expect(family.cancellations).toEqual([{ session_date: YESTERDAY }]);
+    const staff = await geduFeedAs(geduAuth);
+    expect(staff.sessions.map((s) => s.session_date)).toContain(YESTERDAY);
+    expect(staff.cancellations.map((c) => c.session_date)).toEqual([YESTERDAY]);
+
+    // Not owed: nothing ran, so nothing is asked for.
+    expect(await attentionCount()).toBe(owedBefore - 1);
+
+    // Restored, it all comes back as it was, and reopens.
+    const restored = await adminAuth.rpc("restore_session", {
+      p_group_id: GROUP,
+      p_session_date: YESTERDAY,
+    });
+    expect(restored.data).toBe(true);
+    const back = await familyFeed();
+    expect(back.sessions.find((s) => s.session_date === YESTERDAY)).toMatchObject({
+      report: "We built a castle.",
+      attendance: "present",
+      images: [expect.objectContaining({ id: imageId })],
+    });
+    expect(back.cancellations).toEqual([]);
+    expect(await attentionCount()).toBe(owedBefore);
+    const removed = await geduAuth.rpc("delete_group_session_image", {
+      p_image_id: imageId,
+    });
+    expect(removed.error).toBeNull();
   });
 
   it("refuses every session write on a cancelled date until it is restored", async () => {
@@ -456,20 +562,34 @@ describe("session cancellation", () => {
     ).toEqual([IN_THREE_DAYS]);
   });
 
-  it("hands the invoicing page the month's cancelled pairs and every group of the club", async () => {
+  it("hands the invoicing page the month's cancelled pairs and every group of the club, and never a cancelled record", async () => {
+    // The group wrote the date up, then an admin cancelled it: the row is
+    // kept, and never reaches the bill.
+    const notes = await adminAuth.rpc("set_group_session_notes", {
+      p_group_id: CLUB_GROUP,
+      p_session_date: CLUB_DATE,
+      p_report: "Built a bridge.",
+      p_gedu_note: "",
+    });
+    expect(notes.error).toBeNull();
+
     const cancelled = await adminAuth.rpc("cancel_session", {
       p_group_id: CLUB_GROUP,
       p_session_date: CLUB_DATE,
     });
     expect(cancelled.error).toBeNull();
 
-    const { data, error } = await adminAuth.rpc("get_admin_municipality_invoicing", {
-      p_month_start: CLUB_MONTH,
-    });
-    expect(error).toBeNull();
-    const club = municipalityInvoicingSnapshot
-      .parse(data)
-      .clubs.find((c) => c.id === CLUB);
+    async function clubDocument() {
+      const { data, error } = await adminAuth.rpc("get_admin_municipality_invoicing", {
+        p_month_start: CLUB_MONTH,
+      });
+      expect(error).toBeNull();
+      return municipalityInvoicingSnapshot
+        .parse(data)
+        .clubs.find((c) => c.id === CLUB);
+    }
+
+    const club = await clubDocument();
     expect(club?.cancelled_sessions).toEqual([
       { group_id: CLUB_GROUP, session_date: CLUB_DATE },
     ]);
@@ -477,5 +597,16 @@ describe("session cancellation", () => {
     // The silent group appears in neither list above, and is still named: a
     // date only one group cancelled is not cancelled for the club.
     expect(club?.group_ids).toEqual([CLUB_GROUP, CLUB_SILENT_GROUP]);
+
+    // Restored, the recorded session is back on the bill.
+    await adminAuth.rpc("restore_session", {
+      p_group_id: CLUB_GROUP,
+      p_session_date: CLUB_DATE,
+    });
+    const restored = await clubDocument();
+    expect(restored?.sessions).toEqual([
+      { group_id: CLUB_GROUP, session_date: CLUB_DATE },
+    ]);
+    expect(restored?.cancelled_sessions).toEqual([]);
   });
 });

@@ -7,7 +7,8 @@ CREATE FUNCTION public.assert_can_delete_session_image(p_image_id uuid) RETURNS 
     SET search_path TO ''
     AS $$
 DECLARE
-  v_group_id uuid;
+  v_group_id     uuid;
+  v_session_date date;
 BEGIN
   -- An admin, or a gedu. Guard-first on the first statement, in the shape the
   -- authorization spine reads and every other session RPC carries.
@@ -15,8 +16,8 @@ BEGIN
     CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
   );
 
-  SELECT s.group_id
-    INTO v_group_id
+  SELECT s.group_id, s.session_date
+    INTO v_group_id, v_session_date
     FROM public.group_session_images i
     JOIN public.group_sessions s ON s.id = i.session_id
    WHERE i.id = p_image_id;
@@ -27,6 +28,14 @@ BEGIN
      OR (NOT public.is_admin() AND NOT public.gedu_teaches_group(v_group_id))
   THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- Cancellation: a photo on a cancelled session is frozen with the rest of
+  -- the record. Asked here as well as on the delete, because the route removes
+  -- the object between the two and must not start on one it cannot finish.
+  IF public.group_session_is_cancelled(v_group_id, v_session_date) THEN
+    RAISE EXCEPTION 'The session on % is cancelled', v_session_date
+      USING ERRCODE = 'P0026';
   END IF;
 
   -- The id it validated, so a caller has a positive answer rather than the
@@ -41,7 +50,7 @@ $$;
 -- Name: FUNCTION assert_can_delete_session_image(p_image_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.assert_can_delete_session_image(p_image_id uuid) IS 'May this caller remove this photo? A CHECK-ONLY function: it mutates nothing, and it exists because the route deletes the storage object BEFORE the row, on the service-role client, and an admin client must never act for a caller whose authorization has not been proved. Object-first is what makes a failed removal visible and retryable — the row is what every surface reads, so deleting it first would take the tile away and leave the object standing in a public bucket with nothing left to retry against. The gate is byte for byte delete_group_session_image''s: guard-first on assert_role for an ADMIN or a gedu, then the group resolved from the image''s own session row, with a photo id belonging to another group and one belonging to nothing refused IDENTICALLY with 42501 — never distinguish them, or this becomes an oracle for real photo ids, which name objects whose unguessable names are the access control. Returns the id it validated. It does not replace the delete RPC''s own guard, which still runs on the actual delete afterwards; the window between the two is cosmetic, because nothing inside it can widen what a caller may do.';
+COMMENT ON FUNCTION public.assert_can_delete_session_image(p_image_id uuid) IS 'May this caller remove this photo? A CHECK-ONLY function: it mutates nothing, and it exists because the route deletes the storage object BEFORE the row, on the service-role client, and an admin client must never act for a caller whose authorization has not been proved. Object-first is what makes a failed removal visible and retryable — the row is what every surface reads, so deleting it first would take the tile away and leave the object standing in a public bucket with nothing left to retry against. The gate is byte for byte delete_group_session_image''s: guard-first on assert_role for an ADMIN or a gedu, then the group resolved from the image''s own session row, with a photo id belonging to another group and one belonging to nothing refused IDENTICALLY with 42501 — never distinguish them, or this becomes an oracle for real photo ids, which name objects whose unguessable names are the access control. A photo on a CANCELLED session is refused with P0026 after that gate, exactly as the delete refuses it, so the route never removes an object whose row it may not delete. Returns the id it validated. It does not replace the delete RPC''s own guard, which still runs on the actual delete afterwards; the window between the two is cosmetic, because nothing inside it can widen what a caller may do.';
 
 
 --

@@ -109,6 +109,8 @@ const restoreSession = vi.hoisted(() => vi.fn());
 const feedEntries = vi.hoisted(() => ({ value: [] as unknown[] }));
 /** The dates the admin record holds a stored row on. */
 const recordedDates = vi.hoisted(() => ({ value: [] as string[] }));
+/** Of those, the dates whose report has been mailed to the families. */
+const emailedDates = vi.hoisted(() => ({ value: [] as string[] }));
 
 const noopMutation = vi.hoisted(() => () => ({
   mutate: vi.fn(),
@@ -420,7 +422,9 @@ function storedRow(
     created_by: null,
     updated_by: null,
     updated_by_first_name: null,
-    report_emailed_at: null,
+    report_emailed_at: emailedDates.value.includes(sessionDate)
+      ? `${sessionDate}T16:10:00.000Z`
+      : null,
     images: [],
     attendance: {},
   };
@@ -568,6 +572,7 @@ function noteBox() {
 beforeEach(() => {
   feedEntries.value = [];
   recordedDates.value = [];
+  emailedDates.value = [];
   cancelSession.mockReset();
   cancelSession.mockResolvedValue(undefined);
   restoreSession.mockReset();
@@ -830,8 +835,8 @@ describe("admin group details — cancelling a session", () => {
     );
   });
 
-  it("says why when the session turns out to have a record", async () => {
-    cancelSession.mockRejectedValue({ code: "P0027", message: "has record" });
+  it("says so when the cancel does not land, and hands the button back", async () => {
+    cancelSession.mockRejectedValue({ code: "XX000", message: "boom" });
     feedEntries.value = [upcomingEntry()];
     renderPage("consumer_club");
 
@@ -839,7 +844,7 @@ describe("admin group details — cancelling a session", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancel the session" }));
 
     expect(
-      await screen.findByText(/already has a report, a note, a photo or attendance/),
+      await screen.findByText("That could not be saved. Try again."),
     ).toBeTruthy();
     // Still open, with the button handed back for another go.
     expect(
@@ -847,15 +852,42 @@ describe("admin group details — cancelling a session", () => {
     ).toHaveProperty("disabled", false);
   });
 
-  it("does not offer a cancel on a session with a stored record", () => {
+  it("says nothing about a record on a date that holds none", () => {
+    feedEntries.value = [upcomingEntry()];
+    renderPage("consumer_club");
+
+    pickFromMenu("More actions for this session", "Cancel session");
+
+    expect(screen.queryByText(/already recorded for this session are kept/)).toBeNull();
+  });
+
+  it("offers a cancel on a session with a stored record, and says the record is kept", async () => {
     feedEntries.value = [upcomingEntry()];
     recordedDates.value = [UPCOMING_DATE];
     renderPage("consumer_club");
 
-    // Nothing else is on this card's menu either, so there is no `⋯` at all.
+    pickFromMenu("More actions for this session", "Cancel session");
+
     expect(
-      screen.queryByRole("button", { name: "More actions for this session" }),
-    ).toBeNull();
+      screen.getByText(/already recorded for this session are kept/),
+    ).toBeTruthy();
+    expect(screen.queryByText(/cannot be recalled/)).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel the session" }));
+    await waitFor(() => expect(cancelSession).toHaveBeenCalledTimes(1));
+  });
+
+  it("says a report already mailed to families is not recalled", () => {
+    feedEntries.value = [upcomingEntry()];
+    recordedDates.value = [UPCOMING_DATE];
+    emailedDates.value = [UPCOMING_DATE];
+    renderPage("consumer_club");
+
+    pickFromMenu("More actions for this session", "Cancel session");
+
+    expect(
+      screen.getByText(/already been emailed to families, and that email cannot be recalled/),
+    ).toBeTruthy();
   });
 
   it("shows a cancelled session's reason and stamp, and restores it", async () => {

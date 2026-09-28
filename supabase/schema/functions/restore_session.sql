@@ -29,7 +29,7 @@ $$;
 -- Name: FUNCTION restore_session(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.restore_session(p_group_id uuid, p_session_date date) IS 'An admin restores a cancelled session by removing its cancellation, which reopens every write on that date. Idempotent: returns true when a cancellation was removed and false when there was none. Deliberately no schedule check, so an inert cancellation on a date the schedule no longer projects can still be cleared. Admin-only, guard-first.';
+COMMENT ON FUNCTION public.restore_session(p_group_id uuid, p_session_date date) IS 'An admin restores a cancelled session by removing its cancellation, which reopens every write on that date and brings back any record kept on it. Idempotent: returns true when a cancellation was removed and false when there was none. Deliberately no schedule check, so an inert cancellation on a date the schedule no longer projects can still be cleared. Admin-only, guard-first.';
 
 
 --

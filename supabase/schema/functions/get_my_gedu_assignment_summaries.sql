@@ -265,17 +265,13 @@ BEGIN
                 AND rq.status <> 'withdrawn'::public.substitution_request_status
            )
            -- Cancellation: a cancelled session owes nothing — nothing ran, so
-           -- there is no register, report or mail to ask for. A raw existence
-           -- test is the same answer group_session_is_cancelled would give:
-           -- the projected arm's dates are projected by construction, and a
-           -- stored row's date can never carry a cancellation. This has the
-           -- same TypeScript twin as the rule above, and it learns it too.
-           AND NOT EXISTS (
-             SELECT 1
-               FROM public.session_cancellations sc
-              WHERE sc.group_id     = g.id
-                AND sc.session_date = occurrence.session_date
-           )
+           -- there is no register, report or mail to ask for, and a record
+           -- kept under the cancellation is frozen rather than owed. The
+           -- effective test, not a raw one, because the stored-row arm can
+           -- reach a date the schedule no longer projects, where a
+           -- cancellation is inert. This has the same TypeScript twin as the
+           -- rule above, and it learns it too.
+           AND NOT public.group_session_is_cancelled(g.id, occurrence.session_date)
            -- "Needs attention" is FOUR questions joined by OR, and any one
            -- alone keeps the session on the list.
            --

@@ -224,6 +224,10 @@ BEGIN
       ) AS entry
         FROM public.group_sessions s
        WHERE s.group_id = v_group_id
+         -- Cancellation: a record kept under a cancellation does not travel. A
+         -- family is told the session is off, and a report on it would say
+         -- otherwise; a restore brings the row back here as it was.
+         AND NOT public.group_session_is_cancelled(s.group_id, s.session_date)
     ) AS session_rows;
 
   -- Cancellation: the group's cancelled sessions the schedule still projects,

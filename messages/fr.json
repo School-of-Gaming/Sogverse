@@ -1177,7 +1177,8 @@
         "keepSession": "Garder la séance",
         "cancelConfirm": "Annuler la séance",
         "reasonConfirm": "Enregistrer le motif",
-        "hasRecord": "Cette séance a déjà un compte rendu, une note, une photo ou des présences enregistrés, elle ne peut donc pas être annulée.",
+        "recordKept": "Les notes, photos et présences déjà enregistrées pour cette séance sont conservées. Les familles ne les voient pas tant que la séance est annulée, et elles réapparaissent si la séance est rétablie.",
+        "recordKeptEmailed": "Les notes, photos et présences déjà enregistrées pour cette séance sont conservées. Les familles ne les voient pas tant que la séance est annulée, et elles réapparaissent si la séance est rétablie. Le compte rendu a déjà été envoyé aux familles par e-mail, et cet e-mail ne peut pas être rappelé.",
         "cancelFailed": "L’enregistrement n’a pas abouti. Réessayez.",
         "restoreTitle": "Rétablir cette séance ?",
         "restoreBody": "{date}. Les familles et les Gedus verront à nouveau cette séance au programme, et elle pourra être enregistrée comme d’habitude. Personne n’est prévenu.",
@@ -1759,7 +1760,7 @@
         },
         "sessions": {
           "title": "ce qui s’est passé dans chaque groupe",
-          "intro": "Chaque session qu’un groupe du Programme a enregistrée, avec les pointages de présence et les photographies que l’animateur a jointes à son compte rendu. Une session est enregistrée dès qu’un animateur en rédige le compte rendu ou pointe les présences : une session programmée qui n’a pas encore eu lieu ne figure donc pas ici. Utilisez-la pour les vues par session, comme une courbe d’abandon ; les totaux par enfant figurent déjà sur l’inscription.",
+          "intro": "Chaque session qu’un groupe du Programme a enregistrée, avec les pointages de présence et les photographies que l’animateur a jointes à son compte rendu. Une session est enregistrée dès qu’un animateur en rédige le compte rendu ou pointe les présences : une session programmée qui n’a pas encore eu lieu ne figure donc pas ici, pas plus qu’une session annulée par un administrateur, même si son compte rendu a été rédigé. Utilisez-la pour les vues par session, comme une courbe d’abandon ; les totaux par enfant figurent déjà sur l’inscription.",
           "params": {
             "productId": "Uniquement les sessions des groupes de ce produit.",
             "groupId": "Uniquement les sessions de ce groupe.",

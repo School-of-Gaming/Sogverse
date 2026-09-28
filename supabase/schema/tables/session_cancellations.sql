@@ -16,7 +16,7 @@ CREATE TABLE public.session_cancellations (
 -- Name: TABLE session_cancellations; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.session_cancellations IS 'One row per cancelled session, keyed exactly as group_sessions is: (group, product-local date). Written and removed only by cancel_session and restore_session (admin-only); no client role holds a grant, and RLS is on with no policy. A cancellation and a group_sessions row for the same key never coexist: cancelling refuses a date that has a stored record, and ensure_group_session refuses to materialize one on a cancelled date, both under the same advisory lock. A cancellation on a date the schedule no longer projects is INERT — it subtracts only from projected dates and is never surfaced by itself — and is kept so that moving the schedule back re-applies it.';
+COMMENT ON TABLE public.session_cancellations IS 'One row per cancelled session, keyed exactly as group_sessions is: (group, product-local date). Written and removed only by cancel_session and restore_session (admin-only); no client role holds a grant, and RLS is on with no policy. A cancellation may share its key with a group_sessions row, and then it wins: the row is kept but frozen (every write on a cancelled date is refused with P0026, under the advisory lock cancel_session also takes), the family feed stops carrying it, and every reader that treats a stored row as "the session ran" excludes it until the session is restored. A cancellation on a date the schedule no longer projects is INERT — it subtracts only from projected dates and is never surfaced by itself — and is kept so that moving the schedule back re-applies it.';
 
 
 --
