@@ -5020,8 +5020,7 @@
         "title": "Titteli",
         "titleHint": "Tehtäväsi School of Gamingissa, esimerkiksi kerhovastaava.",
         "pick": "Värisi",
-        "pickHint": "Profiilisi korostusväri, joka kehystää kuvasi.",
-        "noPick": "Ei väriä"
+        "pickHint": "Profiilisi korostusväri, joka kehystää kuvasi. Poista väri valitsemalla se uudelleen."
       },
       "writing": {
         "heading": "Omin sanoin",

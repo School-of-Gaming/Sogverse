@@ -421,9 +421,9 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
     renderMenu(GEDU);
     openMenu();
 
-    // Invoicing is the gedu's own account destination; the About row after it
-    // is the header's doing, and the team profile row a role one, not a
-    // household one — see their cases below.
+    // Invoicing is the gedu's own account destination; the About and Your
+    // profile rows after it are the header's doing — none is a household's.
+    // See their cases below.
     expect(rowTexts()).toEqual([
       MY_SOG,
       INVOICING,
@@ -454,34 +454,36 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
     renderMenu({ userId: IDS.gedu, role: "admin", firstName: "Kyle" });
     openMenu();
 
-    expect(rowTexts()).toEqual([
-      messages.common.dashboard,
-      TEAM_PROFILE,
-      SETTINGS,
-      SIGN_OUT,
-    ]);
+    expect(rowTexts()).toEqual([messages.common.dashboard, SETTINGS, SIGN_OUT]);
   });
 });
 
 /**
- * Office staff and Gedus have a public team profile, and the menu takes them
- * to it; the roles without one never see the row.
+ * The other rehoused nav row, and like About the other half of a header decision: a
+ * gedu's Your profile item is on the strip from `md` up and here below it. An
+ * admin reaches their profile from settings and their user page, never from the
+ * chrome, and the roles without a profile never see it.
  */
-describe("AccountMenu — the team profile row", () => {
-  it.each([["admin"], ["gedu"]] as const)(
-    "leads a %s to their own profile, just above Settings",
-    (role) => {
-      renderMenu({ userId: IDS.gedu, role, firstName: "Kyle" });
-      openMenu();
+describe("AccountMenu — the rehoused Your profile row", () => {
+  it("follows About for a gedu, below md only", () => {
+    renderMenu(GEDU);
+    openMenu();
 
-      const texts = rowTexts();
-      expect(texts.indexOf(TEAM_PROFILE)).toBe(texts.indexOf(SETTINGS) - 1);
-      expect(row(TEAM_PROFILE).getAttribute("href")).toBe("/settings/team-profile");
-    },
-  );
+    expect(rowTexts()).toEqual([
+      MY_SOG,
+      INVOICING,
+      ABOUT,
+      TEAM_PROFILE,
+      SETTINGS,
+      SIGN_OUT,
+    ]);
+    // From `md` up it is on the strip, so the menu hides it there.
+    expect(row(TEAM_PROFILE).className).toContain("md:hidden");
+    expect(row(TEAM_PROFILE).getAttribute("href")).toBe("/settings/team-profile");
+  });
 
-  it.each([["customer"], ["gamer"]] as const)(
-    "is absent for a %s, who has no team profile",
+  it.each([["admin"], ["customer"], ["gamer"]] as const)(
+    "is absent for a %s",
     (role) => {
       renderMenu({ userId: IDS.parent, role, firstName: "Riikka" });
       openMenu();
@@ -492,8 +494,8 @@ describe("AccountMenu — the team profile row", () => {
 });
 
 /**
- * The one nav row this menu carries, and the other half of a decision the
- * header makes: a signed-in gedu's strip is one item longer than anyone else's,
+ * One of the two rehoused nav rows this menu carries, and the other half of a decision
+ * the header makes: a signed-in gedu's strip is one item longer than anyone else's,
  * which at 360px leaves no room for all three words, so About lands here
  * instead — at phone width only, where it is actually off the strip.
  */

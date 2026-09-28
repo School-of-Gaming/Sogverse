@@ -115,9 +115,10 @@ const FOCUSABLE_ITEMS =
 /**
  * The rows the arrow keys may land on, in DOM order.
  *
- * **A row the current width does not render is not one of them.** One row is
- * phone-only (the About row a gedu's header hands down here), so from `sm` up
- * it is `display: none` — and `.focus()` on such an element does nothing at
+ * **A row the current width does not render is not one of them.** A gedu's
+ * Invoicing, About and Your profile rows are narrow-only, each hidden from the
+ * breakpoint where the header's strip takes it, and there it is
+ * `display: none` — and `.focus()` on such an element does nothing at
  * all, which would leave ArrowDown reading the same index forever and the
  * keyboard stuck on the row above it. The check is on the computed `display`
  * rather than on a measured box, because a measurement is exactly what is not
@@ -154,9 +155,10 @@ interface AccountMenuProps {
   /**
    * The header's nav override, handed down unchanged — preview scenes only,
    * and documented on `Header`. It decides one thing here and nothing else:
-   * whether this menu carries the nav row the gedu's phone strip gave up. The
-   * dashboard row, the household and every label still follow `role`, because
-   * the account really does belong to whoever is signed in.
+   * whether this menu carries the nav rows the gedu's strip gives up (About and
+   * Your profile). The dashboard row, Invoicing, the household and every label
+   * still follow `role`, because the account really does belong to whoever is
+   * signed in.
    */
   navRole?: UserRole;
 }
@@ -350,8 +352,8 @@ export function AccountMenu({
     (pathname === dashboardPath || pathname.startsWith(dashboardPath + "/")) &&
     !hasOwnNavItem(pathname);
   /**
-   * Whether this menu carries About — the one nav row here, and the other half
-   * of a decision the header makes.
+   * Whether this menu carries About — one of the two nav rows here, each the
+   * other half of a decision the header makes.
    *
    * A signed-in gedu's strip is one item longer than anyone else's, which at
    * 360px leaves no room for all three words; About is the one that gives way,
@@ -372,19 +374,19 @@ export function AccountMenu({
     pathname === ROUTES.gedu.invoicing ||
     pathname.startsWith(ROUTES.gedu.invoicing + "/");
   /**
-   * Office staff and Gedus have a public team profile, edited on a page of its
-   * own under settings; it is a row here because it is a page a person comes
-   * back to, not a setting they change once. Decided by role, before the panel
-   * opens, like every fixed row.
+   * Whether this menu carries the gedu's Your profile — the other nav row
+   * handed down by the header the same way About is. From `md` up it is an
+   * item on the strip; below that it lives here. An admin's profile is reached
+   * from settings and from their user page, never from the chrome.
    */
-  const carriesTeamProfile = role === "admin" || role === "gedu";
+  const carriesTeamProfile = (navRole ?? role) === "gedu";
   const isOnTeamProfile = pathname === ROUTES.settingsTeamProfile;
-  // The team profile page lives under settings but has its own row, so only
-  // one of the two marks itself current.
+  // The profile page lives under settings, but where the chrome has an item of
+  // its own for it, that item is what marks it current, not Settings.
   const isOnSettings =
     (pathname === ROUTES.settings ||
       pathname.startsWith(ROUTES.settings + "/")) &&
-    !isOnTeamProfile;
+    !(carriesTeamProfile && isOnTeamProfile);
   // What the dashboard is called to the person using it — "Dashboard" for the
   // admin, whose panel is genuinely an admin panel, "My SOG" for everyone else.
   const dashboardLabel = role === "admin" ? c("dashboard") : d("pageTitle");
@@ -656,6 +658,21 @@ export function AccountMenu({
                   className="sm:hidden"
                 />
               )}
+              {/* The other rehoused nav row, in the same shape as About and
+                  decided the same way — see `carriesTeamProfile`. Its
+                  breakpoint is `md`, not `sm`: that is where the header's strip
+                  takes it back. */}
+              {carriesTeamProfile && (
+                <MenuLinkRow
+                  href={ROUTES.settingsTeamProfile}
+                  active={isOnTeamProfile}
+                  disabled={busy}
+                  onNavigate={() => setOpen(false)}
+                  icon={<IdCard className="h-4 w-4 shrink-0" />}
+                  label={t("teamProfile")}
+                  className="md:hidden"
+                />
+              )}
 
               {/* No household in hand — a read still in flight, a read that
                   failed, or a role with nobody to switch to — simply means no
@@ -708,17 +725,6 @@ export function AccountMenu({
               )}
 
               <div role="separator" className="my-1 h-px bg-border" />
-
-              {carriesTeamProfile && (
-                <MenuLinkRow
-                  href={ROUTES.settingsTeamProfile}
-                  active={isOnTeamProfile}
-                  disabled={busy}
-                  onNavigate={() => setOpen(false)}
-                  icon={<IdCard className="h-4 w-4 shrink-0" />}
-                  label={t("teamProfile")}
-                />
-              )}
 
               <MenuLinkRow
                 href={ROUTES.settings}
@@ -852,7 +858,7 @@ function MenuLinkRow({
   onNavigate: () => void;
   icon: ReactNode;
   label: string;
-  /** Which widths this row exists at — one row is phone-only. */
+  /** Which widths this row exists at — a gedu's three nav rows are narrow-only. */
   className?: string;
 }) {
   return (

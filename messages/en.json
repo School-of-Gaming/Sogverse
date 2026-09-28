@@ -5020,8 +5020,7 @@
         "title": "Title",
         "titleHint": "Your job at School of Gaming, for example Head of Clubs.",
         "pick": "Your colour",
-        "pickHint": "An accent colour for your profile, framing your photo.",
-        "noPick": "No colour"
+        "pickHint": "An accent colour for your profile, framing your photo. Choose it again to clear it."
       },
       "writing": {
         "heading": "In your own words",

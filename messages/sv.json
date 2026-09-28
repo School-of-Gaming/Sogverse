@@ -5020,8 +5020,7 @@
         "title": "Titel",
         "titleHint": "Ditt jobb på School of Gaming, till exempel klubbansvarig.",
         "pick": "Din färg",
-        "pickHint": "En accentfärg för din profil, som ramar in ditt foto.",
-        "noPick": "Ingen färg"
+        "pickHint": "En accentfärg för din profil, som ramar in ditt foto. Välj den igen för att ta bort den."
       },
       "writing": {
         "heading": "Med egna ord",

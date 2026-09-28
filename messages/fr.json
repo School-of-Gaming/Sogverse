@@ -5020,8 +5020,7 @@
         "title": "Titre",
         "titleHint": "Votre poste chez School of Gaming, par exemple responsable des clubs.",
         "pick": "Votre couleur",
-        "pickHint": "Une couleur d’accent pour votre profil, autour de votre photo.",
-        "noPick": "Aucune couleur"
+        "pickHint": "Une couleur d’accent pour votre profil, autour de votre photo. Choisissez-la à nouveau pour la retirer."
       },
       "writing": {
         "heading": "Avec vos propres mots",

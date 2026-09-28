@@ -513,7 +513,8 @@ function GuidanceList({
  *
  * **An optional accent colour is chosen here too**, from SOG-UI's sixteen
  * picks, through the same swatch grid a moderator colours a voice zone with,
- * with "No colour" as its first choice and the one a new profile starts on.
+ * opted into its clearable mode: a new profile starts with none chosen, and
+ * choosing the chosen colour again clears it.
  */
 export function TeamProfileAboutSection({
   kind,
@@ -573,7 +574,7 @@ export function TeamProfileAboutSection({
           <ZoneColorPicker
             value={form.pick === null ? null : `${form.pick}`}
             labelledBy={labelId}
-            noneLabel={t("noPick")}
+            clearable
             onChange={(key: VoiceZoneColor | null) => {
               const pick =
                 key === null

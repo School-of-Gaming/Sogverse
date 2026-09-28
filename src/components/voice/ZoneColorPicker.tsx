@@ -1,25 +1,22 @@
 "use client";
 
-import { Ban, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VOICE_ZONE_COLORS, VOICE_ZONE_COLOR_KEYS } from "@/lib/constants/voice-zones";
 import type { VoiceZoneColor } from "@/types";
 
-/** A colour is required: the grid is the sixteen picks and nothing else. */
+/** A colour is required: exactly one swatch is always chosen. */
 interface RequiredColorProps {
   value: VoiceZoneColor;
   onChange: (value: VoiceZoneColor) => void;
-  noneLabel?: undefined;
+  clearable?: false;
 }
 
-/**
- * A colour is optional: "none" is the first choice, named by `noneLabel`, and
- * `null` is its value.
- */
-interface OptionalColorProps {
+/** A colour is optional: choosing the chosen swatch again clears it to `null`. */
+interface ClearableColorProps {
   value: VoiceZoneColor | null;
   onChange: (value: VoiceZoneColor | null) => void;
-  noneLabel: string;
+  clearable: true;
 }
 
 /** Grid picker for the 16 picks (2 rows of 8). Each swatch shows the
@@ -31,54 +28,35 @@ interface OptionalColorProps {
  *  **No swatch has a name.** A pick is what it looks like, not what it is
  *  called: a colour a person chooses for themselves means only "this one is
  *  mine", so there is nothing to name it after, and a name would be an opinion
- *  about the hue that no consumer may hold. The grid is one radio group
- *  labelled by the field around it ("Color"), each swatch a radio with no
- *  label of its own, so assistive technology announces the group's name, the
- *  swatch's position in the set and whether it is checked, and nothing more —
- *  the same information a sighted person gets from the grid. No tooltip, for
- *  the same reason.
+ *  about the hue that no consumer may hold. The grid is one group labelled by
+ *  the field around it ("Color"), each swatch with no label of its own, so
+ *  assistive technology announces the group's name, the swatch's position in
+ *  the set and whether it is chosen, and nothing more — the same information a
+ *  sighted person gets from the grid. No tooltip, for the same reason.
  *
- *  **Where a colour is optional, "none" leads the group** — passing
- *  `noneLabel` opts in, and a voice zone, which always has a colour, never
- *  does. It is a column of its own, as tall as the two rows, so the sixteen keep
- *  their two rows of eight beside it. Unlike a swatch it is not a colour, so it
- *  does have a name, and a struck-through glyph in the neutral ink says it
- *  without words. */
+ *  **Where a colour is optional (`clearable`), the chosen swatch clears on a
+ *  second press** — a voice zone, which always has a colour, never opts in.
+ *  A radio cannot be unchecked by activating it, so a clearable grid is not a
+ *  radio group: it is a group of toggle buttons (`aria-pressed`), at most one
+ *  pressed, which is what a swatch that turns off on a press actually is. */
 export function ZoneColorPicker({
   labelledBy,
   ...props
-}: (RequiredColorProps | OptionalColorProps) & {
+}: (RequiredColorProps | ClearableColorProps) & {
   /** Id of the field label that names the group — `Field`'s `labelId`. */
   labelledBy: string;
 }) {
-  const withNone = props.noneLabel !== undefined;
+  const clearable = props.clearable === true;
+  const choose = (key: VoiceZoneColor) => {
+    if (props.clearable === true) props.onChange(key === props.value ? null : key);
+    else props.onChange(key);
+  };
   return (
     <div
-      role="radiogroup"
+      role={clearable ? "group" : "radiogroup"}
       aria-labelledby={labelledBy}
-      className={cn("grid gap-2", withNone ? "grid-cols-9" : "grid-cols-8")}
+      className="grid grid-cols-8 gap-2"
     >
-      {props.noneLabel !== undefined && (
-        <button
-          type="button"
-          role="radio"
-          aria-checked={props.value === null}
-          aria-label={props.noneLabel}
-          onClick={() => props.onChange(null)}
-          // The swatches' box model at twice the height, so it spans both
-          // rows. Selection is the same check, below the glyph that names it.
-          className="row-span-2 flex w-9 flex-col items-center justify-center gap-2 rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-hover"
-        >
-          <Ban className="h-4 w-4" aria-hidden />
-          <Check
-            className={cn(
-              "h-4 w-4 text-foreground",
-              props.value !== null && "invisible",
-            )}
-            aria-hidden
-          />
-        </button>
-      )}
       {VOICE_ZONE_COLOR_KEYS.map((key) => {
         const color = VOICE_ZONE_COLORS[key];
         const selected = key === props.value;
@@ -86,9 +64,10 @@ export function ZoneColorPicker({
           <button
             key={key}
             type="button"
-            role="radio"
-            aria-checked={selected}
-            onClick={() => props.onChange(key)}
+            {...(clearable
+              ? { "aria-pressed": selected }
+              : { role: "radio", "aria-checked": selected })}
+            onClick={() => choose(key)}
             // Same box model as ZoneIconPicker (`h-9 w-9 … border`) so the two
             // grids line up exactly: selection is the check glyph inside the
             // square, never a ring-offset/scale that would grow the square past
