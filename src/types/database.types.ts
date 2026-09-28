@@ -3190,6 +3190,7 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Database["public"]["Enums"]["effective_product_status"]
       }
+      end_every_session: { Args: { p_user_id: string }; Returns: undefined }
       ensure_chat_channel: {
         Args: { p_group_id: string }
         Returns: {

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "crypto";
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
@@ -36,27 +35,25 @@ import type { GamerSignIn } from "@/types";
  * `gamer_profiles.sign_in` — and differs only in what it puts there:
  *
  *  - **→ `parent`** — a fresh random synthetic handle, and the password
- *    scrambled to a value nobody holds. GoTrue cannot *unset* a password, so
- *    overwriting it with 32 random bytes is the closest thing to removing one:
- *    the account becomes switch-only again in the only sense that matters, which
- *    is that no credential anyone knows will open it.
+ *    removed: set to NULL, the state an account that never had one is in, so
+ *    a password sign-in fails and the account is switch-only again.
  *  - **→ `username`** (or a username change) — the address becomes the synthetic
  *    handle built from the new username. A password is required when *entering*
  *    the mode and optional afterwards, which is what makes a parent resetting a
  *    forgotten password a one-field edit.
  *  - **→ `email`** — the address becomes the child's real mailbox, the
- *    password is scrambled, and the welcome mail goes out again. Both halves
+ *    password is removed, and the welcome mail goes out again. Both halves
  *    are the point: a new address is unproven until it is clicked, and a
  *    password set against the *old* address must not survive the move.
  *
- * AN ACCOUNT ALREADY IN `email` MODE DOES NOT TAKE A NEW ADDRESS. Changing an
- * account's email address is not something this platform supports for any role
- * (owner ruling), and when it does it will be one mechanism built once, for
- * every role, rather than a form on one card. So an `email` key is only ever
- * the address a child is *entering* the mode with, and one that arrives with no
- * transition to make is refused — here, because this is the only layer that can
- * see the mode the account is already in. A username is not an address in the
- * same sense — it is a sign-in handle — so replacing one stays supported above.
+ * AN ACCOUNT ALREADY IN `email` MODE DOES NOT TAKE A NEW ADDRESS HERE. Moving
+ * an account to a different mailbox is an admin's correction, made from the
+ * admin user page through its own route, for every role alike. So an `email`
+ * key is only ever the address a child is *entering* the mode with, and one
+ * that arrives with no transition to make is refused — here, because this is
+ * the only layer that can see the mode the account is already in. A username is
+ * not an address in the same sense — it is a sign-in handle — so replacing one
+ * stays supported above.
  *
  * A password may be set ONLY while the account is in `username` mode. In the
  * other two it would be a credential with nothing to type it against — `parent`
@@ -75,7 +72,7 @@ import type { GamerSignIn } from "@/types";
  * steps can still throw before the record catches up: the identity re-read, the
  * `profiles.email` copy, and the mode write itself. Any of them leaving that
  * credential live is the shape the invariant forbids, so the whole window is
- * wrapped and every throw in it scrambles the password before it is rethrown.
+ * wrapped and every throw in it removes the password before it is rethrown.
  * The rethrow is the original failure, so each of the specific 500s below still
  * says which write broke. See `compensateUnrecordedCredential`.
  *
@@ -270,15 +267,26 @@ type AdminClient = ReturnType<typeof createAdminClient>;
 type UpdateBody = z.infer<typeof updateGamerBody>;
 
 /**
- * A password nobody holds.
+ * Take the account's password away: NULL, the state an account that never had
+ * one is in, so a password sign-in fails and only a recovery link can set a new
+ * one. Never a random value — an unknown password is still a credential.
+ * GoTrue's Admin API cannot write NULL, so the database function does.
  *
- * GoTrue has no way to remove a password once set, so leaving a mode that had
- * one means overwriting it with a value that was never shown to anyone and is
- * not stored anywhere. 32 bytes from the CSPRNG, discarded the moment the write
- * returns. The account is then reachable only the way its new mode says it is.
+ * Throws rather than returning the error, because it runs inside the
+ * compensated window and a throw is what puts the compensation on the path.
  */
-function scrambledPassword(): string {
-  return randomBytes(32).toString("hex");
+async function removePassword(args: {
+  admin: AdminClient;
+  gamerId: string;
+}): Promise<void> {
+  const { admin, gamerId } = args;
+  const { error } = await admin.rpc("forfeit_password", { p_user_id: gamerId });
+  if (!error) return;
+  console.error(`gamer ${gamerId}: the password could not be removed`, error);
+  throw new ApiError(
+    `gamer ${gamerId}: the password could not be removed`,
+    500,
+  );
 }
 
 /**
@@ -356,7 +364,10 @@ async function applyCredentialChange(args: {
   }
 
   let newEmail: string | null = null;
+  // A password the parent chose, or an instruction to remove the one the
+  // account holds. Never both: removal is for the modes with no password.
   let newPassword: string | null = null;
+  let clearPassword = false;
   let welcomeGamer = false;
 
   if (nextMode === "parent") {
@@ -365,7 +376,7 @@ async function applyCredentialChange(args: {
     // the family chose or an address a child reads, and neither should stay
     // attached to an account that is no longer reachable through it.
     newEmail = randomSyntheticGamerEmail();
-    newPassword = scrambledPassword();
+    clearPassword = true;
   } else if (nextMode === "username") {
     if (entering && body.password === undefined) {
       return NextResponse.json(
@@ -390,15 +401,15 @@ async function applyCredentialChange(args: {
         { status: 400 },
       );
     }
-    // The address a child already signs in with is not editable. See the
-    // route's doc comment: an address change is a platform-wide mechanism we
-    // have not built, and this is the only layer that can tell one from a child
+    // The address a child already signs in with is not editable here. See the
+    // route's doc comment: moving an account to another mailbox is an admin's
+    // correction, and this is the only layer that can tell one from a child
     // entering the mode, because it is the only one that knows the current mode.
     if (!entering && body.email !== undefined) {
       return NextResponse.json(
         {
           error:
-            "This gamer already signs in with an email address, and changing an account's address is not supported.",
+            "This gamer already signs in with an email address, which only an admin can change.",
         },
         { status: 400 },
       );
@@ -407,12 +418,12 @@ async function applyCredentialChange(args: {
       newEmail = body.email;
       // A new address is an unproven address, and the password that was set
       // against the old one must not carry over to it.
-      newPassword = scrambledPassword();
+      clearPassword = true;
       welcomeGamer = true;
     }
   }
 
-  if (newEmail === null && newPassword === null) {
+  if (newEmail === null && newPassword === null && !clearPassword) {
     // Nothing reached GoTrue, so there is no credential a later failure could
     // leave unrecorded and nothing to compensate: the mode write stands on its
     // own. No transition produces this shape today — all three write an address
@@ -423,13 +434,15 @@ async function applyCredentialChange(args: {
     return { welcomeGamer };
   }
 
-  await writeAuthCredentials({
-    admin,
-    gamerId,
-    newEmail,
-    newPassword,
-    mode: nextMode,
-  });
+  if (newEmail !== null || newPassword !== null) {
+    await writeAuthCredentials({
+      admin,
+      gamerId,
+      newEmail,
+      newPassword,
+      mode: nextMode,
+    });
+  }
 
   // FROM HERE THE CREDENTIAL IS LIVE AND OUR OWN TABLES DO NOT RECORD IT. Each
   // remaining step can throw — the identity re-read, the `profiles.email` copy,
@@ -443,7 +456,15 @@ async function applyCredentialChange(args: {
   // learned about is the same unrecorded credential under a different name —
   // and the cost of treating it that way is a password the parent can simply
   // set again.
+  //
+  // A password being removed goes first, and inside the window rather than
+  // before the auth write: ahead of it, a refused address (already taken) would
+  // leave a child locked out of the mode they are still in; inside it, a
+  // removal that fails is one more failure the compensation answers.
   try {
+    if (clearPassword) {
+      await removePassword({ admin, gamerId });
+    }
     if (newEmail !== null) {
       await copyAddressToProfile({ admin, gamerId, newEmail });
     }
@@ -513,9 +534,9 @@ async function recordSignInMode(args: {
  * gate is built to rule out: a child holding one could sign in on any machine,
  * and the platform would classify that session by a mode that is a lie.
  *
- * So the password is scrambled back to a value nobody holds, which restores the
- * one property that matters: whatever `sign_in` says, no credential anyone
- * knows will open this account. The address is deliberately left where it
+ * So the password is removed — set to NULL, never to a value nobody holds —
+ * which restores the one property that matters: whatever `sign_in` says, no
+ * password will open this account. The address is deliberately left where it
  * landed — moving it back is another write that can fail the same way, and an
  * unreachable account under an unexpected address is a repair, not a breach.
  *
@@ -536,18 +557,17 @@ async function compensateUnrecordedCredential(args: {
 }): Promise<never> {
   const { admin, gamerId, currentMode, nextMode, failure } = args;
   console.error(
-    `gamer ${gamerId}: a write failed after the credential landed, moving ${currentMode} -> ${nextMode}; scrambling the password so no unrecorded credential survives`,
+    `gamer ${gamerId}: a write failed after the credential landed, moving ${currentMode} -> ${nextMode}; removing the password so no unrecorded credential survives`,
     failure,
   );
 
-  const { error: scrambleError } = await admin.auth.admin.updateUserById(
-    gamerId,
-    { password: scrambledPassword() },
-  );
-  if (scrambleError) {
+  const { error: removeError } = await admin.rpc("forfeit_password", {
+    p_user_id: gamerId,
+  });
+  if (removeError) {
     console.error(
       `gamer ${gamerId}: THE COMPENSATION ALSO FAILED — this account may hold a working credential that gamer_profiles.sign_in does not record, and needs to be reset by hand`,
-      scrambleError,
+      removeError,
     );
   }
 

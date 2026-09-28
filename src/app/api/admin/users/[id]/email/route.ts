@@ -7,6 +7,7 @@ import {
   isEmailAlreadyRegistered,
 } from "@/lib/auth-email.server";
 import { hasRealEmail, usernameToSyntheticEmail } from "@/lib/gamer-sign-in";
+import { sendGamerWelcomeEmail } from "@/lib/gamer-welcome.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   adminUserSignInAddressBody,
@@ -23,9 +24,10 @@ import type { GamerSignIn, UserRole } from "@/types";
  * who registered as `aino@gmial.com` and can neither verify nor reset a
  * password until somebody moves the account to the address they meant.
  *
- * **Two writes that must not drift apart, in a fixed order.** The address lives
- * on `auth.users` (what sign-in reads) and on `public.profiles` (what every page
- * reads), and nothing syncs the second from the first after signup:
+ * **The writes run in a fixed order.** The address lives on `auth.users` (what
+ * sign-in reads) and on `public.profiles` (what every page reads), nothing
+ * syncs the second from the first after signup, and the account's credentials
+ * have to follow the address before the change is recorded as done:
  *
  * 1. **Auth, through the Admin API, first.** Never raw SQL: `auth.identities.email`
  *    is a generated column over `identity_data`, so an `UPDATE auth.users` leaves
@@ -37,7 +39,17 @@ import type { GamerSignIn, UserRole } from "@/types";
  *    because the update's own response carries the identities as they were
  *    before the write. An address that reached `auth.users` but not the identity
  *    fails loudly here rather than being reported as done.
- * 3. **Then `profiles.email`, on the service-role client**, because
+ * 3. **An email-mode child's password is removed** — set to NULL, never to a
+ *    random value. A new mailbox is an unproven one, and a password set against
+ *    the old address must not carry over to it: the same rule the parent's own
+ *    move into `email` mode follows, and the welcome mail (step 6) is how the
+ *    child sets a new one. An adult keeps theirs — they chose it at signup —
+ *    and a username rename keeps the child's, because only the name moved.
+ * 4. **Every session the account holds is ended**, on every device and for
+ *    every role, so nothing stays signed in under the address that was
+ *    corrected away. GoTrue's own sign-out takes the account's own token, which
+ *    an admin does not have, so it is a database function's.
+ * 5. **Then `profiles.email`, on the service-role client**, because
  *    `authenticated` holds no UPDATE grant on that column — not even an admin
  *    session can write it. Its trigger nulls `email_verified_at`, so the new
  *    address starts unverified exactly as a fresh signup's would — and since a
@@ -46,10 +58,18 @@ import type { GamerSignIn, UserRole } from "@/types";
  *    column is the app's only verified-email state; GoTrue's own confirmation
  *    stamp (`email_confirm` below) is not read anywhere, because Supabase Auth
  *    confirmations are off.
+ * 6. **Last, the welcome mail for an email-mode child**, once `profiles.email`
+ *    holds the address its link is signed over. A failed send is logged, not
+ *    answered: the move has committed, and the child's parent can resend it
+ *    from the child's card. It spends no allowance: admins are trusted, and the
+ *    allowance is keyed on the parent's own entitlement.
  *
- * **Repeating it finishes the job.** Each half is skipped when it already holds
- * the target, so a retry after a failure between the two brings `profiles` into
- * line with an auth record that already moved, rather than tripping over it.
+ * **`profiles.email` is the record that the change is done, and repeating it
+ * finishes the job.** The auth write is skipped when auth already holds the
+ * target; the password removal and the sign-out run whenever `profiles` has not
+ * caught up yet, and both are idempotent. So a retry after a failure anywhere
+ * before step 5 redoes exactly what may not have landed, and a request whose
+ * address both halves already hold does nothing at all — no sign-out, no mail.
  *
  * **A target already holding the address is refused, not resolved.** It is the
  * duplicate-account case: the other account has data of its own, and freeing
@@ -66,7 +86,7 @@ import type { GamerSignIn, UserRole } from "@/types";
  * - **An adult, or a child in `email` mode, takes a real mailbox** (`{ email }`).
  * - **A child in `username` mode takes a new username** (`{ username }`), which
  *   the route turns into the synthetic handle that *is* the child's address.
- *   The mode stays `username` and the password is untouched: only what the
+ *   The mode stays `username` and the password is kept: only the name the
  *   child types changes. GoTrue's uniqueness on the address is what makes a
  *   username unique, so a taken one is the same refusal as a taken address,
  *   under its own code.
@@ -81,12 +101,12 @@ import type { GamerSignIn, UserRole } from "@/types";
  * name they type. Changing a child's sign-in mode is the parent's, through
  * their own settings, where the mode and the credentials move together.
  *
- * A username change carries no compensation of the kind the parent's own
- * rename does, because nothing about it outruns the record: the mode was
- * `username` before the write and still is, and the password the child holds
- * is the one it always was. What a failure between the halves leaves is the
- * same lagging `profiles.email` an address change can leave, and a retry
- * finishes it the same way.
+ * None of this carries a compensation of the kind the parent's own mode change
+ * does, because nothing here creates a credential the record does not know:
+ * the mode never moves, no password is ever set, and the only credential write
+ * takes one away. What a failure part-way leaves is a lagging `profiles.email`
+ * — with, for an email-mode child, a password that may still open the account
+ * at the new address until the retry removes it — and the 500 says to repeat.
  */
 export const PATCH = defineRoute({
   posture: "role-gated",
@@ -96,7 +116,7 @@ export const PATCH = defineRoute({
   body: adminUserSignInAddressBody,
   response: adminUserEmailWriteResult,
 
-  handler: async ({ supabase, params, body }) => {
+  handler: async ({ request, supabase, params, body }) => {
     const userId = params.id;
 
     // Read the target on the user-bound client: an admin may read every
@@ -122,7 +142,7 @@ export const PATCH = defineRoute({
       body,
     });
     if (resolved instanceof NextResponse) return resolved;
-    const { email, takenCode } = resolved;
+    const { email, takenCode, clearPassword } = resolved;
 
     const { data: current, error: readError } =
       await admin.auth.admin.getUserById(userId);
@@ -136,6 +156,7 @@ export const PATCH = defineRoute({
     // `current` is already a fresh read, so when auth holds the target (a retry
     // after a partial failure) its identities are checked as they stand.
     let authUser = current.user;
+    let authMoved = false;
 
     if (authUser.email?.toLowerCase() !== email) {
       const { error: authError } = await admin.auth.admin.updateUserById(
@@ -166,6 +187,7 @@ export const PATCH = defineRoute({
         );
       }
       authUser = reread.user;
+      authMoved = true;
     }
 
     if (!identitiesHoldEmail(authUser, email)) {
@@ -175,15 +197,55 @@ export const PATCH = defineRoute({
       );
     }
 
-    if (target.email !== email) {
-      const { error: profileError } = await admin
-        .from("profiles")
-        .update({ email })
-        .eq("id", userId);
-      if (profileError) {
+    // Both halves already held the address before this request: the change
+    // was finished by an earlier one, so there is nothing to sign out and
+    // nothing to mail.
+    if (!authMoved && target.email === email) {
+      return { success: true as const, email };
+    }
+
+    if (clearPassword) {
+      const { error: passwordError } = await admin.rpc("forfeit_password", {
+        p_user_id: userId,
+      });
+      if (passwordError) {
         throw new ApiError(
-          `user ${userId}: auth moved to ${email} but profiles.email did not (${profileError.message}); repeating the change finishes it`,
+          `user ${userId}: auth moved to ${email} but the old password could not be removed (${passwordError.message}); repeating the change finishes it`,
           500,
+        );
+      }
+    }
+
+    const { error: signOutError } = await admin.rpc("end_every_session", {
+      p_user_id: userId,
+    });
+    if (signOutError) {
+      throw new ApiError(
+        `user ${userId}: auth moved to ${email} but its sessions could not be ended (${signOutError.message}); repeating the change finishes it`,
+        500,
+      );
+    }
+
+    // Written unconditionally: when it already holds the address the write
+    // changes nothing, and its trigger only fires on a changed address.
+    const { error: profileError } = await admin
+      .from("profiles")
+      .update({ email })
+      .eq("id", userId);
+    if (profileError) {
+      throw new ApiError(
+        `user ${userId}: auth moved to ${email} but profiles.email did not (${profileError.message}); repeating the change finishes it`,
+        500,
+      );
+    }
+
+    if (clearPassword) {
+      try {
+        await sendGamerWelcomeEmail({ request, gamerId: userId });
+      } catch (mailError) {
+        console.error(
+          `user ${userId}: the address moved but the welcome mail failed — the parent can resend it from the child's card`,
+          mailError,
         );
       }
     }
@@ -196,8 +258,8 @@ type AdminClient = ReturnType<typeof createAdminClient>;
 
 /**
  * The address the request asks the account to move to, if the account admits
- * that form at all — or the refusal saying why not. See the route's doc comment
- * for the rules.
+ * that form at all — or the refusal saying why not — and whether the move takes
+ * the password with it. See the route's doc comment for the rules.
  *
  * The mode is read on the service-role client, never taken from the request: it
  * is what decides whether a mailbox is a correction or a privilege change. A
@@ -209,7 +271,9 @@ async function resolveTargetAddress(args: {
   userId: string;
   role: UserRole;
   body: AdminUserSignInAddressBody;
-}): Promise<NextResponse | { email: string; takenCode: string }> {
+}): Promise<
+  NextResponse | { email: string; takenCode: string; clearPassword: boolean }
+> {
   const { admin, userId, role, body } = args;
 
   let signIn: GamerSignIn | null = null;
@@ -233,7 +297,12 @@ async function resolveTargetAddress(args: {
         { status: 400 },
       );
     }
-    return { email: body.email, takenCode: USER_EMAIL_TAKEN };
+    return {
+      email: body.email,
+      takenCode: USER_EMAIL_TAKEN,
+      // Only a child: an adult chose their password and keeps it.
+      clearPassword: signIn === "email",
+    };
   }
 
   if (signIn !== "username") {
@@ -248,5 +317,6 @@ async function resolveTargetAddress(args: {
   return {
     email: usernameToSyntheticEmail(body.username),
     takenCode: USER_USERNAME_TAKEN,
+    clearPassword: false,
   };
 }

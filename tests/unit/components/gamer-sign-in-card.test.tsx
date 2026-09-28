@@ -14,9 +14,10 @@ import type { GamerSignIn } from "@/types";
  * Two standing affordances exist alongside the mode form, and each is its own
  * submit because each is its own decision: a new password for a username-mode
  * child, and a new username. There is deliberately no third for an address:
- * changing an account's email address is not something the app supports for any
- * role (owner ruling), and the route refuses one on an account already in
- * `email` mode, so the card offers no field that would ask for it.
+ * moving an account to another mailbox is an admin's correction, made from the
+ * admin user page (owner ruling), and the parent's route refuses one on an
+ * account already in `email` mode, so the card offers no field that would ask
+ * for it.
  *
  * What is pinned:
  *
@@ -211,9 +212,9 @@ describe("changing a username-mode child's username", () => {
 
 /**
  * **There is no form for replacing an email-mode child's address** (owner
- * ruling): changing an account's email address is not something the app supports
- * for any role, so the card states the address as a fact and offers only the one
- * action either verification state allows. The refusal is backed at the route,
+ * ruling): moving an account to another mailbox is an admin's correction, made
+ * from the admin user page, so the card states the address as a fact and offers
+ * only the one action either verification state allows. The refusal is backed at the route,
  * which answers 400 to an `email` key on an account already in that mode, so
  * the rule holds whether or not this card renders a field.
  */

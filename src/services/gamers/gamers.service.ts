@@ -37,9 +37,9 @@ export interface GamerUpdate {
   username?: string;
   /**
    * The real address a child is *entering* `email` mode with, which they then
-   * have to verify. An account already in that mode does not take a new one —
-   * the route answers 400, because changing an account's address is not
-   * something the platform supports for any role.
+   * have to verify. An account already in that mode does not take a new one
+   * here — the route answers 400, because moving an account to another mailbox
+   * is an admin's correction, made from the admin user page.
    */
   email?: string;
 }

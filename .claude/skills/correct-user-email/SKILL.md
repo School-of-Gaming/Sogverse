@@ -7,7 +7,8 @@ description: Resolve a user's email change the admin user page refuses — a dup
 
 **A plain signup typo is not a hand operation any more.** An admin fixes it from the
 pencil beside the address on the user's admin page (`/admin/users/<id>`), which runs the
-same two writes described below through `PATCH /api/admin/users/[id]/email`. That page
+same two writes described below through `PATCH /api/admin/users/[id]/email`, and signs
+the account out besides (sessions and passwords, below). That page
 refuses exactly one case — the target address already belongs to another account — and
 that case is this skill's reason to exist. The script also remains for scripted or bulk
 changes, and for when there is no admin session to hand.
@@ -82,10 +83,16 @@ re-insert it against the surviving account, preserving the original timestamp.
 - **Verification state.** `trg_reset_email_verification` nulls `profiles.email_verified_at`
   on any email change, and every outstanding verification link self-invalidates (its HMAC
   re-derives from the current address).
-- **The password**, which is untouched. Worst case is one re-login. Note the surviving
-  account keeps *its own* credentials: after a duplicate purge the user's password and
-  parent PIN are the ones from the account that survived, which may not be the one they
-  most recently registered — worth telling them.
+- **Sessions and passwords, when the page makes the change.** It signs the account out
+  of every device, whatever the role. An adult keeps their password; an `email`-mode
+  child's is removed (set to NULL) and the welcome mail goes to the new address so they
+  set a new one, because a password set against the old address must not carry over to
+  an unproven one. **The script does none of this**: it moves the address and nothing
+  else, so sessions stay signed in and every password stays as it was — for an
+  `email`-mode child, the old password then opens the account at its new address. Prefer
+  the page for one. Note the surviving account keeps *its own* credentials: after a
+  duplicate purge the user's password and parent PIN are the ones from the account that
+  survived, which may not be the one they most recently registered — worth telling them.
 - **Every identity** is provider `email` with `provider_id = user_id`, so there is no
   email-keyed unique index to collide with there.
 
