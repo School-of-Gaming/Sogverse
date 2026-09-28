@@ -5082,11 +5082,7 @@
         "makePublicNeedsReady": "Marquez le profil comme prêt dans « Modifier le profil » pour pouvoir le rendre public.",
         "makePublicNotReady": "Le profil de {name} n’est plus marqué comme prêt, il n’a donc pas été rendu public.",
         "hide": "Masquer",
-        "visibilityError": "Impossible de modifier la visibilité du profil. Veuillez réessayer.",
-        "hideConfirm": {
-          "title": "Masquer le profil de {name} ?",
-          "body": "Il disparaît du site de School of Gaming jusqu’à ce qu’un administrateur le rende de nouveau public."
-        }
+        "visibilityError": "Impossible de modifier la visibilité du profil. Veuillez réessayer."
       }
     }
   }

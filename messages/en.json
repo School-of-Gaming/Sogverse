@@ -5082,11 +5082,7 @@
         "makePublicNeedsReady": "Mark the profile ready under Edit profile to be able to make it public.",
         "makePublicNotReady": "{name}’s profile is no longer marked ready, so it wasn’t made public.",
         "hide": "Hide",
-        "visibilityError": "Couldn’t change whether the profile is public. Please try again.",
-        "hideConfirm": {
-          "title": "Hide {name}’s profile?",
-          "body": "It comes off School of Gaming’s website until an admin makes it public again."
-        }
+        "visibilityError": "Couldn’t change whether the profile is public. Please try again."
       }
     }
   }

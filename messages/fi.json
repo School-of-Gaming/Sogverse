@@ -5082,11 +5082,7 @@
         "makePublicNeedsReady": "Merkitse profiili valmiiksi kohdassa Muokkaa profiilia, jotta voit julkaista sen.",
         "makePublicNotReady": "Profiilia ({name}) ei ole enää merkitty valmiiksi, joten sitä ei julkaistu.",
         "hide": "Piilota",
-        "visibilityError": "Profiilin näkyvyyden muuttaminen ei onnistunut. Yritä uudelleen.",
-        "hideConfirm": {
-          "title": "Piilotetaanko profiili ({name})?",
-          "body": "Se poistuu School of Gamingin verkkosivuilta, kunnes ylläpitäjä julkaisee sen uudelleen."
-        }
+        "visibilityError": "Profiilin näkyvyyden muuttaminen ei onnistunut. Yritä uudelleen."
       }
     }
   }

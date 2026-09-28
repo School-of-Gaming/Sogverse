@@ -4183,11 +4183,7 @@
         "makePublicNeedsReady": "Del’a’ yIchoH ’ej yIghuHmoH; vaj Hoch DaleghmoHlaH.",
         "makePublicNotReady": "{name} Del’a’ ghuHbe’choH; vaj Hoch leghmoHlu’be’.",
         "hide": "yISo’",
-        "visibilityError": "leghmoH choHlaHbe’. yInID.",
-        "hideConfirm": {
-          "title": "{name} Del’a’ DaSo’neS’a’?",
-          "body": "Qu’mey Daq So’lu’taH — Hoch leghmoHqa’ loHwI’ neH chegh."
-        }
+        "visibilityError": "leghmoH choHlaHbe’. yInID."
       }
     }
   }

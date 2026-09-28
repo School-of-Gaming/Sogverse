@@ -6,7 +6,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { TeamProfilePreviewFrame } from "@/components/team/team-profile-preview-frame";
 import {
   TeamProfileStatusPanel,
@@ -51,8 +50,7 @@ import {
  *
  * **Admins decide visibility, the Gedu readiness, so an admin has exactly two
  * actions, one button**: Make public while the profile is not public, Hide
- * while it is. Hide is the one that asks first: it removes something from the
- * public website. Make public does not: it is undone with the other button.
+ * while it is. Neither asks first: each is undone with the other.
  *
  * **Make public waits for ready.** An admin makes public what has been marked
  * ready and never ahead of it, which the database enforces; until then the
@@ -206,30 +204,32 @@ function ProfileActions({
   const setVisibility = useSetGeduTeamProfileApproval();
   // Set before the write and cleared once it settles: the card stays, and the
   // re-read that the write waits for is what swaps the button.
-  const [makingPublic, setMakingPublic] = useState(false);
-  const [makePublicError, setMakePublicError] = useState<
+  const [committing, setCommitting] = useState(false);
+  const [visibilityError, setVisibilityError] = useState<
     "notReady" | "failed" | null
   >(null);
-  const [confirmingHide, setConfirmingHide] = useState(false);
   const awaitingReady =
     visibility !== null && !visibility.isPublic && !visibility.ready;
 
-  function makePublic() {
-    setMakingPublic(true);
-    setMakePublicError(null);
+  function setPublic(approved: boolean) {
+    setCommitting(true);
+    setVisibilityError(null);
     void setVisibility
-      .mutateAsync({ geduId: userId, approved: true })
+      .mutateAsync({ geduId: userId, approved })
       .catch((error: unknown) => {
         // Someone unticked ready after this page was read; the hook has
         // re-read the profile, so the button is already disabled with its hint.
-        if (isTeamProfileNotReadyError(error)) {
-          setMakePublicError("notReady");
+        if (approved && isTeamProfileNotReadyError(error)) {
+          setVisibilityError("notReady");
           return;
         }
-        console.error("[team-profile] make public failed:", error);
-        setMakePublicError("failed");
+        console.error(
+          `[team-profile] ${approved ? "make public" : "hide"} failed:`,
+          error,
+        );
+        setVisibilityError("failed");
       })
-      .finally(() => setMakingPublic(false));
+      .finally(() => setCommitting(false));
   }
 
   return (
@@ -250,16 +250,21 @@ function ProfileActions({
         </Link>
         {visibility &&
           (visibility.isPublic ? (
-            <Button variant="outline" onClick={() => setConfirmingHide(true)}>
+            <Button
+              variant="outline"
+              onClick={() => setPublic(false)}
+              disabled={committing}
+            >
+              {committing && <Loader2 className="animate-spin" aria-hidden />}
               {t("hide")}
             </Button>
           ) : (
             <Button
-              onClick={makePublic}
-              disabled={makingPublic || awaitingReady}
+              onClick={() => setPublic(true)}
+              disabled={committing || awaitingReady}
               aria-describedby={awaitingReady ? hintId : undefined}
             >
-              {makingPublic && <Loader2 className="animate-spin" aria-hidden />}
+              {committing && <Loader2 className="animate-spin" aria-hidden />}
               {t("makePublic")}
             </Button>
           ))}
@@ -272,27 +277,12 @@ function ProfileActions({
           {t("makePublicNeedsReady")}
         </p>
       )}
-      {makePublicError !== null && (
+      {visibilityError !== null && (
         <StatusLine status="destructive" role="alert">
-          {makePublicError === "notReady"
+          {visibilityError === "notReady"
             ? t("makePublicNotReady", { name })
             : t("visibilityError")}
         </StatusLine>
-      )}
-      {visibility && (
-        <ConfirmDialog
-          open={confirmingHide}
-          onOpenChange={setConfirmingHide}
-          title={t("hideConfirm.title", { name })}
-          description={t("hideConfirm.body")}
-          confirmLabel={t("hide")}
-          confirmVariant="destructive"
-          holdWhileCommitting
-          onConfirm={() =>
-            setVisibility.mutateAsync({ geduId: userId, approved: false })
-          }
-          describeError={() => t("visibilityError")}
-        />
       )}
     </div>
   );

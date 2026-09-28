@@ -5082,11 +5082,7 @@
         "makePublicNeedsReady": "Markera profilen som klar under Redigera profil för att kunna göra den offentlig.",
         "makePublicNotReady": "Profilen för {name} är inte längre markerad som klar, så den gjordes inte offentlig.",
         "hide": "Dölj",
-        "visibilityError": "Det gick inte att ändra om profilen är offentlig. Försök igen.",
-        "hideConfirm": {
-          "title": "Dölja profilen för {name}?",
-          "body": "Den försvinner från School of Gamings webbplats tills en administratör gör den offentlig igen."
-        }
+        "visibilityError": "Det gick inte att ändra om profilen är offentlig. Försök igen."
       }
     }
   }
