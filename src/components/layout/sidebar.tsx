@@ -73,14 +73,12 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     { href: ROUTES.admin.camps, labelKey: "camps", icon: kindIcon("camp") },
     { href: ROUTES.admin.events, labelKey: "events", icon: kindIcon("event") },
     { href: ROUTES.admin.sites, labelKey: "sites", icon: <MapPin className="h-5 w-5" /> },
+    { href: ROUTES.admin.geduInvoicing, labelKey: "geduInvoicing", icon: <ReceiptText className="h-5 w-5" /> },
     { href: ROUTES.admin.municipalityInvoicing, labelKey: "municipalityInvoicing", icon: <Receipt className="h-5 w-5" /> },
     // Directly under the ledger it serves: a customer is only ever looked up
     // because an invoice is being raised, and the ledger is where a club with
     // no customer is reported.
     { href: ROUTES.admin.invoiceCustomers, labelKey: "invoiceCustomers", icon: <Building2 className="h-5 w-5" /> },
-    // Below the municipality ledger and its customers: the other half of the
-    // month's money, what the gedus invoice us for.
-    { href: ROUTES.admin.geduInvoicing, labelKey: "geduInvoicing", icon: <ReceiptText className="h-5 w-5" /> },
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },
