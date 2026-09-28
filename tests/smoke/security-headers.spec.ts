@@ -53,8 +53,9 @@ test.describe("Security Headers", () => {
   // decided set for GA4 plus Ads conversion, so a host that is needed and was
   // never added fails here instead of failing silently in production. Left out
   // deliberately, and therefore absent from the list on purpose: the
-  // per-country `google.<TLD>` Ads hosts and pagead2.googlesyndication.com,
-  // which carry an advertising audience sync rather than a conversion.
+  // per-country `google.<TLD>` hosts (the analytics tag's ga-audiences ping)
+  // and pagead2.googlesyndication.com, which carry an advertising audience sync
+  // rather than an analytics event or a conversion.
   test("names every host the container's tags reach", async ({ request }) => {
     const response = await request.get("/");
     const csp = response.headers()["content-security-policy"];
@@ -63,13 +64,15 @@ test.describe("Security Headers", () => {
     const connectSrc = /(?:^|; )connect-src ([^;]*)/.exec(csp)?.[1] ?? "";
     const frameSrc = /(?:^|; )frame-src ([^;]*)/.exec(csp)?.[1] ?? "";
 
-    // The collectors: the container's own image transport, the analytics
-    // collector (wildcarded because European traffic is collected on a regional
-    // subdomain), the three an Ads conversion pings, and the two an analytics
-    // property with advertising features beacons its remarketing ping to.
+    // The collectors: the container's own image transport, the two analytics
+    // collector domains (European traffic is collected on a regional
+    // subdomain of analytics.google.com), the three an Ads conversion pings,
+    // and the two an analytics property with advertising features beacons its
+    // remarketing ping to.
     const collectors = [
       "https://www.googletagmanager.com",
       "https://*.google-analytics.com",
+      "https://*.analytics.google.com",
       "https://www.googleadservices.com",
       "https://googleads.g.doubleclick.net",
       "https://td.doubleclick.net",
