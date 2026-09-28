@@ -291,9 +291,14 @@ export function FormSection({
  *
  * **Picking a file opens the crop step, and the crop happens here, locally**:
  * the framed area is drawn to a canvas at the stored size and shown in the
- * frame and the preview at once through an object URL. The upload of the
- * cropped bytes is the caller's (`onUpload`), because that is the backend
- * round trip; what the form holds is the local URL either way.
+ * frame and the preview at once through an object URL. The bytes go to the
+ * caller (`onCropped`), who keeps them for the save that uploads them; what
+ * the form holds is the local URL either way.
+ *
+ * **Every team photo is drawn `unoptimized`.** A saved one is a private object
+ * behind a short-lived signed URL, which the image optimiser would cache for a
+ * year under an unauthenticated address; a new crop is a local object URL the
+ * optimiser cannot fetch at all.
  *
  * **Object URLs are owned in pairs.** The picked file's URL lives exactly as
  * long as the crop dialog and is revoked when it closes; the cropped photo's
@@ -354,7 +359,7 @@ export function TeamProfilePhotoSection({
               width={photo.width}
               height={photo.height}
               alt=""
-              sizes="96px"
+              unoptimized
               className="h-full w-full object-cover"
             />
           ) : (

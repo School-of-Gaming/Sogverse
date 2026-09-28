@@ -4,7 +4,6 @@ export { TeamProfilesService } from "./team-profiles.service";
 export {
   teamProfileKeys,
   useTeamProfile,
-  useUploadTeamPhoto,
   useSaveOwnTeamProfile,
   useSaveGeduTeamProfile,
   useSetGeduTeamProfileApproval,

@@ -5045,7 +5045,7 @@
       "errors": {
         "save": "Det gick inte att spara profilen. Försök igen.",
         "incomplete": "Profilen måste vara komplett så länge den är markerad som klar att visas offentligt. Fyll i det som saknas och spara igen.",
-        "photoUpload": "Fotot laddades inte upp. Välj det igen och spara sedan.",
+        "photoUpload": "Fotot laddades inte upp, så inget sparades. Försök spara igen.",
         "photoGone": "Fotot har ändrats någon annanstans sedan du öppnade den här sidan. Ladda om sidan för att se profilen som den är nu."
       }
     },

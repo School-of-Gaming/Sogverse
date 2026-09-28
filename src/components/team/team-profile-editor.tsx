@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { TeamProfileEditorBody } from "@/components/team/team-profile-editor-body";
 import {
@@ -8,19 +8,17 @@ import {
   type TeamProfileContent,
 } from "@/components/team/team-profile-form";
 import {
+  TeamPhotoUploadError,
   isTeamProfileIncompleteError,
   isTeamProfilePhotoGoneError,
   useSaveGeduTeamProfile,
   useSaveOwnTeamProfile,
-  useUploadTeamPhoto,
+  type TeamPhotoToSave,
   type TeamProfile,
   type TeamProfilePhoto,
   type TeamProfileRecord,
   type TeamProfileSaveInput,
 } from "@/services/team-profiles";
-
-/** A save that could not go out because the photo it names never uploaded. */
-class PhotoUploadError extends Error {}
 
 /** What the last save in this visit wrote, or nothing yet. */
 interface LastSave {
@@ -30,8 +28,8 @@ interface LastSave {
 }
 
 /**
- * The profile editor's data shell: the photo uploads and the save, over the
- * record the page opened on.
+ * The profile editor's data shell: the save, over the record the page opened
+ * on.
  *
  * **What was saved becomes the page's saved state, locally.** A save sends the
  * content the form was showing, so once it lands that content *is* the saved
@@ -41,67 +39,58 @@ interface LastSave {
  * one the form holds, and the form would read as changed. So the editor never
  * re-reads what it has just written.
  *
- * **A photo is uploaded the moment it is cropped, and saved by its path.** The
- * form knows only the URL it shows the photo through; the save names the
- * object in the bucket. The saved photo's path is known, and a newly cropped
- * one's is whatever its upload resolves to, so a save waits for the latest
- * upload, and a failed upload fails the save that needed it.
+ * **A cropped photo stays in the browser until Save.** The form shows it
+ * through a local URL and the body hands its bytes to the save; the save
+ * stores them and names the stored object, and a refused save takes the
+ * object back out. The saved photo goes back by its known path, so an
+ * unchanged photo is never stored twice. Saving, Save stays busy through the
+ * upload as well as the write.
  */
 function useTeamProfileEditor(
   record: TeamProfileRecord,
-  write: (input: TeamProfileSaveInput, on: boolean) => Promise<void>,
+  write: (input: TeamProfileSaveInput, on: boolean) => Promise<string | null>,
 ) {
   const t = useTranslations("team.edit.errors");
-  const upload = useUploadTeamPhoto();
   const [lastSave, setLastSave] = useState<LastSave | null>(null);
   // Set before the write starts, so Save cannot be pressed twice between the
   // click and the first render the write causes; cleared once it settles
   // either way, because the page stays put through both.
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  /** The latest crop's upload, resolving to its path. */
-  const latestUpload = useRef<Promise<string> | null>(null);
 
   const savedPhotoSrc = lastSave
     ? lastSave.content.photo?.src
     : record.profile.photo?.src;
   const savedPhotoPath = lastSave ? lastSave.photoPath : record.photoPath;
 
-  function onUploadPhoto(photo: Blob) {
-    const path = upload
-      .mutateAsync({ ownerId: record.profile.id, photo })
-      .then((uploaded) => uploaded.path);
-    // Nothing waits on it until a save does, and that is where a failure is
-    // told; left unhandled until then, it would be reported as uncaught.
-    path.catch(() => {});
-    latestUpload.current = path;
-  }
-
-  async function photoPathFor(
+  function photoToSave(
     photo: TeamProfilePhoto | null,
-  ): Promise<string | null> {
+    crop: Blob | null,
+  ): TeamPhotoToSave {
     if (photo === null) return null;
-    if (photo.src === savedPhotoSrc || latestUpload.current === null) {
-      return savedPhotoPath;
+    if (photo.src === savedPhotoSrc) {
+      return savedPhotoPath === null ? null : { path: savedPhotoPath };
     }
-    try {
-      return await latestUpload.current;
-    } catch (error) {
-      throw new PhotoUploadError("The photo did not upload", { cause: error });
+    if (crop === null) {
+      throw new TeamPhotoUploadError("A new photo reached the save without its bytes");
     }
+    return { crop };
   }
 
-  async function onSave(content: TeamProfileContent, on: boolean) {
+  async function onSave(
+    content: TeamProfileContent,
+    on: boolean,
+    crop: Blob | null,
+  ) {
     setSaving(true);
     setSaveError(null);
     try {
-      const photoPath = await photoPathFor(content.photo);
-      await write(
+      const photoPath = await write(
         {
           nickname: content.nickname,
           title: content.title,
           pick: content.pick,
-          photoPath,
+          photo: photoToSave(content.photo, crop),
           translations: content.translations,
         },
         on,
@@ -112,7 +101,7 @@ function useTeamProfileEditor(
       // console for whoever is debugging it.
       console.error("[team-profile] save failed:", error);
       setSaveError(
-        error instanceof PhotoUploadError
+        error instanceof TeamPhotoUploadError
           ? t("photoUpload")
           : isTeamProfileIncompleteError(error)
             ? t("incomplete")
@@ -136,7 +125,7 @@ function useTeamProfileEditor(
     },
     saving,
     saveError,
-    actions: { onUploadPhoto, onSave },
+    actions: { onSave },
   };
 }
 

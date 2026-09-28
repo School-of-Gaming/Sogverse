@@ -5045,7 +5045,7 @@
       "errors": {
         "save": "Couldn’t save the profile. Please try again.",
         "incomplete": "The profile has to be complete while it is marked ready to be public. Fill in what is missing and save again.",
-        "photoUpload": "The photo didn’t upload. Choose it again, then save.",
+        "photoUpload": "The photo didn’t upload, so nothing was saved. Please try saving again.",
         "photoGone": "The photo was changed somewhere else since you opened this page. Reload the page to see the profile as it is now."
       }
     },

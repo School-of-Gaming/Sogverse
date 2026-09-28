@@ -165,23 +165,29 @@ export function isTeamProfilePublic(record: TeamProfileRecord): boolean {
 }
 
 /**
+ * The photo a save writes: the stored one, kept by its object path; a freshly
+ * cropped one, whose bytes the save stores first; or `null` for none.
+ */
+export type TeamPhotoToSave = { path: string } | { crop: Blob } | null;
+
+/**
  * What a save writes: the content a person edits, with the photo named by its
- * object path rather than by the URL the form shows it through. `title` is an
- * admin's own; it must be `null` for a Gedu.
+ * object path or handed over as bytes, never by the URL the form shows it
+ * through. `title` is an admin's own; it must be `null` for a Gedu.
  */
 export interface TeamProfileSaveInput {
   nickname: string | null;
   title: string | null;
   pick: PickId | null;
-  photoPath: string | null;
+  photo: TeamPhotoToSave;
   translations: readonly TeamProfileTranslation[];
 }
 
-/** A freshly uploaded photo: where it lives, and how to show it now. */
-export interface UploadedTeamPhoto {
-  path: string;
-  photo: TeamProfilePhoto;
-}
+/**
+ * A save that did not go out because its newly cropped photo could not be
+ * stored. Nothing was written: the profile is as it was.
+ */
+export class TeamPhotoUploadError extends Error {}
 
 // ---------------------------------------------------------------------------
 // Refusals

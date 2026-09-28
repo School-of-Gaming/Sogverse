@@ -6,6 +6,7 @@ import {
   TEAM_PHOTOS_BUCKET,
   TEAM_PROFILE_INCOMPLETE_SQLSTATE,
   TEAM_PROFILE_PHOTO_GONE_SQLSTATE,
+  TeamPhotoUploadError,
   isTeamProfilePhotoGoneError,
   isTeamProfilePublic,
   type TeamProfileSaveInput,
@@ -53,16 +54,21 @@ const FI_COMPLETE = {
   funFact: null,
 } as const;
 
+/**
+ * A save's input. `photoPath` names a stored photo to keep, the shape almost
+ * every case here wants; `photo` overrides it with a new crop.
+ */
 function content(
-  overrides: Partial<TeamProfileSaveInput> = {},
+  overrides: Partial<TeamProfileSaveInput> & { photoPath?: string | null } = {},
 ): TeamProfileSaveInput {
+  const { photoPath = null, ...rest } = overrides;
   return {
     nickname: "Creeperhug",
     title: null,
     pick: 6,
-    photoPath: null,
+    photo: photoPath === null ? null : { path: photoPath },
     translations: [EN_COMPLETE],
-    ...overrides,
+    ...rest,
   };
 }
 
@@ -206,27 +212,26 @@ describe("team profiles", () => {
       });
     });
 
-    it("uploads a photo, saves, and reads back what it saved", async () => {
+    it("stores a new crop with the save, and reads back what it saved", async () => {
       const service = new TeamProfilesService(geduAuth);
-      const uploaded = await service.uploadTeamPhoto(TEST_IDS.GEDU, photoBlob());
-      expect(uploaded.path.startsWith(`${TEST_IDS.GEDU}/`)).toBe(true);
-      expect(uploaded.photo).toMatchObject({ width: 800, height: 1000 });
-
-      await service.saveOwnTeamProfile(
+      const savedPath = await service.saveOwnTeamProfile(
         TEST_IDS.GEDU,
         content({
-          photoPath: uploaded.path,
+          photo: { crop: photoBlob() },
           translations: [FI_COMPLETE, EN_COMPLETE],
         }),
         true,
       );
+      expect(savedPath?.startsWith(`${TEST_IDS.GEDU}/`)).toBe(true);
+      expect(savedPath !== null && (await stored(savedPath))).toBe(true);
 
       const record = await service.getTeamProfile(TEST_IDS.GEDU);
       expect(record?.role).toBe("gedu");
       if (record?.role !== "gedu") return;
       expect(record.ready).toBe(true);
       expect(record.approval).toBe("pending");
-      expect(record.photoPath).toBe(uploaded.path);
+      expect(record.photoPath).toBe(savedPath);
+      expect(record.profile.photo).toMatchObject({ width: 800, height: 1000 });
       expect(record.profile.photo?.src).toContain("token=");
       expect(record.profile.nickname).toBe("Creeperhug");
       expect(record.profile.pick).toBe(6);
@@ -286,6 +291,39 @@ describe("team profiles", () => {
       expect((data ?? []).map((o) => `${TEST_IDS.GEDU}/${o.name}`)).toEqual([
         second,
       ]);
+    });
+
+    it("removes a new crop from the bucket when the save it came with is refused", async () => {
+      const service = new TeamProfilesService(geduAuth);
+      // On with no language: refused as incomplete, after the crop is stored.
+      await expect(
+        service.saveOwnTeamProfile(
+          TEST_IDS.GEDU,
+          content({ photo: { crop: photoBlob() }, translations: [] }),
+          true,
+        ),
+      ).rejects.toMatchObject({ code: TEAM_PROFILE_INCOMPLETE_SQLSTATE });
+
+      const { data } = await admin.storage
+        .from(TEAM_PHOTOS_BUCKET)
+        .list(TEST_IDS.GEDU);
+      expect(data ?? []).toEqual([]);
+    });
+
+    it("refuses a save whose crop cannot be stored, and writes nothing", async () => {
+      const notAPhoto = new Blob(["hello"], { type: "text/plain" });
+      await expect(
+        new TeamProfilesService(geduAuth).saveOwnTeamProfile(
+          TEST_IDS.GEDU,
+          content({ photo: { crop: notAPhoto } }),
+          false,
+        ),
+      ).rejects.toBeInstanceOf(TeamPhotoUploadError);
+      const { count } = await admin
+        .from("team_profiles")
+        .select("user_id", { count: "exact", head: true })
+        .eq("user_id", TEST_IDS.GEDU);
+      expect(count).toBe(0);
     });
 
     it("refuses a Gedu a title, and keeps an admin's", async () => {
@@ -407,6 +445,8 @@ describe("team profiles", () => {
 
   describe("the checkbox needs a complete profile", () => {
     async function saveOn(input: TeamProfileSaveInput) {
+      const photoPath =
+        input.photo !== null && "path" in input.photo ? input.photo.path : null;
       return geduAuth.rpc("save_team_profile", {
         p_user_id: TEST_IDS.GEDU,
         p_translations: input.translations.map((row) => ({
@@ -415,7 +455,7 @@ describe("team profiles", () => {
           long_description: row.longDescription,
           fun_fact: row.funFact,
         })),
-        p_photo_path: input.photoPath ?? undefined,
+        p_photo_path: photoPath ?? undefined,
         p_opted_in: true,
       });
     }

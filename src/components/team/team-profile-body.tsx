@@ -221,6 +221,11 @@ export function TeamProfileBody({
  * photo on its own layer rather than on the frame, where the photo would cover
  * it. With no pick the frame is the neutral edge, at the same width, so
  * choosing or clearing a colour in the editor moves nothing.
+ *
+ * **The photo is drawn `unoptimized`**: a saved one is a private object behind
+ * a short-lived signed URL, which the image optimiser would cache for a year
+ * under an unauthenticated address, and a new crop in the editor is a local
+ * object URL it cannot fetch at all.
  */
 function Portrait({
   photo,
@@ -243,7 +248,7 @@ function Portrait({
           width={photo.width}
           height={photo.height}
           alt=""
-          sizes="(min-width: 640px) 192px, 144px"
+          unoptimized
           className="h-full w-full object-cover"
           priority
         />

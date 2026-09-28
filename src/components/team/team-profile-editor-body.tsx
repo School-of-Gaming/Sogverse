@@ -44,15 +44,17 @@ import type {
  * caller's; the scenes pass ones that only move local state.
  */
 export interface TeamProfileActions {
-  /** A freshly cropped photo's bytes. The form already shows it. */
-  onUploadPhoto: (photo: Blob) => void;
   /**
    * Save the profile and the person's own checkbox together — a Gedu's
    * "ready", an admin's "show". The checkbox is a field like any other, so
    * ticking or unticking it does nothing until this runs, and what the person
    * agreed to show is exactly what they were looking at when they saved.
+   *
+   * `crop` is the bytes behind `content.photo` when this page cropped it, and
+   * `null` when the photo is the saved one or there is none: nothing is
+   * uploaded until this runs.
    */
-  onSave: (content: TeamProfileContent, on: boolean) => void;
+  onSave: (content: TeamProfileContent, on: boolean, crop: Blob | null) => void;
 }
 
 /** What the route tells the page about a save it is making. */
@@ -141,10 +143,7 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
   // that leaves room for both.
   const wide = props.role === "admin" || byAdmin ? "xl" : "lg";
 
-  const trackUrl = useOwnedObjectUrls(
-    form.photo?.src,
-    props.profile.photo?.src,
-  );
+  const crops = useOwnedCrops(form.photo?.src, props.profile.photo?.src);
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-24">
@@ -178,10 +177,7 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
         <div className="min-w-0 space-y-6">
           <TeamProfilePhotoSection
             photo={form.photo}
-            onCropped={(blob, url) => {
-              trackUrl(url);
-              props.actions.onUploadPhoto(blob);
-            }}
+            onCropped={crops.add}
             update={setForm}
           />
           <TeamProfileAboutSection
@@ -221,7 +217,9 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
             </Button>
             <Button
               disabled={!dirty || saving || tooLong || (on && gap !== null)}
-              onClick={() => props.actions.onSave(content, on)}
+              onClick={() =>
+                props.actions.onSave(content, on, crops.bytesOf(content.photo?.src))
+              }
             >
               {saving && <Loader2 className="animate-spin" aria-hidden />}
               {t("actions.save")}
@@ -247,18 +245,20 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
 }
 
 /**
- * The object URLs this page made for cropped photos, each revoked once
- * neither the form nor the saved profile shows it, and all of them on unmount.
- * Returns the function that hands a new one over.
+ * The photos this page cropped: each one's bytes, kept for the save that
+ * uploads them, under the object URL made to show it. Each is let go — the
+ * bytes dropped and the URL revoked — once neither the form nor the saved
+ * profile shows it, and all of them on unmount; so a discarded, replaced or
+ * removed crop goes nowhere.
  */
-function useOwnedObjectUrls(
+function useOwnedCrops(
   formSrc: string | undefined,
   savedSrc: string | undefined,
 ) {
-  const owned = useRef(new Set<string>());
+  const owned = useRef(new Map<string, Blob>());
 
   useEffect(() => {
-    for (const url of owned.current) {
+    for (const url of owned.current.keys()) {
       if (url === formSrc || url === savedSrc) continue;
       URL.revokeObjectURL(url);
       owned.current.delete(url);
@@ -266,15 +266,22 @@ function useOwnedObjectUrls(
   }, [formSrc, savedSrc]);
 
   useEffect(() => {
-    const urls = owned.current;
+    const crops = owned.current;
     return () => {
-      for (const url of urls) URL.revokeObjectURL(url);
-      urls.clear();
+      for (const url of crops.keys()) URL.revokeObjectURL(url);
+      crops.clear();
     };
   }, []);
 
-  return (url: string) => {
-    owned.current.add(url);
+  return {
+    /** A new crop's bytes and the object URL made for them. */
+    add(blob: Blob, url: string) {
+      owned.current.set(url, blob);
+    },
+    /** The bytes behind a URL this page made, or `null` for any other. */
+    bytesOf(url: string | undefined): Blob | null {
+      return url === undefined ? null : (owned.current.get(url) ?? null);
+    },
   };
 }
 

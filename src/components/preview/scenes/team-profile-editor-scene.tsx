@@ -26,8 +26,8 @@ import type {
  *
  * The scene stands in for the route's data shell: saving updates the profile
  * and the checkbox it hands the body, as a refetch would, so save, discard and
- * the status all behave. The upload is inert — the crop runs for real and the
- * form shows the result, but no bytes go anywhere. An admin's approval is the
+ * the status all behave. The crop runs for real and the form shows the
+ * result, but a save sends its bytes nowhere. An admin's approval is the
  * fixture's and does not move here. The admin page also carries the one it
  * edits a Gedu's profile on, whose switch is the Gedu's and so never moves.
  */
@@ -103,7 +103,6 @@ function localActions<P extends TeamProfile>(
   setSwitch: (on: boolean) => void,
 ): TeamProfileActions {
   return {
-    onUploadPhoto: noop,
     onSave: (content, on) => {
       setProfile(profileWithContent(profile, content));
       setSwitch(on);

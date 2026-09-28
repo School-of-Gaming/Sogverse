@@ -33,20 +33,8 @@ export function useTeamProfile(
 }
 
 /**
- * Store a cropped photo in the person's folder. It changes nothing saved, so
- * there is nothing to invalidate: the returned path goes into the next save.
- */
-export function useUploadTeamPhoto() {
-  const service = new TeamProfilesService(getClient());
-
-  return useMutation({
-    mutationFn: ({ ownerId, photo }: { ownerId: string; photo: Blob }) =>
-      service.uploadTeamPhoto(ownerId, photo),
-  });
-}
-
-/**
- * Save the caller's own profile and their checkbox. The invalidation is
+ * Save the caller's own profile and their checkbox, storing a newly cropped
+ * photo first. Resolves to the saved photo's path. The invalidation is
  * returned so `mutateAsync` settles only once the saved profile is re-read.
  */
 export function useSaveOwnTeamProfile() {
@@ -68,7 +56,10 @@ export function useSaveOwnTeamProfile() {
   });
 }
 
-/** An admin saves a Gedu's profile content, leaving the Gedu's checkbox alone. */
+/**
+ * An admin saves a Gedu's profile content, leaving the Gedu's checkbox alone.
+ * Resolves to the saved photo's path.
+ */
 export function useSaveGeduTeamProfile() {
   const queryClient = useQueryClient();
   const service = new TeamProfilesService(getClient());

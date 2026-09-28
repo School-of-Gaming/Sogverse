@@ -10,11 +10,34 @@ import {
   type GeduTeamProfileDecision,
   type TeamProfilePhoto,
   type TeamProfileRecord,
+  TeamPhotoUploadError,
+  type TeamPhotoToSave,
   type TeamProfileSaveInput,
   type TeamProfileTranslation,
-  type UploadedTeamPhoto,
 } from "./team-profiles.types";
 import { saveTeamProfileResult } from "./team-profiles.contracts";
+
+/*
+ * Team profiles: read, save, and the photos behind them.
+ *
+ * **A photo reaches storage only inside a save.** A crop stays in the browser
+ * until the person saves; the save stores it, names it, and removes it again
+ * if the database refuses the save, so the bucket holds no photo of a real
+ * person that no profile names.
+ *
+ * **Photos are private and are read through short-lived signed URLs**, drawn
+ * without the image optimiser: it would cache each one for a year under an
+ * unauthenticated address, and with a new token on every read it would never
+ * hit that cache anyway.
+ *
+ * **The public team page, when it is built, serves photos through the app's
+ * own address**, which checks on every request that the profile is public,
+ * backed by a storage read rule that anyone may read a photo while its profile
+ * is public. Its responses cache for minutes, so a profile taken down stops
+ * showing its photo soon after. Never a public bucket, which would leave a
+ * taken-down photo readable by anyone holding its address, and never the
+ * optimiser over signed URLs.
+ */
 
 /**
  * A person with their team profile embedded. The name and the spoken languages
@@ -80,55 +103,29 @@ export class TeamProfilesService {
    * Save the caller's own profile together with their checkbox — a Gedu's
    * "ready", an admin's "show". The database refuses the checkbox on while the
    * profile is incomplete (`isTeamProfileIncompleteError`).
+   *
+   * Resolves to the saved photo's object path, or `null` for none.
    */
   async saveOwnTeamProfile(
     userId: string,
     input: TeamProfileSaveInput,
     on: boolean,
-  ): Promise<void> {
-    await this.save(userId, input, on);
+  ): Promise<string | null> {
+    return this.save(userId, input, on);
   }
 
   /**
    * An admin saves a Gedu's profile content. The Gedu's own checkbox is their
    * consent and is left exactly as they saved it; the approval is untouched
    * too, because admins are trusted.
+   *
+   * Resolves to the saved photo's object path, or `null` for none.
    */
   async saveGeduTeamProfile(
     geduId: string,
     input: TeamProfileSaveInput,
-  ): Promise<void> {
-    await this.save(geduId, input, null);
-  }
-
-  /**
-   * Store a freshly cropped photo in the person's folder and hand back its
-   * path and a URL to show it by. Nothing references it until a save names the
-   * path, so a photo picked and never saved changes nothing public.
-   *
-   * Each upload gets a new name: overwriting the saved photo in place would
-   * change the public page before the person saved anything.
-   */
-  async uploadTeamPhoto(
-    ownerId: string,
-    photo: Blob,
-  ): Promise<UploadedTeamPhoto> {
-    const extension = photoExtension(photo.type);
-    if (extension === null) {
-      throw new Error(`A team photo is a JPEG or a WebP, not ${photo.type}`);
-    }
-    const path = `${ownerId}/${crypto.randomUUID()}.${extension}`;
-    const bucket = this.supabase.storage.from(TEAM_PHOTOS_BUCKET);
-
-    const upload = await bucket.upload(path, photo, {
-      contentType: photo.type,
-      // The bytes behind a name never change: every upload is a new name.
-      cacheControl: "31536000",
-      upsert: false,
-    });
-    if (upload.error) throw upload.error;
-
-    return { path, photo: photoOf(await this.signedUrl(path)) };
+  ): Promise<string | null> {
+    return this.save(geduId, input, null);
   }
 
   /**
@@ -146,39 +143,110 @@ export class TeamProfilesService {
     if (error) throw error;
   }
 
+  /**
+   * Store the photo if it is a new crop, then save the profile naming it. A
+   * refused save removes the photo it has just stored, and a landed one
+   * removes the photo it replaced.
+   */
   private async save(
     userId: string,
     input: TeamProfileSaveInput,
     on: boolean | null,
-  ): Promise<void> {
-    const { data, error } = await this.supabase.rpc(
-      "save_team_profile",
-      {
-        p_user_id: userId,
-        p_translations: input.translations.map((row) => ({
-          locale: row.locale,
-          short_description: row.shortDescription,
-          long_description: row.longDescription,
-          fun_fact: row.funFact,
-        })),
-        p_nickname: input.nickname ?? undefined,
-        p_title: input.title ?? undefined,
-        p_pick: input.pick ?? undefined,
-        p_photo_path: input.photoPath ?? undefined,
-        p_opted_in: on ?? undefined,
-      },
-    );
-    if (error) throw error;
-    const supersededPath = saveTeamProfileResult.parse(data);
+  ): Promise<string | null> {
+    const stored = await this.storedPhotoPath(userId, input.photo);
+    const photoPath = stored?.path ?? null;
+
+    let supersededPath: string | null;
+    try {
+      supersededPath = await this.write(userId, input, photoPath, on);
+    } catch (error) {
+      // Nothing names the photo this save stored, so it goes with the save.
+      // Best effort: the refusal is what the caller needs to hear, and a
+      // leftover object in a private bucket is unreadable to anyone else.
+      if (stored?.isNew) await this.removePhoto(stored.path);
+      throw error;
+    }
 
     // The photo the save replaced is referenced by nothing now. Removing it is
     // tidying, not part of the save: the save has landed, and a failure here
     // leaves an unreferenced object in a private bucket, which nobody can see.
-    if (supersededPath !== null) {
-      await this.supabase.storage
-        .from(TEAM_PHOTOS_BUCKET)
-        .remove([supersededPath]);
+    if (supersededPath !== null) await this.removePhoto(supersededPath);
+    return photoPath;
+  }
+
+  /** The photo's object path, storing a new crop first; `null` for none. */
+  private async storedPhotoPath(
+    ownerId: string,
+    photo: TeamPhotoToSave,
+  ): Promise<{ path: string; isNew: boolean } | null> {
+    if (photo === null) return null;
+    if ("path" in photo) return { path: photo.path, isNew: false };
+    try {
+      return { path: await this.storePhoto(ownerId, photo.crop), isNew: true };
+    } catch (error) {
+      throw new TeamPhotoUploadError("The photo did not upload", {
+        cause: error,
+      });
     }
+  }
+
+  /**
+   * Store a cropped photo in the person's folder under a new name, and hand
+   * back its path. Overwriting the saved photo in place would change what the
+   * profile shows before the save that names the new one has landed.
+   */
+  private async storePhoto(ownerId: string, photo: Blob): Promise<string> {
+    const extension = photoExtension(photo.type);
+    if (extension === null) {
+      throw new Error(`A team photo is a JPEG or a WebP, not ${photo.type}`);
+    }
+    const path = `${ownerId}/${crypto.randomUUID()}.${extension}`;
+    const upload = await this.supabase.storage
+      .from(TEAM_PHOTOS_BUCKET)
+      .upload(path, photo, {
+        contentType: photo.type,
+        // A browser may keep the bytes as long as the signed URL that fetched
+        // them lives, and no longer. The bytes behind a name never change, but
+        // the photo is private: a copy cached past its URL's expiry would stay
+        // viewable on that browser after the photo was replaced, removed or
+        // taken down.
+        cacheControl: String(TEAM_PHOTO_URL_TTL_SECONDS),
+        upsert: false,
+      });
+    if (upload.error) throw upload.error;
+    return path;
+  }
+
+  private async removePhoto(path: string): Promise<void> {
+    const { error } = await this.supabase.storage
+      .from(TEAM_PHOTOS_BUCKET)
+      .remove([path]);
+    if (error) console.error("[team-profile] photo not removed:", error);
+  }
+
+  /** The database save. Resolves to the photo path it replaced, or `null`. */
+  private async write(
+    userId: string,
+    input: TeamProfileSaveInput,
+    photoPath: string | null,
+    on: boolean | null,
+  ): Promise<string | null> {
+    const { data, error } = await this.supabase.rpc("save_team_profile", {
+      p_user_id: userId,
+      p_translations: input.translations.map((row) => ({
+        locale: row.locale,
+        short_description: row.shortDescription,
+        long_description: row.longDescription,
+        fun_fact: row.funFact,
+      })),
+      p_nickname: input.nickname ?? undefined,
+      p_title: input.title ?? undefined,
+      p_pick: input.pick ?? undefined,
+      p_photo_path: photoPath ?? undefined,
+      p_opted_in: on ?? undefined,
+    });
+    if (error) throw error;
+    return saveTeamProfileResult.parse(data);
   }
 
   private async signedUrl(path: string): Promise<string> {

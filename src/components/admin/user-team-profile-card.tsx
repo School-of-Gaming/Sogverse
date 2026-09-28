@@ -120,7 +120,9 @@ function ProfileSummary({ record }: { record: TeamProfileRecord }) {
             width={profile.photo.width}
             height={profile.photo.height}
             alt={t("photoAlt", { name: profile.firstName })}
-            sizes="80px"
+            // A private photo behind a short-lived signed URL: the optimiser
+            // would cache it for a year under an unauthenticated address.
+            unoptimized
             className="h-full w-full object-cover"
           />
         ) : (
