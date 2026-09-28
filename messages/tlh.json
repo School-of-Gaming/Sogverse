@@ -1284,7 +1284,7 @@
         "usernameTaken": "pongvam ghaj latlh SuvwI’. latlh yIwIv!",
         "usernameSaveError": "pong choHlaHbe’; pagh pollu’. yInIDqa’!",
         "usernameSavedDetailsFailed": "pong choHlu’, ’ach bogh jaj Segh je pollu’be’. yInIDqa’!",
-        "emailHint": "DaH chu’ Daq lo’ ngaQHa’moHmeH.",
+        "emailHint": "DaH chu’ Daq lo’ ngaQHa’moHmeH. Daq ngu’be’lu’, ghaH ngu’pa’.",
         "emailSaveError": "QIn Daq choHlaHbe’; pagh pollu’. yInIDqa’!",
         "emailSavedDetailsFailed": "QIn Daq choHlu’, ’ach bogh jaj Segh je pollu’be’. yInIDqa’!"
       },

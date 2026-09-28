@@ -1240,14 +1240,14 @@
         "usernameTaken": "That username is already taken. Try another one.",
         "usernameSaveError": "Couldn’t change the username, so nothing was saved. Please try again.",
         "usernameSavedDetailsFailed": "The username was changed, but the birth date and gender weren’t saved. Please try again.",
-        "emailHint": "From now on they sign in with the new address.",
+        "emailHint": "From now on they sign in with the new address. It shows as not verified until they confirm it.",
         "emailSaveError": "Couldn’t change the email address, so nothing was saved. Please try again.",
         "emailSavedDetailsFailed": "The email address was changed, but the birth date and gender weren’t saved. Please try again."
       },
       "emailEdit": {
         "edit": "Change email address",
         "title": "Change email address",
-        "description": "From now on they sign in with the new address. It shows as not verified until they confirm it again.",
+        "description": "From now on they sign in with the new address. It shows as not verified until they confirm it.",
         "label": "Email address",
         "invalid": "Enter a valid email address.",
         "taken": "This address already belongs to another account. Merging or removing that account can’t be done here — ask a developer to handle it.",

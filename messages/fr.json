@@ -1240,14 +1240,14 @@
         "usernameTaken": "Ce nom d’utilisateur est déjà pris. Essayez-en un autre.",
         "usernameSaveError": "Impossible de modifier le nom d’utilisateur : rien n’a été enregistré. Veuillez réessayer.",
         "usernameSavedDetailsFailed": "Le nom d’utilisateur a été modifié, mais la date de naissance et le genre n’ont pas été enregistrés. Veuillez réessayer.",
-        "emailHint": "Désormais, l’enfant se connecte avec la nouvelle adresse.",
+        "emailHint": "Désormais, l’enfant se connecte avec la nouvelle adresse. Elle apparaît comme non vérifiée jusqu’à ce qu’elle soit confirmée.",
         "emailSaveError": "Impossible de modifier l’adresse e-mail : rien n’a été enregistré. Veuillez réessayer.",
         "emailSavedDetailsFailed": "L’adresse e-mail a été modifiée, mais la date de naissance et le genre n’ont pas été enregistrés. Veuillez réessayer."
       },
       "emailEdit": {
         "edit": "Modifier l’adresse e-mail",
         "title": "Modifier l’adresse e-mail",
-        "description": "Désormais, la connexion se fait avec la nouvelle adresse. Elle apparaît comme non vérifiée jusqu’à ce qu’elle soit de nouveau confirmée.",
+        "description": "Désormais, la connexion se fait avec la nouvelle adresse. Elle apparaît comme non vérifiée jusqu’à ce qu’elle soit confirmée.",
         "label": "Adresse e-mail",
         "invalid": "Saisissez une adresse e-mail valide.",
         "taken": "Cette adresse appartient déjà à un autre compte. Fusionner ou supprimer ce compte n’est pas possible ici : demandez à un développeur de s’en charger.",

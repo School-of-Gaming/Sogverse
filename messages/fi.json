@@ -1240,14 +1240,14 @@
         "usernameTaken": "Käyttäjätunnus on jo varattu. Kokeile toista.",
         "usernameSaveError": "Käyttäjätunnuksen vaihtaminen epäonnistui, joten mitään ei tallennettu. Yritä uudelleen.",
         "usernameSavedDetailsFailed": "Käyttäjätunnus vaihdettiin, mutta syntymäaikaa ja sukupuolta ei tallennettu. Yritä uudelleen.",
-        "emailHint": "Tästä lähtien lapsi kirjautuu uudella osoitteella.",
+        "emailHint": "Tästä lähtien lapsi kirjautuu uudella osoitteella. Osoite näkyy vahvistamattomana, kunnes hän vahvistaa sen.",
         "emailSaveError": "Sähköpostiosoitteen vaihtaminen epäonnistui, joten mitään ei tallennettu. Yritä uudelleen.",
         "emailSavedDetailsFailed": "Sähköpostiosoite vaihdettiin, mutta syntymäaikaa ja sukupuolta ei tallennettu. Yritä uudelleen."
       },
       "emailEdit": {
         "edit": "Vaihda sähköpostiosoite",
         "title": "Vaihda sähköpostiosoite",
-        "description": "Tästä lähtien käyttäjä kirjautuu uudella osoitteella. Osoite näkyy vahvistamattomana, kunnes hän vahvistaa sen uudelleen.",
+        "description": "Tästä lähtien käyttäjä kirjautuu uudella osoitteella. Osoite näkyy vahvistamattomana, kunnes hän vahvistaa sen.",
         "label": "Sähköpostiosoite",
         "invalid": "Anna kelvollinen sähköpostiosoite.",
         "taken": "Osoite kuuluu jo toiselle tilille. Toisen tilin yhdistämistä tai poistamista ei voi tehdä täällä – pyydä kehittäjää hoitamaan asia.",
