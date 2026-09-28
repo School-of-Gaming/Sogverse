@@ -1279,6 +1279,15 @@
         },
         "ageYears": "{age, plural, one {# DIS} other {# DIS}}"
       },
+      "emailEdit": {
+        "edit": "QIn Daq yIchoH",
+        "title": "QIn Daq yIchoH",
+        "description": "DaH chu’ Daq lo’taH ghaH; mu’ wuS rap lo’taH. chu’ Daq ngu’be’lu’, ghaH ngu’pa’.",
+        "label": "QIn Daq",
+        "invalid": "QIn Daq lugh yInob.",
+        "taken": "latlh mab ghaj Daqvam. naDev mab DamuvmoHlaHbe’ — ghun yIghel!",
+        "saveError": "QIn Daq choHlaHbe’. yInIDqa’!"
+      },
       "gameAccounts": {
         "title": "QujmeH tetlh",
         "description": "QujwI’ pong yIchoH ghap yIcher. bIpolDI’ pong chel Qu’qoq."

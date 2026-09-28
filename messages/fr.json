@@ -1235,6 +1235,15 @@
         },
         "ageYears": "{age, plural, one {# an} other {# ans}}"
       },
+      "emailEdit": {
+        "edit": "Modifier l’adresse e-mail",
+        "title": "Modifier l’adresse e-mail",
+        "description": "Cette personne se connectera désormais avec la nouvelle adresse, avec le même mot de passe. La nouvelle adresse apparaît comme non vérifiée jusqu’à sa confirmation.",
+        "label": "Adresse e-mail",
+        "invalid": "Saisissez une adresse e-mail valide.",
+        "taken": "Cette adresse appartient déjà à un autre compte. Fusionner ou supprimer ce compte n’est pas possible ici : demandez à un développeur de s’en charger.",
+        "saveError": "Impossible de modifier l’adresse e-mail. Veuillez réessayer."
+      },
       "gameAccounts": {
         "title": "Comptes de jeu",
         "description": "Définissez ou corrigez les noms d’utilisateur de jeu de ce compte. L’enregistrement vérifie le nom auprès de la plateforme."

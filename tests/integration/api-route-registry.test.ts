@@ -225,6 +225,7 @@ const TESTS = {
   productsParticipationsSwitch: "tests/integration/api/admin-switch-club.test.ts",
   productsUpdate: "tests/integration/api/products-update.test.ts",
   register: "tests/integration/auth/register.test.ts",
+  adminUserEmail: "tests/integration/api/admin-user-email.test.ts",
   adminUserGameAccount: "tests/integration/api/admin-user-game-account.test.ts",
   robloxAccount: "tests/integration/api/roblox-account.test.ts",
   robloxAvatars: "tests/integration/api/roblox-avatars.test.ts",
@@ -281,6 +282,18 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "createLocationBody" },
         test: TESTS.adminLocations,
+      },
+    },
+  },
+
+  "src/app/api/admin/users/[id]/email/route.ts": {
+    adminClient:
+      "the Auth Admin API, which alone moves auth.users and auth.identities together and enforces the address's uniqueness, and the profiles.email write that follows it, which authenticated holds no UPDATE grant on. The caller is established as an admin by this route's own role gate, and the target's profile is read on the user client first",
+    handlers: {
+      PATCH: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "adminUserEmailBody" },
+        test: TESTS.adminUserEmail,
       },
     },
   },

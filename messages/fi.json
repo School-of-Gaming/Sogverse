@@ -1235,6 +1235,15 @@
         },
         "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}"
       },
+      "emailEdit": {
+        "edit": "Vaihda sähköpostiosoite",
+        "title": "Vaihda sähköpostiosoite",
+        "description": "Käyttäjä kirjautuu jatkossa uudella osoitteella ja samalla salasanalla. Uusi osoite näkyy vahvistamattomana, kunnes käyttäjä vahvistaa sen.",
+        "label": "Sähköpostiosoite",
+        "invalid": "Anna kelvollinen sähköpostiosoite.",
+        "taken": "Osoite kuuluu jo toiselle tilille. Toisen tilin yhdistämistä tai poistamista ei voi tehdä täällä – pyydä kehittäjää hoitamaan asia.",
+        "saveError": "Sähköpostiosoitteen vaihtaminen epäonnistui. Yritä uudelleen."
+      },
       "gameAccounts": {
         "title": "Pelitilit",
         "description": "Aseta tai korjaa tämän tilin pelikäyttäjänimet. Tallennus tarkistaa nimen pelialustalta."

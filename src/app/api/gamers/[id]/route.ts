@@ -3,6 +3,10 @@ import { randomBytes } from "crypto";
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
+import {
+  identitiesHoldEmail,
+  isEmailAlreadyRegistered,
+} from "@/lib/auth-email.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   randomSyntheticGamerEmail,
@@ -617,10 +621,7 @@ async function copyAddressToProfile(args: {
       500,
     );
   }
-  const identities = (reread.user.identities ?? [])
-    .map((identity) => identity.identity_data?.email)
-    .filter((email): email is string => typeof email === "string");
-  if (!identities.some((email) => email.toLowerCase() === newEmail.toLowerCase())) {
+  if (!identitiesHoldEmail(reread.user, newEmail)) {
     throw new ApiError(
       `gamer ${gamerId}: auth.users moved but auth.identities did not — sign-in still answers to the old address`,
       500,
@@ -650,19 +651,4 @@ async function copyAddressToProfile(args: {
       500,
     );
   }
-}
-
-/**
- * Whether GoTrue refused because the address already has an account. The same
- * two-step test the registration routes use: the machine-readable code first,
- * the prose as the fallback for a deployment that drops it.
- */
-function isEmailAlreadyRegistered(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  if ("code" in error && error.code === "email_exists") return true;
-  return (
-    "message" in error &&
-    typeof error.message === "string" &&
-    /already( been)? registered/i.test(error.message)
-  );
 }

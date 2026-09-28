@@ -2,8 +2,9 @@
 
 import { useMemo, useRef, useState, type RefObject } from "react";
 import { formatInTimeZone } from "date-fns-tz";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { EditPencilButton } from "@/components/admin/edit-pencil-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -112,14 +113,7 @@ export function GamerPersonalDetails({
             direct result of the admin confirming the dialog they opened from
             here, not something arriving on data's own schedule. Nothing moves
             while they are merely reading the line. */}
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          aria-label={t("edit")}
-          className="shrink-0 rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
-        >
-          <Pencil className="h-3.5 w-3.5" aria-hidden />
-        </button>
+        <EditPencilButton label={t("edit")} onClick={() => setEditing(true)} />
       </div>
 
       {/* `Dialog` renders nothing while closed, so the form below only mounts

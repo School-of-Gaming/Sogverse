@@ -1,11 +1,13 @@
 /**
- * Corrects a user's email address by hand — the signup typo case.
+ * Corrects a user's email address by hand.
  *
- * There is no email-change flow in the app (`profiles.email` carries no UPDATE
- * grant for `authenticated`, so not even an admin session can write it), which
- * makes this a recurring hand operation. The procedure is the
- * `correct-user-email` skill; this script is the mechanism that
- * keeps the two writes in step.
+ * A plain signup typo is fixed in-app: the admin user page's address line has
+ * an editor that runs these same two writes through
+ * `PATCH /api/admin/users/[id]/email`. This script remains for what that page
+ * does not do — scripted or bulk changes, a change with no admin session to
+ * hand, and reporting on the duplicate-account case the page refuses. The
+ * procedure is the `correct-user-email` skill; this script is the mechanism
+ * that keeps the two writes in step.
  *
  * Report-only unless told otherwise:
  *

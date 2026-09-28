@@ -4,6 +4,7 @@ import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
 import { Constants } from "@/types";
 import type { Profile } from "@/types";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
+import { realEmailValue } from "./parent-registration.contracts";
 
 /**
  * The `profiles` columns a `user_list_entries` row carries, with the NOT NULLs
@@ -225,3 +226,37 @@ export const adminGameAccountWriteResult = z.discriminatedUnion("platform", [
 export type AdminGameAccountWriteResult = z.infer<
   typeof adminGameAccountWriteResult
 >;
+
+/**
+ * Wire shapes for an admin correcting somebody else's sign-in address
+ * (`PATCH /api/admin/users/[id]/email`).
+ *
+ * The address travels under `realEmailValue`, the rule every address a person
+ * types to open an account already obeys: trimmed, folded to lowercase the way
+ * GoTrue stores it, and fenced off our own synthetic gamer domain. An admin's
+ * correction therefore produces exactly the row a signup with the right address
+ * would have, and the dialog parses with the same schema before sending, so a
+ * malformed address is answered in place rather than a round trip later.
+ */
+export const adminUserEmailBody = z.object({ email: realEmailValue });
+
+export type AdminUserEmailBody = z.infer<typeof adminUserEmailBody>;
+
+/** What the write answers with: the address both halves now hold. */
+export const adminUserEmailWriteResult = z.object({
+  success: z.literal(true),
+  email: z.string(),
+});
+
+export type AdminUserEmailWriteResult = z.infer<
+  typeof adminUserEmailWriteResult
+>;
+
+/**
+ * The one refusal of the address write an admin can act on: the address
+ * already signs somebody else in. That is the duplicate-account case, which
+ * the admin page cannot resolve — freeing the address means deciding what
+ * becomes of the other account's data — so the dialog names it and sends the
+ * admin to handle it by hand.
+ */
+export const USER_EMAIL_TAKEN = "EMAIL_TAKEN";

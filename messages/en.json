@@ -1235,6 +1235,15 @@
         },
         "ageYears": "{age, plural, one {# year old} other {# years old}}"
       },
+      "emailEdit": {
+        "edit": "Change email address",
+        "title": "Change email address",
+        "description": "They’ll sign in with the new address from now on, with the same password. The new address shows as not verified until they confirm it.",
+        "label": "Email address",
+        "invalid": "Enter a valid email address.",
+        "taken": "This address already belongs to another account. Merging or removing that account can’t be done here — ask a developer to handle it.",
+        "saveError": "Couldn’t change the email address. Please try again."
+      },
       "gameAccounts": {
         "title": "Game accounts",
         "description": "Set or correct this account's game usernames. Saving checks the name with the platform."

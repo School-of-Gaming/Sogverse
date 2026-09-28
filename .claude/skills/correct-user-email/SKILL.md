@@ -1,13 +1,16 @@
 ---
 name: correct-user-email
-description: Change or correct a user's email address on staging or prod (a signup typo, or a duplicate account already holding the right address) — there is no in-app flow. Runs scripts/correct-user-email.ts and covers the duplicate-account case.
+description: Resolve a user's email change the admin user page refuses — a duplicate account already holding the right address — or change addresses from a script (bulk, or with no admin session). A plain signup typo is fixed in-app, from the pencil beside the address on the admin user page. Runs scripts/correct-user-email.ts.
 ---
 
 # Correcting a user's email by hand
 
-There is no email-change flow in the app — `profiles.email` carries no UPDATE grant for
-`authenticated`, so even an admin session cannot write it through PostgREST. The signup
-typo is therefore a hand operation.
+**A plain signup typo is not a hand operation any more.** An admin fixes it from the
+pencil beside the address on the user's admin page (`/admin/users/<id>`), which runs the
+same two writes described below through `PATCH /api/admin/users/[id]/email`. That page
+refuses exactly one case — the target address already belongs to another account — and
+that case is this skill's reason to exist. The script also remains for scripted or bulk
+changes, and for when there is no admin session to hand.
 
 `scripts/correct-user-email.ts` is the how; this skill is the why. Report-only unless
 told otherwise, and safe to repeat:
@@ -43,8 +46,8 @@ hand check reads `auth.identities` over psql.
 
 ## When the target address is already taken
 
-That is the duplicate-account case, not a typo, and the script refuses it rather than
-guessing. Someone registered twice — once with the typo, once correctly — and the second
+That is the duplicate-account case, not a typo, and both the admin page and the script
+refuse it rather than guessing. Someone registered twice — once with the typo, once correctly — and the second
 account has to be dealt with before the address is free. Inventory both sides first
 (every FK to `public.profiles`, so nothing is missed), then decide:
 

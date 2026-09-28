@@ -1,5 +1,5 @@
 import { Link } from "@/i18n/navigation";
-import { AlertTriangle, ArrowLeft, MailCheck, MailX, Package, Users } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Package, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { ROUTES, ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
@@ -16,6 +16,7 @@ import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card
 import { UserMarketingCard } from "@/components/admin/user-marketing-card";
 import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-consent-card";
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
+import { UserEmailLine } from "@/components/admin/user-email-line";
 import { gamerUsernameFromEmail, hasRealEmail } from "@/lib/gamer-sign-in";
 import { formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -239,8 +240,8 @@ export default async function AdminUserDetailPage({
 
   // Whether this account's stored address is a mailbox rather than one of our
   // synthetic handles. True for every adult by construction, and for a child
-  // only in sign-in mode `email` — which is also the only child whose address is
-  // worth printing or whose verification state means anything.
+  // only in sign-in mode `email` — which is also the only child whose
+  // verification state means anything.
   const accountHasMailbox = hasRealEmail({
     role: profile.role,
     sign_in: gamerProfile?.sign_in ?? null,
@@ -307,26 +308,16 @@ export default async function AdminUserDetailPage({
                 <span>{gamerUsername}</span>
               </p>
             )}
-            {accountHasMailbox && profile.email && (
-              <div className="flex items-center gap-2">
-                <p className="text-muted-foreground">{profile.email}</p>
-                {/* The list shows only the positive case (a check that means
-                    somebody confirmed the address); this detail page states the
-                    answer both ways, because an admin looking at ONE user is
-                    asking the question and deserves a definite answer rather
-                    than having to know that silence means no. */}
-                {profile.email_verified_at ? (
-                  <MailCheck
-                    className="h-4 w-4 shrink-0 text-success"
-                    aria-label={t('emailVerified')}
-                  />
-                ) : (
-                  <MailX
-                    className="h-4 w-4 shrink-0 text-warning"
-                    aria-label={t('emailNotVerified')}
-                  />
-                )}
-              </div>
+            {/* The address and the pencil that corrects it, for every role. A
+                child's synthetic handle is shown too, since it is what the
+                editor replaces; the verification mark only where a mailbox
+                stands behind the address. */}
+            {profile.email && (
+              <UserEmailLine
+                userId={userId}
+                initialProfile={profile}
+                showVerification={accountHasMailbox}
+              />
             )}
             {/* Age and gender, with a pencil that opens their editor. The line
                 itself is a client island seeded with the row this page already
