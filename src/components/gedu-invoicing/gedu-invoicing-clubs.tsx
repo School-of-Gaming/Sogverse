@@ -25,9 +25,10 @@ import type {
 
 /**
  * Who is reading a gedu's clubs. The two readers see the same figures and the
- * same lines; what differs is where a club's name goes — to its admin page for
- * an admin, where an unset fee is repaired, and nowhere for a gedu, who has no
- * admin page to go to.
+ * same lines; what differs is what an unset fee is to them. To an admin it is a
+ * task: the fee is flagged, and the club's name goes to its admin page, where
+ * the fee is set. To a gedu it is nothing to act on — by the time they invoice,
+ * the fee is set — so the cell is a plain dash and the name goes nowhere.
  */
 export type GeduInvoicingAudience = "admin" | "gedu";
 
@@ -36,8 +37,8 @@ export type GeduInvoicingAudience = "admin" | "gedu";
  * five facts in the same order the municipality ledger reads a club, with the
  * role in place of the schedule, because the role is what picks the fee.
  *
- * **Grouped under the two sums a gedu's invoice itemises**, municipality clubs
- * and then consumer clubs, each under a furniture label, so the table reads in
+ * **Grouped under the two sums a gedu's invoice itemises**, municipality and
+ * then consumer, each under a furniture label, so the table reads in
  * the order the invoice is written in. One `table-fixed` for the gedu, so every
  * club's columns land where the club above them did and the total column ends
  * on the ledger's one money axis.
@@ -193,7 +194,7 @@ function GeduClubRows({
         </td>
         <td className="py-2 pr-2 text-right tabular-nums">
           {club.feeCents === null ? (
-            <LedgerFlag label={t("feeNotSet")} />
+            <UnsetFee audience={audience} />
           ) : (
             formatCurrencyFromCents(club.feeCents, "eur", locale)
           )}
@@ -211,7 +212,7 @@ function GeduClubRows({
         </td>
         <td className="py-2 text-right tabular-nums">
           {club.totalCents === null ? (
-            <LedgerFlag label={t("feeNotSet")} />
+            <UnsetFee audience={audience} />
           ) : (
             formatCurrencyFromCents(club.totalCents, "eur", locale)
           )}
@@ -223,13 +224,33 @@ function GeduClubRows({
               the rule above are what say these dates belong to that club. */}
           <td />
           <td colSpan={5} className="pb-2 pt-1">
-            <GeduClubLines club={club} locale={locale} />
+            <GeduClubLines club={club} locale={locale} audience={audience} />
           </td>
         </tr>
       )}
     </>
   );
 }
+
+/**
+ * Where a fee, or a figure the fee multiplies into, would be but nobody has set
+ * it. The admin sees the flag of a task; the gedu sees a neutral dash, with no
+ * warning and nothing to do.
+ */
+function UnsetFee({ audience }: { audience: GeduInvoicingAudience }) {
+  const t = useTranslations("geduInvoicing");
+  return audience === "admin" ? (
+    <LedgerFlag label={t("feeNotSet")} />
+  ) : (
+    <span className="text-muted-foreground">{NO_FIGURE}</span>
+  );
+}
+
+/**
+ * The gedu's unset-fee cell. Punctuation rather than copy — a dash says "no
+ * figure" in every locale — so it is written here and not in five message files.
+ */
+const NO_FIGURE = "—";
 
 const ROLE_LABEL_KEY = {
   primary: "rolePrimary",
@@ -247,9 +268,11 @@ const ROLE_LABEL_KEY = {
 function GeduClubLines({
   club,
   locale,
+  audience,
 }: {
   club: GeduInvoiceClub;
   locale: string;
+  audience: GeduInvoicingAudience;
 }) {
   const showsGroup = new Set(club.lines.map((line) => line.groupId)).size > 1;
 
@@ -261,6 +284,7 @@ function GeduClubLines({
           line={line}
           feeCents={club.feeCents}
           locale={locale}
+          audience={audience}
           showsGroup={showsGroup}
         />
       ))}
@@ -289,11 +313,13 @@ function GeduLineRow({
   line,
   feeCents,
   locale,
+  audience,
   showsGroup,
 }: {
   line: GeduInvoiceLine;
   feeCents: number | null;
   locale: string;
+  audience: GeduInvoicingAudience;
   showsGroup: boolean;
 }) {
   const t = useTranslations("geduInvoicing");
@@ -321,7 +347,7 @@ function GeduLineRow({
       amount={
         line.kind === "paid" ? (
           feeCents === null ? (
-            <LedgerFlag label={t("feeNotSet")} />
+            <UnsetFee audience={audience} />
           ) : (
             formatCurrencyFromCents(feeCents, "eur", locale)
           )

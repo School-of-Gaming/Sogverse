@@ -39,14 +39,18 @@ role picks the fee.
 filed — not in any role the sub holds elsewhere. An absent gedu's line sits under the role
 they filed in, so it lands under the club line it would have paid on.
 
-**An unset fee is never zero.** It shows as "fee not set" in warning tone in place of the
+**An unset fee is never zero.** The admin page shows it as "fee not set" in warning tone in place of the
 fee and the club's total, and the club is outside both subtotals and the total; the counts
 beside a total say how many clubs and sessions were left out. The month's club count is
 distinct products — one unpriced club staffed by five gedus is one fee to set — while its
 session count sums every gedu's, because each seat is a session left out. On the admin page
-the club's name links to its admin product page, which is the repair. The gedu page links
-into no admin page and tells the gedu to contact the office instead. A fee of zero is a
+the club's name links to its admin product page, which is the repair. A fee of zero is a
 real zero and pays zero.
+
+**The gedu page says nothing about unset fees** (owner's ruling): setting a fee is an
+admin's task, which the admin page flags, and by the time a gedu invoices it is set. Where
+a fee is still null there, its cells show a neutral dash — no warning tone, no count, no
+instruction.
 
 ## Absences and substitutions
 
@@ -64,14 +68,17 @@ withdrawn request is history that changes nothing and does not appear.
 
 ## The two sums, and VAT
 
-A municipality club's money is the **municipality** subtotal; every other product type —
-consumer club, camp, event — is **consumer**. The Gedu handbook asks gedus to itemise the
-two sums on their invoice, so the gedu page leads with them and their total, and the admin
+The split is **municipality vs consumer**, not by product type: a municipality club's money
+is the municipality subtotal, and every other product — consumer club, camp, event — is
+consumer. The Gedu handbook says "Consumer Clubs and Municipality Clubs" only because it
+predates camps and events, so the copy names the segments "Municipality" and "Consumer",
+never "clubs". The handbook asks gedus to itemise the two sums on their invoice, so the gedu page leads with them and their total, and the admin
 page carries both on every gedu's line. A gedu's total is the two subtotals added, and the
 month's total is the gedu totals added, so no figure can disagree with the ones it stands
 over.
 
-The fees are VAT 0 %, and the gedu page says that adding VAT is the gedu's own business.
+The fees exclude VAT, and the gedu page says to add it (the handbook's 25.5 %, written in
+the copy) when invoicing.
 
 ## Staffing is today's
 

@@ -32,12 +32,12 @@ import { GeduClubTable } from "./gedu-invoicing-clubs";
  * the database to the calling gedu's own seats, and drawn from the same club
  * table. Where the two differ is what the reader is doing: an admin checks
  * everybody's month, and a gedu copies two sums onto an invoice. So this page
- * leads with those two sums — the municipality clubs and the consumer clubs,
- * which the Gedu handbook asks to be itemised apart — and says the one thing the
- * figures cannot: they are VAT 0 %, and adding VAT is the gedu's own business.
+ * leads with those two sums — municipality and consumer, which the Gedu
+ * handbook asks to be itemised apart — and says the one thing the figures
+ * cannot: they exclude VAT, which the gedu adds on their invoice.
  *
- * Nothing on it links into an admin page. A gap an admin would repair here —
- * a fee nobody has set — is phrased as something to ask the office about.
+ * Nothing on it links into an admin page, and it says nothing about unset fees:
+ * setting a fee is an admin's task, done before a gedu invoices.
  */
 export function MyGeduInvoicingPage({
   monthStart,
@@ -160,17 +160,13 @@ function MyMonth({ gedu, locale }: { gedu: GeduInvoice; locale: string }) {
 
       <div className={cn("space-y-1 pb-2.5 text-xs", LEDGER_ROW_INSET)}>
         <p className="text-muted-foreground">{t("vatNote")}</p>
-        {/* Sentences of their own rather than warning phrases on a count
-            line, as the admin reads them: a gedu has to know what to do about
-            each, not only that it happened. */}
+        <p className="text-muted-foreground">{t("itemiseNote")}</p>
+        {/* A sentence of its own rather than a warning phrase on a count line,
+            as the admin reads it: a gedu has to know what to do about it, not
+            only that it happened. */}
         {gedu.unrecordedCount > 0 && (
           <p className="font-medium text-warning">
             {t("myUnrecorded", { count: gedu.unrecordedCount })}
-          </p>
-        )}
-        {gedu.sessionsWithoutFee > 0 && (
-          <p className="font-medium text-warning">
-            {t("myExcludedWithoutFee", { count: gedu.sessionsWithoutFee })}
           </p>
         )}
       </div>
