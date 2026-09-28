@@ -26,7 +26,7 @@ import {
   type TeamProfileForm,
   type TeamProfileGap,
 } from "@/components/team/team-profile-form";
-import { TeamProfileBody } from "@/components/team/team-profile-body";
+import { TeamProfilePreviewFrame } from "@/components/team/team-profile-preview-frame";
 import {
   TeamProfileStatusPanel,
   teamProfileStatus,
@@ -370,9 +370,6 @@ function PublicSection({
  * It carries no caption: whether the public sees the profile is the status in
  * the "Public profile" section, and a caption here whose length followed the
  * form's state moved the whole preview every time it changed.
- *
- * The frame is framed content — the page as it will appear — so the body sits
- * inside it on the page ground, as it will on the public page.
  */
 function TeamProfilePreview({
   profile,
@@ -397,16 +394,11 @@ function TeamProfilePreview({
       <h2 id="team-profile-preview-heading" className="text-lg font-semibold">
         {t("heading")}
       </h2>
-      <div
-        className={cn(
-          "overflow-hidden rounded-xl border border-border bg-background",
-          wide === "lg"
-            ? "lg:min-h-0 lg:overflow-y-auto"
-            : "xl:min-h-0 xl:overflow-y-auto",
-        )}
-      >
-        <TeamProfileBody profile={profile} readerLocale={readerLocale} />
-      </div>
+      <TeamProfilePreviewFrame
+        profile={profile}
+        readerLocale={readerLocale}
+        scrollFrom={wide}
+      />
     </section>
   );
 }

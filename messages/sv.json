@@ -5076,10 +5076,7 @@
       "userPage": {
         "heading": "Profil",
         "nothingSaved": "Inget har skrivits i profilen för {name} än.",
-        "photoAlt": "Profilfoto för {name}",
-        "nickname": "”{nickname}”",
-        "writtenIn": "Skriven på {languages}",
-        "nothingWritten": "Inget skrivet än",
+        "writtenIn": "Skriven på",
         "edit": "Redigera profil",
         "makePublic": "Gör offentlig",
         "makePublicNeedsReady": "Markera profilen som klar under Redigera profil för att kunna göra den offentlig.",

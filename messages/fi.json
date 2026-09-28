@@ -5076,10 +5076,7 @@
       "userPage": {
         "heading": "Profiili",
         "nothingSaved": "Profiiliin ({name}) ei ole vielä kirjoitettu mitään.",
-        "photoAlt": "Profiilikuva: {name}",
-        "nickname": "”{nickname}”",
-        "writtenIn": "Kielet: {languages}",
-        "nothingWritten": "Ei vielä tekstiä",
+        "writtenIn": "Kielet",
         "edit": "Muokkaa profiilia",
         "makePublic": "Julkaise",
         "makePublicNeedsReady": "Merkitse profiili valmiiksi kohdassa Muokkaa profiilia, jotta voit julkaista sen.",

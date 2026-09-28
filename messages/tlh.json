@@ -4177,10 +4177,7 @@
       "userPage": {
         "heading": "Del’a’",
         "nothingSaved": "{name} Del’a’Daq pagh ghItlhlu’pu’.",
-        "photoAlt": "{name} mIllogh",
-        "nickname": "“{nickname}”",
-        "writtenIn": "Hol: {languages}",
-        "nothingWritten": "pagh ghItlhlu’",
+        "writtenIn": "Hol",
         "edit": "Del’a’ yIchoH",
         "makePublic": "Hoch yIleghmoH",
         "makePublicNeedsReady": "Del’a’ yIchoH ’ej yIghuHmoH; vaj Hoch DaleghmoHlaH.",

@@ -5076,10 +5076,7 @@
       "userPage": {
         "heading": "Profile",
         "nothingSaved": "Nothing has been written for {name}’s profile yet.",
-        "photoAlt": "{name}’s profile photo",
-        "nickname": "“{nickname}”",
-        "writtenIn": "Written in {languages}",
-        "nothingWritten": "Nothing written yet",
+        "writtenIn": "Written in",
         "edit": "Edit profile",
         "makePublic": "Make public",
         "makePublicNeedsReady": "Mark the profile ready under Edit profile to be able to make it public.",

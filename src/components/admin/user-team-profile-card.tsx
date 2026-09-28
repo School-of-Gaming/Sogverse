@@ -1,43 +1,53 @@
 "use client";
 
 import { useId, useState } from "react";
-import Image from "next/image";
 import { IdCard, Loader2, Pencil } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { TeamPhotoPlaceholder } from "@/components/team/team-photo-placeholder";
+import { TeamProfilePreviewFrame } from "@/components/team/team-profile-preview-frame";
 import {
   TeamProfileStatusPanel,
   teamProfileStatus,
 } from "@/components/team/team-profile-status";
-import { useLanguageNames } from "@/hooks/use-language-names";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { LOCALE_CONFIG, resolveLocale } from "@/lib/constants/locales";
+import {
+  LOCALE_CONFIG,
+  SUPPORTED_LOCALES,
+  resolveLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { cn } from "@/lib/utils";
 import {
   isTeamProfileNotReadyError,
   useSetGeduTeamProfileApproval,
   useTeamProfile,
+  type TeamProfile,
   type TeamProfileRecord,
 } from "@/services/team-profiles";
 
 /**
  * The team profile on an admin's or a Gedu's `/admin/users/[id]` page: where
- * it stands publicly, a compact read of what it says, an edit of the whole
- * profile (checkbox included) and — for a Gedu — whether it is public.
+ * it stands publicly, the profile as the public will see it, an edit of the
+ * whole profile (checkbox included) and — for a Gedu — whether it is public.
  *
  * Seeded with the page's server read, so it paints complete; making public or
  * hiding re-reads the record, so the status and the button follow it.
  *
- * **A compact summary rather than the public page.** The editor frames the
- * whole public body beside its form because that is where it is being
- * written; here an admin needs to recognise the profile and decide, and the
- * full page is one click away on the edit route. The photo is framed content,
- * so its edge is not a card inside this card.
+ * **What the public will see, not a summary of it.** The section reads the
+ * saved profile through the public page's own body, framed as in the editor,
+ * so an admin reads every word before making it public without opening the
+ * editor. The section stays a card like its siblings on the page: the frame is
+ * framed content, the status panel a state message, and neither is a card
+ * inside it.
+ *
+ * **The decision comes after the reading**: where the profile stands, then
+ * the profile, then Edit and Make public or Hide, so the button is where the
+ * reader finishes.
  *
  * **Admins decide visibility, the Gedu readiness, so an admin has exactly two
  * actions, one button**: Make public while the profile is not public, Hide
@@ -86,7 +96,7 @@ export function UserTeamProfileCard({
               title={t(`status.${status}Title`)}
               body={t(`status.${status}Body`, { name })}
             />
-            <ProfileSummary record={record} />
+            <ProfilePreview profile={record.profile} />
           </>
         ) : (
           <p className="text-sm text-muted-foreground">
@@ -108,63 +118,65 @@ export function UserTeamProfileCard({
   );
 }
 
-/** The photo, the name, the person's own opening line and the languages written. */
-function ProfileSummary({ record }: { record: TeamProfileRecord }) {
+/**
+ * The saved profile exactly as the public page will show it, in the same
+ * frame as the editor's live preview.
+ *
+ * **Every written language can be read.** A profile written in more than one
+ * gets the editor's language tabs, read-only, over the frame; it opens on the
+ * one the public page would show this admin (`resolveTranslation`: their UI
+ * locale, then English, then the first written). A tab only swaps the text
+ * inside the frame: the row itself holds its place, and nothing above moves.
+ *
+ * **No height cap.** The editor bounds its preview because it stays in view
+ * beside a form; here nothing sits beside it, so a long "About me" lets the
+ * page scroll rather than nesting a scroll area in it.
+ */
+function ProfilePreview({ profile }: { profile: TeamProfile }) {
   const t = useTranslations("team.admin.userPage");
-  const locale = useLocale();
-  const languageName = useLanguageNames();
-  const { profile } = record;
-  const row = resolveTranslation(profile.translations, resolveLocale(locale));
-  const languages = new Intl.ListFormat(locale, { type: "conjunction" }).format(
-    profile.translations.map((r) =>
-      languageName(r.locale, LOCALE_CONFIG[r.locale].label),
-    ),
+  const tabsLabelId = useId();
+  const uiLocale = resolveLocale(useLocale());
+  const written = SUPPORTED_LOCALES.filter((l) =>
+    profile.translations.some((row) => row.locale === l),
   );
+  const [chosen, setChosen] = useState<SupportedLocale | null>(null);
+  const active =
+    chosen !== null && written.includes(chosen)
+      ? chosen
+      : (resolveTranslation(profile.translations, uiLocale)?.locale ?? uiLocale);
 
   return (
-    <div className="flex items-start gap-4">
-      <div className="relative aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-xl border border-border bg-card">
-        {profile.photo ? (
-          <Image
-            src={profile.photo.src}
-            width={profile.photo.width}
-            height={profile.photo.height}
-            alt={t("photoAlt", { name: profile.firstName })}
-            // A private photo behind a short-lived signed URL: the optimiser
-            // would cache it for a year under an unauthenticated address.
-            unoptimized
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <TeamPhotoPlaceholder className="h-full w-full" />
-        )}
-      </div>
-      <div className="min-w-0 space-y-1">
-        <p className="font-medium">
-          {profile.kind === "admin"
-            ? `${profile.firstName} ${profile.lastName}`
-            : profile.firstName}
-          {profile.nickname && (
-            <span className="font-normal text-muted-foreground">
-              {" "}
-              {t("nickname", { nickname: profile.nickname })}
-            </span>
-          )}
-        </p>
-        {profile.kind === "admin" && profile.title && (
-          <p className="text-sm text-muted-foreground">{profile.title}</p>
-        )}
-        {row?.shortDescription && (
-          <p className="text-sm" lang={row.locale}>
-            {row.shortDescription}
-          </p>
-        )}
-        <p className="text-xs text-muted-foreground">
-          {profile.translations.length > 0
-            ? t("writtenIn", { languages })
-            : t("nothingWritten")}
-        </p>
-      </div>
+    <div className="space-y-3">
+      {written.length > 1 && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border">
+          <span id={tabsLabelId} className="text-sm text-muted-foreground">
+            {t("writtenIn")}
+          </span>
+          <div
+            role="group"
+            aria-labelledby={tabsLabelId}
+            className="flex flex-wrap items-center gap-1"
+          >
+            {written.map((l) => (
+              <button
+                key={l}
+                type="button"
+                aria-pressed={active === l}
+                onClick={() => setChosen(l)}
+                className={cn(
+                  "rounded-t-md border-b-2 border-border px-3 py-1.5 text-sm transition-colors",
+                  active === l
+                    ? "text-act"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {LOCALE_CONFIG[l].nativeLabel}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <TeamProfilePreviewFrame profile={profile} readerLocale={active} />
     </div>
   );
 }

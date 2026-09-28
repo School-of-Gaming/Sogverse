@@ -5076,10 +5076,7 @@
       "userPage": {
         "heading": "Profil",
         "nothingSaved": "Rien n’a encore été rédigé pour le profil de {name}.",
-        "photoAlt": "Photo de profil de {name}",
-        "nickname": "« {nickname} »",
-        "writtenIn": "Rédigé en {languages}",
-        "nothingWritten": "Rien de rédigé pour l’instant",
+        "writtenIn": "Rédigé en",
         "edit": "Modifier le profil",
         "makePublic": "Rendre public",
         "makePublicNeedsReady": "Marquez le profil comme prêt dans « Modifier le profil » pour pouvoir le rendre public.",
