@@ -574,6 +574,36 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "gedu-invoicing",
+    title: "Gedu invoicing — admin",
+    description:
+      "The month every Gedu invoices School of Gaming for, over a fixture month pinned to Thursday 21 May 2026 that holds every kind of line. The month stepper stays in the preview; every month but May is empty.",
+    chrome: "admin",
+    scenarios: [{ slug: "working-month", label: "A month of Gedu invoicing" }],
+  },
+  {
+    surface: "gedu-my-invoicing",
+    title: "Gedu invoicing — the Gedu's own month",
+    description:
+      "The page a Gedu copies their invoice from, over the same fixture month, as each of two Gedus — no one of them holds every kind of line. The stepper stays in the preview; every month but May is empty.",
+    chrome: "dashboard",
+    navRole: "gedu",
+    scenarios: [
+      {
+        slug: "was-away",
+        label: "A Gedu who was away",
+        description:
+          "A covered absence, a missed session, and a club in each segment.",
+      },
+      {
+        slug: "stood-in",
+        label: "A Gedu who stood in",
+        description:
+          "A substitution, a cancellation, both roles, and a fee nobody set.",
+      },
+    ],
+  },
+  {
     surface: "invoice-customers",
     title: "Invoice customers",
     description:

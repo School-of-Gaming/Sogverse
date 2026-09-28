@@ -4,12 +4,16 @@ import { ROUTES } from "@/lib/constants";
  * The gedu pages that carry **their own item in the chrome**, rather than being
  * reached from the dashboard they sit under.
  *
- * Substitutions is role-gated by living under the gedu dashboard's path, which
- * is what makes it look like a page *of* that dashboard to any prefix test —
- * and it is not one: it has a nav item of its own, and the chrome must name the
- * reader's position once.
+ * Each is role-gated by living under the gedu dashboard's path, which is what
+ * makes it look like a page *of* that dashboard to any prefix test — and it is
+ * not one: it has a nav item of its own (Substitutions on the strip; Invoicing
+ * on the strip from `lg` up and in the account menu below it), and the chrome
+ * must name the reader's position once.
  */
-const PAGES_WITH_THEIR_OWN_NAV_ITEM = [ROUTES.gedu.substitutions];
+const PAGES_WITH_THEIR_OWN_NAV_ITEM = [
+  ROUTES.gedu.substitutions,
+  ROUTES.gedu.invoicing,
+];
 
 /**
  * Whether this path is a gedu page with its own nav item.

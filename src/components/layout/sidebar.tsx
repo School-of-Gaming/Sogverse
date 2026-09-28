@@ -16,6 +16,7 @@ import {
   ChevronRight,
   MapPin,
   Receipt,
+  ReceiptText,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
@@ -31,7 +32,7 @@ type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "whatsapp" | "testing" | "settings"
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
-  | "invoiceCustomers"
+  | "invoiceCustomers" | "geduInvoicing"
   | "camps" | "events"
   | "sites" | "substitutions";
 
@@ -72,6 +73,7 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     { href: ROUTES.admin.camps, labelKey: "camps", icon: kindIcon("camp") },
     { href: ROUTES.admin.events, labelKey: "events", icon: kindIcon("event") },
     { href: ROUTES.admin.sites, labelKey: "sites", icon: <MapPin className="h-5 w-5" /> },
+    { href: ROUTES.admin.geduInvoicing, labelKey: "geduInvoicing", icon: <ReceiptText className="h-5 w-5" /> },
     { href: ROUTES.admin.municipalityInvoicing, labelKey: "municipalityInvoicing", icon: <Receipt className="h-5 w-5" /> },
     // Directly under the ledger it serves: a customer is only ever looked up
     // because an invoice is being raised, and the ledger is where a club with

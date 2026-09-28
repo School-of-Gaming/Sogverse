@@ -168,6 +168,14 @@ app reads, nothing else — so the server has to start after it, and a server al
 running has to be restarted to see it. A schema change with nothing to look at gets
 no stack: `npm run db -- generate` is all that kind of branch needs.
 
+**A preview always runs on a rich stack, never on the DB tests' `--no-rich-seed` one.**
+Phase 2's DB tests usually leave exactly that stack running, and `up` on a running
+stack changes nothing and keeps its remembered seed — so it reports success and the
+user then cannot sign in with any account below. When `npm run db -- list` shows this
+checkout's stack built `--no-rich-seed`, run `npm run db -- down` and then
+`npm run db -- up` before starting the server. The DB tests rebuild their own stack
+if they have to run again.
+
 - **Sign in as the rich seed's accounts.** `up` builds the stack on
   `supabase/rich-seed.sql` alone — `seed.sql` is the DB tests' fixture set and never
   runs on a rich stack — and that file's header lists the educators, parents and

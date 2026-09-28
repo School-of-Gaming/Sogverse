@@ -11,7 +11,14 @@ import {
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { LayoutDashboard, Loader2, LogOut, School, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  Loader2,
+  LogOut,
+  ReceiptText,
+  School,
+  Settings,
+} from "lucide-react";
 import { StatusLine } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -353,6 +360,16 @@ export function AccountMenu({
    */
   const carriesAbout = (navRole ?? role) === "gedu";
   const isOnAbout = pathname === ROUTES.about;
+  /**
+   * Whether this menu carries the gedu's invoicing month — a page of their own
+   * account, like Settings, rather than a place on the strip. It follows the
+   * real `role`, not the scene-only nav override: it is a destination of the
+   * account the avatar belongs to.
+   */
+  const carriesInvoicing = role === "gedu";
+  const isOnInvoicing =
+    pathname === ROUTES.gedu.invoicing ||
+    pathname.startsWith(ROUTES.gedu.invoicing + "/");
   const isOnSettings =
     pathname === ROUTES.settings || pathname.startsWith(ROUTES.settings + "/");
   // What the dashboard is called to the person using it — "Dashboard" for the
@@ -589,6 +606,23 @@ export function AccountMenu({
                 icon={<LayoutDashboard className="h-4 w-4 shrink-0" />}
                 label={dashboardLabel}
               />
+
+              {/* Decided by role before the panel opens, like every fixed row,
+                  so the menu still opens whole. */}
+              {carriesInvoicing && (
+                <MenuLinkRow
+                  href={ROUTES.gedu.invoicing}
+                  active={isOnInvoicing}
+                  disabled={busy}
+                  onNavigate={() => setOpen(false)}
+                  icon={<ReceiptText className="h-4 w-4 shrink-0" />}
+                  label={t("invoicing")}
+                  // From `lg` up Invoicing is on the header strip instead, so
+                  // the row gives way there — the About row's shape, at the
+                  // breakpoint where the strip link appears.
+                  className="lg:hidden"
+                />
+              )}
 
               {/* The rehoused nav row — see `carriesAbout`. A fixed row like
                   the three around it: leading icon, no chevron, and decided

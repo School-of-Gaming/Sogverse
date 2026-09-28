@@ -161,6 +161,7 @@ export const PATHNAMES = {
   "/admin/municipality-clubs/[id]/groups/[groupId]":
     "/admin/municipality-clubs/[id]/groups/[groupId]",
   "/admin/municipality-invoicing": "/admin/municipality-invoicing",
+  "/admin/gedu-invoicing": "/admin/gedu-invoicing",
   "/admin/invoice-customers": "/admin/invoice-customers",
   "/admin/invoice-customers/new": "/admin/invoice-customers/new",
   "/admin/invoice-customers/[id]": "/admin/invoice-customers/[id]",
@@ -197,6 +198,7 @@ export const PATHNAMES = {
   "/gedu/clubs/[id]": "/gedu/clubs/[id]",
   "/gedu/contract": "/gedu/contract",
   "/gedu/events/[id]": "/gedu/events/[id]",
+  "/gedu/invoicing": "/gedu/invoicing",
   "/gedu/substitutions": "/gedu/substitutions",
 
   // --- Voice ----------------------------------------------------------------

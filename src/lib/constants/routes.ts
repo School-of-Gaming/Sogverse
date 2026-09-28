@@ -607,6 +607,13 @@ export const ROUTES = {
      */
     municipalityInvoicing: "/admin/municipality-invoicing",
     /**
+     * The month each gedu invoices School of Gaming for: every session they
+     * recorded (a stored session row), in which role, and what that comes to at
+     * the product's current fee. The admin's read of every gedu; the gedu's own
+     * month is `ROUTES.gedu.invoicing`.
+     */
+    geduInvoicing: "/admin/gedu-invoicing",
+    /**
      * The Fennoa customers a municipality club can be invoiced to — the contract
      * parties the CFO's monthly files are addressed to.
      *
@@ -704,6 +711,11 @@ export const ROUTES = {
     contract: "/gedu/contract",
     /** The sessions looking for a stand-in, and the ones this gedu took. */
     substitutions: "/gedu/substitutions",
+    /**
+     * The month this gedu invoices School of Gaming for — reached from the
+     * account menu, which is why it carries its own nav item.
+     */
+    invoicing: "/gedu/invoicing",
     assignedProduct: geduAssignedProductHref,
     /** The string form, for absolute URLs built server-side (email). */
     assignedProductPath: geduAssignedProductPath,

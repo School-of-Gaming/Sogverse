@@ -113,6 +113,8 @@ document.addEventListener("click", (event) => {
 const MY_SOG = messages.dashboardSections.pageTitle;
 /** The nav row a gedu's header hands down at phone width — the header's key. */
 const ABOUT = messages.header.nav.about;
+/** The gedu's own invoicing month — a fixed row only their menu carries. */
+const INVOICING = messages.header.invoicing;
 const SETTINGS = messages.common.settings;
 const SIGN_OUT = messages.common.signOut;
 const PARENT_ROLE = messages.common.roleParent;
@@ -418,9 +420,10 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
     renderMenu(GEDU);
     openMenu();
 
-    // The About row between My SOG and Settings is the header's doing, not a
-    // household one — see the rehoused-nav-row cases below.
-    expect(rowTexts()).toEqual([MY_SOG, ABOUT, SETTINGS, SIGN_OUT]);
+    // Invoicing is the gedu's own account destination; the About row between
+    // it and Settings is the header's doing, not a household one — see the
+    // rehoused-nav-row cases below.
+    expect(rowTexts()).toEqual([MY_SOG, INVOICING, ABOUT, SETTINGS, SIGN_OUT]);
     // /api/family/list is gated to customers and gamers; asking would 403 on
     // every navigation.
     expect(mockUseFamily).toHaveBeenCalledWith({ enabled: false });
@@ -458,11 +461,11 @@ describe("AccountMenu — the rehoused About row", () => {
     return row(ABOUT);
   }
 
-  it("sits between the dashboard row and Settings, at phone width only", () => {
+  it("sits between the gedu's own rows and Settings, at phone width only", () => {
     renderMenu(GEDU);
     openMenu();
 
-    expect(rowTexts()).toEqual([MY_SOG, ABOUT, SETTINGS, SIGN_OUT]);
+    expect(rowTexts()).toEqual([MY_SOG, INVOICING, ABOUT, SETTINGS, SIGN_OUT]);
     // From `sm` up it is back on the strip, and two ways to one page in one
     // chrome is one too many.
     expect(aboutRow().className).toContain("sm:hidden");
@@ -481,7 +484,7 @@ describe("AccountMenu — the rehoused About row", () => {
     renderMenu(GEDU);
     openMenu();
 
-    for (const text of [MY_SOG, ABOUT, SETTINGS, SIGN_OUT]) {
+    for (const text of [MY_SOG, INVOICING, ABOUT, SETTINGS, SIGN_OUT]) {
       press("ArrowDown");
       expect(document.activeElement).toBe(row(text));
     }

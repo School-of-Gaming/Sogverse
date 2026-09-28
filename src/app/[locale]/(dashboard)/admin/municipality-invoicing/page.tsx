@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
-import { formatInTimeZone } from "date-fns-tz";
 import { getTranslations } from "next-intl/server";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   MunicipalityInvoicingHeading,
   MunicipalityInvoicingPage,
 } from "@/components/admin/municipality-invoicing/municipality-invoicing-page";
-import { monthsAfter } from "@/lib/calendar-date";
+import {
+  invoicingWireReason,
+  resolveInvoicingMonthStart,
+} from "@/lib/invoicing/month-param";
 import { createClient } from "@/lib/supabase/server";
 import {
   MunicipalityInvoicingService,
@@ -18,48 +20,6 @@ import {
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
   return { title: t("adminMunicipalityInvoicing") };
-}
-
-/**
- * The zone every month on this page is measured in.
- *
- * Municipalities are Finnish — that is what a municipality club is — so the
- * month an invoice defaults to is the month it is in Finland, not the month it
- * is wherever the server happens to be running. On the first and last day of a
- * month those are different answers, and the one that matters is the CFO's.
- */
-const INVOICING_TIME_ZONE = "Europe/Helsinki";
-
-/**
- * `?month=YYYY-MM`, and nothing else — with the year inside this century.
- *
- * The year bound is not tidiness. `0007-03` and `9999-12` are both spelled
- * correctly, so a regex on the *shape* alone hands them to Postgres, which
- * happily answers a month nobody has ever invoiced and never will. A value that
- * cannot be a month anybody means is the same kind of wrong as a malformed one,
- * and takes the same answer: the default month.
- */
-const MONTH_PARAM = /^20\d{2}-(0[1-9]|1[0-2])$/;
-
-/**
- * Which month the page is showing: the one the URL names, or the previous one.
- *
- * **The default is last month, not this one.** An invoice is raised for a month
- * that has finished — a half-month of sessions is not something anybody sends —
- * so the month the CFO wants on opening the page is the one that just ended,
- * and the stepper is right there for the two other months they might want.
- *
- * A malformed, absent or absurd parameter falls to that default rather than
- * refusing. There is nothing dangerous in the value — it selects a read that is
- * already admin-gated — and a 404 for a mistyped URL would cost the reader the
- * page they can plainly see the rest of.
- */
-function resolveMonthStart(raw: string | string[] | undefined): string {
-  const value = Array.isArray(raw) ? raw[0] : raw;
-  if (value !== undefined && MONTH_PARAM.test(value)) return `${value}-01`;
-
-  const today = formatInTimeZone(new Date(), INVOICING_TIME_ZONE, "yyyy-MM-dd");
-  return monthsAfter(`${today.slice(0, 7)}-01`, -1);
 }
 
 /** The read, or the reason it did not happen. Never both, never neither. */
@@ -94,26 +54,8 @@ async function loadMonth(monthStart: string): Promise<SnapshotResult> {
   try {
     return { ok: true, snapshot: await service.getMonth(monthStart) };
   } catch (error) {
-    return { ok: false, reason: wireReason(error) };
+    return { ok: false, reason: invoicingWireReason(error) };
   }
-}
-
-/**
- * The message off the wire, or `null` for anything that is not one.
- *
- * Postgres refusing or failing produces an error carrying a `code` and a
- * `message` written to be read, and splicing that into the band tells the admin
- * something they can act on. A schema mismatch does not: a `ZodError`'s message
- * is a JSON dump of every issue, which would render as a wall of brackets. So
- * the reason is taken only from the wire-shaped error, and everything else — a
- * parse failure, a network fault, a bug — falls to the generic sentence.
- */
-function wireReason(error: unknown): string | null {
-  if (typeof error !== "object" || error === null) return null;
-  if (!("code" in error) || !("message" in error)) return null;
-  const { code, message } = error;
-  if (typeof code !== "string" || typeof message !== "string") return null;
-  return message.length > 0 ? message : null;
 }
 
 /**
@@ -138,7 +80,7 @@ export default async function MunicipalityInvoicingRoute({
   searchParams: Promise<{ month?: string | string[] }>;
 }) {
   const { month } = await searchParams;
-  const monthStart = resolveMonthStart(month);
+  const monthStart = resolveInvoicingMonthStart(month);
   const result = await loadMonth(monthStart);
 
   if (!result.ok) {

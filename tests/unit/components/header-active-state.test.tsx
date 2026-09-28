@@ -102,6 +102,11 @@ describe("Header — where a gedu is told they are", () => {
     renderAt("/gedu/substitutions/abc");
     expect(currentLinks()).toEqual([en.header.nav.substitutions]);
   });
+
+  it("marks Invoicing alone on its page, never Substitutions or My SOG", () => {
+    renderAt("/gedu/invoicing");
+    expect(currentLinks()).toEqual([en.header.invoicing]);
+  });
 });
 
 /**
@@ -125,6 +130,11 @@ describe("the account menu's My SOG row", () => {
 
   it("is not current on a page with a nav item of its own", () => {
     renderAt("/gedu/substitutions");
+    expect(dashboardRow().getAttribute("aria-current")).toBeNull();
+  });
+
+  it("is not current on Invoicing, whose row is in the menu itself", () => {
+    renderAt("/gedu/invoicing");
     expect(dashboardRow().getAttribute("aria-current")).toBeNull();
   });
 });

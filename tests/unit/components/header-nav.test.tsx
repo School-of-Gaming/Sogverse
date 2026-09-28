@@ -117,6 +117,9 @@ describe("Header nav — who gets the Substitutions item", () => {
     // is anchored to the strip's right edge, so an item that ever arrives late
     // has to join at this end or it shoves the links after it sideways.
     expect(navTexts()).toEqual([
+      // Desktop only (hidden below `lg`), and left of Substitutions, per the
+      // owner — at the leading edge for the same late-arrival reason.
+      en.header.invoicing,
       // Both label spans are in the DOM; one is hidden by breakpoint.
       en.header.nav.substitutions + en.header.nav.substitutionsPhone,
       en.header.nav.about,

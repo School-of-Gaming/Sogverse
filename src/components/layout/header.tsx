@@ -104,7 +104,12 @@ export function Header({ navRole }: HeaderProps) {
    * role has a page to send here.
    */
   const showsSubstitutions = navFor === "gedu";
-  const isOnSubstitutions = hasOwnNavItem(pathname);
+  const isOnSubstitutions =
+    pathname === ROUTES.gedu.substitutions ||
+    pathname.startsWith(ROUTES.gedu.substitutions + "/");
+  const isOnInvoicing =
+    pathname === ROUTES.gedu.invoicing ||
+    pathname.startsWith(ROUTES.gedu.invoicing + "/");
 
   const isHome = pathname === ROUTES.home;
 
@@ -124,7 +129,7 @@ export function Header({ navRole }: HeaderProps) {
     logoHref === ROUTES.home
       ? isHome
       : (pathname === logoHref || pathname.startsWith(logoHref + "/")) &&
-        !isOnSubstitutions;
+        !hasOwnNavItem(pathname);
   // What the logo's destination is called — "Dashboard" for the admin, whose
   // panel is genuinely an admin panel, and "My SOG" for every other role.
   const dashboardLabel =
@@ -392,6 +397,26 @@ export function Header({ navRole }: HeaderProps) {
               order is therefore load-bearing: putting this item anywhere else
               in the run would push the links after it sideways.
             */}
+            {/*
+              Desktop only, per the owner: from `lg` up the strip has the room
+              for it, and below that it stays a row in the account menu, which
+              hides the row at exactly this breakpoint — so the phone strip and
+              the arithmetic above are untouched. It is first in the run for the
+              same late-arrival reason as Substitutions.
+            */}
+            {showsSubstitutions && (
+              <Link
+                href={ROUTES.gedu.invoicing}
+                className={cn(
+                  NAV_LINK_CLASS,
+                  "hidden lg:inline-flex",
+                  isOnInvoicing ? "text-act" : "text-muted-foreground",
+                )}
+                aria-current={isOnInvoicing ? "page" : undefined}
+              >
+                {t("invoicing")}
+              </Link>
+            )}
             {showsSubstitutions && (
               <Link
                 href={ROUTES.gedu.substitutions}
