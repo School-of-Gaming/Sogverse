@@ -159,7 +159,13 @@
     "weekRange": "vk {from}–{to}",
     "weekRangeAcrossYears": "vk {from}/{fromYear} – vk {to}/{toYear}",
     "weekCount": "{count, plural, one {# viikko} other {# viikkoa}}",
-    "weekColumn": "vk"
+    "weekColumn": "vk",
+    "unsavedChanges": {
+      "title": "Poistutaanko tallentamatta?",
+      "description": "Muutoksiasi ei ole tallennettu. Jos poistut sivulta nyt, ne menetetään.",
+      "stay": "Jatka muokkaamista",
+      "leave": "Poistu tallentamatta"
+    }
   },
   "datePicker": {
     "openCalendar": "Avaa kalenteri",
@@ -517,6 +523,7 @@
       },
       "statusPanel": {
         "label": "Julkaiseminen",
+        "publishedLine": "Julkaistu {date}.",
         "changedLine": "Lukijat näkevät version, joka julkaistiin {date}."
       },
       "viewLive": "Näytä Kirjastossa",

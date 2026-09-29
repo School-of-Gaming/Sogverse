@@ -159,7 +159,13 @@
     "weekRange": "wk {from}–{to}",
     "weekRangeAcrossYears": "wk {from}/{fromYear} – wk {to}/{toYear}",
     "weekCount": "{count, plural, one {# week} other {# weeks}}",
-    "weekColumn": "wk"
+    "weekColumn": "wk",
+    "unsavedChanges": {
+      "title": "Leave without saving?",
+      "description": "Your changes haven’t been saved. If you leave this page now, they’ll be lost.",
+      "stay": "Keep editing",
+      "leave": "Leave without saving"
+    }
   },
   "datePicker": {
     "openCalendar": "Open calendar",
@@ -517,6 +523,7 @@
       },
       "statusPanel": {
         "label": "Publishing",
+        "publishedLine": "Published {date}.",
         "changedLine": "Readers see the version published on {date}."
       },
       "viewLive": "View in the Library",

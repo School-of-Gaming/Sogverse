@@ -30,6 +30,17 @@ export function emptyLibraryArticleForm(): LibraryArticleForm {
   return { title: "", summary: "", category: null, cover: null, body: "" };
 }
 
+/** Nothing written into a new article's form yet: leaving it loses nothing. */
+export function isBlankLibraryArticleForm(form: LibraryArticleForm): boolean {
+  return (
+    form.title.trim() === "" &&
+    form.summary.trim() === "" &&
+    form.body.trim() === "" &&
+    form.category === null &&
+    form.cover === null
+  );
+}
+
 /** A saved working copy as the editor opens it. */
 export function libraryArticleFormFromDraft(
   draft: LibraryArticleDraft,
@@ -155,7 +166,7 @@ export function libraryArticleStatus(
  * form with nothing unsaved in it: a Publish that published something other
  * than what is on screen would be worse than one that asks for a save first.
  *
- * - `hidden` — a live article with nothing new saved or typed: there is
+ * - `upToDate` — a live article with nothing new saved or typed: there is
  *   nothing to publish.
  * - `ready` — the saved copy is complete and differs from what is live, or is
  *   not live at all.
@@ -167,7 +178,7 @@ export function libraryArticleStatus(
  * whether or not they then save, and naming it is the more useful sentence.
  */
 export type LibraryPublishState =
-  | { kind: "hidden" }
+  | { kind: "upToDate" }
   | { kind: "ready" }
   | { kind: "unsaved" }
   | { kind: "incomplete"; missing: LibraryPublishField[] };
@@ -184,7 +195,9 @@ export function libraryPublishState({
   isPublished: boolean;
   hasUnpublishedChanges: boolean;
 }): LibraryPublishState {
-  if (isPublished && !hasUnpublishedChanges && !dirty) return { kind: "hidden" };
+  if (isPublished && !hasUnpublishedChanges && !dirty) {
+    return { kind: "upToDate" };
+  }
   // While nothing is unsaved the form *is* the saved copy, so reading the
   // form answers for the copy publishing would take.
   const missing = missingForPublish(form);
