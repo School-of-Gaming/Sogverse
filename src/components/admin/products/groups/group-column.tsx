@@ -29,6 +29,7 @@ import { ParticipantChip } from "./participant-chip";
 import type { RobloxRenderMap } from "@/services/roblox";
 import { chipGameIdentity } from "./panel-rules";
 import { GeduPill } from "./gedu-pill";
+import { TraineePill } from "./trainee-pill";
 import type { AppHref } from "@/lib/constants/routes";
 
 interface GroupColumnProps {
@@ -73,6 +74,14 @@ interface GroupColumnProps {
     geduId: string,
     role: GeduAssignmentRole,
   ) => void;
+  onAddTrainee: (groupId: string) => void;
+  onRemoveTrainee: (groupId: string, geduId: string) => void;
+  /**
+   * Make a certified trainee a `primary` Gedu of this group. Optional for the
+   * same reason as the role select: a shell with no write behind it draws the
+   * pill without the control.
+   */
+  onPromoteTrainee?: (groupId: string, geduId: string) => void;
   /**
    * Participation ids whose chip is greyed and undraggable — an in-flight move
    * or removal, or a club switch committing. Handed down rather than derived
@@ -98,6 +107,9 @@ export function GroupColumn({
   busyChipIds,
   onRemoveGedu,
   onSetGeduRole,
+  onAddTrainee,
+  onRemoveTrainee,
+  onPromoteTrainee,
 }: GroupColumnProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const c = useTranslations("common");
@@ -336,6 +348,48 @@ export function GroupColumn({
             >
               <UserPlus className="h-4 w-4" />
               {t("group.addGedu")}
+            </Button>
+          </div>
+
+          {/* Trainees row — gedus shadowing the group. Beneath the Gedus
+              because it is the same question (who is here from our side) at a
+              lower rank. No empty line: most groups never have a trainee, and
+              a "none yet" on every card would be noise the Gedus row does not
+              have to justify. */}
+          <div className="space-y-2">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              {t("trainee.label")}
+            </Label>
+            {group.trainees.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {group.trainees.map((tr) => (
+                  <TraineePill
+                    key={tr.id}
+                    geduId={tr.id}
+                    firstName={tr.first_name}
+                    email={tr.email}
+                    isSaving={pending.trainees.has(`${group.id}:${tr.id}`)}
+                    disabled={busy}
+                    onPromote={
+                      onPromoteTrainee === undefined || isTemp || !tr.certified
+                        ? undefined
+                        : () => onPromoteTrainee(group.id, tr.id)
+                    }
+                    onRemove={() => onRemoveTrainee(group.id, tr.id)}
+                  />
+                ))}
+              </div>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onAddTrainee(group.id)}
+              disabled={busy}
+              className="gap-1.5"
+            >
+              <UserPlus className="h-4 w-4" />
+              {t("trainee.add")}
             </Button>
           </div>
 

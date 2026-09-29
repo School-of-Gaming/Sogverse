@@ -474,6 +474,7 @@ function groupsSnapshot(): ProductGroupsSnapshot {
         name: "Monday A",
         created_at: "2025-09-01T00:00:00.000Z",
         gedus: [],
+        trainees: [],
         participations: [],
       },
     ],

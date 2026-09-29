@@ -14,6 +14,7 @@ import { GroupsService } from "./groups.service";
 import type {
   GeduAssignmentRole,
   GroupGeduDetail,
+  GroupTraineeDetail,
   ProductGroupsSnapshot,
   ProductGroupWithDetails,
 } from "@/types";
@@ -212,6 +213,59 @@ function withGeduAdded(
   };
 }
 
+function withTraineeAdded(
+  snapshot: ProductGroupsSnapshot,
+  groupId: string,
+  trainee: GroupTraineeDetail,
+): ProductGroupsSnapshot {
+  return {
+    ...snapshot,
+    groups: snapshot.groups.map((g) => {
+      // Unlike an assignment, a trainee seat has no upsert — the RPC refuses a
+      // duplicate — so an id already on the list is left as it is and the
+      // refused write rolls the cache back to this same state.
+      if (g.id !== groupId || g.trainees.some((t) => t.id === trainee.id)) {
+        return g;
+      }
+      return { ...g, trainees: [...g.trainees, trainee] };
+    }),
+  };
+}
+
+/**
+ * A promotion drawn as it will land: the trainee pill leaves the Trainees row
+ * and a `primary` pill joins the end of the Gedus row — the end because the
+ * server orders a group's Gedus by assignment time and this assignment is the
+ * newest, so the settle refetch draws it in the same place.
+ */
+function withTraineePromoted(
+  snapshot: ProductGroupsSnapshot,
+  groupId: string,
+  geduId: string,
+): ProductGroupsSnapshot {
+  return {
+    ...snapshot,
+    groups: snapshot.groups.map((g) => {
+      if (g.id !== groupId) return g;
+      const trainee = g.trainees.find((t) => t.id === geduId);
+      if (!trainee) return g;
+      return {
+        ...g,
+        trainees: g.trainees.filter((t) => t.id !== geduId),
+        gedus: [
+          ...g.gedus,
+          {
+            id: trainee.id,
+            first_name: trainee.first_name,
+            email: trainee.email,
+            role: "primary",
+          },
+        ],
+      };
+    }),
+  };
+}
+
 function withGroupAdded(
   snapshot: ProductGroupsSnapshot,
   group: ProductGroupWithDetails,
@@ -313,6 +367,7 @@ export function useCreateGroup(productId: string) {
           name,
           created_at: new Date().toISOString(),
           gedus: [],
+          trainees: [],
           participations: [],
         };
         queryClient.setQueryData(key, withGroupAdded(previous, optimistic));
@@ -420,6 +475,107 @@ export function useRemoveGedu(productId: string) {
     ...destructiveSettle(queryClient, key, ({ groupId, geduId }: RemoveGeduVars) =>
       service.removeGedu(productId, groupId, geduId),
     ),
+  });
+}
+
+interface AddTraineeVars {
+  groupId: string;
+  geduId: string;
+  firstName: string;
+  email: string | null;
+  /**
+   * The educator's standing, off the picker row that was pressed — carried
+   * into the optimistic pill so a certified trainee shows its promote control
+   * from the first frame rather than from the settle refetch.
+   */
+  certified: boolean;
+}
+
+/**
+ * Place a gedu on a group as a trainee. The transform shape `useAddGedu` has:
+ * the pill appears at once, a refused write rolls it back.
+ */
+export function useAddTrainee(productId: string) {
+  const queryClient = useQueryClient();
+  const service = new GroupsService(getClient());
+  const key = groupsKeys.byProduct(productId);
+
+  return useMutation({
+    mutationKey: [...groupMutationBase(productId), "addTrainee"],
+    mutationFn: ({ groupId, geduId }: AddTraineeVars) =>
+      service.addTrainee(productId, groupId, geduId),
+    onMutate: async ({ groupId, geduId, firstName, email, certified }) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<ProductGroupsSnapshot>(key);
+      if (previous) {
+        queryClient.setQueryData(
+          key,
+          withTraineeAdded(previous, groupId, {
+            id: geduId,
+            first_name: firstName,
+            email,
+            certified,
+          }),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
+    onSettled: () => {
+      invalidateGroupChange(queryClient, key);
+    },
+  });
+}
+
+/** Take a trainee off a group — destructive, so greyed until the refetch drops it. */
+export function useRemoveTrainee(productId: string) {
+  const queryClient = useQueryClient();
+  const service = new GroupsService(getClient());
+  const key = groupsKeys.byProduct(productId);
+
+  return useMutation({
+    mutationKey: [...groupMutationBase(productId), "removeTrainee"],
+    ...destructiveSettle(queryClient, key, ({ groupId, geduId }: RemoveGeduVars) =>
+      service.removeTrainee(productId, groupId, geduId),
+    ),
+  });
+}
+
+/**
+ * Promote a trainee to a `primary` Gedu on the same group, in one write.
+ *
+ * A transform rather than a destruction — nobody leaves the group, a pill
+ * changes rows — so it takes the optimistic shape: the pill moves at once and
+ * a refused write puts it back.
+ */
+export function usePromoteTrainee(productId: string) {
+  const queryClient = useQueryClient();
+  const service = new GroupsService(getClient());
+  const key = groupsKeys.byProduct(productId);
+
+  return useMutation({
+    mutationKey: [...groupMutationBase(productId), "promoteTrainee"],
+    mutationFn: ({ groupId, geduId }: RemoveGeduVars) =>
+      service.promoteTrainee(productId, groupId, geduId),
+    onMutate: async ({ groupId, geduId }) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<ProductGroupsSnapshot>(key);
+      if (previous) {
+        queryClient.setQueryData(
+          key,
+          withTraineePromoted(previous, groupId, geduId),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
+    onSettled: () => {
+      invalidateGroupChange(queryClient, key);
+    },
   });
 }
 
@@ -672,8 +828,10 @@ export interface GroupPending {
   renames: Set<string>;
   /** group ids with an in-flight delete */
   deletes: Set<string>;
-  /** `${groupId}:${geduId}` for an in-flight add/remove Gedu */
+  /** `${groupId}:${geduId}` for an in-flight add/remove Gedu or promotion */
   gedus: Set<string>;
+  /** `${groupId}:${geduId}` for an in-flight add/remove trainee or promotion */
+  trainees: Set<string>;
   /** a group create is in flight */
   creating: boolean;
 }
@@ -695,6 +853,7 @@ export function useGroupPending(productId: string): GroupPending {
   const renames = new Set<string>();
   const deletes = new Set<string>();
   const gedus = new Set<string>();
+  const trainees = new Set<string>();
   let creating = false;
 
   for (const { action, vars } of entries) {
@@ -717,10 +876,21 @@ export function useGroupPending(productId: string): GroupPending {
       vars.geduId
     ) {
       gedus.add(`${vars.groupId}:${vars.geduId}`);
+    } else if (
+      (action === "addTrainee" || action === "removeTrainee") &&
+      vars?.groupId &&
+      vars.geduId
+    ) {
+      trainees.add(`${vars.groupId}:${vars.geduId}`);
+    } else if (action === "promoteTrainee" && vars?.groupId && vars.geduId) {
+      // Both rows: the optimistic patch has already moved the pill into the
+      // Gedus row, and it stays greyed there until the write settles.
+      gedus.add(`${vars.groupId}:${vars.geduId}`);
+      trainees.add(`${vars.groupId}:${vars.geduId}`);
     } else if (action === "create") {
       creating = true;
     }
   }
 
-  return { moves, removes, renames, deletes, gedus, creating };
+  return { moves, removes, renames, deletes, gedus, trainees, creating };
 }

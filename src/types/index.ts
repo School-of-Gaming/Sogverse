@@ -629,6 +629,7 @@ export type ChatChannelLockRow = Database["public"]["Tables"]["chat_channel_lock
 export type {
   GroupGeduDetail,
   GroupParticipationDetail,
+  GroupTraineeDetail,
   ProductGroupWithDetails,
   ProductGroupsSnapshot,
 } from "@/services/groups/groups.contracts";

@@ -225,3 +225,78 @@ describe("the gedu picker's caller-supplied refusals", () => {
     ).toBeNull();
   });
 });
+
+describe("the gedu picker's trainee seat", () => {
+  function openFor(
+    seat: "staff" | "trainee",
+    options: {
+      unavailable?: Map<string, "assigned" | "trainee">;
+      offerTraineeInstead?: boolean;
+    } = {},
+  ) {
+    render(
+      <GeduPickerSheet
+        open
+        onOpenChange={() => {}}
+        title="Pick a trainee"
+        description="For this group"
+        seat={seat}
+        unavailable={options.unavailable}
+        offerTraineeInstead={options.offerTraineeInstead}
+        onSelect={() => {}}
+      />,
+    );
+  }
+
+  it("lets an uncertified educator be picked, still saying they are uncertified", () => {
+    openFor("trainee");
+
+    const row = rowFor("Onni Virtanen");
+    expect(row.disabled).toBe(false);
+    expect(
+      within(row).getByText("admin.products.geduPicker.notCertified"),
+    ).toBeTruthy();
+  });
+
+  it("refuses anyone already seated on the product, as either kind of seat", () => {
+    openFor("trainee", {
+      unavailable: new Map<string, "assigned" | "trainee">([
+        [IDS.assigned, "assigned"],
+        [IDS.free, "trainee"],
+      ]),
+    });
+
+    expect(rowFor("Eeli Virtanen").disabled).toBe(true);
+    const trainee = rowFor("Aino Virtanen");
+    expect(trainee.disabled).toBe(true);
+    expect(
+      within(trainee).getByText("admin.products.geduPicker.alreadyTrainee"),
+    ).toBeTruthy();
+  });
+
+  it("points a refused uncertified row at the trainee seat when the caller has one", () => {
+    openFor("staff", { offerTraineeInstead: true });
+
+    const row = rowFor("Onni Virtanen");
+    expect(row.disabled).toBe(true);
+    expect(
+      within(row).getByText("admin.products.geduPicker.traineeInstead"),
+    ).toBeTruthy();
+    // Only on the refused row: a certified educator needs no alternative.
+    expect(
+      within(rowFor("Eeli Virtanen")).queryByText(
+        "admin.products.geduPicker.traineeInstead",
+      ),
+    ).toBeNull();
+  });
+
+  it("offers no trainee hint where the caller has no trainee seat", () => {
+    openFor("staff");
+
+    expect(
+      within(rowFor("Onni Virtanen")).queryByText(
+        "admin.products.geduPicker.traineeInstead",
+      ),
+    ).toBeNull();
+  });
+});

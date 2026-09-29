@@ -48,6 +48,8 @@ const emptyBatch: GroupChangeSet = {
   geduAssignmentsAdded: [],
   geduAssignmentsRemoved: [],
   participationMoves: [],
+  traineesAdded: [],
+  traineesRemoved: [],
 };
 
 function createRequest(body: unknown): Request {
@@ -109,6 +111,8 @@ describe("POST /api/admin/products/[id]/groups/apply", () => {
         { participationId: "p1", toGroupId: "G1" },
         { participationId: "p2", toGroupId: null },
       ],
+      traineesAdded: [{ groupId: "G1", geduId: "g5" }],
+      traineesRemoved: [{ groupId: "G1", geduId: "g6" }],
     };
 
     const response = await POST(createRequest(batch), { params });
@@ -125,6 +129,8 @@ describe("POST /api/admin/products/[id]/groups/apply", () => {
       p_gedu_assignments_added: batch.geduAssignmentsAdded,
       p_gedu_assignments_removed: batch.geduAssignmentsRemoved,
       p_participation_moves: batch.participationMoves,
+      p_trainees_added: batch.traineesAdded,
+      p_trainees_removed: batch.traineesRemoved,
     });
   });
 

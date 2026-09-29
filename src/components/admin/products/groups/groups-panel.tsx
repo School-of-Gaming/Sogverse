@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   useAddGedu,
+  useAddTrainee,
   useAdminAddParticipantToProduct,
   useAdminRemoveParticipantFromProduct,
   useCreateGroup,
@@ -13,7 +14,9 @@ import {
   useMoveParticipation,
   useProductGroups,
   usePromoteFromWaitlist,
+  usePromoteTrainee,
   useRemoveGedu,
+  useRemoveTrainee,
   useRenameGroup,
   useSendSeatOffer,
 } from "@/services/groups";
@@ -22,6 +25,7 @@ import type { ProductAudience } from "@/lib/products/product-audience";
 import { ParticipantPickerSheet } from "../participant-picker-sheet";
 import {
   GeduPickerSheet,
+  type GeduPickerSeat,
   type GeduPickerUnavailability,
 } from "../gedu-picker-sheet";
 import { GroupsPanelView, type GroupsPanelActions } from "./groups-panel-view";
@@ -115,6 +119,9 @@ export function GroupsPanel({
   const createGroup = useCreateGroup(productId);
   const addGedu = useAddGedu(productId);
   const removeGedu = useRemoveGedu(productId);
+  const addTrainee = useAddTrainee(productId);
+  const removeTrainee = useRemoveTrainee(productId);
+  const promoteTrainee = usePromoteTrainee(productId);
   const deleteGroup = useDeleteGroup(productId);
   const addParticipant = useAdminAddParticipantToProduct(productId);
   const removeParticipant = useAdminRemoveParticipantFromProduct(productId);
@@ -130,6 +137,10 @@ export function GroupsPanel({
   useSeatOfferSweepOnMount();
 
   const [pickerForGroupId, setPickerForGroupId] = useState<string | null>(null);
+  // Which kind of seat the gedu picker is filling. Set on the request and
+  // never cleared on close, so a sheet animating out keeps the rows it opened
+  // with rather than re-deciding which of them are selectable mid-exit.
+  const [pickerSeat, setPickerSeat] = useState<GeduPickerSeat>("staff");
   const [participantPickerOpen, setParticipantPickerOpen] = useState(false);
   // The seat whose club switch is open, and — separately — whether that switch
   // is currently moving money. The sheet reports the second back rather than
@@ -183,15 +194,17 @@ export function GroupsPanel({
     return ids;
   }, [snapshot]);
 
-  // One Gedu per product (DB unique constraint), so the picker refuses anyone
-  // already assigned to any group — and says so on the row, which is what the
-  // reason in this map is for. Removals aren't optimistic, so a Gedu mid-
-  // removal stays refused until the settle refetch — correct.
-  const alreadyAssigned = useMemo(() => {
+  // One seat per gedu per product, whichever kind — assigned or trainee — so
+  // the picker refuses anyone already seated on any group, in either mode, and
+  // says which seat they hold, which is what the reason in this map is for.
+  // Removals aren't optimistic, so a gedu mid-removal stays refused until the
+  // settle refetch — correct.
+  const alreadySeated = useMemo(() => {
     const byId = new Map<string, GeduPickerUnavailability>();
     if (!snapshot) return byId;
     for (const g of snapshot.groups) {
       for (const ge of g.gedus) byId.set(ge.id, "assigned");
+      for (const tr of g.trainees) byId.set(tr.id, "trainee");
     }
     return byId;
   }, [snapshot]);
@@ -239,7 +252,18 @@ export function GroupsPanel({
         role,
       });
     },
-    onRequestAddGedu: setPickerForGroupId,
+    onRequestAddGedu: (groupId) => {
+      setPickerSeat("staff");
+      setPickerForGroupId(groupId);
+    },
+    onRequestAddTrainee: (groupId) => {
+      setPickerSeat("trainee");
+      setPickerForGroupId(groupId);
+    },
+    onRemoveTrainee: (groupId, geduId) =>
+      removeTrainee.mutate({ groupId, geduId }),
+    onPromoteTrainee: (groupId, geduId) =>
+      promoteTrainee.mutate({ groupId, geduId }),
     onRequestAddParticipant: () => setParticipantPickerOpen(true),
     // `mutateAsync`, unlike every intent above it: the row's Invite button has
     // to know whether the offer went out, because a failed one leaves the row
@@ -295,13 +319,36 @@ export function GroupsPanel({
             onOpenChange={(open) => {
               if (!open) setPickerForGroupId(null);
             }}
-            title={t("picker.addTitle", {
-              name: groupBeingStaffed?.name ?? "",
-            })}
-            description={t("picker.addDescription")}
-            unavailable={alreadyAssigned}
+            title={
+              pickerSeat === "trainee"
+                ? t("picker.addTraineeTitle", {
+                    name: groupBeingStaffed?.name ?? "",
+                  })
+                : t("picker.addTitle", {
+                    name: groupBeingStaffed?.name ?? "",
+                  })
+            }
+            description={
+              pickerSeat === "trainee"
+                ? t("picker.addTraineeDescription")
+                : t("picker.addDescription")
+            }
+            unavailable={alreadySeated}
+            seat={pickerSeat}
+            offerTraineeInstead
             onSelect={(gedu) => {
               if (!pickerForGroupId) return;
+              if (pickerSeat === "trainee") {
+                addTrainee.mutate({
+                  groupId: pickerForGroupId,
+                  geduId: gedu.id,
+                  firstName: gedu.first_name,
+                  email: gedu.email,
+                  certified: gedu.certified,
+                });
+                setPickerForGroupId(null);
+                return;
+              }
               // No role step: an add assigns as `primary`, which is what every
               // assignment was before roles existed and what nearly all of them
               // stay. The pill's own select is where the other value is chosen,

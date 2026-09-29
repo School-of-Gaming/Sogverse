@@ -69,6 +69,23 @@ export const groupChangeSet = z.object({
       toGroupId: z.string().nullable(),
     })
   ),
+  /**
+   * Trainee seats to place and to remove. No role: a trainee is not paid. The
+   * RPC removes these with the assignment removes and adds them after the
+   * assignment adds, so a **promotion** — this seat in `traineesRemoved` and
+   * the same gedu in `geduAssignmentsAdded` — is one atomic batch. An added
+   * seat has no upsert, so placing somebody already seated on the product is
+   * refused.
+   *
+   * Defaulted rather than required on the way in, for the deploy window: a
+   * browser still on the previous bundle posts a set without them.
+   */
+  traineesAdded: z
+    .array(z.object({ groupId: z.string(), geduId: z.string() }))
+    .default([]),
+  traineesRemoved: z
+    .array(z.object({ groupId: z.string(), geduId: z.string() }))
+    .default([]),
 });
 
 export type GroupChangeSet = z.infer<typeof groupChangeSet>;
@@ -211,11 +228,29 @@ export const groupGeduDetail = z.object({
   role: geduAssignmentRole,
 });
 
+/**
+ * One trainee seat on a group: a gedu shadowing it, placed by an admin.
+ *
+ * `certified` is **not emitted by the RPC**, which carries the person and
+ * nothing about their standing; the service fills it from `gedu_profiles` in
+ * the same query, so the snapshot arrives with it and the pill's promote
+ * control is decided before first paint. It defaults to false — fail-closed,
+ * which offers no promotion — for any reader that parses the RPC alone.
+ */
+export const groupTraineeDetail = z.object({
+  id: z.string(),
+  first_name: z.string(),
+  email: z.string().nullable(),
+  certified: z.boolean().default(false),
+});
+
 export const productGroupWithDetails = z.object({
   id: z.string(),
   name: z.string(),
   created_at: z.string(),
   gedus: z.array(groupGeduDetail),
+  /** The group's trainee seats, in placement order. */
+  trainees: z.array(groupTraineeDetail),
   participations: z.array(groupParticipationDetail),
 });
 
@@ -244,5 +279,6 @@ export const productGroupsSnapshot = z.object({
  */
 export type GroupParticipationDetail = z.infer<typeof groupParticipationDetail>;
 export type GroupGeduDetail = z.infer<typeof groupGeduDetail>;
+export type GroupTraineeDetail = z.infer<typeof groupTraineeDetail>;
 export type ProductGroupWithDetails = z.infer<typeof productGroupWithDetails>;
 export type ProductGroupsSnapshot = z.infer<typeof productGroupsSnapshot>;

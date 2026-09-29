@@ -45,6 +45,8 @@ function emptyChangeSet(): GroupChangeSet {
     geduAssignmentsAdded: [],
     geduAssignmentsRemoved: [],
     participationMoves: [],
+    traineesAdded: [],
+    traineesRemoved: [],
   };
 }
 
@@ -59,7 +61,51 @@ export class GroupsService {
     );
     if (error) throw error;
     // The RPC returns `Json`; the contract schema is the structure.
-    return productGroupsSnapshot.parse(data);
+    const snapshot = productGroupsSnapshot.parse(data);
+    return this.withTraineeStanding(snapshot);
+  }
+
+  /**
+   * Stamps each trainee seat with whether its gedu is certified — the one
+   * fact the panel needs about a trainee that the snapshot RPC does not carry,
+   * and the condition for offering the pill's promote control.
+   *
+   * **Inside the snapshot's own query, not a read of its own beside it.** A
+   * separate query would land a round trip after the snapshot and grow each
+   * certified trainee's pill by a control after first paint; folded in here,
+   * the pill is drawn once with its final controls. It costs a second round
+   * trip only when the product has trainees at all, and it is one indexed read
+   * of a handful of rows by primary key. A failure fails the snapshot, the
+   * same as the RPC failing would — a promote gate that guessed would be
+   * worse than a panel that retries.
+   */
+  private async withTraineeStanding(
+    snapshot: ProductGroupsSnapshot,
+  ): Promise<ProductGroupsSnapshot> {
+    const traineeIds = [
+      ...new Set(snapshot.groups.flatMap((g) => g.trainees.map((t) => t.id))),
+    ];
+    if (traineeIds.length === 0) return snapshot;
+
+    const { data, error } = await this.supabase
+      .from("gedu_profiles")
+      .select("user_id, certified")
+      .in("user_id", traineeIds);
+    if (error) throw error;
+
+    const certified = new Set(
+      data.filter((row) => row.certified).map((row) => row.user_id),
+    );
+    return {
+      ...snapshot,
+      groups: snapshot.groups.map((g) => ({
+        ...g,
+        trainees: g.trainees.map((t) => ({
+          ...t,
+          certified: certified.has(t.id),
+        })),
+      })),
+    };
   }
 
   /**
@@ -184,6 +230,53 @@ export class GroupsService {
     await this.applyChanges(productId, {
       ...emptyChangeSet(),
       geduAssignmentsRemoved: [{ groupId, geduId }],
+    });
+  }
+
+  /**
+   * Places a gedu on a group as a trainee. Certification is not asked about: a
+   * trainee seat is how an uncertified educator shadows a group. The database
+   * refuses a gedu who already holds any seat on the product, assigned or
+   * trainee.
+   */
+  async addTrainee(
+    productId: string,
+    groupId: string,
+    geduId: string,
+  ): Promise<void> {
+    await this.applyChanges(productId, {
+      ...emptyChangeSet(),
+      traineesAdded: [{ groupId, geduId }],
+    });
+  }
+
+  /** Takes a trainee off a group. */
+  async removeTrainee(
+    productId: string,
+    groupId: string,
+    geduId: string,
+  ): Promise<void> {
+    await this.applyChanges(productId, {
+      ...emptyChangeSet(),
+      traineesRemoved: [{ groupId, geduId }],
+    });
+  }
+
+  /**
+   * Promotes a trainee to a `primary` Gedu on the same group: the trainee seat
+   * removed and the assignment added in **one** change set. The RPC removes
+   * before it adds, which is what lets the one-seat-per-product rule pass, and
+   * one transaction is what means the gedu is never left with neither seat.
+   */
+  async promoteTrainee(
+    productId: string,
+    groupId: string,
+    geduId: string,
+  ): Promise<void> {
+    await this.applyChanges(productId, {
+      ...emptyChangeSet(),
+      traineesRemoved: [{ groupId, geduId }],
+      geduAssignmentsAdded: [{ groupId, geduId, role: "primary" }],
     });
   }
 
