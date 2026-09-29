@@ -441,8 +441,9 @@ export const ROUTES = {
    */
   about: "/about",
   /**
-   * The Library — School of Gaming's articles for parents. Public and
-   * indexable, so its slugs are translated.
+   * The Library — School of Gaming's articles for parents. Public, with its
+   * slugs translated for launch, and `noindex` until the owner's visibility
+   * pass (`docs/architecture/discoverability.md`).
    */
   library: "/library",
   /** The index filtered to one category — what a category eyebrow links to. */
