@@ -44,8 +44,8 @@ export function useCatalogueImageUsage() {
  *
  * The catalogue list, because an entry was added, renamed or removed. The
  * usage map, because a replace or a remove moves products and articles between
- * entries. The products **list** keys and the Library's public reads, because
- * those surfaces paint a derived path and a repoint changes it under them. The
+ * entries. The products **list** keys, because those surfaces paint a derived
+ * path and a repoint changes it under them. The
  * Library's whole admin tree, list and detail alike: a replace or a remove
  * moves an article's working-copy cover in the database, and a detail left
  * cached would keep the old cover id, so the editor would compare the form's
@@ -68,7 +68,6 @@ function useCatalogueInvalidation(): () => Promise<void> {
       queryClient.invalidateQueries({ queryKey: catalogueImageUsageKey }),
       queryClient.invalidateQueries({ queryKey: productKeys.lists() }),
       queryClient.invalidateQueries({ queryKey: libraryKeys.admin() }),
-      queryClient.invalidateQueries({ queryKey: libraryKeys.published() }),
     ]);
   };
 }

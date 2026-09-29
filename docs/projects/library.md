@@ -90,8 +90,6 @@ staging or prod (the purpose migration creates it with a plain insert).
 
 ## Open
 
-- `usePublishedLibraryArticles` has no caller; kept for a client-side public reader.
-  Delete if none is planned.
 - On non-English URLs the article text is English under a document whose `lang` is the
   chrome's locale.
 - Emails: session-report text is 16px beside the mail's 14px copy — owner judged it fine.
