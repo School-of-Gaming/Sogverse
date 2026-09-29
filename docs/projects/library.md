@@ -65,6 +65,9 @@ staging or prod (the purpose migration creates it with a plain insert).
 - Links: our site in the same tab; another site in a new tab with an icon and screen-reader
   text; mail unchanged. Raw HTML shows as literal text, as it always did in the app.
 - A sub-list sits at the item gap (4px) below its bullet.
+- Colour is the surface's, size never is (2026-09-29): a surface may set its authored text
+  back to the quiet ink (`emphasis="quiet"`, SOG-UI's second ink, never a caller-chosen
+  colour); the gedu staff note does.
 
 **Admin UI**
 - Library Content sits after Invoice Customers, before Tools. The list follows the product
@@ -76,6 +79,9 @@ staging or prod (the purpose migration creates it with a plain insert).
   content), since the rich seed covers every state on the real pages, and removed the
   old-blog images they used from the repo and from its history.
 - "Unpublished changes" is info blue.
+- A catalogue Replace or Remove moves an affected article's "Last saved" (the working
+  copy's `updated_at`), never its published dates — kept as is (2026-09-29).
+- The shared crop dialog says "image" for team photos too (2026-09-29).
 
 **Public pages**
 - Treated like `/schools` until the owner's visibility pass (2026-09-29): `noindex,
@@ -85,6 +91,9 @@ staging or prod (the purpose migration creates it with a plain insert).
   are English at every locale).
 
 **Process**
+- Releasing: the table rename has no compatibility view; admin product pages and the
+  catalogue fail for the moment between the migrations and the deploy (on prod, until
+  Vercel promotes after the deploy job). Accepted (2026-09-29).
 - A branch's unlanded migrations are consolidated before merging, one file per concept, in
   dependency order — now in `supabase/CLAUDE.md`.
 
