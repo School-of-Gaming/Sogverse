@@ -519,12 +519,7 @@
       },
       "statusPanel": {
         "label": "Publication",
-        "draftTitle": "Brouillon",
-        "draftBody": "Absent de la Bibliothèque. Les lecteurs ne peuvent pas voir cet article tant qu’il n’est pas publié.",
-        "publishedTitle": "Publié",
-        "publishedBody": "Les lecteurs trouvent cet article dans la Bibliothèque, tel qu’il est enregistré ici.",
-        "changedTitle": "Publié, avec des modifications non publiées",
-        "changedBody": "Les lecteurs voient la version publiée le {date}. Les modifications enregistrées depuis leur parviendront quand vous les publierez."
+        "changedLine": "Les lecteurs voient la version publiée le {date}."
       },
       "viewLive": "Voir dans la Bibliothèque",
       "preview": "Aperçu",
@@ -560,11 +555,6 @@
         "body": "Les lecteurs le voient sous l’image de couverture, mis en forme comme ici."
       },
       "categoryPlaceholder": "Choisissez une catégorie",
-      "cover": {
-        "choose": "Choisir une image",
-        "change": "Changer l’image",
-        "remove": "Retirer l’image"
-      },
       "bodyPlaceholder": "Rédigez l’article…",
       "actions": {
         "save": "Enregistrer",
@@ -986,15 +976,26 @@
       },
       "imagePicker": {
         "label": "Image",
-        "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 3:2, l’ajouter et l’utiliser pour ce produit.",
         "formats": "JPEG, PNG ou WebP.",
         "chooseFile": "Choisir un fichier",
         "uploading": "Ajout en cours…",
-        "change": "Changer d’image",
-        "remove": "Retirer de ce produit",
-        "outcomeAdded": "Ajoutée au catalogue et sélectionnée pour ce produit.",
-        "outcomeExisting": "Déjà dans le catalogue — sélectionnée pour ce produit.",
-        "hint": "Affichée sur la carte du produit lorsque les parents parcourent le catalogue, recadrée au format 3:2. Les images sont partagées entre les produits, donc votre choix ici ne modifie rien d’autre."
+        "hint": "Affichée sur la carte du produit lorsque les parents parcourent le catalogue, recadrée au format 3:2. Les images sont partagées entre les produits, donc votre choix ici ne modifie rien d’autre.",
+        "forPurpose": {
+          "product": {
+            "change": "Changer d’image",
+            "remove": "Retirer de ce produit",
+            "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 3:2, l’ajouter et l’utiliser pour ce produit.",
+            "outcomeAdded": "Ajoutée au catalogue et sélectionnée pour ce produit.",
+            "outcomeExisting": "Déjà dans le catalogue — sélectionnée pour ce produit."
+          },
+          "libraryCover": {
+            "change": "Changer l’image",
+            "remove": "Retirer l’image",
+            "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 16:9, l’ajouter et en faire l’image de cet article.",
+            "outcomeAdded": "Ajoutée au catalogue et choisie comme image de cet article.",
+            "outcomeExisting": "Déjà dans le catalogue — choisie comme image de cet article."
+          }
+        }
       },
       "imageCatalogue": {
         "upload": "Ajouter une image",

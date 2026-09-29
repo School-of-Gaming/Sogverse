@@ -210,7 +210,7 @@ describe("library articles", () => {
       expect(error?.message).toMatch(/title/);
     });
 
-    it("derives the cover path from the linked entry, and clears it with the link", async () => {
+    it("derives the cover path from the linked entry, reads its label, and clears both with the link", async () => {
       await reseed();
       await service.saveArticle(ARTICLE_DRAFT, {
         title: "Fixture: an unfinished draft",
@@ -223,6 +223,7 @@ describe("library articles", () => {
       expect(linked?.draft).toMatchObject({
         coverImageId: COVER_B,
         coverPath: pathOf(COVER_B),
+        coverLabel: "Library fixture B",
       });
 
       await service.saveArticle(ARTICLE_DRAFT, {
@@ -233,7 +234,11 @@ describe("library articles", () => {
         coverImageId: null,
       });
       const cleared = await service.getAdminArticle(ARTICLE_DRAFT);
-      expect(cleared?.draft).toMatchObject({ coverImageId: null, coverPath: null });
+      expect(cleared?.draft).toMatchObject({
+        coverImageId: null,
+        coverPath: null,
+        coverLabel: null,
+      });
     });
 
     it("overwrites a cover path any statement writes itself", async () => {

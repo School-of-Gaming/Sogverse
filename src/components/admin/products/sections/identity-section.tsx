@@ -222,6 +222,9 @@ export function IdentitySection({
       </Field>
 
       <ImagePicker
+        purpose="product"
+        label={t("imagePicker.label")}
+        hint={t("imagePicker.hint")}
         imageId={state.imageId}
         current={currentImage}
         onChange={onImageChange}

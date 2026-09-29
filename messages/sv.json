@@ -519,12 +519,7 @@
       },
       "statusPanel": {
         "label": "Publicering",
-        "draftTitle": "Utkast",
-        "draftBody": "Inte i Biblioteket. Läsarna kan inte se artikeln förrän den publiceras.",
-        "publishedTitle": "Publicerad",
-        "publishedBody": "Läsarna hittar artikeln i Biblioteket, precis som den är sparad här.",
-        "changedTitle": "Publicerad, med opublicerade ändringar",
-        "changedBody": "Läsarna ser versionen som publicerades {date}. Ändringarna som sparats sedan dess når dem när du publicerar dem."
+        "changedLine": "Läsarna ser versionen som publicerades {date}."
       },
       "viewLive": "Visa i Biblioteket",
       "preview": "Förhandsvisa",
@@ -560,11 +555,6 @@
         "body": "Läsarna ser texten under omslagsbilden, formaterad som den ser ut här."
       },
       "categoryPlaceholder": "Välj en kategori",
-      "cover": {
-        "choose": "Välj omslagsbild",
-        "change": "Byt omslagsbild",
-        "remove": "Ta bort omslagsbild"
-      },
       "bodyPlaceholder": "Skriv artikeln…",
       "actions": {
         "save": "Spara",
@@ -986,15 +976,26 @@
       },
       "imagePicker": {
         "label": "Bild",
-        "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 3:2-ramen och den läggs till och används för den här produkten.",
         "formats": "JPEG, PNG eller WebP.",
         "chooseFile": "Välj fil",
         "uploading": "Lägger till…",
-        "change": "Byt bild",
-        "remove": "Ta bort från den här produkten",
-        "outcomeAdded": "Tillagd i biblioteket och vald för den här produkten.",
-        "outcomeExisting": "Finns redan i biblioteket – vald för den här produkten.",
-        "hint": "Visas på produktkortet när föräldrar bläddrar, beskuren till en 3:2-ram. Bilderna delas mellan produkter, så ditt val här ändrar inget annat."
+        "hint": "Visas på produktkortet när föräldrar bläddrar, beskuren till en 3:2-ram. Bilderna delas mellan produkter, så ditt val här ändrar inget annat.",
+        "forPurpose": {
+          "product": {
+            "change": "Byt bild",
+            "remove": "Ta bort från den här produkten",
+            "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 3:2-ramen och den läggs till och används för den här produkten.",
+            "outcomeAdded": "Tillagd i biblioteket och vald för den här produkten.",
+            "outcomeExisting": "Finns redan i biblioteket – vald för den här produkten."
+          },
+          "libraryCover": {
+            "change": "Byt omslagsbild",
+            "remove": "Ta bort omslagsbild",
+            "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och blir omslagsbild för den här artikeln.",
+            "outcomeAdded": "Tillagd i biblioteket och vald som omslagsbild för den här artikeln.",
+            "outcomeExisting": "Finns redan i biblioteket – vald som omslagsbild för den här artikeln."
+          }
+        }
       },
       "imageCatalogue": {
         "upload": "Ladda upp",
