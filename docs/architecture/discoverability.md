@@ -24,7 +24,7 @@ key off.
 2. **Reachable, not promoted.** Public because a family holding a link must get in, but
    `noindex, nofollow`, out of the sitemap, no `hreflang`, never listed in `llms.txt`, and
    never the subject or the URL of any structured-data node — the shop's `ItemList` names
-   the shop-visible products and carries no URLs at all. Two surfaces, for two reasons
+   the shop-visible products and carries no URLs at all. Three surfaces, for three reasons
    that come up often enough to state plainly:
    - **The entire `/schools` tree.** Those products are **only for families living in the
      named Finnish municipalities**. The pages are public for convenience — a family
@@ -41,6 +41,12 @@ key off.
      thing worth a search result. The Open Graph card is still the product's own: the
      scrapers behind a WhatsApp or Slack unfurl ignore robots directives, and the card is
      what a shared link shows.
+   - **The Library, until the owner's visibility pass launches it** (owner, 2026-09-29):
+     the index and every article, treated like `/schools` — unlinked, and absent from the
+     sitemap and `llms.txt`. An article keeps its English canonical, its cover card and
+     its `Article` structured data, the one departure from this tier's rule, on purpose:
+     harmless on a `noindex` page, and it leaves launch to lift the `noindex`, restore the
+     index's alternates and add the sitemap and `llms.txt` entries.
    - Also here: the unpublished Roblox programme pages (the flip to published is
      nav, sitemap and noindex together — see the note on the route in
      `src/lib/constants/routes.ts`), the Minecraft API docs, the preview scenes, the

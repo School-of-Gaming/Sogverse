@@ -35,6 +35,7 @@
       "resetPassword": "Vaihda salasana",
       "registerGedu": "Ryhdy pelikasvattajaksi",
       "about": "Tietoa meistä",
+      "library": "Kirjasto",
       "minecraftApi": "Minecraft Server API",
       "lynxApi": "Lynx Educaten kumppani-API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
@@ -82,6 +83,7 @@
       "resetPassword": "Aseta uusi salasana School of Gaming -tilillesi sähköpostitse lähettämämme linkin kautta ja kirjaudu heti sisään uudella salasanalla.",
       "registerGedu": "Hae pelikasvattajaksi School of Gamingiin ja vedä kerhoja, leirejä ja tapahtumia lapsille niissä peleissä, joita he jo pelaavat.",
       "about": "Keitä School of Gamingissa olemme, mitä Yty tarkoittaa ja vastaukset kysymyksiin, joita perheet miettivät ennen ilmoittautumista.",
+      "library": "School of Gamingin käytännön vinkkejä vanhemmille verkkoturvallisuudesta, ruutuajasta ja perheen arjesta sekä siitä, mitä lapset oppivat peleistä.",
       "shop": "Selaa School of Gamingin kerhoja, leirejä ja tapahtumia Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä ja löydä lapsellesi sopiva.",
       "resetPin": "Aseta uusi vanhemman PIN-koodi School of Gaming -tilillesi sähköpostilinkin kautta. PIN-koodi pitää vanhemmille tarkoitetut sivut lapsen ulottumattomissa.",
       "privacy": "Miten School of Gaming kerää, käyttää ja säilyttää perheesi tietoja: mitä lapsesta tallennetaan, kenelle tietoja luovutetaan ja mitä oikeuksia sinulla on.",
@@ -5235,6 +5237,13 @@
         "byEmail": "Jaa sähköpostilla",
         "native": "Jaa…"
       }
+    },
+    "index": {
+      "title": "School of Gamingin <act>kirjasto</act>",
+      "intro": "Käytännön tietoa vanhemmille verkkoturvallisuudesta, pelaamisesta osana perheen arkea ja siitä, mitä lapset oppivat pelatessaan.",
+      "empty": "Täällä ei ole vielä mitään",
+      "all": "Kaikki",
+      "filterLabel": "Aiheet"
     },
     "categories": {
       "onlineSafety": "Verkkoturvallisuus",

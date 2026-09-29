@@ -35,6 +35,7 @@
       "resetPassword": "Réinitialiser le mot de passe",
       "registerGedu": "Devenir animateur",
       "about": "À propos",
+      "library": "Bibliothèque",
       "minecraftApi": "API du serveur Minecraft",
       "lynxApi": "API partenaire Lynx Educate",
       "adminDashboard": "Tableau de bord admin",
@@ -82,6 +83,7 @@
       "resetPassword": "Choisissez un nouveau mot de passe pour votre compte School of Gaming à partir du lien reçu par e-mail, puis connectez-vous aussitôt.",
       "registerGedu": "Rejoignez School of Gaming comme animateur et encadrez des clubs, des stages et des événements pour les enfants, dans les jeux qu’ils pratiquent déjà.",
       "about": "Qui est School of Gaming, ce qu’est le Yty et les réponses aux questions que les familles se posent avant d’inscrire leur enfant.",
+      "library": "Des conseils pratiques de School of Gaming pour les parents sur la sécurité en ligne, le temps d’écran et la vie de famille, et sur ce que les enfants apprennent en jouant.",
       "shop": "Parcourez les clubs, les stages et les événements School of Gaming sur Minecraft, Roblox, Fortnite et bien d’autres, et trouvez celui qui convient à votre enfant.",
       "resetPin": "Choisissez un nouveau code PIN parent à partir du lien reçu par e-mail : ce code garde les pages réservées aux parents fermées à votre enfant.",
       "privacy": "Comment School of Gaming collecte et conserve les données de votre famille : ce que nous gardons sur un enfant, avec qui nous le partageons et vos droits.",
@@ -5235,6 +5237,13 @@
         "byEmail": "Partager par e-mail",
         "native": "Partager…"
       }
+    },
+    "index": {
+      "title": "La <act>bibliothèque</act> de School of Gaming",
+      "intro": "Des conseils pratiques pour les parents sur la sécurité en ligne, le jeu vidéo au quotidien à la maison et ce que les enfants apprennent en jouant.",
+      "empty": "Rien pour l’instant",
+      "all": "Tous",
+      "filterLabel": "Catégories"
     },
     "categories": {
       "onlineSafety": "Sécurité en ligne",

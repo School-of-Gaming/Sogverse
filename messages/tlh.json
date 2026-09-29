@@ -35,6 +35,7 @@
       "resetPassword": "mu’mey yIchoH",
       "registerGedu": "Gedu yImoj!",
       "about": "maH tIqel",
+      "library": "paq qach",
       "minecraftApi": "Minecraft Server API",
       "lynxApi": "Lynx Educate boq API",
       "adminDashboard": "Admin QaD",
@@ -75,6 +76,7 @@
       "resetPassword": "School of Gaming account-lIjvaD chu’bogh mu’mey yIwIv. QInDaq tlhegh yIlo’, ’ej DaH yI’el.",
       "registerGedu": "Quj ghojmoHwI’ — Gedu — yImoj! School of Gaming-vaD ghom’a’mey, raghmey, wanI’mey je yIDev; Qujmey luparHa’bogh puqpu’ yIghojmoH.",
       "about": "School of Gaming: ’Iv maH, nuq ’oH Yty’e’, ’ej qorDu’pu’ luyu’bogh yu’mey lujangbogh De’.",
+      "library": "School of Gaming paq qach: vavpu’ SoSpu’ je DevmeH ghItlhmey. Qan, jIHmey poH, ’ej nuq ghoj puqpu’ Quj.",
       "shop": "School of Gaming ghom’a’mey, raghmey, wanI’mey je yIlegh: Minecraft, Roblox, Fortnite latlh je. puqlI’vaD lI’bogh wa’ yItu’!",
       "resetPin": "chu’bogh vav PIN yIwIv — QInDaq tlhegh yIlo’. vav paqmey SoQmoH PIN, ’ej puq luSovbe’."
     }
@@ -4336,6 +4338,13 @@
         "byEmail": "QIn yIngeH",
         "native": "yIjatlh…"
       }
+    },
+    "index": {
+      "title": "School of Gaming <act>paq qach</act>",
+      "intro": "vavpu’ SoSpu’ je DevmeH: Qan, juHDaq Quj, ’ej nuq ghoj puqpu’.",
+      "empty": "pagh naDev",
+      "all": "Hoch",
+      "filterLabel": "Seghmey"
     },
     "categories": {
       "onlineSafety": "De’wI’ Qan",
