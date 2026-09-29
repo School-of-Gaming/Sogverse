@@ -155,7 +155,7 @@ describe("ImageCropDialog copy", () => {
   it("takes the caller's title and confirm label beside the neutral copy", () => {
     render(
       <ImageCropDialog
-        source={{ kind: "decoding", url: "blob:picked" }}
+        source={{ kind: "decoding" }}
         outputWidth={800}
         outputHeight={1000}
         title="Crop your photo"
