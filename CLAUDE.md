@@ -188,7 +188,8 @@ work under `tests/`). Two things worth knowing from anywhere:
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
 - **`smoke/` is the only CI job that builds the app**, and it asserts security headers
-  and the per-request CSP against a served production build over plain HTTP. No browser
+  and the per-request CSP against a served production build over plain HTTP, and that the
+  build has dropped the dev-only code it must not contain. No browser
   is launched there; a test that needs one does not belong in that directory.
 - **There are no flaky tests. A test that fails intermittently is a broken test and MUST
   be fixed.** Passing on a re-run or in isolation proves nothing about the ordering that

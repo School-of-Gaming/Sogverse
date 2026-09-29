@@ -13,7 +13,7 @@ duplicating across files) and `helpers/`. Two Vitest configs drive them:
 | **unit** | Pure functions, service classes with injected mock dependencies, mapping/transform logic | `.test.ts`, Vitest |
 | **integration** | Route handlers (import real POST/PATCH/GET), proxy, auth flows — full request pipeline with mocked external deps | `.test.ts`, Vitest |
 | **db** | RPCs, constraints, RLS policies against real Postgres | `.test.ts`, Vitest (`vitest.config.db.mts`) |
-| **smoke** | Assertions on the HTTP responses of a served production build — headers, CSP | `.spec.ts`, Playwright |
+| **smoke** | Assertions on the HTTP responses of a served production build — headers, CSP — and on what that build contains | `.spec.ts`, Playwright |
 
 `npm run test` runs `unit/` + `integration/`. `npm run test:smoke` runs Playwright. To
 run a single file, use `npx vitest run <file>` — never `npm run test -- --run <file>`:
@@ -87,11 +87,14 @@ raw text. Tests of the editor itself never see it.
 production server, so the check fails if the build breaks or the server refuses to boot —
 and that gate is most of its value. The assertions on top of it are the ones that can
 only be made against a real response: the static security headers, and the per-request
-CSP nonce the proxy generates (which is absent in dev, so nothing else can verify it).
+CSP nonce the proxy generates (which is absent in dev, so nothing else can verify it) —
+plus assertions on what the build output contains, such as dev-only code the build must
+have dropped, which only this job has a production build to read.
 
 **It uses Playwright's request fixture only — never a browser.** That is deliberate, and
 it is what keeps the job cheap: no engine matrix, no device emulation, no browser
 binaries to install in CI, no retries, because HTTP header assertions are deterministic.
+A spec that reads the build's files needs no fixture at all.
 A spec here that needs a `page` does not belong here.
 
 There was a browser-driven suite before, asserting on marketing copy and unauthenticated

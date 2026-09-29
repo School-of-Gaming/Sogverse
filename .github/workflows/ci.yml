@@ -137,7 +137,8 @@ jobs:
 
   # The only job that builds the app, and the only one that exercises a real
   # served production build: the smoke spec asserts the security headers and the
-  # per-request CSP nonce against actual HTTP responses from `npm run start`.
+  # per-request CSP nonce against actual HTTP responses from `npm run start`, and
+  # checks the built output has dropped the dev-only code it must not contain.
   # Playwright is used purely as an HTTP client here (its request fixture), so no
   # browser binaries are installed and none are needed.
   build-smoke:
