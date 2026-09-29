@@ -5,6 +5,7 @@ import type { Database } from "@/types/database.types";
 import { geduAssignmentSummaries } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
 import { chatChannelRoster } from "@/services/chat/chat.contracts";
+import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -113,9 +114,6 @@ const TRAINEE_SECRETS = [
   "2015-06-15",
 ];
 const withTrainees = z.object({ trainees: z.array(record) });
-const groupsPanel = z.object({
-  groups: z.array(z.object({ id: z.string(), trainees: z.array(record) })),
-});
 
 describe("trainee gedus", () => {
   let admin: Admin;
@@ -535,11 +533,34 @@ describe("trainee gedus", () => {
         p_product_id: PRODUCT_MAIN,
       });
       expect(panel.error).toBeNull();
-      const { groups } = groupsPanel.parse(panel.data);
+      // Parsed through the panel's own contract, so a trainee entry that stops
+      // carrying `certified` fails here rather than in the browser.
+      const { groups } = productGroupsSnapshot.parse(panel.data);
       expect(groups.find((g) => g.id === GROUP_MINE)?.trainees).toEqual([
-        { id: traineeId, first_name: "Tiina", email: traineeEmail },
+        { id: traineeId, first_name: "Tiina", email: traineeEmail, certified: false },
       ]);
       expect(groups.find((g) => g.id === GROUP_SIBLING)?.trainees).toEqual([]);
+    });
+
+    it("carries the trainee's certification on the groups panel, which gates the promotion", async () => {
+      const readCertified = async () => {
+        const { data, error } = await adminAuth.rpc("get_product_groups_with_details", {
+          p_product_id: PRODUCT_MAIN,
+        });
+        expect(error).toBeNull();
+        return productGroupsSnapshot
+          .parse(data)
+          .groups.find((g) => g.id === GROUP_MINE)
+          ?.trainees.find((t) => t.id === traineeId)?.certified;
+      };
+
+      expect(await readCertified()).toBe(false);
+      await admin.from("gedu_profiles").update({ certified: true }).eq("user_id", traineeId);
+      try {
+        expect(await readCertified()).toBe(true);
+      } finally {
+        await admin.from("gedu_profiles").update({ certified: false }).eq("user_id", traineeId);
+      }
     });
 
     it("lets an admin read every seat and a gedu only their own", async () => {

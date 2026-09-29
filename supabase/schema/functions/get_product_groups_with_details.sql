@@ -44,17 +44,22 @@ BEGIN
         ), '[]'::jsonb),
         -- The group's trainee seats, which the panel places, removes and
         -- promotes through apply_group_changes. No role: a trainee is not paid.
+        -- `certified` is what decides whether the panel offers the promotion,
+        -- since only a certified gedu may hold an assignment; a gedu with no
+        -- gedu_profiles row reads as uncertified.
         'trainees', COALESCE((
           SELECT jsonb_agg(
                    jsonb_build_object(
                      'id',         tp.id,
                      'first_name', tp.first_name,
-                     'email',      tp.email
+                     'email',      tp.email,
+                     'certified',  COALESCE(tg.certified, false)
                    )
                    ORDER BY t.created_at, tp.id
                  )
             FROM gedu_group_trainees t
             JOIN profiles tp ON tp.id = t.gedu_id
+            LEFT JOIN gedu_profiles tg ON tg.user_id = t.gedu_id
            WHERE t.group_id = pg.id
         ), '[]'::jsonb),
         'participations', COALESCE((

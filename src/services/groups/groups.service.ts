@@ -61,51 +61,7 @@ export class GroupsService {
     );
     if (error) throw error;
     // The RPC returns `Json`; the contract schema is the structure.
-    const snapshot = productGroupsSnapshot.parse(data);
-    return this.withTraineeStanding(snapshot);
-  }
-
-  /**
-   * Stamps each trainee seat with whether its gedu is certified — the one
-   * fact the panel needs about a trainee that the snapshot RPC does not carry,
-   * and the condition for offering the pill's promote control.
-   *
-   * **Inside the snapshot's own query, not a read of its own beside it.** A
-   * separate query would land a round trip after the snapshot and grow each
-   * certified trainee's pill by a control after first paint; folded in here,
-   * the pill is drawn once with its final controls. It costs a second round
-   * trip only when the product has trainees at all, and it is one indexed read
-   * of a handful of rows by primary key. A failure fails the snapshot, the
-   * same as the RPC failing would — a promote gate that guessed would be
-   * worse than a panel that retries.
-   */
-  private async withTraineeStanding(
-    snapshot: ProductGroupsSnapshot,
-  ): Promise<ProductGroupsSnapshot> {
-    const traineeIds = [
-      ...new Set(snapshot.groups.flatMap((g) => g.trainees.map((t) => t.id))),
-    ];
-    if (traineeIds.length === 0) return snapshot;
-
-    const { data, error } = await this.supabase
-      .from("gedu_profiles")
-      .select("user_id, certified")
-      .in("user_id", traineeIds);
-    if (error) throw error;
-
-    const certified = new Set(
-      data.filter((row) => row.certified).map((row) => row.user_id),
-    );
-    return {
-      ...snapshot,
-      groups: snapshot.groups.map((g) => ({
-        ...g,
-        trainees: g.trainees.map((t) => ({
-          ...t,
-          certified: certified.has(t.id),
-        })),
-      })),
-    };
+    return productGroupsSnapshot.parse(data);
   }
 
   /**

@@ -231,17 +231,15 @@ export const groupGeduDetail = z.object({
 /**
  * One trainee seat on a group: a gedu shadowing it, placed by an admin.
  *
- * `certified` is **not emitted by the RPC**, which carries the person and
- * nothing about their standing; the service fills it from `gedu_profiles` in
- * the same query, so the snapshot arrives with it and the pill's promote
- * control is decided before first paint. It defaults to false — fail-closed,
- * which offers no promotion — for any reader that parses the RPC alone.
+ * `certified` is whether the gedu may hold an assignment, which is what decides
+ * whether the pill offers the promotion. It rides the snapshot itself, so the
+ * pill is drawn once, with its final controls, at first paint.
  */
 export const groupTraineeDetail = z.object({
   id: z.string(),
   first_name: z.string(),
   email: z.string().nullable(),
-  certified: z.boolean().default(false),
+  certified: z.boolean(),
 });
 
 export const productGroupWithDetails = z.object({
