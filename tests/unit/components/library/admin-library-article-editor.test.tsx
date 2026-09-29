@@ -285,17 +285,10 @@ describe("the Library article editor", () => {
     expect(screen.getAllByText(/readiness\./)).toHaveLength(1);
     expect(panel().textContent).not.toContain("readiness.");
 
-    fireEvent.change(summaryBox(), { target: { value: "A summary" } });
-    expect(
-      document.getElementById(publishButton().getAttribute("aria-describedby")!)
-        ?.textContent,
-    ).toBe("readiness.unsaved");
-    // The disabled preview is read out with the same reasons.
-    expect(
-      screen
-        .getByRole("button", { name: "preview" })
-        .getAttribute("aria-describedby"),
-    ).toBe(reasonId);
+    // Unsaved changes need no sentence: the reason stays what is missing.
+    fireEvent.change(titleBox(), { target: { value: "A retitled article" } });
+    expect(reasons().textContent).toContain("readiness.missing");
+    expect(screen.getAllByText(/readiness\./)).toHaveLength(1);
   });
 
   it("asks for a save before publishing, then publishes the saved copy", async () => {
@@ -304,7 +297,7 @@ describe("the Library article editor", () => {
 
     fireEvent.change(summaryBox(), { target: { value: "A summary" } });
     expect(publishButton().hasAttribute("disabled")).toBe(true);
-    expect(screen.getByText("readiness.unsaved")).toBeTruthy();
+    expect(reasons().textContent).toBe("");
 
     rerenderWith({
       ...ARTICLE,
@@ -527,7 +520,7 @@ describe("the Library article editor", () => {
     expect(screen.queryByRole("link", { name: "viewLive" })).toBeNull();
   });
 
-  it("holds the preview back while changes are unsaved, and says so", () => {
+  it("holds the preview back while changes are unsaved", () => {
     const { rerenderWith } = renderEditor(ARTICLE);
 
     fireEvent.change(titleBox(), { target: { value: "A retitled article" } });
@@ -535,17 +528,12 @@ describe("the Library article editor", () => {
     expect(
       screen.getByRole("button", { name: "preview" }).hasAttribute("disabled"),
     ).toBe(true);
-    // Publish is still held back by what is missing, so the save line is the
-    // preview's alone.
-    expect(reasons().textContent).toContain("readiness.previewUnsaved");
-    expect(reasons().textContent).not.toContain("readiness.unsaved");
 
-    // Saved: the preview is a link again, and the line is gone.
+    // Saved: the preview is a link again.
     rerenderWith({
       ...ARTICLE,
       draft: { ...ARTICLE.draft, title: "A retitled article" },
     });
     expect(screen.getByRole("link", { name: "preview" })).toBeTruthy();
-    expect(reasons().textContent).not.toContain("readiness.previewUnsaved");
   });
 });

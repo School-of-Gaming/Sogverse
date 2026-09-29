@@ -576,9 +576,7 @@
       "publishChanges": "choHmey yIngeH",
       "unpublish": "ngeH yIqIl",
       "readiness": {
-        "missing": "ngeHmeH {fields} yIchel.",
-        "unsaved": "choHmey yIpol, vaj wa’DIch Dalegh ’ej DangeH.",
-        "previewUnsaved": "choHmey yIpol, vaj wa’DIch Dalegh."
+        "missing": "ngeHmeH {fields} yIchel."
       },
       "missing": {
         "title": "pong",

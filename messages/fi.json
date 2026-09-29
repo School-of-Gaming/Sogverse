@@ -532,9 +532,7 @@
       "publishChanges": "Julkaise muutokset",
       "unpublish": "Poista julkaisu",
       "readiness": {
-        "missing": "Jotta artikkelin voi julkaista, lisää {fields}.",
-        "unsaved": "Tallenna muutokset, jotta voit esikatsella ja julkaista ne.",
-        "previewUnsaved": "Tallenna muutokset, jotta voit esikatsella niitä."
+        "missing": "Jotta artikkelin voi julkaista, lisää {fields}."
       },
       "missing": {
         "title": "otsikko",
