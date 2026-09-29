@@ -815,7 +815,7 @@ export function existingFormState(
     // product itself. No row at all is the ordinary "no lesson link" case.
     materialUrl: product.product_staff_details?.material_url ?? "",
     // The id alone. The picture and its label ride in on the query's
-    // `product_images` embed and are handed to the form's image card
+    // `catalogue_images` embed and are handed to the form's image card
     // separately, so nothing about the entry is copied into editable state.
     imageId: product.image_id,
     forGamers: product.for_gamers,

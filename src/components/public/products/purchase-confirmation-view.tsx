@@ -9,7 +9,7 @@ import { ProductBanner } from "@/components/ui/product-banner";
 import { TopicPrepContent } from "@/components/topic-prep/TopicPrepContent";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
-import { productImageSrc } from "@/lib/images/product-image-url";
+import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { resolveTopicPrep } from "@/lib/products/topics";
 import { formatCurrencyFromCents } from "@/lib/utils";
@@ -163,7 +163,7 @@ export function PurchaseConfirmationView({
                 square did not. */}
             <div className="mt-4 flex items-center gap-4">
               <ProductBanner
-                src={productImageSrc(product.image_path)}
+                src={catalogueImageSrc("product", product.image_path)}
                 className="w-24 shrink-0 rounded-lg"
                 // `w-24` at every breakpoint — a fixed inline thumb, so one
                 // length with no media conditions.

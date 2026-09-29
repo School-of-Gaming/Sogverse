@@ -915,9 +915,7 @@ function WrittenFields({
       ) : (
         hasText(entry.staffNote) && (
           <StaffNoteBlock>
-            <Markdown className="text-muted-foreground">
-              {entry.staffNote}
-            </Markdown>
+            <Markdown emphasis="quiet">{entry.staffNote}</Markdown>
           </StaffNoteBlock>
         )
       )}

@@ -1,5 +1,5 @@
-import type { ProductImageUsage, ProductImageUser } from "@/services/product-images";
-import type { ProductImage } from "@/types";
+import type { CatalogueImageUsage, ProductPictureUser } from "@/services/catalogue-images";
+import type { CatalogueImage } from "@/types";
 
 /**
  * Fixtures for the catalogue's style-guide section: four entries, one of them
@@ -19,12 +19,13 @@ const IMAGE_IDS = {
   interior: "600518b6-dd27-4d74-b2f0-317d07a0f6d8",
 } as const;
 
-export const CATALOGUE_DEMO_IMAGES: ProductImage[] = [
+export const CATALOGUE_DEMO_IMAGES: CatalogueImage[] = [
   {
     id: IMAGE_IDS.interior,
     label: "Minecraft build hall",
     sha256: "9b1a6f0c4d2e8a7b5c3f1e0d9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b",
     path: "/preview-art/card-interior.svg",
+    purpose: "product",
     created_at: "2026-08-18T09:12:00.000Z",
   },
   {
@@ -32,6 +33,7 @@ export const CATALOGUE_DEMO_IMAGES: ProductImage[] = [
     label: "Roblox park",
     sha256: "1f2e3d4c5b6a798877665544332211ffeeddccbbaa99887766554433221100ff",
     path: "/preview-art/card-park.svg",
+    purpose: "product",
     created_at: "2026-08-14T15:40:00.000Z",
   },
   {
@@ -39,6 +41,7 @@ export const CATALOGUE_DEMO_IMAGES: ProductImage[] = [
     label: "Racetrack",
     sha256: "aa11bb22cc33dd44ee55ff6677889900aabbccddeeff112233445566778899aa",
     path: "/preview-art/card-racetrack.svg",
+    purpose: "product",
     created_at: "2026-07-30T11:05:00.000Z",
   },
   {
@@ -46,6 +49,7 @@ export const CATALOGUE_DEMO_IMAGES: ProductImage[] = [
     label: "Survival terrain",
     sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     path: "/preview-art/card-terrain.svg",
+    purpose: "product",
     created_at: "2026-06-02T08:00:00.000Z",
   },
 ];
@@ -105,8 +109,9 @@ const SHARED_PRODUCT_NAMES = [
   "Survival Club — Saturday mornings",
 ];
 
-const SHARED_PRODUCTS: ProductImageUser[] = SHARED_PRODUCT_IDS.map(
+const SHARED_PRODUCTS: ProductPictureUser[] = SHARED_PRODUCT_IDS.map(
   (id, index) => ({
+    kind: "product",
     id,
     name: SHARED_PRODUCT_NAMES[index],
     product_type: index < 13 ? "consumer_club" : index < 17 ? "camp" : "event",
@@ -116,16 +121,18 @@ const SHARED_PRODUCTS: ProductImageUser[] = SHARED_PRODUCT_IDS.map(
   }),
 );
 
-export const CATALOGUE_DEMO_USAGE: ProductImageUsage = {
+export const CATALOGUE_DEMO_USAGE: CatalogueImageUsage = {
   [IMAGE_IDS.terrain]: SHARED_PRODUCTS,
   [IMAGE_IDS.park]: [
     {
+      kind: "product",
       id: "db413bc7-bd3e-4603-9333-144f70879679",
       name: "Roblox Club Helsinki — Monday",
       product_type: "consumer_club",
       is_visible: true,
     },
     {
+      kind: "product",
       id: "cd8878af-43d4-4635-8b0e-3fa33b3484c7",
       name: "Roblox Taster Event",
       product_type: "event",

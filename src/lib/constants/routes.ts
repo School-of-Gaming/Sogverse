@@ -1,5 +1,6 @@
 import type { Database } from "@/types/database.types";
 import type { getPathname } from "@/i18n/navigation";
+import type { LibraryCategory } from "@/types";
 
 type ProductType = Database["public"]["Enums"]["product_type"];
 
@@ -439,6 +440,29 @@ export const ROUTES = {
    * parent-PIN pad here exactly as it does at `/shop`.
    */
   about: "/about",
+  /**
+   * The Library — School of Gaming's articles for parents. Public, with its
+   * slugs translated for launch, and `noindex` until the owner's visibility
+   * pass (`docs/architecture/discoverability.md`).
+   */
+  library: "/library",
+  /** The index filtered to one category — what a category eyebrow links to. */
+  libraryCategory: (category: LibraryCategory) =>
+    ({ pathname: "/library", query: { category } }) as const,
+  /**
+   * One published article. The id is the address: an article has no slug, so
+   * a retitled article keeps every link anybody has shared to it.
+   */
+  libraryArticle: (id: string) =>
+    ({ pathname: "/library/[id]", params: { id } }) as const,
+  /**
+   * An article's saved working copy as a parent would meet it if it were
+   * published now, in the public chrome — what the editor's Preview opens.
+   * Admin-only, though it sits under the page it previews: the proxy gates it
+   * on the admin role, and the page answers not-found to anyone else.
+   */
+  libraryArticlePreview: (id: string) =>
+    ({ pathname: "/library/[id]/preview", params: { id } }) as const,
   /** Public municipality-club discovery page — list + search of Finnish municipalities. */
   schools: "/schools",
   /**
@@ -643,6 +667,13 @@ export const ROUTES = {
      */
     invoiceCustomer: (id: string) =>
       ({ pathname: "/admin/invoice-customers/[id]", params: { id } }) as const,
+    /** The Library's articles, published or not, and where they are written. */
+    library: "/admin/library",
+    /** The form a new article is written in. */
+    libraryArticleNew: "/admin/library/new",
+    /** One article's editor, where it is also published. */
+    libraryArticle: (id: string) =>
+      ({ pathname: "/admin/library/[id]", params: { id } }) as const,
     camps: "/admin/camps",
     events: "/admin/events",
     /**

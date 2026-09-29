@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { CATALOGUE_IMAGE_PURPOSES } from "./src/lib/images/catalogue-image-purposes";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -128,7 +129,12 @@ const nextConfig: NextConfig = {
     // is false everywhere but a checkout running against `npm run db -- up`.
     dangerouslyAllowLocalIP: supabaseIsLocal(),
     remotePatterns: [
-      bucketPattern("product-images"),
+      // Every catalogue purpose's bucket — product pictures and Library covers
+      // — read off the one purpose map, so a purpose added there is optimizable
+      // here without a second list to remember.
+      ...Object.values(CATALOGUE_IMAGE_PURPOSES).map(({ bucket }) =>
+        bucketPattern(bucket),
+      ),
       // Gedu session-report photos. They go through the optimizer for the same
       // reason product banners do and a stronger one: a family feed card can
       // show five of them, unpaged, and serving ~300 KB masters into 200 px

@@ -35,6 +35,7 @@
       "resetPassword": "Återställ lösenord",
       "registerGedu": "Bli spelfostrare",
       "about": "Om oss",
+      "library": "Biblioteket",
       "minecraftApi": "Minecraft Server API",
       "lynxApi": "Lynx Educate partner-API",
       "adminDashboard": "Administratörspanel",
@@ -42,6 +43,9 @@
       "adminInvoiceCustomers": "Faktureringskunder",
       "adminInvoiceCustomerNew": "Ny faktureringskund",
       "adminInvoiceCustomerEdit": "Redigera faktureringskund",
+      "adminLibrary": "Bibliotekets innehåll",
+      "adminLibraryArticleNew": "Ny artikel",
+      "adminLibraryArticleEdit": "Redigera artikel",
       "adminGeduInvoicing": "Gedufakturering",
       "adminTools": "Verktyg",
       "parentDashboard": "Min SOG",
@@ -79,6 +83,7 @@
       "resetPassword": "Välj ett nytt lösenord för ditt School of Gaming-konto via länken vi skickade med e-post, och logga in med det direkt.",
       "registerGedu": "Bli spelfostrare hos School of Gaming och led klubbar, läger och evenemang för barn i de spel de redan spelar varje dag.",
       "about": "Vilka vi på School of Gaming är, vad Yty är och svar på de frågor familjer ställer innan de anmäler sitt barn till en klubb.",
+      "library": "Praktisk vägledning från School of Gaming för föräldrar om säkerhet på nätet, skärmtid och familjeliv, och om vad barn lär sig genom spel.",
       "shop": "Bläddra bland School of Gamings klubbar, läger och evenemang i Minecraft, Roblox, Fortnite och mer, och hitta ett som passar ditt barns vecka.",
       "resetPin": "Välj en ny föräldra-PIN för ditt School of Gaming-konto via länken vi skickade med e-post. PIN-koden håller föräldrasidorna stängda för ditt barn.",
       "privacy": "Hur School of Gaming samlar in, använder och lagrar din familjs uppgifter: vad vi sparar om ett barn, vem vi delar det med och vilka rättigheter du har.",
@@ -156,7 +161,13 @@
     "weekRange": "v. {from}–{to}",
     "weekRangeAcrossYears": "v. {from}/{fromYear} – v. {to}/{toYear}",
     "weekCount": "{count, plural, one {# vecka} other {# veckor}}",
-    "weekColumn": "v."
+    "weekColumn": "v.",
+    "unsavedChanges": {
+      "title": "Lämna utan att spara?",
+      "description": "Dina ändringar har inte sparats. Om du lämnar sidan nu går de förlorade.",
+      "stay": "Fortsätt redigera",
+      "leave": "Lämna utan att spara"
+    }
   },
   "datePicker": {
     "openCalendar": "Öppna kalendern",
@@ -166,6 +177,15 @@
     "goToWeek": "Gå till vecka",
     "selectWeek": "Välj vecka {week}",
     "today": "I dag"
+  },
+  "imageCrop": {
+    "title": "Beskär bilden",
+    "description": "Dra bilden för att placera den i ramen och zooma så att den passar.",
+    "zoom": "Zoom",
+    "confirm": "Använd bild",
+    "unreadable": "Den här filen kan inte öppnas som en bild här. Välj en JPEG-, PNG- eller WebP-bild. iPhone-foton i HEIC-format måste konverteras först.",
+    "chooseAnother": "Välj en annan bild",
+    "failed": "Bilden kunde inte beskäras. Försök igen eller välj en annan bild."
   },
   "about": {
     "pageTitle": "Om oss",
@@ -472,6 +492,87 @@
         "hint": "Kunden som den här klubbens tillfällen faktureras till. En klubb utan kund flaggas på faktureringssidan och ger ingen fakturafil.",
         "manage": "Hantera faktureringskunder",
         "option": "{name} ({number})"
+      }
+    },
+    "library": {
+      "title": "Bibliotekets innehåll",
+      "subtitle": "Artiklarna för föräldrar i det offentliga Biblioteket.",
+      "newArticle": "Ny artikel",
+      "lastSaved": "Senast sparad {date}",
+      "search": {
+        "label": "Sök",
+        "placeholder": "Sök på rubrik eller kategori…",
+        "showing": "Visar {count} av {total}",
+        "clear": "Rensa",
+        "noMatches": "Inga artiklar matchar sökningen."
+      },
+      "noCategory": "Ingen kategori",
+      "empty": "Inga artiklar än. Skriv den första.",
+      "backToList": "Tillbaka till Bibliotekets innehåll",
+      "notFound": "Det finns ingen artikel med det här id:t.",
+      "loadError": "Artikeln kunde inte läsas in. Uppdatera sidan för att försöka igen.",
+      "newPage": {
+        "title": "Ny artikel",
+        "submit": "Spara utkast"
+      },
+      "editPage": {
+        "title": "Redigera artikel"
+      },
+      "status": {
+        "draft": "Utkast",
+        "published": "Publicerad",
+        "changed": "Opublicerade ändringar"
+      },
+      "statusPanel": {
+        "label": "Publicering",
+        "publishedLine": "Publicerad {date}.",
+        "changedLine": "Läsarna ser versionen som publicerades {date}."
+      },
+      "viewLive": "Visa i Biblioteket",
+      "preview": "Förhandsvisa",
+      "publish": "Publicera",
+      "publishChanges": "Publicera ändringar",
+      "unpublish": "Avpublicera",
+      "readiness": {
+        "missing": "Lägg till {fields} för att publicera."
+      },
+      "missing": {
+        "title": "en rubrik",
+        "summary": "en sammanfattning",
+        "category": "en kategori",
+        "body": "artikeltexten"
+      },
+      "unpublishConfirm": {
+        "title": "Avpublicera artikeln?",
+        "description": "Läsarna hittar den inte längre i Biblioteket, och länkar till den slutar fungera. Artikeln finns kvar här, och du kan publicera den igen när som helst.",
+        "confirm": "Avpublicera"
+      },
+      "fields": {
+        "title": "Rubrik",
+        "summary": "Sammanfattning",
+        "category": "Kategori",
+        "cover": "Omslagsbild",
+        "body": "Artikeltext"
+      },
+      "hints": {
+        "summary": "Ren text, som visas under rubriken och på artikelns kort i Biblioteket.",
+        "cover": "Visas ovanför artikeln och på dess kort, beskuren till 16:9. Utan omslagsbild ser läsarna en platshållare.",
+        "body": "Läsarna ser texten under omslagsbilden, formaterad som den ser ut här."
+      },
+      "categoryPlaceholder": "Välj en kategori",
+      "bodyPlaceholder": "Skriv artikeln…",
+      "actions": {
+        "save": "Spara",
+        "cancel": "Avbryt"
+      },
+      "errors": {
+        "titleRequired": "En artikel måste ha en rubrik.",
+        "saveFailed": "Artikeln kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Artikeln kunde inte sparas – {reason}",
+        "publishFailed": "Artikeln kunde inte publiceras. Försök igen.",
+        "publishFailedWithReason": "Artikeln kunde inte publiceras – {reason}",
+        "unpublishFailed": "Artikeln kunde inte avpubliceras. Försök igen.",
+        "unpublishFailedWithReason": "Artikeln kunde inte avpubliceras – {reason}"
       }
     },
     "geduRole": {
@@ -880,52 +981,82 @@
       },
       "imagePicker": {
         "label": "Bild",
-        "dropPrompt": "Släpp en fil här, eller välj en, så läggs den till och används för den här produkten.",
-        "formats": "JPG, PNG, WebP, AVIF eller SVG, upp till 4 MB.",
+        "formats": "JPEG, PNG eller WebP.",
         "chooseFile": "Välj fil",
         "uploading": "Lägger till…",
-        "change": "Byt bild",
-        "remove": "Ta bort från den här produkten",
-        "outcomeAdded": "Tillagd i biblioteket och vald för den här produkten.",
-        "outcomeExisting": "Finns redan i biblioteket – vald för den här produkten.",
-        "hint": "Visas på produktkortet när föräldrar bläddrar, beskuren till en 3:2-ram. Bilderna delas mellan produkter, så ditt val här ändrar inget annat."
+        "hint": "Visas på produktkortet när föräldrar bläddrar, beskuren till en 3:2-ram. Bilderna delas mellan produkter, så ditt val här ändrar inget annat.",
+        "forPurpose": {
+          "product": {
+            "change": "Byt bild",
+            "remove": "Ta bort från den här produkten",
+            "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 3:2-ramen och den läggs till och används för den här produkten.",
+            "outcomeAdded": "Tillagd i biblioteket och vald för den här produkten.",
+            "outcomeExisting": "Finns redan i biblioteket – vald för den här produkten."
+          },
+          "libraryCover": {
+            "change": "Byt omslagsbild",
+            "remove": "Ta bort omslagsbild",
+            "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och blir omslagsbild för den här artikeln.",
+            "outcomeAdded": "Tillagd i biblioteket och vald som omslagsbild för den här artikeln.",
+            "outcomeExisting": "Finns redan i biblioteket – vald som omslagsbild för den här artikeln."
+          }
+        }
       },
       "imageCatalogue": {
-        "title": "Produktbilder",
-        "description": "En bild kan användas av många produkter. Ditt val gäller bara den här produkten, men att ersätta eller ta bort en bild påverkar alla produkter som använder den.",
         "upload": "Ladda upp",
         "uploading": "Lägger till…",
         "emptyCatalogue": "Inga bilder ännu. Ladda upp en för att börja.",
-        "usedBadge": "{count, plural, one {# produkt} other {# produkter}}",
         "columnEmpty": "Välj en bild",
         "use": "Använd den här bilden",
         "nameLabel": "Bildens namn",
         "rename": "Byt namn",
-        "usedBy": "Produkter som använder bilden",
-        "usedByNone": "Ingen produkt använder den här bilden.",
         "live": "Publicerad",
         "hidden": "Dold",
+        "draft": "Utkast",
         "replace": "Ersätt bild",
         "remove": "Ta bort ur biblioteket",
         "replaceConfirm": {
           "title": "Ersätt ”{label}”",
-          "consequence": "{count, plural, one {Produkten nedan kommer att visa den nya bilden.} other {Alla # produkter nedan kommer att visa den nya bilden.}}",
-          "unused": "Ingen produkt använder den här bilden. Den nya tar dess plats i biblioteket.",
           "choose": "Välj den nya bilden",
-          "confirm": "Ersätt på {count, plural, one {# produkt} other {# produkter}}",
           "confirmUnused": "Ersätt bild"
         },
         "removeConfirm": {
           "title": "Ta bort ”{label}”",
-          "consequence": "{count, plural, one {Produkten nedan blir utan bild tills du väljer en annan.} other {Alla # produkter nedan blir utan bild tills du väljer en annan.}}",
-          "unused": "Ingen produkt använder den här bilden. Den tas bort ur biblioteket för gott.",
-          "confirm": "Ta bort från {count, plural, one {# produkt} other {# produkter}}",
           "confirmUnused": "Ta bort ur biblioteket"
         },
         "errors": {
           "tooLarge": "Filen är för stor. Bilder får vara högst 4 MB.",
-          "unsupportedType": "Filtypen stöds inte. Använd JPG, PNG, WebP, AVIF eller SVG.",
+          "unsupportedType": "Filen är inte en JPEG. Beskär bilden här och försök igen.",
+          "wrongSize": "Bilden har inte exakt den storlek som ramen kräver. Beskär den här och försök igen.",
           "nameRequired": "Ge bilden ett namn på 1–120 tecken."
+        },
+        "forPurpose": {
+          "product": {
+            "title": "Produktbilder",
+            "description": "En bild kan användas av många produkter. Ditt val gäller bara den här produkten, men att ersätta eller ta bort en bild påverkar alla produkter som använder den.",
+            "usedBadge": "{count, plural, one {# produkt} other {# produkter}}",
+            "usedBy": "Produkter som använder bilden",
+            "usedByNone": "Ingen produkt använder den här bilden.",
+            "replaceConsequence": "{count, plural, one {Produkten nedan kommer att visa den nya bilden.} other {Alla # produkter nedan kommer att visa den nya bilden.}}",
+            "replaceUnused": "Ingen produkt använder den här bilden. Den nya tar dess plats i biblioteket.",
+            "replaceConfirm": "Ersätt på {count, plural, one {# produkt} other {# produkter}}",
+            "removeConsequence": "{count, plural, one {Produkten nedan blir utan bild tills du väljer en annan.} other {Alla # produkter nedan blir utan bild tills du väljer en annan.}}",
+            "removeUnused": "Ingen produkt använder den här bilden. Den tas bort ur biblioteket för gott.",
+            "removeConfirm": "Ta bort från {count, plural, one {# produkt} other {# produkter}}"
+          },
+          "libraryCover": {
+            "title": "Bibliotekets omslagsbilder",
+            "description": "En bild kan vara omslag för flera artiklar. Ditt val gäller bara den här artikeln, men att ersätta eller ta bort en bild påverkar alla artiklar som använder den, även publicerade.",
+            "usedBadge": "{count, plural, one {# artikel} other {# artiklar}}",
+            "usedBy": "Artiklar som använder bilden",
+            "usedByNone": "Ingen artikel använder den här bilden.",
+            "replaceConsequence": "{count, plural, one {Artikeln nedan kommer att visa den nya bilden, direkt om den är publicerad.} other {Alla # artiklar nedan kommer att visa den nya bilden, de publicerade direkt.}}",
+            "replaceUnused": "Ingen artikel använder den här bilden. Den nya tar dess plats i biblioteket.",
+            "replaceConfirm": "Ersätt på {count, plural, one {# artikel} other {# artiklar}}",
+            "removeConsequence": "{count, plural, one {Artikeln nedan blir utan omslag tills du väljer ett annat, även om den är publicerad.} other {Alla # artiklar nedan blir utan omslag tills du väljer ett annat, även de publicerade.}}",
+            "removeUnused": "Ingen artikel använder den här bilden. Den tas bort ur biblioteket för gott.",
+            "removeConfirm": "Ta bort från {count, plural, one {# artikel} other {# artiklar}}"
+          }
         }
       },
       "filters": {
@@ -2529,7 +2660,8 @@
     "linkApply": "Lägg till länk",
     "linkRemove": "Ta bort länk",
     "linkCancel": "Avbryt",
-    "linkInvalid": "Den här adressen går inte att länka. Använd en webbadress, en e-postadress eller en sökväg på den här webbplatsen."
+    "linkInvalid": "Den här adressen går inte att länka. Använd en webbadress, en e-postadress eller en sökväg på den här webbplatsen.",
+    "opensInNewTab": "(öppnas i en ny flik)"
   },
   "header": {
     "nav": {
@@ -2980,6 +3112,7 @@
     "municipalityClubs": "Kommunklubbar",
     "municipalityInvoicing": "Kommunfakturering",
     "invoiceCustomers": "Faktureringskunder",
+    "libraryContent": "Bibliotekets innehåll",
     "geduInvoicing": "Gedufakturering",
     "camps": "Läger",
     "events": "Evenemang",
@@ -5074,12 +5207,7 @@
         },
         "crop": {
           "title": "Beskär ditt foto",
-          "description": "Dra fotot för att placera det i ramen och zooma så att det passar.",
-          "zoom": "Zoom",
-          "confirm": "Använd foto",
-          "unreadable": "Den här filen kan inte öppnas som en bild här. Välj ett JPEG-, PNG- eller WebP-foto. iPhone-foton i HEIC-format måste konverteras först.",
-          "chooseAnother": "Välj ett annat foto",
-          "failed": "Fotot kunde inte beskäras. Försök igen eller välj ett annat foto."
+          "confirm": "Använd foto"
         }
       },
       "about": {
@@ -5152,6 +5280,41 @@
         "hide": "Dölj",
         "visibilityError": "Det gick inte att ändra om profilen är offentlig. Försök igen."
       }
+    }
+  },
+  "library": {
+    "name": "Biblioteket",
+    "readingTime": "{minutes, plural, one {# min läsning} other {# min läsning}}",
+    "article": {
+      "breadcrumbLabel": "Brödsmulor",
+      "more": "Mer från Biblioteket",
+      "share": {
+        "heading": "Dela artikeln",
+        "copyLink": "Kopiera länk",
+        "copied": "Länken kopierad",
+        "on": "Dela på {platform} (öppnas i en ny flik)",
+        "email": "E-post",
+        "byEmail": "Dela via e-post",
+        "native": "Dela…"
+      }
+    },
+    "index": {
+      "title": "School of Gamings <act>bibliotek</act>",
+      "intro": "Praktisk vägledning för föräldrar om säkerhet på nätet, spelande i vardagen och vad barn lär sig genom lek.",
+      "empty": "Här finns inget ännu",
+      "all": "Alla",
+      "filterLabel": "Kategorier"
+    },
+    "categories": {
+      "onlineSafety": "Säkerhet på nätet",
+      "screenTime": "Skärmtid och familjeliv",
+      "learning": "Lärande genom spel",
+      "gamesExplained": "Spelen förklarade",
+      "forSchools": "För skolor"
+    },
+    "cta": {
+      "heading": "Redo att börja?",
+      "button": "Kom igång"
     }
   }
 }

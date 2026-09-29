@@ -126,7 +126,7 @@ const CASES: Record<string, IdorCase> = {
       ),
   },
 
-  product_images: {
+  catalogue_images: {
     attacker: "customer2",
     why:
       "the picture catalogue is admin-only, and every authenticated user holds " +
@@ -135,7 +135,7 @@ const CASES: Record<string, IdorCase> = {
     probe: async (admin) =>
       (
         await admin
-          .from("product_images")
+          .from("catalogue_images")
           .select("*")
           .eq("id", IMAGE)
           .maybeSingle()
@@ -143,7 +143,7 @@ const CASES: Record<string, IdorCase> = {
     update: async (client) =>
       outcomeOf(
         await client
-          .from("product_images")
+          .from("catalogue_images")
           .update({ label: "Renamed by an outsider" })
           .eq("id", IMAGE)
           .select("id")
@@ -151,7 +151,7 @@ const CASES: Record<string, IdorCase> = {
     remove: async (client) =>
       outcomeOf(
         await client
-          .from("product_images")
+          .from("catalogue_images")
           .delete()
           .eq("id", IMAGE)
           .select("id")
@@ -617,22 +617,23 @@ describe("write-path IDOR (§3.4 check 3)", () => {
 
     await deleteTestProducts(admin, [PRODUCT]);
     await admin.from("whatsapp_contacts").delete().eq("phone", WHATSAPP_PHONE);
-    await admin.from("product_images").delete().eq("id", IMAGE);
+    await admin.from("catalogue_images").delete().eq("id", IMAGE);
 
     await createTestProduct(admin, { id: PRODUCT, seatCount: null });
 
-    // The table CHECKs the shape of both columns — `sha256` is 64
+    // The table CHECKs the form of both columns — `sha256` is 64
     // lowercase hex characters and `path` is that hash plus a stored extension
-    // — so a readable stand-in does not insert. Both are UNIQUE table-wide,
-    // so the value is a hex word nothing real will collide with rather than
-    // something shaped differently from a hash.
+    // — so a readable stand-in does not insert. Both are UNIQUE within a
+    // purpose, so the value is a hex word nothing real will collide with
+    // rather than something shaped differently from a hash.
     const IDOR_SHA =
       "1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f1d0f";
-    await admin.from("product_images").insert({
+    await admin.from("catalogue_images").insert({
       id: IMAGE,
       label: "IDOR fixture",
       sha256: IDOR_SHA,
       path: `${IDOR_SHA}.png`,
+      purpose: "product",
     });
 
     await admin
@@ -745,7 +746,7 @@ describe("write-path IDOR (§3.4 check 3)", () => {
   afterAll(async () => {
     await deleteTestProducts(admin, [PRODUCT]);
     await admin.from("whatsapp_contacts").delete().eq("phone", WHATSAPP_PHONE);
-    await admin.from("product_images").delete().eq("id", IMAGE);
+    await admin.from("catalogue_images").delete().eq("id", IMAGE);
     await admin
       .from("gedu_locations")
       .delete()

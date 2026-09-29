@@ -6,7 +6,7 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { productImageSrc } from "@/lib/images/product-image-url";
+import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
@@ -173,7 +173,7 @@ export function useBrowseCardViewProps(
     description: tr?.short_description ?? null,
     // The shared row-level resolution owns the empty-string-means-no-image
     // rule; null paints the wordmark banner.
-    imageSrc: productImageSrc(product.image_path),
+    imageSrc: catalogueImageSrc("product", product.image_path),
     // The value travels with the label because the view picks the chip's icon
     // from it; two loose props could be handed a label belonging to a
     // different tag. Null is untagged, which is most products.

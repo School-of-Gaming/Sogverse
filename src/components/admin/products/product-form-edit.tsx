@@ -45,7 +45,7 @@ export function ProductFormEdit({
       // The catalogue entry the product points at, straight off the same read
       // the form is seeded from — so the image card paints its picture and its
       // label on the first frame, with no extra request.
-      initialImage={product.product_images}
+      initialImage={product.catalogue_images}
       isEdit
       submitLabel={c("saveChanges")}
       onCancel={() => router.push(detailsHref)}

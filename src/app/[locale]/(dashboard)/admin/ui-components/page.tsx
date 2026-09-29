@@ -2050,7 +2050,7 @@ function ScenarioBrowseCard({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Product image catalogue                                            */
+/*  Image catalogue                                                    */
 /* ------------------------------------------------------------------ */
 
 /**
@@ -2118,6 +2118,7 @@ function ImageCatalogueDemo() {
 
       <Dialog open={open} size="wide" onOpenChange={setOpen}>
         <ImageCatalogueView
+          purpose="product"
           images={CATALOGUE_DEMO_IMAGES}
           usage={CATALOGUE_DEMO_USAGE}
           selectedId={selectedId}
@@ -2137,7 +2138,8 @@ function ImageCatalogueDemo() {
           onOpenChange={(next) => !next && setConfirm(null)}
           action={confirm.action}
           label={confirmImage.label}
-          products={CATALOGUE_DEMO_USAGE[confirmImage.id] ?? []}
+          purpose={confirmImage.purpose}
+          users={CATALOGUE_DEMO_USAGE[confirmImage.id] ?? []}
           onConfirm={() => {
             setConfirm(null);
             return Promise.resolve();
@@ -3209,7 +3211,7 @@ export default function AdminUIComponentsPage() {
         <ProductsDemo />
       </Section>
 
-      <Section title="Product Image Catalogue">
+      <Section title="Image Catalogue">
         <p className="text-sm text-muted-foreground -mt-2">
           The dialog the product form&rsquo;s picture card opens. Pictures are{" "}
           <strong>shared</strong>: one entry can be on many products, so

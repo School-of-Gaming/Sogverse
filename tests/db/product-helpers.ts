@@ -62,8 +62,8 @@ import { TEST_IDS } from "./constants";
  *                  accidentally raise another, and three groups because the two
  *                  unstaffed-group arrays need a group with members, a group
  *                  with none, and a group with an educator to be told apart)
- *   630-636        product-images-trigger.test.ts (three products 630-632, and
- *                  633-636 for the product_images entries it links them to —
+ *   630-636        catalogue-images-trigger.test.ts (three products 630-632, and
+ *                  633-636 for the catalogue_images entries it links them to —
  *                  a different table, but kept in the one registry so nobody
  *                  has to hold two allocation schemes in their head)
  *   640-645        admin-product-sessions.test.ts (an in-person product 640
@@ -229,7 +229,7 @@ import { TEST_IDS } from "./constants";
  *                  must refuse the column — one product cannot be both, since
  *                  the CHECK is keyed on product_type; 807 and 808 are two
  *                  `invoice_customers` rows rather than products, kept in this
- *                  one registry for the reason the product_images ids are, and
+ *                  one registry for the reason the catalogue_images ids are, and
  *                  two because the RESTRICT-on-delete case needs a customer
  *                  nothing points at beside the one a club does. 809 is a
  *                  customer id that must NEVER exist, backing the case that the
@@ -260,7 +260,12 @@ import { TEST_IDS } from "./constants";
  *                  block was full when they arrived; the file is named twice
  *                  here rather than the ids being squeezed in somewhere they
  *                  would collide
- *   637           write-idor.test.ts's product_images entry. It sits outside
+ *   638-639        catalogue-images-trigger.test.ts's Library cover entries:
+ *                  638 the one a product may not link, 639 fixture A's bytes
+ *                  again as a cover, for the per-purpose dedup case. Outside
+ *                  that file's 630-636 block because the block was full when
+ *                  purposes arrived.
+ *   637           write-idor.test.ts's catalogue_images entry. It sits outside
  *                  that file's 5a4-5a9 block because the block was full when
  *                  the catalogue arrived; the file is named twice here rather
  *                  than the id being squeezed in somewhere it would collide.
@@ -297,6 +302,13 @@ import { TEST_IDS } from "./constants";
  *                  minted one; the municipality club 822 with group 823, where
  *                  the minted sub is an assistant; and 824, a club nobody
  *                  teaches, which must reach no document)
+ *   825-82b        library-articles.test.ts — `library_articles` and
+ *                  `catalogue_images` rows rather than products, kept in this
+ *                  registry for the reason the invoice customers are: 825 a
+ *                  complete working copy, 826 an incomplete draft, 827 an id
+ *                  that must NEVER exist, backing the "unknown id is refused"
+ *                  cases, and 828-82b catalogue entries — three Library covers
+ *                  and one product picture a cover may not be
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

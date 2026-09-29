@@ -3,10 +3,8 @@ import { templateRegistry, type TemplateDefinition } from "@/lib/email-templates
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { styledName } from "@/lib/email-templates/utils";
 import { bulletList, ctaButtonRow, factList } from "@/lib/email-templates/blocks";
-import {
-  EMAIL_MARKDOWN_ELEMENTS,
-  renderMarkdownForEmail,
-} from "@/lib/email-templates/markdown";
+import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
+import { MARKDOWN_USE_CASES, OUTLINE_TAGS } from "@/lib/authored-markdown";
 import {
   getEmailTranslator,
   getTopicPrepTranslator,
@@ -1605,12 +1603,15 @@ describe("templateRegistry componentsReference", () => {
         "1. Fill the moat",
         "2. Test the drawbridge with redstone",
       ].join("\n"),
+      "feed",
     );
     expect(html).toContain(rendered);
     // And the specimen exercises the whole subset, so no construct's look can
     // change without the page showing it.
     const emitted = new Set([...rendered.matchAll(/<([a-z][a-z0-9]*)[\s>/]/g)].map((m) => m[1]));
-    for (const tag of EMAIL_MARKDOWN_ELEMENTS) {
+    const headingTags: Record<string, string> = OUTLINE_TAGS.card;
+    for (const element of MARKDOWN_USE_CASES.feed.allowedElements) {
+      const tag = headingTags[element] ?? element;
       expect(emitted, `the markdown specimen emits no <${tag}>`).toContain(tag);
     }
   });

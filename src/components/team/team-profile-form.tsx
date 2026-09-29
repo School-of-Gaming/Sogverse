@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useId } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Check, Trash2, Upload, X } from "lucide-react";
@@ -26,12 +26,7 @@ import {
   type TeamProfilePhoto,
   type TeamProfileTranslation,
 } from "@/services/team-profiles/team-profiles.types";
-import {
-  TEAM_PHOTO_ACCEPT,
-  TeamPhotoCropDialog,
-  decodeTeamPhoto,
-  type TeamPhotoSource,
-} from "@/components/team/team-photo-crop-dialog";
+import { useImageCrop } from "@/components/ui/use-image-crop";
 import { TeamPhotoPlaceholder } from "@/components/team/team-photo-placeholder";
 import type { VoiceZoneColor } from "@/types";
 
@@ -334,35 +329,18 @@ export function TeamProfilePhotoSection({
   update: FormUpdate;
 }) {
   const t = useTranslations("team.edit.photo");
-  const fileInput = useRef<HTMLInputElement>(null);
-  const [source, setSource] = useState<TeamPhotoSource | null>(null);
-  /** The picked file's URL, revoked when the dialog lets go of it. */
-  const sourceUrl = useRef<string | null>(null);
-  /** Which pick is current, so a slow decode of an abandoned file lands nowhere. */
-  const pick = useRef(0);
-
-  function release() {
-    if (sourceUrl.current !== null) URL.revokeObjectURL(sourceUrl.current);
-    sourceUrl.current = null;
-  }
-
-  function close() {
-    pick.current += 1;
-    release();
-    setSource(null);
-  }
-
-  async function choose(file: File) {
-    release();
-    const url = URL.createObjectURL(file);
-    sourceUrl.current = url;
-    const thisPick = ++pick.current;
-    setSource({ kind: "decoding", url });
-    const readable = await decodeTeamPhoto(url, file.type);
-    if (pick.current !== thisPick) return;
-    if (!readable) release();
-    setSource(readable ? { kind: "ready", url } : { kind: "unreadable" });
-  }
+  const crop = useImageCrop(
+    { width: TEAM_PHOTO_WIDTH, height: TEAM_PHOTO_HEIGHT },
+    (blob) => {
+      const url = URL.createObjectURL(blob);
+      onCropped(blob, url);
+      update((form) => ({
+        ...form,
+        photo: { src: url, width: TEAM_PHOTO_WIDTH, height: TEAM_PHOTO_HEIGHT },
+      }));
+    },
+    { title: t("crop.title"), confirmLabel: t("crop.confirm") },
+  );
 
   return (
     <FormSection heading={t("heading")}>
@@ -390,7 +368,7 @@ export function TeamProfilePhotoSection({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => fileInput.current?.click()}
+              onClick={crop.choose}
             >
               <Upload aria-hidden />
               {photo ? t("replace") : t("upload")}
@@ -409,34 +387,7 @@ export function TeamProfilePhotoSection({
         </div>
       </div>
       <PhotoGuidance />
-      <input
-        ref={fileInput}
-        type="file"
-        accept={TEAM_PHOTO_ACCEPT.join(",")}
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          // Cleared at once, so picking the same file again still fires.
-          e.target.value = "";
-          if (file !== undefined) void choose(file);
-        }}
-      />
-      <TeamPhotoCropDialog
-        source={source}
-        onCancel={close}
-        onChooseAnother={() => fileInput.current?.click()}
-        onConfirm={(blob) => {
-          close();
-          const url = URL.createObjectURL(blob);
-          onCropped(blob, url);
-          update((form) => ({
-            ...form,
-            photo: { src: url, width: TEAM_PHOTO_WIDTH, height: TEAM_PHOTO_HEIGHT },
-          }));
-        }}
-      />
+      {crop.element}
     </FormSection>
   );
 }

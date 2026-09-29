@@ -10,6 +10,23 @@ CREATE TYPE public.billing_mode AS ENUM (
 
 
 --
+-- Name: catalogue_image_purpose; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.catalogue_image_purpose AS ENUM (
+    'product',
+    'library_cover'
+);
+
+
+--
+-- Name: TYPE catalogue_image_purpose; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.catalogue_image_purpose IS 'What a catalogue picture is for: ''product'', a product''s picture, or ''library_cover'', a Library article''s cover. Each purpose has its own storage bucket (product-images, library-covers) and its own exact stored size; both live in the application''s one purpose map, and the size is enforced by the upload routes, which measure the bytes. No aspect ratio is stored: a purpose outlives any one crop.';
+
+
+--
 -- Name: chat_channel_type; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -89,6 +106,26 @@ CREATE TYPE public.gender_type AS ENUM (
     'girl',
     'non_binary'
 );
+
+
+--
+-- Name: library_article_category; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.library_article_category AS ENUM (
+    'online_safety',
+    'screen_time',
+    'learning',
+    'games_explained',
+    'for_schools'
+);
+
+
+--
+-- Name: TYPE library_article_category; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.library_article_category IS 'The Library''s five categories; every published article is in exactly one. The app uses these values as they are, in the index''s ?category= links and as the keys of its category labels, so there is one spelling everywhere. There is no news category on purpose: the Library holds what a parent can still use next year, and a dated announcement is not that.';
 
 
 --

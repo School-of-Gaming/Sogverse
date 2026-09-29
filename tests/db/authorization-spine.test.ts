@@ -132,6 +132,22 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // forbidden role never reaches the validation at all.
   create_invoice_customer: { permittedRoles: ["admin"] },
   update_invoice_customer: { permittedRoles: ["admin"] },
+  // The four writers of the Library — the working copy's create and save, and
+  // publish and unpublish, which copy it over or remove its public published
+  // copy. Neither table carries a write grant for `authenticated`, so these are
+  // the only path in. The positive half is assertable with no fixture for all
+  // four: past the admin guard, all-NULL arguments are refused with
+  // `check_violation` (create and save: no title) or `no_data_found` (publish
+  // and unpublish: no such article) — errors, but not the forbidden one.
+  create_library_article: { permittedRoles: ["admin"] },
+  save_library_article: { permittedRoles: ["admin"] },
+  publish_library_article: { permittedRoles: ["admin"] },
+  unpublish_library_article: { permittedRoles: ["admin"] },
+  // The image catalogue's replace, for the Library's half: it moves every
+  // cover — working and published copies — from one catalogue entry to
+  // another. Past the admin guard, all-NULL arguments are refused with
+  // `null_value_not_allowed` — an error, but not the forbidden one.
+  repoint_library_covers: { permittedRoles: ["admin"] },
   promote_from_waitlist: { permittedRoles: ["admin"] },
   demote_to_waitlist: { permittedRoles: ["admin"] },
   set_gedu_certified: { permittedRoles: ["admin"] },

@@ -154,7 +154,10 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // reader is a parent on a shared family device, so they may be signed in as
 // their own child. The signed token in the URL is the authorization, the page
 // renders identically in every auth state, and a gate would only cost the link.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix];
+// ROUTES.library is the Library index, and its prefix match covers each
+// article (/library/[id]). The admin's preview beneath an article is held out
+// of that match by `isAdminOnlySurface` below.
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — seat-holders (a gamer, or a parent on
@@ -476,6 +479,14 @@ export async function proxy(request: NextRequest) {
     );
   }
 
+  // The admin-only pages that live outside `/admin`: the preview scenes, and
+  // the preview of a Library article's saved working copy. The article preview
+  // sits under the public `/library/[id]` it previews, so it is matched by its
+  // own template and held out of the public-route list below, whose `/library`
+  // prefix match would otherwise reach it.
+  const isAdminOnlySurface =
+    pathname.startsWith("/preview/") || template === "/library/[id]/preview";
+
   // Check if route is public. A non-page path always passes (an API handler
   // owns its own auth; a `/_vercel/*` or `/.well-known/*` file has none).
   // The /voice/group/[id] branch is excluded so its public-prefix match here
@@ -483,6 +494,7 @@ export async function proxy(request: NextRequest) {
   const isPublicRoute =
     isNonPagePath(pathname) ||
     (!pathname.startsWith(AUTH_REQUIRED_VOICE_PREFIX) &&
+      !isAdminOnlySurface &&
       PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)));
 
   // Check if route is for authentication
@@ -602,10 +614,12 @@ export async function proxy(request: NextRequest) {
 
   // /preview/* are admin-only mock surfaces indexed on /admin/ui-previews:
   // full pages rendered from fixtures, each composing the chrome of the role
-  // whose page it mocks. Only admins should be able to reach them. Non-admins
-  // bounce to their own dashboard; unauthenticated users were already
-  // redirected to /login above. The prefix match covers every future scene.
-  if (pathname.startsWith("/preview/") && userRole !== "admin") {
+  // whose page it mocks. The Library article preview is the same kind of page
+  // over a real, unpublished article. Only admins should be able to reach
+  // either. Non-admins bounce to their own dashboard; unauthenticated users
+  // were already redirected to /login above. The prefix match covers every
+  // future scene.
+  if (isAdminOnlySurface && userRole !== "admin") {
     return redirect(localizedUrl(ROLE_DASHBOARD_PATHS[userRole]));
   }
 

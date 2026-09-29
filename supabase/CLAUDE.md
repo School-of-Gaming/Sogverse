@@ -280,6 +280,12 @@ supersedes (re-derive them; a hand-copy dropped a clause once). psql remains the
 tool for *checking* staging state. A local stack that has already applied the file you
 edited is the same trap on a smaller scale, and `npm run db -- reset` is its answer.
 
+A branch's unlanded migrations are drafts, so before it merges they are consolidated: one
+file per concept, not one per edit and not one per branch, where the test is whether a
+later reader would want to find the change on its own. A fix-up to an earlier migration on
+the same branch is folded into it. The files are ordered by dependency, so a migration
+never works around a type or table that a later file on the same branch creates.
+
 ## A schema-changing worktree runs its own stack
 
 **A migration that has to be looked at in the UI gets a local Supabase stack; a migration
@@ -318,14 +324,17 @@ every command does — the things its usage text does not say:
   set has no mail catcher, so nothing emailed can be read on a stack; the seeded accounts
   are the way in.
 - **The rich seed's products carry pictures, and they are not in the SQL.** A
-  `product_images` row names a storage object by the sha256 of its bytes, so the bytes
+  `catalogue_images` row names a storage object by the sha256 of its bytes, so the bytes
   have to be uploaded first: `scripts/local-db/rich-images.sh` uploads
-  `supabase/seed-images/` to the `product-images` bucket with the service-role key and
+  `supabase/seed-images/` to each file's purpose's bucket with the service-role key and
   then writes the catalogue rows and the `products.image_id` links under the admin's
   claims, which is the split the real upload route makes. `up` and `reset` run it after
   the seed. A file is named for a `product_topic` value, so which picture a product gets
   follows its topic; a topic with no file fails the step by name rather than leaving a
-  stack with holes in it. The same step uploads the three seeded team profiles' photos,
+  stack with holes in it. A file named `library-<category>.jpg` is a Library cover
+  instead, uploaded to the `library-covers` bucket (JPEG only, like every upload) and
+  linked to both copies of every seeded article in that category; the one live article
+  in a category with no file is how the stack shows a live article with no cover. The same step uploads the three seeded team profiles' photos,
   from `public/preview-art/`, to the paths the seed saved them under.
 - **Google sign-in works on a stack whose checkout's `.env.local` carries
   `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`** —

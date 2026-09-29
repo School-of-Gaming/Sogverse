@@ -1,238 +1,352 @@
 import { unified } from "unified";
 import remarkParse from "remark-parse";
-import type { List, ListItem, PhrasingContent, RootContent } from "mdast";
-import { DARK_THEME } from "@/lib/constants/colors";
-import { BODY_TEXT_STYLE, defuseAutolinks, escapeHtml } from "./utils";
+import { defaultUrlTransform } from "react-markdown";
+import type {
+  Definition,
+  List,
+  ListItem,
+  Nodes,
+  PhrasingContent,
+  RootContent,
+} from "mdast";
+import {
+  MARKDOWN_CONTAINER,
+  MARKDOWN_LOOK,
+  MARKDOWN_USE_CASES,
+  OUTLINE_TAGS,
+  type MarkdownLook,
+  type MarkdownUseCase,
+} from "@/lib/authored-markdown";
+import { defuseAutolinks, escapeHtml } from "./utils";
 
 /**
- * Renders stored markdown — a gedu's session report — as the inline-styled HTML
- * fragment an email can carry.
+ * Renders stored markdown — a gedu's session report, or any other authored
+ * field — as the inline-styled HTML fragment an email can carry.
  *
- * **Same parser as the app, same subset as the app.** The source is parsed by
- * `remark-parse`, which is the parser inside `react-markdown`, so a report
- * cannot mean one thing on the family's page and another in their inbox. The
- * elements emitted are exactly the in-app `feed` allow-list (see the `Markdown`
- * component under `components/ui/`, and the parity test next to this file):
- * paragraphs, three heading levels, bold, italic, lists and line breaks.
- * Everything outside that set is **unwrapped to its text rather than dropped**,
- * which is the app's rule too — a deeper heading reads as a paragraph, a code
- * span reads as plain text. Neither end enables GFM, so tables, strikethrough
- * and footnotes never come out of the parser at all.
+ * **One document, two media.** The look, the use cases with their feature
+ * flags, allow-lists and outline tags are the app's own, read from
+ * `lib/authored-markdown`, so a field renders here exactly as the in-app
+ * `Markdown` component renders it under the same use case: the same tags in
+ * the same order, the same words, the same links kept or unwrapped, and every
+ * element's values written inline where the app paints classes. The source is
+ * parsed by `remark-parse`, the parser inside `react-markdown`, and an element
+ * outside the use case's allow-list is
+ * unwrapped to its contents as the app unwraps it — a deeper heading or a code
+ * block leaves its bare text in the container, raw HTML in the source reads as
+ * its own literal (escaped) text, an image or a rule leaves nothing.
  *
- * **A link renders as its label and nothing else — and nothing in the text is
- * left for a mail client to turn into one.** A report is written by a gedu and
- * read by a family, so a link in one is this platform pointing a child's parent
- * somewhere it does not control; the app refuses to render one, and a mail that
- * did would be the same sentence meaning two different things depending on
- * where it was read. The inbox has a second way to grow a link that the browser
- * does not: every major client linkifies anything *shaped* like an address in
- * running text, so a bare `evil.example/x` or `someone@example.com` would come
- * out clickable. Those runs are defused with a zero-width word joiner after
- * each dot — the text reads identically, and no client's linkifier recognises
- * it. Images have no text to unwrap to and vanish; raw HTML in the source is
- * never emitted.
+ * **Links follow the `links` flag, and so does their degradation.** A use case
+ * without it (a report: staff-authored, family-read) renders a link as its
+ * label and nothing else. A use case with it keeps an anchor only where the
+ * href survives `react-markdown`'s own URL transform — the one function the
+ * app calls — and degrades a blanked one to its label, exactly as the app does.
+ * **Nothing in the text is left for a mail client to turn into a link either**:
+ * every major client linkifies anything *shaped* like an address in running
+ * text, which the browser does not, so address-shaped runs are defused with a
+ * zero-width word joiner after each dot — the text reads identically, and no
+ * client's linkifier recognises it.
  *
- * **Every character of text is escaped.** The source is typed by a user, and
+ * **Every character of text is escaped.** The source is typed by a user and
  * the output is spliced straight into the mail's HTML, so this is the one seam
  * where a stray `<` would become markup.
  *
- * Output is a string of inline-styled elements, not a React render: this
- * module sits behind the template registry, which a client page imports, so it
- * has to be cheap to bundle and must not reach for `react-dom/server`.
+ * Output is a string rather than a React render: this module sits behind the
+ * template registry, which a client page imports, so it has to be cheap to
+ * bundle and must not reach for `react-dom/server`.
  */
-
-/**
- * The tags this renderer can emit. Held equal to the app's `FEED_ELEMENTS` by a
- * unit test, so widening one side without the other fails the build.
- */
-export const EMAIL_MARKDOWN_ELEMENTS = [
-  "p",
-  "h1",
-  "h2",
-  "h3",
-  "strong",
-  "em",
-  "ul",
-  "ol",
-  "li",
-  "br",
-];
+export function renderMarkdownForEmail(
+  markdown: string,
+  useCase: MarkdownUseCase,
+): string {
+  const tree = parser.parse(markdown);
+  const { allowedElements, features, outline } = MARKDOWN_USE_CASES[useCase];
+  const context: Context = {
+    allowed: new Set(allowedElements),
+    links: features.links,
+    tags: OUTLINE_TAGS[outline],
+    definitions: collectDefinitions(tree),
+  };
+  return `<div style="${css(textDeclarations(MARKDOWN_CONTAINER))}">${renderTopLevel(tree.children, context)}</div>`;
+}
 
 const parser = unified().use(remarkParse);
 
-export function renderMarkdownForEmail(markdown: string): string {
-  return renderBlocks(parser.parse(markdown).children);
+interface Context {
+  allowed: ReadonlySet<string>;
+  /** The use case's `links` flag. */
+  links: boolean;
+  tags: (typeof OUTLINE_TAGS)[keyof typeof OUTLINE_TAGS];
+  /** Link reference definitions, by identifier, so `[label][ref]` resolves as it does in the app. */
+  definitions: ReadonlyMap<string, Definition>;
 }
 
-/**
- * Where a block sits among its siblings. Email clients have no `:first-child`
- * to lean on, so the margins that make the rhythm — no gap above the first
- * block, none below the last, air above a heading otherwise — are decided here
- * and written inline.
- */
-interface Position {
-  first: boolean;
-  last: boolean;
-}
-
-function margin(top: number, bottom: number, { first, last }: Position): string {
-  return `margin:${first ? 0 : top}px 0 ${last ? 0 : bottom}px;`;
-}
-
-function renderBlocks(nodes: RootContent[]): string {
-  const visible = flatten(nodes).filter((node) => !emitsNothing(node));
-  return visible
-    .map((node, i) =>
-      renderBlock(node, { first: i === 0, last: i === visible.length - 1 }),
-    )
-    .join("");
-}
-
-/**
- * A blockquote is unwrapped to the blocks inside it — the app drops the quote
- * and keeps the paragraphs — so its children take their place among the
- * siblings *before* positions are assigned, or the first paragraph of a quote
- * would carry a gap it no longer has a reason for.
- */
-function flatten(nodes: RootContent[]): RootContent[] {
-  return nodes.flatMap((node) =>
-    node.type === "blockquote" ? flatten(node.children) : [node],
-  );
-}
-
-/**
- * Nodes that leave no block behind: raw HTML is dropped rather than rendered,
- * and a rule, an image or a link definition has no words to keep. The one list
- * of them — `renderBlock` consults it too, so a list item cannot emit an empty
- * paragraph for a node the top level would have skipped.
- */
-function emitsNothing(node: RootContent): boolean {
-  switch (node.type) {
-    case "html":
-    case "thematicBreak":
-    case "definition":
-    case "image":
-    case "imageReference":
-      return true;
-    default:
-      return false;
+function collectDefinitions(node: Nodes, found = new Map<string, Definition>()) {
+  if (node.type === "definition" && !found.has(node.identifier)) {
+    found.set(node.identifier, node);
   }
+  if ("children" in node) {
+    for (const child of node.children) collectDefinitions(child, found);
+  }
+  return found;
 }
 
-function renderBlock(node: RootContent, pos: Position): string {
-  if (emitsNothing(node)) return "";
+// ------------------------------------------------------------------- styles
+
+/** A declaration list, in the order it is written. */
+type Declarations = [property: string, value: string][];
+
+function css(declarations: Declarations): string {
+  return declarations.map(([property, value]) => `${property}:${value};`).join("");
+}
+
+/**
+ * The weight a mail asks for. The mail face draws 400 and 700 only, so a
+ * weight between them lands where a browser's own font matching would put it:
+ * above 500 on the heavier face, 500 and below on the lighter.
+ */
+export function mailWeight(weight: number): 400 | 700 {
+  return weight > 500 ? 700 : 400;
+}
+
+/** The text half of a look: size, leading, weight, ink, decoration. */
+function textDeclarations(look: MarkdownLook): Declarations {
+  const out: Declarations = [];
+  if (look.fontSize !== undefined) out.push(["font-size", `${look.fontSize}px`]);
+  if (look.lineHeight !== undefined) out.push(["line-height", `${look.lineHeight}`]);
+  if (look.fontWeight !== undefined) out.push(["font-weight", `${mailWeight(look.fontWeight)}`]);
+  if (look.color !== undefined) out.push(["color", look.color]);
+  if (look.underline === true) out.push(["text-decoration", "underline"]);
+  if (look.underlineOffset !== undefined) {
+    out.push(["text-underline-offset", `${look.underlineOffset}px`]);
+  }
+  return out;
+}
+
+/**
+ * A block's whole style. The container's text values are restated on every
+ * block rather than inherited from the wrapper, because Outlook's Word engine
+ * gives a `<p>` or a heading its own default face size and colour instead of
+ * the parent's; the element's look then overrides them. The margin is the top
+ * one alone — every other side is zeroed, since a mail client's own heading
+ * and paragraph margins are not the app's.
+ */
+function blockStyle(look: MarkdownLook, top: number): string {
+  const box: Declarations =
+    look.indent === undefined
+      ? [["margin", `${top}px 0 0`]]
+      : [
+          ["margin", `${top}px 0 0 ${look.indent}px`],
+          ["padding", "0"],
+        ];
+  if (look.listStyle !== undefined) box.push(["list-style-type", look.listStyle]);
+  const text = new Map(textDeclarations(MARKDOWN_CONTAINER));
+  for (const [property, value] of textDeclarations(look)) text.set(property, value);
+  return css([...box, ...text]);
+}
+
+// ------------------------------------------------------------------- blocks
+
+/**
+ * The container's children. Only the first *element* among them is flush —
+ * the app's reset is a `:first-child` rule, which a mail cannot express and
+ * which ignores bare text — so the flag stays up until markup has been emitted.
+ */
+function renderTopLevel(nodes: RootContent[], context: Context): string {
+  let html = "";
+  for (const node of nodes) {
+    const block = renderBlock(node, context, !html.includes("<"));
+    if (block !== "") html += html === "" ? block : `\n${block}`;
+  }
+  return html;
+}
+
+/** Blocks inside an unwrapped quote: none of them is flush. */
+function renderBlocks(nodes: RootContent[], context: Context, inItem: boolean): string {
+  return nodes
+    .map((node) => renderBlock(node, context, false, inItem))
+    .filter((block) => block !== "")
+    .join("\n");
+}
+
+/**
+ * `inItem` is a block inside a list item, where a list is a sub-list. An
+ * unwrapped quote passes it through: the app unwraps the quote too, so a list
+ * in it still sits in the item.
+ */
+function renderBlock(
+  node: RootContent,
+  context: Context,
+  flush: boolean,
+  inItem = false,
+): string {
   switch (node.type) {
     case "paragraph":
-      return paragraph(renderInline(node.children), pos);
+      return element("p", "p", MARKDOWN_LOOK.p, renderInline(node.children, context), context, flush);
     case "heading": {
-      const { depth } = node;
-      return depth === 1 || depth === 2 || depth === 3
-        ? heading(depth, renderInline(node.children), pos)
-        : // The editor stops at three levels; a deeper one reads as a paragraph,
-          // which is what unwrapping it to its text amounts to.
-          paragraph(renderInline(node.children), pos);
+      const level = `h${node.depth}`;
+      const inner = renderInline(node.children, context);
+      return level === "h1" || level === "h2" || level === "h3"
+        ? element(level, context.tags[level], MARKDOWN_LOOK[level], inner, context, flush)
+        : inner;
     }
     case "list":
-      return list(node, pos);
+      return list(node, context, flush, inItem);
     case "blockquote":
-      // Flattened away at the top level; this is a quote inside a list item.
-      return renderBlocks(node.children);
+      // Kept by no use case, so always unwrapped to the blocks inside it.
+      return renderBlocks(node.children, context, inItem);
     case "code":
-      return paragraph(text(node.value), pos);
+      // `pre` and `code` are kept by no use case: the bare text is what is left.
+      return text(node.value);
+    case "html":
+      // The app shows raw HTML as its own literal text rather than as markup.
+      return text(node.value);
+    case "thematicBreak":
+    case "definition":
+      return "";
     default:
-      // Anything else — a GFM construct neither end enables, a container with
-      // nothing to belong to — keeps its words, as the app does.
-      return paragraph(textOf(node), pos);
+      // Anything else — a GFM construct neither end enables — keeps its words.
+      return textOf(node);
   }
 }
 
 /** The escaped text of any node, markup discarded. */
-function textOf(node: RootContent): string {
+function textOf(node: Nodes): string {
   if ("children" in node) return node.children.map(textOf).join("");
   if ("value" in node) return text(node.value);
   return "";
 }
 
-function paragraph(inner: string, pos: Position): string {
-  return `<p style="${margin(0, 16, pos)}${BODY_TEXT_STYLE}">${inner}</p>`;
-}
-
 /**
- * Three levels, three visible sizes — the editor offers a title, a heading and
- * a subheading, and a writer has to be able to see which one they picked. The
- * top level matches the size the shell's own heading helper uses, so a report's
- * title sits level with the rest of the mail rather than shouting over it; the
- * third is body-sized and muted, as it is in the app.
+ * One element: painted with its look where the use case allows it, unwrapped to
+ * its contents where it does not. `name` is the element the allow-list names;
+ * `tag` is the one written, which differs for a heading under its outline.
  */
-function heading(depth: 1 | 2 | 3, inner: string, pos: Position): string {
-  const size = depth === 1 ? 18 : depth === 2 ? 16 : 14;
-  const color = depth === 3 ? DARK_THEME.mutedFg : DARK_THEME.foreground;
-  return `<h${depth} style="${margin(24, 8, pos)}font-size:${size}px;font-weight:bold;line-height:1.4;color:${color};">${inner}</h${depth}>`;
+function element(
+  name: string,
+  tag: string,
+  look: MarkdownLook,
+  inner: string,
+  context: Context,
+  flush: boolean,
+): string {
+  return context.allowed.has(name)
+    ? `<${tag} style="${blockStyle(look, flush ? 0 : (look.marginTop ?? 0))}">${inner}</${tag}>`
+    : inner;
 }
 
 /**
- * The indent is a `margin-left`, not the `padding-left` the shell's flat
- * bullet list uses: Outlook's Word engine ignores padding on list elements but
- * honours margin, and this renderer emits *nested* lists, where an indent that
- * does not happen turns the writer's structure into a flat one.
+ * A list, with the gap below each item but its last — the app's `space-y`,
+ * which a mail writes on the items themselves.
  *
  * A *tight* list (no blank lines between items) renders each item's paragraph
- * as bare text, the way the app does — wrapping it in `<p>` would give every
- * bullet a paragraph's bottom margin.
+ * as bare text, the way the app does; a loose one keeps the paragraphs, each
+ * with its margin.
+ *
+ * `nested` is a list inside a list item, which takes the look's nested top
+ * margin — the app paints the same value from the parent list's classes.
  */
-function list(node: List, pos: Position): string {
-  const loose = node.spread || node.children.some((item) => item.spread);
-  const tag = node.ordered ? "ol" : "ul";
+function list(
+  node: List,
+  context: Context,
+  flush: boolean,
+  nested = false,
+): string {
+  const name = node.ordered === true ? "ol" : "ul";
+  const look = MARKDOWN_LOOK[name];
+  const loose = node.spread === true || node.children.some(itemIsLoose);
+  const items = node.children
+    .map((item, i) => {
+      const last = i === node.children.length - 1;
+      const inner = listItem(item, loose, context);
+      return context.allowed.has("li")
+        ? `<li style="margin:0 0 ${last ? 0 : look.itemGap}px;">${inner}</li>`
+        : inner;
+    })
+    .join("\n");
+  if (!context.allowed.has(name)) return items;
   const start =
-    node.ordered && typeof node.start === "number" && node.start !== 1
+    node.ordered === true && typeof node.start === "number" && node.start !== 1
       ? ` start="${node.start}"`
       : "";
-  const items = node.children
-    .map((item) => `<li style="margin:0 0 8px;">${listItem(item, loose)}</li>`)
-    .join("");
-  return `<${tag}${start} style="margin:0 0 ${pos.last ? 0 : 16}px 20px;padding:0;${BODY_TEXT_STYLE}">${items}</${tag}>`;
+  const top = flush ? 0 : nested ? look.nestedMarginTop : look.marginTop;
+  return `<${name}${start} style="${blockStyle(look, top)}">${items}</${name}>`;
 }
 
-function listItem(item: ListItem, loose: boolean): string {
+function itemIsLoose(item: ListItem): boolean {
+  return typeof item.spread === "boolean" ? item.spread : item.children.length > 1;
+}
+
+function listItem(item: ListItem, loose: boolean, context: Context): string {
   return item.children
-    .map((child, i) =>
+    .map((child) =>
       child.type === "paragraph" && !loose
-        ? renderInline(child.children)
-        : renderBlock(child, { first: i === 0, last: i === item.children.length - 1 }),
+        ? renderInline(child.children, context)
+        : renderBlock(child, context, false, true),
     )
-    .join("");
+    .filter((block) => block !== "")
+    .join("\n");
 }
 
-function renderInline(nodes: PhrasingContent[]): string {
-  return nodes.map(renderPhrasing).join("");
+// ------------------------------------------------------------------- inline
+
+function renderInline(nodes: PhrasingContent[], context: Context): string {
+  return nodes.map((node) => renderPhrasing(node, context)).join("");
 }
 
-function renderPhrasing(node: PhrasingContent): string {
+function renderPhrasing(node: PhrasingContent, context: Context): string {
   switch (node.type) {
     case "text":
     case "inlineCode":
+    case "html":
       return text(node.value);
     case "strong":
-      return `<strong>${renderInline(node.children)}</strong>`;
+      return inline("strong", MARKDOWN_LOOK.strong, renderInline(node.children, context), context);
     case "emphasis":
-      return `<em>${renderInline(node.children)}</em>`;
+      return context.allowed.has("em")
+        ? `<em>${renderInline(node.children, context)}</em>`
+        : renderInline(node.children, context);
     case "break":
-      return "<br />";
+      return context.allowed.has("br") ? "<br />" : "";
     case "link":
-    case "linkReference":
+      return link(node.url, renderInline(node.children, context), context);
+    case "linkReference": {
+      const definition = context.definitions.get(node.identifier);
+      const label = renderInline(node.children, context);
+      return definition === undefined ? label : link(definition.url, label, context);
+    }
     case "delete":
-      // Unwrapped: the label stays, the destination (or the strike) goes.
-      return renderInline(node.children);
+      return renderInline(node.children, context);
     case "image":
     case "imageReference":
     case "footnoteReference":
-    case "html":
       return "";
   }
+}
+
+function inline(name: string, look: MarkdownLook, inner: string, context: Context): string {
+  return context.allowed.has(name)
+    ? `<${name} style="${css(textDeclarations(look))}">${inner}</${name}>`
+    : inner;
+}
+
+/**
+ * **A link the use case has no flag for, or whose href the URL transform
+ * blanks, is its label.** The href goes through `react-markdown`'s `defaultUrlTransform`, the
+ * function the app's renderer calls, so the two agree on which addresses
+ * survive; an empty one is not inert (it resolves to the page it is on), so it
+ * degrades to plain text in both. No `target`, whatever the address: a link
+ * in a mail opens the browser anyway, so the app's new tab for another site's
+ * address, and its marker saying so, have nothing to do here. The `rel`
+ * withholds the referrer from every destination, as the app's does.
+ */
+function link(url: string, label: string, context: Context): string {
+  if (!context.links) return label;
+  const href = defaultUrlTransform(url);
+  if (href === "") return label;
+  return `<a href="${escapeHtml(href)}" rel="noreferrer" style="${css(textDeclarations(MARKDOWN_LOOK.a))}">${label}</a>`;
 }
 
 /** A run of text as it reaches the mail: escaped, and safe from linkifiers. */
 function text(value: string): string {
   return defuseAutolinks(escapeHtml(value));
 }
-
