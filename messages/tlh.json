@@ -1072,7 +1072,7 @@
           "addTraineeDescription": "ghojwI’ ghom bej. patlh ghajnISbe’. Hoch DaqDaq pawpu’bogh wovbe’."
         },
         "trainee": {
-          "label": "ghojwI’pu’",
+          "role": "ghojwI’",
           "add": "ghojwI’ yIchu’",
           "promote": "Gedu yIchenmoH",
           "promoteAria": "{name} Gedu yIchenmoH",

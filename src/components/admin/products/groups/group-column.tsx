@@ -29,7 +29,6 @@ import { ParticipantChip } from "./participant-chip";
 import type { RobloxRenderMap } from "@/services/roblox";
 import { chipGameIdentity } from "./panel-rules";
 import { GeduPill } from "./gedu-pill";
-import { TraineePill } from "./trainee-pill";
 import type { AppHref } from "@/lib/constants/routes";
 
 interface GroupColumnProps {
@@ -310,12 +309,15 @@ export function GroupColumn({
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Gedus row */}
+          {/* Gedus row — everyone here from our side: the assigned Gedus in
+              the snapshot's order, then the trainees shadowing the group. One
+              list and one pill, because it is one question; a trainee's pill
+              says "Trainee" where an assigned Gedu's has the role select. */}
           <div className="space-y-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               {t("group.assignedGedus")}
             </Label>
-            {group.gedus.length === 0 ? (
+            {group.gedus.length === 0 && group.trainees.length === 0 ? (
               <p className="text-xs text-muted-foreground">{t("group.noGedus")}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -336,35 +338,10 @@ export function GroupColumn({
                     onRemove={() => onRemoveGedu(group.id, ge.id)}
                   />
                 ))}
-              </div>
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onAddGedu(group.id)}
-              disabled={busy}
-              className="gap-1.5"
-            >
-              <UserPlus className="h-4 w-4" />
-              {t("group.addGedu")}
-            </Button>
-          </div>
-
-          {/* Trainees row — gedus shadowing the group. Beneath the Gedus
-              because it is the same question (who is here from our side) at a
-              lower rank. No empty line: most groups never have a trainee, and
-              a "none yet" on every card would be noise the Gedus row does not
-              have to justify. */}
-          <div className="space-y-2">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              {t("trainee.label")}
-            </Label>
-            {group.trainees.length > 0 && (
-              <div className="flex flex-wrap gap-2">
                 {group.trainees.map((tr) => (
-                  <TraineePill
+                  <GeduPill
                     key={tr.id}
+                    seat="trainee"
                     geduId={tr.id}
                     firstName={tr.first_name}
                     email={tr.email}
@@ -380,17 +357,30 @@ export function GroupColumn({
                 ))}
               </div>
             )}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onAddTrainee(group.id)}
-              disabled={busy}
-              className="gap-1.5"
-            >
-              <UserPlus className="h-4 w-4" />
-              {t("trainee.add")}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onAddGedu(group.id)}
+                disabled={busy}
+                className="gap-1.5"
+              >
+                <UserPlus className="h-4 w-4" />
+                {t("group.addGedu")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onAddTrainee(group.id)}
+                disabled={busy}
+                className="gap-1.5"
+              >
+                <UserPlus className="h-4 w-4" />
+                {t("trainee.add")}
+              </Button>
+            </div>
           </div>
 
           {/* Participations row */}

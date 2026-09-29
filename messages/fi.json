@@ -1028,7 +1028,7 @@
           "addTraineeDescription": "Harjoittelija seuraa ryhmän toimintaa eikä hänen tarvitse olla hyväksytty. Tämän tuotteen Gedut ja harjoittelijat näkyvät harmaina."
         },
         "trainee": {
-          "label": "Harjoittelijat",
+          "role": "Harjoittelija",
           "add": "Lisää harjoittelija",
           "promote": "Tee Geduksi",
           "promoteAria": "Nimeä {name} tämän ryhmän Geduksi",

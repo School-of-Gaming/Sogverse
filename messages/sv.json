@@ -1028,7 +1028,7 @@
           "addTraineeDescription": "En praktikant följer gruppen och behöver inte vara certifierad. De som redan finns på produkten, som Gedu eller praktikant, är gråa."
         },
         "trainee": {
-          "label": "Praktikanter",
+          "role": "Praktikant",
           "add": "Lägg till praktikant",
           "promote": "Gör till Gedu",
           "promoteAria": "Gör {name} till Gedu i den här gruppen",

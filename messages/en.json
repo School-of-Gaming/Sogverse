@@ -1028,7 +1028,7 @@
           "addTraineeDescription": "A trainee shadows the group and doesn’t need to be certified. Anyone already on this product, as a Gedu or a trainee, is greyed out."
         },
         "trainee": {
-          "label": "Trainees",
+          "role": "Trainee",
           "add": "Add trainee",
           "promote": "Make Gedu",
           "promoteAria": "Make {name} a Gedu of this group",

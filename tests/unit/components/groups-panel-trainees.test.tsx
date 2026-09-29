@@ -5,13 +5,15 @@ import type { GroupPending } from "@/services/groups";
 import type { ProductGroupsSnapshot } from "@/types";
 
 /**
- * The Trainees row on a group card, through the panel's intents.
+ * Trainees on a group card, through the panel's intents.
  *
- * The claims are the ones a screen cannot tell apart from a broken build: that
- * the row's add, remove and promote each reach the shell with the right group
- * and gedu, and that **promote is offered only to a certified trainee** — an
- * assignment still needs certification, so an uncertified trainee's pill must
- * carry no control that could make one.
+ * A trainee is listed in the Gedus row, after the assigned Gedus, in the same
+ * pill: where a Gedu's pill has the role select, a trainee's says "Trainee"
+ * with nothing to open. The other claims are the ones a screen cannot tell
+ * apart from a broken build: that add, remove and promote each reach the shell
+ * with the right group and gedu, and that **promote is offered only to a
+ * certified trainee** — an assignment still needs certification, so an
+ * uncertified trainee's pill must carry no control that could make one.
  *
  * Translations echo their keys, so nothing depends on English wording.
  */
@@ -24,7 +26,7 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en",
 }));
 
-// The board's drag machinery has nothing to do with the Trainees row.
+// The board's drag machinery has nothing to do with the Gedus row.
 vi.mock("@dnd-kit/core", () => ({
   DndContext: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -53,6 +55,7 @@ vi.mock("@/components/public/products/seat-availability-bar", () => ({
 // Real UUIDs, hardcoded: each pill draws an identicon out of the id's hex bytes.
 const IDS = {
   group: "e3b1c7a2-5d4f-4a8e-9b6c-1f2d3e4a5b6c",
+  gedu: "0d7f3b95-6c1e-4a2d-8f4b-5e9a2c7d1b36",
   certified: "4c9e2a71-8b3d-4f6a-a5e1-7d2c9b8a6f34",
   uncertified: "a81f5d3c-2e9b-4c7a-b6d4-3e1f0a9c8b72",
 } as const;
@@ -64,7 +67,14 @@ const SNAPSHOT: ProductGroupsSnapshot = {
       id: IDS.group,
       name: "Ryhmä A",
       created_at: "2026-01-01T00:00:00Z",
-      gedus: [],
+      gedus: [
+        {
+          id: IDS.gedu,
+          first_name: "Eeli",
+          email: "eeli@example.test",
+          role: "primary",
+        },
+      ],
       trainees: [
         {
           id: IDS.certified,
@@ -96,6 +106,38 @@ const NO_PENDING: GroupPending = {
   creating: false,
 };
 
+const PANEL_PROPS = {
+  snapshot: SNAPSHOT,
+  isLoading: false,
+  pending: NO_PENDING,
+  switchingParticipationId: null,
+  productType: "consumer_club",
+  billingMode: "paid",
+  topic: "minecraft_java",
+  seatCount: null,
+  waitlistEnabled: false,
+  voiceAvailable: false,
+  voiceIsOpen: false,
+  opensDate: "",
+  opensTime: "",
+  robloxRenders: undefined,
+} as const;
+
+const INERT_ACTIONS = {
+  onMove: () => {},
+  onPromote: () => {},
+  onDemote: () => {},
+  onRemoveParticipant: () => {},
+  onRenameGroup: () => {},
+  onDeleteGroup: () => {},
+  onCreateGroup: () => {},
+  onRemoveGedu: () => {},
+  onRequestAddGedu: () => {},
+  onRequestAddParticipant: () => {},
+  onRequestAddTrainee: () => {},
+  onRemoveTrainee: () => {},
+};
+
 function renderPanel(
   overrides: {
     onRequestAddTrainee?: (groupId: string) => void;
@@ -105,43 +147,60 @@ function renderPanel(
 ) {
   render(
     <GroupsPanelView
-      snapshot={SNAPSHOT}
-      isLoading={false}
-      pending={NO_PENDING}
-      switchingParticipationId={null}
-      productType="consumer_club"
-      billingMode="paid"
-      topic="minecraft_java"
-      seatCount={null}
-      waitlistEnabled={false}
-      voiceAvailable={false}
-      voiceIsOpen={false}
-      opensDate=""
-      opensTime=""
-      robloxRenders={undefined}
-      actions={{
-        onMove: () => {},
-        onPromote: () => {},
-        onDemote: () => {},
-        onRemoveParticipant: () => {},
-        onRenameGroup: () => {},
-        onDeleteGroup: () => {},
-        onCreateGroup: () => {},
-        onRemoveGedu: () => {},
-        onRequestAddGedu: () => {},
-        onRequestAddParticipant: () => {},
-        onRequestAddTrainee: overrides.onRequestAddTrainee ?? (() => {}),
-        onRemoveTrainee: overrides.onRemoveTrainee ?? (() => {}),
-        onPromoteTrainee: overrides.onPromoteTrainee,
-      }}
+      {...PANEL_PROPS}
+      actions={{ ...INERT_ACTIONS, ...overrides }}
     />,
   );
 }
 
 const PROMOTE = "admin.products.groupsPanel.trainee.promoteAria";
 const REMOVE = "admin.products.groupsPanel.trainee.removeAria";
+const TRAINEE_ROLE = "admin.products.groupsPanel.trainee.role";
 
-describe("the Trainees row", () => {
+describe("trainees in the Gedus row", () => {
+  it("lists them after the assigned Gedus, as a label where the role select would be", () => {
+    renderPanel();
+
+    const names = screen
+      .getAllByText(/^(Eeli|Aino|Onni)$/)
+      .map((node) => node.textContent);
+    expect(names).toEqual(["Eeli", "Aino", "Onni"]);
+
+    // The assigned Gedu has no role write here, so its role is a label too —
+    // but no trainee pill is a control of any kind.
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.getAllByText(TRAINEE_ROLE)).toHaveLength(2);
+    // No separate Trainees heading.
+    expect(
+      screen.queryByText("admin.products.groupsPanel.trainee.label"),
+    ).toBeNull();
+  });
+
+  it("draws the Gedu's role select but none on a trainee", () => {
+    render(
+      <GroupsPanelView
+        {...PANEL_PROPS}
+        actions={{ ...INERT_ACTIONS, onSetGeduRole: () => {} }}
+      />,
+    );
+
+    expect(screen.getAllByRole("combobox")).toHaveLength(1);
+    expect(screen.getAllByText(TRAINEE_ROLE)).toHaveLength(2);
+  });
+
+  it("puts Add trainee beside and after Add Gedu", () => {
+    renderPanel();
+
+    const addGedu = screen.getByRole("button", {
+      name: "admin.products.groupsPanel.group.addGedu",
+    });
+    const addTrainee = screen.getByRole("button", {
+      name: "admin.products.groupsPanel.trainee.add",
+    });
+    expect(addGedu.parentElement).toBe(addTrainee.parentElement);
+    expect(addGedu.nextElementSibling).toBe(addTrainee);
+  });
+
   it("offers promotion to the certified trainee alone, and reports the pair", () => {
     const onPromoteTrainee = vi.fn();
     renderPanel({ onPromoteTrainee });
