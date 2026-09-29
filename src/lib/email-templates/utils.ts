@@ -12,7 +12,7 @@ export function escapeHtml(str: string): string {
 
 /**
  * The body's text style, for any block that carries body copy — a paragraph,
- * a list, a rendered markdown block. One string, so the three agree.
+ * a list. One string, so the two agree.
  */
 export const BODY_TEXT_STYLE = `color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;`;
 

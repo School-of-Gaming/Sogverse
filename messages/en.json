@@ -2502,7 +2502,8 @@
     "linkApply": "Apply link",
     "linkRemove": "Remove link",
     "linkCancel": "Cancel",
-    "linkInvalid": "That address cannot be linked. Use a web address, an email address, or a path on this site."
+    "linkInvalid": "That address cannot be linked. Use a web address, an email address, or a path on this site.",
+    "opensInNewTab": "(opens in a new tab)"
   },
   "header": {
     "nav": {

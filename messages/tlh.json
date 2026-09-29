@@ -2542,7 +2542,8 @@
     "linkApply": "rarwI’ chu’",
     "linkRemove": "rarwI’ Qaw’",
     "linkCancel": "qIl",
-    "linkInvalid": "Daqvam vIrarlaHbe’. qoDHa’ Daq, QIn Daq, ghap Sogverse He yIlo’."
+    "linkInvalid": "Daqvam vIrarlaHbe’. qoDHa’ Daq, QIn Daq, ghap Sogverse He yIlo’.",
+    "opensInNewTab": "(chu’ DaqDaq poSmoH)"
   },
   "header": {
     "nav": {

@@ -2502,7 +2502,8 @@
     "linkApply": "Appliquer le lien",
     "linkRemove": "Supprimer le lien",
     "linkCancel": "Annuler",
-    "linkInvalid": "Cette adresse ne peut pas servir de lien. Utilisez une adresse web, une adresse e-mail ou un chemin interne à ce site."
+    "linkInvalid": "Cette adresse ne peut pas servir de lien. Utilisez une adresse web, une adresse e-mail ou un chemin interne à ce site.",
+    "opensInNewTab": "(s’ouvre dans un nouvel onglet)"
   },
   "header": {
     "nav": {

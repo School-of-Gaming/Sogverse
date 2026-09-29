@@ -50,8 +50,9 @@ describe("buildSessionReportEmail", () => {
 
   it("renders the report's markdown as headings and paragraphs", () => {
     const html = buildSessionReportEmail(t, "en", base);
-    expect(html).toMatch(/<h1 [^>]*><strong>Lanterns over the Harbour<\/strong><\/h1>/);
-    expect(html).toMatch(/<h2 [^>]*>Next week<\/h2>/);
+    // Under the feed variant's outline, as the family's feed paints them.
+    expect(html).toMatch(/<h3 [^>]*><strong [^>]*>Lanterns over the Harbour<\/strong><\/h3>/);
+    expect(html).toMatch(/<h4 [^>]*>Next week<\/h4>/);
     expect(html).toContain("Today we welcomed a new member.");
   });
 
@@ -71,9 +72,9 @@ describe("buildSessionReportEmail", () => {
       ...base,
       reportMarkdown: "Tricky <img src=x onerror=alert(1)> text & more",
     });
+    // Shown as its own literal text, as the app shows it — never as markup.
     expect(html).not.toContain("<img");
-    expect(html).not.toContain("onerror");
-    expect(html).toContain("text &amp; more");
+    expect(html).toContain("Tricky &lt;img src=x onerror=alert(1)&gt; text &amp; more");
   });
 
   it("escapes the facts the caller passes in", () => {
