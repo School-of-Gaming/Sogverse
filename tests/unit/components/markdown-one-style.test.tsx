@@ -7,6 +7,7 @@ import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import {
+  MARKDOWN_CLASSES,
   MARKDOWN_CONTAINER_CLASSES,
   MARKDOWN_ELEMENT_CLASSES,
   Markdown,
@@ -16,8 +17,12 @@ import { EDITOR_PROSE } from "@/components/ui/rich-text-editor";
 import {
   MARKDOWN_CONTAINER,
   MARKDOWN_LOOK,
+  MARKDOWN_QUIET_INK,
   MARKDOWN_USE_CASES,
+  inQuietInk,
+  type MarkdownEmphasis,
   type MarkdownLook,
+  type StyledMarkdownElement,
 } from "@/lib/authored-markdown";
 import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
 
@@ -316,7 +321,7 @@ describe("the definition's classes and values", () => {
   function values(look: MarkdownLook) {
     const out: Record<string, string | number | boolean> = {};
     for (const [key, value] of Object.entries(look)) {
-      if (key === "classes" || key === "appOnly") continue;
+      if (key === "classes" || key === "appOnly" || key === "ink") continue;
       out[key] = typeof value === "string" && key === "color" ? value.toLowerCase() : value;
     }
     return out;
@@ -329,6 +334,122 @@ describe("the definition's classes and values", () => {
 
   it.each(LOOKS)("resolves %s's classes to its values", (_name, look) => {
     expect(resolve(look.classes)).toEqual(values(look));
+  });
+
+  it.each(LOOKS)("resolves %s's classes to its values in the quiet ink", (_name, look) => {
+    const quiet = inQuietInk(look);
+    expect(resolve(quiet.classes)).toEqual(values(quiet));
+    if (look.color !== undefined) {
+      expect(quiet.color).toBe(MARKDOWN_QUIET_INK.color);
+    }
+  });
+
+  /** The quiet emphasis swaps a look's ink class, so that class has to be the one painting its colour. */
+  it.each(LOOKS)("names %s's ink wherever it has a colour", (_name, look) => {
+    expect(look.ink === undefined).toBe(look.color === undefined);
+    if (look.ink !== undefined) {
+      expect(look.classes.split(/\s+/)).toContain(look.ink);
+      expect(resolve(look.ink).color).toBe(look.color?.toLowerCase());
+    }
+  });
+
+  /**
+   * **A surface may set its authored text in the quiet ink, and nothing else
+   * changes.** Read off the rendered output: an element's ink is its own
+   * colour or, where it names none, the container's it inherits — so body,
+   * every heading, the lists (and their markers) and the link all follow the
+   * emphasis, while every size, weight and gap stays the one style's.
+   */
+  describe("the emphasis", () => {
+    const LOOK_OF: Record<"container" | StyledMarkdownElement, MarkdownLook> = {
+      container: MARKDOWN_CONTAINER,
+      ...MARKDOWN_LOOK,
+    };
+
+    /** A rendered element's look classes, its app-only behaviour set aside. */
+    function look(name: keyof typeof LOOK_OF, className: string | undefined) {
+      if (className === undefined) throw new Error(`${name} was not rendered`);
+      const appOnly = new Set((LOOK_OF[name].appOnly ?? "").split(/\s+/));
+      return resolve(
+        className
+          .split(/\s+/)
+          .filter((token) => !appOnly.has(token))
+          .join(" "),
+      );
+    }
+
+    function rendered(emphasis?: MarkdownEmphasis) {
+      const root = renderInApp(
+        <Markdown variant="marketing" emphasis={emphasis}>
+          {SOURCE}
+        </Markdown>,
+      ).container.firstElementChild;
+      if (root === null) throw new Error("the renderer drew nothing");
+      const heading = (text: string) =>
+        [...root.querySelectorAll("h2, h3, h4, h5")].find(
+          (el) => el.textContent === text,
+        )?.className;
+      const container = look("container", root.className);
+      const looks = {
+        h1: look("h1", heading("Title")),
+        h2: look("h2", heading("Heading")),
+        h3: look("h3", heading("Subheading")),
+        p: look("p", root.querySelector("p")?.className),
+        ul: look("ul", root.querySelector("ul")?.className),
+        ol: look("ol", root.querySelector("ol")?.className),
+        strong: look("strong", root.querySelector("strong")?.className),
+        a: look("a", root.querySelector("a")?.className),
+      };
+      const inks = Object.fromEntries(
+        Object.entries(looks).map(([name, own]) => [
+          name,
+          "color" in own ? own.color : container.color,
+        ]),
+      );
+      const withoutInk = (resolved: Record<string, unknown>) => {
+        const rest = { ...resolved };
+        delete rest.color;
+        return rest;
+      };
+      return {
+        inks: { container: container.color, ...inks },
+        sizes: Object.fromEntries(
+          Object.entries({ container, ...looks }).map(([name, own]) => [
+            name,
+            withoutInk(own),
+          ]),
+        ),
+      };
+    }
+
+    const ink = (name: string) => variable(`--color-${name}`).toLowerCase();
+
+    it("sets everything in the quiet ink when quiet", () => {
+      const { inks } = rendered("quiet");
+      for (const [name, color] of Object.entries(inks)) {
+        expect(color, name).toBe(ink("muted-foreground"));
+      }
+    });
+
+    it("sets the body in the ink and the link in its own by default", () => {
+      const { inks } = rendered();
+      for (const [name, color] of Object.entries(inks)) {
+        expect(color, name).toBe(ink(name === "a" ? "act" : "foreground"));
+      }
+      expect(rendered("normal").inks).toEqual(inks);
+    });
+
+    it("changes nothing but the ink", () => {
+      const quiet = rendered("quiet").sizes;
+      expect(quiet).toEqual(rendered().sizes);
+      expect(quiet.a).toMatchObject({ underline: true, fontWeight: 500 });
+    });
+
+    it("keeps the link's focus ring in either emphasis", () => {
+      for (const emphasis of ["normal", "quiet"] as const) {
+        expect(MARKDOWN_CLASSES[emphasis].elements.a).toContain(MARKDOWN_LOOK.a.appOnly);
+      }
+    });
   });
 
   /**

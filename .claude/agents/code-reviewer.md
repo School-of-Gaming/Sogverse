@@ -71,6 +71,8 @@ Produce one ranked list, most important to least important. Each finding include
 
 **Mark every finding `mechanical` or `fork`.** *Mechanical* means one defensible resolution and nothing left to weigh: a correctness fix, a guard or assertion strengthened, a test pinned, a doc corrected, housekeeping. *Fork* means the fix has to choose between two defensible options, or it touches product behaviour, money or auth semantics, schema shape, user-facing copy, or a plan's step boundaries. The test is whether two reasonable people could settle it differently — **not** how confident you are that your own answer is right.
 
+**Code you can prove unused — nothing in `src` or `tests` calls it — is `mechanical`: delete it.** Never keep it for a caller that might come later, and never frame its removal as a question about plans: git history keeps it for the day one does.
+
 Mark it because the reader cannot. They will sort the list on exactly this line to decide what to apply and what to take to the user, and you have just read the code where they have not. A confident finding that quietly forecloses a product decision is the specific failure this guards against.
 
 Only include findings that are **actionable** and represent a **real improvement**. No praise, no "consider refactoring" fluff, no nitpicks that don't matter. If there's nothing to flag in a category you considered, don't mention it. If nothing survives at all, say so plainly — a short honest list is a result, not a failure.
