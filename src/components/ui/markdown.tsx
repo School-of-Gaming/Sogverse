@@ -1,12 +1,37 @@
 "use client";
 
+import type { ReactNode } from "react";
+import { ExternalLink } from "lucide-react";
+import { useTranslations } from "next-intl";
 import ReactMarkdown, { type Components } from "react-markdown";
 import { cn } from "@/lib/utils";
+import {
+  MARKDOWN_CONTAINER,
+  MARKDOWN_LOOK,
+  MARKDOWN_USE_CASES,
+  OUTLINE_TAGS,
+  authoredLinkKind,
+  type MarkdownLook,
+  type MarkdownOutline,
+  type MarkdownUseCase,
+  type StyledMarkdownElement,
+} from "@/lib/authored-markdown";
+
+export type { MarkdownUseCase };
 
 /**
  * The app's one markdown renderer, for authored prose that is *stored* as
  * markdown — a gedu's session report, a product's marketing long description,
- * a team member's "About me", and the email a report is later converted into.
+ * a team member's "About me", a Library article's body, and the email a report
+ * is later converted into.
+ *
+ * **Authored markdown looks the same wherever it appears, a mail included.**
+ * The look — every element's size, weight, ink and spacing, and the body's —
+ * is defined once in `lib/authored-markdown`, and every use case renders
+ * through it; the email renderer writes the same values inline. The body size
+ * comes from there too, not from the surrounding context, so `className` is
+ * for placing the block (a margin, a width), never for restyling what is
+ * inside it.
  *
  * **A deliberately small subset, enforced twice.** Markdown's full grammar is
  * far wider than anything worth typing into these fields, and the wide half is
@@ -16,23 +41,20 @@ import { cn } from "@/lib/utils";
  * its text rather than dropped, so a stray table still shows its words instead
  * of silently deleting a paragraph of somebody's writing.
  *
- * **No HTML passthrough.** Raw HTML in the source is ignored, which is the
- * library's default and is kept that way on purpose: enabling it would need
+ * **No HTML passthrough.** Raw HTML in the source is never markup — the
+ * library shows it as its own literal text, and the mail does the same. That
+ * is the library's default and is kept that way on purpose: enabling it would need
  * `rehype-raw` plus a sanitizer, and would put a `dangerouslySetInnerHTML`
  * behind a field that any writer can type into. (The codebase has one, in the
  * JSON-LD data block under `src/components/seo/`, and its content is our own
  * serialized JSON rather than anyone's markup.)
  *
- * **The variant is a property of the field, never of the reader.** Two things
- * differ between them — whether links survive, and how loud a heading is — and
- * both are decided by *what is stored*, not by who is looking at it. Keying
- * either to a role or a surface would mean one stored value rendering
- * differently in two places, so the same sentence could carry a live link on
- * one page and a dead label on another. A field picks its variant once, where
- * it is rendered, and every surface showing that field passes the same one.
+ * **A field names its use case, and a use case is a set of feature flags,
+ * never a property of the reader.** The use cases, their flags, the allow-lists
+ * derived from them and their outlines are defined in `lib/authored-markdown`,
+ * beside the look, because the editor and the email renderer take the same
+ * use case names and must keep exactly what this one keeps.
  */
-export type MarkdownVariant = "feed" | "marketing" | "profile";
-
 export function Markdown({
   children,
   variant = "feed",
@@ -41,20 +63,21 @@ export function Markdown({
   /** The markdown source. */
   children: string;
   /**
-   * Which field this is. Defaults to `feed`, the staff-authored, family-facing
-   * case — the conservative half of the pair, so a caller that has not thought
-   * about it gets no links rather than accidental ones.
+   * The field's use case. Defaults to `feed`, the staff-authored,
+   * family-facing case — the conservative one, so a caller that has not
+   * thought about it gets no links rather than accidental ones.
    */
-  variant?: MarkdownVariant;
+  variant?: MarkdownUseCase;
+  /** Placement only — a margin or a width. The typography is the one style's. */
   className?: string;
 }) {
-  const style = VARIANT_STYLES[variant];
+  const { allowedElements, outline } = MARKDOWN_USE_CASES[variant];
   return (
-    <div className={cn(style.container, className)}>
+    <div className={cn(MARKDOWN_CONTAINER_CLASSES, className)}>
       <ReactMarkdown
-        allowedElements={style.allowedElements}
+        allowedElements={[...allowedElements]}
         unwrapDisallowed
-        components={style.components}
+        components={OUTLINE_COMPONENTS[outline]}
       >
         {children}
       </ReactMarkdown>
@@ -62,247 +85,144 @@ export function Markdown({
   );
 }
 
-interface MarkdownVariantStyle {
-  /** Wrapper classes: the type scale and, for `feed`, the block rhythm. */
-  container: string;
-  /** The whitelist. Anything outside it is unwrapped to its text. */
-  allowedElements: string[];
-  components: Components;
+/** A look's classes as the app paints them, behaviour-only ones included. */
+function paintedClasses(look: MarkdownLook): string {
+  return look.appOnly === undefined
+    ? look.classes
+    : `${look.classes} ${look.appOnly}`;
 }
 
 /**
- * **The feed subset: a gedu's write-up, rendered in a card in a column.**
- *
- * Headings are scaled to their context, not to the page. A report renders
- * inside a card inside a feed, and an `h1` typed in the editor is the writer
- * titling their own write-up — it is not competing with the page title. So
- * every heading level lands within a step or two of body copy; the hierarchy
- * survives, the shouting doesn't.
- *
- * **The top three levels are three different sizes**, because the editor offers
- * three of them and a writer who picks between Title, Heading and Subheading
- * has to be able to see which one they picked. Two levels sharing a size and
- * differing only in colour made the choice invisible in the rendered report —
- * and a real report opens with a title line, so the level that matters most was
- * the one hardest to tell apart.
- *
- * **There is no `a`, and that is a policy rather than a limitation.** A report
- * is written by a gedu and read by a family, so a link in one is this platform
- * pointing a child's parent somewhere it does not control. A markdown link
- * therefore unwraps to its own label, which keeps the sentence readable and
- * takes the destination away — and it does so on every surface, because the
- * variant travels with the field.
- *
- * `h4`–`h6` are absent as well: the editor caps headings at three levels, so
- * they are unreachable from the toolbar and a deeper one pasted in would
- * flatten on the first save anyway. **A childless element vanishes entirely** —
- * an `img` has no text to unwrap to, the one case where "unwrapped, not
- * dropped" saves nothing, and there is nothing to save.
- *
- * Exported because the email renderer under `lib/email-templates` emits the
- * same subset from a string walker, and a unit test holds the two lists equal
- * — a report has to read the same in the mail it is sent as.
+ * **The one style, as classes.** Exported because the editor restates them:
+ * its writing surface paints the same elements with the same classes, and a
+ * unit test holds the two equal — what the writer sees while typing is what
+ * the reader sees once it is saved.
  */
-export const FEED_ELEMENTS = [
-  "p",
-  "h1",
-  "h2",
-  "h3",
-  "strong",
-  "em",
-  "ul",
-  "ol",
-  "li",
-  "br",
-];
+export const MARKDOWN_ELEMENT_CLASSES = {
+  h1: paintedClasses(MARKDOWN_LOOK.h1),
+  h2: paintedClasses(MARKDOWN_LOOK.h2),
+  h3: paintedClasses(MARKDOWN_LOOK.h3),
+  p: paintedClasses(MARKDOWN_LOOK.p),
+  ul: paintedClasses(MARKDOWN_LOOK.ul),
+  ol: paintedClasses(MARKDOWN_LOOK.ol),
+  strong: paintedClasses(MARKDOWN_LOOK.strong),
+  a: paintedClasses(MARKDOWN_LOOK.a),
+} as const satisfies Record<StyledMarkdownElement, string>;
+
+/** Body size, leading and ink for everything inside, and the first block flush. */
+export const MARKDOWN_CONTAINER_CLASSES = paintedClasses(MARKDOWN_CONTAINER);
+
+/** A markdown heading level, painted in the one style under its outline tag. */
+function Heading({
+  outline,
+  level,
+  children,
+}: {
+  outline: MarkdownOutline;
+  level: "h1" | "h2" | "h3";
+  children?: ReactNode;
+}) {
+  const Tag = OUTLINE_TAGS[outline][level];
+  return <Tag className={MARKDOWN_ELEMENT_CLASSES[level]}>{children}</Tag>;
+}
+
+function componentsFor(outline: MarkdownOutline): Components {
+  return {
+    h1: ({ children }) => (
+      <Heading outline={outline} level="h1">
+        {children}
+      </Heading>
+    ),
+    h2: ({ children }) => (
+      <Heading outline={outline} level="h2">
+        {children}
+      </Heading>
+    ),
+    h3: ({ children }) => (
+      <Heading outline={outline} level="h3">
+        {children}
+      </Heading>
+    ),
+    p: ({ children }) => <p className={MARKDOWN_ELEMENT_CLASSES.p}>{children}</p>,
+    ul: ({ children }) => (
+      <ul className={MARKDOWN_ELEMENT_CLASSES.ul}>{children}</ul>
+    ),
+    ol: ({ children }) => (
+      <ol className={MARKDOWN_ELEMENT_CLASSES.ol}>{children}</ol>
+    ),
+    strong: ({ children }) => (
+      <strong className={MARKDOWN_ELEMENT_CLASSES.strong}>{children}</strong>
+    ),
+    a: ({ href, children }) => <AuthoredLink href={href}>{children}</AuthoredLink>,
+  };
+}
 
 /**
- * **The marketing subset: a product's long description, on a public page.**
+ * **A link in authored markdown.** Reached only in a use case with the `links`
+ * flag.
  *
- * Two things widen. **Links are in it**, because this field is written by an
- * admin for the shop's own product pages: pointing a parent at the game's
- * store page or at our own policies is the copy doing its job, which is a
- * different act from a session report sending a family off-site mid-write-up.
- * And **headings are scaled to the page** rather than to a card: this text is
- * the body of the page it sits on, so its sections need to read as sections
- * beneath the product's own `h1`.
+ * **An anchor with nothing to point at renders as its own label.** The library
+ * sanitises hrefs before this component ever sees them: a scheme outside its
+ * allow-list (`javascript:`, `data:`, `vbscript:` and every
+ * character-reference spelling of them) is replaced with an empty string
+ * rather than dropped. An empty `href` is not inert — it resolves to the
+ * current page — so a blocked link would still look and behave like a control.
+ * Degrading it to plain text is the same shape the no-links policy already
+ * produces elsewhere, which makes it the honest fallback here too.
  *
- * *Which* addresses survive is a second, narrower list, and it is not written
- * here: the library's default URL transform keeps a relative address plus
- * `http`, `https`, `irc`, `ircs`, `mailto` and `xmpp`, and blanks the rest. The
- * editor restates that list so it cannot offer a scheme this end would strip —
- * one decision in two places, and changing it means changing both.
+ * **Our own site opens in the same tab, another site in a new one** — the
+ * rule for every use case that keeps links, decided here once by where the
+ * address points (`authoredLinkKind`). A link off the site says so: an icon
+ * for the eye and words for a screen reader, since a new tab it did not ask
+ * for otherwise strands a reader who cannot see it open. `rel` withholds the
+ * referrer from every destination, our own included, which buys the same as
+ * inspecting each href would; `noopener` is spelled out beside the new tab.
+ * The mail never adds a target — a link in a mail opens the browser anyway.
  */
-const MARKETING_ELEMENTS = [...FEED_ELEMENTS, "a"];
-
-/**
- * **The profile subset: a team member's "About me", on their public page.**
- *
- * The feed's subset with the headings taken out as well as the links. It is a
- * few paragraphs a person writes about themselves under a heading the page
- * already sets, so a heading of their own would be a second title competing
- * with "About me"; and it is staff-authored copy families read, so it carries
- * no links for the same reason a report does. A heading or link in a stored
- * value unwraps to its words.
- *
- * Set as the page's own body copy — full size, ink, looser rhythm — because it
- * is the body of the page it sits on, not a note in a card.
- */
-const PROFILE_ELEMENTS = ["p", "strong", "em", "ul", "ol", "li", "br"];
-
-const PROFILE_COMPONENTS: Components = {
-  p: ({ children }) => <p className="leading-relaxed">{children}</p>,
-  ul: ({ children }) => (
-    <ul className="list-disc space-y-1 pl-5">{children}</ul>
-  ),
-  ol: ({ children }) => (
-    <ol className="list-decimal space-y-1 pl-5">{children}</ol>
-  ),
-  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-  strong: ({ children }) => (
-    <strong className="font-semibold">{children}</strong>
-  ),
-};
-
-/**
- * Semantic levels, one step down from the markdown level.
- *
- * The page's `h1` is the product's name, so the highest heading a writer can
- * type opens at `h2` and the three levels land on `h2`/`h3`/`h4`. Sizes step
- * down with them, for the same reason the feed's do: three toolbar buttons that
- * produce two visible sizes is a choice the writer cannot see themselves
- * making.
- *
- * **The top level is a step above the body, not two.** It is the size of a
- * section heading inside a card in a reading column, which is what these are —
- * not the size of a page title, which the product's own name already holds a
- * few centimetres above. The scale was briefly a step louder, and the argument
- * against it is that the loudest text on the page below the title was a
- * subheading of it.
- *
- * `text-foreground` is explicit on every heading because this variant renders
- * inside a muted body — the block-based long description it replaces set the
- * same contrast between its headings and its paragraphs, and losing it would
- * flatten the page in a way that has nothing to do with the level.
- */
-const MARKETING_COMPONENTS: Components = {
-  h1: ({ children }) => (
-    <h2 className="mt-5 text-lg font-semibold leading-snug text-foreground">
-      {children}
-    </h2>
-  ),
-  h2: ({ children }) => (
-    <h3 className="mt-5 text-base font-semibold leading-snug text-foreground">
-      {children}
-    </h3>
-  ),
-  h3: ({ children }) => (
-    <h4 className="mt-5 text-sm font-semibold leading-snug text-foreground">
-      {children}
-    </h4>
-  ),
-  p: ({ children }) => <p className="mt-2 leading-relaxed">{children}</p>,
-  ul: ({ children }) => (
-    <ul className="mt-2 list-disc space-y-1 pl-5">{children}</ul>
-  ),
-  ol: ({ children }) => (
-    <ol className="mt-2 list-decimal space-y-1 pl-5">{children}</ol>
-  ),
-  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-  strong: ({ children }) => (
-    <strong className="font-semibold text-foreground">{children}</strong>
-  ),
-  /**
-   * **An anchor with nothing to point at renders as its own label.**
-   *
-   * The library sanitises hrefs before this component ever sees them: a scheme
-   * outside its allow-list (`javascript:`, `data:`, `vbscript:` and every
-   * character-reference spelling of them) is replaced with an empty string
-   * rather than dropped. An empty `href` is not inert — it resolves to the
-   * current page — so a blocked link would still look and behave like a
-   * control. Degrading it to plain text is the same shape the no-links policy
-   * already produces elsewhere, which makes it the honest fallback here too.
-   *
-   * No `target`: a link in body copy behaves like every other link on the site,
-   * and forcing a new tab takes the decision away from the reader. `rel` is
-   * unconditional and withholds the referrer from every destination, our own
-   * included: the alternative is inspecting each href to decide, which buys
-   * nothing — an internal page has no use for a referrer header it could read
-   * off the URL anyway.
-   *
-   * **The underline is persistent, not a hover treatment.** It is what the
-   * editor paints while the same sentence is being written, so writer and
-   * reader see one thing; and against this variant's muted body copy, colour
-   * plus weight is a thin non-colour cue, so an always-on underline is what
-   * satisfies WCAG 1.4.1 without asking the reader to hover first.
-   */
-  a: ({ href, children }) =>
-    href === undefined || href === "" ? (
-      <>{children}</>
-    ) : (
-      <a
-        href={href}
-        rel="noreferrer"
-        className="rounded-sm font-medium text-act underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
-      >
+function AuthoredLink({
+  href,
+  children,
+}: {
+  href: string | undefined;
+  children?: ReactNode;
+}) {
+  if (href === undefined || href === "") return <>{children}</>;
+  if (authoredLinkKind(href, process.env.NEXT_PUBLIC_SITE_URL) !== "other-site") {
+    return (
+      <a href={href} rel="noreferrer" className={MARKDOWN_ELEMENT_CLASSES.a}>
         {children}
       </a>
-    ),
-};
-
-const FEED_COMPONENTS: Components = {
-  // The three levels step down a size each, so a writer can see which one they
-  // picked.
-  h1: ({ children }) => (
-    <h3 className="pt-1 text-lg font-semibold leading-snug">{children}</h3>
-  ),
-  h2: ({ children }) => (
-    <h4 className="pt-1 text-base font-semibold leading-snug">{children}</h4>
-  ),
-  h3: ({ children }) => (
-    <h5 className="pt-1 text-sm font-semibold leading-snug text-muted-foreground">
+    );
+  }
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={MARKDOWN_ELEMENT_CLASSES.a}
+    >
       {children}
-    </h5>
-  ),
-  p: ({ children }) => <p className="leading-relaxed">{children}</p>,
-  ul: ({ children }) => (
-    <ul className="list-disc space-y-1 pl-5">{children}</ul>
-  ),
-  ol: ({ children }) => (
-    <ol className="list-decimal space-y-1 pl-5">{children}</ol>
-  ),
-  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-  strong: ({ children }) => (
-    <strong className="font-semibold">{children}</strong>
-  ),
-};
+      <NewTabMarker />
+    </a>
+  );
+}
 
-const VARIANT_STYLES: Record<MarkdownVariant, MarkdownVariantStyle> = {
-  /**
-   * `space-y` rather than margins on each block: the children come from a
-   * parser, so styling the gaps from the container is the only way to get
-   * consistent rhythm without knowing which blocks a report happens to use.
-   */
-  feed: {
-    container: "space-y-2 text-sm leading-relaxed [&>*:first-child]:mt-0",
-    allowedElements: FEED_ELEMENTS,
-    components: FEED_COMPONENTS,
-  },
-  /**
-   * Per-block margins rather than a container `space-y`, because the rhythm is
-   * not uniform here: a section heading needs to stand clear of the paragraph
-   * above it while consecutive paragraphs sit close together. Those are the
-   * exact gaps the block-based long description used, so the only thing that
-   * changes when a product's copy is converted is the heading level.
-   */
-  marketing: {
-    container: "text-sm leading-relaxed [&>*:first-child]:mt-0",
-    allowedElements: MARKETING_ELEMENTS,
-    components: MARKETING_COMPONENTS,
-  },
-  profile: {
-    container: "space-y-3 text-base leading-relaxed",
-    allowedElements: PROFILE_ELEMENTS,
-    components: PROFILE_COMPONENTS,
-  },
+/**
+ * The "opens in a new tab" marker at the end of a link off the site. The
+ * attribute names the marker, so a check comparing the page with the mail —
+ * which has no new tabs to mark — can set it aside.
+ */
+function NewTabMarker() {
+  const t = useTranslations("richText");
+  return (
+    <span data-new-tab-marker="">
+      <ExternalLink aria-hidden className="ml-0.5 inline h-3.5 w-3.5 align-baseline" />
+      <span className="sr-only">{` ${t("opensInNewTab")}`}</span>
+    </span>
+  );
+}
+
+const OUTLINE_COMPONENTS: Record<MarkdownOutline, Components> = {
+  section: componentsFor("section"),
+  card: componentsFor("card"),
 };

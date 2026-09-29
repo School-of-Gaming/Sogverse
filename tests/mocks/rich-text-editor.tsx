@@ -40,7 +40,7 @@ export function RichTextEditor({
   placeholder?: string;
   ariaLabel: string;
   describedBy?: string;
-  variant?: "feed" | "marketing";
+  variant?: "feed" | "marketing" | "profile" | "article";
   className?: string;
   disabled?: boolean;
 }) {

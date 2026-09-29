@@ -159,7 +159,7 @@ export function buildSessionReportEmail(
       [t("sessionReport.timeLabel"), escapeHtml(sessionTime)],
     ])}
     <div style="margin:0 0 24px;">
-      ${renderMarkdownForEmail(reportMarkdown)}
+      ${renderMarkdownForEmail(reportMarkdown, "feed")}
     </div>
     ${photosSection(t, photos)}
     ${rule()}

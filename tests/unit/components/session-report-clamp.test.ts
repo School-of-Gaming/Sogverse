@@ -4,7 +4,7 @@ import {
   REPORT_CLAMP_LINES,
   REPORT_CLAMP_REM,
   REPORT_ESTIMATED_CHARS_PER_LINE,
-  REPORT_HEADING_LINE_COST,
+  REPORT_HEADING_COSTS,
   REPORT_LINE_HEIGHT_REM,
   REPORT_LIST_GAP_LINES,
   estimateReportLines,
@@ -30,7 +30,7 @@ describe("estimateReportLines", () => {
 
   it("charges a gap between blocks, because the renderer draws one", () => {
     // Three one-line paragraphs are not three lines tall — they are three lines
-    // and two `space-y-2` gaps. Ignoring that is the single biggest way a
+    // and two block gaps. Ignoring that is the single biggest way a
     // character-count estimate under-reads a real report.
     expect(estimateReportLines("one\n\ntwo\n\nthree")).toBeCloseTo(
       3 + 2 * REPORT_BLOCK_GAP_LINES,
@@ -38,8 +38,8 @@ describe("estimateReportLines", () => {
   });
 
   it("counts list items as blocks of their own, at the tighter list gap", () => {
-    // A list's items are set with `space-y-1`, half what the renderer puts
-    // between blocks — so charging them the block gap over-read every list.
+    // A list's items are set with `space-y-1`, far tighter than the renderer
+    // puts between blocks — so charging them the block gap over-read every list.
     expect(estimateReportLines("- one\n- two\n- three")).toBeCloseTo(
       3 + 2 * REPORT_LIST_GAP_LINES,
     );
@@ -61,16 +61,35 @@ describe("estimateReportLines", () => {
   });
 
   it("charges a heading its larger line box", () => {
-    expect(estimateReportLines("# Title")).toBe(REPORT_HEADING_LINE_COST);
+    const title = REPORT_HEADING_COSTS[1];
+    expect(estimateReportLines("# Title")).toBe(title.lineCost);
     expect(estimateReportLines("# Title\n\nA paragraph.")).toBeCloseTo(
-      REPORT_HEADING_LINE_COST + 1 + REPORT_BLOCK_GAP_LINES,
+      title.lineCost + 1 + REPORT_BLOCK_GAP_LINES,
     );
+  });
+
+  it("charges a heading below the first block its extra top margin", () => {
+    const heading = REPORT_HEADING_COSTS[2];
+    expect(estimateReportLines("Intro.\n\n## Heading")).toBeCloseTo(
+      1 + REPORT_BLOCK_GAP_LINES + heading.lineCost + heading.extraTopLines,
+    );
+  });
+
+  it("costs the three levels in descending order, each more than body copy", () => {
+    const [h1, h2, h3] = ([1, 2, 3] as const).map(
+      (level) => REPORT_HEADING_COSTS[level],
+    );
+    expect(h1.lineCost).toBeGreaterThan(h2.lineCost);
+    expect(h2.lineCost).toBeGreaterThan(h3.lineCost);
+    expect(h1.charsPerLine).toBeLessThan(h2.charsPerLine);
+    expect(h3.charsPerLine).toBeLessThan(REPORT_ESTIMATED_CHARS_PER_LINE);
   });
 
   it("does not let syntax inflate a line it never occupies", () => {
     // The hashes, the bullet and the emphasis runs are all markers the reader
     // never sees, so counting them would push short reports over the clamp.
-    expect(estimateReportLines("###### hi")).toBe(REPORT_HEADING_LINE_COST);
+    // A level deeper than the subset unwraps to body copy.
+    expect(estimateReportLines("###### hi")).toBe(1);
     expect(estimateReportLines("**bold** and *italic*")).toBe(1);
     expect(
       estimateReportLines("[the label](https://example.com/very/long/url)"),
