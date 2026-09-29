@@ -8,12 +8,12 @@ import type { ProductGroupsSnapshot } from "@/types";
  * Trainees on a group card, through the panel's intents.
  *
  * A trainee is listed in the Gedus row, after the assigned Gedus, in the same
- * pill: where a Gedu's pill has the role select, a trainee's says "Trainee"
- * with nothing to open. The other claims are the ones a screen cannot tell
- * apart from a broken build: that add, remove and promote each reach the shell
- * with the right group and gedu, and that **promote is offered only to a
- * certified trainee** — an assignment still needs certification, so an
- * uncertified trainee's pill must carry no control that could make one.
+ * pill: where a Gedu's pill has the role select, a trainee's draws "Trainee"
+ * in a select that looks identical and never acts; where the Gedu's role is a
+ * label, so is the trainee's. A trainee pill carries no promotion: a trainee
+ * becomes a Gedu of the group by being removed and added through Add Gedu. The
+ * other claims are the ones a screen cannot tell apart from a broken build:
+ * that add and remove each reach the shell with the right group and gedu.
  *
  * Translations echo their keys, so nothing depends on English wording.
  */
@@ -56,8 +56,8 @@ vi.mock("@/components/public/products/seat-availability-bar", () => ({
 const IDS = {
   group: "e3b1c7a2-5d4f-4a8e-9b6c-1f2d3e4a5b6c",
   gedu: "0d7f3b95-6c1e-4a2d-8f4b-5e9a2c7d1b36",
-  certified: "4c9e2a71-8b3d-4f6a-a5e1-7d2c9b8a6f34",
-  uncertified: "a81f5d3c-2e9b-4c7a-b6d4-3e1f0a9c8b72",
+  aino: "4c9e2a71-8b3d-4f6a-a5e1-7d2c9b8a6f34",
+  onni: "a81f5d3c-2e9b-4c7a-b6d4-3e1f0a9c8b72",
 } as const;
 
 const SNAPSHOT: ProductGroupsSnapshot = {
@@ -77,16 +77,14 @@ const SNAPSHOT: ProductGroupsSnapshot = {
       ],
       trainees: [
         {
-          id: IDS.certified,
+          id: IDS.aino,
           first_name: "Aino",
           email: "aino@example.test",
-          certified: true,
         },
         {
-          id: IDS.uncertified,
+          id: IDS.onni,
           first_name: "Onni",
           email: "onni@example.test",
-          certified: false,
         },
       ],
       participations: [],
@@ -142,7 +140,6 @@ function renderPanel(
   overrides: {
     onRequestAddTrainee?: (groupId: string) => void;
     onRemoveTrainee?: (groupId: string, geduId: string) => void;
-    onPromoteTrainee?: (groupId: string, geduId: string) => void;
   } = {},
 ) {
   render(
@@ -153,7 +150,6 @@ function renderPanel(
   );
 }
 
-const PROMOTE = "admin.products.groupsPanel.trainee.promoteAria";
 const REMOVE = "admin.products.groupsPanel.trainee.removeAria";
 const TRAINEE_ROLE = "admin.products.groupsPanel.trainee.role";
 
@@ -166,9 +162,9 @@ describe("trainees in the Gedus row", () => {
       .map((node) => node.textContent);
     expect(names).toEqual(["Eeli", "Aino", "Onni"]);
 
-    // The assigned Gedu has no role write here, so its role is a label too —
-    // but no trainee pill is a control of any kind.
-    expect(screen.queryByRole("combobox")).toBeNull();
+    // The assigned Gedu has no role write here, so its role is a label — and
+    // the trainees' is the same label, with no select drawn anywhere.
+    expect(document.querySelector("select")).toBeNull();
     expect(screen.getAllByText(TRAINEE_ROLE)).toHaveLength(2);
     // No separate Trainees heading.
     expect(
@@ -176,7 +172,7 @@ describe("trainees in the Gedus row", () => {
     ).toBeNull();
   });
 
-  it("draws the Gedu's role select but none on a trainee", () => {
+  it("draws the trainee's role as a select that looks like the Gedu's and never acts", () => {
     render(
       <GroupsPanelView
         {...PANEL_PROPS}
@@ -184,8 +180,31 @@ describe("trainees in the Gedus row", () => {
       />,
     );
 
+    // One real combobox: the Gedu's. The trainees' look-alikes are hidden
+    // from assistive technology and inert.
+    const selects = Array.from(document.querySelectorAll("select"));
+    expect(selects).toHaveLength(3);
     expect(screen.getAllByRole("combobox")).toHaveLength(1);
-    expect(screen.getAllByText(TRAINEE_ROLE)).toHaveLength(2);
+    const [gedu, ...trainees] = selects;
+    for (const lookalike of trainees) {
+      expect(lookalike.hasAttribute("inert")).toBe(true);
+      expect(lookalike.getAttribute("aria-hidden")).toBe("true");
+      expect(lookalike.tabIndex).toBe(-1);
+      // Same box as the real control, with no disabled greying.
+      expect(lookalike.className).toBe(
+        gedu.className
+          .replace(/\s*disabled:\S+/g, "")
+          .trim(),
+      );
+      expect(lookalike.disabled).toBe(false);
+    }
+    // Each trainee's word reaches a screen reader as text (the option's copy
+    // is hidden with its select, so the readable one is the sibling).
+    expect(
+      screen
+        .getAllByText(TRAINEE_ROLE)
+        .filter((node) => node.tagName === "SPAN"),
+    ).toHaveLength(2);
   });
 
   it("puts Add trainee beside and after Add Gedu", () => {
@@ -201,23 +220,22 @@ describe("trainees in the Gedus row", () => {
     expect(addGedu.nextElementSibling).toBe(addTrainee);
   });
 
-  it("offers promotion to the certified trainee alone, and reports the pair", () => {
-    const onPromoteTrainee = vi.fn();
-    renderPanel({ onPromoteTrainee });
+  it("gives a trainee pill no way to become a Gedu — only the way off the group", () => {
+    render(
+      <GroupsPanelView
+        {...PANEL_PROPS}
+        actions={{ ...INERT_ACTIONS, onSetGeduRole: () => {} }}
+      />,
+    );
 
-    // One pill in two carries the control: Onni is uncertified.
-    const promote = screen.getAllByRole("button", { name: PROMOTE });
-    expect(promote).toHaveLength(1);
-
-    fireEvent.click(promote[0]);
-    expect(onPromoteTrainee).toHaveBeenCalledWith(IDS.group, IDS.certified);
-  });
-
-  it("draws no promote control where the shell supplies no write", () => {
-    renderPanel();
-
-    expect(screen.queryByRole("button", { name: PROMOTE })).toBeNull();
-    // The pills themselves still draw, removable.
+    // Each pill's only button is its remove: the Gedu's and both trainees'.
+    const pills = screen
+      .getAllByText(/^(Eeli|Aino|Onni)$/)
+      .map((name) => name.closest("div.rounded-md"));
+    for (const pill of pills) {
+      expect(pill).not.toBeNull();
+      expect(pill!.querySelectorAll("button")).toHaveLength(1);
+    }
     expect(screen.getAllByRole("button", { name: REMOVE })).toHaveLength(2);
   });
 
@@ -226,7 +244,7 @@ describe("trainees in the Gedus row", () => {
     renderPanel({ onRemoveTrainee });
 
     fireEvent.click(screen.getAllByRole("button", { name: REMOVE })[1]);
-    expect(onRemoveTrainee).toHaveBeenCalledWith(IDS.group, IDS.uncertified);
+    expect(onRemoveTrainee).toHaveBeenCalledWith(IDS.group, IDS.onni);
   });
 
   it("asks the shell for the trainee picker for this group", () => {

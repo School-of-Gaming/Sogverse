@@ -228,18 +228,11 @@ export const groupGeduDetail = z.object({
   role: geduAssignmentRole,
 });
 
-/**
- * One trainee seat on a group: a gedu shadowing it, placed by an admin.
- *
- * `certified` is whether the gedu may hold an assignment, which is what decides
- * whether the pill offers the promotion. It rides the snapshot itself, so the
- * pill is drawn once, with its final controls, at first paint.
- */
+/** One trainee seat on a group: a gedu shadowing it, placed by an admin. */
 export const groupTraineeDetail = z.object({
   id: z.string(),
   first_name: z.string(),
   email: z.string().nullable(),
-  certified: z.boolean(),
 });
 
 export const productGroupWithDetails = z.object({

@@ -48,9 +48,9 @@ interface SessionPlanEditorProps {
    */
   creationsBlock?: ReactNode;
   /** Whether the gedu note was withheld from this reader — filler in its slot. */
-  staffNoteWithheld?: boolean;
+  staffNoteWithheld: boolean;
   /** The Save's explanation when the save was handed in locked, or `null`. */
-  saveLock?: LockExplanation | null;
+  saveLock: LockExplanation | null;
   onCancel: () => void;
   onSave: (draft: SessionPlanDraft) => void;
 }
@@ -94,8 +94,8 @@ export function SessionPlanEditor({
   error,
   photoStrip,
   creationsBlock,
-  staffNoteWithheld = false,
-  saveLock = null,
+  staffNoteWithheld,
+  saveLock,
   onCancel,
   onSave,
 }: SessionPlanEditorProps) {

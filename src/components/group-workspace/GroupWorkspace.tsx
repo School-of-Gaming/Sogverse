@@ -43,6 +43,7 @@ import {
   CopyAllEmailsButton,
   deduplicateEmails,
   geduChipPeople,
+  traineeChipPeople,
 } from "./roster-helpers";
 import { SessionDetailsBackLink } from "./BackLink";
 import { ParticipantRosterRow } from "./ParticipantRosterRow";
@@ -261,9 +262,8 @@ interface GroupWorkspaceProps {
    * product that does not ask the photo consent, where every session editor's
    * photo block is exactly what it was before the consent existed.
    *
-   * **Required rather than defaulted, unlike the other caller-derived props on
-   * this body**, and for a reason none of them has: the safe-looking default is
-   * the one that hides a safeguard. A new shell that forgot this prop would
+   * **Required rather than defaulted**: the safe-looking default is the one
+   * that hides a safeguard. A new shell that forgot this prop would
    * silently render a photo block with no permissions on it, on the one product
    * where a gedu is photographing actual children — so the compiler asks, and
    * a shell whose product asks nothing answers `null` in so many words.
@@ -483,21 +483,27 @@ interface GroupWorkspaceProps {
    */
   groupHeading?: string;
   /**
-   * The gedus holding a **trainee seat** on this group, by first name, drawn as
-   * one line under the group's own gedus. Omitted, or empty, draws nothing — a
-   * group with no trainee says nothing about trainees.
+   * The gedus holding a **trainee seat** on this group, by first name. Each is
+   * a chip in the same run as the group's gedus, after them, marked Trainee —
+   * the same list the admin groups panel draws, where a trainee shares the
+   * gedus' pill with "Trainee" in the role's place. Empty draws no trainee.
    *
-   * A line of names rather than chips beside the gedus': a trainee is not one
-   * of the group's staff, and a chip in that run would say they were.
+   * **Required, with no default**, for the reason `photoConsents` is: a shell
+   * that forgot it would compile and silently draw the group without the
+   * people shadowing it. A shell with none says `[]` in so many words.
    */
-  trainees?: readonly { id: string; first_name: string }[];
+  trainees: readonly { id: string; first_name: string }[];
   /**
    * What a sister group's Join explains when the document carries that group
    * by name only. Such a row keeps its room on the rail — the reader may know
-   * the room exists — and its Join is the locked control. Omitted, a
-   * name-only row draws no Join at all.
+   * the room exists — and its Join is the locked control. `null` draws no Join
+   * on a name-only row, and is what a shell whose documents carry every sister
+   * group in full answers.
+   *
+   * Required for the same reason as {@link trainees}: omitted by the one shell
+   * that has name-only rows, the rooms would silently vanish from its rail.
    */
-  namedOnlyRoomLock?: LockExplanation;
+  namedOnlyRoomLock: LockExplanation | null;
 }
 
 export function GroupWorkspace({
@@ -534,7 +540,7 @@ export function GroupWorkspace({
   backLink,
   workspaceHref: workspaceHrefProp,
   groupHeading,
-  trainees = NO_TRAINEES,
+  trainees,
   namedOnlyRoomLock,
 }: GroupWorkspaceProps) {
   const t = useTranslations("gedu.sessionDetails");
@@ -978,9 +984,6 @@ export function GroupWorkspace({
  */
 const EMPTY_CREATIONS: readonly GamerCreation[] = [];
 
-/** The trainee list a shell that names none is handed — one identity, always. */
-const NO_TRAINEES: readonly { id: string; first_name: string }[] = [];
-
 /**
  * One of the flair's per-member writes bound to the member whose dialog is
  * open — or handed through as it is when the shell locked it, so the dialog
@@ -1093,8 +1096,8 @@ function OtherGroupsRailCard({
   opensTime: string;
   /** Where leaving a peer's room lands — this workspace, not theirs. */
   backHref: AppHref;
-  /** What a name-only row's Join explains. Omitted, such a row has no Join. */
-  namedOnlyRoomLock?: LockExplanation;
+  /** What a name-only row's Join explains. `null`, such a row has no Join. */
+  namedOnlyRoomLock: LockExplanation | null;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
@@ -1121,7 +1124,7 @@ function OtherGroupsRailCard({
               </div>
               {isNamedOnlyGroup(group) ? (
                 isRemote &&
-                namedOnlyRoomLock !== undefined && (
+                namedOnlyRoomLock !== null && (
                   <div className="flex justify-center pt-0.5">
                     <LockedButton
                       explanation={namedOnlyRoomLock}
@@ -1297,12 +1300,12 @@ function GroupRailCard({
    * and a page can only ever have one open.
    */
   onOpenFlair: (participantId: string) => void;
-  /** The group's trainees, named on one line under its gedus. */
+  /** The group's trainees, chipped after its gedus and tagged Trainee. */
   trainees: readonly { id: string; first_name: string }[];
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
-  const w = useTranslations("gedu.groupWorkspace");
+  const tr = useTranslations("gedu.trainee");
   const roster = useMemo(() => group.roster ?? [], [group.roster]);
   const emails = useMemo(
     () => deduplicateEmails(roster.map(rosterContactEmail)),
@@ -1335,20 +1338,19 @@ function GroupRailCard({
         <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           {g("gedus")}
         </p>
-        {group.gedus.length === 0 ? (
+        {/* One run: the gedus, then the trainees, each trainee's chip tagged
+            with the seat — the same list the admin groups panel draws, where a
+            trainee shares the gedus' pill with "Trainee" in the role's
+            place. */}
+        {group.gedus.length === 0 && trainees.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noGedus")}</p>
         ) : (
-          <PersonChipList people={geduChipPeople(group.gedus)} />
-        )}
-        {/* Under the chips rather than among them: a trainee is on the group
-            but is not its staff, and a chip in the gedus' run would say so. */}
-        {trainees.length > 0 && (
-          <p className="text-xs text-muted-foreground">
-            {w("traineesLine", {
-              count: trainees.length,
-              names: trainees.map((trainee) => trainee.first_name).join(", "),
-            })}
-          </p>
+          <PersonChipList
+            people={[
+              ...geduChipPeople(group.gedus),
+              ...traineeChipPeople(trainees, tr("badge")),
+            ]}
+          />
         )}
       </div>
 

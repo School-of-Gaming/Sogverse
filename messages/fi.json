@@ -1030,8 +1030,6 @@
         "trainee": {
           "role": "Harjoittelija",
           "add": "Lisää harjoittelija",
-          "promote": "Tee Geduksi",
-          "promoteAria": "Nimeä {name} tämän ryhmän Geduksi",
           "removeAria": "Poista harjoittelija {name}"
         },
         "removeParticipant": {
@@ -2135,8 +2133,7 @@
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Vain ryhmään nimetyt Gedut ja ylläpitäjät voivat lukea tämän muistiinpanon.",
-      "contactWithheld": "Yhteystiedot näkyvät vain ryhmään nimetyille Geduille ja ylläpitäjille.",
-      "traineesLine": "{count, plural, one {Harjoittelija} other {Harjoittelijat}}: {names}"
+      "contactWithheld": "Yhteystiedot näkyvät vain ryhmään nimetyille Geduille ja ylläpitäjille."
     },
     "trainee": {
       "badge": "Harjoittelija",

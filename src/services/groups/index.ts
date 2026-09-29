@@ -14,7 +14,6 @@ export {
   useRemoveGedu,
   useAddTrainee,
   useRemoveTrainee,
-  usePromoteTrainee,
   useDeleteGroup,
   useAdminAddParticipantToProduct,
   useAdminRemoveParticipantFromProduct,

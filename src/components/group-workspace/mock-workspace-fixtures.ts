@@ -193,6 +193,8 @@ export interface GroupWorkspaceFixture {
    * that rule instead of exercising it.
    */
   photoConsentRows: readonly GamerPhotoConsent[] | null;
+  /** The group's trainee seats, as the group feed carries them. */
+  trainees: readonly { id: string; first_name: string }[];
   /**
    * The group's substitution requests as **stored rows**, and the other two inputs the
    * staffing derivation takes.
@@ -216,7 +218,15 @@ const GEDU_IDS = {
   petra: "96e29545-ad63-4948-b783-14e91189ad75",
   joonas: "d2826073-1d3f-4023-b45e-f42fea4332ca",
   markus: "a79fc7fd-8527-4826-8062-94d25ed30873",
+  oliver: "4c6e9b98-65fd-47f7-ad1b-3def072baf28",
 } as const;
+
+/**
+ * The gedu shadowing the group on a trainee seat — on every scenario, because a
+ * trainee chip coexists with everything else the rail draws, so one render
+ * shows it beside the gedus it follows.
+ */
+const GROUP_TRAINEES = [{ id: GEDU_IDS.oliver, first_name: "Oliver" }] as const;
 
 /**
  * Who this workspace's own group is staffed by, and **who is reading it**.
@@ -1756,6 +1766,7 @@ export function buildGroupWorkspaceFixture(
     photoConsentRows: config.asksGamerPhotoConsent
       ? SESSION_FEED_PHOTO_CONSENTS
       : null,
+    trainees: GROUP_TRAINEES,
     substitutionRequests: substitutions,
     staffingGedus: ASSIGNED_GROUP_GEDUS,
     viewerId: VIEWER_GEDU_ID,

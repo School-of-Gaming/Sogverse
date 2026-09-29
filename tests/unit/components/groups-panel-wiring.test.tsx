@@ -216,7 +216,6 @@ vi.mock("@/services/groups", () => {
     useRemoveGedu: stub(() => mutations.other),
     useAddTrainee: stub(() => mutations.other),
     useRemoveTrainee: stub(() => mutations.other),
-    usePromoteTrainee: stub(() => mutations.other),
     useDeleteGroup: stub(() => mutations.other),
   };
 });

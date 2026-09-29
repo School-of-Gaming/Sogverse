@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -42,16 +42,17 @@ interface AssignedSeatProps {
 interface TraineeSeatProps {
   /**
    * A gedu shadowing the group. A trainee is not paid, so there is no pay
-   * class to choose: the role slot holds the word "Trainee" at the select's
-   * size and position, with nothing to open.
+   * class to choose: the role slot holds the word "Trainee", drawn exactly as
+   * an assigned Gedu's role is drawn on the same surface, with nothing to
+   * open.
    */
   seat: "trainee";
   /**
-   * Make this trainee a `primary` Gedu of the same group. Passed only for a
-   * certified educator: an assignment still requires certification, so an
-   * uncertified trainee's pill carries no control that could make one.
+   * Whether this surface draws roles as the select (it has a role write) or
+   * as a label (it has none). A trainee's own role never changes; this only
+   * keeps its pill looking like the assigned Gedus' pills beside it.
    */
-  onPromote?: () => void;
+  roleAsControl: boolean;
 }
 
 type GeduPillProps = GeduPillBaseProps & (AssignedSeatProps | TraineeSeatProps);
@@ -75,10 +76,18 @@ type GeduPillProps = GeduPillBaseProps & (AssignedSeatProps | TraineeSeatProps);
  * replaced.
  *
  * **A trainee is the same pill in the same list.** Where an assigned Gedu's pill
- * has the role select, a trainee's has the word "Trainee" drawn as the select's
- * text without the select, followed — for a certified trainee — by the
- * promotion that turns the seat into a `primary` assignment in one write, so
- * the gedu is never left holding neither seat.
+ * has the role select, a trainee's has a select that looks exactly like it —
+ * the same box, border, chevron and text, holding "Trainee" — and does nothing:
+ * it is `inert` and hidden from assistive technology, with the word itself
+ * given to a screen reader as plain text. It looks like every other dropdown on
+ * the panel and has none of a dropdown's behaviour, so it is not greyed the way
+ * a disabled one would be. Where the surface draws roles as labels, the
+ * trainee's is the same label.
+ *
+ * **A trainee pill carries no promotion.** Certification is granted on the
+ * admin's user page and nowhere else, and a certified trainee becomes a Gedu of
+ * the group by being removed here and added through Add Gedu — the same two
+ * steps any other change of seat takes.
  */
 export function GeduPill(props: GeduPillProps) {
   const { geduId, firstName, email, isSaving, disabled, onRemove } = props;
@@ -105,31 +114,32 @@ export function GeduPill(props: GeduPillProps) {
         )}
       </div>
       {/* The trailing controls are one right-packed group, in a fixed order:
-          the role, then (for a certified trainee) the promotion, then the way
-          off the group. All are decided by the snapshot the pill is drawn
-          from, so nothing here arrives late and nothing moves. */}
+          the role, then the way off the group. Both are decided by the
+          snapshot the pill is drawn from, so nothing here arrives late and
+          nothing moves. */}
       {props.seat === "trainee" ? (
-        <>
-          {/* The select's box and text size without its border or chevron:
-              the same word in the same place, and nothing that reads as
-              openable. */}
-          <span className="inline-flex h-7 shrink-0 items-center px-1.5 text-[11px]">
+        props.roleAsControl ? (
+          <>
+            {/* The role select's own element and classes, so its look cannot
+                drift from the real one's — made inert (no focus, no pointer,
+                never opens) and hidden from the accessibility tree, so
+                nothing announces a combobox that cannot change. */}
+            <select
+              inert
+              aria-hidden
+              tabIndex={-1}
+              defaultValue="trainee"
+              className="h-7 shrink-0 rounded-md border border-border bg-background px-1.5 text-[11px]"
+            >
+              <option value="trainee">{t("trainee.role")}</option>
+            </select>
+            <span className="sr-only">{t("trainee.role")}</span>
+          </>
+        ) : (
+          <span className="shrink-0 text-[11px] text-muted-foreground">
             {t("trainee.role")}
           </span>
-          {props.onPromote && (
-            <button
-              type="button"
-              onClick={props.onPromote}
-              disabled={inert}
-              title={t("trainee.promoteAria", { name: firstName })}
-              aria-label={t("trainee.promoteAria", { name: firstName })}
-              className="flex h-7 shrink-0 items-center gap-1 rounded-md border border-border px-1.5 text-[11px] transition-colors hover:bg-hover disabled:pointer-events-none disabled:opacity-50"
-            >
-              <ArrowUp className="h-3 w-3" aria-hidden />
-              {t("trainee.promote")}
-            </button>
-          )}
-        </>
+        )
       ) : onRoleChange ? (
         <select
           value={props.role}

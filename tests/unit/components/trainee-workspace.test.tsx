@@ -170,9 +170,12 @@ describe("the trainee workspace, rendered", () => {
     ).toHaveLength(feed.roster.length);
   });
 
-  it("names the group's trainees beside its gedus", () => {
+  it("chips the group's trainees among its gedus, tagged Trainee", () => {
     renderTrainee();
-    expect(screen.getByText("Trainee: Veera")).toBeTruthy();
+    const chips = screen
+      .getAllByText("Veera")
+      .filter((name) => name.parentElement?.textContent === "VeeraTrainee");
+    expect(chips).toHaveLength(1);
   });
 
   it("opens the group notes editor, and its Save explains itself instead of saving", () => {

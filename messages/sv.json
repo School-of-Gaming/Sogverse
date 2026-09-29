@@ -1030,8 +1030,6 @@
         "trainee": {
           "role": "Praktikant",
           "add": "Lägg till praktikant",
-          "promote": "Gör till Gedu",
-          "promoteAria": "Gör {name} till Gedu i den här gruppen",
           "removeAria": "Ta bort praktikanten {name}"
         },
         "removeParticipant": {
@@ -2135,8 +2133,7 @@
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Bara tilldelade Geduer och administratörer kan läsa den här anteckningen.",
-      "contactWithheld": "Kontaktuppgifterna är för tilldelade Geduer och administratörer.",
-      "traineesLine": "{count, plural, one {Praktikant} other {Praktikanter}}: {names}"
+      "contactWithheld": "Kontaktuppgifterna är för tilldelade Geduer och administratörer."
     },
     "trainee": {
       "badge": "Praktikant",

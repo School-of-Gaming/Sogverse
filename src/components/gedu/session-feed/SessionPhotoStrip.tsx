@@ -113,7 +113,7 @@ interface SessionPhotoStripProps extends SessionPhotoEditing {
    * the Add button and every ✕ keep their places wearing a padlock, and a file
    * dropped on the block is ignored rather than staged.
    */
-  lock?: LockExplanation | null;
+  lock: LockExplanation | null;
 }
 
 /**
@@ -184,7 +184,7 @@ export function SessionPhotoStrip({
   landed,
   disabled,
   consent,
-  lock = null,
+  lock,
   error,
   onStageAdd,
   onUnstageAdd,

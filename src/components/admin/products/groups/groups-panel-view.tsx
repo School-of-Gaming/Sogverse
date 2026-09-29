@@ -89,12 +89,6 @@ export interface GroupsPanelActions {
   /** Ask the shell to open its gedu picker, in trainee mode, for this group. */
   onRequestAddTrainee: (groupId: string) => void;
   onRemoveTrainee: (groupId: string, geduId: string) => void;
-  /**
-   * Turn a certified trainee's seat into a `primary` assignment on the same
-   * group, as one write. Optional like the role select: a shell with no write
-   * behind it draws the trainee pill without the control.
-   */
-  onPromoteTrainee?: (groupId: string, geduId: string) => void;
   /** Ask the shell to open its participant picker. */
   onRequestAddParticipant: () => void;
   /**
@@ -650,7 +644,6 @@ export function GroupsPanelView({
                 onSetGeduRole={actions.onSetGeduRole}
                 onAddTrainee={actions.onRequestAddTrainee}
                 onRemoveTrainee={actions.onRemoveTrainee}
-                onPromoteTrainee={actions.onPromoteTrainee}
               />
             ))
           ) : (

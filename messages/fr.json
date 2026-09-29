@@ -1030,8 +1030,6 @@
         "trainee": {
           "role": "Stagiaire",
           "add": "Ajouter un stagiaire",
-          "promote": "Nommer Gedu",
-          "promoteAria": "Faire de {name} un Gedu de ce groupe",
           "removeAria": "Retirer le stagiaire {name}"
         },
         "removeParticipant": {
@@ -2135,8 +2133,7 @@
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Seuls les Gedus assignés et les admins peuvent lire cette note.",
-      "contactWithheld": "Les coordonnées sont réservées aux Gedus assignés et aux admins.",
-      "traineesLine": "{count, plural, one {Stagiaire} other {Stagiaires}} : {names}"
+      "contactWithheld": "Les coordonnées sont réservées aux Gedus assignés et aux admins."
     },
     "trainee": {
       "badge": "Stagiaire",

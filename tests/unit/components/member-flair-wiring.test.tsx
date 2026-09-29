@@ -320,6 +320,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     gedus: [],
     substitutions: [],
     cancellations: [],
+    trainees: [],
   };
 }
 

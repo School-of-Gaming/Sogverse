@@ -364,15 +364,15 @@ export const geduGroupFeed = z.object({
    */
   cancellations: z.array(sessionCancellation),
   /**
-   * The gedus holding a **trainee seat** on this group, by first name — what the
-   * workspace's staff line names beside the group's own gedus. A trainee is
-   * not staff and is on no other list here.
+   * The gedus holding a **trainee seat** on this group, by first name — chipped
+   * in the workspace among the group's own gedus, marked Trainee. A trainee is
+   * on no other list here.
    *
-   * Optional in the type because the document is parsed tolerantly and a
-   * fixture built before the field existed is still a valid document; the
-   * RPC always sends it, `[]` for none.
+   * Required, like the workspace prop it feeds: the RPC always sends it, `[]`
+   * for none, and a document without it would draw a group with its trainees
+   * silently missing.
    */
-  trainees: z.array(groupTrainee).optional(),
+  trainees: z.array(groupTrainee),
 });
 
 export type GeduGroupFeed = z.infer<typeof geduGroupFeed>;

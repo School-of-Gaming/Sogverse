@@ -1074,8 +1074,6 @@
         "trainee": {
           "role": "ghojwI’",
           "add": "ghojwI’ yIchu’",
-          "promote": "Gedu yIchenmoH",
-          "promoteAria": "{name} Gedu yIchenmoH",
           "removeAria": "ghojwI’ {name} yIteq"
         },
         "removeParticipant": {
@@ -2175,8 +2173,7 @@
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Gedupu’ ngeHlu’bogh che’wI’pu’ je neH laDlaH.",
-      "contactWithheld": "Gedupu’ ngeHlu’bogh che’wI’pu’ je neH ghom QIn laDlaH.",
-      "traineesLine": "{count, plural, one {ghojwI’} other {ghojwI’pu’}}: {names}"
+      "contactWithheld": "Gedupu’ ngeHlu’bogh che’wI’pu’ je neH ghom QIn laDlaH."
     },
     "trainee": {
       "badge": "ghojwI’",

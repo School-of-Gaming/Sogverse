@@ -91,7 +91,7 @@ interface SessionRecordEditorProps {
    * excepted, which are the save's own writes and explain themselves the same
    * way — and only the commit is withheld.
    */
-  saveLock?: LockExplanation | null;
+  saveLock: LockExplanation | null;
   onCancel: () => void;
   onSave: (draft: SessionRecordDraft) => void;
 }
@@ -163,7 +163,7 @@ export function SessionRecordEditor({
   error,
   photoStrip,
   creationsBlock,
-  saveLock = null,
+  saveLock,
   onCancel,
   onSave,
 }: SessionRecordEditorProps) {
@@ -358,14 +358,14 @@ export function SessionRecordEditor({
 export function EditorActionRow({
   committing,
   error,
-  saveLock = null,
+  saveLock,
   onCancel,
   onSave,
 }: {
   committing: boolean;
   error: string | null;
   /** Draw the Save as the locked control, explaining itself, instead. */
-  saveLock?: LockExplanation | null;
+  saveLock: LockExplanation | null;
   onCancel: () => void;
   onSave: () => void;
 }) {

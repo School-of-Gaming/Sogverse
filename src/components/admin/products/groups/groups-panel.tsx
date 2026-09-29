@@ -14,7 +14,6 @@ import {
   useMoveParticipation,
   useProductGroups,
   usePromoteFromWaitlist,
-  usePromoteTrainee,
   useRemoveGedu,
   useRemoveTrainee,
   useRenameGroup,
@@ -121,7 +120,6 @@ export function GroupsPanel({
   const removeGedu = useRemoveGedu(productId);
   const addTrainee = useAddTrainee(productId);
   const removeTrainee = useRemoveTrainee(productId);
-  const promoteTrainee = usePromoteTrainee(productId);
   const deleteGroup = useDeleteGroup(productId);
   const addParticipant = useAdminAddParticipantToProduct(productId);
   const removeParticipant = useAdminRemoveParticipantFromProduct(productId);
@@ -262,8 +260,6 @@ export function GroupsPanel({
     },
     onRemoveTrainee: (groupId, geduId) =>
       removeTrainee.mutate({ groupId, geduId }),
-    onPromoteTrainee: (groupId, geduId) =>
-      promoteTrainee.mutate({ groupId, geduId }),
     onRequestAddParticipant: () => setParticipantPickerOpen(true),
     // `mutateAsync`, unlike every intent above it: the row's Invite button has
     // to know whether the offer went out, because a failed one leaves the row
@@ -344,7 +340,6 @@ export function GroupsPanel({
                   geduId: gedu.id,
                   firstName: gedu.first_name,
                   email: gedu.email,
-                  certified: gedu.certified,
                 });
                 setPickerForGroupId(null);
                 return;

@@ -647,9 +647,12 @@ function Workspace({
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}
       memberFlair={memberFlair}
-      // Named beside the group's gedus, so the people teaching the group know
-      // who is shadowing it.
+      // Chipped among the group's gedus, marked Trainee, so the people
+      // teaching the group know who is shadowing it.
       trainees={feed.trainees}
+      // A staff document carries every sister group in full, so no row is
+      // ever drawn by name alone.
+      namedOnlyRoomLock={null}
     />
   );
 }

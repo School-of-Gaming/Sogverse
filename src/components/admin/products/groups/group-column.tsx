@@ -76,12 +76,6 @@ interface GroupColumnProps {
   onAddTrainee: (groupId: string) => void;
   onRemoveTrainee: (groupId: string, geduId: string) => void;
   /**
-   * Make a certified trainee a `primary` Gedu of this group. Optional for the
-   * same reason as the role select: a shell with no write behind it draws the
-   * pill without the control.
-   */
-  onPromoteTrainee?: (groupId: string, geduId: string) => void;
-  /**
    * Participation ids whose chip is greyed and undraggable — an in-flight move
    * or removal, or a club switch committing. Handed down rather than derived
    * from `pending` here, because one of the writes that can busy a chip is not
@@ -108,7 +102,6 @@ export function GroupColumn({
   onSetGeduRole,
   onAddTrainee,
   onRemoveTrainee,
-  onPromoteTrainee,
 }: GroupColumnProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const c = useTranslations("common");
@@ -312,7 +305,9 @@ export function GroupColumn({
           {/* Gedus row — everyone here from our side: the assigned Gedus in
               the snapshot's order, then the trainees shadowing the group. One
               list and one pill, because it is one question; a trainee's pill
-              says "Trainee" where an assigned Gedu's has the role select. */}
+              draws "Trainee" exactly as the Gedus' pills draw their role —
+              the select's look where they have a select, a label where they
+              have a label — and it never opens. */}
           <div className="space-y-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               {t("group.assignedGedus")}
@@ -342,16 +337,12 @@ export function GroupColumn({
                   <GeduPill
                     key={tr.id}
                     seat="trainee"
+                    roleAsControl={onSetGeduRole !== undefined && !isTemp}
                     geduId={tr.id}
                     firstName={tr.first_name}
                     email={tr.email}
                     isSaving={pending.trainees.has(`${group.id}:${tr.id}`)}
                     disabled={busy}
-                    onPromote={
-                      onPromoteTrainee === undefined || isTemp || !tr.certified
-                        ? undefined
-                        : () => onPromoteTrainee(group.id, tr.id)
-                    }
                     onRemove={() => onRemoveTrainee(group.id, tr.id)}
                   />
                 ))}

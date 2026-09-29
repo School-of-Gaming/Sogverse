@@ -72,7 +72,7 @@ export function AttendanceRoster({
   roster,
   attendance,
   disabled = false,
-  lock = null,
+  lock,
   onMark,
 }: {
   /**
@@ -93,7 +93,7 @@ export function AttendanceRoster({
    * was handed in locked. Every mark keeps its place and its word and wears a
    * padlock where its glyph was; pressing one explains, and marks nothing.
    */
-  lock?: LockExplanation | null;
+  lock: LockExplanation | null;
   /** `undefined` clears the mark, returning the row to unanswered. */
   onMark: (gamerId: string, mark: AttendanceMark | undefined) => void;
 }) {

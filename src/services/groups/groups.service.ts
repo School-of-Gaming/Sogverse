@@ -219,24 +219,6 @@ export class GroupsService {
   }
 
   /**
-   * Promotes a trainee to a `primary` Gedu on the same group: the trainee seat
-   * removed and the assignment added in **one** change set. The RPC removes
-   * before it adds, which is what lets the one-seat-per-product rule pass, and
-   * one transaction is what means the gedu is never left with neither seat.
-   */
-  async promoteTrainee(
-    productId: string,
-    groupId: string,
-    geduId: string,
-  ): Promise<void> {
-    await this.applyChanges(productId, {
-      ...emptyChangeSet(),
-      traineesRemoved: [{ groupId, geduId }],
-      geduAssignmentsAdded: [{ groupId, geduId, role: "primary" }],
-    });
-  }
-
-  /**
    * Admin comp-enrollment: drops a participant directly into the product as an
    * active participation, bypassing payment, seat caps, registration windows,
    * and the effective-status gate. The participant is a child or, on a

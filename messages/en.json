@@ -1030,8 +1030,6 @@
         "trainee": {
           "role": "Trainee",
           "add": "Add trainee",
-          "promote": "Make Gedu",
-          "promoteAria": "Make {name} a Gedu of this group",
           "removeAria": "Remove trainee {name}"
         },
         "removeParticipant": {
@@ -2135,8 +2133,7 @@
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Only assigned Gedus and admins can read this note.",
-      "contactWithheld": "Contact details are for assigned Gedus and admins.",
-      "traineesLine": "{count, plural, one {Trainee} other {Trainees}}: {names}"
+      "contactWithheld": "Contact details are for assigned Gedus and admins."
     },
     "trainee": {
       "badge": "Trainee",

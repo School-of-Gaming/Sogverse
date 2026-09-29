@@ -232,40 +232,6 @@ function withTraineeAdded(
   };
 }
 
-/**
- * A promotion drawn as it will land: the trainee pill leaves the Trainees row
- * and a `primary` pill joins the end of the Gedus row — the end because the
- * server orders a group's Gedus by assignment time and this assignment is the
- * newest, so the settle refetch draws it in the same place.
- */
-function withTraineePromoted(
-  snapshot: ProductGroupsSnapshot,
-  groupId: string,
-  geduId: string,
-): ProductGroupsSnapshot {
-  return {
-    ...snapshot,
-    groups: snapshot.groups.map((g) => {
-      if (g.id !== groupId) return g;
-      const trainee = g.trainees.find((t) => t.id === geduId);
-      if (!trainee) return g;
-      return {
-        ...g,
-        trainees: g.trainees.filter((t) => t.id !== geduId),
-        gedus: [
-          ...g.gedus,
-          {
-            id: trainee.id,
-            first_name: trainee.first_name,
-            email: trainee.email,
-            role: "primary",
-          },
-        ],
-      };
-    }),
-  };
-}
-
 function withGroupAdded(
   snapshot: ProductGroupsSnapshot,
   group: ProductGroupWithDetails,
@@ -483,12 +449,6 @@ interface AddTraineeVars {
   geduId: string;
   firstName: string;
   email: string | null;
-  /**
-   * The educator's standing, off the picker row that was pressed — carried
-   * into the optimistic pill so a certified trainee shows its promote control
-   * from the first frame rather than from the settle refetch.
-   */
-  certified: boolean;
 }
 
 /**
@@ -504,7 +464,7 @@ export function useAddTrainee(productId: string) {
     mutationKey: [...groupMutationBase(productId), "addTrainee"],
     mutationFn: ({ groupId, geduId }: AddTraineeVars) =>
       service.addTrainee(productId, groupId, geduId),
-    onMutate: async ({ groupId, geduId, firstName, email, certified }) => {
+    onMutate: async ({ groupId, geduId, firstName, email }) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<ProductGroupsSnapshot>(key);
       if (previous) {
@@ -514,7 +474,6 @@ export function useAddTrainee(productId: string) {
             id: geduId,
             first_name: firstName,
             email,
-            certified,
           }),
         );
       }
@@ -540,42 +499,6 @@ export function useRemoveTrainee(productId: string) {
     ...destructiveSettle(queryClient, key, ({ groupId, geduId }: RemoveGeduVars) =>
       service.removeTrainee(productId, groupId, geduId),
     ),
-  });
-}
-
-/**
- * Promote a trainee to a `primary` Gedu on the same group, in one write.
- *
- * A transform rather than a destruction — nobody leaves the group, a pill
- * changes rows — so it takes the optimistic shape: the pill moves at once and
- * a refused write puts it back.
- */
-export function usePromoteTrainee(productId: string) {
-  const queryClient = useQueryClient();
-  const service = new GroupsService(getClient());
-  const key = groupsKeys.byProduct(productId);
-
-  return useMutation({
-    mutationKey: [...groupMutationBase(productId), "promoteTrainee"],
-    mutationFn: ({ groupId, geduId }: RemoveGeduVars) =>
-      service.promoteTrainee(productId, groupId, geduId),
-    onMutate: async ({ groupId, geduId }) => {
-      await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData<ProductGroupsSnapshot>(key);
-      if (previous) {
-        queryClient.setQueryData(
-          key,
-          withTraineePromoted(previous, groupId, geduId),
-        );
-      }
-      return { previous };
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) queryClient.setQueryData(key, context.previous);
-    },
-    onSettled: () => {
-      invalidateGroupChange(queryClient, key);
-    },
   });
 }
 
@@ -830,7 +753,7 @@ export interface GroupPending {
   deletes: Set<string>;
   /** `${groupId}:${geduId}` for an in-flight add/remove Gedu or promotion */
   gedus: Set<string>;
-  /** `${groupId}:${geduId}` for an in-flight add/remove trainee or promotion */
+  /** `${groupId}:${geduId}` for an in-flight add/remove trainee */
   trainees: Set<string>;
   /** a group create is in flight */
   creating: boolean;
@@ -881,11 +804,6 @@ export function useGroupPending(productId: string): GroupPending {
       vars?.groupId &&
       vars.geduId
     ) {
-      trainees.add(`${vars.groupId}:${vars.geduId}`);
-    } else if (action === "promoteTrainee" && vars?.groupId && vars.geduId) {
-      // Both rows: the optimistic patch has already moved the pill into the
-      // Gedus row, and it stays greyed there until the write settles.
-      gedus.add(`${vars.groupId}:${vars.geduId}`);
       trainees.add(`${vars.groupId}:${vars.geduId}`);
     } else if (action === "create") {
       creating = true;

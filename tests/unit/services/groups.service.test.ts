@@ -174,23 +174,6 @@ describe("GroupsService intent methods", () => {
     expect({ ...sent, traineesRemoved: [] }).toEqual(EMPTY);
   });
 
-  it("promoteTrainee removes the seat and adds a primary assignment in ONE set", async () => {
-    // One request, not two: the RPC's remove-before-add order inside one
-    // transaction is what lets the one-seat-per-product rule pass, and what
-    // means a failure never leaves the gedu holding neither seat.
-    mockApplyResponse();
-    await service.promoteTrainee(PRODUCT_ID, "G1", "ge1");
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const sent = sentChangeSet();
-    expect(sent.traineesRemoved).toEqual([{ groupId: "G1", geduId: "ge1" }]);
-    expect(sent.geduAssignmentsAdded).toEqual([
-      { groupId: "G1", geduId: "ge1", role: "primary" },
-    ]);
-    expect({ ...sent, traineesRemoved: [], geduAssignmentsAdded: [] }).toEqual(
-      EMPTY,
-    );
-  });
-
   it("reads a change set from a previous bundle, which carries no trainee fields", () => {
     const legacy = {
       addedGroups: [],

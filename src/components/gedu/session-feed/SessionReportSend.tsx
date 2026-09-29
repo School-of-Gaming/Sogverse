@@ -44,7 +44,7 @@ interface SessionReportSendProps {
    * sent one is already a record rather than an invitation and stays exactly
    * that, locked or not.
    */
-  lock?: LockExplanation | null;
+  lock: LockExplanation | null;
   onSend: () => void;
 }
 
@@ -98,7 +98,7 @@ export function SessionReportSend({
   sending,
   result,
   error,
-  lock = null,
+  lock,
   onSend,
 }: SessionReportSendProps) {
   const t = useTranslations("gedu.sessionFeed");
