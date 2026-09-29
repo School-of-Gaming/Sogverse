@@ -148,7 +148,10 @@ that group could see and do. Three things about it are easy to get wrong:
   and chat moderation, substitutions and invoicing. The trainee's own reads are separate
   redacted twins of the gedu workspace and product documents, which carry their shapes with every staff-only field absent from the
   wire, so a UI renders a gap rather than blanking a value it was sent. Widening a staff
-  predicate to admit trainees would hand them all of it at once.
+  predicate to admit trainees would hand them all of it at once. That closure is the
+  trainee's own group only: a certified gedu training on one group may still substitute
+  on another group of the same product, nothing prevents it and nothing should — the
+  admin approving the substitution weighs it.
 - **One seat per gedu per product, of either kind.** The schema refuses an assignment
   and a trainee seat for the same gedu on one product, from whichever side is written
   second. Promotion is therefore one `apply_group_changes` batch that removes the

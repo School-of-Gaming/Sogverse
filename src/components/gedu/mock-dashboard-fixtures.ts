@@ -98,7 +98,6 @@ export const GEDU_DASHBOARD_SCENARIOS = [
   "clubs-only",
   "uncertified",
   "trainee",
-  "trainee-badge",
 ] as const;
 
 export type GeduDashboardScenario = (typeof GEDU_DASHBOARD_SCENARIOS)[number];
@@ -129,13 +128,6 @@ export interface GeduDashboardFixture {
    * bands is on the page, or neither — the body shows at most one.
    */
   criminalRecordCheckPassed: boolean;
-  /**
-   * **Temporary, for an owner comparison.** Whether the trainee cards wear a
-   * "Trainee" badge — true on the `trainee-badge` scenario only. The shipped
-   * dashboard draws no badge; this exists so the two can be compared side by
-   * side and is deleted with the scenario once the owner has ruled.
-   */
-  traineeBadge: boolean;
 }
 
 const MINECRAFT_PRODUCT_ID = "mock-dashboard-minecraft-club";
@@ -522,7 +514,7 @@ export function buildGeduDashboardFixture(
       ? []
       : scenario === "clubs-only"
         ? [...clubRows, ...extraClubRows]
-        : scenario === "trainee" || scenario === "trainee-badge"
+        : scenario === "trainee"
           ? [...clubRows, ...traineeRows]
           : [...clubRows, ...endedRows, ...otherRows, ...substitutionRows];
 
@@ -626,7 +618,6 @@ export function buildGeduDashboardFixture(
      */
     contractAccepted: scenario !== "default",
     criminalRecordCheckPassed: scenario !== "default" && scenario !== "uncertified",
-    traineeBadge: scenario === "trainee-badge",
   };
 }
 

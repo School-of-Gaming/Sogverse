@@ -372,15 +372,9 @@ export const PREVIEW_SCENES = [
       },
       {
         slug: "trainee",
-        label: "Trainee seats — shipped, no badge",
+        label: "Trainee seats",
         description:
           "Two trainee seats (Minecraft Builders Club, Coding Camp) on the ordinary card beside two assignments; the Builders card opens the trainee workspace.",
-      },
-      {
-        slug: "trainee-badge",
-        label: "Trainee seats — TEMPORARY badge comparison",
-        description:
-          "The trainee page with a Trainee badge on those two cards, to compare against the shipped, unbadged one. Not shipped; deleted once ruled.",
       },
     ],
   },

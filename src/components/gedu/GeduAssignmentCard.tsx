@@ -13,6 +13,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
+import { SeatKindBadge } from "./SeatKindBadge";
 import { CancelledAheadNotice } from "@/components/session-feed/CancelledAheadNotice";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
@@ -30,14 +31,6 @@ interface GeduAssignmentCardProps {
    * whole product row and this card only carries the roll-up.
    */
   scheduleLines: readonly string[];
-  /**
-   * **Temporary, for an owner comparison — the shipped card passes nothing.**
-   * The word a trainee seat's card would wear as a badge beside the product
-   * name. The owner's ruling is no badge (a trainee's groups are the same cards
-   * in the same list); this lets the preview draw the alternative beside it,
-   * and goes when the comparison has been looked at.
-   */
-  traineeBadge?: string;
 }
 
 /**
@@ -143,6 +136,14 @@ interface GeduAssignmentCardProps {
  * thing — and "Group A" identifies it to nobody, while "Minecraft Monday Club"
  * identifies it immediately.
  *
+ * **A trainee seat is this same card with a "Trainee" badge in the eyebrow**,
+ * after the product type. Trainee status is per seat, so one gedu may hold
+ * assignments and trainee seats on the same page, and the card's kind has to be
+ * legible before its name — the same reasoning that puts "Substitution" in the
+ * substitution card's eyebrow. It sits after the type rather than before it
+ * because the trainee card is still an assignment-shaped card: the type leads,
+ * as on every other card of its kind, and the badge qualifies it.
+ *
  * **The card states the schedule; the Join states the next session.** They are
  * two different questions and each is answered once. A gedu sweeping this page
  * is placing an activity in their week — "Mondays 16:30–18:00" is what does
@@ -202,9 +203,9 @@ interface GeduAssignmentCardProps {
 export function GeduAssignmentCard({
   assignment,
   scheduleLines,
-  traineeBadge,
 }: GeduAssignmentCardProps) {
   const p = useTranslations("productType");
+  const tr = useTranslations("gedu.trainee");
   const c = useTranslations("activityCard");
   const b = useTranslations("sessionBadge");
   const d = useTranslations("gedu.sessionDetails");
@@ -266,9 +267,14 @@ export function GeduAssignmentCard({
         <CardContent className="flex h-full flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {p(productType)}
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {p(productType)}
+                </span>
+                {assignment.trainee && (
+                  <SeatKindBadge>{tr("badge")}</SeatKindBadge>
+                )}
+              </div>
               {/* The identity keeps its weight and loses its tone on a finished
                   run: a gedu looking for last term's club still has to read the
                   name, they just must not trip over it while looking for this
@@ -281,14 +287,6 @@ export function GeduAssignmentCard({
               >
                 {productName}
               </p>
-              {traineeBadge !== undefined && assignment.trainee && (
-                <Badge
-                  variant="outline"
-                  className="w-fit px-2 py-0 text-[10px] uppercase tracking-wide text-muted-foreground"
-                >
-                  {traineeBadge}
-                </Badge>
-              )}
               {/* The group as one quiet line, not a name plus a bordered pill:
                   the pill gave the gamer count the visual weight of a status
                   badge sitting next to real ones, and a roster size is not a

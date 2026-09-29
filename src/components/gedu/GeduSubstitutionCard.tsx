@@ -8,10 +8,10 @@ import {
   MapPin,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { MaybeInertLink } from "@/components/ui/maybe-inert-link";
 import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
+import { SeatKindBadge } from "./SeatKindBadge";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { INERT_HREF } from "@/lib/constants/routes";
 import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
@@ -152,12 +152,7 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
                   is the first thing about it that has to be legible — a sub
                   scanning a grid must not read it as another group of theirs. */}
               <div className="flex flex-wrap items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className="px-2 py-0 text-[10px] uppercase tracking-wide text-info"
-                >
-                  {t("cardEyebrow")}
-                </Badge>
+                <SeatKindBadge>{t("cardEyebrow")}</SeatKindBadge>
                 <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {p(productType)}
                 </span>

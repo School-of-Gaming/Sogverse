@@ -33,8 +33,6 @@ interface GeduAssignmentsSectionViewProps {
    * session. The view sorts nothing and fetches nothing.
    */
   items: readonly GeduDashboardCard[];
-  /** Temporary owner-comparison badge for trainee cards; see the card's prop. */
-  traineeBadge?: string;
 }
 
 /**
@@ -71,7 +69,6 @@ interface GeduAssignmentsSectionViewProps {
  */
 export function GeduAssignmentsSectionView({
   items,
-  traineeBadge,
 }: GeduAssignmentsSectionViewProps) {
   return (
     <div className="grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -88,7 +85,6 @@ export function GeduAssignmentsSectionView({
             key={`assignment-${card.item.assignment.productId}-${card.item.assignment.groupId}`}
             assignment={card.item.assignment}
             scheduleLines={card.item.scheduleLines}
-            traineeBadge={traineeBadge}
           />
         ),
       )}

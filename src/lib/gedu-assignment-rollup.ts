@@ -183,9 +183,9 @@ export interface GeduAssignmentSummary {
   /**
    * Whether this card is a **trainee seat** rather than an assignment. It is
    * the same card, linking to the same workspace URL — the route decides the
-   * trainee's view from the seat — and the default card draws nothing
-   * different for it. Carried so a surface that ever does want to say so has
-   * the fact without re-deriving it.
+   * trainee's view from the seat — and the one thing it draws differently is a
+   * "Trainee" badge in its eyebrow, which this flag drives: trainee status is
+   * per seat, so one gedu's page can hold both kinds side by side.
    */
   trainee: boolean;
   /**

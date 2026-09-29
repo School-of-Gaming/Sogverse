@@ -187,9 +187,8 @@ describe("preview scene registry", () => {
       // no other scenario can show beside its own.
       "gedu-product": 6,
       // The fourth is a trainee's seats, which the default page's pinned card
-      // census keeps off it; the fifth is their temporary badge comparison,
-      // and goes when the owner has ruled on it.
-      "gedu-dashboard": 5,
+      // census keeps off it.
+      "gedu-dashboard": 4,
       // Two, and there is no third: the page has a populated state and an empty
       // one, and the uncertified page is the empty one with a section missing.
       "gedu-substitutions": 2,
