@@ -19,6 +19,7 @@ import type { OAuthLoginError } from "@/lib/google-sign-in";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth } from "@/providers";
 import { ContinueWithGoogle } from "./continue-with-google";
+import { DevSignIn } from "./dev-sign-in";
 
 const PASSWORD_MIN_LENGTH = 6;
 
@@ -80,20 +81,11 @@ export function LoginForm({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // The whole sign-in, from the moment the pair is known. The typed form and
+  // the dev-only quick sign-in both end here, so neither can drift from the
+  // other.
+  const signIn = async (email: string, password: string) => {
     setError(null);
-
-    const trimmedIdentifier = identifier.trim();
-    if (!trimmedIdentifier) {
-      setError(t("login.errors.identifierRequired"));
-      return;
-    }
-    if (password.length < PASSWORD_MIN_LENGTH) {
-      setError(t("login.errors.passwordTooShort", { count: PASSWORD_MIN_LENGTH }));
-      return;
-    }
-
     setIsLoading(true);
 
     try {
@@ -105,13 +97,8 @@ export function LoginForm({
       // (page is still showing signed-out chrome) and a full reload resets it.
       freezeUntilNavigation();
 
-      // The one place the two kinds of identifier become one. A value with an
-      // `@` is passed through as the address it is; anything else is a username
-      // and is resolved to the synthetic address that account holds. Getting
-      // this backwards — guessing username first — would rewrite a short real
-      // address into a handle and tell its owner their password was wrong.
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: identifierToLoginEmail(trimmedIdentifier),
+        email,
         password,
       });
 
@@ -163,6 +150,28 @@ export function LoginForm({
       setError(c('unexpectedError'));
       setIsLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    const trimmedIdentifier = identifier.trim();
+    if (!trimmedIdentifier) {
+      setError(t("login.errors.identifierRequired"));
+      return;
+    }
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      setError(t("login.errors.passwordTooShort", { count: PASSWORD_MIN_LENGTH }));
+      return;
+    }
+
+    // The one place the two kinds of identifier become one. A value with an
+    // `@` is passed through as the address it is; anything else is a username
+    // and is resolved to the synthetic address that account holds. Getting
+    // this backwards — guessing username first — would rewrite a short real
+    // address into a handle and tell its owner their password was wrong.
+    await signIn(identifierToLoginEmail(trimmedIdentifier), password);
   };
 
   return (
@@ -240,6 +249,10 @@ export function LoginForm({
           <Button type="submit" className="w-full" disabled={isLoading || googlePending}>
             {status ?? (isLoading ? t('login.signingIn') : c('signIn'))}
           </Button>
+          <DevSignIn
+            onSignIn={(email, devPassword) => void signIn(email, devPassword)}
+            disabled={isLoading || googlePending}
+          />
           <div className="space-y-2 text-center text-sm text-muted-foreground">
             <div>
               {t.rich('login.noAccountSignUp', {

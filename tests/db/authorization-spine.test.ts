@@ -253,6 +253,14 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "refused by a second 42501 — the ownership half of this RPC's gate. Its " +
       "positive path is covered by get-gedu-assigned-product.test.ts.",
   },
+  // The trainee's twin of the above, and refused the same way past the guard:
+  // a gedu with no trainee seat on the (NULL) product is the ownership 42501.
+  get_trainee_assigned_product: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "past the role guard, a gedu with no trainee seat on the (NULL) product " +
+      "is refused by a second 42501. Positive path: trainee-gedus.test.ts.",
+  },
 
   // --- the session feed ----------------------------------------------------
   //
@@ -281,6 +289,27 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "refusal, so the annotation is carried for the gedu alone — it is per " +
       "function, not per role. Positive paths: gedu-session-feed.test.ts for " +
       "both roles.",
+  },
+  // The trainee's redacted twin of the feed, with the same two-part gate: an
+  // admin passes both halves (to preview the trainee's view), and a gedu
+  // passes the role half and then needs a trainee seat on the group.
+  get_trainee_group_feed: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "past the role guard, a NULL group is a group no gedu trains on, so the " +
+      "trainee-seat half of the gate refuses one with a second 42501. An admin " +
+      "passes that half and gets a null-shaped document back. Positive paths: " +
+      "trainee-gedus.test.ts for both roles.",
+  },
+  // The trainee's twin of get_group_staff_overlay for the voice room, gated
+  // exactly as get_trainee_group_feed is.
+  get_trainee_group_overlay: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "past the role guard, a NULL group is a group no gedu trains on, so the " +
+      "trainee-seat half of the gate refuses one with a second 42501. An admin " +
+      "passes that half and gets a null-shaped document back. Positive paths: " +
+      "trainee-gedus.test.ts for both roles.",
   },
   // The one that CAN be asserted positively: it takes no id at all, only the
   // enforcement epoch, so a gedu with no assignments gets an empty list rather
@@ -656,7 +685,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   get_chat_channel_roster: {
     scopeTest: "tests/db/chat-rpcs.test.ts",
-    why: "the accounts one channel can name — its group's active seat-holders, the product's assigned gedus, and anyone who has a message in it — scoped on is_chat_channel_member. A deliberate hole in the `profiles` RLS that refuses cross-participant reads, and kept to the smallest shape that serves it: first name and role, nothing else about anybody. Deterministically ordered by profile id, which is a contract rather than tidiness — mention resolution settles two accounts sharing a name by list position",
+    why: "the accounts one channel can name — its group's active seat-holders, the product's assigned gedus, its group's trainees, and anyone who has a message in it — scoped on is_chat_channel_member. A deliberate hole in the `profiles` RLS that refuses cross-participant reads, and kept to the smallest shape that serves it: first name, role and is_trainee, nothing else about anybody. is_trainee is answered only to a caller who moderates the channel or is themselves a trainee of its group, and is false for everyone otherwise, so a gamer never learns which gedu is a trainee. Deterministically ordered by profile id, which is a contract rather than tidiness — mention resolution settles two accounts sharing a name by list position",
   },
   send_chat_message: {
     scopeTest: "tests/db/chat-rpcs.test.ts",

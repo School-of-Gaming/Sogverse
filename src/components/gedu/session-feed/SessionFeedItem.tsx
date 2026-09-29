@@ -6,7 +6,10 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import type { LockExplanation } from "@/components/ui/locked-control";
 import { Markdown } from "@/components/ui/markdown";
+import { WithheldText } from "@/components/ui/withheld-text";
+import { isWithheld, type Withheld } from "@/lib/withheld";
 import {
   SessionAttributionChip,
   SessionPhotoGallery,
@@ -111,6 +114,22 @@ interface SessionFeedItemProps {
   sendError: string | null;
   /** Email this session's report to the families. */
   onSendReport: () => void;
+  /**
+   * The explanations for the writes this surface handed in **locked**, or
+   * `null` for each one it handed in as a function. A locked write keeps its
+   * control on the card — the editor still opens and still takes typing — and
+   * the control explains itself instead of acting.
+   */
+  saveLock: LockExplanation | null;
+  sendLock: LockExplanation | null;
+  photoLock: LockExplanation | null;
+  /**
+   * The "I can't make this session" row, locked. Shown on every future card,
+   * because a reader who holds no seat on the session is never "expected" and
+   * the row would otherwise never appear — and the point of a lock is that it
+   * does.
+   */
+  substitutionLock: LockExplanation | null;
   /**
    * This entry's staged photo edit, and the controls that change it.
    *
@@ -306,6 +325,10 @@ export function SessionFeedItem({
   sendResult,
   sendError,
   onSendReport,
+  saveLock,
+  sendLock,
+  photoLock,
+  substitutionLock,
   photoEditing,
   photoConsents,
   creations,
@@ -370,6 +393,7 @@ export function SessionFeedItem({
       consent={
         photoConsents === null ? null : { roster, allowed: photoConsents }
       }
+      lock={photoLock}
       {...photoEditing}
     />
   );
@@ -447,6 +471,7 @@ export function SessionFeedItem({
         error={saveError}
         photoStrip={photoStrip}
         creationsBlock={creationsBlock(true)}
+        saveLock={saveLock}
         onCancel={onCancelEdit}
         onSave={onSave}
       />
@@ -529,6 +554,7 @@ export function SessionFeedItem({
         sending={sending}
         result={sendResult}
         error={sendError}
+        lock={sendLock}
         onSend={onSendReport}
       />
     ) : null;
@@ -612,6 +638,9 @@ export function SessionFeedItem({
           {fileSubstitution !== undefined && (
             <SessionSubstitutionMenu onRequestSubstitution={fileSubstitution} />
           )}
+          {substitutionLock !== null && entry.kind === "future" && (
+            <SessionSubstitutionMenu lock={substitutionLock} />
+          )}
           {/* The other role's menu, in the very same place: a surface supplies
               this or the callback above, never both. */}
           {sessionMenu}
@@ -642,6 +671,8 @@ export function SessionFeedItem({
             error={saveError}
             photoStrip={photoStrip}
             creationsBlock={creationsBlock(true)}
+            staffNoteWithheld={isWithheld(entry.staffNote)}
+            saveLock={saveLock}
             onCancel={onCancelEdit}
             onSave={onSave}
           />
@@ -733,8 +764,13 @@ function SessionEntryBody({
 
   switch (entry.kind) {
     case "future": {
+      // A withheld gedu note always draws its padlocked block, so the card is
+      // never bare and the "no notes yet" line would be describing a card that
+      // visibly has something on it.
       const hasNotes =
-        hasText(entry.report) || hasText(entry.staffNote);
+        hasText(entry.report) ||
+        hasText(entry.staffNote) ||
+        isWithheld(entry.staffNote);
       /*
        * **A live session shows its register; a session still ahead has none to
        * show.** Both are `future` entries — the kind flips at the session's end
@@ -855,6 +891,7 @@ function WrittenFields({
   /** Rendered inside the report block, under the write-up itself. */
   reportAction?: ReactNode;
 }) {
+  const g = useTranslations("gedu.groupWorkspace");
   return (
     <>
       {(hasText(entry.report) || entry.images.length > 0) && (
@@ -868,16 +905,25 @@ function WrittenFields({
           {reportAction}
         </div>
       )}
-      {hasText(entry.staffNote) && (
+      {/* Withheld, the block is drawn on every card whether or not a note
+          was written: filler that appeared only where a note exists would
+          tell the reader which sessions have one. */}
+      {isWithheld(entry.staffNote) ? (
         <StaffNoteBlock>
-          <Markdown emphasis="quiet">{entry.staffNote}</Markdown>
+          <WithheldText label={g("staffNoteWithheld")} lines={2} />
         </StaffNoteBlock>
+      ) : (
+        hasText(entry.staffNote) && (
+          <StaffNoteBlock>
+            <Markdown emphasis="quiet">{entry.staffNote}</Markdown>
+          </StaffNoteBlock>
+        )
       )}
     </>
   );
 }
 
 /** A nullable stored field that actually has something in it. */
-function hasText(value: string | null): value is string {
-  return value !== null && value.length > 0;
+function hasText(value: string | null | Withheld): value is string {
+  return typeof value === "string" && value.length > 0;
 }

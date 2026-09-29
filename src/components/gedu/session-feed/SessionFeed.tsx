@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTimezone } from "@/providers";
+import { lockOf, type Locked } from "@/components/ui/locked-control";
 import { cn, formatDate } from "@/lib/utils";
 import {
   SessionFeedShell,
@@ -110,10 +111,9 @@ interface SessionFeedProps {
    * rejects. A synchronous handler (a preview scene over local state) resolves
    * immediately and the sequence collapses to what it always was.
    */
-  onSaveEntry: (
-    entryId: string,
-    draft: SessionEntryDraft,
-  ) => void | Promise<void>;
+  onSaveEntry:
+    | ((entryId: string, draft: SessionEntryDraft) => void | Promise<void>)
+    | Locked;
   /**
    * Email one session's report to the group's families. **Awaited**, and the
    * contract is the mirror image of the save's: the feed disables the button
@@ -125,7 +125,9 @@ interface SessionFeedProps {
    * automatically something the gedu is told about: being refused because the
    * report has *already* gone is answered by the sent state, not by a message.
    */
-  onSendReport: (entryId: string) => Promise<SessionReportSendResult>;
+  onSendReport:
+    | ((entryId: string) => Promise<SessionReportSendResult>)
+    | Locked;
   /**
    * Attach one already-normalized JPEG to a session's report, resolving with
    * the stored id.
@@ -136,12 +138,14 @@ interface SessionFeedProps {
    * sequence makes, and the editor is greyed and held open across it like every
    * other one.
    */
-  onAddPhoto: (
-    entryId: string,
-    photo: { file: Blob; width: number; height: number },
-  ) => Promise<string>;
+  onAddPhoto:
+    | ((
+        entryId: string,
+        photo: { file: Blob; width: number; height: number },
+      ) => Promise<string>)
+    | Locked;
   /** Remove one photo, by its stored id. @see onAddPhoto */
-  onRemovePhoto: (imageId: string) => Promise<void>;
+  onRemovePhoto: ((imageId: string) => Promise<void>) | Locked;
   /**
    * Who on the roster may be photographed, keyed by roster id — or `null` on a
    * product that does not ask the photo consent, which is every product but the
@@ -169,10 +173,12 @@ interface SessionFeedProps {
    * is then not rendered at all. That is the whole gate: no role flag reaches
    * this component, and the surface decides by what it supplies.
    */
-  onRequestSubstitution?: (
-    entry: SessionFeedEntry,
-    draft: SessionSubstitutionRequestDraft,
-  ) => void | Promise<void>;
+  onRequestSubstitution?:
+    | ((
+        entry: SessionFeedEntry,
+        draft: SessionSubstitutionRequestDraft,
+      ) => void | Promise<void>)
+    | Locked;
   /** Take the viewer's own open request back. Awaited on the same terms. */
   onWithdrawSubstitutionRequest?: (requestId: string) => void | Promise<void>;
   /**
@@ -283,6 +289,18 @@ export function SessionFeed({
   const t = useTranslations("gedu.sessionFeed");
   const locale = useLocale();
   const timeZone = useTimezone();
+
+  /**
+   * The writes a surface handed in **locked** rather than as functions — each
+   * card still draws the control, and the control explains itself instead of
+   * acting. Photos are one lock: adding and removing are the same block's two
+   * halves, and a block where one worked and the other explained itself would
+   * be a state no surface asks for.
+   */
+  const saveLock = lockOf(onSaveEntry);
+  const sendLock = lockOf(onSendReport);
+  const photoLock = lockOf(onAddPhoto) ?? lockOf(onRemovePhoto);
+  const substitutionLock = lockOf(onRequestSubstitution);
 
   /**
    * The entry whose save is in the air, and why the last one failed.
@@ -559,6 +577,10 @@ export function SessionFeed({
   const commitStagedPhotos = async (entryId: string) => {
     const edit = staged !== null && staged.entryId === entryId ? staged : null;
     if (edit === null) return;
+    // Nothing is staged behind a locked strip; the guard is for the compiler.
+    if (typeof onRemovePhoto !== "function" || typeof onAddPhoto !== "function") {
+      return;
+    }
 
     for (const imageId of edit.removals) {
       await onRemovePhoto(imageId);
@@ -619,6 +641,8 @@ export function SessionFeed({
    * about a file.
    */
   const saveEntry = async (entryId: string, draft: SessionEntryDraft) => {
+    // A locked Save never calls this — it explains itself instead.
+    if (typeof onSaveEntry !== "function") return;
     setSaveError(null);
     setPhotoError(null);
     setCommittingEntryId(entryId);
@@ -679,6 +703,7 @@ export function SessionFeed({
    * arguing with the button. The flag stays set through that one, silently.
    */
   const sendReport = async (entryId: string) => {
+    if (typeof onSendReport !== "function") return;
     setSendError(null);
     setSendResult(null);
     setSendingEntryId(entryId);
@@ -819,6 +844,10 @@ export function SessionFeed({
               sendError?.entryId === entry.id ? sendError.message : null
             }
             onSendReport={() => void sendReport(entry.id)}
+            saveLock={saveLock}
+            sendLock={sendLock}
+            photoLock={photoLock}
+            substitutionLock={substitutionLock}
             photoEditing={{
               staged:
                 staged !== null && staged.entryId === entry.id
@@ -840,9 +869,9 @@ export function SessionFeed({
             // never has to turn its own id back into the (group, date) pair a
             // substitution request is keyed by — the same split the save already has.
             onRequestSubstitution={
-              onRequestSubstitution === undefined
-                ? undefined
-                : (draft) => onRequestSubstitution(entry, draft)
+              typeof onRequestSubstitution === "function"
+                ? (draft) => onRequestSubstitution(entry, draft)
+                : undefined
             }
             onWithdrawSubstitutionRequest={onWithdrawSubstitutionRequest}
             sessionMenu={renderSessionMenu?.(entry) ?? null}

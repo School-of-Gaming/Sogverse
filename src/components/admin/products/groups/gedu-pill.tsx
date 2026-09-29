@@ -7,10 +7,23 @@ import { Identicon } from "@/components/ui/identicon";
 import { cn } from "@/lib/utils";
 import { Constants, type GeduAssignmentRole } from "@/types";
 
-interface GeduPillProps {
+interface GeduPillBaseProps {
   geduId: string;
   firstName: string;
   email?: string | null;
+  /** A write for this seat is saving — greyed, and its controls are disabled. */
+  isSaving?: boolean;
+  /**
+   * The whole group is busy (rename/delete in flight) — disable the controls
+   * without greying the pill (the card itself already dims). Keeps them
+   * mounted so the layout doesn't shift.
+   */
+  disabled?: boolean;
+  onRemove?: () => void;
+}
+
+interface AssignedSeatProps {
+  seat?: "assigned";
   /**
    * The pay class this assignment carries. Always shown, because a pill that
    * did not say which role it was would leave the select below it as the only
@@ -18,22 +31,31 @@ interface GeduPillProps {
    * a value nobody audits.
    */
   role: GeduAssignmentRole;
-  /** An add/remove for this Gedu is saving — greyed and the remove button is disabled. */
-  isSaving?: boolean;
-  /**
-   * The whole group is busy (rename/delete in flight) — disable removal without
-   * greying the pill (the card itself already dims). Keeps the remove button
-   * mounted so the layout doesn't shift.
-   */
-  disabled?: boolean;
   /**
    * Change the pay class. Omitted on a read-only surface, where the role is
    * drawn as a label instead — the control and the text carry the same value,
    * so nothing is lost and nothing is pressable that writes nowhere.
    */
   onRoleChange?: (role: GeduAssignmentRole) => void;
-  onRemove?: () => void;
 }
+
+interface TraineeSeatProps {
+  /**
+   * A gedu shadowing the group. A trainee is not paid, so there is no pay
+   * class to choose: the role slot holds the word "Trainee", drawn exactly as
+   * an assigned Gedu's role is drawn on the same surface, with nothing to
+   * open.
+   */
+  seat: "trainee";
+  /**
+   * Whether this surface draws roles as the select (it has a role write) or
+   * as a label (it has none). A trainee's own role never changes; this only
+   * keeps its pill looking like the assigned Gedus' pills beside it.
+   */
+  roleAsControl: boolean;
+}
+
+type GeduPillProps = GeduPillBaseProps & (AssignedSeatProps | TraineeSeatProps);
 
 /**
  * One assigned Gedu: their face, their name, the role they hold, and the way
@@ -52,19 +74,25 @@ interface GeduPillProps {
  * upserts on (group, gedu) and updates the role, and the optimistic patch moves
  * the pill's own value so the select never sits showing what the admin just
  * replaced.
+ *
+ * **A trainee is the same pill in the same list.** Where an assigned Gedu's pill
+ * has the role select, a trainee's has the select's box — the same border,
+ * ground and text, holding "Trainee" — with no chevron, because it does not
+ * open. It sits among the other role boxes on the panel without offering a
+ * choice, and it is not greyed the way a disabled select would be. Where the
+ * surface draws roles as labels, the trainee's is the same label.
+ *
+ * **A trainee pill's only action is Remove.** A trainee's seat ends when an
+ * admin removes it; certification is granted on the admin's user page and
+ * nowhere else.
  */
-export function GeduPill({
-  geduId,
-  firstName,
-  email,
-  role,
-  isSaving,
-  disabled,
-  onRoleChange,
-  onRemove,
-}: GeduPillProps) {
+export function GeduPill(props: GeduPillProps) {
+  const { geduId, firstName, email, isSaving, disabled, onRemove } = props;
   const t = useTranslations("admin.products.groupsPanel");
   const tRole = useTranslations("admin.geduRole");
+  const inert = isSaving || disabled;
+  const onRoleChange =
+    props.seat === "trainee" ? undefined : props.onRoleChange;
 
   return (
     <div
@@ -83,11 +111,25 @@ export function GeduPill({
         )}
       </div>
       {/* The trailing controls are one right-packed group, in a fixed order:
-          the role, then the way off the group. Both are always mounted, so
-          nothing here arrives late and nothing moves. */}
-      {onRoleChange ? (
+          the role, then the way off the group. Both are decided by the
+          snapshot the pill is drawn from, so nothing here arrives late and
+          nothing moves. */}
+      {props.seat === "trainee" ? (
+        props.roleAsControl ? (
+          // The role select's box — its height, border, ground, padding and
+          // text — with no chevron, because nothing here opens. Plain text, so
+          // a screen reader reads the word and announces no combobox.
+          <span className="inline-flex h-7 shrink-0 items-center rounded-md border border-border bg-background px-1.5 text-[11px]">
+            {t("trainee.role")}
+          </span>
+        ) : (
+          <span className="shrink-0 text-[11px] text-muted-foreground">
+            {t("trainee.role")}
+          </span>
+        )
+      ) : onRoleChange ? (
         <select
-          value={role}
+          value={props.role}
           // A `<select>`'s value is a bare string to the compiler, and an
           // assertion here would only be a promise that the options below never
           // change. Narrowing by looking the value up in the enum is the same
@@ -99,7 +141,7 @@ export function GeduPill({
             );
             if (next !== undefined) onRoleChange(next);
           }}
-          disabled={isSaving || disabled}
+          disabled={inert}
           aria-label={tRole("selectAria", { name: firstName })}
           className="h-7 shrink-0 rounded-md border border-border bg-background px-1.5 text-[11px] disabled:pointer-events-none disabled:opacity-50"
         >
@@ -113,15 +155,19 @@ export function GeduPill({
         </select>
       ) : (
         <span className="shrink-0 text-[11px] text-muted-foreground">
-          {tRole(role)}
+          {tRole(props.role)}
         </span>
       )}
       {onRemove && (
         <button
           type="button"
           onClick={onRemove}
-          disabled={isSaving || disabled}
-          aria-label={t("gedu.removeAria", { name: firstName })}
+          disabled={inert}
+          aria-label={
+            props.seat === "trainee"
+              ? t("trainee.removeAria", { name: firstName })
+              : t("gedu.removeAria", { name: firstName })
+          }
           className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
         >
           <X className="h-3.5 w-3.5" />

@@ -19,6 +19,8 @@ const EMPTY: GroupChangeSet = {
   geduAssignmentsAdded: [],
   geduAssignmentsRemoved: [],
   participationMoves: [],
+  traineesAdded: [],
+  traineesRemoved: [],
 };
 
 describe("GroupsService intent methods", () => {
@@ -154,6 +156,34 @@ describe("GroupsService intent methods", () => {
       { groupId: "G1", geduId: "ge1" },
     ]);
     expect({ ...sent, geduAssignmentsRemoved: [] }).toEqual(EMPTY);
+  });
+
+  it("addTrainee sends only traineesAdded", async () => {
+    mockApplyResponse();
+    await service.addTrainee(PRODUCT_ID, "G1", "ge1");
+    const sent = sentChangeSet();
+    expect(sent.traineesAdded).toEqual([{ groupId: "G1", geduId: "ge1" }]);
+    expect({ ...sent, traineesAdded: [] }).toEqual(EMPTY);
+  });
+
+  it("removeTrainee sends only traineesRemoved", async () => {
+    mockApplyResponse();
+    await service.removeTrainee(PRODUCT_ID, "G1", "ge1");
+    const sent = sentChangeSet();
+    expect(sent.traineesRemoved).toEqual([{ groupId: "G1", geduId: "ge1" }]);
+    expect({ ...sent, traineesRemoved: [] }).toEqual(EMPTY);
+  });
+
+  it("reads a change set from a previous bundle, which carries no trainee fields", () => {
+    const legacy = {
+      addedGroups: [],
+      renamedGroups: [],
+      deletedGroupIds: [],
+      geduAssignmentsAdded: [],
+      geduAssignmentsRemoved: [],
+      participationMoves: [],
+    };
+    expect(groupChangeSet.parse(legacy)).toEqual(EMPTY);
   });
 
   it("surfaces the route's error message when the request fails", async () => {

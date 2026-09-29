@@ -155,6 +155,12 @@ function mockTables(opts: {
   /** Whether the joining gedu is still certified. Defaults to true. */
   certified?: boolean;
   /**
+   * The group the joining gedu holds a trainee seat on, if any. The mock
+   * answers a row only when the route's own `eq` chain asked about *this*
+   * group, which is what makes "refused on a sibling group" a real assertion.
+   */
+  traineeSeatGroupId?: string;
+  /**
    * Product-local dates the database answers cancelled on this group. The
    * predicate answers true only when the route asked about one of these dates
    * for this group, and records every date asked on `cancellationDatesAsked`.
@@ -259,6 +265,27 @@ function mockTables(opts: {
             );
           },
         }),
+      };
+      return { select: vi.fn().mockReturnValue(chain) };
+    }
+    if (table === "gedu_group_trainees") {
+      // .select().eq(group_id).eq(gedu_id).maybeSingle() — the group asked
+      // about is captured so a seat on a sibling group answers nothing.
+      let askedGroup: string | null = null;
+      const chain = {
+        eq: (column: string, value: string) => {
+          if (column === "group_id") askedGroup = value;
+          return chain;
+        },
+        maybeSingle: () =>
+          Promise.resolve(
+            mockSupabaseSuccess(
+              opts.traineeSeatGroupId !== undefined &&
+                askedGroup === opts.traineeSeatGroupId
+                ? { group_id: askedGroup }
+                : null,
+            ),
+          ),
       };
       return { select: vi.fn().mockReturnValue(chain) };
     }
@@ -571,6 +598,45 @@ describe("POST /api/voice/token", () => {
       });
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       expect(res.status).toBe(200);
+    });
+
+    it("admits a trainee to their own group's room, as a participant and never an owner", async () => {
+      authAs("trainee-id", { role: "gedu", first_name: "Tiia" });
+      mockTables({
+        group: {},
+        geduAssignment: null,
+        traineeSeatGroupId: GROUP_ID,
+      });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+      expect(res.status).toBe(200);
+      // The role slot stays `gedu` — a trainee reads as a gedu to the room —
+      // and the owner flag, which is the whole moderator surface, is false.
+      expect(data.role).toBe("gedu");
+      expect(data.standing).toBe("trainee");
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isOwner: false,
+          userName: expect.stringMatching(/^trainee-id\|gedu\|Tiia\|/),
+        }),
+      );
+    });
+
+    it("refuses a trainee on a sibling group of the product they train on", async () => {
+      // An assignment reaches every group of the product; a trainee seat
+      // reaches one. A seat on another group of the same product buys nothing
+      // here.
+      authAs("trainee-id", { role: "gedu", first_name: "Tiia" });
+      mockTables({
+        group: {},
+        geduAssignment: null,
+        traineeSeatGroupId: "99999999-8888-7777-6666-555555555555",
+      });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+      expect(res.status).toBe(403);
+      expect(data.error).toBe("You are not assigned to this group");
+      expect(mockCreateMeetingToken).not.toHaveBeenCalled();
     });
 
     it("admin bypasses the membership check", async () => {
@@ -918,7 +984,27 @@ describe("POST /api/voice/token", () => {
         geduAssignment: { group_id: GROUP_ID },
       });
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
       expect(res.status).toBe(200);
+      expect(data.standing).toBe("moderator");
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ isOwner: true }),
+      );
+    });
+
+    it("mints an owner token for a substitute on the session they cover", async () => {
+      const sessionStart = new Date();
+      openWindowFor(sessionStart);
+      authAs("sub-id", { role: "gedu", first_name: "Joonas" });
+      mockTables({
+        group: {},
+        geduAssignment: null,
+        substitutionsByDate: { [dateInProductZone(sessionStart)]: true },
+      });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+      expect(res.status).toBe(200);
+      expect(data.standing).toBe("moderator");
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
         expect.objectContaining({ isOwner: true }),
       );
@@ -946,6 +1032,7 @@ describe("POST /api/voice/token", () => {
       const data = await res.json();
       expect(res.status).toBe(200);
       expect(data.role).toBe("customer");
+      expect(data.standing).toBe("participant");
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
         expect.objectContaining({
           isOwner: false,

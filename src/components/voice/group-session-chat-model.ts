@@ -42,6 +42,9 @@ export function toChatAccounts(
     id: entry.id,
     name: entry.first_name,
     role: entry.role,
+    // True only on a moderator's roster — the RPC answers false to everyone
+    // else — so it can be carried as-is and drawn without a viewer check.
+    isTrainee: entry.is_trainee,
   }));
   return accounts.some((account) => account.id === viewer.id)
     ? accounts

@@ -21,6 +21,10 @@ import {
   type GamePlatform,
 } from "@/components/game-account";
 import { GamerFlairButton, NewcomerBadge } from "@/components/member-flair";
+import {
+  LockedButton,
+  type LockExplanation,
+} from "@/components/ui/locked-control";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { VoiceRole } from "./hooks/types";
@@ -60,7 +64,7 @@ export interface ParticipantRowData {
  * ready to render.
  *
  * **The row is told, never asked to work it out.** Who may lock whom is chat's
- * own question — a positive allow-list of moderator roles, no lock against a
+ * own question — a viewer who moderates by the server's answer, no lock against a
  * colleague or yourself, and nobody who is not on the channel's roster — and it
  * is answered in one place (`deriveChatLockControl` in `components/chat`) so
  * that a message's menu and this rail cannot come to two different conclusions
@@ -93,6 +97,12 @@ export interface ParticipantRowProps {
   lockState: { audio: boolean; video: boolean };
   /** Whether the viewer is a moderator (shows the moderation menu on others' rows). */
   isModView: boolean;
+  /**
+   * The moderation menu's lock, for a viewer shown the menu locked (a
+   * trainee): the same trigger on the same rows, explaining itself when
+   * pressed instead of opening. Ignored for a moderator.
+   */
+  moderationLock?: LockExplanation | null;
   avatarRef?: Ref<HTMLDivElement>;
   onMute?: (track: "audio" | "video") => void;
   onLock?: (track: "audio" | "video", locked: boolean) => void;
@@ -145,6 +155,13 @@ export interface ParticipantRowProps {
    */
   hasContent?: boolean;
   /**
+   * Whether this person holds a trainee seat on the group — staff and trainee
+   * sight, never a family's. A trainee's token says `gedu`, so this is the one
+   * thing that tells them the difference; it arrives with the chat
+   * roster a moment after the room paints, which is why it is drawn last.
+   */
+  isTrainee?: boolean;
+  /**
    * Opens the per-gamer dialog. Its presence is what puts the button at the end
    * of the row: a viewer with no staff access passes nothing and the row has no
    * trailing control for a screen reader to announce.
@@ -156,6 +173,7 @@ export function ParticipantRow({
   participant: p,
   lockState,
   isModView,
+  moderationLock,
   avatarRef,
   onMute,
   onLock,
@@ -163,10 +181,15 @@ export function ParticipantRow({
   newcomerJoinedAt,
   flairNow,
   hasContent,
+  isTrainee,
   onOpenFlair,
 }: ParticipantRowProps) {
   const c = useTranslations("common");
-  const showModMenu = isModView && !p.isLocal && !p.isOwner;
+  const tt = useTranslations("gedu.trainee");
+  const moderatable = !p.isLocal && !p.isOwner;
+  const showModMenu = isModView && moderatable;
+  const lockedModMenu =
+    !isModView && moderatable && moderationLock != null ? moderationLock : null;
   // Show the game identity for gedu/gamer participants, but only when the token
   // actually carried a platform. An absent platform == no game context (an
   // instant room, or a product whose topic is about no single game account) →
@@ -297,6 +320,17 @@ export function ParticipantRow({
           className="order-3 sm:order-4"
         />
       )}
+      {/* The trainee tag — staff and trainee sight, arriving with the chat roster after the
+          room has painted, so it is the last of the run for the same reason
+          the newcomer badge follows the Parent badge. */}
+      {isTrainee === true && (
+        <Badge
+          variant="outline"
+          className="order-3 shrink-0 px-1.5 py-0 text-[10px] font-normal sm:order-4"
+        >
+          {tt("badge")}
+        </Badge>
+      )}
 
       {/* The row's trailing controls, as **one right-packed group**, and both
           halves of that are load-bearing.
@@ -371,8 +405,35 @@ export function ParticipantRow({
             chatControl={chatControl}
           />
         )}
+        {lockedModMenu !== null && (
+          <LockedModMenuTrigger explanation={lockedModMenu} />
+        )}
       </div>
     </div>
+  );
+}
+
+/**
+ * The moderation menu's trigger, locked: the same kebab at the same size and
+ * place, with a padlock, opening the explanation rather than the menu.
+ */
+function LockedModMenuTrigger({
+  explanation,
+}: {
+  explanation: LockExplanation;
+}) {
+  const t = useTranslations("voice");
+  return (
+    <LockedButton
+      explanation={explanation}
+      variant="ghost"
+      size="icon"
+      className="h-7 w-auto shrink-0 gap-0.5 px-1"
+      title={t("moderate")}
+      aria-label={t("moderate")}
+    >
+      <MoreVertical className="h-4 w-4" />
+    </LockedButton>
   );
 }
 

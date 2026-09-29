@@ -4,6 +4,7 @@ export {
   useGroupStaffOverlay,
   useSetGamerGroupCreations,
   useSetGamerGroupNote,
+  useTraineeGroupOverlay,
 } from "./member-flair.queries";
 export {
   GAMER_CREATION_MAX_ENTRIES,
@@ -16,6 +17,8 @@ export {
   groupStaffOverlay,
   groupStaffOverlayMember,
   setGamerGroupCreationsBody,
+  traineeGroupOverlay,
+  traineeGroupOverlayMember,
 } from "./member-flair.contracts";
 export type {
   GamerCreation,
@@ -25,4 +28,5 @@ export type {
   GroupStaffOverlay,
   GroupStaffOverlayMember,
   SetGamerGroupCreationsBody,
+  TraineeGroupOverlay,
 } from "./member-flair.contracts";

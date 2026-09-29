@@ -100,7 +100,7 @@ function renderRow(delivery: ChatDelivery) {
           flashing: false,
           actionsRevealed: false,
           capabilities: deriveChatMessageCapabilities(
-            { viewer: AINO, locked: false },
+            { viewer: AINO, standing: { kind: "participant" }, locked: false },
             message,
             AINO,
             false,

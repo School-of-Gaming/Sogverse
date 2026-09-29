@@ -18,5 +18,13 @@ export const geduSessionKeys = {
   all: ["gedu-sessions"] as const,
   feeds: () => [...geduSessionKeys.all, "feed"] as const,
   feed: (groupId: string) => [...geduSessionKeys.feeds(), groupId] as const,
+  /**
+   * A trainee's redacted document for one group. Under `feeds()` so every write
+   * that refreshes the group's staff feed refreshes this one with it — a trainee
+   * watching a group while its gedu saves sees the saved record — and a segment
+   * of its own so the two documents never share an entry.
+   */
+  traineeFeed: (groupId: string) =>
+    [...geduSessionKeys.feeds(), "trainee", groupId] as const,
   summaries: () => [...geduSessionKeys.all, "summaries"] as const,
 };

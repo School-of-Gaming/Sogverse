@@ -189,7 +189,8 @@ work under `tests/`). Two things worth knowing from anywhere:
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
 - **`smoke/` is the only CI job that builds the app**, and it asserts security headers
-  and the per-request CSP against a served production build over plain HTTP. No browser
+  and the per-request CSP against a served production build over plain HTTP, and that the
+  build has dropped the dev-only code it must not contain. No browser
   is launched there; a test that needs one does not belong in that directory.
 - **There are no flaky tests. A test that fails intermittently is a broken test and MUST
   be fixed.** Passing on a re-run or in isolation proves nothing about the ordering that
@@ -234,6 +235,18 @@ is changing, and changing one half never obliges the other.
 4. **Ship the primitive that makes conforming the cheapest path** — a guard function, a wrapper, a canonical template, giving step 3 a single greppable call site to require.
 
 The first two without the last two is an audit, not a fix: prose decays, a failing test doesn't, and fixing instances leaves the class alive. Keep the scope to one surface and one bug class per pass. Three standing instances show the shape: DB grants + RLS presence (the access-control DB test), DB function bodies (the authorization spine — `docs/architecture/db-authorization.md`), and the HTTP route layer (the posture registry — `docs/architecture/route-boundary.md`).
+
+### A choice that doesn't matter goes to the simplest code, not the smallest diff
+
+**Rule: when the owner rules that a behaviour doesn't matter and defers the choice on
+complexity grounds, pick the outcome that is simplest for a first-time reader to
+understand — not the one that is least work to reach from here.** The ruling says the
+behaviour is not worth paying complexity for; the complexity it means is what every
+future reader pays, and a diff is paid once. So the answer can be more change today:
+two surfaces that order, name or shape the same thing differently make a reader stop
+and ask whether the difference is deliberate, and aligning them is the simpler answer
+even though leaving them alone is the smaller diff. Leaving the code as it stands is
+right only when it already reads as the simplest version of itself.
 
 ### A comment describes current behaviour, never a migration number
 

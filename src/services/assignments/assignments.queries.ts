@@ -69,3 +69,25 @@ export function useGeduAssignedProduct(
     enabled: !!productId,
   });
 }
+
+/**
+ * The trainee's door to a product — the counterpart of
+ * {@link useGeduAssignedProduct}. It is asked only once that read has answered
+ * `null`, because the trainee shell that calls it is mounted only then — the
+ * gating is the component tree's, not a flag here. One seat per gedu per product
+ * is a schema rule, so at most one of the two ever answers with a document. The
+ * route seeds this under the same key when the caller holds a trainee seat.
+ */
+export function useTraineeAssignedProduct(
+  productId: string | undefined,
+  groupId: string | null = null,
+) {
+  const supabase = getClient();
+  const service = new AssignmentsService(supabase);
+
+  return useQuery({
+    queryKey: assignmentKeys.traineeProductDetail(productId, groupId),
+    queryFn: () => service.getTraineeAssignedProduct(productId!, groupId),
+    enabled: !!productId,
+  });
+}

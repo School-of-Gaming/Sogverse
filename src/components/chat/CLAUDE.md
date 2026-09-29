@@ -33,7 +33,7 @@ the props" for what the container does.
 ## The capability module
 
 `capabilities.ts` derives what a composer and a message menu **offer**, from the viewer's
-role and the channel's locks. It is the one piece of chat permission logic that is
+standing and the channel's locks. It is the one piece of chat permission logic that is
 genuinely client-side, and it is deliberately a production module rather than a preview
 one: the scene feeds it real fixture state and switching account re-runs it for real.
 
@@ -41,12 +41,18 @@ one: the scene feeds it real fixture state and switching account re-runs it for 
 write RPCs' guards mirror it.** Three places would otherwise answer the same question and
 drift: the composer, the message action bar, and the server. A UI offering what the server
 refuses — or refusing what it would allow — is what that pairing prevents, so a change to
-what is offered here is unfinished until the matching guard moves with it. Moderation is a
-**positive
-allow-list** of roles (`admin`, `gedu`), never an exclusion — the voice room learned that
-the expensive way, where a "not a gamer" test would have handed moderation to parents the
-day parent seats shipped. A parent in a chat is a participant with no moderator powers,
-exactly like a child.
+what is offered here is unfinished until the matching guard moves with it. **Whether the
+viewer moderates is their `ChatStanding`, handed in by the surface from the server's answer
+— never read off their role**: a trainee's role is `gedu` and a trainee moderates nothing
+(in the voice room the standing is the token route's, whose moderator arms are
+`is_chat_channel_moderator`'s). A parent in a chat is a participant with no moderator
+powers, exactly like a child. A **trainee** standing carries the words for the moderator
+acts they are shown locked — remove, put back, lock — which the module returns in the
+exact slots a moderator's working controls would take. Roles still decide one thing: who
+may be a lock's *target* (never staff, trainees included, as the lock RPC refuses). A
+staff viewer and a trainee of the group — on their own name and a fellow trainee's — see a
+"Trainee" tag beside a trainee's name, from the roster's `is_trainee`, which the database
+answers only to those two and never to a family.
 
 The rules the module encodes, each with its reason, are in its own header. The one worth
 knowing from outside: **a lock takes away everything that writes — replies and reactions
@@ -365,7 +371,7 @@ alone, and the style guide demos it there. What has no demo and must not gain on
 chat's *composition* of it — a burst of thumbnails in a scrolling log.
 
 The scene is one scenario because the account switcher is what a second scenario would
-have been: child, locked child, parent, Gedu and admin are all reachable without leaving
+have been: child, locked child, parent, Gedu, admin and trainee are all reachable without leaving
 the page, so they compare themselves rather than being compared from memory.
 
 ## Fixtures

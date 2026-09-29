@@ -100,6 +100,8 @@ function Harness({
         // The ordinary product: no photo consent is asked, so the block carries
         // no permissions list. The list has its own test file.
         consent={null}
+        // Unlocked: the photo writes were handed in as functions.
+        lock={null}
         disabled={disabled}
         error={error}
         onStageAdd={(photo: StagedSessionPhoto) =>

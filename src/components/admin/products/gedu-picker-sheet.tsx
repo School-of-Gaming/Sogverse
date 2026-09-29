@@ -34,8 +34,8 @@ const SENTINEL_ROOT_MARGIN = "400px 0px";
  * **Why the caller will not take a candidate.**
  *
  * The sheet owns two refusals of its own and neither is in this list: the
- * person already filling the slot, and an uncertified account, which it reads
- * off the row it is drawing. Everything else is a property of what the caller
+ * person already filling the slot, and an uncertified account on a `staff`
+ * seat, which it reads off the row it is drawing. Everything else is a property of what the caller
  * is staffing, and the caller is the only side that can answer it — so it
  * arrives as a reason rather than as a bare id, and the row says *which* rule
  * refused it rather than being silently unpressable.
@@ -46,15 +46,34 @@ const SENTINEL_ROOT_MARGIN = "400px 0px";
  *   somebody else's sub would collapse two seats onto one person and make "who
  *   did which job" unanswerable.
  * - `absent` — the Gedu being substituted for. Nobody subs for themselves.
+ * - `trainee` — already a trainee on a group of this product. The same
+ *   one-seat-per-product rule as `assigned`, seen from the other kind of seat:
+ *   the database refuses a gedu holding both.
  */
-export type GeduPickerUnavailability = "assigned" | "expected" | "absent";
+export type GeduPickerUnavailability =
+  | "assigned"
+  | "expected"
+  | "absent"
+  | "trainee";
 
 /** Which badge names each refusal. A literal map so `t()` keeps its key type. */
 const UNAVAILABILITY_MESSAGE_KEY = {
   assigned: "alreadyAssigned",
   expected: "alreadyExpected",
   absent: "absentGedu",
+  trainee: "alreadyTrainee",
 } as const satisfies Record<GeduPickerUnavailability, string>;
+
+/**
+ * What a pick seats, which decides whether certification is asked about.
+ *
+ * - `staff` — a Gedu doing the job: an assignment or a substitute. An
+ *   uncertified educator is refused.
+ * - `trainee` — a gedu shadowing a group. Certification gates nothing here, so
+ *   every row the caller does not refuse is selectable; the not-certified badge
+ *   stays as information rather than as a refusal.
+ */
+export type GeduPickerSeat = "staff" | "trainee";
 
 interface GeduPickerSheetProps {
   open: boolean;
@@ -74,6 +93,15 @@ interface GeduPickerSheetProps {
   unavailable?: ReadonlyMap<string, GeduPickerUnavailability>;
   /** The id currently filling this slot — shown with a "current" badge. */
   highlightId?: string;
+  /** What the pick seats; `staff` unless said otherwise. */
+  seat?: GeduPickerSeat;
+  /**
+   * `staff` seats only: tell the admin, on each uncertified row, that the
+   * educator can be placed as a trainee instead. Opt-in because only the
+   * groups panel has a Trainees row to point at — a session's substitute
+   * picker has no such alternative to offer.
+   */
+  offerTraineeInstead?: boolean;
   onSelect: (gedu: UserListEntry) => void;
 }
 
@@ -107,6 +135,8 @@ export function GeduPickerSheet({
   description,
   unavailable,
   highlightId,
+  seat = "staff",
+  offerTraineeInstead = false,
   onSelect,
 }: GeduPickerSheetProps) {
   const t = useTranslations("admin.products.geduPicker");
@@ -271,9 +301,12 @@ export function GeduPickerSheet({
               // assign; see src/services/gedu/CLAUDE.md). The flag is a column
               // of this row, so the gate never has to decide what to do about
               // an answer that has not arrived: a row on screen carries its
-              // own verdict.
+              // own verdict. A trainee seat is the exception: shadowing a
+              // group is how an uncertified educator learns it.
               const isUncertified = !g.certified;
-              const isDisabled = isCurrent || refusal !== null || isUncertified;
+              const refusesUncertified = seat === "staff" && isUncertified;
+              const isDisabled =
+                isCurrent || refusal !== null || refusesUncertified;
               return (
                 <GeduRow
                   key={g.id}
@@ -282,6 +315,8 @@ export function GeduPickerSheet({
                   isCurrent={isCurrent}
                   refusal={refusal}
                   isUncertified={isUncertified}
+                  refusesUncertified={refusesUncertified}
+                  showTraineeHint={refusesUncertified && offerTraineeInstead}
                   isDisabled={isDisabled}
                   onClick={() => {
                     if (isDisabled) return;
@@ -324,6 +359,10 @@ interface GeduRowProps {
   /** The caller's reason for refusing this row, or null where it has none. */
   refusal: GeduPickerUnavailability | null;
   isUncertified: boolean;
+  /** The uncertified badge is this row's refusal, rather than information. */
+  refusesUncertified: boolean;
+  /** Say under the address that this educator can be placed as a trainee. */
+  showTraineeHint: boolean;
   isDisabled: boolean;
   onClick: () => void;
 }
@@ -334,6 +373,8 @@ function GeduRow({
   isCurrent,
   refusal,
   isUncertified,
+  refusesUncertified,
+  showTraineeHint,
   isDisabled,
   onClick,
 }: GeduRowProps) {
@@ -373,13 +414,19 @@ function GeduRow({
             </Badge>
           )}
           {isUncertified && !isCurrent && refusal === null && (
-            <Badge variant="outline" className="shrink-0 text-destructive">
+            <Badge
+              variant="outline"
+              className={cn("shrink-0", refusesUncertified && "text-destructive")}
+            >
               {t("notCertified")}
             </Badge>
           )}
         </div>
         {gedu.email && (
           <p className="truncate text-xs text-muted-foreground">{gedu.email}</p>
+        )}
+        {showTraineeHint && (
+          <p className="text-xs text-muted-foreground">{t("traineeInstead")}</p>
         )}
         {gedu.spoken_languages.length > 0 && (
           <div className="mt-1.5 flex gap-1">

@@ -115,6 +115,7 @@ export interface VoiceRoomContextValue {
   callObject: DailyCall | null;
   localSessionId: string | null;
   localRole: VoiceRole;
+  /** The local token's owner flag — who moderates, never read off the role. */
   isModerator: boolean;
   /** `null` on instant rooms (no group → custom/locked zone features disabled). */
   groupId: string | null;

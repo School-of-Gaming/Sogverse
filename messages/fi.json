@@ -1085,7 +1085,9 @@
         "alreadyAssigned": "Jo nimetty",
         "alreadyExpected": "Jo tällä kerralla",
         "absentGedu": "Tuurattava Gedu",
-        "notCertified": "Ei hyväksytty"
+        "notCertified": "Ei hyväksytty",
+        "alreadyTrainee": "Jo harjoittelijana",
+        "traineeInstead": "Voidaan lisätä harjoittelijaksi."
       },
       "participantPicker": {
         "title": "Lisää osallistuja",
@@ -1152,7 +1154,14 @@
         },
         "picker": {
           "addTitle": "Lisää Gedu ryhmään {name}",
-          "addDescription": "Yksi Gedu voi vetää vain yhden ryhmän per tuote. Muualle nimetyt näkyvät harmaina."
+          "addDescription": "Yksi Gedu voi vetää vain yhden ryhmän per tuote. Muualle nimetyt näkyvät harmaina.",
+          "addTraineeTitle": "Lisää harjoittelija ryhmään {name}",
+          "addTraineeDescription": "Harjoittelija seuraa ryhmän toimintaa eikä hänen tarvitse olla hyväksytty. Tämän tuotteen Gedut ja harjoittelijat näkyvät harmaina."
+        },
+        "trainee": {
+          "role": "Harjoittelija",
+          "add": "Lisää harjoittelija",
+          "removeAria": "Poista harjoittelija {name}"
         },
         "removeParticipant": {
           "confirmTitle": "Poistetaanko {name} tästä tuotteesta?",
@@ -2252,6 +2261,51 @@
       "loading": "Ladataan sijainteja...",
       "save": "Tallenna",
       "saving": "Tallennetaan..."
+    },
+    "groupWorkspace": {
+      "staffNoteWithheld": "Vain ryhmään nimetyt Gedut ja ylläpitäjät voivat lukea tämän muistiinpanon.",
+      "contactWithheld": "Yhteystiedot näkyvät vain ryhmään nimetyille Geduille ja ylläpitäjille."
+    },
+    "trainee": {
+      "badge": "Harjoittelija",
+      "dismiss": "Selvä",
+      "lockedHint": "(lukittu)",
+      "whyAction": "Tämä on ryhmään nimettyjen Gedujen tehtävä. Olet ryhmässä harjoittelijana.",
+      "whySave": "Tallentaminen on ryhmään nimettyjen Gedujen tehtävä. Olet ryhmässä harjoittelijana, joten voit kokeilla vapaasti – mitään kirjoittamaasi ei tallenneta.",
+      "sessionTitle": "Kerran tallentaminen",
+      "sessionWhat": "Tallentaa kerran raportin, Gedujen muistiinpanon, kuvat ja läsnäolomerkinnät.",
+      "groupNotesTitle": "Ryhmän muistiinpanojen tallentaminen",
+      "groupNotesWhat": "Tallentaa ryhmän muistiinpanot sen perheille ja Geduille.",
+      "siteNotesTitle": "Toimipisteen muistiinpanojen tallentaminen",
+      "siteNotesWhat": "Tallentaa toimipisteen muistiinpanot, jotka ovat yhteiset kaikille siellä järjestettäville tuotteille.",
+      "gamerTitle": "Pelaajan muistiinpanon tallentaminen",
+      "gamerWhat": "Tallentaa, mitä Gedut kirjoittavat pelaajasta, sekä luomuksen, jonka hänen perheensä näkee.",
+      "usernameTitle": "Pelinimen korjaaminen",
+      "usernameWhat": "Korjaa pelaajan käyttäjänimen vastaamaan pelissä olevaa nimeä.",
+      "sendTitle": "Lähettäminen vanhemmille",
+      "sendWhat": "Lähettää kerran raportin sähköpostilla ryhmän kaikille perheille.",
+      "photosTitle": "Kerran kuvat",
+      "photosWhat": "Lisää kuvia kerran raporttiin tai poistaa niitä.",
+      "substituteTitle": "Tuuraajan pyytäminen",
+      "substituteWhat": "Pyytää toista Gedua pitämään kerran puolestasi.",
+      "roomTitle": "Muiden ryhmien äänihuoneet",
+      "roomWhat": "Liittyy toisen ryhmän äänihuoneeseen, jotta voit tuurata sen Gedua hetken.",
+      "screenShareTitle": "Näytön jakaminen",
+      "screenShareWhat": "Näyttää näyttösi kaikille huoneessa oleville.",
+      "broadcastTitle": "Kuulutus",
+      "broadcastWhat": "Kaikki alueet kuulevat sinut yhtä aikaa, olitpa millä alueella tahansa.",
+      "deafenTitle": "Huoneen vaimentaminen",
+      "deafenWhat": "Vaimentaa kaikki sinulta, jotta voit puhua koko huoneelle kuulematta kaikkia yhtä aikaa.",
+      "zonesTitle": "Alueiden hallinta",
+      "zonesWhat": "Lisää, muokkaa ja poistaa huoneen alueita, myös yksityisiä.",
+      "moderateTitle": "Osallistujan moderointi",
+      "moderateWhat": "Mykistää tai lukitsee osallistujan mikrofonin ja kameran tai lukitsee hänet ulos keskustelusta.",
+      "chatHideTitle": "Viestin poistaminen",
+      "chatHideWhat": "Poistaa jonkun viestin kaikilta ja jättää tilalle merkinnän.",
+      "chatRestoreTitle": "Viestin palauttaminen",
+      "chatRestoreWhat": "Tuo poistetun viestin takaisin kaikille.",
+      "chatLockTitle": "Keskustelun lukitseminen",
+      "chatLockWhat": "Estää osallistujaa kirjoittamasta keskusteluun, kunnes lukitus avataan."
     },
     "sessionDetails": {
       "back": "Takaisin Omaan SOGiin",

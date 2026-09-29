@@ -370,6 +370,12 @@ export const PREVIEW_SCENES = [
         description:
           "An account awaiting approval, which by definition has no assignments at all — under the criminal-record band, the other of the two.",
       },
+      {
+        slug: "trainee",
+        label: "Trainee seats",
+        description:
+          "Two trainee seats (Minecraft Builders Club, Coding Camp) on the ordinary card beside two assignments; the Builders card opens the trainee workspace.",
+      },
     ],
   },
   {
@@ -452,6 +458,12 @@ export const PREVIEW_SCENES = [
         description:
           "The one product shape the owed signal needs: flagged, and over.",
       },
+      {
+        slug: "trainee",
+        label: "Trainee — the club as its trainee sees it",
+        description:
+          "The club scenario through the trainee shell: private text as blurred filler, every write the locked control that explains itself, editors still open.",
+      },
     ],
   },
   {
@@ -466,6 +478,12 @@ export const PREVIEW_SCENES = [
         label: "Gedu — mid-session",
         description:
           "The staff view: newcomer badges across the window and two notes, on the real rail.",
+      },
+      {
+        slug: "trainee",
+        label: "Trainee — the same room",
+        description:
+          "A Gedu on a trainee seat: the moderator's controls and the note dialog's Save, each locked and explaining itself.",
       },
       {
         slug: "gamer",

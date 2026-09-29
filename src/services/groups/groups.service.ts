@@ -45,6 +45,8 @@ function emptyChangeSet(): GroupChangeSet {
     geduAssignmentsAdded: [],
     geduAssignmentsRemoved: [],
     participationMoves: [],
+    traineesAdded: [],
+    traineesRemoved: [],
   };
 }
 
@@ -184,6 +186,35 @@ export class GroupsService {
     await this.applyChanges(productId, {
       ...emptyChangeSet(),
       geduAssignmentsRemoved: [{ groupId, geduId }],
+    });
+  }
+
+  /**
+   * Places a gedu on a group as a trainee. Certification is not asked about: a
+   * trainee seat is how an uncertified educator shadows a group. The database
+   * refuses a gedu who already holds any seat on the product, assigned or
+   * trainee.
+   */
+  async addTrainee(
+    productId: string,
+    groupId: string,
+    geduId: string,
+  ): Promise<void> {
+    await this.applyChanges(productId, {
+      ...emptyChangeSet(),
+      traineesAdded: [{ groupId, geduId }],
+    });
+  }
+
+  /** Takes a trainee off a group. */
+  async removeTrainee(
+    productId: string,
+    groupId: string,
+    geduId: string,
+  ): Promise<void> {
+    await this.applyChanges(productId, {
+      ...emptyChangeSet(),
+      traineesRemoved: [{ groupId, geduId }],
     });
   }
 

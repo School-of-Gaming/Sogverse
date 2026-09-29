@@ -139,7 +139,16 @@ async function seedWorkspace(
       assignmentKeys.assignedProductDetail(productId, groupId),
       product,
     );
-    if (product === null) return;
+    if (product === null) {
+      // Not assigned here — which may mean a trainee seat instead. The server
+      // decides which workspace this URL is by which seat the caller holds, and
+      // loads that seat's reads: the redacted pair, under the keys the trainee
+      // shell reads. At most one of the two doors opens (one seat per gedu per
+      // product), and a refusal from both is seeded too, so the not-yours
+      // state also paints on the first frame.
+      await seedTraineeWorkspace(queryClient, supabase, productId, groupId);
+      return;
+    }
 
     const feed = await new GeduSessionsService(supabase).getGroupFeed(
       product.my_group_id,
@@ -150,4 +159,34 @@ async function seedWorkspace(
     // the shell on mount, which is the pre-prefetch behaviour and is correct —
     // just a beat slower.
   }
+}
+
+/**
+ * The trainee half of the seed: the trainee's door to the product, then —
+ * once it has named their group — that group's redacted document. Same
+ * sequencing, same key-factory discipline and same failure policy as the gedu
+ * half above, which is the caller and catches whatever this throws.
+ */
+async function seedTraineeWorkspace(
+  queryClient: QueryClient,
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  productId: string,
+  groupId: string | null,
+): Promise<void> {
+  const product = await new AssignmentsService(
+    supabase,
+  ).getTraineeAssignedProduct(productId, groupId);
+  queryClient.setQueryData(
+    assignmentKeys.traineeProductDetail(productId, groupId),
+    product,
+  );
+  if (product === null) return;
+
+  const feed = await new GeduSessionsService(supabase).getTraineeGroupFeed(
+    product.my_group_id,
+  );
+  queryClient.setQueryData(
+    geduSessionKeys.traineeFeed(product.my_group_id),
+    feed,
+  );
 }

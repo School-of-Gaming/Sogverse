@@ -859,6 +859,12 @@ function Workspace({
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}
       memberFlair={memberFlair}
+      // The same group feed the gedu shell reads, so the same trainees: an
+      // admin sees who is shadowing the group exactly as its gedus do.
+      trainees={feed.trainees}
+      // A staff document carries every sister group in full, so no row is
+      // ever drawn by name alone.
+      namedOnlyRoomLock={null}
     />
   );
 }

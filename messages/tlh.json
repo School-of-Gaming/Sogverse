@@ -1129,7 +1129,9 @@
         "alreadyAssigned": "ngu’lu’pu’",
         "alreadyExpected": "may’vamDaq pawpu’",
         "absentGedu": "lIwlu’bogh Gedu",
-        "notCertified": "patlh ghajbe’"
+        "notCertified": "patlh ghajbe’",
+        "alreadyTrainee": "ghojwI’ ghaHpu’",
+        "traineeInstead": "ghojwI’ DachellaH."
       },
       "participantPicker": {
         "title": "ghom yIchel",
@@ -1196,7 +1198,14 @@
         },
         "picker": {
           "addTitle": "{name} ghomvaD Gedu yIchu’",
-          "addDescription": "wa’ Gedu, wa’ ghom — Hoch Daq. ngu’lu’pu’ wovbe’."
+          "addDescription": "wa’ Gedu, wa’ ghom — Hoch Daq. ngu’lu’pu’ wovbe’.",
+          "addTraineeTitle": "{name} ghomvaD ghojwI’ yIchu’",
+          "addTraineeDescription": "ghojwI’ ghom bej. patlh ghajnISbe’. Hoch DaqDaq pawpu’bogh wovbe’."
+        },
+        "trainee": {
+          "role": "ghojwI’",
+          "add": "ghojwI’ yIchu’",
+          "removeAria": "ghojwI’ {name} yIteq"
         },
         "removeParticipant": {
           "confirmTitle": "ngoptlhInvamvo’ {name} yIteq’a’?",
@@ -2292,6 +2301,51 @@
       "loading": "Daqmey Huqtaw...",
       "save": "yIpol",
       "saving": "polchoH..."
+    },
+    "groupWorkspace": {
+      "staffNoteWithheld": "Gedupu’ ngeHlu’bogh che’wI’pu’ je neH laDlaH.",
+      "contactWithheld": "Gedupu’ ngeHlu’bogh che’wI’pu’ je neH ghom QIn laDlaH."
+    },
+    "trainee": {
+      "badge": "ghojwI’",
+      "dismiss": "jIyaj",
+      "lockedHint": "(ngaQ)",
+      "whyAction": "Gedupu’ ngeHlu’bogh neH ta’laH. ghom’a’vamDaq ghojwI’ SoH.",
+      "whySave": "Gedupu’ ngeHlu’bogh neH pollaH. ghojwI’ SoH; Hoch yIqeq – ghItlhbogh Dochmey pollu’be’.",
+      "sessionTitle": "may’ polmeH",
+      "sessionWhat": "may’ ja’, Gedu qonta’, mIlloghmey, pawwI’pu’ je pol.",
+      "groupNotesTitle": "ghom qonta’ polmeH",
+      "groupNotesWhat": "ghom’a’vam qonta’mey pol.",
+      "siteNotesTitle": "Daq qonta’ polmeH",
+      "siteNotesWhat": "Daqvam qonta’mey pol.",
+      "gamerTitle": "QujwI’ qonta’ polmeH",
+      "gamerWhat": "QujwI’vam Deq Gedupu’ ghItlhbogh pol.",
+      "usernameTitle": "Quj pong tI’meH",
+      "usernameWhat": "QujwI’ pong tI’.",
+      "sendTitle": "vavpu’ SoSpu’ je nobmeH",
+      "sendWhat": "may’ ja’ ghom qorDu’pu’ Hoch nob.",
+      "photosTitle": "may’ mIlloghmey",
+      "photosWhat": "may’ ja’Daq mIlloghmey chel pagh teq.",
+      "substituteTitle": "lIw poQmeH",
+      "substituteWhat": "may’vam Dev latlh Gedu.",
+      "roomTitle": "latlh ghom ghogh pa’mey",
+      "roomWhat": "latlh ghom ghogh pa’Daq ghoS.",
+      "screenShareTitle": "Daq yIngeH",
+      "screenShareWhat": "pa’Daq Hoch Daleghmoh.",
+      "broadcastTitle": "Hoch ngeH",
+      "broadcastWhat": "Daq Hochvo’ Qoylu’.",
+      "deafenTitle": "pa’ yIQoybe’",
+      "deafenWhat": "Hoch DaQoybe’, Hoch DajatlhlaH.",
+      "zonesTitle": "Daqmey yIche’",
+      "zonesWhat": "Daqmey chel, choH, teq.",
+      "moderateTitle": "vay’ yIche’",
+      "moderateWhat": "vay’ ghogh jonlu’, ja’chuqvo’ jonlu’.",
+      "chatHideTitle": "QIn yIteq",
+      "chatHideWhat": "Hochvo’ vay’ QIn teqlu’.",
+      "chatRestoreTitle": "QIn yIcheghmoH",
+      "chatRestoreWhat": "HochvaD QIn teqlu’pu’bogh cheghmoH.",
+      "chatLockTitle": "ja’chuqvo’ vay’ yIjon",
+      "chatLockWhat": "ja’chuqDaq ghItlhbe’laH vay’."
     },
     "sessionDetails": {
       "back": "jIH SOGDaq yIchegh",

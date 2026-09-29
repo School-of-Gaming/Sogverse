@@ -20,7 +20,7 @@ export {
   deriveChatComposerCapabilities,
   deriveChatLockControl,
   deriveChatMessageCapabilities,
-  isChatModerator,
+  isChatStaffRole,
   type ChatComposerCapabilities,
   type ChatLockControl,
   type ChatMessageCapabilities,
@@ -59,6 +59,8 @@ export type {
   ChatDelivery,
   ChatImageRef,
   ChatMessage,
+  ChatModerationLocks,
   ChatReactionEntry,
   ChatRole,
+  ChatStanding,
 } from "./types";

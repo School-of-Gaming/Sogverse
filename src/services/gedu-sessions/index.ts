@@ -10,6 +10,7 @@ export {
   useSetGroupNotes,
   useSetSessionNotes,
   useSetSiteNotes,
+  useTraineeGroupFeed,
 } from "./gedu-sessions.queries";
 export {
   SESSION_PHOTO_ACCEPT,
@@ -27,6 +28,8 @@ export {
   geduAssignmentSummaries,
   geduGroupFeed,
   isSessionPhotoErrorCode,
+  traineeGroupFeed,
+  traineeRosterEntry,
 } from "./gedu-sessions.contracts";
 export type {
   AttendanceStatus,
@@ -35,5 +38,9 @@ export type {
   GeduFeedSession,
   GeduFeedSite,
   GeduGroupFeed,
+  GroupTrainee,
   SessionPhotoErrorCode,
+  TraineeFeedSession,
+  TraineeGroupFeed,
+  TraineeRosterEntry,
 } from "./gedu-sessions.contracts";

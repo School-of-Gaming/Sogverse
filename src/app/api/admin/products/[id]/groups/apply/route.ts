@@ -42,6 +42,8 @@ export const POST = defineRoute({
       p_gedu_assignments_added: body.geduAssignmentsAdded,
       p_gedu_assignments_removed: body.geduAssignmentsRemoved,
       p_participation_moves: body.participationMoves,
+      p_trainees_added: body.traineesAdded,
+      p_trainees_removed: body.traineesRemoved,
     });
 
     if (error) throw error;

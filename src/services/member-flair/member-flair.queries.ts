@@ -45,6 +45,25 @@ export function useGroupStaffOverlay(groupId: string | null, enabled: boolean) {
 }
 
 /**
+ * The trainee's twin of {@link useGroupStaffOverlay}: the same map for the
+ * group they shadow, with whether a note exists in place of its text.
+ *
+ * `enabled` is the voice room's trainee standing, and like the staff overlay's
+ * gate it only avoids a request the RPC would refuse. No write invalidates this
+ * key: every flair write refuses a trainee, and a note another gedu writes
+ * mid-session is picked up on the next read like any other change.
+ */
+export function useTraineeGroupOverlay(groupId: string | null, enabled: boolean) {
+  const service = new MemberFlairService(getClient());
+
+  return useQuery({
+    queryKey: memberFlairKeys.traineeOverlay(groupId ?? ""),
+    queryFn: () => service.getTraineeGroupOverlay(groupId ?? ""),
+    enabled: enabled && groupId !== null && groupId.length > 0,
+  });
+}
+
+/**
  * Write, replace or clear one member's note in this group.
  *
  * The documents it invalidates, and why those, are in

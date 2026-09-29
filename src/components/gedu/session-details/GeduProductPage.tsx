@@ -2,8 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
-import { Card, CardContent } from "@/components/ui/card";
 import type { GameAccountStatus } from "@/components/game-account";
 import {
   resolveInGroupSince,
@@ -48,7 +46,6 @@ import {
   useUpdateGroupMemberRoblox,
 } from "@/services/roblox";
 import type { GeduAssignedProduct } from "@/types";
-import { SessionDetailsBackLink } from "@/components/group-workspace/BackLink";
 import { deriveRosterFlairMaps } from "@/components/group-workspace/derive-roster-flair";
 import { createGameUsernameSave } from "@/components/group-workspace/game-username-save";
 import {
@@ -59,6 +56,8 @@ import type { GroupNotesDraft } from "@/components/group-workspace/GroupNotesPan
 import { createSessionEntrySaves } from "@/components/group-workspace/session-entry-saves";
 import type { SiteNotesDraft } from "@/components/group-workspace/SitePanel";
 import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
+import { NotAssignedState } from "./NotAssignedState";
+import { TraineeProductPage } from "./TraineeProductPage";
 
 /**
  * The data shell behind `/gedu/clubs|camps|events/[id]` — the gedu's group
@@ -69,8 +68,10 @@ import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
  * who else teaches on this product" and is what the reference rail is built
  * from; the feed RPC then answers everything about that one group in a single
  * round trip — product shell, group notes, site notes, roster, and every stored
- * session row. Both refuse a product the caller is not assigned to by returning
- * `null`, which is what the not-yours state below renders.
+ * session row. The assignment read refuses a product (or a named group) the
+ * caller holds no staff seat on by returning `null`, and that `null` hands the
+ * page to the trainee shell, which renders the not-yours state itself when the
+ * caller holds no trainee seat either.
  *
  * **The calendar math is not in either of them.** The feed RPC returns rows and
  * schedule parameters; the merge that turns those into a descending run of
@@ -135,27 +136,19 @@ export function GeduProductPage({
     return <GeduProductPageSkeleton />;
   }
 
+  // No assignment here is not yet "not yours": a gedu may hold the other kind
+  // of seat — a trainee seat — on this product, and the same URL is their
+  // workspace too. One seat per gedu per product is a schema rule, so the two
+  // reads never both answer, and the trainee shell renders its own not-yours
+  // state when it does not either. The route seeds both answers, so a direct
+  // load of a trainee's workspace paints finished on the first frame.
+  if (product === null) {
+    return <TraineeProductPage productId={productId} groupId={requestedGroupId} />;
+  }
+
   if (!product || !feed) return <NotAssignedState />;
 
   return <Workspace product={product} feed={feed} viewerId={viewerId} />;
-}
-
-/** The page frame around the "this isn't your product" answer. */
-function NotAssignedState() {
-  const t = useTranslations("gedu.sessionDetails");
-  return (
-    <div className="mx-auto max-w-7xl py-6 sm:py-10">
-      <SessionDetailsBackLink />
-      <Card className="mt-6">
-        <CardContent className="p-8 text-center">
-          <h2 className="text-base font-semibold">{t("notAssignedTitle")}</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t("notAssignedBody")}
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
 }
 
 /**
@@ -654,6 +647,12 @@ function Workspace({
       gameStatuses={gameStatuses}
       robloxAvatarUrls={robloxAvatarUrls}
       memberFlair={memberFlair}
+      // Chipped among the group's gedus, marked Trainee, so the people
+      // teaching the group know who is shadowing it.
+      trainees={feed.trainees}
+      // A staff document carries every sister group in full, so no row is
+      // ever drawn by name alone.
+      namedOnlyRoomLock={null}
     />
   );
 }

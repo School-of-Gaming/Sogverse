@@ -4,10 +4,12 @@ import {
   gamerGroupNoteResult,
   groupStaffOverlay,
   setGamerGroupCreationsBody,
+  traineeGroupOverlay,
   type GamerCreation,
   type GamerGroupCreationsResult,
   type GamerGroupNoteResult,
   type GroupStaffOverlay,
+  type TraineeGroupOverlay,
 } from "./member-flair.contracts";
 
 /**
@@ -100,6 +102,26 @@ export class MemberFlairService {
     }
 
     return groupStaffOverlay.parse(data);
+  }
+
+  /**
+   * The trainee's redacted twin of {@link getGroupStaffOverlay}, for the group
+   * they hold a trainee seat on: join stamps, and whether each member has a
+   * note — never its text. A refusal is `null`, as on the staff read.
+   */
+  async getTraineeGroupOverlay(
+    groupId: string,
+  ): Promise<TraineeGroupOverlay | null> {
+    const { data, error } = await this.supabase.rpc("get_trainee_group_overlay", {
+      p_group_id: groupId,
+    });
+
+    if (error) {
+      if (error.code === "42501") return null;
+      throw error;
+    }
+
+    return traineeGroupOverlay.parse(data);
   }
 
   /**

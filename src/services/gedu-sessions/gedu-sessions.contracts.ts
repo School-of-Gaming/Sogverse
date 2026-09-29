@@ -290,6 +290,12 @@ export const geduFeedSite = z.object({
   gedu_note: z.string().nullable(),
 });
 
+/** A gedu holding a trainee seat on a group, as the workspace documents name them. */
+export const groupTrainee = z.object({
+  id: z.string(),
+  first_name: z.string(),
+});
+
 /**
  * Everything the group workspace renders for one group.
  *
@@ -357,12 +363,108 @@ export const geduGroupFeed = z.object({
    * fields inside each element are keyed to the caller, as above.
    */
   cancellations: z.array(sessionCancellation),
+  /**
+   * The gedus holding a **trainee seat** on this group, in the order they were added — chipped
+   * in the workspace among the group's own gedus, marked Trainee. A trainee is
+   * on no other list here.
+   *
+   * Required, like the workspace prop it feeds: the RPC always sends it, `[]`
+   * for none, and a document without it would draw a group with its trainees
+   * silently missing.
+   */
+  trainees: z.array(groupTrainee),
 });
 
 export type GeduGroupFeed = z.infer<typeof geduGroupFeed>;
 export type GeduFeedSession = z.infer<typeof geduFeedSession>;
 export type GeduFeedRosterEntry = z.infer<typeof geduFeedRosterEntry>;
 export type GeduFeedSite = z.infer<typeof geduFeedSite>;
+export type GroupTrainee = z.infer<typeof groupTrainee>;
+
+/**
+ * One roster row as a **trainee** reads it — the redacted twin of
+ * {@link geduFeedRosterEntry}, served by both trainee reads.
+ *
+ * What is missing is missing from the type, not nulled: no contact address of
+ * any kind, an `age` in place of the date of birth, and `has_note` — whether a
+ * staff note exists — in place of the note and its editor. `creations` is
+ * always `[]`, because a gamer sees only their own and a trainee sees what a
+ * gamer on the group sees. A consumer therefore cannot render a parent's
+ * address or a note's text from this row by accident: there is no field to
+ * read it from.
+ */
+export const traineeRosterEntry = z.object({
+  participant_id: z.string(),
+  first_name: z.string(),
+  signed_up_at: z.string(),
+  group_joined_at: z.string().nullable(),
+  /** Whole years on the product's own calendar day, or null with no birth date on file. */
+  age: z.number().nullable(),
+  gender: z.enum(Constants.public.Enums.gender_type).nullable(),
+  minecraft_username: z.string().nullable(),
+  minecraft_uuid: z.string().nullable(),
+  roblox_username: z.string().nullable(),
+  roblox_user_id: z.number().nullable(),
+  has_note: z.boolean(),
+  creations: gamerCreationList,
+});
+
+export type TraineeRosterEntry = z.infer<typeof traineeRosterEntry>;
+
+/**
+ * One stored session as a trainee reads it: the family-facing record and who
+ * last touched it, with the staff note absent and an empty register — a gamer
+ * sees only their own mark.
+ */
+export const traineeFeedSession = z.object({
+  id: z.string(),
+  session_date: z.string(),
+  starts_at: z.string(),
+  ends_at: z.string(),
+  report: z.string().nullable(),
+  report_emailed_at: z.string().nullable(),
+  updated_by: z.string().nullable(),
+  updated_by_first_name: z.string().nullable(),
+  images: z.array(sessionImageSummary),
+  attendance: z.record(z.string(), attendanceStatus),
+});
+
+export type TraineeFeedSession = z.infer<typeof traineeFeedSession>;
+
+/**
+ * `get_trainee_group_feed` — the trainee's workspace document for their own
+ * group: {@link geduGroupFeed}'s keys, with every staff-only field absent from
+ * the wire and from this type.
+ *
+ * The group and the site carry their public notes only; the roster and the
+ * sessions are the redacted twins above. `substitutions` is always empty — a
+ * trainee is nobody's substitute and nobody's absence is theirs to know — so it
+ * is not carried here at all, and the cancellations arrive with their admin
+ * detail null, exactly as a gedu's do.
+ */
+export const traineeGroupFeed = z.object({
+  product: geduGroupFeed.shape.product,
+  group: z.object({
+    id: z.string(),
+    name: z.string(),
+    public_note: z.string().nullable(),
+  }),
+  site: z
+    .object({
+      location_id: z.string(),
+      name: z.string(),
+      address: z.string().nullable(),
+      public_note: z.string().nullable(),
+    })
+    .nullable(),
+  roster: z.array(traineeRosterEntry),
+  sessions: z.array(traineeFeedSession),
+  gedus: z.array(sessionStaffGedu),
+  cancellations: z.array(sessionCancellation),
+  trainees: z.array(groupTrainee),
+});
+
+export type TraineeGroupFeed = z.infer<typeof traineeGroupFeed>;
 
 /**
  * One dashboard card's worth of assignment facts.
@@ -415,8 +517,11 @@ export const geduAssignmentSummary = z.object({
    * The rollup keys on (product, group) rather than on product because of it: a
    * substitution's identity is (group, date), and one gedu may substitute on a sibling group
    * of a product they already teach.
+   *
+   * A `trainee` row is one per trainee seat, and its attention count is always
+   * 0: what a session owes is the staff's work.
    */
-  kind: z.enum(["assignment", "substitution"]),
+  kind: z.enum(["assignment", "substitution", "trainee"]),
   /**
    * The date a `substitution` row is for; null on an `assignment` row.
    *

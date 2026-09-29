@@ -1,20 +1,23 @@
 import { useCallback, useState } from "react";
 import type { DailyCall } from "@daily-co/daily-js";
-import type { VoiceParticipant, VoiceRole } from "./types";
+import type { VoiceParticipant } from "./types";
 
 interface UseScreenShareParams {
   callObjectRef: React.MutableRefObject<DailyCall | null>;
-  localRole: VoiceRole;
+  /**
+   * Whether the local token is an owner's. The mint feeds one flag to both
+   * `is_owner` and `enable_screenshare`, so this is exactly who Daily lets
+   * share — never a role, which a trainee shares with the gedus.
+   */
+  isOwner: boolean;
   /** The local user's session ID (from participants state, not a ref read) */
   localSessionId: string | null;
 }
 
-export function useScreenShare({ callObjectRef, localRole, localSessionId }: UseScreenShareParams) {
+export function useScreenShare({ callObjectRef, isOwner, localSessionId }: UseScreenShareParams) {
   const [screenSharerSessionId, setScreenSharerSessionId] = useState<string | null>(null);
 
-  // Positive mod check so any non-mod role (gamer, guest, future ones) falls
-  // through to "cannot screen share" without needing per-role updates.
-  const canScreenShare = localRole === "admin" || localRole === "gedu";
+  const canScreenShare = isOwner;
 
   // Derived from state (screenSharerSessionId + localSessionId), not ref reads
   const isScreenSharing = screenSharerSessionId !== null && screenSharerSessionId === localSessionId;
