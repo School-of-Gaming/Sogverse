@@ -71,7 +71,7 @@ export function WithheldText({
       <p
         aria-hidden
         className={cn(
-          "select-none leading-relaxed text-muted-foreground blur-sm",
+          "select-none leading-relaxed text-muted-foreground blur-[3px]",
           size === "sm" ? "text-sm" : "text-xs",
           CLAMP[lines],
         )}
