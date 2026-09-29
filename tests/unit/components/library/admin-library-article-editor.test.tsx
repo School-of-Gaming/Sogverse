@@ -12,9 +12,10 @@ import type { ReactNode } from "react";
  * the form is seeded once per article and never per read — the product form
  * once lost a half-filled form to exactly this — and that the page's other
  * logic reads the saved copy: whether there is anything to save, and what the
- * Publish control says. Also pinned is the page's shape — the status and the
- * reasons on top, every action in one row beneath the form, and a row that
- * typing never adds to or takes from — and the ask before unsaved work is left.
+ * Publish control says. Also pinned is the page's shape — the status on top,
+ * every action in one row beneath the form with the reasons Publish waits
+ * beside them, a row that typing never adds to or takes from, and never more
+ * than one filled button — and the ask before unsaved work is left.
  *
  * Translations echo their key plus the values they were handed; the rich
  * editor is replaced by a textarea, since nothing here looks inside it.
@@ -137,25 +138,33 @@ const publishButton = () =>
 /** The status row at the top of the page. */
 const panel = () => screen.getByRole("region", { name: "statusPanel.label" });
 
+/** The row of actions beneath the form: the form's second child, after the card. */
+function bottomRow(): HTMLElement {
+  const row = saveButton().closest("form")!.children[1];
+  if (!(row instanceof HTMLElement)) throw new Error("the form has no action row");
+  return row;
+}
+
 /**
- * The reasons Publish is held back, as they read now — the one element in the
- * status row with an id, the one the buttons point at. The status row also
- * holds invisible copies of the longest reasons there can be, which is why
- * nothing here reads the page's whole text.
+ * The reasons Publish is held back — the one element in the bottom row with
+ * an id, the one the buttons point at. It is there, empty, when nothing is.
  */
 function reasons(): HTMLElement {
-  const element = panel().querySelector<HTMLElement>("[id]");
-  if (element === null) throw new Error("the status row holds no reasons");
+  const element = bottomRow().querySelector<HTMLElement>("[id]");
+  if (element === null) throw new Error("the bottom row holds no reasons");
   return element;
 }
 
 /** The accessible names of the bottom row's controls, in DOM order. */
 function actionRow(): string[] {
-  const row = saveButton().parentElement!;
-  return Array.from(row.children).map(
+  return Array.from(bottomRow().querySelectorAll("button, a")).map(
     (control) => control.textContent.trim(),
   );
 }
+
+/** Whether a control is drawn as the filled, amber affirmative. */
+const isFilled = (control: HTMLElement) =>
+  control.className.split(" ").includes("bg-act");
 
 const PUBLICATION = {
   id: ARTICLE.draft.id,
@@ -264,7 +273,7 @@ describe("the Library article editor", () => {
     );
   });
 
-  it("sets the reasons in the status row, and reads them out with Publish", () => {
+  it("sets the reasons beside the buttons, and reads them out with Publish", () => {
     renderEditor(ARTICLE);
 
     const reasonId = publishButton().getAttribute("aria-describedby");
@@ -272,6 +281,9 @@ describe("the Library article editor", () => {
     const reason = document.getElementById(reasonId!);
     expect(reason).toBe(reasons());
     expect(reason?.textContent).toContain("readiness.missing");
+    // Read once, where the buttons are, and nowhere near the status.
+    expect(screen.getAllByText(/readiness\./)).toHaveLength(1);
+    expect(panel().textContent).not.toContain("readiness.");
 
     fireEvent.change(summaryBox(), { target: { value: "A summary" } });
     expect(
@@ -292,7 +304,7 @@ describe("the Library article editor", () => {
 
     fireEvent.change(summaryBox(), { target: { value: "A summary" } });
     expect(publishButton().hasAttribute("disabled")).toBe(true);
-    expect(reasons().textContent).toBe("readiness.unsaved");
+    expect(screen.getByText("readiness.unsaved")).toBeTruthy();
 
     rerenderWith({
       ...ARTICLE,
@@ -335,6 +347,53 @@ describe("the Library article editor", () => {
       // The status row above holds no control at all.
       expect(within(panel()).queryAllByRole("button")).toHaveLength(0);
       expect(within(panel()).queryAllByRole("link")).toHaveLength(0);
+    });
+
+    it("sets the reasons after Unpublish and before the right-hand group", () => {
+      renderEditor({
+        ...LIVE,
+        draft: { ...LIVE.draft, summary: "" },
+        hasUnpublishedChanges: true,
+      });
+
+      const unpublish = screen.getByRole("button", { name: "unpublish" });
+      const preview = screen.getByRole("link", { name: "preview" });
+      const reason = screen.getByText(/readiness\.missing/);
+      const follows = (a: Node, b: Node) =>
+        (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+      expect(follows(unpublish, reason)).toBe(true);
+      expect(follows(reason, preview)).toBe(true);
+      expect(bottomRow().contains(reason)).toBe(true);
+    });
+
+    it("keeps Save and Publish together, apart from the controls that may wrap", () => {
+      renderEditor(LIVE);
+
+      const pair = saveButton().parentElement!;
+      expect(
+        Array.from(pair.children).map((control) => control.textContent.trim()),
+      ).toEqual(["actions.save", "publishChanges"]);
+    });
+
+    it("fills only whichever of Save and Publish can be pressed", () => {
+      const publishChanges = () =>
+        screen.getByRole("button", { name: "publishChanges" });
+
+      // A clean draft still missing a field: neither can be pressed.
+      const draft = renderEditor(ARTICLE);
+      expect(isFilled(saveButton())).toBe(false);
+      expect(isFilled(publishButton())).toBe(false);
+
+      // Unsaved changes: Save is the next step.
+      fireEvent.change(summaryBox(), { target: { value: "A summary" } });
+      expect(isFilled(saveButton())).toBe(true);
+      expect(isFilled(publishButton())).toBe(false);
+      draft.unmount();
+
+      // Clean, live, with saved changes waiting: Publish is.
+      renderEditor({ ...LIVE, hasUnpublishedChanges: true });
+      expect(isFilled(saveButton())).toBe(false);
+      expect(isFilled(publishChanges())).toBe(true);
     });
 
     it("keeps Publish changes on a live article with nothing new, disabled", () => {
