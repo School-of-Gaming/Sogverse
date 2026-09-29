@@ -120,6 +120,18 @@ describe("authoredLinkKind", () => {
     expect(authoredLinkKind("http://sogverse.sog.gg/x", SITE)).toBe("own-site");
   });
 
+  it.each([
+    ["our host as the userinfo of another", "https://sogverse.sog.gg@evil.com/x"],
+    ["a backslash the browser reads as a slash", "/\\evil.com"],
+    ["our host as a label of another", "https://sogverse.sog.gg.evil.com"],
+  ])("is not fooled by %s", (_name, href) => {
+    expect(authoredLinkKind(href, SITE)).toBe("other-site");
+  });
+
+  it("keeps a bare fragment on our own site", () => {
+    expect(authoredLinkKind("#frag", SITE)).toBe("own-site");
+  });
+
   it("sends the non-web schemes to their apps", () => {
     expect(authoredLinkKind("mailto:hi@sog.gg", SITE)).toBe("other-scheme");
     expect(authoredLinkKind("xmpp:hi@sog.gg", SITE)).toBe("other-scheme");
