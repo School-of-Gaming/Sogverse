@@ -11,13 +11,15 @@ import {
   MARKDOWN_USE_CASES,
   OUTLINE_TAGS,
   authoredLinkKind,
+  inQuietInk,
+  type MarkdownEmphasis,
   type MarkdownLook,
   type MarkdownOutline,
   type MarkdownUseCase,
   type StyledMarkdownElement,
 } from "@/lib/authored-markdown";
 
-export type { MarkdownUseCase };
+export type { MarkdownEmphasis, MarkdownUseCase };
 
 /**
  * The app's one markdown renderer, for authored prose that is *stored* as
@@ -31,7 +33,9 @@ export type { MarkdownUseCase };
  * through it; the email renderer writes the same values inline. The body size
  * comes from there too, not from the surrounding context, so `className` is
  * for placing the block (a margin, a width), never for restyling what is
- * inside it.
+ * inside it. The one thing a surface does choose is `emphasis`: whether its
+ * authored text is set in the ink or in the quiet ink, since colour is the
+ * surface's and not the markdown's. Size never changes with it.
  *
  * **A deliberately small subset, enforced twice.** Markdown's full grammar is
  * far wider than anything worth typing into these fields, and the wide half is
@@ -58,6 +62,7 @@ export type { MarkdownUseCase };
 export function Markdown({
   children,
   variant = "feed",
+  emphasis = "normal",
   className,
 }: {
   /** The markdown source. */
@@ -68,16 +73,21 @@ export function Markdown({
    * thought about it gets no links rather than accidental ones.
    */
   variant?: MarkdownUseCase;
+  /**
+   * SOG-UI's two inks: `quiet` sets every element, links included, in the
+   * quiet ink. Nothing else about the look changes.
+   */
+  emphasis?: MarkdownEmphasis;
   /** Placement only — a margin or a width. The typography is the one style's. */
   className?: string;
 }) {
   const { allowedElements, outline } = MARKDOWN_USE_CASES[variant];
   return (
-    <div className={cn(MARKDOWN_CONTAINER_CLASSES, className)}>
+    <div className={cn(MARKDOWN_CLASSES[emphasis].container, className)}>
       <ReactMarkdown
         allowedElements={[...allowedElements]}
         unwrapDisallowed
-        components={OUTLINE_COMPONENTS[outline]}
+        components={COMPONENTS[emphasis][outline]}
       >
         {children}
       </ReactMarkdown>
@@ -92,68 +102,95 @@ function paintedClasses(look: MarkdownLook): string {
     : `${look.classes} ${look.appOnly}`;
 }
 
+/** Every styled element's classes, with each look passed through `ink`. */
+function elementClasses(ink: (look: MarkdownLook) => MarkdownLook) {
+  return {
+    h1: paintedClasses(ink(MARKDOWN_LOOK.h1)),
+    h2: paintedClasses(ink(MARKDOWN_LOOK.h2)),
+    h3: paintedClasses(ink(MARKDOWN_LOOK.h3)),
+    p: paintedClasses(ink(MARKDOWN_LOOK.p)),
+    ul: paintedClasses(ink(MARKDOWN_LOOK.ul)),
+    ol: paintedClasses(ink(MARKDOWN_LOOK.ol)),
+    strong: paintedClasses(ink(MARKDOWN_LOOK.strong)),
+    a: paintedClasses(ink(MARKDOWN_LOOK.a)),
+  } as const satisfies Record<StyledMarkdownElement, string>;
+}
+
 /**
  * **The one style, as classes.** Exported because the editor restates them:
  * its writing surface paints the same elements with the same classes, and a
  * unit test holds the two equal — what the writer sees while typing is what
  * the reader sees once it is saved.
  */
-export const MARKDOWN_ELEMENT_CLASSES = {
-  h1: paintedClasses(MARKDOWN_LOOK.h1),
-  h2: paintedClasses(MARKDOWN_LOOK.h2),
-  h3: paintedClasses(MARKDOWN_LOOK.h3),
-  p: paintedClasses(MARKDOWN_LOOK.p),
-  ul: paintedClasses(MARKDOWN_LOOK.ul),
-  ol: paintedClasses(MARKDOWN_LOOK.ol),
-  strong: paintedClasses(MARKDOWN_LOOK.strong),
-  a: paintedClasses(MARKDOWN_LOOK.a),
-} as const satisfies Record<StyledMarkdownElement, string>;
+export const MARKDOWN_ELEMENT_CLASSES = elementClasses((look) => look);
 
 /** Body size, leading and ink for everything inside, and the first block flush. */
 export const MARKDOWN_CONTAINER_CLASSES = paintedClasses(MARKDOWN_CONTAINER);
+
+interface EmphasisClasses {
+  readonly container: string;
+  readonly elements: Readonly<Record<StyledMarkdownElement, string>>;
+}
+
+/** The one style in each emphasis — the quiet one derived from it, never restated. */
+export const MARKDOWN_CLASSES: Record<MarkdownEmphasis, EmphasisClasses> = {
+  normal: {
+    container: MARKDOWN_CONTAINER_CLASSES,
+    elements: MARKDOWN_ELEMENT_CLASSES,
+  },
+  quiet: {
+    container: paintedClasses(inQuietInk(MARKDOWN_CONTAINER)),
+    elements: elementClasses(inQuietInk),
+  },
+};
 
 /** A markdown heading level, painted in the one style under its outline tag. */
 function Heading({
   outline,
   level,
+  className,
   children,
 }: {
   outline: MarkdownOutline;
   level: "h1" | "h2" | "h3";
+  className: string;
   children?: ReactNode;
 }) {
   const Tag = OUTLINE_TAGS[outline][level];
-  return <Tag className={MARKDOWN_ELEMENT_CLASSES[level]}>{children}</Tag>;
+  return <Tag className={className}>{children}</Tag>;
 }
 
-function componentsFor(outline: MarkdownOutline): Components {
+function componentsFor(
+  outline: MarkdownOutline,
+  classes: EmphasisClasses["elements"],
+): Components {
   return {
     h1: ({ children }) => (
-      <Heading outline={outline} level="h1">
+      <Heading outline={outline} level="h1" className={classes.h1}>
         {children}
       </Heading>
     ),
     h2: ({ children }) => (
-      <Heading outline={outline} level="h2">
+      <Heading outline={outline} level="h2" className={classes.h2}>
         {children}
       </Heading>
     ),
     h3: ({ children }) => (
-      <Heading outline={outline} level="h3">
+      <Heading outline={outline} level="h3" className={classes.h3}>
         {children}
       </Heading>
     ),
-    p: ({ children }) => <p className={MARKDOWN_ELEMENT_CLASSES.p}>{children}</p>,
-    ul: ({ children }) => (
-      <ul className={MARKDOWN_ELEMENT_CLASSES.ul}>{children}</ul>
-    ),
-    ol: ({ children }) => (
-      <ol className={MARKDOWN_ELEMENT_CLASSES.ol}>{children}</ol>
-    ),
+    p: ({ children }) => <p className={classes.p}>{children}</p>,
+    ul: ({ children }) => <ul className={classes.ul}>{children}</ul>,
+    ol: ({ children }) => <ol className={classes.ol}>{children}</ol>,
     strong: ({ children }) => (
-      <strong className={MARKDOWN_ELEMENT_CLASSES.strong}>{children}</strong>
+      <strong className={classes.strong}>{children}</strong>
     ),
-    a: ({ href, children }) => <AuthoredLink href={href}>{children}</AuthoredLink>,
+    a: ({ href, children }) => (
+      <AuthoredLink href={href} className={classes.a}>
+        {children}
+      </AuthoredLink>
+    ),
   };
 }
 
@@ -181,15 +218,17 @@ function componentsFor(outline: MarkdownOutline): Components {
  */
 function AuthoredLink({
   href,
+  className,
   children,
 }: {
   href: string | undefined;
+  className: string;
   children?: ReactNode;
 }) {
   if (href === undefined || href === "") return <>{children}</>;
   if (authoredLinkKind(href, process.env.NEXT_PUBLIC_SITE_URL) !== "other-site") {
     return (
-      <a href={href} rel="noreferrer" className={MARKDOWN_ELEMENT_CLASSES.a}>
+      <a href={href} rel="noreferrer" className={className}>
         {children}
       </a>
     );
@@ -199,7 +238,7 @@ function AuthoredLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={MARKDOWN_ELEMENT_CLASSES.a}
+      className={className}
     >
       {children}
       <NewTabMarker />
@@ -222,7 +261,16 @@ function NewTabMarker() {
   );
 }
 
-const OUTLINE_COMPONENTS: Record<MarkdownOutline, Components> = {
-  section: componentsFor("section"),
-  card: componentsFor("card"),
+function outlineComponents(
+  classes: EmphasisClasses["elements"],
+): Record<MarkdownOutline, Components> {
+  return {
+    section: componentsFor("section", classes),
+    card: componentsFor("card", classes),
+  };
+}
+
+const COMPONENTS: Record<MarkdownEmphasis, Record<MarkdownOutline, Components>> = {
+  normal: outlineComponents(MARKDOWN_CLASSES.normal.elements),
+  quiet: outlineComponents(MARKDOWN_CLASSES.quiet.elements),
 };
