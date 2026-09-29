@@ -534,9 +534,7 @@
       "publishChanges": "Publier les modifications",
       "unpublish": "Dépublier",
       "readiness": {
-        "missing": "Pour publier, ajoutez {fields}.",
-        "unsaved": "Enregistrez vos modifications pour pouvoir les prévisualiser et les publier.",
-        "previewUnsaved": "Enregistrez vos modifications pour pouvoir les prévisualiser."
+        "missing": "Pour publier, ajoutez {fields}."
       },
       "missing": {
         "title": "un titre",

@@ -534,9 +534,7 @@
       "publishChanges": "Publish changes",
       "unpublish": "Unpublish",
       "readiness": {
-        "missing": "To publish, add {fields}.",
-        "unsaved": "Save your changes to preview and publish them.",
-        "previewUnsaved": "Save your changes to preview them."
+        "missing": "To publish, add {fields}."
       },
       "missing": {
         "title": "a title",

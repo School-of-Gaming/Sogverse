@@ -534,9 +534,7 @@
       "publishChanges": "Publicera ändringar",
       "unpublish": "Avpublicera",
       "readiness": {
-        "missing": "Lägg till {fields} för att publicera.",
-        "unsaved": "Spara dina ändringar för att förhandsvisa och publicera dem.",
-        "previewUnsaved": "Spara dina ändringar för att förhandsvisa dem."
+        "missing": "Lägg till {fields} för att publicera."
       },
       "missing": {
         "title": "en rubrik",
