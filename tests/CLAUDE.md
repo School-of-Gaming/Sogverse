@@ -13,7 +13,7 @@ duplicating across files) and `helpers/`. Two Vitest configs drive them:
 | **unit** | Pure functions, service classes with injected mock dependencies, mapping/transform logic | `.test.ts`, Vitest |
 | **integration** | Route handlers (import real POST/PATCH/GET), proxy, auth flows — full request pipeline with mocked external deps | `.test.ts`, Vitest |
 | **db** | RPCs, constraints, RLS policies against real Postgres | `.test.ts`, Vitest (`vitest.config.db.mts`) |
-| **smoke** | Assertions on the HTTP responses of a served production build — headers, CSP | `.spec.ts`, Playwright |
+| **smoke** | Assertions on the HTTP responses of a served production build — headers, CSP — and on what that build contains | `.spec.ts`, Playwright |
 
 `npm run test` runs `unit/` + `integration/`. `npm run test:smoke` runs Playwright. To
 run a single file, use `npx vitest run <file>` — never `npm run test -- --run <file>`:
