@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { GeduDashboardPageBody } from "@/components/gedu/gedu-dashboard-page-body";
 import {
   buildGeduDashboardFixture,
@@ -40,6 +40,7 @@ export function GeduDashboardScene({
   const now = useNow();
   const locale = resolveLocale(useLocale());
   const timeZone = useTimezone();
+  const tr = useTranslations("gedu.trainee");
   const [fixture] = useState(() =>
     buildGeduDashboardFixture(now, scenario, locale, timeZone),
   );
@@ -51,6 +52,9 @@ export function GeduDashboardScene({
       criminalRecordCheckPassed={fixture.criminalRecordCheckPassed}
       assignments={fixture.assignments}
       substitutions={fixture.substitutions}
+      // Temporary: the owner comparison of a badged trainee card against the
+      // shipped, unbadged one. Only the `trainee-badge` scenario passes it.
+      comparisonTraineeBadge={fixture.traineeBadge ? tr("badge") : undefined}
       toolsCard={
         // Idle, with the submit inert: the textarea, the parsing and the
         // duplicate/email warnings all still work, because those are pure UI

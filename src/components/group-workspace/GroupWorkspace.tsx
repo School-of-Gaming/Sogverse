@@ -4,6 +4,11 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  LockedButton,
+  type LockExplanation,
+  type Locked,
+} from "@/components/ui/locked-control";
 import { MaterialLink } from "@/components/ui/material-link";
 import { PersonChipList } from "@/components/ui/person-chip";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
@@ -32,11 +37,8 @@ import type {
 } from "@/components/game-account";
 import type { RobloxRenderMap } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
-import type {
-  GamerCreation,
-  GeduAssignedProduct,
-  GeduAssignedProductGroup,
-} from "@/types";
+import type { Withheld } from "@/lib/withheld";
+import type { GamerCreation } from "@/types";
 import {
   CopyAllEmailsButton,
   deduplicateEmails,
@@ -44,7 +46,14 @@ import {
 } from "./roster-helpers";
 import { SessionDetailsBackLink } from "./BackLink";
 import { ParticipantRosterRow } from "./ParticipantRosterRow";
-import { rosterContactEmail } from "./types";
+import {
+  isNamedOnlyGroup,
+  isRedactedMember,
+  rosterContactEmail,
+  type WorkspaceGroup,
+  type WorkspaceGroupRow,
+  type WorkspaceProduct,
+} from "./types";
 import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
 import { SitePanel, type SiteNotesDraft } from "./SitePanel";
 import type { AppHref } from "@/lib/constants/routes";
@@ -166,8 +175,12 @@ export interface RosterMemberFlair {
   now: Date;
   /** ISO join stamps. A member past the window keeps their key and simply stops rendering a badge. */
   newcomers: Readonly<Record<string, string | undefined>>;
-  /** Note text. A member with no note has no key; `""` and absent mean the same thing. */
-  notes: Readonly<Record<string, string | undefined>>;
+  /**
+   * Note text. A member with no note has no key; `""` and absent mean the same
+   * thing. **Withheld** is a member who has a note this reader is not sent: the
+   * row's button still lights, and the dialog draws filler in the note's field.
+   */
+  notes: Readonly<Record<string, string | Withheld | undefined>>;
   /** Who last wrote each note, where that is known. Read only for members who have one. */
   noteEditors: Readonly<Record<string, string | undefined>>;
   /**
@@ -181,16 +194,20 @@ export interface RosterMemberFlair {
    * disabled until the write lands and closes only then; the trimmed text
    * arrives here, and an empty string means "clear it".
    */
-  onSaveNote: (participantId: string, text: string) => void | Promise<void>;
+  onSaveNote:
+    | ((participantId: string, text: string) => void | Promise<void>)
+    | Locked;
   /**
    * Replace one member's creations. **Awaited by the dialog**, same contract as
    * the note's; an empty list deletes the row. Both writes are idempotent
    * replaces, which is what lets the dialog retry a half-landed save.
    */
-  onSaveCreations: (
-    participantId: string,
-    creations: readonly GamerCreation[],
-  ) => void | Promise<void>;
+  onSaveCreations:
+    | ((
+        participantId: string,
+        creations: readonly GamerCreation[],
+      ) => void | Promise<void>)
+    | Locked;
 }
 
 /**
@@ -206,12 +223,18 @@ export interface ProductSite {
   address: string | null;
   /** The site note families can eventually read. */
   publicNote: string | null;
-  /** The site note only Gedus and admins ever see. */
-  staffNote: string | null;
+  /** The site note only Gedus and admins ever see — or withheld from this reader. */
+  staffNote: string | null | Withheld;
 }
 
 interface GroupWorkspaceProps {
-  data: GeduAssignedProduct;
+  /**
+   * The product document: the staff one, or its redacted twin, whose own-group
+   * roster rows carry no contact or note text and whose sister groups carry
+   * their names alone. The body renders both with the same components; what a
+   * redacted field draws is decided where the field is drawn, by its type.
+   */
+  data: WorkspaceProduct;
   /**
    * Newest first: the future sessions inside the horizon (furthest away first,
    * so the next session is the last of them), then the term running backwards.
@@ -263,12 +286,23 @@ interface GroupWorkspaceProps {
   materialUrl: string | null;
   /** The group's standing public note, independent of any session. */
   groupPublicNote: string | null;
-  /** The group's standing staff-only note. */
-  groupStaffNote: string | null;
+  /** The group's standing staff-only note — or withheld from this reader. */
+  groupStaffNote: string | null | Withheld;
   groupNotesEditing: boolean;
   onGroupNotesEditingChange: (editing: boolean) => void;
-  /** Persist the group's notes. Awaited by the panel — see its own note. */
-  onSaveGroupNotes: (draft: GroupNotesDraft) => void | Promise<void>;
+  /**
+   * Persist the group's notes. Awaited by the panel — see its own note.
+   *
+   * **Every write this body takes may instead be handed in locked** — this one
+   * and each below it typed `… | Locked`. It is the same capability question
+   * the body always asks (was I given this write?), with a third answer: the
+   * control is drawn exactly as it is and explains itself when pressed instead
+   * of acting. Which writes are locked is the shell's business; the body never
+   * learns who is looking.
+   */
+  onSaveGroupNotes:
+    | ((draft: GroupNotesDraft) => void | Promise<void>)
+    | Locked;
   /**
    * The site an in-person product runs at, or `null` for a remote one.
    *
@@ -284,7 +318,7 @@ interface GroupWorkspaceProps {
   siteNotesEditing: boolean;
   onSiteNotesEditingChange: (editing: boolean) => void;
   /** Persist the site's shared notes. Awaited by the panel. */
-  onSaveSiteNotes: (draft: SiteNotesDraft) => void | Promise<void>;
+  onSaveSiteNotes: ((draft: SiteNotesDraft) => void | Promise<void>) | Locked;
   /**
    * Where this site's record is edited, for a shell whose viewer has such a
    * page. Absent — the gedu shell's answer, and a scene's — the site section
@@ -307,28 +341,31 @@ interface GroupWorkspaceProps {
    * Persist one session's edit. **Awaited by the feed**, which holds the editor
    * open and disabled until it settles and closes it only on success.
    */
-  onSaveEntry: (
-    entryId: string,
-    draft: SessionEntryDraft,
-  ) => void | Promise<void>;
+  onSaveEntry:
+    | ((entryId: string, draft: SessionEntryDraft) => void | Promise<void>)
+    | Locked;
   /**
    * Email one session's report to the group's families. **Awaited by the
    * feed**, which disables the button before it runs and leaves it disabled
    * until the sent line takes its place; a rejection is what hands it back.
    */
-  onSendReport: (entryId: string) => Promise<SessionReportSendResult>;
+  onSendReport:
+    | ((entryId: string) => Promise<SessionReportSendResult>)
+    | Locked;
   /**
    * Attach one already-normalized JPEG to a session's report, resolving with
    * the stored id. **Called by the card's Save**, not by the picker: a photo is
    * held in the browser with the rest of the draft until the whole card
    * commits.
    */
-  onAddPhoto: (
-    entryId: string,
-    photo: { file: Blob; width: number; height: number },
-  ) => Promise<string>;
+  onAddPhoto:
+    | ((
+        entryId: string,
+        photo: { file: Blob; width: number; height: number },
+      ) => Promise<string>)
+    | Locked;
   /** Remove one photo by its stored id. Called by the same Save. */
-  onRemovePhoto: (imageId: string) => Promise<void>;
+  onRemovePhoto: ((imageId: string) => Promise<void>) | Locked;
   /**
    * File "I can't make this session" against one session's card. **Awaited by
    * the feed**, which holds the dialog open and disabled until it settles.
@@ -337,10 +374,12 @@ interface GroupWorkspaceProps {
    * a preview scene's. It is one half of the pair below; see
    * {@link renderSessionMenu}.
    */
-  onRequestSubstitution?: (
-    entry: SessionFeedEntry,
-    draft: SessionSubstitutionRequestDraft,
-  ) => void | Promise<void>;
+  onRequestSubstitution?:
+    | ((
+        entry: SessionFeedEntry,
+        draft: SessionSubstitutionRequestDraft,
+      ) => void | Promise<void>)
+    | Locked;
   /** Take the viewer's own open request back. Awaited on the same terms. */
   onWithdrawSubstitutionRequest?: (requestId: string) => void | Promise<void>;
   /**
@@ -366,10 +405,9 @@ interface GroupWorkspaceProps {
    * Never called on a product whose topic names no platform, because no row on
    * such a roster renders an editor.
    */
-  onSaveGameUsername: (
-    gamerId: string,
-    username: string,
-  ) => void | Promise<void>;
+  onSaveGameUsername:
+    | ((gamerId: string, username: string) => void | Promise<void>)
+    | Locked;
   /**
    * In-flight or just-landed platform checks, keyed by gamer id. A roster member
    * with no entry here shows the resting state derived from their account.
@@ -444,6 +482,22 @@ interface GroupWorkspaceProps {
    * here belongs to whoever did.
    */
   groupHeading?: string;
+  /**
+   * The gedus holding a **trainee seat** on this group, by first name, drawn as
+   * one line under the group's own gedus. Omitted, or empty, draws nothing — a
+   * group with no trainee says nothing about trainees.
+   *
+   * A line of names rather than chips beside the gedus': a trainee is not one
+   * of the group's staff, and a chip in that run would say they were.
+   */
+  trainees?: readonly { id: string; first_name: string }[];
+  /**
+   * What a sister group's Join explains when the document carries that group
+   * by name only. Such a row keeps its room on the rail — the reader may know
+   * the room exists — and its Join is the locked control. Omitted, a
+   * name-only row draws no Join at all.
+   */
+  namedOnlyRoomLock?: LockExplanation;
 }
 
 export function GroupWorkspace({
@@ -480,6 +534,8 @@ export function GroupWorkspace({
   backLink,
   workspaceHref: workspaceHrefProp,
   groupHeading,
+  trainees = NO_TRAINEES,
+  namedOnlyRoomLock,
 }: GroupWorkspaceProps) {
   const t = useTranslations("gedu.sessionDetails");
   const p = useTranslations("productType");
@@ -517,10 +573,24 @@ export function GroupWorkspace({
   const platform = platformForTopic(data.product.topic);
 
   const { assignedGroup, peerGroups } = useMemo(() => {
-    const assigned = data.groups.find((g) => g.id === data.my_group_id) ?? null;
+    // The reader's own group is always drawn in full; a name-only row is only
+    // ever a sister group, so it can never be the one found here.
+    const assigned =
+      data.groups.find(
+        (g): g is WorkspaceGroup =>
+          g.id === data.my_group_id && !isNamedOnlyGroup(g),
+      ) ?? null;
     const peers = data.groups.filter((g) => g.id !== data.my_group_id);
     return { assignedGroup: assigned, peerGroups: peers };
   }, [data.groups, data.my_group_id]);
+
+  /**
+   * Whether this group's roster came redacted. Its creations are then not on
+   * the document at all (always `[]`), so the creations obligation below has
+   * nothing true to itemize: a final session "waiting on" every member would
+   * be a claim made out of missing data.
+   */
+  const rosterRedacted = (assignedGroup?.roster ?? []).some(isRedactedMember);
 
   /**
    * This group's cancelled dates, read off its own feed. On a dated run the
@@ -588,7 +658,7 @@ export function GroupWorkspace({
    * never owes.
    */
   const creationsObligation = useMemo<CreationsObligation | null>(() => {
-    if (!data.product.requires_gamer_creations) return null;
+    if (!data.product.requires_gamer_creations || rosterRedacted) return null;
     const date = finalSessionDate({
       slots: data.product.schedule_slots,
       startDate: data.product.start_date,
@@ -607,7 +677,13 @@ export function GroupWorkspace({
           .map(([participantId]) => participantId),
       ),
     };
-  }, [data.product, data.my_group_id, memberFlair.creations, cancelledDates]);
+  }, [
+    data.product,
+    data.my_group_id,
+    memberFlair.creations,
+    cancelledDates,
+    rosterRedacted,
+  ]);
 
   /**
    * Whether the roster should be *itemizing* that obligation right now.
@@ -764,6 +840,7 @@ export function GroupWorkspace({
               memberFlair={memberFlair}
               membersOwingCreation={membersOwingCreation}
               onOpenFlair={setOpenFor}
+              trainees={trainees}
             />
           )}
 
@@ -774,6 +851,7 @@ export function GroupWorkspace({
             opensDate={voiceState.opensDate}
             opensTime={voiceState.opensTime}
             backHref={workspaceHref}
+            namedOnlyRoomLock={namedOnlyRoomLock}
           />
         </aside>
 
@@ -884,14 +962,8 @@ export function GroupWorkspace({
             ? EMPTY_CREATIONS
             : (memberFlair.creations[openFor] ?? EMPTY_CREATIONS)
         }
-        onSaveNote={async (text) => {
-          if (openFor === null) return;
-          await memberFlair.onSaveNote(openFor, text);
-        }}
-        onSaveCreations={async (creations) => {
-          if (openFor === null) return;
-          await memberFlair.onSaveCreations(openFor, creations);
-        }}
+        onSaveNote={bindMemberWrite(memberFlair.onSaveNote, openFor)}
+        onSaveCreations={bindMemberWrite(memberFlair.onSaveCreations, openFor)}
       />
     </div>
   );
@@ -905,6 +977,25 @@ export function GroupWorkspace({
  * every render is a new identity for something that is always the same nothing.
  */
 const EMPTY_CREATIONS: readonly GamerCreation[] = [];
+
+/** The trainee list a shell that names none is handed — one identity, always. */
+const NO_TRAINEES: readonly { id: string; first_name: string }[] = [];
+
+/**
+ * One of the flair's per-member writes bound to the member whose dialog is
+ * open — or handed through as it is when the shell locked it, so the dialog
+ * draws its locked Save rather than a Save that does nothing.
+ */
+function bindMemberWrite<T>(
+  write: ((participantId: string, value: T) => void | Promise<void>) | Locked,
+  openFor: string | null,
+): ((value: T) => Promise<void>) | Locked {
+  if (typeof write !== "function") return write;
+  return async (value: T) => {
+    if (openFor === null) return;
+    await write(openFor, value);
+  };
+}
 
 /* ------------------------------------------------------------------ */
 /*  Reference rail                                                     */
@@ -988,17 +1079,26 @@ function OtherGroupsRailCard({
   opensDate,
   opensTime,
   backHref,
+  namedOnlyRoomLock,
 }: {
-  peerGroups: readonly GeduAssignedProductGroup[];
+  /**
+   * Every sister group — each drawn in full, or, on a redacted document, by
+   * its name alone: no size in the corner and no gedus line, because neither is
+   * on the row to draw, and its Join as the locked control.
+   */
+  peerGroups: readonly WorkspaceGroupRow[];
   isRemote: boolean;
   voiceIsOpen: boolean;
   opensDate: string;
   opensTime: string;
   /** Where leaving a peer's room lands — this workspace, not theirs. */
   backHref: AppHref;
+  /** What a name-only row's Join explains. Omitted, such a row has no Join. */
+  namedOnlyRoomLock?: LockExplanation;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
+  const v = useTranslations("voiceButton");
 
   return (
     <RailCard title={t("railOtherGroupsHeading")}>
@@ -1015,8 +1115,25 @@ function OtherGroupsRailCard({
                 <p className="min-w-0 flex-1 truncate text-sm font-medium leading-tight">
                   {group.name || t("untitledGroup")}
                 </p>
-                <ParticipantCount count={group.participant_count} />
+                {!isNamedOnlyGroup(group) && (
+                  <ParticipantCount count={group.participant_count} />
+                )}
               </div>
+              {isNamedOnlyGroup(group) ? (
+                isRemote &&
+                namedOnlyRoomLock !== undefined && (
+                  <div className="flex justify-center pt-0.5">
+                    <LockedButton
+                      explanation={namedOnlyRoomLock}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {v("joinVoice")}
+                    </LockedButton>
+                  </div>
+                )
+              ) : (
+              <>
               {/* The chips are labelled, because the line above them already
                   carries a *gamer* count — an unlabelled row of faces next to
                   "6 gamers" reads as six children, and the whole point of
@@ -1046,6 +1163,8 @@ function OtherGroupsRailCard({
                     backHref={backHref}
                   />
                 </div>
+              )}
+              </>
               )}
             </li>
           ))}
@@ -1138,8 +1257,9 @@ function GroupRailCard({
   memberFlair,
   membersOwingCreation,
   onOpenFlair,
+  trainees,
 }: {
-  group: GeduAssignedProductGroup;
+  group: WorkspaceGroup;
   /** The card's heading, or `undefined` for the gedu's "My Group". */
   heading?: string;
   isRemote: boolean;
@@ -1150,10 +1270,9 @@ function GroupRailCard({
   backHref: AppHref;
   /** The product's game identity, or `null` for a topic that has none. */
   platform: GamePlatform | null;
-  onSaveGameUsername: (
-    gamerId: string,
-    username: string,
-  ) => void | Promise<void>;
+  onSaveGameUsername:
+    | ((gamerId: string, username: string) => void | Promise<void>)
+    | Locked;
   gameStatuses?: Readonly<Record<string, GameAccountStatus>>;
   robloxAvatarUrls?: RobloxRenderMap;
   /**
@@ -1178,9 +1297,12 @@ function GroupRailCard({
    * and a page can only ever have one open.
    */
   onOpenFlair: (participantId: string) => void;
+  /** The group's trainees, named on one line under its gedus. */
+  trainees: readonly { id: string; first_name: string }[];
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const g = useTranslations("common");
+  const w = useTranslations("gedu.groupWorkspace");
   const roster = useMemo(() => group.roster ?? [], [group.roster]);
   const emails = useMemo(
     () => deduplicateEmails(roster.map(rosterContactEmail)),
@@ -1218,6 +1340,16 @@ function GroupRailCard({
         ) : (
           <PersonChipList people={geduChipPeople(group.gedus)} />
         )}
+        {/* Under the chips rather than among them: a trainee is on the group
+            but is not its staff, and a chip in the gedus' run would say so. */}
+        {trainees.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {w("traineesLine", {
+              count: trainees.length,
+              names: trainees.map((trainee) => trainee.first_name).join(", "),
+            })}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2 border-t border-border pt-3">
@@ -1245,7 +1377,7 @@ function GroupRailCard({
                 }
                 flairNow={memberFlair.now}
                 hasContent={
-                  (memberFlair.notes[member.participant_id] ?? "").length > 0 ||
+                  hasNote(memberFlair.notes[member.participant_id]) ||
                   (memberFlair.creations[member.participant_id]?.length ?? 0) > 0
                 }
                 // The itemization of the session-level obligation: while the
@@ -1267,4 +1399,13 @@ function GroupRailCard({
       </div>
     </RailCard>
   );
+}
+
+/**
+ * Whether a member has a note — written text, or one withheld from this
+ * reader, which exists all the same and lights the row's button.
+ */
+function hasNote(note: string | Withheld | undefined): boolean {
+  if (note === undefined) return false;
+  return typeof note === "string" ? note.length > 0 : true;
 }

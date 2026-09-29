@@ -4,6 +4,10 @@ import { CheckCircle2, Loader2, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  LockedButton,
+  type LockExplanation,
+} from "@/components/ui/locked-control";
 import type { SessionReportSendResult } from "./send-report";
 
 interface SessionReportSendProps {
@@ -34,6 +38,13 @@ interface SessionReportSendProps {
   result: SessionReportSendResult | null;
   /** Why the last send was refused, or `null`. */
   error: string | null;
+  /**
+   * The explanation the button gives instead of sending, when the send was
+   * handed in locked. An unsent report keeps the offer's face and wording; a
+   * sent one is already a record rather than an invitation and stays exactly
+   * that, locked or not.
+   */
+  lock?: LockExplanation | null;
   onSend: () => void;
 }
 
@@ -87,6 +98,7 @@ export function SessionReportSend({
   sending,
   result,
   error,
+  lock = null,
   onSend,
 }: SessionReportSendProps) {
   const t = useTranslations("gedu.sessionFeed");
@@ -99,6 +111,12 @@ export function SessionReportSend({
           past. The row needs no reserved height of its own: the button is
           present in every state, so its own height is the slot. */}
       <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+        {lock !== null && !sent ? (
+          <LockedButton explanation={lock} variant="secondary" size="sm">
+            <Mail className="h-3.5 w-3.5" aria-hidden />
+            {t("sendReportToParents")}
+          </LockedButton>
+        ) : (
         <Button
           type="button"
           // Filled while there is something to do, outlined once there is not
@@ -130,6 +148,7 @@ export function SessionReportSend({
               ? t("sendingReportToParents")
               : t("sendReportToParents")}
         </Button>
+        )}
 
         {result !== null && result.failed > 0 && (
           <StatusLine status="warning" size="xs" muted>

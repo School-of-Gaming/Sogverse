@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import {
+  useLockExplanation,
+  type LockExplanation,
+} from "@/components/ui/locked-control";
 import { substitutionRequestFailureKey } from "@/services/session-substitution";
 import { SessionCardMenu } from "./SessionCardMenu";
 import {
@@ -40,15 +44,67 @@ import {
  * the loudest thing in the row.
  *
  */
-export function SessionSubstitutionMenu({
+export function SessionSubstitutionMenu(
+  props:
+    | {
+        /**
+         * File "I can't make this session". **Awaited**: the dialog holds its
+         * own committing flag from the click until this settles, and closes
+         * only when it resolves — so a refused write leaves the reason and the
+         * note where the gedu can try again.
+         */
+        onRequestSubstitution: (
+          draft: SessionSubstitutionRequestDraft,
+        ) => void | Promise<void>;
+        lock?: undefined;
+      }
+    | {
+        onRequestSubstitution?: undefined;
+        /**
+         * The same menu and the same row, locked: pressing the row explains
+         * what it does and why this reader cannot, and no request dialog is
+         * ever mounted.
+         */
+        lock: LockExplanation;
+      },
+) {
+  if (props.lock !== undefined) {
+    return <LockedSubstitutionMenu lock={props.lock} />;
+  }
+  return (
+    <FilingSubstitutionMenu onRequestSubstitution={props.onRequestSubstitution} />
+  );
+}
+
+/**
+ * The locked twin: one menu row that opens the explanation. The explanation is
+ * a sibling of the menu, for the same reason the request dialog is.
+ */
+function LockedSubstitutionMenu({ lock }: { lock: LockExplanation }) {
+  const t = useTranslations("gedu.sessionFeed");
+  const explanation = useLockExplanation(lock);
+  return (
+    <>
+      <SessionCardMenu
+        label={t("substitutionMenuLabel")}
+        items={[
+          {
+            key: MENU_ITEM_KEY,
+            label: t("substitutionRequestAction"),
+            lockedHint: lock.lockedHint,
+            onSelect: explanation.open,
+          },
+        ]}
+        flowOpen={explanation.isOpen}
+      />
+      {explanation.dialog}
+    </>
+  );
+}
+
+function FilingSubstitutionMenu({
   onRequestSubstitution,
 }: {
-  /**
-   * File "I can't make this session". **Awaited**: the dialog holds its own
-   * committing flag from the click until this settles, and closes only when it
-   * resolves — so a refused write leaves the reason and the note where the gedu
-   * can try again.
-   */
   onRequestSubstitution: (
     draft: SessionSubstitutionRequestDraft,
   ) => void | Promise<void>;

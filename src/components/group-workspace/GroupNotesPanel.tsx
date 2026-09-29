@@ -1,6 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import type { Locked } from "@/components/ui/locked-control";
+import type { Withheld } from "@/lib/withheld";
 import {
   TwoAudienceNotesPanel,
   type TwoAudienceNotesDraft,
@@ -11,10 +13,12 @@ export type GroupNotesDraft = TwoAudienceNotesDraft;
 
 interface GroupNotesPanelProps {
   publicNote: string | null;
-  staffNote: string | null;
+  /** The staff half — text, `null` for none, or withheld from this reader. */
+  staffNote: string | null | Withheld;
   editing: boolean;
   onEditingChange: (editing: boolean) => void;
-  onSave: (draft: GroupNotesDraft) => void | Promise<void>;
+  /** Persist both notes, or the lock a shell shows in the Save's place. */
+  onSave: ((draft: GroupNotesDraft) => void | Promise<void>) | Locked;
 }
 
 /**
@@ -34,6 +38,7 @@ export function GroupNotesPanel({
   onSave,
 }: GroupNotesPanelProps) {
   const t = useTranslations("gedu.groupNotes");
+  const g = useTranslations("gedu.groupWorkspace");
 
   return (
     <TwoAudienceNotesPanel
@@ -50,6 +55,7 @@ export function GroupNotesPanel({
         staffLabel: t("staffLabel"),
         staffHint: t("staffHint"),
         staffPlaceholder: t("staffPlaceholder"),
+        staffWithheld: g("staffNoteWithheld"),
         saveFailed: t("saveFailed"),
       }}
       publicNote={publicNote}

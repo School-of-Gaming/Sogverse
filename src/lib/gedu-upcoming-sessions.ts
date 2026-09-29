@@ -98,6 +98,10 @@ export function buildGeduUpcomingSessions({
   const bySession = new Map<string, GeduUpcomingSession>();
 
   for (const row of rows) {
+    // A trainee seat is not a seat anybody is expected to cover: a trainee
+    // cannot ask for a substitute (the card shows that row locked), so the
+    // picker over "sessions I could be absent from" does not offer theirs.
+    if (row.kind === "trainee") continue;
     const timezone = row.product.timezone;
     const occurrences =
       row.kind === "substitution"

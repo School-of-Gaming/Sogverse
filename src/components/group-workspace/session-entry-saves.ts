@@ -10,6 +10,7 @@ import {
 import type { AttendanceMark } from "@/components/session-feed";
 import { ApiError } from "@/lib/api/api-error";
 import { sessionEntryId } from "@/lib/session-occurrence";
+import { isWithheld } from "@/lib/withheld";
 import {
   SESSION_REPORT_ALREADY_SENT_SQLSTATE,
   SESSION_REPORT_NO_REPORT_SQLSTATE,
@@ -152,6 +153,11 @@ export function createSessionEntrySaves({
 
     const currentReport = entry.kind === "no_record" ? null : entry.report;
     const currentNote = entry.kind === "no_record" ? null : entry.staffNote;
+    // These saves are bound only by shells whose document carries the note;
+    // a withheld one is refused here rather than written back as empty.
+    if (isWithheld(currentNote)) {
+      throw new Error("Refusing to save over a gedu note this page was not sent.");
+    }
 
     const notesChanged =
       draft.report !== (currentReport ?? "") ||

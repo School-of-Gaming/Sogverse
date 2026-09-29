@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Constants } from "@/types";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 import { sessionStaffGedu } from "@/services/session-substitution/session-substitution.contracts";
+import { traineeRosterEntry } from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 /**
  * Runtime contracts for the gedu assignment RPCs. The generated types can't
@@ -171,3 +172,41 @@ export const geduAssignedProduct = z.object({
     })
   ),
 });
+
+/**
+ * The `get_trainee_assigned_product` JSONB document — the trainee's door to a
+ * product, and the redacted twin of {@link geduAssignedProduct}.
+ *
+ * `groups` holds every group of the product in two shapes, told apart by
+ * `is_my_group`. The caller's **own** group carries its size, its gedus and the
+ * redacted roster the trainee workspace document serves. A **sibling** group
+ * carries its name and nothing else — it is shown so the trainee can see it
+ * exists, while its size, staff and members are nothing a gamer on this group
+ * is shown — and the missing fields are absent from the type, so a consumer
+ * cannot draw a sibling's roster or headcount by accident.
+ */
+export const traineeAssignedProduct = z.object({
+  product: geduAssignedProduct.shape.product,
+  my_group_id: z.string(),
+  groups: z.array(
+    z.discriminatedUnion("is_my_group", [
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        created_at: z.string(),
+        is_my_group: z.literal(true),
+        participant_count: z.number(),
+        gedus: z.array(sessionStaffGedu),
+        roster: z.array(traineeRosterEntry),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        created_at: z.string(),
+        is_my_group: z.literal(false),
+      }),
+    ]),
+  ),
+});
+
+export type TraineeAssignedProduct = z.infer<typeof traineeAssignedProduct>;

@@ -69,3 +69,25 @@ export function useGeduAssignedProduct(
     enabled: !!productId,
   });
 }
+
+/**
+ * The trainee's door to a product — the counterpart of
+ * {@link useGeduAssignedProduct}, asked only once that read has answered that
+ * the caller is not assigned here (`enabled`). One seat per gedu per product is
+ * a schema rule, so at most one of the two ever answers with a document. The
+ * route seeds this under the same key when the caller holds a trainee seat.
+ */
+export function useTraineeAssignedProduct(
+  productId: string | undefined,
+  groupId: string | null = null,
+  enabled = true,
+) {
+  const supabase = getClient();
+  const service = new AssignmentsService(supabase);
+
+  return useQuery({
+    queryKey: assignmentKeys.traineeProductDetail(productId, groupId),
+    queryFn: () => service.getTraineeAssignedProduct(productId!, groupId),
+    enabled: enabled && !!productId,
+  });
+}

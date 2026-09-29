@@ -30,6 +30,14 @@ interface GeduAssignmentCardProps {
    * whole product row and this card only carries the roll-up.
    */
   scheduleLines: readonly string[];
+  /**
+   * **Temporary, for an owner comparison — the shipped card passes nothing.**
+   * The word a trainee seat's card would wear as a badge beside the product
+   * name. The owner's ruling is no badge (a trainee's groups are the same cards
+   * in the same list); this lets the preview draw the alternative beside it,
+   * and goes when the comparison has been looked at.
+   */
+  traineeBadge?: string;
 }
 
 /**
@@ -194,6 +202,7 @@ interface GeduAssignmentCardProps {
 export function GeduAssignmentCard({
   assignment,
   scheduleLines,
+  traineeBadge,
 }: GeduAssignmentCardProps) {
   const p = useTranslations("productType");
   const c = useTranslations("activityCard");
@@ -272,6 +281,14 @@ export function GeduAssignmentCard({
               >
                 {productName}
               </p>
+              {traineeBadge !== undefined && assignment.trainee && (
+                <Badge
+                  variant="outline"
+                  className="w-fit px-2 py-0 text-[10px] uppercase tracking-wide text-muted-foreground"
+                >
+                  {traineeBadge}
+                </Badge>
+              )}
               {/* The group as one quiet line, not a name plus a bordered pill:
                   the pill gave the gamer count the visual weight of a status
                   badge sitting next to real ones, and a roster size is not a

@@ -9,6 +9,12 @@ import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
+import {
+  LockedButton,
+  lockOf,
+  type Locked,
+} from "@/components/ui/locked-control";
+import { WithheldText } from "@/components/ui/withheld-text";
 import { GamerFlairButton, NewcomerBadge } from "@/components/member-flair";
 import {
   gameFigureHeight,
@@ -23,9 +29,10 @@ import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 import { cn, computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import {
+  isRedactedMember,
   rosterContactEmail,
   rosterGameAccount,
-  type ParticipantSessionRow,
+  type WorkspaceRosterMember,
 } from "./types";
 
 const GENDER_KEY = {
@@ -35,7 +42,12 @@ const GENDER_KEY = {
 } as const;
 
 interface ParticipantRosterRowProps {
-  participant: ParticipantSessionRow;
+  /**
+   * The seat — the staff row, or its redacted twin. The redacted row has no
+   * contact address and carries an age rather than a date of birth; the row
+   * draws the same two lines either way, with the address line as filler.
+   */
+  participant: WorkspaceRosterMember;
   /**
    * Which game identity this roster is about, or `null` for a product about no
    * single game account at all.
@@ -65,10 +77,9 @@ interface ParticipantRosterRowProps {
    * Never reached on an adult row or on a product with no platform, neither of
    * which renders an identity cell at all.
    */
-  onSaveGameUsername?: (
-    participantId: string,
-    username: string,
-  ) => void | Promise<void>;
+  onSaveGameUsername?:
+    | ((participantId: string, username: string) => void | Promise<void>)
+    | Locked;
   /**
    * When this person joined the group the roster belongs to, as an ISO stamp,
    * or `null` where that is not recorded or the badge does not apply — the
@@ -240,14 +251,21 @@ export function ParticipantRosterRow({
   // only where participant = customer, so a non-null value *is* "this seat is
   // held by an adult" — there is no second signal to reconcile it against and
   // no role column on the roster row to disagree with it.
-  const isAdult = participant.participant_email !== null;
+  //
+  // A redacted row carries no address, so it cannot say — and draws a child's
+  // row, which is the overwhelmingly common seat.
+  const redacted = isRedactedMember(participant);
+  const isAdult = !redacted && participant.participant_email !== null;
   const contactEmail = rosterContactEmail(participant);
 
+  const age = redacted
+    ? participant.age
+    : participant.date_of_birth
+      ? computeAge(participant.date_of_birth, timeZone)
+      : null;
   const detailParts: string[] = [];
-  if (participant.date_of_birth) {
-    detailParts.push(
-      t("age", { age: computeAge(participant.date_of_birth, timeZone) }),
-    );
+  if (age !== null) {
+    detailParts.push(t("age", { age }));
   }
   if (participant.gender) {
     detailParts.push(t(GENDER_KEY[participant.gender]));
@@ -328,6 +346,10 @@ export function ParticipantRosterRow({
         />
       </div>
       {contactEmail !== null && <ContactEmailCell email={contactEmail} />}
+      {/* The redacted row keeps the address line's place, as filler: the
+          layout a gedu works from has a contact on every seat, and the line
+          is where it would be. */}
+      {redacted && <WithheldContactCell />}
     </li>
   );
 }
@@ -377,11 +399,13 @@ function GameIdentityCell({
   avatarUrl,
   onSave,
 }: {
-  participant: ParticipantSessionRow;
+  participant: WorkspaceRosterMember;
   platform: GamePlatform;
   status?: GameAccountStatus;
   avatarUrl?: string | null;
-  onSave?: (participantId: string, username: string) => void | Promise<void>;
+  onSave?:
+    | ((participantId: string, username: string) => void | Promise<void>)
+    | Locked;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const inputId = useId();
@@ -408,6 +432,9 @@ function GameIdentityCell({
   );
 
   if (onSave === undefined) return identity;
+  // Locked, the editor still opens and still takes typing, and its Save is the
+  // locked control — the same grammar as every other locked write.
+  const saveLock = lockOf(onSave);
 
   if (draft !== null) {
     /**
@@ -417,7 +444,9 @@ function GameIdentityCell({
      * editor for good.
      */
     const commit = async () => {
-      if (committing) return;
+      // Enter in a locked editor does nothing: the locked Save beside it is
+      // the one place that explains why.
+      if (committing || typeof onSave !== "function") return;
       setFailed(false);
       setCommitting(true);
       try {
@@ -477,20 +506,31 @@ function GameIdentityCell({
           >
             <X className="h-3.5 w-3.5" aria-hidden />
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={committing}
-            onClick={() => void commit()}
-            className="h-7 gap-1 px-2 text-xs"
-          >
-            {committing ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-            ) : (
+          {saveLock !== null ? (
+            <LockedButton
+              explanation={saveLock}
+              size="sm"
+              className="h-7 gap-1 px-2 text-xs"
+            >
               <Check className="h-3.5 w-3.5" aria-hidden />
-            )}
-            {t("gameUsernameSave")}
-          </Button>
+              {t("gameUsernameSave")}
+            </LockedButton>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              disabled={committing}
+              onClick={() => void commit()}
+              className="h-7 gap-1 px-2 text-xs"
+            >
+              {committing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Check className="h-3.5 w-3.5" aria-hidden />
+              )}
+              {t("gameUsernameSave")}
+            </Button>
+          )}
         </div>
         {failed && (
           <StatusLine
@@ -569,5 +609,26 @@ function ContactEmailCell({ email }: { email: string }) {
         />
       )}
     </button>
+  );
+}
+
+/**
+ * The address line of a redacted row: the contact cell's box, holding filler.
+ *
+ * It keeps the line because the row's two-line shape is the layout — a roster
+ * whose seats were one line shorter for one reader would be a different rail —
+ * and it holds filler rather than a sentence because a sentence repeated down
+ * every seat of the rail is a wall. The sentence is what a screen reader hears
+ * instead. Not a button: there is nothing to copy.
+ */
+function WithheldContactCell() {
+  const g = useTranslations("gedu.groupWorkspace");
+  return (
+    <WithheldText
+      label={g("contactWithheld")}
+      lines={1}
+      size="xs"
+      className="rounded-md border border-border bg-lifted px-2 py-1"
+    />
   );
 }

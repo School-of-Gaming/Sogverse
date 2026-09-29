@@ -33,4 +33,19 @@ export const assignmentKeys = {
       productId,
       groupId,
     ] as const,
+  /**
+   * The trainee's door to a product — its own entry, because the trainee read
+   * and the gedu read answer the same URL with different documents and the two
+   * must never share one.
+   */
+  traineeProductDetail: (
+    productId: string | undefined,
+    groupId: string | null = null,
+  ) =>
+    [
+      ...assignmentKeys.all,
+      "trainee-product-detail",
+      productId,
+      groupId,
+    ] as const,
 };

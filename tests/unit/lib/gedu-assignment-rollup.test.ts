@@ -558,6 +558,26 @@ describe("rollUpGeduAssignments", () => {
     );
     expect(summaries.map((s) => s.productId)).toEqual(["p1"]);
   });
+
+  it("gives a trainee seat the same card, owing nothing, linking to the same workspace", () => {
+    const trainee = { ...row({ id: "p2", name: "Shadowed Club" }), kind: "trainee" as const };
+    const summaries = rollUp([row({ id: "p1", name: "Club" }), trainee], now, {
+      // A count keyed to the trainee's seat must not reach their card: what a
+      // session owes is the staff's work.
+      attentionByAssignment: {
+        [geduAssignmentKey("p2", "p2-group")]: 4,
+      },
+    });
+    const card = summaries.find((s) => s.productId === "p2");
+    expect(card).toBeDefined();
+    expect(card?.trainee).toBe(true);
+    expect(card?.attentionCount).toBe(0);
+    expect(card?.openHref).toEqual({
+      pathname: "/preview/[surface]/[scenario]",
+      params: { surface: "gedu-product", scenario: "p2" },
+    });
+    expect(summaries.find((s) => s.productId === "p1")?.trainee).toBe(false);
+  });
 });
 
 /**

@@ -67,6 +67,7 @@ export function GeduDashboardPageBody({
   toolsCard,
   instantRoomCard,
   helpForm,
+  comparisonTraineeBadge,
 }: {
   /** One roll-up per assignment, already sorted soonest-first. */
   assignments: readonly GeduAssignmentCardData[];
@@ -132,6 +133,12 @@ export function GeduDashboardPageBody({
    * what lets the preview scene render the real form with the submit inert.
    */
   helpForm: React.ReactNode;
+  /**
+   * **Temporary, for an owner comparison.** The word trainee-seat cards wear as
+   * a badge. The shipped dashboard passes nothing and draws no badge; only the
+   * preview's comparison scenario passes it. Deleted with that scenario.
+   */
+  comparisonTraineeBadge?: string;
 }) {
   const t = useTranslations("dashboardSections");
   const h = useTranslations("helpSection");
@@ -271,7 +278,10 @@ export function GeduDashboardPageBody({
                     {t("myGroupsEmptyStateGedu")}
                   </p>
                 ) : (
-                  <GeduAssignmentsSectionView items={group.items} />
+                  <GeduAssignmentsSectionView
+                    items={group.items}
+                    traineeBadge={comparisonTraineeBadge}
+                  />
                 )}
               </div>
             </section>

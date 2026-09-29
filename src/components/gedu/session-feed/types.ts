@@ -17,6 +17,7 @@
 
 import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 import type { SessionStaffing } from "@/lib/session-staffing";
+import type { Withheld } from "@/lib/withheld";
 
 /**
  * One person on the group's roster, as the workspace's session surfaces need
@@ -132,8 +133,11 @@ export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
    * unset.
    */
   report: string | null;
-  /** The **gedu note** — a reminder for whoever runs it. `null` = unset. */
-  staffNote: string | null;
+  /**
+   * The **gedu note** — a reminder for whoever runs it. `null` = unset, and
+   * withheld on a redacted document, whose reader is not sent it.
+   */
+  staffNote: string | null | Withheld;
   /**
    * What has been said about each child so far — **present here because a
    * future entry can be the one in progress**, and the register opens at the
@@ -224,8 +228,11 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
    * Stored as markdown; `null` = unset.
    */
   report: string | null;
-  /** The **gedu note** — gedu + admin only. `null` renders no block at all. */
-  staffNote: string | null;
+  /**
+   * The **gedu note** — gedu + admin only. `null` renders no block at all;
+   * withheld draws the padlocked block over filler, set or not.
+   */
+  staffNote: string | null | Withheld;
   /**
    * What has been said about each child so far, keyed by roster id. A roster
    * member with no key here has not been marked; an empty map is a session

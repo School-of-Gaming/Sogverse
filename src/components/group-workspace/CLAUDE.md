@@ -42,6 +42,24 @@ on opposite sides of a card. This is a real departure from the paragraph above a
 only one: everything else here still differs between the shells in where it can send you
 and in nothing more.
 
+**The trainee shell is the third live shell, and it adds no capability flag.** A gedu
+holding a trainee seat opens the same `/gedu/…/[id]` URL; the route decides by the seat
+(its server half seeds the redacted reads when the assignment read refuses) and the
+trainee shell in `src/components/gedu/session-details/` feeds the body the redacted
+documents. Two mechanisms carry it, and both are types rather than branches on who is
+looking:
+
+- **A write slot may be handed a lock instead of a function** (`Locked`, from
+  `components/ui/locked-control`). The control is drawn as it is — the editor still opens
+  and takes typing — and only the commit becomes the locked control, which explains
+  itself when pressed. Every save the body takes is typed `fn | Locked`; a component asks
+  "was I handed a write, a lock, or nothing?" and never who is reading.
+- **A field the reader is not sent is typed withheld** (`src/lib/withheld.ts`), never
+  `null` and never a made-up string: redacted roster rows are a separate type with the
+  contact and note text absent, sister groups can arrive by name only, and a withheld
+  staff note draws blurred filler in its slot on every card, set or not, because filler
+  only where a note exists would tell the reader which ones have one.
+
 **The photo-consent answers are a shell read, and the body takes them whole.** On a
 product that asks whether photographs of a child may be taken and used, the session
 editors' photo block lists the roster's permissions and the note telling a gedu to ask

@@ -35,6 +35,22 @@ export function useGeduGroupFeed(groupId: string | null) {
 }
 
 /**
+ * The trainee's redacted workspace document for their group — the counterpart
+ * of {@link useGeduGroupFeed}, read only once the page has established that the
+ * caller holds a trainee seat here. The route seeds it server-side under the
+ * same key, so a direct load resolves on the first render.
+ */
+export function useTraineeGroupFeed(groupId: string | null) {
+  const service = new GeduSessionsService(getClient());
+
+  return useQuery({
+    queryKey: geduSessionKeys.traineeFeed(groupId ?? ""),
+    queryFn: () => service.getTraineeGroupFeed(groupId ?? ""),
+    enabled: groupId !== null && groupId.length > 0,
+  });
+}
+
+/**
  * Every assignment card's facts, including its outstanding-work count.
  *
  * `initialData` is how the dashboard normally gets it: the route prefetches the

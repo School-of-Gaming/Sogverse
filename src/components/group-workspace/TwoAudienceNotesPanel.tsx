@@ -5,7 +5,14 @@ import { Loader2, Pencil } from "lucide-react";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import {
+  LockedButton,
+  lockOf,
+  type Locked,
+} from "@/components/ui/locked-control";
 import { Textarea } from "@/components/ui/textarea";
+import { WithheldText } from "@/components/ui/withheld-text";
+import { isWithheld, type Withheld } from "@/lib/withheld";
 import {
   CollapsibleRegion,
   FamilyNoteBlock,
@@ -61,6 +68,11 @@ export interface TwoAudienceNotesCopy {
   staffLabel: string;
   staffHint: string;
   staffPlaceholder: string;
+  /**
+   * What a screen reader hears where a withheld staff note's filler is drawn —
+   * the only words that slot has. Read only when the staff note is withheld.
+   */
+  staffWithheld: string;
   /** One line for a refused save. Scope-specific, like everything else here. */
   saveFailed: string;
 }
@@ -112,7 +124,17 @@ interface TwoAudienceNotesPanelProps {
    */
   saveBlockedReason?: string | null;
   publicNote: string | null;
-  staffNote: string | null;
+  /**
+   * The staff-only note — its text, `null` for none, or **withheld**: there is a
+   * staff half on this scope and this reader is not sent it.
+   *
+   * A withheld note is drawn as blurred filler in the padlocked block, open or
+   * shut, whether or not anything is written there — the filler says where the
+   * staff half lives without saying whether it is empty, because either answer
+   * would be something about it. In the editor it stays filler: there is nothing
+   * to seed a field with, so nothing to type into.
+   */
+  staffNote: string | null | Withheld;
   /**
    * Whether the editor is open. Owned by the caller — the panel never owns it.
    *
@@ -135,7 +157,7 @@ interface TwoAudienceNotesPanelProps {
    * reached from a page with no claim on the record has to say the first: the
    * way to change it is {@link headerLink}, which goes to the page that does.
    */
-  onSave?: (draft: TwoAudienceNotesDraft) => void | Promise<void>;
+  onSave?: ((draft: TwoAudienceNotesDraft) => void | Promise<void>) | Locked;
 }
 
 /**
@@ -250,9 +272,18 @@ export function TwoAudienceNotesPanel({
    */
   const editable = onSave !== undefined;
   const isEditing = editable && editing;
+  /**
+   * A **locked** save still makes the panel editable — the pencil, the open
+   * editor and both fields are the page an entitled reader works on — and only
+   * the Save itself is the locked control. That is what a lock is: the control
+   * shown as it is, explaining itself instead of acting.
+   */
+  const saveLock = lockOf(onSave);
+  const staffWithheld = isWithheld(staffNote);
+  const storedStaff = staffWithheld ? "" : (staffNote ?? "");
   const [draft, setDraft] = useState<TwoAudienceNotesDraft>({
     publicNote: publicNote ?? "",
-    staffNote: staffNote ?? "",
+    staffNote: storedStaff,
   });
   const [committing, setCommitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -264,7 +295,7 @@ export function TwoAudienceNotesPanel({
   if (isEditing !== wasEditing) {
     setWasEditing(isEditing);
     if (isEditing) {
-      setDraft({ publicNote: publicNote ?? "", staffNote: staffNote ?? "" });
+      setDraft({ publicNote: publicNote ?? "", staffNote: storedStaff });
       setError(null);
     }
   }
@@ -284,7 +315,7 @@ export function TwoAudienceNotesPanel({
    * the same commit as the close, where the region shuts around it anyway.
    */
   const handleSave = async () => {
-    if (onSave === undefined) return;
+    if (onSave === undefined || typeof onSave !== "function") return;
     setError(null);
     setCommitting(true);
     try {
@@ -302,7 +333,8 @@ export function TwoAudienceNotesPanel({
   };
 
   const hasPublic = publicNote !== null && publicNote.length > 0;
-  const hasStaff = staffNote !== null && staffNote.length > 0;
+  const hasStaff =
+    !staffWithheld && staffNote !== null && staffNote.length > 0;
 
   /**
    * What is stored, and — on an editable panel only — a ghost where nothing is.
@@ -329,7 +361,11 @@ export function TwoAudienceNotesPanel({
           </p>
         )
       )}
-      {(hasStaff || editable) && (
+      {staffWithheld ? (
+        <StaffNoteBlock>
+          <WithheldText label={copy.staffWithheld} lines={2} />
+        </StaffNoteBlock>
+      ) : (hasStaff || editable) && (
         <StaffNoteBlock>
           {hasStaff ? (
             <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
@@ -416,6 +452,13 @@ export function TwoAudienceNotesPanel({
           </FamilyNoteBlock>
 
           <StaffNoteBlock>
+            {staffWithheld ? (
+              <Field label={copy.staffLabel} hint={copy.staffHint}>
+                {() => (
+                  <WithheldText label={copy.staffWithheld} lines={3} boxed />
+                )}
+              </Field>
+            ) : (
             <Field
               label={copy.staffLabel}
               htmlFor={`${fieldId}-staff`}
@@ -435,6 +478,7 @@ export function TwoAudienceNotesPanel({
                 />
               )}
             </Field>
+            )}
           </StaffNoteBlock>
 
           {/* The failure line sits above the buttons, where the eye already is
@@ -471,18 +515,24 @@ export function TwoAudienceNotesPanel({
             >
               {copy.cancel}
             </Button>
-            <Button
-              type="button"
-              size="sm"
-              disabled={committing || saveBlockedReason !== null}
-              onClick={() => void handleSave()}
-              className="gap-1.5"
-            >
-              {committing && (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-              )}
-              {copy.save}
-            </Button>
+            {saveLock !== null ? (
+              <LockedButton explanation={saveLock} size="sm">
+                {copy.save}
+              </LockedButton>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                disabled={committing || saveBlockedReason !== null}
+                onClick={() => void handleSave()}
+                className="gap-1.5"
+              >
+                {committing && (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                )}
+                {copy.save}
+              </Button>
+            )}
           </div>
         </div>
       </CollapsibleRegion>

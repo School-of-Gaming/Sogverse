@@ -6,6 +6,8 @@ import { ArrowUpRight, MapPin, Share2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { isLocked, type Locked } from "@/components/ui/locked-control";
+import type { Withheld } from "@/lib/withheld";
 import {
   TwoAudienceNotesPanel,
   type TwoAudienceNotesDraft,
@@ -36,7 +38,8 @@ interface SitePanelProps {
   /** The site's street address, or `null` when nobody has filled one in. */
   address: string | null;
   publicNote: string | null;
-  staffNote: string | null;
+  /** The staff half — text, `null` for none, or withheld from this reader. */
+  staffNote: string | null | Withheld;
   /**
    * Whether the editor is open — the caller's, never the panel's. Meaningless
    * without {@link onSaveNotes}, and omitted alongside it.
@@ -52,7 +55,7 @@ interface SitePanelProps {
    * product runs at rather than owning the site's record — the product form's
    * site field is the case, and it pairs the view with {@link editHref}.
    */
-  onSaveNotes?: (draft: SiteNotesDraft) => void | Promise<void>;
+  onSaveNotes?: ((draft: SiteNotesDraft) => void | Promise<void>) | Locked;
   /**
    * Persist the name and the address — the `locations` record itself.
    *
@@ -168,13 +171,19 @@ export function SitePanel({
   editHref,
 }: SitePanelProps) {
   const t = useTranslations("gedu.siteNotes");
+  const g = useTranslations("gedu.groupWorkspace");
   const fieldId = useId();
 
   const editsNotes = onSaveNotes !== undefined;
+  // A locked notes save still opens the editor — only its Save is the locked
+  // control — so it is handed through to the panel as it is.
+  const notesLocked = isLocked(onSaveNotes);
   // Details ride on the notes' Save, so a details save with no notes save has
   // nothing to commit it. Reading the pair rather than `onSaveDetails` alone
-  // keeps that from rendering two name fields nobody can submit.
-  const editsDetails = editsNotes && onSaveDetails !== undefined;
+  // keeps that from rendering two name fields nobody can submit — and a locked
+  // notes save commits nothing either.
+  const editsDetails =
+    editsNotes && !notesLocked && onSaveDetails !== undefined;
   const storedAddress = address ?? "";
 
   const [nameDraft, setNameDraft] = useState(siteName);
@@ -285,10 +294,11 @@ export function SitePanel({
       }
     }
 
+    const storedStaff = typeof staffNote === "string" ? staffNote : "";
     const notesChanged =
       notes.publicNote !== (publicNote ?? "").trim() ||
-      notes.staffNote !== (staffNote ?? "").trim();
-    if (onSaveNotes !== undefined && notesChanged) {
+      notes.staffNote !== storedStaff.trim();
+    if (typeof onSaveNotes === "function" && notesChanged) {
       try {
         await onSaveNotes(notes);
       } catch (error) {
@@ -317,6 +327,7 @@ export function SitePanel({
         staffLabel: t("staffLabel"),
         staffHint: t("staffHint"),
         staffPlaceholder: t("staffPlaceholder"),
+        staffWithheld: g("staffNoteWithheld"),
         saveFailed: t("saveFailed"),
       }}
       caption={
@@ -386,7 +397,7 @@ export function SitePanel({
       onEditingChange={onEditingChange}
       // No notes save, no save at all — the details ride on this one, so the
       // panel below turns read-only as a whole rather than half of it.
-      onSave={editsNotes ? handleSave : undefined}
+      onSave={notesLocked ? onSaveNotes : editsNotes ? handleSave : undefined}
     />
   );
 }

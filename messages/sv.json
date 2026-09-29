@@ -954,7 +954,9 @@
         "alreadyAssigned": "Redan tilldelad",
         "alreadyExpected": "Redan på tillfället",
         "absentGedu": "Gedun som vikarieras",
-        "notCertified": "Inte certifierad"
+        "notCertified": "Inte certifierad",
+        "alreadyTrainee": "Redan praktikant",
+        "traineeInstead": "Kan läggas till som praktikant i stället."
       },
       "participantPicker": {
         "title": "Lägg till en deltagare",
@@ -1021,7 +1023,16 @@
         },
         "picker": {
           "addTitle": "Lägg till Gedu i {name}",
-          "addDescription": "En Gedu kan bara leda en grupp per produkt. De som redan är tilldelade är gråa."
+          "addDescription": "En Gedu kan bara leda en grupp per produkt. De som redan är tilldelade är gråa.",
+          "addTraineeTitle": "Lägg till praktikant i {name}",
+          "addTraineeDescription": "En praktikant följer gruppen och behöver inte vara certifierad. De som redan finns på produkten, som Gedu eller praktikant, är gråa."
+        },
+        "trainee": {
+          "label": "Praktikanter",
+          "add": "Lägg till praktikant",
+          "promote": "Gör till Gedu",
+          "promoteAria": "Gör {name} till Gedu i den här gruppen",
+          "removeAria": "Ta bort praktikanten {name}"
         },
         "removeParticipant": {
           "confirmTitle": "Ta bort {name} från den här produkten?",
@@ -2121,6 +2132,36 @@
       "loading": "Laddar platser...",
       "save": "Spara",
       "saving": "Sparar..."
+    },
+    "groupWorkspace": {
+      "staffNoteWithheld": "Bara tilldelade Geduer och administratörer kan läsa den här anteckningen.",
+      "contactWithheld": "Kontaktuppgifterna är för tilldelade Geduer och administratörer.",
+      "traineesLine": "{count, plural, one {Praktikant} other {Praktikanter}}: {names}"
+    },
+    "trainee": {
+      "badge": "Praktikant",
+      "dismiss": "Uppfattat",
+      "lockedHint": "(låst)",
+      "whyAction": "Tilldelade Geduer kan göra det här. Du är med i gruppen som praktikant.",
+      "whySave": "Att spara är för tilldelade Geduer. Du är med i gruppen som praktikant, så prova gärna – inget du skriver sparas.",
+      "sessionTitle": "Spara ett tillfälle",
+      "sessionWhat": "Sparar tillfällets rapport, Gedu-anteckningen, bilderna och närvaron.",
+      "groupNotesTitle": "Spara gruppens anteckningar",
+      "groupNotesWhat": "Sparar anteckningarna om gruppen, för familjerna och för Geduerna.",
+      "siteNotesTitle": "Spara lokalens anteckningar",
+      "siteNotesWhat": "Sparar anteckningarna om lokalen, som alla produkter där delar.",
+      "gamerTitle": "Spara en anteckning om en gamer",
+      "gamerWhat": "Sparar det Geduer skriver om den här gamern, och skapelsen familjen ser.",
+      "usernameTitle": "Rätta ett spelnamn",
+      "usernameWhat": "Ändrar gamerns användarnamn så att det stämmer med det i spelet.",
+      "sendTitle": "Skicka till föräldrarna",
+      "sendWhat": "Mejlar tillfällets rapport till alla familjer i gruppen.",
+      "photosTitle": "Tillfällets bilder",
+      "photosWhat": "Lägger till bilder i tillfällets rapport, eller tar bort dem.",
+      "substituteTitle": "Be om en vikarie",
+      "substituteWhat": "Ber en annan Gedu att hålla tillfället i ditt ställe.",
+      "roomTitle": "Andra gruppers röstrum",
+      "roomWhat": "Går med i en annan grupps röstrum för att täcka upp för dess Gedu en stund."
     },
     "sessionDetails": {
       "back": "Tillbaka till Min SOG",

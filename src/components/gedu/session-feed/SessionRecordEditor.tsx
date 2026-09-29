@@ -5,12 +5,18 @@ import { Eye, Loader2, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  LockedButton,
+  type LockExplanation,
+} from "@/components/ui/locked-control";
+import { isWithheld, type Withheld } from "@/lib/withheld";
 import type { AttendanceMark } from "@/components/session-feed";
 import { attendanceTally, draftFromEditorState } from "./entry-state";
 import { AttendanceRoster } from "./AttendanceRoster";
 import { FamilyNoteBlock } from "./FamilyNoteBlock";
 import { RichNoteField } from "./RichNoteField";
 import { StaffNoteBlock } from "./StaffNoteBlock";
+import { WithheldStaffNoteField } from "./WithheldStaffNoteField";
 import type {
   SessionEditorState,
   SessionFeedEntry,
@@ -31,7 +37,14 @@ interface SessionRecordEditorProps {
    * The session being written up — read only for its end instant, which is what
    * decides which of the roster this register is actually for.
    */
-  entry: Pick<SessionFeedEntry, "endsAt">;
+  entry: Pick<SessionFeedEntry, "endsAt"> & {
+    /**
+     * The stored gedu note, read only to ask whether it was withheld — the
+     * editor seeds from {@link SessionRecordEditorProps.initialState}. Absent on
+     * a pre-epoch gap, which has no stored row to withhold anything from.
+     */
+    staffNote?: string | null | Withheld;
+  };
   roster: readonly SessionFeedGamer[];
   initialState: SessionEditorState;
   /**
@@ -72,6 +85,13 @@ interface SessionRecordEditorProps {
    * them.
    */
   creationsBlock?: ReactNode;
+  /**
+   * The Save's explanation when this surface handed the save in locked, or
+   * `null`. Everything above it still takes input — the register's marks
+   * excepted, which are the save's own writes and explain themselves the same
+   * way — and only the commit is withheld.
+   */
+  saveLock?: LockExplanation | null;
   onCancel: () => void;
   onSave: (draft: SessionRecordDraft) => void;
 }
@@ -143,6 +163,7 @@ export function SessionRecordEditor({
   error,
   photoStrip,
   creationsBlock,
+  saveLock = null,
   onCancel,
   onSave,
 }: SessionRecordEditorProps) {
@@ -253,6 +274,7 @@ export function SessionRecordEditor({
                 roster={roster}
                 attendance={draft.attendance}
                 disabled={committing}
+                lock={saveLock}
                 onMark={markGamer}
               />
             </div>
@@ -294,22 +316,27 @@ export function SessionRecordEditor({
           *written*, not only while it is read: the whole risk of a two-audience
           field is somebody typing for one and picturing the other. */}
       <StaffNoteBlock audienceStatedByField>
-        <RichNoteField
-          label={t("staffNoteTitle")}
-          icon={Lock}
-          hint={t("staffNoteHint")}
-          placeholder={t("staffNotePlaceholder")}
-          value={initialState.staffNote}
-          seed={opens}
-          ready={opens > 0}
-          disabled={committing}
-          onChange={(staffNote) => setDraft((d) => ({ ...d, staffNote }))}
-        />
+        {isWithheld(entry.staffNote) ? (
+          <WithheldStaffNoteField />
+        ) : (
+          <RichNoteField
+            label={t("staffNoteTitle")}
+            icon={Lock}
+            hint={t("staffNoteHint")}
+            placeholder={t("staffNotePlaceholder")}
+            value={initialState.staffNote}
+            seed={opens}
+            ready={opens > 0}
+            disabled={committing}
+            onChange={(staffNote) => setDraft((d) => ({ ...d, staffNote }))}
+          />
+        )}
       </StaffNoteBlock>
 
       <EditorActionRow
         committing={committing}
         error={error}
+        saveLock={saveLock}
         onCancel={onCancel}
         onSave={handleSave}
       />
@@ -331,11 +358,14 @@ export function SessionRecordEditor({
 export function EditorActionRow({
   committing,
   error,
+  saveLock = null,
   onCancel,
   onSave,
 }: {
   committing: boolean;
   error: string | null;
+  /** Draw the Save as the locked control, explaining itself, instead. */
+  saveLock?: LockExplanation | null;
   onCancel: () => void;
   onSave: () => void;
 }) {
@@ -363,16 +393,22 @@ export function EditorActionRow({
         >
           {t("cancel")}
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          disabled={committing}
-          onClick={onSave}
-          className="gap-1.5"
-        >
-          {committing && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />}
-          {t("save")}
-        </Button>
+        {saveLock !== null ? (
+          <LockedButton explanation={saveLock} size="sm">
+            {t("save")}
+          </LockedButton>
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            disabled={committing}
+            onClick={onSave}
+            className="gap-1.5"
+          >
+            {committing && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />}
+            {t("save")}
+          </Button>
+        )}
       </div>
     </div>
   );

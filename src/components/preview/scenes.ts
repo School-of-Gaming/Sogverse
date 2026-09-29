@@ -370,6 +370,18 @@ export const PREVIEW_SCENES = [
         description:
           "An account awaiting approval, which by definition has no assignments at all — under the criminal-record band, the other of the two.",
       },
+      {
+        slug: "trainee",
+        label: "Trainee seats — shipped, no badge",
+        description:
+          "Two trainee seats (Minecraft Builders Club, Coding Camp) on the ordinary card beside two assignments; the Builders card opens the trainee workspace.",
+      },
+      {
+        slug: "trainee-badge",
+        label: "Trainee seats — TEMPORARY badge comparison",
+        description:
+          "The trainee page with a Trainee badge on those two cards, to compare against the shipped, unbadged one. Not shipped; deleted once ruled.",
+      },
     ],
   },
   {
@@ -451,6 +463,12 @@ export const PREVIEW_SCENES = [
         label: "Creations owed — a finished flagged run",
         description:
           "The one product shape the owed signal needs: flagged, and over.",
+      },
+      {
+        slug: "trainee",
+        label: "Trainee — the club as its trainee sees it",
+        description:
+          "The club scenario through the trainee shell: private text as blurred filler, every write the locked control that explains itself, editors still open.",
       },
     ],
   },

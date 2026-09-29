@@ -25,7 +25,9 @@ import type {
 import type {
   GeduFeedSession,
   SessionCancellation,
+  TraineeFeedSession,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import { WITHHELD } from "@/lib/withheld";
 import type {
   SubstitutionRequestDocument,
   SessionStaffGedu,
@@ -86,8 +88,13 @@ export interface GeduSessionFeedArgs {
   /** Product-local `YYYY-MM-DD`, or `null` on an open-ended product. */
   startDate: string | null;
   endDate: string | null;
-  /** Every stored row for this group, in any order. */
-  sessions: readonly GeduFeedSession[];
+  /**
+   * Every stored row for this group, in any order — the staff document's rows,
+   * or the redacted rows a trainee is sent. Which of the two is decided by
+   * {@link GeduSessionFeedArgs.reach}, never by inspecting a row: a date with no
+   * row still has to know whether its note is empty or withheld.
+   */
+  sessions: readonly (GeduFeedSession | TraineeFeedSession)[];
   /**
    * The group's staff with their roles, exactly as either staff document emits
    * them — the first input the per-date staffing derivation takes.
@@ -119,6 +126,15 @@ export interface GeduSessionFeedArgs {
    * global constant; a test passes its own so it can stand either side of it.
    */
   epoch?: string;
+  /**
+   * Whose document the rows came from. `"staff"` (the default) is every staff
+   * shell. `"redacted"` is the trainee's: every entry's gedu note is withheld —
+   * on every date, stored row or not, because the reader may not learn whether
+   * one was written — and **nothing is owed**, because what a session owes is
+   * the staff's work and the redacted register is empty by construction; a
+   * card counting it would flag every past session for marks that were made.
+   */
+  reach?: "staff" | "redacted";
 }
 
 /**
@@ -147,6 +163,7 @@ export function buildGeduSessionFeed(
     viewerId = null,
     now,
     epoch = SESSION_RECORDING_EPOCH,
+    reach = "staff",
   } = args;
 
   // Mapped once for the whole feed rather than per entry: the derivation's
@@ -274,6 +291,7 @@ export function buildGeduSessionFeed(
         staffing,
         now,
         epoch,
+        redacted: reach === "redacted",
       }),
     );
   }
@@ -334,12 +352,19 @@ function toEntry(args: {
   date: string;
   startsAt: Date;
   endsAt: Date;
-  row: GeduFeedSession | undefined;
+  row: GeduFeedSession | TraineeFeedSession | undefined;
   staffing: SessionStaffing;
   now: Date;
   epoch: string;
+  redacted: boolean;
 }): SessionFeedEntry {
-  const { id, date, startsAt, endsAt, row, staffing, now, epoch } = args;
+  const { id, date, startsAt, endsAt, row, staffing, now, epoch, redacted } =
+    args;
+  const staffNote = redacted
+    ? WITHHELD
+    : row !== undefined && "gedu_note" in row
+      ? row.gedu_note
+      : null;
 
   if (endsAt.getTime() > now.getTime()) {
     return {
@@ -349,7 +374,7 @@ function toEntry(args: {
       endsAt,
       staffing,
       report: row?.report ?? null,
-      staffNote: row?.gedu_note ?? null,
+      staffNote,
       // Carried on a future entry because one of them can be **in progress**,
       // and the register opens at the start. For a session that has not begun
       // this is `{}` and stays that way — the server refuses a mark before the
@@ -384,9 +409,9 @@ function toEntry(args: {
     // No end test here any more: reaching this branch *is* having finished,
     // since the kind flips at the end instant a few lines up. The epoch is the
     // only remaining question, and it is the same one the SQL count asks.
-    owed: withinEnforcement,
+    owed: withinEnforcement && !redacted,
     report: row?.report ?? null,
-    staffNote: row?.gedu_note ?? null,
+    staffNote,
     reportEmailedAt: toReportEmailedAt(row),
     attendance: row?.attendance ?? {},
     // Straight through in the RPC's own order — `(created_at, id)`, which is
@@ -449,7 +474,9 @@ function toCancelledEntry(args: {
  * through. An occurrence with no row behind it answers the same as a row nobody
  * has emailed, which is the truth in both cases: nothing has been sent.
  */
-function toReportEmailedAt(row: GeduFeedSession | undefined): Date | null {
+function toReportEmailedAt(
+  row: GeduFeedSession | TraineeFeedSession | undefined,
+): Date | null {
   const stamped = row?.report_emailed_at ?? null;
   return stamped === null ? null : new Date(stamped);
 }
@@ -505,7 +532,9 @@ function toSubstitutionRequestInput(request: SubstitutionRequestDocument): Subst
  * imprecision is a documented product decision — the editor type's own note
  * carries it.
  */
-function toLastEditedBy(row: GeduFeedSession | undefined): SessionEditor | null {
+function toLastEditedBy(
+  row: GeduFeedSession | TraineeFeedSession | undefined,
+): SessionEditor | null {
   if (row === undefined) return null;
   return row.updated_by !== null && row.updated_by_first_name !== null
     ? { id: row.updated_by, firstName: row.updated_by_first_name }
