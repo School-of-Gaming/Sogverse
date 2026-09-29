@@ -140,9 +140,8 @@ interface GeduAssignmentCardProps {
  * after the product type. Trainee status is per seat, so one gedu may hold
  * assignments and trainee seats on the same page, and the card's kind has to be
  * legible before its name — the same reasoning that puts "Substitution" in the
- * substitution card's eyebrow. It sits after the type rather than before it
- * because the trainee card is still an assignment-shaped card: the type leads,
- * as on every other card of its kind, and the badge qualifies it.
+ * substitution card's eyebrow. On both cards the type leads and the badge
+ * follows it, so every card's eyebrow starts in the same place.
  *
  * **The card states the schedule; the Join states the next session.** They are
  * two different questions and each is answered once. A gedu sweeping this page

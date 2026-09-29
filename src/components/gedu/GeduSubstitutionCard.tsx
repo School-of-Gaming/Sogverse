@@ -149,13 +149,15 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
               {/* Two words in the eyebrow's slot, because this card's own kind
-                  is the first thing about it that has to be legible — a sub
-                  scanning a grid must not read it as another group of theirs. */}
+                  has to be legible before its name — a sub scanning a grid
+                  must not read it as another group of theirs. The type leads
+                  and the badge follows it, as on the trainee card, so every
+                  card's eyebrow starts in the same place. */}
               <div className="flex flex-wrap items-center gap-2">
-                <SeatKindBadge>{t("cardEyebrow")}</SeatKindBadge>
                 <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {p(productType)}
                 </span>
+                <SeatKindBadge>{t("cardEyebrow")}</SeatKindBadge>
               </div>
               <p className="text-lg font-semibold leading-tight">
                 {productName}
