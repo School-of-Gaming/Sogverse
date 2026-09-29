@@ -34,11 +34,27 @@ export interface ProductPictureUser {
   is_visible: boolean;
 }
 
-/** Anything a catalogue entry reaches. */
-export type CatalogueImageUser = ProductPictureUser;
+/**
+ * One Library article whose cover is a catalogue entry, named by its working
+ * title. `is_live` is whether the entry is the cover readers see right now —
+ * the article's published copy links it — rather than only its working copy.
+ */
+export interface LibraryArticleImageUser {
+  kind: "library-article";
+  id: string;
+  title: string;
+  is_live: boolean;
+}
 
 /**
- * Which products use which entry, keyed by entry id. The count a
+ * Anything a catalogue entry reaches. A product links only a product entry and
+ * an article only a Library cover, so one entry's list is in practice all of
+ * one kind; the type does not rely on that.
+ */
+export type CatalogueImageUser = ProductPictureUser | LibraryArticleImageUser;
+
+/**
+ * Which products and articles use which entry, keyed by entry id. The count a
  * tile's badge shows is the array's length — there is no separate counts map,
  * because two derivations of one number is how they come to disagree. An
  * entry nothing uses is absent from the record rather than present with an
@@ -85,8 +101,8 @@ export class CatalogueImagesService {
   }
 
   /**
-   * Which products each entry reaches, derived from a products read rather
-   * than stored anywhere.
+   * Which products and Library articles each entry reaches, derived from a
+   * products read and an articles read rather than stored anywhere.
    *
    * Only imaged products are fetched: a product with no entry contributes to
    * no entry's list, so reading it would be payload for nothing. The name is
@@ -94,9 +110,16 @@ export class CatalogueImagesService {
    * resolves one — a product need not carry an English translation, and
    * filtering the embed to one locale would blank the name for those rather
    * than falling back.
+   *
+   * An article reaches the entry its working copy links and the one its
+   * published copy links, which differ while a cover change is unpublished —
+   * and a replace or a remove reaches both.
    */
   async getUsage(): Promise<CatalogueImageUsage> {
-    const productRows = await this.readProductUsage();
+    const [productRows, articleRows] = await Promise.all([
+      this.readProductUsage(),
+      this.readArticleUsage(),
+    ]);
 
     const usage: CatalogueImageUsage = {};
     for (const row of productRows) {
@@ -112,6 +135,20 @@ export class CatalogueImagesService {
         product_type: row.product_type,
         is_visible: row.is_visible,
       });
+    }
+
+    for (const row of articleRows) {
+      const liveId = row.publication?.cover_image_id ?? null;
+      const entryIds = new Set([row.cover_image_id, liveId]);
+      for (const entryId of entryIds) {
+        if (!entryId) continue;
+        (usage[entryId] ??= []).push({
+          kind: "library-article",
+          id: row.id,
+          title: row.title,
+          is_live: entryId === liveId,
+        });
+      }
     }
 
     // A stable order inside each list, so re-reading usage after a rename or a
@@ -145,6 +182,24 @@ export class CatalogueImagesService {
   }
 
   /**
+   * Every article with a cover on either copy. The Library is small and the
+   * two copies' links are OR'd across tables, which PostgREST cannot filter
+   * on, so articles with no cover anywhere are dropped by `getUsage` instead.
+   */
+  private readArticleUsage() {
+    return walkPages("libraryArticleImageUsage", (from, to) =>
+      this.supabase
+        .from("library_articles")
+        .select(
+          "id, title, cover_image_id, publication:library_article_publications(cover_image_id)",
+          { count: "exact" },
+        )
+        .order("id")
+        .range(from, to),
+    );
+  }
+
+  /**
    * Add a picture to the catalogue for `purpose`, or find the entry of that
    * purpose that already holds these exact bytes. `status` says which
    * happened; the caller selects the returned entry either way. `file` is a
@@ -172,7 +227,8 @@ export class CatalogueImagesService {
   }
 
   /**
-   * Point every product using `id` at the entry holding the new bytes. The old entry stays in the catalogue,
+   * Point every product and every Library cover — draft and live — using `id`
+   * at the entry holding the new bytes. The old entry stays in the catalogue,
    * unlinked, which is what makes this reversible. `relinked` is 0 when the
    * new bytes resolved to `id` itself.
    */
@@ -221,8 +277,8 @@ export class CatalogueImagesService {
 
   /**
    * Remove an entry from the catalogue: the row and its object both go, and
-   * every product linked to it is left with no picture. `unlinked` is how many
-   * that was.
+   * every product and Library article linked to it — live covers included —
+   * is left with no picture. `unlinked` is how many that was.
    */
   async deleteImage(id: string): Promise<DeleteCatalogueImageResult> {
     const response = await fetch(
@@ -239,9 +295,9 @@ export class CatalogueImagesService {
   }
 }
 
-/** What a usage list is sorted by: a product's name. */
+/** What a usage list is sorted by: a product's name, an article's title. */
 function userName(user: CatalogueImageUser): string {
-  return user.name;
+  return user.kind === "product" ? user.name : user.title;
 }
 
 /**

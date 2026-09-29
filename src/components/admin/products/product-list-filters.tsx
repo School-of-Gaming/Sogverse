@@ -1,11 +1,10 @@
 "use client";
 
-import { useId, useMemo } from "react";
+import { useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Search } from "lucide-react";
 import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { FilterCombobox } from "@/components/ui/filter-combobox";
-import { Input } from "@/components/ui/input";
+import { AdminListSearchField } from "@/components/admin/admin-list-narrowing";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { useUsersByRole } from "@/services/users";
 import {
@@ -22,11 +21,10 @@ import {
 } from "./product-name-search";
 import { ProductListResults } from "./product-list-results";
 import {
-  optionInRange,
-  PRODUCT_LIST_PARAMS,
   useDebouncedUrlParamState,
   useUrlParamState,
-} from "./product-list-url-state";
+} from "@/components/admin/admin-list-url-state";
+import { optionInRange, PRODUCT_LIST_PARAMS } from "./product-list-url-state";
 import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductWithDetails } from "@/services/products";
@@ -67,7 +65,6 @@ export function ProductListFilters({
   const uiLocale = resolveLocale(useLocale());
   const config = PRODUCT_TYPE_CONFIG[productType];
   const plural = t(`types.${config.i18nKey}.plural`);
-  const searchId = useId();
 
   const isConsumer = productType === "consumer_club";
   const isMunicipality = productType === "municipality_club";
@@ -242,34 +239,15 @@ export function ProductListFilters({
           on every one of these pages and a type with two controls simply leaves
           the right half of the row empty. */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="space-y-1.5">
-          {/* The filter controls beside this one label themselves the same way,
-              in the same size and colour; the difference is that this one is a
-              real <label>, because it has a single input to name. */}
-          <label
-            htmlFor={searchId}
-            className="block text-xs font-medium text-muted-foreground"
-          >
-            {t("filters.search")}
-          </label>
-          <div className="relative">
-            <Search
-              aria-hidden
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <Input
-              id={searchId}
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              // Leaving the field settles the URL at once, so a click straight
-              // from the box into a product row cannot outrun the mirror.
-              onBlur={flushSearch}
-              placeholder={t("filters.searchPlaceholder")}
-              className="pl-9"
-            />
-          </div>
-        </div>
+        <AdminListSearchField
+          label={t("filters.search")}
+          placeholder={t("filters.searchPlaceholder")}
+          value={search}
+          onChange={setSearch}
+          // Leaving the field settles the URL at once, so a click straight
+          // from the box into a product row cannot outrun the mirror.
+          onBlur={flushSearch}
+        />
 
         <FilterCombobox
           label={t("filters.gedu")}

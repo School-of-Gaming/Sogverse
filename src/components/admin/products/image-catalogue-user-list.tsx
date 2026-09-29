@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Circle, CircleDot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
+  LibraryArticleImageUser,
   CatalogueImageUser,
   ProductPictureUser,
 } from "@/services/catalogue-images";
@@ -12,7 +13,7 @@ import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import { ROUTES } from "@/lib/constants";
 
 /**
- * **Which products a catalogue entry reaches**, in the
+ * **Which products and Library articles a catalogue entry reaches**, in the
  * one shape both places that ask the question use: the reference column, where
  * it is information, and the confirm dialogs, where it is the thing the admin
  * is being asked to weigh. One component so the two cannot drift into showing
@@ -23,6 +24,10 @@ import { ROUTES } from "@/lib/constants";
  * they". It carries the product's type and whether it is live in the shop, the
  * two facts that decide how much a picture change matters: a hidden draft and
  * a club families are looking at right now are not the same stake.
+ *
+ * An article row is a link to the article's admin editor, names it by its
+ * working title, and says whether this picture is the cover readers see now
+ * (live) or only the draft's.
  *
  * The list is **bounded and scrolls**, in both hosts. An entry can reach 22
  * products, and a list that simply grows pushes whatever is under it — the
@@ -44,7 +49,11 @@ export function CatalogueImageUserList({
     >
       {users.map((user) => (
         <li key={`${user.kind}:${user.id}`}>
-          <ProductRow product={user} />
+          {user.kind === "product" ? (
+            <ProductRow product={user} />
+          ) : (
+            <ArticleRow article={user} />
+          )}
         </li>
       ))}
     </ul>
@@ -76,6 +85,22 @@ function ProductRow({ product }: { product: ProductPictureUser }) {
             ? t("imageCatalogue.live")
             : t("imageCatalogue.hidden")
         }
+      />
+    </Link>
+  );
+}
+
+function ArticleRow({ article }: { article: LibraryArticleImageUser }) {
+  const t = useTranslations("admin.products.imageCatalogue");
+  return (
+    <Link
+      href={ROUTES.admin.libraryArticle(article.id)}
+      className={cn(ROW, "hover:bg-hover")}
+    >
+      <span className="block min-w-0 truncate font-medium">{article.title}</span>
+      <LiveMark
+        live={article.is_live}
+        label={article.is_live ? t("live") : t("draft")}
       />
     </Link>
   );

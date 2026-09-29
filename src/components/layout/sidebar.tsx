@@ -12,6 +12,7 @@ import {
   FlaskConical,
   MessageCircle,
   Building2,
+  BookOpen,
   ChevronLeft,
   ChevronRight,
   MapPin,
@@ -32,7 +33,7 @@ type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "whatsapp" | "testing" | "settings"
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
-  | "invoiceCustomers" | "geduInvoicing"
+  | "invoiceCustomers" | "geduInvoicing" | "libraryContent"
   | "camps" | "events"
   | "sites" | "substitutions";
 
@@ -79,6 +80,7 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     // because an invoice is being raised, and the ledger is where a club with
     // no customer is reported.
     { href: ROUTES.admin.invoiceCustomers, labelKey: "invoiceCustomers", icon: <Building2 className="h-5 w-5" /> },
+    { href: ROUTES.admin.library, labelKey: "libraryContent", icon: <BookOpen className="h-5 w-5" /> },
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },

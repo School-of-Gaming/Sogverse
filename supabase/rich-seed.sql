@@ -7,8 +7,9 @@
 -- database with enough of a catalogue that the admin, gedu and family
 -- dashboards look like a real platform — products of every type and lifecycle
 -- state, families with children, certified and uncertified educators, groups
--- with sessions, reports, attendance, feedback, a substitution and a few
--- cancelled sessions. It exists so
+-- with sessions, reports, attendance, feedback, a substitution, a few
+-- cancelled sessions, and Library articles in every state an admin can find
+-- one in. It exists so
 -- a human can look at the UI. Nothing asserts anything here.
 --
 -- THE TWO SEEDS NEVER SHARE A DATABASE. What makes a good fixture for a DB test
@@ -40,12 +41,13 @@
 -- fixed then. Accounts are the one exception: they are direct `auth.users` /
 -- `auth.identities` inserts exactly as `seed.sql` does them.
 --
--- THE PICTURES ARE NOT IN HERE. A product's picture is a `catalogue_images`
--- entry naming an object in its purpose's storage bucket by
+-- THE PICTURES ARE NOT IN HERE. A product's picture or a Library cover is a
+-- `catalogue_images` entry naming an object in its purpose's storage bucket by
 -- the sha256 of its bytes, so no amount of SQL can mint one — the bytes have to
 -- be uploaded first. `scripts/local-db/rich-images.sh` does that, and the local
 -- stack runs it straight after this file. Applying this file by hand leaves
--- every product on its placeholder.
+-- every product on its placeholder, and every Library article without its
+-- cover.
 --
 -- SIGNING IN. Three accounts are the ones to look at the app through, and they
 -- share the password `password`:
@@ -1559,7 +1561,265 @@ $$;
 COMMIT;
 
 -- =============================================================================
--- 14. What landed
+-- 14. The Library
+-- =============================================================================
+-- Five articles, one per state the admin list and editor can show:
+--
+--   Talking with your child about who they meet online   live, unchanged since
+--   Playing together: how to join your child's game     live, with unpublished changes
+--   Minecraft, Roblox and Fortnite: what's the difference?   live, no cover
+--   What children learn when they build together        draft, ready to publish
+--   Getting ready for your child's first club session   draft, missing summary,
+--                                                        category and cover
+--
+-- Written through the admin RPCs, so each published copy is exactly what
+-- publish_library_article makes of its working copy. The covers are not here,
+-- for the reason the products' pictures are not: `rich-images.sh` uploads
+-- them and links each to both copies of the articles in its category.
+
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+DO $$
+DECLARE
+  v_id uuid;
+BEGIN
+  -- 1. Live, and the working copy is what readers see.
+  v_id := public.create_library_article(
+    p_title    => 'Talking with your child about who they meet online',
+    p_summary  => 'Most of what children meet in online games is ordinary play. A few calm conversations help them spot the part that isn''t, and tell you about it.',
+    p_category => 'online_safety',
+    p_body     => $md$
+Minecraft, Roblox, Fortnite and most of the games children love are social places. Your child may play alongside friends from school, and alongside people they have never met. That is not something to fear, but it is something to talk about: early, calmly and more than once.
+
+## Start with curiosity, not rules
+
+Ask your child to show you what they play and who they play with. **Watching a session together** tells you more than any settings menu, and it tells your child that games are something they can talk to you about.
+
+## Three things every child should know
+
+- **A stranger online is still a stranger**, however friendly they seem and however long they have shared a server.
+- **Personal details stay private**: full name, school, address, phone number and photos.
+- **They can always tell you** when something feels wrong, and telling you will not cost them their games.
+
+That last point matters most. Children often keep quiet about a bad experience because they expect the console to be taken away. Say out loud that telling you will never be what gets them into trouble.
+
+## Use the tools the platforms give you
+
+### Parental controls
+
+Consoles, and most games, have settings for chat, friend requests and spending. Set them up together with your child, so they understand what each one does and why it is there.
+
+### Age ratings
+
+A PEGI label tells you the age a game's content suits, and its descriptors say whether the game has in-game purchases. The [PEGI website](https://pegi.info/) explains every label.
+
+## If something does go wrong
+
+Stay calm, take a screenshot, and use the game's own report and block tools. The [UK Safer Internet Centre](https://saferinternet.org.uk/) has practical guides for parents on reporting and on what to do next. How we handle behaviour in our own clubs is set out in our [anti-bullying and discipline policy](/anti-bullying-and-discipline).
+$md$);
+  PERFORM public.publish_library_article(v_id);
+
+  -- 2. Live, then retitled and extended without publishing again.
+  v_id := public.create_library_article(
+    p_title    => 'Playing together: a parent''s guide to joining in',
+    p_summary  => 'You don''t need to be good at your child''s favourite game to share it. Here is how an hour on a screen becomes an hour spent together.',
+    p_category => 'screen_time',
+    p_body     => $md$
+Much of the advice about screens is about how long. This guide is about something else: what happens during that time, and who shares it.
+
+## Ask for a tour
+
+Let your child be the expert. Ask them to show you their world in Minecraft, their favourite experience in Roblox or the island they have been building in Fortnite. **Children love teaching adults**, and explaining a game out loud is real practice at explaining anything.
+
+## Play, even badly
+
+You do not need to be good at the game. Being terrible at it is often the best part: your child gets to help you, and you get to see how patient and inventive they can be.
+
+- Pick a game with a co-operative mode, so you are on the same side
+- Let your child set the goal for the session
+- Agree beforehand how and when you will stop
+
+## Talk about what happened
+
+Afterwards, ask what they enjoyed, what was hard and what they would build next time. Those questions are what turn time on a screen into time together.
+
+If your child would enjoy playing alongside other children with a Game Educator, have a look at our [clubs, camps and events](/shop).
+$md$);
+  PERFORM public.publish_library_article(v_id);
+
+  PERFORM public.save_library_article(
+    p_id       => v_id,
+    p_title    => 'Playing together: how to join your child''s game',
+    p_summary  => 'You don''t need to be good at your child''s favourite game to share it. Here is how an hour on a screen becomes an hour spent together.',
+    p_category => 'screen_time',
+    p_body     => $md$
+Much of the advice about screens is about how long. This guide is about something else: what happens during that time, and who shares it.
+
+## Ask for a tour
+
+Let your child be the expert. Ask them to show you their world in Minecraft, their favourite experience in Roblox or the island they have been building in Fortnite. **Children love teaching adults**, and explaining a game out loud is real practice at explaining anything.
+
+## Play, even badly
+
+You do not need to be good at the game. Being terrible at it is often the best part: your child gets to help you, and you get to see how patient and inventive they can be.
+
+- Pick a game with a co-operative mode, so you are on the same side
+- Let your child set the goal for the session
+- Agree beforehand how and when you will stop
+
+## Make it a habit
+
+### Keep a regular slot
+
+The same evening each week gives everyone something to look forward to, and it is much easier to protect than a slot you have to negotiate every time.
+
+### Take turns choosing
+
+Let each person in the family pick the game in turn. **A parent's choice counts too**, even if it is a board game.
+
+## Talk about what happened
+
+Afterwards, ask what they enjoyed, what was hard and what they would build next time. Those questions are what turn time on a screen into time together.
+
+If your child would enjoy playing alongside other children with a Game Educator, have a look at our [clubs, camps and events](/shop).
+$md$);
+
+  -- 3. Live without a cover, so readers see the placeholder.
+  v_id := public.create_library_article(
+    p_title    => 'Minecraft, Roblox and Fortnite: what''s the difference?',
+    p_summary  => 'Three games your child probably talks about, what each one actually is, and what children do in them.',
+    p_category => 'games_explained',
+    p_body     => $md$
+If your child's conversation is full of creepers, obbies and victory royales, this is a quick guide to the three games behind the words.
+
+## Minecraft
+
+A world made of blocks that players mine, gather and build with. In **Survival** mode they collect resources and keep themselves alive; in **Creative** mode they have unlimited blocks and simply build. There are two main editions, Java and Bedrock, which cannot always play together, and a version for classrooms, [Minecraft Education](https://education.minecraft.net/).
+
+## Roblox
+
+Less one game than a place full of them. Players join **experiences** that other players have made, from obstacle courses (obbies) to role-play towns, and can make their own in Roblox Studio. Its currency, Robux, is bought with real money, so it is worth agreeing on spending early.
+
+## Fortnite
+
+Best known for **Battle Royale**, where players drop onto an island and the last player or team standing wins. It also has creative and building modes where players make their own islands and games.
+
+## What they have in common
+
+- All three are played online with other people
+- All three have settings for chat and spending
+- All three reward building, planning and teamwork
+
+Before your child starts a new game, check its label on the [PEGI website](https://pegi.info/). It tells you the age the content suits, not how difficult the game is.
+$md$);
+  PERFORM public.publish_library_article(v_id);
+
+  -- 4. A complete draft, ready to publish.
+  PERFORM public.create_library_article(
+    p_title    => 'What children learn when they build together',
+    p_summary  => 'Building in a shared world asks for planning, compromise and patience. Here is what that looks like, and how to notice it at home.',
+    p_category => 'learning',
+    p_body     => $md$
+When children build together in Minecraft, Roblox Studio or Fortnite's creative modes, they are practising things that are hard to teach from the front of a room.
+
+## Planning before building
+
+A shared build falls apart without a plan. Children quickly learn to **agree on a goal**, divide the work and decide who builds what.
+
+## Compromise
+
+Two players rarely want the same castle. Building together means listening to an idea that isn't yours and finding a version everyone can live with.
+
+## Solving problems
+
+### When something breaks
+
+A bridge collapses, a machine doesn't work, a door opens the wrong way. Working out why, and trying again, is the same loop engineers use.
+
+### When someone is stuck
+
+Children who have just solved a problem are often the best at explaining it to a friend.
+
+## How to notice it at home
+
+- Ask your child who did what in their last build
+- Ask what went wrong, and how they fixed it
+- Ask what they would do differently next time
+
+If your child would enjoy building with others, have a look at our [clubs, camps and events](/shop).
+$md$);
+
+  -- 5. A draft begun and left: a title and half a body, nothing else.
+  PERFORM public.create_library_article(
+    p_title => 'Getting ready for your child''s first club session',
+    p_body  => $md$
+A first session in one of our [clubs](/shop) goes more smoothly with a little preparation.
+
+## The day before
+
+- Check the device is charged and its game is up to date
+- Make sure your child knows their username
+- **Find a quiet spot** with a table and good light
+
+## On the day
+
+Log in a few minutes early, so there is time for a last-minute update.
+$md$);
+END;
+$$;
+COMMIT;
+
+-- The RPCs stamp every copy with this moment, so the dates are moved back
+-- over the past four weeks: the list then reads in the order the articles
+-- were written. updated_at's trigger would stamp the backdating itself as a
+-- save, so it is held off for that one statement.
+BEGIN;
+ALTER TABLE public.library_articles DISABLE TRIGGER library_articles_updated_at;
+
+UPDATE public.library_articles a
+   SET created_at = d.created_at, updated_at = d.updated_at
+  FROM (VALUES
+    ('Talking with your child about who they meet online',     timestamptz '2026-09-01 09:20+03', timestamptz '2026-09-03 08:45+03'),
+    ('Minecraft, Roblox and Fortnite: what''s the difference?', timestamptz '2026-09-08 13:10+03', timestamptz '2026-09-10 14:05+03'),
+    ('Playing together: how to join your child''s game',       timestamptz '2026-09-12 10:30+03', timestamptz '2026-09-24 16:20+03'),
+    ('What children learn when they build together',          timestamptz '2026-09-20 11:00+03', timestamptz '2026-09-26 11:05+03'),
+    ('Getting ready for your child''s first club session',     timestamptz '2026-09-27 15:40+03', timestamptz '2026-09-28 10:15+03')
+  ) AS d(title, created_at, updated_at)
+ WHERE a.title = d.title;
+
+ALTER TABLE public.library_articles ENABLE TRIGGER library_articles_updated_at;
+
+UPDATE public.library_article_publications p
+   SET first_published_at = d.published_at, published_at = d.published_at
+  FROM public.library_articles a
+  JOIN (VALUES
+    ('Talking with your child about who they meet online',     timestamptz '2026-09-03 09:00+03'),
+    ('Minecraft, Roblox and Fortnite: what''s the difference?', timestamptz '2026-09-10 14:30+03'),
+    ('Playing together: how to join your child''s game',       timestamptz '2026-09-15 09:00+03')
+  ) AS d(title, published_at) ON d.title = a.title
+ WHERE p.article_id = a.id;
+
+DO $$
+BEGIN
+  IF (SELECT count(*) FROM public.library_articles
+       WHERE created_at > now() - interval '1 hour') > 0 THEN
+    RAISE EXCEPTION 'A Library article kept its seeding date: its title no longer matches the backdating above.';
+  END IF;
+  IF (SELECT count(*) FROM public.library_article_publications
+       WHERE published_at > now() - interval '1 hour') > 0 THEN
+    RAISE EXCEPTION 'A published Library article kept its seeding date: its title no longer matches the backdating above.';
+  END IF;
+END;
+$$;
+COMMIT;
+
+-- =============================================================================
+-- 15. What landed
 -- =============================================================================
 
 DO $$
@@ -1586,6 +1846,17 @@ BEGIN
     (SELECT count(*) FROM public.participations WHERE status = 'waitlisted'),
     (SELECT count(*) FROM public.session_substitution_requests),
     (SELECT count(*) FROM public.session_cancellations);
+
+  RAISE NOTICE 'rich-seed: library articles %, live %, live with unpublished changes %, drafts %',
+    (SELECT count(*) FROM public.library_articles),
+    (SELECT count(*) FROM public.library_article_publications),
+    (SELECT count(*) FROM public.library_articles a
+       JOIN public.library_article_publications p ON p.article_id = a.id
+      WHERE (a.title, a.summary, a.category, a.body_md5)
+            IS DISTINCT FROM (p.title, p.summary, p.category, p.body_md5)),
+    (SELECT count(*) FROM public.library_articles a
+      WHERE NOT EXISTS (SELECT 1 FROM public.library_article_publications p
+                         WHERE p.article_id = a.id));
 
   RAISE NOTICE 'rich-seed: team profiles';
   FOR r IN SELECT p.email || ' (' || p.role::text || ')' AS k,

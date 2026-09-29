@@ -42,6 +42,9 @@
       "adminInvoiceCustomers": "Faktureringskunder",
       "adminInvoiceCustomerNew": "Ny faktureringskund",
       "adminInvoiceCustomerEdit": "Redigera faktureringskund",
+      "adminLibrary": "Bibliotekets innehåll",
+      "adminLibraryArticleNew": "Ny artikel",
+      "adminLibraryArticleEdit": "Redigera artikel",
       "adminGeduInvoicing": "Gedufakturering",
       "adminTools": "Verktyg",
       "parentDashboard": "Min SOG",
@@ -483,6 +486,98 @@
         "option": "{name} ({number})"
       }
     },
+    "library": {
+      "title": "Bibliotekets innehåll",
+      "subtitle": "Artiklarna för föräldrar i det offentliga Biblioteket.",
+      "newArticle": "Ny artikel",
+      "lastSaved": "Senast sparad {date}",
+      "search": {
+        "label": "Sök",
+        "placeholder": "Sök på rubrik eller kategori…",
+        "showing": "Visar {count} av {total}",
+        "clear": "Rensa",
+        "noMatches": "Inga artiklar matchar sökningen."
+      },
+      "noCategory": "Ingen kategori",
+      "empty": "Inga artiklar än. Skriv den första.",
+      "backToList": "Tillbaka till Bibliotekets innehåll",
+      "notFound": "Det finns ingen artikel med det här id:t.",
+      "loadError": "Artikeln kunde inte läsas in. Uppdatera sidan för att försöka igen.",
+      "newPage": {
+        "title": "Ny artikel",
+        "submit": "Spara utkast"
+      },
+      "editPage": {
+        "title": "Redigera artikel"
+      },
+      "status": {
+        "draft": "Utkast",
+        "published": "Publicerad",
+        "changed": "Opublicerade ändringar"
+      },
+      "statusPanel": {
+        "label": "Publicering",
+        "draftTitle": "Utkast",
+        "draftBody": "Inte i Biblioteket. Läsarna kan inte se artikeln förrän den publiceras.",
+        "publishedTitle": "Publicerad",
+        "publishedBody": "Läsarna hittar artikeln i Biblioteket, precis som den är sparad här.",
+        "changedTitle": "Publicerad, med opublicerade ändringar",
+        "changedBody": "Läsarna ser versionen som publicerades {date}. Ändringarna som sparats sedan dess når dem när du publicerar dem."
+      },
+      "viewLive": "Visa i Biblioteket",
+      "preview": "Förhandsvisa",
+      "publish": "Publicera",
+      "publishChanges": "Publicera ändringar",
+      "unpublish": "Avpublicera",
+      "readiness": {
+        "missing": "Lägg till {fields} för att publicera.",
+        "unsaved": "Spara dina ändringar för att förhandsvisa och publicera dem.",
+        "previewUnsaved": "Spara dina ändringar för att förhandsvisa dem."
+      },
+      "missing": {
+        "title": "en rubrik",
+        "summary": "en sammanfattning",
+        "category": "en kategori",
+        "body": "artikeltexten"
+      },
+      "unpublishConfirm": {
+        "title": "Avpublicera artikeln?",
+        "description": "Läsarna hittar den inte längre i Biblioteket, och länkar till den slutar fungera. Artikeln finns kvar här, och du kan publicera den igen när som helst.",
+        "confirm": "Avpublicera"
+      },
+      "fields": {
+        "title": "Rubrik",
+        "summary": "Sammanfattning",
+        "category": "Kategori",
+        "cover": "Omslagsbild",
+        "body": "Artikeltext"
+      },
+      "hints": {
+        "summary": "Ren text, som visas under rubriken och på artikelns kort i Biblioteket.",
+        "cover": "Visas ovanför artikeln och på dess kort, beskuren till 16:9. Utan omslagsbild ser läsarna en platshållare.",
+        "body": "Läsarna ser texten under omslagsbilden, formaterad som den ser ut här."
+      },
+      "categoryPlaceholder": "Välj en kategori",
+      "cover": {
+        "choose": "Välj omslagsbild",
+        "change": "Byt omslagsbild",
+        "remove": "Ta bort omslagsbild"
+      },
+      "bodyPlaceholder": "Skriv artikeln…",
+      "actions": {
+        "save": "Spara",
+        "cancel": "Avbryt"
+      },
+      "errors": {
+        "titleRequired": "En artikel måste ha en rubrik.",
+        "saveFailed": "Artikeln kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Artikeln kunde inte sparas – {reason}",
+        "publishFailed": "Artikeln kunde inte publiceras. Försök igen.",
+        "publishFailedWithReason": "Artikeln kunde inte publiceras – {reason}",
+        "unpublishFailed": "Artikeln kunde inte avpubliceras. Försök igen.",
+        "unpublishFailedWithReason": "Artikeln kunde inte avpubliceras – {reason}"
+      }
+    },
     "geduRole": {
       "primary": "Huvud-Gedu",
       "assistant": "Assisterande Gedu",
@@ -909,6 +1004,7 @@
         "rename": "Byt namn",
         "live": "Publicerad",
         "hidden": "Dold",
+        "draft": "Utkast",
         "replace": "Ersätt bild",
         "remove": "Ta bort ur biblioteket",
         "replaceConfirm": {
@@ -2954,6 +3050,7 @@
     "municipalityClubs": "Kommunklubbar",
     "municipalityInvoicing": "Kommunfakturering",
     "invoiceCustomers": "Faktureringskunder",
+    "libraryContent": "Bibliotekets innehåll",
     "geduInvoicing": "Gedufakturering",
     "camps": "Läger",
     "events": "Evenemang",
@@ -5121,6 +5218,34 @@
         "hide": "Dölj",
         "visibilityError": "Det gick inte att ändra om profilen är offentlig. Försök igen."
       }
+    }
+  },
+  "library": {
+    "name": "Biblioteket",
+    "readingTime": "{minutes, plural, one {# min läsning} other {# min läsning}}",
+    "article": {
+      "breadcrumbLabel": "Brödsmulor",
+      "more": "Mer från Biblioteket",
+      "share": {
+        "heading": "Dela artikeln",
+        "copyLink": "Kopiera länk",
+        "copied": "Länken kopierad",
+        "on": "Dela på {platform} (öppnas i en ny flik)",
+        "email": "E-post",
+        "byEmail": "Dela via e-post",
+        "native": "Dela…"
+      }
+    },
+    "categories": {
+      "onlineSafety": "Säkerhet på nätet",
+      "screenTime": "Skärmtid och familjeliv",
+      "learning": "Lärande genom spel",
+      "gamesExplained": "Spelen förklarade",
+      "forSchools": "För skolor"
+    },
+    "cta": {
+      "heading": "Redo att börja?",
+      "button": "Kom igång"
     }
   }
 }

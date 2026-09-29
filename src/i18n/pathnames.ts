@@ -105,6 +105,28 @@ export const PATHNAMES = {
     fr: "/a-propos",
     tlh: "/about",
   },
+  "/library": {
+    en: "/library",
+    fi: "/kirjasto",
+    sv: "/bibliotek",
+    fr: "/bibliotheque",
+    tlh: "/library",
+  },
+  "/library/[id]": {
+    en: "/library/[id]",
+    fi: "/kirjasto/[id]",
+    sv: "/bibliotek/[id]",
+    fr: "/bibliotheque/[id]",
+    tlh: "/library/[id]",
+  },
+  // Admin-only, but the child of a translated route, so translated with it.
+  "/library/[id]/preview": {
+    en: "/library/[id]/preview",
+    fi: "/kirjasto/[id]/esikatselu",
+    sv: "/bibliotek/[id]/forhandsvisning",
+    fr: "/bibliotheque/[id]/apercu",
+    tlh: "/library/[id]/preview",
+  },
   "/attributions": {
     en: "/attributions",
     fi: "/lahteet",
@@ -166,6 +188,9 @@ export const PATHNAMES = {
   "/admin/invoice-customers": "/admin/invoice-customers",
   "/admin/invoice-customers/new": "/admin/invoice-customers/new",
   "/admin/invoice-customers/[id]": "/admin/invoice-customers/[id]",
+  "/admin/library": "/admin/library",
+  "/admin/library/new": "/admin/library/new",
+  "/admin/library/[id]": "/admin/library/[id]",
   "/admin/sites": "/admin/sites",
   "/admin/sites/[id]": "/admin/sites/[id]",
   "/admin/substitutions": "/admin/substitutions",

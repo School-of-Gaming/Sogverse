@@ -35,6 +35,18 @@
 # is the dedup the real catalogue does anyway. A product whose topic has no file
 # fails this script by name, because the alternative is a stack that quietly
 # comes up with a hole in it.
+#
+# LIBRARY COVERS RIDE THE SAME TWO HALVES. A file named `library-<category>`
+# is a Library cover rather than a product picture: its catalogue entry has
+# the purpose `library_cover` and its object goes to the `library-covers`
+# bucket, which takes JPEG only (each file is a JPEG of exactly 1600 x 900,
+# the size the upload route would demand of it). It becomes the cover of every
+# article the rich seed wrote in that category, on the working copy and on the
+# published copy alike, which is what publishing would have copied had the
+# cover been there when the seed published. A category with no file leaves its
+# articles without a cover, and that is how the seed shows a live article on
+# the NO IMAGE placeholder; a cover whose category has no article is one more
+# entry for the cover picker to offer.
 set -euo pipefail
 
 checkout=$1
@@ -44,6 +56,7 @@ service_key=$4
 
 images_dir="$checkout/supabase/seed-images"
 product_bucket=product-images
+cover_bucket=library-covers
 
 if [ ! -d "$images_dir" ]; then
   echo "No $images_dir to upload; the products will keep their placeholders." >&2
@@ -53,9 +66,12 @@ fi
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
-# The manifest, one line per file: topic, sha256, extension. Built first so the
-# SQL below and the uploads above it cannot disagree about a path.
+# The manifests, one line per file: topic (or category), sha256, extension,
+# path. Built first so the SQL below and the uploads above it cannot disagree
+# about a path. Product pictures and Library covers are kept apart from here
+# on, because they differ in purpose, in bucket and in what they are linked to.
 : > "$work/manifest"
+: > "$work/covers"
 for file in "$images_dir"/*; do
   [ -f "$file" ] || continue
   base=$(basename "$file")
@@ -72,11 +88,23 @@ for file in "$images_dir"/*; do
       ;;
   esac
   sha=$(sha256sum "$file" | cut -d' ' -f1)
-  printf '%s\t%s\t%s\t%s\n' "$topic" "$sha" "$ext" "$file" >> "$work/manifest"
+  case "$topic" in
+    library-*)
+      printf '%s\t%s\t%s\t%s\n' "${topic#library-}" "$sha" "$ext" "$file" >> "$work/covers"
+      ;;
+    *)
+      printf '%s\t%s\t%s\t%s\n' "$topic" "$sha" "$ext" "$file" >> "$work/manifest"
+      ;;
+  esac
 done
 
 if [ ! -s "$work/manifest" ]; then
   echo "$images_dir holds no product pictures." >&2
+  exit 1
+fi
+
+if [ ! -s "$work/covers" ]; then
+  echo "$images_dir holds no Library covers (library-<category>.jpg)." >&2
   exit 1
 fi
 
@@ -132,6 +160,9 @@ upload() {
 while IFS=$'\t' read -r _ sha ext file; do
   upload "$product_bucket" "$sha" "$ext" "$file"
 done < "$work/manifest"
+while IFS=$'\t' read -r _ sha ext file; do
+  upload "$cover_bucket" "$sha" "$ext" "$file"
+done < "$work/covers"
 
 # The manifest as a SQL row set, written once and inlined twice below. A temp
 # table would read better and is not available: the statements run under
@@ -140,6 +171,9 @@ done < "$work/manifest"
 awk -F'\t' '{
   printf "%s      (%c%s%c, %c%s%c, %c%s%c)", (NR == 1 ? "" : ",\n"), 39, $1, 39, 39, $2, 39, 39, $3, 39
 } END { print "" }' "$work/manifest" > "$work/values.sql"
+awk -F'\t' '{
+  printf "%s      (%c%s%c, %c%s%c, %c%s%c)", (NR == 1 ? "" : ",\n"), 39, $1, 39, 39, $2, 39, 39, $3, 39
+} END { print "" }' "$work/covers" > "$work/covers.sql"
 
 # The catalogue half. Written as a file rather than piped inline because it is
 # built from the manifest and is easier to read back when something fails.
@@ -175,12 +209,47 @@ awk -F'\t' '{
   echo "  JOIN public.catalogue_images i ON i.purpose = 'product' AND i.sha256 = s.sha"
   echo " WHERE p.topic::text = s.topic;"
   echo
+  # The covers' entries, of purpose `library_cover` and labelled for the
+  # category they were drawn for. The cast is what refuses a file named for no
+  # category.
+  echo "INSERT INTO public.catalogue_images (label, sha256, path, purpose)"
+  echo "SELECT upper(left(s.category, 1)) || replace(substr(s.category, 2), '_', ' ') || ' cover',"
+  echo "       s.sha, s.sha || '.' || s.ext, 'library_cover'"
+  echo "  FROM (VALUES"
+  cat "$work/covers.sql"
+  echo "       ) AS s(category, sha, ext)"
+  echo " WHERE s.category::public.library_article_category IS NOT NULL"
+  echo " ON CONFLICT (purpose, sha256) DO NOTHING;"
+  echo
   # The completeness check runs as the session role rather than as
   # `authenticated`, because it reads storage.objects: neither bucket carries a
   # read policy a signed-in admin could pass, so under the impersonated claims
   # above every object would read as absent and the check would fail on every
   # run.
   echo "RESET ROLE;"
+  echo
+  # The covers' links, as the session role: neither Library table carries a
+  # write grant, and an admin's own way to set a cover is a save and a
+  # publish, which would move the dates the seed gave both copies. The
+  # cover-path trigger still derives each path and still refuses anything not
+  # a library_cover entry; only the updated_at trigger is held off, because linking a cover
+  # here is not an admin's save.
+  echo "ALTER TABLE public.library_articles DISABLE TRIGGER library_articles_updated_at;"
+  echo "UPDATE public.library_articles a"
+  echo "   SET cover_image_id = i.id"
+  echo "  FROM (VALUES"
+  cat "$work/covers.sql"
+  echo "       ) AS s(category, sha, ext)"
+  echo "  JOIN public.catalogue_images i ON i.purpose = 'library_cover' AND i.sha256 = s.sha"
+  echo " WHERE a.category::text = s.category;"
+  echo "ALTER TABLE public.library_articles ENABLE TRIGGER library_articles_updated_at;"
+  echo "UPDATE public.library_article_publications p"
+  echo "   SET cover_image_id = i.id"
+  echo "  FROM (VALUES"
+  cat "$work/covers.sql"
+  echo "       ) AS s(category, sha, ext)"
+  echo "  JOIN public.catalogue_images i ON i.purpose = 'library_cover' AND i.sha256 = s.sha"
+  echo " WHERE p.category::text = s.category;"
   echo
   echo "DO \$\$"
   echo "DECLARE v_missing text;"
@@ -196,13 +265,16 @@ awk -F'\t' '{
   # bytes go up over HTTP, so a run whose upload half quietly did nothing would
   # leave every product linked to an object the bucket does not hold — which
   # renders as a broken image, not as a placeholder, and nothing else would say
-  # so.
+  # so. The Library's covers are held to the same, live and draft alike.
   echo "  SELECT string_agg(DISTINCT i.path, ', ') INTO v_absent"
   echo "    FROM public.catalogue_images i"
-  echo "   WHERE EXISTS (SELECT 1 FROM public.products p WHERE p.image_id = i.id)"
+  echo "   WHERE (EXISTS (SELECT 1 FROM public.products p WHERE p.image_id = i.id)"
+  echo "          OR EXISTS (SELECT 1 FROM public.library_articles a WHERE a.cover_image_id = i.id)"
+  echo "          OR EXISTS (SELECT 1 FROM public.library_article_publications l WHERE l.cover_image_id = i.id))"
   echo "     AND NOT EXISTS (SELECT 1 FROM storage.objects o"
   echo "                      WHERE o.bucket_id = CASE i.purpose"
   echo "                                            WHEN 'product' THEN '$product_bucket'"
+  echo "                                            WHEN 'library_cover' THEN '$cover_bucket'"
   echo "                                          END"
   echo "                        AND o.name = i.path);"
   echo "  IF v_absent IS NOT NULL THEN"
@@ -212,6 +284,10 @@ awk -F'\t' '{
   echo "  RAISE NOTICE 'rich-seed images: % catalogue entries over % products',"
   echo "    (SELECT count(*) FROM public.catalogue_images WHERE purpose = 'product'),"
   echo "    (SELECT count(*) FROM public.products WHERE image_id IS NOT NULL);"
+  echo "  RAISE NOTICE 'rich-seed images: % Library covers over % articles, % of them live',"
+  echo "    (SELECT count(*) FROM public.catalogue_images WHERE purpose = 'library_cover'),"
+  echo "    (SELECT count(*) FROM public.library_articles WHERE cover_image_id IS NOT NULL),"
+  echo "    (SELECT count(*) FROM public.library_article_publications WHERE cover_image_id IS NOT NULL);"
   echo "END"
   echo "\$\$;"
   echo "COMMIT;"
@@ -220,7 +296,7 @@ awk -F'\t' '{
 docker exec -i "supabase_db_$project" \
   psql -U postgres -d postgres -v ON_ERROR_STOP=1 < "$work/link.sql" >/dev/null
 
-echo "Product images: $(wc -l < "$work/manifest") files to the $product_bucket bucket, $uploaded newly uploaded."
+echo "Product images: $(wc -l < "$work/manifest") files to the $product_bucket bucket and $(wc -l < "$work/covers") Library covers to the $cover_bucket bucket, $uploaded newly uploaded."
 
 # TEAM PHOTOS. The rich seed saves the owner's admin, the second admin and
 # the gedu with their checkbox on, which save_team_profile allows only with a

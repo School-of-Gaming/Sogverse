@@ -43,8 +43,8 @@ key off.
      what a shared link shows.
    - Also here: the unpublished Roblox programme pages (the flip to published is
      nav, sitemap and noindex together — see the note on the route in
-     `src/lib/constants/routes.ts`), the Minecraft API docs, the preview scenes, and
-     every Klingon URL.
+     `src/lib/constants/routes.ts`), the Minecraft API docs, the preview scenes, the
+     admin's preview of a Library article, and every Klingon URL.
 3. **Gated.** The role dashboards, settings and voice. Behind a login, disallowed in
    `robots.txt` for tidiness (the control is the proxy and RLS), and they carry no
    description of their own — the root's translated one is inherited and no crawler

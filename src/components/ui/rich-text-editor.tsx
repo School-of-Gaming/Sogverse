@@ -75,6 +75,7 @@ import { cn } from "@/lib/utils";
 export function RichTextEditor({
   initialValue,
   onChange,
+  onSeeded,
   placeholder,
   ariaLabel,
   describedBy,
@@ -86,6 +87,22 @@ export function RichTextEditor({
   initialValue: string;
   /** Fires with the serialised markdown on every edit. */
   onChange: (markdown: string) => void;
+  /**
+   * Fires once, when the editor is created, with its own serialisation of
+   * `initialValue` — what `onChange` would report for the document untouched.
+   *
+   * **Markdown does not round-trip byte for byte, and `onChange` can fire with
+   * no edit.** The document is parsed and written back in this editor's one
+   * dialect, so a stored value in another spelling (`*` bullets, `__strong__`,
+   * a two-space hard break, a run of blank lines) comes back out different
+   * while meaning the same. And the schema normalises the document on the
+   * first transaction it sees — a caret placed by a click is one — so a
+   * document ending in a list or a heading gains its trailing paragraph then,
+   * and `onChange` reports it. A caller deciding "unsaved" by comparing what
+   * it is handed with the stored value compares against this as well, or an
+   * untouched field reads as edited.
+   */
+  onSeeded?: (markdown: string) => void;
   placeholder?: string;
   /** Accessible name for the writing surface. */
   ariaLabel: string;
@@ -156,6 +173,7 @@ export function RichTextEditor({
         ),
       },
     },
+    onCreate: ({ editor: instance }) => onSeeded?.(readMarkdown(instance)),
     onUpdate: ({ editor: instance }) => onChange(readMarkdown(instance)),
   });
 
