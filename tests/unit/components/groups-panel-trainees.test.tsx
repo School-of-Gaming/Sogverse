@@ -10,9 +10,8 @@ import type { ProductGroupsSnapshot } from "@/types";
  * A trainee is listed in the Gedus row, after the assigned Gedus, in the same
  * pill: where a Gedu's pill has the role select, a trainee's draws "Trainee"
  * in a select that looks identical and never acts; where the Gedu's role is a
- * label, so is the trainee's. A trainee pill carries no promotion: a trainee
- * becomes a Gedu of the group by being removed and added through Add Gedu. The
- * other claims are the ones a screen cannot tell apart from a broken build:
+ * label, so is the trainee's. A trainee's seat ends when an admin removes it;
+ * certification happens only on the admin user page. The other claims are the ones a screen cannot tell apart from a broken build:
  * that add and remove each reach the shell with the right group and gedu.
  *
  * Translations echo their keys, so nothing depends on English wording.

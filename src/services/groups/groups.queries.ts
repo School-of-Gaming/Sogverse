@@ -751,7 +751,7 @@ export interface GroupPending {
   renames: Set<string>;
   /** group ids with an in-flight delete */
   deletes: Set<string>;
-  /** `${groupId}:${geduId}` for an in-flight add/remove Gedu or promotion */
+  /** `${groupId}:${geduId}` for an in-flight add/remove Gedu */
   gedus: Set<string>;
   /** `${groupId}:${geduId}` for an in-flight add/remove trainee */
   trainees: Set<string>;

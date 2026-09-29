@@ -154,8 +154,9 @@ that group could see and do. Three things about it are easy to get wrong:
   admin approving the substitution weighs it.
 - **One seat per gedu per product, of either kind.** The schema refuses an assignment
   and a trainee seat for the same gedu on one product, from whichever side is written
-  second. Promotion is therefore one `apply_group_changes` batch that removes the
-  trainee seat and adds the assignment: that function removes before it adds.
+  second.
+- **There is no path from a trainee seat to an assignment.** A trainee's seat ends
+  when an admin removes it, and certification happens only on the admin user page.
 
 The group's assigned gedus see its trainees by first name on their workspace; families
 are never told a trainee is there.

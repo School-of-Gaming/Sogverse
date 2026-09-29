@@ -53,7 +53,7 @@ $$;
 -- Name: FUNCTION validate_one_gedu_seat_per_product(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.validate_one_gedu_seat_per_product() IS 'Trigger on gedu_group_assignments and gedu_group_trainees: a gedu holds an assignment or a trainee seat on a product, never both, refused from whichever side is written second with unique_violation — the SQLSTATE each table''s own (gedu_id, product_id) UNIQUE raises for the same kind of clash. On the trainee table it also refuses a seat-holder who is not a gedu. Takes a transaction-scoped advisory lock on the (gedu, product) pair, so two writes racing into the two tables queue rather than each finding the other empty. A promotion is a remove and an add in one apply_group_changes batch, which removes before it adds.';
+COMMENT ON FUNCTION public.validate_one_gedu_seat_per_product() IS 'Trigger on gedu_group_assignments and gedu_group_trainees: a gedu holds an assignment or a trainee seat on a product, never both, refused from whichever side is written second with unique_violation — the SQLSTATE each table''s own (gedu_id, product_id) UNIQUE raises for the same kind of clash. On the trainee table it also refuses a seat-holder who is not a gedu. Takes a transaction-scoped advisory lock on the (gedu, product) pair, so two writes racing into the two tables queue rather than each finding the other empty. apply_group_changes removes before it adds, so one batch may end a gedu''s seat of one kind and add one of the other on the same product.';
 
 
 --

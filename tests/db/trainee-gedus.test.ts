@@ -28,25 +28,25 @@ import {
  *      absent from the wire, not blanked.
  *   3. **Families are never told**, and cannot read the table. Staff and the
  *      group's own trainees are.
- *   4. **One seat per gedu per product**, refused from both tables, and a
- *      promotion is one atomic batch.
+ *   4. **One seat per gedu per product**, refused from both tables, and
+ *      judged on a batch's end state because the batch removes before it adds.
  *
  * Layout. PRODUCT_MAIN has two groups: GROUP_MINE, where the seeded GEDU is
  * assigned, GAMER sits and the minted trainee shadows; and GROUP_SIBLING,
- * where GAMER_2 sits. PRODUCT_PROMOTE carries one group for the promotion
+ * where GAMER_2 sits. PRODUCT_BATCH carries one group for the batch-order
  * cases, so moving the trainee's seat there never disturbs the rest.
  */
 
 const PRODUCT_MAIN = "00000000-0000-0000-0000-000000000e51";
-const PRODUCT_PROMOTE = "00000000-0000-0000-0000-000000000e52";
+const PRODUCT_BATCH = "00000000-0000-0000-0000-000000000e52";
 const GROUP_MINE = "00000000-0000-0000-0000-000000000e53";
 const GROUP_SIBLING = "00000000-0000-0000-0000-000000000e54";
-const GROUP_PROMOTE = "00000000-0000-0000-0000-000000000e55";
+const GROUP_BATCH = "00000000-0000-0000-0000-000000000e55";
 /** A group id that exists nowhere, by shape: no fixture uses the f-range. */
 const GROUP_NOWHERE = "00000000-0000-0000-0000-00000000fe5f";
 
-const ALL_PRODUCTS = [PRODUCT_MAIN, PRODUCT_PROMOTE];
-const ALL_GROUPS = [GROUP_MINE, GROUP_SIBLING, GROUP_PROMOTE];
+const ALL_PRODUCTS = [PRODUCT_MAIN, PRODUCT_BATCH];
+const ALL_GROUPS = [GROUP_MINE, GROUP_SIBLING, GROUP_BATCH];
 
 const GROUP_STAFF_NOTE = "Trainee-invisible group staff note";
 const MEMBER_NOTE = "Trainee-invisible member note";
@@ -183,7 +183,7 @@ describe("trainee gedus", () => {
     await admin.from("product_groups").insert([
       { id: GROUP_MINE, product_id: PRODUCT_MAIN, name: "Cohort Trainee", gedu_note: GROUP_STAFF_NOTE },
       { id: GROUP_SIBLING, product_id: PRODUCT_MAIN, name: "Cohort Sibling" },
-      { id: GROUP_PROMOTE, product_id: PRODUCT_PROMOTE, name: "Cohort Promote" },
+      { id: GROUP_BATCH, product_id: PRODUCT_BATCH, name: "Cohort Batch" },
     ]);
     await admin.from("gedu_group_assignments").insert({
       group_id: GROUP_MINE,
@@ -705,7 +705,7 @@ describe("trainee gedus", () => {
   });
 
   // -------------------------------------------------------------------------
-  // 4. One seat per gedu per product, and promotion
+  // 4. One seat per gedu per product, judged on the batch's end state
   // -------------------------------------------------------------------------
 
   describe("one seat per gedu per product", () => {
@@ -746,72 +746,76 @@ describe("trainee gedus", () => {
 
     it("refuses every role but an admin the write", async () => {
       for (const client of [geduAuth, traineeAuth, customerAuth, gamerAuth]) {
-        const { error } = await applyChanges(client, PRODUCT_PROMOTE, {
-          p_trainees_added: [{ groupId: GROUP_PROMOTE, geduId: traineeId }],
+        const { error } = await applyChanges(client, PRODUCT_BATCH, {
+          p_trainees_added: [{ groupId: GROUP_BATCH, geduId: traineeId }],
         });
         expect(error?.code).toBe("42501");
       }
     });
 
-    it("promotes in one atomic batch, and a failed batch leaves the trainee seat standing", async () => {
-      const placed = await applyChanges(adminAuth, PRODUCT_PROMOTE, {
-        p_trainees_added: [{ groupId: GROUP_PROMOTE, geduId: traineeId }],
+    it("runs a batch's removes before its adds, and a failed batch leaves the trainee seat standing", async () => {
+      const placed = await applyChanges(adminAuth, PRODUCT_BATCH, {
+        p_trainees_added: [{ groupId: GROUP_BATCH, geduId: traineeId }],
       });
       expect(placed.error).toBeNull();
 
       const seats = async () => {
         const [trainees, assignments] = await Promise.all([
-          admin.from("gedu_group_trainees").select("group_id").eq("product_id", PRODUCT_PROMOTE),
+          admin.from("gedu_group_trainees").select("group_id").eq("product_id", PRODUCT_BATCH),
           admin
             .from("gedu_group_assignments")
             .select("group_id, role")
-            .eq("product_id", PRODUCT_PROMOTE),
+            .eq("product_id", PRODUCT_BATCH),
         ]);
         return { trainees: trainees.data, assignments: assignments.data };
       };
 
       // The removal succeeds and the add fails on a group that does not exist,
       // so the whole batch rolls back.
-      const failed = await applyChanges(adminAuth, PRODUCT_PROMOTE, {
-        p_trainees_removed: [{ groupId: GROUP_PROMOTE, geduId: traineeId }],
+      const failed = await applyChanges(adminAuth, PRODUCT_BATCH, {
+        p_trainees_removed: [{ groupId: GROUP_BATCH, geduId: traineeId }],
         p_gedu_assignments_added: [
           { groupId: GROUP_NOWHERE, geduId: traineeId, role: "primary" },
         ],
       });
       expect(failed.error).not.toBeNull();
       expect(await seats()).toEqual({
-        trainees: [{ group_id: GROUP_PROMOTE }],
+        trainees: [{ group_id: GROUP_BATCH }],
         assignments: [],
       });
 
-      const promoted = await applyChanges(adminAuth, PRODUCT_PROMOTE, {
-        p_trainees_removed: [{ groupId: GROUP_PROMOTE, geduId: traineeId }],
+      // The trainee seat removed and an assignment added for the same gedu on
+      // the product: the trigger sees the add only after the remove.
+      const swapped = await applyChanges(adminAuth, PRODUCT_BATCH, {
+        p_trainees_removed: [{ groupId: GROUP_BATCH, geduId: traineeId }],
         p_gedu_assignments_added: [
-          { groupId: GROUP_PROMOTE, geduId: traineeId, role: "assistant" },
+          { groupId: GROUP_BATCH, geduId: traineeId, role: "assistant" },
         ],
       });
-      expect(promoted.error).toBeNull();
+      expect(swapped.error).toBeNull();
       expect(await seats()).toEqual({
         trainees: [],
-        assignments: [{ group_id: GROUP_PROMOTE, role: "assistant" }],
+        assignments: [{ group_id: GROUP_BATCH, role: "assistant" }],
       });
 
-      // Promoted, the gedu reads the full workspace and not the trainee's.
-      const full = await traineeAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP_PROMOTE });
+      // The seat's kind decides the document: assigned, the gedu reads the
+      // full workspace and not the trainee's.
+      const full = await traineeAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP_BATCH });
       expect(full.error).toBeNull();
       const redacted = await traineeAuth.rpc("get_trainee_group_feed", {
-        p_group_id: GROUP_PROMOTE,
+        p_group_id: GROUP_BATCH,
       });
       expect(redacted.error?.code).toBe("42501");
 
-      // And back: a demotion is the same batch the other way round.
-      const demoted = await applyChanges(adminAuth, PRODUCT_PROMOTE, {
-        p_gedu_assignments_removed: [{ groupId: GROUP_PROMOTE, geduId: traineeId }],
-        p_trainees_added: [{ groupId: GROUP_PROMOTE, geduId: traineeId }],
+      // The other way round too: an assignment removed and a trainee seat
+      // added in one batch, since trainee seats are added after every remove.
+      const reversed = await applyChanges(adminAuth, PRODUCT_BATCH, {
+        p_gedu_assignments_removed: [{ groupId: GROUP_BATCH, geduId: traineeId }],
+        p_trainees_added: [{ groupId: GROUP_BATCH, geduId: traineeId }],
       });
-      expect(demoted.error).toBeNull();
+      expect(reversed.error).toBeNull();
       expect(await seats()).toEqual({
-        trainees: [{ group_id: GROUP_PROMOTE }],
+        trainees: [{ group_id: GROUP_BATCH }],
         assignments: [],
       });
     });

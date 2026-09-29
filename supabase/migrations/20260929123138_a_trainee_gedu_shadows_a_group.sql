@@ -18,8 +18,10 @@
 -- 2. `gedu_trains_group(uuid)` — does the caller hold a trainee seat on this
 --    group. Internal, like `gedu_teaches_group`.
 -- 3. `apply_group_changes` takes trainee seats to add and to remove, so the
---    groups panel places, removes and PROMOTES a trainee (remove the trainee
---    seat, add an assignment) in its one transaction.
+--    groups panel places and removes a trainee in its one transaction. A
+--    trainee's seat ends when an admin removes it; certification happens only
+--    on the admin user page, and nothing here turns a trainee seat into an
+--    assignment.
 -- 4. Reads: the trainee's own workspace document (`get_trainee_group_feed`)
 --    and product document (`get_trainee_assigned_product`), redacted twins of
 --    the gedu ones; trainee seats on My SOG as a third kind of seat; the
@@ -153,7 +155,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.validate_one_gedu_seat_per_product() IS 'Trigger on gedu_group_assignments and gedu_group_trainees: a gedu holds an assignment or a trainee seat on a product, never both, refused from whichever side is written second with unique_violation — the SQLSTATE each table''s own (gedu_id, product_id) UNIQUE raises for the same kind of clash. On the trainee table it also refuses a seat-holder who is not a gedu. Takes a transaction-scoped advisory lock on the (gedu, product) pair, so two writes racing into the two tables queue rather than each finding the other empty. A promotion is a remove and an add in one apply_group_changes batch, which removes before it adds.';
+COMMENT ON FUNCTION public.validate_one_gedu_seat_per_product() IS 'Trigger on gedu_group_assignments and gedu_group_trainees: a gedu holds an assignment or a trainee seat on a product, never both, refused from whichever side is written second with unique_violation — the SQLSTATE each table''s own (gedu_id, product_id) UNIQUE raises for the same kind of clash. On the trainee table it also refuses a seat-holder who is not a gedu. Takes a transaction-scoped advisory lock on the (gedu, product) pair, so two writes racing into the two tables queue rather than each finding the other empty. apply_group_changes removes before it adds, so one batch may end a gedu''s seat of one kind and add one of the other on the same product.';
 
 REVOKE ALL ON FUNCTION public.validate_one_gedu_seat_per_product() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.validate_one_gedu_seat_per_product() TO service_role;
@@ -203,7 +205,7 @@ GRANT ALL ON FUNCTION public.gedu_trains_group(p_group_id uuid) TO service_role;
 
 
 -- ---------------------------------------------------------------------------
--- 3. Placing, removing and promoting a trainee: the groups panel's batch
+-- 3. Placing and removing a trainee: the groups panel's batch
 -- ---------------------------------------------------------------------------
 
 DROP FUNCTION public.apply_group_changes(uuid, jsonb, jsonb, uuid[], jsonb, jsonb, jsonb);
@@ -271,10 +273,10 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- Trainee seats removed, with the assignments and for the same reason: a
-  -- PROMOTION is this remove and an assignment add in one batch, and the
-  -- one-seat-per-product trigger refuses the add while the trainee seat is
-  -- still there. A trainee holds no substitution request, so nothing is swept.
+  -- Trainee seats removed, with the assignments and for the same reason: the
+  -- one-seat-per-product trigger refuses an add while a seat of the other
+  -- kind is still there, so every remove runs before any add. A trainee holds
+  -- no substitution request, so nothing is swept.
   FOR v_trainee IN SELECT * FROM jsonb_array_elements(p_trainees_removed) LOOP
     DELETE FROM gedu_group_trainees
      WHERE group_id = (v_trainee->>'groupId')::UUID
@@ -359,9 +361,8 @@ BEGIN
       SET role = EXCLUDED.role;
   END LOOP;
 
-  -- Trainee seats added, after the assignments so a DEMOTION (an assignment
-  -- removed, a trainee seat added) is one batch too. A group added in this
-  -- batch is addressed by its tempId. No ON CONFLICT: re-adding a seat that is
+  -- Trainee seats added, after every remove. A group added in this batch is
+  -- addressed by its tempId. No ON CONFLICT: re-adding a seat that is
   -- there, or placing a gedu already seated on the product, is refused.
   FOR v_trainee IN SELECT * FROM jsonb_array_elements(p_trainees_added) LOOP
     IF v_temp_map ? (v_trainee->>'groupId') THEN
@@ -393,7 +394,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb) IS 'The admin groups panel''s whole batch, applied in one transaction: remove assignments, delete groups, rename groups, add groups (each with its educators inline), add assignments, and move participations between groups. Admin-only, guard-first, and it takes the PRODUCT row''s lock first so two admins editing one product''s groups serialize rather than interleave. Removes run BEFORE adds so moving an educator from group A to group B is one batch — the (gedu_id, product_id) UNIQUE would otherwise refuse the add. Newly added groups are addressed by a client-minted `tempId` and the returned `tempMap` hands back the real ids, which is what lets one batch create a group and move members into it. An assignment carries a ROLE: an added assignment element is { groupId, geduId, role } and upserts ON CONFLICT (group_id, gedu_id) DO UPDATE SET role, so a role change is ONE add rather than a remove plus an add — which also means re-adding an existing pair is not a no-op, it restates the role. An added GROUP''s educators arrive as gedus: [{ geduId, role }]; the legacy geduIds array of bare ids is still read for the deploy window and lands every one of them as a primary. An omitted role is a primary, which is also the column''s default. This function is DELIBERATELY ASSIGNMENT-ONLY with respect to session substitutions, and is annotated as such in the completeness check: it is the writer of the permanent relationship, not a gate on it. Removing an assignment also sweeps the substitution requests it orphans: for every date the removed gedu held a live request on, the same fixpoint every other unseating runs. It remains ASSIGNMENT-ONLY as a GATE — it still gates on nothing and still writes no substitution row — but a writer that can unseat somebody has to leave the derivation consistent, or an admin could answer a request filed by a person who is no longer expected at the session. TRAINEE SEATS ride the same batch: p_trainees_removed and p_trainees_added, each element { groupId, geduId } (an added one may name a tempId), removed with the assignments and added after them. That order is what makes a PROMOTION — the trainee seat removed and an assignment added, on the same group or another of the product — and a demotion one atomic batch each; the one-seat-per-product trigger refuses a gedu holding both. An added trainee seat has no ON CONFLICT, so placing a gedu already seated on the product is refused.';
+COMMENT ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb) IS 'The admin groups panel''s whole batch, applied in one transaction: remove assignments, delete groups, rename groups, add groups (each with its educators inline), add assignments, and move participations between groups. Admin-only, guard-first, and it takes the PRODUCT row''s lock first so two admins editing one product''s groups serialize rather than interleave. Removes run BEFORE adds so moving an educator from group A to group B is one batch — the (gedu_id, product_id) UNIQUE would otherwise refuse the add. Newly added groups are addressed by a client-minted `tempId` and the returned `tempMap` hands back the real ids, which is what lets one batch create a group and move members into it. An assignment carries a ROLE: an added assignment element is { groupId, geduId, role } and upserts ON CONFLICT (group_id, gedu_id) DO UPDATE SET role, so a role change is ONE add rather than a remove plus an add — which also means re-adding an existing pair is not a no-op, it restates the role. An added GROUP''s educators arrive as gedus: [{ geduId, role }]; the legacy geduIds array of bare ids is still read for the deploy window and lands every one of them as a primary. An omitted role is a primary, which is also the column''s default. This function is DELIBERATELY ASSIGNMENT-ONLY with respect to session substitutions, and is annotated as such in the completeness check: it is the writer of the permanent relationship, not a gate on it. Removing an assignment also sweeps the substitution requests it orphans: for every date the removed gedu held a live request on, the same fixpoint every other unseating runs. It remains ASSIGNMENT-ONLY as a GATE — it still gates on nothing and still writes no substitution row — but a writer that can unseat somebody has to leave the derivation consistent, or an admin could answer a request filed by a person who is no longer expected at the session. TRAINEE SEATS ride the same batch: p_trainees_removed and p_trainees_added, each element { groupId, geduId } (an added one may name a tempId), removed with the assignments and added after them, so the one-seat-per-product trigger, which refuses a gedu holding both an assignment and a trainee seat on the product, judges the batch''s end state. An added trainee seat has no ON CONFLICT, so placing a gedu already seated on the product is refused.';
 
 REVOKE ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb) TO authenticated;
@@ -444,24 +445,19 @@ BEGIN
             JOIN profiles gp ON gp.id = ga.gedu_id
            WHERE ga.group_id = pg.id
         ), '[]'::jsonb),
-        -- The group's trainee seats, which the panel places, removes and
-        -- promotes through apply_group_changes. No role: a trainee is not paid.
-        -- `certified` is what decides whether the panel offers the promotion,
-        -- since only a certified gedu may hold an assignment; a gedu with no
-        -- gedu_profiles row reads as uncertified.
+        -- The group's trainee seats, which the panel places and removes
+        -- through apply_group_changes. No role: a trainee is not paid.
         'trainees', COALESCE((
           SELECT jsonb_agg(
                    jsonb_build_object(
                      'id',         tp.id,
                      'first_name', tp.first_name,
-                     'email',      tp.email,
-                     'certified',  COALESCE(tg.certified, false)
+                     'email',      tp.email
                    )
                    ORDER BY t.created_at, tp.id
                  )
             FROM gedu_group_trainees t
             JOIN profiles tp ON tp.id = t.gedu_id
-            LEFT JOIN gedu_profiles tg ON tg.user_id = t.gedu_id
            WHERE t.group_id = pg.id
         ), '[]'::jsonb),
         'participations', COALESCE((
@@ -713,7 +709,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. The person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row. All three branches also carry the staff-only flair — group_joined_at, note and note_updated_by_first_name — from one identical LEFT JOIN, which comes back NULL on the two group-less branches because that is the truth and because one expression is what keeps the three shapes one shape. The groups panel draws neither mark, and no admin surface reads either of them from THIS document — the group details page renders both and reads them off get_gedu_group_feed, the copy a note write invalidates — so all three fields ride here for shape parity across the three roster readers rather than for a reader of this one. All three branches also carry seat_offer_sent_at and seat_offer_expiry_notified_at, on exactly the same terms: only the WAITLIST branch can hold a non-NULL value (a CHECK forbids an offer stamp on any other status) and only the waitlist card reads them, but the expression is identical in all three so the shape stays one shape. Whether an offer is LIVE is derived on the reader''s side from sent_at plus the five-day window. Each entry of a group''s `gedus` carries the assignment `role` — primary or assistant — which is what the panel''s per-pill role select reads and writes back through apply_group_changes. This panel is the PERMANENT assignment editor; the session card''s staffing editor is a different tool, and nothing links the two, deliberately. Each group also carries `trainees`, its trainee seats as {id, first_name, email} in placement order, which the panel places, removes and promotes through apply_group_changes.';
+COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. The person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row. All three branches also carry the staff-only flair — group_joined_at, note and note_updated_by_first_name — from one identical LEFT JOIN, which comes back NULL on the two group-less branches because that is the truth and because one expression is what keeps the three shapes one shape. The groups panel draws neither mark, and no admin surface reads either of them from THIS document — the group details page renders both and reads them off get_gedu_group_feed, the copy a note write invalidates — so all three fields ride here for shape parity across the three roster readers rather than for a reader of this one. All three branches also carry seat_offer_sent_at and seat_offer_expiry_notified_at, on exactly the same terms: only the WAITLIST branch can hold a non-NULL value (a CHECK forbids an offer stamp on any other status) and only the waitlist card reads them, but the expression is identical in all three so the shape stays one shape. Whether an offer is LIVE is derived on the reader''s side from sent_at plus the five-day window. Each entry of a group''s `gedus` carries the assignment `role` — primary or assistant — which is what the panel''s per-pill role select reads and writes back through apply_group_changes. This panel is the PERMANENT assignment editor; the session card''s staffing editor is a different tool, and nothing links the two, deliberately. Each group also carries `trainees`, its trainee seats as {id, first_name, email} in placement order, which the panel places and removes through apply_group_changes.';
 
 
 CREATE OR REPLACE FUNCTION public.get_gedu_group_feed(p_group_id uuid) RETURNS jsonb

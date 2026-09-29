@@ -84,10 +84,9 @@ type GeduPillProps = GeduPillBaseProps & (AssignedSeatProps | TraineeSeatProps);
  * a disabled one would be. Where the surface draws roles as labels, the
  * trainee's is the same label.
  *
- * **A trainee pill carries no promotion.** Certification is granted on the
- * admin's user page and nowhere else, and a certified trainee becomes a Gedu of
- * the group by being removed here and added through Add Gedu — the same two
- * steps any other change of seat takes.
+ * **A trainee pill's only action is Remove.** A trainee's seat ends when an
+ * admin removes it; certification is granted on the admin's user page and
+ * nowhere else.
  */
 export function GeduPill(props: GeduPillProps) {
   const { geduId, firstName, email, isSaving, disabled, onRemove } = props;

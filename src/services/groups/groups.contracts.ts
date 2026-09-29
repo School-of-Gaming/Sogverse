@@ -72,8 +72,8 @@ export const groupChangeSet = z.object({
   /**
    * Trainee seats to place and to remove. No role: a trainee is not paid. The
    * RPC removes these with the assignment removes and adds them after the
-   * assignment adds, so a **promotion** — this seat in `traineesRemoved` and
-   * the same gedu in `geduAssignmentsAdded` — is one atomic batch. An added
+   * assignment adds, so the one-seat-per-product rule judges the batch's end
+   * state. An added
    * seat has no upsert, so placing somebody already seated on the product is
    * refused.
    *
