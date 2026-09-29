@@ -68,8 +68,10 @@ import { TraineeProductPage } from "./TraineeProductPage";
  * who else teaches on this product" and is what the reference rail is built
  * from; the feed RPC then answers everything about that one group in a single
  * round trip — product shell, group notes, site notes, roster, and every stored
- * session row. Both refuse a product the caller is not assigned to by returning
- * `null`, which is what the not-yours state below renders.
+ * session row. The assignment read refuses a product (or a named group) the
+ * caller holds no staff seat on by returning `null`, and that `null` hands the
+ * page to the trainee shell, which renders the not-yours state itself when the
+ * caller holds no trainee seat either.
  *
  * **The calendar math is not in either of them.** The feed RPC returns rows and
  * schedule parameters; the merge that turns those into a descending run of
