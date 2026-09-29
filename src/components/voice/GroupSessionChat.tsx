@@ -12,6 +12,7 @@ import {
   deriveChatLockControl,
   type ChatAccount,
   type ChatMessage,
+  type ChatStanding,
   type ChatViewHandlers,
 } from "@/components/chat";
 import { getClient } from "@/lib/supabase/client";
@@ -64,10 +65,18 @@ import type { ParticipantChatControls } from "./ParticipantRow";
  */
 export function GroupSessionChat({
   groupId,
+  standing,
   heightClassName,
   onChatControlsChange,
+  onTraineeIdsChange,
 }: {
   groupId: string;
+  /**
+   * Whether this viewer moderates the chat, or is shown its moderation locked —
+   * the voice token route's answer for the same room, handed down by the page.
+   * Never read off the viewer's role: a trainee's role is `gedu`.
+   */
+  standing: ChatStanding;
   /**
    * The fixed height the room grants the whole surface — required rather than
    * optional, because the placeholder this component renders while the channel
@@ -92,6 +101,13 @@ export function GroupSessionChat({
    * the room around it does not re-render.
    */
   onChatControlsChange?: (controls: ParticipantChatControls | null) => void;
+  /**
+   * Publishes who on the roster holds a trainee seat, for the "Trainee" tag on
+   * the participant rail. Upward for the reason the controls are: the roster
+   * is read here. It is only ever non-empty for a viewer who moderates, because
+   * the database answers the flag to nobody else.
+   */
+  onTraineeIdsChange?: (ids: ReadonlySet<string>) => void;
 }) {
   const channel = useChatChannel(groupId);
 
@@ -126,8 +142,10 @@ export function GroupSessionChat({
   return (
     <GroupSessionChatRoom
       channelId={channel.data.id}
+      standing={standing}
       heightClassName={heightClassName}
       onChatControlsChange={onChatControlsChange}
+      onTraineeIdsChange={onTraineeIdsChange}
     />
   );
 }
@@ -168,12 +186,16 @@ const TYPING_EVENT = "typing";
 
 function GroupSessionChatRoom({
   channelId,
+  standing,
   heightClassName,
   onChatControlsChange,
+  onTraineeIdsChange,
 }: {
   channelId: string;
+  standing: ChatStanding;
   heightClassName: string;
   onChatControlsChange?: (controls: ParticipantChatControls | null) => void;
+  onTraineeIdsChange?: (ids: ReadonlySet<string>) => void;
 }) {
   const supabase = getClient();
   const queryClient = useQueryClient();
@@ -699,6 +721,7 @@ function GroupSessionChatRoom({
     return (userId: string) => {
       const direction = deriveChatLockControl(
         viewer,
+        standing,
         byId.get(userId) ?? null,
         lockedAccountIds.has(userId),
       );
@@ -708,11 +731,24 @@ function GroupSessionChatRoom({
         onSetLock: (locked: boolean) => setLockMutate({ userId, locked }),
       };
     };
-  }, [accounts, lockedAccountIds, setLockMutate, viewer]);
+  }, [accounts, lockedAccountIds, setLockMutate, standing, viewer]);
 
   useEffect(() => {
     onChatControlsChange?.(participantChatControls);
   }, [onChatControlsChange, participantChatControls]);
+
+  const traineeIds = useMemo(
+    () =>
+      new Set(
+        accounts
+          .filter((account) => account.isTrainee === true)
+          .map((account) => account.id),
+      ),
+    [accounts],
+  );
+  useEffect(() => {
+    onTraineeIdsChange?.(traineeIds);
+  }, [onTraineeIdsChange, traineeIds]);
 
   const handlers: ChatViewHandlers = {
     onSend: (drafts) => {
@@ -852,6 +888,7 @@ function GroupSessionChatRoom({
         messages={messages}
         accounts={accounts}
         viewer={viewer}
+        standing={standing}
         lockedAccountIds={lockedAccountIds}
         typingAccountIds={typingAccountIds}
         heightClassName={heightClassName}

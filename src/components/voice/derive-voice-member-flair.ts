@@ -50,6 +50,12 @@ export function deriveVoiceMemberFlair(
   overlay: GroupStaffOverlay | null | undefined,
   now: Date,
   onOpenFlair: (userId: string, name: string) => void,
+  /**
+   * Who in the room holds a trainee seat, as the chat roster told a moderator.
+   * Rides the overlay rather than standing alone, so a viewer with no staff
+   * sight — no overlay — is drawn no tag whatever arrives here.
+   */
+  trainees: ReadonlySet<string> = NO_TRAINEES,
 ): VoiceMemberFlair | null {
   if (overlay == null) return null;
 
@@ -78,6 +84,9 @@ export function deriveVoiceMemberFlair(
     notes,
     noteEditors,
     creations,
+    trainees,
     onOpenFlair,
   };
 }
+
+const NO_TRAINEES: ReadonlySet<string> = new Set();

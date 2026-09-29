@@ -22,7 +22,7 @@ import { ChatMessageActions } from "./ChatMessageActions";
 import { ChatMessageRow } from "./ChatMessageRow";
 import { ChatReactionRow } from "./ChatReactionRow";
 import { ChatQuotedMessage } from "./ChatReply";
-import type { ChatAccount, ChatMessage } from "./types";
+import type { ChatAccount, ChatMessage, ChatStanding } from "./types";
 
 /** Everything the log can ask the surface to do, keyed by message. */
 export interface ChatLogHandlers {
@@ -65,6 +65,7 @@ export function ChatMessageList({
   accounts,
   mentionable,
   viewer,
+  viewerStanding,
   viewerLocked,
   lockedAccountIds,
   timeZone,
@@ -84,6 +85,8 @@ export function ChatMessageList({
    */
   mentionable: readonly ChatAccount[];
   viewer: ChatAccount;
+  /** Whether the viewer moderates, or is shown moderation locked. */
+  viewerStanding: ChatStanding;
   /** Whether the viewer is locked — takes every writing affordance away. */
   viewerLocked: boolean;
   /** Who is locked, so a moderator's menu points the right way. */
@@ -114,6 +117,7 @@ export function ChatMessageList({
 }) {
   const t = useTranslations("chat");
   const common = useTranslations("common");
+  const trainee = useTranslations("gedu.trainee");
   const locale = useLocale();
 
   const logRef = useRef<HTMLDivElement | null>(null);
@@ -360,6 +364,13 @@ export function ChatMessageList({
                         {common(ROLE_LABEL_KEYS[sender.role])}
                       </span>
                     )}
+                    {/* Staff sight only: the roster sets the flag for a
+                        viewer who moderates and for nobody else. */}
+                    {sender?.isTrainee === true && (
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {trainee("badge")}
+                      </span>
+                    )}
                     {lockedAccountIds.has(group.senderId) && (
                       <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-destructive">
                         <Lock className="h-2.5 w-2.5 shrink-0" aria-hidden />
@@ -380,6 +391,7 @@ export function ChatMessageList({
                           byId={byId}
                           accounts={accounts}
                           viewer={viewer}
+                          viewerStanding={viewerStanding}
                           viewerLocked={viewerLocked}
                           lockedAccountIds={lockedAccountIds}
                           flashId={flashId}
@@ -407,7 +419,7 @@ export function ChatMessageList({
                                 ? null
                                 : (byId.get(item.message.replyToId) ?? null),
                             capabilities: deriveChatMessageCapabilities(
-                              { viewer, locked: viewerLocked },
+                              { viewer, standing: viewerStanding, locked: viewerLocked },
                               item.message,
                               accounts.get(item.message.senderId) ?? null,
                               lockedAccountIds.has(item.message.senderId),
@@ -519,6 +531,7 @@ function ChatImageRunItem({
   byId,
   accounts,
   viewer,
+  viewerStanding,
   viewerLocked,
   lockedAccountIds,
   flashId,
@@ -532,6 +545,7 @@ function ChatImageRunItem({
   byId: ReadonlyMap<string, ChatMessage>;
   accounts: ReadonlyMap<string, ChatAccount>;
   viewer: ChatAccount;
+  viewerStanding: ChatStanding;
   viewerLocked: boolean;
   lockedAccountIds: ReadonlySet<string>;
   flashId: string | null;
@@ -555,7 +569,7 @@ function ChatImageRunItem({
 
   const capabilities = messages.map((message) =>
     deriveChatMessageCapabilities(
-      { viewer, locked: viewerLocked },
+      { viewer, standing: viewerStanding, locked: viewerLocked },
       message,
       accounts.get(message.senderId) ?? null,
       lockedAccountIds.has(message.senderId),

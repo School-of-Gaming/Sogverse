@@ -7,6 +7,8 @@ import { robloxAccountId } from "@/components/game-account";
 import { useLiveRobloxRenders, type RobloxRenderMap } from "@/services/roblox";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { useVoiceMemberFlair } from "./VoiceMemberFlairProvider";
+import { useVoiceModeratorLocks } from "./VoiceModeratorLocks";
+import type { LockExplanation } from "@/components/ui/locked-control";
 import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 import { ParticipantRow } from "./ParticipantRow";
 import type {
@@ -64,6 +66,8 @@ export function ParticipantList({
   // the Roblox renders below are, because it is a fact about the viewer rather
   // than about any one row.
   const flair = useVoiceMemberFlair();
+  // The row menu's lock, for a viewer the page handed locks (a trainee).
+  const moderationLock = useVoiceModeratorLocks()?.moderate ?? null;
 
   // One batched lookup for the room, and it lives here because the row must
   // stay dumb: the thumbnails API is rate-limited per IP across the entire
@@ -112,6 +116,7 @@ export function ParticipantList({
             lockStates.get(p.sessionId) ?? { audio: false, video: false }
           }
           isLocalOwner={isModerator}
+          moderationLock={moderationLock}
           flair={flair}
           chatControl={participantChatControls?.(p.userId) ?? null}
           onMute={(track) => muteParticipant(p.sessionId, track)}
@@ -136,6 +141,7 @@ function ParticipantRowWithGlow({
   gameAvatarUrl,
   lockState,
   isLocalOwner,
+  moderationLock,
   flair,
   chatControl,
   onMute,
@@ -146,6 +152,7 @@ function ParticipantRowWithGlow({
   gameAvatarUrl: string | null | undefined;
   lockState: LockState;
   isLocalOwner: boolean;
+  moderationLock: LockExplanation | null;
   /** The viewer's staff overlay, or `null` where they have none. */
   flair: VoiceMemberFlair | null;
   /** This person's chat lock, already decided. `null` where none is offered. */
@@ -172,6 +179,7 @@ function ParticipantRowWithGlow({
       participant={{ ...participant, gameAvatarUrl }}
       lockState={lockState}
       isModView={isLocalOwner}
+      moderationLock={moderationLock}
       avatarRef={avatarRef}
       newcomerJoinedAt={flair?.newcomers[participant.userId]}
       flairNow={flair?.now}
@@ -179,6 +187,7 @@ function ParticipantRowWithGlow({
       // The room draws no owed marker — whether a creation is *wanted* is a fact
       // about the product's schedule, which this document does not carry.
       hasContent={note !== "" || creationCount > 0}
+      isTrainee={flair?.trainees.has(participant.userId) ?? false}
       // Absent for a viewer with no overlay, which is what keeps a child's row
       // a plain avatar with no button semantics to announce.
       onOpenFlair={

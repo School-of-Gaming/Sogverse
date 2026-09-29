@@ -121,7 +121,9 @@ export const ensureChatChannelResult = z.array(chatChannelRow).length(1);
  * refuses cross-participant reads, so it is a deliberate hole in that refusal
  * and is kept to the smallest shape the surface needs. The id seeds the
  * identicon and keys a mention; the first name is what a bubble draws; the role
- * is what `capabilities.ts` derives moderation from.
+ * labels the sender and decides whether a lock may target them. It never
+ * decides whether the *viewer* moderates — that is the viewer's standing, the
+ * server's answer — because a trainee's role is `gedu`.
  */
 export const chatRosterEntry = z.object({
   id: z.string(),

@@ -486,6 +486,12 @@ export const PREVIEW_SCENES = [
           "The staff view: newcomer badges across the window and two notes, on the real rail.",
       },
       {
+        slug: "trainee",
+        label: "Trainee — the same room",
+        description:
+          "A Gedu on a trainee seat: the moderator's controls, each locked and explaining itself.",
+      },
+      {
         slug: "gamer",
         label: "Gamer — the same room",
         description:

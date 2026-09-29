@@ -232,3 +232,33 @@ describe("deriveVoiceMemberFlair — what it passes through", () => {
     expect(flair?.onOpenFlair).toBe(openFlair);
   });
 });
+
+describe("deriveVoiceMemberFlair — the trainee tag", () => {
+  it("carries the chat roster's trainees through for a viewer with staff sight", () => {
+    const trainees = new Set([IDS.sanna]);
+    const flair = deriveVoiceMemberFlair(
+      overlayFor("consumer_club"),
+      NOW,
+      openFlair,
+      trainees,
+    );
+    expect(flair?.trainees).toBe(trainees);
+  });
+
+  it("draws no tag without the overlay, whatever the roster said", () => {
+    // The overlay is the staff-sight gate: a viewer who has none — every family
+    // member in the call — gets no flair at all, so no set can reach a row.
+    expect(
+      deriveVoiceMemberFlair(null, NOW, openFlair, new Set([IDS.sanna])),
+    ).toBeNull();
+  });
+
+  it("defaults to nobody before the roster has said anything", () => {
+    const flair = deriveVoiceMemberFlair(
+      overlayFor("consumer_club"),
+      NOW,
+      openFlair,
+    );
+    expect(flair?.trainees.size).toBe(0);
+  });
+});

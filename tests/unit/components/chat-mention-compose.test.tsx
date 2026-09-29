@@ -170,7 +170,7 @@ function renderEditor(body: string) {
           flashing: false,
           actionsRevealed: false,
           capabilities: deriveChatMessageCapabilities(
-            { viewer: AINO, locked: false },
+            { viewer: AINO, standing: { kind: "participant" }, locked: false },
             message,
             AINO,
             false,

@@ -3,8 +3,13 @@
 
 import { useState } from "react";
 import { Play } from "lucide-react";
-import { ChatView } from "@/components/chat";
-import { CHAT_SCENE_ACCOUNTS } from "@/components/chat/mock-chat-fixtures";
+import { ChatView, type ChatStanding } from "@/components/chat";
+import {
+  CHAT_SCENE_ACCOUNTS,
+  chatSceneAccountsSeenBy,
+  chatSceneStandingKind,
+} from "@/components/chat/mock-chat-fixtures";
+import { useTraineeRoomLocks } from "@/components/voice/VoiceModeratorLocks";
 import { FIXTURE_TIMEZONE } from "@/components/family/mock-enrollment-fixtures";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,6 +53,14 @@ export function ChatScene() {
   const viewer =
     CHAT_SCENE_ACCOUNTS.find((account) => account.id === store.viewerId) ??
     CHAT_SCENE_ACCOUNTS[0];
+  // What the server would have told this viewer — a trainee is shown the
+  // moderator's controls locked, in the same words the live room uses.
+  const traineeLocks = useTraineeRoomLocks().chat;
+  const standingKind = chatSceneStandingKind(viewer);
+  const standing: ChatStanding =
+    standingKind === "trainee"
+      ? { kind: "trainee", locks: traineeLocks }
+      : { kind: standingKind };
 
   return (
     <div className="space-y-4">
@@ -70,8 +83,9 @@ export function ChatScene() {
               // belonged to whoever was typing, so the next viewer starts clean.
               key={viewer.id}
               messages={store.messages}
-              accounts={CHAT_SCENE_ACCOUNTS}
+              accounts={chatSceneAccountsSeenBy(viewer)}
               viewer={viewer}
+              standing={standing}
               lockedAccountIds={store.lockedIds}
               typingAccountIds={store.typingIds}
               heightClassName={height.className}

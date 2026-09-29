@@ -1,5 +1,6 @@
 import type { ChatReactionCode } from "@/lib/constants/chat";
 import type { UserRole } from "@/lib/constants/roles";
+import type { LockExplanation } from "@/components/ui/locked-control";
 
 /**
  * The shapes every chat component takes — and the whole of what a surface has
@@ -32,6 +33,34 @@ export interface ChatAccount {
   /** First name, as every roster in the app shows it. */
   name: string;
   role: ChatRole;
+  /**
+   * Whether this person holds a trainee seat on the channel's group. Only ever
+   * true for a viewer who moderates — the roster tells nobody else — and it
+   * draws a tag beside the name. It confers nothing and takes nothing away: a
+   * trainee's role is `gedu`, and a lock still refuses them as it refuses staff.
+   */
+  isTrainee?: boolean;
+}
+
+/**
+ * What the viewer is in this channel, as the surface that mounted the chat was
+ * told by the server — **never read off the viewer's role**, because a trainee's
+ * role is `gedu` and a trainee moderates nothing.
+ *
+ * A trainee is shown the moderator's controls locked, and the words each lock
+ * explains itself with travel here, so every surface that asks the capability
+ * module gets them without a second prop to thread.
+ */
+export type ChatStanding =
+  | { kind: "moderator" }
+  | { kind: "participant" }
+  | { kind: "trainee"; locks: ChatModerationLocks };
+
+/** What each moderator control a trainee is shown locked says when pressed. */
+export interface ChatModerationLocks {
+  hide: LockExplanation;
+  restore: LockExplanation;
+  lock: LockExplanation;
 }
 
 /**

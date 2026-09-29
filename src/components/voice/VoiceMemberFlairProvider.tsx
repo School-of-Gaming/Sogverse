@@ -74,6 +74,16 @@ export interface VoiceMemberFlair {
    */
   creations: Readonly<Record<string, readonly GamerCreation[]>>;
   /**
+   * The `userId` of everyone in the room holding a trainee seat on the group,
+   * for the "Trainee" tag beside their name.
+   *
+   * A trainee's token says `gedu` to every peer, so the room itself cannot tell
+   * them apart and must not: this set comes from the chat roster, whose
+   * trainee flag the database answers only to a caller who moderates the
+   * channel. Empty until that roster lands, and for a room with no chat.
+   */
+  trainees: ReadonlySet<string>;
+  /**
    * Open a member's per-gamer dialog. Only ever called for a `userId` in
    * {@link members}.
    */

@@ -2,11 +2,21 @@
 
 import { useState } from "react";
 import { GamerFlairDialog } from "@/components/member-flair";
-import { ChatView, deriveChatLockControl } from "@/components/chat";
+import {
+  ChatView,
+  deriveChatLockControl,
+  type ChatStanding,
+} from "@/components/chat";
 import {
   CHAT_ACCOUNT_IDS,
   CHAT_SCENE_ACCOUNTS,
+  chatSceneAccountsSeenBy,
+  chatSceneStandingKind,
 } from "@/components/chat/mock-chat-fixtures";
+import {
+  VoiceModeratorLocksProvider,
+  useTraineeRoomLocks,
+} from "@/components/voice/VoiceModeratorLocks";
 import { FIXTURE_TIMEZONE } from "@/components/family/mock-enrollment-fixtures";
 import { VoiceRoom } from "@/components/voice/VoiceRoom";
 import { VoiceRoomContext } from "@/components/voice/VoiceRoomProvider";
@@ -17,6 +27,7 @@ import {
   buildParticipants,
   SEATED_MEMBER_IDS,
   VOICE_ROOM_CUSTOM_ZONES,
+  VOICE_ROOM_TRAINEE_ID,
   type VoiceRoomScenario,
 } from "@/components/voice/mock-room-fixtures";
 import type {
@@ -48,6 +59,11 @@ import { useChatSceneStore } from "./chat-scene-store";
  * visiting admin. That is what the fixture's seat list is for: a room is not a
  * roster, and a note is about a seat.
  *
+ * **Tiia is a Gedu on a trainee seat.** The staff scenario tags her "Trainee"
+ * on the rail and in the chat; the trainee scenario is her own view — the
+ * moderator's controls in the dock, on the zones, on the rows and in the chat
+ * menu, each locked and explaining itself; the family scenario sees a Gedu.
+ *
  * **Every voice component is a pure consumer of `VoiceRoomContext`**, so a
  * fixture context drives them exactly as the live provider does — no Daily
  * call, no token, no network. Actions are inert; what works is what is pure
@@ -56,8 +72,14 @@ import { useChatSceneStore } from "./chat-scene-store";
 /** The list a member with no creations is handed — one identity, every render. */
 const NO_CREATIONS: readonly GamerCreation[] = [];
 
+/** Who the staff scenario's chat roster flags as a trainee: Tiia. */
+const SCENE_TRAINEES: ReadonlySet<string> = new Set([VOICE_ROOM_TRAINEE_ID]);
+
 export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
   const isStaff = scenario === "gedu";
+  const isTrainee = scenario === "trainee";
+  // The trainee's locks, in the words the live page hands the room.
+  const traineeLocks = useTraineeRoomLocks();
 
   // One instant for the room, frozen at mount, exactly as the live page hands
   // its rows one request-stable clock. A ticking one would walk the badges
@@ -87,11 +109,20 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
    */
   const chat = useChatSceneStore(
     now,
-    isStaff ? CHAT_ACCOUNT_IDS.sanna : CHAT_ACCOUNT_IDS.aino,
+    isStaff
+      ? CHAT_ACCOUNT_IDS.sanna
+      : isTrainee
+        ? CHAT_ACCOUNT_IDS.tiia
+        : CHAT_ACCOUNT_IDS.aino,
   );
   const chatViewer =
     CHAT_SCENE_ACCOUNTS.find((account) => account.id === chat.viewerId) ??
     CHAT_SCENE_ACCOUNTS[0];
+  const chatStandingKind = chatSceneStandingKind(chatViewer);
+  const chatStanding: ChatStanding =
+    chatStandingKind === "trainee"
+      ? { kind: "trainee", locks: traineeLocks.chat }
+      : { kind: chatStandingKind };
 
   /**
    * The chat lock the rail offers, over the same fixtures — **derived by the
@@ -112,6 +143,7 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
   const participantChatControls: ParticipantChatControls = (userId) => {
     const direction = deriveChatLockControl(
       chatViewer,
+      chatStanding,
       CHAT_SCENE_ACCOUNTS.find((account) => account.id === userId) ?? null,
       chat.lockedIds.has(userId),
     );
@@ -136,7 +168,8 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
     joining: false,
     callObject: null,
     localSessionId: local?.sessionId ?? "s-staff",
-    localRole: isStaff ? "gedu" : "gamer",
+    // A trainee's token says `gedu` too; what they lack is the owner flag.
+    localRole: isStaff || isTrainee ? "gedu" : "gamer",
     isModerator: isStaff,
     groupId: "preview-group",
     participants,
@@ -193,6 +226,7 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
         notes,
         noteEditors: fixture.noteEditors,
         creations,
+        trainees: SCENE_TRAINEES,
         onOpenFlair: (id: string, name: string) => setFlairTarget({ id, name }),
       }
     : null;
@@ -204,31 +238,36 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
             into the dashboard layout's container, and a scene that added a
             width would be judging the room at a width it never has. */}
         <VoiceMemberFlairProvider value={flair}>
-          <VoiceRoom
-            onLeave={asyncNoop}
-            participantChatControls={participantChatControls}
-            chat={(heightClassName) => (
-              <ChatView
-                messages={chat.messages}
-                accounts={CHAT_SCENE_ACCOUNTS}
-                viewer={chatViewer}
-                lockedAccountIds={chat.lockedIds}
-                typingAccountIds={chat.typingIds}
-                heightClassName={heightClassName}
-                timeZone={FIXTURE_TIMEZONE}
-                handlers={{
-                  onSend: chat.send,
-                  onToggleReaction: chat.toggleReaction,
-                  onEdit: chat.edit,
-                  onDelete: chat.remove,
-                  onHide: chat.remove,
-                  onRestore: chat.restore,
-                  onSetLock: chat.setLock,
-                  onRetry: chat.retry,
-                }}
-              />
-            )}
-          />
+          <VoiceModeratorLocksProvider
+            value={isTrainee ? traineeLocks.voice : null}
+          >
+            <VoiceRoom
+              onLeave={asyncNoop}
+              participantChatControls={participantChatControls}
+              chat={(heightClassName) => (
+                <ChatView
+                  messages={chat.messages}
+                  accounts={chatSceneAccountsSeenBy(chatViewer)}
+                  viewer={chatViewer}
+                  standing={chatStanding}
+                  lockedAccountIds={chat.lockedIds}
+                  typingAccountIds={chat.typingIds}
+                  heightClassName={heightClassName}
+                  timeZone={FIXTURE_TIMEZONE}
+                  handlers={{
+                    onSend: chat.send,
+                    onToggleReaction: chat.toggleReaction,
+                    onEdit: chat.edit,
+                    onDelete: chat.remove,
+                    onHide: chat.remove,
+                    onRestore: chat.restore,
+                    onSetLock: chat.setLock,
+                    onRetry: chat.retry,
+                  }}
+                />
+              )}
+            />
+          </VoiceModeratorLocksProvider>
         </VoiceMemberFlairProvider>
       </VoiceRoomContext.Provider>
 
