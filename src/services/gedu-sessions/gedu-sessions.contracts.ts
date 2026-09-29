@@ -364,7 +364,7 @@ export const geduGroupFeed = z.object({
    */
   cancellations: z.array(sessionCancellation),
   /**
-   * The gedus holding a **trainee seat** on this group, by first name — chipped
+   * The gedus holding a **trainee seat** on this group, in the order they were added — chipped
    * in the workspace among the group's own gedus, marked Trainee. A trainee is
    * on no other list here.
    *

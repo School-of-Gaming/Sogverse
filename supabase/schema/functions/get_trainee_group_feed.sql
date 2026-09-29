@@ -200,17 +200,17 @@ BEGIN
    WHERE sc.group_id = p_group_id
      AND public.group_session_is_cancelled(sc.group_id, sc.session_date);
 
-  SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'first_name'), '[]'::jsonb)
+  SELECT COALESCE(
+           jsonb_agg(
+             jsonb_build_object('id', pr.id, 'first_name', pr.first_name)
+             ORDER BY t.created_at, pr.id
+           ),
+           '[]'::jsonb
+         )
     INTO v_trainees
-    FROM (
-      SELECT jsonb_build_object(
-        'id',         pr.id,
-        'first_name', pr.first_name
-      ) AS entry
-        FROM public.gedu_group_trainees t
-        JOIN public.profiles pr ON pr.id = t.gedu_id
-       WHERE t.group_id = p_group_id
-    ) AS trainee_rows;
+    FROM public.gedu_group_trainees t
+    JOIN public.profiles pr ON pr.id = t.gedu_id
+   WHERE t.group_id = p_group_id;
 
   RETURN jsonb_build_object(
     'product',       v_product,

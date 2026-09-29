@@ -642,7 +642,7 @@ describe("trainee gedus", () => {
         email: secondEmail,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Tuomas", last_name: "Trainee" },
+        user_metadata: { first_name: "Aarne", last_name: "Trainee" },
       });
       expect(createError).toBeNull();
       const secondId = created.user?.id ?? "";
@@ -655,6 +655,23 @@ describe("trainee gedus", () => {
           p_trainees_added: [{ groupId: GROUP_MINE, geduId: secondId }],
         });
         expect(placed.error).toBeNull();
+
+        // Both feeds list trainees in the order the seats were made, whatever
+        // their names sort to: Aarne sorts first but was placed second.
+        const feed = await geduAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP_MINE });
+        expect(feed.error).toBeNull();
+        expect(withTrainees.parse(feed.data).trainees.map((t) => t.id)).toEqual([
+          traineeId,
+          secondId,
+        ]);
+        const ownFeed = await traineeAuth.rpc("get_trainee_group_feed", {
+          p_group_id: GROUP_MINE,
+        });
+        expect(ownFeed.error).toBeNull();
+        expect(withTrainees.parse(ownFeed.data).trainees.map((t) => t.id)).toEqual([
+          traineeId,
+          secondId,
+        ]);
 
         const tagsFor = async (client: Admin) => {
           const { data, error } = await client.rpc("get_chat_channel_roster", {

@@ -483,10 +483,11 @@ interface GroupWorkspaceProps {
    */
   groupHeading?: string;
   /**
-   * The gedus holding a **trainee seat** on this group, by first name. Each is
-   * a chip in the same run as the group's gedus, after them, marked Trainee —
-   * the same list the admin groups panel draws, where a trainee shares the
-   * gedus' pill with "Trainee" in the role's place. Empty draws no trainee.
+   * The gedus holding a **trainee seat** on this group, in the order they were
+   * added. Each is a chip in the same run as the group's gedus, after them,
+   * marked Trainee — the same list the admin groups panel shows, where a
+   * trainee shares the gedus' pill with "Trainee" in the role's place. Empty
+   * draws no trainee.
    *
    * **Required, with no default**, for the reason `photoConsents` is: a shell
    * that forgot it would compile and silently draw the group without the
@@ -1339,7 +1340,7 @@ function GroupRailCard({
           {g("gedus")}
         </p>
         {/* One run: the gedus, then the trainees, each trainee's chip tagged
-            with the seat — the same list the admin groups panel draws, where a
+            with the seat — the same list the admin groups panel shows, where a
             trainee shares the gedus' pill with "Trainee" in the role's
             place. */}
         {group.gedus.length === 0 && trainees.length === 0 ? (

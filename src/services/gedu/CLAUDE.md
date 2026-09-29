@@ -158,8 +158,8 @@ that group could see and do. Three things about it are easy to get wrong:
 - **There is no path from a trainee seat to an assignment.** A trainee's seat ends
   when an admin removes it, and certification happens only on the admin user page.
 
-The group's assigned gedus see its trainees by first name on their workspace; families
-are never told a trainee is there.
+Admins, the group's assigned gedus and the group's own trainees see a group's trainees
+(workspace chips; the Trainee tag in voice and chat); families never do.
 
 ## The criminal record check
 

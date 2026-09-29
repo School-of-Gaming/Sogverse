@@ -81,8 +81,8 @@ silently missing. The four statements about who brought you here default, and th
 staffing pair is optional because its absence is itself the admin shell's answer.
 
 **A group's trainees are chips in the same run as its gedus**, after them, each tagged
-Trainee — the list the admin groups panel draws, where a trainee shares the gedus' pill
-with "Trainee" in the role's place. Every shell passes them from its group feed.
+Trainee — the list the admin groups panel shows, in the order the trainees were added,
+where a trainee shares the gedus' pill with "Trainee" in the role's place. Every shell passes them from its group feed.
 
 **Rule: nothing in here is named for a role.** The directory is the shared half, so a
 `Gedu*` or `Admin*` name in it is a claim the code does not make. Role-specific shells
