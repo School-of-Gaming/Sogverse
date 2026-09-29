@@ -3,17 +3,17 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 /**
- * **The product form's picture card: the two things it does that are not the
- * catalogue.**
+ * **The catalogue picture field — a product's picture, a Library article's
+ * cover: the two things it does that are not the catalogue.**
  *
- * The card sits in front of a catalogue every product shares, and the whole
- * design rests on keeping its own actions unshared. Taking the picture off
- * *this* product touches nothing else, so it never warns; a dropped file is
- * cropped to the product frame, added to the catalogue and selected **here**,
- * which is what makes the most casual gesture in the feature also the safest
- * one.
+ * The card sits in front of a catalogue every product (or article) shares, and
+ * the whole design rests on keeping its own actions unshared. Taking the
+ * picture off *this* product touches nothing else, so it never warns; a dropped
+ * file is cropped to the purpose's frame, added to the catalogue and selected
+ * **here**, which is what makes the most casual gesture in the feature also the
+ * safest one.
  *
- * The third case is the refusal that has to happen before the request: the
+ * A further case is the refusal that has to happen before the request: the
  * platform caps a function body at roughly 4.5 MB, so a file over the cap never
  * reaches the route and the admin would otherwise see a network failure instead
  * of a sentence telling them what to do. The assertion that matters is not the
@@ -24,6 +24,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
  * in for. The crop dialog needs a canvas jsdom does not have, and what is
  * under test is what the card does with its result: the stub hands back
  * whatever blob a case gives it.
+ *
+ * The last cases run the same field for a Library cover: the frame, the crop
+ * size, the upload's purpose and the copy all follow the purpose.
  */
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -62,6 +65,7 @@ vi.mock("@/lib/supabase/client", () => ({
 
 import { ImagePicker } from "@/components/admin/products/image-picker";
 import { CATALOGUE_IMAGE_MAX_BYTES } from "@/services/catalogue-images";
+import type { CatalogueImagePurpose } from "@/types";
 
 const ENTRY = {
   id: "ba0d0b0b-2b58-4b58-9a0f-1f2ec6a2e2a1",
@@ -86,7 +90,10 @@ function dropped(f: File) {
   };
 }
 
-function renderCard(imageId: string | null) {
+function renderCard(
+  imageId: string | null,
+  purpose: CatalogueImagePurpose = "product",
+) {
   const onChange = vi.fn();
   const client = new QueryClient({
     defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
@@ -94,6 +101,9 @@ function renderCard(imageId: string | null) {
   const view = render(
     <QueryClientProvider client={client}>
       <ImagePicker
+        purpose={purpose}
+        label="label"
+        hint="hint"
         imageId={imageId}
         current={imageId === null ? null : { label: ENTRY.label, path: ENTRY.path }}
         onChange={onChange}
@@ -115,7 +125,7 @@ describe("removing the picture from one product", () => {
   it("clears both halves of the pick and asks nothing", () => {
     const { onChange } = renderCard(ENTRY.id);
 
-    fireEvent.click(button("remove")!);
+    fireEvent.click(button("forPurpose.product.remove")!);
 
     // No dialog, no confirm: nothing shared is being touched.
     expect(onChange).toHaveBeenCalledWith(null, null);
@@ -201,5 +211,69 @@ describe("dropping a file on the card", () => {
     // The point of the client-side check: the body never left the browser.
     expect(fetchMock).not.toHaveBeenCalled();
     expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("the same field picking a Library cover", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockReset();
+    croppedBlob = new Blob(["cropped"], { type: "image/jpeg" });
+    URL.createObjectURL = vi.fn(() => "blob:picked");
+    URL.revokeObjectURL = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("paints the pick in the 16:9 cover frame, names it, and speaks of the cover", () => {
+    renderCard(ENTRY.id, "library_cover");
+
+    expect(document.querySelector(".aspect-video")).not.toBeNull();
+    expect(document.querySelector(".aspect-\\[3\\/2\\]")).toBeNull();
+    expect(screen.getByText(ENTRY.label)).toBeDefined();
+    expect(button("forPurpose.libraryCover.change")).toBeDefined();
+    expect(button("forPurpose.libraryCover.remove")).toBeDefined();
+  });
+
+  it("crops a dropped file to a cover's size and uploads it as a Library cover", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          status: "existing",
+          image: {
+            ...ENTRY,
+            sha256: "0".repeat(64),
+            purpose: "library_cover",
+            created_at: "2026-08-20T10:00:00.000Z",
+          },
+        }),
+    });
+
+    const { onChange } = renderCard(null, "library_cover");
+
+    fireEvent.drop(dropZone(), { dataTransfer: dropped(file("a.png", 1024)) });
+    fireEvent.click(await screen.findByText("crop 1600x900"));
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith(ENTRY.id, {
+        label: ENTRY.label,
+        path: ENTRY.path,
+      });
+    });
+    const init: unknown = fetchMock.mock.calls[0][1];
+    const body =
+      typeof init === "object" && init !== null && "body" in init
+        ? init.body
+        : null;
+    if (!(body instanceof FormData)) throw new Error("expected a form body");
+    expect(body.get("purpose")).toBe("library_cover");
+    expect(document.body.textContent).toContain(
+      "forPurpose.libraryCover.outcomeExisting",
+    );
   });
 });

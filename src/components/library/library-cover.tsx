@@ -2,8 +2,8 @@ import { FramedImage } from "@/components/ui/framed-image";
 
 /**
  * **A Library article's cover, at 16:9 — the only cover presentation.** The
- * index card and the article page both paint it through here, and so will the
- * admin editor, so an admin approves the crop a reader meets.
+ * index card, the article page and the admin editor's picture field all paint
+ * it through here, so an admin approves the crop a reader meets.
  *
  * `src` is an already-resolved URL, from `catalogueImageSrc` over the article's
  * derived cover path (covers are entries of the shared image catalogue). An

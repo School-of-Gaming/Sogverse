@@ -26,6 +26,7 @@ const DRAFT: LibraryArticleDraft = {
   category: "screen_time",
   coverImageId: "b8805c0f-f47d-4f73-af4a-7a2ae7b30237",
   coverPath: "cover.jpg",
+  coverLabel: "Controller on a desk",
   createdAt: "2026-09-12T11:00:00Z",
   updatedAt: "2026-09-15T08:05:00Z",
 };
@@ -149,9 +150,10 @@ describe("the form against the saved copy", () => {
     expect(sameAsSaved({ ...complete(), cover: null }, DRAFT)).toBe(false);
   });
 
-  it("pairs a cover's id with its path, and has neither for none", () => {
+  it("pairs a cover's id with its label and path, and has none of them for none", () => {
     expect(complete().cover).toEqual({
       id: DRAFT.coverImageId,
+      label: DRAFT.coverLabel,
       path: DRAFT.coverPath,
     });
     expect(
@@ -159,8 +161,17 @@ describe("the form against the saved copy", () => {
         ...DRAFT,
         coverImageId: null,
         coverPath: null,
+        coverLabel: null,
       }).cover,
     ).toBeNull();
+  });
+
+  it("compares the cover by its entry, so a renamed entry is not an unsaved change", () => {
+    const form = complete();
+    if (form.cover === null) throw new Error("expected a cover");
+    expect(
+      sameAsSaved({ ...form, cover: { ...form.cover, label: "Renamed" } }, DRAFT),
+    ).toBe(true);
   });
 
   it("saves every field, the cover as its id", () => {

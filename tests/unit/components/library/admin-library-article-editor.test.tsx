@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 
 /**
  * **The Library article editor, as an admin types into it while the page
@@ -63,6 +65,7 @@ const ARTICLE: AdminLibraryArticle = {
     category: "screen_time",
     coverImageId: null,
     coverPath: null,
+    coverLabel: null,
     createdAt: "2026-09-12T11:00:00Z",
     updatedAt: "2026-09-15T08:05:00Z",
   },
@@ -81,6 +84,14 @@ function actions(
   };
 }
 
+/** The cover field's upload is a mutation, so the editor needs a query client. */
+function withQueryClient() {
+  const client = new QueryClient();
+  return function QueryWrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  };
+}
+
 function renderEditor(
   article: AdminLibraryArticle,
   editorActions = actions(),
@@ -90,6 +101,7 @@ function renderEditor(
       article={article}
       actions={editorActions}
     />,
+    { wrapper: withQueryClient() },
   );
   const rerenderWith = (next: AdminLibraryArticle) =>
     utils.rerender(
@@ -332,6 +344,7 @@ describe("the Library article editor", () => {
         article={null}
         actions={{ save }}
         />,
+      { wrapper: withQueryClient() },
     );
 
     fireEvent.change(titleBox(), { target: { value: "A new article" } });

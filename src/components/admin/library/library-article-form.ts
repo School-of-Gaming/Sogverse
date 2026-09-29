@@ -7,11 +7,12 @@ import type {
 
 /**
  * The cover the form points at: the catalogue entry's id, which is what a save
- * writes, and its path, which is what the preview paints. They travel together
+ * writes, and its label and path, which the picker shows. They travel together
  * so the frame can never show one entry while the save links another.
  */
 export interface LibraryArticleCover {
   id: string;
+  label: string;
   path: string;
 }
 
@@ -37,12 +38,18 @@ export function libraryArticleFormFromDraft(
     title: draft.title,
     summary: draft.summary,
     category: draft.category,
-    // The database derives the path from the id and nulls it exactly when the
-    // id is null, so the two are both present or both absent.
+    // The database derives the path from the id and the read embeds the label
+    // through it, so all three are present or all absent.
     cover:
-      draft.coverImageId === null || draft.coverPath === null
+      draft.coverImageId === null ||
+      draft.coverPath === null ||
+      draft.coverLabel === null
         ? null
-        : { id: draft.coverImageId, path: draft.coverPath },
+        : {
+            id: draft.coverImageId,
+            label: draft.coverLabel,
+            path: draft.coverPath,
+          },
     body: draft.body,
   };
 }

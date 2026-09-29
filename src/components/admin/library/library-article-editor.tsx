@@ -15,6 +15,7 @@ import {
   LIBRARY_CATEGORY_MESSAGE_KEY,
   isLibraryCategory,
 } from "@/components/library/categories";
+import { ImagePicker } from "@/components/admin/products/image-picker";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
@@ -36,7 +37,6 @@ import {
   type LibraryPublishField,
 } from "./library-article-form";
 import { LibraryArticleStatusChip } from "./library-article-status-chip";
-import { LibraryCoverField } from "./library-cover-field";
 
 /**
  * The writes the editor makes. Each is a backend action and so the caller's.
@@ -225,9 +225,16 @@ function EditorForm(props: LibraryArticleEditorProps) {
               </select>
             </Field>
 
-            <LibraryCoverField
-              cover={form.cover}
-              onChange={(cover) => set("cover", cover)}
+            <ImagePicker
+              purpose="library_cover"
+              label={t("fields.cover")}
+              hint={t("hints.cover")}
+              optional
+              imageId={form.cover?.id ?? null}
+              current={form.cover}
+              onChange={(id, image) =>
+                set("cover", id === null || image === null ? null : { id, ...image })
+              }
             />
 
             <Field label={t("fields.body")} hint={t("hints.body")}>
