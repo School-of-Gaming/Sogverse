@@ -7,7 +7,7 @@ import { useLeaveGuard } from "@/hooks/use-leave-guard";
 /**
  * **Asks before a page holding unsaved changes is left**, for as long as
  * `when` is true: the browser's own prompt for a reload, a close or a typed
- * address, and this dialog for a link within the app and for Back and Forward.
+ * address, and this dialog for a link within the app and for the browser's Back.
  *
  * `when` is the caller's "there is something to lose": true while the form
  * differs from what is saved, and false again once a save lands — and false
