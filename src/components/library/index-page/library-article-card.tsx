@@ -11,6 +11,8 @@ import { LibraryCategoryLabel } from "../library-category-label";
 import { LibraryCover } from "../library-cover";
 
 export interface LibraryArticleCardProps {
+  /** The article's id, which keys the card in a list: titles need not be unique. */
+  id: string;
   /** Where the card opens: the article's own page. */
   href: AppHref;
   /**

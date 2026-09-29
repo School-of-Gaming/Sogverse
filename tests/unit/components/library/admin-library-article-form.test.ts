@@ -178,22 +178,27 @@ describe("the form against the saved copy", () => {
 });
 
 describe("a refused write", () => {
-  it("quotes the database's own sentence", () => {
-    expect(
-      libraryWriteFailure({
-        code: "23514",
-        message: "The article cannot be published without a summary",
-      }),
-    ).toEqual({
+  it.each([
+    ["23514", "The article cannot be published without a summary"],
+    ["P0002", "Library article not found"],
+    ["23503", "That picture is no longer in the catalogue"],
+  ])("quotes the database's own sentence under %s", (code, message) => {
+    expect(libraryWriteFailure({ code, message })).toEqual({
       kind: "reason",
-      reason: "The article cannot be published without a summary",
+      reason: message,
     });
   });
 
+  it("has nothing to quote for a network fault or an expired session", () => {
+    expect(
+      libraryWriteFailure({ code: "", message: "TypeError: Failed to fetch" }),
+    ).toEqual({ kind: "unknown" });
+    expect(
+      libraryWriteFailure({ code: "PGRST301", message: "JWT expired" }),
+    ).toEqual({ kind: "unknown" });
+  });
+
   it("has nothing to quote for anything that is not a wire error", () => {
-    expect(libraryWriteFailure(new TypeError("Failed to fetch"))).toEqual({
-      kind: "unknown",
-    });
     expect(libraryWriteFailure(null)).toEqual({ kind: "unknown" });
     expect(libraryWriteFailure({ code: "23514", message: "" })).toEqual({
       kind: "unknown",
