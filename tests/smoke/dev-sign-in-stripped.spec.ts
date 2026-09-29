@@ -27,37 +27,44 @@ function filesUnder(dir: string, skip: (name: string) => boolean): string[] {
     .map((entry) => join(entry.parentPath, entry.name));
 }
 
-const SCANNED = [
-  ...filesUnder(join(BUILD_DIR, "static"), () => false),
-  ...filesUnder(join(BUILD_DIR, "server"), (name) => name.endsWith(".map")),
-].map((path) => ({
-  path,
+// Walked when a test runs rather than when the file loads, so a run filtered to
+// the other smoke specs never reads the build, and each file's text is dropped
+// once it has been checked.
+function scannedFiles(): string[] {
+  return [
+    ...filesUnder(join(BUILD_DIR, "static"), () => false),
+    ...filesUnder(join(BUILD_DIR, "server"), (name) => name.endsWith(".map")),
+  ];
+}
+
+function read(path: string): string {
   // eslint-disable-next-line security/detect-non-literal-fs-filename -- a file the walk above found inside the build directory, no external input
-  text: readFileSync(path, "utf8"),
-}));
+  return readFileSync(path, "utf8");
+}
 
 test.describe("Dev sign-in in the production build", () => {
   // The positive control: the scan reads real bundled output and would see an
   // address literal if one were there. The support address is one the login
   // page itself renders, so it ships to the browser and is in the server output.
   test("the scan sees what the build contains", () => {
-    const inStatic = SCANNED.filter(({ path, text }) =>
-      path.startsWith(join(BUILD_DIR, "static")) && text.includes(SUPPORT_EMAIL),
-    );
-    const inServer = SCANNED.filter(({ path, text }) =>
-      path.startsWith(join(BUILD_DIR, "server")) && text.includes(SUPPORT_EMAIL),
-    );
+    const files = scannedFiles();
+    const foundUnder = (tree: string) =>
+      files.some(
+        (path) =>
+          path.startsWith(join(BUILD_DIR, tree)) && read(path).includes(SUPPORT_EMAIL),
+      );
 
-    expect(inStatic.length).toBeGreaterThan(0);
-    expect(inServer.length).toBeGreaterThan(0);
+    expect(foundUnder("static")).toBe(true);
+    expect(foundUnder("server")).toBe(true);
   });
 
   test("names none of the seed accounts", () => {
-    const hits = SCANNED.flatMap(({ path, text }) =>
-      NEEDLES.filter((needle) => text.includes(needle)).map(
+    const hits = scannedFiles().flatMap((path) => {
+      const text = read(path);
+      return NEEDLES.filter((needle) => text.includes(needle)).map(
         (needle) => `${needle} in ${path}`,
-      ),
-    );
+      );
+    });
 
     expect(hits).toEqual([]);
   });

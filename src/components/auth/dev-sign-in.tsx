@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
  *
  * **The gate reads only values fixed at build time**, so Next inlines both and a
  * production build folds it to `false`, leaving the panel, the addresses and the
- * password unreferenced and dropped from the output — the smoke suite asserts
- * they are absent. The Supabase URL has to be written out as the literal
+ * password unreferenced and dropped from the output. The smoke suite asserts the
+ * admin and gedu addresses and the panel label are absent; the parent address
+ * (a sample on a public docs page) and the password (too common a word to search
+ * for) go with the same dead branch but are not checked. The Supabase URL has to be written out as the literal
  * `process.env.NEXT_PUBLIC_SUPABASE_URL` for Next to inline it. A dev server
  * pointed at a remote database renders nothing, since these accounts exist only
  * where the rich seed ran.

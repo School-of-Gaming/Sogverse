@@ -2,8 +2,10 @@ import { defineConfig } from "@playwright/test";
 
 // Playwright drives one thing here: a smoke check that a production build boots
 // and serves the security headers and per-request CSP the proxy is supposed to
-// set. The specs use the `request` fixture only — no page, no browser — so there
-// is no device matrix, no engine matrix, and no browser binaries to install.
+// set, and that the build it serves has dropped what it must not contain. The
+// specs use the `request` fixture or read the build's files — no page, no
+// browser — so there is no device matrix, no engine matrix, and no browser
+// binaries to install.
 //
 // PORT lets a local run avoid a dev server already holding the default; CI takes
 // the default.
