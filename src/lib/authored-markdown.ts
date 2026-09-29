@@ -46,6 +46,11 @@ export interface MarkdownLook {
    */
   readonly fontWeight?: number;
   readonly color?: string;
+  /**
+   * The one class in `classes` that paints `color`, stated wherever `color`
+   * is — the class the quiet emphasis swaps for the quiet ink.
+   */
+  readonly ink?: string;
   readonly listStyle?: "disc" | "decimal";
   /**
    * How far a list's items sit in from its edge. **Mail gap:** written as a
@@ -87,6 +92,7 @@ export const MARKDOWN_CONTAINER = {
   fontSize: 16,
   lineHeight: 1.625,
   color: DARK_THEME.foreground,
+  ink: "text-foreground",
 } as const satisfies MarkdownLook;
 
 /**
@@ -167,12 +173,53 @@ export const MARKDOWN_LOOK = {
       "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
     fontWeight: 500,
     color: BRAND.act,
+    ink: "text-act",
     underline: true,
     underlineOffset: 4,
   },
 } as const satisfies Record<string, MarkdownLook>;
 
 export type StyledMarkdownElement = keyof typeof MARKDOWN_LOOK;
+
+/**
+ * **How strongly a surface sets its authored text: in the ink, or in the quiet
+ * ink** — SOG-UI's two inks, and nothing between them.
+ *
+ * Colour is the one part of the look markdown cannot express, so it belongs to
+ * the surface: a staff-only note set beneath a family-visible report reads as
+ * the quieter of the two. Size, weight and spacing are the markdown's own
+ * hierarchy and are the same in both. A mail has no quiet emphasis, since
+ * nothing mailed is set back.
+ */
+export type MarkdownEmphasis = "normal" | "quiet";
+
+/** The quiet ink, as its token class and the value that class resolves to. */
+export const MARKDOWN_QUIET_INK = {
+  classes: "text-muted-foreground",
+  color: DARK_THEME.mutedFg,
+} as const;
+
+/**
+ * **A look in the quiet ink**: its ink class swapped for the quiet one and its
+ * colour with it, everything else untouched. Only the container and the link
+ * name an ink; every other element inherits the container's, so quieting
+ * those two quiets the whole block evenly — headings and list markers
+ * included. A link keeps its weight and its underline, which is what marks it
+ * as a link once its colour no longer does.
+ */
+export function inQuietInk(look: MarkdownLook): MarkdownLook {
+  if (look.ink === undefined) return look;
+  const ink = look.ink;
+  return {
+    ...look,
+    classes: look.classes
+      .split(/\s+/)
+      .map((token) => (token === ink ? MARKDOWN_QUIET_INK.classes : token))
+      .join(" "),
+    color: MARKDOWN_QUIET_INK.color,
+    ink: MARKDOWN_QUIET_INK.classes,
+  };
+}
 
 /**
  * **The formatting a field can hold beyond plain prose, one flag per kind.**
