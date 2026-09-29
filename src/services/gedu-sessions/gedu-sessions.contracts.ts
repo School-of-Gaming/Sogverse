@@ -415,8 +415,11 @@ export const geduAssignmentSummary = z.object({
    * The rollup keys on (product, group) rather than on product because of it: a
    * substitution's identity is (group, date), and one gedu may substitute on a sibling group
    * of a product they already teach.
+   *
+   * A `trainee` row is one per trainee seat, and its attention count is always
+   * 0: what a session owes is the staff's work.
    */
-  kind: z.enum(["assignment", "substitution"]),
+  kind: z.enum(["assignment", "substitution", "trainee"]),
   /**
    * The date a `substitution` row is for; null on an `assignment` row.
    *

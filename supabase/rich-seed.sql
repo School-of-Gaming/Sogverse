@@ -58,7 +58,9 @@
 -- share the password `testpassword123`. These are the only accounts a stack
 -- carrying this file has. Among them is a second admin, admin2@example.com
 -- (Anni Salonen), so the admin team page has two admins to show — one
--- viewing and editing the other's profile.
+-- viewing and editing the other's profile. Another is the trainee,
+-- oliver.grant@example.com (Oliver Grant): uncertified, shadowing the
+-- Minecraft Java club's Ryhmä A, so the trainee's workspace can be looked at.
 --
 -- IDS ARE GENERATED, NEVER WRITTEN OUT. Every account gets `gen_random_uuid()`,
 -- because the avatar identicon derives its pattern from the id's hex bytes and
@@ -899,6 +901,22 @@ BEGIN
                      WHERE t.name = 'Minecraft Java Club'
                        AND g.name = 'Ryhmä A'),
         'geduId', v_emma, 'role', 'assistant'))
+  );
+
+  -- And a trainee shadows the same group: Oliver, who has neither his
+  -- certification nor his record check yet — a trainee seat asks for neither.
+  PERFORM public.apply_group_changes(
+    (SELECT product_id FROM public.product_translations
+      WHERE locale = 'en' AND name = 'Minecraft Java Club'),
+    p_trainees_added => jsonb_build_array(
+      jsonb_build_object(
+        'groupId', (SELECT g.id FROM public.product_groups g
+                      JOIN public.product_translations t
+                        ON t.product_id = g.product_id AND t.locale = 'en'
+                     WHERE t.name = 'Minecraft Java Club'
+                       AND g.name = 'Ryhmä A'),
+        'geduId', (SELECT id FROM public.profiles
+                    WHERE email = 'oliver.grant@example.com')))
   );
 END;
 $$;

@@ -59,9 +59,10 @@ export interface MyAssignedProductSessionRow {
    * differ only in the card's chrome — a substitution is its own small card, named as
    * a substitution and dated, rather than the recurring assignment card. A consumer
    * that ignored this would render a sub's one substituted afternoon as though they
-   * taught the club every week.
+   * taught the club every week. A `trainee` row is a trainee seat, whose
+   * workspace is the trainee's redacted one.
    */
-  kind: "assignment" | "substitution";
+  kind: "assignment" | "substitution" | "trainee";
   /**
    * The date a `substitution` row is for, product-local `YYYY-MM-DD`; null on an
    * `assignment` row. It is the other half of a substitution card's identity — one

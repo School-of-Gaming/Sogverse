@@ -40,12 +40,12 @@ export const myAssignedProductRows = z.array(
     product_translations: z.array(productTranslationSummary),
     schedule_slots: z.array(scheduleSlotSummary),
     /**
-     * Which kind of seat the row is: a standing `assignment`, or a live
-     * `substitution` on one date. Two arms of one RPC because they share every
-     * product-shell column and the dashboard card differs in its chrome rather
-     * than in the facts it needs.
+     * Which kind of seat the row is: a standing `assignment`, a live
+     * `substitution` on one date, or a `trainee` seat. Arms of one RPC because
+     * they share every product-shell column and the dashboard card differs in
+     * its chrome rather than in the facts it needs.
      */
-    kind: z.enum(["assignment", "substitution"]),
+    kind: z.enum(["assignment", "substitution", "trainee"]),
     /** The substitution date on a `substitution` row; null on an `assignment` row. */
     substitution_date: z.string().nullable(),
     /**

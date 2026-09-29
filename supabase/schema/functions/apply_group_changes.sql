@@ -1,8 +1,8 @@
 --
--- Name: apply_group_changes(uuid, jsonb, jsonb, uuid[], jsonb, jsonb, jsonb); Type: FUNCTION; Schema: public; Owner: -
+-- Name: apply_group_changes(uuid, jsonb, jsonb, uuid[], jsonb, jsonb, jsonb, jsonb, jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb DEFAULT '[]'::jsonb, p_renamed_groups jsonb DEFAULT '[]'::jsonb, p_deleted_group_ids uuid[] DEFAULT '{}'::uuid[], p_gedu_assignments_added jsonb DEFAULT '[]'::jsonb, p_gedu_assignments_removed jsonb DEFAULT '[]'::jsonb, p_participation_moves jsonb DEFAULT '[]'::jsonb) RETURNS jsonb
+CREATE FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb DEFAULT '[]'::jsonb, p_renamed_groups jsonb DEFAULT '[]'::jsonb, p_deleted_group_ids uuid[] DEFAULT '{}'::uuid[], p_gedu_assignments_added jsonb DEFAULT '[]'::jsonb, p_gedu_assignments_removed jsonb DEFAULT '[]'::jsonb, p_participation_moves jsonb DEFAULT '[]'::jsonb, p_trainees_added jsonb DEFAULT '[]'::jsonb, p_trainees_removed jsonb DEFAULT '[]'::jsonb) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -21,6 +21,7 @@ DECLARE
   v_removed_group   UUID;
   v_removed_gedu    UUID;
   v_orphan_date     DATE;
+  v_trainee         JSONB;
 BEGIN
   PERFORM public.assert_admin();
 
@@ -62,6 +63,16 @@ BEGIN
                 v_removed_group, v_orphan_date
               );
     END LOOP;
+  END LOOP;
+
+  -- Trainee seats removed, with the assignments and for the same reason: a
+  -- PROMOTION is this remove and an assignment add in one batch, and the
+  -- one-seat-per-product trigger refuses the add while the trainee seat is
+  -- still there. A trainee holds no substitution request, so nothing is swept.
+  FOR v_trainee IN SELECT * FROM jsonb_array_elements(p_trainees_removed) LOOP
+    DELETE FROM gedu_group_trainees
+     WHERE group_id = (v_trainee->>'groupId')::UUID
+       AND gedu_id  = (v_trainee->>'geduId')::UUID;
   END LOOP;
 
   IF array_length(p_deleted_group_ids, 1) > 0 THEN
@@ -142,6 +153,21 @@ BEGIN
       SET role = EXCLUDED.role;
   END LOOP;
 
+  -- Trainee seats added, after the assignments so a DEMOTION (an assignment
+  -- removed, a trainee seat added) is one batch too. A group added in this
+  -- batch is addressed by its tempId. No ON CONFLICT: re-adding a seat that is
+  -- there, or placing a gedu already seated on the product, is refused.
+  FOR v_trainee IN SELECT * FROM jsonb_array_elements(p_trainees_added) LOOP
+    IF v_temp_map ? (v_trainee->>'groupId') THEN
+      v_resolved_group := (v_temp_map->>(v_trainee->>'groupId'))::UUID;
+    ELSE
+      v_resolved_group := (v_trainee->>'groupId')::UUID;
+    END IF;
+
+    INSERT INTO gedu_group_trainees (group_id, gedu_id, product_id)
+    VALUES (v_resolved_group, (v_trainee->>'geduId')::UUID, p_product_id);
+  END LOOP;
+
   FOR v_move IN SELECT * FROM jsonb_array_elements(p_participation_moves) LOOP
     IF (v_move->'toGroupId') IS NULL OR jsonb_typeof(v_move->'toGroupId') = 'null' THEN
       v_real_to_id := NULL;
@@ -163,18 +189,18 @@ $$;
 
 
 --
--- Name: FUNCTION apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) IS 'The admin groups panel''s whole batch, applied in one transaction: remove assignments, delete groups, rename groups, add groups (each with its educators inline), add assignments, and move participations between groups. Admin-only, guard-first, and it takes the PRODUCT row''s lock first so two admins editing one product''s groups serialize rather than interleave. Removes run BEFORE adds so moving an educator from group A to group B is one batch — the (gedu_id, product_id) UNIQUE would otherwise refuse the add. Newly added groups are addressed by a client-minted `tempId` and the returned `tempMap` hands back the real ids, which is what lets one batch create a group and move members into it. An assignment carries a ROLE: an added assignment element is { groupId, geduId, role } and upserts ON CONFLICT (group_id, gedu_id) DO UPDATE SET role, so a role change is ONE add rather than a remove plus an add — which also means re-adding an existing pair is not a no-op, it restates the role. An added GROUP''s educators arrive as gedus: [{ geduId, role }]; the legacy geduIds array of bare ids is still read for the deploy window and lands every one of them as a primary. An omitted role is a primary, which is also the column''s default. This function is DELIBERATELY ASSIGNMENT-ONLY with respect to session substitutions, and is annotated as such in the completeness check: it is the writer of the permanent relationship, not a gate on it. Removing an assignment also sweeps the substitution requests it orphans: for every date the removed gedu held a live request on, the same fixpoint every other unseating runs. It remains ASSIGNMENT-ONLY as a GATE — it still gates on nothing and still writes no substitution row — but a writer that can unseat somebody has to leave the derivation consistent, or an admin could answer a request filed by a person who is no longer expected at the session.';
+COMMENT ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb) IS 'The admin groups panel''s whole batch, applied in one transaction: remove assignments, delete groups, rename groups, add groups (each with its educators inline), add assignments, and move participations between groups. Admin-only, guard-first, and it takes the PRODUCT row''s lock first so two admins editing one product''s groups serialize rather than interleave. Removes run BEFORE adds so moving an educator from group A to group B is one batch — the (gedu_id, product_id) UNIQUE would otherwise refuse the add. Newly added groups are addressed by a client-minted `tempId` and the returned `tempMap` hands back the real ids, which is what lets one batch create a group and move members into it. An assignment carries a ROLE: an added assignment element is { groupId, geduId, role } and upserts ON CONFLICT (group_id, gedu_id) DO UPDATE SET role, so a role change is ONE add rather than a remove plus an add — which also means re-adding an existing pair is not a no-op, it restates the role. An added GROUP''s educators arrive as gedus: [{ geduId, role }]; the legacy geduIds array of bare ids is still read for the deploy window and lands every one of them as a primary. An omitted role is a primary, which is also the column''s default. This function is DELIBERATELY ASSIGNMENT-ONLY with respect to session substitutions, and is annotated as such in the completeness check: it is the writer of the permanent relationship, not a gate on it. Removing an assignment also sweeps the substitution requests it orphans: for every date the removed gedu held a live request on, the same fixpoint every other unseating runs. It remains ASSIGNMENT-ONLY as a GATE — it still gates on nothing and still writes no substitution row — but a writer that can unseat somebody has to leave the derivation consistent, or an admin could answer a request filed by a person who is no longer expected at the session. TRAINEE SEATS ride the same batch: p_trainees_removed and p_trainees_added, each element { groupId, geduId } (an added one may name a tempId), removed with the assignments and added after them. That order is what makes a PROMOTION — the trainee seat removed and an assignment added, on the same group or another of the product — and a demotion one atomic batch each; the one-seat-per-product trigger refuses a gedu holding both. An added trainee seat has no ON CONFLICT, so placing a gedu already seated on the product is refused.';
 
 
 --
--- Name: FUNCTION apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) TO authenticated;
-GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb) TO service_role;
 
 

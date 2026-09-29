@@ -32,7 +32,7 @@ import type { GeduAssignmentSummary } from "@/services/gedu-sessions";
  * them the other's badge.
  */
 function seatKey(
-  kind: "assignment" | "substitution",
+  kind: "assignment" | "substitution" | "trainee",
   groupId: string,
   substitutionDate: string | null,
 ): string {

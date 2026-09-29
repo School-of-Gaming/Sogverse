@@ -438,6 +438,9 @@ export type ProductGroupUpdate = Database["public"]["Tables"]["product_groups"][
 export type GeduGroupAssignment = Database["public"]["Tables"]["gedu_group_assignments"]["Row"];
 export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group_assignments"]["Insert"];
 
+// gedu_group_trainees — trainee seats, written only through apply_group_changes
+export type GeduGroupTrainee = Database["public"]["Tables"]["gedu_group_trainees"]["Row"];
+
 // Which capacity an educator holds a group in. A group holds any number
 // of each, and the only thing the role decides is pay — the product carries a
 // per-session fee for each.
@@ -839,10 +842,11 @@ export type MyAssignedProductRow = Omit<
   /**
    * Which kind of seat this row is. An `assignment` row is one per
    * `gedu_group_assignments` row; a `substitution`
-   * row is one per live substitution date. Narrowed from the generated `string`
-   * because the RPC emits a closed pair and every consumer branches on it.
+   * row is one per live substitution date; a `trainee` row is one per
+   * `gedu_group_trainees` seat. Narrowed from the generated `string`
+   * because the RPC emits a closed set and every consumer branches on it.
    */
-  kind: "assignment" | "substitution";
+  kind: "assignment" | "substitution" | "trainee";
   /**
    * The date a `substitution` row is for, and null on an `assignment` row — which the
    * generator cannot see, because a RETURNS TABLE column is typed from the

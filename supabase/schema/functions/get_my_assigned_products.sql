@@ -139,7 +139,61 @@ BEGIN
   JOIN products p       ON p.id = g.product_id
   WHERE r.substitute_id = v_gedu_id
     AND r.status     = 'substituted'::public.substitution_request_status
-    AND public.gedu_holds_unexpired_substitution(r.group_id, r.session_date);
+    AND public.gedu_holds_unexpired_substitution(r.group_id, r.session_date)
+
+  UNION ALL
+
+  -- The caller's TRAINEE seats, one row per seat, shaped like an assignment
+  -- row. The card links to the trainee's own workspace.
+  SELECT
+    p.id            AS product_id,
+    t.group_id      AS group_id,
+    p.timezone      AS timezone,
+    p.start_date    AS start_date,
+    p.end_date      AS end_date,
+    p.is_remote     AS is_remote,
+    p.product_type  AS product_type,
+    COALESCE((
+      SELECT jsonb_agg(
+               jsonb_build_object(
+                 'locale',      pt.locale,
+                 'name',        pt.name,
+                 'description', pt.short_description
+               )
+             )
+        FROM product_translations pt
+       WHERE pt.product_id = p.id
+    ), '[]'::jsonb) AS product_translations,
+    COALESCE((
+      SELECT jsonb_agg(
+               jsonb_build_object(
+                 'weekday',          ss.weekday,
+                 'start_time',       to_char(ss.start_time, 'HH24:MI:SS'),
+                 'duration_minutes', ss.duration_minutes
+               )
+               ORDER BY ss.weekday, ss.start_time
+             )
+        FROM schedule_slots ss
+       WHERE ss.product_id = p.id
+    ), '[]'::jsonb) AS schedule_slots,
+    (
+      SELECT COUNT(*)::INTEGER
+        FROM product_groups pg
+       WHERE pg.product_id = p.id
+    ) AS group_count,
+    (
+      SELECT COUNT(*)::INTEGER
+        FROM participations part
+       WHERE part.product_id = p.id
+         AND part.status     = 'active'
+    ) AS participant_count,
+    'trainee'::text    AS kind,
+    NULL::date         AS substitution_date,
+    public.group_upcoming_cancelled_dates(t.group_id) AS cancelled_dates,
+    false              AS substitution_cancelled
+  FROM gedu_group_trainees t
+  JOIN products p ON p.id = t.product_id
+  WHERE t.gedu_id = v_gedu_id;
 END;
 $$;
 
@@ -148,7 +202,7 @@ $$;
 -- Name: FUNCTION get_my_assigned_products(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_assigned_products() IS 'Every product the calling gedu has a seat on, one row per seat, with the product shell, its schedule slots, how many groups it has and how many active seats (participant_count — a seat may be held by an adult as well as by a child). Gedu-gated on its first statement. TWO KINDS OF SEAT, discriminated by `kind`: an `assignment` row per gedu_group_assignments row, with `substitution_date` null; and a `substitution` row per UNEXPIRED substitution date, with `substitution_date` set — a `substituted` request whose holder is still certified and whose window has not closed, which is the whole of what gedu_holds_unexpired_substitution decides. That predicate rather than gedu_substitutes_session, and the difference is the point: this read draws the substitution CARD on My SOG, which stands from approval, where the workspace the card links to opens 48 hours before the substituted session. A substitution row therefore reaches a sub who cannot yet open the group, and carries nothing that would not be theirs to read then: names, a type, a date, the schedule, two head counts, and `cancelled_dates` — the row''s group''s upcoming cancelled dates (group_upcoming_cancelled_dates), dates only, which the card skips when naming the next session and the absence picker never offers; and `substitution_cancelled` — whether the substituted date itself is cancelled (group_session_is_cancelled), asked of the date rather than of that window because the substitution card stands for days after it, and false on an assignment row. One RPC rather than two because the two kinds share every product-shell column and the dashboard card differs in its chrome rather than in the facts it needs.';
+COMMENT ON FUNCTION public.get_my_assigned_products() IS 'Every product the calling gedu has a seat on, one row per seat, with the product shell, its schedule slots, how many groups it has and how many active seats (participant_count — a seat may be held by an adult as well as by a child). Gedu-gated on its first statement. TWO KINDS OF SEAT, discriminated by `kind`: an `assignment` row per gedu_group_assignments row, with `substitution_date` null; and a `substitution` row per UNEXPIRED substitution date, with `substitution_date` set — a `substituted` request whose holder is still certified and whose window has not closed, which is the whole of what gedu_holds_unexpired_substitution decides. That predicate rather than gedu_substitutes_session, and the difference is the point: this read draws the substitution CARD on My SOG, which stands from approval, where the workspace the card links to opens 48 hours before the substituted session. A substitution row therefore reaches a sub who cannot yet open the group, and carries nothing that would not be theirs to read then: names, a type, a date, the schedule, two head counts, and `cancelled_dates` — the row''s group''s upcoming cancelled dates (group_upcoming_cancelled_dates), dates only, which the card skips when naming the next session and the absence picker never offers; and `substitution_cancelled` — whether the substituted date itself is cancelled (group_session_is_cancelled), asked of the date rather than of that window because the substitution card stands for days after it, and false on an assignment row. One RPC rather than two because the two kinds share every product-shell column and the dashboard card differs in its chrome rather than in the facts it needs. A THIRD KIND, `trainee`: a row per gedu_group_trainees seat, shaped like an assignment row (substitution_date null, substitution_cancelled false).';
 
 
 --
