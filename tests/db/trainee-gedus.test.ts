@@ -85,8 +85,33 @@ const traineeFeed = z.object({
 });
 const traineeProduct = z.object({
   my_group_id: z.string(),
-  groups: z.array(record.and(z.object({ roster: z.array(record) }))),
+  groups: z.array(record.and(z.object({ id: z.string() }))),
 });
+
+/** The redacted roster row, the same on both of the trainee's documents. */
+const TRAINEE_ROSTER_KEYS = [
+  "age",
+  "creations",
+  "first_name",
+  "gender",
+  "group_joined_at",
+  "has_note",
+  "minecraft_username",
+  "minecraft_uuid",
+  "participant_id",
+  "roblox_user_id",
+  "roblox_username",
+  "signed_up_at",
+].sort();
+
+/** The sentinels a trainee must never receive, anywhere in either document. */
+const TRAINEE_SECRETS = [
+  GROUP_STAFF_NOTE,
+  MEMBER_NOTE,
+  SESSION_STAFF_NOTE,
+  TEST_CREDENTIALS.CUSTOMER.email,
+  "2015-06-15",
+];
 const withTrainees = z.object({ trainees: z.array(record) });
 const groupsPanel = z.object({
   groups: z.array(z.object({ id: z.string(), trainees: z.array(record) })),
@@ -353,14 +378,7 @@ describe("trainee gedus", () => {
       const wire = JSON.stringify(data);
       const doc = traineeFeed.parse(data);
 
-      // The sentinels a trainee must never receive, anywhere in the document.
-      for (const secret of [
-        GROUP_STAFF_NOTE,
-        MEMBER_NOTE,
-        SESSION_STAFF_NOTE,
-        TEST_CREDENTIALS.CUSTOMER.email,
-        "2015-06-15",
-      ]) {
+      for (const secret of TRAINEE_SECRETS) {
         expect(wire).not.toContain(secret);
       }
 
@@ -369,22 +387,7 @@ describe("trainee gedus", () => {
 
       const roster = doc.roster;
       expect(roster).toHaveLength(1);
-      expect(Object.keys(roster[0]).sort()).toEqual(
-        [
-          "age",
-          "creations",
-          "first_name",
-          "gender",
-          "group_joined_at",
-          "has_note",
-          "minecraft_username",
-          "minecraft_uuid",
-          "participant_id",
-          "roblox_user_id",
-          "roblox_username",
-          "signed_up_at",
-        ].sort(),
-      );
+      expect(Object.keys(roster[0]).sort()).toEqual(TRAINEE_ROSTER_KEYS);
       expect(roster[0].participant_id).toBe(TEST_IDS.GAMER);
       expect(roster[0].age).toBe(ageInUtc("2015-06-15"));
       expect(roster[0].gender).toBe("boy");
@@ -427,19 +430,40 @@ describe("trainee gedus", () => {
   });
 
   describe("get_trainee_assigned_product", () => {
-    it("serves the trainee their own group alone, with the redacted roster", async () => {
+    it("serves the trainee their own group with the redacted roster, and its siblings by name alone", async () => {
       const { data, error } = await traineeAuth.rpc("get_trainee_assigned_product", {
         p_product_id: PRODUCT_MAIN,
       });
       expect(error).toBeNull();
-      expect(JSON.stringify(data)).not.toContain(MEMBER_NOTE);
+      const wire = JSON.stringify(data);
+      for (const secret of TRAINEE_SECRETS) {
+        expect(wire).not.toContain(secret);
+      }
+      // A sibling carries none of its members, so GAMER_2, who sits there,
+      // never travels.
+      expect(wire).not.toContain(TEST_IDS.GAMER_2);
+
       const doc = traineeProduct.parse(data);
       expect(doc.my_group_id).toBe(GROUP_MINE);
-      expect(doc.groups.map((g) => g.id)).toEqual([GROUP_MINE]);
-      const roster = doc.groups[0].roster;
-      expect(roster[0]).not.toHaveProperty("date_of_birth");
-      expect(roster[0]).not.toHaveProperty("parent_email");
-      expect(roster[0]).not.toHaveProperty("note");
+      // Both groups were inserted in one statement, so they tie on created_at
+      // and the id breaks the tie.
+      expect(doc.groups.map((g) => g.id)).toEqual([GROUP_MINE, GROUP_SIBLING]);
+
+      const own = doc.groups.find((g) => g.id === GROUP_MINE);
+      expect(Object.keys(own ?? {}).sort()).toEqual(
+        ["created_at", "gedus", "id", "is_my_group", "name", "participant_count", "roster"].sort(),
+      );
+      expect(own?.is_my_group).toBe(true);
+      expect(own?.participant_count).toBe(1);
+      const roster = z.array(record).parse(own?.roster);
+      expect(roster).toHaveLength(1);
+      expect(Object.keys(roster[0]).sort()).toEqual(TRAINEE_ROSTER_KEYS);
+
+      const sibling = doc.groups.find((g) => g.id === GROUP_SIBLING);
+      expect(Object.keys(sibling ?? {}).sort()).toEqual(
+        ["created_at", "id", "is_my_group", "name"].sort(),
+      );
+      expect(sibling).toMatchObject({ name: "Cohort Sibling", is_my_group: false });
     });
 
     it("refuses a named group that is not the trainee's, and a gedu with no trainee seat", async () => {

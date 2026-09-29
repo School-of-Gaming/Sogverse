@@ -63,13 +63,25 @@ BEGIN
 
   v_today := (now() AT TIME ZONE COALESCE(v_timezone, 'UTC'))::date;
 
-  -- The trainee's OWN group and no other: the sibling groups, their sizes and
-  -- their staff are nothing a gamer on this group is shown. The roster is the
-  -- trainee workspace document's, row for row.
-  SELECT COALESCE(jsonb_agg(g), '[]'::jsonb)
+  -- Every group of the product, ordered as get_gedu_assigned_product orders
+  -- them. A sibling group is shown by name only, so the trainee can see it
+  -- exists (its voice room, locked): its size, its staff and its members are
+  -- nothing a gamer on this group is shown. The caller's own group carries the
+  -- rest, and its roster is the trainee workspace document's, row for row.
+  SELECT COALESCE(
+           jsonb_agg(g ORDER BY g->>'created_at', g->>'id'),
+           '[]'::jsonb
+         )
     INTO v_groups
     FROM (
-      SELECT jsonb_build_object(
+      SELECT CASE WHEN pg.id <> v_my_group_id THEN
+        jsonb_build_object(
+          'id',          pg.id,
+          'name',        pg.name,
+          'created_at',  pg.created_at,
+          'is_my_group', false
+        )
+      ELSE jsonb_build_object(
         'id',          pg.id,
         'name',        pg.name,
         'created_at',  pg.created_at,
@@ -119,9 +131,9 @@ BEGIN
            WHERE part.group_id = pg.id
              AND part.status   = 'active'::public.participation_status
         ), '[]'::jsonb)
-      ) AS g
+      ) END AS g
         FROM public.product_groups pg
-       WHERE pg.id = v_my_group_id
+       WHERE pg.product_id = p_product_id
     ) AS sub;
 
   RETURN jsonb_build_object(
@@ -137,7 +149,7 @@ $$;
 -- Name: FUNCTION get_trainee_assigned_product(p_product_id uuid, p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_trainee_assigned_product(p_product_id uuid, p_group_id uuid) IS 'The trainee''s door to a product: get_gedu_assigned_product''s document for a gedu holding a TRAINEE seat on it, refused with 42501 otherwise (gedu-only on its first statement). p_group_id is optional and, when given, must be the caller''s trainee group. The shell is the gedu one''s (topic included). `groups` holds the caller''s own group ALONE — the sibling groups are nothing a gamer on this group is shown — with participant_count, `gedus` as {id, first_name, role}, and the same redacted roster get_trainee_group_feed serves: an integer `age` instead of date_of_birth, `has_note` instead of the note, `creations` always [], and no contact address.';
+COMMENT ON FUNCTION public.get_trainee_assigned_product(p_product_id uuid, p_group_id uuid) IS 'The trainee''s door to a product: get_gedu_assigned_product''s document for a gedu holding a TRAINEE seat on it, refused with 42501 otherwise (gedu-only on its first statement). p_group_id is optional and, when given, must be the caller''s trainee group. The shell is the gedu one''s (topic included). `groups` holds every group of the product, ordered by created_at then id. A sibling group carries {id, name, created_at, is_my_group: false} and nothing else — its name is shown so the trainee can see it exists, but its size, staff and members are nothing a gamer on this group is shown. The caller''s own group carries is_my_group true, participant_count, `gedus` as {id, first_name, role}, and the same redacted roster get_trainee_group_feed serves: an integer `age` instead of date_of_birth, `has_note` instead of the note, `creations` always [], and no contact address.';
 
 
 --
