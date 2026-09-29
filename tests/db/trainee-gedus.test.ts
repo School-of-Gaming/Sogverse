@@ -6,6 +6,7 @@ import { geduAssignmentSummaries } from "@/services/gedu-sessions/gedu-sessions.
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
 import { chatChannelRoster } from "@/services/chat/chat.contracts";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
+import { traineeGroupOverlay } from "@/services/member-flair/member-flair.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -424,6 +425,60 @@ describe("trainee gedus", () => {
         p_group_id: GROUP_SIBLING,
       });
       expect(error?.code).toBe("42501");
+    });
+  });
+
+  describe("get_trainee_group_overlay", () => {
+    it("serves the trainee their group's room flair: stamps and whether a note exists, never its text", async () => {
+      const { data, error } = await traineeAuth.rpc("get_trainee_group_overlay", {
+        p_group_id: GROUP_MINE,
+      });
+      expect(error).toBeNull();
+      const wire = JSON.stringify(data);
+      for (const secret of TRAINEE_SECRETS) {
+        expect(wire).not.toContain(secret);
+      }
+
+      const doc = traineeGroupOverlay.parse(data);
+      expect(Object.keys(doc.members)).toEqual([TEST_IDS.GAMER]);
+      // The keys on the wire, not the parsed shape: nothing more may arrive.
+      const raw = z.object({ members: z.record(z.string(), record) }).parse(data);
+      expect(Object.keys(raw.members[TEST_IDS.GAMER]).sort()).toEqual([
+        "creations",
+        "group_joined_at",
+        "has_note",
+      ]);
+      expect(doc.members[TEST_IDS.GAMER]).toEqual({
+        group_joined_at: expect.any(String),
+        has_note: true,
+        creations: [],
+      });
+    });
+
+    it("lets an admin preview it, and refuses an assigned gedu, a parent and a gamer", async () => {
+      const preview = await adminAuth.rpc("get_trainee_group_overlay", {
+        p_group_id: GROUP_MINE,
+      });
+      expect(preview.error).toBeNull();
+
+      for (const client of [geduAuth, customerAuth, gamerAuth]) {
+        const { error } = await client.rpc("get_trainee_group_overlay", {
+          p_group_id: GROUP_MINE,
+        });
+        expect(error?.code).toBe("42501");
+      }
+    });
+
+    it("refuses the trainee a sibling group of the same product, and the staff overlay", async () => {
+      const sibling = await traineeAuth.rpc("get_trainee_group_overlay", {
+        p_group_id: GROUP_SIBLING,
+      });
+      expect(sibling.error?.code).toBe("42501");
+
+      const staff = await traineeAuth.rpc("get_group_staff_overlay", {
+        p_group_id: GROUP_MINE,
+      });
+      expect(staff.error?.code).toBe("42501");
     });
   });
 

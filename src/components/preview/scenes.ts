@@ -483,7 +483,7 @@ export const PREVIEW_SCENES = [
         slug: "trainee",
         label: "Trainee — the same room",
         description:
-          "A Gedu on a trainee seat: the moderator's controls, each locked and explaining itself.",
+          "A Gedu on a trainee seat: the moderator's controls and the note dialog's Save, each locked and explaining itself.",
       },
       {
         slug: "gamer",

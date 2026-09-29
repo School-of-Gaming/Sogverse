@@ -1,9 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { deriveVoiceMemberFlair } from "@/components/voice/derive-voice-member-flair";
+import { isWithheld, WITHHELD } from "@/lib/withheld";
 import type {
   GroupStaffOverlay,
   GroupStaffOverlayMember,
   ProductType,
+  TraineeGroupOverlay,
 } from "@/types";
 
 /**
@@ -260,5 +262,44 @@ describe("deriveVoiceMemberFlair — the trainee tag", () => {
       openFlair,
     );
     expect(flair?.trainees.size).toBe(0);
+  });
+});
+
+describe("deriveVoiceMemberFlair — a trainee's redacted overlay", () => {
+  const traineeOverlay: TraineeGroupOverlay = {
+    product_type: "consumer_club",
+    members: {
+      [IDS.siiri]: {
+        group_joined_at: JOINED_RECENTLY,
+        has_note: true,
+        creations: [],
+      },
+      [IDS.emil]: {
+        group_joined_at: JOINED_RECENTLY,
+        has_note: false,
+        creations: [],
+      },
+      [IDS.hilda]: { group_joined_at: null, has_note: false, creations: [] },
+    },
+  };
+
+  it("keeps the seat-holder set and the newcomer badges an assigned gedu sees", () => {
+    const flair = deriveVoiceMemberFlair(traineeOverlay, NOW, openFlair);
+
+    expect(flair?.members).toEqual(new Set([IDS.siiri, IDS.emil, IDS.hilda]));
+    expect(flair?.newcomers).toEqual({
+      [IDS.siiri]: JOINED_RECENTLY,
+      [IDS.emil]: JOINED_RECENTLY,
+    });
+  });
+
+  it("marks a member with a note as withheld: the button lights, the text never arrives", () => {
+    const flair = deriveVoiceMemberFlair(traineeOverlay, NOW, openFlair);
+
+    expect(flair?.notes).toEqual({ [IDS.siiri]: WITHHELD });
+    expect(isWithheld(flair?.notes[IDS.siiri])).toBe(true);
+    // No editor, and nothing in the creations half.
+    expect(flair?.noteEditors).toEqual({});
+    expect(flair?.creations).toEqual({});
   });
 });

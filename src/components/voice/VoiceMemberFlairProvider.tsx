@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import type { Withheld } from "@/lib/withheld";
 import type { GamerCreation } from "@/types";
 
 /**
@@ -56,8 +57,11 @@ export interface VoiceMemberFlair {
    * A row needs only "is there one" — the lit state of its button. The text is
    * here because the dialog the button opens is mounted by the page, not by the
    * row, and it has to seed its draft from somewhere.
+   *
+   * **Withheld** for a trainee: their overlay says a note exists and never
+   * what it says, so the button lights and the dialog draws the note blurred.
    */
-  notes: Readonly<Record<string, string>>;
+  notes: Readonly<Record<string, string | Withheld>>;
   /** Who last wrote each note, keyed as `notes` is. */
   noteEditors?: Readonly<Record<string, string>>;
   /**

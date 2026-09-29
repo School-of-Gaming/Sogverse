@@ -3564,6 +3564,7 @@ export type Database = {
         Returns: Json
       }
       get_trainee_group_feed: { Args: { p_group_id: string }; Returns: Json }
+      get_trainee_group_overlay: { Args: { p_group_id: string }; Returns: Json }
       get_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import type { LockExplanation } from "@/components/ui/locked-control";
+import type { LockExplanation, Locked } from "@/components/ui/locked-control";
 import type { ChatModerationLocks } from "@/components/chat";
 
 /**
@@ -48,12 +48,15 @@ export function useVoiceModeratorLocks(): VoiceModeratorLocks | null {
  * A trainee's locks for the room and for its chat, in the trainee's words: what
  * each control does, then that it is the assigned Gedus' to use.
  *
- * One hook for both surfaces because they are one room to the trainee, and the
- * page that mounts it is where both are handed out.
+ * One hook for every surface because they are one room to the trainee, and the
+ * page that mounts it is where all of them are handed out. `flair` is the
+ * per-gamer dialog's Save, which says what the workspace's says: try anything,
+ * nothing is kept.
  */
 export function useTraineeRoomLocks(): {
   voice: VoiceModeratorLocks;
   chat: ChatModerationLocks;
+  flair: Locked;
 } {
   const t = useTranslations("gedu.trainee");
   return useMemo(() => {
@@ -76,6 +79,12 @@ export function useTraineeRoomLocks(): {
         hide: explain(t("chatHideTitle"), t("chatHideWhat")),
         restore: explain(t("chatRestoreTitle"), t("chatRestoreWhat")),
         lock: explain(t("chatLockTitle"), t("chatLockWhat")),
+      },
+      flair: {
+        locked: {
+          ...explain(t("gamerTitle"), t("gamerWhat")),
+          why: t("whySave"),
+        },
       },
     };
   }, [t]);

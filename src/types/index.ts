@@ -550,6 +550,7 @@ export type {
   GamerGroupNoteResult,
   GroupStaffOverlay,
   GroupStaffOverlayMember,
+  TraineeGroupOverlay,
 } from "@/services/member-flair/member-flair.contracts";
 
 // ---------------------------------------------------------------------------

@@ -23,6 +23,7 @@ import {
   useGroupStaffOverlay,
   useSetGamerGroupCreations,
   useSetGamerGroupNote,
+  useTraineeGroupOverlay,
 } from "@/services/member-flair";
 import {
   isEmptySessionFeedback,
@@ -228,7 +229,17 @@ function VoiceSessionInner({
    * badge is last on the identity line, the note button is the left edge of the
    * right-packed trailing group), which is why nothing waits for it.
    */
-  const { data: overlay } = useGroupStaffOverlay(groupId, isModerator);
+  const { data: staffOverlay } = useGroupStaffOverlay(groupId, isModerator);
+  /**
+   * A trainee's overlay: the same map with each note's text replaced by
+   * whether one exists, so the rows draw the note buttons and badges an
+   * assigned gedu sees and the dialog opens with the note withheld. Gated on
+   * the standing the token route answered, for the same reason as above — the
+   * RPC's own refusal is the boundary.
+   */
+  const isTrainee = standing === "trainee";
+  const { data: traineeOverlay } = useTraineeGroupOverlay(groupId, isTrainee);
+  const overlay = isTrainee ? traineeOverlay : staffOverlay;
   const setGamerNote = useSetGamerGroupNote(groupId);
   const setGamerCreations = useSetGamerGroupCreations(groupId);
 
@@ -465,19 +476,28 @@ function VoiceSessionInner({
           creations={flair?.creations[flairTarget.id] ?? NO_CREATIONS}
           // Each write's promise, straight through. The dialog owns the
           // committing flag that keeps Save disabled from the click until the
-          // close, so nothing here derives one from `isPending`.
-          onSaveNote={async (text) => {
-            await setGamerNote.mutateAsync({
-              participantId: flairTarget.id,
-              note: text,
-            });
-          }}
-          onSaveCreations={async (creations) => {
-            await setGamerCreations.mutateAsync({
-              participantId: flairTarget.id,
-              creations,
-            });
-          }}
+          // close, so nothing here derives one from `isPending`. A trainee is
+          // handed the lock instead, so the same dialog draws its Save locked.
+          onSaveNote={
+            isTrainee
+              ? roomLocks.flair
+              : async (text) => {
+                  await setGamerNote.mutateAsync({
+                    participantId: flairTarget.id,
+                    note: text,
+                  });
+                }
+          }
+          onSaveCreations={
+            isTrainee
+              ? roomLocks.flair
+              : async (creations) => {
+                  await setGamerCreations.mutateAsync({
+                    participantId: flairTarget.id,
+                    creations,
+                  });
+                }
+          }
         />
       )}
     </>

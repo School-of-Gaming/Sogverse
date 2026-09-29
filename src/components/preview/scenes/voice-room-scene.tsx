@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { GamerFlairDialog } from "@/components/member-flair";
 import {
   ChatView,
@@ -20,7 +20,11 @@ import {
 import { FIXTURE_TIMEZONE } from "@/components/family/mock-enrollment-fixtures";
 import { VoiceRoom } from "@/components/voice/VoiceRoom";
 import { VoiceRoomContext } from "@/components/voice/VoiceRoomProvider";
-import { VoiceMemberFlairProvider } from "@/components/voice/VoiceMemberFlairProvider";
+import {
+  VoiceMemberFlairProvider,
+  type VoiceMemberFlair,
+} from "@/components/voice/VoiceMemberFlairProvider";
+import { deriveVoiceMemberFlair } from "@/components/voice/derive-voice-member-flair";
 import type { ParticipantChatControls } from "@/components/voice/ParticipantRow";
 import {
   buildFlairFixture,
@@ -35,7 +39,7 @@ import type {
   VoiceRoomContextValue,
 } from "@/components/voice/hooks/types";
 import { composeZones } from "@/lib/voice/zone-composition";
-import type { GamerCreation } from "@/types";
+import type { GamerCreation, TraineeGroupOverlay } from "@/types";
 import { useChatSceneStore } from "./chat-scene-store";
 
 /**
@@ -62,7 +66,10 @@ import { useChatSceneStore } from "./chat-scene-store";
  * **Tiia is a Gedu on a trainee seat.** The staff scenario tags her "Trainee"
  * on the rail and in the chat; the trainee scenario is her own view — the
  * moderator's controls in the dock, on the zones, on the rows and in the chat
- * menu, each locked and explaining itself; the family scenario sees a Gedu.
+ * menu, each locked and explaining itself — and the rail's note buttons and
+ * newcomer badges an assigned gedu sees, derived by the production function
+ * from the trainee's redacted overlay: a lit button opens the dialog with the
+ * note blurred and its Save locked. The family scenario sees a Gedu.
  *
  * **Every voice component is a pure consumer of `VoiceRoomContext`**, so a
  * fixture context drives them exactly as the live provider does — no Daily
@@ -74,6 +81,29 @@ const NO_CREATIONS: readonly GamerCreation[] = [];
 
 /** Who the staff scenario's chat roster flags as a trainee: Tiia. */
 const SCENE_TRAINEES: ReadonlySet<string> = new Set([VOICE_ROOM_TRAINEE_ID]);
+
+/**
+ * The trainee's overlay over the same fixture, in the shape
+ * `get_trainee_group_overlay` answers with: every seat, its join stamp, whether
+ * a note exists, and no creations.
+ */
+function traineeOverlayFrom(
+  fixture: ReturnType<typeof buildFlairFixture>,
+): TraineeGroupOverlay {
+  return {
+    product_type: "consumer_club",
+    members: Object.fromEntries(
+      [...SEATED_MEMBER_IDS].map((id) => [
+        id,
+        {
+          group_joined_at: fixture.newcomers[id] ?? null,
+          has_note: id in fixture.notes,
+          creations: [],
+        },
+      ]),
+    ),
+  };
+}
 
 export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
   const isStaff = scenario === "gedu";
@@ -218,7 +248,16 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
    * — and a scene that handed the room an empty one would be rehearsing a
    * filter the product does not have.
    */
-  const flair = isStaff
+  const traineeFlair = useMemo(
+    () =>
+      deriveVoiceMemberFlair(
+        traineeOverlayFrom(fixture),
+        now,
+        (id, name) => setFlairTarget({ id, name }),
+      ),
+    [fixture, now],
+  );
+  const flair: VoiceMemberFlair | null = isStaff
     ? {
         now,
         members: SEATED_MEMBER_IDS,
@@ -229,7 +268,9 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
         trainees: SCENE_TRAINEES,
         onOpenFlair: (id: string, name: string) => setFlairTarget({ id, name }),
       }
-    : null;
+    : isTrainee
+      ? traineeFlair
+      : null;
 
   return (
     <>
@@ -271,7 +312,20 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
         </VoiceMemberFlairProvider>
       </VoiceRoomContext.Provider>
 
-      {flairTarget !== null && (
+      {flairTarget !== null && isTrainee && (
+        <GamerFlairDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setFlairTarget(null);
+          }}
+          name={flairTarget.name}
+          note={traineeFlair?.notes[flairTarget.id] ?? ""}
+          creations={NO_CREATIONS}
+          onSaveNote={traineeLocks.flair}
+          onSaveCreations={traineeLocks.flair}
+        />
+      )}
+      {flairTarget !== null && !isTrainee && (
         <GamerFlairDialog
           open
           onOpenChange={(open) => {

@@ -285,6 +285,16 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "passes that half and gets a null-shaped document back. Positive paths: " +
       "trainee-gedus.test.ts for both roles.",
   },
+  // The trainee's twin of get_group_staff_overlay for the voice room, gated
+  // exactly as get_trainee_group_feed is.
+  get_trainee_group_overlay: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "past the role guard, a NULL group is a group no gedu trains on, so the " +
+      "trainee-seat half of the gate refuses one with a second 42501. An admin " +
+      "passes that half and gets a null-shaped document back. Positive paths: " +
+      "trainee-gedus.test.ts for both roles.",
+  },
   // The one that CAN be asserted positively: it takes no id at all, only the
   // enforcement epoch, so a gedu with no assignments gets an empty list rather
   // than a refusal.
