@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
-import { Alert, AlertDescription, AlertTitle, StatusLine } from "@/components/ui/alert";
+import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -33,9 +33,9 @@ import {
   libraryWriteFailure,
   sameAsSaved,
   type LibraryArticleForm,
-  type LibraryArticleStatus,
   type LibraryPublishField,
 } from "./library-article-form";
+import { LibraryArticleStatusChip } from "./library-article-status-chip";
 import { LibraryCoverField } from "./library-cover-field";
 
 /**
@@ -269,23 +269,18 @@ function EditorForm(props: LibraryArticleEditorProps) {
   );
 }
 
-/** The list chip's colours, so the list and the editor name a state alike. */
-const STATUS_ALERT: Record<LibraryArticleStatus, "default" | "success" | "info"> = {
-  draft: "default",
-  published: "success",
-  changed: "info",
-};
-
 /**
  * Where the article stands with readers, and the controls that change it.
  *
- * The status names the **saved** state: what readers see now, and whether
- * saved changes are waiting for them. Under it, Preview — the saved copy as a
- * parent would meet it if it were published now, in a new tab, and held back
+ * The status is the Library list's own chip, so the list and the editor name a
+ * state alike, and it names the **saved** state: what readers see now, and
+ * whether saved changes are waiting for them. Across the row from it, Preview —
+ * the saved copy as a parent would meet it if it were published now, in a new
+ * tab, and held back
  * while the form has unsaved changes — then the link to the public page while
  * the article is live, Unpublish behind a confirmation, and Publish — which
  * reads "Publish changes" once the article is live, and is disabled with its
- * reason in a line beneath while there is nothing it can publish yet.
+ * reason just left of it while there is nothing it can publish yet.
  */
 function PublishingPanel({
   article,
@@ -325,29 +320,21 @@ function PublishingPanel({
     body: t("missing.body"),
   };
 
-  // Keyed concretely, so the compiler checks every key it reads.
-  const statusCopy: Record<LibraryArticleStatus, { title: string; body: string }> = {
-    draft: {
-      title: t("statusPanel.draftTitle"),
-      body: t("statusPanel.draftBody"),
-    },
-    published: {
-      title: t("statusPanel.publishedTitle"),
-      body: t("statusPanel.publishedBody"),
-    },
-    changed: {
-      title: t("statusPanel.changedTitle"),
-      body:
-        article.publication === null
-          ? ""
-          : t("statusPanel.changedBody", {
-              date: formatDate(article.publication.publishedAt, locale, {
-                dateStyle: "long",
-                timeZone,
-              }),
-            }),
-    },
-  };
+  // Only "changed" needs a word beside the chip: readers are not seeing what
+  // the admin sees, so the line says which version they are seeing.
+  const statusLine =
+    status === "changed" && article.publication !== null
+      ? t("statusPanel.changedLine", {
+          date: formatDate(article.publication.publishedAt, locale, {
+            dateStyle: "long",
+            timeZone,
+          }),
+        })
+      : null;
+
+  // Why Publish (or the preview) is held back, read out with the button.
+  const reasonsId = useId();
+  const hasReasons = publishState.kind === "incomplete" || dirty;
 
   async function handlePublish() {
     setPublishError(null);
@@ -369,84 +356,105 @@ function PublishingPanel({
 
   return (
     <section aria-label={t("statusPanel.label")} className="space-y-3">
-      <Alert variant={STATUS_ALERT[status]}>
-        <div className="min-w-0 space-y-1.5">
-          <AlertTitle>{statusCopy[status].title}</AlertTitle>
-          <AlertDescription>{statusCopy[status].body}</AlertDescription>
+      {/* One row: the status on the left, the controls on the right. Narrow,
+          it stacks with the status on top and the controls beneath it. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+          <LibraryArticleStatusChip status={status} />
+          {statusLine && (
+            <p className="text-sm text-muted-foreground">{statusLine}</p>
+          )}
         </div>
-      </Alert>
 
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        {/* An anchor cannot be disabled, so while the form holds unsaved
-            changes the preview is a disabled button in the link's place. */}
-        {dirty ? (
-          <Button type="button" variant="outline" disabled>
-            <ExternalLink className="h-4 w-4" aria-hidden />
-            {t("preview")}
-          </Button>
-        ) : (
-          <Link
-            href={ROUTES.libraryArticlePreview(article.draft.id)}
-            target="_blank"
-            rel="noopener"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            <ExternalLink className="h-4 w-4" aria-hidden />
-            {t("preview")}
-          </Link>
-        )}
-        {isPublished && (
-          <Link
-            href={ROUTES.libraryArticle(article.draft.id)}
-            target="_blank"
-            rel="noopener"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            <ExternalLink className="h-4 w-4" aria-hidden />
-            {t("viewLive")}
-          </Link>
-        )}
-        {isPublished && (
-          <Button
-            type="button"
-            variant="outline"
-            disabled={publishing}
-            onClick={() => setConfirmingUnpublish(true)}
-          >
-            {t("unpublish")}
-          </Button>
-        )}
-        {publishState.kind !== "hidden" && (
-          <Button
-            type="button"
-            disabled={publishing || publishState.kind !== "ready"}
-            onClick={() => void handlePublish()}
-          >
-            {publishing && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            {isPublished ? t("publishChanges") : t("publish")}
-          </Button>
-        )}
+        {/* Right-packed: the reasons sit just left of the buttons they
+            explain, so a reason appearing grows the group leftward and no
+            button moves. Keep them before the buttons for that reason. */}
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+          {hasReasons && (
+            <div id={reasonsId} className="min-w-0 space-y-1">
+              {publishState.kind === "incomplete" && (
+                <StatusLine status="info">
+                  {t("readiness.missing", {
+                    fields: format.list(
+                      publishState.missing.map((field) => missingName[field]),
+                      { type: "conjunction" },
+                    ),
+                  })}
+                </StatusLine>
+              )}
+              {/* One line for what the unsaved changes hold back: the preview
+                  always, and Publish too once nothing but saving stands in
+                  its way. */}
+              {dirty && (
+                <StatusLine status="info">
+                  {publishState.kind === "unsaved"
+                    ? t("readiness.unsaved")
+                    : t("readiness.previewUnsaved")}
+                </StatusLine>
+              )}
+            </div>
+          )}
+
+          <div className="flex shrink-0 flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            {/* An anchor cannot be disabled, so while the form holds unsaved
+                changes the preview is a disabled button in the link's place. */}
+            {dirty ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled
+                aria-describedby={reasonsId}
+              >
+                <ExternalLink className="h-4 w-4" aria-hidden />
+                {t("preview")}
+              </Button>
+            ) : (
+              <Link
+                href={ROUTES.libraryArticlePreview(article.draft.id)}
+                target="_blank"
+                rel="noopener"
+                className={buttonVariants({ variant: "outline" })}
+              >
+                <ExternalLink className="h-4 w-4" aria-hidden />
+                {t("preview")}
+              </Link>
+            )}
+            {isPublished && (
+              <Link
+                href={ROUTES.libraryArticle(article.draft.id)}
+                target="_blank"
+                rel="noopener"
+                className={buttonVariants({ variant: "outline" })}
+              >
+                <ExternalLink className="h-4 w-4" aria-hidden />
+                {t("viewLive")}
+              </Link>
+            )}
+            {isPublished && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={publishing}
+                onClick={() => setConfirmingUnpublish(true)}
+              >
+                {t("unpublish")}
+              </Button>
+            )}
+            {publishState.kind !== "hidden" && (
+              <Button
+                type="button"
+                disabled={publishing || publishState.kind !== "ready"}
+                aria-describedby={hasReasons ? reasonsId : undefined}
+                onClick={() => void handlePublish()}
+              >
+                {publishing && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+                {isPublished ? t("publishChanges") : t("publish")}
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
 
-      {publishState.kind === "incomplete" && (
-        <StatusLine status="info" className="sm:justify-end">
-          {t("readiness.missing", {
-            fields: format.list(
-              publishState.missing.map((field) => missingName[field]),
-              { type: "conjunction" },
-            ),
-          })}
-        </StatusLine>
-      )}
-      {/* One line for what the unsaved changes hold back: the preview always,
-          and Publish too once nothing but saving stands in its way. */}
-      {dirty && (
-        <StatusLine status="info" className="sm:justify-end">
-          {publishState.kind === "unsaved"
-            ? t("readiness.unsaved")
-            : t("readiness.previewUnsaved")}
-        </StatusLine>
-      )}
       {publishError && (
         <StatusLine status="destructive" role="alert" className="sm:justify-end">
           {publishError}

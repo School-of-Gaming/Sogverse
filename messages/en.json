@@ -517,12 +517,7 @@
       },
       "statusPanel": {
         "label": "Publishing",
-        "draftTitle": "Draft",
-        "draftBody": "Not in the Library. Readers cannot see this article until it is published.",
-        "publishedTitle": "Published",
-        "publishedBody": "Readers can find this article in the Library, exactly as it is saved here.",
-        "changedTitle": "Published, with unpublished changes",
-        "changedBody": "Readers see the version published on {date}. The changes saved since then reach them once you publish them."
+        "changedLine": "Readers see the version published on {date}."
       },
       "viewLive": "View in the Library",
       "preview": "Preview",

@@ -517,12 +517,7 @@
       },
       "statusPanel": {
         "label": "Julkaiseminen",
-        "draftTitle": "Luonnos",
-        "draftBody": "Ei Kirjastossa. Lukijat eivät näe artikkelia ennen kuin se julkaistaan.",
-        "publishedTitle": "Julkaistu",
-        "publishedBody": "Lukijat löytävät artikkelin Kirjastosta juuri sellaisena kuin se on tässä tallennettu.",
-        "changedTitle": "Julkaistu, julkaisemattomia muutoksia",
-        "changedBody": "Lukijat näkevät version, joka julkaistiin {date}. Sen jälkeen tallennetut muutokset näkyvät heille, kun julkaiset ne."
+        "changedLine": "Lukijat näkevät version, joka julkaistiin {date}."
       },
       "viewLive": "Näytä Kirjastossa",
       "preview": "Esikatselu",

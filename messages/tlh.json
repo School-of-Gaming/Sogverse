@@ -561,12 +561,7 @@
       },
       "statusPanel": {
         "label": "ngeHmeH",
-        "draftTitle": "nab",
-        "draftBody": "paq qachDaq ghaHbe’. ngeHlu’DI’ neH ghItlh legh laDwI’pu’.",
-        "publishedTitle": "ghItlh ngeHlu’pu’",
-        "publishedBody": "paq qachDaq ghItlh tu’ laDwI’pu’, naDev polbogh rur.",
-        "changedTitle": "ngeHlu’pu’, choHmey ngeHlu’be’bogh ghaj",
-        "changedBody": "{date} ngeHlu’pu’bogh ghItlh legh laDwI’pu’. choHmey DangeHDI’ neH choHmey legh chaH."
+        "changedLine": "{date} ngeHlu’pu’bogh ghItlh legh laDwI’pu’."
       },
       "viewLive": "paq qachDaq yIlegh",
       "preview": "wa’DIch yIlegh",

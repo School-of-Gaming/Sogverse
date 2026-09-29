@@ -517,12 +517,7 @@
       },
       "statusPanel": {
         "label": "Publicering",
-        "draftTitle": "Utkast",
-        "draftBody": "Inte i Biblioteket. Läsarna kan inte se artikeln förrän den publiceras.",
-        "publishedTitle": "Publicerad",
-        "publishedBody": "Läsarna hittar artikeln i Biblioteket, precis som den är sparad här.",
-        "changedTitle": "Publicerad, med opublicerade ändringar",
-        "changedBody": "Läsarna ser versionen som publicerades {date}. Ändringarna som sparats sedan dess når dem när du publicerar dem."
+        "changedLine": "Läsarna ser versionen som publicerades {date}."
       },
       "viewLive": "Visa i Biblioteket",
       "preview": "Förhandsvisa",

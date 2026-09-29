@@ -517,12 +517,7 @@
       },
       "statusPanel": {
         "label": "Publication",
-        "draftTitle": "Brouillon",
-        "draftBody": "Absent de la Bibliothèque. Les lecteurs ne peuvent pas voir cet article tant qu’il n’est pas publié.",
-        "publishedTitle": "Publié",
-        "publishedBody": "Les lecteurs trouvent cet article dans la Bibliothèque, tel qu’il est enregistré ici.",
-        "changedTitle": "Publié, avec des modifications non publiées",
-        "changedBody": "Les lecteurs voient la version publiée le {date}. Les modifications enregistrées depuis leur parviendront quand vous les publierez."
+        "changedLine": "Les lecteurs voient la version publiée le {date}."
       },
       "viewLive": "Voir dans la Bibliothèque",
       "preview": "Aperçu",
