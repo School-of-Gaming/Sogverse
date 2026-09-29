@@ -6,61 +6,26 @@ the Webflow import is a separate, later piece of work.
 
 ## Current state (2026-09-29)
 
-Everything is built and committed on `feat/library` (worktree `.claude/worktrees/library`),
-rebased on `dev` as of 2026-09-29. Its full diff has passed two independent reviews; every
-accepted finding is fixed. Gates at the last run: lint clean, type-check clean,
-translations clean, unit + integration 7304+ tests, DB suite 1657 tests twice in a row.
+The split is done. Four topic branches, each reviewed on its own focus with every accepted
+finding fixed, merge into `feat/library-integration` (worktree
+`.claude/worktrees/library-integration`), which has had the holistic review and is **the
+only branch that merges into `dev`** — on the owner's instruction, after the owner's UI
+pass.
 
-**The branch is too large to land as one, so it is being split** — see "The split" below.
-That is the next piece of work. `feat/library` stays untouched as the reference until the
-integration branch has been proven equal to it.
+| # | Branch | Carries |
+|---|---|---|
+| 1 | `feat/markdown-one-style` | one authored-markdown look for app, editor and mail; use cases over feature flags; the link rule |
+| 2 | `feat/image-catalogue-purposes` | `product_images` → `catalogue_images` with purposes, per-purpose buckets and sizes; crop on upload; one crop hook for team photos and catalogue images |
+| 3 | `feat/library-admin` (on 2 + 1) | the Library migration and service; Library Content; the Preview page; shared list search; rich-seed articles |
+| 4 | `feat/library-public` (on 3) | the public `/library` and `/library/<id>` pages |
 
-Running for the owner's manual review, and torn down only when the split is proven:
-- dev server on port 3007 from the `feat/library` worktree (sign in `admin@example.com` /
-  `password`);
-- that worktree's local Supabase stack, rich seed (5 Library articles: 3 live, one of them
-  with unpublished changes, one live with no cover; 2 drafts, one incomplete).
+Fixes go on the topic branch they belong to and are merged forward (3 → 4 → integration),
+never patched on integration. Integration equals branch 4; against the old `feat/library`
+it differs only by the review fixes. The three migrations land together in the one merge
+into `dev`, restamped once.
 
-## The split (owner-approved 2026-09-29)
-
-Four topic branches, each for a focused review, plus one integration branch that merges
-all four, gets the holistic review of the whole feature and everything changed to support
-it, and is **the only branch that merges into `dev`**.
-
-| # | Branch | Base | Carries |
-|---|---|---|---|
-| 1 | `feat/markdown-one-style` | `dev` | one authored-markdown look for app, editor and mail; use cases over feature flags; the `article` use case; the link rule; nested-list spacing |
-| 2 | `feat/image-catalogue-purposes` | `dev` | `product_images` → `catalogue_images`; purposes and per-purpose buckets; crop on upload; the shared crop dialog (team photo moves onto it); `FramedImage`, `ProductBanner`, the shared hover zoom |
-| 3 | `feat/library-admin` | 1 + 2 | the Library migration and service; Library Content (list, editor, Preview page); the shared list search; the public bodies the admin preview renders; the rich-seed articles |
-| 4 | `feat/library-public` | 3 | the `/library` and `/library/<id>` routes, their metadata and JSON-LD, the proxy's public entry |
-| — | `feat/library-integration` | `dev` | merges 1–4; the equivalence check; the holistic review; the one merge into `dev` |
-
-How it is done:
-- **By file, not by replaying commits** — `feat/library`'s commits interleave the concepts.
-  Each topic branch is cut from `dev` (or its base) and takes the final version of its files
-  from `feat/library`. Regenerate the list with `git diff --name-only origin/dev...feat/library`.
-- **Shared files split hunk by hunk:** `messages/*.json`, `src/lib/constants/routes.ts`,
-  `src/i18n/pathnames.ts`,
-  `src/proxy.ts` (admin-only preview gate → 3, public routes → 4), `src/types/index.ts`,
-  the root/`src`/`supabase` `CLAUDE.md` files, `TODO.md`, `next.config.ts`,
-  `scripts/local-db/rich-images.sh` and `supabase/rich-seed.sql` (product images → 2,
-  Library covers and articles → 3).
-- **Generated files are regenerated per branch** (`npm run db -- generate`), never copied:
-  `database.types.ts`, `supabase/schema/`.
-- **Migrations:** rename + purpose → 2; the Library migration → 3. They land together, in
-  that order, in the one integration merge, restamped once.
-- **Fixes always go on the topic branch they belong to** and are re-merged into integration;
-  never patched on integration directly.
-- **The equivalence check:** once integration first assembles, `git diff feat/library
-  feat/library-integration` must be empty (generated files may differ only by regeneration
-  order). Then `feat/library` is retired and torn down, and previews move to integration.
-- The session is isolated in the `feat/library` worktree and cannot create others: leave it
-  (`ExitWorktree` keep) and create the new worktrees from the main checkout with
-  `.claude\scripts\worktree-setup.ps1` (`-Base` for 3 and 4).
-- Only integration needs a preview server and a rich stack; topic branches run DB tests on
-  a `--no-rich-seed` stack and park it.
-- Owner's review order: 1 and 2 first (they reach beyond the Library; each gets an owner UI
-  pass), then 3 and 4.
+Before landing: a read-only check that no `library-covers` bucket already exists on
+staging or prod (the purpose migration creates it with a plain insert).
 
 ## Decision log (all owner rulings)
 
