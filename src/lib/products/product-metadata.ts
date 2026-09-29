@@ -114,14 +114,14 @@ export async function buildProductMetadata(
   // one omits the key rather than emitting a blank description.
   const description = translation.short_description || undefined;
   const image = catalogueImageSrc("product", product.image_path);
-  // **No `width`/`height`.** 3:2 is a *rendering* convention — `ProductBanner`
-  // paints every picture in an `aspect-[3/2]` frame with `object-cover` — and
-  // nothing enforces it on the stored bytes: the upload path takes an arbitrary
-  // file and puts it in the bucket verbatim, and real products are square
-  // today. Declaring dimensions the file may not have is worse than declaring
-  // none, because the consumers that trust them reserve the frame before
-  // fetching and then letterbox or mis-crop what actually arrives. Omitted,
-  // they fetch and measure, which is slower and right.
+  // **No `width`/`height`.** Every product picture uploaded or replaced now is
+  // cropped to a 1200×800 JPEG, and the upload routes refuse anything else —
+  // but a product can still be linked to an older catalogue entry stored at
+  // some other size, so the size of the file behind a given product is not
+  // known here. Declaring dimensions the file may not have is worse than
+  // declaring none, because the consumers that trust them reserve the frame
+  // before fetching and then letterbox or mis-crop what actually arrives.
+  // Omitted, they fetch and measure, which is slower and right.
   //
   // **A product with no picture falls back to the parent's resolved images —
   // the site-wide card the `[locale]` layout emits at this URL's locale — and

@@ -30,7 +30,7 @@ const MAX_ZOOM = 3;
  * it when the dialog closes.
  */
 export type ImageCropSource =
-  | { kind: "decoding"; url: string }
+  | { kind: "decoding" }
   | { kind: "ready"; url: string }
   | { kind: "unreadable" };
 
