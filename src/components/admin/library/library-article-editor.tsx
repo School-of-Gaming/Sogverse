@@ -168,7 +168,7 @@ function EditorForm(props: LibraryArticleEditorProps) {
         });
   // Why Publish (or the preview) is held back, read out with the button.
   const reasonsId = useId();
-  const hasReasons = publishState?.kind === "incomplete" || dirty;
+  const hasReasons = publishState?.kind === "incomplete";
   const saveDisabled = saving || !dirty;
   const publishDisabled = publishing || publishState?.kind !== "ready";
 
@@ -310,15 +310,13 @@ function EditorForm(props: LibraryArticleEditorProps) {
             the order the work goes. Only a publish or an unpublish changes
             which buttons there are — typing changes whether they are enabled.
 
-            The reasons sit immediately left of the right-hand group, so they
-            read beside the buttons they explain. Their box is there whether or
-            not it holds anything, at one minimum width, and takes the row's
-            slack, so a reason arriving or going grows leftward and never moves
-            a button. Where the row cannot hold that minimum beside the group,
-            the group wraps to a line of its own beneath, and within the group
-            Save and Publish never part. The row aligns to the top, so a reason
-            running to a second line grows downward, not across the buttons. */}
-        <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:flex-wrap sm:items-start sm:justify-end">
+            What is missing before Publish can act sits between Unpublish and
+            the buttons, in whatever width they leave, wrapping inside it. The
+            row never wraps and aligns to the top, so a reason arriving or
+            growing a second line never moves a button. Unsaved changes need no
+            sentence: Save is the one filled button, and Preview and Publish
+            wait for it. */}
+        <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:items-start sm:justify-end">
           {props.article !== null && isPublished && (
             <Button
               type="button"
@@ -333,10 +331,9 @@ function EditorForm(props: LibraryArticleEditorProps) {
             <PublishReasons
               id={reasonsId}
               publishState={publishState}
-              dirty={dirty}
             />
           )}
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
+          <div className="flex shrink-0 flex-col-reverse gap-3 sm:flex-row">
             {onCancel && (
               <Button type="button" variant="ghost" onClick={onCancel}>
                 {t("actions.cancel")}
@@ -350,7 +347,6 @@ function EditorForm(props: LibraryArticleEditorProps) {
                   type="button"
                   variant="outline"
                   disabled
-                  aria-describedby={reasonsId}
                 >
                   <ExternalLink className="h-4 w-4" aria-hidden />
                   {t("preview")}
@@ -491,22 +487,16 @@ function PublishingStatus({ article }: { article: AdminLibraryArticle }) {
 }
 
 /**
- * Why Publish, or the preview, is held back: one line per reason, stacked and
- * set against the buttons they explain.
- *
- * The box is rendered with nothing in it too, at the same minimum width, so
- * where the buttons sit never depends on whether there is a reason. The
- * minimum keeps a wrapping reason to a few words a line rather than one; the
- * padding sets a first line level with the buttons' labels.
+ * What an article still needs before Publish can act, set against the buttons
+ * it explains. The box takes whatever width the buttons leave and wraps inside
+ * it; the padding sets a first line level with the buttons' labels.
  */
 function PublishReasons({
   id,
   publishState,
-  dirty,
 }: {
   id: string;
   publishState: LibraryPublishState;
-  dirty: boolean;
 }) {
   const t = useTranslations("admin.library");
   const format = useFormatter();
@@ -518,37 +508,21 @@ function PublishReasons({
     body: t("missing.body"),
   };
 
-  const reasons: string[] = [];
-  if (publishState.kind === "incomplete") {
-    reasons.push(
-      t("readiness.missing", {
-        fields: format.list(
-          publishState.missing.map((field) => missingName[field]),
-          { type: "conjunction" },
-        ),
-      }),
-    );
-  }
-  // One line for what the unsaved changes hold back: the preview always, and
-  // Publish too once nothing but saving stands in its way.
-  if (dirty) {
-    reasons.push(
-      publishState.kind === "unsaved"
-        ? t("readiness.unsaved")
-        : t("readiness.previewUnsaved"),
-    );
-  }
-
   return (
     <div
       id={id}
-      className="flex flex-col items-end gap-1 text-right sm:min-w-56 sm:flex-1 sm:py-2.5"
+      className="flex min-w-0 flex-1 flex-col items-end text-right sm:py-2.5"
     >
-      {reasons.map((reason) => (
-        <StatusLine key={reason} status="info">
-          {reason}
+      {publishState.kind === "incomplete" && (
+        <StatusLine status="info">
+          {t("readiness.missing", {
+            fields: format.list(
+              publishState.missing.map((field) => missingName[field]),
+              { type: "conjunction" },
+            ),
+          })}
         </StatusLine>
-      ))}
+      )}
     </div>
   );
 }
