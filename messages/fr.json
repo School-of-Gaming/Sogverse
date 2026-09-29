@@ -161,7 +161,13 @@
     "weekRange": "S{from}–S{to}",
     "weekRangeAcrossYears": "S{from}/{fromYear} – S{to}/{toYear}",
     "weekCount": "{count, plural, one {# semaine} other {# semaines}}",
-    "weekColumn": "S"
+    "weekColumn": "S",
+    "unsavedChanges": {
+      "title": "Quitter sans enregistrer ?",
+      "description": "Vos modifications n’ont pas été enregistrées. Si vous quittez cette page maintenant, elles seront perdues.",
+      "stay": "Continuer la modification",
+      "leave": "Quitter sans enregistrer"
+    }
   },
   "datePicker": {
     "openCalendar": "Ouvrir le calendrier",
@@ -519,6 +525,7 @@
       },
       "statusPanel": {
         "label": "Publication",
+        "publishedLine": "Publié le {date}.",
         "changedLine": "Les lecteurs voient la version publiée le {date}."
       },
       "viewLive": "Voir dans la Bibliothèque",
