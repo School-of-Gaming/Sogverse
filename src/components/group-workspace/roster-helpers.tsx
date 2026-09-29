@@ -66,6 +66,22 @@ export function geduChipPeople(
 }
 
 /**
+ * A group's trainees as the same chips, each carrying the seat's name as its
+ * tag — they join the end of the gedus' run, so the tag is what tells them
+ * apart.
+ */
+export function traineeChipPeople(
+  trainees: readonly { id: string; first_name: string }[],
+  tag: string,
+): PersonChipListPerson[] {
+  return trainees.map((trainee) => ({
+    id: trainee.id,
+    name: trainee.first_name,
+    tag,
+  }));
+}
+
+/**
  * Strip nulls and de-duplicate so the same address (e.g. two siblings in the
  * same group sharing a parent) only appears once in the pasted list.
  */

@@ -197,6 +197,7 @@ vi.mock("@/services/groups", () => {
       renames: new Set<string>(),
       deletes: new Set<string>(),
       gedus: new Set<string>(),
+      trainees: new Set<string>(),
       creating: false,
     }),
     useMoveParticipation: stub(() => mutations.move),
@@ -213,6 +214,8 @@ vi.mock("@/services/groups", () => {
     useCreateGroup: stub(() => mutations.other),
     useAddGedu: stub(() => mutations.other),
     useRemoveGedu: stub(() => mutations.other),
+    useAddTrainee: stub(() => mutations.other),
+    useRemoveTrainee: stub(() => mutations.other),
     useDeleteGroup: stub(() => mutations.other),
   };
 });
@@ -272,6 +275,7 @@ const snapshot: ProductGroupsSnapshot = {
       name: "Group A",
       created_at: "2026-01-01T00:00:00Z",
       gedus: [],
+      trainees: [],
       participations: [
         participation(IDS.subscribedParticipation, {
           has_live_subscription: true,

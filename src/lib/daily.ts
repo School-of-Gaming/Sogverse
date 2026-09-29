@@ -246,7 +246,7 @@ interface CreateTokenOptions {
    * `enable_screenshare` below, so it is the *entire* moderator surface of a
    * token — there is no separate screen-share opt-in a caller could get wrong
    * in one direction. Callers must therefore derive it from a positive
-   * allow-list of moderator roles; a negative test ("not a gamer") grants both
+   * allow-list of who moderates; a negative test ("not a gamer") grants both
    * powers to whichever role is admitted next.
    */
   isOwner: boolean;

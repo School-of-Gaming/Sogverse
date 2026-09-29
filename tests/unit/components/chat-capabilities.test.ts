@@ -3,9 +3,16 @@ import {
   deriveChatComposerCapabilities,
   deriveChatLockControl,
   deriveChatMessageCapabilities,
-  isChatModerator,
+  isChatStaffRole,
+  type ChatViewerState,
 } from "@/components/chat/capabilities";
-import type { ChatAccount, ChatMessage } from "@/components/chat/types";
+import type {
+  ChatAccount,
+  ChatMessage,
+  ChatModerationLocks,
+  ChatStanding,
+} from "@/components/chat/types";
+import type { LockExplanation } from "@/components/ui/locked-control";
 
 /**
  * The capability module is the one piece of chat permission logic that is
@@ -26,6 +33,37 @@ const VAINO: ChatAccount = { id: "vaino", name: "Väinö", role: "gamer" };
 const MARJA: ChatAccount = { id: "marja", name: "Marja", role: "customer" };
 const SANNA: ChatAccount = { id: "sanna", name: "Sanna", role: "gedu" };
 const PETRA: ChatAccount = { id: "petra", name: "Petra", role: "admin" };
+/** A Gedu on a trainee seat — `gedu` by role, a participant by standing. */
+const TIIA: ChatAccount = { id: "tiia", name: "Tiia", role: "gedu" };
+
+const lock = (title: string): LockExplanation => ({
+  title,
+  what: `${title} what`,
+  why: `${title} why`,
+  dismiss: "Got it",
+  lockedHint: "(locked)",
+});
+const TRAINEE_LOCKS: ChatModerationLocks = {
+  hide: lock("hide"),
+  restore: lock("restore"),
+  lock: lock("lock"),
+};
+
+/**
+ * What the server would have told each fixture account — the staff accounts
+ * moderate, Tiia holds a trainee seat, everyone else participates. Spelled out
+ * per account rather than derived from the role, because a role test is
+ * exactly what the standing exists to replace.
+ */
+function standingOf(viewer: ChatAccount): ChatStanding {
+  if (viewer === TIIA) return { kind: "trainee", locks: TRAINEE_LOCKS };
+  if (viewer === SANNA || viewer === PETRA) return { kind: "moderator" };
+  return { kind: "participant" };
+}
+
+function viewerState(viewer: ChatAccount, locked: boolean): ChatViewerState {
+  return { viewer, standing: standingOf(viewer), locked };
+}
 
 function message(over: Partial<ChatMessage> = {}): ChatMessage {
   return {
@@ -44,28 +82,146 @@ function message(over: Partial<ChatMessage> = {}): ChatMessage {
   };
 }
 
-describe("isChatModerator", () => {
-  it("admits admins and gedus, and nobody else", () => {
-    expect(isChatModerator("admin")).toBe(true);
-    expect(isChatModerator("gedu")).toBe(true);
+describe("isChatStaffRole", () => {
+  it("names admins and gedus as staff, and nobody else", () => {
+    expect(isChatStaffRole("admin")).toBe(true);
+    expect(isChatStaffRole("gedu")).toBe(true);
     // The one that matters: a parent holding a seat is a participant, exactly
-    // like a child. A negative test ("not a gamer") would hand them the lot.
-    expect(isChatModerator("customer")).toBe(false);
-    expect(isChatModerator("gamer")).toBe(false);
+    // like a child, and lockable like one.
+    expect(isChatStaffRole("customer")).toBe(false);
+    expect(isChatStaffRole("gamer")).toBe(false);
+  });
+});
+
+/**
+ * ============================================================================
+ * Moderation comes from the standing, never from the role
+ * ============================================================================
+ *
+ * A trainee's role is `gedu`, so any derivation that read the viewer's role
+ * would hand a trainee every moderator control. The standing is what the server
+ * decided; these cases pin that the module reads nothing else.
+ */
+describe("a trainee viewer", () => {
+  const hidden = message({
+    hiddenAt: "2026-06-15T17:01:00.000Z",
+    hiddenBy: SANNA.id,
+  });
+
+  it("is offered no working moderation, although their role is gedu", () => {
+    const caps = deriveChatMessageCapabilities(
+      viewerState(TIIA, false),
+      message(),
+      AINO,
+      false,
+    );
+    expect(caps.canHide).toBe(false);
+    expect(caps.lockControl).toBeNull();
+    expect(
+      deriveChatMessageCapabilities(viewerState(TIIA, false), hidden, AINO, false)
+        .canRestore,
+    ).toBe(false);
+  });
+
+  it("does not read a removed message's original — that is staff sight", () => {
+    const caps = deriveChatMessageCapabilities(
+      viewerState(TIIA, false),
+      hidden,
+      AINO,
+      false,
+    );
+    expect(caps.canSeeHiddenBody).toBe(false);
+  });
+
+  it("is shown each moderator act locked, exactly where a moderator gets it", () => {
+    const standing = deriveChatMessageCapabilities(
+      viewerState(TIIA, false),
+      message(),
+      AINO,
+      false,
+    );
+    expect(standing.lockedHide).toBe(TRAINEE_LOCKS.hide);
+    expect(standing.lockedLock).toBe(TRAINEE_LOCKS.lock);
+    expect(standing.lockedRestore).toBeNull();
+
+    const removed = deriveChatMessageCapabilities(
+      viewerState(TIIA, false),
+      hidden,
+      AINO,
+      false,
+    );
+    expect(removed.lockedRestore).toBe(TRAINEE_LOCKS.restore);
+    expect(removed.lockedHide).toBeNull();
+  });
+
+  it("is shown no lock against staff or themselves — the moderator gets none there either", () => {
+    const againstStaff = deriveChatMessageCapabilities(
+      viewerState(TIIA, false),
+      message({ senderId: SANNA.id }),
+      SANNA,
+      false,
+    );
+    expect(againstStaff.lockedLock).toBeNull();
+    // Removal is symmetric, so its locked twin is shown on a colleague's message.
+    expect(againstStaff.lockedHide).toBe(TRAINEE_LOCKS.hide);
+
+    const own = deriveChatMessageCapabilities(
+      viewerState(TIIA, false),
+      message({ senderId: TIIA.id }),
+      TIIA,
+      false,
+    );
+    expect(own.lockedLock).toBeNull();
+    expect(own.lockedHide).toBeNull();
+    expect(own.canDelete).toBe(true);
+  });
+
+  it("gets no rail lock control at all", () => {
+    expect(
+      deriveChatLockControl(TIIA, standingOf(TIIA), AINO, false),
+    ).toBeNull();
+  });
+
+  it("writes like any participant", () => {
+    expect(deriveChatComposerCapabilities(viewerState(TIIA, false))).toEqual({
+      canSend: true,
+      canAttachImages: true,
+      showsLockNotice: false,
+    });
+  });
+
+  it("shows nobody else any locked control", () => {
+    for (const viewer of [AINO, MARJA, SANNA, PETRA]) {
+      const caps = deriveChatMessageCapabilities(
+        viewerState(viewer, false),
+        message({ senderId: VAINO.id }),
+        VAINO,
+        false,
+      );
+      expect(caps.lockedHide, viewer.name).toBeNull();
+      expect(caps.lockedLock, viewer.name).toBeNull();
+      expect(caps.lockedRestore, viewer.name).toBeNull();
+    }
+  });
+
+  it("offers a moderator no lock against a trainee — the RPC refuses any gedu", () => {
+    expect(
+      deriveChatLockControl(SANNA, standingOf(SANNA), TIIA, false),
+    ).toBeNull();
   });
 });
 
 describe("deriveChatComposerCapabilities", () => {
   it("offers the field and the images to anybody who is not locked", () => {
     expect(
-      deriveChatComposerCapabilities({ viewer: AINO, locked: false }),
+      deriveChatComposerCapabilities(viewerState(AINO, false)),
     ).toEqual({ canSend: true, canAttachImages: true, showsLockNotice: false });
   });
 
   it("gives every participant images — there is no moderator-only tier", () => {
     for (const viewer of [AINO, MARJA, SANNA, PETRA]) {
       expect(
-        deriveChatComposerCapabilities({ viewer, locked: false })
+        deriveChatComposerCapabilities(viewerState(viewer, false))
           .canAttachImages,
         viewer.role,
       ).toBe(true);
@@ -74,7 +230,7 @@ describe("deriveChatComposerCapabilities", () => {
 
   it("takes the whole keyboard away from a locked member, and says so", () => {
     expect(
-      deriveChatComposerCapabilities({ viewer: AINO, locked: true }),
+      deriveChatComposerCapabilities(viewerState(AINO, true)),
     ).toEqual({ canSend: false, canAttachImages: false, showsLockNotice: true });
   });
 });
@@ -84,7 +240,7 @@ describe("deriveChatMessageCapabilities", () => {
 
   it("gives a sender edit and delete on their own standing message", () => {
     const caps = deriveChatMessageCapabilities(
-      { viewer: AINO, locked: false },
+      viewerState(AINO, false),
       message(),
       AINO,
       unlocked,
@@ -98,7 +254,7 @@ describe("deriveChatMessageCapabilities", () => {
 
   it("gives nobody else edit or delete", () => {
     const caps = deriveChatMessageCapabilities(
-      { viewer: VAINO, locked: false },
+      viewerState(VAINO, false),
       message(),
       AINO,
       unlocked,
@@ -110,7 +266,7 @@ describe("deriveChatMessageCapabilities", () => {
 
   it("refuses an edit on an image-only message, which has no words to change", () => {
     const caps = deriveChatMessageCapabilities(
-      { viewer: AINO, locked: false },
+      viewerState(AINO, false),
       message({
         body: null,
         image: { id: "i", src: "/preview-art/x.jpg", width: 4, height: 3 },
@@ -125,7 +281,7 @@ describe("deriveChatMessageCapabilities", () => {
   it("lets a moderator remove somebody else's message", () => {
     for (const moderator of [SANNA, PETRA]) {
       const caps = deriveChatMessageCapabilities(
-        { viewer: moderator, locked: false },
+        viewerState(moderator, false),
         message(),
         AINO,
         unlocked,
@@ -136,7 +292,7 @@ describe("deriveChatMessageCapabilities", () => {
 
   it("gives a parent no moderation at all", () => {
     const caps = deriveChatMessageCapabilities(
-      { viewer: MARJA, locked: false },
+      viewerState(MARJA, false),
       message(),
       AINO,
       unlocked,
@@ -150,7 +306,7 @@ describe("deriveChatMessageCapabilities", () => {
     // A reaction is a message with fewer characters. A member locked out of
     // chat who could still react would have been locked out of nothing.
     const caps = deriveChatMessageCapabilities(
-      { viewer: VAINO, locked: true },
+      viewerState(VAINO, true),
       message(),
       AINO,
       unlocked,
@@ -165,7 +321,7 @@ describe("deriveChatMessageCapabilities", () => {
     // retrospectively, and taking back something you regret is the one thing a
     // locked member most plausibly still wants.
     const caps = deriveChatMessageCapabilities(
-      { viewer: VAINO, locked: true },
+      viewerState(VAINO, true),
       message({ senderId: VAINO.id }),
       VAINO,
       true,
@@ -180,7 +336,7 @@ describe("deriveChatMessageCapabilities", () => {
     });
 
     const staff = deriveChatMessageCapabilities(
-      { viewer: SANNA, locked: false },
+      viewerState(SANNA, false),
       hidden,
       AINO,
       unlocked,
@@ -192,7 +348,7 @@ describe("deriveChatMessageCapabilities", () => {
     expect(staff.canHide).toBe(false);
 
     const child = deriveChatMessageCapabilities(
-      { viewer: VAINO, locked: false },
+      viewerState(VAINO, false),
       hidden,
       AINO,
       unlocked,
@@ -204,7 +360,7 @@ describe("deriveChatMessageCapabilities", () => {
   it("offers nothing on a message the server has not seen yet", () => {
     for (const delivery of ["pending", "failed"] as const) {
       const caps = deriveChatMessageCapabilities(
-        { viewer: SANNA, locked: false },
+        viewerState(SANNA, false),
         message({ delivery }),
         AINO,
         unlocked,
@@ -220,7 +376,7 @@ describe("deriveChatMessageCapabilities", () => {
     // retry on it, and "it did not go and I want it gone" has to have an
     // answer. Nothing is asked of the server — there is no row yet.
     const caps = deriveChatMessageCapabilities(
-      { viewer: AINO, locked: false },
+      viewerState(AINO, false),
       message({ delivery: "failed" }),
       AINO,
       unlocked,
@@ -238,7 +394,7 @@ describe("deriveChatMessageCapabilities", () => {
     // acknowledgement. Waiting the moment out loses nothing, because it can be
     // deleted either way it lands.
     const caps = deriveChatMessageCapabilities(
-      { viewer: AINO, locked: false },
+      viewerState(AINO, false),
       message({ delivery: "pending" }),
       AINO,
       unlocked,
@@ -250,7 +406,7 @@ describe("deriveChatMessageCapabilities", () => {
     // Deleting a failed message is a sender taking back their own echo, not a
     // moderation act — there is nothing for anybody else to remove.
     const caps = deriveChatMessageCapabilities(
-      { viewer: SANNA, locked: false },
+      viewerState(SANNA, false),
       message({ delivery: "failed" }),
       AINO,
       unlocked,
@@ -271,7 +427,7 @@ describe("deriveChatMessageCapabilities", () => {
    */
   it("lets a gedu remove an admin's message — moderation is symmetric", () => {
     const caps = deriveChatMessageCapabilities(
-      { viewer: SANNA, locked: false },
+      viewerState(SANNA, false),
       message({ senderId: PETRA.id }),
       PETRA,
       unlocked,
@@ -284,7 +440,7 @@ describe("deriveChatMessageCapabilities", () => {
     // silences a colleague in front of the children they are both responsible
     // for, which is a staff problem handled by people, not by this menu.
     const caps = deriveChatMessageCapabilities(
-      { viewer: SANNA, locked: false },
+      viewerState(SANNA, false),
       message({ senderId: PETRA.id }),
       PETRA,
       unlocked,
@@ -294,7 +450,7 @@ describe("deriveChatMessageCapabilities", () => {
 
   it("points the lock switch at whichever way the sender currently is", () => {
     const locked = deriveChatMessageCapabilities(
-      { viewer: SANNA, locked: false },
+      viewerState(SANNA, false),
       message(),
       AINO,
       true,
@@ -302,7 +458,7 @@ describe("deriveChatMessageCapabilities", () => {
     expect(locked.lockControl).toBe("unlock");
 
     const free = deriveChatMessageCapabilities(
-      { viewer: SANNA, locked: false },
+      viewerState(SANNA, false),
       message(),
       AINO,
       false,
@@ -314,7 +470,7 @@ describe("deriveChatMessageCapabilities", () => {
     // The rail's case, met through a message: a moderation act aimed at
     // somebody the control cannot even print the name of is aimed at a blank.
     const caps = deriveChatMessageCapabilities(
-      { viewer: SANNA, locked: false },
+      viewerState(SANNA, false),
       message({ senderId: "somebody-not-on-the-roster" }),
       null,
       false,
@@ -324,7 +480,7 @@ describe("deriveChatMessageCapabilities", () => {
 
   it("offers no lock against another moderator, or against yourself", () => {
     const againstStaff = deriveChatMessageCapabilities(
-      { viewer: PETRA, locked: false },
+      viewerState(PETRA, false),
       message({ senderId: SANNA.id }),
       SANNA,
       false,
@@ -332,7 +488,7 @@ describe("deriveChatMessageCapabilities", () => {
     expect(againstStaff.lockControl).toBeNull();
 
     const againstSelf = deriveChatMessageCapabilities(
-      { viewer: SANNA, locked: false },
+      viewerState(SANNA, false),
       message({ senderId: SANNA.id }),
       SANNA,
       false,
@@ -356,25 +512,25 @@ describe("deriveChatMessageCapabilities", () => {
 describe("deriveChatLockControl", () => {
   it("offers a moderator the lock against a participant", () => {
     for (const moderator of [SANNA, PETRA]) {
-      expect(deriveChatLockControl(moderator, AINO, false), moderator.role).toBe(
+      expect(deriveChatLockControl(moderator, standingOf(moderator), AINO, false), moderator.role).toBe(
         "lock",
       );
     }
   });
 
   it("points at unlock for somebody already locked", () => {
-    expect(deriveChatLockControl(SANNA, VAINO, true)).toBe("unlock");
+    expect(deriveChatLockControl(SANNA, standingOf(SANNA), VAINO, true)).toBe("unlock");
   });
 
   it("offers a parent nothing — moderation is a positive allow-list", () => {
-    expect(deriveChatLockControl(MARJA, AINO, false)).toBeNull();
-    expect(deriveChatLockControl(AINO, VAINO, false)).toBeNull();
+    expect(deriveChatLockControl(MARJA, standingOf(MARJA), AINO, false)).toBeNull();
+    expect(deriveChatLockControl(AINO, standingOf(AINO), VAINO, false)).toBeNull();
   });
 
   it("offers nothing against a colleague or against yourself", () => {
-    expect(deriveChatLockControl(SANNA, PETRA, false)).toBeNull();
-    expect(deriveChatLockControl(PETRA, SANNA, false)).toBeNull();
-    expect(deriveChatLockControl(SANNA, SANNA, false)).toBeNull();
+    expect(deriveChatLockControl(SANNA, standingOf(SANNA), PETRA, false)).toBeNull();
+    expect(deriveChatLockControl(PETRA, standingOf(PETRA), SANNA, false)).toBeNull();
+    expect(deriveChatLockControl(SANNA, standingOf(SANNA), SANNA, false)).toBeNull();
   });
 
   it("offers nothing against somebody who is not on the roster", () => {
@@ -382,6 +538,6 @@ describe("deriveChatLockControl", () => {
     // the chat roster does not carry — a voice-only guest, somebody whose
     // roster entry has not landed — is not a target, and the control must not
     // appear on their row for the write to be refused after the press.
-    expect(deriveChatLockControl(SANNA, null, false)).toBeNull();
+    expect(deriveChatLockControl(SANNA, standingOf(SANNA), null, false)).toBeNull();
   });
 });

@@ -954,7 +954,9 @@
         "alreadyAssigned": "Déjà affecté",
         "alreadyExpected": "Déjà sur cette séance",
         "absentGedu": "Le Gedu remplacé",
-        "notCertified": "Non certifié"
+        "notCertified": "Non certifié",
+        "alreadyTrainee": "Déjà stagiaire",
+        "traineeInstead": "Peut être ajouté comme stagiaire."
       },
       "participantPicker": {
         "title": "Ajouter un participant",
@@ -1021,7 +1023,14 @@
         },
         "picker": {
           "addTitle": "Ajouter un Gedu à {name}",
-          "addDescription": "Un Gedu ne peut animer qu’un seul groupe par produit. Les personnes déjà affectées apparaissent en grisé."
+          "addDescription": "Un Gedu ne peut animer qu’un seul groupe par produit. Les personnes déjà affectées apparaissent en grisé.",
+          "addTraineeTitle": "Ajouter un stagiaire à {name}",
+          "addTraineeDescription": "Un stagiaire suit le groupe en observation et n’a pas besoin d’être certifié. Les personnes déjà présentes sur ce produit, comme Gedu ou stagiaire, apparaissent en grisé."
+        },
+        "trainee": {
+          "role": "Stagiaire",
+          "add": "Ajouter un stagiaire",
+          "removeAria": "Retirer le stagiaire {name}"
         },
         "removeParticipant": {
           "confirmTitle": "Retirer {name} de ce produit ?",
@@ -2121,6 +2130,51 @@
       "loading": "Chargement des lieux...",
       "save": "Enregistrer",
       "saving": "Enregistrement..."
+    },
+    "groupWorkspace": {
+      "staffNoteWithheld": "Seuls les Gedus assignés et les admins peuvent lire cette note.",
+      "contactWithheld": "Les coordonnées sont réservées aux Gedus assignés et aux admins."
+    },
+    "trainee": {
+      "badge": "Stagiaire",
+      "dismiss": "Compris",
+      "lockedHint": "(verrouillé)",
+      "whyAction": "Les Gedus assignés peuvent le faire. Vous êtes dans ce groupe en tant que stagiaire.",
+      "whySave": "L’enregistrement est réservé aux Gedus assignés. Vous êtes dans ce groupe en tant que stagiaire : essayez librement, rien de ce que vous tapez n’est conservé.",
+      "sessionTitle": "Enregistrer une séance",
+      "sessionWhat": "Conserve le compte rendu de la séance, la note des Gedus, les photos et les présences.",
+      "groupNotesTitle": "Enregistrer les notes du groupe",
+      "groupNotesWhat": "Conserve les notes sur ce groupe, pour ses familles et pour ses Gedus.",
+      "siteNotesTitle": "Enregistrer les notes du site",
+      "siteNotesWhat": "Conserve les notes sur ce site, partagées par tous les produits qui s’y déroulent.",
+      "gamerTitle": "Enregistrer une note sur un joueur",
+      "gamerWhat": "Conserve ce que les Gedus écrivent sur ce joueur, et la création que sa famille voit.",
+      "usernameTitle": "Corriger un nom de jeu",
+      "usernameWhat": "Modifie le nom d’utilisateur du joueur pour qu’il corresponde à celui du jeu.",
+      "sendTitle": "Envoyer aux parents",
+      "sendWhat": "Envoie par e-mail le compte rendu de la séance à toutes les familles du groupe.",
+      "photosTitle": "Photos de la séance",
+      "photosWhat": "Ajoute des photos au compte rendu de la séance, ou les retire.",
+      "substituteTitle": "Demander un remplacement",
+      "substituteWhat": "Demande à un autre Gedu d’animer cette séance à votre place.",
+      "roomTitle": "Salles vocales des autres groupes",
+      "roomWhat": "Rejoint la salle vocale d’un autre groupe pour remplacer son Gedu un moment.",
+      "screenShareTitle": "Partager votre écran",
+      "screenShareWhat": "Montre votre écran à tout le monde dans la salle.",
+      "broadcastTitle": "Diffuser",
+      "broadcastWhat": "Toutes les zones vous entendent en même temps, où que vous soyez.",
+      "deafenTitle": "Couper le son de la salle",
+      "deafenWhat": "Coupe le son de tout le monde pour vous, pour parler à toute la salle sans entendre tout le monde à la fois.",
+      "zonesTitle": "Gérer les zones",
+      "zonesWhat": "Ajoute, modifie et supprime les zones de la salle, y compris les zones privées.",
+      "moderateTitle": "Modérer quelqu’un",
+      "moderateWhat": "Coupe ou verrouille le micro et la caméra d’une personne, ou la verrouille hors du chat.",
+      "chatHideTitle": "Retirer un message",
+      "chatHideWhat": "Retire le message de quelqu’un pour tout le monde et laisse une mention à sa place.",
+      "chatRestoreTitle": "Remettre un message",
+      "chatRestoreWhat": "Rétablit un message retiré pour tout le monde.",
+      "chatLockTitle": "Verrouiller quelqu’un hors du chat",
+      "chatLockWhat": "Empêche une personne d’écrire dans le chat jusqu’à ce que le verrou soit levé."
     },
     "sessionDetails": {
       "back": "Retour à Mon SOG",

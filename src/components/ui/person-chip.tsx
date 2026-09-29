@@ -52,10 +52,16 @@ export interface PersonChipProps
   id: string;
   /** What to show beside the face. A first name in every current caller. */
   name: string;
+  /**
+   * A small muted marker after the name, saying what seat this person holds
+   * where the run around them holds a different one — a trainee among a
+   * group's gedus. Absent on the ordinary chip.
+   */
+  tag?: string;
   className?: string;
 }
 
-export function PersonChip({ id, name, size, className }: PersonChipProps) {
+export function PersonChip({ id, name, tag, size, className }: PersonChipProps) {
   const avatar = AVATAR_BY_SIZE[size ?? "default"];
 
   return (
@@ -64,6 +70,11 @@ export function PersonChip({ id, name, size, className }: PersonChipProps) {
         <Identicon id={id} size={avatar.pixels} />
       </Avatar>
       <span className="leading-none">{name}</span>
+      {tag !== undefined && (
+        <span className="text-[10px] uppercase leading-none tracking-wide text-muted-foreground">
+          {tag}
+        </span>
+      )}
     </span>
   );
 }
@@ -71,6 +82,8 @@ export function PersonChip({ id, name, size, className }: PersonChipProps) {
 export interface PersonChipListPerson {
   id: string;
   name: string;
+  /** See {@link PersonChipProps.tag}. */
+  tag?: string;
 }
 
 /**
@@ -93,6 +106,7 @@ export function PersonChipList({
           key={person.id}
           id={person.id}
           name={person.name}
+          tag={person.tag}
           size={size}
         />
       ))}

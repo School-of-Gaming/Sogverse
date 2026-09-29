@@ -3,7 +3,10 @@ import {
   SESSION_FEED_ADULT_ID,
   SESSION_FEED_GAMER_IDS,
 } from "@/components/gedu/session-feed/mock-fixtures";
-import { VOICE_ROOM_GEDU_ID } from "@/components/voice/mock-room-fixtures";
+import {
+  VOICE_ROOM_GEDU_ID,
+  VOICE_ROOM_TRAINEE_ID,
+} from "@/components/voice/mock-room-fixtures";
 import type { ChatAccount, ChatImageRef, ChatMessage } from "./types";
 
 /**
@@ -46,6 +49,7 @@ export const CHAT_ACCOUNT_IDS = {
   aino: SESSION_FEED_GAMER_IDS.aino,
   vaino: SESSION_FEED_GAMER_IDS.vaino,
   siiri: SESSION_FEED_GAMER_IDS.siiri,
+  tiia: VOICE_ROOM_TRAINEE_ID,
 } as const;
 
 /**
@@ -67,7 +71,38 @@ export const CHAT_SCENE_ACCOUNTS: readonly ChatAccount[] = [
   { id: CHAT_ACCOUNT_IDS.marja, name: "Marja", role: "customer" },
   { id: CHAT_ACCOUNT_IDS.sanna, name: "Sanna", role: "gedu" },
   { id: CHAT_ACCOUNT_IDS.petra, name: "Petra", role: "admin" },
+  // A Gedu on a trainee seat: `gedu` to everyone, and a trainee only to the
+  // viewers the roster tells — see `chatSceneAccountsSeenBy`.
+  { id: CHAT_ACCOUNT_IDS.tiia, name: "Tiia", role: "gedu", isTrainee: true },
 ];
+
+/**
+ * What the server would have told this viewer they are in the channel — the
+ * scene standing in for the voice token route. Tiia holds the trainee seat;
+ * every other staff account moderates; everyone else participates.
+ */
+export function chatSceneStandingKind(
+  viewer: ChatAccount,
+): "moderator" | "trainee" | "participant" {
+  if (viewer.isTrainee === true) return "trainee";
+  return viewer.role === "admin" || viewer.role === "gedu"
+    ? "moderator"
+    : "participant";
+}
+
+/**
+ * The roster as this viewer's client would receive it: the trainee flag is
+ * answered only to a moderator and to a trainee of the group, so a family
+ * viewer sees Tiia as the Gedu her role says she is.
+ */
+export function chatSceneAccountsSeenBy(
+  viewer: ChatAccount,
+): readonly ChatAccount[] {
+  if (chatSceneStandingKind(viewer) !== "participant") return CHAT_SCENE_ACCOUNTS;
+  return CHAT_SCENE_ACCOUNTS.map((account) =>
+    account.isTrainee === true ? { ...account, isTrainee: false } : account,
+  );
+}
 
 /**
  * Demo art, travelling in the same `src` field a stored image will.
@@ -226,6 +261,11 @@ const CONVERSATION: readonly SeedSpec[] = [
     minutesAgo: 3,
     senderId: CHAT_ACCOUNT_IDS.aino,
     image: FIXTURE_IMAGES.arena,
+  },
+  {
+    minutesAgo: 2,
+    senderId: CHAT_ACCOUNT_IDS.tiia,
+    body: "That door is brilliant, Aino. Can you show me how the wiring works?",
   },
 ];
 

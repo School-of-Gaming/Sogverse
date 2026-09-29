@@ -8,7 +8,7 @@ import { ChatComposer } from "./ChatComposer";
 import { ChatMessageList, type ChatLogHandlers } from "./ChatMessageList";
 import { ChatReplyStrip } from "./ChatReply";
 import type { ChatSendDraft } from "./composer-staging";
-import type { ChatAccount, ChatMessage } from "./types";
+import type { ChatAccount, ChatMessage, ChatStanding } from "./types";
 
 /**
  * Everything a surface has to answer for the chat it is showing.
@@ -51,6 +51,7 @@ export function ChatView({
   messages,
   accounts,
   viewer,
+  standing,
   lockedAccountIds,
   typingAccountIds,
   heightClassName,
@@ -62,6 +63,11 @@ export function ChatView({
   messages: readonly ChatMessage[];
   accounts: readonly ChatAccount[];
   viewer: ChatAccount;
+  /**
+   * Whether the viewer moderates this channel, or is shown its moderation
+   * locked — as the surface was told by the server, never read off a role.
+   */
+  standing: ChatStanding;
   /** Who a moderator has locked out of this chat. */
   lockedAccountIds: ReadonlySet<string>;
   /** Who is typing right now. The viewer is ignored if they appear. */
@@ -134,6 +140,7 @@ export function ChatView({
           accounts={byId}
           mentionable={mentionable}
           viewer={viewer}
+          viewerStanding={standing}
           viewerLocked={viewerLocked}
           lockedAccountIds={lockedAccountIds}
           timeZone={timeZone}
@@ -154,6 +161,7 @@ export function ChatView({
         <ChatComposer
           capabilities={deriveChatComposerCapabilities({
             viewer,
+            standing,
             locked: viewerLocked,
           })}
           accounts={mentionable}

@@ -317,6 +317,7 @@ describe("dragSubjectsFrom", () => {
         name: "Group A",
         created_at: "2026-01-01T00:00:00Z",
         gedus: [],
+        trainees: [],
         participations: [
           participation("p-subscribed", {
             has_live_subscription: true,
@@ -548,6 +549,7 @@ describe("robloxIdsFrom", () => {
         name: "Group A",
         created_at: "2026-01-01T00:00:00Z",
         gedus: [],
+        trainees: [],
         participations: [queued("p-grouped", 261), queued("p-typed", null)],
       },
     ],
@@ -754,6 +756,7 @@ function snapshotOf(
       name: `Group ${i}`,
       created_at: "2026-01-01T00:00:00Z",
       gedus: [],
+      trainees: [],
       participations: seats(count, `g${i}`),
     })),
     unassigned: seats(unassigned, "inbox"),

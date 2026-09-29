@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { LockGlyph } from "@/components/ui/locked-control";
 import { cn } from "@/lib/utils";
 
 /** One row of a session card's overflow menu. */
@@ -10,6 +11,12 @@ export interface SessionCardMenuItem {
   key: string;
   label: string;
   onSelect: () => void;
+  /**
+   * The row is a locked action: it wears the padlock after its label, says the
+   * locked hint to a screen reader, and its `onSelect` opens the explanation
+   * rather than the flow. The caller owns both halves; the menu only draws it.
+   */
+  lockedHint?: string;
 }
 
 /**
@@ -233,6 +240,15 @@ export function SessionCardMenu({
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-hover hover:text-foreground focus:bg-lifted focus:text-foreground focus:outline-none"
             >
               {item.label}
+              {item.lockedHint !== undefined && (
+                <>
+                  <LockGlyph className="ml-auto text-muted-foreground" />
+                  <span className="sr-only">
+                    {" "}
+                    {item.lockedHint}
+                  </span>
+                </>
+              )}
             </button>
           ))}
         </div>

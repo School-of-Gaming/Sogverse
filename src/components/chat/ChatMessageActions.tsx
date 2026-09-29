@@ -14,6 +14,11 @@ import {
 import { useTranslations } from "next-intl";
 import type { ChatReactionCode } from "@/lib/constants/chat";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  LockExplanationDialog,
+  LockGlyph,
+  type LockExplanation,
+} from "@/components/ui/locked-control";
 import { cn } from "@/lib/utils";
 import type { ChatMessageCapabilities } from "./capabilities";
 import { ChatPopover } from "./ChatPopover";
@@ -108,6 +113,13 @@ export function ChatMessageActions({
   const [reactAnchor, setReactAnchor] = useState<HTMLElement | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [confirming, setConfirming] = useState<"delete" | "hide" | null>(null);
+  // The locked act whose explanation is up — a trainee pressed one of the
+  // moderator items this menu shows them with a padlock.
+  const [explaining, setExplaining] = useState<LockExplanation | null>(null);
+  const explain = (explanation: LockExplanation) => {
+    setMenuAnchor(null);
+    setExplaining(explanation);
+  };
 
   const picking = reactAnchor !== null;
   const menuOpen = menuAnchor !== null;
@@ -118,7 +130,10 @@ export function ChatMessageActions({
     capabilities.canDelete ||
     capabilities.canHide ||
     capabilities.canRestore ||
-    capabilities.lockControl !== null;
+    capabilities.lockControl !== null ||
+    capabilities.lockedHide !== null ||
+    capabilities.lockedRestore !== null ||
+    capabilities.lockedLock !== null;
 
   if (!capabilities.canReact && !capabilities.canReply && !hasMenu) return null;
 
@@ -227,6 +242,14 @@ export function ChatMessageActions({
                 }}
               />
             )}
+            {capabilities.lockedHide !== null && (
+              <LockedMenuItem
+                icon={<Trash2 className="h-3.5 w-3.5" aria-hidden />}
+                label={t("hide")}
+                explanation={capabilities.lockedHide}
+                onExplain={explain}
+              />
+            )}
             {capabilities.canRestore && (
               <MenuItem
                 icon={<Undo2 className="h-3.5 w-3.5" aria-hidden />}
@@ -235,6 +258,14 @@ export function ChatMessageActions({
                   setMenuAnchor(null);
                   onRestore();
                 }}
+              />
+            )}
+            {capabilities.lockedRestore !== null && (
+              <LockedMenuItem
+                icon={<Undo2 className="h-3.5 w-3.5" aria-hidden />}
+                label={t("restore")}
+                explanation={capabilities.lockedRestore}
+                onExplain={explain}
               />
             )}
             {capabilities.lockControl !== null && (
@@ -258,8 +289,26 @@ export function ChatMessageActions({
                 }}
               />
             )}
+            {capabilities.lockedLock !== null && (
+              <LockedMenuItem
+                icon={<Lock className="h-3.5 w-3.5" aria-hidden />}
+                label={m("lock", { name })}
+                explanation={capabilities.lockedLock}
+                onExplain={explain}
+              />
+            )}
           </div>
         </ChatPopover>
+      )}
+
+      {explaining !== null && (
+        <LockExplanationDialog
+          explanation={explaining}
+          open
+          onOpenChange={(open) => {
+            if (!open) setExplaining(null);
+          }}
+        />
       )}
 
       <ConfirmDialog
@@ -296,6 +345,37 @@ function ActionButton({
       className="rounded p-1 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
     >
       {children}
+    </button>
+  );
+}
+
+/**
+ * A moderator's menu item, shown to a viewer who may not use it: the same
+ * glyph and words in the same place, a padlock after them, and a press that
+ * explains rather than acts. Never tinted destructive, because it does nothing.
+ */
+function LockedMenuItem({
+  icon,
+  label,
+  explanation,
+  onExplain,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  explanation: LockExplanation;
+  onExplain: (explanation: LockExplanation) => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-haspopup="dialog"
+      onClick={() => onExplain(explanation)}
+      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-foreground opacity-80 transition-colors hover:bg-hover"
+    >
+      <span className="shrink-0">{icon}</span>
+      <span className="min-w-0 flex-1">{label}</span>
+      <LockGlyph className="text-muted-foreground" />
+      <span className="sr-only">{explanation.lockedHint}</span>
     </button>
   );
 }

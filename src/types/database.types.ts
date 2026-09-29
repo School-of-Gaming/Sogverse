@@ -916,6 +916,56 @@ export type Database = {
           },
         ]
       }
+      gedu_group_trainees: {
+        Row: {
+          created_at: string
+          gedu_id: string
+          group_id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          gedu_id: string
+          group_id: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          gedu_id?: string
+          group_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_group_trainees_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_group_trainees_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_group_trainees_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_group_trainees_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gedu_locations: {
         Row: {
           created_at: string
@@ -3140,6 +3190,8 @@ export type Database = {
           p_participation_moves?: Json
           p_product_id: string
           p_renamed_groups?: Json
+          p_trainees_added?: Json
+          p_trainees_removed?: Json
         }
         Returns: Json
       }
@@ -3358,6 +3410,7 @@ export type Database = {
         Args: { p_group_id: string }
         Returns: boolean
       }
+      gedu_trains_group: { Args: { p_group_id: string }; Returns: boolean }
       get_admin_dashboard: { Args: never; Returns: Json }
       get_admin_gedu_invoicing: {
         Args: { p_month_start: string }
@@ -3377,6 +3430,7 @@ export type Database = {
         Returns: {
           first_name: string
           id: string
+          is_trainee: boolean
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
@@ -3505,6 +3559,12 @@ export type Database = {
           session_date: string
         }[]
       }
+      get_trainee_assigned_product: {
+        Args: { p_group_id?: string; p_product_id: string }
+        Returns: Json
+      }
+      get_trainee_group_feed: { Args: { p_group_id: string }; Returns: Json }
+      get_trainee_group_overlay: { Args: { p_group_id: string }; Returns: Json }
       get_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]

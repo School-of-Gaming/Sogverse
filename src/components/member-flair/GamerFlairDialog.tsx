@@ -7,6 +7,13 @@ import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  LockedButton,
+  lockOf,
+  type Locked,
+} from "@/components/ui/locked-control";
+import { WithheldText } from "@/components/ui/withheld-text";
+import { isWithheld, type Withheld } from "@/lib/withheld";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -32,8 +39,12 @@ interface GamerFlairDialogProps {
   onOpenChange: (open: boolean) => void;
   /** The member this is about; only their name appears in the copy. */
   name: string;
-  /** The stored note. `""` means no note has been written yet. */
-  note: string;
+  /**
+   * The stored note. `""` means no note has been written yet; **withheld**
+   * means there is one and this reader is not sent it, and the field draws
+   * blurred filler in its place — nothing to seed, so nothing to type over.
+   */
+  note: string | Withheld;
   /** Who last wrote the stored note, when that is known. */
   lastEditedBy?: string | null;
   /**
@@ -47,13 +58,19 @@ interface GamerFlairDialogProps {
    * dialog reads the first entry and writes at most one back.
    */
   creations: readonly GamerCreation[];
-  /** Receives the trimmed note; an empty string means "clear the note". */
-  onSaveNote: (text: string) => void | Promise<void>;
+  /**
+   * Receives the trimmed note; an empty string means "clear the note". Handed
+   * in **locked** instead, the dialog is the same dialog — both halves still
+   * take typing — and its Save is the locked control that explains itself.
+   */
+  onSaveNote: ((text: string) => void | Promise<void>) | Locked;
   /**
    * Receives the whole list, replacing whatever is stored: one entry, or none.
    * An empty array deletes the row — the write is a replace, so it is retry-safe.
    */
-  onSaveCreations: (creations: readonly GamerCreation[]) => void | Promise<void>;
+  onSaveCreations:
+    | ((creations: readonly GamerCreation[]) => void | Promise<void>)
+    | Locked;
 }
 
 /** The one creation being edited, as two raw field values. */
@@ -160,9 +177,13 @@ export function GamerFlairDialog({
 }: GamerFlairDialogProps) {
   const t = useTranslations("memberFlair");
   const c = useTranslations("common");
+  const g = useTranslations("gedu.groupWorkspace");
   const fieldId = useId();
+  const noteWithheld = isWithheld(note);
+  const storedNote = noteWithheld ? "" : note;
+  const saveLock = lockOf(onSaveNote) ?? lockOf(onSaveCreations);
 
-  const [draft, setDraft] = useState(note);
+  const [draft, setDraft] = useState(storedNote);
   const [creationDraft, setCreationDraft] = useState<CreationDraft>(() =>
     seedCreationDraft(creations),
   );
@@ -193,7 +214,7 @@ export function GamerFlairDialog({
    * Seeded from the props on open, so before anything has landed "what is
    * stored" is simply what the dialog was handed.
    */
-  const [committed, setCommitted] = useState({ note, creations });
+  const [committed, setCommitted] = useState({ note: storedNote, creations });
 
   // Seeding during render on the closed→open edge, rather than in an effect:
   // an effect would paint one frame of the previous draft before correcting
@@ -204,12 +225,12 @@ export function GamerFlairDialog({
   if (open !== openedWith) {
     setOpenedWith(open);
     if (open) {
-      setDraft(note);
+      setDraft(storedNote);
       setCreationDraft(seedCreationDraft(creations));
       setCommitting(false);
       setError(null);
       setIncomplete(false);
-      setCommitted({ note, creations });
+      setCommitted({ note: storedNote, creations });
     }
   }
 
@@ -250,8 +271,14 @@ export function GamerFlairDialog({
      * caller outside this editor can store padding (the RPC writes verbatim),
      * which is precisely why the comparison must not assume nobody has.
      */
+    // A locked save never reaches here — the button explains itself instead —
+    // and the guard is what lets the two writes below be called.
+    if (typeof onSaveNote !== "function" || typeof onSaveCreations !== "function") {
+      return;
+    }
     const nextNote = draft.trim();
-    const noteChanged = draft !== committed.note;
+    // A withheld note is never written: the field held filler, not a draft.
+    const noteChanged = !noteWithheld && draft !== committed.note;
 
     /**
      * **The creations half is measured against what the editor was *seeded*
@@ -381,7 +408,14 @@ export function GamerFlairDialog({
               htmlFor={`${fieldId}-note`}
               hint={t("noteHint")}
             >
-              {({ hintId }) => (
+              {({ hintId }) =>
+                noteWithheld ? (
+                  <WithheldText
+                    label={g("staffNoteWithheld")}
+                    lines={5}
+                    boxed
+                  />
+                ) : (
                 <Textarea
                   id={`${fieldId}-note`}
                   rows={5}
@@ -392,9 +426,10 @@ export function GamerFlairDialog({
                   disabled={committing}
                   onChange={(e) => setDraft(e.target.value)}
                 />
-              )}
+                )
+              }
             </Field>
-            {lastEditedBy != null && note.length > 0 && (
+            {lastEditedBy != null && storedNote.length > 0 && (
               <p className="mt-2.5 text-xs text-muted-foreground">
                 {t("noteLastEdited", { name: lastEditedBy })}
               </p>
@@ -414,9 +449,13 @@ export function GamerFlairDialog({
           >
             {c("cancel")}
           </Button>
-          <Button onClick={handleSave} disabled={committing}>
-            {c("save")}
-          </Button>
+          {saveLock !== null ? (
+            <LockedButton explanation={saveLock}>{c("save")}</LockedButton>
+          ) : (
+            <Button onClick={handleSave} disabled={committing}>
+              {c("save")}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

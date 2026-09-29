@@ -70,7 +70,14 @@ function renderRow(hidden: boolean, viewer: ChatAccount) {
           flashing: false,
           actionsRevealed: false,
           capabilities: deriveChatMessageCapabilities(
-            { viewer, locked: false },
+            {
+              viewer,
+              // The Gedu viewer here is the room's moderator; the child is not.
+              standing: {
+                kind: viewer.role === "gedu" ? "moderator" : "participant",
+              },
+              locked: false,
+            },
             message,
             AINO,
             false,

@@ -170,6 +170,27 @@ export const groupStaffOverlay = z.object({
 });
 
 /**
+ * One member's entry on the `get_trainee_group_overlay` document — the staff
+ * overlay's entry with the note's text and editor replaced by whether a note
+ * exists, and `creations` always `[]`: a trainee sees what a gamer on the group
+ * sees, and a gamer sees only their own.
+ */
+export const traineeGroupOverlayMember = z.object({
+  group_joined_at: z.string().nullable(),
+  has_note: z.boolean(),
+  creations: gamerCreationList,
+});
+
+/**
+ * The `get_trainee_group_overlay` document: the voice room's member flair for a
+ * trainee on their own group, keyed exactly as {@link groupStaffOverlay} is.
+ */
+export const traineeGroupOverlay = z.object({
+  product_type: z.enum(Constants.public.Enums.product_type).nullable(),
+  members: z.record(z.string(), traineeGroupOverlayMember),
+});
+
+/**
  * What `set_gamer_group_note` hands back — the (group, member) note as it now
  * stands.
  *
@@ -228,6 +249,7 @@ export const gamerGroupCreationsResult = z.object({
  */
 export type GroupStaffOverlayMember = z.infer<typeof groupStaffOverlayMember>;
 export type GroupStaffOverlay = z.infer<typeof groupStaffOverlay>;
+export type TraineeGroupOverlay = z.infer<typeof traineeGroupOverlay>;
 export type GamerGroupNoteResult = z.infer<typeof gamerGroupNoteResult>;
 export type GamerCreation = z.infer<typeof gamerCreation>;
 export type GamerCreationList = z.infer<typeof gamerCreationList>;

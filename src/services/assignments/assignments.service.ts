@@ -7,6 +7,8 @@ import type {
 import {
   geduAssignedProduct,
   myAssignedProductRows,
+  traineeAssignedProduct,
+  type TraineeAssignedProduct,
 } from "./assignments.contracts";
 
 /**
@@ -59,9 +61,10 @@ export interface MyAssignedProductSessionRow {
    * differ only in the card's chrome — a substitution is its own small card, named as
    * a substitution and dated, rather than the recurring assignment card. A consumer
    * that ignored this would render a sub's one substituted afternoon as though they
-   * taught the club every week.
+   * taught the club every week. A `trainee` row is a trainee seat, whose
+   * workspace is the trainee's redacted one.
    */
-  kind: "assignment" | "substitution";
+  kind: "assignment" | "substitution" | "trainee";
   /**
    * The date a `substitution` row is for, product-local `YYYY-MM-DD`; null on an
    * `assignment` row. It is the other half of a substitution card's identity — one
@@ -147,6 +150,34 @@ export class AssignmentsService {
     }
 
     return geduAssignedProduct.parse(data);
+  }
+
+  /**
+   * The trainee's counterpart of {@link getAssignedProductDetail}: the product
+   * shell, the caller's own trainee group with its redacted roster, and the
+   * product's other groups by name only. Backed by
+   * `get_trainee_assigned_product`, which refuses (42501) a caller holding no
+   * trainee seat on the product — surfaced as `null`, exactly as the gedu read
+   * surfaces its own refusal.
+   */
+  async getTraineeAssignedProduct(
+    productId: string,
+    groupId: string | null = null,
+  ): Promise<TraineeAssignedProduct | null> {
+    const { data, error } = await this.supabase.rpc(
+      "get_trainee_assigned_product",
+      {
+        p_product_id: productId,
+        ...(groupId !== null ? { p_group_id: groupId } : {}),
+      },
+    );
+
+    if (error) {
+      if (error.code === "42501") return null;
+      throw error;
+    }
+
+    return traineeAssignedProduct.parse(data);
   }
 }
 

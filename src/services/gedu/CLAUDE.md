@@ -132,6 +132,35 @@ extension row, seeded with a server fetch. The consequence for writes: the certi
 record-check mutations invalidate the gedu-profiles root **and** the people-list key,
 because the fact now lives on rows under both.
 
+### Trainee seats
+
+A **trainee seat** puts a gedu on one group to shadow it before they run one. The rule
+is that a trainee sees the same workspace an assigned gedu sees, with what a gamer on
+that group could see and do. Three things about it are easy to get wrong:
+
+- **It is independent of certification.** Any gedu may be placed, certified or not, and
+  the picker for trainee seats must not reuse the assignment picker's certification
+  gate. The criminal record check gates nothing here either.
+- **It is a table of its own, not an assignment role, and the staff predicates
+  deliberately do not admit it.** Every staff gate reads the assignments table and
+  treats any row there as full staff, so a trainee is closed to all of them by default:
+  the gedu workspace document and every write on it, the photo-consent answers, voice
+  and chat moderation, substitutions and invoicing. The trainee's own reads are separate
+  redacted twins of the gedu workspace and product documents, which carry their shapes with every staff-only field absent from the
+  wire, so a UI renders a gap rather than blanking a value it was sent. Widening a staff
+  predicate to admit trainees would hand them all of it at once. That closure is the
+  trainee's own group only: a certified gedu training on one group may still substitute
+  on another group of the same product, nothing prevents it and nothing should — the
+  admin approving the substitution weighs it.
+- **One seat per gedu per product, of either kind.** The schema refuses an assignment
+  and a trainee seat for the same gedu on one product, from whichever side is written
+  second.
+- **There is no path from a trainee seat to an assignment.** A trainee's seat ends
+  when an admin removes it, and certification happens only on the admin user page.
+
+Admins, the group's assigned gedus and the group's own trainees see a group's trainees
+(workspace chips; the Trainee tag in voice and chat); families never do.
+
 ## The criminal record check
 
 Finnish law (504/2002) requires a person working with children to present a

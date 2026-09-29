@@ -181,6 +181,14 @@ export interface GeduAssignmentSummary {
   /** Where a click anywhere on the card navigates — the product's feed. */
   openHref: MaybeInertHref;
   /**
+   * Whether this card is a **trainee seat** rather than an assignment. It is
+   * the same card, linking to the same workspace URL — the route decides the
+   * trainee's view from the seat — and the one thing it draws differently is a
+   * "Trainee" badge in its eyebrow, which this flag drives: trainee status is
+   * per seat, so one gedu's page can hold both kinds side by side.
+   */
+  trainee: boolean;
+  /**
    * How many owed past sessions still need something — the number behind the
    * card's badge, computed server-side by the assignment-summaries RPC and
    * carried through here rather than re-derived.
@@ -229,8 +237,9 @@ export function rollUpGeduAssignments({
   const summaries = rows
     // Substitution rows are the other roll-up's: a substitution is one dated afternoon, and
     // running it through the schedule walk would draw a sub a recurring card
-    // claiming they teach the club every week.
-    .filter((row) => row.kind === "assignment")
+    // claiming they teach the club every week. A trainee seat is a standing
+    // seat on a group like an assignment, so it takes the same card.
+    .filter((row) => row.kind !== "substitution")
     .map((row) => {
     const { next, cancelledAhead } = nextOccurrenceFor(row, now, windowCloseMs);
     const hasVoiceRoom = row.product.isRemote === true;
@@ -259,7 +268,12 @@ export function rollUpGeduAssignments({
       // claiming the group meets in two places.
       siteName: hasVoiceRoom ? null : row.siteName,
       openHref: hrefByAssignment[key] ?? INERT_HREF,
-      attentionCount: attentionByAssignment?.[key] ?? 0,
+      // A trainee owes no session anything — what a session owes is the
+      // staff's work — so their card never carries a count, whatever a map
+      // keyed by (product, group) happens to hold.
+      attentionCount:
+        row.kind === "trainee" ? 0 : (attentionByAssignment?.[key] ?? 0),
+      trainee: row.kind === "trainee",
     } satisfies GeduAssignmentSummary;
     });
 

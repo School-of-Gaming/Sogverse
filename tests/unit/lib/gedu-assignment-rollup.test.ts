@@ -11,6 +11,7 @@ import {
 // beside them, in the shared module's test.
 import { runEndedOn, runLiveness } from "@/lib/product-run";
 import { INERT_HREF } from "@/lib/constants/routes";
+import { geduSeatHrefs } from "@/components/gedu/gedu-seat-rows";
 
 /**
  * The roll-up is what replaced the dashboard's per-occurrence enumeration, so
@@ -557,6 +558,53 @@ describe("rollUpGeduAssignments", () => {
       now,
     );
     expect(summaries.map((s) => s.productId)).toEqual(["p1"]);
+  });
+
+  it("gives a trainee seat the same card, owing nothing, linking to the same workspace", () => {
+    const trainee = { ...row({ id: "p2", name: "Shadowed Club" }), kind: "trainee" as const };
+    const summaries = rollUp([row({ id: "p1", name: "Club" }), trainee], now, {
+      // A count keyed to the trainee's seat must not reach their card: what a
+      // session owes is the staff's work.
+      attentionByAssignment: {
+        [geduAssignmentKey("p2", "p2-group")]: 4,
+      },
+    });
+    const card = summaries.find((s) => s.productId === "p2");
+    expect(card).toBeDefined();
+    expect(card?.trainee).toBe(true);
+    expect(card?.attentionCount).toBe(0);
+    expect(card?.openHref).toEqual({
+      pathname: "/preview/[surface]/[scenario]",
+      params: { surface: "gedu-product", scenario: "p2" },
+    });
+    expect(summaries.find((s) => s.productId === "p1")?.trainee).toBe(false);
+  });
+
+  it("links a trainee card to its own group, and an assignment card to the bare product", () => {
+    // The trainee seat and a live substitution on a sibling group of the same
+    // product: with no group named, the workspace read would fall back to the
+    // substituted group and open its staff workspace from the trainee card.
+    const trainee = { ...row({ id: "p1", name: "Club" }), groupId: "g-a", kind: "trainee" as const };
+    const substitution = {
+      ...row({ id: "p1", name: "Club" }),
+      groupId: "g-b",
+      kind: "substitution" as const,
+      substitutionDate: "2026-02-16",
+    };
+    const assignment = row({ id: "p2", name: "Other Club" });
+    const rows = [trainee, substitution, assignment];
+    const { hrefByAssignment } = geduSeatHrefs(rows);
+
+    const summaries = rollUpGeduAssignments({ rows, now, locale: "en", hrefByAssignment });
+    expect(summaries.find((s) => s.productId === "p1")?.openHref).toEqual({
+      pathname: "/gedu/clubs/[id]",
+      params: { id: "p1" },
+      query: { groupId: "g-a" },
+    });
+    expect(summaries.find((s) => s.productId === "p2")?.openHref).toEqual({
+      pathname: "/gedu/clubs/[id]",
+      params: { id: "p2" },
+    });
   });
 });
 

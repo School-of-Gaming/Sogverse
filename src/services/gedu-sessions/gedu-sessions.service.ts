@@ -13,6 +13,7 @@ import {
   emailSessionReportResponse,
   geduAssignmentSummaries,
   geduGroupFeed,
+  traineeGroupFeed,
   groupNotesResult,
   groupSessionNotesResult,
   siteNotesResult,
@@ -22,6 +23,7 @@ import {
   type EmailSessionReportResponse,
   type GeduAssignmentSummary,
   type GeduGroupFeed,
+  type TraineeGroupFeed,
 } from "./gedu-sessions.contracts";
 
 /**
@@ -71,6 +73,25 @@ export class GeduSessionsService {
     }
 
     return geduGroupFeed.parse(data);
+  }
+
+  /**
+   * A trainee's workspace document for the group they hold a trainee seat on —
+   * the redacted twin of {@link getGroupFeed}, with every staff-only field
+   * absent. `null` when the caller holds no trainee seat on the group (the
+   * RPC's 42501), which the page renders as the not-yours state.
+   */
+  async getTraineeGroupFeed(groupId: string): Promise<TraineeGroupFeed | null> {
+    const { data, error } = await this.supabase.rpc("get_trainee_group_feed", {
+      p_group_id: groupId,
+    });
+
+    if (error) {
+      if (error.code === "42501") return null;
+      throw error;
+    }
+
+    return traineeGroupFeed.parse(data);
   }
 
   /**

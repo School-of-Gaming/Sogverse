@@ -42,6 +42,24 @@ on opposite sides of a card. This is a real departure from the paragraph above a
 only one: everything else here still differs between the shells in where it can send you
 and in nothing more.
 
+**The trainee shell is the third live shell, and it adds no capability flag.** A gedu
+holding a trainee seat opens the same `/gedu/…/[id]` URL; the route decides by the seat
+(its server half seeds the redacted reads when the assignment read refuses) and the
+trainee shell in `src/components/gedu/session-details/` feeds the body the redacted
+documents. Two mechanisms carry it, and both are types rather than branches on who is
+looking:
+
+- **A write slot may be handed a lock instead of a function** (`Locked`, from
+  `components/ui/locked-control`). The control is drawn as it is — the editor still opens
+  and takes typing — and only the commit becomes the locked control, which explains
+  itself when pressed. Every save the body takes is typed `fn | Locked`; a component asks
+  "was I handed a write, a lock, or nothing?" and never who is reading.
+- **A field the reader is not sent is typed withheld** (`src/lib/withheld.ts`), never
+  `null` and never a made-up string: redacted roster rows are a separate type with the
+  contact and note text absent, sister groups can arrive by name only, and a withheld
+  staff note draws blurred filler in its slot on every card, set or not, because filler
+  only where a note exists would tell the reader which ones have one.
+
 **The photo-consent answers are a shell read, and the body takes them whole.** On a
 product that asks whether photographs of a child may be taken and used, the session
 editors' photo block lists the roster's permissions and the note telling a gedu to ask
@@ -51,10 +69,20 @@ answered — are read by the shell alongside its other reads and handed in as on
 the reason every other datum here is: two shells reading it two ways is exactly the drift
 a shared body prevents, and a page that asks the database about children's photo
 permissions on a product that never asked the question is a read nobody wanted made. The
-prop is **required rather than defaulted**, unlike the other caller-derived props here:
-the innocent-looking default is the one that hides a safeguard, so a shell says `null` in
-so many words. What each answer *means* — and why a missing one is a refusal — belongs to
-the feed and is written down there.
+prop is **required rather than defaulted**: the innocent-looking default is the one that
+hides a safeguard, so a shell says `null` in so many words. What each answer *means* — and
+why a missing one is a refusal — belongs to the feed and is written down there.
+
+**Rule: a prop whose omission would hide data or unlock a write is required, never
+defaulted** — the photo consents, the group's trainees, the name-only room lock, the
+body's saves and, below it, every lock and withheld flag the feed hands its editors — so
+a shell that forgets one fails to compile rather than drawing a page with something
+silently missing. The four statements about who brought you here default, and the
+staffing pair is optional because its absence is itself the admin shell's answer.
+
+**A group's trainees are chips in the same run as its gedus**, after them, each tagged
+Trainee — the list the admin groups panel shows, in the order the trainees were added,
+where a trainee shares the gedus' pill with "Trainee" in the role's place. Every shell passes them from its group feed.
 
 **Rule: nothing in here is named for a role.** The directory is the shared half, so a
 `Gedu*` or `Admin*` name in it is a claim the code does not make. Role-specific shells

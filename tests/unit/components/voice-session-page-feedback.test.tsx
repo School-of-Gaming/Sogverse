@@ -182,6 +182,7 @@ vi.mock("@/services/session-feedback", async () => {
 
 vi.mock("@/services/member-flair", () => ({
   useGroupStaffOverlay: () => ({ data: undefined }),
+  useTraineeGroupOverlay: () => ({ data: undefined }),
   useSetGamerGroupNote: () => ({ mutateAsync: vi.fn() }),
   useSetGamerGroupCreations: () => ({ mutateAsync: vi.fn() }),
 }));

@@ -2,6 +2,11 @@
 
 import { Check, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import {
+  LockGlyph,
+  useLockExplanation,
+  type LockExplanation,
+} from "@/components/ui/locked-control";
 import { cn } from "@/lib/utils";
 import type { AttendanceMark } from "@/components/session-feed";
 import { isExpectedOnEntry } from "./entry-state";
@@ -67,6 +72,7 @@ export function AttendanceRoster({
   roster,
   attendance,
   disabled = false,
+  lock,
   onMark,
 }: {
   /**
@@ -82,10 +88,19 @@ export function AttendanceRoster({
    * had, not a blank one.
    */
   disabled?: boolean;
+  /**
+   * The explanation the marks give instead of marking, when the save they feed
+   * was handed in locked. Every mark keeps its place and its word and wears a
+   * padlock where its glyph was; pressing one explains, and marks nothing.
+   */
+  lock: LockExplanation | null;
   /** `undefined` clears the mark, returning the row to unanswered. */
   onMark: (gamerId: string, mark: AttendanceMark | undefined) => void;
 }) {
   const t = useTranslations("gedu.sessionFeed");
+  // One explanation for the whole register, rather than one per mark: every
+  // mark on it is the same locked write.
+  const explanation = useLockExplanation(lock);
 
   // The rows are the members this session expected, and this list is used for
   // nothing else — the caller keeps handing the full roster to the draft's
@@ -106,12 +121,16 @@ export function AttendanceRoster({
   if (expected.length === 0) return null;
 
   return (
+    <>
+    {explanation.dialog}
     <ul className="space-y-1.5">
       {expected.map((gamer) => {
         const mark = attendance[gamer.id];
         /** Pressing the pill that is already on clears the row. */
         const toggle = (value: AttendanceMark) =>
-          onMark(gamer.id, mark === value ? undefined : value);
+          lock !== null
+            ? explanation.open()
+            : onMark(gamer.id, mark === value ? undefined : value);
 
         return (
           <li
@@ -136,7 +155,14 @@ export function AttendanceRoster({
                 disabled={disabled}
                 onToggle={() => toggle("present")}
                 label={t("presentLabel")}
-                icon={<Check className="h-3 w-3" aria-hidden />}
+                icon={
+                  lock !== null ? (
+                    <LockGlyph />
+                  ) : (
+                    <Check className="h-3 w-3" aria-hidden />
+                  )
+                }
+                lockedHint={lock?.lockedHint ?? null}
                 // Pressed is the one place a status hue is a ground rather
                 // than a figure, and it is a full-value fill under the ink the
                 // pairing measured: a wash of the same green is not that green.
@@ -147,7 +173,14 @@ export function AttendanceRoster({
                 disabled={disabled}
                 onToggle={() => toggle("absent")}
                 label={t("absentLabel")}
-                icon={<X className="h-3 w-3" aria-hidden />}
+                icon={
+                  lock !== null ? (
+                    <LockGlyph />
+                  ) : (
+                    <X className="h-3 w-3" aria-hidden />
+                  )
+                }
+                lockedHint={lock?.lockedHint ?? null}
                 // Neutral rather than destructive: an absence is a fact about
                 // the afternoon, not an error the gedu made. Neutral still has
                 // to *read* as chosen, though — and a marked row is already
@@ -162,6 +195,7 @@ export function AttendanceRoster({
         );
       })}
     </ul>
+    </>
   );
 }
 
@@ -172,6 +206,7 @@ function MarkOption({
   label,
   icon,
   pressedClassName,
+  lockedHint,
 }: {
   pressed: boolean;
   disabled: boolean;
@@ -179,6 +214,8 @@ function MarkOption({
   label: string;
   icon: React.ReactNode;
   pressedClassName: string;
+  /** Said after the label to a screen reader when the mark is locked. */
+  lockedHint: string | null;
 }) {
   return (
     <button
@@ -197,6 +234,12 @@ function MarkOption({
     >
       {icon}
       {label}
+      {lockedHint !== null && (
+        <span className="sr-only">
+          {" "}
+          {lockedHint}
+        </span>
+      )}
     </button>
   );
 }

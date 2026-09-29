@@ -75,6 +75,7 @@ function renderLog(log: readonly ChatMessage[], overrides: Partial<ChatLogHandle
         accounts={new Map([[AINO.id, AINO]])}
         mentionable={[]}
         viewer={AINO}
+        viewerStanding={{ kind: "participant" }}
         viewerLocked={false}
         lockedAccountIds={new Set()}
         timeZone="Europe/Helsinki"

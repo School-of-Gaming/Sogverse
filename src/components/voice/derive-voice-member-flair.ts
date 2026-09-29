@@ -1,5 +1,10 @@
 import { showsNewcomerBadge } from "@/components/member-flair";
-import type { GamerCreation, GroupStaffOverlay } from "@/types";
+import { WITHHELD, type Withheld } from "@/lib/withheld";
+import type {
+  GamerCreation,
+  GroupStaffOverlay,
+  TraineeGroupOverlay,
+} from "@/types";
 import type { VoiceMemberFlair } from "./VoiceMemberFlairProvider";
 
 /**
@@ -42,21 +47,33 @@ import type { VoiceMemberFlair } from "./VoiceMemberFlairProvider";
  * what the room offers is the same dialog, so a Gedu can supply a creation
  * mid-session.
  *
+ * **A trainee's overlay is the same map, redacted**, and becomes the same
+ * value: a member with a note gets a withheld note, so the button lights and
+ * the dialog draws the note blurred; no editor; creations always empty. What a
+ * trainee may not read never reaches the context, so the rows stay role-blind.
+ *
  * A `null` or absent overlay yields `null`: no provider value, and the room
  * renders exactly as it did before any of this existed. That is what a family's
  * room gets, and what a staff room gets while the read is still in flight.
  */
 export function deriveVoiceMemberFlair(
-  overlay: GroupStaffOverlay | null | undefined,
+  overlay: GroupStaffOverlay | TraineeGroupOverlay | null | undefined,
   now: Date,
   onOpenFlair: (userId: string, name: string) => void,
+  /**
+   * Who in the room holds a trainee seat, as the chat roster told a moderator
+   * or a trainee of the group. Rides the overlay — the staff one or the
+   * trainee's — rather than standing alone, so a family viewer, who has no
+   * overlay, is drawn no tag whatever arrives here.
+   */
+  trainees: ReadonlySet<string> = NO_TRAINEES,
 ): VoiceMemberFlair | null {
   if (overlay == null) return null;
 
   const drawsNewcomerBadge =
     overlay.product_type !== null && showsNewcomerBadge(overlay.product_type);
   const newcomers: Record<string, string> = {};
-  const notes: Record<string, string> = {};
+  const notes: Record<string, string | Withheld> = {};
   const noteEditors: Record<string, string> = {};
   const creations: Record<string, readonly GamerCreation[]> = {};
 
@@ -64,9 +81,13 @@ export function deriveVoiceMemberFlair(
     if (drawsNewcomerBadge && member.group_joined_at !== null) {
       newcomers[userId] = member.group_joined_at;
     }
-    if (member.note !== null) notes[userId] = member.note;
-    if (member.note_updated_by_first_name !== null) {
-      noteEditors[userId] = member.note_updated_by_first_name;
+    if ("has_note" in member) {
+      if (member.has_note) notes[userId] = WITHHELD;
+    } else {
+      if (member.note !== null) notes[userId] = member.note;
+      if (member.note_updated_by_first_name !== null) {
+        noteEditors[userId] = member.note_updated_by_first_name;
+      }
     }
     if (member.creations.length > 0) creations[userId] = member.creations;
   }
@@ -78,6 +99,9 @@ export function deriveVoiceMemberFlair(
     notes,
     noteEditors,
     creations,
+    trainees,
     onOpenFlair,
   };
 }
+
+const NO_TRAINEES: ReadonlySet<string> = new Set();

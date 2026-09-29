@@ -21,8 +21,8 @@ BEGIN
   IF NEW.product_id IS NULL THEN
     NEW.product_id := v_group_product_id;
   ELSIF NEW.product_id <> v_group_product_id THEN
-    RAISE EXCEPTION 'gedu_group_assignments.product_id % does not match group %''s product_id %',
-      NEW.product_id, NEW.group_id, v_group_product_id
+    RAISE EXCEPTION '%.product_id % does not match group %''s product_id %',
+      TG_TABLE_NAME, NEW.product_id, NEW.group_id, v_group_product_id
       USING ERRCODE = 'check_violation';
   END IF;
 

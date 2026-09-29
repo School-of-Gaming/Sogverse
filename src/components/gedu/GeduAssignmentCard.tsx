@@ -13,6 +13,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
+import { SeatKindBadge } from "./SeatKindBadge";
 import { CancelledAheadNotice } from "@/components/session-feed/CancelledAheadNotice";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
@@ -135,6 +136,13 @@ interface GeduAssignmentCardProps {
  * thing — and "Group A" identifies it to nobody, while "Minecraft Monday Club"
  * identifies it immediately.
  *
+ * **A trainee seat is this same card with a "Trainee" badge in the eyebrow**,
+ * after the product type. Trainee status is per seat, so one gedu may hold
+ * assignments and trainee seats on the same page, and the card's kind has to be
+ * legible before its name — the same reasoning that puts "Substitution" in the
+ * substitution card's eyebrow. On both cards the type leads and the badge
+ * follows it, so every card's eyebrow starts in the same place.
+ *
  * **The card states the schedule; the Join states the next session.** They are
  * two different questions and each is answered once. A gedu sweeping this page
  * is placing an activity in their week — "Mondays 16:30–18:00" is what does
@@ -196,6 +204,7 @@ export function GeduAssignmentCard({
   scheduleLines,
 }: GeduAssignmentCardProps) {
   const p = useTranslations("productType");
+  const tr = useTranslations("gedu.trainee");
   const c = useTranslations("activityCard");
   const b = useTranslations("sessionBadge");
   const d = useTranslations("gedu.sessionDetails");
@@ -257,9 +266,14 @@ export function GeduAssignmentCard({
         <CardContent className="flex h-full flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {p(productType)}
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {p(productType)}
+                </span>
+                {assignment.trainee && (
+                  <SeatKindBadge>{tr("badge")}</SeatKindBadge>
+                )}
+              </div>
               {/* The identity keeps its weight and loses its tone on a finished
                   run: a gedu looking for last term's club still has to read the
                   name, they just must not trip over it while looking for this

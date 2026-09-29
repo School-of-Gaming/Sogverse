@@ -954,7 +954,9 @@
         "alreadyAssigned": "Already assigned",
         "alreadyExpected": "Already at this session",
         "absentGedu": "The Gedu being substituted for",
-        "notCertified": "Not certified"
+        "notCertified": "Not certified",
+        "alreadyTrainee": "Already a trainee",
+        "traineeInstead": "Can be added as a trainee instead."
       },
       "participantPicker": {
         "title": "Add a participant",
@@ -1021,7 +1023,14 @@
         },
         "picker": {
           "addTitle": "Add Gedu to {name}",
-          "addDescription": "A Gedu can only run one group per product. Anyone already assigned is greyed out."
+          "addDescription": "A Gedu can only run one group per product. Anyone already assigned is greyed out.",
+          "addTraineeTitle": "Add trainee to {name}",
+          "addTraineeDescription": "A trainee shadows the group and doesn’t need to be certified. Anyone already on this product, as a Gedu or a trainee, is greyed out."
+        },
+        "trainee": {
+          "role": "Trainee",
+          "add": "Add trainee",
+          "removeAria": "Remove trainee {name}"
         },
         "removeParticipant": {
           "confirmTitle": "Remove {name} from this product?",
@@ -2121,6 +2130,51 @@
       "loading": "Loading locations...",
       "save": "Save",
       "saving": "Saving..."
+    },
+    "groupWorkspace": {
+      "staffNoteWithheld": "Only assigned Gedus and admins can read this note.",
+      "contactWithheld": "Contact details are for assigned Gedus and admins."
+    },
+    "trainee": {
+      "badge": "Trainee",
+      "dismiss": "Got it",
+      "lockedHint": "(locked)",
+      "whyAction": "Assigned Gedus can do this. You’re on this group as a trainee.",
+      "whySave": "Saving is for assigned Gedus. You’re on this group as a trainee, so try anything you like – nothing you type is kept.",
+      "sessionTitle": "Saving a session",
+      "sessionWhat": "Keeps the session’s report, the Gedu note, the photos and the attendance marks.",
+      "groupNotesTitle": "Saving the group’s notes",
+      "groupNotesWhat": "Keeps the notes about this group, for its families and for its Gedus.",
+      "siteNotesTitle": "Saving the site’s notes",
+      "siteNotesWhat": "Keeps the notes about this site, which every product running there shares.",
+      "gamerTitle": "Saving a gamer’s note",
+      "gamerWhat": "Keeps what Gedus write about this gamer, and the creation their family sees.",
+      "usernameTitle": "Correcting a game username",
+      "usernameWhat": "Changes this gamer’s username so it matches the one in the game.",
+      "sendTitle": "Sending to parents",
+      "sendWhat": "Emails this session’s report to every family in the group.",
+      "photosTitle": "Session photos",
+      "photosWhat": "Adds photos to the session report, or takes them off.",
+      "substituteTitle": "Asking for a substitute",
+      "substituteWhat": "Asks another Gedu to run this session in your place.",
+      "roomTitle": "Other groups’ voice rooms",
+      "roomWhat": "Joins another group’s voice room, to cover for its Gedu for a while.",
+      "screenShareTitle": "Sharing your screen",
+      "screenShareWhat": "Shows your screen to everyone in the room.",
+      "broadcastTitle": "Broadcasting",
+      "broadcastWhat": "Lets every zone hear you at once, wherever you are standing.",
+      "deafenTitle": "Silencing the room",
+      "deafenWhat": "Mutes everyone for you, so you can speak to the whole room without hearing it all at once.",
+      "zonesTitle": "Managing zones",
+      "zonesWhat": "Adds, edits and removes the room’s zones, private ones included.",
+      "moderateTitle": "Moderating someone",
+      "moderateWhat": "Mutes or locks a person’s mic and camera, or locks them out of the chat.",
+      "chatHideTitle": "Removing a message",
+      "chatHideWhat": "Removes someone’s message for everyone and leaves a note in its place.",
+      "chatRestoreTitle": "Putting a message back",
+      "chatRestoreWhat": "Brings a removed message back for everyone.",
+      "chatLockTitle": "Locking someone out of the chat",
+      "chatLockWhat": "Stops a person writing in the chat until they are let back in."
     },
     "sessionDetails": {
       "back": "Back to My SOG",

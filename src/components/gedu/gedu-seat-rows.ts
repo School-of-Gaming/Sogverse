@@ -32,7 +32,7 @@ import type { GeduAssignmentSummary } from "@/services/gedu-sessions";
  * them the other's badge.
  */
 function seatKey(
-  kind: "assignment" | "substitution",
+  kind: "assignment" | "substitution" | "trainee",
   groupId: string,
   substitutionDate: string | null,
 ): string {
@@ -78,6 +78,13 @@ export function joinGeduSeatRows(
  * sibling group of a product they already teach holds two seats on one product,
  * and under a product key they would have shared a badge, a workspace link and
  * a voice room.
+ *
+ * **A trainee seat's link names its group**, the way a substitution card's does.
+ * A certified gedu can hold a trainee seat on one group and a live substitution
+ * on a sibling group of the same product; a bare product link asks the gedu
+ * read with no group, which falls back to the substituted group and opens its
+ * staff workspace from the trainee card. Named, the gedu read refuses the
+ * trainee's group and the page hands over to the trainee read for it.
  */
 export function geduSeatHrefs(rows: readonly MyAssignedProductSessionRow[]): {
   hrefByAssignment: Record<string, AppHrefObject>;
@@ -85,10 +92,18 @@ export function geduSeatHrefs(rows: readonly MyAssignedProductSessionRow[]): {
 } {
   return {
     hrefByAssignment: Object.fromEntries(
-      rows.map((row) => [
-        geduAssignmentKey(row.product.id, row.groupId),
-        ROUTES.gedu.assignedProduct(row.product.productType, row.product.id),
-      ]),
+      rows.map((row) => {
+        const workspace = ROUTES.gedu.assignedProduct(
+          row.product.productType,
+          row.product.id,
+        );
+        return [
+          geduAssignmentKey(row.product.id, row.groupId),
+          row.kind === "trainee"
+            ? { ...workspace, query: { groupId: row.groupId } }
+            : workspace,
+        ];
+      }),
     ),
     voiceHrefByAssignment: Object.fromEntries(
       rows.map((row) => [

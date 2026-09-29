@@ -1,9 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { deriveVoiceMemberFlair } from "@/components/voice/derive-voice-member-flair";
+import { isWithheld, WITHHELD } from "@/lib/withheld";
 import type {
   GroupStaffOverlay,
   GroupStaffOverlayMember,
   ProductType,
+  TraineeGroupOverlay,
 } from "@/types";
 
 /**
@@ -230,5 +232,88 @@ describe("deriveVoiceMemberFlair — what it passes through", () => {
     // other row's.
     expect(flair?.now).toBe(NOW);
     expect(flair?.onOpenFlair).toBe(openFlair);
+  });
+});
+
+describe("deriveVoiceMemberFlair — the trainee tag", () => {
+  it("carries the chat roster's trainees through for a viewer with staff sight", () => {
+    const trainees = new Set([IDS.sanna]);
+    const flair = deriveVoiceMemberFlair(
+      overlayFor("consumer_club"),
+      NOW,
+      openFlair,
+      trainees,
+    );
+    expect(flair?.trainees).toBe(trainees);
+  });
+
+  it("draws no tag without the overlay, whatever the roster said", () => {
+    // The overlay is the staff-sight gate: a viewer who has none — every family
+    // member in the call — gets no flair at all, so no set can reach a row.
+    expect(
+      deriveVoiceMemberFlair(null, NOW, openFlair, new Set([IDS.sanna])),
+    ).toBeNull();
+  });
+
+  it("defaults to nobody before the roster has said anything", () => {
+    const flair = deriveVoiceMemberFlair(
+      overlayFor("consumer_club"),
+      NOW,
+      openFlair,
+    );
+    expect(flair?.trainees.size).toBe(0);
+  });
+});
+
+describe("deriveVoiceMemberFlair — a trainee's redacted overlay", () => {
+  const traineeOverlay: TraineeGroupOverlay = {
+    product_type: "consumer_club",
+    members: {
+      [IDS.siiri]: {
+        group_joined_at: JOINED_RECENTLY,
+        has_note: true,
+        creations: [],
+      },
+      [IDS.emil]: {
+        group_joined_at: JOINED_RECENTLY,
+        has_note: false,
+        creations: [],
+      },
+      [IDS.hilda]: { group_joined_at: null, has_note: false, creations: [] },
+    },
+  };
+
+  it("keeps the seat-holder set and the newcomer badges an assigned gedu sees", () => {
+    const flair = deriveVoiceMemberFlair(traineeOverlay, NOW, openFlair);
+
+    expect(flair?.members).toEqual(new Set([IDS.siiri, IDS.emil, IDS.hilda]));
+    expect(flair?.newcomers).toEqual({
+      [IDS.siiri]: JOINED_RECENTLY,
+      [IDS.emil]: JOINED_RECENTLY,
+    });
+  });
+
+  it("marks a member with a note as withheld: the button lights, the text never arrives", () => {
+    const flair = deriveVoiceMemberFlair(traineeOverlay, NOW, openFlair);
+
+    expect(flair?.notes).toEqual({ [IDS.siiri]: WITHHELD });
+    expect(isWithheld(flair?.notes[IDS.siiri])).toBe(true);
+    // No editor, and nothing in the creations half.
+    expect(flair?.noteEditors).toEqual({});
+    expect(flair?.creations).toEqual({});
+  });
+
+  it("carries the chat roster's trainees through, so a trainee sees the tag too", () => {
+    // The roster flags trainees to a trainee of the group as well as to staff,
+    // and the trainee's own overlay is what the set rides — the viewer's own
+    // id and a fellow trainee's both reach the rows.
+    const trainees = new Set([IDS.sanna, IDS.siiri]);
+    const flair = deriveVoiceMemberFlair(
+      traineeOverlay,
+      NOW,
+      openFlair,
+      trainees,
+    );
+    expect(flair?.trainees).toBe(trainees);
   });
 });

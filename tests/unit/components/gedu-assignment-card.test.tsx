@@ -171,3 +171,29 @@ describe("the corner", () => {
     expect(html).not.toContain("cursor-default");
   });
 });
+
+describe("the eyebrow names a trainee seat", () => {
+  // Trainee status is per seat, so one gedu's page can hold both kinds; the
+  // card's kind has to be legible before its name, and only the trainee's says so.
+  const TRAINEE_CARDS = buildGeduDashboardFixture(NOW, "trainee", "en", TIME_ZONE)
+    .assignments;
+  const badge = `>${messages.gedu.trainee.badge}<`;
+
+  it("badges a trainee seat, after the product type", () => {
+    const trainee = TRAINEE_CARDS.find((c) => c.assignment.trainee);
+    if (!trainee) throw new Error("the trainee scenario stopped carrying a trainee seat");
+    const html = cardHtml(trainee);
+    const typeLabel = `>${messages.productType[trainee.assignment.productType]}<`;
+    expect(html).toContain(badge);
+    expect(html.indexOf(typeLabel)).toBeGreaterThan(-1);
+    expect(html.indexOf(typeLabel)).toBeLessThan(html.indexOf(badge));
+  });
+
+  it("does not badge an assignment", () => {
+    const assignments = TRAINEE_CARDS.filter((c) => !c.assignment.trainee);
+    expect(assignments.length).toBeGreaterThan(0);
+    for (const card of assignments) {
+      expect(cardHtml(card), card.assignment.productName).not.toContain(badge);
+    }
+  });
+});

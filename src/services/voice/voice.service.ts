@@ -1,6 +1,6 @@
 import type { AppSupabaseClient } from "@/types";
 import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
-import { voiceTokenResponse } from "./voice.contracts";
+import { voiceTokenResponse, type VoiceRoomStanding } from "./voice.contracts";
 
 /**
  * Service-layer wrapper for the voice room flow. The injected client is
@@ -21,7 +21,13 @@ export class VoiceService {
    */
   async getToken(
     groupId: string,
-  ): Promise<{ token: string; roomUrl: string; role: string; sessionOpensAt: string }> {
+  ): Promise<{
+    token: string;
+    roomUrl: string;
+    role: string;
+    sessionOpensAt: string;
+    standing: VoiceRoomStanding;
+  }> {
     const response = await fetch("/api/voice/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

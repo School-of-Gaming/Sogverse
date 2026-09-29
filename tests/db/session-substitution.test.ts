@@ -581,6 +581,10 @@ describe("session substitutions", () => {
         "COUNTS the groups that have nobody assigned, for the attention queue. Admin-gated, and a substitution branch here would be WRONG rather than missing: a sub does not staff a group, so a group whose only body on the day is a substitute still has no gedu and still belongs on that queue.",
       "function:get_my_family_product_feed":
         "LISTS the group's gedus by first name for a FAMILY. The report attribution chip already names whoever wrote a report, so a family learns nothing new from a substitution — and this is the app's one STRICT client schema, so a widened document would fail the old app's parse rather than be stripped by it.",
+      "function:get_trainee_group_feed":
+        "LISTS the group's gedus by first name and role for a TRAINEE, the same list their colleagues' workspace shows. Its gate is the trainee seat, not an assignment.",
+      "function:get_trainee_assigned_product":
+        "LISTS the trainee's own group's gedus by first name and role. Its gate is the trainee seat, not an assignment.",
       "function:get_product_groups_with_details":
         "LISTS a group's gedus for the admin groups panel, which is the PERMANENT assignment editor. Admin-gated, and the list is exactly what that panel edits.",
       "policy:gedu_group_assignments.customers_read_assignments_via_gamers":
