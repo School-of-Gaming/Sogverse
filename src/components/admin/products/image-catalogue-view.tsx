@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Loader2, Pencil, Upload, X } from "lucide-react";
 import {
@@ -17,40 +17,47 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { ProductBanner } from "@/components/ui/product-banner";
-import { productImageSrc } from "@/lib/images/product-image-url";
+import { FramedImage } from "@/components/ui/framed-image";
+import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { cn } from "@/lib/utils";
 import {
-  PRODUCT_IMAGE_ACCEPT,
-  PRODUCT_IMAGE_LABEL_MAX_LENGTH,
-  productImageLabel,
-  type ProductImageUsage,
-  type ProductImageUser,
-} from "@/services/product-images";
-import type { ProductImage } from "@/types";
+  CATALOGUE_IMAGE_LABEL_MAX_LENGTH,
+  catalogueImageLabel,
+  type CatalogueImageUsage,
+  type CatalogueImageUser,
+} from "@/services/catalogue-images";
+import type { CatalogueImage, CatalogueImagePurpose } from "@/types";
+import { CATALOGUE_COPY } from "./catalogue-copy";
+import { useCatalogueCrop } from "./catalogue-crop";
 import {
   ImageActionConfirmDialog,
   type ImageCatalogueAction,
 } from "./image-catalogue-confirm";
-import { ProductImageUserList } from "./image-catalogue-user-list";
-import { productImageErrorMessage } from "./product-image-error";
+import { CatalogueImageUserList } from "./image-catalogue-user-list";
+import { catalogueImageErrorMessage } from "./catalogue-image-error";
 
 export interface ImageCatalogueViewProps {
+  /** The one purpose every entry here has, and every upload is cropped for. */
+  purpose: CatalogueImagePurpose;
   /** The catalogue, newest first. `undefined` while the read is in flight. */
-  images: ProductImage[] | undefined;
-  /** Which products reach which entry. `undefined` while the read is in flight. */
-  usage: ProductImageUsage | undefined;
+  images: CatalogueImage[] | undefined;
+  /** Which products and articles reach which entry. `undefined` while the read is in flight. */
+  usage: CatalogueImageUsage | undefined;
   /** The entry filling the reference column, or null for the empty column. */
   selectedId: string | null;
   /** A tile was clicked. */
   onSelectTile: (id: string) => void;
-  /** Commit this entry to the product being edited, and close. */
-  onUse: (image: ProductImage) => void;
-  /** Add a file to the catalogue. Resolves once the new entry is selected. */
+  /** Commit this entry to the product or article being edited, and close. */
+  onUse: (image: CatalogueImage) => void;
+  /**
+   * Add a picture, already cropped to `purpose`'s size, to the catalogue. Resolves once
+   * the new entry is selected.
+   */
   onUpload: (file: File) => Promise<void>;
-  onRename: (image: ProductImage, label: string) => Promise<void>;
-  onReplace: (image: ProductImage, file: File) => Promise<void>;
-  onRemove: (image: ProductImage) => Promise<void>;
+  onRename: (image: CatalogueImage, label: string) => Promise<void>;
+  /** Replace an entry with a picture already cropped to its purpose's size. */
+  onReplace: (image: CatalogueImage, file: File) => Promise<void>;
+  onRemove: (image: CatalogueImage) => Promise<void>;
   onClose: () => void;
 }
 
@@ -80,6 +87,7 @@ export interface ImageCatalogueViewProps {
  * slot so the counts landing after the pictures moves nothing.
  */
 export function ImageCatalogueView({
+  purpose,
   images,
   usage,
   selectedId,
@@ -94,13 +102,13 @@ export function ImageCatalogueView({
   const t = useTranslations("admin.products.imageCatalogue");
   const tError = useTranslations("admin.products.imageCatalogue.errors");
   const c = useTranslations("common");
+  const copy = CATALOGUE_COPY[purpose];
 
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<ImageCatalogueAction | null>(
     null,
   );
-  const uploadInput = useRef<HTMLInputElement>(null);
 
   const selected = images?.find((image) => image.id === selectedId) ?? null;
   const selectedUsers = selected ? (usage?.[selected.id] ?? []) : [];
@@ -111,7 +119,7 @@ export function ImageCatalogueView({
     try {
       await onUpload(file);
     } catch (err) {
-      setError(productImageErrorMessage(err, tError));
+      setError(catalogueImageErrorMessage(err, tError));
     } finally {
       // Cleared either way: nothing unmounts on a successful upload — the admin
       // stays in the dialog with the new entry in the column — so the button
@@ -120,32 +128,22 @@ export function ImageCatalogueView({
     }
   }
 
+  const uploadCrop = useCatalogueCrop(purpose, (file) => void handleUpload(file));
+
   return (
     <DialogContent className="flex h-[min(85vh,880px)] flex-col p-0">
       <DialogHeader className="flex-row items-start justify-between gap-4 space-y-0 border-b border-border p-6 pb-4">
         <div className="space-y-1.5">
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
+          <DialogTitle>{t(`${copy}.title`)}</DialogTitle>
+          <DialogDescription>{t(`${copy}.description`)}</DialogDescription>
         </div>
         <div className="shrink-0">
-          <input
-            ref={uploadInput}
-            type="file"
-            accept={PRODUCT_IMAGE_ACCEPT}
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              // Cleared before the request so choosing the same file twice
-              // (after a refusal) fires a change event the second time too.
-              e.target.value = "";
-              if (file) void handleUpload(file);
-            }}
-          />
+          {uploadCrop.element}
           <Button
             type="button"
             size="sm"
             disabled={uploading}
-            onClick={() => uploadInput.current?.click()}
+            onClick={uploadCrop.choose}
           >
             {uploading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -192,8 +190,9 @@ export function ImageCatalogueView({
                         isSelected && "border-act",
                       )}
                     >
-                      <ProductBanner
-                        src={productImageSrc(image.path)}
+                      <FramedPicture
+                        purpose={image.purpose}
+                        path={image.path}
                         sizes="200px"
                         className="rounded"
                       />
@@ -207,7 +206,7 @@ export function ImageCatalogueView({
                       <span className="mt-1 flex h-5 items-center">
                         {count > 0 && (
                           <Badge variant="outline">
-                            {t("usedBadge", { count })}
+                            {t(`${copy}.usedBadge`, { count })}
                           </Badge>
                         )}
                       </span>
@@ -252,7 +251,8 @@ export function ImageCatalogueView({
           onOpenChange={(open) => !open && setConfirming(null)}
           action={confirming}
           label={selected.label}
-          products={selectedUsers}
+          purpose={selected.purpose}
+          users={selectedUsers}
           onConfirm={async (file) => {
             if (confirming === "replace") {
               if (file === null) return;
@@ -284,8 +284,8 @@ function SelectedImagePanel({
   onReplace,
   onRemove,
 }: {
-  image: ProductImage;
-  users: readonly ProductImageUser[];
+  image: CatalogueImage;
+  users: readonly CatalogueImageUser[];
   onUse: () => void;
   onRename: (label: string) => Promise<void>;
   onReplace: () => void;
@@ -294,6 +294,7 @@ function SelectedImagePanel({
   const t = useTranslations("admin.products.imageCatalogue");
   const tError = useTranslations("admin.products.imageCatalogue.errors");
   const c = useTranslations("common");
+  const copy = CATALOGUE_COPY[image.purpose];
 
   const [renaming, setRenaming] = useState(false);
   const [draft, setDraft] = useState(image.label);
@@ -302,7 +303,7 @@ function SelectedImagePanel({
   const [used, setUsed] = useState(false);
 
   async function saveName() {
-    const parsed = productImageLabel.safeParse(draft);
+    const parsed = catalogueImageLabel.safeParse(draft);
     if (!parsed.success) {
       setRenameError(tError("nameRequired"));
       return;
@@ -313,7 +314,7 @@ function SelectedImagePanel({
       await onRename(parsed.data);
       setRenaming(false);
     } catch (err) {
-      setRenameError(productImageErrorMessage(err, tError));
+      setRenameError(catalogueImageErrorMessage(err, tError));
     } finally {
       setCommitting(false);
     }
@@ -321,8 +322,9 @@ function SelectedImagePanel({
 
   return (
     <div className="space-y-4">
-      <ProductBanner
-        src={productImageSrc(image.path)}
+      <FramedPicture
+        purpose={image.purpose}
+        path={image.path}
         sizes="320px"
         className="rounded-md border border-border"
       />
@@ -349,7 +351,7 @@ function SelectedImagePanel({
               value={draft}
               autoFocus
               aria-label={t("nameLabel")}
-              maxLength={PRODUCT_IMAGE_LABEL_MAX_LENGTH}
+              maxLength={CATALOGUE_IMAGE_LABEL_MAX_LENGTH}
               onChange={(e) => setDraft(e.target.value)}
             />
             {/* Cancel first, Save last — the app-wide button order
@@ -412,12 +414,12 @@ function SelectedImagePanel({
 
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("usedBy")}
+          {t(`${copy}.usedBy`)}
         </p>
         {users.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("usedByNone")}</p>
+          <p className="text-sm text-muted-foreground">{t(`${copy}.usedByNone`)}</p>
         ) : (
-          <ProductImageUserList products={users} />
+          <CatalogueImageUserList users={users} />
         )}
       </div>
 
@@ -436,5 +438,30 @@ function SelectedImagePanel({
         </Button>
       </div>
     </div>
+  );
+}
+
+/**
+ * An entry's picture in the frame of the purpose it was cut for — the frame the
+ * product or the article using it is painted in.
+ */
+function FramedPicture({
+  purpose,
+  path,
+  sizes,
+  className,
+}: {
+  purpose: CatalogueImagePurpose;
+  path: string;
+  sizes: string;
+  className?: string;
+}) {
+  return (
+    <FramedImage
+      purpose={purpose}
+      src={catalogueImageSrc(purpose, path)}
+      sizes={sizes}
+      className={className}
+    />
   );
 }

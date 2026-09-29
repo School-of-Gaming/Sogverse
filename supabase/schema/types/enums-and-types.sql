@@ -10,6 +10,23 @@ CREATE TYPE public.billing_mode AS ENUM (
 
 
 --
+-- Name: catalogue_image_purpose; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.catalogue_image_purpose AS ENUM (
+    'product',
+    'library_cover'
+);
+
+
+--
+-- Name: TYPE catalogue_image_purpose; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.catalogue_image_purpose IS 'What a catalogue picture is for: ''product'', a product''s picture, or ''library_cover'', a Library article''s cover. Each purpose has its own storage bucket (product-images, library-covers) and its own exact stored size; both live in the application''s one purpose map, and the size is enforced by the upload routes, which measure the bytes. No aspect ratio is stored: a purpose outlives any one crop.';
+
+
+--
 -- Name: chat_channel_type; Type: TYPE; Schema: public; Owner: -
 --
 

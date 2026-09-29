@@ -219,12 +219,15 @@ the page able to disagree about when a club meets.
   a translated zone name was tried and reverted — CLDR has no generic long name for every
   zone in every locale, and where one is missing `Intl` silently returns a differently
   shaped string that splices a label and a colon into the sentence around it.
-- It states no waitlist position and no product picture. A queue number frozen into an
-  inbox goes stale the moment somebody ahead drops out. The picture is the images rule
-  below: `product_images` stores no dimensions, no aspect is enforced on upload, and the
-  accept list admits `webp`, `avif` and `svg` — so there is nothing to size a box from
-  and three formats Outlook's desktop engine will not draw. The summary row states the
-  type and the name that sat beside the picture, and leaves no hole.
+- It states no waitlist position and, for now, no product picture. A queue number frozen
+  into an inbox goes stale the moment somebody ahead drops out. The picture is not ruled
+  out by the images rule below: every picture uploaded for the `product` purpose is a JPEG
+  of exactly 1200 × 800, measured and enforced by the upload routes
+  (`src/services/catalogue-images/CLAUDE.md`), so its box can be sized from the purpose
+  alone. It is simply not built yet. Entries uploaded before that enforcement may still be
+  another size or format until corrected by hand, so the cell, when it lands, draws a
+  fixed 3:2 box and lets such a picture fit inside it. Until then the summary row states the
+  type and the name, and leaves no hole.
 
 ## Images: one that may vanish, and some that carry the content
 

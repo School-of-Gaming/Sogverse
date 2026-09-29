@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "next-intl/server";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { productImageSrc } from "@/lib/images/product-image-url";
+import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 
 /**
  * Robots policy for product pages: **noindex, unconditionally.** Owner
@@ -113,7 +113,7 @@ export async function buildProductMetadata(
   // there is nothing here to choose a better break than they will. An empty
   // one omits the key rather than emitting a blank description.
   const description = translation.short_description || undefined;
-  const image = productImageSrc(product.image_path);
+  const image = catalogueImageSrc("product", product.image_path);
   // **No `width`/`height`.** 3:2 is a *rendering* convention — `ProductBanner`
   // paints every picture in an `aspect-[3/2]` frame with `object-cover` — and
   // nothing enforces it on the stored bytes: the upload path takes an arbitrary

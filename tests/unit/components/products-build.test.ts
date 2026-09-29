@@ -1562,7 +1562,7 @@ function mockDetailRow(
     // family surfaces read — the trigger writes it, nothing here does.
     image_id: "6f0f5e6c-1a4d-4b8a-9f27-2f6a0e5c9d31",
     image_path: "products/original.png",
-    product_images: { label: "Original art", path: "products/original.png" },
+    catalogue_images: { label: "Original art", path: "products/original.png" },
     start_date: "2026-09-01",
     end_date: null,
     seat_count: 10,

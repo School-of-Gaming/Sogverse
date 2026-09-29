@@ -4,7 +4,7 @@
  *
  * It is **derived, never form state**. Form state carries `imageId` alone. The
  * edit page seeds the label and the path from the admin product read's
- * `product_images` embed; from then on, whatever surface changes the pick hands
+ * `catalogue_images` embed; from then on, whatever surface changes the pick hands
  * back the entry it changed to, so a rename or a replace made inside the
  * catalogue dialog can never leave a stale label on the card.
  */
@@ -18,6 +18,6 @@ export interface ProductImageSelection {
  * pick is an id *and* a picture and the two must arrive together or the card
  * paints one entry while the form saves another.
  */
-export interface ProductImageEntry extends ProductImageSelection {
+export interface CatalogueImageEntry extends ProductImageSelection {
   id: string;
 }

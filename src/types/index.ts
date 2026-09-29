@@ -329,18 +329,22 @@ export type ProductPrice = Database["public"]["Tables"]["product_prices"]["Row"]
 export type ProductPriceInsert = Database["public"]["Tables"]["product_prices"]["Insert"];
 export type ProductPriceUpdate = Database["public"]["Tables"]["product_prices"]["Update"];
 
-// product_images — the admin-owned catalogue a product's picture is chosen
-// from. One row per distinct image, identified by the sha256 of its bytes;
-// `path` is the object key in the public product-images bucket and never
+// catalogue_images — the admin-owned catalogue a product's picture and a
+// Library article's cover are chosen from. One row per distinct image per
+// purpose, identified by the sha256 of its bytes; `path` is the object key in
+// the public bucket of the row's purpose and never
 // changes for a given row, so a bucket URL's bytes are immutable by
 // construction. `label` is the only mutable column.
 //
-// A product points at an entry through `products.image_id`; `image_path` stays
-// the column every reader paints and is DERIVED from the link by a trigger, so
-// nothing in app code should ever write it.
-export type ProductImage = Database["public"]["Tables"]["product_images"]["Row"];
-export type ProductImageInsert = Database["public"]["Tables"]["product_images"]["Insert"];
-export type ProductImageUpdate = Database["public"]["Tables"]["product_images"]["Update"];
+// A product points at an entry through `products.image_id`, and an article copy
+// through `cover_image_id`; `image_path` and `cover_path` are the columns every
+// reader paints, DERIVED from the link by a trigger, so nothing in app code
+// should ever write them.
+export type CatalogueImage = Database["public"]["Tables"]["catalogue_images"]["Row"];
+export type CatalogueImageInsert = Database["public"]["Tables"]["catalogue_images"]["Insert"];
+export type CatalogueImageUpdate = Database["public"]["Tables"]["catalogue_images"]["Update"];
+/** What a catalogue picture is for, which decides its bucket and its exact size. */
+export type CatalogueImagePurpose = Database["public"]["Enums"]["catalogue_image_purpose"];
 
 // site_details (member-visible) + site_staff_details (admin + Gedu only)
 export type SiteDetails = Database["public"]["Tables"]["site_details"]["Row"];

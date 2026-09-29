@@ -48,6 +48,7 @@ function renderView(
   overrides: Partial<Parameters<typeof ImageCatalogueView>[0]> = {},
 ) {
   const props = {
+    purpose: "product" as const,
     images: CATALOGUE_DEMO_IMAGES,
     usage: CATALOGUE_DEMO_USAGE,
     selectedId: null as string | null,
@@ -114,11 +115,11 @@ describe("the confirm in front of a shared verb", () => {
     fireEvent.click(button("remove")!);
 
     expect(document.body.textContent).toContain(
-      `removeConfirm.confirm count=${SHARED_COUNT}`,
+      `forPurpose.product.removeConfirm count=${SHARED_COUNT}`,
     );
     // And the consequence line names the same number, from the same list.
     expect(document.body.textContent).toContain(
-      `removeConfirm.consequence count=${SHARED_COUNT}`,
+      `forPurpose.product.removeConsequence count=${SHARED_COUNT}`,
     );
   });
 
@@ -128,8 +129,8 @@ describe("the confirm in front of a shared verb", () => {
     fireEvent.click(button("remove")!);
 
     expect(document.body.textContent).toContain("removeConfirm.confirmUnused");
-    expect(document.body.textContent).toContain("removeConfirm.unused");
-    expect(document.body.textContent).not.toContain("removeConfirm.confirm ");
+    expect(document.body.textContent).toContain("forPurpose.product.removeUnused");
+    expect(document.body.textContent).not.toContain("forPurpose.product.removeConfirm ");
   });
 
   it("holds its button through the request it fired", async () => {
@@ -140,7 +141,7 @@ describe("the confirm in front of a shared verb", () => {
     renderView({ selectedId: SHARED.id, onRemove });
 
     fireEvent.click(button("remove")!);
-    const confirm = button(`removeConfirm.confirm count=${SHARED_COUNT}`)!;
+    const confirm = button(`forPurpose.product.removeConfirm count=${SHARED_COUNT}`)!;
     fireEvent.click(confirm);
 
     expect(onRemove).toHaveBeenCalledTimes(1);
@@ -162,7 +163,7 @@ describe("the confirm in front of a shared verb", () => {
     renderView({ selectedId: SHARED.id, onReplace });
 
     fireEvent.click(button("replace")!);
-    const confirm = button(`replaceConfirm.confirm count=${SHARED_COUNT}`)!;
+    const confirm = button(`forPurpose.product.replaceConfirm count=${SHARED_COUNT}`)!;
     confirm.disabled = false;
     fireEvent.click(confirm);
 
@@ -179,9 +180,9 @@ describe("the confirm in front of a shared verb", () => {
     // until a picture has been chosen, which is what makes the reach readable
     // before the destructive part of the gesture.
     expect(document.body.textContent).toContain(
-      `replaceConfirm.consequence count=${SHARED_COUNT}`,
+      `forPurpose.product.replaceConsequence count=${SHARED_COUNT}`,
     );
-    expect(button(`replaceConfirm.confirm count=${SHARED_COUNT}`)!.disabled).toBe(
+    expect(button(`forPurpose.product.replaceConfirm count=${SHARED_COUNT}`)!.disabled).toBe(
       true,
     );
   });

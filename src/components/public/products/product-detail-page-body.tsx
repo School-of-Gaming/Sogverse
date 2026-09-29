@@ -8,7 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { ROUTES } from "@/lib/constants";
-import { productImageSrc } from "@/lib/images/product-image-url";
+import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -187,7 +187,7 @@ export function ProductDetailPageBody({
 
   // The shared row-level resolution owns the empty-string-means-no-image rule;
   // null paints the wordmark banner at the hero's own ratio.
-  const heroSrc = productImageSrc(product.image_path);
+  const heroSrc = catalogueImageSrc("product", product.image_path);
 
   // Untagged is the ordinary state and renders nothing at all — no chip here,
   // no explanation block below. The value travels with the label so the chip

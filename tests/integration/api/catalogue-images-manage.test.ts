@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
-import { PATCH, DELETE } from "@/app/api/admin/product-images/[id]/route";
+import { PATCH, DELETE } from "@/app/api/admin/catalogue-images/[id]/route";
 import {
   createFetchStubbedClient,
   postgrestJson,
@@ -9,7 +9,7 @@ import {
 } from "../../mocks/postgrest-fetch";
 
 /**
- * PATCH / DELETE /api/admin/product-images/[id] — rename and retire.
+ * PATCH / DELETE /api/admin/catalogue-images/[id] — rename and retire.
  *
  * Rename is the only mutation an entry allows, so the interesting part is the
  * refusals. Removal is the destructive one: the count of affected products is
@@ -26,9 +26,11 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockRemove = vi.fn();
+/** Which bucket each removal went to — the entry's purpose's own. */
+const mockStorageFrom = vi.fn((_bucket: string) => ({ remove: mockRemove }));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
-    storage: { from: vi.fn(() => ({ remove: mockRemove })) },
+    storage: { from: (bucket: string) => mockStorageFrom(bucket) },
   })),
 }));
 
@@ -54,6 +56,7 @@ const ENTRY = {
   label: "Minecraft castle",
   sha256: "c0ffee",
   path: PATH,
+  purpose: "product",
   created_at: "2026-08-01T00:00:00.000Z",
 };
 
@@ -70,7 +73,7 @@ function renameRequest(
   body: unknown,
 ): [Request, { params: Promise<{ id: string }> }] {
   return [
-    new Request(`http://localhost/api/admin/product-images/${id}`, {
+    new Request(`http://localhost/api/admin/catalogue-images/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -83,14 +86,14 @@ function deleteRequest(
   id: string,
 ): [Request, { params: Promise<{ id: string }> }] {
   return [
-    new Request(`http://localhost/api/admin/product-images/${id}`, {
+    new Request(`http://localhost/api/admin/catalogue-images/${id}`, {
       method: "DELETE",
     }),
     { params: Promise.resolve({ id }) },
   ];
 }
 
-describe("PATCH /api/admin/product-images/[id]", () => {
+describe("PATCH /api/admin/catalogue-images/[id]", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns 401 when not authenticated", async () => {
@@ -104,7 +107,7 @@ describe("PATCH /api/admin/product-images/[id]", () => {
   it("returns 403 for a non-admin", async () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json(
-        { error: "Only admins can manage product images" },
+        { error: "Only admins can manage catalogue images" },
         { status: 403 },
       ),
     );
@@ -154,7 +157,7 @@ describe("PATCH /api/admin/product-images/[id]", () => {
   });
 });
 
-describe("DELETE /api/admin/product-images/[id]", () => {
+describe("DELETE /api/admin/catalogue-images/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRemove.mockResolvedValue({ error: null });
@@ -171,7 +174,7 @@ describe("DELETE /api/admin/product-images/[id]", () => {
   it("returns 403 for a non-admin", async () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json(
-        { error: "Only admins can manage product images" },
+        { error: "Only admins can manage catalogue images" },
         { status: 403 },
       ),
     );
@@ -192,7 +195,7 @@ describe("DELETE /api/admin/product-images/[id]", () => {
   it("reports how many products lost their picture, and removes the object", async () => {
     mockAdmin();
     respondWith(
-      postgrestJson([{ path: PATH }]),
+      postgrestJson([{ path: PATH, purpose: "product" }]),
       countResponse(22),
       postgrestJson([]),
       // The re-check before the bucket is touched: no row names this path.
@@ -211,13 +214,37 @@ describe("DELETE /api/admin/product-images/[id]", () => {
     expect(requestedUrl(count[0]).searchParams.get("image_id")).toBe(`eq.${ID}`);
     expect(fetchMock.mock.calls[2][1]?.method).toBe("DELETE");
     expect(mockRemove).toHaveBeenCalledWith([PATH]);
+    // From the product purpose's bucket.
+    expect(mockStorageFrom).toHaveBeenCalledWith("product-images");
+  });
+
+  it("removes a Library cover's object from the covers' bucket, re-checking within its purpose", async () => {
+    mockAdmin();
+    respondWith(
+      postgrestJson([{ path: PATH, purpose: "library_cover" }]),
+      countResponse(0),
+      postgrestJson([]),
+      postgrestJson([]),
+    );
+
+    const response = await DELETE(...deleteRequest(ID));
+
+    expect(response.status).toBe(200);
+    // The same bytes as a product picture would be another object in another
+    // bucket, so the re-check asks only about this purpose's key.
+    const recheck = requestedUrl(fetchMock.mock.calls[3][0]).searchParams;
+    expect(recheck.get("purpose")).toBe("eq.library_cover");
+    expect(recheck.get("path")).toBe(`eq.${PATH}`);
+    expect(mockStorageFrom).toHaveBeenCalledWith("library-covers");
+    expect(mockStorageFrom).not.toHaveBeenCalledWith("product-images");
+    expect(mockRemove).toHaveBeenCalledWith([PATH]);
   });
 
   it("still succeeds when the object removal fails after the row is gone", async () => {
     mockAdmin();
     mockRemove.mockResolvedValue({ error: { message: "storage unavailable" } });
     respondWith(
-      postgrestJson([{ path: PATH }]),
+      postgrestJson([{ path: PATH, purpose: "product" }]),
       countResponse(0),
       postgrestJson([]),
       postgrestJson([]),
@@ -235,7 +262,7 @@ describe("DELETE /api/admin/product-images/[id]", () => {
   it("keeps the object when a concurrent upload has re-created a row on that path", async () => {
     mockAdmin();
     respondWith(
-      postgrestJson([{ path: PATH }]),
+      postgrestJson([{ path: PATH, purpose: "product" }]),
       countResponse(3),
       postgrestJson([]),
       // Between the row delete and the removal, another admin uploaded the
@@ -257,7 +284,7 @@ describe("DELETE /api/admin/product-images/[id]", () => {
   it("keeps the object when the re-check itself fails", async () => {
     mockAdmin();
     respondWith(
-      postgrestJson([{ path: PATH }]),
+      postgrestJson([{ path: PATH, purpose: "product" }]),
       countResponse(0),
       postgrestJson([]),
       postgrestJson(

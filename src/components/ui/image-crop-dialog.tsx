@@ -13,13 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  TEAM_PHOTO_HEIGHT,
-  TEAM_PHOTO_WIDTH,
-} from "@/services/team-profiles/team-profiles.types";
 
-/** The file types the photo picker offers, and the only ones it accepts. */
-export const TEAM_PHOTO_ACCEPT = ["image/jpeg", "image/png", "image/webp"];
+/**
+ * The file types a cropped upload's picker offers, and the only ones it
+ * accepts. One list for every cropped upload; whatever goes in, what comes out
+ * is a JPEG.
+ */
+export const IMAGE_CROP_ACCEPT = ["image/jpeg", "image/png", "image/webp"];
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
@@ -29,19 +29,19 @@ const MAX_ZOOM = 3;
  * or refused. The object URL belongs to the caller, which made it and revokes
  * it when the dialog closes.
  */
-export type TeamPhotoSource =
+export type ImageCropSource =
   | { kind: "decoding"; url: string }
   | { kind: "ready"; url: string }
   | { kind: "unreadable" };
 
 /**
  * Decode a picked file, so a format the browser cannot draw is refused in the
- * dialog rather than failing silently on the canvas. A type outside the three
- * accepted is refused without trying: the picker's filter is a suggestion the
- * reader can switch off.
+ * dialog rather than failing silently on the canvas. A type outside the
+ * accepted list is refused without trying: the picker's filter is a suggestion
+ * the reader can switch off.
  */
-export async function decodeTeamPhoto(url: string, type: string) {
-  if (!TEAM_PHOTO_ACCEPT.includes(type)) return false;
+export async function decodeImageForCrop(url: string, type: string) {
+  if (!IMAGE_CROP_ACCEPT.includes(type)) return false;
   const image = new window.Image();
   image.src = url;
   try {
@@ -53,32 +53,46 @@ export async function decodeTeamPhoto(url: string, type: string) {
 }
 
 /**
- * **The crop step between picking a photo and seeing it on the profile.**
+ * **The crop step between picking an image and seeing it where it will be
+ * shown.**
  *
- * A fixed 4:5 frame, the photo dragged to position under it and zoomed with
- * the slider, the wheel or a pinch. Confirming draws the framed area onto a
- * canvas at the stored size, so what the preview shows is exactly what would
- * be uploaded, and hands the caller the result as a JPEG blob.
+ * A fixed frame, the image dragged to position under it and zoomed with the
+ * slider, the wheel or a pinch. The frame's aspect ratio is derived from the
+ * output size the caller passes, so the two cannot disagree. Confirming draws
+ * the framed area onto a canvas at exactly that size, so what the preview
+ * shows is exactly what would be uploaded, and hands the caller the result as
+ * a JPEG blob.
  *
  * **The footer is settled before the file is decoded**, as a dialog footer
  * has to be: decoding lands after first paint, so the two buttons are there
- * from the start and "Use photo" waits disabled. A file that cannot be read
- * replaces the frame's contents with the reason and a way to pick another;
- * the frame keeps its size throughout, so nothing below it moves.
+ * from the start and the confirm button waits disabled. A file that cannot be
+ * read replaces the frame's contents with the reason and a way to pick
+ * another; the frame keeps its size throughout, so nothing below it moves.
  */
-export function TeamPhotoCropDialog({
+export function ImageCropDialog({
   source,
+  outputWidth,
+  outputHeight,
+  title,
+  confirmLabel,
   onCancel,
   onChooseAnother,
   onConfirm,
 }: {
   /** `null` closes the dialog. */
-  source: TeamPhotoSource | null;
+  source: ImageCropSource | null;
+  /** The output's size in pixels; the frame's aspect ratio follows from it. */
+  outputWidth: number;
+  outputHeight: number;
+  /** The heading, where the neutral "crop the image" undersells the surface. */
+  title?: string;
+  /** The confirm button's label, where the neutral "use image" undersells it. */
+  confirmLabel?: string;
   onCancel: () => void;
   onChooseAnother: () => void;
   onConfirm: (cropped: Blob) => void;
 }) {
-  const t = useTranslations("team.edit.photo.crop");
+  const t = useTranslations("imageCrop");
   const tCommon = useTranslations("common");
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(MIN_ZOOM);
@@ -103,7 +117,7 @@ export function TeamPhotoCropDialog({
     if (readyUrl === null || area === null) return;
     setCommitting(true);
     try {
-      const blob = await cropToBlob(readyUrl, area);
+      const blob = await cropToBlob(readyUrl, area, outputWidth, outputHeight);
       reset();
       onConfirm(blob);
     } catch {
@@ -124,7 +138,7 @@ export function TeamPhotoCropDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogTitle>{title ?? t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
@@ -136,7 +150,7 @@ export function TeamPhotoCropDialog({
               zoom={zoom}
               minZoom={MIN_ZOOM}
               maxZoom={MAX_ZOOM}
-              aspect={TEAM_PHOTO_WIDTH / TEAM_PHOTO_HEIGHT}
+              aspect={outputWidth / outputHeight}
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={(_, pixels) => setArea(pixels)}
@@ -193,7 +207,7 @@ export function TeamPhotoCropDialog({
             {tCommon("cancel")}
           </Button>
           <Button disabled={!ready || area === null || committing} onClick={confirm}>
-            {t("confirm")}
+            {confirmLabel ?? t("confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -202,18 +216,23 @@ export function TeamPhotoCropDialog({
 }
 
 /**
- * Draw the framed area of the image onto a canvas at the stored size and
+ * Draw the framed area of the image onto a canvas at the output size and
  * encode it. The area is in the image's own pixels, which is what the cropper
  * reports, so the output is the same whatever size the frame was on screen.
  */
-async function cropToBlob(url: string, area: Area): Promise<Blob> {
+async function cropToBlob(
+  url: string,
+  area: Area,
+  width: number,
+  height: number,
+): Promise<Blob> {
   const image = new window.Image();
   image.src = url;
   await image.decode();
 
   const canvas = document.createElement("canvas");
-  canvas.width = TEAM_PHOTO_WIDTH;
-  canvas.height = TEAM_PHOTO_HEIGHT;
+  canvas.width = width;
+  canvas.height = height;
   const context = canvas.getContext("2d");
   if (context === null) throw new Error("No 2D canvas context");
   context.imageSmoothingQuality = "high";
@@ -225,8 +244,8 @@ async function cropToBlob(url: string, area: Area): Promise<Blob> {
     area.height,
     0,
     0,
-    TEAM_PHOTO_WIDTH,
-    TEAM_PHOTO_HEIGHT,
+    width,
+    height,
   );
 
   return new Promise((resolve, reject) => {

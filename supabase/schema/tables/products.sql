@@ -63,7 +63,7 @@ END),
 -- Name: COLUMN products.image_path; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.products.image_path IS 'The object key every reader paints. DERIVED, with no exceptions: trg_products_apply_image_path writes the linked entry''s path on every products write and NULLs the column whenever image_id is NULL, so an app-supplied value is always inert and this column has exactly one writer. It deliberately carries NO foreign key into product_images(path): a second relationship between these two tables makes every PostgREST embed of product_images ambiguous (PGRST201) unless every caller hints it, and the trigger already guarantees what such a key would check.';
+COMMENT ON COLUMN public.products.image_path IS 'The object key every reader paints. DERIVED, with no exceptions: trg_products_apply_image_path writes the linked entry''s path on every products write and NULLs the column whenever image_id is NULL, so an app-supplied value is always inert and this column has exactly one writer. It deliberately carries NO foreign key into catalogue_images(path): a second relationship between these two tables makes every PostgREST embed of catalogue_images ambiguous (PGRST201) unless every caller hints it, and the trigger already guarantees what such a key would check.';
 
 
 --
@@ -98,7 +98,7 @@ COMMENT ON COLUMN public.products.region_lock_country IS 'Optional ISO 3166-1 al
 -- Name: COLUMN products.image_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.products.image_id IS 'The catalogue entry this product shows, or NULL for no picture. Anon-readable like the rest of products (it is a UUID and reveals nothing), but only admins can resolve it against product_images. Writing it is what changes a product''s picture — image_path is derived and must not be written directly.';
+COMMENT ON COLUMN public.products.image_id IS 'The catalogue entry this product shows, or NULL for no picture. Anon-readable like the rest of products (it is a UUID and reveals nothing), but only admins can resolve it against catalogue_images. Writing it is what changes a product''s picture — image_path is derived and must not be written directly.';
 
 
 --
@@ -213,7 +213,7 @@ ALTER TABLE ONLY public.products
 --
 
 ALTER TABLE ONLY public.products
-    ADD CONSTRAINT products_image_id_fkey FOREIGN KEY (image_id) REFERENCES public.product_images(id) ON DELETE SET NULL;
+    ADD CONSTRAINT products_image_id_fkey FOREIGN KEY (image_id) REFERENCES public.catalogue_images(id) ON DELETE SET NULL;
 
 
 --

@@ -167,6 +167,15 @@
     "selectWeek": "Valitse viikko {week}",
     "today": "Tänään"
   },
+  "imageCrop": {
+    "title": "Rajaa kuva",
+    "description": "Vedä kuva paikalleen kehyksessä ja zoomaa sopivaksi.",
+    "zoom": "Zoomaus",
+    "confirm": "Käytä kuvaa",
+    "unreadable": "Tätä tiedostoa ei voi avata kuvana tässä. Valitse JPEG-, PNG- tai WebP-kuva. iPhonen HEIC-kuvat pitää muuntaa ensin.",
+    "chooseAnother": "Valitse toinen kuva",
+    "failed": "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+  },
   "about": {
     "pageTitle": "Tietoa meistä",
     "sectionNav": "Tällä sivulla",
@@ -880,8 +889,8 @@
       },
       "imagePicker": {
         "label": "Kuva",
-        "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin se lisätään kirjastoon ja otetaan käyttöön tässä tuotteessa.",
-        "formats": "JPG, PNG, WebP, AVIF tai SVG, enintään 4 Mt.",
+        "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 3:2-kehykseen, se lisätään kirjastoon ja otetaan käyttöön tässä tuotteessa.",
+        "formats": "JPEG, PNG tai WebP.",
         "chooseFile": "Valitse tiedosto",
         "uploading": "Lisätään…",
         "change": "Vaihda kuva",
@@ -891,41 +900,59 @@
         "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat. Kuva rajataan 3:2-kehykseen. Kuvat ovat tuotteiden yhteisiä, joten valinta tässä ei muuta muita tuotteita."
       },
       "imageCatalogue": {
-        "title": "Tuotekuvat",
-        "description": "Sama kuva voi olla monessa tuotteessa. Valinta koskee vain tätä tuotetta, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä tuotteita.",
         "upload": "Lisää kuva",
         "uploading": "Lisätään…",
         "emptyCatalogue": "Kirjastossa ei ole vielä kuvia. Lisää ensimmäinen.",
-        "usedBadge": "{count, plural, one {# tuote} other {# tuotetta}}",
         "columnEmpty": "Valitse kuva",
         "use": "Käytä tätä kuvaa",
         "nameLabel": "Kuvan nimi",
         "rename": "Nimeä uudelleen",
-        "usedBy": "Kuvaa käyttävät tuotteet",
-        "usedByNone": "Mikään tuote ei käytä tätä kuvaa.",
         "live": "Julkaistu",
         "hidden": "Piilotettu",
         "replace": "Korvaa kuva",
         "remove": "Poista kirjastosta",
         "replaceConfirm": {
           "title": "Korvaa ”{label}”",
-          "consequence": "{count, plural, one {Alla oleva tuote näyttää jatkossa uuden kuvan.} other {Kaikki # alla olevaa tuotetta näyttävät jatkossa uuden kuvan.}}",
-          "unused": "Mikään tuote ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
           "choose": "Valitse uusi kuva",
-          "confirm": "Korvaa {count, plural, one {# tuotteessa} other {# tuotteessa}}",
           "confirmUnused": "Korvaa kuva"
         },
         "removeConfirm": {
           "title": "Poista ”{label}”",
-          "consequence": "{count, plural, one {Alla oleva tuote jää ilman kuvaa, kunnes valitset uuden.} other {Kaikki # alla olevaa tuotetta jäävät ilman kuvaa, kunnes valitset uuden.}}",
-          "unused": "Mikään tuote ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
-          "confirm": "Poista {count, plural, one {# tuotteesta} other {# tuotteesta}}",
           "confirmUnused": "Poista kirjastosta"
         },
         "errors": {
           "tooLarge": "Tiedosto on liian suuri. Kuvan enimmäiskoko on 4 Mt.",
-          "unsupportedType": "Tiedostomuotoa ei tueta. Käytä muotoa JPG, PNG, WebP, AVIF tai SVG.",
+          "unsupportedType": "Tiedosto ei ole JPEG-kuva. Rajaa kuva täällä ja yritä uudelleen.",
+          "wrongSize": "Kuva ei ole tarkalleen kehyksen vaatiman kokoinen. Rajaa se täällä ja yritä uudelleen.",
           "nameRequired": "Anna kuvalle nimi, jossa on 1–120 merkkiä."
+        },
+        "forPurpose": {
+          "product": {
+            "title": "Tuotekuvat",
+            "description": "Sama kuva voi olla monessa tuotteessa. Valinta koskee vain tätä tuotetta, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä tuotteita.",
+            "usedBadge": "{count, plural, one {# tuote} other {# tuotetta}}",
+            "usedBy": "Kuvaa käyttävät tuotteet",
+            "usedByNone": "Mikään tuote ei käytä tätä kuvaa.",
+            "replaceConsequence": "{count, plural, one {Alla oleva tuote näyttää jatkossa uuden kuvan.} other {Kaikki # alla olevaa tuotetta näyttävät jatkossa uuden kuvan.}}",
+            "replaceUnused": "Mikään tuote ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
+            "replaceConfirm": "Korvaa {count, plural, one {# tuotteessa} other {# tuotteessa}}",
+            "removeConsequence": "{count, plural, one {Alla oleva tuote jää ilman kuvaa, kunnes valitset uuden.} other {Kaikki # alla olevaa tuotetta jäävät ilman kuvaa, kunnes valitset uuden.}}",
+            "removeUnused": "Mikään tuote ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
+            "removeConfirm": "Poista {count, plural, one {# tuotteesta} other {# tuotteesta}}"
+          },
+          "libraryCover": {
+            "title": "Kirjaston kansikuvat",
+            "description": "Sama kuva voi olla useamman artikkelin kansikuva. Valinta koskee vain tätä artikkelia, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä artikkeleita, myös julkaistuja.",
+            "usedBadge": "{count, plural, one {# artikkeli} other {# artikkelia}}",
+            "usedBy": "Kuvaa käyttävät artikkelit",
+            "usedByNone": "Mikään artikkeli ei käytä tätä kuvaa.",
+            "replaceConsequence": "{count, plural, one {Alla oleva artikkeli näyttää jatkossa uuden kuvan, julkaistuna heti.} other {Kaikki # alla olevaa artikkelia näyttävät jatkossa uuden kuvan, julkaistut heti.}}",
+            "replaceUnused": "Mikään artikkeli ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
+            "replaceConfirm": "Korvaa {count, plural, one {# artikkelissa} other {# artikkelissa}}",
+            "removeConsequence": "{count, plural, one {Alla oleva artikkeli jää ilman kansikuvaa, kunnes valitset uuden, myös julkaistuna.} other {Kaikki # alla olevaa artikkelia jäävät ilman kansikuvaa, kunnes valitset uuden, myös julkaistut.}}",
+            "removeUnused": "Mikään artikkeli ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
+            "removeConfirm": "Poista {count, plural, one {# artikkelista} other {# artikkelista}}"
+          }
         }
       },
       "filters": {
@@ -5020,12 +5047,7 @@
         },
         "crop": {
           "title": "Rajaa kuvasi",
-          "description": "Vedä kuva paikalleen kehyksessä ja zoomaa sopivaksi.",
-          "zoom": "Zoomaus",
-          "confirm": "Käytä kuvaa",
-          "unreadable": "Tätä tiedostoa ei voi avata kuvana tässä. Valitse JPEG-, PNG- tai WebP-kuva. iPhonen HEIC-kuvat pitää muuntaa ensin.",
-          "chooseAnother": "Valitse toinen kuva",
-          "failed": "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+          "confirm": "Käytä kuvaa"
         }
       },
       "about": {

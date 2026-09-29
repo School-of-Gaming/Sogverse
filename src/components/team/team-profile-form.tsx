@@ -27,11 +27,11 @@ import {
   type TeamProfileTranslation,
 } from "@/services/team-profiles/team-profiles.types";
 import {
-  TEAM_PHOTO_ACCEPT,
-  TeamPhotoCropDialog,
-  decodeTeamPhoto,
-  type TeamPhotoSource,
-} from "@/components/team/team-photo-crop-dialog";
+  IMAGE_CROP_ACCEPT,
+  ImageCropDialog,
+  decodeImageForCrop,
+  type ImageCropSource,
+} from "@/components/ui/image-crop-dialog";
 import { TeamPhotoPlaceholder } from "@/components/team/team-photo-placeholder";
 import type { VoiceZoneColor } from "@/types";
 
@@ -335,7 +335,7 @@ export function TeamProfilePhotoSection({
 }) {
   const t = useTranslations("team.edit.photo");
   const fileInput = useRef<HTMLInputElement>(null);
-  const [source, setSource] = useState<TeamPhotoSource | null>(null);
+  const [source, setSource] = useState<ImageCropSource | null>(null);
   /** The picked file's URL, revoked when the dialog lets go of it. */
   const sourceUrl = useRef<string | null>(null);
   /** Which pick is current, so a slow decode of an abandoned file lands nowhere. */
@@ -358,7 +358,7 @@ export function TeamProfilePhotoSection({
     sourceUrl.current = url;
     const thisPick = ++pick.current;
     setSource({ kind: "decoding", url });
-    const readable = await decodeTeamPhoto(url, file.type);
+    const readable = await decodeImageForCrop(url, file.type);
     if (pick.current !== thisPick) return;
     if (!readable) release();
     setSource(readable ? { kind: "ready", url } : { kind: "unreadable" });
@@ -412,7 +412,7 @@ export function TeamProfilePhotoSection({
       <input
         ref={fileInput}
         type="file"
-        accept={TEAM_PHOTO_ACCEPT.join(",")}
+        accept={IMAGE_CROP_ACCEPT.join(",")}
         className="sr-only"
         tabIndex={-1}
         aria-hidden
@@ -423,8 +423,12 @@ export function TeamProfilePhotoSection({
           if (file !== undefined) void choose(file);
         }}
       />
-      <TeamPhotoCropDialog
+      <ImageCropDialog
         source={source}
+        outputWidth={TEAM_PHOTO_WIDTH}
+        outputHeight={TEAM_PHOTO_HEIGHT}
+        title={t("crop.title")}
+        confirmLabel={t("crop.confirm")}
         onCancel={close}
         onChooseAnother={() => fileInput.current?.click()}
         onConfirm={(blob) => {

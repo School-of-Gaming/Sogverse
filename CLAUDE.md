@@ -109,7 +109,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Calendar invitations (the mailed `.ics`) | `src/lib/calendar-invitations/` |
 | Supabase clients & paged list reads | `src/lib/supabase/` |
 | Locations | `src/services/locations/` |
-| Product image catalogue | `src/services/product-images/` |
+| Image catalogue — product pictures and Library covers | `src/services/catalogue-images/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |
