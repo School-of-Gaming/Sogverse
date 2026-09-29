@@ -2475,7 +2475,8 @@
     "linkApply": "Lägg till länk",
     "linkRemove": "Ta bort länk",
     "linkCancel": "Avbryt",
-    "linkInvalid": "Den här adressen går inte att länka. Använd en webbadress, en e-postadress eller en sökväg på den här webbplatsen."
+    "linkInvalid": "Den här adressen går inte att länka. Använd en webbadress, en e-postadress eller en sökväg på den här webbplatsen.",
+    "opensInNewTab": "(öppnas i en ny flik)"
   },
   "header": {
     "nav": {

@@ -347,11 +347,12 @@ export function buildComponentsReferenceEmail(locale: string): string {
    *
    * `renderMarkdownForEmail` is how stored, user-authored markdown — a gedu's
    * session report — reaches a mail. A template never styles that text itself:
-   * the renderer emits exactly the app's feed subset (paragraphs, three heading
-   * levels, bold, italic, lists, line breaks) with the margins decided inline,
-   * escapes every character, unwraps a link to its label and defuses anything
-   * a client would linkify. Reach for it only for a field the app also renders
-   * as markdown; copy a builder writes is composed from the helpers above.
+   * it passes the field's variant, the same one the app renders that field
+   * under, and the renderer emits what the app emits for it — the app's one
+   * markdown style written inline, the same allow-list, the same links kept or
+   * unwrapped — escaping every character and defusing anything a client would
+   * linkify. Reach for it only for a field the app also renders as markdown;
+   * copy a builder writes is composed from the helpers above.
    *
    * It is a string walker rather than a React render, which is what makes it
    * safe to call here: this module sits behind the registry, which a client page
@@ -379,6 +380,7 @@ export function buildComponentsReferenceEmail(locale: string): string {
           "1. Fill the moat",
           "2. Test the drawbridge with redstone",
         ].join("\n"),
+        "feed",
       ),
     )}
   `;
