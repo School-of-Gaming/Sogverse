@@ -42,6 +42,9 @@
       "adminInvoiceCustomers": "Clients de facturation",
       "adminInvoiceCustomerNew": "Nouveau client de facturation",
       "adminInvoiceCustomerEdit": "Modifier le client de facturation",
+      "adminLibrary": "Contenu de la Bibliothèque",
+      "adminLibraryArticleNew": "Nouvel article",
+      "adminLibraryArticleEdit": "Modifier l’article",
       "adminGeduInvoicing": "Facturation des Gedus",
       "adminTools": "Outils",
       "parentDashboard": "Mon SOG",
@@ -483,6 +486,98 @@
         "option": "{name} ({number})"
       }
     },
+    "library": {
+      "title": "Contenu de la Bibliothèque",
+      "subtitle": "Les articles pour les parents de la Bibliothèque publique.",
+      "newArticle": "Nouvel article",
+      "lastSaved": "Enregistré le {date}",
+      "search": {
+        "label": "Recherche",
+        "placeholder": "Rechercher par titre ou catégorie…",
+        "showing": "Affichage de {count} sur {total}",
+        "clear": "Effacer",
+        "noMatches": "Aucun article ne correspond à votre recherche."
+      },
+      "noCategory": "Aucune catégorie",
+      "empty": "Aucun article pour l’instant. Rédigez le premier.",
+      "backToList": "Retour au contenu de la Bibliothèque",
+      "notFound": "Aucun article ne correspond à cet identifiant.",
+      "loadError": "Impossible de charger cet article. Actualisez la page pour réessayer.",
+      "newPage": {
+        "title": "Nouvel article",
+        "submit": "Enregistrer le brouillon"
+      },
+      "editPage": {
+        "title": "Modifier l’article"
+      },
+      "status": {
+        "draft": "Brouillon",
+        "published": "Publié",
+        "changed": "Modifications non publiées"
+      },
+      "statusPanel": {
+        "label": "Publication",
+        "draftTitle": "Brouillon",
+        "draftBody": "Absent de la Bibliothèque. Les lecteurs ne peuvent pas voir cet article tant qu’il n’est pas publié.",
+        "publishedTitle": "Publié",
+        "publishedBody": "Les lecteurs trouvent cet article dans la Bibliothèque, tel qu’il est enregistré ici.",
+        "changedTitle": "Publié, avec des modifications non publiées",
+        "changedBody": "Les lecteurs voient la version publiée le {date}. Les modifications enregistrées depuis leur parviendront quand vous les publierez."
+      },
+      "viewLive": "Voir dans la Bibliothèque",
+      "preview": "Aperçu",
+      "publish": "Publier",
+      "publishChanges": "Publier les modifications",
+      "unpublish": "Dépublier",
+      "readiness": {
+        "missing": "Pour publier, ajoutez {fields}.",
+        "unsaved": "Enregistrez vos modifications pour pouvoir les prévisualiser et les publier.",
+        "previewUnsaved": "Enregistrez vos modifications pour pouvoir les prévisualiser."
+      },
+      "missing": {
+        "title": "un titre",
+        "summary": "un résumé",
+        "category": "une catégorie",
+        "body": "le texte de l’article"
+      },
+      "unpublishConfirm": {
+        "title": "Dépublier cet article ?",
+        "description": "Les lecteurs ne le trouveront plus dans la Bibliothèque, et les liens vers lui ne fonctionneront plus. L’article reste ici, et vous pouvez le republier à tout moment.",
+        "confirm": "Dépublier"
+      },
+      "fields": {
+        "title": "Titre",
+        "summary": "Résumé",
+        "category": "Catégorie",
+        "cover": "Image de couverture",
+        "body": "Texte de l’article"
+      },
+      "hints": {
+        "summary": "Texte simple, affiché sous le titre et sur la carte de l’article dans la Bibliothèque.",
+        "cover": "Affichée au-dessus de l’article et sur sa carte, recadrée en 16:9. Sans image, les lecteurs voient un espace réservé.",
+        "body": "Les lecteurs le voient sous l’image de couverture, mis en forme comme ici."
+      },
+      "categoryPlaceholder": "Choisissez une catégorie",
+      "cover": {
+        "choose": "Choisir une image",
+        "change": "Changer l’image",
+        "remove": "Retirer l’image"
+      },
+      "bodyPlaceholder": "Rédigez l’article…",
+      "actions": {
+        "save": "Enregistrer",
+        "cancel": "Annuler"
+      },
+      "errors": {
+        "titleRequired": "Un article doit avoir un titre.",
+        "saveFailed": "L’article n’a pas pu être enregistré. Réessayez.",
+        "saveFailedWithReason": "L’article n’a pas pu être enregistré — {reason}",
+        "publishFailed": "L’article n’a pas pu être publié. Réessayez.",
+        "publishFailedWithReason": "L’article n’a pas pu être publié — {reason}",
+        "unpublishFailed": "L’article n’a pas pu être dépublié. Réessayez.",
+        "unpublishFailedWithReason": "L’article n’a pas pu être dépublié — {reason}"
+      }
+    },
     "geduRole": {
       "primary": "Gedu principal",
       "assistant": "Gedu assistant",
@@ -909,6 +1004,7 @@
         "rename": "Renommer",
         "live": "En ligne",
         "hidden": "Masqué",
+        "draft": "Brouillon",
         "replace": "Remplacer l’image",
         "remove": "Retirer du catalogue",
         "replaceConfirm": {
@@ -2954,6 +3050,7 @@
     "municipalityClubs": "Clubs municipaux",
     "municipalityInvoicing": "Facturation municipale",
     "invoiceCustomers": "Clients de facturation",
+    "libraryContent": "Contenu de la Bibliothèque",
     "geduInvoicing": "Facturation des Gedus",
     "camps": "Stages",
     "events": "Événements",
@@ -5121,6 +5218,34 @@
         "hide": "Masquer",
         "visibilityError": "Impossible de modifier la visibilité du profil. Veuillez réessayer."
       }
+    }
+  },
+  "library": {
+    "name": "Bibliothèque",
+    "readingTime": "{minutes, plural, one {# min de lecture} other {# min de lecture}}",
+    "article": {
+      "breadcrumbLabel": "Fil d’Ariane",
+      "more": "À lire aussi dans la Bibliothèque",
+      "share": {
+        "heading": "Partager cet article",
+        "copyLink": "Copier le lien",
+        "copied": "Lien copié",
+        "on": "Partager sur {platform} (s’ouvre dans un nouvel onglet)",
+        "email": "E-mail",
+        "byEmail": "Partager par e-mail",
+        "native": "Partager…"
+      }
+    },
+    "categories": {
+      "onlineSafety": "Sécurité en ligne",
+      "screenTime": "Temps d’écran et vie de famille",
+      "learning": "Apprendre en jouant",
+      "gamesExplained": "Les jeux expliqués",
+      "forSchools": "Pour les écoles"
+    },
+    "cta": {
+      "heading": "Prêt à commencer ?",
+      "button": "Commencer"
     }
   }
 }

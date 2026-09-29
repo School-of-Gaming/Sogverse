@@ -108,6 +108,62 @@ describe("the reference column", () => {
   });
 });
 
+describe("the catalogue opened for Library covers", () => {
+  const COVER = {
+    ...SHARED,
+    id: "5b0e7c1a-2d3f-4a6b-8c9d-0e1f2a3b4c05",
+    label: "Library cover",
+    purpose: "library_cover" as const,
+  };
+  const ARTICLE_LIVE = "9c8b7a6d-5e4f-4a3b-8c2d-1e0f9a8b7c06";
+  const ARTICLE_DRAFT = "1a2b3c4d-5e6f-4a7b-9c8d-7e6f5a4b3c07";
+
+  function renderCovers() {
+    return renderView({
+      purpose: "library_cover",
+      images: [COVER],
+      usage: {
+        [COVER.id]: [
+          { kind: "library-article", id: ARTICLE_LIVE, title: "Is Fortnite safe?", is_live: true },
+          { kind: "library-article", id: ARTICLE_DRAFT, title: "Screen time", is_live: false },
+        ],
+      },
+      selectedId: COVER.id,
+    });
+  }
+
+  it("speaks of articles, and lists each by title with whether its cover is live", () => {
+    renderCovers();
+
+    expect(document.body.textContent).toContain("forPurpose.libraryCover.title");
+    expect(document.body.textContent).toContain(
+      "forPurpose.libraryCover.usedBadge count=2",
+    );
+    expect(document.body.textContent).not.toContain("forPurpose.product");
+    expect(screen.getByText("Is Fortnite safe?")).toBeDefined();
+    expect(screen.getByText("Screen time")).toBeDefined();
+    expect(screen.getByText("live")).toBeDefined();
+    expect(screen.getByText("draft")).toBeDefined();
+    // Each row opens its article's editor.
+    expect(
+      screen.getByText("Is Fortnite safe?").closest("a")?.getAttribute("href"),
+    ).toBe(`/admin/library/${ARTICLE_LIVE}`);
+  });
+
+  it("counts the articles a removal reaches, live ones included", () => {
+    renderCovers();
+
+    fireEvent.click(button("remove")!);
+
+    expect(
+      button("forPurpose.libraryCover.removeConfirm count=2"),
+    ).toBeDefined();
+    expect(document.body.textContent).toContain(
+      "forPurpose.libraryCover.removeConsequence count=2",
+    );
+  });
+});
+
 describe("the confirm in front of a shared verb", () => {
   it("carries the count on the button", () => {
     renderView({ selectedId: SHARED.id });

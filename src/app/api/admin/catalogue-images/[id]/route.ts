@@ -48,9 +48,10 @@ export const PATCH = defineRoute({
 /**
  * DELETE /api/admin/catalogue-images/[id] — retire an entry.
  *
- * The row goes, the foreign keys null every `products.image_id` pointing at
+ * The row goes, the foreign keys null every `products.image_id` and every
+ * Library `cover_image_id` — working and published copies alike — pointing at
  * it, the triggers null each derived path, and the object is removed.
- * `unlinked` is how many products lost their picture, read before
+ * `unlinked` is how many products and articles lost their picture, read before
  * the delete because afterwards there is nothing to count.
  *
  * Hard delete of row *and* object, deliberately: bytes with no row is the
@@ -85,7 +86,26 @@ export const DELETE = defineRoute({
       .select("id", { count: "exact", head: true })
       .eq("image_id", id);
     if (products.error) throw products.error;
-    const unlinked = products.count ?? 0;
+
+    const drafts = await supabase
+      .from("library_articles")
+      .select("id")
+      .eq("cover_image_id", id);
+    if (drafts.error) throw drafts.error;
+
+    const live = await supabase
+      .from("library_article_publications")
+      .select("article_id")
+      .eq("cover_image_id", id);
+    if (live.error) throw live.error;
+
+    // An article whose working and live covers are both this entry is one
+    // article losing its picture, not two.
+    const articles = new Set([
+      ...drafts.data.map((row) => row.id),
+      ...live.data.map((row) => row.article_id),
+    ]);
+    const unlinked = (products.count ?? 0) + articles.size;
 
     const { error: deleteError } = await supabase
       .from("catalogue_images")

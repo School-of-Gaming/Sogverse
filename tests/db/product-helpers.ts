@@ -302,6 +302,13 @@ import { TEST_IDS } from "./constants";
  *                  minted one; the municipality club 822 with group 823, where
  *                  the minted sub is an assistant; and 824, a club nobody
  *                  teaches, which must reach no document)
+ *   825-82b        library-articles.test.ts — `library_articles` and
+ *                  `catalogue_images` rows rather than products, kept in this
+ *                  registry for the reason the invoice customers are: 825 a
+ *                  complete working copy, 826 an incomplete draft, 827 an id
+ *                  that must NEVER exist, backing the "unknown id is refused"
+ *                  cases, and 828-82b catalogue entries — three Library covers
+ *                  and one product picture a cover may not be
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

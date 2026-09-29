@@ -1,9 +1,11 @@
 # Image catalogue
 
 Admins own a shared collection of pictures. A product does not have a file; it points at
-a catalogue entry, and many products may point at the same one. Every surface that paints
-a picture reads a derived path (`products.image_path`) and knows nothing about this table,
-which is admin-only.
+a catalogue entry, and many products may point at the same one. A Library article's cover
+is an entry too, linked from both of the article's copies — the working copy and the
+published one. Every surface that paints a picture reads a derived path
+(`products.image_path`, or an article copy's `cover_path`) and knows nothing about this
+table, which is admin-only; that is what lets the public Library read a live cover.
 
 ## The four rules that make the design work
 
@@ -19,23 +21,28 @@ changes, so nothing that already points at an entry can be surprised by it. The 
 the only column an admin can edit.
 
 **A served path is derived by a database trigger and is never written by application
-code.** Application code writes `products.image_id`; a trigger fills the served path
-from the linked entry on every write, and NULLs it whenever the link is NULL — on insert
-and update alike, whatever the statement said about the column. So "this has no entry"
-and "this has no picture" are the same sentence, and there is no third state. Nothing here — no route, no service, no
+code.** Application code writes `products.image_id`, or an article copy's
+`cover_image_id`; a trigger on each table fills the served path from the linked entry on
+every write, and NULLs it whenever the link is NULL — on insert and update alike, whatever
+the statement said about the column. So "this has no entry" and "this has no picture" are
+the same sentence, and there is no third state. Nothing here — no route, no service, no
 script — assigns a path. If a path looks wrong, the link is wrong.
 
 **Replace is a repoint, not an edit.** It resolves the new bytes to their entry
 (creating one if needed, inheriting the old entry's label) and then moves every link:
-`UPDATE products SET image_id = new WHERE image_id = old` on the admin's session. It is
-one statement, so every linked product follows atomically and the trigger writes each
-path. The new entry has the replaced one's purpose, whatever the request says. The old entry
+`UPDATE products SET image_id = new WHERE image_id = old` on the admin's session, and
+`repoint_library_covers(old, new)` for the Library, whose tables carry no write grant —
+one statement over both of an article's copies, so a live cover changes with no
+republish. Each is one statement, so every linked product, and every linked article,
+follows atomically and the triggers write each path; a product links only a `product`
+entry and an article only a `library_cover` one, so for any entry at most one of the two
+moves anything. The new entry has the replaced one's purpose, whatever the request says. The old entry
 stays in the catalogue, unlinked, which is what makes a replace reversible. When the new
 bytes resolve to the entry being replaced, that is a no-op that relinks nothing — not an
 error.
 
-Removal is the mirror: the row goes, the foreign keys null every link pointing at it,
-the triggers null each path, and the object is deleted. An object left behind by a
+Removal is the mirror: the row goes, the foreign keys null every link pointing at it —
+live covers included — the triggers null each path, and the object is deleted. An object left behind by a
 failed removal is logged rather than retried — re-uploading the same file recreates the
 row over the surviving object, because the object's name is still the hash of those
 bytes.
@@ -63,9 +70,10 @@ notices:
   it derives the column on every write, so it is that column's *only* writer. This is why
   nothing in application code may write it and why the product RPCs take no image
   parameter at all.
-- **A product links only a `product` entry** — the trigger refuses any other purpose
-  (23514). The catalogue dialog, opened for one purpose, lists only that purpose, so this
-  fires only on a state the UI cannot produce.
+- **A product links only a `product` entry, and an article's cover only a
+  `library_cover` one** — each table's trigger refuses any other purpose (23514). The
+  catalogue dialog, opened for one purpose, lists only that purpose, so this fires only on
+  a state the UI cannot produce.
 - **An entry's purpose never changes** — a BEFORE UPDATE trigger on the table refuses any
   update that moves it (23514), while a label edit passes. The object lives in the
   purpose's bucket and every link was checked against the purpose when it was made, so a
@@ -85,8 +93,11 @@ admin's own session is all the authority a read needs and a route would add noth
 reads are walked with the shared paging primitive: the catalogue only grows, and an image
 an admin cannot see is precisely what this feature exists to prevent.
 
-Usage — which products a given entry reaches — is **derived** from a products read and
-computed in JavaScript. It is not stored, and there is no counts map beside the lists: a
+Usage — which products and Library articles a given entry reaches — is **derived** from
+a products read and an articles read and computed in JavaScript. An article is listed by
+its working title, under the entry its working copy links and under the one its live copy
+links, which differ while a cover change is unpublished; a replace or a remove reaches
+both. It is not stored, and there is no counts map beside the lists: a
 badge's number is its list's length, because two derivations of one number is how they
 come to disagree.
 
@@ -99,19 +110,25 @@ session.**
 
 ## Cache invalidation — and the one key that must not be touched
 
-Every catalogue mutation invalidates the catalogue list, the usage map and the products
-**list** keys (those surfaces paint a derived path, and a repoint changes it under them).
+Every catalogue mutation invalidates the catalogue list, the usage map, the products
+**list** keys, the Library's public reads and the Library's whole admin tree (those
+surfaces paint a derived path, and a repoint changes it under them).
 
-The usage map is read from products, so a product's create and update invalidate it too:
-a stale map shows a picture as unused, and removable without warning. Its key sits in
-`catalogue-images.keys.ts`, which imports no other feature's module, so the product hooks
-can name it without an import cycle.
+The usage map is read from products and Library articles together, so a product's create
+and update and every Library write (create, save, publish, unpublish) invalidate it too:
+a stale map shows a live cover as unused, and removable without warning. Its key sits in
+`catalogue-images.keys.ts`, which imports no other feature's module, so the product and Library hooks can
+name it without an import cycle.
 
 **Never invalidate the product's admin *detail* key, and never a parent key that cascades
 into it.** The product form seeds its state from the detail query, so refetching it while
 the dialog is open would discard a half-filled form. This is a constraint to keep, not an
 accident, which is why the product keys are listed individually rather than swept with
-one parent key.
+one parent key. The Library's admin detail is the opposite case and *must* be refetched:
+a replace or a removal moves the working copy's cover in the database, and a detail left
+cached makes the open editor read the followed cover as an unsaved change. The Library
+editor seeds its form once per article id, so that refetch never touches the admin's
+typing.
 
 ## Purposes, buckets and exact sizes
 

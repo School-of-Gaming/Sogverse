@@ -20,9 +20,10 @@ import { plainJpeg } from "../../mocks/exif-jpeg";
  *
  * What matters here is that replacing is never an edit of an entry: the new
  * bytes get their own entry (inheriting the replaced entry's name) and every
- * product that used the old one is moved across in a single statement. The
+ * product that used the old one is moved across in a single statement, and
+ * every Library cover — draft and live — in `repoint_library_covers`. The
  * cases below are the forms that takes — nothing to move, products to move,
- * a cover's purpose inherited, and the entry having vanished under the admin.
+ * covers to move, and the entry having vanished under the admin.
  */
 
 // --- Mocks ---
@@ -167,6 +168,8 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
       postgrestJson([]),
       postgrestJson(NEW_ENTRY),
       postgrestJson([{ id: "p1" }, { id: "p2" }, { id: "p3" }]),
+      // A product picture is no Library cover, so no article moves.
+      postgrestJson(0),
     );
 
     const response = await POST(...createRequest(OLD_ID));
@@ -186,7 +189,7 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
     expect(mockStorageFrom).toHaveBeenCalledWith("product-images");
   });
 
-  it("keeps a Library cover's purpose, looking up, creating and storing the new picture as one", async () => {
+  it("moves every Library cover using the entry, draft and live, and counts the articles", async () => {
     mockAdmin();
     const wideBytes = new Uint8Array(await plainJpeg(1600, 900));
     const wideSha = createHash("sha256").update(wideBytes).digest("hex");
@@ -202,6 +205,7 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
       postgrestJson(wideEntry),
       // No product links a cover.
       postgrestJson([]),
+      postgrestJson(2),
     );
 
     const response = await POST(
@@ -209,8 +213,13 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ image: wideEntry, relinked: 0 });
+    expect(await response.json()).toEqual({ image: wideEntry, relinked: 2 });
 
+    const covers = fetchMock.mock.calls[4];
+    expect(requestedUrl(covers[0]).pathname).toBe(
+      "/rest/v1/rpc/repoint_library_covers",
+    );
+    expect(requestBody(4)).toEqual({ p_from: OLD_ID, p_to: NEW_ID });
     // The replacement inherits the cover purpose: looked up and created as a
     // cover, and uploaded to the covers' own bucket.
     expect(
@@ -221,6 +230,24 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
     expect(mockStorageFrom).not.toHaveBeenCalledWith("product-images");
   });
 
+  it("fails loudly when the covers cannot follow, rather than reporting a partial move", async () => {
+    mockAdmin();
+    respondWith(
+      postgrestJson([OLD_ENTRY]),
+      postgrestJson([]),
+      postgrestJson(NEW_ENTRY),
+      postgrestJson([{ id: "p1" }]),
+      postgrestJson(
+        { message: "connection lost", code: "08006", details: null, hint: null },
+        500,
+      ),
+    );
+
+    const response = await POST(...createRequest(OLD_ID));
+
+    expect(response.status).toBe(500);
+  });
+
   it("gives a newly created entry the replaced entry's name", async () => {
     mockAdmin();
     respondWith(
@@ -228,6 +255,7 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
       postgrestJson([]),
       postgrestJson(NEW_ENTRY),
       postgrestJson([]),
+      postgrestJson(0),
     );
 
     await POST(...createRequest(OLD_ID));

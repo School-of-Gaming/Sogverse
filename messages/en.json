@@ -42,6 +42,9 @@
       "adminInvoiceCustomers": "Invoice Customers",
       "adminInvoiceCustomerNew": "New Invoice Customer",
       "adminInvoiceCustomerEdit": "Edit Invoice Customer",
+      "adminLibrary": "Library Content",
+      "adminLibraryArticleNew": "New Article",
+      "adminLibraryArticleEdit": "Edit Article",
       "adminGeduInvoicing": "Gedu Invoicing",
       "adminTools": "Tools",
       "parentDashboard": "My SOG",
@@ -483,6 +486,98 @@
         "option": "{name} ({number})"
       }
     },
+    "library": {
+      "title": "Library content",
+      "subtitle": "The articles for parents in the public Library.",
+      "newArticle": "New article",
+      "lastSaved": "Last saved {date}",
+      "search": {
+        "label": "Search",
+        "placeholder": "Search by title or category…",
+        "showing": "Showing {count} of {total}",
+        "clear": "Clear",
+        "noMatches": "No articles match your search."
+      },
+      "noCategory": "No category",
+      "empty": "No articles yet. Write the first one.",
+      "backToList": "Back to Library content",
+      "notFound": "There is no article with this id.",
+      "loadError": "Could not load this article. Refresh to try again.",
+      "newPage": {
+        "title": "New article",
+        "submit": "Save draft"
+      },
+      "editPage": {
+        "title": "Edit article"
+      },
+      "status": {
+        "draft": "Draft",
+        "published": "Published",
+        "changed": "Unpublished changes"
+      },
+      "statusPanel": {
+        "label": "Publishing",
+        "draftTitle": "Draft",
+        "draftBody": "Not in the Library. Readers cannot see this article until it is published.",
+        "publishedTitle": "Published",
+        "publishedBody": "Readers can find this article in the Library, exactly as it is saved here.",
+        "changedTitle": "Published, with unpublished changes",
+        "changedBody": "Readers see the version published on {date}. The changes saved since then reach them once you publish them."
+      },
+      "viewLive": "View in the Library",
+      "preview": "Preview",
+      "publish": "Publish",
+      "publishChanges": "Publish changes",
+      "unpublish": "Unpublish",
+      "readiness": {
+        "missing": "To publish, add {fields}.",
+        "unsaved": "Save your changes to preview and publish them.",
+        "previewUnsaved": "Save your changes to preview them."
+      },
+      "missing": {
+        "title": "a title",
+        "summary": "a summary",
+        "category": "a category",
+        "body": "the article text"
+      },
+      "unpublishConfirm": {
+        "title": "Unpublish this article?",
+        "description": "Readers will no longer find it in the Library, and links to it will stop working. The article stays here, and you can publish it again at any time.",
+        "confirm": "Unpublish"
+      },
+      "fields": {
+        "title": "Title",
+        "summary": "Summary",
+        "category": "Category",
+        "cover": "Cover",
+        "body": "Article text"
+      },
+      "hints": {
+        "summary": "Plain text, set under the title and on the article’s card in the Library.",
+        "cover": "Shown above the article and on its card, cropped to 16:9. Without one, readers see a placeholder.",
+        "body": "Readers see it under the cover, formatted as it looks here."
+      },
+      "categoryPlaceholder": "Choose a category",
+      "cover": {
+        "choose": "Choose cover",
+        "change": "Change cover",
+        "remove": "Remove cover"
+      },
+      "bodyPlaceholder": "Write the article…",
+      "actions": {
+        "save": "Save",
+        "cancel": "Cancel"
+      },
+      "errors": {
+        "titleRequired": "An article needs a title.",
+        "saveFailed": "The article could not be saved. Try again.",
+        "saveFailedWithReason": "The article could not be saved — {reason}",
+        "publishFailed": "The article could not be published. Try again.",
+        "publishFailedWithReason": "The article could not be published — {reason}",
+        "unpublishFailed": "The article could not be unpublished. Try again.",
+        "unpublishFailedWithReason": "The article could not be unpublished — {reason}"
+      }
+    },
     "geduRole": {
       "primary": "Primary",
       "assistant": "Assistant",
@@ -909,6 +1004,7 @@
         "rename": "Rename",
         "live": "Live",
         "hidden": "Hidden",
+        "draft": "Draft",
         "replace": "Replace picture",
         "remove": "Remove from catalogue",
         "replaceConfirm": {
@@ -2954,6 +3050,7 @@
     "municipalityClubs": "Municipality Clubs",
     "municipalityInvoicing": "Municipality Invoicing",
     "invoiceCustomers": "Invoice Customers",
+    "libraryContent": "Library Content",
     "geduInvoicing": "Gedu Invoicing",
     "camps": "Camps",
     "events": "Events",
@@ -5121,6 +5218,34 @@
         "hide": "Hide",
         "visibilityError": "Couldn’t change whether the profile is public. Please try again."
       }
+    }
+  },
+  "library": {
+    "name": "Library",
+    "readingTime": "{minutes, plural, one {# min read} other {# min read}}",
+    "article": {
+      "breadcrumbLabel": "Breadcrumb",
+      "more": "More from the Library",
+      "share": {
+        "heading": "Share this article",
+        "copyLink": "Copy link",
+        "copied": "Link copied",
+        "on": "Share on {platform} (opens in a new tab)",
+        "email": "Email",
+        "byEmail": "Share by email",
+        "native": "Share…"
+      }
+    },
+    "categories": {
+      "onlineSafety": "Online safety",
+      "screenTime": "Screen time & family life",
+      "learning": "Learning through games",
+      "gamesExplained": "Games explained",
+      "forSchools": "For schools"
+    },
+    "cta": {
+      "heading": "Ready to get started?",
+      "button": "Get started"
     }
   }
 }

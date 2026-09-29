@@ -109,6 +109,26 @@ CREATE TYPE public.gender_type AS ENUM (
 
 
 --
+-- Name: library_article_category; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.library_article_category AS ENUM (
+    'online_safety',
+    'screen_time',
+    'learning',
+    'games_explained',
+    'for_schools'
+);
+
+
+--
+-- Name: TYPE library_article_category; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.library_article_category IS 'The Library''s five categories; every published article is in exactly one. The app uses these values as they are, in the index''s ?category= links and as the keys of its category labels, so there is one spelling everywhere. There is no news category on purpose: the Library holds what a parent can still use next year, and a dated announcement is not that.';
+
+
+--
 -- Name: location_type; Type: TYPE; Schema: public; Owner: -
 --
 

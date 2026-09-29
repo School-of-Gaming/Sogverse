@@ -42,6 +42,9 @@
       "adminInvoiceCustomers": "Laskutusasiakkaat",
       "adminInvoiceCustomerNew": "Uusi laskutusasiakas",
       "adminInvoiceCustomerEdit": "Muokkaa laskutusasiakasta",
+      "adminLibrary": "Kirjaston sisältö",
+      "adminLibraryArticleNew": "Uusi artikkeli",
+      "adminLibraryArticleEdit": "Muokkaa artikkelia",
       "adminGeduInvoicing": "Gedujen laskutus",
       "adminTools": "Työkalut",
       "parentDashboard": "Oma SOG",
@@ -483,6 +486,98 @@
         "option": "{name} ({number})"
       }
     },
+    "library": {
+      "title": "Kirjaston sisältö",
+      "subtitle": "Julkisen Kirjaston artikkelit vanhemmille.",
+      "newArticle": "Uusi artikkeli",
+      "lastSaved": "Tallennettu {date}",
+      "search": {
+        "label": "Haku",
+        "placeholder": "Hae otsikolla tai aiheella…",
+        "showing": "Näytetään {count} / {total}",
+        "clear": "Tyhjennä",
+        "noMatches": "Yksikään artikkeli ei vastaa hakua."
+      },
+      "noCategory": "Ei aihetta",
+      "empty": "Artikkeleita ei vielä ole. Kirjoita ensimmäinen.",
+      "backToList": "Takaisin Kirjaston sisältöön",
+      "notFound": "Tällä tunnisteella ei ole artikkelia.",
+      "loadError": "Artikkelia ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
+      "newPage": {
+        "title": "Uusi artikkeli",
+        "submit": "Tallenna luonnos"
+      },
+      "editPage": {
+        "title": "Muokkaa artikkelia"
+      },
+      "status": {
+        "draft": "Luonnos",
+        "published": "Julkaistu",
+        "changed": "Julkaisemattomia muutoksia"
+      },
+      "statusPanel": {
+        "label": "Julkaiseminen",
+        "draftTitle": "Luonnos",
+        "draftBody": "Ei Kirjastossa. Lukijat eivät näe artikkelia ennen kuin se julkaistaan.",
+        "publishedTitle": "Julkaistu",
+        "publishedBody": "Lukijat löytävät artikkelin Kirjastosta juuri sellaisena kuin se on tässä tallennettu.",
+        "changedTitle": "Julkaistu, julkaisemattomia muutoksia",
+        "changedBody": "Lukijat näkevät version, joka julkaistiin {date}. Sen jälkeen tallennetut muutokset näkyvät heille, kun julkaiset ne."
+      },
+      "viewLive": "Näytä Kirjastossa",
+      "preview": "Esikatselu",
+      "publish": "Julkaise",
+      "publishChanges": "Julkaise muutokset",
+      "unpublish": "Poista julkaisu",
+      "readiness": {
+        "missing": "Jotta artikkelin voi julkaista, lisää {fields}.",
+        "unsaved": "Tallenna muutokset, jotta voit esikatsella ja julkaista ne.",
+        "previewUnsaved": "Tallenna muutokset, jotta voit esikatsella niitä."
+      },
+      "missing": {
+        "title": "otsikko",
+        "summary": "tiivistelmä",
+        "category": "aihe",
+        "body": "artikkelin teksti"
+      },
+      "unpublishConfirm": {
+        "title": "Poistetaanko artikkelin julkaisu?",
+        "description": "Lukijat eivät enää löydä artikkelia Kirjastosta, eivätkä linkit siihen enää toimi. Artikkeli säilyy täällä, ja voit julkaista sen uudelleen milloin tahansa.",
+        "confirm": "Poista julkaisu"
+      },
+      "fields": {
+        "title": "Otsikko",
+        "summary": "Tiivistelmä",
+        "category": "Aihe",
+        "cover": "Kansikuva",
+        "body": "Artikkelin teksti"
+      },
+      "hints": {
+        "summary": "Pelkkää tekstiä. Näkyy otsikon alla ja artikkelin kortissa Kirjastossa.",
+        "cover": "Näkyy artikkelin yläpuolella ja sen kortissa, rajattuna muotoon 16:9. Ilman kansikuvaa lukijat näkevät paikkamerkin.",
+        "body": "Lukijat näkevät tekstin kansikuvan alla muotoiltuna niin kuin se näkyy tässä."
+      },
+      "categoryPlaceholder": "Valitse aihe",
+      "cover": {
+        "choose": "Valitse kansikuva",
+        "change": "Vaihda kansikuva",
+        "remove": "Poista kansikuva"
+      },
+      "bodyPlaceholder": "Kirjoita artikkeli…",
+      "actions": {
+        "save": "Tallenna",
+        "cancel": "Peruuta"
+      },
+      "errors": {
+        "titleRequired": "Artikkelilla on oltava otsikko.",
+        "saveFailed": "Artikkelia ei voitu tallentaa. Yritä uudelleen.",
+        "saveFailedWithReason": "Artikkelia ei voitu tallentaa – {reason}",
+        "publishFailed": "Artikkelia ei voitu julkaista. Yritä uudelleen.",
+        "publishFailedWithReason": "Artikkelia ei voitu julkaista – {reason}",
+        "unpublishFailed": "Artikkelin julkaisua ei voitu poistaa. Yritä uudelleen.",
+        "unpublishFailedWithReason": "Artikkelin julkaisua ei voitu poistaa – {reason}"
+      }
+    },
     "geduRole": {
       "primary": "Vastaava Gedu",
       "assistant": "Avustava Gedu",
@@ -909,6 +1004,7 @@
         "rename": "Nimeä uudelleen",
         "live": "Julkaistu",
         "hidden": "Piilotettu",
+        "draft": "Luonnos",
         "replace": "Korvaa kuva",
         "remove": "Poista kirjastosta",
         "replaceConfirm": {
@@ -2954,6 +3050,7 @@
     "municipalityClubs": "Kuntakerhot",
     "municipalityInvoicing": "Kuntalaskutus",
     "invoiceCustomers": "Laskutusasiakkaat",
+    "libraryContent": "Kirjaston sisältö",
     "geduInvoicing": "Gedujen laskutus",
     "camps": "Leirit",
     "events": "Tapahtumat",
@@ -5121,6 +5218,34 @@
         "hide": "Piilota",
         "visibilityError": "Profiilin näkyvyyden muuttaminen ei onnistunut. Yritä uudelleen."
       }
+    }
+  },
+  "library": {
+    "name": "Kirjasto",
+    "readingTime": "{minutes, plural, one {Lukuaika # min} other {Lukuaika # min}}",
+    "article": {
+      "breadcrumbLabel": "Murupolku",
+      "more": "Lisää kirjastosta",
+      "share": {
+        "heading": "Jaa artikkeli",
+        "copyLink": "Kopioi linkki",
+        "copied": "Linkki kopioitu",
+        "on": "Jaa palvelussa {platform} (avautuu uuteen välilehteen)",
+        "email": "Sähköposti",
+        "byEmail": "Jaa sähköpostilla",
+        "native": "Jaa…"
+      }
+    },
+    "categories": {
+      "onlineSafety": "Verkkoturvallisuus",
+      "screenTime": "Ruutuaika ja perhe-elämä",
+      "learning": "Oppiminen pelaamalla",
+      "gamesExplained": "Pelit tutuiksi",
+      "forSchools": "Kouluille"
+    },
+    "cta": {
+      "heading": "Valmis aloittamaan?",
+      "button": "Aloita"
     }
   }
 }

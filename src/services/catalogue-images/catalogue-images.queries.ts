@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { libraryKeys } from "@/services/library/library.queries";
 import { productKeys } from "@/services/products/products.queries";
 import type { CatalogueImagePurpose } from "@/types";
 import {
@@ -42,9 +43,15 @@ export function useCatalogueImageUsage() {
  * What every catalogue mutation invalidates, and the one key it must not.
  *
  * The catalogue list, because an entry was added, renamed or removed. The
- * usage map, because a replace or a remove moves products between entries.
- * The products **list** keys, because those surfaces paint a derived path and
- * a repoint changes it under them.
+ * usage map, because a replace or a remove moves products and articles between
+ * entries. The products **list** keys and the Library's public reads, because
+ * those surfaces paint a derived path and a repoint changes it under them. The
+ * Library's whole admin tree, list and detail alike: a replace or a remove
+ * moves an article's working-copy cover in the database, and a detail left
+ * cached would keep the old cover id, so the editor would compare the form's
+ * followed id against it and call the article unsaved. That refetch is safe
+ * because the Library editor seeds its form once per article id, never from a
+ * refetch.
  *
  * Never `productKeys.all` and never the product's admin **detail** key: the
  * product form seeds its state from that query, so refetching it mid-edit
@@ -60,6 +67,8 @@ function useCatalogueInvalidation(): () => Promise<void> {
       queryClient.invalidateQueries({ queryKey: catalogueImageKeys.all }),
       queryClient.invalidateQueries({ queryKey: catalogueImageUsageKey }),
       queryClient.invalidateQueries({ queryKey: productKeys.lists() }),
+      queryClient.invalidateQueries({ queryKey: libraryKeys.admin() }),
+      queryClient.invalidateQueries({ queryKey: libraryKeys.published() }),
     ]);
   };
 }

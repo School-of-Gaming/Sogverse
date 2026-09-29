@@ -1,5 +1,6 @@
 export { CatalogueImagesService } from "./catalogue-images.service";
 export type {
+  LibraryArticleImageUser,
   CatalogueImageUsage,
   CatalogueImageUser,
   ProductPictureUser,

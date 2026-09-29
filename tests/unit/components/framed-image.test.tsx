@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import { ProductBanner } from "@/components/ui/product-banner";
+import { LibraryCover } from "@/components/library/library-cover";
 
 /**
- * The catalogue frames and the one placeholder they share. What has to
+ * The two catalogue frames and the one placeholder they share. What has to
  * hold is that each frame keeps its own shape whether or not there is a
  * picture — a card without one is the same height as a card with one — and
  * that the placeholder is drawn in that shape rather than letterboxed inside
@@ -12,6 +13,7 @@ import { ProductBanner } from "@/components/ui/product-banner";
 describe("the catalogue frames", () => {
   it.each([
     ["a product", ProductBanner, "aspect-[3/2]", "0 0 150 100"],
+    ["a Library cover", LibraryCover, "aspect-video", "0 0 160 90"],
   ])(
     "paints NO IMAGE for %s with no picture, in its own shape",
     (_what, Frame, aspect, viewBox) => {
@@ -27,6 +29,7 @@ describe("the catalogue frames", () => {
 
   it.each([
     ["a product", ProductBanner, "aspect-[3/2]"],
+    ["a Library cover", LibraryCover, "aspect-video"],
   ])("frames %s's picture in its own shape", (_what, Frame, aspect) => {
     const { container } = render(<Frame src="/cover.jpg" />);
 

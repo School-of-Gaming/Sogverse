@@ -12,8 +12,9 @@ import {
  * PATCH / DELETE /api/admin/catalogue-images/[id] — rename and retire.
  *
  * Rename is the only mutation an entry allows, so the interesting part is the
- * refusals. Removal is the destructive one: the count of affected products is
- * read *before* the row goes (afterwards there is nothing left to count), and
+ * refusals. Removal is the destructive one: the count of affected products and
+ * Library articles is read *before* the row goes (afterwards there is nothing
+ * left to count), and
  * a failed object removal must not turn a completed delete into an error the
  * admin would retry.
  */
@@ -49,6 +50,8 @@ function countResponse(total: number): Response {
 }
 
 const ID = "6d2b6a5b-6f6d-4a4a-9a56-2b0f1a4c9c11";
+const ARTICLE_A = "3f1e2d4c-5b6a-4978-8a1b-2c3d4e5f6a01";
+const ARTICLE_B = "7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c02";
 const PATH = "c0ffee.png";
 
 const ENTRY = {
@@ -197,6 +200,9 @@ describe("DELETE /api/admin/catalogue-images/[id]", () => {
     respondWith(
       postgrestJson([{ path: PATH, purpose: "product" }]),
       countResponse(22),
+      // No Library article's working or live copy uses it.
+      postgrestJson([]),
+      postgrestJson([]),
       postgrestJson([]),
       // The re-check before the bucket is touched: no row names this path.
       postgrestJson([]),
@@ -212,7 +218,7 @@ describe("DELETE /api/admin/catalogue-images/[id]", () => {
     const count = fetchMock.mock.calls[1];
     expect(count[1]?.method).toBe("HEAD");
     expect(requestedUrl(count[0]).searchParams.get("image_id")).toBe(`eq.${ID}`);
-    expect(fetchMock.mock.calls[2][1]?.method).toBe("DELETE");
+    expect(fetchMock.mock.calls[4][1]?.method).toBe("DELETE");
     expect(mockRemove).toHaveBeenCalledWith([PATH]);
     // From the product purpose's bucket.
     expect(mockStorageFrom).toHaveBeenCalledWith("product-images");
@@ -225,6 +231,8 @@ describe("DELETE /api/admin/catalogue-images/[id]", () => {
       countResponse(0),
       postgrestJson([]),
       postgrestJson([]),
+      postgrestJson([]),
+      postgrestJson([]),
     );
 
     const response = await DELETE(...deleteRequest(ID));
@@ -232,12 +240,44 @@ describe("DELETE /api/admin/catalogue-images/[id]", () => {
     expect(response.status).toBe(200);
     // The same bytes as a product picture would be another object in another
     // bucket, so the re-check asks only about this purpose's key.
-    const recheck = requestedUrl(fetchMock.mock.calls[3][0]).searchParams;
+    const recheck = requestedUrl(fetchMock.mock.calls[5][0]).searchParams;
     expect(recheck.get("purpose")).toBe("eq.library_cover");
     expect(recheck.get("path")).toBe(`eq.${PATH}`);
     expect(mockStorageFrom).toHaveBeenCalledWith("library-covers");
     expect(mockStorageFrom).not.toHaveBeenCalledWith("product-images");
     expect(mockRemove).toHaveBeenCalledWith([PATH]);
+  });
+
+  it("counts each Library article once, whether its draft, its live copy or both lose the cover", async () => {
+    mockAdmin();
+    respondWith(
+      postgrestJson([{ path: PATH, purpose: "product" }]),
+      countResponse(0),
+      // A's working copy and live copy both use it; B's live copy alone does.
+      postgrestJson([{ id: ARTICLE_A }]),
+      postgrestJson([{ article_id: ARTICLE_A }, { article_id: ARTICLE_B }]),
+      postgrestJson([]),
+      postgrestJson([]),
+    );
+
+    const response = await DELETE(...deleteRequest(ID));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ unlinked: 2 });
+    // Both copies are asked about the entry being removed, before the delete.
+    expect(requestedUrl(fetchMock.mock.calls[2][0]).pathname).toBe(
+      "/rest/v1/library_articles",
+    );
+    expect(
+      requestedUrl(fetchMock.mock.calls[2][0]).searchParams.get("cover_image_id"),
+    ).toBe(`eq.${ID}`);
+    expect(requestedUrl(fetchMock.mock.calls[3][0]).pathname).toBe(
+      "/rest/v1/library_article_publications",
+    );
+    expect(
+      requestedUrl(fetchMock.mock.calls[3][0]).searchParams.get("cover_image_id"),
+    ).toBe(`eq.${ID}`);
+    expect(fetchMock.mock.calls[4][1]?.method).toBe("DELETE");
   });
 
   it("still succeeds when the object removal fails after the row is gone", async () => {
@@ -246,6 +286,8 @@ describe("DELETE /api/admin/catalogue-images/[id]", () => {
     respondWith(
       postgrestJson([{ path: PATH, purpose: "product" }]),
       countResponse(0),
+      postgrestJson([]),
+      postgrestJson([]),
       postgrestJson([]),
       postgrestJson([]),
     );
@@ -265,6 +307,8 @@ describe("DELETE /api/admin/catalogue-images/[id]", () => {
       postgrestJson([{ path: PATH, purpose: "product" }]),
       countResponse(3),
       postgrestJson([]),
+      postgrestJson([]),
+      postgrestJson([]),
       // Between the row delete and the removal, another admin uploaded the
       // same picture: the key is the hash of the bytes, so their new entry
       // names this very object. Removing it would break *their* entry.
@@ -277,7 +321,7 @@ describe("DELETE /api/admin/catalogue-images/[id]", () => {
     expect(await response.json()).toEqual({ unlinked: 3 });
     expect(mockRemove).not.toHaveBeenCalled();
     // The re-check asks the table for that exact path, after the delete.
-    const recheck = fetchMock.mock.calls[3];
+    const recheck = fetchMock.mock.calls[5];
     expect(requestedUrl(recheck[0]).searchParams.get("path")).toBe(`eq.${PATH}`);
   });
 
@@ -286,6 +330,8 @@ describe("DELETE /api/admin/catalogue-images/[id]", () => {
     respondWith(
       postgrestJson([{ path: PATH, purpose: "product" }]),
       countResponse(0),
+      postgrestJson([]),
+      postgrestJson([]),
       postgrestJson([]),
       postgrestJson(
         { message: "connection lost", code: "08006", details: null, hint: null },
