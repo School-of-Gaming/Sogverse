@@ -61,9 +61,10 @@ export function deriveVoiceMemberFlair(
   now: Date,
   onOpenFlair: (userId: string, name: string) => void,
   /**
-   * Who in the room holds a trainee seat, as the chat roster told a moderator.
-   * Rides the overlay rather than standing alone, so a viewer with no staff
-   * sight — no overlay — is drawn no tag whatever arrives here.
+   * Who in the room holds a trainee seat, as the chat roster told a moderator
+   * or a trainee of the group. Rides the overlay — the staff one or the
+   * trainee's — rather than standing alone, so a family viewer, who has no
+   * overlay, is drawn no tag whatever arrives here.
    */
   trainees: ReadonlySet<string> = NO_TRAINEES,
 ): VoiceMemberFlair | null {

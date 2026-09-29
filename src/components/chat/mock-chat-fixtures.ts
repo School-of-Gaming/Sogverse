@@ -92,13 +92,13 @@ export function chatSceneStandingKind(
 
 /**
  * The roster as this viewer's client would receive it: the trainee flag is
- * answered only to a moderator, so every other viewer sees Tiia as the Gedu her
- * role says she is.
+ * answered only to a moderator and to a trainee of the group, so a family
+ * viewer sees Tiia as the Gedu her role says she is.
  */
 export function chatSceneAccountsSeenBy(
   viewer: ChatAccount,
 ): readonly ChatAccount[] {
-  if (chatSceneStandingKind(viewer) === "moderator") return CHAT_SCENE_ACCOUNTS;
+  if (chatSceneStandingKind(viewer) !== "participant") return CHAT_SCENE_ACCOUNTS;
   return CHAT_SCENE_ACCOUNTS.map((account) =>
     account.isTrainee === true ? { ...account, isTrainee: false } : account,
   );

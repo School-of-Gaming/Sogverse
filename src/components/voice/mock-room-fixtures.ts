@@ -33,6 +33,12 @@ export const VOICE_ROOM_GEDU_ID = "4a84d001-b789-41f5-ace3-cfcffa139869";
  */
 export const VOICE_ROOM_TRAINEE_ID = "0f7b4155-a74f-434b-b93b-b36ecb920aee";
 /**
+ * Tuomas, a second trainee on the same group — there so the trainee scenario
+ * shows the tag on a fellow trainee's row as well as on Tiia's own. The room
+ * only: the chat scene's switcher keeps one trainee viewer.
+ */
+export const VOICE_ROOM_SECOND_TRAINEE_ID = "7c431fc6-985c-438a-9511-47981a52c129";
+/**
  * Marja — the parent holding a seat of her own.
  *
  * Imported rather than restated, like the children's ids beside it: the
@@ -121,6 +127,14 @@ export function buildParticipants(
       role: "gedu",
       gameUsername: "TiiaTrains",
       isLocal: localIsTrainee,
+    }),
+    member({
+      sessionId: "s-tuomas",
+      userId: VOICE_ROOM_SECOND_TRAINEE_ID,
+      userName: "Tuomas",
+      zoneId: "yty-valor",
+      role: "gedu",
+      gameUsername: "TuomasTags",
     }),
     member({
       sessionId: "s-aino",

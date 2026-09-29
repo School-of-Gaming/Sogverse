@@ -104,8 +104,8 @@ export function GroupSessionChat({
   /**
    * Publishes who on the roster holds a trainee seat, for the "Trainee" tag on
    * the participant rail. Upward for the reason the controls are: the roster
-   * is read here. It is only ever non-empty for a viewer who moderates, because
-   * the database answers the flag to nobody else.
+   * is read here. It is only ever non-empty for a viewer who moderates or is a
+   * trainee of the group, because the database answers the flag to no family.
    */
   onTraineeIdsChange?: (ids: ReadonlySet<string>) => void;
 }) {

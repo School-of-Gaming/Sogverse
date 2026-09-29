@@ -155,9 +155,9 @@ export interface ParticipantRowProps {
    */
   hasContent?: boolean;
   /**
-   * Whether this person holds a trainee seat on the group — staff sight only,
-   * like everything in this block. A trainee's token says `gedu`, so this is
-   * the one thing that tells staff the difference; it arrives with the chat
+   * Whether this person holds a trainee seat on the group — staff and trainee
+   * sight, never a family's. A trainee's token says `gedu`, so this is the one
+   * thing that tells them the difference; it arrives with the chat
    * roster a moment after the room paints, which is why it is drawn last.
    */
   isTrainee?: boolean;
@@ -320,7 +320,7 @@ export function ParticipantRow({
           className="order-3 sm:order-4"
         />
       )}
-      {/* The trainee tag — staff sight, arriving with the chat roster after the
+      {/* The trainee tag — staff and trainee sight, arriving with the chat roster after the
           room has painted, so it is the last of the run for the same reason
           the newcomer badge follows the Parent badge. */}
       {isTrainee === true && (

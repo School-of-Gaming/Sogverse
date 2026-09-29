@@ -50,8 +50,9 @@ powers, exactly like a child. A **trainee** standing carries the words for the m
 acts they are shown locked — remove, put back, lock — which the module returns in the
 exact slots a moderator's working controls would take. Roles still decide one thing: who
 may be a lock's *target* (never staff, trainees included, as the lock RPC refuses). A
-staff viewer sees a "Trainee" tag beside a trainee's name, from the roster's `is_trainee`,
-which the database answers only to a moderator.
+staff viewer and a trainee of the group — on their own name and a fellow trainee's — see a
+"Trainee" tag beside a trainee's name, from the roster's `is_trainee`, which the database
+answers only to those two and never to a family.
 
 The rules the module encodes, each with its reason, are in its own header. The one worth
 knowing from outside: **a lock takes away everything that writes — replies and reactions

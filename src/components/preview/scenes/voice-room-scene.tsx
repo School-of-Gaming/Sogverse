@@ -31,6 +31,7 @@ import {
   buildParticipants,
   SEATED_MEMBER_IDS,
   VOICE_ROOM_CUSTOM_ZONES,
+  VOICE_ROOM_SECOND_TRAINEE_ID,
   VOICE_ROOM_TRAINEE_ID,
   type VoiceRoomScenario,
 } from "@/components/voice/mock-room-fixtures";
@@ -63,9 +64,10 @@ import { useChatSceneStore } from "./chat-scene-store";
  * visiting admin. That is what the fixture's seat list is for: a room is not a
  * roster, and a note is about a seat.
  *
- * **Tiia is a Gedu on a trainee seat.** The staff scenario tags her "Trainee"
- * on the rail and in the chat; the trainee scenario is her own view — the
- * moderator's controls in the dock, on the zones, on the rows and in the chat
+ * **Tiia and Tuomas are Gedus on trainee seats.** The staff scenario tags them
+ * "Trainee" on the rail and Tiia in the chat, and so does the trainee
+ * scenario, which is Tiia's own view — the tag on her own row and on Tuomas's,
+ * the moderator's controls in the dock, on the zones, on the rows and in the chat
  * menu, each locked and explaining itself — and the rail's note buttons and
  * newcomer badges an assigned gedu sees, derived by the production function
  * from the trainee's redacted overlay: a lit button opens the dialog with the
@@ -79,8 +81,14 @@ import { useChatSceneStore } from "./chat-scene-store";
 /** The list a member with no creations is handed — one identity, every render. */
 const NO_CREATIONS: readonly GamerCreation[] = [];
 
-/** Who the staff scenario's chat roster flags as a trainee: Tiia. */
-const SCENE_TRAINEES: ReadonlySet<string> = new Set([VOICE_ROOM_TRAINEE_ID]);
+/**
+ * Who the chat roster flags as a trainee, for a viewer it tells — staff, and
+ * the trainees themselves: Tiia and Tuomas.
+ */
+const SCENE_TRAINEES: ReadonlySet<string> = new Set([
+  VOICE_ROOM_TRAINEE_ID,
+  VOICE_ROOM_SECOND_TRAINEE_ID,
+]);
 
 /**
  * The trainee's overlay over the same fixture, in the shape
@@ -165,7 +173,7 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
    * because Aino is not a moderator — the same code path that keeps a child from
    * seeing it live.
    *
-   * The five members of the room who are not on the *chat* roster — Elias,
+   * The five children in the room who are not on the *chat* roster — Elias,
    * Linnéa, Oskar, Emil and Hilda — get no control either, which is the
    * voice-only case the rail has to keep refusing: being in the call is not
    * being in the channel.
@@ -254,6 +262,7 @@ export function VoiceRoomScene({ scenario }: { scenario: VoiceRoomScenario }) {
         traineeOverlayFrom(fixture),
         now,
         (id, name) => setFlairTarget({ id, name }),
+        SCENE_TRAINEES,
       ),
     [fixture, now],
   );

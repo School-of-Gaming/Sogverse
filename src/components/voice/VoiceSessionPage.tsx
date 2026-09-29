@@ -153,8 +153,9 @@ function VoiceSessionInner({
   /**
    * Who on the chat roster holds a trainee seat, published by the chat
    * container for the rail's "Trainee" tag. The database sets the flag only for
-   * a viewer who moderates, and it rides the staff overlay below, which a
-   * viewer without staff sight never has.
+   * a viewer who moderates or is a trainee of the group, and it rides the
+   * overlay below — the staff one or the trainee's — which a family viewer
+   * never has.
    */
   const [traineeIds, setTraineeIds] = useState<ReadonlySet<string>>(NO_TRAINEES);
 

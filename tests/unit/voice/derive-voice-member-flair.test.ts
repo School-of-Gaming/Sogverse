@@ -302,4 +302,18 @@ describe("deriveVoiceMemberFlair — a trainee's redacted overlay", () => {
     expect(flair?.noteEditors).toEqual({});
     expect(flair?.creations).toEqual({});
   });
+
+  it("carries the chat roster's trainees through, so a trainee sees the tag too", () => {
+    // The roster flags trainees to a trainee of the group as well as to staff,
+    // and the trainee's own overlay is what the set rides — the viewer's own
+    // id and a fellow trainee's both reach the rows.
+    const trainees = new Set([IDS.sanna, IDS.siiri]);
+    const flair = deriveVoiceMemberFlair(
+      traineeOverlay,
+      NOW,
+      openFlair,
+      trainees,
+    );
+    expect(flair?.trainees).toBe(trainees);
+  });
 });

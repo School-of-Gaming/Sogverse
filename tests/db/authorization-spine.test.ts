@@ -669,7 +669,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   get_chat_channel_roster: {
     scopeTest: "tests/db/chat-rpcs.test.ts",
-    why: "the accounts one channel can name — its group's active seat-holders, the product's assigned gedus, its group's trainees, and anyone who has a message in it — scoped on is_chat_channel_member. A deliberate hole in the `profiles` RLS that refuses cross-participant reads, and kept to the smallest shape that serves it: first name, role and is_trainee, nothing else about anybody. is_trainee is answered only to a caller who moderates the channel and is false for everyone otherwise, so a gamer never learns which gedu is a trainee. Deterministically ordered by profile id, which is a contract rather than tidiness — mention resolution settles two accounts sharing a name by list position",
+    why: "the accounts one channel can name — its group's active seat-holders, the product's assigned gedus, its group's trainees, and anyone who has a message in it — scoped on is_chat_channel_member. A deliberate hole in the `profiles` RLS that refuses cross-participant reads, and kept to the smallest shape that serves it: first name, role and is_trainee, nothing else about anybody. is_trainee is answered only to a caller who moderates the channel or is themselves a trainee of its group, and is false for everyone otherwise, so a gamer never learns which gedu is a trainee. Deterministically ordered by profile id, which is a contract rather than tidiness — mention resolution settles two accounts sharing a name by list position",
   },
   send_chat_message: {
     scopeTest: "tests/db/chat-rpcs.test.ts",

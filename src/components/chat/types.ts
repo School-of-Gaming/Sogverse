@@ -35,8 +35,8 @@ export interface ChatAccount {
   role: ChatRole;
   /**
    * Whether this person holds a trainee seat on the channel's group. Only ever
-   * true for a viewer who moderates — the roster tells nobody else — and it
-   * draws a tag beside the name. It confers nothing and takes nothing away: a
+   * true for a viewer who moderates or is a trainee of the group — the roster
+   * tells no family — and it draws a tag beside the name. It confers nothing and takes nothing away: a
    * trainee's role is `gedu`, and a lock still refuses them as it refuses staff.
    */
   isTrainee?: boolean;

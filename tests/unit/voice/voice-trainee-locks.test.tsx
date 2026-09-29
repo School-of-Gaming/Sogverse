@@ -12,6 +12,7 @@ import {
 } from "@/components/voice/VoiceModeratorLocks";
 import { VoiceMemberFlairProvider } from "@/components/voice/VoiceMemberFlairProvider";
 import type { VoiceMemberFlair } from "@/components/voice/VoiceMemberFlairProvider";
+import { deriveVoiceMemberFlair } from "@/components/voice/derive-voice-member-flair";
 import type {
   VoiceParticipant,
   VoiceRoomContextValue,
@@ -37,6 +38,8 @@ const IDS = {
   sanna: "4a84d001-b789-41f5-ace3-cfcffa139869",
   tiia: "0f7b4155-a74f-434b-b93b-b36ecb920aee",
   aino: "c0b5f0d2-6a0a-4c4f-9a39-2d1e4e1d7f55",
+  /** A second trainee, only in the rail case that names one. */
+  tuomas: "ce2e631c-f360-4fa7-a248-97540faa2759",
 } as const;
 
 function participant(over: Partial<VoiceParticipant> & Pick<VoiceParticipant, "sessionId" | "userId" | "userName">): VoiceParticipant {
@@ -59,7 +62,10 @@ const toggleDeafen = vi.fn();
 const startScreenShare = vi.fn(async () => {});
 const muteParticipant = vi.fn();
 
-function room(viewer: "moderator" | "trainee" | "gamer"): VoiceRoomContextValue {
+function room(
+  viewer: "moderator" | "trainee" | "gamer",
+  extra: readonly VoiceParticipant[] = [],
+): VoiceRoomContextValue {
   const participants = [
     participant({
       sessionId: "s-sanna",
@@ -82,6 +88,7 @@ function room(viewer: "moderator" | "trainee" | "gamer"): VoiceRoomContextValue 
       userName: "Aino",
       isLocal: viewer === "gamer",
     }),
+    ...extra,
   ];
   const noop = () => {};
   const asyncNoop = async () => {};
@@ -145,10 +152,11 @@ function Locks({ on, children }: { on: boolean; children: ReactNode }) {
 function renderRoom(
   viewer: "moderator" | "trainee" | "gamer",
   flair: VoiceMemberFlair | null = null,
+  extra: readonly VoiceParticipant[] = [],
 ) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <VoiceRoomContext.Provider value={room(viewer)}>
+      <VoiceRoomContext.Provider value={room(viewer, extra)}>
         <Locks on={viewer === "trainee"}>
           <VoiceMemberFlairProvider value={flair}>
             <VoiceControls />
@@ -243,7 +251,43 @@ describe("the trainee tag on the participant rail", () => {
     expect(screen.getAllByText(trainee.badge)).toHaveLength(1);
   });
 
-  it("is drawn for nobody without the staff overlay", () => {
+  it("is drawn for a trainee viewer on their own row and on a fellow trainee's", () => {
+    // What the page builds for a trainee: their redacted overlay, carrying the
+    // set the chat roster answered them with.
+    const traineeFlair = deriveVoiceMemberFlair(
+      {
+        product_type: "consumer_club",
+        members: {
+          [IDS.aino]: { group_joined_at: null, has_note: false, creations: [] },
+        },
+      },
+      new Date("2026-09-29T12:00:00.000Z"),
+      () => {},
+      new Set([IDS.tiia, IDS.tuomas]),
+    );
+    renderRoom("trainee", traineeFlair, [
+      participant({
+        sessionId: "s-tuomas",
+        userId: IDS.tuomas,
+        userName: "Tuomas",
+        role: "gedu",
+      }),
+    ]);
+
+    // The name and the tag are both direct children of the row.
+    const rowOf = (name: string) => {
+      const row = screen.getByText(name).parentElement;
+      if (row === null) throw new Error(`no row for ${name}`);
+      return row;
+    };
+    expect(screen.getAllByText(trainee.badge)).toHaveLength(2);
+    for (const name of ["Tiia", "Tuomas"]) {
+      expect(within(rowOf(name)).getByText(trainee.badge)).toBeTruthy();
+    }
+    expect(within(rowOf("Sanna")).queryByText(trainee.badge)).toBeNull();
+  });
+
+  it("is drawn for nobody without an overlay", () => {
     renderRoom("gamer");
     expect(screen.queryByText(trainee.badge)).toBeNull();
   });

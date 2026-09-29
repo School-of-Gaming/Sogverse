@@ -84,7 +84,8 @@ export interface VoiceMemberFlair {
    * A trainee's token says `gedu` to every peer, so the room itself cannot tell
    * them apart and must not: this set comes from the chat roster, whose
    * trainee flag the database answers only to a caller who moderates the
-   * channel. Empty until that roster lands, and for a room with no chat.
+   * channel or is a trainee of its group — never to a family. Empty until that
+   * roster lands, and for a room with no chat.
    */
   trainees: ReadonlySet<string>;
   /**

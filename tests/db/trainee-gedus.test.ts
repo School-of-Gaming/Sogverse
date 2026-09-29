@@ -26,7 +26,8 @@ import {
  *      moderator, and cannot read the photo-consent answers.
  *   2. **The trainee's own document carries nothing redacted** — the keys are
  *      absent from the wire, not blanked.
- *   3. **Families are never told**, and cannot read the table.
+ *   3. **Families are never told**, and cannot read the table. Staff and the
+ *      group's own trainees are.
  *   4. **One seat per gedu per product**, refused from both tables, and a
  *      promotion is one atomic batch.
  *
@@ -589,33 +590,12 @@ describe("trainee gedus", () => {
       });
       expect(panel.error).toBeNull();
       // Parsed through the panel's own contract, so a trainee entry that stops
-      // carrying `certified` fails here rather than in the browser.
+      // carrying what the pill draws fails here rather than in the browser.
       const { groups } = productGroupsSnapshot.parse(panel.data);
       expect(groups.find((g) => g.id === GROUP_MINE)?.trainees).toEqual([
-        { id: traineeId, first_name: "Tiina", email: traineeEmail, certified: false },
+        { id: traineeId, first_name: "Tiina", email: traineeEmail },
       ]);
       expect(groups.find((g) => g.id === GROUP_SIBLING)?.trainees).toEqual([]);
-    });
-
-    it("carries the trainee's certification on the groups panel, which gates the promotion", async () => {
-      const readCertified = async () => {
-        const { data, error } = await adminAuth.rpc("get_product_groups_with_details", {
-          p_product_id: PRODUCT_MAIN,
-        });
-        expect(error).toBeNull();
-        return productGroupsSnapshot
-          .parse(data)
-          .groups.find((g) => g.id === GROUP_MINE)
-          ?.trainees.find((t) => t.id === traineeId)?.certified;
-      };
-
-      expect(await readCertified()).toBe(false);
-      await admin.from("gedu_profiles").update({ certified: true }).eq("user_id", traineeId);
-      try {
-        expect(await readCertified()).toBe(true);
-      } finally {
-        await admin.from("gedu_profiles").update({ certified: false }).eq("user_id", traineeId);
-      }
     });
 
     it("lets an admin read every seat and a gedu only their own", async () => {
@@ -654,20 +634,73 @@ describe("trainee gedus", () => {
       expect(wire).not.toContain("Tiina");
     });
 
-    it("puts the trainee on the call chat's roster, tagged for staff alone", async () => {
-      const tagFor = async (client: Admin) => {
-        const { data, error } = await client.rpc("get_chat_channel_roster", {
+    it("puts the trainee on the call chat's roster, tagged for staff and the group's trainees alone", async () => {
+      // A second trainee on the same group, so a trainee's view of a fellow
+      // trainee is pinned as well as their view of themselves.
+      const secondEmail = `trainee-2-${Date.now()}@test.local`;
+      const { data: created, error: createError } = await admin.auth.admin.createUser({
+        email: secondEmail,
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Tuomas", last_name: "Trainee" },
+      });
+      expect(createError).toBeNull();
+      const secondId = created.user?.id ?? "";
+      expect(secondId).toBeTruthy();
+      try {
+        await admin.from("profiles").update({ role: "gedu" }).eq("id", secondId);
+        await admin.from("customer_profiles").delete().eq("user_id", secondId);
+        await admin.from("gedu_profiles").insert({ user_id: secondId, certified: false });
+        const placed = await applyChanges(adminAuth, PRODUCT_MAIN, {
+          p_trainees_added: [{ groupId: GROUP_MINE, geduId: secondId }],
+        });
+        expect(placed.error).toBeNull();
+
+        const tagsFor = async (client: Admin) => {
+          const { data, error } = await client.rpc("get_chat_channel_roster", {
+            p_channel_id: channelId,
+          });
+          expect(error).toBeNull();
+          const roster = chatChannelRoster.parse(data);
+          const tagOf = (id: string) => roster.find((row) => row.id === id)?.is_trainee;
+          return {
+            first: tagOf(traineeId),
+            second: tagOf(secondId),
+            gedu: tagOf(TEST_IDS.GEDU),
+            anyoneElse: roster
+              .filter((row) => row.id !== traineeId && row.id !== secondId)
+              .some((row) => row.is_trainee),
+          };
+        };
+        const tagged = { first: true, second: true, gedu: false, anyoneElse: false };
+
+        // Staff are told, and so is each trainee, of themselves and each other.
+        expect(await tagsFor(adminAuth)).toEqual(tagged);
+        expect(await tagsFor(geduAuth)).toEqual(tagged);
+        expect(await tagsFor(traineeAuth)).toEqual(tagged);
+        const secondAuth = await createAuthenticatedClient(secondEmail, "testpassword123");
+        expect(await tagsFor(secondAuth)).toEqual(tagged);
+
+        // A gamer reads the trainees as the gedus their role says they are.
+        const { data: gamerRoster, error: gamerError } = await gamerAuth.rpc(
+          "get_chat_channel_roster",
+          { p_channel_id: channelId },
+        );
+        expect(gamerError).toBeNull();
+        const rows = chatChannelRoster.parse(gamerRoster);
+        expect(rows.find((row) => row.id === traineeId)).toMatchObject({ role: "gedu" });
+        expect(rows.find((row) => row.id === secondId)).toMatchObject({ role: "gedu" });
+        expect(rows.every((row) => !row.is_trainee)).toBe(true);
+
+        // A parent is not in the room, so is not handed the roster at all.
+        const parent = await customerAuth.rpc("get_chat_channel_roster", {
           p_channel_id: channelId,
         });
-        expect(error).toBeNull();
-        return chatChannelRoster.parse(data).find((row) => row.id === traineeId);
-      };
-
-      // Staff are told; a gamer and the trainee themselves are not.
-      expect((await tagFor(adminAuth))).toMatchObject({ is_trainee: true });
-      expect((await tagFor(geduAuth))).toMatchObject({ is_trainee: true });
-      expect((await tagFor(gamerAuth))).toMatchObject({ is_trainee: false, role: "gedu" });
-      expect((await tagFor(traineeAuth))).toMatchObject({ is_trainee: false });
+        expect(parent.error?.code).toBe("42501");
+      } finally {
+        await admin.from("gedu_group_trainees").delete().eq("gedu_id", secondId);
+        await admin.auth.admin.deleteUser(secondId);
+      }
     });
   });
 

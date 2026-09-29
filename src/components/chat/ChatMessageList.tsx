@@ -364,8 +364,9 @@ export function ChatMessageList({
                         {common(ROLE_LABEL_KEYS[sender.role])}
                       </span>
                     )}
-                    {/* Staff sight only: the roster sets the flag for a
-                        viewer who moderates and for nobody else. */}
+                    {/* Staff and trainee sight: the roster sets the flag for
+                        a viewer who moderates or who is a trainee of the
+                        group, and for no family. */}
                     {sender?.isTrainee === true && (
                       <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                         {trainee("badge")}

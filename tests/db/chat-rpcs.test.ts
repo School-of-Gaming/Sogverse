@@ -481,7 +481,7 @@ describe("chat RPCs", () => {
         "gamer",
       ]);
       // First name, role and the trainee flag, and nothing else. The flag is
-      // for staff (trainee-gedus.test.ts pins who is told). Asserted against the RAW response
+      // for staff and trainees (trainee-gedus.test.ts pins who is told). Asserted against the RAW response
       // with a strict schema, because this RPC is a deliberate hole in the
       // `profiles` RLS that refuses cross-participant reads: an email, a
       // surname or a date of birth arriving alongside would be stripped

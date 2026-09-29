@@ -131,9 +131,10 @@ export const chatRosterEntry = z.object({
   role: z.enum(Constants.public.Enums.user_role),
   /**
    * Whether this person holds a trainee seat on the channel's group — answered
-   * only to a caller who moderates the channel, and false for everyone when the
-   * caller does not. A trainee's `role` is `gedu`, so this is the one field that
-   * tells staff the difference; it confers no moderation.
+   * only to a caller who moderates the channel or is a trainee of its group,
+   * and false for everyone otherwise. A trainee's `role` is `gedu`, so this is
+   * the one field that tells staff and trainees the difference; it confers no
+   * moderation.
    */
   is_trainee: z.boolean(),
 });
