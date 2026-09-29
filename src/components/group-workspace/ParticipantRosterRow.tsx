@@ -621,11 +621,19 @@ function ContactEmailCell({ email }: { email: string }) {
  * every seat of the rail is a wall. The sentence is what a screen reader hears
  * instead. Not a button: there is nothing to copy.
  */
+/**
+ * The withheld contact line's stand-in: an address-shaped constant, so the slot
+ * reads as the parent's email it hides. Not copy — texture, like the filler
+ * Latin — so it is not in the message files.
+ */
+const CONTACT_FILLER = "parent@example.com";
+
 function WithheldContactCell() {
   const g = useTranslations("gedu.groupWorkspace");
   return (
     <WithheldText
       label={g("contactWithheld")}
+      filler={CONTACT_FILLER}
       lines={1}
       size="xs"
       className="rounded-md border border-border bg-lifted px-2 py-1"

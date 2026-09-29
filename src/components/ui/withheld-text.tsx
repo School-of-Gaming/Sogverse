@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
  * look of a paragraph somebody wrote, which teaches where that paragraph lives
  * and roughly what it is for, while saying nothing about any particular child,
  * group or building. It is the same words everywhere, deliberately — filler that
- * varied with the data would be a signal about the data.
+ * varied with the data would be a signal about the data. A slot with a shape of
+ * its own, such as an email address, passes a fixed stand-in of that shape
+ * instead; it is still a constant, never derived from the row.
  *
  * Not translated, and not a string in the message files: it is not copy, it is
  * texture, and the blur is what tells a reader not to try to read it. What a
@@ -49,11 +51,17 @@ interface WithheldTextProps {
   boxed?: boolean;
   /** The text size of the slot it stands in for. */
   size?: "sm" | "xs";
+  /**
+   * A fixed stand-in shaped like the slot's value, for a slot that is not
+   * prose. A constant at the call site — never anything read from the data.
+   */
+  filler?: string;
   className?: string;
 }
 
 export function WithheldText({
   label,
+  filler = FILLER,
   lines = 3,
   boxed = false,
   size = "sm",
@@ -76,7 +84,7 @@ export function WithheldText({
           CLAMP[lines],
         )}
       >
-        {FILLER}
+        {filler}
       </p>
     </div>
   );
