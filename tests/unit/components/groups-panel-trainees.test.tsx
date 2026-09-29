@@ -171,7 +171,7 @@ describe("trainees in the Gedus row", () => {
     ).toBeNull();
   });
 
-  it("draws the trainee's role as a select that looks like the Gedu's and never acts", () => {
+  it("draws the trainee's role in the Gedu's select box, with nothing to open", () => {
     render(
       <GroupsPanelView
         {...PANEL_PROPS}
@@ -179,31 +179,23 @@ describe("trainees in the Gedus row", () => {
       />,
     );
 
-    // One real combobox: the Gedu's. The trainees' look-alikes are hidden
-    // from assistive technology and inert.
+    // One select and one combobox: the Gedu's. A trainee's role is text.
     const selects = Array.from(document.querySelectorAll("select"));
-    expect(selects).toHaveLength(3);
+    expect(selects).toHaveLength(1);
     expect(screen.getAllByRole("combobox")).toHaveLength(1);
-    const [gedu, ...trainees] = selects;
-    for (const lookalike of trainees) {
-      expect(lookalike.hasAttribute("inert")).toBe(true);
-      expect(lookalike.getAttribute("aria-hidden")).toBe("true");
-      expect(lookalike.tabIndex).toBe(-1);
-      // Same box as the real control, with no disabled greying.
-      expect(lookalike.className).toBe(
-        gedu.className
-          .replace(/\s*disabled:\S+/g, "")
-          .trim(),
-      );
-      expect(lookalike.disabled).toBe(false);
+    const [gedu] = selects;
+    const boxes = screen.getAllByText(TRAINEE_ROLE);
+    expect(boxes).toHaveLength(2);
+    for (const box of boxes) {
+      expect(box.tagName).toBe("SPAN");
+      // The select's box — border, ground, height, padding, text size —
+      // without its disabled greying.
+      for (const token of gedu.className
+        .split(/\s+/)
+        .filter((c) => c !== "" && !c.startsWith("disabled:"))) {
+        expect(box.classList.contains(token)).toBe(true);
+      }
     }
-    // Each trainee's word reaches a screen reader as text (the option's copy
-    // is hidden with its select, so the readable one is the sibling).
-    expect(
-      screen
-        .getAllByText(TRAINEE_ROLE)
-        .filter((node) => node.tagName === "SPAN"),
-    ).toHaveLength(2);
   });
 
   it("puts Add trainee beside and after Add Gedu", () => {

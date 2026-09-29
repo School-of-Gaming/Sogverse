@@ -76,13 +76,11 @@ type GeduPillProps = GeduPillBaseProps & (AssignedSeatProps | TraineeSeatProps);
  * replaced.
  *
  * **A trainee is the same pill in the same list.** Where an assigned Gedu's pill
- * has the role select, a trainee's has a select that looks exactly like it —
- * the same box, border, chevron and text, holding "Trainee" — and does nothing:
- * it is `inert` and hidden from assistive technology, with the word itself
- * given to a screen reader as plain text. It looks like every other dropdown on
- * the panel and has none of a dropdown's behaviour, so it is not greyed the way
- * a disabled one would be. Where the surface draws roles as labels, the
- * trainee's is the same label.
+ * has the role select, a trainee's has the select's box — the same border,
+ * ground and text, holding "Trainee" — with no chevron, because it does not
+ * open. It sits among the other role boxes on the panel without offering a
+ * choice, and it is not greyed the way a disabled select would be. Where the
+ * surface draws roles as labels, the trainee's is the same label.
  *
  * **A trainee pill's only action is Remove.** A trainee's seat ends when an
  * admin removes it; certification is granted on the admin's user page and
@@ -118,22 +116,12 @@ export function GeduPill(props: GeduPillProps) {
           nothing moves. */}
       {props.seat === "trainee" ? (
         props.roleAsControl ? (
-          <>
-            {/* The role select's own element and classes, so its look cannot
-                drift from the real one's — made inert (no focus, no pointer,
-                never opens) and hidden from the accessibility tree, so
-                nothing announces a combobox that cannot change. */}
-            <select
-              inert
-              aria-hidden
-              tabIndex={-1}
-              defaultValue="trainee"
-              className="h-7 shrink-0 rounded-md border border-border bg-background px-1.5 text-[11px]"
-            >
-              <option value="trainee">{t("trainee.role")}</option>
-            </select>
-            <span className="sr-only">{t("trainee.role")}</span>
-          </>
+          // The role select's box — its height, border, ground, padding and
+          // text — with no chevron, because nothing here opens. Plain text, so
+          // a screen reader reads the word and announces no combobox.
+          <span className="inline-flex h-7 shrink-0 items-center rounded-md border border-border bg-background px-1.5 text-[11px]">
+            {t("trainee.role")}
+          </span>
         ) : (
           <span className="shrink-0 text-[11px] text-muted-foreground">
             {t("trainee.role")}
