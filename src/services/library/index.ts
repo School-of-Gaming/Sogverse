@@ -5,7 +5,6 @@ export {
   useAdminLibraryArticles,
   useCreateLibraryArticle,
   usePublishLibraryArticle,
-  usePublishedLibraryArticles,
   useSaveLibraryArticle,
   useUnpublishLibraryArticle,
 } from "./library.queries";
