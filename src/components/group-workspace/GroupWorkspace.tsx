@@ -522,9 +522,38 @@ export function GroupWorkspace({
     return { assignedGroup: assigned, peerGroups: peers };
   }, [data.groups, data.my_group_id]);
 
+  /**
+   * This group's cancelled dates, read off its own feed. On a dated run the
+   * feed holds every projected date from the start to the end, so nothing the
+   * final-session walk below can land on is missing from it.
+   */
+  const cancelledDates = useMemo(
+    () =>
+      new Set(
+        entries.flatMap((entry) =>
+          entry.kind === "cancelled" ? [entry.sessionDate] : [],
+        ),
+      ),
+    [entries],
+  );
+
+  // Two answers, because cancellation is per group: this group's room skips
+  // its own cancelled dates, and the peer rows — whose cancellations this page
+  // does not hold — keep the schedule's.
   const voiceState = useMemo(
     () => computeVoiceState({ product: data.product, now, locale, timeZone }),
     [data.product, now, locale, timeZone],
+  );
+  const ownVoiceState = useMemo(
+    () =>
+      computeVoiceState({
+        product: data.product,
+        now,
+        locale,
+        timeZone,
+        cancelledDates,
+      }),
+    [data.product, now, locale, timeZone, cancelledDates],
   );
 
   /**
@@ -554,8 +583,9 @@ export function GroupWorkspace({
    * disagree about whether the last session of a term is finished.
    *
    * The final session is the schedule's last occurrence on or before the end
-   * date, which is exactly what the dashboard's SQL computes; an open-ended
-   * product has none and therefore never owes.
+   * date that this group has not had cancelled, which is exactly what the
+   * dashboard's SQL computes; an open-ended product has none and therefore
+   * never owes.
    */
   const creationsObligation = useMemo<CreationsObligation | null>(() => {
     if (!data.product.requires_gamer_creations) return null;
@@ -563,6 +593,7 @@ export function GroupWorkspace({
       slots: data.product.schedule_slots,
       startDate: data.product.start_date,
       endDate: data.product.end_date,
+      cancelledDates,
     });
     return {
       finalEntryId:
@@ -576,7 +607,7 @@ export function GroupWorkspace({
           .map(([participantId]) => participantId),
       ),
     };
-  }, [data.product, data.my_group_id, memberFlair.creations]);
+  }, [data.product, data.my_group_id, memberFlair.creations, cancelledDates]);
 
   /**
    * Whether the roster should be *itemizing* that obligation right now.
@@ -722,9 +753,9 @@ export function GroupWorkspace({
               group={assignedGroup}
               heading={groupHeading}
               isRemote={data.product.is_remote}
-              voiceIsOpen={voiceState.voiceIsOpen}
-              opensDate={voiceState.opensDate}
-              opensTime={voiceState.opensTime}
+              voiceIsOpen={ownVoiceState.voiceIsOpen}
+              opensDate={ownVoiceState.opensDate}
+              opensTime={ownVoiceState.opensTime}
               backHref={workspaceHref}
               platform={platform}
               onSaveGameUsername={onSaveGameUsername}

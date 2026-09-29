@@ -202,9 +202,9 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
       //
       // Pushed here rather than after the sign-in because here is where the
       // outcome is certain and the document is certainly still ours. The
-      // `signInWithPassword` round trip below sits between this line and the
-      // navigation that unloads the page, so a tag reading this event has a
-      // full network leg of headroom before the document goes.
+      // navigation below unloads the page before Google's tag would send this
+      // on its own schedule, and that is fine: the tag sends whatever it is
+      // holding as the page unloads.
       //
       // No consent check belongs at this call site. `pushGtmEvent` decides for
       // itself whether the container was ever armed, and a second opinion here

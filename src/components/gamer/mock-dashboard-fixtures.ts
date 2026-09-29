@@ -156,6 +156,8 @@ export function buildGamerDashboardFixture(
       startedDaysAgo: 2,
       endsInDays: 5,
       siteName: CAMP_SITE_NAME,
+      // Two camp days called off in a row: the plural line.
+      cancelledUpcomingSessions: 2,
     },
     {
       // The third noun, and the reason it is here: with clubs and a camp only,

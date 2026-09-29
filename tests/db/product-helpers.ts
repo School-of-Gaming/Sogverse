@@ -292,6 +292,11 @@ import { TEST_IDS } from "./constants";
  *                  schedule skips the weekday the cases use — so the same
  *                  date is an ordinary session on one and an orphan on the
  *                  other
+ *   820-824        gedu-invoicing.test.ts (the consumer club 820 with group
+ *                  821, taught by the seeded gedu and substituted on by a
+ *                  minted one; the municipality club 822 with group 823, where
+ *                  the minted sub is an assistant; and 824, a club nobody
+ *                  teaches, which must reach no document)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

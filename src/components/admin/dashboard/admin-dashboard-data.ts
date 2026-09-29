@@ -215,6 +215,20 @@ export interface AdminUserRoleStat {
 }
 
 /**
+ * How much of a product's date its groups have cancelled.
+ *
+ * A cancellation is per group and this page is per product, so a date is one of
+ * three things: **every** group cancelled it, and it is a cancelled date that
+ * stays in its place, muted and labelled, and counts as no session; **some** of
+ * them did, and it still runs for the rest, with a note saying how many; or
+ * **none** did. A group with no cancellation on the date is simply running.
+ */
+export type DateCancellation =
+  | { kind: "none" }
+  | { kind: "all" }
+  | { kind: "some"; cancelled: number; groups: number };
+
+/**
  * One resolved occurrence of a product, on one day of the visible week.
  *
  * **A lifecycle state is deliberately not on it, or anywhere else on this
@@ -257,7 +271,22 @@ export interface ScheduleChip {
   seatCount: number | null;
   /** Does this product appear in the attention queue above? */
   needsAttention: boolean;
+  /**
+   * The occurrence's cancellation, decided on the date in the **product's**
+   * zone, which is the date a cancellation is keyed to — not the viewer's date
+   * the chip is filed under.
+   */
+  cancellation: DateCancellation;
   href: AppHref;
+}
+
+/**
+ * How many sessions a run of chips holds: a date every group cancelled is not a
+ * session, so it is on the row and out of the count, while a partly cancelled
+ * date still runs and still counts.
+ */
+export function runningSessionCount(chips: readonly ScheduleChip[]): number {
+  return chips.filter((chip) => chip.cancellation.kind !== "all").length;
 }
 
 /**
@@ -281,6 +310,12 @@ export interface ComingUpItem {
   href: AppHref;
   activeCount: number;
   seatCount: number | null;
+  /**
+   * The session on this milestone's date, where there is one: a term that
+   * starts or ends on a cancelled session still starts or ends, so the line
+   * stays and says the session is off rather than dropping out.
+   */
+  cancellation: DateCancellation;
 }
 
 /**

@@ -205,6 +205,10 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
 // points at the municipality itself, an in-person one at a site whose parent
 // is that municipality. Riding on this query is what lets that filter answer
 // the question without reading the locations table.
+//
+// The translations are the three columns a list row reads, never `*`: the long
+// description is most of a translation's bytes and no list renders it, so
+// selecting it made a municipality club list's payload three times its size.
 function buildProductsByTypeQuery(
   supabase: AppSupabaseClient,
   type: ProductType,
@@ -212,7 +216,7 @@ function buildProductsByTypeQuery(
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), schedule_slots(weekday, start_time, duration_minutes), gedu_group_assignments(gedu_id), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
+      "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), gedu_group_assignments(gedu_id), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
     )
     .eq("product_type", type)
     .order("created_at", { ascending: false });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
+import { isEmailAlreadyRegistered } from "@/lib/auth-email.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   randomSyntheticGamerEmail,
@@ -305,24 +306,6 @@ export const POST = defineRoute({
     return { gamerId };
   },
 });
-
-/**
- * Whether GoTrue refused this creation because the address already has an
- * account.
- *
- * The same two-step test the parent-registration route uses, and for the same
- * reason: `email_exists` is what current GoTrue sends, and the prose fallback
- * covers a deployment (or a proxy) that drops the code.
- */
-function isEmailAlreadyRegistered(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  if ("code" in error && error.code === "email_exists") return true;
-  return (
-    "message" in error &&
-    typeof error.message === "string" &&
-    /already( been)? registered/i.test(error.message)
-  );
-}
 
 // Best-effort cleanup of the auth user when post-auth creation fails. If the
 // delete itself fails we can't do anything useful — but we must record it: that

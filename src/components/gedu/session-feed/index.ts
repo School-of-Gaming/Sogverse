@@ -86,9 +86,11 @@ export type {
 } from "./send-report";
 export type {
   AttendanceMarks,
+  CancelledSessionFeedEntry,
   FutureSessionFeedEntry,
   NoRecordSessionFeedEntry,
   PastSessionFeedEntry,
+  ScheduledSessionFeedEntry,
   SessionEditor,
   SessionEditorState,
   SessionEntryDraft,

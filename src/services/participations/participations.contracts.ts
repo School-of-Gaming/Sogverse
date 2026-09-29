@@ -249,6 +249,20 @@ export const waitlistPositionResult = z.number().int().positive().nullable();
  * three-valued against a NULL `waitlisted_at`. The db test parses live RPC
  * output through it.
  */
+/**
+ * `get_my_session_cancellations` rows: one per (seat, cancelled upcoming date)
+ * the caller is party to. Strict, because a family learns only that a date is
+ * cancelled — a reason or an author riding along fails the parse.
+ */
+export const mySessionCancellations = z.array(
+  z
+    .object({
+      participation_id: z.string(),
+      session_date: z.string(),
+    })
+    .strict(),
+);
+
 export const myWaitlistPositions = z.array(
   z.object({
     participation_id: z.string(),

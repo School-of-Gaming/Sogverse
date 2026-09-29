@@ -35,7 +35,8 @@ import { voiceTokenResponse } from "@/services/voice/voice.contracts";
  *      substitution arm is date-scoped where the assignment arm is not: a sub joins
  *      the room on the session they are substituting and on none of the group's
  *      other sessions.
- *   2. Session window — at least one slot's window must be open right now.
+ *   2. Session window — at least one slot's window must be open right now, and
+ *      the session it belongs to must not have been cancelled by an admin.
  *
  * The two gates answer in that order and the order is the contract — a
  * non-member is refused whether or not a session is running, so this route
@@ -192,6 +193,24 @@ export const POST = defineRoute({
     if (!openSlot) {
       return NextResponse.json(
         { error: "Room is not open yet" },
+        { status: 403 },
+      );
+    }
+
+    // A cancelled session opens no room, exactly as `ensure_chat_channel` opens
+    // it no chat. Asked after the membership gate, so only a member learns the
+    // session was cancelled. The date is the product-local date of the open
+    // slot's own start — the session's date however its window straddles
+    // midnight, as the substitution arm reads it.
+    if (
+      await sessionIsCancelled(
+        admin,
+        groupId,
+        formatInTimeZone(openSlot.sessionStartsAt, productTimezone, "yyyy-MM-dd"),
+      )
+    ) {
+      return NextResponse.json(
+        { error: "This session is cancelled" },
         { status: 403 },
       );
     }
@@ -401,6 +420,29 @@ async function holdsSubstitutionOn(
     .maybeSingle();
 
   return gedu?.certified === true;
+}
+
+/**
+ * Has an admin cancelled this group's session on this product-local date?
+ *
+ * The database's one answer, asked rather than re-derived: this route runs on
+ * the service-role client, the only role the predicate is granted to, and the
+ * chat room's own gate asks the same function. A failed read throws rather than
+ * answering "not cancelled", so an outage refuses the join instead of opening a
+ * room the database would have kept shut.
+ */
+async function sessionIsCancelled(
+  admin: ReturnType<typeof createAdminClient>,
+  groupId: string,
+  sessionDate: string,
+): Promise<boolean> {
+  const { data, error } = await admin.rpc("group_session_is_cancelled", {
+    p_group_id: groupId,
+    p_session_date: sessionDate,
+  });
+
+  if (error) throw error;
+  return data;
 }
 
 /**

@@ -146,6 +146,10 @@ export function createSessionEntrySaves({
     if (entry === undefined) return;
     const sessionDate = sessionDateOf(entryId, groupId);
 
+    // A cancelled date takes no write — its card offers no editor — so there is
+    // nothing to save against it.
+    if (entry.kind === "cancelled") return;
+
     const currentReport = entry.kind === "no_record" ? null : entry.report;
     const currentNote = entry.kind === "no_record" ? null : entry.staffNote;
 

@@ -37,6 +37,36 @@ shown, never counted, and its treatment splits on whether it has passed:
 - **Today or later — upcoming.** Shown muted with no amount at all. It has not happened;
   printing zero against it would send somebody looking for a session nobody has missed.
 
+**A cancelled date is a third answer, and it holds either side of today.** An admin can
+cancel a session, and a projected date no group of the club ran and that is cancelled is
+shown as **cancelled**: worth nothing, printed at zero in a muted tone, and never counted
+as missed. Nothing about it is wrong, so it takes no warning; it is settled, so a future
+one says cancelled rather than upcoming. Three rules keep it from hiding a real miss or
+billing a cancellation:
+
+- **Only a projected date gets a cancelled line.** The document carries only the
+  cancellations in effect — the database's one answer, the same every surface reads — so
+  one left with neither a projection nor a record is never on it. One over a record the
+  schedule has since stopped projecting is on it and keeps that record off the bill, but
+  it has no projected date to mark, so it renders no line.
+- **A club cancels per group and is invoiced per date, so a date is cancelled only when
+  every group the club has cancelled it.** The document lists every group of the club,
+  including one that neither met nor cancelled all month — the rows and cancellations alone
+  cannot name that group, and it is exactly the one whose miss a sibling's cancellation
+  would otherwise hide. One group
+  cancelling while a sibling was due and recorded nothing leaves the date unrecorded: a
+  half-cancelled date reported as missed is a question somebody can answer, and a real
+  miss hidden behind a sibling's cancellation is not. If any group ran the date, it bills
+  as recorded exactly as before.
+- **A cancelled (group, date) pair never bills, even beside a stored row.** An admin may
+  cancel a session that was recorded, and the admin's word wins — whatever the schedule
+  or the term does afterwards: the document leaves such a row out of its sessions
+  altogether, so no reader can bill it, and a restore puts it back.
+
+The month's session count, every total and every Finvoice row are the stored rows no
+cancellation covers; a customer whose clubs were only cancelled has nothing to invoice and
+is refused on that ground.
+
 "Today" is **the club's own local today**, resolved in the club's timezone, because every
 date on either side of that comparison is one of the club's own local dates. A UTC "today"
 is off by one for several hours of every day, and the error always lands on the newest
@@ -273,6 +303,10 @@ unpacking an archive would be. Revisit it when a month's customer count makes th
 
 ## How the month is read
 
+**The parts this ledger is drawn from are shared with gedu invoicing**
+(`src/components/invoicing-ledger/`), so the rules below bind both pages and a change to one
+of those parts changes both.
+
 **This is a ledger, and it is read the way a ledger is read: down the columns.** A month
 runs to a hundred clubs across twenty municipalities, and the reader is a finance officer
 checking figures against each other rather than somebody being introduced to a page. So
@@ -361,9 +395,9 @@ repair.
 **A club that missed sessions says so on its own line.** The count column carries the missed
 count beside the recorded one, in warning tone — so the problems in a month are visible with
 every club still closed, which is what makes closing them by default affordable. Dates still
-ahead of the club are never mentioned there: nothing is wrong with a session nobody has
-missed, and a note about one would be indistinguishable at a glance from a note about one
-that was.
+ahead of the club and cancelled dates are never mentioned there: nothing is wrong with a
+session nobody has missed, and a note about one would be indistinguishable at a glance from
+a note about one that was.
 
 **The dates behind a club's number are a second disclosure, under its own line.** A compact
 table of the club's month, two columns wide: the day, its ISO week and what became of it as
@@ -495,7 +529,8 @@ live page would build — and an anchor is fetched when it is followed, not when
 rendered, so the scene still reaches the network exactly as often as it did before: never.
 The fixtures carry a customer whose file is blocked by a club with no fee and one whose
 file is blocked by having nothing to invoice, because a month of ordinary clubs would show
-neither.
+neither. They also carry cancellations on both sides of the pinned today and one on a
+date nothing projects and nothing is recorded on, which must render no line.
 
 **The month stepper stays inside the preview, and it is how the empty ledger is reached.**
 The stepper is one of the page's own controls rather than a way out of a row, so the shell

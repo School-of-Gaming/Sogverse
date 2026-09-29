@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/gedu/sessions/email-report/route";
 import {
+  SESSION_CANCELLED_SQLSTATE,
   SESSION_REPORT_ALREADY_SENT_SQLSTATE,
   SESSION_REPORT_NO_REPORT_SQLSTATE,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
@@ -542,6 +543,20 @@ describe("POST /api/gedu/sessions/email-report", () => {
     expect(response.status).toBe(409);
     expect(data.code).toBe(SESSION_REPORT_ALREADY_SENT_SQLSTATE);
     expect(data.error).toMatch(/already been emailed/i);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  it("answers 409 and sends nothing when the session is cancelled", async () => {
+    // An admin may cancel a session that was written up; its report is then
+    // never mailed, and the claim refuses before stamping anything.
+    claimFails(SESSION_CANCELLED_SQLSTATE);
+
+    const response = await POST(createRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(data.code).toBe(SESSION_CANCELLED_SQLSTATE);
+    expect(data.error).toMatch(/cancelled/i);
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 

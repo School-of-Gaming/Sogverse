@@ -308,20 +308,50 @@ export interface NoRecordSessionFeedEntry extends SessionFeedEntryBase {
 }
 
 /**
- * **There is no "skipped" kind**, and its absence is deliberate rather than an
- * omission. A session that did not run — a holiday, a closure, nobody turning
- * up — is a real thing the schema will eventually record, but recording it is
- * inseparable from the cancellation flows that decide *who* may declare a
- * session off and what that does to the family's billing, and none of that is
- * designed yet. A mock that let a gedu tick "didn't run" would be inventing the
- * half of the feature nobody has agreed to, so skip stays a schema intention
- * with no trace anywhere in the UI: no display state, no editor control, no
- * fixture.
+ * A session an admin has **cancelled** — on either side of the present, in its
+ * dated place.
+ *
+ * It is a kind of its own rather than a flag on the other three because a
+ * cancelled date takes nothing: no register, no write-up, no photo, no owed
+ * state, no substitution action. The database refuses every write on it, and a
+ * kind with no field for any of those is what keeps a card from offering one.
+ * A record already stored on the date is kept in the database, frozen, and
+ * comes back on a restore, but the entry carries none of it: the admin's word
+ * that the session did not happen wins over anything written about it.
+ *
+ * The three detail fields are **admin-only**, filled for an admin caller and
+ * `null` for a gedu, who learns that the session is off and nothing about why.
  */
+export interface CancelledSessionFeedEntry extends SessionFeedEntryBase {
+  kind: "cancelled";
+  /** Product-local `YYYY-MM-DD` — the (group, date) key the restore is made on. */
+  sessionDate: string;
+  /**
+   * Whether the session had not yet ended at the feed's `now` — the same
+   * end-instant split the other kinds are classified on, so a cancelled date
+   * sits on the right side of the divider.
+   */
+  upcoming: boolean;
+  reason: string | null;
+  cancelledAt: Date | null;
+  cancelledBy: SessionEditor | null;
+}
+
 export type SessionFeedEntry =
   | FutureSessionFeedEntry
   | PastSessionFeedEntry
-  | NoRecordSessionFeedEntry;
+  | NoRecordSessionFeedEntry
+  | CancelledSessionFeedEntry;
+
+/**
+ * Every kind a session **card** draws: a session that runs, or ran. A cancelled
+ * one never reaches a card — the feed draws it as a line — so the card and its
+ * editors are written against this and cannot read a field it has not got.
+ */
+export type ScheduledSessionFeedEntry = Exclude<
+  SessionFeedEntry,
+  CancelledSessionFeedEntry
+>;
 
 /*
  * **There is deliberately no `EditableSessionFeedEntry` type.** There used to
@@ -331,9 +361,8 @@ export type SessionFeedEntry =
  *
  * The kind now flips at the **end**, so the session in progress is a `future`
  * entry and is editable: the register opens when the session starts. That makes
- * every kind editable-shaped, and a union of all three is just
- * `SessionFeedEntry` under another name — a type claiming to be a subset while
- * being the whole set, which is worse than no type at all.
+ * every kind but `cancelled` editable-shaped, and which of them is editable
+ * right now still turns on the clock — a type cannot carry that.
  *
  * So editability is a **runtime** question now, asked of the entry and the
  * clock together by `isEditableEntry` in this directory's `entry-state` module.

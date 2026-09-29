@@ -166,24 +166,31 @@ search surface.
 
 ## Invoicing & Financial Reporting
 
-### 11. GEDU Invoicing System — `Gap`
+### 11. GEDU Invoicing System — `Partial`
 
 **SOGGA had:** Monthly (or custom) invoicing periods, per-lesson line items linked to
 gedu, club and pricing tier, a status workflow (Unhandled → Processed / Rejected →
 Invoiced), gedu self-service views and admin management.
 
-**Sogverse has:** Every input and no consumer — per-session gedu fees on `products`
-(`primary_gedu_fee_cents`, `assistant_gedu_fee_cents`), per-session attendance
-(`session_attendance`), and, since substitution landed, who was expected at each (group,
-date) and in which role, substitutions included (see item 5). No period, line-item or status objects, no routes, no UI.
-**Educators are still marking sessions done in SOGGA to get paid**: the in-repo gedu
-handbook (`src/data/gedu-docs/`) instructs it, and describes the Truster collective
-invoicing that follows.
+**Sogverse has:** The month view, for both readers. The admin **Gedu invoicing** page reads
+one calendar month for every gedu, and a gedu's own **Invoicing** page (reached from the
+account menu) reads the same month for them alone: every seat they held, in which role, at
+the product's current fee for that role, with municipality and consumer subtotals — the two
+sums the gedu handbook asks to be itemised — and the dated lines behind each club: recorded,
+missed, upcoming, cancelled, and absences with who covered them. It is recomputed from
+current facts at read time; nothing is snapshotted, and staffing is read as it stands today
+(`src/components/gedu-invoicing/CLAUDE.md`).
 
-**Priority:** `Critical` — SOGGA cannot be retired until this lands. `ROADMAP.md`
-schedules **Gedu invoicing** for September 2026.
-**Complexity:** `Very High` — Periods, line generation from materialised sessions +
-fees, a status state machine, gedu and admin views, and the CFO's reporting.
+**Still missing:** Everything after the figures. There is no invoicing period, no status
+workflow (submitted → approved / rejected → paid), no approval step, no snapshot of an
+approved month, and no export — in particular nothing produces the Truster collective
+invoicing file. The in-repo gedu handbook (`src/data/gedu-docs/`) still tells educators to
+mark sessions done in SOGGA to get paid, and describes the Truster flow that follows.
+
+**Priority:** `Critical` — SOGGA cannot be retired until gedus are paid from Sogverse's
+figures.
+**Complexity:** `High` — A period with a status per gedu, lines persisted from the month
+the view already computes, the admin approval step, and a Truster export.
 
 ---
 
@@ -218,18 +225,19 @@ and an export. Shares its period and line machinery with item 11.
 **SOGGA had:** Municipality invoicing report, municipality summary, Truster per-gedu
 payment report with CSV / JSON export, and a gedu invoicing status overview.
 
-**Sogverse has:** One of the four — the admin **Municipality invoicing** month report
+**Sogverse has:** The municipality half — the admin **Municipality invoicing** month report
 (item 12), which is the municipality invoicing report and, on its summary line, the
-municipality summary. It is read-only and has no export: no CSV or JSON export exists
-anywhere in the app. The other two reports, both about gedu payments, have nothing behind
-them yet. The admin dashboard deliberately dropped revenue and growth reporting because
+municipality summary — and the figures behind the gedu half: the admin **Gedu invoicing**
+month view (item 11) states what each gedu is owed for the month. Neither gedu report is
+there as SOGGA had it: there is no Truster payment export and no invoicing status to
+overview, because there is no status workflow yet. The admin dashboard deliberately dropped revenue and growth reporting because
 customer money lives in Stripe, which owns the reporting an accountant uses. That covers
 **incoming** money only; SOGGA's four reports were all about **outgoing** money (gedu fees,
 municipality billing), which Stripe never sees.
 
 **Priority:** `High`
-**Complexity:** `Medium` — The gedu-payment reports depend entirely on item 11; the
-municipality half exists and wants an export route and a filter, not a report.
+**Complexity:** `Medium` — The gedu-payment reports wait on item 11's status workflow and
+export; the municipality half exists and wants an export route and a filter, not a report.
 
 ---
 

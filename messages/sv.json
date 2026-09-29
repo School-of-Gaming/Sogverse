@@ -42,6 +42,7 @@
       "adminInvoiceCustomers": "Faktureringskunder",
       "adminInvoiceCustomerNew": "Ny faktureringskund",
       "adminInvoiceCustomerEdit": "Redigera faktureringskund",
+      "adminGeduInvoicing": "Gedufakturering",
       "adminTools": "Verktyg",
       "parentDashboard": "Min SOG",
       "geduDashboard": "Min SOG",
@@ -66,7 +67,10 @@
       "geduContract": "Gedu-avtal",
       "seatOffer": "Platserbjudande",
       "geduSubstitutions": "Vikariat",
-      "adminSubstitutions": "Vikariat"
+      "geduInvoicing": "Fakturering",
+      "adminSubstitutions": "Vikariat",
+      "teamProfile": "Min profil",
+      "adminTeamProfile": "Profil"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -339,6 +343,15 @@
         "needsAttention": "Behöver åtgärd – den här produkten finns i kön högst upp på sidan",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
+      "cancellation": {
+        "allTitle": "Tillfället är inställt för alla grupper den här dagen",
+        "some": "{cancelled} av {groups, plural, one {# grupp} other {# grupper}} inställda",
+        "allComingUp": {
+          "starts": "första tillfället inställt",
+          "ends": "sista tillfället inställt",
+          "runs": "inställt"
+        }
+      },
       "comingUp": {
         "label": "På gång",
         "heading": "På gång",
@@ -396,6 +409,7 @@
       "feeNotSet": "Avgift saknas",
       "notRecorded": "Inte registrerat",
       "upcoming": "Kommande",
+      "cancelled": "Inställt",
       "unrecordedSessions": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
       "sessionsFor": "Tillfällen för {club}",
       "clubsIn": "Klubbar i {municipality}",
@@ -1159,6 +1173,30 @@
         "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
         "loading": "Laddar dokumentationen av produktens tillfällen.",
         "railGroupHeading": "Grupp"
+      },
+      "cancellation": {
+        "menuLabel": "Fler åtgärder för det här inställda tillfället",
+        "cancelSession": "Ställ in tillfället",
+        "addReason": "Lägg till en orsak",
+        "changeReason": "Ändra orsaken",
+        "restoreSession": "Återställ tillfället",
+        "cancelTitle": "Ställa in det här tillfället?",
+        "cancelBody": "{date}. Familjer och Geduer ser tillfället som inställt, och ingenting kan registreras på det. Ingen meddelas.",
+        "reasonTitle": "Ändra orsaken",
+        "reasonBody": "{date}. Tillfället förblir inställt.",
+        "reasonLabel": "Orsak",
+        "reasonHint": "Bara administratörer ser orsaken. {count} tecken kvar",
+        "reasonPlaceholder": "Varför ställs passet in?",
+        "keepSession": "Behåll tillfället",
+        "cancelConfirm": "Ställ in tillfället",
+        "reasonConfirm": "Spara orsaken",
+        "recordKept": "Anteckningar, foton och närvaro som redan registrerats för tillfället sparas. Familjerna ser dem inte medan tillfället är inställt, och de kommer tillbaka om tillfället återställs.",
+        "recordKeptEmailed": "Anteckningar, foton och närvaro som redan registrerats för tillfället sparas. Familjerna ser dem inte medan tillfället är inställt, och de kommer tillbaka om tillfället återställs. Rapporten har redan mejlats till familjerna, och det mejlet kan inte återkallas.",
+        "cancelFailed": "Det gick inte att spara. Försök igen.",
+        "restoreTitle": "Återställa det här tillfället?",
+        "restoreBody": "{date}. Familjer och Geduer ser tillfället som schemalagt igen, och det kan registreras som vanligt. Ingen meddelas.",
+        "restoreConfirm": "Återställ tillfället",
+        "restoreFailed": "Tillfället kunde inte återställas. Försök igen."
       }
     },
     "users": {
@@ -1197,7 +1235,25 @@
           "girl": "Flicka",
           "non_binary": "Icke-binär"
         },
-        "ageYears": "{age, plural, one {# år} other {# år}}"
+        "ageYears": "{age, plural, one {# år} other {# år}}",
+        "usernameLabel": "Användarnamn",
+        "usernameHint": "Endast bokstäver och siffror, 3–20 tecken. Från och med nu loggar barnet in med det nya användarnamnet.",
+        "usernameInvalid": "Använd 3–20 bokstäver eller siffror, utan mellanslag.",
+        "usernameTaken": "Användarnamnet är redan upptaget. Prova ett annat.",
+        "usernameSaveError": "Det gick inte att byta användarnamnet, så inget sparades. Försök igen.",
+        "usernameSavedDetailsFailed": "Användarnamnet byttes, men födelsedatum och kön sparades inte. Försök igen.",
+        "emailHint": "Från och med nu loggar barnet in med den nya adressen. Den visas som overifierad tills den har bekräftats.",
+        "emailSaveError": "Det gick inte att byta e-postadressen, så inget sparades. Försök igen.",
+        "emailSavedDetailsFailed": "E-postadressen byttes, men födelsedatum och kön sparades inte. Försök igen."
+      },
+      "emailEdit": {
+        "edit": "Byt e-postadress",
+        "title": "Byt e-postadress",
+        "description": "Från och med nu loggar personen in med den nya adressen. Den visas som overifierad tills den har bekräftats.",
+        "label": "E-postadress",
+        "invalid": "Ange en giltig e-postadress.",
+        "taken": "Adressen tillhör redan ett annat konto. Att slå ihop eller ta bort det kontot går inte här – be en utvecklare att hantera det.",
+        "saveError": "Det gick inte att byta e-postadressen. Försök igen."
       },
       "gameAccounts": {
         "title": "Spelkonton",
@@ -1735,7 +1791,7 @@
         },
         "sessions": {
           "title": "vad som hände i varje grupp",
-          "intro": "Varje session en grupp i Programmet har antecknat, med närvaromarkeringarna och de fotografier spelfostraren bifogade rapporten. En session har en anteckning så snart en spelfostrare skriver ihop den eller markerar närvaro, så en schemalagd session som ännu inte ägt rum finns inte här. Använd den för vyer per session, som en avhoppskurva; totalerna per barn finns redan på anmälan.",
+          "intro": "Varje session en grupp i Programmet har antecknat, med närvaromarkeringarna och de fotografier spelfostraren bifogade rapporten. En session har en anteckning så snart en spelfostrare skriver ihop den eller markerar närvaro, så en schemalagd session som ännu inte ägt rum finns inte här, och inte heller en som en administratör har ställt in, även om den skrivits ihop. Använd den för vyer per session, som en avhoppskurva; totalerna per barn finns redan på anmälan.",
           "params": {
             "productId": "Bara sessioner i den här produktens grupper.",
             "groupId": "Bara den här gruppens sessioner.",
@@ -2183,7 +2239,8 @@
       "substitutionWithdrawTitle": "Ta tillbaka det här?",
       "substitutionWithdrawBody": "Du leder tillfället igen, och alla erbjudanden om att vikariera stryks.",
       "substitutionWithdrawConfirm": "Ta tillbaka",
-      "substitutionWithdrawFailed": "Det sparades inte. Försök igen."
+      "substitutionWithdrawFailed": "Det sparades inte. Försök igen.",
+      "cancelledByOn": "Inställt av {name}, {when}"
     },
     "groupNotes": {
       "heading": "Om gruppen",
@@ -2300,6 +2357,55 @@
       }
     }
   },
+  "geduInvoicing": {
+    "adminTitle": "Gedufakturering",
+    "adminDescription": "En månad: de tillfällen varje Gedu har registrerat och vad hen fakturerar School of Gaming för dem.",
+    "myTitle": "Fakturering",
+    "myDescription": "Vad du fakturerar School of Gaming för, en månad i taget. Ett tillfälle räknas med när något har registrerats för det – närvaro, en rapport eller en anteckning.",
+    "backToDashboard": "Tillbaka till Min SOG",
+    "previousMonth": "Föregående månad",
+    "nextMonth": "Nästa månad",
+    "expandAll": "Öppna alla",
+    "collapseAll": "Stäng alla",
+    "monthTotal": "Totalt för månaden",
+    "myTotal": "Totalt",
+    "geduCount": "{count, plural, one {# Gedu} other {# Geduer}}",
+    "clubCount": "{count, plural, one {# klubb} other {# klubbar}}",
+    "sessionCount": "{count, plural, one {# tillfälle} other {# tillfällen}}",
+    "municipalityAmount": "kommun {amount}",
+    "consumerAmount": "konsument {amount}",
+    "segmentMunicipality": "Kommun",
+    "segmentConsumer": "Konsument",
+    "columnClub": "Klubb",
+    "columnRole": "Roll",
+    "columnFee": "Arvode/tillfälle",
+    "columnSessions": "Tillfällen",
+    "columnTotal": "Totalt",
+    "rolePrimary": "Huvud-Gedu",
+    "roleAssistant": "Assisterande Gedu",
+    "feeNotSet": "Arvode saknas",
+    "recorded": "Registrerat",
+    "notRecorded": "Inte registrerat",
+    "upcoming": "Kommande",
+    "cancelled": "Inställt",
+    "absentSubstituted": "Frånvarande – vikarie {name}",
+    "absentNoSubstitute": "Frånvarande – ingen vikarie",
+    "substitutingFor": "vikariat för {name}",
+    "unrecordedCount": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
+    "excludedWithoutFee": "Arvode saknas: {clubs, plural, one {# klubb} other {# klubbar}}, {sessions, plural, one {# tillfälle} other {# tillfällen}} utanför summan",
+    "sessionsFor": "Tillfällen för {club} ({role})",
+    "clubsOf": "Klubbar för {name}",
+    "adminEmptyMonth": "Ingen Gedu har något registrerat eller inplanerat tillfälle den här månaden.",
+    "myEmptyMonth": "Du har inget att fakturera för den här månaden: inget av dina tillfällen registrerades eller planerades in under den.",
+    "vatNote": "Beloppen är exklusive moms. Lägg till moms (25,5 %) när du fakturerar.",
+    "itemiseNote": "Specificera kommun- och konsumentsummorna var för sig på din faktura.",
+    "myUnrecorded": "{count, plural, one {# tidigare tillfälle har inget registrerat, så det ingår inte. Registrera det i gruppens arbetsyta så räknas det med.} other {# tidigare tillfällen har inget registrerat, så de ingår inte. Registrera dem i gruppens arbetsyta så räknas de med.}}",
+    "loadError": "Det gick inte att läsa in faktureringsmånaden. Uppdatera sidan och försök igen.",
+    "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen.",
+    "searchPlaceholder": "Sök på namn eller e-post…",
+    "searchAriaLabel": "Sök Geduer",
+    "searchNoMatches": "Ingen Gedu den här månaden matchar ”{query}”."
+  },
   "productType": {
     "consumer_club": "Klubb",
     "municipality_club": "Klubb",
@@ -2308,12 +2414,15 @@
   },
   "activityCard": {
     "endedOn": "Avslutades {date}",
-    "noSchedule": "Inget schema ännu"
+    "noSchedule": "Inget schema ännu",
+    "cancelledAhead": "{count, plural, one {<b>{dates}</b> är inställt.} other {<b>{dates}</b> är inställda.}}",
+    "cancelledAheadMore": "<b>{first}</b> och {more, plural, one {# tillfälle till} other {# tillfällen till}} är inställda."
   },
   "sessionBadge": {
     "live": "Pågår",
     "nextSession": "Nästa tillfälle",
-    "upcoming": "Kommande tillfälle"
+    "upcoming": "Kommande tillfälle",
+    "cancelled": "Inställt"
   },
   "sessionFeed": {
     "readMore": "Läs mer",
@@ -2379,7 +2488,9 @@
     },
     "accountMenu": "Kontomeny – {name}",
     "continueToAccount": "Fortsätt till ditt konto",
-    "switchTo": "Byt profil"
+    "switchTo": "Byt profil",
+    "invoicing": "Fakturering",
+    "teamProfile": "Min profil"
   },
   "schools": {
     "hero": {
@@ -2815,6 +2926,7 @@
     "municipalityClubs": "Kommunklubbar",
     "municipalityInvoicing": "Kommunfakturering",
     "invoiceCustomers": "Faktureringskunder",
+    "geduInvoicing": "Gedufakturering",
     "camps": "Läger",
     "events": "Evenemang",
     "sites": "Lokaler",
@@ -3055,14 +3167,14 @@
   },
   "settings": {
     "subtitle": "Hantera dina kontoinställningar",
-    "profileDescription": "Uppdatera din personliga information",
+    "personalInformation": "Personuppgifter",
     "roleAccount": "{role, select, customer {Föräldrakonto} gamer {Spelarkonto} gedu {Gedu-konto} admin {Adminkonto} other {Konto}}",
     "firstNamePlaceholder": "Ange ditt förnamn",
     "lastNamePlaceholder": "Ange ditt efternamn",
     "invalidPhone": "Ange ett giltigt telefonnummer.",
     "lastNameRequired": "Efternamnet måste vara minst {min} tecken.",
-    "profileUpdated": "Profilen har uppdaterats!",
-    "failedToUpdateProfile": "Kunde inte uppdatera profilen.",
+    "profileUpdated": "Personuppgifterna har sparats.",
+    "failedToUpdateProfile": "Det gick inte att spara personuppgifterna.",
     "securityDescription": "Hantera ditt lösenord och säkerhetsinställningar",
     "resetPassword": "Återställ lösenord",
     "resetPasswordEmailSent": "Återställningslänk skickad till {email} – kolla din inkorg.",
@@ -3092,6 +3204,11 @@
       "title": "Foton och videor",
       "granted": "Din förälder har sagt att foton och videor på dig får användas i rapporter från tillfällena och av School of Gaming, Lynx Educate och Roblox. En Gedu frågar dig ändå innan de tar ett foto på dig.",
       "notGranted": "Din förälder har sagt att foton och videor på dig inte får användas, så en Gedu håller dig utanför tillfällenas foton. Bara din förälder kan ändra det här."
+    },
+    "teamProfile": {
+      "title": "Min profil",
+      "description": "Din offentliga profil på School of Gamings webbplats: ett foto av dig och några ord om vem du är.",
+      "edit": "Redigera profil"
     }
   },
   "tools": {
@@ -4832,5 +4949,155 @@
     "rejectAll": "Neka alla",
     "analyticsOnly": "Endast analys",
     "analyticsAndMarketing": "Marknadsföring och analys"
+  },
+  "team": {
+    "profile": {
+      "nameWithNickname": "{firstName} ”<nick>{nickname}</nick>” {lastName}",
+      "firstNameWithNickname": "{firstName} ”<nick>{nickname}</nick>”",
+      "geduTitle": "Gedu · spelfostrare",
+      "speaks": "Talar",
+      "aboutMe": "Om mig",
+      "funFact": "Kul fakta",
+      "draft": {
+        "shortDescription": "Din presentation på en rad visas här",
+        "longDescription": "Det du skriver under ”Om mig” visas här"
+      }
+    },
+    "edit": {
+      "back": "Tillbaka till inställningar",
+      "pageTitle": "Min profil",
+      "status": {
+        "privateTitle": "Privat",
+        "privateBody": "Din profil finns inte på webbplatsen. När du är nöjd kryssar du i ”Min profil är redo att bli offentlig” nedan och sparar.",
+        "waitingTitle": "Klar, väntar på en administratör",
+        "waitingBody": "En administratör granskar din profilsida innan den blir offentlig.",
+        "liveTitle": "Offentlig",
+        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du dölja den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar. När du kryssar i den igen gör en administratör den offentlig på nytt."
+      },
+      "actions": {
+        "save": "Spara ändringarna",
+        "discard": "Förkasta ändringarna"
+      },
+      "switch": {
+        "heading": "Offentlig profil",
+        "readyLabel": "Min profil är redo att bli offentlig",
+        "readyHint": "Genom att kryssa i detta och spara markerar du din profil som klar att visas på School of Gamings webbplats, och en administratör gör den offentlig när den har tittat på den. Ta bort krysset och spara när som helst så döljs den direkt. När du kryssar i den igen gör en administratör den offentlig på nytt.",
+        "complete": "Din profil har allt som behövs för att bli offentlig.",
+        "mustStayComplete": "Medan detta är ikryssat måste din profil vara komplett, så det går inte att spara förrän den är det. Fyll i det som saknas, eller ta bort krysset för att fortsätta privat.",
+        "missing": {
+          "photo": "Lägg till ett foto för att kunna kryssa i detta.",
+          "title": "Lägg till din titel för att kunna kryssa i detta.",
+          "text": "Fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
+          "photoTitle": "Lägg till ett foto och din titel för att kunna kryssa i detta.",
+          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
+          "titleText": "Lägg till din titel och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
+          "photoTitleText": "Lägg till ett foto och din titel, och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på, för att kunna kryssa i detta."
+        }
+      },
+      "photo": {
+        "heading": "Foto",
+        "upload": "Ladda upp foto",
+        "replace": "Byt foto",
+        "remove": "Ta bort foto",
+        "guidance": {
+          "intro": "Det här är det första familjer och gamers ser av dig. När du har valt ett foto beskär du det så att det passar ramen.",
+          "doHeading": "Gör så här",
+          "dontHeading": "Undvik",
+          "do": {
+            "you": "Bara du, huvud och axlar, ansiktet väl synligt",
+            "light": "Jämnt ljus, till exempel vänd mot ett fönster",
+            "natural": "Avslappnad och naturlig: se ut som dig själv",
+            "gear": "Ett headset eller en handkontroll i bild går bra",
+            "background": "En enkel eller städad bakgrund"
+          },
+          "dont": {
+            "others": "Andra personer i bilden. För barns trygghet kan ett foto med ett barn i inte användas",
+            "hidden": "Solglasögon, masker eller något som döljer ansiktet",
+            "group": "Gruppbilder, eller du själv beskuren ur en",
+            "avatar": "Avatarer, tecknade bilder eller kraftiga filter",
+            "blurry": "Suddiga eller mörka bilder"
+          }
+        },
+        "crop": {
+          "title": "Beskär ditt foto",
+          "description": "Dra fotot för att placera det i ramen och zooma så att det passar.",
+          "zoom": "Zoom",
+          "confirm": "Använd foto",
+          "unreadable": "Den här filen kan inte öppnas som en bild här. Välj ett JPEG-, PNG- eller WebP-foto. iPhone-foton i HEIC-format måste konverteras först.",
+          "chooseAnother": "Välj ett annat foto",
+          "failed": "Fotot kunde inte beskäras. Försök igen eller välj ett annat foto."
+        }
+      },
+      "about": {
+        "heading": "Om dig",
+        "nickname": "Gamers känner mig som",
+        "nicknamePlaceholder": "PixelPirate",
+        "nicknameHint": "Visas inom citattecken i ditt namn, precis som du skriver den.",
+        "title": "Titel",
+        "titleHint": "Ditt jobb på School of Gaming, till exempel klubbansvarig.",
+        "pick": "Din färg"
+      },
+      "writing": {
+        "heading": "Med egna ord",
+        "languages": "Språk",
+        "addLocale": "Lägg till språk",
+        "removeLocale": "Ta bort {locale}",
+        "shortDescription": "Presentera dig på en rad",
+        "shortDescriptionPlaceholder": "Redstone-nörd och speedrun-fan",
+        "longDescription": "Om mig",
+        "longDescriptionHint": "Vad du gör på sessionerna, vad du spelar och vad familjer kan vilja veta om dig.",
+        "longDescriptionPlaceholder": "Berätta lite om dig själv för familjerna",
+        "funFact": "Kul fakta",
+        "funFactPlaceholder": "Jag har byggt en fungerande miniräknare i Minecraft.",
+        "count": "{count}/{max}"
+      },
+      "preview": {
+        "heading": "Förhandsvisning"
+      },
+      "errors": {
+        "save": "Det gick inte att spara profilen. Försök igen.",
+        "incomplete": "Profilen måste vara komplett så länge den är markerad som klar att visas offentligt. Fyll i det som saknas och spara igen.",
+        "photoUpload": "Fotot laddades inte upp, så inget sparades. Försök spara igen.",
+        "photoGone": "Fotot har ändrats någon annanstans sedan du öppnade den här sidan. Ladda om sidan för att se profilen som den är nu."
+      }
+    },
+    "admin": {
+      "status": {
+        "privateTitle": "Inte markerad som klar än",
+        "privateBody": "Profilen för {name} finns inte på webbplatsen. När den är komplett kan {name} eller vilken administratör som helst markera den som klar att visas offentligt.",
+        "waitingTitle": "Klar, väntar på att göras offentlig",
+        "waitingBody": "Profilen för {name} är markerad som klar att visas offentligt. Den kommer upp på School of Gamings webbplats så snart en administratör gör den offentlig.",
+        "liveTitle": "Offentlig",
+        "liveBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt."
+      },
+      "edit": {
+        "back": "Tillbaka till {name}",
+        "pageTitle": "Profil för {name}",
+        "readyLabel": "Profilen är redo att bli offentlig",
+        "readyHint": "Genom att kryssa i detta och spara markeras profilen för {name} som klar att visas på School of Gamings webbplats. Den kommer upp när en administratör gör den offentlig. Ta bort krysset och spara när som helst så döljs den direkt, och den förblir dold tills den markeras som klar och görs offentlig igen.",
+        "complete": "Profilen har allt den behöver för att visas offentligt.",
+        "mustStayComplete": "Medan detta är ikryssat måste profilen vara komplett, så det går inte att spara förrän den är det. Fyll i det som saknas, eller ta bort krysset.",
+        "missing": {
+          "photo": "Lägg till ett foto för att kunna kryssa i detta.",
+          "title": "Lägg till en titel för att kunna kryssa i detta.",
+          "text": "Fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
+          "photoTitle": "Lägg till ett foto och en titel för att kunna kryssa i detta.",
+          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
+          "titleText": "Lägg till en titel och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
+          "photoTitleText": "Lägg till ett foto och en titel, och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits, för att kunna kryssa i detta."
+        }
+      },
+      "userPage": {
+        "heading": "Profil",
+        "nothingSaved": "Inget har skrivits i profilen för {name} än.",
+        "writtenIn": "Skriven på",
+        "edit": "Redigera profil",
+        "makePublic": "Gör offentlig",
+        "makePublicNeedsReady": "Markera profilen som klar under Redigera profil för att kunna göra den offentlig.",
+        "makePublicNotReady": "Profilen för {name} är inte längre markerad som klar, så den gjordes inte offentlig.",
+        "hide": "Dölj",
+        "visibilityError": "Det gick inte att ändra om profilen är offentlig. Försök igen."
+      }
+    }
   }
 }

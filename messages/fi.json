@@ -42,6 +42,7 @@
       "adminInvoiceCustomers": "Laskutusasiakkaat",
       "adminInvoiceCustomerNew": "Uusi laskutusasiakas",
       "adminInvoiceCustomerEdit": "Muokkaa laskutusasiakasta",
+      "adminGeduInvoicing": "Gedujen laskutus",
       "adminTools": "Työkalut",
       "parentDashboard": "Oma SOG",
       "geduDashboard": "Oma SOG",
@@ -66,7 +67,10 @@
       "geduContract": "Gedu-sopimus",
       "seatOffer": "Paikkatarjous",
       "geduSubstitutions": "Tuuraukset",
-      "adminSubstitutions": "Tuuraukset"
+      "geduInvoicing": "Laskutus",
+      "adminSubstitutions": "Tuuraukset",
+      "teamProfile": "Oma profiili",
+      "adminTeamProfile": "Profiili"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -339,6 +343,15 @@
         "needsAttention": "Vaatii huomiota – tämä tuote on sivun yläreunan jonossa",
         "chipTitle": "{type} · {name} · klo {time}, {minutes} min · {counts}"
       },
+      "cancellation": {
+        "allTitle": "Tämän päivän kerta on peruttu kaikilta ryhmiltä",
+        "some": "Peruttu: {cancelled}/{groups} ryhmää",
+        "allComingUp": {
+          "starts": "ensimmäinen kerta peruttu",
+          "ends": "viimeinen kerta peruttu",
+          "runs": "peruttu"
+        }
+      },
       "comingUp": {
         "label": "Tulossa",
         "heading": "Tulossa",
@@ -396,6 +409,7 @@
       "feeNotSet": "Maksua ei ole asetettu",
       "notRecorded": "Ei kirjattu",
       "upcoming": "Tulossa",
+      "cancelled": "Peruttu",
       "unrecordedSessions": "{count, plural, one {# kirjaamatta} other {# kirjaamatta}}",
       "sessionsFor": "Kerhon {club} kerrat",
       "clubsIn": "Kerhot: {municipality}",
@@ -1159,6 +1173,30 @@
         "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
         "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
         "railGroupHeading": "Ryhmä"
+      },
+      "cancellation": {
+        "menuLabel": "Lisää toimintoja tälle perutulle kerralle",
+        "cancelSession": "Peru kerta",
+        "addReason": "Lisää syy",
+        "changeReason": "Muuta syytä",
+        "restoreSession": "Palauta kerta",
+        "cancelTitle": "Perutaanko kerta?",
+        "cancelBody": "{date}. Perheet ja Gedut näkevät kerran perutuksi, eikä sille voi kirjata mitään. Kenellekään ei ilmoiteta.",
+        "reasonTitle": "Muuta syytä",
+        "reasonBody": "{date}. Kerta pysyy peruttuna.",
+        "reasonLabel": "Syy",
+        "reasonHint": "Vain ylläpitäjät näkevät syyn. {count} merkkiä jäljellä",
+        "reasonPlaceholder": "Miksi istunto perutaan?",
+        "keepSession": "Pidä kerta",
+        "cancelConfirm": "Peru kerta",
+        "reasonConfirm": "Tallenna syy",
+        "recordKept": "Kerralle jo kirjatut muistiinpanot, kuvat ja läsnäolot säilyvät. Perheet eivät näe niitä, kun kerta on peruttu, ja ne palaavat, jos kerta palautetaan.",
+        "recordKeptEmailed": "Kerralle jo kirjatut muistiinpanot, kuvat ja läsnäolot säilyvät. Perheet eivät näe niitä, kun kerta on peruttu, ja ne palaavat, jos kerta palautetaan. Raportti on jo lähetetty perheille sähköpostilla, eikä viestiä voi perua.",
+        "cancelFailed": "Tallentaminen ei onnistunut. Yritä uudelleen.",
+        "restoreTitle": "Palautetaanko kerta?",
+        "restoreBody": "{date}. Perheet ja Gedut näkevät kerran taas aikataulussa, ja sille voi kirjata tavalliseen tapaan. Kenellekään ei ilmoiteta.",
+        "restoreConfirm": "Palauta kerta",
+        "restoreFailed": "Kerran palauttaminen ei onnistunut. Yritä uudelleen."
       }
     },
     "users": {
@@ -1197,7 +1235,25 @@
           "girl": "Tyttö",
           "non_binary": "Muunsukupuolinen"
         },
-        "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}"
+        "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}",
+        "usernameLabel": "Käyttäjätunnus",
+        "usernameHint": "Vain kirjaimia ja numeroita, 3–20 merkkiä. Tästä lähtien lapsi kirjautuu uudella käyttäjätunnuksella.",
+        "usernameInvalid": "Käytä 3–20 kirjainta tai numeroa ilman välilyöntejä.",
+        "usernameTaken": "Käyttäjätunnus on jo varattu. Kokeile toista.",
+        "usernameSaveError": "Käyttäjätunnuksen vaihtaminen epäonnistui, joten mitään ei tallennettu. Yritä uudelleen.",
+        "usernameSavedDetailsFailed": "Käyttäjätunnus vaihdettiin, mutta syntymäaikaa ja sukupuolta ei tallennettu. Yritä uudelleen.",
+        "emailHint": "Tästä lähtien lapsi kirjautuu uudella osoitteella. Osoite näkyy vahvistamattomana, kunnes hän vahvistaa sen.",
+        "emailSaveError": "Sähköpostiosoitteen vaihtaminen epäonnistui, joten mitään ei tallennettu. Yritä uudelleen.",
+        "emailSavedDetailsFailed": "Sähköpostiosoite vaihdettiin, mutta syntymäaikaa ja sukupuolta ei tallennettu. Yritä uudelleen."
+      },
+      "emailEdit": {
+        "edit": "Vaihda sähköpostiosoite",
+        "title": "Vaihda sähköpostiosoite",
+        "description": "Tästä lähtien käyttäjä kirjautuu uudella osoitteella. Osoite näkyy vahvistamattomana, kunnes hän vahvistaa sen.",
+        "label": "Sähköpostiosoite",
+        "invalid": "Anna kelvollinen sähköpostiosoite.",
+        "taken": "Osoite kuuluu jo toiselle tilille. Toisen tilin yhdistämistä tai poistamista ei voi tehdä täällä – pyydä kehittäjää hoitamaan asia.",
+        "saveError": "Sähköpostiosoitteen vaihtaminen epäonnistui. Yritä uudelleen."
       },
       "gameAccounts": {
         "title": "Pelitilit",
@@ -1735,7 +1791,7 @@
         },
         "sessions": {
           "title": "mitä kussakin ryhmässä tapahtui",
-          "intro": "Jokainen istunto, jonka Ohjelman ryhmä on kirjannut, sekä läsnäolomerkinnät ja valokuvat, jotka pelikasvattaja liitti istuntoraporttiin. Istunnosta on merkintä heti kun pelikasvattaja kirjoittaa siitä raportin tai merkitsee läsnäolot, joten aikataulutettu istunto, jota ei ole vielä pidetty, ei ole täällä. Käytä sitä istuntokohtaisiin näkymiin, kuten poistumakäyrään; lapsikohtaiset summat ovat jo ilmoittautumisessa.",
+          "intro": "Jokainen istunto, jonka Ohjelman ryhmä on kirjannut, sekä läsnäolomerkinnät ja valokuvat, jotka pelikasvattaja liitti istuntoraporttiin. Istunnosta on merkintä heti kun pelikasvattaja kirjoittaa siitä raportin tai merkitsee läsnäolot, joten aikataulutettu istunto, jota ei ole vielä pidetty, ei ole täällä, eikä myöskään ylläpitäjän peruma istunto, vaikka siitä olisi kirjoitettu raportti. Käytä sitä istuntokohtaisiin näkymiin, kuten poistumakäyrään; lapsikohtaiset summat ovat jo ilmoittautumisessa.",
           "params": {
             "productId": "Vain tämän tuotteen ryhmien istunnot.",
             "groupId": "Vain tämän ryhmän istunnot.",
@@ -2183,7 +2239,8 @@
       "substitutionWithdrawTitle": "Perutaanko ilmoitus?",
       "substitutionWithdrawBody": "Ohjaat kerran taas itse, ja kaikki tuuraustarjoukset raukeavat.",
       "substitutionWithdrawConfirm": "Peru ilmoitus",
-      "substitutionWithdrawFailed": "Tallennus epäonnistui. Yritä uudelleen."
+      "substitutionWithdrawFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "cancelledByOn": "Perui {name}, {when}"
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
@@ -2300,6 +2357,55 @@
       }
     }
   },
+  "geduInvoicing": {
+    "adminTitle": "Gedujen laskutus",
+    "adminDescription": "Kuukausi: kunkin Gedun kirjaamat kerrat ja mitä hän laskuttaa niistä School of Gamingilta.",
+    "myTitle": "Laskutus",
+    "myDescription": "Mitä laskutat School of Gamingilta, kuukausi kerrallaan. Kerta lasketaan mukaan, kun siitä on kirjattu jotain – läsnäolot, raportti tai muistiinpano.",
+    "backToDashboard": "Takaisin Omaan SOGiin",
+    "previousMonth": "Edellinen kuukausi",
+    "nextMonth": "Seuraava kuukausi",
+    "expandAll": "Avaa kaikki",
+    "collapseAll": "Sulje kaikki",
+    "monthTotal": "Kuukauden summa",
+    "myTotal": "Yhteensä",
+    "geduCount": "{count, plural, one {# Gedu} other {# Gedua}}",
+    "clubCount": "{count, plural, one {# kerho} other {# kerhoa}}",
+    "sessionCount": "{count, plural, one {# kerta} other {# kertaa}}",
+    "municipalityAmount": "kuntalaskutus {amount}",
+    "consumerAmount": "kuluttajalaskutus {amount}",
+    "segmentMunicipality": "Kuntalaskutus",
+    "segmentConsumer": "Kuluttajalaskutus",
+    "columnClub": "Kerho",
+    "columnRole": "Rooli",
+    "columnFee": "Kertapalkkio",
+    "columnSessions": "Kerrat",
+    "columnTotal": "Summa",
+    "rolePrimary": "Vastaava Gedu",
+    "roleAssistant": "Avustava Gedu",
+    "feeNotSet": "Palkkiota ei ole asetettu",
+    "recorded": "Kirjattu",
+    "notRecorded": "Ei kirjattu",
+    "upcoming": "Tulossa",
+    "cancelled": "Peruttu",
+    "absentSubstituted": "Poissa – tuuraajana {name}",
+    "absentNoSubstitute": "Poissa – ei tuuraajaa",
+    "substitutingFor": "tuuraus, poissa {name}",
+    "unrecordedCount": "{count, plural, one {# kirjaamatta} other {# kirjaamatta}}",
+    "excludedWithoutFee": "Palkkio asettamatta: {clubs, plural, one {# kerho} other {# kerhoa}}, {sessions, plural, one {# kerta} other {# kertaa}} summan ulkopuolella",
+    "sessionsFor": "Kerrat: {club} ({role})",
+    "clubsOf": "Kerhot: {name}",
+    "adminEmptyMonth": "Yhdelläkään Gedulla ei ole tälle kuukaudelle kirjattuja tai aikataulutettuja kertoja.",
+    "myEmptyMonth": "Sinulla ei ole tältä kuukaudelta laskutettavaa: yhtään kertaasi ei ole kirjattu eikä aikataulutettu tälle kuukaudelle.",
+    "vatNote": "Summat ovat ilman arvonlisäveroa. Lisää ALV (25,5 %), kun laskutat.",
+    "itemiseNote": "Erittele laskullasi kunta- ja kuluttajalaskutusten summat omille riveilleen.",
+    "myUnrecorded": "{count, plural, one {# mennyt kerta on kirjaamatta, joten se ei ole mukana. Kun kirjaat sen ryhmän työtilassa, se lasketaan mukaan.} other {# mennyttä kertaa on kirjaamatta, joten ne eivät ole mukana. Kun kirjaat ne ryhmän työtilassa, ne lasketaan mukaan.}}",
+    "loadError": "Laskutuskuukauden lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
+    "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen.",
+    "searchPlaceholder": "Hae nimellä tai sähköpostilla…",
+    "searchAriaLabel": "Hae Geduja",
+    "searchNoMatches": "Hakua ”{query}” vastaavaa Gedua ei löydy tältä kuulta."
+  },
   "productType": {
     "consumer_club": "Kerho",
     "municipality_club": "Kerho",
@@ -2308,12 +2414,15 @@
   },
   "activityCard": {
     "endedOn": "Päättyi {date}",
-    "noSchedule": "Aikataulua ei ole vielä sovittu"
+    "noSchedule": "Aikataulua ei ole vielä sovittu",
+    "cancelledAhead": "{count, plural, one {Peruttu: <b>{dates}</b>.} other {Peruttu: <b>{dates}</b>.}}",
+    "cancelledAheadMore": "Peruttu: <b>{first}</b> ja {more, plural, one {# muu kerta} other {# muuta kertaa}}."
   },
   "sessionBadge": {
     "live": "Käynnissä",
     "nextSession": "Seuraava kerta",
-    "upcoming": "Tuleva kerta"
+    "upcoming": "Tuleva kerta",
+    "cancelled": "Peruttu"
   },
   "sessionFeed": {
     "readMore": "Lue lisää",
@@ -2379,7 +2488,9 @@
     },
     "accountMenu": "Tilivalikko – {name}",
     "continueToAccount": "Jatka tilillesi",
-    "switchTo": "Vaihda profiiliin"
+    "switchTo": "Vaihda profiiliin",
+    "invoicing": "Laskutus",
+    "teamProfile": "Oma profiili"
   },
   "schools": {
     "hero": {
@@ -2815,6 +2926,7 @@
     "municipalityClubs": "Kuntakerhot",
     "municipalityInvoicing": "Kuntalaskutus",
     "invoiceCustomers": "Laskutusasiakkaat",
+    "geduInvoicing": "Gedujen laskutus",
     "camps": "Leirit",
     "events": "Tapahtumat",
     "sites": "Toimipisteet",
@@ -3055,14 +3167,14 @@
   },
   "settings": {
     "subtitle": "Hallitse tilisi asetuksia",
-    "profileDescription": "Päivitä henkilötietosi",
+    "personalInformation": "Henkilötiedot",
     "roleAccount": "{role, select, customer {Vanhemman tili} gamer {Pelaajan tili} gedu {Gedun tili} admin {Ylläpitäjän tili} other {Tili}}",
     "firstNamePlaceholder": "Syötä etunimesi",
     "lastNamePlaceholder": "Syötä sukunimesi",
     "invalidPhone": "Syötä kelvollinen puhelinnumero.",
     "lastNameRequired": "Sukunimessä on oltava vähintään {min} merkkiä.",
-    "profileUpdated": "Profiili päivitetty onnistuneesti!",
-    "failedToUpdateProfile": "Profiilin päivittäminen epäonnistui.",
+    "profileUpdated": "Henkilötiedot tallennettu.",
+    "failedToUpdateProfile": "Henkilötietojen tallentaminen epäonnistui.",
     "securityDescription": "Hallitse salasanaasi ja turvallisuusasetuksiasi",
     "resetPassword": "Nollaa salasana",
     "resetPasswordEmailSent": "Salasanan nollauslinkki lähetetty osoitteeseen {email} – tarkista sähköpostisi.",
@@ -3092,6 +3204,11 @@
       "title": "Kuvat ja videot",
       "granted": "Vanhempasi on sallinut, että sinusta otettuja kuvia ja videoita saa käyttää kertojen raporteissa ja että School of Gaming, Lynx Educate ja Roblox saavat käyttää niitä. Gedu kysyy silti sinulta ennen kuin ottaa sinusta kuvan.",
       "notGranted": "Vanhempasi ei ole sallinut sinusta otettujen kuvien ja videoiden käyttöä, joten Gedu jättää sinut pois kertojen kuvista. Vain vanhempasi voi muuttaa tämän."
+    },
+    "teamProfile": {
+      "title": "Oma profiili",
+      "description": "Julkinen profiilisi School of Gamingin verkkosivuilla: kuva sinusta ja muutama sana siitä, kuka olet.",
+      "edit": "Muokkaa profiilia"
     }
   },
   "tools": {
@@ -4832,5 +4949,155 @@
     "rejectAll": "Hylkää kaikki",
     "analyticsOnly": "Vain analytiikka",
     "analyticsAndMarketing": "Markkinointi ja analytiikka"
+  },
+  "team": {
+    "profile": {
+      "nameWithNickname": "{firstName} ”<nick>{nickname}</nick>” {lastName}",
+      "firstNameWithNickname": "{firstName} ”<nick>{nickname}</nick>”",
+      "geduTitle": "Gedu · pelikasvattaja",
+      "speaks": "Puhuu",
+      "aboutMe": "Minusta",
+      "funFact": "Hauska fakta",
+      "draft": {
+        "shortDescription": "Yhden rivin esittelysi näkyy tässä",
+        "longDescription": "”Minusta”-tekstisi näkyy tässä"
+      }
+    },
+    "edit": {
+      "back": "Takaisin asetuksiin",
+      "pageTitle": "Oma profiili",
+      "status": {
+        "privateTitle": "Yksityinen",
+        "privateBody": "Profiilisi ei ole verkkosivuilla. Kun olet siihen tyytyväinen, rastita alta ”Profiilini on valmis julkaistavaksi” ja tallenna.",
+        "waitingTitle": "Valmis, odottaa ylläpitäjää",
+        "waitingBody": "Ylläpitäjä tarkistaa profiilisivusi ennen kuin se tulee julkiseksi.",
+        "liveTitle": "Julkinen",
+        "liveBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti. Jos haluat piilottaa profiilin, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna. Kun rastitat sen uudelleen, ylläpitäjä julkaisee sen taas."
+      },
+      "actions": {
+        "save": "Tallenna muutokset",
+        "discard": "Hylkää muutokset"
+      },
+      "switch": {
+        "heading": "Julkinen profiili",
+        "readyLabel": "Profiilini on valmis julkaistavaksi",
+        "readyHint": "Rastittamalla ja tallentamalla merkitset profiilisi valmiiksi julkaistavaksi School of Gamingin verkkosivuilla, ja ylläpitäjä julkaisee sen katsottuaan sen. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili piilotetaan heti. Kun rastitat sen uudelleen, ylläpitäjä julkaisee sen taas.",
+        "complete": "Profiilissasi on kaikki, mitä julkaisuun tarvitaan.",
+        "mustStayComplete": "Kun tämä on rastitettu, profiilisi täytyy pysyä täydellisenä, joten tallennus on pois käytöstä, kunnes se on. Täydennä puuttuvat kohdat tai poista rasti jatkaaksesi yksityisesti.",
+        "missing": {
+          "photo": "Lisää kuva, jotta voit rastittaa tämän.",
+          "title": "Lisää tittelisi, jotta voit rastittaa tämän.",
+          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "photoTitle": "Lisää kuva ja tittelisi, jotta voit rastittaa tämän.",
+          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "titleText": "Lisää tittelisi ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "photoTitleText": "Lisää kuva ja tittelisi sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän."
+        }
+      },
+      "photo": {
+        "heading": "Kuva",
+        "upload": "Lataa kuva",
+        "replace": "Vaihda kuva",
+        "remove": "Poista kuva",
+        "guidance": {
+          "intro": "Perheet ja pelaajat näkevät tämän sinusta ensimmäisenä. Kun olet valinnut kuvan, rajaat sen kehykseen sopivaksi.",
+          "doHeading": "Tee näin",
+          "dontHeading": "Vältä",
+          "do": {
+            "you": "Vain sinä, pää ja hartiat, kasvot selvästi näkyvissä",
+            "light": "Tasainen valo, esimerkiksi kasvot ikkunaan päin",
+            "natural": "Rento ja luonteva: näytät omalta itseltäsi",
+            "gear": "Kuulokkeet tai ohjain saavat näkyä kuvassa",
+            "background": "Pelkistetty tai siisti tausta"
+          },
+          "dont": {
+            "others": "Muita ihmisiä kuvassa. Lastensuojelun vuoksi kuvaa, jossa on lapsi, ei voi käyttää",
+            "hidden": "Aurinkolaseja, maskeja tai mitään, mikä peittää kasvosi",
+            "group": "Ryhmäkuvia tai itseäsi rajattuna ryhmäkuvasta",
+            "avatar": "Avatareja, piirroshahmoja tai raskaita filttereitä",
+            "blurry": "Sumeita tai tummia kuvia"
+          }
+        },
+        "crop": {
+          "title": "Rajaa kuvasi",
+          "description": "Vedä kuva paikalleen kehyksessä ja zoomaa sopivaksi.",
+          "zoom": "Zoomaus",
+          "confirm": "Käytä kuvaa",
+          "unreadable": "Tätä tiedostoa ei voi avata kuvana tässä. Valitse JPEG-, PNG- tai WebP-kuva. iPhonen HEIC-kuvat pitää muuntaa ensin.",
+          "chooseAnother": "Valitse toinen kuva",
+          "failed": "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+        }
+      },
+      "about": {
+        "heading": "Sinusta",
+        "nickname": "Pelaajat tuntevat minut nimellä",
+        "nicknamePlaceholder": "PixelPirate",
+        "nicknameHint": "Näkyy lainausmerkeissä nimesi keskellä juuri niin kuin sen kirjoitat.",
+        "title": "Titteli",
+        "titleHint": "Tehtäväsi School of Gamingissa, esimerkiksi kerhovastaava.",
+        "pick": "Värisi"
+      },
+      "writing": {
+        "heading": "Omin sanoin",
+        "languages": "Kielet",
+        "addLocale": "Lisää kieli",
+        "removeLocale": "Poista {locale}",
+        "shortDescription": "Esittele itsesi yhdellä rivillä",
+        "shortDescriptionPlaceholder": "Redstone-nörtti ja speedrun-fani",
+        "longDescription": "Minusta",
+        "longDescriptionHint": "Mitä teet sessioissa, mitä pelaat ja mitä perheet voisivat haluta tietää sinusta.",
+        "longDescriptionPlaceholder": "Kerro perheille vähän itsestäsi",
+        "funFact": "Hauska fakta",
+        "funFactPlaceholder": "Rakensin kerran toimivan laskimen Minecraftissa.",
+        "count": "{count}/{max}"
+      },
+      "preview": {
+        "heading": "Esikatselu"
+      },
+      "errors": {
+        "save": "Profiilin tallentaminen ei onnistunut. Yritä uudelleen.",
+        "incomplete": "Profiilin on oltava valmis niin kauan kuin se on merkitty valmiiksi julkaistavaksi. Täydennä puuttuvat kohdat ja tallenna uudelleen.",
+        "photoUpload": "Kuvan lataus ei onnistunut, joten mitään ei tallennettu. Yritä tallentaa uudelleen.",
+        "photoGone": "Kuvaa on muutettu muualla sen jälkeen, kun avasit tämän sivun. Lataa sivu uudelleen nähdäksesi profiilin nykyisen version."
+      }
+    },
+    "admin": {
+      "status": {
+        "privateTitle": "Ei vielä merkitty valmiiksi",
+        "privateBody": "Profiili ({name}) ei ole verkkosivuilla. Kun se on täydellinen, {name} tai kuka tahansa ylläpitäjä voi merkitä sen valmiiksi julkaistavaksi.",
+        "waitingTitle": "Valmis, odottaa julkaisua",
+        "waitingBody": "Profiili ({name}) on merkitty valmiiksi julkaistavaksi. Se tulee näkyviin School of Gamingin verkkosivuille heti, kun ylläpitäjä julkaisee sen.",
+        "liveTitle": "Julkinen",
+        "liveBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti."
+      },
+      "edit": {
+        "back": "Takaisin: {name}",
+        "pageTitle": "Profiili: {name}",
+        "readyLabel": "Profiili on valmis julkaistavaksi",
+        "readyHint": "Rastittamalla ja tallentamalla merkitset profiilin ({name}) valmiiksi julkaistavaksi School of Gamingin verkkosivuilla. Se tulee näkyviin, kun ylläpitäjä julkaisee sen. Voit milloin tahansa poistaa rastin ja tallentaa, jolloin profiili piilotetaan heti ja pysyy piilossa, kunnes se merkitään uudelleen valmiiksi ja julkaistaan.",
+        "complete": "Profiilissa on kaikki, mitä julkaisemiseen tarvitaan.",
+        "mustStayComplete": "Kun tämä on rastitettu, profiilin täytyy pysyä täydellisenä, joten tallennus on pois käytöstä, kunnes se on. Täydennä puuttuvat kohdat tai poista rasti.",
+        "missing": {
+          "photo": "Lisää kuva, jotta voit rastittaa tämän.",
+          "title": "Lisää titteli, jotta voit rastittaa tämän.",
+          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "photoTitle": "Lisää kuva ja titteli, jotta voit rastittaa tämän.",
+          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "titleText": "Lisää titteli ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "photoTitleText": "Lisää kuva ja titteli sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän."
+        }
+      },
+      "userPage": {
+        "heading": "Profiili",
+        "nothingSaved": "Profiiliin ({name}) ei ole vielä kirjoitettu mitään.",
+        "writtenIn": "Kielet",
+        "edit": "Muokkaa profiilia",
+        "makePublic": "Julkaise",
+        "makePublicNeedsReady": "Merkitse profiili valmiiksi kohdassa Muokkaa profiilia, jotta voit julkaista sen.",
+        "makePublicNotReady": "Profiilia ({name}) ei ole enää merkitty valmiiksi, joten sitä ei julkaistu.",
+        "hide": "Piilota",
+        "visibilityError": "Profiilin näkyvyyden muuttaminen ei onnistunut. Yritä uudelleen."
+      }
+    }
   }
 }

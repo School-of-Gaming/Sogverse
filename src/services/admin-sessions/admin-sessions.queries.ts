@@ -1,8 +1,17 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { familyProductFeedKeys } from "@/services/family-product-feed/family-product-feed.keys";
 import type { AttendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import { geduSessionKeys } from "@/services/gedu-sessions/gedu-sessions.keys";
+import { municipalityInvoicingKeys } from "@/services/municipality-invoicing/municipality-invoicing.keys";
+import { sessionSubstitutionKeys } from "@/services/session-substitution/session-substitution.keys";
 import { adminSessionKeys } from "./admin-sessions.keys";
 import { AdminSessionsService } from "./admin-sessions.service";
 
@@ -18,7 +27,9 @@ import { AdminSessionsService } from "./admin-sessions.service";
  *
  * They deliberately do **not** touch the gedu feed's keys. Those caches belong
  * to a gedu's session in a gedu's browser; an admin's client has never held one,
- * so invalidating them would be a no-op dressed up as thoroughness.
+ * so invalidating them would be a no-op dressed up as thoroughness. The one
+ * exception is a cancel or a restore, which changes the session itself rather
+ * than the admin's record of it — see its own note.
  */
 
 /**
@@ -151,6 +162,60 @@ export function useAdminDeleteSessionImage(productId: string) {
         queryKey: adminSessionKeys.byProduct(productId),
       });
     },
+  });
+}
+
+/**
+ * What a cancel or a restore invalidates: every document that draws the date.
+ *
+ * The exception to this file's one-key rule, because a cancellation is not an
+ * edit to the admin's record but a change to the session itself — the gedu feed
+ * and the dashboard's owed counts, the substitution queues that hide a
+ * cancelled date's requests, the family feed, and the municipality invoicing
+ * ledger, where a cancelled date shows as Cancelled and never bills, all read
+ * it. Roots, because a cancelled date moves documents this client cannot name
+ * the leaves of.
+ *
+ * The admin document's refetch is **returned**, so the dialog holding its
+ * committing flag across the await lets go only once the card it was opened
+ * from has been rebuilt from the new answer.
+ */
+function invalidateCancellationWrite(queryClient: QueryClient) {
+  for (const queryKey of [
+    geduSessionKeys.all,
+    sessionSubstitutionKeys.all,
+    familyProductFeedKeys.all,
+    municipalityInvoicingKeys.all,
+  ]) {
+    void queryClient.invalidateQueries({ queryKey });
+  }
+  return queryClient.invalidateQueries({ queryKey: adminSessionKeys.all });
+}
+
+/**
+ * Cancel one session with an optional reason — or, on a session already
+ * cancelled, replace its reason: the write is an upsert.
+ */
+export function useAdminCancelSession(groupId: string) {
+  const queryClient = useQueryClient();
+  const service = new AdminSessionsService(getClient());
+
+  return useMutation({
+    mutationFn: (vars: { sessionDate: string; reason: string }) =>
+      service.cancelSession({ groupId, ...vars }),
+    onSuccess: () => invalidateCancellationWrite(queryClient),
+  });
+}
+
+/** Restore a cancelled session, reopening it to every write. */
+export function useAdminRestoreSession(groupId: string) {
+  const queryClient = useQueryClient();
+  const service = new AdminSessionsService(getClient());
+
+  return useMutation({
+    mutationFn: (vars: { sessionDate: string }) =>
+      service.restoreSession({ groupId, ...vars }),
+    onSuccess: () => invalidateCancellationWrite(queryClient),
   });
 }
 

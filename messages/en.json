@@ -42,6 +42,7 @@
       "adminInvoiceCustomers": "Invoice Customers",
       "adminInvoiceCustomerNew": "New Invoice Customer",
       "adminInvoiceCustomerEdit": "Edit Invoice Customer",
+      "adminGeduInvoicing": "Gedu Invoicing",
       "adminTools": "Tools",
       "parentDashboard": "My SOG",
       "geduDashboard": "My SOG",
@@ -66,7 +67,10 @@
       "geduContract": "Gedu contract",
       "seatOffer": "Seat offer",
       "geduSubstitutions": "Substitutions",
-      "adminSubstitutions": "Substitutions"
+      "geduInvoicing": "Invoicing",
+      "adminSubstitutions": "Substitutions",
+      "teamProfile": "My profile",
+      "adminTeamProfile": "Profile"
     },
     "descriptions": {
       "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
@@ -339,6 +343,15 @@
         "needsAttention": "Needs attention — this product is in the queue at the top of the page",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
+      "cancellation": {
+        "allTitle": "Every group’s session on this date is cancelled",
+        "some": "{cancelled} of {groups, plural, one {# group} other {# groups}} cancelled",
+        "allComingUp": {
+          "starts": "first session cancelled",
+          "ends": "last session cancelled",
+          "runs": "cancelled"
+        }
+      },
       "comingUp": {
         "label": "Coming up",
         "heading": "Coming up",
@@ -396,6 +409,7 @@
       "feeNotSet": "Fee not set",
       "notRecorded": "Not recorded",
       "upcoming": "Upcoming",
+      "cancelled": "Cancelled",
       "unrecordedSessions": "{count, plural, one {# not recorded} other {# not recorded}}",
       "sessionsFor": "Sessions of {club}",
       "clubsIn": "Clubs in {municipality}",
@@ -1159,6 +1173,30 @@
         "loadFailed": "The session record could not be loaded. Reload the page to try again.",
         "loading": "Loading this product's session record.",
         "railGroupHeading": "Group"
+      },
+      "cancellation": {
+        "menuLabel": "More actions for this cancelled session",
+        "cancelSession": "Cancel session",
+        "addReason": "Add a reason",
+        "changeReason": "Change the reason",
+        "restoreSession": "Restore session",
+        "cancelTitle": "Cancel this session?",
+        "cancelBody": "{date}. Families and Gedus will see this session as cancelled, and nothing can be recorded on it. Nobody is notified.",
+        "reasonTitle": "Change the reason",
+        "reasonBody": "{date}. The session stays cancelled.",
+        "reasonLabel": "Reason",
+        "reasonHint": "Only admins see the reason. {count, plural, one {# character left} other {# characters left}}",
+        "reasonPlaceholder": "Why is this session cancelled?",
+        "keepSession": "Keep the session",
+        "cancelConfirm": "Cancel the session",
+        "reasonConfirm": "Save the reason",
+        "recordKept": "The notes, photos and attendance already recorded for this session are kept. Families will not see them while it is cancelled, and they come back if the session is restored.",
+        "recordKeptEmailed": "The notes, photos and attendance already recorded for this session are kept. Families will not see them while it is cancelled, and they come back if the session is restored. The report has already been emailed to families, and that email cannot be recalled.",
+        "cancelFailed": "That could not be saved. Try again.",
+        "restoreTitle": "Restore this session?",
+        "restoreBody": "{date}. Families and Gedus will see this session as scheduled again, and it can be recorded as usual. Nobody is notified.",
+        "restoreConfirm": "Restore the session",
+        "restoreFailed": "The session could not be restored. Try again."
       }
     },
     "users": {
@@ -1197,7 +1235,25 @@
           "girl": "Girl",
           "non_binary": "Non-binary"
         },
-        "ageYears": "{age, plural, one {# year old} other {# years old}}"
+        "ageYears": "{age, plural, one {# year old} other {# years old}}",
+        "usernameLabel": "Username",
+        "usernameHint": "Letters and numbers only, 3 to 20 characters. From now on they sign in with the new username.",
+        "usernameInvalid": "Use 3 to 20 letters or numbers, with no spaces.",
+        "usernameTaken": "That username is already taken. Try another one.",
+        "usernameSaveError": "Couldn’t change the username, so nothing was saved. Please try again.",
+        "usernameSavedDetailsFailed": "The username was changed, but the birth date and gender weren’t saved. Please try again.",
+        "emailHint": "From now on they sign in with the new address. It shows as not verified until they confirm it.",
+        "emailSaveError": "Couldn’t change the email address, so nothing was saved. Please try again.",
+        "emailSavedDetailsFailed": "The email address was changed, but the birth date and gender weren’t saved. Please try again."
+      },
+      "emailEdit": {
+        "edit": "Change email address",
+        "title": "Change email address",
+        "description": "From now on they sign in with the new address. It shows as not verified until they confirm it.",
+        "label": "Email address",
+        "invalid": "Enter a valid email address.",
+        "taken": "This address already belongs to another account. Merging or removing that account can’t be done here — ask a developer to handle it.",
+        "saveError": "Couldn’t change the email address. Please try again."
       },
       "gameAccounts": {
         "title": "Game accounts",
@@ -1735,7 +1791,7 @@
         },
         "sessions": {
           "title": "what happened in each group",
-          "intro": "Every session a Programme group has recorded, with the attendance marks and the photographs the Game Educator attached to its report. A session has a record once a Game Educator writes it up or marks attendance, so a scheduled session that has not happened yet is not here. Use it for per-session views such as a drop-off curve; the per-child totals are already on the enrolment.",
+          "intro": "Every session a Programme group has recorded, with the attendance marks and the photographs the Game Educator attached to its report. A session has a record once a Game Educator writes it up or marks attendance, so a scheduled session that has not happened yet is not here, and neither is one an admin has cancelled, even if it was written up. Use it for per-session views such as a drop-off curve; the per-child totals are already on the enrolment.",
           "params": {
             "productId": "Only sessions of this product’s groups.",
             "groupId": "Only this group’s sessions.",
@@ -2183,7 +2239,8 @@
       "substitutionWithdrawTitle": "Take this back?",
       "substitutionWithdrawBody": "You go back to running the session, and any offers to substitute are dropped.",
       "substitutionWithdrawConfirm": "Take it back",
-      "substitutionWithdrawFailed": "That didn’t save. Try again."
+      "substitutionWithdrawFailed": "That didn’t save. Try again.",
+      "cancelledByOn": "Cancelled by {name}, {when}"
     },
     "groupNotes": {
       "heading": "About this group",
@@ -2300,6 +2357,55 @@
       }
     }
   },
+  "geduInvoicing": {
+    "adminTitle": "Gedu invoicing",
+    "adminDescription": "One month: the sessions each Gedu recorded, and what they invoice School of Gaming for them.",
+    "myTitle": "Invoicing",
+    "myDescription": "What you invoice School of Gaming for, one month at a time. A session counts once something is recorded for it — attendance, a report or a note.",
+    "backToDashboard": "Back to My SOG",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
+    "monthTotal": "Month total",
+    "myTotal": "Total",
+    "geduCount": "{count, plural, one {# Gedu} other {# Gedus}}",
+    "clubCount": "{count, plural, one {# club} other {# clubs}}",
+    "sessionCount": "{count, plural, one {# session} other {# sessions}}",
+    "municipalityAmount": "municipality {amount}",
+    "consumerAmount": "consumer {amount}",
+    "segmentMunicipality": "Municipality",
+    "segmentConsumer": "Consumer",
+    "columnClub": "Club",
+    "columnRole": "Role",
+    "columnFee": "Fee / session",
+    "columnSessions": "Sessions",
+    "columnTotal": "Total",
+    "rolePrimary": "Primary",
+    "roleAssistant": "Assistant",
+    "feeNotSet": "Fee not set",
+    "recorded": "Recorded",
+    "notRecorded": "Not recorded",
+    "upcoming": "Upcoming",
+    "cancelled": "Cancelled",
+    "absentSubstituted": "Away — {name} substituted",
+    "absentNoSubstitute": "Away — no substitute",
+    "substitutingFor": "substituting for {name}",
+    "unrecordedCount": "{count, plural, one {# not recorded} other {# not recorded}}",
+    "excludedWithoutFee": "No fee set: {clubs, plural, one {# club} other {# clubs}}, {sessions, plural, one {# session} other {# sessions}} left out of the total",
+    "sessionsFor": "Sessions of {club} ({role})",
+    "clubsOf": "Clubs of {name}",
+    "adminEmptyMonth": "No Gedu has a session recorded or scheduled in this month.",
+    "myEmptyMonth": "You have nothing to invoice for this month: none of your sessions was recorded or scheduled in it.",
+    "vatNote": "Amounts exclude VAT. Add VAT (25.5%) when you invoice.",
+    "itemiseNote": "Itemise the municipality and consumer sums separately on your invoice.",
+    "myUnrecorded": "{count, plural, one {# past session has nothing recorded, so it isn’t included. Record it in the group’s workspace and it will be.} other {# past sessions have nothing recorded, so they aren’t included. Record them in the group’s workspace and they will be.}}",
+    "loadError": "Could not load the invoicing month. Refresh to try again.",
+    "loadErrorWithReason": "Could not load the invoicing month — {reason}. Refresh to try again.",
+    "searchPlaceholder": "Search by name or email…",
+    "searchAriaLabel": "Search Gedus",
+    "searchNoMatches": "No Gedu this month matches “{query}”."
+  },
   "productType": {
     "consumer_club": "Club",
     "municipality_club": "Club",
@@ -2308,12 +2414,15 @@
   },
   "activityCard": {
     "endedOn": "Ended {date}",
-    "noSchedule": "No schedule set yet"
+    "noSchedule": "No schedule set yet",
+    "cancelledAhead": "{count, plural, one {<b>{dates}</b> is cancelled.} other {<b>{dates}</b> are cancelled.}}",
+    "cancelledAheadMore": "<b>{first}</b> and {more, plural, one {# more session} other {# more sessions}} are cancelled."
   },
   "sessionBadge": {
     "live": "Live",
     "nextSession": "Next session",
-    "upcoming": "Upcoming"
+    "upcoming": "Upcoming",
+    "cancelled": "Cancelled"
   },
   "sessionFeed": {
     "readMore": "Read more",
@@ -2379,7 +2488,9 @@
     },
     "accountMenu": "Account menu – {name}",
     "continueToAccount": "Continue to your account",
-    "switchTo": "Switch to"
+    "switchTo": "Switch to",
+    "invoicing": "Invoicing",
+    "teamProfile": "My profile"
   },
   "schools": {
     "hero": {
@@ -2815,6 +2926,7 @@
     "municipalityClubs": "Municipality Clubs",
     "municipalityInvoicing": "Municipality Invoicing",
     "invoiceCustomers": "Invoice Customers",
+    "geduInvoicing": "Gedu Invoicing",
     "camps": "Camps",
     "events": "Events",
     "sites": "Sites",
@@ -3742,14 +3854,14 @@
   },
   "settings": {
     "subtitle": "Manage your account preferences",
-    "profileDescription": "Update your personal information",
+    "personalInformation": "Personal information",
     "roleAccount": "{role, select, customer {Parent account} gamer {Gamer account} gedu {Gedu account} admin {Admin account} other {Account}}",
     "firstNamePlaceholder": "Enter your first name",
     "lastNamePlaceholder": "Enter your last name",
     "invalidPhone": "Please enter a valid phone number.",
     "lastNameRequired": "Last name must be at least {min} characters.",
-    "profileUpdated": "Profile updated successfully!",
-    "failedToUpdateProfile": "Failed to update profile.",
+    "profileUpdated": "Personal information saved.",
+    "failedToUpdateProfile": "Your personal information could not be saved.",
     "securityDescription": "Manage your password and security settings",
     "resetPassword": "Reset password",
     "resetPasswordEmailSent": "Password reset link sent to {email} — check your inbox.",
@@ -3779,6 +3891,11 @@
       "title": "Photos and videos",
       "granted": "Your parent has said photos and videos of you may be included in session reports and used by School of Gaming, Lynx Educate and Roblox. A Gedu will still ask you before taking your photo.",
       "notGranted": "Your parent has said photos and videos of you are not to be used, so a Gedu will keep you out of session photos. Only your parent can change this."
+    },
+    "teamProfile": {
+      "title": "My profile",
+      "description": "Your public profile on School of Gaming’s website: a photo of you and a few words about who you are.",
+      "edit": "Edit profile"
     }
   },
   "tools": {
@@ -4832,5 +4949,155 @@
     "rejectAll": "Reject all",
     "analyticsOnly": "Analytics only",
     "analyticsAndMarketing": "Marketing and analytics"
+  },
+  "team": {
+    "profile": {
+      "nameWithNickname": "{firstName} “<nick>{nickname}</nick>” {lastName}",
+      "firstNameWithNickname": "{firstName} “<nick>{nickname}</nick>”",
+      "geduTitle": "Gedu · Game Educator",
+      "speaks": "Speaks",
+      "aboutMe": "About me",
+      "funFact": "Fun fact",
+      "draft": {
+        "shortDescription": "Your one-line intro appears here",
+        "longDescription": "What you write in “About me” appears here"
+      }
+    },
+    "edit": {
+      "back": "Back to settings",
+      "pageTitle": "My profile",
+      "status": {
+        "privateTitle": "Private",
+        "privateBody": "Your profile isn’t on the website. When you are happy with it, tick “My profile is ready to be public” below and save.",
+        "waitingTitle": "Ready, waiting for an admin",
+        "waitingBody": "An admin will review your profile page before it becomes public.",
+        "liveTitle": "Public",
+        "liveBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away. To hide it, untick “My profile is ready to be public” and save; once you tick it again, an admin makes it public again."
+      },
+      "actions": {
+        "save": "Save changes",
+        "discard": "Discard changes"
+      },
+      "switch": {
+        "heading": "Public profile",
+        "readyLabel": "My profile is ready to be public",
+        "readyHint": "Ticking this and saving marks your profile ready for School of Gaming’s website, and an admin makes it public once they have looked at it. Untick it and save at any time, and it is hidden straight away; once you tick it again, an admin makes it public again.",
+        "complete": "Your profile has everything it needs to go public.",
+        "mustStayComplete": "While this is ticked your profile has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box to keep working on it privately.",
+        "missing": {
+          "photo": "Add a photo to be able to tick this.",
+          "title": "Add your title to be able to tick this.",
+          "text": "Fill in “Introduce yourself in one line” and “About me” in every language you write in to be able to tick this.",
+          "photoTitle": "Add a photo and your title to be able to tick this.",
+          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this.",
+          "titleText": "Add your title, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this.",
+          "photoTitleText": "Add a photo and your title, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this."
+        }
+      },
+      "photo": {
+        "heading": "Photo",
+        "upload": "Upload photo",
+        "replace": "Replace photo",
+        "remove": "Remove photo",
+        "guidance": {
+          "intro": "This is the first thing families and gamers see of you. Once you have chosen a photo, you crop it to fit the frame.",
+          "doHeading": "Do",
+          "dontHeading": "Don’t",
+          "do": {
+            "you": "Just you, head and shoulders, face clearly visible",
+            "light": "Soft, even light, for example facing a window",
+            "natural": "Relaxed and natural: look like yourself",
+            "gear": "A headset or controller in the shot is fine",
+            "background": "A plain or tidy background"
+          },
+          "dont": {
+            "others": "Anyone else in the frame. For safeguarding, a photo with a child in it can’t be used",
+            "hidden": "Sunglasses, masks or anything hiding your face",
+            "group": "Group shots, or yourself cropped out of one",
+            "avatar": "Avatars, cartoons or heavy filters",
+            "blurry": "Blurry or dark shots"
+          }
+        },
+        "crop": {
+          "title": "Crop your photo",
+          "description": "Drag the photo to place it in the frame, and zoom to fit.",
+          "zoom": "Zoom",
+          "confirm": "Use photo",
+          "unreadable": "This file can’t be opened as a picture here. Choose a JPEG, PNG or WebP photo. iPhone photos in HEIC format need converting first.",
+          "chooseAnother": "Choose another photo",
+          "failed": "The photo could not be cropped. Try again, or choose another photo."
+        }
+      },
+      "about": {
+        "heading": "About you",
+        "nickname": "Gamers know me as",
+        "nicknamePlaceholder": "PixelPirate",
+        "nicknameHint": "Shown in quotes in your name, exactly as you write it.",
+        "title": "Title",
+        "titleHint": "Your job at School of Gaming, for example Head of Clubs.",
+        "pick": "Your colour"
+      },
+      "writing": {
+        "heading": "In your own words",
+        "languages": "Languages",
+        "addLocale": "Add a language",
+        "removeLocale": "Remove {locale}",
+        "shortDescription": "Introduce yourself in one line",
+        "shortDescriptionPlaceholder": "Redstone nerd and speedrun fan",
+        "longDescription": "About me",
+        "longDescriptionHint": "What you do in sessions, what you play, and what families might like to know about you.",
+        "longDescriptionPlaceholder": "Tell families a little about yourself",
+        "funFact": "Fun fact",
+        "funFactPlaceholder": "I once built a working calculator in Minecraft.",
+        "count": "{count}/{max}"
+      },
+      "preview": {
+        "heading": "Preview"
+      },
+      "errors": {
+        "save": "Couldn’t save the profile. Please try again.",
+        "incomplete": "The profile has to be complete while it is marked ready to be public. Fill in what is missing and save again.",
+        "photoUpload": "The photo didn’t upload, so nothing was saved. Please try saving again.",
+        "photoGone": "The photo was changed somewhere else since you opened this page. Reload the page to see the profile as it is now."
+      }
+    },
+    "admin": {
+      "status": {
+        "privateTitle": "Not marked ready yet",
+        "privateBody": "{name}’s profile isn’t on the website. Once it is complete, {name} or any admin can mark it ready to be public.",
+        "waitingTitle": "Ready, waiting to be made public",
+        "waitingBody": "{name}’s profile is marked ready to be public. It goes on School of Gaming’s website as soon as an admin makes it public.",
+        "liveTitle": "Public",
+        "liveBody": "Anyone can see {name}’s profile on School of Gaming’s website. Changes saved to it go live straight away."
+      },
+      "edit": {
+        "back": "Back to {name}",
+        "pageTitle": "{name}’s profile",
+        "readyLabel": "The profile is ready to be public",
+        "readyHint": "Ticking this and saving marks {name}’s profile ready for School of Gaming’s website; it goes up once an admin makes it public. Untick it and save at any time, and it is hidden straight away until it is marked ready and made public again.",
+        "complete": "The profile has everything it needs to go public.",
+        "mustStayComplete": "While this is ticked the profile has to stay complete, so saving is off until it is. Fill in what is missing, or untick the box.",
+        "missing": {
+          "photo": "Add a photo to be able to tick this.",
+          "title": "Add a title to be able to tick this.",
+          "text": "Fill in “Introduce yourself in one line” and “About me” in every language written to be able to tick this.",
+          "photoTitle": "Add a photo and a title to be able to tick this.",
+          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this.",
+          "titleText": "Add a title, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this.",
+          "photoTitleText": "Add a photo and a title, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this."
+        }
+      },
+      "userPage": {
+        "heading": "Profile",
+        "nothingSaved": "Nothing has been written for {name}’s profile yet.",
+        "writtenIn": "Written in",
+        "edit": "Edit profile",
+        "makePublic": "Make public",
+        "makePublicNeedsReady": "Mark the profile ready under Edit profile to be able to make it public.",
+        "makePublicNotReady": "{name}’s profile is no longer marked ready, so it wasn’t made public.",
+        "hide": "Hide",
+        "visibilityError": "Couldn’t change whether the profile is public. Please try again."
+      }
+    }
   }
 }

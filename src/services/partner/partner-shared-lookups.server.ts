@@ -454,8 +454,48 @@ export async function readAttendance(
 }
 
 /**
+ * The cancelled sessions among a set of groups, as `cancelledSessionKey`s.
+ *
+ * An admin may cancel a session that was already recorded, and the admin's
+ * word wins: the record is kept, but the session did not happen, so no
+ * resource reports it as held — whatever the schedule has done since. Which
+ * cancellations are in effect is the database's one answer, read here rather
+ * than re-derived, so this cannot drift from the feeds, the invoice or the
+ * owed count.
+ */
+export async function readCancelledSessions(
+  db: PartnerDb,
+  groupIds: readonly string[],
+): Promise<Set<string>> {
+  const cancelled = new Set<string>();
+  for (const chunk of chunkKeys(unique(groupIds))) {
+    const rows = await walkPages("partner session cancellations", (from, to) =>
+      db
+        .rpc(
+          "get_session_cancellations_in_effect",
+          { p_group_ids: chunk },
+          { count: "exact" },
+        )
+        .order("group_id")
+        .order("session_date")
+        .range(from, to),
+    );
+    for (const row of rows) {
+      cancelled.add(cancelledSessionKey(row.group_id, row.session_date));
+    }
+  }
+  return cancelled;
+}
+
+/** The key `readCancelledSessions` answers in: one (group, product-local date). */
+export function cancelledSessionKey(groupId: string, sessionDate: string): string {
+  return `${groupId}|${sessionDate}`;
+}
+
+/**
  * Each group's recorded sessions — a written report or at least one attendance
- * mark (`isRecordedSession`) — keyed by group id, ascending by session id, with
+ * mark (`isRecordedSession`), on a date no admin cancelled
+ * (`readCancelledSessions`) — keyed by group id, ascending by session id, with
  * the marks attached. A group with none is absent from the map.
  *
  * Recorded is decided on every mark the session carries, whoever it is for:
@@ -494,13 +534,19 @@ export async function readRecordedSessionsByGroup(
     );
   }
 
-  const marks = await readAttendance(
-    db,
-    sessions.map((session) => session.id),
-  );
+  const [marks, cancelled] = await Promise.all([
+    readAttendance(
+      db,
+      sessions.map((session) => session.id),
+    ),
+    readCancelledSessions(db, groupIds),
+  ]);
 
   const byGroup = new Map<string, RecordedSession[]>();
   for (const session of [...sessions].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
+    if (cancelled.has(cancelledSessionKey(session.group_id, session.session_date))) {
+      continue;
+    }
     const attendance = marks.get(session.id) ?? [];
     if (!isRecordedSession(session.report, attendance.length)) continue;
     const list = byGroup.get(session.group_id) ?? [];

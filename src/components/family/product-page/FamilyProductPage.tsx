@@ -145,6 +145,7 @@ export function FamilyProductPage({
             startDate: feed.product.start_date,
             endDate: feed.product.end_date,
             sessions: feed.sessions,
+            cancellations: feed.cancellations,
             now,
             accessUntil,
           }),
@@ -169,7 +170,9 @@ export function FamilyProductPage({
    * when the window covers nothing at all, which is the case the notice has its
    * own sentence for.
    */
-  const lastSessionStart = entries[0]?.startsAt ?? null;
+  // A cancelled date is not a session the window covers, so it is stepped over.
+  const lastSessionStart =
+    entries.find((entry) => entry.kind !== "cancelled")?.startsAt ?? null;
 
   if (isPending) return <FamilyProductPageSkeleton audience={audience} />;
   if (feed === null) return <FamilyProductNotFound audience={audience} />;

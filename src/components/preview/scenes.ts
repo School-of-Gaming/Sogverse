@@ -248,6 +248,52 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "team-profile",
+    title: "Team profile (draft)",
+    description:
+      "One person's public profile as a page, the same body for office staff and Gedus, before the public route exists.",
+    chrome: "public",
+    scenarios: [
+      { slug: "admin", label: "Office staff — English only, with a fun fact" },
+      { slug: "gedu", label: "Gedu — English and Finnish, with a fun fact" },
+      {
+        slug: "gedu-finnish-only",
+        label: "Gedu — Finnish only, no fun fact",
+        description:
+          "Read it in any locale but Finnish to see the fallback and its caption.",
+      },
+    ],
+  },
+  {
+    surface: "gedu-profile-editor",
+    title: "Profile editor — Gedu (draft)",
+    description:
+      "The page a Gedu or an admin edits their own public profile on, beside a live preview of it. Typing, the photo crop, saving and the ready switch work locally; the upload is inert.",
+    chrome: "dashboard",
+    navRole: "gedu",
+    scenarios: [
+      {
+        slug: "private",
+        label: "Private — incomplete",
+        description:
+          "No photo and half a language, so the ready switch is off with its reason.",
+      },
+      { slug: "waiting", label: "Ready, waiting for an admin" },
+      { slug: "live", label: "Public" },
+    ],
+  },
+  {
+    surface: "admin-profile-editor",
+    title: "Profile editor — office staff (draft)",
+    description:
+      "The same page as office staff meet it: their own profile, and a Gedu's profile edited from the admin panel, switch included, in words addressed to the admin.",
+    chrome: "admin",
+    scenarios: [
+      { slug: "own", label: "Own profile, ready, waiting for an admin" },
+      { slug: "editing-gedu", label: "Editing a Gedu's profile" },
+    ],
+  },
+  {
     surface: "parent-dashboard",
     title: "Parent dashboard",
     description:
@@ -570,6 +616,36 @@ export const PREVIEW_SCENES = [
       {
         slug: "working-month",
         label: "A month of invoicing",
+      },
+    ],
+  },
+  {
+    surface: "gedu-invoicing",
+    title: "Gedu invoicing — admin",
+    description:
+      "The month every Gedu invoices School of Gaming for, over a fixture month pinned to Thursday 21 May 2026 that holds every kind of line. The month stepper stays in the preview; every month but May is empty.",
+    chrome: "admin",
+    scenarios: [{ slug: "working-month", label: "A month of Gedu invoicing" }],
+  },
+  {
+    surface: "gedu-my-invoicing",
+    title: "Gedu invoicing — the Gedu's own month",
+    description:
+      "The page a Gedu copies their invoice from, over the same fixture month, as each of two Gedus — no one of them holds every kind of line. The stepper stays in the preview; every month but May is empty.",
+    chrome: "dashboard",
+    navRole: "gedu",
+    scenarios: [
+      {
+        slug: "was-away",
+        label: "A Gedu who was away",
+        description:
+          "A covered absence, a missed session, and a club in each segment.",
+      },
+      {
+        slug: "stood-in",
+        label: "A Gedu who stood in",
+        description:
+          "A substitution, a cancellation, both roles, and a fee nobody set.",
       },
     ],
   },

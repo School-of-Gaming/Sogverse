@@ -226,6 +226,7 @@ function waitlistedEnrollment(
     prepWindowEnd: null,
     nextSessionStart: null,
     nextSessionEnd: null,
+    cancelledAhead: [],
     hasVoiceRoom: true,
     voiceHref: "#",
     siteName: null,

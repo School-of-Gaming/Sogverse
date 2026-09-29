@@ -1,5 +1,5 @@
 import { Link } from "@/i18n/navigation";
-import { AlertTriangle, ArrowLeft, MailCheck, MailX, Package, Users } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Package, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { ROUTES, ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
@@ -16,9 +16,10 @@ import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card
 import { UserMarketingCard } from "@/components/admin/user-marketing-card";
 import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-consent-card";
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
-import { gamerUsernameFromEmail, hasRealEmail } from "@/lib/gamer-sign-in";
+import { GamerUsernameLine, UserEmailLine } from "@/components/admin/user-email-line";
+import { hasRealEmail } from "@/lib/gamer-sign-in";
 import { formatDate } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users";
 import { GamerService } from "@/services/gamers";
@@ -34,6 +35,9 @@ import {
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
+import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
+import type { TeamProfileRecord } from "@/services/team-profiles/team-profiles.types";
+import { UserTeamProfileCard } from "@/components/admin/user-team-profile-card";
 import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@/types";
 
 /**
@@ -158,6 +162,8 @@ export default async function AdminUserDetailPage({
   const isCustomer = profile.role === "customer";
   const isGamer = profile.role === "gamer";
   const isGedu = profile.role === "gedu";
+  // The two roles with a public team profile: office staff and Gedus.
+  const hasTeamProfile = isGedu || profile.role === "admin";
 
   // Game identities belong to the people who play — a child, and the educator
   // running the session. A parent's or another admin's account has none, which
@@ -185,6 +191,8 @@ export default async function AdminUserDetailPage({
     robloxAccount,
     geduCertification,
     geduAcceptances,
+    teamProfile,
+    viewer,
   ] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
@@ -212,6 +220,16 @@ export default async function AdminUserDetailPage({
     isGedu
       ? new GeduContractService(supabase).getAcceptances(userId).catch(() => null)
       : Promise.resolve<GeduContractAcceptance[] | null>(null),
+    // The team profile, read here so its card paints complete: its status
+    // and summary differ in height from one profile to the next. Not caught:
+    // the id has already matched a profile, so it cannot be malformed, and a
+    // failed read shown as no profile would be the wrong answer.
+    hasTeamProfile
+      ? new TeamProfilesService(supabase).getTeamProfile(userId)
+      : Promise.resolve<TeamProfileRecord | null>(null),
+    // Who is looking, so the card can send an admin to their own profile
+    // through settings. Cached for the request: the layout has read it.
+    hasTeamProfile ? getUserWithProfile() : Promise.resolve(null),
   ]);
 
   // Products this user is assigned to. For a gamer, their own participations;
@@ -245,10 +263,6 @@ export default async function AdminUserDetailPage({
     role: profile.role,
     sign_in: gamerProfile?.sign_in ?? null,
   });
-  const gamerUsername =
-    gamerProfile?.sign_in === "username"
-      ? gamerUsernameFromEmail(profile.email)
-      : null;
 
   const uiLocale = resolveLocale(locale);
   const statusLabels: Record<ParticipationStatus, string> = {
@@ -295,46 +309,36 @@ export default async function AdminUserDetailPage({
             <h1 className="text-2xl font-bold">
               {[profile.first_name, profile.last_name].filter(Boolean).join(" ")}
             </h1>
-            {/* A username-mode child's username, which lives in the local part
-                of their synthetic address and nowhere else. Labelled, so it is
-                not read as a mangled email; no verification mark, because there
-                is no inbox behind it to have confirmed anything. */}
-            {gamerUsername && (
-              <p className="flex items-baseline gap-1.5 text-muted-foreground">
-                <span className="text-[10px] uppercase tracking-wide">
-                  {t('usernameLabel')}
-                </span>
-                <span>{gamerUsername}</span>
-              </p>
+            {/* A username-mode child's username. A synthetic handle is never
+                printed as an address: it names no inbox, and for a child in
+                `parent` mode nobody ever types it. */}
+            {gamerProfile?.sign_in === "username" && (
+              <GamerUsernameLine userId={userId} initialProfile={profile} />
             )}
+            {/* The address wherever a mailbox stands behind it. An adult's line
+                carries the pencil that corrects it; a child's does not, because
+                a gamer's one editor is the personal-details dialog below, which
+                edits their sign-in identifier alongside the rest. */}
             {accountHasMailbox && profile.email && (
-              <div className="flex items-center gap-2">
-                <p className="text-muted-foreground">{profile.email}</p>
-                {/* The list shows only the positive case (a check that means
-                    somebody confirmed the address); this detail page states the
-                    answer both ways, because an admin looking at ONE user is
-                    asking the question and deserves a definite answer rather
-                    than having to know that silence means no. */}
-                {profile.email_verified_at ? (
-                  <MailCheck
-                    className="h-4 w-4 shrink-0 text-success"
-                    aria-label={t('emailVerified')}
-                  />
-                ) : (
-                  <MailX
-                    className="h-4 w-4 shrink-0 text-warning"
-                    aria-label={t('emailNotVerified')}
-                  />
-                )}
-              </div>
+              <UserEmailLine
+                userId={userId}
+                initialProfile={profile}
+                editable={!isGamer}
+              />
             )}
-            {/* Age and gender, with a pencil that opens their editor. The line
-                itself is a client island seeded with the row this page already
-                read, so it paints complete and restates itself after a save
-                without a reload. Absent only when that read failed, which is
-                what the read-only line before it did with a missing row. */}
+            {/* Age and gender, with a pencil that opens their editor — which
+                also edits the child's email address or username where their
+                sign-in mode has one. The line itself is a client island seeded
+                with the rows this page already read, so it paints complete and
+                restates itself after a save without a reload. Absent only when
+                that read failed, which is what the read-only line before it did
+                with a missing row. */}
             {isGamer && gamerProfile && (
-              <GamerPersonalDetails gamerId={userId} initialProfile={gamerProfile} />
+              <GamerPersonalDetails
+                gamerId={userId}
+                initialProfile={gamerProfile}
+                initialAccount={profile}
+              />
             )}
             {/* The Minecraft row used to sit here, read-only. It moved into the
                 editable Game accounts card below: an admin who can change these
@@ -508,6 +512,17 @@ export default async function AdminUserDetailPage({
 
       {/* Coverage areas, for substitute matching. */}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
+
+      {/* The public team profile, for the two roles that have one. Seeded by
+          the read above, so it is in its final shape on first paint and sits
+          ahead of the marketing card, whose place at the end is load-bearing. */}
+      {hasTeamProfile && (
+        <UserTeamProfileCard
+          userId={userId}
+          initial={teamProfile}
+          isViewer={viewer?.user.id === userId}
+        />
+      )}
 
       {/* Everything about marketing, in one card: where the account came from,
           and what its holder has agreed to since.

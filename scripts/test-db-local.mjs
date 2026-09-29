@@ -30,11 +30,12 @@
  */
 
 import { spawn } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { stackIdentity } from './lib/local-db-identity.mjs';
 
 const DISTRO = 'Ubuntu-24.04';
 
@@ -73,17 +74,8 @@ if (!cliVersion || !/^\d+\.\d+\.\d+$/.test(cliVersion)) {
   fail(`package.json's supabase devDependency is not an exact version: ${String(cliVersion)}`);
 }
 
-/**
- * The stack's identity, derived from the checkout path — the same three lines
- * scripts/local-db.mjs derives it from, and they have to stay the same three.
- * They are repeated rather than imported because that file is a command: it
- * reads argv and runs something the moment it is loaded, so importing it to
- * borrow an expression would run a database command as a side effect.
- */
-const digest = createHash('sha256').update(checkoutWsl).digest();
-const slug = path.basename(checkout).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-const label = slug.startsWith('sogverse') ? slug : `sogverse-${slug || 'checkout'}`;
-const derivedProjectId = `${label}-${digest.toString('hex').slice(0, 6)}`;
+/** The stack's identity, derived exactly as scripts/local-db.mjs derives it. */
+const { projectId: derivedProjectId } = stackIdentity(checkout, checkoutWsl);
 
 /**
  * `--stack <project-id>` runs against a named stack instead of this checkout's.

@@ -1,11 +1,18 @@
 /**
- * Corrects a user's email address by hand — the signup typo case.
+ * Corrects a user's email address by hand.
  *
- * There is no email-change flow in the app (`profiles.email` carries no UPDATE
- * grant for `authenticated`, so not even an admin session can write it), which
- * makes this a recurring hand operation. The procedure is the
- * `correct-user-email` skill; this script is the mechanism that
- * keeps the two writes in step.
+ * A plain signup typo is fixed in-app: the admin user page's address line has
+ * an editor that runs these same two writes through
+ * `PATCH /api/admin/users/[id]/email`. This script remains for what that page
+ * does not do — scripted or bulk changes, a change with no admin session to
+ * hand, and reporting on the duplicate-account case the page refuses. The
+ * procedure is the `correct-user-email` skill; this script is the mechanism
+ * that keeps the two writes in step.
+ *
+ * **It does only the two writes, exactly as the page does.** Neither touches
+ * the password or the account's sessions, and neither mails anything. That is
+ * by design: securing the account is the user's own job, through a password
+ * reset to the address that is now theirs.
  *
  * Report-only unless told otherwise:
  *
@@ -51,6 +58,13 @@
  * duplicate-account case, not a typo: the address cannot be freed without
  * deciding what happens to the other account's data, which is a judgement call
  * this script will not make for you. It names the blocking user and stops.
+ *
+ * ## What it does not check
+ *
+ * A gamer's sign-in mode. Moving a `parent`- or `username`-mode child off
+ * their synthetic handle onto a real mailbox is a privilege change the admin
+ * page refuses; this script would carry it out. Check `gamer_profiles.sign_in`
+ * first — the `correct-user-email` skill says why.
  */
 import fs from "fs";
 import path from "path";
@@ -281,7 +295,8 @@ async function main() {
   console.log("\nDone. Two follow-ons, both expected and needing no action:");
   console.log("  - profiles.email_verified_at is nulled by trg_reset_email_verification,");
   console.log("    and any outstanding verification link self-invalidates.");
-  console.log("  - the password is untouched; worst case is one re-login.");
+  console.log("  - the password and sessions are untouched, by design: the user secures");
+  console.log("    their own account with a password reset.");
 }
 
 main().catch((error: unknown) => {

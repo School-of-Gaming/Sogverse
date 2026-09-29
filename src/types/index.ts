@@ -286,6 +286,15 @@ export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 export type InvoiceCustomer =
   Database["public"]["Tables"]["invoice_customers"]["Row"];
 
+// team_profiles / team_profile_translations — an admin's or a Gedu's team
+// profile, one row per person and one per (person, site locale). Row aliases
+// only: neither table carries a write grant for any Data API role, and the only
+// writers are `save_team_profile` and `set_team_profile_approval` (an admin
+// making a Gedu's profile public or hiding it).
+export type TeamProfileRow = Database["public"]["Tables"]["team_profiles"]["Row"];
+export type TeamProfileTranslationRow =
+  Database["public"]["Tables"]["team_profile_translations"]["Row"];
+
 // product_staff_details — the staff-only half of a product, split off `products`
 // because that table is readable by anon and by every parent, and PostgREST lets
 // a caller pick the columns it wants. Sparse: a product with nothing staff-only
@@ -477,6 +486,11 @@ export type GroupSession = Database["public"]["Tables"]["group_sessions"]["Row"]
 export type GroupSessionInsert = Database["public"]["Tables"]["group_sessions"]["Insert"];
 export type GroupSessionUpdate = Database["public"]["Tables"]["group_sessions"]["Update"];
 
+// session_cancellations — one row per cancelled (group, date). No client grant
+// and RLS on with no policy: written by cancel_session / restore_session and
+// read through the feed RPCs, so this alias is for the service-role side.
+export type SessionCancellationRow = Database["public"]["Tables"]["session_cancellations"]["Row"];
+
 // session_attendance — one row per explicit mark. A roster member with NO row
 // is unanswered, which is why the status column has no "unmarked" member: that
 // state is the absence of a row, not a value.
@@ -503,6 +517,7 @@ export type {
   GeduFeedSession,
   GeduFeedSite,
   GeduGroupFeed,
+  SessionCancellation,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 // ---------------------------------------------------------------------------

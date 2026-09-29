@@ -13,7 +13,11 @@ import {
   seatHolderKey,
 } from "./partner-scope.server";
 import type { PartnerDb } from "./partner-shared-db.server";
-import { readAttendance } from "./partner-shared-lookups.server";
+import {
+  cancelledSessionKey,
+  readAttendance,
+  readCancelledSessions,
+} from "./partner-shared-lookups.server";
 import {
   PROGRAMME_TERMS_SLUG,
   isRecordedSession,
@@ -37,7 +41,7 @@ import {
 const SESSION_SCOPE_EMBED = `group:product_groups!inner(product_id, product:products!inner(${PROGRAMME_PRODUCT_EMBED}))`;
 const SESSION_SCOPE_FILTER = `group.product.${PROGRAMME_PRODUCT_FILTER}`;
 
-const SESSION_COLUMNS = `id, group_id, starts_at, ends_at, report, ${SESSION_SCOPE_EMBED}`;
+const SESSION_COLUMNS = `id, group_id, session_date, starts_at, ends_at, report, ${SESSION_SCOPE_EMBED}`;
 
 type Images = PartnerSession["images"];
 
@@ -92,6 +96,11 @@ async function readImages(
  * photograph. The keyset stays exact because the cursor is a position in that
  * one order, recorded or not.
  *
+ * **A cancelled session is never served, recorded or not.** An admin may
+ * cancel a session that was written up, and the admin's word wins: the record
+ * is kept, but the session did not happen, so it drops out of the page exactly
+ * as an unrecorded one does, and comes back if the session is restored.
+ *
  * **Recorded is decided on every mark; only in-scope marks are reported.**
  * Whether a session was recorded is a fact about the session — a Game
  * Educator wrote it up or marked attendance — and is read the same way
@@ -129,12 +138,20 @@ export async function readPartnerSessions(
       return select.order("id").limit(take);
     },
     build: async (rows) => {
-      const attendance = await readAttendance(
-        db,
-        rows.map((row) => row.id),
-      );
-      const recorded = rows.filter((row) =>
-        isRecordedSession(row.report, attendance.get(row.id)?.length ?? 0),
+      const [attendance, cancelled] = await Promise.all([
+        readAttendance(
+          db,
+          rows.map((row) => row.id),
+        ),
+        readCancelledSessions(
+          db,
+          rows.map((row) => row.group_id),
+        ),
+      ]);
+      const recorded = rows.filter(
+        (row) =>
+          !cancelled.has(cancelledSessionKey(row.group_id, row.session_date)) &&
+          isRecordedSession(row.report, attendance.get(row.id)?.length ?? 0),
       );
       const [images, holders] = await Promise.all([
         readImages(

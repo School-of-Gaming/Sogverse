@@ -18,6 +18,7 @@ DECLARE
   v_gedus          jsonb;
   v_sessions       jsonb;
   v_creations      jsonb;
+  v_cancellations  jsonb;
 BEGIN
   -- No caller, no answer. This function is scoped entirely to auth.uid(); with
   -- no uid there is nobody for it to be scoped TO, so there is no correct
@@ -223,7 +224,29 @@ BEGIN
       ) AS entry
         FROM public.group_sessions s
        WHERE s.group_id = v_group_id
+         -- Cancellation: a record kept under a cancellation does not travel. A
+         -- family is told the session is off, and a report on it would say
+         -- otherwise; a restore brings the row back here as it was.
+         AND NOT public.group_session_is_cancelled(s.group_id, s.session_date)
     ) AS session_rows;
+
+  -- Cancellation: the group's cancelled sessions in effect, newest first, as a
+  -- date and NOTHING ELSE. The reason and who cancelled are admin-only; a
+  -- family is told the session is off, not why. One kept over a record the
+  -- schedule no longer projects travels too, and the record beside it does
+  -- not (above): the family has no instants to draw it at, so the date
+  -- simply stops being shown rather than showing the report.
+  SELECT COALESCE(
+           jsonb_agg(
+             jsonb_build_object('session_date', sc.session_date)
+             ORDER BY sc.session_date DESC
+           ),
+           '[]'::jsonb
+         )
+    INTO v_cancellations
+    FROM public.session_cancellations sc
+   WHERE sc.group_id = v_group_id
+     AND public.group_session_is_cancelled(sc.group_id, sc.session_date);
 
   RETURN jsonb_build_object(
     'participant', v_participant,
@@ -232,7 +255,8 @@ BEGIN
     'site',        v_site,
     'gedus',       v_gedus,
     'creations',   v_creations,
-    'sessions',    v_sessions
+    'sessions',    v_sessions,
+    'cancellations', v_cancellations
   );
 END;
 $$;

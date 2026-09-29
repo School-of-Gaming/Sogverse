@@ -231,7 +231,12 @@ same reads and hands them down, so the first frame is the finished page. The ske
 what a client-side navigation, a refetch and a failed prefetch land on. Only the back link
 survives that swap, on the same pixel each time.
 
-## Two kinds, split at the session's end
+## Entry kinds, split at the session's end
+
+**Rule: a cancelled session's family entry carries its date and nothing else.** The family
+is told that the session is off, never why: the reason and who cancelled it are staff
+facts, and the entry type has no field for them to arrive in. Where it sits and how it is
+drawn is the shared feed's rule (`src/components/session-feed/`).
 
 **Rule: the family feed is a second builder beside the staff one, not a generalization of
 it — and the shape it emits is where the privacy line is drawn.** A builder generic over

@@ -20,6 +20,7 @@ import {
   createParticipationResponse,
   joinWaitlistResponse,
   leaveWaitlistResponse,
+  mySessionCancellations,
   myWaitlistPositions,
   waitlistPositionResult,
   type CreateParticipationResponse,
@@ -176,6 +177,13 @@ export interface MyUpcomingSessionRow {
    * `getMyUpcomingSessions`.
    */
   subscriptionEndsAt: Date | null;
+  /**
+   * The seat's group's cancelled session dates, product-local `YYYY-MM-DD`,
+   * from the day before today onwards; empty on an unplaced seat. The card
+   * skips them when naming the next session and names the ones before it.
+   * Sourced from `get_my_session_cancellations` — see `getMyUpcomingSessions`.
+   */
+  cancelledDates: readonly string[];
 }
 
 /**
@@ -495,13 +503,37 @@ export class ParticipationsService {
     // only participation id + status + period end (no money), so it works
     // identically for both audiences. One RPC carries both the past_due flag
     // and the canceling access-until date; the client derives each below.
-    const [{ data, error }, { data: subRows, error: subError }] =
-      await Promise.all([
-        buildMyUpcomingSessionsQuery(this.supabase, audienceColumn, userId),
-        this.supabase.rpc("get_my_participation_subscription_states"),
-      ]);
+    const [
+      { data, error },
+      { data: subRows, error: subError },
+      { data: cancellationRows, error: cancellationError },
+    ] = await Promise.all([
+      buildMyUpcomingSessionsQuery(this.supabase, audienceColumn, userId),
+      this.supabase.rpc("get_my_participation_subscription_states"),
+      // Cancelled dates come from their own self-scoped read: no client role
+      // can read the cancellations table, so the select above cannot embed it.
+      this.supabase.rpc("get_my_session_cancellations"),
+    ]);
 
     if (error) throw error;
+
+    // Secondary like the badges: a failed read degrades to "nothing
+    // cancelled", which is the card as it was before cancellations existed —
+    // and the voice room itself still refuses a cancelled session's token.
+    if (cancellationError) {
+      console.error(
+        "[getMyUpcomingSessions] session cancellations failed:",
+        cancellationError,
+      );
+    }
+    const cancelledByParticipation = new Map<string, string[]>();
+    for (const row of cancellationError
+      ? []
+      : mySessionCancellations.parse(cancellationRows)) {
+      const dates = cancelledByParticipation.get(row.participation_id);
+      if (dates) dates.push(row.session_date);
+      else cancelledByParticipation.set(row.participation_id, [row.session_date]);
+    }
 
     // The badges are a secondary signal — if the state query fails, degrade to
     // "no problem / not canceling" rather than breaking the whole sessions list.
@@ -532,6 +564,7 @@ export class ParticipationsService {
         row,
         problemIds.has(row.id),
         cancelEnds.get(row.id) ?? null,
+        cancelledByParticipation.get(row.id) ?? [],
       ),
     );
   }
@@ -1111,6 +1144,7 @@ function toMyUpcomingSessionRow(
   row: RawMyUpcomingSessionRow,
   paymentProblem: boolean,
   subscriptionEndsAt: Date | null,
+  cancelledDates: readonly string[],
 ): MyUpcomingSessionRow {
   // Both non-null via the `!inner` joins in buildMyUpcomingSessionsQuery.
   const { product, participant } = row;
@@ -1148,6 +1182,7 @@ function toMyUpcomingSessionRow(
     })),
     paymentProblem,
     subscriptionEndsAt,
+    cancelledDates,
   };
 }
 

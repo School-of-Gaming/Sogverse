@@ -1,5 +1,6 @@
 import { NextResponse, after } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
+import { isEmailAlreadyRegistered } from "@/lib/auth-email.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
@@ -359,30 +360,9 @@ export const POST = defineRoute({
 });
 
 /**
- * Whether GoTrue refused this signup because the address already has an
- * account.
- *
- * Read the machine-readable code first — `email_exists` is what current GoTrue
- * sends — and fall back to the message, because the code is a relatively recent
- * addition and an older deployment (or a proxy that drops it) still says the
- * same thing in prose. Getting this wrong costs a 409 that should have been a
- * 400, not a security property: both answers refuse, and neither reveals more
- * than the sign-in form does.
- */
-function isEmailAlreadyRegistered(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  if ("code" in error && error.code === "email_exists") return true;
-  return (
-    "message" in error &&
-    typeof error.message === "string" &&
-    /already( been)? registered/i.test(error.message)
-  );
-}
-
-/**
  * Whether GoTrue refused this signup because of the password itself.
  *
- * The code is the whole test, unlike the duplicate-email check above, and it is
+ * The code is the whole test, unlike the shared duplicate-email check, and it is
  * enough: `weak_password` is the one code the auth client attaches to a
  * password refusal, and it attaches it on both paths — the modern response
  * carries `error_code: "weak_password"`, and the legacy response with no code

@@ -176,6 +176,21 @@ BEGIN
             FROM public.session_substitution_requests r
            WHERE r.group_id = g.id
              AND r.status <> 'withdrawn'::public.substitution_request_status
+        ), '[]'::jsonb),
+
+        -- Cancellation: the group's cancelled sessions, newest first, with
+        -- every admin field — this document is admin-only end to end. Exactly
+        -- the ones in effect: a cancellation over a kept record travels even
+        -- where the schedule no longer projects its date, so the page can
+        -- still restore it, and an inert one is never surfaced.
+        'cancellations', COALESCE((
+          SELECT jsonb_agg(
+                   public.session_cancellation_document(sc, true)
+                   ORDER BY sc.session_date DESC
+                 )
+            FROM public.session_cancellations sc
+           WHERE sc.group_id = g.id
+             AND public.group_session_is_cancelled(sc.group_id, sc.session_date)
         ), '[]'::jsonb)
       ) AS entry
         FROM public.product_groups g

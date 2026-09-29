@@ -224,6 +224,7 @@ function tables(rows: FeedbackRow[] = FEEDBACK, seats: SeatRow[] = SEATS) {
       GROUP_SESSIONS.filter((row) => inList(url, "group_id").includes(row.group_id)),
     session_attendance: (url) =>
       ATTENDANCE.filter((row) => inList(url, "session_id").includes(row.session_id)),
+    "rpc/get_session_cancellations_in_effect": () => [],
   });
 }
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  enrollmentLiveness,
   rollUpFamilyEnrollments,
   rollUpGamerEnrollments,
   sortFamilyEnrollments,
@@ -72,6 +73,7 @@ function enrollment(
     prepWindowEnd: null,
     nextSessionStart: start,
     nextSessionEnd: start === null ? null : new Date(start.getTime() + 5_400_000),
+    cancelledAhead: [],
     hasVoiceRoom: true,
     voiceHref: "#",
     siteName: null,
@@ -266,6 +268,7 @@ function sessionRow(
     slots: [FRIDAY_SLOT],
     paymentProblem: false,
     subscriptionEndsAt: null,
+    cancelledDates: [],
     ...rest,
   };
 }
@@ -417,6 +420,91 @@ describe("toFamilyEnrollments — a seat", () => {
       timeZone: "UTC",
     });
     expect(entries[0].enrollment.siteName).toBe("Helsingfors");
+  });
+});
+
+describe("toFamilyEnrollments — cancelled sessions", () => {
+  const SECOND_FRIDAY = "2026-02-20T17:00:00.000Z";
+
+  it("names the next session that runs, skipping a cancelled one", () => {
+    const summary = mapOne({
+      sessionRows: [sessionRow({ cancelledDates: ["2026-02-13"] })],
+    });
+    expect(summary.nextSessionStart?.toISOString()).toBe(SECOND_FRIDAY);
+    expect(summary.cancelledAhead.map((d) => d.toISOString())).toEqual([
+      FIRST_FRIDAY,
+    ]);
+  });
+
+  it("names every cancelled session before the next one, soonest first", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({ cancelledDates: ["2026-02-13", "2026-02-20"] }),
+      ],
+    });
+    expect(summary.nextSessionStart?.toISOString()).toBe(THIRD_FRIDAY);
+    expect(summary.cancelledAhead.map((d) => d.toISOString())).toEqual([
+      FIRST_FRIDAY,
+      SECOND_FRIDAY,
+    ]);
+  });
+
+  it("says nothing about a cancellation after the next session", () => {
+    const summary = mapOne({
+      sessionRows: [sessionRow({ cancelledDates: ["2026-02-20"] })],
+    });
+    expect(summary.nextSessionStart?.toISOString()).toBe(FIRST_FRIDAY);
+    expect(summary.cancelledAhead).toEqual([]);
+  });
+
+  it("never lights the Join for a cancelled session in progress", () => {
+    // Wednesday 12:30–14:00 UTC: NOW (13:00) is in the middle of it.
+    const now = { weekday: 2, startTime: "12:30", durationMinutes: 90 };
+    const running = mapOne({ sessionRows: [sessionRow({ slots: [now] })] });
+    expect(enrollmentLiveness(running, NOW).voiceIsOpen).toBe(true);
+
+    const cancelled = mapOne({
+      sessionRows: [
+        sessionRow({ slots: [now], cancelledDates: ["2026-02-11"] }),
+      ],
+    });
+    expect(cancelled.nextSessionStart?.toISOString()).toBe(
+      "2026-02-18T12:30:00.000Z",
+    );
+    expect(enrollmentLiveness(cancelled, NOW)).toEqual({
+      inProgress: false,
+      voiceIsOpen: false,
+    });
+    expect(cancelled.cancelledAhead.map((d) => d.toISOString())).toEqual([
+      "2026-02-11T12:30:00.000Z",
+    ]);
+  });
+
+  it("has no next session when every one left is cancelled, and names them all", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          product: { endDate: "2026-02-20" },
+          cancelledDates: ["2026-02-13", "2026-02-20"],
+        }),
+      ],
+    });
+    expect(summary.nextSessionStart).toBeNull();
+    expect(summary.cancelledAhead).toHaveLength(2);
+  });
+
+  it("never names a cancelled session as a winding-down membership's last", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          subscriptionEndsAt: new Date("2026-02-28T00:00:00Z"),
+          cancelledDates: ["2026-02-27"],
+        }),
+      ],
+    });
+    expect(summary.cancellation?.lastSessionStart?.toISOString()).toBe(
+      SECOND_FRIDAY,
+    );
   });
 });
 

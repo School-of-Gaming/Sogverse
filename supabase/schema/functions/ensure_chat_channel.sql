@@ -59,6 +59,9 @@ BEGIN
           JOIN public.schedule_slots s ON s.product_id = v_product_id
            -- schedule_slots.weekday is 0 = Monday; ISODOW is 1 = Monday.
            WHERE s.weekday = (EXTRACT(ISODOW FROM cd.session_date)::integer - 1)
+             -- Cancellation: a cancelled session opens no room, by the one
+             -- effective test every other reader asks.
+             AND NOT public.group_session_is_cancelled(p_group_id, cd.session_date)
       ) o
      WHERE now() >= o.opens_at
        AND now() <  o.closes_at

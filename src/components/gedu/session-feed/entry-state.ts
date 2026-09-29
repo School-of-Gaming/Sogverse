@@ -100,6 +100,9 @@ export function isLiveEntry(entry: SessionFeedEntry, now: Date): boolean {
  * produce an entry offering two editors or none.
  */
 export function isEditableEntry(entry: SessionFeedEntry, now: Date): boolean {
+  // A cancelled session takes no record — the database refuses every write on
+  // it — so it opens neither editor.
+  if (entry.kind === "cancelled") return false;
   return entry.kind !== "future" || isLiveEntry(entry, now);
 }
 
@@ -107,9 +110,10 @@ export function isEditableEntry(entry: SessionFeedEntry, now: Date): boolean {
  * Whether an entry can be expanded into the **notes-only** editor: a future
  * session that is not currently running.
  *
- * The exact complement of {@link isEditableEntry} over the same union — the
- * negation of the same expression — so every entry gets one editor and no entry
- * gets both.
+ * The exact complement of {@link isEditableEntry} over every kind but
+ * `cancelled` — the negation of the same expression — so every session that can
+ * take a record gets one editor and none gets both. A cancelled one gets
+ * neither.
  *
  * It still narrows, and soundly: anything it accepts is a future entry. The
  * narrowing is simply *wider* than the runtime test, which additionally requires
@@ -590,7 +594,7 @@ export function editorStateFromEntry(
   entry: SessionFeedEntry,
   roster: readonly SessionFeedGamer[],
 ): SessionEditorState {
-  if (entry.kind === "no_record") {
+  if (entry.kind === "no_record" || entry.kind === "cancelled") {
     return { attendance: {}, report: "", staffNote: "" };
   }
   return {
@@ -659,6 +663,8 @@ export function applyDraftToEntry(
   entry: SessionFeedEntry,
   draft: SessionRecordDraft,
 ): SessionFeedEntry {
+  // A cancelled session takes no record, so there is nothing to fold in.
+  if (entry.kind === "cancelled") return entry;
   // The staffing rides through untouched, like the identity and the schedule
   // beside it: who is expected at a session is not something writing up that
   // session changes.

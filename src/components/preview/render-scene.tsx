@@ -3,6 +3,10 @@ import { isAdminDashboardScenario } from "@/components/admin/dashboard/mock-dash
 import { isAdminSubstitutionsScenario } from "@/components/admin/substitutions/mock-substitutions-fixtures";
 import { isInvoiceCustomerScenario } from "@/components/admin/invoice-customers/mock-invoice-customer-fixtures";
 import { isMunicipalityInvoicingScenario } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
+import {
+  isAdminGeduInvoicingScenario,
+  isMyGeduInvoicingScenario,
+} from "@/components/gedu-invoicing/mock-gedu-invoicing-fixtures";
 import { isChatSceneScenario } from "@/components/chat/mock-chat-fixtures";
 import { isFamilyProductScenario } from "@/components/family/product-page/mock-fixtures";
 import { isGamerDashboardScenario } from "@/components/gamer/mock-dashboard-fixtures";
@@ -13,6 +17,10 @@ import { isGroupWorkspaceScenario } from "@/components/group-workspace/mock-work
 import { isParentDashboardScenario } from "@/components/parent/mock-dashboard-fixtures";
 import { isSeatOfferScenario } from "@/components/seat-offer/mock-seat-offer-fixtures";
 import { isVoiceRoomScenario } from "@/components/voice/mock-room-fixtures";
+import {
+  isAdminTeamProfileEditorScenario,
+  isGeduTeamProfileEditorScenario,
+} from "@/components/team/mock-team-fixtures";
 import {
   findConfirmationNotice,
   isPreviewScenario,
@@ -36,6 +44,10 @@ import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
 import { GeduSubstitutionsScene } from "./scenes/gedu-substitutions-scene";
 import { InvoiceCustomersScene } from "./scenes/invoice-customers-scene";
 import { MunicipalityInvoicingScene } from "./scenes/municipality-invoicing-scene";
+import {
+  AdminGeduInvoicingScene,
+  MyGeduInvoicingScene,
+} from "./scenes/gedu-invoicing-scene";
 import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
@@ -46,6 +58,14 @@ import {
   isTopicPrepScenario,
 } from "./scenes/topic-prep-scene";
 import { SessionFeedbackScene } from "./scenes/session-feedback-scene";
+import {
+  TeamProfileScene,
+  isTeamProfileScenario,
+} from "./scenes/team-profile-scene";
+import {
+  AdminTeamProfileEditorScene,
+  GeduTeamProfileEditorScene,
+} from "./scenes/team-profile-editor-scene";
 import { isSessionFeedbackScenario } from "./scenes/session-feedback-scenarios";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
 import { VoiceRoomScene } from "./scenes/voice-room-scene";
@@ -138,6 +158,18 @@ const SCENE_RENDERERS: Record<
     if (!isPreviewScenario(scenario)) notFound();
     return <PurchaseConfirmationScene scenario={scenario} topic={topic} />;
   },
+  "team-profile": (scenario) => {
+    if (!isTeamProfileScenario(scenario)) notFound();
+    return <TeamProfileScene scenario={scenario} />;
+  },
+  "gedu-profile-editor": (scenario) => {
+    if (!isGeduTeamProfileEditorScenario(scenario)) notFound();
+    return <GeduTeamProfileEditorScene scenario={scenario} />;
+  },
+  "admin-profile-editor": (scenario) => {
+    if (!isAdminTeamProfileEditorScenario(scenario)) notFound();
+    return <AdminTeamProfileEditorScene scenario={scenario} />;
+  },
   "parent-dashboard": (scenario) => {
     if (!isParentDashboardScenario(scenario)) notFound();
     return <ParentDashboardScene scenario={scenario} />;
@@ -208,6 +240,14 @@ const SCENE_RENDERERS: Record<
   "municipality-invoicing": (scenario) => {
     if (!isMunicipalityInvoicingScenario(scenario)) notFound();
     return <MunicipalityInvoicingScene scenario={scenario} />;
+  },
+  "gedu-invoicing": (scenario) => {
+    if (!isAdminGeduInvoicingScenario(scenario)) notFound();
+    return <AdminGeduInvoicingScene scenario={scenario} />;
+  },
+  "gedu-my-invoicing": (scenario) => {
+    if (!isMyGeduInvoicingScenario(scenario)) notFound();
+    return <MyGeduInvoicingScene scenario={scenario} />;
   },
   "invoice-customers": (scenario) => {
     if (!isInvoiceCustomerScenario(scenario)) notFound();

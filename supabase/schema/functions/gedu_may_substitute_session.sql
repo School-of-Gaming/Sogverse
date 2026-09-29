@@ -37,7 +37,11 @@ CREATE FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_id uu
               AND r.session_date = p_session_date
               AND r.requested_by = p_gedu_id
               AND r.status <> 'withdrawn'::public.substitution_request_status
-         );
+         )
+     -- (5) Cancellation: the session is not cancelled. Nobody is seated to
+     -- cover a session that is not happening, which also takes a cancelled
+     -- date off the pool list and refuses an offer or an approval on one.
+     AND NOT public.group_session_is_cancelled(p_group_id, p_session_date);
 $$;
 
 
@@ -45,7 +49,7 @@ $$;
 -- Name: FUNCTION gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid) IS 'Internal predicate: may this gedu be seated as the sub for this (group, date)? Four refusals, and the last two are the interesting ones: (1) not the absent gedu, (2) a certified gedu — the ONLY eligibility test there is, with coverage area, language and schedule clash all deliberately left to follow-ups, (3) not already expected at that session, and (4) holding no non-withdrawn request of their own on that (group, date). Together (3) and (4) stop a sub covering their own substitute and stop two seats collapsing onto one person, which would make "who did which job" unanswerable. Asked by offer_session_substitution, again by approve_session_substitution_offer under the request''s lock, by set_session_substitution, and by get_open_substitution_requests as its exclusion — the pool list shows a gedu exactly the requests they could actually take. Not granted to `authenticated`.';
+COMMENT ON FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid) IS 'Internal predicate: may this gedu be seated as the sub for this (group, date)? Five refusals: (1) not the absent gedu, (2) a certified gedu — the ONLY eligibility test there is, with coverage area, language and schedule clash all deliberately left to follow-ups, (3) not already expected at that session, (4) holding no non-withdrawn request of their own on that (group, date), and (5) the session is not cancelled. Together (3) and (4) stop a sub covering their own substitute and stop two seats collapsing onto one person, which would make "who did which job" unanswerable. Asked by offer_session_substitution, again by approve_session_substitution_offer under the request''s lock, by set_session_substitution, and by get_open_substitution_requests as its exclusion — the pool list shows a gedu exactly the requests they could actually take, and never one on a cancelled session. Not granted to `authenticated`.';
 
 
 --

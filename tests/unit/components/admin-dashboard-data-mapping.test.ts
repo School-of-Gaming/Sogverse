@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   buildAdminDashboardData,
   buildCertificationQueue,
+  productCancellations,
   viewerZoneAbbrev,
 } from "@/components/admin/dashboard/build-admin-dashboard-data";
+import { runningSessionCount } from "@/components/admin/dashboard/admin-dashboard-data";
 import type {
   AdminDashboardAttentionProduct,
   AdminDashboardScheduleProduct,
@@ -45,6 +47,8 @@ function scheduleProduct(
     schedule_slots: [
       { weekday: 0, start_time: "17:00", duration_minutes: 90 },
     ],
+    group_ids: [],
+    cancelled_sessions: [],
     ...overrides,
   };
 }
@@ -266,6 +270,189 @@ describe("resolving a week's sessions", () => {
         chips.map((chip) => [chip.productId, chip.needsAttention]),
       ),
     ).toEqual({ flagged: true, healthy: false });
+  });
+});
+
+describe("cancelled sessions", () => {
+  const GROUP_A = "a0000000-0000-4000-8000-00000000000a";
+  const GROUP_B = "b0000000-0000-4000-8000-00000000000b";
+
+  /** A Monday-and-Wednesday club with two groups. */
+  function twoGroupClub(
+    cancelled: { group_id: string; session_date: string }[],
+    overrides: Partial<AdminDashboardScheduleProduct> = {},
+  ) {
+    return scheduleProduct({
+      id: "club",
+      schedule_slots: [
+        { weekday: 0, start_time: "17:00", duration_minutes: 90 },
+        { weekday: 2, start_time: "17:00", duration_minutes: 90 },
+      ],
+      group_ids: [GROUP_A, GROUP_B],
+      cancelled_sessions: cancelled,
+      ...overrides,
+    });
+  }
+
+  function chipOn(data: ReturnType<typeof build>, weekday: number) {
+    const chip = week(data, "2026-08-17").chips.find(
+      (entry) => entry.weekday === weekday,
+    );
+    if (chip === undefined) throw new Error(`No chip on weekday ${weekday}`);
+    return chip;
+  }
+
+  it("marks a date every group cancelled as cancelled, and keeps it on the row", () => {
+    const data = build(
+      snapshot({
+        schedule_products: [
+          twoGroupClub([
+            { group_id: GROUP_A, session_date: "2026-08-19" },
+            { group_id: GROUP_B, session_date: "2026-08-19" },
+          ]),
+        ],
+      }),
+    );
+
+    expect(chipOn(data, 2).cancellation).toEqual({ kind: "all" });
+    expect(chipOn(data, 0).cancellation).toEqual({ kind: "none" });
+  });
+
+  it("notes a date only some groups cancelled, which still runs", () => {
+    const data = build(
+      snapshot({
+        schedule_products: [
+          twoGroupClub([{ group_id: GROUP_B, session_date: "2026-08-19" }]),
+        ],
+      }),
+    );
+
+    expect(chipOn(data, 2).cancellation).toEqual({
+      kind: "some",
+      cancelled: 1,
+      groups: 2,
+    });
+  });
+
+  it("counts a group with nothing cancelled as running, however little else names it", () => {
+    // Group C appears in no cancellation and in no other fact on the page; it
+    // is still one of the product's groups, so two of three is not "every".
+    const data = build(
+      snapshot({
+        schedule_products: [
+          twoGroupClub(
+            [
+              { group_id: GROUP_A, session_date: "2026-08-19" },
+              { group_id: GROUP_B, session_date: "2026-08-19" },
+            ],
+            {
+              group_ids: [
+                GROUP_A,
+                GROUP_B,
+                "c0000000-0000-4000-8000-00000000000c",
+              ],
+            },
+          ),
+        ],
+      }),
+    );
+
+    expect(chipOn(data, 2).cancellation).toEqual({
+      kind: "some",
+      cancelled: 2,
+      groups: 3,
+    });
+  });
+
+  it("decides on the product's date, not the viewer's", () => {
+    // Monday 09:00 in Helsinki is Sunday evening in Los Angeles; the Monday
+    // cancellation still finds the chip that lands on the viewer's Sunday.
+    const data = build(
+      snapshot({
+        schedule_products: [
+          scheduleProduct({
+            id: "club",
+            schedule_slots: [
+              { weekday: 0, start_time: "09:00", duration_minutes: 60 },
+            ],
+            group_ids: [GROUP_A],
+            cancelled_sessions: [
+              { group_id: GROUP_A, session_date: "2026-08-24" },
+            ],
+          }),
+        ],
+      }),
+      LOS_ANGELES,
+    );
+
+    const sunday = week(data, "2026-08-17").chips.find(
+      (chip) => chip.weekday === 6,
+    );
+    expect(sunday?.cancellation).toEqual({ kind: "all" });
+  });
+
+  it("leaves a fully cancelled date out of the week's session count, and keeps a partly cancelled one in it", () => {
+    const data = build(
+      snapshot({
+        schedule_products: [
+          twoGroupClub([
+            { group_id: GROUP_A, session_date: "2026-08-17" },
+            { group_id: GROUP_A, session_date: "2026-08-19" },
+            { group_id: GROUP_B, session_date: "2026-08-19" },
+          ]),
+        ],
+      }),
+    );
+
+    const chips = week(data, "2026-08-17").chips;
+    expect(chips).toHaveLength(2);
+    expect(runningSessionCount(chips)).toBe(1);
+  });
+
+  it("carries a milestone date's cancellation onto the coming-up line", () => {
+    const data = build(
+      snapshot({
+        schedule_products: [
+          scheduleProduct({
+            id: "lan",
+            product_type: "event",
+            start_date: "2026-08-19",
+            end_date: "2026-08-19",
+            schedule_slots: [
+              { weekday: 2, start_time: "17:00", duration_minutes: 240 },
+            ],
+            group_ids: [GROUP_A],
+            cancelled_sessions: [
+              { group_id: GROUP_A, session_date: "2026-08-19" },
+            ],
+          }),
+          twoGroupClub([{ group_id: GROUP_A, session_date: "2026-08-24" }], {
+            id: "starter",
+            start_date: "2026-08-24",
+          }),
+        ],
+      }),
+    );
+
+    const items = data.comingUp.flatMap((day) =>
+      day.cohorts.flatMap((cohort) =>
+        cohort.items.map((item) => [item.id, item.cancellation] as const),
+      ),
+    );
+    expect(Object.fromEntries(items)).toEqual({
+      lan: { kind: "all" },
+      starter: { kind: "some", cancelled: 1, groups: 2 },
+    });
+  });
+
+  it("ignores a cancellation naming a group outside the product's list", () => {
+    const decide = productCancellations({
+      group_ids: [GROUP_A],
+      cancelled_sessions: [
+        { group_id: GROUP_B, session_date: "2026-08-19" },
+      ],
+    });
+    expect(decide("2026-08-19")).toEqual({ kind: "none" });
   });
 });
 

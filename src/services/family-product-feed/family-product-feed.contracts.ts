@@ -211,6 +211,21 @@ export const familyFeedSession = z
   .strict();
 
 /**
+ * One cancelled session, as a family may see it: the date and nothing else.
+ *
+ * The staff twin carries the reason and who cancelled it; a family is told
+ * that the session is off, never why, and `.strict()` is what keeps the reason
+ * from quietly starting to flow here. Only dates the schedule still projects
+ * travel, and a cancelled date never also has a stored session.
+ */
+export const familyFeedCancellation = z
+  .object({
+    /** Product-local calendar date, `YYYY-MM-DD`. */
+    session_date: z.string(),
+  })
+  .strict();
+
+/**
  * The site, on in-person products. `null` on anything remote.
  *
  * A remote municipality club carries a `location_id` too (a municipality, by
@@ -307,6 +322,8 @@ export const familyProductFeed = z
      * truncates table selects.
      */
     sessions: z.array(familyFeedSession),
+    /** The group's cancelled sessions, newest first. */
+    cancellations: z.array(familyFeedCancellation),
   })
   .strict();
 
@@ -315,3 +332,4 @@ export type FamilyFeedSession = z.infer<typeof familyFeedSession>;
 export type FamilyFeedSessionImage = z.infer<typeof familyFeedSessionImage>;
 export type FamilyFeedSite = z.infer<typeof familyFeedSite>;
 export type FamilyFeedPerson = z.infer<typeof familyFeedPerson>;
+export type FamilyFeedCancellation = z.infer<typeof familyFeedCancellation>;

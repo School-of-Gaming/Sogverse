@@ -115,6 +115,12 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // the first-of-month check with `check_violation` — an error, but not the
   // forbidden one.
   get_admin_municipality_invoicing: { permittedRoles: ["admin"] },
+  // One month of every gedu's invoicing. The same guard-then-month-check
+  // order as the municipality read above, so the positive half is assertable
+  // the same way: an admin passes the guard and is refused by the
+  // first-of-month check with `check_violation`, which is not the forbidden
+  // error.
+  get_admin_gedu_invoicing: { permittedRoles: ["admin"] },
   // The two writers of invoice_customers — the Fennoa customers a
   // municipality club's invoice is addressed to. They exist as RPCs rather than
   // as table writes for the §3.3 reason: the table carries no write grant for
@@ -161,6 +167,15 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // id, so a permitted admin gets a document — empty or not — rather than a
   // second refusal, and every other role is stopped by the guard.
   get_admin_substitution_requests: { permittedRoles: ["admin"] },
+
+  // --- session cancellation ------------------------------------------------
+  //
+  // An admin cancels a session and restores it. Both are assertable on both
+  // halves with no fixture: past the admin guard, a NULL group or date is
+  // refused with check_violation before anything is looked up, which is an
+  // error but not the forbidden one.
+  cancel_session: { permittedRoles: ["admin"] },
+  restore_session: { permittedRoles: ["admin"] },
 
   // --- customer-gated ------------------------------------------------------
   // Phase 3's grant-plus-guard conversion. Past the role guard, a customer
@@ -255,6 +270,13 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // enforcement epoch, so a gedu with no assignments gets an empty list rather
   // than a refusal.
   get_my_gedu_assignment_summaries: { permittedRoles: ["gedu"] },
+  // The caller's own month of invoicing, the gedu twin of the admin read.
+  // Role-gated rather than self-scoping because its body is guard-first; past
+  // the guard it is keyed to auth.uid() alone, and gedu-invoicing.test.ts
+  // proves a gedu never reads another gedu's seats. A NULL month is refused by
+  // the first-of-month check with `check_violation`, so the positive half is
+  // assertable with no fixture.
+  get_my_gedu_invoicing: { permittedRoles: ["gedu"] },
 
   // --- the gedu half of session substitutions ------------------------------
   //
@@ -482,6 +504,22 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "roles: gamer-creations.test.ts.",
   },
 
+  // --- team profiles ---------------------------------------------------------
+  //
+  // The one writer of a team profile's content and checkbox. The role half
+  // admits the two roles that have a profile; the target half — their own, or
+  // any admin's or Gedu's for an admin — is can_edit_team_profile, pinned with
+  // the checkbox and completeness rules by team-profiles.test.ts. Assertable on
+  // both halves with no fixture: past the guard, a NULL person is refused with
+  // null_value_not_allowed (22004) before the target half is asked, for either
+  // role.
+  save_team_profile: { permittedRoles: ["gedu", "admin"] },
+  // An admin making an admin's or a Gedu's profile public, or hiding it — their
+  // own included. Past the admin
+  // guard, a NULL decision is refused with null_value_not_allowed (22004) — an
+  // error, but not the forbidden one. Both actions: team-profiles.test.ts.
+  set_team_profile_approval: { permittedRoles: ["admin"] },
+
   // --- the guard primitives themselves -------------------------------------
   // Exposed to `authenticated` because create_product is SECURITY INVOKER, so
   // its guard runs as the caller (update_product is SECURITY DEFINER and does
@@ -640,6 +678,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/get-my-participation-subscription-states.test.ts",
     why: "billing-state signals for participations the caller is party to",
   },
+  get_my_session_cancellations: {
+    scopeTest: "tests/db/session-cancellation.test.ts",
+    why: "takes no argument at all: the seats it answers for are the active, placed participations whose customer_id or participant_id is auth.uid(), so a caller learns the cancelled upcoming dates of their own seats' groups and of nobody else's. It returns dates only — never the reason, the stamp or the author, which stay admin-only. The scope test asks it as the seat's child, as the paying parent and as another family's parent, and requires the third to see nothing",
+  },
   get_my_family_product_feed: {
     scopeTest: "tests/db/family-product-feed.test.ts",
     why: "the family club/camp/event page, keyed on ONE participation. Two roles reach the same document — the participation's participant, and any parent linked to them — so a role guard could only name both and would prove nothing; the real gate is the ownership predicate, which is keyed entirely to auth.uid(). That participant may be an adult holding a seat of their own, in which case the first arm of the same predicate matches directly and the parent-link fallback is never reached. A row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. The scope test is where the interesting half lives: a sibling in the SAME group is refused (the key is the participation, not the group), a parent of another family is refused, a child cannot read their own parent's seat in the group they share, and the document's attendance field carries one answer — the named participant's — rather than a roster map",
@@ -708,6 +750,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   location_search_blob: {
     scopeTest: "tests/db/search-fold-agreement.test.ts",
     why: "folds the strings it is handed into one delimited blob, reads nothing; reachable because the locations.search_blob generated column evaluates it under the writing role's privileges, so an admin creating a site needs it",
+  },
+  can_edit_team_profile: {
+    scopeTest: "tests/db/team-profiles.test.ts",
+    why: "the edit predicate the team-photos storage policies are evaluated with, so it has to be executable by the querying role. SECURITY INVOKER: it answers from the caller's own role and a profiles row the caller's RLS already shows them, so it says only what the caller could read for themselves — whether the named person is themselves, or an admin or a Gedu while the caller is an admin. The scope test asks it as a Gedu, an admin, a parent and a gamer about themselves and about each other",
   },
 };
 

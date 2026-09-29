@@ -94,6 +94,10 @@ function navTexts(messages: typeof en | typeof fr = en): (string | null)[] {
   return Array.from(navGroup(messages).children).map((el) => el.textContent);
 }
 
+function teamProfileLink() {
+  return screen.queryByRole("link", { name: en.header.teamProfile });
+}
+
 function substitutionsLink(messages: typeof en | typeof fr = en) {
   return screen.queryByRole("link", {
     name: messages.header.nav.substitutions,
@@ -117,8 +121,12 @@ describe("Header nav — who gets the Substitutions item", () => {
     // is anchored to the strip's right edge, so an item that ever arrives late
     // has to join at this end or it shoves the links after it sideways.
     expect(navTexts()).toEqual([
+      // Desktop only (hidden below `lg`), and left of Substitutions, per the
+      // owner — at the leading edge for the same late-arrival reason.
+      en.header.invoicing,
       // Both label spans are in the DOM; one is hidden by breakpoint.
       en.header.nav.substitutions + en.header.nav.substitutionsPhone,
+      en.header.teamProfile,
       en.header.nav.about,
       en.header.nav.shop,
     ]);
@@ -131,6 +139,7 @@ describe("Header nav — who gets the Substitutions item", () => {
       renderHeader();
 
       expect(substitutionsLink()).toBeNull();
+      expect(teamProfileLink()).toBeNull();
       expect(navTexts()).toEqual([en.header.nav.about, en.header.nav.shop]);
     },
   );
@@ -222,6 +231,23 @@ describe("Header nav — About gives way on a phone, for gedus only", () => {
   );
 });
 
+/**
+ * The gedu's My profile item sits between Substitutions and About, and only
+ * from `md` up: below that it is a row in the avatar menu, so the phone strip
+ * and its measured table are exactly what they were. An admin has a profile too
+ * but reaches it from settings, never from the strip.
+ */
+describe("Header nav — the gedu's My profile item", () => {
+  it("is on the strip from md up for a gedu, and links to the profile page", () => {
+    signedInAs("gedu");
+    renderHeader();
+
+    const link = teamProfileLink();
+    expect(link?.getAttribute("href")).toBe("/settings/profile");
+    expect(link?.className).toContain("hidden md:inline-flex");
+  });
+});
+
 describe("Header nav — the French phone label", () => {
   it("sets the short word on a phone, the whole one from sm, and announces the whole one", () => {
     signedInAs("gedu");
@@ -263,6 +289,7 @@ describe("Header nav — the scene-only navRole override", () => {
     renderHeader(en, { navRole: "gedu" });
 
     expect(substitutionsLink()).not.toBeNull();
+    expect(teamProfileLink()).not.toBeNull();
     expect(
       screen.getByRole("link", { name: en.header.nav.about }).className,
     ).toContain("hidden sm:inline-flex");
@@ -272,7 +299,7 @@ describe("Header nav — the scene-only navRole override", () => {
     signedInAs("admin");
     renderHeader(en, { navRole: "gedu" });
 
-    // The menu's copy governs its own rehoused About row. Everything else about
+    // The menu's copy governs its own rehoused nav rows. Everything else about
     // the account is still the admin's, because it really is the admin looking.
     expect(accountMenuProps.at(-1)).toMatchObject({
       role: "admin",

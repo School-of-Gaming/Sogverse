@@ -71,6 +71,18 @@ export interface MyAssignedProductSessionRow {
    * the afternoon they had agreed to take.
    */
   substitutionDate: string | null;
+  /**
+   * This row's group's cancelled session dates, product-local `YYYY-MM-DD`,
+   * from the day before today onwards. A card skips them when naming the next
+   * session and names the ones before it; the absence picker never offers one.
+   */
+  cancelledDates: readonly string[];
+  /**
+   * Whether a `substitution` row's date is cancelled — asked of the date itself,
+   * because the card stands for days after it and `cancelledDates` starts the
+   * day before today. False on an `assignment` row.
+   */
+  substitutionCancelled: boolean;
   /** Total number of groups in the product (every `product_groups` row). */
   groupCount: number;
   /** Active participations summed across every group in the product. */
@@ -154,6 +166,8 @@ function toMyAssignedProductSessionRow(
     groupId: row.group_id,
     kind: row.kind,
     substitutionDate: row.substitution_date,
+    cancelledDates: row.cancelled_dates,
+    substitutionCancelled: row.substitution_cancelled,
     groupCount: row.group_count,
     participantCount: row.participant_count,
     slots: row.schedule_slots.map((s) => ({

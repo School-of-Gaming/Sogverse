@@ -67,6 +67,8 @@ function club(overrides: Record<string, unknown> = {}) {
       { group_id: "g1", session_date: "2020-05-04" },
       { group_id: "g1", session_date: "2020-05-11" },
     ],
+    cancelled_sessions: [],
+    group_ids: ["g1"],
     ...overrides,
   };
 }

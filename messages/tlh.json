@@ -42,6 +42,7 @@
       "adminInvoiceCustomers": "DIlwI’pu’",
       "adminInvoiceCustomerNew": "DIlwI’ chu’",
       "adminInvoiceCustomerEdit": "DIlwI’ yIchoH",
+      "adminGeduInvoicing": "Gedu DIlmeH ghItlh",
       "adminTools": "janmey",
       "parentDashboard": "jIH SOG",
       "geduDashboard": "jIH SOG",
@@ -59,7 +60,10 @@
       "geduContract": "Gedu quv chut",
       "seatOffer": "quS nob",
       "geduSubstitutions": "lIwmey",
-      "adminSubstitutions": "lIwmey"
+      "geduInvoicing": "DIlmeH ghItlh",
+      "adminSubstitutions": "lIwmey",
+      "teamProfile": "Del’a’wIj",
+      "adminTeamProfile": "Del’a’"
     },
     "descriptions": {
       "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
@@ -383,6 +387,15 @@
         "needsAttention": "poQ Qu’ – De’vam tu’lu’ ’etlhDaq QaDDaq",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
       },
+      "cancellation": {
+        "allTitle": "jajvam Hoch ghommey poH qIllu’ – yay’ Dun",
+        "some": "{cancelled}/{groups} ghom poH qIllu’",
+        "allComingUp": {
+          "starts": "wa’DIch poH qIllu’",
+          "ends": "Qav poH qIllu’",
+          "runs": "qIllu’"
+        }
+      },
       "comingUp": {
         "label": "ghoS",
         "heading": "ghoS",
@@ -440,6 +453,7 @@
       "feeNotSet": "DIl wIvlu’pu’be’",
       "notRecorded": "qonlu’pu’be’",
       "upcoming": "qaSbe’lI’",
+      "cancelled": "qIllu’",
       "unrecordedSessions": "{count, plural, one {# qonlu’pu’be’} other {# qonlu’pu’be’}}",
       "sessionsFor": "{club} qaSpu'",
       "clubsIn": "{municipality} ghomHommey",
@@ -1203,6 +1217,30 @@
         "loadFailed": "may’mey qonta’ghach laDlaHbe’. nIteb yIchu’qa’.",
         "loading": "ngIq vamvaD may’mey qonta’ghach laDlu’…",
         "railGroupHeading": "ghom"
+      },
+      "cancellation": {
+        "menuLabel": "may’ qIllu’bogh vamvaD latlh vumghachmey",
+        "cancelSession": "may’ yIqIl",
+        "addReason": "meq yIchel",
+        "changeReason": "meq yIchoH",
+        "restoreSession": "may’ yIchu’qa’",
+        "cancelTitle": "may’vam DaqIl’a’?",
+        "cancelBody": "{date}. may’vam qIllu’ legh qorDu’pu’ Gedupu’ je, ’ej pagh qonlu’laH. vay’ ghelbe’lu’.",
+        "reasonTitle": "meq yIchoH",
+        "reasonBody": "{date}. qIllu’taH may’.",
+        "reasonLabel": "meq",
+        "reasonHint": "meq legh loHwI’pu’ neH. {count} ngutlh ratlh",
+        "reasonPlaceholder": "qatlh ghom qIllu’?",
+        "keepSession": "may’ yIpol",
+        "cancelConfirm": "may’ yIqIl",
+        "reasonConfirm": "meq yIpol",
+        "recordKept": "may’vam qonmey, mIlloghmey, pawlu’ghach je polmoHlu’. qIllu’taHvIS may’, bIH leghbe’ qorDu’pu’. may’ chu’qa’lu’chugh, chegh.",
+        "recordKeptEmailed": "may’vam qonmey, mIlloghmey, pawlu’ghach je polmoHlu’. qIllu’taHvIS may’, bIH leghbe’ qorDu’pu’. may’ chu’qa’lu’chugh, chegh. qorDu’pu’vaD ja’ ngeHlu’pu’, ’ej QIn lI’ qa’laHbe’lu’.",
+        "cancelFailed": "polmoHlu’laHbe’. yInID je.",
+        "restoreTitle": "may’vam Dachu’qa’’a’?",
+        "restoreBody": "{date}. may’vam nab legh qorDu’pu’ Gedupu’ je, ’ej motlh qonlu’laH. vay’ ghelbe’lu’.",
+        "restoreConfirm": "may’ yIchu’qa’",
+        "restoreFailed": "may’ chu’qa’lu’laHbe’. yInID je."
       }
     },
     "users": {
@@ -1241,7 +1279,25 @@
           "girl": "be’Hom",
           "non_binary": "ghob ghajbe’"
         },
-        "ageYears": "{age, plural, one {# DIS} other {# DIS}}"
+        "ageYears": "{age, plural, one {# DIS} other {# DIS}}",
+        "usernameLabel": "pongwIj",
+        "usernameHint": "QIn ghItlh mI’ je neH, 3–20. DaH chu’ pong lo’ ngaQHa’moHmeH.",
+        "usernameInvalid": "3–20 QIn ghItlh mI’ ghap yIlo’. chIm Daq yIlo’Qo’!",
+        "usernameTaken": "pongvam ghaj latlh SuvwI’. latlh yIwIv!",
+        "usernameSaveError": "pong choHlaHbe’; pagh pollu’. yInIDqa’!",
+        "usernameSavedDetailsFailed": "pong choHlu’, ’ach bogh jaj Segh je pollu’be’. yInIDqa’!",
+        "emailHint": "DaH chu’ Daq lo’ ngaQHa’moHmeH. Daq ngu’be’lu’, ghaH ngu’pa’.",
+        "emailSaveError": "QIn Daq choHlaHbe’; pagh pollu’. yInIDqa’!",
+        "emailSavedDetailsFailed": "QIn Daq choHlu’, ’ach bogh jaj Segh je pollu’be’. yInIDqa’!"
+      },
+      "emailEdit": {
+        "edit": "QIn Daq yIchoH",
+        "title": "QIn Daq yIchoH",
+        "description": "DaH chu’ Daq lo’ ngaQHa’moHmeH. Daq ngu’be’lu’, ghaH ngu’pa’.",
+        "label": "QIn Daq",
+        "invalid": "QIn Daq lugh yInob.",
+        "taken": "latlh mab ghaj Daqvam. naDev mab DamuvmoHlaHbe’ — ghun yIghel!",
+        "saveError": "QIn Daq choHlaHbe’. yInIDqa’!"
       },
       "gameAccounts": {
         "title": "QujmeH tetlh",
@@ -1779,7 +1835,7 @@
         },
         "sessions": {
           "title": "Hoch ghomDaq qaSbogh",
-          "intro": "mIw'a' ghom ghItlhpu'bogh Hoch poH, tu'lu' ghItlhmey je ja'chuqDaq Gedu' chelbogh nagh beQmey je. Gedu' ja'chuq ghItlhDI' qoj tu'wI'pu' ghItlhDI' ghItlh ghaj poH; vaj qaSpa' qaSmoHlu'bogh poH naDev tu'be'lu'. poH nIteb leghmeH yIlo' — Qam chIlbogh He rur; puq mI'mey muvmoHghachDaq tu'lu' vaj.",
+          "intro": "mIw'a' ghom ghItlhpu'bogh Hoch poH, tu'lu' ghItlhmey je ja'chuqDaq Gedu' chelbogh nagh beQmey je. Gedu' ja'chuq ghItlhDI' qoj tu'wI'pu' ghItlhDI' ghItlh ghaj poH; vaj qaSpa' qaSmoHlu'bogh poH naDev tu'be'lu'; loHwI' qIlbogh poH naDev tu'be'lu' je. poH nIteb leghmeH yIlo' — Qam chIlbogh He rur; puq mI'mey muvmoHghachDaq tu'lu' vaj.",
           "params": {
             "productId": "De'wI'vam ghommey poHmey neH.",
             "groupId": "ghomvam poHmey neH.",
@@ -2223,7 +2279,8 @@
       "substitutionWithdrawTitle": "DaH Danatlh’a’?",
       "substitutionWithdrawBody": "may’ DaDevqa’, ’ej Hoch lIw nob lunatlhlu’.",
       "substitutionWithdrawConfirm": "yInatlh",
-      "substitutionWithdrawFailed": "pollu’be’. yIboq."
+      "substitutionWithdrawFailed": "pollu’be’. yIboq.",
+      "cancelledByOn": "qIl {name}, {when}"
     },
     "groupNotes": {
       "heading": "ghom’a’vam",
@@ -2340,6 +2397,55 @@
       }
     }
   },
+  "geduInvoicing": {
+    "adminTitle": "Gedu DIlmeH ghItlh",
+    "adminDescription": "wa’ jar: SeSSIy’mey ghItlhlu’pu’bogh Gedu Hoch, ’ej School of Gaming DIlmeH nuq poQ.",
+    "myTitle": "DIlmeH ghItlh",
+    "myDescription": "School of Gaming DIlmeH nuq DapoQ, wa’ jar neH. SeSSIy’ ghItlhlu’DI’ vaj togh — ghoS, ja’ pagh qonta’.",
+    "backToDashboard": "jIH SOGDaq yIchegh",
+    "previousMonth": "jar vorgh",
+    "nextMonth": "jar veb",
+    "expandAll": "Hoch yIpoSmoH",
+    "collapseAll": "Hoch yISoQmoH",
+    "monthTotal": "jar Hoch",
+    "myTotal": "Hoch",
+    "geduCount": "{count, plural, one {# Gedu} other {# Gedupu’}}",
+    "clubCount": "{count, plural, one {# ghom} other {# ghommey}}",
+    "sessionCount": "{count, plural, one {# SeSSIy’} other {# SeSSIy’mey}}",
+    "municipalityAmount": "veng {amount}",
+    "consumerAmount": "tlhIngan {amount}",
+    "segmentMunicipality": "veng",
+    "segmentConsumer": "tlhIngan",
+    "columnClub": "ghom",
+    "columnRole": "Qu’",
+    "columnFee": "Huch / SeSSIy’",
+    "columnSessions": "SeSSIy’mey",
+    "columnTotal": "Hoch",
+    "rolePrimary": "Gedu wa’DIch",
+    "roleAssistant": "Gedu boQwI’",
+    "feeNotSet": "Huch ghItlhbe’lu’",
+    "recorded": "ghItlhlu’",
+    "notRecorded": "ghItlhbe’lu’",
+    "upcoming": "ghoSqu’",
+    "cancelled": "qIllu’",
+    "absentSubstituted": "Dachbe’ — lIw {name}",
+    "absentNoSubstitute": "Dachbe’ — lIwwI’ tu’lu’be’",
+    "substitutingFor": "{name} lIw",
+    "unrecordedCount": "{count, plural, one {# ghItlhbe’lu’} other {# ghItlhbe’lu’}}",
+    "excludedWithoutFee": "Huch ghItlhbe’lu’: {clubs, plural, one {# ghom} other {# ghommey}}, {sessions, plural, one {# SeSSIy’} other {# SeSSIy’mey}} Hochvo’ lellu’",
+    "sessionsFor": "{club} SeSSIy’mey ({role})",
+    "clubsOf": "{name} ghommey",
+    "adminEmptyMonth": "jarvam Gedu SeSSIy’ ghItlhlu’be’, nabbe’lu’.",
+    "myEmptyMonth": "jarvam DIlmeH vay’ Daghajbe’: SeSSIy’lIj ghItlhlu’be’, nabbe’lu’.",
+    "vatNote": "Huch VAT ghajbe’. ghItlhlIjDaq VAT (25.5%) yIchel.",
+    "itemiseNote": "ghItlhlIjDaq veng Huch tlhIngan Huch je yIwav.",
+    "myUnrecorded": "{count, plural, one {# SeSSIy’ ret ghItlhlu’be’, vaj togh’be’lu’. ghom Qu’meH DaqDaq yIghItlh, vaj toghlu’.} other {# SeSSIy’mey ret ghItlhlu’be’, vaj togh’be’lu’. ghom Qu’meH DaqDaq yIghItlh, vaj toghlu’.}}",
+    "loadError": "DIlmeH jar lI’laHbe’. yIchu’qa’.",
+    "loadErrorWithReason": "DIlmeH jar lI’laHbe’ — {reason}. yIchu’qa’.",
+    "searchPlaceholder": "pong qoj QIn yInej…",
+    "searchAriaLabel": "Gedupu’ yInej",
+    "searchNoMatches": "pagh! jarvam ”{query}” rurbogh Gedu tu’lu’be’."
+  },
   "productType": {
     "consumer_club": "ghom’a’",
     "municipality_club": "ghom’a’",
@@ -2348,12 +2454,15 @@
   },
   "activityCard": {
     "endedOn": "{date} rIntaH",
-    "noSchedule": "poH nabta’ tu’lu’be’"
+    "noSchedule": "poH nabta’ tu’lu’be’",
+    "cancelledAhead": "{count, plural, one {<b>{dates}</b> qIllu’!} other {<b>{dates}</b> qIllu’pu’!}}",
+    "cancelledAheadMore": "<b>{first}</b> {more, plural, one {# may’ latlh je} other {# may’mey latlh je}} qIllu’pu’!"
   },
   "sessionBadge": {
     "live": "qaStaH",
     "nextSession": "may’ veb",
-    "upcoming": "may’ pIq"
+    "upcoming": "may’ pIq",
+    "cancelled": "qIllu’"
   },
   "sessionFeed": {
     "readMore": "latlh yIlaD",
@@ -2419,7 +2528,9 @@
     },
     "accountMenu": "qa’ De’wI’ – {name}",
     "continueToAccount": "qa’lIj yIghoS",
-    "switchTo": "pong yIchoH"
+    "switchTo": "pong yIchoH",
+    "invoicing": "DIlmeH ghItlh",
+    "teamProfile": "Del’a’wIj"
   },
   "schools": {
     "hero": {
@@ -2855,6 +2966,7 @@
     "municipalityClubs": "ghomHom veng",
     "municipalityInvoicing": "veng DIlmeH ghItlh",
     "invoiceCustomers": "DIlwI’pu’",
+    "geduInvoicing": "Gedu DIlmeH ghItlh",
     "camps": "pa’ Qugh",
     "events": "Qu’mey",
     "sites": "Daqmey",
@@ -3095,14 +3207,14 @@
   },
   "settings": {
     "subtitle": "account ngoQmey tI’ang",
-    "profileDescription": "SoH De’ yIchoH",
+    "personalInformation": "SoH De’",
     "roleAccount": "{role, select, customer {vav/SoS account} gamer {toy’wI’ account} gedu {Gedu account} admin {ra’wI’ account} other {account}}",
     "firstNamePlaceholder": "wa’DIch pong yIchel",
     "lastNamePlaceholder": "qorDu’ pong yIchel",
     "invalidPhone": "HablI’ HSDu’ nIvbe’ yIchel.",
     "lastNameRequired": "qorDu’ pong {min} mu’tlhegh puS ghobe’.",
-    "profileUpdated": "SoQmoHwI’ choHlu’. Qapla’!",
-    "failedToUpdateProfile": "SoQmoHwI’ choH Dabe’lu’.",
+    "profileUpdated": "SoH De’ pollu’. Qapla’!",
+    "failedToUpdateProfile": "SoH De’ pollaHbe’lu’.",
     "securityDescription": "mu’mey je QaQ ngoQmey tI’ang",
     "resetPassword": "mu’mey yIchoH",
     "resetPasswordEmailSent": "{email}vaD chovmoH QIn ngeHlu’. QIn tepqengwI’lIj yIbej!",
@@ -3132,6 +3244,11 @@
       "title": "mIloghmey HaSta je",
       "granted": "chaw’ SoSlI’ vavlI’ joq: poH ja’ghItlhmeyDaq mIloghlIj HaSta je lo’lu’laH, ’ej School of Gaming, Lynx Educate, Roblox je lo’laH. ’ach mIloghlIj tlhapmeH, SoH Dughel Gedu.",
       "notGranted": "chaw’be’ SoSlI’ vavlI’ joq. vaj poH mIloghmeyvo’ DuchoprupmoH Gedu. SoSlI’ vavlI’ joq neH choHlaH."
+    },
+    "teamProfile": {
+      "title": "Del’a’wIj",
+      "description": "School of Gaming Qu’mey Hoch legh: mInDu’lIj mIllogh, ’ej bIpong nuq ’e’ ghItlh.",
+      "edit": "Del’a’ yIchoH"
     }
   },
   "tools": {
@@ -3933,5 +4050,155 @@
     "emailRequired": "QIn Daq yIchel!",
     "emailInvalid": "QIn Daq rurbe’ vam.",
     "emailTaken": "account ghaj QIn Daqvam."
+  },
+  "team": {
+    "profile": {
+      "nameWithNickname": "{firstName} “<nick>{nickname}</nick>” {lastName}",
+      "firstNameWithNickname": "{firstName} “<nick>{nickname}</nick>”",
+      "geduTitle": "Gedu · Quj ghojmoHwI’",
+      "speaks": "jatlh",
+      "aboutMe": "jIH",
+      "funFact": "De’ Quch",
+      "draft": {
+        "shortDescription": "naDev wa’ tlhegh jIH DaghItlhbogh",
+        "longDescription": "naDev “jIH” DaghItlhbogh"
+      }
+    },
+    "edit": {
+      "back": "SeHlaw’Daq yIchegh",
+      "pageTitle": "Del’a’wIj",
+      "status": {
+        "privateTitle": "So’lu’",
+        "privateBody": "Qu’mey Daq Del’a’lIj leghlaHbe’ vay’. bIQuchDI’, bIng “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIwIv ’ej yIpol.",
+        "waitingTitle": "ghuHmoHlu’, loHwI’ loS",
+        "waitingBody": "Hoch leghpa’, Del’a’ navlIj nuD loHwI’.",
+        "liveTitle": "Hoch leghDaq leghlu’",
+        "liveBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. So’meH, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIteq ’ej yIpol. DawIvqa’DI’, Hoch leghmoHqa’ loHwI’."
+      },
+      "actions": {
+        "save": "choHmey yIpol",
+        "discard": "choHmey yIlon"
+      },
+      "switch": {
+        "heading": "Hoch legh",
+        "readyLabel": "jIH ’oH: DaH leghlu’ ’e’ vIQap",
+        "readyHint": "DawIvDI’ ’ej DapolDI’, Del’a’lIj DaghuHmoH; legh loHwI’ ’ej Hoch leghmoH. Dateq ’ej DapolDI’, SIbI’ So’lu’. DawIvqa’DI’, Hoch leghmoHqa’ loHwI’.",
+        "complete": "Hoch Daghaj. Qapla’!",
+        "mustStayComplete": "wIvlu’taHvIS, naQnIS Del’a’lIj. naQbe’chugh, polbe’lu’. yIchu’ pagh yIteq.",
+        "missing": {
+          "photo": "mIllogh yIlab, vaj DawIvlaH.",
+          "title": "patlhlIj yIghItlh, vaj DawIvlaH.",
+          "text": "“wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "photoTitle": "mIllogh yIlab ’ej patlhlIj yIghItlh, vaj DawIvlaH.",
+          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "titleText": "patlhlIj yIghItlh ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "photoTitleText": "mIllogh yIlab, patlhlIj yIghItlh, ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH."
+        }
+      },
+      "photo": {
+        "heading": "mIllogh",
+        "upload": "mIllogh yIlab",
+        "replace": "mIllogh yIchoH",
+        "remove": "mIllogh yIteq",
+        "guidance": {
+          "intro": "naDev wa’DIch Du ghom qorDu’pu’ QujwI’pu’ je. DawIvDI’, mIllogh Dape’.",
+          "doHeading": "yIruch",
+          "dontHeading": "yImev",
+          "do": {
+            "you": "SoH neH: nach ’ej volchaHmey, qab leghlu’",
+            "light": "wov QaQ: HaSta yIbej",
+            "natural": "yIjot: SoH yIDa",
+            "gear": "QoymeH jan pagh SeHwI’: lo’laH",
+            "background": "’em Say’ pagh Dab"
+          },
+          "dont": {
+            "others": "puqpu’ pagh latlhpu’ mIlloghDaq. puq Qan chut ’oH: puq ngaSchugh mIllogh, lo’lu’be’.",
+            "hidden": "Hov leghwI’ ’oy’, QaD mIn pagh qab So’wI’ Hoch",
+            "group": "ghom mIllogh pagh ghom mIlloghvo’ SoH pe’lu’bogh",
+            "avatar": "avatar, Dijlu’bogh ghot pagh mIllogh choHwI’ HoS",
+            "blurry": "mIllogh Hurgh pagh HeSlaw"
+          }
+        },
+        "crop": {
+          "title": "mIllogh yIpe’",
+          "description": "mIllogh yItlhe’ ’ej yItIn’moH.",
+          "zoom": "tIn’moH",
+          "confirm": "mIllogh yIlo’",
+          "unreadable": "mIllogh ’oHbe’ De’vam! JPEG, PNG pagh WebP yIwIv. HEIC mIllogh yImugh wa’DIch.",
+          "chooseAnother": "latlh mIllogh yIwIv",
+          "failed": "mIllogh pe’lu’laHbe’. yInIDqa’ pagh latlh yIwIv."
+        }
+      },
+      "about": {
+        "heading": "SoH",
+        "nickname": "QujwI’pu’ jIH ponglu’:",
+        "nicknamePlaceholder": "PixelPirate",
+        "nicknameHint": "ponglIjDaq cha’lu’, DaghItlhbogh rur.",
+        "title": "patlh",
+        "titleHint": "School of Gaming Daq Qu’lIj. mu’tlheghvam: Head of Clubs.",
+        "pick": "nguvlIj"
+      },
+      "writing": {
+        "heading": "mu’meylIj",
+        "languages": "Holmey",
+        "addLocale": "Hol chu’",
+        "removeLocale": "{locale} yIteq",
+        "shortDescription": "wa’ tlhegh: jIH",
+        "shortDescriptionPlaceholder": "redstone Qun ’ej chenmoHwI’",
+        "longDescription": "jIH",
+        "longDescriptionHint": "Quj Dachenmo’, Quj DaQujmo’. qorDu’pu’ yIja’.",
+        "longDescriptionPlaceholder": "qorDu’pu’ yIja’",
+        "funFact": "De’ Quch",
+        "funFactPlaceholder": "Minecraft Daq SIvwI’ vIchenmoH.",
+        "count": "{count}/{max}"
+      },
+      "preview": {
+        "heading": "wa’DIch legh"
+      },
+      "errors": {
+        "save": "Del’a’ polmoHlaHbe’. yInID.",
+        "incomplete": "ghuHmoHlu’ Del’a’, vaj naQnIS. chIlbogh yIteb ’ej yIpolmoH.",
+        "photoUpload": "mIllogh lIHlaHbe’. pagh polta’. yInIDqa’.",
+        "photoGone": "latlh Daq mIllogh choHlu’pu’. nav yIchu’qa’ ’ej DaH Del’a’ yIlegh."
+      }
+    },
+    "admin": {
+      "status": {
+        "privateTitle": "ghuHmoHbe’lu’ rIntaHbe’",
+        "privateBody": "{name} Del’a’ Qu’mey Daq Dalegh’be’. naQDI’, ghuHmoHlaH {name} pagh loHwI’ Hoch.",
+        "waitingTitle": "ghuHmoHlu’, leghmoH loS",
+        "waitingBody": "{name} Del’a’ ghuHmoHlu’. Hoch leghmoH loHwI’DI’, SIbI’ Hoch legh.",
+        "liveTitle": "Hoch legh",
+        "liveBody": "{name} Del’a’ legh Hoch. DapolmoHbogh choHmey DaH lInlu’."
+      },
+      "edit": {
+        "back": "{name} yIchegh",
+        "pageTitle": "{name} Del’a’",
+        "readyLabel": "Del’a’ ghuHmoHlu’: DaH leghlu’",
+        "readyHint": "DawIvDI’ ’ej DapolDI’, {name} Del’a’ DaghuHmoH. Hoch leghmoH loHwI’DI’, Hoch legh. Dateq ’ej DapolDI’, SIbI’ So’lu’ — ghuHmoHqa’lu’ ’ej leghmoHqa’lu’ neH chegh.",
+        "complete": "Hoch legh Del’a’ ’e’ laH. naQ.",
+        "mustStayComplete": "wIvlu’taHvIS, naQnIS Del’a’. naQbe’chugh, polbe’lu’. yIchu’ pagh yIteq.",
+        "missing": {
+          "photo": "mIllogh yIlab, vaj DawIvlaH.",
+          "title": "patlh yIghItlh, vaj DawIvlaH.",
+          "text": "“wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "photoTitle": "mIllogh yIlab ’ej patlh yIghItlh, vaj DawIvlaH.",
+          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "titleText": "patlh yIghItlh ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "photoTitleText": "mIllogh yIlab, patlh yIghItlh, ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH."
+        }
+      },
+      "userPage": {
+        "heading": "Del’a’",
+        "nothingSaved": "{name} Del’a’Daq pagh ghItlhlu’pu’.",
+        "writtenIn": "Hol",
+        "edit": "Del’a’ yIchoH",
+        "makePublic": "Hoch yIleghmoH",
+        "makePublicNeedsReady": "Del’a’ yIchoH ’ej yIghuHmoH; vaj Hoch DaleghmoHlaH.",
+        "makePublicNotReady": "{name} Del’a’ ghuHbe’choH; vaj Hoch leghmoHlu’be’.",
+        "hide": "yISo’",
+        "visibilityError": "leghmoH choHlaHbe’. yInID."
+      }
+    }
   }
 }

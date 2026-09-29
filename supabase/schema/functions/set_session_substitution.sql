@@ -35,6 +35,13 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
+  -- Cancellation: no sub is seated on a session that is not happening, and
+  -- that binds the retroactive path too.
+  IF public.group_session_is_cancelled(p_group_id, p_session_date) THEN
+    RAISE EXCEPTION 'The session on % is cancelled', p_session_date
+      USING ERRCODE = 'P0026';
+  END IF;
+
   v_note := NULLIF(btrim(COALESCE(p_reason_note, '')), '');
 
   SELECT * INTO v_row

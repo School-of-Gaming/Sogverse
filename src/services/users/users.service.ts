@@ -5,14 +5,21 @@ import { walkPages } from "@/lib/supabase/paging";
 import { keysetPage, type KeysetCursor } from "@/lib/supabase/keyset";
 import { ADMIN_PEOPLE_LIST_PAGE_SIZE } from "@/lib/constants/admin-people-lists";
 import type { SpokenLanguageCode } from "@/lib/constants/spoken-languages";
-import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
+import {
+  parseJsonResponse,
+  readApiError,
+  readErrorMessage,
+} from "@/lib/api/json-response";
 import {
   adminGameAccountWriteResult,
+  adminUserEmailWriteResult,
   userListEntry,
   USER_LIST_ENTRY_COLUMNS,
   USER_LIST_SEARCH_MIN_QUERY,
   type AdminGameAccountBody,
   type AdminGameAccountWriteResult,
+  type AdminUserSignInAddressBody,
+  type AdminUserEmailWriteResult,
   type UserListEntry,
 } from "./users.contracts";
 
@@ -156,6 +163,35 @@ export class UsersService {
     }
 
     return parseJsonResponse(response, adminGameAccountWriteResult);
+  }
+
+  /**
+   * An admin changing another account's sign-in address — a real mailbox, or a
+   * username-mode child's username, which is the address's local part.
+   *
+   * A route rather than a `.from("profiles")` write, because the address lives
+   * on the auth record too and `authenticated` cannot write `profiles.email` at
+   * all. A refusal is thrown as an `ApiError` so its `code` reaches the dialog,
+   * which tells the value-already-taken case apart from every other failure.
+   */
+  async updateUserSignInAddress(
+    userId: string,
+    edit: AdminUserSignInAddressBody,
+  ): Promise<AdminUserEmailWriteResult> {
+    const response = await fetch(
+      `/api/admin/users/${encodeURIComponent(userId)}/email`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(edit),
+      },
+    );
+
+    if (!response.ok) {
+      throw await readApiError(response, "Failed to change the sign-in address");
+    }
+
+    return parseJsonResponse(response, adminUserEmailWriteResult);
   }
 
   /**

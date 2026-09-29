@@ -24,6 +24,10 @@ import {
 } from "@/components/gedu/mock-dashboard-fixtures";
 import { GEDU_SUBSTITUTIONS_SCENARIOS } from "@/components/gedu/mock-substitutions-fixtures";
 import {
+  ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS,
+  GEDU_TEAM_PROFILE_EDITOR_SCENARIOS,
+} from "@/components/team/mock-team-fixtures";
+import {
   MUNICIPALITY_INVOICING_NOW,
   MUNICIPALITY_INVOICING_SCENARIOS,
   MUNICIPALITY_INVOICING_WORKING_MONTH,
@@ -31,6 +35,19 @@ import {
   resolvePreviewInvoicingMonth,
 } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
 import { buildMunicipalityInvoicing } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
+import {
+  ADMIN_GEDU_INVOICING_SCENARIOS,
+  GEDU_INVOICING_NOW,
+  GEDU_INVOICING_WORKING_MONTH,
+  MY_GEDU_INVOICING_SCENARIOS,
+  MY_GEDU_INVOICING_VIEWERS,
+  geduInvoicingMonthFixture,
+  resolvePreviewGeduInvoicingMonth,
+} from "@/components/gedu-invoicing/mock-gedu-invoicing-fixtures";
+import {
+  buildGeduInvoicing,
+  type GeduInvoicingView,
+} from "@/components/gedu-invoicing/build-gedu-invoicing";
 import { finvoiceReadiness } from "@/lib/finvoice";
 import {
   INVOICE_CUSTOMER_EDIT_FIXTURE,
@@ -206,9 +223,25 @@ describe("registry scenarios match their fixtures", () => {
     ]);
   });
 
+  it("profile editor, both roles", () => {
+    expect(slugsFor("gedu-profile-editor")).toEqual([...GEDU_TEAM_PROFILE_EDITOR_SCENARIOS]);
+    expect(slugsFor("admin-profile-editor")).toEqual([
+      ...ADMIN_TEAM_PROFILE_EDITOR_SCENARIOS,
+    ]);
+  });
+
   it("municipality invoicing", () => {
     expect(slugsFor("municipality-invoicing")).toEqual([
       ...MUNICIPALITY_INVOICING_SCENARIOS,
+    ]);
+  });
+
+  it("gedu invoicing, both readers", () => {
+    expect(slugsFor("gedu-invoicing")).toEqual([
+      ...ADMIN_GEDU_INVOICING_SCENARIOS,
+    ]);
+    expect(slugsFor("gedu-my-invoicing")).toEqual([
+      ...MY_GEDU_INVOICING_SCENARIOS,
     ]);
   });
 
@@ -1350,18 +1383,17 @@ describe("the club scenario shows every state a past session can wear", () => {
   });
 
   /**
-   * The skip states went with the didn't-run editor: declaring a session off is
-   * inseparable from the cancellation and billing flows nobody has designed, so
-   * skip is a schema intention with no trace in the mock. A fixture quietly
-   * reintroducing one would put an unrenderable kind back into the feed.
+   * A cancelled session on each side of the present, as a gedu sees it: the
+   * date and nothing about why, and nothing owed on the one behind.
    */
-  it("authors no skipped session anywhere, in either scenario", () => {
-    const RENDERABLE = ["future", "past", "no_record"];
-    for (const scenario of GROUP_WORKSPACE_SCENARIOS) {
-      const { entries } = buildGroupWorkspaceFixture(now, scenario);
-      for (const entry of entries) {
-        expect(RENDERABLE, `${scenario}/${entry.id}`).toContain(entry.kind);
-      }
+  it("draws a cancelled session on each side of the present, as a gedu sees it", () => {
+    const { entries, feedRoster } = buildGroupWorkspaceFixture(now, "club");
+    const cancelled = entries.filter((e) => e.kind === "cancelled");
+
+    expect(cancelled.map((e) => e.upcoming)).toEqual([true, false]);
+    for (const entry of cancelled) {
+      expect(entry).toMatchObject({ reason: null, cancelledBy: null });
+      expect(entryCompleteness(entry, feedRoster)).toBeNull();
     }
   });
 });
@@ -1899,11 +1931,35 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     );
   });
 
-  it("carries all three kinds of session line", () => {
+  it("carries all four kinds of session line", () => {
     const kinds = new Set(
       clubs.flatMap((club) => club.sessions.map((session) => session.kind)),
     );
-    expect(kinds).toEqual(new Set(["recorded", "unrecorded", "upcoming"]));
+    expect(kinds).toEqual(
+      new Set(["recorded", "unrecorded", "upcoming", "cancelled"]),
+    );
+  });
+
+  it("shows a cancellation either side of today, and none that is orphaned", () => {
+    const shown = new Set(
+      clubs.flatMap((club) =>
+        club.sessions
+          .filter((session) => session.kind === "cancelled")
+          .map((session) => session.date),
+      ),
+    );
+    const sent = new Set(
+      snapshot.clubs.flatMap((club) =>
+        club.cancelled_sessions.map((one) => one.session_date),
+      ),
+    );
+    const today = "2026-05-21";
+
+    expect([...shown].some((date) => date < today)).toBe(true);
+    expect([...shown].some((date) => date > today)).toBe(true);
+    // At least one cancellation in the document sits on a date its club does
+    // not project, and the ledger has no line for it.
+    expect([...sent].some((date) => !shown.has(date))).toBe(true);
   });
 
   it("has clubs reporting missed sessions on their own line", () => {
@@ -2206,5 +2262,63 @@ describe("the invoice customers scene", () => {
       (row) => row.fennoa_customer_no,
     );
     expect(new Set(numbers).size).toBe(numbers.length);
+  });
+});
+
+/**
+ * The gedu invoicing scenes exist to show every kind of line a month can hold.
+ * The admin's month has them all at once; a gedu's own month shows one gedu, so
+ * the two viewers between them must — which is the whole reason there are two.
+ */
+describe("the gedu invoicing scenes cover every line kind", () => {
+  const KINDS = ["paid", "unrecorded", "upcoming", "cancelled", "absent"];
+
+  function build(geduId?: string): GeduInvoicingView {
+    return buildGeduInvoicing({
+      snapshot: geduInvoicingMonthFixture(GEDU_INVOICING_WORKING_MONTH, geduId),
+      locale: "en",
+      now: GEDU_INVOICING_NOW,
+    });
+  }
+
+  function lines(view: GeduInvoicingView) {
+    return view.gedus.flatMap((gedu) => gedu.clubs.flatMap((club) => club.lines));
+  }
+
+  it("shows every kind, both segments and an unset fee in the admin month", () => {
+    const view = build();
+    const all = lines(view);
+    expect(new Set(all.map((line) => line.kind))).toEqual(new Set(KINDS));
+    expect(all.some((line) => line.coveringFor !== null)).toBe(true);
+    const absences = all.filter((line) => line.kind === "absent");
+    expect(absences.some((line) => line.substitute !== null)).toBe(true);
+    expect(absences.some((line) => line.substitute === null)).toBe(true);
+    expect(view.clubsWithoutFee).toBeGreaterThan(0);
+    expect(view.municipalityTotalCents).toBeGreaterThan(0);
+    expect(view.consumerTotalCents).toBeGreaterThan(0);
+  });
+
+  it("narrows each gedu scenario to its one viewer, and the two cover every kind", () => {
+    const seen = new Set<string>();
+    for (const scenario of MY_GEDU_INVOICING_SCENARIOS) {
+      const view = build(MY_GEDU_INVOICING_VIEWERS[scenario]);
+      expect(view.gedus.map((gedu) => gedu.id), scenario).toEqual([
+        MY_GEDU_INVOICING_VIEWERS[scenario],
+      ]);
+      for (const line of lines(view)) seen.add(line.kind);
+    }
+    expect(seen).toEqual(new Set(KINDS));
+  });
+
+  it("opens on the working month, and every other month is empty", () => {
+    expect(resolvePreviewGeduInvoicingMonth(null)).toBe(
+      GEDU_INVOICING_WORKING_MONTH,
+    );
+    expect(resolvePreviewGeduInvoicingMonth("nonsense")).toBe(
+      GEDU_INVOICING_WORKING_MONTH,
+    );
+    const next = monthsAfter(GEDU_INVOICING_WORKING_MONTH, 1);
+    expect(resolvePreviewGeduInvoicingMonth(next.slice(0, 7))).toBe(next);
+    expect(geduInvoicingMonthFixture(next).gedus).toEqual([]);
   });
 });

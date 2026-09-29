@@ -34,6 +34,12 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
+  -- Cancellation: nobody needs cover for a session that is not happening.
+  IF public.group_session_is_cancelled(p_group_id, p_session_date) THEN
+    RAISE EXCEPTION 'The session on % is cancelled', p_session_date
+      USING ERRCODE = 'P0026';
+  END IF;
+
   SELECT p.timezone INTO v_timezone
     FROM public.product_groups g
     JOIN public.products p ON p.id = g.product_id

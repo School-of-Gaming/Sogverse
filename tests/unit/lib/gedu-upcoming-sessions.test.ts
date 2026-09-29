@@ -41,6 +41,7 @@ function row(overrides: {
   startDate?: string | null;
   endDate?: string | null;
   isRemote?: boolean;
+  cancelledDates?: string[];
 }): GeduAssignmentRow {
   return {
     product: {
@@ -61,6 +62,8 @@ function row(overrides: {
     groupId: overrides.groupId,
     kind: overrides.kind ?? "assignment",
     substitutionDate: overrides.substitutionDate ?? null,
+    cancelledDates: overrides.cancelledDates ?? [],
+    substitutionCancelled: false,
     slots: overrides.slots,
     groupCount: 1,
     participantCount: 8,
@@ -191,6 +194,36 @@ describe("the gedu's own upcoming sessions", () => {
     });
     expect(sessions).toHaveLength(1);
     expect(sessions[0].sessionDate).toBe("2026-03-24");
+  });
+
+  it("never offers a cancelled session, on either kind of seat", () => {
+    const sessions = buildGeduUpcomingSessions({
+      rows: [
+        row({
+          productId: "p",
+          groupId: "g",
+          // Mondays; the next one (23 Mar) is cancelled.
+          slots: weekly(0, "17:00"),
+          cancelledDates: ["2026-03-23"],
+        }),
+        row({
+          productId: "sub",
+          groupId: "gsub",
+          kind: "substitution",
+          substitutionDate: "2026-03-24",
+          slots: weekly(1, "17:00"),
+          cancelledDates: ["2026-03-24"],
+        }),
+      ],
+      locale: "en",
+      now: NOW,
+    });
+    const dates = sessions.map((session) => session.sessionDate);
+    expect(dates).not.toContain("2026-03-23");
+    expect(dates).not.toContain("2026-03-24");
+    // The cancelled date still spends its place in the open-ended horizon, as
+    // it does in the group's feed, where it stands as a cancelled line.
+    expect(sessions).toHaveLength(OPEN_ENDED_OCCURRENCE_CAP - 1);
   });
 
   it("drops a substitution on a date the schedule no longer projects", () => {

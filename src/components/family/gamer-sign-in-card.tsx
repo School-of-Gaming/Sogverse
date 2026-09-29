@@ -456,13 +456,12 @@ export function GamerSignInCard({
 /**
  * Replacing the handle a username-mode child signs in with.
  *
- * **There is no sibling form for a mailbox** (owner ruling): changing an
- * account's email address is not something the app supports for any role, and
- * the day it does it will be done once, properly, for every role at the same
- * time. A username is a sign-in handle rather than an address in product terms,
- * so correcting a mistyped one stays here — and the route refuses an address
- * change on an account already in `email` mode, so the rule holds whether or
- * not a form is on screen.
+ * **There is no sibling form for a mailbox** (owner ruling): moving an account
+ * to another mailbox is an admin's correction, made from the admin user page
+ * for every role alike. A username is a sign-in handle rather than an address
+ * in product terms, so correcting a mistyped one stays here too — and the
+ * parent's route refuses an address change on an account already in `email`
+ * mode, so the rule holds whether or not a form is on screen.
  *
  * **Standing and open, not behind a disclosure**, matching the new-password form
  * above it: this is an affordance a parent comes to this card *for*, and a

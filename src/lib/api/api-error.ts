@@ -7,14 +7,13 @@
  * Extends Error, so existing `err instanceof Error` handlers keep working
  * unchanged.
  *
- * `code` is currently carried but unused at both ends, and it is worth knowing
- * why before relying on it. No route passes one, so the wrapper's forwarding of
- * it never fires; the codes a client actually receives (`PIN_REQUIRED`,
- * `GEDU_UNCERTIFIED`, `PIN_LOCKED`) are attached to hand-built responses by the
- * role gate and the PIN route, and reach this class only where a service copies
- * `code` off the response body. Nothing branches on the result — the one client
- * that did was mapping a Minecraft already-linked conflict that no longer
- * exists. The slot stays because the plumbing on both sides is already written.
+ * A route that throws one with a `code` has it forwarded by the `defineRoute`
+ * wrapper beside the generic message, and a service reading the response with
+ * `readApiError` hands it back to the caller — which is how a dialog tells one
+ * refusal it can explain apart from every other failure. Other codes a client
+ * receives (`PIN_REQUIRED`, `GEDU_UNCERTIFIED`, `PIN_LOCKED`) are attached to
+ * hand-built responses by the role gate and the PIN route, and reach this class
+ * the same way, through `readApiError`.
  */
 export class ApiError extends Error {
   constructor(

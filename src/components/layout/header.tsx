@@ -104,7 +104,21 @@ export function Header({ navRole }: HeaderProps) {
    * role has a page to send here.
    */
   const showsSubstitutions = navFor === "gedu";
-  const isOnSubstitutions = hasOwnNavItem(pathname);
+  const isOnSubstitutions =
+    pathname === ROUTES.gedu.substitutions ||
+    pathname.startsWith(ROUTES.gedu.substitutions + "/");
+  const isOnInvoicing =
+    pathname === ROUTES.gedu.invoicing ||
+    pathname.startsWith(ROUTES.gedu.invoicing + "/");
+  /**
+   * The gedu's My profile item: their own public profile, which they come back to
+   * rather than set once. Only from `md` up — below that it is a row in the
+   * avatar menu (`account-menu.tsx`), for the width reasons in the nav group's
+   * note. Admins have one too but reach it from settings and their user page,
+   * never from the chrome.
+   */
+  const showsTeamProfile = navFor === "gedu";
+  const isOnTeamProfile = pathname === ROUTES.settingsTeamProfile;
 
   const isHome = pathname === ROUTES.home;
 
@@ -124,7 +138,7 @@ export function Header({ navRole }: HeaderProps) {
     logoHref === ROUTES.home
       ? isHome
       : (pathname === logoHref || pathname.startsWith(logoHref + "/")) &&
-        !isOnSubstitutions;
+        !hasOwnNavItem(pathname);
   // What the logo's destination is called — "Dashboard" for the admin, whose
   // panel is genuinely an admin panel, and "My SOG" for every other role.
   const dashboardLabel =
@@ -175,8 +189,8 @@ export function Header({ navRole }: HeaderProps) {
         firstName={profile.first_name}
         registrationOwed={profile.registration_completed_at === null}
         // Carried through rather than resolved here: the menu's copy of the
-        // override governs only its own nav row (the rehoused About), exactly
-        // as this one governs only the strip.
+        // override governs only its own nav rows (the rehoused About and My
+        // profile), exactly as this one governs only the strip.
         navRole={navRole}
       />
     ) : (
@@ -369,6 +383,19 @@ export function Header({ navRole }: HeaderProps) {
           gedu strip is already at that count, which is why About is the item
           that gives way on a phone: of the three it is the one a gedu is least
           likely to want, and it is still one tap away in the avatar menu.
+
+          **The gedu's My profile item is not in that table, because it is
+          never on the strip below `md`** — it is a row in the avatar menu there,
+          so the phone strip above is exactly what it was. It joins at `md`
+          rather than `sm` because `sm`'s 608px of content is not enough for
+          four words plus the "My SOG" lockup in French: "Remplacements",
+          "Mon profil", "À propos" and "Boutique" at 14px with their 16px of
+          padding come to roughly 400px, and the logo, the picker and the
+          avatar take most of the rest. At `md` (736px of content) the same row
+          fits in every locale with room to spare. From `lg` up Invoicing
+          joins the run too, ahead of Substitutions. Both width estimates are
+          arithmetic, not browser measurements; measure before tightening
+          either breakpoint.
         */}
         <div
           className={
@@ -392,6 +419,26 @@ export function Header({ navRole }: HeaderProps) {
               order is therefore load-bearing: putting this item anywhere else
               in the run would push the links after it sideways.
             */}
+            {/*
+              Desktop only, per the owner: from `lg` up the strip has the room
+              for it, and below that it stays a row in the account menu, which
+              hides the row at exactly this breakpoint — so the phone strip and
+              the arithmetic above are untouched. It is first in the run for the
+              same late-arrival reason as Substitutions.
+            */}
+            {showsSubstitutions && (
+              <Link
+                href={ROUTES.gedu.invoicing}
+                className={cn(
+                  NAV_LINK_CLASS,
+                  "hidden lg:inline-flex",
+                  isOnInvoicing ? "text-act" : "text-muted-foreground",
+                )}
+                aria-current={isOnInvoicing ? "page" : undefined}
+              >
+                {t("invoicing")}
+              </Link>
+            )}
             {showsSubstitutions && (
               <Link
                 href={ROUTES.gedu.substitutions}
@@ -414,6 +461,23 @@ export function Header({ navRole }: HeaderProps) {
                 <span className="hidden sm:inline">
                   {t("nav.substitutions")}
                 </span>
+              </Link>
+            )}
+            {/* Between Substitutions and About, per the owner, and like
+                Substitutions part of the gedu-only leading run: the two arrive
+                together, ahead of every public link, so the same late-arrival
+                argument covers both. Desktop only — see `showsTeamProfile`. */}
+            {showsTeamProfile && (
+              <Link
+                href={ROUTES.settingsTeamProfile}
+                className={cn(
+                  NAV_LINK_CLASS,
+                  isOnTeamProfile ? "text-act" : "text-muted-foreground",
+                  "hidden md:inline-flex",
+                )}
+                aria-current={isOnTeamProfile ? "page" : undefined}
+              >
+                {t("teamProfile")}
               </Link>
             )}
             {navLinks.map((link) => {
