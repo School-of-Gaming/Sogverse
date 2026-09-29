@@ -150,7 +150,13 @@
     "weekRange": "Hogh {from}–{to}",
     "weekRangeAcrossYears": "Hogh {from}/{fromYear} – Hogh {to}/{toYear}",
     "weekCount": "{count} Hogh",
-    "weekColumn": "Hogh"
+    "weekColumn": "Hogh",
+    "unsavedChanges": {
+      "title": "bIpolbe’chugh bInargh’a’?",
+      "description": "choHmeyLIj pollu’be’. DaH bInarghchugh, luchIllu’.",
+      "stay": "yIghItlhtaH",
+      "leave": "yIpolbe’ ’ej yInargh"
+    }
   },
   "datePicker": {
     "openCalendar": "jajmey nav yIpoSmoH",
@@ -563,6 +569,7 @@
       },
       "statusPanel": {
         "label": "ngeHmeH",
+        "publishedLine": "{date} ngeHlu’pu’.",
         "changedLine": "{date} ngeHlu’pu’bogh ghItlh legh laDwI’pu’."
       },
       "viewLive": "paq qachDaq yIlegh",

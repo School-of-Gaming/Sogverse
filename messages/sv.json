@@ -161,7 +161,13 @@
     "weekRange": "v. {from}–{to}",
     "weekRangeAcrossYears": "v. {from}/{fromYear} – v. {to}/{toYear}",
     "weekCount": "{count, plural, one {# vecka} other {# veckor}}",
-    "weekColumn": "v."
+    "weekColumn": "v.",
+    "unsavedChanges": {
+      "title": "Lämna utan att spara?",
+      "description": "Dina ändringar har inte sparats. Om du lämnar sidan nu går de förlorade.",
+      "stay": "Fortsätt redigera",
+      "leave": "Lämna utan att spara"
+    }
   },
   "datePicker": {
     "openCalendar": "Öppna kalendern",
@@ -519,6 +525,7 @@
       },
       "statusPanel": {
         "label": "Publicering",
+        "publishedLine": "Publicerad {date}.",
         "changedLine": "Läsarna ser versionen som publicerades {date}."
       },
       "viewLive": "Visa i Biblioteket",

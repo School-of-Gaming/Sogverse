@@ -12,7 +12,9 @@ import type { ReactNode } from "react";
  * the form is seeded once per article and never per read — the product form
  * once lost a half-filled form to exactly this — and that the page's other
  * logic reads the saved copy: whether there is anything to save, and what the
- * Publish control says.
+ * Publish control says. Also pinned is the page's shape — the status and the
+ * reasons on top, every action in one row beneath the form, and a row that
+ * typing never adds to or takes from — and the ask before unsaved work is left.
  *
  * Translations echo their key plus the values they were handed; the rich
  * editor is replaced by a textarea, since nothing here looks inside it.
@@ -132,6 +134,47 @@ const saveButton = () =>
 const publishButton = () =>
   screen.getByRole("button", { name: "publish" });
 
+/** The status row at the top of the page. */
+const panel = () => screen.getByRole("region", { name: "statusPanel.label" });
+
+/**
+ * The reasons Publish is held back, as they read now — the one element in the
+ * status row with an id, the one the buttons point at. The status row also
+ * holds invisible copies of the longest reasons there can be, which is why
+ * nothing here reads the page's whole text.
+ */
+function reasons(): HTMLElement {
+  const element = panel().querySelector<HTMLElement>("[id]");
+  if (element === null) throw new Error("the status row holds no reasons");
+  return element;
+}
+
+/** The accessible names of the bottom row's controls, in DOM order. */
+function actionRow(): string[] {
+  const row = saveButton().parentElement!;
+  return Array.from(row.children).map(
+    (control) => control.textContent.trim(),
+  );
+}
+
+const PUBLICATION = {
+  id: ARTICLE.draft.id,
+  title: ARTICLE.draft.title,
+  summary: "A summary",
+  body: ARTICLE.draft.body,
+  category: "screen_time" as const,
+  coverPath: null,
+  firstPublishedAt: "2026-09-16T08:00:00Z",
+  publishedAt: "2026-09-16T08:00:00Z",
+};
+
+/** Live, and exactly as saved: nothing new to publish. */
+const LIVE: AdminLibraryArticle = {
+  ...ARTICLE,
+  draft: { ...ARTICLE.draft, summary: "A summary" },
+  publication: PUBLICATION,
+};
+
 describe("the Library article editor", () => {
   it("keeps what is being typed when the article is read again", () => {
     const { rerenderWith } = renderEditor(ARTICLE);
@@ -216,28 +259,31 @@ describe("the Library article editor", () => {
     renderEditor(ARTICLE);
 
     expect(publishButton().hasAttribute("disabled")).toBe(true);
-    expect(document.body.textContent).toContain(
+    expect(reasons().textContent).toBe(
       "readiness.missing fields=missing.summary",
     );
-    // A cover is optional, so it is never among them.
-    expect(document.body.textContent).not.toContain("missing.cover");
   });
 
-  it("sets the reason Publish is held back beside it, and reads it out with it", () => {
+  it("sets the reasons in the status row, and reads them out with Publish", () => {
     renderEditor(ARTICLE);
 
     const reasonId = publishButton().getAttribute("aria-describedby");
     expect(reasonId).toBeTruthy();
     const reason = document.getElementById(reasonId!);
+    expect(reason).toBe(reasons());
     expect(reason?.textContent).toContain("readiness.missing");
-    // On the row with the buttons, not in a line of its own beneath it.
-    expect(reason?.parentElement?.contains(publishButton())).toBe(true);
 
     fireEvent.change(summaryBox(), { target: { value: "A summary" } });
     expect(
       document.getElementById(publishButton().getAttribute("aria-describedby")!)
         ?.textContent,
-    ).toContain("readiness.unsaved");
+    ).toBe("readiness.unsaved");
+    // The disabled preview is read out with the same reasons.
+    expect(
+      screen
+        .getByRole("button", { name: "preview" })
+        .getAttribute("aria-describedby"),
+    ).toBe(reasonId);
   });
 
   it("asks for a save before publishing, then publishes the saved copy", async () => {
@@ -246,13 +292,14 @@ describe("the Library article editor", () => {
 
     fireEvent.change(summaryBox(), { target: { value: "A summary" } });
     expect(publishButton().hasAttribute("disabled")).toBe(true);
-    expect(document.body.textContent).toContain("readiness.unsaved");
+    expect(reasons().textContent).toBe("readiness.unsaved");
 
     rerenderWith({
       ...ARTICLE,
       draft: { ...ARTICLE.draft, summary: "A summary" },
     });
     expect(publishButton().hasAttribute("disabled")).toBe(false);
+    expect(reasons().textContent).toBe("");
 
     await act(async () => {
       fireEvent.click(publishButton());
@@ -261,21 +308,7 @@ describe("the Library article editor", () => {
   });
 
   it("offers the changes, the public page and Unpublish on a live article", () => {
-    renderEditor({
-      ...ARTICLE,
-      draft: { ...ARTICLE.draft, summary: "A summary" },
-      publication: {
-        id: ARTICLE.draft.id,
-        title: "The title readers see",
-        summary: "A summary",
-        body: ARTICLE.draft.body,
-        category: "screen_time",
-        coverPath: null,
-        firstPublishedAt: "2026-09-16T08:00:00Z",
-        publishedAt: "2026-09-16T08:00:00Z",
-      },
-      hasUnpublishedChanges: true,
-    });
+    renderEditor({ ...LIVE, hasUnpublishedChanges: true });
 
     expect(
       screen
@@ -288,52 +321,116 @@ describe("the Library article editor", () => {
     ).toBe(`/library/${ARTICLE.draft.id}`);
   });
 
-  describe("the status beside the publishing controls", () => {
-    const PUBLICATION = {
-      id: ARTICLE.draft.id,
-      title: ARTICLE.draft.title,
-      summary: "A summary",
-      body: ARTICLE.draft.body,
-      category: "screen_time" as const,
-      coverPath: null,
-      firstPublishedAt: "2026-09-16T08:00:00Z",
-      publishedAt: "2026-09-16T08:00:00Z",
-    };
-    const panel = () =>
-      screen.getByRole("region", { name: "statusPanel.label" });
+  describe("the bottom row", () => {
+    it("holds every action beside Save, Unpublish first and Publish last", () => {
+      renderEditor(LIVE);
 
-    it.each([
-      ["draft", ARTICLE],
-      [
-        "published",
-        {
-          ...ARTICLE,
-          draft: { ...ARTICLE.draft, summary: "A summary" },
-          publication: PUBLICATION,
-        },
-      ],
-    ] as const)(
-      "names a %s article with the list's chip and nothing more",
-      (status, article) => {
-        renderEditor(article);
+      expect(actionRow()).toEqual([
+        "unpublish",
+        "preview",
+        "viewLive",
+        "actions.save",
+        "publishChanges",
+      ]);
+      // The status row above holds no control at all.
+      expect(within(panel()).queryAllByRole("button")).toHaveLength(0);
+      expect(within(panel()).queryAllByRole("link")).toHaveLength(0);
+    });
 
-        expect(within(panel()).getByText(status)).toBeTruthy();
-        expect(panel().textContent).not.toContain("statusPanel.changedLine");
-      },
-    );
+    it("keeps Publish changes on a live article with nothing new, disabled", () => {
+      renderEditor(LIVE);
+
+      const publishChanges = screen.getByRole("button", {
+        name: "publishChanges",
+      });
+      expect(publishChanges.hasAttribute("disabled")).toBe(true);
+      // Nothing is held back, so there is no reason to read out.
+      expect(publishChanges.hasAttribute("aria-describedby")).toBe(false);
+      expect(reasons().textContent).toBe("");
+    });
+
+    it("neither adds nor removes a control while the admin types", () => {
+      renderEditor(LIVE);
+      const before = actionRow();
+
+      fireEvent.change(summaryBox(), { target: { value: "A new summary" } });
+      expect(actionRow()).toEqual(before);
+
+      fireEvent.change(summaryBox(), { target: { value: "" } });
+      expect(actionRow()).toEqual(before);
+    });
+
+    it("sets a draft's row without the live article's controls", () => {
+      renderEditor(ARTICLE);
+      expect(actionRow()).toEqual(["preview", "actions.save", "publish"]);
+    });
+  });
+
+  describe("the status row", () => {
+    it("names a draft with the list's chip and nothing more", () => {
+      renderEditor(ARTICLE);
+
+      expect(within(panel()).getByText("draft")).toBeTruthy();
+      expect(panel().textContent).not.toContain("statusPanel.");
+    });
+
+    it("dates a published article", () => {
+      renderEditor(LIVE);
+
+      expect(within(panel()).getByText("published")).toBeTruthy();
+      expect(panel().textContent).toContain(
+        "statusPanel.publishedLine date=September 16, 2026",
+      );
+      expect(panel().textContent).not.toContain("statusPanel.changedLine");
+    });
 
     it("says which version readers see while saved changes wait", () => {
-      renderEditor({
-        ...ARTICLE,
-        draft: { ...ARTICLE.draft, summary: "A summary" },
-        publication: PUBLICATION,
-        hasUnpublishedChanges: true,
-      });
+      renderEditor({ ...LIVE, hasUnpublishedChanges: true });
 
       expect(within(panel()).getByText("changed")).toBeTruthy();
       expect(panel().textContent).toContain(
         "statusPanel.changedLine date=September 16, 2026",
       );
+      expect(panel().textContent).not.toContain("statusPanel.publishedLine");
+    });
+  });
+
+  describe("leaving with unsaved changes", () => {
+    /** Whether the browser would ask before unloading the page. */
+    function unloadIsHeld(): boolean {
+      const event = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    }
+
+    it("asks while the form differs from the saved copy, and not once it is saved", () => {
+      const { rerenderWith } = renderEditor(ARTICLE);
+      expect(unloadIsHeld()).toBe(false);
+
+      fireEvent.change(summaryBox(), { target: { value: "A summary" } });
+      expect(unloadIsHeld()).toBe(true);
+
+      rerenderWith({
+        ...ARTICLE,
+        draft: { ...ARTICLE.draft, summary: "A summary" },
+      });
+      expect(unloadIsHeld()).toBe(false);
+    });
+
+    it("does not ask about a new article nobody has written in, nor its save", async () => {
+      const save = vi.fn(async () => {});
+      render(<LibraryArticleEditor article={null} actions={{ save }} />, {
+        wrapper: withQueryClient(),
+      });
+      expect(unloadIsHeld()).toBe(false);
+
+      fireEvent.change(titleBox(), { target: { value: "A new article" } });
+      expect(unloadIsHeld()).toBe(true);
+
+      await act(async () => {
+        fireEvent.submit(titleBox().closest("form")!);
+      });
+      expect(unloadIsHeld()).toBe(false);
     });
   });
 
@@ -379,10 +476,10 @@ describe("the Library article editor", () => {
     expect(
       screen.getByRole("button", { name: "preview" }).hasAttribute("disabled"),
     ).toBe(true);
-    // Publish is still held back by what is missing, so the line is the
+    // Publish is still held back by what is missing, so the save line is the
     // preview's alone.
-    expect(document.body.textContent).toContain("readiness.previewUnsaved");
-    expect(document.body.textContent).not.toContain("readiness.unsaved");
+    expect(reasons().textContent).toContain("readiness.previewUnsaved");
+    expect(reasons().textContent).not.toContain("readiness.unsaved");
 
     // Saved: the preview is a link again, and the line is gone.
     rerenderWith({
@@ -390,6 +487,6 @@ describe("the Library article editor", () => {
       draft: { ...ARTICLE.draft, title: "A retitled article" },
     });
     expect(screen.getByRole("link", { name: "preview" })).toBeTruthy();
-    expect(document.body.textContent).not.toContain("readiness.previewUnsaved");
+    expect(reasons().textContent).not.toContain("readiness.previewUnsaved");
   });
 });

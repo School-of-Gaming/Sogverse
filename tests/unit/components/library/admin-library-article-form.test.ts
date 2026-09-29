@@ -105,7 +105,7 @@ describe("the Publish control", () => {
   it("has nothing to do on a live article that nobody has changed", () => {
     expect(
       libraryPublishState({ ...base, isPublished: true, form: complete() }),
-    ).toEqual({ kind: "hidden" });
+    ).toEqual({ kind: "upToDate" });
   });
 
   it("publishes changes saved since an article went live", () => {
