@@ -519,12 +519,7 @@
       },
       "statusPanel": {
         "label": "Julkaiseminen",
-        "draftTitle": "Luonnos",
-        "draftBody": "Ei Kirjastossa. Lukijat eivät näe artikkelia ennen kuin se julkaistaan.",
-        "publishedTitle": "Julkaistu",
-        "publishedBody": "Lukijat löytävät artikkelin Kirjastosta juuri sellaisena kuin se on tässä tallennettu.",
-        "changedTitle": "Julkaistu, julkaisemattomia muutoksia",
-        "changedBody": "Lukijat näkevät version, joka julkaistiin {date}. Sen jälkeen tallennetut muutokset näkyvät heille, kun julkaiset ne."
+        "changedLine": "Lukijat näkevät version, joka julkaistiin {date}."
       },
       "viewLive": "Näytä Kirjastossa",
       "preview": "Esikatselu",
@@ -560,11 +555,6 @@
         "body": "Lukijat näkevät tekstin kansikuvan alla muotoiltuna niin kuin se näkyy tässä."
       },
       "categoryPlaceholder": "Valitse aihe",
-      "cover": {
-        "choose": "Valitse kansikuva",
-        "change": "Vaihda kansikuva",
-        "remove": "Poista kansikuva"
-      },
       "bodyPlaceholder": "Kirjoita artikkeli…",
       "actions": {
         "save": "Tallenna",
@@ -986,15 +976,26 @@
       },
       "imagePicker": {
         "label": "Kuva",
-        "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 3:2-kehykseen, se lisätään kirjastoon ja otetaan käyttöön tässä tuotteessa.",
         "formats": "JPEG, PNG tai WebP.",
         "chooseFile": "Valitse tiedosto",
         "uploading": "Lisätään…",
-        "change": "Vaihda kuva",
-        "remove": "Poista tästä tuotteesta",
-        "outcomeAdded": "Lisätty kirjastoon ja valittu tähän tuotteeseen.",
-        "outcomeExisting": "Kuva on jo kirjastossa – valittu tähän tuotteeseen.",
-        "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat. Kuva rajataan 3:2-kehykseen. Kuvat ovat tuotteiden yhteisiä, joten valinta tässä ei muuta muita tuotteita."
+        "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat. Kuva rajataan 3:2-kehykseen. Kuvat ovat tuotteiden yhteisiä, joten valinta tässä ei muuta muita tuotteita.",
+        "forPurpose": {
+          "product": {
+            "change": "Vaihda kuva",
+            "remove": "Poista tästä tuotteesta",
+            "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 3:2-kehykseen, se lisätään kirjastoon ja otetaan käyttöön tässä tuotteessa.",
+            "outcomeAdded": "Lisätty kirjastoon ja valittu tähän tuotteeseen.",
+            "outcomeExisting": "Kuva on jo kirjastossa – valittu tähän tuotteeseen."
+          },
+          "libraryCover": {
+            "change": "Vaihda kansikuva",
+            "remove": "Poista kansikuva",
+            "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 16:9-kehykseen, se lisätään kirjastoon ja siitä tulee tämän artikkelin kansikuva.",
+            "outcomeAdded": "Lisätty kirjastoon ja valittu tämän artikkelin kansikuvaksi.",
+            "outcomeExisting": "Kuva on jo kirjastossa – valittu tämän artikkelin kansikuvaksi."
+          }
+        }
       },
       "imageCatalogue": {
         "upload": "Lisää kuva",

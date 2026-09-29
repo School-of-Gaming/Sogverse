@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Editor } from "@tiptap/core";
 
 /**
@@ -39,6 +40,7 @@ const DRAFT: AdminLibraryArticle = {
     category: "screen_time",
     coverImageId: null,
     coverPath: null,
+    coverLabel: null,
     createdAt: "2026-09-12T11:00:00Z",
     updatedAt: "2026-09-15T08:05:00Z",
   },
@@ -93,15 +95,18 @@ beforeAll(async () => {
 
 /** Render the editor and wait for the real rich editor to be up. */
 async function renderEditor(body: string): Promise<Editor> {
+  // The cover field's upload is a mutation, so the editor needs a query client.
   render(
-    <LibraryArticleEditor
-      article={article(body)}
-      actions={{
-        save: async () => {},
-        publish: async () => {},
-        unpublish: async () => {},
-      }}
-    />,
+    <QueryClientProvider client={new QueryClient()}>
+      <LibraryArticleEditor
+        article={article(body)}
+        actions={{
+          save: async () => {},
+          publish: async () => {},
+          unpublish: async () => {},
+        }}
+      />
+    </QueryClientProvider>,
   );
   const surface = await screen.findByRole("textbox", { name: "fields.body" });
   // Tiptap hangs the instance on its writing surface.

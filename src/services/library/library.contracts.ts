@@ -63,6 +63,11 @@ export interface LibraryArticleDraft {
    * there is no cover.
    */
   coverPath: string | null;
+  /**
+   * The name the catalogue gives the cover's entry, which the editor shows
+   * under the picture. Null exactly when there is no cover.
+   */
+  coverLabel: string | null;
   createdAt: string;
   /** When the working copy was last saved. Publishing does not move it. */
   updatedAt: string;

@@ -61,7 +61,10 @@ type PublicationRow = Pick<
   | "first_published_at"
 >;
 
-function toDraft(row: DraftRow): LibraryArticleDraft {
+function toDraft(
+  row: DraftRow,
+  coverEntry: { label: string } | null,
+): LibraryArticleDraft {
   return {
     id: row.id,
     title: row.title,
@@ -70,6 +73,7 @@ function toDraft(row: DraftRow): LibraryArticleDraft {
     category: row.category,
     coverImageId: row.cover_image_id,
     coverPath: row.cover_path,
+    coverLabel: coverEntry?.label ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -162,6 +166,12 @@ export class LibraryService {
    * article has that id. The id comes off the editor's URL, so one that is not
    * a UUID is answered as not found without a query, which Postgres would
    * otherwise refuse as a malformed uuid rather than find nothing.
+   *
+   * The cover's catalogue entry is embedded for its label, which the editor
+   * shows under the picture; the path stays the working copy's own derived
+   * column. The catalogue is admin-only, which this read already is. The
+   * embed is unhinted, so it relies on `cover_image_id` being the only
+   * foreign key from the working copy to the catalogue.
    */
   async getAdminArticle(id: string): Promise<AdminLibraryArticle | null> {
     if (!UUID.test(id)) return null;
@@ -169,7 +179,7 @@ export class LibraryService {
     const { data, error } = await this.supabase
       .from("library_articles")
       .select(
-        `${DRAFT_COLUMNS}, publication:library_article_publications(${PUBLICATION_COLUMNS})`,
+        `${DRAFT_COLUMNS}, cover_entry:catalogue_images(label), publication:library_article_publications(${PUBLICATION_COLUMNS})`,
       )
       .eq("id", id)
       .maybeSingle();
@@ -178,7 +188,7 @@ export class LibraryService {
     if (!data) return null;
 
     return {
-      draft: toDraft(data),
+      draft: toDraft(data, data.cover_entry),
       publication: data.publication ? toPublished(data.publication) : null,
       hasUnpublishedChanges: hasUnpublishedChanges(data, data.publication),
     };

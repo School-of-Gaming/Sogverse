@@ -563,12 +563,7 @@
       },
       "statusPanel": {
         "label": "ngeHmeH",
-        "draftTitle": "nab",
-        "draftBody": "paq qachDaq ghaHbe’. ngeHlu’DI’ neH ghItlh legh laDwI’pu’.",
-        "publishedTitle": "ghItlh ngeHlu’pu’",
-        "publishedBody": "paq qachDaq ghItlh tu’ laDwI’pu’, naDev polbogh rur.",
-        "changedTitle": "ngeHlu’pu’, choHmey ngeHlu’be’bogh ghaj",
-        "changedBody": "{date} ngeHlu’pu’bogh ghItlh legh laDwI’pu’. choHmey DangeHDI’ neH choHmey legh chaH."
+        "changedLine": "{date} ngeHlu’pu’bogh ghItlh legh laDwI’pu’."
       },
       "viewLive": "paq qachDaq yIlegh",
       "preview": "wa’DIch yIlegh",
@@ -604,11 +599,6 @@
         "body": "DeghHom bIngDaq legh laDwI’pu’, naDev rur."
       },
       "categoryPlaceholder": "Segh yIwIv",
-      "cover": {
-        "choose": "DeghHom yIwIv",
-        "change": "DeghHom yIchoH",
-        "remove": "DeghHom yIteq"
-      },
       "bodyPlaceholder": "ghItlh yIghItlh…",
       "actions": {
         "save": "yIpol",
@@ -1030,15 +1020,26 @@
       },
       "imagePicker": {
         "label": "nagh beQ",
-        "dropPrompt": "naDev DocH yIpum, qoj yIwIv. 3:2 ’echletvaD Dape’, qachDaq chellu’, ’ej DochvamvaD lo’lu’.",
         "formats": "JPEG, PNG, qoj WebP.",
         "chooseFile": "DocH yIwIv",
         "uploading": "chellu’taH…",
-        "change": "nagh beQ yIchoH",
-        "remove": "Dochvamvo’ yIteq",
-        "outcomeAdded": "qachDaq chellu’, ’ej DochvamvaD wIvlu’.",
-        "outcomeExisting": "qachDaq tu’lu’ — DochvamvaD wIvlu’.",
-        "hint": "vavmey nej De’Daq DochlIj cha’. 3:2 ’echletvaD pe’lu’. Hoch Dochmey nagh beQmey boSlu’, vaj naDev wIvlIj latlh Dochmey choHbe’."
+        "hint": "vavmey nej De’Daq DochlIj cha’. 3:2 ’echletvaD pe’lu’. Hoch Dochmey nagh beQmey boSlu’, vaj naDev wIvlIj latlh Dochmey choHbe’.",
+        "forPurpose": {
+          "product": {
+            "change": "nagh beQ yIchoH",
+            "remove": "Dochvamvo’ yIteq",
+            "dropPrompt": "naDev DocH yIpum, qoj yIwIv. 3:2 ’echletvaD Dape’, qachDaq chellu’, ’ej DochvamvaD lo’lu’.",
+            "outcomeAdded": "qachDaq chellu’, ’ej DochvamvaD wIvlu’.",
+            "outcomeExisting": "qachDaq tu’lu’ — DochvamvaD wIvlu’."
+          },
+          "libraryCover": {
+            "change": "DeghHom yIchoH",
+            "remove": "DeghHom yIteq",
+            "dropPrompt": "naDev DocH yIpum, qoj yIwIv. 16:9 ’echletvaD Dape’, qachDaq chellu’, ’ej ghItlhvamvaD DeghHom moj.",
+            "outcomeAdded": "qachDaq chellu’, ’ej ghItlhvamvaD DeghHom wIvlu’.",
+            "outcomeExisting": "qachDaq tu’lu’ — ghItlhvamvaD DeghHom wIvlu’."
+          }
+        }
       },
       "imageCatalogue": {
         "upload": "yIchel",

@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 
 /**
  * **The Library article editor, as an admin types into it while the page
@@ -63,6 +65,7 @@ const ARTICLE: AdminLibraryArticle = {
     category: "screen_time",
     coverImageId: null,
     coverPath: null,
+    coverLabel: null,
     createdAt: "2026-09-12T11:00:00Z",
     updatedAt: "2026-09-15T08:05:00Z",
   },
@@ -81,6 +84,14 @@ function actions(
   };
 }
 
+/** The cover field's upload is a mutation, so the editor needs a query client. */
+function withQueryClient() {
+  const client = new QueryClient();
+  return function QueryWrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  };
+}
+
 function renderEditor(
   article: AdminLibraryArticle,
   editorActions = actions(),
@@ -90,6 +101,7 @@ function renderEditor(
       article={article}
       actions={editorActions}
     />,
+    { wrapper: withQueryClient() },
   );
   const rerenderWith = (next: AdminLibraryArticle) =>
     utils.rerender(
@@ -211,6 +223,23 @@ describe("the Library article editor", () => {
     expect(document.body.textContent).not.toContain("missing.cover");
   });
 
+  it("sets the reason Publish is held back beside it, and reads it out with it", () => {
+    renderEditor(ARTICLE);
+
+    const reasonId = publishButton().getAttribute("aria-describedby");
+    expect(reasonId).toBeTruthy();
+    const reason = document.getElementById(reasonId!);
+    expect(reason?.textContent).toContain("readiness.missing");
+    // On the row with the buttons, not in a line of its own beneath it.
+    expect(reason?.parentElement?.contains(publishButton())).toBe(true);
+
+    fireEvent.change(summaryBox(), { target: { value: "A summary" } });
+    expect(
+      document.getElementById(publishButton().getAttribute("aria-describedby")!)
+        ?.textContent,
+    ).toContain("readiness.unsaved");
+  });
+
   it("asks for a save before publishing, then publishes the saved copy", async () => {
     const publish = vi.fn(async () => {});
     const { rerenderWith } = renderEditor(ARTICLE, actions({ publish }));
@@ -248,7 +277,6 @@ describe("the Library article editor", () => {
       hasUnpublishedChanges: true,
     });
 
-    expect(document.body.textContent).toContain("statusPanel.changedTitle");
     expect(
       screen
         .getByRole("button", { name: "publishChanges" })
@@ -260,6 +288,55 @@ describe("the Library article editor", () => {
     ).toBe(`/library/${ARTICLE.draft.id}`);
   });
 
+  describe("the status beside the publishing controls", () => {
+    const PUBLICATION = {
+      id: ARTICLE.draft.id,
+      title: ARTICLE.draft.title,
+      summary: "A summary",
+      body: ARTICLE.draft.body,
+      category: "screen_time" as const,
+      coverPath: null,
+      firstPublishedAt: "2026-09-16T08:00:00Z",
+      publishedAt: "2026-09-16T08:00:00Z",
+    };
+    const panel = () =>
+      screen.getByRole("region", { name: "statusPanel.label" });
+
+    it.each([
+      ["draft", ARTICLE],
+      [
+        "published",
+        {
+          ...ARTICLE,
+          draft: { ...ARTICLE.draft, summary: "A summary" },
+          publication: PUBLICATION,
+        },
+      ],
+    ] as const)(
+      "names a %s article with the list's chip and nothing more",
+      (status, article) => {
+        renderEditor(article);
+
+        expect(within(panel()).getByText(status)).toBeTruthy();
+        expect(panel().textContent).not.toContain("statusPanel.changedLine");
+      },
+    );
+
+    it("says which version readers see while saved changes wait", () => {
+      renderEditor({
+        ...ARTICLE,
+        draft: { ...ARTICLE.draft, summary: "A summary" },
+        publication: PUBLICATION,
+        hasUnpublishedChanges: true,
+      });
+
+      expect(within(panel()).getByText("changed")).toBeTruthy();
+      expect(panel().textContent).toContain(
+        "statusPanel.changedLine date=September 16, 2026",
+      );
+    });
+  });
+
   it("stays committed on a new article's save, whose page is leaving", async () => {
     const save = vi.fn(async () => {});
     render(
@@ -267,6 +344,7 @@ describe("the Library article editor", () => {
         article={null}
         actions={{ save }}
         />,
+      { wrapper: withQueryClient() },
     );
 
     fireEvent.change(titleBox(), { target: { value: "A new article" } });

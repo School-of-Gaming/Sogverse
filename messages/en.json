@@ -519,12 +519,7 @@
       },
       "statusPanel": {
         "label": "Publishing",
-        "draftTitle": "Draft",
-        "draftBody": "Not in the Library. Readers cannot see this article until it is published.",
-        "publishedTitle": "Published",
-        "publishedBody": "Readers can find this article in the Library, exactly as it is saved here.",
-        "changedTitle": "Published, with unpublished changes",
-        "changedBody": "Readers see the version published on {date}. The changes saved since then reach them once you publish them."
+        "changedLine": "Readers see the version published on {date}."
       },
       "viewLive": "View in the Library",
       "preview": "Preview",
@@ -560,11 +555,6 @@
         "body": "Readers see it under the cover, formatted as it looks here."
       },
       "categoryPlaceholder": "Choose a category",
-      "cover": {
-        "choose": "Choose cover",
-        "change": "Change cover",
-        "remove": "Remove cover"
-      },
       "bodyPlaceholder": "Write the article…",
       "actions": {
         "save": "Save",
@@ -986,15 +976,26 @@
       },
       "imagePicker": {
         "label": "Image",
-        "dropPrompt": "Drop a file here, or choose one, to crop it to the 3:2 frame, add it and use it for this product.",
         "formats": "JPEG, PNG or WebP.",
         "chooseFile": "Choose file",
         "uploading": "Adding…",
-        "change": "Change image",
-        "remove": "Remove from this product",
-        "outcomeAdded": "Added to the catalogue and selected for this product.",
-        "outcomeExisting": "Already in the catalogue — selected for this product.",
-        "hint": "Shown on the product card when parents are browsing, cropped to a 3:2 frame. Pictures are shared between products, so choosing one here changes nothing else."
+        "hint": "Shown on the product card when parents are browsing, cropped to a 3:2 frame. Pictures are shared between products, so choosing one here changes nothing else.",
+        "forPurpose": {
+          "product": {
+            "change": "Change image",
+            "remove": "Remove from this product",
+            "dropPrompt": "Drop a file here, or choose one, to crop it to the 3:2 frame, add it and use it for this product.",
+            "outcomeAdded": "Added to the catalogue and selected for this product.",
+            "outcomeExisting": "Already in the catalogue — selected for this product."
+          },
+          "libraryCover": {
+            "change": "Change cover",
+            "remove": "Remove cover",
+            "dropPrompt": "Drop a file here, or choose one, to crop it to the 16:9 frame, add it and use it as this article’s cover.",
+            "outcomeAdded": "Added to the catalogue and chosen as this article’s cover.",
+            "outcomeExisting": "Already in the catalogue — chosen as this article’s cover."
+          }
+        }
       },
       "imageCatalogue": {
         "upload": "Upload",
