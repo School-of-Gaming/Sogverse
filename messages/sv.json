@@ -35,6 +35,7 @@
       "resetPassword": "Återställ lösenord",
       "registerGedu": "Bli spelfostrare",
       "about": "Om oss",
+      "library": "Biblioteket",
       "minecraftApi": "Minecraft Server API",
       "lynxApi": "Lynx Educate partner-API",
       "adminDashboard": "Administratörspanel",
@@ -82,6 +83,7 @@
       "resetPassword": "Välj ett nytt lösenord för ditt School of Gaming-konto via länken vi skickade med e-post, och logga in med det direkt.",
       "registerGedu": "Bli spelfostrare hos School of Gaming och led klubbar, läger och evenemang för barn i de spel de redan spelar varje dag.",
       "about": "Vilka vi på School of Gaming är, vad Yty är och svar på de frågor familjer ställer innan de anmäler sitt barn till en klubb.",
+      "library": "Praktisk vägledning från School of Gaming för föräldrar om säkerhet på nätet, skärmtid och familjeliv, och om vad barn lär sig genom spel.",
       "shop": "Bläddra bland School of Gamings klubbar, läger och evenemang i Minecraft, Roblox, Fortnite och mer, och hitta ett som passar ditt barns vecka.",
       "resetPin": "Välj en ny föräldra-PIN för ditt School of Gaming-konto via länken vi skickade med e-post. PIN-koden håller föräldrasidorna stängda för ditt barn.",
       "privacy": "Hur School of Gaming samlar in, använder och lagrar din familjs uppgifter: vad vi sparar om ett barn, vem vi delar det med och vilka rättigheter du har.",
@@ -5235,6 +5237,13 @@
         "byEmail": "Dela via e-post",
         "native": "Dela…"
       }
+    },
+    "index": {
+      "title": "School of Gamings <act>bibliotek</act>",
+      "intro": "Praktisk vägledning för föräldrar om säkerhet på nätet, spelande i vardagen och vad barn lär sig genom lek.",
+      "empty": "Här finns inget ännu",
+      "all": "Alla",
+      "filterLabel": "Kategorier"
     },
     "categories": {
       "onlineSafety": "Säkerhet på nätet",

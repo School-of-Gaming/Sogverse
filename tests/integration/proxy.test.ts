@@ -470,6 +470,33 @@ describe("proxy", () => {
     });
   });
 
+  // --- The Library: public pages, with an admin-only preview beneath them ---
+
+  describe("Library pages", () => {
+    const ARTICLE_ID = "482f0c6f-0fbc-4202-8790-a73a4520fb47";
+
+    it.each([
+      "/en/library",
+      "/en/library?category=online_safety",
+      "/fi/kirjasto",
+      `/en/library/${ARTICLE_ID}`,
+      `/fr/bibliotheque/${ARTICLE_ID}`,
+      // Not a UUID: the page answers not-found, but the proxy lets it through.
+      "/en/library/not-an-article",
+    ])("lets a signed-out reader in at %s", async (path) => {
+      mockNoUser();
+      const response = await proxy(createNextRequest(path));
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+    });
+
+    it("lets a gedu read an article rather than bouncing them to their dashboard", async () => {
+      mockUser("gedu");
+      const response = await proxy(createNextRequest(`/en/library/${ARTICLE_ID}`));
+      expect(response.status).toBe(200);
+    });
+  });
+
   describe("Library article preview", () => {
     const ARTICLE_ID = "482f0c6f-0fbc-4202-8790-a73a4520fb47";
 

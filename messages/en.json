@@ -35,6 +35,7 @@
       "resetPassword": "Reset Password",
       "registerGedu": "Become a Game Educator",
       "about": "About Us",
+      "library": "Library",
       "minecraftApi": "Minecraft Server API",
       "lynxApi": "Lynx Educate Partner API",
       "adminDashboard": "Admin Dashboard",
@@ -82,6 +83,7 @@
       "resetPassword": "Choose a new password for your School of Gaming account from the link we emailed you, then sign in with it straight away.",
       "registerGedu": "Apply to become a Game Educator with School of Gaming and lead clubs, camps and events for children in the games they already play.",
       "about": "Who School of Gaming is, what Yty is, and answers to the questions families ask before they enrol their child.",
+      "library": "Practical guidance from School of Gaming for parents on online safety, screen time and family life, and what children learn through games.",
       "shop": "Browse School of Gaming’s clubs, camps and events in Minecraft, Roblox, Fortnite and more, and find one that fits your child’s week.",
       "resetPin": "Set a new parent PIN for your School of Gaming account from the link we emailed you. The PIN is what keeps the parent-only pages closed to your child.",
       "privacy": "How School of Gaming collects, uses and stores your family’s data: what we hold about a child, who we share it with, and the rights you can exercise.",
@@ -5235,6 +5237,13 @@
         "byEmail": "Share by email",
         "native": "Share…"
       }
+    },
+    "index": {
+      "title": "School of Gaming’s <act>Library</act>",
+      "intro": "Practical guidance for parents on online safety, everyday gaming at home, and what children learn through play.",
+      "empty": "Nothing here yet",
+      "all": "All",
+      "filterLabel": "Categories"
     },
     "categories": {
       "onlineSafety": "Online safety",

@@ -36,12 +36,14 @@ import { BUSINESS_ID, LEGAL_NAME, VAT_ID } from "@/lib/seo/organization";
  * consumer that wants the Finnish pages is told exactly where they are rather
  * than left to guess a prefix.
  *
- * **Nothing here names a `/schools` URL, a product page or an unlisted
- * product.** Municipality clubs are offered to families in specific Finnish
- * municipalities and are not promoted; an unlisted product is reachable by
- * direct link and must never be findable. Both trees are `noindex` on the
- * page, and this file is a discovery surface, so leaving them out is the same
- * decision stated once more where a reader of this file will see it.
+ * **Nothing here names a `/schools` URL, a Library URL, a product page or an
+ * unlisted product.** Municipality clubs are offered to families in specific
+ * Finnish municipalities and are not promoted; the Library is not promoted
+ * until the owner's visibility pass launches it; an unlisted product is
+ * reachable by direct link and must never be findable. All three trees are
+ * `noindex` on the page, and this file is a discovery surface, so leaving them
+ * out is the same decision stated once more where a reader of this file will
+ * see it.
  */
 
 /**
@@ -52,8 +54,8 @@ import { BUSINESS_ID, LEGAL_NAME, VAT_ID } from "@/lib/seo/organization";
  * `getPathname`, never joined from a slug: the pathnames map is the only thing
  * that knows `/shop` is `/fr/boutique`, and a hand-written path here would be
  * a 404 handed to a crawler. `/roblox` and the programme pages are absent
- * along with `/schools` and every product page — they are `noindex` for their
- * own reasons — and so is anything behind a login.
+ * along with `/schools`, the Library and every product page — they are
+ * `noindex` for their own reasons — and so is anything behind a login.
  */
 const LINKED_PAGES: { href: StaticAppHref; label: string; note: string }[] = [
   { href: "/", label: "Home", note: "What we do, and what is running now." },
