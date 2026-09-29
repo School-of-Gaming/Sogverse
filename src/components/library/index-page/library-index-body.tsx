@@ -94,7 +94,7 @@ export function LibraryIndexBody({
       {articles.length > 0 ? (
         <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {articles.map((article) => (
-            <li key={article.title}>
+            <li key={article.id}>
               <LibraryArticleCard {...article} />
             </li>
           ))}
