@@ -111,8 +111,8 @@ session.**
 ## Cache invalidation — and the one key that must not be touched
 
 Every catalogue mutation invalidates the catalogue list, the usage map, the products
-**list** keys, the Library's public reads and the Library's whole admin tree (those
-surfaces paint a derived path, and a repoint changes it under them).
+**list** keys and the Library's whole admin tree (those surfaces paint a derived path,
+and a repoint changes it under them).
 
 The usage map is read from products and Library articles together, so a product's create
 and update and every Library write (create, save, publish, unpublish) invalidate it too:

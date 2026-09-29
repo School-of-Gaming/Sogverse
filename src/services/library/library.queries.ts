@@ -11,10 +11,6 @@ export const libraryKeys = {
   admin: () => [...libraryKeys.all, "admin"] as const,
   adminList: () => [...libraryKeys.admin(), "list"] as const,
   adminDetail: (id: string) => [...libraryKeys.admin(), "detail", id] as const,
-  published: () => [...libraryKeys.all, "published"] as const,
-  publishedList: () => [...libraryKeys.published(), "list"] as const,
-  publishedDetail: (id: string) =>
-    [...libraryKeys.published(), "detail", id] as const,
 };
 
 /**
@@ -41,20 +37,10 @@ export function useAdminLibraryArticle(id: string | null | undefined) {
   });
 }
 
-/** Every published article, newest first — for a client-side public reader. */
-export function usePublishedLibraryArticles() {
-  const service = new LibraryService(getClient());
-
-  return useQuery({
-    queryKey: libraryKeys.publishedList(),
-    queryFn: () => service.listPublishedArticles(),
-  });
-}
-
 /**
- * Every Library write invalidates the whole `library` tree: a save changes the
- * admin list's "unpublished changes" flag and the detail, and a publish or an
- * unpublish changes the public reads besides. It also invalidates the image
+ * Every Library write invalidates the whole `library` tree: each one changes
+ * the admin list's status or "unpublished changes" flag, and the detail. It
+ * also invalidates the image
  * catalogue's usage map, which is read partly from the articles' working and
  * published covers: left cached, it would show a cover an article has just
  * taken up as unused, and removable without warning. Returned rather than
