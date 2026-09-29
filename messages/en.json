@@ -167,6 +167,15 @@
     "selectWeek": "Select week {week}",
     "today": "Today"
   },
+  "imageCrop": {
+    "title": "Crop the image",
+    "description": "Drag the image to place it in the frame, and zoom to fit.",
+    "zoom": "Zoom",
+    "confirm": "Use image",
+    "unreadable": "This file can’t be opened as an image here. Choose a JPEG, PNG or WebP image. iPhone photos in HEIC format need converting first.",
+    "chooseAnother": "Choose another image",
+    "failed": "The image could not be cropped. Try again, or choose another image."
+  },
   "about": {
     "pageTitle": "About us",
     "sectionNav": "On this page",
@@ -880,8 +889,8 @@
       },
       "imagePicker": {
         "label": "Image",
-        "dropPrompt": "Drop a file here, or choose one, to add it and use it for this product.",
-        "formats": "JPG, PNG, WebP, AVIF or SVG, up to 4 MB.",
+        "dropPrompt": "Drop a file here, or choose one, to crop it to the 3:2 frame, add it and use it for this product.",
+        "formats": "JPEG, PNG or WebP.",
         "chooseFile": "Choose file",
         "uploading": "Adding…",
         "change": "Change image",
@@ -891,41 +900,59 @@
         "hint": "Shown on the product card when parents are browsing, cropped to a 3:2 frame. Pictures are shared between products, so choosing one here changes nothing else."
       },
       "imageCatalogue": {
-        "title": "Product pictures",
-        "description": "One picture can be used by many products. Choosing one changes only this product; replacing or removing one changes every product using it.",
         "upload": "Upload",
         "uploading": "Adding…",
         "emptyCatalogue": "No pictures yet. Upload one to start the catalogue.",
-        "usedBadge": "{count, plural, one {# product} other {# products}}",
         "columnEmpty": "Select an image",
         "use": "Use this picture",
         "nameLabel": "Picture name",
         "rename": "Rename",
-        "usedBy": "Products using this picture",
-        "usedByNone": "No product uses this picture.",
         "live": "Live",
         "hidden": "Hidden",
         "replace": "Replace picture",
         "remove": "Remove from catalogue",
         "replaceConfirm": {
           "title": "Replace “{label}”",
-          "consequence": "{count, plural, one {The product below will show the new picture.} other {All # products below will show the new picture.}}",
-          "unused": "No product uses this picture. The new one takes its place in the catalogue.",
           "choose": "Choose the new picture",
-          "confirm": "Replace on {count, plural, one {# product} other {# products}}",
           "confirmUnused": "Replace picture"
         },
         "removeConfirm": {
           "title": "Remove “{label}”",
-          "consequence": "{count, plural, one {The product below will have no picture until you choose another.} other {All # products below will have no picture until you choose another.}}",
-          "unused": "No product uses this picture. It will be removed from the catalogue for good.",
-          "confirm": "Remove from {count, plural, one {# product} other {# products}}",
           "confirmUnused": "Remove from catalogue"
         },
         "errors": {
           "tooLarge": "That file is too large. Pictures must be 4 MB or smaller.",
-          "unsupportedType": "That file type is not supported. Use JPG, PNG, WebP, AVIF or SVG.",
+          "unsupportedType": "That file is not a JPEG. Crop the picture here and try again.",
+          "wrongSize": "That picture is not the exact size its frame needs. Crop it here and try again.",
           "nameRequired": "Give the picture a name of 1–120 characters."
+        },
+        "forPurpose": {
+          "product": {
+            "title": "Product pictures",
+            "description": "One picture can be used by many products. Choosing one changes only this product; replacing or removing one changes every product using it.",
+            "usedBadge": "{count, plural, one {# product} other {# products}}",
+            "usedBy": "Products using this picture",
+            "usedByNone": "No product uses this picture.",
+            "replaceConsequence": "{count, plural, one {The product below will show the new picture.} other {All # products below will show the new picture.}}",
+            "replaceUnused": "No product uses this picture. The new one takes its place in the catalogue.",
+            "replaceConfirm": "Replace on {count, plural, one {# product} other {# products}}",
+            "removeConsequence": "{count, plural, one {The product below will have no picture until you choose another.} other {All # products below will have no picture until you choose another.}}",
+            "removeUnused": "No product uses this picture. It will be removed from the catalogue for good.",
+            "removeConfirm": "Remove from {count, plural, one {# product} other {# products}}"
+          },
+          "libraryCover": {
+            "title": "Library covers",
+            "description": "One picture can be the cover of several articles. Choosing one changes only this article; replacing or removing one changes every article using it, live ones included.",
+            "usedBadge": "{count, plural, one {# article} other {# articles}}",
+            "usedBy": "Articles using this picture",
+            "usedByNone": "No article uses this picture.",
+            "replaceConsequence": "{count, plural, one {The article below will show the new picture, at once if it is live.} other {All # articles below will show the new picture, at once where they are live.}}",
+            "replaceUnused": "No article uses this picture. The new one takes its place in the catalogue.",
+            "replaceConfirm": "Replace on {count, plural, one {# article} other {# articles}}",
+            "removeConsequence": "{count, plural, one {The article below will have no cover until you choose another, even while it is live.} other {All # articles below will have no cover until you choose another, the live ones included.}}",
+            "removeUnused": "No article uses this picture. It will be removed from the catalogue for good.",
+            "removeConfirm": "Remove from {count, plural, one {# article} other {# articles}}"
+          }
         }
       },
       "filters": {
@@ -5020,12 +5047,7 @@
         },
         "crop": {
           "title": "Crop your photo",
-          "description": "Drag the photo to place it in the frame, and zoom to fit.",
-          "zoom": "Zoom",
-          "confirm": "Use photo",
-          "unreadable": "This file can’t be opened as a picture here. Choose a JPEG, PNG or WebP photo. iPhone photos in HEIC format need converting first.",
-          "chooseAnother": "Choose another photo",
-          "failed": "The photo could not be cropped. Try again, or choose another photo."
+          "confirm": "Use photo"
         }
       },
       "about": {

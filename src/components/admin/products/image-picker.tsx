@@ -1,21 +1,21 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { AlertCircle, Images, Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { ProductBanner } from "@/components/ui/product-banner";
-import { productImageSrc } from "@/lib/images/product-image-url";
+import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { cn } from "@/lib/utils";
 import {
-  PRODUCT_IMAGE_ACCEPT,
-  useUploadProductImage,
-} from "@/services/product-images";
+  useUploadCatalogueImage,
+} from "@/services/catalogue-images";
+import { useCatalogueCrop } from "./catalogue-crop";
 import { ImageCatalogueDialog } from "./image-catalogue-dialog";
-import { productImageErrorMessage } from "./product-image-error";
+import { catalogueImageErrorMessage } from "./catalogue-image-error";
 import type {
-  ProductImageEntry,
+  CatalogueImageEntry,
   ProductImageSelection,
 } from "./product-image-selection";
 
@@ -50,7 +50,7 @@ interface ImagePickerProps {
  *     entry, which is why they live behind a dialog that can show that reach.
  *   - **Remove from this product** and a **dropped file** touch this product
  *     and nothing else. Remove never warns, because there is nothing to warn
- *     about; a drop adds the file to the catalogue (or finds the entry that
+ *     about; a drop is cropped to the product frame and added to the catalogue (or finds the entry that
  *     already holds those exact bytes) and selects the result *here*, which is
  *     the whole reason a drop is safe. A drop is never a shared action.
  *
@@ -72,7 +72,7 @@ export function ImagePicker({
 }: ImagePickerProps) {
   const t = useTranslations("admin.products.imagePicker");
   const tError = useTranslations("admin.products.imageCatalogue.errors");
-  const upload = useUploadProductImage();
+  const upload = useUploadCatalogueImage();
 
   const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -80,13 +80,11 @@ export function ImagePicker({
   const [outcome, setOutcome] = useState<
     { kind: "added" | "existing" } | { kind: "error"; message: string } | null
   >(null);
-  const fileInput = useRef<HTMLInputElement>(null);
-
   // A `current` that belongs to some other id is worse than none: it would
   // paint the wrong picture with a straight face. Selection is the id.
   const selected = imageId === null ? null : current;
 
-  function apply(entry: ProductImageEntry | null) {
+  function apply(entry: CatalogueImageEntry | null) {
     onChange(entry?.id ?? null, entry ? { label: entry.label, path: entry.path } : null);
   }
 
@@ -94,18 +92,27 @@ export function ImagePicker({
     setUploading(true);
     setOutcome(null);
     try {
-      const { status, image } = await upload.mutateAsync({ file });
+      const { status, image } = await upload.mutateAsync({
+        file,
+        purpose: "product",
+      });
       apply({ id: image.id, label: image.label, path: image.path });
       setOutcome({ kind: status });
     } catch (err) {
       setOutcome({
         kind: "error",
-        message: productImageErrorMessage(err, tError),
+        message: catalogueImageErrorMessage(err, tError),
       });
     } finally {
       setUploading(false);
     }
   }
+
+  // A picked or dropped file is cropped to the product frame before it is
+  // added: the upload route takes nothing else.
+  const crop = useCatalogueCrop("product", (file) => {
+    void addFile(file);
+  });
 
   return (
     <Field label={t("label")} hint={t("hint")}>
@@ -124,7 +131,7 @@ export function ImagePicker({
           // always-present, so an empty drop would hand `addFile` an undefined
           // it believes is a File. `item` answers null, which is the truth.
           const file = e.dataTransfer.files.item(0);
-          if (file) void addFile(file);
+          if (file) crop.crop(file);
         }}
         className={cn(
           "rounded-md border border-border bg-background p-4 transition-colors",
@@ -137,7 +144,7 @@ export function ImagePicker({
             no-picture state, at the same size, so the card does not change
             height when a picture is chosen. */}
         <ProductBanner
-          src={productImageSrc(selected?.path)}
+          src={catalogueImageSrc("product", selected?.path)}
           sizes="240px"
           className="mx-auto w-60 rounded-md border border-border"
         />
@@ -167,7 +174,7 @@ export function ImagePicker({
             variant="outline"
             size="sm"
             disabled={disabled || uploading}
-            onClick={() => fileInput.current?.click()}
+            onClick={crop.choose}
           >
             {uploading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -194,19 +201,7 @@ export function ImagePicker({
           {t("dropPrompt")} {t("formats")}
         </p>
 
-        <input
-          ref={fileInput}
-          type="file"
-          accept={PRODUCT_IMAGE_ACCEPT}
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            // Cleared before the request, so re-choosing the same file after a
-            // refusal still fires a change event.
-            e.target.value = "";
-            if (file) void addFile(file);
-          }}
-        />
+        {crop.element}
       </div>
 
       {/* Reserved one-line slot. Held open from first paint so the answer
@@ -226,7 +221,8 @@ export function ImagePicker({
 
       {catalogueOpen && (
         <ImageCatalogueDialog
-          productImageId={imageId}
+          purpose="product"
+          currentImageId={imageId}
           onSelect={apply}
           onEntryChanged={apply}
           onClose={() => setCatalogueOpen(false)}

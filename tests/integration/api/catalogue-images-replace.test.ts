@@ -6,22 +6,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
-import { POST } from "@/app/api/admin/product-images/[id]/replace/route";
+import { POST } from "@/app/api/admin/catalogue-images/[id]/replace/route";
 import {
   createFetchStubbedClient,
   postgrestJson,
   requestedUrl,
   type FetchMock,
 } from "../../mocks/postgrest-fetch";
+import { plainJpeg } from "../../mocks/exif-jpeg";
 
 /**
- * POST /api/admin/product-images/[id]/replace — the repoint.
+ * POST /api/admin/catalogue-images/[id]/replace — the repoint.
  *
  * What matters here is that replacing is never an edit of an entry: the new
  * bytes get their own entry (inheriting the replaced entry's name) and every
  * product that used the old one is moved across in a single statement. The
- * cases below are the three shapes that has — nothing to move, something to
- * move, and the entry having vanished under the admin.
+ * cases below are the forms that takes — nothing to move, products to move,
+ * a cover's purpose inherited, and the entry having vanished under the admin.
  */
 
 // --- Mocks ---
@@ -32,9 +33,11 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockUpload = vi.fn();
+/** Which bucket each upload went to — the replaced entry's purpose's own. */
+const mockStorageFrom = vi.fn((_bucket: string) => ({ upload: mockUpload }));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
-    storage: { from: vi.fn(() => ({ upload: mockUpload })) },
+    storage: { from: (bucket: string) => mockStorageFrom(bucket) },
   })),
 }));
 
@@ -47,16 +50,18 @@ function respondWith(...responses: Response[]): void {
 const OLD_ID = "6d2b6a5b-6f6d-4a4a-9a56-2b0f1a4c9c11";
 const NEW_ID = "9f1c2d3e-4a5b-4c6d-8e9f-0a1b2c3d4e5f";
 
-const NEW_BYTES = "the-new-picture-bytes";
+/** A real JPEG at exactly a product picture's size: the route measures the bytes. */
+const NEW_BYTES = new Uint8Array(await plainJpeg(1200, 800));
 const NEW_SHA = createHash("sha256").update(NEW_BYTES).digest("hex");
 
-const OLD_ENTRY = { id: OLD_ID, label: "Minecraft castle" };
+const OLD_ENTRY = { id: OLD_ID, label: "Minecraft castle", purpose: "product" };
 
 const NEW_ENTRY = {
   id: NEW_ID,
   label: "Minecraft castle",
   sha256: NEW_SHA,
-  path: `${NEW_SHA}.png`,
+  path: `${NEW_SHA}.jpg`,
+  purpose: "product",
   created_at: "2026-08-02T00:00:00.000Z",
 };
 
@@ -70,13 +75,15 @@ function mockAdmin(): void {
 
 function createRequest(
   id: string,
-  file: File = new File([NEW_BYTES], "castle-v2.png", { type: "image/png" }),
+  file: File = new File([NEW_BYTES], "castle-v2.jpg", { type: "image/jpeg" }),
+  purpose?: string,
 ): [Request, { params: Promise<{ id: string }> }] {
   const form = new FormData();
   form.append("file", file);
+  if (purpose !== undefined) form.append("purpose", purpose);
   return [
     new Request(
-      `http://localhost/api/admin/product-images/${id}/replace`,
+      `http://localhost/api/admin/catalogue-images/${id}/replace`,
       { method: "POST", body: form },
     ),
     { params: Promise.resolve({ id }) },
@@ -89,7 +96,7 @@ function requestBody(call: number): unknown {
   return JSON.parse(String(init?.body));
 }
 
-describe("POST /api/admin/product-images/[id]/replace", () => {
+describe("POST /api/admin/catalogue-images/[id]/replace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpload.mockResolvedValue({ error: null });
@@ -106,7 +113,7 @@ describe("POST /api/admin/product-images/[id]/replace", () => {
   it("returns 403 for a non-admin", async () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json(
-        { error: "Only admins can manage product images" },
+        { error: "Only admins can manage catalogue images" },
         { status: 403 },
       ),
     );
@@ -175,6 +182,43 @@ describe("POST /api/admin/product-images/[id]/replace", () => {
       `eq.${OLD_ID}`,
     );
     expect(requestBody(3)).toEqual({ image_id: NEW_ID });
+    // The new bytes went to the product purpose's bucket.
+    expect(mockStorageFrom).toHaveBeenCalledWith("product-images");
+  });
+
+  it("keeps a Library cover's purpose, looking up, creating and storing the new picture as one", async () => {
+    mockAdmin();
+    const wideBytes = new Uint8Array(await plainJpeg(1600, 900));
+    const wideSha = createHash("sha256").update(wideBytes).digest("hex");
+    const wideEntry = {
+      ...NEW_ENTRY,
+      sha256: wideSha,
+      path: `${wideSha}.jpg`,
+      purpose: "library_cover",
+    };
+    respondWith(
+      postgrestJson([{ ...OLD_ENTRY, purpose: "library_cover" }]),
+      postgrestJson([]),
+      postgrestJson(wideEntry),
+      // No product links a cover.
+      postgrestJson([]),
+    );
+
+    const response = await POST(
+      ...createRequest(OLD_ID, new File([wideBytes], "cover-v2.jpg")),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ image: wideEntry, relinked: 0 });
+
+    // The replacement inherits the cover purpose: looked up and created as a
+    // cover, and uploaded to the covers' own bucket.
+    expect(
+      requestedUrl(fetchMock.mock.calls[1][0]).searchParams.get("purpose"),
+    ).toBe("eq.library_cover");
+    expect(requestBody(2)).toMatchObject({ purpose: "library_cover" });
+    expect(mockStorageFrom).toHaveBeenCalledWith("library-covers");
+    expect(mockStorageFrom).not.toHaveBeenCalledWith("product-images");
   });
 
   it("gives a newly created entry the replaced entry's name", async () => {
@@ -192,6 +236,43 @@ describe("POST /api/admin/product-images/[id]/replace", () => {
     expect(requestBody(2)).toMatchObject({
       label: "Minecraft castle",
       sha256: NEW_SHA,
+      purpose: "product",
     });
+  });
+
+  it("measures the new picture against the replaced entry's purpose, not the form's", async () => {
+    // Everything that follows the repoint may link only the old entry's
+    // purpose, so a replacement keeps it — a `purpose` field saying otherwise
+    // changes nothing.
+    mockAdmin();
+    respondWith(postgrestJson([{ ...OLD_ENTRY, purpose: "library_cover" }]));
+
+    const response = await POST(
+      ...createRequest(
+        OLD_ID,
+        new File([NEW_BYTES], "castle-v2.jpg", { type: "image/jpeg" }),
+        "product",
+      ),
+    );
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).code).toBe("IMAGE_WRONG_SIZE");
+    expect(mockUpload).not.toHaveBeenCalled();
+    // The entry read, and nothing written after it.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a JPEG that is not exactly the purpose's size", async () => {
+    mockAdmin();
+    respondWith(postgrestJson([OLD_ENTRY]));
+
+    const legacy = new Uint8Array(await plainJpeg(1200, 750));
+    const response = await POST(
+      ...createRequest(OLD_ID, new File([legacy], "castle-v2.jpg")),
+    );
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).code).toBe("IMAGE_WRONG_SIZE");
+    expect(mockUpload).not.toHaveBeenCalled();
   });
 });

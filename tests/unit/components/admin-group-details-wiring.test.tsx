@@ -242,7 +242,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     product_staff_details: null,
     image_id: null,
     image_path: null,
-    product_images: null,
+    catalogue_images: null,
     start_date: "2025-09-01",
     end_date: null,
     seat_count: 10,

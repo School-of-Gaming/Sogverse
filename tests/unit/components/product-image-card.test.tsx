@@ -8,9 +8,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
  *
  * The card sits in front of a catalogue every product shares, and the whole
  * design rests on keeping its own actions unshared. Taking the picture off
- * *this* product touches nothing else, so it never warns; a dropped file adds
- * the bytes to the catalogue and selects the result **here**, which is what
- * makes the most casual gesture in the feature also the safest one.
+ * *this* product touches nothing else, so it never warns; a dropped file is
+ * cropped to the product frame, added to the catalogue and selected **here**,
+ * which is what makes the most casual gesture in the feature also the safest
+ * one.
  *
  * The third case is the refusal that has to happen before the request: the
  * platform caps a function body at roughly 4.5 MB, so a file over the cap never
@@ -19,12 +20,38 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
  * message — it is that `fetch` was never called.
  *
  * The real service and the real mutation hook run here; only the Supabase
- * client (unused by the upload path) and `fetch` are stood in for, because the
- * refusal being tested lives inside the service rather than in the card.
+ * client (unused by the upload path), `fetch` and the crop dialog are stood
+ * in for. The crop dialog needs a canvas jsdom does not have, and what is
+ * under test is what the card does with its result: the stub hands back
+ * whatever blob a case gives it.
  */
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
   useLocale: () => "en",
+}));
+
+/** The blob the stubbed crop dialog hands back on confirm. */
+let croppedBlob = new Blob(["cropped"], { type: "image/jpeg" });
+
+vi.mock("@/components/ui/image-crop-dialog", () => ({
+  IMAGE_CROP_ACCEPT: ["image/jpeg", "image/png", "image/webp"],
+  decodeImageForCrop: () => Promise.resolve(true),
+  ImageCropDialog: ({
+    source,
+    outputWidth,
+    outputHeight,
+    onConfirm,
+  }: {
+    source: { kind: string } | null;
+    outputWidth: number;
+    outputHeight: number;
+    onConfirm: (blob: Blob) => void;
+  }) =>
+    source?.kind === "ready" ? (
+      <button type="button" onClick={() => onConfirm(croppedBlob)}>
+        {`crop ${outputWidth}x${outputHeight}`}
+      </button>
+    ) : null,
 }));
 
 vi.mock("@/lib/supabase/client", () => ({
@@ -34,7 +61,7 @@ vi.mock("@/lib/supabase/client", () => ({
 }));
 
 import { ImagePicker } from "@/components/admin/products/image-picker";
-import { PRODUCT_IMAGE_MAX_BYTES } from "@/services/product-images";
+import { CATALOGUE_IMAGE_MAX_BYTES } from "@/services/catalogue-images";
 
 const ENTRY = {
   id: "ba0d0b0b-2b58-4b58-9a0f-1f2ec6a2e2a1",
@@ -102,13 +129,16 @@ describe("dropping a file on the card", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
     fetchMock.mockReset();
+    croppedBlob = new Blob(["cropped"], { type: "image/jpeg" });
+    URL.createObjectURL = vi.fn(() => "blob:picked");
+    URL.revokeObjectURL = vi.fn();
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it("uploads it and selects the result for this product alone", async () => {
+  it("crops it to a product picture's size, uploads the crop and selects the result for this product alone", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: () =>
@@ -117,6 +147,7 @@ describe("dropping a file on the card", () => {
           image: {
             ...ENTRY,
             sha256: "0".repeat(64),
+            purpose: "product",
             created_at: "2026-08-20T10:00:00.000Z",
           },
         }),
@@ -126,6 +157,11 @@ describe("dropping a file on the card", () => {
 
     fireEvent.drop(dropZone(), { dataTransfer: dropped(file("a.png", 1024)) });
 
+    // Nothing is sent before the crop: the route takes nothing else.
+    const crop = await screen.findByText("crop 1200x800");
+    expect(fetchMock).not.toHaveBeenCalled();
+    fireEvent.click(crop);
+
     await waitFor(() => {
       expect(onChange).toHaveBeenCalledWith(ENTRY.id, {
         label: ENTRY.label,
@@ -133,15 +169,31 @@ describe("dropping a file on the card", () => {
       });
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toBe("/api/admin/product-images");
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/admin/catalogue-images");
+
+    // What went up is the crop, as a JPEG named after the dropped file, with
+    // the purpose it was cut for.
+    const init: unknown = fetchMock.mock.calls[0][1];
+    const body =
+      typeof init === "object" && init !== null && "body" in init
+        ? init.body
+        : null;
+    if (!(body instanceof FormData)) throw new Error("expected a form body");
+    expect(body.get("purpose")).toBe("product");
+    const sent = body.get("file");
+    if (!(sent instanceof File)) throw new Error("expected a file");
+    expect(sent.name).toBe("a.jpg");
+    expect(sent.type).toBe("image/jpeg");
   });
 
-  it("refuses an oversize file before any request is made", async () => {
+  it("refuses an oversize crop before any request is made", async () => {
+    croppedBlob = new Blob([new Uint8Array(CATALOGUE_IMAGE_MAX_BYTES + 1)], {
+      type: "image/jpeg",
+    });
     const { onChange } = renderCard(null);
 
-    fireEvent.drop(dropZone(), {
-      dataTransfer: dropped(file("huge.png", PRODUCT_IMAGE_MAX_BYTES + 1)),
-    });
+    fireEvent.drop(dropZone(), { dataTransfer: dropped(file("huge.png", 1024)) });
+    fireEvent.click(await screen.findByText("crop 1200x800"));
 
     await waitFor(() => {
       expect(document.body.textContent).toContain("tooLarge");

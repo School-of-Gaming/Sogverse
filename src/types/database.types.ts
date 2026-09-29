@@ -52,6 +52,33 @@ export type Database = {
           },
         ]
       }
+      catalogue_images: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          path: string
+          purpose: Database["public"]["Enums"]["catalogue_image_purpose"]
+          sha256: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          path: string
+          purpose: Database["public"]["Enums"]["catalogue_image_purpose"]
+          sha256: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          path?: string
+          purpose?: Database["public"]["Enums"]["catalogue_image_purpose"]
+          sha256?: string
+        }
+        Relationships: []
+      }
       chat_channel_locks: {
         Row: {
           channel_id: string
@@ -1709,30 +1736,6 @@ export type Database = {
           },
         ]
       }
-      product_images: {
-        Row: {
-          created_at: string
-          id: string
-          label: string
-          path: string
-          sha256: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          label: string
-          path: string
-          sha256: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          label?: string
-          path?: string
-          sha256?: string
-        }
-        Relationships: []
-      }
       product_marketing_consents: {
         Row: {
           consent_type: Database["public"]["Enums"]["marketing_consent_type"]
@@ -2062,7 +2065,7 @@ export type Database = {
             foreignKeyName: "products_image_id_fkey"
             columns: ["image_id"]
             isOneToOne: false
-            referencedRelation: "product_images"
+            referencedRelation: "catalogue_images"
             referencedColumns: ["id"]
           },
           {
@@ -3922,6 +3925,7 @@ export type Database = {
     }
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
+      catalogue_image_purpose: "product" | "library_cover"
       chat_channel_type: "group_session"
       effective_product_status: "pending" | "running" | "completed"
       gamer_photo_consent_type: "lynx_educate"
@@ -4084,6 +4088,7 @@ export const Constants = {
   public: {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
+      catalogue_image_purpose: ["product", "library_cover"],
       chat_channel_type: ["group_session"],
       effective_product_status: ["pending", "running", "completed"],
       gamer_photo_consent_type: ["lynx_educate"],

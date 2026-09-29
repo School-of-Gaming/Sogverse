@@ -40,8 +40,8 @@
 -- fixed then. Accounts are the one exception: they are direct `auth.users` /
 -- `auth.identities` inserts exactly as `seed.sql` does them.
 --
--- THE PICTURES ARE NOT IN HERE. A product's picture is a `product_images`
--- catalogue entry naming an object in the `product-images` storage bucket by
+-- THE PICTURES ARE NOT IN HERE. A product's picture is a `catalogue_images`
+-- entry naming an object in its purpose's storage bucket by
 -- the sha256 of its bytes, so no amount of SQL can mint one — the bytes have to
 -- be uploaded first. `scripts/local-db/rich-images.sh` does that, and the local
 -- stack runs it straight after this file. Applying this file by hand leaves

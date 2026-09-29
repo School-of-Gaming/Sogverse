@@ -105,6 +105,7 @@ export function ProductBrowseCardView({
             under-claimed width is a blurry card. */}
         <ProductBanner
           src={imageSrc}
+          zoomOnHover={shell.openHref !== undefined}
           sizes="(min-width: 1280px) 352px, (min-width: 1024px) 464px, (min-width: 768px) 360px, (min-width: 640px) 296px, calc(100vw - 2rem)"
         />
 

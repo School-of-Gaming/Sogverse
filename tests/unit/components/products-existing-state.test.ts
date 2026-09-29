@@ -33,7 +33,7 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     // it, and the embed is what the form's image card paints from.
     image_id: "3d9e4a2f-9c1b-4f6e-8a70-5b2c1d0e7f43",
     image_path: "abc.png",
-    product_images: { label: "Creeper art", path: "abc.png" },
+    catalogue_images: { label: "Creeper art", path: "abc.png" },
     // Staff-only, so it arrives on its own embedded row rather than as a column
     // on the product. `null` is the ordinary case: no row means no lesson link.
     product_staff_details: null,

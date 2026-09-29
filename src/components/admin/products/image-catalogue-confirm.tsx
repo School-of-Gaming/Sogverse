@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Upload } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -12,10 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PRODUCT_IMAGE_ACCEPT } from "@/services/product-images";
-import type { ProductImageUser } from "@/services/product-images";
-import { productImageErrorMessage } from "./product-image-error";
-import { ProductImageUserList } from "./image-catalogue-user-list";
+import type { CatalogueImageUser } from "@/services/catalogue-images";
+import type { CatalogueImagePurpose } from "@/types";
+import { CATALOGUE_COPY } from "./catalogue-copy";
+import { useCatalogueCrop } from "./catalogue-crop";
+import { catalogueImageErrorMessage } from "./catalogue-image-error";
+import { CatalogueImageUserList } from "./image-catalogue-user-list";
 
 export type ImageCatalogueAction = "replace" | "remove";
 
@@ -26,8 +28,10 @@ interface ImageActionConfirmDialogProps {
   action: ImageCatalogueAction;
   /** The entry's name, so the title says which picture is about to change. */
   label: string;
-  /** Every product the entry reaches. Empty is the plain-confirm case. */
-  products: readonly ProductImageUser[];
+  /** The entry's purpose — what a replacement is cropped for. */
+  purpose: CatalogueImagePurpose;
+  /** Every product or article the entry reaches. Empty is the plain-confirm case. */
+  users: readonly CatalogueImageUser[];
   /**
    * Do it. `file` is the replacement's bytes and is null for a removal.
    * Resolving means the caller has closed this dialog; rejecting leaves it
@@ -37,7 +41,8 @@ interface ImageActionConfirmDialogProps {
 }
 
 /**
- * **The confirm in front of the two verbs that reach other people's products.**
+ * **The confirm in front of the two verbs that reach other people's products
+ * and articles.**
  *
  * A local component rather than the shared `ConfirmDialog` for two reasons that
  * are both structural: the shared one closes itself the moment its confirm is
@@ -66,7 +71,8 @@ export function ImageActionConfirmDialog({
   onOpenChange,
   action,
   label,
-  products,
+  purpose,
+  users,
   onConfirm,
 }: ImageActionConfirmDialogProps) {
   const t = useTranslations("admin.products.imageCatalogue");
@@ -75,9 +81,15 @@ export function ImageActionConfirmDialog({
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [committing, setCommitting] = useState(false);
-  const fileInput = useRef<HTMLInputElement>(null);
+  // A replacement keeps the entry's purpose, so the new picture is cropped to its size
+  // before it can be confirmed.
+  const crop = useCatalogueCrop(purpose, (cropped) => {
+    setFile(cropped);
+    setError(null);
+  });
 
-  const count = products.length;
+  const copy = CATALOGUE_COPY[purpose];
+  const count = users.length;
   const isReplace = action === "replace";
 
   async function handleConfirm() {
@@ -99,7 +111,7 @@ export function ImageActionConfirmDialog({
       await onConfirm(file);
     } catch (err) {
       setCommitting(false);
-      setError(productImageErrorMessage(err, tError));
+      setError(catalogueImageErrorMessage(err, tError));
     }
   }
 
@@ -115,35 +127,26 @@ export function ImageActionConfirmDialog({
           <DialogDescription>
             {count === 0
               ? isReplace
-                ? t("replaceConfirm.unused")
-                : t("removeConfirm.unused")
+                ? t(`${copy}.replaceUnused`)
+                : t(`${copy}.removeUnused`)
               : isReplace
-                ? t("replaceConfirm.consequence", { count })
-                : t("removeConfirm.consequence", { count })}
+                ? t(`${copy}.replaceConsequence`, { count })
+                : t(`${copy}.removeConsequence`, { count })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-6 pt-4">
-          {count > 0 && <ProductImageUserList products={products} />}
+          {count > 0 && <CatalogueImageUserList users={users} />}
 
           {isReplace && (
             <div className="mt-4">
-              <input
-                ref={fileInput}
-                type="file"
-                accept={PRODUCT_IMAGE_ACCEPT}
-                className="hidden"
-                onChange={(e) => {
-                  setFile(e.target.files?.[0] ?? null);
-                  setError(null);
-                }}
-              />
+              {crop.element}
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 disabled={committing}
-                onClick={() => fileInput.current?.click()}
+                onClick={crop.choose}
               >
                 <Upload className="h-4 w-4" />
                 {t("replaceConfirm.choose")}
@@ -194,8 +197,8 @@ export function ImageActionConfirmDialog({
                 ? t("replaceConfirm.confirmUnused")
                 : t("removeConfirm.confirmUnused")
               : isReplace
-                ? t("replaceConfirm.confirm", { count })
-                : t("removeConfirm.confirm", { count })}
+                ? t(`${copy}.replaceConfirm`, { count })
+                : t(`${copy}.removeConfirm`, { count })}
           </Button>
         </div>
       </DialogContent>

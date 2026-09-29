@@ -167,6 +167,15 @@
     "selectWeek": "Sélectionner la semaine {week}",
     "today": "Aujourd’hui"
   },
+  "imageCrop": {
+    "title": "Recadrez l’image",
+    "description": "Faites glisser l’image pour la placer dans le cadre, et zoomez pour l’ajuster.",
+    "zoom": "Zoom",
+    "confirm": "Utiliser l’image",
+    "unreadable": "Ce fichier ne peut pas être ouvert comme une image ici. Choisissez une image JPEG, PNG ou WebP. Les photos d’iPhone au format HEIC doivent d’abord être converties.",
+    "chooseAnother": "Choisir une autre image",
+    "failed": "L’image n’a pas pu être recadrée. Réessayez, ou choisissez une autre image."
+  },
   "about": {
     "pageTitle": "À propos",
     "sectionNav": "Sur cette page",
@@ -880,8 +889,8 @@
       },
       "imagePicker": {
         "label": "Image",
-        "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour l’ajouter et l’utiliser pour ce produit.",
-        "formats": "JPG, PNG, WebP, AVIF ou SVG, jusqu’à 4 Mo.",
+        "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 3:2, l’ajouter et l’utiliser pour ce produit.",
+        "formats": "JPEG, PNG ou WebP.",
         "chooseFile": "Choisir un fichier",
         "uploading": "Ajout en cours…",
         "change": "Changer d’image",
@@ -891,41 +900,59 @@
         "hint": "Affichée sur la carte du produit lorsque les parents parcourent le catalogue, recadrée au format 3:2. Les images sont partagées entre les produits, donc votre choix ici ne modifie rien d’autre."
       },
       "imageCatalogue": {
-        "title": "Images des produits",
-        "description": "Une même image peut servir à plusieurs produits. Votre choix ne concerne que ce produit, mais remplacer ou retirer une image touche tous les produits qui l’utilisent.",
         "upload": "Ajouter une image",
         "uploading": "Ajout en cours…",
         "emptyCatalogue": "Aucune image pour l’instant. Ajoutez-en une pour commencer.",
-        "usedBadge": "{count, plural, one {# produit} other {# produits}}",
         "columnEmpty": "Sélectionnez une image",
         "use": "Utiliser cette image",
         "nameLabel": "Nom de l’image",
         "rename": "Renommer",
-        "usedBy": "Produits utilisant cette image",
-        "usedByNone": "Aucun produit n’utilise cette image.",
         "live": "En ligne",
         "hidden": "Masqué",
         "replace": "Remplacer l’image",
         "remove": "Retirer du catalogue",
         "replaceConfirm": {
           "title": "Remplacer « {label} »",
-          "consequence": "{count, plural, one {Le produit ci-dessous affichera la nouvelle image.} other {Les # produits ci-dessous afficheront tous la nouvelle image.}}",
-          "unused": "Aucun produit n’utilise cette image. La nouvelle prend sa place dans le catalogue.",
           "choose": "Choisir la nouvelle image",
-          "confirm": "Remplacer sur {count, plural, one {# produit} other {# produits}}",
           "confirmUnused": "Remplacer l’image"
         },
         "removeConfirm": {
           "title": "Retirer « {label} »",
-          "consequence": "{count, plural, one {Le produit ci-dessous restera sans image jusqu’à ce que vous en choisissiez une autre.} other {Les # produits ci-dessous resteront sans image jusqu’à ce que vous en choisissiez une autre.}}",
-          "unused": "Aucun produit n’utilise cette image. Elle sera définitivement retirée du catalogue.",
-          "confirm": "Retirer de {count, plural, one {# produit} other {# produits}}",
           "confirmUnused": "Retirer du catalogue"
         },
         "errors": {
           "tooLarge": "Ce fichier est trop volumineux. Les images ne doivent pas dépasser 4 Mo.",
-          "unsupportedType": "Ce type de fichier n’est pas pris en charge. Utilisez JPG, PNG, WebP, AVIF ou SVG.",
+          "unsupportedType": "Ce fichier n’est pas un JPEG. Recadrez l’image ici et réessayez.",
+          "wrongSize": "Cette image n’a pas exactement la taille que son cadre exige. Recadrez-la ici et réessayez.",
           "nameRequired": "Donnez à l’image un nom de 1 à 120 caractères."
+        },
+        "forPurpose": {
+          "product": {
+            "title": "Images des produits",
+            "description": "Une même image peut servir à plusieurs produits. Votre choix ne concerne que ce produit, mais remplacer ou retirer une image touche tous les produits qui l’utilisent.",
+            "usedBadge": "{count, plural, one {# produit} other {# produits}}",
+            "usedBy": "Produits utilisant cette image",
+            "usedByNone": "Aucun produit n’utilise cette image.",
+            "replaceConsequence": "{count, plural, one {Le produit ci-dessous affichera la nouvelle image.} other {Les # produits ci-dessous afficheront tous la nouvelle image.}}",
+            "replaceUnused": "Aucun produit n’utilise cette image. La nouvelle prend sa place dans le catalogue.",
+            "replaceConfirm": "Remplacer sur {count, plural, one {# produit} other {# produits}}",
+            "removeConsequence": "{count, plural, one {Le produit ci-dessous restera sans image jusqu’à ce que vous en choisissiez une autre.} other {Les # produits ci-dessous resteront sans image jusqu’à ce que vous en choisissiez une autre.}}",
+            "removeUnused": "Aucun produit n’utilise cette image. Elle sera définitivement retirée du catalogue.",
+            "removeConfirm": "Retirer de {count, plural, one {# produit} other {# produits}}"
+          },
+          "libraryCover": {
+            "title": "Couvertures de la Bibliothèque",
+            "description": "Une même image peut servir de couverture à plusieurs articles. Votre choix ne concerne que cet article, mais remplacer ou retirer une image touche tous les articles qui l’utilisent, y compris ceux en ligne.",
+            "usedBadge": "{count, plural, one {# article} other {# articles}}",
+            "usedBy": "Articles utilisant cette image",
+            "usedByNone": "Aucun article n’utilise cette image.",
+            "replaceConsequence": "{count, plural, one {L’article ci-dessous affichera la nouvelle image, aussitôt s’il est en ligne.} other {Les # articles ci-dessous afficheront tous la nouvelle image, aussitôt pour ceux qui sont en ligne.}}",
+            "replaceUnused": "Aucun article n’utilise cette image. La nouvelle prend sa place dans le catalogue.",
+            "replaceConfirm": "Remplacer sur {count, plural, one {# article} other {# articles}}",
+            "removeConsequence": "{count, plural, one {L’article ci-dessous restera sans couverture jusqu’à ce que vous en choisissiez une autre, même en ligne.} other {Les # articles ci-dessous resteront sans couverture jusqu’à ce que vous en choisissiez une autre, y compris ceux en ligne.}}",
+            "removeUnused": "Aucun article n’utilise cette image. Elle sera définitivement retirée du catalogue.",
+            "removeConfirm": "Retirer de {count, plural, one {# article} other {# articles}}"
+          }
         }
       },
       "filters": {
@@ -5020,12 +5047,7 @@
         },
         "crop": {
           "title": "Recadrez votre photo",
-          "description": "Faites glisser la photo pour la placer dans le cadre, et zoomez pour l’ajuster.",
-          "zoom": "Zoom",
-          "confirm": "Utiliser la photo",
-          "unreadable": "Ce fichier ne peut pas être ouvert comme une image ici. Choisissez une photo JPEG, PNG ou WebP. Les photos d’iPhone au format HEIC doivent d’abord être converties.",
-          "chooseAnother": "Choisir une autre photo",
-          "failed": "La photo n’a pas pu être recadrée. Réessayez, ou choisissez une autre photo."
+          "confirm": "Utiliser la photo"
         }
       },
       "about": {

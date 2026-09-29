@@ -8,16 +8,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
-import { POST } from "@/app/api/admin/product-images/route";
+import sharp from "sharp";
+import { POST } from "@/app/api/admin/catalogue-images/route";
 import {
   createFetchStubbedClient,
   postgrestJson,
   requestedUrl,
   type FetchMock,
 } from "../../mocks/postgrest-fetch";
+import { plainJpeg } from "../../mocks/exif-jpeg";
 
 /**
- * POST /api/admin/product-images — the catalogue's upload.
+ * POST /api/admin/catalogue-images — the catalogue's upload.
  *
  * The route's whole job is find-or-create by content hash, so these tests are
  * mostly about the four ways "we already have these bytes" can be discovered:
@@ -38,9 +40,11 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockUpload = vi.fn();
+/** Which bucket each upload went to — the purpose's own. */
+const mockStorageFrom = vi.fn((_bucket: string) => ({ upload: mockUpload }));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
-    storage: { from: vi.fn(() => ({ upload: mockUpload })) },
+    storage: { from: (bucket: string) => mockStorageFrom(bucket) },
   })),
 }));
 
@@ -56,14 +60,19 @@ function postgrestCode(code: string, message: string, status: number): Response 
   return postgrestJson({ message, code, details: null, hint: null }, status);
 }
 
-const FILE_BYTES = "the-picture-bytes";
+/**
+ * A real JPEG at exactly a product picture's stored size. The route measures the
+ * bytes, so a stand-in string would be refused before anything else ran.
+ */
+const FILE_BYTES = new Uint8Array(await plainJpeg(1200, 800));
 const SHA = createHash("sha256").update(FILE_BYTES).digest("hex");
 
 const ENTRY = {
   id: "6d2b6a5b-6f6d-4a4a-9a56-2b0f1a4c9c11",
   label: "Minecraft castle",
   sha256: SHA,
-  path: `${SHA}.png`,
+  path: `${SHA}.jpg`,
+  purpose: "product",
   created_at: "2026-08-01T00:00:00.000Z",
 };
 
@@ -84,23 +93,25 @@ function mockUnauthenticated(): void {
 function mockForbidden(): void {
   mockRequireRole.mockResolvedValue(
     NextResponse.json(
-      { error: "Only admins can manage product images" },
+      { error: "Only admins can manage catalogue images" },
       { status: 403 },
     ),
   );
 }
 
 function createRequest(
-  options: { file?: File | null; label?: string } = {},
+  options: { file?: File | null; label?: string; purpose?: string | null } = {},
 ): Request {
   const form = new FormData();
   const file =
     "file" in options
       ? options.file
-      : new File([FILE_BYTES], "castle.png", { type: "image/png" });
+      : new File([FILE_BYTES], "castle.jpg", { type: "image/jpeg" });
   if (file) form.append("file", file);
+  const purpose = "purpose" in options ? options.purpose : "product";
+  if (purpose) form.append("purpose", purpose);
   if (options.label !== undefined) form.append("label", options.label);
-  return new Request("http://localhost/api/admin/product-images", {
+  return new Request("http://localhost/api/admin/catalogue-images", {
     method: "POST",
     body: form,
   });
@@ -112,7 +123,7 @@ function requestBody(call: number): unknown {
   return JSON.parse(String(init?.body));
 }
 
-describe("POST /api/admin/product-images", () => {
+describe("POST /api/admin/catalogue-images", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpload.mockResolvedValue({ error: null });
@@ -139,21 +150,132 @@ describe("POST /api/admin/product-images", () => {
     mockAdmin();
     const tooBig = new File(
       [new Uint8Array(4 * 1024 * 1024 + 1)],
-      "huge.png",
-      { type: "image/png" },
+      "huge.jpg",
+      { type: "image/jpeg" },
     );
     const response = await POST(createRequest({ file: tooBig }));
     expect(response.status).toBe(413);
+    expect((await response.json()).code).toBe("IMAGE_TOO_LARGE");
     expect(mockUpload).not.toHaveBeenCalled();
   });
 
-  it("returns 415 for a type outside the accept list", async () => {
+  it("returns 415 for a name outside the accept list — PNG included, now uploads are JPEG only", async () => {
+    for (const name of ["nope.gif", "castle.png", "castle.svg"]) {
+      vi.clearAllMocks();
+      mockAdmin();
+      const response = await POST(
+        createRequest({ file: new File([FILE_BYTES], name) }),
+      );
+      expect(response.status, name).toBe(415);
+      const body = await response.json();
+      expect(body.error).toMatch(/JPEG/);
+      expect(body.code).toBe("IMAGE_UNSUPPORTED_TYPE");
+      expect(mockUpload).not.toHaveBeenCalled();
+    }
+  });
+
+  it("returns 415 for bytes that are not a JPEG, whatever the name says", async () => {
     mockAdmin();
-    const gif = new File([FILE_BYTES], "nope.gif", { type: "image/gif" });
-    const response = await POST(createRequest({ file: gif }));
-    expect(response.status).toBe(415);
-    expect((await response.json()).error).toMatch(/JPEG|PNG|WEBP|AVIF|SVG/);
+    const png = await sharp({
+      create: { width: 1200, height: 800, channels: 3, background: "#123456" },
+    })
+      .png()
+      .toBuffer();
+    for (const bytes of [new Uint8Array(png), new TextEncoder().encode("not a picture")]) {
+      const response = await POST(
+        createRequest({ file: new File([bytes], "castle.jpg") }),
+      );
+      expect(response.status).toBe(415);
+      expect((await response.json()).code).toBe("IMAGE_UNSUPPORTED_TYPE");
+    }
     expect(mockUpload).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when the purpose is missing or is not one of the purposes", async () => {
+    // A ratio says nothing about what a picture is for, so it is no purpose.
+    for (const purpose of [null, "3:2", "cover", "product "]) {
+      vi.clearAllMocks();
+      mockAdmin();
+      const response = await POST(createRequest({ purpose }));
+      expect(response.status, String(purpose)).toBe(400);
+      expect((await response.json()).error).toMatch(/purpose/);
+      expect(mockUpload).not.toHaveBeenCalled();
+    }
+  });
+
+  it("returns 422 IMAGE_WRONG_SIZE for a JPEG that is not exactly its purpose's size", async () => {
+    // Near misses on both axes, the right size for the other purpose, and the
+    // 16:10 the seed pictures used to be — a size is exact or it is refused.
+    const cases: [number, number, string][] = [
+      [1199, 800, "product"],
+      [1200, 801, "product"],
+      [2400, 1600, "product"],
+      [1200, 750, "product"],
+      [1200, 800, "library_cover"],
+      [1600, 900, "product"],
+      [1599, 900, "library_cover"],
+    ];
+    for (const [width, height, purpose] of cases) {
+      vi.clearAllMocks();
+      mockAdmin();
+      const file = new File(
+        [new Uint8Array(await plainJpeg(width, height))],
+        "castle.jpg",
+      );
+      const response = await POST(createRequest({ file, purpose }));
+      const label = `${width}x${height} as ${purpose}`;
+      expect(response.status, label).toBe(422);
+      const body = await response.json();
+      expect(body.code, label).toBe("IMAGE_WRONG_SIZE");
+      expect(body.error, label).toContain(`${width} × ${height}`);
+      expect(mockUpload).not.toHaveBeenCalled();
+      expect(fetchMock).not.toHaveBeenCalled();
+    }
+  });
+
+  it("accepts a Library cover at exactly 1600 × 900, into the library-covers bucket", async () => {
+    mockAdmin();
+    const wide = new Uint8Array(await plainJpeg(1600, 900));
+    const wideSha = createHash("sha256").update(wide).digest("hex");
+    const wideEntry = {
+      ...ENTRY,
+      sha256: wideSha,
+      path: `${wideSha}.jpg`,
+      purpose: "library_cover",
+    };
+    respondWith(postgrestJson([]), postgrestJson(wideEntry));
+
+    const response = await POST(
+      createRequest({
+        file: new File([wide], "cover.jpg"),
+        purpose: "library_cover",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockStorageFrom).toHaveBeenCalledWith("library-covers");
+    expect(mockStorageFrom).not.toHaveBeenCalledWith("product-images");
+    expect(requestBody(1)).toMatchObject({
+      purpose: "library_cover",
+      path: `${wideSha}.jpg`,
+    });
+  });
+
+  it("looks for the bytes within the upload's own purpose only", async () => {
+    // Dedup is per purpose: the same bytes as a product picture and as a
+    // Library cover are two objects in two buckets, and two rows. So the
+    // lookup is keyed on the purpose as well as the hash, and finding nothing
+    // for this purpose uploads — whatever another purpose holds.
+    mockAdmin();
+    respondWith(postgrestJson([]), postgrestJson(ENTRY));
+
+    await POST(createRequest());
+
+    const lookup = requestedUrl(fetchMock.mock.calls[0][0]).searchParams;
+    expect(lookup.get("purpose")).toBe("eq.product");
+    expect(lookup.get("sha256")).toBe(`eq.${SHA}`);
+    expect(mockUpload).toHaveBeenCalledTimes(1);
   });
 
   it("returns 415 for an extension that only exists on Object.prototype", async () => {
@@ -186,18 +308,24 @@ describe("POST /api/admin/product-images", () => {
     // cached for a year — the three properties that make a bucket URL's bytes
     // immutable by construction.
     expect(mockUpload).toHaveBeenCalledWith(
-      `${SHA}.png`,
+      `${SHA}.jpg`,
       expect.any(File),
       expect.objectContaining({
-        contentType: "image/png",
+        contentType: "image/jpeg",
         upsert: false,
         cacheControl: "31536000",
       }),
     );
+    // A product picture goes to the product purpose's bucket.
+    expect(mockStorageFrom).toHaveBeenCalledWith("product-images");
     expect(requestedUrl(fetchMock.mock.calls[0][0]).searchParams.get("sha256")).toBe(
       `eq.${SHA}`,
     );
-    expect(requestBody(1)).toMatchObject({ sha256: SHA, path: `${SHA}.png` });
+    expect(requestBody(1)).toMatchObject({
+      sha256: SHA,
+      path: `${SHA}.jpg`,
+      purpose: "product",
+    });
   });
 
   it("answers 'existing' without touching storage when the hash is already known", async () => {
@@ -261,7 +389,7 @@ describe("POST /api/admin/product-images", () => {
     respondWith(postgrestJson([]), postgrestJson(ENTRY));
     await POST(
       createRequest({
-        file: new File([FILE_BYTES], ".png", { type: "image/png" }),
+        file: new File([FILE_BYTES], ".jpg", { type: "image/jpeg" }),
       }),
     );
     expect(requestBody(1)).toMatchObject({ label: "Image" });

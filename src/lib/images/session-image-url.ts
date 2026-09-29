@@ -23,7 +23,7 @@ export function sessionImageObjectName(id: string): string {
  * The public URL for a session photo, from its row id.
  *
  * **An id starting with `/` is passed straight through**, mirroring the
- * product-image helper: it is already a servable URL rather than a storage
+ * catalogue-image helper: it is already a servable URL rather than a storage
  * object — anything under `public/` is served from the site's own origin — and
  * prefixing it with the bucket URL would point at an object that does not
  * exist. That is what lets a preview scene's fixture images carry demo art

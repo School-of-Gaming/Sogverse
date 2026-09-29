@@ -212,9 +212,9 @@ const TESTS = {
   partnerSessions: "tests/integration/api/partner-sessions.test.ts",
   partnerTraffic: "tests/integration/api/partner-traffic.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
-  productImagesManage: "tests/integration/api/product-images-manage.test.ts",
-  productImagesReplace: "tests/integration/api/product-images-replace.test.ts",
-  productImagesUpload: "tests/integration/api/product-images-upload.test.ts",
+  catalogueImagesManage: "tests/integration/api/catalogue-images-manage.test.ts",
+  catalogueImagesReplace: "tests/integration/api/catalogue-images-replace.test.ts",
+  catalogueImagesUpload: "tests/integration/api/catalogue-images-upload.test.ts",
   productsCreate: "tests/integration/api/products-create.test.ts",
   productsGroupsApply: "tests/integration/api/products-groups-apply.test.ts",
   productsParticipations: "tests/integration/api/products-participations.test.ts",
@@ -400,55 +400,55 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-  // The catalogue routes. All three write the `product_images` table on the
+  // The catalogue routes. All three write the `catalogue_images` table on the
   // caller's own session — an admin-only RLS policy is what decides there — and
-  // reach for the service-role client for the storage bucket alone, which has
-  // no policies at all.
-  "src/app/api/admin/product-images/route.ts": {
+  // reach for the service-role client for the entry's purpose's storage bucket
+  // alone, the one writer the buckets' guarantees are kept behind.
+  "src/app/api/admin/catalogue-images/route.ts": {
     adminClient:
-      "privileged-bucket storage upload only (the bucket carries no policies); the catalogue row is inserted on the user client",
+      "privileged-bucket storage upload only, into the purpose's bucket; the catalogue row is inserted on the user client",
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
         body: {
           kind: "multipart",
           schema:
-            "inline: one `file` plus an optional `label`, read by readImageUpload — no JSON field, and the label is capped rather than refused (productImageLabel governs the rename route, where the label is the request)",
+            "inline: one `file`, its required `purpose` (parsed by the catalogueImagePurpose enum) and an optional `label`, read by readImageUpload — the file's size is measured against the purpose by refuseUnlessPurposeSize, and the label is capped rather than refused (catalogueImageLabel governs the rename route, where the label is the request)",
         },
-        test: TESTS.productImagesUpload,
+        test: TESTS.catalogueImagesUpload,
       },
     },
   },
 
-  "src/app/api/admin/product-images/[id]/route.ts": {
+  "src/app/api/admin/catalogue-images/[id]/route.ts": {
     adminClient:
-      "privileged-bucket object removal only; the row delete and the linked-product count run on the user client",
+      "privileged-bucket object removal only, from the entry's purpose's bucket; the row delete and the linked-product count run on the user client",
     handlers: {
       PATCH: {
         posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "renameProductImageBody" },
-        test: TESTS.productImagesManage,
+        body: { kind: "json", schema: "renameCatalogueImageBody" },
+        test: TESTS.catalogueImagesManage,
       },
       DELETE: {
         posture: ADMIN_ONLY,
         body: { kind: "none" },
-        test: TESTS.productImagesManage,
+        test: TESTS.catalogueImagesManage,
       },
     },
   },
 
-  "src/app/api/admin/product-images/[id]/replace/route.ts": {
+  "src/app/api/admin/catalogue-images/[id]/replace/route.ts": {
     adminClient:
-      "privileged-bucket storage upload only (the bucket carries no policies); the catalogue row and the one-statement repoint of every linked product run on the user client",
+      "privileged-bucket storage upload only, into the replaced entry's purpose's bucket; the catalogue row and the one-statement repoint of every linked product run on the user client",
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
         body: {
           kind: "multipart",
           schema:
-            "inline: one `file`, read by readImageUpload — the replaced entry supplies the label, so the form carries nothing else",
+            "inline: one `file`, read by readImageUpload — the replaced entry supplies the label and the purpose the file is measured against, so the form carries nothing else that is read",
         },
-        test: TESTS.productImagesReplace,
+        test: TESTS.catalogueImagesReplace,
       },
     },
   },

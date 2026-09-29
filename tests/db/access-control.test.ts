@@ -117,7 +117,7 @@ describe("Access Control", () => {
       // products.image_path. The admin dialog uploads, renames, repoints and
       // removes entries on the admin's own session client, which is why all
       // four privileges are here rather than behind an RPC.
-      ["product_images", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["catalogue_images", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["schedule_slots", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_prices", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["site_details", new Set(["INSERT", "UPDATE", "DELETE"])],

@@ -164,7 +164,7 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
 // anon-readable and the whole point of the separate table is that a `select=*`
 // against it cannot reach the link.
 //
-// `product_images(label, path)` is the second admin-only embed, and it is what
+// `catalogue_images(label, path)` is the second admin-only embed, and it is what
 // lets the form's image card paint the selected entry — its picture and the
 // name an admin gave it — from the read the page already makes. A nullable FK,
 // so it arrives as `null` for a product with no picture. Family surfaces never
@@ -176,12 +176,12 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
 // derived `image_path` column is the tempting one — makes this embed ambiguous
 // and PostgREST refuses the whole query with PGRST201, which the admin product
 // page shows as "product not found". That is why `image_path` carries no FK of
-// its own — see `src/services/product-images/CLAUDE.md`.
+// its own — see `src/services/catalogue-images/CLAUDE.md`.
 function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type)",
+      "*, catalogue_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type)",
     )
     .eq("id", id)
     .maybeSingle();

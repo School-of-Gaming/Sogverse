@@ -191,7 +191,7 @@ So the ground is known to be covered:
   exhaustive `Record`.
 - **Holiday calendars** — a vocabulary of *dates*; every column is read, admins hold
   write grants. Data, not vocabulary.
-- **`product_images`** — the closed set is a regex inside a path CHECK, not a column,
+- **`catalogue_images`** — the closed set is a regex inside a path CHECK, not a column,
   and the accept list on the TS side documents its obligation to match. Enum-ing
   means adding a column and rebuilding a deliberately designed constraint.
 - **`products.timezone`** — always written from one constant; a single-value column.
