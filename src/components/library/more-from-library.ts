@@ -48,6 +48,7 @@ export function publishedArticleCard(
   article: PublishedLibraryArticleSummary,
 ): LibraryArticleCardProps {
   return {
+    id: article.id,
     href: ROUTES.libraryArticle(article.id),
     coverSrc: catalogueImageSrc("library_cover", article.coverPath),
     title: article.title,
@@ -65,9 +66,5 @@ export function moreFromLibraryCards(
   published: readonly PublishedLibraryArticleSummary[],
   current: { id: string; category: LibraryCategory | null },
 ): LibraryArticleCardProps[] {
-  const candidates = published.map((article) => ({
-    ...publishedArticleCard(article),
-    id: article.id,
-  }));
-  return selectMoreFromLibrary(candidates, current);
+  return selectMoreFromLibrary(published.map(publishedArticleCard), current);
 }

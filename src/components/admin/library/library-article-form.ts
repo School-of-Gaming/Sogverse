@@ -192,12 +192,24 @@ export function libraryPublishState({
 
 /**
  * Why a write was refused: the database's own sentence when it wrote one for
- * a reader (the title CHECK, the publish function's list of what is missing),
- * or nothing to quote — a network fault, a bug.
+ * a reader, or nothing to quote. The Library's write functions raise their
+ * admin-facing sentences under exactly three SQLSTATEs — `check_violation`
+ * (a missing title, the publish function's list of what is missing, a cover
+ * that is not a Library cover), `no_data_found` (the article is gone) and
+ * `foreign_key_violation` (the cover left the catalogue). Every other code
+ * carries a message written for a developer, not an admin: supabase-js reports
+ * a network fault with an empty code and the fetch error as its message, and an
+ * expired session as a `PGRST` code, so those fall back to the generic line.
  */
 export type LibraryWriteFailure =
   | { kind: "reason"; reason: string }
   | { kind: "unknown" };
+
+const QUOTED_SQLSTATES: ReadonlySet<string> = new Set([
+  "23514", // check_violation
+  "P0002", // no_data_found
+  "23503", // foreign_key_violation
+]);
 
 export function libraryWriteFailure(error: unknown): LibraryWriteFailure {
   if (typeof error !== "object" || error === null) return { kind: "unknown" };
@@ -206,5 +218,8 @@ export function libraryWriteFailure(error: unknown): LibraryWriteFailure {
   if (typeof code !== "string" || typeof message !== "string") {
     return { kind: "unknown" };
   }
-  return message.length > 0 ? { kind: "reason", reason: message } : { kind: "unknown" };
+  if (!QUOTED_SQLSTATES.has(code) || message.length === 0) {
+    return { kind: "unknown" };
+  }
+  return { kind: "reason", reason: message };
 }
