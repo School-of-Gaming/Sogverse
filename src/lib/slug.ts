@@ -40,12 +40,16 @@ const UNDECOMPOSED_LETTERS: Record<string, string> = {
 /**
  * A deterministic, URL-safe slug: lowercase ASCII kebab with diacritics
  * folded — `Ähtäri` → `ahtari`, `Eetu CreeperHug` → `eetu-creeperhug`,
- * `Søren Æbelø` → `soren-aebelo`.
+ * `Søren Æbelø` → `soren-aebelo`, `What's on` → `whats-on`.
  *
  * The transform: Unicode NFD-decompose and drop the combining marks it leaves
  * (ä → a, é → e, å → a), lowercase, spell out the few letters NFD cannot split,
- * collapse every run of anything outside `[a-z0-9]` to one hyphen, and trim
- * hyphens from both ends.
+ * drop apostrophes, collapse every run of anything outside `[a-z0-9]` to one
+ * hyphen, and trim hyphens from both ends.
+ *
+ * Apostrophes (straight, typographic and modifier) are dropped rather than
+ * hyphenated, in every locale, so a word keeps its one piece — the WordPress
+ * and Ghost convention: `parent's` → `parents`, `l'école` → `lecole`.
  *
  * Text with no Latin letter or digit in it slugs to the empty string, which is
  * no address at all: `findBySlug` never matches it, so the thing is reachable
@@ -57,6 +61,7 @@ export function slugify(text: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[ßæøœłđðþ]/g, (letter) => UNDECOMPOSED_LETTERS[letter])
+    .replace(/['\u2018\u2019\u02bc]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }

@@ -253,14 +253,15 @@ export async function GET() {
   return new Response(body, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      // Publicly cacheable: the body depends on nothing but the deployed
-      // catalog and what is live in the Library, the same for every reader,
-      // and it is fetched by crawlers we do not control. That posture
-      // is exactly why the path is excluded from the proxy's matcher — the
-      // proxy may attach `Set-Cookie` to whatever response it handles, and a
-      // shared cache holding one of those would serve one person's session to
-      // every anonymous requester. See the matcher comment in `src/proxy.ts`.
-      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+      // Never served stale: the header Next gives the sitemap, so an article
+      // published or unpublished is in or out of the next fetch of both
+      // files alike. It is still `public` — the body is the same for every
+      // reader — and that is why the path is excluded from the proxy's
+      // matcher: the proxy may attach `Set-Cookie` to whatever response it
+      // handles, and a shared cache holding one of those would serve one
+      // person's session to every anonymous requester. See the matcher
+      // comment in `src/proxy.ts`.
+      "Cache-Control": "public, max-age=0, must-revalidate",
     },
   });
 }

@@ -64,10 +64,14 @@ describe("/llms.txt", () => {
     );
   });
 
-  it("is publicly cacheable", async () => {
-    // The posture that keeps it out of the proxy's matcher; if this stops
-    // being true, that exclusion needs revisiting rather than the header.
-    expect((await GET()).headers.get("cache-control")).toContain("s-maxage=");
+  it("is never served stale, with the sitemap's header", async () => {
+    // Next's header for a dynamic sitemap, so the two files are always
+    // equally fresh. `public` is the posture that keeps the path out of
+    // the proxy's matcher; if it stops being true, that exclusion needs
+    // revisiting rather than the header.
+    expect((await GET()).headers.get("cache-control")).toBe(
+      "public, max-age=0, must-revalidate",
+    );
   });
 
   it("opens with the H1 and the summary blockquote", () => {

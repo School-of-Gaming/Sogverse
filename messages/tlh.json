@@ -4320,7 +4320,6 @@
   },
   "team": {
     "profile": {
-      "headlineName": "{firstName} <nick>{nickname}</nick>",
       "nameWithNickname": "{firstName} “{nickname}” {lastName}",
       "firstNameWithNickname": "{firstName} “{nickname}”",
       "geduTitle": "Gedu · Quj ghojmoHwI’",

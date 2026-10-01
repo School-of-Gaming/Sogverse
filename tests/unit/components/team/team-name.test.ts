@@ -16,7 +16,7 @@ const t = createTranslator({ locale: "en", messages: en, namespace: "team.profil
 describe("a team member headed", () => {
   it("heads an admin with first name and nickname, the surname under the rule", () => {
     const admin = publicAdminProfile();
-    expect(teamMemberHeadlineText(admin, t)).toBe("Laura Nightowl");
+    expect(teamMemberHeadlineText(admin)).toBe("Laura Nightowl");
     expect(teamMemberSubline(admin, t)).toBe(
       "Laura Virtanen · Chief Executive Officer",
     );
@@ -24,13 +24,13 @@ describe("a team member headed", () => {
 
   it("heads a Gedu with first name and nickname, the role under the rule", () => {
     const gedu = publicGeduProfile();
-    expect(teamMemberHeadlineText(gedu, t)).toBe("Eetu CreeperHug");
+    expect(teamMemberHeadlineText(gedu)).toBe("Eetu CreeperHug");
     expect(teamMemberSubline(gedu, t)).toBe("Gedu · Game Educator");
   });
 
   it("heads a person with no nickname by their first name alone", () => {
     expect(
-      teamMemberHeadlineText(publicAdminProfile({ nickname: null }), t),
+      teamMemberHeadlineText(publicAdminProfile({ nickname: null })),
     ).toBe("Laura");
   });
 });

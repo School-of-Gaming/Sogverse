@@ -114,8 +114,8 @@ export function TeamProfileBody({
                 runs exactly the headline's measure, as on the home hero. */}
             <div className="inline-block max-w-full">
               <h1 className="break-words text-h1-mobile font-bold tracking-tight @min-[48rem]:text-5xl">
-                {teamMemberHeadline(profile, t, (chunks) => (
-                  <span className="text-act">{chunks}</span>
+                {teamMemberHeadline(profile, (nickname) => (
+                  <span className="text-act">{nickname}</span>
                 ))}
               </h1>
               <span

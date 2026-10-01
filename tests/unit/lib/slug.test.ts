@@ -25,7 +25,15 @@ describe("slugify", () => {
   it("joins words with single hyphens and trims both ends", () => {
     expect(slugify("Eetu CreeperHug")).toBe("eetu-creeperhug");
     expect(slugify("  Mia  “xX_Builder_Xx”!  ")).toBe("mia-xx-builder-xx");
-    expect(slugify("O'Brien -- the 2nd")).toBe("o-brien-the-2nd");
+    expect(slugify("O'Brien -- the 2nd")).toBe("obrien-the-2nd");
+  });
+
+  it("drops apostrophes rather than hyphenating them, in every locale", () => {
+    expect(slugify("What's on")).toBe("whats-on");
+    expect(slugify("A parent\u2019s guide")).toBe("a-parents-guide");
+    expect(slugify("l'école")).toBe("lecole");
+    expect(slugify("\u2018Quoted\u2019 l\u2019été")).toBe("quoted-lete");
+    expect(slugify("o\u02bcclock")).toBe("oclock");
   });
 
   it("slugs text with no Latin letter or digit to nothing", () => {

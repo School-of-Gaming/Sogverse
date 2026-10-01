@@ -55,8 +55,8 @@ export function TeamMemberCard({
             href={href}
             className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-act"
           >
-            {teamMemberHeadline(profile, t, (chunks) => (
-              <span className="text-act">{chunks}</span>
+            {teamMemberHeadline(profile, (nickname) => (
+              <span className="text-act">{nickname}</span>
             ))}
           </Link>
         </h3>

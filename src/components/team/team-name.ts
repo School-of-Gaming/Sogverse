@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { createElement, Fragment, type ReactNode } from "react";
 import type { useTranslations } from "next-intl";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 
@@ -24,30 +24,18 @@ type TeamProfileTranslator = ReturnType<typeof useTranslations<"team.profile">>;
  */
 export function teamMemberHeadline(
   person: TeamProfile,
-  t: TeamProfileTranslator,
-  nick: (chunks: ReactNode) => ReactNode,
+  nick: (nickname: string) => ReactNode,
 ): ReactNode {
   return person.nickname === null
     ? person.firstName
-    : t.rich("headlineName", {
-        firstName: person.firstName,
-        nickname: person.nickname,
-        nick,
-      });
+    : createElement(Fragment, null, `${person.firstName} `, nick(person.nickname));
 }
 
 /** The headline's words as plain text, for measuring them. */
-export function teamMemberHeadlineText(
-  person: TeamProfile,
-  t: TeamProfileTranslator,
-): string {
+export function teamMemberHeadlineText(person: TeamProfile): string {
   return person.nickname === null
     ? person.firstName
-    : t.markup("headlineName", {
-        firstName: person.firstName,
-        nickname: person.nickname,
-        nick: (chunks) => chunks,
-      });
+    : `${person.firstName} ${person.nickname}`;
 }
 
 /**

@@ -108,8 +108,8 @@ export async function GET(
 
   // Headed as the profile page heads them (`team-name.ts`): the first name
   // with the nickname in act, an admin's surname on the line under the rule.
-  const headline = teamMemberHeadline(person, t, (chunks) => (
-    <span style={{ color: BRAND.act }}>{chunks}</span>
+  const headline = teamMemberHeadline(person, (nickname) => (
+    <span style={{ color: BRAND.act }}>{nickname}</span>
   ));
   const subline = teamMemberSubline(person, t);
 
@@ -199,7 +199,7 @@ export async function GET(
           <div
             style={{
               display: "flex",
-              fontSize: `${teamCardHeadlineSize(teamMemberHeadlineText(person, t))}px`,
+              fontSize: `${teamCardHeadlineSize(teamMemberHeadlineText(person))}px`,
               fontWeight: 600,
               lineHeight: 1.08,
               letterSpacing: "-1px",
