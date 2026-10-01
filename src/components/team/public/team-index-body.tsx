@@ -83,7 +83,7 @@ function TeamGroup({
       <h2 id={headingId} className="text-2xl font-bold">
         {heading}
       </h2>
-      <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
+      <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-4">
         {members.map(({ profile, href }) => (
           <li key={profile.id}>
             <TeamMemberCard profile={profile} href={href} />

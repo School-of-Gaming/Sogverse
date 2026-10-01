@@ -105,17 +105,23 @@ export function TeamProfileBody({
           <TeamPortrait
             photo={profile.photo}
             pick={profile.pick}
-            rounding="page"
             priority
             className="w-36 shrink-0 @min-[40rem]:w-48"
           />
           <div className="min-w-0 flex-1">
             {/* The wrapper shrinks to the headline's longest line, so the rule
-                runs exactly the headline's measure, as on the home hero. */}
+                runs exactly the headline's measure, as on the home hero. The
+                headline is one size for every name, the largest at which a
+                twenty-character nickname fits the column on its own line at
+                each step: 328px stacked at 360, 368px beside the portrait
+                from 40rem, 496px from 48rem. A name too wide for one line
+                puts the nickname, an unbroken block, whole on the second. */}
             <div className="inline-block max-w-full">
-              <h1 className="break-words text-h1-mobile font-bold tracking-tight @min-[48rem]:text-5xl">
+              <h1 className="break-words text-[1.625rem] font-bold leading-[1.1] tracking-tight @min-[40rem]:text-h1-mobile @min-[48rem]:text-[2.5rem]">
                 {teamMemberHeadline(profile, (nickname) => (
-                  <span className="text-act">{nickname}</span>
+                  <span className="inline-block max-w-full text-act">
+                    {nickname}
+                  </span>
                 ))}
               </h1>
               <span

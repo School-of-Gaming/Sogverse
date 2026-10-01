@@ -1,5 +1,4 @@
 import { useLocale, useTranslations } from "next-intl";
-import { Card } from "@/components/ui/card";
 import {
   teamMemberHeadline,
   teamMemberSubline,
@@ -12,18 +11,21 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 
 /**
- * **One person, as a card that opens their page** — the Team index's card.
+ * **One person, as a portrait that opens their page** — the Team index's item.
  *
- * The photo on top in the profile's own 4:5 frame (`TeamPortrait`), edged and
- * glowing in the person's pick as their page frames it, then the person
- * headed as their page heads them (`team-name.ts`) — the first name with the
- * nickname in act, and under it a Gedu's role glossed or an admin's full name
- * and title — and their one-line intro in the reader's locale, resolved as the
- * page resolves it. The intro is clamped and the cards are left to differ in
- * height.
+ * **The framed portrait is the card**: there is no box around it. The photo
+ * in the profile's own 4:5 frame (`TeamPortrait`), edged and glowing in the
+ * person's pick as their page frames it, and under it, on the page's own
+ * ground, the person headed as their page heads them (`team-name.ts`) — the
+ * first name with the nickname in act, and under it a Gedu's role glossed or
+ * an admin's full name and title — then their one-line intro in the reader's
+ * locale, resolved as the page resolves it. The intro is clamped and the
+ * items are left to differ in height.
  *
- * The whole card is the link, stretched from the name, so the link's
- * accessible name is the person's name.
+ * **The whole item is the link**, stretched from the name, so the link's
+ * accessible name is the person's name. Hover and focus deepen the frame's
+ * glow and underline the name; keyboard focus rings the portrait. Nothing
+ * moves.
  */
 export function TeamMemberCard({
   profile,
@@ -40,36 +42,41 @@ export function TeamMemberCard({
   const subline = teamMemberSubline(profile, t);
 
   return (
-    <Card className="group relative flex h-full flex-col overflow-hidden transition-[box-shadow] focus-within:shadow-lg hover:shadow-lg">
-      <div className="p-2 pb-0 sm:p-3 sm:pb-0">
-        <TeamPortrait
-          photo={profile.photo}
-          pick={profile.pick}
-          rounding="card"
-          imageClassName="transition-transform duration-300 group-hover:scale-[1.03]"
-        />
-      </div>
-      <div className="flex flex-1 flex-col gap-1 p-3 sm:p-4">
-        <h3 className="break-words text-base font-semibold leading-snug">
-          <Link
-            href={href}
-            className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-act"
-          >
-            {teamMemberHeadline(profile, (nickname) => (
-              <span className="text-act">{nickname}</span>
-            ))}
-          </Link>
-        </h3>
-        <p className="text-xs text-muted-foreground sm:text-sm">{subline}</p>
-        {written !== null && (
-          <p
-            lang={written.locale}
-            className="mt-1 line-clamp-3 text-sm text-muted-foreground"
-          >
-            {written.shortDescription}
-          </p>
-        )}
-      </div>
-    </Card>
+    <div className="group relative flex h-full flex-col">
+      <TeamPortrait
+        photo={profile.photo}
+        pick={profile.pick}
+        answersHover
+        className="ring-act ring-offset-4 ring-offset-background group-has-[a:focus-visible]:ring-2"
+      />
+      {/* One size for every name, the largest at which a twenty-character
+          nickname fits the column on its own line at each width: the
+          narrowest column is 156px in the two-column grid at 360, 186px in
+          three at 640, 229px in three at 768. A name too wide for one line
+          puts the nickname whole on the second. */}
+      <h3 className="mt-3 break-words text-[0.8125rem] font-semibold leading-snug sm:text-[0.9375rem] md:text-lg">
+        <Link
+          href={href}
+          className="decoration-2 underline-offset-4 after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none group-hover:underline"
+        >
+          {teamMemberHeadline(profile, (nickname) => (
+            <span className="inline-block max-w-full text-act decoration-2 underline-offset-4 group-hover:underline">
+              {nickname}
+            </span>
+          ))}
+        </Link>
+      </h3>
+      <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+        {subline}
+      </p>
+      {written !== null && (
+        <p
+          lang={written.locale}
+          className="mt-1.5 line-clamp-3 text-xs text-muted-foreground sm:text-sm"
+        >
+          {written.shortDescription}
+        </p>
+      )}
+    </div>
   );
 }

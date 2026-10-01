@@ -94,35 +94,16 @@ export const TEAM_CARD_COLUMN_WIDTH =
   TEAM_CARD_LAYOUT.portraitWidth -
   TEAM_CARD_LAYOUT.gap;
 
-/** The headline's size when it fits, and the floor it shrinks to. */
-export const TEAM_CARD_HEADLINE_MAX = 62;
-export const TEAM_CARD_HEADLINE_MIN = 32;
-
 /**
- * The width one character of the headline is budgeted, in ems. Poppins
- * SemiBold's advances average 0.54-0.56em over real first names and nicknames
- * (measured from the vendored file), so 0.6 leaves a margin without shrinking
- * a name that would have fitted.
+ * **The headline's one size, for every name**: 54px. A name is never sized by
+ * its length, here or on the site; each surface picks one size at which the
+ * longest nickname we expect, twenty characters ("TheEnderDragonSlayer",
+ * 11.7em in Poppins SemiBold), fits its column on a line of its own — here
+ * 612px of the 636px column, less the headline's tracking. A name wider than
+ * one line wraps at its space, the first name over the nickname, at the same
+ * size; a nickname wider than the column alone is cut at its edge.
  */
-const HEADLINE_EM_PER_CHARACTER = 0.6;
-
-/**
- * **The headline's font size: one line, shrunk to fit, never wrapped.** At
- * 62px when its characters, at 0.6em each, fit the column; otherwise the size
- * at which they do, down to a floor of 32px. A name still wider than the
- * column at the floor — beyond about 33 characters, or a run of the widest
- * glyphs — is cut at the column's edge rather than spilling off the card.
- */
-export function teamCardHeadlineSize(headline: string): number {
-  const characters = Array.from(headline).length;
-  const fitted = Math.floor(
-    TEAM_CARD_COLUMN_WIDTH / (characters * HEADLINE_EM_PER_CHARACTER),
-  );
-  return Math.max(
-    TEAM_CARD_HEADLINE_MIN,
-    Math.min(TEAM_CARD_HEADLINE_MAX, fitted),
-  );
-}
+export const TEAM_CARD_HEADLINE_SIZE = 54;
 
 /**
  * **The voice zones' glow, `.zone-glow` in `src/app/globals.css`, as that rule

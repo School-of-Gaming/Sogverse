@@ -6,8 +6,6 @@ import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { SogBadge } from "@/components/og/marks";
 import { SogWordmark } from "@/components/brand/sog-wordmark";
 import {
-  teamMemberHeadline,
-  teamMemberHeadlineText,
   teamMemberSubline,
 } from "@/components/team/team-name";
 import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
@@ -17,9 +15,9 @@ import { cardLocaleOf, OG_CARD_SIZE } from "@/lib/og/cards";
 import {
   TEAM_CARD_CACHE_CONTROL,
   TEAM_CARD_COLUMN_WIDTH,
+  TEAM_CARD_HEADLINE_SIZE,
   TEAM_CARD_LAYOUT,
   teamCardFrame,
-  teamCardHeadlineSize,
 } from "@/lib/og/team-card";
 // The modules directly rather than the feature barrel: the barrel carries
 // browser-only React Query hooks.
@@ -106,11 +104,6 @@ export async function GET(
 
   const written = resolveTranslation(person.translations, locale);
 
-  // Headed as the profile page heads them (`team-name.ts`): the first name
-  // with the nickname in act, an admin's surname on the line under the rule.
-  const headline = teamMemberHeadline(person, (nickname) => (
-    <span style={{ color: BRAND.act }}>{nickname}</span>
-  ));
   const subline = teamMemberSubline(person, t);
 
   const { sideMargin, portraitWidth, portraitHeight, gap } = TEAM_CARD_LAYOUT;
@@ -192,25 +185,33 @@ export async function GET(
             <SogWordmark height={38} />
           </div>
 
-          {/* One line, sized to fit (`teamCardHeadlineSize`). A row of the
-              name's runs rather than a block, which satori cannot give mixed
-              children; `pre` keeps the space between the first name and
-              the nickname, which ends one run. */}
+          {/* Headed as the profile page heads them (`team-name.ts`): the
+              first name with the nickname in act, an admin's surname on the
+              line under the rule. One size for every name
+              (`TEAM_CARD_HEADLINE_SIZE`). The two are runs of a wrapping row,
+              each never shrunk, rather than `teamMemberHeadline`'s fragment,
+              which satori lays out as one box that cannot wrap: so a name
+              too wide for one line puts the nickname whole on the second,
+              and a nickname wider than the column alone is cut at its edge
+              by the row's overflow rather than spilling off the card. */}
           <div
             style={{
               display: "flex",
-              fontSize: `${teamCardHeadlineSize(teamMemberHeadlineText(person))}px`,
+              flexWrap: "wrap",
+              columnGap: "14px",
+              fontSize: `${TEAM_CARD_HEADLINE_SIZE}px`,
               fontWeight: 600,
               lineHeight: 1.08,
               letterSpacing: "-1px",
-              whiteSpace: "pre",
               overflow: "hidden",
             }}
           >
-            {/* Never shrunk: a name too wide at the floor is cut at the
-                column's edge by the row's overflow, not squeezed into
-                itself. */}
-            <div style={{ display: "flex", flexShrink: 0 }}>{headline}</div>
+            <div style={{ display: "flex", flexShrink: 0 }}>{person.firstName}</div>
+            {person.nickname !== null && (
+              <div style={{ display: "flex", flexShrink: 0, color: BRAND.act }}>
+                {person.nickname}
+              </div>
+            )}
           </div>
 
           <div

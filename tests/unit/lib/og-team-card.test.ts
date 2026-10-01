@@ -3,11 +3,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DARK_THEME } from "@/lib/constants/colors";
 import {
-  TEAM_CARD_HEADLINE_MAX,
-  TEAM_CARD_HEADLINE_MIN,
   teamCardFrame,
   teamCardGlow,
-  teamCardHeadlineSize,
   teamCardUrl,
   teamCardVersion,
   ZONE_GLOW_GEOMETRY,
@@ -82,40 +79,6 @@ describe("a team card's version", () => {
     expect(teamCardUrl(admin, "fi")).toBe(
       `/opengraph-images/team/${admin.id}?locale=fi&v=${teamCardVersion(admin, "fi")}`,
     );
-  });
-});
-
-describe("the team card's headline size", () => {
-  it("is the full size for a name that fits", () => {
-    expect(teamCardHeadlineSize("Laura Nightowl")).toBe(TEAM_CARD_HEADLINE_MAX);
-  });
-
-  it("shrinks a long name to fit rather than wrapping it", () => {
-    const size = teamCardHeadlineSize("Maximilian XxDragonSlayer");
-    expect(size).toBeLessThan(TEAM_CARD_HEADLINE_MAX);
-    expect(size).toBeGreaterThanOrEqual(TEAM_CARD_HEADLINE_MIN);
-  });
-
-  it("never shrinks below the floor", () => {
-    expect(teamCardHeadlineSize("x".repeat(200))).toBe(TEAM_CARD_HEADLINE_MIN);
-  });
-
-  it("shrinks the rich seed's long-named Gedu, and keeps her above the floor", () => {
-    // The seed gives Aino a nickname long enough to show the shrink on a
-    // local stack; read from the seed, so a renamed nickname cannot quietly
-    // stop doing that.
-    const seed = readFileSync(
-      join(process.cwd(), "supabase", "rich-seed.sql"),
-      "utf8",
-    );
-    const nickname = /p_user_id\s*=>\s*v_aino,[\s\S]*?p_nickname\s*=>\s*'([^']+)'/.exec(
-      seed,
-    )?.[1];
-    expect(nickname).toBeDefined();
-
-    const size = teamCardHeadlineSize(`Aino ${nickname}`);
-    expect(size).toBeLessThan(TEAM_CARD_HEADLINE_MAX);
-    expect(size).toBeGreaterThan(TEAM_CARD_HEADLINE_MIN);
   });
 });
 

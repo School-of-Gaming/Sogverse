@@ -16,6 +16,13 @@ type TeamProfileTranslator = ReturnType<typeof useTranslations<"team.profile">>;
  * Text that cannot carry colour — a page title, alt text, structured data —
  * names the person in full instead (`teamMemberPlainName`), the nickname in
  * the locale's quotes so it is not read as a surname.
+ *
+ * **A headline is one size for every name, never sized by its length.** Each
+ * surface picks the largest size at which the longest nickname we expect,
+ * twenty characters ("TheEnderDragonSlayer"), fits its narrowest column on a
+ * line of its own. A name too wide for one line wraps at its space, the first
+ * name over the nickname, and the nickname is drawn as one unbroken block, so
+ * it breaks inside itself only when it alone is wider than the column.
  */
 
 /**
