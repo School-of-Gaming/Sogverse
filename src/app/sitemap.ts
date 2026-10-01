@@ -2,22 +2,26 @@ import type { MetadataRoute } from "next";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { teamMemberAddress } from "@/components/team/team-address";
 import { teamMemberLocales } from "@/components/team/public/team-member-metadata";
+import { articleAddress } from "@/components/library/article-address";
+import { libraryArticleLocales } from "@/components/library/article/article-metadata";
 import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { StaticAppHref } from "@/lib/constants/routes";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
+import { LibraryService } from "@/services/library/library.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL!;
 
 /**
- * **Rendered per request.** The Team's profiles are read from the database, so
- * the sitemap is no longer a build artefact: a profile made public or hidden
- * is in or out of the next fetch, as it is on the Team pages themselves, and
- * no build has to reach a database (CI's smoke build, a preview deploy built
- * before its migration ran). A crawler fetches it rarely, and each fetch is one
- * read of the public team.
+ * **Rendered per request.** The Team's profiles and the Library's articles are
+ * read from the database, so the sitemap is no longer a build artefact: a
+ * profile made public or hidden, or an article published or unpublished, is in
+ * or out of the next fetch, as it is on the pages themselves, and no build has
+ * to reach a database (CI's smoke build, a preview deploy built before its
+ * migration ran). A crawler fetches it rarely, and each fetch is one read of
+ * the public team and one of the live articles.
  */
 export const dynamic = "force-dynamic";
 
@@ -25,7 +29,8 @@ export const dynamic = "force-dynamic";
  * The indexable static route set, with the crawl hints each one carries. No
  * per-product or per-municipality entries, and nothing `noindex` (the
  * programme pages, the API docs and every product page are all deliberately
- * absent). The one database-backed set is the Team's profiles, below.
+ * absent). The database-backed sets are the Team's profiles and the Library's
+ * articles, below.
  *
  * Each entry becomes one URL **per indexed locale**, and every one of those
  * carries the whole language set as `alternates.languages` — which is what tells
@@ -38,6 +43,7 @@ const ROUTE_ENTRIES: { pathname: StaticAppHref; entry: Omit<MetadataRoute.Sitema
   { pathname: "/shop", entry: { changeFrequency: "weekly", priority: 0.8 } },
   { pathname: "/about", entry: { changeFrequency: "monthly", priority: 0.7 } },
   { pathname: "/team", entry: { changeFrequency: "weekly", priority: 0.6 } },
+  { pathname: "/library", entry: { changeFrequency: "weekly", priority: 0.6 } },
   { pathname: "/login", entry: { changeFrequency: "yearly", priority: 0.5 } },
   { pathname: "/register", entry: { changeFrequency: "yearly", priority: 0.5 } },
   { pathname: "/privacy", entry: { changeFrequency: "yearly", priority: 0.3 } },
@@ -119,23 +125,63 @@ async function teamEntries(): Promise<MetadataRoute.Sitemap> {
   });
 }
 
+/** The live Library articles, read with the anon key and no cookies. */
+async function readLiveArticles() {
+  return new LibraryService(createAnonClient()).listPublishedArticles();
+}
+
 /**
- * No `lastModified` anywhere, deliberately.
+ * Each live article at its slug address in every indexed locale it was
+ * written in — the language versions its own `hreflang` names, and nothing
+ * else: a locale it was not written in canonicalises to one it was, so it is
+ * not a page of its own. Read anonymously with no cookies, like the team, and
+ * left out on a failed read for the same reason.
  *
- * We have no per-page modification time to offer: the static routes are code-
- * and catalog-backed pages, not rows with an `updated_at`, and a profile's
- * read carries no date either. The only value available would be the time of
- * the fetch — one date on every URL whether or not that page changed — and a
- * search engine that cannot trust a `lastmod` stops reading it; one that moves
- * in lockstep across every URL is the clearest possible signal that it is
- * generated rather than true. Omitting the field is a better answer than a
+ * **Dated by when its live versions were published** — the one real
+ * per-page modification time the sitemap has (see below).
+ */
+async function libraryEntries(): Promise<MetadataRoute.Sitemap> {
+  const published = await readLiveArticles().catch((error: unknown) => {
+    console.error("[sitemap] the live Library articles were not read:", error);
+    return null;
+  });
+  if (published === null) return [];
+  return published.flatMap((article) =>
+    localizedEntries(
+      libraryArticleLocales(article),
+      (locale) =>
+        `${baseUrl}${getPathname({
+          href: ROUTES.libraryArticle(articleAddress(published, article, locale)),
+          locale,
+        })}`,
+      {
+        lastModified: article.publishedAt,
+        changeFrequency: "monthly",
+        priority: 0.5,
+      },
+    ),
+  );
+}
+
+/**
+ * `lastModified` only where the date is real: a Library article's.
+ *
+ * We have no per-page modification time for anything else: the static routes
+ * are code- and catalog-backed pages, not rows with an `updated_at`, and a
+ * profile's read carries no date either. The only value available would be the
+ * time of the fetch — one date on every URL whether or not that page changed —
+ * and a search engine that cannot trust a `lastmod` stops reading it; one that
+ * moves in lockstep across every URL is the clearest possible signal that it
+ * is generated rather than true. Omitting the field is a better answer than a
  * fabricated one: the crawler falls back to its own change detection, which
- * is what it would do with a `lastmod` it distrusted anyway. If a real
- * per-page timestamp ever exists, that is the thing to put here.
+ * is what it would do with a `lastmod` it distrusted anyway. An article is
+ * the exception because publishing is what changes it, and the publish time
+ * is stored.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes = ROUTE_ENTRIES.flatMap(({ pathname, entry }) =>
     localizedEntries(INDEXED_LOCALES, (locale) => urlFor(pathname, locale), entry),
   );
-  return [...routes, ...(await teamEntries())];
+  const [team, library] = await Promise.all([teamEntries(), libraryEntries()]);
+  return [...routes, ...team, ...library];
 }

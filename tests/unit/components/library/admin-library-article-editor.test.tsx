@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { slugify } from "@/lib/slug";
 import {
   act,
   cleanup,
@@ -354,6 +355,21 @@ describe("the Library article editor", () => {
     expect(
       screen.getByRole("link", { name: "viewLive" }).getAttribute("href"),
     ).toBe(`/library/${ARTICLE.draft.id}`);
+  });
+
+  it("opens the public page at the slug of its live title, once the live list is read", () => {
+    render(
+      <LibraryArticleEditor
+        article={LIVE}
+        actions={actions()}
+        published={[PUBLICATION]}
+      />,
+      { wrapper: withQueryClient() },
+    );
+
+    const link = screen.getByRole("link", { name: "viewLive" });
+    expect(link.getAttribute("href")).toBe(`/library/${slugify(EN.title)}`);
+    expect(link.getAttribute("locale")).toBe("en");
   });
 
   describe("the bottom row", () => {

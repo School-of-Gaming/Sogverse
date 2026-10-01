@@ -11,6 +11,7 @@ export const libraryKeys = {
   admin: () => [...libraryKeys.all, "admin"] as const,
   adminList: () => [...libraryKeys.admin(), "list"] as const,
   adminDetail: (id: string) => [...libraryKeys.admin(), "detail", id] as const,
+  published: () => [...libraryKeys.all, "published"] as const,
 };
 
 /**
@@ -34,6 +35,21 @@ export function useAdminLibraryArticle(id: string | null | undefined) {
     queryKey: libraryKeys.adminDetail(id ?? ""),
     queryFn: () => service.getAdminArticle(id ?? ""),
     enabled: !!id,
+  });
+}
+
+/**
+ * Everything live, without bodies — what an article's public address is
+ * judged against. Disabled until `enabled`, so a page that has nothing live
+ * to link never reads it.
+ */
+export function usePublishedLibraryArticles(enabled: boolean) {
+  const service = new LibraryService(getClient());
+
+  return useQuery({
+    queryKey: libraryKeys.published(),
+    queryFn: () => service.listPublishedArticles(),
+    enabled,
   });
 }
 

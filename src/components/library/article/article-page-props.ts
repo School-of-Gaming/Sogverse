@@ -1,18 +1,20 @@
-import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import type { LocalizedLibraryArticleSummary } from "@/services/library";
+import type { PublishedLibraryArticleSummary } from "@/services/library";
 import type { LibraryCategory } from "../categories";
 import { moreFromLibraryCards } from "../more-from-library";
 import type { ArticlePageBodyProps } from "./article-page-body";
 
 /**
- * One copy of an article, as both server shells hand it to the page: the
- * public article page its published copy, the admin preview its saved working
- * copy.
+ * One copy of an article in the version the page shows, as both server shells
+ * hand it to the page: the public article page its published copy, the admin
+ * preview its saved working copy.
  */
 export interface ArticlePageSource {
   id: string;
+  /** The language of the version shown, which differs from the page's for a fallback. */
+  locale: SupportedLocale;
   title: string;
   summary: string;
   /** Null only for a working copy saved without one. */
@@ -23,15 +25,8 @@ export interface ArticlePageSource {
   coverPath: string | null;
   /** Authored markdown. */
   body: string;
-}
-
-/**
- * The article's absolute address at a locale — the site origin joined to the
- * translated path, as the share links and the metadata state it.
- */
-export function libraryArticleUrl(id: string, locale: string): string {
-  const path = getPathname({ href: ROUTES.libraryArticle(id), locale });
-  return `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}${path}`;
+  /** The path the share links carry: the page's canonical. */
+  canonicalPath: string;
 }
 
 /**
@@ -39,16 +34,17 @@ export function libraryArticleUrl(id: string, locale: string): string {
  * live now.** The article page and the admin preview both build their props
  * here, so the preview is the page a parent would meet and cannot drift from
  * it: the cover resolved as a Library cover, the back link, the eyebrow's
- * filtered index, the share address at the reader's locale, and "More from the
- * Library" chosen from the published articles.
+ * filtered index, the share address, and "More from the Library" chosen from
+ * the published articles for a reader of `locale`.
  */
 export function articlePageBodyProps(
   article: ArticlePageSource,
-  published: readonly LocalizedLibraryArticleSummary[],
-  locale: string,
+  published: readonly PublishedLibraryArticleSummary[],
+  locale: SupportedLocale,
 ): ArticlePageBodyProps {
   return {
     article: {
+      locale: article.locale,
       title: article.title,
       summary: article.summary,
       category: article.category,
@@ -59,7 +55,7 @@ export function articlePageBodyProps(
     libraryHref: ROUTES.library,
     categoryHref:
       article.category === null ? null : ROUTES.libraryCategory(article.category),
-    shareUrl: libraryArticleUrl(article.id, locale),
-    moreArticles: moreFromLibraryCards(published, article),
+    shareUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}${article.canonicalPath}`,
+    moreArticles: moreFromLibraryCards(published, article, locale),
   };
 }

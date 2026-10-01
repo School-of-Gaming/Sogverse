@@ -18,8 +18,8 @@ tier before it decides anything else.** The tier is what the crawler affordances
 key off.
 
 1. **Promoted.** The marketing pages (home, about, the legal documents, attributions), the
-   auth entry points, the `/shop` browse grid, and the Team pages (the index and every
-   public profile). In the sitemap, self-canonical with the full `hreflang` set, a
+   auth entry points, the `/shop` browse grid, the Team pages (the index and every
+   public profile), and the Library (the index and every live article). In the sitemap, self-canonical with the full `hreflang` set, a
    page-specific localized description, structured data, and linked from `llms.txt` where
    a reader would want the link. **A team profile's language versions are the locales the
    person wrote** (owner, 2026-10-01): its `hreflang` names only those, a locale they did
@@ -28,11 +28,16 @@ key off.
    profile once per indexed locale written. Text in a locale that is not indexed — Klingon,
    the easter-egg locale — makes the page its own canonical with no language alternates.
    Each profile has its own generated link card, its portrait beside the name; its address
-   and caching are in `src/lib/og/`.
+   and caching are in `src/lib/og/`. **A Library article follows the same rule**
+   (owner, 2026-10-01): its language versions are the locales it was written in, the
+   canonical is the slug address of the version the page shows (derived from that
+   version's title), an untranslated locale is reached by the id and canonicalises to the
+   English slug address, and its link card is its cover. The rules are in
+   `src/services/library/CLAUDE.md`.
 2. **Reachable, not promoted.** Public because a family holding a link must get in, but
    `noindex, nofollow`, out of the sitemap, no `hreflang`, never listed in `llms.txt`, and
    never the subject or the URL of any structured-data node — the shop's `ItemList` names
-   the shop-visible products and carries no URLs at all. Three surfaces, for three reasons
+   the shop-visible products and carries no URLs at all. Two surfaces, for two reasons
    that come up often enough to state plainly:
    - **The entire `/schools` tree.** Those products are **only for families living in the
      named Finnish municipalities**. The pages are public for convenience — a family
@@ -49,12 +54,6 @@ key off.
      thing worth a search result. The Open Graph card is still the product's own: the
      scrapers behind a WhatsApp or Slack unfurl ignore robots directives, and the card is
      what a shared link shows.
-   - **The Library, until the owner's visibility pass launches it** (owner, 2026-09-29):
-     the index and every article, treated like `/schools` — unlinked, and absent from the
-     sitemap and `llms.txt`. An article keeps its English canonical, its cover card and
-     its `Article` structured data, the one departure from this tier's rule, on purpose:
-     harmless on a `noindex` page, and it leaves launch to lift the `noindex`, restore the
-     index's alternates and add the sitemap and `llms.txt` entries.
    - Also here: the unpublished Roblox programme pages (the flip to published is
      nav, sitemap and noindex together — see the note on the route in
      `src/lib/constants/routes.ts`), the Minecraft API docs, the preview scenes, the
@@ -83,14 +82,17 @@ Each one exists to make the posture above hold by construction rather than by me
   external link. Allowing the crawl and serving the tag is what deindexes.
 - **The sitemap** lists the promoted routes, one URL per indexed locale, every entry
   carrying the whole language set as alternates, plus each public team profile in the
-  locales its person wrote. **It reads the database, and is rendered per request**: the
-  public team is read anonymously with no cookies, so a profile made public or hidden is
-  in or out of the next fetch, and no build has to reach a database (a revalidating
-  sitemap would be prerendered at build, in CI's smoke build and in a preview built
-  before its migration ran). A failed read leaves the profiles out rather than failing
-  the file. It carries **no `lastmod`**: the only value available is the fetch time — one
-  date on every URL whether or not that page changed — and search engines discard a
-  modification date they cannot trust.
+  locales its person wrote and each live Library article in the locales it was written
+  in, at its slug address there. **It reads the database, and is rendered per request**:
+  the public team and the live articles are read anonymously with no cookies, so a
+  profile made public or hidden, or an article published or unpublished, is in or out of
+  the next fetch, and no build has to reach a database (a revalidating sitemap would be
+  prerendered at build, in CI's smoke build and in a preview built before its migration
+  ran). A failed read leaves those entries out rather than failing the file. **Only an
+  article carries a `lastmod`**, the time its live versions were published: for every
+  other URL the only value available is the fetch time — one date on every URL whether
+  or not that page changed — and search engines discard a modification date they cannot
+  trust.
 - **`robots.txt`** derives the gated-prefix disallow list from the locale list (so a new
   locale cannot leave `/xx/admin` crawlable), and applies one identical rule set to `*`
   and to every named AI agent. Adding an agent is one line in one constant.
@@ -101,10 +103,11 @@ Each one exists to make the posture above hold by construction rather than by me
 - **Structured data** is JSON-LD, emitted through one server component that escapes the
   serialized JSON so an admin-authored product name containing `</script>` cannot break
   out of the data block. A data block is never executed, so the CSP's script nonce does
-  not apply to it. Four blocks exist: `Organization` + `WebSite` on every page from the
-  locale layout, `FAQPage` on About, an `ItemList` on the shop, and a `ProfilePage` about
+  not apply to it. Five blocks exist: `Organization` + `WebSite` on every page from the
+  locale layout, `FAQPage` on About, an `ItemList` on the shop, a `ProfilePage` about
   a `Person` on each team profile, whose `worksFor` names the layout's `Organization` by
-  `@id`. **Rule: a structured
+  `@id`, and an `Article` on each Library article, whose `publisher` names it the same
+  way. **Rule: a structured
   data block reads the same source as the visible page** — the same message keys, the
   same prefetched rows — so it can never assert something the page does not show, and
   only shop-visible products can reach the `ItemList` because only those are ever
@@ -115,7 +118,9 @@ Each one exists to make the posture above hold by construction rather than by me
 - **`llms.txt`** is one English file at the site root, generated at request time from the
   English catalog (the site description, the About prose, every FAQ question and answer
   flattened to plain text) so it cannot drift from the site, with absolute links to the
-  promoted pages only and a section naming each indexed locale's home URL. It is
+  promoted pages only, a section listing every live Library article (read anonymously
+  per request, each at the address an English reader is sent to, with its summary), and
+  a section naming each indexed locale's home URL. It is
   publicly cacheable, which is why it is excluded from the proxy: a response the proxy
   handles may carry a refreshed session cookie, and a shared cache must never hold one.
 - **Open Graph cards** are route handlers taking a locale parameter; the reasoning is in

@@ -1,24 +1,25 @@
-// Pick the best translation for a user's locale.
+// Pick the best translation of a piece of authored content for a reader's
+// locale.
 //
-// The only content this resolves is product_translations (one row per
-// (product_id, locale)). Admins decide which locales to provide; not every
-// product has every locale. The fallback order is:
+// Content written per locale is stored as one row per (thing, locale), and an
+// author decides which locales to write: not every thing has every locale.
+// The fallback order is:
 //
-//   1. The user's current UI locale.
+//   1. The reader's locale.
 //   2. English (en).
 //   3. The first row present in the array.
 //
-// Every product is guaranteed to have ≥1 translation in **any** locale by a
-// non-empty check in the create/update RPC and a BEFORE-DELETE trigger — ≥1 in
-// ANY locale, with no particular one required. So the array is never empty for
-// products and the "first available"
-// step always resolves — even for a product that has neither the user's
-// locale nor en (e.g. an sv-only product).
-//
-// English is special-cased as the second step because it's our most-likely
+// English is special-cased as the second step because it is our most likely
 // shared lingua franca; beyond that, "first available" gives a predictable
-// answer without a longer hard-coded order. fi is deliberately NOT special:
-// under that rule it carries no more guarantee than any other locale.
+// answer without a longer hard-coded order — predictable only if the caller
+// hands the rows over in a stable order, since embedded rows arrive unordered.
+// fi is deliberately not special: it carries no more guarantee than any other
+// locale.
+//
+// Every caller resolves content its own writes guarantee at least one row, in
+// any locale — a save with no version is refused, and so is removing the last
+// — so the third step always resolves for real data, even for a thing written
+// in neither the reader's locale nor English.
 
 import type { SupportedLocale } from "@/lib/constants/locales";
 
@@ -29,8 +30,8 @@ export interface LocaleRow {
 /**
  * Returns the row whose locale best matches `userLocale`, walking the
  * fallback chain (userLocale → en → first row). Returns `null` only if
- * `translations` is empty — which never happens for products (DB-guaranteed
- * ≥1 row), so the `?.` at product call sites is purely defensive.
+ * `translations` is empty, which the callers' writes never leave (see above),
+ * so a `?.` at a call site is purely defensive.
  */
 export function resolveTranslation<T extends LocaleRow>(
   translations: readonly T[] | null | undefined,

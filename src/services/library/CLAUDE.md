@@ -44,11 +44,23 @@ nulls both, so either reaches a live article at once, without a republish.
 
 **List reads never carry a body, and a card shows nothing derived from one.**
 
-**The public pages (`/library` and `/library/[id]`) are treated like `/schools` until the
-owner's visibility pass** — `noindex, nofollow`, no `hreflang` alternates on the index,
-unlinked from nav, footer and every page, and absent from the sitemap and `llms.txt`.
-Launching them is lifting the `noindex`, restoring the index's alternates, and adding their
-sitemap and `llms.txt` entries (with the links).
+**An article has two addresses, neither redirecting** (`src/lib/slug.ts`):
+`<library>/<id>`, which resolves in every locale, and `<library>/<slug>`, the one people
+share and the canonical. The slug is derived from the title of the version in the page's
+locale, on every read, and stored nowhere; it resolves in that locale only, matched
+against the live titles in app code. Retitling changes the shared address and old shared
+links stop resolving. Two titles deriving one slug in a locale leave it to the article
+that went live first; the newer is reachable by its id. The address helpers are in
+`src/components/library/`, and every link to an article goes through them.
+
+**A page canonicalises to the slug address of the version it shows**: its own locale's
+where written, else the fallback's (English, then the first written), and only the
+locales written are `hreflang` versions, in the sitemap too. Text the page shows in
+another language than the page's is marked with `lang`, on the article and on a card;
+a card opens the article where its page canonicalises, so a card showing the English
+fallback opens the English page. The Library is promoted
+(`docs/architecture/discoverability.md`): indexed, in the sitemap with each article's
+publish date, and each article listed in `llms.txt`. The admin preview stays `noindex`.
 
 **There is no delete.** An article leaves the public Library by unpublishing.
 

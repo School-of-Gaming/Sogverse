@@ -50,7 +50,7 @@ vi.mock("@/services/library/library.service", () => ({
 
 import LibraryArticlePreviewPage, {
   metadata,
-} from "@/app/[locale]/(public)/library/[id]/preview/page";
+} from "@/app/[locale]/(public)/library/[idOrSlug]/preview/page";
 
 const ID = "482f0c6f-0fbc-4202-8790-a73a4520fb47";
 
@@ -100,7 +100,7 @@ function asRole(role: string | null) {
 
 async function renderPage(id = ID) {
   const page = await LibraryArticlePreviewPage({
-    params: Promise.resolve({ id }),
+    params: Promise.resolve({ idOrSlug: id }),
   });
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -232,6 +232,6 @@ describe("the Library article preview page", () => {
     expect(titles).toEqual(["Same category", "Newer, other category"]);
     expect(
       screen.getByRole("link", { name: "Same category" }).getAttribute("href"),
-    ).toBe("/library/5e0c7a3b-2f14-4e8d-9b6a-1d3c8f7e2a90");
+    ).toBe("/library/same-category");
   });
 });

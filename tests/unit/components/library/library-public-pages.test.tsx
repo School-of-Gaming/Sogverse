@@ -48,7 +48,7 @@ vi.mock("@/lib/supabase/server", () => ({
 import LibraryIndexPage from "@/app/[locale]/(public)/library/page";
 import LibraryArticlePage, {
   generateMetadata as articleMetadata,
-} from "@/app/[locale]/(public)/library/[id]/page";
+} from "@/app/[locale]/(public)/library/[idOrSlug]/page";
 
 const ID = "482f0c6f-0fbc-4202-8790-a73a4520fb47";
 const OTHER_ID = "5e0c7a3b-2f14-4e8d-9b6a-1d3c8f7e2a90";
@@ -125,7 +125,7 @@ function tablesRead(): string[] {
 
 function draw(page: React.ReactNode) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale={mocks.locale.current} messages={messages}>
       <TimezoneProvider initialTimezone="Europe/Helsinki">{page}</TimezoneProvider>
     </NextIntlClientProvider>,
   );
@@ -140,7 +140,7 @@ async function renderIndex(category?: string | string[]) {
 }
 
 async function renderArticle(id = ID) {
-  draw(await LibraryArticlePage({ params: Promise.resolve({ id }) }));
+  draw(await LibraryArticlePage({ params: Promise.resolve({ idOrSlug: id }) }));
 }
 
 const cardTitles = () =>
@@ -231,13 +231,24 @@ describe("the Library index page", () => {
     expect(screen.getByText("Nothing here yet")).toBeTruthy();
   });
 
-  it("opens each card on its article", async () => {
+  it("opens each card on its article's slug address, in the page's locale", async () => {
     await renderIndex();
+    const link = screen.getByRole("link", { name: "What children learn in a club" });
+    expect(link.getAttribute("href")).toBe("/library/what-children-learn-in-a-club");
+    expect(link.getAttribute("locale")).toBe("en");
+    expect(link.closest("h2")?.hasAttribute("lang")).toBe(false);
+  });
+
+  it("opens a card showing the English fallback on the English page, marked as English", async () => {
+    mocks.locale.current = "sv";
+    await renderIndex();
+    const link = screen.getByRole("link", { name: "What children learn in a club" });
+    expect(link.getAttribute("href")).toBe("/library/what-children-learn-in-a-club");
+    expect(link.getAttribute("locale")).toBe("en");
+    expect(link.closest("h2")?.getAttribute("lang")).toBe("en");
     expect(
-      screen
-        .getByRole("link", { name: "What children learn in a club" })
-        .getAttribute("href"),
-    ).toBe(`/library/${THIRD_ID}`);
+      screen.getByText("What children learn in a club, in short.").getAttribute("lang"),
+    ).toBe("en");
   });
 
   it("reads the published summaries and nothing else, and never a body", async () => {
@@ -263,7 +274,7 @@ describe("the Library article page", () => {
 
   it("reads only the published copy, never the working copy", async () => {
     await renderArticle();
-    await articleMetadata({ params: Promise.resolve({ id: ID }) });
+    await articleMetadata({ params: Promise.resolve({ idOrSlug: ID }) });
     expect(tablesRead()).toEqual(["library_article_publications"]);
   });
 
@@ -297,17 +308,78 @@ describe("the Library article page", () => {
     ).toBeTruthy();
   });
 
-  it("falls back to English where the page's locale has no version", async () => {
+  it("falls back to English where the page's locale has no version, marked as English", async () => {
     mocks.locale.current = "sv";
     await renderArticle();
+    const heading = screen.getByRole("heading", { level: 1, name: TITLE });
+    expect(heading.closest("[lang]")?.getAttribute("lang")).toBe("en");
+    expect(screen.getByText(BODY).closest("[lang]")?.getAttribute("lang")).toBe("en");
+  });
+
+  it("marks no language on the text where the version is the page's own", async () => {
+    await renderArticle();
+    const heading = screen.getByRole("heading", { level: 1, name: TITLE });
+    expect(heading.closest("[lang]")).toBeNull();
+  });
+
+  it("resolves its slug address in the slug's own locale", async () => {
+    draw(
+      await LibraryArticlePage({
+        params: Promise.resolve({ idOrSlug: "setting-up-a-family-gaming-agreement" }),
+      }),
+    );
     expect(screen.getByRole("heading", { level: 1, name: TITLE })).toBeTruthy();
+  });
+
+  it("resolves a Finnish slug under Finnish, and not an English one", async () => {
+    mocks.locale.current = "fi";
+    database(
+      LIVE.map((row) =>
+        row.article_id === ID
+          ? {
+              ...row,
+              versions: [
+                ...row.versions,
+                { locale: "fi", title: "Pelisopimus perheelle", summary: "Lyhyesti." },
+              ],
+            }
+          : row,
+      ),
+      ARTICLE_ROW,
+    );
+    draw(
+      await LibraryArticlePage({
+        params: Promise.resolve({ idOrSlug: "pelisopimus-perheelle" }),
+      }),
+    );
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Pelisopimus perheelle" }),
+    ).toBeTruthy();
+    await expect(
+      LibraryArticlePage({
+        params: Promise.resolve({ idOrSlug: "setting-up-a-family-gaming-agreement" }),
+      }),
+    ).rejects.toThrow(NOT_FOUND);
+  });
+
+  it("answers not-found for a slug no live title derives", async () => {
+    await expect(renderArticle("no-such-article")).rejects.toThrow(NOT_FOUND);
+  });
+
+  it("shares its canonical address", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.example");
+    await renderArticle();
+    const block = document.querySelector('script[type="application/ld+json"]');
+    expect(JSON.parse(block?.textContent ?? "null").url).toBe(
+      "https://sogverse.example/library/setting-up-a-family-gaming-agreement",
+    );
   });
 
   it("answers not-found for an article that is not live", async () => {
     database(LIVE, null);
     await expect(renderArticle()).rejects.toThrow(NOT_FOUND);
     await expect(
-      articleMetadata({ params: Promise.resolve({ id: ID }) }),
+      articleMetadata({ params: Promise.resolve({ idOrSlug: ID }) }),
     ).resolves.toEqual({});
   });
 

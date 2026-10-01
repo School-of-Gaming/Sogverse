@@ -17,6 +17,10 @@ import {
   isLibraryCategory,
 } from "@/components/library/categories";
 import { ImagePicker } from "@/components/admin/products/image-picker";
+import {
+  articleAddress,
+  type AddressableArticle,
+} from "@/components/library/article-address";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -82,6 +86,12 @@ export type LibraryArticleEditorProps = EditorCommonProps &
         /** The article as last read. */
         article: AdminLibraryArticle;
         actions: LibraryArticleEditorActions;
+        /**
+         * Everything live — what "View live" judges the article's public
+         * address against. Until it is read, the link opens the article by
+         * its id, which always resolves.
+         */
+        published?: readonly AddressableArticle[];
       }
   );
 
@@ -366,8 +376,18 @@ function EditorForm(props: LibraryArticleEditorProps) {
                 </Link>
               ))}
             {props.article !== null && isPublished && (
+              // The live page in the language of the tab in front of the
+              // admin, at the address a reader of that language shares.
               <Link
-                href={ROUTES.libraryArticle(props.article.draft.id)}
+                href={ROUTES.libraryArticle(
+                  props.published === undefined
+                    ? props.article.draft.id
+                    : articleAddress(
+                        props.published,
+                        props.article.draft,
+                        form.activeLocale,
+                      ),
+                )}
                 locale={form.activeLocale}
                 target="_blank"
                 rel="noopener"

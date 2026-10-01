@@ -34,8 +34,8 @@ child.** Conversion to a paying club is the measure, not time on page.
   testimonials, a safety section); the first real media on Home and About; the phone tab
   bar and the header around it; "Find a club" to the unfiltered shop. The home round, the tab
   bar and the media were each reviewed by an independent agent and the findings fixed.
-- **Being built now:** the Team page. **Next:** the Library. About (a button to Clubs,
-  the FAQ reordered by what parents ask first) folds into that work.
+- **Being built now:** the Team page and the Library. About (a button to Clubs, the FAQ
+  reordered by what parents ask first) folds into that work.
 - **Waiting on others:** the rest of Sonja's images (see Assets); a native Swedish and
   French check of the branch's new strings.
 
@@ -323,31 +323,13 @@ parent reaches them. Four workstreams, built on the project branch.
    safety section, the team and studio photos on About, all self-hosted; the pipeline and
    clearance are in `src/assets/marketing/CLAUDE.md`. More follows as Sonja delivers (see
    Assets).
-3. **The Library, launched. Next, after the Team page.** Its public pages exist, readable signed out, but are
-   `noindex` and linked from nowhere until this pass. **Decided (owner, 2026-10-01):**
-   - **An article has a version per language** (title, summary, body), which the data
-     model does not hold today; an untranslated locale falls back to English.
-   - **Two addresses, neither redirecting:** `<library>/<id>`, stable and for
-     developers, in every locale; and `<library>/<slug>`, the one people share and the
-     canonical, where the slug is derived from the version's current title and stored
-     nowhere. A slug resolves in its own locale only. Retitling changes the shared
-     address and old shared links stop resolving; the id address always works. No slug
-     history, no redirects.
-   - **The slug lookup stays in app code** (owner, 2026-10-01: no pre-optimising): the
-     page derives the slugs of the published titles in its locale and matches. Two
-     titles with one slug resolve to the older article; the newer stays reachable by id.
-     Revisit in the database if the Library reaches the thousands.
-   - **One Publish per article** publishes all its versions; a version is live once its
-     title, summary and body are written. Admins write each version in the editor.
-   - **An untranslated locale** is reached by the id address, shows the English text, and
-     canonicalises to the English slug address; `hreflang` joins only versions that
-     exist.
-   - **The legacy sog.gg blog is out of scope**: importing it, and redirecting its URLs, is
-     a separate project.
-   **Proposed:** covers (16:9,
-   1600×900) serve as the share image as they do now, close enough to the 1.91:1 card
-   that platforms crop only slightly; sitemap entries with the real publish dates,
-   `hreflang` across the versions that exist, and the articles listed in `llms.txt`.
+3. **The Library.** Its articles are written per language, and its pages are public and
+   promoted: two addresses per article (id and a per-language slug), canonicals and
+   `hreflang` across the versions that exist, sitemap and `llms.txt` entries. The rules
+   are in `src/services/library/CLAUDE.md`. **Still open:** linking it from the footer and
+   from the pages' content (see workstream 1); the legacy sog.gg blog is a separate
+   project (owner, 2026-10-01). Revisit the app-code slug lookup in the database if the
+   Library reaches the thousands.
 4. **The Team page. Being built now on the branch.** Profiles, the editor and admin approval exist; nothing public reads
    them, and the photo bucket is private. **Decided (owner, 2026-10-01):**
    - **Admin approval is all a profile needs to go public.** A Gedu on the platform has
@@ -511,6 +493,7 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-10-01 | Library articles get a version per language; the legacy blog import is a separate project (owner). |
 | 2026-10-01 | An article and a team member each have two addresses, by id and by a slug derived from the title (or first name and nickname) and stored nowhere; the slug address is canonical, a retitle changes it, nothing redirects (owner). |
 | 2026-10-01 | One Publish per article for all its language versions; untranslated locales show English and canonicalise to it (owner). |
+| 2026-10-01 | An article's slug is matched in app code against the live titles of the page's locale, with no stored slug; two titles with one slug go to the older article; revisit in the database if the Library reaches the thousands (owner). |
 | 2026-10-01 | A team profile goes public on admin approval alone; every approved profile is listed, trainees included, Gedus by first name and nickname (owner). |
 | 2026-10-01 | Phones navigate by a bottom tab bar on every page, for every role; its first tab is the reader's home, the dashboard when signed in (owner). |
 | 2026-10-01 | A signed-in reader never reaches the home page (owner). |

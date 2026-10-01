@@ -3,10 +3,13 @@ import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { ArticlePageBody } from "@/components/library/article/article-page-body";
 import { articlePageBodyProps } from "@/components/library/article/article-page-props";
+import {
+  libraryArticleCanonicalPath,
+  libraryArticlePath,
+} from "@/components/library/article/article-metadata";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { resolveLocale } from "@/lib/constants/locales";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
-import { localizeArticleSummaries } from "@/services/library/library.contracts";
 import { LibraryService } from "@/services/library/library.service";
 
 export const metadata: Metadata = {
@@ -39,9 +42,10 @@ export const metadata: Metadata = {
 export default async function LibraryArticlePreviewPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ idOrSlug: string }>;
 }) {
-  const { id } = await params;
+  // Reached by the article's id alone: a working copy has no slug address.
+  const { idOrSlug: id } = await params;
 
   const viewer = await getUserWithProfile();
   if (viewer?.profile?.role !== "admin") notFound();
@@ -54,9 +58,9 @@ export default async function LibraryArticlePreviewPage({
   ]);
   if (article === null) notFound();
 
-  const locale = await getLocale();
-  const { draft } = article;
-  const version = resolveTranslation(draft.versions, resolveLocale(locale));
+  const locale = resolveLocale(await getLocale());
+  const { draft, publication } = article;
+  const version = resolveTranslation(draft.versions, locale);
   if (version === null) notFound();
 
   return (
@@ -64,15 +68,21 @@ export default async function LibraryArticlePreviewPage({
       {...articlePageBodyProps(
         {
           id: draft.id,
+          locale: version.locale,
           category: draft.category,
           coverPath: draft.coverPath,
           title: version.title,
           summary: version.summary,
           body: version.body,
-          publishedAt:
-            article.publication?.firstPublishedAt ?? new Date().toISOString(),
+          publishedAt: publication?.firstPublishedAt ?? new Date().toISOString(),
+          // What is shared today: the live article's canonical, or its id
+          // address for one not live yet.
+          canonicalPath:
+            publication === null
+              ? libraryArticlePath({ locale, address: draft.id })
+              : libraryArticleCanonicalPath(published, publication, locale),
         },
-        localizeArticleSummaries(published, resolveLocale(locale)),
+        published,
         locale,
       )}
     />

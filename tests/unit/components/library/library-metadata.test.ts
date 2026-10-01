@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { LocalizedLibraryArticle } from "@/services/library";
+import type {
+  LocalizedLibraryArticle,
+  PublishedLibraryArticle,
+} from "@/services/library";
 
 // The shared setup mocks the wrapped navigation, and its `getPathname` ignores
 // the locale. The canonical is *about* which locale's address it names, so
@@ -21,9 +24,12 @@ vi.mock("next-intl/server", () => ({
   },
 }));
 
-const { libraryArticleMetadata } = await import(
-  "@/components/library/article/article-metadata"
-);
+const {
+  libraryArticleAlternates,
+  libraryArticleCanonicalPath,
+  libraryArticleLocales,
+  libraryArticleMetadata,
+} = await import("@/components/library/article/article-metadata");
 const { libraryArticleJsonLd } = await import(
   "@/components/library/article/article-json-ld"
 );
@@ -32,18 +38,69 @@ const { generateMetadata: libraryIndexMetadata } = await import(
 );
 
 const ID = "482f0c6f-0fbc-4202-8790-a73a4520fb47";
+const OTHER_ID = "5e0c7a3b-2f14-4e8d-9b6a-1d3c8f7e2a90";
 
+const TITLE = "Setting up a family gaming agreement";
+const SUMMARY = "Why a written agreement ends arguments.";
+
+/** A published article in English and Finnish. */
+const PUBLISHED: PublishedLibraryArticle = {
+  id: ID,
+  category: "screen_time",
+  coverPath: "covers/agreement.jpg",
+  firstPublishedAt: "2026-05-01T08:00:00Z",
+  publishedAt: "2026-09-01T08:00:00Z",
+  versions: [
+    { locale: "en", title: TITLE, summary: SUMMARY, body: "A rule in one head." },
+    {
+      locale: "fi",
+      title: "Pelisopimus perheelle",
+      summary: "Miksi kirjoitettu sopimus lopettaa riidat.",
+      body: "Sääntö yhden päässä.",
+    },
+  ],
+};
+
+/** The same article in every indexed locale. */
+const EVERYWHERE: PublishedLibraryArticle = {
+  ...PUBLISHED,
+  versions: [
+    ...PUBLISHED.versions,
+    { locale: "sv", title: "Ett spelavtal för familjen", summary: "Varför.", body: "Regel." },
+    { locale: "fr", title: "Un accord de jeu en famille", summary: "Pourquoi.", body: "Règle." },
+  ],
+};
+
+/** An article written in Finnish alone. */
+const FINNISH_ONLY: PublishedLibraryArticle = {
+  ...PUBLISHED,
+  id: OTHER_ID,
+  firstPublishedAt: "2026-06-01T08:00:00Z",
+  versions: [
+    {
+      locale: "fi",
+      title: "Pelikerho koulupäivän jälkeen",
+      summary: "Mitä kerhossa tapahtuu.",
+      body: "Kerho alkaa.",
+    },
+  ],
+};
+
+/** The article as the page shows it at English. */
 const ARTICLE: LocalizedLibraryArticle = {
   id: ID,
   locale: "en",
-  title: "Setting up a family gaming agreement",
-  summary: "Why a written agreement ends arguments.",
-  body: "A rule in one head is a rule to argue with.",
+  title: TITLE,
+  summary: SUMMARY,
+  body: "A rule in one head.",
   category: "screen_time",
   coverPath: "covers/agreement.jpg",
   firstPublishedAt: "2026-05-01T08:00:00Z",
   publishedAt: "2026-09-01T08:00:00Z",
 };
+
+const EN_PATH = "/en/library/setting-up-a-family-gaming-agreement";
+const FI_PATH = "/fi/kirjasto/pelisopimus-perheelle";
 
 const COVER_URL =
   "https://test.supabase.co/storage/v1/object/public/library-covers/covers/agreement.jpg";
@@ -53,44 +110,112 @@ beforeEach(() => {
 });
 
 describe("a Library article's metadata", () => {
-  it("is titled by the article and described by its summary", async () => {
-    const metadata = await libraryArticleMetadata(ARTICLE, "fi");
-    expect(metadata.title).toBe(ARTICLE.title);
-    expect(metadata.description).toBe(ARTICLE.summary);
+  it("is titled by the version shown and described by its summary", async () => {
+    const metadata = await libraryArticleMetadata(PUBLISHED, [PUBLISHED], "fi");
+    expect(metadata.title).toBe("Pelisopimus perheelle");
+    expect(metadata.description).toBe("Miksi kirjoitettu sopimus lopettaa riidat.");
   });
 
-  it("is noindex, nofollow until the Library launches", async () => {
-    const metadata = await libraryArticleMetadata(ARTICLE, "fi");
-    expect(metadata.robots).toEqual({ index: false, follow: false });
+  it("is indexable: it names no robots of its own", async () => {
+    const metadata = await libraryArticleMetadata(PUBLISHED, [PUBLISHED], "fi");
+    expect(metadata.robots).toBeUndefined();
   });
 
-  it.each(["en", "fi", "sv", "fr"])(
-    "canonicalises to the English address when read at %s, and claims no translations",
-    async (locale) => {
-      const { alternates } = await libraryArticleMetadata(ARTICLE, locale);
-      expect(alternates).toEqual({ canonical: `/en/library/${ID}` });
-    },
-  );
+  it("is its own canonical at each locale written, with every version as an alternate", async () => {
+    const languages = {
+      en: EN_PATH,
+      fi: FI_PATH,
+      sv: "/sv/bibliotek/ett-spelavtal-for-familjen",
+      fr: "/fr/bibliotheque/un-accord-de-jeu-en-famille",
+      "x-default": EN_PATH,
+    };
+    for (const locale of ["en", "fi", "sv", "fr"] as const) {
+      const { alternates } = await libraryArticleMetadata(
+        EVERYWHERE,
+        [EVERYWHERE],
+        locale,
+      );
+      expect(alternates).toEqual({ canonical: languages[locale], languages });
+    }
+  });
 
-  it("unfurls into the cover", async () => {
-    const { openGraph, twitter } = await libraryArticleMetadata(ARTICLE, "fi");
-    const images = [{ url: COVER_URL, alt: ARTICLE.title }];
+  it("canonicalises a locale it was not written in, reached by id, to the English slug address", async () => {
+    const { alternates, openGraph } = await libraryArticleMetadata(
+      PUBLISHED,
+      [PUBLISHED],
+      "sv",
+    );
+    expect(alternates).toEqual({
+      canonical: EN_PATH,
+      languages: { en: EN_PATH, fi: FI_PATH, "x-default": EN_PATH },
+    });
+    expect(openGraph).toMatchObject({ locale: "en", url: EN_PATH });
+  });
+
+  it("canonicalises a Finnish-only article read in English to its Finnish slug address", async () => {
+    const path = "/fi/kirjasto/pelikerho-koulupaivan-jalkeen";
+    const { alternates, openGraph, title } = await libraryArticleMetadata(
+      FINNISH_ONLY,
+      [FINNISH_ONLY, PUBLISHED],
+      "en",
+    );
+    expect(title).toBe("Pelikerho koulupäivän jälkeen");
+    expect(alternates).toEqual({
+      canonical: path,
+      languages: { fi: path, "x-default": path },
+    });
+    expect(openGraph).toMatchObject({ locale: "fi", url: path });
+  });
+
+  it("names the newer of two articles deriving one slug by its id", () => {
+    const newer = { ...PUBLISHED, id: OTHER_ID, firstPublishedAt: "2026-07-01T08:00:00Z" };
+    const live = [newer, PUBLISHED];
+    expect(libraryArticleCanonicalPath(live, PUBLISHED, "en")).toBe(EN_PATH);
+    expect(libraryArticleCanonicalPath(live, newer, "en")).toBe(
+      `/en/library/${OTHER_ID}`,
+    );
+    expect(libraryArticleAlternates(live, newer)).toEqual({
+      en: `/en/library/${OTHER_ID}`,
+      fi: `/fi/kirjasto/${OTHER_ID}`,
+      "x-default": `/en/library/${OTHER_ID}`,
+    });
+  });
+
+  it("makes a page showing Klingon text its own canonical, with no versions", async () => {
+    const klingon: PublishedLibraryArticle = {
+      ...PUBLISHED,
+      versions: [{ locale: "tlh", title: "Qapla", summary: "Qapla.", body: "Qapla." }],
+    };
+    expect(libraryArticleLocales(klingon)).toEqual([]);
+    const { alternates } = await libraryArticleMetadata(klingon, [klingon], "en");
+    expect(alternates).toEqual({ canonical: `/en/library/${ID}` });
+  });
+
+  it("unfurls into the cover, at the canonical", async () => {
+    const { openGraph, twitter } = await libraryArticleMetadata(
+      PUBLISHED,
+      [PUBLISHED],
+      "en",
+    );
+    const images = [{ url: COVER_URL, alt: TITLE }];
     expect(openGraph).toMatchObject({
       type: "article",
       siteName: "School of Gaming",
-      title: ARTICLE.title,
-      description: ARTICLE.summary,
-      url: `/en/library/${ID}`,
-      publishedTime: ARTICLE.firstPublishedAt,
-      modifiedTime: ARTICLE.publishedAt,
+      title: TITLE,
+      description: SUMMARY,
+      url: EN_PATH,
+      publishedTime: PUBLISHED.firstPublishedAt,
+      modifiedTime: PUBLISHED.publishedAt,
       images,
     });
     expect(twitter).toMatchObject({ card: "summary_large_image", images });
   });
 
   it("falls back to the site-wide card, at the reader's locale, without a cover", async () => {
+    const coverless = { ...PUBLISHED, coverPath: null };
     const { openGraph, twitter } = await libraryArticleMetadata(
-      { ...ARTICLE, coverPath: null },
+      coverless,
+      [coverless],
       "sv",
     );
     const images = [
@@ -109,13 +234,9 @@ describe("a Library article's metadata", () => {
 describe("a Library article's structured data", () => {
   const SITE = "https://sogverse.example";
 
-  it("is an Article published by School of Gaming, at its English address", () => {
+  it("is an Article published by School of Gaming, at its canonical address", () => {
     expect(
-      libraryArticleJsonLd({
-        siteUrl: SITE,
-        canonicalPath: `/en/library/${ID}`,
-        article: ARTICLE,
-      }),
+      libraryArticleJsonLd({ siteUrl: SITE, canonicalPath: EN_PATH, article: ARTICLE }),
     ).toEqual({
       "@context": "https://schema.org",
       "@type": "Article",
@@ -125,8 +246,8 @@ describe("a Library article's structured data", () => {
       datePublished: ARTICLE.firstPublishedAt,
       dateModified: ARTICLE.publishedAt,
       inLanguage: "en",
-      url: `${SITE}/en/library/${ID}`,
-      mainEntityOfPage: `${SITE}/en/library/${ID}`,
+      url: `${SITE}${EN_PATH}`,
+      mainEntityOfPage: `${SITE}${EN_PATH}`,
       publisher: {
         "@type": "Organization",
         "@id": `${SITE}/#organization`,
@@ -138,25 +259,21 @@ describe("a Library article's structured data", () => {
   it("names no image for an article without a cover, and never an author", () => {
     const data = libraryArticleJsonLd({
       siteUrl: SITE,
-      canonicalPath: `/en/library/${ID}`,
+      canonicalPath: EN_PATH,
       article: { ...ARTICLE, coverPath: null },
     });
     expect(data).not.toHaveProperty("image");
     expect(data).not.toHaveProperty("author");
   });
 
-  it("states the language of the version shown, in the data and the card", async () => {
-    const finnish = { ...ARTICLE, locale: "fi" as const };
+  it("states the language of the version shown", () => {
     expect(
       libraryArticleJsonLd({
         siteUrl: SITE,
-        canonicalPath: `/en/library/${ID}`,
-        article: finnish,
+        canonicalPath: FI_PATH,
+        article: { ...ARTICLE, locale: "fi" },
       }).inLanguage,
     ).toBe("fi");
-    expect((await libraryArticleMetadata(finnish, "fi")).openGraph).toMatchObject(
-      { locale: "fi" },
-    );
   });
 });
 
@@ -167,9 +284,18 @@ describe("the Library index's metadata", () => {
     expect(metadata.description).toBe("fi:metadata.descriptions.library");
   });
 
-  it("is noindex, nofollow with no alternates until the Library launches", async () => {
+  it("is indexable, with the site's language alternates", async () => {
     const metadata = await libraryIndexMetadata();
-    expect(metadata.robots).toEqual({ index: false, follow: false });
-    expect(metadata.alternates).toBeUndefined();
+    expect(metadata.robots).toBeUndefined();
+    expect(metadata.alternates).toEqual({
+      canonical: "/fi/kirjasto",
+      languages: {
+        en: "/en/library",
+        fi: "/fi/kirjasto",
+        sv: "/sv/bibliotek",
+        fr: "/fr/bibliotheque",
+        "x-default": "/library",
+      },
+    });
   });
 });

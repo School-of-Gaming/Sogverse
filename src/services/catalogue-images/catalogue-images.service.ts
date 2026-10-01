@@ -7,6 +7,7 @@ import {
 import { ApiError } from "@/lib/api/api-error";
 import { DEFAULT_LOCALE } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { inLocaleOrder } from "@/services/library/library.contracts";
 import type {
   AppSupabaseClient,
   CatalogueImage,
@@ -146,7 +147,13 @@ export class CatalogueImagesService {
         (usage[entryId] ??= []).push({
           kind: "library-article",
           id: row.id,
-          title: resolveTranslation(row.library_article_translations, DEFAULT_LOCALE)?.title ?? "",
+          // In the Library's own locale order, so the resolver's last
+          // fallback is the first version written, as on every Library surface.
+          title:
+            resolveTranslation(
+              inLocaleOrder(row.library_article_translations),
+              DEFAULT_LOCALE,
+            )?.title ?? "",
           is_live: entryId === liveId,
         });
       }
@@ -195,9 +202,6 @@ export class CatalogueImagesService {
           "id, cover_image_id, library_article_translations(locale, title), publication:library_article_publications(cover_image_id)",
           { count: "exact" },
         )
-        // As for products: the resolver's last fallback is the first version,
-        // so the embed is ordered for a stable answer.
-        .order("locale", { referencedTable: "library_article_translations" })
         .order("id")
         .range(from, to),
     );

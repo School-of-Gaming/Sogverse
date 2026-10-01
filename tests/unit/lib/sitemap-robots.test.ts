@@ -35,6 +35,45 @@ mockListPublicTeamProfiles.mockResolvedValue([
   publicGeduProfile({ id: SECOND_EETU_ID, locales: ["en"] }),
 ]);
 
+// The live Library the sitemap reads: one article in English and Finnish, one
+// in Finnish alone, and a newer one whose English title takes the first's
+// slug, so it is listed at its id.
+const FINNISH_ONLY_ID = "70f64c69-1681-4b3b-8ab6-420642e48598";
+const NEWER_ID = "5e0c7a3b-2f14-4e8d-9b6a-1d3c8f7e2a90";
+const mockListPublishedArticles = vi.fn();
+vi.mock("@/services/library/library.service", () => ({
+  LibraryService: class {
+    listPublishedArticles = mockListPublishedArticles;
+  },
+}));
+function liveArticle(
+  id: string,
+  firstPublishedAt: string,
+  versions: { locale: string; title: string }[],
+) {
+  return {
+    id,
+    category: "learning",
+    coverPath: null,
+    firstPublishedAt,
+    publishedAt: "2026-09-15T08:00:00.000Z",
+    versions: versions.map((version) => ({ ...version, summary: "In short." })),
+  };
+}
+mockListPublishedArticles.mockResolvedValue([
+  liveArticle(NEWER_ID, "2026-08-01T08:00:00Z", [
+    { locale: "en", title: "What children learn in a club!" },
+  ]),
+  liveArticle(FINNISH_ONLY_ID, "2026-06-01T08:00:00Z", [
+    { locale: "fi", title: "Pelikerho koulupäivän jälkeen" },
+  ]),
+  liveArticle("482f0c6f-0fbc-4202-8790-a73a4520fb47", "2026-05-01T08:00:00Z", [
+    { locale: "en", title: "What children learn in a club" },
+    { locale: "fi", title: "Mitä lapset oppivat kerhossa" },
+    { locale: "tlh", title: "Qapla" },
+  ]),
+]);
+
 const { default: sitemap } = await import("@/app/sitemap");
 const { default: robots } = await import("@/app/robots");
 
@@ -80,12 +119,18 @@ describe("sitemap", () => {
     expect(urls).not.toContain(`${BASE}/fi/privacy`);
   });
 
-  it("claims no lastModified at all", () => {
+  it("claims a lastModified only for a Library article", () => {
     // It used to be `new Date()`, evaluated per request, so every URL said it
     // had changed on this crawl and on every previous one. A lastmod that is
     // always today is a lastmod a search engine stops reading; no field at all
     // sends it to its own change detection, which is where it was going anyway.
-    expect(entries.every((entry) => entry.lastModified === undefined)).toBe(true);
+    // An article's publish time is real, and is the one date given.
+    const dated = entries.filter((entry) => entry.lastModified !== undefined);
+    expect(dated.length).toBeGreaterThan(0);
+    expect(
+      dated.every((entry) => /\/(library|kirjasto)\/./.test(entry.url)),
+    ).toBe(true);
+    expect(dated[0].lastModified).toBe("2026-09-15T08:00:00.000Z");
   });
 
   it("carries nothing noindex", () => {
@@ -94,7 +139,63 @@ describe("sitemap", () => {
     expect(urls.some((url) => url.includes("/roblox"))).toBe(false);
     expect(urls.some((url) => url.includes("/docs/"))).toBe(false);
     expect(urls.some((url) => url.includes("/schools"))).toBe(false);
-    expect(urls.some((url) => url.includes("/library"))).toBe(false);
+    expect(urls.some((url) => url.includes("/preview"))).toBe(false);
+  });
+
+  it("lists the Library index in every indexed locale", () => {
+    const urls = entries.map((entry) => entry.url);
+
+    expect(urls).toEqual(
+      expect.arrayContaining([
+        `${BASE}/en/library`,
+        `${BASE}/fi/kirjasto`,
+        `${BASE}/sv/bibliotek`,
+        `${BASE}/fr/bibliotheque`,
+      ]),
+    );
+  });
+
+  it("lists each article at its slug address, in the indexed locales it was written in", () => {
+    const article = entries.filter(
+      (entry) =>
+        entry.url.endsWith("/what-children-learn-in-a-club") ||
+        entry.url.endsWith("/mita-lapset-oppivat-kerhossa"),
+    );
+    expect(article.map((entry) => entry.url)).toEqual([
+      `${BASE}/en/library/what-children-learn-in-a-club`,
+      `${BASE}/fi/kirjasto/mita-lapset-oppivat-kerhossa`,
+    ]);
+    expect(article[0].alternates?.languages).toEqual({
+      en: `${BASE}/en/library/what-children-learn-in-a-club`,
+      fi: `${BASE}/fi/kirjasto/mita-lapset-oppivat-kerhossa`,
+    });
+
+    // Written in Finnish alone: listed in Finnish alone.
+    expect(
+      entries
+        .filter((entry) => entry.url.endsWith("/pelikerho-koulupaivan-jalkeen"))
+        .map((entry) => entry.url),
+    ).toEqual([`${BASE}/fi/kirjasto/pelikerho-koulupaivan-jalkeen`]);
+  });
+
+  it("lists the newer of two articles deriving one slug at its id", () => {
+    const urls = entries.map((entry) => entry.url);
+
+    expect(urls).toContain(`${BASE}/en/library/${NEWER_ID}`);
+    expect(
+      urls.filter((url) => url === `${BASE}/en/library/what-children-learn-in-a-club`),
+    ).toHaveLength(1);
+  });
+
+  it("still lists the static routes when the Library cannot be read", async () => {
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockListPublishedArticles.mockRejectedValueOnce(new Error("down"));
+
+    const urls = (await sitemap()).map((entry) => entry.url);
+    quiet.mockRestore();
+
+    expect(urls).toContain(`${BASE}/en/library`);
+    expect(urls.some((url) => url.includes("kerhossa"))).toBe(false);
   });
 
   it("lists the Team index in every indexed locale", () => {

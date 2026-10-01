@@ -4,7 +4,7 @@ import type { LocalizedLibraryArticle } from "@/services/library";
 export interface LibraryArticleJsonLdInput {
   /** The canonical site origin — `NEXT_PUBLIC_SITE_URL`. */
   siteUrl: string;
-  /** The article's canonical path, its English address. */
+  /** The page's canonical path (`libraryArticleCanonicalPath`). */
   canonicalPath: string;
   article: LocalizedLibraryArticle;
 }

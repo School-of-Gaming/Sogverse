@@ -155,7 +155,7 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // their own child. The signed token in the URL is the authorization, the page
 // renders identically in every auth state, and a gate would only cost the link.
 // ROUTES.library is the Library index, and its prefix match covers each
-// article (/library/[id]). The admin's preview beneath an article is held out
+// article (/library/[idOrSlug]). The admin's preview beneath an article is held out
 // of that match by `isAdminOnlySurface` below.
 // ROUTES.team is the Team index, and its prefix match covers each person's
 // page at either address (/team/[idOrSlug]).
@@ -483,11 +483,11 @@ export async function proxy(request: NextRequest) {
 
   // The admin-only pages that live outside `/admin`: the preview scenes, and
   // the preview of a Library article's saved working copy. The article preview
-  // sits under the public `/library/[id]` it previews, so it is matched by its
+  // sits under the public `/library/[idOrSlug]` it previews, so it is matched by its
   // own template and held out of the public-route list below, whose `/library`
   // prefix match would otherwise reach it.
   const isAdminOnlySurface =
-    pathname.startsWith("/preview/") || template === "/library/[id]/preview";
+    pathname.startsWith("/preview/") || template === "/library/[idOrSlug]/preview";
 
   // Check if route is public. A non-page path always passes (an API handler
   // owns its own auth; a `/_vercel/*` or `/.well-known/*` file has none).
