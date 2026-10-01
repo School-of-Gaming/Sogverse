@@ -624,7 +624,7 @@ BEGIN
     'minecraft_java', 'fi', true, v_tz,
     now() - interval '90 days', true, false,
     p_min_age => 8, p_max_age => 12, p_is_visible => true,
-    p_start_date => current_date - 56,
+    p_start_date => current_date - 70,
     p_seat_count => 12,
     p_schedule_slots => jsonb_build_array(
       jsonb_build_object('weekday', 1, 'start_time', '16:00', 'duration_minutes', 90)),
@@ -1275,7 +1275,17 @@ COMMIT;
 -- Reports, notes and attendance for every past session of the running and
 -- finished clubs, written by the educator who teaches the group — impersonated
 -- one at a time, so `updated_by` and `recorded_by` read the way they would in
--- production rather than all pointing at an admin.
+-- production rather than all pointing at an admin. The ten most recent sessions
+-- of each club are written up, which reaches back to the start of the longest
+-- running one.
+--
+-- On the ONLINE clubs, about seven in ten of the children marked present then
+-- answer the feedback screen on the way out — written as the child, the way
+-- the screen writes it, under the child's own claims. The answers are shaped so
+-- the admin feedback page has something to find: the Creator Studio group is
+-- noticeably weaker on whether the group listened, and the Minecraft Java
+-- club's Ryhmä B rates its educator higher week by week. About one answer in
+-- seven carries a note, and a few carry only a note.
 
 BEGIN;
 SELECT set_config('request.jwt.claims',
@@ -1296,11 +1306,36 @@ DECLARE
   v_person uuid;
   v_report text;
   v_n      integer;
+  v_total  integer;
+  v_present  boolean;
+  v_starts   timestamptz;
+  v_roll     integer;
+  v_answers  jsonb;
+  v_key      text;
+  v_level    integer;
+  v_progress numeric;
+  v_notes    text[] := ARRAY[
+    'the redstone door was SO cool',
+    'can we build a castle next time??',
+    'it was hard to hear because everyone talked at once',
+    'i learned how to make a piston elevator',
+    'some people kept talking over me',
+    'my internet was laggy but it was still fun',
+    'too short, i want longer sessions',
+    'the teacher helped me fix my house thanks',
+    'nobody listened when i explained my idea',
+    'best club ever'];
 BEGIN
   FOR grp IN
-    SELECT g.id AS group_id, a.gedu_id, p.start_date, p.end_date, s.weekday
+    SELECT g.id AS group_id, a.gedu_id, p.start_date, p.end_date, s.weekday,
+           p.is_remote, p.timezone, s.start_time, s.duration_minutes,
+           -- The two groups whose answers lean, as the comment above says.
+           (t.name = 'Creator Studio Club')                     AS weak_listening,
+           (t.name = 'Minecraft Java Club' AND g.name = 'Ryhmä B') AS rising_gedu
       FROM public.product_groups g
       JOIN public.products p ON p.id = g.product_id
+      JOIN public.product_translations t
+        ON t.product_id = p.id AND t.locale = 'en'
       JOIN public.gedu_group_assignments a
         ON a.group_id = g.id AND a.role = 'primary'
       JOIN public.schedule_slots s ON s.product_id = p.id
@@ -1320,7 +1355,8 @@ BEGIN
                              interval '1 day') dd
        WHERE EXTRACT(ISODOW FROM dd)::integer - 1 = grp.weekday
        ORDER BY dd DESC
-       LIMIT 6);
+       LIMIT 10);
+    v_total := COALESCE(array_length(v_dates, 1), 0);
     v_people := ARRAY(
       SELECT participant_id FROM public.participations
        WHERE group_id = grp.group_id AND status = 'active');
@@ -1344,10 +1380,51 @@ BEGIN
           ELSE NULL END);
 
       FOREACH v_person IN ARRAY COALESCE(v_people, ARRAY[]::uuid[]) LOOP
+        v_present := (v_n + abs(hashtext(v_person::text))) % 7 <> 0;
         PERFORM public.record_attendance(
           grp.group_id, d, v_person,
-          CASE WHEN (v_n + abs(hashtext(v_person::text))) % 7 = 0
-               THEN 'absent' ELSE 'present' END);
+          CASE WHEN v_present THEN 'present' ELSE 'absent' END);
+
+        CONTINUE WHEN NOT (grp.is_remote AND v_present
+                           AND abs(hashtext('answered' || v_person || d)) % 100 < 70);
+
+        -- 0 at the oldest session written up, 1 at the latest.
+        v_progress := CASE WHEN v_total > 1
+                           THEN (v_total - v_n)::numeric / (v_total - 1) ELSE 1 END;
+        v_roll := abs(hashtext('note' || v_person || d)) % 100;
+        v_answers := '{}'::jsonb;
+        -- Under 4: a note and nothing rated. Otherwise every statement, each
+        -- skipped one time in ten, a level around the group's lean.
+        IF v_roll >= 4 THEN
+          FOREACH v_key IN ARRAY ARRAY['learned', 'fun', 'geduKnowledgeable', 'geduKind', 'groupListens'] LOOP
+            CONTINUE WHEN abs(hashtext('skip' || v_key || v_person || d)) % 10 = 0;
+            v_level := CASE
+                WHEN v_key = 'groupListens' AND grp.weak_listening THEN 2
+                WHEN v_key IN ('geduKnowledgeable', 'geduKind') AND grp.rising_gedu
+                  THEN 2 + round(2.5 * v_progress)::integer
+                WHEN v_key = 'fun' THEN 5
+                ELSE 4
+              END + abs(hashtext('level' || v_key || v_person || d)) % 3 - 1;
+            v_answers := v_answers || jsonb_build_object(v_key, greatest(1, least(5, v_level)));
+          END LOOP;
+        END IF;
+
+        -- The screen writes on the way out, keyed by the instant the voice
+        -- window opened: five minutes before the start, the voice constant.
+        v_starts := (d + grp.start_time) AT TIME ZONE grp.timezone;
+        PERFORM set_config('request.jwt.claims',
+          json_build_object('sub', v_person::text, 'role', 'authenticated')::text, true);
+        INSERT INTO public.session_feedback
+          (group_id, participant_id, session_opens_at, answers, note, created_at, updated_at)
+        VALUES (
+          grp.group_id, v_person, v_starts - interval '5 minutes', v_answers,
+          CASE WHEN v_roll < 15
+               THEN v_notes[1 + abs(hashtext('which' || v_person || d)) % array_length(v_notes, 1)]
+               ELSE '' END,
+          v_starts + make_interval(mins => grp.duration_minutes - abs(hashtext('left' || v_person || d)) % 15),
+          v_starts + make_interval(mins => grp.duration_minutes - abs(hashtext('left' || v_person || d)) % 15));
+        PERFORM set_config('request.jwt.claims',
+          json_build_object('sub', grp.gedu_id::text, 'role', 'authenticated')::text, true);
       END LOOP;
     END LOOP;
 
@@ -2254,10 +2331,11 @@ BEGIN
              FROM public.products p GROUP BY 1 ORDER BY 1
   LOOP RAISE NOTICE '  % : %', r.k, r.n; END LOOP;
 
-  RAISE NOTICE 'rich-seed: groups %, sessions %, attendance marks %, participations %, waitlisted %, substitutions %, cancelled sessions %',
+  RAISE NOTICE 'rich-seed: groups %, sessions %, attendance marks %, feedback answers %, participations %, waitlisted %, substitutions %, cancelled sessions %',
     (SELECT count(*) FROM public.product_groups),
     (SELECT count(*) FROM public.group_sessions),
     (SELECT count(*) FROM public.session_attendance),
+    (SELECT count(*) FROM public.session_feedback),
     (SELECT count(*) FROM public.participations WHERE status = 'active'),
     (SELECT count(*) FROM public.participations WHERE status = 'waitlisted'),
     (SELECT count(*) FROM public.session_substitution_requests),

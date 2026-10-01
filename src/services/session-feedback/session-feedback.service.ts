@@ -1,6 +1,12 @@
 import type { SessionFeedbackResult } from "@/components/voice/feedback/session-feedback-items";
 import type { SessionFeedbackInitialState } from "@/components/voice/feedback/SessionFeedbackScreen";
+import type { SupportedLocale } from "@/lib/constants/locales";
+import { VOICE_CONFIG } from "@/lib/constants/voice";
 import type { AppSupabaseClient, SessionFeedbackRowInsert } from "@/types";
+import {
+  adminFeedbackDatasetFromRpc,
+  type AdminFeedbackDataset,
+} from "./admin-feedback.contracts";
 import {
   answersForStorage,
   noteForStorage,
@@ -90,6 +96,30 @@ export class SessionFeedbackService {
       .upsert(row, { onConflict: "group_id,participant_id,session_opens_at" });
 
     if (error) throw error;
+  }
+
+  /**
+   * Every gamer's answer and every recorded online session for one inclusive
+   * range of session days (`YYYY-MM-DD`), for the admin feedback page.
+   * Admin-only: the function is guard-first on `assert_admin`, so this is
+   * called with the signed-in admin's own client. Product names are resolved
+   * in `locale`.
+   *
+   * The voice window is passed from its one home: a row is keyed by the
+   * instant the window opened, and the function reads the session day from the
+   * start that many minutes later.
+   */
+  async getAdminDataset(
+    range: { from: string; to: string },
+    locale: SupportedLocale,
+  ): Promise<AdminFeedbackDataset> {
+    const { data, error } = await this.supabase.rpc("get_admin_session_feedback", {
+      p_from: range.from,
+      p_to: range.to,
+      p_window_before_minutes: VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES,
+    });
+    if (error) throw error;
+    return adminFeedbackDatasetFromRpc(data, range, locale);
   }
 
   /**
