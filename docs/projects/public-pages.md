@@ -33,7 +33,7 @@ child.** Conversion to a paying club is the measure, not time on page.
 - **On the branch so far:** the first round of the home page: a concrete hero, parent
   testimonials and a safety section (see Home). Reviewed by an independent agent, every
   finding fixed, `npm run gates` passing.
-- **Waiting on others:** images from Sonja, who owns the image collection (see Assets);
+- **Waiting on others:** the rest of Sonja's images (the first delivery is in, see Assets);
   a native Swedish and French check of the branch's new strings.
 - **Next:** the About page (a button to Clubs, the FAQ reordered by what parents ask
   first), then the owner's rulings on the proposals under "Ideas not yet decided".
@@ -367,6 +367,20 @@ decided.**
   identifiable child and Gedu, test accounts in screenshots, originals at least 2400 px
   wide with room to crop both ways, and working on the dark background. Her answers on the
   legacy video and photos are pending.
+- **Delivered 2026-10-01** (her "Sogverse - Visuals" doc; the files sit outside the repo
+  on the owner's machine until each is placed): the hero loop "Calm" (a silent Minecraft
+  city build, as three `.mov` crops: horizontal wide, horizontal close, vertical; 250 MB
+  together, so each needs a web encode) and its still (1920×1080); category stills at
+  2400×1350 for Roblox Studio, Fortnite (a sword fight from a video; she plans a better
+  round) and camps (placeholder); two 3360×2240 photos, a live club in Lauttasaari with a
+  Gedu and the empty room (to be reshot in the new office); and a team photo of two staff
+  at an event stand, only 675 px wide. **Cleared to publish (owner, 2026-10-01):** the
+  staff shown have consented, and no child's face is visible in the club photo; one boy
+  is in small side profile in its back row, so a tight crop can leave him out.
+- **Still to come from her:** a Gedu greeting the group in a voice room, a parent and
+  child at the screen, one image per club category (staged with in-game characters),
+  portraits, and Library images once topics are listed. The sample session report is
+  ours to capture from a staging test account, not hers.
 - **Numbers:** no headline figure (customers, municipalities) is cleared to publish.
 
 ## Testimonial bank
@@ -445,4 +459,5 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-09-25 | "Find a club" is the home page's button for every reader, signed in or not (owner). |
 | 2026-09-25 | Every locale persuades its own audience; the pages are open to any change within the brand guidelines, and a guideline may be challenged through the owner (owner). |
 | 2026-09-25 | The project lives on its own branch, `feat/public-pages`, and merges into `dev` when the owner decides (owner). |
+| 2026-10-01 | Sonja's first images are cleared to publish: the staff shown consented, and no child's face is visible (owner). |
 | 2026-10-01 | "Find a club" opens the shop unfiltered: clubs lead the list, and camps and events follow without touching a filter (owner). |
