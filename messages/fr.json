@@ -198,7 +198,7 @@
       "subtitle": "Du temps d’écran au temps qui fait grandir. Nous réunissons les enfants, des animateurs professionnels et les jeux qu’ils adorent déjà — Minecraft, Roblox, Fortnite et bien d’autres — pour créer des moments où les liens se nouent, les compétences se forgent, et le plaisir est au rendez-vous."
     },
     "quote": {
-      "text": "« Tout ce qui est réel aujourd’hui n’était hier que dans votre imagination. »",
+      "text": "« Tout ce qui est réel aujourd’hui n’était hier que dans votre imagination. »",
       "attribution": "— The Princi-Pal"
     },
     "mission": {
@@ -301,7 +301,7 @@
         },
         "gamerAccounts": {
           "question": "Comment mon enfant se connecte-t-il, et qu’est-ce que le code PIN parent ?",
-          "answer": "<p>C’est vous qui choisissez, pour chaque enfant, comment il se connecte, depuis Mon SOG. Par défaut, un compte joueur n’a pas d’identifiants à lui : il porte une adresse interne Sogverse plutôt qu’une véritable adresse e-mail, il est rattaché à votre compte parent, et votre enfant entre dans Sogverse en basculant vers son profil depuis le vôtre. Si vous préférez, vous pouvez lui donner un identifiant et un mot de passe, ou sa propre adresse e-mail — qu’il vérifie avant de définir un mot de passe par le parcours de réinitialisation habituel.</p><p>Quel que soit votre choix, la connexion d’un enfant n’ouvre que son propre compte : un enfant connecté avec son propre identifiant ou sa propre adresse e-mail ne peut pas du tout basculer vers le vôtre ou celui d’un frère ou d’une sœur — l’enfant se déconnecte et se reconnecte : en tant que vous, avec votre mot de passe, ou en tant que frère ou sœur disposant de ses propres identifiants ; un frère ou une sœur qui se connecte via votre compte se rejoint plutôt depuis votre compte — et un enfant entré en basculant depuis votre compte a besoin de votre code PIN parent pour basculer ailleurs.</p><p>Pour accéder au côté parent, il faut un code PIN à quatre chiffres que vous seul connaissez : un mot de passe enregistré dans le navigateur ne suffit donc pas à acheter quoi que ce soit ni à modifier le compte d’un enfant, et la session se reverrouille dès que vous basculez vers le profil d’un enfant ou que vous vous déconnectez.</p><p>Si vous oubliez le code PIN, nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs — un enfant qui appuie sur « Vous avez oublié votre code PIN ? » vous envoie simplement un e-mail.</p>"
+          "answer": "<p>C’est vous qui choisissez, pour chaque enfant, comment il se connecte, depuis Mon SOG. Par défaut, un compte joueur n’a pas d’identifiants à lui : il porte une adresse interne Sogverse plutôt qu’une véritable adresse e-mail, il est rattaché à votre compte parent, et votre enfant entre dans Sogverse en basculant vers son profil depuis le vôtre. Si vous préférez, vous pouvez lui donner un identifiant et un mot de passe, ou sa propre adresse e-mail — qu’il vérifie avant de définir un mot de passe par le parcours de réinitialisation habituel.</p><p>Quel que soit votre choix, la connexion d’un enfant n’ouvre que son propre compte : un enfant connecté avec son propre identifiant ou sa propre adresse e-mail ne peut pas du tout basculer vers le vôtre ou celui d’un frère ou d’une sœur — l’enfant se déconnecte et se reconnecte : en tant que vous, avec votre mot de passe, ou en tant que frère ou sœur disposant de ses propres identifiants ; un frère ou une sœur qui se connecte via votre compte se rejoint plutôt depuis votre compte — et un enfant entré en basculant depuis votre compte a besoin de votre code PIN parent pour basculer ailleurs.</p><p>Pour accéder au côté parent, il faut un code PIN à quatre chiffres que vous seul connaissez : un mot de passe enregistré dans le navigateur ne suffit donc pas à acheter quoi que ce soit ni à modifier le compte d’un enfant, et la session se reverrouille dès que vous basculez vers le profil d’un enfant ou que vous vous déconnectez.</p><p>Si vous oubliez le code PIN, nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs — un enfant qui appuie sur « Vous avez oublié votre code PIN ? » vous envoie simplement un e-mail.</p>"
         },
         "childData": {
           "question": "Que conservez-vous au sujet de mon enfant ?",
@@ -647,7 +647,7 @@
       "list": {
         "subtitle": "Gérez les {plural} créés par les administrateurs.",
         "new": "Ajouter un {label}",
-        "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
+        "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
         "ageRange": "{min}–{max} ans",
         "seats": "{count} places",
         "online": "En ligne",
@@ -893,10 +893,10 @@
       "hints": {
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
         "longDescription": "Facultatif. La présentation complète, affichée uniquement sur la page de détail du produit. Titres, listes, mises en valeur et liens sont disponibles.",
-        "topicHint": "Ce dont parle ce produit. Les familles le voient comme filtre « Univers » dans la boutique et sur la carte d’info de la page produit.",
+        "topicHint": "Ce dont parle ce produit. Les familles le voient comme filtre « Univers » dans la boutique et sur la carte d’info de la page produit.",
         "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
         "requiresGamerCreationsHint": "Pour les produits dont un contrat l’exige. La dernière séance reste signalée comme nécessitant une action tant que chaque joueur du groupe n’a pas de création enregistrée. Les familles ne voient aucune différence.",
-        "seatAudienceHint": "Choisissez-en au moins un. Les deux désignent un produit auquel un parent et son joueur participent ensemble — la boutique l'affiche « Pour les familles ».",
+        "seatAudienceHint": "Choisissez-en au moins un. Les deux désignent un produit auquel un parent et son joueur participent ensemble — la boutique l'affiche « Pour les familles ».",
         "forGamersHint": "Un parent inscrit son joueur et le joueur occupe la place. Nécessite une tranche d’âge.",
         "forParentsHint": "Un parent occupe une place pour lui-même et y participe. Pas de tranche d’âge — l’âge décrit les enfants, pas les adultes.",
         "tagHint": "Facultatif. Les familles la voient comme une étiquette sur la carte de la boutique et la page du produit. Elle indique pour qui les séances ont été conçues, pas qui peut occuper une place.",
@@ -1030,12 +1030,12 @@
         "replace": "Remplacer l’image",
         "remove": "Retirer du catalogue",
         "replaceConfirm": {
-          "title": "Remplacer « {label} »",
+          "title": "Remplacer « {label} »",
           "choose": "Choisir la nouvelle image",
           "confirmUnused": "Remplacer l’image"
         },
         "removeConfirm": {
-          "title": "Retirer « {label} »",
+          "title": "Retirer « {label} »",
           "confirmUnused": "Retirer du catalogue"
         },
         "errors": {
@@ -1480,7 +1480,7 @@
       "columnPlace": "Localisation",
       "columnProducts": "Produits",
       "searchCapped": "Affichage des {shown} premiers résultats sur {total}. Continuez à saisir pour affiner.",
-      "noResults": "Aucun résultat pour « {query} ».",
+      "noResults": "Aucun résultat pour « {query} ».",
       "empty": "Aucun site pour l’instant. Ajoutez le premier.",
       "backToSites": "Retour aux sites",
       "notFound": "Aucun site ne correspond à cet identifiant.",
@@ -1939,7 +1939,7 @@
             "status": "<code>active</code> pour une place occupée, <code>waitlisted</code> pour une famille en liste d’attente, <code>completed</code> une fois le produit terminé : une place occupée sur un produit dont le <code>status</code> est <code>completed</code> est rapportée comme <code>completed</code>, et une place en liste d’attente reste <code>waitlisted</code>. Le filtre <code>status</code> porte sur la valeur rapportée ici.",
             "signedUpAt": "La date à laquelle la famille s’est inscrite au produit : la troisième étape de l’entonnoir, une inscription.",
             "consents": "L’acceptation par le parent des Conditions générales d’utilisation de l’Académie des Créateurs et de la Politique de confidentialité de l’Académie des Créateurs pour cette inscription : la version de chaque document, sous la forme de sa date de publication, et la date d’acceptation. Tout produit du Programme exige les deux, si bien que chaque inscription les porte toutes les deux. Lorsqu’aucune acceptation n’est enregistrée pour une place, par exemple quand un administrateur a inscrit l’enfant pour le compte de la famille, la version est la dernière publiée au plus tard le jour de <code>signed_up_at</code> en UTC, ou la plus ancienne version publiée si aucune ne l’était encore, et <code>accepted_at</code> est égal à <code>signed_up_at</code>.",
-            "attendance": "Combien de sessions du groupe du participant ont un compte rendu, et à combien d’entre elles le participant a été noté présent. Une session est enregistrée lorsqu’un animateur en rédige le compte rendu ou pointe les présences : une session qui n’a ni l’un ni l’autre n’est donc pas comptée ; le décompte est celui du groupe et inclut les sessions antérieures à l’arrivée du participant. Les deux valent 0 tant que la place n’a pas été affectée à un groupe. Un participant dont <code>sessions_present</code> vaut au moins 1 compte comme « a participé » dans l’entonnoir.",
+            "attendance": "Combien de sessions du groupe du participant ont un compte rendu, et à combien d’entre elles le participant a été noté présent. Une session est enregistrée lorsqu’un animateur en rédige le compte rendu ou pointe les présences : une session qui n’a ni l’un ni l’autre n’est donc pas comptée ; le décompte est celui du groupe et inclut les sessions antérieures à l’arrivée du participant. Les deux valent 0 tant que la place n’a pas été affectée à un groupe. Un participant dont <code>sessions_present</code> vaut au moins 1 compte comme « a participé » dans l’entonnoir.",
             "creations": "Ce que le participant a publié pendant ce produit, tel que son animateur ou un administrateur l’a consigné dans le groupe actuel du participant : un titre et un lien par élément, dans l’ordre d’affichage. <code>is_roblox_url</code> vaut <code>true</code> lorsque le lien pointe vers roblox.com ou l’un de ses sous-domaines, comme www.roblox.com. Un tableau vide signifie que rien n’a encore été consigné."
           }
         },
@@ -2052,7 +2052,7 @@
           "sync": "La forme pour laquelle tout ceci est conçu est une synchronisation, non une interrogation en direct : chaque ressource récupérée dans le stockage propre à Lynx selon un calendrier, et le tableau de bord construit sur ce stockage. Chaque récupération renvoie tout ce qui est dans le périmètre, lu en direct au moment de la requête : sa réponse remplace donc ce que Lynx détenait auparavant.",
           "join": "Les identifiants sont les clés de jointure. L’adresse e-mail d’un parent peut apparaître, disparaître et réapparaître au gré des consentements ; son <code>id</code>, jamais.",
           "consent": "Les changements de consentement et les disparitions sont censés être traités lors de la synchronisation même qui les révèle : une famille dont <code>marketing_consent.granted</code> est passé à <code>false</code> cesse d’être destinataire d’envois le jour même, et un enregistrement qui a quitté une récupération complète quitte le stockage de Lynx le jour même. La politique de confidentialité du Programme engage les deux organisations sur ce point, et une récupération au moins quotidienne est ce qui le rend possible.",
-          "derived": "« A participé » et « a publié » sont des valeurs dérivées, non stockées. Toutes deux sont définies dans les descriptions de champs ci-dessus pour que les chiffres de Lynx et les nôtres concordent ; si la définition doit changer, changez-la ici d’abord.",
+          "derived": "« A participé » et « a publié » sont des valeurs dérivées, non stockées. Toutes deux sont définies dans les descriptions de champs ci-dessus pour que les chiffres de Lynx et les nôtres concordent ; si la définition doit changer, changez-la ici d’abord.",
           "readOnly": "Rien ici n’écrit. Les inscriptions, les consentements et les créations sont consignés dans Sogverse par les familles et les animateurs ; l’API n’est qu’une fenêtre sur ces données."
         }
       },
@@ -2211,7 +2211,7 @@
       "items": {
         "joiningSession": {
           "question": "Comment je rejoins ma séance quand elle commence ?",
-          "answer": "<p>D’abord, ouvre Mon SOG et retrouve ton club. La suite dépend de l’endroit où ton club se réunit.</p><p>S’il se réunit en ligne, il y a un bouton dessus :</p><steps><step>Jusqu’à peu avant ta séance, le bouton reste verrouillé et t’indique le jour et l’heure d’ouverture.</step><step>Cinq minutes avant le début de ta séance, ce bouton devient « Rejoindre la salle vocale ».</step><step>Appuie dessus. Tu y es.</step></steps><p>Il n’y a rien à installer et aucun code à taper.</p><p>S’il se réunit en présentiel, il n’y a pas de bouton. Ton club affiche à la place le nom du lieu, et la page de ton club donne aussi son adresse. Sois là quand ta séance commence.</p><p>Si ton club dit plutôt que tu es inscrit et que nous te cherchons un Gedu et un groupe, il n’y a encore ni bouton ni lieu dessus. Tu es bien inscrit — nous ne t’avons simplement pas encore mis dans un groupe. Cela arrive avant ta première séance, et ton Gedu sera là le moment venu.</p>"
+          "answer": "<p>D’abord, ouvre Mon SOG et retrouve ton club. La suite dépend de l’endroit où ton club se réunit.</p><p>S’il se réunit en ligne, il y a un bouton dessus :</p><steps><step>Jusqu’à peu avant ta séance, le bouton reste verrouillé et t’indique le jour et l’heure d’ouverture.</step><step>Cinq minutes avant le début de ta séance, ce bouton devient « Rejoindre la salle vocale ».</step><step>Appuie dessus. Tu y es.</step></steps><p>Il n’y a rien à installer et aucun code à taper.</p><p>S’il se réunit en présentiel, il n’y a pas de bouton. Ton club affiche à la place le nom du lieu, et la page de ton club donne aussi son adresse. Sois là quand ta séance commence.</p><p>Si ton club dit plutôt que tu es inscrit et que nous te cherchons un Gedu et un groupe, il n’y a encore ni bouton ni lieu dessus. Tu es bien inscrit — nous ne t’avons simplement pas encore mis dans un groupe. Cela arrive avant ta première séance, et ton Gedu sera là le moment venu.</p>"
         },
         "cannotBeHeard": {
           "question": "Personne ne m’entend dans la salle vocale — qu’est-ce que je vérifie ?",
@@ -2539,10 +2539,10 @@
         },
         "takingAttendance": {
           "question": "Comment relever les présences ?",
-          "answer": "<p>Depuis votre Mon SOG :</p><steps><step>Ouvrez le club, le stage ou l’événement que vous animez. Toutes ses séances sont listées sur sa page.</step><step>Repérez la séance et appuyez sur Modifier.</step><step>Les présences arrivent en premier dans l’éditeur : une ligne par joueur, chacune avec Présent et Absent.</step><step>Renseignez chaque joueur de la liste, puis appuyez sur Enregistrer.</step></steps><p>Une ligne commence non renseignée, et non renseigné est un véritable troisième état, pas un « absent » silencieux. Appuyer sur une réponse déjà choisie l’efface, donc une erreur de doigt ne coûte rien, et le compteur au-dessus de la liste indique combien du groupe vous avez déjà renseigné.</p><p>Vous pouvez enregistrer une liste à moitié remplie et la terminer plus tard — rien de ce que vous avez déjà renseigné n’est perdu. Il n’y a délibérément pas de « tout marquer présent » : le relevé est aussi votre confirmation que la séance a eu lieu, et c’est sur lui que vous êtes payé. L’enregistrer ne termine pourtant pas la séance à lui seul — le compte rendu et son envoi aux familles sont le reste.</p>"
+          "answer": "<p>Depuis votre Mon SOG :</p><steps><step>Ouvrez le club, le stage ou l’événement que vous animez. Toutes ses séances sont listées sur sa page.</step><step>Repérez la séance et appuyez sur Modifier.</step><step>Les présences arrivent en premier dans l’éditeur : une ligne par joueur, chacune avec Présent et Absent.</step><step>Renseignez chaque joueur de la liste, puis appuyez sur Enregistrer.</step></steps><p>Une ligne commence non renseignée, et non renseigné est un véritable troisième état, pas un « absent » silencieux. Appuyer sur une réponse déjà choisie l’efface, donc une erreur de doigt ne coûte rien, et le compteur au-dessus de la liste indique combien du groupe vous avez déjà renseigné.</p><p>Vous pouvez enregistrer une liste à moitié remplie et la terminer plus tard — rien de ce que vous avez déjà renseigné n’est perdu. Il n’y a délibérément pas de « tout marquer présent » : le relevé est aussi votre confirmation que la séance a eu lieu, et c’est sur lui que vous êtes payé. L’enregistrer ne termine pourtant pas la séance à lui seul — le compte rendu et son envoi aux familles sont le reste.</p>"
         },
         "attendanceAlert": {
-          "question": "Pourquoi mon club affiche-t-il encore une marque jaune « à traiter » ?",
+          "question": "Pourquoi mon club affiche-t-il encore une marque jaune « à traiter » ?",
           "answer": "<p>Parce qu’il manque encore quelque chose à cette séance. Quand une séance terminée est signalée, il s’agit de l’un de ces quatre points :</p><steps><step>Chaque joueur de la liste actuelle du groupe est renseigné, présent ou absent.</step><step>Un compte rendu de séance a été rédigé. Le texte que vous avez écrit à l’avance dans le plan en tient lieu, alors reprenez-le pour dire ce qui s’est réellement passé.</step><step>Ce compte rendu a été envoyé aux familles.</step><step>Sur la dernière séance d’un cycle qui exige des créations, chaque membre en a une.</step></steps><p>Le premier point est de loin la raison la plus fréquente. Renseigner ceux qui sont venus ne fait que la moitié du relevé — ceux qui ne sont pas venus doivent être marqués Absent, sinon leurs lignes restent vides et la séance reste signalée.</p><p>Une autre chose rouvre une séance que vous aviez déjà terminée : un joueur qui rejoint le groupe après coup. Personne n’a encore dit s’il était là, donc sa ligne revient non renseignée et vous attend.</p>"
         },
         "safeguardingConcern": {
@@ -2603,7 +2603,7 @@
     "loadErrorWithReason": "Impossible de charger le mois de facturation – {reason}. Actualisez la page pour réessayer.",
     "searchPlaceholder": "Rechercher par nom ou e-mail…",
     "searchAriaLabel": "Rechercher des Gedus",
-    "searchNoMatches": "Aucun Gedu de ce mois ne correspond à « {query} »."
+    "searchNoMatches": "Aucun Gedu de ce mois ne correspond à « {query} »."
   },
   "productType": {
     "consumer_club": "Club",
@@ -2706,7 +2706,7 @@
     "search": {
       "label": "Recherchez votre commune",
       "placeholder": "Rechercher des communes…",
-      "noMatches": "Aucune commune ne correspond à « {query} ». Vérifiez l’orthographe, ou essayez une commune voisine."
+      "noMatches": "Aucune commune ne correspond à « {query} ». Vérifiez l’orthographe, ou essayez une commune voisine."
     },
     "available": {
       "empty": "Nos premiers clubs municipaux arrivent. Recherchez votre commune pour voir si nous y sommes déjà."
@@ -2816,12 +2816,12 @@
       "pegi": "PEGI {age}",
       "topics": {
         "minecraft_java": {
-          "description": "Minecraft est un jeu de construction créatif. Imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent, d’une maison douillette à une ville entière. Il n’y a ni victoire ni défaite. C’est un espace calme et ouvert pour créer et résoudre des problèmes. « Java » est la version d’origine pour les ordinateurs Windows, Mac et Linux. C’est celle qu’utilisent nos clubs à distance, car elle prend en charge les outils dont nos animateurs ont besoin.",
-          "note": "Pour nos clubs à distance, votre enfant a besoin de Minecraft sur un ordinateur. Sur le site de Minecraft, il est vendu sous le nom « Minecraft: Java & Bedrock Edition for PC ». C’est un achat unique et non un abonnement, et il comprend la version que nous utilisons. La version distincte pour consoles, téléphones et tablettes ne fonctionne pas pour ces clubs.",
+          "description": "Minecraft est un jeu de construction créatif. Imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent, d’une maison douillette à une ville entière. Il n’y a ni victoire ni défaite. C’est un espace calme et ouvert pour créer et résoudre des problèmes. « Java » est la version d’origine pour les ordinateurs Windows, Mac et Linux. C’est celle qu’utilisent nos clubs à distance, car elle prend en charge les outils dont nos animateurs ont besoin.",
+          "note": "Pour nos clubs à distance, votre enfant a besoin de Minecraft sur un ordinateur. Sur le site de Minecraft, il est vendu sous le nom « Minecraft: Java & Bedrock Edition for PC ». C’est un achat unique et non un abonnement, et il comprend la version que nous utilisons. La version distincte pour consoles, téléphones et tablettes ne fonctionne pas pour ces clubs.",
           "linkLabel": "Obtenir Minecraft pour PC"
         },
         "minecraft_bedrock": {
-          "description": "Minecraft est un jeu de construction créatif. Imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent, d’une maison douillette à une ville entière. Il n’y a ni victoire ni défaite. C’est un espace calme et ouvert pour créer et résoudre des problèmes. « Bedrock » est la version qui fonctionne sur consoles (Xbox, PlayStation, Switch), téléphones, tablettes et PC Windows.",
+          "description": "Minecraft est un jeu de construction créatif. Imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent, d’une maison douillette à une ville entière. Il n’y a ni victoire ni défaite. C’est un espace calme et ouvert pour créer et résoudre des problèmes. « Bedrock » est la version qui fonctionne sur consoles (Xbox, PlayStation, Switch), téléphones, tablettes et PC Windows.",
           "note": "Minecraft Bedrock n’est pas compris dans le prix. C’est le même jeu vendu séparément pour chaque appareil, et un exemplaire acheté pour un appareil ne se reporte pas sur un autre. Celui qui compte est celui de l’appareil sur lequel votre enfant jouera. Sur une console de jeu, jouer en ligne nécessite en plus l’abonnement en ligne payant de cette console.",
           "linkLabel": "Où se le procurer"
         },
@@ -3014,7 +3014,7 @@
     "steps": {
       "minecraftJavaAccount": {
         "title": "Obtenir un compte Microsoft avec Minecraft dessus",
-        "body": "Minecraft se connecte avec un compte Microsoft. Si le participant n’en a pas, un parent le crée et achète « Minecraft: Java & Bedrock Edition for PC » sur ce compte. C’est <b>un achat unique, pas un abonnement</b>, et il couvre la version Java utilisée pendant ces séances. La configuration demande un nom de profil Java. Ce nom est l’identifiant dont nous avons besoin pour ajouter le participant à notre monde Minecraft, alors notez-le quelque part où il sera facile à retrouver.",
+        "body": "Minecraft se connecte avec un compte Microsoft. Si le participant n’en a pas, un parent le crée et achète « Minecraft: Java & Bedrock Edition for PC » sur ce compte. C’est <b>un achat unique, pas un abonnement</b>, et il couvre la version Java utilisée pendant ces séances. La configuration demande un nom de profil Java. Ce nom est l’identifiant dont nous avons besoin pour ajouter le participant à notre monde Minecraft, alors notez-le quelque part où il sera facile à retrouver.",
         "linkLabel": "Obtenir Minecraft pour PC"
       },
       "minecraftJavaInstall": {
@@ -3160,27 +3160,27 @@
       "heading": "Ce qu’en disent les parents",
       "items": {
         "highlightOfTheWeek": {
-          "quote": "« Le club est le moment fort de la semaine de mon fils. Chaque semaine, mon garçon calme et timide se transforme en un enfant rieur et bavard quand il retrouve des enfants qui lui ressemblent. Le contenu du club et le savoir-faire des animateurs m’ont agréablement surprise. »",
+          "quote": "« Le club est le moment fort de la semaine de mon fils. Chaque semaine, mon garçon calme et timide se transforme en un enfant rieur et bavard quand il retrouve des enfants qui lui ressemblent. Le contenu du club et le savoir-faire des animateurs m’ont agréablement surprise. »",
           "attribution": "Maman, Finlande"
         },
         "sighWithHappiness": {
-          "quote": "« Rien d’autre, aucune activité ni aucun loisir, n’a jamais fait soupirer mon enfant de bonheur comme ça. »",
+          "quote": "« Rien d’autre, aucune activité ni aucun loisir, n’a jamais fait soupirer mon enfant de bonheur comme ça. »",
           "attribution": "Maman, Finlande"
         },
         "largeGroups": {
-          "quote": "« Les grands groupes rendent notre enfant anxieux. C’est la façon idéale pour nous d’avoir un loisir et de nous faire de nouveaux amis. »",
+          "quote": "« Les grands groupes rendent notre enfant anxieux. C’est la façon idéale pour nous d’avoir un loisir et de nous faire de nouveaux amis. »",
           "attribution": "Maman, Finlande"
         },
         "finnishImproved": {
-          "quote": "« Le finnois de ma fille a énormément progressé en un mois seulement ! Les animateurs ont été très compétents, bienveillants et patients. Ça marche vraiment ! »",
+          "quote": "« Le finnois de ma fille a énormément progressé en un mois seulement ! Les animateurs ont été très compétents, bienveillants et patients. Ça marche vraiment ! »",
           "attribution": "Maman, Norvège"
         },
         "funAndSupervised": {
-          "quote": "« Le jeu est amusant et encadré. Pas de harcèlement, pas de disputes, pas de mauvaise ambiance. »",
+          "quote": "« Le jeu est amusant et encadré. Pas de harcèlement, pas de disputes, pas de mauvaise ambiance. »",
           "attribution": "Maman, Finlande"
         },
         "positiveExperience": {
-          "quote": "« School of Gaming a été une expérience vraiment positive, pour l’enfant comme pour les parents. Les enfants ont vécu de super moments de jeu avec de nouveaux amis, dans un environnement de jeu sûr, avec des animateurs expérimentés – je recommande ! »",
+          "quote": "« School of Gaming a été une expérience vraiment positive, pour l’enfant comme pour les parents. Les enfants ont vécu de super moments de jeu avec de nouveaux amis, dans un environnement de jeu sûr, avec des animateurs expérimentés – je recommande ! »",
           "attribution": "Papa, Finlande"
         }
       }
@@ -3265,7 +3265,7 @@
       "searchingEverywhere": "Recherche dans tous les pays",
       "searchingCountry": "Recherche : {country}",
       "allCountries": "Tous les pays",
-      "noResults": "Aucun résultat pour « {query} ».",
+      "noResults": "Aucun résultat pour « {query} ».",
       "keepTyping": "Saisissez au moins {count} caractères pour lancer la recherche.",
       "nothingHere": "Rien ici.",
       "showingSome": "Affichage des {shown} premiers résultats sur {total}. Continuez à saisir pour affiner.",
@@ -3417,11 +3417,11 @@
       "items": {
         "joiningSession": {
           "question": "Comment mon joueur rejoint-il une séance quand elle commence ?",
-          "answer": "<p>Cela dépend de l’endroit où elle se tient, et la carte dans votre Mon SOG vous l’indique : une séance en ligne porte un bouton, une séance en présentiel indique le nom du lieu.</p><p>En ligne, la séance se déroule dans une salle vocale, dans le navigateur, sans rien à installer :</p><steps><step>Dans votre Mon SOG, retrouvez la carte sous le prénom de votre enfant. Jusqu’à peu avant la séance, son bouton reste verrouillé et indique le jour et l’heure d’ouverture.</step><step>Cinq minutes avant le début de la séance, le bouton devient « Rejoindre la salle vocale ».</step><step>Appuyez dessus. La salle n’accepte que les membres du groupe : depuis votre compte, il vous est donc d’abord proposé de passer au profil de votre enfant — ce qui vous déconnecte de votre compte parent — puis la salle s’ouvre au nom de votre enfant.</step><step>Autorisez le micro si le navigateur le demande.</step></steps><p>Pour revenir ensuite à votre propre profil, il faut votre code PIN parent. Si votre enfant se connecte avec son propre identifiant ou sa propre adresse e-mail, il peut aussi ouvrir son propre Mon SOG et appuyer sur le même bouton. La salle reste ouverte jusqu’à cinq minutes après la fin de la séance.</p><p>En présentiel, il n’y a pas de bouton. La page du club, du stage ou de l’événement indique le lieu où il se tient, avec son adresse, ainsi qu’une note sur le lieu destinée aux familles lorsqu’il y en a une : amenez donc votre enfant sur place pour l’heure de début.</p><p>Si la carte indique plutôt que nous cherchons un Gedu et un groupe pour votre enfant, il n’y a encore rien à rejoindre : cela se fait avant la première séance, et la carte affiche ensuite le bouton ou le lieu.</p>"
+          "answer": "<p>Cela dépend de l’endroit où elle se tient, et la carte dans votre Mon SOG vous l’indique : une séance en ligne porte un bouton, une séance en présentiel indique le nom du lieu.</p><p>En ligne, la séance se déroule dans une salle vocale, dans le navigateur, sans rien à installer :</p><steps><step>Dans votre Mon SOG, retrouvez la carte sous le prénom de votre enfant. Jusqu’à peu avant la séance, son bouton reste verrouillé et indique le jour et l’heure d’ouverture.</step><step>Cinq minutes avant le début de la séance, le bouton devient « Rejoindre la salle vocale ».</step><step>Appuyez dessus. La salle n’accepte que les membres du groupe : depuis votre compte, il vous est donc d’abord proposé de passer au profil de votre enfant — ce qui vous déconnecte de votre compte parent — puis la salle s’ouvre au nom de votre enfant.</step><step>Autorisez le micro si le navigateur le demande.</step></steps><p>Pour revenir ensuite à votre propre profil, il faut votre code PIN parent. Si votre enfant se connecte avec son propre identifiant ou sa propre adresse e-mail, il peut aussi ouvrir son propre Mon SOG et appuyer sur le même bouton. La salle reste ouverte jusqu’à cinq minutes après la fin de la séance.</p><p>En présentiel, il n’y a pas de bouton. La page du club, du stage ou de l’événement indique le lieu où il se tient, avec son adresse, ainsi qu’une note sur le lieu destinée aux familles lorsqu’il y en a une : amenez donc votre enfant sur place pour l’heure de début.</p><p>Si la carte indique plutôt que nous cherchons un Gedu et un groupe pour votre enfant, il n’y a encore rien à rejoindre : cela se fait avant la première séance, et la carte affiche ensuite le bouton ou le lieu.</p>"
         },
         "parentPin": {
           "question": "Qu’est-ce que le code PIN parent, et que faire si je l’oublie ?",
-          "answer": "<p>Votre code PIN parent est un code à quatre chiffres que vous définissez la première fois que vous utilisez votre compte parent. Il protège l’ensemble du côté parent de Sogverse plutôt que chaque action prise séparément : vous déverrouillez une fois, et la session se reverrouille dès que vous basculez vers un profil joueur ou que vous vous déconnectez — un mot de passe enregistré dans le navigateur ne suffit donc pas à lui seul pour acheter quoi que ce soit ou modifier le compte d’un enfant. Le même code PIN protège le chemin du retour : un enfant entré dans Sogverse en basculant depuis votre compte en a besoin pour basculer vers votre profil ou celui d’un frère ou d’une sœur.</p><p>Si vous l’oubliez, appuyez sur « Vous avez oublié votre code PIN ? » sur l’écran du code PIN : nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs, si bien qu’un enfant qui appuie dessus vous envoie simplement un e-mail. Le lien reste valable 24 heures et ne fonctionne qu’une fois.</p><p>Vous pouvez aussi changer un code PIN dont vous vous souvenez encore depuis les Paramètres.</p>"
+          "answer": "<p>Votre code PIN parent est un code à quatre chiffres que vous définissez la première fois que vous utilisez votre compte parent. Il protège l’ensemble du côté parent de Sogverse plutôt que chaque action prise séparément : vous déverrouillez une fois, et la session se reverrouille dès que vous basculez vers un profil joueur ou que vous vous déconnectez — un mot de passe enregistré dans le navigateur ne suffit donc pas à lui seul pour acheter quoi que ce soit ou modifier le compte d’un enfant. Le même code PIN protège le chemin du retour : un enfant entré dans Sogverse en basculant depuis votre compte en a besoin pour basculer vers votre profil ou celui d’un frère ou d’une sœur.</p><p>Si vous l’oubliez, appuyez sur « Vous avez oublié votre code PIN ? » sur l’écran du code PIN : nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs, si bien qu’un enfant qui appuie dessus vous envoie simplement un e-mail. Le lien reste valable 24 heures et ne fonctionne qu’une fois.</p><p>Vous pouvez aussi changer un code PIN dont vous vous souvenez encore depuis les Paramètres.</p>"
         },
         "sessionReports": {
           "question": "Saurai-je comment se sont passées les séances ?",
@@ -4003,7 +4003,7 @@
       "whoWeAre": {
         "heading": "Qui nous sommes",
         "paragraphs": [
-          "Sogverse est édité par School of Gaming Galactic Oy (« School of Gaming », « nous »), une société finlandaise. Nous sommes responsables de la protection des informations personnelles que vous et votre enfant nous confiez — au sens du droit, nous sommes le « responsable du traitement ».",
+          "Sogverse est édité par School of Gaming Galactic Oy (« School of Gaming », « nous »), une société finlandaise. Nous sommes responsables de la protection des informations personnelles que vous et votre enfant nous confiez — au sens du droit, nous sommes le « responsable du traitement ».",
           "Voici nos coordonnées officielles :"
         ],
         "bullets": [
@@ -4027,7 +4027,7 @@
           "Ce que nos animateurs notent au fil des sessions — présences, comptes rendus de session et courtes notes qui nous aident à accompagner votre enfant dans le groupe.",
           "Les messages que votre enfant envoie dans le chat d’une session — pour que l’animateur et le groupe puissent les lire pendant la session, et pour que nous puissions examiner une inquiétude par la suite. Un message que votre enfant supprime est masqué pour le groupe, mais conservé jusqu’à la fermeture du compte.",
           "Les avis que votre enfant nous donne sur ses sessions — les évaluations et l’éventuel message qu’il choisit de nous laisser lorsque nous lui demandons comment une session s’est passée — afin que nous puissions voir comment se déroulent nos sessions et les améliorer.",
-          "Les informations techniques nécessaires au fonctionnement de tout site web — sessions de connexion, journaux de requêtes et, uniquement si vous le choisissez, statistiques d’utilisation anonymes. Voir « Informations techniques » et « Cookies, statistiques et publicité » ci-dessous.",
+          "Les informations techniques nécessaires au fonctionnement de tout site web — sessions de connexion, journaux de requêtes et, uniquement si vous le choisissez, statistiques d’utilisation anonymes. Voir « Informations techniques » et « Cookies, statistiques et publicité » ci-dessous.",
           "L’étiquette de campagne — source, support et campagne — portée par le lien à l’origine de votre visite. Nous l’enregistrons une fois, à la création du compte, et uniquement si vous avez autorisé les cookies marketing, pour savoir, avec nos partenaires, quelles actions touchent réellement les familles. Refuser le marketing par la suite ne supprime pas une étiquette déjà enregistrée."
         ]
       },
@@ -4039,8 +4039,8 @@
         "bullets": [
           "Les traces de connexion — lorsque vous vous connectez, Supabase, qui gère nos comptes, conserve une trace de la session : son heure de début, le navigateur et l’appareil d’où elle vient et son adresse internet. C’est ce qui nous permet de maintenir votre session ouverte et de mettre fin à une session qui n’a pas lieu d’être. Cette trace est supprimée à la fin de la session, et tout disparaît avec le compte.",
           "Les requêtes et les erreurs — chaque page que vous ouvrez est une requête adressée à Vercel, qui héberge le site. Comme tout hébergeur, Vercel la consigne : la page, l’heure, le type de votre navigateur et de votre appareil, son adresse internet, ainsi que toute erreur survenue. Ces journaux nous servent à garder le site en état de marche et à repérer les pannes. Vercel compte aussi, sur ses propres serveurs, les requêtes reçues par chaque partie du site — des totaux, pas des personnes — et ce comptage fonctionne sans aucun cookie ni consentement. Il est distinct des statistiques que vous pouvez activer ou désactiver ci-dessous.",
-          "Les cookies et les statistiques — quelques cookies nécessaires, puis les statistiques et le marketing uniquement si vous les acceptez. Tout cela est détaillé sous « Cookies, statistiques et publicité » ci-dessous.",
-          "Les sessions en direct — pendant une session audio, l’appareil de votre enfant se connecte directement à Daily.co : Daily voit donc son adresse internet et les détails de sa connexion pendant toute la durée de l’appel. Voir « Sessions audio et vidéo » ci-dessous.",
+          "Les cookies et les statistiques — quelques cookies nécessaires, puis les statistiques et le marketing uniquement si vous les acceptez. Tout cela est détaillé sous « Cookies, statistiques et publicité » ci-dessous.",
+          "Les sessions en direct — pendant une session audio, l’appareil de votre enfant se connecte directement à Daily.co : Daily voit donc son adresse internet et les détails de sa connexion pendant toute la durée de l’appel. Voir « Sessions audio et vidéo » ci-dessous.",
           "Ce que nous ne faisons pas — nous n’exploitons aucun service de suivi d’erreurs ou de journalisation qui nous soit propre, nous n’enregistrons jamais votre adresse internet ni les détails de votre navigateur dans aucune de nos tables, et rien de tout cela ne sert à établir un profil de vous ou de votre enfant."
         ]
       },
@@ -4049,7 +4049,7 @@
         "paragraphs": [
           "La plupart des personnes qui utilisent Sogverse sont des enfants : leur sécurité et leur vie privée sont donc notre priorité absolue.",
           "Un enfant ne peut jamais créer son propre compte. Seul un parent ou un tuteur crée le compte d’un enfant, choisit ce qui est partagé et donne son autorisation en son nom. C’est ainsi que nous respectons nos obligations vis-à-vis des enfants au regard du droit de la protection des données.",
-          "Ce que nous conservons au sujet d’un enfant est présenté ci-dessus sous « Les informations que nous collectons » et « Informations techniques », et nous ne collectons rien sur un enfant au-delà de ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne montrons jamais de publicité aux enfants et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Lorsque votre enfant est connecté en tant que joueur, rien de sa navigation n’est transmis à une plateforme publicitaire, même si le marketing est activé sur l’appareil. Les sessions en direct sont animées par nos animateurs formés (nous les appelons les Gedus).",
+          "Ce que nous conservons au sujet d’un enfant est présenté ci-dessus sous « Les informations que nous collectons » et « Informations techniques », et nous ne collectons rien sur un enfant au-delà de ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne montrons jamais de publicité aux enfants et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Lorsque votre enfant est connecté en tant que joueur, rien de sa navigation n’est transmis à une plateforme publicitaire, même si le marketing est activé sur l’appareil. Les sessions en direct sont animées par nos animateurs formés (nous les appelons les Gedus).",
           "Si vous souhaitez consulter, modifier ou supprimer les informations de votre enfant, écrivez simplement à {supportEmail} et nous nous en occuperons."
         ]
       },
@@ -4090,7 +4090,7 @@
           "Stripe — traite les paiements. Les données de votre carte vont directement à Stripe ; nous ne les voyons jamais.",
           "Brevo — envoie nos e-mails, comme les reçus et les rappels.",
           "Daily.co — assure les sessions audio et vidéo en direct ; l’appareil de votre enfant s’y connecte directement pendant une session.",
-          "Vercel — héberge le site, si bien que chaque requête passe par lui (voir « Informations techniques »), et fournit des statistiques d’utilisation anonymes si vous autorisez les statistiques.",
+          "Vercel — héberge le site, si bien que chaque requête passe par lui (voir « Informations techniques »), et fournit des statistiques d’utilisation anonymes si vous autorisez les statistiques.",
           "Meta (WhatsApp) — utilisé pour envoyer certains messages et rappels aux familles qui préfèrent WhatsApp.",
           "Roblox — reçoit l’identifiant de compte Roblox de votre enfant, pour que nous puissions vérifier le compte, et votre navigateur récupère son avatar directement auprès de Roblox.",
           "Mojang (Microsoft) — reçoit le nom d’utilisateur Minecraft de votre enfant, pour que nous puissions vérifier le compte.",
@@ -4158,7 +4158,7 @@
         "bullets": [
           "Vous montrer les informations que nous détenons sur vous et sur votre enfant.",
           "Corriger tout ce qui est inexact.",
-          "Supprimer vos informations (le « droit à l’oubli »).",
+          "Supprimer vos informations (le « droit à l’oubli »).",
           "Vous en fournir une copie à emporter ailleurs.",
           "Cesser ou limiter l’usage que nous en faisons."
         ]
@@ -4198,7 +4198,7 @@
       "whoWeAre": {
         "heading": "Avec qui vous contractez",
         "paragraphs": [
-          "Sogverse est édité par School of Gaming Galactic Oy (« School of Gaming », « nous »), une société finlandaise. Ces conditions s’appliquent dès que vous utilisez Sogverse ou achetez l’un de nos clubs, stages ou événements.",
+          "Sogverse est édité par School of Gaming Galactic Oy (« School of Gaming », « nous »), une société finlandaise. Ces conditions s’appliquent dès que vous utilisez Sogverse ou achetez l’un de nos clubs, stages ou événements.",
           "Nos coordonnées officielles :"
         ],
         "bullets": [
@@ -4305,7 +4305,7 @@
       "step1": {
         "heading": "Étape 1 — Un rappel et une réparation",
         "paragraphs": [
-          "Le Gedu parle avec votre enfant de ce qui s’est passé et de l’effet produit sur les autres, et l’aide à trouver une meilleure façon de réagir. C’est fait avec douceur et sans dramatiser — par exemple : « Souviens-toi de ne pas prendre des affaires dans le coffre de quelqu’un d’autre sans demander. Tu pourrais plutôt lui proposer un échange. »"
+          "Le Gedu parle avec votre enfant de ce qui s’est passé et de l’effet produit sur les autres, et l’aide à trouver une meilleure façon de réagir. C’est fait avec douceur et sans dramatiser — par exemple : « Souviens-toi de ne pas prendre des affaires dans le coffre de quelqu’un d’autre sans demander. Tu pourrais plutôt lui proposer un échange. »"
         ]
       },
       "step2": {
@@ -4902,7 +4902,7 @@
       "covers": {
         "heading": "Qui est concerné",
         "blocks": [
-          "Cette politique s’applique à l’ensemble du personnel de Lynx Educate et de School of Gaming, aux animateurs (les « Gedus »), aux bénévoles et à tout prestataire en contact avec des enfants dans le cadre de ce Programme."
+          "Cette politique s’applique à l’ensemble du personnel de Lynx Educate et de School of Gaming, aux animateurs (les « Gedus »), aux bénévoles et à tout prestataire en contact avec des enfants dans le cadre de ce Programme."
         ]
       },
       "vetting": {
@@ -4982,10 +4982,10 @@
         "heading": "Qui intervient",
         "blocks": [
           [
-            "<strong>Lynx Educate SAS</strong> et <strong>School of Gaming Galactic Oy (« SOG »)</strong> conçoivent et mettent en œuvre ce Programme ensemble — dans ce document, « nous » désigne les deux entités conjointement, sauf mention contraire.",
-            "<strong>Roblox Corporation</strong> (« Roblox ») parraine le Programme et fournit la plateforme sur laquelle votre enfant créera. Roblox n’est pas partie aux présentes Conditions."
+            "<strong>Lynx Educate SAS</strong> et <strong>School of Gaming Galactic Oy (« SOG »)</strong> conçoivent et mettent en œuvre ce Programme ensemble — dans ce document, « nous » désigne les deux entités conjointement, sauf mention contraire.",
+            "<strong>Roblox Corporation</strong> (« Roblox ») parraine le Programme et fournit la plateforme sur laquelle votre enfant créera. Roblox n’est pas partie aux présentes Conditions."
           ],
-          "L’inscription et les sessions se déroulent sur la plateforme de School of Gaming (« Sogverse »). En vous inscrivant, vous acceptez les présentes conditions propres au Programme, qui s’appliquent en complément des conditions générales en vigueur de <linkTerms>School of Gaming</linkTerms> et de Lynx et qui prévalent sur celles-ci en cas de contradiction."
+          "L’inscription et les sessions se déroulent sur la plateforme de School of Gaming (« Sogverse »). En vous inscrivant, vous acceptez les présentes conditions propres au Programme, qui s’appliquent en complément des conditions générales en vigueur de <linkTerms>School of Gaming</linkTerms> et de Lynx et qui prévalent sur celles-ci en cas de contradiction."
         ]
       },
       "eligibility": {
@@ -5229,7 +5229,7 @@
       "funFact": "Anecdote",
       "draft": {
         "shortDescription": "Votre présentation en une ligne apparaît ici",
-        "longDescription": "Ce que vous écrivez dans « À propos de moi » apparaît ici"
+        "longDescription": "Ce que vous écrivez dans « À propos de moi » apparaît ici"
       }
     },
     "edit": {
@@ -5237,11 +5237,11 @@
       "pageTitle": "Mon profil",
       "status": {
         "privateTitle": "Privé",
-        "privateBody": "Votre profil n’est pas sur le site. Quand il vous convient, cochez « Mon profil est prêt à être public » ci-dessous et enregistrez.",
+        "privateBody": "Votre profil n’est pas sur le site. Quand il vous convient, cochez « Mon profil est prêt à être public » ci-dessous et enregistrez.",
         "waitingTitle": "Prêt, en attente d’un administrateur",
         "waitingBody": "Un administrateur examinera votre page de profil avant qu’elle ne devienne publique.",
         "liveTitle": "Public",
-        "liveBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement. Pour le masquer, décochez « Mon profil est prêt à être public » et enregistrez ; une fois la case recochée, un administrateur le rendra de nouveau public.",
+        "liveBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement. Pour le masquer, décochez « Mon profil est prêt à être public » et enregistrez ; une fois la case recochée, un administrateur le rendra de nouveau public.",
         "viewPublicPage": "Voir la page publique"
       },
       "actions": {
@@ -5257,11 +5257,11 @@
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
           "title": "Ajoutez votre titre pour pouvoir cocher cette case.",
-          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
           "photoTitle": "Ajoutez une photo et votre titre pour pouvoir cocher cette case.",
-          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
-          "titleText": "Ajoutez votre titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
-          "photoTitleText": "Ajoutez une photo et votre titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez, pour pouvoir cocher cette case."
+          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez votre titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et votre titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez, pour pouvoir cocher cette case."
         }
       },
       "photo": {
@@ -5346,11 +5346,11 @@
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
           "title": "Ajoutez un titre pour pouvoir cocher cette case.",
-          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
           "photoTitle": "Ajoutez une photo et un titre pour pouvoir cocher cette case.",
-          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
-          "titleText": "Ajoutez un titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
-          "photoTitleText": "Ajoutez une photo et un titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée, pour pouvoir cocher cette case."
+          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez un titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et un titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée, pour pouvoir cocher cette case."
         }
       },
       "userPage": {
@@ -5359,7 +5359,7 @@
         "writtenIn": "Rédigé en",
         "edit": "Modifier le profil",
         "makePublic": "Rendre public",
-        "makePublicNeedsReady": "Marquez le profil comme prêt dans « Modifier le profil » pour pouvoir le rendre public.",
+        "makePublicNeedsReady": "Marquez le profil comme prêt dans « Modifier le profil » pour pouvoir le rendre public.",
         "makePublicNotReady": "Le profil de {name} n’est plus marqué comme prêt, il n’a donc pas été rendu public.",
         "hide": "Masquer",
         "visibilityError": "Impossible de modifier la visibilité du profil. Veuillez réessayer."
