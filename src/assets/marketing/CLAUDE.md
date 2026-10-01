@@ -17,7 +17,7 @@ crop is a new picture, so a photo is shown whole, in its own proportions.
 |---|---|
 | `club-lauttasaari.jpg` | `Live Club - Gedu and Gamer - GameDev 5.JPG` — an in-person club, children from behind, a Gedu beside them |
 | `studio-lauttasaari.jpg` | `Lauttasaari Pelistudio - PC Game Studio 1.JPG` — the studio, empty |
-| `team-pelipaku.jpg` | `Pelipaku - Lilli ja Shirin 1.png` — two staff at an event stand |
+| `team-pelipaku.jpg` | the Pelipaku event-stand photo of two staff |
 | `hero-calm-{wide,close,vertical}-poster.jpg` | The first frame of the matching encode in `public/media/` |
 | `public/media/hero-calm-{wide,close,vertical}-v1.mp4` | `Sogverse - Calm - Horizontal - Wide.mov`, `… - Horizontal - Close.mov`, `… - Vertical.mov` |
 
@@ -61,7 +61,7 @@ sharp(master).rotate().resize({ width, withoutEnlargement: true })
 ```
 
 Width is set by the largest size a page draws the photo at, doubled for a dense screen:
-2000px for the club photo, 1600px for the studio, the team photo at its own 675px, the
+1200px for the club photo, 1600px for the studio, the team photo at its own 675px, the
 posters at the encode's resolution. Stills are imported statically, so the bundler
 content-hashes them and hands `next/image` their intrinsic size, which reserves each
 box before the bytes arrive; every call site states a real `sizes`.
@@ -75,3 +75,7 @@ replaced in place**: changed bytes ship under the next version (`-v2.mp4`) and t
 points at the new name. Overwriting `-v1` would leave every visitor who has it on the old
 bytes for a year. The stills need no version in their names: the bundler's content hash
 already changes their URL when their bytes do.
+
+A new version's file lands in the same change as the first reference to it, and a name
+that has ever been served as a 404 is never reused: the immutable header applies whatever
+the status, so a browser that asked too early keeps that 404 for a year.

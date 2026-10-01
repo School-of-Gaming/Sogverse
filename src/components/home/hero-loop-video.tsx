@@ -55,7 +55,8 @@ function serverLoop(): HeroLoopId | null {
  * **It is hidden until it is actually playing.** A video that has not decoded
  * a frame yet can paint black in some engines, so it stays transparent over
  * the still until `playing` fires; the still is that encode's first frame, so
- * the swap shows no seam. Nothing here can move layout: the backdrop is
+ * the swap shows no seam. Each cut is its own keyed element holding its own
+ * flag, so a remount always starts hidden, even on a cut that played before. Nothing here can move layout: the backdrop is
  * absolutely positioned inside a hero whose height its text decides.
  *
  * Decorative and silent, so it is hidden from assistive technology and has no
@@ -63,13 +64,18 @@ function serverLoop(): HeroLoopId | null {
  */
 export function HeroLoopVideo() {
   const loop = useSyncExternalStore(subscribe, currentLoop, serverLoop);
-  const [playingLoop, setPlayingLoop] = useState<HeroLoopId | null>(null);
 
   if (loop === null) return null;
 
+  return <LoopVideo key={loop} loop={loop} />;
+}
+
+/** One cut's video, transparent until it fires `playing`. */
+function LoopVideo({ loop }: { loop: HeroLoopId }) {
+  const [playing, setPlaying] = useState(false);
+
   return (
     <video
-      key={loop}
       src={HERO_LOOPS[loop].video}
       autoPlay
       muted
@@ -77,10 +83,10 @@ export function HeroLoopVideo() {
       playsInline
       disablePictureInPicture
       aria-hidden
-      onPlaying={() => setPlayingLoop(loop)}
+      onPlaying={() => setPlaying(true)}
       className={cn(
         "absolute inset-0 h-full w-full object-cover",
-        playingLoop !== loop && "opacity-0",
+        !playing && "opacity-0",
       )}
     />
   );
