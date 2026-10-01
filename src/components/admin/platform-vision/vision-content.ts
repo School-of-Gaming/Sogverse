@@ -168,7 +168,7 @@ export const VISION_GEDUS = {
 export const VISION_COMMUNITY = {
   eyebrow: "Gamer community",
   heading: "Belonging, safe by design",
-  intro: "Sogverse is a safe, friendly place for young gamers, and belonging is at the heart of it. Gamers get tools to do things together: start something, create an event, organise a tournament. All of it ties into the PLM and the Yty-Elements, so time spent with the community builds the profile too.",
+  intro: "Sogverse is a safe, friendly place for young gamers, and belonging is at the heart of it. Gamers get tools to do things together: start something, create an event, organise a tournament. All of it ties into the PLM and the Four Yty-Elements, so time spent with the community builds the profile too.",
   ideas: [
     {
       title: "No direct messaging",
@@ -290,7 +290,7 @@ export const VISION_WALL = {
       tone: "wit",
       icon: "international",
       title: "Ready for the world",
-      body: "More languages beyond Finnish, English and French, and country views for a country manager running each market.",
+      body: "More languages beyond Finnish, Swedish, English and French, and country views for a country manager running each market.",
     },
   ] satisfies readonly WallIdea[],
 } as const;
@@ -302,7 +302,7 @@ export const VISION_PATH = {
   steps: [
     {
       title: "Settle the game mechanism",
-      body: "Points, elements, badges and earnings. Without rules there is nothing to score.",
+      body: "Yty-Points, elements, Achievement Badges and earnings. Without rules there is nothing to score.",
     },
     {
       title: "Close the loop",
