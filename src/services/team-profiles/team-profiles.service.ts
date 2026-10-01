@@ -128,8 +128,8 @@ export class TeamProfilesService {
 
   /**
    * Save a profile together with its "ready" checkbox: the caller's own, or
-   * any admin's or Gedu's for an admin. The checkbox is a readiness mark, not
-   * consent, so whoever may edit the profile sets it. The database refuses it
+   * any admin's or Gedu's for an admin. The checkbox is a readiness mark, so
+   * whoever may edit the profile sets it. The database refuses it
    * on while the profile is incomplete (`isTeamProfileIncompleteError`). A
    * save that leaves the profile not ready also hides it, whoever saves, so
    * ticking ready again waits for an admin to make it public; a save that

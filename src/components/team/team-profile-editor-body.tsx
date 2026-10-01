@@ -64,8 +64,7 @@ export type TeamProfileEditorProps = TeamProfileSaveState & {
   /**
    * An admin is editing someone else's profile from the admin panel — any
    * admin's or Gedu's. The page is the same, checkbox included: it marks the
-   * profile ready, it is not the person's consent, and admins manage profiles
-   * for busy staff. What changes is who is addressed: the page speaks to the
+   * profile ready, and admins manage profiles for busy staff. What changes is who is addressed: the page speaks to the
    * admin about the person and leads back to that person's user page.
    */
   editedByAdmin?: boolean;

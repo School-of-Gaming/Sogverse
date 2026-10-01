@@ -128,8 +128,8 @@ export function pickFromId(id: number | null): PickId | null {
  *
  * Every profile, an admin's or a Gedu's, goes public the same way: whoever
  * edits it marks it ready, and an admin makes it public. The checkbox is a
- * readiness mark, not consent: the person or any admin may save it, while the
- * profile is complete.
+ * readiness mark: the person or any admin may save it, while the profile is
+ * complete.
  */
 export interface TeamProfileRecord {
   profile: TeamProfile;

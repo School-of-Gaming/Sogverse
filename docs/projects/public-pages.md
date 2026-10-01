@@ -24,7 +24,7 @@ child.** Conversion to a paying club is the measure, not time on page.
   proposal (the rule, why it is in the way, the alternative), never work around it
   quietly. An overruling is recorded where the rule lives, so the brand stays one system.
 
-## Where it stands (2026-09-25)
+## Where it stands (2026-10-01)
 
 - **The project lives on `feat/public-pages`,** a branch dedicated to it, with no worktree
   of its own (cut one from the branch to work on it). All public-pages work lands there,
@@ -35,8 +35,9 @@ child.** Conversion to a paying club is the measure, not time on page.
   finding fixed, `npm run gates` passing.
 - **Waiting on others:** the rest of Sonja's images (the first delivery is in, see Assets);
   a native Swedish and French check of the branch's new strings.
-- **Next:** the About page (a button to Clubs, the FAQ reordered by what parents ask
-  first), then the owner's rulings on the proposals under "Ideas not yet decided".
+- **Next:** the trust and discoverability work below, starting with the two navigation
+  prototypes; About (a button to Clubs, the FAQ reordered by what parents ask first)
+  folds into it.
 
 ## Who reads these pages
 
@@ -289,7 +290,7 @@ from:
   dark theme (see "Ideas not yet decided").
 - **Offers Sogverse does not show yet:** birthday parties in Minecraft (a banner across the
   top; the Guidebook's Finnish nav has *Syntymäpäivät*), a Staff page and a Library (see
-  "Planned additions").
+  "Trust and discoverability").
 - **The Finnish page promised a free trial** ("Kokeile kerhoa maksutta"); the English one
   did not. Sogverse offers the money-back guarantee, not a trial. Open question for the
   owner.
@@ -300,24 +301,51 @@ accent colours, and on a phone its promo bar, menu bar and logo take about 530 p
 the hero while the Finnish headline runs off the left edge. Every Finnish headline on
 Sogverse needs checking at phone width for the same reason: long compounds.
 
-## Planned additions (owner, 2026-09-25)
+## Trust and discoverability: the Library, the Team and the way in (2026-10-01)
 
-- **A Staff page.** The legacy one lists three staff members with photo, full name, gamer
-  tag, title and skills. The Sogverse one should put Gedus beside leadership, since they
-  are who parents trust their child to; link it from About and the home page's safety
-  section.
-- **A Gedu spotlight** on the home and For-parents pages, one Gedu at a time in their own
-  words. **Decided: a Gedu is featured only by opting in and giving the extra details**
-  (photo, gamer tag, a short bio, games, languages); Sogverse stores none of these today.
-  The same profile can later feed the Staff page and a "Meet your Gedu" on each club page.
-  Open: whether an admin approves a profile before it is public (proposed: yes). It
-  touches personal data and access control, so it gets a plan before it is built.
-- **A Library**, the legacy site's blog: about 50 articles, several answering exactly what
-  parents search ("Is Roblox Safe for 8 Year Olds?"). **The owner chooses what is
-  ported**; each ported article gets a permanent redirect from its sog.gg URL so it keeps
-  its ranking. Open: who writes new articles and where they are stored (non-developers
-  need an admin editor, not repo files), and categories named for parents rather than the
-  legacy ones ("Serious Business", "Adventure logbook").
+**The project's goal widened (owner, 2026-10-01): trust, and being found by search engines
+and LLMs.** Home, About, the Library and a Team page are one piece of work, along with how a
+parent reaches them. Four workstreams, built in this order on the project branch; the
+Library and Team each get a plan in `docs/plans/` before building, since both change the
+schema and what `anon` can read.
+
+1. **The way in.** A signed-out phone shows two header links (About, Shop) and there is no
+   room for a third (`src/components/layout/CLAUDE.md`, the 360px arithmetic). The
+   avatar menu is no answer: it exists only signed in. **Open (owner):** a "Menu" button
+   opening a bottom sheet, or a bottom tab bar on phones; both are built as prototypes on
+   the branch for the owner to try before choosing. **Proposed:** the footer becomes a
+   site map at every width, and the pages link to one another through their content
+   (home to Team and Library, FAQ answers to articles, articles to the shop).
+2. **Images and video on Home and About** (see Assets). **Proposed:** the hero loop served
+   from our own origin as a muted, looping MP4/WebM of a few MB each, with the still as
+   its poster and the still alone under reduced motion; no third-party player, so no
+   consent change and no new CSP host. Photos are resized from the masters and imported
+   statically through the image optimiser.
+3. **The Library, launched.** Its public pages exist, readable signed out, but are
+   `noindex` and linked from nowhere until this pass. **Decided (owner, 2026-10-01):**
+   - **An article has a version per language** (title, summary, body), which the data
+     model does not hold today; an untranslated locale falls back to English.
+   - **Each version gets a readable slug generated from its title.** The id stays in the
+     link and is what resolves it: the slug is for humans, so there is no slug history
+     and no redirect logic.
+   - **The legacy sog.gg blog is out of scope**: importing it, and redirecting its URLs, is
+     a separate project.
+   **Proposed:** the slug is derived by code, not edited by admins; covers (16:9,
+   1600×900) serve as the share image as they do now, close enough to the 1.91:1 card
+   that platforms crop only slightly; sitemap entries with the real publish dates,
+   `hreflang` across the versions that exist, and the articles listed in `llms.txt`.
+4. **The Team page.** Profiles, the editor and admin approval exist; nothing public reads
+   them, and the photo bucket is private. **Decided (owner, 2026-10-01):**
+   - **Admin approval is all a profile needs to go public.** A Gedu on the platform has
+     already agreed to this; the "ready" checkbox says the profile is ready, nothing more.
+   - **Every approved profile is listed, trainee Gedus included.** Gedus show first name
+     and gamer tag; leadership shows full name and title, as the profile already does.
+   **Proposed:** `/team` and a page per person with the existing profile body; a
+   narrow anon read that returns approved profiles only; photos served through the app
+   with a public-check on each request (the design the team profiles service already
+   names); `Person` structured data and sitemap entries; a "Meet the Game Educators"
+   strip on the home page and a team section on About. "Meet your Gedu" on a club page
+   comes later, read from the Gedus assigned to its group.
 
 ## Ideas not yet decided
 
@@ -459,5 +487,8 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-09-25 | "Find a club" is the home page's button for every reader, signed in or not (owner). |
 | 2026-09-25 | Every locale persuades its own audience; the pages are open to any change within the brand guidelines, and a guideline may be challenged through the owner (owner). |
 | 2026-09-25 | The project lives on its own branch, `feat/public-pages`, and merges into `dev` when the owner decides (owner). |
+| 2026-10-01 | The project's goal adds discoverability by search engines and LLMs; the Library and a Team page join it (owner). |
+| 2026-10-01 | Library articles get a version per language, each with a title-generated slug; the id stays in the link and resolves it, with no slug history or redirects; the legacy blog import is a separate project (owner). |
+| 2026-10-01 | A team profile goes public on admin approval alone; every approved profile is listed, trainees included, Gedus by first name and gamer tag (owner). |
 | 2026-10-01 | Sonja's first images are cleared to publish: the staff shown consented, and no child's face is visible (owner). |
 | 2026-10-01 | "Find a club" opens the shop unfiltered: clubs lead the list, and camps and events follow without touching a filter (owner). |
