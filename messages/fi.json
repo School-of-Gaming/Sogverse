@@ -220,7 +220,7 @@
       },
       "keepChildrenSafe": {
         "title": "Pidetään lapset turvassa verkossa",
-        "description": "Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Jokaisen pelaajatilin luo vanhempi, tili on liitetty vanhemman tiliin, ja vanhempi valitsee, miten lapsi kirjautuu sisään: pelkästään vanhemman tilin kautta tai omalla käyttäjänimellä tai vahvistetulla sähköpostiosoitteella ja omalla salasanalla. Nollatoleranssi kiusaamiselle ja toksisuudelle."
+        "description": "Sogversessa keskustelu käydään yhteisissä ryhmätiloissa: kerran chatti menee koko huoneelle, jossa Gedu näkee sen. Jokaisen pelaajatilin luo vanhempi, tili on liitetty vanhemman tiliin, ja vanhempi valitsee, miten lapsi kirjautuu sisään: pelkästään vanhemman tilin kautta tai omalla käyttäjänimellä tai vahvistetulla sähköpostiosoitteella ja omalla salasanalla. Nollatoleranssi kiusaamiselle ja toksisuudelle."
       },
       "familyInTheLoop": {
         "title": "Perhe mukana",
@@ -258,7 +258,7 @@
         },
         "safety": {
           "question": "Voivatko tuntemattomat puhua lapselleni, ja tallennetaanko mitään?",
-          "answer": "<p>Eivät – kerhon äänihuone ei ole julkinen huone, jonka kuka tahansa löytää. Se on olemassa vain kyseisen ryhmän kerran ajan: se avautuu viisi minuuttia ennen kerran alkua ja sulkeutuu viisi minuuttia sen päätyttyä, ja sisään pääsevät vain kyseisen ryhmän jäsenet, kyseisessä kerhossa työskentelevä pelikasvattaja ja School of Gamingin ylläpitäjät. Tarkistus tehdään palvelimellamme joka kerta, kun joku liittyy, joten lapsi, jolla ei ole paikkaa siinä ryhmässä, ei pääse sisään mitenkään.</p><p>Alustalla ei ole missään yksityisviestitoimintoa: kerran chatti menee koko huoneelle, ei koskaan yhdelle lapselle kahden kesken, ja siinä kulkee sanojen lisäksi kuvia. Chatti on huoneessa, joka on auki saman ajan – siellä lapsesi sen lukee, eikä huoneen sulkeuduttua sitä pääse enää avaamaan. Säilytämme sen kuitenkin: kerhoa vetävät Gedut ja School of Gamingin ylläpitäjät voivat palata siihen, mitä on sanottu, ja juuri se tekee valvonnasta mahdollista. Viestin poistaminen jättää sen tilalle merkinnän eikä pyyhi sitä pois.</p><p>Itse kertaa ei tallenneta. Sovelluksessa mikään ei tallenna, litteroi tai säilytä kerran ääntä tai kuvaa, eikä huoneessa ole tallennuksen hallintapainikkeita.</p><p>Moderaattorin hallintapainikkeet ovat vain Gedulla ja ylläpitäjillä, ja ne ulottuvat pitkälle: mikrofonin mykistäminen tai lukitseminen, kameran sulkeminen tai lukitseminen, chatissa mykistäminen, jonkun siirtäminen omaan tilaansa ja puhuminen kaikkiin tiloihin yhtä aikaa. Pelin sisäinen chatti on eri asia, ja siitä vastaavat pelit itse – School of Gamingin omalla Minecraft-palvelimella Gedumme voivat mykistää, potkia ja porttikieltää pelaajan.</p>"
+          "answer": "<p>Eivät – kerhon äänihuone ei ole julkinen huone, jonka kuka tahansa löytää. Se on olemassa vain kyseisen ryhmän kerran ajan: se avautuu viisi minuuttia ennen kerran alkua ja sulkeutuu viisi minuuttia sen päätyttyä, ja sisään pääsevät vain kyseisen ryhmän jäsenet, kyseisessä kerhossa työskentelevä pelikasvattaja ja School of Gamingin ylläpitäjät. Tarkistus tehdään palvelimellamme joka kerta, kun joku liittyy, joten lapsi, jolla ei ole paikkaa siinä ryhmässä, ei pääse sisään mitenkään.</p><p>Kerran chatti menee koko huoneelle, ei koskaan yhdelle lapselle kahden kesken, ja siinä kulkee sanojen lisäksi kuvia. Chatti on huoneessa, joka on auki saman ajan – siellä lapsesi sen lukee, eikä huoneen sulkeuduttua sitä pääse enää avaamaan. Säilytämme sen kuitenkin: kerhoa vetävät Gedut ja School of Gamingin ylläpitäjät voivat palata siihen, mitä on sanottu, ja juuri se tekee valvonnasta mahdollista. Viestin poistaminen jättää sen tilalle merkinnän eikä pyyhi sitä pois.</p><p>Itse kertaa ei tallenneta. Sovelluksessa mikään ei tallenna, litteroi tai säilytä kerran ääntä tai videokuvaa, eikä huoneessa ole tallennuksen hallintapainikkeita.</p><p>Moderaattorin hallintapainikkeet ovat vain Gedulla ja ylläpitäjillä, ja ne ulottuvat pitkälle: mikrofonin mykistäminen tai lukitseminen, kameran sulkeminen tai lukitseminen, chatissa mykistäminen, jonkun siirtäminen omaan tilaansa ja puhuminen kaikkiin tiloihin yhtä aikaa. Pelin sisäinen chatti on eri asia, ja siitä vastaavat pelit itse – School of Gamingin omalla Minecraft-palvelimella Gedumme voivat mykistää, potkia ja porttikieltää pelaajan.</p>"
         },
         "howToStart": {
           "question": "Miten pääsen alkuun?",
@@ -302,7 +302,7 @@
         },
         "gamerAccounts": {
           "question": "Miten lapseni kirjautuu sisään, ja mikä vanhemman PIN on?",
-          "answer": "<p>Valitset Oma SOG -sivulla jokaiselle lapselle erikseen, miten hän kirjautuu sisään. Oletuksena pelaajatilillä ei ole omaa kirjautumista: sillä on sisäinen Sogverse-osoite eikä oikeaa sähköpostiosoitetta, se on liitetty vanhemman tiliisi, ja lapsesi tulee Sogverseen vaihtamalla sinun profiilistasi omaan profiiliinsa. Halutessasi voit antaa hänelle käyttäjätunnuksen ja salasanan tai hänen oman sähköpostiosoitteensa, jonka hän vahvistaa ennen kuin asettaa salasanan tavallisen palautuspolun kautta.</p><p>Valitsitpa minkä tavan tahansa, lapsen kirjautuminen avaa vain hänen oman tilinsä: lapsi, joka kirjautui sisään omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, ei voi vaihtaa sinun tai sisaruksen tilille lainkaan — hän kirjautuu ulos ja kirjautuu takaisin sisään joko sinuna, sinun salasanallasi, tai sisaruksena, jolla on omat tunnukset; sisarus, joka kirjautuu sisään sinun tilisi kautta, tavoitetaan sen sijaan sinun tililtäsi — ja lapsi, joka tuli sisään vaihtamalla sinun tililtäsi, tarvitsee vanhemman PIN-koodisi vaihtaakseen mihinkään muualle.</p><p>Vanhemman puolelle pääsee nelinumeroisella PIN-koodilla, jonka vain sinä tiedät, joten selaimeen tallennettu salasana ei riitä ostamiseen eikä lapsen tilin muuttamiseen, ja istunto lukittuu uudelleen heti, kun vaihdat lapsen profiiliin tai kirjaudut ulos.</p><p>Jos unohdat PIN-koodin, lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle – jos lapsi painaa ”Unohditko PIN-koodin?”, hän vain lähettää sinulle sähköpostia.</p>"
+          "answer": "<p>Valitset Oma SOG -sivulla jokaiselle lapselle erikseen, miten hän kirjautuu sisään. Oletuksena pelaajatilillä ei ole omaa kirjautumista: sillä on sisäinen Sogverse-osoite eikä oikeaa sähköpostiosoitetta, se on liitetty vanhemman tiliisi, ja lapsesi tulee Sogverseen vaihtamalla sinun profiilistasi omaan profiiliinsa. Halutessasi voit antaa hänelle käyttäjätunnuksen ja salasanan tai hänen oman sähköpostiosoitteensa, jonka hän vahvistaa ennen kuin asettaa salasanan tavallisen palautuspolun kautta.</p><p>Valitsitpa minkä tavan tahansa, lapsen kirjautuminen avaa vain hänen oman tilinsä: lapsi, joka kirjautui sisään omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, ei voi vaihtaa sinun tai sisaruksen tilille lainkaan — hän kirjautuu ulos ja kirjautuu takaisin sisään joko sinuna, sinun salasanallasi, tai sisaruksena, jolla on omat tunnukset; sisarus, joka kirjautuu sisään sinun tilisi kautta, tavoitetaan sen sijaan sinun tililtäsi — ja lapsi, joka tuli sisään vaihtamalla sinun tililtäsi, tarvitsee vanhemman PIN-koodisi vaihtaakseen mihinkään muualle.</p><p>Vanhemman puolelle pääsee nelinumeroisella PIN-koodilla, jonka vain sinä tiedät, joten selaimeen tallennettu salasana ei riitä ostamiseen eikä vanhemman tilin käyttämiseen, ja istunto lukittuu uudelleen heti, kun vaihdat lapsen profiiliin tai kirjaudut ulos.</p><p>Jos unohdat PIN-koodin, lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle – jos lapsi painaa ”Unohditko PIN-koodin?”, hän vain lähettää sinulle sähköpostia.</p>"
         },
         "childData": {
           "question": "Mitä tietoja lapsestani säilytätte?",
@@ -3182,7 +3182,7 @@
           "attribution": "Äiti, Suomi"
         },
         "positiveExperience": {
-          "quote": "”School of Gaming on ollut todella positiivinen kokemus sekä lapselle, että vanhemmille. Lapset ovat saaneet hienoja pelikokemuksia uusien pelikaverien kanssa turvallisessa peliympäristössä kokeneitten ohjaajien kanssa – voin suositella!”",
+          "quote": "”School of Gaming on ollut todella positiivinen kokemus sekä lapselle että vanhemmille. Lapset ovat saaneet hienoja pelikokemuksia uusien pelikaverien kanssa turvallisessa peliympäristössä kokeneitten ohjaajien kanssa – voin suositella!”",
           "attribution": "Isä, Suomi"
         }
       }
@@ -3191,7 +3191,7 @@
       "heading": "Tee pelaamisesta hieno harrastus",
       "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa.",
       "minecraftClubs": {
-        "title": "Jokaisessa tapaamisessa on Gedu",
+        "title": "Joka kerralla mukana on Gedu",
         "description": "Pelikasvattajamme eli Gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa pelikasvattaja, joka todella ymmärtää."
       },
       "screenTime": {
@@ -3215,8 +3215,8 @@
           "description": "Edellytämme, että jokainen Gedu näyttää meille lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen, ennen kuin hyväksymme hänet."
         },
         "noDirectMessages": {
-          "title": "Ei yksityisviestejä",
-          "description": "Alustalla ei voi lähettää yksityisviestejä: kerran chatti menee koko huoneelle, jossa Gedu näkee sen."
+          "title": "Jokainen chatti on koko ryhmän",
+          "description": "Kerran chatti menee koko huoneelle, jossa Gedu näkee sen."
         },
         "groupOnlyRooms": {
           "title": "Vain oma ryhmä pääsee sisään",
@@ -3224,11 +3224,11 @@
         },
         "notRecorded": {
           "title": "Kertoja ei tallenneta",
-          "description": "Mikään ei tallenna, litteroi tai säilytä kerran ääntä tai kuvaa."
+          "description": "Sovelluksessa mikään ei tallenna, litteroi tai säilytä kerran ääntä tai videokuvaa."
         },
         "parentPin": {
           "title": "Ostoihin tarvitaan PIN-koodi",
-          "description": "Ostaminen ja lapsen tilin muuttaminen vaativat nelinumeroisen vanhemman PIN-koodin, jonka vain sinä tiedät."
+          "description": "Ostaminen vaatii nelinumeroisen vanhemman PIN-koodin, jonka vain sinä tiedät, eikä lapsesi pääse ilman sitä vanhemman tilillesi."
         }
       },
       "faqLink": "Lue tarkemmat vastaukset UKK-osiosta",
@@ -3255,8 +3255,8 @@
     },
     "cta": {
       "heading": "Valmis muuttamaan pelaamisen oppimiseksi?",
-      "subheading": "Anna lapsellesi paikka pelata, oppia ja saada ystäviä joka viikko: pelikasvattaja ohjaa jokaista kertaa, eikä alustalla voi lähettää yksityisviestejä.",
-      "whereWeAre": "Verkkokerhoihimme voi osallistua mistä päin maailmaa tahansa, ja kielinä ovat {languages}. Entä maailmanlaajuinen pääkonttorimme? Kodikas toimisto pienellä ja rauhallisella saarella, Lauttasaaressa Helsingissä, Suomessa."
+      "subheading": "Anna lapsellesi paikka pelata, oppia ja saada ystäviä joka viikko: pelikasvattaja ohjaa jokaista kertaa, ja jokainen chatti on koko ryhmän nähtävillä.",
+      "whereWeAre": "Verkkokerhoihimme voi osallistua mistä päin maailmaa tahansa, ja kielinä ovat {languages}. Entä maailmanlaajuinen pääkonttorimme? Kodikas studio pienellä ja rauhallisella saarella, Lauttasaaressa Helsingissä, Suomessa."
     }
   },
   "locations": {
@@ -3713,7 +3713,7 @@
     },
     "overview": {
       "heading": "Miten Yty toimii",
-      "paragraph1": "Jokainen pelaaja aloittaa nollasta. Jokaisesta tapaamisesta, jokaisesta suoritetusta tehtävästä ja jokaisesta ystävällisestä teosta pelaajat ansaitsevat Yty-pisteitä. Pisteet kertyvät neljään Yty-elementtiin, joista jokainen kuvastaa eri puolta hyvästä kasvusta.",
+      "paragraph1": "Jokainen pelaaja aloittaa nollasta. Jokaisesta kerrasta, jokaisesta suoritetusta tehtävästä ja jokaisesta ystävällisestä teosta pelaajat ansaitsevat Yty-pisteitä. Pisteet kertyvät neljään Yty-elementtiin, joista jokainen kuvastaa eri puolta hyvästä kasvusta.",
       "paragraph2": "Kun pelaajat keräävät Ytyä itselleen, he kasvattavat samalla koko Sogversen Ytyä — muokaten tarinaa ja avaten uusia mahdollisuuksia koko yhteisölle."
     },
     "elements": {
@@ -5226,6 +5226,7 @@
       "nameWithNickname": "{firstName} ”{nickname}” {lastName}",
       "firstNameWithNickname": "{firstName} ”{nickname}”",
       "geduTitle": "Gedu · pelikasvattaja",
+      "geduAltRole": "pelikasvattaja",
       "speaks": "Puhuu",
       "aboutMe": "Minusta",
       "funFact": "Hauska fakta",

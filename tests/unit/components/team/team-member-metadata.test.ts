@@ -51,14 +51,27 @@ describe("a team member's addresses", () => {
     ).toBe("paivi");
   });
 
-  it("leave the second person deriving a slug on their id", () => {
-    const first = publicGeduProfile();
-    const second = publicGeduProfile({ id: SECOND_EETU_ID });
-    const team = [first, second];
+  it("leave the newer of two people deriving a slug on their id, wherever the list puts them", () => {
+    const older = publicGeduProfile({ id: SECOND_EETU_ID, createdAt: "2026-02-01T00:00:00+00:00" });
+    const newer = publicGeduProfile({ createdAt: "2026-09-30T00:00:00+00:00" });
 
-    expect(teamMemberAddress(team, first)).toBe("eetu-creeperhug");
-    expect(teamMemberAddress(team, second)).toBe(SECOND_EETU_ID);
-    expect(findTeamMemberBySlug(team, "eetu-creeperhug")?.id).toBe(first.id);
+    // The newer listed first, as a list ordered by name or role can put them.
+    for (const team of [[newer, older], [older, newer]]) {
+      expect(teamMemberAddress(team, older)).toBe("eetu-creeperhug");
+      expect(teamMemberAddress(team, newer)).toBe(newer.id);
+      expect(findTeamMemberBySlug(team, "eetu-creeperhug")?.id).toBe(older.id);
+    }
+  });
+
+  it("settle two profiles first saved at one instant by id", () => {
+    const a = publicGeduProfile();
+    const b = publicGeduProfile({ id: SECOND_EETU_ID });
+    const [lower, higher] = [a, b].sort((x, y) => x.id.localeCompare(y.id));
+
+    for (const team of [[a, b], [b, a]]) {
+      expect(teamMemberAddress(team, lower)).toBe("eetu-creeperhug");
+      expect(teamMemberAddress(team, higher)).toBe(higher.id);
+    }
   });
 
   it("fall back to the id for a name that derives no slug", () => {
@@ -71,10 +84,13 @@ describe("a team member's addresses", () => {
 describe("the public page a staff page links to", () => {
   const live = { ready: true, approved: true };
 
-  it("links the second person deriving a slug to their own page by id, never the first's", async () => {
-    const first = publicGeduProfile();
-    const second = publicGeduProfile({ id: SECOND_EETU_ID });
-    const listTeam = async () => [first, second];
+  it("links the newer of two people deriving a slug to their own page by id, never the older's", async () => {
+    const first = publicGeduProfile({ createdAt: "2026-02-01T00:00:00+00:00" });
+    const second = publicGeduProfile({
+      id: SECOND_EETU_ID,
+      createdAt: "2026-09-30T00:00:00+00:00",
+    });
+    const listTeam = async () => [second, first];
 
     const read = await teamMemberPublicAddress({ ...live, profile: second }, listTeam);
     expect(read).toBe(SECOND_EETU_ID);
@@ -221,7 +237,7 @@ describe("teamMemberMetadata", () => {
       url: teamCardUrl(person, "en"),
       alt: `en:metadata.og.team.alt${JSON.stringify({
         name: "Eetu “CreeperHug”",
-        role: "en:team.profile.geduTitle",
+        role: "en:team.profile.geduAltRole",
       })}`,
       width: 1200,
       height: 630,

@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
-import { teamMemberRole } from "@/components/team/team-name";
 import { OG_CARD_SIZE, ogCardUrl, type OgCard } from "./cards";
 import { teamCardUrl } from "./team-card";
 
@@ -37,7 +36,10 @@ export async function ogCardImage(
  * to every preview that cached the old one.
  *
  * The alt text says who the card shows and what they do here: the person's
- * full name, as the page title gives it, and their title line.
+ * full name, as the page title gives it, and their role. An admin's role is
+ * their own title; a Gedu's is the plain "Game Educator" rather than the
+ * page's "Gedu · Game Educator" title line, whose middle dot a screen reader
+ * may read out.
  */
 export async function teamCardImage(
   person: TeamProfile,
@@ -48,7 +50,8 @@ export async function teamCardImage(
     getTranslations({ locale, namespace: "metadata.og.team" }),
     getTranslations({ locale, namespace: "team.profile" }),
   ]);
-  const role = teamMemberRole(person, profile);
+  const role =
+    person.kind === "admin" ? person.title : profile("geduAltRole");
 
   return {
     url: teamCardUrl(person, locale),
