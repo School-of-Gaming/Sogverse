@@ -2668,7 +2668,11 @@
       "about": "About",
       "faq": "FAQ",
       "substitutions": "Substitutions",
-      "substitutionsPhone": "Substitutions"
+      "substitutionsPhone": "Substitutions",
+      "home": "Home",
+      "library": "Library",
+      "team": "Team",
+      "tabBar": "Site navigation"
     },
     "accountMenu": "Account menu – {name}",
     "continueToAccount": "Continue to your account",

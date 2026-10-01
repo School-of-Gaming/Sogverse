@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import en from "@/../messages/en.json";
 import { Header } from "@/components/layout/header";
@@ -64,9 +64,13 @@ function renderAt(pathname: string) {
   );
 }
 
-/** The links the header marks as the reader's current page, by accessible name. */
+/**
+ * The links the header strip marks as the reader's current page, by accessible
+ * name. The strip only: the tab bar the header also renders names the same
+ * place on a phone, and has its own suite.
+ */
 function currentLinks(): (string | null)[] {
-  return screen
+  return within(screen.getByRole("banner"))
     .getAllByRole("link")
     .filter((link) => link.getAttribute("aria-current") === "page")
     .map((link) => link.getAttribute("aria-label") ?? link.textContent);

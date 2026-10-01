@@ -2668,7 +2668,11 @@
       "about": "Om oss",
       "faq": "FAQ",
       "substitutions": "Vikariat",
-      "substitutionsPhone": "Vikariat"
+      "substitutionsPhone": "Vikariat",
+      "home": "Hem",
+      "library": "Bibliotek",
+      "team": "Team",
+      "tabBar": "Webbplatsens navigering"
     },
     "accountMenu": "Kontomeny – {name}",
     "continueToAccount": "Fortsätt till ditt konto",

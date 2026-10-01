@@ -2708,7 +2708,11 @@
       "about": "maH",
       "faq": "ghelmeH",
       "substitutions": "qa’meH",
-      "substitutionsPhone": "qa’meH"
+      "substitutionsPhone": "qa’meH",
+      "home": "juH",
+      "library": "paq qach",
+      "team": "ghom",
+      "tabBar": "Daq He"
     },
     "accountMenu": "qa’ De’wI’ – {name}",
     "continueToAccount": "qa’lIj yIghoS",

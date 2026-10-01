@@ -82,8 +82,13 @@ const SCREEN_SHARE_ANIMATION_MS = 700;
 // Single source of truth: it's the dock's own bottom padding AND the base of the
 // page's reserved scroll space, so nudging this one value moves both together —
 // raise the dock and the scroll padding grows to match. The max() keeps a 2.5rem
-// floor and grows with the device safe-area inset.
-const DOCK_FLOAT_OFFSET = "max(2.5rem, calc(env(safe-area-inset-bottom) + 0.75rem))";
+// floor, grows with the device safe-area inset, and below `md` clears the phone
+// tab bar the header renders (`--tab-bar-height`, zero from `md` up) by the same
+// 0.75rem. The page around the room already pays the bar's height as bottom
+// padding, so on a phone the reserved scroll space below overestimates by that
+// much — the harmless direction.
+const DOCK_FLOAT_OFFSET =
+  "max(2.5rem, calc(env(safe-area-inset-bottom) + 0.75rem), calc(var(--tab-bar-height) + 0.75rem))";
 
 // Generous estimate of the dock pill's own height. Tallest case is the mobile
 // two-row layout (~6.5rem); 8rem leaves breathing room. Overestimating only

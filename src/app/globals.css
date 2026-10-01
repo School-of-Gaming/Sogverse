@@ -29,6 +29,13 @@
      margins. */
   --header-height: 4rem;
 
+  /* The phone tab bar's height, safe-area inset included, and zero from `md`
+     up, where there is no bar (the override follows this block). Consumed by
+     the bar itself, by the bottom padding below that keeps a page's end clear
+     of it, and by anything else fixed to the bottom of the viewport that has to
+     float above it (the voice room's control dock). */
+  --tab-bar-height: calc(3.5rem + env(safe-area-inset-bottom));
+
   /* The measured height of the product page's sticky signup rail, written onto
      that element by a ResizeObserver so its sticky inset can clamp at both ends
      (`min(header offset, 100vh - this - gap)`) — CSS cannot measure a box, so
@@ -146,6 +153,22 @@ input[type="search"]::-webkit-search-cancel-button {
    OS uses overlay scrollbars (nothing to reserve, no shift). */
 html:has([data-reserve-scroll-gutter]) {
   scrollbar-gutter: stable;
+}
+
+@media (width >= 48rem) {
+  :root {
+    --tab-bar-height: 0px;
+  }
+}
+
+/* Whatever holds the phone tab bar pays its height as bottom padding, so the
+   last thing on the page — the footer, a dashboard's last card — scrolls clear
+   of a bar that is fixed over it. Keyed on the bar's own marker rather than
+   written into each layout, so it holds wherever the header (which renders the
+   bar) is composed: a layout's `min-h-screen` wrapper takes it inside its
+   border box, and a header rendered straight into the body pads the body. */
+:has(> [data-tab-bar]) {
+  padding-bottom: var(--tab-bar-height);
 }
 
 body {

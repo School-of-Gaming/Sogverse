@@ -309,13 +309,16 @@ parent reaches them. Four workstreams, built in this order on the project branch
 Library and Team each get a plan in `docs/plans/` before building, since both change the
 schema and what `anon` can read.
 
-1. **The way in.** A signed-out phone shows two header links (About, Shop) and there is no
-   room for a third (`src/components/layout/CLAUDE.md`, the 360px arithmetic). The
-   avatar menu is no answer: it exists only signed in. **Open (owner):** a "Menu" button
-   opening a bottom sheet, or a bottom tab bar on phones; both are built as prototypes on
-   the branch for the owner to try before choosing. **Proposed:** the footer becomes a
-   site map at every width, and the pages link to one another through their content
-   (home to Team and Library, FAQ answers to articles, articles to the shop).
+1. **The way in.** **Decided (owner, 2026-10-01): a bottom tab bar on phones**, chosen
+   over a "Menu" sheet after trying both on the branch. It is on every page with the
+   header, for every role: the reader's home (the home page signed out, their dashboard
+   signed in, the logo's destination), Shop, Library, Team and About. It freed the phone
+   header for the wordmark or "My SOG" beside the badge; from `md` up the four links sit
+   in the header. The rules are in `src/components/layout/CLAUDE.md`. **Decided:** a
+   signed-in reader never reaches the home page; the logo, the first tab and the bare
+   address all mean their dashboard. **Proposed:** the footer becomes a site map, and the
+   pages link to one another through their content (home to Team and Library, FAQ
+   answers to articles, articles to the shop).
 2. **Images and video on Home and About** (see Assets). **Proposed:** the hero loop served
    from our own origin as a muted, looping MP4/WebM of a few MB each, with the still as
    its poster and the still alone under reduced motion; no third-party player, so no
@@ -490,5 +493,7 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-10-01 | The project's goal adds discoverability by search engines and LLMs; the Library and a Team page join it (owner). |
 | 2026-10-01 | Library articles get a version per language, each with a title-generated slug; the id stays in the link and resolves it, with no slug history or redirects; the legacy blog import is a separate project (owner). |
 | 2026-10-01 | A team profile goes public on admin approval alone; every approved profile is listed, trainees included, Gedus by first name and gamer tag (owner). |
+| 2026-10-01 | Phones navigate by a bottom tab bar on every page, for every role; its first tab is the reader's home, the dashboard when signed in (owner). |
+| 2026-10-01 | A signed-in reader never reaches the home page (owner). |
 | 2026-10-01 | Sonja's first images are cleared to publish: the staff shown consented, and no child's face is visible (owner). |
 | 2026-10-01 | "Find a club" opens the shop unfiltered: clubs lead the list, and camps and events follow without touching a filter (owner). |

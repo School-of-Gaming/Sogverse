@@ -17,7 +17,6 @@ import {
   Loader2,
   LogOut,
   ReceiptText,
-  School,
   Settings,
 } from "lucide-react";
 import { StatusLine } from "@/components/ui/alert";
@@ -116,7 +115,7 @@ const FOCUSABLE_ITEMS =
  * The rows the arrow keys may land on, in DOM order.
  *
  * **A row the current width does not render is not one of them.** A gedu's
- * Invoicing, About and My profile rows are narrow-only, each hidden from the
+ * Invoicing and My profile rows are narrow-only, each hidden from the
  * breakpoint where the header's strip takes it, and there it is
  * `display: none` — and `.focus()` on such an element does nothing at
  * all, which would leave ArrowDown reading the same index forever and the
@@ -155,8 +154,8 @@ interface AccountMenuProps {
   /**
    * The header's nav override, handed down unchanged — preview scenes only,
    * and documented on `Header`. It decides one thing here and nothing else:
-   * whether this menu carries the nav rows the gedu's strip gives up (About and
-   * My profile). The dashboard row, Invoicing, the household and every label
+   * whether this menu carries the nav row the gedu's strip gives up below `lg`
+   * (My profile). The dashboard row, Invoicing, the household and every label
    * still follow `role`, because the account really does belong to whoever is
    * signed in.
    */
@@ -352,18 +351,6 @@ export function AccountMenu({
     (pathname === dashboardPath || pathname.startsWith(dashboardPath + "/")) &&
     !hasOwnNavItem(pathname);
   /**
-   * Whether this menu carries About — one of the two nav rows here, each the
-   * other half of a decision the header makes.
-   *
-   * A signed-in gedu's strip is one item longer than anyone else's, which at
-   * 360px leaves no room for all three words; About is the one that gives way,
-   * and it lands here rather than disappearing. Phone-only, because from `sm`
-   * up it is back on the strip and two ways to the same page in one chrome is
-   * one too many.
-   */
-  const carriesAbout = (navRole ?? role) === "gedu";
-  const isOnAbout = pathname === ROUTES.about;
-  /**
    * Whether this menu carries the gedu's invoicing month — a page of their own
    * account, like Settings, rather than a place on the strip. It follows the
    * real `role`, not the scene-only nav override: it is a destination of the
@@ -374,9 +361,10 @@ export function AccountMenu({
     pathname === ROUTES.gedu.invoicing ||
     pathname.startsWith(ROUTES.gedu.invoicing + "/");
   /**
-   * Whether this menu carries the gedu's My profile — the other nav row
-   * handed down by the header the same way About is. From `md` up it is an
-   * item on the strip; below that it lives here. An admin's profile is reached
+   * Whether this menu carries the gedu's My profile — the other half of a
+   * decision the header makes. From `lg` up it is an item on the strip; below
+   * that the strip has no room for it (the measured table in `header.tsx`) and
+   * it lives here. An admin's profile is reached
    * from settings and from their user page, never from the chrome.
    */
   const carriesTeamProfile = (navRole ?? role) === "gedu";
@@ -633,35 +621,21 @@ export function AccountMenu({
                   icon={<ReceiptText className="h-4 w-4 shrink-0" />}
                   label={t("invoicing")}
                   // From `lg` up Invoicing is on the header strip instead, so
-                  // the row gives way there — the About row's shape, at the
-                  // breakpoint where the strip link appears.
+                  // the row gives way at the breakpoint where the strip link
+                  // appears.
                   className="lg:hidden"
                 />
               )}
 
-              {/* The rehoused nav row — see `carriesAbout`. A fixed row like
-                  the three around it: leading icon, no chevron, and decided
+              {/* The rehoused nav row — see `carriesTeamProfile`. A fixed row
+                  like the ones around it: leading icon, no chevron, and decided
                   before the panel opens, so the menu still opens whole. It is
-                  hidden by CSS rather than dropped from the tree, which is why
-                  the arrow-key traversal filters on the computed display
-                  (`menuItems`) instead of trusting the selector alone. The
-                  label is the header's own key: it must read as the same
-                  destination in both places. */}
-              {carriesAbout && (
-                <MenuLinkRow
-                  href={ROUTES.about}
-                  active={isOnAbout}
-                  disabled={busy}
-                  onNavigate={() => setOpen(false)}
-                  icon={<School className="h-4 w-4 shrink-0" />}
-                  label={t("nav.about")}
-                  className="sm:hidden"
-                />
-              )}
-              {/* The other rehoused nav row, in the same shape as About and
-                  decided the same way — see `carriesTeamProfile`. Its
-                  breakpoint is `md`, not `sm`: that is where the header's strip
-                  takes it back. */}
+                  hidden by CSS at `lg`, where the header's strip takes it,
+                  rather than dropped from the tree, which is why the arrow-key
+                  traversal filters on the computed display (`menuItems`)
+                  instead of trusting the selector alone. The label is the
+                  header's own key: it must read as the same destination in
+                  both places. */}
               {carriesTeamProfile && (
                 <MenuLinkRow
                   href={ROUTES.settingsTeamProfile}
@@ -670,7 +644,7 @@ export function AccountMenu({
                   onNavigate={() => setOpen(false)}
                   icon={<IdCard className="h-4 w-4 shrink-0" />}
                   label={t("teamProfile")}
-                  className="md:hidden"
+                  className="lg:hidden"
                 />
               )}
 

@@ -2668,7 +2668,11 @@
       "about": "Tietoa",
       "faq": "UKK",
       "substitutions": "Tuuraukset",
-      "substitutionsPhone": "Tuuraukset"
+      "substitutionsPhone": "Tuuraukset",
+      "home": "Etusivu",
+      "library": "Kirjasto",
+      "team": "Tiimi",
+      "tabBar": "Sivuston navigointi"
     },
     "accountMenu": "Tilivalikko – {name}",
     "continueToAccount": "Jatka tilillesi",

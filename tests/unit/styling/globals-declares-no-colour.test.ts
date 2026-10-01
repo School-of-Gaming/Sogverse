@@ -17,7 +17,7 @@ import { describe, expect, it } from "vitest";
  *
  * So the test is not "no `--color-*`" — that phrasing invites the next colour to
  * arrive under a name that dodges it (`--brand-amber`, `--surface-2`). It
- * enumerates the whole set instead: two layout heights and the radius scale.
+ * enumerates the whole set instead: the layout values and the radius scale.
  * Anything else declared here fails, and the failure is the question "which
  * adoption owns this, and why is it here instead of there?" The face half of
  * the same seam is this file's sibling, `globals-declares-no-face.test.ts`: no
@@ -65,6 +65,11 @@ const ALLOWED = {
   // sticky offset, the home hero's bleed and every hash-anchor scroll margin.
   // Layout, not colour; it belongs to the library the day chrome is adopted.
   "--header-height": "layout: the sticky header's height",
+  // The phone tab bar's height, zero from `md` up (declared once more under
+  // that breakpoint), read by the bar, the bottom padding that keeps a page's
+  // end clear of it and the voice room's control dock. Layout, like the
+  // header's height, and it goes to the library with it.
+  "--tab-bar-height": "layout: the phone tab bar's height",
   // The measured height of the product page's sticky signup rail, written by a
   // ResizeObserver. CSS cannot measure a box, so this is a number JS supplies —
   // the one value here that is not authored at all.
@@ -92,7 +97,10 @@ describe("Sogverse's stylesheet declares no colour", () => {
   const declared = declaredCustomProperties(readFileSync(globalsPath, "utf8"));
 
   it("declares exactly the tokens the library does not own yet", () => {
-    expect([...declared].sort(), WHY).toEqual(Object.keys(ALLOWED).sort());
+    // A set: a layout value redeclared under a breakpoint is still one token.
+    expect([...new Set(declared)].sort(), WHY).toEqual(
+      Object.keys(ALLOWED).sort(),
+    );
   });
 
   it("declares no colour token under any name", () => {
