@@ -268,12 +268,9 @@ export const PREVIEW_SCENES = [
     surface: "team",
     title: "Team index",
     description:
-      "The live public Team page, with people on it and with nobody public yet.",
+      "The live public Team page with nobody public, the state the seeded database cannot show.",
     chrome: "public",
-    scenarios: [
-      { slug: "team", label: "Leadership and Game Educators" },
-      { slug: "empty", label: "Nobody public yet" },
-    ],
+    scenarios: [{ slug: "empty", label: "Nobody public yet" }],
   },
   {
     surface: "library",

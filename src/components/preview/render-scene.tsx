@@ -173,7 +173,7 @@ const SCENE_RENDERERS: Record<
   },
   team: (scenario) => {
     if (!isTeamIndexScenario(scenario)) notFound();
-    return <TeamIndexScene scenario={scenario} />;
+    return <TeamIndexScene />;
   },
   // Checked and not handed on, like the shop grid: there is one empty index,
   // so the body branches on nothing.
