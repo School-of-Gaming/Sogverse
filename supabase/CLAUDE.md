@@ -334,8 +334,10 @@ every command does — the things its usage text does not say:
   stack with holes in it. A file named `library-<category>.jpg` is a Library cover
   instead, uploaded to the `library-covers` bucket (JPEG only, like every upload) and
   linked to both copies of every seeded article in that category; the one live article
-  in a category with no file is how the stack shows a live article with no cover. The same step uploads the three seeded team profiles' photos,
-  from `public/preview-art/`, to the paths the seed saved them under.
+  in a category with no file is how the stack shows a live article with no cover. The
+  same step uploads every seeded team profile's photo to the path the seed saved it
+  under, from `supabase/seed-images/team/<email local part>.jpg`; a profile with no file
+  fails the step by name, and `scripts/local-db/team-photos.mjs` redraws the files.
 - **Google sign-in works on a stack whose checkout's `.env.local` carries
   `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`** —
   a Google Cloud OAuth client of your own; its consent screen can stay in testing mode,
