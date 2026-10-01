@@ -67,7 +67,7 @@ function renderAt(pathname: string) {
 /**
  * The links the header strip marks as the reader's current page, by accessible
  * name. The strip only: the tab bar the header also renders names the same
- * place on a phone, and has its own suite.
+ * place below `lg`, and has its own suite.
  */
 function currentLinks(): (string | null)[] {
   return within(screen.getByRole("banner"))
@@ -145,6 +145,16 @@ describe("the account menu's My SOG row", () => {
   it("is not current on Invoicing, whose row is in the menu itself", () => {
     renderAt("/gedu/invoicing");
     expect(dashboardRow().getAttribute("aria-current")).toBeNull();
+  });
+
+  it("hands Substitutions to its own row, which the menu carries below lg", () => {
+    renderAt("/gedu/substitutions");
+    expect(dashboardRow().getAttribute("aria-current")).toBeNull();
+    expect(
+      screen
+        .getByRole("menuitem", { name: en.header.nav.substitutions })
+        .getAttribute("aria-current"),
+    ).toBe("page");
   });
 });
 

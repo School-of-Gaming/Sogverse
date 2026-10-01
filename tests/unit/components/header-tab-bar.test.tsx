@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/header";
 import type { UserRole } from "@/lib/constants";
 
 /**
- * The phone tab bar, as the header renders it.
+ * The mobile tab bar, as the header renders it.
  *
  * Pinned here: the five tabs and their order, that only the first one depends
  * on who is looking (Home signed out, the role's dashboard under the header's
@@ -169,12 +169,24 @@ describe("Tab bar — the tab set", () => {
     expect(tabs()[3].getAttribute("href")).toBe("/team");
   });
 
-  it("is a phone-only bar, under the cookie strip", () => {
+  it("is the mobile bar, below lg only, under the cookie strip", () => {
     signedOut();
     renderAt("/");
 
-    expect(bar().className).toContain("md:hidden");
+    expect(bar().className).toContain("lg:hidden");
     expect(bar().className).toContain("z-40");
+  });
+
+  it("spans the viewport, with its tabs a centred group of capped width", () => {
+    // On a wide tablet five cells stretched to the bar's width would each be a
+    // slab; the cap keeps them phone-sized while the surface stays full-width.
+    signedOut();
+    renderAt("/");
+
+    expect(bar().className).toContain("inset-x-0");
+    const list = bar().querySelector("ul");
+    expect(list?.className).toContain("mx-auto");
+    expect(list?.className).toContain("max-w-lg");
   });
 });
 
@@ -206,7 +218,7 @@ describe("Tab bar — where it says the reader is", () => {
   });
 
   it("marks nothing on a dashboard page with a nav item of its own", () => {
-    // Substitutions is on the strip; the bar must not claim the page as My SOG.
+    // Substitutions has its own nav item; the bar must not claim the page as My SOG.
     signedInAs("gedu");
     renderAt("/gedu/substitutions");
     expect(currentTabs()).toEqual([]);

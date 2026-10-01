@@ -63,7 +63,7 @@ export function isAtOrUnder(pathname: string, href: string): boolean {
 
 /**
  * The site's public destinations — Shop, Library, Team, About — as the header
- * strip (from `md` up) and the tab bar (below it) both draw them. One list, so
+ * strip (from `lg` up) and the tab bar (below it) both draw them. One list, so
  * the two surfaces cannot disagree about order, label or what counts as being
  * there: a destination is current on its page and every page beneath it.
  */

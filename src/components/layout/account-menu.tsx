@@ -12,6 +12,7 @@ import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  ArrowLeftRight,
   IdCard,
   LayoutDashboard,
   Loader2,
@@ -115,9 +116,8 @@ const FOCUSABLE_ITEMS =
  * The rows the arrow keys may land on, in DOM order.
  *
  * **A row the current width does not render is not one of them.** A gedu's
- * Invoicing and My profile rows are narrow-only, each hidden from the
- * breakpoint where the header's strip takes it, and there it is
- * `display: none` — and `.focus()` on such an element does nothing at
+ * three nav rows are narrow-only, hidden from `lg` up, where the header's strip
+ * takes them, and there each is `display: none` — and `.focus()` on such an element does nothing at
  * all, which would leave ArrowDown reading the same index forever and the
  * keyboard stuck on the row above it. The check is on the computed `display`
  * rather than on a measured box, because a measurement is exactly what is not
@@ -154,10 +154,10 @@ interface AccountMenuProps {
   /**
    * The header's nav override, handed down unchanged — preview scenes only,
    * and documented on `Header`. It decides one thing here and nothing else:
-   * whether this menu carries the nav row the gedu's strip gives up below `lg`
-   * (My profile). The dashboard row, Invoicing, the household and every label
-   * still follow `role`, because the account really does belong to whoever is
-   * signed in.
+   * whether this menu carries the nav rows the gedu's strip gives up below `lg`
+   * (Invoicing, Substitutions, My profile). The dashboard row, the household
+   * and every label still follow `role`, because the account really does belong
+   * to whoever is signed in.
    */
   navRole?: UserRole;
 }
@@ -351,30 +351,28 @@ export function AccountMenu({
     (pathname === dashboardPath || pathname.startsWith(dashboardPath + "/")) &&
     !hasOwnNavItem(pathname);
   /**
-   * Whether this menu carries the gedu's invoicing month — a page of their own
-   * account, like Settings, rather than a place on the strip. It follows the
-   * real `role`, not the scene-only nav override: it is a destination of the
-   * account the avatar belongs to.
+   * Whether this menu carries the gedu's nav rows — Invoicing, Substitutions and
+   * My profile, the other half of a decision the header makes. From `lg` up
+   * they are items on the strip; below it the strip carries no nav at all and
+   * they live here. It reads the header's nav override, exactly as the strip
+   * does, so the two halves can never disagree about whether the items exist.
+   * An admin's profile is reached from settings and from their user page, never
+   * from the chrome.
    */
-  const carriesInvoicing = role === "gedu";
+  const carriesGeduRows = (navRole ?? role) === "gedu";
   const isOnInvoicing =
     pathname === ROUTES.gedu.invoicing ||
     pathname.startsWith(ROUTES.gedu.invoicing + "/");
-  /**
-   * Whether this menu carries the gedu's My profile — the other half of a
-   * decision the header makes. From `lg` up it is an item on the strip; below
-   * that the strip has no room for it (the measured table in `header.tsx`) and
-   * it lives here. An admin's profile is reached
-   * from settings and from their user page, never from the chrome.
-   */
-  const carriesTeamProfile = (navRole ?? role) === "gedu";
+  const isOnSubstitutions =
+    pathname === ROUTES.gedu.substitutions ||
+    pathname.startsWith(ROUTES.gedu.substitutions + "/");
   const isOnTeamProfile = pathname === ROUTES.settingsTeamProfile;
   // The profile page lives under settings, but where the chrome has an item of
   // its own for it, that item is what marks it current, not Settings.
   const isOnSettings =
     (pathname === ROUTES.settings ||
       pathname.startsWith(ROUTES.settings + "/")) &&
-    !(carriesTeamProfile && isOnTeamProfile);
+    !(carriesGeduRows && isOnTeamProfile);
   // What the dashboard is called to the person using it — "Dashboard" for the
   // admin, whose panel is genuinely an admin panel, "My SOG" for everyone else.
   const dashboardLabel = role === "admin" ? c("dashboard") : d("pageTitle");
@@ -610,42 +608,45 @@ export function AccountMenu({
                 label={dashboardLabel}
               />
 
-              {/* Decided by role before the panel opens, like every fixed row,
-                  so the menu still opens whole. */}
-              {carriesInvoicing && (
-                <MenuLinkRow
-                  href={ROUTES.gedu.invoicing}
-                  active={isOnInvoicing}
-                  disabled={busy}
-                  onNavigate={() => setOpen(false)}
-                  icon={<ReceiptText className="h-4 w-4 shrink-0" />}
-                  label={t("invoicing")}
-                  // From `lg` up Invoicing is on the header strip instead, so
-                  // the row gives way at the breakpoint where the strip link
-                  // appears.
-                  className="lg:hidden"
-                />
-              )}
-
-              {/* The rehoused nav row — see `carriesTeamProfile`. A fixed row
-                  like the ones around it: leading icon, no chevron, and decided
-                  before the panel opens, so the menu still opens whole. It is
-                  hidden by CSS at `lg`, where the header's strip takes it,
-                  rather than dropped from the tree, which is why the arrow-key
-                  traversal filters on the computed display (`menuItems`)
-                  instead of trusting the selector alone. The label is the
-                  header's own key: it must read as the same destination in
-                  both places. */}
-              {carriesTeamProfile && (
-                <MenuLinkRow
-                  href={ROUTES.settingsTeamProfile}
-                  active={isOnTeamProfile}
-                  disabled={busy}
-                  onNavigate={() => setOpen(false)}
-                  icon={<IdCard className="h-4 w-4 shrink-0" />}
-                  label={t("teamProfile")}
-                  className="lg:hidden"
-                />
+              {/* The gedu's nav rows — see `carriesGeduRows` — in the strip's
+                  order. Fixed rows like the ones around them: leading icon, no
+                  chevron, and decided before the panel opens, so the menu still
+                  opens whole. Each is hidden by CSS at `lg`, where the header's
+                  strip takes it, rather than dropped from the tree, which is
+                  why the arrow-key traversal filters on the computed display
+                  (`menuItems`) instead of trusting the selector alone. Each
+                  label is the header's own key: it must read as the same
+                  destination in both places. */}
+              {carriesGeduRows && (
+                <>
+                  <MenuLinkRow
+                    href={ROUTES.gedu.invoicing}
+                    active={isOnInvoicing}
+                    disabled={busy}
+                    onNavigate={() => setOpen(false)}
+                    icon={<ReceiptText className="h-4 w-4 shrink-0" />}
+                    label={t("invoicing")}
+                    className="lg:hidden"
+                  />
+                  <MenuLinkRow
+                    href={ROUTES.gedu.substitutions}
+                    active={isOnSubstitutions}
+                    disabled={busy}
+                    onNavigate={() => setOpen(false)}
+                    icon={<ArrowLeftRight className="h-4 w-4 shrink-0" />}
+                    label={t("nav.substitutions")}
+                    className="lg:hidden"
+                  />
+                  <MenuLinkRow
+                    href={ROUTES.settingsTeamProfile}
+                    active={isOnTeamProfile}
+                    disabled={busy}
+                    onNavigate={() => setOpen(false)}
+                    icon={<IdCard className="h-4 w-4 shrink-0" />}
+                    label={t("teamProfile")}
+                    className="lg:hidden"
+                  />
+                </>
               )}
 
               {/* No household in hand — a read still in flight, a read that

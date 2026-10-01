@@ -110,8 +110,8 @@ export function Sidebar() {
         // Sticks to the bottom edge of the sticky Header by reading
         // `--header-height` from `globals.css` — the same variable the
         // header itself uses. Height is pinned to the visible viewport
-        // between the header and the phone tab bar (`--tab-bar-height`, zero
-        // from `md` up) so the user-info section stays anchored to the
+        // between the header and the mobile tab bar (`--tab-bar-height`, zero
+        // from `lg` up) so the user-info section stays anchored to the
         // bottom, never behind the bar, while the dashboard <main> scrolls with the document.
         //
         // The rail has no palette of its own: it is chrome, and composes from

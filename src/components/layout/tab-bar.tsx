@@ -47,12 +47,17 @@ function Tab({ children }: { children: ReactNode }) {
 }
 
 /**
- * The phone navigation: a fixed bar along the bottom of the viewport, below
- * `md`, on every page that shows the site header — the header renders it.
+ * The mobile navigation: a fixed bar along the bottom of the viewport, below
+ * `lg`, on every page that shows the site header — the header renders it.
  *
  * Five equal cells, so the only thing auth can change is the first cell's word:
  * Home while the server saw no session, the dashboard's name once it knows
  * whose it is. Its icon and the other four cells never change.
+ *
+ * The bar's surface spans the viewport, but the cells are a centred group
+ * capped at `max-w-lg`: on a wide tablet five cells stretched across up to
+ * 1023px would each be a 200px slab with an icon lost in the middle, and the
+ * cap keeps them the size they are on a phone, where it never binds.
  *
  * `z-40`: under the header and its menus, under every dialog and sheet portal,
  * and under the cookie strip (`z-50`), which covers it while it is up. Its
@@ -73,9 +78,9 @@ export function TabBar({
     <nav
       data-tab-bar=""
       aria-label={t("nav.tabBar")}
-      className="glass fixed inset-x-0 bottom-0 z-40 h-[var(--tab-bar-height)] border-t border-border pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="glass fixed inset-x-0 bottom-0 z-40 h-[var(--tab-bar-height)] border-t border-border pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <ul className="grid h-full grid-cols-5">
+      <ul className="mx-auto grid h-full max-w-lg grid-cols-5">
         <Tab>
           <Link
             href={first.href}

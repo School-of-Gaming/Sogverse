@@ -111,8 +111,9 @@ document.addEventListener("click", (event) => {
 });
 
 const MY_SOG = messages.dashboardSections.pageTitle;
-/** The gedu's own invoicing month — a fixed row only their menu carries. */
+/** The gedu's three nav rows — fixed rows only their menu carries. */
 const INVOICING = messages.header.invoicing;
+const SUBSTITUTIONS = messages.header.nav.substitutions;
 const SETTINGS = messages.common.settings;
 const TEAM_PROFILE = messages.header.teamProfile;
 const SIGN_OUT = messages.common.signOut;
@@ -419,12 +420,12 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
     renderMenu(GEDU);
     openMenu();
 
-    // Invoicing is the gedu's own account destination; the My profile row
-    // after it is the header's doing — neither is a household's. See their
+    // The three nav rows are the header's doing, not a household's. See their
     // cases below.
     expect(rowTexts()).toEqual([
       MY_SOG,
       INVOICING,
+      SUBSTITUTIONS,
       TEAM_PROFILE,
       SETTINGS,
       SIGN_OUT,
@@ -457,44 +458,58 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
 
 /**
  * The rehoused nav rows, each the other half of a header decision: a gedu's
- * Invoicing and My profile items are on the strip from `lg` up and here below
- * it. About is not among them — the phone tab bar carries it for everyone. An
- * admin reaches their profile from settings and their user page, never from the
- * chrome, and the roles without a profile never see it.
+ * Invoicing, Substitutions and My profile are on the strip from `lg` up and
+ * here below it. No public destination is among them — the tab bar carries
+ * those below `lg` for everyone. An admin reaches their profile from settings
+ * and their user page, never from the chrome, and the other roles have no such
+ * rows at all.
  */
 describe("AccountMenu — the rehoused nav rows", () => {
-  it("carries Invoicing and My profile for a gedu, below lg only", () => {
+  it("carries all three for a gedu, in the strip's order, below lg only", () => {
     renderMenu(GEDU);
     openMenu();
 
     expect(rowTexts()).toEqual([
       MY_SOG,
       INVOICING,
+      SUBSTITUTIONS,
       TEAM_PROFILE,
       SETTINGS,
       SIGN_OUT,
     ]);
-    // From `lg` up both are on the strip, so the menu hides them there — at
-    // the very breakpoint the strip's classes name, never both and never
+    // From `lg` up all three are on the strip, so the menu hides them there —
+    // at the very breakpoint the strip's run names, never both and never
     // neither.
-    expect(row(TEAM_PROFILE).className).toContain("lg:hidden");
-    expect(row(INVOICING).className).toContain("lg:hidden");
+    for (const text of [INVOICING, SUBSTITUTIONS, TEAM_PROFILE]) {
+      expect(row(text).className).toContain("lg:hidden");
+    }
+    expect(row(INVOICING).getAttribute("href")).toBe("/gedu/invoicing");
+    expect(row(SUBSTITUTIONS).getAttribute("href")).toBe("/gedu/substitutions");
     expect(row(TEAM_PROFILE).getAttribute("href")).toBe("/settings/profile");
   });
 
-  it("is a fixed row like the ones around it — leading icon, no chevron", () => {
+  it("makes each a fixed row like the ones around it — leading icon, no chevron", () => {
     renderMenu(GEDU);
     openMenu();
 
-    expect(row(TEAM_PROFILE).querySelector(".lucide-chevron-right")).toBe(null);
-    expect(row(TEAM_PROFILE).querySelector("svg")).not.toBe(null);
+    for (const text of [INVOICING, SUBSTITUTIONS, TEAM_PROFILE]) {
+      expect(row(text).querySelector(".lucide-chevron-right")).toBe(null);
+      expect(row(text).querySelector("svg")).not.toBe(null);
+    }
   });
 
-  it("joins the arrow-key traversal in its own place", () => {
+  it("joins the arrow-key traversal in their own places", () => {
     renderMenu(GEDU);
     openMenu();
 
-    for (const text of [MY_SOG, INVOICING, TEAM_PROFILE, SETTINGS, SIGN_OUT]) {
+    for (const text of [
+      MY_SOG,
+      INVOICING,
+      SUBSTITUTIONS,
+      TEAM_PROFILE,
+      SETTINGS,
+      SIGN_OUT,
+    ]) {
       press("ArrowDown");
       expect(document.activeElement).toBe(row(text));
     }
@@ -504,7 +519,7 @@ describe("AccountMenu — the rehoused nav rows", () => {
     expect(document.activeElement).toBe(row(SIGN_OUT));
   });
 
-  it("goes out of service with every other row while a commit is in flight", () => {
+  it("takes them out of service with every other row while a commit is in flight", () => {
     const { container } = renderMenu(GEDU);
     openMenu();
 
@@ -512,32 +527,38 @@ describe("AccountMenu — the rehoused nav rows", () => {
     if (!form) throw new Error("No sign-out form rendered");
     fireEvent.submit(form);
 
-    expect(isBlocked(row(TEAM_PROFILE))).toBe(true);
+    for (const text of [INVOICING, SUBSTITUTIONS, TEAM_PROFILE]) {
+      expect(isBlocked(row(text))).toBe(true);
+    }
     press("ArrowDown");
-    expect(document.activeElement).not.toBe(row(TEAM_PROFILE));
+    expect(document.activeElement).not.toBe(row(SUBSTITUTIONS));
   });
 
-  it("never carries About, which the tab bar holds", () => {
+  it("never carries a public destination, which the tab bar holds", () => {
     renderMenu(GEDU);
     openMenu();
 
-    expect(rowTexts()).not.toContain(messages.header.nav.about);
+    for (const key of ["shop", "library", "team", "about"] as const) {
+      expect(rowTexts()).not.toContain(messages.header.nav[key]);
+    }
   });
 
   it.each([["admin"], ["customer"], ["gamer"]] as const)(
-    "carries no My profile row for a %s",
+    "carries none of them for a %s",
     (role) => {
       renderMenu({ userId: IDS.parent, role, firstName: "Riikka" });
       openMenu();
 
-      expect(rowTexts()).not.toContain(TEAM_PROFILE);
+      for (const text of [INVOICING, SUBSTITUTIONS, TEAM_PROFILE]) {
+        expect(rowTexts()).not.toContain(text);
+      }
     },
   );
 
-  it("follows the header's scene-only override for My profile, and the real role for Invoicing", () => {
+  it("follows the header's scene-only override for all three", () => {
     // A gedu scene is opened by an admin, so the menu is the admin's — but the
-    // nav row has to match the strip the scene is showing. Invoicing is an
-    // account destination and stays the real role's.
+    // nav rows have to match the strip the scene is showing, or an item would
+    // be in neither place below `lg`.
     renderMenu({
       userId: IDS.gedu,
       role: "admin",
@@ -548,6 +569,8 @@ describe("AccountMenu — the rehoused nav rows", () => {
 
     expect(rowTexts()).toEqual([
       messages.common.dashboard,
+      INVOICING,
+      SUBSTITUTIONS,
       TEAM_PROFILE,
       SETTINGS,
       SIGN_OUT,

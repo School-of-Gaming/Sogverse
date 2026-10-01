@@ -33,14 +33,15 @@ import { trackDashboardNav } from "@/lib/analytics";
 const LOGO_INTRINSIC = { width: 379, height: 207.5 } as const;
 
 /**
- * Every nav link's shape. The `min-h-11` is a real 44px touch target on a
- * phone: the words are 14px type, and a bare text link is a ~17px-tall strip
- * that is genuinely hard to hit. It costs nothing visible — the strip is 64px
- * tall and `items-center` keeps the text on the same baseline it was on — and
- * `px-2` widens the target so two adjacent links stop sharing an edge.
+ * Every nav link's shape. The `min-h-11` is a real 44px touch target, which a
+ * touch-screen laptop needs as much as anything: the words are 14px type, and
+ * a bare text link is a ~17px-tall strip that is genuinely hard to hit. It
+ * costs nothing visible — the strip is 64px tall and `items-center` keeps the
+ * text on the same baseline it was on — and `px-2` widens the target so two
+ * adjacent links stop sharing an edge.
  *
  * `whitespace-nowrap` picks the failure mode for a full strip. The tightest
- * cases clear by under 20px (the measured table in the nav group below),
+ * case clears by under 20px (the measured table in the nav group below),
  * so a longer word in some future translation will overrun it — and a link
  * allowed to wrap absorbs that silently, breaking to two lines inside a 44px box
  * that then reads as a misaligned smudge nobody reports. Held on one line, the
@@ -77,7 +78,7 @@ export function Header({ navRole }: HeaderProps) {
   const d = useTranslations("dashboardSections");
 
   // The public destinations every visitor gets, in both auth states: on the
-  // strip from `md` up, and in the tab bar below it. The storefront is a single
+  // strip from `lg` up, and in the tab bar below it. The storefront is a single
   // Shop entry; every browseable product type — clubs, camps and events — is
   // reached from within it via the in-page category selector, so the nav never
   // grows a per-type link.
@@ -100,24 +101,20 @@ export function Header({ navRole }: HeaderProps) {
   const navFor = navRole ?? profile?.role ?? null;
 
   /**
-   * The gedu's own nav item: the sessions looking for a stand-in.
+   * The gedu's own nav items: Invoicing (the month they invoice us for),
+   * Substitutions (the sessions looking for a stand-in) and My profile (their
+   * own public profile, which they come back to rather than set once).
    *
    * Gedus only. It is the one place in the chrome where the nav depends on who
-   * is looking, and it is deliberate: substituting is a standing part of the
-   * job rather than something reached from one dashboard card, and no other
-   * role has a page to send here.
+   * is looking, and it is deliberate: each is a standing part of the job rather
+   * than something reached from one dashboard card. Like every strip link they
+   * are on the strip from `lg` up; below it they are rows in the account menu
+   * (`account-menu.tsx`). Admins have a profile too but reach it from settings
+   * and their user page, never from the chrome.
    */
-  const showsSubstitutions = navFor === "gedu";
+  const showsGeduItems = navFor === "gedu";
   const isOnSubstitutions = isAtOrUnder(pathname, ROUTES.gedu.substitutions);
   const isOnInvoicing = isAtOrUnder(pathname, ROUTES.gedu.invoicing);
-  /**
-   * The gedu's My profile item: their own public profile, which they come back to
-   * rather than set once. Only from `lg` up, like Invoicing — below that each
-   * is a row in the avatar menu (`account-menu.tsx`), for the width reasons in
-   * the nav group's note. Admins have one too but reach it from settings and their user page,
-   * never from the chrome.
-   */
-  const showsTeamProfile = navFor === "gedu";
   const isOnTeamProfile = pathname === ROUTES.settingsTeamProfile;
 
   const isHome = pathname === ROUTES.home;
@@ -148,8 +145,6 @@ export function Header({ navRole }: HeaderProps) {
   // name of that destination; signed in it goes to the role's dashboard, so it
   // is called what the dashboard is called — the same string the visible word
   // beside it sets, and the same shape the avatar link's `aria-label` uses.
-  // This is what stops a gedu's phone-width header, where that word is
-  // `hidden`, from announcing a link to the dashboard as "School of Gaming".
   const logoLabel = logoHref === ROUTES.home ? SENDER_NAME : dashboardLabel;
 
   /**
@@ -189,7 +184,7 @@ export function Header({ navRole }: HeaderProps) {
         firstName={profile.first_name}
         registrationOwed={profile.registration_completed_at === null}
         // Carried through rather than resolved here: the menu's copy of the
-        // override governs only its own nav row (the rehoused My profile),
+        // override governs only its own nav rows (the gedu's three items),
         // exactly as this one governs only the strip.
         navRole={navRole}
       />
@@ -246,8 +241,7 @@ export function Header({ navRole }: HeaderProps) {
    * arranged so that even the rare late swap — a session the server missed —
    * moves nothing else on the strip.
    *
-   * The badge and its word make one lockup at every width, with one exception
-   * for one role, stated where it is applied.
+   * The badge and its word make one lockup at every width, for every role.
    */
   const brandText = logoHref === ROUTES.home ? (
     <SogWordmark height={15} className="text-foreground" />
@@ -255,11 +249,6 @@ export function Header({ navRole }: HeaderProps) {
     <span
       className={cn(
         "whitespace-nowrap text-base font-semibold transition-colors",
-        // A gedu's phone strip carries Substitutions, and the word and the item
-        // do not both fit at 360 or 390 (the table in the nav group below), so
-        // below `sm` a gedu's badge stands alone. The tab bar's first tab is
-        // the same destination under the same name, so nothing is lost.
-        navFor === "gedu" && "hidden sm:inline",
         isOnLogoTarget
           ? "text-act"
           : "text-muted-foreground group-hover:text-act",
@@ -277,16 +266,13 @@ export function Header({ navRole }: HeaderProps) {
     // goes to the dashboard would name the picture instead of the destination.
     // The true viewBox goes in as width/height, which is what lets `w-auto`
     // reserve the right box before the file lands.
-    //
-    // `gap-2` costs nothing when nothing is set beside it: a `display: none`
-    // (or absent) flex item creates no gap.
     <span className="flex items-center gap-2">
       <Image
         src={sogLogoSimple}
         alt=""
         width={LOGO_INTRINSIC.width}
         height={LOGO_INTRINSIC.height}
-        className="h-9 w-auto sm:h-11"
+        className="h-9 w-auto lg:h-11"
         unoptimized
       />
       {brandText}
@@ -296,7 +282,7 @@ export function Header({ navRole }: HeaderProps) {
   return (
     <>
       <SiteHeaderShell>
-        <nav className="container mx-auto flex h-full items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4">
+        <nav className="container mx-auto flex h-full items-center justify-between gap-2 px-3 lg:gap-3 lg:px-4">
           {/*
             Always a link, in every auth state — including while auth is still
             resolving, which is not a hazard here the way it is for the avatar.
@@ -342,14 +328,19 @@ export function Header({ navRole }: HeaderProps) {
             have slid sideways as that resolved; anchored to the right edge, the
             links and the account cluster cannot move at all.
 
-            Below `md` the strip carries no public links at all: the tab bar
-            (`tab-bar.tsx`, rendered below) holds them. From `md` up they are
-            here, in the bar's order — Shop, Library, Team, About — and the logo
-            is the Home / My SOG link. A gedu's own items lead the run.
+            The header has two layouts, switching at `lg` (1024px) for every
+            role. Below `lg` — phones and tablets alike — the strip is the
+            lockup, the locale picker and the account slot and nothing else, the
+            same for every role: the tab bar (`tab-bar.tsx`, rendered below)
+            carries the public destinations, and a gedu's own items are rows in
+            the account menu. From `lg` up the strip carries the nav run: a
+            gedu's Invoicing, Substitutions and My profile, then Shop, Library,
+            Team and About, every one in its whole word. The logo is the Home /
+            My SOG link at every width.
 
             Every link carries its own 44px-tall, `px-2` touch target, and the
-            group's `-ml-2` hands the outermost 8px of that padding back to the
-            space on the logo's side. Between links the group adds `gap-1`, so
+            run's `-ml-2` hands the outermost 8px of that padding back to the
+            space on the logo's side. Between links the run adds `gap-1`, so
             two nav words sit 20px apart — the same distance as the last word
             from the picker (its 8px of padding plus the 12px gap), so the nav
             and the account chrome read as one even rhythm and still as two
@@ -360,52 +351,37 @@ export function Header({ navRole }: HeaderProps) {
             block). Signed out is the live header. The signed-in rows are the
             live header with the lockup word and the gedu items written into it
             in the header's own classes, since a headless run has no session —
-            measured layout, synthesised content:
+            measured layout, synthesised content. Below `lg` only the lockup's
+            word varies, and the admin's is the longest dashboard name; from
+            `lg` up a gedu's strip is the fullest.
 
               width  who          en     fi     sv     fr    tlh
-              360    signed out  25.3   25.3   25.3   25.3   25.3
-                     parent      85.8   69.7   80.4   74.7   89.5
-                     admin       57.4   24.0   81.0   14.9  113.3
-                     gedu        48.1   61.1   85.8   91.6   84.8
-              390    signed out  55.3   55.3   55.3   55.3   55.3
-                     admin       87.4   54.0  111.0   44.9  143.3
-                     gedu        78.1   91.1  115.8  121.6  114.8
-              640    gedu       201.6  205.0  233.2  235.4  235.4
-              768    signed out 134.4  121.7  112.3   40.3   96.2
-                     admin      166.5  120.4  168.1   29.9  184.2
-                     gedu        82.8   67.0   93.1   21.1   84.9
-              1024   admin      422.5  376.4  424.1  285.9  440.2
-                     gedu       166.0  139.3  164.0   17.9  149.2
-              1280   gedu       422.0  395.3  420.0  273.9  405.2
+              360    signed out  33.3   33.3   33.3   33.3   33.3
+                     admin       65.4   32.0   89.0   22.9  121.3
+              390    signed out  63.3   63.3   63.3   63.3   63.3
+                     admin       95.4   62.0  119.0   52.9  151.3
+              768    signed out 420.3  426.3  419.3  421.3  413.3
+                     admin      452.4  425.0  475.0  410.9  501.3
+              1024   signed out 398.7  385.7  376.7  304.7  360.7
+                     gedu       174.2  147.1  171.8   26.1  156.9
+              1280   signed out 654.7  641.7  632.7  560.7  616.7
+                     gedu       430.2  403.1  427.8  282.1  412.9
 
-            (A gamer's strip is a parent's. Every width from 360 to 1440 clears
-            in every locale; the rows left out are roomier than the ones shown.)
-
-            Three decisions fall out of it, and none is decoration:
-
-            - **A gedu's badge stands alone below `sm`.** Substitutions is on the
-              strip at every width, and beside it the "My SOG" word does not fit
-              at 360 or 390 in English or Finnish (English is 22px short at
-              360). The tab bar's first tab carries the same word to the same
-              place.
-            - **Substitutions sets its short form below `lg`.** Only French has
-              one ("Rempl."), and it is what carries a French gedu's `md` strip
-              (Substitutions plus four public links) clear at 21.1px; the whole
-              word, 68px wider, does not fit there. The accessible name is the
-              whole word at every width.
-            - **My profile and Invoicing join at `lg`, together.** At `md` the
-              public links take the room, and adding My profile there overflows
-              French; at `lg` all three gedu items and all four public links fit
-              in every locale, French last at 17.9px. Below `lg` both are rows
-              in the account menu.
+            (1023 measures as 768 and 1440 as 1280: the container's width
+            steps at those breakpoints. A parent's, gamer's or gedu's lockup
+            word below `lg` is "My SOG", shorter than the admin's. Every width
+            from 360 to 1440 clears in every locale, with no document
+            overflow.) The tightest cases are a French admin at 360 ("Tableau
+            de bord") and a French gedu at 1024 (three gedu items and four
+            public links), clearing by 23 and 26px.
 
             **Do not add an item without redoing this table, per locale.**
             `NAV_LINK_CLASS`'s `whitespace-nowrap` is there so that the next word
             that does not fit overflows visibly instead of wrapping quietly
             inside its own box.
           */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="-ml-2 flex items-center gap-1">
+          <div className="flex items-center gap-2 lg:gap-3">
+            <div className="-ml-2 hidden items-center gap-1 lg:flex">
               {/*
                 First in the run, per the owner: a gedu's own destinations sit
                 left of the public ones.
@@ -419,71 +395,47 @@ export function Header({ navRole }: HeaderProps) {
                 the right-packed-run case of the late-arriving-mark rule, and the
                 order is therefore load-bearing: putting a gedu item anywhere else
                 in the run would push the links after it sideways.
-
-                Invoicing and My profile join from `lg`; below it each is a row
-                in the account menu, which hides the row at exactly the
-                breakpoint written here.
               */}
-              {showsSubstitutions && (
-                <Link
-                  href={ROUTES.gedu.invoicing}
-                  className={cn(
-                    NAV_LINK_CLASS,
-                    "hidden lg:inline-flex",
-                    isOnInvoicing ? "text-act" : "text-muted-foreground",
-                  )}
-                  aria-current={isOnInvoicing ? "page" : undefined}
-                >
-                  {t("invoicing")}
-                </Link>
-              )}
-              {showsSubstitutions && (
-                <Link
-                  href={ROUTES.gedu.substitutions}
-                  className={cn(
-                    NAV_LINK_CLASS,
-                    isOnSubstitutions ? "text-act" : "text-muted-foreground",
-                  )}
-                  aria-current={isOnSubstitutions ? "page" : undefined}
-                  // The visible word is a locale's short form below `lg`, and in
-                  // French that is an abbreviation. A screen reader must never be
-                  // handed it, so the accessible name is stated here and is the
-                  // whole word at every width, in every locale.
-                  aria-label={t("nav.substitutions")}
-                >
-                  {/* Two spans in every locale, not one per locale that needs it:
-                      four of the five set the same word in both keys, and the
-                      uniform pair is what keeps this component free of any
-                      per-locale branch. */}
-                  <span className="lg:hidden">{t("nav.substitutionsShort")}</span>
-                  <span className="hidden lg:inline">
+              {showsGeduItems && (
+                <>
+                  <Link
+                    href={ROUTES.gedu.invoicing}
+                    className={cn(
+                      NAV_LINK_CLASS,
+                      isOnInvoicing ? "text-act" : "text-muted-foreground",
+                    )}
+                    aria-current={isOnInvoicing ? "page" : undefined}
+                  >
+                    {t("invoicing")}
+                  </Link>
+                  <Link
+                    href={ROUTES.gedu.substitutions}
+                    className={cn(
+                      NAV_LINK_CLASS,
+                      isOnSubstitutions ? "text-act" : "text-muted-foreground",
+                    )}
+                    aria-current={isOnSubstitutions ? "page" : undefined}
+                  >
                     {t("nav.substitutions")}
-                  </span>
-                </Link>
+                  </Link>
+                  <Link
+                    href={ROUTES.settingsTeamProfile}
+                    className={cn(
+                      NAV_LINK_CLASS,
+                      isOnTeamProfile ? "text-act" : "text-muted-foreground",
+                    )}
+                    aria-current={isOnTeamProfile ? "page" : undefined}
+                  >
+                    {t("teamProfile")}
+                  </Link>
+                </>
               )}
-              {/* Between Substitutions and the public links, per the owner, and
-                  part of the same gedu-only leading run. */}
-              {showsTeamProfile && (
-                <Link
-                  href={ROUTES.settingsTeamProfile}
-                  className={cn(
-                    NAV_LINK_CLASS,
-                    isOnTeamProfile ? "text-act" : "text-muted-foreground",
-                    "hidden lg:inline-flex",
-                  )}
-                  aria-current={isOnTeamProfile ? "page" : undefined}
-                >
-                  {t("teamProfile")}
-                </Link>
-              )}
-              {/* From `md` up only: below it the tab bar carries them. */}
               {publicDestinations.map((destination) => (
                 <PublicDestinationLink
                   key={destination.key}
                   destination={destination}
                   className={cn(
                     NAV_LINK_CLASS,
-                    "hidden md:inline-flex",
                     destination.isActive ? "text-act" : "text-muted-foreground",
                   )}
                 >
@@ -495,7 +447,7 @@ export function Header({ navRole }: HeaderProps) {
             {/* The settings cog used to sit here, ahead of the picker. It is now
                 a row in the account menu: one affordance behind the avatar rather
                 than two icons competing for the narrowest part of the strip. */}
-            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <div className="flex shrink-0 items-center gap-2 lg:gap-3">
               <LocalePicker />
               {accountSlot}
             </div>
