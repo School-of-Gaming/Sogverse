@@ -30,14 +30,14 @@ child.** Conversion to a paying club is the measure, not time on page.
   of its own (cut one from the branch to work on it). All public-pages work lands there,
   and the branch merges into `dev` when the owner decides, not after each change. This doc
   is newest on that branch; `dev` holds an older copy.
-- **On the branch so far:** the first round of the home page: a concrete hero, parent
-  testimonials and a safety section (see Home). Reviewed by an independent agent, every
-  finding fixed, `npm run gates` passing.
-- **Waiting on others:** the rest of Sonja's images (the first delivery is in, see Assets);
-  a native Swedish and French check of the branch's new strings.
-- **Next:** the trust and discoverability work below, starting with the two navigation
-  prototypes; About (a button to Clubs, the FAQ reordered by what parents ask first)
-  folds into it.
+- **On the branch so far:** the home page's first round (a concrete hero, parent
+  testimonials, a safety section); the first real media on Home and About; the phone tab
+  bar and the header around it; "Find a club" to the unfiltered shop. The home round, the tab
+  bar and the media were each reviewed by an independent agent and the findings fixed.
+- **Being built now:** the Team page. **Next:** the Library. About (a button to Clubs,
+  the FAQ reordered by what parents ask first) folds into that work.
+- **Waiting on others:** the rest of Sonja's images (see Assets); a native Swedish and
+  French check of the branch's new strings.
 
 ## Who reads these pages
 
@@ -106,25 +106,25 @@ The failure this division corrects: today the home page makes general claims and
 page holds the facts that would prove them, written as precise reference text rather than
 as a case to a parent.
 
-## Current state (reviewed 2026-09-25)
+## Current state
 
-Reviewed from the live page text, the repo source, and headless screenshots of production
-at 1440×900 (desktop) and 390×844 (phone), English and Finnish. The site renders its dark
-theme whatever colour scheme the browser asks for, so there is one look to judge, not two.
-The Finnish pages were captured but only checked for layout, not for copy.
+Home and About describe the project branch as of 2026-10-01. The shop and the cookie
+banner figures come from the 2026-09-25 review of production: the live page text, the
+repo source, and headless screenshots at 1440×900 (desktop) and 390×844 (phone), English
+and Finnish, the Finnish checked for layout only. The site renders its dark theme whatever
+colour scheme the browser asks for, so there is one look to judge, not two.
 
-**Across all three pages, on a first visit:** the cookie banner is a fixed bottom bar
-covering 17% of a desktop screen (20% in Finnish) and **43% of a phone screen (48% in
-Finnish)**. On a phone it hides About's and the shop's first screen below the heading,
-and on the home page everything under the hero's button. What the banner must say is a
-privacy decision and is not this project's to cut, but how much of a phone it covers is a
-layout decision.
+**Across all three pages, on a first visit (production, 2026-09-25):** the cookie banner
+is a fixed bottom bar covering 17% of a desktop screen (20% in Finnish) and **43% of a
+phone screen (48% in Finnish)**. On a phone it hides About's and the shop's first screen
+below the heading, and on the home page everything under the hero's button. What the
+banner must say is a privacy decision and is not this project's to cut, but how much of a
+phone it covers is a layout decision.
 
 ### Home
 
-Rewritten 2026-09-25 on the project branch (the first round of the proposed structure
-below); this describes that branch's page. Order: hero, one testimonial,
-the features, safety, three more testimonials, "How it works", the closing card.
+Order: hero, one testimonial, the features, safety, three more testimonials, "How it
+works", the closing card.
 
 **Works:**
 
@@ -135,10 +135,17 @@ the features, safety, three more testimonials, "How it works", the closing card.
   reader signed in or not, with the risk reversal directly under it: cancel any time at
   no cost, 30-day money-back guarantee. The closing card repeats that button and line, so
   the page opens and closes on the same ask.
+- **The hero runs over the "Calm" loop**, a silent Minecraft build behind the scrim, with
+  the subhead and trust line in the foreground ink. The media, its pipeline and its
+  clearance are in `src/assets/marketing/CLAUDE.md`; the scrim exemption is recorded in
+  `packages/sog-ui/src/tokens/surfaces.ts`. The loop never sizes the hero, so the phone's
+  first-screen budget (button and trust line above the fold once the banner is
+  dismissed) is set by the text alone.
 - **Proof:** T4 sits large under the hero; T13 and T12 sit beside the safety facts; T5, T3
   and T2 form a row further down. Role and country only, in the serif italic. Each quote
   takes an optional image beside it, so photos can arrive without restructuring.
-- **Safety is five checkable facts**, each worded from the About FAQ, and the section
+- **Safety is five checkable facts beside a photo of a club**, the in-person club in
+  Lauttasaari, each fact worded from the About FAQ, and the section
   links to the FAQ: we require every Gedu to show a criminal record extract before
   certification (a requirement, not an enforced outcome: certification does not wait on
   the check, and older Gedus were certified before it was recorded); no private
@@ -149,8 +156,10 @@ the features, safety, three more testimonials, "How it works", the closing card.
 
 **Costs conversions:**
 
-- **No imagery at all.** Text, icons and three numbered circles. A parent cannot picture a
-  lesson with a live Game Educator from prose.
+- **No lesson is shown.** The hero loop is a game build and the safety photo is a room; a
+  parent still cannot see a Game Educator leading a lesson, what a lesson looks like on
+  screen, or a session report (all on the asset list). The shop's club cards carry bright
+  in-game scenes the home page does not use.
 - **No numbers or partners.** The scale on the legacy site (100 municipalities, 250
   schools) is not mentioned, and no headline number is cleared to publish.
 - **The differentiators are still only shop listings**: neuroinclusive clubs,
@@ -159,20 +168,12 @@ the features, safety, three more testimonials, "How it works", the closing card.
 - **Skills are unnamed.** "Designed to build real skills" never says which.
 - **Step 1 of "How it works" is still "Create your account"**, though every button now
   leads to the shop first.
-- **The route to About left the hero** with the banned "Learn more about us"; the page
-  reaches About only through the safety section's FAQ link and the header.
+- **The hero has no route to About**; the page reaches About only through the safety
+  section's FAQ link and the navigation.
 
-**How it looks** (screenshots 2026-09-25 of the branch served locally, same capture
-settings as production's; re-pull by pointing the capture script at a preview):
-
-- **Desktop:** about 4,500 px (English), five screens. The hero, button and trust line
-  clear the cookie banner at 1440×900.
-- **Phone:** about 6,250 px in English and 6,600 in Finnish. The hero's top padding is cut
-  and the subhead is smaller, so at 390×844 the headline, subhead, button and trust line
-  are all on the first screen once the banner is dismissed; with the banner up, the button
-  still shows above it and the trust line is covered.
-- **The shop already has the imagery the home page lacks:** every club card carries a
-  bright in-game scene. The home page uses none of it.
+**How it looks:** not re-measured since the media landed. The 2026-09-25 page heights
+(before the loop and the photo) are no longer current; re-pull with the
+`page-screenshots` skill's `public-pages` preset.
 
 ### About
 
@@ -188,6 +189,8 @@ accurately.
 - Weekly challenges between lessons, holiday camps, community events and tournaments.
 - The gamer's oath, which the Guidebook calls one of our strongest and most under-used
   assets.
+- **Real photos:** two of the team beside the mission, and the Lauttasaari studio,
+  captioned, under "How our clubs work".
 
 **Costs conversions:**
 
@@ -200,15 +203,15 @@ accurately.
   Skills first, if at all.
 - **The Princi-Pal quote** opens the page with a character a new visitor has not met.
 - **The page is a dead end.** It has no call to action anywhere: after the Yty section
-  comes the footer. A parent convinced by the FAQ has to find "Shop" in the header.
+  comes the footer. A parent convinced by the FAQ has to find "Shop" in the navigation.
 - **The FAQ opens with the least useful questions.** "What is Sogverse?" and "Is this
   school?" come first; cost, cancelling, vetting and "can strangers talk to my child?" sit
   at positions 7–12 of 16.
 
-**How it looks:** 5,728 px on desktop, 8,300 px on a phone. It has no imagery.
+**How it looks** (2026-09-25, before the photos; page heights from then are no longer
+current):
 - **Desktop:** the four value cards have unequal content, so "Family in the loop" is half
-  empty beside the long safety card. "How our clubs work" and "For parents" are plain
-  paragraphs with no visual break between them.
+  empty beside the long safety card.
 - **Phone:** the first screen is the page title, an eight-line subhead that repeats the
   home page, and the Princi-Pal quote. The section pill (About / FAQ / Yty) is the only
   navigation aid.
@@ -254,15 +257,13 @@ exactly the facts a parent compares.
 
 **Proposed 2026-09-25, not yet decided.** Order follows the Guidebook: hero, facts, story.
 
-1. **Hero:** keep the headline. One concrete subhead (weekly online clubs for ages 7–17,
-   a Game Educator in every lesson, from €59 per month). Primary call to action "Find a
-   club". Under it: cancel anytime, 30-day money-back guarantee. A real lesson visual.
-2. **The emotional proof:** the "quiet and shy boy" testimonial (T4), large.
+1. **Hero:** built (see Home), except a real lesson visual: the loop is a game build.
+2. **The emotional proof:** built, T4 large under the hero.
 3. **What a lesson is:** 90 minutes, the Gedu greets the group, a story-driven adventure
    over voice, a written report to the parent afterwards.
 4. **What they grow:** the Human Skills, named plainly, with the programming testimonials
    (T6, T7).
-5. **Safety you can check:** the concrete facts from About, the Gedu vetting, T13 and T14.
+5. **Safety you can check:** built with T13 and T12; T14 is unused.
 6. **Find the right club:** tiles for neuroinclusive and small groups (T3), language
    (T1, T2), programming and game-making, in person, camps; each opens a filtered shop.
 7. **You stay involved:** lesson reports with photos, parent game education (T8).
@@ -312,22 +313,17 @@ Sogverse needs checking at phone width for the same reason: long compounds.
 and LLMs.** Home, About, the Library and a Team page are one piece of work, along with how a
 parent reaches them. Four workstreams, built on the project branch.
 
-1. **The way in.** **Decided (owner, 2026-10-01): a bottom tab bar on phones**, chosen
-   over a "Menu" sheet after trying both on the branch. It is on every page with the
-   header, for every role: the reader's home (the home page signed out, their dashboard
-   signed in, the logo's destination), Shop, Library, Team and About. It freed the phone
-   header for the wordmark or "My SOG" beside the badge; from `md` up the four links sit
-   in the header. The rules are in `src/components/layout/CLAUDE.md`. **Decided:** a
-   signed-in reader never reaches the home page; the logo, the first tab and the bare
-   address all mean their dashboard. **Proposed:** the footer becomes a site map, and the
-   pages link to one another through their content (home to Team and Library, FAQ
-   answers to articles, articles to the shop).
-2. **Images and video on Home and About** (see Assets). **Proposed:** the hero loop served
-   from our own origin as a muted, looping MP4/WebM of a few MB each, with the still as
-   its poster and the still alone under reduced motion; no third-party player, so no
-   consent change and no new CSP host. Photos are resized from the masters and imported
-   statically through the image optimiser.
-3. **The Library, launched.** Its public pages exist, readable signed out, but are
+1. **The way in.** Built: the phone tab bar and the header around it; the rules are in
+   `src/components/layout/CLAUDE.md`. **Decided (owner, 2026-10-01):** a signed-in reader
+   never reaches the home page; the logo, the first tab and the bare address all mean
+   their dashboard. **Proposed:** the footer becomes a site map, and the pages link to one
+   another through their content (home to Team and Library, FAQ answers to articles,
+   articles to the shop).
+2. **Images and video on Home and About.** Built: the hero loop, the club photo in the
+   safety section, the team and studio photos on About, all self-hosted; the pipeline and
+   clearance are in `src/assets/marketing/CLAUDE.md`. More follows as Sonja delivers (see
+   Assets).
+3. **The Library, launched. Next, after the Team page.** Its public pages exist, readable signed out, but are
    `noindex` and linked from nowhere until this pass. **Decided (owner, 2026-10-01):**
    - **An article has a version per language** (title, summary, body), which the data
      model does not hold today; an untranslated locale falls back to English.
@@ -340,7 +336,7 @@ parent reaches them. Four workstreams, built on the project branch.
    1600×900) serve as the share image as they do now, close enough to the 1.91:1 card
    that platforms crop only slightly; sitemap entries with the real publish dates,
    `hreflang` across the versions that exist, and the articles listed in `llms.txt`.
-4. **The Team page.** Profiles, the editor and admin approval exist; nothing public reads
+4. **The Team page. Being built now on the branch.** Profiles, the editor and admin approval exist; nothing public reads
    them, and the photo bucket is private. **Decided (owner, 2026-10-01):**
    - **Admin approval is all a profile needs to go public.** A Gedu on the platform has
      already agreed to this; the "ready" checkbox says the profile is ready, nothing more.
@@ -401,16 +397,13 @@ decided.**
   identifiable child and Gedu, test accounts in screenshots, originals at least 2400 px
   wide with room to crop both ways, and working on the dark background. Her answers on the
   legacy video and photos are pending.
-- **Delivered 2026-10-01** (her "Sogverse - Visuals" doc; the files sit outside the repo
-  on the owner's machine until each is placed): the hero loop "Calm" (a silent Minecraft
-  city build, as three `.mov` crops: horizontal wide, horizontal close, vertical; 250 MB
-  together, so each needs a web encode) and its still (1920×1080); category stills at
-  2400×1350 for Roblox Studio, Fortnite (a sword fight from a video; she plans a better
-  round) and camps (placeholder); two 3360×2240 photos, a live club in Lauttasaari with a
-  Gedu and the empty room (to be reshot in the new office); and a team photo of two staff
-  at an event stand, only 675 px wide. **Cleared to publish (owner, 2026-10-01):** the
-  staff shown have consented, and no child's face is visible in the club photo; one boy
-  is in small side profile in its back row, so a tight crop can leave him out.
+- **Delivered 2026-10-01** (her "Sogverse - Visuals" doc). Placed and cleared: the "Calm"
+  hero loop, the club photo, the studio photo and the team photo (masters and clearance
+  in `src/assets/marketing/CLAUDE.md`). Not yet placed, masters on the owner's machine:
+  the loop's 1920×1080 still, and category stills at 2400×1350 for Roblox Studio,
+  Fortnite (a sword fight from a video; she plans a better round) and camps
+  (placeholder). The studio photo is to be reshot in the new office, and the team photo is
+  only 675 px wide.
 - **Still to come from her:** a Gedu greeting the group in a voice room, a parent and
   child at the screen, one image per club category (staged with in-game characters),
   portraits, Library images once topics are listed, and in time a higher-resolution
@@ -465,7 +458,8 @@ and has lost its rating digit to a missing glyph; the English card says a summer
       numbers safe to publish are still needed.
 - [ ] Testimonials: resolve T9; ask for the child's age where it can still be had.
 - [ ] Shop: review the product detail page and the enrolment panel at both widths.
-- [ ] Cookie banner on phones: bring its footprint down from 43–48% of the first screen.
+- [ ] Cookie banner on phones: bring its footprint down from 43–48% of the first screen
+      (production, 2026-09-25).
       A layout change (spacing, type size, the three buttons compact but equally
       weighted) is safe. Rewording is not this project's call: per
       `src/components/consent/CLAUDE.md`, a change to what the visitor agrees to forces a
@@ -509,3 +503,4 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-10-01 | The hero loop takes no game-screenshot window frame; whether the frame applies to other in-game screenshots on the website is decided when one arrives (owner). |
 | 2026-10-01 | Sonja's first images are cleared to publish: the staff shown consented, and no child's face is visible (owner). |
 | 2026-10-01 | "Find a club" opens the shop unfiltered: clubs lead the list, and camps and events follow without touching a filter (owner). |
+| 2026-10-01 | French phone tab shows "Biblio" for the Library (owner, native-speaker check). |

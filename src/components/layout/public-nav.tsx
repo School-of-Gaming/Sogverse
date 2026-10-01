@@ -44,7 +44,14 @@ const HREFS: Record<PublicDestinationKey, string> = {
 
 export interface PublicDestination {
   key: PublicDestinationKey;
+  /** The whole word: the strip's label, and the accessible name everywhere. */
   label: string;
+  /**
+   * The word the tab bar shows. The same as `label` unless a locale's word
+   * does not fit a phone tab (French "Bibliothèque"), per the short-label rule
+   * in this directory's `CLAUDE.md`.
+   */
+  shortLabel: string;
   icon: LucideIcon;
   isActive: boolean;
 }
@@ -68,9 +75,14 @@ export function usePublicDestinations(pathname: string): PublicDestination[] {
     team: t("nav.team"),
     about: t("nav.about"),
   };
+  const shortLabels: Record<PublicDestinationKey, string> = {
+    ...labels,
+    library: t("nav.libraryShort"),
+  };
   return ORDER.map((key) => ({
     key,
     label: labels[key],
+    shortLabel: shortLabels[key],
     icon: ICONS[key],
     isActive: isAtOrUnder(pathname, HREFS[key]),
   }));

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import en from "@/../messages/en.json";
+import fr from "@/../messages/fr.json";
 import { Header } from "@/components/layout/header";
 import type { UserRole } from "@/lib/constants";
 
@@ -12,7 +13,8 @@ import type { UserRole } from "@/lib/constants";
  * on who is looking (Home signed out, the role's dashboard under the header's
  * own name signed in), and where it says the reader is — the first tab on
  * exactly the pages the logo is current on, a public tab on its page and
- * every page beneath it.
+ * every page beneath it — and that a tab may show a short word while its
+ * accessible name stays the whole one.
  */
 
 const mockPathname = vi.hoisted(() => vi.fn<() => string>());
@@ -61,21 +63,24 @@ function signedOut(isLoading = false) {
   mockAuth.mockReturnValue({ user: null, profile: null, isLoading });
 }
 
-function renderAt(pathname: string) {
+function renderAt(pathname: string, messages: typeof en | typeof fr = en) {
   mockPathname.mockReturnValue(pathname);
   return render(
-    <NextIntlClientProvider locale="en" messages={en}>
+    <NextIntlClientProvider
+      locale={messages === fr ? "fr" : "en"}
+      messages={messages}
+    >
       <Header />
     </NextIntlClientProvider>,
   );
 }
 
-function bar(): HTMLElement {
-  return screen.getByRole("navigation", { name: en.header.nav.tabBar });
+function bar(messages: typeof en | typeof fr = en): HTMLElement {
+  return screen.getByRole("navigation", { name: messages.header.nav.tabBar });
 }
 
-function tabs(): HTMLElement[] {
-  return within(bar()).getAllByRole("link");
+function tabs(messages: typeof en | typeof fr = en): HTMLElement[] {
+  return within(bar(messages)).getAllByRole("link");
 }
 
 function tabNames(): (string | null)[] {
@@ -211,5 +216,39 @@ describe("Tab bar — where it says the reader is", () => {
     signedInAs("customer");
     renderAt("/");
     expect(currentTabs()).toEqual([]);
+  });
+});
+
+describe("Tab bar — short labels", () => {
+  it("shows French Library as its short word, named by the whole word", () => {
+    signedOut();
+    renderAt("/", fr);
+
+    const library = tabs(fr)[2];
+    expect(fr.header.nav.libraryShort).not.toBe(fr.header.nav.library);
+    expect(library.textContent).toBe(fr.header.nav.libraryShort);
+    expect(library.getAttribute("aria-label")).toBe(fr.header.nav.library);
+    expect(
+      within(bar(fr)).getByRole("link", { name: fr.header.nav.library }),
+    ).toBe(library);
+  });
+
+  it("keeps the whole word on the header strip", () => {
+    signedOut();
+    renderAt("/", fr);
+
+    const stripLibrary = within(screen.getByRole("banner")).getByRole("link", {
+      name: fr.header.nav.library,
+    });
+    expect(stripLibrary.textContent).toBe(fr.header.nav.library);
+  });
+
+  it("names every public tab by its whole word", () => {
+    signedOut();
+    renderAt("/");
+
+    expect(tabs().slice(1).map((tab) => tab.getAttribute("aria-label"))).toEqual(
+      PUBLIC_TABS,
+    );
   });
 });

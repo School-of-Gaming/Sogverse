@@ -33,8 +33,8 @@ function TabBody({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
       <Icon className="h-5 w-5 shrink-0" aria-hidden />
       {/* `truncate` rather than a wrap: at 360px a tab is 72px wide, and a word
           that does not fit (the admin's "Dashboard" in French or Finnish) ends
-          in an ellipsis on one line. The text node is still the whole word, so
-          the link's accessible name is too. */}
+          in an ellipsis on one line. A public tab may show its short label
+          (French "Biblio"); its link's `aria-label` is always the whole word. */}
       <span className="max-w-full truncate text-[11px] font-medium leading-tight">
         {label}
       </span>
@@ -93,12 +93,16 @@ export function TabBar({
           <Tab key={destination.key}>
             <PublicDestinationLink
               destination={destination}
+              aria-label={destination.label}
               className={cn(
                 TAB_CLASS,
                 destination.isActive ? "text-act" : "text-muted-foreground",
               )}
             >
-              <TabBody icon={destination.icon} label={destination.label} />
+              <TabBody
+                icon={destination.icon}
+                label={destination.shortLabel}
+              />
             </PublicDestinationLink>
           </Tab>
         ))}
