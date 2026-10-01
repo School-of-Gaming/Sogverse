@@ -95,10 +95,10 @@ export interface AdminTeamProfile extends TeamProfileCommon {
  * A Gedu. Two differences from an admin, both in the type rather than in the
  * render, so a Gedu's page cannot show them by accident:
  *
- * - **No last name.** Whether a Gedu's surname belongs on a public page is
- *   the owner's open decision; until it is made, a Gedu profile has nowhere to
- *   carry one, so the data shell cannot hand one over. Reversing it is a field
- *   here, not a rule in the render.
+ * - **No last name.** A Gedu is public by first name and gamer tag (owner,
+ *   2026-10-01), so a Gedu profile has nowhere to carry a surname and the data
+ *   shell cannot hand one over. Reversing it is a field here, not a rule in the
+ *   render.
  * - **No free title.** Their title is the role, "Gedu", glossed on this page
  *   because it is public and the word is never used cold.
  */
