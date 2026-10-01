@@ -1,6 +1,7 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import {
   productJsonLd,
+  weekdayOccurrences,
   type ProductJsonLdSubject,
 } from "@/lib/products/product-json-ld";
 
@@ -98,6 +99,7 @@ describe("productJsonLd", () => {
         "@type": "Organization",
         "@id": `${SITE}/#organization`,
         name: "School of Gaming",
+        url: SITE,
       },
       hasCourseInstance: {
         "@type": "CourseInstance",
@@ -105,7 +107,9 @@ describe("productJsonLd", () => {
         courseSchedule: [
           {
             "@type": "Schedule",
-            repeatFrequency: "P1W",
+            repeatFrequency: "Weekly",
+            // Every Wednesday from Tue 1 Sep to Tue 15 Dec 2026.
+            repeatCount: 15,
             byDay: "https://schema.org/Wednesday",
             startTime: "17:00:00",
             duration: "PT60M",
@@ -116,6 +120,26 @@ describe("productJsonLd", () => {
         ],
       },
     });
+  });
+
+  it("states no repeat count for an open-ended club, since it has none", () => {
+    const course = build(product({ end_date: null }));
+
+    expect(course).toMatchObject({
+      hasCourseInstance: {
+        courseSchedule: [{ repeatFrequency: "Weekly", startDate: "2026-09-01" }],
+      },
+    });
+    const json = JSON.stringify(course);
+    expect(json).not.toContain("repeatCount");
+    expect(json).not.toContain("endDate");
+  });
+
+  it("emits no Course for a club whose page shows no description", () => {
+    const [translation] = product().product_translations;
+    expect(
+      build(product({ product_translations: [{ ...translation, short_description: "" }] })),
+    ).toBeNull();
   });
 
   it("names an onsite club's place as the page does", () => {
@@ -149,16 +173,53 @@ describe("productJsonLd", () => {
       startDate: "2027-06-07",
       endDate: "2027-06-11",
       eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-      location: { "@type": "Place", name: "Tapiolan koulu" },
-      organizer: { "@id": `${SITE}/#organization` },
+      location: {
+        "@type": "Place",
+        name: "Tapiolan koulu",
+        address: { "@type": "PostalAddress", addressLocality: "Espoo" },
+      },
+      organizer: { "@id": `${SITE}/#organization`, name: "School of Gaming", url: SITE },
       offers: { price: "49.00", priceCurrency: "EUR", category: "Paid" },
     });
     expect(camp).not.toHaveProperty("hasCourseInstance");
   });
 
-  it("puts an online event at its page", () => {
-    expect(build(product({ product_type: "event", end_date: null }))).toMatchObject({
+  it("states a camp with no description without one, rather than an empty one", () => {
+    const [translation] = product().product_translations;
+    const camp = build(
+      product({
+        product_type: "camp",
+        product_translations: [{ ...translation, short_description: "" }],
+      }),
+    );
+
+    expect(camp).toMatchObject({ "@type": "Event", name: "Minecraft club" });
+    expect(camp).not.toHaveProperty("description");
+  });
+
+  it("states a timed event as an instant in the product's timezone, ending its slot's length later", () => {
+    const event = build(
+      product({
+        product_type: "event",
+        start_date: "2026-11-14",
+        end_date: "2026-11-14",
+        schedule_slots: [{ weekday: 5, start_time: "12:00:00", duration_minutes: 90 }],
+      }),
+    );
+
+    expect(event).toMatchObject({
       "@type": "Event",
+      startDate: "2026-11-14T12:00:00+02:00",
+      endDate: "2026-11-14T13:30:00+02:00",
+    });
+  });
+
+  it("puts an online event at its page", () => {
+    expect(
+      build(product({ product_type: "event", end_date: "2026-09-01", schedule_slots: [] })),
+    ).toMatchObject({
+      "@type": "Event",
+      startDate: "2026-09-01",
       eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
       location: { "@type": "VirtualLocation", url: `${SITE}${PATH}` },
     });
@@ -185,5 +246,23 @@ describe("productJsonLd", () => {
 
     expect(json).not.toContain("availability");
     expect(json).not.toContain("seat");
+  });
+});
+
+describe("weekdayOccurrences", () => {
+  it("counts a weekday across a range, both ends included", () => {
+    // Tue 1 Sep – Tue 15 Dec 2026.
+    expect(weekdayOccurrences("2026-09-01", "2026-12-15", 1)).toBe(16);
+    expect(weekdayOccurrences("2026-09-01", "2026-12-15", 2)).toBe(15);
+  });
+
+  it("counts a range shorter than a week", () => {
+    expect(weekdayOccurrences("2026-09-01", "2026-09-01", 1)).toBe(1);
+    expect(weekdayOccurrences("2026-09-01", "2026-09-01", 2)).toBe(0);
+  });
+
+  it("counts across a daylight-saving change with no drift", () => {
+    // Europe's clocks go back on Sun 25 Oct 2026; calendar dates do not care.
+    expect(weekdayOccurrences("2026-10-19", "2026-11-01", 6)).toBe(2);
   });
 });

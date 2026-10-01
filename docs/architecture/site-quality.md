@@ -153,7 +153,11 @@ Each one exists to make the posture above hold by construction rather than by me
   whose weekly `courseSchedule` is the club's slots in its own timezone — or an `Event`
   for a camp or an event, naming the `Organization` as provider or organizer. A product
   block states the price but never seats or availability: those are live, and a stale
-  "available" in a search result is worse than none. **Rule: a structured
+  "available" in a search result is worse than none. A club whose page shows no short
+  description emits no `Course`. Google retired its Course info rich result in 2025, so the
+  `Course` serves other schema.org readers only; an `Event` still qualifies for Google's
+  event results. An in-person `Event`'s address is the municipality the page names, because
+  a site's street address is staff data and the page never shows it. **Rule: a structured
   data block reads the same source as the visible page** — the same message keys, the
   same prefetched rows — so it can never assert something the page does not show, and
   only the shop's listing can reach the `ItemList` because only that is ever prefetched

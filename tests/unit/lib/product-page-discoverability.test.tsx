@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Children, isValidElement } from "react";
+import { Children, Suspense, isValidElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ResolvedMetadata } from "next";
 import {
@@ -11,7 +11,7 @@ import {
 } from "../../mocks/postgrest-fetch";
 
 /**
- * **A product page as crawlers meet it** (`docs/architecture/discoverability.md`):
+ * **A product page as crawlers meet it** (`docs/architecture/site-quality.md`):
  * promoted while its product is on the shop's listing, `noindex` otherwise —
  * an unlisted product, an ended one, a municipality club and anything read
  * through the `/schools` tree — and reachable by its direct link either way.
@@ -136,6 +136,34 @@ function respond(input: Parameters<typeof fetch>[0]): Response {
   return postgrestJson(DETAIL_ROW);
 }
 
+/** Which reads have been asked for so far, by what they select. */
+function requestedSelects(): string[] {
+  return fetchMock.mock.calls.map((call) => {
+    const select = requestedUrl(call[0]).searchParams.get("select") ?? "";
+    if (select.startsWith("id,start_date")) return "listing";
+    if (select.startsWith("image_path")) return "card";
+    return "detail";
+  });
+}
+
+/**
+ * Holds the listing check's answer until released, so a test can see which
+ * other reads were already started while it was outstanding.
+ */
+function holdListing(): { release: () => void } {
+  let release = () => {};
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  fetchMock.mockImplementation(async (input) => {
+    if (requestedUrl(input).searchParams.get("select")?.startsWith("id,start_date")) {
+      await gate;
+    }
+    return respond(input);
+  });
+  return { release };
+}
+
 // The layout's resolved metadata, which the card reads only for a product with
 // no picture of its own. The product here has one, so this never settles —
 // and a builder that started reading it would hang the test rather than pass.
@@ -211,6 +239,20 @@ describe("buildProductMetadata", () => {
     expect(metadata.alternates?.canonical).toBe(`/en/shop/${ID}`);
   });
 
+  it("names the language of the words on the card as og:locale, not the URL's", async () => {
+    mocks.locale.current = "sv";
+    expect((await buildProductMetadata(ID, parent, true)).openGraph).toMatchObject({
+      locale: "en",
+      title: "Minecraft club",
+    });
+
+    mocks.locale.current = "fi";
+    expect((await buildProductMetadata(ID, parent, true)).openGraph).toMatchObject({
+      locale: "fi",
+      title: "Minecraft-kerho",
+    });
+  });
+
   it("keeps a product that is not promoted noindex, with no alternates and its own card", async () => {
     const metadata = await buildProductMetadata(ID, parent, false);
 
@@ -227,6 +269,19 @@ describe("the shop product route", () => {
     );
     const metadata = await generateMetadata({ params: Promise.resolve({ id: ID }) }, parent);
     expect(metadata.robots).toBeUndefined();
+  });
+
+  it("starts the listing check and the card's read together", async () => {
+    const held = holdListing();
+    const { generateMetadata } = await import(
+      "@/app/[locale]/(public)/shop/[id]/page"
+    );
+    const pending = generateMetadata({ params: Promise.resolve({ id: ID }) }, parent);
+
+    await vi.waitFor(() => expect(requestedSelects()).toContain("card"));
+    expect(requestedSelects()).toContain("listing");
+    held.release();
+    expect((await pending).robots).toBeUndefined();
   });
 
   it("keeps an unlisted product noindex", async () => {
@@ -251,6 +306,21 @@ describe("the shop product route", () => {
         (child) => isValidElement(child) && child.type === ProductDetailPage,
       ),
     ).toBe(true);
+  });
+
+  it("puts the structured data behind its own Suspense boundary, so the shell does not wait on it", async () => {
+    const page = await ShopProductDetailPage({
+      params: Promise.resolve({ id: ID }),
+    });
+
+    const boundary = Children.toArray(page.props.children).find(
+      (child) => isValidElement(child) && child.type === Suspense,
+    );
+    if (!isValidElement<{ children: unknown }>(boundary)) {
+      throw new Error("no Suspense boundary");
+    }
+    const inner = boundary.props.children;
+    expect(isValidElement(inner) && inner.type === ListedProductJsonLd).toBe(true);
   });
 });
 
@@ -301,5 +371,33 @@ describe("ListedProductJsonLd", () => {
       listing = state;
       expect(await emittedJsonLd()).toBeNull();
     }
+  });
+
+  it("emits nothing when the listing check fails", async () => {
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    listing = "failed";
+    expect(await emittedJsonLd()).toBeNull();
+    quiet.mockRestore();
+  });
+
+  it("starts the product read alongside the listing check", async () => {
+    const held = holdListing();
+    const pending = emittedJsonLd();
+
+    await vi.waitFor(() => expect(requestedSelects()).toContain("detail"));
+    expect(requestedSelects()).toContain("listing");
+    held.release();
+    expect(await pending).toMatchObject({ "@type": "Course" });
+  });
+
+  it("emits nothing when the product read fails", async () => {
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    fetchMock.mockImplementation(async (input) =>
+      requestedUrl(input).searchParams.get("select")?.startsWith("id,start_date")
+        ? respond(input)
+        : postgrestError("boom", 500),
+    );
+    expect(await emittedJsonLd()).toBeNull();
+    quiet.mockRestore();
   });
 });

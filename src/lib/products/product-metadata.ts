@@ -34,7 +34,8 @@ import { ProductsService } from "@/services/products/products.service";
  * positive, so a product a search engine indexed while it was listed stays in
  * the index until its next crawl reads the tag that unlisting put there.
  * Search Console's removal tool is the fast path when that wait matters. The
- * whole posture, tier by tier, is `docs/architecture/discoverability.md`.
+ * whole posture, tier by tier, is the "Found" part of
+ * `docs/architecture/site-quality.md`.
  *
  * This is a tag, not a robots.txt entry, and that is the point — a disallowed
  * URL is never fetched, so the crawler would never read the tag, and the URL
@@ -105,7 +106,9 @@ export function productWrittenRows<Row extends { locale: string }>(
  *
  * **`promoted` is the robots decision, and the caller makes it**: the shop
  * route passes whether the product is on the shop's listing
- * (`isListedInShop`), and the schools route passes `false` — the whole tree is
+ * (`isListedInShop`) as a promise it has not awaited, so that check runs
+ * alongside the card's read rather than before it (it never rejects: a failed
+ * check answers no), and the schools route passes `false` — the whole tree is
  * reachable, never promoted. A promoted page serves no robots tag, so it is
  * indexable, and names its canonical and language versions by the rule every
  * page written per locale follows (`src/lib/metadata/translated-page.ts`): the
@@ -140,7 +143,7 @@ export function productWrittenRows<Row extends { locale: string }>(
 export async function buildProductMetadata(
   id: string,
   parent: ResolvingMetadata,
-  promoted: boolean,
+  promoted: boolean | Promise<boolean>,
 ): Promise<Metadata> {
   const supabase = await createClient();
 
@@ -205,7 +208,7 @@ export async function buildProductMetadata(
     ? [{ url: image, alt: translation.name }]
     : (await parent).openGraph?.images;
 
-  const alternates = promoted
+  const alternates = (await promoted)
     ? translatedPageMetadataAlternates(
         productWrittenRows(product.product_translations),
         locale,
@@ -225,7 +228,9 @@ export async function buildProductMetadata(
     openGraph: {
       type: "website",
       siteName: "School of Gaming",
-      locale,
+      // The language of the words on the card, which is the translation's —
+      // not the URL's, when the product was not written in that locale.
+      locale: translation.locale,
       ...(alternates !== undefined && { url: alternates.canonical }),
       title,
       description,

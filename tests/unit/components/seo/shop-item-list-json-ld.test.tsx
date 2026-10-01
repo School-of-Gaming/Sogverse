@@ -85,17 +85,27 @@ describe("ShopItemListJsonLd", () => {
     });
   });
 
-  it("gives each item its page's URL, in the shop's locale", () => {
+  it("gives each item its page's canonical URL", () => {
     // The rows are exactly the shop's listing, and a listed product's page is
-    // promoted (`docs/architecture/discoverability.md`, tier 1).
+    // promoted (`docs/architecture/site-quality.md`, tier 1). Its canonical is
+    // the address of the locale whose words it shows.
     const list = emitted(
-      [row("a", [{ locale: "en", name: "Minecraft club" }])],
+      [
+        row("a", [
+          { locale: "en", name: "Minecraft club" },
+          { locale: "fi", name: "Minecraft-kerho" },
+        ]),
+        row("b", [{ locale: "en", name: "Roblox camp" }]),
+      ],
       "fi",
     );
 
     expect(list).toMatchObject({
       itemListElement: [
-        { position: 1, name: "Minecraft club", url: `${SITE}/fi/kauppa/a` },
+        { position: 1, name: "Minecraft-kerho", url: `${SITE}/fi/kauppa/a` },
+        // Not written in Finnish: the Finnish shop shows its English words,
+        // and its page canonicalises to the English address.
+        { position: 2, name: "Roblox camp", url: `${SITE}/en/shop/b` },
       ],
     });
   });

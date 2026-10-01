@@ -1,3 +1,4 @@
+import { formatInTimeZone } from "date-fns-tz";
 import {
   resolveProductPrice,
   statesAPrice,
@@ -7,28 +8,41 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { formatProductLocation } from "@/lib/products/format-product-location";
+import { dateTimeInstant } from "@/lib/schedule-occurrence";
 import { organizationId } from "@/lib/seo/organization";
 import type { ProductDetailRow } from "@/services/products/products.service";
 
 /*
  * **A listed product's page as schema.org structured data** — emitted only on
- * a product page that is promoted (`docs/architecture/discoverability.md`), and
- * built from the same detail row the visible page renders, so it can never
- * assert something the page does not show.
+ * a product page that is promoted (`docs/architecture/site-quality.md`), and
+ * built from the same detail row the visible page renders, so it states only
+ * what the page shows.
  *
  * The type follows what the row actually holds:
  *
+ * - **A camp or an event is an `Event`** — the shape of Google's event rich
+ *   result, whose required fields are a name, a start date and a location
+ *   (a `Place` with a name and a `PostalAddress`). Dates are what the page
+ *   shows: a camp's range is a calendar range and is stated as dates; an event
+ *   with a time slot is an instant, stated with the product timezone's offset,
+ *   ending its slot's duration later. An online product's location is its own
+ *   page. An in-person one's `Place` is the site the page names, and its
+ *   address is the municipality the page names beside it: the site's street
+ *   address is staff data the public page never shows, so it is not asserted
+ *   here, and Google may count that address as incomplete.
  * - **A club is a `Course` with one `CourseInstance`.** A club is a term of
  *   weekly sessions, and that is what a course instance with a weekly
  *   `courseSchedule` says: each schedule slot becomes a `Schedule` repeating
- *   every week (`P1W`) on its weekday, at its wall-clock start time in the
- *   product's own timezone, for its duration, between the term's dates. The
- *   instance's `courseMode` is online or onsite, and an onsite one names its
- *   place. This is the shape Google's Course info rich result reads.
- * - **A camp or an event is an `Event`**: it happens on dates, which is what
- *   an `Event` is, and online or at a place. Dates are stated as dates — a
- *   camp's range is a calendar range and the page shows it as one. This is the
- *   shape Google's event experience reads.
+ *   `Weekly` on its weekday, at its wall-clock start time in the product's own
+ *   timezone, for its duration, between the term's dates — and, for a term
+ *   with an end date, `repeatCount` times: the number of that weekday the
+ *   stated term holds. An open-ended club states no count, because none
+ *   exists. Google stopped showing its Course info rich result in 2025, so
+ *   this block is for every other schema.org consumer; it still carries the
+ *   fields that result read (a description, the provider, an offer with its
+ *   category, the course mode and schedule). **A club whose page shows no
+ *   short description emits no Course at all**: a `Course` without a
+ *   description is the one gap no honest value fills.
  *
  * Both name School of Gaming by the `@id` of the layout's `Organization` (as
  * the course's `provider` or the event's `organizer`), so a consumer joins the
@@ -96,7 +110,7 @@ function priceText(cents: number): string {
  * The offer the page's price panel states, or nothing when it states none (a
  * product with no price in the site's currency, or one billed outside the
  * platform). `category` is the free/paid/subscription word Google's Course
- * info result asks for; a club's monthly price says so with a one-month
+ * info result read; a club's monthly price says so with a one-month
  * billing duration.
  */
 function offerOf(product: ProductJsonLdSubject, url: string) {
@@ -161,6 +175,54 @@ function placeOf(product: ProductJsonLdSubject, locale: SupportedLocale) {
   };
 }
 
+const DAY_MS = 86_400_000;
+
+/**
+ * How many times a weekday falls between two calendar dates, both inclusive —
+ * the sessions a weekly slot holds across a term. The dates are bare calendar
+ * dates, so the walk is UTC-pinned day arithmetic, which is exact.
+ */
+export function weekdayOccurrences(
+  startDate: string,
+  endDate: string,
+  weekday: number,
+): number {
+  const start = Date.parse(`${startDate}T00:00:00Z`);
+  const end = Date.parse(`${endDate}T00:00:00Z`);
+  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return 0;
+  const startIso = new Date(start).getUTCDay(); // 0=Sun..6=Sat
+  const startWeekday = startIso === 0 ? 6 : startIso - 1; // → 0=Mon..6=Sun
+  const first = start + ((weekday - startWeekday + 7) % 7) * DAY_MS;
+  return first > end ? 0 : Math.floor((end - first) / (7 * DAY_MS)) + 1;
+}
+
+
+/** An instant as ISO-8601 with the product timezone's own offset. */
+function zonedIso(instant: Date, timeZone: string): string {
+  return formatInTimeZone(instant, timeZone, "yyyy-MM-dd'T'HH:mm:ssXXX");
+}
+
+/**
+ * The dates an `Event` states, as the page shows them: an event with a time
+ * slot is an instant and ends its slot's duration later; anything else — a
+ * camp's range, an event with no time — is calendar dates.
+ */
+function eventDatesOf(product: ProductJsonLdSubject) {
+  const slot = product.schedule_slots.at(0);
+  if (product.product_type === "event" && slot !== undefined) {
+    const start = dateTimeInstant(product.start_date, slot.start_time, product.timezone);
+    const end = new Date(start.getTime() + slot.duration_minutes * 60_000);
+    return {
+      startDate: zonedIso(start, product.timezone),
+      endDate: zonedIso(end, product.timezone),
+    };
+  }
+  return {
+    startDate: product.start_date,
+    ...(product.end_date !== null && { endDate: product.end_date }),
+  };
+}
+
 export function productJsonLd({
   siteUrl,
   canonicalPath,
@@ -169,6 +231,7 @@ export function productJsonLd({
 }: ProductJsonLdInput) {
   const url = `${siteUrl}${canonicalPath}`;
   const shown = resolveTranslation(product.product_translations, locale);
+  const description = shown?.short_description ?? "";
   const image = catalogueImageSrc("product", product.image_path);
   const offer = offerOf(product, url);
   const audience = audienceOf(product);
@@ -177,13 +240,13 @@ export function productJsonLd({
     "@type": "Organization",
     "@id": organizationId(siteUrl),
     name: "School of Gaming",
+    url: siteUrl,
   };
 
   const common = {
     "@context": "https://schema.org",
     name: shown?.name ?? "",
-    ...(shown !== null &&
-      shown.short_description !== "" && { description: shown.short_description }),
+    ...(description !== "" && { description }),
     url,
     ...(image !== null && { image }),
     inLanguage: product.spoken_language_code,
@@ -192,14 +255,20 @@ export function productJsonLd({
   };
 
   if (product.product_type === "consumer_club" || product.product_type === "municipality_club") {
+    // A Course needs a description, and the page shows none to state.
+    if (description === "") return null;
+    const endDate = product.end_date;
     const courseSchedule = product.schedule_slots.map((slot) => ({
       "@type": "Schedule",
-      repeatFrequency: "P1W",
+      repeatFrequency: "Weekly",
+      ...(endDate !== null && {
+        repeatCount: weekdayOccurrences(product.start_date, endDate, slot.weekday),
+      }),
       byDay: SCHEMA_WEEKDAYS[slot.weekday],
       startTime: slot.start_time,
       duration: `PT${slot.duration_minutes}M`,
       startDate: product.start_date,
-      ...(product.end_date !== null && { endDate: product.end_date }),
+      ...(endDate !== null && { endDate }),
       scheduleTimezone: product.timezone,
     }));
     return {
@@ -218,8 +287,7 @@ export function productJsonLd({
   return {
     ...common,
     "@type": "Event",
-    startDate: product.start_date,
-    ...(product.end_date !== null && { endDate: product.end_date }),
+    ...eventDatesOf(product),
     eventAttendanceMode: product.is_remote
       ? "https://schema.org/OnlineEventAttendanceMode"
       : "https://schema.org/OfflineEventAttendanceMode",

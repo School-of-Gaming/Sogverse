@@ -1,7 +1,8 @@
 import { JsonLd } from "@/components/seo/json-ld";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { productPagePath } from "@/lib/products/product-metadata";
+import { translatedCanonicalPath } from "@/lib/metadata/translated-page";
+import { productPagePath, productWrittenRows } from "@/lib/products/product-metadata";
 import type { ProductBrowseRow } from "@/types";
 
 interface ShopItemListJsonLdProps {
@@ -40,9 +41,13 @@ interface ShopItemListJsonLdProps {
  *
  * **A list item carries its position, its name and its page's URL.** The rows
  * are exactly the shop's listing, and a listed product's page is promoted
- * (tier 1 in `docs/architecture/discoverability.md`), so every URL here is a
- * page a crawler may index. The URL is the product's address in the shop's
- * own locale, as the card's link is.
+ * (tier 1 in the "Found" part of `docs/architecture/site-quality.md`), so
+ * every URL here is a page a crawler may index. The URL is the product page's canonical — by
+ * the rule every page written per locale follows
+ * (`src/lib/metadata/translated-page.ts`), the address of the locale whose
+ * words the page shows at the shop's locale — so a list item never points at
+ * a page that canonicalises somewhere else. The card's own link stays at the
+ * shop's locale, for the reader.
  *
  * Names resolve exactly the way a browse card's title does — through the
  * shared translation resolver, so a product with no translation in this locale
@@ -58,7 +63,11 @@ export function ShopItemListJsonLd({ products, locale: requestLocale }: ShopItem
   const items = products
     .map((product) => ({
       name: resolveTranslation(product.product_translations, locale)?.name ?? "",
-      url: `${siteUrl}${productPagePath(product.id)(locale)}`,
+      url: `${siteUrl}${translatedCanonicalPath(
+        productWrittenRows(product.product_translations),
+        locale,
+        productPagePath(product.id),
+      )}`,
     }))
     .filter(({ name }) => name.length > 0);
 

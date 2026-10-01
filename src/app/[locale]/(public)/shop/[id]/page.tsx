@@ -1,4 +1,5 @@
 import type { Metadata, ResolvingMetadata } from "next";
+import { Suspense } from "react";
 import {
   buildProductMetadata,
   isListedInShop,
@@ -28,7 +29,9 @@ export async function generateMetadata(
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
   const { id } = await params;
-  return buildProductMetadata(id, parent, await isListedInShop(id));
+  // The listing check and the card's read run together: the check is handed
+  // over unawaited, and the card awaits it only once its own read is back.
+  return buildProductMetadata(id, parent, isListedInShop(id));
 }
 
 export default async function ShopProductDetailPage({
@@ -39,7 +42,12 @@ export default async function ShopProductDetailPage({
   const { id } = await params;
   return (
     <>
-      <ListedProductJsonLd productId={id} />
+      {/* Behind its own boundary so the shell streams without waiting on the
+          listing check and the product read; the streamed block still lands
+          in the same HTML response. */}
+      <Suspense fallback={null}>
+        <ListedProductJsonLd productId={id} />
+      </Suspense>
       <ProductDetailPage productId={id} />
     </>
   );
