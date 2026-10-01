@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { TeamPhotoPlaceholder } from "@/components/team/team-photo-placeholder";
+import { COVER_HOVER_ZOOM } from "@/components/ui/cover-hover-zoom";
 import { VOICE_ZONE_COLORS } from "@/lib/constants/voice-zones";
 import { cn } from "@/lib/utils";
 import type {
@@ -27,10 +28,9 @@ export function teamPickClasses(pick: TeamProfile["pick"]) {
  * choosing or clearing a colour in the editor moves nothing.
  *
  * **One corner wherever a person is framed**, on their page and on their Team
- * card alike, so the two read as one family. A frame inside a link that
- * answers the pointer (`answersHover`) draws the glow a second time while the
- * enclosing `group` is hovered or holds focus: the glow deepens, and nothing
- * moves.
+ * card alike, so the two read as one family. A frame inside a link leans its
+ * photo in while the link is pointed at (`zoomOnHover`), the same 2% the
+ * Library and product cards use; the frame and its glow stay put.
  *
  * **The photo is drawn `unoptimized`**: in the editor a saved one is a private
  * object behind a short-lived signed URL, which the image optimiser would
@@ -44,15 +44,15 @@ export function TeamPortrait({
   photo,
   pick,
   priority = false,
-  answersHover = false,
+  zoomOnHover = false,
   className,
   imageClassName,
 }: {
   photo: TeamProfilePhoto | null;
   pick: TeamProfile["pick"];
   priority?: boolean;
-  /** Deepen the glow while the enclosing `group` is hovered or focused. */
-  answersHover?: boolean;
+  /** Lean the photo in when its card is pointed at (`COVER_HOVER_ZOOM`). */
+  zoomOnHover?: boolean;
   /** The frame's size. */
   className?: string;
   imageClassName?: string;
@@ -74,7 +74,11 @@ export function TeamPortrait({
           height={photo.height}
           alt=""
           unoptimized
-          className={cn("h-full w-full object-cover", imageClassName)}
+          className={cn(
+            "h-full w-full object-cover",
+            zoomOnHover && COVER_HOVER_ZOOM,
+            imageClassName,
+          )}
           priority={priority}
         />
       ) : (
@@ -82,14 +86,6 @@ export function TeamPortrait({
       )}
       {classes !== null && (
         <span className={cn("absolute inset-0 rounded-xl", classes.glow)} />
-      )}
-      {classes !== null && answersHover && (
-        <span
-          className={cn(
-            "absolute inset-0 rounded-xl opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100",
-            classes.glow,
-          )}
-        />
       )}
     </div>
   );

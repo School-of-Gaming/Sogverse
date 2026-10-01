@@ -23,9 +23,9 @@ import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
  * items are left to differ in height.
  *
  * **The whole item is the link**, stretched from the name, so the link's
- * accessible name is the person's name. Hover and focus deepen the frame's
- * glow and underline the name; keyboard focus rings the portrait. Nothing
- * moves.
+ * accessible name is the person's name. Hover and focus lean the photo in,
+ * as a Library or product card's picture does; keyboard focus rings the
+ * portrait.
  */
 export function TeamMemberCard({
   profile,
@@ -46,7 +46,7 @@ export function TeamMemberCard({
       <TeamPortrait
         photo={profile.photo}
         pick={profile.pick}
-        answersHover
+        zoomOnHover
         className="ring-act ring-offset-4 ring-offset-background group-has-[a:focus-visible]:ring-2"
       />
       {/* One size for every name, the largest at which a twenty-character
@@ -57,10 +57,10 @@ export function TeamMemberCard({
       <h3 className="mt-3 break-words text-[0.8125rem] font-semibold leading-snug sm:text-[0.9375rem] md:text-lg">
         <Link
           href={href}
-          className="decoration-2 underline-offset-4 after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none group-hover:underline"
+          className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
         >
           {teamMemberHeadline(profile, (nickname) => (
-            <span className="inline-block max-w-full text-act decoration-2 underline-offset-4 group-hover:underline">
+            <span className="inline-block max-w-full text-act">
               {nickname}
             </span>
           ))}
