@@ -41,7 +41,7 @@ const LOGO_INTRINSIC = { width: 379, height: 207.5 } as const;
  * adjacent links stop sharing an edge.
  *
  * `whitespace-nowrap` picks the failure mode for a full strip. The tightest
- * case clears by under 20px (the measured table in the nav group below),
+ * case clears by about 23px (the measured table in the nav group below),
  * so a longer word in some future translation will overrun it — and a link
  * allowed to wrap absorbs that silently, breaking to two lines inside a 44px box
  * that then reads as a misaligned smudge nobody reports. Held on one line, the

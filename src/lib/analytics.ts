@@ -14,8 +14,8 @@ import type {
  *                      became the menu trigger — the mechanism changed, so
  *                      the name changed with it rather than letting a
  *                      two-click path report under a one-click name.
- *   - "tab_bar"      — the first tab of the phone tab bar, which the header
- *                      renders below `md` (all dashboard roles).
+ *   - "tab_bar"      — the first tab of the mobile tab bar, which the header
+ *                      renders below `lg` (all dashboard roles).
  *
  * Exactly the chrome's own affordances, on purpose. A "profile_selector" value
  * (the self-tile on /select-profile) existed until August 2026 and was
