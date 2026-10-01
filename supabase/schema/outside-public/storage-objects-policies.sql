@@ -76,3 +76,9 @@ CREATE POLICY team_photos_owner_or_admin_read ON storage.objects
   FOR SELECT
   TO authenticated
   USING (((bucket_id = 'team-photos'::text) AND (( SELECT public.is_admin() AS is_admin) OR ((storage.foldername(name))[1] = (( SELECT auth.uid() AS uid))::text))));
+
+CREATE POLICY team_photos_public_read ON storage.objects
+  AS PERMISSIVE
+  FOR SELECT
+  TO anon, authenticated
+  USING (((bucket_id = 'team-photos'::text) AND public.is_public_team_photo(name)));

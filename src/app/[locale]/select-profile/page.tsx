@@ -87,10 +87,12 @@ export default async function SelectProfilePage() {
       {/* Pull main up under the sticky header so the centering math runs
           against the full viewport, not viewport-minus-header. Same trick
           the home hero uses (`src/app/[locale]/(public)/page.tsx`) — visual center
-          of the body lands at 50vh instead of below the header. Symmetric
+          of the body lands mid-viewport instead of below the header. Below `md`
+          the min-height leaves out the tab bar the body is padded for, so it
+          centres in the visible area and does not scroll. Symmetric
           py-12 keeps the centering true; the body content is small enough
           (title + one row of tiles) that it never reaches the header zone. */}
-      <main className="-mt-[var(--header-height)] flex min-h-screen items-center justify-center px-4 py-12 sm:py-16">
+      <main className="-mt-[var(--header-height)] flex min-h-[calc(100vh-var(--tab-bar-height))] items-center justify-center px-4 py-12 sm:py-16">
         <SelectProfileView
           selfDashboardPath={selfDashboardPath}
           initialFamily={initialFamily}

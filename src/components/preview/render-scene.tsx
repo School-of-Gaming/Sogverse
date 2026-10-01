@@ -64,6 +64,14 @@ import {
   isTeamProfileScenario,
 } from "./scenes/team-profile-scene";
 import {
+  TeamIndexScene,
+  isTeamIndexScenario,
+} from "./scenes/team-index-scene";
+import {
+  LibraryIndexScene,
+  isLibraryIndexScenario,
+} from "./scenes/library-index-scene";
+import {
   AdminTeamProfileEditorScene,
   GeduTeamProfileEditorScene,
 } from "./scenes/team-profile-editor-scene";
@@ -162,6 +170,16 @@ const SCENE_RENDERERS: Record<
   "team-profile": (scenario) => {
     if (!isTeamProfileScenario(scenario)) notFound();
     return <TeamProfileScene scenario={scenario} />;
+  },
+  team: (scenario) => {
+    if (!isTeamIndexScenario(scenario)) notFound();
+    return <TeamIndexScene />;
+  },
+  // Checked and not handed on, like the shop grid: there is one empty index,
+  // so the body branches on nothing.
+  library: (scenario) => {
+    if (!isLibraryIndexScenario(scenario)) notFound();
+    return <LibraryIndexScene />;
   },
   "gedu-profile-editor": (scenario) => {
     if (!isGeduTeamProfileEditorScenario(scenario)) notFound();

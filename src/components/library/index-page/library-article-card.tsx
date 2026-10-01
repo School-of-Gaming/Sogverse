@@ -3,6 +3,7 @@
 import { useLocale } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import type { AppHref } from "@/lib/constants/routes";
 import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
@@ -13,8 +14,14 @@ import { LibraryCover } from "../library-cover";
 export interface LibraryArticleCardProps {
   /** The article's id, which keys the card in a list: titles need not be unique. */
   id: string;
-  /** Where the card opens: the article's own page. */
+  /** Where the card opens: the article's own page, in the page's locale. */
   href: AppHref;
+  /**
+   * The language the title and summary are written in, marked on them where
+   * it is not the page's — a card showing the English fallback on a Swedish
+   * page is English text, and a screen reader should say it as such.
+   */
+  textLocale: SupportedLocale;
   /**
    * An already-resolved image URL, or null for an article with no cover,
    * which paints the NO IMAGE placeholder in the same frame. Decorative: the
@@ -48,6 +55,7 @@ export interface LibraryArticleCardProps {
  */
 export function LibraryArticleCard({
   href,
+  textLocale,
   coverSrc,
   title,
   summary,
@@ -63,6 +71,9 @@ export function LibraryArticleCard({
 }) {
   const locale = useLocale();
   const timeZone = useTimezone();
+  // Only the article's words carry its language; the category and the date
+  // are the page's own.
+  const lang = textLocale === locale ? undefined : textLocale;
 
   return (
     <Card className="group relative flex h-full flex-col overflow-hidden transition-[box-shadow] focus-within:shadow-lg hover:shadow-lg">
@@ -77,7 +88,7 @@ export function LibraryArticleCard({
 
       <div className="flex flex-1 flex-col gap-2 p-4">
         <LibraryCategoryLabel category={category} />
-        <Title className="line-clamp-3 text-base font-semibold">
+        <Title lang={lang} className="line-clamp-3 text-base font-semibold">
           <Link
             href={href}
             className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-act"
@@ -85,7 +96,9 @@ export function LibraryArticleCard({
             {title}
           </Link>
         </Title>
-        <p className="line-clamp-3 text-sm text-muted-foreground">{summary}</p>
+        <p lang={lang} className="line-clamp-3 text-sm text-muted-foreground">
+          {summary}
+        </p>
         <p className="mt-auto pt-2 text-xs text-muted-foreground">
           <time dateTime={publishedAt}>
             {formatDate(publishedAt, locale, {

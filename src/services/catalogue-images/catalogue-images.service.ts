@@ -6,6 +6,7 @@ import {
 } from "@/lib/api/json-response";
 import { ApiError } from "@/lib/api/api-error";
 import { DEFAULT_LOCALE } from "@/lib/constants/locales";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type {
   AppSupabaseClient,
@@ -111,8 +112,9 @@ export class CatalogueImagesService {
    * filtering the embed to one locale would blank the name for those rather
    * than falling back.
    *
-   * An article reaches the entry its working copy links and the one its
-   * published copy links, which differ while a cover change is unpublished —
+   * An article is named by its working copy's title in the default locale,
+   * resolved the same way. It reaches the entry its working copy links and
+   * the one its published copy links, which differ while a cover change is unpublished —
    * and a replace or a remove reaches both.
    */
   async getUsage(): Promise<CatalogueImageUsage> {
@@ -145,7 +147,13 @@ export class CatalogueImagesService {
         (usage[entryId] ??= []).push({
           kind: "library-article",
           id: row.id,
-          title: row.title,
+          // In the Library's own locale order, so the resolver's last
+          // fallback is the first version written, as on every Library surface.
+          title:
+            resolveTranslation(
+              inLocaleOrder(row.library_article_translations),
+              DEFAULT_LOCALE,
+            )?.title ?? "",
           is_live: entryId === liveId,
         });
       }
@@ -191,7 +199,7 @@ export class CatalogueImagesService {
       this.supabase
         .from("library_articles")
         .select(
-          "id, title, cover_image_id, publication:library_article_publications(cover_image_id)",
+          "id, cover_image_id, library_article_translations(locale, title), publication:library_article_publications(cover_image_id)",
           { count: "exact" },
         )
         .order("id")

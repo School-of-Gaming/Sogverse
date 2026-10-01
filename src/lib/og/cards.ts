@@ -2,7 +2,7 @@
  * The Open Graph cards, and the one place their URLs, dimensions and cache
  * posture are written down.
  *
- * **Both cards are root-level route handlers, outside `[locale]`, taking the
+ * **Every card is a root-level route handler, outside `[locale]`, taking the
  * locale as a query parameter.** Next's `opengraph-image` file convention could
  * not survive locale-prefixed routing: a file under `[locale]` emits
  * `/en/opengraph-image` into the meta tag (a crawler chasing a redirecting OG
@@ -21,7 +21,8 @@
  *
  * Pages emit these URLs explicitly from their own `generateMetadata` — the
  * `[locale]` layout for the site-wide card, `/roblox` and its three sub-pages
- * for the programme card.
+ * for the programme card. A team member's page emits a third, drawn per
+ * person, whose address and caching are its own (`./team-card`).
  */
 
 import {
@@ -30,7 +31,7 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 
-/** The canonical Open Graph size, and what both cards are drawn at. */
+/** The canonical Open Graph size, and what every card is drawn at. */
 export const OG_CARD_SIZE = { width: 1200, height: 630 } as const;
 
 /** Every card the app serves, keyed by name, with the path that serves it. */

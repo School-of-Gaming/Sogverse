@@ -112,20 +112,39 @@ export const PATHNAMES = {
     fr: "/bibliotheque",
     tlh: "/library",
   },
-  "/library/[id]": {
-    en: "/library/[id]",
-    fi: "/kirjasto/[id]",
-    sv: "/bibliotek/[id]",
-    fr: "/bibliotheque/[id]",
-    tlh: "/library/[id]",
+  // One segment, two addresses: an article's id or the slug of its title in
+  // the page's locale (`src/lib/slug.ts`).
+  "/library/[idOrSlug]": {
+    en: "/library/[idOrSlug]",
+    fi: "/kirjasto/[idOrSlug]",
+    sv: "/bibliotek/[idOrSlug]",
+    fr: "/bibliotheque/[idOrSlug]",
+    tlh: "/library/[idOrSlug]",
+  },
+  "/team": {
+    en: "/team",
+    fi: "/tiimi",
+    sv: "/team",
+    fr: "/equipe",
+    tlh: "/team",
+  },
+  // One segment, two addresses: a person's id or the slug of their first name
+  // and nickname (`src/lib/slug.ts`).
+  "/team/[idOrSlug]": {
+    en: "/team/[idOrSlug]",
+    fi: "/tiimi/[idOrSlug]",
+    sv: "/team/[idOrSlug]",
+    fr: "/equipe/[idOrSlug]",
+    tlh: "/team/[idOrSlug]",
   },
   // Admin-only, but the child of a translated route, so translated with it.
-  "/library/[id]/preview": {
-    en: "/library/[id]/preview",
-    fi: "/kirjasto/[id]/esikatselu",
-    sv: "/bibliotek/[id]/forhandsvisning",
-    fr: "/bibliotheque/[id]/apercu",
-    tlh: "/library/[id]/preview",
+  // Reached by the article's id alone; the segment is named for its parent's.
+  "/library/[idOrSlug]/preview": {
+    en: "/library/[idOrSlug]/preview",
+    fi: "/kirjasto/[idOrSlug]/esikatselu",
+    sv: "/bibliotek/[idOrSlug]/forhandsvisning",
+    fr: "/bibliotheque/[idOrSlug]/apercu",
+    tlh: "/library/[idOrSlug]/preview",
   },
   "/attributions": {
     en: "/attributions",

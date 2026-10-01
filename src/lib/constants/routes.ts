@@ -441,20 +441,22 @@ export const ROUTES = {
    */
   about: "/about",
   /**
-   * The Library — School of Gaming's articles for parents. Public, with its
-   * slugs translated for launch, and `noindex` until the owner's visibility
-   * pass (`docs/architecture/discoverability.md`).
+   * The Library — School of Gaming's articles for parents. Public and
+   * promoted (`docs/architecture/site-quality.md`).
    */
   library: "/library",
   /** The index filtered to one category — what a category eyebrow links to. */
   libraryCategory: (category: LibraryCategory) =>
     ({ pathname: "/library", query: { category } }) as const,
   /**
-   * One published article. The id is the address: an article has no slug, so
-   * a retitled article keeps every link anybody has shared to it.
+   * One published article, at either of its two addresses: its id, which
+   * resolves in every locale, or the slug of its title in the locale's own
+   * version, which is the one to share and the canonical. Build the segment
+   * with the Library's address helpers (`src/components/library/`), which
+   * know when an older article's title takes the slug first.
    */
-  libraryArticle: (id: string) =>
-    ({ pathname: "/library/[id]", params: { id } }) as const,
+  libraryArticle: (idOrSlug: string) =>
+    ({ pathname: "/library/[idOrSlug]", params: { idOrSlug } }) as const,
   /**
    * An article's saved working copy as a parent would meet it if it were
    * published now, in the public chrome — what the editor's Preview opens.
@@ -462,7 +464,20 @@ export const ROUTES = {
    * on the admin role, and the page answers not-found to anyone else.
    */
   libraryArticlePreview: (id: string) =>
-    ({ pathname: "/library/[id]/preview", params: { id } }) as const,
+    ({ pathname: "/library/[idOrSlug]/preview", params: { idOrSlug: id } }) as const,
+  /**
+   * The Team — every public profile, leadership first, then the Game
+   * Educators. Public and promoted (`docs/architecture/site-quality.md`).
+   */
+  team: "/team",
+  /**
+   * One person's public profile, at either of their two addresses: their id,
+   * or the slug of their first name and nickname, which is the one to share
+   * and the canonical. Build the segment with `teamMemberAddress`, which knows
+   * when a person's slug is taken by an older profile.
+   */
+  teamMember: (idOrSlug: string) =>
+    ({ pathname: "/team/[idOrSlug]", params: { idOrSlug } }) as const,
   /** Public municipality-club discovery page — list + search of Finnish municipalities. */
   schools: "/schools",
   /**

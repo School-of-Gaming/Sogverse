@@ -17,6 +17,9 @@
         "subline": "Ett gratis program, lett av riktiga spelfostrare",
         "collaboration": "I samarbete med"
       },
+      "team": {
+        "alt": "{name}, {role} på School of Gaming"
+      },
       "pages": {
         "signIn": {
           "title": "Logga in på School of Gaming",
@@ -75,7 +78,8 @@
       "geduInvoicing": "Fakturering",
       "adminSubstitutions": "Vikariat",
       "teamProfile": "Min profil",
-      "adminTeamProfile": "Profil"
+      "adminTeamProfile": "Profil",
+      "team": "Team"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -90,7 +94,8 @@
       "privacy": "Hur School of Gaming samlar in, använder och lagrar din familjs uppgifter: vad vi sparar om ett barn, vem vi delar det med och vilka rättigheter du har.",
       "terms": "Villkoren du godkänner när du använder School of Gaming: hur anmälningar, betalningar och avbokningar fungerar och vad vi och du ansvarar för.",
       "antiBullying": "Hur School of Gaming förebygger mobbning i sina klubbar, läger och evenemang, vad som händer när det inträffar och hur en spelfostrare ingriper.",
-      "attributions": "Källorna och licenserna bakom de data School of Gaming använder: ortnamn, postnummer och spelarbilder, var och en krediterad som licensen kräver."
+      "attributions": "Källorna och licenserna bakom de data School of Gaming använder: ortnamn, postnummer och spelarbilder, var och en krediterad som licensen kräver.",
+      "team": "Möt människorna bakom School of Gaming: teamet som driver verksamheten och spelfostrarna som leder klubbar, läger och evenemang. Var och en presenterar sig med egna ord."
     }
   },
   "notFound": {
@@ -123,8 +128,6 @@
     "signIn": "Logga in",
     "signOut": "Logga ut",
     "getStarted": "Kom igång",
-    "goToMySog": "Gå till Min SOG",
-    "goToDashboard": "Gå till översikten",
     "viewDetails": "Visa detaljer",
     "learnMore": "Läs mer",
     "exploreClubs": "Utforska klubbar",
@@ -201,7 +204,9 @@
     },
     "mission": {
       "heading": "Vårt uppdrag",
-      "text": "Allt skärminnehåll är inte lika. Spelande är en fantastisk hobby när den behandlas som alla andra hobbyer. Vi använder barnens kärlek till spel till deras fördel — med bra vänner och en professionell spelfostrare som finns där för att vägleda och hjälpa."
+      "text": "Allt skärminnehåll är inte lika. Spelande är en fantastisk hobby när den behandlas som alla andra hobbyer. Vi använder barnens kärlek till spel till deras fördel — med bra vänner och en professionell spelfostrare som finns där för att vägleda och hjälpa.",
+      "photoAlt": "Två från School of Gaming-teamet i lila School of Gaming-huvtröjor vid en eventmonter",
+      "meetTeam": "Möt teamet"
     },
     "values": {
       "heading": "Saker vi bryr oss om",
@@ -215,7 +220,7 @@
       },
       "keepChildrenSafe": {
         "title": "Håll barn trygga online",
-        "description": "Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Varje spelarkonto skapas av en förälder och är kopplat till förälderns konto, och föräldern väljer hur barnet loggar in — enbart via föräldrakontot, eller med ett användarnamn eller en verifierad e-postadress och ett eget lösenord. Nolltolerans mot mobbning och toxicitet."
+        "description": "I Sogverse sker samtalen i gemensamma grupprum: chatten under ett tillfälle går till hela rummet, där Gedun ser den. Varje spelarkonto skapas av en förälder och är kopplat till förälderns konto, och föräldern väljer hur barnet loggar in — enbart via föräldrakontot, eller med ett användarnamn eller en verifierad e-postadress och ett eget lösenord. Nolltolerans mot mobbning och toxicitet."
       },
       "familyInTheLoop": {
         "title": "Familjen är delaktig",
@@ -225,9 +230,11 @@
     "howClubsWork": {
       "heading": "Så fungerar våra klubbar",
       "paragraph1": "Varje vecka loggar våra spelare in och möts av sin egen spelfostrare — en Gedu. Gedun vägleder dem genom dagens tema och ger barnen utrymme och frihet att göra äventyren till sina egna.",
-      "paragraph2": "Våra Geduer är själva spelare. De förstår av egen erfarenhet att som barn och tonåringar byggs identitet och vänskaper både online och offline. Den förståelsen präglar varje session de leder.",
-      "paragraph3": "Alla våra klubbar är byggda kring berättelser som ger utrymme för spelare att utforska, skapa och fantisera. Mellan veckovisa sessioner får spelarna roliga utmaningar att göra online och offline. Under lov arrangerar vi läger, och varje vecka finns det gemenskapsevent, turneringar och tävlingar.",
-      "paragraph4": "Varje spelare avlägger en ed att uppföra sig vänligt och rättvist — oavsett om det är i spelet, i röstchatten eller i vardagen. Samma värderingar gäller överallt."
+      "paragraph2": "Våra Geduer är själva spelare. De förstår av egen erfarenhet att som barn och tonåringar byggs identitet och vänskaper både online och offline. Den förståelsen präglar varje tillfälle de leder.",
+      "paragraph3": "Alla våra klubbar är byggda kring berättelser som ger utrymme för spelare att utforska, skapa och fantisera. Mellan de veckovisa tillfällena får spelarna roliga utmaningar att göra online och offline. Under lov arrangerar vi läger, och varje vecka finns det gemenskapsevent, turneringar och tävlingar.",
+      "paragraph4": "Varje spelare avlägger en ed att uppföra sig vänligt och rättvist — oavsett om det är i spelet, i röstchatten eller i vardagen. Samma värderingar gäller överallt.",
+      "photoAlt": "En rad datorer med ritprogram öppna i vår studio, redo för en klubb",
+      "photoCaption": "Vår studio på Drumsö i Helsingfors, där en del av våra klubbar på plats träffas."
     },
     "forParents": {
       "heading": "För föräldrar",
@@ -251,7 +258,7 @@
         },
         "safety": {
           "question": "Kan främlingar prata med mitt barn, och spelas något in?",
-          "answer": "<p>Nej — en klubbs röstrum är inget offentligt rum som vem som helst kan hitta. Det finns bara under gruppens tillfälle, öppnar fem minuter innan tillfället börjar och stänger fem minuter efter att det slutar, och de enda som kan komma in är gruppens medlemmar, en spelfostrare som arbetar med den klubben, och administratörer på School of Gaming; den kontrollen körs på vår server varje gång någon ansluter, så ett barn utan plats i den gruppen har ingen väg in.</p><p>Det finns ingen funktion för direktmeddelanden någonstans på plattformen: chatten under ett tillfälle går till hela rummet, aldrig till ett enskilt barn i enrum, och den bär bilder lika väl som ord. Den lever i rummet, som är öppet under samma tid — det är där ditt barn läser den, och när rummet har stängt går den inte att öppna igen. Vi sparar den däremot: Geduerna som håller i klubben och administratörerna på School of Gaming kan gå tillbaka till vad som sagts, och det är just det som gör det möjligt att moderera. Att ta bort ett meddelande lämnar en markering i dess ställe i stället för att radera det.</p><p>Själva tillfället spelas inte in. Ingenting i appen spelar in, transkriberar eller lagrar ljudet eller bilden från ett tillfälle, och rummet har inga inspelningskontroller.</p><p>Bara Gedun och administratörerna har moderatorkontrollerna, och de räcker långt: att tysta en mikrofon eller låsa den, stänga av en kamera eller låsa den, tysta någon i chatten, flytta någon till ett eget utrymme, och tala till alla utrymmen på en gång. Chatt inne i spelet är en annan sak och sköts av spelen själva — på School of Gamings egen Minecraft-server kan våra Geduer tysta, sparka ut och stänga av en spelare.</p>"
+          "answer": "<p>Nej — en klubbs röstrum är inget offentligt rum som vem som helst kan hitta. Det finns bara under gruppens tillfälle, öppnar fem minuter innan tillfället börjar och stänger fem minuter efter att det slutar, och de enda som kan komma in är gruppens medlemmar, en spelfostrare som arbetar med den klubben, och administratörer på School of Gaming; den kontrollen körs på vår server varje gång någon ansluter, så ett barn utan plats i den gruppen har ingen väg in.</p><p>Chatten under ett tillfälle går till hela rummet, aldrig till ett enskilt barn i enrum, och den bär bilder lika väl som ord. Den lever i rummet, som är öppet under samma tid — det är där ditt barn läser den, och när rummet har stängt går den inte att öppna igen. Vi sparar den däremot: Geduerna som håller i klubben och administratörerna på School of Gaming kan gå tillbaka till vad som sagts, och det är just det som gör det möjligt att moderera. Att ta bort ett meddelande lämnar en markering i dess ställe i stället för att radera det.</p><p>Själva tillfället spelas inte in. Ingenting i appen spelar in, transkriberar eller lagrar ljudet eller videon från ett tillfälle, och rummet har inga inspelningskontroller.</p><p>Bara Gedun och administratörerna har moderatorkontrollerna, och de räcker långt: att tysta en mikrofon eller låsa den, stänga av en kamera eller låsa den, tysta någon i chatten, flytta någon till ett eget utrymme, och tala till alla utrymmen på en gång. Chatt inne i spelet är en annan sak och sköts av spelen själva — på School of Gamings egen Minecraft-server kan våra Geduer tysta, sparka ut och stänga av en spelare.</p>"
         },
         "howToStart": {
           "question": "Hur kommer jag igång?",
@@ -279,7 +286,7 @@
         },
         "cancellation": {
           "question": "Kan jag säga upp, och hur ser er återbetalningspolicy ut?",
-          "answer": "<p>En klubb löper som en månadsprenumeration utan bindningstid, och du kan säga upp den när du vill, kostnadsfritt, från kortet Betalning och fakturering på Min SOG, som öppnar Stripes säkra faktureringssida. Ditt barn behåller sin plats till slutet av den period du redan har betalat för — klubbsidan visar datumet för hens sista tillfälle medan medlemskapet löper ut.</p><p>Varje klubb har dessutom 30 dagars nöjd-kund-garanti: om det visar sig att den inte passar ditt barn, mejla {supportEmail} inom 30 dagar från hens första tillfälle så betalar vi tillbaka allt du har betalat för den klubben — inget formulär och ingen anledning att uppge.</p><p>Läger bokas och betalas som en engångssumma och fungerar därför annorlunda: säger du upp 14 dagar eller mer innan lägret börjar får du full återbetalning; mellan 7 och 14 dagar innan betalar vi tillbaka minus en administrativ avgift på 50 euro; mindre än 7 dagar innan kan vi inte betala tillbaka, eftersom platsen har hållits och förberetts för ditt barn — om det inte handlar om ett akut sjukdomsfall eller något annat som verkligen ligger utanför din kontroll. Om ditt barn inte kan delta på grund av sjukdom, skicka oss ett läkarintyg på {supportEmail} så betalar vi tillbaka.</p>"
+          "answer": "<p>En klubb löper som en månadsprenumeration utan bindningstid, och du kan säga upp den när du vill, kostnadsfritt, från kortet Betalning och fakturering på Min SOG, som öppnar Stripes säkra faktureringssida. Ditt barn behåller sin plats till slutet av den period du redan har betalat för — klubbsidan visar datumet för hens sista tillfälle medan medlemskapet löper ut.</p><p>Varje klubb har dessutom 30 dagars pengarna-tillbaka-garanti: om det visar sig att den inte passar ditt barn, mejla {supportEmail} inom 30 dagar från hens första tillfälle så betalar vi tillbaka allt du har betalat för den klubben — inget formulär och ingen anledning att uppge.</p><p>Läger bokas och betalas som en engångssumma och fungerar därför annorlunda: säger du upp 14 dagar eller mer innan lägret börjar får du full återbetalning; mellan 7 och 14 dagar innan betalar vi tillbaka minus en administrativ avgift på 50 euro; mindre än 7 dagar innan kan vi inte betala tillbaka, eftersom platsen har hållits och förberetts för ditt barn — om det inte handlar om ett akut sjukdomsfall eller något annat som verkligen ligger utanför din kontroll. Om ditt barn inte kan delta på grund av sjukdom, skicka oss ett läkarintyg på {supportEmail} så betalar vi tillbaka.</p>"
         },
         "severalChildren": {
           "question": "Jag har flera barn — hur fungerar konton och betalningar?",
@@ -295,7 +302,7 @@
         },
         "gamerAccounts": {
           "question": "Hur loggar mitt barn in, och vad är föräldra-PIN-koden?",
-          "answer": "<p>Du väljer hur ditt barn loggar in, för varje barn, från Min SOG. Som standard har ett spelarkonto ingen egen inloggning: det bär en intern Sogverse-adress i stället för en riktig e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din. Om du hellre vill kan du ge barnet ett användarnamn och ett lösenord, eller en egen e-postadress — som barnet verifierar innan det väljer ett lösenord via det vanliga återställningsflödet.</p><p>Vad du än väljer öppnar ett barns inloggning bara barnets eget konto: ett barn som loggade in med sitt eget användarnamn eller sin egen e-postadress kan inte alls växla till ditt eller ett syskons konto — barnet loggar ut och loggar in igen, som dig med ditt lösenord eller som ett syskon som har en egen inloggning; ett syskon som loggar in via ditt konto nås i stället från ditt konto — och ett barn som kom in genom att växla från ditt konto behöver din föräldra-PIN för att växla någon annanstans.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
+          "answer": "<p>Du väljer hur ditt barn loggar in, för varje barn, från Min SOG. Som standard har ett spelarkonto ingen egen inloggning: det bär en intern Sogverse-adress i stället för en riktig e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din. Om du hellre vill kan du ge barnet ett användarnamn och ett lösenord, eller en egen e-postadress — som barnet verifierar innan det väljer ett lösenord via det vanliga återställningsflödet.</p><p>Vad du än väljer öppnar ett barns inloggning bara barnets eget konto: ett barn som loggade in med sitt eget användarnamn eller sin egen e-postadress kan inte alls växla till ditt eller ett syskons konto — barnet loggar ut och loggar in igen, som dig med ditt lösenord eller som ett syskon som har en egen inloggning; ett syskon som loggar in via ditt konto nås i stället från ditt konto — och ett barn som kom in genom att växla från ditt konto behöver din föräldra-PIN för att växla någon annanstans.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller använda ditt föräldrakonto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
         },
         "childData": {
           "question": "Vad sparar ni om mitt barn?",
@@ -535,13 +542,12 @@
       "publishChanges": "Publicera ändringar",
       "unpublish": "Avpublicera",
       "readiness": {
-        "missing": "Lägg till {fields} för att publicera."
+        "missing": "Lägg till {fields} för att publicera.",
+        "leftOut": "{count, plural, one {{languages} är inte färdig, så den publiceras inte.} other {{languages} är inte färdiga, så de publiceras inte.}}"
       },
       "missing": {
-        "title": "en rubrik",
-        "summary": "en sammanfattning",
         "category": "en kategori",
-        "body": "artikeltexten"
+        "completeVersion": "ett språk med rubrik, sammanfattning och artikeltext"
       },
       "unpublishConfirm": {
         "title": "Avpublicera artikeln?",
@@ -549,6 +555,7 @@
         "confirm": "Avpublicera"
       },
       "fields": {
+        "languages": "Språk",
         "title": "Rubrik",
         "summary": "Sammanfattning",
         "category": "Kategori",
@@ -556,6 +563,7 @@
         "body": "Artikeltext"
       },
       "hints": {
+        "languages": "Skriv varje språk för hand. Vid publicering blir varje färdigt språk synligt: ett med rubrik, sammanfattning och artikeltext.",
         "summary": "Ren text, som visas under rubriken och på artikelns kort i Biblioteket.",
         "cover": "Visas ovanför artikeln och på dess kort, beskuren till 16:9. Utan omslagsbild ser läsarna en platshållare.",
         "body": "Läsarna ser texten under omslagsbilden, formaterad som den ser ut här."
@@ -573,8 +581,14 @@
         "publishFailed": "Artikeln kunde inte publiceras. Försök igen.",
         "publishFailedWithReason": "Artikeln kunde inte publiceras – {reason}",
         "unpublishFailed": "Artikeln kunde inte avpubliceras. Försök igen.",
-        "unpublishFailedWithReason": "Artikeln kunde inte avpubliceras – {reason}"
-      }
+        "unpublishFailedWithReason": "Artikeln kunde inte avpubliceras – {reason}",
+        "versionTitleRequired": "Versionen på {language} måste ha en rubrik."
+      },
+      "versionComplete": "färdig",
+      "versionIncomplete": "inte färdig än",
+      "addLocale": "Lägg till språk",
+      "removeLocale": "Ta bort {language}",
+      "languagesLabel": "Språk"
     },
     "geduRole": {
       "primary": "Huvud-Gedu",
@@ -2669,9 +2683,14 @@
       "shop": "Butik",
       "yty": "Yty",
       "about": "Om oss",
+      "parents": "Föräldrar",
       "faq": "FAQ",
       "substitutions": "Vikariat",
-      "substitutionsPhone": "Vikariat"
+      "home": "Hem",
+      "library": "Biblioteket",
+      "libraryShort": "Biblioteket",
+      "team": "Team",
+      "tabBar": "Huvudmeny"
     },
     "accountMenu": "Kontomeny – {name}",
     "continueToAccount": "Fortsätt till ditt konto",
@@ -3132,15 +3151,48 @@
   "home": {
     "hero": {
       "title": "Där<br></br>skärmtid<br></br>blir<br></br><act>kvalitetstid</act>",
-      "subtitle": "Våra skickligt utformade klubbar främjar hälsosamt spelande som hobby — i Minecraft, Roblox, Fortnite och mer. Professionella spelfostrare gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar.",
-      "aboutCta": "Läs mer om oss"
+      "subtitle": "Klubbar varje vecka för 7–17-åringar, online och på plats, från 59 € per månad: en spelfostrare leder varje tillfälle i Minecraft, Roblox, Fortnite och mer."
+    },
+    "findClub": "Hitta en klubb",
+    "trust": {
+      "cancel": "Säg upp när du vill, kostnadsfritt",
+      "guarantee": "30 dagars pengarna-tillbaka-garanti"
+    },
+    "testimonials": {
+      "heading": "Det här säger föräldrar",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "”Klubben är höjdpunkten i min sons vecka. Varje vecka förvandlas min tysta och blyga pojke till ett skrattande barn som pratar högt, när han får umgås med likasinnade barn. Klubbens innehåll och ledarnas kunnande har överraskat mig positivt.”",
+          "attribution": "Mamma, Finland"
+        },
+        "sighWithHappiness": {
+          "quote": "”Ingenting annat, ingen aktivitet eller hobby, har fått mitt barn att sucka av lycka så här.”",
+          "attribution": "Mamma, Finland"
+        },
+        "largeGroups": {
+          "quote": "”Stora grupper gör vårt barn oroligt. Det här är det perfekta sättet för oss att ha en hobby och få nya vänner.”",
+          "attribution": "Mamma, Finland"
+        },
+        "finnishImproved": {
+          "quote": "”Min dotters finska har blivit enormt mycket bättre på bara en månad! Spelfostrarna har varit väldigt skickliga, vänliga och tålmodiga. Det här fungerar verkligen!”",
+          "attribution": "Mamma, Norge"
+        },
+        "funAndSupervised": {
+          "quote": "”Spelandet är roligt och övervakat. Ingen mobbning, inga gräl och ingen dålig stämning.”",
+          "attribution": "Mamma, Finland"
+        },
+        "positiveExperience": {
+          "quote": "”School of Gaming har varit en riktigt positiv upplevelse för både barnet och föräldrarna. Barnen har fått fina spelupplevelser med nya vänner i en trygg spelmiljö med erfarna ledare – jag kan rekommendera det!”",
+          "attribution": "Pappa, Finland"
+        }
+      }
     },
     "features": {
       "heading": "Gör spelande till en fantastisk hobby",
       "subheading": "Spelande är en hobby som alla andra — bättre med bra vänner och med en professionell spelfostrare som finns där för att vägleda och hjälpa.",
       "minecraftClubs": {
-        "title": "Varje session har en Gedu",
-        "description": "Våra spelfostrare — Geduer — är själva spelare. De förstår att som barn byggs identitet och vänskaper både online och offline. Varje session leds av någon som verkligen förstår."
+        "title": "Varje tillfälle har en Gedu",
+        "description": "Våra spelfostrare — Geduer — är själva spelare. De förstår att som barn byggs identitet och vänskaper både online och offline. Varje tillfälle leds av någon som verkligen förstår."
       },
       "screenTime": {
         "title": "Utformat för riktiga färdigheter",
@@ -3153,6 +3205,36 @@
       "parents": {
         "title": "Föräldrar är med",
         "description": "Spelfostran för föräldrar är lika viktig som själva klubbarna. Vi håller dig informerad, involverad och rustad att stötta ditt barns spelresa."
+      }
+    },
+    "safety": {
+      "heading": "Hur hålls mitt barn tryggt?",
+      "facts": {
+        "vetted": {
+          "title": "Krav på straffregisterutdrag",
+          "description": "Vi kräver att varje Gedu visar oss ett straffregisterutdrag för arbete med barn innan vi certifierar hen."
+        },
+        "noDirectMessages": {
+          "title": "Varje chatt är hela gruppens",
+          "description": "Chatten under ett tillfälle går till hela rummet, där Gedun ser den."
+        },
+        "groupOnlyRooms": {
+          "title": "Bara gruppen kommer in",
+          "description": "En klubbs röstrum öppnar fem minuter innan tillfället och stänger fem minuter efter det, och bara gruppen, dess Geduer och vår personal kan komma in."
+        },
+        "notRecorded": {
+          "title": "Tillfällena spelas inte in",
+          "description": "Ingenting i appen spelar in, transkriberar eller lagrar ljudet eller videon från ett tillfälle."
+        },
+        "parentPin": {
+          "title": "PIN-kod krävs för köp",
+          "description": "Att köpa något kräver en fyrsiffrig föräldra-PIN som bara du känner till, och ditt barn kommer inte in på ditt föräldrakonto utan den."
+        }
+      },
+      "faqLink": "Läs hela svaren i vår FAQ",
+      "photo": {
+        "alt": "Barn vid datorer i en School of Gaming-klubb, fotograferade bakifrån, med sin spelfostrare sittande bredvid",
+        "caption": "En klubb på plats i vår studio på Drumsö i Helsingfors."
       }
     },
     "howItWorks": {
@@ -3173,8 +3255,8 @@
     },
     "cta": {
       "heading": "Redo att förvandla spelande till lärande?",
-      "subheading": "Ge ditt barn en rolig, trygg plats att spela, lära sig och få vänner — under ledning av en professionell spelfostrare.",
-      "createFreeAccount": "Skapa gratis konto"
+      "subheading": "Ge ditt barn en plats att spela, lära sig och få vänner varje vecka, med en spelfostrare vid varje tillfälle och varje chatt öppen för hela gruppen.",
+      "whereWeAre": "Våra onlineklubbar hålls på {languages}, för familjer var som helst i världen. Och vårt globala huvudkontor? En mysig studio på Drumsö i Helsingfors, Finland, på en lugn liten ö."
     }
   },
   "locations": {
@@ -3631,7 +3713,7 @@
     },
     "overview": {
       "heading": "Så fungerar Yty",
-      "paragraph1": "Varje spelare börjar på noll. Från varje session de deltar i, varje uppdrag de klarar och varje vänlig handling de visar, tjänar spelare Yty-poäng. Dessa poäng byggs upp över de fyra Yty-elementen, som var och ett speglar en del av att växa upp väl.",
+      "paragraph1": "Varje spelare börjar på noll. Från varje tillfälle de deltar i, varje uppdrag de klarar och varje vänlig handling de visar, tjänar spelare Yty-poäng. Dessa poäng byggs upp över de fyra Yty-elementen, som var och ett speglar en del av att växa upp väl.",
       "paragraph2": "När spelare samlar Yty åt sig själva ökar de också det totala Yty i Sogverse — formar berättelsen och låser upp nya möjligheter för hela gemenskapen."
     },
     "elements": {
@@ -3660,7 +3742,7 @@
     },
     "earning": {
       "heading": "Hur spelare tjänar Yty",
-      "paragraph1": "Yty-poäng tjänas genom deltagande. Att delta i veckovisa klubbsessioner, klara uppdrag, visa vänlighet mot medspelare, gå med i gemenskapsevent och läger — allt detta bidrar till en spelares Yty.",
+      "paragraph1": "Yty-poäng tjänas genom deltagande. Att delta i klubbens tillfällen varje vecka, klara uppdrag, visa vänlighet mot medspelare, gå med i gemenskapsevent och läger — allt detta bidrar till en spelares Yty.",
       "paragraph2": "När poäng samlas under specifika prestationsmärken går spelarna upp i nivå på dessa märken — från brons till silver, guld, platina och diamant. Varje poäng bidrar också till deras totala Yty-nivå och det Yty-element det tillhör.",
       "paragraph3": "Och det är inte bara spelare. Geduer, föräldrar och hela gemenskapen kan delta i att bygga Ytyn i Sogverse genom event och gemensamma aktiviteter."
     }
@@ -5141,9 +5223,10 @@
   },
   "team": {
     "profile": {
-      "nameWithNickname": "{firstName} ”<nick>{nickname}</nick>” {lastName}",
-      "firstNameWithNickname": "{firstName} ”<nick>{nickname}</nick>”",
+      "nameWithNickname": "{firstName} ”{nickname}” {lastName}",
+      "firstNameWithNickname": "{firstName} ”{nickname}”",
       "geduTitle": "Gedu · spelfostrare",
+      "geduAltRole": "spelfostrare",
       "speaks": "Talar",
       "aboutMe": "Om mig",
       "funFact": "Kul fakta",
@@ -5161,7 +5244,8 @@
         "waitingTitle": "Klar, väntar på en administratör",
         "waitingBody": "En administratör granskar din profilsida innan den blir offentlig.",
         "liveTitle": "Offentlig",
-        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du dölja den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar. När du kryssar i den igen gör en administratör den offentlig på nytt."
+        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du dölja den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar. När du kryssar i den igen gör en administratör den offentlig på nytt.",
+        "viewPublicPage": "Visa den offentliga sidan"
       },
       "actions": {
         "save": "Spara ändringarna",
@@ -5252,7 +5336,8 @@
         "waitingTitle": "Klar, väntar på att göras offentlig",
         "waitingBody": "Profilen för {name} är markerad som klar att visas offentligt. Den kommer upp på School of Gamings webbplats så snart en administratör gör den offentlig.",
         "liveTitle": "Offentlig",
-        "liveBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt."
+        "liveBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt.",
+        "viewPublicPage": "Visa den offentliga sidan"
       },
       "edit": {
         "back": "Tillbaka till {name}",
@@ -5281,6 +5366,19 @@
         "makePublicNotReady": "Profilen för {name} är inte längre markerad som klar, så den gjordes inte offentlig.",
         "hide": "Dölj",
         "visibilityError": "Det gick inte att ändra om profilen är offentlig. Försök igen."
+      }
+    },
+    "public": {
+      "index": {
+        "title": "Möt <act>teamet</act>",
+        "intro": "Teamet som driver School of Gaming och spelfostrarna som leder våra klubbar, var och en presenterad med egna ord.",
+        "leadership": "Ledning",
+        "gameEducators": "Spelfostrare",
+        "empty": "Snart presenterar sig vårt team här"
+      },
+      "back": "Tillbaka till teamet",
+      "cta": {
+        "heading": "Letar du efter en klubb för ditt barn?"
       }
     }
   },

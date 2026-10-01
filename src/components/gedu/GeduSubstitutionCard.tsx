@@ -146,30 +146,32 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
         )}
       >
         <CardContent className="flex h-full flex-col gap-3 p-5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 space-y-1">
-              {/* Two words in the eyebrow's slot, because this card's own kind
-                  has to be legible before its name — a sub scanning a grid
-                  must not read it as another group of theirs. The type leads
-                  and the badge follows it, as on the trainee card, so every
-                  card's eyebrow starts in the same place. */}
-              <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-0 space-y-1">
+            {/* The assignment card's eyebrow row. Two words in the eyebrow's
+                slot, because this card's own kind has to be legible before its
+                name — a sub scanning a grid must not read it as another group
+                of theirs — and the chevron across from them. The type leads and
+                the badge follows it, as on the trainee card, so every card's
+                eyebrow starts in the same place, and on both cards the product
+                name has the row below to itself. */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {p(productType)}
                 </span>
                 <SeatKindBadge>{t("cardEyebrow")}</SeatKindBadge>
               </div>
-              <p className="text-lg font-semibold leading-tight">
-                {productName}
-              </p>
-              <p className="text-sm font-medium text-muted-foreground">
-                {groupName ?? d("untitledGroup")}
-              </p>
+              <ChevronRight
+                aria-hidden
+                className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+              />
             </div>
-            <ChevronRight
-              aria-hidden
-              className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-            />
+            <p className="text-lg font-semibold leading-tight wrap-anywhere">
+              {productName}
+            </p>
+            <p className="text-sm font-medium text-muted-foreground">
+              {groupName ?? d("untitledGroup")}
+            </p>
           </div>
 
           {/* The one date this card is about — not a cadence, because a substitution

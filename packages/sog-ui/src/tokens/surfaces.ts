@@ -44,7 +44,11 @@
  * **Never a ground for text.** Nothing is authored *on* a scrim; things are
  * authored *over* it, on their own opaque surface. A label set directly on a
  * scrim has no measurable ground under it, because the ground is whatever the
- * scrim happens to be covering.
+ * scrim happens to be covering. **A public page's hero is the one declared
+ * departure**: its headline sits on the scrim over the hero's own background
+ * loop, a fixed asset shipped with the page, so the ground is known after all —
+ * every frame is measured against the hero's inks before a loop ships, and the
+ * quiet ink is not one of them.
  *
  * ## The glass
  *

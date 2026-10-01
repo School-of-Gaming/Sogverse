@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { teamMemberLinkAddress } from "@/components/team/team-address";
 import { TeamProfilePreviewFrame } from "@/components/team/team-profile-preview-frame";
 import {
   TeamProfileStatusPanel,
@@ -62,11 +63,17 @@ import {
 export function UserTeamProfileCard({
   userId,
   initial,
+  publicAddress,
   isViewer,
 }: {
   userId: string;
   /** The page's server read — `null` where the person has no profile. */
   initial: TeamProfileRecord | null;
+  /**
+   * The public page's address, read on the server while the profile was live
+   * (`teamMemberPublicAddress`), or `null`.
+   */
+  publicAddress: string | null;
   /** The page is the viewer's own, whose profile is edited from settings. */
   isViewer: boolean;
 }) {
@@ -94,6 +101,10 @@ export function UserTeamProfileCard({
               status={status}
               title={t(`status.${status}Title`)}
               body={t(`status.${status}Body`, { name })}
+              publicHref={ROUTES.teamMember(
+                teamMemberLinkAddress(record.profile, publicAddress),
+              )}
+              publicLabel={t("status.viewPublicPage")}
             />
             <ProfilePreview profile={record.profile} />
           </>

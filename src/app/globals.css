@@ -29,6 +29,18 @@
      margins. */
   --header-height: 4rem;
 
+  /* The mobile tab bar's drawn height, safe-area inset included. Only the bar
+     itself sizes from it, so how tall the bar is never depends on `:has()`. */
+  --tab-bar-drawn-height: calc(3.5rem + env(safe-area-inset-bottom));
+
+  /* The height the page pays for the tab bar — the drawn height where the bar
+     is, zero wherever no bar is drawn: from `lg` up, and on a page whose header
+     renders none (the voice rooms). The non-zero value is set below, keyed on
+     the bar's own marker. Consumed by the bottom padding below that keeps a
+     page's end clear of the bar, by `scroll-padding-bottom`, and by anything
+     else that has to end above it (the admin sidebar rail's sticky height). */
+  --tab-bar-height: 0px;
+
   /* The measured height of the product page's sticky signup rail, written onto
      that element by a ResizeObserver so its sticky inset can clamp at both ends
      (`min(header offset, 100vh - this - gap)`) — CSS cannot measure a box, so
@@ -146,6 +158,34 @@ input[type="search"]::-webkit-search-cancel-button {
    OS uses overlay scrollbars (nothing to reserve, no shift). */
 html:has([data-reserve-scroll-gutter]) {
   scrollbar-gutter: stable;
+}
+
+/* The bar's height is reserved only where the bar is: below `lg`, on a page
+   that renders it. */
+@media (width < 64rem) {
+  :root:has([data-tab-bar]) {
+    --tab-bar-height: var(--tab-bar-drawn-height);
+  }
+}
+
+/* Focus and scrollIntoView never park an element behind the tab bar. */
+html {
+  scroll-padding-bottom: var(--tab-bar-height);
+}
+
+/* Whatever holds the mobile tab bar pays its height as bottom padding, so the
+   last thing on the page — the footer, a dashboard's last card — scrolls clear
+   of a bar that is fixed over it. Keyed on the bar's own marker rather than
+   written into each layout, so it holds wherever the header (which renders the
+   bar) is composed: a layout's `min-h-screen` wrapper takes it inside its
+   border box, and a header rendered straight into the body pads the body.
+   Below `lg` only, so it never touches desktop padding — and there it
+   replaces the holder's own bottom padding, which therefore must not be
+   relied on. */
+@media (width < 64rem) {
+  :has(> [data-tab-bar]) {
+    padding-bottom: var(--tab-bar-height);
+  }
 }
 
 body {

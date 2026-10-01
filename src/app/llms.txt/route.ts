@@ -1,4 +1,8 @@
 import { FAQ_ITEM_KEYS } from "@/components/about/about-faq";
+import {
+  libraryArticleCanonicalPath,
+  libraryArticleLocales,
+} from "@/components/library/article/article-metadata";
 import { loadMessages } from "@/i18n/messages";
 import { getPathname } from "@/i18n/navigation";
 import { SUPPORT_EMAIL } from "@/lib/constants";
@@ -7,6 +11,12 @@ import type { StaticAppHref } from "@/lib/constants/routes";
 import { messageToPlainText } from "@/lib/i18n/plain-text";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
 import { BUSINESS_ID, LEGAL_NAME, VAT_ID } from "@/lib/seo/organization";
+import { createAnonClient } from "@/lib/supabase/anon";
+import {
+  localizeArticleSummary,
+  type PublishedLibraryArticleSummary,
+} from "@/services/library/library.contracts";
+import { LibraryService } from "@/services/library/library.service";
 
 /**
  * `/llms.txt` — the site, in plain English, for a language model that has been
@@ -36,14 +46,19 @@ import { BUSINESS_ID, LEGAL_NAME, VAT_ID } from "@/lib/seo/organization";
  * consumer that wants the Finnish pages is told exactly where they are rather
  * than left to guess a prefix.
  *
- * **Nothing here names a `/schools` URL, a Library URL, a product page or an
- * unlisted product.** Municipality clubs are offered to families in specific
- * Finnish municipalities and are not promoted; the Library is not promoted
- * until the owner's visibility pass launches it; an unlisted product is
- * reachable by direct link and must never be findable. All three trees are
- * `noindex` on the page, and this file is a discovery surface, so leaving them
- * out is the same decision stated once more where a reader of this file will
- * see it.
+ * **The Library's articles are listed one by one**, each at the address an
+ * English reader is sent to, with its summary: they are the site's own
+ * writing for parents, which is exactly what a model pointed here can cite.
+ * They are read from the database on every request, anonymously and with no
+ * cookies, so the file is the same for whoever asks; a failed read leaves the
+ * section out rather than failing the file.
+ *
+ * **Nothing here names a `/schools` URL, a product page or an unlisted
+ * product.** Municipality clubs are offered to families in specific Finnish
+ * municipalities and are not promoted; an unlisted product is reachable by
+ * direct link and must never be findable. Both trees are `noindex` on the
+ * page, and this file is a discovery surface, so leaving them out is the same
+ * decision stated once more where a reader of this file will see it.
  */
 
 /**
@@ -54,8 +69,9 @@ import { BUSINESS_ID, LEGAL_NAME, VAT_ID } from "@/lib/seo/organization";
  * `getPathname`, never joined from a slug: the pathnames map is the only thing
  * that knows `/shop` is `/fr/boutique`, and a hand-written path here would be
  * a 404 handed to a crawler. `/roblox` and the programme pages are absent
- * along with `/schools`, the Library and every product page — they are
- * `noindex` for their own reasons — and so is anything behind a login.
+ * along with `/schools` — they are `noindex` for their own reasons — and so is
+ * anything behind a login. A listed product's page is promoted but not linked
+ * here: the shop is, and the file stays short.
  */
 const LINKED_PAGES: { href: StaticAppHref; label: string; note: string }[] = [
   { href: "/", label: "Home", note: "What we do, and what is running now." },
@@ -68,6 +84,16 @@ const LINKED_PAGES: { href: StaticAppHref; label: string; note: string }[] = [
     href: "/shop",
     label: "Shop",
     note: "Every club, camp and event open for enrolment, with schedules and prices.",
+  },
+  {
+    href: "/team",
+    label: "Team",
+    note: "The people behind School of Gaming: the office team and the Game Educators who lead the sessions, each with a page of their own.",
+  },
+  {
+    href: "/library",
+    label: "Library",
+    note: "Our articles for parents on gaming, screen time and online safety, each listed below.",
   },
   {
     href: "/register",
@@ -114,13 +140,43 @@ function section(heading: string, paragraphs: string[]): string {
   return [`## ${heading}`, ...paragraphs].join("\n\n");
 }
 
+/**
+ * One line per live article written in an indexed locale: its title and
+ * summary in the version an English reader is shown, linked to the page that
+ * version canonicalises to — so an article written only in Finnish is listed
+ * in Finnish, at its Finnish address. Newest first, as the Library lists them.
+ */
+function libraryLines(
+  published: readonly PublishedLibraryArticleSummary[],
+  baseUrl: string,
+): string[] {
+  return published.flatMap((article) => {
+    const shown = localizeArticleSummary(article, "en");
+    if (shown === null || libraryArticleLocales(article).length === 0) return [];
+    const path = libraryArticleCanonicalPath(published, article, "en");
+    return [`- [${shown.title}](${baseUrl}${path}): ${shown.summary}`];
+  });
+}
+
 function buildLlmsTxt(
   messages: Awaited<ReturnType<typeof loadMessages>>,
   baseUrl: string,
+  published: readonly PublishedLibraryArticleSummary[] | null,
 ): string {
   const { about } = messages;
   const url = (href: StaticAppHref) =>
     `${baseUrl}${getPathname({ href, locale: "en" })}`;
+
+  const articles = published === null ? [] : libraryLines(published, baseUrl);
+  const library =
+    articles.length === 0
+      ? []
+      : [
+          section("Library", [
+            "Articles for parents, written by School of Gaming. An article not written in English is listed in the language it was written in, at that language's address.",
+            articles.join("\n"),
+          ]),
+        ];
 
   const faq = FAQ_ITEM_KEYS.flatMap((key) => {
     const item = about.faq.items[key];
@@ -164,6 +220,7 @@ function buildLlmsTxt(
         ({ href, label, note }) => `- [${label}](${url(href)}): ${note}`,
       ).join("\n"),
     ]),
+    ...library,
     section("Languages", [
       "The same pages, in each language we publish. English is the source.",
       INDEXED_LOCALES.map(
@@ -174,20 +231,38 @@ function buildLlmsTxt(
   ].join("\n\n")}\n`;
 }
 
+/** The live Library articles, read with the anon key and no cookies. */
+async function readLiveArticles() {
+  return new LibraryService(createAnonClient()).listPublishedArticles();
+}
+
+/** Built per request: the Library section reads the live articles, and no build may need a database. */
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const messages = await loadMessages("en");
-  const body = buildLlmsTxt(messages, process.env.NEXT_PUBLIC_SITE_URL!);
+  const published = await readLiveArticles().catch((error: unknown) => {
+    console.error("[llms.txt] the live Library articles were not read:", error);
+    return null;
+  });
+  const body = buildLlmsTxt(
+    messages,
+    process.env.NEXT_PUBLIC_SITE_URL!,
+    published,
+  );
 
   return new Response(body, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      // Publicly cacheable: the body depends on nothing but the deployed
-      // catalog, and it is fetched by crawlers we do not control. That posture
-      // is exactly why the path is excluded from the proxy's matcher — the
-      // proxy may attach `Set-Cookie` to whatever response it handles, and a
-      // shared cache holding one of those would serve one person's session to
-      // every anonymous requester. See the matcher comment in `src/proxy.ts`.
-      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+      // Never served stale: the header Next gives the sitemap, so an article
+      // published or unpublished is in or out of the next fetch of both
+      // files alike. It is still `public` — the body is the same for every
+      // reader — and that is why the path is excluded from the proxy's
+      // matcher: the proxy may attach `Set-Cookie` to whatever response it
+      // handles, and a shared cache holding one of those would serve one
+      // person's session to every anonymous requester. See the matcher
+      // comment in `src/proxy.ts`.
+      "Cache-Control": "public, max-age=0, must-revalidate",
     },
   });
 }

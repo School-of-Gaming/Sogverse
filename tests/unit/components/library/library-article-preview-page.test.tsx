@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   getUserWithProfile: vi.fn(),
   getAdminArticle: vi.fn(),
   listPublishedArticles: vi.fn(),
+  locale: { current: "en" },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -32,7 +33,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("next-intl/server", () => ({
-  getLocale: async () => "en",
+  getLocale: async () => mocks.locale.current,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -49,16 +50,21 @@ vi.mock("@/services/library/library.service", () => ({
 
 import LibraryArticlePreviewPage, {
   metadata,
-} from "@/app/[locale]/(public)/library/[id]/preview/page";
+} from "@/app/[locale]/(public)/library/[idOrSlug]/preview/page";
 
 const ID = "482f0c6f-0fbc-4202-8790-a73a4520fb47";
+
+const TITLE = "Setting up a family gaming agreement";
+const SUMMARY = "Why a written agreement ends arguments.";
+const BODY = "A rule in one head is a rule to argue with.";
 
 const DRAFT: AdminLibraryArticle = {
   draft: {
     id: ID,
-    title: "Setting up a family gaming agreement",
-    summary: "Why a written agreement ends arguments.",
-    body: "A rule in one head is a rule to argue with.",
+    versions: [
+      { locale: "en", title: TITLE, summary: SUMMARY, body: BODY },
+      { locale: "fi", title: "Pelisopimus perheelle", summary: "", body: "" },
+    ],
     category: "screen_time",
     coverImageId: null,
     coverPath: null,
@@ -78,8 +84,7 @@ function published(
 ): PublishedLibraryArticleSummary {
   return {
     id,
-    title,
-    summary: "",
+    versions: [{ locale: "en", title, summary: "" }],
     category,
     coverPath: null,
     firstPublishedAt,
@@ -95,7 +100,7 @@ function asRole(role: string | null) {
 
 async function renderPage(id = ID) {
   const page = await LibraryArticlePreviewPage({
-    params: Promise.resolve({ id }),
+    params: Promise.resolve({ idOrSlug: id }),
   });
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -108,6 +113,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.getAdminArticle.mockResolvedValue(DRAFT);
   mocks.listPublishedArticles.mockResolvedValue([]);
+  mocks.locale.current = "en";
 });
 
 describe("the Library article preview page", () => {
@@ -141,7 +147,7 @@ describe("the Library article preview page", () => {
     }
 
     expect(
-      screen.getByRole("heading", { level: 1, name: DRAFT.draft.title }),
+      screen.getByRole("heading", { level: 1, name: TITLE }),
     ).toBeTruthy();
     expect(document.querySelector("time")?.getAttribute("dateTime")).toBe(
       "2026-09-29T10:00:00.000Z",
@@ -162,9 +168,9 @@ describe("the Library article preview page", () => {
       ...DRAFT,
       publication: {
         id: ID,
-        title: "An older title",
-        summary: DRAFT.draft.summary,
-        body: DRAFT.draft.body,
+        versions: [
+          { locale: "en", title: "An older title", summary: SUMMARY, body: BODY },
+        ],
         category: "screen_time",
         coverPath: null,
         firstPublishedAt: "2026-05-01T08:00:00Z",
@@ -181,6 +187,22 @@ describe("the Library article preview page", () => {
     expect(screen.queryByText("An older title")).toBeNull();
   });
 
+  it("shows the version for the page's locale, even one still being written", async () => {
+    asRole("admin");
+    mocks.locale.current = "fi";
+    await renderPage();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Pelisopimus perheelle" }),
+    ).toBeTruthy();
+  });
+
+  it("falls back to English for a locale with no version", async () => {
+    asRole("admin");
+    mocks.locale.current = "sv";
+    await renderPage();
+    expect(screen.getByRole("heading", { level: 1, name: TITLE })).toBeTruthy();
+  });
+
   it("draws a draft with no category without its eyebrow", async () => {
     asRole("admin");
     mocks.getAdminArticle.mockResolvedValue({
@@ -190,7 +212,7 @@ describe("the Library article preview page", () => {
     await renderPage();
 
     expect(
-      screen.getByRole("heading", { level: 1, name: DRAFT.draft.title }),
+      screen.getByRole("heading", { level: 1, name: TITLE }),
     ).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Screen time & family life" })).toBeNull();
   });
@@ -210,6 +232,6 @@ describe("the Library article preview page", () => {
     expect(titles).toEqual(["Same category", "Newer, other category"]);
     expect(
       screen.getByRole("link", { name: "Same category" }).getAttribute("href"),
-    ).toBe("/library/5e0c7a3b-2f14-4e8d-9b6a-1d3c8f7e2a90");
+    ).toBe("/library/same-category");
   });
 });

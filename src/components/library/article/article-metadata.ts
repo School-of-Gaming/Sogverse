@@ -1,69 +1,126 @@
 import type { Metadata } from "next";
 import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { resolveLocale } from "@/lib/constants/locales";
+import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
+import {
+  translatedCanonicalPath,
+  translatedPageLocales,
+  translatedPageMetadataAlternates,
+  type TranslatedPagePath,
+} from "@/lib/metadata/translated-page";
 import { ogCardImage } from "@/lib/og/card-metadata";
-import type { PublishedLibraryArticle } from "@/services/library";
+import {
+  localizeArticle,
+  type PublishedLibraryArticle,
+} from "@/services/library/library.contracts";
+import { articleAddress, type AddressableArticle } from "../article-address";
 
-/**
- * **The article's canonical path: its English address, whatever locale it is
- * read at.** Articles are written in English only, while the site has five
- * locales, so `/fi/kirjasto/<id>` and `/en/library/<id>` carry the same English
- * text under different chrome. One of them has to be the document, and the
- * English one is the language it is written in.
+/*
+ * An article as crawlers and link previews meet it. The Library is promoted
+ * (`docs/architecture/site-quality.md`), so an article carries a
+ * canonical, its language versions and an `Article`.
+ *
+ * Its canonical and language versions follow the rule every page written per
+ * locale follows (`src/lib/metadata/translated-page.ts`): the locales it was
+ * written in are its language versions, and a locale it was not written in
+ * canonicalises to the slug address of the locale whose text it shows.
  */
-export function libraryArticleCanonicalPath(id: string): string {
-  return getPathname({ href: ROUTES.libraryArticle(id), locale: "en" });
+
+/** One place an article can be read: a locale, and the path segment there. */
+interface LibraryArticleLocation {
+  locale: SupportedLocale;
+  /** An id or a slug (`articleAddress`). */
+  address: string;
+}
+
+/** A location's path, from the pathnames map — `/fi/kirjasto/<slug>`. */
+export function libraryArticlePath({
+  locale,
+  address,
+}: LibraryArticleLocation): string {
+  return getPathname({ href: ROUTES.libraryArticle(address), locale });
+}
+
+/** The article's path at each locale: its address there, judged against `published`. */
+function pathsOf(
+  published: readonly AddressableArticle[],
+  article: AddressableArticle,
+): TranslatedPagePath {
+  return (locale) =>
+    libraryArticlePath({
+      locale,
+      address: articleAddress(published, article, locale),
+    });
+}
+
+/** The canonical path of the article read at `locale`. */
+export function libraryArticleCanonicalPath(
+  published: readonly AddressableArticle[],
+  article: AddressableArticle,
+  locale: SupportedLocale,
+): string {
+  return translatedCanonicalPath(
+    article.versions,
+    locale,
+    pathsOf(published, article),
+  );
 }
 
 /**
- * A published article's metadata: its title, its summary as the description,
- * and the card a shared link unfurls into.
+ * The language versions an article has: one per indexed locale it was
+ * written in, in the site's locale order. The sitemap lists exactly these.
+ */
+export function libraryArticleLocales(
+  article: Pick<AddressableArticle, "versions">,
+): SupportedLocale[] {
+  return translatedPageLocales(article.versions);
+}
+
+/**
+ * A published article's metadata, read at `requestLocale`: the shown
+ * version's title, its summary as the description, and the card a shared link
+ * unfurls into.
  *
- * - **The canonical is the English address, and there are no `hreflang`
- *   alternates.** The articles are English at every locale's URL (see
- *   `libraryArticleCanonicalPath`), and a `languages` set would claim
- *   translations that do not exist. The Library index is different — its
- *   chrome really is localized — and takes the site's normal alternates once
- *   the Library launches.
+ * - **The canonical moves with the text shown**, and `og:url` is the same
+ *   address.
  * - **The card's image is the cover, falling back to the site-wide card** at
  *   the request's locale — the card the `[locale]` layout would have emitted.
  *   It cannot be left to inheritance: Next assigns a child's `openGraph` and
  *   `twitter` over the parent's rather than merging them, so declaring either
  *   block drops the layout's image. `siteName` is restated for the same reason.
  * - **`og:type` is `article`**, with the day it first went live and the day
- *   the live version was published. `og:locale` is `en`, the language of the
- *   title and summary the card shows.
- *
- * **`noindex, nofollow`.** Owner decision (2026-09-29): the Library is not
- * promoted yet, so it is treated like the /schools tree until the owner's
- * visibility pass launches it (`docs/architecture/discoverability.md`). The
- * English canonical, the cover card and the page's JSON-LD are kept on
- * purpose: harmless on a noindex page, and it leaves the visibility pass only
- * the noindex to lift here.
+ *   the live versions were published. `og:locale` is the language of the
+ *   version whose title and summary the card shows.
  */
 export async function libraryArticleMetadata(
   article: PublishedLibraryArticle,
+  published: readonly AddressableArticle[],
   requestLocale: string,
 ): Promise<Metadata> {
+  const locale = resolveLocale(requestLocale);
+  const shown = localizeArticle(article, locale);
+  if (shown === null) return {};
   const cover = catalogueImageSrc("library_cover", article.coverPath);
   const images = cover
-    ? [{ url: cover, alt: article.title }]
-    : [await ogCardImage("site", resolveLocale(requestLocale))];
-  const title = article.title;
-  const description = article.summary;
-  const canonical = libraryArticleCanonicalPath(article.id);
+    ? [{ url: cover, alt: shown.title }]
+    : [await ogCardImage("site", locale)];
+  const { title, summary: description } = shown;
+  const alternates = translatedPageMetadataAlternates(
+    article.versions,
+    locale,
+    pathsOf(published, article),
+  );
+  const { canonical } = alternates;
 
   return {
     title,
     description,
-    alternates: { canonical },
-    robots: { index: false, follow: false },
+    alternates,
     openGraph: {
       type: "article",
       siteName: "School of Gaming",
-      locale: "en",
+      locale: shown.locale,
       url: canonical,
       title,
       description,

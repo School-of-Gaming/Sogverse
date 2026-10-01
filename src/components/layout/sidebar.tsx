@@ -4,7 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import {
   ArrowLeftRight,
-  LayoutDashboard,
+  House,
   Users,
   Palette,
   MonitorPlay,
@@ -64,7 +64,7 @@ function kindIcon(kind: ProductType) {
 // no nested sub-routes that need sidebar nav.
 const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
   admin: [
-    { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
+    { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <House className="h-5 w-5" /> },
     { href: ROUTES.admin.users, labelKey: "users", icon: <Users className="h-5 w-5" /> },
     // Above the product entries because it is the one page here that is a queue
     // of work rather than a catalogue: a session with nobody teaching it is
@@ -114,14 +114,15 @@ export function Sidebar() {
         // Sticks to the bottom edge of the sticky Header by reading
         // `--header-height` from `globals.css` — the same variable the
         // header itself uses. Height is pinned to the visible viewport
-        // below the header so the user-info section stays anchored to the
-        // bottom while the dashboard <main> scrolls with the document.
+        // between the header and the mobile tab bar (`--tab-bar-height`, zero
+        // from `lg` up) so the user-info section stays anchored to the
+        // bottom, never behind the bar, while the dashboard <main> scrolls with the document.
         //
         // The rail has no palette of its own: it is chrome, and composes from
         // the general neutrals like every other surface. Its ground is the
         // card, its edge the general border, its hover fill `muted`, and the
         // active entry the brand pair.
-        `sticky top-[var(--header-height)] flex h-[calc(100vh-var(--header-height))] flex-col self-start border-r border-border bg-card ${collapseTransition}`,
+        `sticky top-[var(--header-height)] flex h-[calc(100vh-var(--header-height)-var(--tab-bar-height))] flex-col self-start border-r border-border bg-card ${collapseTransition}`,
         collapsed ? "w-18" : "w-18 md:w-64"
       )}
     >

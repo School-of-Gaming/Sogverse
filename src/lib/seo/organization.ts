@@ -33,7 +33,7 @@ import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
  * The legacy marketing site leads the list on purpose. Search engines' notion
  * of the School of Gaming entity is attached to it today, and this entry says
  * the Organization published here is that same entity — the hand-over the
- * discoverability doc's first backlog item is about. It goes when the host is
+ * site-quality doc's first "found" backlog item is about. It goes when the host is
  * retired, or stays harmlessly once the host redirects here.
  */
 export const SAME_AS = [
@@ -81,6 +81,15 @@ export const COUNTRY = "FI";
  */
 const LOGO_PATH = "/apple-icon.png";
 
+/**
+ * The `@id` of the `Organization` node the layout emits on every page. Another
+ * block names School of Gaming by this id rather than restating the company,
+ * so a consumer joins the two instead of meeting a second, thinner one.
+ */
+export function organizationId(siteUrl: string): string {
+  return `${siteUrl}/#organization`;
+}
+
 export interface SiteJsonLdInput {
   /** The canonical site origin — `NEXT_PUBLIC_SITE_URL`. */
   siteUrl: string;
@@ -121,14 +130,12 @@ export function siteJsonLd({ siteUrl, description }: SiteJsonLdInput): {
   "@context": string;
   "@graph": [OrganizationNode, WebSiteNode];
 } {
-  const organizationId = `${siteUrl}/#organization`;
-
   return {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "Organization",
-        "@id": organizationId,
+        "@id": organizationId(siteUrl),
         // The brand, not the platform: this is the name a stranger meeting us
         // in a search result or an AI answer has any chance of recognising
         // (`src/CLAUDE.md` § Brand vs. Platform). `legalName` carries the
@@ -154,7 +161,7 @@ export function siteJsonLd({ siteUrl, description }: SiteJsonLdInput): {
         // Klingon would contradict both.
         inLanguage: [...INDEXED_LOCALES],
         description,
-        publisher: { "@id": organizationId },
+        publisher: { "@id": organizationId(siteUrl) },
       },
     ],
   };

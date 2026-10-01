@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { LibraryCategory } from "@/components/library/categories";
-import { selectMoreFromLibrary } from "@/components/library/more-from-library";
+import {
+  publishedArticleCard,
+  selectMoreFromLibrary,
+} from "@/components/library/more-from-library";
+import { ROUTES } from "@/lib/constants";
+import type { PublishedLibraryArticleSummary } from "@/services/library/library.contracts";
 
 function article(id: string, category: LibraryCategory, publishedAt: string) {
   return { id, category, publishedAt: `${publishedAt}T08:00:00Z` };
@@ -82,5 +87,42 @@ describe("selectMoreFromLibrary", () => {
       ids(selectMoreFromLibrary(articles, { id: "x", category: "learning" }, 1)),
     ).toEqual(["b"]);
     expect(ids(articles)).toEqual(before);
+  });
+});
+
+describe("publishedArticleCard", () => {
+  const english: PublishedLibraryArticleSummary = {
+    id: "482f0c6f-0fbc-4202-8790-a73a4520fb47",
+    category: "screen_time",
+    coverPath: null,
+    firstPublishedAt: "2026-05-01T08:00:00Z",
+    publishedAt: "2026-09-01T08:00:00Z",
+    versions: [
+      { locale: "en", title: "A family gaming agreement", summary: "Why." },
+    ],
+  };
+  const swedish: PublishedLibraryArticleSummary = {
+    ...english,
+    id: "5e0c7a3b-2f14-4e8d-9b6a-1d3c8f7e2a90",
+    versions: [
+      ...english.versions,
+      { locale: "sv", title: "Ett spelavtal", summary: "Varför." },
+    ],
+  };
+  const published = [english, swedish];
+
+  it("opens an article written in the page's locale at its slug there", () => {
+    const card = publishedArticleCard(swedish, published, "sv");
+    expect(card?.href).toEqual(ROUTES.libraryArticle("ett-spelavtal"));
+    expect(card?.textLocale).toBe("sv");
+  });
+
+  it("keeps a card showing the fallback in the page's locale, at the id address", () => {
+    // Like a shop card: the link names no locale, so it stays on the Swedish
+    // page, which shows the same English fallback the card does.
+    const card = publishedArticleCard(english, published, "sv");
+    expect(card?.href).toEqual(ROUTES.libraryArticle(english.id));
+    expect(card?.textLocale).toBe("en");
+    expect(card?.title).toBe("A family gaming agreement");
   });
 });

@@ -27,6 +27,17 @@ export const TEAM_PHOTO_HEIGHT = 1000;
 export const TEAM_PHOTO_URL_TTL_SECONDS = 60 * 60;
 
 /**
+ * The address a public profile's photo is served from: the app's own route,
+ * which serves a photo only while its profile is public. `version` is the
+ * token the public read hands back with the profile, which changes whenever
+ * the photo does, so a new photo is a new address and no cache serves the old
+ * one under it.
+ */
+export function publicTeamPhotoUrl(userId: string, version: string): string {
+  return `/api/team/photos/${encodeURIComponent(userId)}?v=${encodeURIComponent(version)}`;
+}
+
+/**
  * The person's photo. Uploads are cropped to a 4:5 portrait of
  * `TEAM_PHOTO_WIDTH` × `TEAM_PHOTO_HEIGHT` before they are stored, and the
  * frame covers whatever it is handed, so a photo of another shape (the preview
@@ -95,10 +106,10 @@ export interface AdminTeamProfile extends TeamProfileCommon {
  * A Gedu. Two differences from an admin, both in the type rather than in the
  * render, so a Gedu's page cannot show them by accident:
  *
- * - **No last name.** Whether a Gedu's surname belongs on a public page is
- *   the owner's open decision; until it is made, a Gedu profile has nowhere to
- *   carry one, so the data shell cannot hand one over. Reversing it is a field
- *   here, not a rule in the render.
+ * - **No last name.** A Gedu is public by first name and nickname (owner,
+ *   2026-10-01), so a Gedu profile has nowhere to carry a surname and the data
+ *   shell cannot hand one over. Reversing it is a field here, not a rule in the
+ *   render.
  * - **No free title.** Their title is the role, "Gedu", glossed on this page
  *   because it is public and the word is never used cold.
  */
@@ -107,6 +118,13 @@ export interface GeduTeamProfile extends TeamProfileCommon {
 }
 
 export type TeamProfile = AdminTeamProfile | GeduTeamProfile;
+
+/**
+ * A profile as the public read hands it over, with when it was first saved —
+ * which never moves, unlike the approval — so two people deriving one public
+ * address settle it by age (`src/components/team/team-address.ts`).
+ */
+export type PublicTeamProfile = TeamProfile & { createdAt: string };
 
 /** The pick a stored id names, or `null` for none or for an id no pick has. */
 export function pickFromId(id: number | null): PickId | null {
@@ -128,8 +146,8 @@ export function pickFromId(id: number | null): PickId | null {
  *
  * Every profile, an admin's or a Gedu's, goes public the same way: whoever
  * edits it marks it ready, and an admin makes it public. The checkbox is a
- * readiness mark, not consent: the person or any admin may save it, while the
- * profile is complete.
+ * readiness mark: the person or any admin may save it, while the profile is
+ * complete.
  */
 export interface TeamProfileRecord {
   profile: TeamProfile;
@@ -147,7 +165,8 @@ export interface TeamProfileRecord {
 
 /**
  * Whether a saved profile is on the public page: once an admin has made it
- * so, which the database allows only while it is marked ready.
+ * so, which the database allows only while it is marked ready. Every approved
+ * profile of an admin or a Gedu is public, a trainee Gedu's included.
  */
 export function isTeamProfilePublic(record: TeamProfileRecord): boolean {
   return record.approved;

@@ -232,6 +232,22 @@ describe("existingFormState", () => {
 
     expect(state.activeLocale).toBe("fi");
   });
+
+  it("falls back to the first written in SUPPORTED_LOCALES order, not row order", () => {
+    const product = syntheticConsumerProduct();
+    product.product_translations = (["fr", "sv"] as const).map((locale) => ({
+      product_id: product.id,
+      locale,
+      name: `Club ${locale}`,
+      short_description: "",
+      long_description: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
+    const state = existingFormState(product, consumerConfig, "fi");
+
+    expect(state.activeLocale).toBe("sv");
+  });
 });
 
 describe("buildUpdateInput round-trip", () => {

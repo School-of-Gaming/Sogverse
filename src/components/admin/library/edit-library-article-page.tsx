@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   useAdminLibraryArticle,
   usePublishLibraryArticle,
+  usePublishedLibraryArticles,
   useSaveLibraryArticle,
   useUnpublishLibraryArticle,
 } from "@/services/library";
@@ -35,12 +36,18 @@ export function EditLibraryArticlePage({ articleId }: { articleId: string }) {
   const saveArticle = useSaveLibraryArticle();
   const publishArticle = usePublishLibraryArticle();
   const unpublishArticle = useUnpublishLibraryArticle();
+  // Read only while the article is live: "View live" is the one thing that
+  // needs it.
+  const { data: published } = usePublishedLibraryArticles(
+    article?.publication != null,
+  );
 
   return (
     <LibraryArticlePageShell title={t("editPage.title")}>
       {article && (
         <LibraryArticleEditor
           article={article}
+          published={published}
           actions={{
             save: async (input) => {
               await saveArticle.mutateAsync({ id: article.draft.id, input });

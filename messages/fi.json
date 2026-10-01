@@ -5,7 +5,7 @@
       "site": {
         "alt": "School of Gaming: ruutuajasta laatuaikaa. Kerhoja, leirejä ja tapahtumia ammattipelikasvattajien johdolla.",
         "headline": "Ruutuajasta",
-        "headlineAccent": "Laatuaikaa",
+        "headlineAccent": "laatuaikaa",
         "subline": "Kerhoja, leirejä ja tapahtumia ammattipelikasvattajien johdolla"
       },
       "roblox": {
@@ -16,6 +16,9 @@
         "headlineTail": "Robloxiin",
         "subline": "Ilmainen ohjelma, jota vetävät oikeat pelikasvattajat",
         "collaboration": "Yhteistyössä"
+      },
+      "team": {
+        "alt": "{name}, {role}, School of Gaming"
       },
       "pages": {
         "signIn": {
@@ -75,7 +78,8 @@
       "geduInvoicing": "Laskutus",
       "adminSubstitutions": "Tuuraukset",
       "teamProfile": "Oma profiili",
-      "adminTeamProfile": "Profiili"
+      "adminTeamProfile": "Profiili",
+      "team": "Tiimi"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -90,7 +94,8 @@
       "privacy": "Miten School of Gaming kerää, käyttää ja säilyttää perheesi tietoja: mitä lapsesta tallennetaan, kenelle tietoja luovutetaan ja mitä oikeuksia sinulla on.",
       "terms": "School of Gamingin käyttöehdot: miten ilmoittautuminen, maksut ja peruutukset toimivat ja mistä me ja sinä olemme kumpikin vastuussa.",
       "antiBullying": "Miten School of Gaming ehkäisee kiusaamista kerhoissa, leireillä ja tapahtumissa, mitä kiusaamistilanteessa tapahtuu ja miten pelikasvattaja puuttuu siihen.",
-      "attributions": "Lähteet ja lisenssit tiedoille, joita School of Gaming käyttää: paikannimet, postinumerot ja pelaajien hahmokuvat, kukin lisenssinsä edellyttämällä tavalla."
+      "attributions": "Lähteet ja lisenssit tiedoille, joita School of Gaming käyttää: paikannimet, postinumerot ja pelaajien hahmokuvat, kukin lisenssinsä edellyttämällä tavalla.",
+      "team": "Tutustu School of Gamingin ihmisiin: tiimiin, joka pyörittää toimintaa, ja pelikasvattajiin, jotka ohjaavat kerhoja, leirejä ja tapahtumia. Jokainen esittäytyy omin sanoin."
     }
   },
   "notFound": {
@@ -123,8 +128,6 @@
     "signIn": "Kirjaudu sisään",
     "signOut": "Kirjaudu ulos",
     "getStarted": "Aloita tästä",
-    "goToMySog": "Avaa Oma SOG",
-    "goToDashboard": "Avaa hallintapaneeli",
     "viewDetails": "Näytä tiedot",
     "learnMore": "Lue lisää",
     "exploreClubs": "Tutustu kerhoihin",
@@ -201,7 +204,9 @@
     },
     "mission": {
       "heading": "Missiomme",
-      "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa."
+      "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa.",
+      "photoAlt": "Kaksi School of Gamingin tiimiläistä violetit School of Gaming -hupparit päällään tapahtuman esittelypisteellä",
+      "meetTeam": "Tutustu tiimiin"
     },
     "values": {
       "heading": "Asiat, joista välitämme",
@@ -215,7 +220,7 @@
       },
       "keepChildrenSafe": {
         "title": "Pidetään lapset turvassa verkossa",
-        "description": "Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Jokaisen pelaajatilin luo vanhempi, tili on liitetty vanhemman tiliin, ja vanhempi valitsee, miten lapsi kirjautuu sisään: pelkästään vanhemman tilin kautta tai omalla käyttäjänimellä tai vahvistetulla sähköpostiosoitteella ja omalla salasanalla. Nollatoleranssi kiusaamiselle ja toksisuudelle."
+        "description": "Sogversessa keskustelu käydään yhteisissä ryhmätiloissa: kerran chatti menee koko huoneelle, jossa Gedu näkee sen. Jokaisen pelaajatilin luo vanhempi, tili on liitetty vanhemman tiliin, ja vanhempi valitsee, miten lapsi kirjautuu sisään: pelkästään vanhemman tilin kautta tai omalla käyttäjänimellä tai vahvistetulla sähköpostiosoitteella ja omalla salasanalla. Nollatoleranssi kiusaamiselle ja toksisuudelle."
       },
       "familyInTheLoop": {
         "title": "Perhe mukana",
@@ -227,7 +232,9 @@
       "paragraph1": "Joka viikko pelaajamme kirjautuvat sisään ja heitä tervehtii oma pelikasvattajansa — Gedu. Gedu ohjaa heidät päivän aiheen läpi antaen lapsille tilaa ja vapautta tehdä seikkailuista omiaan.",
       "paragraph2": "Gedumme ovat itsekin pelaajia. He ymmärtävät omakohtaisesti, että lapsina ja nuorina identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Tämä ymmärrys muokkaa jokaista heidän vetämäänsä kertaa.",
       "paragraph3": "Kaikki kerhomme on rakennettu tarinoiden ympärille, jotka antavat pelaajille tilaa tutkia, luoda ja kuvitella. Viikoittaisten kertojen välillä pelaajat saavat hauskoja haasteita tehtäväksi verkossa ja sen ulkopuolella. Lomien aikana järjestämme leirejä, ja joka viikko on yhteisötapahtumia, turnauksia ja kilpailuja.",
-      "paragraph4": "Jokainen pelaaja vannoo valan käyttäytyä ystävällisesti ja oikein — olipa kyseessä peli, äänichatti tai arki. Samat arvot pätevät kaikkialla."
+      "paragraph4": "Jokainen pelaaja vannoo valan käyttäytyä ystävällisesti ja oikein — olipa kyseessä peli, äänichatti tai arki. Samat arvot pätevät kaikkialla.",
+      "photoAlt": "Rivi tietokoneita studiollamme piirto-ohjelmat auki, valmiina kerhoa varten",
+      "photoCaption": "Studiomme Lauttasaaressa Helsingissä, jossa osa lähikerhoistamme kokoontuu."
     },
     "forParents": {
       "heading": "Vanhemmille",
@@ -251,7 +258,7 @@
         },
         "safety": {
           "question": "Voivatko tuntemattomat puhua lapselleni, ja tallennetaanko mitään?",
-          "answer": "<p>Eivät – kerhon äänihuone ei ole julkinen huone, jonka kuka tahansa löytää. Se on olemassa vain kyseisen ryhmän kerran ajan: se avautuu viisi minuuttia ennen kerran alkua ja sulkeutuu viisi minuuttia sen päätyttyä, ja sisään pääsevät vain kyseisen ryhmän jäsenet, kyseisessä kerhossa työskentelevä pelikasvattaja ja School of Gamingin ylläpitäjät. Tarkistus tehdään palvelimellamme joka kerta, kun joku liittyy, joten lapsi, jolla ei ole paikkaa siinä ryhmässä, ei pääse sisään mitenkään.</p><p>Alustalla ei ole missään yksityisviestitoimintoa: kerran chatti menee koko huoneelle, ei koskaan yhdelle lapselle kahden kesken, ja siinä kulkee sanojen lisäksi kuvia. Chatti on huoneessa, joka on auki saman ajan – siellä lapsesi sen lukee, eikä huoneen sulkeuduttua sitä pääse enää avaamaan. Säilytämme sen kuitenkin: kerhoa vetävät Gedut ja School of Gamingin ylläpitäjät voivat palata siihen, mitä on sanottu, ja juuri se tekee valvonnasta mahdollista. Viestin poistaminen jättää sen tilalle merkinnän eikä pyyhi sitä pois.</p><p>Itse kertaa ei tallenneta. Sovelluksessa mikään ei tallenna, litteroi tai säilytä kerran ääntä tai kuvaa, eikä huoneessa ole tallennuksen hallintapainikkeita.</p><p>Moderaattorin hallintapainikkeet ovat vain Gedulla ja ylläpitäjillä, ja ne ulottuvat pitkälle: mikrofonin mykistäminen tai lukitseminen, kameran sulkeminen tai lukitseminen, chatissa mykistäminen, jonkun siirtäminen omaan tilaansa ja puhuminen kaikkiin tiloihin yhtä aikaa. Pelin sisäinen chatti on eri asia, ja siitä vastaavat pelit itse – School of Gamingin omalla Minecraft-palvelimella Gedumme voivat mykistää, potkia ja porttikieltää pelaajan.</p>"
+          "answer": "<p>Eivät – kerhon äänihuone ei ole julkinen huone, jonka kuka tahansa löytää. Se on olemassa vain kyseisen ryhmän kerran ajan: se avautuu viisi minuuttia ennen kerran alkua ja sulkeutuu viisi minuuttia sen päätyttyä, ja sisään pääsevät vain kyseisen ryhmän jäsenet, kyseisessä kerhossa työskentelevä pelikasvattaja ja School of Gamingin ylläpitäjät. Tarkistus tehdään palvelimellamme joka kerta, kun joku liittyy, joten lapsi, jolla ei ole paikkaa siinä ryhmässä, ei pääse sisään mitenkään.</p><p>Kerran chatti menee koko huoneelle, ei koskaan yhdelle lapselle kahden kesken, ja siinä kulkee sanojen lisäksi kuvia. Chatti on huoneessa, joka on auki saman ajan – siellä lapsesi sen lukee, eikä huoneen sulkeuduttua sitä pääse enää avaamaan. Säilytämme sen kuitenkin: kerhoa vetävät Gedut ja School of Gamingin ylläpitäjät voivat palata siihen, mitä on sanottu, ja juuri se tekee valvonnasta mahdollista. Viestin poistaminen jättää sen tilalle merkinnän eikä pyyhi sitä pois.</p><p>Itse kertaa ei tallenneta. Sovelluksessa mikään ei tallenna, litteroi tai säilytä kerran ääntä tai videokuvaa, eikä huoneessa ole tallennuksen hallintapainikkeita.</p><p>Moderaattorin hallintapainikkeet ovat vain Gedulla ja ylläpitäjillä, ja ne ulottuvat pitkälle: mikrofonin mykistäminen tai lukitseminen, kameran sulkeminen tai lukitseminen, chatissa mykistäminen, jonkun siirtäminen omaan tilaansa ja puhuminen kaikkiin tiloihin yhtä aikaa. Pelin sisäinen chatti on eri asia, ja siitä vastaavat pelit itse – School of Gamingin omalla Minecraft-palvelimella Gedumme voivat mykistää, potkia ja porttikieltää pelaajan.</p>"
         },
         "howToStart": {
           "question": "Miten pääsen alkuun?",
@@ -279,7 +286,7 @@
         },
         "cancellation": {
           "question": "Voinko perua, ja millainen palautuskäytäntönne on?",
-          "answer": "<p>Kerho on kuukausitilaus ilman määräaikaa, ja voit perua sen milloin tahansa maksutta Oma SOG -sivun Maksut ja laskutus -kortista, joka avaa Stripen suojatun laskutussivun. Lapsesi säilyttää paikkansa jo maksetun laskutusjakson loppuun asti – kerhon sivu näyttää hänen viimeisen kertansa päivämäärän, kun jäsenyys on päättymässä.</p><p>Jokaiseen kerhoon kuuluu myös 30 päivän tyytyväisyystakuu: jos kerho ei osoittaudukaan lapsellesi sopivaksi, lähetä sähköpostia osoitteeseen {supportEmail} 30 päivän kuluessa hänen ensimmäisestä kerrastaan, niin palautamme kaiken, mitä olet siitä kerhosta maksanut – lomaketta ei ole eikä syytä tarvitse kertoa.</p><p>Leirit varataan ja maksetaan kertamaksuna, joten ne toimivat toisin: jos peruut vähintään 14 päivää ennen leirin alkua, saat täyden palautuksen; 7–14 päivää ennen palautamme maksun 50 euron käsittelykulun vähennettynä; alle 7 päivää ennen emme voi palauttaa maksua, koska paikka on varattu ja valmisteltu lapsellesi – ellei kyseessä ole äkillinen sairaustapaus tai muu aidosti sinusta riippumaton syy. Jos lapsesi ei pääse mukaan sairauden vuoksi, lähetä meille lääkärintodistus osoitteeseen {supportEmail}, niin palautamme maksun.</p>"
+          "answer": "<p>Kerho on kuukausitilaus ilman määräaikaa, ja voit perua sen milloin tahansa maksutta Oma SOG -sivun Maksut ja laskutus -kortista, joka avaa Stripen suojatun laskutussivun. Lapsesi säilyttää paikkansa jo maksetun laskutusjakson loppuun asti – kerhon sivu näyttää hänen viimeisen kertansa päivämäärän, kun jäsenyys on päättymässä.</p><p>Jokaiseen kerhoon kuuluu myös 30 päivän rahat takaisin -takuu: jos kerho ei osoittaudukaan lapsellesi sopivaksi, lähetä sähköpostia osoitteeseen {supportEmail} 30 päivän kuluessa hänen ensimmäisestä kerrastaan, niin palautamme kaiken, mitä olet siitä kerhosta maksanut – lomaketta ei ole eikä syytä tarvitse kertoa.</p><p>Leirit varataan ja maksetaan kertamaksuna, joten ne toimivat toisin: jos peruut vähintään 14 päivää ennen leirin alkua, saat täyden palautuksen; 7–14 päivää ennen palautamme maksun 50 euron käsittelykulun vähennettynä; alle 7 päivää ennen emme voi palauttaa maksua, koska paikka on varattu ja valmisteltu lapsellesi – ellei kyseessä ole äkillinen sairaustapaus tai muu aidosti sinusta riippumaton syy. Jos lapsesi ei pääse mukaan sairauden vuoksi, lähetä meille lääkärintodistus osoitteeseen {supportEmail}, niin palautamme maksun.</p>"
         },
         "severalChildren": {
           "question": "Minulla on useita lapsia – miten tilit ja maksut toimivat?",
@@ -295,7 +302,7 @@
         },
         "gamerAccounts": {
           "question": "Miten lapseni kirjautuu sisään, ja mikä vanhemman PIN on?",
-          "answer": "<p>Valitset Oma SOG -sivulla jokaiselle lapselle erikseen, miten hän kirjautuu sisään. Oletuksena pelaajatilillä ei ole omaa kirjautumista: sillä on sisäinen Sogverse-osoite eikä oikeaa sähköpostiosoitetta, se on liitetty vanhemman tiliisi, ja lapsesi tulee Sogverseen vaihtamalla sinun profiilistasi omaan profiiliinsa. Halutessasi voit antaa hänelle käyttäjätunnuksen ja salasanan tai hänen oman sähköpostiosoitteensa, jonka hän vahvistaa ennen kuin asettaa salasanan tavallisen palautuspolun kautta.</p><p>Valitsitpa minkä tavan tahansa, lapsen kirjautuminen avaa vain hänen oman tilinsä: lapsi, joka kirjautui sisään omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, ei voi vaihtaa sinun tai sisaruksen tilille lainkaan — hän kirjautuu ulos ja kirjautuu takaisin sisään joko sinuna, sinun salasanallasi, tai sisaruksena, jolla on omat tunnukset; sisarus, joka kirjautuu sisään sinun tilisi kautta, tavoitetaan sen sijaan sinun tililtäsi — ja lapsi, joka tuli sisään vaihtamalla sinun tililtäsi, tarvitsee vanhemman PIN-koodisi vaihtaakseen mihinkään muualle.</p><p>Vanhemman puolelle pääsee nelinumeroisella PIN-koodilla, jonka vain sinä tiedät, joten selaimeen tallennettu salasana ei riitä ostamiseen eikä lapsen tilin muuttamiseen, ja istunto lukittuu uudelleen heti, kun vaihdat lapsen profiiliin tai kirjaudut ulos.</p><p>Jos unohdat PIN-koodin, lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle – jos lapsi painaa ”Unohditko PIN-koodin?”, hän vain lähettää sinulle sähköpostia.</p>"
+          "answer": "<p>Valitset Oma SOG -sivulla jokaiselle lapselle erikseen, miten hän kirjautuu sisään. Oletuksena pelaajatilillä ei ole omaa kirjautumista: sillä on sisäinen Sogverse-osoite eikä oikeaa sähköpostiosoitetta, se on liitetty vanhemman tiliisi, ja lapsesi tulee Sogverseen vaihtamalla sinun profiilistasi omaan profiiliinsa. Halutessasi voit antaa hänelle käyttäjätunnuksen ja salasanan tai hänen oman sähköpostiosoitteensa, jonka hän vahvistaa ennen kuin asettaa salasanan tavallisen palautuspolun kautta.</p><p>Valitsitpa minkä tavan tahansa, lapsen kirjautuminen avaa vain hänen oman tilinsä: lapsi, joka kirjautui sisään omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, ei voi vaihtaa sinun tai sisaruksen tilille lainkaan — hän kirjautuu ulos ja kirjautuu takaisin sisään joko sinuna, sinun salasanallasi, tai sisaruksena, jolla on omat tunnukset; sisarus, joka kirjautuu sisään sinun tilisi kautta, tavoitetaan sen sijaan sinun tililtäsi — ja lapsi, joka tuli sisään vaihtamalla sinun tililtäsi, tarvitsee vanhemman PIN-koodisi vaihtaakseen mihinkään muualle.</p><p>Vanhemman puolelle pääsee nelinumeroisella PIN-koodilla, jonka vain sinä tiedät, joten selaimeen tallennettu salasana ei riitä ostamiseen eikä vanhemman tilin käyttämiseen, ja istunto lukittuu uudelleen heti, kun vaihdat lapsen profiiliin tai kirjaudut ulos.</p><p>Jos unohdat PIN-koodin, lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle – jos lapsi painaa ”Unohditko PIN-koodin?”, hän vain lähettää sinulle sähköpostia.</p>"
         },
         "childData": {
           "question": "Mitä tietoja lapsestani säilytätte?",
@@ -535,13 +542,12 @@
       "publishChanges": "Julkaise muutokset",
       "unpublish": "Poista julkaisu",
       "readiness": {
-        "missing": "Jotta artikkelin voi julkaista, lisää {fields}."
+        "missing": "Jotta artikkelin voi julkaista, lisää {fields}.",
+        "leftOut": "{count, plural, one {{languages}: kieliversio on kesken, joten sitä ei julkaista.} other {{languages}: kieliversiot ovat kesken, joten niitä ei julkaista.}}"
       },
       "missing": {
-        "title": "otsikko",
-        "summary": "tiivistelmä",
         "category": "aihe",
-        "body": "artikkelin teksti"
+        "completeVersion": "kieliversio, jossa on otsikko, tiivistelmä ja artikkelin teksti"
       },
       "unpublishConfirm": {
         "title": "Poistetaanko artikkelin julkaisu?",
@@ -549,6 +555,7 @@
         "confirm": "Poista julkaisu"
       },
       "fields": {
+        "languages": "Kielet",
         "title": "Otsikko",
         "summary": "Tiivistelmä",
         "category": "Aihe",
@@ -556,6 +563,7 @@
         "body": "Artikkelin teksti"
       },
       "hints": {
+        "languages": "Kirjoita jokainen kieliversio itse. Julkaistessa kaikki valmiit kieliversiot tulevat näkyviin: ne, joissa on otsikko, tiivistelmä ja artikkelin teksti.",
         "summary": "Pelkkää tekstiä. Näkyy otsikon alla ja artikkelin kortissa Kirjastossa.",
         "cover": "Näkyy artikkelin yläpuolella ja sen kortissa, rajattuna muotoon 16:9. Ilman kansikuvaa lukijat näkevät paikkamerkin.",
         "body": "Lukijat näkevät tekstin kansikuvan alla muotoiltuna niin kuin se näkyy tässä."
@@ -573,8 +581,14 @@
         "publishFailed": "Artikkelia ei voitu julkaista. Yritä uudelleen.",
         "publishFailedWithReason": "Artikkelia ei voitu julkaista – {reason}",
         "unpublishFailed": "Artikkelin julkaisua ei voitu poistaa. Yritä uudelleen.",
-        "unpublishFailedWithReason": "Artikkelin julkaisua ei voitu poistaa – {reason}"
-      }
+        "unpublishFailedWithReason": "Artikkelin julkaisua ei voitu poistaa – {reason}",
+        "versionTitleRequired": "{language}: kieliversiolta puuttuu otsikko."
+      },
+      "versionComplete": "valmis",
+      "versionIncomplete": "kesken",
+      "addLocale": "Lisää kieli",
+      "removeLocale": "Poista {language}",
+      "languagesLabel": "Kielet"
     },
     "geduRole": {
       "primary": "Vastaava Gedu",
@@ -2669,9 +2683,14 @@
       "shop": "Kauppa",
       "yty": "Yty",
       "about": "Tietoa",
+      "parents": "Vanhemmat",
       "faq": "UKK",
       "substitutions": "Tuuraukset",
-      "substitutionsPhone": "Tuuraukset"
+      "home": "Etusivu",
+      "library": "Kirjasto",
+      "libraryShort": "Kirjasto",
+      "team": "Tiimi",
+      "tabBar": "Päävalikko"
     },
     "accountMenu": "Tilivalikko – {name}",
     "continueToAccount": "Jatka tilillesi",
@@ -3131,15 +3150,48 @@
   },
   "home": {
     "hero": {
-      "title": "Ruutuajasta<br></br><act>Laatuaikaa</act>",
-      "subtitle": "Taidolla suunnitellut kerhomme edistävät tervettä pelaamista harrastuksena Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Ammattitaitoiset pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat.",
-      "aboutCta": "Lue lisää meistä"
+      "title": "Ruutuajasta<br></br><act>laatuaikaa</act>",
+      "subtitle": "Viikoittaiset kerhot 7–17-vuotiaille verkossa ja paikan päällä alkaen 59 € kuukaudessa: pelikasvattaja ohjaa jokaista kertaa Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä."
+    },
+    "findClub": "Etsi kerho",
+    "trust": {
+      "cancel": "Peru milloin tahansa maksutta",
+      "guarantee": "30 päivän rahat takaisin -takuu"
+    },
+    "testimonials": {
+      "heading": "Mitä vanhemmat kertovat",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "”Kerho on pojan viikon kohokohta. Hiljaisesta ja arasta pojasta kuoriutuu joka viikko nauravainen ja kovaan ääneen höpöttävä lapsi, kun pääsee samanhenkisten lasten kanssa puuhailemaan. Kerhon sisältö ja kasvattajien osaaminen on yllättänyt minut todella positiivisesti.”",
+          "attribution": "Äiti, Suomi"
+        },
+        "sighWithHappiness": {
+          "quote": "”Mikään toinen asia, harrastus tai juttu ei ole saanut lastani huokailemaan sitä kuinka onnellinen on.”",
+          "attribution": "Äiti, Suomi"
+        },
+        "largeGroups": {
+          "quote": "”Isot ryhmät jännittävät lastamme. Tämä on täydellinen tapa meille harrastaa ja tutustua uusiin kavereihin.”",
+          "attribution": "Äiti, Suomi"
+        },
+        "finnishImproved": {
+          "quote": "”Tyttäreni suomen kieli on kehittynyt kuukaudessa valtavasti! Pelikasvattajat ovat olleet tosi taitavia, ystävällisiä ja pitkämielisiä. Tämä teidän juttu todella toimii!”",
+          "attribution": "Äiti, Norja"
+        },
+        "funAndSupervised": {
+          "quote": "”Pelaaminen on hauskaa ja valvottua. Ei kiusaamista eikä rähjäämistä tai pahaa mieltä.”",
+          "attribution": "Äiti, Suomi"
+        },
+        "positiveExperience": {
+          "quote": "”School of Gaming on ollut todella positiivinen kokemus sekä lapselle että vanhemmille. Lapset ovat saaneet hienoja pelikokemuksia uusien pelikaverien kanssa turvallisessa peliympäristössä kokeneitten ohjaajien kanssa – voin suositella!”",
+          "attribution": "Isä, Suomi"
+        }
+      }
     },
     "features": {
       "heading": "Tee pelaamisesta hieno harrastus",
       "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa.",
       "minecraftClubs": {
-        "title": "Jokaisessa tapaamisessa on Gedu",
+        "title": "Joka kerralla mukana on Gedu",
         "description": "Pelikasvattajamme eli Gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa pelikasvattaja, joka todella ymmärtää."
       },
       "screenTime": {
@@ -3153,6 +3205,36 @@
       "parents": {
         "title": "Koko perhe mukaan",
         "description": "Pidämme vanhemmat ajan tasalla ja mukana lastensa pelipolulla. Vanhempien tukeminen on meille yhtä tärkeää kuin itse kerhot."
+      }
+    },
+    "safety": {
+      "heading": "Miten lapseni turvallisuudesta huolehditaan?",
+      "facts": {
+        "vetted": {
+          "title": "Rikosrekisteriote vaaditaan",
+          "description": "Edellytämme, että jokainen Gedu näyttää meille lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen, ennen kuin hyväksymme hänet."
+        },
+        "noDirectMessages": {
+          "title": "Jokainen chatti on koko ryhmän",
+          "description": "Kerran chatti menee koko huoneelle, jossa Gedu näkee sen."
+        },
+        "groupOnlyRooms": {
+          "title": "Vain oma ryhmä pääsee sisään",
+          "description": "Kerhon äänihuone avautuu viisi minuuttia ennen kerran alkua ja sulkeutuu viisi minuuttia sen päätyttyä, ja sisään pääsevät vain ryhmän jäsenet, sen Gedut ja henkilökuntamme."
+        },
+        "notRecorded": {
+          "title": "Kertoja ei tallenneta",
+          "description": "Sovelluksessa mikään ei tallenna, litteroi tai säilytä kerran ääntä tai videokuvaa."
+        },
+        "parentPin": {
+          "title": "Ostoihin tarvitaan PIN-koodi",
+          "description": "Ostaminen vaatii nelinumeroisen vanhemman PIN-koodin, jonka vain sinä tiedät, eikä lapsesi pääse ilman sitä vanhemman tilillesi."
+        }
+      },
+      "faqLink": "Lue tarkemmat vastaukset UKK-osiosta",
+      "photo": {
+        "alt": "Lapset tietokoneiden ääressä School of Gamingin kerhossa takaapäin kuvattuna, vieressä istuu heidän pelikasvattajansa",
+        "caption": "Lähikerho studiollamme Lauttasaaressa Helsingissä."
       }
     },
     "howItWorks": {
@@ -3173,8 +3255,8 @@
     },
     "cta": {
       "heading": "Valmis muuttamaan pelaamisen oppimiseksi?",
-      "subheading": "Anna lapsellesi hauska ja turvallinen paikka pelata, oppia ja saada ystäviä — ammattitaitoisen pelikasvattajan ohjaamana.",
-      "createFreeAccount": "Luo ilmainen tili"
+      "subheading": "Anna lapsellesi paikka pelata, oppia ja saada ystäviä joka viikko: pelikasvattaja ohjaa jokaista kertaa, ja jokainen chatti on koko ryhmän nähtävillä.",
+      "whereWeAre": "Verkkokerhoihimme voi osallistua mistä päin maailmaa tahansa, ja kielinä ovat {languages}. Entä maailmanlaajuinen pääkonttorimme? Kodikas studio pienellä ja rauhallisella saarella, Lauttasaaressa Helsingissä, Suomessa."
     }
   },
   "locations": {
@@ -3631,7 +3713,7 @@
     },
     "overview": {
       "heading": "Miten Yty toimii",
-      "paragraph1": "Jokainen pelaaja aloittaa nollasta. Jokaisesta tapaamisesta, jokaisesta suoritetusta tehtävästä ja jokaisesta ystävällisestä teosta pelaajat ansaitsevat Yty-pisteitä. Pisteet kertyvät neljään Yty-elementtiin, joista jokainen kuvastaa eri puolta hyvästä kasvusta.",
+      "paragraph1": "Jokainen pelaaja aloittaa nollasta. Jokaisesta kerrasta, jokaisesta suoritetusta tehtävästä ja jokaisesta ystävällisestä teosta pelaajat ansaitsevat Yty-pisteitä. Pisteet kertyvät neljään Yty-elementtiin, joista jokainen kuvastaa eri puolta hyvästä kasvusta.",
       "paragraph2": "Kun pelaajat keräävät Ytyä itselleen, he kasvattavat samalla koko Sogversen Ytyä — muokaten tarinaa ja avaten uusia mahdollisuuksia koko yhteisölle."
     },
     "elements": {
@@ -5141,9 +5223,10 @@
   },
   "team": {
     "profile": {
-      "nameWithNickname": "{firstName} ”<nick>{nickname}</nick>” {lastName}",
-      "firstNameWithNickname": "{firstName} ”<nick>{nickname}</nick>”",
+      "nameWithNickname": "{firstName} ”{nickname}” {lastName}",
+      "firstNameWithNickname": "{firstName} ”{nickname}”",
       "geduTitle": "Gedu · pelikasvattaja",
+      "geduAltRole": "pelikasvattaja",
       "speaks": "Puhuu",
       "aboutMe": "Minusta",
       "funFact": "Hauska fakta",
@@ -5161,7 +5244,8 @@
         "waitingTitle": "Valmis, odottaa ylläpitäjää",
         "waitingBody": "Ylläpitäjä tarkistaa profiilisivusi ennen kuin se tulee julkiseksi.",
         "liveTitle": "Julkinen",
-        "liveBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti. Jos haluat piilottaa profiilin, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna. Kun rastitat sen uudelleen, ylläpitäjä julkaisee sen taas."
+        "liveBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti. Jos haluat piilottaa profiilin, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna. Kun rastitat sen uudelleen, ylläpitäjä julkaisee sen taas.",
+        "viewPublicPage": "Näytä julkinen sivu"
       },
       "actions": {
         "save": "Tallenna muutokset",
@@ -5252,7 +5336,8 @@
         "waitingTitle": "Valmis, odottaa julkaisua",
         "waitingBody": "Profiili ({name}) on merkitty valmiiksi julkaistavaksi. Se tulee näkyviin School of Gamingin verkkosivuille heti, kun ylläpitäjä julkaisee sen.",
         "liveTitle": "Julkinen",
-        "liveBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti."
+        "liveBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti.",
+        "viewPublicPage": "Näytä julkinen sivu"
       },
       "edit": {
         "back": "Takaisin: {name}",
@@ -5281,6 +5366,19 @@
         "makePublicNotReady": "Profiilia ({name}) ei ole enää merkitty valmiiksi, joten sitä ei julkaistu.",
         "hide": "Piilota",
         "visibilityError": "Profiilin näkyvyyden muuttaminen ei onnistunut. Yritä uudelleen."
+      }
+    },
+    "public": {
+      "index": {
+        "title": "Tutustu <act>tiimiin</act>",
+        "intro": "School of Gamingia pyörittävä tiimi ja kerhojamme ohjaavat pelikasvattajat – jokainen esittäytyy omin sanoin.",
+        "leadership": "Johto",
+        "gameEducators": "Pelikasvattajat",
+        "empty": "Tiimimme esittäytyy täällä pian"
+      },
+      "back": "Takaisin tiimiin",
+      "cta": {
+        "heading": "Etsitkö lapsellesi kerhoa?"
       }
     }
   },

@@ -6,6 +6,7 @@ import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { localeTabAfterRemoving } from "@/lib/i18n/locale-tabs";
 import { cn, findOption } from "@/lib/utils";
 import {
   LOCALE_CONFIG,
@@ -96,14 +97,15 @@ export function IdentitySection({
     setState((s) => {
       const next = { ...s.translations };
       delete next[locale];
-      const remaining = SUPPORTED_LOCALES.filter((l) => next[l] !== undefined);
       return {
         ...s,
         translations: next,
-        activeLocale:
-          s.activeLocale === locale
-            ? (remaining[0] ?? uiLocale)
-            : s.activeLocale,
+        activeLocale: localeTabAfterRemoving(
+          next,
+          s.activeLocale,
+          locale,
+          uiLocale,
+        ),
       };
     });
   }

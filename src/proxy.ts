@@ -155,9 +155,11 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // their own child. The signed token in the URL is the authorization, the page
 // renders identically in every auth state, and a gate would only cost the link.
 // ROUTES.library is the Library index, and its prefix match covers each
-// article (/library/[id]). The admin's preview beneath an article is held out
+// article (/library/[idOrSlug]). The admin's preview beneath an article is held out
 // of that match by `isAdminOnlySurface` below.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix];
+// ROUTES.team is the Team index, and its prefix match covers each person's
+// page at either address (/team/[idOrSlug]).
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — seat-holders (a gamer, or a parent on
@@ -481,11 +483,11 @@ export async function proxy(request: NextRequest) {
 
   // The admin-only pages that live outside `/admin`: the preview scenes, and
   // the preview of a Library article's saved working copy. The article preview
-  // sits under the public `/library/[id]` it previews, so it is matched by its
+  // sits under the public `/library/[idOrSlug]` it previews, so it is matched by its
   // own template and held out of the public-route list below, whose `/library`
   // prefix match would otherwise reach it.
   const isAdminOnlySurface =
-    pathname.startsWith("/preview/") || template === "/library/[id]/preview";
+    pathname.startsWith("/preview/") || template === "/library/[idOrSlug]/preview";
 
   // Check if route is public. A non-page path always passes (an API handler
   // owns its own auth; a `/_vercel/*` or `/.well-known/*` file has none).
@@ -650,6 +652,13 @@ export const config = {
      *   a bare public URL answered from the deployed catalog and marked
      *   publicly cacheable, so it is excluded for the reason spelled out below
      * - api/locations/search — see below, this one is load-bearing
+     * - api/team/photos/ — the public team page's photos, marked publicly
+     *   cacheable for the same reason as the location search
+     * - media/ — the public folder's video, which next.config.ts serves
+     *   `immutable`, so it is public cacheable output the rule below binds.
+     *   Excluded by prefix rather than by extension so the rule holds for
+     *   every file type kept there; without it, a `/media/*.mp4` is
+     *   locale-redirected to a page that does not exist
      *
      * **Rule: a route whose response is marked publicly cacheable must not pass
      * through here.** This proxy refreshes a near-expiry session and writes the
@@ -667,6 +676,6 @@ export const config = {
      * made. Excluding the path makes it ours. The route needs nothing from the
      * proxy anyway: it reads no cookies and builds its own anonymous client.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|llms\\.txt|api/locations/search|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|llms\\.txt|api/locations/search|api/team/photos/|media/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

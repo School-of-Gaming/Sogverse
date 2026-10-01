@@ -207,7 +207,7 @@ function resolveBase(raw, signedOut) {
 /** Set once the preset is loaded and says whether the run signs in. */
 let BASE = null;
 
-/** `tlh` is the Klingon easter egg — a test locale, never a review locale. */
+/** `tlh` is the Klingon easter egg — a real locale, but never a review locale. */
 const LOCALES = list(arg("locales", "en,fi,sv,fr"));
 const ONLY = list(arg("only"));
 

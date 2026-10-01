@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useNow, useTimezone } from "@/providers";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
@@ -100,7 +101,10 @@ export function useBrowseCardViewProps(
   const topicLabel = useTopicLabel();
   const currency = DEFAULT_CURRENCY;
 
-  const tr = resolveTranslation(product.product_translations, uiLocale);
+  const tr = resolveTranslation(
+    inLocaleOrder(product.product_translations),
+    uiLocale,
+  );
 
   // Seats are held by active participations alone. A parent part-way through
   // Stripe Checkout holds nothing — the row is created when the payment lands —

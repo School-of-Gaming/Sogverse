@@ -1,5 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+
+// The real wrapped navigation: an item's URL is the locale-prefixed,
+// translated address the path builder produces, which the setup's stub
+// flattens.
+vi.unmock("@/i18n/navigation");
+vi.unmock("next/navigation");
+
+const SITE = "https://test.sogverse.local";
+vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE);
+afterAll(() => vi.unstubAllEnvs());
 import { ShopItemListJsonLd } from "@/components/public/products/shop-item-list-json-ld";
 import type { ProductBrowseRow } from "@/types";
 
@@ -75,18 +85,50 @@ describe("ShopItemListJsonLd", () => {
     });
   });
 
-  it("emits no url anywhere", () => {
-    // Every product detail page is `noindex, nofollow` by posture, so a URL
-    // here would advertise pages a crawler is told it may not use
-    // (`docs/architecture/discoverability.md`, tier 2).
-    const html = renderToStaticMarkup(
-      ShopItemListJsonLd({
-        products: [row("a", [{ locale: "en", name: "Minecraft club" }])],
-        locale: "en",
-      }) ?? <></>,
+  it("gives each item its page's canonical URL", () => {
+    // The rows are exactly the shop's listing, and a listed product's page is
+    // promoted (`docs/architecture/site-quality.md`, tier 1). Its canonical is
+    // the address of the locale whose words it shows.
+    const list = emitted(
+      [
+        row("a", [
+          { locale: "en", name: "Minecraft club" },
+          { locale: "fi", name: "Minecraft-kerho" },
+        ]),
+        row("b", [{ locale: "en", name: "Roblox camp" }]),
+      ],
+      "fi",
     );
 
-    expect(html).not.toContain("url");
+    expect(list).toMatchObject({
+      itemListElement: [
+        { position: 1, name: "Minecraft-kerho", url: `${SITE}/fi/kauppa/a` },
+        // Not written in Finnish: the Finnish shop shows its English words,
+        // and its page canonicalises to the English address.
+        { position: 2, name: "Roblox camp", url: `${SITE}/en/shop/b` },
+      ],
+    });
+  });
+
+  it("names an untranslated product by its first version in the one fixed language order", () => {
+    // Written in French and Swedish, the rows arriving French first: a
+    // Finnish reader is shown Swedish, which comes before French in
+    // `SUPPORTED_LOCALES`, and the name and the URL agree on it.
+    const list = emitted(
+      [
+        row("c", [
+          { locale: "fr", name: "Club de construction" },
+          { locale: "sv", name: "Byggklubb" },
+        ]),
+      ],
+      "fi",
+    );
+
+    expect(list).toMatchObject({
+      itemListElement: [
+        { position: 1, name: "Byggklubb", url: `${SITE}/sv/butik/c` },
+      ],
+    });
   });
 
   it("skips a row whose name resolves to nothing", () => {

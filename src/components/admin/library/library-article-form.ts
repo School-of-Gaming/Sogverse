@@ -1,8 +1,14 @@
 import type { LibraryCategory } from "@/components/library/categories";
+import {
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
+import { openingLocaleTab } from "@/lib/i18n/locale-tabs";
 import type {
   AdminLibraryArticleListItem,
   LibraryArticleDraft,
   LibraryArticleInput,
+  LibraryArticleVersionInput,
 } from "@/services/library";
 
 /**
@@ -16,38 +22,95 @@ export interface LibraryArticleCover {
   path: string;
 }
 
-/** The editor's own state: the five fields an admin writes. */
-export interface LibraryArticleForm {
+/** One language's text as typed — untrimmed, so nothing moves under the cursor. */
+export interface LibraryArticleVersionDraft {
   title: string;
   summary: string;
-  category: LibraryCategory | null;
-  cover: LibraryArticleCover | null;
   /** Authored markdown. */
   body: string;
 }
 
-export function emptyLibraryArticleForm(): LibraryArticleForm {
-  return { title: "", summary: "", category: null, cover: null, body: "" };
+const EMPTY_VERSION: LibraryArticleVersionDraft = {
+  title: "",
+  summary: "",
+  body: "",
+};
+
+/**
+ * The editor's own state: a version per language tab, the open tab, and the
+ * article's category and cover. The versions are the team profile form's
+ * per-locale map, so switching tabs keeps what was typed in each.
+ */
+export interface LibraryArticleForm {
+  versions: Partial<Record<SupportedLocale, LibraryArticleVersionDraft>>;
+  activeLocale: SupportedLocale;
+  category: LibraryCategory | null;
+  cover: LibraryArticleCover | null;
+}
+
+/** The version a tab holds, or an empty one for a tab not yet typed in. */
+export function versionOf(
+  form: Pick<LibraryArticleForm, "versions">,
+  locale: SupportedLocale,
+): LibraryArticleVersionDraft {
+  return form.versions[locale] ?? EMPTY_VERSION;
+}
+
+/** The tabs open, in `SUPPORTED_LOCALES` order. */
+export function formLocales(
+  form: Pick<LibraryArticleForm, "versions">,
+): SupportedLocale[] {
+  return SUPPORTED_LOCALES.filter((locale) => form.versions[locale] !== undefined);
+}
+
+/** A new article opens on one tab, in the admin's own UI locale. */
+export function emptyLibraryArticleForm(
+  uiLocale: SupportedLocale,
+): LibraryArticleForm {
+  return {
+    versions: { [uiLocale]: EMPTY_VERSION },
+    activeLocale: uiLocale,
+    category: null,
+    cover: null,
+  };
+}
+
+function isBlankVersion(version: LibraryArticleVersionDraft): boolean {
+  return (
+    version.title.trim() === "" &&
+    version.summary.trim() === "" &&
+    version.body.trim() === ""
+  );
 }
 
 /** Nothing written into a new article's form yet: leaving it loses nothing. */
 export function isBlankLibraryArticleForm(form: LibraryArticleForm): boolean {
   return (
-    form.title.trim() === "" &&
-    form.summary.trim() === "" &&
-    form.body.trim() === "" &&
+    formLocales(form).every((locale) => isBlankVersion(versionOf(form, locale))) &&
     form.category === null &&
     form.cover === null
   );
 }
 
-/** A saved working copy as the editor opens it. */
+/**
+ * A saved working copy as the editor opens it: on the tab a reader of the
+ * admin's UI locale would be shown (`openingLocaleTab`).
+ */
 export function libraryArticleFormFromDraft(
   draft: LibraryArticleDraft,
+  uiLocale: SupportedLocale,
 ): LibraryArticleForm {
+  const versions: LibraryArticleForm["versions"] = {};
+  for (const { locale, title, summary, body } of draft.versions) {
+    versions[locale] = { title, summary, body };
+  }
+  if (draft.versions.length === 0) versions[uiLocale] = EMPTY_VERSION;
   return {
-    title: draft.title,
-    summary: draft.summary,
+    versions,
+    activeLocale: openingLocaleTab(
+      draft.versions.map((version) => version.locale),
+      uiLocale,
+    ),
     category: draft.category,
     // The database derives the path from the id and the read embeds the label
     // through it, so all three are present or all absent.
@@ -61,21 +124,61 @@ export function libraryArticleFormFromDraft(
             label: draft.coverLabel,
             path: draft.coverPath,
           },
-    body: draft.body,
   };
 }
 
 /**
- * What a save sends. The service's contract trims and validates it; the whole
- * input travels on every save, because the save assigns every field.
+ * The versions a save would store, trimmed, in locale order. A tab with
+ * nothing typed in it is not a version — it is a tab opened and not used — so
+ * it is left out, and a new article's first, empty tab is no content.
+ */
+function versionsToSave(
+  form: Pick<LibraryArticleForm, "versions">,
+): LibraryArticleVersionInput[] {
+  return formLocales(form).flatMap((locale) => {
+    const version = versionOf(form, locale);
+    if (isBlankVersion(version)) return [];
+    return [
+      {
+        locale,
+        title: version.title.trim(),
+        summary: version.summary.trim(),
+        body: version.body.trim(),
+      },
+    ];
+  });
+}
+
+/**
+ * Why a save cannot go ahead, before it is tried: no language written at all,
+ * or a language written without its title (the admin list names an article by
+ * one). The same rule the save function applies.
+ */
+export type LibrarySaveBlocker =
+  | { kind: "noVersion" }
+  | { kind: "untitled"; locale: SupportedLocale };
+
+export function librarySaveBlocker(
+  form: Pick<LibraryArticleForm, "versions">,
+): LibrarySaveBlocker | null {
+  const versions = versionsToSave(form);
+  if (versions.length === 0) return { kind: "noVersion" };
+  const untitled = versions.find((version) => version.title === "");
+  return untitled === undefined
+    ? null
+    : { kind: "untitled", locale: untitled.locale };
+}
+
+/**
+ * What a save sends. The service's contract validates it; the whole input
+ * travels on every save, because the save assigns every field and replaces
+ * the whole version set.
  */
 export function libraryArticleInputFromForm(
   form: LibraryArticleForm,
 ): LibraryArticleInput {
   return {
-    title: form.title,
-    summary: form.summary,
-    body: form.body,
+    versions: versionsToSave(form),
     category: form.category,
     coverImageId: form.cover?.id ?? null,
   };
@@ -87,7 +190,7 @@ export function libraryArticleInputFromForm(
  * form looking unsaved against the trimmed copy the read hands back.
  *
  * `editorBodies` maps a body the rich editor was seeded with to the editor's
- * own serialisation of it. The body is also the saved one when it is that
+ * own serialisation of it. A body is also the saved one when it is that
  * serialisation of the saved body: the editor writes markdown back in its own
  * dialect, and reports it on its first transaction whether or not anything
  * was typed, so an untouched body can arrive spelled differently from the
@@ -99,12 +202,20 @@ export function sameAsSaved(
   draft: LibraryArticleDraft,
   editorBodies: ReadonlyMap<string, string> = new Map(),
 ): boolean {
-  const body = form.body.trim();
+  const versions = versionsToSave(form);
+  if (versions.length !== draft.versions.length) return false;
+  const sameVersions = versions.every((version, index) => {
+    const saved = draft.versions[index];
+    return (
+      version.locale === saved.locale &&
+      version.title === saved.title.trim() &&
+      version.summary === saved.summary.trim() &&
+      (version.body === saved.body.trim() ||
+        version.body === editorBodies.get(saved.body)?.trim())
+    );
+  });
   return (
-    form.title.trim() === draft.title.trim() &&
-    form.summary.trim() === draft.summary.trim() &&
-    (body === draft.body.trim() ||
-      body === editorBodies.get(draft.body)?.trim()) &&
+    sameVersions &&
     form.category === draft.category &&
     (form.cover?.id ?? null) === draft.coverImageId
   );
@@ -115,29 +226,54 @@ export function sameAsSaved(
 // ---------------------------------------------------------------------------
 
 /**
- * The fields publishing requires, in the order the form asks for them. The
- * cover is not among them: an article may go live without one.
+ * The fields a version needs before publishing takes it, in the order the
+ * form asks for them.
  */
-export const LIBRARY_PUBLISH_FIELDS = [
-  "title",
-  "summary",
-  "category",
-  "body",
-] as const;
+export const LIBRARY_VERSION_FIELDS = ["title", "summary", "body"] as const;
 
-export type LibraryPublishField = (typeof LIBRARY_PUBLISH_FIELDS)[number];
+export type LibraryVersionField = (typeof LIBRARY_VERSION_FIELDS)[number];
+
+/** What a version still needs before publishing takes it; empty when complete. */
+export function missingInVersion(
+  version: LibraryArticleVersionDraft,
+): LibraryVersionField[] {
+  return LIBRARY_VERSION_FIELDS.filter((field) => version[field].trim() === "");
+}
+
+export function isCompleteVersion(version: LibraryArticleVersionDraft): boolean {
+  return missingInVersion(version).length === 0;
+}
 
 /**
- * What a copy still needs before it can be published, in form order — empty
- * when it is ready. The same rule the publish function applies: a blank after
- * trimming is missing, and so is no category.
+ * What an article still needs before it can be published: a category, and at
+ * least one complete version. A cover is not among them, and neither is a
+ * complete version in every language: publishing leaves an incomplete one out.
  */
+export type LibraryPublishNeed = "category" | "completeVersion";
+
 export function missingForPublish(
-  copy: Pick<LibraryArticleForm, LibraryPublishField>,
-): LibraryPublishField[] {
-  return LIBRARY_PUBLISH_FIELDS.filter((field) =>
-    field === "category" ? copy.category === null : copy[field].trim() === "",
+  form: Pick<LibraryArticleForm, "versions" | "category">,
+): LibraryPublishNeed[] {
+  const needs: LibraryPublishNeed[] = [];
+  if (form.category === null) needs.push("category");
+  const anyComplete = formLocales(form).some((locale) =>
+    isCompleteVersion(versionOf(form, locale)),
   );
+  if (!anyComplete) needs.push("completeVersion");
+  return needs;
+}
+
+/**
+ * The languages written but not complete — the ones a publish would leave
+ * out — in locale order. A blank tab is not written, so it is not here.
+ */
+export function incompleteLocales(
+  form: Pick<LibraryArticleForm, "versions">,
+): SupportedLocale[] {
+  return formLocales(form).filter((locale) => {
+    const version = versionOf(form, locale);
+    return !isBlankVersion(version) && !isCompleteVersion(version);
+  });
 }
 
 /**
@@ -171,7 +307,7 @@ export function libraryArticleStatus(
  * - `ready` — the saved copy is complete and differs from what is live, or is
  *   not live at all.
  * - `unsaved` — the form holds changes a save has not stored yet.
- * - `incomplete` — the copy lacks something publishing requires; `missing`
+ * - `incomplete` — the article lacks something publishing requires; `missing`
  *   names what.
  *
  * `incomplete` wins over `unsaved`, because the admin has to add the field
@@ -181,7 +317,7 @@ export type LibraryPublishState =
   | { kind: "upToDate" }
   | { kind: "ready" }
   | { kind: "unsaved" }
-  | { kind: "incomplete"; missing: LibraryPublishField[] };
+  | { kind: "incomplete"; missing: LibraryPublishNeed[] };
 
 export function libraryPublishState({
   form,

@@ -17,6 +17,9 @@
         "subline": "Huch Hutlh ghojmoH — Gedu’pu’ Dun DevtaH",
         "collaboration": "boqwI’pu’"
       },
+      "team": {
+        "alt": "{name}, {role} — School of Gaming"
+      },
       "pages": {
         "signIn": {
           "title": "School of Gaming: yI’el",
@@ -68,7 +71,8 @@
       "geduInvoicing": "DIlmeH ghItlh",
       "adminSubstitutions": "lIwmey",
       "teamProfile": "Del’a’wIj",
-      "adminTeamProfile": "Del’a’"
+      "adminTeamProfile": "Del’a’",
+      "team": "ghom"
     },
     "descriptions": {
       "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
@@ -79,7 +83,8 @@
       "about": "School of Gaming: ’Iv maH, nuq ’oH Yty’e’, ’ej qorDu’pu’ luyu’bogh yu’mey lujangbogh De’.",
       "library": "School of Gaming paq qach: vavpu’ SoSpu’ je DevmeH ghItlhmey. Qan, jIHmey poH, ’ej nuq ghoj puqpu’ Quj.",
       "shop": "School of Gaming ghom’a’mey, raghmey, wanI’mey je yIlegh: Minecraft, Roblox, Fortnite latlh je. puqlI’vaD lI’bogh wa’ yItu’!",
-      "resetPin": "chu’bogh vav PIN yIwIv — QInDaq tlhegh yIlo’. vav paqmey SoQmoH PIN, ’ej puq luSovbe’."
+      "resetPin": "chu’bogh vav PIN yIwIv — QInDaq tlhegh yIlo’. vav paqmey SoQmoH PIN, ’ej puq luSovbe’.",
+      "team": "School of Gaming ghom yIghov: DevwI’pu’ ’ej Quj ghojmoHwI’pu’."
     }
   },
   "notFound": {
@@ -112,8 +117,6 @@
     "signIn": "yI’el",
     "signOut": "yImej",
     "getStarted": "DaH yIqet",
-    "goToMySog": "jIH SOG yIghoS",
-    "goToDashboard": "QaD yIghoS",
     "viewDetails": "tIqel",
     "learnMore": "bIghojnIS",
     "exploreClubs": "ghom’a’mey tIghoS",
@@ -190,7 +193,9 @@
     },
     "mission": {
       "heading": "maH ngoQ",
-      "text": "Hoch QIn nIvbe’. toy’a’ QaQ Hob ’oH Hoch latlh Hob rur. puqpu’ toy’taHghach muSHa’ wIlo’ — juppu’ QaQ je Gedu’ tIqqu’ — DaH batlh Qapla’."
+      "text": "Hoch QIn nIvbe’. toy’a’ QaQ Hob ’oH Hoch latlh Hob rur. puqpu’ toy’taHghach muSHa’ wIlo’ — juppu’ QaQ je Gedu’ tIqqu’ — DaH batlh Qapla’.",
+      "photoAlt": "cha’ noH Quj yejHaD beqpu’ — Sut Doq tuQ, lupDujDaq Qam",
+      "meetTeam": "ghom yIghov"
     },
     "values": {
       "heading": "maH nuq muSHa’",
@@ -204,7 +209,7 @@
       },
       "keepChildrenSafe": {
         "title": "moQ DIvI’ Daq puqpu’ yISuq",
-        "description": "Sogverse pat: pegh QInmey ngeHmeH mIw tu’lu’be’. ghom DaqmeyDaq jatlh toy’wI’pu’, ’ej ja’chuqtaHvIS Hoch pa’ QInmey lulegh ’ej polbe’lu’. Hoch toy’wI’ account chenmoH vav, ’ej vav account tlhej boqlu’; chay’ ’el puq ’e’ wIv vav — vav account neH, pagh pong pegh mu’ je, pagh jabbI’ID Daq ’ol pegh mu’ je. qIp ’ej tlhejHa’: not wIchaw’."
+        "description": "Sogverse: ghom DaqmeyDaq jatlh toy’wI’pu’ — qep QIn Hoch pa’ Qoy, Gedu’ legh. Hoch toy’wI’ account chenmoH vav, ’ej vav account tlhej boqlu’; chay’ ’el puq ’e’ wIv vav — vav account neH, pagh pong pegh mu’ je, pagh jabbI’ID Daq ’ol pegh mu’ je. qIp ’ej tlhejHa’: not wIchaw’."
       },
       "familyInTheLoop": {
         "title": "qorDu’ Qu’ SoH",
@@ -216,7 +221,9 @@
       "paragraph1": "wa’ tup Hoch, toy’wI’pu’ ’el — Gedu’ chaHvaD jatlh. Gedu’ QaD jaj De’, puq HoS je ngoQ moj — jaH pIq je Haq.",
       "paragraph2": "maH Gedu’pu’ toy’wI’pu’ chaH. bIH Sovchu’ puqpu’ je tengchaH ngupwI’pu’ jupwI’ chenmoHlu’ HablI’ je moQ. batlh vum chaH Hoch tup.",
       "paragraph3": "Hoch maH ghom’a’mey HaqwI’ De’ ngeH — toy’wI’pu’ je ghoS, chenmoh, je HaqwI’. Hoch tup, qoH laHmey, Duj De’, je Qapla’ wanI’ nIvqu’.",
-      "paragraph4": "Hoch toy’wI’ batlh ’Ip — Qujdaq, ghogh QInDaq, jaj Hoch yIntaHvIS je. Dat rap ngoQmey."
+      "paragraph4": "Hoch toy’wI’ batlh ’Ip — Qujdaq, ghogh QInDaq, jaj Hoch yIntaHvIS je. Dat rap ngoQmey.",
+      "photoAlt": "De’wI’mey tlhegh — maH Qujmeh pa’Daq ghom loS",
+      "photoCaption": "maH Qujmeh pa’ — Lauttasaari, Helsinki. pa’Daq ghom puqpu’ ’op."
     },
     "forParents": {
       "heading": "vav/SoSmey",
@@ -295,7 +302,7 @@
         },
         "safety": {
           "question": "puqwI’ luja’laH’a’ novpu’? vay’ qonlu’’a’?",
-          "answer": "<p>ghobe’ — ghom’a’ ghogh pa’ ’oH pa’ pegh’e’: Sam ’Iv? pagh! ghom may’ poH neH tu’lu’ — may’ taghpa’ vagh tup poSmoH, ’ej may’ rInDI’ vagh tup SoQmoH. ’ellaH ghomvetlh nuvpu’, ghom’a’vetlhDaq vumbogh Gedu, noH Quj yejHaD che’wI’pu’ je — chaH neH. ’elmeH vay’ nIDDI’, may’wI’maj SeHlawDaq nuDbej: ghomvetlhDaq pa’ Hutlhbogh puq ’ellaHbe’.</p><p>patDaq pegh QIn ngeHmeH mIw tu’lu’be’: may’ QInmey pa’ Hoch ghoS, wa’ puqvaD mob ghoSbe’ not, ’ej mu’mey rap mIlloghmey qeng. pa’Daq yIn QInmey, ’ej poH rap poStaH pa’ — pa’Daq laD puqlI’, ’ej pa’ SoQpu’DI’, poSqa’meH mIw tu’lu’be’. ’ach DIpol: ghom’a’ DevtaH Gedupu’, noH Quj yejHaD che’wI’pu’ je: jatlhlu’pu’bogh luqIhqa’laH, ’ej ghovmo’ SeHlaH. QIn teqDI’ vay’, Daqchaj SIq lan — Qaw’be’.</p><p>may’ ’e’ qonbe’lu’. pat qoDDaq may’ wab, may’ mIllogh je qonbe’lu’, mu’ghom moHbe’lu’, polbe’lu’ — ’ej pa’Daq qonwI’ SeHwI’ janmey tu’lu’be’.</p><p>Gedu che’wI’pu’ je neH ghaj SeHwI’ janmey, ’ej Hop leSpoH: wab jan SovmoH qoj jon, mIlQeD chu’Ha’ qoj jon, QInmeyDaq vay’ SovmoH, Daq mobDaq vay’ vIH, ’ej Daqmey Hoch jatlh. Quj qoD ghItlh QInmey: latlh Doch bIH, ’ej Qujmey SeH — noH Quj yejHaD Minecraft may’wI’Daq toy’wI’ SovmoHlaH, chaghlaH, ngIllaH je Gedupu’maj.</p>"
+          "answer": "<p>ghobe’ — ghom’a’ ghogh pa’ ’oH pa’ pegh’e’: Sam ’Iv? pagh! ghom may’ poH neH tu’lu’ — may’ taghpa’ vagh tup poSmoH, ’ej may’ rInDI’ vagh tup SoQmoH. ’ellaH ghomvetlh nuvpu’, ghom’a’vetlhDaq vumbogh Gedu, noH Quj yejHaD che’wI’pu’ je — chaH neH. ’elmeH vay’ nIDDI’, may’wI’maj SeHlawDaq nuDbej: ghomvetlhDaq pa’ Hutlhbogh puq ’ellaHbe’.</p><p>may’ QInmey pa’ Hoch ghoS, wa’ puqvaD mob ghoSbe’ not, ’ej mu’mey rap mIlloghmey qeng. pa’Daq yIn QInmey, ’ej poH rap poStaH pa’ — pa’Daq laD puqlI’, ’ej pa’ SoQpu’DI’, poSqa’meH mIw tu’lu’be’. ’ach DIpol: ghom’a’ DevtaH Gedupu’, noH Quj yejHaD che’wI’pu’ je: jatlhlu’pu’bogh luqIhqa’laH, ’ej ghovmo’ SeHlaH. QIn teqDI’ vay’, Daqchaj SIq lan — Qaw’be’.</p><p>may’ ’e’ qonbe’lu’. pat qoDDaq may’ wab, may’ mIllogh je qonbe’lu’, mu’ghom moHbe’lu’, polbe’lu’ — ’ej pa’Daq qonwI’ SeHwI’ janmey tu’lu’be’.</p><p>Gedu che’wI’pu’ je neH ghaj SeHwI’ janmey, ’ej Hop leSpoH: wab jan SovmoH qoj jon, mIlQeD chu’Ha’ qoj jon, QInmeyDaq vay’ SovmoH, Daq mobDaq vay’ vIH, ’ej Daqmey Hoch jatlh. Quj qoD ghItlh QInmey: latlh Doch bIH, ’ej Qujmey SeH — noH Quj yejHaD Minecraft may’wI’Daq toy’wI’ SovmoHlaH, chaghlaH, ngIllaH je Gedupu’maj.</p>"
         },
         "howToStart": {
           "question": "chay’ jIQaplaH?",
@@ -339,7 +346,7 @@
         },
         "gamerAccounts": {
           "question": "chay’ ’el puqwI’, ’ej nuq ’oH vav PIN’e’?",
-          "answer": "<p>chay’ ’el puqlI’ ’e’ DawIv, Hoch puqvaD, jIH SOGDaq. motlh ’elmeH ngoq Daj ghajbe’ toy’wI’ account: Sogverse qoD Daq ghaj — jabbI’ID Daq teH ghajbe’ — vav accountlIj tlhej boqlu’, ’ej accountlIjvo’ profileDaj DawIvDI’, Sogverse ’el puqlI’. DaneHchugh, pong pegh mu’ je DanoblaH, pagh jabbI’ID DaqDaj — ’olDI’ puq, pegh mu’ wIv.</p><p>DawIvbogh Hoch: puq ’elmeH ngoq accountDaj neH poSmoH — ponglIj mu’lIj joq lo’taHbogh puq: accountlIj qoj loDnI’ be’nI’ account ’ol laHbe’ pagh. mej ’ej ’elqa’: SoH ghaH ’ej pegh mu’lIj lo’, pagh loDnI’ be’nI’ je ghaj pong pegh mu’ je. ’ach accountlIjvo’ ’elbogh loDnI’ be’nI’: accountlIjvo’ neH yISuch. ’ej accountlIjvo’ ’elpu’bogh puq: latlh DaqDaq wIvmeH vav PINlIj poQ.</p><p>vav Daq ’elmeH loS mI’ PIN poQlu’, ’ej SoH neH Sov: vaj Hal qawwI’Daq polta’bogh mu’ pegh: je’meH qoj puq account choHmeH lI’be’. puq profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’.</p><p>PIN DalIjchugh, accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj ”PIN DalIj’a’?” qIptaHvIS puq, jabbI’ID neH DangeHmoH.</p>"
+          "answer": "<p>chay’ ’el puqlI’ ’e’ DawIv, Hoch puqvaD, jIH SOGDaq. motlh ’elmeH ngoq Daj ghajbe’ toy’wI’ account: Sogverse qoD Daq ghaj — jabbI’ID Daq teH ghajbe’ — vav accountlIj tlhej boqlu’, ’ej accountlIjvo’ profileDaj DawIvDI’, Sogverse ’el puqlI’. DaneHchugh, pong pegh mu’ je DanoblaH, pagh jabbI’ID DaqDaj — ’olDI’ puq, pegh mu’ wIv.</p><p>DawIvbogh Hoch: puq ’elmeH ngoq accountDaj neH poSmoH — ponglIj mu’lIj joq lo’taHbogh puq: accountlIj qoj loDnI’ be’nI’ account ’ol laHbe’ pagh. mej ’ej ’elqa’: SoH ghaH ’ej pegh mu’lIj lo’, pagh loDnI’ be’nI’ je ghaj pong pegh mu’ je. ’ach accountlIjvo’ ’elbogh loDnI’ be’nI’: accountlIjvo’ neH yISuch. ’ej accountlIjvo’ ’elpu’bogh puq: latlh DaqDaq wIvmeH vav PINlIj poQ.</p><p>vav Daq ’elmeH loS mI’ PIN poQlu’, ’ej SoH neH Sov: vaj Hal qawwI’Daq polta’bogh mu’ pegh: je’meH qoj vav account lo’meH lI’be’. puq profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’.</p><p>PIN DalIjchugh, accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj ”PIN DalIj’a’?” qIptaHvIS puq, jabbI’ID neH DangeHmoH.</p>"
         },
         "childData": {
           "question": "nuq De’ puqwI’vo’ bopol?",
@@ -579,13 +586,12 @@
       "publishChanges": "choHmey yIngeH",
       "unpublish": "ngeH yIqIl",
       "readiness": {
-        "missing": "ngeHmeH {fields} yIchel."
+        "missing": "ngeHmeH {fields} yIchel.",
+        "leftOut": "{count, plural, one {naQbe’ {languages}, vaj ngeHbe’lu’.} other {naQbe’ {languages}, vaj ngeHbe’lu’.}}"
       },
       "missing": {
-        "title": "pong",
-        "summary": "ghItlh mach",
         "category": "Segh",
-        "body": "ghItlh mu’mey"
+        "completeVersion": "Hol naQ: pong, ghItlh mach, ghItlh mu’mey je"
       },
       "unpublishConfirm": {
         "title": "ghItlhvam ngeH DaqIl’a’?",
@@ -593,6 +599,7 @@
         "confirm": "ngeH yIqIl"
       },
       "fields": {
+        "languages": "Holmey",
         "title": "pong",
         "summary": "ghItlh mach",
         "category": "Segh",
@@ -600,6 +607,7 @@
         "body": "ghItlh mu’mey"
       },
       "hints": {
+        "languages": "Hoch Hol yIghItlh. ngeHlu’DI’ Hol naQ Hoch ’agh: pong, ghItlh mach, ghItlh mu’mey je ghaj.",
         "summary": "mu’mey neH. pong bIngDaq ’ej paq qach navDaq ’agh.",
         "cover": "ghItlh Dung ’ej navDaq ’agh, 16:9 muHlu’. DeghHom ghajbe’chugh, Daq ’avwI’ legh laDwI’pu’.",
         "body": "DeghHom bIngDaq legh laDwI’pu’, naDev rur."
@@ -617,8 +625,14 @@
         "publishFailed": "ghItlh ngeHlu’be’. yInIDqa’.",
         "publishFailedWithReason": "ghItlh ngeHlu’be’ – {reason}",
         "unpublishFailed": "ghItlh ngeH qIllu’be’. yInIDqa’.",
-        "unpublishFailedWithReason": "ghItlh ngeH qIllu’be’ – {reason}"
-      }
+        "unpublishFailedWithReason": "ghItlh ngeH qIllu’be’ – {reason}",
+        "versionTitleRequired": "pong poQ {language} ghItlh."
+      },
+      "versionComplete": "naQ",
+      "versionIncomplete": "naQbe’ wej",
+      "addLocale": "Hol chu’",
+      "removeLocale": "{language} yIteq",
+      "languagesLabel": "Holmey"
     },
     "geduRole": {
       "primary": "Gedu wa’DIch",
@@ -2709,9 +2723,14 @@
       "shop": "ngevwI’",
       "yty": "Yty",
       "about": "maH",
+      "parents": "vav/SoSmey",
       "faq": "ghelmeH",
       "substitutions": "qa’meH",
-      "substitutionsPhone": "qa’meH"
+      "home": "juH",
+      "library": "paq qach",
+      "libraryShort": "paq qach",
+      "team": "ghom",
+      "tabBar": "Main"
     },
     "accountMenu": "qa’ De’wI’ – {name}",
     "continueToAccount": "qa’lIj yIghoS",
@@ -3172,8 +3191,41 @@
   "home": {
     "hero": {
       "title": "naDev<br></br>Daq tIv<br></br>moj<br></br><act>Qap tIv</act>",
-      "subtitle": "po’taHvIS chenmoHlu’ ghom’a’meymaj: Quj QaQ Hob chenmoH — Minecraft, Roblox, Fortnite latlh je. Gedu’pu’ Dun Hoch qep ghojmoHmeH tIv chenmoH — jup chu’ luSuq puqpu’, laHmeychaj mojaq luchenmoH, ’ej muSHa’bogh lutIv.",
-      "aboutCta": "maH yIqel"
+      "subtitle": "Hoch Hogh ghom’a’mey, 7–17 ben puqpu’, De’wI’Daq naDevDaq je, 59 € jar Hoch vo’ Suq: Hoch qep Gedu’ DevtaH — Minecraft, Roblox, Fortnite latlh je."
+    },
+    "findClub": "ghom’a’ yInej",
+    "trust": {
+      "cancel": "rInmoH Hoch poH, Huch Hutlh",
+      "guarantee": "30 jaj: Huch chegh lay’"
+    },
+    "testimonials": {
+      "heading": "vav/SoSmey jatlhbogh",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "”Hogh Dun law’ ghom’a’. Hoch Hogh, puqloDwIj tam ’ej ghIjlu’bogh moj puq Hagh ’ej jach, puqpu’ rurbogh ghom. ghom’a’ Dol ’ej ghojmoHwI’pu’ laH, mupIvmoH.”",
+          "attribution": "SoS, Suomi"
+        },
+        "sighWithHappiness": {
+          "quote": "”pagh latlh Qu’, pagh latlh Hob — puqwIj Quch neH ’oH ghom’a’.”",
+          "attribution": "SoS, Suomi"
+        },
+        "largeGroups": {
+          "quote": "”ghom’a’mey tIn puqmaj bIt. ghom’a’vam Daq Hob maHoy ’ej jup chu’ maSuq.”",
+          "attribution": "SoS, Suomi"
+        },
+        "finnishImproved": {
+          "quote": "”wa’ jar neH — puqbe’wI’ Suomi Hol Dun law’! ghojmoHwI’pu’ val, QaQ, ’ej ghIQ. Qap!”",
+          "attribution": "SoS, Norway"
+        },
+        "funAndSupervised": {
+          "quote": "”Quj tlhab ’ej ghoS. qI’be’, ghobe’, ’ej pagh QoQ qab.”",
+          "attribution": "SoS, Suomi"
+        },
+        "positiveExperience": {
+          "quote": "”School of Gaming — puq vav/SoS je QaQ. jup chu’ tlhej Quj QaQ luSuq puqpu’ — QaQ Daq, ghojmoHwI’pu’ Qeq tlhej. vIQuvmoH!”",
+          "attribution": "vav, Suomi"
+        }
+      }
     },
     "features": {
       "heading": "toy’a’ QaQ Hob yIchenmoH",
@@ -3195,6 +3247,36 @@
         "description": "vav/SoS ghojmoHghach nIvbe’ ghom’a’mey. maH vav/SoSmey SoQ, tIqhom, je puq toy’a’ghach boqmoH."
       }
     },
+    "safety": {
+      "heading": "chay’ puqwIj Qanlu’?",
+      "facts": {
+        "vetted": {
+          "title": "Gedu’pu’ nuDlu’",
+          "description": "Hoch Gedu’ ghe’naQ De’ ’aghlu’ — wa’DIch luQaw’be’lu’."
+        },
+        "noDirectMessages": {
+          "title": "Hoch QIn ghom Hoch Qoy",
+          "description": "qep QIn Hoch pa’ Qoy, Gedu’ legh."
+        },
+        "groupOnlyRooms": {
+          "title": "ghom neH ’el",
+          "description": "vagh tup qep tagh pa’ poSmoHlu’, vagh tup qep rIn pa’ SoQmoHlu’ — ghom neH, Gedu’pu’chaj, ’ej beqmaj ’el."
+        },
+        "notRecorded": {
+          "title": "qep qonlu’be’",
+          "description": "qep ghogh ’ej mIllogh pagh qon, pagh ghItlh, pagh pol."
+        },
+        "parentPin": {
+          "title": "Huch ngaSmeH PIN",
+          "description": "vay’ Daje’meH PIN loS mI’ DaSovbogh neH poQlu’ — PIN Hutlhchugh puqlI’, vav accountlIj ’ellaHbe’."
+        }
+      },
+      "faqLink": "FAQ jangmey tIlaD",
+      "photo": {
+        "alt": "noH Quj yejHaD ghomDaq De’wI’mey lo’ puqpu’ — chaH DoHDaq Gedu’ ba’",
+        "caption": "Lauttasaari, Helsinki: maH Qujmeh pa’Daq ghom puqpu’."
+      }
+    },
     "howItWorks": {
       "heading": "QujtaHvIS ghojtaH.",
       "subheading": "chay’ qaS: wej mIwmey ngeD — ghom’a’, ragh, wanI’ ghap yImuv.",
@@ -3213,8 +3295,8 @@
     },
     "cta": {
       "heading": "toy’a’ ghojmoH DaneH’a’?",
-      "subheading": "puqvaH QaQ Daq toy’a’, ghojmoH, je jupwI’ Suq — Gedu’ tIqqu’ tI’ang.",
-      "createFreeAccount": "Account Huch Hutlh yIchenmoH"
+      "subheading": "Hoch Hogh puqlI’ Quj, ghoj, jup Suq je — Hoch qep Gedu’ tu’lu’, Hoch QIn ghom Hoch Qoy.",
+      "whereWeAre": "De’wI’ ghom’a’meymajDaq qo’ Hoch Daq qorDu’pu’ ghom. De’wI’ ghom’a’mey Hol: {languages}. ’ej yejHaD’a’maj Hoch? Qujmeh pa’ mach, ’ambo’ jot Daq: Lauttasaari, Helsinki, Finland. Qapla’!"
     }
   },
   "locations": {
@@ -4242,9 +4324,10 @@
   },
   "team": {
     "profile": {
-      "nameWithNickname": "{firstName} “<nick>{nickname}</nick>” {lastName}",
-      "firstNameWithNickname": "{firstName} “<nick>{nickname}</nick>”",
+      "nameWithNickname": "{firstName} “{nickname}” {lastName}",
+      "firstNameWithNickname": "{firstName} “{nickname}”",
       "geduTitle": "Gedu · Quj ghojmoHwI’",
+      "geduAltRole": "Quj ghojmoHwI’",
       "speaks": "jatlh",
       "aboutMe": "jIH",
       "funFact": "De’ Quch",
@@ -4262,7 +4345,8 @@
         "waitingTitle": "ghuHmoHlu’, loHwI’ loS",
         "waitingBody": "Hoch leghpa’, Del’a’ navlIj nuD loHwI’.",
         "liveTitle": "Hoch leghDaq leghlu’",
-        "liveBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. So’meH, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIteq ’ej yIpol. DawIvqa’DI’, Hoch leghmoHqa’ loHwI’."
+        "liveBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. So’meH, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIteq ’ej yIpol. DawIvqa’DI’, Hoch leghmoHqa’ loHwI’.",
+        "viewPublicPage": "Hoch leghmeH ghItlh yIlegh"
       },
       "actions": {
         "save": "choHmey yIpol",
@@ -4353,7 +4437,8 @@
         "waitingTitle": "ghuHmoHlu’, leghmoH loS",
         "waitingBody": "{name} Del’a’ ghuHmoHlu’. Hoch leghmoH loHwI’DI’, SIbI’ Hoch legh.",
         "liveTitle": "Hoch legh",
-        "liveBody": "{name} Del’a’ legh Hoch. DapolmoHbogh choHmey DaH lInlu’."
+        "liveBody": "{name} Del’a’ legh Hoch. DapolmoHbogh choHmey DaH lInlu’.",
+        "viewPublicPage": "Hoch leghmeH ghItlh yIlegh"
       },
       "edit": {
         "back": "{name} yIchegh",
@@ -4382,6 +4467,19 @@
         "makePublicNotReady": "{name} Del’a’ ghuHbe’choH; vaj Hoch leghmoHlu’be’.",
         "hide": "yISo’",
         "visibilityError": "leghmoH choHlaHbe’. yInID."
+      }
+    },
+    "public": {
+      "index": {
+        "title": "<act>ghom</act> yIghov",
+        "intro": "School of Gaming ghom: DevwI’pu’ ’ej Quj ghojmoHwI’pu’.",
+        "leadership": "DevwI’pu’",
+        "gameEducators": "Quj ghojmoHwI’pu’",
+        "empty": "tugh naDev ghom"
+      },
+      "back": "ghomDaq yIchegh",
+      "cta": {
+        "heading": "maH DIQujmeH puqlI’ DaneH’a’?"
       }
     }
   },

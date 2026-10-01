@@ -1,12 +1,13 @@
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import type { PublishedLibraryArticle } from "@/services/library";
+import { organizationId } from "@/lib/seo/organization";
+import type { LocalizedLibraryArticle } from "@/services/library";
 
 export interface LibraryArticleJsonLdInput {
   /** The canonical site origin — `NEXT_PUBLIC_SITE_URL`. */
   siteUrl: string;
-  /** The article's canonical path, its English address. */
+  /** The page's canonical path (`libraryArticleCanonicalPath`). */
   canonicalPath: string;
-  article: PublishedLibraryArticle;
+  article: LocalizedLibraryArticle;
 }
 
 /**
@@ -23,8 +24,8 @@ export interface LibraryArticleJsonLdInput {
  * - The `publisher` is School of Gaming, by the `@id` of the `Organization`
  *   node the `[locale]` layout emits on every page, so a consumer joins the
  *   two instead of meeting a second, thinner company.
- * - The `url` is the canonical English address, and `inLanguage` is English at
- *   every locale's URL, because the article is.
+ * - The `url` is the page's canonical, which follows the version shown, and
+ *   `inLanguage` is that version's own language.
  *
  * Pure, so the whole shape is assertable without rendering a page.
  */
@@ -44,12 +45,12 @@ export function libraryArticleJsonLd({
     ...(image !== null && { image }),
     datePublished: article.firstPublishedAt,
     dateModified: article.publishedAt,
-    inLanguage: "en",
+    inLanguage: article.locale,
     url,
     mainEntityOfPage: url,
     publisher: {
       "@type": "Organization",
-      "@id": `${siteUrl}/#organization`,
+      "@id": organizationId(siteUrl),
       name: "School of Gaming",
     },
   };

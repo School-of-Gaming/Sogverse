@@ -59,10 +59,24 @@
 -- Every other account this file creates exists to fill lists, and they all
 -- share the password `testpassword123`. These are the only accounts a stack
 -- carrying this file has. Among them is a second admin, admin2@example.com
--- (Anni Salonen), so the admin team page has two admins to show — one
--- viewing and editing the other's profile. Another is the trainee,
--- oliver.grant@example.com (Oliver Grant): uncertified, shadowing the
--- Minecraft Java club's Ryhmä A, so the trainee's workspace can be looked at.
+-- (Anni Salonen), so the admin UI has one admin viewing and editing another's
+-- profile, and three more admins who make up the public team page's
+-- leadership with the owner's: juha.makela@, helena.strand@ and
+-- daniel.okafor@example.com. Another is the trainee, oliver.grant@example.com
+-- (Oliver Grant): uncertified, shadowing the Minecraft Java club's Ryhmä A, so
+-- the trainee's workspace can be looked at. Eight certified Gedus teach nothing
+-- here and exist to fill the public team page: joonas.heinonen@,
+-- veera.laaksonen@, tuomas.rautio@, priya.nair@, niklas.holmberg@,
+-- lotta.saarinen@, ben.carter@ and ronja.kallio@example.com.
+--
+-- ONE CLUB IS LIVE WHEN THE STACK IS BUILT. The Minecraft Bedrock Club's one
+-- weekly slot is placed on the build's own weekday, starting ten minutes before
+-- the build and lasting three hours (Helsinki time), so its voice room is open
+-- on a fresh stack: gedu@example.com teaches it, parent@example.com's Milo sits
+-- in it with Elias, Eino and Leevi, and admin@example.com joins any room. It is
+-- live only on the day of the build, for about three hours after it; after
+-- that it is an ordinary weekly club, and `npm run db -- reset` makes it live
+-- again.
 --
 -- IDS ARE GENERATED, NEVER WRITTEN OUT. Every account gets `gen_random_uuid()`,
 -- because the avatar identicon derives its pattern from the id's hex bytes and
@@ -84,7 +98,7 @@ SET client_encoding TO 'UTF8';
 -- a local stack that gets the rich seed is created with the CLI's own seed
 -- switched off — and the single check covers all three ways of being somewhere
 -- else: a stack built for the DB tests carries seed.sql's fixtures, a second run
--- finds this file's own 41 accounts, and any real environment has users in it.
+-- finds this file's own 52 accounts, and any real environment has users in it.
 -- It stops the script before its first write.
 --
 -- It is a count and not a lookup for an account this file writes, because this
@@ -177,9 +191,34 @@ BEGIN
 END;
 $$;
 
--- Educators. Five are certified below, two are not: a brand-new hire whose
+-- Three more admins, whose public team profiles (section 13) make up the team
+-- page's leadership with the owner's. Promoted the same way, with the locale
+-- and spoken languages their profiles show.
+DO $$
+DECLARE
+  r    record;
+  v_id uuid;
+BEGIN
+  FOR r IN SELECT * FROM (VALUES
+    ('juha.makela@example.com',   'Juha',   'Mäkelä', 'fi', ARRAY['fi','en']::public.spoken_language[]),
+    ('helena.strand@example.com', 'Helena', 'Strand', 'sv', ARRAY['sv','fi','en']::public.spoken_language[]),
+    ('daniel.okafor@example.com', 'Daniel', 'Okafor', 'en', ARRAY['en']::public.spoken_language[])
+  ) AS t(email, first_name, last_name, locale, languages)
+  LOOP
+    v_id := pg_temp.account(r.email, r.first_name, r.last_name);
+    UPDATE public.profiles
+       SET role = 'admin', email_verified_at = now(),
+           locale = r.locale, spoken_languages = r.languages
+     WHERE id = v_id;
+    DELETE FROM public.customer_profiles WHERE user_id = v_id;
+  END LOOP;
+END;
+$$;
+
+-- Educators. Thirteen are certified below, two are not: a brand-new hire whose
 -- record check is in and an applicant with nothing recorded yet. The owner's
--- gedu is first and carries the heaviest teaching load.
+-- gedu is first and carries the heaviest teaching load. The last eight teach
+-- nothing in this file; they are here for the public team page.
 DO $$
 DECLARE r record;
 BEGIN
@@ -190,7 +229,15 @@ BEGIN
     ('sofia.nieminen@example.com', 'Sofia',  'Nieminen',  'testpassword123'),
     ('lucas.moreau@example.com',   'Lucas',  'Moreau',    'testpassword123'),
     ('emma.koskinen@example.com',  'Emma',   'Koskinen',  'testpassword123'),
-    ('oliver.grant@example.com',   'Oliver', 'Grant',     'testpassword123')
+    ('oliver.grant@example.com',   'Oliver', 'Grant',     'testpassword123'),
+    ('joonas.heinonen@example.com', 'Joonas', 'Heinonen',  'testpassword123'),
+    ('veera.laaksonen@example.com', 'Veera',  'Laaksonen', 'testpassword123'),
+    ('tuomas.rautio@example.com',   'Tuomas', 'Rautio',    'testpassword123'),
+    ('priya.nair@example.com',      'Priya',  'Nair',      'testpassword123'),
+    ('niklas.holmberg@example.com', 'Niklas', 'Holmberg',  'testpassword123'),
+    ('lotta.saarinen@example.com',  'Lotta',  'Saarinen',  'testpassword123'),
+    ('ben.carter@example.com',      'Ben',    'Carter',    'testpassword123'),
+    ('ronja.kallio@example.com',    'Ronja',  'Kallio',    'testpassword123')
   ) AS t(email, first_name, last_name, password)
   LOOP
     PERFORM pg_temp.account(r.email, r.first_name, r.last_name, r.password);
@@ -309,7 +356,15 @@ BEGIN
     ('sofia.nieminen@example.com', 'Sofia',  'Nieminen',  'fi', '358501000003', ARRAY['fi','sv','en']::public.spoken_language[], ARRAY[v_tampere],      '',            'SofiaStudio', ''),
     ('lucas.moreau@example.com',   'Lucas',  'Moreau',    'en', '358501000004', ARRAY['fr','en']::public.spoken_language[], ARRAY[]::uuid[],            '',            '',            ''),
     ('emma.koskinen@example.com',  'Emma',   'Koskinen',  'fi', '358501000005', ARRAY['fi','en']::public.spoken_language[], ARRAY[v_espoo],             '',            '',            ''),
-    ('oliver.grant@example.com',   'Oliver', 'Grant',     'en', '358501000006', ARRAY['en']::public.spoken_language[],      ARRAY[]::uuid[],            '',            '',            '')
+    ('oliver.grant@example.com',   'Oliver', 'Grant',     'en', '358501000006', ARRAY['en']::public.spoken_language[],      ARRAY[]::uuid[],            '',            '',            ''),
+    ('joonas.heinonen@example.com', 'Joonas', 'Heinonen',  'fi', '358501000007', ARRAY['fi']::public.spoken_language[],      ARRAY[v_helsinki],          '',            '',            ''),
+    ('veera.laaksonen@example.com', 'Veera',  'Laaksonen', 'fi', '358501000008', ARRAY['fi','en']::public.spoken_language[], ARRAY[v_tampere],           '',            '',            ''),
+    ('tuomas.rautio@example.com',   'Tuomas', 'Rautio',    'fi', '358501000009', ARRAY['fi','en']::public.spoken_language[], ARRAY[v_helsinki, v_espoo], '',            '',            ''),
+    ('priya.nair@example.com',      'Priya',  'Nair',      'en', '358501000010', ARRAY['en']::public.spoken_language[],      ARRAY[v_helsinki],          '',            '',            ''),
+    ('niklas.holmberg@example.com', 'Niklas', 'Holmberg',  'fi', '358501000011', ARRAY['sv','fi','en']::public.spoken_language[], ARRAY[v_espoo],         '',            '',            ''),
+    ('lotta.saarinen@example.com',  'Lotta',  'Saarinen',  'fi', '358501000012', ARRAY['fi','en']::public.spoken_language[], ARRAY[v_espoo],             '',            '',            ''),
+    ('ben.carter@example.com',      'Ben',    'Carter',    'en', '358501000013', ARRAY['en']::public.spoken_language[],      ARRAY[v_helsinki],          '',            '',            ''),
+    ('ronja.kallio@example.com',    'Ronja',  'Kallio',    'fi', '358501000014', ARRAY['fi','en']::public.spoken_language[], ARRAY[v_tampere],           '',            '',            '')
   ) AS t(email, first_name, last_name, locale, phone, languages, coverage, minecraft, roblox, roblox_id)
   LOOP
     PERFORM public.register_gedu(
@@ -322,7 +377,7 @@ $$;
 COMMIT;
 
 -- Certification and the record check, both admin-only and both stamped
--- server-side. Five certified; Emma has her record extract in but is not
+-- server-side. Thirteen certified; Emma has her record extract in but is not
 -- certified yet; Oliver has neither.
 BEGIN;
 SELECT set_config('request.jwt.claims',
@@ -335,7 +390,11 @@ DECLARE g uuid;
 BEGIN
   FOR g IN SELECT id FROM public.profiles WHERE email IN (
     'gedu@example.com', 'aino.virtanen@example.com', 'mikko.lehtinen@example.com',
-    'sofia.nieminen@example.com', 'lucas.moreau@example.com')
+    'sofia.nieminen@example.com', 'lucas.moreau@example.com',
+    'joonas.heinonen@example.com', 'veera.laaksonen@example.com',
+    'tuomas.rautio@example.com', 'priya.nair@example.com',
+    'niklas.holmberg@example.com', 'lotta.saarinen@example.com',
+    'ben.carter@example.com', 'ronja.kallio@example.com')
   LOOP
     PERFORM public.set_gedu_criminal_record_check(g, true);
     PERFORM public.set_gedu_certified(g, true);
@@ -349,7 +408,7 @@ COMMIT;
 
 -- The contract each educator signs for themselves. Which version exists is
 -- reference data a migration publishes, so the newest is read rather than
--- named. Five sign: four certified educators and the one still awaiting
+-- named. Thirteen sign: twelve certified educators and the one still awaiting
 -- certification. Lucas is certified and has NOT signed, and Oliver has neither
 -- — signing and certifying are independent facts, and the admin user list has
 -- to show every combination of them.
@@ -370,7 +429,11 @@ DECLARE
   v_signers uuid[] := ARRAY(
     SELECT id FROM public.profiles WHERE email IN (
       'gedu@example.com', 'aino.virtanen@example.com', 'mikko.lehtinen@example.com',
-      'sofia.nieminen@example.com', 'emma.koskinen@example.com'));
+      'sofia.nieminen@example.com', 'emma.koskinen@example.com',
+      'joonas.heinonen@example.com', 'veera.laaksonen@example.com',
+      'tuomas.rautio@example.com', 'priya.nair@example.com',
+      'niklas.holmberg@example.com', 'lotta.saarinen@example.com',
+      'ben.carter@example.com', 'ronja.kallio@example.com'));
 BEGIN
   IF v_version IS NULL THEN
     RETURN;
@@ -507,9 +570,10 @@ COMMIT;
 -- =============================================================================
 -- 6. The catalogue
 -- =============================================================================
--- Twelve products: every product type, every billing mode, and every lifecycle
+-- Thirteen products: every product type, every billing mode, and every lifecycle
 -- state the derivation can produce — pending, running and completed, a hidden
--- draft, and one whose registration window has not opened. Dates are
+-- draft, and one whose registration window has not opened — plus the live club,
+-- whose one weekly session is in progress when the stack is built. Dates are
 -- now()-relative so the catalogue never goes stale. Prices are plain EUR cents
 -- and exist to render; no Stripe object stands behind any of them.
 --
@@ -541,6 +605,9 @@ DECLARE
   v_daily    jsonb := (SELECT jsonb_agg(jsonb_build_object(
                          'weekday', d, 'start_time', '10:00', 'duration_minutes', 300))
                        FROM generate_series(0, 6) d);
+  -- The live club's session: it started ten minutes before this ran, on the
+  -- product's own clock, so its weekday and start time are read in that zone.
+  v_live     timestamp := date_trunc('minute', (now() AT TIME ZONE v_tz) - interval '10 minutes');
 BEGIN
 
   -- 1. Running, listed, paid consumer club. The busiest thing in the catalogue.
@@ -823,6 +890,35 @@ BEGIN
     p_primary_gedu_fee_cents => 15000
   );
 
+  -- 13. The live club: running, online and free, with its one weekly slot
+  --     placed on the build's own weekday, starting ten minutes before the
+  --     build and lasting three hours, so a voice room is open on a fresh
+  --     stack. It starts on the day of that session, which keeps section 9
+  --     from writing up any history for it. On any other day it is an ordinary
+  --     weekly club whose next session is days away.
+  PERFORM public.create_product(
+    'consumer_club', 'free',
+    jsonb_build_array(
+      jsonb_build_object('locale','en','name','Minecraft Bedrock Club',
+        'short_description','A free online club for building together on Bedrock.',
+        'long_description','A small online group on Bedrock, playing on tablets, phones and consoles alike, with the educator on voice chat throughout.'),
+      jsonb_build_object('locale','fi','name','Minecraft Bedrock -kerho',
+        'short_description','Maksuton verkkokerho yhdessä rakentamiseen Bedrockilla.',
+        'long_description','Pieni verkkoryhmä Bedrockilla tableteilla, puhelimilla ja konsoleilla, ohjaaja mukana puhekanavalla koko ajan.')
+    ),
+    'minecraft_bedrock', 'fi', true, v_tz,
+    now() - interval '14 days', true, false,
+    p_min_age => 8, p_max_age => 12, p_is_visible => true,
+    p_start_date => v_live::date,
+    p_seat_count => 10,
+    p_schedule_slots => jsonb_build_array(
+      jsonb_build_object('weekday', EXTRACT(ISODOW FROM v_live)::integer - 1,
+                         'start_time', to_char(v_live, 'HH24:MI'),
+                         'duration_minutes', 180)),
+    p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
+    p_primary_gedu_fee_cents => 6000
+  );
+
 END;
 $$;
 
@@ -860,6 +956,7 @@ BEGIN
     ('Roblox Studio Club',                       'Ryhmä A',      v_sofia, 'primary', NULL,           NULL),
     ('Fortnite Creative Club',                   'Crew A',       v_lucas, 'primary', NULL,           NULL),
     ('Creator Studio Club',                      'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
+    ('Minecraft Bedrock Club',                   'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
     ('Schools Game Club',                        'Ryhmä 1',      v_gedu,  'primary', NULL,           NULL),
     ('Autumn Term Game Club',                    'Ryhmä 1',      v_sofia, 'primary', NULL,           NULL),
     ('Minecraft Summer Camp',                    'Camp Group A', v_lucas, 'primary', 'Camp Group B', v_emma),
@@ -974,6 +1071,10 @@ BEGIN
     ('Creator Studio Club', 'oskari@gamer.example.com', 'free'),
     ('Creator Studio Club', 'hugo@gamer.example.com',   'free'),
     ('Creator Studio Club', 'aada@gamer.example.com',   'free'),
+    ('Minecraft Bedrock Club', 'milo@gamer.example.com',  'free'),
+    ('Minecraft Bedrock Club', 'elias@gamer.example.com', 'free'),
+    ('Minecraft Bedrock Club', 'eino@gamer.example.com',  'free'),
+    ('Minecraft Bedrock Club', 'leevi@gamer.example.com', 'free'),
     ('Schools Game Club', 'milo@gamer.example.com',   'external'),
     ('Schools Game Club', 'elias@gamer.example.com',  'external'),
     ('Schools Game Club', 'venla@gamer.example.com',  'external'),
@@ -1480,24 +1581,35 @@ COMMIT;
 -- =============================================================================
 -- 13. Team profiles
 -- =============================================================================
--- The owner's admin and the second admin, both public, and the owner's gedu,
--- ready and waiting for an admin to make it public, in English and Finnish.
+-- Every admin and Gedu this file made has a profile, and all but one are
+-- public, so the public team page shows four leaders and fifteen Gedus. The
+-- one that is not is the second admin's, ready and waiting for an admin to
+-- make it public, in English and Finnish.
+-- Aino's is public, in English only and with no pick, and exists for its
+-- headline: "TheRedstoneArchitect" is twenty characters, the longest nickname
+-- each surface is sized for, so a local stack shows a long name wrapping with
+-- the nickname whole on its own line. With no pick, her card also shows the
+-- neutral frame.
+-- The rest vary what a reader's locale falls back over: several are written
+-- in English alone, most in English and Finnish, three in Finnish alone, one
+-- in English and Swedish and one in English and French; a few have no pick
+-- and a few no fun fact.
 -- Each is saved by its own person through save_team_profile, marked ready,
--- and the owner's admin then makes the two admin profiles public — their own
--- included — through set_team_profile_approval, as any profile goes public.
+-- and the owner's admin then makes every one but the second admin's public
+-- through set_team_profile_approval, as any profile goes public.
 -- save_team_profile will not
 -- take a checkbox that is on without a photo, nor a photo path the bucket
 -- holds no object for — so each photo's object row is put in place here,
 -- empty, and `scripts/local-db/rich-images.sh` replaces it with the real
--- upload straight after this file, from the preview art in
--- `public/preview-art/`. Applying this file by hand leaves every photo
+-- upload straight after this file, from the drawn silhouettes in
+-- `supabase/seed-images/team/`. Applying this file by hand leaves every photo
 -- without its bytes.
 
 BEGIN;
 INSERT INTO storage.objects (bucket_id, name)
 SELECT 'team-photos', p.id::text || '/seed.jpg'
   FROM public.profiles p
- WHERE p.email IN ('admin@example.com', 'admin2@example.com', 'gedu@example.com');
+ WHERE p.role IN ('admin', 'gedu');
 
 SELECT set_config('request.jwt.claims',
   json_build_object('sub', (SELECT id::text FROM public.profiles
@@ -1510,6 +1622,9 @@ DECLARE
   v_admin  uuid := (SELECT id FROM public.profiles WHERE email = 'admin@example.com');
   v_admin2 uuid := (SELECT id FROM public.profiles WHERE email = 'admin2@example.com');
   v_gedu   uuid := (SELECT id FROM public.profiles WHERE email = 'gedu@example.com');
+  v_aino   uuid := (SELECT id FROM public.profiles WHERE email = 'aino.virtanen@example.com');
+  v_id     uuid;
+  r        record;
 BEGIN
   PERFORM public.save_team_profile(
     p_user_id      => v_admin,
@@ -1566,13 +1681,194 @@ BEGIN
     p_photo_path   => v_gedu::text || '/seed.jpg',
     p_opted_in     => true);
 
-  -- The owner's admin makes both admin profiles public; the gedu's stays
-  -- waiting, so the user page shows Make public live.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', v_aino::text, 'role', 'authenticated')::text, true);
+
+  PERFORM public.save_team_profile(
+    p_user_id      => v_aino,
+    p_translations => jsonb_build_array(jsonb_build_object(
+      'locale', 'en',
+      'short_description', 'I design the builds our club teams spend a whole term finishing.',
+      'long_description', E'I run Minecraft build clubs in Helsinki and Espoo.\n\n**What we make together:**\n\n- Towns planned street by street before the first block goes down\n- Redstone that opens, lights up or plays a tune\n- Showcases where every builder walks the others through their part',
+      'fun_fact', NULL)),
+    p_nickname     => 'TheRedstoneArchitect',
+    p_photo_path   => v_aino::text || '/seed.jpg',
+    p_opted_in     => true);
+
+  -- Everyone else, each saving their own: three admins with a title and
+  -- twelve Gedus without one. A translation is {locale, short_description,
+  -- long_description, fun_fact}, exactly as save_team_profile takes it.
+  FOR r IN SELECT * FROM (VALUES
+    ('juha.makela@example.com', 'Kippari', 'CEO', 1::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'I started School of Gaming because every child who loves games deserves a club where that love counts for something.',
+        'long_description', E'I grew up on a farm outside Seinäjoki with a slow internet connection and a very fast Nintendo 64. Games taught me English, teamwork and how to lose gracefully, mostly to my little sister.\n\nThese days I spend my time with the people who make our clubs happen: schools, municipalities, partners and, best of all, our Gedus. I still drop in on a session whenever I can, usually to be beaten at Mario Kart by a nine-year-old.\n\n**What I care about most:**\n\n- Clubs that feel like a team, not a classroom\n- Parents knowing what their child actually does in a session\n- Growing carefully, so every new town gets clubs as good as the first ones',
+        'fun_fact', 'I have finished Ocarina of Time eleven times and I still get lost in the Water Temple.'),
+      jsonb_build_object(
+        'locale', 'fi',
+        'short_description', 'Perustin School of Gamingin, koska jokainen pelejä rakastava lapsi ansaitsee kerhon, jossa se innostus otetaan tosissaan.',
+        'long_description', E'Kasvoin maatilalla Seinäjoen lähellä hitaan nettiyhteyden ja hyvin nopean Nintendo 64:n parissa. Pelit opettivat minulle englantia, tiimityötä ja häviämisen taitoa, enimmäkseen pikkusiskoani vastaan.\n\nNykyään vietän aikani niiden ihmisten kanssa, jotka tekevät kerhoistamme totta: koulujen, kuntien, kumppaneiden ja ennen kaikkea Gedujemme. Piipahdan sessioissa aina kun ehdin, yleensä hävitäkseni Mario Kartissa yhdeksänvuotiaalle.\n\n**Mikä minulle on tärkeintä:**\n\n- Kerhot, jotka tuntuvat joukkueelta eivätkä luokkahuoneelta\n- Vanhemmat, jotka tietävät, mitä lapsi sessiossa oikeasti tekee\n- Harkittu kasvu, jotta jokainen uusi paikkakunta saa yhtä hyvät kerhot kuin ensimmäiset',
+        'fun_fact', 'Olen pelannut Ocarina of Timen läpi yksitoista kertaa, ja eksyn silti Water Templeen.'))),
+    ('helena.strand@example.com', 'Fyren', 'Head of Education', 9::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'I make sure what happens in a session is worth a child''s afternoon.',
+        'long_description', E'Before School of Gaming I taught maths and crafts at a Swedish-speaking school in Vaasa for twelve years. The day a pupil explained fractions to me with Minecraft slabs, I knew where I wanted to work next.\n\nI write the session plans our Gedus run, and I keep improving them with everything Gedus and families tell us.\n\n- Every session has one thing to learn and plenty to play\n- Plans work just as well in Finnish, Swedish and English\n- Quieter gamers get a role that suits them, not whatever is left over',
+        'fun_fact', 'I am knitting a scarf in the colours of every club I have visited. It is four metres long so far.'),
+      jsonb_build_object(
+        'locale', 'sv',
+        'short_description', 'Jag ser till att det som händer under en session är värt ett barns eftermiddag.',
+        'long_description', E'Innan School of Gaming undervisade jag i matematik och slöjd vid en svenskspråkig skola i Vasa i tolv år. Den dagen en elev förklarade bråk för mig med Minecraft-plattor visste jag var jag ville jobba härnäst.\n\nJag skriver sessionsplanerna som våra Geduer använder, och jag förbättrar dem hela tiden utifrån det som Geduer och familjer berättar för oss.\n\n- Varje session har en sak att lära sig och massor att spela\n- Planerna fungerar lika bra på finska, svenska och engelska\n- Tystare gamers får en roll som passar dem, inte det som blir över',
+        'fun_fact', 'Jag stickar en halsduk i färgerna från varje klubb jag har besökt. Hittills är den fyra meter lång.'))),
+    ('daniel.okafor@example.com', 'Loremaster', 'Community Lead', NULL::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'I look after our Discord, our events and the people who make both worth turning up to.',
+        'long_description', E'I moved to Helsinki from Manchester for a job in mobile games and stayed for the saunas. Community has always been my thing: I ran a Pokémon league at my local library when I was fourteen and never really stopped organising.\n\nAt School of Gaming I run our online community and the events families come to in person, from LAN days to parents'' evenings.\n\n**Come and say hello at:**\n\n- Our seasonal tournaments, where I am usually on commentary\n- Parents'' evenings, where I promise to explain what a battle pass is\n- The Discord, where I read every suggestion, even the ones asking for a pizza channel',
+        'fun_fact', 'My Pokémon card binder is older than most of our gamers, and I still know where every card is.'))),
+    ('mikko.lehtinen@example.com', 'Revontuli', NULL, 2::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'fi',
+        'short_description', 'Rakennan mieluiten isoja juttuja yhdessä: linnoja, kaupunkeja ja joskus kokonaisen saariston.',
+        'long_description', E'Olen vetänyt Minecraft-kerhoja Helsingissä kolme vuotta. Parasta on hetki, kun ryhmä huomaa, että yhteinen rakennelma on paljon hienompi kuin kenenkään oma.\n\n**Sessioissani:**\n\n- Suunnitellaan ensin paperilla ja rakennetaan sitten\n- Jokainen saa oman vastuualueen, vaikka se olisi vain kaivon katto\n- Lopuksi kierretään katsomassa, mitä muut saivat aikaan',
+        'fun_fact', 'Olen pelannut samaa Minecraft-maailmaa vuodesta 2013. Sen keskellä seisoo yhä ensimmäinen multamajani.'))),
+    ('sofia.nieminen@example.com', 'Paintbucket', NULL, 13::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'Pixel artist, Roblox builder and the Gedu who will always ask what colour your castle should be.',
+        'long_description', E'I studied graphic design in Tampere and found my way to School of Gaming through a summer camp. Now I run creative sessions where the art matters as much as the gameplay.\n\n- Pixel art and textures for our own resource packs\n- Roblox Studio builds with a proper colour palette\n- Showcases where everyone explains one choice they made',
+        'fun_fact', 'I have a sticker on my laptop for every game jam I have entered. There are nineteen.'),
+      jsonb_build_object(
+        'locale', 'fi',
+        'short_description', 'Pikselitaiteilija, Roblox-rakentaja ja se Gedu, joka kysyy aina, minkä värinen linnasi pitäisi olla.',
+        'long_description', E'Opiskelin graafista suunnittelua Tampereella ja päädyin School of Gamingiin kesäleirin kautta. Nyt vedän luovia sessioita, joissa grafiikka on yhtä tärkeää kuin pelattavuus.\n\n- Pikselitaidetta ja tekstuureja omiin resurssipaketteihimme\n- Roblox Studio -rakennelmia kunnollisella väripaletilla\n- Esittelyjä, joissa jokainen kertoo yhdestä tekemästään valinnasta',
+        'fun_fact', 'Läppärissäni on tarra jokaisesta game jamista, johon olen osallistunut. Niitä on yhdeksäntoista.'))),
+    ('lucas.moreau@example.com', 'Wallrunner', NULL, 4::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'Parkour maps, speedruns and terrible puns, in English or French.',
+        'long_description', E'I grew up in Lyon and came to Finland to study game design. I run Minecraft parkour and Roblox obby sessions, which mostly means building jumps that are hard but fair, then watching gamers clear them faster than I can.\n\n**Expect:**\n\n- Courses we design and test together\n- Timed runs where everyone chases their own best time\n- A little French, if you want to learn how to say "one more go"',
+        'fun_fact', 'I once finished a parkour map with my eyes closed. It was a very short map.'),
+      jsonb_build_object(
+        'locale', 'fr',
+        'short_description', 'Des cartes de parkour, du speedrun et de très mauvais jeux de mots, en français ou en anglais.',
+        'long_description', E'J’ai grandi à Lyon et je suis venu en Finlande pour étudier le game design. J’anime des sessions de parkour sur Minecraft et d’obby sur Roblox : je construis des sauts difficiles mais justes, puis je regarde les joueurs les franchir plus vite que moi.\n\n**Au programme :**\n\n- Des parcours que l’on imagine et teste ensemble\n- Des courses chronométrées où chacun bat son propre record\n- Un peu de français, si tu veux apprendre à dire « on refait un essai »',
+        'fun_fact', 'J’ai terminé une carte de parkour les yeux fermés. C’était une toute petite carte.'))),
+    ('emma.koskinen@example.com', 'Kettu', NULL, NULL::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'New to the team and already outnumbered by axolotls.',
+        'long_description', E'I am studying to be a primary school teacher in Espoo and joined School of Gaming this autumn. I love cosy games: farming, building and looking after animals.\n\nIn my sessions we take it slowly, help each other out and always leave time to show off what we made.',
+        'fun_fact', NULL),
+      jsonb_build_object(
+        'locale', 'fi',
+        'short_description', 'Uusi tiimissä ja jo nyt aksolotlien piirittämä.',
+        'long_description', E'Opiskelen luokanopettajaksi Espoossa ja aloitin School of Gamingissa tänä syksynä. Rakastan rauhallisia pelejä: maanviljelyä, rakentamista ja eläinten hoitamista.\n\nSessioissani edetään rauhassa, autetaan toisia ja jätetään aina aikaa esitellä, mitä saatiin aikaan.',
+        'fun_fact', NULL))),
+    ('oliver.grant@example.com', 'OllieOops', NULL, 8::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'Helping out in the Minecraft Java club this term and learning something new from the gamers every week.',
+        'long_description', E'I moved to Finland from Bristol last year and joined School of Gaming as a trainee. Right now I help out in the Minecraft Java club, where the gamers are very patient with my redstone.\n\nAt home I play a lot of Mario Kart and Stardew Valley, and I am slowly building a pixel art version of my street.',
+        'fun_fact', 'I can name every Mario Kart track since the SNES, in order.'))),
+    ('joonas.heinonen@example.com', 'Joonatron', NULL, 5::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'fi',
+        'short_description', 'Fortnite-rakentaja ja joukkuepelien ystävä. Minun sessioissani kukaan ei jää penkille.',
+        'long_description', E'Olen pelannut Fortnitea sen ensimmäisestä kaudesta asti, ja nykyään rakennan Creative-tilassa omia kenttiä kerholaisille.\n\n**Mitä teemme:**\n\n- Joukkuepelejä, joissa voitetaan yhdessä ja hävitään yhdessä\n- Omia kenttiä, joita testataan ja parannetaan viikko viikolta\n- Reilua peliä: hyvä pelikaveri on tärkeämpi kuin voitto',
+        'fun_fact', 'Olen pelannut salibandyä maalivahtina viisitoista vuotta, mikä selittää refleksini.'))),
+    ('veera.laaksonen@example.com', 'Myrskylyhty', NULL, 15::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'fi',
+        'short_description', 'Vedän Minecraft Education -sessioita, joissa matikka ja historia piiloutuvat rakennushaasteisiin.',
+        'long_description', E'Olen koulutukseltani historian opettaja, ja Minecraft Education on minulle paras tapa herättää menneisyys henkiin. Olemme rakentaneet keskiaikaisen linnan, viikinkikylän ja kerran koko Turun tuomiokirkon.\n\nSessioissani jokainen löytää oman tapansa osallistua: joku rakentaa, joku suunnittelee ja joku keksii tarinan, joka sitoo kaiken yhteen.',
+        'fun_fact', NULL))),
+    ('tuomas.rautio@example.com', 'Boostpad', NULL, 7::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'Rocket League, racing games and anything with a scoreboard. I coach teamwork, not just aim.',
+        'long_description', E'I have played Rocket League since 2016 and coached school esports teams in Vantaa for the last three seasons.\n\n**What we practise:**\n\n- Calling out plays so the whole team knows the plan\n- Rotating, so nobody is stuck in goal all match\n- Losing a game, shaking hands and queueing again',
+        'fun_fact', 'I have spent more hours in Rocket League training packs than in actual matches.'),
+      jsonb_build_object(
+        'locale', 'fi',
+        'short_description', 'Rocket League, ajopelit ja kaikki, missä on tulostaulu. Valmennan tiimityötä, en pelkkää tähtäämistä.',
+        'long_description', E'Olen pelannut Rocket Leaguea vuodesta 2016 ja valmentanut koulujen e-urheilujoukkueita Vantaalla kolmen kauden ajan.\n\n**Mitä harjoittelemme:**\n\n- Pelikutsuja, jotta koko joukkue tietää suunnitelman\n- Kiertoa, ettei kukaan jumitu maaliin koko otteluksi\n- Häviämistä, kättelyä ja uutta yritystä',
+        'fun_fact', 'Olen viettänyt Rocket Leaguen harjoituspakettien parissa enemmän tunteja kuin oikeissa otteluissa.'))),
+    ('priya.nair@example.com', 'Nebula', NULL, 12::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'Coder, game designer and proud space nerd. I help gamers turn the idea they keep doodling in class into a real game they can actually play.',
+        'long_description', E'I came to Helsinki from Bangalore to study computer science, and I have been making small games ever since: puzzle games, a very buggy space shooter and one about a cat who runs a bakery.\n\nAt School of Gaming I run our Game Studio and AI sessions. We start with an idea on paper, turn it into rules and then into code, in Roblox Studio, Minecraft Education''s Code Builder or Scratch, depending on who is in the room.\n\n**What gamers leave with:**\n\n- A game they designed themselves, however small\n- The confidence to read an error message instead of panicking\n- A feel for how the games they love are actually made\n\nI also love talking to parents about where an interest in games can lead, so do come and say hello after a session.',
+        'fun_fact', 'I have named every houseplant I own after a moon of Jupiter. There are nine so far.'))),
+    ('niklas.holmberg@example.com', 'Holmy', NULL, 10::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'Map maker, Minecraft Bedrock fan and the person to ask about command blocks.',
+        'long_description', E'I make adventure maps in Minecraft Bedrock: hidden levers, secret rooms and a story you only understand at the end. In my sessions gamers build their own, then swap and play each other''s.\n\nI speak Finnish, Swedish and English, so ask me for help in whichever feels easiest.',
+        'fun_fact', 'The final boss of my first adventure map was a very angry chicken.'),
+      jsonb_build_object(
+        'locale', 'fi',
+        'short_description', 'Karttojen tekijä, Minecraft Bedrock -fani ja se, jolta kannattaa kysyä komentokuutioista.',
+        'long_description', E'Teen Minecraft Bedrockiin seikkailukarttoja: piilotettuja vipuja, salahuoneita ja tarinan, jonka ymmärtää vasta lopussa. Sessioissani pelaajat rakentavat omansa ja pelaavat sitten toistensa karttoja.\n\nPuhun suomea, ruotsia ja englantia, joten voit pyytää apua sillä kielellä, joka tuntuu helpoimmalta.',
+        'fun_fact', 'Ensimmäisen seikkailukarttani loppuvastus oli hyvin vihainen kana.'))),
+    ('lotta.saarinen@example.com', 'Lumipallo', NULL, NULL::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'Roblox obbies, Minecraft mini-games and a lot of cheering.',
+        'long_description', E'I run Roblox and Minecraft sessions in Espoo, mostly for our younger gamers. We play together first, then build our own version and see whose turned out the trickiest.\n\nMy favourite moment is when a gamer who was too shy to talk in the first week is showing everyone their build by the last one.',
+        'fun_fact', 'I have a cat called Creeper. She is exactly as sneaky as the name suggests.'),
+      jsonb_build_object(
+        'locale', 'fi',
+        'short_description', 'Roblox-obbyja, Minecraft-minipelejä ja paljon kannustusta.',
+        'long_description', E'Vedän Roblox- ja Minecraft-sessioita Espoossa, enimmäkseen nuorimmille pelaajillemme. Pelaamme ensin yhdessä, sitten rakennamme oman version ja katsomme, kenen radasta tuli kaikkein kinkkisin.\n\nLempihetkeni on se, kun ensimmäisellä viikolla liian ujo pelaaja esittelee viimeisellä kerralla rakennelmaansa kaikille.',
+        'fun_fact', 'Minulla on Creeper-niminen kissa. Se on juuri niin salakavala kuin nimestä voi päätellä.'))),
+    ('ben.carter@example.com', 'Benchmark', NULL, 14::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'Fortnite, esports and good sportsmanship.',
+        'long_description', E'I grew up in Leeds playing every football game going, and now I run esports sessions in Helsinki.\n\n- Squad tactics in Fortnite\n- Warm-ups that are actually fun\n- Saying "good game" and meaning it',
+        'fun_fact', 'There is a framed screenshot of my first Victory Royale on my living room wall.'))),
+    ('ronja.kallio@example.com', 'Ukkonen', NULL, 16::smallint, jsonb_build_array(
+      jsonb_build_object(
+        'locale', 'en',
+        'short_description', 'Pixel art, music and indie games. I will help you make a game that sounds as good as it looks.',
+        'long_description', E'I make chiptune music and pixel art, and I have released two tiny games of my own. In Game Studio sessions I help gamers give their games a look and a sound that are all theirs.\n\n**We try out:**\n\n- Drawing sprites one pixel at a time\n- Recording sound effects with our own voices\n- Building a short level that tells a story without words',
+        'fun_fact', 'My band only plays songs from game soundtracks. Our best crowd ever was a school disco.'),
+      jsonb_build_object(
+        'locale', 'fi',
+        'short_description', 'Pikselitaidetta, musiikkia ja indiepelejä. Autan tekemään pelin, joka kuulostaa yhtä hyvältä kuin näyttää.',
+        'long_description', E'Teen chiptune-musiikkia ja pikselitaidetta, ja olen julkaissut kaksi omaa pientä peliä. Game Studio -sessioissa autan pelaajia antamaan peleilleen ihan oman näköisensä ilmeen ja äänen.\n\n**Kokeilemme:**\n\n- Hahmojen piirtämistä pikseli kerrallaan\n- Ääniefektien äänittämistä omalla äänellä\n- Lyhyttä tasoa, joka kertoo tarinan ilman sanoja',
+        'fun_fact', 'Bändini soittaa pelkkiä pelien tunnusmusiikkeja. Paras yleisömme oli koulun disko.')))
+  ) AS t(email, nickname, title, pick, translations)
+  LOOP
+    -- The id is read under the owner admin's claims: the previous person's
+    -- would not let it see anyone else's profile row.
+    PERFORM set_config('request.jwt.claims',
+      json_build_object('sub', v_admin::text, 'role', 'authenticated')::text, true);
+    v_id := (SELECT id FROM public.profiles WHERE email = r.email);
+    PERFORM set_config('request.jwt.claims',
+      json_build_object('sub', v_id::text, 'role', 'authenticated')::text, true);
+    PERFORM public.save_team_profile(
+      p_user_id      => v_id,
+      p_translations => r.translations,
+      p_nickname     => r.nickname,
+      p_title        => r.title,
+      p_pick         => r.pick,
+      p_photo_path   => v_id::text || '/seed.jpg',
+      p_opted_in     => true);
+  END LOOP;
+
+  -- The owner's admin makes every profile public but the second admin's,
+  -- which stays waiting, so the user page shows Make public live.
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', v_admin::text, 'role', 'authenticated')::text, true);
 
-  PERFORM public.set_team_profile_approval(v_admin, true);
-  PERFORM public.set_team_profile_approval(v_admin2, true);
+  FOR v_id IN SELECT tp.user_id FROM public.team_profiles tp
+               WHERE tp.user_id <> v_admin2
+  LOOP
+    PERFORM public.set_team_profile_approval(v_id, true);
+  END LOOP;
 END;
 $$;
 
@@ -1581,14 +1877,19 @@ COMMIT;
 -- =============================================================================
 -- 14. The Library
 -- =============================================================================
--- Five articles, one per state the admin list and editor can show:
+-- Six articles, one per state the admin list and editor can show, and the
+-- language versions a reader's fallback has to choose between:
 --
---   Talking with your child about who they meet online   live, unchanged since
+--   Talking with your child about who they meet online   live, unchanged since;
+--                                                        English and Finnish
 --   Playing together: how to join your child's game     live, with unpublished changes
---   Minecraft, Roblox and Fortnite: what's the difference?   live, no cover
---   What children learn when they build together        draft, ready to publish
+--   Minecraft, Roblox and Fortnite: what's the difference?   live, no cover;
+--                                                        English and Finnish
+--   What children learn when they build together        draft, ready to publish;
+--                                                        Finnish begun, not complete
 --   Getting ready for your child's first club session   draft, missing summary,
 --                                                        category and cover
+--   Pelikerho koulupäivän jälkeen                       live, Finnish only
 --
 -- Written through the admin RPCs, so each published copy is exactly what
 -- publish_library_article makes of its working copy. The covers are not here,
@@ -1608,10 +1909,12 @@ DECLARE
 BEGIN
   -- 1. Live, and the working copy is what readers see.
   v_id := public.create_library_article(
-    p_title    => 'Talking with your child about who they meet online',
-    p_summary  => 'Most of what children meet in online games is ordinary play. A few calm conversations help them spot the part that isn''t, and tell you about it.',
     p_category => 'online_safety',
-    p_body     => $md$
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale',  'en',
+      'title',   'Talking with your child about who they meet online',
+      'summary', 'Most of what children meet in online games is ordinary play. A few calm conversations help them spot the part that isn''t, and tell you about it.',
+      'body',    $md$
 Minecraft, Roblox, Fortnite and most of the games children love are social places. Your child may play alongside friends from school, and alongside people they have never met. That is not something to fear, but it is something to talk about: early, calmly and more than once.
 
 ## Start with curiosity, not rules
@@ -1639,15 +1942,43 @@ A PEGI label tells you the age a game's content suits, and its descriptors say w
 ## If something does go wrong
 
 Stay calm, take a screenshot, and use the game's own report and block tools. The [UK Safer Internet Centre](https://saferinternet.org.uk/) has practical guides for parents on reporting and on what to do next. How we handle behaviour in our own clubs is set out in our [anti-bullying and discipline policy](/anti-bullying-and-discipline).
-$md$);
+$md$), jsonb_build_object(
+      'locale',  'fi',
+      'title',   'Puhu lapsesi kanssa siitä, keitä hän tapaa verkossa',
+      'summary', 'Suurin osa siitä, mitä lapset kohtaavat verkkopeleissä, on tavallista leikkiä. Muutama rauhallinen keskustelu auttaa heitä tunnistamaan sen, mikä ei ole, ja kertomaan siitä sinulle.',
+      'body',    $md$
+Minecraft, Roblox, Fortnite ja useimmat muut lasten suosikkipelit ovat sosiaalisia paikkoja. Lapsesi voi pelata koulukavereidensa kanssa ja myös sellaisten ihmisten kanssa, joita hän ei ole koskaan tavannut. Sitä ei tarvitse pelätä, mutta siitä kannattaa puhua: ajoissa, rauhallisesti ja useammin kuin kerran.
+
+## Aloita uteliaisuudesta, älä säännöistä
+
+Pyydä lastasi näyttämään, mitä hän pelaa ja kenen kanssa. **Yhdessä katsottu pelikerta** kertoo enemmän kuin mikään asetusvalikko, ja samalla lapsesi huomaa, että peleistä voi puhua kanssasi.
+
+## Kolme asiaa, jotka jokaisen lapsen kannattaa tietää
+
+- **Vieras verkossa on yhä vieras**, vaikka hän vaikuttaisi ystävälliseltä ja olisi pelannut samalla palvelimella pitkään.
+- **Henkilötiedot pidetään omana tietona**: koko nimi, koulu, osoite, puhelinnumero ja kuvat.
+- **Sinulle saa aina kertoa**, jos jokin tuntuu pahalta, eikä kertominen vie pelejä pois.
+
+Viimeinen kohta on tärkein. Lapset jättävät usein ikävän kokemuksen kertomatta, koska pelkäävät menettävänsä konsolin. Sano ääneen, ettei kertominen koskaan ole se, mistä hän joutuu vaikeuksiin.
+
+## Käytä pelialustojen omia työkaluja
+
+Konsoleissa ja useimmissa peleissä on asetukset chatille, kaveripyynnöille ja ostoksille. Ottakaa ne käyttöön yhdessä, niin lapsesi ymmärtää, mitä kukin asetus tekee ja miksi.
+
+## Jos jotain sattuu
+
+Pysy rauhallisena, ota kuvakaappaus ja käytä pelin omia ilmoitus- ja estotoimintoja. Se, miten käytökseen puututaan omissa kerhoissamme, kerrotaan [kiusaamisen ja kurinpidon periaatteissamme](/anti-bullying-and-discipline).
+$md$)));
   PERFORM public.publish_library_article(v_id);
 
   -- 2. Live, then retitled and extended without publishing again.
   v_id := public.create_library_article(
-    p_title    => 'Playing together: a parent''s guide to joining in',
-    p_summary  => 'You don''t need to be good at your child''s favourite game to share it. Here is how an hour on a screen becomes an hour spent together.',
     p_category => 'screen_time',
-    p_body     => $md$
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale',  'en',
+      'title',   'Playing together: a parent''s guide to joining in',
+      'summary', 'You don''t need to be good at your child''s favourite game to share it. Here is how an hour on a screen becomes an hour spent together.',
+      'body',    $md$
 Much of the advice about screens is about how long. This guide is about something else: what happens during that time, and who shares it.
 
 ## Ask for a tour
@@ -1667,15 +1998,17 @@ You do not need to be good at the game. Being terrible at it is often the best p
 Afterwards, ask what they enjoyed, what was hard and what they would build next time. Those questions are what turn time on a screen into time together.
 
 If your child would enjoy playing alongside other children with a Game Educator, have a look at our [clubs, camps and events](/shop).
-$md$);
+$md$)));
   PERFORM public.publish_library_article(v_id);
 
   PERFORM public.save_library_article(
     p_id       => v_id,
-    p_title    => 'Playing together: how to join your child''s game',
-    p_summary  => 'You don''t need to be good at your child''s favourite game to share it. Here is how an hour on a screen becomes an hour spent together.',
     p_category => 'screen_time',
-    p_body     => $md$
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale',  'en',
+      'title',   'Playing together: how to join your child''s game',
+      'summary', 'You don''t need to be good at your child''s favourite game to share it. Here is how an hour on a screen becomes an hour spent together.',
+      'body',    $md$
 Much of the advice about screens is about how long. This guide is about something else: what happens during that time, and who shares it.
 
 ## Ask for a tour
@@ -1705,14 +2038,16 @@ Let each person in the family pick the game in turn. **A parent's choice counts 
 Afterwards, ask what they enjoyed, what was hard and what they would build next time. Those questions are what turn time on a screen into time together.
 
 If your child would enjoy playing alongside other children with a Game Educator, have a look at our [clubs, camps and events](/shop).
-$md$);
+$md$)));
 
   -- 3. Live without a cover, so readers see the placeholder.
   v_id := public.create_library_article(
-    p_title    => 'Minecraft, Roblox and Fortnite: what''s the difference?',
-    p_summary  => 'Three games your child probably talks about, what each one actually is, and what children do in them.',
     p_category => 'games_explained',
-    p_body     => $md$
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale',  'en',
+      'title',   'Minecraft, Roblox and Fortnite: what''s the difference?',
+      'summary', 'Three games your child probably talks about, what each one actually is, and what children do in them.',
+      'body',    $md$
 If your child's conversation is full of creepers, obbies and victory royales, this is a quick guide to the three games behind the words.
 
 ## Minecraft
@@ -1734,15 +2069,43 @@ Best known for **Battle Royale**, where players drop onto an island and the last
 - All three reward building, planning and teamwork
 
 Before your child starts a new game, check its label on the [PEGI website](https://pegi.info/). It tells you the age the content suits, not how difficult the game is.
-$md$);
+$md$), jsonb_build_object(
+      'locale',  'fi',
+      'title',   'Minecraft, Roblox ja Fortnite: mitä eroa niillä on?',
+      'summary', 'Kolme peliä, joista lapsesi luultavasti puhuu: mitä kukin niistä on ja mitä lapset niissä tekevät.',
+      'body',    $md$
+Jos lapsesi puheet ovat täynnä creepereitä, obbyja ja victory royaleja, tästä oppaasta näet nopeasti, mitkä kolme peliä sanojen takana ovat.
+
+## Minecraft
+
+Kuutioista koostuva maailma, jossa pelaajat louhivat, keräävät ja rakentavat. **Survival**-tilassa kerätään materiaaleja ja pidetään itsensä hengissä, **Creative**-tilassa kuutioita on rajattomasti ja keskitytään rakentamiseen. Peliä on kaksi pääversiota, Java ja Bedrock, jotka eivät aina toimi keskenään, sekä luokkahuoneisiin tehty [Minecraft Education](https://education.minecraft.net/).
+
+## Roblox
+
+Ennemmin paikka täynnä pelejä kuin yksi peli. Pelaajat liittyvät toisten pelaajien tekemiin **kokemuksiin**, esteradoista (obbyt) roolipelikaupunkeihin, ja voivat tehdä omiaan Roblox Studiossa. Sen valuutta Robux ostetaan oikealla rahalla, joten rahankäytöstä kannattaa sopia ajoissa.
+
+## Fortnite
+
+Tunnetuin pelimuodostaan **Battle Royale**, jossa pelaajat hyppäävät saarelle ja viimeinen pelaaja tai joukkue voittaa. Siinä on myös luovia ja rakentavia tiloja, joissa pelaajat tekevät omia saariaan ja pelejään.
+
+## Mitä yhteistä niillä on
+
+- Kaikkia kolmea pelataan verkossa muiden kanssa
+- Kaikissa kolmessa on asetukset chatille ja rahankäytölle
+- Kaikki kolme palkitsevat rakentamisesta, suunnittelusta ja yhteistyöstä
+
+Ennen kuin lapsesi aloittaa uuden pelin, tarkista sen merkintä [PEGIn verkkosivuilta](https://pegi.info/). Merkintä kertoo, minkä ikäisille sisältö sopii, ei sitä, kuinka vaikea peli on.
+$md$)));
   PERFORM public.publish_library_article(v_id);
 
-  -- 4. A complete draft, ready to publish.
+  -- 4. A complete draft, ready to publish, with a Finnish version begun.
   PERFORM public.create_library_article(
-    p_title    => 'What children learn when they build together',
-    p_summary  => 'Building in a shared world asks for planning, compromise and patience. Here is what that looks like, and how to notice it at home.',
     p_category => 'learning',
-    p_body     => $md$
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale',  'en',
+      'title',   'What children learn when they build together',
+      'summary', 'Building in a shared world asks for planning, compromise and patience. Here is what that looks like, and how to notice it at home.',
+      'body',    $md$
 When children build together in Minecraft, Roblox Studio or Fortnite's creative modes, they are practising things that are hard to teach from the front of a room.
 
 ## Planning before building
@@ -1770,12 +2133,17 @@ Children who have just solved a problem are often the best at explaining it to a
 - Ask what they would do differently next time
 
 If your child would enjoy building with others, have a look at our [clubs, camps and events](/shop).
-$md$);
+$md$), jsonb_build_object(
+      'locale',  'fi',
+      'title',   'Mitä lapset oppivat rakentaessaan yhdessä',
+      'summary', 'Yhteisessä maailmassa rakentaminen vaatii suunnittelua, kompromisseja ja kärsivällisyyttä. Näin se näkyy, ja näin huomaat sen kotona.')));
 
   -- 5. A draft begun and left: a title and half a body, nothing else.
   PERFORM public.create_library_article(
-    p_title => 'Getting ready for your child''s first club session',
-    p_body  => $md$
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale', 'en',
+      'title',  'Getting ready for your child''s first club session',
+      'body',   $md$
 A first session in one of our [clubs](/shop) goes more smoothly with a little preparation.
 
 ## The day before
@@ -1787,7 +2155,32 @@ A first session in one of our [clubs](/shop) goes more smoothly with a little pr
 ## On the day
 
 Log in a few minutes early, so there is time for a last-minute update.
-$md$);
+$md$)));
+
+  -- 6. Live in Finnish alone, so every other locale's reader meets the
+  --    fallback's last step: the first version written.
+  v_id := public.create_library_article(
+    p_category => 'for_schools',
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale',  'fi',
+      'title',   'Pelikerho koulupäivän jälkeen',
+      'summary', 'Koulun tiloissa kokoontuva pelikerho tarvitsee vähemmän valmistelua kuin moni luulee. Tähän on koottu, mitä koululta tarvitaan.',
+      'body',    $md$
+Iltapäivän pelikerho sopii koulun omiin tiloihin: atk-luokkaan, kirjastoon tai mihin tahansa tilaan, jossa on pöydät ja sähköpistokkeet.
+
+## Mitä koululta tarvitaan
+
+- **Tila** samana iltapäivänä joka viikko
+- **Laitteet**, joilla peliä pelataan, tai lupa käyttää koulun koneita
+- **Verkkoyhteys**, joka päästää pelin palvelimille
+
+## Ennen ensimmäistä kertaa
+
+Kokeilkaa yhteyttä ja kirjautumista etukäteen samalla koneella, jota kerhossa käytetään. Päivitykset vievät usein enemmän aikaa kuin itse kirjautuminen.
+
+Lisätietoa kouluille tarjoamistamme kerhoista löydät [kerhojen sivulta](/shop).
+$md$)));
+  PERFORM public.publish_library_article(v_id);
 END;
 $$;
 COMMIT;
@@ -1801,26 +2194,29 @@ ALTER TABLE public.library_articles DISABLE TRIGGER library_articles_updated_at;
 
 UPDATE public.library_articles a
    SET created_at = d.created_at, updated_at = d.updated_at
-  FROM (VALUES
+  FROM public.library_article_translations t
+  JOIN (VALUES
     ('Talking with your child about who they meet online',     timestamptz '2026-09-01 09:20+03', timestamptz '2026-09-03 08:45+03'),
     ('Minecraft, Roblox and Fortnite: what''s the difference?', timestamptz '2026-09-08 13:10+03', timestamptz '2026-09-10 14:05+03'),
     ('Playing together: how to join your child''s game',       timestamptz '2026-09-12 10:30+03', timestamptz '2026-09-24 16:20+03'),
     ('What children learn when they build together',          timestamptz '2026-09-20 11:00+03', timestamptz '2026-09-26 11:05+03'),
-    ('Getting ready for your child''s first club session',     timestamptz '2026-09-27 15:40+03', timestamptz '2026-09-28 10:15+03')
-  ) AS d(title, created_at, updated_at)
- WHERE a.title = d.title;
+    ('Getting ready for your child''s first club session',     timestamptz '2026-09-27 15:40+03', timestamptz '2026-09-28 10:15+03'),
+    ('Pelikerho koulupäivän jälkeen',                          timestamptz '2026-09-29 09:10+03', timestamptz '2026-09-29 09:40+03')
+  ) AS d(title, created_at, updated_at) ON d.title = t.title
+ WHERE t.article_id = a.id;
 
 ALTER TABLE public.library_articles ENABLE TRIGGER library_articles_updated_at;
 
 UPDATE public.library_article_publications p
    SET first_published_at = d.published_at, published_at = d.published_at
-  FROM public.library_articles a
+  FROM public.library_article_translations t
   JOIN (VALUES
     ('Talking with your child about who they meet online',     timestamptz '2026-09-03 09:00+03'),
     ('Minecraft, Roblox and Fortnite: what''s the difference?', timestamptz '2026-09-10 14:30+03'),
-    ('Playing together: how to join your child''s game',       timestamptz '2026-09-15 09:00+03')
-  ) AS d(title, published_at) ON d.title = a.title
- WHERE p.article_id = a.id;
+    ('Playing together: how to join your child''s game',       timestamptz '2026-09-15 09:00+03'),
+    ('Pelikerho koulupäivän jälkeen',                          timestamptz '2026-09-29 10:00+03')
+  ) AS d(title, published_at) ON d.title = t.title
+ WHERE p.article_id = t.article_id;
 
 DO $$
 BEGIN
@@ -1841,7 +2237,9 @@ COMMIT;
 -- =============================================================================
 
 DO $$
-DECLARE r record;
+DECLARE
+  r record;
+  live_club record;
 BEGIN
   RAISE NOTICE 'rich-seed: profiles by role';
   FOR r IN SELECT role::text AS k, count(*) AS n FROM public.profiles
@@ -1865,16 +2263,32 @@ BEGIN
     (SELECT count(*) FROM public.session_substitution_requests),
     (SELECT count(*) FROM public.session_cancellations);
 
-  RAISE NOTICE 'rich-seed: library articles %, live %, live with unpublished changes %, drafts %',
+  SELECT to_char(DATE '2024-01-01' + s.weekday, 'FMDay') AS weekday,
+         to_char(s.start_time, 'HH24:MI') AS starts,
+         s.duration_minutes,
+         p.timezone,
+         to_char(s.start_time + make_interval(mins => s.duration_minutes + 5), 'HH24:MI') AS open_until
+    INTO live_club
+    FROM public.schedule_slots s
+    JOIN public.products p ON p.id = s.product_id
+    JOIN public.product_translations t ON t.product_id = p.id AND t.locale = 'en'
+   WHERE t.name = 'Minecraft Bedrock Club';
+  RAISE NOTICE 'rich-seed: live club Minecraft Bedrock Club, % % for % minutes (%), voice room open until about % today',
+    live_club.weekday, live_club.starts, live_club.duration_minutes,
+    live_club.timezone, live_club.open_until;
+
+  RAISE NOTICE 'rich-seed: library articles %, live %, drafts %, versions by language %, live versions by language %',
     (SELECT count(*) FROM public.library_articles),
     (SELECT count(*) FROM public.library_article_publications),
     (SELECT count(*) FROM public.library_articles a
-       JOIN public.library_article_publications p ON p.article_id = a.id
-      WHERE (a.title, a.summary, a.category, a.body_md5)
-            IS DISTINCT FROM (p.title, p.summary, p.category, p.body_md5)),
-    (SELECT count(*) FROM public.library_articles a
       WHERE NOT EXISTS (SELECT 1 FROM public.library_article_publications p
-                         WHERE p.article_id = a.id));
+                         WHERE p.article_id = a.id)),
+    (SELECT string_agg(locale || ' ' || n, ', ' ORDER BY locale)
+       FROM (SELECT locale, count(*) AS n FROM public.library_article_translations
+              GROUP BY locale) v),
+    (SELECT string_agg(locale || ' ' || n, ', ' ORDER BY locale)
+       FROM (SELECT locale, count(*) AS n FROM public.library_article_publication_translations
+              GROUP BY locale) v);
 
   RAISE NOTICE 'rich-seed: team profiles';
   FOR r IN SELECT p.email || ' (' || p.role::text || ')' AS k,

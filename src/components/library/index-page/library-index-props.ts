@@ -1,8 +1,9 @@
 import { ROUTES } from "@/lib/constants";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import type { AppHref } from "@/lib/constants/routes";
 import type { PublishedLibraryArticleSummary } from "@/services/library";
 import { isLibraryCategory, type LibraryCategory } from "../categories";
-import { publishedArticleCard } from "../more-from-library";
+import { publishedArticleCards } from "../more-from-library";
 import type { LibraryIndexBodyProps } from "./library-index-body";
 
 /**
@@ -36,20 +37,18 @@ export const LIBRARY_FILTER_HREFS: Record<LibraryCategory | "all", AppHref> = {
 
 /**
  * **Everything `LibraryIndexBody` draws, from what is live now and the
- * selected category.** The published articles arrive newest first by the day
- * they first went live, and keep that order.
+ * selected category, for a reader of `locale`.** The published articles
+ * arrive newest first by the day they first went live, and keep that order.
  */
 export function libraryIndexBodyProps(
   published: readonly PublishedLibraryArticleSummary[],
   selectedCategory: LibraryCategory | null,
+  locale: SupportedLocale,
 ): LibraryIndexBodyProps {
   return {
-    articles: published
-      .filter(
-        (article) =>
-          selectedCategory === null || article.category === selectedCategory,
-      )
-      .map(publishedArticleCard),
+    articles: publishedArticleCards(published, locale).filter(
+      (card) => selectedCategory === null || card.category === selectedCategory,
+    ),
     selectedCategory,
     filterHrefs: LIBRARY_FILTER_HREFS,
   };

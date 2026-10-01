@@ -1,4 +1,4 @@
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, type UserRole } from "@/lib/constants";
 
 /**
  * The gedu pages that carry **their own item in the chrome**, rather than being
@@ -6,9 +6,13 @@ import { ROUTES } from "@/lib/constants";
  *
  * Each is role-gated by living under the gedu dashboard's path, which is what
  * makes it look like a page *of* that dashboard to any prefix test — and it is
- * not one: it has a nav item of its own (Substitutions on the strip; Invoicing
- * on the strip from `lg` up and in the account menu below it), and the chrome
+ * not one: it has a nav item of its own (on the strip from `lg` up and in the
+ * account menu below it), and the chrome
  * must name the reader's position once.
+ *
+ * The file also holds the one check for which roles carry a My profile item —
+ * a gedu and an admin — whose page lives under settings rather than a
+ * dashboard, so it is not in this list.
  */
 const PAGES_WITH_THEIR_OWN_NAV_ITEM = [
   ROUTES.gedu.substitutions,
@@ -31,4 +35,14 @@ export function hasOwnNavItem(pathname: string): boolean {
   return PAGES_WITH_THEIR_OWN_NAV_ITEM.some(
     (page) => pathname === page || pathname.startsWith(page + "/"),
   );
+}
+
+/**
+ * Whether this role's chrome carries a My profile item — on the strip from
+ * `lg` up, as a row in the account menu below it. The two roles with a public
+ * team profile have one; the header and the menu both read this, so the two
+ * halves cannot disagree about who gets it.
+ */
+export function hasMyProfileItem(role: UserRole | null): boolean {
+  return role === "gedu" || role === "admin";
 }

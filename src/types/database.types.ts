@@ -1331,16 +1331,12 @@ export type Database = {
         }
         Relationships: []
       }
-      library_article_publications: {
+      library_article_publication_translations: {
         Row: {
           article_id: string
           body: string
           body_md5: string | null
-          category: Database["public"]["Enums"]["library_article_category"]
-          cover_image_id: string | null
-          cover_path: string | null
-          first_published_at: string
-          published_at: string
+          locale: string
           summary: string
           title: string
         }
@@ -1348,11 +1344,7 @@ export type Database = {
           article_id: string
           body: string
           body_md5?: string | null
-          category: Database["public"]["Enums"]["library_article_category"]
-          cover_image_id?: string | null
-          cover_path?: string | null
-          first_published_at: string
-          published_at: string
+          locale: string
           summary: string
           title: string
         }
@@ -1360,13 +1352,44 @@ export type Database = {
           article_id?: string
           body?: string
           body_md5?: string | null
+          locale?: string
+          summary?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_article_publication_translations_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "library_article_publications"
+            referencedColumns: ["article_id"]
+          },
+        ]
+      }
+      library_article_publications: {
+        Row: {
+          article_id: string
+          category: Database["public"]["Enums"]["library_article_category"]
+          cover_image_id: string | null
+          cover_path: string | null
+          first_published_at: string
+          published_at: string
+        }
+        Insert: {
+          article_id: string
+          category: Database["public"]["Enums"]["library_article_category"]
+          cover_image_id?: string | null
+          cover_path?: string | null
+          first_published_at: string
+          published_at: string
+        }
+        Update: {
+          article_id?: string
           category?: Database["public"]["Enums"]["library_article_category"]
           cover_image_id?: string | null
           cover_path?: string | null
           first_published_at?: string
           published_at?: string
-          summary?: string
-          title?: string
         }
         Relationships: [
           {
@@ -1385,11 +1408,47 @@ export type Database = {
           },
         ]
       }
+      library_article_translations: {
+        Row: {
+          article_id: string
+          body: string
+          body_md5: string | null
+          is_complete: boolean | null
+          locale: string
+          summary: string
+          title: string
+        }
+        Insert: {
+          article_id: string
+          body?: string
+          body_md5?: string | null
+          is_complete?: boolean | null
+          locale: string
+          summary?: string
+          title: string
+        }
+        Update: {
+          article_id?: string
+          body?: string
+          body_md5?: string | null
+          is_complete?: boolean | null
+          locale?: string
+          summary?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_article_translations_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "library_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       library_articles: {
         Row: {
           author_id: string | null
-          body: string
-          body_md5: string | null
           category:
             | Database["public"]["Enums"]["library_article_category"]
             | null
@@ -1397,14 +1456,10 @@ export type Database = {
           cover_path: string | null
           created_at: string
           id: string
-          summary: string
-          title: string
           updated_at: string
         }
         Insert: {
           author_id?: string | null
-          body?: string
-          body_md5?: string | null
           category?:
             | Database["public"]["Enums"]["library_article_category"]
             | null
@@ -1412,14 +1467,10 @@ export type Database = {
           cover_path?: string | null
           created_at?: string
           id?: string
-          summary?: string
-          title: string
           updated_at?: string
         }
         Update: {
           author_id?: string | null
-          body?: string
-          body_md5?: string | null
           category?:
             | Database["public"]["Enums"]["library_article_category"]
             | null
@@ -1427,8 +1478,6 @@ export type Database = {
           cover_path?: string | null
           created_at?: string
           id?: string
-          summary?: string
-          title?: string
           updated_at?: string
         }
         Relationships: [
@@ -3416,11 +3465,9 @@ export type Database = {
       }
       create_library_article: {
         Args: {
-          p_body?: string
           p_category?: Database["public"]["Enums"]["library_article_category"]
           p_cover_image_id?: string
-          p_summary?: string
-          p_title: string
+          p_versions: Json
         }
         Returns: string
       }
@@ -3689,6 +3736,22 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Json
       }
+      get_public_team_profile: {
+        Args: { p_user_id: string }
+        Returns: {
+          created_at: string
+          first_name: string
+          last_name: string
+          nickname: string
+          photo_version: string
+          pick: number
+          role: Database["public"]["Enums"]["user_role"]
+          spoken_languages: Database["public"]["Enums"]["spoken_language"][]
+          title: string
+          translations: Json
+          user_id: string
+        }[]
+      }
       get_session_cancellations_in_effect: {
         Args: { p_group_ids: string[] }
         Returns: {
@@ -3750,6 +3813,7 @@ export type Database = {
         Returns: boolean
       }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
+      is_public_team_photo: { Args: { p_name: string }; Returns: boolean }
       is_subscription_shaped: {
         Args: {
           p_mode: Database["public"]["Enums"]["billing_mode"]
@@ -3782,6 +3846,22 @@ export type Database = {
       leave_my_waitlist_spot: {
         Args: { p_participation_id: string }
         Returns: Json
+      }
+      list_public_team_profiles: {
+        Args: never
+        Returns: {
+          created_at: string
+          first_name: string
+          last_name: string
+          nickname: string
+          photo_version: string
+          pick: number
+          role: Database["public"]["Enums"]["user_role"]
+          spoken_languages: Database["public"]["Enums"]["spoken_language"][]
+          title: string
+          translations: Json
+          user_id: string
+        }[]
       }
       location_search_blob: {
         Args: { p_external_code: string; p_name: string; p_name_i18n: Json }
@@ -3890,12 +3970,10 @@ export type Database = {
       }
       save_library_article: {
         Args: {
-          p_body?: string
           p_category?: Database["public"]["Enums"]["library_article_category"]
           p_cover_image_id?: string
           p_id: string
-          p_summary?: string
-          p_title: string
+          p_versions: Json
         }
         Returns: string
       }

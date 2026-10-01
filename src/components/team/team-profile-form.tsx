@@ -4,7 +4,7 @@ import { useId } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Check, Trash2, Upload, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { PICKS, type PickId } from "@sog/ui";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,9 +15,11 @@ import { ZoneColorPicker } from "@/components/voice/ZoneColorPicker";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import {
   LOCALE_CONFIG,
+  resolveLocale,
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
+import { localeTabAfterRemoving, openingLocaleTab } from "@/lib/i18n/locale-tabs";
 import { cn, findOption } from "@/lib/utils";
 import {
   TEAM_PHOTO_HEIGHT,
@@ -122,17 +124,22 @@ export function formFromProfile(
       funFact: row.funFact ?? "",
     };
   }
-  // A profile with nothing written opens on one tab, in the reader's own UI
-  // locale, exactly as a new product does.
-  const first = profile.translations.at(0)?.locale;
-  if (first === undefined) translations[uiLocale] = EMPTY_TRANSLATION;
+  // A profile opens on the tab a reader of the admin's UI locale would be
+  // shown, and one with nothing written on one tab in that locale, exactly as
+  // a product does (`openingLocaleTab`).
+  if (profile.translations.length === 0) {
+    translations[uiLocale] = EMPTY_TRANSLATION;
+  }
   return {
     nickname: profile.nickname ?? "",
     title: profile.kind === "admin" ? profile.title : "",
     pick: profile.pick,
     photo: profile.photo,
     translations,
-    activeLocale: first ?? uiLocale,
+    activeLocale: openingLocaleTab(
+      profile.translations.map((row) => row.locale),
+      uiLocale,
+    ),
   };
 }
 
@@ -583,6 +590,7 @@ export function TeamProfileWritingSection({
   update: FormUpdate;
 }) {
   const t = useTranslations("team.edit.writing");
+  const uiLocale = resolveLocale(useLocale());
   const languageName = useLanguageNames();
   const shortId = useId();
   const funFactId = useId();
@@ -621,14 +629,15 @@ export function TeamProfileWritingSection({
     update((prev) => {
       const next = { ...prev.translations };
       delete next[gone];
-      const remaining = SUPPORTED_LOCALES.filter((l) => next[l] !== undefined);
       return {
         ...prev,
         translations: next,
-        activeLocale:
-          prev.activeLocale === gone
-            ? (remaining[0] ?? prev.activeLocale)
-            : prev.activeLocale,
+        activeLocale: localeTabAfterRemoving(
+          next,
+          prev.activeLocale,
+          gone,
+          uiLocale,
+        ),
       };
     });
   }

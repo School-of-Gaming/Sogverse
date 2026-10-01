@@ -30,8 +30,10 @@ import type { AdminLibraryArticleListItem } from "@/services/library";
 const LIBRARY_ADMIN_LIST: readonly AdminLibraryArticleListItem[] = [
   {
     id: "3f1c2a7e-8d4b-4e59-9a61-0b7c5d2e8f13",
-    title: "Is Fortnite safe for children? Five myths",
-    summary: "What actually matters.",
+    versions: [
+      { locale: "en", title: "Is Fortnite safe for children? Five myths", summary: "What actually matters." },
+      { locale: "fi", title: "Onko Fortnite turvallinen lapsille?", summary: "Mikä oikeasti merkitsee." },
+    ],
     category: "games_explained",
     coverPath: "/covers/controller.jpg",
     updatedAt: "2026-09-18T12:40:00Z",
@@ -40,8 +42,7 @@ const LIBRARY_ADMIN_LIST: readonly AdminLibraryArticleListItem[] = [
   },
   {
     id: "bb744329-6849-4d79-be8e-da6b5bdec6fa",
-    title: "Setting up a family gaming agreement",
-    summary: "",
+    versions: [{ locale: "en", title: "Setting up a family gaming agreement", summary: "" }],
     category: "screen_time",
     coverPath: null,
     updatedAt: "2026-09-15T08:05:00Z",
@@ -50,8 +51,7 @@ const LIBRARY_ADMIN_LIST: readonly AdminLibraryArticleListItem[] = [
   },
   {
     id: "70f64c69-1681-4b3b-8ab6-420642e48598",
-    title: "What to ask a club before your child joins",
-    summary: "",
+    versions: [{ locale: "en", title: "What to ask a club before your child joins", summary: "" }],
     category: null,
     coverPath: null,
     updatedAt: "2026-09-09T14:20:00Z",
@@ -60,8 +60,7 @@ const LIBRARY_ADMIN_LIST: readonly AdminLibraryArticleListItem[] = [
   },
   {
     id: "9d39dd23-2b00-43f4-a0f5-af63bd58ad67",
-    title: "Screen time is not the enemy",
-    summary: "It is what they do on screen that matters.",
+    versions: [{ locale: "en", title: "Screen time is not the enemy", summary: "It is what they do on screen that matters." }],
     category: "screen_time",
     coverPath: "/covers/clock.jpg",
     updatedAt: "2026-06-02T10:00:00Z",
@@ -102,7 +101,7 @@ describe("the Library content list", () => {
     expect(articleRows()).toHaveLength(LIBRARY_ADMIN_LIST.length);
     for (const article of LIBRARY_ADMIN_LIST) {
       const row = within(rowFor(article.id));
-      expect(row.getByText(article.title)).toBeTruthy();
+      expect(row.getByText(article.versions[0].title)).toBeTruthy();
       const status = !article.isPublished
         ? "draft"
         : article.hasUnpublishedChanges
@@ -124,6 +123,21 @@ describe("the Library content list", () => {
         expect(row.querySelector("img")).not.toBeNull();
       }
     }
+  });
+
+  it("names an article in the admin's language and lists the languages it is written in", () => {
+    render(<AdminLibraryArticlesPage articles={LIBRARY_ADMIN_LIST} settled />);
+    const row = within(rowFor(LIBRARY_ADMIN_LIST[0].id));
+    expect(row.getByText("Is Fortnite safe for children? Five myths")).toBeTruthy();
+    expect(row.queryByText("Onko Fortnite turvallinen lapsille?")).toBeNull();
+    expect(row.getByText("en")).toBeTruthy();
+    expect(row.getByText("fi")).toBeTruthy();
+  });
+
+  it("finds an article by a title in any of its languages", () => {
+    render(<AdminLibraryArticlesPage articles={LIBRARY_ADMIN_LIST} settled />);
+    search("turvallinen");
+    expect(articleRows()).toEqual([rowFor(LIBRARY_ADMIN_LIST[0].id)]);
   });
 
   it("says when an article has no category yet", () => {
@@ -151,10 +165,11 @@ describe("searching the Library content list", () => {
     render(<AdminLibraryArticlesPage articles={LIBRARY_ADMIN_LIST} settled />);
     const [target] = LIBRARY_ADMIN_LIST;
 
-    search(`  ${target.title.slice(0, 12).toUpperCase()} `);
+    const title = target.versions[0].title;
+    search(`  ${title.slice(0, 12).toUpperCase()} `);
 
     const expected = LIBRARY_ADMIN_LIST.filter((article) =>
-      article.title.toLowerCase().includes(target.title.slice(0, 12).toLowerCase()),
+      article.versions[0].title.toLowerCase().includes(title.slice(0, 12).toLowerCase()),
     );
     expect(articleRows()).toHaveLength(expected.length);
     expect(rowFor(target.id)).toBeTruthy();

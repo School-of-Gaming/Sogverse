@@ -207,6 +207,17 @@ const nextConfig: NextConfig = {
           // (nonce-based script-src blocks injected inline scripts in production)
         ],
       },
+      // The public folder's video. Every file there is named with a version
+      // (`hero-calm-wide-v1.mp4`), and changed bytes always ship under a new
+      // name, so a URL there never changes meaning and can be cached for a year
+      // without revalidating (`src/assets/marketing/CLAUDE.md`). The proxy's
+      // matcher skips this prefix, so no response here carries a cookie.
+      {
+        source: "/media/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
     ];
   },
 };

@@ -92,10 +92,19 @@
  *   one thing. The act phrase is the payoff, the words the headline is
  *   travelling towards, and there is exactly one of them: a second coloured
  *   phrase spends the accent twice and the rule already holds the other hue.
- *   **It is the one heading that may.** A section heading is not a hero — it
+ *   **It is the one heading that may**, a team member's nickname below
+ *   aside. A section heading is not a hero — it
  *   has no rule under it and a reader reads straight through it — so a
  *   coloured word in one is the defect this departure is narrow enough to
  *   keep catching.
+ * - **Declared departure: a team member's nickname.** Wherever a team
+ *   member's name is shown — their profile's headline, their card, their
+ *   share card — it is their first name in ink and the nickname gamers know
+ *   them by in `act`, with no quotes: the colour is what marks the second
+ *   word as a nickname rather than a surname, so it holds on a card's heading
+ *   too. Only the nickname takes it. Where the name is plain text that cannot
+ *   carry colour — a page title, alt text — the nickname takes the locale's
+ *   quotes instead.
  * - **A brand colour exists at exactly the values authored below, never at an
  *   alpha step**: over a near-black ground an alpha step composites to a
  *   darker, duller hue, so what the reader sees is no longer the brand. This

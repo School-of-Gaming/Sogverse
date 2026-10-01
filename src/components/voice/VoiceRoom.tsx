@@ -82,8 +82,12 @@ const SCREEN_SHARE_ANIMATION_MS = 700;
 // Single source of truth: it's the dock's own bottom padding AND the base of the
 // page's reserved scroll space, so nudging this one value moves both together —
 // raise the dock and the scroll padding grows to match. The max() keeps a 2.5rem
-// floor and grows with the device safe-area inset.
-const DOCK_FLOAT_OFFSET = "max(2.5rem, calc(env(safe-area-inset-bottom) + 0.75rem))";
+// floor and grows with the device safe-area inset. The live rooms draw no tab
+// bar, so `--tab-bar-height` is zero there; the term still clears the bar by the
+// same 0.75rem where the room is composed under a header that does draw one (its
+// preview scene).
+const DOCK_FLOAT_OFFSET =
+  "max(2.5rem, calc(env(safe-area-inset-bottom) + 0.75rem), calc(var(--tab-bar-height) + 0.75rem))";
 
 // Generous estimate of the dock pill's own height. Tallest case is the mobile
 // two-row layout (~6.5rem); 8rem leaves breathing room. Overestimating only

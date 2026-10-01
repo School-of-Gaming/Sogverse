@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import type { AppHref } from "@/lib/constants/routes";
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/utils";
 import {
@@ -27,6 +28,7 @@ import {
   type TeamProfileGap,
 } from "@/components/team/team-profile-form";
 import { TeamProfilePreviewFrame } from "@/components/team/team-profile-preview-frame";
+import { teamMemberLinkAddress } from "@/components/team/team-address";
 import {
   TeamProfileStatusPanel,
   teamProfileStatus,
@@ -64,8 +66,7 @@ export type TeamProfileEditorProps = TeamProfileSaveState & {
   /**
    * An admin is editing someone else's profile from the admin panel — any
    * admin's or Gedu's. The page is the same, checkbox included: it marks the
-   * profile ready, it is not the person's consent, and admins manage profiles
-   * for busy staff. What changes is who is addressed: the page speaks to the
+   * profile ready, and admins manage profiles for busy staff. What changes is who is addressed: the page speaks to the
    * admin about the person and leads back to that person's user page.
    */
   editedByAdmin?: boolean;
@@ -76,6 +77,11 @@ export type TeamProfileEditorProps = TeamProfileSaveState & {
   ready: boolean;
   /** An admin has made it public, decided on the user page and only read here. */
   approved: boolean;
+  /**
+   * The public page's address as the server read it while the profile was
+   * live (`teamMemberPublicAddress`), or nothing.
+   */
+  publicAddress?: string | null;
 };
 
 /**
@@ -176,6 +182,9 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
           <PublicSection
             byAdmin={byAdmin}
             name={props.profile.firstName}
+            publicHref={ROUTES.teamMember(
+              teamMemberLinkAddress(props.profile, props.publicAddress ?? null),
+            )}
             status={status}
             on={on}
             gap={gap}
@@ -283,6 +292,7 @@ function useOwnedCrops(
 function PublicSection({
   byAdmin,
   name,
+  publicHref,
   status,
   on,
   gap,
@@ -290,6 +300,11 @@ function PublicSection({
 }: {
   byAdmin: boolean;
   name: string;
+  /**
+   * The profile's public page while it is live, at the address the saved
+   * profile derives: a nickname typed but not saved has not moved it yet.
+   */
+  publicHref: AppHref;
   status: TeamProfileStatus;
   on: boolean;
   gap: TeamProfileGap;
@@ -306,6 +321,7 @@ function PublicSection({
         complete: ta("edit.complete"),
         mustStayComplete: ta("edit.mustStayComplete"),
         missing: gap === null ? null : ta(`edit.missing.${gap}`),
+        viewPublicPage: ta("status.viewPublicPage"),
       }
     : {
         title: t(`status.${status}Title`),
@@ -315,10 +331,17 @@ function PublicSection({
         complete: t("switch.complete"),
         mustStayComplete: t("switch.mustStayComplete"),
         missing: gap === null ? null : t(`switch.missing.${gap}`),
+        viewPublicPage: t("status.viewPublicPage"),
       };
   return (
     <FormSection heading={t("switch.heading")}>
-      <TeamProfileStatusPanel status={status} title={copy.title} body={copy.body} />
+      <TeamProfileStatusPanel
+        status={status}
+        title={copy.title}
+        body={copy.body}
+        publicHref={publicHref}
+        publicLabel={copy.viewPublicPage}
+      />
       <div className="space-y-3">
         <CheckboxRow
           checked={on}

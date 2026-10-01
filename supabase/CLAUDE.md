@@ -322,7 +322,9 @@ every command does — the things its usage text does not say:
   out, because the avatar identicon derives its pattern from the id's bytes and a
   hand-written one draws a face nobody will ever see in production. The trimmed service
   set has no mail catcher, so nothing emailed can be read on a stack; the seeded accounts
-  are the way in.
+  are the way in. One club, the Minecraft Bedrock Club, has its session in progress for
+  about three hours after the stack is built, so a real voice room can be opened locally
+  by all three; later than that, `reset` makes it live again.
 - **The rich seed's products carry pictures, and they are not in the SQL.** A
   `catalogue_images` row names a storage object by the sha256 of its bytes, so the bytes
   have to be uploaded first: `scripts/local-db/rich-images.sh` uploads
@@ -334,8 +336,10 @@ every command does — the things its usage text does not say:
   stack with holes in it. A file named `library-<category>.jpg` is a Library cover
   instead, uploaded to the `library-covers` bucket (JPEG only, like every upload) and
   linked to both copies of every seeded article in that category; the one live article
-  in a category with no file is how the stack shows a live article with no cover. The same step uploads the three seeded team profiles' photos,
-  from `public/preview-art/`, to the paths the seed saved them under.
+  in a category with no file is how the stack shows a live article with no cover. The
+  same step uploads every seeded team profile's photo to the path the seed saved it
+  under, from `supabase/seed-images/team/<email local part>.jpg`; a profile with no file
+  fails the step by name, and `scripts/local-db/team-photos.mjs` redraws the files.
 - **Google sign-in works on a stack whose checkout's `.env.local` carries
   `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`** —
   a Google Cloud OAuth client of your own; its consent screen can stay in testing mode,

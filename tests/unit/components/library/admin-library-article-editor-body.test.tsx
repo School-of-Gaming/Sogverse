@@ -34,9 +34,9 @@ import type { AdminLibraryArticle } from "@/services/library";
 const DRAFT: AdminLibraryArticle = {
   draft: {
     id: "bb744329-6849-4d79-be8e-da6b5bdec6fa",
-    title: "Setting up a family gaming agreement",
-    summary: "",
-    body: "",
+    versions: [
+      { locale: "en", title: "Setting up a family gaming agreement", summary: "", body: "" },
+    ],
     category: "screen_time",
     coverImageId: null,
     coverPath: null,
@@ -72,13 +72,16 @@ const FOREIGN_DIALECT = [
 const SEEDED_BODIES = [
   // From the checkout root, which vitest runs in; `import.meta.url` is not a
   // file URL under jsdom.
-  ...readFileSync(join(process.cwd(), "supabase", "rich-seed.sql"), "utf8").matchAll(/p_body\s*=>\s*\$md\$([\s\S]*?)\$md\$/g),
+  ...readFileSync(join(process.cwd(), "supabase", "rich-seed.sql"), "utf8").matchAll(/'body',\s*\$md\$([\s\S]*?)\$md\$/g),
 ].map((match) => match[1]);
 
 function article(body: string): AdminLibraryArticle {
   return {
     ...DRAFT,
-    draft: { ...DRAFT.draft, body },
+    draft: {
+      ...DRAFT.draft,
+      versions: [{ ...DRAFT.draft.versions[0], body }],
+    },
   };
 }
 

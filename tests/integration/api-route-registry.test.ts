@@ -233,6 +233,7 @@ const TESTS = {
   seatOfferRespond: "tests/integration/api/seat-offer-respond.test.ts",
   seatOfferSweep: "tests/integration/api/admin-seat-offers-sweep.test.ts",
   seatOfferInApp: "tests/integration/api/participations-seat-offer.test.ts",
+  teamPhotos: "tests/integration/api/team-photos.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   signout: "tests/integration/auth/signout.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
@@ -1253,6 +1254,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "none" },
         test: TESTS.robloxVerify,
+      },
+    },
+  },
+
+  // --- Team profiles -------------------------------------------------------
+
+  "src/app/api/team/photos/[userId]/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "public",
+          reason:
+            "the public team page shows each public profile's photo to anyone, signed in or not, so the photo cannot require a session. The route reads with the anon key and no cookies, so the team-photos storage policy decides every read: anon may read an object only while it is the current photo of an approved admin's or Gedu's profile, re-asked on every request. Anything else answers 404, so it discloses nothing the public team page does not, and the answer not depending on who asks is what lets it be cached publicly",
+        },
+        body: { kind: "none" },
+        test: TESTS.teamPhotos,
       },
     },
   },

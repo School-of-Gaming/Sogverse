@@ -9,13 +9,14 @@ import type { UserRole } from "@/lib/constants";
 /**
  * The header strip's nav.
  *
- * What is pinned here is the one thing about it that is not obvious from the
- * markup: **it is the only piece of chrome that varies by role**, so a signed-in
- * gedu gets an item nobody else does, About gives way to it on a phone, and
- * every other role's strip has to come out byte for byte as it was. Plus the
- * two things a type-check cannot see — that the shortened French label never
- * reaches an accessible name, and that the scene-only `navRole` override
- * reaches the nav (and the menu's copy of the same decision) and nothing else.
+ * What is pinned here is what is not obvious from the markup: **the strip is
+ * the only piece of chrome that varies by role**, so a signed-in gedu or admin
+ * gets items of their own and a parent's, a gamer's and a signed-out strip have
+ * to come out byte for byte the same; the whole run is on the strip only from `lg` up (the tab bar
+ * and the account menu carry it below), which is the one breakpoint the
+ * measured table in `header.tsx` settled. Plus what a type-check cannot see —
+ * that the scene-only `navRole` override reaches the nav (and the menu's copy
+ * of the same decision) and nothing else.
  */
 
 const mockAuth = vi.hoisted(() => vi.fn());
@@ -78,12 +79,19 @@ function renderHeader(
   );
 }
 
+/** The site header itself, apart from the tab bar the header also renders. */
+function banner(): HTMLElement {
+  return screen.getByRole("banner");
+}
+
 /**
  * The run of nav links, found through a link that is always in it rather than
- * by walking the DOM: Shop is on the strip for every role at every width.
+ * by walking the DOM: Shop is in the run for every role (shown from `lg` up).
  */
 function navGroup(messages: typeof en | typeof fr = en): HTMLElement {
-  const shop = screen.getByRole("link", { name: messages.header.nav.shop });
+  const shop = within(banner()).getByRole("link", {
+    name: messages.header.nav.shop,
+  });
   const group = shop.parentElement;
   if (!group) throw new Error("Shop link has no nav group around it");
   return group;
@@ -94,45 +102,60 @@ function navTexts(messages: typeof en | typeof fr = en): (string | null)[] {
   return Array.from(navGroup(messages).children).map((el) => el.textContent);
 }
 
+function stripLink(name: string) {
+  return within(banner()).queryByRole("link", { name });
+}
+
 function teamProfileLink() {
-  return screen.queryByRole("link", { name: en.header.teamProfile });
+  return stripLink(en.header.teamProfile);
 }
 
 function substitutionsLink(messages: typeof en | typeof fr = en) {
-  return screen.queryByRole("link", {
-    name: messages.header.nav.substitutions,
-  });
+  return stripLink(messages.header.nav.substitutions);
 }
+
+const PUBLIC_LINKS = [
+  en.header.nav.shop,
+  en.header.nav.library,
+  en.header.nav.team,
+  en.header.nav.about,
+];
 
 beforeEach(() => {
   mockAuth.mockReset();
   accountMenuProps.length = 0;
 });
 
-describe("Header nav — who gets the Substitutions item", () => {
-  it("gives a signed-in gedu the item, first in the run and ahead of About", () => {
+describe("Header nav — who gets the role's own items", () => {
+  it("gives a signed-in gedu its items, first in the run and ahead of the public links", () => {
     signedInAs("gedu");
     renderHeader();
 
     const link = substitutionsLink();
     expect(link).not.toBeNull();
     expect(link?.getAttribute("href")).toBe("/gedu/substitutions");
-    // Left of About, per the owner — and the position is load-bearing: the run
-    // is anchored to the strip's right edge, so an item that ever arrives late
-    // has to join at this end or it shoves the links after it sideways.
+    // The position is load-bearing: the run is anchored to the strip's right
+    // edge, so an item that ever arrives late has to join at this end or it
+    // shoves the links after it sideways.
     expect(navTexts()).toEqual([
-      // Desktop only (hidden below `lg`), and left of Substitutions, per the
-      // owner — at the leading edge for the same late-arrival reason.
       en.header.invoicing,
-      // Both label spans are in the DOM; one is hidden by breakpoint.
-      en.header.nav.substitutions + en.header.nav.substitutionsPhone,
+      en.header.nav.substitutions,
       en.header.teamProfile,
-      en.header.nav.about,
-      en.header.nav.shop,
+      ...PUBLIC_LINKS,
     ]);
   });
 
-  it.each([["customer"], ["gamer"], ["admin"]] as const)(
+  it("gives a signed-in admin My profile alone, ahead of the public links", () => {
+    signedInAs("admin");
+    renderHeader();
+
+    expect(substitutionsLink()).toBeNull();
+    expect(stripLink(en.header.invoicing)).toBeNull();
+    expect(teamProfileLink()?.getAttribute("href")).toBe("/settings/profile");
+    expect(navTexts()).toEqual([en.header.teamProfile, ...PUBLIC_LINKS]);
+  });
+
+  it.each([["customer"], ["gamer"]] as const)(
     "gives a signed-in %s nothing new",
     (role) => {
       signedInAs(role);
@@ -140,7 +163,7 @@ describe("Header nav — who gets the Substitutions item", () => {
 
       expect(substitutionsLink()).toBeNull();
       expect(teamProfileLink()).toBeNull();
-      expect(navTexts()).toEqual([en.header.nav.about, en.header.nav.shop]);
+      expect(navTexts()).toEqual(PUBLIC_LINKS);
     },
   );
 
@@ -149,13 +172,13 @@ describe("Header nav — who gets the Substitutions item", () => {
     renderHeader();
 
     expect(substitutionsLink()).toBeNull();
-    expect(navTexts()).toEqual([en.header.nav.about, en.header.nav.shop]);
+    expect(navTexts()).toEqual(PUBLIC_LINKS);
   });
 
   it("gives a session whose profile never landed nothing new", () => {
-    // The role is what the item is decided from, and a profile read that failed
-    // server-side is never repaired on the client — so this state is permanent
-    // rather than transient, and it must not guess.
+    // The role is what the items are decided from, and a profile read that
+    // failed server-side is never repaired on the client — so this state is
+    // permanent rather than transient, and it must not guess.
     mockAuth.mockReturnValue({ user: USER, profile: null, isLoading: false });
     renderHeader();
 
@@ -163,16 +186,15 @@ describe("Header nav — who gets the Substitutions item", () => {
   });
 });
 
-describe("Header nav — every other role's strip is untouched", () => {
+describe("Header nav — a parent's and a gamer's strip is the signed-out one", () => {
   /**
-   * The claim this branch has to make good on: only a gedu's header changed.
    * Asserted as DOM equality between the roles rather than against a frozen
    * string, so it stays true through an unrelated edit to the shared markup
    * and fails the moment one role's strip diverges from another's.
    */
-  it("renders one identical nav for admin, parent, gamer and signed-out", () => {
+  it("renders one identical nav for parent, gamer and signed-out", () => {
     const shapes = new Set<string>();
-    for (const role of ["admin", "customer", "gamer"] as const) {
+    for (const role of ["customer", "gamer"] as const) {
       signedInAs(role);
       const view = renderHeader();
       shapes.add(navGroup().outerHTML);
@@ -183,104 +205,108 @@ describe("Header nav — every other role's strip is untouched", () => {
     shapes.add(navGroup().outerHTML);
 
     expect(shapes.size).toBe(1);
-    // Neither half of the gedu accommodation leaks into it: About keeps its
-    // place on the phone strip, and the gap to the account cluster is the one
-    // it always was.
-    const [shape] = [...shapes];
-    expect(shape).not.toContain("sm:inline-flex");
-    expect(navGroup().parentElement?.className).toBe(
-      "flex items-center gap-2 sm:gap-3",
-    );
     view.unmount();
   });
 
-  it("tightens that gap by one step only while the gedu item is on the strip", () => {
-    signedInAs("gedu");
-    renderHeader();
-
-    // 4px back on a phone, which is what carries Finnish clear of the 360px
-    // floor. Unchanged from `sm` up, where the strip has room either way.
-    expect(navGroup().parentElement?.className).toBe(
-      "flex items-center gap-1 sm:gap-3",
-    );
+  it("holds the run off the account cluster by the same gap for a gedu", () => {
+    for (const role of ["gedu", "customer"] as const) {
+      signedInAs(role);
+      const view = renderHeader();
+      expect(navGroup().parentElement?.className).toBe(
+        "flex items-center gap-2 lg:gap-3",
+      );
+      view.unmount();
+    }
   });
 });
 
-describe("Header nav — About gives way on a phone, for gedus only", () => {
-  it("hides About below sm for a gedu", () => {
-    signedInAs("gedu");
-    renderHeader();
-
-    const about = screen.getByRole("link", { name: en.header.nav.about });
-    expect(about.className).toContain("hidden sm:inline-flex");
-    // Shop stays on the strip at every width — it is the one a gedu might
-    // actually be going to.
-    const shop = screen.getByRole("link", { name: en.header.nav.shop });
-    expect(shop.className).not.toContain("hidden");
-  });
-
-  it.each([["customer"], ["gamer"], ["admin"]] as const)(
-    "leaves About on the strip at every width for a %s",
+/**
+ * The header has two layouts, switching at `lg` for every role: below it the
+ * strip carries no nav at all (the tab bar has the public destinations, the
+ * avatar menu a gedu's own items — its suite pins the matching `lg:hidden`);
+ * from it the whole run is on the strip, every link in its whole word. So the
+ * breakpoint lives once, on the run, and no link carries one of its own.
+ */
+describe("Header nav — the run is the strip's from lg up", () => {
+  it.each([["gedu"], ["customer"], ["gamer"], ["admin"]] as const)(
+    "hides the whole run below lg for a %s",
     (role) => {
       signedInAs(role);
       renderHeader();
 
-      const about = screen.getByRole("link", { name: en.header.nav.about });
-      expect(about.className).not.toContain("hidden");
+      expect(navGroup().className).toContain("hidden");
+      expect(navGroup().className).toContain("lg:flex");
     },
   );
-});
 
-/**
- * The gedu's My profile item sits between Substitutions and About, and only
- * from `md` up: below that it is a row in the avatar menu, so the phone strip
- * and its measured table are exactly what they were. An admin has a profile too
- * but reaches it from settings, never from the strip.
- */
-describe("Header nav — the gedu's My profile item", () => {
-  it("is on the strip from md up for a gedu, and links to the profile page", () => {
+  it.each([["gedu"], ["admin"]] as const)(
+    "gives no link in a %s's run a breakpoint of its own",
+    (role) => {
+      signedInAs(role);
+      renderHeader();
+
+      for (const link of Array.from(navGroup().children)) {
+        expect(link.className).not.toMatch(/\b(hidden|sm:|md:|lg:)/);
+      }
+    },
+  );
+
+  it("links the gedu items to their pages", () => {
     signedInAs("gedu");
     renderHeader();
 
-    const link = teamProfileLink();
-    expect(link?.getAttribute("href")).toBe("/settings/profile");
-    expect(link?.className).toContain("hidden md:inline-flex");
+    expect(stripLink(en.header.invoicing)?.getAttribute("href")).toBe(
+      "/gedu/invoicing",
+    );
+    expect(teamProfileLink()?.getAttribute("href")).toBe("/settings/profile");
   });
-});
 
-describe("Header nav — the French phone label", () => {
-  it("sets the short word on a phone, the whole one from sm, and announces the whole one", () => {
+  it("sets Substitutions as its whole word, in French too", () => {
     signedInAs("gedu");
     renderHeader(fr);
 
-    // "Remplacements" does not fit the 360px or 390px strip; "Rempl." does.
-    // The accessible name is stated on the link, so the abbreviation is never
-    // what a screen reader reads out.
-    const link = screen.getByRole("link", {
-      name: fr.header.nav.substitutions,
-    });
-    expect(link.getAttribute("aria-label")).toBe("Remplacements");
-    expect(
-      within(link).getByText("Rempl.").className,
-    ).toContain("sm:hidden");
-    expect(
-      within(link).getByText("Remplacements").className,
-    ).toContain("hidden sm:inline");
+    const link = substitutionsLink(fr);
+    expect(link?.textContent).toBe(fr.header.nav.substitutions);
+    expect(link?.hasAttribute("aria-label")).toBe(false);
   });
 
-  it("uses the same two-span shape in a locale whose words are equal", () => {
-    // Four of the five locales set the same word in both keys. The pair is
-    // rendered anyway, so the component carries one rule and no per-locale
-    // branch — and a locale that later runs out of room is a copy change.
-    signedInAs("gedu");
+  it("links Team to the bare path, and the rest through the route map", () => {
+    signedOut();
     renderHeader();
 
-    const link = screen.getByRole("link", {
-      name: en.header.nav.substitutions,
-    });
-    expect(link.querySelectorAll("span")).toHaveLength(2);
-    expect(en.header.nav.substitutionsPhone).toBe(en.header.nav.substitutions);
+    expect(stripLink(en.header.nav.team)?.getAttribute("href")).toBe("/team");
+    expect(stripLink(en.header.nav.library)?.getAttribute("href")).toBe(
+      "/library",
+    );
   });
+});
+
+describe("Header — the lockup beside the badge", () => {
+  it("sets the wordmark at every width when signed out", () => {
+    signedOut();
+    renderHeader();
+
+    const logo = within(banner()).getByRole("link", {
+      name: "School of Gaming",
+    });
+    const mark = logo.querySelector("svg");
+    expect(mark).not.toBeNull();
+    expect(mark?.getAttribute("class") ?? "").not.toContain("hidden");
+  });
+
+  it.each([["customer"], ["gamer"], ["admin"], ["gedu"]] as const)(
+    "sets the dashboard's word at every width for a %s",
+    (role) => {
+      signedInAs(role);
+      renderHeader();
+
+      const word =
+        role === "admin" ? en.common.dashboard : en.dashboardSections.pageTitle;
+      expect(within(banner()).getByText(word).className).not.toContain(
+        "hidden",
+      );
+    },
+  );
 });
 
 describe("Header nav — the scene-only navRole override", () => {
@@ -290,9 +316,6 @@ describe("Header nav — the scene-only navRole override", () => {
 
     expect(substitutionsLink()).not.toBeNull();
     expect(teamProfileLink()).not.toBeNull();
-    expect(
-      screen.getByRole("link", { name: en.header.nav.about }).className,
-    ).toContain("hidden sm:inline-flex");
   });
 
   it("hands the same override to the account menu and changes nothing else about it", () => {

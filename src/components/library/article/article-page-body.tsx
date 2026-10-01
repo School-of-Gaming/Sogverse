@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { Markdown } from "@/components/ui/markdown";
 import { Link } from "@/i18n/navigation";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import type { AppHref } from "@/lib/constants/routes";
 import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
@@ -52,6 +53,11 @@ export interface LibraryArticle {
  */
 export type LibraryArticlePageContent = Omit<LibraryArticle, "category"> & {
   category: LibraryCategory | null;
+  /**
+   * The language the title, summary and body are written in — the page's
+   * own, or a fallback's, which the page marks on them.
+   */
+  locale: SupportedLocale;
 };
 
 /** Everything the page draws, the in-app destinations around the article included. */
@@ -100,6 +106,9 @@ export function ArticlePageBody({
   const t = useTranslations("library");
   const locale = useLocale();
   const timeZone = useTimezone();
+  // The article's words carry its language where it is not the page's; the
+  // chrome around them — the eyebrow, the date, sharing — is the page's own.
+  const lang = article.locale === locale ? undefined : article.locale;
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
@@ -121,12 +130,14 @@ export function ArticlePageBody({
               href={categoryHref ?? undefined}
             />
           )}
-          <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-4xl">
-            {article.title}
-          </h1>
-          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-            {article.summary}
-          </p>
+          <div lang={lang}>
+            <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-4xl">
+              {article.title}
+            </h1>
+            <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+              {article.summary}
+            </p>
+          </div>
           <p className="mt-4 text-sm text-muted-foreground">
             <time dateTime={article.publishedAt}>
               {formatDate(article.publishedAt, locale, {
@@ -152,9 +163,9 @@ export function ArticlePageBody({
           className="mt-8 rounded-lg border border-border"
         />
 
-        <Markdown variant="article" className="mt-8">
-          {article.bodyMarkdown}
-        </Markdown>
+        <div lang={lang} className="mt-8">
+          <Markdown variant="article">{article.bodyMarkdown}</Markdown>
+        </div>
 
         <ShareSection url={shareUrl} title={article.title} />
 

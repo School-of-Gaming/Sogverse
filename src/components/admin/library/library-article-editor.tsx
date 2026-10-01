@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { CircleCheck, CircleDashed, ExternalLink, Loader2, X } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -17,9 +17,21 @@ import {
   isLibraryCategory,
 } from "@/components/library/categories";
 import { ImagePicker } from "@/components/admin/products/image-picker";
+import {
+  articleAddress,
+  type AddressableArticle,
+} from "@/components/library/article-address";
+import { useLanguageNames } from "@/hooks/use-language-names";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
+import {
+  LOCALE_CONFIG,
+  SUPPORTED_LOCALES,
+  resolveLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
+import { localeTabAfterRemoving } from "@/lib/i18n/locale-tabs";
+import { cn, findOption, formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type {
   AdminLibraryArticle,
@@ -28,15 +40,21 @@ import type {
 import { ArticleBodyEditor } from "./article-body-editor";
 import {
   emptyLibraryArticleForm,
+  formLocales,
+  incompleteLocales,
   isBlankLibraryArticleForm,
+  isCompleteVersion,
   libraryArticleFormFromDraft,
   libraryArticleInputFromForm,
   libraryArticleStatus,
   libraryPublishState,
+  librarySaveBlocker,
   libraryWriteFailure,
   sameAsSaved,
+  versionOf,
   type LibraryArticleForm,
-  type LibraryPublishField,
+  type LibraryArticleVersionDraft,
+  type LibraryPublishNeed,
   type LibraryPublishState,
 } from "./library-article-form";
 import { LibraryArticleStatusChip } from "./library-article-status-chip";
@@ -69,6 +87,12 @@ export type LibraryArticleEditorProps = EditorCommonProps &
         /** The article as last read. */
         article: AdminLibraryArticle;
         actions: LibraryArticleEditorActions;
+        /**
+         * Everything live — what "View live" judges the article's public
+         * address against. Until it is read, the link opens the article by
+         * its id, which always resolves.
+         */
+        published?: readonly AddressableArticle[];
       }
   );
 
@@ -96,6 +120,11 @@ interface EditorCommonProps {
  * opens the saved copy on a page of its own, in the public site's chrome, and
  * waits for Save the same way, so what it shows is what Publish would publish.
  *
+ * **The text is written per language, in tabs** — the team profile's: a tab
+ * per language written, each marked complete or not, a remove control on each
+ * while more than one remains, and an "add a language" select for the rest.
+ * The category and the cover are the article's, once, beneath them.
+ *
  * **Typing never adds, removes or moves a control.** Which buttons there are
  * changes only with a publish or an unpublish; what typing changes is whether
  * they are enabled, and the reasons beside them, which grow leftward into the
@@ -115,11 +144,13 @@ function EditorForm(props: LibraryArticleEditorProps) {
   const { article, onCancel } = props;
   const t = useTranslations("admin.library");
   const tCategory = useTranslations("library.categories");
+  const languageName = useLanguageNames();
+  const uiLocale = resolveLocale(useLocale());
 
   const [form, setForm] = useState<LibraryArticleForm>(() =>
     article === null
-      ? emptyLibraryArticleForm()
-      : libraryArticleFormFromDraft(article.draft),
+      ? emptyLibraryArticleForm(uiLocale)
+      : libraryArticleFormFromDraft(article.draft, uiLocale),
   );
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -174,8 +205,18 @@ function EditorForm(props: LibraryArticleEditorProps) {
 
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
-    if (form.title.trim() === "") {
-      setSaveError(t("errors.titleRequired"));
+    const blocker = librarySaveBlocker(form);
+    if (blocker !== null) {
+      setSaveError(
+        blocker.kind === "noVersion"
+          ? t("errors.titleRequired")
+          : t("errors.versionTitleRequired", {
+              language: languageName(
+                blocker.locale,
+                LOCALE_CONFIG[blocker.locale].label,
+              ),
+            }),
+      );
       return;
     }
     setSaveError(null);
@@ -221,30 +262,11 @@ function EditorForm(props: LibraryArticleEditorProps) {
       <form onSubmit={handleSave} className="space-y-6">
         <Card>
           <CardContent className="space-y-5 p-6">
-            <Field label={t("fields.title")} htmlFor="library-article-title">
-              <Input
-                id="library-article-title"
-                value={form.title}
-                onChange={(event) => set("title", event.target.value)}
-                autoComplete="off"
-              />
-            </Field>
-
-            <Field
-              label={t("fields.summary")}
-              htmlFor="library-article-summary"
-              hint={t("hints.summary")}
-            >
-              {({ hintId }) => (
-                <Textarea
-                  id="library-article-summary"
-                  value={form.summary}
-                  onChange={(event) => set("summary", event.target.value)}
-                  aria-describedby={hintId}
-                  rows={3}
-                />
-              )}
-            </Field>
+            <ArticleVersionsSection
+              form={form}
+              setForm={setForm}
+              onSeeded={recordEditorBody}
+            />
 
             <Field
               label={t("fields.category")}
@@ -288,18 +310,6 @@ function EditorForm(props: LibraryArticleEditorProps) {
               }
             />
 
-            <Field label={t("fields.body")} hint={t("hints.body")}>
-              {({ hintId }) => (
-                <ArticleBodyEditor
-                  value={form.body}
-                  onChange={(body) => set("body", body)}
-                  onSeeded={recordEditorBody}
-                  placeholder={t("bodyPlaceholder")}
-                  ariaLabel={t("fields.body")}
-                  describedBy={hintId}
-                />
-              )}
-            </Field>
           </CardContent>
         </Card>
 
@@ -331,6 +341,7 @@ function EditorForm(props: LibraryArticleEditorProps) {
             <PublishReasons
               id={reasonsId}
               publishState={publishState}
+              leftOut={incompleteLocales(form)}
             />
           )}
           <div className="flex shrink-0 flex-col-reverse gap-3 sm:flex-row">
@@ -352,8 +363,11 @@ function EditorForm(props: LibraryArticleEditorProps) {
                   {t("preview")}
                 </Button>
               ) : (
+                // Opened in the language of the tab in front of the admin, so
+                // the preview shows that version in that language's chrome.
                 <Link
                   href={ROUTES.libraryArticlePreview(props.article.draft.id)}
+                  locale={form.activeLocale}
                   target="_blank"
                   rel="noopener"
                   className={buttonVariants({ variant: "outline" })}
@@ -363,8 +377,19 @@ function EditorForm(props: LibraryArticleEditorProps) {
                 </Link>
               ))}
             {props.article !== null && isPublished && (
+              // The live page in the language of the tab in front of the
+              // admin, at the address a reader of that language shares.
               <Link
-                href={ROUTES.libraryArticle(props.article.draft.id)}
+                href={ROUTES.libraryArticle(
+                  props.published === undefined
+                    ? props.article.draft.id
+                    : articleAddress(
+                        props.published,
+                        props.article.draft,
+                        form.activeLocale,
+                      ),
+                )}
+                locale={form.activeLocale}
                 target="_blank"
                 rel="noopener"
                 className={buttonVariants({ variant: "outline" })}
@@ -488,41 +513,241 @@ function PublishingStatus({ article }: { article: AdminLibraryArticle }) {
 
 /**
  * What an article still needs before Publish can act, set against the buttons
- * it explains. The box takes whatever width the buttons leave and wraps inside
- * it; the padding sets a first line level with the buttons' labels.
+ * it explains — and, while it can be published, the languages a publish would
+ * leave out because they are not complete yet. The box takes whatever width
+ * the buttons leave and wraps inside it; the padding sets a first line level
+ * with the buttons' labels.
  */
 function PublishReasons({
   id,
   publishState,
+  leftOut,
 }: {
   id: string;
   publishState: LibraryPublishState;
+  /** Languages written but incomplete, in locale order. */
+  leftOut: readonly SupportedLocale[];
 }) {
   const t = useTranslations("admin.library");
   const format = useFormatter();
+  const languageName = useLanguageNames();
 
-  const missingName: Record<LibraryPublishField, string> = {
-    title: t("missing.title"),
-    summary: t("missing.summary"),
+  const needName: Record<LibraryPublishNeed, string> = {
     category: t("missing.category"),
-    body: t("missing.body"),
+    completeVersion: t("missing.completeVersion"),
   };
+  const languages = format.list(
+    leftOut.map((locale) => languageName(locale, LOCALE_CONFIG[locale].label)),
+    { type: "conjunction" },
+  );
 
   return (
     <div
       id={id}
-      className="flex min-w-0 flex-1 flex-col items-end text-right sm:py-2.5"
+      className="flex min-w-0 flex-1 flex-col items-end gap-1 text-right sm:py-2.5"
     >
       {publishState.kind === "incomplete" && (
         <StatusLine status="info">
           {t("readiness.missing", {
             fields: format.list(
-              publishState.missing.map((field) => missingName[field]),
+              publishState.missing.map((need) => needName[need]),
               { type: "conjunction" },
             ),
           })}
         </StatusLine>
       )}
+      {/* Only beside a publish that would go ahead: with no complete
+          language at all, the line above already says what to do. */}
+      {publishState.kind !== "upToDate" &&
+        !(
+          publishState.kind === "incomplete" &&
+          publishState.missing.includes("completeVersion")
+        ) &&
+        leftOut.length > 0 && (
+        <StatusLine status="info">
+          {t("readiness.leftOut", { languages, count: leftOut.length })}
+        </StatusLine>
+      )}
+    </div>
+  );
+}
+
+/**
+ * **An article's text, one tab per language.** The team profile's tabs,
+ * mirrored rather than shared, as that form mirrors the product form's: a tab
+ * per language written, a remove control on each while more than one remains,
+ * and an "add a language" select for the rest. Each tab says whether its
+ * version is complete — a title, a summary and a body — because only a
+ * complete one is published.
+ *
+ * The body editor reads its content once, at mount, so the locale is its key
+ * and switching tabs remounts it on that language's draft.
+ */
+function ArticleVersionsSection({
+  form,
+  setForm,
+  onSeeded,
+}: {
+  form: LibraryArticleForm;
+  setForm: React.Dispatch<React.SetStateAction<LibraryArticleForm>>;
+  onSeeded: (seed: { value: string; markdown: string }) => void;
+}) {
+  const t = useTranslations("admin.library");
+  const languageName = useLanguageNames();
+  const uiLocale = resolveLocale(useLocale());
+
+  const locale = form.activeLocale;
+  const addedLocales = formLocales(form);
+  const addableLocales = SUPPORTED_LOCALES.filter(
+    (l) => form.versions[l] === undefined,
+  );
+  const draft = versionOf(form, locale);
+
+  function setActive(patch: Partial<LibraryArticleVersionDraft>) {
+    setForm((prev) => ({
+      ...prev,
+      versions: {
+        ...prev.versions,
+        [prev.activeLocale]: { ...versionOf(prev, prev.activeLocale), ...patch },
+      },
+    }));
+  }
+
+  function addLocale(next: SupportedLocale) {
+    setForm((prev) => ({
+      ...prev,
+      versions: { ...prev.versions, [next]: versionOf(prev, next) },
+      activeLocale: next,
+    }));
+  }
+
+  function removeLocale(gone: SupportedLocale) {
+    setForm((prev) => {
+      const next = { ...prev.versions };
+      delete next[gone];
+      return {
+        ...prev,
+        versions: next,
+        activeLocale: localeTabAfterRemoving(
+          next,
+          prev.activeLocale,
+          gone,
+          uiLocale,
+        ),
+      };
+    });
+  }
+
+  return (
+    <div className="space-y-5">
+      <Field label={t("fields.languages")} hint={t("hints.languages")}>
+        <div className="flex flex-wrap items-center gap-1 border-b border-border">
+          {addedLocales.map((l) => {
+            const isActive = locale === l;
+            const canRemove = addedLocales.length > 1;
+            const name = languageName(l, LOCALE_CONFIG[l].label);
+            const complete = isCompleteVersion(versionOf(form, l));
+            const Mark = complete ? CircleCheck : CircleDashed;
+            return (
+              <span
+                key={l}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-t-md border-b-2 border-border px-3 py-1.5 text-sm transition-colors",
+                  isActive
+                    ? "text-act"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <button
+                  type="button"
+                  aria-pressed={isActive}
+                  className="inline-flex items-center gap-1.5"
+                  onClick={() =>
+                    setForm((prev) => ({ ...prev, activeLocale: l }))
+                  }
+                >
+                  {LOCALE_CONFIG[l].nativeLabel}
+                  <Mark className="h-3.5 w-3.5" aria-hidden />
+                  <span className="sr-only">
+                    {complete ? t("versionComplete") : t("versionIncomplete")}
+                  </span>
+                </button>
+                {canRemove && (
+                  <button
+                    type="button"
+                    onClick={() => removeLocale(l)}
+                    className="rounded p-0.5 text-muted-foreground hover:text-destructive"
+                    aria-label={t("removeLocale", { language: name })}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
+            );
+          })}
+          {addableLocales.length > 0 && (
+            <select
+              value=""
+              aria-label={t("addLocale")}
+              onChange={(e) => {
+                const next = findOption(addableLocales, e.target.value);
+                if (next) addLocale(next);
+              }}
+              className="mb-1 ml-1 h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+            >
+              <option value="">{t("addLocale")}</option>
+              {addableLocales.map((l) => (
+                <option key={l} value={l}>
+                  {languageName(l, LOCALE_CONFIG[l].label)}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      </Field>
+
+      <Field label={t("fields.title")} htmlFor="library-article-title">
+        <Input
+          id="library-article-title"
+          value={draft.title}
+          lang={locale}
+          onChange={(event) => setActive({ title: event.target.value })}
+          autoComplete="off"
+        />
+      </Field>
+
+      <Field
+        label={t("fields.summary")}
+        htmlFor="library-article-summary"
+        hint={t("hints.summary")}
+      >
+        {({ hintId }) => (
+          <Textarea
+            id="library-article-summary"
+            value={draft.summary}
+            lang={locale}
+            onChange={(event) => setActive({ summary: event.target.value })}
+            aria-describedby={hintId}
+            rows={3}
+          />
+        )}
+      </Field>
+
+      <Field label={t("fields.body")} hint={t("hints.body")}>
+        {({ hintId }) => (
+          <div lang={locale}>
+            <ArticleBodyEditor
+              key={locale}
+              value={draft.body}
+              onChange={(body) => setActive({ body })}
+              onSeeded={onSeeded}
+              placeholder={t("bodyPlaceholder")}
+              ariaLabel={t("fields.body")}
+              describedBy={hintId}
+            />
+          </div>
+        )}
+      </Field>
     </div>
   );
 }
