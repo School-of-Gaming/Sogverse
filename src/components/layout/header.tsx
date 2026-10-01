@@ -360,20 +360,23 @@ export function Header({ navRole }: HeaderProps) {
 
             **What fits, measured in a real browser** (headless Chromium against
             the dev server, px of strip left over between the logo and the right
-            block). Signed out is the live header. The admin row at 1024 is the
-            live header signed in as an admin. The other signed-in rows are the
-            live header with the lockup word and the gedu items written into it
-            in the header's own classes — measured layout, synthesised content.
-            Below `lg` only the lockup's word varies, and the admin's is the
+            block). Every row below `lg`, and the admin row at 1024, is the live
+            header signed out or signed in as that role. The other signed-in
+            rows at 1024 and 1280 are the live header with the lockup word and
+            the gedu items written into it in the header's own classes —
+            measured layout, synthesised content. Below `lg` the lockup's word
+            and the picker's locale code vary, and the admin's word is the
             longest dashboard name; from `lg` up a gedu's strip is the fullest.
 
               width  who          en     fi     sv     fr    tlh
-              360    signed out  33.3   33.3   33.3   33.3   33.3
-                     admin       65.4   32.0   89.0   22.9  121.3
-              390    signed out  63.3   63.3   63.3   63.3   63.3
-                     admin       95.4   62.0  119.0   52.9  151.3
-              768    signed out 420.3  426.3  419.3  421.3  413.3
-                     admin      452.4  425.0  475.0  410.9  501.3
+              360    signed out  11.8   18.4   11.1   13.2    5.3
+                     My SOG      72.3   62.8   66.3   62.6   69.5
+                     admin       44.0   17.1   66.9    2.8   93.3
+              390    signed out  41.8   48.4   41.1   43.2   35.3
+                     My SOG     102.3   92.8   96.3   92.6   99.5
+                     admin       74.0   47.1   96.9   32.8  123.3
+              768    signed out 419.8  426.4  419.1  421.2  413.3
+                     admin      452.0  425.1  474.9  410.8  501.3
               1024   signed out 398.7  385.7  376.7  304.7  360.7
                      admin      353.9  294.5  359.5  216.0  382.8
                      gedu       174.2  147.1  171.8   26.1  156.9
@@ -381,12 +384,16 @@ export function Header({ navRole }: HeaderProps) {
                      gedu       430.2  403.1  427.8  282.1  412.9
 
             (1023 measures as 768 and 1440 as 1280: the container's width
-            steps at those breakpoints. A parent's, gamer's or gedu's lockup
-            word below `lg` is "My SOG", shorter than the admin's. Every width
-            from 360 to 1440 clears in every locale, with no document
-            overflow.) The tightest cases are a French admin at 360 ("Tableau
-            de bord") and a French gedu at 1024 (three gedu items and four
-            public links), clearing by 23 and 26px.
+            steps at those breakpoints. The "My SOG" rows are a parent and a
+            gedu, which measure identically: below `lg` a parent's, gamer's or
+            gedu's lockup word is "My SOG" in the locale's own form. Phone rows
+            are measured without a classic scrollbar, as a phone draws none.
+            Every width from 360 to 1440 clears in every locale, and the strip
+            never overflows the header.) The tightest cases are a French admin
+            at 360 ("Tableau de bord" beside the FR code), clearing by 3px; a
+            signed-out Klingon visitor at 360 (the widest code, TLH), by 5px;
+            and a French gedu at 1024 (three gedu items and four public
+            links), by 26px.
 
             **Do not add an item without redoing this table, per locale.**
             `NAV_LINK_CLASS`'s `whitespace-nowrap` is there so that the next word

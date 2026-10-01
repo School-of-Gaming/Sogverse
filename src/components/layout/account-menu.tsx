@@ -611,8 +611,9 @@ export function AccountMenu({
                 label={dashboardLabel}
               />
 
-              {/* The role's nav rows — see `carriesGeduRows` — in the strip's
-                  order. Fixed rows like the ones around them: leading icon, no
+              {/* The role's nav rows — a gedu's from `carriesGeduRows`, the
+                  gedu's or admin's My profile from `carriesMyProfileRow` — in
+                  the strip's order. Fixed rows like the ones around them: leading icon, no
                   chevron, and decided before the panel opens, so the menu still
                   opens whole. Each is hidden by CSS at `lg`, where the header's
                   strip takes it, rather than dropped from the tree, which is

@@ -9,6 +9,10 @@ import { ROUTES, type UserRole } from "@/lib/constants";
  * not one: it has a nav item of its own (on the strip from `lg` up and in the
  * account menu below it), and the chrome
  * must name the reader's position once.
+ *
+ * The file also holds the one check for which roles carry a My profile item —
+ * a gedu and an admin — whose page lives under settings rather than a
+ * dashboard, so it is not in this list.
  */
 const PAGES_WITH_THEIR_OWN_NAV_ITEM = [
   ROUTES.gedu.substitutions,

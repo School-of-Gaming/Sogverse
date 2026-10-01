@@ -161,10 +161,13 @@ Each one exists to make the posture above hold by construction rather than by me
   data block reads the same source as the visible page** — the same message keys, the
   same prefetched rows — so it can never assert something the page does not show, and
   only the shop's listing can reach the `ItemList` because only that is ever prefetched
-  for the grid. Each item carries its position, its name and its page's URL in the
-  shop's own locale — every one of those pages is promoted, because the items are
-  exactly the listed products. It is omitted entirely when the grid has nothing to list,
-  rather than emitted empty over a page the client is still filling.
+  for the grid. Each item carries its position, its name and its page's canonical
+  URL — the address of the locale whose words that page shows at the shop's locale, so
+  an item never points at a page that canonicalises elsewhere, while the card's own link
+  stays at the shop's locale for the reader. Every one of those pages is promoted,
+  because the items are exactly the listed products. It is omitted entirely when the
+  grid has nothing to list, rather than emitted empty over a page the client is still
+  filling.
 - **`llms.txt`** is one English file at the site root, generated at request time from the
   English catalog (the site description, the About prose, every FAQ question and answer
   flattened to plain text) so it cannot drift from the site, with absolute links to the
@@ -270,8 +273,6 @@ and safety-copy rules in `src/CLAUDE.md` bind them too.
   parent would repeat to their partner; section headings 3–7 words, questions allowed;
   body paragraphs 40–70 words.
 - **Calls to action are verb-first, 2–4 words, and never "Learn more".**
-- **Navigation** is named for what a parent searches: Clubs, Camps, For parents, How it
-  works, About (Finnish: Kerhot, Leirit, Opas vanhemmille, —, Meistä).
 - **The home page holds nothing that lives nowhere else.** A signed-in reader never
   reaches it, so each section is the short form of a page they can reach (About and its
   FAQ, the Team, the Library, the shop) and links to it. Before a section is added, name
@@ -385,7 +386,10 @@ Re-check before building on one.
   immersion card shows a large UK flag beside an FI badge, the badge being the lesson
   language; the filter panel has twelve groups and about 25 chips, several in internal
   vocabulary (Creator Studio, Game Studio, AI, "For parents" versus "For families"); the
-  nav says "Shop" where the agreed parent-facing word is "Clubs".
+  nav says "Shop" where the agreed parent-facing word is "Clubs". The Guidebook's target
+  naming is for what a parent searches: Clubs, Camps, For parents, How it works, About
+  (Finnish: Kerhot, Leirit, Opas vanhemmille, —, Meistä), against today's Shop,
+  Library, Team, About.
 - **Every Finnish headline checked at phone width**: long compounds run off the edge, as
   they do on the legacy site.
 - **The Team on the other pages.** Proposed: a "Meet the Game Educators" strip on the

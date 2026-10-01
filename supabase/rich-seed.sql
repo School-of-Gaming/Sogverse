@@ -2237,7 +2237,9 @@ COMMIT;
 -- =============================================================================
 
 DO $$
-DECLARE r record;
+DECLARE
+  r record;
+  live_club record;
 BEGIN
   RAISE NOTICE 'rich-seed: profiles by role';
   FOR r IN SELECT role::text AS k, count(*) AS n FROM public.profiles
@@ -2261,23 +2263,19 @@ BEGIN
     (SELECT count(*) FROM public.session_substitution_requests),
     (SELECT count(*) FROM public.session_cancellations);
 
+  SELECT to_char(DATE '2024-01-01' + s.weekday, 'FMDay') AS weekday,
+         to_char(s.start_time, 'HH24:MI') AS starts,
+         s.duration_minutes,
+         p.timezone,
+         to_char(s.start_time + make_interval(mins => s.duration_minutes + 5), 'HH24:MI') AS open_until
+    INTO live_club
+    FROM public.schedule_slots s
+    JOIN public.products p ON p.id = s.product_id
+    JOIN public.product_translations t ON t.product_id = p.id AND t.locale = 'en'
+   WHERE t.name = 'Minecraft Bedrock Club';
   RAISE NOTICE 'rich-seed: live club Minecraft Bedrock Club, % % for % minutes (%), voice room open until about % today',
-    (SELECT to_char(DATE '2024-01-01' + s.weekday, 'FMDay') FROM public.schedule_slots s
-       JOIN public.product_translations t ON t.product_id = s.product_id AND t.locale = 'en'
-      WHERE t.name = 'Minecraft Bedrock Club'),
-    (SELECT to_char(s.start_time, 'HH24:MI') FROM public.schedule_slots s
-       JOIN public.product_translations t ON t.product_id = s.product_id AND t.locale = 'en'
-      WHERE t.name = 'Minecraft Bedrock Club'),
-    (SELECT s.duration_minutes FROM public.schedule_slots s
-       JOIN public.product_translations t ON t.product_id = s.product_id AND t.locale = 'en'
-      WHERE t.name = 'Minecraft Bedrock Club'),
-    (SELECT p.timezone FROM public.products p
-       JOIN public.product_translations t ON t.product_id = p.id AND t.locale = 'en'
-      WHERE t.name = 'Minecraft Bedrock Club'),
-    (SELECT to_char(s.start_time + make_interval(mins => s.duration_minutes + 5), 'HH24:MI')
-       FROM public.schedule_slots s
-       JOIN public.product_translations t ON t.product_id = s.product_id AND t.locale = 'en'
-      WHERE t.name = 'Minecraft Bedrock Club');
+    live_club.weekday, live_club.starts, live_club.duration_minutes,
+    live_club.timezone, live_club.open_until;
 
   RAISE NOTICE 'rich-seed: library articles %, live %, drafts %, versions by language %, live versions by language %',
     (SELECT count(*) FROM public.library_articles),
