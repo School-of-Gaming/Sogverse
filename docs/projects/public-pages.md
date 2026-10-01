@@ -333,6 +333,10 @@ parent reaches them. Four workstreams, built on the project branch.
      nowhere. A slug resolves in its own locale only. Retitling changes the shared
      address and old shared links stop resolving; the id address always works. No slug
      history, no redirects.
+   - **The slug lookup stays in app code** (owner, 2026-10-01: no pre-optimising): the
+     page derives the slugs of the published titles in its locale and matches. Two
+     titles with one slug resolve to the older article; the newer stays reachable by id.
+     Revisit in the database if the Library reaches the thousands.
    - **One Publish per article** publishes all its versions; a version is live once its
      title, summary and body are written. Admins write each version in the editor.
    - **An untranslated locale** is reached by the id address, shows the English text, and
