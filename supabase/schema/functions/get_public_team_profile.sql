@@ -2,7 +2,7 @@
 -- Name: get_public_team_profile(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_public_team_profile(p_user_id uuid) RETURNS TABLE(user_id uuid, role public.user_role, first_name text, last_name text, nickname text, title text, pick smallint, spoken_languages public.spoken_language[], photo_version text, translations jsonb)
+CREATE FUNCTION public.get_public_team_profile(p_user_id uuid) RETURNS TABLE(user_id uuid, role public.user_role, first_name text, last_name text, nickname text, title text, pick smallint, spoken_languages public.spoken_language[], photo_version text, translations jsonb, created_at timestamp with time zone)
     LANGUAGE sql STABLE
     SET search_path TO ''
     AS $$

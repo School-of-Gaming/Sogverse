@@ -1,12 +1,12 @@
 import { getLocale } from "next-intl/server";
 import { JsonLd } from "@/components/seo/json-ld";
 import { resolveLocale } from "@/lib/constants/locales";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { translatedCanonicalPath } from "@/lib/metadata/translated-page";
 import { productJsonLd } from "@/lib/products/product-json-ld";
 import {
   isListedInShop,
   productPagePath,
-  productWrittenRows,
 } from "@/lib/products/product-metadata";
 import { createClient } from "@/lib/supabase/server";
 import { ProductsService } from "@/services/products/products.service";
@@ -49,7 +49,7 @@ export async function ListedProductJsonLd({ productId }: { productId: string }) 
   if (!listed || product === null) return null;
 
   const locale = resolveLocale(await getLocale());
-  const translations = productWrittenRows(product.product_translations);
+  const translations = inLocaleOrder(product.product_translations);
   const canonicalPath = translatedCanonicalPath(
     translations,
     locale,

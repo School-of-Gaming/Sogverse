@@ -22,6 +22,8 @@ export const saveTeamProfileResult = z.string().nullable();
  *   the photo; NULL only for a profile with no photo, which cannot be public.
  * - `translations` is every locale the person wrote, ordered by locale, and
  *   may name one the site no longer serves.
+ * - `created_at` is when the profile was first saved, which never moves: two
+ *   people deriving one public address settle it by age.
  */
 export const publicTeamProfileRow = z.object({
   user_id: z.string().uuid(),
@@ -41,6 +43,7 @@ export const publicTeamProfileRow = z.object({
       fun_fact: z.string().nullable(),
     }),
   ),
+  created_at: z.string(),
 });
 
 export type PublicTeamProfileRow = z.infer<typeof publicTeamProfileRow>;

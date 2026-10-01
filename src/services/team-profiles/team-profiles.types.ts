@@ -119,6 +119,13 @@ export interface GeduTeamProfile extends TeamProfileCommon {
 
 export type TeamProfile = AdminTeamProfile | GeduTeamProfile;
 
+/**
+ * A profile as the public read hands it over, with when it was first saved —
+ * which never moves, unlike the approval — so two people deriving one public
+ * address settle it by age (`src/components/team/team-address.ts`).
+ */
+export type PublicTeamProfile = TeamProfile & { createdAt: string };
+
 /** The pick a stored id names, or `null` for none or for an id no pick has. */
 export function pickFromId(id: number | null): PickId | null {
   if (id === null) return null;

@@ -22,15 +22,16 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveIdOrSlug } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
-import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
+import type { PublicTeamProfile } from "@/services/team-profiles/team-profiles.types";
 
 interface PageProps {
   params: Promise<{ idOrSlug: string }>;
 }
 
 /**
- * The whole public team, in the read's own order — what a slug is matched
- * against and what decides who owns a slug two people derive. `cache()`
+ * The whole public team — what a slug is matched against, and, by when each
+ * profile was first saved, what decides who owns a slug two people derive.
+ * `cache()`
  * dedupes it across `generateMetadata` and the render within one request.
  */
 const loadTeam = cache(async () =>
@@ -45,7 +46,7 @@ const loadTeam = cache(async () =>
  * page answers it with a 404.
  */
 const loadPerson = cache(async (segment: string) =>
-  resolveIdOrSlug<TeamProfile>(segment, {
+  resolveIdOrSlug<PublicTeamProfile>(segment, {
     byId: async (id) =>
       (await loadTeam()).find((person) => person.id === id) ?? null,
     bySlug: async (slug) => findTeamMemberBySlug(await loadTeam(), slug),
@@ -81,7 +82,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * **One person's public profile** — an admin or a Gedu, at either of their
  * two addresses, neither redirecting: `/team/<id>` and `/team/<slug>`. Both
  * name the slug address as canonical (or the id, for someone whose slug is
- * taken by a person listed before them).
+ * taken by an older profile).
  *
  * The body is the profile body the editor previews, so what the person saw
  * while writing is what the public reads; around it, the way back to the

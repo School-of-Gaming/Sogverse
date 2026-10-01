@@ -1,5 +1,5 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { findBySlug, slugAddressOf, slugify } from "@/lib/slug";
+import { findBySlug, oldestFirst, slugAddressOf, slugify } from "@/lib/slug";
 
 /*
  * Where an article lives. Two addresses, neither redirecting
@@ -31,22 +31,15 @@ export function articleSlug(
   return version === undefined ? null : slugify(version.title);
 }
 
-/**
- * The articles with a version in `locale`, oldest first — the order a slug's
- * owner is settled in. The id breaks a tie, so the answer is stable however
- * the list was handed over.
- */
+/** The articles with a version in `locale`, oldest first (`oldestFirst`). */
 function writtenIn<T extends AddressableArticle>(
   articles: readonly T[],
   locale: SupportedLocale,
 ): T[] {
-  return articles
-    .filter((article) => articleSlug(article, locale) !== null)
-    .sort(
-      (a, b) =>
-        Date.parse(a.firstPublishedAt) - Date.parse(b.firstPublishedAt) ||
-        a.id.localeCompare(b.id),
-    );
+  return oldestFirst(
+    articles.filter((article) => articleSlug(article, locale) !== null),
+    (article) => article.firstPublishedAt,
+  );
 }
 
 /** The published article a slug addresses in `locale`: the oldest whose title there derives it. */

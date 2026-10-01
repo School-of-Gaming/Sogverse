@@ -1,6 +1,6 @@
 import { StorageApiError, type QueryData } from "@supabase/supabase-js";
 import { z } from "zod";
-import { SUPPORTED_LOCALES, isSupportedLocale } from "@/lib/constants/locales";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import type { AppSupabaseClient } from "@/types";
 import {
@@ -14,7 +14,7 @@ import {
   TEAM_PHOTO_WIDTH,
   pickFromId,
   publicTeamPhotoUrl,
-  type TeamProfile,
+  type PublicTeamProfile,
   type TeamProfilePhoto,
   type TeamProfileRecord,
   TeamPhotoUploadError,
@@ -138,24 +138,16 @@ function siteTranslations(
     fun_fact: string | null;
   }[],
 ): TeamProfileTranslation[] {
-  const translations: TeamProfileTranslation[] = [];
-  for (const t of rows) {
-    if (!isSupportedLocale(t.locale)) continue;
-    translations.push({
-      locale: t.locale,
-      shortDescription: t.short_description,
-      longDescription: t.long_description,
-      funFact: t.fun_fact,
-    });
-  }
-  return translations.sort(
-    (a, b) =>
-      SUPPORTED_LOCALES.indexOf(a.locale) - SUPPORTED_LOCALES.indexOf(b.locale),
-  );
+  return inLocaleOrder(rows).map((t) => ({
+    locale: t.locale,
+    shortDescription: t.short_description,
+    longDescription: t.long_description,
+    funFact: t.fun_fact,
+  }));
 }
 
 /** A row of the public read as the profile the page renders. */
-function toPublicProfile(row: PublicTeamProfileRow): TeamProfile {
+function toPublicProfile(row: PublicTeamProfileRow): PublicTeamProfile {
   const common = {
     id: row.user_id,
     firstName: row.first_name,
@@ -167,6 +159,7 @@ function toPublicProfile(row: PublicTeamProfileRow): TeamProfile {
         : photoOf(publicTeamPhotoUrl(row.user_id, row.photo_version)),
     translations: siteTranslations(row.translations),
     spokenLanguages: row.spoken_languages,
+    createdAt: row.created_at,
   };
   return row.role === "admin"
     ? {
@@ -209,7 +202,7 @@ export class TeamProfilesService {
    * function's own order ends in the person's id, so it is total, and a page
    * of it is read off the function's result in that order.
    */
-  async listPublicTeamProfiles(): Promise<TeamProfile[]> {
+  async listPublicTeamProfiles(): Promise<PublicTeamProfile[]> {
     const rows = await walkPages("list_public_team_profiles", (from, to) =>
       this.supabase
         .rpc("list_public_team_profiles", undefined, { count: "exact" })
@@ -224,7 +217,7 @@ export class TeamProfilesService {
    * not an id included, so a page can answer every one of those with a 404.
    * Works signed out.
    */
-  async getPublicTeamProfile(userId: string): Promise<TeamProfile | null> {
+  async getPublicTeamProfile(userId: string): Promise<PublicTeamProfile | null> {
     if (!z.string().uuid().safeParse(userId).success) return null;
     const { data, error } = await this.supabase.rpc("get_public_team_profile", {
       p_user_id: userId,

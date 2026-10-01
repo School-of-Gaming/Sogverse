@@ -14,11 +14,13 @@ import { z } from "zod";
  * address always works. One dynamic segment takes either, told apart by
  * whether it parses as a UUID.
  *
- * **Two things deriving one slug: the first in the list's own order wins** —
- * the caller passes the list in the order it wants ties settled — and the
- * other stays reachable by its id alone. That is why "where does this thing
- * live" is answered against the list (`slugAddressOf`), never by deriving its
- * slug in isolation.
+ * **Two things deriving one slug: the older owns it**, and the newer stays
+ * reachable by its id alone — so a newcomer never takes over an address
+ * already shared. The lookups settle a tie by the order of the list they are
+ * handed, and a caller hands them the list `oldestFirst`, by a time that never
+ * moves (an article's first going live, a team profile's first save). That is
+ * why "where does this thing live" is answered against the list
+ * (`slugAddressOf`), never by deriving its slug in isolation.
  */
 
 /**
@@ -78,6 +80,21 @@ export type IdOrSlug = { id: string } | { slug: string };
  */
 export function parseIdOrSlug(segment: string): IdOrSlug {
   return uuid.safeParse(segment).success ? { id: segment } : { slug: segment };
+}
+
+/**
+ * `items` oldest first, by `since` — an ISO timestamp that never moves for the
+ * thing — the order a shared slug's owner is settled in. The id breaks a tie,
+ * so the answer is stable however the list was handed over.
+ */
+export function oldestFirst<T extends { id: string }>(
+  items: readonly T[],
+  since: (item: T) => string,
+): T[] {
+  return [...items].sort(
+    (a, b) =>
+      Date.parse(since(a)) - Date.parse(since(b)) || a.id.localeCompare(b.id),
+  );
 }
 
 /**

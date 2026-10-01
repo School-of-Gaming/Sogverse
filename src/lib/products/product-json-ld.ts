@@ -5,6 +5,7 @@ import {
 } from "@/components/public/products/format-product-price";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { formatProductLocation } from "@/lib/products/format-product-location";
@@ -230,7 +231,10 @@ export function productJsonLd({
   locale,
 }: ProductJsonLdInput) {
   const url = `${siteUrl}${canonicalPath}`;
-  const shown = resolveTranslation(product.product_translations, locale);
+  const shown = resolveTranslation(
+    inLocaleOrder(product.product_translations),
+    locale,
+  );
   const description = shown?.short_description ?? "";
   const image = catalogueImageSrc("product", product.image_path);
   const offer = offerOf(product, url);

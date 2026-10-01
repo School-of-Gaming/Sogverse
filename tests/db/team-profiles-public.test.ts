@@ -39,6 +39,7 @@ const PASSWORD = "testpassword123";
 
 /** The columns a public profile carries, and not one more. */
 const PUBLIC_COLUMNS = [
+  "created_at",
   "first_name",
   "last_name",
   "nickname",
@@ -305,6 +306,26 @@ describe("public team profiles", () => {
         expect(Object.keys(row).sort()).toEqual(PUBLIC_COLUMNS);
       }
       expect(() => publicTeamProfileRows.parse(data)).not.toThrow();
+    });
+
+    it("carries when the profile was first saved, unmoved by a hide and a re-approval", async () => {
+      const stored = await admin
+        .from("team_profiles")
+        .select("created_at")
+        .eq("user_id", zed.id)
+        .single();
+      expect(stored.error).toBeNull();
+      const firstSaved = Date.parse(stored.data?.created_at ?? "");
+
+      for (const approved of [false, true]) {
+        await admin
+          .from("team_profiles")
+          .update({ approved, approval_decided_at: new Date().toISOString() })
+          .eq("user_id", zed.id);
+      }
+
+      const row = (await listAs(anon)).find((r) => r.user_id === zed.id);
+      expect(Date.parse(row?.created_at ?? "")).toBe(firstSaved);
     });
 
     it("gives an admin's full name and title, and a Gedu's first name and nickname alone", async () => {

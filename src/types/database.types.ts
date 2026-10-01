@@ -3739,6 +3739,7 @@ export type Database = {
       get_public_team_profile: {
         Args: { p_user_id: string }
         Returns: {
+          created_at: string
           first_name: string
           last_name: string
           nickname: string
@@ -3849,6 +3850,7 @@ export type Database = {
       list_public_team_profiles: {
         Args: never
         Returns: {
+          created_at: string
           first_name: string
           last_name: string
           nickname: string

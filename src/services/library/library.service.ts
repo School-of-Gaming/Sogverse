@@ -1,8 +1,8 @@
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import type { AppSupabaseClient } from "@/types";
 import {
   hasUnpublishedChanges,
-  inLocaleOrder,
   libraryArticleInput,
   type AdminLibraryArticle,
   type AdminLibraryArticleListItem,

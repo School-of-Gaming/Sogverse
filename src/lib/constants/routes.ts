@@ -474,7 +474,7 @@ export const ROUTES = {
    * One person's public profile, at either of their two addresses: their id,
    * or the slug of their first name and nickname, which is the one to share
    * and the canonical. Build the segment with `teamMemberAddress`, which knows
-   * when a person's slug is taken by someone listed before them.
+   * when a person's slug is taken by an older profile.
    */
   teamMember: (idOrSlug: string) =>
     ({ pathname: "/team/[idOrSlug]", params: { idOrSlug } }) as const,

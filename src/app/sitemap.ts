@@ -9,12 +9,10 @@ import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { StaticAppHref } from "@/lib/constants/routes";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
 import { translatedPageLocales } from "@/lib/metadata/translated-page";
-import {
-  productPagePath,
-  productWrittenRows,
-} from "@/lib/products/product-metadata";
+import { productPagePath } from "@/lib/products/product-metadata";
 import { LibraryService } from "@/services/library/library.service";
 import { ProductsService } from "@/services/products/products.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
@@ -199,7 +197,7 @@ async function productEntries(): Promise<MetadataRoute.Sitemap> {
   if (listed === null) return [];
   return listed.flatMap((product) =>
     localizedEntries(
-      translatedPageLocales(productWrittenRows(product.product_translations)),
+      translatedPageLocales(inLocaleOrder(product.product_translations)),
       (locale) => `${baseUrl}${productPagePath(product.id)(locale)}`,
       { changeFrequency: "weekly", priority: 0.6 },
     ),

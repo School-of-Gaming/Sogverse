@@ -6,8 +6,8 @@ import {
 } from "@/lib/api/json-response";
 import { ApiError } from "@/lib/api/api-error";
 import { DEFAULT_LOCALE } from "@/lib/constants/locales";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { inLocaleOrder } from "@/services/library/library.contracts";
 import type {
   AppSupabaseClient,
   CatalogueImage,

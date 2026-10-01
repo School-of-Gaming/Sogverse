@@ -32,7 +32,12 @@ vi.mock("@/services/team-profiles/team-profiles.service", () => ({
 mockListPublicTeamProfiles.mockResolvedValue([
   publicAdminProfile({ locales: ["fr", "tlh"] }),
   publicGeduProfile({ locales: ["en", "fi"] }),
-  publicGeduProfile({ id: SECOND_EETU_ID, locales: ["en"] }),
+  // Saved after the first Eetu, so the slug is the first's.
+  publicGeduProfile({
+    id: SECOND_EETU_ID,
+    locales: ["en"],
+    createdAt: "2026-09-30T00:00:00+00:00",
+  }),
 ]);
 
 // The live Library the sitemap reads: one article in English and Finnish, one
@@ -294,7 +299,7 @@ describe("sitemap", () => {
     ]);
   });
 
-  it("lists the second person deriving a slug at their id, not at the slug", () => {
+  it("lists the newer of two people deriving a slug at their id, not at the slug", () => {
     const urls = entries.map((entry) => entry.url);
 
     expect(urls).toContain(`${BASE}/en/team/${SECOND_EETU_ID}`);

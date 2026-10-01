@@ -24,11 +24,8 @@ import {
   isAttachableGamerPhotoConsent,
 } from "@/lib/constants/gamer-photo-consents";
 import { isSupportedCountry } from "@/lib/constants/location-hierarchies";
-import {
-  isSupportedLocale,
-  SUPPORTED_LOCALES,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
+import { SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/constants/locales";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { openingLocaleTab } from "@/lib/i18n/locale-tabs";
 import { resolveWebUrl } from "@/lib/navigation/web-url";
 import { decimalToCents } from "@/lib/utils";
@@ -729,19 +726,16 @@ export function existingFormState(
   uiLocale: SupportedLocale,
 ): FormState {
   const translations: Partial<Record<SupportedLocale, TranslationDraft>> = {};
-  // Row order, mirroring the Object.keys insertion order this replaced —
-  // `translationLocales[0]` is the first *fetched* translation, not the
-  // first locale in SUPPORTED_LOCALES order.
+  // In the one fixed language order, so the tab an admin opens on is the
+  // version a reader of their UI locale is shown on the public page.
   const translationLocales: SupportedLocale[] = [];
-  for (const t of product.product_translations) {
-    if (isSupportedLocale(t.locale)) {
-      translations[t.locale] = {
-        name: t.name,
-        shortDescription: t.short_description,
-        longDescription: t.long_description ?? "",
-      };
-      translationLocales.push(t.locale);
-    }
+  for (const t of inLocaleOrder(product.product_translations)) {
+    translations[t.locale] = {
+      name: t.name,
+      shortDescription: t.short_description,
+      longDescription: t.long_description ?? "",
+    };
+    translationLocales.push(t.locale);
   }
   const activeLocale = openingLocaleTab(translationLocales, uiLocale);
 

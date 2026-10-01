@@ -61,7 +61,8 @@ key off.
    (owner, 2026-10-01): its language versions are the locales it was written in, the
    canonical is the slug address of the version the page shows (derived from that
    version's title), an untranslated locale is reached by the id and canonicalises to the
-   English slug address, and its link card is its cover. Links to an article or a profile
+   slug address of the version it shows (the reader's, else English, else the first
+   written), and its link card is its cover. Links to an article or a profile
    stay in the page's locale, as a shop card's do: the URL's locale is the site's, and a
    page showing fallback text is still a page in that locale, canonical to the version it
    shows (owner, 2026-10-01). The rules are in
@@ -392,6 +393,10 @@ Re-check before building on one.
   Library, Team, About.
 - **Every Finnish headline checked at phone width**: long compounds run off the edge, as
   they do on the legacy site.
+- **The app's vocabulary for the weekly meeting.** The app's dashboards say "session"
+  where SOG-UI's guidebook vocabulary says "lesson": the club is the group, the lesson is
+  the weekly meeting, and there is no third word. The public pages were aligned on
+  2026-10-01; the app was not.
 - **The Team on the other pages.** Proposed: a "Meet the Game Educators" strip on the
   home page; later, "Meet your Gedu" on a club page, read from the Gedus assigned to its
   group.

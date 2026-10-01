@@ -1,8 +1,9 @@
 import { JsonLd } from "@/components/seo/json-ld";
 import { resolveLocale } from "@/lib/constants/locales";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { translatedCanonicalPath } from "@/lib/metadata/translated-page";
-import { productPagePath, productWrittenRows } from "@/lib/products/product-metadata";
+import { productPagePath } from "@/lib/products/product-metadata";
 import type { ProductBrowseRow } from "@/types";
 
 interface ShopItemListJsonLdProps {
@@ -61,14 +62,17 @@ export function ShopItemListJsonLd({ products, locale: requestLocale }: ShopItem
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const items = products
-    .map((product) => ({
-      name: resolveTranslation(product.product_translations, locale)?.name ?? "",
-      url: `${siteUrl}${translatedCanonicalPath(
-        productWrittenRows(product.product_translations),
-        locale,
-        productPagePath(product.id),
-      )}`,
-    }))
+    .map((product) => {
+      const written = inLocaleOrder(product.product_translations);
+      return {
+        name: resolveTranslation(written, locale)?.name ?? "",
+        url: `${siteUrl}${translatedCanonicalPath(
+          written,
+          locale,
+          productPagePath(product.id),
+        )}`,
+      };
+    })
     .filter(({ name }) => name.length > 0);
 
   // Nothing at all rather than an empty `ItemList`. The shop page's prefetch

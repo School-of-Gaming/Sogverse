@@ -2,7 +2,6 @@ import { z } from "zod";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   SUPPORTED_LOCALES,
-  isSupportedLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { Constants, type LibraryCategory } from "@/types";
@@ -197,24 +196,6 @@ export interface AdminLibraryArticle {
 // ---------------------------------------------------------------------------
 // Reading in a language
 // ---------------------------------------------------------------------------
-
-/**
- * The versions a row carries that the app can show, in `SUPPORTED_LOCALES`
- * order. The database accepts any locale-shaped code, so one the app no longer
- * ships is dropped here rather than typed as one it does. Embedded rows arrive
- * unordered; the order is what makes "the first written" stable.
- */
-export function inLocaleOrder<T extends { locale: string }>(
-  rows: readonly T[],
-): (T & { locale: SupportedLocale })[] {
-  const supported = rows.filter(
-    (row): row is T & { locale: SupportedLocale } => isSupportedLocale(row.locale),
-  );
-  return supported.sort(
-    (a, b) =>
-      SUPPORTED_LOCALES.indexOf(a.locale) - SUPPORTED_LOCALES.indexOf(b.locale),
-  );
-}
 
 /**
  * The version a reader of `locale` is shown: theirs, else English, else the

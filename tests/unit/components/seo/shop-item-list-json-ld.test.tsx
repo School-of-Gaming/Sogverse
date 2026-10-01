@@ -110,6 +110,27 @@ describe("ShopItemListJsonLd", () => {
     });
   });
 
+  it("names an untranslated product by its first version in the one fixed language order", () => {
+    // Written in French and Swedish, the rows arriving French first: a
+    // Finnish reader is shown Swedish, which comes before French in
+    // `SUPPORTED_LOCALES`, and the name and the URL agree on it.
+    const list = emitted(
+      [
+        row("c", [
+          { locale: "fr", name: "Club de construction" },
+          { locale: "sv", name: "Byggklubb" },
+        ]),
+      ],
+      "fi",
+    );
+
+    expect(list).toMatchObject({
+      itemListElement: [
+        { position: 1, name: "Byggklubb", url: `${SITE}/sv/butik/c` },
+      ],
+    });
+  });
+
   it("skips a row whose name resolves to nothing", () => {
     // A `ListItem` with an empty `name` is an invalid one — better absent than
     // present and nameless.

@@ -4,11 +4,8 @@ import { getLocale } from "next-intl/server";
 import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import {
-  isSupportedLocale,
-  resolveLocale,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
+import { resolveLocale } from "@/lib/constants/locales";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import {
@@ -78,24 +75,6 @@ export const isListedInShop = cache(async (id: string): Promise<boolean> => {
 /** A product's shop address at a locale — `/fi/kauppa/<id>`. */
 export function productPagePath(id: string): TranslatedPagePath {
   return (locale) => getPathname({ href: ROUTES.shopProduct(id), locale });
-}
-
-/**
- * The product's written languages, narrowed to the site's locales and in
- * locale order. The column is plain text, so a row in a locale the site does
- * not have is dropped here rather than named as a language version; and
- * embedded rows arrive unordered, so the order is fixed here, which keeps the
- * translation resolver's "first row" step — and so the canonical — the same
- * for every read of the product.
- */
-export function productWrittenRows<Row extends { locale: string }>(
-  rows: readonly Row[],
-): (Row & { locale: SupportedLocale })[] {
-  return rows
-    .filter((row): row is Row & { locale: SupportedLocale } =>
-      isSupportedLocale(row.locale),
-    )
-    .sort((a, b) => (a.locale < b.locale ? -1 : a.locale > b.locale ? 1 : 0));
 }
 
 /**
@@ -169,7 +148,8 @@ export async function buildProductMetadata(
   }
 
   const locale = resolveLocale(await getLocale());
-  const translation = resolveTranslation(product?.product_translations, locale);
+  const translation =
+    product && resolveTranslation(inLocaleOrder(product.product_translations), locale);
   if (!product || !translation) return PRODUCT_ROBOTS_ONLY;
 
   // The product's name and nothing else. It used to be an absolute
@@ -210,7 +190,7 @@ export async function buildProductMetadata(
 
   const alternates = (await promoted)
     ? translatedPageMetadataAlternates(
-        productWrittenRows(product.product_translations),
+        inLocaleOrder(product.product_translations),
         locale,
         productPagePath(id),
       )

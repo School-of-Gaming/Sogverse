@@ -1,4 +1,5 @@
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
+import { organizationId } from "@/lib/seo/organization";
 import type { LocalizedLibraryArticle } from "@/services/library";
 
 export interface LibraryArticleJsonLdInput {
@@ -49,7 +50,7 @@ export function libraryArticleJsonLd({
     mainEntityOfPage: url,
     publisher: {
       "@type": "Organization",
-      "@id": `${siteUrl}/#organization`,
+      "@id": organizationId(siteUrl),
       name: "School of Gaming",
     },
   };

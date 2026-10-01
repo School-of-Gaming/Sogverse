@@ -2,7 +2,7 @@
 -- Name: list_public_team_profiles(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.list_public_team_profiles() RETURNS TABLE(user_id uuid, role public.user_role, first_name text, last_name text, nickname text, title text, pick smallint, spoken_languages public.spoken_language[], photo_version text, translations jsonb)
+CREATE FUNCTION public.list_public_team_profiles() RETURNS TABLE(user_id uuid, role public.user_role, first_name text, last_name text, nickname text, title text, pick smallint, spoken_languages public.spoken_language[], photo_version text, translations jsonb, created_at timestamp with time zone)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -26,7 +26,11 @@ CREATE FUNCTION public.list_public_team_profiles() RETURNS TABLE(user_id uuid, r
                    ORDER BY t.locale)
               FROM public.team_profile_translations t
              WHERE t.user_id = tp.user_id),
-           '[]'::jsonb)
+           '[]'::jsonb),
+         -- When the profile was first saved, which never moves: two people
+         -- deriving one public address settle it by this, the older keeping
+         -- it. Not the approval stamp, which a re-approval moves.
+         tp.created_at
     FROM public.team_profiles tp
     JOIN public.profiles p ON p.id = tp.user_id
    -- A profile row left behind by someone whose role has since changed is not
@@ -44,7 +48,7 @@ $$;
 -- Name: FUNCTION list_public_team_profiles(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.list_public_team_profiles() IS 'The public team page: every team profile an admin has made public (approved), of a person who is still an admin or a Gedu, trainee Gedus included. Crosses the boundary that anon holds no grant on the team tables and authenticated reads only its own row or, as an admin, everyone''s, and hands back the public slice alone: id, role, first name, the last name and title for an admin only (NULL for a Gedu, who is public by first name and nickname), nickname, pick, spoken languages, a photo version token (md5 of the photo''s object path, so a new photo is a new address; the path itself is not returned) and the translations as a JSON array of {locale, short_description, long_description, fun_fact} ordered by locale. Nothing else from profiles. Admins first, then Gedus; within each by first name, then nickname, then id. Answers every caller identically.';
+COMMENT ON FUNCTION public.list_public_team_profiles() IS 'The public team page: every team profile an admin has made public (approved), of a person who is still an admin or a Gedu, trainee Gedus included. Crosses the boundary that anon holds no grant on the team tables and authenticated reads only its own row or, as an admin, everyone''s, and hands back the public slice alone: id, role, first name, the last name and title for an admin only (NULL for a Gedu, who is public by first name and nickname), nickname, pick, spoken languages, a photo version token (md5 of the photo''s object path, so a new photo is a new address; the path itself is not returned) and the translations as a JSON array of {locale, short_description, long_description, fun_fact} ordered by locale, and when the profile was first saved (created_at, which never moves, so two people deriving one public address settle it by age, the older keeping it). Nothing else from profiles. Admins first, then Gedus; within each by first name, then nickname, then id. Answers every caller identically.';
 
 
 --

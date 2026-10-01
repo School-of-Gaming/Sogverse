@@ -15,6 +15,9 @@ export function teamTranslation(locale: SupportedLocale): TeamProfileTranslation
   };
 }
 
+/** When a mock profile was first saved, unless `createdAt` says otherwise. */
+const FIRST_SAVED = "2026-01-01T00:00:00+00:00";
+
 /**
  * A public Gedu profile as the public read returns it: photo served by the
  * app's photo route, written in English unless `locales` says otherwise.
@@ -22,8 +25,9 @@ export function teamTranslation(locale: SupportedLocale): TeamProfileTranslation
 export function publicGeduProfile(
   overrides: Partial<Omit<GeduTeamProfile, "kind" | "translations">> & {
     locales?: SupportedLocale[];
+    createdAt?: string;
   } = {},
-): GeduTeamProfile {
+): GeduTeamProfile & { createdAt: string } {
   const { locales = ["en"], ...rest } = overrides;
   const id = rest.id ?? "eadea095-24f1-40cd-bc31-e898edc9ab3a";
   return {
@@ -34,6 +38,7 @@ export function publicGeduProfile(
     pick: null,
     photo: { src: `/api/team/photos/${id}?v=abc`, width: 800, height: 1000 },
     spokenLanguages: ["fi", "en"],
+    createdAt: FIRST_SAVED,
     ...rest,
     translations: locales.map(teamTranslation),
   };
@@ -43,8 +48,9 @@ export function publicGeduProfile(
 export function publicAdminProfile(
   overrides: Partial<Omit<AdminTeamProfile, "kind" | "translations">> & {
     locales?: SupportedLocale[];
+    createdAt?: string;
   } = {},
-): AdminTeamProfile {
+): AdminTeamProfile & { createdAt: string } {
   const { locales = ["en"], ...rest } = overrides;
   const id = rest.id ?? "65fd2cbb-acda-45fd-9dad-b973f75b2579";
   return {
@@ -57,6 +63,7 @@ export function publicAdminProfile(
     pick: null,
     photo: { src: `/api/team/photos/${id}?v=def`, width: 800, height: 1000 },
     spokenLanguages: ["fi", "en"],
+    createdAt: FIRST_SAVED,
     ...rest,
     translations: locales.map(teamTranslation),
   };
