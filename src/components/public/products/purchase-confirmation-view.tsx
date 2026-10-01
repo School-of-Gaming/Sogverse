@@ -16,6 +16,7 @@ import { formatCurrencyFromCents } from "@/lib/utils";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { useTimezone } from "@/providers";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import type { ProductBrowseRow } from "@/types";
 import { buildPricingOption, type PricingOption } from "./pricing-options";
 import { ProductOverviewCard } from "./product-overview-card";
@@ -82,7 +83,7 @@ export function PurchaseConfirmationView({
   const viewerTimezone = useTimezone();
 
   const isWaitlist = outcome === "waitlisted";
-  const tr = resolveTranslation(product.product_translations, locale);
+  const tr = resolveTranslation(inLocaleOrder(product.product_translations), locale);
   const productName = tr?.name ?? "";
   // The summary row keeps naming the person even on a self seat — the reader's
   // own first name is what they recognise beside "Enrolled", and it is the one

@@ -220,7 +220,7 @@
       },
       "keepChildrenSafe": {
         "title": "Protéger les enfants en ligne",
-        "description": "Dans Sogverse, les échanges se font dans des espaces de groupe partagés : le chat d’une séance s’adresse à toute la salle, où le Gedu le voit. Chaque compte joueur est créé par un parent et rattaché à son compte, et c’est le parent qui choisit comment l’enfant se connecte — uniquement par le compte parent, ou avec un identifiant ou une adresse e-mail vérifiée et un mot de passe à lui. Tolérance zéro pour le harcèlement."
+        "description": "Dans Sogverse, les échanges se font dans des espaces de groupe partagés : le chat d’une séance s’adresse à toute la salle, où l’animateur ou l’animatrice le voit. Chaque compte joueur est créé par un parent et rattaché à son compte, et c’est le parent qui choisit comment l’enfant se connecte — uniquement par le compte parent, ou avec un identifiant ou une adresse e-mail vérifiée et un mot de passe à lui. Tolérance zéro pour le harcèlement."
       },
       "familyInTheLoop": {
         "title": "La famille reste dans la boucle",
