@@ -25,8 +25,10 @@ key off.
    person wrote** (owner, 2026-10-01): its `hreflang` names only those, a locale they did
    not write shows the fallback text and canonicalises to the address of the locale it
    shows, the canonical is the slug address (`src/lib/slug.ts`), and the sitemap lists each
-   profile once per indexed locale written. Its link card is the site-wide card for now: a
-   4:5 portrait crops badly to a preview's wide frame.
+   profile once per indexed locale written. Text in a locale that is not indexed — Klingon,
+   the easter-egg locale — makes the page its own canonical with no language alternates.
+   Each profile has its own generated link card, its portrait beside the name; its address
+   and caching are in `src/lib/og/`.
 2. **Reachable, not promoted.** Public because a family holding a link must get in, but
    `noindex, nofollow`, out of the sitemap, no `hreflang`, never listed in `llms.txt`, and
    never the subject or the URL of any structured-data node — the shop's `ItemList` names
@@ -254,7 +256,8 @@ lands is deleted here and its mechanism is described above.
 - **Off-site signals**: Search Console and Bing Webmaster verification, a Google Business
   Profile check, and fixing or replacing the legacy site's link to the dead Oulu Facebook
   page so the profiles it names agree with the `sameAs` here.
-- **Per-route Open Graph images** (deliberately left out of the locale-routing scope).
+- **Per-route Open Graph images** for the promoted pages that still share the site card
+  (the team profiles have their own).
 
 A per-locale `llms.txt` was considered and declined (2026-09-10): discovery in another
 language runs through that language's pages and the index they rank in, both of which

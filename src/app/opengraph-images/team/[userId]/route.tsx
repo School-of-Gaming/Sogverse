@@ -8,6 +8,7 @@ import { SogWordmark } from "@/components/brand/sog-wordmark";
 import { teamMemberPlainName } from "@/components/team/team-name";
 import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { MAX_INPUT_PIXELS } from "@/lib/images/reencode-jpeg.server";
 import { cardLocaleOf, OG_CARD_SIZE } from "@/lib/og/cards";
 import {
   TEAM_CARD_CACHE_CONTROL,
@@ -56,13 +57,24 @@ import {
  * art) is cropped rather than squashed — the renderer cannot crop a background
  * itself. And one JPEG in, whatever was stored: the bucket admits WebP, which
  * the card's rasteriser cannot decode.
+ *
+ * The decode is bounded as the upload routes bound theirs (`MAX_INPUT_PIXELS`):
+ * the stored bytes are capped, their decoded size is not, and a Gedu writes
+ * their own photo folder. A photo that will not decode inside the bound, or at
+ * all, is `null` — the card draws the frame empty, as it does for no photo.
  */
-async function portraitJpeg(stored: Blob): Promise<Buffer> {
-  return sharp(Buffer.from(await stored.arrayBuffer()))
-    .rotate()
-    .resize(TEAM_PHOTO_WIDTH, TEAM_PHOTO_HEIGHT, { fit: "cover" })
-    .jpeg({ quality: 85 })
-    .toBuffer();
+async function portraitJpeg(stored: Blob): Promise<Buffer | null> {
+  try {
+    return await sharp(Buffer.from(await stored.arrayBuffer()), {
+      limitInputPixels: MAX_INPUT_PIXELS,
+    })
+      .rotate()
+      .resize(TEAM_PHOTO_WIDTH, TEAM_PHOTO_HEIGHT, { fit: "cover" })
+      .jpeg({ quality: 85 })
+      .toBuffer();
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(
@@ -82,10 +94,11 @@ export async function GET(
     readPublicTeamPhoto(anon, person.id),
   ]);
   // A public profile always has a photo; one hidden or replaced between the
-  // two reads draws the frame empty rather than failing the card.
-  const photoSrc = photo.ok
-    ? `data:image/jpeg;base64,${(await portraitJpeg(photo.data)).toString("base64")}`
-    : null;
+  // two reads, or one that will not decode, draws the frame empty rather than
+  // failing the card.
+  const portrait = photo.ok ? await portraitJpeg(photo.data) : null;
+  const photoSrc =
+    portrait === null ? null : `data:image/jpeg;base64,${portrait.toString("base64")}`;
 
   const written = resolveTranslation(person.translations, locale);
 

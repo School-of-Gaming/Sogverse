@@ -197,4 +197,44 @@ describe("GET /opengraph-images/team/[userId]", () => {
     expect(response.status).toBe(200);
     expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(0);
   });
+
+  /** The card as drawn with no photo at all: the empty frame. */
+  async function emptyFrameCard(): Promise<Buffer> {
+    mockList.mockResolvedValueOnce({ data: [], error: null });
+    return Buffer.from(await (await card(USER_ID)).arrayBuffer());
+  }
+
+  it("draws the empty frame for a photo too large to decode", async () => {
+    const expected = await emptyFrameCard();
+    // Past the decode bound, though a flat picture is a small file.
+    const bytes = await sharp({
+      create: { width: 4100, height: 4100, channels: 3, background: "#336699" },
+    })
+      .jpeg()
+      .toBuffer();
+    mockDownload.mockResolvedValue({
+      data: new Blob([new Uint8Array(bytes)], { type: "image/jpeg" }),
+      error: null,
+    });
+
+    const response = await card(USER_ID);
+
+    expect(response.status).toBe(200);
+    expect(Buffer.from(await response.arrayBuffer()).equals(expected)).toBe(true);
+  });
+
+  it("draws the empty frame for a photo that will not decode", async () => {
+    const expected = await emptyFrameCard();
+    mockDownload.mockResolvedValue({
+      data: new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0x00, 0x01, 0x02])], {
+        type: "image/jpeg",
+      }),
+      error: null,
+    });
+
+    const response = await card(USER_ID);
+
+    expect(response.status).toBe(200);
+    expect(Buffer.from(await response.arrayBuffer()).equals(expected)).toBe(true);
+  });
 });
