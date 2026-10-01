@@ -69,6 +69,15 @@
 -- veera.laaksonen@, tuomas.rautio@, priya.nair@, niklas.holmberg@,
 -- lotta.saarinen@, ben.carter@ and ronja.kallio@example.com.
 --
+-- ONE CLUB IS LIVE WHEN THE STACK IS BUILT. The Minecraft Bedrock Club's one
+-- weekly slot is placed on the build's own weekday, starting ten minutes before
+-- the build and lasting three hours (Helsinki time), so its voice room is open
+-- on a fresh stack: gedu@example.com teaches it, parent@example.com's Milo sits
+-- in it with Elias, Eino and Leevi, and admin@example.com joins any room. It is
+-- live only on the day of the build, for about three hours after it; after
+-- that it is an ordinary weekly club, and `npm run db -- reset` makes it live
+-- again.
+--
 -- IDS ARE GENERATED, NEVER WRITTEN OUT. Every account gets `gen_random_uuid()`,
 -- because the avatar identicon derives its pattern from the id's hex bytes and
 -- a hand-written id — all ones, all twos — draws a degenerate face that is not
@@ -561,9 +570,10 @@ COMMIT;
 -- =============================================================================
 -- 6. The catalogue
 -- =============================================================================
--- Twelve products: every product type, every billing mode, and every lifecycle
+-- Thirteen products: every product type, every billing mode, and every lifecycle
 -- state the derivation can produce — pending, running and completed, a hidden
--- draft, and one whose registration window has not opened. Dates are
+-- draft, and one whose registration window has not opened — plus the live club,
+-- whose one weekly session is in progress when the stack is built. Dates are
 -- now()-relative so the catalogue never goes stale. Prices are plain EUR cents
 -- and exist to render; no Stripe object stands behind any of them.
 --
@@ -595,6 +605,9 @@ DECLARE
   v_daily    jsonb := (SELECT jsonb_agg(jsonb_build_object(
                          'weekday', d, 'start_time', '10:00', 'duration_minutes', 300))
                        FROM generate_series(0, 6) d);
+  -- The live club's session: it started ten minutes before this ran, on the
+  -- product's own clock, so its weekday and start time are read in that zone.
+  v_live     timestamp := date_trunc('minute', (now() AT TIME ZONE v_tz) - interval '10 minutes');
 BEGIN
 
   -- 1. Running, listed, paid consumer club. The busiest thing in the catalogue.
@@ -877,6 +890,35 @@ BEGIN
     p_primary_gedu_fee_cents => 15000
   );
 
+  -- 13. The live club: running, online and free, with its one weekly slot
+  --     placed on the build's own weekday, starting ten minutes before the
+  --     build and lasting three hours, so a voice room is open on a fresh
+  --     stack. It starts on the day of that session, which keeps section 9
+  --     from writing up any history for it. On any other day it is an ordinary
+  --     weekly club whose next session is days away.
+  PERFORM public.create_product(
+    'consumer_club', 'free',
+    jsonb_build_array(
+      jsonb_build_object('locale','en','name','Minecraft Bedrock Club',
+        'short_description','A free online club for building together on Bedrock.',
+        'long_description','A small online group on Bedrock, playing on tablets, phones and consoles alike, with the educator on voice chat throughout.'),
+      jsonb_build_object('locale','fi','name','Minecraft Bedrock -kerho',
+        'short_description','Maksuton verkkokerho yhdessä rakentamiseen Bedrockilla.',
+        'long_description','Pieni verkkoryhmä Bedrockilla tableteilla, puhelimilla ja konsoleilla, ohjaaja mukana puhekanavalla koko ajan.')
+    ),
+    'minecraft_bedrock', 'fi', true, v_tz,
+    now() - interval '14 days', true, false,
+    p_min_age => 8, p_max_age => 12, p_is_visible => true,
+    p_start_date => v_live::date,
+    p_seat_count => 10,
+    p_schedule_slots => jsonb_build_array(
+      jsonb_build_object('weekday', EXTRACT(ISODOW FROM v_live)::integer - 1,
+                         'start_time', to_char(v_live, 'HH24:MI'),
+                         'duration_minutes', 180)),
+    p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
+    p_primary_gedu_fee_cents => 6000
+  );
+
 END;
 $$;
 
@@ -914,6 +956,7 @@ BEGIN
     ('Roblox Studio Club',                       'Ryhmä A',      v_sofia, 'primary', NULL,           NULL),
     ('Fortnite Creative Club',                   'Crew A',       v_lucas, 'primary', NULL,           NULL),
     ('Creator Studio Club',                      'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
+    ('Minecraft Bedrock Club',                   'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
     ('Schools Game Club',                        'Ryhmä 1',      v_gedu,  'primary', NULL,           NULL),
     ('Autumn Term Game Club',                    'Ryhmä 1',      v_sofia, 'primary', NULL,           NULL),
     ('Minecraft Summer Camp',                    'Camp Group A', v_lucas, 'primary', 'Camp Group B', v_emma),
@@ -1028,6 +1071,10 @@ BEGIN
     ('Creator Studio Club', 'oskari@gamer.example.com', 'free'),
     ('Creator Studio Club', 'hugo@gamer.example.com',   'free'),
     ('Creator Studio Club', 'aada@gamer.example.com',   'free'),
+    ('Minecraft Bedrock Club', 'milo@gamer.example.com',  'free'),
+    ('Minecraft Bedrock Club', 'elias@gamer.example.com', 'free'),
+    ('Minecraft Bedrock Club', 'eino@gamer.example.com',  'free'),
+    ('Minecraft Bedrock Club', 'leevi@gamer.example.com', 'free'),
     ('Schools Game Club', 'milo@gamer.example.com',   'external'),
     ('Schools Game Club', 'elias@gamer.example.com',  'external'),
     ('Schools Game Club', 'venla@gamer.example.com',  'external'),
@@ -2214,6 +2261,24 @@ BEGIN
     (SELECT count(*) FROM public.participations WHERE status = 'waitlisted'),
     (SELECT count(*) FROM public.session_substitution_requests),
     (SELECT count(*) FROM public.session_cancellations);
+
+  RAISE NOTICE 'rich-seed: live club Minecraft Bedrock Club, % % for % minutes (%), voice room open until about % today',
+    (SELECT to_char(DATE '2024-01-01' + s.weekday, 'FMDay') FROM public.schedule_slots s
+       JOIN public.product_translations t ON t.product_id = s.product_id AND t.locale = 'en'
+      WHERE t.name = 'Minecraft Bedrock Club'),
+    (SELECT to_char(s.start_time, 'HH24:MI') FROM public.schedule_slots s
+       JOIN public.product_translations t ON t.product_id = s.product_id AND t.locale = 'en'
+      WHERE t.name = 'Minecraft Bedrock Club'),
+    (SELECT s.duration_minutes FROM public.schedule_slots s
+       JOIN public.product_translations t ON t.product_id = s.product_id AND t.locale = 'en'
+      WHERE t.name = 'Minecraft Bedrock Club'),
+    (SELECT p.timezone FROM public.products p
+       JOIN public.product_translations t ON t.product_id = p.id AND t.locale = 'en'
+      WHERE t.name = 'Minecraft Bedrock Club'),
+    (SELECT to_char(s.start_time + make_interval(mins => s.duration_minutes + 5), 'HH24:MI')
+       FROM public.schedule_slots s
+       JOIN public.product_translations t ON t.product_id = s.product_id AND t.locale = 'en'
+      WHERE t.name = 'Minecraft Bedrock Club');
 
   RAISE NOTICE 'rich-seed: library articles %, live %, drafts %, versions by language %, live versions by language %',
     (SELECT count(*) FROM public.library_articles),

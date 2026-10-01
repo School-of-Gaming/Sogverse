@@ -322,7 +322,9 @@ every command does — the things its usage text does not say:
   out, because the avatar identicon derives its pattern from the id's bytes and a
   hand-written one draws a face nobody will ever see in production. The trimmed service
   set has no mail catcher, so nothing emailed can be read on a stack; the seeded accounts
-  are the way in.
+  are the way in. One club, the Minecraft Bedrock Club, has its session in progress for
+  about three hours after the stack is built, so a real voice room can be opened locally
+  by all three; later than that, `reset` makes it live again.
 - **The rich seed's products carry pictures, and they are not in the SQL.** A
   `catalogue_images` row names a storage object by the sha256 of its bytes, so the bytes
   have to be uploaded first: `scripts/local-db/rich-images.sh` uploads
