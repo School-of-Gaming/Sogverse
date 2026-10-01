@@ -74,6 +74,32 @@ mockListPublishedArticles.mockResolvedValue([
   ]),
 ]);
 
+// The shop's listing the sitemap reads — the grid's own query, so it holds
+// only listed, unended shop products: one written in English and Finnish, one
+// in Swedish and Klingon. An unlisted, ended or municipality product is never
+// on it, which is the whole of how those stay out.
+const LISTED_ID = "3f8a2c1e-6b4d-4e9a-8c7f-2d1e0b9a8c76";
+const SWEDISH_ID = "7d6c5b4a-3e2f-4a1b-9c8d-7e6f5a4b3c2d";
+const mockListVisibleListingByTypes = vi.fn();
+vi.mock("@/services/products/products.service", () => ({
+  ProductsService: class {
+    listVisibleListingByTypes = mockListVisibleListingByTypes;
+  },
+}));
+function listedProduct(id: string, locales: string[]) {
+  return {
+    id,
+    start_date: "2026-09-01",
+    end_date: null,
+    timezone: "Europe/Helsinki",
+    product_translations: locales.map((locale) => ({ locale })),
+  };
+}
+mockListVisibleListingByTypes.mockResolvedValue([
+  listedProduct(LISTED_ID, ["fi", "en"]),
+  listedProduct(SWEDISH_ID, ["sv", "tlh"]),
+]);
+
 const { default: sitemap } = await import("@/app/sitemap");
 const { default: robots } = await import("@/app/robots");
 
@@ -196,6 +222,45 @@ describe("sitemap", () => {
 
     expect(urls).toContain(`${BASE}/en/library`);
     expect(urls.some((url) => url.includes("kerhossa"))).toBe(false);
+  });
+
+  it("reads the shop's own listing", () => {
+    expect(mockListVisibleListingByTypes).toHaveBeenCalledWith([
+      "consumer_club",
+      "camp",
+      "event",
+    ]);
+  });
+
+  it("lists each listed product at its shop address, in the indexed locales it was written in", () => {
+    const product = entries.filter((entry) => entry.url.endsWith(`/${LISTED_ID}`));
+    expect(product.map((entry) => entry.url)).toEqual([
+      `${BASE}/en/shop/${LISTED_ID}`,
+      `${BASE}/fi/kauppa/${LISTED_ID}`,
+    ]);
+    expect(product[0].alternates?.languages).toEqual({
+      en: `${BASE}/en/shop/${LISTED_ID}`,
+      fi: `${BASE}/fi/kauppa/${LISTED_ID}`,
+    });
+    expect(product[0].lastModified).toBeUndefined();
+
+    // Written in Swedish and Klingon: Swedish only.
+    expect(
+      entries
+        .filter((entry) => entry.url.endsWith(`/${SWEDISH_ID}`))
+        .map((entry) => entry.url),
+    ).toEqual([`${BASE}/sv/butik/${SWEDISH_ID}`]);
+  });
+
+  it("still lists the static routes when the shop's listing cannot be read", async () => {
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockListVisibleListingByTypes.mockRejectedValueOnce(new Error("down"));
+
+    const urls = (await sitemap()).map((entry) => entry.url);
+    quiet.mockRestore();
+
+    expect(urls).toContain(`${BASE}/en/shop`);
+    expect(urls.some((url) => url.includes(LISTED_ID))).toBe(false);
   });
 
   it("lists the Team index in every indexed locale", () => {

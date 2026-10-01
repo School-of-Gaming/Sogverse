@@ -69,8 +69,9 @@ import { LibraryService } from "@/services/library/library.service";
  * `getPathname`, never joined from a slug: the pathnames map is the only thing
  * that knows `/shop` is `/fr/boutique`, and a hand-written path here would be
  * a 404 handed to a crawler. `/roblox` and the programme pages are absent
- * along with `/schools` and every product page — they are `noindex` for their
- * own reasons — and so is anything behind a login.
+ * along with `/schools` — they are `noindex` for their own reasons — and so is
+ * anything behind a login. A listed product's page is promoted but not linked
+ * here: the shop is, and the file stays short.
  */
 const LINKED_PAGES: { href: StaticAppHref; label: string; note: string }[] = [
   { href: "/", label: "Home", note: "What we do, and what is running now." },

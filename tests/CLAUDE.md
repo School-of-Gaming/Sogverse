@@ -255,9 +255,10 @@ emits **no locale prefix**: a test asserting on a route is asserting about the r
 about which language the reader is in. `useParams` is exported for the same reason the
 picker reads it — a locale switch on a dynamic route needs the concrete values.
 
-**Two files deliberately unmock both navigation modules** — the page-metadata helper's
-and the sitemap/robots tests. What they are *about* is the locale-prefixed, translated
-URLs the real path builder produces, which the stub flattens; and `next/navigation` has
+**Some files deliberately unmock both navigation modules** — the tests of what a page
+tells crawlers (its metadata, its structured data, the sitemap, `llms.txt`). What they
+are *about* is the locale-prefixed, translated URLs the real path builder produces, which
+the stub flattens; and `next/navigation` has
 to come with it, because next-intl reads a redirect helper off it while constructing the
 wrapped APIs and the setup's partial mock does not carry one. Unmocking is the right move
 only for a test whose subject is the URL building itself.

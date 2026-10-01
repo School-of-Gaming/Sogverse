@@ -95,8 +95,22 @@ const BROWSE_SELECT =
 const LOCATION_ONLY_SELECT =
   "start_date, end_date, timezone, locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
 
+/**
+ * The same listing read by a caller that wants only *which* products are on it
+ * and the languages each is written in: the sitemap, which lists a listed
+ * product's page once per language written, and the product page, which asks
+ * whether its own product is on the listing. The three lifecycle columns are
+ * what `effectiveStatus()` needs to finish the visibility filter in JS.
+ */
+const LISTING_SELECT =
+  "id, start_date, end_date, timezone, product_translations(locale)";
+
 function buildBrowseQuery(supabase: AppSupabaseClient, types: ProductType[]) {
   return buildVisibleProductsQuery(supabase, types, BROWSE_SELECT);
+}
+
+function buildListingQuery(supabase: AppSupabaseClient, types: ProductType[]) {
+  return buildVisibleProductsQuery(supabase, types, LISTING_SELECT);
 }
 
 function buildVisibleLocationsQuery(
@@ -144,6 +158,14 @@ export type ProductBrowseRow = QueryData<
  */
 export type ProductLocationRow = QueryData<
   ReturnType<typeof buildVisibleLocationsQuery>
+>[number];
+
+/**
+ * A listed product's id and the languages it is written in — nothing a card
+ * would render. Consumed by the sitemap.
+ */
+export type ProductListingRow = QueryData<
+  ReturnType<typeof buildListingQuery>
 >[number];
 
 function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
@@ -536,6 +558,23 @@ export class ProductsService {
       this.supabase,
       types,
     );
+
+    if (error) throw error;
+    return dropEndedProducts(data);
+  }
+
+  // The same listing again, narrowed to ids and written languages — and, with
+  // `id`, to one product, which answers "is this product on the listing?" by
+  // asking the listing itself rather than restating its rule. The rule is the
+  // query's filters plus the ended pass, so a second copy of it written as a
+  // predicate over a fetched row would be one that could disagree with the
+  // grid.
+  async listVisibleListingByTypes(
+    types: ProductType[],
+    id?: string,
+  ): Promise<ProductListingRow[]> {
+    const query = buildListingQuery(this.supabase, types);
+    const { data, error } = await (id === undefined ? query : query.eq("id", id));
 
     if (error) throw error;
     return dropEndedProducts(data);

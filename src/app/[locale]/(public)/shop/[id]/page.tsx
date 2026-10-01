@@ -1,5 +1,9 @@
 import type { Metadata, ResolvingMetadata } from "next";
-import { buildProductMetadata } from "@/lib/products/product-metadata";
+import {
+  buildProductMetadata,
+  isListedInShop,
+} from "@/lib/products/product-metadata";
+import { ListedProductJsonLd } from "@/components/public/products/listed-product-json-ld";
 import { ProductDetailPage } from "@/components/public/products/product-detail-page";
 
 // Unified product detail / signup page for the shop. One route for every
@@ -12,17 +16,19 @@ import { ProductDetailPage } from "@/components/public/products/product-detail-p
 // The route shell is a server component purely so it can answer the crawler;
 // everything visible is still rendered client-side by ProductDetailPage.
 
-// The robots policy and the product's Open Graph card are both built by
-// `buildProductMetadata`, shared with the municipality route
-// (/schools/[municipalityName]/[id]) that renders this same page for the same
-// product row. See its doc comment for why each part of the card is shaped the
-// way it is.
+// The product's Open Graph card is built by `buildProductMetadata`, shared with
+// the municipality route (/schools/[municipalityName]/[id]) that renders this
+// same page for the same product row. This route is the one where a product
+// page can be promoted: it is indexable, with its language versions and its
+// structured data, exactly while the product is on the shop's listing, and
+// `noindex` otherwise — decided on every request, so unlisting takes effect at
+// the next crawl. See the robots policy in `product-metadata.ts`.
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> },
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
   const { id } = await params;
-  return buildProductMetadata(id, parent);
+  return buildProductMetadata(id, parent, await isListedInShop(id));
 }
 
 export default async function ShopProductDetailPage({
@@ -31,5 +37,10 @@ export default async function ShopProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <ProductDetailPage productId={id} />;
+  return (
+    <>
+      <ListedProductJsonLd productId={id} />
+      <ProductDetailPage productId={id} />
+    </>
+  );
 }

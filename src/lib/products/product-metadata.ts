@@ -1,53 +1,125 @@
+import { cache } from "react";
 import type { Metadata, ResolvingMetadata } from "next";
-import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "next-intl/server";
-import { resolveLocale } from "@/lib/constants/locales";
+import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
+import { getPathname } from "@/i18n/navigation";
+import { ROUTES } from "@/lib/constants";
+import {
+  isSupportedLocale,
+  resolveLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
+import {
+  translatedPageMetadataAlternates,
+  type TranslatedPagePath,
+} from "@/lib/metadata/translated-page";
+import { createClient } from "@/lib/supabase/server";
+import { ProductsService } from "@/services/products/products.service";
 
 /**
- * Robots policy for product pages: **noindex, unconditionally.** Owner
- * decision (Aug 2026): search engines and AI crawlers may discover only the
- * `/shop` browse surface — never an individual product page, listed or not.
- * Listings change with terms and seasons; the browse page is the stable thing
- * worth a search result, and an unlisted product's direct link (a campaign, an
- * unannounced cohort) must never turn up in search and become listed after
- * all. One static rule covers every case, so it is set before anything about
- * the product is known. That is what `unlisted` means: hidden from the shop,
- * never promoted, never findable — and a parent who was sent the link still
- * gets in. The whole posture, tier by tier, is
- * `docs/architecture/discoverability.md`.
+ * Robots policy for product pages: **decided per request, from the product's
+ * own row** (owner, 2026-10-01). A product page is indexable exactly when its
+ * product is on the shop's listing — listed, a shop type, and not ended, by
+ * the very query the shop grid reads — and only at its shop address. Every
+ * other product page is `noindex, nofollow`: an unlisted product, one that has
+ * ended, a municipality club, and any product read through the `/schools`
+ * tree. That is what `unlisted` means: hidden from the shop and never
+ * promoted — not by the grid, not by a search engine, not by an AI assistant —
+ * while a parent who was sent the link still gets in, because nothing here
+ * gates the page itself.
+ *
+ * The owner's trade, stated with it: being found beats the occasional false
+ * positive, so a product a search engine indexed while it was listed stays in
+ * the index until its next crawl reads the tag that unlisting put there.
+ * Search Console's removal tool is the fast path when that wait matters. The
+ * whole posture, tier by tier, is `docs/architecture/discoverability.md`.
  *
  * This is a tag, not a robots.txt entry, and that is the point — a disallowed
  * URL is never fetched, so the crawler would never read the tag, and the URL
  * could still be indexed bare off an external link. Allowing the crawl and
  * serving noindex is what actually deindexes.
  *
- * **Noindex does not make the Open Graph card pointless — it is the reason the
- * card matters.** A product page is reached by a link someone was *sent*: a
- * campaign, a parents' WhatsApp group, a Slack channel. The scrapers behind
- * those unfurls read the OG tags and ignore the robots directive, so the card
- * is the only thing standing between a shared club link and a generic
- * site-wide preview. Search stays shut; sharing gets the product.
+ * **The Open Graph card is the product's own either way.** A product page is
+ * often reached by a link someone was *sent*: a campaign, a parents' WhatsApp
+ * group, a Slack channel. The scrapers behind those unfurls read the OG tags
+ * and ignore the robots directive, so the card is what a shared link shows
+ * whether or not search may index the page.
  */
 export const PRODUCT_ROBOTS_ONLY: Metadata = {
   robots: { index: false, follow: false },
 };
 
 /**
+ * Whether the product is on the shop's listing — the question that makes its
+ * page indexable. Answered by the listing query itself, narrowed to this id,
+ * rather than by a predicate restated over the product row: the grid and the
+ * crawler must never disagree about what is listed. Deduped across
+ * `generateMetadata` and the render within one request.
+ *
+ * **A failed read answers no.** The page then serves `noindex` for that one
+ * response, which the next crawl corrects; answering yes on a failure would
+ * promote a product nobody checked.
+ */
+export const isListedInShop = cache(async (id: string): Promise<boolean> => {
+  try {
+    const listed = await new ProductsService(
+      await createClient(),
+    ).listVisibleListingByTypes(SHOP_PRODUCT_TYPES, id);
+    return listed.length > 0;
+  } catch (error) {
+    console.error("[product-metadata] the shop listing read failed", error);
+    return false;
+  }
+});
+
+/** A product's shop address at a locale — `/fi/kauppa/<id>`. */
+export function productPagePath(id: string): TranslatedPagePath {
+  return (locale) => getPathname({ href: ROUTES.shopProduct(id), locale });
+}
+
+/**
+ * The product's written languages, narrowed to the site's locales and in
+ * locale order. The column is plain text, so a row in a locale the site does
+ * not have is dropped here rather than named as a language version; and
+ * embedded rows arrive unordered, so the order is fixed here, which keeps the
+ * translation resolver's "first row" step — and so the canonical — the same
+ * for every read of the product.
+ */
+export function productWrittenRows<Row extends { locale: string }>(
+  rows: readonly Row[],
+): (Row & { locale: SupportedLocale })[] {
+  return rows
+    .filter((row): row is Row & { locale: SupportedLocale } =>
+      isSupportedLocale(row.locale),
+    )
+    .sort((a, b) => (a.locale < b.locale ? -1 : a.locale > b.locale ? 1 : 0));
+}
+
+/**
  * The product's own Open Graph card, shared by **every URL that renders a
  * product detail page** — `/shop/[id]` and the municipality route
  * `/schools/[municipalityName]/[id]`, which is a second URL for the same
- * product row. The robots rule above is applied at both for the same reason
- * this builder is: a policy that only one of two URLs honours is a policy that
- * can be side-stepped by sharing the other one.
+ * product row. A shared link unfurls as the product at either one.
  *
- * **This is the only server-side read on those routes** — everything visible is
- * still fetched and rendered client-side by `ProductDetailPage` — so it is kept
- * as narrow as the card is: the image path, plus the three translation columns
- * the title and description come out of. The joined shapes the products service
- * selects (prices, slots, locations) exist for the page body and would be a
- * large second fetch for two strings.
+ * **`promoted` is the robots decision, and the caller makes it**: the shop
+ * route passes whether the product is on the shop's listing
+ * (`isListedInShop`), and the schools route passes `false` — the whole tree is
+ * reachable, never promoted. A promoted page serves no robots tag, so it is
+ * indexable, and names its canonical and language versions by the rule every
+ * page written per locale follows (`src/lib/metadata/translated-page.ts`): the
+ * locales the product's text was written in are its language versions, and a
+ * locale it was not written in canonicalises to the one whose text it shows.
+ * Klingon keeps the locale layout's `noindex`, which a page with no robots tag
+ * of its own inherits. Anything not promoted is `noindex` with no alternates,
+ * as every noindex page is.
+ *
+ * The card's read is kept as narrow as the card is: the image path, plus the
+ * three translation columns the title and description come out of. Everything
+ * visible is still fetched and rendered client-side by `ProductDetailPage`, and
+ * the joined shapes the products service selects (prices, slots, locations)
+ * exist for the page body and would be a large second fetch for two strings.
  *
  * **The translation is resolved at the request locale — the URL's.** It used to
  * resolve at the default locale, and the reason was sound while it held: a link
@@ -68,6 +140,7 @@ export const PRODUCT_ROBOTS_ONLY: Metadata = {
 export async function buildProductMetadata(
   id: string,
   parent: ResolvingMetadata,
+  promoted: boolean,
 ): Promise<Metadata> {
   const supabase = await createClient();
 
@@ -92,10 +165,8 @@ export async function buildProductMetadata(
     console.error("[product-metadata] product read failed", error);
   }
 
-  const translation = resolveTranslation(
-    product?.product_translations,
-    resolveLocale(await getLocale()),
-  );
+  const locale = resolveLocale(await getLocale());
+  const translation = resolveTranslation(product?.product_translations, locale);
   if (!product || !translation) return PRODUCT_ROBOTS_ONLY;
 
   // The product's name and nothing else. It used to be an absolute
@@ -134,8 +205,16 @@ export async function buildProductMetadata(
     ? [{ url: image, alt: translation.name }]
     : (await parent).openGraph?.images;
 
+  const alternates = promoted
+    ? translatedPageMetadataAlternates(
+        productWrittenRows(product.product_translations),
+        locale,
+        productPagePath(id),
+      )
+    : undefined;
+
   return {
-    ...PRODUCT_ROBOTS_ONLY,
+    ...(alternates === undefined ? PRODUCT_ROBOTS_ONLY : { alternates }),
     title,
     description,
     // `siteName` is restated, not inherited: a child `openGraph` replaces the
@@ -146,6 +225,8 @@ export async function buildProductMetadata(
     openGraph: {
       type: "website",
       siteName: "School of Gaming",
+      locale,
+      ...(alternates !== undefined && { url: alternates.canonical }),
       title,
       description,
       images,

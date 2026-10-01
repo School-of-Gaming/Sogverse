@@ -1,5 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+
+// The real wrapped navigation: an item's URL is the locale-prefixed,
+// translated address the path builder produces, which the setup's stub
+// flattens.
+vi.unmock("@/i18n/navigation");
+vi.unmock("next/navigation");
+
+const SITE = "https://test.sogverse.local";
+vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE);
+afterAll(() => vi.unstubAllEnvs());
 import { ShopItemListJsonLd } from "@/components/public/products/shop-item-list-json-ld";
 import type { ProductBrowseRow } from "@/types";
 
@@ -75,18 +85,19 @@ describe("ShopItemListJsonLd", () => {
     });
   });
 
-  it("emits no url anywhere", () => {
-    // Every product detail page is `noindex, nofollow` by posture, so a URL
-    // here would advertise pages a crawler is told it may not use
-    // (`docs/architecture/discoverability.md`, tier 2).
-    const html = renderToStaticMarkup(
-      ShopItemListJsonLd({
-        products: [row("a", [{ locale: "en", name: "Minecraft club" }])],
-        locale: "en",
-      }) ?? <></>,
+  it("gives each item its page's URL, in the shop's locale", () => {
+    // The rows are exactly the shop's listing, and a listed product's page is
+    // promoted (`docs/architecture/discoverability.md`, tier 1).
+    const list = emitted(
+      [row("a", [{ locale: "en", name: "Minecraft club" }])],
+      "fi",
     );
 
-    expect(html).not.toContain("url");
+    expect(list).toMatchObject({
+      itemListElement: [
+        { position: 1, name: "Minecraft club", url: `${SITE}/fi/kauppa/a` },
+      ],
+    });
   });
 
   it("skips a row whose name resolves to nothing", () => {

@@ -32,17 +32,14 @@ interface PageProps {
 //     listing was linked from (`helsingfors` stays `helsingfors`).
 
 /**
- * Robots policy: **noindex, unconditionally** — the same owner decision as
- * `/shop/[id]`, and the Open Graph card that route builds — both from the one
- * shared builder.
- *
- * The reason is the same for both halves, and is why they are shared rather
- * than restated: this is a **second URL for the same product row**. A robots
- * rule only one of the two URLs carried could be side-stepped by sharing the
- * other; a card only one of them built would leave a municipality club — the
- * shape most likely to be pasted into a school's parent group — unfurling as
- * the generic site-wide preview. Whatever one URL says about a product, both
- * say.
+ * Robots policy: **noindex, unconditionally**, whatever the product — the
+ * whole `/schools` tree is reachable, never promoted
+ * (`docs/architecture/discoverability.md`). Its products are only for families
+ * living in the named municipalities, and a consumer product opened here is a
+ * second URL for a row whose promoted page, if it has one, is its shop
+ * address. The Open Graph card is the product's own, from the builder the shop
+ * route shares, so a club pasted into a school's parent group unfurls as the
+ * club rather than as the generic site-wide preview.
  *
  * The municipality slug deliberately plays no part in it. It decides where the
  * back link returns to, not which product this is, and two URLs onto one row
@@ -55,7 +52,7 @@ export async function generateMetadata(
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
   const { id } = await params;
-  return buildProductMetadata(id, parent);
+  return buildProductMetadata(id, parent, false);
 }
 
 export default async function MunicipalityClubDetailPage({ params }: PageProps) {

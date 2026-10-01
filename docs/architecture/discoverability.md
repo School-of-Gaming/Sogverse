@@ -36,27 +36,34 @@ key off.
    stay in the page's locale, as a shop card's do: the URL's locale is the site's, and a
    page showing fallback text is still a page in that locale, canonical to the version it
    shows (owner, 2026-10-01). The rules are in
-   `src/services/library/CLAUDE.md`.
+   `src/services/library/CLAUDE.md`. **A product's page is promoted while the product is
+   on the shop's listing** (owner, 2026-10-01) — listed, a shop type, not ended: exactly
+   what the shop grid shows — and only at its shop address. Its language versions follow
+   the same rule as an article's, the locales its text was written in, and its structured
+   data is a `Course` for a club or an `Event` for a camp or an event. The moment the
+   product leaves the listing, its page drops to tier 2 (below).
 2. **Reachable, not promoted.** Public because a family holding a link must get in, but
    `noindex, nofollow`, out of the sitemap, no `hreflang`, never listed in `llms.txt`, and
-   never the subject or the URL of any structured-data node — the shop's `ItemList` names
-   the shop-visible products and carries no URLs at all. Two surfaces, for two reasons
-   that come up often enough to state plainly:
+   never the subject or the URL of any structured-data node. Two surfaces, for two
+   reasons that come up often enough to state plainly:
    - **The entire `/schools` tree.** Those products are **only for families living in the
      named Finnish municipalities**. The pages are public for convenience — a family
      forwards the link, a school newsletter carries it — not because the offer is open.
      Strangers on the internet discovering a municipality's clubs is the failure the tier
      prevents.
-   - **Every product detail page**, at every URL that renders one, listed or not. A product
-     has an `unlisted` property that hides it from the shop while a direct link still
-     opens it, and the meaning is exactly that: **not promoted, not findable, but a parent
-     who was sent the link gets in.** The crawler rule is static across listed and
-     unlisted — one tag, set before anything about the product is read — because a
-     per-product rule could be side-stepped by sharing the product's other URL, and
-     because a listing changes with terms and seasons while the browse page is the stable
-     thing worth a search result. The Open Graph card is still the product's own: the
-     scrapers behind a WhatsApp or Slack unfurl ignore robots directives, and the card is
-     what a shared link shows.
+   - **Every product page whose product is not on the shop's listing** — unlisted, ended,
+     or a municipality club — and every product page reached through `/schools`, whatever
+     the product. A product has an `unlisted` property that hides it from the shop while a
+     direct link still opens it, and the meaning is exactly that: **not promoted by the
+     grid, a search engine or an AI assistant, but a parent who was sent the link gets
+     in.** The decision is made per request from the product's own row, by asking the
+     shop grid's own query whether it holds the product, so the grid and the crawler
+     cannot disagree. The owner's trade (2026-10-01): being found beats the occasional
+     false positive, so a page indexed while its product was listed stays in the index
+     until the next crawl reads the `noindex` that unlisting put there; Search Console's
+     removal tool is the fast path when that wait matters. The Open Graph card is the
+     product's own in either tier: the scrapers behind a WhatsApp or Slack unfurl ignore
+     robots directives, and the card is what a shared link shows.
    - Also here: the unpublished Roblox programme pages (the flip to published is
      nav, sitemap and noindex together — see the note on the route in
      `src/lib/constants/routes.ts`), the Minecraft API docs, the preview scenes, the
@@ -85,17 +92,20 @@ Each one exists to make the posture above hold by construction rather than by me
   external link. Allowing the crawl and serving the tag is what deindexes.
 - **The sitemap** lists the promoted routes, one URL per indexed locale, every entry
   carrying the whole language set as alternates, plus each public team profile in the
-  locales its person wrote and each live Library article in the locales it was written
-  in, at its slug address there. **It reads the database, and is rendered per request**:
-  the public team and the live articles are read anonymously with no cookies, so a
-  profile made public or hidden, or an article published or unpublished, is in or out of
-  the next fetch, and no build has to reach a database (a revalidating sitemap would be
+  locales its person wrote, each live Library article in the locales it was written
+  in, at its slug address there, and each product on the shop's listing in the locales
+  its text was written in, at its shop address. **It reads the database, and is rendered
+  per request**: the public team, the live articles and the shop's listing are read
+  anonymously with no cookies, so a profile made public or hidden, an article published
+  or unpublished, or a product listed, unlisted or ended, is in or out of the next fetch, and no build has to reach a database (a revalidating sitemap would be
   prerendered at build, in CI's smoke build and in a preview built before its migration
   ran). A failed read leaves those entries out rather than failing the file. **Only an
   article carries a `lastmod`**, the time its live versions were published: for every
   other URL the only value available is the fetch time — one date on every URL whether
   or not that page changed — and search engines discard a modification date they cannot
-  trust.
+  trust. A product row's update time is not a real one either: the page shows seats left
+  and whether registration is open, which change with every signup and with the clock,
+  and its prices and schedule live in other tables.
 - **`robots.txt`** derives the gated-prefix disallow list from the locale list (so a new
   locale cannot leave `/xx/admin` crawlable), and applies one identical rule set to `*`
   and to every named AI agent. Adding an agent is one line in one constant.
@@ -106,17 +116,21 @@ Each one exists to make the posture above hold by construction rather than by me
 - **Structured data** is JSON-LD, emitted through one server component that escapes the
   serialized JSON so an admin-authored product name containing `</script>` cannot break
   out of the data block. A data block is never executed, so the CSP's script nonce does
-  not apply to it. Five blocks exist: `Organization` + `WebSite` on every page from the
+  not apply to it. Six blocks exist: `Organization` + `WebSite` on every page from the
   locale layout, `FAQPage` on About, an `ItemList` on the shop, a `ProfilePage` about
   a `Person` on each team profile, whose `worksFor` names the layout's `Organization` by
-  `@id`, and an `Article` on each Library article, whose `publisher` names it the same
-  way. **Rule: a structured
+  `@id`, an `Article` on each Library article, whose `publisher` names it the same
+  way, and on each promoted product page a `Course` for a club — one `CourseInstance`
+  whose weekly `courseSchedule` is the club's slots in its own timezone — or an `Event`
+  for a camp or an event, naming the `Organization` as provider or organizer. A product
+  block states the price but never seats or availability: those are live, and a stale
+  "available" in a search result is worse than none. **Rule: a structured
   data block reads the same source as the visible page** — the same message keys, the
   same prefetched rows — so it can never assert something the page does not show, and
-  only shop-visible products can reach the `ItemList` because only those are ever
-  prefetched for the grid. The `ItemList`'s items carry a position and a name and **no
-  URL**: a product detail page is tier 2, so a URL there would point a crawler at pages
-  the tag on them forbids. It is omitted entirely when the grid has nothing to list,
+  only the shop's listing can reach the `ItemList` because only that is ever prefetched
+  for the grid. Each item carries its position, its name and its page's URL in the
+  shop's own locale — every one of those pages is promoted, because the items are
+  exactly the listed products. It is omitted entirely when the grid has nothing to list,
   rather than emitted empty over a page the client is still filling.
 - **`llms.txt`** is one English file at the site root, generated at request time from the
   English catalog (the site description, the About prose, every FAQ question and answer
@@ -245,25 +259,17 @@ lands is deleted here and its mechanism is described above.
   goes the same way: the bare apex redirects to one host, the dead `sogverse-fi.sog.gg`
   sign-in page is removed from the index, and the `en.` / `lat.` / `start.` sites either
   redirect here or are current.
-- **Index listed, shop-visible product pages.** The single largest lever: the queries a
-  parent actually types ("Minecraft club for kids Espoo", "Roblox summer camp") want a
-  page about *that product* with dates, price, age range and location, which the browse
-  grid cannot rank for and an AI assistant cannot cite. The tier-2 reasoning above keeps
-  unlisted products and the whole `/schools` tree exactly where they are; the question is
-  only whether a *listed* shop product's detail page moves to tier 1, with `Event` /
-  `Course` structured data and a sitemap entry, and back to `noindex` the moment it is
-  unlisted or ends. The "one static rule, no per-product read" argument no longer holds
-  on its own — the card builder already reads the product row — so this is a product
-  decision, not a cost one. Owner's call.
 - **Topic landing pages** (`/minecraft`, `/roblox`, `/fortnite`, …) generated from the
   topics module: the existing "About {topic}" prose plus that topic's listed products.
   These are the pages both search and AI assistants cite for "who runs Minecraft clubs
   in Finland".
-- **A factual paragraph on the home page** — what we are, where, for whom, in which
-  languages. The hero plus four feature cards is thin for entity recognition.
 - **Off-site signals**: Search Console and Bing Webmaster verification, a Google Business
   Profile check, and fixing or replacing the legacy site's link to the dead Oulu Facebook
   page so the profiles it names agree with the `sameAs` here.
+- **After the merge, check what only the live site can show.** Google's Rich Results
+  Test on a team profile, a Library article and a product page; the Facebook and LinkedIn
+  share debuggers, and a real WhatsApp and Slack paste, on a profile and an article; then
+  submit the sitemap in Search Console and watch the pages index.
 - **Per-route Open Graph images** for the promoted pages that still share the site card
   (the team profiles have their own).
 
