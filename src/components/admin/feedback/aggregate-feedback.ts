@@ -34,9 +34,6 @@ import { FEEDBACK_CATALOGUES } from "./feedback-sources";
 
 export {
   bucketUnitFor,
-  POSITIVE_FROM,
-  LOW_UP_TO,
-  TOO_FEW,
   type FeedbackBucketUnit,
   type FeedbackPeriod,
   type FeedbackPeriods,
@@ -52,7 +49,8 @@ export { wilsonInterval, type ShareInterval } from "./wilson";
  * Every builder takes the dataset, the source being read and both periods; the
  * dataset spans both, and each builder splits it by session day itself. Every
  * figure is per source, compared against the previous period, and — below the
- * overview — against the platform for the same period. Nothing here knows
+ * overview — against the platform for the same period, except a gamer's,
+ * which carries no platform figure at all. Nothing here knows
  * about React, the URL or the locale: ids and message-key-shaped values out,
  * labels are the UI's.
  */
@@ -198,8 +196,12 @@ export interface PlatformComparison {
   confidentlyBelow: boolean;
 }
 
-export type FeedbackDetailHeadline = FeedbackHeadline & PlatformComparison;
-export type FeedbackDetailStatement = FeedbackStatementLine & PlatformComparison;
+/**
+ * A gamer is a child, read only against themselves over time, so a gamer's
+ * detail has `againstPlatform: null` everywhere: the comparison is never built.
+ */
+export type FeedbackDetailHeadline = FeedbackHeadline & { againstPlatform: PlatformComparison | null };
+export type FeedbackDetailStatement = FeedbackStatementLine & { againstPlatform: PlatformComparison | null };
 
 /** A gamer under a group: who, and how often they answered. Never a score. */
 export interface FeedbackGamerEntry {
@@ -331,12 +333,14 @@ export function buildFeedbackDetail(
   const scoped = comparedTallies(slice.current, slice.previous, source);
 
   const headline = headlineOf(scoped, slice.current, periods.current, bucketUnit);
-  const platformOverall = shareFigure(platformTallies.overall);
+  const comparable = scope.kind !== "gamer";
 
   const statements = statementLinesOf(scoped, slice.current, source, periods.current, bucketUnit).map(
     (line) => ({
       ...line,
-      ...againstPlatform(line.current, statementFigure(platformTallies, line.key)),
+      againstPlatform: comparable
+        ? compareWithPlatform(line.current, statementFigure(platformTallies, line.key))
+        : null,
     }),
   );
 
@@ -350,7 +354,12 @@ export function buildFeedbackDetail(
     name: nameOf(dataset, scope),
     product: productOf(dataset, scope),
     bucketUnit,
-    headline: { ...headline, ...againstPlatform(headline.current, platformOverall) },
+    headline: {
+      ...headline,
+      againstPlatform: comparable
+        ? compareWithPlatform(headline.current, shareFigure(platformTallies.overall))
+        : null,
+    },
     participation:
       scope.kind === "gamer"
         ? { ...participationOf(slice.current, []), eligible: null, responseRate: null }
@@ -385,7 +394,7 @@ export function buildFeedbackNotes(
 }
 
 /** The rows one source contributed. */
-export function ofSource<T extends { source: FeedbackSource }>(
+function ofSource<T extends { source: FeedbackSource }>(
   rows: readonly T[],
   source: FeedbackSource,
 ): T[] {
@@ -472,7 +481,7 @@ function statementFigure(tallies: ResponseTallies, key: string): ShareFigure {
   return shareFigure(tallies.statements.get(key) ?? emptyTally());
 }
 
-function againstPlatform(scope: ShareFigure, platform: ShareFigure): PlatformComparison {
+function compareWithPlatform(scope: ShareFigure, platform: ShareFigure): PlatformComparison {
   return {
     platform,
     vsPlatformPoints:

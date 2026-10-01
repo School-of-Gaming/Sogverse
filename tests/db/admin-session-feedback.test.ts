@@ -355,6 +355,30 @@ describe("get_admin_session_feedback", () => {
     expect(sessions.some((s) => s.sessionDate === DAY_4)).toBe(false);
   });
 
+  it("counts no response toward the rate for a session the denominator leaves out", async () => {
+    // The same club, held in person: its sessions are not online sessions, so
+    // GAMER's answer on DAY_1, though the register marks them present, may not
+    // count toward a rate whose denominator holds no such session.
+    const toSite = await admin
+      .from("products")
+      .update({ is_remote: false, location_id: TEST_IDS.LOCATION_SITE })
+      .eq("id", PRODUCT);
+    expect(toSite.error).toBeNull();
+    try {
+      const { responses, sessions } = await read(DAY_1, DAY_1);
+      expect(responses.map((r) => [r.respondent.id, r.isRemote, r.countsTowardRate])).toEqual([
+        [TEST_IDS.GAMER, false, false],
+      ]);
+      expect(sessions).toEqual([]);
+    } finally {
+      const back = await admin
+        .from("products")
+        .update({ is_remote: true, location_id: null })
+        .eq("id", PRODUCT);
+      expect(back.error).toBeNull();
+    }
+  });
+
   it("refuses a range that ends before it starts", async () => {
     const { error } = await adminAuth.rpc("get_admin_session_feedback", {
       p_from: DAY_3,

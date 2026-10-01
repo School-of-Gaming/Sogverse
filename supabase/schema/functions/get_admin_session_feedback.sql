@@ -148,11 +148,16 @@ BEGIN
                  -- many answered", so only an answer from a gamer the session's
                  -- register marks present counts toward it, and a cancelled
                  -- session has no register, exactly as the sessions list reads it.
+                 -- The session must be one sessions_in_range counts — an online
+                 -- product's — so the numerator is never outside the denominator.
                  'countsTowardRate', EXISTS (
                    SELECT 1
                      FROM public.group_sessions s
                      JOIN public.session_attendance sa ON sa.session_id = s.id
-                    WHERE s.group_id        = r.group_id
+                     JOIN public.product_groups sg     ON sg.id = s.group_id
+                     JOIN public.products sp           ON sp.id = sg.product_id
+                    WHERE sp.is_remote
+                      AND s.group_id        = r.group_id
                       AND s.session_date    = r.session_date
                       AND sa.participant_id = r.participant_id
                       AND sa.status         = 'present'

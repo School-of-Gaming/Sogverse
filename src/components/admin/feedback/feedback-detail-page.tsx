@@ -11,6 +11,7 @@ import type {
   FeedbackDetail,
   FeedbackDetailStatement,
   FeedbackGamerEntry,
+  PlatformComparison,
 } from "./aggregate-feedback";
 import { FeedbackDimensionRows } from "./feedback-dimension-rows";
 import { formatShare } from "./feedback-format";
@@ -84,7 +85,11 @@ export function FeedbackDetailPage({
             headline={detail.headline}
             participation={detail.participation}
             unit={detail.bucketUnit}
-            comparison={scope.kind === "gamer" ? undefined : <PlatformLine detail={detail} />}
+            comparison={
+              detail.headline.againstPlatform === null ? undefined : (
+                <PlatformLine comparison={detail.headline.againstPlatform} />
+              )
+            }
           />
           <Statements detail={detail} />
           <Children detail={detail} origin={self} />
@@ -119,17 +124,16 @@ function adminPageOf(detail: FeedbackDetail): FeedbackHref | null {
 }
 
 /** "Platform 89%", and the warning when the scope is confidently below it. */
-function PlatformLine({ detail }: { detail: FeedbackDetail }) {
+function PlatformLine({ comparison }: { comparison: PlatformComparison }) {
   const t = useTranslations("admin.feedback.detail");
   const locale = useLocale();
-  const { headline } = detail;
-  if (headline.platform.positiveShare === null) return null;
+  if (comparison.platform.positiveShare === null) return null;
   return (
     <div className="space-y-1">
       <p className="text-sm text-muted-foreground">
-        {t("platform", { share: formatShare(headline.platform.positiveShare, locale) })}
+        {t("platform", { share: formatShare(comparison.platform.positiveShare, locale) })}
       </p>
-      {headline.confidentlyBelow && <BelowAverage statement={null} />}
+      {comparison.confidentlyBelow && <BelowAverage statement={null} />}
     </div>
   );
 }
@@ -137,7 +141,7 @@ function PlatformLine({ detail }: { detail: FeedbackDetail }) {
 function Statements({ detail }: { detail: FeedbackDetail }) {
   const t = useTranslations("admin.feedback.statements");
   const labels = useFeedbackStatementLabels(detail.source);
-  const withPlatform = detail.scope.kind !== "gamer";
+  const withPlatform = detail.headline.againstPlatform !== null;
 
   return (
     <Section title={t("heading")} aside={<AnswerLegend withPlatform={withPlatform} />}>
@@ -148,7 +152,6 @@ function Statements({ detail }: { detail: FeedbackDetail }) {
               key={line.key}
               line={line}
               label={labels[line.key] ?? line.key}
-              withPlatform={withPlatform}
             />
           ))}
         </ul>
@@ -160,11 +163,9 @@ function Statements({ detail }: { detail: FeedbackDetail }) {
 function StatementSpread({
   line,
   label,
-  withPlatform,
 }: {
   line: FeedbackDetailStatement;
   label: string;
-  withPlatform: boolean;
 }) {
   const t = useTranslations("admin.feedback.statements");
   const locale = useLocale();
@@ -189,37 +190,39 @@ function StatementSpread({
       </div>
       <AnswerSpreadBar
         figure={line.current}
-        platform={withPlatform ? line.platform.positiveShare : null}
+        platform={line.againstPlatform?.platform.positiveShare ?? null}
       />
-      {withPlatform && line.confidentlyBelow && <BelowAverage statement={null} />}
+      {line.againstPlatform?.confidentlyBelow === true && <BelowAverage statement={null} />}
     </li>
   );
 }
 
 function Children({ detail, origin }: { detail: FeedbackDetail; origin: FeedbackOrigin }) {
   const t = useTranslations("admin.feedback.detail");
-  const { children, headline } = detail;
+  const { children } = detail;
+  // Group and Gedu rows exist only under a scope that is set against the platform.
+  const platform = detail.headline.againstPlatform?.platform ?? null;
   return (
     <>
-      {children.groups !== null && (
+      {children.groups !== null && platform !== null && (
         <Section title={t("groupsHeading")}>
           <Card className="overflow-hidden">
             <FeedbackDimensionRows
               source={detail.source}
               rows={children.groups}
-              platform={headline.platform}
+              platform={platform}
               origin={origin}
             />
           </Card>
         </Section>
       )}
-      {children.gedus !== null && (
+      {children.gedus !== null && platform !== null && (
         <Section title={t("gedusHeading")}>
           <Card className="overflow-hidden">
             <FeedbackDimensionRows
               source={detail.source}
               rows={children.gedus}
-              platform={headline.platform}
+              platform={platform}
               origin={origin}
             />
           </Card>

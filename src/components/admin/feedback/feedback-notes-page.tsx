@@ -32,7 +32,7 @@ export function FeedbackNotesPage({
     >
       <NotesFilter view={view} lowAnswerOnly={lowAnswerOnly} />
       <Card className="overflow-hidden">
-        <FeedbackNoteList notes={view.notes} origin={{ kind: "notes" }} markLow={!lowAnswerOnly} />
+        <FeedbackNoteList notes={view.notes} origin={{ kind: "notes", lowAnswerOnly }} markLow={!lowAnswerOnly} />
       </Card>
     </FeedbackShell>
   );

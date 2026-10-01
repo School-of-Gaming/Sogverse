@@ -332,15 +332,6 @@ function adminProductPath(productType: ProductType, productId: string): string {
   return `/admin/${adminProductSegment(productType)}/${productId}`;
 }
 
-/**
- * A product type's admin listing and create form — the two of its surfaces that
- * take no params, so a plain pathname is the whole href.
- *
- * They used to be built at their call sites from the product-type config's
- * `routeSlug`, which produced a `/admin/${slug}/…` template string the router
- * can no longer be handed: a typed href names a declared route, and a
- * concatenated segment names none.
- */
 /** What the admin feedback pages can be opened on, as the routes spell it. */
 type FeedbackRouteDimension = "product" | "group" | "gedu";
 type FeedbackRouteKind = FeedbackRouteDimension | "gamer";
@@ -358,6 +349,15 @@ const ADMIN_FEEDBACK_DETAIL_PATHNAMES = {
   gamer: "/admin/feedback/gamers/[id]",
 } as const satisfies Record<FeedbackRouteKind, string>;
 
+/**
+ * A product type's admin listing and create form — the two of its surfaces that
+ * take no params, so a plain pathname is the whole href.
+ *
+ * They used to be built at their call sites from the product-type config's
+ * `routeSlug`, which produced a `/admin/${slug}/…` template string the router
+ * can no longer be handed: a typed href names a declared route, and a
+ * concatenated segment names none.
+ */
 const ADMIN_PRODUCT_LIST_PATHNAMES = {
   "consumer-clubs": "/admin/consumer-clubs",
   "municipality-clubs": "/admin/municipality-clubs",

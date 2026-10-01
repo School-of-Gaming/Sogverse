@@ -445,13 +445,13 @@ describe("buildFeedbackDetail", () => {
 
     expect(detail.name).toBe("Club B");
     expect(detail.product).toEqual({ id: "product-b", name: "Club B", type: "municipality_club", isRemote: true });
-    expect(detail.headline.platform.positiveShare).toBeCloseTo(34 / 42);
-    expect(detail.headline.vsPlatformPoints).toBeCloseTo((4 / 12 - 34 / 42) * 100);
+    expect(detail.headline.againstPlatform?.platform.positiveShare).toBeCloseTo(34 / 42);
+    expect(detail.headline.againstPlatform?.vsPlatformPoints).toBeCloseTo((4 / 12 - 34 / 42) * 100);
     expect(detail.headline.changePoints).toBeCloseTo((4 / 12 - 1) * 100);
-    expect(detail.headline.confidentlyBelow).toBe(true);
+    expect(detail.headline.againstPlatform?.confidentlyBelow).toBe(true);
     const fun = detail.statements.find((line) => line.key === "fun");
     expect(fun?.current.distribution).toEqual({ 1: 8, 2: 0, 3: 0, 4: 0, 5: 4 });
-    expect(fun?.confidentlyBelow).toBe(true);
+    expect(fun?.againstPlatform?.confidentlyBelow).toBe(true);
     expect(detail.children.groups?.map((row) => row.id)).toEqual(["group-b1"]);
     expect(detail.children.gedus?.map((row) => row.id)).toEqual(["gedu-aino"]);
     expect(detail.children.gamers).toBeNull();
@@ -501,7 +501,7 @@ describe("buildFeedbackDetail", () => {
     expect(detail.children.gedus).toBeNull();
   });
 
-  it("gives a gamer no response rate, notes low-answer first, responses newest first", () => {
+  it("gives a gamer no response rate and no platform figure, notes low-answer first, responses newest first", () => {
     const gamer = { id: "g-1", name: "Eetu" };
     const detail = buildFeedbackDetail(
       dataset(
@@ -518,6 +518,9 @@ describe("buildFeedbackDetail", () => {
     );
 
     expect(detail.participation).toEqual({ responses: 3, countedResponses: 3, eligible: null, responseRate: null });
+    expect(detail.headline.againstPlatform).toBeNull();
+    expect(detail.statements.length).toBeGreaterThan(0);
+    expect(detail.statements.every((line) => line.againstPlatform === null)).toBe(true);
     expect(detail.notes.map((note) => [note.response.note, note.withLowAnswer])).toEqual([
       ["low", true],
       ["newest", false],

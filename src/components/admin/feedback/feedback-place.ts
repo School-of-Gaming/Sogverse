@@ -17,7 +17,7 @@ export type FeedbackHref = ComponentProps<typeof Link>["href"];
  */
 export type FeedbackOrigin =
   | { kind: "list"; dimension: FeedbackDimension }
-  | { kind: "notes" }
+  | { kind: "notes"; lowAnswerOnly: boolean }
   | { kind: "detail"; scope: FeedbackScope };
 
 /**
@@ -40,6 +40,10 @@ export const FEEDBACK_ORIGIN_PARAM = "from";
 /** The query parameter that widens the notes page to every note. */
 export const FEEDBACK_NOTES_PARAM = "show";
 const ALL_NOTES = "all";
+
+/** The origin tokens of the notes page, filtered and widened. */
+const NOTES_TOKEN = "notes";
+const ALL_NOTES_TOKEN = "notes-all";
 
 const DIMENSION_TOKENS = {
   product: "products",
@@ -69,7 +73,8 @@ function firstOf(raw: string | string[] | undefined): string | undefined {
 export function parseFeedbackOrigin(raw: string | string[] | undefined): FeedbackOrigin | null {
   const value = firstOf(raw);
   if (value === undefined) return null;
-  if (value === "notes") return { kind: "notes" };
+  if (value === NOTES_TOKEN) return { kind: "notes", lowAnswerOnly: true };
+  if (value === ALL_NOTES_TOKEN) return { kind: "notes", lowAnswerOnly: false };
   const dimension = DIMENSIONS.find((candidate) => DIMENSION_TOKENS[candidate] === value);
   if (dimension !== undefined) return { kind: "list", dimension };
   const separator = value.indexOf(":");
@@ -89,7 +94,7 @@ function originToken(origin: FeedbackOrigin): string {
     case "list":
       return DIMENSION_TOKENS[origin.dimension];
     case "notes":
-      return "notes";
+      return origin.lowAnswerOnly ? NOTES_TOKEN : ALL_NOTES_TOKEN;
     case "detail":
       return `${origin.scope.kind}:${origin.scope.id}`;
   }
@@ -112,7 +117,7 @@ export function placeOfOrigin(origin: FeedbackOrigin): FeedbackPlace {
     case "list":
       return { view: "list", dimension: origin.dimension };
     case "notes":
-      return { view: "notes", lowAnswerOnly: true };
+      return { view: "notes", lowAnswerOnly: origin.lowAnswerOnly };
     case "detail":
       return { view: "detail", scope: origin.scope, origin: null };
   }

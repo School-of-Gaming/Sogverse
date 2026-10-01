@@ -7,6 +7,7 @@ import {
   feedbackPlaceQuery,
   parseFeedbackNotesFilter,
   parseFeedbackOrigin,
+  placeOfOrigin,
 } from "@/components/admin/feedback/feedback-place";
 
 const ID = "0e899757-d789-4fe0-a083-7ef9185e4a72";
@@ -42,7 +43,8 @@ describe("feedback places", () => {
   it("round-trips every origin through the query", () => {
     const origins = [
       { kind: "list", dimension: "gedu" },
-      { kind: "notes" },
+      { kind: "notes", lowAnswerOnly: true },
+      { kind: "notes", lowAnswerOnly: false },
       { kind: "detail", scope: { kind: "group", id: ID } },
     ] as const;
     for (const origin of origins) {
@@ -52,6 +54,11 @@ describe("feedback places", () => {
       );
       expect(parseFeedbackOrigin(query.from)).toEqual(origin);
     }
+  });
+
+  it("returns a gamer opened from the notes to the notes as they were filtered", () => {
+    expect(placeOfOrigin({ kind: "notes", lowAnswerOnly: true })).toEqual({ view: "notes", lowAnswerOnly: true });
+    expect(placeOfOrigin({ kind: "notes", lowAnswerOnly: false })).toEqual({ view: "notes", lowAnswerOnly: false });
   });
 
   it("drops an origin it cannot use", () => {
