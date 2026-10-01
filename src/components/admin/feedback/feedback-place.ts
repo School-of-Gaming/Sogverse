@@ -13,11 +13,11 @@ export type FeedbackHref = ComponentProps<typeof Link>["href"];
 
 /**
  * Where a detail page was opened from, so its back link returns there: a
- * list, the notes, or another detail (a product's group, a group's gamer).
+ * list, what gamers said, or another detail (a product's group, a group's gamer).
  */
 export type FeedbackOrigin =
   | { kind: "list"; dimension: FeedbackDimension }
-  | { kind: "notes"; lowAnswerOnly: boolean }
+  | { kind: "responses" }
   | { kind: "detail"; scope: FeedbackScope };
 
 /**
@@ -28,18 +28,13 @@ export type FeedbackPlace =
   | { view: "overview" }
   | { view: "list"; dimension: FeedbackDimension }
   | { view: "detail"; scope: FeedbackScope; origin: FeedbackOrigin | null }
-  | { view: "notes"; lowAnswerOnly: boolean };
+  | { view: "responses" };
 
 /** The query parameter a detail page's origin travels in. */
 export const FEEDBACK_ORIGIN_PARAM = "from";
 
-/** The query parameter that widens the notes page to every note. */
-export const FEEDBACK_NOTES_PARAM = "show";
-const ALL_NOTES = "all";
-
-/** The origin tokens of the notes page, filtered and widened. */
-const NOTES_TOKEN = "notes";
-const ALL_NOTES_TOKEN = "notes-all";
+/** The origin token of the platform's "What gamers said" page. */
+const RESPONSES_TOKEN = "responses";
 
 const DIMENSION_TOKENS = {
   product: "products",
@@ -69,8 +64,7 @@ function firstOf(raw: string | string[] | undefined): string | undefined {
 export function parseFeedbackOrigin(raw: string | string[] | undefined): FeedbackOrigin | null {
   const value = firstOf(raw);
   if (value === undefined) return null;
-  if (value === NOTES_TOKEN) return { kind: "notes", lowAnswerOnly: true };
-  if (value === ALL_NOTES_TOKEN) return { kind: "notes", lowAnswerOnly: false };
+  if (value === RESPONSES_TOKEN) return { kind: "responses" };
   const dimension = DIMENSIONS.find((candidate) => DIMENSION_TOKENS[candidate] === value);
   if (dimension !== undefined) return { kind: "list", dimension };
   const separator = value.indexOf(":");
@@ -80,17 +74,12 @@ export function parseFeedbackOrigin(raw: string | string[] | undefined): Feedbac
   return { kind: "detail", scope: { kind, id } };
 }
 
-/** Whether the notes page shows only the notes that came with a low answer. */
-export function parseFeedbackNotesFilter(raw: string | string[] | undefined): boolean {
-  return firstOf(raw) !== ALL_NOTES;
-}
-
 function originToken(origin: FeedbackOrigin): string {
   switch (origin.kind) {
     case "list":
       return DIMENSION_TOKENS[origin.dimension];
-    case "notes":
-      return origin.lowAnswerOnly ? NOTES_TOKEN : ALL_NOTES_TOKEN;
+    case "responses":
+      return RESPONSES_TOKEN;
     case "detail":
       return `${origin.scope.kind}:${origin.scope.id}`;
   }
@@ -103,7 +92,6 @@ export function feedbackPlaceQuery(place: FeedbackPlace, range: FeedbackRange): 
   if (place.view === "detail" && place.origin !== null) {
     query[FEEDBACK_ORIGIN_PARAM] = originToken(place.origin);
   }
-  if (place.view === "notes" && !place.lowAnswerOnly) query[FEEDBACK_NOTES_PARAM] = ALL_NOTES;
   return query;
 }
 
@@ -112,8 +100,8 @@ export function placeOfOrigin(origin: FeedbackOrigin): FeedbackPlace {
   switch (origin.kind) {
     case "list":
       return { view: "list", dimension: origin.dimension };
-    case "notes":
-      return { view: "notes", lowAnswerOnly: origin.lowAnswerOnly };
+    case "responses":
+      return { view: "responses" };
     case "detail":
       return { view: "detail", scope: origin.scope, origin: null };
   }
@@ -136,7 +124,7 @@ export function adminFeedbackHref(place: FeedbackPlace, range: FeedbackRange): F
       return { pathname: ROUTES.admin.feedbackList(place.dimension), query };
     case "detail":
       return { ...ROUTES.admin.feedbackDetail(place.scope.kind, place.scope.id), query };
-    case "notes":
-      return { pathname: ROUTES.admin.feedbackNotes, query };
+    case "responses":
+      return { pathname: ROUTES.admin.feedbackResponses, query };
   }
 }

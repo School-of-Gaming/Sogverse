@@ -5,7 +5,6 @@ import {
 } from "@/components/admin/feedback/feedback-range";
 import {
   feedbackPlaceQuery,
-  parseFeedbackNotesFilter,
   parseFeedbackOrigin,
   placeOfOrigin,
 } from "@/components/admin/feedback/feedback-place";
@@ -43,8 +42,7 @@ describe("feedback places", () => {
   it("round-trips every origin through the query", () => {
     const origins = [
       { kind: "list", dimension: "gedu" },
-      { kind: "notes", lowAnswerOnly: true },
-      { kind: "notes", lowAnswerOnly: false },
+      { kind: "responses" },
       { kind: "detail", scope: { kind: "group", id: ID } },
     ] as const;
     for (const origin of origins) {
@@ -56,9 +54,8 @@ describe("feedback places", () => {
     }
   });
 
-  it("returns a gamer opened from the notes to the notes as they were filtered", () => {
-    expect(placeOfOrigin({ kind: "notes", lowAnswerOnly: true })).toEqual({ view: "notes", lowAnswerOnly: true });
-    expect(placeOfOrigin({ kind: "notes", lowAnswerOnly: false })).toEqual({ view: "notes", lowAnswerOnly: false });
+  it("returns a gamer opened from what gamers said to that page", () => {
+    expect(placeOfOrigin({ kind: "responses" })).toEqual({ view: "responses" });
   });
 
   it("drops an origin it cannot use", () => {
@@ -71,11 +68,5 @@ describe("feedback places", () => {
   it("carries the range only when it is not the default", () => {
     expect(feedbackPlaceQuery({ view: "overview" }, "90d")).toEqual({});
     expect(feedbackPlaceQuery({ view: "overview" }, "12m")).toEqual({ range: "12m" });
-  });
-
-  it("shows only low-answer notes unless asked for all", () => {
-    expect(parseFeedbackNotesFilter(undefined)).toBe(true);
-    const all = feedbackPlaceQuery({ view: "notes", lowAnswerOnly: false }, "90d");
-    expect(parseFeedbackNotesFilter(all.show)).toBe(false);
   });
 });

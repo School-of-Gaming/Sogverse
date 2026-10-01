@@ -1585,7 +1585,6 @@
       "skipped": "Ohitettu",
       "belowAverage": "Alle keskiarvon",
       "belowAverageOn": "Alle keskiarvon väitteessä: {statement}",
-      "platformMark": "Koko alustan keskiarvo",
       "change": {
         "up": "Nousu {points, plural, one {# prosenttiyksikkö} other {# prosenttiyksikköä}}",
         "down": "Lasku {points, plural, one {# prosenttiyksikkö} other {# prosenttiyksikköä}}",
@@ -1610,7 +1609,7 @@
           "group": "Takaisin ryhmiin",
           "gedu": "Takaisin geduihin"
         },
-        "notes": "Takaisin viesteihin",
+        "responses": "Takaisin pelaajien vastauksiin",
         "detail": {
           "product": "Takaisin tuotteeseen",
           "group": "Takaisin ryhmään",
@@ -1628,7 +1627,8 @@
         "heading": "Väitteittäin",
         "legend": "Myönteinen on Kyllä tai Ehdottomasti, heikko on Ei tai Vähän.",
         "positive": "{share} myönteisiä",
-        "low": "{share} heikkoja"
+        "low": "{share} heikkoja",
+        "saidPositive": "{positive}/{answers} vastasi {yes} tai {definitely}"
       },
       "explore": {
         "heading": "Tutki tarkemmin",
@@ -1636,15 +1636,15 @@
           "product": "Tuotteet",
           "group": "Ryhmät",
           "gedu": "Gedut",
-          "notes": "Viestit"
+          "responses": "Mitä pelaajat sanoivat"
         },
         "below": "{count, plural, =0 {Ei yhtään alle keskiarvon} other {# alle keskiarvon}}",
-        "notesLow": "{count, plural, =0 {Yhdessäkään ei heikkoa vastausta} other {# heikon vastauksen yhteydessä}}",
+        "worthReading": "{count, plural, =0 {Ei mitään poimittavaa} one {# lukemisen arvoinen} other {# lukemisen arvoista}}",
         "counts": {
           "product": "{count, plural, one {# tuote} other {# tuotetta}}",
           "group": "{count, plural, one {# ryhmä} other {# ryhmää}}",
           "gedu": "{count, plural, one {# Gedu} other {# Gedua}}",
-          "notes": "{count, plural, one {# viesti} other {# viestiä}}"
+          "responses": "{count, plural, one {# vastaus} other {# vastausta}}"
         }
       },
       "rows": {
@@ -1680,19 +1680,16 @@
         "groupsHeading": "Ryhmät",
         "gedusHeading": "Gedut",
         "gamersHeading": "Vastanneet pelaajat",
-        "notesHeading": "Viestit",
-        "responsesHeading": "Vastaukset"
+        "responsesHeading": "Mitä pelaajat sanoivat"
       },
-      "notes": {
-        "title": "Viestit",
-        "none": "Täällä ei ole viestejä.",
-        "withLowAnswer": "Heikon vastauksen yhteydessä",
+      "responses": {
+        "title": "Mitä pelaajat sanoivat",
+        "none": "Täällä ei ole vastauksia.",
+        "noneWorthReading": "Ei mitään poimittavaa: ei heikkoja vastauksia eikä viestejä.",
         "noGedu": "Gedua ei ole kirjattu",
-        "showing": "Näytetään {shown}/{total}",
-        "showMore": "Näytä lisää",
-        "filterLabel": "Näytettävät viestit",
-        "onlyLow": "Heikon vastauksen yhteydessä ({count})",
-        "all": "Kaikki viestit ({count})"
+        "filterLabel": "Näytettävät vastaukset",
+        "worthReading": "Lukemisen arvoiset ({count})",
+        "all": "Kaikki ({count})"
       }
     }
   },

@@ -690,8 +690,8 @@ export const ROUTES = {
     /** One product's, group's, Gedu's or gamer's feedback. */
     feedbackDetail: (kind: FeedbackRouteKind, id: string) =>
       ({ pathname: ADMIN_FEEDBACK_DETAIL_PATHNAMES[kind], params: { id } }) as const,
-    /** Every note in the range. */
-    feedbackNotes: "/admin/feedback/notes",
+    /** Every response in the range, worth reading first. */
+    feedbackResponses: "/admin/feedback/responses",
     /**
      * The Fennoa customers a municipality club can be invoiced to — the contract
      * parties the CFO's monthly files are addressed to.

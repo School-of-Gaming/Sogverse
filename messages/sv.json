@@ -1585,7 +1585,6 @@
       "skipped": "Hoppades över",
       "belowAverage": "Under genomsnittet",
       "belowAverageOn": "Under genomsnittet på: {statement}",
-      "platformMark": "Plattformens genomsnitt",
       "change": {
         "up": "Upp {points, plural, one {# procentenhet} other {# procentenheter}}",
         "down": "Ned {points, plural, one {# procentenhet} other {# procentenheter}}",
@@ -1610,7 +1609,7 @@
           "group": "Tillbaka till grupperna",
           "gedu": "Tillbaka till Geduerna"
         },
-        "notes": "Tillbaka till meddelandena",
+        "responses": "Tillbaka till vad gamerna sa",
         "detail": {
           "product": "Tillbaka till produkten",
           "group": "Tillbaka till gruppen",
@@ -1628,7 +1627,8 @@
         "heading": "Per påstående",
         "legend": "Positivt är Ja eller Absolut; lågt är Nej eller Inte riktigt.",
         "positive": "{share} positiva",
-        "low": "{share} låga"
+        "low": "{share} låga",
+        "saidPositive": "{positive} av {answers} svarade {yes} eller {definitely}"
       },
       "explore": {
         "heading": "Utforska",
@@ -1636,15 +1636,15 @@
           "product": "Produkter",
           "group": "Grupper",
           "gedu": "Geduer",
-          "notes": "Meddelanden"
+          "responses": "Vad gamerna sa"
         },
         "below": "{count, plural, =0 {Ingen under genomsnittet} other {# under genomsnittet}}",
-        "notesLow": "{count, plural, =0 {Inget kom med ett lågt svar} other {# kom med ett lågt svar}}",
+        "worthReading": "{count, plural, =0 {Inget värt att läsa} other {# värda att läsa}}",
         "counts": {
           "product": "{count, plural, one {# produkt} other {# produkter}}",
           "group": "{count, plural, one {# grupp} other {# grupper}}",
           "gedu": "{count, plural, one {# Gedu} other {# Geduer}}",
-          "notes": "{count, plural, one {# meddelande} other {# meddelanden}}"
+          "responses": "{count, plural, one {# svar} other {# svar}}"
         }
       },
       "rows": {
@@ -1680,19 +1680,16 @@
         "groupsHeading": "Grupper",
         "gedusHeading": "Geduer",
         "gamersHeading": "Gamers som svarade",
-        "notesHeading": "Meddelanden",
-        "responsesHeading": "Svar"
+        "responsesHeading": "Vad gamerna sa"
       },
-      "notes": {
-        "title": "Meddelanden",
-        "none": "Inga meddelanden här.",
-        "withLowAnswer": "Kom med ett lågt svar",
+      "responses": {
+        "title": "Vad gamerna sa",
+        "none": "Inga svar här.",
+        "noneWorthReading": "Inget värt att läsa: inga låga svar och inga meddelanden.",
         "noGedu": "Ingen Gedu registrerad",
-        "showing": "Visar {shown} av {total}",
-        "showMore": "Visa fler",
-        "filterLabel": "Vilka meddelanden",
-        "onlyLow": "Med ett lågt svar ({count})",
-        "all": "Alla meddelanden ({count})"
+        "filterLabel": "Vilka svar",
+        "worthReading": "Värda att läsa ({count})",
+        "all": "Alla ({count})"
       }
     }
   },

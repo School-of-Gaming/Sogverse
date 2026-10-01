@@ -74,8 +74,8 @@ function BackLink({ place }: { place: FeedbackPlace }) {
       ? t("overview")
       : place.view === "list"
         ? t(`list.${place.dimension}`)
-        : place.view === "notes"
-          ? t("notes")
+        : place.view === "responses"
+          ? t("responses")
           : t(`detail.${place.scope.kind}`);
 
   return (
@@ -107,8 +107,16 @@ function RangeControl({ place }: { place: FeedbackPlace }) {
   );
 }
 
+/** One pill of a segmented row, drawn the same whether it navigates or switches a view. */
+function pillClass(active: boolean): string {
+  return cn(
+    "inline-flex items-center rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors",
+    active ? "bg-lifted text-foreground" : "text-muted-foreground hover:bg-hover hover:text-foreground",
+  );
+}
+
 /** A row of pill links, one of them the page on show. */
-export function SegmentedLinks<K extends string>({
+function SegmentedLinks<K extends string>({
   label,
   options,
   current,
@@ -127,16 +135,45 @@ export function SegmentedLinks<K extends string>({
             href={option.href}
             aria-current={active ? "page" : undefined}
             scroll={false}
-            className={cn(
-              "inline-flex items-center rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors",
-              active ? "bg-lifted text-foreground" : "text-muted-foreground hover:bg-hover hover:text-foreground",
-            )}
+            className={pillClass(active)}
           >
             {option.label}
           </Link>
         );
       })}
     </nav>
+  );
+}
+
+/** The same row as buttons, for a choice between views of what is already on the page. */
+export function SegmentedButtons<K extends string>({
+  label,
+  options,
+  current,
+  onChoose,
+}: {
+  label: string;
+  options: { key: K; label: string }[];
+  current: K;
+  onChoose: (key: K) => void;
+}) {
+  return (
+    <div role="group" aria-label={label} className="flex flex-wrap items-center gap-1.5">
+      {options.map((option) => {
+        const active = option.key === current;
+        return (
+          <button
+            key={option.key}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onChoose(option.key)}
+            className={pillClass(active)}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

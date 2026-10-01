@@ -1585,7 +1585,6 @@
       "skipped": "Skipped",
       "belowAverage": "Below average",
       "belowAverageOn": "Below average on: {statement}",
-      "platformMark": "Platform average",
       "change": {
         "up": "Up {points, plural, one {# point} other {# points}}",
         "down": "Down {points, plural, one {# point} other {# points}}",
@@ -1610,7 +1609,7 @@
           "group": "Back to groups",
           "gedu": "Back to Gedus"
         },
-        "notes": "Back to notes",
+        "responses": "Back to what gamers said",
         "detail": {
           "product": "Back to the product",
           "group": "Back to the group",
@@ -1628,7 +1627,8 @@
         "heading": "By statement",
         "legend": "Positive is Yes or Definitely; low is No or Not really.",
         "positive": "{share} positive",
-        "low": "{share} low"
+        "low": "{share} low",
+        "saidPositive": "{positive} of {answers} said {yes} or {definitely}"
       },
       "explore": {
         "heading": "Explore",
@@ -1636,15 +1636,15 @@
           "product": "Products",
           "group": "Groups",
           "gedu": "Gedus",
-          "notes": "Notes"
+          "responses": "What gamers said"
         },
         "below": "{count, plural, =0 {None below average} other {# below average}}",
-        "notesLow": "{count, plural, =0 {None came with a low answer} other {# came with a low answer}}",
+        "worthReading": "{count, plural, =0 {Nothing worth reading} other {# worth reading}}",
         "counts": {
           "product": "{count, plural, one {# product} other {# products}}",
           "group": "{count, plural, one {# group} other {# groups}}",
           "gedu": "{count, plural, one {# Gedu} other {# Gedus}}",
-          "notes": "{count, plural, one {# note} other {# notes}}"
+          "responses": "{count, plural, one {# response} other {# responses}}"
         }
       },
       "rows": {
@@ -1680,19 +1680,16 @@
         "groupsHeading": "Groups",
         "gedusHeading": "Gedus",
         "gamersHeading": "Gamers who answered",
-        "notesHeading": "Notes",
-        "responsesHeading": "Responses"
+        "responsesHeading": "What gamers said"
       },
-      "notes": {
-        "title": "Notes",
-        "none": "No notes here.",
-        "withLowAnswer": "Came with a low answer",
+      "responses": {
+        "title": "What gamers said",
+        "none": "No responses here.",
+        "noneWorthReading": "Nothing worth reading: no low answers and no notes.",
         "noGedu": "No Gedu recorded",
-        "showing": "Showing {shown} of {total}",
-        "showMore": "Show more",
-        "filterLabel": "Which notes",
-        "onlyLow": "With a low answer ({count})",
-        "all": "All notes ({count})"
+        "filterLabel": "Which responses",
+        "worthReading": "Worth reading ({count})",
+        "all": "All ({count})"
       }
     }
   },

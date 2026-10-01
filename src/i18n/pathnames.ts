@@ -212,7 +212,7 @@ export const PATHNAMES = {
   "/admin/feedback/gedus": "/admin/feedback/gedus",
   "/admin/feedback/gedus/[id]": "/admin/feedback/gedus/[id]",
   "/admin/feedback/gamers/[id]": "/admin/feedback/gamers/[id]",
-  "/admin/feedback/notes": "/admin/feedback/notes",
+  "/admin/feedback/responses": "/admin/feedback/responses",
   "/admin/gedu-invoicing": "/admin/gedu-invoicing",
   "/admin/invoice-customers": "/admin/invoice-customers",
   "/admin/invoice-customers/new": "/admin/invoice-customers/new",

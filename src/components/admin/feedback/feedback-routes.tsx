@@ -5,24 +5,22 @@ import { getTranslations } from "next-intl/server";
 import {
   buildFeedbackDetail,
   buildFeedbackDimensionList,
-  buildFeedbackNotes,
   buildFeedbackOverview,
+  buildFeedbackResponses,
   type FeedbackDimension,
   type FeedbackScopeKind,
 } from "./aggregate-feedback";
 import { FeedbackDetailPage } from "./feedback-detail-page";
 import { FeedbackListPage } from "./feedback-list-page";
-import { FeedbackNotesPage } from "./feedback-notes-page";
 import { FeedbackOverviewPage } from "./feedback-overview-page";
 import {
-  FEEDBACK_NOTES_PARAM,
   FEEDBACK_ORIGIN_PARAM,
   isFeedbackId,
-  parseFeedbackNotesFilter,
   parseFeedbackOrigin,
   type FeedbackPlace,
 } from "./feedback-place";
 import type { FeedbackRange } from "./feedback-range";
+import { FeedbackResponsesPage } from "./feedback-responses-page";
 import { FeedbackLoadFailure } from "./feedback-shell";
 import { loadFeedback } from "./load-feedback.server";
 
@@ -103,16 +101,13 @@ export async function FeedbackDetailRoute({
   );
 }
 
-export async function FeedbackNotesRoute({ searchParams }: { searchParams: SearchParams }) {
-  const query = await searchParams;
-  const lowAnswerOnly = parseFeedbackNotesFilter(query[FEEDBACK_NOTES_PARAM]);
-  const load = await loadFeedback(query);
-  if (!load.ok) return failure({ view: "notes", lowAnswerOnly }, load.range, load.reason);
+export async function FeedbackResponsesRoute({ searchParams }: { searchParams: SearchParams }) {
+  const load = await loadFeedback(await searchParams);
+  if (!load.ok) return failure({ view: "responses" }, load.range, load.reason);
   return (
-    <FeedbackNotesPage
+    <FeedbackResponsesPage
       range={load.range}
-      lowAnswerOnly={lowAnswerOnly}
-      view={buildFeedbackNotes(load.dataset, load.source, load.periods, { lowAnswerOnly })}
+      view={buildFeedbackResponses(load.dataset, load.source, load.periods)}
     />
   );
 }

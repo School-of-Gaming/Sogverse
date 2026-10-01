@@ -1629,7 +1629,6 @@
       "skipped": "juSlu'",
       "belowAverage": "motlh bIng",
       "belowAverageOn": "motlh bIng: {statement}",
-      "platformMark": "Hoch motlh",
       "change": {
         "up": "Dun {points, plural, one {# mI’} other {# mI’mey}}",
         "down": "bIng {points, plural, one {# mI’} other {# mI’mey}}",
@@ -1654,7 +1653,7 @@
           "group": "ghommey yIchegh",
           "gedu": "Gedupu' yIchegh"
         },
-        "notes": "QInmey yIchegh",
+        "responses": "QujwI'pu' jatlhpu'bogh yIchegh",
         "detail": {
           "product": "DochDaq yIchegh",
           "group": "ghomDaq yIchegh",
@@ -1672,7 +1671,8 @@
         "heading": "ja'meH mu'tlhegh",
         "legend": "QaQ: HISlaH pagh HISlaHbej. QaQbe': ghobe' pagh ghobe'law'.",
         "positive": "{share} QaQ",
-        "low": "{share} QaQbe'"
+        "low": "{share} QaQbe'",
+        "saidPositive": "{answers} jangmey; {positive} {yes} pagh {definitely}"
       },
       "explore": {
         "heading": "yInej",
@@ -1680,15 +1680,15 @@
           "product": "Dochmey",
           "group": "ghommey",
           "gedu": "Gedupu'",
-          "notes": "QInmey"
+          "responses": "QujwI'pu' jatlhpu'bogh"
         },
         "below": "{count, plural, =0 {motlh bIngDaq pagh} other {# motlh bIng}}",
-        "notesLow": "{count, plural, =0 {jang QaQbe’ pagh} other {# jang QaQbe’ ghaj}}",
+        "worthReading": "{count, plural, =0 {laDnIS pagh} other {# laDnIS}}",
         "counts": {
           "product": "{count, plural, one {# Doch} other {# Dochmey}}",
           "group": "{count, plural, one {# ghom} other {# ghommey}}",
           "gedu": "{count, plural, one {# Gedu} other {# Gedupu’}}",
-          "notes": "{count, plural, one {# QIn} other {# QInmey}}"
+          "responses": "{count, plural, one {# jang} other {# jangmey}}"
         }
       },
       "rows": {
@@ -1724,19 +1724,16 @@
         "groupsHeading": "ghommey",
         "gedusHeading": "Gedupu'",
         "gamersHeading": "QujwI'pu' jangbogh",
-        "notesHeading": "QInmey",
-        "responsesHeading": "jangmey"
+        "responsesHeading": "QujwI'pu' jatlhpu'bogh"
       },
-      "notes": {
-        "title": "QInmey",
-        "none": "naDev QIn pagh.",
-        "withLowAnswer": "jang QaQbe' ghaj",
+      "responses": {
+        "title": "QujwI'pu' jatlhpu'bogh",
+        "none": "naDev jang pagh.",
+        "noneWorthReading": "laDnIS pagh: jang QaQbe' pagh, QIn pagh.",
         "noGedu": "Gedu ghItlhlu'be'",
-        "showing": "{shown} / {total} cha'lu'",
-        "showMore": "latlh yIcha'",
-        "filterLabel": "QInmey yIwIv",
-        "onlyLow": "jang QaQbe' ghaj ({count})",
-        "all": "Hoch QInmey ({count})"
+        "filterLabel": "jangmey yIwIv",
+        "worthReading": "laDnIS ({count})",
+        "all": "Hoch ({count})"
       }
     }
   },

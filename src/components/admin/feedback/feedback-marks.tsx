@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { ArrowDown, ArrowUp, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -7,41 +8,25 @@ import {
   type SessionFeedbackRating,
 } from "@/components/voice/feedback/session-feedback-items";
 import { cn, formatDateOnly } from "@/lib/utils";
-import type { AdminFeedbackResponse } from "@/services/session-feedback/admin-feedback.contracts";
 import type {
   FeedbackBucketUnit,
   FeedbackSparkPoint,
   ShareFigure,
 } from "./aggregate-feedback";
 import { formatShare } from "./feedback-format";
-import { FEEDBACK_CATALOGUES } from "./feedback-sources";
 import { useFeedbackRange } from "./feedback-nav";
-import { useFeedbackStatementLabels, useRatingWord } from "./use-feedback-labels";
+import { useRatingWord } from "./use-feedback-labels";
 
 /**
  * **The marks the feedback pages are drawn with.** One accent: act is the
- * measured series — a sparkline's line, a bar's fill, the two positive levels
- * of an answer. The platform it is judged against is a grey tick, a track is
- * the lifted grey, and the warning colour appears only beside its icon and
- * words. How much is told by length and by the figure in text, never by hue.
+ * measured series — a sparkline's line, a bar's fill. The platform it is judged
+ * against is a grey tick, a track is the lifted grey, and the warning colour
+ * appears only beside its icon and words. How much is told by length and by the
+ * figure in text, never by hue.
  */
 
-/** The answer levels left to right in a spread: the hoped-for answers first. */
-const SPREAD_ORDER: readonly SessionFeedbackRating[] = [...SESSION_FEEDBACK_RATINGS].reverse();
-
-/**
- * How each answer level is drawn. Act for the two positive levels — filled for
- * "Definitely", edged for "Yes" — and greys stepping down through the rest,
- * with "A bit" as the quiet middle. The legend names every step, so no level is
- * told apart by colour alone.
- */
-export const RATING_SWATCH: Record<SessionFeedbackRating, string> = {
-  5: "bg-act",
-  4: "border-2 border-act",
-  3: "bg-lifted",
-  2: "border-2 border-muted-foreground",
-  1: "bg-muted-foreground",
-};
+/** The answer levels top to bottom in a breakdown: the hoped-for answers first. */
+const BREAKDOWN_ORDER: readonly SessionFeedbackRating[] = [...SESSION_FEEDBACK_RATINGS].reverse();
 
 /** A percentage, or "No answers" when nothing was answered. */
 export function ShareText({
@@ -136,109 +121,35 @@ function PlatformTick({ share }: { share: number }) {
 }
 
 /**
- * One statement's answers as a 100% bar, "Definitely" first, with the
- * platform's positive share as a tick — it lines up with where this scope's
- * own positive answers end.
+ * **One statement's answers, a row per level**, "Definitely" down to "No": the
+ * level's word, a bar in act as long as its share of the answers, and the
+ * count. Every level has its row, a zero included, so the five always read in
+ * the same place and an empty level says so rather than vanishing. The bars
+ * share one scale — the statement's answers — so a long one is a large share,
+ * not merely the largest level.
  */
-export function AnswerSpreadBar({
-  figure,
-  platform,
-}: {
-  figure: ShareFigure;
-  platform: number | null;
-}) {
-  const ratingWord = useRatingWord();
-  const locale = useLocale();
-  const total = figure.answers;
-  let start = 0;
-  const levelText = (rating: SessionFeedbackRating) => {
-    const count = figure.distribution[rating];
-    return total === 0
-      ? `${ratingWord(rating)}: ${count}`
-      : `${ratingWord(rating)}: ${formatShare(count / total, locale)} (${count})`;
-  };
-
-  return (
-    <div className="relative h-3 w-full">
-      {total === 0 ? (
-        <div className="absolute inset-0 rounded-sm bg-lifted" />
-      ) : (
-        SPREAD_ORDER.map((rating) => {
-          const count = figure.distribution[rating];
-          const left = start;
-          start += count / total;
-          if (count === 0) return null;
-          return (
-            <div
-              key={rating}
-              className="absolute inset-y-0 px-px"
-              style={{ left: `${left * 100}%`, width: `${(count / total) * 100}%` }}
-              title={levelText(rating)}
-            >
-              <div className={cn("h-full w-full rounded-sm", RATING_SWATCH[rating])} />
-            </div>
-          );
-        })
-      )}
-      {platform !== null && <PlatformTick share={platform} />}
-      <p className="sr-only">
-        {SPREAD_ORDER.map(levelText).join(", ")}
-      </p>
-    </div>
-  );
-}
-
-/** The five answer words with the swatch each is drawn in. */
-export function AnswerLegend({ withPlatform = false }: { withPlatform?: boolean }) {
-  const t = useTranslations("admin.feedback");
+export function AnswerBreakdown({ figure }: { figure: ShareFigure }) {
   const ratingWord = useRatingWord();
   return (
-    <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-      {SPREAD_ORDER.map((rating) => (
-        <li key={rating} className="inline-flex items-center gap-1.5">
-          <span className={cn("h-3 w-3 rounded-sm", RATING_SWATCH[rating])} aria-hidden />
-          {ratingWord(rating)}
-        </li>
-      ))}
-      {withPlatform && (
-        <li className="inline-flex items-center gap-1.5">
-          <span className="h-3.5 w-0.5 rounded-full bg-muted-foreground" aria-hidden />
-          {t("platformMark")}
-        </li>
-      )}
-    </ul>
-  );
-}
-
-/**
- * One response's answers, small: a swatch per statement in the order asked,
- * each naming its statement and answer on hover and to a screen reader.
- */
-export function ResponseMarks({ response }: { response: AdminFeedbackResponse }) {
-  const t = useTranslations("admin.feedback");
-  const labels = useFeedbackStatementLabels(response.source);
-  const ratingWord = useRatingWord();
-
-  return (
-    <ul className="flex items-center gap-1">
-      {FEEDBACK_CATALOGUES[response.source].map(({ key }) => {
-        const value = response.answers[key];
-        const rating = SESSION_FEEDBACK_RATINGS.find((level) => level === value);
-        const text = `${labels[key] ?? key}: ${rating === undefined ? t("skipped") : ratingWord(rating)}`;
+    <dl className="grid max-w-md grid-cols-[auto_minmax(0,1fr)_2.5rem] items-center gap-x-3 gap-y-1 text-xs">
+      {BREAKDOWN_ORDER.map((rating) => {
+        const count = figure.distribution[rating];
         return (
-          <li key={key} title={text}>
-            <span
-              className={cn(
-                "block h-3.5 w-3.5 rounded-sm",
-                rating === undefined ? "border border-dashed border-border" : RATING_SWATCH[rating],
+          <Fragment key={rating}>
+            <dt className="text-muted-foreground">{ratingWord(rating)}</dt>
+            <dd className="h-2 rounded-full bg-lifted" aria-hidden>
+              {count > 0 && (
+                <div
+                  className="h-full rounded-full bg-act"
+                  style={{ width: `${(count / figure.answers) * 100}%` }}
+                />
               )}
-              aria-hidden
-            />
-            <span className="sr-only">{text}</span>
-          </li>
+            </dd>
+            <dd className="text-right tabular-nums">{count}</dd>
+          </Fragment>
         );
       })}
-    </ul>
+    </dl>
   );
 }
 

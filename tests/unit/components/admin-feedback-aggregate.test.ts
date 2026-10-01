@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildFeedbackDetail,
   buildFeedbackDimensionList,
-  buildFeedbackNotes,
   buildFeedbackOverview,
+  buildFeedbackResponses,
   bucketUnitFor,
   type FeedbackPeriods,
 } from "@/components/admin/feedback/aggregate-feedback";
@@ -158,7 +158,7 @@ describe("buildFeedbackOverview", () => {
     expect(overview.participation.responseRate).toBeNull();
   });
 
-  it("summarises each dimension and the notes without listing them", () => {
+  it("summarises each dimension and what gamers said without listing them", () => {
     const overview = buildFeedbackOverview(
       dataset(
         [
@@ -177,7 +177,8 @@ describe("buildFeedbackOverview", () => {
     expect(overview.dimensions.product).toEqual({ rows: 2, belowPlatform: 1 });
     expect(overview.dimensions.group).toEqual({ rows: 3, belowPlatform: 1 });
     expect(overview.dimensions.gedu).toEqual({ rows: 2, belowPlatform: 1 });
-    expect(overview.notes).toEqual({ total: 2, withLowAnswer: 1 });
+    // The two Club B responses are low, "Too loud." is low with a note, "Great!" is a note.
+    expect(overview.responses).toEqual({ total: 24, worthReading: 4 });
   });
 });
 
@@ -421,7 +422,7 @@ describe("buildFeedbackDetail", () => {
     expect(detail.children.gedus).toBeNull();
   });
 
-  it("gives a gamer no response rate and no platform figure, notes low-answer first, responses newest first", () => {
+  it("gives a gamer no response rate and no platform figure, and their responses newest first", () => {
     const gamer = { id: "g-1", name: "Eetu" };
     const detail = buildFeedbackDetail(
       dataset(
@@ -441,31 +442,54 @@ describe("buildFeedbackDetail", () => {
     expect(detail.headline.againstPlatform).toBeNull();
     expect(detail.statements.length).toBeGreaterThan(0);
     expect(detail.statements.every((line) => line.againstPlatform === null)).toBe(true);
-    expect(detail.notes.map((note) => [note.response.note, note.withLowAnswer])).toEqual([
-      ["low", true],
-      ["newest", false],
-    ]);
-    expect(detail.responses.map((row) => row.sessionDate)).toEqual(["2026-09-20", "2026-09-10", "2026-09-02"]);
+    expect(detail.responses.all.map((row) => row.sessionDate)).toEqual(["2026-09-20", "2026-09-10", "2026-09-02"]);
+    expect(detail.responses.worthReading.map((row) => row.note)).toEqual(["low", "newest"]);
     expect(detail.children).toEqual({ groups: null, gedus: null, gamers: null });
   });
 });
 
-describe("buildFeedbackNotes", () => {
-  it("lists notes newest first and filters to those that came with a low answer", () => {
-    const data = dataset([
-      response({ answers: { fun: 5, learned: 2 }, note: "mixed", sessionDate: "2026-09-03" }),
-      response({ answers: { fun: 5 }, note: "happy", sessionDate: "2026-09-21" }),
-      response({ answers: { fun: 3 }, note: "  " }),
-      response({ answers: { fun: 1 }, note: "last period", sessionDate: "2026-08-20" }),
-      response({ answers: { retired: 1 }, note: "retired key is not low", sessionDate: "2026-09-10" }),
+describe("buildFeedbackResponses", () => {
+  const data = dataset([
+    response({ answers: { fun: 5 }, note: "note, older", sessionDate: "2026-09-04" }),
+    response({ answers: { fun: 2 }, note: "", sessionDate: "2026-09-05" }),
+    response({ answers: { fun: 5, learned: 2 }, note: "low + note, older", sessionDate: "2026-09-03" }),
+    response({ answers: { fun: 5 }, note: "note, newer", sessionDate: "2026-09-21" }),
+    response({ answers: { fun: 1 }, note: "low + note, newer", sessionDate: "2026-09-18" }),
+    response({ answers: { learned: 1 }, note: "", sessionDate: "2026-09-19" }),
+    response({ answers: { fun: 3 }, note: "  ", sessionDate: "2026-09-25" }),
+    response({ answers: { fun: 1 }, note: "last period", sessionDate: "2026-08-20" }),
+    response({ answers: { retired: 1 }, note: "", sessionDate: "2026-09-10" }),
+  ]);
+  const { responses } = buildFeedbackResponses(data, "gamer_online", PERIODS);
+  const labelOf = (row: { note: string; sessionDate: string }) => row.note || row.sessionDate;
+
+  it("orders what is worth reading: low with a note, then low, then a note, newest first in each", () => {
+    expect(responses.worthReading.map(labelOf)).toEqual([
+      "low + note, newer",
+      "low + note, older",
+      "2026-09-19",
+      "2026-09-05",
+      "note, newer",
+      "note, older",
     ]);
+  });
 
-    const all = buildFeedbackNotes(data, "gamer_online", PERIODS, { lowAnswerOnly: false });
-    expect(all.summary).toEqual({ total: 3, withLowAnswer: 1 });
-    expect(all.notes.map((note) => note.response.note)).toEqual(["happy", "retired key is not low", "mixed"]);
+  it("leaves out a blank note, a middling answer and a key the catalogue no longer asks", () => {
+    expect(responses.worthReading.map(labelOf)).not.toContain("2026-09-25");
+    expect(responses.worthReading.map(labelOf)).not.toContain("2026-09-10");
+  });
 
-    const low = buildFeedbackNotes(data, "gamer_online", PERIODS, { lowAnswerOnly: true });
-    expect(low.notes.map((note) => note.response.note)).toEqual(["mixed"]);
+  it("lists every response of the period newest first", () => {
+    expect(responses.all.map((row) => row.sessionDate)).toEqual([
+      "2026-09-25",
+      "2026-09-21",
+      "2026-09-19",
+      "2026-09-18",
+      "2026-09-10",
+      "2026-09-05",
+      "2026-09-04",
+      "2026-09-03",
+    ]);
   });
 });
 

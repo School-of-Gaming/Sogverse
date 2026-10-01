@@ -1585,7 +1585,6 @@
       "skipped": "Passée",
       "belowAverage": "Sous la moyenne",
       "belowAverageOn": "Sous la moyenne sur : {statement}",
-      "platformMark": "Moyenne de la plateforme",
       "change": {
         "up": "En hausse de {points, plural, one {# point} other {# points}}",
         "down": "En baisse de {points, plural, one {# point} other {# points}}",
@@ -1610,7 +1609,7 @@
           "group": "Retour aux groupes",
           "gedu": "Retour aux Gedus"
         },
-        "notes": "Retour aux messages",
+        "responses": "Retour à ce que les gamers ont dit",
         "detail": {
           "product": "Retour au produit",
           "group": "Retour au groupe",
@@ -1628,7 +1627,8 @@
         "heading": "Par affirmation",
         "legend": "Positive : Oui ou Tout à fait ; basse : Non ou Pas vraiment.",
         "positive": "{share} positives",
-        "low": "{share} basses"
+        "low": "{share} basses",
+        "saidPositive": "{positive} sur {answers} ont répondu {yes} ou {definitely}"
       },
       "explore": {
         "heading": "Explorer",
@@ -1636,15 +1636,15 @@
           "product": "Produits",
           "group": "Groupes",
           "gedu": "Gedus",
-          "notes": "Messages"
+          "responses": "Ce que les gamers ont dit"
         },
         "below": "{count, plural, =0 {Aucun sous la moyenne} other {# sous la moyenne}}",
-        "notesLow": "{count, plural, =0 {Aucun avec une réponse basse} one {# avec une réponse basse} other {# avec une réponse basse}}",
+        "worthReading": "{count, plural, =0 {Rien à lire en priorité} other {# à lire en priorité}}",
         "counts": {
           "product": "{count, plural, one {# produit} other {# produits}}",
           "group": "{count, plural, one {# groupe} other {# groupes}}",
           "gedu": "{count, plural, one {# Gedu} other {# Gedus}}",
-          "notes": "{count, plural, one {# message} other {# messages}}"
+          "responses": "{count, plural, one {# réponse} other {# réponses}}"
         }
       },
       "rows": {
@@ -1680,19 +1680,16 @@
         "groupsHeading": "Groupes",
         "gedusHeading": "Gedus",
         "gamersHeading": "Gamers ayant répondu",
-        "notesHeading": "Messages",
-        "responsesHeading": "Réponses"
+        "responsesHeading": "Ce que les gamers ont dit"
       },
-      "notes": {
-        "title": "Messages",
-        "none": "Aucun message ici.",
-        "withLowAnswer": "Avec une réponse basse",
+      "responses": {
+        "title": "Ce que les gamers ont dit",
+        "none": "Aucune réponse ici.",
+        "noneWorthReading": "Rien à lire en priorité : aucune réponse basse et aucun message.",
         "noGedu": "Aucun Gedu enregistré",
-        "showing": "{shown} sur {total} affichés",
-        "showMore": "Afficher plus",
-        "filterLabel": "Quels messages",
-        "onlyLow": "Avec une réponse basse ({count})",
-        "all": "Tous les messages ({count})"
+        "filterLabel": "Quelles réponses",
+        "worthReading": "À lire en priorité ({count})",
+        "all": "Toutes ({count})"
       }
     }
   },

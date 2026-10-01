@@ -27,8 +27,8 @@ const OVERVIEW: FeedbackPlace = { view: "overview" };
 /**
  * **`/admin/feedback` — the pulse, with no lists on it.** One figure for how
  * positive gamers are and which way it is moving, one line per statement, and
- * four doors to the lists an admin dives into: products, groups, Gedus and the
- * notes, each saying in a few words whether there is anything to find there.
+ * four doors to the lists an admin dives into: products, groups, Gedus and what
+ * gamers said, each saying in a few words whether there is anything to find there.
  */
 export function FeedbackOverviewPage({
   range,
@@ -50,7 +50,7 @@ export function FeedbackOverviewPage({
             participation={overview.participation}
             unit={overview.bucketUnit}
           />
-          <StatementLines statements={overview.statements} unit={overview.bucketUnit} source={overview.source} />
+          <StatementLines statements={overview.statements} source={overview.source} />
           <Explore overview={overview} />
         </>
       )}
@@ -113,11 +113,9 @@ function ParticipationLine({ participation }: { participation: FeedbackParticipa
 /** The statements in the order they are asked, one line each. */
 function StatementLines({
   statements,
-  unit,
   source,
 }: {
   statements: FeedbackStatementLine[];
-  unit: FeedbackBucketUnit;
   source: FeedbackOverview["source"];
 }) {
   const t = useTranslations("admin.feedback.statements");
@@ -135,7 +133,7 @@ function StatementLines({
           {statements.map((line) => (
             <li
               key={line.key}
-              className="grid gap-x-6 gap-y-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_9rem_8rem_5rem] sm:items-center"
+              className="grid gap-x-6 gap-y-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_14rem_6rem] sm:items-center"
             >
               <p className="text-sm">{labels[line.key] ?? line.key}</p>
               <div className="text-sm">
@@ -150,7 +148,6 @@ function StatementLines({
                   </span>
                 )}
               </div>
-              <Sparkline series={line.series} unit={unit} width={128} height={28} className="max-w-32" />
               <p className="text-xs tabular-nums text-muted-foreground sm:text-right">
                 {line.current.lowShare === null ? null : t("low", { share: formatShare(line.current.lowShare, locale) })}
               </p>
@@ -184,13 +181,13 @@ function Explore({ overview }: { overview: FeedbackOverview }) {
           );
         })}
         <ExploreCard
-          place={{ view: "notes", lowAnswerOnly: true }}
-          title={t("titles.notes")}
+          place={{ view: "responses" }}
+          title={t("titles.responses")}
           lines={[
-            t("notesLow", { count: overview.notes.withLowAnswer }),
-            t("counts.notes", { count: overview.notes.total }),
+            t("worthReading", { count: overview.responses.worthReading }),
+            t("counts.responses", { count: overview.responses.total }),
           ]}
-          flagged={overview.notes.withLowAnswer > 0}
+          flagged={overview.responses.worthReading > 0}
         />
       </div>
     </section>

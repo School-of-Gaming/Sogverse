@@ -42,7 +42,7 @@ export {
 /**
  * **The feedback page's arithmetic** — pure passes from the dataset the route
  * read to the view model of each of the page's four views: the overview, a
- * dimension's list, one scope's detail, and the notes.
+ * dimension's list, one scope's detail, and what gamers said.
  *
  * Every builder takes the dataset, the source being read and both periods; the
  * dataset spans both, and each builder splits it by session day itself. Every
@@ -101,7 +101,6 @@ export interface FeedbackStatementLine extends ComparedFigure {
   /** The catalogue key — also the statement's message key. */
   key: string;
   theme: SessionFeedbackTheme;
-  series: FeedbackSparkPoint[];
 }
 
 /** "N answers from X% of gamers present". */
@@ -124,10 +123,26 @@ export interface FeedbackDimensionSummary {
   belowPlatform: number;
 }
 
-/** "6 came with a low answer", out of every note in the period. */
-export interface FeedbackNotesSummary {
+/**
+ * The responses of a period as the "What gamers said" list reads them.
+ *
+ * **Worth reading** is a response with a low answer (No or Not really) on any
+ * statement, or a note: the two ways a gamer tells an admin something needs
+ * looking at. It is ordered by how much it says — a low answer with a note
+ * explaining it, then a low answer alone, then a note alone — and newest first
+ * within each, so the top of the list is the read most likely to need acting on.
+ */
+export interface FeedbackResponses {
+  /** Every response in the period, newest first. */
+  all: AdminFeedbackResponse[];
+  /** The responses worth reading, in reading order. */
+  worthReading: AdminFeedbackResponse[];
+}
+
+/** "8 worth reading · 412 responses". */
+export interface FeedbackResponsesSummary {
   total: number;
-  withLowAnswer: number;
+  worthReading: number;
 }
 
 /** `/admin/feedback`: one source, one period, no lists. */
@@ -140,7 +155,7 @@ export interface FeedbackOverview {
   /** In the order the source asks them. */
   statements: FeedbackStatementLine[];
   dimensions: Record<FeedbackDimension, FeedbackDimensionSummary>;
-  notes: FeedbackNotesSummary;
+  responses: FeedbackResponsesSummary;
 }
 
 /** The statement a row lags the platform on most. */
@@ -216,12 +231,6 @@ export interface FeedbackDetailChildren {
   gamers: FeedbackGamerEntry[] | null;
 }
 
-/** A response carrying a note, and whether any of its answers was low (1–2). */
-export interface FeedbackNote {
-  response: AdminFeedbackResponse;
-  withLowAnswer: boolean;
-}
-
 /** One product, group, Gedu or gamer. */
 export interface FeedbackDetail {
   source: FeedbackSource;
@@ -236,19 +245,14 @@ export interface FeedbackDetail {
   participation: FeedbackParticipation;
   statements: FeedbackDetailStatement[];
   children: FeedbackDetailChildren;
-  /** Low-answer notes first, then newest first. */
-  notes: FeedbackNote[];
-  /** Every response in the period, newest first. */
-  responses: AdminFeedbackResponse[];
+  responses: FeedbackResponses;
 }
 
-/** The notes view. */
-export interface FeedbackNotesView {
+/** "What gamers said" across the whole platform. */
+export interface FeedbackResponsesView {
   source: FeedbackSource;
   periods: FeedbackPeriods;
-  summary: FeedbackNotesSummary;
-  /** Newest first; only low-answer notes when asked for. */
-  notes: FeedbackNote[];
+  responses: FeedbackResponses;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -263,7 +267,7 @@ export function buildFeedbackOverview(
   const slice = sliceOf(dataset, source, periods);
   const bucketUnit = bucketUnitFor(periods.current);
   const platform = comparedTallies(slice.current, slice.previous, source);
-  const notes = notesOf(slice.current);
+  const responses = responsesOf(slice.current);
 
   const summarise = (dimension: FeedbackDimension): FeedbackDimensionSummary => {
     const rows = dimensionRows(dimension, slice, source, platform.current);
@@ -279,16 +283,13 @@ export function buildFeedbackOverview(
     bucketUnit,
     headline: headlineOf(platform, slice.current, periods.current, bucketUnit),
     participation: participationOf(slice.current, slice.currentSessions),
-    statements: statementLinesOf(platform, slice.current, source, periods.current, bucketUnit),
+    statements: statementLinesOf(platform, source),
     dimensions: {
       product: summarise("product"),
       group: summarise("group"),
       gedu: summarise("gedu"),
     },
-    notes: {
-      total: notes.length,
-      withLowAnswer: notes.filter((note) => note.withLowAnswer).length,
-    },
+    responses: { total: responses.all.length, worthReading: responses.worthReading.length },
   };
 }
 
@@ -328,7 +329,7 @@ export function buildFeedbackDetail(
   const headline = headlineOf(scoped, slice.current, periods.current, bucketUnit);
   const comparable = scope.kind !== "gamer";
 
-  const statements = statementLinesOf(scoped, slice.current, source, periods.current, bucketUnit).map(
+  const statements = statementLinesOf(scoped, source).map(
     (line) => ({
       ...line,
       againstPlatform: comparable
@@ -363,27 +364,16 @@ export function buildFeedbackDetail(
       gedus: scope.kind === "product" ? childRows("gedu") : null,
       gamers: scope.kind === "group" ? gamersOf(slice.current) : null,
     },
-    notes: notesOf(slice.current).sort(
-      (a, b) => Number(b.withLowAnswer) - Number(a.withLowAnswer) || newestFirst(a.response, b.response),
-    ),
-    responses: [...slice.current].sort(newestFirst),
+    responses: responsesOf(slice.current),
   };
 }
 
-export function buildFeedbackNotes(
+export function buildFeedbackResponses(
   dataset: AdminFeedbackDataset,
   source: FeedbackSource,
   periods: FeedbackPeriods,
-  options: { lowAnswerOnly: boolean },
-): FeedbackNotesView {
-  const notes = notesOf(sliceOf(dataset, source, periods).current);
-  const withLowAnswer = notes.filter((note) => note.withLowAnswer);
-  return {
-    source,
-    periods,
-    summary: { total: notes.length, withLowAnswer: withLowAnswer.length },
-    notes: options.lowAnswerOnly ? withLowAnswer : notes,
-  };
+): FeedbackResponsesView {
+  return { source, periods, responses: responsesOf(sliceOf(dataset, source, periods).current) };
 }
 
 /** The rows one source contributed. */
@@ -482,21 +472,17 @@ function compareWithPlatform(scope: ShareFigure, platform: ShareFigure): Platfor
   };
 }
 
-/** The current period's positive share bucket by bucket; `key` narrows it to one statement. */
+/** The current period's positive share across every statement, bucket by bucket. */
 function seriesOf(
   responses: readonly AdminFeedbackResponse[],
   period: FeedbackPeriod,
   unit: FeedbackBucketUnit,
-  key: string | null,
 ): FeedbackSparkPoint[] {
   const buckets = new Map(bucketStarts(period, unit).map((start) => [start, emptyTally()]));
   for (const response of responses) {
     const tally = buckets.get(bucketStartOf(response.sessionDate, unit));
     if (tally === undefined) continue;
-    const ratings = knownAnswers(response)
-      .filter((answer) => key === null || answer.key === key)
-      .map(({ rating }) => rating);
-    addRatings(tally, ratings);
+    addRatings(tally, knownAnswers(response).map(({ rating }) => rating));
   }
   return [...buckets].map(([start, tally]) => {
     const figure = shareFigure(tally);
@@ -512,17 +498,11 @@ function headlineOf(
 ): FeedbackHeadline {
   return {
     ...compared(tallies.current.overall, tallies.previous.overall),
-    series: seriesOf(responses, period, unit, null),
+    series: seriesOf(responses, period, unit),
   };
 }
 
-function statementLinesOf(
-  tallies: ComparedTallies,
-  responses: readonly AdminFeedbackResponse[],
-  source: FeedbackSource,
-  period: FeedbackPeriod,
-  unit: FeedbackBucketUnit,
-): FeedbackStatementLine[] {
+function statementLinesOf(tallies: ComparedTallies, source: FeedbackSource): FeedbackStatementLine[] {
   return FEEDBACK_CATALOGUES[source].map(({ key, theme }) => ({
     key,
     theme,
@@ -530,7 +510,6 @@ function statementLinesOf(
       tallies.current.statements.get(key) ?? emptyTally(),
       tallies.previous.statements.get(key) ?? emptyTally(),
     ),
-    series: seriesOf(responses, period, unit, key),
   }));
 }
 
@@ -673,7 +652,7 @@ function worstFirst(a: FeedbackDimensionRow, b: FeedbackDimensionRow): number {
 }
 
 /* ------------------------------------------------------------------------ */
-/* People, notes, names                                                     */
+/* People, responses, names                                                     */
 /* ------------------------------------------------------------------------ */
 
 function gamersOf(responses: readonly AdminFeedbackResponse[]): FeedbackGamerEntry[] {
@@ -693,12 +672,28 @@ function newestFirst(a: AdminFeedbackResponse, b: AdminFeedbackResponse): number
   return b.sessionDate.localeCompare(a.sessionDate) || b.submittedAt.localeCompare(a.submittedAt);
 }
 
-/** The responses carrying a note, newest first. */
-function notesOf(responses: readonly AdminFeedbackResponse[]): FeedbackNote[] {
-  return responses
-    .filter(hasNote)
-    .sort(newestFirst)
-    .map((response) => ({ response, withLowAnswer: hasLowAnswer(response) }));
+/** Why a response is worth reading, most telling first: the list is grouped in this order. */
+const READING_ORDER = ["lowAndNote", "low", "note"] as const;
+
+type ReadingReason = (typeof READING_ORDER)[number];
+
+/** Why a response is worth reading, or `null` when it is not. */
+function readingReasonOf(response: AdminFeedbackResponse): ReadingReason | null {
+  const low = hasLowAnswer(response);
+  const note = hasNote(response);
+  if (low) return note ? "lowAndNote" : "low";
+  return note ? "note" : null;
+}
+
+function responsesOf(responses: readonly AdminFeedbackResponse[]): FeedbackResponses {
+  const all = [...responses].sort(newestFirst);
+  return {
+    all,
+    // Filtering the newest-first list once per reason keeps each group newest first.
+    worthReading: READING_ORDER.flatMap((reason) =>
+      all.filter((response) => readingReasonOf(response) === reason),
+    ),
+  };
 }
 
 /** Every entry of the dataset, any source and period: a name outlives the range it was seen in. */

@@ -15,7 +15,7 @@ import type {
 } from "./aggregate-feedback";
 import { FeedbackDimensionRows } from "./feedback-dimension-rows";
 import { formatShare } from "./feedback-format";
-import { AnswerLegend, AnswerSpreadBar, BelowAverage, Change, ShareText } from "./feedback-marks";
+import { AnswerBreakdown, BelowAverage, Change, ShareText } from "./feedback-marks";
 import { useFeedbackHref } from "./feedback-nav";
 import { FeedbackHero } from "./feedback-overview-page";
 import {
@@ -25,15 +25,15 @@ import {
   type FeedbackOrigin,
 } from "./feedback-place";
 import type { FeedbackRange } from "./feedback-range";
-import { FeedbackNoteList, FeedbackResponseList } from "./feedback-responses";
+import { WhatGamersSaid } from "./feedback-responses";
 import { FeedbackShell } from "./feedback-shell";
-import { useFeedbackStatementLabels } from "./use-feedback-labels";
+import { useFeedbackStatementLabels, useRatingWord } from "./use-feedback-labels";
 
 /**
  * **One product, group, Gedu or gamer.** The same reading as the overview's,
  * narrowed to the one thing and set beside the platform: how positive, against
  * what, moving which way; each statement's answers in full; what sits under
- * it; and what was actually said.
+ * it; and what gamers said, the responses worth reading first.
  *
  * A gamer is a child, and is read only against themselves over time: no
  * platform figure, no mark, no below-average line. A group's gamers are listed
@@ -77,7 +77,7 @@ export function FeedbackDetailPage({
         )
       }
     >
-      {detail.responses.length === 0 ? (
+      {detail.responses.all.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("none")}</p>
       ) : (
         <>
@@ -93,15 +93,8 @@ export function FeedbackDetailPage({
           />
           <Statements detail={detail} />
           <Children detail={detail} origin={self} />
-          <Section title={t("notesHeading")}>
-            <Card className="overflow-hidden">
-              <FeedbackNoteList notes={detail.notes} origin={self} markLow />
-            </Card>
-          </Section>
-          <Section title={t("responsesHeading")} aside={<AnswerLegend />}>
-            <Card className="overflow-hidden">
-              <FeedbackResponseList responses={detail.responses} origin={self} />
-            </Card>
+          <Section title={t("responsesHeading")}>
+            <WhatGamersSaid responses={detail.responses} origin={self} />
           </Section>
         </>
       )}
@@ -141,10 +134,9 @@ function PlatformLine({ comparison }: { comparison: PlatformComparison }) {
 function Statements({ detail }: { detail: FeedbackDetail }) {
   const t = useTranslations("admin.feedback.statements");
   const labels = useFeedbackStatementLabels(detail.source);
-  const withPlatform = detail.headline.againstPlatform !== null;
 
   return (
-    <Section title={t("heading")} aside={<AnswerLegend withPlatform={withPlatform} />}>
+    <Section title={t("heading")}>
       <Card>
         <ul className="divide-y divide-border">
           {detail.statements.map((line) => (
@@ -160,6 +152,11 @@ function Statements({ detail }: { detail: FeedbackDetail }) {
   );
 }
 
+/**
+ * One statement: its wording and, first, the sentence an admin would say about
+ * it — "19 of 23 said Yes or Definitely" — then the shares, the move and the
+ * platform as text, and the five levels a row each.
+ */
 function StatementSpread({
   line,
   label,
@@ -168,30 +165,48 @@ function StatementSpread({
   label: string;
 }) {
   const t = useTranslations("admin.feedback.statements");
+  const tDetail = useTranslations("admin.feedback.detail");
   const locale = useLocale();
+  const ratingWord = useRatingWord();
+  const { current } = line;
+  const platform = line.againstPlatform?.platform.positiveShare ?? null;
 
   return (
     <li className="space-y-2 px-4 py-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="text-sm">{label}</p>
-        {line.current.positiveShare === null ? (
-          <ShareText figure={line.current} className="text-xs text-muted-foreground" />
+        <p className="text-sm font-medium">{label}</p>
+        {current.positiveShare === null ? (
+          <ShareText figure={current} className="text-sm text-muted-foreground" />
         ) : (
-          <p className="flex flex-wrap items-baseline gap-x-3 text-sm">
-            <span className="font-semibold tabular-nums">
-              {t("positive", { share: formatShare(line.current.positiveShare, locale) })}
-            </span>
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {t("low", { share: formatShare(line.current.lowShare, locale) })}
-            </span>
-            <Change points={line.changePoints} className="text-xs text-muted-foreground" />
+          <p className="text-sm">
+            {t("saidPositive", {
+              positive: current.positive,
+              answers: current.answers,
+              yes: ratingWord(4),
+              definitely: ratingWord(5),
+            })}
           </p>
         )}
       </div>
-      <AnswerSpreadBar
-        figure={line.current}
-        platform={line.againstPlatform?.platform.positiveShare ?? null}
-      />
+      {current.positiveShare !== null && (
+        <>
+          <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+            <span className="font-semibold tabular-nums text-foreground">
+              {t("positive", { share: formatShare(current.positiveShare, locale) })}
+            </span>
+            <span className="tabular-nums">
+              {t("low", { share: formatShare(current.lowShare, locale) })}
+            </span>
+            <Change points={line.changePoints} />
+            {platform !== null && (
+              <span className="tabular-nums">
+                {tDetail("platform", { share: formatShare(platform, locale) })}
+              </span>
+            )}
+          </p>
+          <AnswerBreakdown figure={current} />
+        </>
+      )}
       {line.againstPlatform?.belowPlatform === true && <BelowAverage statement={null} />}
     </li>
   );
