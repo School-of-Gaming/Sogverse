@@ -13,7 +13,8 @@ import type { YtyElementId } from "@/lib/constants/yty";
  *
  * The page is a vision board, not the plan: the minimum words that carry the
  * dream, with the detail left to the document the team already has. It states
- * no dates and no quarters; where order matters it is the order of priority.
+ * no dates and no quarters; where order matters it is the order of priority,
+ * or of dependency: what has to exist before what.
  */
 
 /**
@@ -119,6 +120,15 @@ export const VISION_GEDUS = {
     { title: "Build a team", body: "A club takes off, and you hire the Gedus to run it." },
   ] satisfies readonly VisionIdea[],
   stageLabel: "Stage",
+  foundation: "One day a Gedu earns from their own club and leads a team at the same time.",
+  profile: {
+    title: "A Gedu profile that levels up",
+    body: "Training, experience and feedback all count, and earnings grow with them.",
+  },
+  community: {
+    title: "A home for Gedus",
+    body: "A place to connect, back each other up and share what works.",
+  },
 } as const;
 
 export const VISION_COMMUNITY = {
@@ -169,8 +179,7 @@ export interface WallIdea extends VisionIdea {
     | "bots"
     | "webinars"
     | "wellbeing"
-    | "shop"
-    | "international";
+    | "shop";
 }
 
 export const VISION_WALL = {
@@ -180,12 +189,28 @@ export const VISION_WALL = {
     { tone: "world", icon: "website", title: "Sogverse is the website", body: "sog.gg lives on the platform." },
     { tone: "harmony", icon: "birthday", title: "Birthday parties", body: "Booked online, with a birthday badge." },
     { tone: "act", icon: "merch", title: "Merch with meaning", body: "A real patch for the digital one you earned." },
-    { tone: "wit", icon: "bots", title: "Help bots", body: "For Gedus, parents and gamers alike." },
+    { tone: "wit", icon: "bots", title: "Help bots", body: "Answers on hand whenever a parent or a Gedu needs them." },
     { tone: "valor", icon: "webinars", title: "Webinars and tournaments", body: "For parents and the community." },
     { tone: "glow", icon: "wellbeing", title: "Wellbeing tools", body: "Gamer Gym, and a button for a break." },
     { tone: "act", icon: "shop", title: "Shop essentials", body: "Gift cards, referrals and bring-a-friend." },
-    { tone: "wit", icon: "international", title: "Ready for the world", body: "More languages, more countries." },
   ] satisfies readonly WallIdea[],
+  /** The one idea pinned bigger than the rest, under the wall. */
+  feature: {
+    title: "Ready for the world",
+    body: "More languages, and a country view for the manager running each market.",
+  },
+} as const;
+
+export const VISION_PATH = {
+  eyebrow: "How we get there",
+  heading: "Each step unlocks the next",
+  intro: "Sell first, then build the fancy features. Each stage funds the next.",
+  steps: [
+    { title: "Set the rules", body: "Yty-Points, Achievement Badges and what gamers earn." },
+    { title: "Close the loop", body: "Lore to profile, working as one chain." },
+    { title: "Grow the profile", body: "Ready for everything the avatar becomes." },
+    { title: "Hang everything off it", body: "Parents, the community, and the Gedu marketplace." },
+  ] satisfies readonly VisionIdea[],
 } as const;
 
 export const VISION_FOUNDATION = {

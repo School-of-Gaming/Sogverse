@@ -17,6 +17,7 @@ import {
   MessageCircleOff,
   MessagesSquare,
   Rocket,
+  Route,
   ShieldCheck,
   Shirt,
   Sparkles,
@@ -25,6 +26,7 @@ import {
   Store,
   Swords,
   Trophy,
+  Users,
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
@@ -37,6 +39,7 @@ import {
   GrowingAvatarArt,
   LoopArt,
   ProfileOrbitArt,
+  RouteArt,
   SparkleBurstArt,
   StaircaseArt,
   ThreadArt,
@@ -52,6 +55,7 @@ import {
   VISION_LAST_UPDATED,
   VISION_LOOP,
   VISION_PARENTS,
+  VISION_PATH,
   VISION_THREAD,
   VISION_WALL,
   VISION_YTY,
@@ -89,6 +93,7 @@ export function PlatformVisionPage() {
       <ParentsSection />
       <GamesSection />
       <WallSection />
+      <PathSection />
       <FoundationSection />
       <ClosingSection />
     </div>
@@ -410,6 +415,25 @@ function GedusSection() {
         </ol>
         <StaircaseArt title={VISION_GEDUS.artTitle} className="mx-auto w-full max-w-md" />
       </div>
+      <p className="mt-6 max-w-3xl text-sm text-muted-foreground">{VISION_GEDUS.foundation}</p>
+      <ul className="mt-10 grid gap-6 md:grid-cols-2">
+        <li>
+          <IdeaCard
+            icon={Trophy}
+            tone="valor"
+            title={VISION_GEDUS.profile.title}
+            body={VISION_GEDUS.profile.body}
+          />
+        </li>
+        <li>
+          <IdeaCard
+            icon={Users}
+            tone="harmony"
+            title={VISION_GEDUS.community.title}
+            body={VISION_GEDUS.community.body}
+          />
+        </li>
+      </ul>
     </section>
   );
 }
@@ -518,7 +542,6 @@ const WALL_ICONS = {
   webinars: Swords,
   wellbeing: Sprout,
   shop: Gift,
-  international: Globe,
 } as const satisfies Record<WallIdea["icon"], LucideIcon>;
 
 function WallSection() {
@@ -531,10 +554,16 @@ function WallSection() {
         eyebrow={VISION_WALL.eyebrow}
         heading={VISION_WALL.heading}
       />
-      {/* A pinboard: each note tilts a degree either way from `lg` up, with a pin in its own hue. */}
-      <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {/*
+        A pinboard: each note tilts a degree either way from `lg` up, with a pin in
+        its own hue. Centred rows, so a short last row sits in the middle of the board.
+      */}
+      <ul className="mt-12 flex flex-wrap justify-center gap-6">
         {VISION_WALL.ideas.map((idea) => (
-          <li key={idea.title} className="relative lg:odd:-rotate-1 lg:even:rotate-1">
+          <li
+            key={idea.title}
+            className="relative w-full sm:w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-4.5rem)/4)] lg:odd:-rotate-1 lg:even:rotate-1"
+          >
             <span
               aria-hidden="true"
               className={cn("absolute -top-1.5 left-1/2 z-10 h-3 w-3 -translate-x-1/2 rounded-full", VISION_TONES[idea.tone].mark)}
@@ -543,6 +572,51 @@ function WallSection() {
           </li>
         ))}
       </ul>
+      <div className="mt-10 flex flex-col gap-4 rounded-lg border-2 border-world bg-card p-6 sm:flex-row sm:items-center sm:p-8">
+        <GlyphTile icon={Globe} tone="world" />
+        <div>
+          <h3 className="text-h3">{VISION_WALL.feature.title}</h3>
+          <p className="mt-2 text-body-l text-muted-foreground">{VISION_WALL.feature.body}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const PATH_TONES = ["act", "world", "glow", "harmony"] as const satisfies readonly [
+  VisionTone,
+  VisionTone,
+  VisionTone,
+  VisionTone,
+];
+
+function PathSection() {
+  return (
+    <section aria-labelledby="vision-path">
+      <SectionHeader
+        id="vision-path"
+        icon={Route}
+        tone="glow"
+        eyebrow={VISION_PATH.eyebrow}
+        heading={VISION_PATH.heading}
+        intro={VISION_PATH.intro}
+      />
+      <RouteArt tones={PATH_TONES} className="mt-12 hidden w-full lg:block" />
+      {/* Four equal columns from `lg` up, each under its waypoint on the route. */}
+      <ol className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {VISION_PATH.steps.map((step, i) => (
+          <li key={step.title} className="lg:text-center">
+            <div className="flex items-baseline gap-3 lg:justify-center">
+              <span
+                aria-hidden="true"
+                className={cn("h-3 w-3 shrink-0 rounded-full lg:hidden", VISION_TONES[PATH_TONES[i % PATH_TONES.length]].mark)}
+              />
+              <h3 className="text-h4 font-semibold">{step.title}</h3>
+            </div>
+            <p className="mt-2 text-muted-foreground">{step.body}</p>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
