@@ -53,6 +53,14 @@ export interface AdminFeedbackResponse extends AdminFeedbackGroupRef {
   gedus: AdminFeedbackGedu[];
   answers: Record<string, number>;
   note: string;
+  /**
+   * Whether this response counts toward the response rate: its session has a
+   * recorded register that marks the respondent present. The rate is then
+   * "of the gamers marked present, how many answered", and can never pass
+   * 100%; a session nobody took the register for, or a gamer marked absent
+   * who answered anyway, still counts everywhere else.
+   */
+  countsTowardRate: boolean;
   /** When the response was last saved — the last Done wins. */
   submittedAt: string;
 }
@@ -115,6 +123,7 @@ export const adminFeedbackRpcResult = z.object({
       respondent: z.object({ id: z.string(), name: z.string() }),
       answers: z.record(z.string(), z.number()),
       note: z.string(),
+      countsTowardRate: z.boolean(),
       submittedAt: z.string(),
     }),
   ),

@@ -31,7 +31,11 @@ import { deleteTestProducts } from "./product-helpers";
  *           GAMER_2 left a note of only newlines and tabs, which is as empty as
  *           a blank one and may not travel. Marked present: GAMER; GAMER_2
  *           marked absent.
- *   DAY_3 — a recorded session nobody was marked present at.
+ *   DAY_3 — a recorded session nobody was marked present at. GAMER_2, marked
+ *           absent, answered anyway: the answer travels but does not count
+ *           toward the response rate.
+ *   DAY_4 — no recorded session at all. GAMER answered: it travels, without
+ *           a partner in sessions, and does not count toward the rate.
  *   DAY_0 — a recorded session outside the range.
  *
  * The dates sit in 2025 so nothing another file writes into the shared tables
@@ -46,6 +50,7 @@ const DAY_0 = "2025-03-09";
 const DAY_1 = "2025-03-11";
 const DAY_2 = "2025-03-12";
 const DAY_3 = "2025-03-13";
+const DAY_4 = "2025-03-14";
 
 const WINDOW = VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES;
 
@@ -55,6 +60,10 @@ const DAY_1_OPENS = new Date(Date.parse(DAY_1_STARTS) - WINDOW * 60_000).toISOSt
 const DAY_2_STARTS = "2025-03-12T15:00:00Z";
 const DAY_2_OPENS = new Date(Date.parse(DAY_2_STARTS) - WINDOW * 60_000).toISOString();
 const DAY_3_STARTS = "2025-03-13T15:00:00Z";
+const DAY_3_OPENS = new Date(Date.parse(DAY_3_STARTS) - WINDOW * 60_000).toISOString();
+const DAY_4_OPENS = new Date(
+  Date.parse("2025-03-14T15:00:00Z") - WINDOW * 60_000,
+).toISOString();
 const DAY_0_STARTS = "2025-03-09T15:00:00Z";
 
 function hourAfter(iso: string): string {
@@ -184,6 +193,7 @@ describe("get_admin_session_feedback", () => {
       { session_id: sessionId(DAY_1), participant_id: TEST_IDS.CUSTOMER, status: "present" },
       { session_id: sessionId(DAY_2), participant_id: TEST_IDS.GAMER, status: "present" },
       { session_id: sessionId(DAY_2), participant_id: TEST_IDS.GAMER_2, status: "absent" },
+      { session_id: sessionId(DAY_3), participant_id: TEST_IDS.GAMER_2, status: "absent" },
     ]);
     if (attendance.error) throw new Error(`seed attendance failed: ${attendance.error.message}`);
 
@@ -223,6 +233,20 @@ describe("get_admin_session_feedback", () => {
         answers: {},
         note: "\n\t ",
       },
+      {
+        group_id: GROUP,
+        participant_id: TEST_IDS.GAMER_2,
+        session_opens_at: DAY_3_OPENS,
+        answers: { fun: 2 },
+        note: "",
+      },
+      {
+        group_id: GROUP,
+        participant_id: TEST_IDS.GAMER,
+        session_opens_at: DAY_4_OPENS,
+        answers: { fun: 5 },
+        note: "",
+      },
     ]);
     if (feedback.error) throw new Error(`seed feedback failed: ${feedback.error.message}`);
   });
@@ -251,10 +275,12 @@ describe("get_admin_session_feedback", () => {
   it("returns gamers' non-empty answers only, with their group, product and respondent", async () => {
     const { responses } = await read("2025-03-10", DAY_3);
 
-    // GAMER_2's two rows are absent: blank on DAY_1, newlines and tabs on DAY_2.
+    // GAMER_2's blank rows are left out: blank on DAY_1, newlines and tabs on
+    // DAY_2. Their DAY_3 answer travels although they were marked absent.
     expect(responses.map((r) => [r.sessionDate, r.respondent.id])).toEqual([
       [DAY_1, TEST_IDS.GAMER],
       [DAY_2, TEST_IDS.GAMER],
+      [DAY_3, TEST_IDS.GAMER_2],
     ]);
 
     const [first, second] = responses;
@@ -312,6 +338,21 @@ describe("get_admin_session_feedback", () => {
       productId: PRODUCT,
       isRemote: true,
     });
+  });
+
+  it("counts a response toward the rate only when the register marks its respondent present", async () => {
+    const { responses, sessions } = await read("2025-03-10", DAY_4);
+
+    expect(responses.map((r) => [r.sessionDate, r.respondent.id, r.countsTowardRate])).toEqual([
+      // Marked present.
+      [DAY_1, TEST_IDS.GAMER, true],
+      [DAY_2, TEST_IDS.GAMER, true],
+      // Marked absent on a recorded session.
+      [DAY_3, TEST_IDS.GAMER_2, false],
+      // No recorded session for the day at all.
+      [DAY_4, TEST_IDS.GAMER, false],
+    ]);
+    expect(sessions.some((s) => s.sessionDate === DAY_4)).toBe(false);
   });
 
   it("refuses a range that ends before it starts", async () => {
