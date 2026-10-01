@@ -2682,6 +2682,7 @@
       "shop": "Boutique",
       "yty": "Yty",
       "about": "À propos",
+      "parents": "Parents",
       "faq": "FAQ",
       "substitutions": "Remplacements",
       "home": "Accueil",
@@ -3252,7 +3253,8 @@
     },
     "cta": {
       "heading": "Prêt à transformer le temps d’écran en temps qui fait grandir ?",
-      "subheading": "Offrez à votre enfant un rendez-vous chaque semaine pour jouer, apprendre et se faire des amis, avec un Gedu à chaque séance et aucun message privé."
+      "subheading": "Offrez à votre enfant un rendez-vous chaque semaine pour jouer, apprendre et se faire des amis, avec un Gedu à chaque séance et aucun message privé.",
+      "whereWeAre": "Basé à Helsinki, en Finlande, School of Gaming propose aux familles du monde entier des clubs en ligne, animés en {languages}. Notre siège mondial se trouve à Lauttasaari, une petite île tranquille d’Helsinki."
     }
   },
   "locations": {

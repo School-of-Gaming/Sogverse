@@ -2682,6 +2682,7 @@
       "shop": "Kauppa",
       "yty": "Yty",
       "about": "Tietoa",
+      "parents": "Vanhemmat",
       "faq": "UKK",
       "substitutions": "Tuuraukset",
       "home": "Etusivu",
@@ -3252,7 +3253,8 @@
     },
     "cta": {
       "heading": "Valmis muuttamaan pelaamisen oppimiseksi?",
-      "subheading": "Anna lapsellesi paikka pelata, oppia ja saada ystäviä joka viikko: pelikasvattaja ohjaa jokaista kertaa, eikä alustalla voi lähettää yksityisviestejä."
+      "subheading": "Anna lapsellesi paikka pelata, oppia ja saada ystäviä joka viikko: pelikasvattaja ohjaa jokaista kertaa, eikä alustalla voi lähettää yksityisviestejä.",
+      "whereWeAre": "School of Gaming on suomalainen yritys Helsingistä. Verkkokerhoihimme pääsee mukaan mistä päin maailmaa tahansa, ja kerhojen kielet ovat {languages}. Maailmanlaajuinen pääkonttorimme on Lauttasaaressa, pienellä ja rauhallisella saarella Helsingissä."
     }
   },
   "locations": {

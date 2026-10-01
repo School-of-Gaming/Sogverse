@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { getLocale } from "next-intl/server";
 import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import {
@@ -22,7 +22,13 @@ import { HeroBackdrop } from "@/components/home/hero-backdrop";
 import { MarketingPhoto } from "@/components/marketing/marketing-photo";
 import clubPhoto from "@/assets/marketing/club-lauttasaari.jpg";
 import { Testimonial } from "@/components/home/testimonial";
-import { ROUTES } from "@/lib/constants";
+import {
+  featureTestimonialKey,
+  rowTestimonialKeys,
+  safetyTestimonialKeys,
+} from "@/components/home/testimonial-keys";
+import { ROUTES, resolveLocale } from "@/lib/constants";
+import { spokenLanguagesPhrase } from "@/lib/i18n/spoken-languages-phrase";
 import { cn } from "@/lib/utils";
 
 /**
@@ -53,10 +59,6 @@ const safetyFacts = [
   { key: "notRecorded", icon: VideoOff },
   { key: "parentPin", icon: KeyRound },
 ] as const;
-
-/** The quotes paired with the safety facts, and the row further down. */
-const safetyTestimonialKeys = ["funAndSupervised", "positiveExperience"] as const;
-const rowTestimonialKeys = ["sighWithHappiness", "largeGroups", "finnishImproved"] as const;
 
 const trustKeys = ["cancel", "guarantee"] as const;
 
@@ -89,6 +91,7 @@ function TrustLine({ className }: { className?: string }) {
 
 export default function HomePage() {
   const t = useTranslations('home');
+  const locale = resolveLocale(useLocale());
 
   const features = featureKeys.map((key, i) => ({
     key,
@@ -170,8 +173,8 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-16 sm:pb-24">
         <Testimonial
           size="feature"
-          quote={t('testimonials.items.highlightOfTheWeek.quote')}
-          attribution={t('testimonials.items.highlightOfTheWeek.attribution')}
+          quote={t(`testimonials.items.${featureTestimonialKey}.quote`)}
+          attribution={t(`testimonials.items.${featureTestimonialKey}.attribution`)}
           className="mx-auto max-w-3xl"
         />
       </section>
@@ -340,6 +343,15 @@ export default function HomePage() {
             </h2>
             <p className="mt-4 text-muted-foreground">
               {t('cta.subheading')}
+            </p>
+            {/* Where we are, as a plain fact a search engine or an assistant
+                can quote: the company is in Helsinki, Finland, its clubs run
+                online for families anywhere, in the spoken languages it
+                delivers in — and its global headquarters is a quiet island.
+                The language list is derived, never written into the copy,
+                because it grows as we expand. */}
+            <p className="mt-4 text-sm text-muted-foreground">
+              {t('cta.whereWeAre', { languages: spokenLanguagesPhrase(locale) })}
             </p>
             {/* The page closes on the hero's own call to action and its trust
                 line, so the two ends of the page ask for the same thing. */}

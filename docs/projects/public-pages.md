@@ -446,8 +446,6 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 
 ## Tasks and open questions
 
-- [ ] About: a "What parents say" section holding the testimonials, which today live only
-      on the home page (the rule above).
 - [ ] Owner decision: the division of jobs between the three pages, above.
 - [ ] Owner decision: the proposed home page structure, above.
 - [ ] Assets: lesson imagery and Gedu photos are planned but do not exist yet; headline

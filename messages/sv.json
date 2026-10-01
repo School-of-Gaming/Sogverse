@@ -2682,6 +2682,7 @@
       "shop": "Butik",
       "yty": "Yty",
       "about": "Om oss",
+      "parents": "Föräldrar",
       "faq": "FAQ",
       "substitutions": "Vikariat",
       "home": "Hem",
@@ -3252,7 +3253,8 @@
     },
     "cta": {
       "heading": "Redo att förvandla spelande till lärande?",
-      "subheading": "Ge ditt barn en plats att spela, lära sig och få vänner varje vecka, med en spelfostrare vid varje tillfälle och inga direktmeddelanden någonstans."
+      "subheading": "Ge ditt barn en plats att spela, lära sig och få vänner varje vecka, med en spelfostrare vid varje tillfälle och inga direktmeddelanden någonstans.",
+      "whereWeAre": "School of Gaming har sin bas i Helsingfors i Finland och driver klubbar online på {languages} för familjer var som helst i världen. Vårt globala huvudkontor ligger på Drumsö, en lugn liten ö i Helsingfors."
     }
   },
   "locations": {

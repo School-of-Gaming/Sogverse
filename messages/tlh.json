@@ -2722,6 +2722,7 @@
       "shop": "ngevwI’",
       "yty": "Yty",
       "about": "maH",
+      "parents": "vav/SoSmey",
       "faq": "ghelmeH",
       "substitutions": "qa’meH",
       "home": "juH",
@@ -3292,7 +3293,8 @@
     },
     "cta": {
       "heading": "toy’a’ ghojmoH DaneH’a’?",
-      "subheading": "Hoch Hogh puqlI’ Quj, ghoj, jup Suq je — Hoch qep Gedu’ tu’lu’, pegh QInmey tu’be’lu’."
+      "subheading": "Hoch Hogh puqlI’ Quj, ghoj, jup Suq je — Hoch qep Gedu’ tu’lu’, pegh QInmey tu’be’lu’.",
+      "whereWeAre": "noH Quj yejHaD: Helsinki, Finland. De’wI’Daq ghom’a’mey ghom Hoch qorDu’, qo’ Hoch Daq. ghom’a’mey Hol: {languages}. yejHaD’a’maj Hoch qo’Daq: Lauttasaari, Helsinki tlhoy’ jot ’ambo’."
     }
   },
   "locations": {
