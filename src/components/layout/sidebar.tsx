@@ -18,6 +18,7 @@ import {
   MapPin,
   Receipt,
   ReceiptText,
+  Sparkles,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
@@ -33,7 +34,7 @@ type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "whatsapp" | "testing" | "settings"
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
-  | "invoiceCustomers" | "geduInvoicing" | "libraryContent"
+  | "invoiceCustomers" | "geduInvoicing" | "libraryContent" | "platformVision"
   | "camps" | "events"
   | "sites" | "substitutions";
 
@@ -81,6 +82,9 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     // no customer is reported.
     { href: ROUTES.admin.invoiceCustomers, labelKey: "invoiceCustomers", icon: <Building2 className="h-5 w-5" /> },
     { href: ROUTES.admin.library, labelKey: "libraryContent", icon: <BookOpen className="h-5 w-5" /> },
+    // Last of the content entries and above the tooling: it is read, not
+    // worked in, and an admin reaches it from a link far more than by habit.
+    { href: ROUTES.admin.platformVision, labelKey: "platformVision", icon: <Sparkles className="h-5 w-5" /> },
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },
