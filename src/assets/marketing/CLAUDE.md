@@ -23,7 +23,10 @@ characters and name tags in the hero loop are test accounts, not gamers.
 | `public/media/hero-calm-{wide,close,vertical}-v1.mp4` | `Sogverse - Calm - Horizontal - Wide.mov`, `… - Horizontal - Close.mov`, `… - Vertical.mov` |
 
 The three loop cuts are delivered framed for their shapes and are never cropped from one
-another; the hero picks one by the viewport's shape.
+another; the hero picks one by the viewport's shape. The loop takes no game-screenshot
+window frame, by the owner's ruling: it is the hero's background, under the scrim. Whether that frame
+applies to other in-game screenshots on the website is decided when the first one
+arrives.
 
 ## Making the videos
 

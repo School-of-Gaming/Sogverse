@@ -15,7 +15,7 @@ import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 
 /*
  * A person's page as crawlers and link previews meet it. The Team pages are
- * promoted (`docs/architecture/discoverability.md`), so a profile carries a
+ * promoted (`docs/architecture/site-quality.md`), so a profile carries a
  * canonical, its language versions and a `ProfilePage`.
  *
  * **A person writes in the languages they choose, and the page follows the

@@ -40,7 +40,9 @@ and all.
 **A cover is a `library_cover` entry of the shared image catalogue**
 (`src/services/catalogue-images/`), its object in the `library-covers` bucket, linked by id
 from both copies. A catalogue replace repoints both, and a catalogue removal
-nulls both, so either reaches a live article at once, without a republish.
+nulls both, so either reaches a live article at once, without a republish. Either moves
+the working copy's "Last saved" time and never the published dates, which is accepted
+as is.
 
 **List reads never carry a body, and a card shows nothing derived from one.**
 
@@ -50,7 +52,9 @@ share and the canonical. The slug is derived from the title of the version in th
 locale, on every read, and stored nowhere; it resolves in that locale only, matched
 against the live titles in app code. Retitling changes the shared address and old shared
 links stop resolving. Two titles deriving one slug in a locale leave it to the article
-that went live first; the newer is reachable by its id. The address helpers are in
+that went live first; the newer is reachable by its id. Matching in app code reads every
+live title of the locale, which is fine at the Library's size; if it reaches the
+thousands, move the lookup into the database. The address helpers are in
 `src/components/library/`, and every link to an article goes through them.
 
 **The URL's locale is the site's, exactly as on a product page**: the chrome is the page's
@@ -62,7 +66,7 @@ version it shows**: its own locale's where written, else the fallback's, and onl
 locales written are `hreflang` versions, in the sitemap too. The rule is shared with the
 Team pages, in `src/lib/metadata/`. Text the page shows in another language than the
 page's is marked with `lang`, on the article and on a card. The Library is promoted
-(`docs/architecture/discoverability.md`): indexed, in the sitemap with each article's
+(`docs/architecture/site-quality.md`): indexed, in the sitemap with each article's
 publish date, and each article listed in `llms.txt`. The admin preview stays `noindex`.
 
 **There is no delete.** An article leaves the public Library by unpublishing.

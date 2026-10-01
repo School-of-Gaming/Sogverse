@@ -34,7 +34,7 @@ interface PageProps {
 /**
  * Robots policy: **noindex, unconditionally**, whatever the product — the
  * whole `/schools` tree is reachable, never promoted
- * (`docs/architecture/discoverability.md`). Its products are only for families
+ * (`docs/architecture/site-quality.md`). Its products are only for families
  * living in the named municipalities, and a consumer product opened here is a
  * second URL for a row whose promoted page, if it has one, is its shop
  * address. The Open Graph card is the product's own, from the builder the shop

@@ -64,7 +64,7 @@ export default async function ShopPage() {
   // The structured-data block reads the same prefetched rows as the grid, so it
   // can never list a product the page does not show — and only shop-visible
   // products are ever prefetched here, which is what keeps unlisted ones out
-  // (`docs/architecture/discoverability.md`).
+  // (`docs/architecture/site-quality.md`).
   return (
     <>
       <ShopItemListJsonLd products={products} locale={await getLocale()} />

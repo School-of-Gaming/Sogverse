@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
   // tree is public for convenience, not because the offer is open: these
   // products are only for families living in the named municipalities, and
   // strangers on the internet discovering them is the failure the tag
-  // prevents (`docs/architecture/discoverability.md`). No `hreflang`
+  // prevents (`docs/architecture/site-quality.md`). No `hreflang`
   // alternates either: a page telling crawlers to leave has no business
   // annotating its language versions, and the site-wide card is inherited
   // from the layout for the links people share.

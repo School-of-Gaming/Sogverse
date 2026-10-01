@@ -18,7 +18,7 @@ import { articleAddress, type AddressableArticle } from "../article-address";
 
 /*
  * An article as crawlers and link previews meet it. The Library is promoted
- * (`docs/architecture/discoverability.md`), so an article carries a
+ * (`docs/architecture/site-quality.md`), so an article carries a
  * canonical, its language versions and an `Article`.
  *
  * Its canonical and language versions follow the rule every page written per

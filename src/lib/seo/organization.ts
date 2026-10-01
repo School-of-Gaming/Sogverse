@@ -33,7 +33,7 @@ import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
  * The legacy marketing site leads the list on purpose. Search engines' notion
  * of the School of Gaming entity is attached to it today, and this entry says
  * the Organization published here is that same entity — the hand-over the
- * discoverability doc's first backlog item is about. It goes when the host is
+ * site-quality doc's first "found" backlog item is about. It goes when the host is
  * retired, or stays harmlessly once the host redirects here.
  */
 export const SAME_AS = [

@@ -442,7 +442,7 @@ export const ROUTES = {
   about: "/about",
   /**
    * The Library — School of Gaming's articles for parents. Public and
-   * promoted (`docs/architecture/discoverability.md`).
+   * promoted (`docs/architecture/site-quality.md`).
    */
   library: "/library",
   /** The index filtered to one category — what a category eyebrow links to. */
@@ -467,7 +467,7 @@ export const ROUTES = {
     ({ pathname: "/library/[idOrSlug]/preview", params: { idOrSlug: id } }) as const,
   /**
    * The Team — every public profile, leadership first, then the Game
-   * Educators. Public and promoted (`docs/architecture/discoverability.md`).
+   * Educators. Public and promoted (`docs/architecture/site-quality.md`).
    */
   team: "/team",
   /**
