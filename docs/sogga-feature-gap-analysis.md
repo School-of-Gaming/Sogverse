@@ -91,8 +91,8 @@ occurrence. `did_not_run` / `needs_substitute` columns were added with the gedu 
 feed and deliberately dropped when the family feed replaced it; `cancel_session` and
 `reschedule_session` are reserved
 names only, and cancellation is where the occurrence expansion first gains a subtraction
-(substitution needed none). The substitution flow is also **in-app only** — the `ROADMAP.md`
-WhatsApp / Discord / email fan-out on **Auto substitution** is not built.
+(substitution needed none). The substitution flow is also **in-app only** — a WhatsApp / Discord / email
+fan-out of substitution offers is not built.
 
 **Priority:** `Medium` (down from High — substitution shipped; cancellation is what is left)
 **Complexity:** `Medium` — An occurrence-override shape on `group_sessions` (cancelled,
@@ -253,10 +253,9 @@ progress bars, a radar chart, an achievement grid and unlock notifications.
 SOGGA's "Common Sense" is now Wit), Yty-Points, Quests, Achievement Badges and the metal
 tiers exist as the Yty constants module and the `yty` messages namespace, rendered on the
 public `/about` page. No `achievements`, `badges`, `quests` or points tables; nothing is
-awarded or stored; the gamer dashboard explicitly has no Yty section. `ROADMAP.md` names
-this in as many words ("the product carries the vocabulary without the mechanics behind
-it") and schedules **Gamer Yty** for November 2026, with Yty-Points balances, Achievement
-Badges and Quests unscheduled behind it.
+awarded or stored; the gamer dashboard explicitly has no Yty section. The product carries the vocabulary
+without the mechanics behind it; the game mechanism and the gamer profile that would close
+that gap are the platform's top priority.
 
 **Priority:** `Medium`
 **Complexity:** `Very High` — Points ledger, achievement definitions with translations
@@ -400,8 +399,8 @@ three staff commands: `/geduguru` and `/happinappi` (Gemini assistants over the 
 docs) and `/reset-password` (Minecraft Education). Voice moved to Daily.co. No account
 linking, no role sync, no per-club guild or classroom.
 
-**Still missing:** Everything community-shaped. `ROADMAP.md` moves the other way — Gedu
-Guru and support tickets are to be handled natively in Sogverse — so the missing pieces
+**Still missing:** Everything community-shaped. The direction is the other way — help
+bots and support tickets are to be handled natively in Sogverse — so the missing pieces
 are not planned.
 
 **Priority:** `Low`
