@@ -30,11 +30,16 @@ const ICONS: Record<PublicDestinationKey, LucideIcon> = {
   about: School,
 };
 
-const HREFS: Record<PublicDestinationKey, string> = {
+/** The destinations the typed `Link` can name — every one but Team. */
+const LINK_HREFS = {
   shop: ROUTES.shop,
   library: ROUTES.library,
-  team: TEAM_PATH,
   about: ROUTES.about,
+} as const satisfies Record<Exclude<PublicDestinationKey, "team">, string>;
+
+const HREFS: Record<PublicDestinationKey, string> = {
+  ...LINK_HREFS,
+  team: TEAM_PATH,
 };
 
 export interface PublicDestination {
@@ -83,30 +88,16 @@ export function PublicDestinationLink({
     ...props,
     "aria-current": destination.isActive ? ("page" as const) : undefined,
   };
-  switch (destination.key) {
-    case "team":
-      return (
-        <a href={TEAM_PATH} {...shared}>
-          {children}
-        </a>
-      );
-    case "shop":
-      return (
-        <Link href={ROUTES.shop} {...shared}>
-          {children}
-        </Link>
-      );
-    case "library":
-      return (
-        <Link href={ROUTES.library} {...shared}>
-          {children}
-        </Link>
-      );
-    case "about":
-      return (
-        <Link href={ROUTES.about} {...shared}>
-          {children}
-        </Link>
-      );
+  if (destination.key === "team") {
+    return (
+      <a href={TEAM_PATH} {...shared}>
+        {children}
+      </a>
+    );
   }
+  return (
+    <Link href={LINK_HREFS[destination.key]} {...shared}>
+      {children}
+    </Link>
+  );
 }

@@ -161,14 +161,24 @@ html:has([data-reserve-scroll-gutter]) {
   }
 }
 
+/* Focus and scrollIntoView never park an element behind the tab bar. */
+html {
+  scroll-padding-bottom: var(--tab-bar-height);
+}
+
 /* Whatever holds the phone tab bar pays its height as bottom padding, so the
    last thing on the page — the footer, a dashboard's last card — scrolls clear
    of a bar that is fixed over it. Keyed on the bar's own marker rather than
    written into each layout, so it holds wherever the header (which renders the
    bar) is composed: a layout's `min-h-screen` wrapper takes it inside its
-   border box, and a header rendered straight into the body pads the body. */
-:has(> [data-tab-bar]) {
-  padding-bottom: var(--tab-bar-height);
+   border box, and a header rendered straight into the body pads the body.
+   Phone widths only, so it never touches desktop padding — and below `md` it
+   replaces the holder's own bottom padding, which therefore must not be relied
+   on there. */
+@media (width < 48rem) {
+  :has(> [data-tab-bar]) {
+    padding-bottom: var(--tab-bar-height);
+  }
 }
 
 body {

@@ -50,7 +50,7 @@ The strip is the logo lockup, the nav run, the locale picker and the account slo
 
 **Rule: only the first tab may change with auth.** The tabs are five equal cells, so while auth resolves the first cell swaps its word and the other four hold still. A label that does not fit its cell ends in an ellipsis on one line; the text node is still the whole word, so the accessible name is too.
 
-**Rule: the page pays the bar's height, by mechanism.** `--tab-bar-height` in `globals.css` is the bar's height plus the bottom safe-area inset, and zero from `md` up; a rule keyed on the bar's own marker gives whatever element contains it that much bottom padding — a layout's `min-h-screen` wrapper takes it inside its border box, and a header rendered straight into the body pads the body. So the last thing on a page is never behind the bar, and no layout states the padding itself. Anything else fixed to the bottom of the viewport reads the same variable to float above the bar: the voice room's control dock does.
+**Rule: the page pays the bar's height, by mechanism.** `--tab-bar-height` in `globals.css` is the bar's height plus the bottom safe-area inset, and zero from `md` up; a rule keyed on the bar's own marker gives whatever element contains it that much bottom padding — a layout's `min-h-screen` wrapper takes it inside its border box, and a header rendered straight into the body pads the body. That rule applies below `md` only, where it replaces the holder's own bottom padding — so the bar's holder must not rely on its own bottom padding there. So the last thing on a page is never behind the bar, and no layout states the padding itself; `html`'s `scroll-padding-bottom` keeps focus and `scrollIntoView` clear of it too. Anything else that has to end at the bottom of the viewport reads the same variable to stay above the bar: the voice room's control dock floats over it, and the admin sidebar rail's sticky height leaves it out.
 
 **Rule: the bar is `z-40`, under everything that overlays the page.** The cookie strip (`z-50`) covers it while it is up; dialogs, sheets and popovers portal in at `z-50` above it; the header's own menus paint inside the header's `z-50`.
 
@@ -100,7 +100,7 @@ The header avatar is a dropdown, not a link (`account-menu.tsx`). It is the sing
 
 Only the admin dashboard renders a sidebar (`navItemsByRole` in `sidebar.tsx` is keyed by role and only `admin` has entries). Parents, gamers, and gedus reach their dashboards via header affordances and have no nested sub-routes needing nav.
 
-The sidebar is `position: sticky; top: var(--header-height)` with an explicit `h-[calc(100vh-var(--header-height))]` and `self-start`. It sits in the dashboard flex row beside `<main>`. It works because:
+The sidebar is `position: sticky; top: var(--header-height)` with an explicit `h-[calc(100vh-var(--header-height)-var(--tab-bar-height))]` (the tab bar rule above) and `self-start`. It sits in the dashboard flex row beside `<main>`. It works because:
 
 - The dashboard wrapper's height is the natural height of its tallest child (`<main>`), which can exceed the viewport.
 - `position: sticky` keeps the sidebar visible as the document scrolls past it.

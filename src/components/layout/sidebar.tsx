@@ -110,14 +110,15 @@ export function Sidebar() {
         // Sticks to the bottom edge of the sticky Header by reading
         // `--header-height` from `globals.css` — the same variable the
         // header itself uses. Height is pinned to the visible viewport
-        // below the header so the user-info section stays anchored to the
-        // bottom while the dashboard <main> scrolls with the document.
+        // between the header and the phone tab bar (`--tab-bar-height`, zero
+        // from `md` up) so the user-info section stays anchored to the
+        // bottom, never behind the bar, while the dashboard <main> scrolls with the document.
         //
         // The rail has no palette of its own: it is chrome, and composes from
         // the general neutrals like every other surface. Its ground is the
         // card, its edge the general border, its hover fill `muted`, and the
         // active entry the brand pair.
-        `sticky top-[var(--header-height)] flex h-[calc(100vh-var(--header-height))] flex-col self-start border-r border-border bg-card ${collapseTransition}`,
+        `sticky top-[var(--header-height)] flex h-[calc(100vh-var(--header-height)-var(--tab-bar-height))] flex-col self-start border-r border-border bg-card ${collapseTransition}`,
         collapsed ? "w-18" : "w-18 md:w-64"
       )}
     >

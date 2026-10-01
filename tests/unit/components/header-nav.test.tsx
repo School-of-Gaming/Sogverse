@@ -141,7 +141,7 @@ describe("Header nav — who gets the gedu items", () => {
     expect(navTexts()).toEqual([
       en.header.invoicing,
       // Both label spans are in the DOM; one is hidden by breakpoint.
-      en.header.nav.substitutionsPhone + en.header.nav.substitutions,
+      en.header.nav.substitutionsShort + en.header.nav.substitutions,
       en.header.teamProfile,
       ...PUBLIC_LINKS,
     ]);
@@ -291,7 +291,7 @@ describe("Header nav — the French short label", () => {
       name: en.header.nav.substitutions,
     });
     expect(link.querySelectorAll("span")).toHaveLength(2);
-    expect(en.header.nav.substitutionsPhone).toBe(en.header.nav.substitutions);
+    expect(en.header.nav.substitutionsShort).toBe(en.header.nav.substitutions);
   });
 });
 

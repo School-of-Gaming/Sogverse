@@ -111,7 +111,6 @@ document.addEventListener("click", (event) => {
 });
 
 const MY_SOG = messages.dashboardSections.pageTitle;
-/** The nav row a gedu's header hands down at phone width — the header's key. */
 /** The gedu's own invoicing month — a fixed row only their menu carries. */
 const INVOICING = messages.header.invoicing;
 const SETTINGS = messages.common.settings;

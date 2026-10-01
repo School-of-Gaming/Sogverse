@@ -22,6 +22,7 @@ import { LocalePicker } from "@/components/layout/locale-picker";
 import { hasOwnNavItem } from "@/components/layout/own-nav-item";
 import { SiteHeaderShell } from "@/components/layout/site-header-shell";
 import {
+  isAtOrUnder,
   PublicDestinationLink,
   usePublicDestinations,
 } from "@/components/layout/public-nav";
@@ -107,12 +108,8 @@ export function Header({ navRole }: HeaderProps) {
    * role has a page to send here.
    */
   const showsSubstitutions = navFor === "gedu";
-  const isOnSubstitutions =
-    pathname === ROUTES.gedu.substitutions ||
-    pathname.startsWith(ROUTES.gedu.substitutions + "/");
-  const isOnInvoicing =
-    pathname === ROUTES.gedu.invoicing ||
-    pathname.startsWith(ROUTES.gedu.invoicing + "/");
+  const isOnSubstitutions = isAtOrUnder(pathname, ROUTES.gedu.substitutions);
+  const isOnInvoicing = isAtOrUnder(pathname, ROUTES.gedu.invoicing);
   /**
    * The gedu's My profile item: their own public profile, which they come back to
    * rather than set once. Only from `lg` up, like Invoicing — below that each
@@ -458,7 +455,7 @@ export function Header({ navRole }: HeaderProps) {
                       four of the five set the same word in both keys, and the
                       uniform pair is what keeps this component free of any
                       per-locale branch. */}
-                  <span className="lg:hidden">{t("nav.substitutionsPhone")}</span>
+                  <span className="lg:hidden">{t("nav.substitutionsShort")}</span>
                   <span className="hidden lg:inline">
                     {t("nav.substitutions")}
                   </span>
@@ -510,7 +507,7 @@ export function Header({ navRole }: HeaderProps) {
         first={{
           href: logoHref,
           label: logoHref === ROUTES.home ? t("nav.home") : dashboardLabel,
-            isActive: isOnLogoTarget,
+          isActive: isOnLogoTarget,
           onClick: () => {
             if (profile?.role) {
               trackDashboardNav({
