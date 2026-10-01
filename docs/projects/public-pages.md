@@ -310,9 +310,7 @@ Sogverse needs checking at phone width for the same reason: long compounds.
 
 **The project's goal widened (owner, 2026-10-01): trust, and being found by search engines
 and LLMs.** Home, About, the Library and a Team page are one piece of work, along with how a
-parent reaches them. Four workstreams, built in this order on the project branch; the
-Library and Team each get a plan in `docs/plans/` before building, since both change the
-schema and what `anon` can read.
+parent reaches them. Four workstreams, built on the project branch.
 
 1. **The way in.** **Decided (owner, 2026-10-01): a bottom tab bar on phones**, chosen
    over a "Menu" sheet after trying both on the branch. It is on every page with the
