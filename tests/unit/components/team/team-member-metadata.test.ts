@@ -11,15 +11,16 @@ import {
 vi.unmock("@/i18n/navigation");
 vi.unmock("next/navigation");
 
-// The site card's alt text reads the catalog; a stub keeps the assertions on
-// the shape and says which locale was asked for.
+// The card's alt text reads the catalog; a stub keeps the assertions on the
+// shape and says which locale was asked for.
 vi.mock("next-intl/server", () => ({
   getTranslations: async (
     arg: string | { locale: string; namespace: string },
   ) => {
     const namespace = typeof arg === "string" ? arg : arg.namespace;
     const locale = typeof arg === "string" ? "en" : arg.locale;
-    return (key: string) => `${locale}:${namespace}.${key}`;
+    return (key: string, values?: Record<string, string>) =>
+      `${locale}:${namespace}.${key}${values === undefined ? "" : JSON.stringify(values)}`;
   },
 }));
 
@@ -36,6 +37,8 @@ const {
   teamMemberLocales,
   teamMemberMetadata,
 } = await import("@/components/team/public/team-member-metadata");
+
+const { teamCardUrl } = await import("@/lib/og/team-card");
 
 const SECOND_EETU_ID = "0b5e8c52-8d3f-4a54-9a27-7d8f2c6e1a90";
 
@@ -147,9 +150,10 @@ describe("teamMemberMetadata", () => {
     expect(metadata.openGraph).toMatchObject({ locale: "en" });
   });
 
-  it("is a profile card on the site-wide image, with the names the page shows", async () => {
+  it("is a profile card on the person's own image, with the names the page shows", async () => {
+    const person = publicGeduProfile();
     const gedu = await teamMemberMetadata({
-      person: publicGeduProfile(),
+      person,
       address: "eetu-creeperhug",
       requestLocale: "en",
       name: "Eetu “CreeperHug”",
@@ -163,12 +167,24 @@ describe("teamMemberMetadata", () => {
     });
     // Never a surname for a Gedu.
     expect(gedu.openGraph).not.toHaveProperty("lastName");
-    // The site-wide card at the page's locale, not the portrait: a 4:5 photo
-    // crops badly to a link preview's wide frame.
-    expect(gedu.openGraph?.images).toEqual([
-      expect.objectContaining({ url: "/opengraph-images/site?locale=en" }),
-    ]);
-    expect(gedu.twitter).toMatchObject({ card: "summary_large_image" });
+    // The person's own card at the page's locale, versioned, at the card's
+    // size, with an alt naming who it shows and what they do — and the same
+    // image for the twitter card, which Next would not inherit.
+    const card = {
+      url: teamCardUrl(person, "en"),
+      alt: `en:metadata.og.team.alt${JSON.stringify({
+        name: "Eetu “CreeperHug”",
+        role: "en:team.profile.geduTitle",
+      })}`,
+      width: 1200,
+      height: 630,
+    };
+    expect(card.url).toMatch(/^\/opengraph-images\/team\/[0-9a-f-]{36}\?locale=en&v=[0-9a-f]{16}$/);
+    expect(gedu.openGraph?.images).toEqual([card]);
+    expect(gedu.twitter).toMatchObject({
+      card: "summary_large_image",
+      images: [card],
+    });
 
     const admin = await teamMemberMetadata({
       person: publicAdminProfile(),
@@ -177,6 +193,12 @@ describe("teamMemberMetadata", () => {
       name: "Laura “Nightowl” Virtanen",
     });
     expect(admin.openGraph).toMatchObject({ lastName: "Virtanen" });
+    // A leader's alt names their own title.
+    expect(admin.openGraph?.images).toEqual([
+      expect.objectContaining({
+        alt: expect.stringContaining('"role":"Chief Executive Officer"'),
+      }),
+    ]);
   });
 });
 

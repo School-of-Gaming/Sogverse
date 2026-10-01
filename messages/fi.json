@@ -17,6 +17,9 @@
         "subline": "Ilmainen ohjelma, jota vetävät oikeat pelikasvattajat",
         "collaboration": "Yhteistyössä"
       },
+      "team": {
+        "alt": "{name}, {role}, School of Gaming"
+      },
       "pages": {
         "signIn": {
           "title": "Kirjaudu School of Gamingiin",

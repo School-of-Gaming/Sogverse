@@ -17,6 +17,9 @@
         "subline": "Programme gratuit, animé par de vrais Game Educators",
         "collaboration": "Une collaboration entre"
       },
+      "team": {
+        "alt": "{name}, {role} chez School of Gaming"
+      },
       "pages": {
         "signIn": {
           "title": "Connectez-vous à School of Gaming",

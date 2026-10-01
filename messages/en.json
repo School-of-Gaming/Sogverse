@@ -17,6 +17,9 @@
         "subline": "A free programme, run by real Game Educators",
         "collaboration": "A collaboration between"
       },
+      "team": {
+        "alt": "{name}, {role} at School of Gaming"
+      },
       "pages": {
         "signIn": {
           "title": "Sign in to School of Gaming",

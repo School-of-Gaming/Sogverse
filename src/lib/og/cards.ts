@@ -21,7 +21,8 @@
  *
  * Pages emit these URLs explicitly from their own `generateMetadata` — the
  * `[locale]` layout for the site-wide card, `/roblox` and its three sub-pages
- * for the programme card.
+ * for the programme card. A team member's page emits a third, drawn per
+ * person, whose address and caching are its own (`./team-card`).
  */
 
 import {

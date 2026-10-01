@@ -4,7 +4,7 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
-import { ogCardImage } from "@/lib/og/card-metadata";
+import { teamCardImage } from "@/lib/og/card-metadata";
 import { organizationId } from "@/lib/seo/organization";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 
@@ -87,12 +87,13 @@ export function teamMemberAlternates(
  * - **The title is the name as the heading shows it** (`name`, plain text),
  *   under the site's title template. The description is their one-line intro
  *   in the words the page shows.
- * - **The card is the site-wide card** at the request's locale, for now: a
- *   portrait photo crops badly to a link preview's wide frame. It has to be
- *   stated, because Next assigns a child's `openGraph` and `twitter` over the
- *   layout's rather than merging them; `siteName` is restated for the same
- *   reason. `og:type` is `profile`, with the names the page shows — a Gedu's
- *   first name and nickname, an admin's surname too.
+ * - **The card is the person's own** (`/opengraph-images/team/<id>`) at the
+ *   request's locale, drawn for a link preview's wide frame rather than the
+ *   portrait cropped into it. It has to be stated, because Next assigns a
+ *   child's `openGraph` and `twitter` over the layout's rather than merging
+ *   them; `siteName` is restated for the same reason. `og:type` is `profile`,
+ *   with the names the page shows — a Gedu's first name and nickname, an
+ *   admin's surname too.
  */
 export async function teamMemberMetadata({
   person,
@@ -112,7 +113,7 @@ export async function teamMemberMetadata({
   const description = written?.shortDescription;
   const canonical = teamMemberCanonicalPath(person, address, locale);
   const languages = teamMemberAlternates(person, address);
-  const card = await ogCardImage("site", locale);
+  const card = await teamCardImage(person, locale, name);
 
   return {
     title: name,

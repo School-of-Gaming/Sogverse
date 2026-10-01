@@ -2,9 +2,9 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
-// The types module directly rather than the feature barrel: the barrel carries
+// The module directly rather than the feature barrel: the barrel carries
 // browser-only React Query hooks.
-import { TEAM_PHOTOS_BUCKET } from "@/services/team-profiles/team-profiles.types";
+import { readPublicTeamPhoto } from "@/services/team-profiles/public-team-photo";
 import type { Database } from "@/types/database.types";
 
 /**
@@ -18,13 +18,8 @@ import type { Database } from "@/types/database.types";
  * request instead.
  *
  * **The bucket's own read rule is the check.** The client is built with the
- * anon key and no cookies, and the team-photos storage policy lets anon read
- * an object only while it is the current photo of an approved profile of an
- * admin or a Gedu. Listing the person's folder therefore finds that one photo
- * or nothing — an older photo still waiting to be swept, a crop not yet saved,
- * and every photo of a profile that is not public are all invisible to it — so
- * the route never needs the object's name from anywhere else, and never hands
- * it out.
+ * anon key and no cookies, so the team-photos storage policy decides the read
+ * (`readPublicTeamPhoto`, which the share card reads through too).
  *
  * **Everything that is not a public photo answers 404**: a hidden profile, a
  * profile not yet made public, a person who is not staff, an id naming no one.
@@ -53,27 +48,6 @@ const CACHE_CONTROL = "public, max-age=300, s-maxage=300";
  */
 const CONTENT_SECURITY_POLICY = "default-src 'none'; sandbox";
 
-/** The only types the route serves: what the photo editor saves. */
-const SERVED_TYPES = ["image/jpeg", "image/webp"] as const;
-type ServedType = (typeof SERVED_TYPES)[number];
-
-function isServedType(type: string): type is ServedType {
-  return (SERVED_TYPES as readonly string[]).includes(type);
-}
-
-/**
- * The content type to serve a stored photo as: the stored type when it is a
- * JPEG or a WebP, otherwise the one its name's extension says, otherwise none.
- * Never any other stored type — an SVG served from our origin runs script.
- */
-function contentTypeOf(name: string, stored: string): ServedType | null {
-  if (isServedType(stored)) return stored;
-  const lower = name.toLowerCase();
-  if (lower.endsWith(".webp")) return "image/webp";
-  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
-  return null;
-}
-
 export const GET = defineRoute({
   posture: "public",
   reason:
@@ -88,37 +62,12 @@ export const GET = defineRoute({
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       { auth: { persistSession: false } },
     );
-    const bucket = supabase.storage.from(TEAM_PHOTOS_BUCKET);
+    const photo = await readPublicTeamPhoto(supabase, params.userId);
+    if (!photo.ok) throw new ApiError(photo.reason, 404);
 
-    // The storage policy shows anon at most one object in the folder: the
-    // current photo of a public profile.
-    const listed = await bucket.list(params.userId);
-    // A folder entry has no id; the write policy admits no subfolder anyway.
-    const name = listed.data?.find((object) => object.id !== null)?.name;
-    if (listed.error !== null || name === undefined) {
-      throw new ApiError(`no public team photo for ${params.userId}`, 404);
-    }
-
-    const { data, error } = await bucket.download(`${params.userId}/${name}`);
-    if (error !== null) {
-      // Hidden or replaced between the listing and the download.
-      throw new ApiError(
-        `public team photo for ${params.userId} not readable: ${error.message}`,
-        404,
-      );
-    }
-
-    const contentType = contentTypeOf(name, data.type);
-    if (contentType === null) {
-      throw new ApiError(
-        `public team photo for ${params.userId} is not a JPEG or a WebP`,
-        404,
-      );
-    }
-
-    return new Response(data, {
+    return new Response(photo.data, {
       headers: {
-        "Content-Type": contentType,
+        "Content-Type": photo.contentType,
         "Cache-Control": CACHE_CONTROL,
         "Content-Security-Policy": CONTENT_SECURITY_POLICY,
       },

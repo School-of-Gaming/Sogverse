@@ -17,6 +17,9 @@
         "subline": "Ett gratis program, lett av riktiga spelfostrare",
         "collaboration": "I samarbete med"
       },
+      "team": {
+        "alt": "{name}, {role} på School of Gaming"
+      },
       "pages": {
         "signIn": {
           "title": "Logga in på School of Gaming",

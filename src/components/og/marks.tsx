@@ -3,7 +3,7 @@
  *
  * next/og cannot import an `.svg` as a component and satori has no filesystem,
  * so a mark reaches an `ImageResponse` either as inlined elements or as a
- * base64 data-URI baked into the source. Inlining is what we do, for all three,
+ * base64 data-URI baked into the source. Inlining is what we do, for all four,
  * because a partner mark carries usage rules a reviewer has to be able to
  * *check*: the Roblox guidelines forbid recolouring outright, and a literal
  * `fill="white"` sitting in the diff is that check, where a base64 blob would
@@ -13,10 +13,10 @@
  * the file named above it in `src/assets/` — that file stays the source of
  * truth, and re-cutting a mark means re-copying it here in the same change. The
  * only edits made in transit are mechanical: self-closing the tags, and (for our
- * own mark alone) swapping the two literal fills for the named tokens they
+ * own marks alone) swapping the two literal fills for the named tokens they
  * already equal.
  *
- * All three take a `height` and derive the width from the real viewBox ratio,
+ * All four take a `height` and derive the width from the real viewBox ratio,
  * which is both what keeps a mark from being scaled unevenly and the shape the
  * live `/roblox` lockup already uses. The ratios span 1.8:1 to 5.4:1, so equal
  * heights would make our squat badge tower over the two wordmarks rather than
@@ -48,6 +48,26 @@ export function SogMark({ height }: { height: number }) {
         <polygon points="167.3,148.3 167.3,152.2 155.7,152.2 155.7,124.8 159.6,124.8 159.6,148.3"/>
         <polygon points="119.2,124.8 119.2,152.2 115.3,152.2 115.3,140 110.4,140 110.4,152.2 106.5,152.2 106.5,124.8 110.4,124.8 110.4,136.6 115.3,136.6 115.3,124.8"/>
         <rect x="268.3" y="124.8"   width="3.9" height="27.4"/>
+      </g>
+    </svg>
+  );
+}
+
+
+/**
+ * Our plain badge, the mark without its "SCHOOL OF GAMING" line —
+ * `src/assets/brand/sog-logo-simple.svg`. A card that sets the name beside it
+ * draws the line with `SogWordmark`, which is the full mark's own lettering.
+ */
+export function SogBadge({ height }: { height: number }) {
+  return (
+    <svg width={height * (379 / 207.5)} height={height} viewBox="0 0 379 207.5">
+      <path d="M352.5,50.1L197.9,4.2c-4.4-1-9-1.1-13.4-0.2L27,47.6c-13.9,3-23.8,15.3-23.8,29.5v54.4 c0,14.3,10,26.6,23.9,29.6l156.2,42.3c4.3,0.9,8.7,0.9,13,0l155.9-44.8c13.8-3.1,23.6-15.4,23.6-29.6V79.5 C375.9,65.5,366.2,53.3,352.5,50.1z" fill={BRAND.act}/>
+      <g transform="translate(189.5 103.725) scale(1.2) translate(-189.495 -85.65)" fill={BRAND.actForeground}>
+        <path d="M137.8,64.5l-3.2,3.2c-1,1-2.2,1.5-3.6,1.5H87.6l-10.4,0.1c-1.1,0-2.2-0.3-3-1c-2.2-1.7-2.7-4.8-1-7.1l2.4-3.3 c1-1.3,2.5-2,4.1-2h54.5c1.3,0,2.6,0.5,3.6,1.5C139.7,59.3,139.7,62.5,137.8,64.5z"/>
+        <path d="M144.1,100.2l-9.8,13.3c-1,1.3-2.5,2-4.1,2H75.7c-1.3,0-2.6-0.5-3.5-1.4c-2-2-2-5.2-0.1-7.2l3.2-3.3 c1-1,2.2-1.5,3.6-1.5h41c1.5,0,2.9-0.7,3.8-1.8c1.6-1.9,1.7-4.6,0.1-6.5l-0.2-0.2c-1-1.2-2.4-1.9-4-1.9H79.3c-1.6,0-3.1-0.7-4.1-2 l-1.7-2.3c-0.7-0.9-1-1.9-1-3c0-2.8,2.3-5.1,5.1-5.1l53.1,0.3c1.6,0,3.1,0.7,4.1,2l9.4,12.5C145.4,96,145.4,98.4,144.1,100.2 z"/>
+        <path d="M230.8,86.2v13c0,1.8-0.7,3.5-1.9,4.7l-9.6,9.6c-1.3,1.2-3,1.9-4.8,1.9h-44.1c-1.8,0-3.5-0.7-4.8-1.9l-9.6-9.6 c-1.2-1.3-1.9-3-1.9-4.7V72.1c0-1.8,0.7-3.5,1.9-4.7l9.6-9.7c1.3-1.2,3-1.9,4.8-1.9h44.1c1.8,0,3.5,0.7,4.8,1.9c1.3,1.3,2,3,2,4.8 c0,3.7-3,6.7-6.8,6.7h-35.8c-3.7,0-6.7,3-6.7,6.7v19.6c0,3.7,3,6.7,6.7,6.7h27.4c3.7,0,6.7-3,6.7-6.7v-9.3c0-3.7,2.9-6.7,6.6-6.7 h4.6C227.8,79.5,230.8,82.5,230.8,86.2z"/>
+        <path d="M308.3,84.8v15.2c0,1.4-0.5,2.7-1.5,3.7L296.6,114c-1,1-2.3,1.5-3.7,1.5h-38.2c-1.4,0-2.7-0.5-3.6-1.5 l-10.5-10.4c-1-1-1.5-2.3-1.5-3.7V71.5c0-1.4,0.5-2.7,1.5-3.6l10.6-10.6c1-1,2.3-1.5,3.7-1.5h43.3c2.8,0,5.2,2.3,5.2,5.2 c0,1.4-0.5,2.7-1.5,3.6l-3,3c-1,1-2.3,1.5-3.7,1.5h-32.8c-2.8,0-5.1,2.3-5.1,5.1V97c0,2.8,2.3,5.1,5.1,5.2h23 c2.8,0,5.2-2.3,5.2-5.2s-2.3-5.2-5.2-5.2h-5c-1.4,0-2.7-0.5-3.7-1.5l-1.9-1.9c-2-2-2-5.3,0-7.3c1-1,2.3-1.5,3.6-1.5h24.9 C306,79.6,308.3,81.9,308.3,84.8z"/>
       </g>
     </svg>
   );
