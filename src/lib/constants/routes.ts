@@ -689,6 +689,11 @@ export const ROUTES = {
     /** One article's editor, where it is also published. */
     libraryArticle: (id: string) =>
       ({ pathname: "/admin/library/[id]", params: { id } }) as const,
+    /**
+     * The big picture of Sogverse: the vision board an admin is sent to when
+     * they ask what the dream is. Static prose and artwork, English only.
+     */
+    platformVision: "/admin/platform-vision",
     camps: "/admin/camps",
     events: "/admin/events",
     /**
