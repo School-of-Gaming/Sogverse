@@ -14,7 +14,7 @@ child.** Conversion to a paying club is the measure, not time on page.
 **Rules for the whole project (owner, 2026-09-25):**
 
 - **Every locale, persuading its own audience.** English, Finnish, Swedish and French
-  each get the same care (`tlh` is a test locale). What persuades differs by culture
+  each get the same care (Klingon, `tlh`, is our easter-egg locale: supported for real where practical, but not a market these pages persuade). What persuades differs by culture
   and country, so a locale's copy is written to convince its own readers, not translated
   from the English case; which testimonials and proof lead may differ per locale too.
 - **Nothing about the pages is fixed.** Structure, layout, which pages exist, copy,

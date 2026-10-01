@@ -35,7 +35,7 @@ node scripts/preview-export/export.mjs --selftest   # no app, no login
 | `--pages <path>` | A module of the same shape, for a list nobody wants to commit. |
 | `--base <url>` | Default `http://localhost:3005`. Loopback only when the preset signs in — see the guard. |
 | `--out <dir>` | Default `scripts/output/preview-export/<preset>-<date>/`. |
-| `--locales` | Default `en,fi,sv,fr`. (`tlh` is a test locale.) |
+| `--locales` | Default `en,fi,sv,fr`. (Klingon, `tlh`, is our easter-egg locale, not one a review covers.) |
 | `--viewports` | `desktop` (1440×900), `mobile` (360×800), or both (the default). |
 | `--only <slug,…>` | Just these entries. |
 | `--selftest` | Composes placeholder pages, so the whole pipeline runs with no app. |
