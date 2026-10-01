@@ -327,12 +327,20 @@ parent reaches them. Four workstreams, built on the project branch.
    `noindex` and linked from nowhere until this pass. **Decided (owner, 2026-10-01):**
    - **An article has a version per language** (title, summary, body), which the data
      model does not hold today; an untranslated locale falls back to English.
-   - **Each version gets a readable slug generated from its title.** The id stays in the
-     link and is what resolves it: the slug is for humans, so there is no slug history
-     and no redirect logic.
+   - **Two addresses, neither redirecting:** `<library>/<id>`, stable and for
+     developers, in every locale; and `<library>/<slug>`, the one people share and the
+     canonical, where the slug is derived from the version's current title and stored
+     nowhere. A slug resolves in its own locale only. Retitling changes the shared
+     address and old shared links stop resolving; the id address always works. No slug
+     history, no redirects.
+   - **One Publish per article** publishes all its versions; a version is live once its
+     title, summary and body are written. Admins write each version in the editor.
+   - **An untranslated locale** is reached by the id address, shows the English text, and
+     canonicalises to the English slug address; `hreflang` joins only versions that
+     exist.
    - **The legacy sog.gg blog is out of scope**: importing it, and redirecting its URLs, is
      a separate project.
-   **Proposed:** the slug is derived by code, not edited by admins; covers (16:9,
+   **Proposed:** covers (16:9,
    1600×900) serve as the share image as they do now, close enough to the 1.91:1 card
    that platforms crop only slightly; sitemap entries with the real publish dates,
    `hreflang` across the versions that exist, and the articles listed in `llms.txt`.
@@ -342,6 +350,8 @@ parent reaches them. Four workstreams, built on the project branch.
      already agreed to this; the "ready" checkbox says the profile is ready, nothing more.
    - **Every approved profile is listed, trainee Gedus included.** Gedus show first name
      and gamer tag; leadership shows full name and title, as the profile already does.
+   **Decided:** a person's page has the same two addresses, `/team/<id>` and
+   `/team/<slug>`, the slug derived from first name and gamer tag.
    **Proposed:** `/team` and a page per person with the existing profile body; a
    narrow anon read that returns approved profiles only; photos served through the app
    with a public-check on each request (the design the team profiles service already
@@ -494,7 +504,9 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-09-25 | Every locale persuades its own audience; the pages are open to any change within the brand guidelines, and a guideline may be challenged through the owner (owner). |
 | 2026-09-25 | The project lives on its own branch, `feat/public-pages`, and merges into `dev` when the owner decides (owner). |
 | 2026-10-01 | The project's goal adds discoverability by search engines and LLMs; the Library and a Team page join it (owner). |
-| 2026-10-01 | Library articles get a version per language, each with a title-generated slug; the id stays in the link and resolves it, with no slug history or redirects; the legacy blog import is a separate project (owner). |
+| 2026-10-01 | Library articles get a version per language; the legacy blog import is a separate project (owner). |
+| 2026-10-01 | An article and a team member each have two addresses, by id and by a slug derived from the title (or first name and gamer tag) and stored nowhere; the slug address is canonical, a retitle changes it, nothing redirects (owner). |
+| 2026-10-01 | One Publish per article for all its language versions; untranslated locales show English and canonicalise to it (owner). |
 | 2026-10-01 | A team profile goes public on admin approval alone; every approved profile is listed, trainees included, Gedus by first name and gamer tag (owner). |
 | 2026-10-01 | Phones navigate by a bottom tab bar on every page, for every role; its first tab is the reader's home, the dashboard when signed in (owner). |
 | 2026-10-01 | A signed-in reader never reaches the home page (owner). |
