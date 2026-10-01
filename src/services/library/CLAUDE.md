@@ -33,7 +33,7 @@ no longer complete is one, since publishing would take it down.
 
 **Readers fall back from their locale to English to the first version written.** The
 service hands back every live version, in `SUPPORTED_LOCALES` order so "first" is stable;
-pages pick one with `localizeArticle` / `localizeArticleSummaries`. The admin preview
+each page picks one per article, for a list card by card. The admin preview
 shows the page locale's working version, the one the editor's Preview opens on, blanks
 and all.
 

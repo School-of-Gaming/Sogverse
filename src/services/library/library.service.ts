@@ -278,7 +278,7 @@ export class LibraryService {
    * Every published article, newest first by the date it first went live,
    * with every live version and no body: a list feeds cards, and a card shows
    * nothing derived from the body. The caller picks each article's version for
-   * its reader (`localizeArticleSummaries`). Walked, because the Library only
+   * its reader, card by card. Walked, because the Library only
    * grows. An article with no version it can show is left out.
    */
   async listPublishedArticles(): Promise<PublishedLibraryArticleSummary[]> {

@@ -239,17 +239,6 @@ export function localizeArticle(
   return version === null ? null : { ...shared, ...version };
 }
 
-/** Every article in a list, each in the version a reader of `locale` is shown. */
-export function localizeArticleSummaries(
-  articles: readonly PublishedLibraryArticleSummary[],
-  locale: SupportedLocale,
-): LocalizedLibraryArticleSummary[] {
-  return articles.flatMap((article) => {
-    const localized = localizeArticleSummary(article, locale);
-    return localized === null ? [] : [localized];
-  });
-}
-
 // ---------------------------------------------------------------------------
 // Unpublished changes
 // ---------------------------------------------------------------------------

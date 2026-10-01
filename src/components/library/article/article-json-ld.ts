@@ -23,8 +23,8 @@ export interface LibraryArticleJsonLdInput {
  * - The `publisher` is School of Gaming, by the `@id` of the `Organization`
  *   node the `[locale]` layout emits on every page, so a consumer joins the
  *   two instead of meeting a second, thinner company.
- * - The `url` is the canonical English address, and `inLanguage` is English at
- *   every locale's URL, because the article is.
+ * - The `url` is the page's canonical, which follows the version shown, and
+ *   `inLanguage` is that version's own language.
  *
  * Pure, so the whole shape is assertable without rendering a page.
  */

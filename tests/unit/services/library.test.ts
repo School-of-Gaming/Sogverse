@@ -9,7 +9,6 @@ import {
   hasUnpublishedChanges,
   libraryArticleInput,
   localizeArticle,
-  localizeArticleSummaries,
   type ComparableArticleCopy,
   type PublishedLibraryArticle,
 } from "@/services/library/library.contracts";
@@ -147,14 +146,6 @@ describe("localizing a published article", () => {
     expect(localizeArticle(article, "sv")).toMatchObject({ locale: "en", title: "Title" });
     const finnishOnly = { ...article, versions: [article.versions[1]] };
     expect(localizeArticle(finnishOnly, "fr")).toMatchObject({ locale: "fi" });
-  });
-
-  it("drops an article with no version from a list", () => {
-    expect(
-      localizeArticleSummaries([{ ...article, versions: [] }, article], "en").map(
-        (a) => a.title,
-      ),
-    ).toEqual(["Title"]);
   });
 });
 

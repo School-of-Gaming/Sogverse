@@ -13,7 +13,6 @@ export {
   hasUnpublishedChanges,
   libraryArticleInput,
   localizeArticle,
-  localizeArticleSummaries,
   localizeArticleSummary,
   type AdminLibraryArticle,
   type AdminLibraryArticleListItem,
