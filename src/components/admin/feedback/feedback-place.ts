@@ -2,11 +2,8 @@ import type { ComponentProps } from "react";
 import type { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import type { FeedbackDimension, FeedbackScope, FeedbackScopeKind } from "./aggregate-feedback";
-import {
-  DEFAULT_FEEDBACK_RANGE,
-  FEEDBACK_RANGE_PARAM,
-  type FeedbackRange,
-} from "./feedback-range";
+import { selectionQuery } from "./feedback-selection";
+import type { FeedbackPeriod } from "./feedback-tally";
 
 /** A link target the app's own typed `Link` accepts. */
 export type FeedbackHref = ComponentProps<typeof Link>["href"];
@@ -22,7 +19,7 @@ export type FeedbackOrigin =
 
 /**
  * **One page of the feedback section**, as data. Every link between the pages
- * is built from a place and the range on show.
+ * is built from a place and the selection on show.
  */
 export type FeedbackPlace =
   | { view: "overview" }
@@ -30,8 +27,8 @@ export type FeedbackPlace =
   | { view: "detail"; scope: FeedbackScope; origin: FeedbackOrigin | null }
   | { view: "responses" };
 
-/** The query parameter a detail page's origin travels in. */
-export const FEEDBACK_ORIGIN_PARAM = "from";
+/** The query parameter a detail page's origin travels in; `from` and `to` are the selection's. */
+export const FEEDBACK_ORIGIN_PARAM = "via";
 
 /** The origin token of the platform's "What gamers said" page. */
 const RESPONSES_TOKEN = "responses";
@@ -57,7 +54,7 @@ function firstOf(raw: string | string[] | undefined): string | undefined {
 }
 
 /**
- * The origin a `?from=` value names, or `null` for anything else — an unusable
+ * The origin a `?via=` value names, or `null` for anything else — an unusable
  * origin costs the reader nothing but the back link's destination, which then
  * falls to the scope's own list.
  */
@@ -85,10 +82,16 @@ function originToken(origin: FeedbackOrigin): string {
   }
 }
 
-/** The query a place carries: the range unless it is the default, and the place's own state. */
-export function feedbackPlaceQuery(place: FeedbackPlace, range: FeedbackRange): Record<string, string> {
-  const query: Record<string, string> =
-    range === DEFAULT_FEEDBACK_RANGE ? {} : { [FEEDBACK_RANGE_PARAM]: range };
+/**
+ * The query a place carries: the selection, always — the default is measured
+ * back from today, so a link that left it implicit would mean another period
+ * tomorrow — and the place's own state.
+ */
+export function feedbackPlaceQuery(
+  place: FeedbackPlace,
+  selection: FeedbackPeriod,
+): Record<string, string> {
+  const query = selectionQuery(selection);
   if (place.view === "detail" && place.origin !== null) {
     query[FEEDBACK_ORIGIN_PARAM] = originToken(place.origin);
   }
@@ -114,9 +117,9 @@ export function defaultBackPlace(scope: FeedbackScope): FeedbackPlace {
     : { view: "list", dimension: scope.kind };
 }
 
-/** A place's admin route, at a range. */
-export function adminFeedbackHref(place: FeedbackPlace, range: FeedbackRange): FeedbackHref {
-  const query = feedbackPlaceQuery(place, range);
+/** A place's admin route, at a selection. */
+export function adminFeedbackHref(place: FeedbackPlace, selection: FeedbackPeriod): FeedbackHref {
+  const query = feedbackPlaceQuery(place, selection);
   switch (place.view) {
     case "overview":
       return { pathname: ROUTES.admin.feedback, query };

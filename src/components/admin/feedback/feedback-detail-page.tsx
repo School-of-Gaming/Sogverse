@@ -1,22 +1,30 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
-import type {
-  FeedbackDetail,
-  FeedbackDetailStatement,
-  FeedbackGamerEntry,
-  PlatformComparison,
+import {
+  buildFeedbackDetail,
+  buildFeedbackTimeline,
+  type FeedbackDetail,
+  type FeedbackDetailStatement,
+  type FeedbackGamerEntry,
+  type FeedbackScope,
+  type PlatformComparison,
 } from "./aggregate-feedback";
 import { FeedbackDimensionRows } from "./feedback-dimension-rows";
 import { formatShare } from "./feedback-format";
 import { AnswerBreakdown, BelowAverage, Change, ShareText } from "./feedback-marks";
-import { useFeedbackHref } from "./feedback-nav";
+import {
+  FeedbackSelectionProvider,
+  useFeedbackHref,
+  useFeedbackPeriods,
+  type FeedbackRead,
+} from "./feedback-nav";
 import { FeedbackHero } from "./feedback-overview-page";
 import {
   defaultBackPlace,
@@ -24,7 +32,6 @@ import {
   type FeedbackHref,
   type FeedbackOrigin,
 } from "./feedback-place";
-import type { FeedbackRange } from "./feedback-range";
 import { WhatGamersSaid } from "./feedback-responses";
 import { FeedbackShell } from "./feedback-shell";
 import { useFeedbackStatementLabels, useRatingWord } from "./use-feedback-labels";
@@ -40,16 +47,41 @@ import { useFeedbackStatementLabels, useRatingWord } from "./use-feedback-labels
  * by name with how often they answered, and nothing that ranks them.
  */
 export function FeedbackDetailPage({
-  range,
-  detail,
+  read,
+  scope,
   origin,
 }: {
-  range: FeedbackRange;
-  detail: FeedbackDetail;
+  read: FeedbackRead;
+  scope: FeedbackScope;
+  origin: FeedbackOrigin | null;
+}) {
+  return (
+    <FeedbackSelectionProvider history={read.history} initial={read.selection}>
+      <DetailBody read={read} scope={scope} origin={origin} />
+    </FeedbackSelectionProvider>
+  );
+}
+
+function DetailBody({
+  read,
+  scope,
+  origin,
+}: {
+  read: FeedbackRead;
+  scope: FeedbackScope;
   origin: FeedbackOrigin | null;
 }) {
   const t = useTranslations("admin.feedback.detail");
-  const { scope } = detail;
+  const { dataset, source, history } = read;
+  const periods = useFeedbackPeriods();
+  const detail = useMemo(
+    () => buildFeedbackDetail(dataset, source, periods, scope),
+    [dataset, source, periods, scope],
+  );
+  const timeline = useMemo(
+    () => buildFeedbackTimeline(dataset, source, history, scope),
+    [dataset, source, history, scope],
+  );
   const kindLabel = t(`kinds.${scope.kind}`);
   const subtitle =
     scope.kind === "group" && detail.product !== null
@@ -60,8 +92,6 @@ export function FeedbackDetailPage({
 
   return (
     <FeedbackShell
-      range={range}
-      place={{ view: "detail", scope, origin }}
       title={detail.name ?? kindLabel}
       subtitle={subtitle}
       back={origin === null ? defaultBackPlace(scope) : placeOfOrigin(origin)}
@@ -77,20 +107,21 @@ export function FeedbackDetailPage({
         )
       }
     >
+      <FeedbackHero
+        headline={detail.headline}
+        participation={detail.participation}
+        timeline={timeline}
+        scopeLabel={detail.name ?? kindLabel}
+        comparison={
+          detail.headline.againstPlatform === null ? undefined : (
+            <PlatformLine comparison={detail.headline.againstPlatform} />
+          )
+        }
+      />
       {detail.responses.all.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("none")}</p>
       ) : (
         <>
-          <FeedbackHero
-            headline={detail.headline}
-            participation={detail.participation}
-            unit={detail.bucketUnit}
-            comparison={
-              detail.headline.againstPlatform === null ? undefined : (
-                <PlatformLine comparison={detail.headline.againstPlatform} />
-              )
-            }
-          />
           <Statements detail={detail} />
           <Children detail={detail} origin={self} />
           <Section title={t("responsesHeading")}>
@@ -116,17 +147,20 @@ function adminPageOf(detail: FeedbackDetail): FeedbackHref | null {
   }
 }
 
-/** "Platform 89%", and the warning when the scope is below it. */
+/**
+ * "Platform 89%", and the warning when the scope is below it. Both lines keep
+ * their height when empty, since the selection decides whether they are.
+ */
 function PlatformLine({ comparison }: { comparison: PlatformComparison }) {
   const t = useTranslations("admin.feedback.detail");
   const locale = useLocale();
-  if (comparison.platform.positiveShare === null) return null;
   return (
     <div className="space-y-1">
-      <p className="text-sm text-muted-foreground">
-        {t("platform", { share: formatShare(comparison.platform.positiveShare, locale) })}
+      <p className="min-h-5 text-sm text-muted-foreground">
+        {comparison.platform.positiveShare !== null &&
+          t("platform", { share: formatShare(comparison.platform.positiveShare, locale) })}
       </p>
-      {comparison.belowPlatform && <BelowAverage statement={null} />}
+      <p className="min-h-5">{comparison.belowPlatform && <BelowAverage statement={null} />}</p>
     </div>
   );
 }

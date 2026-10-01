@@ -1571,12 +1571,6 @@
       "sources": {
         "gamerOnline": "Des gamers après les séances en ligne"
       },
-      "rangeLabel": "Période",
-      "ranges": {
-        "30d": "30 jours",
-        "90d": "90 jours",
-        "12m": "12 mois"
-      },
       "empty": "Aucun avis n’a été donné sur cette période.",
       "loadError": "Les avis n’ont pas pu être chargés. Rechargez la page pour réessayer.",
       "loadErrorWithReason": "Les avis n’ont pas pu être chargés : {reason}",
@@ -1590,17 +1584,16 @@
         "down": "En baisse de {points, plural, one {# point} other {# points}}",
         "none": "Pas de changement",
         "points": "{points, plural, one {# point} other {# points}}",
-        "previous": {
-          "30d": "par rapport aux 30 jours précédents",
-          "90d": "par rapport aux 90 jours précédents",
-          "12m": "par rapport aux 12 mois précédents"
-        }
+        "previous": "par rapport {days, plural, one {au jour précédent} other {aux # jours précédents}}"
       },
-      "spark": {
-        "point": "{bucket} : {share} positives",
-        "none": "{bucket} : aucune réponse",
-        "labelWeek": "Réponses positives par semaine. {points}",
-        "labelMonth": "Réponses positives par mois. {points}"
+      "timeline": {
+        "byWeek": "Réponses positives par semaine",
+        "byMonth": "Réponses positives par mois",
+        "platform": "Plateforme",
+        "hint": "Faites glisser sur le graphique pour choisir une période",
+        "start": "Début de la période : {date}",
+        "end": "Fin de la période : {date}",
+        "selection": "{range} · {days, plural, one {# jour} other {# jours}}"
       },
       "back": {
         "overview": "Retour aux avis",

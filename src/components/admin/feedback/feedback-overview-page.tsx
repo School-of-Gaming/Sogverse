@@ -1,55 +1,73 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
-import type {
-  FeedbackBucketUnit,
-  FeedbackDimension,
-  FeedbackHeadline,
-  FeedbackOverview,
-  FeedbackParticipation,
-  FeedbackStatementLine,
+import {
+  buildFeedbackOverview,
+  buildFeedbackTimeline,
+  type FeedbackDimension,
+  type FeedbackHeadline,
+  type FeedbackOverview,
+  type FeedbackParticipation,
+  type FeedbackStatementLine,
+  type FeedbackTimeline as FeedbackTimelineModel,
 } from "./aggregate-feedback";
 import { formatShare } from "./feedback-format";
-import { Change, ShareText, Sparkline } from "./feedback-marks";
-import { useFeedbackHref } from "./feedback-nav";
+import { Change, ShareText } from "./feedback-marks";
+import {
+  FeedbackSelectionProvider,
+  useFeedbackHref,
+  useFeedbackPeriods,
+  type FeedbackRead,
+} from "./feedback-nav";
 import type { FeedbackPlace } from "./feedback-place";
-import type { FeedbackRange } from "./feedback-range";
 import { FeedbackShell } from "./feedback-shell";
+import { FeedbackTimeline } from "./feedback-timeline";
 import { useFeedbackStatementLabels } from "./use-feedback-labels";
-
-const OVERVIEW: FeedbackPlace = { view: "overview" };
 
 /**
  * **`/admin/feedback` — the pulse, with no lists on it.** One figure for how
- * positive gamers are and which way it is moving, one line per statement, and
- * four doors to the lists an admin dives into: products, groups, Gedus and what
- * gamers said, each saying in a few words whether there is anything to find there.
+ * positive gamers are and which way it is moving, the whole history to pick
+ * the period from, one line per statement, and four doors to the lists an
+ * admin dives into: products, groups, Gedus and what gamers said, each saying
+ * in a few words whether there is anything to find there.
  */
-export function FeedbackOverviewPage({
-  range,
-  overview,
-}: {
-  range: FeedbackRange;
-  overview: FeedbackOverview;
-}) {
+export function FeedbackOverviewPage({ read }: { read: FeedbackRead }) {
+  return (
+    <FeedbackSelectionProvider history={read.history} initial={read.selection}>
+      <OverviewBody read={read} />
+    </FeedbackSelectionProvider>
+  );
+}
+
+function OverviewBody({ read }: { read: FeedbackRead }) {
   const t = useTranslations("admin.feedback");
+  const { dataset, source, history } = read;
+  const periods = useFeedbackPeriods();
+  const overview = useMemo(
+    () => buildFeedbackOverview(dataset, source, periods),
+    [dataset, source, periods],
+  );
+  const timeline = useMemo(
+    () => buildFeedbackTimeline(dataset, source, history, null),
+    [dataset, source, history],
+  );
 
   return (
-    <FeedbackShell range={range} place={OVERVIEW} title={t("title")}>
+    <FeedbackShell title={t("title")}>
+      <FeedbackHero
+        headline={overview.headline}
+        participation={overview.participation}
+        timeline={timeline}
+      />
       {overview.participation.responses === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <>
-          <FeedbackHero
-            headline={overview.headline}
-            participation={overview.participation}
-            unit={overview.bucketUnit}
-          />
           <StatementLines statements={overview.statements} source={overview.source} />
           <Explore overview={overview} />
         </>
@@ -59,43 +77,56 @@ export function FeedbackOverviewPage({
 }
 
 /**
- * The headline figure, its move since the previous period and its line over
- * this one, with how many answered beneath. Shared with the detail pages,
- * which add the platform beside the figure.
+ * The headline figure for the selection, its move since the period before
+ * and how many answered, over the timeline the selection is picked on.
+ * Shared with the detail pages, which add the platform beside the figure.
+ *
+ * Every line above the timeline keeps its height whatever the selection
+ * holds — "No answers" sits in the figure's own box, and a change that cannot
+ * be stated leaves its line empty — so the chart never moves under a drag.
  */
 export function FeedbackHero({
   headline,
   participation,
-  unit,
+  timeline,
+  scopeLabel,
   comparison,
 }: {
   headline: FeedbackHeadline;
   participation: FeedbackParticipation;
-  unit: FeedbackBucketUnit;
+  timeline: FeedbackTimelineModel;
+  /** The legend's name for the scope's line, beside the platform's. */
+  scopeLabel?: string;
   /** The detail pages' "platform 89%" and below-average line. */
   comparison?: ReactNode;
 }) {
   const t = useTranslations("admin.feedback.hero");
 
   return (
-    <Card className="grid gap-x-8 gap-y-4 p-5 md:grid-cols-[minmax(0,auto)_minmax(0,1fr)] md:items-center">
-      <div className="space-y-1">
-        {headline.current.positiveShare === null ? (
-          <ShareText figure={headline.current} className="text-2xl font-semibold" />
-        ) : (
-          <p className="flex items-baseline gap-2">
-            <ShareText figure={headline.current} className="text-5xl font-semibold" />
-            <span className="text-lg text-muted-foreground">{t("positive")}</span>
+    <Card className="space-y-5 p-5">
+      <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2 sm:items-end">
+        <div className="space-y-1">
+          <p className="flex h-12 items-end gap-2">
+            {headline.current.positiveShare === null ? (
+              <ShareText figure={headline.current} className="text-2xl font-semibold" />
+            ) : (
+              <>
+                <ShareText figure={headline.current} className="text-5xl font-semibold leading-none tabular-nums" />
+                <span className="text-lg leading-tight text-muted-foreground">{t("positive")}</span>
+              </>
+            )}
           </p>
-        )}
-        <p className="text-xs text-muted-foreground">{t("definition")}</p>
-        {comparison}
-        <Change points={headline.changePoints} withPeriod className="text-sm" />
+          <p className="text-xs text-muted-foreground">{t("definition")}</p>
+        </div>
+        <div className="space-y-1">
+          {comparison}
+          <p className="min-h-5 text-sm">
+            <Change points={headline.changePoints} withPeriod />
+          </p>
+          <ParticipationLine participation={participation} />
+        </div>
       </div>
-      <div className="space-y-2">
-        <Sparkline series={headline.series} unit={unit} width={480} height={72} />
-        <ParticipationLine participation={participation} />
-      </div>
+      <FeedbackTimeline timeline={timeline} scopeLabel={scopeLabel} />
     </Card>
   );
 }

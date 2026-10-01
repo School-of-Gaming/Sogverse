@@ -1571,12 +1571,6 @@
       "sources": {
         "gamerOnline": "Från gamers efter onlinesessioner"
       },
-      "rangeLabel": "Period",
-      "ranges": {
-        "30d": "30 dagar",
-        "90d": "90 dagar",
-        "12m": "12 månader"
-      },
       "empty": "Ingen feedback gavs under den här perioden.",
       "loadError": "Feedbacken kunde inte laddas. Ladda om sidan och försök igen.",
       "loadErrorWithReason": "Feedbacken kunde inte laddas: {reason}",
@@ -1590,17 +1584,16 @@
         "down": "Ned {points, plural, one {# procentenhet} other {# procentenheter}}",
         "none": "Ingen förändring",
         "points": "{points, plural, one {# procentenhet} other {# procentenheter}}",
-        "previous": {
-          "30d": "jämfört med föregående 30 dagar",
-          "90d": "jämfört med föregående 90 dagar",
-          "12m": "jämfört med föregående 12 månader"
-        }
+        "previous": "jämfört med {days, plural, one {föregående dag} other {föregående # dagar}}"
       },
-      "spark": {
-        "point": "{bucket}: {share} positiva",
-        "none": "{bucket}: inga svar",
-        "labelWeek": "Positiva svar per vecka. {points}",
-        "labelMonth": "Positiva svar per månad. {points}"
+      "timeline": {
+        "byWeek": "Positiva svar per vecka",
+        "byMonth": "Positiva svar per månad",
+        "platform": "Plattformen",
+        "hint": "Dra över diagrammet för att välja en period",
+        "start": "Periodens början: {date}",
+        "end": "Periodens slut: {date}",
+        "selection": "{range} · {days, plural, one {# dag} other {# dagar}}"
       },
       "back": {
         "overview": "Tillbaka till feedback",

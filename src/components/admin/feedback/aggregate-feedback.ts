@@ -7,6 +7,7 @@ import type {
   AdminFeedbackSession,
   FeedbackSource,
 } from "@/services/session-feedback/admin-feedback.contracts";
+import { addCalendarDays } from "@/lib/calendar-date";
 import type { ProductType } from "@/types";
 import {
   addRatings,
@@ -14,6 +15,7 @@ import {
   bucketStarts,
   bucketUnitFor,
   emptyTally,
+  stepBuckets,
   hasLowAnswer,
   hasNote,
   inPeriod,
@@ -45,7 +47,8 @@ export {
  * dimension's list, one scope's detail, and what gamers said.
  *
  * Every builder takes the dataset, the source being read and both periods; the
- * dataset spans both, and each builder splits it by session day itself. Every
+ * dataset spans the whole history, and each builder splits it by session day
+ * itself, so a page recomputes for any selection without another read. Every
  * figure is per source, compared against the previous period, and — below the
  * overview — against the platform for the same period, except a gamer's,
  * which carries no platform figure at all. Nothing here knows
@@ -72,14 +75,30 @@ export interface FeedbackProductRef {
   isRemote: boolean;
 }
 
-/** One point of a sparkline: the positive share of one week or month. */
-export interface FeedbackSparkPoint {
-  /** The bucket's first day: a Monday, or the 1st of a month. */
+/** One point of the timeline: the positive share of one week or month. */
+export interface FeedbackTimelinePoint {
+  /** The bucket's first day inside the history: a Monday or a 1st, unless the history starts later. */
   start: string;
-  /** The sample behind it (responses for the headline, answers for a statement). */
+  /** The bucket's last day inside the history. */
+  end: string;
+  /** Responses behind it. */
   n: number;
   /** `null` when nothing was answered in the bucket: the line gaps there. */
   positiveShare: number | null;
+}
+
+/**
+ * **The whole history, bucket by bucket**, which the selection is dragged
+ * across: the scope's line and, on a detail page set against the platform,
+ * the platform's line beside it.
+ */
+export interface FeedbackTimeline {
+  history: FeedbackPeriod;
+  unit: FeedbackBucketUnit;
+  /** Oldest first. */
+  points: FeedbackTimelinePoint[];
+  /** The platform's points at the same buckets; `null` on the overview and for a gamer. */
+  platform: FeedbackTimelinePoint[] | null;
 }
 
 /** A figure this period, the same figure the period before, and the move between them. */
@@ -91,10 +110,7 @@ export interface ComparedFigure {
 }
 
 /** The headline: positive share across every statement. */
-export interface FeedbackHeadline extends ComparedFigure {
-  /** The current period, bucket by bucket, oldest first. */
-  series: FeedbackSparkPoint[];
-}
+export type FeedbackHeadline = ComparedFigure;
 
 /** One statement's line. `current.distribution` is its full 1–5 spread. */
 export interface FeedbackStatementLine extends ComparedFigure {
@@ -149,7 +165,6 @@ export interface FeedbackResponsesSummary {
 export interface FeedbackOverview {
   source: FeedbackSource;
   periods: FeedbackPeriods;
-  bucketUnit: FeedbackBucketUnit;
   headline: FeedbackHeadline;
   participation: FeedbackParticipation;
   /** In the order the source asks them. */
@@ -240,7 +255,6 @@ export interface FeedbackDetail {
   name: string | null;
   /** The product of a product or group scope; `null` otherwise. */
   product: FeedbackProductRef | null;
-  bucketUnit: FeedbackBucketUnit;
   headline: FeedbackDetailHeadline;
   participation: FeedbackParticipation;
   statements: FeedbackDetailStatement[];
@@ -265,7 +279,6 @@ export function buildFeedbackOverview(
   periods: FeedbackPeriods,
 ): FeedbackOverview {
   const slice = sliceOf(dataset, source, periods);
-  const bucketUnit = bucketUnitFor(periods.current);
   const platform = comparedTallies(slice.current, slice.previous, source);
   const responses = responsesOf(slice.current);
 
@@ -280,8 +293,7 @@ export function buildFeedbackOverview(
   return {
     source,
     periods,
-    bucketUnit,
-    headline: headlineOf(platform, slice.current, periods.current, bucketUnit),
+    headline: compared(platform.current.overall, platform.previous.overall),
     participation: participationOf(slice.current, slice.currentSessions),
     statements: statementLinesOf(platform, source),
     dimensions: {
@@ -322,11 +334,10 @@ export function buildFeedbackDetail(
 ): FeedbackDetail {
   const all = sliceOf(dataset, source, periods);
   const slice = narrow(all, scope);
-  const bucketUnit = bucketUnitFor(periods.current);
   const platformTallies = tallyResponses(all.current, source);
   const scoped = comparedTallies(slice.current, slice.previous, source);
 
-  const headline = headlineOf(scoped, slice.current, periods.current, bucketUnit);
+  const headline = compared(scoped.current.overall, scoped.previous.overall);
   const comparable = scope.kind !== "gamer";
 
   const statements = statementLinesOf(scoped, source).map(
@@ -347,7 +358,6 @@ export function buildFeedbackDetail(
     scope,
     name: nameOf(dataset, scope),
     product: productOf(dataset, scope),
-    bucketUnit,
     headline: {
       ...headline,
       againstPlatform: comparable
@@ -374,6 +384,43 @@ export function buildFeedbackResponses(
   periods: FeedbackPeriods,
 ): FeedbackResponsesView {
   return { source, periods, responses: responsesOf(sliceOf(dataset, source, periods).current) };
+}
+
+/**
+ * The timeline a page drags its selection across: the scope's line over the
+ * whole history (the platform's own when `scope` is `null`) and, for a scope
+ * set against the platform, the platform's line beside it. It does not depend
+ * on the selection, so it is built once per page.
+ */
+export function buildFeedbackTimeline(
+  dataset: AdminFeedbackDataset,
+  source: FeedbackSource,
+  history: FeedbackPeriod,
+  scope: FeedbackScope | null,
+): FeedbackTimeline {
+  const unit = bucketUnitFor(history);
+  const all = ofSource(dataset.responses, source).filter((row) => inPeriod(row.sessionDate, history));
+  const platform = seriesOf(all, history, unit);
+  if (scope === null) return { history, unit, points: platform, platform: null };
+  return {
+    history,
+    unit,
+    points: seriesOf(
+      all.filter((row) => inScope(row, scope)),
+      history,
+      unit,
+    ),
+    platform: scope.kind === "gamer" ? null : platform,
+  };
+}
+
+/** The first session day any response of the source is about, or `null` for none. */
+export function earliestAnswerDay(dataset: AdminFeedbackDataset, source: FeedbackSource): string | null {
+  let earliest: string | null = null;
+  for (const row of ofSource(dataset.responses, source)) {
+    if (earliest === null || row.sessionDate < earliest) earliest = row.sessionDate;
+  }
+  return earliest;
 }
 
 /** The rows one source contributed. */
@@ -472,13 +519,17 @@ function compareWithPlatform(scope: ShareFigure, platform: ShareFigure): Platfor
   };
 }
 
-/** The current period's positive share across every statement, bucket by bucket. */
+/**
+ * The positive share across every statement, bucket by bucket over the whole
+ * history. A bucket the history cuts at either end is drawn for the days it
+ * holds, so its point sits over them rather than over days never read.
+ */
 function seriesOf(
   responses: readonly AdminFeedbackResponse[],
-  period: FeedbackPeriod,
+  history: FeedbackPeriod,
   unit: FeedbackBucketUnit,
-): FeedbackSparkPoint[] {
-  const buckets = new Map(bucketStarts(period, unit).map((start) => [start, emptyTally()]));
+): FeedbackTimelinePoint[] {
+  const buckets = new Map(bucketStarts(history, unit).map((start) => [start, emptyTally()]));
   for (const response of responses) {
     const tally = buckets.get(bucketStartOf(response.sessionDate, unit));
     if (tally === undefined) continue;
@@ -486,20 +537,14 @@ function seriesOf(
   }
   return [...buckets].map(([start, tally]) => {
     const figure = shareFigure(tally);
-    return { start, n: figure.n, positiveShare: figure.positiveShare };
+    const end = addCalendarDays(stepBuckets(start, unit, 1), -1);
+    return {
+      start: start < history.from ? history.from : start,
+      end: end > history.to ? history.to : end,
+      n: figure.n,
+      positiveShare: figure.positiveShare,
+    };
   });
-}
-
-function headlineOf(
-  tallies: ComparedTallies,
-  responses: readonly AdminFeedbackResponse[],
-  period: FeedbackPeriod,
-  unit: FeedbackBucketUnit,
-): FeedbackHeadline {
-  return {
-    ...compared(tallies.current.overall, tallies.previous.overall),
-    series: seriesOf(responses, period, unit),
-  };
 }
 
 function statementLinesOf(tallies: ComparedTallies, source: FeedbackSource): FeedbackStatementLine[] {

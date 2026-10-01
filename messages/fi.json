@@ -1571,12 +1571,6 @@
       "sources": {
         "gamerOnline": "Pelaajilta verkkotapaamisten jälkeen"
       },
-      "rangeLabel": "Aikaväli",
-      "ranges": {
-        "30d": "30 päivää",
-        "90d": "90 päivää",
-        "12m": "12 kuukautta"
-      },
       "empty": "Tällä aikavälillä ei annettu palautetta.",
       "loadError": "Palautetta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
       "loadErrorWithReason": "Palautetta ei voitu ladata: {reason}",
@@ -1590,17 +1584,16 @@
         "down": "Lasku {points, plural, one {# prosenttiyksikkö} other {# prosenttiyksikköä}}",
         "none": "Ei muutosta",
         "points": "{points, plural, one {# %-yksikkö} other {# %-yksikköä}}",
-        "previous": {
-          "30d": "edellisiin 30 päivään verrattuna",
-          "90d": "edellisiin 90 päivään verrattuna",
-          "12m": "edellisiin 12 kuukauteen verrattuna"
-        }
+        "previous": "{days, plural, one {edelliseen päivään} other {edellisiin # päivään}} verrattuna"
       },
-      "spark": {
-        "point": "{bucket}: {share} myönteisiä",
-        "none": "{bucket}: ei vastauksia",
-        "labelWeek": "Myönteiset vastaukset viikoittain. {points}",
-        "labelMonth": "Myönteiset vastaukset kuukausittain. {points}"
+      "timeline": {
+        "byWeek": "Myönteiset vastaukset viikoittain",
+        "byMonth": "Myönteiset vastaukset kuukausittain",
+        "platform": "Koko alusta",
+        "hint": "Valitse jakso vetämällä kaavion poikki",
+        "start": "Jakson alku: {date}",
+        "end": "Jakson loppu: {date}",
+        "selection": "{range} · {days, plural, one {# päivä} other {# päivää}}"
       },
       "back": {
         "overview": "Takaisin palautteeseen",

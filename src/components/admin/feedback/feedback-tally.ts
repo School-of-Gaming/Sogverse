@@ -16,7 +16,7 @@ import { FEEDBACK_CATALOGUES } from "./feedback-sources";
 
 /**
  * The counting underneath every figure on the feedback page: answers into
- * tallies, tallies into shares, and session days into the buckets a sparkline
+ * tallies, tallies into shares, and session days into the buckets the timeline
  * draws. A share is stated whatever the sample behind it: it exists wherever
  * anything was answered.
  */
@@ -174,11 +174,15 @@ export function inPeriod(date: string, period: FeedbackPeriod): boolean {
   return period.from <= date && date <= period.to;
 }
 
-/** What one sparkline point stands for. */
+/** What one point of the timeline stands for. */
 export type FeedbackBucketUnit = "week" | "month";
 
-/** The longest period, in days, whose sparkline is drawn by the week. */
-const WEEKLY_UP_TO_DAYS = 120;
+/**
+ * The longest history, in days, whose timeline is drawn by the week: about six
+ * months, 27 points at most. Past that a week is too narrow to aim at on a
+ * phone and the line turns to noise, so the whole history goes by the month.
+ */
+const WEEKLY_UP_TO_DAYS = 183;
 
 /** Inclusive days in a period. */
 export function periodDays(period: FeedbackPeriod): number {
@@ -187,12 +191,16 @@ export function periodDays(period: FeedbackPeriod): number {
 }
 
 /**
- * The bucket a period's sparkline is drawn in: ISO weeks for the 30- and 90-day
- * ranges (5 and 13 points), months for the year (12 points). Decided by
- * length so any span reads at a sensible grain, not by the preset's name.
+ * The bucket a history's timeline is drawn in. Decided by the length of the
+ * whole history, never by the selection, so dragging never redraws the line.
  */
-export function bucketUnitFor(period: FeedbackPeriod): FeedbackBucketUnit {
-  return periodDays(period) <= WEEKLY_UP_TO_DAYS ? "week" : "month";
+export function bucketUnitFor(history: FeedbackPeriod): FeedbackBucketUnit {
+  return periodDays(history) <= WEEKLY_UP_TO_DAYS ? "week" : "month";
+}
+
+/** `date` moved by `count` whole buckets: weeks of seven days, or calendar months. */
+export function stepBuckets(date: string, unit: FeedbackBucketUnit, count: number): string {
+  return unit === "week" ? addCalendarDays(date, 7 * count) : addCalendarMonths(date, count);
 }
 
 /** The first day of the bucket a session day falls in: its Monday, or its month's 1st. */
@@ -207,7 +215,7 @@ export function bucketStarts(period: FeedbackPeriod, unit: FeedbackBucketUnit): 
   for (
     let start = bucketStartOf(period.from, unit);
     start <= last;
-    start = unit === "week" ? addCalendarDays(start, 7) : addCalendarMonths(start, 1)
+    start = stepBuckets(start, unit, 1)
   ) {
     starts.push(start);
   }

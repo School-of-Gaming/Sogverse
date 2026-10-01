@@ -1571,12 +1571,6 @@
       "sources": {
         "gamerOnline": "From gamers after online sessions"
       },
-      "rangeLabel": "Range",
-      "ranges": {
-        "30d": "30 days",
-        "90d": "90 days",
-        "12m": "12 months"
-      },
       "empty": "No feedback was given in this range.",
       "loadError": "The feedback could not be loaded. Reload the page to try again.",
       "loadErrorWithReason": "The feedback could not be loaded: {reason}",
@@ -1590,17 +1584,16 @@
         "down": "Down {points, plural, one {# point} other {# points}}",
         "none": "No change",
         "points": "{points, plural, one {# point} other {# points}}",
-        "previous": {
-          "30d": "vs the previous 30 days",
-          "90d": "vs the previous 90 days",
-          "12m": "vs the previous 12 months"
-        }
+        "previous": "vs the previous {days, plural, one {day} other {# days}}"
       },
-      "spark": {
-        "point": "{bucket}: {share} positive",
-        "none": "{bucket}: no answers",
-        "labelWeek": "Positive answers by week. {points}",
-        "labelMonth": "Positive answers by month. {points}"
+      "timeline": {
+        "byWeek": "Positive answers by week",
+        "byMonth": "Positive answers by month",
+        "platform": "Platform",
+        "hint": "Drag across the chart to choose a period",
+        "start": "Start of the period: {date}",
+        "end": "End of the period: {date}",
+        "selection": "{range} · {days, plural, one {# day} other {# days}}"
       },
       "back": {
         "overview": "Back to feedback",

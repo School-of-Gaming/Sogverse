@@ -7,19 +7,16 @@ import {
   SESSION_FEEDBACK_RATINGS,
   type SessionFeedbackRating,
 } from "@/components/voice/feedback/session-feedback-items";
-import { cn, formatDateOnly } from "@/lib/utils";
-import type {
-  FeedbackBucketUnit,
-  FeedbackSparkPoint,
-  ShareFigure,
-} from "./aggregate-feedback";
+import { cn } from "@/lib/utils";
+import type { ShareFigure } from "./aggregate-feedback";
 import { formatShare } from "./feedback-format";
-import { useFeedbackRange } from "./feedback-nav";
+import { useFeedbackSelection } from "./feedback-nav";
+import { periodDays } from "./feedback-tally";
 import { useRatingWord } from "./use-feedback-labels";
 
 /**
  * **The marks the feedback pages are drawn with.** One accent: act is the
- * measured series — a sparkline's line, a bar's fill. The platform it is judged
+ * measured series — the timeline's line, a bar's fill. The platform it is judged
  * against is a grey tick, a track is the lifted grey, and the warning colour
  * appears only beside its icon and words. How much is told by length and by the
  * figure in text, never by hue.
@@ -57,12 +54,12 @@ export function Change({
   className,
 }: {
   points: number | null;
-  /** Adds "vs the previous 90 days". */
+  /** Adds "vs the previous 92 days", the selection's length. */
   withPeriod?: boolean;
   className?: string;
 }) {
   const t = useTranslations("admin.feedback.change");
-  const range = useFeedbackRange();
+  const { selection } = useFeedbackSelection();
   if (points === null) return null;
   const rounded = Math.round(points);
   const size = Math.abs(rounded);
@@ -79,7 +76,7 @@ export function Change({
             : t("down", { points: size })}
       </span>
       <span aria-hidden>{rounded === 0 ? t("none") : t("points", { points: size })}</span>
-      {withPeriod && <span className="text-muted-foreground">{t(`previous.${range}`)}</span>}
+      {withPeriod && <span className="text-muted-foreground">{t("previous", { days: periodDays(selection) })}</span>}
     </span>
   );
 }
@@ -150,120 +147,5 @@ export function AnswerBreakdown({ figure }: { figure: ShareFigure }) {
         );
       })}
     </dl>
-  );
-}
-
-/** The bucket a sparkline point stands for, as a reader names it. */
-function bucketName(start: string, unit: FeedbackBucketUnit, locale: string): string {
-  return unit === "week"
-    ? formatDateOnly(start, locale, { day: "numeric", month: "short" })
-    : formatDateOnly(start, locale, { month: "short", year: "numeric" });
-}
-
-/** The lowest the vertical scale may start, so a calm line is never blown up into a swing. */
-const SPARK_FLOOR_CEILING = 0.6;
-
-/**
- * **The positive share over the period, bucket by bucket**, as a line in act.
- *
- * A bucket nobody answered in is a gap, not a point: the line breaks there
- * rather than drawing a zero. The scale runs to 100% at the top
- * and starts a step below the lowest point — never higher than 60% — so the
- * line has room to move without a two-point wobble filling the box. Each
- * bucket names itself on hover, and the whole series is read out as text.
- */
-export function Sparkline({
-  series,
-  unit,
-  width,
-  height,
-  className,
-}: {
-  series: FeedbackSparkPoint[];
-  unit: FeedbackBucketUnit;
-  width: number;
-  height: number;
-  className?: string;
-}) {
-  const t = useTranslations("admin.feedback.spark");
-  const locale = useLocale();
-  const pad = 3;
-  const stated = series.flatMap((point) =>
-    point.positiveShare === null ? [] : [point.positiveShare],
-  );
-  const lowest = stated.length === 0 ? 0 : Math.min(...stated);
-  const floor = Math.min(SPARK_FLOOR_CEILING, Math.max(0, Math.floor((lowest - 0.05) * 10) / 10));
-  const step = series.length > 1 ? (width - pad * 2) / (series.length - 1) : 0;
-  const x = (index: number) => (series.length > 1 ? pad + index * step : width / 2);
-  const y = (share: number) => pad + (1 - (share - floor) / (1 - floor)) * (height - pad * 2);
-
-  // Runs of consecutive stated points: each run is one stroke.
-  const runs: { index: number; share: number }[][] = [];
-  let run: { index: number; share: number }[] = [];
-  series.forEach((point, index) => {
-    if (point.positiveShare === null) {
-      if (run.length > 0) runs.push(run);
-      run = [];
-    } else {
-      run.push({ index, share: point.positiveShare });
-    }
-  });
-  if (run.length > 0) runs.push(run);
-  const last = runs.at(-1)?.at(-1);
-
-  const describe = (point: FeedbackSparkPoint) => {
-    const name = bucketName(point.start, unit, locale);
-    return point.positiveShare === null
-      ? t("none", { bucket: name })
-      : t("point", { bucket: name, share: formatShare(point.positiveShare, locale) });
-  };
-
-  return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      className={cn("h-auto w-full overflow-visible", className)}
-      role="img"
-      aria-label={t(unit === "week" ? "labelWeek" : "labelMonth", {
-        points: series.map(describe).join("; "),
-      })}
-    >
-      {runs.map((points) =>
-        points.length === 1 ? (
-          <circle
-            key={points[0].index}
-            cx={x(points[0].index)}
-            cy={y(points[0].share)}
-            r={1.75}
-            className="fill-act"
-          />
-        ) : (
-          <polyline
-            key={points[0].index}
-            points={points.map((point) => `${x(point.index)},${y(point.share)}`).join(" ")}
-            fill="none"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-            className="stroke-act"
-          />
-        ),
-      )}
-      {last !== undefined && (
-        <circle cx={x(last.index)} cy={y(last.share)} r={2.5} className="fill-act" />
-      )}
-      {series.map((point, index) => (
-        <rect
-          key={point.start}
-          x={x(index) - step / 2}
-          y={0}
-          width={Math.max(step, 4)}
-          height={height}
-          fill="transparent"
-        >
-          <title>{describe(point)}</title>
-        </rect>
-      ))}
-    </svg>
   );
 }

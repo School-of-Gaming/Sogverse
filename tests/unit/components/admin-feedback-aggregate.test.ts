@@ -4,13 +4,10 @@ import {
   buildFeedbackDimensionList,
   buildFeedbackOverview,
   buildFeedbackResponses,
+  buildFeedbackTimeline,
   bucketUnitFor,
-  type FeedbackPeriods,
+  earliestAnswerDay,
 } from "@/components/admin/feedback/aggregate-feedback";
-import {
-  feedbackRangeBounds,
-  resolveFeedbackRange,
-} from "@/components/admin/feedback/feedback-range";
 import {
   allFive as ALL_FIVE,
   FEEDBACK_CLUB_A2 as CLUB_A2,
@@ -182,53 +179,73 @@ describe("buildFeedbackOverview", () => {
   });
 });
 
-describe("sparkline buckets", () => {
-  it("draws 30 and 90 days by the week and twelve months by the month", () => {
-    expect(bucketUnitFor(feedbackRangeBounds("30d", "2026-09-30"))).toBe("week");
-    expect(bucketUnitFor(feedbackRangeBounds("90d", "2026-09-30"))).toBe("week");
-    expect(bucketUnitFor(feedbackRangeBounds("12m", "2026-09-30"))).toBe("month");
+describe("buildFeedbackTimeline", () => {
+  it("draws up to about six months by the week and anything longer by the month", () => {
+    expect(bucketUnitFor({ from: "2026-04-01", to: "2026-09-30" })).toBe("week");
+    expect(bucketUnitFor({ from: "2026-03-01", to: "2026-09-30" })).toBe("month");
   });
 
-  it("buckets by ISO Monday, states a week of one answer, gaps only an empty week", () => {
-    const overview = buildFeedbackOverview(
+  it("buckets by ISO Monday, clips the end buckets to the history, gaps only an empty week", () => {
+    const timeline = buildFeedbackTimeline(
       dataset([
         ...many(10, { answers: { fun: 5 }, sessionDate: "2026-09-08" }),
         ...many(3, { answers: { fun: 1 }, sessionDate: "2026-09-13" }),
         response({ answers: { fun: 5 }, sessionDate: "2026-09-01" }),
       ]),
       "gamer_online",
-      PERIODS,
+      PERIODS.current,
+      null,
     );
 
-    expect(overview.bucketUnit).toBe("week");
+    expect(timeline.unit).toBe("week");
+    expect(timeline.platform).toBeNull();
     expect(
-      overview.headline.series.map((point) => [point.start, point.n, point.positiveShare]),
+      timeline.points.map((point) => [point.start, point.end, point.n, point.positiveShare]),
     ).toEqual([
-      ["2026-08-31", 1, 1],
-      ["2026-09-07", 13, 10 / 13],
-      ["2026-09-14", 0, null],
-      ["2026-09-21", 0, null],
-      ["2026-09-28", 0, null],
+      ["2026-09-01", "2026-09-06", 1, 1],
+      ["2026-09-07", "2026-09-13", 13, 10 / 13],
+      ["2026-09-14", "2026-09-20", 0, null],
+      ["2026-09-21", "2026-09-27", 0, null],
+      ["2026-09-28", "2026-09-30", 0, null],
     ]);
   });
 
-  it("buckets a year by calendar month across a year boundary", () => {
-    const periods: FeedbackPeriods = {
-      current: feedbackRangeBounds("12m", "2026-02-15"),
-      previous: { from: "2024-02-16", to: "2025-02-15" },
-    };
-    const overview = buildFeedbackOverview(
-      { from: "2024-02-16", to: "2026-02-15", responses: [response({ answers: { fun: 5 }, sessionDate: "2025-12-31" })], sessions: [] },
+  it("buckets a long history by calendar month across a year boundary", () => {
+    const history = { from: "2025-02-16", to: "2026-02-15" };
+    const timeline = buildFeedbackTimeline(
+      { ...history, responses: [response({ answers: { fun: 5 }, sessionDate: "2025-12-31" })], sessions: [] },
       "gamer_online",
-      periods,
+      history,
+      null,
     );
 
-    expect(overview.bucketUnit).toBe("month");
-    const starts = overview.headline.series.map((point) => point.start);
-    expect(starts[0]).toBe("2025-02-01");
+    expect(timeline.unit).toBe("month");
+    const starts = timeline.points.map((point) => point.start);
+    expect(starts[0]).toBe("2025-02-16");
+    expect(starts[1]).toBe("2025-03-01");
     expect(starts.at(-1)).toBe("2026-02-01");
     expect(starts).toHaveLength(13);
-    expect(overview.headline.series.find((point) => point.start === "2025-12-01")?.n).toBe(1);
+    expect(timeline.points.find((point) => point.start === "2025-12-01")?.n).toBe(1);
+  });
+
+  it("draws a scope against the platform, and a gamer alone", () => {
+    const data = dataset([
+      ...many(3, { answers: { fun: 5 }, sessionDate: "2026-09-08" }),
+      response({ ...CLUB_B, answers: { fun: 1 }, sessionDate: "2026-09-08" }),
+      response({ respondent: { id: "gamer-x", name: "X" }, answers: { fun: 1 }, sessionDate: "2026-09-08" }),
+    ]);
+    const group = buildFeedbackTimeline(data, "gamer_online", PERIODS.current, { kind: "group", id: CLUB_B.groupId });
+    expect(group.points[1].positiveShare).toBe(0);
+    expect(group.platform?.[1].positiveShare).toBe(3 / 5);
+
+    const gamer = buildFeedbackTimeline(data, "gamer_online", PERIODS.current, { kind: "gamer", id: "gamer-x" });
+    expect(gamer.points[1].n).toBe(1);
+    expect(gamer.platform).toBeNull();
+  });
+
+  it("finds the first day anybody answered", () => {
+    expect(earliestAnswerDay(dataset([response({ sessionDate: "2026-09-08" }), response({ sessionDate: "2026-08-03" })]), "gamer_online")).toBe("2026-08-03");
+    expect(earliestAnswerDay(dataset([]), "gamer_online")).toBeNull();
   });
 });
 
@@ -490,19 +507,5 @@ describe("buildFeedbackResponses", () => {
       "2026-09-04",
       "2026-09-03",
     ]);
-  });
-});
-
-describe("feedback range", () => {
-  it("falls back to 90 days for anything it does not know", () => {
-    expect(resolveFeedbackRange("12m")).toBe("12m");
-    expect(resolveFeedbackRange("forever")).toBe("90d");
-    expect(resolveFeedbackRange(undefined)).toBe("90d");
-  });
-
-  it("measures inclusive session days back from today", () => {
-    expect(feedbackRangeBounds("30d", "2026-03-01")).toEqual({ from: "2026-01-31", to: "2026-03-01" });
-    expect(feedbackRangeBounds("90d", "2026-09-28")).toEqual({ from: "2026-07-01", to: "2026-09-28" });
-    expect(feedbackRangeBounds("12m", "2026-02-28")).toEqual({ from: "2025-03-01", to: "2026-02-28" });
   });
 });

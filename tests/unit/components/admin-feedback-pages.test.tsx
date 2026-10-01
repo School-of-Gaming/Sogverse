@@ -3,12 +3,8 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import messages from "@/../messages/en.json";
-import {
-  buildFeedbackDetail,
-  buildFeedbackDimensionList,
-  buildFeedbackOverview,
-  buildFeedbackResponses,
-} from "@/components/admin/feedback/aggregate-feedback";
+import type { FeedbackRead } from "@/components/admin/feedback/feedback-nav";
+import type { AdminFeedbackDataset } from "@/services/session-feedback/admin-feedback.contracts";
 import { FeedbackDetailPage } from "@/components/admin/feedback/feedback-detail-page";
 import { FeedbackListPage } from "@/components/admin/feedback/feedback-list-page";
 import { FeedbackOverviewPage } from "@/components/admin/feedback/feedback-overview-page";
@@ -48,6 +44,16 @@ const dataset = feedbackDataset(
   [feedbackSession({ ...FEEDBACK_CLUB_A2, eligibleCount: 5 })],
 );
 
+/** A page's read: three months of history, September selected. */
+function read(data: AdminFeedbackDataset): FeedbackRead {
+  return {
+    source: "gamer_online",
+    dataset: data,
+    history: { from: "2026-07-01", to: "2026-09-30" },
+    selection: FEEDBACK_PERIODS.current,
+  };
+}
+
 function wrap(children: ReactNode) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages} timeZone="Europe/Helsinki">
@@ -57,25 +63,49 @@ function wrap(children: ReactNode) {
 }
 
 describe("admin feedback pages", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("opens the overview on no list of products, groups or Gedus", () => {
-    wrap(
-      <FeedbackOverviewPage
-        range="30d"
-        overview={buildFeedbackOverview(dataset, "gamer_online", FEEDBACK_PERIODS)}
-      />,
-    );
+    wrap(<FeedbackOverviewPage read={read(dataset)} />);
     expect(screen.getByText("positive")).toBeTruthy();
     expect(screen.queryByText("B1")).toBeNull();
     expect(screen.queryByText("Aino")).toBeNull();
   });
 
+  it("draws the timeline over a labelled scale and states the selected dates", () => {
+    wrap(<FeedbackOverviewPage read={read(dataset)} />);
+    const chart = screen.getByRole("group", { name: "Positive answers by week" });
+    for (const label of ["0%", "25%", "50%", "75%", "100%", "Jul 2026", "Aug", "Sep"]) {
+      expect(within(chart).getByText(label)).toBeTruthy();
+    }
+    expect(screen.getByText("Sep 1, 2026 – Sep 30, 2026 · 30 days")).toBeTruthy();
+    expect(screen.getByRole("slider", { name: "Start of the period: Sep 1, 2026" })).toBeTruthy();
+    expect(screen.getByRole("slider", { name: "End of the period: Sep 30, 2026" })).toBeTruthy();
+  });
+
+  it("moves the selection a week per arrow key, recomputes the page and writes the URL", () => {
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    wrap(<FeedbackOverviewPage read={read(dataset)} />);
+    expect(screen.getByText("89%")).toBeTruthy();
+
+    fireEvent.keyDown(screen.getByRole("slider", { name: /^Start of the period/ }), { key: "ArrowRight" });
+
+    expect(screen.getByText("Sep 8, 2026 – Sep 30, 2026 · 23 days")).toBeTruthy();
+    // Every response is on 8 September, still inside: the headline holds.
+    expect(screen.getByText("89%")).toBeTruthy();
+    expect(String(replaceState.mock.lastCall?.[2])).toMatch(/from=2026-09-08&to=2026-09-30/);
+
+    fireEvent.keyDown(screen.getByRole("slider", { name: /^Start of the period/ }), { key: "ArrowRight", shiftKey: true });
+    // Four weeks on would leave less than a week: the start stops a week before the end.
+    expect(screen.getByText("Sep 24, 2026 – Sep 30, 2026 · 7 days")).toBeTruthy();
+    expect(screen.getByText("No answers")).toBeTruthy();
+    expect(screen.getByText("No feedback was given in this range.")).toBeTruthy();
+  });
+
   it("judges a group of one answer and says so for a group with none", () => {
-    wrap(
-      <FeedbackListPage
-        range="30d"
-        list={buildFeedbackDimensionList(dataset, "gamer_online", FEEDBACK_PERIODS, "group")}
-      />,
-    );
+    wrap(<FeedbackListPage read={read(dataset)} dimension="group" />);
     const rows = screen.getAllByRole("link").filter((link) => link.closest("li") !== null);
     expect(rows.map((row) => within(row).getByText(/^(A1|A2|B1)$/).textContent)).toEqual([
       "B1",
@@ -91,14 +121,7 @@ describe("admin feedback pages", () => {
 
   it("never sets a gamer against the platform", () => {
     wrap(
-      <FeedbackDetailPage
-        range="30d"
-        origin={null}
-        detail={buildFeedbackDetail(dataset, "gamer_online", FEEDBACK_PERIODS, {
-          kind: "gamer",
-          id: HELMI.id,
-        })}
-      />,
+      <FeedbackDetailPage read={read(dataset)} origin={null} scope={{ kind: "gamer", id: HELMI.id }} />,
     );
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Helmi");
     expect(screen.queryByText(/Platform/)).toBeNull();
@@ -107,14 +130,7 @@ describe("admin feedback pages", () => {
 
   it("lists a group's gamers by name with their answer count", () => {
     wrap(
-      <FeedbackDetailPage
-        range="30d"
-        origin={null}
-        detail={buildFeedbackDetail(dataset, "gamer_online", FEEDBACK_PERIODS, {
-          kind: "group",
-          id: "group-a1",
-        })}
-      />,
+      <FeedbackDetailPage read={read(dataset)} origin={null} scope={{ kind: "group", id: "group-a1" }} />,
     );
     const heading = screen.getByRole("heading", { name: "Gamers who answered" });
     const section = heading.closest("section");
@@ -153,10 +169,7 @@ describe("admin feedback pages", () => {
 
     it("opens on what is worth reading, low with a note first, then low, then a note", () => {
       wrap(
-        <FeedbackResponsesPage
-          range="30d"
-          view={buildFeedbackResponses(said, "gamer_online", FEEDBACK_PERIODS)}
-        />,
+        <FeedbackResponsesPage read={read(said)} />,
       );
       expect(screen.getByRole("button", { name: "Worth reading (3)" }).getAttribute("aria-pressed")).toBe("true");
       const names = screen
@@ -171,10 +184,7 @@ describe("admin feedback pages", () => {
 
     it("draws each answer as the gamer's bar with its word, a low one marked, and quotes the note", () => {
       wrap(
-        <FeedbackResponsesPage
-          range="30d"
-          view={buildFeedbackResponses(said, "gamer_online", FEEDBACK_PERIODS)}
-        />,
+        <FeedbackResponsesPage read={read(said)} />,
       );
       const card = cardOf("Bea");
       const meters = within(card).getAllByRole("img");
@@ -195,10 +205,7 @@ describe("admin feedback pages", () => {
       installFakeIntersectionObserver();
       const crowd = feedbackDataset(feedbackResponses(45, { answers: allFive(1) }));
       wrap(
-        <FeedbackResponsesPage
-          range="30d"
-          view={buildFeedbackResponses(crowd, "gamer_online", FEEDBACK_PERIODS)}
-        />,
+        <FeedbackResponsesPage read={read(crowd)} />,
       );
       // Five meters to a card.
       const count = () => document.querySelectorAll("[role='img']").length / 5;

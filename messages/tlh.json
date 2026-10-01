@@ -1615,12 +1615,6 @@
       "sources": {
         "gamerOnline": "QujwI'pu' ja'chuq, De'wI' ghommey pItlh"
       },
-      "rangeLabel": "poH",
-      "ranges": {
-        "30d": "30 jaj",
-        "90d": "90 jaj",
-        "12m": "12 jar"
-      },
       "empty": "poHvam ja'chuq pagh.",
       "loadError": "ja'chuq lI'laHbe'. nIqHom yIchu'qa'.",
       "loadErrorWithReason": "ja'chuq lI'laHbe': {reason}",
@@ -1634,17 +1628,16 @@
         "down": "bIng {points, plural, one {# mI’} other {# mI’mey}}",
         "none": "choHbe'",
         "points": "{points, plural, one {# mI’} other {# mI’mey}}",
-        "previous": {
-          "30d": "30 jaj vorgh",
-          "90d": "90 jaj vorgh",
-          "12m": "12 jar vorgh"
-        }
+        "previous": "{days, plural, one {# jaj} other {# jaj}} vorgh"
       },
-      "spark": {
-        "point": "{bucket}: {share} QaQ",
-        "none": "{bucket}: jangmey pagh",
-        "labelWeek": "Hogh jangmey QaQ. {points}",
-        "labelMonth": "jar jangmey QaQ. {points}"
+      "timeline": {
+        "byWeek": "Hogh jangmey QaQ",
+        "byMonth": "jar jangmey QaQ",
+        "platform": "Hoch",
+        "hint": "poH yIwIv",
+        "start": "poH tagh: {date}",
+        "end": "poH Qav: {date}",
+        "selection": "{range} · {days, plural, one {# jaj} other {# jaj}}"
       },
       "back": {
         "overview": "ja'chuqDaq yIchegh",
