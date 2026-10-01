@@ -10,7 +10,7 @@ CREATE FUNCTION public.list_public_team_profiles() RETURNS TABLE(user_id uuid, r
          p.role,
          p.first_name,
          -- An admin is public by full name and title; a Gedu by first name
-         -- and gamer tag alone.
+         -- and nickname alone.
          CASE WHEN p.role = 'admin' THEN p.last_name END,
          tp.nickname,
          CASE WHEN p.role = 'admin' THEN tp.title END,
@@ -44,7 +44,7 @@ $$;
 -- Name: FUNCTION list_public_team_profiles(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.list_public_team_profiles() IS 'The public team page: every team profile an admin has made public (approved), of a person who is still an admin or a Gedu, trainee Gedus included. Crosses the boundary that anon holds no grant on the team tables and authenticated reads only its own row or, as an admin, everyone''s, and hands back the public slice alone: id, role, first name, the last name and title for an admin only (NULL for a Gedu, who is public by first name and gamer tag), nickname, pick, spoken languages, a photo version token (md5 of the photo''s object path, so a new photo is a new address; the path itself is not returned) and the translations as a JSON array of {locale, short_description, long_description, fun_fact} ordered by locale. Nothing else from profiles. Admins first, then Gedus; within each by first name, then nickname, then id. Answers every caller identically.';
+COMMENT ON FUNCTION public.list_public_team_profiles() IS 'The public team page: every team profile an admin has made public (approved), of a person who is still an admin or a Gedu, trainee Gedus included. Crosses the boundary that anon holds no grant on the team tables and authenticated reads only its own row or, as an admin, everyone''s, and hands back the public slice alone: id, role, first name, the last name and title for an admin only (NULL for a Gedu, who is public by first name and nickname), nickname, pick, spoken languages, a photo version token (md5 of the photo''s object path, so a new photo is a new address; the path itself is not returned) and the translations as a JSON array of {locale, short_description, long_description, fun_fact} ordered by locale. Nothing else from profiles. Admins first, then Gedus; within each by first name, then nickname, then id. Answers every caller identically.';
 
 
 --

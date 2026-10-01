@@ -106,7 +106,7 @@ export interface AdminTeamProfile extends TeamProfileCommon {
  * A Gedu. Two differences from an admin, both in the type rather than in the
  * render, so a Gedu's page cannot show them by accident:
  *
- * - **No last name.** A Gedu is public by first name and gamer tag (owner,
+ * - **No last name.** A Gedu is public by first name and nickname (owner,
  *   2026-10-01), so a Gedu profile has nowhere to carry a surname and the data
  *   shell cannot hand one over. Reversing it is a field here, not a rule in the
  *   render.

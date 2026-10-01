@@ -17,7 +17,7 @@ export const saveTeamProfileResult = z.string().nullable();
  *
  * - `role` is only ever an admin's or a Gedu's; the body filters every other.
  * - `last_name` and `title` are an admin's alone, NULL for a Gedu, who is
- *   public by first name and gamer tag.
+ *   public by first name and nickname.
  * - `photo_version` is an md5 of the photo's object path, so it changes with
  *   the photo; NULL only for a profile with no photo, which cannot be public.
  * - `translations` is every locale the person wrote, ordered by locale, and

@@ -307,7 +307,7 @@ describe("public team profiles", () => {
       expect(() => publicTeamProfileRows.parse(data)).not.toThrow();
     });
 
-    it("gives an admin's full name and title, and a Gedu's first name and gamer tag alone", async () => {
+    it("gives an admin's full name and title, and a Gedu's first name and nickname alone", async () => {
       const rows = await listAs(anon);
       const annaRow = rows.find((row) => row.user_id === anna.id);
       const aaroRow = rows.find((row) => row.user_id === aaroA.id);

@@ -353,9 +353,9 @@ parent reaches them. Four workstreams, built on the project branch.
    - **Admin approval is all a profile needs to go public.** A Gedu on the platform has
      already agreed to this; the "ready" checkbox says the profile is ready, nothing more.
    - **Every approved profile is listed, trainee Gedus included.** Gedus show first name
-     and gamer tag; leadership shows full name and title, as the profile already does.
+     and nickname; leadership shows full name and title, as the profile already does.
    **Decided:** a person's page has the same two addresses, `/team/<id>` and
-   `/team/<slug>`, the slug derived from first name and gamer tag.
+   `/team/<slug>`, the slug derived from first name and nickname.
    **Proposed:** `/team` and a page per person with the existing profile body; a
    narrow anon read that returns approved profiles only; photos served through the app
    with a public-check on each request (the design the team profiles service already
@@ -509,9 +509,9 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-09-25 | The project lives on its own branch, `feat/public-pages`, and merges into `dev` when the owner decides (owner). |
 | 2026-10-01 | The project's goal adds discoverability by search engines and LLMs; the Library and a Team page join it (owner). |
 | 2026-10-01 | Library articles get a version per language; the legacy blog import is a separate project (owner). |
-| 2026-10-01 | An article and a team member each have two addresses, by id and by a slug derived from the title (or first name and gamer tag) and stored nowhere; the slug address is canonical, a retitle changes it, nothing redirects (owner). |
+| 2026-10-01 | An article and a team member each have two addresses, by id and by a slug derived from the title (or first name and nickname) and stored nowhere; the slug address is canonical, a retitle changes it, nothing redirects (owner). |
 | 2026-10-01 | One Publish per article for all its language versions; untranslated locales show English and canonicalise to it (owner). |
-| 2026-10-01 | A team profile goes public on admin approval alone; every approved profile is listed, trainees included, Gedus by first name and gamer tag (owner). |
+| 2026-10-01 | A team profile goes public on admin approval alone; every approved profile is listed, trainees included, Gedus by first name and nickname (owner). |
 | 2026-10-01 | Phones navigate by a bottom tab bar on every page, for every role; its first tab is the reader's home, the dashboard when signed in (owner). |
 | 2026-10-01 | A signed-in reader never reaches the home page (owner). |
 | 2026-10-01 | The home page holds nothing that lives nowhere else; each section summarises a page a signed-in reader can reach (owner). |
