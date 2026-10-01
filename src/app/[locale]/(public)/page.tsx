@@ -344,15 +344,6 @@ export default function HomePage() {
             <p className="mt-4 text-muted-foreground">
               {t('cta.subheading')}
             </p>
-            {/* Where we are, as a plain fact a search engine or an assistant
-                can quote: the company is in Helsinki, Finland, its clubs run
-                online for families anywhere, in the spoken languages it
-                delivers in — and its global headquarters is a quiet island.
-                The language list is derived, never written into the copy,
-                because it grows as we expand. */}
-            <p className="mt-4 text-sm text-muted-foreground">
-              {t('cta.whereWeAre', { languages: spokenLanguagesPhrase(locale) })}
-            </p>
             {/* The page closes on the hero's own call to action and its trust
                 line, so the two ends of the page ask for the same thing. */}
             <div className="mt-8 flex justify-center">
@@ -365,6 +356,18 @@ export default function HomePage() {
               </Link>
             </div>
             <TrustLine className="mt-4" />
+            {/* The card signs off below the button with where we are: a plain
+                fact a search engine or an assistant can quote (clubs online in
+                the spoken languages we deliver in, for families anywhere, run
+                from Helsinki, Finland) with a smile at the end. It sits after
+                the ask so the card reads as one pitch rather than two stacked
+                paragraphs, and it matches the subheading's size and ink so it
+                reads as the same voice. The measure is narrowed and balanced
+                so centred lines stay even. The language list is derived, never
+                written into the copy, because it grows as we expand. */}
+            <p className="mx-auto mt-8 max-w-xl text-balance text-muted-foreground">
+              {t('cta.whereWeAre', { languages: spokenLanguagesPhrase(locale) })}
+            </p>
           </CardContent>
         </Card>
       </section>
