@@ -79,6 +79,7 @@
       "adminSubstitutions": "Vikariat",
       "teamProfile": "Min profil",
       "adminTeamProfile": "Profil",
+      "adminFeedback": "Feedback",
       "team": "Team"
     },
     "descriptions": {
@@ -1564,6 +1565,101 @@
       "seatFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
       "seatFailedRequestWithdrawn": "{absent} har dragit tillbaka sin begäran om vikarie, så det finns inget att vikariera för.",
       "seatFailedNotScheduled": "Gruppen har inte längre något tillfälle det här datumet."
+    },
+    "feedback": {
+      "title": "Feedback",
+      "sources": {
+        "gamerOnline": "Från gamers efter onlinesessioner"
+      },
+      "rangeLabel": "Period",
+      "ranges": {
+        "30d": "30 dagar",
+        "90d": "90 dagar",
+        "12m": "12 månader"
+      },
+      "empty": "Ingen feedback gavs under den här perioden.",
+      "emptyFiltered": "Inget under den här perioden matchar filtren.",
+      "loadError": "Feedbacken kunde inte laddas. Ladda om sidan och försök igen.",
+      "loadErrorWithReason": "Feedbacken kunde inte laddas: {reason}",
+      "filters": {
+        "label": "Avgränsat till",
+        "dimensions": {
+          "product": "Produkt",
+          "group": "Grupp",
+          "gedu": "Gedu",
+          "gamer": "Gamer"
+        },
+        "unknown": "Inte under den här perioden",
+        "remove": "Ta bort {dimension}: {name}",
+        "clear": "Rensa alla"
+      },
+      "kpi": {
+        "responses": "Svar",
+        "responsesDetail": "{eligible, plural, one {# gamer} other {# gamers}} kunde svara",
+        "responsesDetailNoSessions": "Från den här gamern",
+        "responseRate": "Svarsfrekvens",
+        "responseRateDetail": "Av de närvarande gamerna",
+        "responseRateNotCounted": "Räknas inte per gamer",
+        "positive": "Positiva svar",
+        "positiveDetail": "{positive} av {count, plural, one {# svar} other {# svar}}",
+        "notes": "Meddelanden",
+        "notesDetail": "I {count, plural, one {# svar} other {# svar}}"
+      },
+      "themes": {
+        "learning": "Lärande",
+        "fun": "Roligt",
+        "geduQuality": "Gedukvalitet",
+        "belonging": "Gemenskap"
+      },
+      "trend": {
+        "heading": "Utveckling per vecka",
+        "description": "Andel positiva svar (Ja eller Absolut) per tema. En ihålig punkt bygger på färre än {min} svar.",
+        "showTable": "Visa som tabell",
+        "hideTable": "Dölj tabell",
+        "span": "Veckor från {from} till {to}",
+        "weekResponses": "Veckan {date}: {count, plural, one {# svar} other {# svar}}",
+        "answers": "{count, plural, one {# svar} other {# svar}}",
+        "panelLabel": "{theme}, positiva svar per vecka: {summary}",
+        "responsesHeading": "Svar per vecka",
+        "responsesLabel": "Svar per vecka: {summary}",
+        "week": "Vecka",
+        "responses": "Svar"
+      },
+      "statements": {
+        "heading": "Per påstående",
+        "positiveDetail": "{share} positiva · {count, plural, one {# svar} other {# svar}}",
+        "levelDetail": "{level}: {share} ({count})"
+      },
+      "breakdown": {
+        "heading": "Uppdelning",
+        "tabs": {
+          "product": "Per produkt",
+          "group": "Per grupp",
+          "gedu": "Per Gedu",
+          "gamer": "Per gamer"
+        },
+        "columns": {
+          "name": "Namn",
+          "responses": "Svar",
+          "responseRate": "Svarsfrekvens",
+          "positive": "Positiva",
+          "open": "Öppna"
+        },
+        "narrowTo": "Avgränsa sidan till {name}",
+        "open": "Öppna {name}",
+        "showing": "Visar {shown} av {total}",
+        "lowN": "Grå rader bygger på färre än {min} svar",
+        "showMore": "Visa fler"
+      },
+      "responses": {
+        "heading": "Svar",
+        "onlyNotes": "Bara med meddelande",
+        "noneWithNotes": "Inget svar här har något meddelande.",
+        "showing": "Visar {shown} av {total}",
+        "showMore": "Visa fler",
+        "noGedu": "Ingen Gedu registrerad",
+        "skipped": "Hoppades över"
+      }
     }
   },
   "auth": {
@@ -3146,7 +3242,8 @@
     "tools": "Verktyg",
     "expandSidebar": "Expandera sidopanel",
     "collapseSidebar": "Minimera sidopanel",
-    "substitutions": "Vikariat"
+    "substitutions": "Vikariat",
+    "feedback": "Feedback"
   },
   "home": {
     "hero": {

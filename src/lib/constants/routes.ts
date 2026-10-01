@@ -663,6 +663,12 @@ export const ROUTES = {
      */
     geduInvoicing: "/admin/gedu-invoicing",
     /**
+     * What gamers say about their sessions, over a range of session days: the
+     * trend, the statements and every response, narrowed by product, group,
+     * Gedu or gamer.
+     */
+    feedback: "/admin/feedback",
+    /**
      * The Fennoa customers a municipality club can be invoiced to — the contract
      * parties the CFO's monthly files are addressed to.
      *

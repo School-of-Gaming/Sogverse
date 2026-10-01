@@ -79,6 +79,7 @@
       "adminSubstitutions": "Remplacements",
       "teamProfile": "Mon profil",
       "adminTeamProfile": "Profil",
+      "adminFeedback": "Avis",
       "team": "Équipe"
     },
     "descriptions": {
@@ -1564,6 +1565,101 @@
       "seatFailedSeatGone": "{absent} n’a plus cette séance, il n’y a donc personne à remplacer.",
       "seatFailedRequestWithdrawn": "{absent} a retiré sa demande de remplacement, il n’y a donc personne à remplacer.",
       "seatFailedNotScheduled": "Le groupe n’a plus de séance à cette date."
+    },
+    "feedback": {
+      "title": "Avis",
+      "sources": {
+        "gamerOnline": "Des gamers après les séances en ligne"
+      },
+      "rangeLabel": "Période",
+      "ranges": {
+        "30d": "30 jours",
+        "90d": "90 jours",
+        "12m": "12 mois"
+      },
+      "empty": "Aucun avis n’a été donné sur cette période.",
+      "emptyFiltered": "Rien sur cette période ne correspond aux filtres.",
+      "loadError": "Les avis n’ont pas pu être chargés. Rechargez la page pour réessayer.",
+      "loadErrorWithReason": "Les avis n’ont pas pu être chargés : {reason}",
+      "filters": {
+        "label": "Filtré sur",
+        "dimensions": {
+          "product": "Produit",
+          "group": "Groupe",
+          "gedu": "Gedu",
+          "gamer": "Gamer"
+        },
+        "unknown": "Absent de cette période",
+        "remove": "Retirer {dimension} : {name}",
+        "clear": "Tout effacer"
+      },
+      "kpi": {
+        "responses": "Réponses",
+        "responsesDetail": "{eligible, plural, one {# gamer pouvait} other {# gamers pouvaient}} répondre",
+        "responsesDetailNoSessions": "De ce gamer",
+        "responseRate": "Taux de réponse",
+        "responseRateDetail": "Parmi les gamers présents",
+        "responseRateNotCounted": "Non calculé par gamer",
+        "positive": "Réponses positives",
+        "positiveDetail": "{positive} sur {count, plural, one {# réponse} other {# réponses}}",
+        "notes": "Messages",
+        "notesDetail": "Dans {count, plural, one {# réponse} other {# réponses}}"
+      },
+      "themes": {
+        "learning": "Apprentissage",
+        "fun": "Plaisir",
+        "geduQuality": "Qualité du Gedu",
+        "belonging": "Appartenance"
+      },
+      "trend": {
+        "heading": "Évolution par semaine",
+        "description": "Part de réponses positives (Oui ou Tout à fait) par thème. Un point creux repose sur moins de {min} réponses.",
+        "showTable": "Afficher en tableau",
+        "hideTable": "Masquer le tableau",
+        "span": "Semaines du {from} au {to}",
+        "weekResponses": "Semaine du {date} : {count, plural, one {# réponse} other {# réponses}}",
+        "answers": "{count, plural, one {# réponse} other {# réponses}}",
+        "panelLabel": "{theme}, réponses positives par semaine : {summary}",
+        "responsesHeading": "Réponses par semaine",
+        "responsesLabel": "Réponses par semaine : {summary}",
+        "week": "Semaine",
+        "responses": "Réponses"
+      },
+      "statements": {
+        "heading": "Par affirmation",
+        "positiveDetail": "{share} positives · {count, plural, one {# réponse} other {# réponses}}",
+        "levelDetail": "{level} : {share} ({count})"
+      },
+      "breakdown": {
+        "heading": "Répartition",
+        "tabs": {
+          "product": "Par produit",
+          "group": "Par groupe",
+          "gedu": "Par Gedu",
+          "gamer": "Par gamer"
+        },
+        "columns": {
+          "name": "Nom",
+          "responses": "Réponses",
+          "responseRate": "Taux de réponse",
+          "positive": "Positives",
+          "open": "Ouvrir"
+        },
+        "narrowTo": "Filtrer la page sur {name}",
+        "open": "Ouvrir {name}",
+        "showing": "{shown} sur {total} affichés",
+        "lowN": "Les lignes en gris reposent sur moins de {min} réponses",
+        "showMore": "Afficher plus"
+      },
+      "responses": {
+        "heading": "Réponses",
+        "onlyNotes": "Seulement avec un message",
+        "noneWithNotes": "Aucune réponse ici ne contient de message.",
+        "showing": "{shown} sur {total} affichées",
+        "showMore": "Afficher plus",
+        "noGedu": "Aucun Gedu enregistré",
+        "skipped": "Passée"
+      }
     }
   },
   "auth": {
@@ -3146,7 +3242,8 @@
     "tools": "Outils",
     "expandSidebar": "Déplier la barre latérale",
     "collapseSidebar": "Replier la barre latérale",
-    "substitutions": "Remplacements"
+    "substitutions": "Remplacements",
+    "feedback": "Avis"
   },
   "home": {
     "hero": {

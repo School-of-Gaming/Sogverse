@@ -79,6 +79,7 @@
       "adminSubstitutions": "Tuuraukset",
       "teamProfile": "Oma profiili",
       "adminTeamProfile": "Profiili",
+      "adminFeedback": "Palaute",
       "team": "Tiimi"
     },
     "descriptions": {
@@ -1564,6 +1565,101 @@
       "seatFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
       "seatFailedRequestWithdrawn": "{absent} on perunut tuurauspyyntönsä, joten tuurattavaa ei ole.",
       "seatFailedNotScheduled": "Ryhmällä ei ole enää kertaa tänä päivänä."
+    },
+    "feedback": {
+      "title": "Palaute",
+      "sources": {
+        "gamerOnline": "Pelaajilta verkkotapaamisten jälkeen"
+      },
+      "rangeLabel": "Aikaväli",
+      "ranges": {
+        "30d": "30 päivää",
+        "90d": "90 päivää",
+        "12m": "12 kuukautta"
+      },
+      "empty": "Tällä aikavälillä ei annettu palautetta.",
+      "emptyFiltered": "Mikään tämän aikavälin palaute ei vastaa suodattimia.",
+      "loadError": "Palautetta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+      "loadErrorWithReason": "Palautetta ei voitu ladata: {reason}",
+      "filters": {
+        "label": "Rajattu:",
+        "dimensions": {
+          "product": "Tuote",
+          "group": "Ryhmä",
+          "gedu": "Gedu",
+          "gamer": "Pelaaja"
+        },
+        "unknown": "Ei tällä aikavälillä",
+        "remove": "Poista rajaus {dimension}: {name}",
+        "clear": "Tyhjennä kaikki"
+      },
+      "kpi": {
+        "responses": "Vastaukset",
+        "responsesDetail": "{eligible, plural, one {# pelaaja} other {# pelaajaa}} voi vastata",
+        "responsesDetailNoSessions": "Tältä pelaajalta",
+        "responseRate": "Vastausprosentti",
+        "responseRateDetail": "Paikalla olleista pelaajista",
+        "responseRateNotCounted": "Ei lasketa pelaajakohtaisesti",
+        "positive": "Myönteiset vastaukset",
+        "positiveDetail": "{positive}/{count, plural, one {# vastauksesta} other {# vastauksesta}}",
+        "notes": "Viestit",
+        "notesDetail": "{count, plural, one {# vastauksessa} other {# vastauksessa}}"
+      },
+      "themes": {
+        "learning": "Oppiminen",
+        "fun": "Hauskuus",
+        "geduQuality": "Gedun laatu",
+        "belonging": "Yhteenkuuluvuus"
+      },
+      "trend": {
+        "heading": "Kehitys viikoittain",
+        "description": "Myönteisten vastausten (Kyllä tai Ehdottomasti) osuus teemoittain. Ontto piste perustuu alle {min} vastaukseen.",
+        "showTable": "Näytä taulukkona",
+        "hideTable": "Piilota taulukko",
+        "span": "Viikot {from}–{to}",
+        "weekResponses": "Viikko {date}: {count, plural, one {# vastaus} other {# vastausta}}",
+        "answers": "{count, plural, one {# vastaus} other {# vastausta}}",
+        "panelLabel": "{theme}, myönteiset vastaukset viikoittain: {summary}",
+        "responsesHeading": "Vastauksia viikossa",
+        "responsesLabel": "Vastauksia viikossa: {summary}",
+        "week": "Viikko",
+        "responses": "Vastaukset"
+      },
+      "statements": {
+        "heading": "Väittämittäin",
+        "positiveDetail": "{share} myönteisiä · {count, plural, one {# vastaus} other {# vastausta}}",
+        "levelDetail": "{level}: {share} ({count})"
+      },
+      "breakdown": {
+        "heading": "Erittely",
+        "tabs": {
+          "product": "Tuotteittain",
+          "group": "Ryhmittäin",
+          "gedu": "Geduittain",
+          "gamer": "Pelaajittain"
+        },
+        "columns": {
+          "name": "Nimi",
+          "responses": "Vastaukset",
+          "responseRate": "Vastausprosentti",
+          "positive": "Myönteiset",
+          "open": "Avaa"
+        },
+        "narrowTo": "Rajaa sivu: {name}",
+        "open": "Avaa: {name}",
+        "showing": "Näytetään {shown}/{total}",
+        "lowN": "Harmaat rivit perustuvat alle {min} vastaukseen",
+        "showMore": "Näytä lisää"
+      },
+      "responses": {
+        "heading": "Vastaukset",
+        "onlyNotes": "Vain viestilliset",
+        "noneWithNotes": "Yhdessäkään vastauksessa ei ole viestiä.",
+        "showing": "Näytetään {shown}/{total}",
+        "showMore": "Näytä lisää",
+        "noGedu": "Gedua ei ole kirjattu",
+        "skipped": "Ohitettu"
+      }
     }
   },
   "auth": {
@@ -3146,7 +3242,8 @@
     "tools": "Työkalut",
     "expandSidebar": "Laajenna sivupalkki",
     "collapseSidebar": "Pienennä sivupalkki",
-    "substitutions": "Tuuraukset"
+    "substitutions": "Tuuraukset",
+    "feedback": "Palaute"
   },
   "home": {
     "hero": {

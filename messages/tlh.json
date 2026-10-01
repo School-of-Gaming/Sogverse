@@ -72,6 +72,7 @@
       "adminSubstitutions": "lIwmey",
       "teamProfile": "Del’a’wIj",
       "adminTeamProfile": "Del’a’",
+      "adminFeedback": "ja'chuq",
       "team": "ghom"
     },
     "descriptions": {
@@ -1608,6 +1609,101 @@
       "seatFailedSeatGone": "may’vam ghaj {absent} ’e’ mev. lIwmeH pagh tu’lu’.",
       "seatFailedRequestWithdrawn": "tlhobghachDaj teq {absent}. lIwmeH pagh tu’lu’.",
       "seatFailedNotScheduled": "jajvam may’ ghajbe’ ghom DaH."
+    },
+    "feedback": {
+      "title": "ja'chuq",
+      "sources": {
+        "gamerOnline": "QujwI'pu' ja'chuq, De'wI' ghommey pItlh"
+      },
+      "rangeLabel": "poH",
+      "ranges": {
+        "30d": "30 jaj",
+        "90d": "90 jaj",
+        "12m": "12 jar"
+      },
+      "empty": "poHvam ja'chuq pagh.",
+      "emptyFiltered": "poHvam Daqvo' pagh mach.",
+      "loadError": "ja'chuq lI'laHbe'. nIqHom yIchu'qa'.",
+      "loadErrorWithReason": "ja'chuq lI'laHbe': {reason}",
+      "filters": {
+        "label": "wIvlu'",
+        "dimensions": {
+          "product": "Doch",
+          "group": "ghom",
+          "gedu": "Gedu",
+          "gamer": "QujwI'"
+        },
+        "unknown": "poHvam Daq tu'lu'be'",
+        "remove": "{dimension} yIteq: {name}",
+        "clear": "Hoch yIteq"
+      },
+      "kpi": {
+        "responses": "jangmey",
+        "responsesDetail": "{eligible, plural, one {# QujwI'} other {# QujwI'pu'}} jang laH",
+        "responsesDetailNoSessions": "QujwI'vamvo'",
+        "responseRate": "jang mI'",
+        "responseRateDetail": "QujwI'pu' naDev tu'lu'bogh",
+        "responseRateNotCounted": "QujwI' mI' toghlu'be'",
+        "positive": "jangmey QaQ",
+        "positiveDetail": "{positive} / {count, plural, one {# jang} other {# jangmey}}",
+        "notes": "QInmey",
+        "notesDetail": "{count, plural, one {# jang} other {# jangmey}} Daq"
+      },
+      "themes": {
+        "learning": "ghojmeH",
+        "fun": "Quch",
+        "geduQuality": "Gedu QaQ",
+        "belonging": "tay'"
+      },
+      "trend": {
+        "heading": "Hogh ghoch",
+        "description": "jangmey QaQ (HISlaH pagh HISlaHbej) mI' Hoch DochvaD. ghom chIm wa' puS {min} jangmey.",
+        "showTable": "SIrgh yIcha'",
+        "hideTable": "SIrgh yISo'",
+        "span": "Hoghmey {from} – {to}",
+        "weekResponses": "Hogh {date}: {count, plural, one {# jang} other {# jangmey}}",
+        "answers": "{count, plural, one {# jang} other {# jangmey}}",
+        "panelLabel": "{theme}, jangmey QaQ Hogh Hoch: {summary}",
+        "responsesHeading": "jangmey Hogh Hoch",
+        "responsesLabel": "jangmey Hogh Hoch: {summary}",
+        "week": "Hogh",
+        "responses": "jangmey"
+      },
+      "statements": {
+        "heading": "ja'meH mu'tlheghmey",
+        "positiveDetail": "{share} QaQ · {count, plural, one {# jang} other {# jangmey}}",
+        "levelDetail": "{level}: {share} ({count})"
+      },
+      "breakdown": {
+        "heading": "ghom ghItlh",
+        "tabs": {
+          "product": "Doch",
+          "group": "ghom",
+          "gedu": "Gedu",
+          "gamer": "QujwI'"
+        },
+        "columns": {
+          "name": "pong",
+          "responses": "jangmey",
+          "responseRate": "jang mI'",
+          "positive": "QaQ",
+          "open": "poSmoH"
+        },
+        "narrowTo": "{name} neH yIcha'",
+        "open": "{name} yIpoSmoH",
+        "showing": "{shown} / {total} cha'lu'",
+        "lowN": "tamghay rur Dochmey: puS {min} jangmey",
+        "showMore": "latlh yIcha'"
+      },
+      "responses": {
+        "heading": "jangmey",
+        "onlyNotes": "QIn ghajbogh neH",
+        "noneWithNotes": "naDev QIn ghajbe' jang.",
+        "showing": "{shown} / {total} cha'lu'",
+        "showMore": "latlh yIcha'",
+        "noGedu": "Gedu ghItlhlu'be'",
+        "skipped": "juSlu'"
+      }
     }
   },
   "auth": {
@@ -3186,7 +3282,8 @@
     "tools": "janmey",
     "expandSidebar": "HeDmey ’an",
     "collapseSidebar": "HeDmey SoQmoH",
-    "substitutions": "lIwmey"
+    "substitutions": "lIwmey",
+    "feedback": "ja'chuq"
   },
   "home": {
     "hero": {

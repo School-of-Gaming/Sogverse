@@ -204,6 +204,7 @@ export const PATHNAMES = {
     "/admin/municipality-clubs/[id]/groups/[groupId]",
   "/admin/municipality-invoicing": "/admin/municipality-invoicing",
   "/admin/platform-vision": "/admin/platform-vision",
+  "/admin/feedback": "/admin/feedback",
   "/admin/gedu-invoicing": "/admin/gedu-invoicing",
   "/admin/invoice-customers": "/admin/invoice-customers",
   "/admin/invoice-customers/new": "/admin/invoice-customers/new",

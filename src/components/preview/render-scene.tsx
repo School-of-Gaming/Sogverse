@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { isAdminDashboardScenario } from "@/components/admin/dashboard/mock-dashboard-fixtures";
+import { isAdminFeedbackScenario } from "@/components/admin/feedback/mock-feedback-fixtures";
 import { isAdminSubstitutionsScenario } from "@/components/admin/substitutions/mock-substitutions-fixtures";
 import { isInvoiceCustomerScenario } from "@/components/admin/invoice-customers/mock-invoice-customer-fixtures";
 import { isMunicipalityInvoicingScenario } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
@@ -35,6 +36,7 @@ import { findConsentScenario } from "@/components/public/products/required-conse
 import type { ProductTopic } from "@/types";
 import type { PreviewSurface } from "./scenes";
 import { AdminDashboardScene } from "./scenes/admin-dashboard-scene";
+import { AdminFeedbackScene } from "./scenes/admin-feedback-scene";
 import { AdminSubstitutionsScene } from "./scenes/admin-substitutions-scene";
 import { ChatScene } from "./scenes/chat-scene";
 import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
@@ -255,6 +257,10 @@ const SCENE_RENDERERS: Record<
   "admin-dashboard": (scenario) => {
     if (!isAdminDashboardScenario(scenario)) notFound();
     return <AdminDashboardScene scenario={scenario} />;
+  },
+  "admin-feedback": (scenario) => {
+    if (!isAdminFeedbackScenario(scenario)) notFound();
+    return <AdminFeedbackScene scenario={scenario} />;
   },
   "admin-substitutions": (scenario) => {
     if (!isAdminSubstitutionsScenario(scenario)) notFound();

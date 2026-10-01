@@ -641,6 +641,18 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "admin-feedback",
+    title: "Admin feedback",
+    description:
+      "The /admin/feedback page over a generated year of gamer feedback ending Monday 28 September 2026. The range control stays in the preview; drill-downs, tabs, sorting and the notes toggle all work.",
+    chrome: "admin",
+    scenarios: [
+      { slug: "year", label: "A year of feedback" },
+      { slug: "empty", label: "Nobody answered", description: "The empty range, which a year of answers cannot show." },
+      { slug: "load-failed", label: "The read failed" },
+    ],
+  },
+  {
     surface: "municipality-invoicing",
     title: "Municipality invoicing",
     description:

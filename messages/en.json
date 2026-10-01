@@ -79,6 +79,7 @@
       "adminSubstitutions": "Substitutions",
       "teamProfile": "My profile",
       "adminTeamProfile": "Profile",
+      "adminFeedback": "Feedback",
       "team": "Team"
     },
     "descriptions": {
@@ -1564,6 +1565,101 @@
       "seatFailedSeatGone": "{absent} no longer has this session, so there is nothing to substitute for.",
       "seatFailedRequestWithdrawn": "{absent} has withdrawn their request, so there is no absence to cover.",
       "seatFailedNotScheduled": "The group no longer has a session on this date."
+    },
+    "feedback": {
+      "title": "Feedback",
+      "sources": {
+        "gamerOnline": "From gamers after online sessions"
+      },
+      "rangeLabel": "Range",
+      "ranges": {
+        "30d": "30 days",
+        "90d": "90 days",
+        "12m": "12 months"
+      },
+      "empty": "No feedback was given in this range.",
+      "emptyFiltered": "Nothing in this range matches the filters.",
+      "loadError": "The feedback could not be loaded. Reload the page to try again.",
+      "loadErrorWithReason": "The feedback could not be loaded: {reason}",
+      "filters": {
+        "label": "Narrowed to",
+        "dimensions": {
+          "product": "Product",
+          "group": "Group",
+          "gedu": "Gedu",
+          "gamer": "Gamer"
+        },
+        "unknown": "Not in this range",
+        "remove": "Remove {dimension}: {name}",
+        "clear": "Clear all"
+      },
+      "kpi": {
+        "responses": "Responses",
+        "responsesDetail": "{eligible, plural, one {# gamer} other {# gamers}} could answer",
+        "responsesDetailNoSessions": "From this gamer",
+        "responseRate": "Response rate",
+        "responseRateDetail": "Of the gamers present",
+        "responseRateNotCounted": "Not counted per gamer",
+        "positive": "Positive answers",
+        "positiveDetail": "{positive} of {count, plural, one {# answer} other {# answers}}",
+        "notes": "Notes",
+        "notesDetail": "Across {count, plural, one {# response} other {# responses}}"
+      },
+      "themes": {
+        "learning": "Learning",
+        "fun": "Fun",
+        "geduQuality": "Gedu quality",
+        "belonging": "Belonging"
+      },
+      "trend": {
+        "heading": "Trend by week",
+        "description": "Share of positive answers (Yes or Definitely) per theme. A hollow point rests on fewer than {min} answers.",
+        "showTable": "Show as table",
+        "hideTable": "Hide table",
+        "span": "Weeks from {from} to {to}",
+        "weekResponses": "Week of {date}: {count, plural, one {# response} other {# responses}}",
+        "answers": "{count, plural, one {# answer} other {# answers}}",
+        "panelLabel": "{theme}, positive answers by week: {summary}",
+        "responsesHeading": "Responses per week",
+        "responsesLabel": "Responses per week: {summary}",
+        "week": "Week",
+        "responses": "Responses"
+      },
+      "statements": {
+        "heading": "By statement",
+        "positiveDetail": "{share} positive · {count, plural, one {# answer} other {# answers}}",
+        "levelDetail": "{level}: {share} ({count})"
+      },
+      "breakdown": {
+        "heading": "Breakdown",
+        "tabs": {
+          "product": "By product",
+          "group": "By group",
+          "gedu": "By Gedu",
+          "gamer": "By gamer"
+        },
+        "columns": {
+          "name": "Name",
+          "responses": "Responses",
+          "responseRate": "Response rate",
+          "positive": "Positive",
+          "open": "Open"
+        },
+        "narrowTo": "Narrow the page to {name}",
+        "open": "Open {name}",
+        "showing": "Showing {shown} of {total}",
+        "lowN": "Rows in grey rest on fewer than {min} responses",
+        "showMore": "Show more"
+      },
+      "responses": {
+        "heading": "Responses",
+        "onlyNotes": "Only with notes",
+        "noneWithNotes": "No response here carries a note.",
+        "showing": "Showing {shown} of {total}",
+        "showMore": "Show more",
+        "noGedu": "No Gedu recorded",
+        "skipped": "Skipped"
+      }
     }
   },
   "auth": {
@@ -3146,7 +3242,8 @@
     "tools": "Tools",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
-    "substitutions": "Substitutions"
+    "substitutions": "Substitutions",
+    "feedback": "Feedback"
   },
   "home": {
     "hero": {
