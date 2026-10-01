@@ -45,9 +45,7 @@ import type { LibraryArticleInput } from "@/services/library/library.contracts";
 
 const ARTICLE = "3f8e2a71-6c4b-4d19-a0e5-8b27c9d1f604";
 const INPUT: LibraryArticleInput = {
-  title: "T",
-  summary: "",
-  body: "",
+  versions: [{ locale: "en", title: "T", summary: "", body: "" }],
   category: null,
   coverImageId: null,
 };

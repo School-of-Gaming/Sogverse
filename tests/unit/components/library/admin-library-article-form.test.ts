@@ -1,14 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   emptyLibraryArticleForm,
+  incompleteLocales,
   libraryArticleFormFromDraft,
   libraryArticleInputFromForm,
   libraryArticleStatus,
   libraryPublishState,
+  librarySaveBlocker,
   libraryWriteFailure,
   missingForPublish,
   sameAsSaved,
   type LibraryArticleForm,
+  type LibraryArticleVersionDraft,
 } from "@/components/admin/library/library-article-form";
 import type { LibraryArticleDraft } from "@/services/library";
 
@@ -20,9 +23,14 @@ import type { LibraryArticleDraft } from "@/services/library";
 
 const DRAFT: LibraryArticleDraft = {
   id: "3f0c7a52-3a3e-4a57-9a4e-5a86f2a1c0de",
-  title: "Setting up a family gaming agreement",
-  summary: "Why a written agreement ends more arguments than it starts.",
-  body: "## Why write it down\n\nA rule in one head is a rule to argue with.",
+  versions: [
+    {
+      locale: "en",
+      title: "Setting up a family gaming agreement",
+      summary: "Why a written agreement ends more arguments than it starts.",
+      body: "## Why write it down\n\nA rule in one head is a rule to argue with.",
+    },
+  ],
   category: "screen_time",
   coverImageId: "b8805c0f-f47d-4f73-af4a-7a2ae7b30237",
   coverPath: "cover.jpg",
@@ -31,8 +39,16 @@ const DRAFT: LibraryArticleDraft = {
   updatedAt: "2026-09-15T08:05:00Z",
 };
 
+const EN = DRAFT.versions[0];
+
 function complete(): LibraryArticleForm {
-  return libraryArticleFormFromDraft(DRAFT);
+  return libraryArticleFormFromDraft(DRAFT, "fi");
+}
+
+/** The form with the English version changed. */
+function withEnglish(patch: Partial<LibraryArticleVersionDraft>): LibraryArticleForm {
+  const form = complete();
+  return { ...form, versions: { ...form.versions, en: { ...EN, ...patch } } };
 }
 
 describe("an article's status", () => {
@@ -56,24 +72,64 @@ describe("an article's status", () => {
 });
 
 describe("what publishing still needs", () => {
-  it("names every missing field, in the order the form asks for them", () => {
-    expect(missingForPublish(emptyLibraryArticleForm())).toEqual([
-      "title",
-      "summary",
+  it("names a category and a complete language for a new article", () => {
+    expect(missingForPublish(emptyLibraryArticleForm("en"))).toEqual([
       "category",
-      "body",
+      "completeVersion",
     ]);
   });
 
   it("counts a field of only whitespace as missing, as the database does", () => {
+    expect(missingForPublish(withEnglish({ summary: "   " }))).toEqual([
+      "completeVersion",
+    ]);
+  });
+
+  it("needs one complete language, not every language", () => {
+    const form = complete();
+    const halfFinnish: LibraryArticleForm = {
+      ...form,
+      versions: { ...form.versions, fi: { title: "Otsikko", summary: "", body: "" } },
+    };
+    expect(missingForPublish(halfFinnish)).toEqual([]);
+    expect(incompleteLocales(halfFinnish)).toEqual(["fi"]);
+  });
+
+  it("does not count an untouched tab as a language left out", () => {
+    const form = complete();
     expect(
-      missingForPublish({ ...complete(), summary: "   ", body: "\n\n" }),
-    ).toEqual(["summary", "body"]);
+      incompleteLocales({
+        ...form,
+        versions: { ...form.versions, sv: { title: "", summary: "", body: "" } },
+      }),
+    ).toEqual([]);
   });
 
   it("never asks for a cover", () => {
     const noCover: LibraryArticleForm = { ...complete(), cover: null };
     expect(missingForPublish(noCover)).toEqual([]);
+  });
+});
+
+describe("what a save needs", () => {
+  it("needs a language written", () => {
+    expect(librarySaveBlocker(emptyLibraryArticleForm("en"))).toEqual({
+      kind: "noVersion",
+    });
+  });
+
+  it("names a language written without its title", () => {
+    const form = complete();
+    expect(
+      librarySaveBlocker({
+        ...form,
+        versions: { ...form.versions, fi: { title: " ", summary: "Tiivistelmä", body: "" } },
+      }),
+    ).toEqual({ kind: "untitled", locale: "fi" });
+  });
+
+  it("lets a titled draft through", () => {
+    expect(librarySaveBlocker(complete())).toBeNull();
   });
 });
 
@@ -132,18 +188,42 @@ describe("the Publish control", () => {
 });
 
 describe("the form against the saved copy", () => {
-  it("opens on the saved copy with nothing unsaved", () => {
+  it("opens on the saved copy's first language with nothing unsaved", () => {
+    expect(complete().activeLocale).toBe("en");
     expect(sameAsSaved(complete(), DRAFT)).toBe(true);
   });
 
+  it("opens a new article on the admin's own language", () => {
+    expect(emptyLibraryArticleForm("fi").activeLocale).toBe("fi");
+  });
+
   it("compares as the save stores, trimmed", () => {
+    expect(sameAsSaved(withEnglish({ title: `  ${EN.title} ` }), DRAFT)).toBe(true);
+  });
+
+  it("does not count an opened, untouched tab as a change", () => {
+    const form = complete();
     expect(
-      sameAsSaved({ ...complete(), title: `  ${DRAFT.title} ` }, DRAFT),
+      sameAsSaved(
+        { ...form, versions: { ...form.versions, sv: { title: "", summary: "", body: "" } } },
+        DRAFT,
+      ),
     ).toBe(true);
   });
 
+  it("sees a language added or removed", () => {
+    const form = complete();
+    expect(
+      sameAsSaved(
+        { ...form, versions: { ...form.versions, fi: { title: "Otsikko", summary: "", body: "" } } },
+        DRAFT,
+      ),
+    ).toBe(false);
+    expect(sameAsSaved({ ...form, versions: {} }, DRAFT)).toBe(false);
+  });
+
   it("sees a changed field, category or cover", () => {
-    expect(sameAsSaved({ ...complete(), summary: "Other" }, DRAFT)).toBe(false);
+    expect(sameAsSaved(withEnglish({ summary: "Other" }), DRAFT)).toBe(false);
     expect(sameAsSaved({ ...complete(), category: "learning" }, DRAFT)).toBe(
       false,
     );
@@ -157,12 +237,10 @@ describe("the form against the saved copy", () => {
       path: DRAFT.coverPath,
     });
     expect(
-      libraryArticleFormFromDraft({
-        ...DRAFT,
-        coverImageId: null,
-        coverPath: null,
-        coverLabel: null,
-      }).cover,
+      libraryArticleFormFromDraft(
+        { ...DRAFT, coverImageId: null, coverPath: null, coverLabel: null },
+        "en",
+      ).cover,
     ).toBeNull();
   });
 
@@ -176,9 +254,7 @@ describe("the form against the saved copy", () => {
 
   it("saves every field, the cover as its id", () => {
     expect(libraryArticleInputFromForm(complete())).toEqual({
-      title: DRAFT.title,
-      summary: DRAFT.summary,
-      body: DRAFT.body,
+      versions: [EN],
       category: DRAFT.category,
       coverImageId: DRAFT.coverImageId,
     });

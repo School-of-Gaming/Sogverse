@@ -541,13 +541,12 @@
       "publishChanges": "Publicera ändringar",
       "unpublish": "Avpublicera",
       "readiness": {
-        "missing": "Lägg till {fields} för att publicera."
+        "missing": "Lägg till {fields} för att publicera.",
+        "leftOut": "{count, plural, one {{languages} är inte färdig, så den publiceras inte.} other {{languages} är inte färdiga, så de publiceras inte.}}"
       },
       "missing": {
-        "title": "en rubrik",
-        "summary": "en sammanfattning",
         "category": "en kategori",
-        "body": "artikeltexten"
+        "completeVersion": "ett språk med rubrik, sammanfattning och artikeltext"
       },
       "unpublishConfirm": {
         "title": "Avpublicera artikeln?",
@@ -555,6 +554,7 @@
         "confirm": "Avpublicera"
       },
       "fields": {
+        "languages": "Språk",
         "title": "Rubrik",
         "summary": "Sammanfattning",
         "category": "Kategori",
@@ -562,6 +562,7 @@
         "body": "Artikeltext"
       },
       "hints": {
+        "languages": "Skriv varje språk för hand. Vid publicering blir varje färdigt språk synligt: ett med rubrik, sammanfattning och artikeltext.",
         "summary": "Ren text, som visas under rubriken och på artikelns kort i Biblioteket.",
         "cover": "Visas ovanför artikeln och på dess kort, beskuren till 16:9. Utan omslagsbild ser läsarna en platshållare.",
         "body": "Läsarna ser texten under omslagsbilden, formaterad som den ser ut här."
@@ -579,8 +580,14 @@
         "publishFailed": "Artikeln kunde inte publiceras. Försök igen.",
         "publishFailedWithReason": "Artikeln kunde inte publiceras – {reason}",
         "unpublishFailed": "Artikeln kunde inte avpubliceras. Försök igen.",
-        "unpublishFailedWithReason": "Artikeln kunde inte avpubliceras – {reason}"
-      }
+        "unpublishFailedWithReason": "Artikeln kunde inte avpubliceras – {reason}",
+        "versionTitleRequired": "Versionen på {language} måste ha en rubrik."
+      },
+      "versionComplete": "färdig",
+      "versionIncomplete": "inte färdig än",
+      "addLocale": "Lägg till språk",
+      "removeLocale": "Ta bort {language}",
+      "languagesLabel": "Språk"
     },
     "geduRole": {
       "primary": "Huvud-Gedu",

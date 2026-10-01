@@ -1,14 +1,12 @@
 import { walkPages } from "@/lib/supabase/paging";
-import type {
-  AppSupabaseClient,
-  LibraryArticlePublicationRow,
-  LibraryArticleRow,
-} from "@/types";
+import type { AppSupabaseClient } from "@/types";
 import {
   hasUnpublishedChanges,
+  inLocaleOrder,
   libraryArticleInput,
   type AdminLibraryArticle,
   type AdminLibraryArticleListItem,
+  type ComparableArticleCopy,
   type LibraryArticleDraft,
   type LibraryArticleInput,
   type PublishedLibraryArticle,
@@ -19,93 +17,86 @@ import {
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const DRAFT_COLUMNS =
-  "id, title, summary, body, category, cover_image_id, cover_path, body_md5, created_at, updated_at";
+/** A working version whole, with what comparing and publishing read off it. */
+const DRAFT_VERSION_COLUMNS = "locale, title, summary, body, body_md5, is_complete";
 
-const PUBLICATION_COLUMNS =
-  "article_id, title, summary, body, category, cover_image_id, cover_path, body_md5, published_at, first_published_at";
+/** A working version for the list: no body, but its digest and completeness. */
+const DRAFT_VERSION_LIST_COLUMNS = "locale, title, summary, body_md5, is_complete";
+
+const PUBLICATION_COLUMNS = `article_id, category, cover_image_id, cover_path, published_at, first_published_at, versions:library_article_publication_translations(locale, title, summary, body, body_md5)`;
 
 /** The published copy's columns for a list: everything a card draws, no body. */
-const PUBLICATION_SUMMARY_COLUMNS =
-  "article_id, title, summary, category, cover_path, published_at, first_published_at";
+const PUBLICATION_SUMMARY_COLUMNS = `article_id, category, cover_path, published_at, first_published_at, versions:library_article_publication_translations(locale, title, summary)`;
 
-/** The published copy's columns for comparing, without its body. */
-const PUBLICATION_COMPARE_COLUMNS =
-  "title, summary, category, cover_image_id, body_md5";
+/** The published copy's columns for comparing, without a body. */
+const PUBLICATION_COMPARE_COLUMNS = `category, cover_image_id, versions:library_article_publication_translations(locale, title, summary, body_md5)`;
 
-type DraftRow = Pick<
-  LibraryArticleRow,
-  | "id"
-  | "title"
-  | "summary"
-  | "body"
-  | "category"
-  | "cover_image_id"
-  | "cover_path"
-  | "body_md5"
-  | "created_at"
-  | "updated_at"
->;
+interface WorkingVersionRow {
+  locale: string;
+  title: string;
+  summary: string;
+  body_md5: string | null;
+  is_complete: boolean | null;
+}
 
-type PublicationRow = Pick<
-  LibraryArticlePublicationRow,
-  | "article_id"
-  | "title"
-  | "summary"
-  | "body"
-  | "category"
-  | "cover_image_id"
-  | "cover_path"
-  | "body_md5"
-  | "published_at"
-  | "first_published_at"
->;
-
-function toDraft(
-  row: DraftRow,
-  coverEntry: { label: string } | null,
-): LibraryArticleDraft {
+/**
+ * The working copy as publishing would copy it, for comparing with what is
+ * live: the shared fields and the complete versions alone.
+ */
+function publishable(row: {
+  category: ComparableArticleCopy["category"];
+  cover_image_id: string | null;
+  versions: readonly WorkingVersionRow[];
+}): ComparableArticleCopy {
   return {
-    id: row.id,
-    title: row.title,
-    summary: row.summary,
-    body: row.body,
     category: row.category,
-    coverImageId: row.cover_image_id,
-    coverPath: row.cover_path,
-    coverLabel: coverEntry?.label ?? null,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    cover_image_id: row.cover_image_id,
+    versions: row.versions.filter((version) => version.is_complete === true),
   };
 }
 
-type PublicationSummaryRow = Pick<
-  LibraryArticlePublicationRow,
-  | "article_id"
-  | "title"
-  | "summary"
-  | "category"
-  | "cover_path"
-  | "published_at"
-  | "first_published_at"
->;
+interface PublicationSummaryRow {
+  article_id: string;
+  category: PublishedLibraryArticleSummary["category"];
+  cover_path: string | null;
+  published_at: string;
+  first_published_at: string;
+  versions: readonly { locale: string; title: string; summary: string }[];
+}
+
+interface PublicationRow extends Omit<PublicationSummaryRow, "versions"> {
+  versions: readonly {
+    locale: string;
+    title: string;
+    summary: string;
+    body: string;
+  }[];
+}
 
 function toPublishedSummary(
   row: PublicationSummaryRow,
 ): PublishedLibraryArticleSummary {
   return {
     id: row.article_id,
-    title: row.title,
-    summary: row.summary,
     category: row.category,
     coverPath: row.cover_path,
     firstPublishedAt: row.first_published_at,
     publishedAt: row.published_at,
+    versions: inLocaleOrder(row.versions).map(({ locale, title, summary }) => ({
+      locale,
+      title,
+      summary,
+    })),
   };
 }
 
 function toPublished(row: PublicationRow): PublishedLibraryArticle {
-  return { ...toPublishedSummary(row), body: row.body };
+  return {
+    ...toPublishedSummary(row),
+    versions: inLocaleOrder(row.versions).map(
+      ({ locale, title, summary, body }) => ({ locale, title, summary, body }),
+    ),
+  };
 }
 
 /**
@@ -128,20 +119,21 @@ export class LibraryService {
   // -------------------------------------------------------------------------
 
   /**
-   * Every article, most recently saved first, with whether each is live and
-   * whether its working copy has changes that are not.
+   * Every article, most recently saved first, with its versions' titles and
+   * summaries, whether it is live and whether publishing now would change
+   * what is.
    *
-   * The comparison reads the published copy's short fields and its body's
-   * digest, never either body, so the list stays small however long the
-   * articles are. Walked, because the table only grows; `id` breaks ties so a
-   * page boundary cannot repeat or drop a row.
+   * The comparison reads each version's short fields and its body's digest,
+   * never a body, so the list stays small however long the articles are.
+   * Walked, because the table only grows; `id` breaks ties so a page boundary
+   * cannot repeat or drop a row.
    */
   async listAdminArticles(): Promise<AdminLibraryArticleListItem[]> {
     const rows = await walkPages("listAdminLibraryArticles", (from, to) =>
       this.supabase
         .from("library_articles")
         .select(
-          `id, title, summary, category, cover_image_id, cover_path, body_md5, updated_at, publication:library_article_publications(${PUBLICATION_COMPARE_COLUMNS})`,
+          `id, category, cover_image_id, cover_path, updated_at, versions:library_article_translations(${DRAFT_VERSION_LIST_COLUMNS}), publication:library_article_publications(${PUBLICATION_COMPARE_COLUMNS})`,
           { count: "exact" },
         )
         .order("updated_at", { ascending: false })
@@ -151,13 +143,19 @@ export class LibraryService {
 
     return rows.map((row) => ({
       id: row.id,
-      title: row.title,
-      summary: row.summary,
+      versions: inLocaleOrder(row.versions).map(({ locale, title, summary }) => ({
+        locale,
+        title,
+        summary,
+      })),
       category: row.category,
       coverPath: row.cover_path,
       updatedAt: row.updated_at,
       isPublished: row.publication !== null,
-      hasUnpublishedChanges: hasUnpublishedChanges(row, row.publication),
+      hasUnpublishedChanges: hasUnpublishedChanges(
+        publishable(row),
+        row.publication,
+      ),
     }));
   }
 
@@ -179,7 +177,7 @@ export class LibraryService {
     const { data, error } = await this.supabase
       .from("library_articles")
       .select(
-        `${DRAFT_COLUMNS}, cover_entry:catalogue_images(label), publication:library_article_publications(${PUBLICATION_COLUMNS})`,
+        `id, category, cover_image_id, cover_path, created_at, updated_at, versions:library_article_translations(${DRAFT_VERSION_COLUMNS}), cover_entry:catalogue_images(label), publication:library_article_publications(${PUBLICATION_COLUMNS})`,
       )
       .eq("id", id)
       .maybeSingle();
@@ -187,10 +185,26 @@ export class LibraryService {
     if (error) throw error;
     if (!data) return null;
 
+    const draft: LibraryArticleDraft = {
+      id: data.id,
+      versions: inLocaleOrder(data.versions).map(
+        ({ locale, title, summary, body }) => ({ locale, title, summary, body }),
+      ),
+      category: data.category,
+      coverImageId: data.cover_image_id,
+      coverPath: data.cover_path,
+      coverLabel: data.cover_entry?.label ?? null,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+
     return {
-      draft: toDraft(data, data.cover_entry),
+      draft,
       publication: data.publication ? toPublished(data.publication) : null,
-      hasUnpublishedChanges: hasUnpublishedChanges(data, data.publication),
+      hasUnpublishedChanges: hasUnpublishedChanges(
+        publishable(data),
+        data.publication,
+      ),
     };
   }
 
@@ -203,9 +217,7 @@ export class LibraryService {
     const parsed = libraryArticleInput.parse(input);
 
     const { data, error } = await this.supabase.rpc("create_library_article", {
-      p_title: parsed.title,
-      p_summary: parsed.summary,
-      p_body: parsed.body,
+      p_versions: parsed.versions,
       // Null maps to an omission, so the RPC's DEFAULT NULL writes the null.
       p_category: parsed.category ?? undefined,
       p_cover_image_id: parsed.coverImageId ?? undefined,
@@ -218,17 +230,16 @@ export class LibraryService {
 
   /**
    * Save an article's working copy. What is live does not change until
-   * `publishArticle`. The RPC assigns every field on every call, which is why
-   * the whole input travels on every save.
+   * `publishArticle`. The RPC assigns every field and replaces the whole
+   * version set on every call, which is why the whole input travels on every
+   * save.
    */
   async saveArticle(id: string, input: LibraryArticleInput): Promise<string> {
     const parsed = libraryArticleInput.parse(input);
 
     const { data, error } = await this.supabase.rpc("save_library_article", {
       p_id: id,
-      p_title: parsed.title,
-      p_summary: parsed.summary,
-      p_body: parsed.body,
+      p_versions: parsed.versions,
       p_category: parsed.category ?? undefined,
       p_cover_image_id: parsed.coverImageId ?? undefined,
     });
@@ -239,9 +250,10 @@ export class LibraryService {
   }
 
   /**
-   * Make the saved working copy live, replacing any live version. The
-   * database refuses an incomplete working copy with `check_violation` and a
-   * sentence naming every missing field.
+   * Make the saved working copy live — its category, cover and every complete
+   * language version at once — replacing what was live. The database refuses
+   * an article with no complete version or no category with `check_violation`
+   * and a sentence naming what is missing.
    */
   async publishArticle(id: string): Promise<void> {
     const { error } = await this.supabase.rpc("publish_library_article", {
@@ -264,8 +276,10 @@ export class LibraryService {
 
   /**
    * Every published article, newest first by the date it first went live,
-   * without its body: a list feeds cards, and a card shows nothing derived
-   * from the body. Walked, because the Library only grows.
+   * with every live version and no body: a list feeds cards, and a card shows
+   * nothing derived from the body. The caller picks each article's version for
+   * its reader (`localizeArticleSummaries`). Walked, because the Library only
+   * grows. An article with no version it can show is left out.
    */
   async listPublishedArticles(): Promise<PublishedLibraryArticleSummary[]> {
     const rows = await walkPages("listPublishedLibraryArticles", (from, to) =>
@@ -276,11 +290,15 @@ export class LibraryService {
         .order("article_id", { ascending: false })
         .range(from, to),
     );
-    return rows.map(toPublishedSummary);
+    return rows
+      .map(toPublishedSummary)
+      .filter((article) => article.versions.length > 0);
   }
 
   /**
-   * One published article by id, or `null` when it is not live.
+   * One published article by id, with every live version, or `null` when it
+   * is not live. The caller picks the version for its reader
+   * (`localizeArticle`).
    *
    * The id comes straight off a public URL, so one that is not a UUID at all
    * is `null` here rather than the query error Postgres would raise casting
@@ -298,6 +316,8 @@ export class LibraryService {
       .maybeSingle();
 
     if (error) throw error;
-    return data ? toPublished(data) : null;
+    if (!data) return null;
+    const article = toPublished(data);
+    return article.versions.length > 0 ? article : null;
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Clock, Plus, Tag } from "lucide-react";
+import { Clock, Languages, Plus, Tag } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { buttonVariants } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import { LIBRARY_CATEGORY_MESSAGE_KEY } from "@/components/library/categories";
 import { LibraryCover } from "@/components/library/library-cover";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { ROUTES } from "@/lib/constants";
+import { resolveLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { AdminLibraryArticleListItem } from "@/services/library";
@@ -95,6 +97,7 @@ function SearchableArticles({
 }) {
   const t = useTranslations("admin.library");
   const tCategory = useTranslations("library.categories");
+  const uiLocale = resolveLocale(useLocale());
 
   // The same `?q=` the product lists mirror their search into, with the same
   // hook, so Back from an article returns to the list as it was narrowed.
@@ -103,17 +106,20 @@ function SearchableArticles({
   );
 
   // The category as its row names it, so the search matches the words the
-  // admin can see.
+  // admin can see. The row names the article by the version in the admin's
+  // own language, falling back as a reader's would; the search reaches every
+  // version's title, since an admin may remember an article by any of them.
   const rows = useMemo(
     () =>
       articles.map((article) => ({
         article,
+        version: resolveTranslation(article.versions, uiLocale),
         categoryLabel:
           article.category === null
             ? t("noCategory")
             : tCategory(LIBRARY_CATEGORY_MESSAGE_KEY[article.category]),
       })),
-    [articles, t, tCategory],
+    [articles, t, tCategory, uiLocale],
   );
 
   const needle = search.trim().toLowerCase();
@@ -122,8 +128,9 @@ function SearchableArticles({
       ? rows
       : rows.filter(
           ({ article, categoryLabel }) =>
-            article.title.toLowerCase().includes(needle) ||
-            categoryLabel.toLowerCase().includes(needle),
+            article.versions.some((version) =>
+              version.title.toLowerCase().includes(needle),
+            ) || categoryLabel.toLowerCase().includes(needle),
         );
 
   function clear() {
@@ -168,10 +175,12 @@ function SearchableArticles({
         </Card>
       ) : (
         <div className="space-y-2">
-          {shown.map(({ article, categoryLabel }) => (
+          {shown.map(({ article, version, categoryLabel }) => (
             <ArticleRow
               key={article.id}
               article={article}
+              title={version?.title ?? ""}
+              summary={version?.summary ?? ""}
               categoryLabel={categoryLabel}
             />
           ))}
@@ -181,12 +190,19 @@ function SearchableArticles({
   );
 }
 
-/** One article, the product list row's shape: thumb, title and chip, facts. */
+/**
+ * One article, the product list row's shape: thumb, title and chip, facts —
+ * among them the languages it is written in.
+ */
 function ArticleRow({
   article,
+  title,
+  summary,
   categoryLabel,
 }: {
   article: AdminLibraryArticleListItem;
+  title: string;
+  summary: string;
   categoryLabel: string;
 }) {
   const t = useTranslations("admin.library");
@@ -209,16 +225,23 @@ function ArticleRow({
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate font-medium">{article.title}</span>
+            <span className="truncate font-medium">{title}</span>
             <LibraryArticleStatusChip status={libraryArticleStatus(article)} />
           </div>
-          <p className="truncate text-sm text-muted-foreground">
-            {article.summary}
-          </p>
+          <p className="truncate text-sm text-muted-foreground">{summary}</p>
           <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Tag className="h-3 w-3" />
               {categoryLabel}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Languages className="h-3 w-3" aria-hidden />
+              <span className="sr-only">{t("languagesLabel")}</span>
+              {article.versions.map((version) => (
+                <span key={version.locale} className="uppercase">
+                  {version.locale}
+                </span>
+              ))}
             </span>
             <span className="inline-flex items-center gap-1">
               <Clock className="h-3 w-3" />

@@ -13,12 +13,14 @@ import { LibraryService } from "@/services/library/library.service";
 /**
  * The Library: `library_articles` (an article's admin-only working copy),
  * `library_article_publications` (its public published copy, whose row
- * existing IS the article being live), their four admin-guarded writers, and
+ * existing IS the article being live), each with its per-language versions
+ * (`library_article_translations`, `library_article_publication_translations`),
+ * their four admin-guarded writers, and
  * covers: a link from either copy to a library_cover entry of the shared image
  * catalogue, the trigger that derives each copy's `cover_path` from it, and
  * `repoint_library_covers`, the catalogue replace's half for the Library.
  *
- * Neither table carries a write grant for any Data API role, so there is no
+ * No Library table carries a write grant for any Data API role, so there is no
  * write-IDOR case to make: a non-admin's direct write is refused at the grant,
  * which is asserted here once per table. The spine sweeps the four RPCs with
  * all-NULL arguments; what it cannot show is that a refusal is about the ROLE,
@@ -77,26 +79,46 @@ const pathOf = (entry: string): string | undefined =>
 /** Ids minted by create during the run, deleted with the rest at the end. */
 const minted: string[] = [];
 
-/** A complete working copy, as the table stores it. */
-function completeRow() {
+/** A complete English version. */
+const EN = {
+  locale: "en" as const,
+  title: "Fixture: screen time that adds up",
+  summary: "A standfirst.",
+  body: "## A heading\n\nA paragraph.",
+};
+
+/** A complete Finnish version. */
+const FI = {
+  locale: "fi" as const,
+  title: "Fixture: ruutuaika",
+  summary: "Tiivistelmä.",
+  body: "Kappale.",
+};
+
+type VersionInput = {
+  locale: "en" | "fi" | "sv";
+  title: string;
+  summary: string;
+  body: string;
+};
+
+/** A complete working copy, as the service takes it: English alone. */
+function completeInput() {
   return {
-    title: "Fixture: screen time that adds up",
-    summary: "A standfirst.",
-    body: "## A heading\n\nA paragraph.",
+    versions: [EN] as VersionInput[],
     category: "screen_time" as const,
-    cover_image_id: COVER_A,
+    coverImageId: COVER_A as string | null,
   };
 }
 
-/** The same working copy, as the service takes it. */
-function completeInput() {
-  const { cover_image_id, ...row } = completeRow();
-  return {
-    ...row,
-    category: "screen_time" as const,
-    coverImageId: cover_image_id as string | null,
-  };
-}
+/** A draft as the service takes it: a title and nothing else. */
+const DRAFT_INPUT = {
+  versions: [
+    { locale: "en" as const, title: "Fixture: an unfinished draft", summary: "", body: "" },
+  ],
+  category: null,
+  coverImageId: null,
+};
 
 describe("library articles", () => {
   let admin: SupabaseClient<Database>;
@@ -127,20 +149,18 @@ describe("library articles", () => {
     const entries = await admin.from("catalogue_images").insert(ENTRY_ROWS);
     expect(entries.error).toBeNull();
     const { error } = await admin.from("library_articles").insert([
-      { id: ARTICLE_COMPLETE, ...completeRow() },
+      { id: ARTICLE_COMPLETE, category: "screen_time", cover_image_id: COVER_A },
       // Every column spelled out: a multi-row insert sends the union of the
       // rows' keys, so an omitted one arrives as an explicit NULL rather than
       // taking its default.
-      {
-        id: ARTICLE_DRAFT,
-        title: "Fixture: an unfinished draft",
-        summary: "",
-        body: "",
-        category: null,
-        cover_image_id: null,
-      },
+      { id: ARTICLE_DRAFT, category: null, cover_image_id: null },
     ]);
     expect(error).toBeNull();
+    const versions = await admin.from("library_article_translations").insert([
+      { article_id: ARTICLE_COMPLETE, ...EN },
+      { article_id: ARTICLE_DRAFT, ...DRAFT_INPUT.versions[0] },
+    ]);
+    expect(versions.error).toBeNull();
   }
 
   beforeAll(async () => {
@@ -177,9 +197,7 @@ describe("library articles", () => {
   describe("create and save", () => {
     it("creates a draft from a title alone, stamping the admin as author", async () => {
       const id = await service.createArticle({
-        title: "  Fixture: minted  ",
-        summary: "",
-        body: "",
+        versions: [{ locale: "fi", title: "  Fixture: minted  ", summary: "", body: "" }],
         category: null,
         coverImageId: null,
       });
@@ -187,36 +205,82 @@ describe("library articles", () => {
 
       const { data: row } = await admin
         .from("library_articles")
-        .select("title, summary, body, category, cover_image_id, cover_path, author_id")
+        .select(
+          "category, cover_image_id, cover_path, author_id, versions:library_article_translations(locale, title, summary, body, is_complete)",
+        )
         .eq("id", id)
         .single();
       const { data: me } = await adminAuth.auth.getUser();
       expect(row).toEqual({
-        title: "Fixture: minted",
-        summary: "",
-        body: "",
         category: null,
         cover_image_id: null,
         cover_path: null,
         author_id: me.user?.id,
+        versions: [
+          { locale: "fi", title: "Fixture: minted", summary: "", body: "", is_complete: false },
+        ],
       });
     });
 
-    it("refuses a draft with no title, with a readable check_violation", async () => {
-      const { error } = await adminAuth.rpc("create_library_article", {
-        p_title: "   ",
+    it("refuses an article with no version, and a version with no title, creating nothing", async () => {
+      const none = await adminAuth.rpc("create_library_article", {
+        p_versions: [],
       });
-      expect(error?.code).toBe("23514");
-      expect(error?.message).toMatch(/title/);
+      expect(none.error?.code).toBe("23514");
+      expect(none.error?.message).toMatch(/title/);
+
+      const untitled = await adminAuth.rpc("create_library_article", {
+        p_versions: [
+          { locale: "en", title: "Fixture: never created" },
+          { locale: "fi", title: "   ", summary: "Tiivistelmä." },
+        ],
+      });
+      expect(untitled.error?.code).toBe("23514");
+      expect(untitled.error?.message).toMatch(/fi version needs a title/);
+
+      const { count } = await admin
+        .from("library_article_translations")
+        .select("article_id", { count: "exact", head: true })
+        .eq("title", "Fixture: never created");
+      expect(count).toBe(0);
+    });
+
+    it("refuses one language twice", async () => {
+      const { error } = await adminAuth.rpc("save_library_article", {
+        p_id: ARTICLE_DRAFT,
+        p_versions: [
+          { locale: "en", title: "A" },
+          { locale: "en", title: "B" },
+        ],
+      });
+      expect(error?.code).toBe("22023");
+    });
+
+    it("replaces the version set whole: a language left out is removed", async () => {
+      await reseed();
+      await service.saveArticle(ARTICLE_COMPLETE, {
+        ...completeInput(),
+        versions: [EN, FI],
+      });
+      expect(
+        (await service.getAdminArticle(ARTICLE_COMPLETE))?.draft.versions.map(
+          (version) => version.locale,
+        ),
+      ).toEqual(["en", "fi"]);
+
+      await service.saveArticle(ARTICLE_COMPLETE, {
+        ...completeInput(),
+        versions: [FI],
+      });
+      expect(
+        (await service.getAdminArticle(ARTICLE_COMPLETE))?.draft.versions,
+      ).toEqual([FI]);
     });
 
     it("derives the cover path from the linked entry, reads its label, and clears both with the link", async () => {
       await reseed();
       await service.saveArticle(ARTICLE_DRAFT, {
-        title: "Fixture: an unfinished draft",
-        summary: "",
-        body: "",
-        category: null,
+        ...DRAFT_INPUT,
         coverImageId: COVER_B,
       });
       const linked = await service.getAdminArticle(ARTICLE_DRAFT);
@@ -226,13 +290,7 @@ describe("library articles", () => {
         coverLabel: "Library fixture B",
       });
 
-      await service.saveArticle(ARTICLE_DRAFT, {
-        title: "Fixture: an unfinished draft",
-        summary: "",
-        body: "",
-        category: null,
-        coverImageId: null,
-      });
+      await service.saveArticle(ARTICLE_DRAFT, DRAFT_INPUT);
       const cleared = await service.getAdminArticle(ARTICLE_DRAFT);
       expect(cleared?.draft).toMatchObject({
         coverImageId: null,
@@ -256,7 +314,7 @@ describe("library articles", () => {
     it("refuses a product picture as a cover, with a readable check_violation", async () => {
       const { error } = await adminAuth.rpc("save_library_article", {
         p_id: ARTICLE_DRAFT,
-        p_title: "T",
+        p_versions: [{ locale: "en", title: "T" }],
         p_cover_image_id: PRODUCT_PICTURE,
       });
       expect(error?.code).toBe("23514");
@@ -266,7 +324,7 @@ describe("library articles", () => {
     it("refuses a cover that is no longer in the catalogue", async () => {
       const { error } = await adminAuth.rpc("save_library_article", {
         p_id: ARTICLE_DRAFT,
-        p_title: "T",
+        p_versions: [{ locale: "en", title: "T" }],
         p_cover_image_id: ARTICLE_MISSING,
       });
       expect(error?.code).toBe("23503");
@@ -274,13 +332,7 @@ describe("library articles", () => {
 
     it("refuses to save an id no article has", async () => {
       await expect(
-        service.saveArticle(ARTICLE_MISSING, {
-          title: "T",
-          summary: "",
-          body: "",
-          category: null,
-          coverImageId: null,
-        }),
+        service.saveArticle(ARTICLE_MISSING, DRAFT_INPUT),
       ).rejects.toMatchObject({ code: "P0002" });
     });
 
@@ -288,22 +340,21 @@ describe("library articles", () => {
       "refuses a %s creating or saving with a payload an admin would succeed with",
       async (role) => {
         const created = await clientFor(role).rpc("create_library_article", {
-          p_title: `Fixture: by ${role}`,
+          p_versions: [{ locale: "en", title: `Fixture: by ${role}` }],
         });
         expect(created.error?.code).toBe("42501");
 
         const saved = await clientFor(role).rpc("save_library_article", {
           p_id: ARTICLE_DRAFT,
-          p_title: `Renamed by ${role}`,
+          p_versions: [{ locale: "en", title: `Renamed by ${role}` }],
         });
         expect(saved.error?.code).toBe("42501");
 
-        const { data: row } = await admin
-          .from("library_articles")
+        const { data: rows } = await admin
+          .from("library_article_translations")
           .select("title")
-          .eq("id", ARTICLE_DRAFT)
-          .single();
-        expect(row?.title).toBe("Fixture: an unfinished draft");
+          .eq("article_id", ARTICLE_DRAFT);
+        expect(rows).toEqual([{ title: "Fixture: an unfinished draft" }]);
       },
     );
   });
@@ -313,11 +364,11 @@ describe("library articles", () => {
   // -------------------------------------------------------------------------
 
   describe("publish and unpublish", () => {
-    it("refuses an incomplete working copy, naming everything missing", async () => {
+    it("refuses an article with no category and no complete version, naming both", async () => {
       await reseed();
       await expect(service.publishArticle(ARTICLE_DRAFT)).rejects.toMatchObject({
         code: "23514",
-        message: expect.stringMatching(/summary.*body.*category/),
+        message: expect.stringMatching(/category.*language version/),
       });
 
       const { count } = await admin
@@ -343,7 +394,7 @@ describe("library articles", () => {
       const live = await service.getPublishedArticle(ARTICLE_COMPLETE);
       expect(live).toMatchObject({
         id: ARTICLE_COMPLETE,
-        title: completeRow().title,
+        versions: [EN],
         category: "screen_time",
         coverPath: pathOf(COVER_A),
       });
@@ -355,14 +406,15 @@ describe("library articles", () => {
       await service.saveArticle(ARTICLE_COMPLETE, {
         ...completeInput(),
         category: "learning",
-        title: "Fixture: edited, not yet live",
-        body: "A different body.",
+        versions: [
+          { ...EN, title: "Fixture: edited, not yet live", body: "A different body." },
+        ],
       });
 
       expect(await service.getPublishedArticle(ARTICLE_COMPLETE)).toEqual(live);
 
       const edited = await service.getAdminArticle(ARTICLE_COMPLETE);
-      expect(edited?.draft.title).toBe("Fixture: edited, not yet live");
+      expect(edited?.draft.versions[0]?.title).toBe("Fixture: edited, not yet live");
       expect(edited?.draft.category).toBe("learning");
       expect(edited?.publication).toEqual(live);
       expect(edited?.hasUnpublishedChanges).toBe(true);
@@ -371,7 +423,9 @@ describe("library articles", () => {
         (item) => item.id === ARTICLE_COMPLETE,
       );
       expect(listed).toMatchObject({
-        title: "Fixture: edited, not yet live",
+        versions: [
+          { locale: "en", title: "Fixture: edited, not yet live", summary: EN.summary },
+        ],
         category: "learning",
         isPublished: true,
         hasUnpublishedChanges: true,
@@ -383,7 +437,7 @@ describe("library articles", () => {
       await service.publishArticle(ARTICLE_COMPLETE);
       await service.saveArticle(ARTICLE_COMPLETE, {
         ...completeInput(),
-        body: `${completeRow().body} One more sentence.`,
+        versions: [{ ...EN, body: `${EN.body} One more sentence.` }],
       });
 
       const listed = (await service.listAdminArticles()).find(
@@ -399,13 +453,13 @@ describe("library articles", () => {
 
       await service.saveArticle(ARTICLE_COMPLETE, {
         ...completeInput(),
-        title: "Fixture: second version",
+        versions: [{ ...EN, title: "Fixture: second version" }],
         coverImageId: COVER_B,
       });
       await service.publishArticle(ARTICLE_COMPLETE);
 
       const second = await service.getPublishedArticle(ARTICLE_COMPLETE);
-      expect(second?.title).toBe("Fixture: second version");
+      expect(second?.versions[0]?.title).toBe("Fixture: second version");
       expect(second?.coverPath).toBe(pathOf(COVER_B));
       expect(second?.firstPublishedAt).toBe(first?.firstPublishedAt);
       expect(Date.parse(second!.publishedAt)).toBeGreaterThan(
@@ -428,7 +482,7 @@ describe("library articles", () => {
       expect(after?.publication).toBeNull();
       expect(after?.hasUnpublishedChanges).toBe(false);
       expect(after?.draft).toMatchObject({
-        title: completeRow().title,
+        versions: [EN],
         coverImageId: COVER_A,
         category: "screen_time",
       });
@@ -438,20 +492,81 @@ describe("library articles", () => {
       ).resolves.toBeUndefined();
     });
 
-    it("refuses a published copy with a blank field at the schema itself", async () => {
-      // The backstop behind publish's own refusal: a row arriving any other way
-      // still cannot put a blank on a public page.
-      const { error } = await admin.from("library_article_publications").insert({
-        article_id: ARTICLE_DRAFT,
-        category: "learning",
-        title: "T",
-        summary: "   ",
-        body: "B",
-        cover_image_id: COVER_A,
-        published_at: new Date().toISOString(),
-        first_published_at: new Date().toISOString(),
-      });
+    it("refuses a published version with a blank field at the schema itself", async () => {
+      // The backstop behind publish copying only complete versions: a row
+      // arriving any other way still cannot put a blank on a public page.
+      await reseed();
+      await service.publishArticle(ARTICLE_COMPLETE);
+      const { error } = await admin
+        .from("library_article_publication_translations")
+        .insert({ article_id: ARTICLE_COMPLETE, locale: "fi", title: "T", summary: "   ", body: "B" });
       expect(error?.code).toBe("23514");
+    });
+
+    it("publishes every complete version at once and leaves an incomplete one out", async () => {
+      await reseed();
+      await service.saveArticle(ARTICLE_COMPLETE, {
+        ...completeInput(),
+        versions: [EN, FI, { locale: "sv", title: "Fixture: halvfärdig", summary: "", body: "" }],
+      });
+      await service.publishArticle(ARTICLE_COMPLETE);
+
+      const live = await new LibraryService(anon).getPublishedArticle(ARTICLE_COMPLETE);
+      expect(live?.versions).toEqual([EN, FI]);
+
+      // The half-written Swedish is not something publishing would change.
+      const admined = await service.getAdminArticle(ARTICLE_COMPLETE);
+      expect(admined?.hasUnpublishedChanges).toBe(false);
+    });
+
+    it("publishes an article whose only complete version is not English", async () => {
+      await reseed();
+      await service.saveArticle(ARTICLE_COMPLETE, {
+        ...completeInput(),
+        versions: [{ ...EN, body: "" }, FI],
+      });
+      await service.publishArticle(ARTICLE_COMPLETE);
+      const live = await service.getPublishedArticle(ARTICLE_COMPLETE);
+      expect(live?.versions).toEqual([FI]);
+    });
+
+    it("takes a live version down when a republish finds it incomplete", async () => {
+      await reseed();
+      await service.saveArticle(ARTICLE_COMPLETE, {
+        ...completeInput(),
+        versions: [EN, FI],
+      });
+      await service.publishArticle(ARTICLE_COMPLETE);
+
+      await service.saveArticle(ARTICLE_COMPLETE, {
+        ...completeInput(),
+        versions: [EN, { ...FI, summary: "" }],
+      });
+      // Publishing now would take the Finnish down, which is a change.
+      expect(
+        (await service.getAdminArticle(ARTICLE_COMPLETE))?.hasUnpublishedChanges,
+      ).toBe(true);
+
+      await service.publishArticle(ARTICLE_COMPLETE);
+      expect(
+        (await service.getPublishedArticle(ARTICLE_COMPLETE))?.versions,
+      ).toEqual([EN]);
+    });
+
+    it("unpublishes every version with the article", async () => {
+      await reseed();
+      await service.saveArticle(ARTICLE_COMPLETE, {
+        ...completeInput(),
+        versions: [EN, FI],
+      });
+      await service.publishArticle(ARTICLE_COMPLETE);
+      await service.unpublishArticle(ARTICLE_COMPLETE);
+
+      const { count } = await admin
+        .from("library_article_publication_translations")
+        .select("article_id", { count: "exact", head: true })
+        .eq("article_id", ARTICLE_COMPLETE);
+      expect(count).toBe(0);
     });
 
     it.each([["customer"], ["gedu"], ["gamer"]])(
@@ -482,7 +597,32 @@ describe("library articles", () => {
   describe("reads", () => {
     beforeAll(async () => {
       await reseed();
+      await service.saveArticle(ARTICLE_COMPLETE, {
+        ...completeInput(),
+        versions: [EN, { ...FI, body: "" }],
+      });
       await service.publishArticle(ARTICLE_COMPLETE);
+      // A working edit after publishing, which no reader may see.
+      await service.saveArticle(ARTICLE_COMPLETE, {
+        ...completeInput(),
+        versions: [{ ...EN, title: "Fixture: unpublished edit" }, { ...FI, body: "" }],
+      });
+    });
+
+    it("lets anon read only published versions", async () => {
+      const live = await anon
+        .from("library_article_publication_translations")
+        .select("locale, title")
+        .eq("article_id", ARTICLE_COMPLETE);
+      expect(live.error).toBeNull();
+      expect(live.data).toEqual([{ locale: "en", title: EN.title }]);
+
+      // A working version is not merely filtered out for anon: anon holds no grant.
+      const working = await anon
+        .from("library_article_translations")
+        .select("locale")
+        .eq("article_id", ARTICLE_COMPLETE);
+      expect(working.error).not.toBeNull();
     });
 
     it("lets anon read published articles through the service, and nothing else", async () => {
@@ -522,6 +662,13 @@ describe("library articles", () => {
         expect(drafts.error).toBeNull();
         expect(drafts.data).toEqual([]);
 
+        const draftVersions = await clientFor(role)
+          .from("library_article_translations")
+          .select("locale")
+          .in("article_id", [ARTICLE_COMPLETE, ARTICLE_DRAFT]);
+        expect(draftVersions.error).toBeNull();
+        expect(draftVersions.data).toEqual([]);
+
         const live = await new LibraryService(clientFor(role)).getPublishedArticle(
           ARTICLE_COMPLETE,
         );
@@ -534,23 +681,41 @@ describe("library articles", () => {
       async (role) => {
         const intoDrafts = await clientFor(role)
           .from("library_articles")
-          .insert({ title: `Fixture: direct by ${role}` });
+          .insert({ category: "learning" });
         expect(intoDrafts.error?.code).toBe("42501");
+
+        const intoDraftVersions = await clientFor(role)
+          .from("library_article_translations")
+          .update({ title: `Hijacked by ${role}` })
+          .eq("article_id", ARTICLE_COMPLETE);
+        expect(intoDraftVersions.error?.code).toBe("42501");
 
         const intoLive = await clientFor(role)
           .from("library_article_publications")
-          .update({ title: `Hijacked by ${role}` })
+          .update({ category: "learning" })
           .eq("article_id", ARTICLE_COMPLETE);
         expect(intoLive.error?.code).toBe("42501");
+
+        const intoLiveVersions = await clientFor(role)
+          .from("library_article_publication_translations")
+          .update({ title: `Hijacked by ${role}` })
+          .eq("article_id", ARTICLE_COMPLETE);
+        expect(intoLiveVersions.error?.code).toBe("42501");
       },
     );
 
-    it("refuses even an admin writing either table directly — the RPCs are the only way in", async () => {
+    it("refuses even an admin writing the tables directly — the RPCs are the only way in", async () => {
       const { error } = await adminAuth
         .from("library_article_publications")
         .delete()
         .eq("article_id", ARTICLE_COMPLETE);
       expect(error?.code).toBe("42501");
+
+      const versions = await adminAuth
+        .from("library_article_publication_translations")
+        .delete()
+        .eq("article_id", ARTICLE_COMPLETE);
+      expect(versions.error?.code).toBe("42501");
     });
   });
 

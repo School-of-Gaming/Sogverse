@@ -6,15 +6,10 @@ CREATE TABLE public.library_articles (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     author_id uuid,
     category public.library_article_category,
-    title text NOT NULL,
-    summary text DEFAULT ''::text NOT NULL,
-    body text DEFAULT ''::text NOT NULL,
     cover_image_id uuid,
     cover_path text,
-    body_md5 text GENERATED ALWAYS AS (md5(body)) STORED,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT chk_library_articles_title_present CHECK ((btrim(title) <> ''::text))
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -22,7 +17,7 @@ CREATE TABLE public.library_articles (
 -- Name: TABLE library_articles; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.library_articles IS 'The WORKING COPY of each Library article — what an admin is editing, which may be saved incomplete. The public never reads this table: what is live is the article''s row in library_article_publications, copied from this one by publish_library_article, so saving here never changes the live article. The id is the article''s URL. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant at all — the only writers are create_library_article, save_library_article and the catalogue''s repoint_library_covers. No delete: an article that has to come down is unpublished.';
+COMMENT ON TABLE public.library_articles IS 'The WORKING COPY of each Library article — what an admin is editing, which may be saved incomplete: the category and cover here, and the text per language in library_article_translations. The public never reads this table: what is live is the article''s row in library_article_publications, copied from this one by publish_library_article, so saving here never changes the live article. The id is the article''s URL. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant at all — the only writers are create_library_article, save_library_article and the catalogue''s repoint_library_covers. No delete: an article that has to come down is unpublished.';
 
 
 --
@@ -40,27 +35,6 @@ COMMENT ON COLUMN public.library_articles.category IS 'One of the five categorie
 
 
 --
--- Name: COLUMN library_articles.title; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.library_articles.title IS 'The title, trimmed. The one field a draft must carry, because the admin list names every article by it.';
-
-
---
--- Name: COLUMN library_articles.summary; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.library_articles.summary IS 'The standfirst shown under the title and on the index card: plain text, trimmed, and the empty string while a draft has none.';
-
-
---
--- Name: COLUMN library_articles.body; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.library_articles.body IS 'The article''s authored markdown, trimmed, and the empty string while a draft has none. The article page counts its reading time from it; no reading time is stored.';
-
-
---
 -- Name: COLUMN library_articles.cover_image_id; Type: COMMENT; Schema: public; Owner: -
 --
 
@@ -75,17 +49,10 @@ COMMENT ON COLUMN public.library_articles.cover_path IS 'The cover''s object nam
 
 
 --
--- Name: COLUMN library_articles.body_md5; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.library_articles.body_md5 IS 'md5 of body, generated. It exists so the admin list can tell whether the working copy differs from the published one without reading either body: it compares this with the publication''s own body_md5 beside the four short fields.';
-
-
---
 -- Name: COLUMN library_articles.updated_at; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.library_articles.updated_at IS 'When the working copy was last saved, maintained by the library_articles_updated_at trigger. Publishing does not touch it; a catalogue replace that moves the cover does, since it writes the row.';
+COMMENT ON COLUMN public.library_articles.updated_at IS 'When the working copy was last saved, its versions included, maintained by the library_articles_updated_at trigger: every save writes this row. Publishing does not touch it; a catalogue replace that moves the cover does, since it writes the row.';
 
 
 --

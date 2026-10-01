@@ -1,6 +1,6 @@
 import { ROUTES } from "@/lib/constants";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import type { PublishedLibraryArticleSummary } from "@/services/library";
+import type { LocalizedLibraryArticleSummary } from "@/services/library";
 import type { LibraryCategory } from "./categories";
 import type { LibraryArticleCardProps } from "./index-page/library-article-card";
 
@@ -45,7 +45,7 @@ export function selectMoreFromLibrary<T extends MoreFromLibraryCandidate>(
  * an article alike. The date is the one it first went live on.
  */
 export function publishedArticleCard(
-  article: PublishedLibraryArticleSummary,
+  article: LocalizedLibraryArticleSummary,
 ): LibraryArticleCardProps {
   return {
     id: article.id,
@@ -63,7 +63,7 @@ export function publishedArticleCard(
  * as the cards the section draws, chosen for the article being read.
  */
 export function moreFromLibraryCards(
-  published: readonly PublishedLibraryArticleSummary[],
+  published: readonly LocalizedLibraryArticleSummary[],
   current: { id: string; category: LibraryCategory | null },
 ): LibraryArticleCardProps[] {
   return selectMoreFromLibrary(published.map(publishedArticleCard), current);

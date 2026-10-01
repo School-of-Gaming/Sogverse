@@ -10,7 +10,12 @@ import {
   libraryArticleMetadata,
 } from "@/components/library/article/article-metadata";
 import { JsonLd } from "@/components/seo/json-ld";
+import { resolveLocale } from "@/lib/constants/locales";
 import { createClient } from "@/lib/supabase/server";
+import {
+  localizeArticle,
+  localizeArticleSummaries,
+} from "@/services/library/library.contracts";
 import { LibraryService } from "@/services/library/library.service";
 
 interface PageProps {
@@ -18,7 +23,8 @@ interface PageProps {
 }
 
 /**
- * The published copy, or null when the article is not live — an unknown id,
+ * The published copy in the version for the page's locale — the reader's own,
+ * else English, else the first written — or null when the article is not live — an unknown id,
  * one that is not a UUID (answered without a query), or an article that was
  * never published or has been unpublished. **Only the published copy is ever
  * read here**: the working copy is the admin's, and its preview is a separate,
@@ -29,9 +35,14 @@ interface PageProps {
  * the shop's is; the publications table admits anon, so a signed-out reader
  * reads it too.
  */
-const loadArticle = cache(async (id: string) =>
-  new LibraryService(await createClient()).getPublishedArticle(id),
-);
+const loadArticle = cache(async (id: string) => {
+  const article = await new LibraryService(
+    await createClient(),
+  ).getPublishedArticle(id);
+  return article === null
+    ? null
+    : localizeArticle(article, resolveLocale(await getLocale()));
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const article = await loadArticle((await params).id);
@@ -52,6 +63,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  */
 export default async function LibraryArticlePage({ params }: PageProps) {
   const { id } = await params;
+  const locale = await getLocale();
   const service = new LibraryService(await createClient());
   const [article, published] = await Promise.all([
     loadArticle(id),
@@ -71,8 +83,8 @@ export default async function LibraryArticlePage({ params }: PageProps) {
       <ArticlePageBody
         {...articlePageBodyProps(
           { ...article, publishedAt: article.firstPublishedAt },
-          published,
-          await getLocale(),
+          localizeArticleSummaries(published, resolveLocale(locale)),
+          locale,
         )}
       />
     </>

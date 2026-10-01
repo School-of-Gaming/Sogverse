@@ -1,12 +1,12 @@
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import type { PublishedLibraryArticle } from "@/services/library";
+import type { LocalizedLibraryArticle } from "@/services/library";
 
 export interface LibraryArticleJsonLdInput {
   /** The canonical site origin — `NEXT_PUBLIC_SITE_URL`. */
   siteUrl: string;
   /** The article's canonical path, its English address. */
   canonicalPath: string;
-  article: PublishedLibraryArticle;
+  article: LocalizedLibraryArticle;
 }
 
 /**
@@ -44,7 +44,7 @@ export function libraryArticleJsonLd({
     ...(image !== null && { image }),
     datePublished: article.firstPublishedAt,
     dateModified: article.publishedAt,
-    inLanguage: "en",
+    inLanguage: article.locale,
     url,
     mainEntityOfPage: url,
     publisher: {

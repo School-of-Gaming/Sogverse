@@ -25,7 +25,7 @@ $$;
 -- Name: FUNCTION unpublish_library_article(p_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.unpublish_library_article(p_id uuid) IS 'Admin-gated unpublish: deletes the article''s published copy, taking it off every public page, and leaves the working copy exactly as it was. It exists so a mistake can be taken down; there is no delete of the article itself. Unpublishing an article that is not live is a no-op, since the state asked for already holds; an id no article has raises no_data_found. Publishing again afterwards starts a new first_published_at.';
+COMMENT ON FUNCTION public.unpublish_library_article(p_id uuid) IS 'Admin-gated unpublish: deletes the article''s published copy, every language version with it, taking it off every public page, and leaves the working copy exactly as it was. It exists so a mistake can be taken down; there is no delete of the article itself. Unpublishing an article that is not live is a no-op, since the state asked for already holds; an id no article has raises no_data_found. Publishing again afterwards starts a new first_published_at.';
 
 
 --

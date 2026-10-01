@@ -585,13 +585,12 @@
       "publishChanges": "choHmey yIngeH",
       "unpublish": "ngeH yIqIl",
       "readiness": {
-        "missing": "ngeHmeH {fields} yIchel."
+        "missing": "ngeHmeH {fields} yIchel.",
+        "leftOut": "{count, plural, one {naQbe’ {languages}, vaj ngeHbe’lu’.} other {naQbe’ {languages}, vaj ngeHbe’lu’.}}"
       },
       "missing": {
-        "title": "pong",
-        "summary": "ghItlh mach",
         "category": "Segh",
-        "body": "ghItlh mu’mey"
+        "completeVersion": "Hol naQ: pong, ghItlh mach, ghItlh mu’mey je"
       },
       "unpublishConfirm": {
         "title": "ghItlhvam ngeH DaqIl’a’?",
@@ -599,6 +598,7 @@
         "confirm": "ngeH yIqIl"
       },
       "fields": {
+        "languages": "Holmey",
         "title": "pong",
         "summary": "ghItlh mach",
         "category": "Segh",
@@ -606,6 +606,7 @@
         "body": "ghItlh mu’mey"
       },
       "hints": {
+        "languages": "Hoch Hol yIghItlh. ngeHlu’DI’ Hol naQ Hoch ’agh: pong, ghItlh mach, ghItlh mu’mey je ghaj.",
         "summary": "mu’mey neH. pong bIngDaq ’ej paq qach navDaq ’agh.",
         "cover": "ghItlh Dung ’ej navDaq ’agh, 16:9 muHlu’. DeghHom ghajbe’chugh, Daq ’avwI’ legh laDwI’pu’.",
         "body": "DeghHom bIngDaq legh laDwI’pu’, naDev rur."
@@ -623,8 +624,14 @@
         "publishFailed": "ghItlh ngeHlu’be’. yInIDqa’.",
         "publishFailedWithReason": "ghItlh ngeHlu’be’ – {reason}",
         "unpublishFailed": "ghItlh ngeH qIllu’be’. yInIDqa’.",
-        "unpublishFailedWithReason": "ghItlh ngeH qIllu’be’ – {reason}"
-      }
+        "unpublishFailedWithReason": "ghItlh ngeH qIllu’be’ – {reason}",
+        "versionTitleRequired": "pong poQ {language} ghItlh."
+      },
+      "versionComplete": "naQ",
+      "versionIncomplete": "naQbe’ wej",
+      "addLocale": "Hol chu’",
+      "removeLocale": "{language} yIteq",
+      "languagesLabel": "Holmey"
     },
     "geduRole": {
       "primary": "Gedu wa’DIch",

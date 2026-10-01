@@ -24,7 +24,10 @@ import { parseLibraryCategory } from "@/components/library/index-page/library-in
  */
 const NOT_FOUND = "NEXT_NOT_FOUND";
 
-const mocks = vi.hoisted(() => ({ client: null as unknown }));
+const mocks = vi.hoisted(() => ({
+  client: null as unknown,
+  locale: { current: "en" },
+}));
 
 vi.mock("next/navigation", () => ({
   notFound: () => {
@@ -33,7 +36,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("next-intl/server", () => ({
-  getLocale: async () => "en",
+  getLocale: async () => mocks.locale.current,
   // The metadata's fallback card alt; `library-metadata.test.ts` pins the card.
   getTranslations: async () => (key: string) => key,
 }));
@@ -59,14 +62,15 @@ function summaryRow(
 ) {
   return {
     article_id: id,
-    title,
-    summary: `${title}, in short.`,
     category,
     cover_path: null,
     published_at: firstPublishedAt,
     first_published_at: firstPublishedAt,
+    versions: [{ locale: "en", title, summary: `${title}, in short.` }],
   };
 }
+
+const titleOf = (row: ReturnType<typeof summaryRow>) => row.versions[0].title;
 
 /** What is live, newest first — the order the list read asks for. */
 const LIVE = [
@@ -75,12 +79,17 @@ const LIVE = [
   summaryRow(OTHER_ID, "How much screen time is enough?", "screen_time", "2026-04-01T08:00:00Z"),
 ];
 
+const TITLE = "Setting up a family gaming agreement";
+const BODY = "A rule in one head is a rule to argue with.";
+
 const ARTICLE_ROW = {
-  ...summaryRow(ID, "Setting up a family gaming agreement", "screen_time", "2026-05-01T08:00:00Z"),
+  ...summaryRow(ID, TITLE, "screen_time", "2026-05-01T08:00:00Z"),
   published_at: "2026-09-01T08:00:00Z",
-  body: "A rule in one head is a rule to argue with.",
   cover_image_id: null,
-  body_md5: "d41d8cd98f00b204e9800998ecf8427e",
+  versions: [
+    { locale: "en", title: TITLE, summary: `${TITLE}, in short.`, body: BODY },
+    { locale: "fi", title: "Pelisopimus perheelle", summary: "Lyhyesti.", body: "Sääntö yhden päässä." },
+  ],
 };
 
 let fetchMock: FetchMock;
@@ -90,7 +99,10 @@ let fetchMock: FetchMock;
  * summaries; a read of one article gets its row when it is live and nothing
  * otherwise. Every request is kept, so a test can say which tables were read.
  */
-function database(live: typeof LIVE, article: typeof ARTICLE_ROW | null) {
+function database(
+  live: ReturnType<typeof summaryRow>[],
+  article: typeof ARTICLE_ROW | null,
+) {
   fetchMock = vi.fn<typeof fetch>(async (input) => {
     const url = requestedUrl(input);
     if (url.searchParams.has("article_id")) {
@@ -136,6 +148,7 @@ const cardTitles = () =>
 
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://test.supabase.co");
+  mocks.locale.current = "en";
   database(LIVE, ARTICLE_ROW);
 });
 
@@ -162,7 +175,7 @@ describe("the index's ?category=", () => {
 describe("the Library index page", () => {
   it("lists everything live, newest first, with All selected", async () => {
     await renderIndex();
-    expect(cardTitles()).toEqual(LIVE.map((row) => row.title));
+    expect(cardTitles()).toEqual(LIVE.map(titleOf));
     expect(
       screen.getByRole("link", { name: "All" }).getAttribute("aria-current"),
     ).toBe("page");
@@ -184,10 +197,32 @@ describe("the Library index page", () => {
 
   it("treats an unknown category as all rather than not-found", async () => {
     await renderIndex("news");
-    expect(cardTitles()).toEqual(LIVE.map((row) => row.title));
+    expect(cardTitles()).toEqual(LIVE.map(titleOf));
     expect(
       screen.getByRole("link", { name: "All" }).getAttribute("aria-current"),
     ).toBe("page");
+  });
+
+  it("titles each card in the page's locale where it can, else in English", async () => {
+    mocks.locale.current = "fi";
+    database(
+      [
+        {
+          ...LIVE[0],
+          versions: [
+            ...LIVE[0].versions,
+            { locale: "fi", title: "Mitä lapset oppivat kerhossa", summary: "Lyhyesti." },
+          ],
+        },
+        ...LIVE.slice(1),
+      ],
+      ARTICLE_ROW,
+    );
+    await renderIndex();
+    expect(cardTitles()).toEqual([
+      "Mitä lapset oppivat kerhossa",
+      ...LIVE.slice(1).map(titleOf),
+    ]);
   });
 
   it("says so when nothing is published", async () => {
@@ -218,9 +253,9 @@ describe("the Library article page", () => {
   it("renders the published copy, dated the day it first went live", async () => {
     await renderArticle();
     expect(
-      screen.getByRole("heading", { level: 1, name: ARTICLE_ROW.title }),
+      screen.getByRole("heading", { level: 1, name: TITLE }),
     ).toBeTruthy();
-    expect(screen.getByText(ARTICLE_ROW.body)).toBeTruthy();
+    expect(screen.getByText(BODY)).toBeTruthy();
     expect(document.querySelector("time")?.getAttribute("dateTime")).toBe(
       ARTICLE_ROW.first_published_at,
     );
@@ -248,10 +283,24 @@ describe("the Library article page", () => {
     const block = document.querySelector('script[type="application/ld+json"]');
     expect(JSON.parse(block?.textContent ?? "null")).toMatchObject({
       "@type": "Article",
-      headline: ARTICLE_ROW.title,
+      headline: TITLE,
       datePublished: ARTICLE_ROW.first_published_at,
       dateModified: ARTICLE_ROW.published_at,
     });
+  });
+
+  it("renders the version for the page's locale", async () => {
+    mocks.locale.current = "fi";
+    await renderArticle();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Pelisopimus perheelle" }),
+    ).toBeTruthy();
+  });
+
+  it("falls back to English where the page's locale has no version", async () => {
+    mocks.locale.current = "sv";
+    await renderArticle();
+    expect(screen.getByRole("heading", { level: 1, name: TITLE })).toBeTruthy();
   });
 
   it("answers not-found for an article that is not live", async () => {

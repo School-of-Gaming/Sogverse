@@ -297,9 +297,11 @@ export type TeamProfileTranslationRow =
 
 // The Library — `library_articles` is an article's admin-only working copy and
 // `library_article_publications` its public published copy, whose row existing
-// is the article being live. Row aliases only: neither table carries a write
-// grant for any Data API role, and the four library RPCs — with the image
-// catalogue's `repoint_library_covers` for covers — are the only writers.
+// is the article being live; each copy's text is per language, one row per
+// (article, site locale) in its `_translations` table. Row aliases only: no
+// Library table carries a write grant for any Data API role, and the four
+// library RPCs — with the image catalogue's `repoint_library_covers` for
+// covers — are the only writers.
 // The category enum is the Library's category vocabulary, spelled the same in
 // the app and its URLs (`src/components/library/categories.ts`).
 export type LibraryCategory =
@@ -308,6 +310,10 @@ export type LibraryArticleRow =
   Database["public"]["Tables"]["library_articles"]["Row"];
 export type LibraryArticlePublicationRow =
   Database["public"]["Tables"]["library_article_publications"]["Row"];
+export type LibraryArticleTranslationRow =
+  Database["public"]["Tables"]["library_article_translations"]["Row"];
+export type LibraryArticlePublicationTranslationRow =
+  Database["public"]["Tables"]["library_article_publication_translations"]["Row"];
 
 // product_staff_details — the staff-only half of a product, split off `products`
 // because that table is readable by anon and by every parent, and PostgREST lets

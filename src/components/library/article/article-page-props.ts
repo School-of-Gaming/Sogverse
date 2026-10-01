@@ -1,7 +1,7 @@
 import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import type { PublishedLibraryArticleSummary } from "@/services/library";
+import type { LocalizedLibraryArticleSummary } from "@/services/library";
 import type { LibraryCategory } from "../categories";
 import { moreFromLibraryCards } from "../more-from-library";
 import type { ArticlePageBodyProps } from "./article-page-body";
@@ -44,7 +44,7 @@ export function libraryArticleUrl(id: string, locale: string): string {
  */
 export function articlePageBodyProps(
   article: ArticlePageSource,
-  published: readonly PublishedLibraryArticleSummary[],
+  published: readonly LocalizedLibraryArticleSummary[],
   locale: string,
 ): ArticlePageBodyProps {
   return {

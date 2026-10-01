@@ -541,13 +541,12 @@
       "publishChanges": "Publish changes",
       "unpublish": "Unpublish",
       "readiness": {
-        "missing": "To publish, add {fields}."
+        "missing": "To publish, add {fields}.",
+        "leftOut": "{count, plural, one {{languages} is not complete, so publishing leaves it out.} other {{languages} are not complete, so publishing leaves them out.}}"
       },
       "missing": {
-        "title": "a title",
-        "summary": "a summary",
         "category": "a category",
-        "body": "the article text"
+        "completeVersion": "a language with a title, a summary and the article text"
       },
       "unpublishConfirm": {
         "title": "Unpublish this article?",
@@ -555,6 +554,7 @@
         "confirm": "Unpublish"
       },
       "fields": {
+        "languages": "Languages",
         "title": "Title",
         "summary": "Summary",
         "category": "Category",
@@ -562,6 +562,7 @@
         "body": "Article text"
       },
       "hints": {
+        "languages": "Write each language by hand. Publishing puts every complete language live: one with a title, a summary and the article text.",
         "summary": "Plain text, set under the title and on the article’s card in the Library.",
         "cover": "Shown above the article and on its card, cropped to 16:9. Without one, readers see a placeholder.",
         "body": "Readers see it under the cover, formatted as it looks here."
@@ -579,8 +580,14 @@
         "publishFailed": "The article could not be published. Try again.",
         "publishFailedWithReason": "The article could not be published — {reason}",
         "unpublishFailed": "The article could not be unpublished. Try again.",
-        "unpublishFailedWithReason": "The article could not be unpublished — {reason}"
-      }
+        "unpublishFailedWithReason": "The article could not be unpublished — {reason}",
+        "versionTitleRequired": "The {language} version needs a title."
+      },
+      "versionComplete": "complete",
+      "versionIncomplete": "not complete yet",
+      "addLocale": "Add a language",
+      "removeLocale": "Remove {language}",
+      "languagesLabel": "Languages"
     },
     "geduRole": {
       "primary": "Primary",

@@ -1,4 +1,10 @@
 import { z } from "zod";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import {
+  SUPPORTED_LOCALES,
+  isSupportedLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import { Constants, type LibraryCategory } from "@/types";
 
 /**
@@ -10,28 +16,53 @@ import { Constants, type LibraryCategory } from "@/types";
  * of purpose `library_cover`: an article saves the entry's id, and the database derives the
  * served path. What this module holds is the shapes the rest of the app agrees
  * on and the small pure rules around them.
+ *
+ * **An article's text is per language.** Each version is a title, a summary
+ * and a body in one site locale; the category and the cover are the article's,
+ * once. Versions are listed in `SUPPORTED_LOCALES` order everywhere, so "the
+ * first written" — the reader fallback's last step — is the same answer on
+ * every surface.
  */
 
 // ---------------------------------------------------------------------------
 // What an admin writes
 // ---------------------------------------------------------------------------
 
-/**
- * An article's working copy as an admin saves it — the same five fields on a
- * create and on every save.
- *
- * Only the title is required: a working copy may be saved incomplete, and
- * publishing is what demands the rest (the database refuses an incomplete
- * publish and names what is missing; a cover is never required). `category`
- * and `coverImageId` are required-**nullable** rather than optional, because the save RPC assigns
- * every column on every call and an omitted field is how one is cleared —
- * demanding the field keeps a clearing deliberate.
- */
-export const libraryArticleInput = z.object({
-  title: z.string().trim().min(1, "An article needs a title"),
+/** One language version as an admin saves it. */
+export const libraryArticleVersionInput = z.object({
+  locale: z.enum(SUPPORTED_LOCALES),
+  title: z.string().trim().min(1, "Every language version needs a title"),
   summary: z.string().trim(),
   /** Authored markdown. */
   body: z.string().trim(),
+});
+
+export type LibraryArticleVersionInput = z.input<
+  typeof libraryArticleVersionInput
+>;
+
+/**
+ * An article's working copy as an admin saves it — the same fields on a
+ * create and on every save.
+ *
+ * `versions` is the whole set, replacing what is stored: a language left out is
+ * removed. At least one, each with a title; the rest may wait, because
+ * publishing is what demands them (the database copies only complete versions
+ * and refuses an article with none; a cover is never required). `category`
+ * and `coverImageId` are required-**nullable** rather than optional, because
+ * the save RPC assigns every column on every call and an omitted field is how
+ * one is cleared — demanding the field keeps a clearing deliberate.
+ */
+export const libraryArticleInput = z.object({
+  versions: z
+    .array(libraryArticleVersionInput)
+    .min(1, "An article needs a title")
+    .refine(
+      (versions) =>
+        new Set(versions.map((version) => version.locale)).size ===
+        versions.length,
+      "Each language may have one version",
+    ),
   category: z.enum(Constants.public.Enums.library_article_category).nullable(),
   /**
    * A Library cover entry's id, or null for none. The database refuses an
@@ -46,13 +77,21 @@ export type LibraryArticleInput = z.input<typeof libraryArticleInput>;
 // What the reads return
 // ---------------------------------------------------------------------------
 
+/** One language version of an article's working copy. */
+export interface LibraryArticleDraftVersion {
+  locale: SupportedLocale;
+  title: string;
+  /** The empty string while unwritten. */
+  summary: string;
+  /** Authored markdown; the empty string while unwritten. */
+  body: string;
+}
+
 /** An article's working copy, as the admin edit page reads it. */
 export interface LibraryArticleDraft {
   id: string;
-  title: string;
-  summary: string;
-  /** Authored markdown; the empty string while there is none. */
-  body: string;
+  /** Every version written, in `SUPPORTED_LOCALES` order; never empty. */
+  versions: LibraryArticleDraftVersion[];
   category: LibraryCategory | null;
   /** The cover's catalogue entry, or null for none. */
   coverImageId: string | null;
@@ -73,16 +112,27 @@ export interface LibraryArticleDraft {
   updatedAt: string;
 }
 
+/** One live language version as a list reads it: no body. */
+export interface PublishedLibraryVersionSummary {
+  locale: SupportedLocale;
+  title: string;
+  summary: string;
+}
+
+/** One live language version whole. */
+export interface PublishedLibraryVersion extends PublishedLibraryVersionSummary {
+  /** Authored markdown. The article page counts its reading time from it. */
+  body: string;
+}
+
 /**
- * A published article as a list reads it — everything but the body, which is
- * what a card draws. Every field is set but the cover, which an article may go
- * live without.
+ * A published article as a list reads it — every live version without its
+ * body, which is what a card draws. Every field is set but the cover, which an
+ * article may go live without.
  */
 export interface PublishedLibraryArticleSummary {
   /** The article's id — what its URL carries. */
   id: string;
-  title: string;
-  summary: string;
   category: LibraryCategory;
   /**
    * The live cover's path in the `library-covers` bucket — resolve it with
@@ -92,23 +142,37 @@ export interface PublishedLibraryArticleSummary {
   coverPath: string | null;
   /** When the article first went live — the date its page shows. */
   firstPublishedAt: string;
-  /** When the version now live was published. */
+  /** When the live versions were published. */
   publishedAt: string;
+  /** Every live version, in `SUPPORTED_LOCALES` order; never empty. */
+  versions: PublishedLibraryVersionSummary[];
 }
 
-/** A published article whole — what its own page renders. */
-export interface PublishedLibraryArticle extends PublishedLibraryArticleSummary {
-  /** Authored markdown. The article page counts its reading time from it. */
-  body: string;
+/** A published article whole, every live version with its body. */
+export interface PublishedLibraryArticle
+  extends Omit<PublishedLibraryArticleSummary, "versions"> {
+  versions: PublishedLibraryVersion[];
 }
+
+/**
+ * A published article in the one version a reader of `locale` is shown — what
+ * a card or a page draws. `locale` is the version's own, which differs from the
+ * reader's when the fallback answered.
+ */
+export type LocalizedLibraryArticleSummary = Omit<
+  PublishedLibraryArticleSummary,
+  "versions"
+> &
+  PublishedLibraryVersionSummary;
+
+export type LocalizedLibraryArticle = Omit<PublishedLibraryArticle, "versions"> &
+  PublishedLibraryVersion;
 
 /** One article on the admin list. */
 export interface AdminLibraryArticleListItem {
   id: string;
-  /** The working copy's title. */
-  title: string;
-  /** The working copy's summary; the empty string while it has none. */
-  summary: string;
+  /** The working copy's version titles and summaries, in locale order; never empty. */
+  versions: { locale: SupportedLocale; title: string; summary: string }[];
   category: LibraryCategory | null;
   /**
    * The working copy's cover path — resolve it with `catalogueImageSrc`. Null
@@ -118,7 +182,7 @@ export interface AdminLibraryArticleListItem {
   /** When the working copy was last saved. */
   updatedAt: string;
   isPublished: boolean;
-  /** True when a published article's working copy differs from what is live. */
+  /** True when publishing now would change what is live. */
   hasUnpublishedChanges: boolean;
 }
 
@@ -130,23 +194,96 @@ export interface AdminLibraryArticle {
   hasUnpublishedChanges: boolean;
 }
 
-/** The fields a working copy and its published copy are compared on. */
-export interface ComparableArticleCopy {
+// ---------------------------------------------------------------------------
+// Reading in a language
+// ---------------------------------------------------------------------------
+
+/**
+ * The versions a row carries that the app can show, in `SUPPORTED_LOCALES`
+ * order. The database accepts any locale-shaped code, so one the app no longer
+ * ships is dropped here rather than typed as one it does. Embedded rows arrive
+ * unordered; the order is what makes "the first written" stable.
+ */
+export function inLocaleOrder<T extends { locale: string }>(
+  rows: readonly T[],
+): (T & { locale: SupportedLocale })[] {
+  const supported = rows.filter(
+    (row): row is T & { locale: SupportedLocale } => isSupportedLocale(row.locale),
+  );
+  return supported.sort(
+    (a, b) =>
+      SUPPORTED_LOCALES.indexOf(a.locale) - SUPPORTED_LOCALES.indexOf(b.locale),
+  );
+}
+
+/**
+ * The version a reader of `locale` is shown: theirs, else English, else the
+ * first written. Null only for an article with no version, which a published
+ * one never is.
+ */
+export function localizeArticleSummary(
+  article: PublishedLibraryArticleSummary,
+  locale: SupportedLocale,
+): LocalizedLibraryArticleSummary | null {
+  const { versions, ...shared } = article;
+  const version = resolveTranslation(versions, locale);
+  return version === null ? null : { ...shared, ...version };
+}
+
+export function localizeArticle(
+  article: PublishedLibraryArticle,
+  locale: SupportedLocale,
+): LocalizedLibraryArticle | null {
+  const { versions, ...shared } = article;
+  const version = resolveTranslation(versions, locale);
+  return version === null ? null : { ...shared, ...version };
+}
+
+/** Every article in a list, each in the version a reader of `locale` is shown. */
+export function localizeArticleSummaries(
+  articles: readonly PublishedLibraryArticleSummary[],
+  locale: SupportedLocale,
+): LocalizedLibraryArticleSummary[] {
+  return articles.flatMap((article) => {
+    const localized = localizeArticleSummary(article, locale);
+    return localized === null ? [] : [localized];
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Unpublished changes
+// ---------------------------------------------------------------------------
+
+/** One version as compared: its short fields and its body's digest. */
+export interface ComparableVersion {
+  locale: string;
   title: string;
   summary: string;
-  category: LibraryCategory | null;
-  cover_image_id: string | null;
   /** md5 of the body, generated by the database on both tables. */
   body_md5: string | null;
 }
 
+/** The fields a working copy and its published copy are compared on. */
+export interface ComparableArticleCopy {
+  category: LibraryCategory | null;
+  cover_image_id: string | null;
+  /**
+   * The versions publishing would copy — for the working copy, its complete
+   * ones alone; for the published copy, all of them.
+   */
+  versions: readonly ComparableVersion[];
+}
+
 /**
- * Whether a working copy differs from its published copy — false when there
- * is no published copy, because an article that is not live has nothing for
- * its edits to be "unpublished" against.
+ * Whether publishing now would change what is live — false when there is no
+ * published copy, because an article that is not live has nothing for its
+ * edits to be "unpublished" against.
  *
- * Compared on the four short fields and the body's digest rather than the
- * body itself, so the admin list never has to read a body. A digest the
+ * Compared on the shared fields and on each version's short fields and body
+ * digest, never a body, so the admin list never has to read one. The working
+ * side is the versions publishing would copy, so a half-written new language
+ * is not a change readers would see, and a live language whose working copy
+ * is no longer complete is one (publishing would take it down). A digest the
  * database failed to produce counts as a difference: saying "unpublished
  * changes" when there are none costs a republish, and the opposite hides an
  * edit from the admin who made it.
@@ -156,12 +293,23 @@ export function hasUnpublishedChanges(
   publication: ComparableArticleCopy | null,
 ): boolean {
   if (publication === null) return false;
-  if (draft.body_md5 === null || publication.body_md5 === null) return true;
-  return (
-    draft.title !== publication.title ||
-    draft.summary !== publication.summary ||
+  if (
     draft.category !== publication.category ||
     draft.cover_image_id !== publication.cover_image_id ||
-    draft.body_md5 !== publication.body_md5
-  );
+    draft.versions.length !== publication.versions.length
+  ) {
+    return true;
+  }
+  const live = new Map(publication.versions.map((v) => [v.locale, v]));
+  return draft.versions.some((version) => {
+    const published = live.get(version.locale);
+    return (
+      published === undefined ||
+      version.body_md5 === null ||
+      published.body_md5 === null ||
+      version.title !== published.title ||
+      version.summary !== published.summary ||
+      version.body_md5 !== published.body_md5
+    );
+  });
 }

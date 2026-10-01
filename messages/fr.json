@@ -541,13 +541,12 @@
       "publishChanges": "Publier les modifications",
       "unpublish": "Dépublier",
       "readiness": {
-        "missing": "Pour publier, ajoutez {fields}."
+        "missing": "Pour publier, ajoutez {fields}.",
+        "leftOut": "{count, plural, one {La version en {languages} n’est pas complète : elle ne sera pas publiée.} other {Les versions en {languages} ne sont pas complètes : elles ne seront pas publiées.}}"
       },
       "missing": {
-        "title": "un titre",
-        "summary": "un résumé",
         "category": "une catégorie",
-        "body": "le texte de l’article"
+        "completeVersion": "une langue avec un titre, un résumé et le texte de l’article"
       },
       "unpublishConfirm": {
         "title": "Dépublier cet article ?",
@@ -555,6 +554,7 @@
         "confirm": "Dépublier"
       },
       "fields": {
+        "languages": "Langues",
         "title": "Titre",
         "summary": "Résumé",
         "category": "Catégorie",
@@ -562,6 +562,7 @@
         "body": "Texte de l’article"
       },
       "hints": {
+        "languages": "Rédigez chaque langue à la main. La publication met en ligne chaque langue complète : celle qui a un titre, un résumé et le texte de l’article.",
         "summary": "Texte simple, affiché sous le titre et sur la carte de l’article dans la Bibliothèque.",
         "cover": "Affichée au-dessus de l’article et sur sa carte, recadrée en 16:9. Sans image, les lecteurs voient un espace réservé.",
         "body": "Les lecteurs le voient sous l’image de couverture, mis en forme comme ici."
@@ -579,8 +580,14 @@
         "publishFailed": "L’article n’a pas pu être publié. Réessayez.",
         "publishFailedWithReason": "L’article n’a pas pu être publié — {reason}",
         "unpublishFailed": "L’article n’a pas pu être dépublié. Réessayez.",
-        "unpublishFailedWithReason": "L’article n’a pas pu être dépublié — {reason}"
-      }
+        "unpublishFailedWithReason": "L’article n’a pas pu être dépublié — {reason}",
+        "versionTitleRequired": "La version en {language} doit avoir un titre."
+      },
+      "versionComplete": "complète",
+      "versionIncomplete": "pas encore complète",
+      "addLocale": "Ajouter une langue",
+      "removeLocale": "Supprimer {language}",
+      "languagesLabel": "Langues"
     },
     "geduRole": {
       "primary": "Gedu principal",

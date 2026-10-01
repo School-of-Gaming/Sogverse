@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
@@ -57,14 +64,23 @@ import {
   LibraryArticleEditor,
   type LibraryArticleEditorActions,
 } from "@/components/admin/library/library-article-editor";
-import type { AdminLibraryArticle } from "@/services/library";
+import type {
+  AdminLibraryArticle,
+  LibraryArticleDraft,
+  LibraryArticleDraftVersion,
+} from "@/services/library";
+
+const EN: LibraryArticleDraftVersion = {
+  locale: "en",
+  title: "Setting up a family gaming agreement",
+  summary: "",
+  body: "## Why write it down\n\nA rule in one head is a rule to argue with.",
+};
 
 const ARTICLE: AdminLibraryArticle = {
   draft: {
     id: "bb744329-6849-4d79-be8e-da6b5bdec6fa",
-    title: "Setting up a family gaming agreement",
-    summary: "",
-    body: "## Why write it down\n\nA rule in one head is a rule to argue with.",
+    versions: [EN],
     category: "screen_time",
     coverImageId: null,
     coverPath: null,
@@ -75,6 +91,11 @@ const ARTICLE: AdminLibraryArticle = {
   publication: null,
   hasUnpublishedChanges: false,
 };
+
+/** The article's saved copy with its English version changed. */
+function enDraft(patch: Partial<LibraryArticleDraftVersion>): LibraryArticleDraft {
+  return { ...ARTICLE.draft, versions: [{ ...EN, ...patch }] };
+}
 
 function actions(
   overrides: Partial<LibraryArticleEditorActions> = {},
@@ -114,6 +135,12 @@ function renderEditor(
         />,
     );
   return { ...utils, rerenderWith };
+}
+
+/** Unmount whatever is on screen and render the editor afresh. */
+function cleanupAndRender(article: AdminLibraryArticle) {
+  cleanup();
+  return renderEditor(article);
 }
 
 /** A text box by its label, narrowed by what it is rather than by a cast. */
@@ -168,9 +195,7 @@ const isFilled = (control: HTMLElement) =>
 
 const PUBLICATION = {
   id: ARTICLE.draft.id,
-  title: ARTICLE.draft.title,
-  summary: "A summary",
-  body: ARTICLE.draft.body,
+  versions: [{ locale: "en" as const, title: EN.title, summary: "A summary", body: EN.body }],
   category: "screen_time" as const,
   coverPath: null,
   firstPublishedAt: "2026-09-16T08:00:00Z",
@@ -180,7 +205,7 @@ const PUBLICATION = {
 /** Live, and exactly as saved: nothing new to publish. */
 const LIVE: AdminLibraryArticle = {
   ...ARTICLE,
-  draft: { ...ARTICLE.draft, summary: "A summary" },
+  draft: enDraft({ summary: "A summary" }),
   publication: PUBLICATION,
 };
 
@@ -196,14 +221,13 @@ describe("the Library article editor", () => {
     rerenderWith({
       ...ARTICLE,
       draft: {
-        ...ARTICLE.draft,
-        title: "A title saved elsewhere",
+        ...enDraft({ title: "A title saved elsewhere" }),
         updatedAt: "2026-09-21T09:00:00Z",
       },
     });
 
     expect(summaryBox().value).toBe("Why a written agreement ends arguments.");
-    expect(titleBox().value).toBe(ARTICLE.draft.title);
+    expect(titleBox().value).toBe(EN.title);
   });
 
   it("seeds afresh for a different article", () => {
@@ -213,10 +237,11 @@ describe("the Library article editor", () => {
     rerenderWith({
       ...ARTICLE,
       draft: {
-        ...ARTICLE.draft,
+        ...enDraft({
+          title: "What to ask a club before your child joins",
+          summary: "Its own summary",
+        }),
         id: "70f64c69-1681-4b3b-8ab6-420642e48598",
-        title: "What to ask a club before your child joins",
-        summary: "Its own summary",
       },
     });
 
@@ -236,20 +261,23 @@ describe("the Library article editor", () => {
       fireEvent.submit(saveButton().closest("form")!);
     });
     expect(save).toHaveBeenCalledWith(
-      expect.objectContaining({ summary: "A summary ", coverImageId: null }),
+      expect.objectContaining({
+        versions: [{ ...EN, summary: "A summary" }],
+        coverImageId: null,
+      }),
     );
 
     // The refetch after the save hands back the trimmed copy: nothing is
     // unsaved any more, and the typed text is still what is in the box.
     rerenderWith({
       ...ARTICLE,
-      draft: { ...ARTICLE.draft, summary: "A summary" },
+      draft: enDraft({ summary: "A summary" }),
     });
     expect(saveButton().hasAttribute("disabled")).toBe(true);
     expect(summaryBox().value).toBe("A summary ");
   });
 
-  it("refuses a save with no title, naming why", () => {
+  it("refuses a save with a language left without its title, naming it", () => {
     const save = vi.fn(async () => {});
     renderEditor(ARTICLE, actions({ save }));
 
@@ -260,7 +288,9 @@ describe("the Library article editor", () => {
     expect(
       screen
         .getAllByRole("alert")
-        .some((alert) => alert.textContent.includes("errors.titleRequired")),
+        .some((alert) =>
+          alert.textContent.includes("errors.versionTitleRequired language=English"),
+        ),
     ).toBe(true);
   });
 
@@ -269,7 +299,7 @@ describe("the Library article editor", () => {
 
     expect(publishButton().hasAttribute("disabled")).toBe(true);
     expect(reasons().textContent).toBe(
-      "readiness.missing fields=missing.summary",
+      "readiness.missing fields=missing.completeVersion",
     );
   });
 
@@ -301,7 +331,7 @@ describe("the Library article editor", () => {
 
     rerenderWith({
       ...ARTICLE,
-      draft: { ...ARTICLE.draft, summary: "A summary" },
+      draft: enDraft({ summary: "A summary" }),
     });
     expect(publishButton().hasAttribute("disabled")).toBe(false);
     expect(reasons().textContent).toBe("");
@@ -345,7 +375,7 @@ describe("the Library article editor", () => {
     it("sets the reasons after Unpublish and before the right-hand group", () => {
       renderEditor({
         ...LIVE,
-        draft: { ...LIVE.draft, summary: "" },
+        draft: enDraft({ summary: "" }),
         hasUnpublishedChanges: true,
       });
 
@@ -464,7 +494,7 @@ describe("the Library article editor", () => {
 
       rerenderWith({
         ...ARTICLE,
-        draft: { ...ARTICLE.draft, summary: "A summary" },
+        draft: enDraft({ summary: "A summary" }),
       });
       expect(unloadIsHeld()).toBe(false);
     });
@@ -532,8 +562,110 @@ describe("the Library article editor", () => {
     // Saved: the preview is a link again.
     rerenderWith({
       ...ARTICLE,
-      draft: { ...ARTICLE.draft, title: "A retitled article" },
+      draft: enDraft({ title: "A retitled article" }),
     });
     expect(screen.getByRole("link", { name: "preview" })).toBeTruthy();
+  });
+
+  describe("the language tabs", () => {
+    /** The tab that opens a language, by the locale's own name. */
+    const tab = (name: RegExp) => screen.getByRole("button", { name });
+
+    function addLanguage(locale: string) {
+      fireEvent.change(screen.getByRole("combobox", { name: "addLocale" }), {
+        target: { value: locale },
+      });
+    }
+
+    it("opens on the saved language and marks whether it is complete", () => {
+      renderEditor(LIVE);
+      expect(tab(/^English/).getAttribute("aria-pressed")).toBe("true");
+      expect(tab(/^English/).textContent).toContain("versionComplete");
+
+      cleanupAndRender(ARTICLE);
+      expect(tab(/^English/).textContent).toContain("versionIncomplete");
+    });
+
+    it("keeps what was typed in each language across a switch", () => {
+      renderEditor(LIVE);
+      addLanguage("fi");
+      expect(tab(/^Suomi/).getAttribute("aria-pressed")).toBe("true");
+      expect(titleBox().value).toBe("");
+      fireEvent.change(titleBox(), { target: { value: "Pelisopimus" } });
+
+      fireEvent.click(tab(/^English/));
+      expect(titleBox().value).toBe(EN.title);
+      fireEvent.click(tab(/^Suomi/));
+      expect(titleBox().value).toBe("Pelisopimus");
+    });
+
+    it("saves every language written, and leaves an untouched tab out", async () => {
+      const save = vi.fn(async () => {});
+      renderEditor(LIVE, actions({ save }));
+      addLanguage("fi");
+      fireEvent.change(titleBox(), { target: { value: "Pelisopimus" } });
+      addLanguage("sv");
+
+      await act(async () => {
+        fireEvent.submit(saveButton().closest("form")!);
+      });
+      expect(save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          versions: [
+            { ...EN, summary: "A summary" },
+            { locale: "fi", title: "Pelisopimus", summary: "", body: "" },
+          ],
+        }),
+      );
+    });
+
+    it("refuses a language written without its title, naming it", () => {
+      const save = vi.fn(async () => {});
+      renderEditor(LIVE, actions({ save }));
+      addLanguage("fi");
+      fireEvent.change(summaryBox(), { target: { value: "Tiivistelmä" } });
+      fireEvent.submit(saveButton().closest("form")!);
+
+      expect(save).not.toHaveBeenCalled();
+      expect(
+        screen
+          .getAllByRole("alert")
+          .some((alert) =>
+            alert.textContent.includes("errors.versionTitleRequired language=Finnish"),
+          ),
+      ).toBe(true);
+    });
+
+    it("says which languages a publish would leave out", () => {
+      renderEditor({
+        ...LIVE,
+        draft: {
+          ...LIVE.draft,
+          versions: [
+            LIVE.draft.versions[0],
+            { locale: "fi", title: "Pelisopimus", summary: "", body: "" },
+          ],
+        },
+        hasUnpublishedChanges: false,
+      });
+      // The half-written Finnish is no change to readers, so nothing is
+      // waiting to publish and nothing is said.
+      expect(reasons().textContent).toBe("");
+
+      fireEvent.change(summaryBox(), { target: { value: "Edited" } });
+      expect(reasons().textContent).toBe(
+        "readiness.leftOut languages=Finnish count=1",
+      );
+    });
+
+    it("removes a language, and keeps the last one", () => {
+      renderEditor(LIVE);
+      addLanguage("fi");
+      fireEvent.click(screen.getByRole("button", { name: "removeLocale language=Finnish" }));
+      expect(screen.queryByRole("button", { name: /^Suomi/ })).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: /^removeLocale/ }),
+      ).toBeNull();
+    });
   });
 });

@@ -541,13 +541,12 @@
       "publishChanges": "Julkaise muutokset",
       "unpublish": "Poista julkaisu",
       "readiness": {
-        "missing": "Jotta artikkelin voi julkaista, lisää {fields}."
+        "missing": "Jotta artikkelin voi julkaista, lisää {fields}.",
+        "leftOut": "{count, plural, one {{languages}: kieliversio on kesken, joten sitä ei julkaista.} other {{languages}: kieliversiot ovat kesken, joten niitä ei julkaista.}}"
       },
       "missing": {
-        "title": "otsikko",
-        "summary": "tiivistelmä",
         "category": "aihe",
-        "body": "artikkelin teksti"
+        "completeVersion": "kieliversio, jossa on otsikko, tiivistelmä ja artikkelin teksti"
       },
       "unpublishConfirm": {
         "title": "Poistetaanko artikkelin julkaisu?",
@@ -555,6 +554,7 @@
         "confirm": "Poista julkaisu"
       },
       "fields": {
+        "languages": "Kielet",
         "title": "Otsikko",
         "summary": "Tiivistelmä",
         "category": "Aihe",
@@ -562,6 +562,7 @@
         "body": "Artikkelin teksti"
       },
       "hints": {
+        "languages": "Kirjoita jokainen kieliversio itse. Julkaistessa kaikki valmiit kieliversiot tulevat näkyviin: ne, joissa on otsikko, tiivistelmä ja artikkelin teksti.",
         "summary": "Pelkkää tekstiä. Näkyy otsikon alla ja artikkelin kortissa Kirjastossa.",
         "cover": "Näkyy artikkelin yläpuolella ja sen kortissa, rajattuna muotoon 16:9. Ilman kansikuvaa lukijat näkevät paikkamerkin.",
         "body": "Lukijat näkevät tekstin kansikuvan alla muotoiltuna niin kuin se näkyy tässä."
@@ -579,8 +580,14 @@
         "publishFailed": "Artikkelia ei voitu julkaista. Yritä uudelleen.",
         "publishFailedWithReason": "Artikkelia ei voitu julkaista – {reason}",
         "unpublishFailed": "Artikkelin julkaisua ei voitu poistaa. Yritä uudelleen.",
-        "unpublishFailedWithReason": "Artikkelin julkaisua ei voitu poistaa – {reason}"
-      }
+        "unpublishFailedWithReason": "Artikkelin julkaisua ei voitu poistaa – {reason}",
+        "versionTitleRequired": "{language}: kieliversiolta puuttuu otsikko."
+      },
+      "versionComplete": "valmis",
+      "versionIncomplete": "kesken",
+      "addLocale": "Lisää kieli",
+      "removeLocale": "Poista {language}",
+      "languagesLabel": "Kielet"
     },
     "geduRole": {
       "primary": "Vastaava Gedu",

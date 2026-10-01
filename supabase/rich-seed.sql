@@ -1831,14 +1831,19 @@ COMMIT;
 -- =============================================================================
 -- 14. The Library
 -- =============================================================================
--- Five articles, one per state the admin list and editor can show:
+-- Six articles, one per state the admin list and editor can show, and the
+-- language versions a reader's fallback has to choose between:
 --
---   Talking with your child about who they meet online   live, unchanged since
+--   Talking with your child about who they meet online   live, unchanged since;
+--                                                        English and Finnish
 --   Playing together: how to join your child's game     live, with unpublished changes
---   Minecraft, Roblox and Fortnite: what's the difference?   live, no cover
---   What children learn when they build together        draft, ready to publish
+--   Minecraft, Roblox and Fortnite: what's the difference?   live, no cover;
+--                                                        English and Finnish
+--   What children learn when they build together        draft, ready to publish;
+--                                                        Finnish begun, not complete
 --   Getting ready for your child's first club session   draft, missing summary,
 --                                                        category and cover
+--   Pelikerho koulupäivän jälkeen                       live, Finnish only
 --
 -- Written through the admin RPCs, so each published copy is exactly what
 -- publish_library_article makes of its working copy. The covers are not here,
@@ -1858,10 +1863,12 @@ DECLARE
 BEGIN
   -- 1. Live, and the working copy is what readers see.
   v_id := public.create_library_article(
-    p_title    => 'Talking with your child about who they meet online',
-    p_summary  => 'Most of what children meet in online games is ordinary play. A few calm conversations help them spot the part that isn''t, and tell you about it.',
     p_category => 'online_safety',
-    p_body     => $md$
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale',  'en',
+      'title',   'Talking with your child about who they meet online',
+      'summary', 'Most of what children meet in online games is ordinary play. A few calm conversations help them spot the part that isn''t, and tell you about it.',
+      'body',    $md$
 Minecraft, Roblox, Fortnite and most of the games children love are social places. Your child may play alongside friends from school, and alongside people they have never met. That is not something to fear, but it is something to talk about: early, calmly and more than once.
 
 ## Start with curiosity, not rules
@@ -1889,15 +1896,43 @@ A PEGI label tells you the age a game's content suits, and its descriptors say w
 ## If something does go wrong
 
 Stay calm, take a screenshot, and use the game's own report and block tools. The [UK Safer Internet Centre](https://saferinternet.org.uk/) has practical guides for parents on reporting and on what to do next. How we handle behaviour in our own clubs is set out in our [anti-bullying and discipline policy](/anti-bullying-and-discipline).
-$md$);
+$md$), jsonb_build_object(
+      'locale',  'fi',
+      'title',   'Puhu lapsesi kanssa siitä, keitä hän tapaa verkossa',
+      'summary', 'Suurin osa siitä, mitä lapset kohtaavat verkkopeleissä, on tavallista leikkiä. Muutama rauhallinen keskustelu auttaa heitä tunnistamaan sen, mikä ei ole, ja kertomaan siitä sinulle.',
+      'body',    $md$
+Minecraft, Roblox, Fortnite ja useimmat muut lasten suosikkipelit ovat sosiaalisia paikkoja. Lapsesi voi pelata koulukavereidensa kanssa ja myös sellaisten ihmisten kanssa, joita hän ei ole koskaan tavannut. Sitä ei tarvitse pelätä, mutta siitä kannattaa puhua: ajoissa, rauhallisesti ja useammin kuin kerran.
+
+## Aloita uteliaisuudesta, älä säännöistä
+
+Pyydä lastasi näyttämään, mitä hän pelaa ja kenen kanssa. **Yhdessä katsottu pelikerta** kertoo enemmän kuin mikään asetusvalikko, ja samalla lapsesi huomaa, että peleistä voi puhua kanssasi.
+
+## Kolme asiaa, jotka jokaisen lapsen kannattaa tietää
+
+- **Vieras verkossa on yhä vieras**, vaikka hän vaikuttaisi ystävälliseltä ja olisi pelannut samalla palvelimella pitkään.
+- **Henkilötiedot pidetään omana tietona**: koko nimi, koulu, osoite, puhelinnumero ja kuvat.
+- **Sinulle saa aina kertoa**, jos jokin tuntuu pahalta, eikä kertominen vie pelejä pois.
+
+Viimeinen kohta on tärkein. Lapset jättävät usein ikävän kokemuksen kertomatta, koska pelkäävät menettävänsä konsolin. Sano ääneen, ettei kertominen koskaan ole se, mistä hän joutuu vaikeuksiin.
+
+## Käytä pelialustojen omia työkaluja
+
+Konsoleissa ja useimmissa peleissä on asetukset chatille, kaveripyynnöille ja ostoksille. Ottakaa ne käyttöön yhdessä, niin lapsesi ymmärtää, mitä kukin asetus tekee ja miksi.
+
+## Jos jotain sattuu
+
+Pysy rauhallisena, ota kuvakaappaus ja käytä pelin omia ilmoitus- ja estotoimintoja. Se, miten käytökseen puututaan omissa kerhoissamme, kerrotaan [kiusaamisen ja kurinpidon periaatteissamme](/anti-bullying-and-discipline).
+$md$)));
   PERFORM public.publish_library_article(v_id);
 
   -- 2. Live, then retitled and extended without publishing again.
   v_id := public.create_library_article(
-    p_title    => 'Playing together: a parent''s guide to joining in',
-    p_summary  => 'You don''t need to be good at your child''s favourite game to share it. Here is how an hour on a screen becomes an hour spent together.',
     p_category => 'screen_time',
-    p_body     => $md$
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale',  'en',
+      'title',   'Playing together: a parent''s guide to joining in',
+      'summary', 'You don''t need to be good at your child''s favourite game to share it. Here is how an hour on a screen becomes an hour spent together.',
+      'body',    $md$
 Much of the advice about screens is about how long. This guide is about something else: what happens during that time, and who shares it.
 
 ## Ask for a tour
@@ -1917,15 +1952,17 @@ You do not need to be good at the game. Being terrible at it is often the best p
 Afterwards, ask what they enjoyed, what was hard and what they would build next time. Those questions are what turn time on a screen into time together.
 
 If your child would enjoy playing alongside other children with a Game Educator, have a look at our [clubs, camps and events](/shop).
-$md$);
+$md$)));
   PERFORM public.publish_library_article(v_id);
 
   PERFORM public.save_library_article(
     p_id       => v_id,
-    p_title    => 'Playing together: how to join your child''s game',
-    p_summary  => 'You don''t need to be good at your child''s favourite game to share it. Here is how an hour on a screen becomes an hour spent together.',
     p_category => 'screen_time',
-    p_body     => $md$
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale',  'en',
+      'title',   'Playing together: how to join your child''s game',
+      'summary', 'You don''t need to be good at your child''s favourite game to share it. Here is how an hour on a screen becomes an hour spent together.',
+      'body',    $md$
 Much of the advice about screens is about how long. This guide is about something else: what happens during that time, and who shares it.
 
 ## Ask for a tour
@@ -1955,14 +1992,16 @@ Let each person in the family pick the game in turn. **A parent's choice counts 
 Afterwards, ask what they enjoyed, what was hard and what they would build next time. Those questions are what turn time on a screen into time together.
 
 If your child would enjoy playing alongside other children with a Game Educator, have a look at our [clubs, camps and events](/shop).
-$md$);
+$md$)));
 
   -- 3. Live without a cover, so readers see the placeholder.
   v_id := public.create_library_article(
-    p_title    => 'Minecraft, Roblox and Fortnite: what''s the difference?',
-    p_summary  => 'Three games your child probably talks about, what each one actually is, and what children do in them.',
     p_category => 'games_explained',
-    p_body     => $md$
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale',  'en',
+      'title',   'Minecraft, Roblox and Fortnite: what''s the difference?',
+      'summary', 'Three games your child probably talks about, what each one actually is, and what children do in them.',
+      'body',    $md$
 If your child's conversation is full of creepers, obbies and victory royales, this is a quick guide to the three games behind the words.
 
 ## Minecraft
@@ -1984,15 +2023,43 @@ Best known for **Battle Royale**, where players drop onto an island and the last
 - All three reward building, planning and teamwork
 
 Before your child starts a new game, check its label on the [PEGI website](https://pegi.info/). It tells you the age the content suits, not how difficult the game is.
-$md$);
+$md$), jsonb_build_object(
+      'locale',  'fi',
+      'title',   'Minecraft, Roblox ja Fortnite: mitä eroa niillä on?',
+      'summary', 'Kolme peliä, joista lapsesi luultavasti puhuu: mitä kukin niistä on ja mitä lapset niissä tekevät.',
+      'body',    $md$
+Jos lapsesi puheet ovat täynnä creepereitä, obbyja ja victory royaleja, tästä oppaasta näet nopeasti, mitkä kolme peliä sanojen takana ovat.
+
+## Minecraft
+
+Kuutioista koostuva maailma, jossa pelaajat louhivat, keräävät ja rakentavat. **Survival**-tilassa kerätään materiaaleja ja pidetään itsensä hengissä, **Creative**-tilassa kuutioita on rajattomasti ja keskitytään rakentamiseen. Peliä on kaksi pääversiota, Java ja Bedrock, jotka eivät aina toimi keskenään, sekä luokkahuoneisiin tehty [Minecraft Education](https://education.minecraft.net/).
+
+## Roblox
+
+Ennemmin paikka täynnä pelejä kuin yksi peli. Pelaajat liittyvät toisten pelaajien tekemiin **kokemuksiin**, esteradoista (obbyt) roolipelikaupunkeihin, ja voivat tehdä omiaan Roblox Studiossa. Sen valuutta Robux ostetaan oikealla rahalla, joten rahankäytöstä kannattaa sopia ajoissa.
+
+## Fortnite
+
+Tunnetuin pelimuodostaan **Battle Royale**, jossa pelaajat hyppäävät saarelle ja viimeinen pelaaja tai joukkue voittaa. Siinä on myös luovia ja rakentavia tiloja, joissa pelaajat tekevät omia saariaan ja pelejään.
+
+## Mitä yhteistä niillä on
+
+- Kaikkia kolmea pelataan verkossa muiden kanssa
+- Kaikissa kolmessa on asetukset chatille ja rahankäytölle
+- Kaikki kolme palkitsevat rakentamisesta, suunnittelusta ja yhteistyöstä
+
+Ennen kuin lapsesi aloittaa uuden pelin, tarkista sen merkintä [PEGIn verkkosivuilta](https://pegi.info/). Merkintä kertoo, minkä ikäisille sisältö sopii, ei sitä, kuinka vaikea peli on.
+$md$)));
   PERFORM public.publish_library_article(v_id);
 
-  -- 4. A complete draft, ready to publish.
+  -- 4. A complete draft, ready to publish, with a Finnish version begun.
   PERFORM public.create_library_article(
-    p_title    => 'What children learn when they build together',
-    p_summary  => 'Building in a shared world asks for planning, compromise and patience. Here is what that looks like, and how to notice it at home.',
     p_category => 'learning',
-    p_body     => $md$
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale',  'en',
+      'title',   'What children learn when they build together',
+      'summary', 'Building in a shared world asks for planning, compromise and patience. Here is what that looks like, and how to notice it at home.',
+      'body',    $md$
 When children build together in Minecraft, Roblox Studio or Fortnite's creative modes, they are practising things that are hard to teach from the front of a room.
 
 ## Planning before building
@@ -2020,12 +2087,17 @@ Children who have just solved a problem are often the best at explaining it to a
 - Ask what they would do differently next time
 
 If your child would enjoy building with others, have a look at our [clubs, camps and events](/shop).
-$md$);
+$md$), jsonb_build_object(
+      'locale',  'fi',
+      'title',   'Mitä lapset oppivat rakentaessaan yhdessä',
+      'summary', 'Yhteisessä maailmassa rakentaminen vaatii suunnittelua, kompromisseja ja kärsivällisyyttä. Näin se näkyy, ja näin huomaat sen kotona.')));
 
   -- 5. A draft begun and left: a title and half a body, nothing else.
   PERFORM public.create_library_article(
-    p_title => 'Getting ready for your child''s first club session',
-    p_body  => $md$
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale', 'en',
+      'title',  'Getting ready for your child''s first club session',
+      'body',   $md$
 A first session in one of our [clubs](/shop) goes more smoothly with a little preparation.
 
 ## The day before
@@ -2037,7 +2109,32 @@ A first session in one of our [clubs](/shop) goes more smoothly with a little pr
 ## On the day
 
 Log in a few minutes early, so there is time for a last-minute update.
-$md$);
+$md$)));
+
+  -- 6. Live in Finnish alone, so every other locale's reader meets the
+  --    fallback's last step: the first version written.
+  v_id := public.create_library_article(
+    p_category => 'for_schools',
+    p_versions => jsonb_build_array(jsonb_build_object(
+      'locale',  'fi',
+      'title',   'Pelikerho koulupäivän jälkeen',
+      'summary', 'Koulun tiloissa kokoontuva pelikerho tarvitsee vähemmän valmistelua kuin moni luulee. Tähän on koottu, mitä koululta tarvitaan.',
+      'body',    $md$
+Iltapäivän pelikerho sopii koulun omiin tiloihin: atk-luokkaan, kirjastoon tai mihin tahansa tilaan, jossa on pöydät ja sähköpistokkeet.
+
+## Mitä koululta tarvitaan
+
+- **Tila** samana iltapäivänä joka viikko
+- **Laitteet**, joilla peliä pelataan, tai lupa käyttää koulun koneita
+- **Verkkoyhteys**, joka päästää pelin palvelimille
+
+## Ennen ensimmäistä kertaa
+
+Kokeilkaa yhteyttä ja kirjautumista etukäteen samalla koneella, jota kerhossa käytetään. Päivitykset vievät usein enemmän aikaa kuin itse kirjautuminen.
+
+Lisätietoa kouluille tarjoamistamme kerhoista löydät [kerhojen sivulta](/shop).
+$md$)));
+  PERFORM public.publish_library_article(v_id);
 END;
 $$;
 COMMIT;
@@ -2051,26 +2148,29 @@ ALTER TABLE public.library_articles DISABLE TRIGGER library_articles_updated_at;
 
 UPDATE public.library_articles a
    SET created_at = d.created_at, updated_at = d.updated_at
-  FROM (VALUES
+  FROM public.library_article_translations t
+  JOIN (VALUES
     ('Talking with your child about who they meet online',     timestamptz '2026-09-01 09:20+03', timestamptz '2026-09-03 08:45+03'),
     ('Minecraft, Roblox and Fortnite: what''s the difference?', timestamptz '2026-09-08 13:10+03', timestamptz '2026-09-10 14:05+03'),
     ('Playing together: how to join your child''s game',       timestamptz '2026-09-12 10:30+03', timestamptz '2026-09-24 16:20+03'),
     ('What children learn when they build together',          timestamptz '2026-09-20 11:00+03', timestamptz '2026-09-26 11:05+03'),
-    ('Getting ready for your child''s first club session',     timestamptz '2026-09-27 15:40+03', timestamptz '2026-09-28 10:15+03')
-  ) AS d(title, created_at, updated_at)
- WHERE a.title = d.title;
+    ('Getting ready for your child''s first club session',     timestamptz '2026-09-27 15:40+03', timestamptz '2026-09-28 10:15+03'),
+    ('Pelikerho koulupäivän jälkeen',                          timestamptz '2026-09-29 09:10+03', timestamptz '2026-09-29 09:40+03')
+  ) AS d(title, created_at, updated_at) ON d.title = t.title
+ WHERE t.article_id = a.id;
 
 ALTER TABLE public.library_articles ENABLE TRIGGER library_articles_updated_at;
 
 UPDATE public.library_article_publications p
    SET first_published_at = d.published_at, published_at = d.published_at
-  FROM public.library_articles a
+  FROM public.library_article_translations t
   JOIN (VALUES
     ('Talking with your child about who they meet online',     timestamptz '2026-09-03 09:00+03'),
     ('Minecraft, Roblox and Fortnite: what''s the difference?', timestamptz '2026-09-10 14:30+03'),
-    ('Playing together: how to join your child''s game',       timestamptz '2026-09-15 09:00+03')
-  ) AS d(title, published_at) ON d.title = a.title
- WHERE p.article_id = a.id;
+    ('Playing together: how to join your child''s game',       timestamptz '2026-09-15 09:00+03'),
+    ('Pelikerho koulupäivän jälkeen',                          timestamptz '2026-09-29 10:00+03')
+  ) AS d(title, published_at) ON d.title = t.title
+ WHERE p.article_id = t.article_id;
 
 DO $$
 BEGIN
@@ -2115,16 +2215,18 @@ BEGIN
     (SELECT count(*) FROM public.session_substitution_requests),
     (SELECT count(*) FROM public.session_cancellations);
 
-  RAISE NOTICE 'rich-seed: library articles %, live %, live with unpublished changes %, drafts %',
+  RAISE NOTICE 'rich-seed: library articles %, live %, drafts %, versions by language %, live versions by language %',
     (SELECT count(*) FROM public.library_articles),
     (SELECT count(*) FROM public.library_article_publications),
     (SELECT count(*) FROM public.library_articles a
-       JOIN public.library_article_publications p ON p.article_id = a.id
-      WHERE (a.title, a.summary, a.category, a.body_md5)
-            IS DISTINCT FROM (p.title, p.summary, p.category, p.body_md5)),
-    (SELECT count(*) FROM public.library_articles a
       WHERE NOT EXISTS (SELECT 1 FROM public.library_article_publications p
-                         WHERE p.article_id = a.id));
+                         WHERE p.article_id = a.id)),
+    (SELECT string_agg(locale || ' ' || n, ', ' ORDER BY locale)
+       FROM (SELECT locale, count(*) AS n FROM public.library_article_translations
+              GROUP BY locale) v),
+    (SELECT string_agg(locale || ' ' || n, ', ' ORDER BY locale)
+       FROM (SELECT locale, count(*) AS n FROM public.library_article_publication_translations
+              GROUP BY locale) v);
 
   RAISE NOTICE 'rich-seed: team profiles';
   FOR r IN SELECT p.email || ' (' || p.role::text || ')' AS k,

@@ -1,6 +1,6 @@
 import { ROUTES } from "@/lib/constants";
 import type { AppHref } from "@/lib/constants/routes";
-import type { PublishedLibraryArticleSummary } from "@/services/library";
+import type { LocalizedLibraryArticleSummary } from "@/services/library";
 import { isLibraryCategory, type LibraryCategory } from "../categories";
 import { publishedArticleCard } from "../more-from-library";
 import type { LibraryIndexBodyProps } from "./library-index-body";
@@ -40,7 +40,7 @@ export const LIBRARY_FILTER_HREFS: Record<LibraryCategory | "all", AppHref> = {
  * they first went live, and keep that order.
  */
 export function libraryIndexBodyProps(
-  published: readonly PublishedLibraryArticleSummary[],
+  published: readonly LocalizedLibraryArticleSummary[],
   selectedCategory: LibraryCategory | null,
 ): LibraryIndexBodyProps {
   return {

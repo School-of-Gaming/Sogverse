@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { LibraryIndexBody } from "@/components/library/index-page/library-index-body";
 import {
   libraryIndexBodyProps,
   parseLibraryCategory,
 } from "@/components/library/index-page/library-index-props";
+import { resolveLocale } from "@/lib/constants/locales";
 import { createClient } from "@/lib/supabase/server";
+import { localizeArticleSummaries } from "@/services/library/library.contracts";
 import { LibraryService } from "@/services/library/library.service";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -31,7 +33,8 @@ export async function generateMetadata(): Promise<Metadata> {
  * Rendered per request, like the shop, on the request's server client (the
  * publications table admits anon): what is live is what an admin last
  * published, with no revalidation to wait out. The list read carries no
- * bodies. A read that fails surfaces to the error boundary rather than
+ * bodies. Each card shows the version for the page's locale, falling back to
+ * English and then to the first written. A read that fails surfaces to the error boundary rather than
  * painting "nothing here yet" over a Library that has articles.
  */
 export default async function LibraryIndexPage({
@@ -40,9 +43,10 @@ export default async function LibraryIndexPage({
   searchParams: Promise<{ category?: string | string[] }>;
 }) {
   const selectedCategory = parseLibraryCategory((await searchParams).category);
-  const published = await new LibraryService(
-    await createClient(),
-  ).listPublishedArticles();
+  const published = localizeArticleSummaries(
+    await new LibraryService(await createClient()).listPublishedArticles(),
+    resolveLocale(await getLocale()),
+  );
 
   return (
     <LibraryIndexBody {...libraryIndexBodyProps(published, selectedCategory)} />

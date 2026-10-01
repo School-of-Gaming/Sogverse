@@ -4,14 +4,14 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { ogCardImage } from "@/lib/og/card-metadata";
-import type { PublishedLibraryArticle } from "@/services/library";
+import type { LocalizedLibraryArticle } from "@/services/library";
 
 /**
  * **The article's canonical path: its English address, whatever locale it is
- * read at.** Articles are written in English only, while the site has five
- * locales, so `/fi/kirjasto/<id>` and `/en/library/<id>` carry the same English
- * text under different chrome. One of them has to be the document, and the
- * English one is the language it is written in.
+ * read at.** Every locale's URL carries the same article, in the reader's
+ * version where one is written and in the fallback where not, so one of them
+ * has to be the document; the English one is the version nearly every article
+ * has.
  */
 export function libraryArticleCanonicalPath(id: string): string {
   return getPathname({ href: ROUTES.libraryArticle(id), locale: "en" });
@@ -22,9 +22,9 @@ export function libraryArticleCanonicalPath(id: string): string {
  * and the card a shared link unfurls into.
  *
  * - **The canonical is the English address, and there are no `hreflang`
- *   alternates.** The articles are English at every locale's URL (see
- *   `libraryArticleCanonicalPath`), and a `languages` set would claim
- *   translations that do not exist. The Library index is different — its
+ *   alternates** (see `libraryArticleCanonicalPath`): a `languages` set would
+ *   claim a translation at every locale's URL, where many show a fallback.
+ *   The Library index is different — its
  *   chrome really is localized — and takes the site's normal alternates once
  *   the Library launches.
  * - **The card's image is the cover, falling back to the site-wide card** at
@@ -33,8 +33,8 @@ export function libraryArticleCanonicalPath(id: string): string {
  *   `twitter` over the parent's rather than merging them, so declaring either
  *   block drops the layout's image. `siteName` is restated for the same reason.
  * - **`og:type` is `article`**, with the day it first went live and the day
- *   the live version was published. `og:locale` is `en`, the language of the
- *   title and summary the card shows.
+ *   the live version was published. `og:locale` is the language of the
+ *   version whose title and summary the card shows.
  *
  * **`noindex, nofollow`.** Owner decision (2026-09-29): the Library is not
  * promoted yet, so it is treated like the /schools tree until the owner's
@@ -44,7 +44,7 @@ export function libraryArticleCanonicalPath(id: string): string {
  * the noindex to lift here.
  */
 export async function libraryArticleMetadata(
-  article: PublishedLibraryArticle,
+  article: LocalizedLibraryArticle,
   requestLocale: string,
 ): Promise<Metadata> {
   const cover = catalogueImageSrc("library_cover", article.coverPath);
@@ -63,7 +63,7 @@ export async function libraryArticleMetadata(
     openGraph: {
       type: "article",
       siteName: "School of Gaming",
-      locale: "en",
+      locale: article.locale,
       url: canonical,
       title,
       description,

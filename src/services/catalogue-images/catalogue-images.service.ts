@@ -111,8 +111,9 @@ export class CatalogueImagesService {
    * filtering the embed to one locale would blank the name for those rather
    * than falling back.
    *
-   * An article reaches the entry its working copy links and the one its
-   * published copy links, which differ while a cover change is unpublished —
+   * An article is named by its working copy's title in the default locale,
+   * resolved the same way. It reaches the entry its working copy links and
+   * the one its published copy links, which differ while a cover change is unpublished —
    * and a replace or a remove reaches both.
    */
   async getUsage(): Promise<CatalogueImageUsage> {
@@ -145,7 +146,7 @@ export class CatalogueImagesService {
         (usage[entryId] ??= []).push({
           kind: "library-article",
           id: row.id,
-          title: row.title,
+          title: resolveTranslation(row.library_article_translations, DEFAULT_LOCALE)?.title ?? "",
           is_live: entryId === liveId,
         });
       }
@@ -191,9 +192,12 @@ export class CatalogueImagesService {
       this.supabase
         .from("library_articles")
         .select(
-          "id, title, cover_image_id, publication:library_article_publications(cover_image_id)",
+          "id, cover_image_id, library_article_translations(locale, title), publication:library_article_publications(cover_image_id)",
           { count: "exact" },
         )
+        // As for products: the resolver's last fallback is the first version,
+        // so the embed is ordered for a stable answer.
+        .order("locale", { referencedTable: "library_article_translations" })
         .order("id")
         .range(from, to),
     );

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { PublishedLibraryArticle } from "@/services/library";
+import type { LocalizedLibraryArticle } from "@/services/library";
 
 // The shared setup mocks the wrapped navigation, and its `getPathname` ignores
 // the locale. The canonical is *about* which locale's address it names, so
@@ -33,8 +33,9 @@ const { generateMetadata: libraryIndexMetadata } = await import(
 
 const ID = "482f0c6f-0fbc-4202-8790-a73a4520fb47";
 
-const ARTICLE: PublishedLibraryArticle = {
+const ARTICLE: LocalizedLibraryArticle = {
   id: ID,
+  locale: "en",
   title: "Setting up a family gaming agreement",
   summary: "Why a written agreement ends arguments.",
   body: "A rule in one head is a rule to argue with.",
@@ -142,6 +143,20 @@ describe("a Library article's structured data", () => {
     });
     expect(data).not.toHaveProperty("image");
     expect(data).not.toHaveProperty("author");
+  });
+
+  it("states the language of the version shown, in the data and the card", async () => {
+    const finnish = { ...ARTICLE, locale: "fi" as const };
+    expect(
+      libraryArticleJsonLd({
+        siteUrl: SITE,
+        canonicalPath: `/en/library/${ID}`,
+        article: finnish,
+      }).inLanguage,
+    ).toBe("fi");
+    expect((await libraryArticleMetadata(finnish, "fi")).openGraph).toMatchObject(
+      { locale: "fi" },
+    );
   });
 });
 

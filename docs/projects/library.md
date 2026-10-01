@@ -38,6 +38,16 @@ staging or prod (the purpose migration creates it with a plain insert).
 - A draft needs a title; publish needs category, title, summary and body. A cover is
   optional even to publish (reversed 2026-09-28 from "required"); a missing one shows the
   intentionally ugly NO IMAGE placeholder products use.
+- **A version per language (2026-10-01).** Title, summary and body are per site locale, in
+  both copies (`library_article_translations`, `library_article_publication_translations`);
+  category and cover stay per article. Admins write each version by hand in locale tabs, as
+  team profiles are written; no AI translation. One Publish per article copies every
+  complete version (title, summary and body all written) at once and leaves an incomplete
+  one out; it needs a category and at least one complete version. Unpublish removes them
+  all. Readers fall back: their locale → English → the first written. No per-locale
+  publishing, no translation workflow states, and no stored slug (the public addresses
+  derive one from the title in app code). Existing articles became English versions, both
+  copies, dates untouched.
 - Categories: the `library_article_category` enum is the only vocabulary; URLs carry its
   values as they are; five categories, no news category.
 - Reading time shows on the article page only; cards carry none, and list reads never carry
@@ -87,8 +97,9 @@ staging or prod (the purpose migration creates it with a plain insert).
 - Treated like `/schools` until the owner's visibility pass (2026-09-29): `noindex,
   nofollow`, no alternates on the index, linked from nowhere, and absent from the sitemap
   and `llms.txt`. Launching lifts the `noindex`, restores the index's alternates and adds
-  the sitemap and `llms.txt` entries. An article's canonical is its English address (articles
-  are English at every locale).
+  the sitemap and `llms.txt` entries. Each page shows the version for its locale, with the
+  reader fallback; an article's canonical is still its English address, and its own
+  per-language addresses, metadata and discoverability are the next piece of work.
 
 **Process**
 - Releasing: the table rename has no compatibility view; admin product pages and the
@@ -99,6 +110,6 @@ staging or prod (the purpose migration creates it with a plain insert).
 
 ## Open
 
-- On non-English URLs the article text is English under a document whose `lang` is the
-  chrome's locale.
+- Where a page falls back, the article text is in another language than the document's
+  `lang`, which is the chrome's locale.
 - Emails: session-report text is 16px beside the mail's 14px copy — owner judged it fine.
