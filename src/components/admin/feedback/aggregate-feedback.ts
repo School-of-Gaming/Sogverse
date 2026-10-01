@@ -1,9 +1,4 @@
-import {
-  SESSION_FEEDBACK_RATINGS,
-  type SessionFeedbackRating,
-  type SessionFeedbackTheme,
-} from "@/components/voice/feedback/session-feedback-items";
-import { addCalendarDays, mondayOf } from "@/lib/calendar-date";
+import type { SessionFeedbackTheme } from "@/components/voice/feedback/session-feedback-items";
 import type {
   AdminFeedbackDataset,
   AdminFeedbackGedu,
@@ -12,352 +7,380 @@ import type {
   AdminFeedbackSession,
   FeedbackSource,
 } from "@/services/session-feedback/admin-feedback.contracts";
-import type { FeedbackFilters } from "./feedback-filters";
-import { FEEDBACK_CATALOGUES, themesOf } from "./feedback-sources";
+import type { ProductType } from "@/types";
+import {
+  addRatings,
+  bucketStartOf,
+  bucketStarts,
+  bucketUnitFor,
+  changePoints,
+  confidentlyBelow,
+  emptyTally,
+  hasLowAnswer,
+  hasNote,
+  inPeriod,
+  knownAnswers,
+  shareFigure,
+  tallyResponses,
+  TOO_FEW,
+  type FeedbackBucketUnit,
+  type FeedbackPeriod,
+  type FeedbackPeriods,
+  type ResponseTallies,
+  type ShareFigure,
+  type Tally,
+} from "./feedback-tally";
+import { FEEDBACK_CATALOGUES } from "./feedback-sources";
+
+export {
+  bucketUnitFor,
+  POSITIVE_FROM,
+  LOW_UP_TO,
+  TOO_FEW,
+  type FeedbackBucketUnit,
+  type FeedbackPeriod,
+  type FeedbackPeriods,
+  type ShareFigure,
+} from "./feedback-tally";
+export { wilsonInterval, type ShareInterval } from "./wilson";
 
 /**
- * **The feedback page's arithmetic** — one pure pass from the dataset the route
- * read to every figure the page draws, for one source and one slice.
+ * **The feedback page's arithmetic** — pure passes from the dataset the route
+ * read to the view model of each of the page's four views: the overview, a
+ * dimension's list, one scope's detail, and the notes.
  *
- * Nothing here knows about React, the URL or the locale, so the page, the
- * preview scene and the tests all compute the same numbers from the same
- * document.
+ * Every builder takes the dataset, the source being read and both periods; the
+ * dataset spans both, and each builder splits it by session day itself. Every
+ * figure is per source, compared against the previous period, and — below the
+ * overview — against the platform for the same period. Nothing here knows
+ * about React, the URL or the locale: ids and message-key-shaped values out,
+ * labels are the UI's.
  */
 
-/**
- * The lowest answer that counts as positive: "Yes" and "Definitely".
- *
- * The headline is a share of positive answers rather than a mean of the 1–5
- * scale because the scale's steps are words, not distances — "A bit" is not
- * halfway between "No" and "Definitely" in any sense a child meant — and a
- * share reads at a glance and stays honest on a handful of answers.
- */
-export const POSITIVE_FROM: SessionFeedbackRating = 4;
+/** The dimensions the overview summarises and a list can be opened for. */
+export type FeedbackDimension = "product" | "group" | "gedu";
 
-/**
- * Below this many, a figure is shown but not trusted: a week of three answers
- * swinging from 33% to 100% is noise, and the page draws it as such.
- */
-export const LOW_N = 5;
+/** What a detail page can be about: a dimension's row, or one gamer. */
+export type FeedbackScopeKind = FeedbackDimension | "gamer";
 
-/** How a set of answers fell across the five levels. */
-export interface RatingTally {
-  /** Answers counted. */
-  n: number;
-  /** Answers at `POSITIVE_FROM` or above. */
-  positive: number;
-  counts: Record<SessionFeedbackRating, number>;
+export interface FeedbackScope {
+  kind: FeedbackScopeKind;
+  id: string;
 }
 
-/** The positive share of a tally, or `null` when nothing was answered. */
-export function positiveShare(tally: RatingTally): number | null {
-  return tally.n === 0 ? null : tally.positive / tally.n;
-}
-
-/** Every figure a slice carries, each with the count behind it. */
-export interface FeedbackFigures {
-  responses: number;
-  /**
-   * How many could have answered, or `null` where no denominator exists for
-   * this slice (a gamer's sessions are not counted individually).
-   */
-  eligible: number | null;
-  /** Responses over eligible, or `null` when there is no denominator or it is 0. */
-  responseRate: number | null;
-  overall: RatingTally;
-  themes: Record<SessionFeedbackTheme, RatingTally>;
-  /** Responses carrying a note. */
-  notes: number;
-}
-
-export interface StatementFigures {
-  key: string;
-  theme: SessionFeedbackTheme;
-  tally: RatingTally;
-}
-
-export interface WeekFigures {
-  /** The Monday the week starts on. */
-  weekStart: string;
-  responses: number;
-  overall: RatingTally;
-  themes: Record<SessionFeedbackTheme, RatingTally>;
-}
-
-export type BreakdownDimension = "product" | "group" | "gedu" | "gamer";
-
-export interface BreakdownRow extends FeedbackFigures {
+/** The product a product or group belongs to. */
+export interface FeedbackProductRef {
   id: string;
   name: string;
-  /** The product a product or group row belongs to; `null` for people. */
-  ref: AdminFeedbackGroupRef | null;
+  type: ProductType;
+  isRemote: boolean;
 }
 
-export interface FeedbackView {
+/** One point of a sparkline: the positive share of one week or month. */
+export interface FeedbackSparkPoint {
+  /** The bucket's first day: a Monday, or the 1st of a month. */
+  start: string;
+  /** The sample behind it (responses for the headline, answers for a statement). */
+  n: number;
+  positiveShare: number | null;
+  /** `n < TOO_FEW`: the line gaps here rather than drawing noise. */
+  sparse: boolean;
+}
+
+/** A figure this period, the same figure the period before, and the move between them. */
+export interface ComparedFigure {
+  current: ShareFigure;
+  previous: ShareFigure;
+  /** Positive share now minus before, in percentage points; `null` if either side is too few. */
+  changePoints: number | null;
+}
+
+/** The headline: positive share across every statement. */
+export interface FeedbackHeadline extends ComparedFigure {
+  /** The current period, bucket by bucket, oldest first. */
+  series: FeedbackSparkPoint[];
+}
+
+/** One statement's line. `current.distribution` is its full 1–5 spread. */
+export interface FeedbackStatementLine extends ComparedFigure {
+  /** The catalogue key — also the statement's message key. */
+  key: string;
+  theme: SessionFeedbackTheme;
+  series: FeedbackSparkPoint[];
+}
+
+/** "N answers from X% of gamers present". */
+export interface FeedbackParticipation {
+  /** Responses in the period. */
+  responses: number;
+  /** Of those, the ones whose session's register marks the respondent present. */
+  countedResponses: number;
+  /** Gamers marked present at the scope's sessions; `null` for a gamer scope. */
+  eligible: number | null;
+  /** `countedResponses / eligible`; `null` when there is no denominator or it is 0. */
+  responseRate: number | null;
+}
+
+/** One line of the overview per dimension, e.g. "2 below platform". */
+export interface FeedbackDimensionSummary {
+  /** Rows the dimension's list would show. */
+  rows: number;
+  /** Rows with too few answers to state. */
+  tooFew: number;
+  /** Rows confidently below the platform. */
+  confidentlyBelow: number;
+}
+
+/** "6 came with a low answer", out of every note in the period. */
+export interface FeedbackNotesSummary {
+  total: number;
+  withLowAnswer: number;
+}
+
+/** `/admin/feedback`: one source, one period, no lists. */
+export interface FeedbackOverview {
   source: FeedbackSource;
-  themes: SessionFeedbackTheme[];
-  totals: FeedbackFigures;
-  statements: StatementFigures[];
-  /** Every week the range touches, oldest first, empty weeks included. */
-  weeks: WeekFigures[];
-  breakdowns: Record<BreakdownDimension, BreakdownRow[]>;
-  /** The slice's responses, newest session first. */
+  periods: FeedbackPeriods;
+  bucketUnit: FeedbackBucketUnit;
+  headline: FeedbackHeadline;
+  participation: FeedbackParticipation;
+  /** In the order the source asks them. */
+  statements: FeedbackStatementLine[];
+  dimensions: Record<FeedbackDimension, FeedbackDimensionSummary>;
+  notes: FeedbackNotesSummary;
+}
+
+/** The statement a row lags the platform on most. */
+export interface FeedbackWeakestStatement {
+  key: string;
+  /** Row's positive share minus the platform's, in points; always negative. */
+  gapPoints: number;
+  confidentlyBelow: boolean;
+}
+
+/**
+ * One product, group or Gedu in a list. When `overall.current.tooFew`, show
+ * the count and nothing else: `confidentlyBelow` is false and `weakest` null.
+ */
+export interface FeedbackDimensionRow {
+  dimension: FeedbackDimension;
+  id: string;
+  name: string;
+  /** The row's own product, or a group's product; `null` for a Gedu. */
+  product: FeedbackProductRef | null;
+  /** Responses this period (a response with two Gedus counts toward each). */
+  responses: number;
+  eligible: number;
+  responseRate: number | null;
+  /** Positive share across every statement; `current.interval.lower` is what the list sorts on. */
+  overall: ComparedFigure;
+  /** Even the top of the row's 95% interval is under the platform's share. */
+  confidentlyBelow: boolean;
+  /** `null` when too few, or when no stated statement is below the platform. */
+  weakest: FeedbackWeakestStatement | null;
+}
+
+/** A dimension's list, worst first; rows with too few answers last. */
+export interface FeedbackDimensionList {
+  source: FeedbackSource;
+  periods: FeedbackPeriods;
+  dimension: FeedbackDimension;
+  /** The platform's overall figure the rows are judged against. */
+  platform: ShareFigure;
+  rows: FeedbackDimensionRow[];
+}
+
+/** How a scope's figure stands against the whole platform in the same period. */
+export interface PlatformComparison {
+  platform: ShareFigure;
+  /** Scope minus platform, in points; `null` when the scope is too few. */
+  vsPlatformPoints: number | null;
+  confidentlyBelow: boolean;
+}
+
+export type FeedbackDetailHeadline = FeedbackHeadline & PlatformComparison;
+export type FeedbackDetailStatement = FeedbackStatementLine & PlatformComparison;
+
+/** A gamer under a group: who, and how often they answered. Never a score. */
+export interface FeedbackGamerEntry {
+  id: string;
+  name: string;
+  responses: number;
+}
+
+/**
+ * The rows under a scope, `null` where that kind of child is not shown:
+ * product → groups and Gedus; Gedu → groups; group → gamers; gamer → none.
+ * Group and Gedu children are judged against the platform, exactly as list rows.
+ */
+export interface FeedbackDetailChildren {
+  groups: FeedbackDimensionRow[] | null;
+  gedus: FeedbackDimensionRow[] | null;
+  /** Alphabetical, response count only — never ranked or scored. */
+  gamers: FeedbackGamerEntry[] | null;
+}
+
+/** A response carrying a note, and whether any of its answers was low (1–2). */
+export interface FeedbackNote {
+  response: AdminFeedbackResponse;
+  withLowAnswer: boolean;
+}
+
+/** One product, group, Gedu or gamer. */
+export interface FeedbackDetail {
+  source: FeedbackSource;
+  periods: FeedbackPeriods;
+  scope: FeedbackScope;
+  /** Looked up across the whole dataset; `null` when the id appears nowhere. */
+  name: string | null;
+  /** The product of a product or group scope; `null` otherwise. */
+  product: FeedbackProductRef | null;
+  bucketUnit: FeedbackBucketUnit;
+  headline: FeedbackDetailHeadline;
+  participation: FeedbackParticipation;
+  statements: FeedbackDetailStatement[];
+  children: FeedbackDetailChildren;
+  /** Low-answer notes first, then newest first. */
+  notes: FeedbackNote[];
+  /** Every response in the period, newest first. */
   responses: AdminFeedbackResponse[];
 }
 
-function emptyTally(): RatingTally {
-  return { n: 0, positive: 0, counts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
+/** The notes view. */
+export interface FeedbackNotesView {
+  source: FeedbackSource;
+  periods: FeedbackPeriods;
+  summary: FeedbackNotesSummary;
+  /** Newest first; only low-answer notes when asked for. */
+  notes: FeedbackNote[];
 }
 
-function emptyThemes(): Record<SessionFeedbackTheme, RatingTally> {
-  return {
-    Learning: emptyTally(),
-    Fun: emptyTally(),
-    "Gedu quality": emptyTally(),
-    Belonging: emptyTally(),
-  };
-}
+/* ------------------------------------------------------------------------ */
+/* Builders                                                                 */
+/* ------------------------------------------------------------------------ */
 
-function isRating(value: number): value is SessionFeedbackRating {
-  return (SESSION_FEEDBACK_RATINGS as readonly number[]).includes(value);
-}
-
-function count(tally: RatingTally, rating: SessionFeedbackRating): void {
-  tally.n += 1;
-  tally.counts[rating] += 1;
-  if (rating >= POSITIVE_FROM) tally.positive += 1;
-}
-
-/**
- * The answers of one response the source's catalogue knows, as
- * statement → rating. A retired key, or a value outside the scale, is skipped.
- */
-function knownAnswers(
-  response: AdminFeedbackResponse,
-): { key: string; theme: SessionFeedbackTheme; rating: SessionFeedbackRating }[] {
-  return FEEDBACK_CATALOGUES[response.source].flatMap(({ key, theme }) => {
-    const value = response.answers[key];
-    // `value` is undefined for a statement this response skipped; the guard
-    // refuses that along with anything off the scale.
-    return isRating(value) ? [{ key, theme, rating: value }] : [];
-  });
-}
-
-function hasGedu(gedus: AdminFeedbackGedu[], id: string): boolean {
-  return gedus.some((gedu) => gedu.id === id);
-}
-
-function matchesSession(
-  row: AdminFeedbackGroupRef & { gedus: AdminFeedbackGedu[] },
-  filters: FeedbackFilters,
-): boolean {
-  return (
-    (filters.product === null || row.productId === filters.product) &&
-    (filters.group === null || row.groupId === filters.group) &&
-    (filters.gedu === null || hasGedu(row.gedus, filters.gedu))
-  );
-}
-
-function matchesResponse(
-  response: AdminFeedbackResponse,
-  filters: FeedbackFilters,
-): boolean {
-  return (
-    matchesSession(response, filters) &&
-    (filters.gamer === null || response.respondent.id === filters.gamer)
-  );
-}
-
-/** A running total, finished into `FeedbackFigures` once every row is in. */
-interface Accumulator {
-  responses: number;
-  eligible: number;
-  overall: RatingTally;
-  themes: Record<SessionFeedbackTheme, RatingTally>;
-  notes: number;
-}
-
-function emptyAccumulator(): Accumulator {
-  return { responses: 0, eligible: 0, overall: emptyTally(), themes: emptyThemes(), notes: 0 };
-}
-
-function addResponse(acc: Accumulator, response: AdminFeedbackResponse): void {
-  acc.responses += 1;
-  if (response.note.trim() !== "") acc.notes += 1;
-  for (const { theme, rating } of knownAnswers(response)) {
-    count(acc.overall, rating);
-    count(acc.themes[theme], rating);
-  }
-}
-
-function finish(acc: Accumulator, hasDenominator: boolean): FeedbackFigures {
-  const eligible = hasDenominator ? acc.eligible : null;
-  return {
-    responses: acc.responses,
-    eligible,
-    responseRate: eligible === null || eligible === 0 ? null : acc.responses / eligible,
-    overall: acc.overall,
-    themes: acc.themes,
-    notes: acc.notes,
-  };
-}
-
-/**
- * Rows of one breakdown, grown by key. A row can be opened by a session alone —
- * a product that ran thirty sessions and heard nothing back is a finding, and
- * belongs in the table at a 0% response rate rather than missing from it.
- */
-class Breakdown {
-  private rows = new Map<string, { name: string; ref: AdminFeedbackGroupRef | null; acc: Accumulator }>();
-
-  constructor(private readonly hasDenominator: boolean) {}
-
-  private row(id: string, name: string, ref: AdminFeedbackGroupRef | null) {
-    let row = this.rows.get(id);
-    if (row === undefined) {
-      row = { name, ref, acc: emptyAccumulator() };
-      this.rows.set(id, row);
-    }
-    return row;
-  }
-
-  addSession(id: string, name: string, ref: AdminFeedbackGroupRef | null, eligible: number) {
-    this.row(id, name, ref).acc.eligible += eligible;
-  }
-
-  addResponse(id: string, name: string, ref: AdminFeedbackGroupRef | null, response: AdminFeedbackResponse) {
-    addResponse(this.row(id, name, ref).acc, response);
-  }
-
-  finish(): BreakdownRow[] {
-    return [...this.rows.entries()]
-      .map(([id, { name, ref, acc }]) => ({
-        id,
-        name,
-        ref,
-        ...finish(acc, this.hasDenominator),
-      }))
-      .sort((a, b) => b.responses - a.responses || a.name.localeCompare(b.name));
-  }
-}
-
-function groupRef(row: AdminFeedbackGroupRef): AdminFeedbackGroupRef {
-  return {
-    groupId: row.groupId,
-    groupName: row.groupName,
-    productId: row.productId,
-    productName: row.productName,
-    productType: row.productType,
-    isRemote: row.isRemote,
-  };
-}
-
-/** Every Monday from the week `from` falls in to the week `to` falls in. */
-export function weeksBetween(from: string, to: string): string[] {
-  const weeks: string[] = [];
-  const last = mondayOf(to);
-  for (let week = mondayOf(from); week <= last; week = addCalendarDays(week, 7)) {
-    weeks.push(week);
-  }
-  return weeks;
-}
-
-/**
- * Everything the page draws for one source, narrowed to one slice.
- *
- * The response rate's denominator is the sessions in the same slice, so a
- * product filter divides that product's responses by that product's present
- * gamers. A gamer filter has no denominator — the dataset counts who could
- * answer per session, not which gamers they were — so the rate is withheld
- * rather than divided by the wrong thing, and the gamer breakdown carries none.
- */
-export function buildFeedbackView(
+export function buildFeedbackOverview(
   dataset: AdminFeedbackDataset,
   source: FeedbackSource,
-  filters: FeedbackFilters,
-): FeedbackView {
-  const hasDenominator = filters.gamer === null;
-  const responses = ofSource(dataset.responses, source)
-    .filter((response) => matchesResponse(response, filters))
-    .sort(
-      (a, b) =>
-        b.sessionDate.localeCompare(a.sessionDate) ||
-        b.submittedAt.localeCompare(a.submittedAt),
-    );
-  const sessions: AdminFeedbackSession[] = hasDenominator
-    ? ofSource(dataset.sessions, source).filter((session) => matchesSession(session, filters))
-    : [];
+  periods: FeedbackPeriods,
+): FeedbackOverview {
+  const slice = sliceOf(dataset, source, periods);
+  const bucketUnit = bucketUnitFor(periods.current);
+  const platform = comparedTallies(slice.current, slice.previous, source);
+  const notes = notesOf(slice.current);
 
-  const totals = emptyAccumulator();
-  const statementTallies = new Map(
-    FEEDBACK_CATALOGUES[source].map(({ key }) => [key, emptyTally()]),
-  );
-  const weeks = new Map(
-    weeksBetween(dataset.from, dataset.to).map((weekStart) => [
-      weekStart,
-      { weekStart, responses: 0, overall: emptyTally(), themes: emptyThemes() },
-    ]),
-  );
-  const breakdowns = {
-    product: new Breakdown(hasDenominator),
-    group: new Breakdown(hasDenominator),
-    gedu: new Breakdown(hasDenominator),
-    gamer: new Breakdown(false),
+  const summarise = (dimension: FeedbackDimension): FeedbackDimensionSummary => {
+    const rows = dimensionRows(dimension, slice, source, platform.current);
+    return {
+      rows: rows.length,
+      tooFew: rows.filter((row) => row.overall.current.tooFew).length,
+      confidentlyBelow: rows.filter((row) => row.confidentlyBelow).length,
+    };
   };
-
-  for (const session of sessions) {
-    totals.eligible += session.eligibleCount;
-    const ref = groupRef(session);
-    breakdowns.product.addSession(session.productId, session.productName, ref, session.eligibleCount);
-    breakdowns.group.addSession(session.groupId, session.groupName, ref, session.eligibleCount);
-    for (const gedu of uniqueGedus(session.gedus)) {
-      breakdowns.gedu.addSession(gedu.id, gedu.name, null, session.eligibleCount);
-    }
-  }
-
-  for (const response of responses) {
-    addResponse(totals, response);
-    for (const { key, rating } of knownAnswers(response)) {
-      const tally = statementTallies.get(key);
-      if (tally !== undefined) count(tally, rating);
-    }
-
-    const week = weeks.get(mondayOf(response.sessionDate));
-    if (week !== undefined) {
-      week.responses += 1;
-      for (const { theme, rating } of knownAnswers(response)) {
-        count(week.overall, rating);
-        count(week.themes[theme], rating);
-      }
-    }
-
-    const ref = groupRef(response);
-    breakdowns.product.addResponse(response.productId, response.productName, ref, response);
-    breakdowns.group.addResponse(response.groupId, response.groupName, ref, response);
-    // A response about a session two Gedus ran counts toward each of them.
-    for (const gedu of uniqueGedus(response.gedus)) {
-      breakdowns.gedu.addResponse(gedu.id, gedu.name, null, response);
-    }
-    breakdowns.gamer.addResponse(response.respondent.id, response.respondent.name, null, response);
-  }
 
   return {
     source,
-    themes: themesOf(source),
-    totals: finish(totals, hasDenominator),
-    statements: FEEDBACK_CATALOGUES[source].map(({ key, theme }) => ({
-      key,
-      theme,
-      tally: statementTallies.get(key) ?? emptyTally(),
-    })),
-    weeks: [...weeks.values()],
-    breakdowns: {
-      product: breakdowns.product.finish(),
-      group: breakdowns.group.finish(),
-      gedu: breakdowns.gedu.finish(),
-      gamer: breakdowns.gamer.finish(),
+    periods,
+    bucketUnit,
+    headline: headlineOf(platform, slice.current, periods.current, bucketUnit),
+    participation: participationOf(slice.current, slice.currentSessions),
+    statements: statementLinesOf(platform, slice.current, source, periods.current, bucketUnit),
+    dimensions: {
+      product: summarise("product"),
+      group: summarise("group"),
+      gedu: summarise("gedu"),
     },
-    responses,
+    notes: {
+      total: notes.length,
+      withLowAnswer: notes.filter((note) => note.withLowAnswer).length,
+    },
+  };
+}
+
+/**
+ * Every product, group or Gedu that had a response or an eligible session in
+ * the current period, worst first by the lower bound of its positive share.
+ */
+export function buildFeedbackDimensionList(
+  dataset: AdminFeedbackDataset,
+  source: FeedbackSource,
+  periods: FeedbackPeriods,
+  dimension: FeedbackDimension,
+): FeedbackDimensionList {
+  const slice = sliceOf(dataset, source, periods);
+  const platform = tallyResponses(slice.current, source);
+  return {
+    source,
+    periods,
+    dimension,
+    platform: shareFigure(platform.overall),
+    rows: dimensionRows(dimension, slice, source, platform),
+  };
+}
+
+export function buildFeedbackDetail(
+  dataset: AdminFeedbackDataset,
+  source: FeedbackSource,
+  periods: FeedbackPeriods,
+  scope: FeedbackScope,
+): FeedbackDetail {
+  const all = sliceOf(dataset, source, periods);
+  const slice = narrow(all, scope);
+  const bucketUnit = bucketUnitFor(periods.current);
+  const platformTallies = tallyResponses(all.current, source);
+  const scoped = comparedTallies(slice.current, slice.previous, source);
+
+  const headline = headlineOf(scoped, slice.current, periods.current, bucketUnit);
+  const platformOverall = shareFigure(platformTallies.overall);
+
+  const statements = statementLinesOf(scoped, slice.current, source, periods.current, bucketUnit).map(
+    (line) => ({
+      ...line,
+      ...againstPlatform(line.current, statementFigure(platformTallies, line.key)),
+    }),
+  );
+
+  const childRows = (dimension: FeedbackDimension) =>
+    dimensionRows(dimension, slice, source, platformTallies);
+
+  return {
+    source,
+    periods,
+    scope,
+    name: nameOf(dataset, scope),
+    product: productOf(dataset, scope),
+    bucketUnit,
+    headline: { ...headline, ...againstPlatform(headline.current, platformOverall) },
+    participation:
+      scope.kind === "gamer"
+        ? { ...participationOf(slice.current, []), eligible: null, responseRate: null }
+        : participationOf(slice.current, slice.currentSessions),
+    statements,
+    children: {
+      groups: scope.kind === "product" || scope.kind === "gedu" ? childRows("group") : null,
+      gedus: scope.kind === "product" ? childRows("gedu") : null,
+      gamers: scope.kind === "group" ? gamersOf(slice.current) : null,
+    },
+    notes: notesOf(slice.current).sort(
+      (a, b) => Number(b.withLowAnswer) - Number(a.withLowAnswer) || newestFirst(a.response, b.response),
+    ),
+    responses: [...slice.current].sort(newestFirst),
+  };
+}
+
+export function buildFeedbackNotes(
+  dataset: AdminFeedbackDataset,
+  source: FeedbackSource,
+  periods: FeedbackPeriods,
+  options: { lowAnswerOnly: boolean },
+): FeedbackNotesView {
+  const notes = notesOf(sliceOf(dataset, source, periods).current);
+  const withLowAnswer = notes.filter((note) => note.withLowAnswer);
+  return {
+    source,
+    periods,
+    summary: { total: notes.length, withLowAnswer: withLowAnswer.length },
+    notes: options.lowAnswerOnly ? withLowAnswer : notes,
   };
 }
 
@@ -370,54 +393,346 @@ export function ofSource<T extends { source: FeedbackSource }>(
   return rows.filter((row) => row.source === source);
 }
 
-/** A Gedu listed twice on one session (say, primary and substitute) counts once. */
-function uniqueGedus(gedus: AdminFeedbackGedu[]): AdminFeedbackGedu[] {
-  const seen = new Set<string>();
-  return gedus.filter((gedu) => {
-    if (seen.has(gedu.id)) return false;
-    seen.add(gedu.id);
-    return true;
+/* ------------------------------------------------------------------------ */
+/* Slicing                                                                  */
+/* ------------------------------------------------------------------------ */
+
+/** One source's entries, split into the two periods. */
+interface Slice {
+  current: AdminFeedbackResponse[];
+  previous: AdminFeedbackResponse[];
+  currentSessions: AdminFeedbackSession[];
+}
+
+function sliceOf(
+  dataset: AdminFeedbackDataset,
+  source: FeedbackSource,
+  periods: FeedbackPeriods,
+): Slice {
+  const responses = ofSource(dataset.responses, source);
+  return {
+    current: responses.filter((row) => inPeriod(row.sessionDate, periods.current)),
+    previous: responses.filter((row) => inPeriod(row.sessionDate, periods.previous)),
+    currentSessions: ofSource(dataset.sessions, source).filter((row) =>
+      inPeriod(row.sessionDate, periods.current),
+    ),
+  };
+}
+
+function inScope(
+  row: AdminFeedbackResponse | AdminFeedbackSession,
+  scope: FeedbackScope,
+): boolean {
+  switch (scope.kind) {
+    case "product":
+      return row.productId === scope.id;
+    case "group":
+      return row.groupId === scope.id;
+    case "gedu":
+      return row.gedus.some((gedu) => gedu.id === scope.id);
+    case "gamer":
+      return "respondent" in row && row.respondent.id === scope.id;
+  }
+}
+
+function narrow(slice: Slice, scope: FeedbackScope): Slice {
+  return {
+    current: slice.current.filter((row) => inScope(row, scope)),
+    previous: slice.previous.filter((row) => inScope(row, scope)),
+    // Sessions do not say which gamers were present, so a gamer has no denominator.
+    currentSessions:
+      scope.kind === "gamer" ? [] : slice.currentSessions.filter((row) => inScope(row, scope)),
+  };
+}
+
+/* ------------------------------------------------------------------------ */
+/* Figures                                                                  */
+/* ------------------------------------------------------------------------ */
+
+interface ComparedTallies {
+  current: ResponseTallies;
+  previous: ResponseTallies;
+}
+
+function comparedTallies(
+  current: readonly AdminFeedbackResponse[],
+  previous: readonly AdminFeedbackResponse[],
+  source: FeedbackSource,
+): ComparedTallies {
+  return { current: tallyResponses(current, source), previous: tallyResponses(previous, source) };
+}
+
+function compared(current: Tally, previous: Tally): ComparedFigure {
+  const now = shareFigure(current);
+  const before = shareFigure(previous);
+  return { current: now, previous: before, changePoints: changePoints(now, before) };
+}
+
+function statementFigure(tallies: ResponseTallies, key: string): ShareFigure {
+  return shareFigure(tallies.statements.get(key) ?? emptyTally());
+}
+
+function againstPlatform(scope: ShareFigure, platform: ShareFigure): PlatformComparison {
+  return {
+    platform,
+    vsPlatformPoints:
+      scope.tooFew || scope.positiveShare === null || platform.positiveShare === null
+        ? null
+        : (scope.positiveShare - platform.positiveShare) * 100,
+    confidentlyBelow: confidentlyBelow(scope, platform),
+  };
+}
+
+/** The current period's positive share bucket by bucket; `key` narrows it to one statement. */
+function seriesOf(
+  responses: readonly AdminFeedbackResponse[],
+  period: FeedbackPeriod,
+  unit: FeedbackBucketUnit,
+  key: string | null,
+): FeedbackSparkPoint[] {
+  const buckets = new Map(bucketStarts(period, unit).map((start) => [start, emptyTally()]));
+  for (const response of responses) {
+    const tally = buckets.get(bucketStartOf(response.sessionDate, unit));
+    if (tally === undefined) continue;
+    const ratings = knownAnswers(response)
+      .filter((answer) => key === null || answer.key === key)
+      .map(({ rating }) => rating);
+    addRatings(tally, ratings);
+  }
+  return [...buckets].map(([start, tally]) => {
+    const figure = shareFigure(tally);
+    return { start, n: figure.n, positiveShare: figure.positiveShare, sparse: figure.n < TOO_FEW };
   });
 }
 
-/**
- * The display name of each active filter, looked up across the whole dataset
- * rather than the slice — a filter can outlive the range it was set in, and its
- * chip should still say who it is. `null` where the id appears nowhere.
- */
-export function feedbackFilterNames(
-  dataset: AdminFeedbackDataset,
-  filters: FeedbackFilters,
-): Record<keyof FeedbackFilters, string | null> {
-  const rows = [...dataset.responses, ...dataset.sessions];
-  const find = <T>(pick: (row: AdminFeedbackResponse | AdminFeedbackSession) => T | undefined) => {
-    for (const row of rows) {
-      const found = pick(row);
-      if (found !== undefined) return found;
+function headlineOf(
+  tallies: ComparedTallies,
+  responses: readonly AdminFeedbackResponse[],
+  period: FeedbackPeriod,
+  unit: FeedbackBucketUnit,
+): FeedbackHeadline {
+  return {
+    ...compared(tallies.current.overall, tallies.previous.overall),
+    series: seriesOf(responses, period, unit, null),
+  };
+}
+
+function statementLinesOf(
+  tallies: ComparedTallies,
+  responses: readonly AdminFeedbackResponse[],
+  source: FeedbackSource,
+  period: FeedbackPeriod,
+  unit: FeedbackBucketUnit,
+): FeedbackStatementLine[] {
+  return FEEDBACK_CATALOGUES[source].map(({ key, theme }) => ({
+    key,
+    theme,
+    ...compared(
+      tallies.current.statements.get(key) ?? emptyTally(),
+      tallies.previous.statements.get(key) ?? emptyTally(),
+    ),
+    series: seriesOf(responses, period, unit, key),
+  }));
+}
+
+function participationOf(
+  responses: readonly AdminFeedbackResponse[],
+  sessions: readonly AdminFeedbackSession[],
+): FeedbackParticipation {
+  const countedResponses = responses.filter((row) => row.countsTowardRate).length;
+  const eligible = sessions.reduce((sum, row) => sum + row.eligibleCount, 0);
+  return {
+    responses: responses.length,
+    countedResponses,
+    eligible,
+    responseRate: eligible === 0 ? null : countedResponses / eligible,
+  };
+}
+
+/* ------------------------------------------------------------------------ */
+/* Dimension rows                                                           */
+/* ------------------------------------------------------------------------ */
+
+interface RowKey {
+  id: string;
+  name: string;
+  product: FeedbackProductRef | null;
+}
+
+function productRefOf(row: AdminFeedbackGroupRef): FeedbackProductRef {
+  return { id: row.productId, name: row.productName, type: row.productType, isRemote: row.isRemote };
+}
+
+/** The rows an entry counts toward. A Gedu listed twice on one session counts once. */
+function rowKeysOf(
+  row: AdminFeedbackGroupRef & { gedus: AdminFeedbackGedu[] },
+  dimension: FeedbackDimension,
+): RowKey[] {
+  switch (dimension) {
+    case "product":
+      return [{ id: row.productId, name: row.productName, product: productRefOf(row) }];
+    case "group":
+      return [{ id: row.groupId, name: row.groupName, product: productRefOf(row) }];
+    case "gedu": {
+      const seen = new Set<string>();
+      return row.gedus.flatMap((gedu) => {
+        if (seen.has(gedu.id)) return [];
+        seen.add(gedu.id);
+        return [{ id: gedu.id, name: gedu.name, product: null }];
+      });
     }
-    return null;
+  }
+}
+
+interface RowAccumulator extends RowKey {
+  current: AdminFeedbackResponse[];
+  previous: AdminFeedbackResponse[];
+  eligible: number;
+}
+
+/**
+ * One dimension's rows over a slice, judged against the platform's tallies.
+ * A row is opened by a current response or a current session — a group that
+ * ran sessions and heard nothing back is listed — never by the previous period
+ * alone.
+ */
+function dimensionRows(
+  dimension: FeedbackDimension,
+  slice: Slice,
+  source: FeedbackSource,
+  platform: ResponseTallies,
+): FeedbackDimensionRow[] {
+  const rows = new Map<string, RowAccumulator>();
+  const open = (key: RowKey): RowAccumulator => {
+    let row = rows.get(key.id);
+    if (row === undefined) {
+      row = { ...key, current: [], previous: [], eligible: 0 };
+      rows.set(key.id, row);
+    }
+    return row;
   };
 
-  return {
-    product:
-      filters.product === null
-        ? null
-        : find((row) => (row.productId === filters.product ? row.productName : undefined)),
-    group:
-      filters.group === null
-        ? null
-        : find((row) => (row.groupId === filters.group ? row.groupName : undefined)),
-    gedu:
-      filters.gedu === null
-        ? null
-        : find((row) => row.gedus.find((gedu) => gedu.id === filters.gedu)?.name),
-    gamer:
-      filters.gamer === null
-        ? null
-        : find((row) =>
-            "respondent" in row && row.respondent.id === filters.gamer
-              ? row.respondent.name
-              : undefined,
-          ),
-  };
+  for (const response of slice.current) {
+    for (const key of rowKeysOf(response, dimension)) open(key).current.push(response);
+  }
+  for (const session of slice.currentSessions) {
+    for (const key of rowKeysOf(session, dimension)) open(key).eligible += session.eligibleCount;
+  }
+  for (const response of slice.previous) {
+    for (const key of rowKeysOf(response, dimension)) rows.get(key.id)?.previous.push(response);
+  }
+
+  const platformOverall = shareFigure(platform.overall);
+  return [...rows.values()]
+    .map((row): FeedbackDimensionRow => {
+      const tallies = comparedTallies(row.current, row.previous, source);
+      const overall = compared(tallies.current.overall, tallies.previous.overall);
+      const counted = row.current.filter((response) => response.countsTowardRate).length;
+      return {
+        dimension,
+        id: row.id,
+        name: row.name,
+        product: row.product,
+        responses: row.current.length,
+        eligible: row.eligible,
+        responseRate: row.eligible === 0 ? null : counted / row.eligible,
+        overall,
+        confidentlyBelow: confidentlyBelow(overall.current, platformOverall),
+        weakest: overall.current.tooFew ? null : weakestStatement(tallies.current, platform, source),
+      };
+    })
+    .sort(worstFirst);
+}
+
+/** The stated statement furthest below the platform's share for it, if any is below. */
+function weakestStatement(
+  scope: ResponseTallies,
+  platform: ResponseTallies,
+  source: FeedbackSource,
+): FeedbackWeakestStatement | null {
+  let weakest: FeedbackWeakestStatement | null = null;
+  for (const { key } of FEEDBACK_CATALOGUES[source]) {
+    const mine = statementFigure(scope, key);
+    const theirs = statementFigure(platform, key);
+    if (mine.tooFew || mine.positiveShare === null || theirs.positiveShare === null) continue;
+    const gapPoints = (mine.positiveShare - theirs.positiveShare) * 100;
+    if (gapPoints < 0 && (weakest === null || gapPoints < weakest.gapPoints)) {
+      weakest = { key, gapPoints, confidentlyBelow: confidentlyBelow(mine, theirs) };
+    }
+  }
+  return weakest;
+}
+
+/** Stated rows by the lower bound of their positive share, ascending; too-few rows last, by name. */
+function worstFirst(a: FeedbackDimensionRow, b: FeedbackDimensionRow): number {
+  const aFew = a.overall.current.tooFew;
+  const bFew = b.overall.current.tooFew;
+  if (aFew !== bFew) return aFew ? 1 : -1;
+  const aLower = a.overall.current.interval?.lower ?? 0;
+  const bLower = b.overall.current.interval?.lower ?? 0;
+  return (aFew ? 0 : aLower - bLower) || a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
+}
+
+/* ------------------------------------------------------------------------ */
+/* People, notes, names                                                     */
+/* ------------------------------------------------------------------------ */
+
+function gamersOf(responses: readonly AdminFeedbackResponse[]): FeedbackGamerEntry[] {
+  const gamers = new Map<string, FeedbackGamerEntry>();
+  for (const { respondent } of responses) {
+    const entry = gamers.get(respondent.id);
+    if (entry === undefined) {
+      gamers.set(respondent.id, { id: respondent.id, name: respondent.name, responses: 1 });
+    } else {
+      entry.responses += 1;
+    }
+  }
+  return [...gamers.values()].sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+}
+
+function newestFirst(a: AdminFeedbackResponse, b: AdminFeedbackResponse): number {
+  return b.sessionDate.localeCompare(a.sessionDate) || b.submittedAt.localeCompare(a.submittedAt);
+}
+
+/** The responses carrying a note, newest first. */
+function notesOf(responses: readonly AdminFeedbackResponse[]): FeedbackNote[] {
+  return responses
+    .filter(hasNote)
+    .sort(newestFirst)
+    .map((response) => ({ response, withLowAnswer: hasLowAnswer(response) }));
+}
+
+/** Every entry of the dataset, any source and period: a name outlives the range it was seen in. */
+function entriesOf(dataset: AdminFeedbackDataset) {
+  return [...dataset.responses, ...dataset.sessions];
+}
+
+function nameOf(dataset: AdminFeedbackDataset, scope: FeedbackScope): string | null {
+  for (const entry of entriesOf(dataset)) {
+    switch (scope.kind) {
+      case "product":
+        if (entry.productId === scope.id) return entry.productName;
+        break;
+      case "group":
+        if (entry.groupId === scope.id) return entry.groupName;
+        break;
+      case "gedu": {
+        const gedu = entry.gedus.find((candidate) => candidate.id === scope.id);
+        if (gedu !== undefined) return gedu.name;
+        break;
+      }
+      case "gamer":
+        if ("respondent" in entry && entry.respondent.id === scope.id) return entry.respondent.name;
+        break;
+    }
+  }
+  return null;
+}
+
+function productOf(dataset: AdminFeedbackDataset, scope: FeedbackScope): FeedbackProductRef | null {
+  if (scope.kind !== "product" && scope.kind !== "group") return null;
+  const entry = entriesOf(dataset).find((row) =>
+    scope.kind === "product" ? row.productId === scope.id : row.groupId === scope.id,
+  );
+  return entry === undefined ? null : productRefOf(entry);
 }

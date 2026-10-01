@@ -1,15 +1,15 @@
 import {
   feedbackMetadata,
-  FeedbackOverviewRoute,
+  FeedbackNotesRoute,
 } from "@/components/admin/feedback/feedback-routes";
 
 export const generateMetadata = feedbackMetadata;
 
-/** `/admin/feedback` — the overview: the pulse, and the doors to the lists. */
-export default function AdminFeedbackRoute({
+/** `/admin/feedback/notes` — every note in the range. */
+export default function AdminFeedbackNotesRoute({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  return <FeedbackOverviewRoute searchParams={searchParams} />;
+  return <FeedbackNotesRoute searchParams={searchParams} />;
 }

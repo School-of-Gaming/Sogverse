@@ -5,11 +5,9 @@ import { useTranslations } from "next-intl";
 import {
   SESSION_FEEDBACK_RATING_KEYS,
   type SessionFeedbackRating,
-  type SessionFeedbackTheme,
 } from "@/components/voice/feedback/session-feedback-items";
 import { useSessionFeedbackItems } from "@/components/voice/feedback/use-session-feedback-items";
 import type { FeedbackSource } from "@/services/session-feedback/admin-feedback.contracts";
-import { FEEDBACK_THEME_MESSAGE_KEYS } from "./feedback-sources";
 
 /**
  * Each statement's wording, keyed by its stored key, in the words the source's
@@ -23,12 +21,6 @@ export function useFeedbackStatementLabels(
     const items = { gamer_online: gamerItems }[source];
     return Object.fromEntries(items.map(({ key, label }) => [key, label]));
   }, [gamerItems, source]);
-}
-
-/** A theme's name in the reader's locale. */
-export function useThemeLabel(): (theme: SessionFeedbackTheme) => string {
-  const t = useTranslations("admin.feedback.themes");
-  return useCallback((theme) => t(FEEDBACK_THEME_MESSAGE_KEYS[theme]), [t]);
 }
 
 /**

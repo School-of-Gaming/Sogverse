@@ -1,4 +1,5 @@
 import { addCalendarDays, addCalendarMonths } from "@/lib/calendar-date";
+import { periodDays, type FeedbackPeriod, type FeedbackPeriods } from "./feedback-tally";
 
 /**
  * The spans the feedback page can be read over. Three, because the page has
@@ -48,4 +49,23 @@ export function feedbackRangeBounds(
     case "12m":
       return { from: addCalendarDays(addCalendarMonths(today, -12), 1), to: today };
   }
+}
+
+/**
+ * The range being read and the equal-length span immediately before it, which
+ * every change on the page is measured against.
+ *
+ * Equal length in days, so a 12-month range that crosses a 29 February is
+ * compared with a span exactly as long rather than with "the year before".
+ */
+export function feedbackRangePeriods(range: FeedbackRange, today: string): FeedbackPeriods {
+  const current = feedbackRangeBounds(range, today);
+  const to = addCalendarDays(current.from, -1);
+  const from = addCalendarDays(to, 1 - periodDays(current));
+  return { current, previous: { from, to } };
+}
+
+/** The one span of session days the page reads: both periods, end to end. */
+export function feedbackReadSpan(periods: FeedbackPeriods): FeedbackPeriod {
+  return { from: periods.previous.from, to: periods.current.to };
 }

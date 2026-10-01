@@ -1578,87 +1578,122 @@
         "12m": "12 months"
       },
       "empty": "No feedback was given in this range.",
-      "emptyFiltered": "Nothing in this range matches the filters.",
       "loadError": "The feedback could not be loaded. Reload the page to try again.",
       "loadErrorWithReason": "The feedback could not be loaded: {reason}",
-      "filters": {
-        "label": "Narrowed to",
-        "dimensions": {
+      "tooFew": "Too few answers ({count})",
+      "answers": "{count, plural, one {# answer} other {# answers}}",
+      "skipped": "Skipped",
+      "belowAverage": "Below average",
+      "belowAverageOn": "Below average on: {statement}",
+      "platformMark": "Platform average",
+      "change": {
+        "up": "Up {points, plural, one {# point} other {# points}}",
+        "down": "Down {points, plural, one {# point} other {# points}}",
+        "none": "No change",
+        "points": "{points, plural, one {# point} other {# points}}",
+        "previous": {
+          "30d": "vs the previous 30 days",
+          "90d": "vs the previous 90 days",
+          "12m": "vs the previous 12 months"
+        }
+      },
+      "spark": {
+        "point": "{bucket}: {share} positive",
+        "tooFew": "{bucket}: too few answers ({count})",
+        "labelWeek": "Positive answers by week. {points}",
+        "labelMonth": "Positive answers by month. {points}"
+      },
+      "back": {
+        "overview": "Back to feedback",
+        "list": {
+          "product": "Back to products",
+          "group": "Back to groups",
+          "gedu": "Back to Gedus"
+        },
+        "notes": "Back to notes",
+        "detail": {
+          "product": "Back to the product",
+          "group": "Back to the group",
+          "gedu": "Back to the Gedu",
+          "gamer": "Back to the gamer"
+        }
+      },
+      "hero": {
+        "positive": "positive",
+        "definition": "Answered Yes or Definitely",
+        "answers": "{count, plural, one {# answer} other {# answers}}",
+        "responseRate": "{share} of gamers present answered"
+      },
+      "statements": {
+        "heading": "By statement",
+        "legend": "Positive is Yes or Definitely; low is No or Not really.",
+        "positive": "{share} positive",
+        "low": "{share} low"
+      },
+      "explore": {
+        "heading": "Explore",
+        "titles": {
+          "product": "Products",
+          "group": "Groups",
+          "gedu": "Gedus",
+          "notes": "Notes"
+        },
+        "below": "{count, plural, =0 {None below average} other {# below average}}",
+        "notesLow": "{count, plural, =0 {None came with a low answer} other {# came with a low answer}}",
+        "counts": {
+          "product": "{count, plural, one {# product} other {# products}}",
+          "group": "{count, plural, one {# group} other {# groups}}",
+          "gedu": "{count, plural, one {# Gedu} other {# Gedus}}",
+          "notes": "{count, plural, one {# note} other {# notes}}"
+        }
+      },
+      "rows": {
+        "none": "Nothing in this range.",
+        "answers": "Answers",
+        "positive": "Positive",
+        "positiveAgainst": "Positive (platform {share})",
+        "change": "Change",
+        "tooFewHeading": "Too few answers to say"
+      },
+      "lists": {
+        "titles": {
+          "product": "Products",
+          "group": "Groups",
+          "gedu": "Gedus"
+        },
+        "subtitle": "Worst first, against the platform average"
+      },
+      "detail": {
+        "kinds": {
           "product": "Product",
           "group": "Group",
           "gedu": "Gedu",
           "gamer": "Gamer"
         },
-        "unknown": "Not in this range",
-        "remove": "Remove {dimension}: {name}",
-        "clear": "Clear all"
-      },
-      "kpi": {
-        "responses": "Responses",
-        "responsesDetail": "{eligible, plural, one {# gamer} other {# gamers}} could answer",
-        "responsesDetailNoSessions": "From this gamer",
-        "responseRate": "Response rate",
-        "responseRateDetail": "Of the gamers present",
-        "responseRateNotCounted": "Not counted per gamer",
-        "positive": "Positive answers",
-        "positiveDetail": "{positive} of {count, plural, one {# answer} other {# answers}}",
-        "notes": "Notes",
-        "notesDetail": "Across {count, plural, one {# response} other {# responses}}"
-      },
-      "themes": {
-        "learning": "Learning",
-        "fun": "Fun",
-        "geduQuality": "Gedu quality",
-        "belonging": "Belonging"
-      },
-      "trend": {
-        "heading": "Trend by week",
-        "description": "Share of positive answers (Yes or Definitely) per theme. A hollow point rests on fewer than {min} answers.",
-        "showTable": "Show as table",
-        "hideTable": "Hide table",
-        "span": "Weeks from {from} to {to}",
-        "weekResponses": "Week of {date}: {count, plural, one {# response} other {# responses}}",
-        "answers": "{count, plural, one {# answer} other {# answers}}",
-        "panelLabel": "{theme}, positive answers by week: {summary}",
-        "responsesHeading": "Responses per week",
-        "responsesLabel": "Responses per week: {summary}",
-        "week": "Week",
-        "responses": "Responses"
-      },
-      "statements": {
-        "heading": "By statement",
-        "positiveDetail": "{share} positive · {count, plural, one {# answer} other {# answers}}",
-        "levelDetail": "{level}: {share} ({count})"
-      },
-      "breakdown": {
-        "heading": "Breakdown",
-        "tabs": {
-          "product": "By product",
-          "group": "By group",
-          "gedu": "By Gedu",
-          "gamer": "By gamer"
+        "open": {
+          "product": "Open the product",
+          "group": "Open the group",
+          "gedu": "Open the Gedu's account",
+          "gamer": "Open the gamer's account"
         },
-        "columns": {
-          "name": "Name",
-          "responses": "Responses",
-          "responseRate": "Response rate",
-          "positive": "Positive",
-          "open": "Open"
-        },
-        "narrowTo": "Narrow the page to {name}",
-        "open": "Open {name}",
-        "showing": "Showing {shown} of {total}",
-        "lowN": "Rows in grey rest on fewer than {min} responses",
-        "showMore": "Show more"
+        "none": "Nothing was answered about this in the selected range.",
+        "platform": "Platform {share}",
+        "groupsHeading": "Groups",
+        "gedusHeading": "Gedus",
+        "gamersHeading": "Gamers who answered",
+        "notesHeading": "Notes",
+        "responsesHeading": "Responses"
       },
-      "responses": {
-        "heading": "Responses",
-        "onlyNotes": "Only with notes",
-        "noneWithNotes": "No response here carries a note.",
+      "notes": {
+        "title": "Notes",
+        "none": "No notes here.",
+        "withLowAnswer": "Came with a low answer",
+        "noGedu": "No Gedu recorded",
         "showing": "Showing {shown} of {total}",
         "showMore": "Show more",
-        "noGedu": "No Gedu recorded",
-        "skipped": "Skipped"
+        "filterLabel": "Which notes",
+        "onlyLow": "With a low answer ({count})",
+        "all": "All notes ({count})"
       }
     }
   },

@@ -1,0 +1,243 @@
+import {
+  SESSION_FEEDBACK_RATINGS,
+  type SessionFeedbackRating,
+} from "@/components/voice/feedback/session-feedback-items";
+import {
+  addCalendarMonths,
+  addCalendarDays,
+  mondayOf,
+  parseCalendarDate,
+} from "@/lib/calendar-date";
+import type {
+  AdminFeedbackResponse,
+  FeedbackSource,
+} from "@/services/session-feedback/admin-feedback.contracts";
+import { FEEDBACK_CATALOGUES } from "./feedback-sources";
+import { wilsonInterval, type ShareInterval } from "./wilson";
+
+/**
+ * The counting underneath every figure on the feedback page: answers into
+ * tallies, tallies into shares with their confidence, and session days into
+ * the buckets a sparkline draws.
+ */
+
+/**
+ * The lowest answer that counts as positive: "Yes" and "Definitely".
+ *
+ * A share of positive answers rather than a mean of the 1–5 scale, because the
+ * scale's steps are words, not distances — "A bit" is not halfway between "No"
+ * and "Definitely" in any sense a child meant.
+ */
+export const POSITIVE_FROM: SessionFeedbackRating = 4;
+
+/** The highest answer that counts as low: "No" and "Not really". */
+export const LOW_UP_TO: SessionFeedbackRating = 2;
+
+/**
+ * Below this sample a figure is listed but never stated: no percentage, no
+ * change, no flag. Ten answers is where a share stops swinging by ten points
+ * on one child's mood.
+ */
+export const TOO_FEW = 10;
+
+/** One inclusive span of session days, `YYYY-MM-DD`. */
+export interface FeedbackPeriod {
+  from: string;
+  to: string;
+}
+
+/** The span being read and the equal-length span just before it. */
+export interface FeedbackPeriods {
+  current: FeedbackPeriod;
+  previous: FeedbackPeriod;
+}
+
+/** One answer the source's catalogue knows. */
+export interface KnownAnswer {
+  key: string;
+  rating: SessionFeedbackRating;
+}
+
+function isRating(value: number | undefined): value is SessionFeedbackRating {
+  return (SESSION_FEEDBACK_RATINGS as readonly (number | undefined)[]).includes(value);
+}
+
+/**
+ * The answers of one response its source's catalogue still asks, in catalogue
+ * order. A retired key, or a value off the 1–5 scale, is skipped.
+ */
+export function knownAnswers(response: AdminFeedbackResponse): KnownAnswer[] {
+  return FEEDBACK_CATALOGUES[response.source].flatMap(({ key }) => {
+    const value = response.answers[key];
+    return isRating(value) ? [{ key, rating: value }] : [];
+  });
+}
+
+/** Whether any statement of the response was answered "No" or "Not really". */
+export function hasLowAnswer(response: AdminFeedbackResponse): boolean {
+  return knownAnswers(response).some(({ rating }) => rating <= LOW_UP_TO);
+}
+
+/** Whether the response carries a note. */
+export function hasNote(response: AdminFeedbackResponse): boolean {
+  return response.note.trim() !== "";
+}
+
+/** A running count of answers, finished into a `ShareFigure`. */
+export interface Tally {
+  /** Responses that answered at least one statement counted here. */
+  responses: number;
+  answers: number;
+  counts: Record<SessionFeedbackRating, number>;
+}
+
+export function emptyTally(): Tally {
+  return { responses: 0, answers: 0, counts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
+}
+
+/** Counts one response's ratings into a tally; a response with none is not counted. */
+export function addRatings(tally: Tally, ratings: readonly SessionFeedbackRating[]): void {
+  if (ratings.length === 0) return;
+  tally.responses += 1;
+  for (const rating of ratings) {
+    tally.answers += 1;
+    tally.counts[rating] += 1;
+  }
+}
+
+/**
+ * A set of answers as the page states it.
+ *
+ * `n` is the sample every judgement of confidence rests on — the interval, the
+ * `tooFew` floor, sparse buckets. For one statement it is that statement's
+ * answers. For the overall figure across statements it is the *responses*,
+ * not the answers: one child's five answers about one session move together,
+ * so counting them as five independent observations would make a single
+ * response look like a sample of five.
+ */
+export interface ShareFigure {
+  n: number;
+  /** Answers counted (equals `n` for a single statement). */
+  answers: number;
+  /** Answers at 4–5. */
+  positive: number;
+  /** Answers at 1–2. */
+  low: number;
+  /** `positive / answers`, `null` when nothing was answered. */
+  positiveShare: number | null;
+  /** `low / answers`, `null` when nothing was answered. */
+  lowShare: number | null;
+  /** 95% Wilson interval of `positiveShare` over `n`; `null` when `n` is 0. */
+  interval: ShareInterval | null;
+  /** `n < TOO_FEW`: list it, state no percentage, compare nothing. */
+  tooFew: boolean;
+  /** How the answers fell across the five levels. */
+  distribution: Record<SessionFeedbackRating, number>;
+}
+
+export function shareFigure(tally: Tally): ShareFigure {
+  const { counts, answers } = tally;
+  const positive = counts[4] + counts[5];
+  const low = counts[1] + counts[2];
+  const positiveShare = answers === 0 ? null : positive / answers;
+  return {
+    n: tally.responses,
+    answers,
+    positive,
+    low,
+    positiveShare,
+    lowShare: answers === 0 ? null : low / answers,
+    interval: positiveShare === null ? null : wilsonInterval(positiveShare, tally.responses),
+    tooFew: tally.responses < TOO_FEW,
+    distribution: { ...counts },
+  };
+}
+
+/** The overall tally and one tally per catalogue statement, for one set of responses. */
+export interface ResponseTallies {
+  overall: Tally;
+  statements: Map<string, Tally>;
+}
+
+export function tallyResponses(
+  responses: readonly AdminFeedbackResponse[],
+  source: FeedbackSource,
+): ResponseTallies {
+  const statements = new Map(FEEDBACK_CATALOGUES[source].map(({ key }) => [key, emptyTally()]));
+  const overall = emptyTally();
+  for (const response of responses) {
+    const answers = knownAnswers(response);
+    addRatings(overall, answers.map(({ rating }) => rating));
+    for (const { key, rating } of answers) {
+      const tally = statements.get(key);
+      if (tally !== undefined) addRatings(tally, [rating]);
+    }
+  }
+  return { overall, statements };
+}
+
+/** `current − previous` in percentage points; `null` unless both are stated. */
+export function changePoints(current: ShareFigure, previous: ShareFigure): number | null {
+  if (current.tooFew || previous.tooFew) return null;
+  if (current.positiveShare === null || previous.positiveShare === null) return null;
+  return (current.positiveShare - previous.positiveShare) * 100;
+}
+
+/**
+ * Whether a scope sits *confidently* below the platform: even the top of its
+ * 95% interval is under the platform's own share for the same thing and
+ * period. Never true for a figure with too few answers to state.
+ */
+export function confidentlyBelow(scope: ShareFigure, platform: ShareFigure): boolean {
+  return (
+    !scope.tooFew &&
+    scope.interval !== null &&
+    platform.positiveShare !== null &&
+    scope.interval.upper < platform.positiveShare
+  );
+}
+
+/** Whether a session day falls inside an inclusive period. */
+export function inPeriod(date: string, period: FeedbackPeriod): boolean {
+  return period.from <= date && date <= period.to;
+}
+
+/** What one sparkline point stands for. */
+export type FeedbackBucketUnit = "week" | "month";
+
+/** The longest period, in days, whose sparkline is drawn by the week. */
+const WEEKLY_UP_TO_DAYS = 120;
+
+/** Inclusive days in a period. */
+export function periodDays(period: FeedbackPeriod): number {
+  const ms = parseCalendarDate(period.to).getTime() - parseCalendarDate(period.from).getTime();
+  return Math.round(ms / 86_400_000) + 1;
+}
+
+/**
+ * The bucket a period's sparkline is drawn in: ISO weeks for the 30- and 90-day
+ * ranges (5 and 13 points), months for the year (12 points). Decided by
+ * length so any span reads at a sensible grain, not by the preset's name.
+ */
+export function bucketUnitFor(period: FeedbackPeriod): FeedbackBucketUnit {
+  return periodDays(period) <= WEEKLY_UP_TO_DAYS ? "week" : "month";
+}
+
+/** The first day of the bucket a session day falls in: its Monday, or its month's 1st. */
+export function bucketStartOf(date: string, unit: FeedbackBucketUnit): string {
+  return unit === "week" ? mondayOf(date) : `${date.slice(0, 7)}-01`;
+}
+
+/** Every bucket the period touches, oldest first — partial ones at either end included. */
+export function bucketStarts(period: FeedbackPeriod, unit: FeedbackBucketUnit): string[] {
+  const starts: string[] = [];
+  const last = bucketStartOf(period.to, unit);
+  for (
+    let start = bucketStartOf(period.from, unit);
+    start <= last;
+    start = unit === "week" ? addCalendarDays(start, 7) : addCalendarMonths(start, 1)
+  ) {
+    starts.push(start);
+  }
+  return starts;
+}

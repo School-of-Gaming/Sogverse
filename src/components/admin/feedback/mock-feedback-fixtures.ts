@@ -6,137 +6,204 @@ import type {
   AdminFeedbackResponse,
   AdminFeedbackSession,
 } from "@/services/session-feedback/admin-feedback.contracts";
-import { feedbackRangeBounds, type FeedbackRange } from "./feedback-range";
+import type { FeedbackDimension, FeedbackPeriod, FeedbackScopeKind } from "./aggregate-feedback";
+import { feedbackRangePeriods, feedbackReadSpan } from "./feedback-range";
 
 /**
  * Fixtures for the admin feedback preview scene.
  *
- * **Three scenarios, each a page the others cannot be.** A year of answers, a
- * range nobody answered in, and a read that failed — the last two are not a
- * filter away from the first, so each earns its link.
+ * **One scenario per page, plus the two states no page of answers can show**:
+ * the overview, a list, a product, a group, a Gedu, a gamer and the notes are
+ * each a different page; a range nobody answered in and a read that failed are
+ * not a click away from any of them.
  *
- * The year is generated rather than written out, from a fixed seed, because the
- * page is about trends and a trend needs a few hundred answers to be one. The
- * generator is deterministic: the same fixture on every reload, so a screenshot
- * taken twice is the same picture. It is built to hold the stories the page
- * exists to surface — a group whose sense of belonging slides over the summer,
- * a Gedu whose sessions are loved, a club that runs every week and hears
- * almost nothing back, and a handful of notes, one of which an admin would want
- * to read today.
+ * Two years are generated rather than written out, from a fixed seed, because
+ * the pages compare a range with the one before it and a trend needs a few
+ * hundred answers to be one. The generator is deterministic: the same fixture
+ * on every reload. It holds the stories the pages exist to surface — a group
+ * whose sense of belonging slides, a Gedu whose sessions are loved, a club that
+ * runs every week and hears almost nothing back, a group too new to judge, and
+ * a handful of notes, one of which an admin would want to read today.
  */
-export const ADMIN_FEEDBACK_SCENARIOS = ["year", "empty", "load-failed"] as const;
+export const ADMIN_FEEDBACK_SCENARIOS = [
+  "overview",
+  "list",
+  "product",
+  "group",
+  "gedu",
+  "gamer",
+  "notes",
+  "empty",
+  "load-failed",
+] as const;
 
-export type AdminFeedbackPreviewScenario =
-  (typeof ADMIN_FEEDBACK_SCENARIOS)[number];
+export type AdminFeedbackPreviewScenario = (typeof ADMIN_FEEDBACK_SCENARIOS)[number];
 
-export function isAdminFeedbackScenario(
-  value: string,
-): value is AdminFeedbackPreviewScenario {
+export function isAdminFeedbackScenario(value: string): value is AdminFeedbackPreviewScenario {
   return (ADMIN_FEEDBACK_SCENARIOS as readonly string[]).includes(value);
 }
 
-/** The day the fixture year ends on — the scene's "today". */
+/** The day the fixture ends on — the scene's "today". */
 export const FEEDBACK_FIXTURE_TODAY = "2026-09-28";
 
+const PRODUCTS = {
+  minecraft: {
+    productId: "1918c4a0-7549-4020-9be7-48f8eb7b5cb2",
+    productName: "Minecraft building club",
+    productType: "consumer_club",
+    isRemote: true,
+  },
+  roblox: {
+    productId: "6e8b4d01-c0bb-425f-a2fa-224d02dc9dbd",
+    productName: "Roblox game design club",
+    productType: "consumer_club",
+    isRemote: true,
+  },
+  tampere: {
+    productId: "081e1e8d-4c4e-4e3a-aff0-2c71d663aa9c",
+    productName: "Tampere online club",
+    productType: "municipality_club",
+    isRemote: true,
+  },
+} as const satisfies Record<string, Omit<AdminFeedbackGroupRef, "groupId" | "groupName">>;
+
 const GEDUS = {
-  aino: { id: "preview-gedu-aino", name: "Aino Virtanen" },
-  mikael: { id: "preview-gedu-mikael", name: "Mikael Korhonen" },
-  sofia: { id: "preview-gedu-sofia", name: "Sofia Lindqvist" },
-  oskari: { id: "preview-gedu-oskari", name: "Oskari Mäkelä" },
+  aino: { id: "fbb37487-2f16-4311-982e-d6bdd8297803", name: "Aino Virtanen" },
+  mikael: { id: "32ff6486-a511-47d2-af16-d32805d8b752", name: "Mikael Korhonen" },
+  sofia: { id: "43fa5eeb-7e27-4f22-93a9-9f264149cc51", name: "Sofia Lindqvist" },
+  oskari: { id: "ed68011a-c36a-4d07-95dd-6d49b10181a3", name: "Oskari Mäkelä" },
 } as const;
+
+const GROUP_IDS = {
+  tuesday: "69832141-6a35-436a-8c4f-34f397a8ac1a",
+  thursday: "0e899757-d789-4fe0-a083-7ef9185e4a72",
+  wednesday: "e6b2dd62-9e8b-4d86-b1bc-eb2ffa642969",
+  monday: "85e24989-b67c-48c7-88ad-c8f6b4f773ff",
+  saturday: "a2b4bf76-9060-4db7-a5b9-f7c55f382fce",
+} as const;
+
+const GAMERS = {
+  eetu: { id: "df0d3591-d491-44d6-9d73-94c2fb740ff5", name: "Eetu" },
+  linnea: { id: "6801a3c2-0237-4192-8a8e-9f150851ae22", name: "Linnea" },
+  onni: { id: "2ee12040-cdc2-4118-b26f-6efa54431b11", name: "Onni" },
+  venla: { id: "c55daf6d-29e8-4d86-b3bf-2a778c951823", name: "Venla" },
+  leo: { id: "04f1f0bf-d722-469b-b5c1-223ea3b9ed3e", name: "Leo" },
+  aada: { id: "0084f914-f779-4c61-8625-77fb8522a82a", name: "Aada" },
+  elias: { id: "b70563fb-cab1-42be-9954-58d36fb52910", name: "Elias" },
+  helmi: { id: "7e1a660c-ac75-41af-803f-4bcef80cecb2", name: "Helmi" },
+  niilo: { id: "d557d9cd-d9a7-4366-9c10-de49d4f64ed2", name: "Niilo" },
+  siiri: { id: "e7422f8f-1783-459d-9cfc-4813a106bbb7", name: "Siiri" },
+  toivo: { id: "8f55a170-3344-410c-9564-b3d7dd62e5f2", name: "Toivo" },
+  ilona: { id: "196a52e6-ee68-43aa-81e3-4982de8fbbc0", name: "Ilona" },
+  kasper: { id: "80da6c86-216a-48c8-9643-4749bbb94cc4", name: "Kasper" },
+  lumi: { id: "d67f06e2-7119-424b-ba86-d384fcbcfad3", name: "Lumi" },
+  vilho: { id: "2e4f0461-bb1a-48d0-83d4-3415e6312b2f", name: "Vilho" },
+  aleksi: { id: "a26531b5-0655-4124-b114-91b9b139088e", name: "Aleksi" },
+  emma: { id: "27b1768e-8689-4d54-9ddb-b5d52b080067", name: "Emma" },
+  jooa: { id: "a0add629-7c86-4193-a12c-c7a20ad8b8c4", name: "Jooa" },
+  minea: { id: "226feea3-e2b0-4cdf-ad28-cc0a9d65619f", name: "Minea" },
+  pihla: { id: "e7a844ec-135b-47fa-bee1-657224cc6789", name: "Pihla" },
+  rasmus: { id: "4477e8c9-5bb7-45e0-b850-6288ef976612", name: "Rasmus" },
+  saga: { id: "faa01d0c-2958-45e0-bf9f-e499e97f5001", name: "Saga" },
+  otso: { id: "66dbfaf4-79df-4962-8ec4-07ce7bbd855a", name: "Otso" },
+  iida: { id: "f64b69e0-b587-4153-a42d-37cc1995ac43", name: "Iida" },
+  kerttu: { id: "d5861d1b-5fab-4999-8d14-5913781d2a27", name: "Kerttu" },
+  vilja: { id: "624788b4-3f77-4759-bc13-061eb2879591", name: "Vilja" },
+} as const;
+
+/** The scope each detail scenario opens on when the scene is given no `?id=`. */
+export const FEEDBACK_FIXTURE_FEATURED: Record<FeedbackScopeKind, string> = {
+  product: PRODUCTS.minecraft.productId,
+  group: GROUP_IDS.thursday,
+  gedu: GEDUS.mikael.id,
+  gamer: GAMERS.helmi.id,
+};
+
+/** The list scenario's dimension when the scene is given no `?dimension=`. */
+export const FEEDBACK_FIXTURE_LIST: FeedbackDimension = "group";
 
 interface FixtureGroup {
   ref: AdminFeedbackGroupRef;
   weekday: number;
+  /** The first session day; nothing before it. */
+  startsOn?: string;
   gedus: AdminFeedbackGedu[];
   gamers: { id: string; name: string }[];
   /** The share of present gamers who answer. */
   answerRate: number;
-  /** Each theme's lean, as the chance an answer lands at 4–5. */
+  /** Each statement's lean, as the chance an answer lands at 4–5. */
   lean: (progress: number) => Record<string, number>;
-}
-
-function gamers(prefix: string, names: string[]) {
-  return names.map((name) => ({
-    id: `preview-gamer-${prefix}-${name.toLowerCase()}`,
-    name,
-  }));
 }
 
 const GROUPS: FixtureGroup[] = [
   {
-    ref: {
-      groupId: "preview-group-builders-tue",
-      groupName: "Tuesday builders",
-      productId: "preview-product-minecraft-club",
-      productName: "Minecraft building club",
-      productType: "consumer_club",
-      isRemote: true,
-    },
+    ref: { ...PRODUCTS.minecraft, groupId: GROUP_IDS.tuesday, groupName: "Tuesday builders" },
     weekday: 1,
     gedus: [{ ...GEDUS.aino, role: "primary" }],
-    gamers: gamers("tue", ["Eetu", "Linnea", "Onni", "Venla", "Leo"]),
-    answerRate: 0.7,
-    lean: () => ({ learned: 0.8, fun: 0.9, geduKnowledgeable: 0.92, geduKind: 0.95, groupListens: 0.8 }),
+    gamers: [GAMERS.eetu, GAMERS.linnea, GAMERS.onni, GAMERS.venla, GAMERS.leo],
+    answerRate: 0.85,
+    lean: () => ({ learned: 0.85, fun: 0.92, geduKnowledgeable: 0.94, geduKind: 0.96, groupListens: 0.85 }),
   },
   {
-    ref: {
-      groupId: "preview-group-builders-thu",
-      groupName: "Thursday builders",
-      productId: "preview-product-minecraft-club",
-      productName: "Minecraft building club",
-      productType: "consumer_club",
-      isRemote: true,
-    },
+    ref: { ...PRODUCTS.minecraft, groupId: GROUP_IDS.thursday, groupName: "Thursday builders" },
     weekday: 3,
     gedus: [
       { ...GEDUS.mikael, role: "primary" },
       { ...GEDUS.oskari, role: "assistant" },
     ],
-    gamers: gamers("thu", ["Aada", "Elias", "Helmi", "Niilo", "Siiri", "Toivo"]),
-    answerRate: 0.6,
-    // Belonging slides as the year goes on — the story the trend should tell.
-    lean: (progress) => ({
-      learned: 0.7,
-      fun: 0.8,
-      geduKnowledgeable: 0.75,
-      geduKind: 0.8,
-      groupListens: 0.8 - progress * 0.45,
-    }),
+    gamers: [
+      GAMERS.aada,
+      GAMERS.elias,
+      GAMERS.helmi,
+      GAMERS.kerttu,
+      GAMERS.niilo,
+      GAMERS.siiri,
+      GAMERS.toivo,
+      GAMERS.vilja,
+    ],
+    answerRate: 0.85,
+    // Belonging slides as the second year goes on, and takes the fun with it —
+    // the story the pages should tell.
+    lean: (progress) => {
+      const slide = Math.max(0, progress - 0.5) * 2;
+      return {
+        learned: 0.78,
+        fun: 0.85 - slide * 0.3,
+        geduKnowledgeable: 0.8,
+        geduKind: 0.85 - slide * 0.15,
+        groupListens: 0.85 - slide * 0.65,
+      };
+    },
   },
   {
-    ref: {
-      groupId: "preview-group-roblox-wed",
-      groupName: "Wednesday creators",
-      productId: "preview-product-roblox-club",
-      productName: "Roblox game design club",
-      productType: "consumer_club",
-      isRemote: true,
-    },
+    ref: { ...PRODUCTS.roblox, groupId: GROUP_IDS.wednesday, groupName: "Wednesday creators" },
     weekday: 2,
     gedus: [{ ...GEDUS.sofia, role: "primary" }],
-    gamers: gamers("wed", ["Ilona", "Kasper", "Lumi", "Vilho"]),
-    answerRate: 0.8,
+    gamers: [GAMERS.ilona, GAMERS.kasper, GAMERS.lumi, GAMERS.vilho],
+    answerRate: 0.9,
     lean: (progress) => ({
-      learned: 0.6 + progress * 0.25,
-      fun: 0.85,
-      geduKnowledgeable: 0.85,
-      geduKind: 0.9,
-      groupListens: 0.75,
+      learned: 0.6 + progress * 0.3,
+      fun: 0.88,
+      geduKnowledgeable: 0.9,
+      geduKind: 0.92,
+      groupListens: 0.8,
     }),
   },
   {
-    ref: {
-      groupId: "preview-group-tampere-mon",
-      groupName: "Hervanta Monday",
-      productId: "preview-product-tampere-club",
-      productName: "Tampere online club",
-      productType: "municipality_club",
-      isRemote: true,
-    },
+    ref: { ...PRODUCTS.roblox, groupId: GROUP_IDS.saturday, groupName: "Saturday starters" },
+    weekday: 5,
+    // Too new to say anything about: listed, never judged.
+    startsOn: "2026-09-19",
+    gedus: [{ ...GEDUS.sofia, role: "primary" }],
+    gamers: [GAMERS.saga, GAMERS.otso, GAMERS.iida],
+    answerRate: 0.7,
+    lean: () => ({ learned: 0.8, fun: 0.9, geduKnowledgeable: 0.9, geduKind: 0.9, groupListens: 0.85 }),
+  },
+  {
+    ref: { ...PRODUCTS.tampere, groupId: GROUP_IDS.monday, groupName: "Hervanta Monday" },
     weekday: 0,
     gedus: [{ ...GEDUS.oskari, role: "primary" }],
-    gamers: gamers("mon", ["Aleksi", "Emma", "Jooa", "Minea", "Pihla", "Rasmus"]),
+    gamers: [GAMERS.aleksi, GAMERS.emma, GAMERS.jooa, GAMERS.minea, GAMERS.pihla, GAMERS.rasmus],
     // Runs every week and hears almost nothing back.
     answerRate: 0.12,
     lean: () => ({ learned: 0.6, fun: 0.65, geduKnowledgeable: 0.7, geduKind: 0.75, groupListens: 0.6 }),
@@ -169,17 +236,18 @@ function rating(random: () => number, lean: number): number {
   return low < 0.5 ? 3 : low < 0.8 ? 2 : 1;
 }
 
-function buildYear(): AdminFeedbackDataset {
-  const { from, to } = feedbackRangeBounds("12m", FEEDBACK_FIXTURE_TODAY);
+/** Everything the scene can be asked for: the 12-month range and the 12 months before it. */
+function buildHistory(): AdminFeedbackDataset {
+  const { from, to } = feedbackReadSpan(feedbackRangePeriods("12m", FEEDBACK_FIXTURE_TODAY));
   const random = seeded(20260928);
   const responses: AdminFeedbackResponse[] = [];
   const sessions: AdminFeedbackSession[] = [];
-  const totalDays = 365;
   let noteIndex = 0;
+  let totalDays = 0;
+  while (addCalendarDays(from, totalDays) <= to) totalDays += 1;
 
   for (let day = 0; day < totalDays; day += 1) {
     const date = addCalendarDays(from, day);
-    if (date > to) break;
     const weekday = weekdayOf(date);
     // A summer break, as clubs have: no sessions from mid-June to early August.
     const monthDay = date.slice(5);
@@ -187,6 +255,7 @@ function buildYear(): AdminFeedbackDataset {
 
     for (const group of GROUPS) {
       if (group.weekday !== weekday) continue;
+      if (group.startsOn !== undefined && date < group.startsOn) continue;
       const present = group.gamers.filter(() => random() < 0.85);
       sessions.push({
         ...group.ref,
@@ -212,7 +281,9 @@ function buildYear(): AdminFeedbackDataset {
           gedus: group.gedus,
           answers,
           note,
-          submittedAt: `${date}T16:${String(10 + responses.length % 40).padStart(2, "0")}:00Z`,
+          // Most sessions have their register taken; now and then one does not.
+          countsTowardRate: random() < 0.92,
+          submittedAt: `${date}T16:${String(10 + (responses.length % 40)).padStart(2, "0")}:00Z`,
         });
       }
     }
@@ -221,21 +292,17 @@ function buildYear(): AdminFeedbackDataset {
   return { from, to, responses, sessions };
 }
 
-const YEAR = buildYear();
+const HISTORY = buildHistory();
 
-/** The fixture year narrowed to the session days a range covers. */
-export function feedbackFixture(
-  scenario: Exclude<AdminFeedbackPreviewScenario, "load-failed">,
-  range: FeedbackRange,
-): AdminFeedbackDataset {
-  const { from, to } = feedbackRangeBounds(range, FEEDBACK_FIXTURE_TODAY);
-  if (scenario === "empty") return { from, to, responses: [], sessions: [] };
-  const within = (row: { sessionDate: string }) =>
-    row.sessionDate >= from && row.sessionDate <= to;
+/** The fixture narrowed to the span a page reads, or that span with nothing in it. */
+export function feedbackFixture(span: FeedbackPeriod, empty: boolean): AdminFeedbackDataset {
+  const { from, to } = span;
+  if (empty) return { from, to, responses: [], sessions: [] };
+  const within = (row: { sessionDate: string }) => row.sessionDate >= from && row.sessionDate <= to;
   return {
     from,
     to,
-    responses: YEAR.responses.filter(within),
-    sessions: YEAR.sessions.filter(within),
+    responses: HISTORY.responses.filter(within),
+    sessions: HISTORY.sessions.filter(within),
   };
 }

@@ -1,15 +1,15 @@
 import {
   feedbackMetadata,
-  FeedbackOverviewRoute,
+  FeedbackListRoute,
 } from "@/components/admin/feedback/feedback-routes";
 
 export const generateMetadata = feedbackMetadata;
 
-/** `/admin/feedback` — the overview: the pulse, and the doors to the lists. */
-export default function AdminFeedbackRoute({
+/** `/admin/feedback/gedus` — every gedu with feedback in the range, worst first. */
+export default function AdminFeedbackGedusRoute({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  return <FeedbackOverviewRoute searchParams={searchParams} />;
+  return <FeedbackListRoute dimension="gedu" searchParams={searchParams} />;
 }

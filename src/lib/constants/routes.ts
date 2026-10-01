@@ -341,6 +341,23 @@ function adminProductPath(productType: ProductType, productId: string): string {
  * can no longer be handed: a typed href names a declared route, and a
  * concatenated segment names none.
  */
+/** What the admin feedback pages can be opened on, as the routes spell it. */
+type FeedbackRouteDimension = "product" | "group" | "gedu";
+type FeedbackRouteKind = FeedbackRouteDimension | "gamer";
+
+const ADMIN_FEEDBACK_LIST_PATHNAMES = {
+  product: "/admin/feedback/products",
+  group: "/admin/feedback/groups",
+  gedu: "/admin/feedback/gedus",
+} as const satisfies Record<FeedbackRouteDimension, string>;
+
+const ADMIN_FEEDBACK_DETAIL_PATHNAMES = {
+  product: "/admin/feedback/products/[id]",
+  group: "/admin/feedback/groups/[id]",
+  gedu: "/admin/feedback/gedus/[id]",
+  gamer: "/admin/feedback/gamers/[id]",
+} as const satisfies Record<FeedbackRouteKind, string>;
+
 const ADMIN_PRODUCT_LIST_PATHNAMES = {
   "consumer-clubs": "/admin/consumer-clubs",
   "municipality-clubs": "/admin/municipality-clubs",
@@ -664,10 +681,17 @@ export const ROUTES = {
     geduInvoicing: "/admin/gedu-invoicing",
     /**
      * What gamers say about their sessions, over a range of session days: the
-     * trend, the statements and every response, narrowed by product, group,
-     * Gedu or gamer.
+     * overview, with no lists on it. The lists, the details and the notes hang
+     * off it below.
      */
     feedback: "/admin/feedback",
+    /** One dimension's list, worst first (`/admin/feedback/gedus`). */
+    feedbackList: (dimension: FeedbackRouteDimension) => ADMIN_FEEDBACK_LIST_PATHNAMES[dimension],
+    /** One product's, group's, Gedu's or gamer's feedback. */
+    feedbackDetail: (kind: FeedbackRouteKind, id: string) =>
+      ({ pathname: ADMIN_FEEDBACK_DETAIL_PATHNAMES[kind], params: { id } }) as const,
+    /** Every note in the range. */
+    feedbackNotes: "/admin/feedback/notes",
     /**
      * The Fennoa customers a municipality club can be invoiced to — the contract
      * parties the CFO's monthly files are addressed to.

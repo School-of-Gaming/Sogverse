@@ -1,6 +1,5 @@
 import {
   SESSION_FEEDBACK_ITEMS,
-  SESSION_FEEDBACK_THEMES,
   type SessionFeedbackTheme,
 } from "@/components/voice/feedback/session-feedback-items";
 import type { FeedbackSource } from "@/services/session-feedback/admin-feedback.contracts";
@@ -30,24 +29,6 @@ export const FEEDBACK_CATALOGUES: Record<
 > = {
   gamer_online: SESSION_FEEDBACK_ITEMS,
 };
-
-/** The themes a source's statements report into, in the owner's order. */
-export function themesOf(source: FeedbackSource): SessionFeedbackTheme[] {
-  const asked = new Set(FEEDBACK_CATALOGUES[source].map((item) => item.theme));
-  return SESSION_FEEDBACK_THEMES.filter((theme) => asked.has(theme));
-}
-
-/**
- * The message key each theme is named by. The catalogue's theme strings are
- * internal identifiers — the owner's words, kept for the code — so the page
- * reads its labels from here rather than printing them.
- */
-export const FEEDBACK_THEME_MESSAGE_KEYS = {
-  Learning: "learning",
-  Fun: "fun",
-  "Gedu quality": "geduQuality",
-  Belonging: "belonging",
-} as const satisfies Record<SessionFeedbackTheme, string>;
 
 /** The message key naming who answers a source, and when. */
 export const FEEDBACK_SOURCE_MESSAGE_KEYS = {

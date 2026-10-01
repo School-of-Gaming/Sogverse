@@ -1578,87 +1578,122 @@
         "12m": "12 månader"
       },
       "empty": "Ingen feedback gavs under den här perioden.",
-      "emptyFiltered": "Inget under den här perioden matchar filtren.",
       "loadError": "Feedbacken kunde inte laddas. Ladda om sidan och försök igen.",
       "loadErrorWithReason": "Feedbacken kunde inte laddas: {reason}",
-      "filters": {
-        "label": "Avgränsat till",
-        "dimensions": {
+      "tooFew": "För få svar ({count})",
+      "answers": "{count, plural, one {# svar} other {# svar}}",
+      "skipped": "Hoppades över",
+      "belowAverage": "Under genomsnittet",
+      "belowAverageOn": "Under genomsnittet på: {statement}",
+      "platformMark": "Plattformens genomsnitt",
+      "change": {
+        "up": "Upp {points, plural, one {# procentenhet} other {# procentenheter}}",
+        "down": "Ned {points, plural, one {# procentenhet} other {# procentenheter}}",
+        "none": "Ingen förändring",
+        "points": "{points, plural, one {# procentenhet} other {# procentenheter}}",
+        "previous": {
+          "30d": "jämfört med föregående 30 dagar",
+          "90d": "jämfört med föregående 90 dagar",
+          "12m": "jämfört med föregående 12 månader"
+        }
+      },
+      "spark": {
+        "point": "{bucket}: {share} positiva",
+        "tooFew": "{bucket}: för få svar ({count})",
+        "labelWeek": "Positiva svar per vecka. {points}",
+        "labelMonth": "Positiva svar per månad. {points}"
+      },
+      "back": {
+        "overview": "Tillbaka till feedback",
+        "list": {
+          "product": "Tillbaka till produkterna",
+          "group": "Tillbaka till grupperna",
+          "gedu": "Tillbaka till Geduerna"
+        },
+        "notes": "Tillbaka till meddelandena",
+        "detail": {
+          "product": "Tillbaka till produkten",
+          "group": "Tillbaka till gruppen",
+          "gedu": "Tillbaka till Gedun",
+          "gamer": "Tillbaka till gamern"
+        }
+      },
+      "hero": {
+        "positive": "positiva",
+        "definition": "Svarade Ja eller Absolut",
+        "answers": "{count, plural, one {# svar} other {# svar}}",
+        "responseRate": "{share} av de närvarande gamerna svarade"
+      },
+      "statements": {
+        "heading": "Per påstående",
+        "legend": "Positivt är Ja eller Absolut; lågt är Nej eller Inte riktigt.",
+        "positive": "{share} positiva",
+        "low": "{share} låga"
+      },
+      "explore": {
+        "heading": "Utforska",
+        "titles": {
+          "product": "Produkter",
+          "group": "Grupper",
+          "gedu": "Geduer",
+          "notes": "Meddelanden"
+        },
+        "below": "{count, plural, =0 {Ingen under genomsnittet} other {# under genomsnittet}}",
+        "notesLow": "{count, plural, =0 {Inget kom med ett lågt svar} other {# kom med ett lågt svar}}",
+        "counts": {
+          "product": "{count, plural, one {# produkt} other {# produkter}}",
+          "group": "{count, plural, one {# grupp} other {# grupper}}",
+          "gedu": "{count, plural, one {# Gedu} other {# Geduer}}",
+          "notes": "{count, plural, one {# meddelande} other {# meddelanden}}"
+        }
+      },
+      "rows": {
+        "none": "Inget under den här perioden.",
+        "answers": "Svar",
+        "positive": "Positiva",
+        "positiveAgainst": "Positiva (plattformen {share})",
+        "change": "Förändring",
+        "tooFewHeading": "För få svar för att säga något"
+      },
+      "lists": {
+        "titles": {
+          "product": "Produkter",
+          "group": "Grupper",
+          "gedu": "Geduer"
+        },
+        "subtitle": "Sämst först, jämfört med plattformens genomsnitt"
+      },
+      "detail": {
+        "kinds": {
           "product": "Produkt",
           "group": "Grupp",
           "gedu": "Gedu",
           "gamer": "Gamer"
         },
-        "unknown": "Inte under den här perioden",
-        "remove": "Ta bort {dimension}: {name}",
-        "clear": "Rensa alla"
-      },
-      "kpi": {
-        "responses": "Svar",
-        "responsesDetail": "{eligible, plural, one {# gamer} other {# gamers}} kunde svara",
-        "responsesDetailNoSessions": "Från den här gamern",
-        "responseRate": "Svarsfrekvens",
-        "responseRateDetail": "Av de närvarande gamerna",
-        "responseRateNotCounted": "Räknas inte per gamer",
-        "positive": "Positiva svar",
-        "positiveDetail": "{positive} av {count, plural, one {# svar} other {# svar}}",
-        "notes": "Meddelanden",
-        "notesDetail": "I {count, plural, one {# svar} other {# svar}}"
-      },
-      "themes": {
-        "learning": "Lärande",
-        "fun": "Roligt",
-        "geduQuality": "Gedukvalitet",
-        "belonging": "Gemenskap"
-      },
-      "trend": {
-        "heading": "Utveckling per vecka",
-        "description": "Andel positiva svar (Ja eller Absolut) per tema. En ihålig punkt bygger på färre än {min} svar.",
-        "showTable": "Visa som tabell",
-        "hideTable": "Dölj tabell",
-        "span": "Veckor från {from} till {to}",
-        "weekResponses": "Veckan {date}: {count, plural, one {# svar} other {# svar}}",
-        "answers": "{count, plural, one {# svar} other {# svar}}",
-        "panelLabel": "{theme}, positiva svar per vecka: {summary}",
-        "responsesHeading": "Svar per vecka",
-        "responsesLabel": "Svar per vecka: {summary}",
-        "week": "Vecka",
-        "responses": "Svar"
-      },
-      "statements": {
-        "heading": "Per påstående",
-        "positiveDetail": "{share} positiva · {count, plural, one {# svar} other {# svar}}",
-        "levelDetail": "{level}: {share} ({count})"
-      },
-      "breakdown": {
-        "heading": "Uppdelning",
-        "tabs": {
-          "product": "Per produkt",
-          "group": "Per grupp",
-          "gedu": "Per Gedu",
-          "gamer": "Per gamer"
+        "open": {
+          "product": "Öppna produkten",
+          "group": "Öppna gruppen",
+          "gedu": "Öppna Gedus konto",
+          "gamer": "Öppna gamerns konto"
         },
-        "columns": {
-          "name": "Namn",
-          "responses": "Svar",
-          "responseRate": "Svarsfrekvens",
-          "positive": "Positiva",
-          "open": "Öppna"
-        },
-        "narrowTo": "Avgränsa sidan till {name}",
-        "open": "Öppna {name}",
-        "showing": "Visar {shown} av {total}",
-        "lowN": "Grå rader bygger på färre än {min} svar",
-        "showMore": "Visa fler"
+        "none": "Inget besvarades om detta under den valda perioden.",
+        "platform": "Plattformen {share}",
+        "groupsHeading": "Grupper",
+        "gedusHeading": "Geduer",
+        "gamersHeading": "Gamers som svarade",
+        "notesHeading": "Meddelanden",
+        "responsesHeading": "Svar"
       },
-      "responses": {
-        "heading": "Svar",
-        "onlyNotes": "Bara med meddelande",
-        "noneWithNotes": "Inget svar här har något meddelande.",
+      "notes": {
+        "title": "Meddelanden",
+        "none": "Inga meddelanden här.",
+        "withLowAnswer": "Kom med ett lågt svar",
+        "noGedu": "Ingen Gedu registrerad",
         "showing": "Visar {shown} av {total}",
         "showMore": "Visa fler",
-        "noGedu": "Ingen Gedu registrerad",
-        "skipped": "Hoppades över"
+        "filterLabel": "Vilka meddelanden",
+        "onlyLow": "Med ett lågt svar ({count})",
+        "all": "Alla meddelanden ({count})"
       }
     }
   },

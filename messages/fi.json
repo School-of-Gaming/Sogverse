@@ -1578,87 +1578,122 @@
         "12m": "12 kuukautta"
       },
       "empty": "Tällä aikavälillä ei annettu palautetta.",
-      "emptyFiltered": "Mikään tämän aikavälin palaute ei vastaa suodattimia.",
       "loadError": "Palautetta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
       "loadErrorWithReason": "Palautetta ei voitu ladata: {reason}",
-      "filters": {
-        "label": "Rajattu:",
-        "dimensions": {
+      "tooFew": "Liian vähän vastauksia ({count})",
+      "answers": "{count, plural, one {# vastaus} other {# vastausta}}",
+      "skipped": "Ohitettu",
+      "belowAverage": "Alle keskiarvon",
+      "belowAverageOn": "Alle keskiarvon väitteessä: {statement}",
+      "platformMark": "Koko alustan keskiarvo",
+      "change": {
+        "up": "Nousu {points, plural, one {# prosenttiyksikkö} other {# prosenttiyksikköä}}",
+        "down": "Lasku {points, plural, one {# prosenttiyksikkö} other {# prosenttiyksikköä}}",
+        "none": "Ei muutosta",
+        "points": "{points, plural, one {# %-yksikkö} other {# %-yksikköä}}",
+        "previous": {
+          "30d": "edellisiin 30 päivään verrattuna",
+          "90d": "edellisiin 90 päivään verrattuna",
+          "12m": "edellisiin 12 kuukauteen verrattuna"
+        }
+      },
+      "spark": {
+        "point": "{bucket}: {share} myönteisiä",
+        "tooFew": "{bucket}: liian vähän vastauksia ({count})",
+        "labelWeek": "Myönteiset vastaukset viikoittain. {points}",
+        "labelMonth": "Myönteiset vastaukset kuukausittain. {points}"
+      },
+      "back": {
+        "overview": "Takaisin palautteeseen",
+        "list": {
+          "product": "Takaisin tuotteisiin",
+          "group": "Takaisin ryhmiin",
+          "gedu": "Takaisin geduihin"
+        },
+        "notes": "Takaisin viesteihin",
+        "detail": {
+          "product": "Takaisin tuotteeseen",
+          "group": "Takaisin ryhmään",
+          "gedu": "Takaisin geduun",
+          "gamer": "Takaisin pelaajaan"
+        }
+      },
+      "hero": {
+        "positive": "myönteisiä",
+        "definition": "Vastaus Kyllä tai Ehdottomasti",
+        "answers": "{count, plural, one {# vastaus} other {# vastausta}}",
+        "responseRate": "{share} paikalla olleista pelaajista vastasi"
+      },
+      "statements": {
+        "heading": "Väitteittäin",
+        "legend": "Myönteinen on Kyllä tai Ehdottomasti, heikko on Ei tai Vähän.",
+        "positive": "{share} myönteisiä",
+        "low": "{share} heikkoja"
+      },
+      "explore": {
+        "heading": "Tutki tarkemmin",
+        "titles": {
+          "product": "Tuotteet",
+          "group": "Ryhmät",
+          "gedu": "Gedut",
+          "notes": "Viestit"
+        },
+        "below": "{count, plural, =0 {Ei yhtään alle keskiarvon} other {# alle keskiarvon}}",
+        "notesLow": "{count, plural, =0 {Yhdessäkään ei heikkoa vastausta} other {# heikon vastauksen yhteydessä}}",
+        "counts": {
+          "product": "{count, plural, one {# tuote} other {# tuotetta}}",
+          "group": "{count, plural, one {# ryhmä} other {# ryhmää}}",
+          "gedu": "{count, plural, one {# Gedu} other {# Gedua}}",
+          "notes": "{count, plural, one {# viesti} other {# viestiä}}"
+        }
+      },
+      "rows": {
+        "none": "Tällä aikavälillä ei ole mitään.",
+        "answers": "Vastaukset",
+        "positive": "Myönteiset",
+        "positiveAgainst": "Myönteiset (koko alusta {share})",
+        "change": "Muutos",
+        "tooFewHeading": "Liian vähän vastauksia arvioitavaksi"
+      },
+      "lists": {
+        "titles": {
+          "product": "Tuotteet",
+          "group": "Ryhmät",
+          "gedu": "Gedut"
+        },
+        "subtitle": "Heikoin ensin, verrattuna koko alustan keskiarvoon"
+      },
+      "detail": {
+        "kinds": {
           "product": "Tuote",
           "group": "Ryhmä",
           "gedu": "Gedu",
           "gamer": "Pelaaja"
         },
-        "unknown": "Ei tällä aikavälillä",
-        "remove": "Poista rajaus {dimension}: {name}",
-        "clear": "Tyhjennä kaikki"
-      },
-      "kpi": {
-        "responses": "Vastaukset",
-        "responsesDetail": "{eligible, plural, one {# pelaaja} other {# pelaajaa}} voi vastata",
-        "responsesDetailNoSessions": "Tältä pelaajalta",
-        "responseRate": "Vastausprosentti",
-        "responseRateDetail": "Paikalla olleista pelaajista",
-        "responseRateNotCounted": "Ei lasketa pelaajakohtaisesti",
-        "positive": "Myönteiset vastaukset",
-        "positiveDetail": "{positive}/{count, plural, one {# vastauksesta} other {# vastauksesta}}",
-        "notes": "Viestit",
-        "notesDetail": "{count, plural, one {# vastauksessa} other {# vastauksessa}}"
-      },
-      "themes": {
-        "learning": "Oppiminen",
-        "fun": "Hauskuus",
-        "geduQuality": "Gedun laatu",
-        "belonging": "Yhteenkuuluvuus"
-      },
-      "trend": {
-        "heading": "Kehitys viikoittain",
-        "description": "Myönteisten vastausten (Kyllä tai Ehdottomasti) osuus teemoittain. Ontto piste perustuu alle {min} vastaukseen.",
-        "showTable": "Näytä taulukkona",
-        "hideTable": "Piilota taulukko",
-        "span": "Viikot {from}–{to}",
-        "weekResponses": "Viikko {date}: {count, plural, one {# vastaus} other {# vastausta}}",
-        "answers": "{count, plural, one {# vastaus} other {# vastausta}}",
-        "panelLabel": "{theme}, myönteiset vastaukset viikoittain: {summary}",
-        "responsesHeading": "Vastauksia viikossa",
-        "responsesLabel": "Vastauksia viikossa: {summary}",
-        "week": "Viikko",
-        "responses": "Vastaukset"
-      },
-      "statements": {
-        "heading": "Väittämittäin",
-        "positiveDetail": "{share} myönteisiä · {count, plural, one {# vastaus} other {# vastausta}}",
-        "levelDetail": "{level}: {share} ({count})"
-      },
-      "breakdown": {
-        "heading": "Erittely",
-        "tabs": {
-          "product": "Tuotteittain",
-          "group": "Ryhmittäin",
-          "gedu": "Geduittain",
-          "gamer": "Pelaajittain"
+        "open": {
+          "product": "Avaa tuote",
+          "group": "Avaa ryhmä",
+          "gedu": "Avaa gedun tili",
+          "gamer": "Avaa pelaajan tili"
         },
-        "columns": {
-          "name": "Nimi",
-          "responses": "Vastaukset",
-          "responseRate": "Vastausprosentti",
-          "positive": "Myönteiset",
-          "open": "Avaa"
-        },
-        "narrowTo": "Rajaa sivu: {name}",
-        "open": "Avaa: {name}",
-        "showing": "Näytetään {shown}/{total}",
-        "lowN": "Harmaat rivit perustuvat alle {min} vastaukseen",
-        "showMore": "Näytä lisää"
+        "none": "Tästä ei vastattu mitään valitulla aikavälillä.",
+        "platform": "Koko alusta {share}",
+        "groupsHeading": "Ryhmät",
+        "gedusHeading": "Gedut",
+        "gamersHeading": "Vastanneet pelaajat",
+        "notesHeading": "Viestit",
+        "responsesHeading": "Vastaukset"
       },
-      "responses": {
-        "heading": "Vastaukset",
-        "onlyNotes": "Vain viestilliset",
-        "noneWithNotes": "Yhdessäkään vastauksessa ei ole viestiä.",
+      "notes": {
+        "title": "Viestit",
+        "none": "Täällä ei ole viestejä.",
+        "withLowAnswer": "Heikon vastauksen yhteydessä",
+        "noGedu": "Gedua ei ole kirjattu",
         "showing": "Näytetään {shown}/{total}",
         "showMore": "Näytä lisää",
-        "noGedu": "Gedua ei ole kirjattu",
-        "skipped": "Ohitettu"
+        "filterLabel": "Näytettävät viestit",
+        "onlyLow": "Heikon vastauksen yhteydessä ({count})",
+        "all": "Kaikki viestit ({count})"
       }
     }
   },

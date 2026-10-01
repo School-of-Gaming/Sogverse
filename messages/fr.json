@@ -1578,87 +1578,122 @@
         "12m": "12 mois"
       },
       "empty": "Aucun avis n’a été donné sur cette période.",
-      "emptyFiltered": "Rien sur cette période ne correspond aux filtres.",
       "loadError": "Les avis n’ont pas pu être chargés. Rechargez la page pour réessayer.",
       "loadErrorWithReason": "Les avis n’ont pas pu être chargés : {reason}",
-      "filters": {
-        "label": "Filtré sur",
-        "dimensions": {
+      "tooFew": "Trop peu de réponses ({count})",
+      "answers": "{count, plural, one {# réponse} other {# réponses}}",
+      "skipped": "Passée",
+      "belowAverage": "Sous la moyenne",
+      "belowAverageOn": "Sous la moyenne sur : {statement}",
+      "platformMark": "Moyenne de la plateforme",
+      "change": {
+        "up": "En hausse de {points, plural, one {# point} other {# points}}",
+        "down": "En baisse de {points, plural, one {# point} other {# points}}",
+        "none": "Pas de changement",
+        "points": "{points, plural, one {# point} other {# points}}",
+        "previous": {
+          "30d": "par rapport aux 30 jours précédents",
+          "90d": "par rapport aux 90 jours précédents",
+          "12m": "par rapport aux 12 mois précédents"
+        }
+      },
+      "spark": {
+        "point": "{bucket} : {share} positives",
+        "tooFew": "{bucket} : trop peu de réponses ({count})",
+        "labelWeek": "Réponses positives par semaine. {points}",
+        "labelMonth": "Réponses positives par mois. {points}"
+      },
+      "back": {
+        "overview": "Retour aux avis",
+        "list": {
+          "product": "Retour aux produits",
+          "group": "Retour aux groupes",
+          "gedu": "Retour aux Gedus"
+        },
+        "notes": "Retour aux messages",
+        "detail": {
+          "product": "Retour au produit",
+          "group": "Retour au groupe",
+          "gedu": "Retour au Gedu",
+          "gamer": "Retour au gamer"
+        }
+      },
+      "hero": {
+        "positive": "positives",
+        "definition": "Réponse Oui ou Tout à fait",
+        "answers": "{count, plural, one {# réponse} other {# réponses}}",
+        "responseRate": "{share} des gamers présents ont répondu"
+      },
+      "statements": {
+        "heading": "Par affirmation",
+        "legend": "Positive : Oui ou Tout à fait ; basse : Non ou Pas vraiment.",
+        "positive": "{share} positives",
+        "low": "{share} basses"
+      },
+      "explore": {
+        "heading": "Explorer",
+        "titles": {
+          "product": "Produits",
+          "group": "Groupes",
+          "gedu": "Gedus",
+          "notes": "Messages"
+        },
+        "below": "{count, plural, =0 {Aucun sous la moyenne} other {# sous la moyenne}}",
+        "notesLow": "{count, plural, =0 {Aucun avec une réponse basse} one {# avec une réponse basse} other {# avec une réponse basse}}",
+        "counts": {
+          "product": "{count, plural, one {# produit} other {# produits}}",
+          "group": "{count, plural, one {# groupe} other {# groupes}}",
+          "gedu": "{count, plural, one {# Gedu} other {# Gedus}}",
+          "notes": "{count, plural, one {# message} other {# messages}}"
+        }
+      },
+      "rows": {
+        "none": "Rien sur cette période.",
+        "answers": "Réponses",
+        "positive": "Positives",
+        "positiveAgainst": "Positives (plateforme {share})",
+        "change": "Évolution",
+        "tooFewHeading": "Trop peu de réponses pour conclure"
+      },
+      "lists": {
+        "titles": {
+          "product": "Produits",
+          "group": "Groupes",
+          "gedu": "Gedus"
+        },
+        "subtitle": "Les plus faibles d’abord, par rapport à la moyenne de la plateforme"
+      },
+      "detail": {
+        "kinds": {
           "product": "Produit",
           "group": "Groupe",
           "gedu": "Gedu",
           "gamer": "Gamer"
         },
-        "unknown": "Absent de cette période",
-        "remove": "Retirer {dimension} : {name}",
-        "clear": "Tout effacer"
-      },
-      "kpi": {
-        "responses": "Réponses",
-        "responsesDetail": "{eligible, plural, one {# gamer pouvait} other {# gamers pouvaient}} répondre",
-        "responsesDetailNoSessions": "De ce gamer",
-        "responseRate": "Taux de réponse",
-        "responseRateDetail": "Parmi les gamers présents",
-        "responseRateNotCounted": "Non calculé par gamer",
-        "positive": "Réponses positives",
-        "positiveDetail": "{positive} sur {count, plural, one {# réponse} other {# réponses}}",
-        "notes": "Messages",
-        "notesDetail": "Dans {count, plural, one {# réponse} other {# réponses}}"
-      },
-      "themes": {
-        "learning": "Apprentissage",
-        "fun": "Plaisir",
-        "geduQuality": "Qualité du Gedu",
-        "belonging": "Appartenance"
-      },
-      "trend": {
-        "heading": "Évolution par semaine",
-        "description": "Part de réponses positives (Oui ou Tout à fait) par thème. Un point creux repose sur moins de {min} réponses.",
-        "showTable": "Afficher en tableau",
-        "hideTable": "Masquer le tableau",
-        "span": "Semaines du {from} au {to}",
-        "weekResponses": "Semaine du {date} : {count, plural, one {# réponse} other {# réponses}}",
-        "answers": "{count, plural, one {# réponse} other {# réponses}}",
-        "panelLabel": "{theme}, réponses positives par semaine : {summary}",
-        "responsesHeading": "Réponses par semaine",
-        "responsesLabel": "Réponses par semaine : {summary}",
-        "week": "Semaine",
-        "responses": "Réponses"
-      },
-      "statements": {
-        "heading": "Par affirmation",
-        "positiveDetail": "{share} positives · {count, plural, one {# réponse} other {# réponses}}",
-        "levelDetail": "{level} : {share} ({count})"
-      },
-      "breakdown": {
-        "heading": "Répartition",
-        "tabs": {
-          "product": "Par produit",
-          "group": "Par groupe",
-          "gedu": "Par Gedu",
-          "gamer": "Par gamer"
+        "open": {
+          "product": "Ouvrir le produit",
+          "group": "Ouvrir le groupe",
+          "gedu": "Ouvrir le compte du Gedu",
+          "gamer": "Ouvrir le compte du gamer"
         },
-        "columns": {
-          "name": "Nom",
-          "responses": "Réponses",
-          "responseRate": "Taux de réponse",
-          "positive": "Positives",
-          "open": "Ouvrir"
-        },
-        "narrowTo": "Filtrer la page sur {name}",
-        "open": "Ouvrir {name}",
-        "showing": "{shown} sur {total} affichés",
-        "lowN": "Les lignes en gris reposent sur moins de {min} réponses",
-        "showMore": "Afficher plus"
+        "none": "Aucune réponse à ce sujet sur la période choisie.",
+        "platform": "Plateforme {share}",
+        "groupsHeading": "Groupes",
+        "gedusHeading": "Gedus",
+        "gamersHeading": "Gamers ayant répondu",
+        "notesHeading": "Messages",
+        "responsesHeading": "Réponses"
       },
-      "responses": {
-        "heading": "Réponses",
-        "onlyNotes": "Seulement avec un message",
-        "noneWithNotes": "Aucune réponse ici ne contient de message.",
-        "showing": "{shown} sur {total} affichées",
-        "showMore": "Afficher plus",
+      "notes": {
+        "title": "Messages",
+        "none": "Aucun message ici.",
+        "withLowAnswer": "Avec une réponse basse",
         "noGedu": "Aucun Gedu enregistré",
-        "skipped": "Passée"
+        "showing": "{shown} sur {total} affichés",
+        "showMore": "Afficher plus",
+        "filterLabel": "Quels messages",
+        "onlyLow": "Avec une réponse basse ({count})",
+        "all": "Tous les messages ({count})"
       }
     }
   },
