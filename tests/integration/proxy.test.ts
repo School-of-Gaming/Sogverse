@@ -498,6 +498,33 @@ describe("proxy", () => {
     });
   });
 
+  // --- The Team: public pages, each person at their id and at their slug ---
+
+  describe("Team pages", () => {
+    const PERSON_ID = "3f1d2c0e-5b7a-4c19-9e2d-8a6b4f0c1d23";
+
+    it.each([
+      "/en/team",
+      "/fi/tiimi",
+      "/fr/equipe",
+      `/en/team/${PERSON_ID}`,
+      `/sv/team/${PERSON_ID}`,
+      "/en/team/eetu-creeperhug",
+      "/fi/tiimi/eetu-creeperhug",
+    ])("lets a signed-out reader in at %s", async (path) => {
+      mockNoUser();
+      const response = await proxy(createNextRequest(path));
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+    });
+
+    it("lets a gedu read a profile rather than bouncing them to their dashboard", async () => {
+      mockUser("gedu");
+      const response = await proxy(createNextRequest("/fi/tiimi/eetu-creeperhug"));
+      expect(response.status).toBe(200);
+    });
+  });
+
   describe("Library article preview", () => {
     const ARTICLE_ID = "482f0c6f-0fbc-4202-8790-a73a4520fb47";
 

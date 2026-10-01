@@ -463,6 +463,19 @@ export const ROUTES = {
    */
   libraryArticlePreview: (id: string) =>
     ({ pathname: "/library/[id]/preview", params: { id } }) as const,
+  /**
+   * The Team — every public profile, leadership first, then the Game
+   * Educators. Public and promoted (`docs/architecture/discoverability.md`).
+   */
+  team: "/team",
+  /**
+   * One person's public profile, at either of their two addresses: their id,
+   * or the slug of their first name and nickname, which is the one to share
+   * and the canonical. Build the segment with `teamMemberAddress`, which knows
+   * when a person's slug is taken by someone listed before them.
+   */
+  teamMember: (idOrSlug: string) =>
+    ({ pathname: "/team/[idOrSlug]", params: { idOrSlug } }) as const,
   /** Public municipality-club discovery page — list + search of Finnish municipalities. */
   schools: "/schools",
   /**

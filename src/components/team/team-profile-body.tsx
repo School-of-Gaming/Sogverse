@@ -20,7 +20,7 @@ import type {
  * The public team profile page body: one person, admin or Gedu, on one page.
  *
  * Presentational over props, so the preview scene, the editor's live preview
- * and the future public route render the same body.
+ * and the public profile page (`/team/<id|slug>`) render the same body.
  *
  * **Written for parents and gamers at once**, so it does two jobs: it lets a
  * parent see who this is — a face, a name, the languages they can talk to
@@ -222,10 +222,12 @@ export function TeamProfileBody({
  * it. With no pick the frame is the neutral edge, at the same width, so
  * choosing or clearing a colour in the editor moves nothing.
  *
- * **The photo is drawn `unoptimized`**: a saved one is a private object behind
- * a short-lived signed URL, which the image optimiser would cache for a year
- * under an unauthenticated address, and a new crop in the editor is a local
- * object URL it cannot fetch at all.
+ * **The photo is drawn `unoptimized`**: in the editor a saved one is a private
+ * object behind a short-lived signed URL, which the image optimiser would
+ * cache for a year under an unauthenticated address, and a new crop is a local
+ * object URL it cannot fetch at all; on the public page it is the app's photo
+ * route, whose five-minute cache is what takes a hidden profile's photo down,
+ * and the optimiser's year would outlive it.
  */
 function Portrait({
   photo,

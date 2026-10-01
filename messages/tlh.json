@@ -67,7 +67,8 @@
       "geduInvoicing": "DIlmeH ghItlh",
       "adminSubstitutions": "lIwmey",
       "teamProfile": "Del’a’wIj",
-      "adminTeamProfile": "Del’a’"
+      "adminTeamProfile": "Del’a’",
+      "team": "ghom"
     },
     "descriptions": {
       "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
@@ -78,7 +79,8 @@
       "about": "School of Gaming: ’Iv maH, nuq ’oH Yty’e’, ’ej qorDu’pu’ luyu’bogh yu’mey lujangbogh De’.",
       "library": "School of Gaming paq qach: vavpu’ SoSpu’ je DevmeH ghItlhmey. Qan, jIHmey poH, ’ej nuq ghoj puqpu’ Quj.",
       "shop": "School of Gaming ghom’a’mey, raghmey, wanI’mey je yIlegh: Minecraft, Roblox, Fortnite latlh je. puqlI’vaD lI’bogh wa’ yItu’!",
-      "resetPin": "chu’bogh vav PIN yIwIv — QInDaq tlhegh yIlo’. vav paqmey SoQmoH PIN, ’ej puq luSovbe’."
+      "resetPin": "chu’bogh vav PIN yIwIv — QInDaq tlhegh yIlo’. vav paqmey SoQmoH PIN, ’ej puq luSovbe’.",
+      "team": "School of Gaming ghom yIghov: DevwI’pu’ ’ej Quj ghojmoHwI’pu’."
     }
   },
   "notFound": {
@@ -188,7 +190,8 @@
     "mission": {
       "heading": "maH ngoQ",
       "text": "Hoch QIn nIvbe’. toy’a’ QaQ Hob ’oH Hoch latlh Hob rur. puqpu’ toy’taHghach muSHa’ wIlo’ — juppu’ QaQ je Gedu’ tIqqu’ — DaH batlh Qapla’.",
-      "photoAlt": "cha’ noH Quj yejHaD beqpu’ — Sut Doq tuQ, lupDujDaq Qam"
+      "photoAlt": "cha’ noH Quj yejHaD beqpu’ — Sut Doq tuQ, lupDujDaq Qam",
+      "meetTeam": "ghom yIghov"
     },
     "values": {
       "heading": "maH nuq muSHa’",
@@ -4327,7 +4330,8 @@
         "waitingTitle": "ghuHmoHlu’, loHwI’ loS",
         "waitingBody": "Hoch leghpa’, Del’a’ navlIj nuD loHwI’.",
         "liveTitle": "Hoch leghDaq leghlu’",
-        "liveBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. So’meH, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIteq ’ej yIpol. DawIvqa’DI’, Hoch leghmoHqa’ loHwI’."
+        "liveBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. So’meH, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIteq ’ej yIpol. DawIvqa’DI’, Hoch leghmoHqa’ loHwI’.",
+        "viewPublicPage": "Hoch leghmeH ghItlh yIlegh"
       },
       "actions": {
         "save": "choHmey yIpol",
@@ -4418,7 +4422,8 @@
         "waitingTitle": "ghuHmoHlu’, leghmoH loS",
         "waitingBody": "{name} Del’a’ ghuHmoHlu’. Hoch leghmoH loHwI’DI’, SIbI’ Hoch legh.",
         "liveTitle": "Hoch legh",
-        "liveBody": "{name} Del’a’ legh Hoch. DapolmoHbogh choHmey DaH lInlu’."
+        "liveBody": "{name} Del’a’ legh Hoch. DapolmoHbogh choHmey DaH lInlu’.",
+        "viewPublicPage": "Hoch leghmeH ghItlh yIlegh"
       },
       "edit": {
         "back": "{name} yIchegh",
@@ -4447,6 +4452,19 @@
         "makePublicNotReady": "{name} Del’a’ ghuHbe’choH; vaj Hoch leghmoHlu’be’.",
         "hide": "yISo’",
         "visibilityError": "leghmoH choHlaHbe’. yInID."
+      }
+    },
+    "public": {
+      "index": {
+        "title": "<act>ghom</act> yIghov",
+        "intro": "School of Gaming ghom: DevwI’pu’ ’ej Quj ghojmoHwI’pu’.",
+        "leadership": "DevwI’pu’",
+        "gameEducators": "Quj ghojmoHwI’pu’",
+        "empty": "tugh naDev ghom"
+      },
+      "back": "ghomDaq yIchegh",
+      "cta": {
+        "heading": "maH DIQujmeH puqlI’ DaneH’a’?"
       }
     }
   },

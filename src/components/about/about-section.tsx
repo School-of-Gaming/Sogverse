@@ -1,7 +1,9 @@
 import { useLocale, useTranslations } from "next-intl";
-import { Heart, Shield, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Heart, Shield, Sparkles, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MarketingPhoto } from "@/components/marketing/marketing-photo";
+import { Link } from "@/i18n/navigation";
+import { ROUTES } from "@/lib/constants";
 import studioPhoto from "@/assets/marketing/studio-lauttasaari.jpg";
 import teamPhoto from "@/assets/marketing/team-pelipaku.jpg";
 
@@ -83,6 +85,16 @@ export function AboutSection({ id }: AboutSectionProps) {
               <p className="mt-4 text-lg text-muted-foreground">
                 {t("mission.text")}
               </p>
+              {/* The people in the photo, and everyone else, each with a page
+                  of their own: the photo is where a reader wants to know who
+                  they are. */}
+              <Link
+                href={ROUTES.team}
+                className="mt-6 inline-flex items-center gap-2 font-semibold text-act underline-offset-4 hover:underline"
+              >
+                {t("mission.meetTeam")}
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
+              </Link>
             </div>
           </CardContent>
         </Card>

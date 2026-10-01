@@ -18,9 +18,15 @@ tier before it decides anything else.** The tier is what the crawler affordances
 key off.
 
 1. **Promoted.** The marketing pages (home, about, the legal documents, attributions), the
-   auth entry points, and the `/shop` browse grid. In the sitemap, self-canonical with the
-   full `hreflang` set, a page-specific localized description, structured data, and
-   linked from `llms.txt` where a reader would want the link.
+   auth entry points, the `/shop` browse grid, and the Team pages (the index and every
+   public profile). In the sitemap, self-canonical with the full `hreflang` set, a
+   page-specific localized description, structured data, and linked from `llms.txt` where
+   a reader would want the link. **A team profile's language versions are the locales the
+   person wrote** (owner, 2026-10-01): its `hreflang` names only those, a locale they did
+   not write shows the fallback text and canonicalises to the address of the locale it
+   shows, the canonical is the slug address (`src/lib/slug.ts`), and the sitemap lists each
+   profile once per indexed locale written. Its link card is the site-wide card for now: a
+   4:5 portrait crops badly to a preview's wide frame.
 2. **Reachable, not promoted.** Public because a family holding a link must get in, but
    `noindex, nofollow`, out of the sitemap, no `hreflang`, never listed in `llms.txt`, and
    never the subject or the URL of any structured-data node — the shop's `ItemList` names
@@ -74,10 +80,15 @@ Each one exists to make the posture above hold by construction rather than by me
   fetched, so the tag is never read, and the bare URL can still be indexed off an
   external link. Allowing the crawl and serving the tag is what deindexes.
 - **The sitemap** lists the promoted routes, one URL per indexed locale, every entry
-  carrying the whole language set as alternates. It carries **no `lastmod`**: the route
-  is prerendered, so the only value available is the deploy time — one date on every
-  URL whether or not that page changed — and search engines discard a modification date
-  they cannot trust.
+  carrying the whole language set as alternates, plus each public team profile in the
+  locales its person wrote. **It reads the database, and is rendered per request**: the
+  public team is read anonymously with no cookies, so a profile made public or hidden is
+  in or out of the next fetch, and no build has to reach a database (a revalidating
+  sitemap would be prerendered at build, in CI's smoke build and in a preview built
+  before its migration ran). A failed read leaves the profiles out rather than failing
+  the file. It carries **no `lastmod`**: the only value available is the fetch time — one
+  date on every URL whether or not that page changed — and search engines discard a
+  modification date they cannot trust.
 - **`robots.txt`** derives the gated-prefix disallow list from the locale list (so a new
   locale cannot leave `/xx/admin` crawlable), and applies one identical rule set to `*`
   and to every named AI agent. Adding an agent is one line in one constant.
@@ -88,8 +99,10 @@ Each one exists to make the posture above hold by construction rather than by me
 - **Structured data** is JSON-LD, emitted through one server component that escapes the
   serialized JSON so an admin-authored product name containing `</script>` cannot break
   out of the data block. A data block is never executed, so the CSP's script nonce does
-  not apply to it. Three blocks exist: `Organization` + `WebSite` on every page from the
-  locale layout, `FAQPage` on About, and an `ItemList` on the shop. **Rule: a structured
+  not apply to it. Four blocks exist: `Organization` + `WebSite` on every page from the
+  locale layout, `FAQPage` on About, an `ItemList` on the shop, and a `ProfilePage` about
+  a `Person` on each team profile, whose `worksFor` names the layout's `Organization` by
+  `@id`. **Rule: a structured
   data block reads the same source as the visible page** — the same message keys, the
   same prefetched rows — so it can never assert something the page does not show, and
   only shop-visible products can reach the `ItemList` because only those are ever

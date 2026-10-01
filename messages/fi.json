@@ -74,7 +74,8 @@
       "geduInvoicing": "Laskutus",
       "adminSubstitutions": "Tuuraukset",
       "teamProfile": "Oma profiili",
-      "adminTeamProfile": "Profiili"
+      "adminTeamProfile": "Profiili",
+      "team": "Tiimi"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -89,7 +90,8 @@
       "privacy": "Miten School of Gaming kerää, käyttää ja säilyttää perheesi tietoja: mitä lapsesta tallennetaan, kenelle tietoja luovutetaan ja mitä oikeuksia sinulla on.",
       "terms": "School of Gamingin käyttöehdot: miten ilmoittautuminen, maksut ja peruutukset toimivat ja mistä me ja sinä olemme kumpikin vastuussa.",
       "antiBullying": "Miten School of Gaming ehkäisee kiusaamista kerhoissa, leireillä ja tapahtumissa, mitä kiusaamistilanteessa tapahtuu ja miten pelikasvattaja puuttuu siihen.",
-      "attributions": "Lähteet ja lisenssit tiedoille, joita School of Gaming käyttää: paikannimet, postinumerot ja pelaajien hahmokuvat, kukin lisenssinsä edellyttämällä tavalla."
+      "attributions": "Lähteet ja lisenssit tiedoille, joita School of Gaming käyttää: paikannimet, postinumerot ja pelaajien hahmokuvat, kukin lisenssinsä edellyttämällä tavalla.",
+      "team": "Tutustu School of Gamingin ihmisiin: tiimiin, joka pyörittää toimintaa, ja pelikasvattajiin, jotka ohjaavat kerhoja, leirejä ja tapahtumia. Jokainen esittäytyy omin sanoin."
     }
   },
   "notFound": {
@@ -199,7 +201,8 @@
     "mission": {
       "heading": "Missiomme",
       "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa.",
-      "photoAlt": "Kaksi School of Gamingin tiimiläistä violetit School of Gaming -hupparit päällään tapahtuman esittelypisteellä"
+      "photoAlt": "Kaksi School of Gamingin tiimiläistä violetit School of Gaming -hupparit päällään tapahtuman esittelypisteellä",
+      "meetTeam": "Tutustu tiimiin"
     },
     "values": {
       "heading": "Asiat, joista välitämme",
@@ -5226,7 +5229,8 @@
         "waitingTitle": "Valmis, odottaa ylläpitäjää",
         "waitingBody": "Ylläpitäjä tarkistaa profiilisivusi ennen kuin se tulee julkiseksi.",
         "liveTitle": "Julkinen",
-        "liveBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti. Jos haluat piilottaa profiilin, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna. Kun rastitat sen uudelleen, ylläpitäjä julkaisee sen taas."
+        "liveBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti. Jos haluat piilottaa profiilin, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna. Kun rastitat sen uudelleen, ylläpitäjä julkaisee sen taas.",
+        "viewPublicPage": "Näytä julkinen sivu"
       },
       "actions": {
         "save": "Tallenna muutokset",
@@ -5317,7 +5321,8 @@
         "waitingTitle": "Valmis, odottaa julkaisua",
         "waitingBody": "Profiili ({name}) on merkitty valmiiksi julkaistavaksi. Se tulee näkyviin School of Gamingin verkkosivuille heti, kun ylläpitäjä julkaisee sen.",
         "liveTitle": "Julkinen",
-        "liveBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti."
+        "liveBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti.",
+        "viewPublicPage": "Näytä julkinen sivu"
       },
       "edit": {
         "back": "Takaisin: {name}",
@@ -5346,6 +5351,19 @@
         "makePublicNotReady": "Profiilia ({name}) ei ole enää merkitty valmiiksi, joten sitä ei julkaistu.",
         "hide": "Piilota",
         "visibilityError": "Profiilin näkyvyyden muuttaminen ei onnistunut. Yritä uudelleen."
+      }
+    },
+    "public": {
+      "index": {
+        "title": "Tutustu <act>tiimiin</act>",
+        "intro": "Nämä ihmiset ovat School of Gamingin takana: tiimi, joka pyörittää toimintaa, ja pelikasvattajat, jotka ohjaavat kerhojamme, leirejämme ja tapahtumiamme.",
+        "leadership": "Johto",
+        "gameEducators": "Pelikasvattajat",
+        "empty": "Tiimimme esittäytyy täällä pian"
+      },
+      "back": "Takaisin tiimiin",
+      "cta": {
+        "heading": "Haluatko lapsesi pelaavan kanssamme?"
       }
     }
   },

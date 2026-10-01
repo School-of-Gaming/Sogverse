@@ -1,12 +1,13 @@
+import { slugify } from "@/lib/slug";
+
 /**
  * Deterministic, URL-safe slug for a Finnish municipality name.
  *
  * Used to build human-readable `/schools/<slug>` links (e.g. `helsinki`,
  * `espoo`) without storing a slug column -- the `locations` table holds only
- * the native name. The transform: Unicode NFD-decompose, drop combining
- * accents (a-umlaut -> a, o-umlaut -> o, a-ring -> a, e-acute -> e, ...),
- * lowercase, collapse every run of non-`[a-z0-9]` to a single hyphen, then
- * trim leading/trailing hyphens.
+ * the native name. The transform is the site's one `slugify`: diacritics
+ * folded (a-umlaut -> a, o-umlaut -> o, a-ring -> a), lowercase, every run of
+ * non-`[a-z0-9]` collapsed to a single hyphen, trimmed.
  *
  * Verified collision-free across all 308 municipalities in Finland's 2025
  * classification (the unit test re-checks it against the seed),
@@ -15,10 +16,5 @@
  * kunta" -> `pedersoren-kunta`.
  */
 export function municipalitySlug(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // strip combining accents left by NFD
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  return slugify(name);
 }

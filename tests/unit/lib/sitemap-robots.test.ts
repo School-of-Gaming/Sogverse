@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { afterAll, describe, it, expect, vi } from "vitest";
 
 // The real wrapped navigation, not the setup's link-rendering stub: what these
 // two files are for is the locale-prefixed, translated URLs `getPathname`
@@ -10,16 +10,41 @@ vi.unmock("next/navigation");
 
 // Both modules read the site URL once, at import time.
 process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+// The sitemap builds its anonymous client from these; the read itself is mocked.
+vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
+vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+afterAll(() => vi.unstubAllEnvs());
 const BASE = "https://test.sogverse.local";
+
+// The public team the sitemap reads. Two people deriving one slug, so the
+// second is listed at their id; one who wrote Finnish and English, one who
+// wrote French and Klingon.
+const { publicAdminProfile, publicGeduProfile } = await import(
+  "../../mocks/team-profile"
+);
+const SECOND_EETU_ID = "0b5e8c52-8d3f-4a54-9a27-7d8f2c6e1a90";
+const mockListPublicTeamProfiles = vi.fn();
+vi.mock("@/services/team-profiles/team-profiles.service", () => ({
+  TeamProfilesService: class {
+    listPublicTeamProfiles = mockListPublicTeamProfiles;
+  },
+}));
+mockListPublicTeamProfiles.mockResolvedValue([
+  publicAdminProfile({ locales: ["fr", "tlh"] }),
+  publicGeduProfile({ locales: ["en", "fi"] }),
+  publicGeduProfile({ id: SECOND_EETU_ID, locales: ["en"] }),
+]);
 
 const { default: sitemap } = await import("@/app/sitemap");
 const { default: robots } = await import("@/app/robots");
+
+const entries = await sitemap();
 
 describe("sitemap", () => {
   it("lists every indexed locale of a route and no Klingon", () => {
     // One route's entries are the ones sharing its English alternate, which is
     // the only thing about a translated set that is the same in all of them.
-    const shop = sitemap().filter(
+    const shop = entries.filter(
       (entry) => entry.alternates?.languages?.en === `${BASE}/en/shop`,
     );
 
@@ -29,11 +54,11 @@ describe("sitemap", () => {
       `${BASE}/sv/butik`,
       `${BASE}/fr/boutique`,
     ]);
-    expect(sitemap().some((entry) => entry.url.includes("/tlh/"))).toBe(false);
+    expect(entries.some((entry) => entry.url.includes("/tlh/"))).toBe(false);
   });
 
   it("annotates each entry with the whole language set", () => {
-    const [home] = sitemap();
+    const [home] = entries;
 
     expect(home.url).toBe(`${BASE}/en`);
     expect(home.alternates?.languages).toEqual({
@@ -47,7 +72,7 @@ describe("sitemap", () => {
   it("takes translated slugs from the pathnames map rather than the route name", () => {
     // The failure this pins is a sitemap advertising `/fi/privacy` — a URL that
     // exists nowhere — because someone joined a base to a route key.
-    const urls = sitemap().map((entry) => entry.url);
+    const urls = entries.map((entry) => entry.url);
 
     expect(urls).toContain(`${BASE}/fi/tietosuoja`);
     expect(urls).toContain(`${BASE}/fr/lutte-contre-le-harcelement-et-discipline`);
@@ -60,15 +85,67 @@ describe("sitemap", () => {
     // had changed on this crawl and on every previous one. A lastmod that is
     // always today is a lastmod a search engine stops reading; no field at all
     // sends it to its own change detection, which is where it was going anyway.
-    expect(sitemap().every((entry) => entry.lastModified === undefined)).toBe(true);
+    expect(entries.every((entry) => entry.lastModified === undefined)).toBe(true);
   });
 
-  it("carries index pages only — nothing noindex, nothing DB-backed", () => {
-    const urls = sitemap().map((entry) => entry.url);
+  it("carries nothing noindex", () => {
+    const urls = entries.map((entry) => entry.url);
 
     expect(urls.some((url) => url.includes("/roblox"))).toBe(false);
     expect(urls.some((url) => url.includes("/docs/"))).toBe(false);
     expect(urls.some((url) => url.includes("/schools"))).toBe(false);
+    expect(urls.some((url) => url.includes("/library"))).toBe(false);
+  });
+
+  it("lists the Team index in every indexed locale", () => {
+    const urls = entries.map((entry) => entry.url);
+
+    expect(urls).toEqual(
+      expect.arrayContaining([
+        `${BASE}/en/team`,
+        `${BASE}/fi/tiimi`,
+        `${BASE}/sv/team`,
+        `${BASE}/fr/equipe`,
+      ]),
+    );
+  });
+
+  it("lists each profile at its canonical address, in the indexed locales they wrote", () => {
+    const eetu = entries.filter((entry) => entry.url.endsWith("/eetu-creeperhug"));
+    expect(eetu.map((entry) => entry.url)).toEqual([
+      `${BASE}/en/team/eetu-creeperhug`,
+      `${BASE}/fi/tiimi/eetu-creeperhug`,
+    ]);
+    expect(eetu[0].alternates?.languages).toEqual({
+      en: `${BASE}/en/team/eetu-creeperhug`,
+      fi: `${BASE}/fi/tiimi/eetu-creeperhug`,
+    });
+
+    // Written in French and Klingon: French only, Klingon is never indexed.
+    const laura = entries.filter((entry) => entry.url.endsWith("/laura-nightowl"));
+    expect(laura.map((entry) => entry.url)).toEqual([
+      `${BASE}/fr/equipe/laura-nightowl`,
+    ]);
+  });
+
+  it("lists the second person deriving a slug at their id, not at the slug", () => {
+    const urls = entries.map((entry) => entry.url);
+
+    expect(urls).toContain(`${BASE}/en/team/${SECOND_EETU_ID}`);
+    expect(
+      urls.filter((url) => url === `${BASE}/en/team/eetu-creeperhug`),
+    ).toHaveLength(1);
+  });
+
+  it("still lists the static routes when the team cannot be read", async () => {
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockListPublicTeamProfiles.mockRejectedValueOnce(new Error("down"));
+
+    const urls = (await sitemap()).map((entry) => entry.url);
+    quiet.mockRestore();
+
+    expect(urls).toContain(`${BASE}/en/team`);
+    expect(urls.some((url) => url.includes("creeperhug"))).toBe(false);
   });
 });
 

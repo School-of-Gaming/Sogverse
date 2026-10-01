@@ -1,15 +1,32 @@
 import type { MetadataRoute } from "next";
+import { createClient } from "@supabase/supabase-js";
+import { teamMemberAddress } from "@/components/team/team-address";
+import { teamMemberLocales } from "@/components/team/public/team-member-metadata";
 import { getPathname } from "@/i18n/navigation";
+import { ROUTES } from "@/lib/constants";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import type { StaticAppHref } from "@/lib/constants/routes";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
+import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
+import type { Database } from "@/types/database.types";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL!;
 
 /**
- * The indexable route set, with the crawl hints each one carries. Index pages
- * only — no DB-backed per-product or per-municipality entries, and nothing
- * `noindex` (the programme pages, the API docs and every product page are all
- * deliberately absent).
+ * **Rendered per request.** The Team's profiles are read from the database, so
+ * the sitemap is no longer a build artefact: a profile made public or hidden
+ * is in or out of the next fetch, as it is on the Team pages themselves, and
+ * no build has to reach a database (CI's smoke build, a preview deploy built
+ * before its migration ran). A crawler fetches it rarely, and each fetch is one
+ * read of the public team.
+ */
+export const dynamic = "force-dynamic";
+
+/**
+ * The indexable static route set, with the crawl hints each one carries. No
+ * per-product or per-municipality entries, and nothing `noindex` (the
+ * programme pages, the API docs and every product page are all deliberately
+ * absent). The one database-backed set is the Team's profiles, below.
  *
  * Each entry becomes one URL **per indexed locale**, and every one of those
  * carries the whole language set as `alternates.languages` — which is what tells
@@ -17,10 +34,11 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL!;
  * pages. Klingon is excluded here as it is from `hreflang`; see
  * `INDEXED_LOCALES`.
  */
-const ROUTES: { pathname: StaticAppHref; entry: Omit<MetadataRoute.Sitemap[number], "url" | "alternates"> }[] = [
+const ROUTE_ENTRIES: { pathname: StaticAppHref; entry: Omit<MetadataRoute.Sitemap[number], "url" | "alternates"> }[] = [
   { pathname: "/", entry: { changeFrequency: "weekly", priority: 1 } },
   { pathname: "/shop", entry: { changeFrequency: "weekly", priority: 0.8 } },
   { pathname: "/about", entry: { changeFrequency: "monthly", priority: 0.7 } },
+  { pathname: "/team", entry: { changeFrequency: "weekly", priority: 0.6 } },
   { pathname: "/login", entry: { changeFrequency: "yearly", priority: 0.5 } },
   { pathname: "/register", entry: { changeFrequency: "yearly", priority: 0.5 } },
   { pathname: "/privacy", entry: { changeFrequency: "yearly", priority: 0.3 } },
@@ -49,32 +67,80 @@ function urlFor(pathname: StaticAppHref, locale: (typeof INDEXED_LOCALES)[number
 }
 
 /**
+ * One URL per locale in `locales`, each carrying the whole set as its
+ * language alternates.
+ */
+function localizedEntries(
+  locales: readonly SupportedLocale[],
+  urlAt: (locale: SupportedLocale) => string,
+  entry: Omit<MetadataRoute.Sitemap[number], "url" | "alternates">,
+): MetadataRoute.Sitemap {
+  const languages = Object.fromEntries(
+    locales.map((locale) => [locale, urlAt(locale)]),
+  );
+  return locales.map((locale) => ({
+    url: urlAt(locale),
+    alternates: { languages },
+    ...entry,
+  }));
+}
+
+/** The public team, read with the anon key and no cookies. */
+async function readPublicTeam() {
+  const supabase = createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } },
+  );
+  return new TeamProfilesService(supabase).listPublicTeamProfiles();
+}
+
+/**
+ * Each public profile at its canonical address, in the indexed locales the
+ * person wrote — the language versions its own `hreflang` names, and nothing
+ * else: a locale they did not write canonicalises to one they did, so it is
+ * not a page of its own. Read anonymously with no cookies, which is all the
+ * public read needs and keeps the response the same for whoever asks.
+ *
+ * **A failed read leaves the profiles out rather than failing the sitemap.**
+ * A sitemap is a set of hints, not a declaration of everything that exists:
+ * a fetch missing the profiles costs nothing the next fetch does not restore,
+ * while a failing sitemap takes every other URL down with them.
+ */
+async function teamEntries(): Promise<MetadataRoute.Sitemap> {
+  const team = await readPublicTeam().catch((error: unknown) => {
+    console.error("[sitemap] the public team was not read:", error);
+    return null;
+  });
+  if (team === null) return [];
+  return team.flatMap((person) => {
+    const address = teamMemberAddress(team, person);
+    return localizedEntries(
+      teamMemberLocales(person),
+      (locale) =>
+        `${baseUrl}${getPathname({ href: ROUTES.teamMember(address), locale })}`,
+      { changeFrequency: "monthly", priority: 0.5 },
+    );
+  });
+}
+
+/**
  * No `lastModified` anywhere, deliberately.
  *
- * The only value this function could put there is the build's own timestamp —
- * it reads nothing request-scoped and declares no `dynamic`/`revalidate`, so
- * Next prerenders it and every URL gets the same date. That date says a deploy
- * happened, not that the page changed: a typo fix on one legal page would
- * restamp the whole site. A search engine that cannot trust a `lastmod` stops
- * reading it, and one that moves in lockstep across every URL is the clearest
- * possible signal that it is generated rather than true. We have no per-page
- * modification time to offer (these are code- and catalog-backed pages, not
- * rows with an `updated_at`), and omitting the
- * field is a better answer than a fabricated one: the crawler falls back to
- * its own change detection, which is what it would do with a `lastmod` it
- * distrusted anyway. If a real per-page timestamp ever exists, that is the
- * thing to put here.
+ * We have no per-page modification time to offer: the static routes are code-
+ * and catalog-backed pages, not rows with an `updated_at`, and a profile's
+ * read carries no date either. The only value available would be the time of
+ * the fetch — one date on every URL whether or not that page changed — and a
+ * search engine that cannot trust a `lastmod` stops reading it; one that moves
+ * in lockstep across every URL is the clearest possible signal that it is
+ * generated rather than true. Omitting the field is a better answer than a
+ * fabricated one: the crawler falls back to its own change detection, which
+ * is what it would do with a `lastmod` it distrusted anyway. If a real
+ * per-page timestamp ever exists, that is the thing to put here.
  */
-export default function sitemap(): MetadataRoute.Sitemap {
-  return ROUTES.flatMap(({ pathname, entry }) => {
-    const languages = Object.fromEntries(
-      INDEXED_LOCALES.map((locale) => [locale, urlFor(pathname, locale)]),
-    );
-
-    return INDEXED_LOCALES.map((locale) => ({
-      url: urlFor(pathname, locale),
-      alternates: { languages },
-      ...entry,
-    }));
-  });
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const routes = ROUTE_ENTRIES.flatMap(({ pathname, entry }) =>
+    localizedEntries(INDEXED_LOCALES, (locale) => urlFor(pathname, locale), entry),
+  );
+  return [...routes, ...(await teamEntries())];
 }

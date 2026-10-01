@@ -74,7 +74,8 @@
       "geduInvoicing": "Fakturering",
       "adminSubstitutions": "Vikariat",
       "teamProfile": "Min profil",
-      "adminTeamProfile": "Profil"
+      "adminTeamProfile": "Profil",
+      "team": "Team"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -89,7 +90,8 @@
       "privacy": "Hur School of Gaming samlar in, använder och lagrar din familjs uppgifter: vad vi sparar om ett barn, vem vi delar det med och vilka rättigheter du har.",
       "terms": "Villkoren du godkänner när du använder School of Gaming: hur anmälningar, betalningar och avbokningar fungerar och vad vi och du ansvarar för.",
       "antiBullying": "Hur School of Gaming förebygger mobbning i sina klubbar, läger och evenemang, vad som händer när det inträffar och hur en spelfostrare ingriper.",
-      "attributions": "Källorna och licenserna bakom de data School of Gaming använder: ortnamn, postnummer och spelarbilder, var och en krediterad som licensen kräver."
+      "attributions": "Källorna och licenserna bakom de data School of Gaming använder: ortnamn, postnummer och spelarbilder, var och en krediterad som licensen kräver.",
+      "team": "Möt människorna bakom School of Gaming: teamet som driver verksamheten och spelfostrarna som leder klubbar, läger och evenemang. Var och en presenterar sig med egna ord."
     }
   },
   "notFound": {
@@ -199,7 +201,8 @@
     "mission": {
       "heading": "Vårt uppdrag",
       "text": "Allt skärminnehåll är inte lika. Spelande är en fantastisk hobby när den behandlas som alla andra hobbyer. Vi använder barnens kärlek till spel till deras fördel — med bra vänner och en professionell spelfostrare som finns där för att vägleda och hjälpa.",
-      "photoAlt": "Två från School of Gaming-teamet i lila School of Gaming-huvtröjor vid en eventmonter"
+      "photoAlt": "Två från School of Gaming-teamet i lila School of Gaming-huvtröjor vid en eventmonter",
+      "meetTeam": "Möt teamet"
     },
     "values": {
       "heading": "Saker vi bryr oss om",
@@ -5226,7 +5229,8 @@
         "waitingTitle": "Klar, väntar på en administratör",
         "waitingBody": "En administratör granskar din profilsida innan den blir offentlig.",
         "liveTitle": "Offentlig",
-        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du dölja den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar. När du kryssar i den igen gör en administratör den offentlig på nytt."
+        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du dölja den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar. När du kryssar i den igen gör en administratör den offentlig på nytt.",
+        "viewPublicPage": "Visa den offentliga sidan"
       },
       "actions": {
         "save": "Spara ändringarna",
@@ -5317,7 +5321,8 @@
         "waitingTitle": "Klar, väntar på att göras offentlig",
         "waitingBody": "Profilen för {name} är markerad som klar att visas offentligt. Den kommer upp på School of Gamings webbplats så snart en administratör gör den offentlig.",
         "liveTitle": "Offentlig",
-        "liveBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt."
+        "liveBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt.",
+        "viewPublicPage": "Visa den offentliga sidan"
       },
       "edit": {
         "back": "Tillbaka till {name}",
@@ -5346,6 +5351,19 @@
         "makePublicNotReady": "Profilen för {name} är inte längre markerad som klar, så den gjordes inte offentlig.",
         "hide": "Dölj",
         "visibilityError": "Det gick inte att ändra om profilen är offentlig. Försök igen."
+      }
+    },
+    "public": {
+      "index": {
+        "title": "Möt <act>teamet</act>",
+        "intro": "Människorna bakom School of Gaming: teamet som driver verksamheten och spelfostrarna som leder våra klubbar, läger och evenemang.",
+        "leadership": "Ledning",
+        "gameEducators": "Spelfostrare",
+        "empty": "Snart presenterar sig vårt team här"
+      },
+      "back": "Tillbaka till teamet",
+      "cta": {
+        "heading": "Vill du att ditt barn ska spela med oss?"
       }
     }
   },

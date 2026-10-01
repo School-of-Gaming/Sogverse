@@ -70,6 +70,11 @@ const LINKED_PAGES: { href: StaticAppHref; label: string; note: string }[] = [
     note: "Every club, camp and event open for enrolment, with schedules and prices.",
   },
   {
+    href: "/team",
+    label: "Team",
+    note: "The people behind School of Gaming: the office team and the Game Educators who lead the sessions, each with a page of their own.",
+  },
+  {
     href: "/register",
     label: "Create a parent account",
     note: "Where a family starts; children are added from the parent's account.",

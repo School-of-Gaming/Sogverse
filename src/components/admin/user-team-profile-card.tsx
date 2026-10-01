@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { teamMemberSharedAddress } from "@/components/team/team-address";
 import { TeamProfilePreviewFrame } from "@/components/team/team-profile-preview-frame";
 import {
   TeamProfileStatusPanel,
@@ -94,6 +95,10 @@ export function UserTeamProfileCard({
               status={status}
               title={t(`status.${status}Title`)}
               body={t(`status.${status}Body`, { name })}
+              publicHref={ROUTES.teamMember(
+                teamMemberSharedAddress(record.profile),
+              )}
+              publicLabel={t("status.viewPublicPage")}
             />
             <ProfilePreview profile={record.profile} />
           </>

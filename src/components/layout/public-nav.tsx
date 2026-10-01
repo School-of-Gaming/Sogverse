@@ -7,13 +7,6 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 
-/**
- * The Team page has no entry in the pathnames map yet, so the typed `Link`
- * cannot name it. A plain anchor to the bare path lets the proxy add the locale
- * prefix.
- */
-const TEAM_PATH = "/team";
-
 type PublicDestinationKey = "shop" | "library" | "team" | "about";
 
 /** The order both surfaces draw the public destinations in. */
@@ -30,17 +23,12 @@ const ICONS: Record<PublicDestinationKey, LucideIcon> = {
   about: School,
 };
 
-/** The destinations the typed `Link` can name — every one but Team. */
-const LINK_HREFS = {
+const HREFS = {
   shop: ROUTES.shop,
   library: ROUTES.library,
+  team: ROUTES.team,
   about: ROUTES.about,
-} as const satisfies Record<Exclude<PublicDestinationKey, "team">, string>;
-
-const HREFS: Record<PublicDestinationKey, string> = {
-  ...LINK_HREFS,
-  team: TEAM_PATH,
-};
+} as const satisfies Record<PublicDestinationKey, string>;
 
 export interface PublicDestination {
   key: PublicDestinationKey;
@@ -100,15 +88,8 @@ export function PublicDestinationLink({
     ...props,
     "aria-current": destination.isActive ? ("page" as const) : undefined,
   };
-  if (destination.key === "team") {
-    return (
-      <a href={TEAM_PATH} {...shared}>
-        {children}
-      </a>
-    );
-  }
   return (
-    <Link href={LINK_HREFS[destination.key]} {...shared}>
+    <Link href={HREFS[destination.key]} {...shared}>
       {children}
     </Link>
   );

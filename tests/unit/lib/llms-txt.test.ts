@@ -60,6 +60,7 @@ describe("/llms.txt", () => {
     expect(body).toContain(`(${BASE}/en/about)`);
     expect(body).toContain(`(${BASE}/en/shop)`);
     expect(body).toContain(`(${BASE}/en/privacy)`);
+    expect(body).toContain(`(${BASE}/en/team)`);
   });
 
   it("lists each indexed locale's home URL and no Klingon one", () => {

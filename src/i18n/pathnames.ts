@@ -119,6 +119,22 @@ export const PATHNAMES = {
     fr: "/bibliotheque/[id]",
     tlh: "/library/[id]",
   },
+  "/team": {
+    en: "/team",
+    fi: "/tiimi",
+    sv: "/team",
+    fr: "/equipe",
+    tlh: "/team",
+  },
+  // One segment, two addresses: a person's id or the slug of their first name
+  // and nickname (`src/lib/slug.ts`).
+  "/team/[idOrSlug]": {
+    en: "/team/[idOrSlug]",
+    fi: "/tiimi/[idOrSlug]",
+    sv: "/team/[idOrSlug]",
+    fr: "/equipe/[idOrSlug]",
+    tlh: "/team/[idOrSlug]",
+  },
   // Admin-only, but the child of a translated route, so translated with it.
   "/library/[id]/preview": {
     en: "/library/[id]/preview",

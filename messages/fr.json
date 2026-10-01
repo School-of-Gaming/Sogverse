@@ -74,7 +74,8 @@
       "geduInvoicing": "Facturation",
       "adminSubstitutions": "Remplacements",
       "teamProfile": "Mon profil",
-      "adminTeamProfile": "Profil"
+      "adminTeamProfile": "Profil",
+      "team": "Équipe"
     },
     "descriptions": {
       "signIn": "Connectez-vous à votre compte School of Gaming pour suivre les séances à venir de vos joueurs, gérer les inscriptions et tenir vos informations à jour.",
@@ -89,7 +90,8 @@
       "privacy": "Comment School of Gaming collecte et conserve les données de votre famille : ce que nous gardons sur un enfant, avec qui nous le partageons et vos droits.",
       "terms": "Les conditions que vous acceptez en utilisant School of Gaming : inscriptions, paiements, annulations, et ce dont nous et vous êtes responsables.",
       "antiBullying": "Comment School of Gaming prévient le harcèlement dans ses clubs, ses stages et ses événements, ce qui se passe le cas échéant et comment un animateur intervient.",
-      "attributions": "Les sources et les licences des données utilisées par School of Gaming : noms de lieux, codes postaux et avatars de joueurs, crédités comme l’exige chaque licence."
+      "attributions": "Les sources et les licences des données utilisées par School of Gaming : noms de lieux, codes postaux et avatars de joueurs, crédités comme l’exige chaque licence.",
+      "team": "Découvrez les personnes derrière School of Gaming : l’équipe qui fait vivre l’aventure et les animateurs et animatrices qui encadrent ses clubs, stages et événements. Chaque membre se présente avec ses propres mots."
     }
   },
   "notFound": {
@@ -199,7 +201,8 @@
     "mission": {
       "heading": "Notre mission",
       "text": "Tous les écrans ne se valent pas. Quand le jeu vidéo est bien encadré, c’est un loisir enrichissant, pas si différent du foot ou de la musique. Notre mission : mettre la passion des enfants pour le jeu au service de leur développement, avec de vrais amis et un animateur professionnel pour les guider.",
-      "photoAlt": "Deux membres de l’équipe School of Gaming en sweats à capuche violets School of Gaming sur le stand d’un événement"
+      "photoAlt": "Deux membres de l’équipe School of Gaming en sweats à capuche violets School of Gaming sur le stand d’un événement",
+      "meetTeam": "Découvrez l’équipe"
     },
     "values": {
       "heading": "Ce qui compte pour nous",
@@ -5226,7 +5229,8 @@
         "waitingTitle": "Prêt, en attente d’un administrateur",
         "waitingBody": "Un administrateur examinera votre page de profil avant qu’elle ne devienne publique.",
         "liveTitle": "Public",
-        "liveBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement. Pour le masquer, décochez « Mon profil est prêt à être public » et enregistrez ; une fois la case recochée, un administrateur le rendra de nouveau public."
+        "liveBody": "Tout le monde peut voir votre profil sur le site de School of Gaming. Les modifications que vous enregistrez sont en ligne immédiatement. Pour le masquer, décochez « Mon profil est prêt à être public » et enregistrez ; une fois la case recochée, un administrateur le rendra de nouveau public.",
+        "viewPublicPage": "Voir la page publique"
       },
       "actions": {
         "save": "Enregistrer les modifications",
@@ -5317,7 +5321,8 @@
         "waitingTitle": "Prêt, en attente d’être rendu public",
         "waitingBody": "Le profil de {name} est marqué comme prêt à être public. Il apparaîtra sur le site de School of Gaming dès qu’un administrateur l’aura rendu public.",
         "liveTitle": "Public",
-        "liveBody": "Tout le monde peut voir le profil de {name} sur le site de School of Gaming. Les modifications enregistrées sont en ligne immédiatement."
+        "liveBody": "Tout le monde peut voir le profil de {name} sur le site de School of Gaming. Les modifications enregistrées sont en ligne immédiatement.",
+        "viewPublicPage": "Voir la page publique"
       },
       "edit": {
         "back": "Retour à {name}",
@@ -5346,6 +5351,19 @@
         "makePublicNotReady": "Le profil de {name} n’est plus marqué comme prêt, il n’a donc pas été rendu public.",
         "hide": "Masquer",
         "visibilityError": "Impossible de modifier la visibilité du profil. Veuillez réessayer."
+      }
+    },
+    "public": {
+      "index": {
+        "title": "Découvrez <act>l’équipe</act>",
+        "intro": "Les personnes derrière School of Gaming : l’équipe qui fait vivre l’aventure, et les animateurs et animatrices qui encadrent nos clubs, stages et événements.",
+        "leadership": "Direction",
+        "gameEducators": "Animateurs et animatrices",
+        "empty": "Notre équipe se présentera bientôt ici"
+      },
+      "back": "Retour à l’équipe",
+      "cta": {
+        "heading": "Envie que votre enfant joue avec nous ?"
       }
     }
   },
