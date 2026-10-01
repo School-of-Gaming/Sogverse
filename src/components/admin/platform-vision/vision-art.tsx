@@ -548,48 +548,6 @@ export function CampfireArt({ className }: ArtProps) {
   );
 }
 
-/**
- * The road ahead: four waypoints on one winding path. Decorative — the
- * numbered steps under it say what each one is. The waypoints stand at the
- * centres of four equal columns, so a four-column row beneath lines up.
- */
-export function RouteArt({
-  tones,
-  className,
-}: ArtProps & { tones: readonly [VisionTone, VisionTone, VisionTone, VisionTone] }) {
-  const points = [
-    { x: 75, y: 80 },
-    { x: 225, y: 34 },
-    { x: 375, y: 80 },
-    { x: 525, y: 34 },
-  ];
-
-  return (
-    <svg viewBox="0 0 600 112" aria-hidden="true" className={className}>
-      <path
-        d="M8 80 L75 80 C150 80 150 34 225 34 C300 34 300 80 375 80 C450 80 450 34 525 34 L592 34"
-        fill="none"
-        strokeWidth="5"
-        strokeDasharray="1 12"
-        strokeLinecap="round"
-        className="stroke-muted-foreground"
-      />
-      {points.map((point, i) => {
-        const tone = tones[i];
-        return (
-          <g key={point.x} transform={`translate(${point.x} ${point.y})`}>
-            <circle r="22" className={VISION_TONES[tone].fill} />
-            <text y="8" textAnchor="middle" fontSize="22" className={cn("font-semibold", VISION_TONES[tone].onFill)}>
-              {i + 1}
-            </text>
-          </g>
-        );
-      })}
-      <Sparkle x={588} y={34} r={12} tone="act" />
-    </svg>
-  );
-}
-
 /** A small burst of sparkles over the closing line. Decorative. */
 export function SparkleBurstArt({ className }: ArtProps) {
   return (

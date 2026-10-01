@@ -17,7 +17,6 @@ import {
   MessageCircleOff,
   MessagesSquare,
   Rocket,
-  Route,
   ShieldCheck,
   Shirt,
   Sparkles,
@@ -26,20 +25,18 @@ import {
   Store,
   Swords,
   Trophy,
-  Users,
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { YTY_ELEMENTS } from "@/lib/constants/yty";
-import { cn } from "@/lib/utils";
+import { cn, formatDateOnly } from "@/lib/utils";
 import {
   CampfireArt,
   ForestToPixelsArt,
   GrowingAvatarArt,
   LoopArt,
   ProfileOrbitArt,
-  RouteArt,
   SparkleBurstArt,
   StaircaseArt,
   ThreadArt,
@@ -52,9 +49,9 @@ import {
   VISION_GAMES,
   VISION_GEDUS,
   VISION_HERO,
+  VISION_LAST_UPDATED,
   VISION_LOOP,
   VISION_PARENTS,
-  VISION_PATH,
   VISION_THREAD,
   VISION_WALL,
   VISION_YTY,
@@ -66,13 +63,14 @@ import { VISION_TONES, type VisionTone } from "./vision-tones";
  * `/admin/platform-vision` — the big picture of Sogverse, for staff.
  *
  * An admin who asks "what is the dream?" is sent here. It is a vision board,
- * not a spec: ideas, hopes, values and the order we chase them in, light on
- * detail and with no dates. The words are in `vision-content.ts` (English
- * only, declared there) and the pictures in `vision-art.tsx`.
+ * not a spec: the fewest words that carry the dream, with the art doing the
+ * rest, and no dates. The words are in `vision-content.ts` (English only,
+ * declared there) and the pictures in `vision-art.tsx`.
  *
- * **It spends the whole palette**, a departure from the admin act-plus-one
- * budget declared and justified in `vision-tones.ts`, where the six hues are
- * spelled. Headings and prose stay ink; colour arrives as edges, rules, marks,
+ * **BRAND RULE EXCEPTION — read the banner at the top of `vision-tones.ts`.**
+ * This page knowingly breaks SOG-UI's colour budget (all six hues on one page,
+ * and page-ground numerals on the Yty fills), by owner ruling, for this page
+ * alone. Headings and prose stay ink; colour arrives as edges, rules, marks,
  * glyphs, element names beside their glyphs, and the artwork.
  *
  * Static from first paint: no read, no state, nothing that arrives later, so
@@ -91,7 +89,6 @@ export function PlatformVisionPage() {
       <ParentsSection />
       <GamesSection />
       <WallSection />
-      <PathSection />
       <FoundationSection />
       <ClosingSection />
     </div>
@@ -171,6 +168,13 @@ function IdeaCard({
 
 // ------------------------------------------------------------ sections
 
+/** A bare calendar date, so UTC-pinned at both ends and never in the viewer's zone. */
+const LAST_UPDATED_TEXT = formatDateOnly(VISION_LAST_UPDATED, "en-GB", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
 function HeroSection() {
   return (
     <section
@@ -189,10 +193,9 @@ function HeroSection() {
         </h1>
         <div aria-hidden="true" className="mt-6 h-1 w-24 rounded-full bg-world" />
         <p className="mt-6 text-body-l">{VISION_HERO.lead}</p>
-        <figure className="mt-8 border-l-4 border-act pl-5">
-          <blockquote className="font-serif text-2xl sm:text-3xl">{VISION_HERO.statement}</blockquote>
-          <figcaption className="mt-2 text-sm text-muted-foreground">{VISION_HERO.statementLabel}</figcaption>
-        </figure>
+        <p className="mt-8 text-xs text-muted-foreground">
+          {VISION_HERO.lastUpdatedLabel} {LAST_UPDATED_TEXT}
+        </p>
       </div>
       <ProfileOrbitArt title={VISION_HERO.artTitle} className="mx-auto w-full max-w-md" />
     </section>
@@ -407,25 +410,6 @@ function GedusSection() {
         </ol>
         <StaircaseArt title={VISION_GEDUS.artTitle} className="mx-auto w-full max-w-md" />
       </div>
-      <p className="mt-6 max-w-3xl text-sm text-muted-foreground">{VISION_GEDUS.foundation}</p>
-      <ul className="mt-10 grid gap-6 md:grid-cols-2">
-        <li>
-          <IdeaCard
-            icon={Trophy}
-            tone="valor"
-            title={VISION_GEDUS.profile.title}
-            body={VISION_GEDUS.profile.body}
-          />
-        </li>
-        <li>
-          <IdeaCard
-            icon={Users}
-            tone="harmony"
-            title={VISION_GEDUS.community.title}
-            body={VISION_GEDUS.community.body}
-          />
-        </li>
-      </ul>
     </section>
   );
 }
@@ -482,7 +466,6 @@ function ParentsSection() {
         tone="valor"
         eyebrow={VISION_PARENTS.eyebrow}
         heading={VISION_PARENTS.heading}
-        intro={VISION_PARENTS.intro}
       />
       <ul className="mt-12 grid gap-6 lg:grid-cols-3">
         {VISION_PARENTS.ideas.map((idea, i) => (
@@ -511,7 +494,6 @@ function GamesSection() {
         tone="valor"
         eyebrow={VISION_GAMES.eyebrow}
         heading={VISION_GAMES.heading}
-        intro={VISION_GAMES.intro}
       />
       <ul className="mt-10 flex flex-wrap gap-3">
         {VISION_GAMES.lines.map((line, i) => (
@@ -565,44 +547,6 @@ function WallSection() {
   );
 }
 
-const PATH_TONES = ["act", "world", "glow", "harmony"] as const satisfies readonly [
-  VisionTone,
-  VisionTone,
-  VisionTone,
-  VisionTone,
-];
-
-function PathSection() {
-  return (
-    <section aria-labelledby="vision-path">
-      <SectionHeader
-        id="vision-path"
-        icon={Route}
-        tone="glow"
-        eyebrow={VISION_PATH.eyebrow}
-        heading={VISION_PATH.heading}
-        intro={VISION_PATH.intro}
-      />
-      <RouteArt tones={PATH_TONES} className="mt-12 hidden w-full lg:block" />
-      {/* Four equal columns from `lg` up, each under its waypoint on the route. */}
-      <ol className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {VISION_PATH.steps.map((step, i) => (
-          <li key={step.title} className="lg:text-center">
-            <div className="flex items-baseline gap-3 lg:justify-center">
-              <span
-                aria-hidden="true"
-                className={cn("h-3 w-3 shrink-0 rounded-full lg:hidden", VISION_TONES[PATH_TONES[i % PATH_TONES.length]].mark)}
-              />
-              <h3 className="text-h4 font-semibold">{step.title}</h3>
-            </div>
-            <p className="mt-2 text-muted-foreground">{step.body}</p>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
 function FoundationSection() {
   return (
     <section aria-labelledby="vision-foundation">
@@ -612,7 +556,6 @@ function FoundationSection() {
         tone="glow"
         eyebrow={VISION_FOUNDATION.eyebrow}
         heading={VISION_FOUNDATION.heading}
-        intro={VISION_FOUNDATION.body}
       />
       <ul className="mt-10 flex flex-wrap gap-3">
         {VISION_FOUNDATION.facts.map((fact) => (
