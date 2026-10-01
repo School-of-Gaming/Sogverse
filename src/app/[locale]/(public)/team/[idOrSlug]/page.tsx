@@ -8,7 +8,7 @@ import {
   findTeamMemberBySlug,
   teamMemberAddress,
 } from "@/components/team/team-address";
-import { teamMemberPlainName } from "@/components/team/team-name";
+import { teamMemberPlainName, teamMemberRole } from "@/components/team/team-name";
 import { TeamProfileBody } from "@/components/team/team-profile-body";
 import { TeamClosingCta } from "@/components/team/public/team-closing-cta";
 import {
@@ -61,7 +61,7 @@ async function loadPage(segment: string) {
     person,
     address: teamMemberAddress(await loadTeam(), person),
     name: teamMemberPlainName(person, t),
-    jobTitle: person.kind === "admin" ? person.title : t("geduTitle"),
+    jobTitle: teamMemberRole(person, t),
   };
 }
 

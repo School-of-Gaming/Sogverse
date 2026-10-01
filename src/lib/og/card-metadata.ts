@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
+import { teamMemberRole } from "@/components/team/team-name";
 import { OG_CARD_SIZE, ogCardUrl, type OgCard } from "./cards";
 import { teamCardUrl } from "./team-card";
 
@@ -47,7 +48,7 @@ export async function teamCardImage(
     getTranslations({ locale, namespace: "metadata.og.team" }),
     getTranslations({ locale, namespace: "team.profile" }),
   ]);
-  const role = person.kind === "admin" ? person.title : profile("geduTitle");
+  const role = teamMemberRole(person, profile);
 
   return {
     url: teamCardUrl(person, locale),

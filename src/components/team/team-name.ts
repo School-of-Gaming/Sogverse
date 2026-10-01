@@ -75,6 +75,11 @@ export function teamMemberPlainName(
       });
 }
 
+/** **What a person does here**: an admin's own title, or the Gedu role glossed. */
+export function teamMemberRole(person: TeamProfile, t: TeamProfileTranslator): string {
+  return person.kind === "admin" ? person.title : t("geduTitle");
+}
+
 /**
  * **The line under a person's headline**: a Gedu's role glossed, or an
  * admin's full name beside their own title — the surname the headline leaves
@@ -85,6 +90,6 @@ export function teamMemberSubline(
   t: TeamProfileTranslator,
 ): string {
   return person.kind === "admin"
-    ? `${person.firstName} ${person.lastName} · ${person.title}`
-    : t("geduTitle");
+    ? `${person.firstName} ${person.lastName} · ${teamMemberRole(person, t)}`
+    : teamMemberRole(person, t);
 }

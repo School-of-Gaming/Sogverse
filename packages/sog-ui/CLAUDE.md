@@ -162,7 +162,7 @@ getting built: a box drawn by hand with a neutral edge and a coloured glyph insi
 the panel with its one mark of attention taken back off. **A public page's
 hero headline and a team member's nickname are the two declared departures from the
 division** — the hero a display treatment, one phrase in `act` and the `world` rule
-beneath it; the nickname set in `act`, unquoted, wherever a team member's name is shown —
+beneath it; the nickname set in `act`, unquoted, wherever a team member's name is drawn with colour (plain text keeps the locale's quotes) —
 both declared beside the label rule in `brand.ts`, which is also where it says a section
 heading is not a hero.
 
