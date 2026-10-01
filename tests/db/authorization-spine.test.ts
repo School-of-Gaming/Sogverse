@@ -800,6 +800,23 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/team-profiles.test.ts",
     why: "the edit predicate the team-photos storage policies are evaluated with, so it has to be executable by the querying role. SECURITY INVOKER: it answers from the caller's own role and a profiles row the caller's RLS already shows them, so it says only what the caller could read for themselves — whether the named person is themselves, or an admin or a Gedu while the caller is an admin. The scope test asks it as a Gedu, an admin, a parent and a gamer about themselves and about each other",
   },
+  // The public team page's three reads. Self-scoping by the widest reading the
+  // category admits, the one can_read_product sits on: none names a user,
+  // reads a uid, or answers one caller differently from another. What could
+  // leak is which profiles and which columns, and the scope test pins both,
+  // asked as anon and as every signed-in role.
+  list_public_team_profiles: {
+    scopeTest: "tests/db/team-profiles-public.test.ts",
+    why: "SECURITY DEFINER over team_profiles, team_profile_translations and profiles, which anon holds no grant on and authenticated reads only its own row of (or everyone's as an admin). It crosses that boundary to hand back the public slice alone: approved profiles of people who are still an admin or a Gedu, narrowed to id, role, first name, an admin's last name and title (NULL for a Gedu), nickname, pick, spoken languages, a photo version token and the translations — no email, dates, certification or trainee standing, and never the photo's object path. It takes no argument and answers every caller identically, anon included, which the scope test proves alongside the columns and the order",
+  },
+  get_public_team_profile: {
+    scopeTest: "tests/db/team-profiles-public.test.ts",
+    why: "SECURITY INVOKER filter over list_public_team_profiles by one id, so it can answer with nothing the list would not: the id only narrows the public set, and an id that is not in it (not approved, not staff, no one) returns no row. Answers every caller identically, which the scope test proves for anon and every signed-in role",
+  },
+  is_public_team_photo: {
+    scopeTest: "tests/db/team-profiles-public.test.ts",
+    why: "the predicate of the team-photos public read policy, which anon evaluates itself, so it has to be executable by anon. SECURITY DEFINER over the team tables anon cannot read, and answers only yes or no: whether a name is the current photo of a profile list_public_team_profiles shows. It reveals nothing the public list does not, and answers every caller identically; the scope test asks it about a public photo, a hidden profile's, a former staffer's and a stray object, and proves the policy it backs lets anon read the first alone",
+  },
 };
 
 /**
@@ -842,12 +859,21 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  * functions over their arguments that read no table, so anon reaching them
  * exposes nothing; `location_search_blob` is deliberately *not* here, because
  * only the write path needs it and anon never writes to `locations`.
+ *
+ * The public team page's reads are here because the page is public:
+ * `list_public_team_profiles` and `get_public_team_profile` return the
+ * approved profiles narrowed to what the page shows, and `is_public_team_photo`
+ * is the team-photos public read policy's predicate, which anon evaluates
+ * itself when the public photo route reads with no session.
  */
 const ANON_ALLOWLIST = new Set([
   "can_read_product",
   "search_locations",
   "immutable_unaccent",
   "location_search_separator",
+  "list_public_team_profiles",
+  "get_public_team_profile",
+  "is_public_team_photo",
 ]);
 
 /**

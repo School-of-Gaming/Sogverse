@@ -1406,8 +1406,20 @@ describe("proxy", () => {
       },
     );
 
-    it.each(["/", "/en", "/fi/shop", "/mediatheque"])("still runs on %s", (path) => {
-      expect(runsOn(path)).toBe(true);
+    // The public team photos are served publicly cacheable, so a refreshed
+    // session cookie on one would be handed to every later requester.
+    it.each([
+      "/api/team/photos/00000000-0000-0000-0000-000000000003",
+      "/api/team/photos/00000000-0000-0000-0000-000000000003?v=abc123",
+    ])("skips %s", (path) => {
+      expect(runsOn(path)).toBe(false);
     });
+
+    it.each(["/", "/en", "/fi/shop", "/mediatheque", "/api/team", "/fi/team"])(
+      "still runs on %s",
+      (path) => {
+        expect(runsOn(path)).toBe(true);
+      },
+    );
   });
 });

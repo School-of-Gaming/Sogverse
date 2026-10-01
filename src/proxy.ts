@@ -650,6 +650,8 @@ export const config = {
      *   a bare public URL answered from the deployed catalog and marked
      *   publicly cacheable, so it is excluded for the reason spelled out below
      * - api/locations/search — see below, this one is load-bearing
+     * - api/team/photos/ — the public team page's photos, marked publicly
+     *   cacheable for the same reason as the location search
      * - media/ — the public folder's video, which next.config.ts serves
      *   `immutable`, so it is public cacheable output the rule below binds.
      *   Excluded by prefix rather than by extension so the rule holds for
@@ -672,6 +674,6 @@ export const config = {
      * made. Excluding the path makes it ours. The route needs nothing from the
      * proxy anyway: it reads no cookies and builds its own anonymous client.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|llms\\.txt|api/locations/search|media/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|llms\\.txt|api/locations/search|api/team/photos/|media/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

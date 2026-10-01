@@ -62,14 +62,14 @@ COMMENT ON COLUMN public.team_profiles.photo_path IS 'The photo''s object name i
 -- Name: COLUMN team_profiles.opted_in; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.team_profiles.opted_in IS 'The profile''s "ready" mark. Not consent: the person or any admin may save it, only while the profile is complete; while it is on, every save has to leave the profile complete. A save that passes NULL keeps it as stored. Saving the profile not ready also hides it (approved becomes false).';
+COMMENT ON COLUMN public.team_profiles.opted_in IS 'The profile''s "ready" mark: the profile is finished and waiting for an admin to make it public. The person or any admin may save it, only while the profile is complete; while it is on, every save has to leave the profile complete. A save that passes NULL keeps it as stored. Saving the profile not ready also hides it (approved becomes false).';
 
 
 --
 -- Name: COLUMN team_profiles.approved; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.team_profiles.approved IS 'Whether an admin has made the profile public. Set true only by set_team_profile_approval and only while the checkbox is on; set false by that function (an admin hiding it) or by save_team_profile whenever a save leaves the checkbox off, so re-ticking ready waits for an admin again. Never true while opted_in is false (CHECK team_profiles_public_only_when_ready). While it is true, later edits go live with no second look.';
+COMMENT ON COLUMN public.team_profiles.approved IS 'Whether an admin has made the profile public; the public team page shows every approved profile of an admin or a Gedu (list_public_team_profiles). Set true only by set_team_profile_approval and only while the checkbox is on; set false by that function (an admin hiding it) or by save_team_profile whenever a save leaves the checkbox off, so re-ticking ready waits for an admin again. Never true while opted_in is false (CHECK team_profiles_public_only_when_ready). While it is true, later edits go live with no second look.';
 
 
 --

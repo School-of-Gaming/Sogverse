@@ -27,6 +27,17 @@ export const TEAM_PHOTO_HEIGHT = 1000;
 export const TEAM_PHOTO_URL_TTL_SECONDS = 60 * 60;
 
 /**
+ * The address a public profile's photo is served from: the app's own route,
+ * which serves a photo only while its profile is public. `version` is the
+ * token the public read hands back with the profile, which changes whenever
+ * the photo does, so a new photo is a new address and no cache serves the old
+ * one under it.
+ */
+export function publicTeamPhotoUrl(userId: string, version: string): string {
+  return `/api/team/photos/${encodeURIComponent(userId)}?v=${encodeURIComponent(version)}`;
+}
+
+/**
  * The person's photo. Uploads are cropped to a 4:5 portrait of
  * `TEAM_PHOTO_WIDTH` × `TEAM_PHOTO_HEIGHT` before they are stored, and the
  * frame covers whatever it is handed, so a photo of another shape (the preview
@@ -147,7 +158,8 @@ export interface TeamProfileRecord {
 
 /**
  * Whether a saved profile is on the public page: once an admin has made it
- * so, which the database allows only while it is marked ready.
+ * so, which the database allows only while it is marked ready. Every approved
+ * profile of an admin or a Gedu is public, a trainee Gedu's included.
  */
 export function isTeamProfilePublic(record: TeamProfileRecord): boolean {
   return record.approved;

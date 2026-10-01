@@ -1480,11 +1480,11 @@ COMMIT;
 -- =============================================================================
 -- 13. Team profiles
 -- =============================================================================
--- The owner's admin and the second admin, both public, and the owner's gedu,
--- ready and waiting for an admin to make it public, in English and Finnish.
+-- The owner's admin, the second admin and the owner's gedu, all three public,
+-- so the public team page shows both kinds of profile, in English and Finnish.
 -- Each is saved by its own person through save_team_profile, marked ready,
--- and the owner's admin then makes the two admin profiles public — their own
--- included — through set_team_profile_approval, as any profile goes public.
+-- and the owner's admin then makes all three public — their own included —
+-- through set_team_profile_approval, as any profile goes public.
 -- save_team_profile will not
 -- take a checkbox that is on without a photo, nor a photo path the bucket
 -- holds no object for — so each photo's object row is put in place here,
@@ -1566,13 +1566,13 @@ BEGIN
     p_photo_path   => v_gedu::text || '/seed.jpg',
     p_opted_in     => true);
 
-  -- The owner's admin makes both admin profiles public; the gedu's stays
-  -- waiting, so the user page shows Make public live.
+  -- The owner's admin makes all three profiles public.
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', v_admin::text, 'role', 'authenticated')::text, true);
 
   PERFORM public.set_team_profile_approval(v_admin, true);
   PERFORM public.set_team_profile_approval(v_admin2, true);
+  PERFORM public.set_team_profile_approval(v_gedu, true);
 END;
 $$;
 

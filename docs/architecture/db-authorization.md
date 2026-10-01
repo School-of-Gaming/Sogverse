@@ -156,7 +156,8 @@ the verification spine treats each kind differently:
   voice-room ones — `STABLE SECURITY DEFINER`, return a boolean, never raise. Each is
   granted to `authenticated` because a policy expression is evaluated as the *querying*
   role, so a predicate a policy composes from must be executable by that role. The
-  product-read predicate is the only function granted to `anon`. **A predicate returns a
+  product-read predicate and the public team-photo predicate are the only predicates
+  granted to `anon`. **A predicate returns a
   total boolean** — never NULL. A `USING` clause treats NULL as deny, so a NULL-capable
   predicate is not a hole *there*, but it is a trap for any consumer that is not a policy;
   wrap a disjunction whose first term can be NULL in `COALESCE(…, false)`.
@@ -420,7 +421,11 @@ predicate the RLS policies evaluate is the other shape: `SECURITY DEFINER`, and 
 read a table, but it answers only whether a product exists, identically for every caller
 and with no arm keyed to anyone's identity — so an argument has nothing to aim at either,
 and what it can reveal is which ids exist rather than anything about a person. It too is
-`anon`-reachable, which is a separate allowlist and a separate decision. The primitives
+`anon`-reachable, which is a separate allowlist and a separate decision. The public team
+page's reads are the same shape: `SECURITY DEFINER` over the staff tables, handing every
+caller, `anon` included, the same narrowed slice of the profiles an admin has made public,
+and a yes-or-no predicate for the team-photo read policy about whether an object is one
+of those profiles' current photos. The primitives
 are granted rather than hidden because both paths that reach them are checked as the
 *caller*: a `SECURITY INVOKER` function calling them, and a generated column whose
 expression Postgres evaluates under the privileges of whoever writes the row. Revoking
