@@ -154,7 +154,7 @@ export function LocalePicker({ className }: { className?: string }) {
         <span className="h-4 w-6 [&>svg]:h-full">
           <FlagComponent country={config.country} nativeLabel={config.nativeLabel} />
         </span>
-        <span className="hidden lg:inline">{locale.toUpperCase()}</span>
+        <span>{locale.toUpperCase()}</span>
         <ChevronDown className="h-3 w-3 text-muted-foreground" />
       </button>
       {open && (
