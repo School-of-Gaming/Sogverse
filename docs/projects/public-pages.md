@@ -125,7 +125,7 @@ the features, safety, three more testimonials, "How it works", the closing card.
 - **The hero states the offer in one sentence**: weekly clubs for ages 7–17, online and in
   person, from €59 per month, a Game Educator leading every lesson in Minecraft, Roblox,
   Fortnite and more. Lesson length is left out because it is set per club, not
-  fixed. Its one call to action is "Find a club", to the shop's clubs, the same for every
+  fixed. Its one call to action is "Find a club", to the unfiltered shop, the same for every
   reader signed in or not, with the risk reversal directly under it: cancel any time at
   no cost, 30-day money-back guarantee. The closing card repeats that button and line, so
   the page opens and closes on the same ask.
@@ -445,3 +445,4 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-09-25 | "Find a club" is the home page's button for every reader, signed in or not (owner). |
 | 2026-09-25 | Every locale persuades its own audience; the pages are open to any change within the brand guidelines, and a guideline may be challenged through the owner (owner). |
 | 2026-09-25 | The project lives on its own branch, `feat/public-pages`, and merges into `dev` when the owner decides (owner). |
+| 2026-10-01 | "Find a club" opens the shop unfiltered: clubs lead the list, and camps and events follow without touching a filter (owner). |

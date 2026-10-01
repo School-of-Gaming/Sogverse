@@ -57,8 +57,12 @@ const rowTestimonialKeys = ["sighWithHappiness", "largeGroups", "finnishImproved
 
 const trustKeys = ["cancel", "guarantee"] as const;
 
-/** Every call to action on this page goes to the shop's clubs, not to signup. */
-const findClubHref = ROUTES.shopBrowse("consumer_club");
+/**
+ * Every call to action on this page goes to the shop, not to signup, and
+ * unfiltered: clubs lead its list anyway, and a parent scrolling on meets the
+ * camps and events without touching a filter.
+ */
+const findClubHref = ROUTES.shop;
 
 /**
  * The risk reversal under each "Find a club": cancel any time, and the 30-day
