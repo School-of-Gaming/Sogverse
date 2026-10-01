@@ -11,7 +11,8 @@ wide), and the repo holds only what a page serves.
 The owner cleared this set on 2026-10-01: every member of staff shown has consented, and
 no child's face is identifiable in any of them — the club photo was judged fine
 uncropped. A new photo of people needs the same clearance before it is committed, and a
-crop is a new picture, so a photo is shown whole, in its own proportions.
+crop is a new picture, so a photo is shown whole, in its own proportions. The
+characters and name tags in the hero loop are test accounts, not gamers.
 
 | File | Master |
 |---|---|

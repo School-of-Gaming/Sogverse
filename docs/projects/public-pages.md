@@ -78,6 +78,11 @@ one is currently broken somewhere on these pages or was nearly broken in the fir
 - **Navigation** is named for what a parent searches: Clubs, Camps, For parents, How it
   works, About (Finnish: Kerhot, Leirit, Opas vanhemmille, —, Meistä).
 
+**Rule (owner, 2026-10-01): the home page holds nothing that lives nowhere else.** A
+signed-in reader never reaches it, so each of its sections is the short form of a page
+they can reach (About and its FAQ, Team, the Library, the shop) and links to it. Before a
+section is added, name the page that holds its full version.
+
 **Rule (owner, 2026-09-25): every look-and-feel decision is judged at both desktop and
 mobile widths.** A layout, section order or visual that works on one and not the other is
 not done. The first screen is judged twice, because a parent on a phone sees far less of it
@@ -410,7 +415,11 @@ decided.**
   is in small side profile in its back row, so a tight crop can leave him out.
 - **Still to come from her:** a Gedu greeting the group in a voice room, a parent and
   child at the screen, one image per club category (staged with in-game characters),
-  portraits, and Library images once topics are listed. The sample session report is
+  portraits, Library images once topics are listed, and in time a higher-resolution
+  export of the hero loop for wide and ultrawide monitors (the 1920px cut is upscaled
+  there; not urgent, owner 2026-10-01). A staged lesson clip with the Gedu's character in
+  view, which the hero ask described and the "Calm" loop is not, would earn its own framed
+  place further down the page; the loop stays the hero's background. The sample session report is
   ours to capture from a staging test account, not hers.
 - **Numbers:** no headline figure (customers, municipalities) is cleared to publish.
 
@@ -450,6 +459,8 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 
 ## Tasks and open questions
 
+- [ ] About: a "What parents say" section holding the testimonials, which today live only
+      on the home page (the rule above).
 - [ ] Owner decision: the division of jobs between the three pages, above.
 - [ ] Owner decision: the proposed home page structure, above.
 - [ ] Assets: lesson imagery and Gedu photos are planned but do not exist yet; headline
@@ -495,5 +506,8 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-10-01 | A team profile goes public on admin approval alone; every approved profile is listed, trainees included, Gedus by first name and gamer tag (owner). |
 | 2026-10-01 | Phones navigate by a bottom tab bar on every page, for every role; its first tab is the reader's home, the dashboard when signed in (owner). |
 | 2026-10-01 | A signed-in reader never reaches the home page (owner). |
+| 2026-10-01 | The home page holds nothing that lives nowhere else; each section summarises a page a signed-in reader can reach (owner). |
+| 2026-10-01 | The hero sets its text on the scrim over its background loop, a declared exemption recorded in SOG-UI's surfaces (owner). |
+| 2026-10-01 | The hero loop takes no game-screenshot window frame; whether the frame applies to other in-game screenshots on the website is decided when one arrives (owner). |
 | 2026-10-01 | Sonja's first images are cleared to publish: the staff shown consented, and no child's face is visible (owner). |
 | 2026-10-01 | "Find a club" opens the shop unfiltered: clubs lead the list, and camps and events follow without touching a filter (owner). |

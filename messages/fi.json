@@ -2675,7 +2675,7 @@
       "home": "Etusivu",
       "library": "Kirjasto",
       "team": "Tiimi",
-      "tabBar": "Sivuston navigointi"
+      "tabBar": "Päävalikko"
     },
     "accountMenu": "Tilivalikko – {name}",
     "continueToAccount": "Jatka tilillesi",
