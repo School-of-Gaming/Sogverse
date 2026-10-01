@@ -142,9 +142,12 @@ function useTeamProfileEditor(
  */
 export function TeamProfileEditor({
   record,
+  publicAddress,
   editedByAdmin = false,
 }: {
   record: TeamProfileRecord;
+  /** The public page's address, read on the server (`teamMemberPublicAddress`). */
+  publicAddress: string | null;
   editedByAdmin?: boolean;
 }) {
   const save = useSaveTeamProfile();
@@ -157,6 +160,7 @@ export function TeamProfileEditor({
       profile={editor.profile}
       ready={editor.ready}
       approved={editor.approved}
+      publicAddress={publicAddress}
       actions={editor.actions}
       saving={editor.saving}
       saveError={editor.saveError}

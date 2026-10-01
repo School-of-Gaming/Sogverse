@@ -8,6 +8,7 @@ import {
   findTeamMemberBySlug,
   teamMemberAddress,
 } from "@/components/team/team-address";
+import { teamMemberPlainName } from "@/components/team/team-name";
 import { TeamProfileBody } from "@/components/team/team-profile-body";
 import { TeamClosingCta } from "@/components/team/public/team-closing-cta";
 import {
@@ -37,15 +38,16 @@ const loadTeam = cache(async () =>
 );
 
 /**
- * The public profile a segment names, or null: an id by the one-profile read,
- * a slug by matching the slugs of the public list. Anything not public — a
- * hidden or unapproved profile, someone not on the staff, a slug nobody
- * derives — is null alike, and the page answers it with a 404.
+ * The public profile a segment names, or null: an id or a slug, each matched
+ * against the public list — the one read a request makes, shared with the
+ * canonical address. Anything not public — a hidden or unapproved profile,
+ * someone not on the staff, a slug nobody derives — is null alike, and the
+ * page answers it with a 404.
  */
 const loadPerson = cache(async (segment: string) =>
   resolveIdOrSlug<TeamProfile>(segment, {
     byId: async (id) =>
-      new TeamProfilesService(await createClient()).getPublicTeamProfile(id),
+      (await loadTeam()).find((person) => person.id === id) ?? null,
     bySlug: async (slug) => findTeamMemberBySlug(await loadTeam(), slug),
   }),
 );
@@ -55,27 +57,10 @@ async function loadPage(segment: string) {
   const person = await loadPerson(segment);
   if (person === null) return null;
   const t = await getTranslations("team.profile");
-  const name =
-    person.nickname === null
-      ? person.kind === "admin"
-        ? `${person.firstName} ${person.lastName}`
-        : person.firstName
-      : person.kind === "admin"
-        ? t.markup("nameWithNickname", {
-            firstName: person.firstName,
-            lastName: person.lastName,
-            nickname: person.nickname,
-            nick: (chunks) => chunks,
-          })
-        : t.markup("firstNameWithNickname", {
-            firstName: person.firstName,
-            nickname: person.nickname,
-            nick: (chunks) => chunks,
-          });
   return {
     person,
     address: teamMemberAddress(await loadTeam(), person),
-    name,
+    name: teamMemberPlainName(person, t),
     jobTitle: person.kind === "admin" ? person.title : t("geduTitle"),
   };
 }

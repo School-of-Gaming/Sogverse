@@ -38,6 +38,7 @@ import { GeduContractService } from "@/services/gedu/gedu-contract.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
 import type { TeamProfileRecord } from "@/services/team-profiles/team-profiles.types";
 import { UserTeamProfileCard } from "@/components/admin/user-team-profile-card";
+import { teamMemberPublicAddress } from "@/components/team/team-address";
 import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@/types";
 
 /**
@@ -69,6 +70,26 @@ const STATUS_BADGE_STYLES: Record<ParticipationStatus, string> = {
   reserving: "border border-border bg-transparent text-info",
   completed: "border border-border bg-transparent text-muted-foreground",
 };
+
+/**
+ * A person's team profile record, and its public page's address while it is
+ * live (`teamMemberPublicAddress`) — the list read only for a live profile.
+ */
+async function readTeamProfile(
+  service: TeamProfilesService,
+  userId: string,
+): Promise<{ record: TeamProfileRecord | null; publicAddress: string | null }> {
+  const record = await service.getTeamProfile(userId);
+  return {
+    record,
+    publicAddress:
+      record === null
+        ? null
+        : await teamMemberPublicAddress(record, () =>
+            service.listPublicTeamProfiles(),
+          ),
+  };
+}
 
 /**
  * One assigned-product row: product name + assigned group, with a status
@@ -191,7 +212,7 @@ export default async function AdminUserDetailPage({
     robloxAccount,
     geduCertification,
     geduAcceptances,
-    teamProfile,
+    { record: teamProfile, publicAddress: teamProfileAddress },
     viewer,
   ] = await Promise.all([
     isCustomer
@@ -223,10 +244,11 @@ export default async function AdminUserDetailPage({
     // The team profile, read here so its card paints complete: its status
     // and summary differ in height from one profile to the next. Not caught:
     // the id has already matched a profile, so it cannot be malformed, and a
-    // failed read shown as no profile would be the wrong answer.
+    // failed read shown as no profile would be the wrong answer. A live
+    // profile's public address follows it, judged against the public list.
     hasTeamProfile
-      ? new TeamProfilesService(supabase).getTeamProfile(userId)
-      : Promise.resolve<TeamProfileRecord | null>(null),
+      ? readTeamProfile(new TeamProfilesService(supabase), userId)
+      : Promise.resolve({ record: null, publicAddress: null }),
     // Who is looking, so the card can send an admin to their own profile
     // through settings. Cached for the request: the layout has read it.
     hasTeamProfile ? getUserWithProfile() : Promise.resolve(null),
@@ -520,6 +542,7 @@ export default async function AdminUserDetailPage({
         <UserTeamProfileCard
           userId={userId}
           initial={teamProfile}
+          publicAddress={teamProfileAddress}
           isViewer={viewer?.user.id === userId}
         />
       )}

@@ -7,10 +7,9 @@ list read that can outgrow a single response goes through. The factories are des
 normative for every service in the codebase and not only the ones that happen to page
 today.
 
-(An identity-free server read — the team photo route, the sitemap's read of the public
-team — builds its own supabase-js client with the anon key and no cookies, so its answer
-is the same for whoever asks. A page cannot buy caching that way while the root layout
-reads the session on every request.)
+(An identity-free server read goes through `createAnonClient()` in `anon.ts` — the anon
+key and no cookies, so its answer is the same for whoever asks. A page cannot buy caching
+that way while the root layout reads the session on every request.)
 
 ## The problem paging exists to solve
 

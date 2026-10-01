@@ -1,11 +1,13 @@
 import { createHash } from "node:crypto";
+import { PICKS } from "@sog/ui";
+import { DARK_THEME } from "@/lib/constants/colors";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 
 /**
- * The team member's share card: its address, its version, and the numbers the
- * drawing is built from. The route that draws it is
+ * The team member's share card: its address, its version, the numbers the
+ * drawing is built from, and the portrait's frame. The route that draws it is
  * `src/app/opengraph-images/team/[userId]/route.tsx`; it shares the site
  * cards' shape (`./cards`) — a root-level route handler the proxy's matcher
  * excludes, the locale as a query parameter — and differs from them in one
@@ -145,4 +147,27 @@ const REM_PX = 16;
 export function teamCardGlow(color: string): string {
   const px = (rem: number) => rem * REM_PX * TEAM_CARD_GLOW_SCALE;
   return `inset 0 0 ${px(ZONE_GLOW_GEOMETRY.blurRem)}px ${px(ZONE_GLOW_GEOMETRY.spreadRem)}px ${color}`;
+}
+
+/** The frame's width, in pixels of the card. */
+const TEAM_CARD_FRAME_WIDTH = 6;
+
+/**
+ * **The portrait's frame, as the profile page draws it.** A person who picked
+ * a colour is edged in it and glows with it (`teamCardGlow`); a person with no
+ * pick gets the neutral edge, at the same width, and no glow — the card adds
+ * no accent the page does not show. The style the frame's layer takes: the
+ * shadow is left out rather than set empty, which the renderer refuses.
+ */
+export function teamCardFrame(pick: TeamProfile["pick"]): {
+  border: string;
+  boxShadow?: string;
+} {
+  const hex = PICKS.find((candidate) => candidate.id === pick)?.hex;
+  return hex === undefined
+    ? { border: `${TEAM_CARD_FRAME_WIDTH}px solid ${DARK_THEME.border}` }
+    : {
+        border: `${TEAM_CARD_FRAME_WIDTH}px solid ${hex}`,
+        boxShadow: teamCardGlow(hex),
+      };
 }

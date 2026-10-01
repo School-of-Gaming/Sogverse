@@ -130,7 +130,6 @@ export function siteJsonLd({ siteUrl, description }: SiteJsonLdInput): {
   "@context": string;
   "@graph": [OrganizationNode, WebSiteNode];
 } {
-
   return {
     "@context": "https://schema.org",
     "@graph": [

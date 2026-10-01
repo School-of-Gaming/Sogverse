@@ -19,6 +19,11 @@ import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
  * through `resolveTranslation()` as the body does — and canonicalises to the
  * address of the locale whose text it shows. So only the locales they wrote
  * are language versions, and each of those is its own canonical.
+ *
+ * **Text in a locale that is not indexed is never canonicalised to.** That
+ * locale's page is noindex (`INDEXED_LOCALES`: Klingon, a real locale but an
+ * easter egg), so a page showing such text — a Klingon-only profile read at
+ * English, say — is its own canonical and names no language versions.
  */
 
 /** The locale whose words the page shows at this locale: its own when written, else the fallback's. */
@@ -37,16 +42,27 @@ function addressAt(address: string, locale: SupportedLocale): string {
   return getPathname({ href: ROUTES.teamMember(address), locale });
 }
 
+/** Whether the page at `locale` shows words written in an indexed locale. */
+function showsIndexedText(person: TeamProfile, locale: SupportedLocale): boolean {
+  return INDEXED_LOCALES.includes(teamMemberTextLocale(person, locale));
+}
+
 /**
  * The canonical path of the person's page read at `locale`: their canonical
- * address (`teamMemberAddress`) at the locale whose words the page shows.
+ * address (`teamMemberAddress`) at the locale whose words the page shows, or
+ * at `locale` itself when those words are in a locale that is not indexed.
  */
 export function teamMemberCanonicalPath(
   person: TeamProfile,
   address: string,
   locale: SupportedLocale,
 ): string {
-  return addressAt(address, teamMemberTextLocale(person, locale));
+  return addressAt(
+    address,
+    showsIndexedText(person, locale)
+      ? teamMemberTextLocale(person, locale)
+      : locale,
+  );
 }
 
 /**
@@ -112,7 +128,11 @@ export async function teamMemberMetadata({
   const written = resolveTranslation(person.translations, locale);
   const description = written?.shortDescription;
   const canonical = teamMemberCanonicalPath(person, address, locale);
-  const languages = teamMemberAlternates(person, address);
+  // A page showing text that is not indexed is its own canonical, outside
+  // the set of language versions, so it names none of them.
+  const languages = showsIndexedText(person, locale)
+    ? teamMemberAlternates(person, address)
+    : {};
   const card = await teamCardImage(person, locale, name);
 
   return {

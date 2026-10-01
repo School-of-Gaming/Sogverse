@@ -1,11 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
+import { createAnonClient } from "@/lib/supabase/anon";
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
 // The module directly rather than the feature barrel: the barrel carries
 // browser-only React Query hooks.
 import { readPublicTeamPhoto } from "@/services/team-profiles/public-team-photo";
-import type { Database } from "@/types/database.types";
 
 /**
  * GET /api/team/photos/[userId]?v=<version> — the photo of one public team
@@ -57,11 +56,7 @@ export const GET = defineRoute({
   query: z.object({ v: z.string().max(64).optional() }),
 
   handler: async ({ params }) => {
-    const supabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { auth: { persistSession: false } },
-    );
+    const supabase = createAnonClient();
     const photo = await readPublicTeamPhoto(supabase, params.userId);
     if (!photo.ok) throw new ApiError(photo.reason, 404);
 

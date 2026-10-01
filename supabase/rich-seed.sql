@@ -1483,9 +1483,15 @@ COMMIT;
 -- The owner's admin and the owner's gedu, both public, so the public team page
 -- shows both kinds of profile, and the second admin's, ready and waiting for
 -- an admin to make it public, in English and Finnish.
+-- Aino's is public too, in English only and with no pick, and exists for its
+-- headline: "Aino “TheRedstoneArchitect”" is long enough that the share card
+-- shrinks it below its full size, yet short enough to stay above the floor
+-- and render whole (`teamCardHeadlineSize` in `src/lib/og/team-card.ts`; a
+-- unit test reads the nickname from here and holds it to that). With no pick,
+-- her card also shows the neutral frame.
 -- Each is saved by its own person through save_team_profile, marked ready,
--- and the owner's admin then makes their own and the gedu's public through
--- set_team_profile_approval, as any profile goes public.
+-- and the owner's admin then makes their own, the gedu's and Aino's public
+-- through set_team_profile_approval, as any profile goes public.
 -- save_team_profile will not
 -- take a checkbox that is on without a photo, nor a photo path the bucket
 -- holds no object for — so each photo's object row is put in place here,
@@ -1498,7 +1504,8 @@ BEGIN;
 INSERT INTO storage.objects (bucket_id, name)
 SELECT 'team-photos', p.id::text || '/seed.jpg'
   FROM public.profiles p
- WHERE p.email IN ('admin@example.com', 'admin2@example.com', 'gedu@example.com');
+ WHERE p.email IN ('admin@example.com', 'admin2@example.com', 'gedu@example.com',
+                   'aino.virtanen@example.com');
 
 SELECT set_config('request.jwt.claims',
   json_build_object('sub', (SELECT id::text FROM public.profiles
@@ -1511,6 +1518,7 @@ DECLARE
   v_admin  uuid := (SELECT id FROM public.profiles WHERE email = 'admin@example.com');
   v_admin2 uuid := (SELECT id FROM public.profiles WHERE email = 'admin2@example.com');
   v_gedu   uuid := (SELECT id FROM public.profiles WHERE email = 'gedu@example.com');
+  v_aino   uuid := (SELECT id FROM public.profiles WHERE email = 'aino.virtanen@example.com');
 BEGIN
   PERFORM public.save_team_profile(
     p_user_id      => v_admin,
@@ -1567,13 +1575,28 @@ BEGIN
     p_photo_path   => v_gedu::text || '/seed.jpg',
     p_opted_in     => true);
 
-  -- The owner's admin makes their own profile and the gedu's public; the
-  -- second admin's stays waiting, so the user page shows Make public live.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', v_aino::text, 'role', 'authenticated')::text, true);
+
+  PERFORM public.save_team_profile(
+    p_user_id      => v_aino,
+    p_translations => jsonb_build_array(jsonb_build_object(
+      'locale', 'en',
+      'short_description', 'I design the builds our club teams spend a whole term finishing.',
+      'long_description', E'I run Minecraft build clubs in Helsinki and Espoo.\n\n**What we make together:**\n\n- Towns planned street by street before the first block goes down\n- Redstone that opens, lights up or plays a tune\n- Showcases where every builder walks the others through their part',
+      'fun_fact', NULL)),
+    p_nickname     => 'TheRedstoneArchitect',
+    p_photo_path   => v_aino::text || '/seed.jpg',
+    p_opted_in     => true);
+
+  -- The owner's admin makes their own profile, the gedu's and Aino's public;
+  -- the second admin's stays waiting, so the user page shows Make public live.
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', v_admin::text, 'role', 'authenticated')::text, true);
 
   PERFORM public.set_team_profile_approval(v_admin, true);
   PERFORM public.set_team_profile_approval(v_gedu, true);
+  PERFORM public.set_team_profile_approval(v_aino, true);
 END;
 $$;
 

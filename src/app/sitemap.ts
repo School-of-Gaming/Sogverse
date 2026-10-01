@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { createClient } from "@supabase/supabase-js";
+import { createAnonClient } from "@/lib/supabase/anon";
 import { teamMemberAddress } from "@/components/team/team-address";
 import { teamMemberLocales } from "@/components/team/public/team-member-metadata";
 import { getPathname } from "@/i18n/navigation";
@@ -8,7 +8,6 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import type { StaticAppHref } from "@/lib/constants/routes";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
-import type { Database } from "@/types/database.types";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL!;
 
@@ -87,11 +86,7 @@ function localizedEntries(
 
 /** The public team, read with the anon key and no cookies. */
 async function readPublicTeam() {
-  const supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } },
-  );
+  const supabase = createAnonClient();
   return new TeamProfilesService(supabase).listPublicTeamProfiles();
 }
 

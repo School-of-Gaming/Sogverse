@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
+import { teamMemberPublicAddress } from "@/components/team/team-address";
 import { TeamProfileEditor } from "@/components/team/team-profile-editor";
 import { redirect } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -44,17 +45,26 @@ export default async function AdminUserTeamProfilePage({
     redirect({ href: ROUTES.settingsTeamProfile, locale: await getLocale() });
   }
 
-  const supabase = await createClient();
+  const service = new TeamProfilesService(await createClient());
   // A malformed id is refused by the database (22P02) rather than matched to
   // nobody; either way there is no profile here. Any other failure is a
   // failed read, not a missing profile, and takes the page's error path.
-  const record = await new TeamProfilesService(supabase)
+  const record = await service
     .getTeamProfile(id)
     .catch((error: unknown) => {
       if (isInvalidTextRepresentation(error)) return null;
       throw error;
     });
   if (record === null) notFound();
+  const publicAddress = await teamMemberPublicAddress(record, () =>
+    service.listPublicTeamProfiles(),
+  );
 
-  return <TeamProfileEditor record={record} editedByAdmin />;
+  return (
+    <TeamProfileEditor
+      record={record}
+      publicAddress={publicAddress}
+      editedByAdmin
+    />
+  );
 }

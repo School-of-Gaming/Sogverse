@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createAnonClient } from "@/lib/supabase/anon";
 import { defineRoute } from "@/lib/api/define-route";
 import {
   LOCATION_SEARCH_LIMIT,
   locationSearchResult,
   searchLocationsQuery,
 } from "@/services/locations/locations.contracts";
-import type { Database } from "@/types/database.types";
 
 /**
  * GET /api/locations/search — the one location read a keystroke drives.
@@ -60,11 +59,7 @@ export const GET = defineRoute({
   query: searchLocationsQuery,
 
   handler: async ({ query }) => {
-    const supabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { auth: { persistSession: false } },
-    );
+    const supabase = createAnonClient();
 
     const { data, error } = await supabase.rpc("search_locations", {
       p_query: query.q,

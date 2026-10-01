@@ -2,6 +2,7 @@ import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { TeamPhotoPlaceholder } from "@/components/team/team-photo-placeholder";
+import { teamMemberPlainName } from "@/components/team/team-name";
 import { Link } from "@/i18n/navigation";
 import { resolveLocale } from "@/lib/constants/locales";
 import type { AppHref } from "@/lib/constants/routes";
@@ -39,23 +40,7 @@ export function TeamMemberCard({
   const written = resolveTranslation(profile.translations, locale);
 
   // The heading's own words, without its colour: a card title is not a hero.
-  const name =
-    profile.nickname === null
-      ? profile.kind === "admin"
-        ? `${profile.firstName} ${profile.lastName}`
-        : profile.firstName
-      : profile.kind === "admin"
-        ? t.markup("nameWithNickname", {
-            firstName: profile.firstName,
-            lastName: profile.lastName,
-            nickname: profile.nickname,
-            nick: (chunks) => chunks,
-          })
-        : t.markup("firstNameWithNickname", {
-            firstName: profile.firstName,
-            nickname: profile.nickname,
-            nick: (chunks) => chunks,
-          });
+  const name = teamMemberPlainName(profile, t);
   const title = profile.kind === "admin" ? profile.title : t("geduTitle");
 
   return (

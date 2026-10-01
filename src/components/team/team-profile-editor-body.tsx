@@ -28,7 +28,7 @@ import {
   type TeamProfileGap,
 } from "@/components/team/team-profile-form";
 import { TeamProfilePreviewFrame } from "@/components/team/team-profile-preview-frame";
-import { teamMemberSharedAddress } from "@/components/team/team-address";
+import { teamMemberLinkAddress } from "@/components/team/team-address";
 import {
   TeamProfileStatusPanel,
   teamProfileStatus,
@@ -77,6 +77,11 @@ export type TeamProfileEditorProps = TeamProfileSaveState & {
   ready: boolean;
   /** An admin has made it public, decided on the user page and only read here. */
   approved: boolean;
+  /**
+   * The public page's address as the server read it while the profile was
+   * live (`teamMemberPublicAddress`), or nothing.
+   */
+  publicAddress?: string | null;
 };
 
 /**
@@ -177,7 +182,9 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
           <PublicSection
             byAdmin={byAdmin}
             name={props.profile.firstName}
-            publicHref={ROUTES.teamMember(teamMemberSharedAddress(props.profile))}
+            publicHref={ROUTES.teamMember(
+              teamMemberLinkAddress(props.profile, props.publicAddress ?? null),
+            )}
             status={status}
             on={on}
             gap={gap}

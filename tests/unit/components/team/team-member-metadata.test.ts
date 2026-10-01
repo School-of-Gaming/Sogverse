@@ -27,7 +27,8 @@ vi.mock("next-intl/server", () => ({
 const {
   findTeamMemberBySlug,
   teamMemberAddress,
-  teamMemberSharedAddress,
+  teamMemberLinkAddress,
+  teamMemberPublicAddress,
   teamMemberSlug,
 } = await import("@/components/team/team-address");
 const {
@@ -65,7 +66,46 @@ describe("a team member's addresses", () => {
     const person = publicGeduProfile({ firstName: "李", nickname: null });
 
     expect(teamMemberAddress([person], person)).toBe(person.id);
-    expect(teamMemberSharedAddress(person)).toBe(person.id);
+  });
+});
+
+describe("the public page a staff page links to", () => {
+  const live = { ready: true, approved: true };
+
+  it("links the second person deriving a slug to their own page by id, never the first's", async () => {
+    const first = publicGeduProfile();
+    const second = publicGeduProfile({ id: SECOND_EETU_ID });
+    const listTeam = async () => [first, second];
+
+    const read = await teamMemberPublicAddress({ ...live, profile: second }, listTeam);
+    expect(read).toBe(SECOND_EETU_ID);
+    expect(teamMemberLinkAddress(second, read)).toBe(SECOND_EETU_ID);
+
+    const firstRead = await teamMemberPublicAddress({ ...live, profile: first }, listTeam);
+    expect(teamMemberLinkAddress(first, firstRead)).toBe("eetu-creeperhug");
+  });
+
+  it("reads no list for a profile that is not live", async () => {
+    const listTeam = vi.fn(async () => [publicGeduProfile()]);
+
+    for (const record of [
+      { ready: true, approved: false },
+      { ready: false, approved: false },
+    ]) {
+      expect(
+        await teamMemberPublicAddress({ ...record, profile: publicGeduProfile() }, listTeam),
+      ).toBeNull();
+    }
+    expect(listTeam).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the id when no address was read or the name has changed since", () => {
+    const person = publicGeduProfile();
+
+    expect(teamMemberLinkAddress(person, null)).toBe(person.id);
+    expect(
+      teamMemberLinkAddress({ ...person, nickname: "Redstoner" }, "eetu-creeperhug"),
+    ).toBe(person.id);
   });
 });
 
@@ -115,9 +155,33 @@ describe("a team member's language versions", () => {
       teamMemberAlternates(publicGeduProfile({ locales: ["tlh"] }), "x"),
     ).toEqual({});
   });
+
+  it("never canonicalise to text in a locale that is not indexed", () => {
+    // A Klingon-only profile read at English shows the Klingon text, whose
+    // own page is noindex: the English page is its own canonical instead.
+    const klingon = publicGeduProfile({ locales: ["tlh"] });
+    expect(teamMemberCanonicalPath(klingon, "eetu-creeperhug", "en")).toBe(
+      "/en/team/eetu-creeperhug",
+    );
+    expect(teamMemberCanonicalPath(klingon, "eetu-creeperhug", "fi")).toBe(
+      "/fi/tiimi/eetu-creeperhug",
+    );
+  });
 });
 
 describe("teamMemberMetadata", () => {
+  it("makes a page showing Klingon text its own canonical, with no hreflang", async () => {
+    const metadata = await teamMemberMetadata({
+      person: publicGeduProfile({ locales: ["tlh"] }),
+      address: "eetu-creeperhug",
+      requestLocale: "en",
+      name: "Eetu “CreeperHug”",
+    });
+
+    expect(metadata.alternates?.canonical).toBe("/en/team/eetu-creeperhug");
+    expect(metadata.alternates).not.toHaveProperty("languages");
+  });
+
   it("titles the page with the name, describes it with the intro shown, and canonicalises to the slug", async () => {
     const person = publicGeduProfile({ locales: ["en", "fi"] });
     const metadata = await teamMemberMetadata({

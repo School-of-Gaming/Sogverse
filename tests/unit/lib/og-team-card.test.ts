@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { DARK_THEME } from "@/lib/constants/colors";
 import {
   TEAM_CARD_HEADLINE_MAX,
   TEAM_CARD_HEADLINE_MIN,
+  teamCardFrame,
   teamCardGlow,
   teamCardHeadlineSize,
   teamCardUrl,
@@ -97,6 +99,24 @@ describe("the team card's headline size", () => {
   it("never shrinks below the floor", () => {
     expect(teamCardHeadlineSize("x".repeat(200))).toBe(TEAM_CARD_HEADLINE_MIN);
   });
+
+  it("shrinks the rich seed's long-named Gedu, and keeps her above the floor", () => {
+    // The seed gives Aino a nickname long enough to show the shrink on a
+    // local stack; read from the seed, so a renamed nickname cannot quietly
+    // stop doing that.
+    const seed = readFileSync(
+      join(process.cwd(), "supabase", "rich-seed.sql"),
+      "utf8",
+    );
+    const nickname = /p_user_id\s*=>\s*v_aino,[\s\S]*?p_nickname\s*=>\s*'([^']+)'/.exec(
+      seed,
+    )?.[1];
+    expect(nickname).toBeDefined();
+
+    const size = teamCardHeadlineSize(`Aino “${nickname}”`);
+    expect(size).toBeLessThan(TEAM_CARD_HEADLINE_MAX);
+    expect(size).toBeGreaterThan(TEAM_CARD_HEADLINE_MIN);
+  });
 });
 
 describe("the team card's glow", () => {
@@ -113,5 +133,21 @@ describe("the team card's glow", () => {
 
   it("is that geometry, scaled, as an inset shadow in the given colour", () => {
     expect(teamCardGlow("#A36BF6")).toBe("inset 0 0 48px -9.6px #A36BF6");
+  });
+});
+
+describe("the team card's portrait frame", () => {
+  it("is edged in the person's pick and glows with it", () => {
+    expect(teamCardFrame(6)).toEqual({
+      border: "6px solid #46CF5A",
+      boxShadow: teamCardGlow("#46CF5A"),
+    });
+  });
+
+  it("is the profile page's neutral edge, with no glow, for a person with no pick", () => {
+    // No shadow at all, not an empty one: the renderer refuses that.
+    expect(teamCardFrame(null)).toStrictEqual({
+      border: `6px solid ${DARK_THEME.border}`,
+    });
   });
 });

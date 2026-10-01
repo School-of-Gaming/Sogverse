@@ -1,5 +1,8 @@
 import { findBySlug, slugAddressOf, slugify } from "@/lib/slug";
-import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
+import type {
+  TeamProfile,
+  TeamProfileRecord,
+} from "@/services/team-profiles/team-profiles.types";
 
 /*
  * Where a person's public page lives. Two addresses, neither redirecting
@@ -41,14 +44,33 @@ export function teamMemberAddress(
 }
 
 /**
- * The segment the staff editor and the admin user page link a live profile
- * to, with no public list in hand: the person's slug, or their id when they
- * derive none. Two people sharing a slug is rare enough that the link is not
- * worth a read of the whole team; the one listed second still has their id.
+ * The segment a staff page links a profile's public page to, judged against
+ * the public list like every other address — so the second of two people
+ * deriving one slug is linked to their own page by id, never to the first's.
+ * Read on the server, and only for a live profile (ready and made public):
+ * anything else has no public page to link and answers `null` without reading
+ * the list.
  */
-export function teamMemberSharedAddress(
+export async function teamMemberPublicAddress(
+  record: Pick<TeamProfileRecord, "profile" | "ready" | "approved">,
+  listPublicTeam: () => Promise<readonly TeamProfile[]>,
+): Promise<string | null> {
+  if (!record.ready || !record.approved) return null;
+  return teamMemberAddress(await listPublicTeam(), record.profile);
+}
+
+/**
+ * The segment to link a person's public page to from a staff page, given the
+ * address the page was read with (`teamMemberPublicAddress`): that address
+ * while the person still derives it, else their id, which always resolves —
+ * for a name saved since the read, or a profile made public since it, whose
+ * place in the list was never read.
+ */
+export function teamMemberLinkAddress(
   person: Pick<TeamProfile, "id" | "firstName" | "nickname">,
+  readAddress: string | null,
 ): string {
-  const slug = teamMemberSlug(person);
-  return slug === "" ? person.id : slug;
+  return readAddress !== null && readAddress === teamMemberSlug(person)
+    ? readAddress
+    : person.id;
 }

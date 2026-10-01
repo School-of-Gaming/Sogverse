@@ -298,15 +298,15 @@ docker exec -i "supabase_db_$project" \
 
 echo "Product images: $(wc -l < "$work/manifest") files to the $product_bucket bucket and $(wc -l < "$work/covers") Library covers to the $cover_bucket bucket, $uploaded newly uploaded."
 
-# TEAM PHOTOS. The rich seed saves the owner's admin, the second admin and
-# the gedu with their checkbox on, which save_team_profile allows only with a
+# TEAM PHOTOS. The rich seed saves the owner's admin, the second admin, the
+# gedu and Aino with their checkbox on, which save_team_profile allows only with a
 # photo, so the seed names each photo's path and the bytes go up here, to
 # exactly that path. The pictures are the preview art the team fixtures
 # borrow: abstract art, never a picture of a person. `x-upsert: true` because
 # a path names one person on one database, and a second `up` over a storage
 # volume that outlived its database is writing the same bytes again.
 team_bucket=team-photos
-for pair in "admin@example.com:session-badge.jpg" "admin2@example.com:session-arena.jpg" "gedu@example.com:session-tower.jpg"; do
+for pair in "admin@example.com:session-badge.jpg" "admin2@example.com:session-arena.jpg" "gedu@example.com:session-tower.jpg" "aino.virtanen@example.com:session-build.jpg"; do
   email=${pair%%:*}
   art="$checkout/public/preview-art/${pair#*:}"
   path=$(docker exec -i "supabase_db_$project" \
@@ -336,4 +336,4 @@ for pair in "admin@example.com:session-badge.jpg" "admin2@example.com:session-ar
       ;;
   esac
 done
-echo "Team photos: 3 uploaded to the $team_bucket bucket."
+echo "Team photos: 4 uploaded to the $team_bucket bucket."

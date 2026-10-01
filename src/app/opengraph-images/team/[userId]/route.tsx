@@ -1,11 +1,11 @@
 import { ImageResponse } from "next/og";
 import { getTranslations } from "next-intl/server";
-import { createClient } from "@supabase/supabase-js";
+import { createAnonClient } from "@/lib/supabase/anon";
 import sharp from "sharp";
-import { PICKS } from "@sog/ui";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { SogBadge } from "@/components/og/marks";
 import { SogWordmark } from "@/components/brand/sog-wordmark";
+import { teamMemberPlainName } from "@/components/team/team-name";
 import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cardLocaleOf, OG_CARD_SIZE } from "@/lib/og/cards";
@@ -13,7 +13,7 @@ import {
   TEAM_CARD_CACHE_CONTROL,
   TEAM_CARD_COLUMN_WIDTH,
   TEAM_CARD_LAYOUT,
-  teamCardGlow,
+  teamCardFrame,
   teamCardHeadlineSize,
 } from "@/lib/og/team-card";
 // The modules directly rather than the feature barrel: the barrel carries
@@ -24,10 +24,10 @@ import {
   TEAM_PHOTO_HEIGHT,
   TEAM_PHOTO_WIDTH,
 } from "@/services/team-profiles/team-profiles.types";
-import type { Database } from "@/types/database.types";
 
 /**
- * A team member's share card: their portrait, framed in their pick, beside the
+ * A team member's share card: their portrait, framed as their profile page
+ * frames it (in their pick, or the neutral edge without one), beside the
  * School of Gaming lockup, their name with the nickname gamers know them by,
  * what they do here, and their one-line intro — at the URL's locale, with the
  * profile page's own translation fallback for the words they wrote.
@@ -72,11 +72,7 @@ export async function GET(
   const { userId } = await params;
   const locale = cardLocaleOf(request);
 
-  const anon = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } },
-  );
+  const anon = createAnonClient();
   const person = await new TeamProfilesService(anon).getPublicTeamProfile(userId);
   if (person === null) return new Response("Not found", { status: 404 });
 
@@ -91,20 +87,11 @@ export async function GET(
     ? `data:image/jpeg;base64,${(await portraitJpeg(photo.data)).toString("base64")}`
     : null;
 
-  const accent =
-    PICKS.find((pick) => pick.id === person.pick)?.hex ?? BRAND.act;
   const written = resolveTranslation(person.translations, locale);
 
   // The headline is the first name with the nickname, for an admin too: their
   // surname moves to the line under the rule, beside their title.
-  const headlinePlain =
-    person.nickname === null
-      ? person.firstName
-      : t.markup("firstNameWithNickname", {
-          firstName: person.firstName,
-          nickname: person.nickname,
-          nick: (chunks) => chunks,
-        });
+  const headlinePlain = teamMemberPlainName(person, t, { withSurname: false });
   const headline =
     person.nickname === null
       ? person.firstName
@@ -136,9 +123,10 @@ export async function GET(
           color: DARK_THEME.foreground,
         }}
       >
-        {/* The portrait whole, at its own 4:5, in the frame and glow the
-            profile page gives it. The glow is a layer over the photo because
-            an inset shadow is drawn under an element's own content. */}
+        {/* The portrait whole, at its own 4:5, in the frame the profile
+            page gives it (`teamCardFrame`). The frame is a layer over the
+            photo because its glow, an inset shadow, is drawn under an
+            element's own content. */}
         <div
           style={{
             display: "flex",
@@ -171,8 +159,7 @@ export async function GET(
               width: "100%",
               height: "100%",
               borderRadius: `${radius}px`,
-              border: `6px solid ${accent}`,
-              boxShadow: teamCardGlow(accent),
+              ...teamCardFrame(person.pick),
             }}
           />
         </div>
