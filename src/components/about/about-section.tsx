@@ -1,6 +1,9 @@
 import { useLocale, useTranslations } from "next-intl";
 import { Heart, Shield, Sparkles, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MarketingPhoto } from "@/components/marketing/marketing-photo";
+import studioPhoto from "@/assets/marketing/studio-lauttasaari.jpg";
+import teamPhoto from "@/assets/marketing/team-pelipaku.jpg";
 
 interface AboutSectionProps {
   /** Optional anchor id for scrollspy navigation. */
@@ -64,14 +67,23 @@ export function AboutSection({ id }: AboutSectionProps) {
             and a brand colour is never blended into another. Nothing replaces
             it — the card is already lifted off the page, and a rule here would
             be the hero's mark spent on a paragraph. */}
+        {/* Two of the team beside the mission, so the page shows people
+            behind it rather than only saying so. The photo is small on purpose — its master is
+            675px wide — and sits above the text on a phone, beside it wider. */}
         <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">{t("mission.heading")}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-lg text-muted-foreground">
-              {t("mission.text")}
-            </p>
+          <CardContent className="grid items-center gap-6 p-6 sm:grid-cols-[11rem_1fr] sm:gap-8 sm:p-8">
+            <MarketingPhoto
+              image={teamPhoto}
+              alt={t("mission.photoAlt")}
+              sizes="(min-width: 640px) 176px, 160px"
+              className="mx-auto w-40 sm:w-full"
+            />
+            <div className="text-center sm:text-left">
+              <CardTitle className="text-2xl">{t("mission.heading")}</CardTitle>
+              <p className="mt-4 text-lg text-muted-foreground">
+                {t("mission.text")}
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -103,6 +115,15 @@ export function AboutSection({ id }: AboutSectionProps) {
       {/* How Clubs Work */}
       <div className="mx-auto mt-16 max-w-3xl">
         <h3 className="text-center text-2xl font-bold">{t("howClubsWork.heading")}</h3>
+        {/* The room an in-person club meets in, under the heading that
+            explains what happens there; the caption says where it is. */}
+        <MarketingPhoto
+          image={studioPhoto}
+          alt={t("howClubsWork.photoAlt")}
+          caption={t("howClubsWork.photoCaption")}
+          sizes="min(calc(100vw - 2rem), 768px)"
+          className="mt-8"
+        />
         <div className="mt-8 space-y-6 text-muted-foreground">
           <p>{t("howClubsWork.paragraph1")}</p>
           <p>{t("howClubsWork.paragraph2")}</p>

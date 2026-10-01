@@ -198,7 +198,8 @@
     },
     "mission": {
       "heading": "Our mission",
-      "text": "All screen content is not made equal. Gaming is a great hobby when it is treated like all the other hobbies. We use children’s love for games to their advantage — with good friends and a professional Game Educator who is there to guide and help."
+      "text": "All screen content is not made equal. Gaming is a great hobby when it is treated like all the other hobbies. We use children’s love for games to their advantage — with good friends and a professional Game Educator who is there to guide and help.",
+      "photoAlt": "Two of the School of Gaming team in purple School of Gaming hoodies at an event stand"
     },
     "values": {
       "heading": "Things we care about",
@@ -224,7 +225,9 @@
       "paragraph1": "Each week, our gamers log in and are greeted by their own Game Educator — a Gedu. The Gedu guides them through the day’s topic, giving children space and freedom to make the adventures their own.",
       "paragraph2": "Our Gedus are gamers themselves. They understand firsthand that as children and teenagers, identity and friendships are built both online and offline. That understanding shapes every session they lead.",
       "paragraph3": "All our clubs are built around stories that give space for gamers to explore, create, and imagine. Between weekly sessions, gamers get fun challenges to do online and offline. During holidays we organise camps, and every week there are community events, tournaments, and competitions.",
-      "paragraph4": "Every gamer takes an oath to behave kindly and righteously — whether in-game, on voice chat, or in everyday life. The same values apply everywhere."
+      "paragraph4": "Every gamer takes an oath to behave kindly and righteously — whether in-game, on voice chat, or in everyday life. The same values apply everywhere.",
+      "photoAlt": "A row of computers with drawing programs open in our studio, ready for a club",
+      "photoCaption": "Our studio in Lauttasaari, Helsinki, where in-person clubs meet."
     },
     "forParents": {
       "heading": "For parents",
@@ -3212,7 +3215,11 @@
           "description": "Buying anything, or changing your child’s account, needs a four-digit parent PIN that only you know."
         }
       },
-      "faqLink": "Read the full answers in our FAQ"
+      "faqLink": "Read the full answers in our FAQ",
+      "photo": {
+        "alt": "Children at computers in a School of Gaming club, seen from behind, with their Game Educator sitting beside them",
+        "caption": "An in-person club at our studio in Lauttasaari, Helsinki."
+      }
     },
     "howItWorks": {
       "heading": "Learning by Gaming.",

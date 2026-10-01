@@ -650,6 +650,11 @@ export const config = {
      *   a bare public URL answered from the deployed catalog and marked
      *   publicly cacheable, so it is excluded for the reason spelled out below
      * - api/locations/search — see below, this one is load-bearing
+     * - media/ — the public folder's video, which next.config.ts serves
+     *   `immutable`, so it is public cacheable output the rule below binds.
+     *   Excluded by prefix rather than by extension so the rule holds for
+     *   every file type kept there; without it, a `/media/*.mp4` is
+     *   locale-redirected to a page that does not exist
      *
      * **Rule: a route whose response is marked publicly cacheable must not pass
      * through here.** This proxy refreshes a near-expiry session and writes the
@@ -667,6 +672,6 @@ export const config = {
      * made. Excluding the path makes it ours. The route needs nothing from the
      * proxy anyway: it reads no cookies and builds its own anonymous client.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|llms\\.txt|api/locations/search|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|llms\\.txt|api/locations/search|media/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

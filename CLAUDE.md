@@ -100,6 +100,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Cookie consent and the advertising scripts (Meta Pixel, Tag Manager) | `src/components/consent/` |
 | Game accounts (Minecraft, Roblox) | `src/components/game-account/` |
 | Partner brand assets (Roblox, Lynx marks) | `src/assets/partners/` |
+| Marketing photos and the home hero video — masters, encodes, the cache rule | `src/assets/marketing/` |
 | Billing portal | `src/services/billing/` |
 | Parent PIN | `src/services/pin/` |
 | Gedu profiles, certification and the record check | `src/services/gedu/` |

@@ -6,12 +6,13 @@ import { readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 
 // pin-session reads PIN_COOKIE_SECRET lazily, so setting it before importing the
 // proxy is enough for the HMAC unlock-token helpers used below.
 process.env.PIN_COOKIE_SECRET = "test-pin-cookie-secret";
 
-import { proxy } from "@/proxy";
+import { config, proxy } from "@/proxy";
 import { PIN_COOKIE_NAME, pinTokenFor } from "@/lib/pin-session";
 import {
   decodeExternalPathname,
@@ -1387,4 +1388,26 @@ describe("proxy", () => {
     });
   });
 
+  // --- The matcher ------------------------------------------------------------
+
+  describe("matcher", () => {
+    // Next's own matcher compiler, so this asks exactly the question the
+    // deployment answers: does the proxy run on this path?
+    const runsOn = (path: string) =>
+      unstable_doesMiddlewareMatch({ config, url: path });
+
+    // The public folder's video is served `immutable` and must never carry a
+    // refreshed session cookie, so the proxy must not see it — and if it did,
+    // it would locale-redirect the file to a page that does not exist.
+    it.each(["/media/hero-calm-wide-v1.mp4", "/media/any/nested/file.webm"])(
+      "skips %s",
+      (path) => {
+        expect(runsOn(path)).toBe(false);
+      },
+    );
+
+    it.each(["/", "/en", "/fi/shop", "/mediatheque"])("still runs on %s", (path) => {
+      expect(runsOn(path)).toBe(true);
+    });
+  });
 });

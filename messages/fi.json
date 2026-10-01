@@ -198,7 +198,8 @@
     },
     "mission": {
       "heading": "Missiomme",
-      "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa."
+      "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa.",
+      "photoAlt": "Kaksi School of Gamingin tiimiläistä violetit School of Gaming -hupparit päällään tapahtuman esittelypisteellä"
     },
     "values": {
       "heading": "Asiat, joista välitämme",
@@ -224,7 +225,9 @@
       "paragraph1": "Joka viikko pelaajamme kirjautuvat sisään ja heitä tervehtii oma pelikasvattajansa — Gedu. Gedu ohjaa heidät päivän aiheen läpi antaen lapsille tilaa ja vapautta tehdä seikkailuista omiaan.",
       "paragraph2": "Gedumme ovat itsekin pelaajia. He ymmärtävät omakohtaisesti, että lapsina ja nuorina identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Tämä ymmärrys muokkaa jokaista heidän vetämäänsä kertaa.",
       "paragraph3": "Kaikki kerhomme on rakennettu tarinoiden ympärille, jotka antavat pelaajille tilaa tutkia, luoda ja kuvitella. Viikoittaisten kertojen välillä pelaajat saavat hauskoja haasteita tehtäväksi verkossa ja sen ulkopuolella. Lomien aikana järjestämme leirejä, ja joka viikko on yhteisötapahtumia, turnauksia ja kilpailuja.",
-      "paragraph4": "Jokainen pelaaja vannoo valan käyttäytyä ystävällisesti ja oikein — olipa kyseessä peli, äänichatti tai arki. Samat arvot pätevät kaikkialla."
+      "paragraph4": "Jokainen pelaaja vannoo valan käyttäytyä ystävällisesti ja oikein — olipa kyseessä peli, äänichatti tai arki. Samat arvot pätevät kaikkialla.",
+      "photoAlt": "Rivi tietokoneita studiollamme piirto-ohjelmat auki, valmiina kerhoa varten",
+      "photoCaption": "Studiomme Lauttasaaressa Helsingissä, jossa lähikerhot kokoontuvat."
     },
     "forParents": {
       "heading": "Vanhemmille",
@@ -3212,7 +3215,11 @@
           "description": "Ostaminen ja lapsen tilin muuttaminen vaativat nelinumeroisen vanhemman PIN-koodin, jonka vain sinä tiedät."
         }
       },
-      "faqLink": "Lue tarkemmat vastaukset UKK-osiosta"
+      "faqLink": "Lue tarkemmat vastaukset UKK-osiosta",
+      "photo": {
+        "alt": "Lapset tietokoneiden ääressä School of Gamingin kerhossa takaapäin kuvattuna, vieressä istuu heidän pelikasvattajansa",
+        "caption": "Lähikerho studiollamme Lauttasaaressa Helsingissä."
+      }
     },
     "howItWorks": {
       "heading": "Oppimista pelaamalla.",

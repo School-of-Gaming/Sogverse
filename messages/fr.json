@@ -198,7 +198,8 @@
     },
     "mission": {
       "heading": "Notre mission",
-      "text": "Tous les écrans ne se valent pas. Quand le jeu vidéo est bien encadré, c’est un loisir enrichissant, pas si différent du foot ou de la musique. Notre mission : mettre la passion des enfants pour le jeu au service de leur développement, avec de vrais amis et un animateur professionnel pour les guider."
+      "text": "Tous les écrans ne se valent pas. Quand le jeu vidéo est bien encadré, c’est un loisir enrichissant, pas si différent du foot ou de la musique. Notre mission : mettre la passion des enfants pour le jeu au service de leur développement, avec de vrais amis et un animateur professionnel pour les guider.",
+      "photoAlt": "Deux membres de l’équipe School of Gaming en sweats à capuche violets School of Gaming sur le stand d’un événement"
     },
     "values": {
       "heading": "Ce qui compte pour nous",
@@ -224,7 +225,9 @@
       "paragraph1": "Chaque semaine, les joueurs retrouvent leur Gedu, leur animateur de jeu. Ensemble, ils explorent le thème du jour, mais le Gedu laisse toujours aux enfants la liberté de s’approprier l’aventure.",
       "paragraph2": "Nos Gedus sont des joueurs avant tout. Ils savent ce que c’est de grandir avec les jeux vidéo, de construire son identité en ligne, de se lier d’amitié à travers un écran. Cette expérience, ils la mettent au service des enfants à chaque session.",
       "paragraph3": "Les clubs sont construits autour d’histoires évolutives qui invitent à explorer, créer et imaginer. Entre les sessions, les joueurs reçoivent des défis à relever, en ligne et dans la vraie vie. Les vacances sont l’occasion de stages, et tout au long de l’année ont lieu des tournois, des événements communautaires et des concours.",
-      "paragraph4": "Chaque joueur s’engage à se comporter avec bienveillance et intégrité : en jeu, en vocal, dans la vie de tous les jours. Les mêmes valeurs, partout."
+      "paragraph4": "Chaque joueur s’engage à se comporter avec bienveillance et intégrité : en jeu, en vocal, dans la vie de tous les jours. Les mêmes valeurs, partout.",
+      "photoAlt": "Une rangée d’ordinateurs avec des logiciels de dessin ouverts dans notre studio, prêts pour un club",
+      "photoCaption": "Notre studio de Lauttasaari, à Helsinki, où se réunissent les clubs en présentiel."
     },
     "forParents": {
       "heading": "Pour les parents",
@@ -3212,7 +3215,11 @@
           "description": "Acheter quoi que ce soit ou modifier le compte de votre enfant exige un code PIN parent à quatre chiffres que vous seul connaissez."
         }
       },
-      "faqLink": "Lire les réponses complètes dans notre FAQ"
+      "faqLink": "Lire les réponses complètes dans notre FAQ",
+      "photo": {
+        "alt": "Des enfants devant des ordinateurs dans un club School of Gaming, vus de dos, avec leur animateur de jeu assis à côté d’eux",
+        "caption": "Un club en présentiel dans notre studio de Lauttasaari, à Helsinki."
+      }
     },
     "howItWorks": {
       "heading": "Apprendre en jouant.",

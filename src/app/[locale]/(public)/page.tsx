@@ -18,6 +18,9 @@ import {
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { HeroBackdrop } from "@/components/home/hero-backdrop";
+import { MarketingPhoto } from "@/components/marketing/marketing-photo";
+import clubPhoto from "@/assets/marketing/club-lauttasaari.jpg";
 import { Testimonial } from "@/components/home/testimonial";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -116,9 +119,17 @@ export default function HomePage() {
           **The call to action and the trust line must fit a 390×844 phone's
           first screen**, banner aside. That is what the phone's tighter top
           padding and smaller subhead are buying; judge any change here at
-          that size before anything else. */}
+          that size before anything else.
+
+          Behind it all runs the "Calm" loop under the scrim (`HeroBackdrop`).
+          The backdrop takes the hero's box and never sizes it, so the text
+          still decides the hero's height and the first-screen budget above is
+          unchanged. Over it, every word is in the foreground ink: the quiet
+          ink falls short of AA over the loop's brightest frames, the
+          foreground ink and the act phrase do not. */}
       <section className="relative -mt-[var(--header-height)] overflow-hidden pt-[var(--header-height)]">
-        <div className="container mx-auto px-4 pb-16 pt-8 sm:py-24 lg:py-28">
+        <HeroBackdrop />
+        <div className="container relative mx-auto px-4 pb-16 pt-8 sm:py-24 lg:py-28">
           <div className="mx-auto max-w-3xl text-center">
             {/* The wrapper shrinks to the headline's longest line, so the rule
                 beneath it runs exactly the headline's measure with nothing
@@ -132,7 +143,7 @@ export default function HomePage() {
               </h1>
               <span className="mt-5 block h-1.5 w-full rounded-full bg-world sm:mt-8" />
             </div>
-            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground sm:mt-6 sm:text-lg sm:leading-8">
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-foreground sm:mt-6 sm:text-lg sm:leading-8">
               {t('hero.subtitle')}
             </p>
             {/* One call to action: the home page's job is to send a parent to
@@ -148,14 +159,15 @@ export default function HomePage() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-            <TrustLine className="mt-4" />
+            <TrustLine className="mt-4 text-foreground" />
           </div>
         </div>
       </section>
 
       {/* The emotional proof: one parent's words, large, straight after the
-          offer. No heading — the quote is the section. */}
-      <section className="container mx-auto px-4 pb-16 sm:pb-24">
+          offer. No heading — the quote is the section. Its top padding is
+          the room between the quote and the hero backdrop's lower edge. */}
+      <section className="container mx-auto px-4 py-16 sm:pb-24">
         <Testimonial
           size="feature"
           quote={t('testimonials.items.highlightOfTheWeek.quote')}
@@ -197,13 +209,26 @@ export default function HomePage() {
 
       {/* Safety: checkable facts, then two parents saying what they saw.
           A trust-building section on a parent surface spends act alone —
-          never world (`packages/sog-ui/CLAUDE.md`, the colour budget). */}
+          never world (`packages/sog-ui/CLAUDE.md`, the colour budget).
+
+          The club photo is the first thing under the heading on a phone and
+          heads the right-hand column on a wide screen, beside the facts: a
+          parent reading who is with their child sees the room it happens in.
+          The DOM order is the phone's; the wide layout places the three by
+          grid position, so the facts span both rows of the left column. */}
       <section className="container mx-auto px-4 py-16 sm:py-24">
         <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight sm:text-4xl">
           {t('safety.heading')}
         </h2>
-        <div className="mx-auto mt-12 grid max-w-5xl gap-12 lg:mt-16 lg:grid-cols-[3fr_2fr] lg:gap-16">
-          <div>
+        <div className="mx-auto mt-12 grid max-w-5xl gap-12 lg:mt-16 lg:grid-cols-[3fr_2fr] lg:gap-x-16 lg:gap-y-10">
+          <MarketingPhoto
+            image={clubPhoto}
+            alt={t('safety.photo.alt')}
+            caption={t('safety.photo.caption')}
+            sizes="(min-width: 1024px) 384px, min(calc(100vw - 2rem), 576px)"
+            className="mx-auto w-full max-w-xl lg:col-start-2 lg:row-start-1 lg:max-w-none"
+          />
+          <div className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
             <ul className="space-y-6">
               {safetyFacts.map(({ key, icon: Icon }) => (
                 <li key={key} className="flex gap-4">
@@ -227,7 +252,7 @@ export default function HomePage() {
               <ArrowRight aria-hidden="true" className="h-4 w-4" />
             </Link>
           </div>
-          <div className="flex flex-col gap-10 lg:justify-center">
+          <div className="flex flex-col gap-10 lg:col-start-2">
             {safetyTestimonialKeys.map((key) => (
               <Testimonial
                 key={key}

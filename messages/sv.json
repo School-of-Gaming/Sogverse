@@ -198,7 +198,8 @@
     },
     "mission": {
       "heading": "Vårt uppdrag",
-      "text": "Allt skärminnehåll är inte lika. Spelande är en fantastisk hobby när den behandlas som alla andra hobbyer. Vi använder barnens kärlek till spel till deras fördel — med bra vänner och en professionell spelfostrare som finns där för att vägleda och hjälpa."
+      "text": "Allt skärminnehåll är inte lika. Spelande är en fantastisk hobby när den behandlas som alla andra hobbyer. Vi använder barnens kärlek till spel till deras fördel — med bra vänner och en professionell spelfostrare som finns där för att vägleda och hjälpa.",
+      "photoAlt": "Två från School of Gaming-teamet i lila School of Gaming-huvtröjor vid en eventmonter"
     },
     "values": {
       "heading": "Saker vi bryr oss om",
@@ -224,7 +225,9 @@
       "paragraph1": "Varje vecka loggar våra spelare in och möts av sin egen spelfostrare — en Gedu. Gedun vägleder dem genom dagens tema och ger barnen utrymme och frihet att göra äventyren till sina egna.",
       "paragraph2": "Våra Geduer är själva spelare. De förstår av egen erfarenhet att som barn och tonåringar byggs identitet och vänskaper både online och offline. Den förståelsen präglar varje session de leder.",
       "paragraph3": "Alla våra klubbar är byggda kring berättelser som ger utrymme för spelare att utforska, skapa och fantisera. Mellan veckovisa sessioner får spelarna roliga utmaningar att göra online och offline. Under lov arrangerar vi läger, och varje vecka finns det gemenskapsevent, turneringar och tävlingar.",
-      "paragraph4": "Varje spelare avlägger en ed att uppföra sig vänligt och rättvist — oavsett om det är i spelet, i röstchatten eller i vardagen. Samma värderingar gäller överallt."
+      "paragraph4": "Varje spelare avlägger en ed att uppföra sig vänligt och rättvist — oavsett om det är i spelet, i röstchatten eller i vardagen. Samma värderingar gäller överallt.",
+      "photoAlt": "En rad datorer med ritprogram öppna i vår studio, redo för en klubb",
+      "photoCaption": "Vår studio på Drumsö i Helsingfors, där klubbarna på plats träffas."
     },
     "forParents": {
       "heading": "För föräldrar",
@@ -3212,7 +3215,11 @@
           "description": "Att köpa något eller ändra ditt barns konto kräver en fyrsiffrig föräldra-PIN som bara du känner till."
         }
       },
-      "faqLink": "Läs hela svaren i vår FAQ"
+      "faqLink": "Läs hela svaren i vår FAQ",
+      "photo": {
+        "alt": "Barn vid datorer i en School of Gaming-klubb, fotograferade bakifrån, med sin spelfostrare sittande bredvid",
+        "caption": "En klubb på plats i vår studio på Drumsö i Helsingfors."
+      }
     },
     "howItWorks": {
       "heading": "Lärande genom spelande.",

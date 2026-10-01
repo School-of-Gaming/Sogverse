@@ -187,7 +187,8 @@
     },
     "mission": {
       "heading": "maH ngoQ",
-      "text": "Hoch QIn nIvbe’. toy’a’ QaQ Hob ’oH Hoch latlh Hob rur. puqpu’ toy’taHghach muSHa’ wIlo’ — juppu’ QaQ je Gedu’ tIqqu’ — DaH batlh Qapla’."
+      "text": "Hoch QIn nIvbe’. toy’a’ QaQ Hob ’oH Hoch latlh Hob rur. puqpu’ toy’taHghach muSHa’ wIlo’ — juppu’ QaQ je Gedu’ tIqqu’ — DaH batlh Qapla’.",
+      "photoAlt": "cha’ noH Quj yejHaD beqpu’ — Sut Doq tuQ, lupDujDaq Qam"
     },
     "values": {
       "heading": "maH nuq muSHa’",
@@ -213,7 +214,9 @@
       "paragraph1": "wa’ tup Hoch, toy’wI’pu’ ’el — Gedu’ chaHvaD jatlh. Gedu’ QaD jaj De’, puq HoS je ngoQ moj — jaH pIq je Haq.",
       "paragraph2": "maH Gedu’pu’ toy’wI’pu’ chaH. bIH Sovchu’ puqpu’ je tengchaH ngupwI’pu’ jupwI’ chenmoHlu’ HablI’ je moQ. batlh vum chaH Hoch tup.",
       "paragraph3": "Hoch maH ghom’a’mey HaqwI’ De’ ngeH — toy’wI’pu’ je ghoS, chenmoh, je HaqwI’. Hoch tup, qoH laHmey, Duj De’, je Qapla’ wanI’ nIvqu’.",
-      "paragraph4": "Hoch toy’wI’ batlh ’Ip — Qujdaq, ghogh QInDaq, jaj Hoch yIntaHvIS je. Dat rap ngoQmey."
+      "paragraph4": "Hoch toy’wI’ batlh ’Ip — Qujdaq, ghogh QInDaq, jaj Hoch yIntaHvIS je. Dat rap ngoQmey.",
+      "photoAlt": "De’wI’mey tlhegh — maH Qujmeh pa’Daq ghom loS",
+      "photoCaption": "maH Qujmeh pa’ — Lauttasaari, Helsinki. pa’Daq ghom puqpu’."
     },
     "forParents": {
       "heading": "vav/SoSmey",
@@ -3252,7 +3255,11 @@
           "description": "vay’ Daje’ pagh puqlI’ Account DachoHmeH, PIN loS mI’ DaSovbogh neH poQlu’."
         }
       },
-      "faqLink": "FAQ jangmey tIlaD"
+      "faqLink": "FAQ jangmey tIlaD",
+      "photo": {
+        "alt": "noH Quj yejHaD ghomDaq De’wI’mey lo’ puqpu’ — chaH DoHDaq Gedu’ ba’",
+        "caption": "Lauttasaari, Helsinki: maH Qujmeh pa’Daq ghom puqpu’."
+      }
     },
     "howItWorks": {
       "heading": "QujtaHvIS ghojtaH.",
