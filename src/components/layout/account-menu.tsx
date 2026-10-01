@@ -14,7 +14,7 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowLeftRight,
   IdCard,
-  LayoutDashboard,
+  House,
   Loader2,
   LogOut,
   ReceiptText,
@@ -604,7 +604,7 @@ export function AccountMenu({
                   });
                   setOpen(false);
                 }}
-                icon={<LayoutDashboard className="h-4 w-4 shrink-0" />}
+                icon={<House className="h-4 w-4 shrink-0" />}
                 label={dashboardLabel}
               />
 

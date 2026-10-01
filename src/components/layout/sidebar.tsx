@@ -4,7 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import {
   ArrowLeftRight,
-  LayoutDashboard,
+  House,
   Users,
   Palette,
   MonitorPlay,
@@ -63,7 +63,7 @@ function kindIcon(kind: ProductType) {
 // no nested sub-routes that need sidebar nav.
 const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
   admin: [
-    { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
+    { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <House className="h-5 w-5" /> },
     { href: ROUTES.admin.users, labelKey: "users", icon: <Users className="h-5 w-5" /> },
     // Above the product entries because it is the one page here that is a queue
     // of work rather than a catalogue: a session with nobody teaching it is
