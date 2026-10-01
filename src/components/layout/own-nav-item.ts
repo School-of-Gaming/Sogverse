@@ -1,4 +1,4 @@
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, type UserRole } from "@/lib/constants";
 
 /**
  * The gedu pages that carry **their own item in the chrome**, rather than being
@@ -31,4 +31,14 @@ export function hasOwnNavItem(pathname: string): boolean {
   return PAGES_WITH_THEIR_OWN_NAV_ITEM.some(
     (page) => pathname === page || pathname.startsWith(page + "/"),
   );
+}
+
+/**
+ * Whether this role's chrome carries a My profile item — on the strip from
+ * `lg` up, as a row in the account menu below it. The two roles with a public
+ * team profile have one; the header and the menu both read this, so the two
+ * halves cannot disagree about who gets it.
+ */
+export function hasMyProfileItem(role: UserRole | null): boolean {
+  return role === "gedu" || role === "admin";
 }

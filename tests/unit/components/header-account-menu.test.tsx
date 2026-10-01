@@ -452,17 +452,21 @@ describe("AccountMenu — identity lives on the trigger, not in the list", () =>
     renderMenu({ userId: IDS.gedu, role: "admin", firstName: "Kyle" });
     openMenu();
 
-    expect(rowTexts()).toEqual([messages.common.dashboard, SETTINGS, SIGN_OUT]);
+    expect(rowTexts()).toEqual([
+      messages.common.dashboard,
+      TEAM_PROFILE,
+      SETTINGS,
+      SIGN_OUT,
+    ]);
   });
 });
 
 /**
  * The rehoused nav rows, each the other half of a header decision: a gedu's
- * Invoicing, Substitutions and My profile are on the strip from `lg` up and
- * here below it. No public destination is among them — the tab bar carries
- * those below `lg` for everyone. An admin reaches their profile from settings
- * and their user page, never from the chrome, and the other roles have no such
- * rows at all.
+ * Invoicing, Substitutions and My profile, and an admin's My profile, are on
+ * the strip from `lg` up and here below it. No public destination is among
+ * them — the tab bar carries those below `lg` for everyone — and the other
+ * roles have no such rows at all.
  */
 describe("AccountMenu — the rehoused nav rows", () => {
   it("carries all three for a gedu, in the strip's order, below lg only", () => {
@@ -543,7 +547,23 @@ describe("AccountMenu — the rehoused nav rows", () => {
     }
   });
 
-  it.each([["admin"], ["customer"], ["gamer"]] as const)(
+  it("carries My profile alone for an admin, after the dashboard row, below lg only", () => {
+    renderMenu({ userId: IDS.gedu, role: "admin", firstName: "Kyle" });
+    openMenu();
+
+    expect(rowTexts()).toEqual([
+      messages.common.dashboard,
+      TEAM_PROFILE,
+      SETTINGS,
+      SIGN_OUT,
+    ]);
+    expect(row(TEAM_PROFILE).className).toContain("lg:hidden");
+    expect(row(TEAM_PROFILE).getAttribute("href")).toBe("/settings/profile");
+    expect(row(TEAM_PROFILE).querySelector(".lucide-id-card")).not.toBe(null);
+    expect(row(TEAM_PROFILE).querySelector(".lucide-chevron-right")).toBe(null);
+  });
+
+  it.each([["customer"], ["gamer"]] as const)(
     "carries none of them for a %s",
     (role) => {
       renderMenu({ userId: IDS.parent, role, firstName: "Riikka" });

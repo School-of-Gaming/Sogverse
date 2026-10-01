@@ -10,9 +10,9 @@ import type { UserRole } from "@/lib/constants";
  * The header strip's nav.
  *
  * What is pinned here is what is not obvious from the markup: **the strip is
- * the only piece of chrome that varies by role**, so a signed-in gedu gets
- * items nobody else does and every other role's strip has to come out byte for
- * byte the same; the whole run is on the strip only from `lg` up (the tab bar
+ * the only piece of chrome that varies by role**, so a signed-in gedu or admin
+ * gets items of their own and a parent's, a gamer's and a signed-out strip have
+ * to come out byte for byte the same; the whole run is on the strip only from `lg` up (the tab bar
  * and the account menu carry it below), which is the one breakpoint the
  * measured table in `header.tsx` settled. Plus what a type-check cannot see —
  * that the scene-only `navRole` override reaches the nav (and the menu's copy
@@ -126,7 +126,7 @@ beforeEach(() => {
   accountMenuProps.length = 0;
 });
 
-describe("Header nav — who gets the gedu items", () => {
+describe("Header nav — who gets the role's own items", () => {
   it("gives a signed-in gedu its items, first in the run and ahead of the public links", () => {
     signedInAs("gedu");
     renderHeader();
@@ -145,7 +145,17 @@ describe("Header nav — who gets the gedu items", () => {
     ]);
   });
 
-  it.each([["customer"], ["gamer"], ["admin"]] as const)(
+  it("gives a signed-in admin My profile alone, ahead of the public links", () => {
+    signedInAs("admin");
+    renderHeader();
+
+    expect(substitutionsLink()).toBeNull();
+    expect(stripLink(en.header.invoicing)).toBeNull();
+    expect(teamProfileLink()?.getAttribute("href")).toBe("/settings/profile");
+    expect(navTexts()).toEqual([en.header.teamProfile, ...PUBLIC_LINKS]);
+  });
+
+  it.each([["customer"], ["gamer"]] as const)(
     "gives a signed-in %s nothing new",
     (role) => {
       signedInAs(role);
@@ -176,15 +186,15 @@ describe("Header nav — who gets the gedu items", () => {
   });
 });
 
-describe("Header nav — every other role's strip is identical", () => {
+describe("Header nav — a parent's and a gamer's strip is the signed-out one", () => {
   /**
    * Asserted as DOM equality between the roles rather than against a frozen
    * string, so it stays true through an unrelated edit to the shared markup
    * and fails the moment one role's strip diverges from another's.
    */
-  it("renders one identical nav for admin, parent, gamer and signed-out", () => {
+  it("renders one identical nav for parent, gamer and signed-out", () => {
     const shapes = new Set<string>();
-    for (const role of ["admin", "customer", "gamer"] as const) {
+    for (const role of ["customer", "gamer"] as const) {
       signedInAs(role);
       const view = renderHeader();
       shapes.add(navGroup().outerHTML);
@@ -229,14 +239,17 @@ describe("Header nav — the run is the strip's from lg up", () => {
     },
   );
 
-  it("gives no link in the run a breakpoint of its own", () => {
-    signedInAs("gedu");
-    renderHeader();
+  it.each([["gedu"], ["admin"]] as const)(
+    "gives no link in a %s's run a breakpoint of its own",
+    (role) => {
+      signedInAs(role);
+      renderHeader();
 
-    for (const link of Array.from(navGroup().children)) {
-      expect(link.className).not.toMatch(/\b(hidden|sm:|md:|lg:)/);
-    }
-  });
+      for (const link of Array.from(navGroup().children)) {
+        expect(link.className).not.toMatch(/\b(hidden|sm:|md:|lg:)/);
+      }
+    },
+  );
 
   it("links the gedu items to their pages", () => {
     signedInAs("gedu");

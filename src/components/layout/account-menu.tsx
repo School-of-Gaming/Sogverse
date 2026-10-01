@@ -24,7 +24,10 @@ import { StatusLine } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { NavChevron } from "@/components/ui/nav-chevron";
-import { hasOwnNavItem } from "@/components/layout/own-nav-item";
+import {
+  hasMyProfileItem,
+  hasOwnNavItem,
+} from "@/components/layout/own-nav-item";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { trackDashboardNav } from "@/lib/analytics";
 import { ROLE_DASHBOARD_PATHS, ROUTES, type UserRole } from "@/lib/constants";
@@ -115,8 +118,8 @@ const FOCUSABLE_ITEMS =
 /**
  * The rows the arrow keys may land on, in DOM order.
  *
- * **A row the current width does not render is not one of them.** A gedu's
- * three nav rows are narrow-only, hidden from `lg` up, where the header's strip
+ * **A row the current width does not render is not one of them.** A role's
+ * nav rows are narrow-only, hidden from `lg` up, where the header's strip
  * takes them, and there each is `display: none` — and `.focus()` on such an element does nothing at
  * all, which would leave ArrowDown reading the same index forever and the
  * keyboard stuck on the row above it. The check is on the computed `display`
@@ -154,8 +157,8 @@ interface AccountMenuProps {
   /**
    * The header's nav override, handed down unchanged — preview scenes only,
    * and documented on `Header`. It decides one thing here and nothing else:
-   * whether this menu carries the nav rows the gedu's strip gives up below `lg`
-   * (Invoicing, Substitutions, My profile). The dashboard row, the household
+   * whether this menu carries the nav rows the role's strip gives up below
+   * `lg` (a gedu's Invoicing and Substitutions, a gedu's or admin's My profile). The dashboard row, the household
    * and every label still follow `role`, because the account really does belong
    * to whoever is signed in.
    */
@@ -351,15 +354,15 @@ export function AccountMenu({
     (pathname === dashboardPath || pathname.startsWith(dashboardPath + "/")) &&
     !hasOwnNavItem(pathname);
   /**
-   * Whether this menu carries the gedu's nav rows — Invoicing, Substitutions and
-   * My profile, the other half of a decision the header makes. From `lg` up
-   * they are items on the strip; below it the strip carries no nav at all and
-   * they live here. It reads the header's nav override, exactly as the strip
-   * does, so the two halves can never disagree about whether the items exist.
-   * An admin's profile is reached from settings and from their user page, never
-   * from the chrome.
+   * Whether this menu carries the role's nav rows — a gedu's Invoicing and
+   * Substitutions, and a gedu's or an admin's My profile, the other half of a
+   * decision the header makes. From `lg` up they are items on the strip; below
+   * it the strip carries no nav at all and they live here. It reads the
+   * header's nav override, exactly as the strip does, so the two halves can
+   * never disagree about whether the items exist.
    */
   const carriesGeduRows = (navRole ?? role) === "gedu";
+  const carriesMyProfileRow = hasMyProfileItem(navRole ?? role);
   const isOnInvoicing =
     pathname === ROUTES.gedu.invoicing ||
     pathname.startsWith(ROUTES.gedu.invoicing + "/");
@@ -372,7 +375,7 @@ export function AccountMenu({
   const isOnSettings =
     (pathname === ROUTES.settings ||
       pathname.startsWith(ROUTES.settings + "/")) &&
-    !(carriesGeduRows && isOnTeamProfile);
+    !(carriesMyProfileRow && isOnTeamProfile);
   // What the dashboard is called to the person using it — "Dashboard" for the
   // admin, whose panel is genuinely an admin panel, "My SOG" for everyone else.
   const dashboardLabel = role === "admin" ? c("dashboard") : d("pageTitle");
@@ -608,7 +611,7 @@ export function AccountMenu({
                 label={dashboardLabel}
               />
 
-              {/* The gedu's nav rows — see `carriesGeduRows` — in the strip's
+              {/* The role's nav rows — see `carriesGeduRows` — in the strip's
                   order. Fixed rows like the ones around them: leading icon, no
                   chevron, and decided before the panel opens, so the menu still
                   opens whole. Each is hidden by CSS at `lg`, where the header's
@@ -637,16 +640,18 @@ export function AccountMenu({
                     label={t("nav.substitutions")}
                     className="lg:hidden"
                   />
-                  <MenuLinkRow
-                    href={ROUTES.settingsTeamProfile}
-                    active={isOnTeamProfile}
-                    disabled={busy}
-                    onNavigate={() => setOpen(false)}
-                    icon={<IdCard className="h-4 w-4 shrink-0" />}
-                    label={t("teamProfile")}
-                    className="lg:hidden"
-                  />
                 </>
+              )}
+              {carriesMyProfileRow && (
+                <MenuLinkRow
+                  href={ROUTES.settingsTeamProfile}
+                  active={isOnTeamProfile}
+                  disabled={busy}
+                  onNavigate={() => setOpen(false)}
+                  icon={<IdCard className="h-4 w-4 shrink-0" />}
+                  label={t("teamProfile")}
+                  className="lg:hidden"
+                />
               )}
 
               {/* No household in hand — a read still in flight, a read that
@@ -833,7 +838,7 @@ function MenuLinkRow({
   onNavigate: () => void;
   icon: ReactNode;
   label: string;
-  /** Which widths this row exists at — a gedu's three nav rows are narrow-only. */
+  /** Which widths this row exists at — a role's nav rows are narrow-only. */
   className?: string;
 }) {
   return (

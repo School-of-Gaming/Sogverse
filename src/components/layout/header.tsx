@@ -19,7 +19,10 @@ import {
 } from "@/lib/constants";
 import { AccountMenu } from "@/components/layout/account-menu";
 import { LocalePicker } from "@/components/layout/locale-picker";
-import { hasOwnNavItem } from "@/components/layout/own-nav-item";
+import {
+  hasMyProfileItem,
+  hasOwnNavItem,
+} from "@/components/layout/own-nav-item";
 import { SiteHeaderShell } from "@/components/layout/site-header-shell";
 import {
   isAtOrUnder,
@@ -101,18 +104,19 @@ export function Header({ navRole }: HeaderProps) {
   const navFor = navRole ?? profile?.role ?? null;
 
   /**
-   * The gedu's own nav items: Invoicing (the month they invoice us for),
-   * Substitutions (the sessions looking for a stand-in) and My profile (their
-   * own public profile, which they come back to rather than set once).
+   * The role's own nav items: a gedu's Invoicing (the month they invoice us
+   * for) and Substitutions (the sessions looking for a stand-in), and a gedu's
+   * or an admin's My profile (their own public profile, which they come back to
+   * rather than set once).
    *
-   * Gedus only. It is the one place in the chrome where the nav depends on who
-   * is looking, and it is deliberate: each is a standing part of the job rather
-   * than something reached from one dashboard card. Like every strip link they
-   * are on the strip from `lg` up; below it they are rows in the account menu
-   * (`account-menu.tsx`). Admins have a profile too but reach it from settings
-   * and their user page, never from the chrome.
+   * The one place in the chrome where the nav depends on who is looking, and it
+   * is deliberate: each is a standing part of the job rather than something
+   * reached from one dashboard card. Like every strip link they are on the
+   * strip from `lg` up; below it they are rows in the account menu
+   * (`account-menu.tsx`).
    */
   const showsGeduItems = navFor === "gedu";
+  const showsMyProfile = hasMyProfileItem(navFor);
   const isOnSubstitutions = isAtOrUnder(pathname, ROUTES.gedu.substitutions);
   const isOnInvoicing = isAtOrUnder(pathname, ROUTES.gedu.invoicing);
   const isOnTeamProfile = pathname === ROUTES.settingsTeamProfile;
@@ -340,11 +344,11 @@ export function Header({ navRole }: HeaderProps) {
             role. Below `lg` — phones and tablets alike — the strip is the
             lockup, the locale picker and the account slot and nothing else, the
             same for every role: the tab bar (`tab-bar.tsx`, rendered below)
-            carries the public destinations, and a gedu's own items are rows in
+            carries the public destinations, and a role's own items are rows in
             the account menu. From `lg` up the strip carries the nav run: a
-            gedu's Invoicing, Substitutions and My profile, then Shop, Library,
-            Team and About, every one in its whole word. The logo is the Home /
-            My SOG link at every width.
+            gedu's Invoicing, Substitutions and My profile, or an admin's My
+            profile, then Shop, Library, Team and About, every one in its whole
+            word. The logo is the Home / My SOG link at every width.
 
             Every link carries its own 44px-tall, `px-2` touch target, and the
             run's `-ml-2` hands the outermost 8px of that padding back to the
@@ -356,12 +360,12 @@ export function Header({ navRole }: HeaderProps) {
 
             **What fits, measured in a real browser** (headless Chromium against
             the dev server, px of strip left over between the logo and the right
-            block). Signed out is the live header. The signed-in rows are the
+            block). Signed out is the live header. The admin row at 1024 is the
+            live header signed in as an admin. The other signed-in rows are the
             live header with the lockup word and the gedu items written into it
-            in the header's own classes, since a headless run has no session —
-            measured layout, synthesised content. Below `lg` only the lockup's
-            word varies, and the admin's is the longest dashboard name; from
-            `lg` up a gedu's strip is the fullest.
+            in the header's own classes — measured layout, synthesised content.
+            Below `lg` only the lockup's word varies, and the admin's is the
+            longest dashboard name; from `lg` up a gedu's strip is the fullest.
 
               width  who          en     fi     sv     fr    tlh
               360    signed out  33.3   33.3   33.3   33.3   33.3
@@ -371,6 +375,7 @@ export function Header({ navRole }: HeaderProps) {
               768    signed out 420.3  426.3  419.3  421.3  413.3
                      admin      452.4  425.0  475.0  410.9  501.3
               1024   signed out 398.7  385.7  376.7  304.7  360.7
+                     admin      353.9  294.5  359.5  216.0  382.8
                      gedu       174.2  147.1  171.8   26.1  156.9
               1280   signed out 654.7  641.7  632.7  560.7  616.7
                      gedu       430.2  403.1  427.8  282.1  412.9
@@ -391,8 +396,8 @@ export function Header({ navRole }: HeaderProps) {
           <div className="flex items-center gap-2 lg:gap-3">
             <div className="-ml-2 hidden items-center gap-1 lg:flex">
               {/*
-                First in the run, per the owner: a gedu's own destinations sit
-                left of the public ones.
+                First in the run, per the owner: the role's own destinations
+                sit left of the public ones.
 
                 That is also where the slack is, which is what makes the one
                 window where these items can arrive late — a session the server
@@ -401,8 +406,8 @@ export function Header({ navRole }: HeaderProps) {
                 group leftward into the space beside the logo; the public links,
                 the picker and the avatar hold their positions to the pixel. It is
                 the right-packed-run case of the late-arriving-mark rule, and the
-                order is therefore load-bearing: putting a gedu item anywhere else
-                in the run would push the links after it sideways.
+                order is therefore load-bearing: putting a role's item anywhere
+                else in the run would push the links after it sideways.
               */}
               {showsGeduItems && (
                 <>
@@ -426,17 +431,19 @@ export function Header({ navRole }: HeaderProps) {
                   >
                     {t("nav.substitutions")}
                   </Link>
-                  <Link
-                    href={ROUTES.settingsTeamProfile}
-                    className={cn(
-                      NAV_LINK_CLASS,
-                      isOnTeamProfile ? "text-act" : "text-muted-foreground",
-                    )}
-                    aria-current={isOnTeamProfile ? "page" : undefined}
-                  >
-                    {t("teamProfile")}
-                  </Link>
                 </>
+              )}
+              {showsMyProfile && (
+                <Link
+                  href={ROUTES.settingsTeamProfile}
+                  className={cn(
+                    NAV_LINK_CLASS,
+                    isOnTeamProfile ? "text-act" : "text-muted-foreground",
+                  )}
+                  aria-current={isOnTeamProfile ? "page" : undefined}
+                >
+                  {t("teamProfile")}
+                </Link>
               )}
               {publicDestinations.map((destination) => (
                 <PublicDestinationLink
