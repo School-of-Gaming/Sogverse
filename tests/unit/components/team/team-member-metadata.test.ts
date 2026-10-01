@@ -32,7 +32,6 @@ const {
   teamMemberSlug,
 } = await import("@/components/team/team-address");
 const {
-  teamMemberAlternates,
   teamMemberCanonicalPath,
   teamMemberJsonLd,
   teamMemberLocales,
@@ -138,22 +137,6 @@ describe("a team member's language versions", () => {
     expect(teamMemberCanonicalPath(finnish, "eetu-creeperhug", "fr")).toBe(
       "/fi/tiimi/eetu-creeperhug",
     );
-  });
-
-  it("annotate only the written versions, with x-default where an unmatched reader lands", () => {
-    const finnish = publicGeduProfile({ locales: ["fi", "sv"] });
-
-    expect(teamMemberAlternates(finnish, "eetu-creeperhug")).toEqual({
-      fi: "/fi/tiimi/eetu-creeperhug",
-      sv: "/sv/team/eetu-creeperhug",
-      "x-default": "/fi/tiimi/eetu-creeperhug",
-    });
-  });
-
-  it("annotate nothing for a person who wrote no indexed locale", () => {
-    expect(
-      teamMemberAlternates(publicGeduProfile({ locales: ["tlh"] }), "x"),
-    ).toEqual({});
   });
 
   it("never canonicalise to text in a locale that is not indexed", () => {

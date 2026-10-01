@@ -5,7 +5,6 @@ import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import {
   translatedCanonicalPath,
-  translatedPageAlternates,
   translatedPageLocales,
   translatedPageMetadataAlternates,
   type TranslatedPagePath,
@@ -29,7 +28,7 @@ import { articleAddress, type AddressableArticle } from "../article-address";
  */
 
 /** One place an article can be read: a locale, and the path segment there. */
-export interface LibraryArticleLocation {
+interface LibraryArticleLocation {
   locale: SupportedLocale;
   /** An id or a slug (`articleAddress`). */
   address: string;
@@ -76,14 +75,6 @@ export function libraryArticleLocales(
   article: Pick<AddressableArticle, "versions">,
 ): SupportedLocale[] {
   return translatedPageLocales(article.versions);
-}
-
-/** The article's `hreflang` set; empty when it was written in no indexed locale. */
-export function libraryArticleAlternates(
-  published: readonly AddressableArticle[],
-  article: AddressableArticle,
-): Record<string, string> {
-  return translatedPageAlternates(article.versions, pathsOf(published, article));
 }
 
 /**

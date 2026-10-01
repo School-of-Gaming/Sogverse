@@ -25,7 +25,6 @@ vi.mock("next-intl/server", () => ({
 }));
 
 const {
-  libraryArticleAlternates,
   libraryArticleCanonicalPath,
   libraryArticleLocales,
   libraryArticleMetadata,
@@ -167,14 +166,15 @@ describe("a Library article's metadata", () => {
     expect(openGraph).toMatchObject({ locale: "fi", url: path });
   });
 
-  it("names the newer of two articles deriving one slug by its id", () => {
+  it("names the newer of two articles deriving one slug by its id", async () => {
     const newer = { ...PUBLISHED, id: OTHER_ID, firstPublishedAt: "2026-07-01T08:00:00Z" };
     const live = [newer, PUBLISHED];
     expect(libraryArticleCanonicalPath(live, PUBLISHED, "en")).toBe(EN_PATH);
     expect(libraryArticleCanonicalPath(live, newer, "en")).toBe(
       `/en/library/${OTHER_ID}`,
     );
-    expect(libraryArticleAlternates(live, newer)).toEqual({
+    const { alternates } = await libraryArticleMetadata(newer, live, "en");
+    expect(alternates?.languages).toEqual({
       en: `/en/library/${OTHER_ID}`,
       fi: `/fi/kirjasto/${OTHER_ID}`,
       "x-default": `/en/library/${OTHER_ID}`,

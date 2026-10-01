@@ -5,9 +5,7 @@ import { slugify } from "@/lib/slug";
  *
  * Used to build human-readable `/schools/<slug>` links (e.g. `helsinki`,
  * `espoo`) without storing a slug column -- the `locations` table holds only
- * the native name. The transform is the site's one `slugify`: diacritics
- * folded (a-umlaut -> a, o-umlaut -> o, a-ring -> a), lowercase, every run of
- * non-`[a-z0-9]` collapsed to a single hyphen, trimmed.
+ * the native name. The transform is the site's one `slugify`.
  *
  * Verified collision-free across all 308 municipalities in Finland's 2025
  * classification (the unit test re-checks it against the seed),

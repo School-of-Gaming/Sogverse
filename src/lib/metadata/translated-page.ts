@@ -88,7 +88,7 @@ export function translatedPageLocales(
  * English resolves to, since an unmatched language lands on English. Empty
  * when nothing was written in an indexed locale.
  */
-export function translatedPageAlternates(
+function translatedPageAlternates(
   rows: readonly WrittenRow[],
   pathAt: TranslatedPagePath,
 ): Record<string, string> {

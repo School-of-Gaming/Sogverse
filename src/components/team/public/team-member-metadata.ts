@@ -5,7 +5,6 @@ import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   translatedCanonicalPath,
-  translatedPageAlternates,
   translatedPageLocales,
   translatedPageMetadataAlternates,
   type TranslatedPagePath,
@@ -53,14 +52,6 @@ export function teamMemberCanonicalPath(
  */
 export function teamMemberLocales(person: TeamProfile): SupportedLocale[] {
   return translatedPageLocales(person.translations);
-}
-
-/** The person's `hreflang` set; empty when they wrote in no indexed locale. */
-export function teamMemberAlternates(
-  person: TeamProfile,
-  address: string,
-): Record<string, string> {
-  return translatedPageAlternates(person.translations, pathsOf(address));
 }
 
 /**
