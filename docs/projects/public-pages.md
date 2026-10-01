@@ -517,6 +517,8 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-10-01 | The home page holds nothing that lives nowhere else; each section summarises a page a signed-in reader can reach (owner). |
 | 2026-10-01 | The hero sets its text on the scrim over its background loop, a declared exemption recorded in SOG-UI's surfaces (owner). |
 | 2026-10-01 | The hero loop takes no game-screenshot window frame; whether the frame applies to other in-game screenshots on the website is decided when one arrives (owner). |
+| 2026-10-01 | The team share card's address version is not checked by the server: forcing re-renders needs deliberate abuse with nothing to gain, so no guard is built (owner). |
+| 2026-10-01 | The Library and Team index headers stay hand-written and matching (headline centred, intro left-aligned); a shared header waits for a third such page (owner). |
 | 2026-10-01 | Sonja's first images are cleared to publish: the staff shown consented, and no child's face is visible (owner). |
 | 2026-10-01 | "Find a club" opens the shop unfiltered: clubs lead the list, and camps and events follow without touching a filter (owner). |
 | 2026-10-01 | French phone tab shows "Biblio" for the Library (owner, native-speaker check). |

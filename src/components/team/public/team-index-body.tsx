@@ -47,7 +47,7 @@ export function TeamIndexBody({ members }: { members: readonly TeamIndexMember[]
           </h1>
           <span aria-hidden className="mt-4 block h-1.5 w-full rounded-full bg-world" />
         </div>
-        <p className="mx-auto mt-5 max-w-3xl text-center text-base text-muted-foreground sm:text-lg">
+        <p className="mt-5 text-base text-muted-foreground sm:text-lg">
           {t("intro")}
         </p>
       </header>
