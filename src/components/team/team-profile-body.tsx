@@ -1,7 +1,6 @@
 "use client";
 
 import { useId } from "react";
-import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { Markdown } from "@/components/ui/markdown";
@@ -9,12 +8,15 @@ import { useLanguageNames } from "@/hooks/use-language-names";
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cn } from "@/lib/utils";
-import { TeamPhotoPlaceholder } from "@/components/team/team-photo-placeholder";
-import { VOICE_ZONE_COLORS } from "@/lib/constants/voice-zones";
-import type {
-  TeamProfile,
-  TeamProfilePhoto,
-} from "@/services/team-profiles/team-profiles.types";
+import {
+  teamMemberHeadline,
+  teamMemberSubline,
+} from "@/components/team/team-name";
+import {
+  TeamPortrait,
+  teamPickClasses,
+} from "@/components/team/team-portrait";
+import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 
 /**
  * The public team profile page body: one person, admin or Gedu, on one page.
@@ -25,24 +27,26 @@ import type {
  * **Written for parents and gamers at once**, so it does two jobs: it lets a
  * parent see who this is — a face, a name, the languages they can talk to
  * them in — and it lets a gamer see why a session with them is fun. The order
- * follows that: the photo leads, then the name with the nickname gamers use,
- * the person's own opening line, the languages they speak, "About me", and the
- * fun fact as a playful aside to finish on.
+ * follows that: the photo leads, then the person headed as everywhere they
+ * are shown (`team-name.ts`) — the first name with the nickname gamers use,
+ * and under the rule a Gedu's role or an admin's full name and title — then
+ * the person's own opening line, the languages they speak, "About me", and
+ * the fun fact as a playful aside to finish on.
  *
  * **One reading column.** Every section shares the article's measure; nothing
  * narrows itself, so the page has one left edge and one right edge.
  *
  * **Colour: the brand first, the person's pick as an optional accent.** The
  * headline takes the public hero treatment declared in SOG-UI's `brand.ts` —
- * the name in ink, the nickname as the one act phrase, the world rule beneath
- * — so the page reads as School of Gaming before it reads as anyone's. A
+ * the first name in ink, the nickname as the one act phrase, the world rule
+ * beneath — so the page reads as School of Gaming before it reads as anyone's. A
  * person who picked a colour gets it as an accent on top: the photo's frame
  * and the voice zones' own glow (`.zone-glow`, spilling in from the frame),
  * and the fun fact's side rule. It is only ever an edge, a rule or that glow,
  * never a fill with words on it, and it sits outside the page's colour budget
  * (SOG-UI's `picks.ts`). With no pick, the frame is the neutral edge, there
- * is no glow, and the side rule falls back to act. Poppins throughout: this is a person
- * introducing themselves, not a quotation.
+ * is no glow, and the side rule falls back to act. Poppins throughout: this is
+ * a person introducing themselves, not a quotation.
  *
  * **Which of the person's languages is shown follows the product page**: the
  * reader's locale, then English, then the first one written, through the same
@@ -90,50 +94,36 @@ export function TeamProfileBody({
   const shortDescription = written?.shortDescription.trim() ?? "";
   const longDescription = written?.longDescription.trim() ?? "";
   const funFact = written?.funFact?.trim() ?? "";
-  const pick =
-    profile.pick === null ? null : VOICE_ZONE_COLORS[`${profile.pick}`];
+  const pick = teamPickClasses(profile.pick);
 
-  const displayName =
-    profile.kind === "admin"
-      ? `${profile.firstName} ${profile.lastName}`
-      : profile.firstName;
-  const title = profile.kind === "admin" ? profile.title : t("geduTitle");
+  const subline = teamMemberSubline(profile, t);
 
   return (
     <div className="@container">
       <article className="mx-auto w-full max-w-3xl px-4 py-8 @min-[40rem]:px-6 @min-[40rem]:py-12">
         <header className="flex flex-col gap-6 @min-[40rem]:flex-row @min-[40rem]:items-center @min-[40rem]:gap-8">
-          <Portrait photo={profile.photo} pick={pick} />
+          <TeamPortrait
+            photo={profile.photo}
+            pick={profile.pick}
+            rounding="page"
+            priority
+            className="w-36 shrink-0 @min-[40rem]:w-48"
+          />
           <div className="min-w-0 flex-1">
             {/* The wrapper shrinks to the headline's longest line, so the rule
                 runs exactly the headline's measure, as on the home hero. */}
             <div className="inline-block max-w-full">
               <h1 className="break-words text-h1-mobile font-bold tracking-tight @min-[48rem]:text-5xl">
-                {profile.nickname === null
-                  ? displayName
-                  : profile.kind === "admin"
-                    ? t.rich("nameWithNickname", {
-                        firstName: profile.firstName,
-                        lastName: profile.lastName,
-                        nickname: profile.nickname,
-                        nick: (chunks) => (
-                          <span className="text-act">{chunks}</span>
-                        ),
-                      })
-                    : t.rich("firstNameWithNickname", {
-                        firstName: profile.firstName,
-                        nickname: profile.nickname,
-                        nick: (chunks) => (
-                          <span className="text-act">{chunks}</span>
-                        ),
-                      })}
+                {teamMemberHeadline(profile, t, (chunks) => (
+                  <span className="text-act">{chunks}</span>
+                ))}
               </h1>
               <span
                 aria-hidden
                 className="mt-4 block h-1.5 w-full rounded-full bg-world"
               />
             </div>
-            <p className="mt-3 font-medium text-muted-foreground">{title}</p>
+            <p className="mt-3 font-medium text-muted-foreground">{subline}</p>
             {shortDescription === "" ? (
               <p className="mt-4 text-lg font-medium leading-snug text-muted-foreground @min-[40rem]:text-xl">
                 {t("draft.shortDescription")}
@@ -204,62 +194,6 @@ export function TeamProfileBody({
           </aside>
         )}
       </article>
-    </div>
-  );
-}
-
-/**
- * The 4:5 portrait frame the person is shown in: their photo, or, in the
- * editor's preview of a profile that has none yet, the drawn placeholder. The
- * body keeps the placeholder because the editor's preview is this same body;
- * the public page never meets it, since a profile cannot go up without a
- * photo. Decorative either way: the name is the heading beside it.
- *
- * **With a pick, the frame is edged in it and glows with it**, through the
- * voice zones' own `glow` classes, unchanged. That glow is an inset shadow, and
- * an inset shadow paints beneath an element's content, so it is laid over the
- * photo on its own layer rather than on the frame, where the photo would cover
- * it. With no pick the frame is the neutral edge, at the same width, so
- * choosing or clearing a colour in the editor moves nothing.
- *
- * **The photo is drawn `unoptimized`**: in the editor a saved one is a private
- * object behind a short-lived signed URL, which the image optimiser would
- * cache for a year under an unauthenticated address, and a new crop is a local
- * object URL it cannot fetch at all; on the public page it is the app's photo
- * route, whose five-minute cache is what takes a hidden profile's photo down,
- * and the optimiser's year would outlive it.
- */
-function Portrait({
-  photo,
-  pick,
-}: {
-  photo: TeamProfilePhoto | null;
-  pick: { edge: string; glow: string } | null;
-}) {
-  return (
-    <div
-      aria-hidden
-      className={cn(
-        "relative aspect-[4/5] w-36 shrink-0 overflow-hidden rounded-2xl border-4 bg-card @min-[40rem]:w-48",
-        pick === null ? "border-border" : pick.edge,
-      )}
-    >
-      {photo ? (
-        <Image
-          src={photo.src}
-          width={photo.width}
-          height={photo.height}
-          alt=""
-          unoptimized
-          className="h-full w-full object-cover"
-          priority
-        />
-      ) : (
-        <TeamPhotoPlaceholder className="h-full w-full" />
-      )}
-      {pick !== null && (
-        <span className={cn("absolute inset-0 rounded-xl", pick.glow)} />
-      )}
     </div>
   );
 }

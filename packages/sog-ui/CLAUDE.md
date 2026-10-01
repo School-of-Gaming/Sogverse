@@ -160,9 +160,11 @@ edge; a status stated inline — under a field, along a row — is a line and ha
 all.** There is no third shape between the two, and the third shape is what keeps
 getting built: a box drawn by hand with a neutral edge and a coloured glyph inside it is
 the panel with its one mark of attention taken back off. **A public page's
-hero headline is the one declared departure from the division** — a display treatment,
-one phrase in `act` and the `world` rule beneath it — declared beside the label rule in
-`brand.ts`, which is also where it says a section heading is not a hero.
+hero headline and a team member's nickname are the two declared departures from the
+division** — the hero a display treatment, one phrase in `act` and the `world` rule
+beneath it; the nickname set in `act`, unquoted, wherever a team member's name is shown —
+both declared beside the label rule in `brand.ts`, which is also where it says a section
+heading is not a hero.
 
 **Colour is spent to a budget, and the budget is set by who the page is for.** **A
 surface where a parent is being asked to trust us or to pay**, the parent's dashboard,

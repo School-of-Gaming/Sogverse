@@ -35,8 +35,8 @@ export async function ogCardImage(
  * the card's version (`teamCardUrl`), so a profile that changes is a new image
  * to every preview that cached the old one.
  *
- * The alt text says who the card shows and what they do here: the name as the
- * page's heading shows it, and the title line under it.
+ * The alt text says who the card shows and what they do here: the person's
+ * full name, as the page title gives it, and their title line.
  */
 export async function teamCardImage(
   person: TeamProfile,

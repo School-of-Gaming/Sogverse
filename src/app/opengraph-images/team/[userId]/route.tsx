@@ -5,7 +5,11 @@ import sharp from "sharp";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { SogBadge } from "@/components/og/marks";
 import { SogWordmark } from "@/components/brand/sog-wordmark";
-import { teamMemberPlainName } from "@/components/team/team-name";
+import {
+  teamMemberHeadline,
+  teamMemberHeadlineText,
+  teamMemberSubline,
+} from "@/components/team/team-name";
 import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { MAX_INPUT_PIXELS } from "@/lib/images/reencode-jpeg.server";
@@ -102,21 +106,12 @@ export async function GET(
 
   const written = resolveTranslation(person.translations, locale);
 
-  // The headline is the first name with the nickname, for an admin too: their
-  // surname moves to the line under the rule, beside their title.
-  const headlinePlain = teamMemberPlainName(person, t, { withSurname: false });
-  const headline =
-    person.nickname === null
-      ? person.firstName
-      : t.rich("firstNameWithNickname", {
-          firstName: person.firstName,
-          nickname: person.nickname,
-          nick: (chunks) => <span style={{ color: BRAND.act }}>{chunks}</span>,
-        });
-  const subline =
-    person.kind === "admin"
-      ? `${person.firstName} ${person.lastName} · ${person.title}`
-      : t("geduTitle");
+  // Headed as the profile page heads them (`team-name.ts`): the first name
+  // with the nickname in act, an admin's surname on the line under the rule.
+  const headline = teamMemberHeadline(person, t, (chunks) => (
+    <span style={{ color: BRAND.act }}>{chunks}</span>
+  ));
+  const subline = teamMemberSubline(person, t);
 
   const { sideMargin, portraitWidth, portraitHeight, gap } = TEAM_CARD_LAYOUT;
   const radius = 30;
@@ -199,12 +194,12 @@ export async function GET(
 
           {/* One line, sized to fit (`teamCardHeadlineSize`). A row of the
               name's runs rather than a block, which satori cannot give mixed
-              children; `pre` keeps the space a locale's quote mark sits
-              beside. */}
+              children; `pre` keeps the space between the first name and
+              the nickname, which ends one run. */}
           <div
             style={{
               display: "flex",
-              fontSize: `${teamCardHeadlineSize(headlinePlain)}px`,
+              fontSize: `${teamCardHeadlineSize(teamMemberHeadlineText(person, t))}px`,
               fontWeight: 600,
               lineHeight: 1.08,
               letterSpacing: "-1px",

@@ -52,7 +52,7 @@ const loadPerson = cache(async (segment: string) =>
   }),
 );
 
-/** The person, their canonical address, and the words the page heads itself with. */
+/** The person, their canonical address, their full name for the title, and their title line. */
 async function loadPage(segment: string) {
   const person = await loadPerson(segment);
   if (person === null) return null;

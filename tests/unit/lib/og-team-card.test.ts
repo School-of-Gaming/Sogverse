@@ -87,11 +87,11 @@ describe("a team card's version", () => {
 
 describe("the team card's headline size", () => {
   it("is the full size for a name that fits", () => {
-    expect(teamCardHeadlineSize("Laura “Nightowl”")).toBe(TEAM_CARD_HEADLINE_MAX);
+    expect(teamCardHeadlineSize("Laura Nightowl")).toBe(TEAM_CARD_HEADLINE_MAX);
   });
 
   it("shrinks a long name to fit rather than wrapping it", () => {
-    const size = teamCardHeadlineSize("Maximilian “XxDragonSlayer”");
+    const size = teamCardHeadlineSize("Maximilian XxDragonSlayer");
     expect(size).toBeLessThan(TEAM_CARD_HEADLINE_MAX);
     expect(size).toBeGreaterThanOrEqual(TEAM_CARD_HEADLINE_MIN);
   });
@@ -113,7 +113,7 @@ describe("the team card's headline size", () => {
     )?.[1];
     expect(nickname).toBeDefined();
 
-    const size = teamCardHeadlineSize(`Aino “${nickname}”`);
+    const size = teamCardHeadlineSize(`Aino ${nickname}`);
     expect(size).toBeLessThan(TEAM_CARD_HEADLINE_MAX);
     expect(size).toBeGreaterThan(TEAM_CARD_HEADLINE_MIN);
   });

@@ -100,8 +100,10 @@ export function teamMemberAlternates(
 /**
  * A person's page metadata.
  *
- * - **The title is the name as the heading shows it** (`name`, plain text),
- *   under the site's title template. The description is their one-line intro
+ * - **The title is the person's full name** (`name`, plain text): the
+ *   heading's first name and nickname, and an admin's surname too, which the
+ *   page shows on the line under the heading. A title stands alone in a
+ *   search result or a tab, so it names the person in full. The description is their one-line intro
  *   in the words the page shows.
  * - **The card is the person's own** (`/opengraph-images/team/<id>`) at the
  *   request's locale, drawn for a link preview's wide frame rather than the
@@ -121,7 +123,7 @@ export async function teamMemberMetadata({
   /** The person's canonical address segment (`teamMemberAddress`). */
   address: string;
   requestLocale: string;
-  /** The name as the page's heading shows it, as plain text. */
+  /** The person's full name, as plain text (`teamMemberPlainName`). */
   name: string;
 }): Promise<Metadata> {
   const locale = resolveLocale(requestLocale);

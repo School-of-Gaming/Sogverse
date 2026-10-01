@@ -4313,8 +4313,9 @@
   },
   "team": {
     "profile": {
-      "nameWithNickname": "{firstName} “<nick>{nickname}</nick>” {lastName}",
-      "firstNameWithNickname": "{firstName} “<nick>{nickname}</nick>”",
+      "headlineName": "{firstName} <nick>{nickname}</nick>",
+      "nameWithNickname": "{firstName} “{nickname}” {lastName}",
+      "firstNameWithNickname": "{firstName} “{nickname}”",
       "geduTitle": "Gedu · Quj ghojmoHwI’",
       "speaks": "jatlh",
       "aboutMe": "jIH",

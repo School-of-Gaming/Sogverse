@@ -100,7 +100,7 @@ export const TEAM_CARD_HEADLINE_MIN = 32;
 
 /**
  * The width one character of the headline is budgeted, in ems. Poppins
- * SemiBold's advances average 0.54-0.56em over real names with their quotes
+ * SemiBold's advances average 0.54-0.56em over real first names and nicknames
  * (measured from the vendored file), so 0.6 leaves a margin without shrinking
  * a name that would have fitted.
  */
