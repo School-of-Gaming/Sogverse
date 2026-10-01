@@ -358,8 +358,10 @@ export default function HomePage() {
             <TrustLine className="mt-4" />
             {/* The card signs off below the button with where we are: a plain
                 fact a search engine or an assistant can quote (clubs online in
-                the spoken languages we deliver in, for families anywhere, run
-                from Helsinki, Finland) with a smile at the end. It sits after
+                the spoken languages we deliver in, for families anywhere), then
+                a smile about our "global headquarters" being a small office in
+                Helsinki, Finland. The joke is about the company's office, never
+                about where clubs are run from: Gedus are not all there. It sits after
                 the ask so the card reads as one pitch rather than two stacked
                 paragraphs, and it matches the subheading's size and ink so it
                 reads as the same voice. The measure is narrowed and balanced
