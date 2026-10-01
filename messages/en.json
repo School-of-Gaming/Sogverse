@@ -1580,7 +1580,7 @@
       "empty": "No feedback was given in this range.",
       "loadError": "The feedback could not be loaded. Reload the page to try again.",
       "loadErrorWithReason": "The feedback could not be loaded: {reason}",
-      "tooFew": "Too few answers ({count})",
+      "noAnswers": "No answers",
       "answers": "{count, plural, one {# answer} other {# answers}}",
       "skipped": "Skipped",
       "belowAverage": "Below average",
@@ -1599,7 +1599,7 @@
       },
       "spark": {
         "point": "{bucket}: {share} positive",
-        "tooFew": "{bucket}: too few answers ({count})",
+        "none": "{bucket}: no answers",
         "labelWeek": "Positive answers by week. {points}",
         "labelMonth": "Positive answers by month. {points}"
       },
@@ -1652,8 +1652,7 @@
         "answers": "Answers",
         "positive": "Positive",
         "positiveAgainst": "Positive (platform {share})",
-        "change": "Change",
-        "tooFewHeading": "Too few answers to say"
+        "change": "Change"
       },
       "lists": {
         "titles": {

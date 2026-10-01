@@ -1580,7 +1580,7 @@
       "empty": "Tällä aikavälillä ei annettu palautetta.",
       "loadError": "Palautetta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
       "loadErrorWithReason": "Palautetta ei voitu ladata: {reason}",
-      "tooFew": "Liian vähän vastauksia ({count})",
+      "noAnswers": "Ei vastauksia",
       "answers": "{count, plural, one {# vastaus} other {# vastausta}}",
       "skipped": "Ohitettu",
       "belowAverage": "Alle keskiarvon",
@@ -1599,7 +1599,7 @@
       },
       "spark": {
         "point": "{bucket}: {share} myönteisiä",
-        "tooFew": "{bucket}: liian vähän vastauksia ({count})",
+        "none": "{bucket}: ei vastauksia",
         "labelWeek": "Myönteiset vastaukset viikoittain. {points}",
         "labelMonth": "Myönteiset vastaukset kuukausittain. {points}"
       },
@@ -1652,8 +1652,7 @@
         "answers": "Vastaukset",
         "positive": "Myönteiset",
         "positiveAgainst": "Myönteiset (koko alusta {share})",
-        "change": "Muutos",
-        "tooFewHeading": "Liian vähän vastauksia arvioitavaksi"
+        "change": "Muutos"
       },
       "lists": {
         "titles": {

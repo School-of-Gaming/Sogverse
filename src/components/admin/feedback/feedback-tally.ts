@@ -13,12 +13,12 @@ import type {
   FeedbackSource,
 } from "@/services/session-feedback/admin-feedback.contracts";
 import { FEEDBACK_CATALOGUES } from "./feedback-sources";
-import { wilsonInterval, type ShareInterval } from "./wilson";
 
 /**
  * The counting underneath every figure on the feedback page: answers into
- * tallies, tallies into shares with their confidence, and session days into
- * the buckets a sparkline draws.
+ * tallies, tallies into shares, and session days into the buckets a sparkline
+ * draws. A share is stated whatever the sample behind it: it exists wherever
+ * anything was answered.
  */
 
 /**
@@ -32,13 +32,6 @@ export const POSITIVE_FROM: SessionFeedbackRating = 4;
 
 /** The highest answer that counts as low: "No" and "Not really". */
 export const LOW_UP_TO: SessionFeedbackRating = 2;
-
-/**
- * Below this sample a figure is listed but never stated: no percentage, no
- * change, no flag. Ten answers is where a share stops swinging by ten points
- * on one child's mood.
- */
-export const TOO_FEW = 10;
 
 /** One inclusive span of session days, `YYYY-MM-DD`. */
 export interface FeedbackPeriod {
@@ -105,17 +98,9 @@ export function addRatings(tally: Tally, ratings: readonly SessionFeedbackRating
   }
 }
 
-/**
- * A set of answers as the page states it.
- *
- * `n` is the sample every judgement of confidence rests on — the interval, the
- * `tooFew` floor, sparse buckets. For one statement it is that statement's
- * answers. For the overall figure across statements it is the *responses*,
- * not the answers: one child's five answers about one session move together,
- * so counting them as five independent observations would make a single
- * response look like a sample of five.
- */
+/** A set of answers as the page states it. */
 export interface ShareFigure {
+  /** Responses counted: for one statement, that statement's answers. */
   n: number;
   /** Answers counted (equals `n` for a single statement). */
   answers: number;
@@ -127,10 +112,6 @@ export interface ShareFigure {
   positiveShare: number | null;
   /** `low / answers`, `null` when nothing was answered. */
   lowShare: number | null;
-  /** 95% Wilson interval of `positiveShare` over `n`; `null` when `n` is 0. */
-  interval: ShareInterval | null;
-  /** `n < TOO_FEW`: list it, state no percentage, compare nothing. */
-  tooFew: boolean;
   /** How the answers fell across the five levels. */
   distribution: Record<SessionFeedbackRating, number>;
 }
@@ -139,16 +120,13 @@ export function shareFigure(tally: Tally): ShareFigure {
   const { counts, answers } = tally;
   const positive = counts[4] + counts[5];
   const low = counts[1] + counts[2];
-  const positiveShare = answers === 0 ? null : positive / answers;
   return {
     n: tally.responses,
     answers,
     positive,
     low,
-    positiveShare,
+    positiveShare: answers === 0 ? null : positive / answers,
     lowShare: answers === 0 ? null : low / answers,
-    interval: positiveShare === null ? null : wilsonInterval(positiveShare, tally.responses),
-    tooFew: tally.responses < TOO_FEW,
     distribution: { ...counts },
   };
 }
@@ -176,25 +154,19 @@ export function tallyResponses(
   return { overall, statements };
 }
 
-/** `current − previous` in percentage points; `null` unless both are stated. */
-export function changePoints(current: ShareFigure, previous: ShareFigure): number | null {
-  if (current.tooFew || previous.tooFew) return null;
-  if (current.positiveShare === null || previous.positiveShare === null) return null;
-  return (current.positiveShare - previous.positiveShare) * 100;
+/**
+ * `a − b` in percentage points — a change since the previous period, or a gap
+ * to the platform. `null` when either side had no answers.
+ */
+export function pointsBetween(a: ShareFigure, b: ShareFigure): number | null {
+  if (a.positiveShare === null || b.positiveShare === null) return null;
+  return (a.positiveShare - b.positiveShare) * 100;
 }
 
-/**
- * Whether a scope sits *confidently* below the platform: even the top of its
- * 95% interval is under the platform's own share for the same thing and
- * period. Never true for a figure with too few answers to state.
- */
-export function confidentlyBelow(scope: ShareFigure, platform: ShareFigure): boolean {
-  return (
-    !scope.tooFew &&
-    scope.interval !== null &&
-    platform.positiveShare !== null &&
-    scope.interval.upper < platform.positiveShare
-  );
+/** Whether a scope's positive share is under the platform's for the same thing and period. */
+export function isBelow(scope: ShareFigure, platform: ShareFigure): boolean {
+  const gap = pointsBetween(scope, platform);
+  return gap !== null && gap < 0;
 }
 
 /** Whether a session day falls inside an inclusive period. */

@@ -1624,7 +1624,7 @@
       "empty": "poHvam ja'chuq pagh.",
       "loadError": "ja'chuq lI'laHbe'. nIqHom yIchu'qa'.",
       "loadErrorWithReason": "ja'chuq lI'laHbe': {reason}",
-      "tooFew": "jangmey puS law' ({count})",
+      "noAnswers": "jangmey pagh",
       "answers": "{count, plural, one {# jang} other {# jangmey}}",
       "skipped": "juSlu'",
       "belowAverage": "motlh bIng",
@@ -1643,7 +1643,7 @@
       },
       "spark": {
         "point": "{bucket}: {share} QaQ",
-        "tooFew": "{bucket}: jangmey puS law' ({count})",
+        "none": "{bucket}: jangmey pagh",
         "labelWeek": "Hogh jangmey QaQ. {points}",
         "labelMonth": "jar jangmey QaQ. {points}"
       },
@@ -1696,8 +1696,7 @@
         "answers": "jangmey",
         "positive": "QaQ",
         "positiveAgainst": "QaQ (Hoch {share})",
-        "change": "choH",
-        "tooFewHeading": "jangmey puS law'; jatlhlaHbe'"
+        "change": "choH"
       },
       "lists": {
         "titles": {

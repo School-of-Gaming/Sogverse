@@ -610,7 +610,9 @@ DECLARE
   v_live     timestamp := date_trunc('minute', (now() AT TIME ZONE v_tz) - interval '10 minutes');
 BEGIN
 
-  -- 1. Running, listed, paid consumer club. The busiest thing in the catalogue.
+  -- 1. Running, listed, paid consumer club. The busiest thing in the catalogue,
+  --    and seven months in, like the free club below: the feedback page's
+  --    90-day view needs a previous 90 days to compare against.
   PERFORM public.create_product(
     'consumer_club', 'paid',
     jsonb_build_array(
@@ -622,9 +624,9 @@ BEGIN
         'long_description','Ohjaajamme vetävät joka viikko pienen verkkoryhmän omalla Java-palvelimellamme.\n\n- Rakennus- ja redstone-projektit lapset valitsevat itse\n- Suljettu palvelin, jolle ei pääse ulkopuolisia\n- Ohjaaja moderoi puhekanavaa koko ajan')
     ),
     'minecraft_java', 'fi', true, v_tz,
-    now() - interval '90 days', true, false,
+    now() - interval '230 days', true, false,
     p_min_age => 8, p_max_age => 12, p_is_visible => true,
-    p_start_date => current_date - 70,
+    p_start_date => current_date - 210,
     p_seat_count => 12,
     p_schedule_slots => jsonb_build_array(
       jsonb_build_object('weekday', 1, 'start_time', '16:00', 'duration_minutes', 90)),
@@ -692,9 +694,9 @@ BEGIN
         'long_description','Pienet ryhmät, joka viikko sama rakenne eikä painetta näkyä kameralla. Suunniteltu erityisesti neuroepätyypillisiä lapsia ajatellen.')
     ),
     'creator_studio', 'fi', true, v_tz,
-    now() - interval '30 days', true, false,
+    now() - interval '230 days', true, false,
     p_min_age => 8, p_max_age => 13, p_is_visible => true,
-    p_start_date => current_date - 14,
+    p_start_date => current_date - 210,
     p_end_date => current_date + 120,
     p_seat_count => 15,
     p_schedule_slots => jsonb_build_array(
@@ -1267,6 +1269,37 @@ BEGIN
 END;
 $$;
 
+-- The Creator Studio Club splits into a second group, Mikko's, which three of
+-- its children move to by name — so Otso and Nea stay together in Ryhmä A.
+-- Section 9 gives this group sessions and attendance but no feedback at all:
+-- the admin feedback page's "ran sessions, heard nothing back".
+DO $$
+DECLARE
+  v_product uuid := (SELECT product_id FROM public.product_translations
+                      WHERE locale = 'en' AND name = 'Creator Studio Club');
+  v_group   uuid;
+BEGIN
+  PERFORM public.apply_group_changes(
+    v_product,
+    p_added_groups => jsonb_build_array(jsonb_build_object(
+      'tempId', 'b', 'name', 'Ryhmä B',
+      'gedus', jsonb_build_array(jsonb_build_object(
+        'geduId', (SELECT id FROM public.profiles WHERE email = 'mikko.lehtinen@example.com'),
+        'role', 'primary')))));
+  v_group := (SELECT id FROM public.product_groups
+               WHERE product_id = v_product AND name = 'Ryhmä B');
+  PERFORM public.apply_group_changes(
+    v_product,
+    p_participation_moves => (
+      SELECT jsonb_agg(jsonb_build_object('participationId', pa.id, 'toGroupId', v_group))
+        FROM public.participations pa
+        JOIN public.profiles pr ON pr.id = pa.participant_id
+       WHERE pa.product_id = v_product AND pa.status = 'active'
+         AND pr.email IN ('sointu@gamer.example.com', 'pihla@gamer.example.com',
+                          'aada@gamer.example.com')));
+END;
+$$;
+
 COMMIT;
 
 -- =============================================================================
@@ -1276,16 +1309,21 @@ COMMIT;
 -- finished clubs, written by the educator who teaches the group — impersonated
 -- one at a time, so `updated_by` and `recorded_by` read the way they would in
 -- production rather than all pointing at an admin. The ten most recent sessions
--- of each club are written up, which reaches back to the start of the longest
--- running one.
+-- of each in-person club are written up, and the thirty-one most recent of each
+-- online one — seven months, back to their start, so the admin feedback page
+-- has a previous period behind every range but the year.
 --
 -- On the ONLINE clubs, about seven in ten of the children marked present then
 -- answer the feedback screen on the way out — written as the child, the way
--- the screen writes it, under the child's own claims. The answers are shaped so
--- the admin feedback page has something to find: the Creator Studio group is
--- noticeably weaker on whether the group listened, and the Minecraft Java
--- club's Ryhmä B rates its educator higher week by week. About one answer in
--- seven carries a note, and a few carry only a note.
+-- the screen writes it, under the child's own claims — and so does one in four
+-- of those marked absent, who joined late or left before the register. The
+-- answers are shaped so the admin feedback page has something to find: the
+-- Creator Studio Club's Ryhmä A is noticeably weaker on whether the group
+-- listened, the Minecraft Java club's Ryhmä B rates its educator (Aino) higher
+-- week by week, and the Creator Studio Club's Ryhmä B, Mikko's, holds its
+-- sessions and never answers at all. About one answer in seven carries a note,
+-- a few carry only a note, and a note says what the answers do: a child who
+-- answered No or Not really to something writes about what went wrong.
 
 BEGIN;
 SELECT set_config('request.jwt.claims',
@@ -1314,24 +1352,33 @@ DECLARE
   v_key      text;
   v_level    integer;
   v_progress numeric;
-  v_notes    text[] := ARRAY[
+  v_notes    text[];
+  -- What a child writes after answering No or Not really to something.
+  v_low_notes text[] := ARRAY[
+    'it was hard to hear because everyone talked at once',
+    'some people kept talking over me',
+    'nobody listened when i explained my idea',
+    'too short, i didnt get to finish my build',
+    'someone broke my house and nobody said anything',
+    'kind of boring we did the same thing as last time',
+    'my internet was laggy and i missed half of it'];
+  -- And after a session that went well, or with no answers beside it.
+  v_happy_notes text[] := ARRAY[
     'the redstone door was SO cool',
     'can we build a castle next time??',
-    'it was hard to hear because everyone talked at once',
     'i learned how to make a piston elevator',
-    'some people kept talking over me',
-    'my internet was laggy but it was still fun',
-    'too short, i want longer sessions',
     'the teacher helped me fix my house thanks',
-    'nobody listened when i explained my idea',
-    'best club ever'];
+    'best club ever',
+    'WE WON THE BUILD BATTLE',
+    'i made a new friend today'];
 BEGIN
   FOR grp IN
     SELECT g.id AS group_id, a.gedu_id, p.start_date, p.end_date, s.weekday,
            p.is_remote, p.timezone, s.start_time, s.duration_minutes,
-           -- The two groups whose answers lean, as the comment above says.
-           (t.name = 'Creator Studio Club')                     AS weak_listening,
-           (t.name = 'Minecraft Java Club' AND g.name = 'Ryhmä B') AS rising_gedu
+           -- The groups whose answers lean, or never come, as the comment above says.
+           (t.name = 'Creator Studio Club' AND g.name = 'Ryhmä A') AS weak_listening,
+           (t.name = 'Minecraft Java Club' AND g.name = 'Ryhmä B') AS rising_gedu,
+           (t.name = 'Creator Studio Club' AND g.name = 'Ryhmä B') AS silent
       FROM public.product_groups g
       JOIN public.products p ON p.id = g.product_id
       JOIN public.product_translations t
@@ -1355,7 +1402,7 @@ BEGIN
                              interval '1 day') dd
        WHERE EXTRACT(ISODOW FROM dd)::integer - 1 = grp.weekday
        ORDER BY dd DESC
-       LIMIT 10);
+       LIMIT CASE WHEN grp.is_remote THEN 31 ELSE 10 END);
     v_total := COALESCE(array_length(v_dates, 1), 0);
     v_people := ARRAY(
       SELECT participant_id FROM public.participations
@@ -1385,8 +1432,9 @@ BEGIN
           grp.group_id, d, v_person,
           CASE WHEN v_present THEN 'present' ELSE 'absent' END);
 
-        CONTINUE WHEN NOT (grp.is_remote AND v_present
-                           AND abs(hashtext('answered' || v_person || d)) % 100 < 70);
+        CONTINUE WHEN NOT (grp.is_remote AND NOT grp.silent
+                           AND abs(hashtext('answered' || v_person || d)) % 100
+                               < CASE WHEN v_present THEN 70 ELSE 25 END);
 
         -- 0 at the oldest session written up, 1 at the latest.
         v_progress := CASE WHEN v_total > 1
@@ -1412,6 +1460,9 @@ BEGIN
         -- The screen writes on the way out, keyed by the instant the voice
         -- window opened: five minutes before the start, the voice constant.
         v_starts := (d + grp.start_time) AT TIME ZONE grp.timezone;
+        v_notes := CASE
+          WHEN EXISTS (SELECT 1 FROM jsonb_each(v_answers) WHERE value::integer <= 2)
+            THEN v_low_notes ELSE v_happy_notes END;
         PERFORM set_config('request.jwt.claims',
           json_build_object('sub', v_person::text, 'role', 'authenticated')::text, true);
         INSERT INTO public.session_feedback

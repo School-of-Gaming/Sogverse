@@ -123,7 +123,7 @@ function adminPageOf(detail: FeedbackDetail): FeedbackHref | null {
   }
 }
 
-/** "Platform 89%", and the warning when the scope is confidently below it. */
+/** "Platform 89%", and the warning when the scope is below it. */
 function PlatformLine({ comparison }: { comparison: PlatformComparison }) {
   const t = useTranslations("admin.feedback.detail");
   const locale = useLocale();
@@ -133,7 +133,7 @@ function PlatformLine({ comparison }: { comparison: PlatformComparison }) {
       <p className="text-sm text-muted-foreground">
         {t("platform", { share: formatShare(comparison.platform.positiveShare, locale) })}
       </p>
-      {comparison.confidentlyBelow && <BelowAverage statement={null} />}
+      {comparison.belowPlatform && <BelowAverage statement={null} />}
     </div>
   );
 }
@@ -174,7 +174,7 @@ function StatementSpread({
     <li className="space-y-2 px-4 py-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <p className="text-sm">{label}</p>
-        {line.current.tooFew ? (
+        {line.current.positiveShare === null ? (
           <ShareText figure={line.current} className="text-xs text-muted-foreground" />
         ) : (
           <p className="flex flex-wrap items-baseline gap-x-3 text-sm">
@@ -192,7 +192,7 @@ function StatementSpread({
         figure={line.current}
         platform={line.againstPlatform?.platform.positiveShare ?? null}
       />
-      {line.againstPlatform?.confidentlyBelow === true && <BelowAverage statement={null} />}
+      {line.againstPlatform?.belowPlatform === true && <BelowAverage statement={null} />}
     </li>
   );
 }

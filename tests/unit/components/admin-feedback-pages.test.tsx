@@ -11,21 +11,36 @@ import {
 import { FeedbackDetailPage } from "@/components/admin/feedback/feedback-detail-page";
 import { FeedbackListPage } from "@/components/admin/feedback/feedback-list-page";
 import { FeedbackOverviewPage } from "@/components/admin/feedback/feedback-overview-page";
-import { feedbackRangePeriods, feedbackReadSpan } from "@/components/admin/feedback/feedback-range";
 import {
-  FEEDBACK_FIXTURE_FEATURED,
-  FEEDBACK_FIXTURE_TODAY,
-  feedbackFixture,
-} from "@/components/admin/feedback/mock-feedback-fixtures";
+  allFive,
+  FEEDBACK_CLUB_A2,
+  FEEDBACK_CLUB_B,
+  FEEDBACK_PERIODS,
+  feedbackDataset,
+  feedbackResponse,
+  feedbackResponses,
+  feedbackSession,
+} from "../../mocks/admin-feedback";
 
 /**
  * The feedback pages' promises that a refactor could break without any type
- * noticing: the overview opens on no list, a row too thin to judge states no
- * percentage, and a child is never set against the platform.
+ * noticing: the overview opens on no list, a row of one answer is judged like
+ * any other while a row with none says so, and a child is never set against
+ * the platform.
  */
 
-const periods = feedbackRangePeriods("90d", FEEDBACK_FIXTURE_TODAY);
-const dataset = feedbackFixture(feedbackReadSpan(periods), false);
+const HELMI = { id: "gamer-helmi", name: "Helmi" };
+const ONNI = { id: "gamer-onni", name: "Onni" };
+
+const dataset = feedbackDataset(
+  [
+    ...feedbackResponses(6, { answers: allFive(5) }),
+    feedbackResponse({ respondent: ONNI, answers: allFive(4) }),
+    feedbackResponse({ respondent: HELMI, answers: allFive(5), note: "So fun!" }),
+    feedbackResponse({ ...FEEDBACK_CLUB_B, answers: allFive(1), note: "Nobody listened to me." }),
+  ],
+  [feedbackSession({ ...FEEDBACK_CLUB_A2, eligibleCount: 5 })],
+);
 
 function wrap(children: ReactNode) {
   return render(
@@ -39,37 +54,43 @@ describe("admin feedback pages", () => {
   it("opens the overview on no list of products, groups or Gedus", () => {
     wrap(
       <FeedbackOverviewPage
-        range="90d"
-        overview={buildFeedbackOverview(dataset, "gamer_online", periods)}
+        range="30d"
+        overview={buildFeedbackOverview(dataset, "gamer_online", FEEDBACK_PERIODS)}
       />,
     );
     expect(screen.getByText("positive")).toBeTruthy();
-    expect(screen.queryByText("Thursday builders")).toBeNull();
-    expect(screen.queryByText("Mikael Korhonen")).toBeNull();
+    expect(screen.queryByText("B1")).toBeNull();
+    expect(screen.queryByText("Aino")).toBeNull();
   });
 
-  it("states no percentage for a group with too few answers", () => {
+  it("judges a group of one answer and says so for a group with none", () => {
     wrap(
       <FeedbackListPage
-        range="90d"
-        list={buildFeedbackDimensionList(dataset, "gamer_online", periods, "group")}
+        range="30d"
+        list={buildFeedbackDimensionList(dataset, "gamer_online", FEEDBACK_PERIODS, "group")}
       />,
     );
-    const row = screen.getByText("Saturday starters").closest("a");
-    expect(row).not.toBeNull();
-    if (row === null) return;
-    expect(within(row).getByText(/Too few answers/)).toBeTruthy();
-    expect(row.textContent).not.toMatch(/%/);
+    const rows = screen.getAllByRole("link").filter((link) => link.closest("li") !== null);
+    expect(rows.map((row) => within(row).getByText(/^(A1|A2|B1)$/).textContent)).toEqual([
+      "B1",
+      "A1",
+      "A2",
+    ]);
+    const [weak, , silent] = rows;
+    expect(weak.textContent).toMatch(/0%/);
+    expect(within(weak).getByText(/Below average/)).toBeTruthy();
+    expect(within(silent).getByText("No answers")).toBeTruthy();
+    expect(silent.textContent).not.toMatch(/%/);
   });
 
   it("never sets a gamer against the platform", () => {
     wrap(
       <FeedbackDetailPage
-        range="90d"
+        range="30d"
         origin={null}
-        detail={buildFeedbackDetail(dataset, "gamer_online", periods, {
+        detail={buildFeedbackDetail(dataset, "gamer_online", FEEDBACK_PERIODS, {
           kind: "gamer",
-          id: FEEDBACK_FIXTURE_FEATURED.gamer,
+          id: HELMI.id,
         })}
       />,
     );
@@ -81,11 +102,11 @@ describe("admin feedback pages", () => {
   it("lists a group's gamers by name with their answer count", () => {
     wrap(
       <FeedbackDetailPage
-        range="90d"
+        range="30d"
         origin={null}
-        detail={buildFeedbackDetail(dataset, "gamer_online", periods, {
+        detail={buildFeedbackDetail(dataset, "gamer_online", FEEDBACK_PERIODS, {
           kind: "group",
-          id: FEEDBACK_FIXTURE_FEATURED.group,
+          id: "group-a1",
         })}
       />,
     );
@@ -96,6 +117,7 @@ describe("admin feedback pages", () => {
     const names = within(section)
       .getAllByRole("link")
       .map((link) => link.firstChild?.textContent);
+    expect(names).toContain("Helmi");
     expect(names).toEqual([...names].sort((a, b) => (a ?? "").localeCompare(b ?? "")));
     expect(section.textContent).not.toMatch(/%/);
   });

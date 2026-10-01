@@ -22,17 +22,13 @@ export type FeedbackOrigin =
 
 /**
  * **One page of the feedback section**, as data. Every link between the pages
- * is built from a place and the range on show, so the live routes and the
- * preview scene differ only in the one function that turns a place into a URL.
+ * is built from a place and the range on show.
  */
 export type FeedbackPlace =
   | { view: "overview" }
   | { view: "list"; dimension: FeedbackDimension }
   | { view: "detail"; scope: FeedbackScope; origin: FeedbackOrigin | null }
   | { view: "notes"; lowAnswerOnly: boolean };
-
-/** Turns a place, at a range, into a link target. */
-export type FeedbackHrefBuilder = (place: FeedbackPlace, range: FeedbackRange) => FeedbackHref;
 
 /** The query parameter a detail page's origin travels in. */
 export const FEEDBACK_ORIGIN_PARAM = "from";
@@ -130,8 +126,8 @@ export function defaultBackPlace(scope: FeedbackScope): FeedbackPlace {
     : { view: "list", dimension: scope.kind };
 }
 
-/** The live admin routes. */
-export const adminFeedbackHref: FeedbackHrefBuilder = (place, range) => {
+/** A place's admin route, at a range. */
+export function adminFeedbackHref(place: FeedbackPlace, range: FeedbackRange): FeedbackHref {
   const query = feedbackPlaceQuery(place, range);
   switch (place.view) {
     case "overview":
@@ -143,4 +139,4 @@ export const adminFeedbackHref: FeedbackHrefBuilder = (place, range) => {
     case "notes":
       return { pathname: ROUTES.admin.feedbackNotes, query };
   }
-};
+}

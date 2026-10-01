@@ -641,24 +641,6 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
-    surface: "admin-feedback",
-    title: "Admin feedback",
-    description:
-      "The /admin/feedback pages over two generated years of gamer feedback ending Monday 28 September 2026. The range control, the notes filter and every link between the feedback pages stay in the preview; a detail scenario takes ?id= and a list takes ?dimension=.",
-    chrome: "admin",
-    scenarios: [
-      { slug: "overview", label: "Overview" },
-      { slug: "list", label: "Groups, worst first" },
-      { slug: "product", label: "A product" },
-      { slug: "group", label: "A group whose belonging slides" },
-      { slug: "gedu", label: "A Gedu" },
-      { slug: "gamer", label: "A gamer" },
-      { slug: "notes", label: "Notes with a low answer" },
-      { slug: "empty", label: "Nobody answered", description: "The empty range, which a range of answers cannot show." },
-      { slug: "load-failed", label: "The read failed" },
-    ],
-  },
-  {
     surface: "municipality-invoicing",
     title: "Municipality invoicing",
     description:

@@ -13,16 +13,15 @@ import {
   bucketStartOf,
   bucketStarts,
   bucketUnitFor,
-  changePoints,
-  confidentlyBelow,
   emptyTally,
   hasLowAnswer,
   hasNote,
   inPeriod,
+  isBelow,
   knownAnswers,
+  pointsBetween,
   shareFigure,
   tallyResponses,
-  TOO_FEW,
   type FeedbackBucketUnit,
   type FeedbackPeriod,
   type FeedbackPeriods,
@@ -39,7 +38,6 @@ export {
   type FeedbackPeriods,
   type ShareFigure,
 } from "./feedback-tally";
-export { wilsonInterval, type ShareInterval } from "./wilson";
 
 /**
  * **The feedback page's arithmetic** — pure passes from the dataset the route
@@ -80,16 +78,15 @@ export interface FeedbackSparkPoint {
   start: string;
   /** The sample behind it (responses for the headline, answers for a statement). */
   n: number;
+  /** `null` when nothing was answered in the bucket: the line gaps there. */
   positiveShare: number | null;
-  /** `n < TOO_FEW`: the line gaps here rather than drawing noise. */
-  sparse: boolean;
 }
 
 /** A figure this period, the same figure the period before, and the move between them. */
 export interface ComparedFigure {
   current: ShareFigure;
   previous: ShareFigure;
-  /** Positive share now minus before, in percentage points; `null` if either side is too few. */
+  /** Positive share now minus before, in percentage points; `null` if either side had no answers. */
   changePoints: number | null;
 }
 
@@ -119,14 +116,12 @@ export interface FeedbackParticipation {
   responseRate: number | null;
 }
 
-/** One line of the overview per dimension, e.g. "2 below platform". */
+/** One line of the overview per dimension, e.g. "2 below average". */
 export interface FeedbackDimensionSummary {
   /** Rows the dimension's list would show. */
   rows: number;
-  /** Rows with too few answers to state. */
-  tooFew: number;
-  /** Rows confidently below the platform. */
-  confidentlyBelow: number;
+  /** Rows whose positive share is below the platform's. */
+  belowPlatform: number;
 }
 
 /** "6 came with a low answer", out of every note in the period. */
@@ -153,12 +148,11 @@ export interface FeedbackWeakestStatement {
   key: string;
   /** Row's positive share minus the platform's, in points; always negative. */
   gapPoints: number;
-  confidentlyBelow: boolean;
 }
 
 /**
- * One product, group or Gedu in a list. When `overall.current.tooFew`, show
- * the count and nothing else: `confidentlyBelow` is false and `weakest` null.
+ * One product, group or Gedu in a list. A row that ran sessions but heard
+ * nothing back has no share: `belowPlatform` is false and `weakest` null.
  */
 export interface FeedbackDimensionRow {
   dimension: FeedbackDimension;
@@ -170,15 +164,15 @@ export interface FeedbackDimensionRow {
   responses: number;
   eligible: number;
   responseRate: number | null;
-  /** Positive share across every statement; `current.interval.lower` is what the list sorts on. */
+  /** Positive share across every statement; `current.positiveShare` is what the list sorts on. */
   overall: ComparedFigure;
-  /** Even the top of the row's 95% interval is under the platform's share. */
-  confidentlyBelow: boolean;
-  /** `null` when too few, or when no stated statement is below the platform. */
+  /** The row's positive share is under the platform's. */
+  belowPlatform: boolean;
+  /** `null` when no statement is below the platform's share for it. */
   weakest: FeedbackWeakestStatement | null;
 }
 
-/** A dimension's list, worst first; rows with too few answers last. */
+/** A dimension's list, worst first; rows with no answers last. */
 export interface FeedbackDimensionList {
   source: FeedbackSource;
   periods: FeedbackPeriods;
@@ -191,9 +185,9 @@ export interface FeedbackDimensionList {
 /** How a scope's figure stands against the whole platform in the same period. */
 export interface PlatformComparison {
   platform: ShareFigure;
-  /** Scope minus platform, in points; `null` when the scope is too few. */
+  /** Scope minus platform, in points; `null` when either had no answers. */
   vsPlatformPoints: number | null;
-  confidentlyBelow: boolean;
+  belowPlatform: boolean;
 }
 
 /**
@@ -275,8 +269,7 @@ export function buildFeedbackOverview(
     const rows = dimensionRows(dimension, slice, source, platform.current);
     return {
       rows: rows.length,
-      tooFew: rows.filter((row) => row.overall.current.tooFew).length,
-      confidentlyBelow: rows.filter((row) => row.confidentlyBelow).length,
+      belowPlatform: rows.filter((row) => row.belowPlatform).length,
     };
   };
 
@@ -301,7 +294,7 @@ export function buildFeedbackOverview(
 
 /**
  * Every product, group or Gedu that had a response or an eligible session in
- * the current period, worst first by the lower bound of its positive share.
+ * the current period, worst first by its positive share.
  */
 export function buildFeedbackDimensionList(
   dataset: AdminFeedbackDataset,
@@ -474,7 +467,7 @@ function comparedTallies(
 function compared(current: Tally, previous: Tally): ComparedFigure {
   const now = shareFigure(current);
   const before = shareFigure(previous);
-  return { current: now, previous: before, changePoints: changePoints(now, before) };
+  return { current: now, previous: before, changePoints: pointsBetween(now, before) };
 }
 
 function statementFigure(tallies: ResponseTallies, key: string): ShareFigure {
@@ -484,11 +477,8 @@ function statementFigure(tallies: ResponseTallies, key: string): ShareFigure {
 function compareWithPlatform(scope: ShareFigure, platform: ShareFigure): PlatformComparison {
   return {
     platform,
-    vsPlatformPoints:
-      scope.tooFew || scope.positiveShare === null || platform.positiveShare === null
-        ? null
-        : (scope.positiveShare - platform.positiveShare) * 100,
-    confidentlyBelow: confidentlyBelow(scope, platform),
+    vsPlatformPoints: pointsBetween(scope, platform),
+    belowPlatform: isBelow(scope, platform),
   };
 }
 
@@ -510,7 +500,7 @@ function seriesOf(
   }
   return [...buckets].map(([start, tally]) => {
     const figure = shareFigure(tally);
-    return { start, n: figure.n, positiveShare: figure.positiveShare, sparse: figure.n < TOO_FEW };
+    return { start, n: figure.n, positiveShare: figure.positiveShare };
   });
 }
 
@@ -646,14 +636,14 @@ function dimensionRows(
         eligible: row.eligible,
         responseRate: row.eligible === 0 ? null : counted / row.eligible,
         overall,
-        confidentlyBelow: confidentlyBelow(overall.current, platformOverall),
-        weakest: overall.current.tooFew ? null : weakestStatement(tallies.current, platform, source),
+        belowPlatform: isBelow(overall.current, platformOverall),
+        weakest: weakestStatement(tallies.current, platform, source),
       };
     })
     .sort(worstFirst);
 }
 
-/** The stated statement furthest below the platform's share for it, if any is below. */
+/** The statement furthest below the platform's share for it, if any is below. */
 function weakestStatement(
   scope: ResponseTallies,
   platform: ResponseTallies,
@@ -661,25 +651,25 @@ function weakestStatement(
 ): FeedbackWeakestStatement | null {
   let weakest: FeedbackWeakestStatement | null = null;
   for (const { key } of FEEDBACK_CATALOGUES[source]) {
-    const mine = statementFigure(scope, key);
-    const theirs = statementFigure(platform, key);
-    if (mine.tooFew || mine.positiveShare === null || theirs.positiveShare === null) continue;
-    const gapPoints = (mine.positiveShare - theirs.positiveShare) * 100;
-    if (gapPoints < 0 && (weakest === null || gapPoints < weakest.gapPoints)) {
-      weakest = { key, gapPoints, confidentlyBelow: confidentlyBelow(mine, theirs) };
+    const gapPoints = pointsBetween(statementFigure(scope, key), statementFigure(platform, key));
+    if (gapPoints !== null && gapPoints < 0 && (weakest === null || gapPoints < weakest.gapPoints)) {
+      weakest = { key, gapPoints };
     }
   }
   return weakest;
 }
 
-/** Stated rows by the lower bound of their positive share, ascending; too-few rows last, by name. */
+/**
+ * By positive share, ascending; ties by name, then id. A row with no answers
+ * has no share and goes last.
+ */
 function worstFirst(a: FeedbackDimensionRow, b: FeedbackDimensionRow): number {
-  const aFew = a.overall.current.tooFew;
-  const bFew = b.overall.current.tooFew;
-  if (aFew !== bFew) return aFew ? 1 : -1;
-  const aLower = a.overall.current.interval?.lower ?? 0;
-  const bLower = b.overall.current.interval?.lower ?? 0;
-  return (aFew ? 0 : aLower - bLower) || a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
+  const aShare = a.overall.current.positiveShare;
+  const bShare = b.overall.current.positiveShare;
+  if ((aShare === null) !== (bShare === null)) return aShare === null ? 1 : -1;
+  return (
+    (aShare ?? 0) - (bShare ?? 0) || a.name.localeCompare(b.name) || a.id.localeCompare(b.id)
+  );
 }
 
 /* ------------------------------------------------------------------------ */

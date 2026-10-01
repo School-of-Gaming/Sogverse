@@ -9,13 +9,8 @@ import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule"
 import { cn } from "@/lib/utils";
 import { FEEDBACK_SOURCES } from "@/services/session-feedback/admin-feedback.contracts";
 import { FEEDBACK_RANGES, type FeedbackRange } from "./feedback-range";
-import {
-  FeedbackRangeProvider,
-  useFeedbackHref,
-  useFeedbackRange,
-  useFeedbackRangeHref,
-} from "./feedback-nav";
-import type { FeedbackHref, FeedbackPlace } from "./feedback-place";
+import { FeedbackRangeProvider, useFeedbackHref, useFeedbackRange } from "./feedback-nav";
+import { adminFeedbackHref, type FeedbackHref, type FeedbackPlace } from "./feedback-place";
 import { FEEDBACK_SOURCE_MESSAGE_KEYS } from "./feedback-sources";
 
 /**
@@ -97,7 +92,6 @@ function BackLink({ place }: { place: FeedbackPlace }) {
 /** The three spans, as links: a range is a different read, so choosing one is a navigation. */
 function RangeControl({ place }: { place: FeedbackPlace }) {
   const t = useTranslations("admin.feedback");
-  const rangeHref = useFeedbackRangeHref();
   const current = useFeedbackRange();
 
   return (
@@ -106,7 +100,7 @@ function RangeControl({ place }: { place: FeedbackPlace }) {
       options={FEEDBACK_RANGES.map((option) => ({
         key: option,
         label: t(`ranges.${option}`),
-        href: rangeHref(place, option),
+        href: adminFeedbackHref(place, option),
       }))}
       current={current}
     />

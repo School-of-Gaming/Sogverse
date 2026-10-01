@@ -43,7 +43,7 @@ export const RATING_SWATCH: Record<SessionFeedbackRating, string> = {
   1: "bg-muted-foreground",
 };
 
-/** A percentage, or "Too few answers (n)" when the sample is too small to state one. */
+/** A percentage, or "No answers" when nothing was answered. */
 export function ShareText({
   figure,
   className,
@@ -55,8 +55,8 @@ export function ShareText({
   const locale = useLocale();
   return (
     <span className={className}>
-      {figure.tooFew
-        ? t("tooFew", { count: figure.n })
+      {figure.positiveShare === null
+        ? t("noAnswers")
         : formatShare(figure.positiveShare, locale)}
     </span>
   );
@@ -151,10 +151,9 @@ export function AnswerSpreadBar({
   const locale = useLocale();
   const total = figure.answers;
   let start = 0;
-  // Too few answers to state a share: the counts alone, never a percentage.
   const levelText = (rating: SessionFeedbackRating) => {
     const count = figure.distribution[rating];
-    return figure.tooFew || total === 0
+    return total === 0
       ? `${ratingWord(rating)}: ${count}`
       : `${ratingWord(rating)}: ${formatShare(count / total, locale)} (${count})`;
   };
@@ -256,8 +255,8 @@ const SPARK_FLOOR_CEILING = 0.6;
 /**
  * **The positive share over the period, bucket by bucket**, as a line in act.
  *
- * A bucket with too few answers is a gap, not a point: the line breaks rather
- * than drawing one child's mood as a trend. The scale runs to 100% at the top
+ * A bucket nobody answered in is a gap, not a point: the line breaks there
+ * rather than drawing a zero. The scale runs to 100% at the top
  * and starts a step below the lowest point — never higher than 60% — so the
  * line has room to move without a two-point wobble filling the box. Each
  * bucket names itself on hover, and the whole series is read out as text.
@@ -279,7 +278,7 @@ export function Sparkline({
   const locale = useLocale();
   const pad = 3;
   const stated = series.flatMap((point) =>
-    point.sparse || point.positiveShare === null ? [] : [point.positiveShare],
+    point.positiveShare === null ? [] : [point.positiveShare],
   );
   const lowest = stated.length === 0 ? 0 : Math.min(...stated);
   const floor = Math.min(SPARK_FLOOR_CEILING, Math.max(0, Math.floor((lowest - 0.05) * 10) / 10));
@@ -291,7 +290,7 @@ export function Sparkline({
   const runs: { index: number; share: number }[][] = [];
   let run: { index: number; share: number }[] = [];
   series.forEach((point, index) => {
-    if (point.sparse || point.positiveShare === null) {
+    if (point.positiveShare === null) {
       if (run.length > 0) runs.push(run);
       run = [];
     } else {
@@ -303,8 +302,8 @@ export function Sparkline({
 
   const describe = (point: FeedbackSparkPoint) => {
     const name = bucketName(point.start, unit, locale);
-    return point.sparse || point.positiveShare === null
-      ? t("tooFew", { bucket: name, count: point.n })
+    return point.positiveShare === null
+      ? t("none", { bucket: name })
       : t("point", { bucket: name, share: formatShare(point.positiveShare, locale) });
   };
 

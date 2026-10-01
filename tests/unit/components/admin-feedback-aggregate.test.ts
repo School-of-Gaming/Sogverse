@@ -5,110 +5,24 @@ import {
   buildFeedbackNotes,
   buildFeedbackOverview,
   bucketUnitFor,
-  wilsonInterval,
   type FeedbackPeriods,
 } from "@/components/admin/feedback/aggregate-feedback";
 import {
   feedbackRangeBounds,
   resolveFeedbackRange,
 } from "@/components/admin/feedback/feedback-range";
-import type {
-  AdminFeedbackDataset,
-  AdminFeedbackGedu,
-  AdminFeedbackGroupRef,
-  AdminFeedbackResponse,
-  AdminFeedbackSession,
-} from "@/services/session-feedback/admin-feedback.contracts";
-
-const CLUB_A: AdminFeedbackGroupRef = {
-  groupId: "group-a1",
-  groupName: "A1",
-  productId: "product-a",
-  productName: "Club A",
-  productType: "consumer_club",
-  isRemote: true,
-};
-const CLUB_A2: AdminFeedbackGroupRef = { ...CLUB_A, groupId: "group-a2", groupName: "A2" };
-const CLUB_B: AdminFeedbackGroupRef = {
-  groupId: "group-b1",
-  groupName: "B1",
-  productId: "product-b",
-  productName: "Club B",
-  productType: "municipality_club",
-  isRemote: true,
-};
-const AINO: AdminFeedbackGedu = { id: "gedu-aino", name: "Aino", role: "primary" };
-const MIKA: AdminFeedbackGedu = { id: "gedu-mika", name: "Mika", role: "assistant" };
-
-/** A 30-day current period and the 30 days before it. */
-const PERIODS: FeedbackPeriods = {
-  current: { from: "2026-09-01", to: "2026-09-30" },
-  previous: { from: "2026-08-02", to: "2026-08-31" },
-};
-
-const ALL_FIVE = (rating: number) => ({
-  learned: rating,
-  fun: rating,
-  geduKnowledgeable: rating,
-  geduKind: rating,
-  groupListens: rating,
-});
-
-let nextGamer = 0;
-
-function response(overrides: Partial<AdminFeedbackResponse> = {}): AdminFeedbackResponse {
-  nextGamer += 1;
-  return {
-    ...CLUB_A,
-    source: "gamer_online",
-    sessionDate: "2026-09-08",
-    respondent: { id: `gamer-${nextGamer}`, name: `Gamer ${nextGamer}` },
-    gedus: [AINO],
-    answers: {},
-    note: "",
-    countsTowardRate: true,
-    submittedAt: "2026-09-08T16:00:00Z",
-    ...overrides,
-  };
-}
-
-/** `count` responses alike but for who gave them. */
-function many(count: number, overrides: Partial<AdminFeedbackResponse> = {}): AdminFeedbackResponse[] {
-  return Array.from({ length: count }, () => response(overrides));
-}
-
-function session(overrides: Partial<AdminFeedbackSession> = {}): AdminFeedbackSession {
-  return {
-    ...CLUB_A,
-    source: "gamer_online",
-    sessionDate: "2026-09-08",
-    eligibleCount: 4,
-    gedus: [AINO],
-    ...overrides,
-  };
-}
-
-function dataset(
-  responses: AdminFeedbackResponse[],
-  sessions: AdminFeedbackSession[] = [],
-): AdminFeedbackDataset {
-  return { from: PERIODS.previous.from, to: PERIODS.current.to, responses, sessions };
-}
-
-describe("wilsonInterval", () => {
-  it("matches known 95% values", () => {
-    const half = wilsonInterval(0.5, 10);
-    expect(half?.lower).toBeCloseTo(0.2366, 4);
-    expect(half?.upper).toBeCloseTo(0.7634, 4);
-    const eight = wilsonInterval(0.8, 10);
-    expect(eight?.lower).toBeCloseTo(0.4902, 4);
-    expect(eight?.upper).toBeCloseTo(0.9433, 4);
-    const none = wilsonInterval(0, 20);
-    expect(none?.lower).toBe(0);
-    expect(none?.upper).toBeCloseTo(0.1611, 4);
-    expect(wilsonInterval(0.5, 0)).toBeNull();
-  });
-});
+import {
+  allFive as ALL_FIVE,
+  FEEDBACK_CLUB_A2 as CLUB_A2,
+  FEEDBACK_CLUB_B as CLUB_B,
+  FEEDBACK_GEDU_AINO as AINO,
+  FEEDBACK_GEDU_MIKA as MIKA,
+  FEEDBACK_PERIODS as PERIODS,
+  feedbackDataset as dataset,
+  feedbackResponse as response,
+  feedbackResponses as many,
+  feedbackSession as session,
+} from "../../mocks/admin-feedback";
 
 describe("buildFeedbackOverview", () => {
   it("states positive (4–5) and low (1–2) shares of every answer", () => {
@@ -127,7 +41,6 @@ describe("buildFeedbackOverview", () => {
       positive: 2,
       low: 2,
       distribution: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1 },
-      tooFew: true,
     });
     expect(overview.headline.current.positiveShare).toBeCloseTo(0.4);
     expect(overview.headline.current.lowShare).toBeCloseTo(0.4);
@@ -165,12 +78,11 @@ describe("buildFeedbackOverview", () => {
       n: 0,
       positiveShare: null,
       lowShare: null,
-      interval: null,
     });
     expect(overview.headline.changePoints).toBeNull();
   });
 
-  it("compares with the previous period in percentage points once both sides are stated", () => {
+  it("compares with the previous period in percentage points", () => {
     const overview = buildFeedbackOverview(
       dataset([
         ...many(8, { answers: { fun: 5 } }),
@@ -191,18 +103,26 @@ describe("buildFeedbackOverview", () => {
     expect(overview.statements.find((line) => line.key === "learned")?.changePoints).toBeNull();
   });
 
-  it("withholds the change when the previous period had too few", () => {
-    const overview = buildFeedbackOverview(
+  it("compares against a previous period of a single answer, and withholds it against none", () => {
+    const single = buildFeedbackOverview(
       dataset([
-        ...many(10, { answers: { fun: 5 } }),
+        ...many(3, { answers: { fun: 5 } }),
         response({ answers: { fun: 1 }, sessionDate: "2026-08-20" }),
       ]),
       "gamer_online",
       PERIODS,
     );
+    expect(single.headline.changePoints).toBeCloseTo(100);
 
-    expect(overview.headline.previous.tooFew).toBe(true);
-    expect(overview.headline.changePoints).toBeNull();
+    const none = buildFeedbackOverview(
+      dataset([
+        ...many(3, { answers: { fun: 5 } }),
+        response({ note: "Only a note.", sessionDate: "2026-08-20" }),
+      ]),
+      "gamer_online",
+      PERIODS,
+    );
+    expect(none.headline.changePoints).toBeNull();
   });
 
   it("divides responses that count toward the rate by the gamers present", () => {
@@ -243,7 +163,7 @@ describe("buildFeedbackOverview", () => {
       dataset(
         [
           ...many(20, { answers: ALL_FIVE(5) }),
-          ...many(12, { ...CLUB_B, answers: ALL_FIVE(1), gedus: [MIKA] }),
+          ...many(2, { ...CLUB_B, answers: ALL_FIVE(1), gedus: [MIKA] }),
           response({ answers: { fun: 2 }, note: "Too loud." }),
           response({ answers: { fun: 5 }, note: "Great!" }),
         ],
@@ -253,9 +173,10 @@ describe("buildFeedbackOverview", () => {
       PERIODS,
     );
 
-    expect(overview.dimensions.product).toEqual({ rows: 2, tooFew: 0, confidentlyBelow: 1 });
-    expect(overview.dimensions.group).toEqual({ rows: 3, tooFew: 1, confidentlyBelow: 1 });
-    expect(overview.dimensions.gedu).toEqual({ rows: 2, tooFew: 0, confidentlyBelow: 1 });
+    // Club B, its group and Mika are below; A2 heard nothing back, so is not.
+    expect(overview.dimensions.product).toEqual({ rows: 2, belowPlatform: 1 });
+    expect(overview.dimensions.group).toEqual({ rows: 3, belowPlatform: 1 });
+    expect(overview.dimensions.gedu).toEqual({ rows: 2, belowPlatform: 1 });
     expect(overview.notes).toEqual({ total: 2, withLowAnswer: 1 });
   });
 });
@@ -267,7 +188,7 @@ describe("sparkline buckets", () => {
     expect(bucketUnitFor(feedbackRangeBounds("12m", "2026-09-30"))).toBe("month");
   });
 
-  it("buckets by ISO Monday, marks thin weeks sparse, keeps empty weeks", () => {
+  it("buckets by ISO Monday, states a week of one answer, gaps only an empty week", () => {
     const overview = buildFeedbackOverview(
       dataset([
         ...many(10, { answers: { fun: 5 }, sessionDate: "2026-09-08" }),
@@ -280,16 +201,14 @@ describe("sparkline buckets", () => {
 
     expect(overview.bucketUnit).toBe("week");
     expect(
-      overview.headline.series.map((point) => [point.start, point.n, point.sparse]),
+      overview.headline.series.map((point) => [point.start, point.n, point.positiveShare]),
     ).toEqual([
-      ["2026-08-31", 1, true],
-      ["2026-09-07", 13, false],
-      ["2026-09-14", 0, true],
-      ["2026-09-21", 0, true],
-      ["2026-09-28", 0, true],
+      ["2026-08-31", 1, 1],
+      ["2026-09-07", 13, 10 / 13],
+      ["2026-09-14", 0, null],
+      ["2026-09-21", 0, null],
+      ["2026-09-28", 0, null],
     ]);
-    expect(overview.headline.series[1].positiveShare).toBeCloseTo(10 / 13);
-    expect(overview.headline.series[2].positiveShare).toBeNull();
   });
 
   it("buckets a year by calendar month across a year boundary", () => {
@@ -313,13 +232,14 @@ describe("sparkline buckets", () => {
 });
 
 describe("buildFeedbackDimensionList", () => {
-  it("flags a row confidently below only when its whole interval is under the platform", () => {
+  it("flags a row below average when its share is under the platform's, naming its weakest statement", () => {
     const list = buildFeedbackDimensionList(
       dataset([
-        ...many(40, { answers: { fun: 5 } }),
-        // Club B: 4 of 12 positive — interval top ≈ 0.61, platform ≈ 0.85.
-        ...many(4, { ...CLUB_B, answers: { fun: 5 } }),
-        ...many(8, { ...CLUB_B, answers: { fun: 1 } }),
+        ...many(40, { answers: { fun: 5, learned: 5 } }),
+        // Club B: fun 4 of 12 positive, learned 10 of 12 — both under the platform.
+        ...many(4, { ...CLUB_B, answers: { fun: 5, learned: 5 } }),
+        ...many(6, { ...CLUB_B, answers: { fun: 1, learned: 5 } }),
+        ...many(2, { ...CLUB_B, answers: { fun: 1, learned: 1 } }),
       ]),
       "gamer_online",
       PERIODS,
@@ -327,52 +247,41 @@ describe("buildFeedbackDimensionList", () => {
     );
 
     const clubB = list.rows.find((row) => row.id === "product-b");
-    expect(list.platform.positiveShare).toBeCloseTo(44 / 52);
-    expect(clubB?.overall.current.interval?.upper).toBeLessThan(list.platform.positiveShare ?? 0);
-    expect(clubB?.confidentlyBelow).toBe(true);
-    expect(clubB?.weakest).toMatchObject({ key: "fun", confidentlyBelow: true });
+    expect(clubB?.belowPlatform).toBe(true);
+    expect(clubB?.weakest?.key).toBe("fun");
     expect(clubB?.weakest?.gapPoints).toBeCloseTo((4 / 12 - 44 / 52) * 100);
     expect(list.rows.find((row) => row.id === "product-a")).toMatchObject({
-      confidentlyBelow: false,
+      belowPlatform: false,
       weakest: null,
     });
   });
 
-  it("never flags a row with too few answers, however bad", () => {
+  it("judges a row of a single answer like any other", () => {
     const list = buildFeedbackDimensionList(
-      dataset([...many(40, { answers: { fun: 5 } }), ...many(9, { ...CLUB_B, answers: { fun: 1 } })]),
+      dataset([...many(40, { answers: { fun: 5 } }), response({ ...CLUB_B, answers: { fun: 1 } })]),
       "gamer_online",
       PERIODS,
       "product",
     );
 
     expect(list.rows.find((row) => row.id === "product-b")).toMatchObject({
-      overall: { current: { tooFew: true, n: 9 }, changePoints: null },
-      confidentlyBelow: false,
-      weakest: null,
+      overall: { current: { n: 1, positiveShare: 0 }, changePoints: null },
+      belowPlatform: true,
+      weakest: { key: "fun" },
     });
   });
 
-  it("is not fooled by many answers from few responses", () => {
-    // Nine responses answering all five statements are 45 answers, still too few.
-    const list = buildFeedbackDimensionList(
-      dataset(many(9, { answers: ALL_FIVE(1) })),
-      "gamer_online",
-      PERIODS,
-      "product",
-    );
-
-    expect(list.rows[0].overall.current).toMatchObject({ n: 9, answers: 45, tooFew: true });
-  });
-
-  it("sorts worst first by the lower bound, too-few rows last", () => {
+  it("sorts worst first by positive share, ties by name, rows with no answers last", () => {
     const CLUB_C = { ...CLUB_B, productId: "product-c", productName: "Club C", groupId: "group-c1" };
+    const CLUB_AB = { ...CLUB_B, productId: "product-ab", productName: "Club AB", groupId: "group-ab1" };
     const list = buildFeedbackDimensionList(
       dataset(
         [
           ...many(30, { answers: { fun: 5 } }),
           ...many(10, { ...CLUB_B, answers: { fun: 4 } }),
           ...many(10, { ...CLUB_B, answers: { fun: 1 } }),
+          response({ ...CLUB_AB, answers: { fun: 5 } }),
+          response({ ...CLUB_AB, answers: { fun: 2 } }),
           ...many(2, { ...CLUB_C, answers: { fun: 1 } }),
         ],
         [session({ ...CLUB_C, productId: "product-d", productName: "Club D" })],
@@ -382,10 +291,16 @@ describe("buildFeedbackDimensionList", () => {
       "product",
     );
 
-    expect(list.rows.map((row) => row.id)).toEqual(["product-b", "product-a", "product-c", "product-d"]);
+    expect(list.rows.map((row) => row.id)).toEqual([
+      "product-c",
+      "product-ab",
+      "product-b",
+      "product-a",
+      "product-d",
+    ]);
   });
 
-  it("lists a product that ran sessions but heard nothing back", () => {
+  it("lists a product that ran sessions but heard nothing back, unjudged", () => {
     const list = buildFeedbackDimensionList(
       dataset([response({ answers: { fun: 5 } })], [session(), session({ ...CLUB_B, eligibleCount: 6 })]),
       "gamer_online",
@@ -397,7 +312,9 @@ describe("buildFeedbackDimensionList", () => {
       responses: 0,
       eligible: 6,
       responseRate: 0,
-      overall: { current: { tooFew: true, positiveShare: null } },
+      overall: { current: { positiveShare: null }, changePoints: null },
+      belowPlatform: false,
+      weakest: null,
     });
   });
 
@@ -448,10 +365,13 @@ describe("buildFeedbackDetail", () => {
     expect(detail.headline.againstPlatform?.platform.positiveShare).toBeCloseTo(34 / 42);
     expect(detail.headline.againstPlatform?.vsPlatformPoints).toBeCloseTo((4 / 12 - 34 / 42) * 100);
     expect(detail.headline.changePoints).toBeCloseTo((4 / 12 - 1) * 100);
-    expect(detail.headline.againstPlatform?.confidentlyBelow).toBe(true);
+    expect(detail.headline.againstPlatform?.belowPlatform).toBe(true);
     const fun = detail.statements.find((line) => line.key === "fun");
     expect(fun?.current.distribution).toEqual({ 1: 8, 2: 0, 3: 0, 4: 0, 5: 4 });
-    expect(fun?.againstPlatform?.confidentlyBelow).toBe(true);
+    expect(fun?.againstPlatform?.belowPlatform).toBe(true);
+    // Nobody answered "learned": no gap, no flag.
+    const learned = detail.statements.find((line) => line.key === "learned");
+    expect(learned?.againstPlatform).toMatchObject({ vsPlatformPoints: null, belowPlatform: false });
     expect(detail.children.groups?.map((row) => row.id)).toEqual(["group-b1"]);
     expect(detail.children.gedus?.map((row) => row.id)).toEqual(["gedu-aino"]);
     expect(detail.children.gamers).toBeNull();

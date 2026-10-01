@@ -80,7 +80,7 @@ export function FeedbackHero({
   return (
     <Card className="grid gap-x-8 gap-y-4 p-5 md:grid-cols-[minmax(0,auto)_minmax(0,1fr)] md:items-center">
       <div className="space-y-1">
-        {headline.current.tooFew ? (
+        {headline.current.positiveShare === null ? (
           <ShareText figure={headline.current} className="text-2xl font-semibold" />
         ) : (
           <p className="flex items-baseline gap-2">
@@ -139,7 +139,7 @@ function StatementLines({
             >
               <p className="text-sm">{labels[line.key] ?? line.key}</p>
               <div className="text-sm">
-                {line.current.tooFew ? (
+                {line.current.positiveShare === null ? (
                   <ShareText figure={line.current} className="text-muted-foreground" />
                 ) : (
                   <span className="flex flex-wrap items-baseline gap-x-2">
@@ -152,7 +152,7 @@ function StatementLines({
               </div>
               <Sparkline series={line.series} unit={unit} width={128} height={28} className="max-w-32" />
               <p className="text-xs tabular-nums text-muted-foreground sm:text-right">
-                {line.current.tooFew ? null : t("low", { share: formatShare(line.current.lowShare, locale) })}
+                {line.current.lowShare === null ? null : t("low", { share: formatShare(line.current.lowShare, locale) })}
               </p>
             </li>
           ))}
@@ -178,8 +178,8 @@ function Explore({ overview }: { overview: FeedbackOverview }) {
               key={dimension}
               place={{ view: "list", dimension }}
               title={t(`titles.${dimension}`)}
-              lines={[t("below", { count: summary.confidentlyBelow }), t(`counts.${dimension}`, { count: summary.rows })]}
-              flagged={summary.confidentlyBelow > 0}
+              lines={[t("below", { count: summary.belowPlatform }), t(`counts.${dimension}`, { count: summary.rows })]}
+              flagged={summary.belowPlatform > 0}
             />
           );
         })}

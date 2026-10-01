@@ -1580,7 +1580,7 @@
       "empty": "Ingen feedback gavs under den här perioden.",
       "loadError": "Feedbacken kunde inte laddas. Ladda om sidan och försök igen.",
       "loadErrorWithReason": "Feedbacken kunde inte laddas: {reason}",
-      "tooFew": "För få svar ({count})",
+      "noAnswers": "Inga svar",
       "answers": "{count, plural, one {# svar} other {# svar}}",
       "skipped": "Hoppades över",
       "belowAverage": "Under genomsnittet",
@@ -1599,7 +1599,7 @@
       },
       "spark": {
         "point": "{bucket}: {share} positiva",
-        "tooFew": "{bucket}: för få svar ({count})",
+        "none": "{bucket}: inga svar",
         "labelWeek": "Positiva svar per vecka. {points}",
         "labelMonth": "Positiva svar per månad. {points}"
       },
@@ -1652,8 +1652,7 @@
         "answers": "Svar",
         "positive": "Positiva",
         "positiveAgainst": "Positiva (plattformen {share})",
-        "change": "Förändring",
-        "tooFewHeading": "För få svar för att säga något"
+        "change": "Förändring"
       },
       "lists": {
         "titles": {
