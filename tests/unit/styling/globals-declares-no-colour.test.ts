@@ -65,9 +65,9 @@ const ALLOWED = {
   // sticky offset, the home hero's bleed and every hash-anchor scroll margin.
   // Layout, not colour; it belongs to the library the day chrome is adopted.
   "--header-height": "layout: the sticky header's height",
-  // The phone tab bar's height, zero from `md` up (declared once more under
-  // that breakpoint), read by the bar, the bottom padding that keeps a page's
-  // end clear of it and the voice room's control dock. Layout, like the
+  // The phone tab bar's height, zero wherever no bar is drawn (set non-zero
+  // once more below `lg` on a page that renders the bar), read by the bar and
+  // the bottom padding that keeps a page's end clear of it. Layout, like the
   // header's height, and it goes to the library with it.
   "--tab-bar-height": "layout: the phone tab bar's height",
   // The measured height of the product page's sticky signup rail, written by a

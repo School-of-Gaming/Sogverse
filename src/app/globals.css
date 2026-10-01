@@ -29,12 +29,13 @@
      margins. */
   --header-height: 4rem;
 
-  /* The mobile tab bar's height, safe-area inset included, and zero from `lg`
-     up, where there is no bar (the override follows this block). Consumed by
-     the bar itself, by the bottom padding below that keeps a page's end clear
-     of it, and by anything else fixed to the bottom of the viewport that has to
-     float above it (the voice room's control dock). */
-  --tab-bar-height: calc(3.5rem + env(safe-area-inset-bottom));
+  /* The mobile tab bar's height, safe-area inset included — zero wherever no
+     bar is drawn: from `lg` up, and on a page whose header renders none (the
+     voice rooms). The non-zero value is set below, keyed on the bar's own
+     marker. Consumed by the bar itself, by the bottom padding below that keeps
+     a page's end clear of it, by `scroll-padding-bottom`, and by anything else
+     that has to end above it (the admin sidebar rail's sticky height). */
+  --tab-bar-height: 0px;
 
   /* The measured height of the product page's sticky signup rail, written onto
      that element by a ResizeObserver so its sticky inset can clamp at both ends
@@ -155,9 +156,11 @@ html:has([data-reserve-scroll-gutter]) {
   scrollbar-gutter: stable;
 }
 
-@media (width >= 64rem) {
-  :root {
-    --tab-bar-height: 0px;
+/* The bar's height is reserved only where the bar is: below `lg`, on a page
+   that renders it. */
+@media (width < 64rem) {
+  :root:has([data-tab-bar]) {
+    --tab-bar-height: calc(3.5rem + env(safe-area-inset-bottom));
   }
 }
 

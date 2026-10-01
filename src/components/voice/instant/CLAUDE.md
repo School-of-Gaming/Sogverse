@@ -6,7 +6,7 @@ On-the-fly voice rooms any admin or *verified* gedu can spin up, share via a sho
 
 A moderator (admin or verified gedu) creates a room from the Tools surface their role has — `/admin/tools` for an admin, the `/gedu` dashboard's Tools section for a gedu. The server allocates a 4-character code, asks Daily.co to create a room named with that code, and returns the code. The dashboard shows a copyable URL chip + a Join button. The mod shares `/voice/{CODE}` with whoever should join. Anyone with the link joins, no account required — signed in they join as themselves, signed out they type a name. The room dies when a mod clicks "End for everyone" or after the room's `exp` (8h), whichever comes first.
 
-The page runs under the **standard app header with no footer** — that is the whole reason the `(voice)` route group exists (see `../../layout/CLAUDE.md`). It used to carry a simplified header of its own, from a launch era when the surrounding site wasn't production-ready; scheduled group rooms already ran live calls under the standard chrome, so the special case was inconsistency rather than protection.
+The page runs under the **standard app header**, without the phone tab bar, like the scheduled room (see `../../layout/CLAUDE.md`). It has a `(voice)` route group of its own because anyone with the link may open it, signed in or not, so it belongs in neither the public group nor the signed-in dashboard group.
 
 ## No database
 

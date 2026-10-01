@@ -264,3 +264,25 @@ describe("Tab bar — short labels", () => {
     );
   });
 });
+
+describe("Tab bar — absent in a voice room", () => {
+  it.each(["/voice/group/[id]", "/voice/[code]"])(
+    "draws no bar at %s, and keeps the header",
+    (pathname) => {
+      signedInAs("gamer");
+      renderAt(pathname);
+
+      expect(
+        screen.queryByRole("navigation", { name: en.header.nav.tabBar }),
+      ).toBeNull();
+      expect(screen.getByRole("banner")).toBeTruthy();
+    },
+  );
+
+  it("still draws it on a page that merely starts with the same letters", () => {
+    signedOut();
+    renderAt("/voiceover");
+
+    expect(bar()).toBeTruthy();
+  });
+});

@@ -119,6 +119,14 @@ export function Header({ navRole }: HeaderProps) {
 
   const isHome = pathname === ROUTES.home;
 
+  // No tab bar in a voice room — every path under `/voice` is one, the
+  // scheduled group room and the instant room alike. Its five buttons all leave
+  // the call and would sit right under the dock's mute and leave, so a child
+  // reaching for mute could tap out of the session; leaving takes the room's own
+  // deliberate Leave. Without the bar `--tab-bar-height` resolves to zero
+  // (`globals.css`), so nothing reserves its space.
+  const showsTabBar = !isAtOrUnder(pathname, ROUTES.voice.prefix);
+
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
     : null;
@@ -454,23 +462,25 @@ export function Header({ navRole }: HeaderProps) {
           </div>
         </nav>
       </SiteHeaderShell>
-      <TabBar
-        pathname={pathname}
-        first={{
-          href: logoHref,
-          label: logoHref === ROUTES.home ? t("nav.home") : dashboardLabel,
-          isActive: isOnLogoTarget,
-          onClick: () => {
-            if (profile?.role) {
-              trackDashboardNav({
-                role: profile.role,
-                method: "tab_bar",
-                from: pathname,
-              });
-            }
-          },
-        }}
-      />
+      {showsTabBar && (
+        <TabBar
+          pathname={pathname}
+          first={{
+            href: logoHref,
+            label: logoHref === ROUTES.home ? t("nav.home") : dashboardLabel,
+            isActive: isOnLogoTarget,
+            onClick: () => {
+              if (profile?.role) {
+                trackDashboardNav({
+                  role: profile.role,
+                  method: "tab_bar",
+                  from: pathname,
+                });
+              }
+            },
+          }}
+        />
+      )}
     </>
   );
 }
