@@ -1,4 +1,5 @@
 import { StorageApiError, type QueryData } from "@supabase/supabase-js";
+import { z } from "zod";
 import { SUPPORTED_LOCALES, isSupportedLocale } from "@/lib/constants/locales";
 import { walkPages } from "@/lib/supabase/paging";
 import type { AppSupabaseClient } from "@/types";
@@ -179,8 +180,6 @@ function toPublicProfile(row: PublicTeamProfileRow): TeamProfile {
     : { ...common, kind: "gedu" };
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 export class TeamProfilesService {
   constructor(private supabase: AppSupabaseClient) {}
 
@@ -226,7 +225,7 @@ export class TeamProfilesService {
    * Works signed out.
    */
   async getPublicTeamProfile(userId: string): Promise<TeamProfile | null> {
-    if (!UUID.test(userId)) return null;
+    if (!z.string().uuid().safeParse(userId).success) return null;
     const { data, error } = await this.supabase.rpc("get_public_team_profile", {
       p_user_id: userId,
     });

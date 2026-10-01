@@ -47,10 +47,31 @@ import type { Database } from "@/types/database.types";
 /** Five minutes in the browser and the shared cache, and no stale serving. */
 const CACHE_CONTROL = "public, max-age=300, s-maxage=300";
 
-/** The content type of a stored photo, from its name when storage gives none. */
-function contentTypeOf(name: string, stored: string): string {
-  if (stored.startsWith("image/")) return stored;
-  return name.endsWith(".webp") ? "image/webp" : "image/jpeg";
+/**
+ * The photo's own sandbox: the bytes are an image and nothing in them may run.
+ * The proxy, which sets the app's CSP, never sees this path.
+ */
+const CONTENT_SECURITY_POLICY = "default-src 'none'; sandbox";
+
+/** The only types the route serves: what the photo editor saves. */
+const SERVED_TYPES = ["image/jpeg", "image/webp"] as const;
+type ServedType = (typeof SERVED_TYPES)[number];
+
+function isServedType(type: string): type is ServedType {
+  return (SERVED_TYPES as readonly string[]).includes(type);
+}
+
+/**
+ * The content type to serve a stored photo as: the stored type when it is a
+ * JPEG or a WebP, otherwise the one its name's extension says, otherwise none.
+ * Never any other stored type — an SVG served from our origin runs script.
+ */
+function contentTypeOf(name: string, stored: string): ServedType | null {
+  if (isServedType(stored)) return stored;
+  const lower = name.toLowerCase();
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  return null;
 }
 
 export const GET = defineRoute({
@@ -87,10 +108,19 @@ export const GET = defineRoute({
       );
     }
 
+    const contentType = contentTypeOf(name, data.type);
+    if (contentType === null) {
+      throw new ApiError(
+        `public team photo for ${params.userId} is not a JPEG or a WebP`,
+        404,
+      );
+    }
+
     return new Response(data, {
       headers: {
-        "Content-Type": contentTypeOf(name, data.type),
+        "Content-Type": contentType,
         "Cache-Control": CACHE_CONTROL,
+        "Content-Security-Policy": CONTENT_SECURITY_POLICY,
       },
     });
   },

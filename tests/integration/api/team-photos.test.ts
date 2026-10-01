@@ -21,6 +21,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  *   vanishes between the listing and the download.
  * - **The cache header is pinned**: five minutes, public, no stale serving —
  *   the longest a hidden profile's photo keeps showing.
+ * - **Only a JPEG or a WebP is served, sandboxed.** The route is outside the
+ *   proxy and so outside the app's CSP; a stored SVG echoed as one would run
+ *   script from our origin.
  *
  * The policy itself is proved against a real database in
  * tests/db/team-profiles-public.test.ts.
@@ -125,6 +128,42 @@ describe("GET /api/team/photos/[userId]", () => {
     const response = await GET(...photoRequest(USER_ID));
 
     expect(response.headers.get("Content-Type")).toBe("image/webp");
+  });
+
+  it("never echoes a stored type that is not a JPEG or a WebP", async () => {
+    mockDownload.mockResolvedValue({
+      data: new Blob([JPEG_BYTES], { type: "image/svg+xml" }),
+      error: null,
+    });
+
+    const response = await GET(...photoRequest(USER_ID));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("image/jpeg");
+  });
+
+  it("answers 404 for a stored SVG its name does not vouch for", async () => {
+    mockList.mockResolvedValue({
+      data: [{ id: "object-id", name: "4b1f.svg" }],
+      error: null,
+    });
+    mockDownload.mockResolvedValue({
+      data: new Blob(["<svg/>"], { type: "image/svg+xml" }),
+      error: null,
+    });
+
+    const response = await GET(...photoRequest(USER_ID));
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get("Content-Type")).not.toBe("image/svg+xml");
+  });
+
+  it("sandboxes the photo so nothing in it can run", async () => {
+    const response = await GET(...photoRequest(USER_ID));
+
+    expect(response.headers.get("Content-Security-Policy")).toBe(
+      "default-src 'none'; sandbox",
+    );
   });
 
   it("serves the current photo whatever version the address carries", async () => {

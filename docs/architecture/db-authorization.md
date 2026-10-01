@@ -422,10 +422,12 @@ read a table, but it answers only whether a product exists, identically for ever
 and with no arm keyed to anyone's identity — so an argument has nothing to aim at either,
 and what it can reveal is which ids exist rather than anything about a person. It too is
 `anon`-reachable, which is a separate allowlist and a separate decision. The public team
-page's reads are the same shape: `SECURITY DEFINER` over the staff tables, handing every
-caller, `anon` included, the same narrowed slice of the profiles an admin has made public,
-and a yes-or-no predicate for the team-photo read policy about whether an object is one
-of those profiles' current photos. The primitives
+page's reads are the same shape. The list is `SECURITY DEFINER` over the staff tables,
+handing every caller, `anon` included, the same narrowed slice of the profiles an admin
+has made public. The single-profile read is a `SECURITY INVOKER` filter over that list,
+which is what makes it inherit the list's definition of public rather than restating it.
+The team-photo read policy asks a `SECURITY DEFINER` yes-or-no predicate whether an
+object is one of those profiles' current photos. The primitives
 are granted rather than hidden because both paths that reach them are checked as the
 *caller*: a `SECURITY INVOKER` function calling them, and a generated column whose
 expression Postgres evaluates under the privileges of whoever writes the row. Revoking

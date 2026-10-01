@@ -499,6 +499,30 @@ describe("public team profiles", () => {
       await admin.storage.from(TEAM_PHOTOS_BUCKET).remove([stray]);
     });
 
+    it("shows anon nothing in the folder of a person who is not public", async () => {
+      for (const person of [hiddenAdmin, formerStaff]) {
+        const { data, error } = await anon.storage
+          .from(TEAM_PHOTOS_BUCKET)
+          .list(person.id);
+        expect(error).toBeNull();
+        expect(data).toEqual([]);
+      }
+    });
+
+    it("names no person who is not public at the bucket's root", async () => {
+      const { data, error } = await anon.storage
+        .from(TEAM_PHOTOS_BUCKET)
+        .list("", { limit: 10_000 });
+      expect(error).toBeNull();
+      const names = (data ?? []).map((entry) => entry.name);
+      const notPublic = new Set(minted);
+      for (const person of [anna, zed, bea, aaroA, aaroB]) {
+        notPublic.delete(person.id);
+      }
+      expect(notPublic.size).toBeGreaterThan(0);
+      for (const id of notPublic) expect(names).not.toContain(id);
+    });
+
     it("lets a parent read a public photo too, which their own policies alone would refuse", async () => {
       expect(await downloadAs(callers.customer, aaroB.photoPath)).toBe(true);
       expect(await downloadAs(callers.customer, hiddenAdmin.photoPath)).toBe(false);
