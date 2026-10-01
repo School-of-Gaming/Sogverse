@@ -65,7 +65,8 @@ export function FeedbackBreakdownTable({
   view: FeedbackView;
   filters: FeedbackFilters;
   hrefs: FeedbackEntityHrefs;
-  onNarrow: (dimension: FeedbackFilterDimension, id: string) => void;
+  /** Narrows the page to a row, or widens it again (`null`) from the row it is narrowed to. */
+  onNarrow: (dimension: FeedbackFilterDimension, id: string | null) => void;
 }) {
   const t = useTranslations("admin.feedback.breakdown");
   const locale = useLocale();
@@ -81,7 +82,7 @@ export function FeedbackBreakdownTable({
     () => sortRows(view.breakdowns[dimension], sort.key, sort.descending),
     [view.breakdowns, dimension, sort],
   );
-  const hasRate = dimension !== "gamer";
+  const hasRate = hasResponseRate(dimension);
 
   const sortBy = (key: SortKey) =>
     setSort((current) =>
@@ -119,6 +120,15 @@ export function FeedbackBreakdownTable({
                 onClick={() => {
                   setDimension(option);
                   setLimit(PAGE_SIZE);
+                  // A sort on a column the new tab does not draw would order
+                  // the rows by something the reader cannot see.
+                  if (!hasResponseRate(option)) {
+                    setSort((current) =>
+                      current.key === "responseRate"
+                        ? { key: "responses", descending: true }
+                        : current,
+                    );
+                  }
                 }}
                 className={cn(
                   "inline-flex items-center rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors",
@@ -161,10 +171,11 @@ export function FeedbackBreakdownTable({
             {rows.slice(0, limit).map((row) => {
               const href = hrefOf(row);
               const narrowed = filters[dimension] === row.id;
+              const toggleNarrow = () => onNarrow(dimension, narrowed ? null : row.id);
               return (
                 <tr
                   key={row.id}
-                  onClick={() => onNarrow(dimension, row.id)}
+                  onClick={toggleNarrow}
                   className={cn(
                     "cursor-pointer transition-colors hover:bg-hover",
                     row.responses < LOW_N && "text-muted-foreground",
@@ -175,7 +186,7 @@ export function FeedbackBreakdownTable({
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
-                        onNarrow(dimension, row.id);
+                        toggleNarrow();
                       }}
                       aria-label={t("narrowTo", { name: row.name })}
                       aria-pressed={narrowed}
@@ -232,6 +243,11 @@ export function FeedbackBreakdownTable({
       </div>
     </Card>
   );
+}
+
+/** Whether a tab has a response rate: a gamer's sessions have no denominator. */
+function hasResponseRate(dimension: BreakdownDimension): boolean {
+  return dimension !== "gamer";
 }
 
 function SortHeader({

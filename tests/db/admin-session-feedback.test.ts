@@ -27,8 +27,10 @@ import { deleteTestProducts } from "./product-helpers";
  *           product's zone. GAMER answered; GAMER_2 left an emptied row and
  *           CUSTOMER (not a gamer) a full one, and neither may travel. Marked
  *           present: GAMER, GAMER_2 and CUSTOMER — two gamers.
- *   DAY_2 — GEDU is away and SUB stands in. GAMER left a note and no rating.
- *           Marked present: GAMER; GAMER_2 marked absent.
+ *   DAY_2 — GEDU is away and SUB stands in. GAMER left a note and no rating;
+ *           GAMER_2 left a note of only newlines and tabs, which is as empty as
+ *           a blank one and may not travel. Marked present: GAMER; GAMER_2
+ *           marked absent.
  *   DAY_3 — a recorded session nobody was marked present at.
  *   DAY_0 — a recorded session outside the range.
  *
@@ -214,6 +216,13 @@ describe("get_admin_session_feedback", () => {
         answers: {},
         note: "the sub was fun",
       },
+      {
+        group_id: GROUP,
+        participant_id: TEST_IDS.GAMER_2,
+        session_opens_at: DAY_2_OPENS,
+        answers: {},
+        note: "\n\t ",
+      },
     ]);
     if (feedback.error) throw new Error(`seed feedback failed: ${feedback.error.message}`);
   });
@@ -242,6 +251,7 @@ describe("get_admin_session_feedback", () => {
   it("returns gamers' non-empty answers only, with their group, product and respondent", async () => {
     const { responses } = await read("2025-03-10", DAY_3);
 
+    // GAMER_2's two rows are absent: blank on DAY_1, newlines and tabs on DAY_2.
     expect(responses.map((r) => [r.sessionDate, r.respondent.id])).toEqual([
       [DAY_1, TEST_IDS.GAMER],
       [DAY_2, TEST_IDS.GAMER],

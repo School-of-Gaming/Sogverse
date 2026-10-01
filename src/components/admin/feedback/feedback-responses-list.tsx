@@ -74,7 +74,7 @@ export function FeedbackResponsesList({
         <ul className="divide-y divide-border border-t border-border">
           {shown.slice(0, limit).map((response) => (
             <ResponseRow
-              key={`${response.respondent.id}-${response.groupId}-${response.sessionDate}`}
+              key={`${response.respondent.id}-${response.groupId}-${response.sessionDate}-${response.submittedAt}`}
               response={response}
               hrefs={hrefs}
             />

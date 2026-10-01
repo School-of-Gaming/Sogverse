@@ -6,10 +6,8 @@ import {
   MunicipalityInvoicingHeading,
   MunicipalityInvoicingPage,
 } from "@/components/admin/municipality-invoicing/municipality-invoicing-page";
-import {
-  invoicingWireReason,
-  resolveInvoicingMonthStart,
-} from "@/lib/invoicing/month-param";
+import { wireErrorMessage } from "@/lib/api/wire-error-message";
+import { resolveInvoicingMonthStart } from "@/lib/invoicing/month-param";
 import { createClient } from "@/lib/supabase/server";
 import {
   MunicipalityInvoicingService,
@@ -54,7 +52,7 @@ async function loadMonth(monthStart: string): Promise<SnapshotResult> {
   try {
     return { ok: true, snapshot: await service.getMonth(monthStart) };
   } catch (error) {
-    return { ok: false, reason: invoicingWireReason(error) };
+    return { ok: false, reason: wireErrorMessage(error) };
   }
 }
 

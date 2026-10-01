@@ -361,22 +361,13 @@ export function buildFeedbackView(
   };
 }
 
-/**
- * The rows one source contributed. Partitioned rather than compared row by row:
- * a dataset holds every source's rows side by side, and each figure on the page
- * reads exactly one source's share of them.
- */
+/** The rows one source contributed. */
 export function ofSource<T extends { source: FeedbackSource }>(
   rows: readonly T[],
   source: FeedbackSource,
 ): T[] {
-  const bySource = new Map<FeedbackSource, T[]>();
-  for (const row of rows) {
-    const bucket = bySource.get(row.source);
-    if (bucket === undefined) bySource.set(row.source, [row]);
-    else bucket.push(row);
-  }
-  return bySource.get(source) ?? [];
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- constant only while FEEDBACK_SOURCES has a single member; with a second source it is the partition
+  return rows.filter((row) => row.source === source);
 }
 
 /** A Gedu listed twice on one session (say, primary and substitute) counts once. */

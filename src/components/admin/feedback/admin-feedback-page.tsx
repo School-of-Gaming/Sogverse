@@ -30,6 +30,7 @@ import {
 import { formatShare } from "./feedback-format";
 import {
   DEFAULT_FEEDBACK_RANGE,
+  FEEDBACK_RANGE_PARAM,
   FEEDBACK_RANGES,
   type FeedbackRange,
 } from "./feedback-range";
@@ -129,7 +130,7 @@ const ADMIN_ENTITY_HREFS: FeedbackEntityHrefs = {
 
 function adminRangeHref(range: FeedbackRange, filters: FeedbackFilters): FeedbackHref {
   const query = {
-    ...(range === DEFAULT_FEEDBACK_RANGE ? {} : { range }),
+    ...(range === DEFAULT_FEEDBACK_RANGE ? {} : { [FEEDBACK_RANGE_PARAM]: range }),
     ...feedbackFilterQuery(filters),
   };
   return { pathname: ROUTES.admin.feedback, query };

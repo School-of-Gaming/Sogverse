@@ -68,7 +68,9 @@ BEGIN
       JOIN public.products p       ON p.id = g.product_id
       JOIN public.profiles pr      ON pr.id = sf.participant_id
      WHERE pr.role = 'gamer'::public.user_role
-       AND NOT (sf.answers = '{}'::jsonb AND btrim(sf.note) = '')
+       -- A note of nothing but whitespace (newlines and tabs too, as the
+       -- client's trim() reads it) is blank.
+       AND NOT (sf.answers = '{}'::jsonb AND sf.note ~ '^\s*$')
        AND sf.session_opens_at >= (p_from::timestamp AT TIME ZONE 'UTC') - interval '2 days'
        AND sf.session_opens_at <  (p_to::timestamp   AT TIME ZONE 'UTC') + interval '3 days'
   ),

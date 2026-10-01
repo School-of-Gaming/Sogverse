@@ -7,11 +7,12 @@ import {
 } from "@/components/admin/feedback/admin-feedback-page";
 import { parseFeedbackFilters } from "@/components/admin/feedback/feedback-filters";
 import {
+  FEEDBACK_RANGE_PARAM,
   feedbackRangeBounds,
   resolveFeedbackRange,
 } from "@/components/admin/feedback/feedback-range";
+import { wireErrorMessage } from "@/lib/api/wire-error-message";
 import { DEFAULT_TIMEZONE, resolveLocale } from "@/lib/constants/locales";
-import { invoicingWireReason } from "@/lib/invoicing/month-param";
 import { createClient } from "@/lib/supabase/server";
 import type { AdminFeedbackDataset } from "@/services/session-feedback/admin-feedback.contracts";
 import { SessionFeedbackService } from "@/services/session-feedback/session-feedback.service";
@@ -45,7 +46,7 @@ async function loadRange(from: string, to: string): Promise<DatasetResult> {
   try {
     return { ok: true, dataset: await service.getAdminDataset({ from, to }, locale) };
   } catch (error) {
-    return { ok: false, reason: invoicingWireReason(error) };
+    return { ok: false, reason: wireErrorMessage(error) };
   }
 }
 
@@ -69,7 +70,7 @@ export default async function AdminFeedbackRoute({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const range = resolveFeedbackRange(params.range);
+  const range = resolveFeedbackRange(params[FEEDBACK_RANGE_PARAM]);
   const today = formatInTimeZone(new Date(), DEFAULT_TIMEZONE, "yyyy-MM-dd");
   const { from, to } = feedbackRangeBounds(range, today);
   const result = await loadRange(from, to);
@@ -81,12 +82,11 @@ export default async function AdminFeedbackRoute({
   const initialFilters = parseFeedbackFilters(params);
 
   return (
-    // Keyed on the filters the URL arrived with. A range choice carries the
-    // filters along, so the page keeps its tab and toggles across it; a link
-    // that arrives with other filters (the sidebar's, with none) is a fresh
-    // page, and must not keep the drill-down the previous one held.
+    // Not keyed: the page stays mounted across a navigation back to this route,
+    // so its tab and toggles survive. A range choice carries the current filters
+    // along and arrives with the same ones; a link arriving with other filters
+    // (the sidebar's, with none) resets the drill-down to them.
     <AdminFeedbackPage
-      key={JSON.stringify(initialFilters)}
       range={range}
       dataset={result.dataset}
       initialFilters={initialFilters}
