@@ -486,7 +486,7 @@ export const PREVIEW_SCENES = [
     surface: "voice-room",
     title: "Voice room",
     description:
-      "The scheduled group room over a fixture context — zone cards, control dock, chat and the participant rail. The rail is where the staff flair is judged; the family scenario is the check that none of it is there.",
+      "The scheduled group room over a fixture context — zone cards, control dock, chat and the participant rail. The rail is where the staff flair is judged; the family scenario is the check that none of it is there. Below `lg` the scene shows the phone tab bar, which the live rooms do not.",
     chrome: "dashboard",
     scenarios: [
       {

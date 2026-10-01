@@ -61,8 +61,9 @@ function Tab({ children }: { children: ReactNode }) {
  *
  * `z-40`: under the header and its menus, under every dialog and sheet portal,
  * and under the cookie strip (`z-50`), which covers it while it is up. Its
- * height is `--tab-bar-height`, which `globals.css` also pays as bottom padding
- * on whatever contains it, so the end of the page is never hidden behind it.
+ * height is `--tab-bar-drawn-height`, which `globals.css` hands on as
+ * `--tab-bar-height` where the bar is and pays as bottom padding on whatever
+ * contains it, so the end of the page is never hidden behind it.
  */
 export function TabBar({
   pathname,
@@ -78,7 +79,7 @@ export function TabBar({
     <nav
       data-tab-bar=""
       aria-label={t("nav.tabBar")}
-      className="glass fixed inset-x-0 bottom-0 z-40 h-[var(--tab-bar-height)] border-t border-border pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="glass fixed inset-x-0 bottom-0 z-40 h-[var(--tab-bar-drawn-height)] border-t border-border pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <ul className="mx-auto grid h-full max-w-lg grid-cols-5">
         <Tab>

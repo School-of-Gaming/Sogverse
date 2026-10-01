@@ -38,13 +38,6 @@ export function teamMemberHeadline(
     : createElement(Fragment, null, `${person.firstName} `, nick(person.nickname));
 }
 
-/** The headline's words as plain text, for measuring them. */
-export function teamMemberHeadlineText(person: TeamProfile): string {
-  return person.nickname === null
-    ? person.firstName
-    : `${person.firstName} ${person.nickname}`;
-}
-
 /**
  * **A person's full name as plain text**, for text that stands without the
  * line under the headline: an admin with their surname, the nickname in the

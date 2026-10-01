@@ -42,19 +42,22 @@ export function TeamMemberCard({
   const subline = teamMemberSubline(profile, t);
 
   return (
-    <div className="group relative flex h-full flex-col">
+    <div className="group relative flex flex-col">
       <TeamPortrait
         photo={profile.photo}
         pick={profile.pick}
         zoomOnHover
         className="ring-act ring-offset-4 ring-offset-background group-has-[a:focus-visible]:ring-2"
       />
-      {/* One size for every name, the largest at which a twenty-character
-          nickname fits the column on its own line at each width: the
-          narrowest column is 156px in the two-column grid at 360, 186px in
-          three at 640, 229px in three at 768. A name too wide for one line
-          puts the nickname whole on the second. */}
-      <h3 className="mt-3 break-words text-[0.8125rem] font-semibold leading-snug sm:text-[0.9375rem] md:text-lg">
+      {/* One size for every name per step, from the type scale, stepping
+          once at `md`. Below it, at 14px, a twenty-character nickname (about
+          164px) fits its column on its own line from 390px wide, three
+          columns at 640 included (187px), and breaks inside itself only on
+          the narrowest phones, where the column is 156px at 360 — accepted.
+          From `md`, at 18px (about 211px), every column is at least 229px.
+          A name too wide for one line puts the nickname whole on the
+          second. */}
+      <h3 className="mt-3 break-words text-body-s font-semibold leading-snug md:text-h4">
         <Link
           href={href}
           className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
@@ -66,13 +69,13 @@ export function TeamMemberCard({
           ))}
         </Link>
       </h3>
-      <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+      <p className="mt-0.5 text-xs text-muted-foreground md:text-body-s">
         {subline}
       </p>
       {written !== null && (
         <p
           lang={written.locale}
-          className="mt-1.5 line-clamp-3 text-xs text-muted-foreground sm:text-sm"
+          className="mt-1.5 line-clamp-3 text-xs text-muted-foreground md:text-body-s"
         >
           {written.shortDescription}
         </p>

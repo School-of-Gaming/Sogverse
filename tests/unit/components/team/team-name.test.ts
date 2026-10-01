@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { createTranslator } from "next-intl";
 import en from "../../../../messages/en.json";
 import {
-  teamMemberHeadlineText,
   teamMemberPlainName,
   teamMemberSubline,
 } from "@/components/team/team-name";
@@ -14,24 +13,14 @@ import {
 const t = createTranslator({ locale: "en", messages: en, namespace: "team.profile" });
 
 describe("a team member headed", () => {
-  it("heads an admin with first name and nickname, the surname under the rule", () => {
-    const admin = publicAdminProfile();
-    expect(teamMemberHeadlineText(admin)).toBe("Laura Nightowl");
-    expect(teamMemberSubline(admin, t)).toBe(
+  it("heads an admin with their surname under the rule", () => {
+    expect(teamMemberSubline(publicAdminProfile(), t)).toBe(
       "Laura Virtanen · Chief Executive Officer",
     );
   });
 
-  it("heads a Gedu with first name and nickname, the role under the rule", () => {
-    const gedu = publicGeduProfile();
-    expect(teamMemberHeadlineText(gedu)).toBe("Eetu CreeperHug");
-    expect(teamMemberSubline(gedu, t)).toBe("Gedu · Game Educator");
-  });
-
-  it("heads a person with no nickname by their first name alone", () => {
-    expect(
-      teamMemberHeadlineText(publicAdminProfile({ nickname: null })),
-    ).toBe("Laura");
+  it("heads a Gedu with their role under the rule", () => {
+    expect(teamMemberSubline(publicGeduProfile(), t)).toBe("Gedu · Game Educator");
   });
 });
 

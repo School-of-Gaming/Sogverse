@@ -1586,11 +1586,10 @@ COMMIT;
 -- one that is not is the second admin's, ready and waiting for an admin to
 -- make it public, in English and Finnish.
 -- Aino's is public, in English only and with no pick, and exists for its
--- headline: "Aino “TheRedstoneArchitect”" is long enough that the share card
--- shrinks it below its full size, yet short enough to stay above the floor
--- and render whole (`teamCardHeadlineSize` in `src/lib/og/team-card.ts`; a
--- unit test reads the nickname from here and holds it to that). With no pick,
--- her card also shows the neutral frame.
+-- headline: "TheRedstoneArchitect" is twenty characters, the longest nickname
+-- each surface is sized for, so a local stack shows a long name wrapping with
+-- the nickname whole on its own line. With no pick, her card also shows the
+-- neutral frame.
 -- The rest vary what a reader's locale falls back over: several are written
 -- in English alone, most in English and Finnish, three in Finnish alone, one
 -- in English and Swedish and one in English and French; a few have no pick
