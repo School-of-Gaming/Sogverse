@@ -1591,8 +1591,10 @@
         "byMonth": "Réponses positives par mois",
         "platform": "Plateforme",
         "hint": "Faites glisser sur le graphique pour choisir une période",
-        "start": "Début de la période : {date}",
-        "end": "Fin de la période : {date}",
+        "start": "Début de la période",
+        "end": "Fin de la période",
+        "pointWeek": "Semaine consultée",
+        "pointMonth": "Mois consulté",
         "selection": "{range} · {days, plural, one {# jour} other {# jours}}"
       },
       "back": {
@@ -1613,7 +1615,6 @@
       "hero": {
         "positive": "positives",
         "definition": "Réponse Oui ou Tout à fait",
-        "answers": "{count, plural, one {# réponse} other {# réponses}}",
         "responseRate": "{share} des gamers présents ont répondu"
       },
       "statements": {

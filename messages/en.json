@@ -1591,8 +1591,10 @@
         "byMonth": "Positive answers by month",
         "platform": "Platform",
         "hint": "Drag across the chart to choose a period",
-        "start": "Start of the period: {date}",
-        "end": "End of the period: {date}",
+        "start": "Start of the period",
+        "end": "End of the period",
+        "pointWeek": "Week being read",
+        "pointMonth": "Month being read",
         "selection": "{range} · {days, plural, one {# day} other {# days}}"
       },
       "back": {
@@ -1613,7 +1615,6 @@
       "hero": {
         "positive": "positive",
         "definition": "Answered Yes or Definitely",
-        "answers": "{count, plural, one {# answer} other {# answers}}",
         "responseRate": "{share} of gamers present answered"
       },
       "statements": {

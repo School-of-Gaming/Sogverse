@@ -1632,7 +1632,8 @@ DECLARE
   v_group uuid;
   v_date  date;
 BEGIN
-  -- The past one. Section 9 wrote up the six most recent dates up to yesterday.
+  -- The past one: the second most recent date up to yesterday, which section 9
+  -- has already written up.
   v_group := (SELECT pa.group_id
                 FROM public.participations pa
                 JOIN public.profiles pr ON pr.id = pa.participant_id

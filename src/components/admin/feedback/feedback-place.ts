@@ -49,6 +49,15 @@ export function isFeedbackId(id: string): boolean {
   return UUID.test(id);
 }
 
+/**
+ * A route's id as the dataset spells it — lowercase, which is how every uuid
+ * is read back from the database — or `null` when it could name nothing. A
+ * uuid typed in capitals names the same thing, and must find it.
+ */
+export function feedbackScopeId(id: string): string | null {
+  return isFeedbackId(id) ? id.toLowerCase() : null;
+}
+
 function firstOf(raw: string | string[] | undefined): string | undefined {
   return Array.isArray(raw) ? raw[0] : raw;
 }

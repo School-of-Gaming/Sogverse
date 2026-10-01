@@ -6,7 +6,7 @@ import type { FeedbackDimension, FeedbackScopeKind } from "./aggregate-feedback"
 import { FeedbackDetailPage } from "./feedback-detail-page";
 import { FeedbackListPage } from "./feedback-list-page";
 import { FeedbackOverviewPage } from "./feedback-overview-page";
-import { FEEDBACK_ORIGIN_PARAM, isFeedbackId, parseFeedbackOrigin } from "./feedback-place";
+import { FEEDBACK_ORIGIN_PARAM, feedbackScopeId, parseFeedbackOrigin } from "./feedback-place";
 import { FeedbackResponsesPage } from "./feedback-responses-page";
 import { FeedbackLoadFailure } from "./feedback-shell";
 import { loadFeedback } from "./load-feedback.server";
@@ -63,8 +63,8 @@ export async function FeedbackDetailRoute({
   params: Promise<{ id: string }>;
   searchParams: SearchParams;
 }) {
-  const { id } = await params;
-  if (!isFeedbackId(id)) notFound();
+  const id = feedbackScopeId((await params).id);
+  if (id === null) notFound();
   const query = await searchParams;
   const origin = parseFeedbackOrigin(query[FEEDBACK_ORIGIN_PARAM]);
   const load = await loadFeedback(query);

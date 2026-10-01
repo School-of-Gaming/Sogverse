@@ -42,21 +42,21 @@ import { periodDays, type FeedbackPeriod } from "./feedback-tally";
  *
  * The chart's height is fixed and the canvas is drawn at the width it is
  * given, so text stays its own size at any width and nothing beneath it moves
- * when the selection does.
+ * when the selection does. Until the box is measured it stays empty at that
+ * height: a chart drawn at a guessed width would shift every label, point and
+ * handle sideways once the real width arrived.
  */
 
 const HEIGHT = 208;
 const MARGIN = { top: 12, right: 12, bottom: 28, left: 44 };
 /** The scale's labelled steps; the 0 line is the baseline, the rest gridlines. */
 const GRID = [0, 0.25, 0.5, 0.75, 1];
-/** Drawn at before the box is measured (on the server, and in a test). */
-const FALLBACK_WIDTH = 640;
 /** How far a press must travel to become a drag rather than a click. */
 const DRAG_THRESHOLD_PX = 4;
 /** Buckets a handle moves for shift+arrow or Page Up/Down. */
 const LARGE_STEP = 4;
-/** A handle's grab area: wider than its 2px line, so a thumb can find it. */
-const HANDLE_HIT_PX = 24;
+/** How far a handle's grab area reaches out from its 2px line, so a thumb can find it. */
+const HANDLE_REACH_PX = 12;
 /** The closest two month labels may sit. */
 const MIN_TICK_GAP_PX = 64;
 const AVERAGE_MONTH_DAYS = 30.44;
@@ -132,8 +132,7 @@ export function FeedbackTimeline({
 
   const boxRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const measured = useWidth(boxRef);
-  const width = measured > 0 ? measured : FALLBACK_WIDTH;
+  const width = useWidth(boxRef);
 
   const dragRef = useRef<DragState | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
@@ -167,6 +166,9 @@ export function FeedbackTimeline({
   const selectedTo = dayIndex(selection.to, history.from);
   const selectionLeft = xAt(selectedFrom);
   const selectionRight = xAt(selectedTo + 1);
+  // A handle reaches into the selection at most a quarter of its width, so the
+  // middle half stays the selection's own to slide however short it is.
+  const handleInnerReach = Math.min(HANDLE_REACH_PX, (selectionRight - selectionLeft) / 4);
 
   const ticks = useMemo(() => {
     const monthWidth = (plotWidth * AVERAGE_MONTH_DAYS) / days;
@@ -355,264 +357,270 @@ export function FeedbackTimeline({
       </div>
 
       <div ref={boxRef} className="relative" style={{ height: HEIGHT }}>
-        <svg
-          ref={svgRef}
-          viewBox={`0 0 ${width} ${HEIGHT}`}
-          className="block h-full w-full touch-pan-y select-none overflow-visible"
-          role="group"
-          aria-label={t(unit === "week" ? "timeline.byWeek" : "timeline.byMonth")}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerCancel}
-          onPointerLeave={() => setHovered(null)}
-        >
-          {/* The scale: labelled steps, the baseline and faint gridlines. */}
-          {GRID.map((share) => (
-            <g key={share} aria-hidden>
-              <line
-                x1={plotLeft}
-                x2={plotRight}
-                y1={yAt(share)}
-                y2={yAt(share)}
-                strokeWidth={1}
-                shapeRendering="crispEdges"
-                className="stroke-border"
+        {width > 0 && (
+          <>
+            <svg
+              ref={svgRef}
+              viewBox={`0 0 ${width} ${HEIGHT}`}
+              className="block h-full w-full touch-pan-y select-none overflow-visible"
+              role="group"
+              aria-label={t(unit === "week" ? "timeline.byWeek" : "timeline.byMonth")}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerCancel}
+              onPointerLeave={() => setHovered(null)}
+            >
+              {/* The scale: labelled steps, the baseline and faint gridlines. */}
+              {GRID.map((share) => (
+                <g key={share} aria-hidden>
+                  <line
+                    x1={plotLeft}
+                    x2={plotRight}
+                    y1={yAt(share)}
+                    y2={yAt(share)}
+                    strokeWidth={1}
+                    shapeRendering="crispEdges"
+                    className="stroke-border"
+                  />
+                  <text
+                    x={plotLeft - 8}
+                    y={yAt(share)}
+                    textAnchor="end"
+                    dominantBaseline="middle"
+                    className="fill-muted-foreground text-xs tabular-nums"
+                  >
+                    {formatShare(share, locale)}
+                  </text>
+                </g>
+              ))}
+              {ticks.map((start, index) => {
+                const x = xAt(dayIndex(start, history.from));
+                const withYear = index === 0 || start.slice(5, 7) === "01";
+                return (
+                  <g key={start} aria-hidden>
+                    <line
+                      x1={x}
+                      x2={x}
+                      y1={plotBottom}
+                      y2={plotBottom + 4}
+                      strokeWidth={1}
+                      shapeRendering="crispEdges"
+                      className="stroke-border"
+                    />
+                    <text
+                      x={x}
+                      y={plotBottom + 18}
+                      textAnchor="middle"
+                      className="fill-muted-foreground text-xs"
+                    >
+                      {formatDateOnly(
+                        start,
+                        locale,
+                        withYear ? { month: "short", year: "numeric" } : { month: "short" },
+                      )}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* The plot's own ground, so the whole of it answers the pointer. */}
+              <rect
+                x={plotLeft}
+                y={plotTop}
+                width={plotWidth}
+                height={plotBottom - plotTop}
+                fill="transparent"
+                className="cursor-crosshair"
               />
-              <text
-                x={plotLeft - 8}
-                y={yAt(share)}
-                textAnchor="end"
-                dominantBaseline="middle"
-                className="fill-muted-foreground text-xs tabular-nums"
-              >
-                {formatShare(share, locale)}
-              </text>
-            </g>
-          ))}
-          {ticks.map((start, index) => {
-            const x = xAt(dayIndex(start, history.from));
-            const withYear = index === 0 || start.slice(5, 7) === "01";
-            return (
-              <g key={start} aria-hidden>
-                <line
-                  x1={x}
-                  x2={x}
-                  y1={plotBottom}
-                  y2={plotBottom + 4}
-                  strokeWidth={1}
-                  shapeRendering="crispEdges"
-                  className="stroke-border"
-                />
-                <text
-                  x={x}
-                  y={plotBottom + 18}
-                  textAnchor="middle"
-                  className="fill-muted-foreground text-xs"
-                >
-                  {formatDateOnly(
-                    start,
-                    locale,
-                    withYear ? { month: "short", year: "numeric" } : { month: "short" },
-                  )}
-                </text>
+
+              {/* The platform first, so the scope's line is drawn over it. */}
+              <g aria-hidden>
+                {platformRuns.map((run) =>
+                  run.length === 1 ? (
+                    <circle
+                      key={run[0].index}
+                      cx={pointX(run[0].index)}
+                      cy={yAt(run[0].share)}
+                      r={2.5}
+                      className="fill-muted-foreground"
+                    />
+                  ) : (
+                    <polyline
+                      key={run[0].index}
+                      points={run.map((point) => `${pointX(point.index)},${yAt(point.share)}`).join(" ")}
+                      fill="none"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="stroke-muted-foreground"
+                    />
+                  ),
+                )}
+                {scopeRuns.map((run) =>
+                  run.length === 1 ? (
+                    <circle
+                      key={run[0].index}
+                      cx={pointX(run[0].index)}
+                      cy={yAt(run[0].share)}
+                      r={4}
+                      className="fill-act"
+                    />
+                  ) : (
+                    <polyline
+                      key={run[0].index}
+                      points={run.map((point) => `${pointX(point.index)},${yAt(point.share)}`).join(" ")}
+                      fill="none"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="stroke-act"
+                    />
+                  ),
+                )}
               </g>
-            );
-          })}
 
-          {/* The plot's own ground, so the whole of it answers the pointer. */}
-          <rect
-            x={plotLeft}
-            y={plotTop}
-            width={plotWidth}
-            height={plotBottom - plotTop}
-            fill="transparent"
-            className="cursor-crosshair"
-          />
-
-          {/* The platform first, so the scope's line is drawn over it. */}
-          <g aria-hidden>
-            {platformRuns.map((run) =>
-              run.length === 1 ? (
-                <circle
-                  key={run[0].index}
-                  cx={pointX(run[0].index)}
-                  cy={yAt(run[0].share)}
-                  r={2.5}
-                  className="fill-muted-foreground"
+              {/* Outside the selection, dimmed. */}
+              <g aria-hidden className="pointer-events-none">
+                <rect
+                  x={plotLeft}
+                  y={plotTop}
+                  width={Math.max(0, selectionLeft - plotLeft)}
+                  height={plotBottom - plotTop}
+                  className="fill-scrim"
                 />
-              ) : (
-                <polyline
-                  key={run[0].index}
-                  points={run.map((point) => `${pointX(point.index)},${yAt(point.share)}`).join(" ")}
-                  fill="none"
-                  strokeWidth={1.5}
-                  strokeDasharray="4 4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="stroke-muted-foreground"
+                <rect
+                  x={selectionRight}
+                  y={plotTop}
+                  width={Math.max(0, plotRight - selectionRight)}
+                  height={plotBottom - plotTop}
+                  className="fill-scrim"
                 />
-              ),
-            )}
-            {scopeRuns.map((run) =>
-              run.length === 1 ? (
-                <circle
-                  key={run[0].index}
-                  cx={pointX(run[0].index)}
-                  cy={yAt(run[0].share)}
-                  r={4}
-                  className="fill-act"
-                />
-              ) : (
-                <polyline
-                  key={run[0].index}
-                  points={run.map((point) => `${pointX(point.index)},${yAt(point.share)}`).join(" ")}
-                  fill="none"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="stroke-act"
-                />
-              ),
-            )}
-          </g>
+              </g>
 
-          {/* Outside the selection, dimmed. */}
-          <g aria-hidden className="pointer-events-none">
-            <rect
-              x={plotLeft}
-              y={plotTop}
-              width={Math.max(0, selectionLeft - plotLeft)}
-              height={plotBottom - plotTop}
-              className="fill-scrim"
-            />
-            <rect
-              x={selectionRight}
-              y={plotTop}
-              width={Math.max(0, plotRight - selectionRight)}
-              height={plotBottom - plotTop}
-              className="fill-scrim"
-            />
-          </g>
-
-          {/* The selection itself: grabbed to slide it. */}
-          <rect
-            x={selectionLeft}
-            y={plotTop}
-            width={Math.max(0, selectionRight - selectionLeft)}
-            height={plotBottom - plotTop}
-            fill="transparent"
-            className="cursor-grab active:cursor-grabbing"
-          />
-
-          {/* The point being read. */}
-          {shown !== null && shownPoint !== null && (
-            <g aria-hidden className="pointer-events-none">
-              <line
-                x1={pointX(shown)}
-                x2={pointX(shown)}
-                y1={plotTop}
-                y2={plotBottom}
-                strokeWidth={1}
-                shapeRendering="crispEdges"
-                className="stroke-muted-foreground"
+              {/* The selection itself: grabbed to slide it. */}
+              <rect
+                x={selectionLeft}
+                y={plotTop}
+                width={Math.max(0, selectionRight - selectionLeft)}
+                height={plotBottom - plotTop}
+                fill="transparent"
+                className="cursor-grab active:cursor-grabbing"
               />
-              {shownPoint.positiveShare !== null && (
-                <circle
-                  cx={pointX(shown)}
-                  cy={yAt(shownPoint.positiveShare)}
-                  r={4.5}
-                  strokeWidth={2}
-                  className="fill-act stroke-card"
-                />
+
+              {/* The point being read. */}
+              {shown !== null && shownPoint !== null && (
+                <g aria-hidden className="pointer-events-none">
+                  <line
+                    x1={pointX(shown)}
+                    x2={pointX(shown)}
+                    y1={plotTop}
+                    y2={plotBottom}
+                    strokeWidth={1}
+                    shapeRendering="crispEdges"
+                    className="stroke-muted-foreground"
+                  />
+                  {shownPoint.positiveShare !== null && (
+                    <circle
+                      cx={pointX(shown)}
+                      cy={yAt(shownPoint.positiveShare)}
+                      r={4.5}
+                      strokeWidth={2}
+                      className="fill-act stroke-card"
+                    />
+                  )}
+                </g>
               )}
-            </g>
-          )}
 
-          {/* The points, read one at a time from the keyboard. */}
-          <g
-            tabIndex={0}
-            role="slider"
-            aria-label={t(unit === "week" ? "timeline.byWeek" : "timeline.byMonth")}
-            aria-orientation="horizontal"
-            aria-valuemin={0}
-            aria-valuemax={Math.max(0, points.length - 1)}
-            aria-valuenow={focusedPoint ?? Math.max(0, points.length - 1)}
-            aria-valuetext={points.length === 0 ? undefined : describe(focusedPoint ?? points.length - 1)}
-            onFocus={() => setFocusedPoint((current) => current ?? Math.max(0, points.length - 1))}
-            onBlur={() => setFocusedPoint(null)}
-            onKeyDown={onPointsKey}
-            className="outline-none"
-          >
-            <rect
-              x={plotLeft}
-              y={plotTop}
-              width={plotWidth}
-              height={plotBottom - plotTop}
-              fill="none"
-              strokeWidth={2}
-              className={focusedPoint === null ? "stroke-transparent" : "stroke-act"}
-            />
-          </g>
+              {/* The points, read one at a time from the keyboard. */}
+              <g
+                tabIndex={0}
+                role="slider"
+                aria-label={t(unit === "week" ? "timeline.pointWeek" : "timeline.pointMonth")}
+                aria-orientation="horizontal"
+                aria-valuemin={0}
+                aria-valuemax={Math.max(0, points.length - 1)}
+                aria-valuenow={focusedPoint ?? Math.max(0, points.length - 1)}
+                aria-valuetext={points.length === 0 ? undefined : describe(focusedPoint ?? points.length - 1)}
+                onFocus={() => setFocusedPoint((current) => current ?? Math.max(0, points.length - 1))}
+                onBlur={() => setFocusedPoint(null)}
+                onKeyDown={onPointsKey}
+                className="outline-none"
+              >
+                <rect
+                  x={plotLeft}
+                  y={plotTop}
+                  width={plotWidth}
+                  height={plotBottom - plotTop}
+                  fill="none"
+                  strokeWidth={2}
+                  className={focusedPoint === null ? "stroke-transparent" : "stroke-act"}
+                />
+              </g>
 
-          <Handle
-            edge="from"
-            x={selectionLeft}
-            top={plotTop}
-            bottom={plotBottom}
-            middle={plotMiddle}
-            label={t("timeline.start", { date: dateLabel(selection.from) })}
-            valueText={dateLabel(selection.from)}
-            min={0}
-            max={days - 1}
-            now={selectedFrom}
-            focused={focusedEdge === "from"}
-            onFocusChange={(focused) => setFocusedEdge(focused ? "from" : null)}
-            onKeyDown={onEdgeKey("from")}
-          />
-          <Handle
-            edge="to"
-            x={selectionRight}
-            top={plotTop}
-            bottom={plotBottom}
-            middle={plotMiddle}
-            label={t("timeline.end", { date: dateLabel(selection.to) })}
-            valueText={dateLabel(selection.to)}
-            min={0}
-            max={days - 1}
-            now={selectedTo}
-            focused={focusedEdge === "to"}
-            onFocusChange={(focused) => setFocusedEdge(focused ? "to" : null)}
-            onKeyDown={onEdgeKey("to")}
-          />
-        </svg>
+              <Handle
+                edge="from"
+                x={selectionLeft}
+                top={plotTop}
+                bottom={plotBottom}
+                middle={plotMiddle}
+                innerReach={handleInnerReach}
+                label={t("timeline.start")}
+                valueText={dateLabel(selection.from)}
+                min={0}
+                max={days - 1}
+                now={selectedFrom}
+                focused={focusedEdge === "from"}
+                onFocusChange={(focused) => setFocusedEdge(focused ? "from" : null)}
+                onKeyDown={onEdgeKey("from")}
+              />
+              <Handle
+                edge="to"
+                x={selectionRight}
+                top={plotTop}
+                bottom={plotBottom}
+                middle={plotMiddle}
+                innerReach={handleInnerReach}
+                label={t("timeline.end")}
+                valueText={dateLabel(selection.to)}
+                min={0}
+                max={days - 1}
+                now={selectedTo}
+                focused={focusedEdge === "to"}
+                onFocusChange={(focused) => setFocusedEdge(focused ? "to" : null)}
+                onKeyDown={onEdgeKey("to")}
+              />
+            </svg>
 
-        {shown !== null && shownPoint !== null && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute z-10 w-max max-w-56 -translate-x-1/2 -translate-y-full rounded-md border border-border bg-card px-3 py-2 text-xs shadow-md"
-            style={{
-              left: Math.min(Math.max(pointX(shown), 80), width - 80),
-              top: plotTop - 6,
-            }}
-          >
-            <p className="text-muted-foreground">
-              {formatDateRange(shownPoint.start, shownPoint.end, locale)}
-            </p>
-            <p className="text-sm font-semibold tabular-nums">
-              {shownPoint.positiveShare === null
-                ? t("noAnswers")
-                : t("statements.positive", { share: formatShare(shownPoint.positiveShare, locale) })}
-            </p>
-            {shownPoint.n > 0 && (
-              <p className="tabular-nums text-muted-foreground">{t("answers", { count: shownPoint.n })}</p>
+            {shown !== null && shownPoint !== null && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute z-10 w-max max-w-56 -translate-x-1/2 -translate-y-full rounded-md border border-border bg-card px-3 py-2 text-xs shadow-md"
+                style={{
+                  left: Math.min(Math.max(pointX(shown), 80), width - 80),
+                  top: plotTop - 6,
+                }}
+              >
+                <p className="text-muted-foreground">
+                  {formatDateRange(shownPoint.start, shownPoint.end, locale)}
+                </p>
+                <p className="text-sm font-semibold tabular-nums">
+                  {shownPoint.positiveShare === null
+                    ? t("noAnswers")
+                    : t("statements.positive", { share: formatShare(shownPoint.positiveShare, locale) })}
+                </p>
+                {shownPoint.n > 0 && (
+                  <p className="tabular-nums text-muted-foreground">{t("answers", { count: shownPoint.n })}</p>
+                )}
+                {shownPlatform !== null && (
+                  <p className="tabular-nums text-muted-foreground">
+                    {t("detail.platform", { share: formatShare(shownPlatform, locale) })}
+                  </p>
+                )}
+              </div>
             )}
-            {shownPlatform !== null && (
-              <p className="tabular-nums text-muted-foreground">
-                {t("detail.platform", { share: formatShare(shownPlatform, locale) })}
-              </p>
-            )}
-          </div>
+          </>
         )}
       </div>
 
@@ -633,6 +641,7 @@ function Handle({
   top,
   bottom,
   middle,
+  innerReach,
   label,
   valueText,
   min,
@@ -647,6 +656,8 @@ function Handle({
   top: number;
   bottom: number;
   middle: number;
+  /** How far the grab area reaches into the selection; outward it always reaches the full 12px. */
+  innerReach: number;
   label: string;
   valueText: string;
   min: number;
@@ -677,9 +688,9 @@ function Handle({
       className="cursor-ew-resize outline-none"
     >
       <rect
-        x={x - HANDLE_HIT_PX / 2}
+        x={edge === "from" ? x - HANDLE_REACH_PX : x - innerReach}
         y={top}
-        width={HANDLE_HIT_PX}
+        width={HANDLE_REACH_PX + innerReach}
         height={bottom - top}
         fill="transparent"
       />

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
@@ -62,7 +62,33 @@ function wrap(children: ReactNode) {
   );
 }
 
+/**
+ * A `ResizeObserver` that reports a 640px box as soon as it observes one: the
+ * timeline draws nothing until it is measured, and jsdom measures nothing.
+ */
+class MeasuredResizeObserver implements ResizeObserver {
+  constructor(private readonly callback: ResizeObserverCallback) {}
+  observe(target: Element) {
+    const [width, height] = [640, 208];
+    const contentRect = { x: 0, y: 0, top: 0, left: 0, right: width, bottom: height, width, height };
+    const entry: ResizeObserverEntry = {
+      target,
+      contentRect: { ...contentRect, toJSON: () => contentRect },
+      borderBoxSize: [],
+      contentBoxSize: [],
+      devicePixelContentBoxSize: [],
+    };
+    this.callback([entry], this);
+  }
+  unobserve() {}
+  disconnect() {}
+}
+
 describe("admin feedback pages", () => {
+  beforeEach(() => {
+    vi.stubGlobal("ResizeObserver", MeasuredResizeObserver);
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -81,8 +107,12 @@ describe("admin feedback pages", () => {
       expect(within(chart).getByText(label)).toBeTruthy();
     }
     expect(screen.getByText("Sep 1, 2026 – Sep 30, 2026 · 30 days")).toBeTruthy();
-    expect(screen.getByRole("slider", { name: "Start of the period: Sep 1, 2026" })).toBeTruthy();
-    expect(screen.getByRole("slider", { name: "End of the period: Sep 30, 2026" })).toBeTruthy();
+    expect(
+      screen.getByRole("slider", { name: "Start of the period" }).getAttribute("aria-valuetext"),
+    ).toBe("Sep 1, 2026");
+    expect(
+      screen.getByRole("slider", { name: "End of the period" }).getAttribute("aria-valuetext"),
+    ).toBe("Sep 30, 2026");
   });
 
   it("moves the selection a week per arrow key, recomputes the page and writes the URL", () => {
@@ -90,14 +120,14 @@ describe("admin feedback pages", () => {
     wrap(<FeedbackOverviewPage read={read(dataset)} />);
     expect(screen.getByText("89%")).toBeTruthy();
 
-    fireEvent.keyDown(screen.getByRole("slider", { name: /^Start of the period/ }), { key: "ArrowRight" });
+    fireEvent.keyDown(screen.getByRole("slider", { name: "Start of the period" }), { key: "ArrowRight" });
 
     expect(screen.getByText("Sep 8, 2026 – Sep 30, 2026 · 23 days")).toBeTruthy();
     // Every response is on 8 September, still inside: the headline holds.
     expect(screen.getByText("89%")).toBeTruthy();
     expect(String(replaceState.mock.lastCall?.[2])).toMatch(/from=2026-09-08&to=2026-09-30/);
 
-    fireEvent.keyDown(screen.getByRole("slider", { name: /^Start of the period/ }), { key: "ArrowRight", shiftKey: true });
+    fireEvent.keyDown(screen.getByRole("slider", { name: "Start of the period" }), { key: "ArrowRight", shiftKey: true });
     // Four weeks on would leave less than a week: the start stops a week before the end.
     expect(screen.getByText("Sep 24, 2026 – Sep 30, 2026 · 7 days")).toBeTruthy();
     expect(screen.getByText("No answers")).toBeTruthy();

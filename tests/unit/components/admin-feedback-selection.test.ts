@@ -11,6 +11,7 @@ import {
 import {
   FEEDBACK_ORIGIN_PARAM,
   feedbackPlaceQuery,
+  feedbackScopeId,
   parseFeedbackOrigin,
   placeOfOrigin,
 } from "@/components/admin/feedback/feedback-place";
@@ -129,5 +130,11 @@ describe("feedback places", () => {
     expect(parseFeedbackOrigin("group:not-a-uuid")).toBeNull();
     expect(parseFeedbackOrigin(`school:${ID}`)).toBeNull();
     expect(parseFeedbackOrigin(undefined)).toBeNull();
+  });
+
+  it("reads a route's id as the dataset spells it, and refuses one that names nothing", () => {
+    expect(feedbackScopeId(ID)).toBe(ID);
+    expect(feedbackScopeId(ID.toUpperCase())).toBe(ID);
+    expect(feedbackScopeId("not-a-uuid")).toBeNull();
   });
 });

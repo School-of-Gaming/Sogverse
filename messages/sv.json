@@ -1591,8 +1591,10 @@
         "byMonth": "Positiva svar per månad",
         "platform": "Plattformen",
         "hint": "Dra över diagrammet för att välja en period",
-        "start": "Periodens början: {date}",
-        "end": "Periodens slut: {date}",
+        "start": "Periodens början",
+        "end": "Periodens slut",
+        "pointWeek": "Vecka som läses",
+        "pointMonth": "Månad som läses",
         "selection": "{range} · {days, plural, one {# dag} other {# dagar}}"
       },
       "back": {
@@ -1613,7 +1615,6 @@
       "hero": {
         "positive": "positiva",
         "definition": "Svarade Ja eller Absolut",
-        "answers": "{count, plural, one {# svar} other {# svar}}",
         "responseRate": "{share} av de närvarande gamerna svarade"
       },
       "statements": {

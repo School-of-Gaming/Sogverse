@@ -1,28 +1,12 @@
 import { cn } from "@/lib/utils";
 import {
   SESSION_FEEDBACK_RATINGS,
+  SESSION_FEEDBACK_SEGMENT_PX,
   type SessionFeedbackRating,
 } from "./session-feedback-items";
 
-/**
- * The height of each level's block on the gamer's feedback screen, in pixels,
- * from the first to the fifth.
- *
- * **Mirrored from `SessionFeedbackScreen`'s segment heights, which are the
- * source** — the screen spells them as class names, so the numbers cannot be
- * imported without restructuring a control a child taps; they are copied here
- * and drawn as proportions of the tallest, so the meter rises at exactly the
- * screen's rate at any size. A change to the screen's rise changes these with it.
- */
-const SCREEN_SEGMENT_PX = {
-  1: 24,
-  2: 29,
-  3: 34,
-  4: 39,
-  5: 44,
-} as const satisfies Record<SessionFeedbackRating, number>;
-
-const TALLEST = SCREEN_SEGMENT_PX[5];
+/** The screen's segment heights are drawn as proportions of this, so the meter rises at its rate at any size. */
+const TALLEST = SESSION_FEEDBACK_SEGMENT_PX[5];
 
 /**
  * **One answer, drawn the way the gamer gave it** — the feedback screen's
@@ -60,7 +44,7 @@ export function SessionFeedbackMeter({
             "block flex-1 rounded-xs",
             level !== undefined && rating <= level ? "bg-act" : "bg-lifted",
           )}
-          style={{ height: `${(SCREEN_SEGMENT_PX[rating] / TALLEST) * 100}%` }}
+          style={{ height: `${(SESSION_FEEDBACK_SEGMENT_PX[rating] / TALLEST) * 100}%` }}
         />
       ))}
     </span>

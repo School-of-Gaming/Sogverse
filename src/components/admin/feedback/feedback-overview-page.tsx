@@ -132,11 +132,11 @@ export function FeedbackHero({
 }
 
 function ParticipationLine({ participation }: { participation: FeedbackParticipation }) {
-  const t = useTranslations("admin.feedback.hero");
+  const t = useTranslations("admin.feedback");
   const locale = useLocale();
   const parts = [t("answers", { count: participation.responses })];
   if (participation.responseRate !== null) {
-    parts.push(t("responseRate", { share: formatShare(participation.responseRate, locale) }));
+    parts.push(t("hero.responseRate", { share: formatShare(participation.responseRate, locale) }));
   }
   return <p className="text-xs text-muted-foreground">{parts.join(SCHEDULE_PART_SEPARATOR)}</p>;
 }

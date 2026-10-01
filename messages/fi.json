@@ -1591,8 +1591,10 @@
         "byMonth": "Myönteiset vastaukset kuukausittain",
         "platform": "Koko alusta",
         "hint": "Valitse jakso vetämällä kaavion poikki",
-        "start": "Jakson alku: {date}",
-        "end": "Jakson loppu: {date}",
+        "start": "Jakson alku",
+        "end": "Jakson loppu",
+        "pointWeek": "Luettava viikko",
+        "pointMonth": "Luettava kuukausi",
         "selection": "{range} · {days, plural, one {# päivä} other {# päivää}}"
       },
       "back": {
@@ -1613,7 +1615,6 @@
       "hero": {
         "positive": "myönteisiä",
         "definition": "Vastaus Kyllä tai Ehdottomasti",
-        "answers": "{count, plural, one {# vastaus} other {# vastausta}}",
         "responseRate": "{share} paikalla olleista pelaajista vastasi"
       },
       "statements": {

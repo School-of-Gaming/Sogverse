@@ -1635,8 +1635,10 @@
         "byMonth": "jar jangmey QaQ",
         "platform": "Hoch",
         "hint": "poH yIwIv",
-        "start": "poH tagh: {date}",
-        "end": "poH Qav: {date}",
+        "start": "poH tagh",
+        "end": "poH Qav",
+        "pointWeek": "Hogh laDlu’bogh",
+        "pointMonth": "jar laDlu’bogh",
         "selection": "{range} · {days, plural, one {# jaj} other {# jaj}}"
       },
       "back": {
@@ -1657,7 +1659,6 @@
       "hero": {
         "positive": "QaQ",
         "definition": "HISlaH pagh HISlaHbej jang",
-        "answers": "{count, plural, one {# jang} other {# jangmey}}",
         "responseRate": "{share} QujwI'pu' naDev tu'lu'bogh jang"
       },
       "statements": {
