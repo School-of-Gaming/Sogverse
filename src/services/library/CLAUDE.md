@@ -53,12 +53,15 @@ links stop resolving. Two titles deriving one slug in a locale leave it to the a
 that went live first; the newer is reachable by its id. The address helpers are in
 `src/components/library/`, and every link to an article goes through them.
 
-**A page canonicalises to the slug address of the version it shows**: its own locale's
-where written, else the fallback's (English, then the first written), and only the
-locales written are `hreflang` versions, in the sitemap too. Text the page shows in
-another language than the page's is marked with `lang`, on the article and on a card;
-a card opens the article where its page canonicalises, so a card showing the English
-fallback opens the English page. The Library is promoted
+**The URL's locale is the site's, exactly as on a product page**: the chrome is the page's
+locale and the text is the version the reader fallback picks there, and every link to an
+article stays in the page's locale — its slug address there when written in it, else its
+id address — so a card showing the English fallback on a Swedish page opens the Swedish
+page, which shows the same fallback. **A page canonicalises to the slug address of the
+version it shows**: its own locale's where written, else the fallback's, and only the
+locales written are `hreflang` versions, in the sitemap too. The rule is shared with the
+Team pages, in `src/lib/metadata/`. Text the page shows in another language than the
+page's is marked with `lang`, on the article and on a card. The Library is promoted
 (`docs/architecture/discoverability.md`): indexed, in the sitemap with each article's
 publish date, and each article listed in `llms.txt`. The admin preview stays `noindex`.
 

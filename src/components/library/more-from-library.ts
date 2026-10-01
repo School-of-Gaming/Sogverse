@@ -5,7 +5,7 @@ import {
   localizeArticleSummary,
   type PublishedLibraryArticleSummary,
 } from "@/services/library/library.contracts";
-import { libraryArticleCanonicalLocation } from "./article/article-metadata";
+import { articleAddress } from "./article-address";
 import type { LibraryCategory } from "./categories";
 import type { LibraryArticleCardProps } from "./index-page/library-article-card";
 
@@ -48,10 +48,10 @@ export function selectMoreFromLibrary<T extends MoreFromLibraryCandidate>(
 /**
  * **A published article as the card that opens it** — on the index and under
  * an article alike, in the version a reader of `locale` is shown. The date is
- * the one it first went live on. The card opens the article where its page at
- * `locale` canonicalises: its slug address in `locale`, or in the language of
- * the fallback the card shows. `published` is the live list the address is
- * judged against.
+ * the one it first went live on. The card opens the article in the page's own
+ * locale, as a product card does: its slug address there when it was written
+ * in `locale`, else its id address, whose page shows the same fallback the
+ * card does. `published` is the live list the address is judged against.
  */
 export function publishedArticleCard(
   article: PublishedLibraryArticleSummary,
@@ -60,11 +60,9 @@ export function publishedArticleCard(
 ): LibraryArticleCardProps | null {
   const shown = localizeArticleSummary(article, locale);
   if (shown === null) return null;
-  const location = libraryArticleCanonicalLocation(published, article, locale);
   return {
     id: article.id,
-    href: ROUTES.libraryArticle(location.address),
-    hrefLocale: location.locale,
+    href: ROUTES.libraryArticle(articleAddress(published, article, locale)),
     textLocale: shown.locale,
     coverSrc: catalogueImageSrc("library_cover", article.coverPath),
     title: shown.title,

@@ -3,7 +3,13 @@ import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
+import {
+  translatedCanonicalPath,
+  translatedPageAlternates,
+  translatedPageLocales,
+  translatedPageMetadataAlternates,
+  type TranslatedPagePath,
+} from "@/lib/metadata/translated-page";
 import { teamCardImage } from "@/lib/og/card-metadata";
 import { organizationId } from "@/lib/seo/organization";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
@@ -14,37 +20,18 @@ import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
  * canonical, its language versions and a `ProfilePage`.
  *
  * **A person writes in the languages they choose, and the page follows the
- * Library's rule for the rest**: a locale they did not write shows the
- * fallback text — the reader's locale, then English, then the first written,
- * through `resolveTranslation()` as the body does — and canonicalises to the
- * address of the locale whose text it shows. So only the locales they wrote
- * are language versions, and each of those is its own canonical.
- *
- * **Text in a locale that is not indexed is never canonicalised to.** That
- * locale's page is noindex (`INDEXED_LOCALES`: Klingon, a real locale but an
- * easter egg), so a page showing such text — a Klingon-only profile read at
- * English, say — is its own canonical and names no language versions.
+ * rule every page written per locale follows**
+ * (`src/lib/metadata/translated-page.ts`): the locales they wrote are its
+ * language versions, and a locale they did not write canonicalises to the
+ * address of the locale whose text it shows.
  */
-
-/** The locale whose words the page shows at this locale: its own when written, else the fallback's. */
-export function teamMemberTextLocale(
-  person: TeamProfile,
-  locale: SupportedLocale,
-): SupportedLocale {
-  return resolveTranslation(person.translations, locale)?.locale ?? locale;
-}
 
 /**
  * The person's address at a locale, from the pathnames map — `/fi/tiimi/<slug>`
  * — so a translated segment and its `hreflang` cannot disagree.
  */
-function addressAt(address: string, locale: SupportedLocale): string {
-  return getPathname({ href: ROUTES.teamMember(address), locale });
-}
-
-/** Whether the page at `locale` shows words written in an indexed locale. */
-function showsIndexedText(person: TeamProfile, locale: SupportedLocale): boolean {
-  return INDEXED_LOCALES.includes(teamMemberTextLocale(person, locale));
+function pathsOf(address: string): TranslatedPagePath {
+  return (locale) => getPathname({ href: ROUTES.teamMember(address), locale });
 }
 
 /**
@@ -57,44 +44,23 @@ export function teamMemberCanonicalPath(
   address: string,
   locale: SupportedLocale,
 ): string {
-  return addressAt(
-    address,
-    showsIndexedText(person, locale)
-      ? teamMemberTextLocale(person, locale)
-      : locale,
-  );
+  return translatedCanonicalPath(person.translations, locale, pathsOf(address));
 }
 
 /**
  * The language versions a person's page has: one per indexed locale they
- * wrote, in the site's locale order. Klingon is never one (`INDEXED_LOCALES`).
- * The sitemap lists exactly these.
+ * wrote, in the site's locale order. The sitemap lists exactly these.
  */
 export function teamMemberLocales(person: TeamProfile): SupportedLocale[] {
-  return INDEXED_LOCALES.filter((locale) =>
-    person.translations.some((row) => row.locale === locale),
-  );
+  return translatedPageLocales(person.translations);
 }
 
-/**
- * The `hreflang` set: each written, indexed locale at its own address, and
- * `x-default` at the page a reader in any other language is shown — the one
- * English resolves to, since an unmatched language lands on English. Empty
- * when the person wrote in no indexed locale, which then has no versions to
- * annotate.
- */
+/** The person's `hreflang` set; empty when they wrote in no indexed locale. */
 export function teamMemberAlternates(
   person: TeamProfile,
   address: string,
 ): Record<string, string> {
-  const locales = teamMemberLocales(person);
-  if (locales.length === 0) return {};
-  return {
-    ...Object.fromEntries(
-      locales.map((locale) => [locale, addressAt(address, locale)]),
-    ),
-    "x-default": teamMemberCanonicalPath(person, address, "en"),
-  };
+  return translatedPageAlternates(person.translations, pathsOf(address));
 }
 
 /**
@@ -129,21 +95,18 @@ export async function teamMemberMetadata({
   const locale = resolveLocale(requestLocale);
   const written = resolveTranslation(person.translations, locale);
   const description = written?.shortDescription;
-  const canonical = teamMemberCanonicalPath(person, address, locale);
-  // A page showing text that is not indexed is its own canonical, outside
-  // the set of language versions, so it names none of them.
-  const languages = showsIndexedText(person, locale)
-    ? teamMemberAlternates(person, address)
-    : {};
+  const alternates = translatedPageMetadataAlternates(
+    person.translations,
+    locale,
+    pathsOf(address),
+  );
+  const { canonical } = alternates;
   const card = await teamCardImage(person, locale, name);
 
   return {
     title: name,
     description,
-    alternates: {
-      canonical,
-      ...(Object.keys(languages).length > 0 && { languages }),
-    },
+    alternates,
     openGraph: {
       type: "profile",
       siteName: "School of Gaming",

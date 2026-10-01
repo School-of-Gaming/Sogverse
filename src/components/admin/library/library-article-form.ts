@@ -3,6 +3,7 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
+import { openingLocaleTab } from "@/lib/i18n/locale-tabs";
 import type {
   AdminLibraryArticleListItem,
   LibraryArticleDraft,
@@ -91,7 +92,10 @@ export function isBlankLibraryArticleForm(form: LibraryArticleForm): boolean {
   );
 }
 
-/** A saved working copy as the editor opens it: on its first version's tab. */
+/**
+ * A saved working copy as the editor opens it: on the tab a reader of the
+ * admin's UI locale would be shown (`openingLocaleTab`).
+ */
 export function libraryArticleFormFromDraft(
   draft: LibraryArticleDraft,
   uiLocale: SupportedLocale,
@@ -100,11 +104,13 @@ export function libraryArticleFormFromDraft(
   for (const { locale, title, summary, body } of draft.versions) {
     versions[locale] = { title, summary, body };
   }
-  const first = draft.versions.at(0)?.locale;
-  if (first === undefined) versions[uiLocale] = EMPTY_VERSION;
+  if (draft.versions.length === 0) versions[uiLocale] = EMPTY_VERSION;
   return {
     versions,
-    activeLocale: first ?? uiLocale,
+    activeLocale: openingLocaleTab(
+      draft.versions.map((version) => version.locale),
+      uiLocale,
+    ),
     category: draft.category,
     // The database derives the path from the id and the read embeds the label
     // through it, so all three are present or all absent.

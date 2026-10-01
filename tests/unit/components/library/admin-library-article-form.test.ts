@@ -188,9 +188,33 @@ describe("the Publish control", () => {
 });
 
 describe("the form against the saved copy", () => {
-  it("opens on the saved copy's first language with nothing unsaved", () => {
+  it("opens on the language a reader of the admin's own would be shown, with nothing unsaved", () => {
+    // An English-only copy, opened by a Finnish admin, falls back to English.
     expect(complete().activeLocale).toBe("en");
     expect(sameAsSaved(complete(), DRAFT)).toBe(true);
+  });
+
+  it("opens on the admin's own language when the copy has it, else English, else the first written", () => {
+    const sv = { ...EN, title: "Ett spelavtal" };
+    const fi = { ...EN, title: "Pelisopimus" };
+    const written = (...versions: LibraryArticleDraft["versions"]) => ({
+      ...DRAFT,
+      versions,
+    });
+    expect(
+      libraryArticleFormFromDraft(
+        written({ ...sv, locale: "sv" }, EN, { ...fi, locale: "fi" }),
+        "fi",
+      ).activeLocale,
+    ).toBe("fi");
+    expect(
+      libraryArticleFormFromDraft(written({ ...sv, locale: "sv" }, EN), "fi")
+        .activeLocale,
+    ).toBe("en");
+    expect(
+      libraryArticleFormFromDraft(written({ ...sv, locale: "sv" }), "fi")
+        .activeLocale,
+    ).toBe("sv");
   });
 
   it("opens a new article on the admin's own language", () => {

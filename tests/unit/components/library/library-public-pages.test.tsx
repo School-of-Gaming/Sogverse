@@ -235,16 +235,19 @@ describe("the Library index page", () => {
     await renderIndex();
     const link = screen.getByRole("link", { name: "What children learn in a club" });
     expect(link.getAttribute("href")).toBe("/library/what-children-learn-in-a-club");
-    expect(link.getAttribute("locale")).toBe("en");
+    // No locale of its own: the link stays in the page's.
+    expect(link.hasAttribute("locale")).toBe(false);
     expect(link.closest("h2")?.hasAttribute("lang")).toBe(false);
   });
 
-  it("opens a card showing the English fallback on the English page, marked as English", async () => {
+  it("keeps a card showing the English fallback in the page's locale, by its id, marked as English", async () => {
     mocks.locale.current = "sv";
     await renderIndex();
     const link = screen.getByRole("link", { name: "What children learn in a club" });
-    expect(link.getAttribute("href")).toBe("/library/what-children-learn-in-a-club");
-    expect(link.getAttribute("locale")).toBe("en");
+    // No Swedish version, so no Swedish slug: the id address, which the
+    // Swedish page answers with the same English fallback the card shows.
+    expect(link.getAttribute("href")).toBe(`/library/${THIRD_ID}`);
+    expect(link.hasAttribute("locale")).toBe(false);
     expect(link.closest("h2")?.getAttribute("lang")).toBe("en");
     expect(
       screen.getByText("What children learn in a club, in short.").getAttribute("lang"),

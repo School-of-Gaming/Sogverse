@@ -29,6 +29,7 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
+import { openingLocaleTab } from "@/lib/i18n/locale-tabs";
 import { resolveWebUrl } from "@/lib/navigation/web-url";
 import { decimalToCents } from "@/lib/utils";
 import type {
@@ -742,12 +743,7 @@ export function existingFormState(
       translationLocales.push(t.locale);
     }
   }
-  const activeLocale: SupportedLocale =
-    translations[uiLocale] !== undefined
-      ? uiLocale
-      : translations.en !== undefined
-        ? "en"
-        : (translationLocales[0] ?? uiLocale);
+  const activeLocale = openingLocaleTab(translationLocales, uiLocale);
 
   // EUR-only price map. A blank row is invalid for paid products, but
   // validate() catches that on save. Legacy non-EUR `product_prices` rows

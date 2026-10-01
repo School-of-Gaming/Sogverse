@@ -30,6 +30,7 @@ import {
   resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
+import { localeTabAfterRemoving } from "@/lib/i18n/locale-tabs";
 import { cn, findOption, formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type {
@@ -593,6 +594,7 @@ function ArticleVersionsSection({
 }) {
   const t = useTranslations("admin.library");
   const languageName = useLanguageNames();
+  const uiLocale = resolveLocale(useLocale());
 
   const locale = form.activeLocale;
   const addedLocales = formLocales(form);
@@ -623,14 +625,15 @@ function ArticleVersionsSection({
     setForm((prev) => {
       const next = { ...prev.versions };
       delete next[gone];
-      const remaining = SUPPORTED_LOCALES.filter((l) => next[l] !== undefined);
       return {
         ...prev,
         versions: next,
-        activeLocale:
-          prev.activeLocale === gone
-            ? (remaining[0] ?? prev.activeLocale)
-            : prev.activeLocale,
+        activeLocale: localeTabAfterRemoving(
+          next,
+          prev.activeLocale,
+          gone,
+          uiLocale,
+        ),
       };
     });
   }

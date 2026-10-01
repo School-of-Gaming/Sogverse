@@ -14,13 +14,8 @@ import { LibraryCover } from "../library-cover";
 export interface LibraryArticleCardProps {
   /** The article's id, which keys the card in a list: titles need not be unique. */
   id: string;
-  /** Where the card opens: the article's own page, at `hrefLocale`. */
+  /** Where the card opens: the article's own page, in the page's locale. */
   href: AppHref;
-  /**
-   * The locale of the page the card opens — the page's own, or the language
-   * of the fallback the card shows, whose page that article canonicalises to.
-   */
-  hrefLocale: SupportedLocale;
   /**
    * The language the title and summary are written in, marked on them where
    * it is not the page's — a card showing the English fallback on a Swedish
@@ -60,7 +55,6 @@ export interface LibraryArticleCardProps {
  */
 export function LibraryArticleCard({
   href,
-  hrefLocale,
   textLocale,
   coverSrc,
   title,
@@ -97,7 +91,6 @@ export function LibraryArticleCard({
         <Title lang={lang} className="line-clamp-3 text-base font-semibold">
           <Link
             href={href}
-            locale={hrefLocale}
             className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-act"
           >
             {title}

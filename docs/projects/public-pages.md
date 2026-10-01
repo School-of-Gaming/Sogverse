@@ -505,3 +505,4 @@ and has lost its rating digit to a missing glyph; the English card says a summer
 | 2026-10-01 | Sonja's first images are cleared to publish: the staff shown consented, and no child's face is visible (owner). |
 | 2026-10-01 | "Find a club" opens the shop unfiltered: clubs lead the list, and camps and events follow without touching a filter (owner). |
 | 2026-10-01 | French phone tab shows "Biblio" for the Library (owner, native-speaker check). |
+| 2026-10-01 | Library and Team pages follow product locales: the URL locale is the site's, content falls back by the product resolver, links stay in the page locale, and the editors open like the product editor (owner). |

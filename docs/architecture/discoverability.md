@@ -32,7 +32,10 @@ key off.
    (owner, 2026-10-01): its language versions are the locales it was written in, the
    canonical is the slug address of the version the page shows (derived from that
    version's title), an untranslated locale is reached by the id and canonicalises to the
-   English slug address, and its link card is its cover. The rules are in
+   English slug address, and its link card is its cover. Links to an article or a profile
+   stay in the page's locale, as a shop card's do: the URL's locale is the site's, and a
+   page showing fallback text is still a page in that locale, canonical to the version it
+   shows (owner, 2026-10-01). The rules are in
    `src/services/library/CLAUDE.md`.
 2. **Reachable, not promoted.** Public because a family holding a link must get in, but
    `noindex, nofollow`, out of the sitemap, no `hreflang`, never listed in `llms.txt`, and
