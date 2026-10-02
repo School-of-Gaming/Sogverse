@@ -78,7 +78,7 @@ describe("GeduSubstitutionCard", () => {
     const substitution = fixtureCover();
     const html = cardHtml(substitution);
     expect(html).toContain(copy.cardEyebrow);
-    expect(html).toContain(substitution.productName);
+    expect(html).toContain(substitution.session.productName);
     expect(html).toContain(substitution.groupName ?? "");
   });
 
@@ -109,12 +109,12 @@ describe("GeduSubstitutionCard", () => {
 
     const html = cardHtml(substitution);
     // Still reads as the session it is about.
-    expect(html).toContain(substitution.productName);
+    expect(html).toContain(substitution.session.productName);
     expect(html).toContain(OPENS_AT);
     // Neither the card nor the corner badge goes anywhere.
     expect(html).not.toContain("/gedu/clubs/product-1");
     expect(html).toContain(
-      copy.cardLockedLabel.replace("{product}", substitution.productName),
+      copy.cardLockedLabel.replace("{product}", substitution.session.productName),
     );
     // No Join, on a remote substitution that would otherwise render one: there is no
     // room to promise before the workspace opens, and a card must not say the
@@ -127,8 +127,11 @@ describe("GeduSubstitutionCard", () => {
       ...fixtureLockedSubstitution(),
       accessOpensAt: new Date(NOW.getTime() - 60_000),
       // In its voice window, so the Join would otherwise be lit.
-      startsAt: new Date(NOW.getTime() - 10 * 60_000),
-      endsAt: new Date(NOW.getTime() + 80 * 60_000),
+      session: {
+        ...fixtureLockedSubstitution().session,
+        startsAt: new Date(NOW.getTime() - 10 * 60_000),
+        endsAt: new Date(NOW.getTime() + 80 * 60_000),
+      },
       hasVoiceRoom: true,
       cancelled: true,
     };
@@ -152,15 +155,62 @@ describe("GeduSubstitutionCard", () => {
 
   it("states the substituted session's date and clock face", () => {
     const substitution = fixtureCover();
-    expect(substitution.startsAt).not.toBeNull();
+    expect(substitution.session.startsAt).not.toBeNull();
     const html = cardHtml(substitution);
     // The day, in the viewer's zone — the same conversion every other clock
     // face on this page makes.
     const weekday = new Intl.DateTimeFormat("en", {
       weekday: "short",
       timeZone: TIME_ZONE,
-    }).format(substitution.startsAt!);
+    }).format(substitution.session.startsAt!);
     expect(html).toContain(weekday);
+  });
+
+  it("says it is online while it is still locked", () => {
+    // Whether to travel is something a sub plans a week around, so it is on
+    // the card from the moment the substitution is theirs — not only once the
+    // workspace opens, which is when the footer would have said it.
+    const locked = fixtureLockedSubstitution();
+    expect(locked.session.isRemote).toBe(true);
+    const html = cardHtml(locked);
+    expect(html).toContain(OPENS_AT);
+    expect(html).toContain(messages.sessionFacts.remote);
+  });
+
+  it("names the building while locked, and once more is not added when it opens", () => {
+    const inPerson = (accessOpensAt: Date): GeduSubstitutionSummary => ({
+      ...fixtureLockedSubstitution(),
+      session: {
+        ...fixtureLockedSubstitution().session,
+        isRemote: false,
+        siteName: "Sello Library, Espoo",
+      },
+      hasVoiceRoom: false,
+      accessOpensAt,
+    });
+    const count = (html: string) => html.split("Sello Library, Espoo").length - 1;
+
+    const locked = cardHtml(inPerson(new Date(NOW.getTime() + 60_000)));
+    expect(locked).toContain(OPENS_AT);
+    expect(count(locked)).toBe(1);
+
+    const opened = cardHtml(inPerson(new Date(NOW.getTime() - 60_000)));
+    expect(opened).not.toContain(OPENS_AT);
+    expect(count(opened)).toBe(1);
+  });
+
+  it("says the place is still to be confirmed rather than reading as online", () => {
+    const html = cardHtml({
+      ...fixtureLockedSubstitution(),
+      session: {
+        ...fixtureLockedSubstitution().session,
+        isRemote: false,
+        siteName: null,
+      },
+      hasVoiceRoom: false,
+    });
+    expect(html).toContain(messages.sessionFacts.siteUnknown);
+    expect(html).not.toContain(messages.sessionFacts.remote);
   });
 
   it("renders the group-bearing workspace link it is handed", () => {
@@ -208,9 +258,12 @@ describe("GeduSubstitutionCard", () => {
   function orphan(substitutionDate: string): GeduSubstitutionSummary {
     return {
       ...fixtureCover(),
-      startsAt: null,
-      endsAt: null,
-      substitutionDate,
+      session: {
+        ...fixtureCover().session,
+        startsAt: null,
+        endsAt: null,
+        sessionDate: substitutionDate,
+      },
       // Product-local midnight of the date, less 48 hours — the roll-up's own
       // arithmetic, restated as a literal so this case does not pass by
       // agreeing with a bug in it.

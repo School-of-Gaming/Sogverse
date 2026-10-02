@@ -566,7 +566,7 @@ describe("trainee gedus", () => {
       expect(rows.error).toBeNull();
       const productRows = myAssignedProductRows
         .parse(rows.data)
-        .filter((r) => r.product_id === PRODUCT_MAIN);
+        .filter((r) => r.product.id === PRODUCT_MAIN);
       expect(productRows).toEqual([
         expect.objectContaining({ kind: "trainee", group_id: GROUP_MINE, substitution_date: null }),
       ]);

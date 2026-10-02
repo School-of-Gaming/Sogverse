@@ -1,11 +1,10 @@
-import { formatInTimeZone } from "date-fns-tz";
 import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
-  occurrenceOnDate,
-  type SessionDateOccurrence,
-} from "@/lib/session-date-occurrence";
+  buildSessionFacts,
+  sessionClockFace,
+  sessionFactsProduct,
+} from "@/lib/substitution-session-facts";
 import { formatDateOnly } from "@/lib/utils";
 import type {
   AdminSubstitutionRequest,
@@ -29,10 +28,11 @@ import type {
  * Those are the two the shell re-runs on the clock, and they are the reason
  * this function takes `now` at all.
  *
- * **The occurrence is resolved from each request's own product**, from the
- * slots that travel with it, so the only absence left is "no slot names this
- * weekday" — the orphaned request — which reaches the row as `null` and renders
- * under its day with no time, rather than a time the schedule would not produce.
+ * **The session is described by the shared session facts**, resolved from each
+ * request's own product and the slots that travel with it, so the only absence
+ * left is "no slot names this weekday" — the orphaned request — which reaches
+ * the row with no start and renders under its day with no time, rather than a
+ * time the schedule would not produce.
  *
  * **One read, two lists.** The document carries open and substituted requests
  * together, and they are split here by status; both lists are sorted by the
@@ -107,10 +107,9 @@ function sortBySoonest<T extends SubstitutionSession>(rows: readonly T[]): T[] {
  * day rather than ahead of all of them — the day is the only thing it can
  * honestly claim, and the middle of it is the least wrong place to say so.
  */
-function sortKey(session: SubstitutionSession): number {
-  const { startsAt } = session;
-  if (startsAt !== null) return startsAt.getTime();
-  return new Date(`${session.sessionDay}T12:00:00.000Z`).getTime();
+function sortKey({ facts }: SubstitutionSession): number {
+  if (facts.startsAt !== null) return facts.startsAt.getTime();
+  return new Date(`${facts.sessionDate}T12:00:00.000Z`).getTime();
 }
 
 /** One open request as the queue renders it. */
@@ -121,7 +120,7 @@ function toSubstitutionRequest(
   now: Date,
 ): SubstitutionRequest {
   const session = toSubstitutionSession(request, locale, viewerTimeZone);
-  const { startsAt } = session;
+  const { startsAt } = session.facts;
 
   return {
     ...session,
@@ -172,15 +171,18 @@ function toSubstitutionSession(
   locale: SupportedLocale,
   viewerTimeZone: string,
 ): SubstitutionSession {
-  const occurrence = occurrenceFor(request);
+  const facts = buildSessionFacts({
+    product: sessionFactsProduct(request.product),
+    sessionDate: request.session_date,
+    locale,
+  });
 
   return {
     id: request.id,
     groupId: request.group_id,
     groupName: request.group_name,
-    productName: productName(request.product.translations, locale),
-    productType: request.product.product_type,
-    sessionDay: request.session_date,
+    facts,
+    viewerTimeZone,
     // A weekday beside the date, because what an admin is staffing is a
     // *session* and "Friday" is how the office talks about one; the year is
     // left off because the queue only ever holds dates from today forward
@@ -190,9 +192,7 @@ function toSubstitutionSession(
       day: "numeric",
       month: "short",
     }),
-    sessionTime:
-      occurrence === null ? null : clockFace(occurrence, viewerTimeZone),
-    startsAt: occurrence?.start ?? null,
+    sessionTime: sessionClockFace(facts, viewerTimeZone),
     role: request.role,
     reason: request.reason,
     reasonNote: request.reason_note,
@@ -207,41 +207,6 @@ function toSubstitutionSession(
       request.group_id,
     ),
   };
-}
-
-/** Where the session's own product puts it on its date, or `null` for an orphan. */
-function occurrenceFor(
-  row: AdminSubstitutionRequest,
-): SessionDateOccurrence | null {
-  return occurrenceOnDate({
-    sessionDate: row.session_date,
-    slots: row.product.schedule_slots.map((slot) => ({
-      weekday: slot.weekday,
-      startTime: slot.start_time,
-      durationMinutes: slot.duration_minutes,
-    })),
-    timezone: row.product.timezone,
-  });
-}
-
-/**
- * One occurrence as a clock face: `HH:MM–HH:MM` in the viewer's zone.
- *
- * 24-hour and locale-blind, exactly as the admin schedule chips are — the times
- * on an admin surface are a column to be scanned rather than a sentence to be
- * read. The en dash is punctuation for the same reason the seat counts' slash
- * is: it reads identically in every locale and stays out of the catalog.
- *
- * Exported for the preview scene's fixtures, which resolve their own
- * occurrences and must word them the way the live mapping does.
- */
-export function clockFace(
-  occurrence: SessionDateOccurrence,
-  viewerTimeZone: string,
-): string {
-  const start = formatInTimeZone(occurrence.start, viewerTimeZone, "HH:mm");
-  const end = formatInTimeZone(occurrence.end, viewerTimeZone, "HH:mm");
-  return `${start}–${end}`;
 }
 
 /**
@@ -271,18 +236,6 @@ function viewerZoneAbbrev(
     .formatToParts(now)
     .find((piece) => piece.type === "timeZoneName");
   return part?.value ?? null;
-}
-
-/**
- * A product's name in the reader's locale, through the admin surfaces' own
- * fallback chain (locale → English → whatever exists). Every product is
- * DB-guaranteed at least one translation, so the empty fallback is defensive.
- */
-function productName(
-  translations: readonly { locale: string; name: string }[],
-  locale: SupportedLocale,
-): string {
-  return resolveTranslation(translations, locale)?.name ?? "";
 }
 
 /**

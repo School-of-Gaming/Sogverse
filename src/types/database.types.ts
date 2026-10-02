@@ -3652,20 +3652,13 @@ export type Database = {
         Args: never
         Returns: {
           cancelled_dates: string[]
-          end_date: string
           group_count: number
           group_id: string
-          is_remote: boolean
           kind: string
           participant_count: number
-          product_id: string
-          product_translations: Json
-          product_type: Database["public"]["Enums"]["product_type"]
-          schedule_slots: Json
-          start_date: string
+          product: Json
           substitution_cancelled: boolean
           substitution_date: string
-          timezone: string
         }[]
       }
       get_my_family_product_feed: {
@@ -4068,6 +4061,10 @@ export type Database = {
           p_cancellation: Database["public"]["Tables"]["session_cancellations"]["Row"]
           p_include_detail: boolean
         }
+        Returns: Json
+      }
+      session_product_document: {
+        Args: { p_product: Database["public"]["Tables"]["products"]["Row"] }
         Returns: Json
       }
       set_chat_lock: {

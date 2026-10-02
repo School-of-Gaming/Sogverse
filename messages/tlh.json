@@ -2392,8 +2392,6 @@
       "accessOpens": "{date} {time}Daq poSmoH Qu’meH pa’",
       "poolHeading": "lIw poQbogh may’mey",
       "poolAllClear": "DaH lIw poQbogh may’ tu’lu’be’.",
-      "poolRemote": "HeHDaq",
-      "poolSiteUnknown": "Daq ngu’lu’be’ DaH",
       "poolRolePrimary": "Gedu wa’DIch",
       "poolRoleAssistant": "Gedu boQwI’",
       "poolFee": "{fee} / may’",
@@ -2811,6 +2809,10 @@
     "nextSession": "may’ veb",
     "upcoming": "may’ pIq",
     "cancelled": "qIllu’"
+  },
+  "sessionFacts": {
+    "remote": "HeHDaq",
+    "siteUnknown": "Daq ngu’lu’be’ DaH"
   },
   "sessionFeed": {
     "readMore": "latlh yIlaD",

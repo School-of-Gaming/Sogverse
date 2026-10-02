@@ -2352,8 +2352,6 @@
       "accessOpens": "Arbetsytan öppnar {date} kl. {time}",
       "poolHeading": "Tillfällen som behöver en vikarie",
       "poolAllClear": "Inga tillfällen behöver en vikarie just nu.",
-      "poolRemote": "På distans",
-      "poolSiteUnknown": "Plats bekräftas senare",
       "poolRolePrimary": "Huvud-Gedu",
       "poolRoleAssistant": "Assisterande Gedu",
       "poolFee": "{fee} per tillfälle",
@@ -2771,6 +2769,10 @@
     "nextSession": "Nästa tillfälle",
     "upcoming": "Kommande tillfälle",
     "cancelled": "Inställt"
+  },
+  "sessionFacts": {
+    "remote": "På distans",
+    "siteUnknown": "Plats bekräftas senare"
   },
   "sessionFeed": {
     "readMore": "Läs mer",

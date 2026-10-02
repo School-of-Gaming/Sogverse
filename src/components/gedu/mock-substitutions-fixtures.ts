@@ -153,6 +153,9 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
           ? null
           : calendarDate(now, opts.endsInDays, SESSION_FEED_TIMEZONE),
       isRemote: opts.isRemote,
+      siteName: opts.isRemote ? null : (opts.siteName ?? null),
+      topic: "minecraft_java",
+      spokenLanguageCode: "fi",
       productType: opts.productType ?? "consumer_club",
       translations: [{ locale: "en", name: opts.name, description: "" }],
     },
@@ -165,7 +168,6 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
     participantCount: 9,
     groupName: opts.group,
     groupParticipantCount: 9,
-    siteName: opts.siteName ?? null,
     slots: opts.slots,
   });
 

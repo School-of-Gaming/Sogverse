@@ -129,8 +129,8 @@ describe("the substitutions page, populated", () => {
     // hours out, against four that are a day or more away.
     const due = fixture.pool.filter(
       (row) =>
-        row.startsAt !== null &&
-        row.startsAt.getTime() - NOW.getTime() < 24 * 60 * 60 * 1000,
+        row.session.startsAt !== null &&
+        row.session.startsAt.getTime() - NOW.getTime() < 24 * 60 * 60 * 1000,
     );
     expect(due).toHaveLength(2);
 

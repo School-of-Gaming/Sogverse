@@ -56,7 +56,7 @@ export function ApproveOfferDialog({
       description={t("approveConfirmBody", {
         name,
         absent,
-        product: request.productName,
+        product: request.facts.productName,
         group: request.groupName,
         // The card's own words for the session, so the dialog names it exactly
         // as the row the admin pressed named it. The date is the product's

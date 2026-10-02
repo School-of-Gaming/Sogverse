@@ -123,19 +123,51 @@ export type AnonymousSubstitutionRequestDocument = z.infer<
   typeof anonymousSubstitutionRequestDocument
 >;
 
-/** One recurring slot, as the pool list emits it for the client's calendar walk. */
-const substitutionScheduleSlot = z.object({
+/** One recurring slot, product-local wall clock, for the client's calendar walk. */
+const sessionScheduleSlot = z.object({
   weekday: z.number(),
   start_time: z.string(),
   duration_minutes: z.number(),
 });
 
 /** One product name and teaser, in one locale. */
-const substitutionProductTranslation = z.object({
+const sessionProductTranslation = z.object({
   locale: z.string(),
   name: z.string(),
   description: z.string(),
 });
+
+/**
+ * **The session's product, in the one shape every substitution surface reads it
+ * in** — the gedus' pool, the admin Substitutions page, and the gedu's seat read
+ * that draws a sub's own card on My SOG.
+ *
+ * The database builds all three from a single function, so this is the one
+ * schema for it: a fact about the session added there and here reaches every
+ * reader at once, and no surface is left unable to say whether a session is
+ * online or where it is. It describes the product and nothing about a person —
+ * who is absent, why, and what the role pays travel beside it, under each
+ * read's own rules.
+ *
+ * **No instants travel.** It hands over the slots and the timezone, exactly as
+ * both session feeds do, and the client owns the calendar math.
+ */
+export const sessionProductDocument = z.object({
+  id: z.string(),
+  product_type: z.enum(Constants.public.Enums.product_type),
+  topic: z.enum(Constants.public.Enums.product_topic),
+  spoken_language_code: z.enum(Constants.public.Enums.spoken_language),
+  timezone: z.string(),
+  is_remote: z.boolean(),
+  start_date: z.string().nullable(),
+  end_date: z.string().nullable(),
+  /** The venue, on in-person products only; null on anything remote. */
+  site_name: z.string().nullable(),
+  translations: z.array(sessionProductTranslation),
+  schedule_slots: z.array(sessionScheduleSlot),
+});
+
+export type SessionProductDocument = z.infer<typeof sessionProductDocument>;
 
 /**
  * One line of the pool — an open request this gedu could actually take.
@@ -163,20 +195,7 @@ export const openSubstitutionRequest = z.object({
   fee_cents: z.number().nullable(),
   /** Whether the caller has already offered — the button's two states. */
   has_offered: z.boolean(),
-  product: z.object({
-    id: z.string(),
-    product_type: z.enum(Constants.public.Enums.product_type),
-    topic: z.enum(Constants.public.Enums.product_topic),
-    spoken_language_code: z.enum(Constants.public.Enums.spoken_language),
-    timezone: z.string(),
-    is_remote: z.boolean(),
-    start_date: z.string().nullable(),
-    end_date: z.string().nullable(),
-    /** The venue, on in-person products only; null on anything remote. */
-    site_name: z.string().nullable(),
-    translations: z.array(substitutionProductTranslation),
-    schedule_slots: z.array(substitutionScheduleSlot),
-  }),
+  product: sessionProductDocument,
 });
 
 export type OpenSubstitutionRequest = z.infer<typeof openSubstitutionRequest>;
@@ -211,30 +230,6 @@ export const adminSubstitutionOffer = z.object({
 
 export type AdminSubstitutionOffer = z.infer<typeof adminSubstitutionOffer>;
 
-/** One product name, in one locale. */
-const adminSubstitutionProductName = z.object({
-  locale: z.string(),
-  name: z.string(),
-});
-
-/**
- * The product shell the admin queue states a session by.
- *
- * `schedule_slots` rides on the **request's** own product rather than being
- * looked up elsewhere, so the only absence it can carry is "no slot names this
- * weekday" — which is the orphaned request, and is what a row renders as a bare
- * date. Slots and not an instant, because the client owns the calendar math on
- * every substitution surface.
- */
-const adminSubstitutionProduct = z.object({
-  id: z.string(),
-  product_type: z.enum(Constants.public.Enums.product_type),
-  timezone: z.string(),
-  is_remote: z.boolean(),
-  translations: z.array(adminSubstitutionProductName),
-  schedule_slots: z.array(substitutionScheduleSlot),
-});
-
 /**
  * What every row of the admin document carries, open or substituted: which
  * session, whose seat, and why they are away.
@@ -266,7 +261,12 @@ const adminSubstitutionRequestBase = z.object({
   requested_by: z.string(),
   requested_by_first_name: z.string(),
   requested_by_last_name: z.string(),
-  product: adminSubstitutionProduct,
+  /**
+   * The session's product. Its slots ride on the **request's** own product, so
+   * the only absence they can carry is "no slot names this weekday" — the
+   * orphaned request, which a row renders as a bare date.
+   */
+  product: sessionProductDocument,
   offers: z.array(adminSubstitutionOffer),
 });
 

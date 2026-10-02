@@ -50,6 +50,9 @@ function row(overrides: {
       startDate: overrides.startDate ?? "2026-01-05",
       endDate: overrides.endDate ?? null,
       isRemote: overrides.isRemote ?? true,
+      siteName: null,
+      topic: "minecraft_java",
+      spokenLanguageCode: "fi",
       productType: "consumer_club",
       translations: [
         {
@@ -69,7 +72,6 @@ function row(overrides: {
     participantCount: 8,
     groupName: `Group ${overrides.groupId}`,
     groupParticipantCount: 8,
-    siteName: null,
   };
 }
 

@@ -6,6 +6,7 @@ import type {
   SubstitutedSession,
 } from "@/components/admin/substitutions/admin-substitutions-data";
 import { ROUTES } from "@/lib/constants";
+import { sessionFacts } from "../../mocks/session-facts";
 
 /**
  * The admin Substitutions page's second section: the upcoming sessions that
@@ -36,6 +37,10 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en",
 }));
 
+// The session facts read the viewer's zone; every row here names its own, so
+// what the provider would say is never used.
+vi.mock("@/providers", () => ({ useTimezone: () => "Europe/Helsinki" }));
+
 // Real UUIDs, hardcoded: every chip draws an identicon out of the id's hex
 // bytes. Never generated at test time.
 const IDS = {
@@ -55,12 +60,17 @@ const SUBSTITUTED: SubstitutedSession = {
   id: "request-substituted",
   groupId: "group-c",
   groupName: "Ryhmä C",
-  productName: "Fortnite-klubi Vantaa",
-  productType: "consumer_club",
-  sessionDay: "2026-08-18",
+  facts: sessionFacts({
+    productName: "Fortnite-klubi Vantaa",
+    sessionDate: "2026-08-18",
+    startsAt: new Date("2026-08-18T16:00:00+03:00"),
+    endsAt: new Date("2026-08-18T17:30:00+03:00"),
+    isRemote: true,
+    siteName: null,
+  }),
+  viewerTimeZone: "Europe/Helsinki",
   sessionDate: "Tue 18 Aug",
   sessionTime: "16:00–17:30",
-  startsAt: new Date("2026-08-18T16:00:00+03:00"),
   role: "primary",
   reason: "sick",
   reasonNote: null,
@@ -100,7 +110,11 @@ function section() {
 
 describe("the admin Substitutions page's sessions with a substitute", () => {
   it("lists them below the open queue, under a heading with a count", () => {
-    renderBody([SUBSTITUTED, { ...SUBSTITUTED, id: "second", sessionDay: "2026-08-24" }]);
+    renderBody([SUBSTITUTED, {
+        ...SUBSTITUTED,
+        id: "second",
+        facts: { ...SUBSTITUTED.facts, sessionDate: "2026-08-24" },
+      }]);
 
     const headings = screen.getAllByRole("heading", { level: 2 });
     expect(headings.map((heading) => heading.textContent)).toEqual([
@@ -144,10 +158,14 @@ describe("the admin Substitutions page's sessions with a substitute", () => {
     renderBody([
       {
         ...SUBSTITUTED,
-        sessionDay: "2026-08-17",
+        facts: {
+          ...SUBSTITUTED.facts,
+          sessionDate: "2026-08-17",
+          startsAt: new Date("2026-08-17T10:00:00+03:00"),
+          endsAt: new Date("2026-08-17T11:30:00+03:00"),
+        },
         sessionDate: "Mon 17 Aug",
         sessionTime: "10:00–11:30",
-        startsAt: new Date("2026-08-17T10:00:00+03:00"),
       },
     ]);
     const list = within(section()).getByRole("list", {

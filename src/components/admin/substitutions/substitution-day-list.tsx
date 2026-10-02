@@ -89,8 +89,8 @@ function groupByDay<T extends SubstitutionSession>(
 ): { date: string; requests: T[] }[] {
   const byDay = new Map<string, T[]>();
   for (const request of requests) {
-    const bucket = byDay.get(request.sessionDay);
-    if (bucket === undefined) byDay.set(request.sessionDay, [request]);
+    const bucket = byDay.get(request.facts.sessionDate);
+    if (bucket === undefined) byDay.set(request.facts.sessionDate, [request]);
     else bucket.push(request);
   }
   // `YYYY-MM-DD` sorts as a string in date order.

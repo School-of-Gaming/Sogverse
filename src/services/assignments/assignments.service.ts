@@ -1,13 +1,15 @@
 import type {
   AppSupabaseClient,
   GeduAssignedProduct,
-  MyAssignedProductRow,
+  ProductTopic,
   ProductType,
+  SpokenLanguageCode,
 } from "@/types";
 import {
   geduAssignedProduct,
   myAssignedProductRows,
   traineeAssignedProduct,
+  type MyAssignedProductRow,
   type TraineeAssignedProduct,
 } from "./assignments.contracts";
 
@@ -37,6 +39,15 @@ export interface MyAssignedProductSessionRow {
     /** False for in-person products — the join button is a no-op in that case. */
     isRemote: boolean;
     /**
+     * The venue on an in-person product, or `null` — always on a remote one
+     * (the read tests the remote flag, never the presence of a location, since a
+     * remote municipality club carries one and has no building), and on an
+     * in-person product with no site recorded.
+     */
+    siteName: string | null;
+    topic: ProductTopic;
+    spokenLanguageCode: SpokenLanguageCode;
+    /**
      * Product kind. The dashboard card uses it to pick the right URL prefix
      * for "View details" — `/gedu/clubs/[id]`, `/gedu/camps/[id]`, or
      * `/gedu/events/[id]` — so the gedu lands on a route that matches their
@@ -49,7 +60,7 @@ export interface MyAssignedProductSessionRow {
      * gedu RPC keeps that output key while the column itself is named
      * `short_description`.
      */
-    translations: MyAssignedProductRow["product_translations"];
+    translations: MyAssignedProductRow["product"]["translations"];
   };
   /** The gedu's group on this product — assigned, or the one they substitute on. */
   groupId: string;
@@ -186,13 +197,16 @@ function toMyAssignedProductSessionRow(
 ): MyAssignedProductSessionRow {
   return {
     product: {
-      id: row.product_id,
-      timezone: row.timezone,
-      startDate: row.start_date,
-      endDate: row.end_date,
-      isRemote: row.is_remote,
-      productType: row.product_type,
-      translations: row.product_translations,
+      id: row.product.id,
+      timezone: row.product.timezone,
+      startDate: row.product.start_date,
+      endDate: row.product.end_date,
+      isRemote: row.product.is_remote,
+      siteName: row.product.site_name,
+      topic: row.product.topic,
+      spokenLanguageCode: row.product.spoken_language_code,
+      productType: row.product.product_type,
+      translations: row.product.translations,
     },
     groupId: row.group_id,
     kind: row.kind,
@@ -201,7 +215,7 @@ function toMyAssignedProductSessionRow(
     substitutionCancelled: row.substitution_cancelled,
     groupCount: row.group_count,
     participantCount: row.participant_count,
-    slots: row.schedule_slots.map((s) => ({
+    slots: row.product.schedule_slots.map((s) => ({
       weekday: s.weekday,
       startTime: s.start_time,
       durationMinutes: s.duration_minutes,

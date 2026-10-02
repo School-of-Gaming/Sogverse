@@ -247,15 +247,15 @@ describe("get_gedu_assigned_product", () => {
       expect(error).toBeNull();
 
       const rows = myAssignedProductRows.parse(data);
-      const mine = rows.find((r) => r.product_id === PRODUCT_GEDU_ON);
+      const mine = rows.find((r) => r.product.id === PRODUCT_GEDU_ON);
       expect(mine).toBeDefined();
       // The caller owns exactly Cohort A on this product.
       expect(mine?.group_id).toBe(myGroupId);
       // Both groups exist on the product; one active gamer sits in each.
       expect(mine?.group_count).toBe(2);
       expect(mine?.participant_count).toBe(2);
-      expect(mine?.product_translations.length).toBeGreaterThan(0);
-      expect(mine?.schedule_slots.length).toBeGreaterThan(0);
+      expect(mine?.product.translations.length).toBeGreaterThan(0);
+      expect(mine?.product.schedule_slots.length).toBeGreaterThan(0);
     });
   });
 

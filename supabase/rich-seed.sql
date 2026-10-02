@@ -84,6 +84,16 @@
 -- sofia.nieminen@example.com, so the Invoicing page for that month shows a
 -- settled line of each kind, one on each subtotal (section 11).
 --
+-- TWO SUBSTITUTIONS ARE COMING UP FOR gedu@example.com, so their My SOG has a
+-- card for each kind of wait. They cover sofia.nieminen@example.com's online
+-- Roblox Builders Club about two weeks after the build, a card still locked
+-- until 48 hours before it, and aino.virtanen@example.com's in-person
+-- Minecraft Redstone Club at Sellon kirjasto, Espoo, a day after the build,
+-- a card already open. The Redstone club's one weekly slot is placed on the
+-- day after the build at the build's own time of day (Helsinki time), the way
+-- the live club's is placed on the day of it, so the second card is open on
+-- a fresh stack whatever day it is built (section 11).
+--
 -- IDS ARE GENERATED, NEVER WRITTEN OUT. Every account gets `gen_random_uuid()`,
 -- because the avatar identicon derives its pattern from the id's hex bytes and
 -- a hand-written id — all ones, all twos — draws a degenerate face that is not
@@ -576,11 +586,12 @@ COMMIT;
 -- =============================================================================
 -- 6. The catalogue
 -- =============================================================================
--- Fourteen products: every product type, every billing mode, and every lifecycle
+-- Fifteen products: every product type, every billing mode, and every lifecycle
 -- state the derivation can produce — pending, running and completed, a hidden
 -- draft, and one whose registration window has not opened — plus the live club,
--- whose one weekly session is in progress when the stack is built, and an
--- online club small enough to need only one group. Dates are
+-- whose one weekly session is in progress when the stack is built, an online
+-- club small enough to need only one group, and an in-person club whose next
+-- session is a day after the build. Dates are
 -- now()-relative so the catalogue never goes stale. Prices are plain EUR cents
 -- and exist to render; no Stripe object stands behind any of them.
 --
@@ -615,6 +626,8 @@ DECLARE
   -- The live club's session: it started ten minutes before this ran, on the
   -- product's own clock, so its weekday and start time are read in that zone.
   v_live     timestamp := date_trunc('minute', (now() AT TIME ZONE v_tz) - interval '10 minutes');
+  -- The Redstone club's next session: this time tomorrow, on the same clock.
+  v_next     timestamp := date_trunc('minute', now() AT TIME ZONE v_tz) + interval '1 day';
 BEGIN
 
   -- 1. Running, listed, paid consumer club. The busiest thing in the catalogue,
@@ -953,6 +966,35 @@ BEGIN
     p_primary_gedu_fee_cents => 6000
   );
 
+  -- 15. Running, free and in person, four weeks in, with its one weekly slot
+  --     placed on the day after the build at the build's own time of day, so
+  --     its next session is always about a day away on a fresh stack — the
+  --     session section 11 seats gedu@example.com on as the sub, inside the
+  --     48 hours that open a substitution's workspace.
+  PERFORM public.create_product(
+    'consumer_club', 'free',
+    jsonb_build_array(
+      jsonb_build_object('locale','en','name','Minecraft Redstone Club',
+        'short_description','A free weekly club for building redstone machines side by side.',
+        'long_description','A small group meets in person once a week to build doors, lifts and contraptions in Minecraft Java, with the educator in the room to help when a circuit will not fire.'),
+      jsonb_build_object('locale','fi','name','Minecraft Redstone -kerho',
+        'short_description','Maksuton viikkokerho redstone-koneiden rakentamiseen vierekkäin.',
+        'long_description','Pieni ryhmä kokoontuu kerran viikossa paikan päällä rakentamaan Minecraft Javassa ovia, hissejä ja laitteita. Ohjaaja on samassa tilassa auttamassa, kun piiri ei toimi.')
+    ),
+    'minecraft_java', 'fi', false, v_tz,
+    now() - interval '40 days', true, false,
+    p_min_age => 8, p_max_age => 12, p_is_visible => true,
+    p_location_id => v_espoo,
+    p_start_date => v_next::date - 28,
+    p_seat_count => 10,
+    p_schedule_slots => jsonb_build_array(
+      jsonb_build_object('weekday', EXTRACT(ISODOW FROM v_next)::integer - 1,
+                         'start_time', to_char(v_next, 'HH24:MI'),
+                         'duration_minutes', 90)),
+    p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
+    p_primary_gedu_fee_cents => 6000
+  );
+
 END;
 $$;
 
@@ -992,6 +1034,7 @@ BEGIN
     ('Creator Studio Club',                      'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
     ('Minecraft Bedrock Club',                   'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
     ('Roblox Builders Club',                     'Ryhmä A',      v_sofia, 'primary', NULL,           NULL),
+    ('Minecraft Redstone Club',                  'Ryhmä A',      v_aino,  'primary', NULL,           NULL),
     ('Schools Game Club',                        'Ryhmä 1',      v_gedu,  'primary', NULL,           NULL),
     ('Autumn Term Game Club',                    'Ryhmä 1',      v_sofia, 'primary', NULL,           NULL),
     ('Minecraft Summer Camp',                    'Camp Group A', v_lucas, 'primary', 'Camp Group B', v_emma),
@@ -1118,6 +1161,10 @@ BEGIN
     ('Roblox Builders Club', 'olivia@gamer.example.com', 'subscription_monthly'),
     ('Roblox Builders Club', 'aarne@gamer.example.com',  'subscription_monthly'),
     ('Roblox Builders Club', 'rasmus@gamer.example.com', 'subscription_monthly'),
+    ('Minecraft Redstone Club', 'elias@gamer.example.com',  'free'),
+    ('Minecraft Redstone Club', 'aada@gamer.example.com',   'free'),
+    ('Minecraft Redstone Club', 'oskari@gamer.example.com', 'free'),
+    ('Minecraft Redstone Club', 'eino@gamer.example.com',   'free'),
     ('Schools Game Club', 'milo@gamer.example.com',   'external'),
     ('Schools Game Club', 'elias@gamer.example.com',  'external'),
     ('Schools Game Club', 'venla@gamer.example.com',  'external'),
@@ -1665,6 +1712,80 @@ BEGIN
       (SELECT id FROM public.profiles WHERE email = 'gedu@example.com'),
       (SELECT id FROM public.profiles WHERE email = 'sofia.nieminen@example.com'));
   END IF;
+END;
+$$;
+
+COMMIT;
+
+-- Two coming sessions gedu@example.com covers as the sub, arranged by the
+-- office, so their My SOG has a substitution card on each side of the 48 hours
+-- that open a sub's access to the group: Sofia's online Roblox Builders Club
+-- about two weeks out, still locked, and Aino's in-person Minecraft Redstone
+-- Club about a day out, already open. gedu@example.com teaches neither product,
+-- which is what makes them eligible.
+--
+-- Each date is the session the product's own schedule projects whose start
+-- lies nearest the build plus that lead, read on the product's clock. The
+-- Builders club meets once a week, so its nearest session to two weeks out is
+-- between ten and eighteen days away on any day of the build. The Redstone
+-- club's one slot is the day after the build at the build's time of day, so
+-- its nearest session to a day out is that one. Neither absent educator has
+-- filed anything, so the admin files for them, which needs a reason.
+
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+DO $$
+DECLARE
+  r       record;
+  v_group uuid;
+  v_date  date;
+BEGIN
+  FOR r IN SELECT * FROM (VALUES
+    ('Roblox Builders Club',    'Ryhmä A', 'sofia.nieminen@example.com', interval '14 days',
+     'other'::public.substitution_reason, 'At a training course in Tampere all that week.'),
+    ('Minecraft Redstone Club', 'Ryhmä A', 'aino.virtanen@example.com',  interval '1 day',
+     'sick'::public.substitution_reason, 'Fever since this morning, so not in tomorrow.')
+  ) AS t(product_name, group_name, absent_email, ahead, reason, reason_note)
+  LOOP
+    v_group := (SELECT g.id FROM public.product_groups g
+                  JOIN public.product_translations t
+                    ON t.product_id = g.product_id AND t.locale = 'en'
+                 WHERE t.name = r.product_name
+                   AND g.name = r.group_name);
+    v_date := (SELECT c.day
+                 FROM (SELECT p.local_today + i AS day,
+                              ((p.local_today + i) + s.start_time) AT TIME ZONE p.timezone AS starts
+                         FROM (SELECT pp.id, pp.timezone, pp.start_date, pp.end_date,
+                                      (now() AT TIME ZONE pp.timezone)::date AS local_today
+                                 FROM public.products pp
+                                 JOIN public.product_groups g ON g.product_id = pp.id
+                                WHERE g.id = v_group) p
+                         JOIN public.schedule_slots s ON s.product_id = p.id
+                        CROSS JOIN generate_series(0, 28) i
+                        WHERE EXTRACT(ISODOW FROM p.local_today + i)::integer - 1 = s.weekday
+                          AND (p.start_date IS NULL OR p.local_today + i >= p.start_date)
+                          AND (p.end_date   IS NULL OR p.local_today + i <= p.end_date)
+                      ) c
+                WHERE c.starts > now()
+                ORDER BY abs(EXTRACT(EPOCH FROM c.starts - (now() + r.ahead)))
+                LIMIT 1);
+
+    IF v_group IS NULL OR v_date IS NULL THEN
+      RAISE NOTICE 'rich-seed: no coming % session to substitute on', r.product_name;
+      CONTINUE;
+    END IF;
+
+    PERFORM public.set_session_substitution(
+      v_group, v_date,
+      (SELECT id FROM public.profiles WHERE email = r.absent_email),
+      (SELECT id FROM public.profiles WHERE email = 'gedu@example.com'),
+      r.reason, r.reason_note);
+  END LOOP;
 END;
 $$;
 
@@ -2565,6 +2686,25 @@ BEGIN
     (SELECT count(*) FROM public.participations WHERE status = 'waitlisted'),
     (SELECT count(*) FROM public.session_substitution_requests),
     (SELECT count(*) FROM public.session_cancellations);
+
+  RAISE NOTICE 'rich-seed: coming sessions gedu@example.com covers as the sub';
+  FOR r IN SELECT t.name || ' ' || g.name || ', ' || to_char(sr.session_date, 'Dy DD Mon')
+                  || ' at ' || to_char(s.start_time, 'HH24:MI') AS k,
+                  'for ' || ab.email AS n
+             FROM public.session_substitution_requests sr
+             JOIN public.profiles sub ON sub.id = sr.substitute_id
+             JOIN public.profiles ab  ON ab.id = sr.requested_by
+             JOIN public.product_groups g ON g.id = sr.group_id
+             JOIN public.product_translations t
+               ON t.product_id = g.product_id AND t.locale = 'en'
+             JOIN public.schedule_slots s
+               ON s.product_id = g.product_id
+              AND s.weekday = EXTRACT(ISODOW FROM sr.session_date)::integer - 1
+            WHERE sub.email = 'gedu@example.com'
+              AND sr.status = 'substituted'
+              AND sr.session_date >= current_date
+            ORDER BY sr.session_date
+  LOOP RAISE NOTICE '  % : %', r.k, r.n; END LOOP;
 
   SELECT to_char(DATE '2024-01-01' + s.weekday, 'FMDay') AS weekday,
          to_char(s.start_time, 'HH24:MI') AS starts,

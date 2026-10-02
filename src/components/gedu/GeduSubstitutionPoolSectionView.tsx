@@ -1,27 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock, Check, Clock, Loader2, MapPin, Radio } from "lucide-react";
-import { useFormatter, useLocale, useTranslations } from "next-intl";
+import { Check, Loader2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { LanguageFlag } from "@/components/ui/language-flag";
 import { StatusLine } from "@/components/ui/alert";
+import {
+  SubstitutionSessionFacts,
+  sessionFactsWhen,
+} from "@/components/session-substitution/SubstitutionSessionFacts";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import {
   isSubstitutionUrgent,
   type SubstitutionPoolRow,
 } from "@/lib/gedu-substitution-pool";
-import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useNow, useTimezone } from "@/providers";
-import {
-  formatCurrencyFromCents,
-  formatDate,
-  formatDateOnly,
-  formatTimeRange,
-} from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/utils";
 
 export interface GeduSubstitutionPoolSectionViewProps {
   /**
@@ -75,13 +72,15 @@ export interface GeduSubstitutionPoolSectionViewProps {
  * volunteer decides on is the session. The read does not carry either field, so
  * this is a property of the data rather than a rule this component keeps.
  *
+ * **The session is described by the shared session facts**, exactly as the
+ * admin page and a sub's own card describe it; what is this card's own is the
+ * frame around them — the group, the role and its fee, and the one action.
+ *
  * **Urgency is on the card, not only in the order.** A grid is read in two
  * dimensions, so "first" is a weaker signal than it is in a column: every card
  * says how far away its session is in words, and a session inside the next day
- * says it as a warning rather than as a quiet line. No new colour and no motion
- * — the warning status is the one the rest of the app already uses to mean
- * *this needs you now*, and the two lines are the same size and the same single
- * line, so nothing on the card moves when one becomes the other.
+ * says it as a warning rather than as a quiet line — the facts draw both, and
+ * the pool's own threshold decides which.
  *
  * **One control per card, in two resting states**: offer, and — once the offer
  * is in — the withdrawal, because an offer that cannot be taken back is a
@@ -202,8 +201,8 @@ function OfferConfirmDialog({
       }}
       title={t("offerConfirmTitle")}
       description={t("offerConfirmBody", {
-        product: row.productName,
-        when: sessionWhen(row, locale, timeZone),
+        product: row.session.productName,
+        when: sessionFactsWhen(row.session, locale, timeZone),
       })}
       confirmLabel={t("poolOfferAction")}
       // An affirmative, not a destructive one: this is the action the dialog
@@ -214,35 +213,6 @@ function OfferConfirmDialog({
       describeError={() => t("poolActionFailed")}
     />
   );
-}
-
-/**
- * The session's day and clock face, **in the viewer's zone** — the gedu
- * deciding whether they are free is free in their own timezone, not in the
- * club's.
- *
- * A request whose weekday the schedule no longer projects has no instant at
- * all, and it falls back to the bare date, UTC-pinned like every other zoneless
- * calendar date. It is history rather than a fault: the queue carries it
- * because a request is keyed by date and never by a derived instant.
- *
- * Shared by the card and the dialog it opens, so the session a volunteer is
- * asked about is worded exactly as the card they pressed worded it.
- */
-function sessionWhen(
-  row: SubstitutionPoolRow,
-  locale: string,
-  timeZone: string,
-): string {
-  if (row.startsAt === null || row.endsAt === null) {
-    return formatDateOnly(row.sessionDate, locale);
-  }
-  return `${formatDate(row.startsAt, locale, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    timeZone,
-  })}, ${formatTimeRange(row.startsAt, row.endsAt, locale, timeZone)}`;
 }
 
 function SubstitutionPoolCard({
@@ -263,84 +233,31 @@ function SubstitutionPoolCard({
   const t = useTranslations("gedu.substitution");
   const p = useTranslations("productType");
   const locale = useLocale();
-  const format = useFormatter();
-  const timeZone = useTimezone();
   const now = useNow();
-  const topicLabel = useTopicLabel();
-
-  const when = sessionWhen(row, locale, timeZone);
-
-  /**
-   * How far away it is, in words — "in 3 hours", "tomorrow", "in 5 days".
-   *
-   * Formatted rather than translated: the phrasing, the unit and the plural are
-   * the locale's own, and a string per shape of gap would be a catalogue of
-   * arithmetic. An orphaned date has no instant to measure from and carries no
-   * line at all.
-   */
-  const relative =
-    row.startsAt === null ? null : format.relativeTime(row.startsAt, now);
-  const urgent = isSubstitutionUrgent(row, now);
 
   return (
     <Card className="h-full">
       <CardContent className="flex h-full flex-col gap-3 p-5">
         <div className="min-w-0 space-y-1">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            {p(row.productType)}
+            {p(row.session.productType)}
           </p>
           <p className="text-base font-semibold leading-tight">
-            {row.productName}
+            {row.session.productName}
           </p>
           <p className="text-sm text-muted-foreground">{row.groupName}</p>
         </div>
 
-        <div className="min-w-0 space-y-1">
-          <p className="flex items-start gap-1.5 text-sm tabular-nums text-muted-foreground">
-            <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <span className="min-w-0">{when}</span>
-          </p>
-          {/* The same one line either way — the quiet clock, or the warning
-              mark the rest of the app uses for a thing that needs somebody
-              now. */}
-          {relative !== null &&
-            (urgent ? (
-              <StatusLine status="warning" size="xs">
-                {relative}
-              </StatusLine>
-            ) : (
-              <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                <Clock className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
-                <span className="min-w-0">{relative}</span>
-              </p>
-            ))}
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            {row.isRemote ? (
-              <>
-                <Radio className="h-4 w-4 shrink-0" aria-hidden />
-                {t("poolRemote")}
-              </>
-            ) : (
-              <>
-                <MapPin className="h-4 w-4 shrink-0" aria-hidden />
-                <span className="min-w-0 truncate">
-                  {row.siteName ?? t("poolSiteUnknown")}
-                </span>
-              </>
-            )}
-          </p>
-        </div>
-
-        {/* The facts a volunteer weighs rather than reads in order: the topic,
-            the language it is delivered in, the role being substituted and what
-            that role pays. A chip run rather than four more lines, because they
-            are a set of small independent facts and a column of them would bury
-            the date above. */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="text-[11px]">
-            {topicLabel(row.topic)}
-          </Badge>
-          <LanguageFlag code={row.spokenLanguageCode} />
+        {/* The facts a volunteer weighs: when, how soon, where, the topic and
+            the language — and, appended to that chip run, the two that are this
+            card's own: the role being substituted and what it pays. One run
+            rather than more lines, because they are small independent facts
+            and a column of them would bury the date above. */}
+        <SubstitutionSessionFacts
+          facts={row.session}
+          variant="card"
+          howSoon={{ now, urgent: isSubstitutionUrgent(row.session, now) }}
+        >
           <Badge variant="outline" className="text-[11px]">
             {row.role === "primary"
               ? t("poolRolePrimary")
@@ -361,7 +278,7 @@ function SubstitutionPoolCard({
               })}
             </span>
           )}
-        </div>
+        </SubstitutionSessionFacts>
 
         <div className="mt-auto flex flex-col gap-1 pt-1">
           <Button
