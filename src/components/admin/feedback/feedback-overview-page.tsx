@@ -21,13 +21,13 @@ import { formatShare } from "./feedback-format";
 import { ShareText } from "./feedback-marks";
 import { feedbackHref, type FeedbackPlace } from "./feedback-place";
 import { FeedbackShell } from "./feedback-shell";
+import { FeedbackStatementTable } from "./feedback-statement-table";
 import { FeedbackTimeline } from "./feedback-timeline";
-import { useFeedbackStatementLabels } from "./use-feedback-labels";
 
 /**
  * **`/admin/feedback` — the pulse, with no lists on it.** One figure for how
  * positive gamers have been since the first answer, the whole history drawn
- * beneath it, one line per statement, and three doors to the lists an admin
+ * beneath it, each statement's answers, and three doors to the lists an admin
  * dives into: products (whose groups are a breakdown on a product's own page),
  * Gedus, and what gamers said.
  */
@@ -51,7 +51,7 @@ export function FeedbackOverviewPage({ read }: { read: FeedbackRead }) {
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <>
-          <StatementLines statements={overview.statements} source={overview.source} />
+          <Statements statements={overview.statements} source={overview.source} />
           <Explore overview={overview} />
         </>
       )}
@@ -117,8 +117,12 @@ function ParticipationLine({ participation }: { participation: FeedbackParticipa
   return <p className="text-xs text-muted-foreground">{parts.join(SCHEDULE_PART_SEPARATOR)}</p>;
 }
 
-/** The statements in the order they are asked, one line each. */
-function StatementLines({
+/**
+ * The platform's statements, in the same table a detail page draws. The
+ * platform is what everything else is set against, so it carries no
+ * comparison of its own.
+ */
+function Statements({
   statements,
   source,
 }: {
@@ -126,38 +130,15 @@ function StatementLines({
   source: FeedbackOverview["source"];
 }) {
   const t = useTranslations("admin.feedback.statements");
-  const locale = useLocale();
-  const labels = useFeedbackStatementLabels(source);
+  const lines = useMemo(
+    () => statements.map((line) => ({ ...line, againstPlatform: null })),
+    [statements],
+  );
 
   return (
     <section className="space-y-2">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-        <h2 className="text-base font-semibold">{t("heading")}</h2>
-        <p className="text-xs text-muted-foreground">{t("legend")}</p>
-      </div>
-      <Card>
-        <ul className="divide-y divide-border">
-          {statements.map(({ key, figure }) => (
-            // Negative before positive, as the meter reads: No on the left, Definitely on the right.
-            <li
-              key={key}
-              className="grid grid-cols-[auto_auto] items-baseline justify-start gap-x-4 gap-y-1 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_7rem_8rem] sm:justify-stretch sm:gap-x-6"
-            >
-              <p className="col-span-2 text-sm sm:col-span-1">{labels[key] ?? key}</p>
-              <p className="text-xs tabular-nums text-muted-foreground sm:text-right">
-                {figure.negativeShare === null ? null : t("negative", { share: formatShare(figure.negativeShare, locale) })}
-              </p>
-              {figure.positiveShare === null ? (
-                <ShareText figure={figure} className="text-sm text-muted-foreground sm:text-right" />
-              ) : (
-                <p className="text-sm font-semibold tabular-nums sm:text-right">
-                  {t("positive", { share: formatShare(figure.positiveShare, locale) })}
-                </p>
-              )}
-            </li>
-          ))}
-        </ul>
-      </Card>
+      <h2 className="text-base font-semibold">{t("heading")}</h2>
+      <FeedbackStatementTable source={source} statements={lines} />
     </section>
   );
 }

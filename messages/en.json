@@ -1612,10 +1612,9 @@
       },
       "statements": {
         "heading": "By statement",
-        "legend": "Negative is No or Not really; positive is Yes or Definitely.",
         "positive": "{share} positive",
-        "negative": "{share} negative",
-        "saidPositive": "{positive} of {answers} said {yes} or {definitely}"
+        "caption": "Answers to each statement",
+        "statement": "Statement"
       },
       "explore": {
         "heading": "Explore",

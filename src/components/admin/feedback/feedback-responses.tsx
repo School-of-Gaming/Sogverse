@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useId, useState } from "react";
+import { Fragment, useState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
@@ -22,6 +22,7 @@ import {
   type FeedbackGroupsPerProduct,
   type FeedbackResponses,
 } from "./aggregate-feedback";
+import { FeedbackHint } from "./feedback-hint";
 import { feedbackHref, type FeedbackOrigin } from "./feedback-place";
 import { SegmentedButtons } from "./feedback-shell";
 import { FEEDBACK_CATALOGUES } from "./feedback-sources";
@@ -212,13 +213,7 @@ function ResponseTable({
 /**
  * A statement's short name as its column heading, with the sentence the gamer
  * read on hover and on keyboard focus, and as the heading's accessible
- * description.
- *
- * The sentence opens from the whole heading cell and sits inside it, flush
- * against the name with its spacing drawn as padding, so the pointer can move
- * onto the sentence without leaving what opened it. Escape hides it while the
- * heading is hovered or focused, without moving either; leaving the heading,
- * or focus leaving it, lets it open again.
+ * description. The whole heading cell opens it.
  */
 function StatementHeader({
   source,
@@ -231,61 +226,16 @@ function StatementHeader({
 }) {
   const shortLabels = useFeedbackStatementShortLabels(source);
   const labels = useFeedbackStatementLabels(source);
-  const sentenceId = useId();
-  const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
-
-  // While the sentence can be showing, Escape hides it wherever focus is: a
-  // reader pointing at the heading has not necessarily focused it.
-  const engaged = hovered || focused;
-  useEffect(() => {
-    if (!engaged) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setDismissed(true);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [engaged]);
-
   return (
-    <div
-      role="columnheader"
-      className="group relative"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => {
-        setHovered(false);
-        setDismissed(false);
-      }}
-      onFocus={() => setFocused(true)}
-      onBlur={(event) => {
-        if (event.currentTarget.contains(event.relatedTarget)) return;
-        setFocused(false);
-        setDismissed(false);
-      }}
-    >
-      <span
-        tabIndex={0}
-        aria-describedby={sentenceId}
-        className="cursor-help rounded-xs text-xs font-medium text-muted-foreground underline decoration-dotted underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-act"
+    <div role="columnheader">
+      <FeedbackHint
+        hint={labels[statementKey] ?? statementKey}
+        alignEnd={alignEnd}
+        block
+        className="text-xs font-medium text-muted-foreground"
       >
         {shortLabels[statementKey] ?? statementKey}
-      </span>
-      <span
-        className={cn(
-          "invisible absolute top-full z-20 w-56 pt-1.5",
-          !dismissed && "group-hover:visible group-focus-within:visible",
-          alignEnd ? "right-0" : "left-0",
-        )}
-      >
-        <span
-          id={sentenceId}
-          role="tooltip"
-          className="block rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-foreground shadow-md"
-        >
-          {labels[statementKey] ?? statementKey}
-        </span>
-      </span>
+      </FeedbackHint>
     </div>
   );
 }

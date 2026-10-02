@@ -1612,10 +1612,9 @@
       },
       "statements": {
         "heading": "Väitteittäin",
-        "legend": "Kielteinen on Ei tai Vähän, myönteinen on Kyllä tai Ehdottomasti.",
         "positive": "{share} myönteisiä",
-        "negative": "{share} kielteisiä",
-        "saidPositive": "{positive}/{answers} vastasi {yes} tai {definitely}"
+        "caption": "Vastaukset väitteittäin",
+        "statement": "Väite"
       },
       "explore": {
         "heading": "Tutki tarkemmin",
