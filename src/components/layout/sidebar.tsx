@@ -10,7 +10,6 @@ import {
   MonitorPlay,
   Settings,
   FlaskConical,
-  MessageCircle,
   Building2,
   BookOpen,
   ChevronLeft,
@@ -32,7 +31,7 @@ import type { StaticAppHref } from "@/lib/constants/routes";
 
 type SidebarKey =
   | "dashboard" | "users"
-  | "uiComponents" | "uiPreviews" | "whatsapp" | "testing" | "settings"
+  | "uiComponents" | "uiPreviews" | "testing" | "settings"
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
   | "invoiceCustomers" | "geduInvoicing" | "libraryContent" | "platformVision"
   | "camps" | "events"
@@ -88,7 +87,6 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },
-    { href: ROUTES.admin.whatsapp, labelKey: "whatsapp", icon: <MessageCircle className="h-5 w-5" /> },
     { href: ROUTES.admin.testing, labelKey: "testing", icon: <FlaskConical className="h-5 w-5" /> },
     { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
