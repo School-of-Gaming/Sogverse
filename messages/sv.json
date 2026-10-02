@@ -79,6 +79,7 @@
       "adminSubstitutions": "Vikariat",
       "teamProfile": "Min profil",
       "adminTeamProfile": "Profil",
+      "adminFeedback": "Feedback",
       "team": "Team"
     },
     "descriptions": {
@@ -1564,6 +1565,115 @@
       "seatFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
       "seatFailedRequestWithdrawn": "{absent} har dragit tillbaka sin begäran om vikarie, så det finns inget att vikariera för.",
       "seatFailedNotScheduled": "Gruppen har inte längre något tillfälle det här datumet."
+    },
+    "feedback": {
+      "title": "Feedback",
+      "sources": {
+        "gamerOnline": "Från gamers efter onlinesessioner"
+      },
+      "empty": "Ingen feedback har getts än.",
+      "loadError": "Feedbacken kunde inte laddas. Ladda om sidan och försök igen.",
+      "loadErrorWithReason": "Feedbacken kunde inte laddas: {reason}",
+      "noAnswers": "Inga svar",
+      "answers": "{count, plural, one {# svar} other {# svar}}",
+      "skipped": "Hoppades över",
+      "belowAverage": "Under genomsnittet",
+      "belowAverageOn": "Under genomsnittet på: {statement}",
+      "statementLabels": {
+        "learned": "Lärde sig",
+        "fun": "Roligt",
+        "geduKnowledgeable": "Gedu kunnig",
+        "geduKind": "Gedu snäll",
+        "groupListens": "Blev hörd"
+      },
+      "timeline": {
+        "byWeek": "Positiva svar per vecka",
+        "byMonth": "Positiva svar per månad",
+        "platform": "Plattformen"
+      },
+      "back": {
+        "overview": "Tillbaka till feedback",
+        "list": {
+          "product": "Tillbaka till produkterna",
+          "gedu": "Tillbaka till Geduerna"
+        },
+        "responses": "Tillbaka till vad gamerna sa",
+        "detail": {
+          "product": "Tillbaka till produkten",
+          "group": "Tillbaka till gruppen",
+          "gedu": "Tillbaka till Gedun",
+          "gamer": "Tillbaka till gamern"
+        }
+      },
+      "hero": {
+        "positive": "positiva",
+        "definition": "Svarade Ja eller Absolut",
+        "responseRate": "{share} av de närvarande gamerna svarade"
+      },
+      "statements": {
+        "heading": "Per påstående",
+        "legend": "Negativt är Nej eller Inte riktigt; positivt är Ja eller Absolut.",
+        "positive": "{share} positiva",
+        "negative": "{share} negativa",
+        "saidPositive": "{positive} av {answers} svarade {yes} eller {definitely}"
+      },
+      "explore": {
+        "heading": "Utforska",
+        "titles": {
+          "product": "Produkter",
+          "gedu": "Geduer",
+          "responses": "Gamers"
+        },
+        "counts": {
+          "product": "{count, plural, one {# produkt} other {# produkter}}",
+          "gedu": "{count, plural, one {# Gedu} other {# Geduer}}",
+          "responses": "{count, plural, one {# svar} other {# svar}}"
+        }
+      },
+      "rows": {
+        "none": "Inget här än.",
+        "answers": "Svar",
+        "positive": "Positiva",
+        "positiveAgainst": "Positiva (plattformen {share})"
+      },
+      "lists": {
+        "titles": {
+          "product": "Produkter",
+          "gedu": "Geduer"
+        },
+        "subtitle": "Sämst först, jämfört med plattformens genomsnitt"
+      },
+      "detail": {
+        "kinds": {
+          "product": "Produkt",
+          "group": "Grupp",
+          "gedu": "Gedu",
+          "gamer": "Gamer"
+        },
+        "open": {
+          "product": "Öppna produkten",
+          "group": "Öppna gruppen",
+          "gedu": "Öppna Gedus konto",
+          "gamer": "Öppna gamerns konto"
+        },
+        "none": "Inget har besvarats om detta än.",
+        "platform": "Plattformen {share}",
+        "groupsHeading": "Grupper",
+        "productsHeading": "Produkter",
+        "gedusHeading": "Geduer",
+        "gamersHeading": "Gamers som svarade",
+        "responsesHeading": "Vad gamerna sa"
+      },
+      "responses": {
+        "title": "Vad gamerna sa",
+        "none": "Inga svar här.",
+        "noneWorthReading": "Inget värt att läsa: inga negativa svar och inga meddelanden.",
+        "noGedu": "Ingen Gedu registrerad",
+        "who": "Svar",
+        "filterLabel": "Vilka svar",
+        "worthReading": "Värda att läsa ({count})",
+        "all": "Alla ({count})"
+      }
     }
   },
   "auth": {
@@ -3144,7 +3254,8 @@
     "tools": "Verktyg",
     "expandSidebar": "Expandera sidopanel",
     "collapseSidebar": "Minimera sidopanel",
-    "substitutions": "Vikariat"
+    "substitutions": "Vikariat",
+    "feedback": "Feedback"
   },
   "home": {
     "hero": {

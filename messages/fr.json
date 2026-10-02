@@ -79,6 +79,7 @@
       "adminSubstitutions": "Remplacements",
       "teamProfile": "Mon profil",
       "adminTeamProfile": "Profil",
+      "adminFeedback": "Avis",
       "team": "Équipe"
     },
     "descriptions": {
@@ -1564,6 +1565,115 @@
       "seatFailedSeatGone": "{absent} n’a plus cette séance, il n’y a donc personne à remplacer.",
       "seatFailedRequestWithdrawn": "{absent} a retiré sa demande de remplacement, il n’y a donc personne à remplacer.",
       "seatFailedNotScheduled": "Le groupe n’a plus de séance à cette date."
+    },
+    "feedback": {
+      "title": "Avis",
+      "sources": {
+        "gamerOnline": "Des gamers après les séances en ligne"
+      },
+      "empty": "Aucun avis n’a encore été donné.",
+      "loadError": "Les avis n’ont pas pu être chargés. Rechargez la page pour réessayer.",
+      "loadErrorWithReason": "Les avis n’ont pas pu être chargés : {reason}",
+      "noAnswers": "Aucune réponse",
+      "answers": "{count, plural, one {# réponse} other {# réponses}}",
+      "skipped": "Passée",
+      "belowAverage": "Sous la moyenne",
+      "belowAverageOn": "Sous la moyenne sur : {statement}",
+      "statementLabels": {
+        "learned": "Apprentissage",
+        "fun": "Plaisir",
+        "geduKnowledgeable": "Gedu compétent",
+        "geduKind": "Gedu gentil",
+        "groupListens": "Écoute"
+      },
+      "timeline": {
+        "byWeek": "Réponses positives par semaine",
+        "byMonth": "Réponses positives par mois",
+        "platform": "Plateforme"
+      },
+      "back": {
+        "overview": "Retour aux avis",
+        "list": {
+          "product": "Retour aux produits",
+          "gedu": "Retour aux Gedus"
+        },
+        "responses": "Retour à ce que les gamers ont dit",
+        "detail": {
+          "product": "Retour au produit",
+          "group": "Retour au groupe",
+          "gedu": "Retour au Gedu",
+          "gamer": "Retour au gamer"
+        }
+      },
+      "hero": {
+        "positive": "positives",
+        "definition": "Réponse Oui ou Tout à fait",
+        "responseRate": "{share} des gamers présents ont répondu"
+      },
+      "statements": {
+        "heading": "Par affirmation",
+        "legend": "Négative : Non ou Pas vraiment ; positive : Oui ou Tout à fait.",
+        "positive": "{share} positives",
+        "negative": "{share} négatives",
+        "saidPositive": "{positive} sur {answers} ont répondu {yes} ou {definitely}"
+      },
+      "explore": {
+        "heading": "Explorer",
+        "titles": {
+          "product": "Produits",
+          "gedu": "Gedus",
+          "responses": "Gamers"
+        },
+        "counts": {
+          "product": "{count, plural, one {# produit} other {# produits}}",
+          "gedu": "{count, plural, one {# Gedu} other {# Gedus}}",
+          "responses": "{count, plural, one {# réponse} other {# réponses}}"
+        }
+      },
+      "rows": {
+        "none": "Rien pour l’instant.",
+        "answers": "Réponses",
+        "positive": "Positives",
+        "positiveAgainst": "Positives (plateforme {share})"
+      },
+      "lists": {
+        "titles": {
+          "product": "Produits",
+          "gedu": "Gedus"
+        },
+        "subtitle": "Les plus faibles d’abord, par rapport à la moyenne de la plateforme"
+      },
+      "detail": {
+        "kinds": {
+          "product": "Produit",
+          "group": "Groupe",
+          "gedu": "Gedu",
+          "gamer": "Gamer"
+        },
+        "open": {
+          "product": "Ouvrir le produit",
+          "group": "Ouvrir le groupe",
+          "gedu": "Ouvrir le compte du Gedu",
+          "gamer": "Ouvrir le compte du gamer"
+        },
+        "none": "Aucune réponse à ce sujet pour l’instant.",
+        "platform": "Plateforme {share}",
+        "groupsHeading": "Groupes",
+        "productsHeading": "Produits",
+        "gedusHeading": "Gedus",
+        "gamersHeading": "Gamers ayant répondu",
+        "responsesHeading": "Ce que les gamers ont dit"
+      },
+      "responses": {
+        "title": "Ce que les gamers ont dit",
+        "none": "Aucune réponse ici.",
+        "noneWorthReading": "Rien à lire en priorité : aucune réponse négative et aucun message.",
+        "noGedu": "Aucun Gedu enregistré",
+        "who": "Réponse",
+        "filterLabel": "Quelles réponses",
+        "worthReading": "À lire en priorité ({count})",
+        "all": "Toutes ({count})"
+      }
     }
   },
   "auth": {
@@ -3144,7 +3254,8 @@
     "tools": "Outils",
     "expandSidebar": "Déplier la barre latérale",
     "collapseSidebar": "Replier la barre latérale",
-    "substitutions": "Remplacements"
+    "substitutions": "Remplacements",
+    "feedback": "Avis"
   },
   "home": {
     "hero": {

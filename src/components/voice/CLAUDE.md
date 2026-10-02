@@ -169,7 +169,8 @@ and everyone is ejected — and only for that one audience.
 Every other role leaves exactly as it did before, and the error path is untouched.
 
 **Rule: the answers are one row per child, per group, per session window, written and read
-by the child themselves through RLS — no route, no function, and no session row.** The key
+by the child themselves through RLS — no route and no session row; admins read every row
+through the guard-first `get_admin_session_feedback`, which writes nothing.** The key
 is the group plus the child plus the instant the window opened, which is the same triple
 in-call chat keys a channel by and the same value the voice token response already hands
 every joiner, so a later reader can line a session's readings up against chat and
@@ -384,7 +385,7 @@ The corollary for anything added next: put it where the run ends, or resolve it 
 
 - `VoiceRoomProvider` — context orchestrator; takes `groupId: string | null` (null = instant room → custom/private features disabled). Composes the hooks, derives `participantsByZone` (bucketing private-zone occupants by their authoritative occupancy row, self by synchronous membership zone), owns the unified `moveParticipantToZone` (moveUser + occupancy write/clear) and the one-shot confinement seed, and routes Daily app-messages in `handleAppMessage`. Exports `VoiceRoomContext` for the style-guide mock.
 - `hooks/` — `use-audio-pipeline` (playback + analyser; mutes cross-zone via `element.muted`), `use-zone-membership` (userData self-move + mod `moveUser`; sole writer of `localZoneIdRef`), `use-zone-data` (DB custom zones + occupancy + realtime), `use-receive-permissions` (owner-side live `canReceive` projection over raw occupancy), `use-mic-devices`, `use-screen-share`, `use-moderator-controls`, `use-speaking-glow`, `use-local-stream-glow`, `use-wake-lock`. `hooks/types.ts` — shared types incl. the `VoiceRoomContextValue` contract.
-- Outside this dir: `src/services/session-feedback/` (the child's own feedback row: the read that prefills the screen, the upsert behind Done, and the parse that narrows a stored answers object to the catalogue), `src/services/voice/` (token service + `VoiceZonesService` + React Query hook), `src/app/api/voice/token/route.ts`, `src/lib/daily.ts` (Daily REST + room-name helpers + token `canReceive`/`user_id`), `src/lib/voice/receive-permissions.ts` (the pure `canReceive` projection, shared by the route + the hook), `src/lib/session-schedule.ts` + `src/lib/voice-window.ts`, `src/lib/voice/{user-name,audio-routing,zone-composition,glow,locked-session}.ts`, `src/lib/constants/{voice,voice-zones}.ts`.
+- Outside this dir: `src/services/session-feedback/` (the child's own feedback row: the read that prefills the screen, the upsert behind Done, and the parse that narrows a stored answers object to the catalogue; and the admin read: `get_admin_session_feedback`'s dataset and its contract, for the admin feedback page), `src/services/voice/` (token service + `VoiceZonesService` + React Query hook), `src/app/api/voice/token/route.ts`, `src/lib/daily.ts` (Daily REST + room-name helpers + token `canReceive`/`user_id`), `src/lib/voice/receive-permissions.ts` (the pure `canReceive` projection, shared by the route + the hook), `src/lib/session-schedule.ts` + `src/lib/voice-window.ts`, `src/lib/voice/{user-name,audio-routing,zone-composition,glow,locked-session}.ts`, `src/lib/constants/{voice,voice-zones}.ts`.
 
 ## Env
 

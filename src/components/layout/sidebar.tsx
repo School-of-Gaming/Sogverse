@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MapPin,
+  MessageSquareHeart,
   Receipt,
   ReceiptText,
   Sparkles,
@@ -34,7 +35,7 @@ type SidebarKey =
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
   | "invoiceCustomers" | "geduInvoicing" | "libraryContent" | "platformVision"
   | "camps" | "events"
-  | "sites" | "substitutions";
+  | "sites" | "substitutions" | "feedback";
 
 interface NavItemDef {
   href: StaticAppHref;
@@ -68,6 +69,9 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     // of work rather than a catalogue: a session with nobody teaching it is
     // answered today, and the clubs are answered whenever.
     { href: ROUTES.admin.substitutions, labelKey: "substitutions", icon: <ArrowLeftRight className="h-5 w-5" /> },
+    // Beside the queue rather than among the reports: it is the read of how
+    // sessions are landing, and a note that needs acting on is today's work too.
+    { href: ROUTES.admin.feedback, labelKey: "feedback", icon: <MessageSquareHeart className="h-5 w-5" /> },
     { href: ROUTES.admin.consumerClubs, labelKey: "consumerClubs", icon: kindIcon("consumer_club") },
     { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: kindIcon("municipality_club") },
     { href: ROUTES.admin.camps, labelKey: "camps", icon: kindIcon("camp") },
