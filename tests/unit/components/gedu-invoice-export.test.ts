@@ -11,6 +11,7 @@ import {
   buildGeduInvoiceCsv,
   csvField,
   csvMoney,
+  csvText,
 } from "@/components/gedu-invoicing/gedu-invoice-csv";
 import type { GeduInvoicingTranslator } from "@/components/gedu-invoicing/gedu-invoice-export";
 import {
@@ -53,7 +54,7 @@ function invoiceOf(viewer: "was-away" | "stood-in"): GeduInvoice {
 /** The CSV's records as fields, BOM stripped. The fixtures need no quoting. */
 function records(csv: string): string[][] {
   return csv
-    .replace(/^﻿/, "")
+    .replace(/^\uFEFF/, "")
     .split("\r\n")
     .filter((line) => line !== "")
     .map((line) => line.split(";"));
@@ -71,7 +72,7 @@ describe("buildGeduInvoiceCsv", () => {
   it("is UTF-8 with a BOM, semicolon-delimited, with CRLF line ends", () => {
     const csv = buildGeduInvoiceCsv({ invoice: aino, locale: "en", t: translator("en") });
 
-    expect(csv.startsWith("﻿")).toBe(true);
+    expect(csv.startsWith("\uFEFF")).toBe(true);
     expect(csv.endsWith("\r\n")).toBe(true);
     expect(csv.replaceAll("\r\n", "")).not.toMatch(/[\r\n]/);
     expect(records(csv)[0]).toEqual([
@@ -173,6 +174,42 @@ describe("buildGeduInvoiceCsv", () => {
     expect(first[6]).toBe("Vastaava Gedu");
     expect(first[7]).toBe("Kirjattu");
   });
+
+  it("neutralises a typed cell a spreadsheet would read as a formula", () => {
+    const hostile: GeduInvoice = {
+      ...aino,
+      clubs: aino.clubs.map((club) => ({
+        ...club,
+        name: club.segment === "municipality" ? "-Kivikko" : club.name,
+        lines: club.lines.map((line) => ({
+          ...line,
+          substitute:
+            line.substitute === null
+              ? null
+              : { ...line.substitute, firstName: '=HYPERLINK("x","y")' },
+        })),
+      })),
+    };
+    const csv = buildGeduInvoiceCsv({ invoice: hostile, locale: "en", t: translator("en") });
+    const rows = records(csv).slice(1);
+
+    expect(rows[2][3]).toBe("'-Kivikko");
+    expect(rows[2][8]).toBe(`"'=HYPERLINK(""x"",""y"") Rinne"`);
+    // Generated cells are left alone, the club beside it untouched.
+    expect(rows[2][0]).toBe("2026-05-11");
+    expect(rows[1][3]).toBe("Minecraft adventurers");
+  });
+});
+
+describe("csvText", () => {
+  it("prefixes a quote to a value opening with a formula character", () => {
+    for (const lead of ["=", "+", "-", "@", "\t", "\r"]) {
+      expect(csvText(`${lead}1+1`)).toBe(`'${lead}1+1`);
+    }
+    expect(csvText("Ryhmä A")).toBe("Ryhmä A");
+    expect(csvText("A-ryhmä")).toBe("A-ryhmä");
+    expect(csvText("")).toBe("");
+  });
 });
 
 describe("csvMoney", () => {
@@ -224,7 +261,9 @@ describe("geduInvoicePdfContent", () => {
     expect(content.month).toBe("May 2026");
     expect(content.to).toBe("To: School of Gaming");
     // 10:40 in Helsinki, whatever zone the test runs in.
-    expect(content.figuresAsOf).toMatch(/^Figures as of May 21, 2026.*10:40/);
+    expect(content.figuresAsOf).toMatch(
+      /^Figures as of May 21, 2026.*10:40.*GMT\+3$/,
+    );
   });
 
   it("says the month is in progress while a line is still upcoming", () => {
@@ -254,6 +293,7 @@ describe("geduInvoicePdfContent", () => {
         label: "Municipality",
         clubs: [
           {
+            productId: expect.any(String),
             club: "Pelikerho Kivikko",
             role: "Primary",
             sessions: "2",
@@ -266,6 +306,7 @@ describe("geduInvoicePdfContent", () => {
         label: "Consumer",
         clubs: [
           {
+            productId: expect.any(String),
             club: "Minecraft adventurers",
             role: "Primary",
             sessions: "2",
@@ -289,6 +330,8 @@ describe("geduInvoicePdfContent", () => {
   it("details the paying sessions only, per club line", () => {
     expect(contentOf(aino).sessionsByClub).toEqual([
       {
+        productId: expect.any(String),
+        role: "Primary",
         heading: "Pelikerho Kivikko · Primary",
         sessions: [
           { date: "Mon 5/4/2026", group: "Ryhmä A" },
@@ -296,6 +339,8 @@ describe("geduInvoicePdfContent", () => {
         ],
       },
       {
+        productId: expect.any(String),
+        role: "Primary",
         heading: "Minecraft adventurers · Primary",
         sessions: [
           { date: "Tue 5/5/2026", group: "Group 1" },
@@ -315,24 +360,27 @@ describe("geduInvoicePdfContent", () => {
     expect(listed).toHaveLength(withPaid.length);
   });
 
-  it("formats money the way the page does, in Helvetica's character set", () => {
+  it("formats money the way the page does, with no narrow or thin space", () => {
     const content = contentOf(aino, "fr");
     const total = content.summary.at(-1)?.figure ?? "";
 
-    expect(total).toBe("230,00 €");
+    expect(total).toBe("230,00\u00A0€");
     for (const text of [
       ...content.summary.map((row) => row.figure),
       content.figuresAsOf,
       content.month,
     ]) {
-      expect(text).not.toMatch(/[  ]/);
+      expect(text).not.toMatch(/[\u202F\u2009]/);
     }
   });
 });
 
 describe("pdfText", () => {
-  it("turns the narrow no-break space into one Helvetica can draw", () => {
-    expect(pdfText("1 234,50 €")).toBe("1 234,50 €");
+  it("turns the narrow no-break space and the thin space into a no-break space", () => {
+    expect(pdfText("1\u202F234,50\u00A0€")).toBe(
+      "1\u00A0234,50\u00A0€",
+    );
+    expect(pdfText("10\u2009h")).toBe("10\u00A0h");
   });
 });
 

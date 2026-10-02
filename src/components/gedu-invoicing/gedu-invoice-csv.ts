@@ -57,12 +57,12 @@ export function buildGeduInvoiceCsv({
     line.date,
     String(line.isoWeek),
     t(SEGMENT_LABEL_KEY[club.segment]),
-    club.name,
-    line.groupName,
-    club.locationName ?? "",
+    csvText(club.name),
+    csvText(line.groupName),
+    csvText(club.locationName ?? ""),
     t(ROLE_LABEL_KEY[club.role]),
     t(STATUS_LABEL_KEY[line.kind]),
-    otherGeduName(line) ?? "",
+    csvText(otherGeduName(line) ?? ""),
     club.feeCents === null ? "" : csvMoney(club.feeCents),
     club.feeCents === null
       ? ""
@@ -106,6 +106,17 @@ export function csvMoney(cents: number): string {
   return `${euros},${String(rest).padStart(2, "0")}`;
 }
 
+/**
+ * A cell somebody typed — a club, group or location name, a gedu's name —
+ * made inert for a spreadsheet: a value opening with a character Excel reads
+ * as the start of a formula gets a leading `'`, so it is shown as text rather
+ * than evaluated (OWASP's CSV injection rule). Cells the file generates itself
+ * — dates, weeks, money, the localised words — never need it and never get it.
+ */
+export function csvText(value: string): string {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
 /** RFC 4180: quote a field holding the delimiter, a quote or a line break. */
 export function csvField(value: string): string {
   return /[;"\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
@@ -116,7 +127,7 @@ const ROLE_RANK = { primary: 0, assistant: 1 } as const satisfies Record<
   number
 >;
 
-const BYTE_ORDER_MARK = "﻿";
+const BYTE_ORDER_MARK = "\uFEFF";
 const DELIMITER = ";";
 const LINE_END = "\r\n";
 

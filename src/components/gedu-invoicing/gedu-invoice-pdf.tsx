@@ -77,6 +77,8 @@ export interface GeduInvoicePdfContent {
   segments: readonly {
     label: string;
     clubs: readonly {
+      /** With the role, what tells two lines apart: club names repeat. */
+      productId: string;
       club: string;
       role: string;
       sessions: string;
@@ -88,6 +90,8 @@ export interface GeduInvoicePdfContent {
   sessionColumns: { date: string; group: string };
   /** Club lines with at least one paying session, in the club table's order. */
   sessionsByClub: readonly {
+    productId: string;
+    role: string;
     heading: string;
     sessions: readonly { date: string; group: string }[];
   }[];
@@ -116,6 +120,7 @@ export function geduInvoicePdfContent({
     clubs: invoice.clubs
       .filter((club) => club.segment === segment)
       .map((club) => ({
+        productId: club.productId,
         club: club.name,
         role: role(club),
         sessions: String(club.paidCount),
@@ -131,6 +136,8 @@ export function geduInvoicePdfContent({
 
   const sessionsByClub = clubsInTableOrder
     .map((club) => ({
+      productId: club.productId,
+      role: role(club),
       heading: `${club.name}${HEADING_SEPARATOR}${role(club)}`,
       sessions: club.lines
         .filter((line) => line.kind === "paid")
@@ -157,9 +164,15 @@ export function geduInvoicePdfContent({
     to: t("export.to"),
     figuresAsOf: pdfText(
       t("export.figuresAsOf", {
+        // `Intl` refuses a zone name beside `dateStyle`/`timeStyle`, so the
+        // fields are spelled out to carry the zone the time is read in.
         time: formatDate(now, locale, {
-          dateStyle: "long",
-          timeStyle: "short",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          timeZoneName: "short",
           timeZone: DEFAULT_TIMEZONE,
         }),
       }),
@@ -214,14 +227,15 @@ export async function renderGeduInvoicePdf(
 }
 
 /**
- * Text with the narrow no-break space `Intl` puts in French amounts over a
- * thousand turned into an ordinary no-break space. It is the one character
- * here a font is least likely to carry — the PDF standard Helvetica prints it
- * as a stray slash — and the two look the same at this size, so a figure
- * cannot misprint whatever the face.
+ * Text with the narrow no-break space and the thin space that `Intl` puts in
+ * some locales' figures — French amounts over a thousand, for one — turned
+ * into an ordinary no-break space. A defensive normalisation: those two are
+ * the characters a face is least likely to carry, the ordinary no-break space
+ * is in every one, and they look the same at this size, so a figure prints
+ * whatever the face.
  */
 export function pdfText(value: string): string {
-  return value.replace(/[  ]/g, " ");
+  return value.replace(/[\u202F\u2009]/g, "\u00A0");
 }
 
 const HEADING_SEPARATOR = " · ";
@@ -392,7 +406,7 @@ export function GeduInvoicePdfDocument({
             <Text style={styles.segmentLabel}>{segment.label}</Text>
             {segment.clubs.map((club) => (
               <View
-                key={`${club.club}|${club.role}`}
+                key={`${club.productId}|${club.role}`}
                 style={styles.row}
                 wrap={false}
               >
@@ -413,7 +427,7 @@ export function GeduInvoicePdfDocument({
           <Text>{content.noSessions}</Text>
         ) : (
           content.sessionsByClub.map((club) => (
-            <View key={club.heading} style={styles.clubSessions}>
+            <View key={`${club.productId}|${club.role}`} style={styles.clubSessions}>
               <Text style={styles.bold}>{club.heading}</Text>
               <View style={styles.headRow}>
                 <Text style={styles.colDate}>{content.sessionColumns.date}</Text>
