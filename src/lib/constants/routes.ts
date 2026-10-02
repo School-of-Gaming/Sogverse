@@ -430,6 +430,15 @@ export const ROUTES = {
    */
   completeRegistration: "/complete-registration",
   /**
+   * Where Supabase Auth's OAuth server sends an admin to approve an AI app
+   * connecting to the MCP endpoint, carrying `?authorization_id=`. The path is
+   * fixed by `[auth.oauth_server]` in `supabase/config.toml` (and the hosted
+   * projects' Auth settings), so it is not translated. Public to the proxy,
+   * because the proxy's login bounce keeps only the pathname and would drop the
+   * id; the page gates itself.
+   */
+  oauthConsent: "/oauth/consent",
+  /**
    * Public identity page — who School of Gaming is, what Yty is, and the
    * public FAQ. Reached from the header in both auth states: it is the one
    * page carrying this copy, and the home page it used to live on is

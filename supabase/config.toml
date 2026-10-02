@@ -57,6 +57,15 @@ refresh_token_reuse_interval = 10
 enable_signup = true
 enable_anonymous_sign_ins = false
 
+[auth.oauth_server]
+# Supabase Auth as an OAuth 2.1 authorization server, so an AI client can sign an admin in
+# to the MCP endpoint at /api/mcp (src/lib/mcp/). The consent page is the app's, at
+# site_url + this path. Registration is open on purpose (the owner's ruling): any MCP
+# client connects with the server URL alone, and the consent page is what defends it.
+enabled = true
+authorization_url_path = "/oauth/consent"
+allow_dynamic_registration = true
+
 [auth.email]
 enable_signup = true
 double_confirm_changes = true

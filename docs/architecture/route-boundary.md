@@ -89,6 +89,7 @@ integration test that renders both cards instead.
 | `optional-auth` | 1 | Instant-room token: public, but silently elevates admin/certified-gedu to room owner; fails closed to guest. A `role-gated \| public` binary cannot express this route |
 | `webhook` | 4 | Three verifier strategies (Stripe signature, Meta HMAC + timing-safe compare, Discord Ed25519) plus Meta's GET challenge (a plain `===` compare until the sweep made it timing-safe like every other secret comparison here). All POST verifiers consume the **raw text body** before any JSON parse. Divergent error contracts: Stripe wants 5xx for retry; Meta must never 5xx or the endpoint is disabled |
 | `api-key` | 1 | Minecraft join-check: Bearer + timing-safe compare, server-to-server. Its gating is unbuilt, so it authenticates, validates, and fails closed 501 — it reaches no data at all |
+| `oauth-bearer` | 2 (added later) | The MCP endpoint (`src/lib/mcp/`): an OAuth access token from the project's own Auth server, granted to an AI app an admin approved, verified and role-checked on every request by the gate the entry names. Added after this snapshot; it is the one posture whose caller holds no cookie session and no shared secret |
 
 ### Existing primitives (the wrapper composes these; it replaces none of them)
 

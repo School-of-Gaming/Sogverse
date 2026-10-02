@@ -159,7 +159,12 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // of that match by `isAdminOnlySurface` below.
 // ROUTES.team is the Team index, and its prefix match covers each person's
 // page at either address (/team/[idOrSlug]).
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix];
+// ROUTES.oauthConsent is where an AI app sends an admin to approve it, and it
+// is listed here only because the login bounce below keeps the pathname alone:
+// it would drop `?authorization_id=`, which is the whole of the request. The
+// page gates itself — signed out to login with the full path and query, anyone
+// but an admin refused — so being public here grants nothing.
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix, ROUTES.oauthConsent];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — seat-holders (a gamer, or a parent on

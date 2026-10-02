@@ -66,6 +66,7 @@
       "changePin": "PIN yIchoH",
       "roblox": "chenmoHwI’ DuSaQ",
       "geduContract": "Gedu quv chut",
+      "oauthConsent": "QoQ jan yIrar",
       "seatOffer": "quS nob",
       "geduSubstitutions": "lIwmey",
       "geduInvoicing": "DIlmeH ghItlh",
@@ -4170,6 +4171,25 @@
       "roblox": "Roblox per, Roblox Degh, je Roblox Tilt Roblox Corporation ngoq’a’mey — Amerika Sepmey je latlh Sepmey. chaw’ lo’lu’.",
       "lynx": "Lynx Educate je Lynx Educate Degh Lynx Educate ngoq’a’mey. chaw’ lo’lu’.",
       "documents": "chenmoHwI’ DuSaQ ghItlhmey"
+    }
+  },
+  "oauthConsent": {
+    "title": "Sogverse QoQ jan yIrar",
+    "body": "{clientName} DaH SoH moj neH. DIvI' HoS Hoch Dalo'.",
+    "destinationLabel": "naDev Dachu'meH ghItlh ngeH",
+    "loopbackHint": "De'wI'vam Daq Qap QoQ jan.",
+    "unrecognised": "School of Gaming Daqvam ghovlaHbe'. QoQ jan Dun vo' DaH DataghDI' neH yIchaw'. Dataghbe'chugh, yIQoj.",
+    "signedInAs": "{email} SoH",
+    "failed": "tlhobvam DajanglaHbe'. QoQ jan Dun vo' yItaghqa'.",
+    "deny": "yIQoj",
+    "allow": "yIchaw'",
+    "unavailable": {
+      "title": "naDev 'el ghItlhvam lo'pu'",
+      "body": "wa'logh neH Qap ghItlh, 'ej tugh Heghchu'. QoQ jan Dun vo' yItaghqa'."
+    },
+    "refused": {
+      "title": "School of Gaming DIvI' HoS neH QoQ jan rarlaH",
+      "body": "{email} SoH, 'ach DIvI' HoS ghItlh 'oHbe'."
     }
   },
   "seatOffer": {

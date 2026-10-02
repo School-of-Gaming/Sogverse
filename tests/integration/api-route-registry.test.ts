@@ -103,7 +103,20 @@ type Posture =
    * its own secret inline names the compare it uses, which records the
    * hand-roll as a wart rather than excusing it.
    */
-  | { kind: "api-key"; reason: string; primitive: string };
+  | { kind: "api-key"; reason: string; primitive: string }
+  /**
+   * An OAuth access token from the project's own Auth server, presented as a
+   * bearer by a client an admin approved — the MCP endpoint. No cookie session
+   * is involved, so neither `defineRoute` nor the bare role gate applies;
+   * `primitive` names the gate the file must call, and `roles` the roles that
+   * gate admits, re-read on every request.
+   */
+  | {
+      kind: "oauth-bearer";
+      roles: readonly UserRole[];
+      primitive: string;
+      reason: string;
+    };
 
 /**
  * Webhook verifier strategies, recorded per handler because their error
@@ -196,6 +209,7 @@ const TESTS = {
     "tests/integration/api/tools-minecraft-password-reset.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
+  mcp: "tests/integration/api/mcp.test.ts",
   municipalityInvoicingFinvoice:
     "tests/integration/api/municipality-invoicing-finvoice.test.ts",
   // The partner API: one suite for what its resources share (the key, query
@@ -211,6 +225,7 @@ const TESTS = {
   partnerRobloxResearch: "tests/integration/api/partner-roblox-research.test.ts",
   partnerSessions: "tests/integration/api/partner-sessions.test.ts",
   partnerTraffic: "tests/integration/api/partner-traffic.test.ts",
+  oauthConsent: "tests/integration/api/oauth-consent.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
   catalogueImagesManage: "tests/integration/api/catalogue-images-manage.test.ts",
   catalogueImagesReplace: "tests/integration/api/catalogue-images-replace.test.ts",
@@ -1095,6 +1110,54 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // --- MCP (AI apps acting as an admin) --------------------------------------
+
+  // One gate for both methods: GET is the 2025-era stream opener, which the
+  // stateless server answers 405 once the caller is through.
+  "src/app/api/mcp/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "oauth-bearer",
+          roles: ["admin"],
+          primitive: "withMcpAdmin",
+          reason:
+            "an AI app working for an admin holds no Sogverse cookie session; it presents an OAuth access token the project's own Auth server issued to it after the admin approved it on the consent page. The gate verifies the token's signature and expiry, that the project's Auth server issued it, and that it carries a client_id — which refuses a first-party session token lifted out of a browser and presented as a bearer — and then reads the caller's role on a client bound to the token, so the read runs under the admin's own row policies and a role change takes effect on the next request rather than when the grant expires. No service-role client is reached",
+        },
+        body: { kind: "none" },
+        test: TESTS.mcp,
+      },
+      POST: {
+        posture: {
+          kind: "oauth-bearer",
+          roles: ["admin"],
+          primitive: "withMcpAdmin",
+          reason:
+            "the same gate as GET: the JSON-RPC traffic of an AI app holding an admin's OAuth grant, verified and role-checked on every request",
+        },
+        body: {
+          kind: "json",
+          schema:
+            "the MCP SDK: the JSON-RPC envelope, then each tool's own input schema under src/lib/mcp/",
+        },
+        test: TESTS.mcp,
+      },
+    },
+  },
+
+  // The consent page's two buttons. Admin-only like the page: a grant held by
+  // anyone else would be refused at the MCP endpoint, and refusing it here
+  // keeps one from existing at all.
+  "src/app/api/oauth/consent/route.ts": {
+    handlers: {
+      POST: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "oauthConsentBody" },
+        test: TESTS.oauthConsent,
+      },
+    },
+  },
+
   // --- Partner API (Lynx Educate) ------------------------------------------
   //
   // Eight read-only resources published at `/docs/lynx-api`, all on one issued
@@ -1579,6 +1642,9 @@ describe("check 1 — completeness: the surface and the registry agree", () => {
         expect(handler.posture.roles.length).toBeGreaterThan(0);
         return;
       }
+      if (handler.posture.kind === "oauth-bearer") {
+        expect(handler.posture.roles.length).toBeGreaterThan(0);
+      }
       expect(handler.posture.reason.trim().length).toBeGreaterThan(0);
     },
   );
@@ -1660,18 +1726,24 @@ describe("check 2 — static conformance: gated routes contain the primitive", (
   // answers: the partner routes share a helper, and the Minecraft join-check
   // still compares its own key inline. Naming each one keeps the hand-roll
   // visible and still verified, instead of exempting it.
+  //
+  // An oauth-bearer handler is held to the same check for the same reason: its
+  // gate is a bearer token rather than a cookie, so the shared session gate is
+  // nowhere in the file, and deleting the one call that verifies the token
+  // would put the MCP endpoint's admin tools on the open internet.
   const keyedHandlers = REGISTERED_HANDLERS.flatMap((h) =>
-    h.handler.posture.kind === "api-key"
+    h.handler.posture.kind === "api-key" ||
+    h.handler.posture.kind === "oauth-bearer"
       ? [[h.label, h.path, h.handler.posture.primitive] as const]
       : [],
   );
 
-  it("found api-key routes to check", () => {
+  it("found api-key and oauth-bearer routes to check", () => {
     expect(keyedHandlers.length).toBeGreaterThan(0);
   });
 
   it.each(keyedHandlers)(
-    "%s runs the key check it declares",
+    "%s runs the key or token check it declares",
     (_label, path, primitive) => {
       expect(
         runsKeyCheck(readSource(path), primitive),

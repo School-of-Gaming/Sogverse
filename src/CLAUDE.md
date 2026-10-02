@@ -64,7 +64,7 @@ none of its own are stated in `packages/sog-ui/CLAUDE.md` and held by lint and b
 - Within `[locale]`, routes are grouped: `(auth)`, `(dashboard)`, `(public)`, `(voice)`, `(preview)`
 - **Name a route through the app's wrapped navigation module (`src/i18n/navigation.tsx`), not `next/link` / `next/navigation`** — hrefs are typed against the route map and emitted locale-prefixed. The exception, and the rule for it, is in `src/i18n/CLAUDE.md`: comparing a pathname → wrapped; embedding one in a URL → raw, with a comment.
 - Components are organized by role: `components/[role]/`, shared UI in `components/ui/`
-- Supabase clients: `lib/supabase/` — `client.ts` (browser), `server.ts` (RSC), `anon.ts` (identity-free server reads), `admin.ts` (privileged)
+- Supabase clients: `lib/supabase/` — `client.ts` (browser), `server.ts` (RSC), `anon.ts` (identity-free server reads), `bearer.ts` (a caller's bearer token, for the MCP endpoint), `admin.ts` (privileged)
 - Auto-generated types in `types/database.types.ts`, convenience aliases in `types/index.ts`
 
 ## Service Layer Pattern
@@ -81,6 +81,7 @@ Each feature in `src/services/` follows a two-to-three-file pattern:
 - `createBrowserClient()` - Browser-side, singleton pattern. Used for data queries and auth operations (sign in, sign up, sign out).
 - `createServerComponentClient()` - Server components (RSC)
 - `createAnonClient()` - Anon key and no cookies, for a server read whose answer must not vary by caller
+- `createBearerClient(token)` - Anon key plus a bearer token from an `Authorization` header, no session kept — the MCP endpoint's client, acting as the admin the OAuth token names
 - `createAdminClient()` - Service role key for privileged operations
 
 ## Auth Architecture

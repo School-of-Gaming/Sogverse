@@ -73,6 +73,7 @@
       "robloxSafeguarding": "Creator Academy Child Safeguarding Policy",
       "robloxTerms": "Creator Academy Terms & Conditions",
       "geduContract": "Gedu contract",
+      "oauthConsent": "Connect an AI app",
       "seatOffer": "Seat offer",
       "geduSubstitutions": "Substitutions",
       "geduInvoicing": "Invoicing",
@@ -5051,6 +5052,25 @@
       "geonames": "The list of countries, regions and towns you pick from when you tell us where your family lives — the same list we use to find clubs near you. Ours is based on GeoNames rather than being a copy of it: we leave out places we do not serve, group some of them differently, and rename others to the form people use locally.",
       "laPoste": "The French postal codes in that same list, so a family in France can type their code instead of hunting for their commune.",
       "mcHeads": "Draws the Minecraft character shown beside a linked Minecraft account. They ask for nothing in return, so this credit is a thank-you rather than a requirement."
+    }
+  },
+  "oauthConsent": {
+    "title": "Connect an AI app to Sogverse",
+    "body": "{clientName} is asking to act as you in Sogverse, with everything your admin account can do.",
+    "destinationLabel": "Your sign-in will be sent to",
+    "loopbackHint": "An app running on this computer.",
+    "unrecognised": "School of Gaming doesn't recognise this destination. Only allow this if you have just started connecting from your own AI app. If you didn't, choose Deny.",
+    "signedInAs": "Signed in as {email}",
+    "failed": "This request can no longer be answered. Start connecting again from your AI app.",
+    "deny": "Deny",
+    "allow": "Allow",
+    "unavailable": {
+      "title": "This sign-in link has already been used",
+      "body": "Each link works once and expires soon after. Start connecting again from your AI app."
+    },
+    "refused": {
+      "title": "Only School of Gaming admins can connect an AI app",
+      "body": "You're signed in as {email}, which isn't an admin account."
     }
   },
   "seatOffer": {

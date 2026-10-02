@@ -125,6 +125,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Voice — instant rooms | `src/components/voice/instant/` |
 | Discord bot | `src/app/api/discord/` |
 | Partner API (Lynx Educate) | `src/app/api/partner/` |
+| MCP server — AI apps acting as an admin, its OAuth gate and consent page | `src/lib/mcp/` |
 | SOG-UI — the UI language package and its demo | `packages/sog-ui/` |
 | Database / migrations | `supabase/` |
 | Testing conventions | `tests/` |

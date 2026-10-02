@@ -74,6 +74,10 @@ export function resolveSafeRedirect(
   if (allowCompleteRegistration && internal === ROUTES.completeRegistration) {
     return path;
   }
+  // The OAuth consent page, exactly: an admin signed out when their AI app
+  // sent them there signs in and comes back to the same authorization, whose
+  // id rides on the query this path keeps.
+  if (internal === ROUTES.oauthConsent) return path;
   return SAFE_REDIRECT_PREFIXES.some((p) => internal.startsWith(p))
     ? path
     : null;
