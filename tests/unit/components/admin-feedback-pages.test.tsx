@@ -104,7 +104,7 @@ describe("admin feedback pages", () => {
     for (const label of ["0%", "25%", "50%", "75%", "100%", "Jul 2026", "Aug", "Sep"]) {
       expect(within(chart).getByText(label)).toBeTruthy();
     }
-    expect(screen.getByText("Since Jul 1, 2026")).toBeTruthy();
+    expect(screen.queryByText(/^Since /)).toBeNull();
     expect(within(chart).getByText("Sep 28, 2026 – Sep 30, 2026 · No answers")).toBeTruthy();
     expect(within(chart).getByText("Sep 7, 2026 – Sep 13, 2026 · 89% positive · 9 answers")).toBeTruthy();
   });
@@ -133,6 +133,21 @@ describe("admin feedback pages", () => {
     wrap(<FeedbackDetailPage read={read(dataset)} origin={null} scope={{ kind: "gamer", id: HELMI.id }} />);
     const gamerChart = screen.getByRole("group", { name: "Positive answers by week" });
     expect(within(gamerChart).queryByText("Platform")).toBeNull();
+  });
+
+  it("draws the chart on the overview and detail pages only", () => {
+    const chart = { name: "Positive answers by week" };
+    const { unmount } = wrap(<FeedbackListPage read={read(dataset)} dimension="group" />);
+    expect(screen.queryByRole("group", chart)).toBeNull();
+    unmount();
+    wrap(<FeedbackResponsesPage read={read(dataset)} />);
+    expect(screen.queryByRole("group", chart)).toBeNull();
+  });
+
+  it("states a statement's negative share before its positive one, as the meter reads", () => {
+    wrap(<FeedbackOverviewPage read={read(dataset)} />);
+    const line = screen.getByText("I had fun.").closest("li");
+    expect(line?.textContent).toMatch(/negative.*positive/);
   });
 
   it("judges a group of one answer and says so for a group with none", () => {
@@ -203,10 +218,11 @@ describe("admin feedback pages", () => {
       }),
     ]);
 
-    function cardOf(name: string): HTMLElement {
-      const item = screen.getByRole("link", { name }).closest("li");
-      if (item === null) throw new Error(`No card for ${name}`);
-      return item;
+    /** A response's row group: its row of answers and, when it has one, its note's row. */
+    function responseOf(name: string): HTMLElement {
+      const group = screen.getByRole("link", { name }).closest<HTMLElement>("[role='rowgroup']");
+      if (group === null) throw new Error(`No response for ${name}`);
+      return group;
     }
 
     it("opens on what is worth reading, negative with a note first, then negative, then a note", () => {
@@ -228,7 +244,7 @@ describe("admin feedback pages", () => {
       wrap(
         <FeedbackResponsesPage read={read(said)} />,
       );
-      const card = cardOf("Bea");
+      const card = responseOf("Bea");
       const meters = within(card).getAllByRole("img");
       expect(meters.map((meter) => meter.getAttribute("aria-label"))).toEqual(["Yes", "Yes", "Yes", "Yes", "No"]);
       // A meter fills from the first segment through the level: four of five for "Yes".
@@ -238,9 +254,51 @@ describe("admin feedback pages", () => {
       expect(negative.querySelector("svg")).not.toBeNull();
       expect(within(card).getByText("Nobody listened.")).toBeTruthy();
 
-      const skipped = within(cardOf("Lumi")).getAllByRole("img", { name: "Skipped" });
+      const skipped = within(responseOf("Lumi")).getAllByRole("img", { name: "Skipped" });
       expect(skipped).toHaveLength(4);
       expect(skipped[0].querySelectorAll(".bg-act")).toHaveLength(0);
+    });
+
+    it("names the statements once, as headings carrying the sentence, over a row per response and its note", () => {
+      wrap(<FeedbackResponsesPage read={read(said)} />);
+      fireEvent.click(screen.getByRole("button", { name: "All (4)" }));
+      const table = screen.getByRole("table", { name: "What gamers said" });
+
+      const headers = within(table).getAllByRole("columnheader");
+      expect(headers).toHaveLength(6);
+      const statementHeaders = headers.slice(1).map((header) => {
+        const label = header.querySelector<HTMLElement>("[tabindex='0']");
+        if (label === null) throw new Error("A statement heading has nothing to focus");
+        return label;
+      });
+      expect(statementHeaders.map((label) => label.textContent)).toEqual([
+        "Learned",
+        "Fun",
+        "Gedu knew",
+        "Gedu kind",
+        "Listened",
+      ]);
+      const sentenceOf = (label: HTMLElement) =>
+        document.getElementById(label.getAttribute("aria-describedby") ?? "")?.textContent;
+      expect(sentenceOf(statementHeaders[0])).toBe("I learned something new.");
+      expect(sentenceOf(statementHeaders[4])).toBe("My group listens to and understands me.");
+
+      // The heading row group, then one per response.
+      expect(within(table).getAllByRole("rowgroup")).toHaveLength(5);
+
+      const bea = within(responseOf("Bea")).getAllByRole("row");
+      expect(bea).toHaveLength(2);
+      const [answers, note] = bea;
+      const cells = within(answers).getAllByRole("cell");
+      expect(cells).toHaveLength(6);
+      // Below lg each answer cell names its own statement, the heading row being hidden.
+      expect(within(cells[5]).getByText("Listened").className).toMatch(/lg:hidden/);
+      expect(within(cells[5]).getByText("No", { selector: "span[aria-hidden]" }).className).toMatch(/text-warning/);
+      const noteCell = within(note).getByRole("cell");
+      expect(noteCell.getAttribute("aria-colspan")).toBe("6");
+      expect(noteCell.textContent).toBe("Nobody listened.");
+
+      expect(within(responseOf("Quinn")).getAllByRole("row")).toHaveLength(1);
     });
 
     it("reveals twenty more as the reader scrolls to the end, and starts over on a switch", () => {
@@ -249,7 +307,7 @@ describe("admin feedback pages", () => {
       wrap(
         <FeedbackResponsesPage read={read(crowd)} />,
       );
-      // Five meters to a card.
+      // Five meters to a response.
       const count = () => document.querySelectorAll("[role='img']").length / 5;
       expect(count()).toBe(20);
       act(() => latestIntersectionObserver()?.deliver());

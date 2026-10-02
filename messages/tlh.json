@@ -1623,11 +1623,17 @@
       "skipped": "juSlu'",
       "belowAverage": "motlh bIng",
       "belowAverageOn": "motlh bIng: {statement}",
+      "statementLabels": {
+        "learned": "ghoj",
+        "fun": "Tiv",
+        "geduKnowledgeable": "Gedu po'",
+        "geduKind": "Gedu parHa'",
+        "groupListens": "Qoy"
+      },
       "timeline": {
         "byWeek": "Hogh jangmey QaQ",
         "byMonth": "jar jangmey QaQ",
-        "platform": "Hoch",
-        "since": "{date} vo'"
+        "platform": "Hoch"
       },
       "back": {
         "overview": "ja'chuqDaq yIchegh",
@@ -1651,7 +1657,7 @@
       },
       "statements": {
         "heading": "ja'meH mu'tlhegh",
-        "legend": "QaQ: HISlaH pagh HISlaHbej. QaQbe': ghobe' pagh ghobe'law'.",
+        "legend": "QaQbe': ghobe' pagh ghobe'law'. QaQ: HISlaH pagh HISlaHbej.",
         "positive": "{share} QaQ",
         "negative": "{share} QaQbe'",
         "saidPositive": "{answers} jangmey; {positive} {yes} pagh {definitely}"
@@ -1712,6 +1718,7 @@
         "none": "naDev jang pagh.",
         "noneWorthReading": "laDnIS pagh: jang QaQbe' pagh, QIn pagh.",
         "noGedu": "Gedu ghItlhlu'be'",
+        "who": "QujwI', ghom, jaj",
         "filterLabel": "jangmey yIwIv",
         "worthReading": "laDnIS ({count})",
         "all": "Hoch ({count})"

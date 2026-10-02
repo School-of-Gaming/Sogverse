@@ -1579,11 +1579,17 @@
       "skipped": "Ohitettu",
       "belowAverage": "Alle keskiarvon",
       "belowAverageOn": "Alle keskiarvon väitteessä: {statement}",
+      "statementLabels": {
+        "learned": "Oppi uutta",
+        "fun": "Oli kivaa",
+        "geduKnowledgeable": "Gedu osasi",
+        "geduKind": "Gedu ystävällinen",
+        "groupListens": "Tuli kuulluksi"
+      },
       "timeline": {
         "byWeek": "Myönteiset vastaukset viikoittain",
         "byMonth": "Myönteiset vastaukset kuukausittain",
-        "platform": "Koko alusta",
-        "since": "{date} alkaen"
+        "platform": "Koko alusta"
       },
       "back": {
         "overview": "Takaisin palautteeseen",
@@ -1607,7 +1613,7 @@
       },
       "statements": {
         "heading": "Väitteittäin",
-        "legend": "Myönteinen on Kyllä tai Ehdottomasti, kielteinen on Ei tai Vähän.",
+        "legend": "Kielteinen on Ei tai Vähän, myönteinen on Kyllä tai Ehdottomasti.",
         "positive": "{share} myönteisiä",
         "negative": "{share} kielteisiä",
         "saidPositive": "{positive}/{answers} vastasi {yes} tai {definitely}"
@@ -1668,6 +1674,7 @@
         "none": "Täällä ei ole vastauksia.",
         "noneWorthReading": "Ei mitään poimittavaa: ei kielteisiä vastauksia eikä viestejä.",
         "noGedu": "Gedua ei ole kirjattu",
+        "who": "Pelaaja, ryhmä ja päivä",
         "filterLabel": "Näytettävät vastaukset",
         "worthReading": "Lukemisen arvoiset ({count})",
         "all": "Kaikki ({count})"

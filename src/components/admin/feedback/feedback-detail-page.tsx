@@ -104,7 +104,7 @@ export function FeedbackDetailPage({
           <Statements detail={detail} />
           <Children detail={detail} origin={self} />
           <Section title={t("responsesHeading")}>
-            <WhatGamersSaid responses={detail.responses} origin={self} />
+            <WhatGamersSaid source={detail.source} responses={detail.responses} origin={self} />
           </Section>
         </>
       )}
@@ -205,12 +205,13 @@ function StatementSpread({
       </div>
       {current.positiveShare !== null && (
         <>
+          {/* Negative before positive, as the meter reads: No on the left, Definitely on the right. */}
           <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-            <span className="font-semibold tabular-nums text-foreground">
-              {t("positive", { share: formatShare(current.positiveShare, locale) })}
-            </span>
             <span className="tabular-nums">
               {t("negative", { share: formatShare(current.negativeShare, locale) })}
+            </span>
+            <span className="font-semibold tabular-nums text-foreground">
+              {t("positive", { share: formatShare(current.positiveShare, locale) })}
             </span>
             {platform !== null && (
               <span className="tabular-nums">

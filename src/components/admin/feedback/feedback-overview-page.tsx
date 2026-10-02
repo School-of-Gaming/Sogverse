@@ -138,21 +138,22 @@ function StatementLines({
       <Card>
         <ul className="divide-y divide-border">
           {statements.map(({ key, figure }) => (
+            // Negative before positive, as the meter reads: No on the left, Definitely on the right.
             <li
               key={key}
-              className="grid gap-x-6 gap-y-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_8rem_6rem] sm:items-center"
+              className="grid grid-cols-[auto_auto] items-baseline justify-start gap-x-4 gap-y-1 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_7rem_8rem] sm:justify-stretch sm:gap-x-6"
             >
-              <p className="text-sm">{labels[key] ?? key}</p>
-              {figure.positiveShare === null ? (
-                <ShareText figure={figure} className="text-sm text-muted-foreground" />
-              ) : (
-                <p className="text-sm font-semibold tabular-nums">
-                  {t("positive", { share: formatShare(figure.positiveShare, locale) })}
-                </p>
-              )}
+              <p className="col-span-2 text-sm sm:col-span-1">{labels[key] ?? key}</p>
               <p className="text-xs tabular-nums text-muted-foreground sm:text-right">
                 {figure.negativeShare === null ? null : t("negative", { share: formatShare(figure.negativeShare, locale) })}
               </p>
+              {figure.positiveShare === null ? (
+                <ShareText figure={figure} className="text-sm text-muted-foreground sm:text-right" />
+              ) : (
+                <p className="text-sm font-semibold tabular-nums sm:text-right">
+                  {t("positive", { share: formatShare(figure.positiveShare, locale) })}
+                </p>
+              )}
             </li>
           ))}
         </ul>

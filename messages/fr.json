@@ -1579,11 +1579,17 @@
       "skipped": "Passée",
       "belowAverage": "Sous la moyenne",
       "belowAverageOn": "Sous la moyenne sur : {statement}",
+      "statementLabels": {
+        "learned": "Apprentissage",
+        "fun": "Plaisir",
+        "geduKnowledgeable": "Gedu compétent",
+        "geduKind": "Gedu gentil",
+        "groupListens": "Écoute"
+      },
       "timeline": {
         "byWeek": "Réponses positives par semaine",
         "byMonth": "Réponses positives par mois",
-        "platform": "Plateforme",
-        "since": "Depuis le {date}"
+        "platform": "Plateforme"
       },
       "back": {
         "overview": "Retour aux avis",
@@ -1607,7 +1613,7 @@
       },
       "statements": {
         "heading": "Par affirmation",
-        "legend": "Positive : Oui ou Tout à fait ; négative : Non ou Pas vraiment.",
+        "legend": "Négative : Non ou Pas vraiment ; positive : Oui ou Tout à fait.",
         "positive": "{share} positives",
         "negative": "{share} négatives",
         "saidPositive": "{positive} sur {answers} ont répondu {yes} ou {definitely}"
@@ -1668,6 +1674,7 @@
         "none": "Aucune réponse ici.",
         "noneWorthReading": "Rien à lire en priorité : aucune réponse négative et aucun message.",
         "noGedu": "Aucun Gedu enregistré",
+        "who": "Gamer, groupe et date",
         "filterLabel": "Quelles réponses",
         "worthReading": "À lire en priorité ({count})",
         "all": "Toutes ({count})"

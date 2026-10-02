@@ -1579,11 +1579,17 @@
       "skipped": "Hoppades över",
       "belowAverage": "Under genomsnittet",
       "belowAverageOn": "Under genomsnittet på: {statement}",
+      "statementLabels": {
+        "learned": "Lärde sig",
+        "fun": "Roligt",
+        "geduKnowledgeable": "Gedu kunnig",
+        "geduKind": "Gedu snäll",
+        "groupListens": "Blev hörd"
+      },
       "timeline": {
         "byWeek": "Positiva svar per vecka",
         "byMonth": "Positiva svar per månad",
-        "platform": "Plattformen",
-        "since": "Sedan {date}"
+        "platform": "Plattformen"
       },
       "back": {
         "overview": "Tillbaka till feedback",
@@ -1607,7 +1613,7 @@
       },
       "statements": {
         "heading": "Per påstående",
-        "legend": "Positivt är Ja eller Absolut; negativt är Nej eller Inte riktigt.",
+        "legend": "Negativt är Nej eller Inte riktigt; positivt är Ja eller Absolut.",
         "positive": "{share} positiva",
         "negative": "{share} negativa",
         "saidPositive": "{positive} av {answers} svarade {yes} eller {definitely}"
@@ -1668,6 +1674,7 @@
         "none": "Inga svar här.",
         "noneWorthReading": "Inget värt att läsa: inga negativa svar och inga meddelanden.",
         "noGedu": "Ingen Gedu registrerad",
+        "who": "Gamer, grupp och datum",
         "filterLabel": "Vilka svar",
         "worthReading": "Värda att läsa ({count})",
         "all": "Alla ({count})"

@@ -47,7 +47,7 @@ export function FeedbackDimensionRows({
       >
         <span />
         <span className="text-right">{t("answers")}</span>
-        <span>
+        <span className="text-right">
           {platform.positiveShare === null
             ? t("positive")
             : t("positiveAgainst", { share: formatShare(platform.positiveShare, locale) })}

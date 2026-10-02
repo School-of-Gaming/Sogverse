@@ -103,7 +103,7 @@ export function FeedbackTimeline({
 }) {
   const t = useTranslations("admin.feedback");
   const locale = useLocale();
-  const { history, unit, points, platform } = timeline;
+  const { unit, points, platform } = timeline;
 
   const rows = useMemo<Row[]>(
     () =>
@@ -233,12 +233,6 @@ export function FeedbackTimeline({
           <li key={row.start}>{describe(row)}</li>
         ))}
       </ul>
-
-      <p className="text-xs text-muted-foreground">
-        {t("timeline.since", {
-          date: formatDateOnly(history.from, locale, { day: "numeric", month: "short", year: "numeric" }),
-        })}
-      </p>
     </div>
   );
 }

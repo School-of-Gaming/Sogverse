@@ -97,7 +97,6 @@ export interface FeedbackTimelinePoint {
  * page set against the platform, the platform's line beside it.
  */
 export interface FeedbackTimeline {
-  history: FeedbackPeriod;
   unit: FeedbackBucketUnit;
   /** Oldest first. */
   points: FeedbackTimelinePoint[];
@@ -377,9 +376,8 @@ export function buildFeedbackTimeline(
   const unit = bucketUnitFor(history);
   const all = ofSource(dataset.responses, source);
   const platform = seriesOf(all, history, unit);
-  if (scope === null) return { history, unit, points: platform, platform: null };
+  if (scope === null) return { unit, points: platform, platform: null };
   return {
-    history,
     unit,
     points: seriesOf(
       all.filter((row) => inScope(row, scope)),
