@@ -231,6 +231,8 @@ export interface OAuthGrant {
   clientId: string;
   /** An access token carrying the `client_id` claim. */
   accessToken: string;
+  /** The user's own session, which approved the grant and can revoke it. */
+  user: SupabaseClient<Database>;
 }
 
 /**
@@ -240,8 +242,8 @@ export interface OAuthGrant {
  * the `client_id` claim. Nothing is signed by hand, so the claim is exactly
  * what Supabase Auth issues.
  *
- * The client is registered through the Admin API, and `revokeOAuthGrant`
- * deletes it, its grant and its session with it — call it in teardown.
+ * The client is registered through the Admin API; call `revokeOAuthGrant` in
+ * teardown.
  */
 export async function oauthGrantFor(
   email: string,
@@ -325,13 +327,24 @@ export async function oauthGrantFor(
     throw new Error(`The token exchange failed (${exchanged.status})`);
   }
 
-  return { clientId, accessToken };
+  return { clientId, accessToken, user };
 }
 
-/** Deletes a client `oauthGrantFor` registered, and its grants with it. */
-export async function revokeOAuthGrant(clientId: string): Promise<void> {
-  const { error } =
-    await createAdminTestClient().auth.admin.oauth.deleteClient(clientId);
+/**
+ * Undoes `oauthGrantFor`. Deleting a client through the Admin API only marks
+ * it deleted and leaves its grant and session in place, so the user revokes
+ * the grant first — which ends the app's session and its refresh token — and
+ * signs out the session that approved it. The client and the grant stay
+ * behind as deleted and revoked rows: no API removes them.
+ */
+export async function revokeOAuthGrant(grant: OAuthGrant): Promise<void> {
+  const revoked = await grant.user.auth.oauth.revokeGrant({ clientId: grant.clientId });
+  if (revoked.error) throw new Error(`Revoking the grant failed: ${revoked.error.message}`);
+  const signedOut = await grant.user.auth.signOut({ scope: "local" });
+  if (signedOut.error) throw new Error(`Signing out failed: ${signedOut.error.message}`);
+  const { error } = await createAdminTestClient().auth.admin.oauth.deleteClient(
+    grant.clientId
+  );
   if (error) throw new Error(`Deleting OAuth client failed: ${error.message}`);
 }
 

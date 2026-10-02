@@ -459,9 +459,26 @@ describe("writing", () => {
   });
 });
 
+/** ARTICLE once published as it stands: the English goes live, the Swedish comes down. */
+function publishedAs(liveLocales: readonly string[]): AdminLibraryArticle {
+  return {
+    draft: ARTICLE.draft,
+    publication: {
+      ...ARTICLE.publication!,
+      versions: ARTICLE.draft.versions
+        .filter((v) => liveLocales.includes(v.locale))
+        .map((v) => ({ ...v, body: v.body || "Text." })),
+    },
+    hasUnpublishedChanges: false,
+  };
+}
+
 describe("publishing", () => {
   it("reports what went live, what was left out and taken down, and the live links", async () => {
     library.publishArticle.mockResolvedValue(undefined);
+    library.getAdminArticle
+      .mockResolvedValueOnce(ARTICLE)
+      .mockResolvedValueOnce(publishedAs(["en"]));
 
     const result = await tool("publish_library_article", { articleId: ID });
 
@@ -473,6 +490,28 @@ describe("publishing", () => {
       takenDown: ["sv"],
       publicLinks: [
         { locale: "en", publicLink: `${ORIGIN}/en/library/screen-time-is-not-the-enemy` },
+      ],
+    });
+  });
+
+  it("reports what the publish did, not what the read before it forecast", async () => {
+    // Read before publishing, the Swedish had no body and would come down; a
+    // save finished it in between, so the publish put it live.
+    library.publishArticle.mockResolvedValue(undefined);
+    library.getAdminArticle
+      .mockResolvedValueOnce(ARTICLE)
+      .mockResolvedValueOnce(publishedAs(["en", "sv"]));
+
+    const result = await tool("publish_library_article", { articleId: ID });
+
+    expect(result.structuredContent).toEqual({
+      articleId: ID,
+      live: ["en", "sv"],
+      leftOut: ["fi"],
+      takenDown: [],
+      publicLinks: [
+        { locale: "en", publicLink: `${ORIGIN}/en/library/screen-time-is-not-the-enemy` },
+        { locale: "sv", publicLink: `${ORIGIN}/sv/bibliotek/skarmtid-ar-inte-fienden` },
       ],
     });
   });

@@ -132,12 +132,6 @@ async function cropToCover(
 
 const app = new App({ name: "Sogverse Library cover uploader", version: "1.0.0" }, {});
 
-app.ontoolinput = ({ arguments: args }) => {
-  // The article is known as soon as the call is made; the cover's frame only
-  // once it answers, so nothing can be picked before then.
-  if (typeof args?.title === "string") articleLine.textContent = `For “${args.title}”`;
-};
-
 app.ontoolresult = (result) => {
   if (result.isError) {
     say(textOf(result) || "The uploader could not open for this article.", "error");

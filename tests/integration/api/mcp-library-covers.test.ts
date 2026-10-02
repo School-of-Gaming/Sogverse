@@ -212,9 +212,12 @@ describe("covers as pictures", () => {
   it("pictures at most twenty covers in one answer and names the rest", async () => {
     library.listAdminArticles.mockResolvedValue([
       listItem(0, null),
-      ...Array.from({ length: 25 }, (_, n) => listItem(n + 1, "clock.jpg")),
+      ...Array.from({ length: 25 }, (_, n) => listItem(n + 1, `cover-${n + 1}.jpg`)),
     ]);
-    serveBucket({ "clock.jpg": await jpeg(1600, 900) });
+    const picture = await jpeg(1600, 900);
+    serveBucket(
+      Object.fromEntries(Array.from({ length: 25 }, (_, n) => [`cover-${n + 1}.jpg`, picture])),
+    );
 
     const result = await tool("list_library_articles", { includeCovers: true });
 
@@ -222,6 +225,31 @@ describe("covers as pictures", () => {
     const meta = await sharp(Buffer.from(images(result)[0].data ?? "", "base64")).metadata();
     expect([meta.width, meta.height]).toEqual([256, 144]);
     expect(resultText(result)).toContain("5 more cover(s) are not pictured");
+  });
+
+  it("pictures a cover several articles share once, naming every one of them", async () => {
+    library.listAdminArticles.mockResolvedValue([
+      listItem(1, "clock.jpg"),
+      listItem(2, "lamp.jpg"),
+      listItem(3, "clock.jpg"),
+    ]);
+    const mockFetch = serveBucket({
+      "clock.jpg": await jpeg(1600, 900),
+      "lamp.jpg": await jpeg(1600, 900),
+    });
+
+    const result = await tool("list_library_articles", { includeCovers: true });
+
+    expect(images(result)).toHaveLength(2);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    const captions = result.content
+      .filter((block) => block.type === "text")
+      .slice(1)
+      .map((block) => block.text);
+    expect(captions).toEqual([
+      `Cover shared by article ${listItem(1, null).id} ("Article 1"), article ${listItem(3, null).id} ("Article 3"): ${BUCKET}/clock.jpg`,
+      `Cover of article ${listItem(2, null).id} ("Article 2"): ${BUCKET}/lamp.jpg`,
+    ]);
   });
 
 });

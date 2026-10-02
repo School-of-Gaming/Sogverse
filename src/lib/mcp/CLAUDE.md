@@ -38,10 +38,11 @@ it expires — up to one access-token lifetime, an hour. Only the role read is l
 demoted admin is refused on their next request. Nothing in Sogverse lists or revokes grants
 yet; that is done from the Supabase dashboard.
 
-**Deleting an AI app's OAuth client does not cut it off.** Supabase only soft-deletes the
-client and leaves its sessions, so the app's refresh token goes on minting access tokens.
-The reliable cut-off for an AI app is removing the person's admin role, which the gate
-reads on every request.
+**Deleting an AI app's OAuth client cuts it off no faster than revoking a grant.** Supabase
+only marks the client deleted and leaves every grant and session it had in place, but its
+token endpoint refuses a deleted client, so the app's refresh token mints nothing more;
+an access token already issued works until it expires. The immediate cut-off for an AI app
+is removing the person's admin role, which the gate reads on every request.
 
 **Rule: tools act as the admin, through `createBearerClient(authInfo.token)`, and never
 through the service-role client.** Row policies and guarded RPCs then decide exactly as

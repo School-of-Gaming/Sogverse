@@ -26,6 +26,7 @@ import {
   MAX_IMAGES_PER_RESULT,
   answerWithCovers,
   coverUrl,
+  type CoverToShow,
 } from "@/lib/mcp/cover-images";
 import {
   NOT_FOUND,
@@ -40,6 +41,7 @@ import {
   isCompleteVersion,
   missingInVersion,
   type AdminLibraryArticle,
+  type AdminLibraryArticleListItem,
   type PublishedLibraryArticleSummary,
 } from "@/services/library";
 import { Constants } from "@/types";
@@ -224,6 +226,28 @@ async function articleView(
   };
 }
 
+/**
+ * The list's covers as pictures, one per picture rather than one per article:
+ * articles sharing a catalogue entry share its picture, and its caption names
+ * every one of them, in the list's order.
+ */
+function coversOnce(articles: readonly AdminLibraryArticleListItem[]): CoverToShow[] {
+  const usedBy = new Map<string, AdminLibraryArticleListItem[]>();
+  for (const article of articles) {
+    if (article.coverPath === null) continue;
+    usedBy.set(article.coverPath, [...(usedBy.get(article.coverPath) ?? []), article]);
+  }
+  return [...usedBy].map(([path, users]) => {
+    const named = users
+      .map((article) => `article ${article.id} ("${article.versions[0]?.title ?? ""}")`)
+      .join(", ");
+    return {
+      path,
+      caption: `${users.length === 1 ? "Cover of" : "Cover shared by"} ${named}: ${coverUrl(path)}`,
+    };
+  });
+}
+
 /** The bodies a write would store, checked against the article subset before anything is sent. */
 function bodyRefusal(markdown: string): CallToolResult | null {
   const outside = markdownOutsideSubset(markdown, "article");
@@ -247,7 +271,7 @@ export function registerLibraryTools(server: McpServer): void {
     "list_library_articles",
     {
       title: "List Library articles",
-      description: `Every School of Gaming Library article — the parent-facing articles on the public /library pages — most recently saved first: its id, each language's title, its category, its cover's public URL, whether it is live, whether it has saved changes readers do not see yet, and when, by whom and through which AI app it was last saved. Bodies are not included; get_library_article reads one whole. With includeCovers, the covers come as small pictures too, for the first ${MAX_IMAGES_PER_RESULT} articles that have one. ${VERSIONS}`,
+      description: `Every School of Gaming Library article — the parent-facing articles on the public /library pages — most recently saved first: its id, each language's title, its category, its cover's public URL, whether it is live, whether it has saved changes readers do not see yet, and when, by whom and through which AI app it was last saved. Bodies are not included; get_library_article reads one whole. With includeCovers, the covers come as small pictures too, up to ${MAX_IMAGES_PER_RESULT} of them, each picture once with every article that uses it named. ${VERSIONS}`,
       inputSchema: z.object({
         includeCovers: z
           .boolean()
@@ -278,20 +302,7 @@ export function registerLibraryTools(server: McpServer): void {
           })),
         };
         if (!includeCovers) return answer(value);
-        return answerWithCovers(
-          value,
-          articles.flatMap((article) =>
-            article.coverPath === null
-              ? []
-              : [
-                  {
-                    path: article.coverPath,
-                    caption: `Cover of article ${article.id} ("${article.versions[0]?.title ?? ""}"): ${coverUrl(article.coverPath)}`,
-                  },
-                ],
-          ),
-          COVER_THUMBNAIL,
-        );
+        return answerWithCovers(value, coversOnce(articles), COVER_THUMBNAIL);
       }),
   );
 
@@ -483,15 +494,25 @@ export function registerLibraryTools(server: McpServer): void {
       asAdmin(ctx, async ({ service, origin }) => {
         const before = await service.getAdminArticle(id);
         if (before === null) return refusal(NOT_FOUND);
-        const forecast = publishForecast(before);
+        const wasLive = before.publication?.versions.map((v) => v.locale) ?? [];
         await service.publishArticle(id);
-        const published = await service.listPublishedArticles();
+        // The answer is read back from what the publish did, never forecast
+        // from the read before it: a save landing in between changes what
+        // goes live.
+        const [after, published] = await Promise.all([
+          service.getAdminArticle(id),
+          service.listPublishedArticles(),
+        ]);
+        if (after === null) return refusal(NOT_FOUND);
+        const live = after.publication?.versions.map((v) => v.locale) ?? [];
         return answer({
           articleId: id,
-          live: forecast.wouldPutLive,
-          leftOut: forecast.wouldLeaveOut,
-          takenDown: forecast.wouldTakeDown,
-          publicLinks: forecast.wouldPutLive.map((l) => ({
+          live,
+          leftOut: after.draft.versions
+            .map((v) => v.locale)
+            .filter((l) => !live.includes(l)),
+          takenDown: wasLive.filter((l) => !live.includes(l)),
+          publicLinks: live.map((l) => ({
             locale: l,
             publicLink: publicLink(origin, published, id, l),
           })),

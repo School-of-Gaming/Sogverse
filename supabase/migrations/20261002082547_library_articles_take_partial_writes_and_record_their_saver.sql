@@ -61,9 +61,9 @@ COMMENT ON COLUMN public.library_articles.last_saved_via IS
   'last_saved_by''s write came through: auth.oauth_clients.id, read from the '
   'token''s client_id claim by stamp_library_article_saver. NULL for a write '
   'made in Sogverse itself, and whenever last_saved_by is NULL. No foreign '
-  'key: the client may be deleted from Supabase Auth, and the record that a '
-  'save came through an app outlives it — get_oauth_client then finds '
-  'nothing to name it by.';
+  'key: the client belongs to Supabase Auth, and the record that a save came '
+  'through an app outlives it. Deleting a client only marks it deleted, so '
+  'get_oauth_client still names it; a client removed outright names nothing.';
 
 CREATE FUNCTION public.stamp_library_article_saver()
 RETURNS trigger
@@ -102,12 +102,24 @@ CREATE TRIGGER trg_library_articles_stamp_saver
   ON public.library_articles
   FOR EACH ROW EXECUTE FUNCTION public.stamp_library_article_saver();
 
+-- The save time takes the stamp's column list too. On every column, a profile
+-- deletion's SET NULL on author_id or last_saved_by would move it, showing a
+-- save nobody made at the moment an account went.
+DROP TRIGGER library_articles_updated_at ON public.library_articles;
+
+CREATE TRIGGER library_articles_updated_at
+  BEFORE UPDATE OF category, cover_image_id, updated_at
+  ON public.library_articles
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
 COMMENT ON COLUMN public.library_articles.updated_at IS
   'When the working copy was last saved, its versions included, maintained by '
-  'the library_articles_updated_at trigger: every Library writer writes this '
-  'row. Publishing does not touch it; a catalogue replace or removal that '
-  'moves the cover does, since it writes the row. Who saved it, and through '
-  'which app, are last_saved_by and last_saved_via.';
+  'the library_articles_updated_at trigger on an update of category, '
+  'cover_image_id or updated_at: every Library writer names one of them, and '
+  'so do the catalogue''s replace and removal, which move the cover. '
+  'Publishing does not touch it, and neither does a profile deletion''s SET '
+  'NULL on author_id or last_saved_by. Who saved it, and through which app, '
+  'are last_saved_by and last_saved_via.';
 
 COMMENT ON TABLE public.library_articles IS
   'The WORKING COPY of each Library article — what an admin is editing, which '

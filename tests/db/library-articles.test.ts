@@ -1088,7 +1088,7 @@ describe("library articles", () => {
     });
 
     afterAll(async () => {
-      await revokeOAuthGrant(grant.clientId);
+      await revokeOAuthGrant(grant);
     });
 
     async function saver(id: string) {
@@ -1186,6 +1186,52 @@ describe("library articles", () => {
       const view = await service.getAdminArticle(ARTICLE_COMPLETE);
       expect(view?.draft.lastSavedBy).toBeNull();
       expect(view?.draft.lastSavedVia).toBeNull();
+    });
+
+    it("keeps the save time when the saver's account is deleted", async () => {
+      await reseed();
+      const email = `library-saver-${Date.now()}@test.local`;
+      const created = await admin.auth.admin.createUser({
+        email,
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Library", last_name: "Saver" },
+      });
+      expect(created.error).toBeNull();
+      const saverId = created.data.user?.id ?? "";
+      try {
+        await admin.from("profiles").update({ role: "admin" }).eq("id", saverId);
+        await admin.from("customer_profiles").delete().eq("user_id", saverId);
+        const asSaver = new LibraryService(
+          await createAuthenticatedClient(email, "testpassword123"),
+        );
+        // Both of the account's links: the author of one article, the last
+        // saver of another.
+        const authored = await asSaver.createArticle({ ...DRAFT_INPUT });
+        minted.push(authored);
+        await asSaver.setArticleCategory(ARTICLE_COMPLETE, "games_explained");
+
+        const stamped = async (id: string) => {
+          const { data } = await admin
+            .from("library_articles")
+            .select("author_id, last_saved_by, updated_at")
+            .eq("id", id)
+            .single();
+          return data;
+        };
+        const before = [await stamped(authored), await stamped(ARTICLE_COMPLETE)];
+        expect(before[0]?.author_id).toBe(saverId);
+        expect(before[1]?.last_saved_by).toBe(saverId);
+
+        const deleted = await admin.auth.admin.deleteUser(saverId);
+        expect(deleted.error).toBeNull();
+
+        const after = [await stamped(authored), await stamped(ARTICLE_COMPLETE)];
+        expect(after[0]).toEqual({ ...before[0], author_id: null, last_saved_by: null });
+        expect(after[1]).toEqual({ ...before[1], last_saved_by: null });
+      } finally {
+        await admin.auth.admin.deleteUser(saverId);
+      }
     });
 
     it.each([["customer"], ["gedu"], ["gamer"]])(
