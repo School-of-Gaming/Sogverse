@@ -1,13 +1,13 @@
 import type {
   AppSupabaseClient,
   GeduAssignedProduct,
-  MyAssignedProductRow,
   ProductType,
 } from "@/types";
 import {
   geduAssignedProduct,
   myAssignedProductRows,
   traineeAssignedProduct,
+  type MyAssignedProductRow,
   type TraineeAssignedProduct,
 } from "./assignments.contracts";
 
@@ -49,7 +49,7 @@ export interface MyAssignedProductSessionRow {
      * gedu RPC keeps that output key while the column itself is named
      * `short_description`.
      */
-    translations: MyAssignedProductRow["product_translations"];
+    translations: MyAssignedProductRow["product"]["translations"];
   };
   /** The gedu's group on this product — assigned, or the one they substitute on. */
   groupId: string;
@@ -186,13 +186,13 @@ function toMyAssignedProductSessionRow(
 ): MyAssignedProductSessionRow {
   return {
     product: {
-      id: row.product_id,
-      timezone: row.timezone,
-      startDate: row.start_date,
-      endDate: row.end_date,
-      isRemote: row.is_remote,
-      productType: row.product_type,
-      translations: row.product_translations,
+      id: row.product.id,
+      timezone: row.product.timezone,
+      startDate: row.product.start_date,
+      endDate: row.product.end_date,
+      isRemote: row.product.is_remote,
+      productType: row.product.product_type,
+      translations: row.product.translations,
     },
     groupId: row.group_id,
     kind: row.kind,
@@ -201,7 +201,7 @@ function toMyAssignedProductSessionRow(
     substitutionCancelled: row.substitution_cancelled,
     groupCount: row.group_count,
     participantCount: row.participant_count,
-    slots: row.schedule_slots.map((s) => ({
+    slots: row.product.schedule_slots.map((s) => ({
       weekday: s.weekday,
       startTime: s.start_time,
       durationMinutes: s.duration_minutes,

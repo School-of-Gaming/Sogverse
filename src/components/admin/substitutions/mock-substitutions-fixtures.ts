@@ -82,9 +82,14 @@ function product(args: {
   return {
     id: args.id,
     product_type: args.productType,
+    topic: "minecraft_java",
+    spoken_language_code: "fi",
     timezone: args.timezone,
     is_remote: true,
-    translations: [{ locale: "en", name: args.name }],
+    start_date: null,
+    end_date: null,
+    site_name: null,
+    translations: [{ locale: "en", name: args.name, description: "" }],
     schedule_slots: args.slots.map((slot) => ({
       weekday: slot.weekday,
       start_time: slot.startTime,

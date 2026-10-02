@@ -158,6 +158,15 @@ language match, no schedule-clash check.
 **No instants travel.** The pool emits the date plus the product's timezone and slots, and
 the client owns the calendar math, exactly as both feeds do.
 
+**Every surface describes the session the same way.** The pool, the admin page and a
+sub's own card on My SOG state the session's product — type, topic, language, timezone,
+online or the venue, term dates, names and slots — through one database function, and
+the client parses it through one schema. A fact about the session added there reaches
+every reader at once; a surface building its own shell is how the admin page once could
+not say whether a session was online or where it was. The shell carries nothing about a
+person, so sharing it widens no read's disclosure: who is absent, why, and the fee stay in
+each read's own body under that read's own rules.
+
 ## Filing is quiet and has two ways in; a filed absence is loud
 
 **Rule: the action that *starts* an absence is deliberately out of the way, and

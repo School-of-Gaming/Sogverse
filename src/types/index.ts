@@ -843,54 +843,6 @@ export type SessionFeedbackRow = Database["public"]["Tables"]["session_feedback"
 export type SessionFeedbackRowInsert =
   Database["public"]["Tables"]["session_feedback"]["Insert"];
 
-// get_my_assigned_products RPC — the generator marks every column of an RPC
-// RETURNS TABLE row as non-nullable from the column type alone, missing
-// products columns that are actually nullable (end_date). It also
-// degrades the jsonb arrays (product_translations,
-// schedule_slots) to `Json`, which forces every consumer to cast. Tighten
-// both: nullability matches the underlying products schema, and the
-// arrays get structured shapes that mirror the jsonb_build_object calls in
-// the RPC body. Keep this alias adjacent to its source in
-// supabase/schema/functions/get_my_assigned_products.sql.
-type _MyAssignedProductGenerated =
-  Database["public"]["Functions"]["get_my_assigned_products"]["Returns"][number];
-export type MyAssignedProductRow = Omit<
-  _MyAssignedProductGenerated,
-  | "start_date"
-  | "end_date"
-  | "product_translations"
-  | "schedule_slots"
-  | "kind"
-  | "substitution_date"
-> & {
-  start_date: string | null;
-  end_date: string | null;
-  /**
-   * Which kind of seat this row is. An `assignment` row is one per
-   * `gedu_group_assignments` row; a `substitution`
-   * row is one per live substitution date; a `trainee` row is one per
-   * `gedu_group_trainees` seat. Narrowed from the generated `string`
-   * because the RPC emits a closed set and every consumer branches on it.
-   */
-  kind: "assignment" | "substitution" | "trainee";
-  /**
-   * The date a `substitution` row is for, and null on an `assignment` row — which the
-   * generator cannot see, because a RETURNS TABLE column is typed from the
-   * column type alone.
-   */
-  substitution_date: string | null;
-  product_translations: Array<{
-    locale: string;
-    name: string;
-    description: string;
-  }>;
-  schedule_slots: Array<{
-    weekday: number;
-    start_time: string;
-    duration_minutes: number;
-  }>;
-};
-
 // get_my_participation_subscription_states RPC — money-free read of the
 // caller's past_due/canceling subs feeding the dashboard payment-problem and
 // access-until badges. The generator types `current_period_end` non-nullable
