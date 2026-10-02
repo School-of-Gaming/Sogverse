@@ -2606,7 +2606,7 @@
     "searchAriaLabel": "Sök Geduer",
     "searchNoMatches": "Ingen Gedu den här månaden matchar ”{query}”.",
     "export": {
-      "statementTitle": "Arbetsspecifikation",
+      "statementTitle": "Arbetsrapport",
       "to": "Till: School of Gaming",
       "figuresAsOf": "Siffror per {time}",
       "monthInProgress": "Månaden pågår: några tillfällen är ännu kommande, så siffrorna kan ändras.",
@@ -2625,7 +2625,7 @@
       "columnGroup": "Grupp",
       "columnLocation": "Plats",
       "columnStatus": "Status",
-      "columnOtherGedu": "Vikarie för / vikarie",
+      "columnOtherGedu": "Vikarierade för / vikarie",
       "columnFeeExclVat": "Arvode exkl. moms",
       "columnAmountExclVat": "Belopp exkl. moms",
       "statusAway": "Frånvarande",
