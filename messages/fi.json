@@ -1624,10 +1624,8 @@
           "product": "Tuotteet",
           "group": "Ryhmät",
           "gedu": "Gedut",
-          "responses": "Mitä pelaajat sanoivat"
+          "responses": "Pelaajat"
         },
-        "below": "{count, plural, =0 {Ei yhtään alle keskiarvon} other {# alle keskiarvon}}",
-        "worthReading": "{count, plural, =0 {Ei mitään poimittavaa} one {# lukemisen arvoinen} other {# lukemisen arvoista}}",
         "counts": {
           "product": "{count, plural, one {# tuote} other {# tuotetta}}",
           "group": "{count, plural, one {# ryhmä} other {# ryhmää}}",

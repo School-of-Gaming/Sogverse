@@ -1624,10 +1624,8 @@
           "product": "Produkter",
           "group": "Grupper",
           "gedu": "Geduer",
-          "responses": "Vad gamerna sa"
+          "responses": "Gamers"
         },
-        "below": "{count, plural, =0 {Ingen under genomsnittet} other {# under genomsnittet}}",
-        "worthReading": "{count, plural, =0 {Inget värt att läsa} other {# värda att läsa}}",
         "counts": {
           "product": "{count, plural, one {# produkt} other {# produkter}}",
           "group": "{count, plural, one {# grupp} other {# grupper}}",

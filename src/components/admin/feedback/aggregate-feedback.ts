@@ -123,12 +123,10 @@ export interface FeedbackParticipation {
   responseRate: number | null;
 }
 
-/** One line of the overview per dimension, e.g. "2 below average". */
+/** One line of the overview per dimension, e.g. "12 groups". */
 export interface FeedbackDimensionSummary {
   /** Rows the dimension's list would show. */
   rows: number;
-  /** Rows whose positive share is below the platform's. */
-  belowPlatform: number;
 }
 
 /**
@@ -147,10 +145,9 @@ export interface FeedbackResponses {
   worthReading: AdminFeedbackResponse[];
 }
 
-/** "8 worth reading · 412 responses". */
+/** "412 responses". */
 export interface FeedbackResponsesSummary {
   total: number;
-  worthReading: number;
 }
 
 /** `/admin/feedback`: one source, no lists. */
@@ -269,13 +266,9 @@ export function buildFeedbackOverview(
   const platform = tallyResponses(slice.responses, source);
   const responses = responsesOf(slice.responses);
 
-  const summarise = (dimension: FeedbackDimension): FeedbackDimensionSummary => {
-    const rows = dimensionRows(dimension, slice, source, platform);
-    return {
-      rows: rows.length,
-      belowPlatform: rows.filter((row) => row.belowPlatform).length,
-    };
-  };
+  const summarise = (dimension: FeedbackDimension): FeedbackDimensionSummary => ({
+    rows: dimensionRows(dimension, slice, source, platform).length,
+  });
 
   return {
     source,
@@ -287,7 +280,7 @@ export function buildFeedbackOverview(
       group: summarise("group"),
       gedu: summarise("gedu"),
     },
-    responses: { total: responses.all.length, worthReading: responses.worthReading.length },
+    responses: { total: responses.all.length },
   };
 }
 

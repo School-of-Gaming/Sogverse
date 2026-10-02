@@ -1624,10 +1624,8 @@
           "product": "Produits",
           "group": "Groupes",
           "gedu": "Gedus",
-          "responses": "Ce que les gamers ont dit"
+          "responses": "Gamers"
         },
-        "below": "{count, plural, =0 {Aucun sous la moyenne} other {# sous la moyenne}}",
-        "worthReading": "{count, plural, =0 {Rien à lire en priorité} other {# à lire en priorité}}",
         "counts": {
           "product": "{count, plural, one {# produit} other {# produits}}",
           "group": "{count, plural, one {# groupe} other {# groupes}}",

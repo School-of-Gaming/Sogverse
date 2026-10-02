@@ -123,12 +123,10 @@ describe("buildFeedbackOverview", () => {
       "gamer_online",
     );
 
-    // Club B, its group and Mika are below; A2 heard nothing back, so is not.
-    expect(overview.dimensions.product).toEqual({ rows: 2, belowPlatform: 1 });
-    expect(overview.dimensions.group).toEqual({ rows: 3, belowPlatform: 1 });
-    expect(overview.dimensions.gedu).toEqual({ rows: 2, belowPlatform: 1 });
-    // The two Club B responses are negative, "Too loud." is negative with a note, "Great!" is a note.
-    expect(overview.responses).toEqual({ total: 24, worthReading: 4 });
+    expect(overview.dimensions.product).toEqual({ rows: 2 });
+    expect(overview.dimensions.group).toEqual({ rows: 3 });
+    expect(overview.dimensions.gedu).toEqual({ rows: 2 });
+    expect(overview.responses).toEqual({ total: 24 });
   });
 });
 

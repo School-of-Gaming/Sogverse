@@ -1668,10 +1668,8 @@
           "product": "Dochmey",
           "group": "ghommey",
           "gedu": "Gedupu'",
-          "responses": "QujwI'pu' jatlhpu'bogh"
+          "responses": "QujwI'pu'"
         },
-        "below": "{count, plural, =0 {motlh bIngDaq pagh} other {# motlh bIng}}",
-        "worthReading": "{count, plural, =0 {laDnIS pagh} other {# laDnIS}}",
         "counts": {
           "product": "{count, plural, one {# Doch} other {# Dochmey}}",
           "group": "{count, plural, one {# ghom} other {# ghommey}}",

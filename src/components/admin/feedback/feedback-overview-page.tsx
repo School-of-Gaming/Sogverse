@@ -171,51 +171,31 @@ function Explore({ overview }: { overview: FeedbackOverview }) {
     <section className="space-y-2">
       <h2 className="text-base font-semibold">{t("heading")}</h2>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {dimensions.map((dimension) => {
-          const summary = overview.dimensions[dimension];
-          return (
-            <ExploreCard
-              key={dimension}
-              place={{ view: "list", dimension }}
-              title={t(`titles.${dimension}`)}
-              lines={[t("below", { count: summary.belowPlatform }), t(`counts.${dimension}`, { count: summary.rows })]}
-              flagged={summary.belowPlatform > 0}
-            />
-          );
-        })}
+        {dimensions.map((dimension) => (
+          <ExploreCard
+            key={dimension}
+            place={{ view: "list", dimension }}
+            title={t(`titles.${dimension}`)}
+            count={t(`counts.${dimension}`, { count: overview.dimensions[dimension].rows })}
+          />
+        ))}
         <ExploreCard
           place={{ view: "responses" }}
           title={t("titles.responses")}
-          lines={[
-            t("worthReading", { count: overview.responses.worthReading }),
-            t("counts.responses", { count: overview.responses.total }),
-          ]}
-          flagged={overview.responses.worthReading > 0}
+          count={t("counts.responses", { count: overview.responses.total })}
         />
       </div>
     </section>
   );
 }
 
-function ExploreCard({
-  place,
-  title,
-  lines,
-  flagged,
-}: {
-  place: FeedbackPlace;
-  title: string;
-  lines: [string, string];
-  /** Whether the first line names something to look at, and so reads in the full ink. */
-  flagged: boolean;
-}) {
+function ExploreCard({ place, title, count }: { place: FeedbackPlace; title: string; count: string }) {
   return (
     <Link href={feedbackHref(place)} className="group block">
       <Card className="flex h-full items-center justify-between gap-3 p-4 transition-colors group-hover:bg-hover">
         <div className="min-w-0 space-y-0.5">
           <p className="text-sm font-semibold">{title}</p>
-          <p className={flagged ? "text-sm" : "text-sm text-muted-foreground"}>{lines[0]}</p>
-          <p className="text-xs text-muted-foreground">{lines[1]}</p>
+          <p className="text-xs text-muted-foreground">{count}</p>
         </div>
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
       </Card>
