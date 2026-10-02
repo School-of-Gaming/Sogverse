@@ -11,8 +11,9 @@ import type { GeduAssignmentSummary } from "@/services/gedu-sessions";
 /**
  * The join every gedu page that draws seat cards has to make first: the
  * assignment rows, which carry the product and its schedule, against the
- * summaries, which carry the three facts that belong to the seat rather than to
- * the product — the group's name, its size, and its building.
+ * summaries, which carry the two facts that belong to the seat rather than to
+ * the product — the group's name and its size. The building is the product's,
+ * and rides on the assignment row itself.
  *
  * It lives here because two pages make it now. My SOG draws a gedu's standing
  * groups and their live substitutions; the Substitutions page draws the
@@ -63,10 +64,6 @@ export function joinGeduSeatRows(
       ...row,
       groupName: summary?.group_name ?? null,
       groupParticipantCount: summary?.group_participant_count ?? 0,
-      // Null on anything remote, and the RPC has already applied that test
-      // against `is_remote` rather than against the presence of a location — a
-      // remote municipality club carries one and has no building.
-      siteName: summary?.site_name ?? null,
     };
   });
 }

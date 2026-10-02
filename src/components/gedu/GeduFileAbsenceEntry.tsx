@@ -502,7 +502,7 @@ function SessionPickerRow({
   reason: string | null;
   onPick: () => void;
 }) {
-  const t = useTranslations("gedu.substitution");
+  const t = useTranslations("sessionFacts");
 
   return (
     <button
@@ -522,12 +522,12 @@ function SessionPickerRow({
         {session.isRemote ? (
           <span className="inline-flex items-center gap-1.5">
             <Radio className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {t("poolRemote")}
+            {t("remote")}
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {session.siteName ?? t("poolSiteUnknown")}
+            {session.siteName ?? t("siteUnknown")}
           </span>
         )}
       </span>

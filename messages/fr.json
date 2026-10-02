@@ -2352,8 +2352,6 @@
       "accessOpens": "L’espace de travail ouvre le {date} à {time}",
       "poolHeading": "Séances cherchant un remplacement",
       "poolAllClear": "Aucune séance ne cherche de remplacement pour le moment.",
-      "poolRemote": "En ligne",
-      "poolSiteUnknown": "Lieu à confirmer",
       "poolRolePrimary": "Gedu principal",
       "poolRoleAssistant": "Gedu assistant",
       "poolFee": "{fee} par séance",
@@ -2771,6 +2769,10 @@
     "nextSession": "Prochaine séance",
     "upcoming": "Séance à venir",
     "cancelled": "Annulée"
+  },
+  "sessionFacts": {
+    "remote": "En ligne",
+    "siteUnknown": "Lieu à confirmer"
   },
   "sessionFeed": {
     "readMore": "Lire la suite",

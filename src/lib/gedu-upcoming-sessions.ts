@@ -157,7 +157,7 @@ export function buildGeduUpcomingSessions({
         // Never carried by a remote product, whatever the row says: a product
         // with a voice room has no building, and a row showing both would be
         // claiming the group meets in two places.
-        siteName: row.product.isRemote ? null : row.siteName,
+        siteName: row.product.isRemote ? null : row.product.siteName,
       });
     }
   }

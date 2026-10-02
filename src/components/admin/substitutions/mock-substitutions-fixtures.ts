@@ -72,23 +72,32 @@ const FRI = 4;
 
 type WireProduct = AdminSubstitutionRequest["product"];
 
+/**
+ * One product shell. `site` is what decides online or in person: `"remote"`,
+ * a building, or `null` for an in-person product with no site recorded
+ * yet — the three answers the session facts line can give, all on the page.
+ */
 function product(args: {
   id: string;
   name: string;
   productType: WireProduct["product_type"];
+  topic: WireProduct["topic"];
+  language: WireProduct["spoken_language_code"];
+  site: "remote" | { building: string } | null;
   timezone: string;
   slots: readonly { weekday: number; startTime: string; minutes: number }[];
 }): WireProduct {
   return {
     id: args.id,
     product_type: args.productType,
-    topic: "minecraft_java",
-    spoken_language_code: "fi",
+    topic: args.topic,
+    spoken_language_code: args.language,
     timezone: args.timezone,
-    is_remote: true,
+    is_remote: args.site === "remote",
     start_date: null,
     end_date: null,
-    site_name: null,
+    site_name:
+      args.site === "remote" || args.site === null ? null : args.site.building,
     translations: [{ locale: "en", name: args.name, description: "" }],
     schedule_slots: args.slots.map((slot) => ({
       weekday: slot.weekday,
@@ -102,6 +111,9 @@ const ESPOO_CLUB = product({
   id: "consumer-club-1",
   name: "Minecraft-klubi Espoo",
   productType: "consumer_club",
+  topic: "minecraft_java",
+  language: "fi",
+  site: { building: "Sellon kirjasto, Espoo" },
   timezone: "Europe/Helsinki",
   slots: [{ weekday: MON, startTime: "17:00", minutes: 90 }],
 });
@@ -117,6 +129,9 @@ const STOCKHOLM_CLUB = product({
   id: "municipality-club-3",
   name: "Roblox-klubben Solna",
   productType: "municipality_club",
+  topic: "roblox_studio",
+  language: "sv",
+  site: "remote",
   timezone: "Europe/Stockholm",
   slots: [{ weekday: MON, startTime: "15:00", minutes: 60 }],
 });
@@ -125,6 +140,9 @@ const VANTAA_CLUB = product({
   id: "consumer-club-4",
   name: "Fortnite-klubi Vantaa",
   productType: "consumer_club",
+  topic: "fortnite",
+  language: "fi",
+  site: "remote",
   timezone: "Europe/Helsinki",
   slots: [
     { weekday: TUE, startTime: "16:00", minutes: 90 },
@@ -142,6 +160,11 @@ const ROBLOX_CAMP = product({
   id: "camp-2",
   name: "Roblox Studio -leiri Espoo",
   productType: "camp",
+  topic: "roblox_studio",
+  language: "fi",
+  // In person with the venue still being arranged: "place to be confirmed",
+  // which must not read as online.
+  site: null,
   timezone: "Europe/Helsinki",
   slots: [
     { weekday: MON, startTime: "10:00", minutes: 300 },

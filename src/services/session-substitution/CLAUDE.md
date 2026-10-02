@@ -167,6 +167,14 @@ not say whether a session was online or where it was. The shell carries nothing 
 person, so sharing it widens no read's disclosure: who is absent, why, and the fee stay in
 each read's own body under that read's own rules.
 
+The client half is single too: one derivation turns the shell and the session date into
+the session's facts, and one shared component renders them — when, how soon, online or
+where, topic and language — at a card's density or the admin list's. Each surface keeps
+only its frame around it: people, the fee, the role, the actions. A surface that states
+a session fact outside that component states it twice or differently. "Place to be
+confirmed" is an in-person session with no site, never a remote one, and a sub's own card
+says online or where from the moment the substitution is theirs, lock included.
+
 ## Filing is quiet and has two ways in; a filed absence is loud
 
 **Rule: the action that *starts* an absence is deliberately out of the way, and

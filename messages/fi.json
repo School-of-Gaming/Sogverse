@@ -2352,8 +2352,6 @@
       "accessOpens": "Työtila avautuu {date} klo {time}",
       "poolHeading": "Kerrat, jotka tarvitsevat tuuraajan",
       "poolAllClear": "Yksikään kerta ei tarvitse juuri nyt tuuraajaa.",
-      "poolRemote": "Etänä",
-      "poolSiteUnknown": "Paikka varmistuu myöhemmin",
       "poolRolePrimary": "Vastaava Gedu",
       "poolRoleAssistant": "Avustava Gedu",
       "poolFee": "{fee} / kerta",
@@ -2771,6 +2769,10 @@
     "nextSession": "Seuraava kerta",
     "upcoming": "Tuleva kerta",
     "cancelled": "Peruttu"
+  },
+  "sessionFacts": {
+    "remote": "Etänä",
+    "siteUnknown": "Paikka varmistuu myöhemmin"
   },
   "sessionFeed": {
     "readMore": "Lue lisää",

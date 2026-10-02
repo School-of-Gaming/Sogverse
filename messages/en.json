@@ -2352,8 +2352,6 @@
       "accessOpens": "Workspace opens {date} at {time}",
       "poolHeading": "Sessions needing a substitute",
       "poolAllClear": "No sessions need a substitute right now.",
-      "poolRemote": "Remote",
-      "poolSiteUnknown": "Place to be confirmed",
       "poolRolePrimary": "Primary",
       "poolRoleAssistant": "Assistant",
       "poolFee": "{fee} per session",
@@ -2771,6 +2769,10 @@
     "nextSession": "Next session",
     "upcoming": "Upcoming",
     "cancelled": "Cancelled"
+  },
+  "sessionFacts": {
+    "remote": "Remote",
+    "siteUnknown": "Place to be confirmed"
   },
   "sessionFeed": {
     "readMore": "Read more",

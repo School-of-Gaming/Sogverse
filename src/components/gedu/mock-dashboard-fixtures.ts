@@ -416,8 +416,10 @@ export function buildGeduDashboardFixture(
    * **Both remote, so the pair differs in exactly one thing.** The open one
    * renders the locked Join every other future card renders; the locked one
    * renders no Join at all, because until the workspace opens there is no room
-   * to promise and the footer's one answer is when it opens. Reading them
-   * together is how you see that the height is held either way.
+   * to promise and the footer's one answer is when it opens. Both say "Remote"
+   * all the same: online or where is on the card from the moment the
+   * substitution is the sub's. Reading them together is how you see that the
+   * height is held either way.
    *
    * The open one carries a backlog of one, which is the only non-zero a substitution
    * can have. The locked one carries none, and that is not a choice: a substitution
@@ -727,6 +729,11 @@ function assignmentRow(opts: {
           ? null
           : calendarDate(opts.now, opts.endsInDays, SESSION_FEED_TIMEZONE),
       isRemote: opts.isRemote,
+      // Remote products have no building, whatever a fixture passes — the
+      // read applies the same test.
+      siteName: opts.isRemote ? null : (opts.siteName ?? null),
+      topic: "minecraft_java",
+      spokenLanguageCode: "fi",
       productType: opts.productType,
       translations: [{ locale: "en", name: opts.name, description: "" }],
     },
@@ -742,7 +749,6 @@ function assignmentRow(opts: {
     participantCount: opts.participantCount,
     groupName: opts.groupName,
     groupParticipantCount: opts.groupParticipantCount,
-    siteName: opts.siteName ?? null,
     slots: opts.slots,
   };
 }

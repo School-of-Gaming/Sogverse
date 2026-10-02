@@ -1,28 +1,18 @@
 "use client";
 
-import {
-  CalendarClock,
-  CalendarX,
-  ChevronRight,
-  Lock,
-  MapPin,
-} from "lucide-react";
+import { CalendarX, ChevronRight, Lock } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { MaybeInertLink } from "@/components/ui/maybe-inert-link";
 import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
 import { SeatKindBadge } from "./SeatKindBadge";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
+import { SubstitutionSessionFacts } from "@/components/session-substitution/SubstitutionSessionFacts";
 import { INERT_HREF } from "@/lib/constants/routes";
 import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
 import { useNow, useTimezone } from "@/providers";
 import { runLiveness } from "@/lib/product-run";
-import {
-  cn,
-  formatDate,
-  formatDateOnly,
-  formatTimeRange,
-} from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 /**
  * One card per **live substitution** — a single afternoon this gedu is standing in
@@ -34,7 +24,9 @@ import {
  * the run has ended. A substitution has none of those — it is one session — and a card
  * that answered them would be telling a sub they teach the club every week. So
  * this one says only what a sub needs: which product and group, when it is,
- * where it is or how to get in, and whether the write-up is still owed.
+ * whether it is online or where, how to get in, and whether the write-up is
+ * still owed. When and where are the shared session facts, so the session reads
+ * here as it read in the pool the sub took it from.
  *
  * **It lives in the same grid as the assignment cards, at the head of its type
  * noun's section.** A substitution is one of the things a gedu runs this week, so
@@ -64,12 +56,14 @@ import {
  * the 48 hours run back from product-local midnight of that date, exactly as
  * the SQL's own fallback does.
  *
- * **The footer holds one answer, and while the card is locked the answer is
- * when.** That zone asks "how do I get to this session" — a Join on a remote
- * product, the building on an in-person one — and until the workspace opens the
- * honest reply is neither of those. It is the same reserved height either way,
- * so the card does not move when the answer changes, and the site or the Join
- * is back well before the session.
+ * **Online or where is stated at all times; the footer holds the way in.** A
+ * sub planning their week needs to know whether to travel the moment the
+ * substitution is theirs, not 48 hours before it, so that line sits with the
+ * date and never moves. The footer is the one zone that changes: while the
+ * workspace is shut it says when it opens, and once it is open it holds the
+ * Join on a remote product and nothing on an in-person one — the building is
+ * already on the card. It is the same reserved height in every state, so the
+ * card does not move when the lock lifts.
  */
 export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubstitutionSummary }) {
   const t = useTranslations("gedu.substitution");
@@ -81,20 +75,16 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
   const now = useNow();
 
   const {
-    productName,
-    productType,
+    session,
     groupName,
-    substitutionDate,
-    startsAt,
-    endsAt,
     accessOpensAt,
     cancelled,
     hasVoiceRoom,
     voiceHref,
-    siteName,
     openHref,
     attentionCount,
   } = substitution;
+  const { productName, productType, startsAt, endsAt } = session;
 
   /**
    * Whether the group is still shut to this sub.
@@ -121,16 +111,6 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
     { nextSessionStart: startsAt, nextSessionEnd: endsAt, hasVoiceRoom },
     now,
   );
-
-  const when =
-    startsAt !== null && endsAt !== null
-      ? `${formatDate(startsAt, locale, {
-          weekday: "short",
-          day: "numeric",
-          month: "short",
-          timeZone,
-        })}, ${formatTimeRange(startsAt, endsAt, locale, timeZone)}`
-      : formatDateOnly(substitutionDate, locale);
 
   return (
     // The same shell the assignment card uses: a `relative` wrapper so the
@@ -174,19 +154,21 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
             </p>
           </div>
 
-          {/* The one date this card is about — not a cadence, because a substitution
-              has none. */}
-          <p className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
-            <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <span className="min-w-0 tabular-nums">{when}</span>
-          </p>
+          {/* The one date this card is about — not a cadence, because a
+              substitution has none — and whether it is online or where, which
+              stands through the lock. No topic or language: the sub took the
+              session knowing both, and the assignment cards beside this one
+              state neither. */}
+          <SubstitutionSessionFacts facts={session} variant="card" tags={false} />
 
-          {/* The same footer question the assignment card asks — how do I get
-              to this — with one answer at a time and the same reserved button
-              height, so a substitution card and an assignment card in one grid row are
-              the same height without either holding a gap. While the workspace
-              is shut the answer is when it opens; the room or the building take
-              the zone back the moment it does, and the height never moves. */}
+          {/* The way in, with one answer at a time and the same reserved
+              button height in every state, so a substitution card and an
+              assignment card in one grid row are the same height and nothing
+              moves when the lock lifts. While the workspace is shut the answer
+              is when it opens; on a remote product the room takes the zone back
+              the moment it does. An in-person product has no Join, and its
+              building is already stated above, so the zone is left empty
+              rather than saying it twice. */}
           <div className="mt-auto flex min-h-9 items-center justify-center">
             {cancelled && (
               // A session an admin called off: nothing to join and nowhere to
@@ -241,12 +223,6 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
                   // card itself opens, so the two agree by construction.
                   backHref={openHref === INERT_HREF ? undefined : openHref}
                 />
-              </span>
-            )}
-            {!cancelled && !locked && !hasVoiceRoom && siteName !== null && (
-              <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4 shrink-0" aria-hidden />
-                <span className="truncate">{siteName}</span>
               </span>
             )}
           </div>

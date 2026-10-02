@@ -1,7 +1,9 @@
 import type {
   AppSupabaseClient,
   GeduAssignedProduct,
+  ProductTopic,
   ProductType,
+  SpokenLanguageCode,
 } from "@/types";
 import {
   geduAssignedProduct,
@@ -36,6 +38,15 @@ export interface MyAssignedProductSessionRow {
     endDate: string | null;
     /** False for in-person products — the join button is a no-op in that case. */
     isRemote: boolean;
+    /**
+     * The venue on an in-person product, or `null` — always on a remote one
+     * (the read tests the remote flag, never the presence of a location, since a
+     * remote municipality club carries one and has no building), and on an
+     * in-person product with no site recorded.
+     */
+    siteName: string | null;
+    topic: ProductTopic;
+    spokenLanguageCode: SpokenLanguageCode;
     /**
      * Product kind. The dashboard card uses it to pick the right URL prefix
      * for "View details" — `/gedu/clubs/[id]`, `/gedu/camps/[id]`, or
@@ -191,6 +202,9 @@ function toMyAssignedProductSessionRow(
       startDate: row.product.start_date,
       endDate: row.product.end_date,
       isRemote: row.product.is_remote,
+      siteName: row.product.site_name,
+      topic: row.product.topic,
+      spokenLanguageCode: row.product.spoken_language_code,
       productType: row.product.product_type,
       translations: row.product.translations,
     },
