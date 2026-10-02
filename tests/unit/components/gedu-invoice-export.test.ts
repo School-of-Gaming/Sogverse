@@ -259,7 +259,7 @@ describe("geduInvoicePdfContent", () => {
     expect(content.geduName).toBe("Aino Kallio");
     expect(content.geduEmail).toBe("aino.kallio@example.com");
     expect(content.month).toBe("May 2026");
-    expect(content.to).toBe("To: School of Gaming");
+    expect(content.to).toBe("To: School of Gaming Galactic Oy");
     // 10:40 in Helsinki, whatever zone the test runs in.
     expect(content.figuresAsOf).toMatch(
       /^Figures as of May 21, 2026.*10:40.*GMT\+3$/,

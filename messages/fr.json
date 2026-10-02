@@ -2607,7 +2607,7 @@
     "searchNoMatches": "Aucun Gedu de ce mois ne correspond à « {query} ».",
     "export": {
       "statementTitle": "Relevé d’activité",
-      "to": "Destinataire : School of Gaming",
+      "to": "Destinataire : School of Gaming Galactic Oy",
       "figuresAsOf": "Chiffres au {time}",
       "completeTitle": "Ce relevé est complet",
       "completeBody": "Aucune séance de ce mois n’est encore à venir ni en attente d’enregistrement.",

@@ -2607,7 +2607,7 @@
     "searchNoMatches": "Hakua ”{query}” vastaavaa Gedua ei löydy tältä kuulta.",
     "export": {
       "statementTitle": "Työerittely",
-      "to": "Vastaanottaja: School of Gaming",
+      "to": "Vastaanottaja: School of Gaming Galactic Oy",
       "figuresAsOf": "Lukujen tilanne: {time}",
       "completeTitle": "Erittely on valmis",
       "completeBody": "Yksikään tämän kuukauden kerta ei ole enää tulossa eikä odota kirjausta.",
