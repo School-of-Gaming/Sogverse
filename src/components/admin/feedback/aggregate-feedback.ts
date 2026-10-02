@@ -42,9 +42,10 @@ export {
  * read to the view model of each of the page's four views: the overview, a
  * dimension's list, one scope's detail, and what gamers said.
  *
- * Every figure covers the whole history the route read, from the first day
- * with data to today: there is no period to pick and nothing to compare it
- * with but the platform. Every figure is per source and — below the overview —
+ * Every figure covers the whole history, from the first day a gamer answered
+ * to today: there is no period to pick and nothing to compare it with but the
+ * platform. A session before the first answer predates the feedback prompt, so
+ * it counts toward no denominator and opens no row. Every figure is per source and — below the overview —
  * set against the platform's, except a gamer's, which carries no platform
  * figure at all. Nothing here knows about React, the URL or the locale: ids
  * and message-key-shaped values out, labels are the UI's.
@@ -56,7 +57,7 @@ export interface FeedbackRead {
   source: FeedbackSource;
   /** Every session day from the read's floor to today. */
   dataset: AdminFeedbackDataset;
-  /** The days the timeline draws: the first day with data to today. */
+  /** The days the timeline draws: the first answer's session day to today. */
   history: FeedbackPeriod;
 }
 
@@ -206,8 +207,6 @@ export interface FeedbackDimensionList {
 /** How a scope's figure stands against the whole platform. */
 export interface PlatformComparison {
   platform: ShareFigure;
-  /** Scope minus platform, in points; `null` when either had no answers. */
-  vsPlatformPoints: number | null;
   belowPlatform: boolean;
 }
 
@@ -392,20 +391,26 @@ export function buildFeedbackTimeline(
 }
 
 /**
- * The days the pages read: from the first session day the source has a
- * response or a recorded session for, to today — just today when it has
- * neither.
+ * The days the pages read: from the session day of the source's first answer
+ * to today — just today when nobody has answered. Recorded sessions never move
+ * the start: the read returns sessions from before the feedback prompt existed.
  */
 export function feedbackHistory(
   dataset: AdminFeedbackDataset,
   source: FeedbackSource,
   today: string,
 ): FeedbackPeriod {
-  let from = today;
-  for (const row of [...ofSource(dataset.responses, source), ...ofSource(dataset.sessions, source)]) {
-    if (row.sessionDate < from) from = row.sessionDate;
+  const first = firstAnswerDay(ofSource(dataset.responses, source));
+  return { from: first === null || first > today ? today : first, to: today };
+}
+
+/** The earliest session day among `responses`; `null` when there are none. */
+function firstAnswerDay(responses: readonly AdminFeedbackResponse[]): string | null {
+  let first: string | null = null;
+  for (const { sessionDate } of responses) {
+    if (first === null || sessionDate < first) first = sessionDate;
   }
-  return { from, to: today };
+  return first;
 }
 
 /** The rows one source contributed. */
@@ -421,16 +426,23 @@ function ofSource<T extends { source: FeedbackSource }>(
 /* Slicing                                                                  */
 /* ------------------------------------------------------------------------ */
 
-/** One source's entries. */
+/**
+ * One source's entries over its history: a session before the first answer
+ * predates the prompt, so it is dropped — and with no answer at all, every
+ * session is.
+ */
 interface Slice {
   responses: AdminFeedbackResponse[];
   sessions: AdminFeedbackSession[];
 }
 
 function sliceOf(dataset: AdminFeedbackDataset, source: FeedbackSource): Slice {
+  const responses = ofSource(dataset.responses, source);
+  const first = firstAnswerDay(responses);
   return {
-    responses: ofSource(dataset.responses, source),
-    sessions: ofSource(dataset.sessions, source),
+    responses,
+    sessions:
+      first === null ? [] : ofSource(dataset.sessions, source).filter((row) => row.sessionDate >= first),
   };
 }
 
@@ -469,7 +481,6 @@ function statementFigure(tallies: ResponseTallies, key: string): ShareFigure {
 function compareWithPlatform(scope: ShareFigure, platform: ShareFigure): PlatformComparison {
   return {
     platform,
-    vsPlatformPoints: pointsBetween(scope, platform),
     belowPlatform: isBelow(scope, platform),
   };
 }

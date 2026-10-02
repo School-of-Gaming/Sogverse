@@ -139,7 +139,7 @@ describe("admin feedback pages", () => {
     expect(screen.queryByText(/Below average/)).toBeNull();
   });
 
-  it("leads a gamer opened from a group back to that group", () => {
+  it("a group's gamer links carry the group as their origin", () => {
     wrap(
       <FeedbackDetailPage read={read(dataset)} origin={null} scope={{ kind: "group", id: "group-a1" }} />,
     );

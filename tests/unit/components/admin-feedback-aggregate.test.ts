@@ -196,14 +196,14 @@ describe("buildFeedbackTimeline", () => {
     expect(gamer.platform).toBeNull();
   });
 
-  it("runs the history from the first day with an answer or a session to today", () => {
+  it("runs the history from the first answer's session day to today", () => {
     const today = "2026-09-30";
     expect(
       feedbackHistory(dataset([response({ sessionDate: "2026-09-08" }), response({ sessionDate: "2026-08-03" })]), "gamer_online", today),
     ).toEqual({ from: "2026-08-03", to: today });
     expect(
       feedbackHistory(dataset([response({ sessionDate: "2026-09-08" })], [session({ sessionDate: "2026-07-14" })]), "gamer_online", today),
-    ).toEqual({ from: "2026-07-14", to: today });
+    ).toEqual({ from: "2026-09-08", to: today });
     expect(feedbackHistory(dataset([]), "gamer_online", today)).toEqual({ from: today, to: today });
   });
 });
@@ -291,6 +291,21 @@ describe("buildFeedbackDimensionList", () => {
     });
   });
 
+  it("drops a session before the first answer from every denominator and row", () => {
+    const data = dataset(
+      [response({ answers: { fun: 5 }, sessionDate: "2026-09-08" })],
+      [
+        session({ eligibleCount: 4, sessionDate: "2026-09-08" }),
+        session({ eligibleCount: 9, sessionDate: "2026-07-14" }),
+        session({ ...CLUB_B, eligibleCount: 6, sessionDate: "2026-07-14" }),
+      ],
+    );
+
+    const list = buildFeedbackDimensionList(data, "gamer_online", "group");
+    expect(list.rows.map((row) => [row.id, row.eligible])).toEqual([["group-a1", 4]]);
+    expect(buildFeedbackOverview(data, "gamer_online").participation.eligible).toBe(4);
+  });
+
   it("counts a response toward each Gedu at its session, once each", () => {
     const list = buildFeedbackDimensionList(
       dataset(
@@ -324,14 +339,13 @@ describe("buildFeedbackDetail", () => {
     expect(detail.name).toBe("Club B");
     expect(detail.product).toEqual({ id: "product-b", name: "Club B", type: "municipality_club", isRemote: true });
     expect(detail.againstPlatform?.platform.positiveShare).toBeCloseTo(34 / 42);
-    expect(detail.againstPlatform?.vsPlatformPoints).toBeCloseTo((4 / 12 - 34 / 42) * 100);
     expect(detail.againstPlatform?.belowPlatform).toBe(true);
     const fun = detail.statements.find((line) => line.key === "fun");
     expect(fun?.figure.distribution).toEqual({ 1: 8, 2: 0, 3: 0, 4: 0, 5: 4 });
     expect(fun?.againstPlatform?.belowPlatform).toBe(true);
     // Nobody answered "learned": no gap, no flag.
     const learned = detail.statements.find((line) => line.key === "learned");
-    expect(learned?.againstPlatform).toMatchObject({ vsPlatformPoints: null, belowPlatform: false });
+    expect(learned?.againstPlatform).toMatchObject({ belowPlatform: false });
     expect(detail.children.groups?.map((row) => row.id)).toEqual(["group-b1"]);
     expect(detail.children.gedus?.map((row) => row.id)).toEqual(["gedu-aino"]);
     expect(detail.children.gamers).toBeNull();

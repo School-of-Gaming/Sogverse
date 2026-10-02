@@ -24,8 +24,9 @@ export type FeedbackLoad =
 /**
  * **The read behind every feedback page**: every session day from the floor
  * to today in Finland (session days are club-local, and every club is run
- * from there), in one read. Every figure on the page covers all of it; the
- * history the timeline draws starts at the first day with data.
+ * from there), in one read. The pages' history starts at the first answer's
+ * session day, and every figure covers that history: the sessions read from
+ * before it predate the feedback prompt and count toward nothing.
  *
  * **A failure is carried, not flattened**: "nobody said anything" and "the
  * read failed" must never look the same, because the first is an answer
