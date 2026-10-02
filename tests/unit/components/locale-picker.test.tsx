@@ -5,6 +5,11 @@ import messages from "@/../messages/en.json";
 import { LocalePicker } from "@/components/layout/locale-picker";
 import { LocaleProvider } from "@/providers/locale-provider";
 import {
+  LocaleSwitchPaths,
+  LocaleSwitchPathsProvider,
+  type LocaleSwitchPathMap,
+} from "@/i18n/locale-switch-paths";
+import {
   SUPPORTED_LOCALES,
   type DetectedLocale,
 } from "@/lib/constants/locales";
@@ -95,13 +100,19 @@ const TOGGLE_LABEL = messages.common.selectLanguage;
 const CLOSED_BUTTONS = 1;
 const OPEN_BUTTONS = CLOSED_BUTTONS + SUPPORTED_LOCALES.length;
 
-function renderPicker(detectedLocale: DetectedLocale) {
+function renderPicker(
+  detectedLocale: DetectedLocale,
+  switchPaths?: LocaleSwitchPathMap,
+) {
   return render(
     // The real next-intl provider, so useLocale() seeds the provider with "en"
     // and the picker's aria-label comes from the shipped messages.
     <NextIntlClientProvider locale="en" messages={messages}>
       <LocaleProvider detectedLocale={detectedLocale}>
-        <LocalePicker />
+        <LocaleSwitchPathsProvider>
+          <LocalePicker />
+          {switchPaths && <LocaleSwitchPaths paths={switchPaths} />}
+        </LocaleSwitchPathsProvider>
       </LocaleProvider>
     </NextIntlClientProvider>,
   );
@@ -268,6 +279,40 @@ describe("LocalePicker navigation", () => {
 
     expect(mockRouter.replace).toHaveBeenCalledWith(
       "/fi/kauppa/abc?category=camps#yty",
+    );
+  });
+
+  it("sends a page that registered its path in the chosen locale there, query and fragment intact", () => {
+    // A Library article's slug resolves only in the locale it was derived in,
+    // so the same params under the new prefix would 404; the page's own path
+    // there is the destination. Repeated keys survive as they do on a rebuild.
+    mockLocation.pathname = "/library/[idOrSlug]";
+    mockLocation.params = { idOrSlug: "kirjastolinkin-testaus" };
+    mockLocation.search = "topic=minecraft&topic=roblox";
+    window.location.hash = "#yty";
+    renderPicker("en", {
+      en: "/en/library/library-link-test",
+      fi: "/fi/kirjasto/kirjastolinkin-testaus",
+    });
+    fireEvent.click(toggle());
+
+    fireEvent.click(localeRow("en"));
+
+    expect(mockGetPathname).not.toHaveBeenCalled();
+    expect(mockRouter.replace).toHaveBeenCalledWith(
+      "/en/library/library-link-test?topic=minecraft&topic=roblox#yty",
+    );
+  });
+
+  it("rebuilds the route for a locale the page registered no path for", () => {
+    renderPicker("en", { en: "/en/library/library-link-test" });
+    fireEvent.click(toggle());
+
+    fireEvent.click(localeRow("fi"));
+
+    expect(mockGetPathname).toHaveBeenCalledTimes(1);
+    expect(mockRouter.replace).toHaveBeenCalledWith(
+      "/fi/kauppa/abc?category=camps",
     );
   });
 

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
+import {
+  resolveLocale,
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import {
   translatedCanonicalPath,
@@ -52,6 +56,21 @@ function pathsOf(
       locale,
       address: articleAddress(published, article, locale),
     });
+}
+
+/**
+ * The article's path in every locale, for the locale picker: its slug address
+ * where it was written, its id address elsewhere — so a switch to any locale
+ * lands on this article.
+ */
+export function libraryArticleLocalePaths(
+  published: readonly AddressableArticle[],
+  article: AddressableArticle,
+): Partial<Record<SupportedLocale, string>> {
+  const pathAt = pathsOf(published, article);
+  const paths: Partial<Record<SupportedLocale, string>> = {};
+  for (const locale of SUPPORTED_LOCALES) paths[locale] = pathAt(locale);
+  return paths;
 }
 
 /** The canonical path of the article read at `locale`. */
