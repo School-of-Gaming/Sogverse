@@ -47,10 +47,10 @@ export function LocaleSwitchPathsProvider({ children }: { children: ReactNode })
  * Registers the rendering page's path in each locale for as long as it is
  * mounted. Rendered from a server component, so it takes plain data.
  *
- * **The cleanup clears only its own registration.** Navigating from one such
- * page to another mounts the new registration before the old one's cleanup
- * runs, so an unconditional clear would wipe the page now on screen; the
- * identity check leaves a registration that has already been replaced alone.
+ * **The cleanup clears only its own registration.** A cleanup must never wipe
+ * a registration another page made after it — which happens whenever two
+ * registrants are mounted at once — so it clears only when the registration
+ * is still the one it made.
  */
 export function LocaleSwitchPaths({ paths }: { paths: LocaleSwitchPathMap }) {
   const context = useContext(LocaleSwitchPathsContext);

@@ -8,11 +8,11 @@ import {
 } from "@/i18n/locale-switch-paths";
 
 /**
- * **A page's cleanup clears only its own registration.** Moving from one
- * article to another mounts the new page's registration while the old one is
- * still on its way out; an unconditional clear on unmount would wipe the
- * article now on screen, and the picker would fall back to rebuilding a slug
- * that 404s in the other locale.
+ * **A page's cleanup clears only its own registration.** When two registrants
+ * are mounted at once, the older one unmounting must not wipe the newer one's
+ * registration, or the picker would fall back to rebuilding a slug that 404s
+ * in the other locale. The swap case pins the ordinary article-to-article
+ * navigation, where React runs the old cleanup before the new effect.
  */
 
 const ARTICLE_A: LocaleSwitchPathMap = { en: "/en/library/a", fi: "/fi/kirjasto/a" };
@@ -51,7 +51,7 @@ describe("LocaleSwitchPaths", () => {
     expect(registered()).toBe("/en/library/b");
   });
 
-  it("leaves the newer registration in place when one page is swapped for another in one commit", () => {
+  it("registers the new page when one page is swapped for another in one commit", () => {
     const { rerender } = render(<Tree pages={[ARTICLE_A]} />);
 
     rerender(<Tree pages={[ARTICLE_B]} />);
