@@ -112,6 +112,52 @@ describe("/api/mcp", () => {
     expect(body.result).toMatchObject({ serverInfo: { name: "sogverse" } });
   });
 
+  // Without an icon of its own, a client guesses one — Claude.ai took the
+  // marketing site's badge from the parent domain. The icon is the app's own,
+  // on the trusted origin, even when the request names some other host.
+  it.each([
+    ["the trusted origin", ORIGIN],
+    ["an untrusted host", "http://evil.example.com"],
+  ])("declares the app's own icon on the trusted origin, asked from %s", async (_, from) => {
+    signedInAs("admin");
+    const host = new URL(from).host;
+
+    const body = await readRpc(
+      await POST(
+        new Request(`${from}/api/mcp`, {
+          method: "POST",
+          headers: {
+            host,
+            "x-forwarded-host": host,
+            "Content-Type": "application/json",
+            Accept: "application/json, text/event-stream",
+            "MCP-Protocol-Version": "2025-11-25",
+            Authorization: "Bearer token",
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "initialize",
+            params: {
+              protocolVersion: "2025-11-25",
+              capabilities: {},
+              clientInfo: { name: "test", version: "0" },
+            },
+          }),
+        }),
+      ),
+    );
+
+    expect(body.result).toMatchObject({
+      serverInfo: {
+        icons: [
+          { src: `${ORIGIN}/apple-icon.png`, mimeType: "image/png", sizes: ["180x180"] },
+          { src: `${ORIGIN}/icon.svg`, mimeType: "image/svg+xml", sizes: ["any"] },
+        ],
+      },
+    });
+  });
+
   it("lists every tool, each stating its annotations", async () => {
     signedInAs("admin");
 
