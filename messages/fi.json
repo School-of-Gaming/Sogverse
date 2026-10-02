@@ -3627,6 +3627,18 @@
       "title": "Oma profiili",
       "description": "Julkinen profiilisi School of Gamingin verkkosivuilla: kuva sinusta ja muutama sana siitä, kuka olet.",
       "edit": "Muokkaa profiilia"
+    },
+    "mcp": {
+      "title": "Yhdistä tekoälysovellus",
+      "description": "Hallitse Sogversea omasta tekoälysovelluksestasi Sogversen MCP-palvelimen kautta.",
+      "urlLabel": "MCP-palvelimen osoite",
+      "copy": "Kopioi",
+      "copied": "Kopioitu",
+      "steps": {
+        "add": "Lisää tekoälysovelluksesi asetuksissa mukautettu liitin tai etä-MCP-palvelin tällä osoitteella.",
+        "signIn": "Kirjaudu ylläpitäjän tililläsi ja valitse Salli.",
+        "unsure": "Etkö tiedä, mistä asetus löytyy? Kysy tekoälysovellukseltasi, miten etä-MCP-palvelin lisätään osoitteen perusteella."
+      }
     }
   },
   "tools": {

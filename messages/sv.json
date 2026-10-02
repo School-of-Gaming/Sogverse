@@ -3627,6 +3627,18 @@
       "title": "Min profil",
       "description": "Din offentliga profil på School of Gamings webbplats: ett foto av dig och några ord om vem du är.",
       "edit": "Redigera profil"
+    },
+    "mcp": {
+      "title": "Anslut en AI-app",
+      "description": "Hantera Sogverse från din egen AI-app via Sogverses MCP-server.",
+      "urlLabel": "MCP-serverns adress",
+      "copy": "Kopiera",
+      "copied": "Kopierad",
+      "steps": {
+        "add": "Lägg till en anpassad anslutning eller fjärr-MCP-server med den här adressen i din AI-apps inställningar.",
+        "signIn": "Logga in med ditt administratörskonto och välj Tillåt.",
+        "unsure": "Vet du inte var du lägger till den? Fråga din AI-app hur man lägger till en fjärr-MCP-server via dess adress."
+      }
     }
   },
   "tools": {

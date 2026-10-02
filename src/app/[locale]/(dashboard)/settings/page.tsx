@@ -1,7 +1,10 @@
+import { headers } from "next/headers";
 import type { GeduContractSeed } from "@/components/gedu/contract/gedu-contract-settings-card";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES } from "@/lib/constants/gamer-photo-consents";
+import { MCP_ENDPOINT_PATH } from "@/lib/mcp/auth";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
+import { getOrigin } from "@/lib/url";
 // Imported from the service module rather than the package index because that
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
@@ -60,6 +63,9 @@ async function readGeduContractSeed(
  *
  * The accepted cost, stated plainly: a gedu's settings visit blocks on this read
  * before the first byte.
+ *
+ * Nothing is read for an admin, but the MCP card's URL is built here, because
+ * only the server knows the trusted origin to build it on.
  */
 /**
  * How this gamer signs in, resolved before the first byte.
@@ -150,6 +156,14 @@ export default async function SettingsPage() {
         photoConsentGranted={photoConsentGranted}
       />
     );
+  }
+
+  if (userWithProfile?.profile?.role === "admin") {
+    // The MCP card shows this environment's own endpoint, so the origin is the
+    // request's — through `getOrigin`, which trusts the Host header only when it
+    // names this deployment, never the raw header and never the browser's.
+    const mcpServerUrl = `${getOrigin(await headers())}${MCP_ENDPOINT_PATH}`;
+    return <SettingsSectionContent mcpServerUrl={mcpServerUrl} />;
   }
 
   if (userWithProfile?.profile?.role !== "gedu") {
