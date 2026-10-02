@@ -86,13 +86,23 @@ A gedu can take their month away as a CSV and as a PDF, built from the same view
 the page renders. **Neither is an invoice**: gedus invoice from tools of their own, so
 the PDF is a work statement attached to that invoice and the CSV is raw rows for a
 spreadsheet. **Neither computes VAT** — some gedus are not VAT-registered — so every money
-label says the figures exclude it. The PDF is a frozen copy of a page that freezes
-nothing, so it states when its figures were read (Helsinki time) and says so loudly while
-the month still has upcoming sessions; it lists only the dates that pay. The CSV lists
-every dated line of every kind, a non-paying one at zero so the amount column sums to the
-total, and it is written for a Finnish Excel opened by double-click (BOM, semicolons,
-decimal comma, CRLF) whatever the page's locale. An unset fee is a blank in the CSV and a
-dash in the PDF, never zero.
+label says the figures exclude it. Both list every dated line of every kind, a
+non-paying one at zero so the amounts sum to the total. The PDF is a frozen copy of a page
+that freezes nothing, so it states on every page when its figures were read (Helsinki
+time), and under the sums it **says whether the month is complete**: either that nothing
+is still open, or each past session with nothing recorded by date, club and group, and
+how many are still upcoming — it goes to an accounting inbox, where a partial month must
+not pass for a finished one. Each line gives the page's own outcome and why it pays
+nothing (away and who substituted, covering for whom, nothing recorded yet). The CSV is
+written for a Finnish Excel opened by double-click (BOM, semicolons, decimal comma, CRLF)
+whatever the page's locale. An unset fee is a blank in the CSV and a dash in the PDF, on
+the fee and on every amount it would multiply into, never zero, and neither file says more
+about it than the page does.
+
+The PDF is School of Gaming's paper: the full mark (an inlined copy of the brand asset,
+since react-pdf cannot import an `.svg`), the brand ink on white, and act as its one
+accent; its print colours come from `src/lib/constants/colors.ts`, derived from `@sog/ui`
+like every renderer's that cannot read CSS.
 
 Both are served by one GET route under `src/app/api/gedu/invoicing/`, which reads the
 month through the gedu's own client exactly as the page does. The page's links carry the

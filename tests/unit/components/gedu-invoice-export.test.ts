@@ -266,17 +266,53 @@ describe("geduInvoicePdfContent", () => {
     );
   });
 
-  it("says the month is in progress while a line is still upcoming", () => {
-    expect(contentOf(aino).monthInProgress).toMatch(/^Month in progress/);
-
-    const settled: GeduInvoice = {
-      ...aino,
-      clubs: aino.clubs.map((club) => ({
+  function without(
+    invoice: GeduInvoice,
+    kinds: readonly GeduInvoice["clubs"][number]["lines"][number]["kind"][],
+  ): GeduInvoice {
+    return {
+      ...invoice,
+      clubs: invoice.clubs.map((club) => ({
         ...club,
-        lines: club.lines.filter((line) => line.kind !== "upcoming"),
+        lines: club.lines.filter((line) => !kinds.includes(line.kind)),
       })),
     };
-    expect(contentOf(settled).monthInProgress).toBeNull();
+  }
+
+  it("says what is still open: each unrecorded session, and the upcoming count", () => {
+    expect(contentOf(aino).completeness).toEqual({
+      isComplete: false,
+      title: "This statement is not complete",
+      body: null,
+      unrecorded: {
+        text: expect.stringMatching(
+          /^1 past session has nothing recorded, so it is not included\. Record a report, a note or attendance for it/,
+        ),
+        sessions: ["Tue 5/12/2026 · Minecraft adventurers · Group 1"],
+      },
+      upcoming:
+        "2 sessions are still upcoming: the month is in progress, so these figures can change.",
+    });
+  });
+
+  it("names only what is open: no unrecorded list once every past session is recorded", () => {
+    const completeness = contentOf(without(aino, ["unrecorded"])).completeness;
+
+    expect(completeness.isComplete).toBe(false);
+    expect(completeness.unrecorded).toBeNull();
+    expect(completeness.upcoming).toMatch(/^2 sessions are still upcoming/);
+  });
+
+  it("says the month is complete once nothing is upcoming or unrecorded", () => {
+    expect(
+      contentOf(without(aino, ["unrecorded", "upcoming"])).completeness,
+    ).toEqual({
+      isComplete: true,
+      title: "This statement is complete",
+      body: "No session this month is still upcoming or waiting to be recorded.",
+      unrecorded: null,
+      upcoming: null,
+    });
   });
 
   it("leads with the two subtotals and their total, all excluding VAT", () => {
@@ -327,37 +363,97 @@ describe("geduInvoicePdfContent", () => {
     expect(unpriced?.total).toBe("—");
   });
 
-  it("details the paying sessions only, per club line", () => {
+  it("details every dated line, paying or not, with its amount and why", () => {
     expect(contentOf(aino).sessionsByClub).toEqual([
       {
         productId: expect.any(String),
         role: "Primary",
         heading: "Pelikerho Kivikko · Primary",
+        fee: "Fee / session €65.00",
         sessions: [
-          { date: "Mon 5/4/2026", group: "Ryhmä A" },
-          { date: "Mon 5/18/2026", group: "Ryhmä A" },
+          { date: "Mon 5/4/2026", group: "Ryhmä A", status: "Recorded", details: [], amount: "€65.00", pays: true },
+          { date: "Mon 5/11/2026", group: "Ryhmä A", status: "Away — Mikael Rinne substituted", details: [], amount: "€0.00", pays: false },
+          { date: "Mon 5/18/2026", group: "Ryhmä A", status: "Recorded", details: [], amount: "€65.00", pays: true },
+          { date: "Mon 5/25/2026", group: "Ryhmä A", status: "Upcoming", details: [], amount: "€0.00", pays: false },
         ],
+        total: { label: "Total", sessions: "2 sessions", amount: "€130.00" },
       },
       {
         productId: expect.any(String),
         role: "Primary",
         heading: "Minecraft adventurers · Primary",
+        fee: "Fee / session €50.00",
         sessions: [
-          { date: "Tue 5/5/2026", group: "Group 1" },
-          { date: "Tue 5/19/2026", group: "Group 1" },
+          { date: "Tue 5/5/2026", group: "Group 1", status: "Recorded", details: [], amount: "€50.00", pays: true },
+          {
+            date: "Tue 5/12/2026",
+            group: "Group 1",
+            status: "Not recorded",
+            details: ["No report, note or attendance yet"],
+            amount: "€0.00",
+            pays: false,
+          },
+          { date: "Tue 5/19/2026", group: "Group 1", status: "Recorded", details: [], amount: "€50.00", pays: true },
+          { date: "Tue 5/26/2026", group: "Group 1", status: "Upcoming", details: [], amount: "€0.00", pays: false },
         ],
+        total: { label: "Total", sessions: "2 sessions", amount: "€100.00" },
       },
     ]);
   });
 
-  it("drops a club line with no paying session from the detail", () => {
+  it("lists as many lines as the page has, every club line included", () => {
     const content = contentOf(mikael);
-    const listed = content.sessionsByClub.map((club) => club.heading);
-    const withPaid = mikael.clubs
-      .filter((club) => club.lines.some((line) => line.kind === "paid"))
-      .map((club) => club.name);
 
-    expect(listed).toHaveLength(withPaid.length);
+    expect(content.sessionsByClub).toHaveLength(mikael.clubs.length);
+    expect(
+      content.sessionsByClub.reduce((n, club) => n + club.sessions.length, 0),
+    ).toBe(mikael.clubs.reduce((n, club) => n + club.lines.length, 0));
+  });
+
+  it("names who a substitute covered for, and dashes every amount of an unset fee", () => {
+    const clubs = contentOf(mikael).sessionsByClub;
+    const cover = clubs
+      .flatMap((club) => club.sessions)
+      .find((session) => session.date === "Mon 5/11/2026");
+    expect(cover?.status).toBe("Recorded");
+    expect(cover?.details).toEqual(["Covering for Aino Kallio"]);
+
+    const unpriced = clubs.find((club) =>
+      club.heading.startsWith("Rakentajakerho Mäntyranta"),
+    );
+    expect(unpriced?.fee).toBe("Fee / session —");
+    expect(unpriced?.total.amount).toBe("—");
+    expect(unpriced?.sessions.map((session) => session.amount)).toEqual(
+      unpriced?.sessions.map(() => "—"),
+    );
+    expect(unpriced?.sessions.map((session) => session.status)).toContain(
+      "Cancelled",
+    );
+  });
+
+  it("words the away line with no substitute the way the page does", () => {
+    const noSub: GeduInvoice = {
+      ...aino,
+      clubs: aino.clubs.map((club) => ({
+        ...club,
+        lines: club.lines.map((line) => ({ ...line, substitute: null })),
+      })),
+    };
+    const away = contentOf(noSub)
+      .sessionsByClub.flatMap((club) => club.sessions)
+      .find((session) => session.date === "Mon 5/11/2026");
+
+    expect(away?.status).toBe("Away — no substitute");
+  });
+
+  it("words the completeness statement and the detail in the page locale", () => {
+    const content = contentOf(aino, "fi");
+
+    expect(content.completeness.title).toBe("Erittely ei ole vielä valmis");
+    expect(content.completeness.unrecorded?.sessions).toEqual([
+      "ti 12.5.2026 · Minecraft adventurers · Group 1",
+    ]);
+    expect(content.footer).toBe("School of Gaming · Aino Kallio · toukokuu 2026");
   });
 
   it("formats money the way the page does, with no narrow or thin space", () => {
