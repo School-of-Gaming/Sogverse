@@ -170,8 +170,11 @@ each read's own body under that read's own rules.
 The client half is single too: one derivation turns the shell and the session date into
 the session's facts, and one shared component renders them — when, how soon, online or
 where, topic and language — at a card's density or the admin list's. Each surface keeps
-only its frame around it: people, the fee, the role, the actions. A surface that states
-a session fact outside that component states it twice or differently. "Place to be
+only its frame around it: people, the fee, the role, the actions. The rule covers the
+three surfaces that describe a substituted session — the pool, the office's page and the
+sub's card. The filing picker lists the reader's *own* sessions and draws its one
+online-or-where line itself, by the owner's ruling that sharing it is not worth the
+change. "Place to be
 confirmed" is an in-person session with no site, never a remote one, and a sub's own card
 says online or where from the moment the substitution is theirs, lock included.
 
