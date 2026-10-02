@@ -1145,9 +1145,10 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-  // The consent page's two buttons. Admin-only like the page: a grant held by
-  // anyone else would be refused at the MCP endpoint, and refusing it here
-  // keeps one from existing at all.
+  // The consent page's two buttons. Admin-only to mirror the page's refusal,
+  // for the experience only: any signed-in user can approve their own
+  // authorization directly against Supabase Auth, so what keeps a non-admin out
+  // is the MCP endpoint's role check on every request.
   "src/app/api/oauth/consent/route.ts": {
     handlers: {
       POST: {

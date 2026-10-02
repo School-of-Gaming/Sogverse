@@ -58,7 +58,7 @@ export type McpTokenVerdict =
  *    issues and on no first-party session token, so this is what refuses a
  *    browser session's token lifted out of a cookie and presented as a bearer:
  *    the endpoint is for granted clients only, each one a grant the admin
- *    approved on the consent page and can see.
+ *    approved on the consent page.
  * 4. **The caller's role, read now**, on a client bound to the token itself, so
  *    the read runs under that user's own row policies. A grant outlives a
  *    role change, which is why this is re-read on every request rather than

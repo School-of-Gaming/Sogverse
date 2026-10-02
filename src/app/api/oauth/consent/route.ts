@@ -1,5 +1,7 @@
+import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
+import { getOrigin } from "@/lib/url";
 import {
   oauthConsentBody,
   oauthConsentResponse,
@@ -15,10 +17,13 @@ import {
  * external destination in the flow, and it is handed back rather than
  * followed, so the page leaves with a full navigation of its own.
  *
- * Admin-only here as on the page: a grant to anyone else would be refused at
- * the endpoint anyway, and refusing it here keeps a non-admin from holding one.
+ * Admin-only to mirror the page's refusal, which is a matter of experience,
+ * not enforcement: any signed-in user can approve their own authorization
+ * straight against Supabase Auth, so a non-admin can hold a grant whatever this
+ * route does. What makes the MCP endpoint admin-only is its role check on
+ * every request.
  */
-export const POST = defineRoute({
+const answerAuthorization = defineRoute({
   posture: "role-gated",
   roles: "admin",
   body: oauthConsentBody,
@@ -43,3 +48,36 @@ export const POST = defineRoute({
     return { redirectUrl: data.redirect_url };
   },
 });
+
+/**
+ * Refused before the session is read unless the browser vouches that the
+ * request came from this site's own page. An approval forged from another site
+ * would hand an AI app an admin's grant, and the session cookie's SameSite=Lax
+ * is otherwise this route's only defence — the JSON body parse does not check
+ * the content type, so a cross-site form post is not refused for being one.
+ */
+export async function POST(request: Request): Promise<Response> {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  return answerAuthorization(request);
+}
+
+/**
+ * Whether the browser says this request came from the app's own origin.
+ *
+ * `Sec-Fetch-Site`, where sent, must be `same-origin`; `Origin`, where sent,
+ * must be the app's own origin. A request carrying neither is refused too:
+ * every current browser sends `Origin` on a POST, a same-origin `fetch`
+ * included, so only a client that is not a browser — and so holds no victim's
+ * cookie to forge with — arrives without both.
+ */
+function isSameOriginRequest(request: Request): boolean {
+  const fetchSite = request.headers.get("sec-fetch-site");
+  const origin = request.headers.get("origin");
+  if (fetchSite === null && origin === null) return false;
+  if (fetchSite !== null && fetchSite !== "same-origin") return false;
+  // Through the URL parser, since the configured fallback may end in a slash.
+  if (origin !== null && origin !== new URL(getOrigin(request)).origin) return false;
+  return true;
+}

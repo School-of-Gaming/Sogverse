@@ -87,7 +87,7 @@ const noMailFaceOutsideMail = [
  * is how every face in the tree is actually loaded, and a ban that named only
  * `next/font` would report nothing.
  *
- * Held in a const because four blocks below set the import rule, and a later
+ * Held in a const because several blocks below set the import rule, and a later
  * block replaces its options rather than merging with them.
  */
 const noNextFontOutsideLayout = [
@@ -95,6 +95,24 @@ const noNextFontOutsideLayout = [
     group: ["next/font", "next/font/*", "next/font/**"],
     message:
       "Faces are loaded in one place: src/app/[locale]/layout.tsx, which loads exactly the faces @sog/ui names and defines each one's variable on <html>. Everywhere else a face is *set*, never loaded, with the font-sans / font-serif / font-mono / font-cursive utilities. See packages/sog-ui/src/tokens/typography.ts.",
+  },
+];
+
+/**
+ * zod 4, importable by the MCP server's modules and nowhere else.
+ *
+ * The app is on zod 3. `zod-v4` is an npm alias installed for the MCP SDK,
+ * whose tool schemas need zod 4. A zod 4 schema anywhere else is a second zod
+ * in the app, one that none of the app's zod 3 schemas can compose with.
+ *
+ * Held in a const for the same reason as the bans above; the MCP block below
+ * restates the rule without it.
+ */
+const noZodV4OutsideMcp = [
+  {
+    group: ["zod-v4", "zod-v4/*"],
+    message:
+      "zod-v4 is for the MCP server's tool schemas only (src/lib/mcp/), which the MCP SDK needs in zod 4. The app is on zod 3: import from \"zod\".",
   },
 ];
 
@@ -805,6 +823,19 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp],
+      }],
+    },
+  },
+  {
+    // The MCP server's modules, where zod 4 is the one zod a tool schema can be
+    // written in. Everything else the `src/**` block bans is restated, because
+    // this block replaces that rule rather than merging with it.
+    files: ["src/lib/mcp/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": "off",
+      "@typescript-eslint/no-restricted-imports": ["error", {
+        paths: noMailFaceOutsideMail,
         patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout],
       }],
     },
@@ -829,7 +860,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: noTsExtensionImports,
+        patterns: [...noTsExtensionImports, ...noZodV4OutsideMcp],
       }],
     },
   },
@@ -868,6 +899,7 @@ const eslintConfig = defineConfig([
           // the root layout and nowhere else, a family surface included.
           ...noTsExtensionImports,
           ...noNextFontOutsideLayout,
+          ...noZodV4OutsideMcp,
           {
             // Both halves of the staff workspace: the gedu tree, and the
             // role-agnostic group workspace the gedu and admin shells both
@@ -1126,7 +1158,7 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp],
       }],
     },
   },

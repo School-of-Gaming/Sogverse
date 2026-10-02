@@ -26,10 +26,20 @@ function mockAdmin() {
   });
 }
 
-function consentRequest(body: unknown) {
+/** The headers a browser sends with the consent page's own fetch. */
+const SAME_ORIGIN_HEADERS = {
+  Host: "localhost:3000",
+  Origin: "http://localhost:3000",
+  "Sec-Fetch-Site": "same-origin",
+};
+
+function consentRequest(
+  body: unknown,
+  browserHeaders: Record<string, string> = SAME_ORIGIN_HEADERS,
+) {
   return new Request("http://localhost:3000/api/oauth/consent", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...browserHeaders },
     body: JSON.stringify(body),
   });
 }
@@ -111,6 +121,45 @@ describe("POST /api/oauth/consent", () => {
     const response = await POST(consentRequest({ authorizationId: "auth-1", decision: "approve" }));
 
     expect(response.status).toBe(400);
+  });
+
+  describe("refuses a request the browser does not vouch for as same-origin", () => {
+    const APPROVE = { authorizationId: "auth-1", decision: "approve" };
+
+    it.each([
+      [
+        "another site",
+        { Host: "localhost:3000", Origin: "https://evil.example", "Sec-Fetch-Site": "cross-site" },
+      ],
+      [
+        "a same-site but not same-origin page",
+        { Host: "localhost:3000", "Sec-Fetch-Site": "same-site" },
+      ],
+      ["a foreign Origin with no Sec-Fetch-Site", { Host: "localhost:3000", Origin: "https://evil.example" }],
+      ["an opaque Origin", { Host: "localhost:3000", Origin: "null" }],
+      ["a cross-site Sec-Fetch-Site with no Origin", { Host: "localhost:3000", "Sec-Fetch-Site": "cross-site" }],
+      ["neither header", { Host: "localhost:3000" }],
+    ])("from %s, before the session is read", async (_label, headers) => {
+      mockAdmin();
+
+      const response = await POST(consentRequest(APPROVE, headers));
+
+      expect(response.status).toBe(403);
+      expect(mockRequireRole).not.toHaveBeenCalled();
+      expect(mockApprove).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["Origin alone", { Host: "localhost:3000", Origin: "http://localhost:3000" }],
+      ["Sec-Fetch-Site alone", { Host: "localhost:3000", "Sec-Fetch-Site": "same-origin" }],
+    ])("but takes %s when it says same-origin", async (_label, headers) => {
+      mockAdmin();
+      mockApprove.mockResolvedValue({ data: { redirect_url: CALLBACK }, error: null });
+
+      const response = await POST(consentRequest(APPROVE, headers));
+
+      expect(response.status).toBe(200);
+    });
   });
 
   it("never hands the browser a script URL, whatever Supabase answers", async () => {
