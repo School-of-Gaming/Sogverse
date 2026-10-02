@@ -10,6 +10,7 @@ import {
   buildFeedbackDetail,
   buildFeedbackTimeline,
   type FeedbackDetail,
+  type FeedbackDetailStatement,
   type FeedbackGamerEntry,
   type FeedbackRead,
   type FeedbackScope,
@@ -17,7 +18,7 @@ import {
 } from "./aggregate-feedback";
 import { FeedbackDimensionRows } from "./feedback-dimension-rows";
 import { formatShare } from "./feedback-format";
-import { BelowAverage } from "./feedback-marks";
+import { AnswerBreakdown, BelowAverage, ShareText } from "./feedback-marks";
 import { FeedbackHero } from "./feedback-overview-page";
 import {
   defaultBackPlace,
@@ -28,7 +29,7 @@ import {
 } from "./feedback-place";
 import { WhatGamersSaid } from "./feedback-responses";
 import { FeedbackShell } from "./feedback-shell";
-import { FeedbackStatementTable } from "./feedback-statement-table";
+import { useFeedbackStatementLabels, useRatingWord } from "./use-feedback-labels";
 
 /**
  * **One product, group, Gedu or gamer.** The same reading as the overview's,
@@ -147,10 +148,82 @@ function PlatformLine({ comparison }: { comparison: PlatformComparison }) {
 
 function Statements({ detail }: { detail: FeedbackDetail }) {
   const t = useTranslations("admin.feedback.statements");
+  const labels = useFeedbackStatementLabels(detail.source);
+
   return (
     <Section title={t("heading")}>
-      <FeedbackStatementTable source={detail.source} statements={detail.statements} />
+      <Card>
+        <ul className="divide-y divide-border">
+          {detail.statements.map((line) => (
+            <StatementSpread
+              key={line.key}
+              line={line}
+              label={labels[line.key] ?? line.key}
+            />
+          ))}
+        </ul>
+      </Card>
     </Section>
+  );
+}
+
+/**
+ * One statement: its wording and, first, the sentence an admin would say about
+ * it — "19 of 23 said Yes or Definitely" — then the shares and the platform as
+ * text, and the five levels a row each.
+ */
+function StatementSpread({
+  line,
+  label,
+}: {
+  line: FeedbackDetailStatement;
+  label: string;
+}) {
+  const t = useTranslations("admin.feedback.statements");
+  const tDetail = useTranslations("admin.feedback.detail");
+  const locale = useLocale();
+  const ratingWord = useRatingWord();
+  const current = line.figure;
+  const platform = line.againstPlatform?.platform.positiveShare ?? null;
+
+  return (
+    <li className="space-y-2 px-4 py-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <p className="text-sm font-medium">{label}</p>
+        {current.positiveShare === null ? (
+          <ShareText figure={current} className="text-sm text-muted-foreground" />
+        ) : (
+          <p className="text-sm">
+            {t("saidPositive", {
+              positive: current.positive,
+              answers: current.answers,
+              yes: ratingWord(4),
+              definitely: ratingWord(5),
+            })}
+          </p>
+        )}
+      </div>
+      {current.positiveShare !== null && (
+        <>
+          {/* Negative before positive, as the meter reads: No on the left, Definitely on the right. */}
+          <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+            <span className="tabular-nums">
+              {t("negative", { share: formatShare(current.negativeShare, locale) })}
+            </span>
+            <span className="font-semibold tabular-nums text-foreground">
+              {t("positive", { share: formatShare(current.positiveShare, locale) })}
+            </span>
+            {platform !== null && (
+              <span className="tabular-nums">
+                {tDetail("platform", { share: formatShare(platform, locale) })}
+              </span>
+            )}
+          </p>
+          <AnswerBreakdown figure={current} />
+        </>
+      )}
+      {line.againstPlatform?.belowPlatform === true && <BelowAverage statement={null} />}
+    </li>
   );
 }
 

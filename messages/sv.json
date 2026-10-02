@@ -1612,9 +1612,10 @@
       },
       "statements": {
         "heading": "Per påstående",
+        "legend": "Negativt är Nej eller Inte riktigt; positivt är Ja eller Absolut.",
         "positive": "{share} positiva",
-        "caption": "Svar per påstående",
-        "statement": "Påstående"
+        "negative": "{share} negativa",
+        "saidPositive": "{positive} av {answers} svarade {yes} eller {definitely}"
       },
       "explore": {
         "heading": "Utforska",

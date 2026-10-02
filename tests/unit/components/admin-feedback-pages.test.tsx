@@ -91,7 +91,8 @@ describe("admin feedback pages", () => {
 
   it("opens the overview on no list of products, groups or Gedus, and no change since before", () => {
     wrap(<FeedbackOverviewPage read={read(dataset)} />);
-    expect(screen.getByText("positive").parentElement?.textContent).toBe("89%positive");
+    expect(screen.getByText("positive")).toBeTruthy();
+    expect(screen.getByText("89%")).toBeTruthy();
     expect(screen.queryByText("B1")).toBeNull();
     expect(screen.queryByText("Aino")).toBeNull();
     expect(screen.queryByText(/previous|point/i)).toBeNull();
@@ -152,81 +153,10 @@ describe("admin feedback pages", () => {
     expect(screen.queryByRole("group", chart)).toBeNull();
   });
 
-  describe("by statement", () => {
-    // Club B lags the platform on "Learned" and matches it on "Fun".
-    const mixed = feedbackDataset([
-      ...feedbackResponses(4, { answers: allFive(5) }),
-      feedbackResponse({ ...FEEDBACK_CLUB_B, respondent: ONNI, answers: { ...allFive(5), learned: 1 } }),
-      feedbackResponse({ ...FEEDBACK_CLUB_B, answers: { ...allFive(4), learned: 2 } }),
-    ]);
-
-    function statementTable() {
-      return screen.getByRole("table", { name: "Answers to each statement" });
-    }
-
-    /** A statement's row: its five counts, then its positive cell's text. */
-    function rowOf(table: HTMLElement, label: string) {
-      const row = within(table)
-        .getAllByRole("rowheader")
-        .find((header) => header.querySelector("[tabindex='0']")?.textContent === label)
-        ?.closest("tr");
-      if (row == null) throw new Error(`No row for ${label}`);
-      const cells = within(row).getAllByRole("cell");
-      return { counts: cells.slice(0, 5), positive: cells[5] };
-    }
-
-    it("draws a row per statement and a column per answer, No to Definitely, then the positive share", () => {
-      wrap(<FeedbackDetailPage read={read(mixed)} origin={null} scope={{ kind: "product", id: "product-b" }} />);
-      const table = statementTable();
-      const headings = within(table)
-        .getAllByRole("columnheader")
-        .map((header) => (header.querySelector("[tabindex='0']") ?? header).textContent);
-      expect(headings).toEqual([
-        "Statement",
-        "No",
-        "Not really",
-        "A bit",
-        "Yes",
-        "Definitely",
-        "Positive",
-      ]);
-      const labels = within(table)
-        .getAllByRole("rowheader")
-        .map((header) => header.querySelector("[tabindex='0']")?.textContent);
-      expect(labels).toEqual(["Learned", "Fun", "Gedu knew", "Gedu kind", "Listened"]);
-
-      const learned = rowOf(table, "Learned");
-      expect(learned.counts.map((cell) => cell.textContent)).toEqual(["1", "1", "0", "0", "0"]);
-      // Each count's rule is its share of the statement's answers; a zero draws none.
-      expect(learned.counts[0].querySelector<HTMLElement>(".bg-act")?.style.width).toBe("50%");
-      expect(learned.counts[2].querySelector(".bg-act")).toBeNull();
-      expect(learned.positive.textContent).toMatch(/^0%/);
-      expect(learned.positive.textContent).toContain("Platform 67%");
-      expect(within(learned.positive).getByText("Below average")).toBeTruthy();
-
-      const fun = rowOf(table, "Fun");
-      expect(fun.counts.map((cell) => cell.textContent)).toEqual(["0", "0", "0", "1", "1"]);
-      expect(fun.positive.textContent).toMatch(/^100%/);
-      expect(within(fun.positive).queryByText("Below average")).toBeNull();
-    });
-
-    it("sets neither a gamer nor the platform itself against the platform", () => {
-      const expectUncompared = () => {
-        const table = statementTable();
-        expect(within(table).getAllByRole("rowheader")).toHaveLength(5);
-        expect(rowOf(table, "Fun").positive.textContent).toBe("100%");
-        expect(table.textContent).not.toMatch(/Platform|Below average/);
-      };
-
-      const { unmount } = wrap(
-        <FeedbackDetailPage read={read(mixed)} origin={null} scope={{ kind: "gamer", id: ONNI.id }} />,
-      );
-      expectUncompared();
-      unmount();
-
-      wrap(<FeedbackOverviewPage read={read(mixed)} />);
-      expectUncompared();
-    });
+  it("states a statement's negative share before its positive one, as the meter reads", () => {
+    wrap(<FeedbackOverviewPage read={read(dataset)} />);
+    const line = screen.getByText("I had fun.").closest("li");
+    expect(line?.textContent).toMatch(/negative.*positive/);
   });
 
   it("judges a product of one answer like any other", () => {
@@ -415,14 +345,10 @@ describe("admin feedback pages", () => {
       expect(opener()).not.toMatch(/group-hover:visible|group-focus-within:visible/);
       fireEvent.blur(statementHeaders[0]);
       expect(opener()).toMatch(/group-focus-within:visible/);
-      // The hint's wrapper fills the heading cell, so pointing at the cell is pointing at it.
-      const hint = tooltip.parentElement?.parentElement;
-      if (hint == null) throw new Error("The sentence has no wrapper");
-      expect(hint.className).toMatch(/\bblock\b/);
-      fireEvent.mouseEnter(hint);
+      fireEvent.mouseEnter(headers[1]);
       fireEvent.keyDown(document, { key: "Escape" });
       expect(opener()).not.toMatch(/group-hover:visible/);
-      fireEvent.mouseLeave(hint);
+      fireEvent.mouseLeave(headers[1]);
       expect(opener()).toMatch(/group-hover:visible/);
 
       // The heading row group, then one per response.

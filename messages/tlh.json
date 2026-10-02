@@ -1656,9 +1656,10 @@
       },
       "statements": {
         "heading": "ja'meH mu'tlhegh",
+        "legend": "QaQbe': ghobe' pagh ghobe'law'. QaQ: HISlaH pagh HISlaHbej.",
         "positive": "{share} QaQ",
-        "caption": "mu'tlhegh jangmey",
-        "statement": "mu'tlhegh"
+        "negative": "{share} QaQbe'",
+        "saidPositive": "{answers} jangmey; {positive} {yes} pagh {definitely}"
       },
       "explore": {
         "heading": "yInej",

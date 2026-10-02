@@ -1612,9 +1612,10 @@
       },
       "statements": {
         "heading": "Par affirmation",
+        "legend": "Négative : Non ou Pas vraiment ; positive : Oui ou Tout à fait.",
         "positive": "{share} positives",
-        "caption": "Réponses à chaque affirmation",
-        "statement": "Affirmation"
+        "negative": "{share} négatives",
+        "saidPositive": "{positive} sur {answers} ont répondu {yes} ou {definitely}"
       },
       "explore": {
         "heading": "Explorer",
