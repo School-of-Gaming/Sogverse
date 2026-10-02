@@ -40,7 +40,7 @@ export interface FeedbackPeriod {
 }
 
 /** One answer the source's catalogue knows. */
-export interface KnownAnswer {
+interface KnownAnswer {
   key: string;
   rating: SessionFeedbackRating;
 }
@@ -98,9 +98,9 @@ export interface ShareFigure {
   n: number;
   /** Answers counted (equals `n` for a single statement). */
   answers: number;
-  /** Answers at 4–5. */
+  /** Answers at `POSITIVE_FROM` or above. */
   positive: number;
-  /** Answers at 1–2. */
+  /** Answers at `NEGATIVE_UP_TO` or below. */
   negative: number;
   /** `positive / answers`, `null` when nothing was answered. */
   positiveShare: number | null;
@@ -110,10 +110,15 @@ export interface ShareFigure {
   distribution: Record<SessionFeedbackRating, number>;
 }
 
+/** The answers at the levels `counts` as. */
+function answersAt(tally: Tally, counts: (rating: SessionFeedbackRating) => boolean): number {
+  return SESSION_FEEDBACK_RATINGS.filter(counts).reduce((sum, rating) => sum + tally.counts[rating], 0);
+}
+
 export function shareFigure(tally: Tally): ShareFigure {
   const { counts, answers } = tally;
-  const positive = counts[4] + counts[5];
-  const negative = counts[1] + counts[2];
+  const positive = answersAt(tally, (rating) => rating >= POSITIVE_FROM);
+  const negative = answersAt(tally, (rating) => rating <= NEGATIVE_UP_TO);
   return {
     n: tally.responses,
     answers,
@@ -171,7 +176,7 @@ export type FeedbackBucketUnit = "week" | "month";
 const WEEKLY_UP_TO_DAYS = 183;
 
 /** Inclusive days in a period. */
-export function periodDays(period: FeedbackPeriod): number {
+function periodDays(period: FeedbackPeriod): number {
   const ms = parseCalendarDate(period.to).getTime() - parseCalendarDate(period.from).getTime();
   return Math.round(ms / 86_400_000) + 1;
 }

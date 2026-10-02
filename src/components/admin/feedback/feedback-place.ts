@@ -39,7 +39,7 @@ const SCOPE_KINDS: readonly FeedbackScopeKind[] = ["product", "group", "gedu", "
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Whether a route's id could name anything at all: every id here is a uuid. */
-export function isFeedbackId(id: string): boolean {
+function isFeedbackId(id: string): boolean {
   return UUID.test(id);
 }
 

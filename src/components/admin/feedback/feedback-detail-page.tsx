@@ -11,10 +11,10 @@ import {
   buildFeedbackDetail,
   buildFeedbackTimeline,
   type FeedbackDetail,
-  type FeedbackDetailStatement,
   type FeedbackGamerEntry,
   type FeedbackRead,
   type FeedbackScope,
+  type FeedbackStatementLine,
   type PlatformComparison,
 } from "./aggregate-feedback";
 import { FeedbackDimensionRows } from "./feedback-dimension-rows";
@@ -172,7 +172,7 @@ function StatementSpread({
   line,
 }: {
   source: FeedbackSource;
-  line: FeedbackDetailStatement;
+  line: FeedbackStatementLine;
 }) {
   const t = useTranslations("admin.feedback.statements");
   const locale = useLocale();
@@ -281,21 +281,10 @@ function GamerList({ gamers, origin }: { gamers: FeedbackGamerEntry[]; origin: F
   );
 }
 
-function Section({
-  title,
-  aside,
-  children,
-}: {
-  title: string;
-  aside?: ReactNode;
-  children: ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <h2 className="text-base font-semibold">{title}</h2>
-        {aside}
-      </div>
+      <h2 className="text-base font-semibold">{title}</h2>
       {children}
     </section>
   );

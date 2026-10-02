@@ -1,16 +1,12 @@
-import {
-  SESSION_FEEDBACK_ITEMS,
-  type SessionFeedbackTheme,
-} from "@/components/voice/feedback/session-feedback-items";
+import { SESSION_FEEDBACK_ITEMS } from "@/components/voice/feedback/session-feedback-items";
 import type { FeedbackSource } from "@/services/session-feedback/admin-feedback.contracts";
 
 /**
  * What the feedback page needs to know about one statement of a source's
- * instrument: the key its answer is stored under, and the theme it reports into.
+ * instrument: the key its answer is stored under.
  */
 export interface FeedbackStatement {
   key: string;
-  theme: SessionFeedbackTheme;
 }
 
 /**

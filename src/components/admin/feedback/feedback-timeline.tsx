@@ -11,6 +11,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
 import { formatDateOnly, formatDateRange } from "@/lib/utils";
 import type { FeedbackTimeline as Timeline, FeedbackTimelinePoint } from "./aggregate-feedback";
 import { formatShare } from "./feedback-format";
@@ -134,7 +135,7 @@ export function FeedbackTimeline({
     ];
     if (row.point.n > 0) parts.push(t("answers", { count: row.point.n }));
     if (row.platform !== null) parts.push(t("detail.platform", { share: share(row.platform) }));
-    return parts.join(" · ");
+    return parts.join(SCHEDULE_PART_SEPARATOR);
   };
 
   const label = t(unit === "week" ? "timeline.byWeek" : "timeline.byMonth");

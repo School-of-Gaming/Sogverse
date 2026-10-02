@@ -82,10 +82,10 @@ export function feedbackSession(overrides: Partial<AdminFeedbackSession> = {}): 
   };
 }
 
-/** A dataset spanning `FEEDBACK_HISTORY`. */
+/** A dataset of these responses and sessions. */
 export function feedbackDataset(
   responses: AdminFeedbackResponse[],
   sessions: AdminFeedbackSession[] = [],
 ): AdminFeedbackDataset {
-  return { ...FEEDBACK_HISTORY, responses, sessions };
+  return { responses, sessions };
 }

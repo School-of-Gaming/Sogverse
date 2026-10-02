@@ -119,7 +119,7 @@ export class SessionFeedbackService {
       p_window_before_minutes: VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES,
     });
     if (error) throw error;
-    return adminFeedbackDatasetFromRpc(data, range, locale);
+    return adminFeedbackDatasetFromRpc(data, locale);
   }
 
   /**

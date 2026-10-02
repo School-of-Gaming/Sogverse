@@ -612,8 +612,8 @@ DECLARE
 BEGIN
 
   -- 1. Running, listed, paid consumer club. The busiest thing in the catalogue,
-  --    and seven months in, like the free club below: the feedback page's
-  --    90-day view needs a previous 90 days to compare against.
+  --    and seven months in, like the free club below, so the feedback page's
+  --    timeline has history to draw.
   PERFORM public.create_product(
     'consumer_club', 'paid',
     jsonb_build_array(
@@ -986,7 +986,7 @@ BEGIN
     ('Creator Studio Club',                      'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
     ('Minecraft Bedrock Club',                   'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
     ('Roblox Builders Club',                     'Ryhmä A',      v_sofia, 'primary', NULL,           NULL),
-    ('Schools Game Club',                       'Ryhmä 1',      v_gedu,  'primary', NULL,           NULL),
+    ('Schools Game Club',                        'Ryhmä 1',      v_gedu,  'primary', NULL,           NULL),
     ('Autumn Term Game Club',                    'Ryhmä 1',      v_sofia, 'primary', NULL,           NULL),
     ('Minecraft Summer Camp',                    'Camp Group A', v_lucas, 'primary', 'Camp Group B', v_emma),
     ('Roblox Winter Camp',                       'Camp Group A', v_mikko, 'primary', NULL,           NULL),
@@ -1345,8 +1345,8 @@ COMMIT;
 -- one at a time, so `updated_by` and `recorded_by` read the way they would in
 -- production rather than all pointing at an admin. The ten most recent sessions
 -- of each in-person club are written up, and the thirty-one most recent of each
--- online one — seven months, back to their start, so the admin feedback page
--- has a previous period behind every range but the year.
+-- online one — seven months, back to their start, so the admin feedback page's
+-- timeline has history to draw.
 --
 -- On the ONLINE clubs, about seven in ten of the children marked present then
 -- answer the feedback screen on the way out — written as the child, the way
@@ -1361,8 +1361,8 @@ COMMIT;
 -- answered No or Not really to something writes about what went wrong.
 --
 -- The Roblox Builders Club, the one-group product, is the healthy contrast and
--- is scripted rather than rolled: every answer rated, nothing below Somewhat
--- except two, and three notes — one of them beside a No.
+-- is scripted rather than rolled: every answer rated, nothing below A bit
+-- except two, and three notes — one of them beside a Not really.
 
 BEGIN;
 SELECT set_config('request.jwt.claims',
@@ -1393,10 +1393,10 @@ DECLARE
   v_progress numeric;
   v_notes    text[];
   v_scripted boolean;
-  v_low_key  text;
+  v_negative_key text;
   v_note     text;
   -- What a child writes after answering No or Not really to something.
-  v_low_notes text[] := ARRAY[
+  v_negative_notes text[] := ARRAY[
     'it was hard to hear because everyone talked at once',
     'some people kept talking over me',
     'nobody listened when i explained my idea',
@@ -1479,13 +1479,13 @@ BEGIN
         -- The healthy group's few low answers and notes, placed by how many
         -- sessions back they are and which of the group's children (in id
         -- order) gave them. A scripted answer is given whatever the roll says.
-        SELECT s.low_key, s.note INTO v_low_key, v_note
+        SELECT s.negative_key, s.note INTO v_negative_key, v_note
           FROM (VALUES
             (3,  1, 'learned',      'too short, i didnt get to finish my obby'),
             (6,  2, NULL,           'can we make a tycoon game next week??'),
             (10, 4, 'groupListens', NULL),
             (15, 5, NULL,           'i scripted a door that opens when you touch it!!')
-          ) AS s(sessions_back, child, low_key, note)
+          ) AS s(sessions_back, child, negative_key, note)
          WHERE grp.healthy AND s.sessions_back = v_n
            AND s.child = array_position(v_people, v_person);
         v_scripted := FOUND;
@@ -1507,7 +1507,7 @@ BEGIN
         IF v_roll >= 4 THEN
           FOREACH v_key IN ARRAY ARRAY['learned', 'fun', 'geduKnowledgeable', 'geduKind', 'groupListens'] LOOP
             CONTINUE WHEN abs(hashtext('skip' || v_key || v_person || d)) % 10 = 0
-                      AND v_key IS DISTINCT FROM v_low_key;
+                      AND v_key IS DISTINCT FROM v_negative_key;
             v_level := CASE
                 WHEN v_key = 'groupListens' AND grp.weak_listening THEN 2
                 WHEN v_key IN ('geduKnowledgeable', 'geduKind') AND grp.rising_gedu
@@ -1515,7 +1515,7 @@ BEGIN
                 WHEN v_key = 'fun' THEN 5
                 ELSE 4
               END + abs(hashtext('level' || v_key || v_person || d)) % 3 - 1;
-            IF v_key = v_low_key THEN
+            IF v_key = v_negative_key THEN
               v_level := 2;
             END IF;
             v_answers := v_answers || jsonb_build_object(v_key, greatest(1, least(5, v_level)));
@@ -1527,7 +1527,7 @@ BEGIN
         v_starts := (d + grp.start_time) AT TIME ZONE grp.timezone;
         v_notes := CASE
           WHEN EXISTS (SELECT 1 FROM jsonb_each(v_answers) WHERE value::integer <= 2)
-            THEN v_low_notes ELSE v_happy_notes END;
+            THEN v_negative_notes ELSE v_happy_notes END;
         PERFORM set_config('request.jwt.claims',
           json_build_object('sub', v_person::text, 'role', 'authenticated')::text, true);
         INSERT INTO public.session_feedback

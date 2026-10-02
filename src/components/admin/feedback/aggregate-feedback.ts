@@ -1,4 +1,3 @@
-import type { SessionFeedbackTheme } from "@/components/voice/feedback/session-feedback-items";
 import type {
   AdminFeedbackDataset,
   AdminFeedbackGedu,
@@ -33,7 +32,6 @@ import { FEEDBACK_CATALOGUES } from "./feedback-sources";
 
 export {
   bucketUnitFor,
-  type FeedbackBucketUnit,
   type FeedbackPeriod,
   type ShareFigure,
 } from "./feedback-tally";
@@ -46,9 +44,9 @@ export {
  * Every figure covers the whole history, from the first day a gamer answered
  * to today: there is no period to pick and nothing to compare it with but the
  * platform. A session before the first answer predates the feedback prompt, so
- * it counts toward no denominator and opens no row. Every figure is per source and — below the overview —
- * set against the platform's, except a gamer's, which carries no platform
- * figure at all. Nothing here knows about React, the URL or the locale: ids
+ * it counts toward no denominator and opens no row. Every figure is per
+ * source. Below the overview a detail's headline and every breakdown row are
+ * set against the platform's; a gamer's carry no platform figure at all. Nothing here knows about React, the URL or the locale: ids
  * and message-key-shaped values out, labels are the UI's.
  */
 
@@ -83,9 +81,7 @@ export interface FeedbackScope {
 /** The product a product or group belongs to. */
 export interface FeedbackProductRef {
   id: string;
-  name: string;
   type: ProductType;
-  isRemote: boolean;
 }
 
 /** One point of the timeline: the positive share of one week or month. */
@@ -116,7 +112,6 @@ export interface FeedbackTimeline {
 export interface FeedbackStatementLine {
   /** The catalogue key — also the statement's message key. */
   key: string;
-  theme: SessionFeedbackTheme;
   figure: ShareFigure;
 }
 
@@ -193,8 +188,6 @@ export interface FeedbackDimensionRow {
   scope: FeedbackScope;
   /** Responses (a response with two Gedus counts toward each). */
   responses: number;
-  eligible: number;
-  responseRate: number | null;
   /** Positive share across every statement; its `positiveShare` is what the list sorts on. */
   overall: ShareFigure;
   /** The row's positive share is under the platform's. */
@@ -217,12 +210,6 @@ export interface PlatformComparison {
   platform: ShareFigure;
   belowPlatform: boolean;
 }
-
-/**
- * A gamer is a child, read only against themselves over time, so a gamer's
- * detail has `againstPlatform: null` everywhere: the comparison is never built.
- */
-export type FeedbackDetailStatement = FeedbackStatementLine & { againstPlatform: PlatformComparison | null };
 
 /** A gamer under a group: who, and how often they answered. Never a score. */
 export interface FeedbackGamerEntry {
@@ -259,10 +246,14 @@ export interface FeedbackDetail {
   /** The product of a product or group scope; `null` otherwise. */
   product: FeedbackProductRef | null;
   headline: ShareFigure;
-  /** The headline against the platform's; `null` for a gamer. */
+  /**
+   * The headline against the platform's; `null` for a gamer, a child read only
+   * against themselves over time.
+   */
   againstPlatform: PlatformComparison | null;
   participation: FeedbackParticipation;
-  statements: FeedbackDetailStatement[];
+  /** In the order the source asks them. */
+  statements: FeedbackStatementLine[];
   children: FeedbackDetailChildren;
   responses: FeedbackResponses;
 }
@@ -335,13 +326,6 @@ export function buildFeedbackDetail(
   const headline = shareFigure(scoped.overall);
   const comparable = scope.kind !== "gamer";
 
-  const statements = statementLinesOf(scoped, source).map((line) => ({
-    ...line,
-    againstPlatform: comparable
-      ? compareWithPlatform(line.figure, statementFigure(platformTallies, line.key))
-      : null,
-  }));
-
   const childRows = (dimension: FeedbackDimension) =>
     dimensionRows(dimension, slice, source, platformTallies, groups);
   const productOfManyGroups = scope.kind === "product" && (groups.get(scope.id) ?? 0) > 1;
@@ -359,7 +343,7 @@ export function buildFeedbackDetail(
       scope.kind === "gamer"
         ? { ...participationOf(slice.responses, []), eligible: null, responseRate: null }
         : participationOf(slice.responses, slice.sessions),
-    statements,
+    statements: statementLinesOf(scoped, source),
     children: {
       groups: productOfManyGroups || scope.kind === "gedu" ? childRows("group") : null,
       gedus: scope.kind === "product" ? childRows("gedu") : null,
@@ -601,9 +585,8 @@ function seriesOf(
 }
 
 function statementLinesOf(tallies: ResponseTallies, source: FeedbackSource): FeedbackStatementLine[] {
-  return FEEDBACK_CATALOGUES[source].map(({ key, theme }) => ({
+  return FEEDBACK_CATALOGUES[source].map(({ key }) => ({
     key,
-    theme,
     figure: statementFigure(tallies, key),
   }));
 }
@@ -633,7 +616,7 @@ interface RowKey {
 }
 
 function productRefOf(row: AdminFeedbackGroupRef): FeedbackProductRef {
-  return { id: row.productId, name: row.productName, type: row.productType, isRemote: row.isRemote };
+  return { id: row.productId, type: row.productType };
 }
 
 /** The rows an entry counts toward. A Gedu listed twice on one session counts once. */
@@ -662,7 +645,6 @@ function rowKeysOf(
 
 interface RowAccumulator extends RowKey {
   responses: AdminFeedbackResponse[];
-  eligible: number;
 }
 
 /**
@@ -681,7 +663,7 @@ function dimensionRows(
   const open = (key: RowKey): RowAccumulator => {
     let row = rows.get(key.id);
     if (row === undefined) {
-      row = { ...key, responses: [], eligible: 0 };
+      row = { ...key, responses: [] };
       rows.set(key.id, row);
     }
     return row;
@@ -694,7 +676,7 @@ function dimensionRows(
   }
   for (const session of slice.sessions) {
     for (const key of rowKeysOf(session, dimension, groupsPerProduct)) {
-      open(key).eligible += session.eligibleCount;
+      open(key);
     }
   }
 
@@ -703,14 +685,11 @@ function dimensionRows(
     .map((row): FeedbackDimensionRow => {
       const tallies = tallyResponses(row.responses, source);
       const overall = shareFigure(tallies.overall);
-      const counted = row.responses.filter((response) => response.countsTowardRate).length;
       return {
         id: row.id,
         name: row.name,
         scope: row.scope,
         responses: row.responses.length,
-        eligible: row.eligible,
-        responseRate: row.eligible === 0 ? null : counted / row.eligible,
         overall,
         belowPlatform: isBelow(overall, platformOverall),
         weakest: weakestStatement(tallies, platform, source),

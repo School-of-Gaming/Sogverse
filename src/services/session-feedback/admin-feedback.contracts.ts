@@ -80,8 +80,6 @@ export interface AdminFeedbackSession extends AdminFeedbackGroupRef {
 
 /** Everything the admin feedback page draws, for one inclusive range of session days. */
 export interface AdminFeedbackDataset {
-  from: string;
-  to: string;
   responses: AdminFeedbackResponse[];
   sessions: AdminFeedbackSession[];
 }
@@ -157,13 +155,10 @@ function withProductName<T extends { productTranslations: ProductTranslation[] }
  */
 export function adminFeedbackDatasetFromRpc(
   raw: unknown,
-  range: { from: string; to: string },
   locale: SupportedLocale,
 ): AdminFeedbackDataset {
   const parsed = adminFeedbackRpcResult.parse(raw);
   return {
-    from: range.from,
-    to: range.to,
     responses: parsed.responses.map((entry) => withProductName(entry, locale)),
     sessions: parsed.sessions.map((entry) => withProductName(entry, locale)),
   };

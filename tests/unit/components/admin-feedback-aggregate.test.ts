@@ -167,7 +167,7 @@ describe("buildFeedbackTimeline", () => {
   it("buckets a long history by calendar month across a year boundary", () => {
     const history = { from: "2025-02-16", to: "2026-02-15" };
     const timeline = buildFeedbackTimeline(
-      { ...history, responses: [response({ answers: { fun: 5 }, sessionDate: "2025-12-31" })], sessions: [] },
+      { responses: [response({ answers: { fun: 5 }, sessionDate: "2025-12-31" })], sessions: [] },
       "gamer_online",
       history,
       null,
@@ -284,8 +284,6 @@ describe("buildFeedbackDimensionList", () => {
 
     expect(list.rows.find((row) => row.id === "product-b")).toMatchObject({
       responses: 0,
-      eligible: 6,
-      responseRate: 0,
       overall: { positiveShare: null },
       belowPlatform: false,
       weakest: null,
@@ -303,7 +301,7 @@ describe("buildFeedbackDimensionList", () => {
     );
 
     const list = buildFeedbackDimensionList(data, "gamer_online", "product");
-    expect(list.rows.map((row) => [row.id, row.eligible])).toEqual([["product-a", 4]]);
+    expect(list.rows.map((row) => row.id)).toEqual(["product-a"]);
     expect(buildFeedbackOverview(data, "gamer_online").participation.eligible).toBe(4);
   });
 
@@ -317,9 +315,9 @@ describe("buildFeedbackDimensionList", () => {
       "gedu",
     );
 
-    expect(list.rows.map((row) => [row.id, row.responses, row.eligible])).toEqual([
-      ["gedu-aino", 1, 3],
-      ["gedu-mika", 1, 3],
+    expect(list.rows.map((row) => [row.id, row.responses])).toEqual([
+      ["gedu-aino", 1],
+      ["gedu-mika", 1],
     ]);
   });
 
@@ -338,15 +336,11 @@ describe("buildFeedbackDetail", () => {
     );
 
     expect(detail.name).toBe("Club B");
-    expect(detail.product).toEqual({ id: "product-b", name: "Club B", type: "municipality_club", isRemote: true });
+    expect(detail.product).toEqual({ id: "product-b", type: "municipality_club" });
     expect(detail.againstPlatform?.platform.positiveShare).toBeCloseTo(34 / 42);
     expect(detail.againstPlatform?.belowPlatform).toBe(true);
     const fun = detail.statements.find((line) => line.key === "fun");
     expect(fun?.figure.distribution).toEqual({ 1: 8, 2: 0, 3: 0, 4: 0, 5: 4 });
-    expect(fun?.againstPlatform?.belowPlatform).toBe(true);
-    // Nobody answered "learned": no gap, no flag.
-    const learned = detail.statements.find((line) => line.key === "learned");
-    expect(learned?.againstPlatform).toMatchObject({ belowPlatform: false });
     // Club B ran one group: no groups breakdown, and the product lists that group's gamers itself.
     expect(detail.children.groups).toBeNull();
     expect(detail.children.gedus?.map((row) => row.id)).toEqual(["gedu-aino"]);
@@ -466,7 +460,6 @@ describe("buildFeedbackDetail", () => {
     expect(detail.participation).toEqual({ responses: 3, countedResponses: 3, eligible: null, responseRate: null });
     expect(detail.againstPlatform).toBeNull();
     expect(detail.statements.length).toBeGreaterThan(0);
-    expect(detail.statements.every((line) => line.againstPlatform === null)).toBe(true);
     expect(detail.responses.all.map((row) => row.sessionDate)).toEqual(["2026-09-20", "2026-09-10", "2026-09-02"]);
     expect(detail.responses.worthReading.map((row) => row.note)).toEqual(["negative", "newest"]);
     expect(detail.children).toEqual({ groups: null, gedus: null, gamers: null });

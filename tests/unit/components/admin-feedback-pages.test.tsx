@@ -89,13 +89,12 @@ describe("admin feedback pages", () => {
     vi.restoreAllMocks();
   });
 
-  it("opens the overview on no list of products, groups or Gedus, and no change since before", () => {
+  it("opens the overview on no list of products, groups or Gedus", () => {
     wrap(<FeedbackOverviewPage read={read(dataset)} />);
     expect(screen.getByText("positive")).toBeTruthy();
     expect(screen.getByText("89%")).toBeTruthy();
     expect(screen.queryByText("B1")).toBeNull();
     expect(screen.queryByText("Aino")).toBeNull();
-    expect(screen.queryByText(/previous|point/i)).toBeNull();
   });
 
   it("draws the whole history over a labelled scale, its readings also given as text", () => {
@@ -104,7 +103,6 @@ describe("admin feedback pages", () => {
     for (const label of ["0%", "25%", "50%", "75%", "100%", "Jul 2026", "Aug", "Sep"]) {
       expect(within(chart).getByText(label)).toBeTruthy();
     }
-    expect(screen.queryByText(/^Since /)).toBeNull();
     expect(within(chart).getByText("Sep 28, 2026 – Sep 30, 2026 · No answers")).toBeTruthy();
     expect(within(chart).getByText("Sep 7, 2026 – Sep 13, 2026 · 89% positive · 9 answers")).toBeTruthy();
   });
