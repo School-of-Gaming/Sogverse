@@ -60,8 +60,9 @@ export function McpServerCard({ url }: { url: string }) {
               readOnly
               className="bg-lifted font-mono"
             />
-            {/* The label swaps for one word and the icon for a same-sized one,
-                so nothing beside the button moves when it confirms. */}
+            {/* Both labels share one grid cell and the inactive one is hidden,
+                so the button keeps the wider label's width and the field beside
+                it does not move when it confirms. The icons are the same size. */}
             <Button
               type="button"
               variant="outline"
@@ -73,7 +74,20 @@ export function McpServerCard({ url }: { url: string }) {
               ) : (
                 <Copy className="h-4 w-4" aria-hidden />
               )}
-              {copied ? t("copied") : t("copy")}
+              <span className="grid">
+                <span
+                  aria-hidden={copied}
+                  className={cn("col-start-1 row-start-1", copied && "invisible")}
+                >
+                  {t("copy")}
+                </span>
+                <span
+                  aria-hidden={!copied}
+                  className={cn("col-start-1 row-start-1", !copied && "invisible")}
+                >
+                  {t("copied")}
+                </span>
+              </span>
             </Button>
           </div>
         </Field>
