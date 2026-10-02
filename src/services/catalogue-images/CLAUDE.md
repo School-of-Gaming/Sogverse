@@ -102,7 +102,9 @@ badge's number is its list's length, because two derivations of one number is ho
 come to disagree.
 
 Writes go through the API routes because they touch the storage buckets, which the routes
-write through the service-role client the browser must never hold. Each bucket also
+write through the service-role client the browser must never hold. The one other writer is
+the MCP server's Library cover uploader (`src/lib/mcp/`), which adds a cover through the
+same checks and the same find-or-create as the upload route, from the server module here. Each bucket also
 carries admin-only write policies on `storage.objects`, the same three on both; nothing
 uses them today, and they are what an admin's own session would be held to. Inside a route the
 split is deliberate: **storage on the admin client, the catalogue table on the caller's own
@@ -153,7 +155,8 @@ database never sees the bytes either, so a stored size would be a claim nobody c
 
 Where each rule is enforced:
 
-- **The size — the upload routes**, the only writers to the buckets. Each reads the pixel
+- **The size — the upload routes and the MCP cover uploader**, the only writers to the
+  buckets, sharing one set of checks. Each reads the pixel
   size from the uploaded bytes and refuses anything that is not a JPEG of exactly its
   purpose's size, with a stable code. A new entry's purpose is the form's `purpose` field;
   a replacement takes the replaced entry's purpose and ignores the field, because

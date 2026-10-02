@@ -73,6 +73,7 @@
       "robloxSafeguarding": "Luojien akatemian lasten turvallisuuden toimintaohje",
       "robloxTerms": "Luojien akatemian käyttöehdot",
       "geduContract": "Gedu-sopimus",
+      "oauthConsent": "Yhdistä tekoälysovellus",
       "seatOffer": "Paikkatarjous",
       "geduSubstitutions": "Tuuraukset",
       "geduInvoicing": "Laskutus",
@@ -535,7 +536,11 @@
       "statusPanel": {
         "label": "Julkaiseminen",
         "publishedLine": "Julkaistu {date}.",
-        "changedLine": "Lukijat näkevät version, joka julkaistiin {date}."
+        "changedLine": "Lukijat näkevät version, joka julkaistiin {date}.",
+        "savedLine": "Tallennettu viimeksi {date}.",
+        "savedByLine": "Tallennettu viimeksi {date}, tallentaja {name}.",
+        "savedByViaLine": "Tallennettu viimeksi {date}, tallentaja {name} sovelluksen {app} kautta.",
+        "savedByViaUnnamedLine": "Tallennettu viimeksi {date}, tallentaja {name} tekoälysovelluksen kautta."
       },
       "viewLive": "Näytä Kirjastossa",
       "preview": "Esikatselu",
@@ -5160,6 +5165,25 @@
       "geonames": "Maiden, alueiden ja kuntien luettelo, josta valitset, missä perheesi asuu — sama luettelo, jonka avulla etsimme lähelläsi olevia kerhoja. Luettelomme perustuu GeoNamesin aineistoon, mutta se ei ole siitä suora kopio: jätämme pois paikat, joissa emme toimi, ryhmittelemme osan toisin ja nimeämme osan uudelleen siihen muotoon, jota paikalliset käyttävät.",
       "laPoste": "Ranskan postinumerot samassa luettelossa, jotta Ranskassa asuva perhe voi kirjoittaa numeron sen sijaan, että etsisi kuntaansa listalta.",
       "mcHeads": "Piirtää Minecraft-hahmon, joka näkyy liitetyn Minecraft-tilin vieressä. Palvelu ei vaadi mainintaa, joten tämä on kiitos eikä velvollisuus."
+    }
+  },
+  "oauthConsent": {
+    "title": "Yhdistä tekoälysovellus Sogverseen",
+    "body": "{clientName} pyytää lupaa toimia Sogversessa sinun nimissäsi kaikilla ylläpitäjän oikeuksillasi.",
+    "destinationLabel": "Kirjautumisesi lähetetään osoitteeseen",
+    "loopbackHint": "Tällä tietokoneella toimiva sovellus.",
+    "unrecognised": "School of Gaming ei tunnista tätä kohdetta. Salli yhteys vain, jos aloitit juuri yhdistämisen omasta tekoälysovelluksestasi. Muussa tapauksessa valitse Estä.",
+    "signedInAs": "Kirjautuneena: {email}",
+    "failed": "Tähän pyyntöön ei voi enää vastata. Aloita yhdistäminen uudelleen tekoälysovelluksestasi.",
+    "deny": "Estä",
+    "allow": "Salli",
+    "unavailable": {
+      "title": "Tämä kirjautumislinkki on jo käytetty",
+      "body": "Kukin linkki toimii kerran ja vanhenee pian. Aloita yhdistäminen uudelleen tekoälysovelluksestasi."
+    },
+    "refused": {
+      "title": "Vain School of Gamingin ylläpitäjät voivat yhdistää tekoälysovelluksen",
+      "body": "Olet kirjautuneena osoitteella {email}, joka ei ole ylläpitäjän tili."
     }
   },
   "seatOffer": {

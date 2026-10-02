@@ -1,14 +1,20 @@
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import type { AppSupabaseClient } from "@/types";
+import type { LibraryCategory } from "@/types";
 import {
   hasUnpublishedChanges,
+  libraryArticleCategoryInput,
+  libraryArticleCoverInput,
   libraryArticleInput,
+  libraryArticleVersionInput,
+  oauthClientNameRows,
   type AdminLibraryArticle,
   type AdminLibraryArticleListItem,
   type ComparableArticleCopy,
   type LibraryArticleDraft,
   type LibraryArticleInput,
+  type LibraryArticleVersionInput,
   type PublishedLibraryArticle,
   type PublishedLibraryArticleSummary,
 } from "./library.contracts";
@@ -30,6 +36,20 @@ const PUBLICATION_SUMMARY_COLUMNS = `article_id, category, cover_path, published
 
 /** The published copy's columns for comparing, without a body. */
 const PUBLICATION_COMPARE_COLUMNS = `category, cover_image_id, versions:library_article_publication_translations(locale, title, summary, body_md5)`;
+
+/**
+ * The last saver's profile, embedded by its constraint's name, since the
+ * author is a second key to the same table; an admin reads every profile.
+ */
+const LAST_SAVER_EMBED =
+  "last_saver:profiles!library_articles_last_saved_by_fkey(first_name, last_name)";
+
+/** The last saver's name, or null when no saver is recorded. */
+function saverName(
+  saver: { first_name: string; last_name: string } | null,
+): string | null {
+  return saver ? `${saver.first_name} ${saver.last_name}`.trim() : null;
+}
 
 interface WorkingVersionRow {
   locale: string;
@@ -106,7 +126,7 @@ function toPublished(row: PublicationRow): PublishedLibraryArticle {
  * Every method runs on the injected client and nothing here calls `fetch()`.
  * The admin reads run under `library_articles`' admin-only SELECT policy; the
  * public reads run under `library_article_publications`' policy, which admits
- * anon, so they work on a signed-out server client. The writes are four
+ * anon, so they work on a signed-out server client. The writes are
  * admin-guarded RPCs — neither table carries a write grant, so a stray
  * `.insert()` fails closed. A cover is picked from the shared image catalogue,
  * which owns its uploads; an article holds only the entry's id.
@@ -120,8 +140,8 @@ export class LibraryService {
 
   /**
    * Every article, most recently saved first, with its versions' titles and
-   * summaries, whether it is live and whether publishing now would change
-   * what is.
+   * summaries, who last saved it and through which AI app, whether it is
+   * live and whether publishing now would change what is.
    *
    * The comparison reads each version's short fields and its body's digest,
    * never a body, so the list stays small however long the articles are.
@@ -133,12 +153,16 @@ export class LibraryService {
       this.supabase
         .from("library_articles")
         .select(
-          `id, category, cover_image_id, cover_path, updated_at, versions:library_article_translations(${DRAFT_VERSION_LIST_COLUMNS}), publication:library_article_publications(${PUBLICATION_COMPARE_COLUMNS})`,
+          `id, category, cover_image_id, cover_path, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:library_article_translations(${DRAFT_VERSION_LIST_COLUMNS}), publication:library_article_publications(${PUBLICATION_COMPARE_COLUMNS})`,
           { count: "exact" },
         )
         .order("updated_at", { ascending: false })
         .order("id")
         .range(from, to),
+    );
+
+    const appNames = await this.oauthClientNames(
+      rows.map((row) => row.last_saved_via),
     );
 
     return rows.map((row) => ({
@@ -151,6 +175,13 @@ export class LibraryService {
       category: row.category,
       coverPath: row.cover_path,
       updatedAt: row.updated_at,
+      lastSavedBy: saverName(row.last_saver),
+      lastSavedVia: row.last_saved_via
+        ? {
+            clientId: row.last_saved_via,
+            name: appNames.get(row.last_saved_via) ?? null,
+          }
+        : null,
       isPublished: row.publication !== null,
       hasUnpublishedChanges: hasUnpublishedChanges(
         publishable(row),
@@ -170,6 +201,10 @@ export class LibraryService {
    * column. The catalogue is admin-only, which this read already is. The
    * embed is unhinted, so it relies on `cover_image_id` being the only
    * foreign key from the working copy to the catalogue.
+   *
+   * A save that came through an AI app is named by a second read, made only
+   * then: the app's registration lives in Supabase Auth, out of the Data
+   * API's reach, behind an admin-gated function.
    */
   async getAdminArticle(id: string): Promise<AdminLibraryArticle | null> {
     if (!UUID.test(id)) return null;
@@ -177,7 +212,7 @@ export class LibraryService {
     const { data, error } = await this.supabase
       .from("library_articles")
       .select(
-        `id, category, cover_image_id, cover_path, created_at, updated_at, versions:library_article_translations(${DRAFT_VERSION_COLUMNS}), cover_entry:catalogue_images(label), publication:library_article_publications(${PUBLICATION_COLUMNS})`,
+        `id, category, cover_image_id, cover_path, created_at, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:library_article_translations(${DRAFT_VERSION_COLUMNS}), cover_entry:catalogue_images(label), publication:library_article_publications(${PUBLICATION_COLUMNS})`,
       )
       .eq("id", id)
       .maybeSingle();
@@ -196,6 +231,13 @@ export class LibraryService {
       coverLabel: data.cover_entry?.label ?? null,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
+      lastSavedBy: saverName(data.last_saver),
+      lastSavedVia: data.last_saved_via
+        ? {
+            clientId: data.last_saved_via,
+            name: await this.oauthClientName(data.last_saved_via),
+          }
+        : null,
     };
 
     return {
@@ -206,6 +248,37 @@ export class LibraryService {
         data.publication,
       ),
     };
+  }
+
+  /**
+   * The names of the AI apps a list of saves came through, each app read once
+   * however many articles it saved. An app that gave no name or is no longer
+   * registered is absent from the map.
+   */
+  private async oauthClientNames(
+    clientIds: readonly (string | null)[],
+  ): Promise<Map<string, string>> {
+    const distinct = [
+      ...new Set(clientIds.filter((id): id is string => id !== null)),
+    ];
+    const names = await Promise.all(
+      distinct.map(async (id) => [id, await this.oauthClientName(id)] as const),
+    );
+    return new Map(
+      names.flatMap(([id, name]) => (name === null ? [] : [[id, name] as const])),
+    );
+  }
+
+  /**
+   * The name an AI app registered itself under, or null when it gave none or
+   * is no longer registered.
+   */
+  private async oauthClientName(clientId: string): Promise<string | null> {
+    const { data, error } = await this.supabase.rpc("get_oauth_client", {
+      p_id: clientId,
+    });
+    if (error) throw error;
+    return oauthClientNameRows.parse(data)[0]?.client_name ?? null;
   }
 
   // -------------------------------------------------------------------------
@@ -246,6 +319,72 @@ export class LibraryService {
 
     if (error) throw error;
     if (!data) throw new Error("save_library_article returned no id");
+    return data;
+  }
+
+  /**
+   * Save one language version of an article's working copy, creating it when
+   * the language is new. No other version, nor the category or cover, is
+   * touched — so this cannot undo another admin's edit to anything else.
+   */
+  async saveArticleVersion(
+    id: string,
+    version: LibraryArticleVersionInput,
+  ): Promise<string> {
+    const parsed = libraryArticleVersionInput.parse(version);
+
+    const { data, error } = await this.supabase.rpc(
+      "save_library_article_version",
+      {
+        p_id: id,
+        p_locale: parsed.locale,
+        p_title: parsed.title,
+        p_summary: parsed.summary,
+        p_body: parsed.body,
+      },
+    );
+
+    if (error) throw error;
+    if (!data) throw new Error("save_library_article_version returned no id");
+    return data;
+  }
+
+  /** Set the working copy's category alone; null clears it. */
+  async setArticleCategory(
+    id: string,
+    category: LibraryCategory | null,
+  ): Promise<string> {
+    const parsed = libraryArticleCategoryInput.parse(category);
+
+    const { data, error } = await this.supabase.rpc(
+      "set_library_article_category",
+      // Null maps to an omission, so the RPC's DEFAULT NULL writes the null.
+      { p_id: id, p_category: parsed ?? undefined },
+    );
+
+    if (error) throw error;
+    if (!data) throw new Error("set_library_article_category returned no id");
+    return data;
+  }
+
+  /**
+   * Set the working copy's cover alone, as a Library cover entry's id; null
+   * clears it. The database refuses an entry of another purpose, or one that
+   * has been removed.
+   */
+  async setArticleCover(
+    id: string,
+    coverImageId: string | null,
+  ): Promise<string> {
+    const parsed = libraryArticleCoverInput.parse(coverImageId);
+
+    const { data, error } = await this.supabase.rpc(
+      "set_library_article_cover",
+      { p_id: id, p_cover_image_id: parsed ?? undefined },
+    );
+
+    if (error) throw error;
+    if (!data) throw new Error("set_library_article_cover returned no id");
     return data;
   }
 

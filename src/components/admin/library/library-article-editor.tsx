@@ -33,9 +33,12 @@ import {
 import { localeTabAfterRemoving } from "@/lib/i18n/locale-tabs";
 import { cn, findOption, formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
-import type {
-  AdminLibraryArticle,
-  LibraryArticleInput,
+import {
+  isCompleteVersion,
+  libraryWriteFailure,
+  type AdminLibraryArticle,
+  type LibraryArticleDraft,
+  type LibraryArticleInput,
 } from "@/services/library";
 import { ArticleBodyEditor } from "./article-body-editor";
 import {
@@ -43,13 +46,11 @@ import {
   formLocales,
   incompleteLocales,
   isBlankLibraryArticleForm,
-  isCompleteVersion,
   libraryArticleFormFromDraft,
   libraryArticleInputFromForm,
   libraryArticleStatus,
   libraryPublishState,
   librarySaveBlocker,
-  libraryWriteFailure,
   sameAsSaved,
   versionOf,
   type LibraryArticleForm,
@@ -257,7 +258,12 @@ function EditorForm(props: LibraryArticleEditorProps) {
     <div className="space-y-6">
       <UnsavedChangesGuard when={unsaved} />
 
-      {props.article !== null && <PublishingStatus article={props.article} />}
+      {props.article !== null && (
+        <div className="space-y-1">
+          <PublishingStatus article={props.article} />
+          <LastSaved draft={props.article.draft} />
+        </div>
+      )}
 
       <form onSubmit={handleSave} className="space-y-6">
         <Card>
@@ -509,6 +515,45 @@ function PublishingStatus({ article }: { article: AdminLibraryArticle }) {
       {fact && <p className="text-sm text-muted-foreground">{fact}</p>}
     </section>
   );
+}
+
+/**
+ * When the working copy was last saved, by which admin, and — when the save
+ * came through an AI app connected to Sogverse — which app, so an edit an
+ * app made is never mistaken for one made here. A save with no recorded saver
+ * gives the time alone. The app's name is the one it registered, and an app
+ * no longer registered is named only as an AI app.
+ */
+function LastSaved({ draft }: { draft: LibraryArticleDraft }) {
+  const t = useTranslations("admin.library");
+  const locale = useLocale();
+  const timeZone = useTimezone();
+
+  const date = formatDate(draft.updatedAt, locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone,
+  });
+
+  let line: string;
+  if (draft.lastSavedBy === null) {
+    line = t("statusPanel.savedLine", { date });
+  } else if (draft.lastSavedVia === null) {
+    line = t("statusPanel.savedByLine", { date, name: draft.lastSavedBy });
+  } else if (draft.lastSavedVia.name === null) {
+    line = t("statusPanel.savedByViaUnnamedLine", {
+      date,
+      name: draft.lastSavedBy,
+    });
+  } else {
+    line = t("statusPanel.savedByViaLine", {
+      date,
+      name: draft.lastSavedBy,
+      app: draft.lastSavedVia.name,
+    });
+  }
+
+  return <p className="text-sm text-muted-foreground">{line}</p>;
 }
 
 /**

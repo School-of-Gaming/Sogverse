@@ -299,9 +299,9 @@ export type TeamProfileTranslationRow =
 // `library_article_publications` its public published copy, whose row existing
 // is the article being live; each copy's text is per language, one row per
 // (article, site locale) in its `_translations` table. Row aliases only: no
-// Library table carries a write grant for any Data API role, and the four
-// library RPCs — with the image catalogue's `repoint_library_covers` for
-// covers — are the only writers.
+// Library table carries a write grant for any Data API role, and the library
+// RPCs — with the image catalogue's `repoint_library_covers` for covers — are
+// the only writers.
 // The category enum is the Library's category vocabulary, spelled the same in
 // the app and its URLs (`src/components/library/categories.ts`).
 export type LibraryCategory =

@@ -12,9 +12,29 @@ unpublishing deletes the published row and keeps the working copy.
 **An article has a version per language, in both copies.** The title, summary and body are
 written per site locale, by hand, in the editor's language tabs — one row per (article,
 locale) in `library_article_translations` and `library_article_publication_translations`;
-the category and the cover are the article's, once. A save writes the whole version set,
-so a language left out is removed. There is no per-language publishing and no translation
-workflow.
+the category and the cover are the article's, once. The editor's save writes the whole
+version set, so a language left out is removed. There is no per-language publishing and no
+translation workflow.
+
+**Writes are whole or partial, and the two never mix.** The editor holds the whole article
+and saves it whole — every version, the category and the cover in one call. Everything
+that edits a piece at a time (the MCP tools an AI app calls) goes through the partial
+writers instead: one language version, the category alone, or the cover alone, each
+touching nothing else. Sent through the whole save, a piece-at-a-time edit would carry a
+stale copy of everything it was not changing and silently undo another admin's work; a
+partial write can only lose to another write of the same piece. Nothing partial removes a
+version, so the whole save stays the only way a language leaves.
+
+**The working copy records who last saved it, and through which AI app.** A trigger
+stamps the admin (`auth.uid()`) and the OAuth client named by the token's `client_id`
+claim on every write that changes the working copy — no writer passes them and none can
+override them. No client means the save was made in Sogverse. A write with no signed-in
+caller (service role, psql) records no saver, and so does a save from before saves were
+attributed; the editor then shows the time alone. Publishing saves nothing and moves
+neither. The app's name is not stored: it is what the app registered with Supabase Auth,
+read through an admin-gated function at the moment the editor shows it. A deleted app keeps
+its name there while Supabase keeps its row; one whose row is gone is named only as "an AI
+app", and the record that a save came through one remains.
 
 **One Publish puts every complete version live at once, and refuses an article with
 none.** A version is complete when its title, summary and body are all written (the

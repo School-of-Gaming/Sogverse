@@ -7,13 +7,15 @@ import {
   libraryArticleStatus,
   libraryPublishState,
   librarySaveBlocker,
-  libraryWriteFailure,
   missingForPublish,
   sameAsSaved,
   type LibraryArticleForm,
   type LibraryArticleVersionDraft,
 } from "@/components/admin/library/library-article-form";
-import type { LibraryArticleDraft } from "@/services/library";
+import {
+  libraryWriteFailure,
+  type LibraryArticleDraft,
+} from "@/services/library";
 
 /**
  * The admin Library editor's rules, apart from any render: where an article
@@ -37,6 +39,8 @@ const DRAFT: LibraryArticleDraft = {
   coverLabel: "Controller on a desk",
   createdAt: "2026-09-12T11:00:00Z",
   updatedAt: "2026-09-15T08:05:00Z",
+  lastSavedBy: null,
+  lastSavedVia: null,
 };
 
 const EN = DRAFT.versions[0];

@@ -10,7 +10,7 @@ npm run dev:stripe       # Start dev server + Stripe webhook listener
 npm run build            # Production build
 npm run lint             # ESLint
 npm run type-check       # TypeScript check (tsc --noEmit)
-npm run gates            # All landing gates: lint + type-check + translations + tests (runs all, reports every failure)
+npm run gates            # All landing gates: lint + type-check + translations + the MCP cover uploader's build freshness + tests (runs all, reports every failure)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
 npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
@@ -47,7 +47,8 @@ file is opened are carried here as one-line reminders, with the full rule in the
 
 - **A new API route** lives under `src/app/api/` and is classified in the integration
   suite's route posture registry — the Testing section below says how.
-- **Admins are trusted**, including trusted to act only through the admin UI: "an admin
+- **Admins are trusted**, including trusted to act only through the admin UI and the admin
+  MCP tools: "an admin
   could reach an invalid state via the raw API" is not a defect worth building for, and a
   state the UI cannot produce fails loudly at the schema rather than corrupting silently.
 - **Caller-supplied redirect targets** go through `resolveInternalPath()`, and any absolute
@@ -125,6 +126,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Voice — instant rooms | `src/components/voice/instant/` |
 | Discord bot | `src/app/api/discord/` |
 | Partner API (Lynx Educate) | `src/app/api/partner/` |
+| MCP server — AI apps acting as an admin, its OAuth gate and consent page | `src/lib/mcp/` |
 | SOG-UI — the UI language package and its demo | `packages/sog-ui/` |
 | Database / migrations | `supabase/` |
 | Testing conventions | `tests/` |

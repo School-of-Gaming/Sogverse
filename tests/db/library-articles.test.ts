@@ -5,8 +5,12 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  createBearerTestClient,
+  oauthGrantFor,
+  revokeOAuthGrant,
+  type OAuthGrant,
 } from "./helpers";
-import { TEST_CREDENTIALS } from "./constants";
+import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import type { CatalogueImageInsert } from "@/types";
 import { LibraryService } from "@/services/library/library.service";
 
@@ -15,14 +19,17 @@ import { LibraryService } from "@/services/library/library.service";
  * `library_article_publications` (its public published copy, whose row
  * existing IS the article being live), each with its per-language versions
  * (`library_article_translations`, `library_article_publication_translations`),
- * their four admin-guarded writers, and
+ * their admin-guarded writers — the whole-article ones and the partial ones
+ * that write one version or one field — and
  * covers: a link from either copy to a library_cover entry of the shared image
  * catalogue, the trigger that derives each copy's `cover_path` from it, and
- * `repoint_library_covers`, the catalogue replace's half for the Library.
+ * `repoint_library_covers`, the catalogue replace's half for the Library. Last,
+ * the record of who last saved a working copy and through which AI app, made
+ * with a real OAuth grant from the stack's own authorization server.
  *
  * No Library table carries a write grant for any Data API role, so there is no
  * write-IDOR case to make: a non-admin's direct write is refused at the grant,
- * which is asserted here once per table. The spine sweeps the four RPCs with
+ * which is asserted here once per table. The spine sweeps the RPCs with
  * all-NULL arguments; what it cannot show is that a refusal is about the ROLE,
  * so each wrong role is tried here with a payload an admin would succeed with.
  *
@@ -859,5 +866,382 @@ describe("library articles", () => {
       expect(after.draft).toEqual({ cover_image_id: null, cover_path: null });
       expect(after.live).toMatchObject({ cover_image_id: null, cover_path: null });
     });
+  });
+
+  // -------------------------------------------------------------------------
+  // Partial writes: one version, or one field, at a time
+  // -------------------------------------------------------------------------
+
+  describe("partial writes", () => {
+    /** The working copy's shared fields and versions, read past RLS. */
+    async function workingCopy(id: string) {
+      const article = await admin
+        .from("library_articles")
+        .select("category, cover_image_id, cover_path, updated_at")
+        .eq("id", id)
+        .single();
+      const versions = await admin
+        .from("library_article_translations")
+        .select("locale, title, summary, body")
+        .eq("article_id", id)
+        .order("locale");
+      return { ...article.data, versions: versions.data };
+    }
+
+    it("writes one language and leaves every other version, the category and the cover alone", async () => {
+      await reseed();
+      await service.saveArticle(ARTICLE_COMPLETE, {
+        ...completeInput(),
+        versions: [EN, FI],
+      });
+      const before = await workingCopy(ARTICLE_COMPLETE);
+
+      await service.saveArticleVersion(ARTICLE_COMPLETE, {
+        locale: "fi",
+        title: "  Fixture: uusi otsikko  ",
+        summary: "Uusi tiivistelmä.",
+        body: "Uusi kappale.",
+      });
+
+      const after = await workingCopy(ARTICLE_COMPLETE);
+      expect(after.versions).toEqual([
+        EN,
+        {
+          locale: "fi",
+          title: "Fixture: uusi otsikko",
+          summary: "Uusi tiivistelmä.",
+          body: "Uusi kappale.",
+        },
+      ]);
+      expect(after.category).toBe("screen_time");
+      expect(after.cover_image_id).toBe(COVER_A);
+      expect(after.cover_path).toBe(pathOf(COVER_A));
+      expect(Date.parse(after.updated_at ?? "")).toBeGreaterThan(
+        Date.parse(before.updated_at ?? ""),
+      );
+    });
+
+    it("adds a language the article did not have", async () => {
+      await reseed();
+
+      await service.saveArticleVersion(ARTICLE_DRAFT, {
+        locale: "sv",
+        title: "Fixture: ett utkast",
+        summary: "",
+        body: "",
+      });
+
+      const after = await workingCopy(ARTICLE_DRAFT);
+      expect(after.versions?.map((version) => version.locale)).toEqual(["en", "sv"]);
+    });
+
+    it("never touches the published copy", async () => {
+      await reseed();
+      await service.publishArticle(ARTICLE_COMPLETE);
+
+      await service.saveArticleVersion(ARTICLE_COMPLETE, {
+        ...EN,
+        title: "Fixture: retitled in the working copy",
+      });
+      await service.setArticleCategory(ARTICLE_COMPLETE, "games_explained");
+      await service.setArticleCover(ARTICLE_COMPLETE, COVER_B);
+
+      const view = await service.getAdminArticle(ARTICLE_COMPLETE);
+      expect(view?.publication).toMatchObject({
+        category: "screen_time",
+        coverPath: pathOf(COVER_A),
+        versions: [{ locale: "en", title: EN.title }],
+      });
+      expect(view?.hasUnpublishedChanges).toBe(true);
+    });
+
+    it("refuses a version with a blank title, naming the language and writing nothing", async () => {
+      await reseed();
+      const before = await workingCopy(ARTICLE_DRAFT);
+
+      const { error } = await adminAuth.rpc("save_library_article_version", {
+        p_id: ARTICLE_DRAFT,
+        p_locale: "fi",
+        p_title: "   ",
+        p_summary: "Tiivistelmä.",
+        p_body: "",
+      });
+      expect(error?.code).toBe("23514");
+      expect(error?.message).toContain("fi");
+
+      expect(await workingCopy(ARTICLE_DRAFT)).toEqual(before);
+    });
+
+    it("refuses each partial write to an id no article has", async () => {
+      await expect(
+        service.saveArticleVersion(ARTICLE_MISSING, { ...EN }),
+      ).rejects.toMatchObject({ code: "P0002" });
+      await expect(
+        service.setArticleCategory(ARTICLE_MISSING, "screen_time"),
+      ).rejects.toMatchObject({ code: "P0002" });
+      await expect(
+        service.setArticleCover(ARTICLE_MISSING, COVER_A),
+      ).rejects.toMatchObject({ code: "P0002" });
+
+      const { data } = await admin
+        .from("library_article_translations")
+        .select("article_id")
+        .eq("article_id", ARTICLE_MISSING);
+      expect(data).toEqual([]);
+    });
+
+    it("sets the category alone, and clears it with null", async () => {
+      await reseed();
+      const before = await workingCopy(ARTICLE_COMPLETE);
+
+      await service.setArticleCategory(ARTICLE_COMPLETE, "games_explained");
+      const set = await workingCopy(ARTICLE_COMPLETE);
+      expect(set.category).toBe("games_explained");
+      expect(set.cover_image_id).toBe(COVER_A);
+      expect(set.versions).toEqual(before.versions);
+
+      await service.setArticleCategory(ARTICLE_COMPLETE, null);
+      expect((await workingCopy(ARTICLE_COMPLETE)).category).toBeNull();
+    });
+
+    it("sets the cover alone, deriving its path, and clears both with null", async () => {
+      await reseed();
+
+      await service.setArticleCover(ARTICLE_COMPLETE, COVER_B);
+      const set = await workingCopy(ARTICLE_COMPLETE);
+      expect(set.cover_image_id).toBe(COVER_B);
+      expect(set.cover_path).toBe(pathOf(COVER_B));
+      expect(set.category).toBe("screen_time");
+
+      await service.setArticleCover(ARTICLE_COMPLETE, null);
+      const cleared = await workingCopy(ARTICLE_COMPLETE);
+      expect(cleared.cover_image_id).toBeNull();
+      expect(cleared.cover_path).toBeNull();
+    });
+
+    it("refuses a product picture as a cover, keeping the one there", async () => {
+      await reseed();
+
+      await expect(
+        service.setArticleCover(ARTICLE_COMPLETE, PRODUCT_PICTURE),
+      ).rejects.toMatchObject({ code: "23514" });
+
+      expect((await workingCopy(ARTICLE_COMPLETE)).cover_image_id).toBe(COVER_A);
+    });
+
+    it.each([["customer"], ["gedu"], ["gamer"]])(
+      "refuses a %s every partial write with a payload an admin would succeed with",
+      async (role) => {
+        await reseed();
+        const before = await workingCopy(ARTICLE_COMPLETE);
+
+        const version = await clientFor(role).rpc("save_library_article_version", {
+          p_id: ARTICLE_COMPLETE,
+          p_locale: "en",
+          p_title: `Renamed by ${role}`,
+          p_summary: "",
+          p_body: "",
+        });
+        expect(version.error?.code).toBe("42501");
+
+        const category = await clientFor(role).rpc("set_library_article_category", {
+          p_id: ARTICLE_COMPLETE,
+          p_category: "games_explained",
+        });
+        expect(category.error?.code).toBe("42501");
+
+        const cover = await clientFor(role).rpc("set_library_article_cover", {
+          p_id: ARTICLE_COMPLETE,
+          p_cover_image_id: COVER_B,
+        });
+        expect(cover.error?.code).toBe("42501");
+
+        expect(await workingCopy(ARTICLE_COMPLETE)).toEqual(before);
+      },
+    );
+  });
+
+  // -------------------------------------------------------------------------
+  // Who last saved the working copy, and through which AI app
+  // -------------------------------------------------------------------------
+
+  describe("the last saver", () => {
+    const APP_NAME = "Fixture AI app";
+    let grant: OAuthGrant;
+    /** The admin acting through the AI app's token, as an MCP tool does. */
+    let viaApp: LibraryService;
+    let adminName: string;
+
+    beforeAll(async () => {
+      grant = await oauthGrantFor(
+        TEST_CREDENTIALS.ADMIN.email,
+        TEST_CREDENTIALS.ADMIN.password,
+        APP_NAME,
+      );
+      viaApp = new LibraryService(createBearerTestClient(grant.accessToken));
+      const { data } = await admin
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", TEST_IDS.ADMIN)
+        .single();
+      adminName = `${data?.first_name ?? ""} ${data?.last_name ?? ""}`.trim();
+    });
+
+    afterAll(async () => {
+      await revokeOAuthGrant(grant);
+    });
+
+    async function saver(id: string) {
+      const { data } = await admin
+        .from("library_articles")
+        .select("last_saved_by, last_saved_via")
+        .eq("id", id)
+        .single();
+      return data;
+    }
+
+    it("records the admin and no app for a save in Sogverse", async () => {
+      await reseed();
+      await service.saveArticle(ARTICLE_COMPLETE, completeInput());
+
+      expect(await saver(ARTICLE_COMPLETE)).toEqual({
+        last_saved_by: TEST_IDS.ADMIN,
+        last_saved_via: null,
+      });
+      const view = await service.getAdminArticle(ARTICLE_COMPLETE);
+      expect(view?.draft.lastSavedBy).toBe(adminName);
+      expect(view?.draft.lastSavedVia).toBeNull();
+    });
+
+    it("records the AI app a save came through, and names it to the admin read", async () => {
+      await reseed();
+      await viaApp.saveArticleVersion(ARTICLE_COMPLETE, {
+        ...EN,
+        title: "Fixture: written by an app",
+      });
+
+      expect(await saver(ARTICLE_COMPLETE)).toEqual({
+        last_saved_by: TEST_IDS.ADMIN,
+        last_saved_via: grant.clientId,
+      });
+      const view = await service.getAdminArticle(ARTICLE_COMPLETE);
+      expect(view?.draft.lastSavedBy).toBe(adminName);
+      expect(view?.draft.lastSavedVia).toEqual({
+        clientId: grant.clientId,
+        name: APP_NAME,
+      });
+    });
+
+    it("stamps every writer, and a later save in Sogverse clears the app", async () => {
+      await reseed();
+
+      await viaApp.setArticleCategory(ARTICLE_COMPLETE, "games_explained");
+      expect((await saver(ARTICLE_COMPLETE))?.last_saved_via).toBe(grant.clientId);
+
+      await service.setArticleCover(ARTICLE_COMPLETE, COVER_B);
+      expect(await saver(ARTICLE_COMPLETE)).toEqual({
+        last_saved_by: TEST_IDS.ADMIN,
+        last_saved_via: null,
+      });
+
+      const mintedId = await viaApp.createArticle({
+        versions: [{ locale: "en", title: "Fixture: created by an app", summary: "", body: "" }],
+        category: null,
+        coverImageId: null,
+      });
+      minted.push(mintedId);
+      expect(await saver(mintedId)).toEqual({
+        last_saved_by: TEST_IDS.ADMIN,
+        last_saved_via: grant.clientId,
+      });
+    });
+
+    it("leaves the record alone on a publish, which saves nothing", async () => {
+      await reseed();
+      await service.saveArticle(ARTICLE_COMPLETE, completeInput());
+
+      await viaApp.publishArticle(ARTICLE_COMPLETE);
+
+      expect((await saver(ARTICLE_COMPLETE))?.last_saved_via).toBeNull();
+    });
+
+    it("records no saver for a write with no signed-in caller, whatever the statement says", async () => {
+      await reseed();
+      await viaApp.saveArticleVersion(ARTICLE_COMPLETE, { ...EN });
+
+      const { error } = await admin
+        .from("library_articles")
+        .update({
+          category: "games_explained",
+          last_saved_by: TEST_IDS.ADMIN,
+          last_saved_via: grant.clientId,
+        })
+        .eq("id", ARTICLE_COMPLETE);
+      expect(error).toBeNull();
+
+      expect(await saver(ARTICLE_COMPLETE)).toEqual({
+        last_saved_by: null,
+        last_saved_via: null,
+      });
+      const view = await service.getAdminArticle(ARTICLE_COMPLETE);
+      expect(view?.draft.lastSavedBy).toBeNull();
+      expect(view?.draft.lastSavedVia).toBeNull();
+    });
+
+    it("keeps the save time when the saver's account is deleted", async () => {
+      await reseed();
+      const email = `library-saver-${Date.now()}@test.local`;
+      const created = await admin.auth.admin.createUser({
+        email,
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Library", last_name: "Saver" },
+      });
+      expect(created.error).toBeNull();
+      const saverId = created.data.user?.id ?? "";
+      try {
+        await admin.from("profiles").update({ role: "admin" }).eq("id", saverId);
+        await admin.from("customer_profiles").delete().eq("user_id", saverId);
+        const asSaver = new LibraryService(
+          await createAuthenticatedClient(email, "testpassword123"),
+        );
+        // Both of the account's links: the author of one article, the last
+        // saver of another.
+        const authored = await asSaver.createArticle({ ...DRAFT_INPUT });
+        minted.push(authored);
+        await asSaver.setArticleCategory(ARTICLE_COMPLETE, "games_explained");
+
+        const stamped = async (id: string) => {
+          const { data } = await admin
+            .from("library_articles")
+            .select("author_id, last_saved_by, updated_at")
+            .eq("id", id)
+            .single();
+          return data;
+        };
+        const before = [await stamped(authored), await stamped(ARTICLE_COMPLETE)];
+        expect(before[0]?.author_id).toBe(saverId);
+        expect(before[1]?.last_saved_by).toBe(saverId);
+
+        const deleted = await admin.auth.admin.deleteUser(saverId);
+        expect(deleted.error).toBeNull();
+
+        const after = [await stamped(authored), await stamped(ARTICLE_COMPLETE)];
+        expect(after[0]).toEqual({ ...before[0], author_id: null, last_saved_by: null });
+        expect(after[1]).toEqual({ ...before[1], last_saved_by: null });
+      } finally {
+        await admin.auth.admin.deleteUser(saverId);
+      }
+    });
+
+    it.each([["customer"], ["gedu"], ["gamer"]])(
+      "refuses a %s reading an OAuth client",
+      async (role) => {
+        const { error } = await clientFor(role).rpc("get_oauth_client", {
+          p_id: grant.clientId,
+        });
+        expect(error?.code).toBe("42501");
+      },
+    );
   });
 });

@@ -73,6 +73,7 @@
       "robloxSafeguarding": "Barnskyddspolicy för Skaparnas akademi",
       "robloxTerms": "Användarvillkor för Skaparnas akademi",
       "geduContract": "Gedu-avtal",
+      "oauthConsent": "Anslut en AI-app",
       "seatOffer": "Platserbjudande",
       "geduSubstitutions": "Vikariat",
       "geduInvoicing": "Fakturering",
@@ -535,7 +536,11 @@
       "statusPanel": {
         "label": "Publicering",
         "publishedLine": "Publicerad {date}.",
-        "changedLine": "Läsarna ser versionen som publicerades {date}."
+        "changedLine": "Läsarna ser versionen som publicerades {date}.",
+        "savedLine": "Senast sparad {date}.",
+        "savedByLine": "Senast sparad {date} av {name}.",
+        "savedByViaLine": "Senast sparad {date} av {name} via {app}.",
+        "savedByViaUnnamedLine": "Senast sparad {date} av {name} via en AI-app."
       },
       "viewLive": "Visa i Biblioteket",
       "preview": "Förhandsvisa",
@@ -5160,6 +5165,25 @@
       "geonames": "Listan över länder, regioner och orter som du väljer från när du berättar var din familj bor — samma lista som vi använder för att hitta klubbar nära dig. Vår version bygger på GeoNames men är ingen kopia: vi utelämnar platser där vi inte är verksamma, grupperar en del annorlunda och byter namn på andra till den form som används lokalt.",
       "laPoste": "De franska postnumren i samma lista, så att en familj i Frankrike kan skriva in sitt postnummer i stället för att leta upp sin kommun.",
       "mcHeads": "Ritar den Minecraft-figur som visas bredvid ett länkat Minecraft-konto. De begär ingenting i gengäld, så det här är ett tack snarare än ett krav."
+    }
+  },
+  "oauthConsent": {
+    "title": "Anslut en AI-app till Sogverse",
+    "body": "{clientName} ber om att få agera som dig i Sogverse, med allt som ditt administratörskonto kan göra.",
+    "destinationLabel": "Din inloggning skickas till",
+    "loopbackHint": "En app som körs på den här datorn.",
+    "unrecognised": "School of Gaming känner inte igen den här destinationen. Tillåt bara om du precis har börjat ansluta från din egen AI-app. Om inte, välj Neka.",
+    "signedInAs": "Inloggad som {email}",
+    "failed": "Den här begäran kan inte längre besvaras. Börja ansluta på nytt från din AI-app.",
+    "deny": "Neka",
+    "allow": "Tillåt",
+    "unavailable": {
+      "title": "Den här inloggningslänken har redan använts",
+      "body": "Varje länk fungerar en gång och slutar snart att gälla. Börja ansluta på nytt från din AI-app."
+    },
+    "refused": {
+      "title": "Bara administratörer på School of Gaming kan ansluta en AI-app",
+      "body": "Du är inloggad som {email}, som inte är ett administratörskonto."
     }
   },
   "seatOffer": {

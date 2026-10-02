@@ -173,6 +173,7 @@ export const PATHNAMES = {
   "/verify-email": "/verify-email",
   "/select-profile": "/select-profile",
   "/complete-registration": "/complete-registration",
+  "/oauth/consent": "/oauth/consent",
 
   // --- Shared ---------------------------------------------------------------
   "/settings": "/settings",

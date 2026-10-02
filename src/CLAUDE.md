@@ -31,11 +31,18 @@ Four user roles with separate dashboards:
 
 Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, redirects a bare path into its locale-prefixed form, enforces role-based routing, and sets a per-request nonce-based Content Security Policy (Next.js 16 uses `proxy.ts` instead of `middleware.ts`). **Every one of its pathname checks matches the locale-stripped, untranslated internal path** — unstripped, `/fi/admin` would sail past the `/admin` role gate (`src/i18n/CLAUDE.md`). RLS policies protect data at the database level.
 
-**Rule: admins are trusted — including trusted to act only through the admin UI.** An admin hand-crafting API or RPC calls is neither a threat model nor a supported workflow, so "an admin could reach an invalid state via the raw API" is not a defect worth building UI or validation for. The database's own guarantees (CHECKs, constraints, grants) still stand behind everything — a state the UI cannot produce must fail loudly at the schema if it somehow arises, never corrupt silently — but the loud failure *is* the accepted handling, not a gap.
+**Rule: admins are trusted — including trusted to act only through the admin UI and the admin MCP tools.** An admin hand-crafting API or RPC calls is neither a threat model nor a supported workflow, so "an admin could reach an invalid state via the raw API" is not a defect worth building UI or validation for. The database's own guarantees (CHECKs, constraints, grants) still stand behind everything — a state the UI cannot produce must fail loudly at the schema if it somehow arises, never corrupt silently — but the loud failure *is* the accepted handling, not a gap.
 
 **Rule: an admin must be able to see every stored product property on the product details page — opening the edit form is not the read path.** The edit form is a write surface; making an admin open it to answer "is this flag set?" means a read costs a form that can be accidentally submitted, and a property nobody can see on the details page is a property nobody audits.
 
 **Rule: user-facing copy calls a role's dashboard "My SOG" — "dashboard" is internal vocabulary.** The role dashboards (`/parent`, `/gamer`, `/gedu`) are named "My SOG" to the people using them, in page titles, back links, buttons and emails alike. "Dashboard" is what we call them among ourselves and in the code; a translated string that says it has leaked an implementation word into the product. The brand name itself stays "My SOG" rather than being translated wholesale — locales localise the surrounding words and the possessive, not the mark. The one exception is the **admin** dashboard, which is genuinely an admin panel and is called one: admin sidebar entries and admin page titles keep saying "Dashboard".
+
+**Rule: admins can also run Sogverse from AI clients, through the MCP server in
+`src/lib/mcp/`. When a change alters what an admin can do or the rules around it, judge
+whether the MCP tools need it too.** The aim is the same outcomes, not the same steps: a
+chat reaches a result differently from the UI, so the tools are shaped for an agent rather
+than mirroring screens, and deciding the AI side does not need a change is a fine answer.
+What must not happen is the question going unasked.
 
 ## SOG-UI owns the UI
 
@@ -64,7 +71,7 @@ none of its own are stated in `packages/sog-ui/CLAUDE.md` and held by lint and b
 - Within `[locale]`, routes are grouped: `(auth)`, `(dashboard)`, `(public)`, `(voice)`, `(preview)`
 - **Name a route through the app's wrapped navigation module (`src/i18n/navigation.tsx`), not `next/link` / `next/navigation`** — hrefs are typed against the route map and emitted locale-prefixed. The exception, and the rule for it, is in `src/i18n/CLAUDE.md`: comparing a pathname → wrapped; embedding one in a URL → raw, with a comment.
 - Components are organized by role: `components/[role]/`, shared UI in `components/ui/`
-- Supabase clients: `lib/supabase/` — `client.ts` (browser), `server.ts` (RSC), `anon.ts` (identity-free server reads), `admin.ts` (privileged)
+- Supabase clients: `lib/supabase/` — `client.ts` (browser), `server.ts` (RSC), `anon.ts` (identity-free server reads), `bearer.ts` (a caller's bearer token, for the MCP endpoint), `admin.ts` (privileged)
 - Auto-generated types in `types/database.types.ts`, convenience aliases in `types/index.ts`
 
 ## Service Layer Pattern
@@ -81,6 +88,7 @@ Each feature in `src/services/` follows a two-to-three-file pattern:
 - `createBrowserClient()` - Browser-side, singleton pattern. Used for data queries and auth operations (sign in, sign up, sign out).
 - `createServerComponentClient()` - Server components (RSC)
 - `createAnonClient()` - Anon key and no cookies, for a server read whose answer must not vary by caller
+- `createBearerClient(token)` - Anon key plus a bearer token from an `Authorization` header, no session kept — the MCP endpoint's client, acting as the admin the OAuth token names
 - `createAdminClient()` - Service role key for privileged operations
 
 ## Auth Architecture

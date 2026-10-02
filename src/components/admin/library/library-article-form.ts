@@ -4,11 +4,12 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { openingLocaleTab } from "@/lib/i18n/locale-tabs";
-import type {
-  AdminLibraryArticleListItem,
-  LibraryArticleDraft,
-  LibraryArticleInput,
-  LibraryArticleVersionInput,
+import {
+  isCompleteVersion,
+  type AdminLibraryArticleListItem,
+  type LibraryArticleDraft,
+  type LibraryArticleInput,
+  type LibraryArticleVersionInput,
 } from "@/services/library";
 
 /**
@@ -226,25 +227,6 @@ export function sameAsSaved(
 // ---------------------------------------------------------------------------
 
 /**
- * The fields a version needs before publishing takes it, in the order the
- * form asks for them.
- */
-export const LIBRARY_VERSION_FIELDS = ["title", "summary", "body"] as const;
-
-export type LibraryVersionField = (typeof LIBRARY_VERSION_FIELDS)[number];
-
-/** What a version still needs before publishing takes it; empty when complete. */
-export function missingInVersion(
-  version: LibraryArticleVersionDraft,
-): LibraryVersionField[] {
-  return LIBRARY_VERSION_FIELDS.filter((field) => version[field].trim() === "");
-}
-
-export function isCompleteVersion(version: LibraryArticleVersionDraft): boolean {
-  return missingInVersion(version).length === 0;
-}
-
-/**
  * What an article still needs before it can be published: a category, and at
  * least one complete version. A cover is not among them, and neither is a
  * complete version in every language: publishing leaves an incomplete one out.
@@ -340,42 +322,4 @@ export function libraryPublishState({
   if (missing.length > 0) return { kind: "incomplete", missing };
   if (dirty) return { kind: "unsaved" };
   return { kind: "ready" };
-}
-
-// ---------------------------------------------------------------------------
-// Refusals
-// ---------------------------------------------------------------------------
-
-/**
- * Why a write was refused: the database's own sentence when it wrote one for
- * a reader, or nothing to quote. The Library's write functions raise their
- * admin-facing sentences under exactly three SQLSTATEs — `check_violation`
- * (a missing title, the publish function's list of what is missing, a cover
- * that is not a Library cover), `no_data_found` (the article is gone) and
- * `foreign_key_violation` (the cover left the catalogue). Every other code
- * carries a message written for a developer, not an admin: supabase-js reports
- * a network fault with an empty code and the fetch error as its message, and an
- * expired session as a `PGRST` code, so those fall back to the generic line.
- */
-export type LibraryWriteFailure =
-  | { kind: "reason"; reason: string }
-  | { kind: "unknown" };
-
-const QUOTED_SQLSTATES: ReadonlySet<string> = new Set([
-  "23514", // check_violation
-  "P0002", // no_data_found
-  "23503", // foreign_key_violation
-]);
-
-export function libraryWriteFailure(error: unknown): LibraryWriteFailure {
-  if (typeof error !== "object" || error === null) return { kind: "unknown" };
-  if (!("code" in error) || !("message" in error)) return { kind: "unknown" };
-  const { code, message } = error;
-  if (typeof code !== "string" || typeof message !== "string") {
-    return { kind: "unknown" };
-  }
-  if (!QUOTED_SQLSTATES.has(code) || message.length === 0) {
-    return { kind: "unknown" };
-  }
-  return { kind: "reason", reason: message };
 }

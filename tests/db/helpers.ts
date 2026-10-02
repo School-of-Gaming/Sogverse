@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 
@@ -222,4 +223,140 @@ async function readRestResult(response: Response): Promise<RawRestResult> {
     code: typeof error.code === "string" ? error.code : null,
     message: typeof error.message === "string" ? error.message : null,
   };
+}
+
+/** An AI app's grant, as the MCP endpoint's callers hold one. */
+export interface OAuthGrant {
+  /** The OAuth client registered for the grant — the token's `client_id`. */
+  clientId: string;
+  /** An access token carrying the `client_id` claim. */
+  accessToken: string;
+  /** The user's own session, which approved the grant and can revoke it. */
+  user: SupabaseClient<Database>;
+}
+
+/**
+ * Registers an OAuth client with the stack's Supabase Auth OAuth server and
+ * walks one user through the whole authorization-code flow, PKCE included,
+ * returning the access token an AI app would hold: an ordinary user JWT plus
+ * the `client_id` claim. Nothing is signed by hand, so the claim is exactly
+ * what Supabase Auth issues.
+ *
+ * The client is registered through the Admin API; call `revokeOAuthGrant` in
+ * teardown.
+ */
+export async function oauthGrantFor(
+  email: string,
+  password: string,
+  clientName: string
+): Promise<OAuthGrant> {
+  const admin = createAdminTestClient();
+  const redirectUri = "http://127.0.0.1:9/callback";
+
+  const registered = await admin.auth.admin.oauth.createClient({
+    client_name: clientName,
+    redirect_uris: [redirectUri],
+    token_endpoint_auth_method: "none",
+  });
+  if (registered.error) {
+    throw new Error(`Registering ${clientName} failed: ${registered.error.message}`);
+  }
+  const clientId = registered.data.client_id;
+
+  const verifier = randomBytes(32).toString("base64url");
+  const challenge = createHash("sha256").update(verifier).digest("base64url");
+
+  // The authorize step answers with a redirect to the consent page, naming the
+  // pending authorization.
+  const authorize = await fetch(
+    `${supabaseUrl}/auth/v1/oauth/authorize?${new URLSearchParams({
+      response_type: "code",
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      code_challenge: challenge,
+      code_challenge_method: "S256",
+      state: "db-test",
+    })}`,
+    { headers: { apikey: anonKey }, redirect: "manual" }
+  );
+  const consentPage = authorize.headers.get("location");
+  const authorizationId =
+    consentPage === null
+      ? null
+      : new URL(consentPage).searchParams.get("authorization_id");
+  if (authorizationId === null) {
+    throw new Error(`OAuth authorize gave no authorization (${authorize.status})`);
+  }
+
+  // The consent page's own two calls, on the user's session: reading the
+  // authorization binds it to the reader, and only then can they approve it.
+  const user = await createAuthenticatedClient(email, password);
+  const details = await user.auth.oauth.getAuthorizationDetails(authorizationId);
+  if (details.error) {
+    throw new Error(`Reading the authorization failed: ${details.error.message}`);
+  }
+  const approved = await user.auth.oauth.approveAuthorization(authorizationId, {
+    skipBrowserRedirect: true,
+  });
+  if (approved.error) {
+    throw new Error(`Approving the authorization failed: ${approved.error.message}`);
+  }
+  const code = new URL(approved.data.redirect_url).searchParams.get("code");
+  if (code === null) throw new Error("The approval carried no code");
+
+  const exchanged = await fetch(`${supabaseUrl}/auth/v1/oauth/token`, {
+    method: "POST",
+    headers: {
+      apikey: anonKey,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: redirectUri,
+      client_id: clientId,
+      code_verifier: verifier,
+    }),
+  });
+  const token: unknown = await exchanged.json();
+  const accessToken =
+    token !== null && typeof token === "object" && "access_token" in token
+      ? token.access_token
+      : null;
+  if (typeof accessToken !== "string") {
+    throw new Error(`The token exchange failed (${exchanged.status})`);
+  }
+
+  return { clientId, accessToken, user };
+}
+
+/**
+ * Undoes `oauthGrantFor`. Deleting a client through the Admin API only marks
+ * it deleted and leaves its grant and session in place, so the user revokes
+ * the grant first — which ends the app's session and its refresh token — and
+ * signs out the session that approved it. The client and the grant stay
+ * behind as deleted and revoked rows: no API removes them.
+ */
+export async function revokeOAuthGrant(grant: OAuthGrant): Promise<void> {
+  const revoked = await grant.user.auth.oauth.revokeGrant({ clientId: grant.clientId });
+  if (revoked.error) throw new Error(`Revoking the grant failed: ${revoked.error.message}`);
+  const signedOut = await grant.user.auth.signOut({ scope: "local" });
+  if (signedOut.error) throw new Error(`Signing out failed: ${signedOut.error.message}`);
+  const { error } = await createAdminTestClient().auth.admin.oauth.deleteClient(
+    grant.clientId
+  );
+  if (error) throw new Error(`Deleting OAuth client failed: ${error.message}`);
+}
+
+/**
+ * A client acting on a raw access token rather than a signed-in session — how
+ * an MCP tool reaches the database with an AI app's token.
+ */
+export function createBearerTestClient(
+  accessToken: string
+): SupabaseClient<Database> {
+  return createClient<Database>(supabaseUrl, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+  });
 }

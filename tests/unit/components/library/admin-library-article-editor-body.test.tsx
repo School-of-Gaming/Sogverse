@@ -43,6 +43,8 @@ const DRAFT: AdminLibraryArticle = {
     coverLabel: null,
     createdAt: "2026-09-12T11:00:00Z",
     updatedAt: "2026-09-15T08:05:00Z",
+    lastSavedBy: null,
+    lastSavedVia: null,
   },
   publication: null,
   hasUnpublishedChanges: false,

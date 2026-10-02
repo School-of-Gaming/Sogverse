@@ -88,6 +88,8 @@ const ARTICLE: AdminLibraryArticle = {
     coverLabel: null,
     createdAt: "2026-09-12T11:00:00Z",
     updatedAt: "2026-09-15T08:05:00Z",
+    lastSavedBy: null,
+    lastSavedVia: null,
   },
   publication: null,
   hasUnpublishedChanges: false,
@@ -490,6 +492,55 @@ describe("the Library article editor", () => {
         "statusPanel.changedLine date=September 16, 2026",
       );
       expect(panel().textContent).not.toContain("statusPanel.publishedLine");
+    });
+  });
+
+  describe("the last save", () => {
+    const savedAt = "statusPanel.savedLine date=Sep 15, 2026, 11:05 AM";
+
+    function draftSavedBy(
+      lastSavedBy: string | null,
+      lastSavedVia: LibraryArticleDraft["lastSavedVia"],
+    ): AdminLibraryArticle {
+      return { ...ARTICLE, draft: { ...ARTICLE.draft, lastSavedBy, lastSavedVia } };
+    }
+
+    it("gives the time alone when no saver is recorded", () => {
+      renderEditor(ARTICLE);
+
+      expect(screen.getByText(savedAt)).toBeTruthy();
+    });
+
+    it("names the admin who saved it in Sogverse", () => {
+      renderEditor(draftSavedBy("Kyle Hutchinson", null));
+
+      expect(
+        screen.getByText(
+          "statusPanel.savedByLine date=Sep 15, 2026, 11:05 AM name=Kyle Hutchinson",
+        ),
+      ).toBeTruthy();
+    });
+
+    it("names the AI app a save came through", () => {
+      renderEditor(
+        draftSavedBy("Kyle Hutchinson", { clientId: "c1", name: "Claude Code" }),
+      );
+
+      expect(
+        screen.getByText(
+          "statusPanel.savedByViaLine date=Sep 15, 2026, 11:05 AM name=Kyle Hutchinson app=Claude Code",
+        ),
+      ).toBeTruthy();
+    });
+
+    it("still says a save came through an app no longer registered", () => {
+      renderEditor(draftSavedBy("Kyle Hutchinson", { clientId: "c1", name: null }));
+
+      expect(
+        screen.getByText(
+          "statusPanel.savedByViaUnnamedLine date=Sep 15, 2026, 11:05 AM name=Kyle Hutchinson",
+        ),
+      ).toBeTruthy();
     });
   });
 

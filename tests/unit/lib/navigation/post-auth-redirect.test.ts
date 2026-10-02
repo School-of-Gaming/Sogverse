@@ -69,6 +69,23 @@ describe("resolveSafeRedirect", () => {
     expect(resolveSafeRedirect("/shop/%2e%2e/admin")).toBe(null);
   });
 
+  it("admits the OAuth consent page with its authorization id, in any locale", () => {
+    // The consent page's id is the whole of the authorization: a sign-in that
+    // came back without its query would strand the admin on a dead page.
+    expect(resolveSafeRedirect("/en/oauth/consent?authorization_id=abc")).toBe(
+      "/en/oauth/consent?authorization_id=abc",
+    );
+    expect(resolveSafeRedirect("/fi/oauth/consent?authorization_id=abc")).toBe(
+      "/fi/oauth/consent?authorization_id=abc",
+    );
+  });
+
+  it("admits the consent page exactly, never what sits beneath it", () => {
+    expect(resolveSafeRedirect("/oauth/consent/../../admin")).toBe(null);
+    expect(resolveSafeRedirect("/oauth/consentx")).toBe(null);
+    expect(resolveSafeRedirect("/oauth")).toBe(null);
+  });
+
   it("normalizes in-allowlist traversal to the real path", () => {
     // A `..` that stays within /shop/ is harmless; it collapses and is
     // returned as the normalized path the browser would actually visit.

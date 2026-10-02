@@ -9,8 +9,9 @@ import { Constants, type LibraryCategory } from "@/types";
 /**
  * Contracts for the Library's articles.
  *
- * There is no API route here: the four writes are admin-guarded RPCs the
- * admin's own session calls, and the reads are plain table reads under RLS. A
+ * There is no API route here: the writes are admin-guarded RPCs the admin's
+ * own session calls — in the browser, or through an AI app's token at the MCP
+ * endpoint — and the reads are plain table reads under RLS. A
  * cover is an entry of the shared image catalogue (`src/services/catalogue-images/`)
  * of purpose `library_cover`: an article saves the entry's id, and the database derives the
  * served path. What this module holds is the shapes the rest of the app agrees
@@ -40,6 +41,20 @@ export type LibraryArticleVersionInput = z.input<
   typeof libraryArticleVersionInput
 >;
 
+/** An article's category as an admin sets it; null clears it. */
+export const libraryArticleCategoryInput = z
+  .enum(Constants.public.Enums.library_article_category)
+  .nullable();
+
+/**
+ * A Library cover entry's id as an admin sets it, or null for none. The
+ * database refuses an entry of another purpose, or one that has been removed.
+ */
+export const libraryArticleCoverInput = z
+  .string()
+  .uuid("Not a catalogue picture")
+  .nullable();
+
 /**
  * An article's working copy as an admin saves it — the same fields on a
  * create and on every save.
@@ -62,12 +77,8 @@ export const libraryArticleInput = z.object({
         versions.length,
       "Each language may have one version",
     ),
-  category: z.enum(Constants.public.Enums.library_article_category).nullable(),
-  /**
-   * A Library cover entry's id, or null for none. The database refuses an
-   * entry of another purpose, or one that has been removed.
-   */
-  coverImageId: z.string().uuid("Not a catalogue picture").nullable(),
+  category: libraryArticleCategoryInput,
+  coverImageId: libraryArticleCoverInput,
 });
 
 export type LibraryArticleInput = z.input<typeof libraryArticleInput>;
@@ -109,6 +120,18 @@ export interface LibraryArticleDraft {
   createdAt: string;
   /** When the working copy was last saved. Publishing does not move it. */
   updatedAt: string;
+  /**
+   * The name of the admin who last saved the working copy. Null when no saver
+   * is recorded: a server-side write, an account since removed, or a save
+   * from before saves were attributed.
+   */
+  lastSavedBy: string | null;
+  /**
+   * The AI app the last save came through, or null when it was made in
+   * Sogverse itself. `name` is what the app registered itself as, and null
+   * once it is no longer registered.
+   */
+  lastSavedVia: { clientId: string; name: string | null } | null;
 }
 
 /** One live language version as a list reads it: no body. */
@@ -180,6 +203,10 @@ export interface AdminLibraryArticleListItem {
   coverPath: string | null;
   /** When the working copy was last saved. */
   updatedAt: string;
+  /** Who last saved it, as on the edit page (`LibraryArticleDraft`). */
+  lastSavedBy: LibraryArticleDraft["lastSavedBy"];
+  /** The AI app the last save came through, as on the edit page. */
+  lastSavedVia: LibraryArticleDraft["lastSavedVia"];
   isPublished: boolean;
   /** True when publishing now would change what is live. */
   hasUnpublishedChanges: boolean;
@@ -192,6 +219,16 @@ export interface AdminLibraryArticle {
   publication: PublishedLibraryArticle | null;
   hasUnpublishedChanges: boolean;
 }
+
+/**
+ * What `get_oauth_client` answers, narrowed to what naming an AI app needs.
+ * The generator types every column non-null; the name is whatever the app
+ * registered, and the registration lets it be absent. No row at all means the
+ * app is no longer registered.
+ */
+export const oauthClientNameRows = z.array(
+  z.object({ client_name: z.string().nullable() }),
+);
 
 // ---------------------------------------------------------------------------
 // Reading in a language
@@ -218,6 +255,71 @@ export function localizeArticle(
   const { versions, ...shared } = article;
   const version = resolveTranslation(versions, locale);
   return version === null ? null : { ...shared, ...version };
+}
+
+// ---------------------------------------------------------------------------
+// Completeness
+// ---------------------------------------------------------------------------
+
+/**
+ * The fields a version needs before publishing takes it, in the order the
+ * editor asks for them. Complete means all three written — the same rule as
+ * the working table's generated `is_complete`, which is what publishing reads.
+ */
+export const LIBRARY_VERSION_FIELDS = ["title", "summary", "body"] as const;
+
+export type LibraryVersionField = (typeof LIBRARY_VERSION_FIELDS)[number];
+
+/** What a version still needs before publishing takes it; empty when complete. */
+export function missingInVersion(
+  version: Readonly<Record<LibraryVersionField, string>>,
+): LibraryVersionField[] {
+  return LIBRARY_VERSION_FIELDS.filter((field) => version[field].trim() === "");
+}
+
+export function isCompleteVersion(
+  version: Readonly<Record<LibraryVersionField, string>>,
+): boolean {
+  return missingInVersion(version).length === 0;
+}
+
+// ---------------------------------------------------------------------------
+// Refusals
+// ---------------------------------------------------------------------------
+
+/**
+ * Why a write was refused: the database's own sentence when it wrote one for
+ * a reader, or nothing to quote. The Library's write functions raise their
+ * admin-facing sentences under exactly three SQLSTATEs — `check_violation`
+ * (a missing title, the publish function's list of what is missing, a cover
+ * that is not a Library cover), `no_data_found` (the article is gone) and
+ * `foreign_key_violation` (the cover left the catalogue). Every other code
+ * carries a message written for a developer, not an admin: supabase-js reports
+ * a network fault with an empty code and the fetch error as its message, and an
+ * expired session as a `PGRST` code, so those fall back to a generic line.
+ * The editor and the MCP tools both read a refusal through this.
+ */
+export type LibraryWriteFailure =
+  | { kind: "reason"; reason: string }
+  | { kind: "unknown" };
+
+const QUOTED_SQLSTATES: ReadonlySet<string> = new Set([
+  "23514", // check_violation
+  "P0002", // no_data_found
+  "23503", // foreign_key_violation
+]);
+
+export function libraryWriteFailure(error: unknown): LibraryWriteFailure {
+  if (typeof error !== "object" || error === null) return { kind: "unknown" };
+  if (!("code" in error) || !("message" in error)) return { kind: "unknown" };
+  const { code, message } = error;
+  if (typeof code !== "string" || typeof message !== "string") {
+    return { kind: "unknown" };
+  }
+  if (!QUOTED_SQLSTATES.has(code) || message.length === 0) {
+    return { kind: "unknown" };
+  }
+  return { kind: "reason", reason: message };
 }
 
 // ---------------------------------------------------------------------------

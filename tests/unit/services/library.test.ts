@@ -197,6 +197,91 @@ describe("LibraryService", () => {
     });
   });
 
+  it("saves one language version, trimmed, and nothing else", async () => {
+    const fetchMock: FetchMock = vi.fn(async () => postgrestJson("an-id"));
+    const service = serviceWith(fetchMock);
+
+    await service.saveArticleVersion("an-id", {
+      locale: "sv",
+      title: "  T  ",
+      summary: "S ",
+      body: " B",
+    });
+
+    const [input, init] = fetchMock.mock.calls[0];
+    expect(requestedUrl(input).pathname).toBe(
+      "/rest/v1/rpc/save_library_article_version",
+    );
+    expect(JSON.parse(String(init?.body))).toEqual({
+      p_id: "an-id",
+      p_locale: "sv",
+      p_title: "T",
+      p_summary: "S",
+      p_body: "B",
+    });
+  });
+
+  it("refuses a version with no title, or in a locale the site does not ship, without calling", async () => {
+    const fetchMock: FetchMock = vi.fn();
+    const service = serviceWith(fetchMock);
+
+    await expect(
+      service.saveArticleVersion("an-id", { locale: "en", title: " ", summary: "", body: "" }),
+    ).rejects.toThrow();
+    await expect(
+      service.saveArticleVersion("an-id", {
+        // @ts-expect-error -- a locale the site does not ship, which the schema must refuse
+        locale: "de",
+        title: "T",
+        summary: "",
+        body: "",
+      }),
+    ).rejects.toThrow();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("sets the category alone, and clears it as an omission", async () => {
+    const fetchMock: FetchMock = vi.fn(async () => postgrestJson("an-id"));
+    const service = serviceWith(fetchMock);
+
+    await service.setArticleCategory("an-id", "screen_time");
+    await service.setArticleCategory("an-id", null);
+
+    const [first, firstInit] = fetchMock.mock.calls[0];
+    expect(requestedUrl(first).pathname).toBe(
+      "/rest/v1/rpc/set_library_article_category",
+    );
+    expect(JSON.parse(String(firstInit?.body))).toEqual({
+      p_id: "an-id",
+      p_category: "screen_time",
+    });
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toEqual({
+      p_id: "an-id",
+    });
+  });
+
+  it("sets the cover alone, clears it as an omission, and refuses a non-id", async () => {
+    const fetchMock: FetchMock = vi.fn(async () => postgrestJson("an-id"));
+    const service = serviceWith(fetchMock);
+
+    await service.setArticleCover("an-id", COVER_B);
+    await service.setArticleCover("an-id", null);
+    await expect(service.setArticleCover("an-id", "cover.jpg")).rejects.toThrow();
+
+    const [first, firstInit] = fetchMock.mock.calls[0];
+    expect(requestedUrl(first).pathname).toBe(
+      "/rest/v1/rpc/set_library_article_cover",
+    );
+    expect(JSON.parse(String(firstInit?.body))).toEqual({
+      p_id: "an-id",
+      p_cover_image_id: COVER_B,
+    });
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toEqual({
+      p_id: "an-id",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("answers a published read for a malformed id with null, without querying", async () => {
     const fetchMock: FetchMock = vi.fn();
     const service = serviceWith(fetchMock);

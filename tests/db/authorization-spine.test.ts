@@ -151,6 +151,17 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // another. Past the admin guard, all-NULL arguments are refused with
   // `null_value_not_allowed` — an error, but not the forbidden one.
   repoint_library_covers: { permittedRoles: ["admin"] },
+  // The Library's partial writers, one version or one field at a time. Past
+  // the admin guard, all-NULL arguments are refused with `check_violation`
+  // (the version: no title) or `no_data_found` (category and cover: no such
+  // article).
+  save_library_article_version: { permittedRoles: ["admin"] },
+  set_library_article_category: { permittedRoles: ["admin"] },
+  set_library_article_cover: { permittedRoles: ["admin"] },
+  // One OAuth client's public description out of Supabase Auth, which no Data
+  // API role can read — how the Library editor names the AI app a save came
+  // through. Past the admin guard, a NULL id finds no client: an empty answer.
+  get_oauth_client: { permittedRoles: ["admin"] },
   promote_from_waitlist: { permittedRoles: ["admin"] },
   demote_to_waitlist: { permittedRoles: ["admin"] },
   set_gedu_certified: { permittedRoles: ["admin"] },
