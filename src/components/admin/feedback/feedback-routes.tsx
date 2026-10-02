@@ -1,12 +1,22 @@
 import "server-only";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
-import type { FeedbackDimension, FeedbackScopeKind } from "./aggregate-feedback";
+import { getLocale, getTranslations } from "next-intl/server";
+import { redirect } from "@/i18n/navigation";
+import {
+  feedbackCanonicalScope,
+  type FeedbackListDimension,
+  type FeedbackScopeKind,
+} from "./aggregate-feedback";
 import { FeedbackDetailPage } from "./feedback-detail-page";
 import { FeedbackListPage } from "./feedback-list-page";
 import { FeedbackOverviewPage } from "./feedback-overview-page";
-import { FEEDBACK_ORIGIN_PARAM, feedbackScopeId, parseFeedbackOrigin } from "./feedback-place";
+import {
+  FEEDBACK_ORIGIN_PARAM,
+  feedbackDetailHref,
+  feedbackScopeId,
+  parseFeedbackOrigin,
+} from "./feedback-place";
 import { FeedbackResponsesPage } from "./feedback-responses-page";
 import { FeedbackLoadFailure } from "./feedback-shell";
 import { loadFeedback } from "./load-feedback.server";
@@ -34,7 +44,7 @@ export async function FeedbackOverviewRoute() {
   return <FeedbackOverviewPage read={load} />;
 }
 
-export async function FeedbackListRoute({ dimension }: { dimension: FeedbackDimension }) {
+export async function FeedbackListRoute({ dimension }: { dimension: FeedbackListDimension }) {
   const load = await loadFeedback();
   if (!load.ok) return failure(load.reason);
   return <FeedbackListPage read={load} dimension={dimension} />;
@@ -44,6 +54,10 @@ export async function FeedbackListRoute({ dimension }: { dimension: FeedbackDime
  * A malformed id is a 404: it can name nothing. A well-formed id the history
  * has no feedback for renders the page saying so, because the thing may well
  * exist and simply not have been answered about yet.
+ *
+ * A group of a single-group product is read on its product's page, so its own
+ * address redirects there, keeping the origin: one thing never has two pages
+ * that look alike and list different things.
  */
 export async function FeedbackDetailRoute({
   kind,
@@ -59,7 +73,11 @@ export async function FeedbackDetailRoute({
   const origin = parseFeedbackOrigin((await searchParams)[FEEDBACK_ORIGIN_PARAM]);
   const load = await loadFeedback();
   if (!load.ok) return failure(load.reason);
-  return <FeedbackDetailPage read={load} scope={{ kind, id }} origin={origin} />;
+  const scope = feedbackCanonicalScope(load.dataset, load.source, { kind, id });
+  if (scope.kind !== kind) {
+    redirect({ href: feedbackDetailHref(scope, origin), locale: await getLocale() });
+  }
+  return <FeedbackDetailPage read={load} scope={scope} origin={origin} />;
 }
 
 export async function FeedbackResponsesRoute() {

@@ -1595,7 +1595,6 @@
         "overview": "Back to feedback",
         "list": {
           "product": "Back to products",
-          "group": "Back to groups",
           "gedu": "Back to Gedus"
         },
         "responses": "Back to what gamers said",
@@ -1622,13 +1621,11 @@
         "heading": "Explore",
         "titles": {
           "product": "Products",
-          "group": "Groups",
           "gedu": "Gedus",
           "responses": "Gamers"
         },
         "counts": {
           "product": "{count, plural, one {# product} other {# products}}",
-          "group": "{count, plural, one {# group} other {# groups}}",
           "gedu": "{count, plural, one {# Gedu} other {# Gedus}}",
           "responses": "{count, plural, one {# response} other {# responses}}"
         }
@@ -1642,7 +1639,6 @@
       "lists": {
         "titles": {
           "product": "Products",
-          "group": "Groups",
           "gedu": "Gedus"
         },
         "subtitle": "Worst first, against the platform average"
@@ -1663,6 +1659,7 @@
         "none": "Nothing has been answered about this yet.",
         "platform": "Platform {share}",
         "groupsHeading": "Groups",
+        "productsHeading": "Products",
         "gedusHeading": "Gedus",
         "gamersHeading": "Gamers who answered",
         "responsesHeading": "What gamers said"

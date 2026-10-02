@@ -13,7 +13,8 @@ const ROW_GRID =
   "grid gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,1fr)_6rem_minmax(8rem,16rem)] sm:items-center";
 
 /**
- * **Products, groups or Gedus, worst first**, each a link to its own page.
+ * **Products, groups or Gedus, worst first**, each a link to the page it is
+ * read on — a group's named and placed by `feedbackGroupTarget`.
  *
  * A row reads left to right as name, how many answered, and how positive
  * against the platform's grey mark; a row below the platform says so in words,
@@ -81,11 +82,11 @@ function Row({
   return (
     <li>
       <Link
-        href={feedbackHref({ view: "detail", scope: { kind: row.dimension, id: row.id }, origin })}
+        href={feedbackHref({ view: "detail", scope: row.scope, origin })}
         className="block px-4 py-3 transition-colors hover:bg-hover"
       >
         <div className={ROW_GRID}>
-          <RowName row={row} />
+          <span className="min-w-0 truncate text-sm font-medium">{row.name}</span>
           <span className="text-sm tabular-nums text-muted-foreground sm:text-right">
             {t("answers", { count: row.responses })}
           </span>
@@ -109,16 +110,5 @@ function Row({
         )}
       </Link>
     </li>
-  );
-}
-
-function RowName({ row }: { row: FeedbackDimensionRow }) {
-  return (
-    <span className="min-w-0">
-      <span className="block truncate text-sm font-medium">{row.name}</span>
-      {row.dimension === "group" && row.product !== null && (
-        <span className="block truncate text-xs text-muted-foreground">{row.product.name}</span>
-      )}
-    </span>
   );
 }

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { PATHNAMES } from "@/i18n/pathnames";
 import {
+  defaultBackPlace,
   FEEDBACK_ORIGIN_PARAM,
   feedbackHref,
   feedbackScopeId,
@@ -33,6 +35,17 @@ describe("feedback places", () => {
 
   it("returns a gamer opened from what gamers said to that page", () => {
     expect(placeOfOrigin({ kind: "responses" })).toEqual({ view: "responses" });
+  });
+
+  it("has no groups list: groups are a product's breakdown, and a group's page goes back to its product", () => {
+    expect(parseFeedbackOrigin("groups")).toBeNull();
+    expect(Object.keys(PATHNAMES)).not.toContain("/admin/feedback/groups");
+    expect(Object.keys(PATHNAMES)).toContain("/admin/feedback/groups/[id]");
+    expect(defaultBackPlace({ kind: "group", id: ID }, "product-a")).toEqual({
+      view: "detail",
+      scope: { kind: "product", id: "product-a" },
+      origin: null,
+    });
   });
 
   it("drops an origin it cannot use", () => {

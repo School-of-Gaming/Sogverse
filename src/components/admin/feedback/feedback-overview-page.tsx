@@ -9,7 +9,7 @@ import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule"
 import {
   buildFeedbackOverview,
   buildFeedbackTimeline,
-  type FeedbackDimension,
+  type FeedbackListDimension,
   type FeedbackOverview,
   type FeedbackParticipation,
   type FeedbackRead,
@@ -27,9 +27,9 @@ import { useFeedbackStatementLabels } from "./use-feedback-labels";
 /**
  * **`/admin/feedback` — the pulse, with no lists on it.** One figure for how
  * positive gamers have been since the first answer, the whole history drawn
- * beneath it, one line per statement, and four doors to the lists an admin
- * dives into: products, groups, Gedus and what gamers said, each saying in a
- * few words whether there is anything to find there.
+ * beneath it, one line per statement, and three doors to the lists an admin
+ * dives into: products (whose groups are a breakdown on a product's own page),
+ * Gedus, and what gamers said.
  */
 export function FeedbackOverviewPage({ read }: { read: FeedbackRead }) {
   const t = useTranslations("admin.feedback");
@@ -162,15 +162,15 @@ function StatementLines({
   );
 }
 
-/** The four doors to the lists, each summarised in a few words. */
+/** The three doors — products, Gedus and gamers — each summarised in a few words. */
 function Explore({ overview }: { overview: FeedbackOverview }) {
   const t = useTranslations("admin.feedback.explore");
-  const dimensions: FeedbackDimension[] = ["product", "group", "gedu"];
+  const dimensions: FeedbackListDimension[] = ["product", "gedu"];
 
   return (
     <section className="space-y-2">
       <h2 className="text-base font-semibold">{t("heading")}</h2>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-3">
         {dimensions.map((dimension) => (
           <ExploreCard
             key={dimension}

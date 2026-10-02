@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 import type { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import type { FeedbackDimension, FeedbackScope, FeedbackScopeKind } from "./aggregate-feedback";
+import type { FeedbackListDimension, FeedbackScope, FeedbackScopeKind } from "./aggregate-feedback";
 
 /** A link target the app's own typed `Link` accepts. */
 export type FeedbackHref = ComponentProps<typeof Link>["href"];
@@ -11,14 +11,14 @@ export type FeedbackHref = ComponentProps<typeof Link>["href"];
  * list, what gamers said, or another detail (a product's group, a group's gamer).
  */
 export type FeedbackOrigin =
-  | { kind: "list"; dimension: FeedbackDimension }
+  | { kind: "list"; dimension: FeedbackListDimension }
   | { kind: "responses" }
   | { kind: "detail"; scope: FeedbackScope };
 
 /** **One page of the feedback section**, as data. Every link between the pages is built from a place. */
 export type FeedbackPlace =
   | { view: "overview" }
-  | { view: "list"; dimension: FeedbackDimension }
+  | { view: "list"; dimension: FeedbackListDimension }
   | { view: "detail"; scope: FeedbackScope; origin: FeedbackOrigin | null }
   | { view: "responses" };
 
@@ -30,12 +30,11 @@ const RESPONSES_TOKEN = "responses";
 
 const DIMENSION_TOKENS = {
   product: "products",
-  group: "groups",
   gedu: "gedus",
-} as const satisfies Record<FeedbackDimension, string>;
+} as const satisfies Record<FeedbackListDimension, string>;
 
-const DIMENSIONS: readonly FeedbackDimension[] = ["product", "group", "gedu"];
-const SCOPE_KINDS: readonly FeedbackScopeKind[] = [...DIMENSIONS, "gamer"];
+const DIMENSIONS: readonly FeedbackListDimension[] = ["product", "gedu"];
+const SCOPE_KINDS: readonly FeedbackScopeKind[] = ["product", "group", "gedu", "gamer"];
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -94,11 +93,23 @@ export function placeOfOrigin(origin: FeedbackOrigin): FeedbackPlace {
   }
 }
 
-/** Where a detail page's back link leads with no origin: its own list, or the overview for a gamer. */
-export function defaultBackPlace(scope: FeedbackScope): FeedbackPlace {
-  return scope.kind === "gamer"
-    ? { view: "overview" }
-    : { view: "list", dimension: scope.kind };
+/**
+ * Where a detail page's back link leads with no origin: a product's or a
+ * Gedu's list, a group's product (`productId`, when the group is known), or the
+ * overview.
+ */
+export function defaultBackPlace(scope: FeedbackScope, productId: string | null): FeedbackPlace {
+  switch (scope.kind) {
+    case "product":
+    case "gedu":
+      return { view: "list", dimension: scope.kind };
+    case "group":
+      return productId === null
+        ? { view: "overview" }
+        : { view: "detail", scope: { kind: "product", id: productId }, origin: null };
+    case "gamer":
+      return { view: "overview" };
+  }
 }
 
 /** A place's admin route; a detail page's carries its origin, for its back link. */
@@ -108,13 +119,17 @@ export function feedbackHref(place: FeedbackPlace): FeedbackHref {
       return ROUTES.admin.feedback;
     case "list":
       return ROUTES.admin.feedbackList(place.dimension);
-    case "detail": {
-      const route = ROUTES.admin.feedbackDetail(place.scope.kind, place.scope.id);
-      return place.origin === null
-        ? route
-        : { ...route, query: { [FEEDBACK_ORIGIN_PARAM]: originToken(place.origin) } };
-    }
+    case "detail":
+      return feedbackDetailHref(place.scope, place.origin);
     case "responses":
       return ROUTES.admin.feedbackResponses;
   }
+}
+
+/** A detail page's route carrying its origin — typed narrowly enough for a server redirect. */
+export function feedbackDetailHref(scope: FeedbackScope, origin: FeedbackOrigin | null) {
+  const route = ROUTES.admin.feedbackDetail(scope.kind, scope.id);
+  return origin === null
+    ? route
+    : { ...route, query: { [FEEDBACK_ORIGIN_PARAM]: originToken(origin) } };
 }

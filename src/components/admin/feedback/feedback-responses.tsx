@@ -17,7 +17,11 @@ import type {
   AdminFeedbackResponse,
   FeedbackSource,
 } from "@/services/session-feedback/admin-feedback.contracts";
-import type { FeedbackResponses } from "./aggregate-feedback";
+import {
+  feedbackGroupTarget,
+  type FeedbackGroupsPerProduct,
+  type FeedbackResponses,
+} from "./aggregate-feedback";
 import { feedbackHref, type FeedbackOrigin } from "./feedback-place";
 import { SegmentedButtons } from "./feedback-shell";
 import { FEEDBACK_CATALOGUES } from "./feedback-sources";
@@ -100,7 +104,12 @@ export function WhatGamersSaid({
           {show === "worthReading" ? t("noneWorthReading") : t("none")}
         </p>
       ) : (
-        <ResponseTable source={source} responses={list.slice(0, limit)} origin={origin} />
+        <ResponseTable
+          source={source}
+          responses={list.slice(0, limit)}
+          groupsPerProduct={responses.groupsPerProduct}
+          origin={origin}
+        />
       )}
       {/* Below the table, so a revealed batch lands in the slack beneath the
           list and nothing painted moves. Unmounted once nothing is left. */}
@@ -133,10 +142,12 @@ function responseKey(response: AdminFeedbackResponse): string {
 function ResponseTable({
   source,
   responses,
+  groupsPerProduct,
   origin,
 }: {
   source: FeedbackSource;
   responses: AdminFeedbackResponse[];
+  groupsPerProduct: FeedbackGroupsPerProduct;
   origin: FeedbackOrigin;
 }) {
   const t = useTranslations("admin.feedback.responses");
@@ -169,7 +180,7 @@ function ResponseTable({
           <div key={responseKey(response)} role="rowgroup" className="space-y-2 px-4 py-3">
             <div role="row" className={ROW_GRID}>
               <div role="cell" className="min-w-0 pb-1 lg:pb-0">
-                <ResponseFacts response={response} origin={origin} />
+                <ResponseFacts response={response} groupsPerProduct={groupsPerProduct} origin={origin} />
               </div>
               {statements.map(({ key }) => {
                 const value = response.answers[key];
@@ -185,7 +196,7 @@ function ResponseTable({
             {response.note.trim() !== "" && (
               <div role="row">
                 <div role="cell" aria-colspan={statements.length + 1}>
-                  <blockquote className="whitespace-pre-wrap border-l-2 border-act pl-3 text-sm">
+                  <blockquote className="whitespace-pre-wrap border-l-2 border-world pl-3 text-sm">
                     {response.note}
                   </blockquote>
                 </div>
@@ -323,19 +334,24 @@ function AnswerCell({
 }
 
 /**
- * The gamer, the group and the date; then, quietly, the product and the
- * Gedus — each a way into its own page.
+ * The gamer, where they answered and the date; then, quietly, the Gedus —
+ * each a way into its own page. Where they answered is named and linked by
+ * `feedbackGroupTarget`: the product alone, or "Product · Group" where the
+ * product ran more than one.
  */
 function ResponseFacts({
   response,
+  groupsPerProduct,
   origin,
 }: {
   response: AdminFeedbackResponse;
+  groupsPerProduct: FeedbackGroupsPerProduct;
   origin: FeedbackOrigin;
 }) {
   const t = useTranslations("admin.feedback.responses");
   const locale = useLocale();
   const linkClass = "hover:underline";
+  const where = feedbackGroupTarget(response, groupsPerProduct);
 
   return (
     <div className="space-y-0.5">
@@ -347,11 +363,8 @@ function ResponseFacts({
           {response.respondent.name}
         </Link>
         {SCHEDULE_PART_SEPARATOR}
-        <Link
-          href={feedbackHref({ view: "detail", scope: { kind: "group", id: response.groupId }, origin })}
-          className={linkClass}
-        >
-          {response.groupName}
+        <Link href={feedbackHref({ view: "detail", scope: where.scope, origin })} className={linkClass}>
+          {where.name}
         </Link>
         {SCHEDULE_PART_SEPARATOR}
         <span className="tabular-nums text-muted-foreground">
@@ -359,13 +372,6 @@ function ResponseFacts({
         </span>
       </p>
       <p className="text-xs text-muted-foreground">
-        <Link
-          href={feedbackHref({ view: "detail", scope: { kind: "product", id: response.productId }, origin })}
-          className={linkClass}
-        >
-          {response.productName}
-        </Link>
-        {SCHEDULE_PART_SEPARATOR}
         {response.gedus.length === 0
           ? t("noGedu")
           : response.gedus.map((gedu, index) => (

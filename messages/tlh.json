@@ -1639,7 +1639,6 @@
         "overview": "ja'chuqDaq yIchegh",
         "list": {
           "product": "Dochmey yIchegh",
-          "group": "ghommey yIchegh",
           "gedu": "Gedupu' yIchegh"
         },
         "responses": "QujwI'pu' jatlhpu'bogh yIchegh",
@@ -1666,13 +1665,11 @@
         "heading": "yInej",
         "titles": {
           "product": "Dochmey",
-          "group": "ghommey",
           "gedu": "Gedupu'",
           "responses": "QujwI'pu'"
         },
         "counts": {
           "product": "{count, plural, one {# Doch} other {# Dochmey}}",
-          "group": "{count, plural, one {# ghom} other {# ghommey}}",
           "gedu": "{count, plural, one {# Gedu} other {# Gedupu’}}",
           "responses": "{count, plural, one {# jang} other {# jangmey}}"
         }
@@ -1686,7 +1683,6 @@
       "lists": {
         "titles": {
           "product": "Dochmey",
-          "group": "ghommey",
           "gedu": "Gedupu'"
         },
         "subtitle": "QaQbe'qu'wI' wa'DIch, Hoch motlh"
@@ -1707,6 +1703,7 @@
         "none": "DaH Dochvam jang pagh.",
         "platform": "Hoch {share}",
         "groupsHeading": "ghommey",
+        "productsHeading": "Dochmey",
         "gedusHeading": "Gedupu'",
         "gamersHeading": "QujwI'pu' jangbogh",
         "responsesHeading": "QujwI'pu' jatlhpu'bogh"

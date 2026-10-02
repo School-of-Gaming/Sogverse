@@ -6,7 +6,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
 import {
   buildFeedbackDetail,
   buildFeedbackTimeline,
@@ -39,8 +38,9 @@ import { useFeedbackStatementLabels, useRatingWord } from "./use-feedback-labels
  * gamers said, the responses worth reading first.
  *
  * A gamer is a child, and is read only against themselves over time: no
- * platform figure, no mark, no below-average line. A group's gamers are listed
- * by name with how often they answered, and nothing that ranks them.
+ * platform figure, no mark, no below-average line. A group's gamers — or a
+ * single-group product's, the product being its one group — are listed by
+ * name with how often they answered, and nothing that ranks them.
  */
 export function FeedbackDetailPage({
   read,
@@ -62,18 +62,18 @@ export function FeedbackDetailPage({
     [dataset, source, history, scope],
   );
   const kindLabel = t(`kinds.${scope.kind}`);
-  const subtitle =
-    scope.kind === "group" && detail.product !== null
-      ? [kindLabel, detail.product.name].join(SCHEDULE_PART_SEPARATOR)
-      : kindLabel;
   const outHref = adminPageOf(detail);
   const self: FeedbackOrigin = { kind: "detail", scope };
 
   return (
     <FeedbackShell
       title={detail.name ?? kindLabel}
-      subtitle={subtitle}
-      back={origin === null ? defaultBackPlace(scope) : placeOfOrigin(origin)}
+      subtitle={kindLabel}
+      back={
+        origin === null
+          ? defaultBackPlace(scope, detail.product?.id ?? null)
+          : placeOfOrigin(origin)
+      }
       aside={
         outHref !== null && (
           <Link
@@ -235,7 +235,8 @@ function Children({ detail, origin }: { detail: FeedbackDetail; origin: Feedback
   return (
     <>
       {children.groups !== null && platform !== null && (
-        <Section title={t("groupsHeading")}>
+        // A Gedu's rows are the groups they taught, named as products where a product ran one.
+        <Section title={t(detail.scope.kind === "gedu" ? "productsHeading" : "groupsHeading")}>
           <Card className="overflow-hidden">
             <FeedbackDimensionRows
               source={detail.source}

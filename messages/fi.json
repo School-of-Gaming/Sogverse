@@ -1595,7 +1595,6 @@
         "overview": "Takaisin palautteeseen",
         "list": {
           "product": "Takaisin tuotteisiin",
-          "group": "Takaisin ryhmiin",
           "gedu": "Takaisin geduihin"
         },
         "responses": "Takaisin pelaajien vastauksiin",
@@ -1622,13 +1621,11 @@
         "heading": "Tutki tarkemmin",
         "titles": {
           "product": "Tuotteet",
-          "group": "Ryhmät",
           "gedu": "Gedut",
           "responses": "Pelaajat"
         },
         "counts": {
           "product": "{count, plural, one {# tuote} other {# tuotetta}}",
-          "group": "{count, plural, one {# ryhmä} other {# ryhmää}}",
           "gedu": "{count, plural, one {# Gedu} other {# Gedua}}",
           "responses": "{count, plural, one {# vastaus} other {# vastausta}}"
         }
@@ -1642,7 +1639,6 @@
       "lists": {
         "titles": {
           "product": "Tuotteet",
-          "group": "Ryhmät",
           "gedu": "Gedut"
         },
         "subtitle": "Heikoin ensin, verrattuna koko alustan keskiarvoon"
@@ -1663,6 +1659,7 @@
         "none": "Tästä ei ole vielä vastattu mitään.",
         "platform": "Koko alusta {share}",
         "groupsHeading": "Ryhmät",
+        "productsHeading": "Tuotteet",
         "gedusHeading": "Gedut",
         "gamersHeading": "Vastanneet pelaajat",
         "responsesHeading": "Mitä pelaajat sanoivat"

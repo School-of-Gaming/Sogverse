@@ -8,6 +8,7 @@ import type {
   FeedbackSource,
 } from "@/services/session-feedback/admin-feedback.contracts";
 import { addCalendarDays } from "@/lib/calendar-date";
+import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
 import type { ProductType } from "@/types";
 import {
   addRatings,
@@ -61,8 +62,15 @@ export interface FeedbackRead {
   history: FeedbackPeriod;
 }
 
-/** The dimensions the overview summarises and a list can be opened for. */
+/** What a breakdown's rows can be: a product, a group or a Gedu. */
 export type FeedbackDimension = "product" | "group" | "gedu";
+
+/**
+ * The dimensions with a list of their own, each a door on the overview. A
+ * group has none: it is only ever a product's breakdown, shown where the
+ * product ran more than one.
+ */
+export type FeedbackListDimension = Exclude<FeedbackDimension, "group">;
 
 /** What a detail page can be about: a dimension's row, or one gamer. */
 export type FeedbackScopeKind = FeedbackDimension | "gamer";
@@ -123,7 +131,7 @@ export interface FeedbackParticipation {
   responseRate: number | null;
 }
 
-/** One line of the overview per dimension, e.g. "12 groups". */
+/** One line of the overview per list, e.g. "12 products". */
 export interface FeedbackDimensionSummary {
   /** Rows the dimension's list would show. */
   rows: number;
@@ -143,6 +151,8 @@ export interface FeedbackResponses {
   all: AdminFeedbackResponse[];
   /** The responses worth reading, in reading order. */
   worthReading: AdminFeedbackResponse[];
+  /** For naming each response's group by `feedbackGroupTarget`. */
+  groupsPerProduct: FeedbackGroupsPerProduct;
 }
 
 /** "412 responses". */
@@ -158,7 +168,7 @@ export interface FeedbackOverview {
   participation: FeedbackParticipation;
   /** In the order the source asks them. */
   statements: FeedbackStatementLine[];
-  dimensions: Record<FeedbackDimension, FeedbackDimensionSummary>;
+  dimensions: Record<FeedbackListDimension, FeedbackDimensionSummary>;
   responses: FeedbackResponsesSummary;
 }
 
@@ -170,15 +180,17 @@ export interface FeedbackWeakestStatement {
 }
 
 /**
- * One product, group or Gedu in a list. A row that ran sessions but heard
- * nothing back has no share: `belowPlatform` is false and `weakest` null.
+ * One product, group or Gedu in a list or a breakdown. A row that ran sessions
+ * but heard nothing back has no share: `belowPlatform` is false and `weakest`
+ * null.
  */
 export interface FeedbackDimensionRow {
-  dimension: FeedbackDimension;
+  /** The product's, group's or Gedu's own id: what the row counts. */
   id: string;
+  /** A group's is its `feedbackGroupTarget` name. */
   name: string;
-  /** The row's own product, or a group's product; `null` for a Gedu. */
-  product: FeedbackProductRef | null;
+  /** The page the row opens: a group's is its `feedbackGroupTarget` scope. */
+  scope: FeedbackScope;
   /** Responses (a response with two Gedus counts toward each). */
   responses: number;
   eligible: number;
@@ -194,7 +206,7 @@ export interface FeedbackDimensionRow {
 /** A dimension's list, worst first; rows with no answers last. */
 export interface FeedbackDimensionList {
   source: FeedbackSource;
-  dimension: FeedbackDimension;
+  dimension: FeedbackListDimension;
   /** The platform's overall figure the rows are judged against. */
   platform: ShareFigure;
   rows: FeedbackDimensionRow[];
@@ -220,8 +232,12 @@ export interface FeedbackGamerEntry {
 }
 
 /**
- * The rows under a scope, `null` where that kind of child is not shown:
- * product → groups and Gedus; Gedu → groups; group → gamers; gamer → none.
+ * The rows under a scope, `null` where that kind of child is not shown. A
+ * product breaks down by Gedu and — only when it ran more than one group — by
+ * group; with one group, the product and the group are the same thing, so the
+ * product lists that group's gamers itself. A Gedu breaks down by the groups
+ * they taught, each named by `feedbackGroupTarget`, so a single-group product
+ * reads as the product. A group lists its gamers; a gamer has no children.
  * Group and Gedu children are judged against the platform, exactly as list rows.
  */
 export interface FeedbackDetailChildren {
@@ -235,7 +251,10 @@ export interface FeedbackDetailChildren {
 export interface FeedbackDetail {
   source: FeedbackSource;
   scope: FeedbackScope;
-  /** Looked up across the whole dataset; `null` when the id appears nowhere. */
+  /**
+   * Looked up across the whole dataset — a group's is its `feedbackGroupTarget`
+   * name; `null` when the id appears nowhere.
+   */
   name: string | null;
   /** The product of a product or group scope; `null` otherwise. */
   product: FeedbackProductRef | null;
@@ -264,10 +283,11 @@ export function buildFeedbackOverview(
 ): FeedbackOverview {
   const slice = sliceOf(dataset, source);
   const platform = tallyResponses(slice.responses, source);
-  const responses = responsesOf(slice.responses);
+  const groups = groupsPerProductOf(slice);
+  const responses = responsesOf(slice.responses, groups);
 
-  const summarise = (dimension: FeedbackDimension): FeedbackDimensionSummary => ({
-    rows: dimensionRows(dimension, slice, source, platform).length,
+  const summarise = (dimension: FeedbackListDimension): FeedbackDimensionSummary => ({
+    rows: dimensionRows(dimension, slice, source, platform, groups).length,
   });
 
   return {
@@ -277,7 +297,6 @@ export function buildFeedbackOverview(
     statements: statementLinesOf(platform, source),
     dimensions: {
       product: summarise("product"),
-      group: summarise("group"),
       gedu: summarise("gedu"),
     },
     responses: { total: responses.all.length },
@@ -285,13 +304,13 @@ export function buildFeedbackOverview(
 }
 
 /**
- * Every product, group or Gedu that had a response or an eligible session,
- * worst first by its positive share.
+ * Every product or Gedu that had a response or an eligible session, worst
+ * first by its positive share.
  */
 export function buildFeedbackDimensionList(
   dataset: AdminFeedbackDataset,
   source: FeedbackSource,
-  dimension: FeedbackDimension,
+  dimension: FeedbackListDimension,
 ): FeedbackDimensionList {
   const slice = sliceOf(dataset, source);
   const platform = tallyResponses(slice.responses, source);
@@ -299,7 +318,7 @@ export function buildFeedbackDimensionList(
     source,
     dimension,
     platform: shareFigure(platform.overall),
-    rows: dimensionRows(dimension, slice, source, platform),
+    rows: dimensionRows(dimension, slice, source, platform, groupsPerProductOf(slice)),
   };
 }
 
@@ -309,6 +328,7 @@ export function buildFeedbackDetail(
   scope: FeedbackScope,
 ): FeedbackDetail {
   const all = sliceOf(dataset, source);
+  const groups = groupsPerProductOf(all);
   const slice = narrow(all, scope);
   const platformTallies = tallyResponses(all.responses, source);
   const scoped = tallyResponses(slice.responses, source);
@@ -323,12 +343,13 @@ export function buildFeedbackDetail(
   }));
 
   const childRows = (dimension: FeedbackDimension) =>
-    dimensionRows(dimension, slice, source, platformTallies);
+    dimensionRows(dimension, slice, source, platformTallies, groups);
+  const productOfManyGroups = scope.kind === "product" && (groups.get(scope.id) ?? 0) > 1;
 
   return {
     source,
     scope,
-    name: nameOf(dataset, scope),
+    name: nameOf(dataset, scope, groups),
     product: productOf(dataset, scope),
     headline,
     againstPlatform: comparable
@@ -340,11 +361,14 @@ export function buildFeedbackDetail(
         : participationOf(slice.responses, slice.sessions),
     statements,
     children: {
-      groups: scope.kind === "product" || scope.kind === "gedu" ? childRows("group") : null,
+      groups: productOfManyGroups || scope.kind === "gedu" ? childRows("group") : null,
       gedus: scope.kind === "product" ? childRows("gedu") : null,
-      gamers: scope.kind === "group" ? gamersOf(slice.responses) : null,
+      gamers:
+        scope.kind === "group" || (scope.kind === "product" && !productOfManyGroups)
+          ? gamersOf(slice.responses)
+          : null,
     },
-    responses: responsesOf(slice.responses),
+    responses: responsesOf(slice.responses, groups),
   };
 }
 
@@ -352,7 +376,79 @@ export function buildFeedbackResponses(
   dataset: AdminFeedbackDataset,
   source: FeedbackSource,
 ): FeedbackResponsesView {
-  return { source, responses: responsesOf(sliceOf(dataset, source).responses) };
+  const slice = sliceOf(dataset, source);
+  return { source, responses: responsesOf(slice.responses, groupsPerProductOf(slice)) };
+}
+
+/* ------------------------------------------------------------------------ */
+/* Groups and their products                                                */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * How many groups each product ran over the history, by product id: a group
+ * counts when it had a response or an eligible session there. A product absent
+ * from it ran none the history saw.
+ */
+export type FeedbackGroupsPerProduct = ReadonlyMap<string, number>;
+
+/** Where a group is opened, and what it is called wherever it is linked or named. */
+export interface FeedbackGroupTarget {
+  scope: FeedbackScope;
+  name: string;
+}
+
+/**
+ * **The one rule for linking and naming a group.** A product is the entry
+ * point, and its groups are a breakdown only when there is more than one of
+ * them: a group of a single-group product *is* the product, so it opens the
+ * product's page and is named by the product alone; a group of a multi-group
+ * product opens its own page and is named "Product · Group".
+ */
+export function feedbackGroupTarget(
+  group: Pick<AdminFeedbackGroupRef, "groupId" | "groupName" | "productId" | "productName">,
+  groupsPerProduct: FeedbackGroupsPerProduct,
+): FeedbackGroupTarget {
+  return (groupsPerProduct.get(group.productId) ?? 0) > 1
+    ? {
+        scope: { kind: "group", id: group.groupId },
+        name: [group.productName, group.groupName].join(SCHEDULE_PART_SEPARATOR),
+      }
+    : { scope: { kind: "product", id: group.productId }, name: group.productName };
+}
+
+export function feedbackGroupsPerProduct(
+  dataset: AdminFeedbackDataset,
+  source: FeedbackSource,
+): FeedbackGroupsPerProduct {
+  return groupsPerProductOf(sliceOf(dataset, source));
+}
+
+/**
+ * The page a scope is read on: a group of a single-group product is read on
+ * its product's page, so an address to its own page — typed, or kept from
+ * before the product's other groups ended — lands there. Every other scope,
+ * and a group the dataset has never seen, is read on its own.
+ */
+export function feedbackCanonicalScope(
+  dataset: AdminFeedbackDataset,
+  source: FeedbackSource,
+  scope: FeedbackScope,
+): FeedbackScope {
+  if (scope.kind !== "group") return scope;
+  const entry = entriesOf(dataset).find((row) => row.groupId === scope.id);
+  return entry === undefined
+    ? scope
+    : feedbackGroupTarget(entry, feedbackGroupsPerProduct(dataset, source)).scope;
+}
+
+function groupsPerProductOf(slice: Slice): Map<string, number> {
+  const groups = new Map<string, Set<string>>();
+  for (const { productId, groupId } of [...slice.responses, ...slice.sessions]) {
+    const ofProduct = groups.get(productId) ?? new Set<string>();
+    ofProduct.add(groupId);
+    groups.set(productId, ofProduct);
+  }
+  return new Map([...groups].map(([productId, ids]) => [productId, ids.size]));
 }
 
 /**
@@ -533,7 +629,7 @@ function participationOf(
 interface RowKey {
   id: string;
   name: string;
-  product: FeedbackProductRef | null;
+  scope: FeedbackScope;
 }
 
 function productRefOf(row: AdminFeedbackGroupRef): FeedbackProductRef {
@@ -544,18 +640,21 @@ function productRefOf(row: AdminFeedbackGroupRef): FeedbackProductRef {
 function rowKeysOf(
   row: AdminFeedbackGroupRef & { gedus: AdminFeedbackGedu[] },
   dimension: FeedbackDimension,
+  groupsPerProduct: FeedbackGroupsPerProduct,
 ): RowKey[] {
   switch (dimension) {
     case "product":
-      return [{ id: row.productId, name: row.productName, product: productRefOf(row) }];
+      return [
+        { id: row.productId, name: row.productName, scope: { kind: "product", id: row.productId } },
+      ];
     case "group":
-      return [{ id: row.groupId, name: row.groupName, product: productRefOf(row) }];
+      return [{ id: row.groupId, ...feedbackGroupTarget(row, groupsPerProduct) }];
     case "gedu": {
       const seen = new Set<string>();
       return row.gedus.flatMap((gedu) => {
         if (seen.has(gedu.id)) return [];
         seen.add(gedu.id);
-        return [{ id: gedu.id, name: gedu.name, product: null }];
+        return [{ id: gedu.id, name: gedu.name, scope: { kind: "gedu", id: gedu.id } }];
       });
     }
   }
@@ -576,6 +675,7 @@ function dimensionRows(
   slice: Slice,
   source: FeedbackSource,
   platform: ResponseTallies,
+  groupsPerProduct: FeedbackGroupsPerProduct,
 ): FeedbackDimensionRow[] {
   const rows = new Map<string, RowAccumulator>();
   const open = (key: RowKey): RowAccumulator => {
@@ -588,10 +688,14 @@ function dimensionRows(
   };
 
   for (const response of slice.responses) {
-    for (const key of rowKeysOf(response, dimension)) open(key).responses.push(response);
+    for (const key of rowKeysOf(response, dimension, groupsPerProduct)) {
+      open(key).responses.push(response);
+    }
   }
   for (const session of slice.sessions) {
-    for (const key of rowKeysOf(session, dimension)) open(key).eligible += session.eligibleCount;
+    for (const key of rowKeysOf(session, dimension, groupsPerProduct)) {
+      open(key).eligible += session.eligibleCount;
+    }
   }
 
   const platformOverall = shareFigure(platform.overall);
@@ -601,10 +705,9 @@ function dimensionRows(
       const overall = shareFigure(tallies.overall);
       const counted = row.responses.filter((response) => response.countsTowardRate).length;
       return {
-        dimension,
         id: row.id,
         name: row.name,
-        product: row.product,
+        scope: row.scope,
         responses: row.responses.length,
         eligible: row.eligible,
         responseRate: row.eligible === 0 ? null : counted / row.eligible,
@@ -679,10 +782,14 @@ function readingReasonOf(response: AdminFeedbackResponse): ReadingReason | null 
   return note ? "note" : null;
 }
 
-function responsesOf(responses: readonly AdminFeedbackResponse[]): FeedbackResponses {
+function responsesOf(
+  responses: readonly AdminFeedbackResponse[],
+  groupsPerProduct: FeedbackGroupsPerProduct,
+): FeedbackResponses {
   const all = [...responses].sort(newestFirst);
   return {
     all,
+    groupsPerProduct,
     // Filtering the newest-first list once per reason keeps each group newest first.
     worthReading: READING_ORDER.flatMap((reason) =>
       all.filter((response) => readingReasonOf(response) === reason),
@@ -695,14 +802,18 @@ function entriesOf(dataset: AdminFeedbackDataset) {
   return [...dataset.responses, ...dataset.sessions];
 }
 
-function nameOf(dataset: AdminFeedbackDataset, scope: FeedbackScope): string | null {
+function nameOf(
+  dataset: AdminFeedbackDataset,
+  scope: FeedbackScope,
+  groupsPerProduct: FeedbackGroupsPerProduct,
+): string | null {
   for (const entry of entriesOf(dataset)) {
     switch (scope.kind) {
       case "product":
         if (entry.productId === scope.id) return entry.productName;
         break;
       case "group":
-        if (entry.groupId === scope.id) return entry.groupName;
+        if (entry.groupId === scope.id) return feedbackGroupTarget(entry, groupsPerProduct).name;
         break;
       case "gedu": {
         const gedu = entry.gedus.find((candidate) => candidate.id === scope.id);

@@ -207,7 +207,6 @@ export const PATHNAMES = {
   "/admin/feedback": "/admin/feedback",
   "/admin/feedback/products": "/admin/feedback/products",
   "/admin/feedback/products/[id]": "/admin/feedback/products/[id]",
-  "/admin/feedback/groups": "/admin/feedback/groups",
   "/admin/feedback/groups/[id]": "/admin/feedback/groups/[id]",
   "/admin/feedback/gedus": "/admin/feedback/gedus",
   "/admin/feedback/gedus/[id]": "/admin/feedback/gedus/[id]",

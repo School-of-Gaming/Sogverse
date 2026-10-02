@@ -1595,7 +1595,6 @@
         "overview": "Retour aux avis",
         "list": {
           "product": "Retour aux produits",
-          "group": "Retour aux groupes",
           "gedu": "Retour aux Gedus"
         },
         "responses": "Retour à ce que les gamers ont dit",
@@ -1622,13 +1621,11 @@
         "heading": "Explorer",
         "titles": {
           "product": "Produits",
-          "group": "Groupes",
           "gedu": "Gedus",
           "responses": "Gamers"
         },
         "counts": {
           "product": "{count, plural, one {# produit} other {# produits}}",
-          "group": "{count, plural, one {# groupe} other {# groupes}}",
           "gedu": "{count, plural, one {# Gedu} other {# Gedus}}",
           "responses": "{count, plural, one {# réponse} other {# réponses}}"
         }
@@ -1642,7 +1639,6 @@
       "lists": {
         "titles": {
           "product": "Produits",
-          "group": "Groupes",
           "gedu": "Gedus"
         },
         "subtitle": "Les plus faibles d’abord, par rapport à la moyenne de la plateforme"
@@ -1663,6 +1659,7 @@
         "none": "Aucune réponse à ce sujet pour l’instant.",
         "platform": "Plateforme {share}",
         "groupsHeading": "Groupes",
+        "productsHeading": "Produits",
         "gedusHeading": "Gedus",
         "gamersHeading": "Gamers ayant répondu",
         "responsesHeading": "Ce que les gamers ont dit"

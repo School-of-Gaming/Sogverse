@@ -5,14 +5,14 @@ import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import {
   buildFeedbackDimensionList,
-  type FeedbackDimension,
+  type FeedbackListDimension,
   type FeedbackRead,
 } from "./aggregate-feedback";
 import { FeedbackDimensionRows } from "./feedback-dimension-rows";
 import { FeedbackShell } from "./feedback-shell";
 
 /**
- * **One dimension's list — products, groups or Gedus — worst first**: the
+ * **One dimension's list — products or Gedus — worst first**: the
  * page an admin dives into from the overview, and the way into each row's own
  * page.
  */
@@ -21,7 +21,7 @@ export function FeedbackListPage({
   dimension,
 }: {
   read: FeedbackRead;
-  dimension: FeedbackDimension;
+  dimension: FeedbackListDimension;
 }) {
   const t = useTranslations("admin.feedback.lists");
   const { dataset, source } = read;

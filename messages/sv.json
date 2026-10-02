@@ -1595,7 +1595,6 @@
         "overview": "Tillbaka till feedback",
         "list": {
           "product": "Tillbaka till produkterna",
-          "group": "Tillbaka till grupperna",
           "gedu": "Tillbaka till Geduerna"
         },
         "responses": "Tillbaka till vad gamerna sa",
@@ -1622,13 +1621,11 @@
         "heading": "Utforska",
         "titles": {
           "product": "Produkter",
-          "group": "Grupper",
           "gedu": "Geduer",
           "responses": "Gamers"
         },
         "counts": {
           "product": "{count, plural, one {# produkt} other {# produkter}}",
-          "group": "{count, plural, one {# grupp} other {# grupper}}",
           "gedu": "{count, plural, one {# Gedu} other {# Geduer}}",
           "responses": "{count, plural, one {# svar} other {# svar}}"
         }
@@ -1642,7 +1639,6 @@
       "lists": {
         "titles": {
           "product": "Produkter",
-          "group": "Grupper",
           "gedu": "Geduer"
         },
         "subtitle": "Sämst först, jämfört med plattformens genomsnitt"
@@ -1663,6 +1659,7 @@
         "none": "Inget har besvarats om detta än.",
         "platform": "Plattformen {share}",
         "groupsHeading": "Grupper",
+        "productsHeading": "Produkter",
         "gedusHeading": "Geduer",
         "gamersHeading": "Gamers som svarade",
         "responsesHeading": "Vad gamerna sa"

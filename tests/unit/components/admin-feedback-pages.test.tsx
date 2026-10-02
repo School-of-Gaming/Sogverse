@@ -136,7 +136,7 @@ describe("admin feedback pages", () => {
     );
     const chart = screen.getByRole("group", { name: "Positive answers by week" });
     expect(within(chart).getByText("Platform")).toBeTruthy();
-    expect(within(chart).getByText("A1")).toBeTruthy();
+    expect(within(chart).getByText("Club A · A1")).toBeTruthy();
     unmount();
 
     wrap(<FeedbackDetailPage read={read(dataset)} origin={null} scope={{ kind: "gamer", id: HELMI.id }} />);
@@ -146,7 +146,7 @@ describe("admin feedback pages", () => {
 
   it("draws the chart on the overview and detail pages only", () => {
     const chart = { name: "Positive answers by week" };
-    const { unmount } = wrap(<FeedbackListPage read={read(dataset)} dimension="group" />);
+    const { unmount } = wrap(<FeedbackListPage read={read(dataset)} dimension="product" />);
     expect(screen.queryByRole("group", chart)).toBeNull();
     unmount();
     wrap(<FeedbackResponsesPage read={read(dataset)} />);
@@ -159,19 +159,62 @@ describe("admin feedback pages", () => {
     expect(line?.textContent).toMatch(/negative.*positive/);
   });
 
-  it("judges a group of one answer and says so for a group with none", () => {
-    wrap(<FeedbackListPage read={read(dataset)} dimension="group" />);
+  it("judges a product of one answer like any other", () => {
+    wrap(<FeedbackListPage read={read(dataset)} dimension="product" />);
     const rows = screen.getAllByRole("link").filter((link) => link.closest("li") !== null);
-    expect(rows.map((row) => within(row).getByText(/^(A1|A2|B1)$/).textContent)).toEqual([
-      "B1",
-      "A1",
-      "A2",
-    ]);
-    const [weak, , silent] = rows;
+    expect(rows.map((row) => within(row).getByText(/^Club [AB]$/).textContent)).toEqual(["Club B", "Club A"]);
+    const [weak] = rows;
     expect(weak.textContent).toMatch(/0%/);
     expect(within(weak).getByText(/Below average/)).toBeTruthy();
-    expect(within(silent).getByText("No answers")).toBeTruthy();
-    expect(silent.textContent).not.toMatch(/%/);
+  });
+
+  it("opens on three doors: products, Gedus and gamers", () => {
+    wrap(<FeedbackOverviewPage read={read(dataset)} />);
+    const explore = screen.getByRole("heading", { name: "Explore" }).closest("section");
+    if (explore === null) throw new Error("No explore section");
+    const doors = within(explore).getAllByRole("link");
+    expect(doors.map((door) => door.querySelector("p")?.textContent)).toEqual(["Products", "Gedus", "Gamers"]);
+    expect(doors.map((door) => door.getAttribute("href"))).toEqual([
+      expect.stringMatching(/\/admin\/feedback\/products$/),
+      expect.stringMatching(/\/admin\/feedback\/gedus$/),
+      expect.stringMatching(/\/admin\/feedback\/responses$/),
+    ]);
+  });
+
+  it("breaks a multi-group product down by group, each named with its product, saying so for one with none", () => {
+    wrap(
+      <FeedbackDetailPage read={read(dataset)} origin={null} scope={{ kind: "product", id: "product-a" }} />,
+    );
+    const section = screen.getByRole("heading", { name: "Groups" }).closest("section");
+    if (section === null) throw new Error("No groups section");
+    const rows = within(section).getAllByRole("link");
+    expect(rows.map((row) => within(row).getByText(/^Club A · A\d$/).textContent)).toEqual([
+      "Club A · A1",
+      "Club A · A2",
+    ]);
+    expect(rows[0].getAttribute("href")).toMatch(/\/admin\/feedback\/groups\/group-a1\?from=product%3Aproduct-a$/);
+    expect(within(rows[1]).getByText("No answers")).toBeTruthy();
+    expect(rows[1].textContent).not.toMatch(/%/);
+    expect(screen.queryByRole("heading", { name: "Gamers who answered" })).toBeNull();
+  });
+
+  it("gives a single-group product no groups breakdown, listing its gamers instead", () => {
+    wrap(
+      <FeedbackDetailPage read={read(dataset)} origin={null} scope={{ kind: "product", id: "product-b" }} />,
+    );
+    expect(screen.queryByRole("heading", { name: "Groups" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Gedus" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Gamers who answered" })).toBeTruthy();
+  });
+
+  it("links a response's group by the one rule: a single-group product as itself, else 'Product · Group'", () => {
+    wrap(<FeedbackResponsesPage read={read(dataset)} />);
+    fireEvent.click(screen.getByRole("button", { name: /^All/ }));
+    const clubB = screen.getAllByRole("link", { name: "Club B" });
+    expect(clubB[0].getAttribute("href")).toMatch(/\/admin\/feedback\/products\/product-b\?from=responses$/);
+    const clubA = screen.getAllByRole("link", { name: "Club A · A1" });
+    expect(clubA[0].getAttribute("href")).toMatch(/\/admin\/feedback\/groups\/group-a1\?from=responses$/);
+    expect(screen.queryByRole("link", { name: "B1" })).toBeNull();
   });
 
   it("never sets a gamer against the platform", () => {
@@ -187,8 +230,9 @@ describe("admin feedback pages", () => {
     wrap(
       <FeedbackDetailPage read={read(dataset)} origin={null} scope={{ kind: "group", id: "group-a1" }} />,
     );
-    expect(screen.getByRole("link", { name: "Back to groups" }).getAttribute("href")).toMatch(
-      /\/admin\/feedback\/groups$/,
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Club A · A1");
+    expect(screen.getByRole("link", { name: "Back to the product" }).getAttribute("href")).toMatch(
+      /\/admin\/feedback\/products\/product-a$/,
     );
     const helmi = screen.getAllByRole("link").find((link) => link.firstChild?.textContent === "Helmi");
     expect(helmi?.getAttribute("href")).toMatch(/\/admin\/feedback\/gamers\/gamer-helmi\?from=group%3Agroup-a1$/);

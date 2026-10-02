@@ -333,14 +333,13 @@ function adminProductPath(productType: ProductType, productId: string): string {
 }
 
 /** What the admin feedback pages can be opened on, as the routes spell it. */
-type FeedbackRouteDimension = "product" | "group" | "gedu";
-type FeedbackRouteKind = FeedbackRouteDimension | "gamer";
+type FeedbackRouteList = "product" | "gedu";
+type FeedbackRouteKind = FeedbackRouteList | "group" | "gamer";
 
 const ADMIN_FEEDBACK_LIST_PATHNAMES = {
   product: "/admin/feedback/products",
-  group: "/admin/feedback/groups",
   gedu: "/admin/feedback/gedus",
-} as const satisfies Record<FeedbackRouteDimension, string>;
+} as const satisfies Record<FeedbackRouteList, string>;
 
 const ADMIN_FEEDBACK_DETAIL_PATHNAMES = {
   product: "/admin/feedback/products/[id]",
@@ -686,7 +685,7 @@ export const ROUTES = {
      */
     feedback: "/admin/feedback",
     /** One dimension's list, worst first (`/admin/feedback/gedus`). */
-    feedbackList: (dimension: FeedbackRouteDimension) => ADMIN_FEEDBACK_LIST_PATHNAMES[dimension],
+    feedbackList: (dimension: FeedbackRouteList) => ADMIN_FEEDBACK_LIST_PATHNAMES[dimension],
     /** One product's, group's, Gedu's or gamer's feedback. */
     feedbackDetail: (kind: FeedbackRouteKind, id: string) =>
       ({ pathname: ADMIN_FEEDBACK_DETAIL_PATHNAMES[kind], params: { id } }) as const,

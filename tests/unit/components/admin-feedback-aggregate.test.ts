@@ -6,10 +6,14 @@ import {
   buildFeedbackResponses,
   buildFeedbackTimeline,
   bucketUnitFor,
+  feedbackCanonicalScope,
+  feedbackGroupsPerProduct,
+  feedbackGroupTarget,
   feedbackHistory,
 } from "@/components/admin/feedback/aggregate-feedback";
 import {
   allFive as ALL_FIVE,
+  FEEDBACK_CLUB_A as CLUB_A,
   FEEDBACK_CLUB_A2 as CLUB_A2,
   FEEDBACK_CLUB_B as CLUB_B,
   FEEDBACK_GEDU_AINO as AINO,
@@ -123,9 +127,8 @@ describe("buildFeedbackOverview", () => {
       "gamer_online",
     );
 
-    expect(overview.dimensions.product).toEqual({ rows: 2 });
-    expect(overview.dimensions.group).toEqual({ rows: 3 });
-    expect(overview.dimensions.gedu).toEqual({ rows: 2 });
+    // Groups have no door of their own: they are a product's breakdown.
+    expect(overview.dimensions).toEqual({ product: { rows: 2 }, gedu: { rows: 2 } });
     expect(overview.responses).toEqual({ total: 24 });
   });
 });
@@ -299,8 +302,8 @@ describe("buildFeedbackDimensionList", () => {
       ],
     );
 
-    const list = buildFeedbackDimensionList(data, "gamer_online", "group");
-    expect(list.rows.map((row) => [row.id, row.eligible])).toEqual([["group-a1", 4]]);
+    const list = buildFeedbackDimensionList(data, "gamer_online", "product");
+    expect(list.rows.map((row) => [row.id, row.eligible])).toEqual([["product-a", 4]]);
     expect(buildFeedbackOverview(data, "gamer_online").participation.eligible).toBe(4);
   });
 
@@ -344,9 +347,44 @@ describe("buildFeedbackDetail", () => {
     // Nobody answered "learned": no gap, no flag.
     const learned = detail.statements.find((line) => line.key === "learned");
     expect(learned?.againstPlatform).toMatchObject({ belowPlatform: false });
-    expect(detail.children.groups?.map((row) => row.id)).toEqual(["group-b1"]);
+    // Club B ran one group: no groups breakdown, and the product lists that group's gamers itself.
+    expect(detail.children.groups).toBeNull();
     expect(detail.children.gedus?.map((row) => row.id)).toEqual(["gedu-aino"]);
-    expect(detail.children.gamers).toBeNull();
+    expect(detail.children.gamers).toHaveLength(12);
+  });
+
+  it("breaks a product down by group only when it ran more than one, counting a group by its sessions too", () => {
+    const data = dataset(
+      [response({ answers: { fun: 5 } }), response({ ...CLUB_B, answers: { fun: 1 } })],
+      [session({ ...CLUB_A2, eligibleCount: 3 })],
+    );
+
+    const clubA = buildFeedbackDetail(data, "gamer_online", { kind: "product", id: "product-a" });
+    expect(clubA.children.groups?.map((row) => [row.name, row.scope])).toEqual([
+      ["Club A · A1", { kind: "group", id: "group-a1" }],
+      ["Club A · A2", { kind: "group", id: "group-a2" }],
+    ]);
+    expect(clubA.children.gamers).toBeNull();
+
+    const clubB = buildFeedbackDetail(data, "gamer_online", { kind: "product", id: "product-b" });
+    expect(clubB.children.groups).toBeNull();
+    expect(clubB.children.gamers?.map((gamer) => gamer.responses)).toEqual([1]);
+
+    expect(feedbackGroupsPerProduct(data, "gamer_online")).toEqual(
+      new Map([
+        ["product-a", 2],
+        ["product-b", 1],
+      ]),
+    );
+  });
+
+  it("names a group of a multi-group product with its product, and titles its page so", () => {
+    const detail = buildFeedbackDetail(
+      dataset([response({ answers: { fun: 5 } }), response({ ...CLUB_A2, answers: { fun: 5 } })]),
+      "gamer_online",
+      { kind: "group", id: "group-a2" },
+    );
+    expect(detail.name).toBe("Club A · A2");
   });
 
   it("lists a group's gamers alphabetically with a response count and no score", () => {
@@ -389,6 +427,25 @@ describe("buildFeedbackDetail", () => {
     expect(detail.participation).toMatchObject({ responses: 2, eligible: 5 });
     expect(detail.children.groups?.map((row) => row.id).sort()).toEqual(["group-a1", "group-a2"]);
     expect(detail.children.gedus).toBeNull();
+  });
+
+  it("breaks a Gedu down by product, a single-group product as the product itself", () => {
+    const detail = buildFeedbackDetail(
+      dataset([
+        response({ answers: { fun: 5 }, gedus: [MIKA] }),
+        response({ ...CLUB_A2, answers: { fun: 5 } }),
+        response({ ...CLUB_B, answers: { fun: 5 }, gedus: [MIKA] }),
+      ]),
+      "gamer_online",
+      { kind: "gedu", id: "gedu-mika" },
+    );
+
+    expect(
+      detail.children.groups?.map((row) => [row.name, row.scope]).sort(([a], [b]) => String(a).localeCompare(String(b))),
+    ).toEqual([
+      ["Club A · A1", { kind: "group", id: "group-a1" }],
+      ["Club B", { kind: "product", id: "product-b" }],
+    ]);
   });
 
   it("gives a gamer no response rate and no platform figure, and their responses newest first", () => {
@@ -457,5 +514,55 @@ describe("buildFeedbackResponses", () => {
       "2026-09-04",
       "2026-09-03",
     ]);
+  });
+});
+
+describe("feedbackGroupTarget", () => {
+  const groups = new Map([
+    ["product-a", 2],
+    ["product-b", 1],
+  ]);
+
+  it("names a group of a single-group product by the product alone and opens the product", () => {
+    expect(feedbackGroupTarget(CLUB_B, groups)).toEqual({
+      scope: { kind: "product", id: "product-b" },
+      name: "Club B",
+    });
+  });
+
+  it("names a group of a multi-group product 'Product · Group' and opens the group", () => {
+    expect(feedbackGroupTarget(CLUB_A, groups)).toEqual({
+      scope: { kind: "group", id: "group-a1" },
+      name: "Club A · A1",
+    });
+  });
+
+  it("treats a product the history never saw as single-group", () => {
+    expect(feedbackGroupTarget(CLUB_A, new Map()).scope).toEqual({ kind: "product", id: "product-a" });
+  });
+});
+
+describe("feedbackCanonicalScope", () => {
+  const data = dataset(
+    [response({ answers: { fun: 5 } }), response({ ...CLUB_B, answers: { fun: 5 } })],
+    [session({ ...CLUB_A2 })],
+  );
+
+  it("reads a single-group product's group on the product's page", () => {
+    expect(feedbackCanonicalScope(data, "gamer_online", { kind: "group", id: "group-b1" })).toEqual({
+      kind: "product",
+      id: "product-b",
+    });
+  });
+
+  it("keeps a multi-group product's group, an unknown group and every other scope on their own page", () => {
+    for (const scope of [
+      { kind: "group", id: "group-a1" },
+      { kind: "group", id: "group-unknown" },
+      { kind: "product", id: "product-b" },
+      { kind: "gamer", id: "gamer-x" },
+    ] as const) {
+      expect(feedbackCanonicalScope(data, "gamer_online", scope)).toEqual(scope);
+    }
   });
 });
