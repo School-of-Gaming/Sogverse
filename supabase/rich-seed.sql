@@ -570,10 +570,11 @@ COMMIT;
 -- =============================================================================
 -- 6. The catalogue
 -- =============================================================================
--- Thirteen products: every product type, every billing mode, and every lifecycle
+-- Fourteen products: every product type, every billing mode, and every lifecycle
 -- state the derivation can produce — pending, running and completed, a hidden
 -- draft, and one whose registration window has not opened — plus the live club,
--- whose one weekly session is in progress when the stack is built. Dates are
+-- whose one weekly session is in progress when the stack is built, and an
+-- online club small enough to need only one group. Dates are
 -- now()-relative so the catalogue never goes stale. Prices are plain EUR cents
 -- and exist to render; no Stripe object stands behind any of them.
 --
@@ -921,6 +922,31 @@ BEGIN
     p_primary_gedu_fee_cents => 6000
   );
 
+  -- 14. Running, paid and online, five months in, with ONE group: the admin
+  --     feedback page's single-group product, whose group is the product. Its
+  --     children are happy with it, against the Creator Studio Club's weak
+  --     Ryhmä A.
+  PERFORM public.create_product(
+    'consumer_club', 'paid',
+    jsonb_build_array(
+      jsonb_build_object('locale','en','name','Roblox Builders Club',
+        'short_description','A weekly online club for building and scripting in Roblox Studio.',
+        'long_description','A small online group that builds its own Roblox worlds together, from the first block to a first script.\n\n- A new building or scripting challenge every week\n- Private servers with only the group on them\n- The educator on voice chat throughout'),
+      jsonb_build_object('locale','fi','name','Roblox-rakentajien kerho',
+        'short_description','Viikoittainen verkkokerho Roblox Studiossa rakentamiseen ja skriptaamiseen.',
+        'long_description','Pieni verkkoryhmä rakentaa yhdessä omia Roblox-maailmojaan ensimmäisestä palikasta ensimmäiseen skriptiin.\n\n- Joka viikko uusi rakennus- tai skriptaushaaste\n- Yksityiset palvelimet, joilla on vain oma ryhmä\n- Ohjaaja mukana puhekanavalla koko ajan')
+    ),
+    'roblox_studio', 'fi', true, v_tz,
+    now() - interval '170 days', true, false,
+    p_min_age => 10, p_max_age => 15, p_is_visible => true,
+    p_start_date => current_date - 150,
+    p_seat_count => 8,
+    p_schedule_slots => jsonb_build_array(
+      jsonb_build_object('weekday', 4, 'start_time', '16:00', 'duration_minutes', 90)),
+    p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',4900)),
+    p_primary_gedu_fee_cents => 6000
+  );
+
 END;
 $$;
 
@@ -959,7 +985,8 @@ BEGIN
     ('Fortnite Creative Club',                   'Crew A',       v_lucas, 'primary', NULL,           NULL),
     ('Creator Studio Club',                      'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
     ('Minecraft Bedrock Club',                   'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
-    ('Schools Game Club',                        'Ryhmä 1',      v_gedu,  'primary', NULL,           NULL),
+    ('Roblox Builders Club',                     'Ryhmä A',      v_sofia, 'primary', NULL,           NULL),
+    ('Schools Game Club',                       'Ryhmä 1',      v_gedu,  'primary', NULL,           NULL),
     ('Autumn Term Game Club',                    'Ryhmä 1',      v_sofia, 'primary', NULL,           NULL),
     ('Minecraft Summer Camp',                    'Camp Group A', v_lucas, 'primary', 'Camp Group B', v_emma),
     ('Roblox Winter Camp',                       'Camp Group A', v_mikko, 'primary', NULL,           NULL),
@@ -1077,6 +1104,14 @@ BEGIN
     ('Minecraft Bedrock Club', 'elias@gamer.example.com', 'free'),
     ('Minecraft Bedrock Club', 'eino@gamer.example.com',  'free'),
     ('Minecraft Bedrock Club', 'leevi@gamer.example.com', 'free'),
+    -- The six children in no other online club's group, so the Roblox
+    -- Builders Club's answers are nobody else's.
+    ('Roblox Builders Club', 'venla@gamer.example.com',  'subscription_monthly'),
+    ('Roblox Builders Club', 'vaino@gamer.example.com',  'subscription_monthly'),
+    ('Roblox Builders Club', 'lea@gamer.example.com',    'subscription_monthly'),
+    ('Roblox Builders Club', 'olivia@gamer.example.com', 'subscription_monthly'),
+    ('Roblox Builders Club', 'aarne@gamer.example.com',  'subscription_monthly'),
+    ('Roblox Builders Club', 'rasmus@gamer.example.com', 'subscription_monthly'),
     ('Schools Game Club', 'milo@gamer.example.com',   'external'),
     ('Schools Game Club', 'elias@gamer.example.com',  'external'),
     ('Schools Game Club', 'venla@gamer.example.com',  'external'),
@@ -1324,6 +1359,10 @@ COMMIT;
 -- sessions and never answers at all. About one answer in seven carries a note,
 -- a few carry only a note, and a note says what the answers do: a child who
 -- answered No or Not really to something writes about what went wrong.
+--
+-- The Roblox Builders Club, the one-group product, is the healthy contrast and
+-- is scripted rather than rolled: every answer rated, nothing below Somewhat
+-- except two, and three notes — one of them beside a No.
 
 BEGIN;
 SELECT set_config('request.jwt.claims',
@@ -1353,6 +1392,9 @@ DECLARE
   v_level    integer;
   v_progress numeric;
   v_notes    text[];
+  v_scripted boolean;
+  v_low_key  text;
+  v_note     text;
   -- What a child writes after answering No or Not really to something.
   v_low_notes text[] := ARRAY[
     'it was hard to hear because everyone talked at once',
@@ -1378,7 +1420,8 @@ BEGIN
            -- The groups whose answers lean, or never come, as the comment above says.
            (t.name = 'Creator Studio Club' AND g.name = 'Ryhmä A') AS weak_listening,
            (t.name = 'Minecraft Java Club' AND g.name = 'Ryhmä B') AS rising_gedu,
-           (t.name = 'Creator Studio Club' AND g.name = 'Ryhmä B') AS silent
+           (t.name = 'Creator Studio Club' AND g.name = 'Ryhmä B') AS silent,
+           (t.name = 'Roblox Builders Club') AS healthy
       FROM public.product_groups g
       JOIN public.products p ON p.id = g.product_id
       JOIN public.product_translations t
@@ -1406,7 +1449,8 @@ BEGIN
     v_total := COALESCE(array_length(v_dates, 1), 0);
     v_people := ARRAY(
       SELECT participant_id FROM public.participations
-       WHERE group_id = grp.group_id AND status = 'active');
+       WHERE group_id = grp.group_id AND status = 'active'
+       ORDER BY participant_id);
 
     PERFORM set_config('request.jwt.claims',
       json_build_object('sub', grp.gedu_id::text, 'role', 'authenticated')::text, true);
@@ -1432,20 +1476,38 @@ BEGIN
           grp.group_id, d, v_person,
           CASE WHEN v_present THEN 'present' ELSE 'absent' END);
 
+        -- The healthy group's few low answers and notes, placed by how many
+        -- sessions back they are and which of the group's children (in id
+        -- order) gave them. A scripted answer is given whatever the roll says.
+        SELECT s.low_key, s.note INTO v_low_key, v_note
+          FROM (VALUES
+            (3,  1, 'learned',      'too short, i didnt get to finish my obby'),
+            (6,  2, NULL,           'can we make a tycoon game next week??'),
+            (10, 4, 'groupListens', NULL),
+            (15, 5, NULL,           'i scripted a door that opens when you touch it!!')
+          ) AS s(sessions_back, child, low_key, note)
+         WHERE grp.healthy AND s.sessions_back = v_n
+           AND s.child = array_position(v_people, v_person);
+        v_scripted := FOUND;
+
         CONTINUE WHEN NOT (grp.is_remote AND NOT grp.silent
-                           AND abs(hashtext('answered' || v_person || d)) % 100
-                               < CASE WHEN v_present THEN 70 ELSE 25 END);
+                           AND (v_scripted
+                                OR abs(hashtext('answered' || v_person || d)) % 100
+                                   < CASE WHEN v_present THEN 70 ELSE 25 END));
 
         -- 0 at the oldest session written up, 1 at the latest.
         v_progress := CASE WHEN v_total > 1
                            THEN (v_total - v_n)::numeric / (v_total - 1) ELSE 1 END;
-        v_roll := abs(hashtext('note' || v_person || d)) % 100;
+        -- The healthy group rolls neither a note nor a note-only answer.
+        v_roll := CASE WHEN grp.healthy THEN 100
+                       ELSE abs(hashtext('note' || v_person || d)) % 100 END;
         v_answers := '{}'::jsonb;
         -- Under 4: a note and nothing rated. Otherwise every statement, each
         -- skipped one time in ten, a level around the group's lean.
         IF v_roll >= 4 THEN
           FOREACH v_key IN ARRAY ARRAY['learned', 'fun', 'geduKnowledgeable', 'geduKind', 'groupListens'] LOOP
-            CONTINUE WHEN abs(hashtext('skip' || v_key || v_person || d)) % 10 = 0;
+            CONTINUE WHEN abs(hashtext('skip' || v_key || v_person || d)) % 10 = 0
+                      AND v_key IS DISTINCT FROM v_low_key;
             v_level := CASE
                 WHEN v_key = 'groupListens' AND grp.weak_listening THEN 2
                 WHEN v_key IN ('geduKnowledgeable', 'geduKind') AND grp.rising_gedu
@@ -1453,6 +1515,9 @@ BEGIN
                 WHEN v_key = 'fun' THEN 5
                 ELSE 4
               END + abs(hashtext('level' || v_key || v_person || d)) % 3 - 1;
+            IF v_key = v_low_key THEN
+              v_level := 2;
+            END IF;
             v_answers := v_answers || jsonb_build_object(v_key, greatest(1, least(5, v_level)));
           END LOOP;
         END IF;
@@ -1469,7 +1534,8 @@ BEGIN
           (group_id, participant_id, session_opens_at, answers, note, created_at, updated_at)
         VALUES (
           grp.group_id, v_person, v_starts - interval '5 minutes', v_answers,
-          CASE WHEN v_roll < 15
+          CASE WHEN grp.healthy THEN COALESCE(v_note, '')
+               WHEN v_roll < 15
                THEN v_notes[1 + abs(hashtext('which' || v_person || d)) % array_length(v_notes, 1)]
                ELSE '' END,
           v_starts + make_interval(mins => grp.duration_minutes - abs(hashtext('left' || v_person || d)) % 15),
