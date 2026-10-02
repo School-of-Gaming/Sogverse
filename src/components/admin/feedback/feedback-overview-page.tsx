@@ -60,8 +60,9 @@ export function FeedbackOverviewPage({ read }: { read: FeedbackRead }) {
 }
 
 /**
- * The headline figure and how many answered, over the timeline of the whole
- * history. Shared with the detail pages, which add the platform beside the
+ * The headline figure and how many answered, beside the timeline of the whole
+ * history from `lg` (the figure a third, the chart two thirds) and over it
+ * below. Shared with the detail pages, which add the platform beside the
  * figure.
  */
 export function FeedbackHero({
@@ -82,8 +83,8 @@ export function FeedbackHero({
   const t = useTranslations("admin.feedback.hero");
 
   return (
-    <Card className="space-y-5 p-5">
-      <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2 sm:items-end">
+    <Card className="grid gap-x-8 gap-y-5 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-center">
+      <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2 sm:items-end lg:grid-cols-1 lg:items-start lg:gap-y-4">
         <div className="space-y-1">
           <p className="flex h-12 items-end gap-2">
             {headline.positiveShare === null ? (
@@ -97,12 +98,14 @@ export function FeedbackHero({
           </p>
           <p className="text-xs text-muted-foreground">{t("definition")}</p>
         </div>
-        <div className="space-y-1 sm:text-right">
+        <div className="space-y-1 sm:text-right lg:text-left">
           {comparison}
           <ParticipationLine participation={participation} />
         </div>
       </div>
-      <FeedbackTimeline timeline={timeline} scopeLabel={scopeLabel} />
+      <div className="min-w-0">
+        <FeedbackTimeline timeline={timeline} scopeLabel={scopeLabel} />
+      </div>
     </Card>
   );
 }

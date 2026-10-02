@@ -27,8 +27,11 @@ import {
  * platform's own, a gamer's — shows its share alone: the table reads only
  * what the row carries.
  *
- * From `lg` it is a real table; below, where the admin sidebar leaves too
- * little width for six columns, each statement folds into a block of its own.
+ * From `lg` it is a real table across the card's full width: the name and
+ * the share take the room their content needs and the five answer columns
+ * share the rest evenly, so each answer's rule has length to read by. Below,
+ * where the admin sidebar leaves too little width for six columns, each
+ * statement folds into a block of its own.
  * The two are never shown together, so assistive tech meets one of them.
  */
 export function FeedbackStatementTable({
@@ -56,15 +59,15 @@ export function FeedbackStatementTable({
         <caption className="sr-only">{t("caption")}</caption>
         <thead>
           <tr className="border-b border-border text-left align-bottom text-xs font-medium text-muted-foreground">
-            <th scope="col" className="w-28 px-4 py-2 font-medium">
+            <th scope="col" className="w-36 px-4 py-2 font-medium">
               <span className="sr-only">{t("statement")}</span>
             </th>
             {SESSION_FEEDBACK_RATINGS.map((rating) => (
-              <th key={rating} scope="col" className="w-20 px-2 py-2 font-medium">
+              <th key={rating} scope="col" className="px-3 py-2 font-medium">
                 {ratingWord(rating)}
               </th>
             ))}
-            <th scope="col" className="px-4 py-2 font-medium">
+            <th scope="col" className="w-44 px-4 py-2 font-medium">
               <FeedbackHint hint={tFeedback("hero.definition")} alignEnd>
                 {tFeedback("rows.positive")}
               </FeedbackHint>
@@ -78,7 +81,7 @@ export function FeedbackStatementTable({
                 {nameOf(line.key, true)}
               </th>
               {SESSION_FEEDBACK_RATINGS.map((rating) => (
-                <td key={rating} className="px-2 py-2.5">
+                <td key={rating} className="px-3 py-2.5">
                   <AnswerCount count={line.figure.distribution[rating]} answers={line.figure.answers} />
                 </td>
               ))}

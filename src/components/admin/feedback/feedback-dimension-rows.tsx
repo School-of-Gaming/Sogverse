@@ -9,8 +9,14 @@ import { BelowAverage, ShareBar, ShareText } from "./feedback-marks";
 import { feedbackHref, type FeedbackOrigin } from "./feedback-place";
 import { useFeedbackStatementLabels } from "./use-feedback-labels";
 
+/**
+ * Name, answers, share. The name takes a third of what the count leaves and the
+ * share's bar two thirds, so at any width the figures sit beside the name
+ * rather than across an empty column, and the bar is long enough to set a row
+ * against the platform's tick.
+ */
 const ROW_GRID =
-  "grid gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,1fr)_6rem_minmax(8rem,16rem)] sm:items-center";
+  "grid gap-x-6 gap-y-1 sm:grid-cols-[minmax(0,1fr)_6rem_minmax(8rem,2fr)] sm:items-center";
 
 /**
  * **Products, groups or Gedus, worst first**, each a link to the page it is

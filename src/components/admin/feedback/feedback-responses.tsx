@@ -45,12 +45,16 @@ const PAGE_SIZE = 20;
 const SENTINEL_ROOT_MARGIN = "800px 0px";
 
 /**
- * The table's columns from `lg`: who, where and when, then one narrow column
- * per statement. Below `lg` a row is a single column — the who line over one
- * line per statement — because five answer columns do not fit beside the
- * admin sidebar until then.
+ * The table's columns from `lg`: who, where and when, then a column per
+ * statement. Spare width is shared three parts to the who column and one to
+ * each statement, so on a wide screen the answers spread across the card
+ * instead of bunching at its right edge; on a narrow one each statement keeps
+ * its 5.5rem and the who column takes what is left. Below `lg` a row is a
+ * single column — the who line over one line per statement — because five
+ * answer columns do not fit beside the admin sidebar until then.
  */
-const ROW_GRID = "grid gap-y-1.5 lg:grid-cols-[minmax(0,1fr)_repeat(5,5.5rem)] lg:items-start lg:gap-x-3";
+const ROW_GRID =
+  "grid gap-y-1.5 lg:grid-cols-[minmax(0,3fr)_repeat(5,minmax(5.5rem,1fr))] lg:items-start lg:gap-x-3";
 
 type Show = "worthReading" | "all";
 
