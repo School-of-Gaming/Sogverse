@@ -41,6 +41,18 @@ export const DARK_THEME = {
   mutedFg: NEUTRALS.mutedForeground.hex,
 } as const;
 
+/**
+ * The one colour a printed document is set in: the brand's ink, on the white
+ * of the paper. It is the value the dark theme spends as its ground, put back
+ * to its first job.
+ *
+ * There is no grey beside it on purpose. The library's quiet ink is a grey
+ * tuned to read on the near-black ground and is too faint on white, and the
+ * library has no light palette to take a paper grey from — so a printed
+ * document builds its hierarchy from weight, size and rules, all in this ink.
+ */
+export const PRINT_INK = NEUTRALS.background.hex;
+
 // The hero gradient's two glows used to live here: act at 20% and world at 10%,
 // pre-composited over the dark ground because neither a satori render nor an
 // email client can be relied on for alpha. Flattening is what made them

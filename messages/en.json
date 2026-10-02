@@ -2604,7 +2604,32 @@
     "loadErrorWithReason": "Could not load the invoicing month — {reason}. Refresh to try again.",
     "searchPlaceholder": "Search by name or email…",
     "searchAriaLabel": "Search Gedus",
-    "searchNoMatches": "No Gedu this month matches “{query}”."
+    "searchNoMatches": "No Gedu this month matches “{query}”.",
+    "export": {
+      "statementTitle": "Work statement",
+      "to": "To: School of Gaming",
+      "figuresAsOf": "Figures as of {time}",
+      "monthInProgress": "Month in progress: some sessions are still upcoming, so these figures can change.",
+      "summary": "Summary",
+      "municipalityExclVat": "Municipality, excl. VAT",
+      "consumerExclVat": "Consumer, excl. VAT",
+      "totalExclVat": "Total, excl. VAT",
+      "clubs": "Clubs",
+      "amountsExclVat": "All amounts exclude VAT.",
+      "sessionsToInvoice": "Sessions to invoice",
+      "noSessionsToInvoice": "No sessions to invoice this month.",
+      "pageOf": "Page {page} of {pages}",
+      "columnDate": "Date",
+      "columnWeek": "Week",
+      "columnSegment": "Segment",
+      "columnGroup": "Group",
+      "columnLocation": "Location",
+      "columnStatus": "Status",
+      "columnOtherGedu": "Covering for / Substitute",
+      "columnFeeExclVat": "Fee excl. VAT",
+      "columnAmountExclVat": "Amount excl. VAT",
+      "statusAway": "Away"
+    }
   },
   "productType": {
     "consumer_club": "Club",

@@ -4,8 +4,8 @@ What each gedu invoices School of Gaming for, one calendar month at a time, on t
 over one document: the admin's page reads every gedu, and a gedu's own **Invoicing** page
 (on the header strip at desktop width, in their account menu below it) reads them alone — the database narrows that read to the
 caller's own seats, and the two pages run the same pure build over it. It **writes
-nothing, snapshots nothing and exports nothing**: every figure is recomputed from today's
-facts each time it is read. There is no approval workflow in v1 — no submitted, approved or
+nothing and snapshots nothing**: every figure is recomputed from today's facts each time it
+is read. There is no approval workflow in v1 — no submitted, approved or
 paid state, no frozen month, no Truster file; gedus copy the figures onto their own invoice.
 
 ## What pays
@@ -79,6 +79,20 @@ over.
 
 The fees exclude VAT, and the gedu page says to add it (the handbook's 25.5 %, written in
 the copy) when invoicing.
+
+## The gedu's exports
+
+A gedu can take their month away as a CSV and as a PDF, built from the same view model
+the page renders. **Neither is an invoice**: gedus invoice from tools of their own, so
+the PDF is a work statement attached to that invoice and the CSV is raw rows for a
+spreadsheet. **Neither computes VAT** — some gedus are not VAT-registered — so every money
+label says the figures exclude it. The PDF is a frozen copy of a page that freezes
+nothing, so it states when its figures were read (Helsinki time) and says so loudly while
+the month still has upcoming sessions; it lists only the dates that pay. The CSV lists
+every dated line of every kind, a non-paying one at zero so the amount column sums to the
+total, and it is written for a Finnish Excel opened by double-click (BOM, semicolons,
+decimal comma, CRLF) whatever the page's locale. An unset fee is a blank in the CSV and a
+dash in the PDF, never zero.
 
 ## Staffing is today's
 

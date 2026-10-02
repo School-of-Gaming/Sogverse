@@ -540,6 +540,17 @@ function person(row: {
   return { id: row.id, firstName: row.first_name, lastName: row.last_name };
 }
 
+/**
+ * A gedu as a reader names them — both names, as the rest of staff copy does.
+ * It lives with the build rather than with the page so the server-side exports
+ * name people exactly as the page does.
+ */
+export function fullName(
+  person: Pick<GeduInvoicePerson, "firstName" | "lastName">,
+): string {
+  return `${person.firstName} ${person.lastName}`;
+}
+
 /** A stable last tie-break that does not depend on the reader's locale. */
 function compareCodeUnits(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;

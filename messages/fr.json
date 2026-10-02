@@ -2604,7 +2604,32 @@
     "loadErrorWithReason": "Impossible de charger le mois de facturation – {reason}. Actualisez la page pour réessayer.",
     "searchPlaceholder": "Rechercher par nom ou e-mail…",
     "searchAriaLabel": "Rechercher des Gedus",
-    "searchNoMatches": "Aucun Gedu de ce mois ne correspond à « {query} »."
+    "searchNoMatches": "Aucun Gedu de ce mois ne correspond à « {query} ».",
+    "export": {
+      "statementTitle": "Relevé d’activité",
+      "to": "Destinataire : School of Gaming",
+      "figuresAsOf": "Chiffres au {time}",
+      "monthInProgress": "Mois en cours : certaines séances sont encore à venir, ces chiffres peuvent donc évoluer.",
+      "summary": "Récapitulatif",
+      "municipalityExclVat": "Municipal, HT",
+      "consumerExclVat": "Grand public, HT",
+      "totalExclVat": "Total HT",
+      "clubs": "Clubs",
+      "amountsExclVat": "Tous les montants sont hors TVA.",
+      "sessionsToInvoice": "Séances à facturer",
+      "noSessionsToInvoice": "Aucune séance à facturer ce mois-ci.",
+      "pageOf": "Page {page} sur {pages}",
+      "columnDate": "Date",
+      "columnWeek": "Semaine",
+      "columnSegment": "Segment",
+      "columnGroup": "Groupe",
+      "columnLocation": "Lieu",
+      "columnStatus": "Statut",
+      "columnOtherGedu": "En remplacement de / Remplaçant",
+      "columnFeeExclVat": "Rémunération HT",
+      "columnAmountExclVat": "Montant HT",
+      "statusAway": "Absence"
+    }
   },
   "productType": {
     "consumer_club": "Club",

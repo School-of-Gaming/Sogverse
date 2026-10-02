@@ -2604,7 +2604,32 @@
     "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen.",
     "searchPlaceholder": "Sök på namn eller e-post…",
     "searchAriaLabel": "Sök Geduer",
-    "searchNoMatches": "Ingen Gedu den här månaden matchar ”{query}”."
+    "searchNoMatches": "Ingen Gedu den här månaden matchar ”{query}”.",
+    "export": {
+      "statementTitle": "Arbetsspecifikation",
+      "to": "Till: School of Gaming",
+      "figuresAsOf": "Siffror per {time}",
+      "monthInProgress": "Månaden pågår: några tillfällen är ännu kommande, så siffrorna kan ändras.",
+      "summary": "Sammanfattning",
+      "municipalityExclVat": "Kommun, exkl. moms",
+      "consumerExclVat": "Konsument, exkl. moms",
+      "totalExclVat": "Totalt, exkl. moms",
+      "clubs": "Klubbar",
+      "amountsExclVat": "Alla belopp är exklusive moms.",
+      "sessionsToInvoice": "Tillfällen att fakturera",
+      "noSessionsToInvoice": "Inga tillfällen att fakturera den här månaden.",
+      "pageOf": "Sida {page} av {pages}",
+      "columnDate": "Datum",
+      "columnWeek": "Vecka",
+      "columnSegment": "Segment",
+      "columnGroup": "Grupp",
+      "columnLocation": "Plats",
+      "columnStatus": "Status",
+      "columnOtherGedu": "Vikarie för / vikarie",
+      "columnFeeExclVat": "Arvode exkl. moms",
+      "columnAmountExclVat": "Belopp exkl. moms",
+      "statusAway": "Frånvarande"
+    }
   },
   "productType": {
     "consumer_club": "Klubb",

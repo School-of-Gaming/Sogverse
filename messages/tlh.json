@@ -2644,7 +2644,32 @@
     "loadErrorWithReason": "DIlmeH jar lI’laHbe’ — {reason}. yIchu’qa’.",
     "searchPlaceholder": "pong qoj QIn yInej…",
     "searchAriaLabel": "Gedupu’ yInej",
-    "searchNoMatches": "pagh! jarvam ”{query}” rurbogh Gedu tu’lu’be’."
+    "searchNoMatches": "pagh! jarvam ”{query}” rurbogh Gedu tu’lu’be’.",
+    "export": {
+      "statementTitle": "Qu’ ghItlh",
+      "to": "School of Gaming-vaD",
+      "figuresAsOf": "{time} mI’mey",
+      "monthInProgress": "jar taH: SeSSIy’mey ghoSqu’, mI’mey choHlaH.",
+      "summary": "naQ",
+      "municipalityExclVat": "veng, VAT ghajbe’",
+      "consumerExclVat": "tlhIngan, VAT ghajbe’",
+      "totalExclVat": "Hoch, VAT ghajbe’",
+      "clubs": "ghommey",
+      "amountsExclVat": "Huch Hoch VAT ghajbe’.",
+      "sessionsToInvoice": "DIlmeH SeSSIy’mey",
+      "noSessionsToInvoice": "DIlmeH SeSSIy’ tu’lu’be’ jarvam.",
+      "pageOf": "nav {page} / {pages}",
+      "columnDate": "jaj",
+      "columnWeek": "Hogh",
+      "columnSegment": "Sep",
+      "columnGroup": "ghom",
+      "columnLocation": "Daq",
+      "columnStatus": "Dotlh",
+      "columnOtherGedu": "lIw / lIwwI’",
+      "columnFeeExclVat": "Huch, VAT ghajbe’",
+      "columnAmountExclVat": "mI’, VAT ghajbe’",
+      "statusAway": "Dachbe’"
+    }
   },
   "productType": {
     "consumer_club": "ghom’a’",

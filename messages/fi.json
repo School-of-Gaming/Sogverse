@@ -2604,7 +2604,32 @@
     "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen.",
     "searchPlaceholder": "Hae nimellä tai sähköpostilla…",
     "searchAriaLabel": "Hae Geduja",
-    "searchNoMatches": "Hakua ”{query}” vastaavaa Gedua ei löydy tältä kuulta."
+    "searchNoMatches": "Hakua ”{query}” vastaavaa Gedua ei löydy tältä kuulta.",
+    "export": {
+      "statementTitle": "Työerittely",
+      "to": "Vastaanottaja: School of Gaming",
+      "figuresAsOf": "Lukujen tilanne: {time}",
+      "monthInProgress": "Kuukausi on kesken: osa kerroista on vielä tulossa, joten luvut voivat muuttua.",
+      "summary": "Yhteenveto",
+      "municipalityExclVat": "Kuntalaskutus (ALV 0 %)",
+      "consumerExclVat": "Kuluttajalaskutus (ALV 0 %)",
+      "totalExclVat": "Yhteensä (ALV 0 %)",
+      "clubs": "Kerhot",
+      "amountsExclVat": "Kaikki summat ovat ilman arvonlisäveroa.",
+      "sessionsToInvoice": "Laskutettavat kerrat",
+      "noSessionsToInvoice": "Tältä kuukaudelta ei ole laskutettavia kertoja.",
+      "pageOf": "Sivu {page}/{pages}",
+      "columnDate": "Päivämäärä",
+      "columnWeek": "Viikko",
+      "columnSegment": "Laskutus",
+      "columnGroup": "Ryhmä",
+      "columnLocation": "Paikka",
+      "columnStatus": "Tila",
+      "columnOtherGedu": "Tuurattava / tuuraaja",
+      "columnFeeExclVat": "Kertapalkkio (ALV 0 %)",
+      "columnAmountExclVat": "Summa (ALV 0 %)",
+      "statusAway": "Poissa"
+    }
   },
   "productType": {
     "consumer_club": "Kerho",
