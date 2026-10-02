@@ -210,7 +210,7 @@ function StatementSpread({
               {t("positive", { share: formatShare(current.positiveShare, locale) })}
             </span>
             <span className="tabular-nums">
-              {t("low", { share: formatShare(current.lowShare, locale) })}
+              {t("negative", { share: formatShare(current.negativeShare, locale) })}
             </span>
             {platform !== null && (
               <span className="tabular-nums">

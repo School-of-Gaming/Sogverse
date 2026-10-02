@@ -1627,8 +1627,6 @@
         "byWeek": "Hogh jangmey QaQ",
         "byMonth": "jar jangmey QaQ",
         "platform": "Hoch",
-        "pointWeek": "Hogh laDlu’bogh",
-        "pointMonth": "jar laDlu’bogh",
         "since": "{date} vo'"
       },
       "back": {
@@ -1655,7 +1653,7 @@
         "heading": "ja'meH mu'tlhegh",
         "legend": "QaQ: HISlaH pagh HISlaHbej. QaQbe': ghobe' pagh ghobe'law'.",
         "positive": "{share} QaQ",
-        "low": "{share} QaQbe'",
+        "negative": "{share} QaQbe'",
         "saidPositive": "{answers} jangmey; {positive} {yes} pagh {definitely}"
       },
       "explore": {

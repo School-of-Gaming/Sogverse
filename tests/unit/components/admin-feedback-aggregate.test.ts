@@ -24,7 +24,7 @@ import {
 const SEPTEMBER = { from: "2026-09-01", to: "2026-09-30" };
 
 describe("buildFeedbackOverview", () => {
-  it("states positive (4–5) and low (1–2) shares of every answer", () => {
+  it("states positive (4–5) and negative (1–2) shares of every answer", () => {
     const overview = buildFeedbackOverview(
       dataset([
         response({ answers: { learned: 5, fun: 4, geduKind: 3 } }),
@@ -37,13 +37,13 @@ describe("buildFeedbackOverview", () => {
       n: 2,
       answers: 5,
       positive: 2,
-      low: 2,
+      negative: 2,
       distribution: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1 },
     });
     expect(overview.headline.positiveShare).toBeCloseTo(0.4);
-    expect(overview.headline.lowShare).toBeCloseTo(0.4);
+    expect(overview.headline.negativeShare).toBeCloseTo(0.4);
     const learned = overview.statements.find((line) => line.key === "learned");
-    expect(learned?.figure).toMatchObject({ n: 2, positive: 1, low: 1 });
+    expect(learned?.figure).toMatchObject({ n: 2, positive: 1, negative: 1 });
     expect(overview.statements.map((line) => line.key)).toEqual([
       "learned",
       "fun",
@@ -73,7 +73,7 @@ describe("buildFeedbackOverview", () => {
     expect(overview.headline).toMatchObject({
       n: 0,
       positiveShare: null,
-      lowShare: null,
+      negativeShare: null,
     });
   });
 
@@ -127,7 +127,7 @@ describe("buildFeedbackOverview", () => {
     expect(overview.dimensions.product).toEqual({ rows: 2, belowPlatform: 1 });
     expect(overview.dimensions.group).toEqual({ rows: 3, belowPlatform: 1 });
     expect(overview.dimensions.gedu).toEqual({ rows: 2, belowPlatform: 1 });
-    // The two Club B responses are low, "Too loud." is low with a note, "Great!" is a note.
+    // The two Club B responses are negative, "Too loud." is negative with a note, "Great!" is a note.
     expect(overview.responses).toEqual({ total: 24, worthReading: 4 });
   });
 });
@@ -399,7 +399,7 @@ describe("buildFeedbackDetail", () => {
       dataset(
         [
           response({ respondent: gamer, answers: { fun: 5 }, note: "newest", sessionDate: "2026-09-20" }),
-          response({ respondent: gamer, answers: { fun: 1 }, note: "low", sessionDate: "2026-09-02" }),
+          response({ respondent: gamer, answers: { fun: 1 }, note: "negative", sessionDate: "2026-09-02" }),
           response({ respondent: gamer, answers: { fun: 4 }, sessionDate: "2026-09-10" }),
         ],
         [session()],
@@ -413,7 +413,7 @@ describe("buildFeedbackDetail", () => {
     expect(detail.statements.length).toBeGreaterThan(0);
     expect(detail.statements.every((line) => line.againstPlatform === null)).toBe(true);
     expect(detail.responses.all.map((row) => row.sessionDate)).toEqual(["2026-09-20", "2026-09-10", "2026-09-02"]);
-    expect(detail.responses.worthReading.map((row) => row.note)).toEqual(["low", "newest"]);
+    expect(detail.responses.worthReading.map((row) => row.note)).toEqual(["negative", "newest"]);
     expect(detail.children).toEqual({ groups: null, gedus: null, gamers: null });
   });
 });
@@ -422,9 +422,9 @@ describe("buildFeedbackResponses", () => {
   const data = dataset([
     response({ answers: { fun: 5 }, note: "note, older", sessionDate: "2026-09-04" }),
     response({ answers: { fun: 2 }, note: "", sessionDate: "2026-09-05" }),
-    response({ answers: { fun: 5, learned: 2 }, note: "low + note, older", sessionDate: "2026-09-03" }),
+    response({ answers: { fun: 5, learned: 2 }, note: "negative + note, older", sessionDate: "2026-09-03" }),
     response({ answers: { fun: 5 }, note: "note, newer", sessionDate: "2026-09-21" }),
-    response({ answers: { fun: 1 }, note: "low + note, newer", sessionDate: "2026-09-18" }),
+    response({ answers: { fun: 1 }, note: "negative + note, newer", sessionDate: "2026-09-18" }),
     response({ answers: { learned: 1 }, note: "", sessionDate: "2026-09-19" }),
     response({ answers: { fun: 3 }, note: "  ", sessionDate: "2026-09-25" }),
     response({ answers: { retired: 1 }, note: "", sessionDate: "2026-09-10" }),
@@ -432,10 +432,10 @@ describe("buildFeedbackResponses", () => {
   const { responses } = buildFeedbackResponses(data, "gamer_online");
   const labelOf = (row: { note: string; sessionDate: string }) => row.note || row.sessionDate;
 
-  it("orders what is worth reading: low with a note, then low, then a note, newest first in each", () => {
+  it("orders what is worth reading: negative with a note, then negative, then a note, newest first in each", () => {
     expect(responses.worthReading.map(labelOf)).toEqual([
-      "low + note, newer",
-      "low + note, older",
+      "negative + note, newer",
+      "negative + note, older",
       "2026-09-19",
       "2026-09-05",
       "note, newer",

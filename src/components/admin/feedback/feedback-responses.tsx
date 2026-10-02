@@ -18,7 +18,7 @@ import type { FeedbackResponses } from "./aggregate-feedback";
 import { feedbackHref, type FeedbackOrigin } from "./feedback-place";
 import { SegmentedButtons } from "./feedback-shell";
 import { FEEDBACK_CATALOGUES } from "./feedback-sources";
-import { LOW_UP_TO } from "./feedback-tally";
+import { NEGATIVE_UP_TO } from "./feedback-tally";
 import { useFeedbackStatementLabels, useRatingWord } from "./use-feedback-labels";
 
 /** How many responses are revealed at a time as the reader scrolls. */
@@ -36,7 +36,7 @@ type Show = "worthReading" | "all";
 
 /**
  * **What gamers said** — the responses themselves, one card each, opening on
- * the ones worth reading: a low answer or a note, the reads most likely to need
+ * the ones worth reading: a negative answer or a note, the reads most likely to need
  * acting on, in the order the aggregation ranks them. The switch widens it to
  * every response, newest first.
  *
@@ -137,7 +137,7 @@ function ResponseCard({
 }
 
 /**
- * A statement, the answer drawn as the gamer's own bar, and its word. A low
+ * A statement, the answer drawn as the gamer's own bar, and its word. A negative
  * answer's word takes the warning ink beside its icon, so it stands out without
  * leaning on colour alone; a skipped statement is the empty bar and "Skipped".
  */
@@ -151,7 +151,7 @@ function AnswerRow({
   const t = useTranslations("admin.feedback");
   const ratingWord = useRatingWord();
   const word = rating === undefined ? t("skipped") : ratingWord(rating);
-  const low = rating !== undefined && rating <= LOW_UP_TO;
+  const negative = rating !== undefined && rating <= NEGATIVE_UP_TO;
 
   return (
     <li className="grid grid-cols-[minmax(0,1fr)_auto_7rem] items-center gap-x-3 text-sm">
@@ -161,14 +161,14 @@ function AnswerRow({
       <span
         aria-hidden
         className={
-          low
+          negative
             ? "inline-flex items-center gap-1 font-medium text-warning"
             : rating === undefined
               ? "text-muted-foreground"
               : undefined
         }
       >
-        {low && <TriangleAlert className="h-3.5 w-3.5 shrink-0" />}
+        {negative && <TriangleAlert className="h-3.5 w-3.5 shrink-0" />}
         {word}
       </span>
     </li>

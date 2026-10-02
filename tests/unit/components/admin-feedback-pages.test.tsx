@@ -98,21 +98,41 @@ describe("admin feedback pages", () => {
     expect(screen.queryByText(/previous|point/i)).toBeNull();
   });
 
-  it("draws the whole history over a labelled scale, read a point at a time from the keyboard", () => {
+  it("draws the whole history over a labelled scale, its readings also given as text", () => {
     wrap(<FeedbackOverviewPage read={read(dataset)} />);
     const chart = screen.getByRole("group", { name: "Positive answers by week" });
     for (const label of ["0%", "25%", "50%", "75%", "100%", "Jul 2026", "Aug", "Sep"]) {
       expect(within(chart).getByText(label)).toBeTruthy();
     }
     expect(screen.getByText("Since Jul 1, 2026")).toBeTruthy();
-    expect(screen.getAllByRole("slider")).toHaveLength(1);
+    expect(within(chart).getByText("Sep 28, 2026 – Sep 30, 2026 · No answers")).toBeTruthy();
+    expect(within(chart).getByText("Sep 7, 2026 – Sep 13, 2026 · 89% positive · 9 answers")).toBeTruthy();
+  });
 
-    const points = screen.getByRole("slider", { name: "Week being read" });
-    expect(points.getAttribute("aria-valuetext")).toBe("Sep 28, 2026 – Sep 30, 2026 · No answers");
-    fireEvent.keyDown(points, { key: "ArrowLeft" });
-    fireEvent.keyDown(points, { key: "ArrowLeft" });
-    fireEvent.keyDown(points, { key: "ArrowLeft" });
-    expect(points.getAttribute("aria-valuetext")).toBe("Sep 7, 2026 – Sep 13, 2026 · 89% positive · 9 answers");
+  it("names the month the history starts in, though it starts mid-month", () => {
+    wrap(
+      <FeedbackOverviewPage
+        read={{ ...read(dataset), history: { from: "2026-03-10", to: "2026-05-20" } }}
+      />,
+    );
+    const chart = screen.getByRole("group", { name: "Positive answers by week" });
+    for (const label of ["Mar 2026", "Apr", "May"]) {
+      expect(within(chart).getByText(label)).toBeTruthy();
+    }
+  });
+
+  it("names the platform's line in a legend on a group's page, and draws none for a gamer", () => {
+    const { unmount } = wrap(
+      <FeedbackDetailPage read={read(dataset)} origin={null} scope={{ kind: "group", id: "group-a1" }} />,
+    );
+    const chart = screen.getByRole("group", { name: "Positive answers by week" });
+    expect(within(chart).getByText("Platform")).toBeTruthy();
+    expect(within(chart).getByText("A1")).toBeTruthy();
+    unmount();
+
+    wrap(<FeedbackDetailPage read={read(dataset)} origin={null} scope={{ kind: "gamer", id: HELMI.id }} />);
+    const gamerChart = screen.getByRole("group", { name: "Positive answers by week" });
+    expect(within(gamerChart).queryByText("Platform")).toBeNull();
   });
 
   it("judges a group of one answer and says so for a group with none", () => {
@@ -174,7 +194,7 @@ describe("admin feedback pages", () => {
     const said = feedbackDataset([
       feedbackResponse({ respondent: { id: "g-note", name: "Noa" }, answers: allFive(5), note: "Loved it.", sessionDate: "2026-09-20" }),
       feedbackResponse({ respondent: { id: "g-quiet", name: "Quinn" }, answers: allFive(4), sessionDate: "2026-09-21" }),
-      feedbackResponse({ respondent: { id: "g-low", name: "Lumi" }, answers: { fun: 2 }, sessionDate: "2026-09-19" }),
+      feedbackResponse({ respondent: { id: "g-negative", name: "Lumi" }, answers: { fun: 2 }, sessionDate: "2026-09-19" }),
       feedbackResponse({
         respondent: { id: "g-both", name: "Bea" },
         answers: { ...allFive(4), groupListens: 1 },
@@ -189,7 +209,7 @@ describe("admin feedback pages", () => {
       return item;
     }
 
-    it("opens on what is worth reading, low with a note first, then low, then a note", () => {
+    it("opens on what is worth reading, negative with a note first, then negative, then a note", () => {
       wrap(
         <FeedbackResponsesPage read={read(said)} />,
       );
@@ -204,7 +224,7 @@ describe("admin feedback pages", () => {
       expect(screen.getByRole("link", { name: "Quinn" })).toBeTruthy();
     });
 
-    it("draws each answer as the gamer's bar with its word, a low one marked, and quotes the note", () => {
+    it("draws each answer as the gamer's bar with its word, a negative one marked, and quotes the note", () => {
       wrap(
         <FeedbackResponsesPage read={read(said)} />,
       );
@@ -213,9 +233,9 @@ describe("admin feedback pages", () => {
       expect(meters.map((meter) => meter.getAttribute("aria-label"))).toEqual(["Yes", "Yes", "Yes", "Yes", "No"]);
       // A meter fills from the first segment through the level: four of five for "Yes".
       expect(meters[0].querySelectorAll(".bg-act")).toHaveLength(4);
-      const low = within(card).getByText("No", { selector: "span[aria-hidden]" });
-      expect(low.className).toMatch(/text-warning/);
-      expect(low.querySelector("svg")).not.toBeNull();
+      const negative = within(card).getByText("No", { selector: "span[aria-hidden]" });
+      expect(negative.className).toMatch(/text-warning/);
+      expect(negative.querySelector("svg")).not.toBeNull();
       expect(within(card).getByText("Nobody listened.")).toBeTruthy();
 
       const skipped = within(cardOf("Lumi")).getAllByRole("img", { name: "Skipped" });

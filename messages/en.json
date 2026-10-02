@@ -1583,8 +1583,6 @@
         "byWeek": "Positive answers by week",
         "byMonth": "Positive answers by month",
         "platform": "Platform",
-        "pointWeek": "Week being read",
-        "pointMonth": "Month being read",
         "since": "Since {date}"
       },
       "back": {
@@ -1609,9 +1607,9 @@
       },
       "statements": {
         "heading": "By statement",
-        "legend": "Positive is Yes or Definitely; low is No or Not really.",
+        "legend": "Positive is Yes or Definitely; negative is No or Not really.",
         "positive": "{share} positive",
-        "low": "{share} low",
+        "negative": "{share} negative",
         "saidPositive": "{positive} of {answers} said {yes} or {definitely}"
       },
       "explore": {
@@ -1668,7 +1666,7 @@
       "responses": {
         "title": "What gamers said",
         "none": "No responses here.",
-        "noneWorthReading": "Nothing worth reading: no low answers and no notes.",
+        "noneWorthReading": "Nothing worth reading: no negative answers and no notes.",
         "noGedu": "No Gedu recorded",
         "filterLabel": "Which responses",
         "worthReading": "Worth reading ({count})",

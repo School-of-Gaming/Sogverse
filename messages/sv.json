@@ -1583,8 +1583,6 @@
         "byWeek": "Positiva svar per vecka",
         "byMonth": "Positiva svar per månad",
         "platform": "Plattformen",
-        "pointWeek": "Vecka som läses",
-        "pointMonth": "Månad som läses",
         "since": "Sedan {date}"
       },
       "back": {
@@ -1609,9 +1607,9 @@
       },
       "statements": {
         "heading": "Per påstående",
-        "legend": "Positivt är Ja eller Absolut; lågt är Nej eller Inte riktigt.",
+        "legend": "Positivt är Ja eller Absolut; negativt är Nej eller Inte riktigt.",
         "positive": "{share} positiva",
-        "low": "{share} låga",
+        "negative": "{share} negativa",
         "saidPositive": "{positive} av {answers} svarade {yes} eller {definitely}"
       },
       "explore": {
@@ -1668,7 +1666,7 @@
       "responses": {
         "title": "Vad gamerna sa",
         "none": "Inga svar här.",
-        "noneWorthReading": "Inget värt att läsa: inga låga svar och inga meddelanden.",
+        "noneWorthReading": "Inget värt att läsa: inga negativa svar och inga meddelanden.",
         "noGedu": "Ingen Gedu registrerad",
         "filterLabel": "Vilka svar",
         "worthReading": "Värda att läsa ({count})",

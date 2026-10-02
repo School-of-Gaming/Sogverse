@@ -1583,8 +1583,6 @@
         "byWeek": "Réponses positives par semaine",
         "byMonth": "Réponses positives par mois",
         "platform": "Plateforme",
-        "pointWeek": "Semaine consultée",
-        "pointMonth": "Mois consulté",
         "since": "Depuis le {date}"
       },
       "back": {
@@ -1609,9 +1607,9 @@
       },
       "statements": {
         "heading": "Par affirmation",
-        "legend": "Positive : Oui ou Tout à fait ; basse : Non ou Pas vraiment.",
+        "legend": "Positive : Oui ou Tout à fait ; négative : Non ou Pas vraiment.",
         "positive": "{share} positives",
-        "low": "{share} basses",
+        "negative": "{share} négatives",
         "saidPositive": "{positive} sur {answers} ont répondu {yes} ou {definitely}"
       },
       "explore": {
@@ -1668,7 +1666,7 @@
       "responses": {
         "title": "Ce que les gamers ont dit",
         "none": "Aucune réponse ici.",
-        "noneWorthReading": "Rien à lire en priorité : aucune réponse basse et aucun message.",
+        "noneWorthReading": "Rien à lire en priorité : aucune réponse négative et aucun message.",
         "noGedu": "Aucun Gedu enregistré",
         "filterLabel": "Quelles réponses",
         "worthReading": "À lire en priorité ({count})",

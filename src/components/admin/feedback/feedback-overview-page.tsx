@@ -97,7 +97,7 @@ export function FeedbackHero({
           </p>
           <p className="text-xs text-muted-foreground">{t("definition")}</p>
         </div>
-        <div className="space-y-1">
+        <div className="space-y-1 sm:text-right">
           {comparison}
           <ParticipationLine participation={participation} />
         </div>
@@ -151,7 +151,7 @@ function StatementLines({
                 </p>
               )}
               <p className="text-xs tabular-nums text-muted-foreground sm:text-right">
-                {figure.lowShare === null ? null : t("low", { share: formatShare(figure.lowShare, locale) })}
+                {figure.negativeShare === null ? null : t("negative", { share: formatShare(figure.negativeShare, locale) })}
               </p>
             </li>
           ))}

@@ -16,7 +16,7 @@ import {
   bucketUnitFor,
   emptyTally,
   stepBuckets,
-  hasLowAnswer,
+  hasNegativeAnswer,
   hasNote,
   isBelow,
   knownAnswers,
@@ -135,10 +135,10 @@ export interface FeedbackDimensionSummary {
 /**
  * The responses as the "What gamers said" list reads them.
  *
- * **Worth reading** is a response with a low answer (No or Not really) on any
+ * **Worth reading** is a response with a negative answer (No or Not really) on any
  * statement, or a note: the two ways a gamer tells an admin something needs
- * looking at. It is ordered by how much it says — a low answer with a note
- * explaining it, then a low answer alone, then a note alone — and newest first
+ * looking at. It is ordered by how much it says — a negative answer with a note
+ * explaining it, then a negative answer alone, then a note alone — and newest first
  * within each, so the top of the list is the read most likely to need acting on.
  */
 export interface FeedbackResponses {
@@ -676,15 +676,15 @@ function newestFirst(a: AdminFeedbackResponse, b: AdminFeedbackResponse): number
 }
 
 /** Why a response is worth reading, most telling first: the list is grouped in this order. */
-const READING_ORDER = ["lowAndNote", "low", "note"] as const;
+const READING_ORDER = ["negativeAndNote", "negative", "note"] as const;
 
 type ReadingReason = (typeof READING_ORDER)[number];
 
 /** Why a response is worth reading, or `null` when it is not. */
 function readingReasonOf(response: AdminFeedbackResponse): ReadingReason | null {
-  const low = hasLowAnswer(response);
+  const negative = hasNegativeAnswer(response);
   const note = hasNote(response);
-  if (low) return note ? "lowAndNote" : "low";
+  if (negative) return note ? "negativeAndNote" : "negative";
   return note ? "note" : null;
 }
 

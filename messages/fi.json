@@ -1583,8 +1583,6 @@
         "byWeek": "Myönteiset vastaukset viikoittain",
         "byMonth": "Myönteiset vastaukset kuukausittain",
         "platform": "Koko alusta",
-        "pointWeek": "Luettava viikko",
-        "pointMonth": "Luettava kuukausi",
         "since": "{date} alkaen"
       },
       "back": {
@@ -1609,9 +1607,9 @@
       },
       "statements": {
         "heading": "Väitteittäin",
-        "legend": "Myönteinen on Kyllä tai Ehdottomasti, heikko on Ei tai Vähän.",
+        "legend": "Myönteinen on Kyllä tai Ehdottomasti, kielteinen on Ei tai Vähän.",
         "positive": "{share} myönteisiä",
-        "low": "{share} heikkoja",
+        "negative": "{share} kielteisiä",
         "saidPositive": "{positive}/{answers} vastasi {yes} tai {definitely}"
       },
       "explore": {
@@ -1668,7 +1666,7 @@
       "responses": {
         "title": "Mitä pelaajat sanoivat",
         "none": "Täällä ei ole vastauksia.",
-        "noneWorthReading": "Ei mitään poimittavaa: ei heikkoja vastauksia eikä viestejä.",
+        "noneWorthReading": "Ei mitään poimittavaa: ei kielteisiä vastauksia eikä viestejä.",
         "noGedu": "Gedua ei ole kirjattu",
         "filterLabel": "Näytettävät vastaukset",
         "worthReading": "Lukemisen arvoiset ({count})",

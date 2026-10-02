@@ -30,8 +30,8 @@ import { FEEDBACK_CATALOGUES } from "./feedback-sources";
  */
 export const POSITIVE_FROM: SessionFeedbackRating = 4;
 
-/** The highest answer that counts as low: "No" and "Not really". */
-export const LOW_UP_TO: SessionFeedbackRating = 2;
+/** The highest answer that counts as negative: "No" and "Not really". */
+export const NEGATIVE_UP_TO: SessionFeedbackRating = 2;
 
 /** One inclusive span of session days, `YYYY-MM-DD`. */
 export interface FeedbackPeriod {
@@ -61,8 +61,8 @@ export function knownAnswers(response: AdminFeedbackResponse): KnownAnswer[] {
 }
 
 /** Whether any statement of the response was answered "No" or "Not really". */
-export function hasLowAnswer(response: AdminFeedbackResponse): boolean {
-  return knownAnswers(response).some(({ rating }) => rating <= LOW_UP_TO);
+export function hasNegativeAnswer(response: AdminFeedbackResponse): boolean {
+  return knownAnswers(response).some(({ rating }) => rating <= NEGATIVE_UP_TO);
 }
 
 /** Whether the response carries a note. */
@@ -101,11 +101,11 @@ export interface ShareFigure {
   /** Answers at 4–5. */
   positive: number;
   /** Answers at 1–2. */
-  low: number;
+  negative: number;
   /** `positive / answers`, `null` when nothing was answered. */
   positiveShare: number | null;
-  /** `low / answers`, `null` when nothing was answered. */
-  lowShare: number | null;
+  /** `negative / answers`, `null` when nothing was answered. */
+  negativeShare: number | null;
   /** How the answers fell across the five levels. */
   distribution: Record<SessionFeedbackRating, number>;
 }
@@ -113,14 +113,14 @@ export interface ShareFigure {
 export function shareFigure(tally: Tally): ShareFigure {
   const { counts, answers } = tally;
   const positive = counts[4] + counts[5];
-  const low = counts[1] + counts[2];
+  const negative = counts[1] + counts[2];
   return {
     n: tally.responses,
     answers,
     positive,
-    low,
+    negative,
     positiveShare: answers === 0 ? null : positive / answers,
-    lowShare: answers === 0 ? null : low / answers,
+    negativeShare: answers === 0 ? null : negative / answers,
     distribution: { ...counts },
   };
 }
