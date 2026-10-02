@@ -2634,7 +2634,6 @@
       "columnFeeExclVat": "Fee excl. VAT",
       "columnAmountExclVat": "Amount excl. VAT",
       "statusAway": "Away",
-      "coveringFor": "Covering for {name}",
       "notRecordedDetail": "No report, note or attendance yet",
       "downloadCsv": "Download CSV",
       "downloadPdf": "Download PDF"

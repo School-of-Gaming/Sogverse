@@ -99,8 +99,8 @@ whatever the page's locale. An unset fee is a blank in the CSV and a dash in the
 the fee and on every amount it would multiply into, never zero, and neither file says more
 about it than the page does.
 
-The PDF is School of Gaming's paper: the full mark (an inlined copy of the brand asset,
-since react-pdf cannot import an `.svg`), the brand ink on white, and act as its one
+The PDF is School of Gaming's paper: the full mark (drawn from the geometry module the OG
+cards share in `src/components/brand/`, since react-pdf cannot import an `.svg`), the brand ink on white, and act as its one
 accent; its print colours come from `src/lib/constants/colors.ts`, derived from `@sog/ui`
 like every renderer's that cannot read CSS.
 

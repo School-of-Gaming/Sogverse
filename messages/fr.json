@@ -2634,7 +2634,6 @@
       "columnFeeExclVat": "Rémunération HT",
       "columnAmountExclVat": "Montant HT",
       "statusAway": "Absence",
-      "coveringFor": "En remplacement de {name}",
       "notRecordedDetail": "Ni compte rendu, ni note, ni présences pour l’instant",
       "downloadCsv": "Télécharger le CSV",
       "downloadPdf": "Télécharger le PDF"

@@ -194,10 +194,19 @@ export function geduInvoicePdfContent({
         : t("absentSubstituted", { name: fullName(line.substitute) })
       : t(STATUS_KEY[line.kind]);
 
+  // The page's own wording, which runs on after the line's outcome there; here
+  // it opens a line of its own, so its first letter is capitalised.
+  const sentenceStart = (text: string) =>
+    text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
+
   const sessionDetails = (line: GeduInvoiceLine) => [
     ...(line.coveringFor === null
       ? []
-      : [t("export.coveringFor", { name: fullName(line.coveringFor) })]),
+      : [
+          sentenceStart(
+            t("substitutingFor", { name: fullName(line.coveringFor) }),
+          ),
+        ]),
     ...(line.kind === "unrecorded" ? [t("export.notRecordedDetail")] : []),
   ];
 

@@ -2620,7 +2620,7 @@
       "totalExclVat": "Yhteensä (ALV 0 %)",
       "clubs": "Kerhot",
       "amountsExclVat": "Kaikki summat ovat ilman arvonlisäveroa.",
-      "sessions": "Kerrat päivittäin",
+      "sessions": "Kertojen erittely",
       "noSessions": "Tälle kuukaudelle ei ole kertoja.",
       "pageOf": "Sivu {page}/{pages}",
       "footer": "School of Gaming · {name} · {month}",
@@ -2634,7 +2634,6 @@
       "columnFeeExclVat": "Kertapalkkio (ALV 0 %)",
       "columnAmountExclVat": "Summa (ALV 0 %)",
       "statusAway": "Poissa",
-      "coveringFor": "Tuuraus, poissa {name}",
       "notRecordedDetail": "Ei vielä raporttia, muistiinpanoa eikä läsnäoloja",
       "downloadCsv": "Lataa CSV",
       "downloadPdf": "Lataa PDF"

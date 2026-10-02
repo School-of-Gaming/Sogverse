@@ -2634,7 +2634,6 @@
       "columnFeeExclVat": "Arvode exkl. moms",
       "columnAmountExclVat": "Belopp exkl. moms",
       "statusAway": "Frånvarande",
-      "coveringFor": "Vikariat för {name}",
       "notRecordedDetail": "Ingen rapport, anteckning eller närvaro ännu",
       "downloadCsv": "Ladda ner CSV",
       "downloadPdf": "Ladda ner PDF"

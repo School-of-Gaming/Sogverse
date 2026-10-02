@@ -416,7 +416,7 @@ describe("geduInvoicePdfContent", () => {
       .flatMap((club) => club.sessions)
       .find((session) => session.date === "Mon 5/11/2026");
     expect(cover?.status).toBe("Recorded");
-    expect(cover?.details).toEqual(["Covering for Aino Kallio"]);
+    expect(cover?.details).toEqual(["Substituting for Aino Kallio"]);
 
     const unpriced = clubs.find((club) =>
       club.heading.startsWith("Rakentajakerho Mäntyranta"),
