@@ -8,9 +8,11 @@ import { articlePageBodyProps } from "@/components/library/article/article-page-
 import { libraryArticleJsonLd } from "@/components/library/article/article-json-ld";
 import {
   libraryArticleCanonicalPath,
+  libraryArticleLocalePaths,
   libraryArticleMetadata,
 } from "@/components/library/article/article-metadata";
 import { JsonLd } from "@/components/seo/json-ld";
+import { LocaleSwitchPaths } from "@/i18n/locale-switch-paths";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveIdOrSlug } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
@@ -89,6 +91,9 @@ export default async function LibraryArticlePage({ params }: PageProps) {
 
   return (
     <>
+      {/* A slug resolves only in the locale it was derived in, so the
+          picker is told this article's address in every locale. */}
+      <LocaleSwitchPaths paths={libraryArticleLocalePaths(published, article)} />
       <JsonLd
         data={libraryArticleJsonLd({
           siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "",

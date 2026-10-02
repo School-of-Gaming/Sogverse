@@ -75,7 +75,9 @@ links stop resolving. Two titles deriving one slug in a locale leave it to the a
 that went live first; the newer is reachable by its id. Matching in app code reads every
 live title of the locale, which is fine at the Library's size; if it reaches the
 thousands, move the lookup into the database. The address helpers are in
-`src/components/library/`, and every link to an article goes through them.
+`src/components/library/`, and every link to an article goes through them. The article
+page registers its address in every locale with the locale picker, so a language switch
+lands on the same article rather than on its slug under a locale that does not derive it.
 
 **The URL's locale is the site's, exactly as on a product page**: the chrome is the page's
 locale and the text is the version the reader fallback picks there, and every link to an
