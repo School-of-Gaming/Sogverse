@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   MCP_TEST_ORIGIN as ORIGIN,
@@ -58,6 +59,12 @@ vi.mock("next-intl/server", async () => {
 
 const { POST } = await import("@/app/api/mcp/route");
 
+/** A plain 1600 x 900 JPEG, as a Library cover is stored. */
+const coverJpeg = () =>
+  sharp({ create: { width: 1600, height: 900, channels: 3, background: { r: 51, g: 102, b: 153 } } })
+    .jpeg()
+    .toBuffer();
+
 const SUPABASE_URL = "https://project.supabase.co";
 const ID = "3f1c2a7e-8d4b-4e59-9a61-0b7c5d2e8f13";
 const CLIENT_ID = "5b0a3f0e-1c55-4c43-8d2e-6a7f3f0f2a90";
@@ -79,7 +86,7 @@ const ARTICLE: AdminLibraryArticle = {
     ],
     category: "screen_time",
     coverImageId: "9d39dd23-2b00-43f4-a0f5-af63bd58ad67",
-    coverPath: "/covers/clock.jpg",
+    coverPath: "clock.jpg",
     coverLabel: "Clock",
     createdAt: "2026-09-01T10:00:00Z",
     updatedAt: "2026-09-18T12:40:00Z",
@@ -150,10 +157,16 @@ beforeEach(() => {
   for (const method of Object.values(library)) method.mockReset();
   library.getAdminArticle.mockResolvedValue(ARTICLE);
   library.listPublishedArticles.mockResolvedValue(PUBLISHED);
+  // The cover's original, as the public bucket answers it.
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => new Response(new Uint8Array(await coverJpeg()))),
+  );
 });
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
 });
 
 describe("reading", () => {
@@ -168,6 +181,7 @@ describe("reading", () => {
           articleId: ID,
           titles: [{ locale: "en", title: "Screen time is not the enemy" }],
           category: "screen_time",
+          coverUrl: null,
           live: true,
           hasUnpublishedChanges: true,
           lastSaved: {
@@ -188,7 +202,11 @@ describe("reading", () => {
       articleId: ID,
       category: "screen_time",
       categoryLabel: "Screen time & family life",
-      cover: { catalogueId: ARTICLE.draft.coverImageId, label: "Clock" },
+      cover: {
+        catalogueId: ARTICLE.draft.coverImageId,
+        label: "Clock",
+        publicUrl: `${SUPABASE_URL}/storage/v1/object/public/library-covers/clock.jpg`,
+      },
       lastSaved: { by: "Kyle Hutchinson", via: { name: "Claude" } },
       hasUnpublishedChanges: true,
       publish: {

@@ -38,7 +38,14 @@ export async function readRpc(response: Response): Promise<Record<string, unknow
 const toolResult = z.object({
   isError: z.boolean().optional(),
   structuredContent: z.record(z.unknown()).optional(),
-  content: z.array(z.object({ type: z.string(), text: z.string().optional() })),
+  content: z.array(
+    z.object({
+      type: z.string(),
+      text: z.string().optional(),
+      data: z.string().optional(),
+      mimeType: z.string().optional(),
+    }),
+  ),
 });
 
 export type McpToolResult = z.infer<typeof toolResult>;

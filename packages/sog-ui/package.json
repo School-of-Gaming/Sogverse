@@ -6,6 +6,8 @@
   "description": "School of Gaming's UI language as a package, with the demo app that documents it.",
   "exports": {
     ".": "./src/index.ts",
+    "./tokens/brand": "./src/tokens/brand.ts",
+    "./tokens/typography": "./src/tokens/typography.ts",
     "./theme.css": "./src/tokens/theme.css"
   },
   "scripts": {

@@ -18,7 +18,10 @@ import {
   isPurposeSize,
   resolveCatalogueImageExtension,
 } from "./catalogue-images.contracts";
-import type { CatalogueImageExtension } from "./catalogue-images.contracts";
+import type {
+  CatalogueImageErrorCode,
+  CatalogueImageExtension,
+} from "./catalogue-images.contracts";
 
 /**
  * The find-or-create half of the catalogue, shared by the upload route and the
@@ -232,18 +235,11 @@ export async function readImageUpload(
     return NextResponse.json({ error: "Missing 'file' field" }, { status: 400 });
   }
 
-  if (file.size > CATALOGUE_IMAGE_MAX_BYTES) {
-    return NextResponse.json(
-      {
-        error: "Image must be 4 MB or smaller",
-        code: CATALOGUE_IMAGE_ERROR_CODES.tooLarge,
-      },
-      { status: 413 },
-    );
-  }
+  const overCap = sizeCapRefusal(file.size);
+  if (overCap) return refusalResponse(overCap);
 
   const resolved = resolveImageExtension(file.name);
-  if (!resolved) return unsupportedType();
+  if (!resolved) return refusalResponse(UNSUPPORTED_TYPE);
 
   const purposeField = formData.get("purpose");
   let purpose: CatalogueImagePurpose | null = null;
@@ -270,14 +266,56 @@ export async function readImageUpload(
   };
 }
 
-function unsupportedType(): NextResponse {
-  return NextResponse.json(
-    {
-      error: "Unsupported file type. Use a JPEG.",
-      code: CATALOGUE_IMAGE_ERROR_CODES.unsupportedType,
-    },
-    { status: 415 },
-  );
+/**
+ * An upload refused for a reason the admin can act on: the HTTP status the
+ * routes answer with, the sentence, and the stable code the catalogue dialog
+ * translates. Plain data rather than a response, so a writer that is not a
+ * route — the MCP uploader tool — refuses with the same sentence.
+ */
+export interface UploadRefusal {
+  status: 413 | 415 | 422;
+  error: string;
+  code: CatalogueImageErrorCode;
+}
+
+/** A refusal as the routes answer it. */
+export function refusalResponse({ status, error, code }: UploadRefusal): NextResponse {
+  return NextResponse.json({ error, code }, { status });
+}
+
+const UNSUPPORTED_TYPE: UploadRefusal = {
+  status: 415,
+  error: "Unsupported file type. Use a JPEG.",
+  code: CATALOGUE_IMAGE_ERROR_CODES.unsupportedType,
+};
+
+/** The 4 MB cap, or null when `bytes` is within it. */
+export function sizeCapRefusal(bytes: number): UploadRefusal | null {
+  if (bytes <= CATALOGUE_IMAGE_MAX_BYTES) return null;
+  return {
+    status: 413,
+    error: "Image must be 4 MB or smaller",
+    code: CATALOGUE_IMAGE_ERROR_CODES.tooLarge,
+  };
+}
+
+/**
+ * Every check a new picture passes before it is stored, in the order the
+ * upload route makes them: the size cap, a JPEG name, and a JPEG exactly the
+ * purpose's size measured from the bytes. Answers the stored extension and
+ * content type, or the first refusal.
+ */
+export async function vetCatalogueUpload(
+  file: File,
+  purpose: CatalogueImagePurpose,
+): Promise<UploadRefusal | CatalogueImageExtension> {
+  const overCap = sizeCapRefusal(file.size);
+  if (overCap) return overCap;
+  const resolved = resolveImageExtension(file.name);
+  if (!resolved) return UNSUPPORTED_TYPE;
+  const wrongSize = await purposeSizeRefusal(file, purpose);
+  if (wrongSize) return wrongSize;
+  return resolved;
 }
 
 /**
@@ -296,42 +334,48 @@ const PURPOSE_NAME: Record<CatalogueImagePurpose, string> = {
 /**
  * Refuse an upload that is not a JPEG exactly the size its purpose is stored
  * at, or answer null when it is. The size is measured from the bytes, never
- * taken from the request: the routes are the only writers to the bucket, so
- * this is the one place the guarantee can be kept, and the database cannot
- * keep it because it never sees the bytes.
+ * taken from the request: the routes and the MCP uploader are the only
+ * writers to the bucket, so this is the one place the guarantee can be kept,
+ * and the database cannot keep it because it never sees the bytes.
  *
  * The size is the one the picture is *shown* at, so an orientation tag that
  * turns it a quarter swaps the two. The crop dialog writes no tag at all.
  */
-export async function refuseUnlessPurposeSize(
+export async function purposeSizeRefusal(
   file: File,
   purpose: CatalogueImagePurpose,
-): Promise<NextResponse | null> {
+): Promise<UploadRefusal | null> {
   let width: number;
   let height: number;
   try {
     const metadata = await sharp(Buffer.from(await file.arrayBuffer()), {
       limitInputPixels: MAX_INPUT_PIXELS,
     }).metadata();
-    if (metadata.format !== "jpeg") return unsupportedType();
+    if (metadata.format !== "jpeg") return UNSUPPORTED_TYPE;
     const quarterTurn = (metadata.orientation ?? 1) >= 5;
     width = quarterTurn ? metadata.height : metadata.width;
     height = quarterTurn ? metadata.width : metadata.height;
   } catch {
     // Nothing sharp can read a header from: whatever its name says, it is not
     // a JPEG.
-    return unsupportedType();
+    return UNSUPPORTED_TYPE;
   }
 
   if (isPurposeSize(purpose, width, height)) return null;
 
   const size = CATALOGUE_IMAGE_PURPOSES[purpose];
-  return NextResponse.json(
-    {
-      error: `A ${PURPOSE_NAME[purpose]} must be exactly ${size.width} × ${size.height} pixels; this one is ${width} × ${height}`,
-      code: CATALOGUE_IMAGE_ERROR_CODES.wrongSize,
-    },
-    { status: 422 },
-  );
+  return {
+    status: 422,
+    error: `A ${PURPOSE_NAME[purpose]} must be exactly ${size.width} × ${size.height} pixels; this one is ${width} × ${height}`,
+    code: CATALOGUE_IMAGE_ERROR_CODES.wrongSize,
+  };
 }
 
+/** `purposeSizeRefusal` as the routes answer it. */
+export async function refuseUnlessPurposeSize(
+  file: File,
+  purpose: CatalogueImagePurpose,
+): Promise<NextResponse | null> {
+  const refused = await purposeSizeRefusal(file, purpose);
+  return refused && refusalResponse(refused);
+}

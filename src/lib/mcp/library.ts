@@ -1,8 +1,4 @@
-import type {
-  CallToolResult,
-  McpServer,
-  ServerContext,
-} from "@modelcontextprotocol/server";
+import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
 import { getTranslations } from "next-intl/server";
 import { z } from "zod-v4";
 import { articleAddress, articleSlug } from "@/components/library/article-address";
@@ -24,17 +20,28 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { readMcpCaller } from "@/lib/mcp/auth";
-import { createBearerClient } from "@/lib/supabase/bearer";
-import { getOrigin } from "@/lib/url";
+import {
+  COVER_PREVIEW,
+  COVER_THUMBNAIL,
+  MAX_IMAGES_PER_RESULT,
+  answerWithCovers,
+  coverUrl,
+} from "@/lib/mcp/cover-images";
+import {
+  NOT_FOUND,
+  OVERWRITES,
+  READ_ONLY,
+  answer,
+  articleId,
+  asAdmin,
+  refusal,
+} from "@/lib/mcp/library-call";
 import {
   isCompleteVersion,
-  libraryWriteFailure,
   missingInVersion,
   type AdminLibraryArticle,
   type PublishedLibraryArticleSummary,
 } from "@/services/library";
-import { LibraryService } from "@/services/library/library.service";
 import { Constants } from "@/types";
 
 /*
@@ -46,8 +53,9 @@ import { Constants } from "@/types";
  * one language version or the category alone — never the editor's whole save
  * (`src/services/library/CLAUDE.md`).
  *
- * Covers are not here yet: a tool reports the cover by its catalogue entry and
- * cannot set one.
+ * The cover tools are in `library-covers.ts` and the uploader in
+ * `cover-uploader.ts`; this module shows a cover as a picture where it reads
+ * one (`cover-images.ts`).
  */
 
 // ---------------------------------------------------------------------------
@@ -73,15 +81,11 @@ const READERS =
 const NO_DELETE =
   "There is no delete: unpublishing takes an article down and keeps it to work on.";
 
-const BODY = `The body is markdown limited to ${describeMarkdownSubset("article")}. Anything else — images, code, block quotes, rules, deeper headings, raw HTML — is refused with the construct named, and nothing is saved. Tables, strikethrough and task lists are not markdown here: they show as their literal characters.`;
+const BODY = `The body is markdown limited to ${describeMarkdownSubset("article")}. Anything else — images, code, block quotes, rules, deeper headings, tables, strikethrough, raw HTML — is refused with the construct named, and nothing is saved. Task lists are not markdown here: a "- [ ]" item is an ordinary bullet showing its brackets.`;
 
 // ---------------------------------------------------------------------------
 // Inputs
 // ---------------------------------------------------------------------------
-
-const articleId = z
-  .guid()
-  .describe("The article's id, as list_library_articles returns it.");
 
 const locale = z
   .enum(SUPPORTED_LOCALES)
@@ -103,84 +107,6 @@ const summary = z
   .describe("A sentence or two shown on the article's card and under its title.");
 
 const body = z.string().trim().describe(`The article itself. ${BODY}`);
-
-// ---------------------------------------------------------------------------
-// Tool answers
-// ---------------------------------------------------------------------------
-
-/** A tool's answer: the structured value, and the same as text for clients that read only that. */
-function answer<T extends Record<string, unknown>>(value: T): CallToolResult {
-  return {
-    structuredContent: value,
-    content: [{ type: "text", text: JSON.stringify(value, null, 2) }],
-  };
-}
-
-/** A refusal the AI app reads and acts on: a tool error, never a protocol error. */
-function refusal(text: string): CallToolResult {
-  return { isError: true, content: [{ type: "text", text }] };
-}
-
-const NOT_FOUND = "No Library article has that id.";
-
-/**
- * A failed call as the AI app reads it. A database refusal carries the
- * sentence the database wrote for an admin, quoted as is; anything else is a
- * fault on our side, logged, and answered without its developer-facing detail.
- */
-function failure(error: unknown): CallToolResult {
-  const read = libraryWriteFailure(error);
-  if (read.kind === "reason") return refusal(read.reason);
-  console.error("[mcp] library tool failed:", error);
-  return refusal(
-    "Sogverse could not complete this. Read the article again to see what was saved before retrying.",
-  );
-}
-
-/** What every Library tool runs with: the admin's service, and the origin links are built on. */
-interface LibraryCall {
-  service: LibraryService;
-  origin: string;
-}
-
-/**
- * Run a tool body as the admin the gate let through. The client is bound to
- * the admin's own token, never the service role.
- */
-async function asAdmin(
-  ctx: ServerContext,
-  run: (call: LibraryCall) => Promise<CallToolResult>,
-): Promise<CallToolResult> {
-  const authInfo = ctx.http?.authInfo;
-  const request = ctx.http?.req;
-  if (!authInfo || !readMcpCaller(authInfo) || !request) {
-    // Unreachable behind the gate, which lets no request through without an
-    // admin's auth info; said rather than assumed.
-    return refusal("No verified caller on this request.");
-  }
-  try {
-    return await run({
-      service: new LibraryService(createBearerClient(authInfo.token)),
-      origin: getOrigin(request),
-    });
-  } catch (error) {
-    return failure(error);
-  }
-}
-
-const READ_ONLY = {
-  readOnlyHint: true,
-  destructiveHint: false,
-  idempotentHint: true,
-  openWorldHint: false,
-} as const;
-
-const OVERWRITES = {
-  readOnlyHint: false,
-  destructiveHint: true,
-  idempotentHint: true,
-  openWorldHint: false,
-} as const;
 
 // ---------------------------------------------------------------------------
 // Reading an article
@@ -258,7 +184,11 @@ async function articleView(
     cover:
       draft.coverImageId === null
         ? null
-        : { catalogueId: draft.coverImageId, label: draft.coverLabel },
+        : {
+            catalogueId: draft.coverImageId,
+            label: draft.coverLabel,
+            publicUrl: draft.coverPath === null ? null : coverUrl(draft.coverPath),
+          },
     createdAt: draft.createdAt,
     lastSaved: lastSaved(draft),
     versions: draft.versions.map((version) => ({
@@ -281,6 +211,8 @@ async function articleView(
             category: publication.category,
             firstPublishedAt: publication.firstPublishedAt,
             publishedAt: publication.publishedAt,
+            coverUrl:
+              publication.coverPath === null ? null : coverUrl(publication.coverPath),
             versions: publication.versions.map((version) => ({
               locale: version.locale,
               title: version.title,
@@ -315,13 +247,19 @@ export function registerLibraryTools(server: McpServer): void {
     "list_library_articles",
     {
       title: "List Library articles",
-      description: `Every School of Gaming Library article — the parent-facing articles on the public /library pages — most recently saved first: its id, each language's title, its category, whether it is live, whether it has saved changes readers do not see yet, and when, by whom and through which AI app it was last saved. Bodies are not included; get_library_article reads one whole. ${VERSIONS}`,
+      description: `Every School of Gaming Library article — the parent-facing articles on the public /library pages — most recently saved first: its id, each language's title, its category, its cover's public URL, whether it is live, whether it has saved changes readers do not see yet, and when, by whom and through which AI app it was last saved. Bodies are not included; get_library_article reads one whole. With includeCovers, the covers come as small pictures too, for the first ${MAX_IMAGES_PER_RESULT} articles that have one. ${VERSIONS}`,
+      inputSchema: z.object({
+        includeCovers: z
+          .boolean()
+          .optional()
+          .describe("Also show each article's cover as a small picture. Off by default."),
+      }),
       annotations: READ_ONLY,
     },
-    (ctx) =>
+    ({ includeCovers }, ctx) =>
       asAdmin(ctx, async ({ service }) => {
         const articles = await service.listAdminArticles();
-        return answer({
+        const value = {
           articles: articles.map((article) => ({
             articleId: article.id,
             titles: article.versions.map(({ locale: l, title: t }) => ({
@@ -329,6 +267,7 @@ export function registerLibraryTools(server: McpServer): void {
               title: t,
             })),
             category: article.category,
+            coverUrl: article.coverPath === null ? null : coverUrl(article.coverPath),
             live: article.isPublished,
             hasUnpublishedChanges: article.hasUnpublishedChanges,
             lastSaved: {
@@ -337,7 +276,22 @@ export function registerLibraryTools(server: McpServer): void {
               via: article.lastSavedVia,
             },
           })),
-        });
+        };
+        if (!includeCovers) return answer(value);
+        return answerWithCovers(
+          value,
+          articles.flatMap((article) =>
+            article.coverPath === null
+              ? []
+              : [
+                  {
+                    path: article.coverPath,
+                    caption: `Cover of article ${article.id} ("${article.versions[0]?.title ?? ""}"): ${coverUrl(article.coverPath)}`,
+                  },
+                ],
+          ),
+          COVER_THUMBNAIL,
+        );
       }),
   );
 
@@ -345,7 +299,7 @@ export function registerLibraryTools(server: McpServer): void {
     "get_library_article",
     {
       title: "Read a Library article",
-      description: `One Library article whole: every language version (title, summary, body) with whether it is complete and what it still needs; the category and the cover (by its picture catalogue entry); what a publish now would put live, leave out and take down, and what would stop it; what readers see now, with each live language's public link; a preview link per language; and the link to its editor in Sogverse. ${PUBLISHING} ${READERS}`,
+      description: `One Library article whole: every language version (title, summary, body) with whether it is complete and what it still needs; the category; the cover by its picture catalogue entry and public URL, shown as a picture as well; what a publish now would put live, leave out and take down, and what would stop it; what readers see now, with each live language's public link; a preview link per language; and the link to its editor in Sogverse. ${PUBLISHING} ${READERS}`,
       inputSchema: z.object({ articleId }),
       annotations: READ_ONLY,
     },
@@ -356,7 +310,20 @@ export function registerLibraryTools(server: McpServer): void {
           service.listPublishedArticles(),
         ]);
         if (article === null) return refusal(NOT_FOUND);
-        return answer(await articleView(article, published, origin));
+        const view = await articleView(article, published, origin);
+        const { coverPath } = article.draft;
+        return answerWithCovers(
+          view,
+          coverPath === null || view.cover === null
+            ? []
+            : [
+                {
+                  path: coverPath,
+                  caption: `The article's cover, catalogue entry ${view.cover.catalogueId} ("${view.cover.label ?? ""}"): ${coverUrl(coverPath)}`,
+                },
+              ],
+          COVER_PREVIEW,
+        );
       }),
   );
 

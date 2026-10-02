@@ -111,6 +111,12 @@ jobs:
       - name: Run type check
         run: npm run type-check
 
+      # The MCP cover uploader is served from its committed build, which the
+      # deployment never rebuilds; this fails when the source has moved on
+      # without it (packages/mcp-cover-uploader/).
+      - name: Check the committed MCP cover uploader matches its source
+        run: npm run check-fresh --workspace=@sog/mcp-cover-uploader
+
   test:
     name: Unit & Integration Tests
     runs-on: ubuntu-latest

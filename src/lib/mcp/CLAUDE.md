@@ -38,9 +38,17 @@ it expires — up to one access-token lifetime, an hour. Only the role read is l
 demoted admin is refused on their next request. Nothing in Sogverse lists or revokes grants
 yet; that is done from the Supabase dashboard.
 
+**Deleting an AI app's OAuth client does not cut it off.** Supabase only soft-deletes the
+client and leaves its sessions, so the app's refresh token goes on minting access tokens.
+The reliable cut-off for an AI app is removing the person's admin role, which the gate
+reads on every request.
+
 **Rule: tools act as the admin, through `createBearerClient(authInfo.token)`, and never
 through the service-role client.** Row policies and guarded RPCs then decide exactly as
 they do for the admin in the browser. A tool reads who is calling with `readMcpCaller`.
+The one exception is the bytes of an uploaded cover, which go to the covers bucket on the
+service-role client exactly as the image catalogue's upload route sends them — that bucket
+has no other writer — while the catalogue row is still written on the admin's client.
 
 ## Adding tools
 
@@ -78,10 +86,56 @@ could never produce; an AI app can type anything, and would never learn its tabl
 is not what readers see. The check runs the renderer's own parse against the same
 allow-list, and the subset the description states is generated from that list too.
 
+**Rule: a picture in a tool result is re-encoded small, capped per result, and named in
+text.** Claude's clients refuse a whole tool result over 1 MB, and a refused result is a
+failed call. So a cover is never the stored original: `cover-images.ts` fetches it from the
+public bucket and re-encodes it as JPEG image content, about 800 × 450 for one article and
+256 × 144 for a list, and a result carries at most twenty pictures and stops adding them
+at a base64 budget well under the limit. Every picture follows a text line naming it — the
+catalogue id, label and public URL — so a client that drops images still knows each cover,
+and a picture past either limit, or one that fails to load, keeps its line and says why.
+
 **A link a tool hands back is absolute, on `getOrigin` of the request** (`ctx.http.req`),
 and built with the app's own path helpers for its locale — the same address the page
 itself would link to. An answer is structured content, repeated as JSON text for clients
 that read only the text.
+
+## Uploading through an MCP Apps view
+
+The bytes of a picture must never pass through the model, so a cover is uploaded through an
+**MCP Apps view** (extension `io.modelcontextprotocol/ui`): `open_cover_uploader` carries
+`_meta.ui.resourceUri` naming a `ui://` resource of type `text/html;profile=mcp-app`, which
+the AI app renders in a sandboxed frame inside the chat. The view crops the admin's picture
+to the cover's frame at exactly the catalogue's size and calls two tools through the AI
+app's own connection — `upload_library_cover`, then `set_library_article_cover` — and then
+puts the new entry's id in the model's context. It holds no token and opens no connection
+of its own, so the gate in front of those calls is the endpoint's. What the cover is — its
+size, the largest JPEG a call may carry, the article — arrives in the opening tool's
+result, so the view restates nothing the catalogue defines.
+
+**An app-only tool is a tool all the same.** `upload_library_cover` carries
+`_meta.ui.visibility: ["app"]`, which tells a host to keep it out of the model's tool list
+and accept it only from this server's own views. That is the host's promise, not a gate:
+the tool is in `tools/list` and any client holding a grant can call it, so it checks its
+input exactly as a model-visible tool would. A host that cannot show views gets the opening
+tool's text instead, which says so and sends the admin to the Sogverse editor; there is no
+other way to upload from an AI app, by the owner's ruling. The server cannot ask the client
+first — it is stateless, so the initialize capabilities are gone by the next request.
+
+**The picture travels as base64 inside one JSON-RPC request.** The catalogue's cap is 4 MB,
+but the SDK refuses a request body over 4 MB (Vercel's own limit, 4.5 MB, sits above it), so
+the view is told a smaller cap and re-encodes at a lower quality to fit; a 1600 × 900 JPEG is
+a few hundred kilobytes, so neither limit is near in practice.
+
+**The view is its own workspace package, `packages/mcp-cover-uploader`, built to one HTML
+file that is committed.** `@modelcontextprotocol/ext-apps` needs zod 4 as a peer, which the
+root package cannot give it, and the deployment installs only the root and `@sog/ui`, so
+the server never builds the view: it reads `dist/cover-uploader.html` from disk (named in
+`next.config.ts`'s tracing includes). After editing the view, run `npm run build
+--workspace=@sog/mcp-cover-uploader` and commit the output; `check-fresh` in the same
+package rebuilds it in memory and fails on a difference, in CI and in `npm run gates`. The
+view takes its colours and face from `@sog/ui`'s token modules (not the package index, which
+would bundle the icon set and React); its words are English, outside the app's message files.
 
 ## Environments
 

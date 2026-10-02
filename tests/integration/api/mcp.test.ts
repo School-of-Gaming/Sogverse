@@ -145,6 +145,10 @@ describe("/api/mcp", () => {
       "set_library_article_category",
       "publish_library_article",
       "unpublish_library_article",
+      "list_library_covers",
+      "set_library_article_cover",
+      "open_cover_uploader",
+      "upload_library_cover",
     ]);
     expect(tools.find((tool) => tool.name === "whoami")?.annotations.readOnlyHint).toBe(true);
   });

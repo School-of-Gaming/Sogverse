@@ -87,8 +87,37 @@ describe("markdownOutsideSubset", () => {
     ]);
   });
 
-  it("leaves GitHub extensions alone: they parse as text, which is what readers see", () => {
-    expect(constructs("| a | b |\n|---|---|\n| 1 | 2 |\n\n~~struck~~")).toEqual([]);
+  it("names a table and strikethrough, which the renderer shows as literal pipes and tildes", () => {
+    const markdown = [
+      "Intro",
+      "",
+      "| a | b |",
+      "|---|---|",
+      "| 1 | 2 |",
+      "",
+      "Some ~~struck~~ text.",
+    ].join("\n");
+
+    expect(markdownOutsideSubset(markdown, "article")).toEqual([
+      { construct: "a table (| cell |), which readers would see as its pipes", lines: [3] },
+      {
+        construct: "strikethrough (~~text~~), which readers would see as its tildes",
+        lines: [7],
+      },
+    ]);
+  });
+
+  it("puts the GFM finds among the others by line", () => {
+    expect(constructs("~~gone~~\n\n![a](x.png)")).toEqual([
+      "strikethrough (~~text~~), which readers would see as its tildes",
+      "an image (![alt](url))",
+    ]);
+  });
+
+  it("passes single tildes, a pipe in prose and a task list, which read as written", () => {
+    expect(
+      constructs("It takes ~5 to ~10 minutes.\n\nThis | that.\n\n- [ ] a task"),
+    ).toEqual([]);
   });
 });
 

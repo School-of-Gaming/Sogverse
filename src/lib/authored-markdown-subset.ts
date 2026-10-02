@@ -1,8 +1,10 @@
 import { unified } from "unified";
+import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import { toHast } from "mdast-util-to-hast";
 import { defaultUrlTransform } from "react-markdown";
 import type { Nodes } from "hast";
+import type { Nodes as MdastNodes } from "mdast";
 import {
   MARKDOWN_USE_CASES,
   type MarkdownUseCase,
@@ -26,6 +28,12 @@ import {
  * renderer filters by. Two more things the reader would not see as written are
  * refused with them: raw HTML, which the renderer shows as its own literal
  * text, and a link whose address the renderer's URL transform blanks.
+ *
+ * **And two a writer reaches for that are not markdown here at all.** The
+ * renderer parses CommonMark, so a GFM table or ~~strikethrough~~ is not a
+ * construct to unwrap — it is plain text, and readers see its pipes and
+ * tildes. A second parse with the GFM extensions finds them, only to name
+ * them; it decides nothing else.
  */
 
 /** One construct outside the subset, and the lines it is on. */
@@ -92,6 +100,14 @@ export function describeMarkdownSubset(useCase: MarkdownUseCase): string {
 }
 
 const parser = unified().use(remarkParse);
+// Double tildes only: "~5 to ~10 minutes" is prose, and readers see it as written.
+const gfmParser = unified().use(remarkParse).use(remarkGfm, { singleTilde: false });
+
+/** The GFM constructs the renderer shows as literal text, by their mdast node type. */
+const LITERAL_GFM: Readonly<Partial<Record<string, string>>> = {
+  table: "a table (| cell |), which readers would see as its pipes",
+  delete: "strikethrough (~~text~~), which readers would see as its tildes",
+};
 
 /**
  * The constructs in `markdown` that a reader of `useCase` would not see as
@@ -108,7 +124,7 @@ export function markdownOutsideSubset(
   const tree = toHast(parser.parse(markdown), { allowDangerousHtml: true });
   const found = new Map<string, number[]>();
 
-  const note = (construct: string, node: Nodes) => {
+  const note = (construct: string, node: Nodes | MdastNodes) => {
     const line = node.position?.start.line;
     const lines = found.get(construct) ?? [];
     if (line !== undefined && !lines.includes(line)) lines.push(line);
@@ -141,5 +157,20 @@ export function markdownOutsideSubset(
   };
   visit(tree);
 
-  return [...found].map(([construct, lines]) => ({ construct, lines }));
+  const visitGfm = (node: MdastNodes) => {
+    const construct = LITERAL_GFM[node.type];
+    if (construct !== undefined) {
+      note(construct, node);
+      return;
+    }
+    if ("children" in node) {
+      for (const child of node.children) visitGfm(child);
+    }
+  };
+  visitGfm(gfmParser.parse(markdown));
+
+  // The second parse's finds go in among the first's by where they start.
+  return [...found]
+    .map(([construct, lines]) => ({ construct, lines }))
+    .sort((a, b) => (a.lines[0] ?? 0) - (b.lines[0] ?? 0));
 }

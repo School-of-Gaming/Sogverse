@@ -1,0 +1,23 @@
+{
+  "name": "@sog/mcp-cover-uploader",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The Library cover uploader the MCP server shows an admin inside their AI app: an MCP Apps view, built to one committed HTML file.",
+  "scripts": {
+    "build": "vite build",
+    "check-fresh": "node scripts/check-fresh.ts",
+    "type-check": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "^2.2.0",
+    "@modelcontextprotocol/ext-apps": "^2.0.3",
+    "@sog/ui": "*",
+    "zod": "^4.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "vite": "^7.3.6",
+    "vite-plugin-singlefile": "^2.3.3"
+  }
+}

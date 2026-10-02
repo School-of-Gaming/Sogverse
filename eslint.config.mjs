@@ -1274,7 +1274,7 @@ const eslintConfig = defineConfig([
     // at computed paths is the entire job. Left on it fires fifty times here and
     // says nothing, which is worse than silence — it trains the next reader to
     // scroll past the category. It stays on everywhere else.
-    files: ["scripts/**/*.{mjs,ts}"],
+    files: ["scripts/**/*.{mjs,ts}", "packages/*/scripts/**/*.ts"],
     rules: {
       "security/detect-non-literal-fs-filename": "off",
     },
