@@ -2628,7 +2628,9 @@
       "columnOtherGedu": "En remplacement de / Remplaçant",
       "columnFeeExclVat": "Rémunération HT",
       "columnAmountExclVat": "Montant HT",
-      "statusAway": "Absence"
+      "statusAway": "Absence",
+      "downloadCsv": "Télécharger le CSV",
+      "downloadPdf": "Télécharger le PDF"
     }
   },
   "productType": {

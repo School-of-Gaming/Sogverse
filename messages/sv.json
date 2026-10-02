@@ -2628,7 +2628,9 @@
       "columnOtherGedu": "Vikarie för / vikarie",
       "columnFeeExclVat": "Arvode exkl. moms",
       "columnAmountExclVat": "Belopp exkl. moms",
-      "statusAway": "Frånvarande"
+      "statusAway": "Frånvarande",
+      "downloadCsv": "Ladda ner CSV",
+      "downloadPdf": "Ladda ner PDF"
     }
   },
   "productType": {

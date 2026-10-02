@@ -2668,7 +2668,9 @@
       "columnOtherGedu": "lIw / lIwwI’",
       "columnFeeExclVat": "Huch, VAT ghajbe’",
       "columnAmountExclVat": "mI’, VAT ghajbe’",
-      "statusAway": "Dachbe’"
+      "statusAway": "Dachbe’",
+      "downloadCsv": "CSV-nav yISuq",
+      "downloadPdf": "PDF-nav yISuq"
     }
   },
   "productType": {

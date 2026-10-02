@@ -2628,7 +2628,9 @@
       "columnOtherGedu": "Covering for / Substitute",
       "columnFeeExclVat": "Fee excl. VAT",
       "columnAmountExclVat": "Amount excl. VAT",
-      "statusAway": "Away"
+      "statusAway": "Away",
+      "downloadCsv": "Download CSV",
+      "downloadPdf": "Download PDF"
     }
   },
   "productType": {

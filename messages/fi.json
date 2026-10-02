@@ -2628,7 +2628,9 @@
       "columnOtherGedu": "Tuurattava / tuuraaja",
       "columnFeeExclVat": "Kertapalkkio (ALV 0 %)",
       "columnAmountExclVat": "Summa (ALV 0 %)",
-      "statusAway": "Poissa"
+      "statusAway": "Poissa",
+      "downloadCsv": "Lataa CSV",
+      "downloadPdf": "Lataa PDF"
     }
   },
   "productType": {

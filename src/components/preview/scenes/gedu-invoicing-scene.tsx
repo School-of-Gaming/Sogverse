@@ -79,6 +79,10 @@ export function MyGeduInvoicingScene({
         initialSnapshot={snapshot}
         now={GEDU_INVOICING_NOW}
         monthHref={(month) => myPreviewMonthHref(scenario, month)}
+        // The downloads render as they do live and fetch nothing: the route
+        // answers for the signed-in gedu, and the reviewer here is an admin
+        // looking at fixtures.
+        onDownloadClick={(event) => event.preventDefault()}
       />
     </FixtureQueryClient>
   );

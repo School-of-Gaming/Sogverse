@@ -94,6 +94,15 @@ total, and it is written for a Finnish Excel opened by double-click (BOM, semico
 decimal comma, CRLF) whatever the page's locale. An unset fee is a blank in the CSV and a
 dash in the PDF, never zero.
 
+Both are served by one GET route under `src/app/api/gedu/invoicing/`, which reads the
+month through the gedu's own client exactly as the page does. The page's links carry the
+page's locale, because the route sits outside the `[locale]` tree and the files are
+worded in the language the gedu was reading. **The PDF reads its fonts off disk, which the
+bundler cannot trace**: the route is listed in `outputFileTracingIncludes` in
+`next.config.ts`, and moving or renaming it without that entry ships a route that works
+locally and fails deployed. A month with no seats still downloads, as an empty month named
+from the caller's profile; a failed read answers an error, never an empty file.
+
 ## Staffing is today's
 
 **Assignments keep no history, so a past month is read against today's staffing.** Removing

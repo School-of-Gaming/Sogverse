@@ -118,9 +118,11 @@ const nextConfig: NextConfig = {
   // (`src/components/og/fonts.ts`). A `process.cwd()` read is invisible to the
   // bundler's tracer, so the files have to be named here or they are simply not
   // deployed beside the handlers — and a card with no fonts is a card satori
-  // draws in nothing.
+  // draws in nothing. The gedu's PDF work statement reads the same files the
+  // same way.
   outputFileTracingIncludes: {
     "/opengraph-images/**": ["./src/assets/fonts/*.ttf"],
+    "/api/gedu/invoicing/export": ["./src/assets/fonts/*.ttf"],
   },
   images: {
     // Derived from the configured URL, never from NODE_ENV: what decides
