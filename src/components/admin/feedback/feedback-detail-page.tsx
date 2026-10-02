@@ -152,17 +152,16 @@ function Statements({ detail }: { detail: FeedbackDetail }) {
 
   return (
     <Section title={t("heading")}>
-      <Card>
-        <ul className="divide-y divide-border">
-          {detail.statements.map((line) => (
-            <StatementSpread
-              key={line.key}
-              line={line}
-              label={labels[line.key] ?? line.key}
-            />
-          ))}
-        </ul>
-      </Card>
+      {/* A card per statement, as many to a row as the width holds. */}
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-3">
+        {detail.statements.map((line) => (
+          <StatementSpread
+            key={line.key}
+            line={line}
+            label={labels[line.key] ?? line.key}
+          />
+        ))}
+      </ul>
     </Section>
   );
 }
@@ -187,42 +186,44 @@ function StatementSpread({
   const platform = line.againstPlatform?.platform.positiveShare ?? null;
 
   return (
-    <li className="space-y-2 px-4 py-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="text-sm font-medium">{label}</p>
-        {current.positiveShare === null ? (
-          <ShareText figure={current} className="text-sm text-muted-foreground" />
-        ) : (
-          <p className="text-sm">
-            {t("saidPositive", {
-              positive: current.positive,
-              answers: current.answers,
-              yes: ratingWord(4),
-              definitely: ratingWord(5),
-            })}
-          </p>
-        )}
-      </div>
-      {current.positiveShare !== null && (
-        <>
-          {/* Negative before positive, as the meter reads: No on the left, Definitely on the right. */}
-          <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-            <span className="tabular-nums">
-              {t("negative", { share: formatShare(current.negativeShare, locale) })}
-            </span>
-            <span className="font-semibold tabular-nums text-foreground">
-              {t("positive", { share: formatShare(current.positiveShare, locale) })}
-            </span>
-            {platform !== null && (
+    <li>
+      <Card className="h-full space-y-2 px-4 py-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <p className="text-sm font-medium">{label}</p>
+          {current.positiveShare === null ? (
+            <ShareText figure={current} className="text-sm text-muted-foreground" />
+          ) : (
+            <p className="text-sm">
+              {t("saidPositive", {
+                positive: current.positive,
+                answers: current.answers,
+                yes: ratingWord(4),
+                definitely: ratingWord(5),
+              })}
+            </p>
+          )}
+        </div>
+        {current.positiveShare !== null && (
+          <>
+            {/* Negative before positive, as the meter reads: No on the left, Definitely on the right. */}
+            <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
               <span className="tabular-nums">
-                {tDetail("platform", { share: formatShare(platform, locale) })}
+                {t("negative", { share: formatShare(current.negativeShare, locale) })}
               </span>
-            )}
-          </p>
-          <AnswerBreakdown figure={current} />
-        </>
-      )}
-      {line.againstPlatform?.belowPlatform === true && <BelowAverage statement={null} />}
+              <span className="font-semibold tabular-nums text-foreground">
+                {t("positive", { share: formatShare(current.positiveShare, locale) })}
+              </span>
+              {platform !== null && (
+                <span className="tabular-nums">
+                  {tDetail("platform", { share: formatShare(platform, locale) })}
+                </span>
+              )}
+            </p>
+            <AnswerBreakdown figure={current} />
+          </>
+        )}
+        {line.againstPlatform?.belowPlatform === true && <BelowAverage statement={null} />}
+      </Card>
     </li>
   );
 }
