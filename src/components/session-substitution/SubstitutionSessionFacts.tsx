@@ -38,11 +38,16 @@ import {
  * times in the locale's own words with the zone named. `compact` is one wrapping
  * run at the admin list's size, its clock face 24-hour and zoneless because that
  * page states its one zone above every row.
+ *
+ * **Only the card names the day.** A card stands alone in a grid, so its "when"
+ * is the day and the clock face together. The compact run states the clock face
+ * alone, because it sits under the admin page's day heading and naming the day
+ * again would state it twice; an orphaned date has no clock face, so it states
+ * no time at all rather than a guessed one.
  */
 export function SubstitutionSessionFacts({
   facts,
   variant,
-  date = true,
   timeZone: frameTimeZone,
   howSoon,
   tags = true,
@@ -50,12 +55,6 @@ export function SubstitutionSessionFacts({
 }: {
   facts: SessionFacts;
   variant: "card" | "compact";
-  /**
-   * Whether "when" names the day. A frame that already groups its rows under a
-   * day heading leaves it off, so the card does not state the date twice; the
-   * orphan then states no time at all rather than a guessed one.
-   */
-  date?: boolean;
   /**
    * The zone times are stated in. The viewer's, unless the frame resolved its
    * own view model against a zone it pins — the admin page does, and its zone
@@ -87,19 +86,7 @@ export function SubstitutionSessionFacts({
   const timeZone = frameTimeZone ?? viewerTimeZone;
 
   if (variant === "compact") {
-    const clock = sessionClockFace(facts, timeZone);
-    let when = clock;
-    if (date) {
-      when =
-        facts.startsAt === null || clock === null
-          ? formatDateOnly(facts.sessionDate, locale)
-          : `${formatDate(facts.startsAt, locale, {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-              timeZone,
-            })}, ${clock}`;
-    }
+    const when = sessionClockFace(facts, timeZone);
 
     return (
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -138,11 +125,7 @@ export function SubstitutionSessionFacts({
         <p className="flex items-start gap-1.5 text-sm tabular-nums text-muted-foreground">
           <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span className="min-w-0">
-            {date
-              ? sessionFactsWhen(facts, locale, timeZone)
-              : facts.startsAt !== null && facts.endsAt !== null
-                ? formatTimeRange(facts.startsAt, facts.endsAt, locale, timeZone)
-                : null}
+            {sessionFactsWhen(facts, locale, timeZone)}
           </span>
         </p>
         {howSoon !== undefined && facts.startsAt !== null && (

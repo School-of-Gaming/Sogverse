@@ -81,7 +81,6 @@ export function SubstitutionSessionHeading({
       <SubstitutionSessionFacts
         facts={facts}
         variant="compact"
-        date={false}
         timeZone={session.viewerTimeZone}
         howSoon={{ now, urgent }}
       />
