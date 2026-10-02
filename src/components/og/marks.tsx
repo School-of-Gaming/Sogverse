@@ -10,11 +10,12 @@
  * hide it.
  *
  * These are copies, and copies drift. Our own two marks map over the full
- * mark's geometry in `src/components/brand/sog-mark-geometry.ts` — the one copy
- * the gedu work statement's PDF mark draws from as well — and the partner
- * marks' paths are verbatim from the file named above each function in
- * `src/assets/`. Either way the asset stays the source of truth, and re-cutting
- * a mark means re-copying it in the same change. The only edits made to the
+ * mark's geometry in `src/components/brand/sog-mark-geometry.ts` — the one
+ * code-format version of it, which the gedu work statement's PDF mark draws from
+ * as well and a unit test holds to the asset — and the partner marks' paths are
+ * verbatim from the file named above each function in `src/assets/`. Either way
+ * the asset stays the source of truth, and re-cutting a mark means re-copying it
+ * in the same change. The only edits made to the
  * partner marks in transit are mechanical: self-closing the tags.
  *
  * All four take a `height` and derive the width from the real viewBox ratio,

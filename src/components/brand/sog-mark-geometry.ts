@@ -2,16 +2,19 @@ import { BRAND } from "@/lib/constants/colors";
 
 /**
  * The geometry of School of Gaming's full mark — the amber badge with "SCHOOL
- * OF GAMING" beneath the monogram — as data, for the renderers that cannot
- * import an `.svg`: the Open Graph cards' satori `<svg>` and the gedu work
- * statement's react-pdf `<Svg>`. Each maps over these constants in its own
- * primitives, so this is the one copy of the mark's paths those renderers share.
+ * OF GAMING" beneath the monogram — as data. This is the one code-format version
+ * of the mark, derived from `src/assets/brand/sog-logo-full.svg`, for every
+ * renderer that cannot load an `.svg`: the Open Graph cards' satori `<svg>`, the
+ * gedu work statement's react-pdf `<Svg>`, and the header's inline wordmark,
+ * which needs `currentColor`. Each maps over these constants in its own
+ * primitives.
  *
- * The paths are verbatim from `src/assets/brand/sog-logo-full.svg`, which stays
- * the source of truth; re-cutting the mark means re-copying it here in the same
- * change. The only edit made in transit is swapping the asset's two literal
- * fills for the brand tokens they already equal: the badge is act and every
- * piece of lettering is act's own ink.
+ * The asset stays the source of truth, and a unit test holds this module to it
+ * shape for shape, in both directions: re-cutting the mark means re-copying it
+ * here in the same change, or that test fails. The only edit made in transit is
+ * swapping the asset's two literal fills for the brand tokens they equal — the
+ * badge is act and every piece of lettering is act's own ink — and the test
+ * checks those tokens against the asset's hex values.
  */
 
 export const SOG_MARK_VIEW_WIDTH = 379;
