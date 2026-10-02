@@ -114,27 +114,25 @@ describe("/api/mcp", () => {
 
   // Without an icon of its own, a client guesses one — Claude.ai took the
   // marketing site's badge from the parent domain. The icon is the app's own,
-  // on the trusted origin, even when the request names some other host.
+  // on the request's origin when its host is trusted, and on the configured
+  // site URL when it is not.
   it.each([
-    ["the trusted origin", ORIGIN],
-    ["an untrusted host", "http://evil.example.com"],
-  ])("declares the app's own icon on the trusted origin, asked from %s", async (_, from) => {
+    ["the configured origin", ORIGIN, undefined, ORIGIN],
+    ["an untrusted host", "http://evil.example.com", undefined, ORIGIN],
+    [
+      "a trusted branch host",
+      "https://sogverse-git-x.vercel.app",
+      "sogverse-git-x.vercel.app",
+      "https://sogverse-git-x.vercel.app",
+    ],
+  ])("declares the app's own icon, asked from %s", async (_, from, branchUrl, expected) => {
+    if (branchUrl) vi.stubEnv("VERCEL_BRANCH_URL", branchUrl);
     signedInAs("admin");
-    const host = new URL(from).host;
 
     const body = await readRpc(
       await POST(
-        new Request(`${from}/api/mcp`, {
-          method: "POST",
-          headers: {
-            host,
-            "x-forwarded-host": host,
-            "Content-Type": "application/json",
-            Accept: "application/json, text/event-stream",
-            "MCP-Protocol-Version": "2025-11-25",
-            Authorization: "Bearer token",
-          },
-          body: JSON.stringify({
+        rpc(
+          {
             jsonrpc: "2.0",
             id: 1,
             method: "initialize",
@@ -143,16 +141,19 @@ describe("/api/mcp", () => {
               capabilities: {},
               clientInfo: { name: "test", version: "0" },
             },
-          }),
-        }),
+          },
+          "token",
+          "POST",
+          { origin: from, protocolVersion: "2025-11-25" },
+        ),
       ),
     );
 
     expect(body.result).toMatchObject({
       serverInfo: {
         icons: [
-          { src: `${ORIGIN}/apple-icon.png`, mimeType: "image/png", sizes: ["180x180"] },
-          { src: `${ORIGIN}/icon.svg`, mimeType: "image/svg+xml", sizes: ["any"] },
+          { src: `${expected}/apple-icon.png`, mimeType: "image/png", sizes: ["180x180"] },
+          { src: `${expected}/icon.svg`, mimeType: "image/svg+xml", sizes: ["any"] },
         ],
       },
     });
