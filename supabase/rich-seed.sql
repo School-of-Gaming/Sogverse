@@ -7,7 +7,7 @@
 -- database with enough of a catalogue that the admin, gedu and family
 -- dashboards look like a real platform — products of every type and lifecycle
 -- state, families with children, certified and uncertified educators, groups
--- with sessions, reports, attendance, feedback, a substitution, a few
+-- with sessions, reports, attendance, feedback, substitutions, a few
 -- cancelled sessions, and Library articles in every state an admin can find
 -- one in. It exists so
 -- a human can look at the UI. Nothing asserts anything here.
@@ -77,6 +77,12 @@
 -- live only on the day of the build, for about three hours after it; after
 -- that it is an ordinary weekly club, and `npm run db -- reset` makes it live
 -- again.
+--
+-- LAST MONTH HAS A SUBSTITUTION EACH WAY. In the calendar month before the
+-- build, gedu@example.com was away from a Minecraft Java Club afternoon that
+-- mikko.lehtinen@example.com ran, and ran an Autumn Term Game Club afternoon for
+-- sofia.nieminen@example.com, so the Invoicing page for that month shows a
+-- settled line of each kind, one on each subtotal (section 11).
 --
 -- IDS ARE GENERATED, NEVER WRITTEN OUT. Every account gets `gen_random_uuid()`,
 -- because the avatar identicon derives its pattern from the id's hex bytes and
@@ -1594,7 +1600,7 @@ $$;
 COMMIT;
 
 -- =============================================================================
--- 11. One absence, and one substitution an admin arranged
+-- 11. Absences, and the substitutions an admin arranged
 -- =============================================================================
 
 -- The gedu files it for themselves, for the next session they are expected at.
@@ -1659,6 +1665,107 @@ BEGIN
       (SELECT id FROM public.profiles WHERE email = 'gedu@example.com'),
       (SELECT id FROM public.profiles WHERE email = 'sofia.nieminen@example.com'));
   END IF;
+END;
+$$;
+
+COMMIT;
+
+-- Last month, a substitution each way round gedu@example.com, so their
+-- Invoicing page has a settled one of each on the month before the build: an
+-- afternoon they were away from and Mikko ran (an "away" line naming him, and a
+-- paid line on Mikko's page), and one they ran for Sofia on the municipality
+-- club (a paid line naming her, on the municipality subtotal).
+--
+-- Both are past, and a gedu cannot file for a past session, so the admin records
+-- them the way an off-platform substitution is recorded: through the seating RPC
+-- with no request in place, which files one on the absent gedu's behalf, already
+-- substituted, with the reason a filing needs. Each date is the group's latest
+-- session in the previous calendar month, which section 9 has already written
+-- up as the group's own educator. The sub then writes the report and takes the
+-- register over again, so the record reads as theirs — but only while their
+-- access to the group is still open, fifteen days from the session, so a stack
+-- built late in a month keeps the absent educator's record of it. The session
+-- pays the sub either way: what pays is that a record exists, not who wrote it.
+
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+DO $$
+DECLARE
+  v_admin_claims text := json_build_object(
+    'sub', (SELECT id::text FROM public.profiles WHERE email = 'admin@example.com'),
+    'role', 'authenticated')::text;
+  v_month_start date := (date_trunc('month', current_date) - interval '1 month')::date;
+  v_month_end   date := date_trunc('month', current_date)::date - 1;
+  r        record;
+  v_group  uuid;
+  v_date   date;
+  v_sub    uuid;
+  v_people uuid[];
+  v_person uuid;
+BEGIN
+  FOR r IN SELECT * FROM (VALUES
+    ('Minecraft Java Club',   'Ryhmä A', 'gedu@example.com',           'mikko.lehtinen@example.com',
+     'other'::public.substitution_reason, 'Family wedding abroad, booked in the spring.',
+     'Mikko here, covering for Gedu. We carried on with the redstone door project and everyone got theirs opening by the end.'),
+    ('Autumn Term Game Club', 'Ryhmä 1', 'sofia.nieminen@example.com', 'gedu@example.com',
+     'sick'::public.substitution_reason, 'Lost her voice, back the following week.',
+     'Covering for Sofia today. The group finished their shared build for the end of term and showed it to each other.')
+  ) AS t(product_name, group_name, absent_email, sub_email, reason, reason_note, report)
+  LOOP
+    v_group := (SELECT g.id FROM public.product_groups g
+                  JOIN public.product_translations t
+                    ON t.product_id = g.product_id AND t.locale = 'en'
+                 WHERE t.name = r.product_name
+                   AND g.name = r.group_name);
+    v_date := (SELECT dd::date
+                 FROM public.product_groups g
+                 JOIN public.products p ON p.id = g.product_id
+                 JOIN public.schedule_slots s ON s.product_id = p.id
+                CROSS JOIN LATERAL generate_series(
+                        GREATEST(p.start_date, v_month_start),
+                        LEAST(v_month_end, current_date - 1,
+                              COALESCE(p.end_date, v_month_end)),
+                        interval '1 day') dd
+                WHERE g.id = v_group
+                  AND EXTRACT(ISODOW FROM dd)::integer - 1 = s.weekday
+                ORDER BY dd DESC
+                LIMIT 1);
+
+    IF v_group IS NULL OR v_date IS NULL THEN
+      RAISE NOTICE 'rich-seed: no % session last month to substitute on', r.product_name;
+      CONTINUE;
+    END IF;
+
+    v_sub := (SELECT id FROM public.profiles WHERE email = r.sub_email);
+    PERFORM public.set_session_substitution(
+      v_group, v_date,
+      (SELECT id FROM public.profiles WHERE email = r.absent_email),
+      v_sub, r.reason, r.reason_note);
+
+    v_people := ARRAY(
+      SELECT participant_id FROM public.participations
+       WHERE group_id = v_group AND status = 'active');
+
+    PERFORM set_config('request.jwt.claims',
+      json_build_object('sub', v_sub::text, 'role', 'authenticated')::text, true);
+
+    IF public.gedu_substitutes_group(v_group) THEN
+      PERFORM public.set_group_session_notes(v_group, v_date, r.report, NULL);
+      FOREACH v_person IN ARRAY COALESCE(v_people, ARRAY[]::uuid[]) LOOP
+        PERFORM public.record_attendance(v_group, v_date, v_person, 'present');
+      END LOOP;
+    ELSE
+      RAISE NOTICE 'rich-seed: % % on % is past %''s access, so its record stays as the group''s educator wrote it',
+        r.product_name, r.group_name, v_date, r.sub_email;
+    END IF;
+
+    PERFORM set_config('request.jwt.claims', v_admin_claims, true);
+  END LOOP;
 END;
 $$;
 

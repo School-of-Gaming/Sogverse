@@ -4,8 +4,8 @@ What each gedu invoices School of Gaming for, one calendar month at a time, on t
 over one document: the admin's page reads every gedu, and a gedu's own **Invoicing** page
 (on the header strip at desktop width, in their account menu below it) reads them alone — the database narrows that read to the
 caller's own seats, and the two pages run the same pure build over it. It **writes
-nothing, snapshots nothing and exports nothing**: every figure is recomputed from today's
-facts each time it is read. There is no approval workflow in v1 — no submitted, approved or
+nothing and snapshots nothing**: every figure is recomputed from today's facts each time it
+is read. There is no approval workflow in v1 — no submitted, approved or
 paid state, no frozen month, no Truster file; gedus copy the figures onto their own invoice.
 
 ## What pays
@@ -79,6 +79,39 @@ over.
 
 The fees exclude VAT, and the gedu page says to add it (the handbook's 25.5 %, written in
 the copy) when invoicing.
+
+## The gedu's exports
+
+A gedu can take their month away as a CSV and as a PDF, built from the same view model
+the page renders. **Neither is an invoice**: gedus invoice from tools of their own, so
+the PDF is a work statement attached to that invoice and the CSV is raw rows for a
+spreadsheet. **Neither computes VAT** — some gedus are not VAT-registered — so every money
+label says the figures exclude it. Both list every dated line of every kind, a
+non-paying one at zero so the amounts sum to the total. The PDF is a frozen copy of a page
+that freezes nothing, so it states on every page when its figures were read (Helsinki
+time), and under the sums it **says whether the month is complete**: either that nothing
+is still open, or each past session with nothing recorded by date, club and group, and
+how many are still upcoming — it goes to an accounting inbox, where a partial month must
+not pass for a finished one. Each line gives the page's own outcome and why it pays
+nothing (away and who substituted, covering for whom, nothing recorded yet). The CSV is
+written for a Finnish Excel opened by double-click (BOM, semicolons, decimal comma, CRLF)
+whatever the page's locale. An unset fee is a blank in the CSV and a dash in the PDF, on
+the fee and on every amount it would multiply into, never zero, and neither file says more
+about it than the page does.
+
+The PDF is School of Gaming's paper: the full mark (drawn from the geometry module the OG
+cards share in `src/components/brand/`, since react-pdf cannot import an `.svg`), the brand ink on white, and act as its one
+accent; its print colours come from `src/lib/constants/colors.ts`, derived from `@sog/ui`
+like every renderer's that cannot read CSS.
+
+Both are served by one GET route under `src/app/api/gedu/invoicing/`, which reads the
+month through the gedu's own client exactly as the page does. The page's links carry the
+page's locale, because the route sits outside the `[locale]` tree and the files are
+worded in the language the gedu was reading. **The PDF reads its fonts off disk, which the
+bundler cannot trace**: the route is listed in `outputFileTracingIncludes` in
+`next.config.ts`, and moving or renaming it without that entry ships a route that works
+locally and fails deployed. A month with no seats still downloads, as an empty month named
+from the caller's profile; a failed read answers an error, never an empty file.
 
 ## Staffing is today's
 

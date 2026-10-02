@@ -196,6 +196,7 @@ const TESTS = {
   geduGamerRoblox: "tests/integration/api/gedu-gamer-roblox.test.ts",
   geduCompleteRegistration:
     "tests/integration/api/gedu-complete-registration.test.ts",
+  geduInvoicingExport: "tests/integration/api/gedu-invoicing-export.test.ts",
   geduRegister: "tests/integration/api/gedu-register.test.ts",
   geduSessionEmailReport:
     "tests/integration/api/gedu-session-email-report.test.ts",
@@ -963,6 +964,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "json", schema: "registerGeduBody" },
         test: TESTS.geduRegister,
+      },
+    },
+  },
+
+  // --- Educator invoicing --------------------------------------------------
+
+  // The gedu's own month as a CSV or PDF attachment — a read, so a GET the page
+  // links to, with no body. Which seats reach the file is decided by the RPC
+  // underneath, on the gedu's own client: it answers for auth.uid() alone and
+  // is guard-first on the gedu role, so this gate is the first of two layers.
+  "src/app/api/gedu/invoicing/export/route.ts": {
+    handlers: {
+      GET: {
+        posture: { kind: "role-gated", roles: ["gedu"] },
+        body: { kind: "none" },
+        test: TESTS.geduInvoicingExport,
       },
     },
   },

@@ -28,11 +28,12 @@ import {
 } from "@/services/gedu-invoicing";
 import {
   buildGeduInvoicing,
+  fullName,
   type GeduInvoice,
   type GeduInvoicingView,
 } from "./build-gedu-invoicing";
 import { filterGeduInvoices } from "./filter-gedu-invoices";
-import { GeduClubTable, fullName } from "./gedu-invoicing-clubs";
+import { GeduClubTable } from "./gedu-invoicing-clubs";
 
 /**
  * **Gedu invoicing, the admin's read** — one month, every gedu.

@@ -14,14 +14,19 @@ import {
 import { ROUTES } from "@/lib/constants";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
 import { formatCurrencyFromCents } from "@/lib/utils";
-import type {
-  GeduInvoice,
-  GeduInvoiceClub,
-  GeduInvoiceLine,
-  GeduInvoiceLineKind,
-  GeduInvoicePerson,
-  GeduInvoiceSegment,
+import {
+  fullName,
+  type GeduInvoice,
+  type GeduInvoiceClub,
+  type GeduInvoiceLine,
+  type GeduInvoiceLineKind,
 } from "./build-gedu-invoicing";
+import {
+  NO_FIGURE,
+  ROLE_LABEL_KEY,
+  SEGMENT_LABEL_KEY,
+  SEGMENT_ORDER,
+} from "./gedu-invoicing-labels";
 
 /**
  * Who is reading a gedu's clubs. The two readers see the same figures and the
@@ -121,13 +126,6 @@ export function GeduClubTable({
     </table>
   );
 }
-
-const SEGMENT_ORDER: readonly GeduInvoiceSegment[] = ["municipality", "consumer"];
-
-const SEGMENT_LABEL_KEY = {
-  municipality: "segmentMunicipality",
-  consumer: "segmentConsumer",
-} as const satisfies Record<GeduInvoiceSegment, string>;
 
 /**
  * One club, in one role, and the dates behind its number when opened.
@@ -247,17 +245,6 @@ function UnsetFee({ audience }: { audience: GeduInvoicingAudience }) {
 }
 
 /**
- * The gedu's unset-fee cell. Punctuation rather than copy — a dash says "no
- * figure" in every locale — so it is written here and not in five message files.
- */
-const NO_FIGURE = "—";
-
-const ROLE_LABEL_KEY = {
-  primary: "rolePrimary",
-  assistant: "roleAssistant",
-} as const;
-
-/**
  * Every dated seat behind one club's number.
  *
  * The group rides on a line only where the club's lines span more than one
@@ -373,8 +360,3 @@ const LINE_OUTCOME_KEY = {
   upcoming: "upcoming",
   cancelled: "cancelled",
 } as const satisfies Record<Exclude<GeduInvoiceLineKind, "absent">, string>;
-
-/** A gedu as a reader names them — both names, as the rest of staff copy does. */
-export function fullName(person: Pick<GeduInvoicePerson, "firstName" | "lastName">) {
-  return `${person.firstName} ${person.lastName}`;
-}

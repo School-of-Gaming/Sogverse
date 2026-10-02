@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type MouseEventHandler } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileDown } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   LEDGER_ROW_INSET,
@@ -14,7 +15,10 @@ import {
   type MonthHref,
 } from "@/components/invoicing-ledger/month-stepper";
 import { ROUTES } from "@/lib/constants";
-import { resolveLocale } from "@/lib/constants/locales";
+import {
+  resolveLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import { cn, formatCurrencyFromCents } from "@/lib/utils";
 import { useNow } from "@/providers";
 import {
@@ -22,6 +26,10 @@ import {
   type GeduInvoicingSnapshot,
 } from "@/services/gedu-invoicing";
 import { buildGeduInvoicing, type GeduInvoice } from "./build-gedu-invoicing";
+import {
+  geduInvoiceExportHref,
+  type GeduInvoiceExportFormat,
+} from "./gedu-invoice-file";
 import { GeduClubTable } from "./gedu-invoicing-clubs";
 
 /**
@@ -44,6 +52,7 @@ export function MyGeduInvoicingPage({
   initialSnapshot,
   now: pinnedNow,
   monthHref = geduMonthHref,
+  onDownloadClick,
 }: {
   /** The month on screen, as its first day (`YYYY-MM-01`). */
   monthStart: string;
@@ -52,6 +61,8 @@ export function MyGeduInvoicingPage({
   now?: Date;
   /** Where a step of the month stepper goes; the scene points it at itself. */
   monthHref?: (month: string) => MonthHref;
+  /** Intercepts a download — only the preview scene, which must not fetch one. */
+  onDownloadClick?: MouseEventHandler<HTMLAnchorElement>;
 }) {
   const t = useTranslations("geduInvoicing");
   const locale = resolveLocale(useLocale());
@@ -76,13 +87,34 @@ export function MyGeduInvoicingPage({
     <div className="mx-auto max-w-5xl space-y-6 pb-24" data-reserve-scroll-gutter>
       <MyGeduInvoicingHeading />
 
-      <MonthStepper
-        monthStart={invoice.monthStart}
-        locale={locale}
-        monthHref={monthHref}
-        previousLabel={t("previousMonth")}
-        nextLabel={t("nextMonth")}
-      />
+      {/* The downloads take the month the stepper names, so they share its
+          row. An empty month offers them too: "nothing to invoice" is a true
+          answer about the month, and the files say it. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <MonthStepper
+          monthStart={invoice.monthStart}
+          locale={locale}
+          monthHref={monthHref}
+          previousLabel={t("previousMonth")}
+          nextLabel={t("nextMonth")}
+        />
+        <div className="flex gap-2">
+          <MonthDownload
+            monthStart={invoice.monthStart}
+            format="csv"
+            locale={locale}
+            label={t("export.downloadCsv")}
+            onClick={onDownloadClick}
+          />
+          <MonthDownload
+            monthStart={invoice.monthStart}
+            format="pdf"
+            locale={locale}
+            label={t("export.downloadPdf")}
+            onClick={onDownloadClick}
+          />
+        </div>
+      </div>
 
       {gedu === undefined ? (
         <p className="text-sm text-muted-foreground">{t("myEmptyMonth")}</p>
@@ -99,6 +131,36 @@ export function MyGeduInvoicingPage({
 /** The live page's own answer: another month of this route. */
 function geduMonthHref(month: string): MonthHref {
   return { pathname: ROUTES.gedu.invoicing, query: { month } };
+}
+
+/**
+ * One file of the month. A download is a navigation, so it is a link drawn as
+ * a button rather than a button that fetches.
+ */
+function MonthDownload({
+  monthStart,
+  format,
+  locale,
+  label,
+  onClick,
+}: {
+  monthStart: string;
+  format: GeduInvoiceExportFormat;
+  locale: SupportedLocale;
+  label: string;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
+}) {
+  return (
+    <a
+      href={geduInvoiceExportHref(monthStart, format, locale)}
+      download
+      onClick={onClick}
+      className={buttonVariants({ variant: "outline", size: "sm" })}
+    >
+      <FileDown aria-hidden />
+      {label}
+    </a>
+  );
 }
 
 /**

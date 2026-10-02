@@ -118,10 +118,12 @@ const nextConfig: NextConfig = {
   // (`src/components/og/fonts.ts`). A `process.cwd()` read is invisible to the
   // bundler's tracer, so the files have to be named here or they are simply not
   // deployed beside the handlers — and a card with no fonts is a card satori
-  // draws in nothing. The MCP endpoint serves its cover uploader the same way,
-  // from the file its workspace package builds (`src/lib/mcp/cover-uploader.ts`).
+  // draws in nothing. The gedu's PDF work statement reads the same files the
+  // same way, and the MCP endpoint serves its cover uploader likewise, from the
+  // file its workspace package builds (`src/lib/mcp/cover-uploader.ts`).
   outputFileTracingIncludes: {
     "/opengraph-images/**": ["./src/assets/fonts/*.ttf"],
+    "/api/gedu/invoicing/export": ["./src/assets/fonts/*.ttf"],
     "/api/mcp": ["./packages/mcp-cover-uploader/dist/cover-uploader.html"],
   },
   images: {
