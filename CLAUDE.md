@@ -47,7 +47,8 @@ file is opened are carried here as one-line reminders, with the full rule in the
 
 - **A new API route** lives under `src/app/api/` and is classified in the integration
   suite's route posture registry — the Testing section below says how.
-- **Admins are trusted**, including trusted to act only through the admin UI: "an admin
+- **Admins are trusted**, including trusted to act only through the admin UI and the admin
+  MCP tools: "an admin
   could reach an invalid state via the raw API" is not a defect worth building for, and a
   state the UI cannot produce fails loudly at the schema rather than corrupting silently.
 - **Caller-supplied redirect targets** go through `resolveInternalPath()`, and any absolute
