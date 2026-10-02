@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import type { FeedbackSource } from "@/services/session-feedback/admin-feedback.contracts";
 import {
   buildFeedbackDetail,
   buildFeedbackTimeline,
@@ -27,9 +28,9 @@ import {
   type FeedbackHref,
   type FeedbackOrigin,
 } from "./feedback-place";
-import { WhatGamersSaid } from "./feedback-responses";
+import { StatementHeader, WhatGamersSaid } from "./feedback-responses";
 import { FeedbackShell } from "./feedback-shell";
-import { useFeedbackStatementLabels, useRatingWord } from "./use-feedback-labels";
+import { useRatingWord } from "./use-feedback-labels";
 
 /**
  * **One product, group, Gedu or gamer.** The same reading as the overview's,
@@ -148,18 +149,13 @@ function PlatformLine({ comparison }: { comparison: PlatformComparison }) {
 
 function Statements({ detail }: { detail: FeedbackDetail }) {
   const t = useTranslations("admin.feedback.statements");
-  const labels = useFeedbackStatementLabels(detail.source);
 
   return (
     <Section title={t("heading")}>
       {/* A card per statement, as many to a row as the width holds. */}
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-3">
         {detail.statements.map((line) => (
-          <StatementSpread
-            key={line.key}
-            line={line}
-            label={labels[line.key] ?? line.key}
-          />
+          <StatementSpread key={line.key} source={detail.source} line={line} />
         ))}
       </ul>
     </Section>
@@ -167,29 +163,27 @@ function Statements({ detail }: { detail: FeedbackDetail }) {
 }
 
 /**
- * One statement: its wording and, first, the sentence an admin would say about
- * it — "19 of 23 said Yes or Definitely" — then the shares and the platform as
- * text, and the five levels a row each.
+ * One statement: headed by the same short name the responses table uses, then
+ * the sentence an admin would say about it — "19 of 23 said Yes or
+ * Definitely" — the shares as text, and the five levels a row each.
  */
 function StatementSpread({
+  source,
   line,
-  label,
 }: {
+  source: FeedbackSource;
   line: FeedbackDetailStatement;
-  label: string;
 }) {
   const t = useTranslations("admin.feedback.statements");
-  const tDetail = useTranslations("admin.feedback.detail");
   const locale = useLocale();
   const ratingWord = useRatingWord();
   const current = line.figure;
-  const platform = line.againstPlatform?.platform.positiveShare ?? null;
 
   return (
     <li>
       <Card className="h-full space-y-2 px-4 py-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <p className="text-sm font-medium">{label}</p>
+        <div className="space-y-1">
+          <StatementHeader source={source} statementKey={line.key} alignEnd={false} heading />
           {current.positiveShare === null ? (
             <ShareText figure={current} className="text-sm text-muted-foreground" />
           ) : (
@@ -213,16 +207,10 @@ function StatementSpread({
               <span className="font-semibold tabular-nums text-foreground">
                 {t("positive", { share: formatShare(current.positiveShare, locale) })}
               </span>
-              {platform !== null && (
-                <span className="tabular-nums">
-                  {tDetail("platform", { share: formatShare(platform, locale) })}
-                </span>
-              )}
             </p>
             <AnswerBreakdown figure={current} />
           </>
         )}
-        {line.againstPlatform?.belowPlatform === true && <BelowAverage statement={null} />}
       </Card>
     </li>
   );

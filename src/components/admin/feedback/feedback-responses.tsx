@@ -214,24 +214,28 @@ function ResponseTable({
 }
 
 /**
- * A statement's short name as its column heading, with the sentence the gamer
- * read on hover and on keyboard focus, and as the heading's accessible
- * description.
+ * A statement's short name as its heading, with the sentence the gamer read on
+ * hover and on keyboard focus, and as the heading's accessible description.
+ * One heading for every place a statement is named: a column of the responses
+ * table, or, with `heading`, a statement's card on a detail page.
  *
- * The sentence opens from the whole heading cell and sits inside it, flush
- * against the name with its spacing drawn as padding, so the pointer can move
- * onto the sentence without leaving what opened it. Escape hides it while the
- * heading is hovered or focused, without moving either; leaving the heading,
- * or focus leaving it, lets it open again.
+ * The sentence opens from the whole heading and sits inside it, flush against
+ * the name with its spacing drawn as padding, so the pointer can move onto the
+ * sentence without leaving what opened it. Escape hides it while the heading
+ * is hovered or focused, without moving either; leaving the heading, or focus
+ * leaving it, lets it open again.
  */
-function StatementHeader({
+export function StatementHeader({
   source,
   statementKey,
   alignEnd,
+  heading = false,
 }: {
   source: FeedbackSource;
   statementKey: string;
   alignEnd: boolean;
+  /** Drawn as a card's heading rather than as a table column's header. */
+  heading?: boolean;
 }) {
   const shortLabels = useFeedbackStatementShortLabels(source);
   const labels = useFeedbackStatementLabels(source);
@@ -252,9 +256,10 @@ function StatementHeader({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [engaged]);
 
+  const Wrapper = heading ? "h3" : "div";
   return (
-    <div
-      role="columnheader"
+    <Wrapper
+      role={heading ? undefined : "columnheader"}
       className="group relative"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => {
@@ -290,7 +295,7 @@ function StatementHeader({
           {labels[statementKey] ?? statementKey}
         </span>
       </span>
-    </div>
+    </Wrapper>
   );
 }
 
