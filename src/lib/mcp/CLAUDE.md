@@ -15,6 +15,17 @@ sends the admin through Supabase's authorize step to the app's consent page
 (`/oauth/consent`, at the Auth project's site URL), and exchanges the code for a token.
 The token is an ordinary user JWT plus a `client_id` claim.
 
+**Rule: the server declares its own icon in `initialize`, as absolute URLs on the
+request's `getOrigin`, and never leaves the icon to a client's guess.** A client given no
+icon invents one — Claude.ai has shown the favicon of the endpoint's parent domain, which is
+the marketing site's badge rather than the app's. The icon is the app's own "S" badge at the
+fixed, unhashed paths Next serves its icon files on, as a PNG (the type every
+icon-rendering client must take) and an SVG, and on the server's own origin, since the spec
+asks clients to accept an icon only from there. Declaring it does not yet change what
+Claude.ai shows: as of October 2026 its custom connectors ignore server icons and take the
+parent domain's favicon from Google's favicon service, so the badge there is the marketing
+site's to set.
+
 **Rule: the consent page is the defence that open registration leans on, and it judges the
 redirect URI, never the client's name.** The name is whatever the registrant typed; the
 redirect URI is where the code goes. The known AI apps' exact callback URLs (scheme, host

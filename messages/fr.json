@@ -3627,6 +3627,18 @@
       "title": "Mon profil",
       "description": "Votre profil public sur le site de School of Gaming : une photo de vous et quelques mots sur qui vous êtes.",
       "edit": "Modifier le profil"
+    },
+    "mcp": {
+      "title": "Connecter une application d’IA",
+      "description": "Gérez Sogverse depuis votre propre application d’IA grâce au serveur MCP de Sogverse.",
+      "urlLabel": "URL du serveur MCP",
+      "copy": "Copier",
+      "copied": "Copié",
+      "steps": {
+        "add": "Dans les paramètres de votre application d’IA, ajoutez un connecteur personnalisé ou un serveur MCP distant avec cette URL.",
+        "signIn": "Connectez-vous avec votre compte administrateur et choisissez Autoriser.",
+        "unsure": "Vous ne savez pas où l’ajouter ? Demandez à votre application d’IA comment ajouter un serveur MCP distant à partir de son URL."
+      }
     }
   },
   "tools": {

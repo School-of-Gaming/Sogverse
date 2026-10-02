@@ -3667,6 +3667,18 @@
       "title": "Del’a’wIj",
       "description": "School of Gaming Qu’mey Hoch legh: mInDu’lIj mIllogh, ’ej bIpong nuq ’e’ ghItlh.",
       "edit": "Del’a’ yIchoH"
+    },
+    "mcp": {
+      "title": "QoQ jan yIrar",
+      "description": "QoQ jan Dun vo' Sogverse yIchu'. Sogverse MCP jan lo'.",
+      "urlLabel": "MCP jan Daq",
+      "copy": "yIlI'",
+      "copied": "lI'ta'",
+      "steps": {
+        "add": "QoQ jan Dun DuHmey Daq, Daqvam lo'bogh MCP jan yIchel.",
+        "signIn": "DIvI' HoS ghItlhlIj yIlo' 'ej yIchaw' yIwIv.",
+        "unsure": "nuqDaq DachellaH? QoQ jan Dun yIghel: chay' MCP jan chel Daq lo'taHvIS?"
+      }
     }
   },
   "tools": {

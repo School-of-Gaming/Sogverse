@@ -4314,6 +4314,18 @@
       "title": "My profile",
       "description": "Your public profile on School of Gaming’s website: a photo of you and a few words about who you are.",
       "edit": "Edit profile"
+    },
+    "mcp": {
+      "title": "Connect an AI app",
+      "description": "Manage Sogverse from your own AI app through Sogverse’s MCP server.",
+      "urlLabel": "MCP server URL",
+      "copy": "Copy",
+      "copied": "Copied",
+      "steps": {
+        "add": "In your AI app’s settings, add a custom connector or remote MCP server with this URL.",
+        "signIn": "Sign in with your admin account and choose Allow.",
+        "unsure": "Not sure where to add it? Ask your AI app how to add a remote MCP server by its URL."
+      }
     }
   },
   "tools": {

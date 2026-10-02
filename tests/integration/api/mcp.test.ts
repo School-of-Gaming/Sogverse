@@ -112,6 +112,53 @@ describe("/api/mcp", () => {
     expect(body.result).toMatchObject({ serverInfo: { name: "sogverse" } });
   });
 
+  // Without an icon of its own, a client guesses one — Claude.ai took the
+  // marketing site's badge from the parent domain. The icon is the app's own,
+  // on the request's origin when its host is trusted, and on the configured
+  // site URL when it is not.
+  it.each([
+    ["the configured origin", ORIGIN, undefined, ORIGIN],
+    ["an untrusted host", "http://evil.example.com", undefined, ORIGIN],
+    [
+      "a trusted branch host",
+      "https://sogverse-git-x.vercel.app",
+      "sogverse-git-x.vercel.app",
+      "https://sogverse-git-x.vercel.app",
+    ],
+  ])("declares the app's own icon, asked from %s", async (_, from, branchUrl, expected) => {
+    if (branchUrl) vi.stubEnv("VERCEL_BRANCH_URL", branchUrl);
+    signedInAs("admin");
+
+    const body = await readRpc(
+      await POST(
+        rpc(
+          {
+            jsonrpc: "2.0",
+            id: 1,
+            method: "initialize",
+            params: {
+              protocolVersion: "2025-11-25",
+              capabilities: {},
+              clientInfo: { name: "test", version: "0" },
+            },
+          },
+          "token",
+          "POST",
+          { origin: from, protocolVersion: "2025-11-25" },
+        ),
+      ),
+    );
+
+    expect(body.result).toMatchObject({
+      serverInfo: {
+        icons: [
+          { src: `${expected}/apple-icon.png`, mimeType: "image/png", sizes: ["180x180"] },
+          { src: `${expected}/icon.svg`, mimeType: "image/svg+xml", sizes: ["any"] },
+        ],
+      },
+    });
+  });
+
   it("lists every tool, each stating its annotations", async () => {
     signedInAs("admin");
 
