@@ -37,6 +37,8 @@ const DRAFT: LibraryArticleDraft = {
   coverLabel: "Controller on a desk",
   createdAt: "2026-09-12T11:00:00Z",
   updatedAt: "2026-09-15T08:05:00Z",
+  lastSavedBy: null,
+  lastSavedVia: null,
 };
 
 const EN = DRAFT.versions[0];

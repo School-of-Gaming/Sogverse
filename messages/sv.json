@@ -535,7 +535,11 @@
       "statusPanel": {
         "label": "Publicering",
         "publishedLine": "Publicerad {date}.",
-        "changedLine": "Läsarna ser versionen som publicerades {date}."
+        "changedLine": "Läsarna ser versionen som publicerades {date}.",
+        "savedLine": "Senast sparad {date}.",
+        "savedByLine": "Senast sparad {date} av {name}.",
+        "savedByViaLine": "Senast sparad {date} av {name} via {app}.",
+        "savedByViaUnnamedLine": "Senast sparad {date} av {name} via en AI-app."
       },
       "viewLive": "Visa i Biblioteket",
       "preview": "Förhandsvisa",

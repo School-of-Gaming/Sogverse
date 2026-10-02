@@ -535,7 +535,11 @@
       "statusPanel": {
         "label": "Julkaiseminen",
         "publishedLine": "Julkaistu {date}.",
-        "changedLine": "Lukijat näkevät version, joka julkaistiin {date}."
+        "changedLine": "Lukijat näkevät version, joka julkaistiin {date}.",
+        "savedLine": "Tallennettu viimeksi {date}.",
+        "savedByLine": "Tallennettu viimeksi {date}, tallentaja {name}.",
+        "savedByViaLine": "Tallennettu viimeksi {date}, tallentaja {name} sovelluksen {app} kautta.",
+        "savedByViaUnnamedLine": "Tallennettu viimeksi {date}, tallentaja {name} tekoälysovelluksen kautta."
       },
       "viewLive": "Näytä Kirjastossa",
       "preview": "Esikatselu",

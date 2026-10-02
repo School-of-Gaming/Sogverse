@@ -535,7 +535,11 @@
       "statusPanel": {
         "label": "Publishing",
         "publishedLine": "Published {date}.",
-        "changedLine": "Readers see the version published on {date}."
+        "changedLine": "Readers see the version published on {date}.",
+        "savedLine": "Last saved {date}.",
+        "savedByLine": "Last saved {date} by {name}.",
+        "savedByViaLine": "Last saved {date} by {name} via {app}.",
+        "savedByViaUnnamedLine": "Last saved {date} by {name} via an AI app."
       },
       "viewLive": "View in the Library",
       "preview": "Preview",

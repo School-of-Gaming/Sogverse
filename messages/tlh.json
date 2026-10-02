@@ -579,7 +579,11 @@
       "statusPanel": {
         "label": "ngeHmeH",
         "publishedLine": "{date} ngeHlu’pu’.",
-        "changedLine": "{date} ngeHlu’pu’bogh ghItlh legh laDwI’pu’."
+        "changedLine": "{date} ngeHlu’pu’bogh ghItlh legh laDwI’pu’.",
+        "savedLine": "poltaHvIS: {date}.",
+        "savedByLine": "poltaHvIS: {date}. polta’pu’ {name}.",
+        "savedByViaLine": "poltaHvIS: {date}. {app} lo’taHvIS polta’pu’ {name}.",
+        "savedByViaUnnamedLine": "poltaHvIS: {date}. De’wI’ yab lo’taHvIS polta’pu’ {name}."
       },
       "viewLive": "paq qachDaq yIlegh",
       "preview": "wa’DIch yIlegh",

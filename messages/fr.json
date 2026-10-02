@@ -535,7 +535,11 @@
       "statusPanel": {
         "label": "Publication",
         "publishedLine": "Publié le {date}.",
-        "changedLine": "Les lecteurs voient la version publiée le {date}."
+        "changedLine": "Les lecteurs voient la version publiée le {date}.",
+        "savedLine": "Dernier enregistrement le {date}.",
+        "savedByLine": "Dernier enregistrement le {date} par {name}.",
+        "savedByViaLine": "Dernier enregistrement le {date} par {name} via {app}.",
+        "savedByViaUnnamedLine": "Dernier enregistrement le {date} par {name} via une application d’IA."
       },
       "viewLive": "Voir dans la Bibliothèque",
       "preview": "Aperçu",

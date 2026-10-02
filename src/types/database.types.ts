@@ -1456,6 +1456,8 @@ export type Database = {
           cover_path: string | null
           created_at: string
           id: string
+          last_saved_by: string | null
+          last_saved_via: string | null
           updated_at: string
         }
         Insert: {
@@ -1467,6 +1469,8 @@ export type Database = {
           cover_path?: string | null
           created_at?: string
           id?: string
+          last_saved_by?: string | null
+          last_saved_via?: string | null
           updated_at?: string
         }
         Update: {
@@ -1478,6 +1482,8 @@ export type Database = {
           cover_path?: string | null
           created_at?: string
           id?: string
+          last_saved_by?: string | null
+          last_saved_via?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1500,6 +1506,20 @@ export type Database = {
             columns: ["cover_image_id"]
             isOneToOne: false
             referencedRelation: "catalogue_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_articles_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_articles_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -3731,6 +3751,17 @@ export type Database = {
           waitlist_position: number
         }[]
       }
+      get_oauth_client: {
+        Args: { p_id: string }
+        Returns: {
+          client_name: string
+          client_uri: string
+          created_at: string
+          deleted_at: string
+          id: string
+          logo_uri: string
+        }[]
+      }
       get_open_substitution_requests: { Args: never; Returns: Json }
       get_product_groups_with_details: {
         Args: { p_product_id: string }
@@ -3977,6 +4008,16 @@ export type Database = {
         }
         Returns: string
       }
+      save_library_article_version: {
+        Args: {
+          p_body: string
+          p_id: string
+          p_locale: string
+          p_summary: string
+          p_title: string
+        }
+        Returns: string
+      }
       save_team_profile: {
         Args: {
           p_nickname?: string
@@ -4086,6 +4127,17 @@ export type Database = {
           p_session_date: string
         }
         Returns: Json
+      }
+      set_library_article_category: {
+        Args: {
+          p_category?: Database["public"]["Enums"]["library_article_category"]
+          p_id: string
+        }
+        Returns: string
+      }
+      set_library_article_cover: {
+        Args: { p_cover_image_id?: string; p_id: string }
+        Returns: string
       }
       set_marketing_consent: {
         Args: {

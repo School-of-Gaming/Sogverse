@@ -19,7 +19,7 @@ CREATE TABLE public.library_article_translations (
 -- Name: TABLE library_article_translations; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.library_article_translations IS 'One language version of a Library article''s WORKING COPY — what an admin is editing in that locale, which may be saved incomplete. Any set of locales, at least one per article (save_library_article enforces it). The public never reads this table: publishing copies the complete versions to library_article_publication_translations. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — save_library_article, which replaces the whole set, is the only writer.';
+COMMENT ON TABLE public.library_article_translations IS 'One language version of a Library article''s WORKING COPY — what an admin is editing in that locale, which may be saved incomplete. Any set of locales, at least one per article: save_library_article refuses an empty set, and nothing else removes a version. The public never reads this table: publishing copies the complete versions to library_article_publication_translations. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are save_library_article, which replaces the whole set, and save_library_article_version, which writes one version.';
 
 
 --
