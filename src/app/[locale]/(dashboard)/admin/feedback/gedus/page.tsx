@@ -5,11 +5,7 @@ import {
 
 export const generateMetadata = feedbackMetadata;
 
-/** `/admin/feedback/gedus` — every gedu with feedback in the range, worst first. */
-export default function AdminFeedbackGedusRoute({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  return <FeedbackListRoute dimension="gedu" searchParams={searchParams} />;
+/** `/admin/feedback/gedus` — every gedu with feedback, worst first. */
+export default function AdminFeedbackGedusRoute() {
+  return <FeedbackListRoute dimension="gedu" />;
 }

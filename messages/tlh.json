@@ -1615,7 +1615,7 @@
       "sources": {
         "gamerOnline": "QujwI'pu' ja'chuq, De'wI' ghommey pItlh"
       },
-      "empty": "poHvam ja'chuq pagh.",
+      "empty": "DaH ja'chuq pagh.",
       "loadError": "ja'chuq lI'laHbe'. nIqHom yIchu'qa'.",
       "loadErrorWithReason": "ja'chuq lI'laHbe': {reason}",
       "noAnswers": "jangmey pagh",
@@ -1623,23 +1623,13 @@
       "skipped": "juSlu'",
       "belowAverage": "motlh bIng",
       "belowAverageOn": "motlh bIng: {statement}",
-      "change": {
-        "up": "Dun {points, plural, one {# mI’} other {# mI’mey}}",
-        "down": "bIng {points, plural, one {# mI’} other {# mI’mey}}",
-        "none": "choHbe'",
-        "points": "{points, plural, one {# mI’} other {# mI’mey}}",
-        "previous": "{days, plural, one {# jaj} other {# jaj}} vorgh"
-      },
       "timeline": {
         "byWeek": "Hogh jangmey QaQ",
         "byMonth": "jar jangmey QaQ",
         "platform": "Hoch",
-        "hint": "poH yIwIv",
-        "start": "poH tagh",
-        "end": "poH Qav",
         "pointWeek": "Hogh laDlu’bogh",
         "pointMonth": "jar laDlu’bogh",
-        "selection": "{range} · {days, plural, one {# jaj} other {# jaj}}"
+        "since": "{date} vo'"
       },
       "back": {
         "overview": "ja'chuqDaq yIchegh",
@@ -1686,11 +1676,10 @@
         }
       },
       "rows": {
-        "none": "poHvam pagh.",
+        "none": "DaH pagh.",
         "answers": "jangmey",
         "positive": "QaQ",
-        "positiveAgainst": "QaQ (Hoch {share})",
-        "change": "choH"
+        "positiveAgainst": "QaQ (Hoch {share})"
       },
       "lists": {
         "titles": {
@@ -1713,7 +1702,7 @@
           "gedu": "Gedu mI' yIpoSmoH",
           "gamer": "QujwI' mI' yIpoSmoH"
         },
-        "none": "poHvam Dochvam jang pagh.",
+        "none": "DaH Dochvam jang pagh.",
         "platform": "Hoch {share}",
         "groupsHeading": "ghommey",
         "gedusHeading": "Gedupu'",

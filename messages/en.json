@@ -1571,7 +1571,7 @@
       "sources": {
         "gamerOnline": "From gamers after online sessions"
       },
-      "empty": "No feedback was given in this range.",
+      "empty": "No feedback has been given yet.",
       "loadError": "The feedback could not be loaded. Reload the page to try again.",
       "loadErrorWithReason": "The feedback could not be loaded: {reason}",
       "noAnswers": "No answers",
@@ -1579,23 +1579,13 @@
       "skipped": "Skipped",
       "belowAverage": "Below average",
       "belowAverageOn": "Below average on: {statement}",
-      "change": {
-        "up": "Up {points, plural, one {# point} other {# points}}",
-        "down": "Down {points, plural, one {# point} other {# points}}",
-        "none": "No change",
-        "points": "{points, plural, one {# point} other {# points}}",
-        "previous": "vs the previous {days, plural, one {day} other {# days}}"
-      },
       "timeline": {
         "byWeek": "Positive answers by week",
         "byMonth": "Positive answers by month",
         "platform": "Platform",
-        "hint": "Drag across the chart to choose a period",
-        "start": "Start of the period",
-        "end": "End of the period",
         "pointWeek": "Week being read",
         "pointMonth": "Month being read",
-        "selection": "{range} · {days, plural, one {# day} other {# days}}"
+        "since": "Since {date}"
       },
       "back": {
         "overview": "Back to feedback",
@@ -1642,11 +1632,10 @@
         }
       },
       "rows": {
-        "none": "Nothing in this range.",
+        "none": "Nothing here yet.",
         "answers": "Answers",
         "positive": "Positive",
-        "positiveAgainst": "Positive (platform {share})",
-        "change": "Change"
+        "positiveAgainst": "Positive (platform {share})"
       },
       "lists": {
         "titles": {
@@ -1669,7 +1658,7 @@
           "gedu": "Open the Gedu's account",
           "gamer": "Open the gamer's account"
         },
-        "none": "Nothing was answered about this in the selected range.",
+        "none": "Nothing has been answered about this yet.",
         "platform": "Platform {share}",
         "groupsHeading": "Groups",
         "gedusHeading": "Gedus",

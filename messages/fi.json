@@ -1571,7 +1571,7 @@
       "sources": {
         "gamerOnline": "Pelaajilta verkkotapaamisten jälkeen"
       },
-      "empty": "Tällä aikavälillä ei annettu palautetta.",
+      "empty": "Palautetta ei ole vielä annettu.",
       "loadError": "Palautetta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
       "loadErrorWithReason": "Palautetta ei voitu ladata: {reason}",
       "noAnswers": "Ei vastauksia",
@@ -1579,23 +1579,13 @@
       "skipped": "Ohitettu",
       "belowAverage": "Alle keskiarvon",
       "belowAverageOn": "Alle keskiarvon väitteessä: {statement}",
-      "change": {
-        "up": "Nousu {points, plural, one {# prosenttiyksikkö} other {# prosenttiyksikköä}}",
-        "down": "Lasku {points, plural, one {# prosenttiyksikkö} other {# prosenttiyksikköä}}",
-        "none": "Ei muutosta",
-        "points": "{points, plural, one {# %-yksikkö} other {# %-yksikköä}}",
-        "previous": "{days, plural, one {edelliseen päivään} other {edellisiin # päivään}} verrattuna"
-      },
       "timeline": {
         "byWeek": "Myönteiset vastaukset viikoittain",
         "byMonth": "Myönteiset vastaukset kuukausittain",
         "platform": "Koko alusta",
-        "hint": "Valitse jakso vetämällä kaavion poikki",
-        "start": "Jakson alku",
-        "end": "Jakson loppu",
         "pointWeek": "Luettava viikko",
         "pointMonth": "Luettava kuukausi",
-        "selection": "{range} · {days, plural, one {# päivä} other {# päivää}}"
+        "since": "{date} alkaen"
       },
       "back": {
         "overview": "Takaisin palautteeseen",
@@ -1642,11 +1632,10 @@
         }
       },
       "rows": {
-        "none": "Tällä aikavälillä ei ole mitään.",
+        "none": "Täällä ei ole vielä mitään.",
         "answers": "Vastaukset",
         "positive": "Myönteiset",
-        "positiveAgainst": "Myönteiset (koko alusta {share})",
-        "change": "Muutos"
+        "positiveAgainst": "Myönteiset (koko alusta {share})"
       },
       "lists": {
         "titles": {
@@ -1669,7 +1658,7 @@
           "gedu": "Avaa gedun tili",
           "gamer": "Avaa pelaajan tili"
         },
-        "none": "Tästä ei vastattu mitään valitulla aikavälillä.",
+        "none": "Tästä ei ole vielä vastattu mitään.",
         "platform": "Koko alusta {share}",
         "groupsHeading": "Ryhmät",
         "gedusHeading": "Gedut",

@@ -2,8 +2,6 @@ import type { ComponentProps } from "react";
 import type { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import type { FeedbackDimension, FeedbackScope, FeedbackScopeKind } from "./aggregate-feedback";
-import { selectionQuery } from "./feedback-selection";
-import type { FeedbackPeriod } from "./feedback-tally";
 
 /** A link target the app's own typed `Link` accepts. */
 export type FeedbackHref = ComponentProps<typeof Link>["href"];
@@ -17,18 +15,15 @@ export type FeedbackOrigin =
   | { kind: "responses" }
   | { kind: "detail"; scope: FeedbackScope };
 
-/**
- * **One page of the feedback section**, as data. Every link between the pages
- * is built from a place and the selection on show.
- */
+/** **One page of the feedback section**, as data. Every link between the pages is built from a place. */
 export type FeedbackPlace =
   | { view: "overview" }
   | { view: "list"; dimension: FeedbackDimension }
   | { view: "detail"; scope: FeedbackScope; origin: FeedbackOrigin | null }
   | { view: "responses" };
 
-/** The query parameter a detail page's origin travels in; `from` and `to` are the selection's. */
-export const FEEDBACK_ORIGIN_PARAM = "via";
+/** The query parameter a detail page's origin travels in. */
+export const FEEDBACK_ORIGIN_PARAM = "from";
 
 /** The origin token of the platform's "What gamers said" page. */
 const RESPONSES_TOKEN = "responses";
@@ -58,17 +53,13 @@ export function feedbackScopeId(id: string): string | null {
   return isFeedbackId(id) ? id.toLowerCase() : null;
 }
 
-function firstOf(raw: string | string[] | undefined): string | undefined {
-  return Array.isArray(raw) ? raw[0] : raw;
-}
-
 /**
- * The origin a `?via=` value names, or `null` for anything else — an unusable
+ * The origin a `?from=` value names, or `null` for anything else — an unusable
  * origin costs the reader nothing but the back link's destination, which then
  * falls to the scope's own list.
  */
 export function parseFeedbackOrigin(raw: string | string[] | undefined): FeedbackOrigin | null {
-  const value = firstOf(raw);
+  const value = Array.isArray(raw) ? raw[0] : raw;
   if (value === undefined) return null;
   if (value === RESPONSES_TOKEN) return { kind: "responses" };
   const dimension = DIMENSIONS.find((candidate) => DIMENSION_TOKENS[candidate] === value);
@@ -91,22 +82,6 @@ function originToken(origin: FeedbackOrigin): string {
   }
 }
 
-/**
- * The query a place carries: the selection, always — the default is measured
- * back from today, so a link that left it implicit would mean another period
- * tomorrow — and the place's own state.
- */
-export function feedbackPlaceQuery(
-  place: FeedbackPlace,
-  selection: FeedbackPeriod,
-): Record<string, string> {
-  const query = selectionQuery(selection);
-  if (place.view === "detail" && place.origin !== null) {
-    query[FEEDBACK_ORIGIN_PARAM] = originToken(place.origin);
-  }
-  return query;
-}
-
 /** The place an origin is: where a detail page's back link leads. */
 export function placeOfOrigin(origin: FeedbackOrigin): FeedbackPlace {
   switch (origin.kind) {
@@ -126,17 +101,20 @@ export function defaultBackPlace(scope: FeedbackScope): FeedbackPlace {
     : { view: "list", dimension: scope.kind };
 }
 
-/** A place's admin route, at a selection. */
-export function adminFeedbackHref(place: FeedbackPlace, selection: FeedbackPeriod): FeedbackHref {
-  const query = feedbackPlaceQuery(place, selection);
+/** A place's admin route; a detail page's carries its origin, for its back link. */
+export function feedbackHref(place: FeedbackPlace): FeedbackHref {
   switch (place.view) {
     case "overview":
-      return { pathname: ROUTES.admin.feedback, query };
+      return ROUTES.admin.feedback;
     case "list":
-      return { pathname: ROUTES.admin.feedbackList(place.dimension), query };
-    case "detail":
-      return { ...ROUTES.admin.feedbackDetail(place.scope.kind, place.scope.id), query };
+      return ROUTES.admin.feedbackList(place.dimension);
+    case "detail": {
+      const route = ROUTES.admin.feedbackDetail(place.scope.kind, place.scope.id);
+      return place.origin === null
+        ? route
+        : { ...route, query: { [FEEDBACK_ORIGIN_PARAM]: originToken(place.origin) } };
+    }
     case "responses":
-      return { pathname: ROUTES.admin.feedbackResponses, query };
+      return ROUTES.admin.feedbackResponses;
   }
 }

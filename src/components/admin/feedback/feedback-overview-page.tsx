@@ -10,48 +10,31 @@ import {
   buildFeedbackOverview,
   buildFeedbackTimeline,
   type FeedbackDimension,
-  type FeedbackHeadline,
   type FeedbackOverview,
   type FeedbackParticipation,
+  type FeedbackRead,
   type FeedbackStatementLine,
   type FeedbackTimeline as FeedbackTimelineModel,
+  type ShareFigure,
 } from "./aggregate-feedback";
 import { formatShare } from "./feedback-format";
-import { Change, ShareText } from "./feedback-marks";
-import {
-  FeedbackSelectionProvider,
-  useFeedbackHref,
-  useFeedbackPeriods,
-  type FeedbackRead,
-} from "./feedback-nav";
-import type { FeedbackPlace } from "./feedback-place";
+import { ShareText } from "./feedback-marks";
+import { feedbackHref, type FeedbackPlace } from "./feedback-place";
 import { FeedbackShell } from "./feedback-shell";
 import { FeedbackTimeline } from "./feedback-timeline";
 import { useFeedbackStatementLabels } from "./use-feedback-labels";
 
 /**
  * **`/admin/feedback` — the pulse, with no lists on it.** One figure for how
- * positive gamers are and which way it is moving, the whole history to pick
- * the period from, one line per statement, and four doors to the lists an
- * admin dives into: products, groups, Gedus and what gamers said, each saying
- * in a few words whether there is anything to find there.
+ * positive gamers have been since the first answer, the whole history drawn
+ * beneath it, one line per statement, and four doors to the lists an admin
+ * dives into: products, groups, Gedus and what gamers said, each saying in a
+ * few words whether there is anything to find there.
  */
 export function FeedbackOverviewPage({ read }: { read: FeedbackRead }) {
-  return (
-    <FeedbackSelectionProvider history={read.history} initial={read.selection}>
-      <OverviewBody read={read} />
-    </FeedbackSelectionProvider>
-  );
-}
-
-function OverviewBody({ read }: { read: FeedbackRead }) {
   const t = useTranslations("admin.feedback");
   const { dataset, source, history } = read;
-  const periods = useFeedbackPeriods();
-  const overview = useMemo(
-    () => buildFeedbackOverview(dataset, source, periods),
-    [dataset, source, periods],
-  );
+  const overview = useMemo(() => buildFeedbackOverview(dataset, source), [dataset, source]);
   const timeline = useMemo(
     () => buildFeedbackTimeline(dataset, source, history, null),
     [dataset, source, history],
@@ -77,13 +60,9 @@ function OverviewBody({ read }: { read: FeedbackRead }) {
 }
 
 /**
- * The headline figure for the selection, its move since the period before
- * and how many answered, over the timeline the selection is picked on.
- * Shared with the detail pages, which add the platform beside the figure.
- *
- * Every line above the timeline keeps its height whatever the selection
- * holds — "No answers" sits in the figure's own box, and a change that cannot
- * be stated leaves its line empty — so the chart never moves under a drag.
+ * The headline figure and how many answered, over the timeline of the whole
+ * history. Shared with the detail pages, which add the platform beside the
+ * figure.
  */
 export function FeedbackHero({
   headline,
@@ -92,7 +71,7 @@ export function FeedbackHero({
   scopeLabel,
   comparison,
 }: {
-  headline: FeedbackHeadline;
+  headline: ShareFigure;
   participation: FeedbackParticipation;
   timeline: FeedbackTimelineModel;
   /** The legend's name for the scope's line, beside the platform's. */
@@ -107,11 +86,11 @@ export function FeedbackHero({
       <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2 sm:items-end">
         <div className="space-y-1">
           <p className="flex h-12 items-end gap-2">
-            {headline.current.positiveShare === null ? (
-              <ShareText figure={headline.current} className="text-2xl font-semibold" />
+            {headline.positiveShare === null ? (
+              <ShareText figure={headline} className="text-2xl font-semibold" />
             ) : (
               <>
-                <ShareText figure={headline.current} className="text-5xl font-semibold leading-none tabular-nums" />
+                <ShareText figure={headline} className="text-5xl font-semibold leading-none tabular-nums" />
                 <span className="text-lg leading-tight text-muted-foreground">{t("positive")}</span>
               </>
             )}
@@ -120,9 +99,6 @@ export function FeedbackHero({
         </div>
         <div className="space-y-1">
           {comparison}
-          <p className="min-h-5 text-sm">
-            <Change points={headline.changePoints} withPeriod />
-          </p>
           <ParticipationLine participation={participation} />
         </div>
       </div>
@@ -161,26 +137,21 @@ function StatementLines({
       </div>
       <Card>
         <ul className="divide-y divide-border">
-          {statements.map((line) => (
+          {statements.map(({ key, figure }) => (
             <li
-              key={line.key}
-              className="grid gap-x-6 gap-y-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_14rem_6rem] sm:items-center"
+              key={key}
+              className="grid gap-x-6 gap-y-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_8rem_6rem] sm:items-center"
             >
-              <p className="text-sm">{labels[line.key] ?? line.key}</p>
-              <div className="text-sm">
-                {line.current.positiveShare === null ? (
-                  <ShareText figure={line.current} className="text-muted-foreground" />
-                ) : (
-                  <span className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="font-semibold tabular-nums">
-                      {t("positive", { share: formatShare(line.current.positiveShare, locale) })}
-                    </span>
-                    <Change points={line.changePoints} className="text-xs text-muted-foreground" />
-                  </span>
-                )}
-              </div>
+              <p className="text-sm">{labels[key] ?? key}</p>
+              {figure.positiveShare === null ? (
+                <ShareText figure={figure} className="text-sm text-muted-foreground" />
+              ) : (
+                <p className="text-sm font-semibold tabular-nums">
+                  {t("positive", { share: formatShare(figure.positiveShare, locale) })}
+                </p>
+              )}
               <p className="text-xs tabular-nums text-muted-foreground sm:text-right">
-                {line.current.lowShare === null ? null : t("low", { share: formatShare(line.current.lowShare, locale) })}
+                {figure.lowShare === null ? null : t("low", { share: formatShare(figure.lowShare, locale) })}
               </p>
             </li>
           ))}
@@ -237,9 +208,8 @@ function ExploreCard({
   /** Whether the first line names something to look at, and so reads in the full ink. */
   flagged: boolean;
 }) {
-  const href = useFeedbackHref();
   return (
-    <Link href={href(place)} className="group block">
+    <Link href={feedbackHref(place)} className="group block">
       <Card className="flex h-full items-center justify-between gap-3 p-4 transition-colors group-hover:bg-hover">
         <div className="min-w-0 space-y-0.5">
           <p className="text-sm font-semibold">{title}</p>

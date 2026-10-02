@@ -39,12 +39,6 @@ export interface FeedbackPeriod {
   to: string;
 }
 
-/** The span being read and the equal-length span just before it. */
-export interface FeedbackPeriods {
-  current: FeedbackPeriod;
-  previous: FeedbackPeriod;
-}
-
 /** One answer the source's catalogue knows. */
 export interface KnownAnswer {
   key: string;
@@ -154,24 +148,16 @@ export function tallyResponses(
   return { overall, statements };
 }
 
-/**
- * `a − b` in percentage points — a change since the previous period, or a gap
- * to the platform. `null` when either side had no answers.
- */
+/** `a − b` in percentage points: a gap to the platform. `null` when either side had no answers. */
 export function pointsBetween(a: ShareFigure, b: ShareFigure): number | null {
   if (a.positiveShare === null || b.positiveShare === null) return null;
   return (a.positiveShare - b.positiveShare) * 100;
 }
 
-/** Whether a scope's positive share is under the platform's for the same thing and period. */
+/** Whether a scope's positive share is under the platform's for the same thing. */
 export function isBelow(scope: ShareFigure, platform: ShareFigure): boolean {
   const gap = pointsBetween(scope, platform);
   return gap !== null && gap < 0;
-}
-
-/** Whether a session day falls inside an inclusive period. */
-export function inPeriod(date: string, period: FeedbackPeriod): boolean {
-  return period.from <= date && date <= period.to;
 }
 
 /** What one point of the timeline stands for. */
@@ -190,10 +176,7 @@ export function periodDays(period: FeedbackPeriod): number {
   return Math.round(ms / 86_400_000) + 1;
 }
 
-/**
- * The bucket a history's timeline is drawn in. Decided by the length of the
- * whole history, never by the selection, so dragging never redraws the line.
- */
+/** The bucket a history's timeline is drawn in, decided by the history's length. */
 export function bucketUnitFor(history: FeedbackPeriod): FeedbackBucketUnit {
   return periodDays(history) <= WEEKLY_UP_TO_DAYS ? "week" : "month";
 }

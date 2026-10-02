@@ -680,7 +680,7 @@ export const ROUTES = {
      */
     geduInvoicing: "/admin/gedu-invoicing",
     /**
-     * What gamers say about their sessions, over a range of session days: the
+     * What gamers say about their sessions, over the whole history: the
      * overview, with no lists on it. The lists, the details and the notes hang
      * off it below.
      */
@@ -690,7 +690,7 @@ export const ROUTES = {
     /** One product's, group's, Gedu's or gamer's feedback. */
     feedbackDetail: (kind: FeedbackRouteKind, id: string) =>
       ({ pathname: ADMIN_FEEDBACK_DETAIL_PATHNAMES[kind], params: { id } }) as const,
-    /** Every response in the range, worth reading first. */
+    /** Every response, worth reading first. */
     feedbackResponses: "/admin/feedback/responses",
     /**
      * The Fennoa customers a municipality club can be invoiced to — the contract

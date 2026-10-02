@@ -7,17 +7,16 @@ import {
   buildFeedbackDimensionList,
   buildFeedbackTimeline,
   type FeedbackDimension,
+  type FeedbackRead,
 } from "./aggregate-feedback";
 import { FeedbackDimensionRows } from "./feedback-dimension-rows";
-import { FeedbackSelectionProvider, useFeedbackPeriods, type FeedbackRead } from "./feedback-nav";
 import { FeedbackShell } from "./feedback-shell";
 import { FeedbackTimeline } from "./feedback-timeline";
 
 /**
  * **One dimension's list — products, groups or Gedus — worst first**: the
  * page an admin dives into from the overview, and the way into each row's own
- * page. The platform's timeline sits above it, so the period can be moved
- * here as on every other feedback page.
+ * page, under the platform's timeline.
  */
 export function FeedbackListPage({
   read,
@@ -26,20 +25,11 @@ export function FeedbackListPage({
   read: FeedbackRead;
   dimension: FeedbackDimension;
 }) {
-  return (
-    <FeedbackSelectionProvider history={read.history} initial={read.selection}>
-      <ListBody read={read} dimension={dimension} />
-    </FeedbackSelectionProvider>
-  );
-}
-
-function ListBody({ read, dimension }: { read: FeedbackRead; dimension: FeedbackDimension }) {
   const t = useTranslations("admin.feedback.lists");
   const { dataset, source, history } = read;
-  const periods = useFeedbackPeriods();
   const list = useMemo(
-    () => buildFeedbackDimensionList(dataset, source, periods, dimension),
-    [dataset, source, periods, dimension],
+    () => buildFeedbackDimensionList(dataset, source, dimension),
+    [dataset, source, dimension],
   );
   const timeline = useMemo(
     () => buildFeedbackTimeline(dataset, source, history, null),

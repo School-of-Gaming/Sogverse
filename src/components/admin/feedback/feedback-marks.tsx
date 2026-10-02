@@ -1,17 +1,14 @@
 "use client";
 
 import { Fragment } from "react";
-import { ArrowDown, ArrowUp, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   SESSION_FEEDBACK_RATINGS,
   type SessionFeedbackRating,
 } from "@/components/voice/feedback/session-feedback-items";
-import { cn } from "@/lib/utils";
 import type { ShareFigure } from "./aggregate-feedback";
 import { formatShare } from "./feedback-format";
-import { useFeedbackSelection } from "./feedback-nav";
-import { periodDays } from "./feedback-tally";
 import { useRatingWord } from "./use-feedback-labels";
 
 /**
@@ -40,43 +37,6 @@ export function ShareText({
       {figure.positiveShare === null
         ? t("noAnswers")
         : formatShare(figure.positiveShare, locale)}
-    </span>
-  );
-}
-
-/**
- * A change in percentage points, with its direction as an arrow and in words.
- * Nothing at all when the two periods cannot be compared.
- */
-export function Change({
-  points,
-  withPeriod = false,
-  className,
-}: {
-  points: number | null;
-  /** Adds "vs the previous 92 days", the selection's length. */
-  withPeriod?: boolean;
-  className?: string;
-}) {
-  const t = useTranslations("admin.feedback.change");
-  const { selection } = useFeedbackSelection();
-  if (points === null) return null;
-  const rounded = Math.round(points);
-  const size = Math.abs(rounded);
-  const Arrow = rounded > 0 ? ArrowUp : ArrowDown;
-
-  return (
-    <span className={cn("inline-flex items-center gap-1 whitespace-nowrap", className)}>
-      {rounded !== 0 && <Arrow className="h-3.5 w-3.5 shrink-0" aria-hidden />}
-      <span className="sr-only">
-        {rounded === 0
-          ? t("none")
-          : rounded > 0
-            ? t("up", { points: size })
-            : t("down", { points: size })}
-      </span>
-      <span aria-hidden>{rounded === 0 ? t("none") : t("points", { points: size })}</span>
-      {withPeriod && <span className="text-muted-foreground">{t("previous", { days: periodDays(selection) })}</span>}
     </span>
   );
 }

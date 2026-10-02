@@ -6,10 +6,6 @@ import {
 export const generateMetadata = feedbackMetadata;
 
 /** `/admin/feedback` — the overview: the pulse, and the doors to the lists. */
-export default function AdminFeedbackRoute({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  return <FeedbackOverviewRoute searchParams={searchParams} />;
+export default function AdminFeedbackRoute() {
+  return <FeedbackOverviewRoute />;
 }

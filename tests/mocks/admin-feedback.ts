@@ -1,4 +1,4 @@
-import type { FeedbackPeriods } from "@/components/admin/feedback/aggregate-feedback";
+import type { FeedbackPeriod } from "@/components/admin/feedback/aggregate-feedback";
 import type {
   AdminFeedbackDataset,
   AdminFeedbackGedu,
@@ -9,7 +9,7 @@ import type {
 
 /**
  * Builders for the admin feedback dataset the RPC returns: a response or a
- * session at one of a few fixed groups, and a dataset spanning both periods.
+ * session at one of a few fixed groups, and a dataset spanning the history.
  */
 
 export const FEEDBACK_CLUB_A: AdminFeedbackGroupRef = {
@@ -36,11 +36,8 @@ export const FEEDBACK_CLUB_B: AdminFeedbackGroupRef = {
 export const FEEDBACK_GEDU_AINO: AdminFeedbackGedu = { id: "gedu-aino", name: "Aino", role: "primary" };
 export const FEEDBACK_GEDU_MIKA: AdminFeedbackGedu = { id: "gedu-mika", name: "Mika", role: "assistant" };
 
-/** A 30-day current period and the 30 days before it. */
-export const FEEDBACK_PERIODS: FeedbackPeriods = {
-  current: { from: "2026-09-01", to: "2026-09-30" },
-  previous: { from: "2026-08-02", to: "2026-08-31" },
-};
+/** Three months of history, ending "today". */
+export const FEEDBACK_HISTORY: FeedbackPeriod = { from: "2026-07-01", to: "2026-09-30" };
 
 /** One rating for every statement the online catalogue asks. */
 export function allFive(rating: number): Record<string, number> {
@@ -85,15 +82,10 @@ export function feedbackSession(overrides: Partial<AdminFeedbackSession> = {}): 
   };
 }
 
-/** A dataset spanning both of `FEEDBACK_PERIODS`. */
+/** A dataset spanning `FEEDBACK_HISTORY`. */
 export function feedbackDataset(
   responses: AdminFeedbackResponse[],
   sessions: AdminFeedbackSession[] = [],
 ): AdminFeedbackDataset {
-  return {
-    from: FEEDBACK_PERIODS.previous.from,
-    to: FEEDBACK_PERIODS.current.to,
-    responses,
-    sessions,
-  };
+  return { ...FEEDBACK_HISTORY, responses, sessions };
 }

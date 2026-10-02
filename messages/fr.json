@@ -1571,7 +1571,7 @@
       "sources": {
         "gamerOnline": "Des gamers après les séances en ligne"
       },
-      "empty": "Aucun avis n’a été donné sur cette période.",
+      "empty": "Aucun avis n’a encore été donné.",
       "loadError": "Les avis n’ont pas pu être chargés. Rechargez la page pour réessayer.",
       "loadErrorWithReason": "Les avis n’ont pas pu être chargés : {reason}",
       "noAnswers": "Aucune réponse",
@@ -1579,23 +1579,13 @@
       "skipped": "Passée",
       "belowAverage": "Sous la moyenne",
       "belowAverageOn": "Sous la moyenne sur : {statement}",
-      "change": {
-        "up": "En hausse de {points, plural, one {# point} other {# points}}",
-        "down": "En baisse de {points, plural, one {# point} other {# points}}",
-        "none": "Pas de changement",
-        "points": "{points, plural, one {# point} other {# points}}",
-        "previous": "par rapport {days, plural, one {au jour précédent} other {aux # jours précédents}}"
-      },
       "timeline": {
         "byWeek": "Réponses positives par semaine",
         "byMonth": "Réponses positives par mois",
         "platform": "Plateforme",
-        "hint": "Faites glisser sur le graphique pour choisir une période",
-        "start": "Début de la période",
-        "end": "Fin de la période",
         "pointWeek": "Semaine consultée",
         "pointMonth": "Mois consulté",
-        "selection": "{range} · {days, plural, one {# jour} other {# jours}}"
+        "since": "Depuis le {date}"
       },
       "back": {
         "overview": "Retour aux avis",
@@ -1642,11 +1632,10 @@
         }
       },
       "rows": {
-        "none": "Rien sur cette période.",
+        "none": "Rien pour l’instant.",
         "answers": "Réponses",
         "positive": "Positives",
-        "positiveAgainst": "Positives (plateforme {share})",
-        "change": "Évolution"
+        "positiveAgainst": "Positives (plateforme {share})"
       },
       "lists": {
         "titles": {
@@ -1669,7 +1658,7 @@
           "gedu": "Ouvrir le compte du Gedu",
           "gamer": "Ouvrir le compte du gamer"
         },
-        "none": "Aucune réponse à ce sujet sur la période choisie.",
+        "none": "Aucune réponse à ce sujet pour l’instant.",
         "platform": "Plateforme {share}",
         "groupsHeading": "Groupes",
         "gedusHeading": "Gedus",

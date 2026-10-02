@@ -1571,7 +1571,7 @@
       "sources": {
         "gamerOnline": "Från gamers efter onlinesessioner"
       },
-      "empty": "Ingen feedback gavs under den här perioden.",
+      "empty": "Ingen feedback har getts än.",
       "loadError": "Feedbacken kunde inte laddas. Ladda om sidan och försök igen.",
       "loadErrorWithReason": "Feedbacken kunde inte laddas: {reason}",
       "noAnswers": "Inga svar",
@@ -1579,23 +1579,13 @@
       "skipped": "Hoppades över",
       "belowAverage": "Under genomsnittet",
       "belowAverageOn": "Under genomsnittet på: {statement}",
-      "change": {
-        "up": "Upp {points, plural, one {# procentenhet} other {# procentenheter}}",
-        "down": "Ned {points, plural, one {# procentenhet} other {# procentenheter}}",
-        "none": "Ingen förändring",
-        "points": "{points, plural, one {# procentenhet} other {# procentenheter}}",
-        "previous": "jämfört med {days, plural, one {föregående dag} other {föregående # dagar}}"
-      },
       "timeline": {
         "byWeek": "Positiva svar per vecka",
         "byMonth": "Positiva svar per månad",
         "platform": "Plattformen",
-        "hint": "Dra över diagrammet för att välja en period",
-        "start": "Periodens början",
-        "end": "Periodens slut",
         "pointWeek": "Vecka som läses",
         "pointMonth": "Månad som läses",
-        "selection": "{range} · {days, plural, one {# dag} other {# dagar}}"
+        "since": "Sedan {date}"
       },
       "back": {
         "overview": "Tillbaka till feedback",
@@ -1642,11 +1632,10 @@
         }
       },
       "rows": {
-        "none": "Inget under den här perioden.",
+        "none": "Inget här än.",
         "answers": "Svar",
         "positive": "Positiva",
-        "positiveAgainst": "Positiva (plattformen {share})",
-        "change": "Förändring"
+        "positiveAgainst": "Positiva (plattformen {share})"
       },
       "lists": {
         "titles": {
@@ -1669,7 +1658,7 @@
           "gedu": "Öppna Gedus konto",
           "gamer": "Öppna gamerns konto"
         },
-        "none": "Inget besvarades om detta under den valda perioden.",
+        "none": "Inget har besvarats om detta än.",
         "platform": "Plattformen {share}",
         "groupsHeading": "Grupper",
         "gedusHeading": "Geduer",

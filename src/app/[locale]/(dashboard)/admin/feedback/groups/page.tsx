@@ -5,11 +5,7 @@ import {
 
 export const generateMetadata = feedbackMetadata;
 
-/** `/admin/feedback/groups` — every group with feedback in the range, worst first. */
-export default function AdminFeedbackGroupsRoute({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  return <FeedbackListRoute dimension="group" searchParams={searchParams} />;
+/** `/admin/feedback/groups` — every group with feedback, worst first. */
+export default function AdminFeedbackGroupsRoute() {
+  return <FeedbackListRoute dimension="group" />;
 }

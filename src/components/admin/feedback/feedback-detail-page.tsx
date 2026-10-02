@@ -13,21 +13,17 @@ import {
   type FeedbackDetail,
   type FeedbackDetailStatement,
   type FeedbackGamerEntry,
+  type FeedbackRead,
   type FeedbackScope,
   type PlatformComparison,
 } from "./aggregate-feedback";
 import { FeedbackDimensionRows } from "./feedback-dimension-rows";
 import { formatShare } from "./feedback-format";
-import { AnswerBreakdown, BelowAverage, Change, ShareText } from "./feedback-marks";
-import {
-  FeedbackSelectionProvider,
-  useFeedbackHref,
-  useFeedbackPeriods,
-  type FeedbackRead,
-} from "./feedback-nav";
+import { AnswerBreakdown, BelowAverage, ShareText } from "./feedback-marks";
 import { FeedbackHero } from "./feedback-overview-page";
 import {
   defaultBackPlace,
+  feedbackHref,
   placeOfOrigin,
   type FeedbackHref,
   type FeedbackOrigin,
@@ -38,9 +34,9 @@ import { useFeedbackStatementLabels, useRatingWord } from "./use-feedback-labels
 
 /**
  * **One product, group, Gedu or gamer.** The same reading as the overview's,
- * narrowed to the one thing and set beside the platform: how positive, against
- * what, moving which way; each statement's answers in full; what sits under
- * it; and what gamers said, the responses worth reading first.
+ * narrowed to the one thing and set beside the platform: how positive, and
+ * against what; each statement's answers in full; what sits under it; and what
+ * gamers said, the responses worth reading first.
  *
  * A gamer is a child, and is read only against themselves over time: no
  * platform figure, no mark, no below-average line. A group's gamers are listed
@@ -55,28 +51,11 @@ export function FeedbackDetailPage({
   scope: FeedbackScope;
   origin: FeedbackOrigin | null;
 }) {
-  return (
-    <FeedbackSelectionProvider history={read.history} initial={read.selection}>
-      <DetailBody read={read} scope={scope} origin={origin} />
-    </FeedbackSelectionProvider>
-  );
-}
-
-function DetailBody({
-  read,
-  scope,
-  origin,
-}: {
-  read: FeedbackRead;
-  scope: FeedbackScope;
-  origin: FeedbackOrigin | null;
-}) {
   const t = useTranslations("admin.feedback.detail");
   const { dataset, source, history } = read;
-  const periods = useFeedbackPeriods();
   const detail = useMemo(
-    () => buildFeedbackDetail(dataset, source, periods, scope),
-    [dataset, source, periods, scope],
+    () => buildFeedbackDetail(dataset, source, scope),
+    [dataset, source, scope],
   );
   const timeline = useMemo(
     () => buildFeedbackTimeline(dataset, source, history, scope),
@@ -113,8 +92,8 @@ function DetailBody({
         timeline={timeline}
         scopeLabel={detail.name ?? kindLabel}
         comparison={
-          detail.headline.againstPlatform === null ? undefined : (
-            <PlatformLine comparison={detail.headline.againstPlatform} />
+          detail.againstPlatform === null ? undefined : (
+            <PlatformLine comparison={detail.againstPlatform} />
           )
         }
       />
@@ -147,21 +126,23 @@ function adminPageOf(detail: FeedbackDetail): FeedbackHref | null {
   }
 }
 
-/**
- * "Platform 89%", and the warning when the scope is below it. Both lines keep
- * their height when empty, since the selection decides whether they are.
- */
+/** "Platform 89%", and the warning when the scope is below it. */
 function PlatformLine({ comparison }: { comparison: PlatformComparison }) {
   const t = useTranslations("admin.feedback.detail");
   const locale = useLocale();
   return (
-    <div className="space-y-1">
-      <p className="min-h-5 text-sm text-muted-foreground">
-        {comparison.platform.positiveShare !== null &&
-          t("platform", { share: formatShare(comparison.platform.positiveShare, locale) })}
-      </p>
-      <p className="min-h-5">{comparison.belowPlatform && <BelowAverage statement={null} />}</p>
-    </div>
+    <>
+      {comparison.platform.positiveShare !== null && (
+        <p className="text-sm text-muted-foreground">
+          {t("platform", { share: formatShare(comparison.platform.positiveShare, locale) })}
+        </p>
+      )}
+      {comparison.belowPlatform && (
+        <p>
+          <BelowAverage statement={null} />
+        </p>
+      )}
+    </>
   );
 }
 
@@ -188,8 +169,8 @@ function Statements({ detail }: { detail: FeedbackDetail }) {
 
 /**
  * One statement: its wording and, first, the sentence an admin would say about
- * it — "19 of 23 said Yes or Definitely" — then the shares, the move and the
- * platform as text, and the five levels a row each.
+ * it — "19 of 23 said Yes or Definitely" — then the shares and the platform as
+ * text, and the five levels a row each.
  */
 function StatementSpread({
   line,
@@ -202,7 +183,7 @@ function StatementSpread({
   const tDetail = useTranslations("admin.feedback.detail");
   const locale = useLocale();
   const ratingWord = useRatingWord();
-  const { current } = line;
+  const current = line.figure;
   const platform = line.againstPlatform?.platform.positiveShare ?? null;
 
   return (
@@ -231,7 +212,6 @@ function StatementSpread({
             <span className="tabular-nums">
               {t("low", { share: formatShare(current.lowShare, locale) })}
             </span>
-            <Change points={line.changePoints} />
             {platform !== null && (
               <span className="tabular-nums">
                 {tDetail("platform", { share: formatShare(platform, locale) })}
@@ -250,7 +230,7 @@ function Children({ detail, origin }: { detail: FeedbackDetail; origin: Feedback
   const t = useTranslations("admin.feedback.detail");
   const { children } = detail;
   // Group and Gedu rows exist only under a scope that is set against the platform.
-  const platform = detail.headline.againstPlatform?.platform ?? null;
+  const platform = detail.againstPlatform?.platform ?? null;
   return (
     <>
       {children.groups !== null && platform !== null && (
@@ -291,13 +271,12 @@ function Children({ detail, origin }: { detail: FeedbackDetail; origin: Feedback
 /** A group's gamers, alphabetically, with how often each answered — never a score. */
 function GamerList({ gamers, origin }: { gamers: FeedbackGamerEntry[]; origin: FeedbackOrigin }) {
   const t = useTranslations("admin.feedback");
-  const href = useFeedbackHref();
   return (
     <ul className="grid divide-y divide-border sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-3">
       {gamers.map((gamer) => (
         <li key={gamer.id}>
           <Link
-            href={href({ view: "detail", scope: { kind: "gamer", id: gamer.id }, origin })}
+            href={feedbackHref({ view: "detail", scope: { kind: "gamer", id: gamer.id }, origin })}
             className="flex items-baseline justify-between gap-3 px-4 py-2 transition-colors hover:bg-hover"
           >
             <span className="truncate text-sm">{gamer.name}</span>

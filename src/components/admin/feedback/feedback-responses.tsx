@@ -15,8 +15,7 @@ import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule"
 import { formatDateOnly } from "@/lib/utils";
 import type { AdminFeedbackResponse } from "@/services/session-feedback/admin-feedback.contracts";
 import type { FeedbackResponses } from "./aggregate-feedback";
-import { useFeedbackHref } from "./feedback-nav";
-import type { FeedbackOrigin } from "./feedback-place";
+import { feedbackHref, type FeedbackOrigin } from "./feedback-place";
 import { SegmentedButtons } from "./feedback-shell";
 import { FEEDBACK_CATALOGUES } from "./feedback-sources";
 import { LOW_UP_TO } from "./feedback-tally";
@@ -186,14 +185,13 @@ function ResponseFacts({
 }) {
   const t = useTranslations("admin.feedback.responses");
   const locale = useLocale();
-  const href = useFeedbackHref();
   const linkClass = "hover:underline";
 
   return (
     <div className="space-y-0.5">
       <p className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
         <Link
-          href={href({ view: "detail", scope: { kind: "gamer", id: response.respondent.id }, origin })}
+          href={feedbackHref({ view: "detail", scope: { kind: "gamer", id: response.respondent.id }, origin })}
           className={`font-medium ${linkClass}`}
         >
           {response.respondent.name}
@@ -205,14 +203,14 @@ function ResponseFacts({
       <p className="flex flex-wrap items-baseline gap-x-3 text-xs text-muted-foreground">
         <span>
           <Link
-            href={href({ view: "detail", scope: { kind: "group", id: response.groupId }, origin })}
+            href={feedbackHref({ view: "detail", scope: { kind: "group", id: response.groupId }, origin })}
             className={linkClass}
           >
             {response.groupName}
           </Link>
           {SCHEDULE_PART_SEPARATOR}
           <Link
-            href={href({ view: "detail", scope: { kind: "product", id: response.productId }, origin })}
+            href={feedbackHref({ view: "detail", scope: { kind: "product", id: response.productId }, origin })}
             className={linkClass}
           >
             {response.productName}
@@ -225,7 +223,7 @@ function ResponseFacts({
                 <Fragment key={gedu.id}>
                   {index > 0 && ", "}
                   <Link
-                    href={href({ view: "detail", scope: { kind: "gedu", id: gedu.id }, origin })}
+                    href={feedbackHref({ view: "detail", scope: { kind: "gedu", id: gedu.id }, origin })}
                     className={linkClass}
                   >
                     {gedu.name}

@@ -5,21 +5,20 @@ import { Link } from "@/i18n/navigation";
 import type { FeedbackSource } from "@/services/session-feedback/admin-feedback.contracts";
 import type { FeedbackDimensionRow, ShareFigure } from "./aggregate-feedback";
 import { formatShare } from "./feedback-format";
-import { BelowAverage, Change, ShareBar, ShareText } from "./feedback-marks";
-import { useFeedbackHref } from "./feedback-nav";
-import type { FeedbackOrigin } from "./feedback-place";
+import { BelowAverage, ShareBar, ShareText } from "./feedback-marks";
+import { feedbackHref, type FeedbackOrigin } from "./feedback-place";
 import { useFeedbackStatementLabels } from "./use-feedback-labels";
 
 const ROW_GRID =
-  "grid gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,1fr)_6rem_minmax(8rem,16rem)_7rem] sm:items-center";
+  "grid gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,1fr)_6rem_minmax(8rem,16rem)] sm:items-center";
 
 /**
  * **Products, groups or Gedus, worst first**, each a link to its own page.
  *
- * A row reads left to right as name, how many answered, how positive against
- * the platform's grey mark, and how it moved; a row below the platform says so
- * in words, naming the statement it lags most. A row that ran sessions but
- * heard nothing back comes last, saying so in place of a share.
+ * A row reads left to right as name, how many answered, and how positive
+ * against the platform's grey mark; a row below the platform says so in words,
+ * naming the statement it lags most. A row that ran sessions but heard nothing
+ * back comes last, saying so in place of a share.
  */
 export function FeedbackDimensionRows({
   source,
@@ -53,7 +52,6 @@ export function FeedbackDimensionRows({
             ? t("positive")
             : t("positiveAgainst", { share: formatShare(platform.positiveShare, locale) })}
         </span>
-        <span>{t("change")}</span>
       </div>
       <ul className="divide-y divide-border">
         {rows.map((row) => (
@@ -77,14 +75,13 @@ function Row({
 }) {
   const t = useTranslations("admin.feedback");
   const locale = useLocale();
-  const href = useFeedbackHref();
   const labels = useFeedbackStatementLabels(source);
-  const share = row.overall.current.positiveShare;
+  const share = row.overall.positiveShare;
 
   return (
     <li>
       <Link
-        href={href({ view: "detail", scope: { kind: row.dimension, id: row.id }, origin })}
+        href={feedbackHref({ view: "detail", scope: { kind: row.dimension, id: row.id }, origin })}
         className="block px-4 py-3 transition-colors hover:bg-hover"
       >
         <div className={ROW_GRID}>
@@ -93,7 +90,7 @@ function Row({
             {t("answers", { count: row.responses })}
           </span>
           {share === null ? (
-            <ShareText figure={row.overall.current} className="text-sm text-muted-foreground" />
+            <ShareText figure={row.overall} className="text-sm text-muted-foreground" />
           ) : (
             <span className="flex items-center gap-3">
               <ShareBar share={share} platform={platform.positiveShare} />
@@ -102,7 +99,6 @@ function Row({
               </span>
             </span>
           )}
-          <Change points={row.overall.changePoints} className="text-xs" />
         </div>
         {row.belowPlatform && (
           <div className="mt-1.5">

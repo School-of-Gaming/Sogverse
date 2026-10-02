@@ -8,15 +8,12 @@ import { Link } from "@/i18n/navigation";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
 import { cn } from "@/lib/utils";
 import { FEEDBACK_SOURCES } from "@/services/session-feedback/admin-feedback.contracts";
-import { useFeedbackHref } from "./feedback-nav";
-import type { FeedbackPlace } from "./feedback-place";
+import { feedbackHref, type FeedbackPlace } from "./feedback-place";
 import { FEEDBACK_SOURCE_MESSAGE_KEYS } from "./feedback-sources";
 
 /**
  * **The chrome every feedback page sits in**: the way back, the title and
- * what it is about, and the page underneath. Nothing in it waits on the read,
- * and every link inside it carries the selection on show, so it renders inside
- * the page's `FeedbackSelectionProvider`.
+ * what it is about, and the page underneath. Nothing in it waits on the read.
  */
 export function FeedbackShell({
   title,
@@ -58,7 +55,6 @@ function SourcesLine() {
 
 function BackLink({ place }: { place: FeedbackPlace }) {
   const t = useTranslations("admin.feedback.back");
-  const href = useFeedbackHref();
   const label =
     place.view === "overview"
       ? t("overview")
@@ -70,7 +66,7 @@ function BackLink({ place }: { place: FeedbackPlace }) {
 
   return (
     <Link
-      href={href(place)}
+      href={feedbackHref(place)}
       className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
     >
       <ArrowLeft className="h-4 w-4" aria-hidden />

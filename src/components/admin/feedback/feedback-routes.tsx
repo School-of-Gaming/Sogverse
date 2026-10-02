@@ -12,14 +12,11 @@ import { FeedbackLoadFailure } from "./feedback-shell";
 import { loadFeedback } from "./load-feedback.server";
 
 /**
- * **The feedback routes' one shape**: read the whole history, parse the
- * query, hand the client body the dataset and the selection to open on. Each
- * route file under `/admin/feedback` is a call into here, so the read, the
- * failure band and the parsing of the query are written once; every figure is
- * computed in the body, for whatever the admin selects.
+ * **The feedback routes' one shape**: read the whole history and hand the
+ * client body the dataset. Each route file under `/admin/feedback` is a call
+ * into here, so the read and the failure band are written once; every figure
+ * is computed in the body.
  */
-
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export async function feedbackMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -31,20 +28,14 @@ async function failure(reason: string | null) {
   return <FeedbackLoadFailure title={t("title")} reason={reason} />;
 }
 
-export async function FeedbackOverviewRoute({ searchParams }: { searchParams: SearchParams }) {
-  const load = await loadFeedback(await searchParams);
+export async function FeedbackOverviewRoute() {
+  const load = await loadFeedback();
   if (!load.ok) return failure(load.reason);
   return <FeedbackOverviewPage read={load} />;
 }
 
-export async function FeedbackListRoute({
-  dimension,
-  searchParams,
-}: {
-  dimension: FeedbackDimension;
-  searchParams: SearchParams;
-}) {
-  const load = await loadFeedback(await searchParams);
+export async function FeedbackListRoute({ dimension }: { dimension: FeedbackDimension }) {
+  const load = await loadFeedback();
   if (!load.ok) return failure(load.reason);
   return <FeedbackListPage read={load} dimension={dimension} />;
 }
@@ -52,7 +43,7 @@ export async function FeedbackListRoute({
 /**
  * A malformed id is a 404: it can name nothing. A well-formed id the history
  * has no feedback for renders the page saying so, because the thing may well
- * exist and simply have had a quiet month.
+ * exist and simply not have been answered about yet.
  */
 export async function FeedbackDetailRoute({
   kind,
@@ -61,19 +52,18 @@ export async function FeedbackDetailRoute({
 }: {
   kind: FeedbackScopeKind;
   params: Promise<{ id: string }>;
-  searchParams: SearchParams;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const id = feedbackScopeId((await params).id);
   if (id === null) notFound();
-  const query = await searchParams;
-  const origin = parseFeedbackOrigin(query[FEEDBACK_ORIGIN_PARAM]);
-  const load = await loadFeedback(query);
+  const origin = parseFeedbackOrigin((await searchParams)[FEEDBACK_ORIGIN_PARAM]);
+  const load = await loadFeedback();
   if (!load.ok) return failure(load.reason);
   return <FeedbackDetailPage read={load} scope={{ kind, id }} origin={origin} />;
 }
 
-export async function FeedbackResponsesRoute({ searchParams }: { searchParams: SearchParams }) {
-  const load = await loadFeedback(await searchParams);
+export async function FeedbackResponsesRoute() {
+  const load = await loadFeedback();
   if (!load.ok) return failure(load.reason);
   return <FeedbackResponsesPage read={load} />;
 }

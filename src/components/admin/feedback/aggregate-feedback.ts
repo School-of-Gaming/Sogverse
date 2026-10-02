@@ -18,7 +18,6 @@ import {
   stepBuckets,
   hasLowAnswer,
   hasNote,
-  inPeriod,
   isBelow,
   knownAnswers,
   pointsBetween,
@@ -26,10 +25,8 @@ import {
   tallyResponses,
   type FeedbackBucketUnit,
   type FeedbackPeriod,
-  type FeedbackPeriods,
   type ResponseTallies,
   type ShareFigure,
-  type Tally,
 } from "./feedback-tally";
 import { FEEDBACK_CATALOGUES } from "./feedback-sources";
 
@@ -37,7 +34,6 @@ export {
   bucketUnitFor,
   type FeedbackBucketUnit,
   type FeedbackPeriod,
-  type FeedbackPeriods,
   type ShareFigure,
 } from "./feedback-tally";
 
@@ -46,15 +42,23 @@ export {
  * read to the view model of each of the page's four views: the overview, a
  * dimension's list, one scope's detail, and what gamers said.
  *
- * Every builder takes the dataset, the source being read and both periods; the
- * dataset spans the whole history, and each builder splits it by session day
- * itself, so a page recomputes for any selection without another read. Every
- * figure is per source, compared against the previous period, and — below the
- * overview — against the platform for the same period, except a gamer's,
- * which carries no platform figure at all. Nothing here knows
- * about React, the URL or the locale: ids and message-key-shaped values out,
- * labels are the UI's.
+ * Every figure covers the whole history the route read, from the first day
+ * with data to today: there is no period to pick and nothing to compare it
+ * with but the platform. Every figure is per source and — below the overview —
+ * set against the platform's, except a gamer's, which carries no platform
+ * figure at all. Nothing here knows about React, the URL or the locale: ids
+ * and message-key-shaped values out, labels are the UI's.
  */
+
+/** What every feedback page is handed by its route. */
+export interface FeedbackRead {
+  /** The one source collected today. */
+  source: FeedbackSource;
+  /** Every session day from the read's floor to today. */
+  dataset: AdminFeedbackDataset;
+  /** The days the timeline draws: the first day with data to today. */
+  history: FeedbackPeriod;
+}
 
 /** The dimensions the overview summarises and a list can be opened for. */
 export type FeedbackDimension = "product" | "group" | "gedu";
@@ -88,9 +92,8 @@ export interface FeedbackTimelinePoint {
 }
 
 /**
- * **The whole history, bucket by bucket**, which the selection is dragged
- * across: the scope's line and, on a detail page set against the platform,
- * the platform's line beside it.
+ * **The whole history, bucket by bucket**: the scope's line and, on a detail
+ * page set against the platform, the platform's line beside it.
  */
 export interface FeedbackTimeline {
   history: FeedbackPeriod;
@@ -101,27 +104,16 @@ export interface FeedbackTimeline {
   platform: FeedbackTimelinePoint[] | null;
 }
 
-/** A figure this period, the same figure the period before, and the move between them. */
-export interface ComparedFigure {
-  current: ShareFigure;
-  previous: ShareFigure;
-  /** Positive share now minus before, in percentage points; `null` if either side had no answers. */
-  changePoints: number | null;
-}
-
-/** The headline: positive share across every statement. */
-export type FeedbackHeadline = ComparedFigure;
-
-/** One statement's line. `current.distribution` is its full 1–5 spread. */
-export interface FeedbackStatementLine extends ComparedFigure {
+/** One statement's line. `figure.distribution` is its full 1–5 spread. */
+export interface FeedbackStatementLine {
   /** The catalogue key — also the statement's message key. */
   key: string;
   theme: SessionFeedbackTheme;
+  figure: ShareFigure;
 }
 
 /** "N answers from X% of gamers present". */
 export interface FeedbackParticipation {
-  /** Responses in the period. */
   responses: number;
   /** Of those, the ones whose session's register marks the respondent present. */
   countedResponses: number;
@@ -140,7 +132,7 @@ export interface FeedbackDimensionSummary {
 }
 
 /**
- * The responses of a period as the "What gamers said" list reads them.
+ * The responses as the "What gamers said" list reads them.
  *
  * **Worth reading** is a response with a low answer (No or Not really) on any
  * statement, or a note: the two ways a gamer tells an admin something needs
@@ -149,7 +141,7 @@ export interface FeedbackDimensionSummary {
  * within each, so the top of the list is the read most likely to need acting on.
  */
 export interface FeedbackResponses {
-  /** Every response in the period, newest first. */
+  /** Every response, newest first. */
   all: AdminFeedbackResponse[];
   /** The responses worth reading, in reading order. */
   worthReading: AdminFeedbackResponse[];
@@ -161,11 +153,11 @@ export interface FeedbackResponsesSummary {
   worthReading: number;
 }
 
-/** `/admin/feedback`: one source, one period, no lists. */
+/** `/admin/feedback`: one source, no lists. */
 export interface FeedbackOverview {
   source: FeedbackSource;
-  periods: FeedbackPeriods;
-  headline: FeedbackHeadline;
+  /** Positive share across every statement. */
+  headline: ShareFigure;
   participation: FeedbackParticipation;
   /** In the order the source asks them. */
   statements: FeedbackStatementLine[];
@@ -190,12 +182,12 @@ export interface FeedbackDimensionRow {
   name: string;
   /** The row's own product, or a group's product; `null` for a Gedu. */
   product: FeedbackProductRef | null;
-  /** Responses this period (a response with two Gedus counts toward each). */
+  /** Responses (a response with two Gedus counts toward each). */
   responses: number;
   eligible: number;
   responseRate: number | null;
-  /** Positive share across every statement; `current.positiveShare` is what the list sorts on. */
-  overall: ComparedFigure;
+  /** Positive share across every statement; its `positiveShare` is what the list sorts on. */
+  overall: ShareFigure;
   /** The row's positive share is under the platform's. */
   belowPlatform: boolean;
   /** `null` when no statement is below the platform's share for it. */
@@ -205,14 +197,13 @@ export interface FeedbackDimensionRow {
 /** A dimension's list, worst first; rows with no answers last. */
 export interface FeedbackDimensionList {
   source: FeedbackSource;
-  periods: FeedbackPeriods;
   dimension: FeedbackDimension;
   /** The platform's overall figure the rows are judged against. */
   platform: ShareFigure;
   rows: FeedbackDimensionRow[];
 }
 
-/** How a scope's figure stands against the whole platform in the same period. */
+/** How a scope's figure stands against the whole platform. */
 export interface PlatformComparison {
   platform: ShareFigure;
   /** Scope minus platform, in points; `null` when either had no answers. */
@@ -224,7 +215,6 @@ export interface PlatformComparison {
  * A gamer is a child, read only against themselves over time, so a gamer's
  * detail has `againstPlatform: null` everywhere: the comparison is never built.
  */
-export type FeedbackDetailHeadline = FeedbackHeadline & { againstPlatform: PlatformComparison | null };
 export type FeedbackDetailStatement = FeedbackStatementLine & { againstPlatform: PlatformComparison | null };
 
 /** A gamer under a group: who, and how often they answered. Never a score. */
@@ -249,13 +239,14 @@ export interface FeedbackDetailChildren {
 /** One product, group, Gedu or gamer. */
 export interface FeedbackDetail {
   source: FeedbackSource;
-  periods: FeedbackPeriods;
   scope: FeedbackScope;
   /** Looked up across the whole dataset; `null` when the id appears nowhere. */
   name: string | null;
   /** The product of a product or group scope; `null` otherwise. */
   product: FeedbackProductRef | null;
-  headline: FeedbackDetailHeadline;
+  headline: ShareFigure;
+  /** The headline against the platform's; `null` for a gamer. */
+  againstPlatform: PlatformComparison | null;
   participation: FeedbackParticipation;
   statements: FeedbackDetailStatement[];
   children: FeedbackDetailChildren;
@@ -265,7 +256,6 @@ export interface FeedbackDetail {
 /** "What gamers said" across the whole platform. */
 export interface FeedbackResponsesView {
   source: FeedbackSource;
-  periods: FeedbackPeriods;
   responses: FeedbackResponses;
 }
 
@@ -276,14 +266,13 @@ export interface FeedbackResponsesView {
 export function buildFeedbackOverview(
   dataset: AdminFeedbackDataset,
   source: FeedbackSource,
-  periods: FeedbackPeriods,
 ): FeedbackOverview {
-  const slice = sliceOf(dataset, source, periods);
-  const platform = comparedTallies(slice.current, slice.previous, source);
-  const responses = responsesOf(slice.current);
+  const slice = sliceOf(dataset, source);
+  const platform = tallyResponses(slice.responses, source);
+  const responses = responsesOf(slice.responses);
 
   const summarise = (dimension: FeedbackDimension): FeedbackDimensionSummary => {
-    const rows = dimensionRows(dimension, slice, source, platform.current);
+    const rows = dimensionRows(dimension, slice, source, platform);
     return {
       rows: rows.length,
       belowPlatform: rows.filter((row) => row.belowPlatform).length,
@@ -292,9 +281,8 @@ export function buildFeedbackOverview(
 
   return {
     source,
-    periods,
-    headline: compared(platform.current.overall, platform.previous.overall),
-    participation: participationOf(slice.current, slice.currentSessions),
+    headline: shareFigure(platform.overall),
+    participation: participationOf(slice.responses, slice.sessions),
     statements: statementLinesOf(platform, source),
     dimensions: {
       product: summarise("product"),
@@ -306,20 +294,18 @@ export function buildFeedbackOverview(
 }
 
 /**
- * Every product, group or Gedu that had a response or an eligible session in
- * the current period, worst first by its positive share.
+ * Every product, group or Gedu that had a response or an eligible session,
+ * worst first by its positive share.
  */
 export function buildFeedbackDimensionList(
   dataset: AdminFeedbackDataset,
   source: FeedbackSource,
-  periods: FeedbackPeriods,
   dimension: FeedbackDimension,
 ): FeedbackDimensionList {
-  const slice = sliceOf(dataset, source, periods);
-  const platform = tallyResponses(slice.current, source);
+  const slice = sliceOf(dataset, source);
+  const platform = tallyResponses(slice.responses, source);
   return {
     source,
-    periods,
     dimension,
     platform: shareFigure(platform.overall),
     rows: dimensionRows(dimension, slice, source, platform),
@@ -329,68 +315,59 @@ export function buildFeedbackDimensionList(
 export function buildFeedbackDetail(
   dataset: AdminFeedbackDataset,
   source: FeedbackSource,
-  periods: FeedbackPeriods,
   scope: FeedbackScope,
 ): FeedbackDetail {
-  const all = sliceOf(dataset, source, periods);
+  const all = sliceOf(dataset, source);
   const slice = narrow(all, scope);
-  const platformTallies = tallyResponses(all.current, source);
-  const scoped = comparedTallies(slice.current, slice.previous, source);
-
-  const headline = compared(scoped.current.overall, scoped.previous.overall);
+  const platformTallies = tallyResponses(all.responses, source);
+  const scoped = tallyResponses(slice.responses, source);
+  const headline = shareFigure(scoped.overall);
   const comparable = scope.kind !== "gamer";
 
-  const statements = statementLinesOf(scoped, source).map(
-    (line) => ({
-      ...line,
-      againstPlatform: comparable
-        ? compareWithPlatform(line.current, statementFigure(platformTallies, line.key))
-        : null,
-    }),
-  );
+  const statements = statementLinesOf(scoped, source).map((line) => ({
+    ...line,
+    againstPlatform: comparable
+      ? compareWithPlatform(line.figure, statementFigure(platformTallies, line.key))
+      : null,
+  }));
 
   const childRows = (dimension: FeedbackDimension) =>
     dimensionRows(dimension, slice, source, platformTallies);
 
   return {
     source,
-    periods,
     scope,
     name: nameOf(dataset, scope),
     product: productOf(dataset, scope),
-    headline: {
-      ...headline,
-      againstPlatform: comparable
-        ? compareWithPlatform(headline.current, shareFigure(platformTallies.overall))
-        : null,
-    },
+    headline,
+    againstPlatform: comparable
+      ? compareWithPlatform(headline, shareFigure(platformTallies.overall))
+      : null,
     participation:
       scope.kind === "gamer"
-        ? { ...participationOf(slice.current, []), eligible: null, responseRate: null }
-        : participationOf(slice.current, slice.currentSessions),
+        ? { ...participationOf(slice.responses, []), eligible: null, responseRate: null }
+        : participationOf(slice.responses, slice.sessions),
     statements,
     children: {
       groups: scope.kind === "product" || scope.kind === "gedu" ? childRows("group") : null,
       gedus: scope.kind === "product" ? childRows("gedu") : null,
-      gamers: scope.kind === "group" ? gamersOf(slice.current) : null,
+      gamers: scope.kind === "group" ? gamersOf(slice.responses) : null,
     },
-    responses: responsesOf(slice.current),
+    responses: responsesOf(slice.responses),
   };
 }
 
 export function buildFeedbackResponses(
   dataset: AdminFeedbackDataset,
   source: FeedbackSource,
-  periods: FeedbackPeriods,
 ): FeedbackResponsesView {
-  return { source, periods, responses: responsesOf(sliceOf(dataset, source, periods).current) };
+  return { source, responses: responsesOf(sliceOf(dataset, source).responses) };
 }
 
 /**
- * The timeline a page drags its selection across: the scope's line over the
- * whole history (the platform's own when `scope` is `null`) and, for a scope
- * set against the platform, the platform's line beside it. It does not depend
- * on the selection, so it is built once per page.
+ * The scope's line over the whole history (the platform's own when `scope` is
+ * `null`) and, for a scope set against the platform, the platform's line
+ * beside it.
  */
 export function buildFeedbackTimeline(
   dataset: AdminFeedbackDataset,
@@ -399,7 +376,7 @@ export function buildFeedbackTimeline(
   scope: FeedbackScope | null,
 ): FeedbackTimeline {
   const unit = bucketUnitFor(history);
-  const all = ofSource(dataset.responses, source).filter((row) => inPeriod(row.sessionDate, history));
+  const all = ofSource(dataset.responses, source);
   const platform = seriesOf(all, history, unit);
   if (scope === null) return { history, unit, points: platform, platform: null };
   return {
@@ -414,13 +391,21 @@ export function buildFeedbackTimeline(
   };
 }
 
-/** The first session day any response of the source is about, or `null` for none. */
-export function earliestAnswerDay(dataset: AdminFeedbackDataset, source: FeedbackSource): string | null {
-  let earliest: string | null = null;
-  for (const row of ofSource(dataset.responses, source)) {
-    if (earliest === null || row.sessionDate < earliest) earliest = row.sessionDate;
+/**
+ * The days the pages read: from the first session day the source has a
+ * response or a recorded session for, to today — just today when it has
+ * neither.
+ */
+export function feedbackHistory(
+  dataset: AdminFeedbackDataset,
+  source: FeedbackSource,
+  today: string,
+): FeedbackPeriod {
+  let from = today;
+  for (const row of [...ofSource(dataset.responses, source), ...ofSource(dataset.sessions, source)]) {
+    if (row.sessionDate < from) from = row.sessionDate;
   }
-  return earliest;
+  return { from, to: today };
 }
 
 /** The rows one source contributed. */
@@ -436,25 +421,16 @@ function ofSource<T extends { source: FeedbackSource }>(
 /* Slicing                                                                  */
 /* ------------------------------------------------------------------------ */
 
-/** One source's entries, split into the two periods. */
+/** One source's entries. */
 interface Slice {
-  current: AdminFeedbackResponse[];
-  previous: AdminFeedbackResponse[];
-  currentSessions: AdminFeedbackSession[];
+  responses: AdminFeedbackResponse[];
+  sessions: AdminFeedbackSession[];
 }
 
-function sliceOf(
-  dataset: AdminFeedbackDataset,
-  source: FeedbackSource,
-  periods: FeedbackPeriods,
-): Slice {
-  const responses = ofSource(dataset.responses, source);
+function sliceOf(dataset: AdminFeedbackDataset, source: FeedbackSource): Slice {
   return {
-    current: responses.filter((row) => inPeriod(row.sessionDate, periods.current)),
-    previous: responses.filter((row) => inPeriod(row.sessionDate, periods.previous)),
-    currentSessions: ofSource(dataset.sessions, source).filter((row) =>
-      inPeriod(row.sessionDate, periods.current),
-    ),
+    responses: ofSource(dataset.responses, source),
+    sessions: ofSource(dataset.sessions, source),
   };
 }
 
@@ -476,36 +452,15 @@ function inScope(
 
 function narrow(slice: Slice, scope: FeedbackScope): Slice {
   return {
-    current: slice.current.filter((row) => inScope(row, scope)),
-    previous: slice.previous.filter((row) => inScope(row, scope)),
+    responses: slice.responses.filter((row) => inScope(row, scope)),
     // Sessions do not say which gamers were present, so a gamer has no denominator.
-    currentSessions:
-      scope.kind === "gamer" ? [] : slice.currentSessions.filter((row) => inScope(row, scope)),
+    sessions: scope.kind === "gamer" ? [] : slice.sessions.filter((row) => inScope(row, scope)),
   };
 }
 
 /* ------------------------------------------------------------------------ */
 /* Figures                                                                  */
 /* ------------------------------------------------------------------------ */
-
-interface ComparedTallies {
-  current: ResponseTallies;
-  previous: ResponseTallies;
-}
-
-function comparedTallies(
-  current: readonly AdminFeedbackResponse[],
-  previous: readonly AdminFeedbackResponse[],
-  source: FeedbackSource,
-): ComparedTallies {
-  return { current: tallyResponses(current, source), previous: tallyResponses(previous, source) };
-}
-
-function compared(current: Tally, previous: Tally): ComparedFigure {
-  const now = shareFigure(current);
-  const before = shareFigure(previous);
-  return { current: now, previous: before, changePoints: pointsBetween(now, before) };
-}
 
 function statementFigure(tallies: ResponseTallies, key: string): ShareFigure {
   return shareFigure(tallies.statements.get(key) ?? emptyTally());
@@ -547,14 +502,11 @@ function seriesOf(
   });
 }
 
-function statementLinesOf(tallies: ComparedTallies, source: FeedbackSource): FeedbackStatementLine[] {
+function statementLinesOf(tallies: ResponseTallies, source: FeedbackSource): FeedbackStatementLine[] {
   return FEEDBACK_CATALOGUES[source].map(({ key, theme }) => ({
     key,
     theme,
-    ...compared(
-      tallies.current.statements.get(key) ?? emptyTally(),
-      tallies.previous.statements.get(key) ?? emptyTally(),
-    ),
+    figure: statementFigure(tallies, key),
   }));
 }
 
@@ -608,16 +560,14 @@ function rowKeysOf(
 }
 
 interface RowAccumulator extends RowKey {
-  current: AdminFeedbackResponse[];
-  previous: AdminFeedbackResponse[];
+  responses: AdminFeedbackResponse[];
   eligible: number;
 }
 
 /**
  * One dimension's rows over a slice, judged against the platform's tallies.
- * A row is opened by a current response or a current session — a group that
- * ran sessions and heard nothing back is listed — never by the previous period
- * alone.
+ * A row is opened by a response or a session: a group that ran sessions and
+ * heard nothing back is listed.
  */
 function dimensionRows(
   dimension: FeedbackDimension,
@@ -629,39 +579,36 @@ function dimensionRows(
   const open = (key: RowKey): RowAccumulator => {
     let row = rows.get(key.id);
     if (row === undefined) {
-      row = { ...key, current: [], previous: [], eligible: 0 };
+      row = { ...key, responses: [], eligible: 0 };
       rows.set(key.id, row);
     }
     return row;
   };
 
-  for (const response of slice.current) {
-    for (const key of rowKeysOf(response, dimension)) open(key).current.push(response);
+  for (const response of slice.responses) {
+    for (const key of rowKeysOf(response, dimension)) open(key).responses.push(response);
   }
-  for (const session of slice.currentSessions) {
+  for (const session of slice.sessions) {
     for (const key of rowKeysOf(session, dimension)) open(key).eligible += session.eligibleCount;
-  }
-  for (const response of slice.previous) {
-    for (const key of rowKeysOf(response, dimension)) rows.get(key.id)?.previous.push(response);
   }
 
   const platformOverall = shareFigure(platform.overall);
   return [...rows.values()]
     .map((row): FeedbackDimensionRow => {
-      const tallies = comparedTallies(row.current, row.previous, source);
-      const overall = compared(tallies.current.overall, tallies.previous.overall);
-      const counted = row.current.filter((response) => response.countsTowardRate).length;
+      const tallies = tallyResponses(row.responses, source);
+      const overall = shareFigure(tallies.overall);
+      const counted = row.responses.filter((response) => response.countsTowardRate).length;
       return {
         dimension,
         id: row.id,
         name: row.name,
         product: row.product,
-        responses: row.current.length,
+        responses: row.responses.length,
         eligible: row.eligible,
         responseRate: row.eligible === 0 ? null : counted / row.eligible,
         overall,
-        belowPlatform: isBelow(overall.current, platformOverall),
-        weakest: weakestStatement(tallies.current, platform, source),
+        belowPlatform: isBelow(overall, platformOverall),
+        weakest: weakestStatement(tallies, platform, source),
       };
     })
     .sort(worstFirst);
@@ -688,8 +635,8 @@ function weakestStatement(
  * has no share and goes last.
  */
 function worstFirst(a: FeedbackDimensionRow, b: FeedbackDimensionRow): number {
-  const aShare = a.overall.current.positiveShare;
-  const bShare = b.overall.current.positiveShare;
+  const aShare = a.overall.positiveShare;
+  const bShare = b.overall.positiveShare;
   if ((aShare === null) !== (bShare === null)) return aShare === null ? 1 : -1;
   return (
     (aShare ?? 0) - (bShare ?? 0) || a.name.localeCompare(b.name) || a.id.localeCompare(b.id)
@@ -741,7 +688,7 @@ function responsesOf(responses: readonly AdminFeedbackResponse[]): FeedbackRespo
   };
 }
 
-/** Every entry of the dataset, any source and period: a name outlives the range it was seen in. */
+/** Every entry of the dataset, any source: a name is found wherever it was seen. */
 function entriesOf(dataset: AdminFeedbackDataset) {
   return [...dataset.responses, ...dataset.sessions];
 }

@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import messages from "@/../messages/en.json";
-import type { FeedbackRead } from "@/components/admin/feedback/feedback-nav";
+import type { FeedbackRead } from "@/components/admin/feedback/aggregate-feedback";
 import type { AdminFeedbackDataset } from "@/services/session-feedback/admin-feedback.contracts";
 import { FeedbackDetailPage } from "@/components/admin/feedback/feedback-detail-page";
 import { FeedbackListPage } from "@/components/admin/feedback/feedback-list-page";
@@ -17,7 +17,7 @@ import {
   allFive,
   FEEDBACK_CLUB_A2,
   FEEDBACK_CLUB_B,
-  FEEDBACK_PERIODS,
+  FEEDBACK_HISTORY,
   feedbackDataset,
   feedbackResponse,
   feedbackResponses,
@@ -28,7 +28,8 @@ import {
  * The feedback pages' promises that a refactor could break without any type
  * noticing: the overview opens on no list, a row of one answer is judged like
  * any other while a row with none says so, and a child is never set against
- * the platform.
+ * the platform, and every page reads the whole history with nothing to compare
+ * it with but the platform.
  */
 
 const HELMI = { id: "gamer-helmi", name: "Helmi" };
@@ -44,14 +45,9 @@ const dataset = feedbackDataset(
   [feedbackSession({ ...FEEDBACK_CLUB_A2, eligibleCount: 5 })],
 );
 
-/** A page's read: three months of history, September selected. */
+/** A page's read: three months of history. */
 function read(data: AdminFeedbackDataset): FeedbackRead {
-  return {
-    source: "gamer_online",
-    dataset: data,
-    history: { from: "2026-07-01", to: "2026-09-30" },
-    selection: FEEDBACK_PERIODS.current,
-  };
+  return { source: "gamer_online", dataset: data, history: FEEDBACK_HISTORY };
 }
 
 function wrap(children: ReactNode) {
@@ -93,45 +89,30 @@ describe("admin feedback pages", () => {
     vi.restoreAllMocks();
   });
 
-  it("opens the overview on no list of products, groups or Gedus", () => {
+  it("opens the overview on no list of products, groups or Gedus, and no change since before", () => {
     wrap(<FeedbackOverviewPage read={read(dataset)} />);
     expect(screen.getByText("positive")).toBeTruthy();
+    expect(screen.getByText("89%")).toBeTruthy();
     expect(screen.queryByText("B1")).toBeNull();
     expect(screen.queryByText("Aino")).toBeNull();
+    expect(screen.queryByText(/previous|point/i)).toBeNull();
   });
 
-  it("draws the timeline over a labelled scale and states the selected dates", () => {
+  it("draws the whole history over a labelled scale, read a point at a time from the keyboard", () => {
     wrap(<FeedbackOverviewPage read={read(dataset)} />);
     const chart = screen.getByRole("group", { name: "Positive answers by week" });
     for (const label of ["0%", "25%", "50%", "75%", "100%", "Jul 2026", "Aug", "Sep"]) {
       expect(within(chart).getByText(label)).toBeTruthy();
     }
-    expect(screen.getByText("Sep 1, 2026 – Sep 30, 2026 · 30 days")).toBeTruthy();
-    expect(
-      screen.getByRole("slider", { name: "Start of the period" }).getAttribute("aria-valuetext"),
-    ).toBe("Sep 1, 2026");
-    expect(
-      screen.getByRole("slider", { name: "End of the period" }).getAttribute("aria-valuetext"),
-    ).toBe("Sep 30, 2026");
-  });
+    expect(screen.getByText("Since Jul 1, 2026")).toBeTruthy();
+    expect(screen.getAllByRole("slider")).toHaveLength(1);
 
-  it("moves the selection a week per arrow key, recomputes the page and writes the URL", () => {
-    const replaceState = vi.spyOn(window.history, "replaceState");
-    wrap(<FeedbackOverviewPage read={read(dataset)} />);
-    expect(screen.getByText("89%")).toBeTruthy();
-
-    fireEvent.keyDown(screen.getByRole("slider", { name: "Start of the period" }), { key: "ArrowRight" });
-
-    expect(screen.getByText("Sep 8, 2026 – Sep 30, 2026 · 23 days")).toBeTruthy();
-    // Every response is on 8 September, still inside: the headline holds.
-    expect(screen.getByText("89%")).toBeTruthy();
-    expect(String(replaceState.mock.lastCall?.[2])).toMatch(/from=2026-09-08&to=2026-09-30/);
-
-    fireEvent.keyDown(screen.getByRole("slider", { name: "Start of the period" }), { key: "ArrowRight", shiftKey: true });
-    // Four weeks on would leave less than a week: the start stops a week before the end.
-    expect(screen.getByText("Sep 24, 2026 – Sep 30, 2026 · 7 days")).toBeTruthy();
-    expect(screen.getByText("No answers")).toBeTruthy();
-    expect(screen.getByText("No feedback was given in this range.")).toBeTruthy();
+    const points = screen.getByRole("slider", { name: "Week being read" });
+    expect(points.getAttribute("aria-valuetext")).toBe("Sep 28, 2026 – Sep 30, 2026 · No answers");
+    fireEvent.keyDown(points, { key: "ArrowLeft" });
+    fireEvent.keyDown(points, { key: "ArrowLeft" });
+    fireEvent.keyDown(points, { key: "ArrowLeft" });
+    expect(points.getAttribute("aria-valuetext")).toBe("Sep 7, 2026 – Sep 13, 2026 · 89% positive · 9 answers");
   });
 
   it("judges a group of one answer and says so for a group with none", () => {
@@ -156,6 +137,17 @@ describe("admin feedback pages", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Helmi");
     expect(screen.queryByText(/Platform/)).toBeNull();
     expect(screen.queryByText(/Below average/)).toBeNull();
+  });
+
+  it("leads a gamer opened from a group back to that group", () => {
+    wrap(
+      <FeedbackDetailPage read={read(dataset)} origin={null} scope={{ kind: "group", id: "group-a1" }} />,
+    );
+    expect(screen.getByRole("link", { name: "Back to groups" }).getAttribute("href")).toMatch(
+      /\/admin\/feedback\/groups$/,
+    );
+    const helmi = screen.getAllByRole("link").find((link) => link.firstChild?.textContent === "Helmi");
+    expect(helmi?.getAttribute("href")).toMatch(/\/admin\/feedback\/gamers\/gamer-helmi\?from=group%3Agroup-a1$/);
   });
 
   it("lists a group's gamers by name with their answer count", () => {
