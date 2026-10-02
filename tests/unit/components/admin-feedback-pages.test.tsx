@@ -109,6 +109,15 @@ describe("admin feedback pages", () => {
     expect(within(chart).getByText("Sep 7, 2026 – Sep 13, 2026 · 89% positive · 9 answers")).toBeTruthy();
   });
 
+  it("names the chart's focusable surface and describes it with the readings", () => {
+    wrap(<FeedbackOverviewPage read={read(dataset)} />);
+    const surface = screen.getByRole("application", { name: "Positive answers by week" });
+    expect(surface.getAttribute("tabindex")).toBe("0");
+    const readings = document.getElementById(surface.getAttribute("aria-describedby") ?? "");
+    expect(readings?.tagName).toBe("UL");
+    expect(readings?.textContent).toContain("Sep 7, 2026 – Sep 13, 2026 · 89% positive · 9 answers");
+  });
+
   it("names the month the history starts in, though it starts mid-month", () => {
     wrap(
       <FeedbackOverviewPage
@@ -282,6 +291,21 @@ describe("admin feedback pages", () => {
         document.getElementById(label.getAttribute("aria-describedby") ?? "")?.textContent;
       expect(sentenceOf(statementHeaders[0])).toBe("I learned something new.");
       expect(sentenceOf(statementHeaders[4])).toBe("My group listens to and understands me.");
+
+      // The sentence opens from the heading cell it sits inside, until Escape hides it.
+      const tooltip = within(headers[1]).getByRole("tooltip", { hidden: true });
+      const opener = () => tooltip.parentElement?.className ?? "";
+      expect(opener()).toMatch(/group-hover:visible/);
+      fireEvent.focus(statementHeaders[0]);
+      fireEvent.keyDown(statementHeaders[0], { key: "Escape" });
+      expect(opener()).not.toMatch(/group-hover:visible|group-focus-within:visible/);
+      fireEvent.blur(statementHeaders[0]);
+      expect(opener()).toMatch(/group-focus-within:visible/);
+      fireEvent.mouseEnter(headers[1]);
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(opener()).not.toMatch(/group-hover:visible/);
+      fireEvent.mouseLeave(headers[1]);
+      expect(opener()).toMatch(/group-hover:visible/);
 
       // The heading row group, then one per response.
       expect(within(table).getAllByRole("rowgroup")).toHaveLength(5);

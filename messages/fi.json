@@ -1674,7 +1674,7 @@
         "none": "Täällä ei ole vastauksia.",
         "noneWorthReading": "Ei mitään poimittavaa: ei kielteisiä vastauksia eikä viestejä.",
         "noGedu": "Gedua ei ole kirjattu",
-        "who": "Pelaaja, ryhmä ja päivä",
+        "who": "Vastaus",
         "filterLabel": "Näytettävät vastaukset",
         "worthReading": "Lukemisen arvoiset ({count})",
         "all": "Kaikki ({count})"

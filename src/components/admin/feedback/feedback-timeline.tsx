@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis, type DotItemDotProps } from "recharts";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -23,7 +23,9 @@ import { formatShare } from "./feedback-format";
  * bucket between two gaps is a dot. A detail page set against the platform
  * draws the platform's line beside it as a dashed grey, named in a legend.
  * Hovering a bucket, or walking them with the arrow keys once the chart has
- * focus, reads it out; the same readings are listed for assistive tech.
+ * focus, moves the tooltip onto it. The tooltip is drawn, never announced: what
+ * assistive tech reads is the same readings listed as visually hidden text,
+ * which the chart's focusable surface names as its description.
  *
  * The chart's height is fixed and it is drawn at the width it is given, so
  * text stays its own size at any width. Until the box is measured it stays
@@ -31,7 +33,7 @@ import { formatShare } from "./feedback-format";
  */
 
 /** Each line's stroke: the colour its series is configured with below. */
-const STROKE = { scope: "var(--color-scope)", platform: "var(--color-platform)" } as const;
+const STROKE = { scope: "var(--series-scope)", platform: "var(--series-platform)" } as const;
 /** The platform line's dash, which says "for comparison" without a second colour. */
 const PLATFORM_DASH = "4 4";
 /** The point being read: the scope's colour ringed in the card's ground so it lifts off the line. */
@@ -136,11 +138,17 @@ export function FeedbackTimeline({
   };
 
   const label = t(unit === "week" ? "timeline.byWeek" : "timeline.byMonth");
+  const readingsId = useId();
 
   return (
     <div className="space-y-2" role="group" aria-label={label}>
       <ChartContainer config={config} className="h-52 w-full">
-        <LineChart data={rows} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
+        <LineChart
+          data={rows}
+          margin={{ top: 8, right: 12, bottom: 0, left: 0 }}
+          aria-label={label}
+          aria-describedby={readingsId}
+        >
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="start"
@@ -228,7 +236,7 @@ export function FeedbackTimeline({
       </ChartContainer>
 
       {/* The chart's readings as text, for a reader who cannot see it. */}
-      <ul className="sr-only">
+      <ul id={readingsId} className="sr-only">
         {rows.map((row) => (
           <li key={row.start}>{describe(row)}</li>
         ))}
