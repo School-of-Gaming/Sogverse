@@ -2612,7 +2612,7 @@
       "completeTitle": "This statement is complete",
       "completeBody": "No session this month is still upcoming or waiting to be recorded.",
       "incompleteTitle": "This statement is not complete",
-      "incompleteUnrecorded": "{count, plural, one {# past session has nothing recorded, so it is not included. Record a report, a note or attendance for it in the group’s workspace and it will be:} other {# past sessions have nothing recorded, so they are not included. Record a report, a note or attendance for them in the group’s workspace and they will be:}}",
+      "incompleteUnrecorded": "{count, plural, one {# past session has nothing recorded, so it is not included:} other {# past sessions have nothing recorded, so they are not included:}}",
       "incompleteUpcoming": "{count, plural, one {# session is still upcoming: the month is in progress, so these figures can change.} other {# sessions are still upcoming: the month is in progress, so these figures can change.}}",
       "summary": "Summary",
       "municipalityExclVat": "Municipality, excl. VAT",

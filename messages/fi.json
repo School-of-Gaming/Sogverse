@@ -2612,7 +2612,7 @@
       "completeTitle": "Erittely on valmis",
       "completeBody": "Yksikään tämän kuukauden kerta ei ole enää tulossa eikä odota kirjausta.",
       "incompleteTitle": "Erittely ei ole vielä valmis",
-      "incompleteUnrecorded": "{count, plural, one {# mennyt kerta on kirjaamatta, joten se ei ole mukana. Kirjaa sille raportti, muistiinpano tai läsnäolot ryhmän työtilassa, niin se lasketaan mukaan:} other {# mennyttä kertaa on kirjaamatta, joten ne eivät ole mukana. Kirjaa niille raportti, muistiinpano tai läsnäolot ryhmän työtilassa, niin ne lasketaan mukaan:}}",
+      "incompleteUnrecorded": "{count, plural, one {# mennyt kerta on kirjaamatta, joten se ei ole mukana:} other {# mennyttä kertaa on kirjaamatta, joten ne eivät ole mukana:}}",
       "incompleteUpcoming": "{count, plural, one {# kerta on vielä tulossa: kuukausi on kesken, joten luvut voivat muuttua.} other {# kertaa on vielä tulossa: kuukausi on kesken, joten luvut voivat muuttua.}}",
       "summary": "Yhteenveto",
       "municipalityExclVat": "Kuntalaskutus (ALV 0 %)",

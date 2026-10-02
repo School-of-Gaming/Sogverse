@@ -2612,7 +2612,7 @@
       "completeTitle": "Rapporten är komplett",
       "completeBody": "Inget tillfälle den här månaden är kommande eller väntar på att registreras.",
       "incompleteTitle": "Rapporten är inte komplett",
-      "incompleteUnrecorded": "{count, plural, one {# tidigare tillfälle har inget registrerat, så det ingår inte. Registrera en rapport, en anteckning eller närvaro för det i gruppens arbetsyta så räknas det med:} other {# tidigare tillfällen har inget registrerat, så de ingår inte. Registrera en rapport, en anteckning eller närvaro för dem i gruppens arbetsyta så räknas de med:}}",
+      "incompleteUnrecorded": "{count, plural, one {# tidigare tillfälle har inget registrerat, så det ingår inte:} other {# tidigare tillfällen har inget registrerat, så de ingår inte:}}",
       "incompleteUpcoming": "{count, plural, one {# tillfälle är ännu kommande: månaden pågår, så siffrorna kan ändras.} other {# tillfällen är ännu kommande: månaden pågår, så siffrorna kan ändras.}}",
       "summary": "Sammanfattning",
       "municipalityExclVat": "Kommun, exkl. moms",

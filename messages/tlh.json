@@ -2652,7 +2652,7 @@
       "completeTitle": "Qu’ ghItlh naQ",
       "completeBody": "jarvam SeSSIy’ ghoSqu’ pagh ghItlhbe’lu’ pagh.",
       "incompleteTitle": "Qu’ ghItlh naQbe’",
-      "incompleteUnrecorded": "{count, plural, one {# SeSSIy’ ret ghItlhlu’be’, vaj togh’be’lu’. ghom Qu’meH DaqDaq yIghItlh, vaj toghlu’:} other {# SeSSIy’mey ret ghItlhlu’be’, vaj togh’be’lu’. ghom Qu’meH DaqDaq yIghItlh, vaj toghlu’:}}",
+      "incompleteUnrecorded": "{count, plural, one {# SeSSIy’ ret ghItlhlu’be’, vaj togh’be’lu’:} other {# SeSSIy’mey ret ghItlhlu’be’, vaj togh’be’lu’:}}",
       "incompleteUpcoming": "{count, plural, one {# SeSSIy’ ghoSqu’: jar taH, mI’mey choHlaH.} other {# SeSSIy’mey ghoSqu’: jar taH, mI’mey choHlaH.}}",
       "summary": "naQ",
       "municipalityExclVat": "veng, VAT ghajbe’",

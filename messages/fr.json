@@ -2612,7 +2612,7 @@
       "completeTitle": "Ce relevé est complet",
       "completeBody": "Aucune séance de ce mois n’est encore à venir ni en attente d’enregistrement.",
       "incompleteTitle": "Ce relevé n’est pas complet",
-      "incompleteUnrecorded": "{count, plural, one {# séance passée n’a rien d’enregistré : elle n’est donc pas comptée. Enregistrez pour elle un compte rendu, une note ou les présences dans l’espace de travail du groupe pour qu’elle le soit :} other {# séances passées n’ont rien d’enregistré : elles ne sont donc pas comptées. Enregistrez pour elles un compte rendu, une note ou les présences dans l’espace de travail du groupe pour qu’elles le soient :}}",
+      "incompleteUnrecorded": "{count, plural, one {# séance passée n’a rien d’enregistré et n’est donc pas comptée :} other {# séances passées n’ont rien d’enregistré et ne sont donc pas comptées :}}",
       "incompleteUpcoming": "{count, plural, one {# séance est encore à venir : le mois est en cours, ces chiffres peuvent donc évoluer.} other {# séances sont encore à venir : le mois est en cours, ces chiffres peuvent donc évoluer.}}",
       "summary": "Récapitulatif",
       "municipalityExclVat": "Municipal, HT",

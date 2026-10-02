@@ -285,9 +285,7 @@ describe("geduInvoicePdfContent", () => {
       title: "This statement is not complete",
       body: null,
       unrecorded: {
-        text: expect.stringMatching(
-          /^1 past session has nothing recorded, so it is not included\. Record a report, a note or attendance for it/,
-        ),
+        text: "1 past session has nothing recorded, so it is not included:",
         sessions: ["Tue 5/12/2026 · Minecraft adventurers · Group 1"],
       },
       upcoming:
