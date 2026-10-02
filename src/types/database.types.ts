@@ -3628,6 +3628,10 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Json
       }
+      get_admin_session_feedback: {
+        Args: { p_from: string; p_to: string; p_window_before_minutes: number }
+        Returns: Json
+      }
       get_admin_substitution_requests: { Args: never; Returns: Json }
       get_chat_channel_roster: {
         Args: { p_channel_id: string }

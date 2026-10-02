@@ -343,6 +343,15 @@ A living style guide is available at `/admin/ui-components` (admin login require
 
 The style guide demos components; a *page-level* change has to be judged as a page — real chrome, real viewport, real scrolling. That's what a **preview scene** is: one fixture-driven page at `/preview/{surface}/{scenario}`, served by a single dynamic route from a central scene registry (`src/components/preview/`), admin-gated in the proxy, noindex, and listed automatically on the admin **UI Previews** page (its own sidebar entry, directly below UI Components). Scenes make page-level iteration cheap: sign the design off from fixtures first, wire it once afterwards.
 
+**Rule: a page the rich seed can show gets no scene — it is reviewed on a local stack built
+from `supabase/rich-seed.sql`.** A scene earns its place only where one rich seed cannot
+reasonably put the page on screen: a state the seed cannot hold alongside everything else
+it seeds (a failed read, an auth state no seeded account is in), data that lives outside
+the database (a live call, a third party's answer), or design variants being compared
+before one is built. Where the seed can show the page, growing the seed is the work
+instead: it drives the real reads and the real route, which a fixture body never does and
+can drift from.
+
 **Rule: the registry is the only place a scene is declared.** The UI Previews page enumerates it, so adding a scene or a scenario surfaces its links with no edit to that page and no hand-maintained index anywhere. Scene titles, descriptions and scenario labels are literal English on purpose: they are developer-facing metadata on an admin-only page, never shown to a user, so they do not belong in the message files. They are also held to a budget: the title and the render carry the meaning, so a description that narrates the state the reader should be able to see is the scenario failing to show it — one line of why the scenario exists, or nothing.
 
 **A scene may take an *axis* as a search param, and an axis is not a scenario.** A scenario is a state the page can only be in one of; a value every existing scenario can equally be read at — the product topic, which decides the About card and the prep guide — is an axis, and multiplying the scenario list by it is how a registry becomes unreadable. Such a scene declares a flag (`topicAxis`), the route parses the param and validates it, and the UI Previews page turns the flag into a row of per-value links. **An unusable value is ignored rather than 404'd**: the slug in the path is what has to resolve, and an axis is a lens over a page that exists.

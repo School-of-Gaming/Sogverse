@@ -80,6 +80,7 @@
       "adminSubstitutions": "Tuuraukset",
       "teamProfile": "Oma profiili",
       "adminTeamProfile": "Profiili",
+      "adminFeedback": "Palaute",
       "team": "Tiimi"
     },
     "descriptions": {
@@ -1569,6 +1570,115 @@
       "seatFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
       "seatFailedRequestWithdrawn": "{absent} on perunut tuurauspyyntönsä, joten tuurattavaa ei ole.",
       "seatFailedNotScheduled": "Ryhmällä ei ole enää kertaa tänä päivänä."
+    },
+    "feedback": {
+      "title": "Palaute",
+      "sources": {
+        "gamerOnline": "Pelaajilta verkkotapaamisten jälkeen"
+      },
+      "empty": "Palautetta ei ole vielä annettu.",
+      "loadError": "Palautetta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+      "loadErrorWithReason": "Palautetta ei voitu ladata: {reason}",
+      "noAnswers": "Ei vastauksia",
+      "answers": "{count, plural, one {# vastaus} other {# vastausta}}",
+      "skipped": "Ohitettu",
+      "belowAverage": "Alle keskiarvon",
+      "belowAverageOn": "Alle keskiarvon väitteessä: {statement}",
+      "statementLabels": {
+        "learned": "Oppi uutta",
+        "fun": "Oli kivaa",
+        "geduKnowledgeable": "Gedu osasi",
+        "geduKind": "Gedu ystävällinen",
+        "groupListens": "Tuli kuulluksi"
+      },
+      "timeline": {
+        "byWeek": "Myönteiset vastaukset viikoittain",
+        "byMonth": "Myönteiset vastaukset kuukausittain",
+        "platform": "Koko alusta"
+      },
+      "back": {
+        "overview": "Takaisin palautteeseen",
+        "list": {
+          "product": "Takaisin tuotteisiin",
+          "gedu": "Takaisin geduihin"
+        },
+        "responses": "Takaisin pelaajien vastauksiin",
+        "detail": {
+          "product": "Takaisin tuotteeseen",
+          "group": "Takaisin ryhmään",
+          "gedu": "Takaisin geduun",
+          "gamer": "Takaisin pelaajaan"
+        }
+      },
+      "hero": {
+        "positive": "myönteisiä",
+        "definition": "Vastaus Kyllä tai Ehdottomasti",
+        "responseRate": "{share} paikalla olleista pelaajista vastasi"
+      },
+      "statements": {
+        "heading": "Väitteittäin",
+        "legend": "Kielteinen on Ei tai Vähän, myönteinen on Kyllä tai Ehdottomasti.",
+        "positive": "{share} myönteisiä",
+        "negative": "{share} kielteisiä",
+        "saidPositive": "{positive}/{answers} vastasi {yes} tai {definitely}"
+      },
+      "explore": {
+        "heading": "Tutki tarkemmin",
+        "titles": {
+          "product": "Tuotteet",
+          "gedu": "Gedut",
+          "responses": "Pelaajat"
+        },
+        "counts": {
+          "product": "{count, plural, one {# tuote} other {# tuotetta}}",
+          "gedu": "{count, plural, one {# Gedu} other {# Gedua}}",
+          "responses": "{count, plural, one {# vastaus} other {# vastausta}}"
+        }
+      },
+      "rows": {
+        "none": "Täällä ei ole vielä mitään.",
+        "answers": "Vastaukset",
+        "positive": "Myönteiset",
+        "positiveAgainst": "Myönteiset (koko alusta {share})"
+      },
+      "lists": {
+        "titles": {
+          "product": "Tuotteet",
+          "gedu": "Gedut"
+        },
+        "subtitle": "Heikoin ensin, verrattuna koko alustan keskiarvoon"
+      },
+      "detail": {
+        "kinds": {
+          "product": "Tuote",
+          "group": "Ryhmä",
+          "gedu": "Gedu",
+          "gamer": "Pelaaja"
+        },
+        "open": {
+          "product": "Avaa tuote",
+          "group": "Avaa ryhmä",
+          "gedu": "Avaa gedun tili",
+          "gamer": "Avaa pelaajan tili"
+        },
+        "none": "Tästä ei ole vielä vastattu mitään.",
+        "platform": "Koko alusta {share}",
+        "groupsHeading": "Ryhmät",
+        "productsHeading": "Tuotteet",
+        "gedusHeading": "Gedut",
+        "gamersHeading": "Vastanneet pelaajat",
+        "responsesHeading": "Mitä pelaajat sanoivat"
+      },
+      "responses": {
+        "title": "Mitä pelaajat sanoivat",
+        "none": "Täällä ei ole vastauksia.",
+        "noneWorthReading": "Ei mitään poimittavaa: ei kielteisiä vastauksia eikä viestejä.",
+        "noGedu": "Gedua ei ole kirjattu",
+        "who": "Vastaus",
+        "filterLabel": "Näytettävät vastaukset",
+        "worthReading": "Lukemisen arvoiset ({count})",
+        "all": "Kaikki ({count})"
+      }
     }
   },
   "auth": {
@@ -3145,13 +3255,12 @@
     "sites": "Toimipisteet",
     "uiComponents": "UI-komponentit",
     "uiPreviews": "UI-esikatselut",
-    "whatsapp": "WhatsApp",
     "testing": "Testaus",
-    "settings": "Asetukset",
     "tools": "Työkalut",
     "expandSidebar": "Laajenna sivupalkki",
     "collapseSidebar": "Pienennä sivupalkki",
-    "substitutions": "Tuuraukset"
+    "substitutions": "Tuuraukset",
+    "feedback": "Palaute"
   },
   "home": {
     "hero": {

@@ -73,6 +73,7 @@
       "adminSubstitutions": "lIwmey",
       "teamProfile": "Del’a’wIj",
       "adminTeamProfile": "Del’a’",
+      "adminFeedback": "ja'chuq",
       "team": "ghom"
     },
     "descriptions": {
@@ -1613,6 +1614,115 @@
       "seatFailedSeatGone": "may’vam ghaj {absent} ’e’ mev. lIwmeH pagh tu’lu’.",
       "seatFailedRequestWithdrawn": "tlhobghachDaj teq {absent}. lIwmeH pagh tu’lu’.",
       "seatFailedNotScheduled": "jajvam may’ ghajbe’ ghom DaH."
+    },
+    "feedback": {
+      "title": "ja'chuq",
+      "sources": {
+        "gamerOnline": "QujwI'pu' ja'chuq, De'wI' ghommey pItlh"
+      },
+      "empty": "DaH ja'chuq pagh.",
+      "loadError": "ja'chuq lI'laHbe'. nIqHom yIchu'qa'.",
+      "loadErrorWithReason": "ja'chuq lI'laHbe': {reason}",
+      "noAnswers": "jangmey pagh",
+      "answers": "{count, plural, one {# jang} other {# jangmey}}",
+      "skipped": "juSlu'",
+      "belowAverage": "motlh bIng",
+      "belowAverageOn": "motlh bIng: {statement}",
+      "statementLabels": {
+        "learned": "ghoj",
+        "fun": "Tiv",
+        "geduKnowledgeable": "Gedu po'",
+        "geduKind": "Gedu parHa'",
+        "groupListens": "Qoy"
+      },
+      "timeline": {
+        "byWeek": "Hogh jangmey QaQ",
+        "byMonth": "jar jangmey QaQ",
+        "platform": "Hoch"
+      },
+      "back": {
+        "overview": "ja'chuqDaq yIchegh",
+        "list": {
+          "product": "Dochmey yIchegh",
+          "gedu": "Gedupu' yIchegh"
+        },
+        "responses": "QujwI'pu' jatlhpu'bogh yIchegh",
+        "detail": {
+          "product": "DochDaq yIchegh",
+          "group": "ghomDaq yIchegh",
+          "gedu": "GeduDaq yIchegh",
+          "gamer": "QujwI'Daq yIchegh"
+        }
+      },
+      "hero": {
+        "positive": "QaQ",
+        "definition": "HISlaH pagh HISlaHbej jang",
+        "responseRate": "{share} QujwI'pu' naDev tu'lu'bogh jang"
+      },
+      "statements": {
+        "heading": "ja'meH mu'tlhegh",
+        "legend": "QaQbe': ghobe' pagh ghobe'law'. QaQ: HISlaH pagh HISlaHbej.",
+        "positive": "{share} QaQ",
+        "negative": "{share} QaQbe'",
+        "saidPositive": "{answers} jangmey; {positive} {yes} pagh {definitely}"
+      },
+      "explore": {
+        "heading": "yInej",
+        "titles": {
+          "product": "Dochmey",
+          "gedu": "Gedupu'",
+          "responses": "QujwI'pu'"
+        },
+        "counts": {
+          "product": "{count, plural, one {# Doch} other {# Dochmey}}",
+          "gedu": "{count, plural, one {# Gedu} other {# Gedupu’}}",
+          "responses": "{count, plural, one {# jang} other {# jangmey}}"
+        }
+      },
+      "rows": {
+        "none": "DaH pagh.",
+        "answers": "jangmey",
+        "positive": "QaQ",
+        "positiveAgainst": "QaQ (Hoch {share})"
+      },
+      "lists": {
+        "titles": {
+          "product": "Dochmey",
+          "gedu": "Gedupu'"
+        },
+        "subtitle": "QaQbe'qu'wI' wa'DIch, Hoch motlh"
+      },
+      "detail": {
+        "kinds": {
+          "product": "Doch",
+          "group": "ghom",
+          "gedu": "Gedu",
+          "gamer": "QujwI'"
+        },
+        "open": {
+          "product": "Doch yIpoSmoH",
+          "group": "ghom yIpoSmoH",
+          "gedu": "Gedu mI' yIpoSmoH",
+          "gamer": "QujwI' mI' yIpoSmoH"
+        },
+        "none": "DaH Dochvam jang pagh.",
+        "platform": "Hoch {share}",
+        "groupsHeading": "ghommey",
+        "productsHeading": "Dochmey",
+        "gedusHeading": "Gedupu'",
+        "gamersHeading": "QujwI'pu' jangbogh",
+        "responsesHeading": "QujwI'pu' jatlhpu'bogh"
+      },
+      "responses": {
+        "title": "QujwI'pu' jatlhpu'bogh",
+        "none": "naDev jang pagh.",
+        "noneWorthReading": "laDnIS pagh: jang QaQbe' pagh, QIn pagh.",
+        "noGedu": "Gedu ghItlhlu'be'",
+        "who": "jang",
+        "filterLabel": "jangmey yIwIv",
+        "worthReading": "laDnIS ({count})",
+        "all": "Hoch ({count})"
+      }
     }
   },
   "auth": {
@@ -3185,13 +3295,12 @@
     "sites": "Daqmey",
     "uiComponents": "UI ngoQmey",
     "uiPreviews": "UI cha’ghachmey",
-    "whatsapp": "WhatsApp",
     "testing": "Qu’ nI’moH",
-    "settings": "ngoQmey",
     "tools": "janmey",
     "expandSidebar": "HeDmey ’an",
     "collapseSidebar": "HeDmey SoQmoH",
-    "substitutions": "lIwmey"
+    "substitutions": "lIwmey",
+    "feedback": "ja'chuq"
   },
   "home": {
     "hero": {

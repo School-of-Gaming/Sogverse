@@ -8,14 +8,13 @@ import {
   Users,
   Palette,
   MonitorPlay,
-  Settings,
   FlaskConical,
-  MessageCircle,
   Building2,
   BookOpen,
   ChevronLeft,
   ChevronRight,
   MapPin,
+  MessageSquareHeart,
   Receipt,
   ReceiptText,
   Sparkles,
@@ -32,11 +31,11 @@ import type { StaticAppHref } from "@/lib/constants/routes";
 
 type SidebarKey =
   | "dashboard" | "users"
-  | "uiComponents" | "uiPreviews" | "whatsapp" | "testing" | "settings"
+  | "uiComponents" | "uiPreviews" | "testing"
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
   | "invoiceCustomers" | "geduInvoicing" | "libraryContent" | "platformVision"
   | "camps" | "events"
-  | "sites" | "substitutions";
+  | "sites" | "substitutions" | "feedback";
 
 interface NavItemDef {
   href: StaticAppHref;
@@ -70,6 +69,9 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     // of work rather than a catalogue: a session with nobody teaching it is
     // answered today, and the clubs are answered whenever.
     { href: ROUTES.admin.substitutions, labelKey: "substitutions", icon: <ArrowLeftRight className="h-5 w-5" /> },
+    // Beside the queue rather than among the reports: it is the read of how
+    // sessions are landing, and a note that needs acting on is today's work too.
+    { href: ROUTES.admin.feedback, labelKey: "feedback", icon: <MessageSquareHeart className="h-5 w-5" /> },
     { href: ROUTES.admin.consumerClubs, labelKey: "consumerClubs", icon: kindIcon("consumer_club") },
     { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: kindIcon("municipality_club") },
     { href: ROUTES.admin.camps, labelKey: "camps", icon: kindIcon("camp") },
@@ -88,9 +90,7 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },
-    { href: ROUTES.admin.whatsapp, labelKey: "whatsapp", icon: <MessageCircle className="h-5 w-5" /> },
     { href: ROUTES.admin.testing, labelKey: "testing", icon: <FlaskConical className="h-5 w-5" /> },
-    { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
 };
 

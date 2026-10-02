@@ -80,6 +80,7 @@
       "adminSubstitutions": "Substitutions",
       "teamProfile": "My profile",
       "adminTeamProfile": "Profile",
+      "adminFeedback": "Feedback",
       "team": "Team"
     },
     "descriptions": {
@@ -1569,6 +1570,115 @@
       "seatFailedSeatGone": "{absent} no longer has this session, so there is nothing to substitute for.",
       "seatFailedRequestWithdrawn": "{absent} has withdrawn their request, so there is no absence to cover.",
       "seatFailedNotScheduled": "The group no longer has a session on this date."
+    },
+    "feedback": {
+      "title": "Feedback",
+      "sources": {
+        "gamerOnline": "From gamers after online sessions"
+      },
+      "empty": "No feedback has been given yet.",
+      "loadError": "The feedback could not be loaded. Reload the page to try again.",
+      "loadErrorWithReason": "The feedback could not be loaded: {reason}",
+      "noAnswers": "No answers",
+      "answers": "{count, plural, one {# answer} other {# answers}}",
+      "skipped": "Skipped",
+      "belowAverage": "Below average",
+      "belowAverageOn": "Below average on: {statement}",
+      "statementLabels": {
+        "learned": "Learned",
+        "fun": "Fun",
+        "geduKnowledgeable": "Gedu knew",
+        "geduKind": "Gedu kind",
+        "groupListens": "Listened"
+      },
+      "timeline": {
+        "byWeek": "Positive answers by week",
+        "byMonth": "Positive answers by month",
+        "platform": "Platform"
+      },
+      "back": {
+        "overview": "Back to feedback",
+        "list": {
+          "product": "Back to products",
+          "gedu": "Back to Gedus"
+        },
+        "responses": "Back to what gamers said",
+        "detail": {
+          "product": "Back to the product",
+          "group": "Back to the group",
+          "gedu": "Back to the Gedu",
+          "gamer": "Back to the gamer"
+        }
+      },
+      "hero": {
+        "positive": "positive",
+        "definition": "Answered Yes or Definitely",
+        "responseRate": "{share} of gamers present answered"
+      },
+      "statements": {
+        "heading": "By statement",
+        "legend": "Negative is No or Not really; positive is Yes or Definitely.",
+        "positive": "{share} positive",
+        "negative": "{share} negative",
+        "saidPositive": "{positive} of {answers} said {yes} or {definitely}"
+      },
+      "explore": {
+        "heading": "Explore",
+        "titles": {
+          "product": "Products",
+          "gedu": "Gedus",
+          "responses": "Gamers"
+        },
+        "counts": {
+          "product": "{count, plural, one {# product} other {# products}}",
+          "gedu": "{count, plural, one {# Gedu} other {# Gedus}}",
+          "responses": "{count, plural, one {# response} other {# responses}}"
+        }
+      },
+      "rows": {
+        "none": "Nothing here yet.",
+        "answers": "Answers",
+        "positive": "Positive",
+        "positiveAgainst": "Positive (platform {share})"
+      },
+      "lists": {
+        "titles": {
+          "product": "Products",
+          "gedu": "Gedus"
+        },
+        "subtitle": "Worst first, against the platform average"
+      },
+      "detail": {
+        "kinds": {
+          "product": "Product",
+          "group": "Group",
+          "gedu": "Gedu",
+          "gamer": "Gamer"
+        },
+        "open": {
+          "product": "Open the product",
+          "group": "Open the group",
+          "gedu": "Open the Gedu's account",
+          "gamer": "Open the gamer's account"
+        },
+        "none": "Nothing has been answered about this yet.",
+        "platform": "Platform {share}",
+        "groupsHeading": "Groups",
+        "productsHeading": "Products",
+        "gedusHeading": "Gedus",
+        "gamersHeading": "Gamers who answered",
+        "responsesHeading": "What gamers said"
+      },
+      "responses": {
+        "title": "What gamers said",
+        "none": "No responses here.",
+        "noneWorthReading": "Nothing worth reading: no negative answers and no notes.",
+        "noGedu": "No Gedu recorded",
+        "who": "Response",
+        "filterLabel": "Which responses",
+        "worthReading": "Worth reading ({count})",
+        "all": "All ({count})"
+      }
     }
   },
   "auth": {
@@ -3145,13 +3255,12 @@
     "sites": "Sites",
     "uiComponents": "UI Components",
     "uiPreviews": "UI Previews",
-    "whatsapp": "WhatsApp",
     "testing": "Testing",
-    "settings": "Settings",
     "tools": "Tools",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
-    "substitutions": "Substitutions"
+    "substitutions": "Substitutions",
+    "feedback": "Feedback"
   },
   "home": {
     "hero": {

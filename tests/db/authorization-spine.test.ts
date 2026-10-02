@@ -104,6 +104,9 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // than a second 42501 — so unlike every gedu read below, the positive half of
   // the matrix IS assertable here with no fixture.
   get_admin_product_sessions: { permittedRoles: ["admin"] },
+  // All-NULL arguments reach the body past the guard and are refused as a
+  // missing range (22004), which is not the forbidden error.
+  get_admin_session_feedback: { permittedRoles: ["admin"] },
   // Takes no arguments at all, so the all-NULL convention hands it an empty
   // argument object and a permitted admin gets the whole document back — the
   // positive half of the matrix is assertable here without a fixture.

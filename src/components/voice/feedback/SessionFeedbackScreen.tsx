@@ -11,6 +11,7 @@ import {
   SESSION_FEEDBACK_NOTE_MAX_LENGTH,
   SESSION_FEEDBACK_RATINGS,
   SESSION_FEEDBACK_RATING_KEYS,
+  SESSION_FEEDBACK_SEGMENT_PX,
   type SessionFeedbackItemKey,
   type SessionFeedbackRating,
   type SessionFeedbackResult,
@@ -140,15 +141,11 @@ const SEGMENT =
  * Five even steps from just over half the row to the whole of it: enough
  * difference between neighbours to read as a rise at a glance, and the last one
  * is the full 44 so the tallest block and the tap target agree at the end the
- * bar charges toward. Only the drawing changes — every label is 44 tall.
+ * bar charges toward. Only the drawing changes — every label is 44 tall. The
+ * pixels are the shared table in `session-feedback-items`, which the admin's
+ * meter draws its rise from too.
  */
-const SEGMENT_HEIGHTS = {
-  1: "h-[24px]",
-  2: "h-[29px]",
-  3: "h-[34px]",
-  4: "h-[39px]",
-  5: "h-[44px]",
-} as const satisfies Record<SessionFeedbackRating, string>;
+const SEGMENT_HEIGHTS = SESSION_FEEDBACK_SEGMENT_PX;
 
 /**
  * Where a level's word is placed on the line below the bar, and how it is
@@ -436,9 +433,6 @@ export function SessionFeedbackScreen<
                         aria-hidden
                         className={cn(
                           SEGMENT,
-                          // The rise: the drawn block grows with the level it
-                          // stands for, while the label around it stays 44 tall.
-                          SEGMENT_HEIGHTS[rating],
                           // Filled from the state, not from `peer-checked`: only
                           // one radio in a bar is checked, and every segment below
                           // it has to fill too.
@@ -446,6 +440,9 @@ export function SessionFeedbackScreen<
                             ? "bg-act"
                             : "bg-lifted",
                         )}
+                        // The rise: the drawn block grows with the level it
+                        // stands for, while the label around it stays 44 tall.
+                        style={{ height: SEGMENT_HEIGHTS[rating] }}
                       />
                     </label>
                   ))}

@@ -6,10 +6,8 @@ import {
   AdminGeduInvoicingHeading,
   AdminGeduInvoicingPage,
 } from "@/components/gedu-invoicing/admin-gedu-invoicing-page";
-import {
-  invoicingWireReason,
-  resolveInvoicingMonthStart,
-} from "@/lib/invoicing/month-param";
+import { wireErrorMessage } from "@/lib/api/wire-error-message";
+import { resolveInvoicingMonthStart } from "@/lib/invoicing/month-param";
 import { createClient } from "@/lib/supabase/server";
 import type { GeduInvoicingSnapshot } from "@/services/gedu-invoicing/gedu-invoicing.contracts";
 import { geduInvoicingKeys } from "@/services/gedu-invoicing/gedu-invoicing.keys";
@@ -44,7 +42,7 @@ async function loadMonth(monthStart: string): Promise<SnapshotResult> {
   try {
     return { ok: true, snapshot: await service.getAdminMonth(monthStart) };
   } catch (error) {
-    return { ok: false, reason: invoicingWireReason(error) };
+    return { ok: false, reason: wireErrorMessage(error) };
   }
 }
 
