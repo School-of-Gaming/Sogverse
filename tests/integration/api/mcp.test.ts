@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { MCP_TEST_ORIGIN as ORIGIN, mcpRequest as rpc, readRpc } from "../../helpers/mcp";
 
 /**
  * The MCP endpoint end to end inside the process: the real gate, the real
@@ -25,7 +26,6 @@ import {
 } from "@/app/.well-known/oauth-protected-resource/api/mcp/route";
 
 const SUPABASE_URL = "https://project.supabase.co";
-const ORIGIN = "http://localhost:3000";
 const USER_ID = "8f1c2a8e-6c1b-4a7e-9a52-2d0d3c6e9b11";
 const CLIENT_ID = "5b0a3f0e-1c55-4c43-8d2e-6a7f3f0f2a90";
 const EXP = 2_000_000_000;
@@ -46,29 +46,6 @@ function signedInAs(role: string, overrides: Record<string, unknown> = {}) {
     error: null,
   });
   mockMaybeSingle.mockResolvedValue({ data: { role }, error: null });
-}
-
-function rpc(body: unknown, token: string | null = "token", method = "POST") {
-  return new Request(`${ORIGIN}/api/mcp`, {
-    method,
-    headers: {
-      host: "localhost:3000",
-      "Content-Type": "application/json",
-      Accept: "application/json, text/event-stream",
-      "MCP-Protocol-Version": "2025-06-18",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    ...(method === "POST" ? { body: JSON.stringify(body) } : {}),
-  });
-}
-
-/** A JSON-RPC answer, whether it came back as JSON or as one SSE event. */
-async function readRpc(response: Response): Promise<Record<string, unknown>> {
-  const text = await response.text();
-  const data = text.split("\n").filter((line) => line.startsWith("data:"));
-  return z
-    .record(z.unknown())
-    .parse(JSON.parse(data.length ? data[data.length - 1].slice(5) : text));
 }
 
 beforeEach(() => {
@@ -135,16 +112,41 @@ describe("/api/mcp", () => {
     expect(body.result).toMatchObject({ serverInfo: { name: "sogverse" } });
   });
 
-  it("lists whoami as a read-only tool", async () => {
+  it("lists every tool, each stating its annotations", async () => {
     signedInAs("admin");
 
     const body = await readRpc(
       await POST(rpc({ jsonrpc: "2.0", id: 2, method: "tools/list" })),
     );
 
-    expect(body.result).toMatchObject({
-      tools: [expect.objectContaining({ name: "whoami", annotations: expect.objectContaining({ readOnlyHint: true }) })],
-    });
+    const tools = z
+      .object({
+        tools: z.array(
+          z.object({
+            name: z.string(),
+            annotations: z.object({
+              readOnlyHint: z.boolean(),
+              destructiveHint: z.boolean(),
+              idempotentHint: z.boolean(),
+              openWorldHint: z.boolean(),
+            }),
+          }),
+        ),
+      })
+      .parse(body.result).tools;
+    expect(tools.map((tool) => tool.name)).toEqual([
+      "whoami",
+      "list_library_articles",
+      "get_library_article",
+      "list_library_categories",
+      "get_library_preview_link",
+      "create_library_article",
+      "save_library_article_version",
+      "set_library_article_category",
+      "publish_library_article",
+      "unpublish_library_article",
+    ]);
+    expect(tools.find((tool) => tool.name === "whoami")?.annotations.readOnlyHint).toBe(true);
   });
 
   it("answers whoami with the admin, the client, the server and the expiry", async () => {

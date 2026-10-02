@@ -203,6 +203,10 @@ export interface AdminLibraryArticleListItem {
   coverPath: string | null;
   /** When the working copy was last saved. */
   updatedAt: string;
+  /** Who last saved it, as on the edit page (`LibraryArticleDraft`). */
+  lastSavedBy: LibraryArticleDraft["lastSavedBy"];
+  /** The AI app the last save came through, as on the edit page. */
+  lastSavedVia: LibraryArticleDraft["lastSavedVia"];
   isPublished: boolean;
   /** True when publishing now would change what is live. */
   hasUnpublishedChanges: boolean;
@@ -251,6 +255,71 @@ export function localizeArticle(
   const { versions, ...shared } = article;
   const version = resolveTranslation(versions, locale);
   return version === null ? null : { ...shared, ...version };
+}
+
+// ---------------------------------------------------------------------------
+// Completeness
+// ---------------------------------------------------------------------------
+
+/**
+ * The fields a version needs before publishing takes it, in the order the
+ * editor asks for them. Complete means all three written — the same rule as
+ * the working table's generated `is_complete`, which is what publishing reads.
+ */
+export const LIBRARY_VERSION_FIELDS = ["title", "summary", "body"] as const;
+
+export type LibraryVersionField = (typeof LIBRARY_VERSION_FIELDS)[number];
+
+/** What a version still needs before publishing takes it; empty when complete. */
+export function missingInVersion(
+  version: Readonly<Record<LibraryVersionField, string>>,
+): LibraryVersionField[] {
+  return LIBRARY_VERSION_FIELDS.filter((field) => version[field].trim() === "");
+}
+
+export function isCompleteVersion(
+  version: Readonly<Record<LibraryVersionField, string>>,
+): boolean {
+  return missingInVersion(version).length === 0;
+}
+
+// ---------------------------------------------------------------------------
+// Refusals
+// ---------------------------------------------------------------------------
+
+/**
+ * Why a write was refused: the database's own sentence when it wrote one for
+ * a reader, or nothing to quote. The Library's write functions raise their
+ * admin-facing sentences under exactly three SQLSTATEs — `check_violation`
+ * (a missing title, the publish function's list of what is missing, a cover
+ * that is not a Library cover), `no_data_found` (the article is gone) and
+ * `foreign_key_violation` (the cover left the catalogue). Every other code
+ * carries a message written for a developer, not an admin: supabase-js reports
+ * a network fault with an empty code and the fetch error as its message, and an
+ * expired session as a `PGRST` code, so those fall back to a generic line.
+ * The editor and the MCP tools both read a refusal through this.
+ */
+export type LibraryWriteFailure =
+  | { kind: "reason"; reason: string }
+  | { kind: "unknown" };
+
+const QUOTED_SQLSTATES: ReadonlySet<string> = new Set([
+  "23514", // check_violation
+  "P0002", // no_data_found
+  "23503", // foreign_key_violation
+]);
+
+export function libraryWriteFailure(error: unknown): LibraryWriteFailure {
+  if (typeof error !== "object" || error === null) return { kind: "unknown" };
+  if (!("code" in error) || !("message" in error)) return { kind: "unknown" };
+  const { code, message } = error;
+  if (typeof code !== "string" || typeof message !== "string") {
+    return { kind: "unknown" };
+  }
+  if (!QUOTED_SQLSTATES.has(code) || message.length === 0) {
+    return { kind: "unknown" };
+  }
+  return { kind: "reason", reason: message };
 }
 
 // ---------------------------------------------------------------------------

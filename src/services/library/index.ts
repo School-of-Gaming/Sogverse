@@ -11,7 +11,10 @@ export {
 } from "./library.queries";
 export {
   hasUnpublishedChanges,
+  isCompleteVersion,
   libraryArticleInput,
+  libraryWriteFailure,
+  missingInVersion,
   localizeArticle,
   localizeArticleSummary,
   type AdminLibraryArticle,

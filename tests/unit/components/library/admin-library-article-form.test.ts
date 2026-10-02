@@ -7,13 +7,15 @@ import {
   libraryArticleStatus,
   libraryPublishState,
   librarySaveBlocker,
-  libraryWriteFailure,
   missingForPublish,
   sameAsSaved,
   type LibraryArticleForm,
   type LibraryArticleVersionDraft,
 } from "@/components/admin/library/library-article-form";
-import type { LibraryArticleDraft } from "@/services/library";
+import {
+  libraryWriteFailure,
+  type LibraryArticleDraft,
+} from "@/services/library";
 
 /**
  * The admin Library editor's rules, apart from any render: where an article

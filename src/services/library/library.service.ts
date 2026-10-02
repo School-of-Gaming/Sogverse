@@ -37,6 +37,20 @@ const PUBLICATION_SUMMARY_COLUMNS = `article_id, category, cover_path, published
 /** The published copy's columns for comparing, without a body. */
 const PUBLICATION_COMPARE_COLUMNS = `category, cover_image_id, versions:library_article_publication_translations(locale, title, summary, body_md5)`;
 
+/**
+ * The last saver's profile, embedded by its constraint's name, since the
+ * author is a second key to the same table; an admin reads every profile.
+ */
+const LAST_SAVER_EMBED =
+  "last_saver:profiles!library_articles_last_saved_by_fkey(first_name, last_name)";
+
+/** The last saver's name, or null when no saver is recorded. */
+function saverName(
+  saver: { first_name: string; last_name: string } | null,
+): string | null {
+  return saver ? `${saver.first_name} ${saver.last_name}`.trim() : null;
+}
+
 interface WorkingVersionRow {
   locale: string;
   title: string;
@@ -126,8 +140,8 @@ export class LibraryService {
 
   /**
    * Every article, most recently saved first, with its versions' titles and
-   * summaries, whether it is live and whether publishing now would change
-   * what is.
+   * summaries, who last saved it and through which AI app, whether it is
+   * live and whether publishing now would change what is.
    *
    * The comparison reads each version's short fields and its body's digest,
    * never a body, so the list stays small however long the articles are.
@@ -139,12 +153,16 @@ export class LibraryService {
       this.supabase
         .from("library_articles")
         .select(
-          `id, category, cover_image_id, cover_path, updated_at, versions:library_article_translations(${DRAFT_VERSION_LIST_COLUMNS}), publication:library_article_publications(${PUBLICATION_COMPARE_COLUMNS})`,
+          `id, category, cover_image_id, cover_path, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:library_article_translations(${DRAFT_VERSION_LIST_COLUMNS}), publication:library_article_publications(${PUBLICATION_COMPARE_COLUMNS})`,
           { count: "exact" },
         )
         .order("updated_at", { ascending: false })
         .order("id")
         .range(from, to),
+    );
+
+    const appNames = await this.oauthClientNames(
+      rows.map((row) => row.last_saved_via),
     );
 
     return rows.map((row) => ({
@@ -157,6 +175,13 @@ export class LibraryService {
       category: row.category,
       coverPath: row.cover_path,
       updatedAt: row.updated_at,
+      lastSavedBy: saverName(row.last_saver),
+      lastSavedVia: row.last_saved_via
+        ? {
+            clientId: row.last_saved_via,
+            name: appNames.get(row.last_saved_via) ?? null,
+          }
+        : null,
       isPublished: row.publication !== null,
       hasUnpublishedChanges: hasUnpublishedChanges(
         publishable(row),
@@ -175,9 +200,7 @@ export class LibraryService {
    * shows under the picture; the path stays the working copy's own derived
    * column. The catalogue is admin-only, which this read already is. The
    * embed is unhinted, so it relies on `cover_image_id` being the only
-   * foreign key from the working copy to the catalogue. The last saver's
-   * profile is embedded by its constraint's name, since the author is a
-   * second key to the same table; an admin reads every profile.
+   * foreign key from the working copy to the catalogue.
    *
    * A save that came through an AI app is named by a second read, made only
    * then: the app's registration lives in Supabase Auth, out of the Data
@@ -189,7 +212,7 @@ export class LibraryService {
     const { data, error } = await this.supabase
       .from("library_articles")
       .select(
-        `id, category, cover_image_id, cover_path, created_at, updated_at, last_saved_via, last_saver:profiles!library_articles_last_saved_by_fkey(first_name, last_name), versions:library_article_translations(${DRAFT_VERSION_COLUMNS}), cover_entry:catalogue_images(label), publication:library_article_publications(${PUBLICATION_COLUMNS})`,
+        `id, category, cover_image_id, cover_path, created_at, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:library_article_translations(${DRAFT_VERSION_COLUMNS}), cover_entry:catalogue_images(label), publication:library_article_publications(${PUBLICATION_COLUMNS})`,
       )
       .eq("id", id)
       .maybeSingle();
@@ -208,9 +231,7 @@ export class LibraryService {
       coverLabel: data.cover_entry?.label ?? null,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
-      lastSavedBy: data.last_saver
-        ? `${data.last_saver.first_name} ${data.last_saver.last_name}`.trim()
-        : null,
+      lastSavedBy: saverName(data.last_saver),
       lastSavedVia: data.last_saved_via
         ? {
             clientId: data.last_saved_via,
@@ -227,6 +248,25 @@ export class LibraryService {
         data.publication,
       ),
     };
+  }
+
+  /**
+   * The names of the AI apps a list of saves came through, each app read once
+   * however many articles it saved. An app that gave no name or is no longer
+   * registered is absent from the map.
+   */
+  private async oauthClientNames(
+    clientIds: readonly (string | null)[],
+  ): Promise<Map<string, string>> {
+    const distinct = [
+      ...new Set(clientIds.filter((id): id is string => id !== null)),
+    ];
+    const names = await Promise.all(
+      distinct.map(async (id) => [id, await this.oauthClientName(id)] as const),
+    );
+    return new Map(
+      names.flatMap(([id, name]) => (name === null ? [] : [[id, name] as const])),
+    );
   }
 
   /**

@@ -33,10 +33,12 @@ import {
 import { localeTabAfterRemoving } from "@/lib/i18n/locale-tabs";
 import { cn, findOption, formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
-import type {
-  AdminLibraryArticle,
-  LibraryArticleDraft,
-  LibraryArticleInput,
+import {
+  isCompleteVersion,
+  libraryWriteFailure,
+  type AdminLibraryArticle,
+  type LibraryArticleDraft,
+  type LibraryArticleInput,
 } from "@/services/library";
 import { ArticleBodyEditor } from "./article-body-editor";
 import {
@@ -44,13 +46,11 @@ import {
   formLocales,
   incompleteLocales,
   isBlankLibraryArticleForm,
-  isCompleteVersion,
   libraryArticleFormFromDraft,
   libraryArticleInputFromForm,
   libraryArticleStatus,
   libraryPublishState,
   librarySaveBlocker,
-  libraryWriteFailure,
   sameAsSaved,
   versionOf,
   type LibraryArticleForm,
