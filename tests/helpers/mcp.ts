@@ -7,24 +7,19 @@ import { z } from "zod";
 
 export const MCP_TEST_ORIGIN = "http://localhost:3000";
 
-/**
- * A JSON-RPC request to the endpoint, carrying a bearer token unless `token` is
- * null. `origin` is where it claims to come from (its `Host` follows) and
- * `protocolVersion` the MCP version header.
- */
+/** A JSON-RPC request to the endpoint, carrying a bearer token unless `token` is null. */
 export function mcpRequest(
   body: unknown,
   token: string | null = "token",
   method = "POST",
-  { origin = MCP_TEST_ORIGIN, protocolVersion = "2025-06-18" } = {},
 ): Request {
-  return new Request(`${origin}/api/mcp`, {
+  return new Request(`${MCP_TEST_ORIGIN}/api/mcp`, {
     method,
     headers: {
-      host: new URL(origin).host,
+      host: "localhost:3000",
       "Content-Type": "application/json",
       Accept: "application/json, text/event-stream",
-      "MCP-Protocol-Version": protocolVersion,
+      "MCP-Protocol-Version": "2025-06-18",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     ...(method === "POST" ? { body: JSON.stringify(body) } : {}),
