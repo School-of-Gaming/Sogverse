@@ -70,9 +70,8 @@ export async function verifyMcpAccessToken(
   if (!token) return { kind: "invalid", reason: "no bearer token" };
 
   const supabase = createBearerClient(token);
-  const { data, error } = await supabase.auth.getClaims(token);
-  const claims = data?.claims;
-  if (error || !claims?.sub) {
+  const claims = await readVerifiedClaims(supabase, token);
+  if (!claims?.sub) {
     return { kind: "invalid", reason: "the token did not verify" };
   }
 
@@ -107,6 +106,23 @@ export async function verifyMcpAccessToken(
       extra: { ...caller },
     },
   };
+}
+
+/**
+ * The token's claims once its signature and expiry check out, or null when
+ * they do not. `getClaims` returns most refusals as an error but throws a
+ * plain `Error` for an expired token, and an expired token is the one every
+ * client presents an hour into its grant: it has to read as a refusal, so the
+ * client gets the 401 that sends it to refresh, never the 500 that tells it we
+ * are down.
+ */
+async function readVerifiedClaims(supabase: AppSupabaseClient, token: string) {
+  try {
+    const { data, error } = await supabase.auth.getClaims(token);
+    return error ? null : (data?.claims ?? null);
+  } catch {
+    return null;
+  }
 }
 
 /**

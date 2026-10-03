@@ -85,6 +85,17 @@ describe("/api/mcp", () => {
     expect(response.status).toBe(401);
   });
 
+  it("answers an expired token with the 401 challenge that sends a client to refresh", async () => {
+    // What getClaims does with an expired token: throws, rather than returning
+    // an error as it does for every other refusal.
+    mockGetClaims.mockRejectedValue(new Error("JWT has expired"));
+
+    const response = await POST(rpc({ jsonrpc: "2.0", id: 1, method: "tools/list" }));
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("www-authenticate")).toContain("resource_metadata=");
+  });
+
   it("gates GET as well", async () => {
     const response = await GET(rpc(null, null, "GET"));
 
