@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 
 /**
  * The confirm page's request: the raw token from the `/link` URL. The bot
@@ -46,6 +47,8 @@ export const sendTestDiscordMessageBody = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("subPreview"),
     profileId: z.string().uuid(),
+    /** The locale to render the preview in; absent, the recipient's own. */
+    locale: z.enum(SUPPORTED_LOCALES).optional(),
   }),
 ]);
 export type SendTestDiscordMessageBody = z.infer<typeof sendTestDiscordMessageBody>;

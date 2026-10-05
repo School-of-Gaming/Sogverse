@@ -29,7 +29,7 @@ import { DiscordLinkService } from "@/services/discord-link/discord-link.service
  *
  * Two kinds of message: plain `text`, or a `subPreview` — the `/sub` command's
  * first step, built by the command's own builder over sample sessions and in
- * the recipient's locale. Its controls carry the preview prefix, so a press on
+ * the chosen locale, or the recipient's when none is chosen. Its controls carry the preview prefix, so a press on
  * one answers "this is a preview" and files nothing.
  */
 export const POST = defineRoute({
@@ -54,7 +54,7 @@ export const POST = defineRoute({
       message = { content: body.content };
     } else {
       const copy = await loadDiscordSubCopy(
-        await service.getRecipientLocale(body.profileId),
+        body.locale ?? (await service.getRecipientLocale(body.profileId)),
       );
       const now = new Date();
       message = buildSessionPickerMessage({

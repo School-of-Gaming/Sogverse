@@ -206,7 +206,6 @@ describe("POST /api/admin/send-test-discord-message", () => {
     expect(message.content).toBeUndefined();
     const body = JSON.stringify(message);
     expect(body).toContain("Mille kerralle et pääse?");
-    expect(body).toContain("Mille kerralle et pääse?");
     const ids = customIds(message.components);
     expect(ids.length).toBeGreaterThan(1);
     expect(ids.every((id) => id.startsWith("subpreview:"))).toBe(true);
@@ -260,6 +259,26 @@ describe("POST /api/admin/send-test-discord-message", () => {
     await POST(sendRequest({ kind: "subPreview", profileId: PROFILE_ID }));
 
     expect(JSON.stringify(postedMessage())).toContain("Which session can’t you make?");
+  });
+
+  it("renders the preview in the chosen locale over the recipient's, without reading the recipient's", async () => {
+    const response = await POST(
+      sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "sv" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockFrom).not.toHaveBeenCalledWith("profiles");
+    const body = JSON.stringify(postedMessage());
+    expect(body).toContain("Vilket tillfälle kan du inte vara med på?");
+  });
+
+  it("refuses a locale the app does not support, before calling Discord", async () => {
+    const response = await POST(
+      sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "de" }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("refuses a body that names no kind", async () => {

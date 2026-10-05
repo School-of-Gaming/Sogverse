@@ -1558,7 +1558,9 @@
         "sent": "Viesti lähetetty.",
         "openInDiscord": "Avaa Discordissa",
         "sendSubPreview": "Lähetä /sub-esikatselu",
-        "subPreviewSent": "Esikatselu lähetetty."
+        "subPreviewSent": "Esikatselu lähetetty.",
+        "previewLocale": "Esikatselun kieli",
+        "recipientsLocale": "Vastaanottajan kieli"
       }
     },
     "whatsapp": {

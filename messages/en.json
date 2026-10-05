@@ -1558,7 +1558,9 @@
         "sent": "Message sent.",
         "openInDiscord": "Open in Discord",
         "sendSubPreview": "Send /sub Preview",
-        "subPreviewSent": "Preview sent."
+        "subPreviewSent": "Preview sent.",
+        "previewLocale": "Preview locale",
+        "recipientsLocale": "Recipient’s locale"
       }
     },
     "whatsapp": {

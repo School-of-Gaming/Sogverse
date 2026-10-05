@@ -14,6 +14,11 @@ import {
 } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  LOCALE_CONFIG,
+  SUPPORTED_LOCALES,
+  isSupportedLocale,
+} from "@/lib/constants/locales";
 import { getClient } from "@/lib/supabase/client";
 import { useAuth } from "@/providers";
 import {
@@ -40,6 +45,8 @@ export function DiscordToolCard({ selectClass }: { selectClass: string }) {
 
   const [chosenProfileId, setChosenProfileId] = useState<string | null>(null);
   const [content, setContent] = useState("");
+  // "" is the recipient's own locale, which the /sub preview then takes from them.
+  const [previewLocale, setPreviewLocale] = useState("");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<SendResult | null>(null);
 
@@ -124,6 +131,22 @@ export function DiscordToolCard({ selectClass }: { selectClass: string }) {
             />
           </Field>
 
+          <Field label={t("discord.previewLocale")} htmlFor="discordPreviewLocale">
+            <select
+              id="discordPreviewLocale"
+              value={previewLocale}
+              onChange={(e) => setPreviewLocale(e.target.value)}
+              className={selectClass}
+            >
+              <option value="">{t("discord.recipientsLocale")}</option>
+              {SUPPORTED_LOCALES.map((locale) => (
+                <option key={locale} value={locale}>
+                  {LOCALE_CONFIG[locale].nativeLabel}
+                </option>
+              ))}
+            </select>
+          </Field>
+
           {result && (
             <Alert variant={result.type === "success" ? "success" : "destructive"}>
               <AlertDescription>
@@ -162,7 +185,13 @@ export function DiscordToolCard({ selectClass }: { selectClass: string }) {
               type="button"
               variant="outline"
               disabled={sending || noneLinked || recipientId === ""}
-              onClick={() => void send({ kind: "subPreview", profileId: recipientId })}
+              onClick={() =>
+                void send({
+                  kind: "subPreview",
+                  profileId: recipientId,
+                  ...(isSupportedLocale(previewLocale) && { locale: previewLocale }),
+                })
+              }
             >
               {t("discord.sendSubPreview")}
             </Button>

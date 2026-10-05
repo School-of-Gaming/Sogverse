@@ -1558,7 +1558,9 @@
         "sent": "Meddelandet skickades.",
         "openInDiscord": "Öppna i Discord",
         "sendSubPreview": "Skicka förhandsvisning av /sub",
-        "subPreviewSent": "Förhandsvisningen skickades."
+        "subPreviewSent": "Förhandsvisningen skickades.",
+        "previewLocale": "Förhandsvisningens språk",
+        "recipientsLocale": "Mottagarens språk"
       }
     },
     "whatsapp": {
