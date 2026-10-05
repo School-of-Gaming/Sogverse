@@ -2417,7 +2417,7 @@
       "filePickShowLater": "Afficher les séances suivantes",
       "filePickGroupLabel": "Groupe",
       "filePickAllGroups": "Tous les groupes",
-      "fileFiled": "Remplacement demandé pour {product} le {when}. Il apparaît maintenant sur la fiche de cette séance.",
+      "fileFiled": "Remplacement demandé pour {product} le {when}. Il apparaît maintenant sur la fiche de cette séance dans Mon SOG.",
       "fileFiledLink": "Ouvrir l’espace de travail du groupe",
       "offerConfirmTitle": "Proposer un remplacement ?",
       "offerConfirmBody": "Vous proposez d’assurer {product} le {when}. School of Gaming choisit qui remplace, et vous pouvez retirer votre proposition tant qu’elle n’est pas approuvée. Une fois approuvée, la séance relève de votre contrat Gedu, exactement comme vos propres séances, et vous ne pouvez plus vous retirer : si vous ne pouvez finalement pas l’assurer, demandez vous-même un remplacement, comme pour toutes vos séances. L’espace de travail du groupe s’ouvre à vous 48 heures avant le début de la séance."
