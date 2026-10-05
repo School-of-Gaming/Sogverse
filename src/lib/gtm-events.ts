@@ -7,9 +7,11 @@
  * campaign on the event name. Google reads its own dictionary: a tag built on
  * `sign_up` or `begin_checkout` is recognised by GA4's reporting and by Ads
  * conversion import, where `Lead` or `InitiateCheckout` would arrive as an
- * unrecognised custom event and forfeit both. The two vocabularies name the same
- * moments and sit beside each other rather than merging, because merging them
- * would mean one of the platforms being told a word it does not know.
+ * unrecognised custom event and forfeit both. The two vocabularies sit beside
+ * each other rather than merging, because merging them would mean one of the
+ * platforms being told a word it does not know — and their checkout words do not
+ * even name the same moment: `begin_checkout` is the handoff to Stripe, Meta's
+ * `InitiateCheckout` the click into the sign-up flow before it.
  *
  * Client-safe and React-free: the components that push these import it directly.
  *
@@ -91,8 +93,10 @@ export interface GtmSignUpEvent extends GtmEventBase {
 /**
  * A signup attempt ended in something worth reporting.
  *
- * `outcome` is the same three words the Meta side uses, so a reader comparing
- * the two platforms is not also translating. `advertised` is the product
+ * `outcome` is drawn from the same three words the Meta side uses, so a reader
+ * comparing the two platforms is not also translating. Meta is sent only two
+ * of them: `sent_to_checkout` is pushed here, while Meta's checkout start is
+ * the earlier click into the flow. `advertised` is the product
  * decision described in this module's header.
  */
 export interface GtmEnrolmentEvent extends GtmEventBase {

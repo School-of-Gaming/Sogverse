@@ -170,6 +170,7 @@ function panel({
       regionGate={{ kind: "unlocked" }}
       homeLocationName={null}
       onLocationConfirmed={() => {}}
+      onCheckoutStart={() => {}}
     />
   );
 }

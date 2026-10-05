@@ -472,10 +472,12 @@ describe("POST /api/auth/complete-registration", () => {
 
     expect(deferred).toHaveLength(1);
     expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
-    const [, conversion] = mockReportMetaConversion.mock.calls[0];
+    const [, conversion, account] = mockReportMetaConversion.mock.calls[0];
     expect(conversion).toEqual({
       event: "account_created",
       sourcePath: ROUTES.register,
     });
+    // The signed-in account's own address, from its profile.
+    expect(account).toEqual({ email: EMAIL });
   });
 });

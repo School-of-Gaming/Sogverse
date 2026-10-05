@@ -1,10 +1,11 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { cookieValueFromHeader, parseConsentCookieHeader } from "@/lib/consent";
 import {
-  ENROLMENT_EVENTS,
   isValidPixelId,
   PIXEL_EVENTS,
-  type EnrolmentOutcome,
+  type MetaEnrolmentOutcome,
+  type MetaProductDetails,
 } from "@/lib/marketing-events";
 import { getOrigin } from "@/lib/url";
 
@@ -14,20 +15,37 @@ import { getOrigin } from "@/lib/url";
  *
  * **Why the server and not the pixel.** A conversion happens where the decision
  * is committed — an account is created, a seat is taken, a queue place is
- * accepted, a parent is handed to Stripe — and every one of those is a route
- * handler. Reporting them from the browser meant telling the browser what had
- * happened and trusting it to say so on the next page it loaded: a marker cookie,
+ * accepted — and every one of those is a route handler. Reporting them from the
+ * browser meant telling the browser what had happened and trusting it to say so
+ * on the next page it loaded: a marker cookie,
  * a script that read it, and a report that was lost if the visitor closed the tab
  * or gained if anything else set the cookie. The handler that committed the
  * outcome is the only place that knows it happened, exactly once.
  *
+ * **Starting a checkout is not one of them.** Meta's `InitiateCheckout` is the
+ * parent stepping into the sign-up flow, which is a click on a product page and
+ * commits nothing; the browser reports it there, for free products as well as
+ * paid ones (see `@/components/consent/meta-pixel`). Handing a parent to Stripe
+ * is therefore reported from nowhere on this side, so no attempt is counted
+ * twice under one name.
+ *
  * **What is sent about a person, exhaustively:** the user agent, the IP address
- * the request arrived from, and Meta's own `_fbp` / `_fbc` cookies if this
- * browser carries them. No email, no phone number, no name, no user id, no
- * participation id, and nothing whatsoever about a child — not their name, not
- * their age, not which product they joined. The enrolment events carry one
- * custom field, `outcome`, which is one of three fixed words. This list is the
+ * the request arrived from, Meta's own `_fbp` / `_fbc` cookies if this browser
+ * carries them, and a SHA-256 hash of the parent's own account email — hashed
+ * here, so the address itself is never sent and never logged, and sent whether
+ * or not the address has been verified (standard practice, accepted as such).
+ * No phone number, no name, no user id, no participation id, and nothing about
+ * a child beyond the product named below — not their name, not their age, not
+ * their account, not their address. This list is the
  * promise the privacy policy makes; a field added here is a policy edit.
+ *
+ * **What is sent about the enrolment** is `outcome`, one of two fixed words,
+ * and the product it was for in Meta's standard product fields — its id, name,
+ * topic and price (no price on a queue place), the same facts the product's
+ * public page shows anyone. On the same event as the email hash, so Meta
+ * learns that an identifiable parent signed up for that named club, camp or
+ * event — which the privacy policy states. Nothing about the child goes with
+ * it: not their name, age, account or anything else.
  *
  * **Gated on the request's own consent cookie.** The send is refused unless the
  * request that triggered it carried marketing consent — decided here, on the
@@ -59,24 +77,77 @@ const REQUEST_TIMEOUT_MS = 10_000;
  *
  * **The caller names the event, never the event *name*.** The mapping from an
  * outcome to the name Meta optimises on lives in one place
- * (`@/lib/marketing-events`), so a caller cannot pair "went to Stripe" with the
- * enrolment name by mistake — which is the single error in this area that would
- * cost real money, because it would train a campaign on abandoned checkouts.
+ * (`@/lib/marketing-events`), so a caller can only say what it committed. The
+ * outcome type has no word for "went to Stripe" at all: reporting that as an
+ * enrolment is the single error in this area that would cost real money,
+ * because it would train a campaign on abandoned checkouts, and the browser
+ * already reports the checkout start under its own name.
  *
  * `sourcePath` is the public path the conversion happened on, supplied by the
  * caller: a marketing page's own path, so the URL Meta is told is one of the
  * pages the browser pixel is already allowed to report. It is never taken from
  * the request's own URL — that is an API route, and on some of these flows it
  * would carry a query string nobody vetted.
+ *
+ * `product` is built by `metaProductDetails()`, the one builder the browser's
+ * product view uses too, so the two sides cannot describe a product
+ * differently.
  */
 export type MetaConversion =
   | { event: "account_created"; sourcePath: string }
-  | { event: "enrolment"; outcome: EnrolmentOutcome; sourcePath: string };
+  | {
+      event: "enrolment";
+      outcome: MetaEnrolmentOutcome;
+      product: MetaProductDetails;
+      sourcePath: string;
+    };
+
+/**
+ * The account the request acts as — the parent it just registered, or the
+ * signed-in customer — and never anyone else. Every caller is a customer-only
+ * route, so this is always the parent's own address and never a gamer's.
+ * `null` when the caller has none to hand: the report still goes, without the
+ * hashed email.
+ */
+export interface MetaRequestingAccount {
+  email: string | null;
+}
+
+/**
+ * Meta's advanced-matching form of an email: trimmed, lowercased, SHA-256,
+ * lowercase hex. Meta compares it with the hashes of its own users' addresses;
+ * the plain address never leaves this function.
+ */
+function hashEmailForMeta(email: string): string {
+  return createHash("sha256")
+    .update(email.trim().toLowerCase())
+    .digest("hex");
+}
 
 function eventNameFor(conversion: MetaConversion): string {
   return conversion.event === "account_created"
     ? PIXEL_EVENTS.accountCreated
-    : ENROLMENT_EVENTS[conversion.outcome];
+    : PIXEL_EVENTS.enrolment;
+}
+
+/**
+ * The enrolment's `custom_data`: its outcome and the product it was for.
+ *
+ * **A queue place carries no value.** A waitlisted report keeps the product's
+ * id, name, topic and type but drops `value` and `currency`, whatever the
+ * caller passed: nobody has paid or committed to pay, and a price on it would
+ * teach the campaign that a full product's queue is revenue. Decided here
+ * rather than by each caller, so no route can get it wrong.
+ */
+function enrolmentCustomData(
+  conversion: Extract<MetaConversion, { event: "enrolment" }>,
+): Record<string, unknown> {
+  const { outcome, product } = conversion;
+  if (outcome === "waitlisted") {
+    const { value: _value, currency: _currency, ...unpriced } = product;
+    return { outcome, ...unpriced };
+  }
+  return { outcome, ...product };
 }
 
 /**
@@ -97,6 +168,7 @@ function clientIpFrom(headers: Headers): string | undefined {
 export async function reportMetaConversion(
   request: Request,
   conversion: MetaConversion,
+  account: MetaRequestingAccount,
 ): Promise<void> {
   try {
     const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
@@ -116,6 +188,10 @@ export async function reportMetaConversion(
     // person as the browser's page view instead of counted as a stranger.
     const fbp = cookieValueFromHeader(cookieHeader, "_fbp");
     const fbc = cookieValueFromHeader(cookieHeader, "_fbc");
+    // Advanced matching: the hash, never the address, and only when there is
+    // an address to hash.
+    const email = account.email?.trim();
+    const emailHash = email ? hashEmailForMeta(email) : undefined;
 
     const event = {
       event_name: eventNameFor(conversion),
@@ -133,9 +209,10 @@ export async function reportMetaConversion(
         ...(clientIp && { client_ip_address: clientIp }),
         ...(fbp && { fbp }),
         ...(fbc && { fbc }),
+        ...(emailHash && { em: [emailHash] }),
       },
       ...(conversion.event === "enrolment" && {
-        custom_data: { outcome: conversion.outcome },
+        custom_data: enrolmentCustomData(conversion),
       }),
     };
 

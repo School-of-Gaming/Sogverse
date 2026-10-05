@@ -137,6 +137,7 @@ vi.mock("@/lib/stripe/customer", () => ({
 // --- Fixtures ---
 
 const CUSTOMER_ID = "11111111-1111-1111-1111-111111111111";
+const CUSTOMER_EMAIL = "parent@example.test";
 const PRODUCT_ID = "22222222-2222-2222-2222-222222222222";
 const GAMER_ID = "33333333-3333-3333-3333-333333333333";
 const PARTICIPATION_ID = "44444444-4444-4444-4444-444444444444";
@@ -159,6 +160,9 @@ type ProductFixture = {
   start_date: string | null;
   end_date: string | null;
   product_translations: { locale: string; name: string }[];
+  // Read for the advertising report alone: what Stripe charges is priced
+  // separately, through the price helpers mocked below.
+  product_prices: { currency: string; price_cents: number }[];
 };
 
 const PAID_CLUB: ProductFixture = {
@@ -181,6 +185,7 @@ const PAID_CLUB: ProductFixture = {
   start_date: "2024-09-01",
   end_date: null,
   product_translations: [{ locale: "en", name: "Test Club" }],
+  product_prices: [{ currency: "eur", price_cents: 5000 }],
 };
 
 const PAID_CAMP: ProductFixture = {
@@ -358,7 +363,7 @@ function mockForbidden(role: string) {
 function mockAuthenticatedCustomer(locale: string | null = null) {
   mockRequireRole.mockResolvedValue({
     user: { id: CUSTOMER_ID },
-    profile: { role: "customer", locale },
+    profile: { role: "customer", locale, email: CUSTOMER_EMAIL },
     supabase: {},
   });
 }
@@ -1481,18 +1486,33 @@ describe("POST /api/checkout/products/create", () => {
       expect(res.status).toBe(200);
       await settleDeferred();
       expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
-      const [request, conversion] = mockReportMetaConversion.mock.calls[0];
+      const [request, conversion, account] =
+        mockReportMetaConversion.mock.calls[0];
       expect(request).toBeInstanceOf(Request);
+      // The signed-in customer's own address, never the participant's.
+      expect(account).toEqual({ email: CUSTOMER_EMAIL });
       // The product's own public page, stated rather than taken from this
       // route's URL — which is an API path nobody browses.
+      // And the product, valued at nothing because nothing was charged.
       expect(conversion).toEqual({
         event: "enrolment",
         outcome: "enrolled",
+        product: {
+          content_ids: [PRODUCT_ID],
+          content_type: "product",
+          content_name: "Test Club",
+          content_category: "minecraft_java",
+          value: 0,
+          currency: "EUR",
+        },
         sourcePath: `/shop/${PRODUCT_ID}`,
       });
     });
 
-    it("reports a started checkout, not an enrolment, on the paid path", async () => {
+    // The checkout start is the browser's click on the product page, for free
+    // and paid products alike; a report from here as well would count every
+    // paid attempt twice.
+    it("reports nothing to Meta when handing the parent to Stripe", async () => {
       mockAuthenticatedCustomer();
       mockAdmin({ product: PAID_CLUB });
       mockAdminRpc.mockResolvedValueOnce({
@@ -1503,14 +1523,12 @@ describe("POST /api/checkout/products/create", () => {
 
       const res = await POST(createRequest(VALID_BODY));
 
-      expect(res.status).toBe(200);
-      await settleDeferred();
-      expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
-      expect(mockReportMetaConversion.mock.calls[0][1]).toEqual({
-        event: "enrolment",
-        outcome: "sent_to_checkout",
-        sourcePath: `/shop/${PRODUCT_ID}`,
+      expect(await res.json()).toEqual({
+        status: "redirect",
+        checkoutUrl: "https://checkout.stripe.com/c/test_sub",
       });
+      await settleDeferred();
+      expect(mockReportMetaConversion).not.toHaveBeenCalled();
     });
 
     it("reports nothing for a municipality registration", async () => {
@@ -1565,27 +1583,6 @@ describe("POST /api/checkout/products/create", () => {
       const res = await POST(freeSignup());
 
       expect(await res.json()).toEqual({ status: "full" });
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
-    });
-
-    it("reports nothing when Stripe never returned a checkout URL", async () => {
-      mockAuthenticatedCustomer();
-      mockAdmin({ product: PAID_CLUB });
-      mockAdminRpc.mockResolvedValueOnce({
-        data: { kind: "validated" },
-        error: null,
-      });
-      mockGetOrCreateSubscriptionPrice.mockResolvedValue({
-        product_id: PRODUCT_ID,
-        currency: "eur",
-        stripe_price_id: STRIPE_PRICE_ID,
-        unit_amount_cents: 5000,
-      });
-      mockStripeSessionCreate.mockResolvedValue({ url: null });
-
-      const res = await POST(createRequest(VALID_BODY));
-
-      expect(res.status).toBe(502);
       expect(mockReportMetaConversion).not.toHaveBeenCalled();
     });
   });
@@ -2229,9 +2226,9 @@ describe("POST /api/checkout/products/create", () => {
       const res = await POST(createRequest(VALID_BODY));
 
       expect(res.status).toBe(200);
-      // One deferred item, and it is the checkout conversion rather than a
-      // mail: the seat does not exist yet, so there is nothing to confirm.
-      expect(deferred).toHaveLength(1);
+      // Nothing deferred at all: the seat does not exist yet, so there is
+      // nothing to confirm, and the checkout start is the browser's to report.
+      expect(deferred).toHaveLength(0);
       await settleDeferred();
       expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
     });
