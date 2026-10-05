@@ -2656,6 +2656,34 @@ $$;
 COMMIT;
 
 -- =============================================================================
+-- 14a. A linked Discord account
+-- =============================================================================
+-- mikko.lehtinen@example.com has his Discord account linked, so a fresh stack
+-- shows the linked state on his settings and on the admin user page.
+-- gedu@example.com is left unlinked on purpose: it is the account for trying the
+-- /link flow by hand.
+--
+-- The bot writes the token row with the service role, so the direct insert (as
+-- the seed's own role, before any impersonation) is the real path; the link
+-- itself is made by the RPC under Mikko's claims. The token is stored as the
+-- hex SHA-256 of the raw token.
+
+INSERT INTO public.discord_link_tokens (token_hash, discord_user_id, discord_username)
+VALUES (encode(extensions.digest('rich-seed-mikko-link-token', 'sha256'), 'hex'),
+        '412345678901234567', 'mikko.lehtinen');
+
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'mikko.lehtinen@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+SELECT public.consume_discord_link_token('rich-seed-mikko-link-token');
+
+COMMIT;
+
+-- =============================================================================
 -- 15. What landed
 -- =============================================================================
 
