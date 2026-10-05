@@ -154,6 +154,17 @@ whatever URL the tab shows by then. It never loads the library and never holds u
 parent's navigation. Same gates as the views, same address-bar check at the moment of
 sending.
 
+**A checkout start counts attempts, not people, and that is accepted.** The once-per-page
+memory dies with the document, and every sign-in ends in a full load, so a parent who
+creates an account and comes back to enrol is two checkout starts for one sign-up, and so
+is one who abandons Stripe and retries. Meta keeps both — it deduplicates only a browser
+event against its server twin, never two from the browser. The enrolment itself is still
+reported exactly once, and that is the number a campaign is judged on; the checkout start
+is a higher-volume signal for steering delivery, where the same parent twice changes
+nothing about who Meta looks for. Making it once per person would mean storage of our own
+that the withdrawal sweep then has to clear — not worth building unless someone reports
+or bids on checkout starts as a figure in itself.
+
 From our servers, through Meta's Conversions API (`src/lib/meta-conversions.server.ts`),
 each one sent after the response has gone out so it can neither delay nor fail what the
 family asked for:
