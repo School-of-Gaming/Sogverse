@@ -479,6 +479,66 @@ export type Database = {
           },
         ]
       }
+      discord_link_tokens: {
+        Row: {
+          created_at: string
+          discord_user_id: string
+          discord_username: string
+          expires_at: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          discord_user_id: string
+          discord_username: string
+          expires_at?: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          discord_user_id?: string
+          discord_username?: string
+          expires_at?: string
+          token_hash?: string
+        }
+        Relationships: []
+      }
+      discord_links: {
+        Row: {
+          discord_user_id: string
+          discord_username: string
+          linked_at: string
+          profile_id: string
+        }
+        Insert: {
+          discord_user_id: string
+          discord_username: string
+          linked_at?: string
+          profile_id: string
+        }
+        Update: {
+          discord_user_id?: string
+          discord_username?: string
+          linked_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discord_links_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discord_links_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_subscriptions: {
         Row: {
           created_at: string
@@ -3452,6 +3512,7 @@ export type Database = {
         }
         Returns: Json
       }
+      consume_discord_link_token: { Args: { p_token: string }; Returns: string }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
       create_gamer: {
         Args: {

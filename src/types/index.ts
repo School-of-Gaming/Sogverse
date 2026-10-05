@@ -295,6 +295,16 @@ export type TeamProfileRow = Database["public"]["Tables"]["team_profiles"]["Row"
 export type TeamProfileTranslationRow =
   Database["public"]["Tables"]["team_profile_translations"]["Row"];
 
+// discord_links — an admin's or a Gedu's linked Discord account, at most one per
+// profile. Row alias only: the table carries no write grant for any Data API
+// role, and `consume_discord_link_token` is its only writer.
+export type DiscordLink = Database["public"]["Tables"]["discord_links"]["Row"];
+// discord_link_tokens — the one-time tokens the Discord bot's webhook inserts
+// with the service-role client. Insert alias only: nothing reads the table but
+// `consume_discord_link_token`.
+export type DiscordLinkTokenInsert =
+  Database["public"]["Tables"]["discord_link_tokens"]["Insert"];
+
 // The Library — `library_articles` is an article's admin-only working copy and
 // `library_article_publications` its public published copy, whose row existing
 // is the article being live; each copy's text is per language, one row per

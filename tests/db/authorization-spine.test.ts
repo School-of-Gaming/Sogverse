@@ -336,6 +336,12 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // the first-of-month check with `check_violation`, so the positive half is
   // assertable with no fixture.
   get_my_gedu_invoicing: { permittedRoles: ["gedu"] },
+  // Links the caller's own profile to the Discord user a bot-minted token
+  // names. Past the role guard it writes only the caller's own row. A NULL
+  // token hashes to NULL and matches no pending token, so a permitted role is
+  // refused with P0029 rather than a second 42501 and the positive half is
+  // assertable with no fixture. discord-links.test.ts drives the real path.
+  consume_discord_link_token: { permittedRoles: ["gedu", "admin"] },
 
   // --- the gedu half of session substitutions ------------------------------
   //
