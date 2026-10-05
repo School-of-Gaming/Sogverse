@@ -199,6 +199,10 @@ describe("proxy", () => {
         pattern: /^\/library\/[^/]+\/preview$/,
         reason: "an admin's preview of an unpublished Library article, gated in the proxy",
       },
+      {
+        pattern: /^\/discover\/[^/]+\/preview$/,
+        reason: "an admin's preview of a landing page's working copy, gated in the proxy",
+      },
     ];
 
     function walkPages(dir: string): string[] {
@@ -566,6 +570,56 @@ describe("proxy", () => {
       expect(location.searchParams.get("redirect")).toBe(
         `/en/library/${ARTICLE_ID}/preview`,
       );
+    });
+  });
+
+  // --- Landing pages: public, with an admin-only preview beneath them ---
+
+  describe("landing pages", () => {
+    const PAGE_ID = "9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c5d";
+
+    it.each([
+      `/en/discover/${PAGE_ID}`,
+      "/en/discover/gaming-clubs-in-espoo",
+      "/fi/tutustu/pelikerhot-espoossa",
+      `/fr/decouvrir/${PAGE_ID}`,
+    ])("lets a signed-out reader in at %s", async (path) => {
+      mockNoUser();
+      const response = await proxy(createNextRequest(path));
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+    });
+
+    it("lets a gedu read a landing page rather than bouncing them to their dashboard", async () => {
+      mockUser("gedu");
+      const response = await proxy(createNextRequest(`/en/discover/${PAGE_ID}`));
+      expect(response.status).toBe(200);
+    });
+
+    it("lets an admin into the preview", async () => {
+      mockUser("admin");
+      const response = await proxy(
+        createNextRequest(`/fi/tutustu/${PAGE_ID}/esikatselu`),
+      );
+      expect(response.status).toBe(200);
+    });
+
+    it("sends a gedu away from the preview, to their own dashboard", async () => {
+      mockUser("gedu");
+      const response = await proxy(
+        createNextRequest(`/en/discover/${PAGE_ID}/preview`),
+      );
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/en/gedu");
+    });
+
+    it("sends a signed-out visitor at the preview to login", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createNextRequest(`/en/discover/${PAGE_ID}/preview`),
+      );
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/en/login");
     });
   });
 

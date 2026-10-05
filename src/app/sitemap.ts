@@ -4,6 +4,10 @@ import { teamMemberAddress } from "@/components/team/team-address";
 import { teamMemberLocales } from "@/components/team/public/team-member-metadata";
 import { articleAddress } from "@/components/library/article-address";
 import { libraryArticleLocales } from "@/components/library/article/article-metadata";
+import {
+  landingPageLocales,
+  landingPagePath,
+} from "@/components/landing-pages/landing-page-address";
 import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -13,6 +17,7 @@ import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
 import { translatedPageLocales } from "@/lib/metadata/translated-page";
 import { productPagePath } from "@/lib/products/product-metadata";
+import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import { LibraryService } from "@/services/library/library.service";
 import { ProductsService } from "@/services/products/products.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
@@ -20,14 +25,15 @@ import { TeamProfilesService } from "@/services/team-profiles/team-profiles.serv
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL!;
 
 /**
- * **Rendered per request.** The Team's profiles, the Library's articles and
- * the shop's listed products are read from the database, so the sitemap is no
- * longer a build artefact: a profile made public or hidden, an article
- * published or unpublished, or a product listed, unlisted or ended, is in or
- * out of the next fetch, as it is on the pages themselves, and no build has to
- * reach a database (CI's smoke build, a preview deploy built before its
- * migration ran). A crawler fetches it rarely, and each fetch is one read of
- * the public team, one of the live articles and one of the shop's listing.
+ * **Rendered per request.** The Team's profiles, the Library's articles, the
+ * live landing pages and the shop's listed products are read from the
+ * database, so the sitemap is no longer a build artefact: a profile made
+ * public or hidden, an article or a landing page published or unpublished, or
+ * a product listed, unlisted or ended, is in or out of the next fetch, as it
+ * is on the pages themselves, and no build has to reach a database (CI's smoke
+ * build, a preview deploy built before its migration ran). A crawler fetches
+ * it rarely, and each fetch is one read of the public team, one of the live
+ * articles, one of the live landing pages and one of the shop's listing.
  */
 export const dynamic = "force-dynamic";
 
@@ -35,8 +41,8 @@ export const dynamic = "force-dynamic";
  * The indexable static route set, with the crawl hints each one carries. No
  * per-municipality entries, and nothing `noindex` (the programme pages, the API
  * docs and the schools tree are all deliberately absent). The database-backed
- * sets are the Team's profiles, the Library's articles and the shop's listed
- * products, below.
+ * sets are the Team's profiles, the Library's articles, the live landing pages
+ * and the shop's listed products, below.
  *
  * Each entry becomes one URL **per indexed locale**, and every one of those
  * carries the whole language set as `alternates.languages` — which is what tells
@@ -169,6 +175,40 @@ async function libraryEntries(): Promise<MetadataRoute.Sitemap> {
   );
 }
 
+/** The live landing pages, read with the anon key and no cookies. */
+async function readLiveLandingPages() {
+  return new LandingPageService(createAnonClient()).listPublishedPages();
+}
+
+/**
+ * Each live landing page at its slug address in every indexed locale it is
+ * live in — the language versions its own `hreflang` names, and nothing else:
+ * a locale it has no live version in canonicalises to one it has, so it is not
+ * a page of its own. Read anonymously with no cookies, like the team, and left
+ * out on a failed read for the same reason.
+ *
+ * **Dated by when its live versions were published**, as an article is:
+ * publishing is the only thing that changes what a reader sees.
+ */
+async function landingPageEntries(): Promise<MetadataRoute.Sitemap> {
+  const live = await readLiveLandingPages().catch((error: unknown) => {
+    console.error("[sitemap] the live landing pages were not read:", error);
+    return null;
+  });
+  if (live === null) return [];
+  return live.flatMap((page) =>
+    localizedEntries(
+      landingPageLocales(page),
+      (locale) => `${baseUrl}${landingPagePath(page, locale)}`,
+      {
+        lastModified: page.publishedAt,
+        changeFrequency: "monthly",
+        priority: 0.6,
+      },
+    ),
+  );
+}
+
 /** The shop's listing, read with the anon key and no cookies. */
 async function readListedProducts() {
   return new ProductsService(createAnonClient()).listVisibleListingByTypes(
@@ -205,7 +245,8 @@ async function productEntries(): Promise<MetadataRoute.Sitemap> {
 }
 
 /**
- * `lastModified` only where the date is real: a Library article's.
+ * `lastModified` only where the date is real: a Library article's and a
+ * landing page's.
  *
  * We have no per-page modification time for anything else: the static routes
  * are code- and catalog-backed pages, not rows with an `updated_at`, a
@@ -216,18 +257,19 @@ async function productEntries(): Promise<MetadataRoute.Sitemap> {
  * moves in lockstep across every URL is the clearest possible signal that it
  * is generated rather than true. Omitting the field is a better answer than a
  * fabricated one: the crawler falls back to its own change detection, which
- * is what it would do with a `lastmod` it distrusted anyway. An article is
- * the exception because publishing is what changes it, and the publish time
- * is stored.
+ * is what it would do with a `lastmod` it distrusted anyway. An article and a
+ * landing page are the exceptions because publishing is what changes them,
+ * and the publish time is stored.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes = ROUTE_ENTRIES.flatMap(({ pathname, entry }) =>
     localizedEntries(INDEXED_LOCALES, (locale) => urlFor(pathname, locale), entry),
   );
-  const [team, library, products] = await Promise.all([
+  const [team, library, landingPages, products] = await Promise.all([
     teamEntries(),
     libraryEntries(),
+    landingPageEntries(),
     productEntries(),
   ]);
-  return [...routes, ...team, ...library, ...products];
+  return [...routes, ...team, ...library, ...landingPages, ...products];
 }

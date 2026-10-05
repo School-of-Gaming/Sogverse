@@ -498,6 +498,23 @@ export const ROUTES = {
   libraryArticlePreview: (id: string) =>
     ({ pathname: "/library/[idOrSlug]/preview", params: { idOrSlug: id } }) as const,
   /**
+   * A live landing page, at either of its two addresses: its id, which
+   * resolves in every locale, or the slug its version in the locale stores,
+   * which is the one to share and the canonical. Public and promoted
+   * (`docs/architecture/site-quality.md`). Build the segment with the address
+   * helpers in `src/components/landing-pages/`, which know which address a
+   * locale has.
+   */
+  landingPage: (idOrSlug: string) =>
+    ({ pathname: "/discover/[idOrSlug]", params: { idOrSlug } }) as const,
+  /**
+   * A landing page's saved working copy as a reader would meet it if it were
+   * published now — what the editor's Preview opens. Admin-only, gated like
+   * the Library article preview.
+   */
+  landingPagePreview: (id: string) =>
+    ({ pathname: "/discover/[idOrSlug]/preview", params: { idOrSlug: id } }) as const,
+  /**
    * The Team — every public profile, leadership first, then the Game
    * Educators. Public and promoted (`docs/architecture/site-quality.md`).
    */
@@ -734,6 +751,13 @@ export const ROUTES = {
     /** One article's editor, where it is also published. */
     libraryArticle: (id: string) =>
       ({ pathname: "/admin/library/[id]", params: { id } }) as const,
+    /** Every landing page, live or not, and where they are written. */
+    landingPages: "/admin/landing-pages",
+    /** The form a new landing page is written in. */
+    landingPageNew: "/admin/landing-pages/new",
+    /** One landing page's editor, where it is also published. */
+    landingPage: (id: string) =>
+      ({ pathname: "/admin/landing-pages/[id]", params: { id } }) as const,
     /**
      * The big picture of Sogverse: the vision board an admin is sent to when
      * they ask what the dream is. Static prose and artwork, English only.

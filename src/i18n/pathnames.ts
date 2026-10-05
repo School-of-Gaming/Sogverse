@@ -146,6 +146,24 @@ export const PATHNAMES = {
     fr: "/bibliotheque/[idOrSlug]/apercu",
     tlh: "/library/[idOrSlug]/preview",
   },
+  // A landing page: its id, or the slug its version in the page's locale
+  // stores (`src/services/landing-pages/`). There is no index at `/discover`.
+  "/discover/[idOrSlug]": {
+    en: "/discover/[idOrSlug]",
+    fi: "/tutustu/[idOrSlug]",
+    sv: "/upptack/[idOrSlug]",
+    fr: "/decouvrir/[idOrSlug]",
+    tlh: "/discover/[idOrSlug]",
+  },
+  // Admin-only, translated with its parent like the Library article preview,
+  // and reached by the page's id alone.
+  "/discover/[idOrSlug]/preview": {
+    en: "/discover/[idOrSlug]/preview",
+    fi: "/tutustu/[idOrSlug]/esikatselu",
+    sv: "/upptack/[idOrSlug]/forhandsvisning",
+    fr: "/decouvrir/[idOrSlug]/apercu",
+    tlh: "/discover/[idOrSlug]/preview",
+  },
   "/attributions": {
     en: "/attributions",
     fi: "/lahteet",
@@ -221,6 +239,9 @@ export const PATHNAMES = {
   "/admin/library": "/admin/library",
   "/admin/library/new": "/admin/library/new",
   "/admin/library/[id]": "/admin/library/[id]",
+  "/admin/landing-pages": "/admin/landing-pages",
+  "/admin/landing-pages/new": "/admin/landing-pages/new",
+  "/admin/landing-pages/[id]": "/admin/landing-pages/[id]",
   "/admin/sites": "/admin/sites",
   "/admin/sites/[id]": "/admin/sites/[id]",
   "/admin/substitutions": "/admin/substitutions",

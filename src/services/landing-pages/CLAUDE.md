@@ -88,3 +88,11 @@ refusals. Nothing else in the save path touches a link.
 
 **Every landing page write invalidates the whole `landing-pages` key tree**, the admin
 detail included, and the image catalogue's usage map.
+
+**The public page lives in `src/components/landing-pages/`, and every link to a landing
+page is built by its address module** — the slug a locale's live version stores, else the
+id — never by handing a segment to the route builder, because a slug resolves in its own
+locale only and a hand-picked one is a 404 in every other. The renderer and the SEO
+contribution (structured data, plain text) are each an exhaustive map over the section
+types. Every section sits on the plain page ground: an admin chooses the order, so a
+tinted band could land beside another and read as one section.
