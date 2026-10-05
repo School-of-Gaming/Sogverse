@@ -72,7 +72,7 @@ function discordAnswer(status: number, body: unknown): Response {
 }
 
 const validBody = {
-  kind: "text",
+  template: "text",
   profileId: PROFILE_ID,
   content: "Hello from Sogverse",
 };
@@ -192,7 +192,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
 
   it("DMs the /sub first step in the chosen locale, every control on the preview prefix", async () => {
     const response = await POST(
-      sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "fi", variant: "sessions" }),
+      sendRequest({ template: "subSessions", profileId: PROFILE_ID, locale: "fi" }),
     );
 
     expect(response.status).toBe(200);
@@ -219,7 +219,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
   }
 
   it("heads the preview with the favicon from this environment's own site", async () => {
-    await POST(sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "en", variant: "sessions" }));
+    await POST(sendRequest({ template: "subSessions", profileId: PROFILE_ID, locale: "en" }));
 
     expect(thumbnails(postedMessage().components)).toEqual([
       { type: 11, media: { url: "https://sogverse.sog.gg/apple-icon.png" } },
@@ -231,10 +231,9 @@ describe("POST /api/admin/send-test-discord-message", () => {
     try {
       const response = await POST(
         sendRequest({
-          kind: "subPreview",
+          template: "subSessions",
           profileId: PROFILE_ID,
           locale: "en",
-          variant: "sessions",
         }),
       );
 
@@ -249,7 +248,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
 
   it("renders the preview in the chosen locale", async () => {
     const response = await POST(
-      sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "sv", variant: "sessions" }),
+      sendRequest({ template: "subSessions", profileId: PROFILE_ID, locale: "sv" }),
     );
 
     expect(response.status).toBe(200);
@@ -259,7 +258,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
 
   it("refuses a locale the app does not support, before calling Discord", async () => {
     const response = await POST(
-      sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "de", variant: "sessions" }),
+      sendRequest({ template: "subSessions", profileId: PROFILE_ID, locale: "de" }),
     );
 
     expect(response.status).toBe(400);
@@ -268,17 +267,17 @@ describe("POST /api/admin/send-test-discord-message", () => {
 
   it("refuses a preview that names no locale, before calling Discord", async () => {
     const response = await POST(
-      sendRequest({ kind: "subPreview", profileId: PROFILE_ID, variant: "sessions" }),
+      sendRequest({ template: "subSessions", profileId: PROFILE_ID }),
     );
 
     expect(response.status).toBe(400);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("refuses a preview that names no variant, or an unknown one, before calling Discord", async () => {
-    for (const variant of [undefined, "everything"]) {
+  it("refuses a body that names an unknown template, before calling Discord", async () => {
+    for (const template of [undefined, "everything"]) {
       const response = await POST(
-        sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "en", variant }),
+        sendRequest({ template, profileId: PROFILE_ID, locale: "en" }),
       );
 
       expect(response.status).toBe(400);
@@ -286,13 +285,21 @@ describe("POST /api/admin/send-test-discord-message", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  it("refuses a not-linked preview that names no locale, before calling Discord", async () => {
+    const response = await POST(
+      sendRequest({ template: "subNotLinked", profileId: PROFILE_ID }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
   it("DMs the not-linked answer, in the chosen locale, over a link that links nothing", async () => {
     const response = await POST(
       sendRequest({
-        kind: "subPreview",
+        template: "subNotLinked",
         profileId: PROFILE_ID,
         locale: "sv",
-        variant: "notLinked",
       }),
     );
 
@@ -305,7 +312,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
     expect(message.content).toContain("The link expires in 10 minutes and works once.");
   });
 
-  it("refuses a body that names no kind", async () => {
+  it("refuses a body that names no template", async () => {
     const response = await POST(
       sendRequest({ profileId: PROFILE_ID, content: "Hello from Sogverse" }),
     );

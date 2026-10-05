@@ -30,11 +30,11 @@ import { DiscordLinkService } from "@/services/discord-link/discord-link.service
  * looked up from the profile on the admin's own session (RLS lets an admin read
  * every link), so the client never names one.
  *
- * Two kinds of message: plain `text`, or a `subPreview` of one of the `/sub`
- * command's two answers, built by the command's own builders in the chosen
- * locale: the first step over sample sessions (its controls carry the preview
+ * Three templates: plain `text`, or one of the `/sub` command's two answers,
+ * built by the command's own builders in the chosen locale: `subSessions`, the
+ * first step over sample sessions (its controls carry the preview
  * prefix, so a press on one answers "this is a preview" and files nothing), or
- * what a caller with no linked account is told, whose link carries a fixed
+ * `subNotLinked`, what a caller with no linked account is told, whose link carries a fixed
  * token that links nothing.
  */
 export const POST = defineRoute({
@@ -55,9 +55,9 @@ export const POST = defineRoute({
     }
 
     let message: unknown;
-    if (body.kind === "text") {
+    if (body.template === "text") {
       message = { content: body.content };
-    } else if (body.variant === "notLinked") {
+    } else if (body.template === "subNotLinked") {
       const copy = await loadDiscordSubCopy(body.locale);
       message = {
         content: buildSubNotLinkedContent({

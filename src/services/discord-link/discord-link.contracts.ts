@@ -34,23 +34,29 @@ export const DISCORD_MESSAGE_MAX_LENGTH = 2000;
 
 /**
  * The admin testing page's Discord send: which linked Sogverse account to DM,
- * and what — plain `text`, or a `subPreview` of the `/sub` command's first step
- * over sample sessions. The recipient is named by profile, never by Discord id
- * — the route looks the Discord account up itself.
+ * and which template — plain `text`, or one of the `/sub` command's two
+ * answers, `subSessions` (the first step over sample sessions) and
+ * `subNotLinked` (what a caller with no linked account is told). The recipient
+ * is named by profile, never by Discord id — the route looks the Discord
+ * account up itself.
  */
-export const sendTestDiscordMessageBody = z.discriminatedUnion("kind", [
+export const sendTestDiscordMessageBody = z.discriminatedUnion("template", [
   z.object({
-    kind: z.literal("text"),
+    template: z.literal("text"),
     profileId: z.string().uuid(),
     content: z.string().trim().min(1).max(DISCORD_MESSAGE_MAX_LENGTH),
   }),
   z.object({
-    kind: z.literal("subPreview"),
+    template: z.literal("subSessions"),
     profileId: z.string().uuid(),
     /** The locale to render the preview in. */
     locale: z.enum(SUPPORTED_LOCALES),
-    /** Which `/sub` message: the session list, or the answer to a caller who is not linked. */
-    variant: z.enum(["sessions", "notLinked"]),
+  }),
+  z.object({
+    template: z.literal("subNotLinked"),
+    profileId: z.string().uuid(),
+    /** The locale to render the preview in. */
+    locale: z.enum(SUPPORTED_LOCALES),
   }),
 ]);
 export type SendTestDiscordMessageBody = z.infer<typeof sendTestDiscordMessageBody>;

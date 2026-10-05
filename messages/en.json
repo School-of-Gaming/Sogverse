@@ -1557,12 +1557,9 @@
         "send": "Send Test Message",
         "sent": "Message sent.",
         "openInDiscord": "Open in Discord",
-        "sendSubPreview": "Send /sub Preview",
-        "previewVariant": "Preview message",
-        "previewVariants": {
-          "sessions": "Session list",
-          "notLinked": "Not linked yet"
-        },
+        "templatePlain": "Plain text",
+        "templateSubSessions": "/sub: session list",
+        "templateSubNotLinked": "/sub: not linked yet",
         "subPreviewSent": "Preview sent."
       }
     },

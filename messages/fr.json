@@ -1557,12 +1557,9 @@
         "send": "Envoyer le message de test",
         "sent": "Message envoyé.",
         "openInDiscord": "Ouvrir dans Discord",
-        "sendSubPreview": "Envoyer l’aperçu de /sub",
-        "previewVariant": "Message à prévisualiser",
-        "previewVariants": {
-          "sessions": "Liste des séances",
-          "notLinked": "Pas encore lié"
-        },
+        "templatePlain": "Texte brut",
+        "templateSubSessions": "/sub : liste des séances",
+        "templateSubNotLinked": "/sub : pas encore lié",
         "subPreviewSent": "Aperçu envoyé."
       }
     },

@@ -1601,12 +1601,9 @@
         "send": "ngong QIn yIngeH",
         "sent": "QIn ngeHta’.",
         "openInDiscord": "Discord Daq yIpoS",
-        "sendSubPreview": "/sub ghantoH yIngeH",
-        "previewVariant": "ghantoH QIn",
-        "previewVariants": {
-          "sessions": "Qu' tlhegh",
-          "notLinked": "wej ghItlh pagh"
-        },
+        "templatePlain": "ghItlh neH",
+        "templateSubSessions": "/sub: Qu' tlhegh",
+        "templateSubNotLinked": "/sub: wej ghItlh pagh",
         "subPreviewSent": "ghantoH ngeHta’."
       }
     },

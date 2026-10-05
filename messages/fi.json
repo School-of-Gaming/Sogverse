@@ -1557,12 +1557,9 @@
         "send": "Lähetä testiviesti",
         "sent": "Viesti lähetetty.",
         "openInDiscord": "Avaa Discordissa",
-        "sendSubPreview": "Lähetä /sub-esikatselu",
-        "previewVariant": "Esikatseltava viesti",
-        "previewVariants": {
-          "sessions": "Istuntolista",
-          "notLinked": "Ei vielä yhdistetty"
-        },
+        "templatePlain": "Pelkkä teksti",
+        "templateSubSessions": "/sub: istuntolista",
+        "templateSubNotLinked": "/sub: ei vielä yhdistetty",
         "subPreviewSent": "Esikatselu lähetetty."
       }
     },

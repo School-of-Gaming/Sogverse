@@ -1557,12 +1557,9 @@
         "send": "Skicka testmeddelande",
         "sent": "Meddelandet skickades.",
         "openInDiscord": "Öppna i Discord",
-        "sendSubPreview": "Skicka förhandsvisning av /sub",
-        "previewVariant": "Meddelande att förhandsvisa",
-        "previewVariants": {
-          "sessions": "Sessionslista",
-          "notLinked": "Inte kopplad än"
-        },
+        "templatePlain": "Ren text",
+        "templateSubSessions": "/sub: sessionslista",
+        "templateSubNotLinked": "/sub: inte kopplad än",
         "subPreviewSent": "Förhandsvisningen skickades."
       }
     },
