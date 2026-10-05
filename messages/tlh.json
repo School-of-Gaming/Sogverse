@@ -687,6 +687,15 @@
       "queueNotRecorded": "ghItlh cha’lu’be’",
       "rowNotRecorded": "HeS ta’ ghItlh cha’be’taH"
     },
+    "geduQualifications": {
+      "title": "laHmey",
+      "neuroinclusive": "Hoch yab SuvwI’pu’ ghom DevlaH.",
+      "consumer_products": "ghomHom tlhIngan, mIw, wanI’ je DevlaH.",
+      "grantedOn": "nobpu’: {date}",
+      "grantedOnBy": "nobpu’ {name}: {date}",
+      "notGranted": "nobbe’lu’",
+      "error": "laH choHlu’be’pu’. yInID."
+    },
     "geduCertifyWarnings": {
       "title": "patlh yInob ’e’ DaHech’a’?",
       "body": "patlh nobmeH pagh poQlu’ — vaj patlh Danob laH.",

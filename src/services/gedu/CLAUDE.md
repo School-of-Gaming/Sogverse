@@ -421,6 +421,26 @@ would be provably dead. The admin's queue picks a new acceptance up on its own
 next read. This is the same line the dashboard key's own factory draws: admin
 writes invalidate it, writes from any other role reach it through their next read.
 
+## Qualifications
+
+Admins grant gedus **qualifications** — what kinds of group an educator is qualified to
+run: neuroinclusive groups, and the family-paid products (consumer clubs, camps and
+events). A row in `gedu_qualifications` means the gedu holds that qualification; there is
+no history, so revoking deletes the row and granting one already held keeps its original
+moment and admin. `set_gedu_qualification` is the only writer, admin-only, and stamps
+both server-side; an admin reads every gedu's qualifications, a gedu their own. The
+starting holdings were derived once from assignments, with no granting admin; nothing
+re-derives them.
+
+**Rule: qualifications gate nothing.** No assignment, picker or check reads them, for the
+same reason the contract and the record check don't: certification stays the only
+blocking lever over an educator. Making a qualification gate something is a separate
+decision.
+
+**Adding a qualification is a new `gedu_qualification` enum value plus its copy.** The
+app's list derives from the generated enum, in the enum's declared order; the admin card
+keys each name by the enum, so it fails to compile until the new value has one.
+
 ## Coverage field reuse
 
 The register form and the settings/admin coverage editor render the same coverage field

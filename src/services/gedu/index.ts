@@ -12,6 +12,17 @@ export {
   type GeduCriminalRecordCheck,
 } from "./gedu-profiles.service";
 export {
+  useGeduQualifications,
+  useSetGeduQualification,
+  geduQualificationKeys,
+} from "./gedu-qualifications.queries";
+export {
+  GeduQualificationsService,
+  GEDU_QUALIFICATIONS,
+  type GeduQualification,
+  type HeldGeduQualification,
+} from "./gedu-qualifications.service";
+export {
   useGeduContractAcceptances,
   useGeduContractAcceptanceMap,
   useAcceptGeduContract,

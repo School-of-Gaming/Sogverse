@@ -643,6 +643,15 @@
       "queueNotRecorded": "Extract not recorded",
       "rowNotRecorded": "Has not presented a criminal record extract"
     },
+    "geduQualifications": {
+      "title": "Qualifications",
+      "neuroinclusive": "Qualified to run groups in products tagged Neuroinclusive.",
+      "consumer_products": "Cleared to run the clubs, camps and events families pay for themselves, not only municipality clubs.",
+      "grantedOn": "Granted on {date}",
+      "grantedOnBy": "Granted on {date} by {name}",
+      "notGranted": "Not granted",
+      "error": "Couldn’t update the qualification. Please try again."
+    },
     "geduCertifyWarnings": {
       "title": "Certify anyway?",
       "body": "Certification requires neither of these, so you can certify them anyway.",

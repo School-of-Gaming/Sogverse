@@ -65,6 +65,7 @@ import {
   useSetGeduCriminalRecordCheck,
   type GeduCertificationDetail,
 } from "@/services/gedu";
+import { personName } from "@/components/admin/person-name";
 import { useTimezone } from "@/providers";
 import type { GeduContractAcceptance } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -442,20 +443,4 @@ export function GeduCertificationCard({
       />
     </Card>
   );
-}
-
-/**
- * An embedded profile's display name, or `null` where there is no profile to
- * name — an absent embed, or one whose row is all blanks.
- *
- * Both audit names on this card go through it, so the certifying admin and the
- * recording admin are written the same way and neither can drift into printing
- * a lone space for a half-filled profile.
- */
-function personName(
-  person: { first_name: string | null; last_name: string | null } | null | undefined,
-): string | null {
-  if (!person) return null;
-  const name = [person.first_name, person.last_name].filter(Boolean).join(" ");
-  return name === "" ? null : name;
 }

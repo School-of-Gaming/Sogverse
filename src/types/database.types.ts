@@ -1166,6 +1166,49 @@ export type Database = {
           },
         ]
       }
+      gedu_qualifications: {
+        Row: {
+          gedu_id: string
+          granted_at: string
+          granted_by: string | null
+          qualification: Database["public"]["Enums"]["gedu_qualification"]
+        }
+        Insert: {
+          gedu_id: string
+          granted_at?: string
+          granted_by?: string | null
+          qualification: Database["public"]["Enums"]["gedu_qualification"]
+        }
+        Update: {
+          gedu_id?: string
+          granted_at?: string
+          granted_by?: string | null
+          qualification?: Database["public"]["Enums"]["gedu_qualification"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_qualifications_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "gedu_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "gedu_qualifications_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_qualifications_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_session_images: {
         Row: {
           created_at: string
@@ -4165,6 +4208,14 @@ export type Database = {
         Args: { p_gedu_id: string; p_passed: boolean }
         Returns: undefined
       }
+      set_gedu_qualification: {
+        Args: {
+          p_gedu_id: string
+          p_held: boolean
+          p_qualification: Database["public"]["Enums"]["gedu_qualification"]
+        }
+        Returns: undefined
+      }
       set_group_member_minecraft: {
         Args: {
           p_minecraft_username: string
@@ -4339,6 +4390,7 @@ export type Database = {
       gamer_photo_consent_type: "lynx_educate"
       gamer_sign_in: "parent" | "username" | "email"
       gedu_assignment_role: "primary" | "assistant"
+      gedu_qualification: "neuroinclusive" | "consumer_products"
       gender_type: "boy" | "girl" | "non_binary"
       invoice_billing_cadence: "monthly" | "quarterly" | "half_yearly"
       library_article_category:
@@ -4509,6 +4561,7 @@ export const Constants = {
       gamer_photo_consent_type: ["lynx_educate"],
       gamer_sign_in: ["parent", "username", "email"],
       gedu_assignment_role: ["primary", "assistant"],
+      gedu_qualification: ["neuroinclusive", "consumer_products"],
       gender_type: ["boy", "girl", "non_binary"],
       invoice_billing_cadence: ["monthly", "quarterly", "half_yearly"],
       library_article_category: [

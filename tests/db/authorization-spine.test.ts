@@ -171,6 +171,9 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // rather than a second 42501 — so the positive half of the matrix is
   // assertable here with no fixture.
   set_gedu_criminal_record_check: { permittedRoles: ["admin"] },
+  // Granting or revoking a gedu's qualification. The same shape again: past the
+  // admin guard, a NULL target raises "is not a gedu" (P0001), not 42501.
+  set_gedu_qualification: { permittedRoles: ["admin"] },
   // Phase 3's new-RPC conversions. Past the admin guard, all-NULL arguments hit
   // "no such product" / "no such participation" — an error, but not 42501.
   admin_enroll_participant: { permittedRoles: ["admin"] },
