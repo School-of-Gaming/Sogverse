@@ -80,7 +80,6 @@ describe("the settings route's Discord read", () => {
     signedInAs("admin");
     mockGetLink.mockResolvedValue({
       discord_username: "office.kyle",
-      linked_at: "2026-10-05T10:00:00Z",
     });
 
     const props = await renderedProps();

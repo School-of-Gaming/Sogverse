@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CircleCheck, Link2, Loader2, ShieldX, TimerOff } from "lucide-react";
+import Image from "next/image";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import discordSymbol from "@/assets/partners/discord-symbol-blurple.svg";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { codeTag } from "@/components/ui/inline-code";
 import { Link } from "@/i18n/navigation";
 import { parseJsonResponse, readApiError } from "@/lib/api/json-response";
 import { ROUTES } from "@/lib/constants";
@@ -92,7 +95,7 @@ export function DiscordLinkConfirm({
 
   return (
     <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
-      <Link2 className="h-12 w-12 text-act" aria-hidden />
+      <DiscordSymbol />
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground">
@@ -127,7 +130,6 @@ function DiscordLinkLinked({
   const t = useTranslations("discordLink.linked");
   return (
     <Outcome
-      icon={<CircleCheck className="h-12 w-12 text-act" aria-hidden />}
       title={t("title", { username })}
       body={t("body")}
     >
@@ -152,9 +154,8 @@ export function DiscordLinkDead({ reason }: { reason: DeadLink }) {
   const t = useTranslations("discordLink");
   return (
     <Outcome
-      icon={<TimerOff className="h-12 w-12 text-muted-foreground" aria-hidden />}
       title={t(`${reason}.title`)}
-      body={t(`${reason}.body`)}
+      body={t.rich(`${reason}.body`, { code: codeTag })}
     />
   );
 }
@@ -163,28 +164,35 @@ export function DiscordLinkDead({ reason }: { reason: DeadLink }) {
 export function DiscordLinkRefused() {
   const t = useTranslations("discordLink.refused");
   return (
-    <Outcome
-      icon={<ShieldX className="h-12 w-12 text-muted-foreground" aria-hidden />}
-      title={t("title")}
-      body={t("body")}
-    />
+    <Outcome title={t("title")} body={t("body")} />
+  );
+}
+
+/**
+ * Discord's own symbol, as Discord ships it, at the head of every card on the
+ * page — the page is about a Discord account whatever its outcome, and the
+ * title beside it says which outcome. Decorative: the copy names Discord.
+ * Height only, so the width follows the file's proportions; `unoptimized`
+ * because the optimizer refuses SVG.
+ */
+function DiscordSymbol() {
+  return (
+    <Image src={discordSymbol} alt="" height={40} unoptimized aria-hidden />
   );
 }
 
 function Outcome({
-  icon,
   title,
   body,
   children,
 }: {
-  icon: React.ReactNode;
   title: string;
-  body: string;
+  body: React.ReactNode;
   children?: React.ReactNode;
 }) {
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
-      {icon}
+      <DiscordSymbol />
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">{title}</h1>
         <p className="text-muted-foreground">{body}</p>

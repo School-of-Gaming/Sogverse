@@ -12,6 +12,8 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
+import { codeTag } from "@/components/ui/inline-code";
+import discordSymbol from "@/assets/partners/discord-symbol-blurple.svg";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -714,12 +716,14 @@ export function SettingsSectionContent({
           {discordUsername !== undefined && (
             <Field
               label={t('discord.label')}
+              brandMark={discordSymbol}
               htmlFor={DISCORD_FIELD_ID}
-              hint={
+              hint={t.rich(
                 discordUsername === null
-                  ? t('discord.linkHint')
-                  : t('discord.relinkHint')
-              }
+                  ? 'discord.linkHint'
+                  : 'discord.relinkHint',
+                { code: codeTag },
+              )}
             >
               {({ hintId }) => (
                 <Input

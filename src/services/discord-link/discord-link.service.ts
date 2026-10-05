@@ -1,10 +1,7 @@
 import type { AppSupabaseClient, DiscordLink } from "@/types";
 
-/** What a page shows of a link: who it points at, and since when. */
-export type DiscordLinkSummary = Pick<
-  DiscordLink,
-  "discord_username" | "linked_at"
->;
+/** What a page shows of a link: the Discord account it points at. */
+export type DiscordLinkSummary = Pick<DiscordLink, "discord_username">;
 
 /**
  * Reading an admin's or a Gedu's linked Discord account.
@@ -24,7 +21,7 @@ export class DiscordLinkService {
   async getLink(profileId: string): Promise<DiscordLinkSummary | null> {
     const { data, error } = await this.supabase
       .from("discord_links")
-      .select("discord_username, linked_at")
+      .select("discord_username")
       .eq("profile_id", profileId)
       .maybeSingle();
     if (error) throw error;

@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+// First among the app imports: the asset mock's factory reads it.
+import { staticImageModule } from "../../mocks/static-image";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
@@ -15,6 +17,10 @@ import {
  */
 
 const COPY = messages.discordLink;
+
+vi.mock("@/assets/partners/discord-symbol-blurple.svg", () =>
+  staticImageModule("/discord-symbol-blurple.svg", 127, 96),
+);
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -125,6 +131,12 @@ describe("the Discord link confirm card", () => {
       const { unmount } = renderDead(reason);
       expect(screen.getByRole("heading", { name: COPY[reason].title })).toBeTruthy();
       expect(screen.queryByRole("button")).toBeNull();
+      // The command to type again is set as code, inside the sentence.
+      const command = screen.getByText("/link");
+      expect(command.tagName).toBe("CODE");
+      expect(command.parentElement?.textContent).toBe(
+        COPY[reason].body.replace(/<\/?code>/g, ""),
+      );
       unmount();
     }
   });

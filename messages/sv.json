@@ -1467,7 +1467,7 @@
       },
       "usernameLabel": "Användarnamn",
       "discordLabel": "Discord",
-      "discordLinked": "@{username} · kopplat {date}",
+      "discordLinked": "@{username}",
       "discordNotLinked": "Inte kopplat"
     },
     "locations": {
@@ -3620,8 +3620,8 @@
     "discord": {
       "label": "Discord",
       "notLinked": "Inte kopplat",
-      "linkHint": "Koppla ditt Discord-konto genom att skriva /link på School of Gamings Discord-server.",
-      "relinkHint": "Koppla ett annat Discord-konto genom att skriva /link från det kontot på School of Gamings Discord-server."
+      "linkHint": "Koppla ditt Discord-konto genom att skriva <code>/link</code> på School of Gamings Discord-server.",
+      "relinkHint": "Koppla ett annat Discord-konto genom att skriva <code>/link</code> från det kontot på School of Gamings Discord-server."
     },
     "marketing": {
       "title": "Marknadsföringsinställningar",
@@ -5258,15 +5258,15 @@
     },
     "used": {
       "title": "Den här länken har redan använts",
-      "body": "Varje länk fungerar en gång. Kör /link i Discord igen för att få en ny."
+      "body": "Varje länk fungerar en gång. Kör <code>/link</code> i Discord igen för att få en ny."
     },
     "expired": {
       "title": "Den här länken har gått ut",
-      "body": "Länkar slutar gälla efter 10 minuter. Kör /link i Discord igen för att få en ny."
+      "body": "Länkar slutar gälla efter 10 minuter. Kör <code>/link</code> i Discord igen för att få en ny."
     },
     "missingToken": {
       "title": "Den här länken är ofullständig",
-      "body": "Kör /link i Discord igen för att få en ny."
+      "body": "Kör <code>/link</code> i Discord igen för att få en ny."
     },
     "refused": {
       "title": "Bara personalen på School of Gaming kan koppla ett Discord-konto",

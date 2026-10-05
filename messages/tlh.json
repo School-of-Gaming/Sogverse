@@ -1511,7 +1511,7 @@
       },
       "usernameLabel": "pong",
       "discordLabel": "Discord",
-      "discordLinked": "@{username} · rarlu'pu' {date}",
+      "discordLinked": "@{username}",
       "discordNotLinked": "rarlu'be'"
     },
     "locations": {
@@ -3660,8 +3660,8 @@
     "discord": {
       "label": "Discord",
       "notLinked": "rarlu'be'",
-      "linkHint": "Discord ghItlhlIj DararmeH, School of Gaming Discord Daq /link yIlo'.",
-      "relinkHint": "Discord ghItlh latlh DararmeH, ghItlhvam vo' School of Gaming Discord Daq /link yIlo'."
+      "linkHint": "Discord ghItlhlIj DararmeH, School of Gaming Discord Daq <code>/link</code> yIlo'.",
+      "relinkHint": "Discord ghItlh latlh DararmeH, ghItlhvam vo' School of Gaming Discord Daq <code>/link</code> yIlo'."
     },
     "marketing": {
       "title": "QIn chaw’mey",
@@ -4377,15 +4377,15 @@
     },
     "used": {
       "title": "ghItlhvam lo'pu'lu'",
-      "body": "wa'logh neH Qap ghItlh. ghItlh chu' DaghajmeH, Discord Daq /link yIlo'qa'."
+      "body": "wa'logh neH Qap ghItlh. ghItlh chu' DaghajmeH, Discord Daq <code>/link</code> yIlo'qa'."
     },
     "expired": {
       "title": "ghItlhvam Heghpu'",
-      "body": "wa'maH tup pIq Hegh ghItlhmey. ghItlh chu' DaghajmeH, Discord Daq /link yIlo'qa'."
+      "body": "wa'maH tup pIq Hegh ghItlhmey. ghItlh chu' DaghajmeH, Discord Daq <code>/link</code> yIlo'qa'."
     },
     "missingToken": {
       "title": "ghItlhvam naQbe'",
-      "body": "ghItlh chu' DaghajmeH, Discord Daq /link yIlo'qa'."
+      "body": "ghItlh chu' DaghajmeH, Discord Daq <code>/link</code> yIlo'qa'."
     },
     "refused": {
       "title": "School of Gaming beqpu' neH Discord ghItlh rarlaH",

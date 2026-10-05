@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { AlertTriangle, ArrowLeft, Package, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -43,6 +44,7 @@ import {
 import type { TeamProfileRecord } from "@/services/team-profiles/team-profiles.types";
 import { UserTeamProfileCard } from "@/components/admin/user-team-profile-card";
 import { teamMemberPublicAddress } from "@/components/team/team-address";
+import discordSymbol from "@/assets/partners/discord-symbol-blurple.svg";
 import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@/types";
 
 /**
@@ -363,20 +365,27 @@ export default async function AdminUserDetailPage({
             )}
             {/* The linked Discord account, for the two roles that can link
                 one. Read-only: only its holder links it, from Discord. Styled
-                as the username line above, the other labelled sign-in fact. */}
+                as the username line above, the other labelled sign-in fact,
+                with Discord's own mark, as shipped, before the label: the word
+                beside it already names the service, so the mark is hidden from
+                assistive technology. */}
             {canLinkDiscord && (
               <p className="flex items-baseline gap-1.5 text-muted-foreground">
-                <span className="text-[10px] uppercase tracking-wide">
+                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide">
+                  <Image
+                    src={discordSymbol}
+                    alt=""
+                    height={10}
+                    unoptimized
+                    aria-hidden
+                    className="shrink-0"
+                  />
                   {t("discordLabel")}
                 </span>
                 <span>
                   {discordLink
                     ? t("discordLinked", {
                         username: discordLink.discord_username,
-                        date: formatDate(discordLink.linked_at, locale, {
-                          dateStyle: "medium",
-                          timeZone,
-                        }),
                       })
                     : t("discordNotLinked")}
                 </span>

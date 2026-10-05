@@ -1,4 +1,5 @@
 import { useId } from "react";
+import Image, { type StaticImageData } from "next/image";
 import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
@@ -50,10 +51,23 @@ export interface FieldDescriptors {
  * carries a fact about the field beyond its name, such as who will end up
  * reading what is typed into it — where the glyph is what makes that fact
  * legible at a glance. A field whose label is only its name does not take one.
+ *
+ * `brandMark` is the other thing a label can lead with: a third party's own
+ * mark (a vendored file from `src/assets/partners/`, statically imported) on a
+ * field whose value is an account on that service, such as a linked Discord
+ * account. A mark is shown exactly as its owner ships it, never in the label's
+ * ink, so it is its own slot rather than an `icon`. The field sizes it to the
+ * label's text and hides it from assistive technology, because the label
+ * already names the service. A field takes `icon` or `brandMark`, never both.
+ *
+ * `hint` is usually a plain sentence, but may be rich text — a `t.rich` result,
+ * so a command can be set as inline code. An empty string, `null` or `false`
+ * counts as no hint, so the control is never pointed at an empty paragraph.
  */
 export function Field({
   label,
   icon: Icon,
+  brandMark,
   htmlFor,
   optional = false,
   hint,
@@ -62,16 +76,18 @@ export function Field({
 }: {
   label: string;
   icon?: LucideIcon;
+  brandMark?: StaticImageData;
   htmlFor?: string;
   optional?: boolean;
-  hint?: string;
+  hint?: React.ReactNode;
   labelAction?: React.ReactNode;
   children: React.ReactNode | ((ids: FieldDescriptors) => React.ReactNode);
 }) {
   const c = useTranslations("common");
   const generated = useId();
   const labelId = `${generated}-label`;
-  const hasHint = hint !== undefined && hint !== "";
+  const hasHint =
+    hint !== undefined && hint !== null && hint !== "" && hint !== false;
   const hintId = hasHint ? `${generated}-hint` : undefined;
 
   return (
@@ -85,9 +101,22 @@ export function Field({
         <Label
           id={labelId}
           htmlFor={htmlFor}
-          className={Icon ? "flex items-center gap-1.5" : undefined}
+          className={Icon || brandMark ? "flex items-center gap-1.5" : undefined}
         >
           {Icon && <Icon className="h-4 w-4 shrink-0" aria-hidden />}
+          {/* Height only: the width follows from the file's own proportions,
+              so a mark is never squashed into a square. `unoptimized` because
+              the optimizer refuses SVG. */}
+          {brandMark && (
+            <Image
+              src={brandMark}
+              alt=""
+              height={14}
+              unoptimized
+              aria-hidden
+              className="shrink-0"
+            />
+          )}
           <span>
             {label}
             {optional && (

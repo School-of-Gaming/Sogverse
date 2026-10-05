@@ -1467,7 +1467,7 @@
       },
       "usernameLabel": "Identifiant",
       "discordLabel": "Discord",
-      "discordLinked": "@{username} · associé le {date}",
+      "discordLinked": "@{username}",
       "discordNotLinked": "Non associé"
     },
     "locations": {
@@ -3620,8 +3620,8 @@
     "discord": {
       "label": "Discord",
       "notLinked": "Non associé",
-      "linkHint": "Pour associer votre compte Discord, tapez /link sur le serveur Discord de School of Gaming.",
-      "relinkHint": "Pour associer un autre compte Discord, tapez /link depuis ce compte sur le serveur Discord de School of Gaming."
+      "linkHint": "Pour associer votre compte Discord, tapez <code>/link</code> sur le serveur Discord de School of Gaming.",
+      "relinkHint": "Pour associer un autre compte Discord, tapez <code>/link</code> depuis ce compte sur le serveur Discord de School of Gaming."
     },
     "marketing": {
       "title": "Préférences marketing",
@@ -5258,15 +5258,15 @@
     },
     "used": {
       "title": "Ce lien a déjà été utilisé",
-      "body": "Chaque lien ne fonctionne qu’une fois. Relancez /link dans Discord pour en obtenir un nouveau."
+      "body": "Chaque lien ne fonctionne qu’une fois. Relancez <code>/link</code> dans Discord pour en obtenir un nouveau."
     },
     "expired": {
       "title": "Ce lien a expiré",
-      "body": "Les liens expirent au bout de 10 minutes. Relancez /link dans Discord pour en obtenir un nouveau."
+      "body": "Les liens expirent au bout de 10 minutes. Relancez <code>/link</code> dans Discord pour en obtenir un nouveau."
     },
     "missingToken": {
       "title": "Ce lien est incomplet",
-      "body": "Relancez /link dans Discord pour en obtenir un nouveau."
+      "body": "Relancez <code>/link</code> dans Discord pour en obtenir un nouveau."
     },
     "refused": {
       "title": "Seule l’équipe de School of Gaming peut associer un compte Discord",

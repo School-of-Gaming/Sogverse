@@ -1467,7 +1467,7 @@
       },
       "usernameLabel": "Käyttäjätunnus",
       "discordLabel": "Discord",
-      "discordLinked": "@{username} · yhdistetty {date}",
+      "discordLinked": "@{username}",
       "discordNotLinked": "Ei yhdistetty"
     },
     "locations": {
@@ -3620,8 +3620,8 @@
     "discord": {
       "label": "Discord",
       "notLinked": "Ei yhdistetty",
-      "linkHint": "Yhdistä Discord-tilisi kirjoittamalla /link School of Gamingin Discord-palvelimella.",
-      "relinkHint": "Voit yhdistää toisen Discord-tilin kirjoittamalla /link sillä tilillä School of Gamingin Discord-palvelimella."
+      "linkHint": "Yhdistä Discord-tilisi kirjoittamalla <code>/link</code> School of Gamingin Discord-palvelimella.",
+      "relinkHint": "Voit yhdistää toisen Discord-tilin kirjoittamalla <code>/link</code> sillä tilillä School of Gamingin Discord-palvelimella."
     },
     "marketing": {
       "title": "Markkinointiasetukset",
@@ -5258,15 +5258,15 @@
     },
     "used": {
       "title": "Tämä linkki on jo käytetty",
-      "body": "Kukin linkki toimii kerran. Saat uuden linkin, kun kirjoitat Discordissa uudelleen /link."
+      "body": "Kukin linkki toimii kerran. Saat uuden linkin, kun kirjoitat Discordissa uudelleen <code>/link</code>."
     },
     "expired": {
       "title": "Tämä linkki on vanhentunut",
-      "body": "Linkki on voimassa 10 minuuttia. Saat uuden linkin, kun kirjoitat Discordissa uudelleen /link."
+      "body": "Linkki on voimassa 10 minuuttia. Saat uuden linkin, kun kirjoitat Discordissa uudelleen <code>/link</code>."
     },
     "missingToken": {
       "title": "Tämä linkki on puutteellinen",
-      "body": "Saat uuden linkin, kun kirjoitat Discordissa uudelleen /link."
+      "body": "Saat uuden linkin, kun kirjoitat Discordissa uudelleen <code>/link</code>."
     },
     "refused": {
       "title": "Vain School of Gamingin henkilökunta voi yhdistää Discord-tilin",

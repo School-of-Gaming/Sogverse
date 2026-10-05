@@ -12,6 +12,7 @@ import {
   robloxServiceModule,
   usersServiceModule,
 } from "../../mocks/settings-page";
+import { staticImageModule } from "../../mocks/static-image";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
@@ -47,8 +48,17 @@ vi.mock("@/components/locations/home-location-field", () =>
 vi.mock("@/components/gedu/contract/gedu-contract-settings-card", () => ({
   GeduContractSettingsCard: () => <div data-testid="gedu-contract-card" />,
 }));
+vi.mock("@/assets/partners/discord-symbol-blurple.svg", () =>
+  staticImageModule("/discord-symbol-blurple.svg", 127, 96),
+);
 
-const copy = messages.settings.discord;
+/** The catalogue's sentences as read: the `<code>` tags render, never print. */
+const plain = (message: string) => message.replace(/<\/?code>/g, "");
+const copy = {
+  ...messages.settings.discord,
+  linkHint: plain(messages.settings.discord.linkHint),
+  relinkHint: plain(messages.settings.discord.relinkHint),
+};
 
 function renderSettings(discordUsername?: string | null) {
   return render(
@@ -56,6 +66,16 @@ function renderSettings(discordUsername?: string | null) {
       <SettingsSectionContent discordUsername={discordUsername} />
     </NextIntlClientProvider>,
   );
+}
+
+/**
+ * A matcher for a paragraph reading `text` whole. A plain string matcher reads
+ * only an element's own text nodes, so it would never find a sentence whose
+ * command sits in a `<code>` child, and an absence check would pass vacuously.
+ */
+function sentence(text: string) {
+  return (_: string, element: Element | null) =>
+    element?.tagName === "P" && element.textContent === text;
 }
 
 /** The text of the hint the field points at with `aria-describedby`. */
@@ -76,7 +96,7 @@ describe("the Discord field", () => {
     expect(field.value).toBe("@gedu.aino");
     expect(field.disabled).toBe(true);
     expect(describedBy(field)).toBe(copy.relinkHint);
-    expect(screen.queryByText(copy.linkHint)).toBeNull();
+    expect(screen.queryByText(sentence(copy.linkHint))).toBeNull();
   });
 
   it("shows an unlinked account as empty, saying how to link one", () => {
@@ -90,6 +110,15 @@ describe("the Discord field", () => {
     expect(describedBy(field)).toBe(copy.linkHint);
   });
 
+  it("sets the command to type as code inside the hint", () => {
+    renderSettings(null);
+
+    const field = screen.getByLabelText(copy.label);
+    const hint = document.getElementById(field.getAttribute("aria-describedby") ?? "");
+    const command = hint?.querySelector("code");
+    expect(command?.textContent).toBe("/link");
+  });
+
   it.each(["customer", "gamer"] as const)(
     "is absent for a %s, whose route hands down no link",
     (role) => {
@@ -97,7 +126,7 @@ describe("the Discord field", () => {
       renderSettings();
 
       expect(screen.queryByLabelText(copy.label)).toBeNull();
-      expect(screen.queryByText(copy.linkHint)).toBeNull();
+      expect(screen.queryByText(sentence(copy.linkHint))).toBeNull();
     },
   );
 });

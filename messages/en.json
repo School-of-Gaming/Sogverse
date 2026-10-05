@@ -1467,7 +1467,7 @@
       },
       "usernameLabel": "Username",
       "discordLabel": "Discord",
-      "discordLinked": "@{username} · linked {date}",
+      "discordLinked": "@{username}",
       "discordNotLinked": "Not linked"
     },
     "locations": {
@@ -4307,8 +4307,8 @@
     "discord": {
       "label": "Discord",
       "notLinked": "Not linked",
-      "linkHint": "To link your Discord account, type /link in the School of Gaming Discord server.",
-      "relinkHint": "To link a different Discord account, type /link from that account in the School of Gaming Discord server."
+      "linkHint": "To link your Discord account, type <code>/link</code> in the School of Gaming Discord server.",
+      "relinkHint": "To link a different Discord account, type <code>/link</code> from that account in the School of Gaming Discord server."
     },
     "marketing": {
       "title": "Marketing preferences",
@@ -5258,15 +5258,15 @@
     },
     "used": {
       "title": "This link has already been used",
-      "body": "Each link works once. Run /link in Discord again to get a new one."
+      "body": "Each link works once. Run <code>/link</code> in Discord again to get a new one."
     },
     "expired": {
       "title": "This link has expired",
-      "body": "Links expire after 10 minutes. Run /link in Discord again to get a new one."
+      "body": "Links expire after 10 minutes. Run <code>/link</code> in Discord again to get a new one."
     },
     "missingToken": {
       "title": "This link is incomplete",
-      "body": "Run /link in Discord again to get a new one."
+      "body": "Run <code>/link</code> in Discord again to get a new one."
     },
     "refused": {
       "title": "Only School of Gaming staff can link a Discord account",
