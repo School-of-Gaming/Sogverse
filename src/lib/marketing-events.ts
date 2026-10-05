@@ -48,8 +48,6 @@ export const PIXEL_EVENTS = {
   checkout: "InitiateCheckout",
 } as const;
 
-export type PixelEventName = (typeof PIXEL_EVENTS)[keyof typeof PIXEL_EVENTS];
-
 /** The three ways a signup attempt can end in something worth reporting. */
 export const ENROLMENT_OUTCOMES = [
   "enrolled",

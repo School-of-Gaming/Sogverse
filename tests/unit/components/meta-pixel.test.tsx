@@ -240,7 +240,9 @@ describe("MetaPixel — what it reports", () => {
 describe("MetaProductView", () => {
   const PRODUCT_ID = "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10";
 
-  type ViewedProduct = Parameters<typeof MetaProductView>[0]["product"];
+  type ViewedProduct = NonNullable<
+    Parameters<typeof MetaProductView>[0]["product"]
+  >;
 
   const ROBLOX_CLUB: ViewedProduct = {
     id: PRODUCT_ID,
@@ -255,7 +257,7 @@ describe("MetaProductView", () => {
   };
 
   function renderProductView(
-    product: ViewedProduct,
+    product: ViewedProduct | null,
     consent: ConsentState | null = GRANTED_BOTH,
   ) {
     return render(
@@ -294,6 +296,27 @@ describe("MetaProductView", () => {
         },
       },
     );
+  });
+
+  it("waits for the product to be read, then reports it exactly once", () => {
+    const { rerender } = renderProductView(null);
+    expect(mockReport).not.toHaveBeenCalled();
+
+    const renderWith = (product: ViewedProduct | null) =>
+      rerender(
+        <ConsentProvider initial={GRANTED_BOTH}>
+          <MetaProductView product={product} />
+        </ConsentProvider>,
+      );
+
+    renderWith(ROBLOX_CLUB);
+    expect(mockReport).toHaveBeenCalledTimes(1);
+
+    // Back to unread and loaded again on the same page — a refetch, the page
+    // dropping to its skeleton — is still the one page reached.
+    renderWith(null);
+    renderWith({ ...ROBLOX_CLUB });
+    expect(mockReport).toHaveBeenCalledTimes(1);
   });
 
   it("reports nothing without marketing consent", () => {

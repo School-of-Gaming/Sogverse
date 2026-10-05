@@ -295,6 +295,15 @@ export function ProductDetailPage({
   // `failureCount` turns over immediately, the page paints, and the gate takes
   // its fail-open branch — which the latch above then makes permanent, so
   // nothing arrives later to contradict what the parent is looking at.
+  // The advertising product view: renders nothing, and reports only behind the
+  // pixel's own gates. **It is the first child of every branch below, so it
+  // stays mounted for the page's whole life** — its once-per-page guard lives in
+  // the component, and a remount (the skeleton giving way to the body, or the
+  // page falling back to the skeleton) would count the same page twice. `null`
+  // while the read is in flight is its "nothing to report yet", so the view
+  // goes out once, when the product lands.
+  const productView = <MetaProductView product={product ?? null} />;
+
   if (
     productLoading ||
     authLoading ||
@@ -308,11 +317,21 @@ export function ProductDetailPage({
       !homeLocationReadFailed &&
       homeLocationLoading)
   ) {
-    return <DetailLoadingSkeleton />;
+    return (
+      <>
+        {productView}
+        <DetailLoadingSkeleton />
+      </>
+    );
   }
 
   if (isError || !product) {
-    return <DetailNotFound />;
+    return (
+      <>
+        {productView}
+        <DetailNotFound />
+      </>
+    );
   }
 
   const authState: AuthState = (() => {
@@ -444,9 +463,7 @@ export function ProductDetailPage({
 
   return (
     <>
-      {/* The advertising product view: renders nothing, and reports only
-          behind the pixel's own gates. */}
-      <MetaProductView product={product} />
+      {productView}
       <ProductDetailPageBody
         product={product}
         municipalitySlug={municipalitySlug}

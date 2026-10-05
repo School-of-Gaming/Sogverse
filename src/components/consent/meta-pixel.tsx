@@ -100,14 +100,19 @@ export function MetaPixel() {
 export function MetaProductView({
   product,
 }: {
-  product: Parameters<typeof metaProductDetails>[0] &
-    Parameters<typeof isAdvertisedProduct>[0];
+  /** `null` while the product has not been read yet. */
+  product:
+    | (Parameters<typeof metaProductDetails>[0] &
+        Parameters<typeof isAdvertisedProduct>[0])
+    | null;
 }) {
   // Memoised on the row so a re-render hands the hook the same report; the
-  // hook's once-per-page guard would hold either way.
+  // hook's once-per-page guard would hold either way. An unread product and one
+  // we do not advertise both hand it `null`, which never counts the page as
+  // reached — so a read landing later still reports, and nothing else does.
   const report = useMemo<BrowserPixelEvent | null>(
     () =>
-      isAdvertisedProduct(product)
+      product !== null && isAdvertisedProduct(product)
         ? {
             event: PIXEL_EVENTS.productView,
             product: metaProductDetails(product),
