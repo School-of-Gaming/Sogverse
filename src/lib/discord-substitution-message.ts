@@ -626,6 +626,77 @@ export function buildNoticeMessage({
   return message(copy, logoUrl, { body: [text(line)] });
 }
 
+// ---------------------------------------------------------------- a press in flight
+
+/** The select menus: string, user, role, mentionable and channel. */
+const SELECT_TYPES = new Set([3, 5, 6, 7, 8]);
+/** Buttons that raise no interaction — a link and a premium (SKU) button. */
+const BUTTON_STYLES_WITHOUT_INTERACTION = new Set([5, 6]);
+
+/**
+ * The message's components with every control that raises an interaction set
+ * `disabled`, walking into action rows, containers and a section's accessory.
+ * A link button is left as it is, since pressing it reaches nothing of ours,
+ * and a component type this walker does not know is passed through untouched.
+ * The input is not mutated.
+ */
+export function disableMessageControls(components: readonly unknown[]): unknown[] {
+  return components.map(disableControl);
+}
+
+function isComponentRecord(value: unknown): value is DiscordComponent {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function disableControl(record: unknown): unknown {
+  if (!isComponentRecord(record)) return record;
+  switch (record.type) {
+    case BUTTON:
+      return typeof record.style === "number" &&
+        BUTTON_STYLES_WITHOUT_INTERACTION.has(record.style)
+        ? record
+        : { ...record, disabled: true };
+    case ACTION_ROW:
+    case CONTAINER:
+      return Array.isArray(record.components)
+        ? { ...record, components: disableMessageControls(record.components) }
+        : record;
+    case SECTION:
+      return record.accessory === undefined
+        ? record
+        : { ...record, accessory: disableControl(record.accessory) };
+    default:
+      return typeof record.type === "number" && SELECT_TYPES.has(record.type)
+        ? { ...record, disabled: true }
+        : record;
+  }
+}
+
+/**
+ * An UPDATE_MESSAGE's `data` that redraws the pressed message with its controls
+ * greyed out, so a second tap cannot start a second run of the step while the
+ * first is still working. `null` when the interaction carried no usable message,
+ * and the caller then acknowledges without redrawing.
+ *
+ * The flag is restated only for a Components V2 message, which an edit may
+ * never turn back into a content one; the message's other flags (ephemeral
+ * among them) are not editable and are left out.
+ */
+export function disabledControlsUpdate(
+  pressed: unknown,
+): { flags?: number; components: unknown[] } | null {
+  if (typeof pressed !== "object" || pressed === null) return null;
+  const components = "components" in pressed ? pressed.components : undefined;
+  if (!Array.isArray(components) || components.length === 0) return null;
+  const flags = "flags" in pressed ? pressed.flags : undefined;
+  const isComponentsV2 =
+    typeof flags === "number" && (flags & DISCORD_FLAG_IS_COMPONENTS_V2) !== 0;
+  return {
+    ...(isComponentsV2 ? { flags: DISCORD_FLAG_IS_COMPONENTS_V2 } : {}),
+    components: disableMessageControls(components),
+  };
+}
+
 /**
  * `/link`'s reply: the one-time URL that links the caller's Discord account,
  * and how long it lasts. Plain text, sent with {@link DISCORD_FLAG_SUPPRESS_EMBEDS}.

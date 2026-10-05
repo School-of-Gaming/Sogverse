@@ -36,6 +36,7 @@ vi.mock("discord-interactions", () => ({
     CHANNEL_MESSAGE_WITH_SOURCE: 4,
     DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE: 5,
     DEFERRED_UPDATE_MESSAGE: 6,
+    UPDATE_MESSAGE: 7,
     MODAL: 9,
   },
 }));
@@ -558,8 +559,83 @@ describe("POST /api/discord/interactions — /sub", () => {
 
   const command = (extra: Record<string, unknown> = {}) =>
     run({ type: 2, data: { name: "sub" }, ...extra });
-  const press = (customId: string, values?: string[]) =>
-    run({ type: 3, data: { custom_id: customId, component_type: values ? 3 : 2, values } });
+  /**
+   * The message a control sits on, as Discord sends it with the press: an
+   * ephemeral Components V2 message with a select, a button and a link.
+   */
+  const PRESSED_MESSAGE = {
+    id: "1300000000000000000",
+    flags: (1 << 15) | 64,
+    components: [
+      {
+        type: 17,
+        id: 1,
+        components: [
+          { type: 10, id: 2, content: "# School of Gaming · Substitutions" },
+          {
+            type: 1,
+            id: 3,
+            components: [{ type: 3, id: 4, custom_id: "sub:s:2026-10-05:0", options: [] }],
+          },
+          {
+            type: 1,
+            id: 5,
+            components: [
+              { type: 2, id: 6, style: 2, custom_id: "sub:p:1", label: "Show later sessions" },
+              { type: 2, id: 7, style: 5, url: "https://sogverse.sog.gg", label: "Web" },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  /** {@link PRESSED_MESSAGE} with every control that raises an interaction disabled. */
+  const GREYED_OUT = {
+    flags: 1 << 15,
+    components: [
+      {
+        type: 17,
+        id: 1,
+        components: [
+          { type: 10, id: 2, content: "# School of Gaming · Substitutions" },
+          {
+            type: 1,
+            id: 3,
+            components: [
+              { type: 3, id: 4, custom_id: "sub:s:2026-10-05:0", options: [], disabled: true },
+            ],
+          },
+          {
+            type: 1,
+            id: 5,
+            components: [
+              {
+                type: 2,
+                id: 6,
+                style: 2,
+                custom_id: "sub:p:1",
+                label: "Show later sessions",
+                disabled: true,
+              },
+              { type: 2, id: 7, style: 5, url: "https://sogverse.sog.gg", label: "Web" },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  const press = (
+    customId: string,
+    values?: string[],
+    options: { message?: unknown } = {},
+  ) =>
+    run({
+      type: 3,
+      // Explicitly `undefined` is a press with no message at all.
+      message: "message" in options ? options.message : PRESSED_MESSAGE,
+      data: { custom_id: customId, component_type: values ? 3 : 2, values },
+    });
 
   /** Every component in a payload, depth first, a section's accessory included. */
   function walk(components: unknown): Array<Record<string, unknown>> {
@@ -682,10 +758,10 @@ describe("POST /api/discord/interactions — /sub", () => {
     expect(JSON.stringify(patched)).not.toContain("connection reset");
   });
 
-  it("pages forward on a deferred update", async () => {
+  it("pages forward, greying the pressed message's controls out meanwhile", async () => {
     const { response, patched } = await press("sub:p:1");
 
-    expect(response).toEqual({ type: 6 });
+    expect(response).toEqual({ type: 7, data: GREYED_OUT });
     expect(ids(patched)).toEqual(["sub:s:2026-10-19:0", "sub:p:0"]);
   });
 
@@ -698,7 +774,7 @@ describe("POST /api/discord/interactions — /sub", () => {
   it("asks for the reason once a session is picked", async () => {
     const { response, patched } = await press("sub:s:2026-10-05:0", [`${GROUP_A}:2026-10-06`]);
 
-    expect(response).toEqual({ type: 6 });
+    expect(response).toEqual({ type: 7, data: GREYED_OUT });
     expect(texts(patched)).toContain("### I can’t make this session");
     expect(ids(patched)).toEqual([
       `sub:r:${GROUP_A}:2026-10-06`,
@@ -743,6 +819,7 @@ describe("POST /api/discord/interactions — /sub", () => {
   it("files with the note from the modal, as the presser", async () => {
     const { response, patched } = await run({
       type: 5,
+      message: PRESSED_MESSAGE,
       data: {
         custom_id: `sub:n:${GROUP_A}:2026-10-06:other`,
         components: [
@@ -751,7 +828,9 @@ describe("POST /api/discord/interactions — /sub", () => {
       },
     });
 
-    expect(response).toEqual({ type: 6 });
+    // The message the modal was opened from is greyed out while the filing
+    // runs, so a second submit cannot race the first to the outcome.
+    expect(response).toEqual({ type: 7, data: GREYED_OUT });
     expect(mockFileRequest).toHaveBeenCalledWith({
       discordUserId: "112233445566778899",
       groupId: GROUP_A,
@@ -774,9 +853,14 @@ describe("POST /api/discord/interactions — /sub", () => {
     expect(mockFileRequest).toHaveBeenCalledWith(expect.objectContaining({ reasonNote: "Flu" }));
   });
 
-  it("files with no note from the confirm button", async () => {
-    await press(`sub:f:${GROUP_A}:2026-10-06:sick`);
+  it("files with no note from the confirm button, greying the controls out meanwhile", async () => {
+    const { response, patched } = await press(`sub:f:${GROUP_A}:2026-10-06:sick`);
 
+    // The press answers at once with the controls disabled; the filing still
+    // runs afterwards and replaces the message with its outcome.
+    expect(response).toEqual({ type: 7, data: GREYED_OUT });
+    expect(deferred).toHaveLength(1);
+    expect(texts(patched)).toContain("Substitute requested for Minecraft Club — A on Tue, Oct 6,");
     expect(mockFileRequest).toHaveBeenCalledWith({
       discordUserId: "112233445566778899",
       groupId: GROUP_A,
@@ -822,6 +906,21 @@ describe("POST /api/discord/interactions — /sub", () => {
     expect(deferred).toHaveLength(0);
     expect(mockResolveDiscordGedu).not.toHaveBeenCalled();
     expect(mockFileRequest).not.toHaveBeenCalled();
+  });
+
+  it("falls back to a plain deferred update when the press carries no usable message", async () => {
+    for (const message of [undefined, { flags: 1 << 15 }, "not a message"]) {
+      mockFetch.mockClear();
+      mockFileRequest.mockClear();
+      deferred.length = 0;
+      const { response, patched } = await press(`sub:f:${GROUP_A}:2026-10-06:sick`, undefined, {
+        message,
+      });
+
+      expect(response).toEqual({ type: 6 });
+      expect(mockFileRequest).toHaveBeenCalledTimes(1);
+      expect(texts(patched)).toContain("Substitute requested for Minecraft Club");
+    }
   });
 
   it("acknowledges a control it cannot place, and does nothing", async () => {

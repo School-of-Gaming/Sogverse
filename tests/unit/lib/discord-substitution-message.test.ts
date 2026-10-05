@@ -10,6 +10,8 @@ import {
   buildSessionPickerMessage,
   buildSubPreviewSessions,
   buildNoticeMessage,
+  disableMessageControls,
+  disabledControlsUpdate,
   discordSubLogoUrl,
   loadDiscordSubCopy,
   parseReasonValue,
@@ -461,5 +463,97 @@ describe("the logo", () => {
       "https://sogverse-staging.sog.gg/apple-icon.png",
     );
     expect(discordSubLogoUrl(null)).toBeNull();
+  });
+});
+
+describe("greying out a pressed message's controls", () => {
+  const pressed = () => [
+    {
+      type: 17,
+      accent_color: 1,
+      components: [
+        {
+          type: 9,
+          components: [{ type: 10, content: "# Header" }],
+          accessory: { type: 11, media: { url: LOGO } },
+        },
+        {
+          type: 9,
+          components: [{ type: 10, content: "Row with a button" }],
+          accessory: { type: 2, style: 2, custom_id: "sub:p:1", label: "More" },
+        },
+        { type: 1, components: [{ type: 3, custom_id: "sub:s:2026-10-05:0", options: [] }] },
+        {
+          type: 1,
+          components: [
+            { type: 2, style: 1, custom_id: "sub:f:x", label: "File" },
+            { type: 2, style: 5, url: "https://sogverse.sog.gg", label: "Web" },
+          ],
+        },
+        { type: 1, components: [5, 6, 7, 8].map((type) => ({ type, custom_id: `s${type}` })) },
+        { type: 99, components: [{ type: 2, style: 1, custom_id: "inside-unknown" }] },
+      ],
+    },
+  ];
+
+  const greyed = () => {
+    const [container] = componentList.parse(disableMessageControls(pressed()));
+    return componentList.parse(container.components);
+  };
+
+  it("disables every button and select, in containers, sections and rows", () => {
+    const [header, section, selectRow, buttonRow, otherSelects] = greyed();
+
+    expect(header.accessory).toEqual({ type: 11, media: { url: LOGO } });
+    expect(section.accessory).toMatchObject({ custom_id: "sub:p:1", disabled: true });
+    expect(selectRow.components).toEqual([
+      { type: 3, custom_id: "sub:s:2026-10-05:0", options: [], disabled: true },
+    ]);
+    expect(buttonRow.components).toEqual([
+      { type: 2, style: 1, custom_id: "sub:f:x", label: "File", disabled: true },
+      { type: 2, style: 5, url: "https://sogverse.sog.gg", label: "Web" },
+    ]);
+    expect(otherSelects.components).toEqual(
+      [5, 6, 7, 8].map((type) => ({ type, custom_id: `s${type}`, disabled: true })),
+    );
+  });
+
+  it("passes a component type it does not know through untouched", () => {
+    expect(greyed()[5]).toEqual({
+      type: 99,
+      components: [{ type: 2, style: 1, custom_id: "inside-unknown" }],
+    });
+    expect(disableMessageControls(["text", null, 3])).toEqual(["text", null, 3]);
+  });
+
+  it("does not mutate the message it is given", () => {
+    const input = pressed();
+    const before = structuredClone(input);
+
+    disableMessageControls(input);
+
+    expect(input).toEqual(before);
+  });
+
+  it("restates the Components V2 flag alone, and no flag for a content message", () => {
+    const components = [{ type: 1, components: [{ type: 2, style: 1, custom_id: "a" }] }];
+
+    expect(
+      disabledControlsUpdate({ flags: DISCORD_FLAG_IS_COMPONENTS_V2 | 64, components }),
+    ).toEqual({
+      flags: DISCORD_FLAG_IS_COMPONENTS_V2,
+      components: [
+        { type: 1, components: [{ type: 2, style: 1, custom_id: "a", disabled: true }] },
+      ],
+    });
+    expect(disabledControlsUpdate({ flags: 64, components })).not.toHaveProperty("flags");
+  });
+
+  it("is nothing for a missing or unusable message", () => {
+    expect(disabledControlsUpdate(undefined)).toBeNull();
+    expect(disabledControlsUpdate(null)).toBeNull();
+    expect(disabledControlsUpdate({ flags: DISCORD_FLAG_IS_COMPONENTS_V2 })).toBeNull();
+    expect(disabledControlsUpdate({ components: "nope" })).toBeNull();
+    expect(disabledControlsUpdate({ components: [] })).toBeNull();
   });
 });

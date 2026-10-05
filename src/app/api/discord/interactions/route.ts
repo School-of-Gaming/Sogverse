@@ -27,6 +27,7 @@ import {
   buildRefusalMessage,
   buildSessionPickerMessage,
   buildSubNotLinkedContent,
+  disabledControlsUpdate,
   discordSubLogoUrl,
   loadDiscordSubCopy,
   parseReasonValue,
@@ -82,6 +83,10 @@ const discordInteraction = z.object({
       components: z.unknown().optional(),
     })
     .optional(),
+  // The message a pressed control sits on — also sent with a modal submit the
+  // modal was opened from a control for. Read only to redraw it with its
+  // controls greyed out, so it is not parsed here.
+  message: z.unknown().optional(),
 });
 
 type DiscordInteraction = z.infer<typeof discordInteraction>;
@@ -295,9 +300,12 @@ type SubStep =
 /**
  * Answer a press on one of the bot's controls.
  *
- * **Everything that reads or writes is deferred** (`DEFERRED_UPDATE_MESSAGE`)
- * and lands by PATCHing the message the control sits on, for the same three
- * seconds every command is deferred for. Two answers are synchronous because
+ * **Everything that reads or writes is deferred** and lands by PATCHing the
+ * message the control sits on, for the same three seconds every command is
+ * deferred for. The immediate answer redraws that message with its controls
+ * greyed out (`UPDATE_MESSAGE`), so a second tap cannot race the first; where
+ * the payload carries no usable message it is a plain `DEFERRED_UPDATE_MESSAGE`.
+ * Two answers are synchronous because
  * they read nothing: the note modal, whose custom_id already carries the
  * session, the reason and the copy's locale, and the admin preview's "nothing
  * was filed" line. A press this route cannot place is acknowledged and
@@ -371,7 +379,12 @@ async function answerSubControl(
   if (step === null) return acknowledge;
 
   after(sendSubStep(token, caller, locale, requestHeaders, step));
-  return acknowledge;
+  // Grey the message's controls out in the same reply, so a second tap — easy
+  // on a phone — cannot start a second run racing this one to `@original`.
+  const greyedOut = disabledControlsUpdate(interaction.message);
+  return greyedOut === null
+    ? acknowledge
+    : NextResponse.json({ type: InteractionResponseType.UPDATE_MESSAGE, data: greyedOut });
 }
 
 /** A select's picked value, or `null` when the press carried none. */
