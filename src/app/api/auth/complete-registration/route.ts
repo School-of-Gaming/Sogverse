@@ -231,10 +231,11 @@ export const POST = defineRoute({
     // request whose stamp changed a row gets this far. After the response, and
     // only with the request's own marketing consent (the reporter decides).
     after(
-      reportMetaConversion(request, {
-        event: "account_created",
-        sourcePath: ROUTES.register,
-      }),
+      reportMetaConversion(
+        request,
+        { event: "account_created", sourcePath: ROUTES.register },
+        { email: profile.email },
+      ),
     );
 
     return registrationCompletedResponse();

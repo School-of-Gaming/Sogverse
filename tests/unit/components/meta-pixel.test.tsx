@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render } from "@testing-library/react";
-import { ConsentProvider, MetaPixel } from "@/components/consent";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  ConsentProvider,
+  MetaPixel,
+  MetaProductView,
+  useMetaCheckoutStart,
+} from "@/components/consent";
 import type { ConsentState } from "@/lib/consent";
 
 /**
@@ -46,8 +51,15 @@ vi.mock("@/providers/auth-provider", () => ({
 const mockReport = vi.hoisted(() =>
   vi.fn((..._args: unknown[]) => Promise.resolve()),
 );
+// The click's report, which answers whether it went out — false standing for
+// "the library has not arrived", the one case it drops the event. Its own
+// suite covers that decision; here the answer is set per case.
+const mockReportNow = vi.hoisted(() =>
+  vi.fn((..._args: unknown[]) => true),
+);
 vi.mock("@/lib/meta-pixel", () => ({
-  reportMetaPageView: (...args: unknown[]) => mockReport(...args),
+  reportMetaEvent: (...args: unknown[]) => mockReport(...args),
+  reportMetaEventNow: (...args: unknown[]) => mockReportNow(...args),
 }));
 
 const GRANTED_BOTH: ConsentState = {
@@ -165,7 +177,9 @@ describe("MetaPixel — what it reports", () => {
     renderPixel();
 
     expect(mockReport).toHaveBeenCalledTimes(1);
-    expect(mockReport).toHaveBeenCalledWith(PIXEL_ID, "/shop");
+    expect(mockReport).toHaveBeenCalledWith(PIXEL_ID, "/shop", {
+      event: "PageView",
+    });
   });
 
   // The visitor's own URL, in their own language, with a real product id in it
@@ -207,7 +221,11 @@ describe("MetaPixel — what it reports", () => {
 
     expect(mockReport).toHaveBeenCalledTimes(2);
     // And nothing was asked for on the private page in between.
-    expect(mockReport).not.toHaveBeenCalledWith(PIXEL_ID, "/parent/gamers/abc");
+    expect(mockReport).not.toHaveBeenCalledWith(
+      PIXEL_ID,
+      "/parent/gamers/abc",
+      expect.anything(),
+    );
   });
 
   it("reports each marketing page a visitor walks through", () => {
@@ -218,5 +236,263 @@ describe("MetaPixel — what it reports", () => {
     navigate(rerender, "/shop/abc-123");
 
     expect(mockReport).toHaveBeenCalledTimes(3);
+  });
+});
+
+/**
+ * The product view rides the page view's machinery, so the cases below do not
+ * re-walk every gate: they pin that it reports once, with the product's fields,
+ * for a product we advertise — and that two of the gates it shares (consent,
+ * and the advertising rule it adds) hold for it too.
+ */
+describe("MetaProductView", () => {
+  const PRODUCT_ID = "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10";
+
+  type ViewedProduct = NonNullable<
+    Parameters<typeof MetaProductView>[0]["product"]
+  >;
+
+  const ROBLOX_CLUB: ViewedProduct = {
+    id: PRODUCT_ID,
+    product_type: "consumer_club",
+    billing_mode: "paid",
+    topic: "roblox_studio",
+    product_translations: [
+      { locale: "fi", name: "Roblox Studio -kerho" },
+      { locale: "en", name: "Roblox Studio Club" },
+    ],
+    product_prices: [{ currency: "eur", price_cents: 4900 }],
+  };
+
+  function renderProductView(
+    product: ViewedProduct | null,
+    consent: ConsentState | null = GRANTED_BOTH,
+  ) {
+    return render(
+      <ConsentProvider initial={consent}>
+        <MetaProductView product={product} />
+      </ConsentProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    mockPathname.value = `/fi/kauppa/${PRODUCT_ID}`;
+  });
+
+  it("reports one product view, with the product's fields, on its page", () => {
+    const { rerender } = renderProductView(ROBLOX_CLUB);
+    // A re-render — the seat count ticking, a query settling — is not a view.
+    rerender(
+      <ConsentProvider initial={GRANTED_BOTH}>
+        <MetaProductView product={{ ...ROBLOX_CLUB }} />
+      </ConsentProvider>,
+    );
+
+    expect(mockReport).toHaveBeenCalledTimes(1);
+    expect(mockReport).toHaveBeenCalledWith(
+      PIXEL_ID,
+      `/fi/kauppa/${PRODUCT_ID}`,
+      {
+        event: "ViewContent",
+        product: {
+          content_ids: [PRODUCT_ID],
+          content_type: "product",
+          content_name: "Roblox Studio Club",
+          content_category: "roblox_studio",
+          value: 49,
+          currency: "EUR",
+        },
+      },
+    );
+  });
+
+  it("waits for the product to be read, then reports it exactly once", () => {
+    const { rerender } = renderProductView(null);
+    expect(mockReport).not.toHaveBeenCalled();
+
+    const renderWith = (product: ViewedProduct | null) =>
+      rerender(
+        <ConsentProvider initial={GRANTED_BOTH}>
+          <MetaProductView product={product} />
+        </ConsentProvider>,
+      );
+
+    renderWith(ROBLOX_CLUB);
+    expect(mockReport).toHaveBeenCalledTimes(1);
+
+    // Back to unread and loaded again on the same page — a refetch, the page
+    // dropping to its skeleton — is still the one page reached.
+    renderWith(null);
+    renderWith({ ...ROBLOX_CLUB });
+    expect(mockReport).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports nothing without marketing consent", () => {
+    renderProductView(ROBLOX_CLUB, { ...GRANTED_BOTH, marketing: false });
+
+    expect(mockReport).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing for a product we do not advertise", () => {
+    renderProductView({
+      ...ROBLOX_CLUB,
+      product_type: "municipality_club",
+      billing_mode: "external_contract",
+    });
+
+    expect(mockReport).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing for a signed-in gamer", () => {
+    mockAuth.user = { id: "gamer-1" };
+    mockAuth.profile = { role: "gamer" };
+
+    renderProductView(ROBLOX_CLUB);
+
+    expect(mockReport).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The checkout start rides the same gate hook, so the cases below pin what is
+ * its own: it is sent from the click and not on mount, once per product page
+ * however often the parent clicks, only for a product we advertise, and — when
+ * the library has not arrived — not counted, so nothing is queued and a later
+ * click on the same page may still report.
+ */
+describe("useMetaCheckoutStart", () => {
+  const PRODUCT_ID = "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10";
+
+  type StartedProduct = NonNullable<Parameters<typeof useMetaCheckoutStart>[0]>;
+
+  const FREE_EVENT: StartedProduct = {
+    id: PRODUCT_ID,
+    product_type: "event",
+    billing_mode: "free",
+    topic: "roblox_studio",
+    product_translations: [{ locale: "en", name: "Roblox Studio Day" }],
+    product_prices: [],
+  };
+
+  function StartButton({ product }: { product: StartedProduct | null }) {
+    const start = useMetaCheckoutStart(product);
+    return (
+      <button type="button" onClick={start}>
+        Sign up
+      </button>
+    );
+  }
+
+  function renderStart(
+    product: StartedProduct | null = FREE_EVENT,
+    consent: ConsentState | null = GRANTED_BOTH,
+  ) {
+    return render(
+      <ConsentProvider initial={consent}>
+        <StartButton product={product} />
+      </ConsentProvider>,
+    );
+  }
+
+  const click = () => fireEvent.click(screen.getByRole("button"));
+
+  beforeEach(() => {
+    mockPathname.value = `/fi/kauppa/${PRODUCT_ID}`;
+    mockReportNow.mockReturnValue(true);
+  });
+
+  it("reports nothing until the parent clicks", () => {
+    renderStart();
+
+    expect(mockReportNow).not.toHaveBeenCalled();
+    expect(mockReport).not.toHaveBeenCalled();
+  });
+
+  it("reports the click once, with the product's fields, for an advertised product", () => {
+    renderStart();
+
+    click();
+
+    expect(mockReportNow).toHaveBeenCalledTimes(1);
+    expect(mockReportNow).toHaveBeenCalledWith(`/fi/kauppa/${PRODUCT_ID}`, {
+      event: "InitiateCheckout",
+      product: {
+        content_ids: [PRODUCT_ID],
+        content_type: "product",
+        content_name: "Roblox Studio Day",
+        content_category: "roblox_studio",
+        value: 0,
+        currency: "EUR",
+      },
+    });
+  });
+
+  // A second click, or a failed enrolment tried again, is the same parent on
+  // the same page.
+  it("reports nothing more on a second click on the same page", () => {
+    renderStart();
+
+    click();
+    click();
+
+    expect(mockReportNow).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports nothing for a product we do not advertise", () => {
+    renderStart({
+      ...FREE_EVENT,
+      product_type: "municipality_club",
+      billing_mode: "external_contract",
+    });
+
+    click();
+
+    expect(mockReportNow).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing without marketing consent", () => {
+    renderStart(FREE_EVENT, { ...GRANTED_BOTH, marketing: false });
+
+    click();
+
+    expect(mockReportNow).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing for a signed-in gamer", () => {
+    mockAuth.user = { id: "gamer-1" };
+    mockAuth.profile = { role: "gamer" };
+    renderStart();
+
+    click();
+
+    expect(mockReportNow).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing off the marketing-page allowlist", () => {
+    mockPathname.value = "/parent";
+    renderStart();
+
+    click();
+
+    expect(mockReportNow).not.toHaveBeenCalled();
+  });
+
+  // The library had not arrived: the event is dropped, never queued, and the
+  // page is not counted — so a click once it has arrived still reports, once.
+  it("drops a click before the library has arrived without spending the page's report", () => {
+    mockReportNow.mockReturnValueOnce(false);
+    renderStart();
+
+    click();
+    click();
+    click();
+
+    // Never through the awaiting reporter, which would load and wait.
+    expect(mockReport).not.toHaveBeenCalled();
+    expect(mockReportNow).toHaveBeenCalledTimes(2);
+    expect(mockReportNow.mock.results.map((result) => result.value)).toEqual([
+      false,
+      true,
+    ]);
   });
 });

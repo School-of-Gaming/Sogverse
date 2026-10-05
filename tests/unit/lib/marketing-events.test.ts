@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { isAdvertisedProduct, isValidPixelId } from "@/lib/marketing-events";
+import {
+  isAdvertisedProduct,
+  isValidPixelId,
+  metaProductDetails,
+} from "@/lib/marketing-events";
 import { Constants } from "@/types";
 import type { BillingMode, ProductType } from "@/types";
 
@@ -149,5 +153,66 @@ describe("isValidPixelId", () => {
     // `string` is required; this line would not compile without it.
     const asString: string = configured;
     expect(asString).toBe("1234567890");
+  });
+});
+
+/**
+ * Which product an event is about, in Meta's own product fields. The browser's
+ * product view and both server enrolment reports send exactly this object, so
+ * what is pinned here is what every one of them says about a product.
+ */
+describe("metaProductDetails", () => {
+  const ROBLOX_CLUB = {
+    id: "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10",
+    topic: "roblox_studio" as const,
+    billing_mode: "paid" as const,
+    product_translations: [
+      { locale: "fi", name: "Roblox Studio -kerho" },
+      { locale: "en", name: "Roblox Studio Club" },
+    ],
+    product_prices: [{ currency: "eur", price_cents: 4900 }],
+  };
+
+  it("states the product's id, English name, topic and price", () => {
+    expect(metaProductDetails(ROBLOX_CLUB)).toEqual({
+      content_ids: [ROBLOX_CLUB.id],
+      content_type: "product",
+      content_name: "Roblox Studio Club",
+      content_category: "roblox_studio",
+      value: 49,
+      currency: "EUR",
+    });
+  });
+
+  // One product is one name in a report, whatever language it was bought in —
+  // and a product never written in English still has a name rather than none.
+  it("falls back to the first written name when there is no English one", () => {
+    const noEnglish = {
+      ...ROBLOX_CLUB,
+      product_translations: [
+        { locale: "sv", name: "Roblox Studio-klubb" },
+        { locale: "fi", name: "Roblox Studio -kerho" },
+      ],
+    };
+    expect(metaProductDetails(noEnglish).content_name).toBe(
+      "Roblox Studio -kerho",
+    );
+  });
+
+  it("values a free product at zero, whatever price rows it carries", () => {
+    const details = metaProductDetails({
+      ...ROBLOX_CLUB,
+      billing_mode: "free",
+      product_prices: [],
+    });
+    expect(details.value).toBe(0);
+    expect(details.currency).toBe("EUR");
+  });
+
+  // A guessed price is worse than none: the platform would optimise towards it.
+  it("states no value at all for a paid product with no price in the currency", () => {
+    const details = metaProductDetails({ ...ROBLOX_CLUB, product_prices: [] });
+    expect(details).not.toHaveProperty("value");
+    expect(details).not.toHaveProperty("currency");
   });
 });

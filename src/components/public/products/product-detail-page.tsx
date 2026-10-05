@@ -33,6 +33,7 @@ import { ProductDetailPageBody } from "./product-detail-page-body";
 import { audienceAdmitsRole, productAudience } from "@/lib/products/product-audience";
 import { resolveRegionGate, type RegionGate } from "./region-lock/region-gate";
 import { SignupPanel } from "./signup-panel";
+import { MetaProductView, useMetaCheckoutStart } from "@/components/consent";
 import type {
   AuthState,
   ConfirmedHomeLocation,
@@ -294,6 +295,20 @@ export function ProductDetailPage({
   // `failureCount` turns over immediately, the page paints, and the gate takes
   // its fail-open branch — which the latch above then makes permanent, so
   // nothing arrives later to contradict what the parent is looking at.
+  // The advertising product view: renders nothing, and reports only behind the
+  // pixel's own gates. **It is the first child of every branch below, so it
+  // stays mounted for the page's whole life** — its once-per-page guard lives in
+  // the component, and a remount (the skeleton giving way to the body, or the
+  // page falling back to the skeleton) would count the same page twice. `null`
+  // while the read is in flight is its "nothing to report yet", so the view
+  // goes out once, when the product lands.
+  const productView = <MetaProductView product={product ?? null} />;
+  // The advertising checkout start, handed to the panel to call from the click
+  // that starts signing up. Held here rather than in the panel for the same
+  // reason the view is: this component outlives the skeleton, so the
+  // once-per-page guard does too.
+  const reportCheckoutStart = useMetaCheckoutStart(product ?? null);
+
   if (
     productLoading ||
     authLoading ||
@@ -307,11 +322,21 @@ export function ProductDetailPage({
       !homeLocationReadFailed &&
       homeLocationLoading)
   ) {
-    return <DetailLoadingSkeleton />;
+    return (
+      <>
+        {productView}
+        <DetailLoadingSkeleton />
+      </>
+    );
   }
 
   if (isError || !product) {
-    return <DetailNotFound />;
+    return (
+      <>
+        {productView}
+        <DetailNotFound />
+      </>
+    );
   }
 
   const authState: AuthState = (() => {
@@ -442,49 +467,53 @@ export function ProductDetailPage({
       : { kind: "unlocked" };
 
   return (
-    <ProductDetailPageBody
-      product={product}
-      municipalitySlug={municipalitySlug}
-      signupPanel={
-        <SignupPanel
-          product={product}
-          // Off the detail query's own embed, which is the only read that has
-          // it: the browse row deliberately does not publish a product's
-          // enrolment conditions, so the panel takes them beside the product
-          // rather than off it.
-          requiredConsentSlugs={product.product_required_consents.map(
-            (consent) => consent.document_slug,
-          )}
-          // The other embed on the same read, and the same reasoning: what a
-          // product asks at signup is not on the browse row, because a card
-          // never names it.
-          marketingConsentTypes={product.product_marketing_consents.map(
-            (consent) => consent.consent_type,
-          )}
-          // The third embed on the same read, same reasoning again: what a
-          // product asks about a child's photograph is not on the browse row.
-          gamerPhotoConsentTypes={product.product_gamer_photo_consents.map(
-            (consent) => consent.consent_type,
-          )}
-          state={state}
-          authState={authState}
-          regionGate={regionGate}
-          // Only the `eligible` variant reads it, and only the confirmed pick
-          // can answer before the row does — the same precedence the gate uses.
-          homeLocationName={
-            confirmedLocation?.name ??
-            (homeLocationRow !== null
-              ? localizedLocationName(homeLocationRow, locale)
-              : null)
-          }
-          onLocationConfirmed={setConfirmedLocation}
-        />
-      }
-      // The panel is where the region block is explained, so the phone-width
-      // jump button stays exactly as it was: it scrolls the reader to the
-      // answer, which is the same service it does for a gedu who lands here.
-      signupActionable={registrationCtaKind(state) === "primary"}
-    />
+    <>
+      {productView}
+      <ProductDetailPageBody
+        product={product}
+        municipalitySlug={municipalitySlug}
+        signupPanel={
+          <SignupPanel
+            product={product}
+            // Off the detail query's own embed, which is the only read that has
+            // it: the browse row deliberately does not publish a product's
+            // enrolment conditions, so the panel takes them beside the product
+            // rather than off it.
+            requiredConsentSlugs={product.product_required_consents.map(
+              (consent) => consent.document_slug,
+            )}
+            // The other embed on the same read, and the same reasoning: what a
+            // product asks at signup is not on the browse row, because a card
+            // never names it.
+            marketingConsentTypes={product.product_marketing_consents.map(
+              (consent) => consent.consent_type,
+            )}
+            // The third embed on the same read, same reasoning again: what a
+            // product asks about a child's photograph is not on the browse row.
+            gamerPhotoConsentTypes={product.product_gamer_photo_consents.map(
+              (consent) => consent.consent_type,
+            )}
+            state={state}
+            authState={authState}
+            regionGate={regionGate}
+            // Only the `eligible` variant reads it, and only the confirmed pick
+            // can answer before the row does — the same precedence the gate uses.
+            homeLocationName={
+              confirmedLocation?.name ??
+              (homeLocationRow !== null
+                ? localizedLocationName(homeLocationRow, locale)
+                : null)
+            }
+            onLocationConfirmed={setConfirmedLocation}
+            onCheckoutStart={reportCheckoutStart}
+          />
+        }
+        // The panel is where the region block is explained, so the phone-width
+        // jump button stays exactly as it was: it scrolls the reader to the
+        // answer, which is the same service it does for a gedu who lands here.
+        signupActionable={registrationCtaKind(state) === "primary"}
+      />
+    </>
   );
 }
 

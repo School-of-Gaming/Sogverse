@@ -94,6 +94,15 @@ interface SignupPanelProps {
    * picker just handed us.
    */
   onLocationConfirmed: (confirmed: ConfirmedHomeLocation) => void;
+  /**
+   * Report that the parent has stepped into the sign-up flow from this page —
+   * the advertising checkout start, gated and counted once per page by the
+   * page that hands it in. Called from the two clicks that start signing up:
+   * creating an account here while signed out, and the button that enrols. It
+   * sends synchronously or not at all, so calling it first in a click handler
+   * puts the event out before the navigation that click sets off.
+   */
+  onCheckoutStart: () => void;
 }
 
 /**
@@ -130,6 +139,7 @@ export function SignupPanel({
   regionGate,
   homeLocationName,
   onLocationConfirmed,
+  onCheckoutStart,
 }: SignupPanelProps) {
   const router = useRouter();
   const { user, refreshProfile } = useAuth();
@@ -300,6 +310,10 @@ export function SignupPanel({
 
   const handleSubmit = () => {
     if (!fields.selectedParticipantId || !purchaseShape) return;
+    // First, before anything can navigate: the click into the flow is the
+    // checkout start for a free product exactly as for a paid one. A retry
+    // after a failure calls it again and it sends nothing more.
+    onCheckoutStart();
     setSubmitError(null);
     setCommitting(true);
     recordConsentAnswers();
@@ -493,6 +507,7 @@ export function SignupPanel({
     onAddGamer: () => setAddGamerOpen(true),
     onSubmit: handleSubmit,
     onJoinWaitlist: handleJoinWaitlist,
+    onCreateAccount: onCheckoutStart,
     submitting: committing,
     submitError,
     regionGate: {

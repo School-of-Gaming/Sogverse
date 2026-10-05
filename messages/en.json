@@ -4945,7 +4945,7 @@
           "Roblox — receives your child’s Roblox account id, so we can confirm the account, and your browser fetches their avatar picture from Roblox directly.",
           "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account.",
           "mc-heads.net — your browser fetches the picture of your child’s Minecraft character from it directly, using their Minecraft username, which is public in the game. It is a free public service rather than a contractor of ours, and it sees only that request.",
-          "Meta (Facebook and Instagram) — through the Meta Pixel in your browser and reports from our servers, sees how you use our site, so we can show you our ads there and measure how they perform. Only if you allow marketing cookies.",
+          "Meta (Facebook and Instagram) — through the Meta Pixel in your browser and reports from our servers, sees how you use our site, so we can show you our ads there and measure how they perform. When you create an account or sign up, our servers also send Meta a scrambled (hashed) copy of your email address and which club, camp or event you signed up for, so it can recognise you if you use Facebook or Instagram — never your child’s name, age or other details about them. Only if you allow marketing cookies.",
           "Google (Analytics and Ads) — through a tag manager in your browser, sees which of our public pages you visit and what you signed up for, so we can measure how our advertising performs and show you our ads. Only if you allow marketing cookies — not analytics: the analytics you can switch on is Vercel’s alone."
         ]
       },
