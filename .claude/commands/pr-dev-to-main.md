@@ -25,11 +25,11 @@ Sanity check the dev-side set first:
 - **Check for dragged-in history** — the failure worth catching here is history that arrived from outside this release cycle (an old branch merged in late, a wrong base). Its signature is a *date* older than the previous release, not a large count:
 
   ```bash
-  git log origin/main -1 --format=%ad --date=short                    # previous release point
-  git log origin/main..origin/dev --no-merges --format=%ad --date=short | sort -u
+  git log origin/main -1 --format=%cd --date=short                    # previous release point
+  git log origin/main..origin/dev --no-merges --format=%cd --date=short | sort -u
   ```
 
-  Every commit in the release set should date on or after the previous release. Anything older is the signal to stop and show the user the list. **Volume is not that signal** — a busy few days here is legitimately 150+ commits, and a count threshold fires on every healthy release until it gets reflexively waved through, which is worse than no check at all.
+  Read the *commit* date (`%cd`), never the author date (`%ad`): a rebase keeps each commit's author date, so a feature branch begun before the last release and rebased onto `dev` after it shows old author dates while being legitimately new work. Every commit in the release set should date on or after the previous release. Anything older is the signal to stop and show the user the list. **Volume is not that signal** — a busy few days here is legitimately 150+ commits, and a count threshold fires on every healthy release until it gets reflexively waved through, which is worse than no check at all.
 - Print `git diff origin/main..origin/dev --shortstat` — the file/line totals should roughly match what the PR will produce. If they don't, flag it.
 - Print `git diff origin/main..origin/dev --name-only --diff-filter=A -- supabase/migrations/` — the schema surface, carried to Step 4.
 
