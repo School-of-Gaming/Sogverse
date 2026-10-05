@@ -108,6 +108,12 @@ const nextConfig: NextConfig = {
   // instructions committed to the repo. Left on, the block reappears in
   // `git status` after every `next dev` and rewrites itself on every upgrade.
   agentRules: false,
+  // `next dev` serves its scripts to `localhost` only, and a page opened on any
+  // other host loads without them, so a form on it submits as a plain GET. The
+  // MCP OAuth flow against a local stack lands on `127.0.0.1` — the address the
+  // local stack's site URL names (`src/lib/mcp/CLAUDE.md`) — so that host is
+  // allowed too. A development-only setting; a production build ignores it.
+  allowedDevOrigins: ["127.0.0.1"],
   // `sharp` is a native module: it loads a platform-specific binary at require
   // time, which a bundler cannot trace and must not try to inline. Naming it
   // here leaves it as a plain runtime `require` in the two upload routes and
