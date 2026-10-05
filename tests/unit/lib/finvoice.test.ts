@@ -1181,7 +1181,7 @@ describe("a period customer's file", () => {
     const xml = serializeFinvoice(quarterInvoice(), GENERATED_AT);
 
     expect(xml).toContain(
-      '<OriginCode>Original</OriginCode>\n    <InvoicingPeriodStartDate Format="CCYYMMDD">20260101</InvoicingPeriodStartDate><InvoicingPeriodEndDate Format="CCYYMMDD">20260331</InvoicingPeriodEndDate>\n    <InvoiceNumber>2026030221</InvoiceNumber>',
+      '</InvoiceDate>\n    <InvoicingPeriodStartDate Format="CCYYMMDD">20260101</InvoicingPeriodStartDate><InvoicingPeriodEndDate Format="CCYYMMDD">20260331</InvoicingPeriodEndDate>\n    <InvoiceTotalVatExcludedAmount',
     );
     expect(xml.match(/<StartDate Format="CCYYMMDD">\d+<\/StartDate>/g)).toEqual([
       '<StartDate Format="CCYYMMDD">20260101</StartDate>',

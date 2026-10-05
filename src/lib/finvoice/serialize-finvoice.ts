@@ -95,14 +95,15 @@ export function serializeFinvoice(
     `  <DeliveryDetails><DeliveryMethodText>${x(FINVOICE_DELIVERY_METHOD_TEXT)}</DeliveryMethodText></DeliveryDetails>`,
     `  <InvoiceDetails>`,
     `    <InvoiceTypeCode>${x(FINVOICE_INVOICE_TYPE.code)}</InvoiceTypeCode><InvoiceTypeText>${x(FINVOICE_INVOICE_TYPE.text)}</InvoiceTypeText><OriginCode>${x(FINVOICE_INVOICE_TYPE.originCode)}</OriginCode>`,
-    // Where the schema puts it: after the origin, before the number.
+    `    <InvoiceNumber>${x(invoice.invoiceNumber)}</InvoiceNumber>`,
+    `    <InvoiceDate Format="CCYYMMDD">${x(invoice.invoiceDate)}</InvoiceDate>`,
+    // Where the schema puts it: after the invoice date (and the original-invoice
+    // fields this file never writes), before the totals.
     ...(statesPeriod
       ? [
           `    <InvoicingPeriodStartDate Format="CCYYMMDD">${compactDate(period.firstMonth)}</InvoicingPeriodStartDate><InvoicingPeriodEndDate Format="CCYYMMDD">${compactDate(period.endDate)}</InvoicingPeriodEndDate>`,
         ]
       : []),
-    `    <InvoiceNumber>${x(invoice.invoiceNumber)}</InvoiceNumber>`,
-    `    <InvoiceDate Format="CCYYMMDD">${x(invoice.invoiceDate)}</InvoiceDate>`,
     `    <InvoiceTotalVatExcludedAmount AmountCurrencyIdentifier="EUR">${euros(invoice.netCents)}</InvoiceTotalVatExcludedAmount>`,
     `    <InvoiceTotalVatAmount AmountCurrencyIdentifier="EUR">${euros(invoice.vatCents)}</InvoiceTotalVatAmount>`,
     `    <InvoiceTotalVatIncludedAmount AmountCurrencyIdentifier="EUR">${euros(invoice.grossCents)}</InvoiceTotalVatIncludedAmount>`,

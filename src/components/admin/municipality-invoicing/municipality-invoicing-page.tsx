@@ -157,10 +157,8 @@ export function MunicipalityInvoicingPage({
       ]),
     ].sort();
   }, [snapshot, initialPeriodSnapshots, monthStart]);
-  const periodSnapshots = useMunicipalityInvoicingMonths(
-    periodMonths,
-    initialPeriodSnapshots,
-  );
+  const { documents: periodSnapshots, failed: periodReadFailed } =
+    useMunicipalityInvoicingMonths(periodMonths, initialPeriodSnapshots);
 
   // Every customer's file, decided by the predicate the export route asks —
   // over the whole period where the customer is on one. The earlier months are
@@ -252,6 +250,7 @@ export function MunicipalityInvoicingPage({
               <PeriodFilesLine
                 monthStart={invoice.monthStart}
                 files={files.withoutClubThisMonth}
+                periodReadFailed={periodReadFailed}
                 locale={locale}
               />
             </Card>
@@ -266,6 +265,7 @@ export function MunicipalityInvoicingPage({
                 key={municipality.id}
                 municipality={municipality}
                 files={files.byCustomerId}
+                periodReadFailed={periodReadFailed}
                 monthStart={invoice.monthStart}
                 locale={locale}
                 isOpen={openKeys.has(municipality.id)}
@@ -284,6 +284,7 @@ export function MunicipalityInvoicingPage({
               <PeriodFilesLine
                 monthStart={invoice.monthStart}
                 files={files.withoutClubThisMonth}
+                periodReadFailed={periodReadFailed}
                 locale={locale}
               />
             )}
@@ -452,10 +453,12 @@ function CustomerNotSet() {
 function CustomerFiles({
   monthStart,
   files,
+  periodReadFailed,
   locale,
 }: {
   monthStart: string;
   files: readonly CustomerFile[];
+  periodReadFailed: boolean;
   locale: string;
 }) {
   if (files.length === 0) return null;
@@ -467,6 +470,7 @@ function CustomerFiles({
           key={file.customer.id}
           monthStart={monthStart}
           file={file}
+          periodReadFailed={periodReadFailed}
           locale={locale}
         />
       ))}
@@ -489,15 +493,20 @@ function CustomerFiles({
  *   problem is when the file covers several, because a quarter refused in
  *   March over a club that met only in January has to send the reader to
  *   January.
- * - **Waiting on the period's earlier months** — muted, until they land.
+ * - **Waiting on the period's earlier months** — muted, until they land; or,
+ *   where one of those reads failed and so never will, the page's own
+ *   load-error copy in warning tone, rather than a wait that never ends.
  */
 function CustomerFileControl({
   monthStart,
   file,
+  periodReadFailed,
   locale,
 }: {
   monthStart: string;
   file: CustomerFile;
+  /** One of the period's earlier months could not be read. */
+  periodReadFailed: boolean;
   locale: string;
 }) {
   const t = useTranslations("admin.municipalityInvoicing");
@@ -547,6 +556,16 @@ function CustomerFileControl({
           </span>
         )}
       </a>
+    );
+  }
+
+  if (state.reason === "period_not_read" && periodReadFailed) {
+    return (
+      <span className="flex min-w-0 items-baseline gap-1.5 text-xs text-warning">
+        <TriangleAlert className="h-3 w-3 shrink-0 self-center" aria-hidden />
+        {label}
+        <span className="shrink-0 font-medium">{t("loadError")}</span>
+      </span>
     );
   }
 
@@ -613,10 +632,12 @@ function periodLabel(
 function PeriodFilesLine({
   monthStart,
   files,
+  periodReadFailed,
   locale,
 }: {
   monthStart: string;
   files: readonly CustomerFile[];
+  periodReadFailed: boolean;
   locale: string;
 }) {
   const t = useTranslations("admin.municipalityInvoicing");
@@ -632,7 +653,12 @@ function PeriodFilesLine({
         {t("periodFilesWithoutClub")}
       </span>
       <span className="ml-auto flex min-w-0 justify-end">
-        <CustomerFiles monthStart={monthStart} files={files} locale={locale} />
+        <CustomerFiles
+          monthStart={monthStart}
+          files={files}
+          periodReadFailed={periodReadFailed}
+          locale={locale}
+        />
       </span>
     </div>
   );
@@ -663,6 +689,7 @@ function PeriodFilesLine({
 function MunicipalitySection({
   municipality,
   files,
+  periodReadFailed,
   monthStart,
   locale,
   isOpen,
@@ -671,6 +698,7 @@ function MunicipalitySection({
   municipality: InvoiceMunicipality;
   /** Every customer's file this month, by customer id. */
   files: ReadonlyMap<string, CustomerFile>;
+  periodReadFailed: boolean;
   /** The month on screen — what a customer's file is asked for. */
   monthStart: string;
   locale: string;
@@ -716,6 +744,7 @@ function MunicipalitySection({
                 const file = files.get(summary.customer.id);
                 return file === undefined ? [] : [file];
               })}
+              periodReadFailed={periodReadFailed}
               locale={locale}
             />
           </span>

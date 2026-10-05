@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  billingPeriodOf,
-  earlierPeriodMonths,
-  isPeriodEnd,
-} from "@/lib/finvoice";
+import { billingPeriodOf, earlierPeriodMonths } from "@/lib/finvoice";
 
 /**
  * The calendar arithmetic of a billing period: which calendar months a
@@ -71,33 +67,6 @@ describe("billingPeriodOf", () => {
 
   it("knows February's length in a leap year", () => {
     expect(billingPeriodOf("monthly", "2028-02-01").endDate).toBe("2028-02-29");
-  });
-});
-
-describe("isPeriodEnd", () => {
-  it("is every month for a monthly customer", () => {
-    expect(isPeriodEnd("monthly", "2026-05-01")).toBe(true);
-  });
-
-  it("is March, June, September and December for a quarterly one", () => {
-    const ends = Array.from({ length: 12 }, (_unused, index) =>
-      `2026-${String(index + 1).padStart(2, "0")}-01`,
-    ).filter((month) => isPeriodEnd("quarterly", month));
-
-    expect(ends).toEqual([
-      "2026-03-01",
-      "2026-06-01",
-      "2026-09-01",
-      "2026-12-01",
-    ]);
-  });
-
-  it("is June and December for a half-yearly one", () => {
-    const ends = Array.from({ length: 12 }, (_unused, index) =>
-      `2026-${String(index + 1).padStart(2, "0")}-01`,
-    ).filter((month) => isPeriodEnd("half_yearly", month));
-
-    expect(ends).toEqual(["2026-06-01", "2026-12-01"]);
   });
 });
 

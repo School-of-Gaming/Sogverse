@@ -37,10 +37,8 @@ export {
   type FinvoiceRow,
 } from "./build-finvoice-invoice";
 export {
-  MONTHS_PER_PERIOD,
   billingPeriodOf,
   earlierPeriodMonths,
-  isPeriodEnd,
   type BillingPeriod,
 } from "./billing-period";
 export { serializeFinvoice } from "./serialize-finvoice";

@@ -55,15 +55,17 @@ export function useMunicipalityInvoicingMonth(
  * the documents the route already read, matched by month; a month without one
  * is fetched, and is simply absent from the answer until it lands.
  *
- * The answer is the documents in hand, and it is the same array from render to
- * render until one of them changes — the combine below is a module function,
- * so React Query re-runs it only when a result does — which is what lets the
- * page build its months in a memo keyed on it.
+ * The answer is the documents in hand, plus whether any month's read failed —
+ * a failed month never lands, so without the flag the page would wait for it
+ * forever. The documents are the same array from render to render until one of
+ * them changes — the combine below is a module function, so React Query
+ * re-runs it only when a result does — which is what lets the page build its
+ * months in a memo keyed on them.
  */
 export function useMunicipalityInvoicingMonths(
   monthStarts: readonly string[],
   seeds: readonly MunicipalityInvoicingSnapshot[],
-): MunicipalityInvoicingSnapshot[] {
+): MunicipalityInvoicingMonths {
   const supabase = getClient();
   const service = new MunicipalityInvoicingService(supabase);
 
@@ -77,10 +79,24 @@ export function useMunicipalityInvoicingMonths(
   });
 }
 
+interface MunicipalityInvoicingMonths {
+  documents: MunicipalityInvoicingSnapshot[];
+  /** Some month's read errored and holds no document to fall back on. */
+  failed: boolean;
+}
+
 function documentsInHand(
-  results: readonly { data: MunicipalityInvoicingSnapshot | undefined }[],
-): MunicipalityInvoicingSnapshot[] {
-  return results.flatMap((result) =>
-    result.data === undefined ? [] : [result.data],
-  );
+  results: readonly {
+    data: MunicipalityInvoicingSnapshot | undefined;
+    isError: boolean;
+  }[],
+): MunicipalityInvoicingMonths {
+  return {
+    documents: results.flatMap((result) =>
+      result.data === undefined ? [] : [result.data],
+    ),
+    failed: results.some(
+      (result) => result.isError && result.data === undefined,
+    ),
+  };
 }

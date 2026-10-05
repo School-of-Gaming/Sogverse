@@ -345,6 +345,12 @@ customers are on, read from the customer list rather than from the month's own d
 because the document does not mention a buyer with no club in it. A month that ends no
 period of a cadence anybody is on reads nothing more.
 
+**A long period makes the no-snapshot rule reach back further.** A period's file is priced
+at the fee read when it is downloaded, and its sessions are derived from the schedule as it
+stands then — so a fee or schedule edit in the middle of a quarter or a half-year reprices
+and rebills every month of it already delivered, not only the months still to come. The fee
+and the schedule have to be right for the whole period before its file is raised.
+
 **One row per club per month**, month by month, so a quarter's file reads in the order its
 months were checked. Each row carries its month's first and last day, and the invoice
 states the period's first and last day, which is what the Finvoice guide recommends for an

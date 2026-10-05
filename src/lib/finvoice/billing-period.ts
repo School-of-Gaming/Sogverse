@@ -14,7 +14,7 @@ import type { InvoiceBillingCadence } from "@/types";
  */
 
 /** How many calendar months one period of each cadence spans. */
-export const MONTHS_PER_PERIOD = {
+const MONTHS_PER_PERIOD = {
   monthly: 1,
   quarterly: 3,
   half_yearly: 6,
@@ -65,17 +65,6 @@ export function billingPeriodOf(
     lastMonth,
     endDate: monthEndOf(lastMonth),
   };
-}
-
-/**
- * Whether `monthStart` is the last month of its `cadence` period — the one
- * month a period's file can be produced in. Always true for a monthly customer.
- */
-export function isPeriodEnd(
-  cadence: InvoiceBillingCadence,
-  monthStart: string,
-): boolean {
-  return billingPeriodOf(cadence, monthStart).lastMonth === monthStart;
 }
 
 /**
