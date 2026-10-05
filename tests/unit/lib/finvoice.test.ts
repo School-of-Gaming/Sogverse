@@ -29,8 +29,9 @@ import type {
  * to be re-verified against Fennoa rather than reasoned about.
  *
  * May 2026 throughout, with the clock pinned to Thursday the 21st in Helsinki,
- * so a month's Mondays fall either side of "today" and a club's recorded count
- * is a real answer rather than every date it was scheduled for.
+ * so a month's Mondays fall either side of "today": the 4th, 11th and 18th were
+ * due and bill whether or not anybody wrote them up, and the 25th is still
+ * ahead and bills nothing.
  */
 
 const HELSINKI = "Europe/Helsinki";
@@ -82,7 +83,10 @@ interface ClubSpec {
   location?: MunicipalityInvoicingClub["location"];
   feeCents?: number | null;
   invoiceCustomer?: InvoiceCustomerRow | null;
-  /** Monday 14:15 for 75 minutes unless a case wants something else. */
+  /**
+   * Monday 14:15 for 75 minutes unless a case wants something else. An empty
+   * list projects nothing, so the club bills its stored rows and no more.
+   */
   slots?: MunicipalityInvoicingClub["schedule_slots"];
   /** Dates with a stored row. Mondays in May 2026 are 4, 11, 18 and 25. */
   dates?: readonly string[];
@@ -152,6 +156,9 @@ function invoiceFor(
   return result.invoice;
 }
 
+/** Every Monday of May 2026 that has passed by the pinned clock. */
+const ALL_DUE_MONDAYS = ["2026-05-04", "2026-05-11", "2026-05-18"] as const;
+
 // ---------------------------------------------------------------------------
 // The money
 // ---------------------------------------------------------------------------
@@ -159,8 +166,11 @@ function invoiceFor(
 describe("the money rule", () => {
   it("rounds one row's VAT half up at the standard Finnish rate", () => {
     // 65.00 at 25.5 % is 16.575, which is the awkward half-cent the whole rule
-    // exists for. Half up is 16.58.
-    const invoice = invoiceFor([club({ id: "a", name: "Peliklubi Purola" })]);
+    // exists for. Half up is 16.58. No slots, so the one stored row is the one
+    // session billed.
+    const invoice = invoiceFor([
+      club({ id: "a", name: "Peliklubi Purola", slots: [] }),
+    ]);
 
     expect(invoice.rows).toHaveLength(1);
     expect(invoice.rows[0].netCents).toBe(6_500);
@@ -175,9 +185,9 @@ describe("the money rule", () => {
     // rows, so 49.74 is the answer that foots — and 49.73 is what the previous
     // system's files carried.
     const invoice = invoiceFor([
-      club({ id: "a", name: "Klubi A" }),
-      club({ id: "b", name: "Klubi B" }),
-      club({ id: "c", name: "Klubi C" }),
+      club({ id: "a", name: "Klubi A", slots: [] }),
+      club({ id: "b", name: "Klubi B", slots: [] }),
+      club({ id: "c", name: "Klubi C", slots: [] }),
     ]);
 
     expect(invoice.rows.map((row) => row.vatCents)).toEqual([1_658, 1_658, 1_658]);
@@ -217,9 +227,10 @@ describe("the money rule", () => {
     }
   });
 
-  it("counts only the sessions that ran, not the ones that were scheduled", () => {
-    // Four Mondays in May, two of them written up, one missed and one still
-    // ahead of the pinned clock. The invoice bills two.
+  it("bills every session that was due, recorded or not, and none still ahead", () => {
+    // Four Mondays in May: two written up, one nobody wrote up, and one still
+    // ahead of the pinned clock. The unrecorded one was due and was not
+    // cancelled, so it bills like the recorded two; the one ahead does not.
     const invoice = invoiceFor([
       club({
         id: "a",
@@ -228,13 +239,22 @@ describe("the money rule", () => {
       }),
     ]);
 
-    expect(invoice.rows[0].sessions).toBe(2);
-    expect(invoice.rows[0].netCents).toBe(13_000);
+    expect(invoice.rows[0].sessions).toBe(3);
+    expect(invoice.rows[0].netCents).toBe(19_500);
+  });
+
+  it("bills a club that recorded nothing for every date it was due", () => {
+    const invoice = invoiceFor([
+      club({ id: "a", name: "Klubi A", dates: [] }),
+    ]);
+
+    expect(invoice.rows[0].sessions).toBe(3);
+    expect(invoice.netCents).toBe(19_500);
   });
 
   it("bills nothing for a cancelled session", () => {
     // The ledger shows a cancelled date at €0; the file must not carry it in a
-    // row's count or its money.
+    // row's count or its money. The 18th, due and not cancelled, still bills.
     const invoice = invoiceFor([
       club({
         id: "a",
@@ -244,16 +264,16 @@ describe("the money rule", () => {
       }),
     ]);
 
-    expect(invoice.rows[0].sessions).toBe(1);
-    expect(invoice.netCents).toBe(6_500);
+    expect(invoice.rows[0].sessions).toBe(2);
+    expect(invoice.netCents).toBe(13_000);
   });
 
-  it("leaves a club that recorded nothing off the invoice entirely", () => {
-    // A row worth €0.00 invites the buyer to ask what it is. A club that did
-    // not run this month is simply not on the invoice.
+  it("leaves a club with nothing billed off the invoice entirely", () => {
+    // A row worth €0.00 invites the buyer to ask what it is. A club whose every
+    // due date was cancelled bills nothing and is simply not on the invoice.
     const invoice = invoiceFor([
       club({ id: "a", name: "Klubi A" }),
-      club({ id: "b", name: "Klubi B", dates: [] }),
+      club({ id: "b", name: "Klubi B", dates: [], cancelled: ALL_DUE_MONDAYS }),
     ]);
 
     expect(invoice.rows.map((row) => row.clubId)).toEqual(["a"]);
@@ -551,44 +571,56 @@ describe("what refuses a file", () => {
     });
   });
 
-  it("produces the file where the only fee-less club recorded nothing", () => {
-    // A club that did not meet is on no invoice, so its missing price cannot
+  it("refuses the file when a fee-less club's only billed sessions are unrecorded", () => {
+    // Nobody wrote anything up, but the club was due on three Mondays and none
+    // was cancelled, so it bills them — and with no price the file would be
+    // short by exactly those.
+    const result = buildFor([
+      club({ id: "a", name: "Klubi A" }),
+      club({ id: "b", name: "Klubi B", feeCents: null, dates: [] }),
+    ]);
+
+    expect(result).toEqual({
+      ok: false,
+      reason: "club_without_fee",
+      clubsWithoutFee: 1,
+    });
+  });
+
+  it("produces the file where the only fee-less club billed nothing", () => {
+    // A club with nothing billed is on no invoice, so its missing price cannot
     // make one short — the file is about what ran. The gap is still an admin
     // error, and it is still reported where data problems are reported: on the
     // club's own line in the ledger and on the admin dashboard. Refusing the
     // file for it would be a third alarm, and one that stops the month's real
     // clubs being invoiced.
     const invoice = invoiceFor([
-      club({ id: "a", name: "Klubi A" }),
-      club({ id: "b", name: "Klubi B", feeCents: null, dates: [] }),
+      club({ id: "a", name: "Klubi A", slots: [] }),
+      club({
+        id: "b",
+        name: "Klubi B",
+        feeCents: null,
+        dates: [],
+        cancelled: ALL_DUE_MONDAYS,
+      }),
     ]);
 
     expect(invoice.rows.map((row) => row.clubId)).toEqual(["a"]);
     expect(invoice.netCents).toBe(6_500);
   });
 
-  it("refuses a customer whose clubs all recorded nothing", () => {
-    const result = buildFor([club({ id: "a", name: "Klubi A", dates: [] })]);
-
-    expect(result).toEqual({
-      ok: false,
-      reason: "nothing_to_invoice",
-      clubsWithoutFee: 0,
-    });
-  });
-
   it("refuses a customer whose clubs have only cancelled sessions", () => {
     // A month of cancellations is a month with nothing to invoice, and a club
     // with no fee that was only cancelled never ran, so it does not change the
-    // reason.
+    // reason. Every due Monday is cancelled: one left standing would bill.
     const result = buildFor([
-      club({ id: "a", name: "Klubi A", dates: [], cancelled: ["2026-05-04"] }),
+      club({ id: "a", name: "Klubi A", dates: [], cancelled: ALL_DUE_MONDAYS }),
       club({
         id: "b",
         name: "Klubi B",
         feeCents: null,
         dates: [],
-        cancelled: ["2026-05-11"],
+        cancelled: ALL_DUE_MONDAYS,
       }),
     ]);
 
@@ -697,11 +729,13 @@ Laskurivillä kerhokerrat laskutuskaudella</InvoiceFreeText>
 </Finvoice>`;
 
 describe("the Finvoice document", () => {
+  // Two Mondays written up and the third cancelled, so the row bills two.
   const oneClub = invoiceFor([
     club({
       id: "a",
       name: "Peliklubi Purola",
       dates: ["2026-05-04", "2026-05-11"],
+      cancelled: ["2026-05-18"],
     }),
   ]);
 

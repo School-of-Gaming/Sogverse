@@ -23,7 +23,7 @@ import type {
  * **Everything is deterministic.** No `Math.random`, no `Date.now`, no
  * `crypto.randomUUID`: the clock is one pinned instant (below), the month is a
  * fixed month around it, and every date is either a literal or weekly
- * arithmetic from one. A ledger whose set of missed sessions changed between two
+ * arithmetic from one. A ledger whose set of unrecorded sessions changed between two
  * reloads could not be compared with itself, and this page is read by comparing
  * figures.
  *
@@ -90,15 +90,15 @@ export const MUNICIPALITY_INVOICING_TIMEZONE = "Europe/Helsinki";
  *
  * A *fixed* instant rather than the live clock, unlike the family scenes next
  * door, because every state this page has is a statement about a date's position
- * relative to today: a Monday earlier in the month is either recorded or missed,
- * next Monday is upcoming, and today's own session is the one that bills the
- * moment it is written up. Derived from a live clock, the scene would show a
+ * relative to today: a Monday earlier in the month is either recorded or billed
+ * without a record, next Monday is upcoming, and today's own session bills only
+ * once it is written up. Derived from a live clock, the scene would show a
  * different set of those cases every day and none of them the set the design was
  * drawn against — and once the real month rolled past May the working month
  * would have no upcoming lines at all.
  *
  * Mid-month and mid-week on purpose: a Thursday leaves three weeks behind it and
- * a week and a half ahead of it inside one month, so recorded, missed and
+ * a week and a half ahead of it inside one month, so recorded, unrecorded and
  * upcoming lines all fit in every club's own detail table.
  *
  * The cost is honest and known: this date will one day be in the past, at which
@@ -166,7 +166,7 @@ type MunicipalityKey = keyof typeof MUNICIPALITIES;
  * buy their clubs themselves and appear once. Tampere appears **twice** — two
  * departments buying under two agreements, which is the shape that makes a
  * per-municipality link impossible — and so does Helsinki, whose second
- * department buys the one club that recorded nothing all month. And one
+ * department buys the one club whose every past date was cancelled. And one
  * association buys clubs sited in a municipality it is not, which is the shape
  * that makes deriving the buyer from a club's location impossible even for the
  * single-customer case.
@@ -203,8 +203,8 @@ const INVOICE_CUSTOMERS = {
     invoiceText: "Laskutusviite merkittävä jokaiselle riville.",
   },
   // Helsinki's second department, and the one customer here with nothing to
-  // invoice: it buys exactly one club, and that club recorded no sessions at
-  // all this month. Its download is refused for a reason that is not a missing
+  // invoice: it buys exactly one club, and every date that club was due to run
+  // so far this month was cancelled. Its download is refused for a reason that is not a missing
   // fee, which is the other half of the export's readiness rule and the one a
   // month of ordinary clubs would never show.
   helsinkiYouth: {
@@ -374,8 +374,8 @@ interface ClubSpec {
   /** How many groups met on each recorded date. One unless stated. */
   groups?: number;
   /**
-   * Projected dates that have passed and carry **no** stored row — the missed
-   * sessions the club's own line reports in warning tone.
+   * Projected dates that have passed and carry **no** stored row — sessions
+   * billed without a record, which the club's own line counts in quiet type.
    */
   missedDates?: readonly string[];
   /**
@@ -428,7 +428,8 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     site: { name: "Haavikallion koulu" },
     feeCents: 8000,
     slots: [{ weekday: TUE, startTime: "15:30" }],
-    // One session nobody wrote up: the warning count on a club line.
+    // One session nobody wrote up: billed, and counted as not recorded on the
+    // club's line.
     missedDates: ["2026-05-12"],
   },
   {
@@ -452,7 +453,7 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     // A Saturday the schedule does not project, with a row on it: an orphan
     // that still bills, because records beat projections.
     extraDates: ["2026-05-16"],
-    // Ascension Day, cancelled: a passed date worth nothing and not missed.
+    // Ascension Day, cancelled: a passed date worth nothing.
     cancelledDates: ["2026-05-14"],
   },
   {
@@ -483,7 +484,8 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     ],
   },
 
-  // Helsinki — the long name, the club with no schedule, and a month of misses.
+  // Helsinki — the long name, the club with no schedule, and a month of
+  // cancellations.
   {
     id: "preview-club-pohjois-vuorela",
     name: "Peliklubi Pohjois-Vuorelan yhtenäiskoulun iltapäiväryhmä",
@@ -500,17 +502,17 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     id: "preview-club-vuorenpeikko",
     name: "Peliklubi Vuorenpeikko",
     municipality: "helsinki",
-    // Its own customer, buying nothing else. A club that recorded nothing is
-    // already the strongest thing on the page to notice; giving it a buyer of
-    // its own is what makes that buyer's file refusable for having nothing to
-    // invoice rather than for a missing fee.
+    // Its own customer, buying nothing else: giving a club that billed nothing
+    // a buyer of its own is what makes that buyer's file refusable for having
+    // nothing to invoice rather than for a missing fee.
     customer: "helsinkiYouth",
     site: { name: "Vuorenpeikon koulu" },
     feeCents: 6500,
     slots: [{ weekday: WED, startTime: "15:00" }],
-    // Every past date missed: a club that owes three write-ups and bills
-    // nothing, which is the strongest thing on the page to notice.
-    missedDates: ["2026-05-06", "2026-05-13", "2026-05-20"],
+    // Every past date cancelled — the only thing that keeps a date that was
+    // due off the bill — so the club bills nothing, while next week's session
+    // is still upcoming.
+    cancelledDates: ["2026-05-06", "2026-05-13", "2026-05-20"],
   },
   {
     id: "preview-club-sammalniitty",

@@ -437,7 +437,7 @@
       "emptyMonth": "Aucun club municipal n’a de séance enregistrée ou prévue sur ce mois.",
       "excludedClubs": "{count, plural, one {Hors total : # club sans tarif défini} other {Hors total : # clubs sans tarif défini}}",
       "feeNotSet": "Tarif non défini",
-      "notRecorded": "Non enregistrée",
+      "billedNotRecorded": "Facturée, non enregistrée",
       "upcoming": "À venir",
       "cancelled": "Annulée",
       "unrecordedSessions": "{count, plural, one {# non enregistrée} other {# non enregistrées}}",
@@ -447,7 +447,7 @@
       "customerNotSet": "Client de facturation non défini",
       "downloadInvoiceFor": "Télécharger le fichier Finvoice pour {customer}",
       "fileBlockedByFee": "{count, plural, one {Pas de fichier : # club a eu lieu sans tarif} other {Pas de fichier : # clubs ont eu lieu sans tarif}}",
-      "fileBlockedByNothingToInvoice": "Pas de fichier : rien d’enregistré",
+      "fileBlockedByNothingToInvoice": "Pas de fichier : rien à facturer",
       "loadError": "Impossible de charger le mois de facturation. Actualisez la page pour réessayer.",
       "loadErrorWithReason": "Impossible de charger le mois de facturation – {reason}. Actualisez la page pour réessayer."
     },

@@ -481,7 +481,7 @@
       "emptyMonth": "jarvam qaSpu’bogh ghomHom veng tu’lu’be’.",
       "excludedClubs": "{count, plural, one {mI’vamDaq # ghomHom tu’lu’be’ — DIl SaHbe’} other {mI’vamDaq # ghomHom tu’lu’be’ — DIl SaHbe’}}",
       "feeNotSet": "DIl wIvlu’pu’be’",
-      "notRecorded": "qonlu’pu’be’",
+      "billedNotRecorded": "DIl ’ach qonlu’pu’be’",
       "upcoming": "qaSbe’lI’",
       "cancelled": "qIllu’",
       "unrecordedSessions": "{count, plural, one {# qonlu’pu’be’} other {# qonlu’pu’be’}}",
@@ -491,7 +491,7 @@
       "customerNotSet": "DIlwI’ wIvlu’pu’be’",
       "downloadInvoiceFor": "{customer} Finvoice-nav yISuq",
       "fileBlockedByFee": "{count, plural, one {nav tu’lu’be’: # ghomHom qaSpu’ ’ach DIl SaHbe’} other {nav tu’lu’be’: # ghomHom qaSpu’ ’ach DIl SaHbe’}}",
-      "fileBlockedByNothingToInvoice": "nav tu’lu’be’: qonlu’pu’be’",
+      "fileBlockedByNothingToInvoice": "nav tu’lu’be’: DIl vay’ tu’be’",
       "loadError": "DIl jar laDlaHbe’. yIchu’qa’ ’ej yInID.",
       "loadErrorWithReason": "DIl jar laDlaHbe’ – {reason}. yIchu’qa’ ’ej yInID."
     },

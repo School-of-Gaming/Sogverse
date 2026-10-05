@@ -33,7 +33,7 @@ import { MunicipalityInvoicingService } from "@/services/municipality-invoicing"
  *
  * A refusal is a 409 with a machine-readable `code`, because the two refusals
  * are ordinary states of an ordinary month rather than faults: a club that ran
- * this month with no fee against it, and a customer with nothing recorded. The
+ * this month with no fee against it, and a customer with nothing to bill. The
  * page already renders the same two states as a disabled control with the same
  * reason — both from one predicate — so a 409 here is what somebody reaches by
  * pasting a stale link, not by clicking.
@@ -120,6 +120,6 @@ function refusalMessage(refusal: FinvoiceRefusal): string {
         ? "One of this customer's clubs ran this month with no fee set, so the invoice would be short. Set the fee and export again."
         : `${refusal.clubsWithoutFee} of this customer's clubs ran this month with no fee set, so the invoice would be short. Set the fees and export again.`;
     case "nothing_to_invoice":
-      return "This customer's clubs recorded no sessions in this month, so there is nothing to invoice.";
+      return "This customer's clubs have no billable sessions in this month, so there is nothing to invoice.";
   }
 }

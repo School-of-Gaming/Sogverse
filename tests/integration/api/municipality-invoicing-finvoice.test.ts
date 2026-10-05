@@ -271,6 +271,42 @@ describe("GET /api/admin/municipality-invoicing/finvoice", () => {
 
   // -- The refusals --
 
+  it("bills a club that recorded nothing for every date it was due", async () => {
+    mockAdmin();
+    mockRpc.mockResolvedValue({
+      data: snapshot([club({ sessions: [] })]),
+      error: null,
+    });
+
+    const response = await GET(
+      request(`?month=2020-05&customer=${CUSTOMER_ID}`),
+    );
+
+    expect(response.status).toBe(200);
+    // Four Mondays in May 2020, none recorded, none cancelled.
+    expect(await response.text()).toContain(
+      '<DeliveredQuantity QuantityUnitCode="krt">4.00</DeliveredQuantity>',
+    );
+  });
+
+  it("returns 409 when a fee-less club bills only unrecorded sessions", async () => {
+    mockAdmin();
+    mockRpc.mockResolvedValue({
+      data: snapshot([
+        club(),
+        club({ id: "club-b", municipality_fee_cents: null, sessions: [] }),
+      ]),
+      error: null,
+    });
+
+    const response = await GET(
+      request(`?month=2020-05&customer=${CUSTOMER_ID}`),
+    );
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).code).toBe("club_without_fee");
+  });
+
   it("returns 409 when one of the customer's clubs has no fee", async () => {
     mockAdmin();
     mockRpc.mockResolvedValue({
@@ -306,10 +342,19 @@ describe("GET /api/admin/municipality-invoicing/finvoice", () => {
     });
   });
 
-  it("returns 409 when the customer's clubs recorded nothing", async () => {
+  it("returns 409 when the customer's clubs have nothing to bill", async () => {
+    // Every Monday of May 2020 was due, so only cancelling all four leaves the
+    // club with nothing billed.
     mockAdmin();
     mockRpc.mockResolvedValue({
-      data: snapshot([club({ sessions: [] })]),
+      data: snapshot([
+        club({
+          sessions: [],
+          cancelled_sessions: ["2020-05-04", "2020-05-11", "2020-05-18", "2020-05-25"].map(
+            (date) => ({ group_id: "g1", session_date: date }),
+          ),
+        }),
+      ]),
       error: null,
     });
 

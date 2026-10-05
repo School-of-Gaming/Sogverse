@@ -43,7 +43,7 @@ import {
  *
  * The page the CFO opens once a month to raise the invoices. It is read-only
  * from end to end: every number on it is derived at read time from the clubs'
- * current fees and the sessions that were actually recorded, and nothing here
+ * current fees, schedules, recorded sessions and cancellations, and nothing here
  * writes, snapshots or exports anything.
  *
  * The shell owns four things and nothing else: the month the URL names, the
@@ -278,7 +278,7 @@ function MonthSummaryRow({
             parts={[
               t("municipalityCount", { count: invoice.municipalityCount }),
               t("clubCount", { count: invoice.clubCount }),
-              t("sessionCount", { count: invoice.recordedCount }),
+              t("sessionCount", { count: invoice.billedCount }),
             ]}
           />
           {invoice.clubsWithoutFee > 0 && (
@@ -493,7 +493,7 @@ function MunicipalitySection({
             <CountLine
               parts={[
                 t("clubCount", { count: municipality.clubs.length }),
-                t("sessionCount", { count: municipality.recordedCount }),
+                t("sessionCount", { count: municipality.billedCount }),
               ]}
             />
             {municipality.clubsWithoutFee > 0 && (
@@ -586,18 +586,18 @@ function ClubTable({
  * One club's line, and the dates behind its number when the reader opens it.
  *
  * Five facts on one line, in the order the arithmetic runs: what it is, when it
- * meets, what a session of it costs, how many ran, and what that comes to. The
+ * meets, what a session of it costs, how many bill, and what that comes to. The
  * total is the product of the two columns to its left, so a reader can check the
  * multiplication without leaving the row — which is the whole reason the fee is
  * on the line at all rather than only in the detail.
  *
- * **A club with sessions it should have run and did not says so on its own
- * line.** The count cell carries the missed count beside the recorded one, in
- * warning tone, so a month's problems are visible without opening anything —
- * which matters precisely because every club here is closed by default. Dates
- * still ahead of the club get no mention: nothing is wrong with a session that
- * has not happened yet, and a note about one would be indistinguishable at a
- * glance from a note about one that was missed.
+ * **A club billed for sessions nobody wrote up says so on its own line.** The
+ * count cell carries how many of its billed sessions are not recorded, in quiet
+ * secondary type beside the billed count, so a missing write-up can be chased
+ * without opening anything — which matters because every club here is closed
+ * by default. It is not a warning: those sessions are in the count and the
+ * total, and nothing about the invoice is wrong. Dates still ahead of the club
+ * and cancelled dates get no mention there.
  *
  * **The whole row toggles the dates, and the club's name is the one thing on it
  * that does not.** A row this dense is read by pointing at it, and a reader
@@ -692,20 +692,22 @@ function ClubRows({ club, locale }: { club: InvoiceClub; locale: string }) {
             formatCurrencyFromCents(club.feeCents, "eur", locale)
           )}
         </td>
-        {/* The warning comes first and the count last, so the count ends on the
+        {/* The note comes first and the count last, so the count ends on the
             column's right edge like every other figure on the page and the note
-            flows leftward into the column's slack. Read left to right it is also
-            the order the reader wants: what is wrong, then what is being billed.
-            Both halves are one phrase per locale, joined by punctuation rather
-            than by copy, so no locale has to word the pair. */}
+            flows leftward into the column's slack. The note is quiet secondary
+            type rather than a warning: the sessions it counts are billed and
+            already inside the count beside it, and it is there only so a
+            missing write-up can be chased. Both halves are one phrase per
+            locale, joined by punctuation rather than by copy, so no locale has
+            to word the pair. */}
         <td className="py-2 pr-2 text-right tabular-nums">
           {club.unrecordedCount > 0 && (
-            <span className="whitespace-nowrap text-xs font-medium text-warning">
+            <span className="whitespace-nowrap text-xs text-muted-foreground">
               {t("unrecordedSessions", { count: club.unrecordedCount })}
               {SCHEDULE_PART_SEPARATOR}
             </span>
           )}
-          {club.recordedCount}
+          {club.billedCount}
         </td>
         {/* The money axis. The last column's right edge is the row inset, which
             is the same edge the municipality total and the month total end on. */}
@@ -765,13 +767,13 @@ function ClubSessionDetail({
  *
  * The four kinds read differently on purpose. A recorded session carries the
  * fee and nothing else in the way of explanation — it is the ordinary case and
- * should be quiet. An unrecorded one is drawn in warning tone and says so in
- * words, because a zero with no explanation beside it is indistinguishable from
- * a free session. An upcoming one carries no amount at all: it has not
- * happened, and printing €0 against a date in the future would invite somebody
- * to go looking for a session nobody has missed. A cancelled one is muted and
- * worth €0, past or future: it is settled, nothing about it is wrong, and the
- * word beside the zero is what tells it apart from a missed one.
+ * should be quiet. An unrecorded one carries the same fee, muted, and says in
+ * words that it is billed without a record: nothing about the invoice is wrong,
+ * but a reader chasing write-ups has to be able to find it. An upcoming one
+ * carries no amount at all: it has not happened, and printing €0 against a date
+ * in the future would invite somebody to go looking for a session nobody has
+ * missed. A cancelled one is muted and worth €0, past or future: it is settled,
+ * and the word beside the zero is what tells it apart from a billed one.
  */
 function SessionRow({
   session,
@@ -789,16 +791,10 @@ function SessionRow({
       date={session.date}
       isoWeek={session.isoWeek}
       locale={locale}
-      tone={
-        session.kind === "unrecorded"
-          ? "warning"
-          : session.kind === "recorded"
-            ? "plain"
-            : "muted"
-      }
+      tone={session.kind === "recorded" ? "plain" : "muted"}
       outcome={t(SESSION_OUTCOME_KEY[session.kind])}
       amount={
-        session.kind === "recorded" ? (
+        session.kind === "recorded" || session.kind === "unrecorded" ? (
           feeCents === null ? (
             <FeeNotSet />
           ) : (
@@ -814,7 +810,7 @@ function SessionRow({
 
 const SESSION_OUTCOME_KEY = {
   recorded: "recorded",
-  unrecorded: "notRecorded",
+  unrecorded: "billedNotRecorded",
   upcoming: "upcoming",
   cancelled: "cancelled",
 } as const satisfies Record<InvoiceSession["kind"], string>;

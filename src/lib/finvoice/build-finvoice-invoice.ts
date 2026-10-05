@@ -64,7 +64,7 @@ export interface FinvoiceRow {
    * municipality's own, the club, and its weekly cadence.
    */
   text: string;
-  /** Sessions that ran — a whole number of them; the file states two decimals. */
+  /** Sessions billed — a whole number of them; the file states two decimals. */
   sessions: number;
   /** The club's current per-session fee, in cents. */
   unitPriceCents: number;
@@ -108,16 +108,17 @@ export interface FinvoiceInvoice {
  *   is what a stale link or a hand-typed id reaches, and it is not an error
  *   about the customer: the customer may exist and simply have had no clubs
  *   running.
- * - `club_without_fee` — at least one club that **ran** this month has no
- *   per-session fee. **The whole file is refused rather than the club being
- *   dropped**, because a file that silently omits a club that ran is a total
- *   that is short, and a short total is the one thing nobody downstream
- *   catches. A club that recorded nothing is not in this count: it puts no row
- *   and no money on the file whatever its fee, so it cannot make the file
- *   wrong — its missing fee is a data problem, reported where data problems
- *   are, on the club's own line and on the admin dashboard.
- * - `nothing_to_invoice` — every one of the customer's clubs recorded no
- *   sessions. An invoice for nothing is a document somebody has to explain.
+ * - `club_without_fee` — at least one club that **ran** this month — has at
+ *   least one billed session, recorded or not — has no per-session fee. **The
+ *   whole file is refused rather than the club being dropped**, because a file
+ *   that silently omits a club that ran is a total that is short, and a short
+ *   total is the one thing nobody downstream catches. A club with nothing
+ *   billed is not in this count: it puts no row and no money on the file
+ *   whatever its fee, so it cannot make the file wrong — its missing fee is a
+ *   data problem, reported where data problems are, on the club's own line and
+ *   on the admin dashboard.
+ * - `nothing_to_invoice` — none of the customer's clubs has a billed session
+ *   this month. An invoice for nothing is a document somebody has to explain.
  */
 export type FinvoiceBlockedReason = "club_without_fee" | "nothing_to_invoice";
 
@@ -174,7 +175,7 @@ export function finvoiceReadiness(
       clubsWithoutFee: summary.clubsThatRanWithoutFee,
     };
   }
-  if (summary.recordedCount === 0) {
+  if (summary.billedCount === 0) {
     return { ok: false, reason: "nothing_to_invoice", clubsWithoutFee: 0 };
   }
   return { ok: true };
@@ -202,14 +203,14 @@ export function buildFinvoiceInvoice({
   const readiness = finvoiceReadiness(summary);
   if (!readiness.ok) return readiness;
 
-  // Only the clubs that actually ran get a row. A club with a fee and no
+  // Only the clubs with a billed session get a row. A club with a fee and no
   // sessions is not a zero line — it is a club that was not delivered this
   // month, and a row worth €0.00 invites the buyer to ask what it is.
   const rows = summary.clubs
-    .filter((club) => club.recordedCount > 0)
+    .filter((club) => club.billedCount > 0)
     .map((club, index) => buildRow(club, index + 1));
 
-  // Only reachable where every club with a fee recorded nothing, which
+  // Only reachable where every club with a fee billed nothing, which
   // `finvoiceReadiness` has already refused — kept because the filter above is
   // what decides it, and a zero-row invoice must never be serialized.
   if (rows.length === 0) {
@@ -286,14 +287,14 @@ function buildRow(club: InvoiceClub, rowNumber: number): FinvoiceRow {
   // caller that skipped the check produces a visible zero rather than a crash
   // halfway through writing a file.
   const unitPriceCents = club.feeCents ?? 0;
-  const netCents = sumCents([unitPriceCents * club.recordedCount]);
+  const netCents = sumCents([unitPriceCents * club.billedCount]);
   const vatCents = vatOf(netCents);
 
   return {
     rowNumber,
     clubId: club.id,
     text: rowText(club),
-    sessions: club.recordedCount,
+    sessions: club.billedCount,
     unitPriceCents,
     netCents,
     vatCents,

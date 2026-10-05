@@ -1971,13 +1971,26 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     expect([...sent].some((date) => !shown.has(date))).toBe(true);
   });
 
-  it("has clubs reporting missed sessions on their own line", () => {
-    const missing = clubs.filter((club) => club.unrecordedCount > 0);
-    expect(missing.length).toBeGreaterThanOrEqual(3);
-    // One of them recorded nothing at all, which is the strongest version of
-    // the warning and the only one whose total is zero with a fee set.
+  it("has clubs billing sessions nobody recorded, counted on their own line", () => {
+    const unrecorded = clubs.filter((club) => club.unrecordedCount > 0);
+    expect(unrecorded.length).toBeGreaterThanOrEqual(3);
+    // Billed at the fee, exactly like the recorded ones beside them.
+    for (const club of unrecorded) {
+      expect(club.billedCount).toBeGreaterThanOrEqual(club.unrecordedCount);
+      if (club.feeCents !== null) {
+        expect(club.totalCents).toBe(club.feeCents * club.billedCount);
+      }
+    }
+  });
+
+  it("has a club that bills nothing because every date it was due was cancelled", () => {
     expect(
-      missing.some((club) => club.recordedCount === 0 && club.totalCents === 0),
+      clubs.some(
+        (club) =>
+          club.billedCount === 0 &&
+          club.totalCents === 0 &&
+          club.sessions.some((session) => session.kind === "cancelled"),
+      ),
     ).toBe(true);
   });
 
@@ -1988,7 +2001,7 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     // A club with no fee has no total either — never a zero, which would be a
     // figure somebody could add up.
     expect(unpriced[0].totalCents).toBeNull();
-    expect(unpriced[0].recordedCount).toBeGreaterThan(0);
+    expect(unpriced[0].billedCount).toBeGreaterThan(0);
     expect(
       invoice.municipalities.filter((one) => one.clubsWithoutFee > 0),
     ).toHaveLength(1);
@@ -2004,7 +2017,7 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     expect(invoice.clubsWithoutCustomer).toBe(1);
     const unlinked = clubs.filter((club) => club.invoiceCustomer === null);
     expect(unlinked).toHaveLength(1);
-    expect(unlinked[0].recordedCount).toBeGreaterThan(0);
+    expect(unlinked[0].billedCount).toBeGreaterThan(0);
     expect(unlinked[0].totalCents).toBeGreaterThan(0);
     expect(
       invoice.municipalities.filter((one) => one.clubsWithoutCustomer > 0),
@@ -2100,9 +2113,10 @@ describe("the municipality invoicing scene covers every ledger state", () => {
       const built = clubs.find((one) => one.id === club.id);
       expect(built, club.id).toBeDefined();
       const dates = new Set(club.sessions.map((s) => s.session_date));
-      // Twice as many rows as dates, and the count is the dates.
+      // Twice as many rows as dates, and the recorded count is the dates; the
+      // billed count adds only the dates billed without a record.
       expect(club.sessions.length).toBe(dates.size * 2);
-      expect(built!.recordedCount).toBe(dates.size);
+      expect(built!.billedCount - built!.unrecordedCount).toBe(dates.size);
     }
   });
 
@@ -2127,7 +2141,7 @@ describe("the municipality invoicing scene covers every ledger state", () => {
   it("has a club with no schedule at all, still billing its rows", () => {
     const unscheduled = clubs.filter((club) => club.scheduleSummary === null);
     expect(unscheduled).toHaveLength(1);
-    expect(unscheduled[0].recordedCount).toBeGreaterThan(0);
+    expect(unscheduled[0].billedCount).toBeGreaterThan(0);
     expect(unscheduled[0].unrecordedCount).toBe(0);
   });
 
@@ -2138,10 +2152,10 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     expect(spec).toBeDefined();
     const built = clubs.find((one) => one.id === spec!.id);
     expect(built).toBeDefined();
-    expect(built!.recordedCount).toBeGreaterThan(0);
+    expect(built!.billedCount).toBeGreaterThan(0);
     // Nothing projected, so nothing can be missing and nothing is upcoming.
     expect(built!.unrecordedCount).toBe(0);
-    expect(built!.sessions.length).toBe(built!.recordedCount);
+    expect(built!.sessions.length).toBe(built!.billedCount);
   });
 
   it("prices every club inside the municipality fee range", () => {

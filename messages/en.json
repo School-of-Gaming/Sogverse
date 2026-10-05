@@ -437,7 +437,7 @@
       "emptyMonth": "No municipality club has anything recorded or scheduled in this month.",
       "excludedClubs": "{count, plural, one {Excludes # club with no fee set} other {Excludes # clubs with no fee set}}",
       "feeNotSet": "Fee not set",
-      "notRecorded": "Not recorded",
+      "billedNotRecorded": "Billed, not recorded",
       "upcoming": "Upcoming",
       "cancelled": "Cancelled",
       "unrecordedSessions": "{count, plural, one {# not recorded} other {# not recorded}}",
@@ -447,7 +447,7 @@
       "customerNotSet": "Customer not set",
       "downloadInvoiceFor": "Download the Finvoice file for {customer}",
       "fileBlockedByFee": "{count, plural, one {No file: # club ran with no fee} other {No file: # clubs ran with no fee}}",
-      "fileBlockedByNothingToInvoice": "No file: nothing recorded",
+      "fileBlockedByNothingToInvoice": "No file: nothing to bill",
       "loadError": "Could not load the invoicing month. Refresh to try again.",
       "loadErrorWithReason": "Could not load the invoicing month — {reason}. Refresh to try again."
     },
