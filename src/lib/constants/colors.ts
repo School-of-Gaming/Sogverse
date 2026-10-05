@@ -41,6 +41,36 @@ export const DARK_THEME = {
   mutedFg: NEUTRALS.mutedForeground.hex,
 } as const;
 
+/**
+ * The one colour a printed document is set in: the brand's ink, on the white
+ * of the paper. It is the value the dark theme spends as its ground, put back
+ * to its first job.
+ *
+ * There is no grey beside it on purpose. The library's quiet ink is a grey
+ * tuned to read on the near-black ground and is too faint on white, and the
+ * library has no light palette to take a paper grey from — so a printed
+ * document builds its hierarchy from weight, size and rules, all in this ink.
+ * The brand's colour arrives on paper the way it does on screen, at its
+ * authored value on a rule, a fill or the mark: `BRAND.act` with
+ * `BRAND.actForeground` on it.
+ */
+export const PRINT_INK = NEUTRALS.background.hex;
+
+/**
+ * The edges a printed document marks a state with, on the white of the paper.
+ *
+ * A status on paper is the library's status panel: a coloured edge around no
+ * ground, with the words in `PRINT_INK`. The hue is never set as type here —
+ * the statuses are measured against the dark grounds and not against white, and
+ * a light yellow word on white would not read — so the edge is the only place
+ * the colour goes, and the sentence beside it carries the meaning on its own,
+ * which is also what a black-and-white printer leaves.
+ */
+export const PRINT_STATUS_EDGE = {
+  success: statusHex("success"),
+  warning: statusHex("warning"),
+} as const;
+
 // The hero gradient's two glows used to live here: act at 20% and world at 10%,
 // pre-composited over the dark ground because neither a satori render nor an
 // email client can be relied on for alpha. Flattening is what made them

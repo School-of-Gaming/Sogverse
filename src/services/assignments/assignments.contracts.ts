@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
-import { sessionStaffGedu } from "@/services/session-substitution/session-substitution.contracts";
+import {
+  sessionProductDocument,
+  sessionStaffGedu,
+} from "@/services/session-substitution/session-substitution.contracts";
+import { traineeRosterEntry } from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 /**
  * Runtime contracts for the gedu assignment RPCs. The generated types can't
@@ -25,42 +29,43 @@ const scheduleSlotSummary = z.object({
   duration_minutes: z.number(),
 });
 
-/** Rows of `get_my_assigned_products` (nullability per the products schema). */
-export const myAssignedProductRows = z.array(
-  z.object({
-    product_id: z.string(),
-    product_type: z.enum(Constants.public.Enums.product_type),
-    timezone: z.string(),
-    is_remote: z.boolean(),
-    start_date: z.string().nullable(),
-    end_date: z.string().nullable(),
-    group_id: z.string(),
-    group_count: z.number(),
-    participant_count: z.number(),
-    product_translations: z.array(productTranslationSummary),
-    schedule_slots: z.array(scheduleSlotSummary),
-    /**
-     * Which kind of seat the row is: a standing `assignment`, or a live
-     * `substitution` on one date. Two arms of one RPC because they share every
-     * product-shell column and the dashboard card differs in its chrome rather
-     * than in the facts it needs.
-     */
-    kind: z.enum(["assignment", "substitution"]),
-    /** The substitution date on a `substitution` row; null on an `assignment` row. */
-    substitution_date: z.string().nullable(),
-    /**
-     * The row's group's cancelled session dates from the day before
-     * product-local today onwards, ascending — dates only, never a reason.
-     */
-    cancelled_dates: z.array(z.string()),
-    /**
-     * Whether a `substitution` row's own date is cancelled, asked of that date
-     * rather than of `cancelled_dates`, whose window the card outlives; false
-     * on an `assignment` row.
-     */
-    substitution_cancelled: z.boolean(),
-  })
-);
+/** One row of `get_my_assigned_products`. */
+const myAssignedProductRow = z.object({
+  /**
+   * The seat's product, in the one shape every substitution surface reads a
+   * session's product in — the sub's own card on My SOG is drawn from this
+   * read, so it states the session exactly as the pool and the admin page do.
+   */
+  product: sessionProductDocument,
+  group_id: z.string(),
+  group_count: z.number(),
+  participant_count: z.number(),
+  /**
+   * Which kind of seat the row is: a standing `assignment`, a live
+   * `substitution` on one date, or a `trainee` seat. Arms of one RPC because
+   * they share every product fact and the dashboard card differs in its chrome
+   * rather than in the facts it needs.
+   */
+  kind: z.enum(["assignment", "substitution", "trainee"]),
+  /** The substitution date on a `substitution` row; null on an `assignment` row. */
+  substitution_date: z.string().nullable(),
+  /**
+   * The row's group's cancelled session dates from the day before
+   * product-local today onwards, ascending — dates only, never a reason.
+   */
+  cancelled_dates: z.array(z.string()),
+  /**
+   * Whether a `substitution` row's own date is cancelled, asked of that date
+   * rather than of `cancelled_dates`, whose window the card outlives; false
+   * on an `assignment` row.
+   */
+  substitution_cancelled: z.boolean(),
+});
+
+export type MyAssignedProductRow = z.infer<typeof myAssignedProductRow>;
+
+/** Rows of `get_my_assigned_products`. */
+export const myAssignedProductRows = z.array(myAssignedProductRow);
 
 /** The `get_gedu_assigned_product` JSONB document (types/index.ts interfaces). */
 export const geduAssignedProduct = z.object({
@@ -171,3 +176,41 @@ export const geduAssignedProduct = z.object({
     })
   ),
 });
+
+/**
+ * The `get_trainee_assigned_product` JSONB document — the trainee's door to a
+ * product, and the redacted twin of {@link geduAssignedProduct}.
+ *
+ * `groups` holds every group of the product in two shapes, told apart by
+ * `is_my_group`. The caller's **own** group carries its size, its gedus and the
+ * redacted roster the trainee workspace document serves. A **sibling** group
+ * carries its name and nothing else — it is shown so the trainee can see it
+ * exists, while its size, staff and members are nothing a gamer on this group
+ * is shown — and the missing fields are absent from the type, so a consumer
+ * cannot draw a sibling's roster or headcount by accident.
+ */
+export const traineeAssignedProduct = z.object({
+  product: geduAssignedProduct.shape.product,
+  my_group_id: z.string(),
+  groups: z.array(
+    z.discriminatedUnion("is_my_group", [
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        created_at: z.string(),
+        is_my_group: z.literal(true),
+        participant_count: z.number(),
+        gedus: z.array(sessionStaffGedu),
+        roster: z.array(traineeRosterEntry),
+      }),
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        created_at: z.string(),
+        is_my_group: z.literal(false),
+      }),
+    ]),
+  ),
+});
+
+export type TraineeAssignedProduct = z.infer<typeof traineeAssignedProduct>;

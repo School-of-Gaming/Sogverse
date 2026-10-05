@@ -17,6 +17,9 @@
         "subline": "Ett gratis program, lett av riktiga spelfostrare",
         "collaboration": "I samarbete med"
       },
+      "team": {
+        "alt": "{name}, {role} på School of Gaming"
+      },
       "pages": {
         "signIn": {
           "title": "Logga in på School of Gaming",
@@ -35,6 +38,7 @@
       "resetPassword": "Återställ lösenord",
       "registerGedu": "Bli spelfostrare",
       "about": "Om oss",
+      "library": "Biblioteket",
       "minecraftApi": "Minecraft Server API",
       "lynxApi": "Lynx Educate partner-API",
       "adminDashboard": "Administratörspanel",
@@ -42,6 +46,10 @@
       "adminInvoiceCustomers": "Faktureringskunder",
       "adminInvoiceCustomerNew": "Ny faktureringskund",
       "adminInvoiceCustomerEdit": "Redigera faktureringskund",
+      "adminLibrary": "Bibliotekets innehåll",
+      "adminLibraryArticleNew": "Ny artikel",
+      "adminLibraryArticleEdit": "Redigera artikel",
+      "adminPlatformVision": "Plattformens vision",
       "adminGeduInvoicing": "Gedufakturering",
       "adminTools": "Verktyg",
       "parentDashboard": "Min SOG",
@@ -65,12 +73,15 @@
       "robloxSafeguarding": "Barnskyddspolicy för Skaparnas akademi",
       "robloxTerms": "Användarvillkor för Skaparnas akademi",
       "geduContract": "Gedu-avtal",
+      "oauthConsent": "Anslut en AI-app",
       "seatOffer": "Platserbjudande",
       "geduSubstitutions": "Vikariat",
       "geduInvoicing": "Fakturering",
       "adminSubstitutions": "Vikariat",
       "teamProfile": "Min profil",
-      "adminTeamProfile": "Profil"
+      "adminTeamProfile": "Profil",
+      "adminFeedback": "Feedback",
+      "team": "Team"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -79,12 +90,14 @@
       "resetPassword": "Välj ett nytt lösenord för ditt School of Gaming-konto via länken vi skickade med e-post, och logga in med det direkt.",
       "registerGedu": "Bli spelfostrare hos School of Gaming och led klubbar, läger och evenemang för barn i de spel de redan spelar varje dag.",
       "about": "Vilka vi på School of Gaming är, vad Yty är och svar på de frågor familjer ställer innan de anmäler sitt barn till en klubb.",
+      "library": "Praktisk vägledning från School of Gaming för föräldrar om säkerhet på nätet, skärmtid och familjeliv, och om vad barn lär sig genom spel.",
       "shop": "Bläddra bland School of Gamings klubbar, läger och evenemang i Minecraft, Roblox, Fortnite och mer, och hitta ett som passar ditt barns vecka.",
       "resetPin": "Välj en ny föräldra-PIN för ditt School of Gaming-konto via länken vi skickade med e-post. PIN-koden håller föräldrasidorna stängda för ditt barn.",
       "privacy": "Hur School of Gaming samlar in, använder och lagrar din familjs uppgifter: vad vi sparar om ett barn, vem vi delar det med och vilka rättigheter du har.",
       "terms": "Villkoren du godkänner när du använder School of Gaming: hur anmälningar, betalningar och avbokningar fungerar och vad vi och du ansvarar för.",
       "antiBullying": "Hur School of Gaming förebygger mobbning i sina klubbar, läger och evenemang, vad som händer när det inträffar och hur en spelfostrare ingriper.",
-      "attributions": "Källorna och licenserna bakom de data School of Gaming använder: ortnamn, postnummer och spelarbilder, var och en krediterad som licensen kräver."
+      "attributions": "Källorna och licenserna bakom de data School of Gaming använder: ortnamn, postnummer och spelarbilder, var och en krediterad som licensen kräver.",
+      "team": "Möt människorna bakom School of Gaming: teamet som driver verksamheten och spelfostrarna som leder klubbar, läger och evenemang. Var och en presenterar sig med egna ord."
     }
   },
   "notFound": {
@@ -117,8 +130,6 @@
     "signIn": "Logga in",
     "signOut": "Logga ut",
     "getStarted": "Kom igång",
-    "goToMySog": "Gå till Min SOG",
-    "goToDashboard": "Gå till översikten",
     "viewDetails": "Visa detaljer",
     "learnMore": "Läs mer",
     "exploreClubs": "Utforska klubbar",
@@ -156,7 +167,13 @@
     "weekRange": "v. {from}–{to}",
     "weekRangeAcrossYears": "v. {from}/{fromYear} – v. {to}/{toYear}",
     "weekCount": "{count, plural, one {# vecka} other {# veckor}}",
-    "weekColumn": "v."
+    "weekColumn": "v.",
+    "unsavedChanges": {
+      "title": "Lämna utan att spara?",
+      "description": "Dina ändringar har inte sparats. Om du lämnar sidan nu går de förlorade.",
+      "stay": "Fortsätt redigera",
+      "leave": "Lämna utan att spara"
+    }
   },
   "datePicker": {
     "openCalendar": "Öppna kalendern",
@@ -166,6 +183,15 @@
     "goToWeek": "Gå till vecka",
     "selectWeek": "Välj vecka {week}",
     "today": "I dag"
+  },
+  "imageCrop": {
+    "title": "Beskär bilden",
+    "description": "Dra bilden för att placera den i ramen och zooma så att den passar.",
+    "zoom": "Zoom",
+    "confirm": "Använd bild",
+    "unreadable": "Den här filen kan inte öppnas som en bild här. Välj en JPEG-, PNG- eller WebP-bild. iPhone-foton i HEIC-format måste konverteras först.",
+    "chooseAnother": "Välj en annan bild",
+    "failed": "Bilden kunde inte beskäras. Försök igen eller välj en annan bild."
   },
   "about": {
     "pageTitle": "Om oss",
@@ -180,7 +206,9 @@
     },
     "mission": {
       "heading": "Vårt uppdrag",
-      "text": "Allt skärminnehåll är inte lika. Spelande är en fantastisk hobby när den behandlas som alla andra hobbyer. Vi använder barnens kärlek till spel till deras fördel — med bra vänner och en professionell spelfostrare som finns där för att vägleda och hjälpa."
+      "text": "Allt skärminnehåll är inte lika. Spelande är en fantastisk hobby när den behandlas som alla andra hobbyer. Vi använder barnens kärlek till spel till deras fördel — med bra vänner och en professionell spelfostrare som finns där för att vägleda och hjälpa.",
+      "photoAlt": "Två från School of Gaming-teamet i lila School of Gaming-huvtröjor vid en eventmonter",
+      "meetTeam": "Möt teamet"
     },
     "values": {
       "heading": "Saker vi bryr oss om",
@@ -194,7 +222,7 @@
       },
       "keepChildrenSafe": {
         "title": "Håll barn trygga online",
-        "description": "Sogverse-plattformen har ingen funktion för privata meddelanden: samtalen sker i gemensamma grupprum, och meddelanden under ett röstsamtal går ut till hela rummet och sparas aldrig. Varje spelarkonto skapas av en förälder och är kopplat till förälderns konto, och föräldern väljer hur barnet loggar in — enbart via föräldrakontot, eller med ett användarnamn eller en verifierad e-postadress och ett eget lösenord. Nolltolerans mot mobbning och toxicitet."
+        "description": "I Sogverse sker samtalen i gemensamma grupprum: chatten under ett tillfälle går till hela rummet, där Gedun ser den. Varje spelarkonto skapas av en förälder och är kopplat till förälderns konto, och föräldern väljer hur barnet loggar in — enbart via föräldrakontot, eller med ett användarnamn eller en verifierad e-postadress och ett eget lösenord. Nolltolerans mot mobbning och toxicitet."
       },
       "familyInTheLoop": {
         "title": "Familjen är delaktig",
@@ -204,9 +232,11 @@
     "howClubsWork": {
       "heading": "Så fungerar våra klubbar",
       "paragraph1": "Varje vecka loggar våra spelare in och möts av sin egen spelfostrare — en Gedu. Gedun vägleder dem genom dagens tema och ger barnen utrymme och frihet att göra äventyren till sina egna.",
-      "paragraph2": "Våra Geduer är själva spelare. De förstår av egen erfarenhet att som barn och tonåringar byggs identitet och vänskaper både online och offline. Den förståelsen präglar varje session de leder.",
-      "paragraph3": "Alla våra klubbar är byggda kring berättelser som ger utrymme för spelare att utforska, skapa och fantisera. Mellan veckovisa sessioner får spelarna roliga utmaningar att göra online och offline. Under lov arrangerar vi läger, och varje vecka finns det gemenskapsevent, turneringar och tävlingar.",
-      "paragraph4": "Varje spelare avlägger en ed att uppföra sig vänligt och rättvist — oavsett om det är i spelet, i röstchatten eller i vardagen. Samma värderingar gäller överallt."
+      "paragraph2": "Våra Geduer är själva spelare. De förstår av egen erfarenhet att som barn och tonåringar byggs identitet och vänskaper både online och offline. Den förståelsen präglar varje tillfälle de leder.",
+      "paragraph3": "Alla våra klubbar är byggda kring berättelser som ger utrymme för spelare att utforska, skapa och fantisera. Mellan de veckovisa tillfällena får spelarna roliga utmaningar att göra online och offline. Under lov arrangerar vi läger, och varje vecka finns det gemenskapsevent, turneringar och tävlingar.",
+      "paragraph4": "Varje spelare avlägger en ed att uppföra sig vänligt och rättvist — oavsett om det är i spelet, i röstchatten eller i vardagen. Samma värderingar gäller överallt.",
+      "photoAlt": "En rad datorer med ritprogram öppna i vår studio, redo för en klubb",
+      "photoCaption": "Vår studio på Drumsö i Helsingfors, där en del av våra klubbar på plats träffas."
     },
     "forParents": {
       "heading": "För föräldrar",
@@ -230,7 +260,7 @@
         },
         "safety": {
           "question": "Kan främlingar prata med mitt barn, och spelas något in?",
-          "answer": "<p>Nej — en klubbs röstrum är inget offentligt rum som vem som helst kan hitta. Det finns bara under gruppens tillfälle, öppnar fem minuter innan tillfället börjar och stänger fem minuter efter att det slutar, och de enda som kan komma in är gruppens medlemmar, en spelfostrare som arbetar med den klubben, och administratörer på School of Gaming; den kontrollen körs på vår server varje gång någon ansluter, så ett barn utan plats i den gruppen har ingen väg in.</p><p>Det finns ingen funktion för direktmeddelanden någonstans på plattformen: chatten under ett tillfälle går till hela rummet, aldrig till ett enskilt barn i enrum, och den bär bilder lika väl som ord. Den lever i rummet, som är öppet under samma tid — det är där ditt barn läser den, och när rummet har stängt går den inte att öppna igen. Vi sparar den däremot: Geduerna som håller i klubben och administratörerna på School of Gaming kan gå tillbaka till vad som sagts, och det är just det som gör det möjligt att moderera. Att ta bort ett meddelande lämnar en markering i dess ställe i stället för att radera det.</p><p>Själva tillfället spelas inte in. Ingenting i appen spelar in, transkriberar eller lagrar ljudet eller bilden från ett tillfälle, och rummet har inga inspelningskontroller.</p><p>Bara Gedun och administratörerna har moderatorkontrollerna, och de räcker långt: att tysta en mikrofon eller låsa den, stänga av en kamera eller låsa den, tysta någon i chatten, flytta någon till ett eget utrymme, och tala till alla utrymmen på en gång. Chatt inne i spelet är en annan sak och sköts av spelen själva — på School of Gamings egen Minecraft-server kan våra Geduer tysta, sparka ut och stänga av en spelare.</p>"
+          "answer": "<p>Nej — en klubbs röstrum är inget offentligt rum som vem som helst kan hitta. Det finns bara under gruppens tillfälle, öppnar fem minuter innan tillfället börjar och stänger fem minuter efter att det slutar, och de enda som kan komma in är gruppens medlemmar, en spelfostrare som arbetar med den klubben, och administratörer på School of Gaming; den kontrollen körs på vår server varje gång någon ansluter, så ett barn utan plats i den gruppen har ingen väg in.</p><p>Chatten under ett tillfälle går till hela rummet, aldrig till ett enskilt barn i enrum, och den bär bilder lika väl som ord. Den lever i rummet, som är öppet under samma tid — det är där ditt barn läser den, och när rummet har stängt går den inte att öppna igen. Vi sparar den däremot: Geduerna som håller i klubben och administratörerna på School of Gaming kan gå tillbaka till vad som sagts, och det är just det som gör det möjligt att moderera. Att ta bort ett meddelande lämnar en markering i dess ställe i stället för att radera det.</p><p>Själva tillfället spelas inte in. Ingenting i appen spelar in, transkriberar eller lagrar ljudet eller videon från ett tillfälle, och rummet har inga inspelningskontroller.</p><p>Bara Gedun och administratörerna har moderatorkontrollerna, och de räcker långt: att tysta en mikrofon eller låsa den, stänga av en kamera eller låsa den, tysta någon i chatten, flytta någon till ett eget utrymme, och tala till alla utrymmen på en gång. Chatt inne i spelet är en annan sak och sköts av spelen själva — på School of Gamings egen Minecraft-server kan våra Geduer tysta, sparka ut och stänga av en spelare.</p>"
         },
         "howToStart": {
           "question": "Hur kommer jag igång?",
@@ -258,7 +288,7 @@
         },
         "cancellation": {
           "question": "Kan jag säga upp, och hur ser er återbetalningspolicy ut?",
-          "answer": "<p>En klubb löper som en månadsprenumeration utan bindningstid, och du kan säga upp den när du vill, kostnadsfritt, från kortet Betalning och fakturering på Min SOG, som öppnar Stripes säkra faktureringssida. Ditt barn behåller sin plats till slutet av den period du redan har betalat för — klubbsidan visar datumet för hens sista tillfälle medan medlemskapet löper ut.</p><p>Varje klubb har dessutom 30 dagars nöjd-kund-garanti: om det visar sig att den inte passar ditt barn, mejla {supportEmail} inom 30 dagar från hens första tillfälle så betalar vi tillbaka allt du har betalat för den klubben — inget formulär och ingen anledning att uppge.</p><p>Läger bokas och betalas som en engångssumma och fungerar därför annorlunda: säger du upp 14 dagar eller mer innan lägret börjar får du full återbetalning; mellan 7 och 14 dagar innan betalar vi tillbaka minus en administrativ avgift på 50 euro; mindre än 7 dagar innan kan vi inte betala tillbaka, eftersom platsen har hållits och förberetts för ditt barn — om det inte handlar om ett akut sjukdomsfall eller något annat som verkligen ligger utanför din kontroll. Om ditt barn inte kan delta på grund av sjukdom, skicka oss ett läkarintyg på {supportEmail} så betalar vi tillbaka.</p>"
+          "answer": "<p>En klubb löper som en månadsprenumeration utan bindningstid, och du kan säga upp den när du vill, kostnadsfritt, från kortet Betalning och fakturering på Min SOG, som öppnar Stripes säkra faktureringssida. Ditt barn behåller sin plats till slutet av den period du redan har betalat för — klubbsidan visar datumet för hens sista tillfälle medan medlemskapet löper ut.</p><p>Varje klubb har dessutom 30 dagars pengarna-tillbaka-garanti: om det visar sig att den inte passar ditt barn, mejla {supportEmail} inom 30 dagar från hens första tillfälle så betalar vi tillbaka allt du har betalat för den klubben — inget formulär och ingen anledning att uppge.</p><p>Läger bokas och betalas som en engångssumma och fungerar därför annorlunda: säger du upp 14 dagar eller mer innan lägret börjar får du full återbetalning; mellan 7 och 14 dagar innan betalar vi tillbaka minus en administrativ avgift på 50 euro; mindre än 7 dagar innan kan vi inte betala tillbaka, eftersom platsen har hållits och förberetts för ditt barn — om det inte handlar om ett akut sjukdomsfall eller något annat som verkligen ligger utanför din kontroll. Om ditt barn inte kan delta på grund av sjukdom, skicka oss ett läkarintyg på {supportEmail} så betalar vi tillbaka.</p>"
         },
         "severalChildren": {
           "question": "Jag har flera barn — hur fungerar konton och betalningar?",
@@ -274,7 +304,7 @@
         },
         "gamerAccounts": {
           "question": "Hur loggar mitt barn in, och vad är föräldra-PIN-koden?",
-          "answer": "<p>Du väljer hur ditt barn loggar in, för varje barn, från Min SOG. Som standard har ett spelarkonto ingen egen inloggning: det bär en intern Sogverse-adress i stället för en riktig e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din. Om du hellre vill kan du ge barnet ett användarnamn och ett lösenord, eller en egen e-postadress — som barnet verifierar innan det väljer ett lösenord via det vanliga återställningsflödet.</p><p>Vad du än väljer öppnar ett barns inloggning bara barnets eget konto: ett barn som loggade in med sitt eget användarnamn eller sin egen e-postadress kan inte alls växla till ditt eller ett syskons konto — barnet loggar ut och loggar in igen, som dig med ditt lösenord eller som ett syskon som har en egen inloggning; ett syskon som loggar in via ditt konto nås i stället från ditt konto — och ett barn som kom in genom att växla från ditt konto behöver din föräldra-PIN för att växla någon annanstans.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller ändra ett barns konto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
+          "answer": "<p>Du väljer hur ditt barn loggar in, för varje barn, från Min SOG. Som standard har ett spelarkonto ingen egen inloggning: det bär en intern Sogverse-adress i stället för en riktig e-postadress, det är kopplat till ditt föräldrakonto, och ditt barn kommer in i Sogverse genom att växla till sin profil från din. Om du hellre vill kan du ge barnet ett användarnamn och ett lösenord, eller en egen e-postadress — som barnet verifierar innan det väljer ett lösenord via det vanliga återställningsflödet.</p><p>Vad du än väljer öppnar ett barns inloggning bara barnets eget konto: ett barn som loggade in med sitt eget användarnamn eller sin egen e-postadress kan inte alls växla till ditt eller ett syskons konto — barnet loggar ut och loggar in igen, som dig med ditt lösenord eller som ett syskon som har en egen inloggning; ett syskon som loggar in via ditt konto nås i stället från ditt konto — och ett barn som kom in genom att växla från ditt konto behöver din föräldra-PIN för att växla någon annanstans.</p><p>För att komma in på föräldrasidan krävs en fyrsiffrig PIN-kod som bara du känner till, så ett lösenord sparat i webbläsaren räcker inte för att köpa något eller använda ditt föräldrakonto, och sessionen låses igen i samma stund som du växlar till ett barns profil eller loggar ut.</p><p>Om du glömmer PIN-koden mejlar vi en återställningslänk till adressen på ditt konto och ingen annanstans — ett barn som trycker på ”Glömt din PIN?” skickar helt enkelt ett mejl till dig.</p>"
         },
         "childData": {
           "question": "Vad sparar ni om mitt barn?",
@@ -473,6 +503,98 @@
         "manage": "Hantera faktureringskunder",
         "option": "{name} ({number})"
       }
+    },
+    "library": {
+      "title": "Bibliotekets innehåll",
+      "subtitle": "Artiklarna för föräldrar i det offentliga Biblioteket.",
+      "newArticle": "Ny artikel",
+      "lastSaved": "Senast sparad {date}",
+      "search": {
+        "label": "Sök",
+        "placeholder": "Sök på rubrik eller kategori…",
+        "showing": "Visar {count} av {total}",
+        "clear": "Rensa",
+        "noMatches": "Inga artiklar matchar sökningen."
+      },
+      "noCategory": "Ingen kategori",
+      "empty": "Inga artiklar än. Skriv den första.",
+      "backToList": "Tillbaka till Bibliotekets innehåll",
+      "notFound": "Det finns ingen artikel med det här id:t.",
+      "loadError": "Artikeln kunde inte läsas in. Uppdatera sidan för att försöka igen.",
+      "newPage": {
+        "title": "Ny artikel",
+        "submit": "Spara utkast"
+      },
+      "editPage": {
+        "title": "Redigera artikel"
+      },
+      "status": {
+        "draft": "Utkast",
+        "published": "Publicerad",
+        "changed": "Opublicerade ändringar"
+      },
+      "statusPanel": {
+        "label": "Publicering",
+        "publishedLine": "Publicerad {date}.",
+        "changedLine": "Läsarna ser versionen som publicerades {date}.",
+        "savedLine": "Senast sparad {date}.",
+        "savedByLine": "Senast sparad {date} av {name}.",
+        "savedByViaLine": "Senast sparad {date} av {name} via {app}.",
+        "savedByViaUnnamedLine": "Senast sparad {date} av {name} via en AI-app."
+      },
+      "viewLive": "Visa i Biblioteket",
+      "preview": "Förhandsvisa",
+      "publish": "Publicera",
+      "publishChanges": "Publicera ändringar",
+      "unpublish": "Avpublicera",
+      "readiness": {
+        "missing": "Lägg till {fields} för att publicera.",
+        "leftOut": "{count, plural, one {{languages} är inte färdig, så den publiceras inte.} other {{languages} är inte färdiga, så de publiceras inte.}}"
+      },
+      "missing": {
+        "category": "en kategori",
+        "completeVersion": "ett språk med rubrik, sammanfattning och artikeltext"
+      },
+      "unpublishConfirm": {
+        "title": "Avpublicera artikeln?",
+        "description": "Läsarna hittar den inte längre i Biblioteket, och länkar till den slutar fungera. Artikeln finns kvar här, och du kan publicera den igen när som helst.",
+        "confirm": "Avpublicera"
+      },
+      "fields": {
+        "languages": "Språk",
+        "title": "Rubrik",
+        "summary": "Sammanfattning",
+        "category": "Kategori",
+        "cover": "Omslagsbild",
+        "body": "Artikeltext"
+      },
+      "hints": {
+        "languages": "Skriv varje språk för hand. Vid publicering blir varje färdigt språk synligt: ett med rubrik, sammanfattning och artikeltext.",
+        "summary": "Ren text, som visas under rubriken och på artikelns kort i Biblioteket.",
+        "cover": "Visas ovanför artikeln och på dess kort, beskuren till 16:9. Utan omslagsbild ser läsarna en platshållare.",
+        "body": "Läsarna ser texten under omslagsbilden, formaterad som den ser ut här."
+      },
+      "categoryPlaceholder": "Välj en kategori",
+      "bodyPlaceholder": "Skriv artikeln…",
+      "actions": {
+        "save": "Spara",
+        "cancel": "Avbryt"
+      },
+      "errors": {
+        "titleRequired": "En artikel måste ha en rubrik.",
+        "saveFailed": "Artikeln kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Artikeln kunde inte sparas – {reason}",
+        "publishFailed": "Artikeln kunde inte publiceras. Försök igen.",
+        "publishFailedWithReason": "Artikeln kunde inte publiceras – {reason}",
+        "unpublishFailed": "Artikeln kunde inte avpubliceras. Försök igen.",
+        "unpublishFailedWithReason": "Artikeln kunde inte avpubliceras – {reason}",
+        "versionTitleRequired": "Versionen på {language} måste ha en rubrik."
+      },
+      "versionComplete": "färdig",
+      "versionIncomplete": "inte färdig än",
+      "addLocale": "Lägg till språk",
+      "removeLocale": "Ta bort {language}",
+      "languagesLabel": "Språk"
     },
     "geduRole": {
       "primary": "Huvud-Gedu",
@@ -880,52 +1002,82 @@
       },
       "imagePicker": {
         "label": "Bild",
-        "dropPrompt": "Släpp en fil här, eller välj en, så läggs den till och används för den här produkten.",
-        "formats": "JPG, PNG, WebP, AVIF eller SVG, upp till 4 MB.",
+        "formats": "JPEG, PNG eller WebP.",
         "chooseFile": "Välj fil",
         "uploading": "Lägger till…",
-        "change": "Byt bild",
-        "remove": "Ta bort från den här produkten",
-        "outcomeAdded": "Tillagd i biblioteket och vald för den här produkten.",
-        "outcomeExisting": "Finns redan i biblioteket – vald för den här produkten.",
-        "hint": "Visas på produktkortet när föräldrar bläddrar, beskuren till en 3:2-ram. Bilderna delas mellan produkter, så ditt val här ändrar inget annat."
+        "hint": "Visas på produktkortet när föräldrar bläddrar, beskuren till en 3:2-ram. Bilderna delas mellan produkter, så ditt val här ändrar inget annat.",
+        "forPurpose": {
+          "product": {
+            "change": "Byt bild",
+            "remove": "Ta bort från den här produkten",
+            "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 3:2-ramen och den läggs till och används för den här produkten.",
+            "outcomeAdded": "Tillagd i biblioteket och vald för den här produkten.",
+            "outcomeExisting": "Finns redan i biblioteket – vald för den här produkten."
+          },
+          "libraryCover": {
+            "change": "Byt omslagsbild",
+            "remove": "Ta bort omslagsbild",
+            "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och blir omslagsbild för den här artikeln.",
+            "outcomeAdded": "Tillagd i biblioteket och vald som omslagsbild för den här artikeln.",
+            "outcomeExisting": "Finns redan i biblioteket – vald som omslagsbild för den här artikeln."
+          }
+        }
       },
       "imageCatalogue": {
-        "title": "Produktbilder",
-        "description": "En bild kan användas av många produkter. Ditt val gäller bara den här produkten, men att ersätta eller ta bort en bild påverkar alla produkter som använder den.",
         "upload": "Ladda upp",
         "uploading": "Lägger till…",
         "emptyCatalogue": "Inga bilder ännu. Ladda upp en för att börja.",
-        "usedBadge": "{count, plural, one {# produkt} other {# produkter}}",
         "columnEmpty": "Välj en bild",
         "use": "Använd den här bilden",
         "nameLabel": "Bildens namn",
         "rename": "Byt namn",
-        "usedBy": "Produkter som använder bilden",
-        "usedByNone": "Ingen produkt använder den här bilden.",
         "live": "Publicerad",
         "hidden": "Dold",
+        "draft": "Utkast",
         "replace": "Ersätt bild",
         "remove": "Ta bort ur biblioteket",
         "replaceConfirm": {
           "title": "Ersätt ”{label}”",
-          "consequence": "{count, plural, one {Produkten nedan kommer att visa den nya bilden.} other {Alla # produkter nedan kommer att visa den nya bilden.}}",
-          "unused": "Ingen produkt använder den här bilden. Den nya tar dess plats i biblioteket.",
           "choose": "Välj den nya bilden",
-          "confirm": "Ersätt på {count, plural, one {# produkt} other {# produkter}}",
           "confirmUnused": "Ersätt bild"
         },
         "removeConfirm": {
           "title": "Ta bort ”{label}”",
-          "consequence": "{count, plural, one {Produkten nedan blir utan bild tills du väljer en annan.} other {Alla # produkter nedan blir utan bild tills du väljer en annan.}}",
-          "unused": "Ingen produkt använder den här bilden. Den tas bort ur biblioteket för gott.",
-          "confirm": "Ta bort från {count, plural, one {# produkt} other {# produkter}}",
           "confirmUnused": "Ta bort ur biblioteket"
         },
         "errors": {
           "tooLarge": "Filen är för stor. Bilder får vara högst 4 MB.",
-          "unsupportedType": "Filtypen stöds inte. Använd JPG, PNG, WebP, AVIF eller SVG.",
+          "unsupportedType": "Filen är inte en JPEG. Beskär bilden här och försök igen.",
+          "wrongSize": "Bilden har inte exakt den storlek som ramen kräver. Beskär den här och försök igen.",
           "nameRequired": "Ge bilden ett namn på 1–120 tecken."
+        },
+        "forPurpose": {
+          "product": {
+            "title": "Produktbilder",
+            "description": "En bild kan användas av många produkter. Ditt val gäller bara den här produkten, men att ersätta eller ta bort en bild påverkar alla produkter som använder den.",
+            "usedBadge": "{count, plural, one {# produkt} other {# produkter}}",
+            "usedBy": "Produkter som använder bilden",
+            "usedByNone": "Ingen produkt använder den här bilden.",
+            "replaceConsequence": "{count, plural, one {Produkten nedan kommer att visa den nya bilden.} other {Alla # produkter nedan kommer att visa den nya bilden.}}",
+            "replaceUnused": "Ingen produkt använder den här bilden. Den nya tar dess plats i biblioteket.",
+            "replaceConfirm": "Ersätt på {count, plural, one {# produkt} other {# produkter}}",
+            "removeConsequence": "{count, plural, one {Produkten nedan blir utan bild tills du väljer en annan.} other {Alla # produkter nedan blir utan bild tills du väljer en annan.}}",
+            "removeUnused": "Ingen produkt använder den här bilden. Den tas bort ur biblioteket för gott.",
+            "removeConfirm": "Ta bort från {count, plural, one {# produkt} other {# produkter}}"
+          },
+          "libraryCover": {
+            "title": "Bibliotekets omslagsbilder",
+            "description": "En bild kan vara omslag för flera artiklar. Ditt val gäller bara den här artikeln, men att ersätta eller ta bort en bild påverkar alla artiklar som använder den, även publicerade.",
+            "usedBadge": "{count, plural, one {# artikel} other {# artiklar}}",
+            "usedBy": "Artiklar som använder bilden",
+            "usedByNone": "Ingen artikel använder den här bilden.",
+            "replaceConsequence": "{count, plural, one {Artikeln nedan kommer att visa den nya bilden, direkt om den är publicerad.} other {Alla # artiklar nedan kommer att visa den nya bilden, de publicerade direkt.}}",
+            "replaceUnused": "Ingen artikel använder den här bilden. Den nya tar dess plats i biblioteket.",
+            "replaceConfirm": "Ersätt på {count, plural, one {# artikel} other {# artiklar}}",
+            "removeConsequence": "{count, plural, one {Artikeln nedan blir utan omslag tills du väljer ett annat, även om den är publicerad.} other {Alla # artiklar nedan blir utan omslag tills du väljer ett annat, även de publicerade.}}",
+            "removeUnused": "Ingen artikel använder den här bilden. Den tas bort ur biblioteket för gott.",
+            "removeConfirm": "Ta bort från {count, plural, one {# artikel} other {# artiklar}}"
+          }
         }
       },
       "filters": {
@@ -954,7 +1106,9 @@
         "alreadyAssigned": "Redan tilldelad",
         "alreadyExpected": "Redan på tillfället",
         "absentGedu": "Gedun som vikarieras",
-        "notCertified": "Inte certifierad"
+        "notCertified": "Inte certifierad",
+        "alreadyTrainee": "Redan praktikant",
+        "traineeInstead": "Kan läggas till som praktikant i stället."
       },
       "participantPicker": {
         "title": "Lägg till en deltagare",
@@ -1021,7 +1175,14 @@
         },
         "picker": {
           "addTitle": "Lägg till Gedu i {name}",
-          "addDescription": "En Gedu kan bara leda en grupp per produkt. De som redan är tilldelade är gråa."
+          "addDescription": "En Gedu kan bara leda en grupp per produkt. De som redan är tilldelade är gråa.",
+          "addTraineeTitle": "Lägg till praktikant i {name}",
+          "addTraineeDescription": "En praktikant följer gruppen och behöver inte vara certifierad. De som redan finns på produkten, som Gedu eller praktikant, är gråa."
+        },
+        "trainee": {
+          "role": "Praktikant",
+          "add": "Lägg till praktikant",
+          "removeAria": "Ta bort praktikanten {name}"
         },
         "removeParticipant": {
           "confirmTitle": "Ta bort {name} från den här produkten?",
@@ -1409,6 +1570,115 @@
       "seatFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
       "seatFailedRequestWithdrawn": "{absent} har dragit tillbaka sin begäran om vikarie, så det finns inget att vikariera för.",
       "seatFailedNotScheduled": "Gruppen har inte längre något tillfälle det här datumet."
+    },
+    "feedback": {
+      "title": "Feedback",
+      "sources": {
+        "gamerOnline": "Från gamers efter onlinesessioner"
+      },
+      "empty": "Ingen feedback har getts än.",
+      "loadError": "Feedbacken kunde inte laddas. Ladda om sidan och försök igen.",
+      "loadErrorWithReason": "Feedbacken kunde inte laddas: {reason}",
+      "noAnswers": "Inga svar",
+      "answers": "{count, plural, one {# svar} other {# svar}}",
+      "skipped": "Hoppades över",
+      "belowAverage": "Under genomsnittet",
+      "belowAverageOn": "Under genomsnittet på: {statement}",
+      "statementLabels": {
+        "learned": "Lärde sig",
+        "fun": "Roligt",
+        "geduKnowledgeable": "Gedu kunnig",
+        "geduKind": "Gedu snäll",
+        "groupListens": "Blev hörd"
+      },
+      "timeline": {
+        "byWeek": "Positiva svar per vecka",
+        "byMonth": "Positiva svar per månad",
+        "platform": "Plattformen"
+      },
+      "back": {
+        "overview": "Tillbaka till feedback",
+        "list": {
+          "product": "Tillbaka till produkterna",
+          "gedu": "Tillbaka till Geduerna"
+        },
+        "responses": "Tillbaka till vad gamerna sa",
+        "detail": {
+          "product": "Tillbaka till produkten",
+          "group": "Tillbaka till gruppen",
+          "gedu": "Tillbaka till Gedun",
+          "gamer": "Tillbaka till gamern"
+        }
+      },
+      "hero": {
+        "positive": "positiva",
+        "definition": "Svarade Ja eller Absolut",
+        "responseRate": "{share} av de närvarande gamerna svarade"
+      },
+      "statements": {
+        "heading": "Per påstående",
+        "legend": "Negativt är Nej eller Inte riktigt; positivt är Ja eller Absolut.",
+        "positive": "{share} positiva",
+        "negative": "{share} negativa",
+        "saidPositive": "{positive} av {answers} svarade {yes} eller {definitely}"
+      },
+      "explore": {
+        "heading": "Utforska",
+        "titles": {
+          "product": "Produkter",
+          "gedu": "Geduer",
+          "responses": "Gamers"
+        },
+        "counts": {
+          "product": "{count, plural, one {# produkt} other {# produkter}}",
+          "gedu": "{count, plural, one {# Gedu} other {# Geduer}}",
+          "responses": "{count, plural, one {# svar} other {# svar}}"
+        }
+      },
+      "rows": {
+        "none": "Inget här än.",
+        "answers": "Svar",
+        "positive": "Positiva",
+        "positiveAgainst": "Positiva (plattformen {share})"
+      },
+      "lists": {
+        "titles": {
+          "product": "Produkter",
+          "gedu": "Geduer"
+        },
+        "subtitle": "Sämst först, jämfört med plattformens genomsnitt"
+      },
+      "detail": {
+        "kinds": {
+          "product": "Produkt",
+          "group": "Grupp",
+          "gedu": "Gedu",
+          "gamer": "Gamer"
+        },
+        "open": {
+          "product": "Öppna produkten",
+          "group": "Öppna gruppen",
+          "gedu": "Öppna Gedus konto",
+          "gamer": "Öppna gamerns konto"
+        },
+        "none": "Inget har besvarats om detta än.",
+        "platform": "Plattformen {share}",
+        "groupsHeading": "Grupper",
+        "productsHeading": "Produkter",
+        "gedusHeading": "Geduer",
+        "gamersHeading": "Gamers som svarade",
+        "responsesHeading": "Vad gamerna sa"
+      },
+      "responses": {
+        "title": "Vad gamerna sa",
+        "none": "Inga svar här.",
+        "noneWorthReading": "Inget värt att läsa: inga negativa svar och inga meddelanden.",
+        "noGedu": "Ingen Gedu registrerad",
+        "who": "Svar",
+        "filterLabel": "Vilka svar",
+        "worthReading": "Värda att läsa ({count})",
+        "all": "Alla ({count})"
+      }
     }
   },
   "auth": {
@@ -2082,8 +2352,6 @@
       "accessOpens": "Arbetsytan öppnar {date} kl. {time}",
       "poolHeading": "Tillfällen som behöver en vikarie",
       "poolAllClear": "Inga tillfällen behöver en vikarie just nu.",
-      "poolRemote": "På distans",
-      "poolSiteUnknown": "Plats bekräftas senare",
       "poolRolePrimary": "Huvud-Gedu",
       "poolRoleAssistant": "Assisterande Gedu",
       "poolFee": "{fee} per tillfälle",
@@ -2121,6 +2389,51 @@
       "loading": "Laddar platser...",
       "save": "Spara",
       "saving": "Sparar..."
+    },
+    "groupWorkspace": {
+      "staffNoteWithheld": "Bara tilldelade Geduer och administratörer kan läsa den här anteckningen.",
+      "contactWithheld": "Kontaktuppgifterna är för tilldelade Geduer och administratörer."
+    },
+    "trainee": {
+      "badge": "Praktikant",
+      "dismiss": "Uppfattat",
+      "lockedHint": "(låst)",
+      "whyAction": "Tilldelade Geduer kan göra det här. Du är med i gruppen som praktikant.",
+      "whySave": "Att spara är för tilldelade Geduer. Du är med i gruppen som praktikant, så prova gärna – inget du skriver sparas.",
+      "sessionTitle": "Spara ett tillfälle",
+      "sessionWhat": "Sparar tillfällets rapport, Gedu-anteckningen, bilderna och närvaron.",
+      "groupNotesTitle": "Spara gruppens anteckningar",
+      "groupNotesWhat": "Sparar anteckningarna om gruppen, för familjerna och för Geduerna.",
+      "siteNotesTitle": "Spara lokalens anteckningar",
+      "siteNotesWhat": "Sparar anteckningarna om lokalen, som alla produkter där delar.",
+      "gamerTitle": "Spara en anteckning om en gamer",
+      "gamerWhat": "Sparar det Geduer skriver om den här gamern, och skapelsen familjen ser.",
+      "usernameTitle": "Rätta ett spelnamn",
+      "usernameWhat": "Ändrar gamerns användarnamn så att det stämmer med det i spelet.",
+      "sendTitle": "Skicka till föräldrarna",
+      "sendWhat": "Mejlar tillfällets rapport till alla familjer i gruppen.",
+      "photosTitle": "Tillfällets bilder",
+      "photosWhat": "Lägger till bilder i tillfällets rapport, eller tar bort dem.",
+      "substituteTitle": "Be om en vikarie",
+      "substituteWhat": "Ber en annan Gedu att hålla tillfället i ditt ställe.",
+      "roomTitle": "Andra gruppers röstrum",
+      "roomWhat": "Går med i en annan grupps röstrum för att täcka upp för dess Gedu en stund.",
+      "screenShareTitle": "Dela din skärm",
+      "screenShareWhat": "Visar din skärm för alla i rummet.",
+      "broadcastTitle": "Sändning",
+      "broadcastWhat": "Låter alla zoner höra dig samtidigt, var du än står.",
+      "deafenTitle": "Tysta rummet",
+      "deafenWhat": "Tystar alla för dig, så att du kan tala till hela rummet utan att höra alla på en gång.",
+      "zonesTitle": "Hantera zoner",
+      "zonesWhat": "Lägger till, redigerar och tar bort rummets zoner, även privata.",
+      "moderateTitle": "Moderera någon",
+      "moderateWhat": "Stänger av eller låser en persons mikrofon och kamera, eller låser ute personen från chatten.",
+      "chatHideTitle": "Ta bort ett meddelande",
+      "chatHideWhat": "Tar bort någons meddelande för alla och lämnar en notis i dess ställe.",
+      "chatRestoreTitle": "Lägga tillbaka ett meddelande",
+      "chatRestoreWhat": "Tar tillbaka ett borttaget meddelande för alla.",
+      "chatLockTitle": "Låsa ute någon från chatten",
+      "chatLockWhat": "Hindrar en person från att skriva i chatten tills låset hävs."
     },
     "sessionDetails": {
       "back": "Tillbaka till Min SOG",
@@ -2404,7 +2717,40 @@
     "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen.",
     "searchPlaceholder": "Sök på namn eller e-post…",
     "searchAriaLabel": "Sök Geduer",
-    "searchNoMatches": "Ingen Gedu den här månaden matchar ”{query}”."
+    "searchNoMatches": "Ingen Gedu den här månaden matchar ”{query}”.",
+    "export": {
+      "statementTitle": "Arbetsrapport",
+      "to": "Till: School of Gaming Galactic Oy",
+      "figuresAsOf": "Siffror per {time}",
+      "completeTitle": "Rapporten är komplett",
+      "completeBody": "Inget tillfälle den här månaden är kommande eller väntar på att registreras.",
+      "incompleteTitle": "Rapporten är inte komplett",
+      "incompleteUnrecorded": "{count, plural, one {# tidigare tillfälle har inget registrerat, så det ingår inte:} other {# tidigare tillfällen har inget registrerat, så de ingår inte:}}",
+      "incompleteUpcoming": "{count, plural, one {# tillfälle är ännu kommande: månaden pågår, så siffrorna kan ändras.} other {# tillfällen är ännu kommande: månaden pågår, så siffrorna kan ändras.}}",
+      "summary": "Sammanfattning",
+      "municipalityExclVat": "Kommun, exkl. moms",
+      "consumerExclVat": "Konsument, exkl. moms",
+      "totalExclVat": "Totalt, exkl. moms",
+      "clubs": "Klubbar",
+      "amountsExclVat": "Alla belopp är exklusive moms.",
+      "sessions": "Tillfällen dag för dag",
+      "noSessions": "Inga tillfällen den här månaden.",
+      "pageOf": "Sida {page} av {pages}",
+      "footer": "School of Gaming · {name} · {month}",
+      "columnDate": "Datum",
+      "columnWeek": "Vecka",
+      "columnSegment": "Segment",
+      "columnGroup": "Grupp",
+      "columnLocation": "Plats",
+      "columnStatus": "Status",
+      "columnOtherGedu": "Vikarierade för / vikarie",
+      "columnFeeExclVat": "Arvode exkl. moms",
+      "columnAmountExclVat": "Belopp exkl. moms",
+      "statusAway": "Frånvarande",
+      "notRecordedDetail": "Ingen rapport, anteckning eller närvaro ännu",
+      "downloadCsv": "Ladda ner CSV",
+      "downloadPdf": "Ladda ner PDF"
+    }
   },
   "productType": {
     "consumer_club": "Klubb",
@@ -2423,6 +2769,10 @@
     "nextSession": "Nästa tillfälle",
     "upcoming": "Kommande tillfälle",
     "cancelled": "Inställt"
+  },
+  "sessionFacts": {
+    "remote": "På distans",
+    "siteUnknown": "Plats bekräftas senare"
   },
   "sessionFeed": {
     "readMore": "Läs mer",
@@ -2475,16 +2825,22 @@
     "linkApply": "Lägg till länk",
     "linkRemove": "Ta bort länk",
     "linkCancel": "Avbryt",
-    "linkInvalid": "Den här adressen går inte att länka. Använd en webbadress, en e-postadress eller en sökväg på den här webbplatsen."
+    "linkInvalid": "Den här adressen går inte att länka. Använd en webbadress, en e-postadress eller en sökväg på den här webbplatsen.",
+    "opensInNewTab": "(öppnas i en ny flik)"
   },
   "header": {
     "nav": {
       "shop": "Butik",
       "yty": "Yty",
       "about": "Om oss",
+      "parents": "Föräldrar",
       "faq": "FAQ",
       "substitutions": "Vikariat",
-      "substitutionsPhone": "Vikariat"
+      "home": "Hem",
+      "library": "Biblioteket",
+      "libraryShort": "Biblioteket",
+      "team": "Team",
+      "tabBar": "Huvudmeny"
     },
     "accountMenu": "Kontomeny – {name}",
     "continueToAccount": "Fortsätt till ditt konto",
@@ -2926,32 +3282,66 @@
     "municipalityClubs": "Kommunklubbar",
     "municipalityInvoicing": "Kommunfakturering",
     "invoiceCustomers": "Faktureringskunder",
+    "libraryContent": "Bibliotekets innehåll",
+    "platformVision": "Plattformens vision",
     "geduInvoicing": "Gedufakturering",
     "camps": "Läger",
     "events": "Evenemang",
     "sites": "Lokaler",
     "uiComponents": "UI-komponenter",
     "uiPreviews": "UI-förhandsvisningar",
-    "whatsapp": "WhatsApp",
     "testing": "Testning",
-    "settings": "Inställningar",
     "tools": "Verktyg",
     "expandSidebar": "Expandera sidopanel",
     "collapseSidebar": "Minimera sidopanel",
-    "substitutions": "Vikariat"
+    "substitutions": "Vikariat",
+    "feedback": "Feedback"
   },
   "home": {
     "hero": {
       "title": "Där<br></br>skärmtid<br></br>blir<br></br><act>kvalitetstid</act>",
-      "subtitle": "Våra skickligt utformade klubbar främjar hälsosamt spelande som hobby — i Minecraft, Roblox, Fortnite och mer. Professionella spelfostrare gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar.",
-      "aboutCta": "Läs mer om oss"
+      "subtitle": "Klubbar varje vecka för 7–17-åringar, online och på plats, från 59 € per månad: en spelfostrare leder varje tillfälle i Minecraft, Roblox, Fortnite och mer."
+    },
+    "findClub": "Hitta en klubb",
+    "trust": {
+      "cancel": "Säg upp när du vill, kostnadsfritt",
+      "guarantee": "30 dagars pengarna-tillbaka-garanti"
+    },
+    "testimonials": {
+      "heading": "Det här säger föräldrar",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "”Klubben är höjdpunkten i min sons vecka. Varje vecka förvandlas min tysta och blyga pojke till ett skrattande barn som pratar högt, när han får umgås med likasinnade barn. Klubbens innehåll och ledarnas kunnande har överraskat mig positivt.”",
+          "attribution": "Mamma, Finland"
+        },
+        "sighWithHappiness": {
+          "quote": "”Ingenting annat, ingen aktivitet eller hobby, har fått mitt barn att sucka av lycka så här.”",
+          "attribution": "Mamma, Finland"
+        },
+        "largeGroups": {
+          "quote": "”Stora grupper gör vårt barn oroligt. Det här är det perfekta sättet för oss att ha en hobby och få nya vänner.”",
+          "attribution": "Mamma, Finland"
+        },
+        "finnishImproved": {
+          "quote": "”Min dotters finska har blivit enormt mycket bättre på bara en månad! Spelfostrarna har varit väldigt skickliga, vänliga och tålmodiga. Det här fungerar verkligen!”",
+          "attribution": "Mamma, Norge"
+        },
+        "funAndSupervised": {
+          "quote": "”Spelandet är roligt och övervakat. Ingen mobbning, inga gräl och ingen dålig stämning.”",
+          "attribution": "Mamma, Finland"
+        },
+        "positiveExperience": {
+          "quote": "”School of Gaming har varit en riktigt positiv upplevelse för både barnet och föräldrarna. Barnen har fått fina spelupplevelser med nya vänner i en trygg spelmiljö med erfarna ledare – jag kan rekommendera det!”",
+          "attribution": "Pappa, Finland"
+        }
+      }
     },
     "features": {
       "heading": "Gör spelande till en fantastisk hobby",
       "subheading": "Spelande är en hobby som alla andra — bättre med bra vänner och med en professionell spelfostrare som finns där för att vägleda och hjälpa.",
       "minecraftClubs": {
-        "title": "Varje session har en Gedu",
-        "description": "Våra spelfostrare — Geduer — är själva spelare. De förstår att som barn byggs identitet och vänskaper både online och offline. Varje session leds av någon som verkligen förstår."
+        "title": "Varje tillfälle har en Gedu",
+        "description": "Våra spelfostrare — Geduer — är själva spelare. De förstår att som barn byggs identitet och vänskaper både online och offline. Varje tillfälle leds av någon som verkligen förstår."
       },
       "screenTime": {
         "title": "Utformat för riktiga färdigheter",
@@ -2964,6 +3354,36 @@
       "parents": {
         "title": "Föräldrar är med",
         "description": "Spelfostran för föräldrar är lika viktig som själva klubbarna. Vi håller dig informerad, involverad och rustad att stötta ditt barns spelresa."
+      }
+    },
+    "safety": {
+      "heading": "Hur hålls mitt barn tryggt?",
+      "facts": {
+        "vetted": {
+          "title": "Krav på straffregisterutdrag",
+          "description": "Vi kräver att varje Gedu visar oss ett straffregisterutdrag för arbete med barn innan vi certifierar hen."
+        },
+        "noDirectMessages": {
+          "title": "Varje chatt är hela gruppens",
+          "description": "Chatten under ett tillfälle går till hela rummet, där Gedun ser den."
+        },
+        "groupOnlyRooms": {
+          "title": "Bara gruppen kommer in",
+          "description": "En klubbs röstrum öppnar fem minuter innan tillfället och stänger fem minuter efter det, och bara gruppen, dess Geduer och vår personal kan komma in."
+        },
+        "notRecorded": {
+          "title": "Tillfällena spelas inte in",
+          "description": "Ingenting i appen spelar in, transkriberar eller lagrar ljudet eller videon från ett tillfälle."
+        },
+        "parentPin": {
+          "title": "PIN-kod krävs för köp",
+          "description": "Att köpa något kräver en fyrsiffrig föräldra-PIN som bara du känner till, och ditt barn kommer inte in på ditt föräldrakonto utan den."
+        }
+      },
+      "faqLink": "Läs hela svaren i vår FAQ",
+      "photo": {
+        "alt": "Barn vid datorer i en School of Gaming-klubb, fotograferade bakifrån, med sin spelfostrare sittande bredvid",
+        "caption": "En klubb på plats i vår studio på Drumsö i Helsingfors."
       }
     },
     "howItWorks": {
@@ -2984,8 +3404,8 @@
     },
     "cta": {
       "heading": "Redo att förvandla spelande till lärande?",
-      "subheading": "Ge ditt barn en rolig, trygg plats att spela, lära sig och få vänner — under ledning av en professionell spelfostrare.",
-      "createFreeAccount": "Skapa gratis konto"
+      "subheading": "Ge ditt barn en plats att spela, lära sig och få vänner varje vecka, med en spelfostrare vid varje tillfälle och varje chatt öppen för hela gruppen.",
+      "whereWeAre": "Våra onlineklubbar hålls på {languages}, för familjer var som helst i världen. Och vårt globala huvudkontor? En mysig studio på Drumsö i Helsingfors, Finland, på en lugn liten ö."
     }
   },
   "locations": {
@@ -3209,6 +3629,18 @@
       "title": "Min profil",
       "description": "Din offentliga profil på School of Gamings webbplats: ett foto av dig och några ord om vem du är.",
       "edit": "Redigera profil"
+    },
+    "mcp": {
+      "title": "Anslut en AI-app",
+      "description": "Hantera Sogverse från din egen AI-app via Sogverses MCP-server.",
+      "urlLabel": "MCP-serverns adress",
+      "copy": "Kopiera",
+      "copied": "Kopierad",
+      "steps": {
+        "add": "Lägg till en anpassad anslutning eller fjärr-MCP-server med den här adressen i din AI-apps inställningar.",
+        "signIn": "Logga in med ditt administratörskonto och välj Tillåt.",
+        "unsure": "Vet du inte var du lägger till den? Fråga din AI-app hur man lägger till en fjärr-MCP-server via dess adress."
+      }
     }
   },
   "tools": {
@@ -3442,7 +3874,7 @@
     },
     "overview": {
       "heading": "Så fungerar Yty",
-      "paragraph1": "Varje spelare börjar på noll. Från varje session de deltar i, varje uppdrag de klarar och varje vänlig handling de visar, tjänar spelare Yty-poäng. Dessa poäng byggs upp över de fyra Yty-elementen, som var och ett speglar en del av att växa upp väl.",
+      "paragraph1": "Varje spelare börjar på noll. Från varje tillfälle de deltar i, varje uppdrag de klarar och varje vänlig handling de visar, tjänar spelare Yty-poäng. Dessa poäng byggs upp över de fyra Yty-elementen, som var och ett speglar en del av att växa upp väl.",
       "paragraph2": "När spelare samlar Yty åt sig själva ökar de också det totala Yty i Sogverse — formar berättelsen och låser upp nya möjligheter för hela gemenskapen."
     },
     "elements": {
@@ -3471,7 +3903,7 @@
     },
     "earning": {
       "heading": "Hur spelare tjänar Yty",
-      "paragraph1": "Yty-poäng tjänas genom deltagande. Att delta i veckovisa klubbsessioner, klara uppdrag, visa vänlighet mot medspelare, gå med i gemenskapsevent och läger — allt detta bidrar till en spelares Yty.",
+      "paragraph1": "Yty-poäng tjänas genom deltagande. Att delta i klubbens tillfällen varje vecka, klara uppdrag, visa vänlighet mot medspelare, gå med i gemenskapsevent och läger — allt detta bidrar till en spelares Yty.",
       "paragraph2": "När poäng samlas under specifika prestationsmärken går spelarna upp i nivå på dessa märken — från brons till silver, guld, platina och diamant. Varje poäng bidrar också till deras totala Yty-nivå och det Yty-element det tillhör.",
       "paragraph3": "Och det är inte bara spelare. Geduer, föräldrar och hela gemenskapen kan delta i att bygga Ytyn i Sogverse genom event och gemensamma aktiviteter."
     }
@@ -4782,6 +5214,25 @@
       "mcHeads": "Ritar den Minecraft-figur som visas bredvid ett länkat Minecraft-konto. De begär ingenting i gengäld, så det här är ett tack snarare än ett krav."
     }
   },
+  "oauthConsent": {
+    "title": "Anslut en AI-app till Sogverse",
+    "body": "{clientName} ber om att få agera som dig i Sogverse, med allt som ditt administratörskonto kan göra.",
+    "destinationLabel": "Din inloggning skickas till",
+    "loopbackHint": "En app som körs på den här datorn.",
+    "unrecognised": "School of Gaming känner inte igen den här destinationen. Tillåt bara om du precis har börjat ansluta från din egen AI-app. Om inte, välj Neka.",
+    "signedInAs": "Inloggad som {email}",
+    "failed": "Den här begäran kan inte längre besvaras. Börja ansluta på nytt från din AI-app.",
+    "deny": "Neka",
+    "allow": "Tillåt",
+    "unavailable": {
+      "title": "Den här inloggningslänken har redan använts",
+      "body": "Varje länk fungerar en gång och slutar snart att gälla. Börja ansluta på nytt från din AI-app."
+    },
+    "refused": {
+      "title": "Bara administratörer på School of Gaming kan ansluta en AI-app",
+      "body": "Du är inloggad som {email}, som inte är ett administratörskonto."
+    }
+  },
   "seatOffer": {
     "offer": {
       "title": "En plats har blivit ledig",
@@ -4952,9 +5403,10 @@
   },
   "team": {
     "profile": {
-      "nameWithNickname": "{firstName} ”<nick>{nickname}</nick>” {lastName}",
-      "firstNameWithNickname": "{firstName} ”<nick>{nickname}</nick>”",
+      "nameWithNickname": "{firstName} ”{nickname}” {lastName}",
+      "firstNameWithNickname": "{firstName} ”{nickname}”",
       "geduTitle": "Gedu · spelfostrare",
+      "geduAltRole": "spelfostrare",
       "speaks": "Talar",
       "aboutMe": "Om mig",
       "funFact": "Kul fakta",
@@ -4972,7 +5424,8 @@
         "waitingTitle": "Klar, väntar på en administratör",
         "waitingBody": "En administratör granskar din profilsida innan den blir offentlig.",
         "liveTitle": "Offentlig",
-        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du dölja den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar. När du kryssar i den igen gör en administratör den offentlig på nytt."
+        "liveBody": "Vem som helst kan se din profil på School of Gamings webbplats. Ändringar du sparar syns direkt. Vill du dölja den tar du bort krysset vid ”Min profil är redo att bli offentlig” och sparar. När du kryssar i den igen gör en administratör den offentlig på nytt.",
+        "viewPublicPage": "Visa den offentliga sidan"
       },
       "actions": {
         "save": "Spara ändringarna",
@@ -5020,12 +5473,7 @@
         },
         "crop": {
           "title": "Beskär ditt foto",
-          "description": "Dra fotot för att placera det i ramen och zooma så att det passar.",
-          "zoom": "Zoom",
-          "confirm": "Använd foto",
-          "unreadable": "Den här filen kan inte öppnas som en bild här. Välj ett JPEG-, PNG- eller WebP-foto. iPhone-foton i HEIC-format måste konverteras först.",
-          "chooseAnother": "Välj ett annat foto",
-          "failed": "Fotot kunde inte beskäras. Försök igen eller välj ett annat foto."
+          "confirm": "Använd foto"
         }
       },
       "about": {
@@ -5068,7 +5516,8 @@
         "waitingTitle": "Klar, väntar på att göras offentlig",
         "waitingBody": "Profilen för {name} är markerad som klar att visas offentligt. Den kommer upp på School of Gamings webbplats så snart en administratör gör den offentlig.",
         "liveTitle": "Offentlig",
-        "liveBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt."
+        "liveBody": "Vem som helst kan se profilen för {name} på School of Gamings webbplats. Ändringar som sparas syns direkt.",
+        "viewPublicPage": "Visa den offentliga sidan"
       },
       "edit": {
         "back": "Tillbaka till {name}",
@@ -5098,6 +5547,54 @@
         "hide": "Dölj",
         "visibilityError": "Det gick inte att ändra om profilen är offentlig. Försök igen."
       }
+    },
+    "public": {
+      "index": {
+        "title": "Möt <act>teamet</act>",
+        "intro": "Teamet som driver School of Gaming och spelfostrarna som leder våra klubbar, var och en presenterad med egna ord.",
+        "leadership": "Ledning",
+        "gameEducators": "Spelfostrare",
+        "empty": "Snart presenterar sig vårt team här"
+      },
+      "back": "Tillbaka till teamet",
+      "cta": {
+        "heading": "Letar du efter en klubb för ditt barn?"
+      }
+    }
+  },
+  "library": {
+    "name": "Biblioteket",
+    "readingTime": "{minutes, plural, one {# min läsning} other {# min läsning}}",
+    "article": {
+      "breadcrumbLabel": "Brödsmulor",
+      "more": "Mer från Biblioteket",
+      "share": {
+        "heading": "Dela artikeln",
+        "copyLink": "Kopiera länk",
+        "copied": "Länken kopierad",
+        "on": "Dela på {platform} (öppnas i en ny flik)",
+        "email": "E-post",
+        "byEmail": "Dela via e-post",
+        "native": "Dela…"
+      }
+    },
+    "index": {
+      "title": "School of Gamings <act>bibliotek</act>",
+      "intro": "Praktisk vägledning för föräldrar om säkerhet på nätet, spelande i vardagen och vad barn lär sig genom lek.",
+      "empty": "Här finns inget ännu",
+      "all": "Alla",
+      "filterLabel": "Kategorier"
+    },
+    "categories": {
+      "onlineSafety": "Säkerhet på nätet",
+      "screenTime": "Skärmtid och familjeliv",
+      "learning": "Lärande genom spel",
+      "gamesExplained": "Spelen förklarade",
+      "forSchools": "För skolor"
+    },
+    "cta": {
+      "heading": "Redo att börja?",
+      "button": "Kom igång"
     }
   }
 }

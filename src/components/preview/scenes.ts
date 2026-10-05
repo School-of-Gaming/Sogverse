@@ -265,6 +265,22 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "team",
+    title: "Team index",
+    description:
+      "The live public Team page with nobody public, the state the seeded database cannot show.",
+    chrome: "public",
+    scenarios: [{ slug: "empty", label: "Nobody public yet" }],
+  },
+  {
+    surface: "library",
+    title: "Library index",
+    description:
+      "The live public Library page with nothing published, the state the seeded database cannot show.",
+    chrome: "public",
+    scenarios: [{ slug: "empty", label: "Nothing published yet" }],
+  },
+  {
     surface: "gedu-profile-editor",
     title: "Profile editor — Gedu (draft)",
     description:
@@ -370,6 +386,12 @@ export const PREVIEW_SCENES = [
         description:
           "An account awaiting approval, which by definition has no assignments at all — under the criminal-record band, the other of the two.",
       },
+      {
+        slug: "trainee",
+        label: "Trainee seats",
+        description:
+          "Two trainee seats (Minecraft Builders Club, Coding Camp) on the ordinary card beside two assignments; the Builders card opens the trainee workspace.",
+      },
     ],
   },
   {
@@ -452,13 +474,19 @@ export const PREVIEW_SCENES = [
         description:
           "The one product shape the owed signal needs: flagged, and over.",
       },
+      {
+        slug: "trainee",
+        label: "Trainee — the club as its trainee sees it",
+        description:
+          "The club scenario through the trainee shell: private text as blurred filler, every write the locked control that explains itself, editors still open.",
+      },
     ],
   },
   {
     surface: "voice-room",
     title: "Voice room",
     description:
-      "The scheduled group room over a fixture context — zone cards, control dock, chat and the participant rail. The rail is where the staff flair is judged; the family scenario is the check that none of it is there.",
+      "The scheduled group room over a fixture context — zone cards, control dock, chat and the participant rail. The rail is where the staff flair is judged; the family scenario is the check that none of it is there. Below `lg` the scene shows the phone tab bar, which the live rooms do not.",
     chrome: "dashboard",
     scenarios: [
       {
@@ -466,6 +494,12 @@ export const PREVIEW_SCENES = [
         label: "Gedu — mid-session",
         description:
           "The staff view: newcomer badges across the window and two notes, on the real rail.",
+      },
+      {
+        slug: "trainee",
+        label: "Trainee — the same room",
+        description:
+          "A Gedu on a trainee seat: the moderator's controls and the note dialog's Save, each locked and explaining itself.",
       },
       {
         slug: "gamer",

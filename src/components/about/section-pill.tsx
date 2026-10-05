@@ -6,16 +6,16 @@ import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
 import { cn } from "@/lib/utils";
 
 /**
- * The page's three sections, in the order they are laid out. Owned here rather
+ * The page's four sections, in the order they are laid out. Owned here rather
  * than passed in: `/about` is the only page that draws this bar, and the array
  * is what keeps the anchors, the labels and the scrollspy's ordering in one
  * place. Each id is the `id` attribute of the matching section on the page.
  *
- * `about` and `yty` take their labels from `header.nav`, the same keys the
- * header once used for them; `faq` was added there so all three read from one
- * namespace.
+ * Every label comes from `header.nav`: `about` and `yty` are the keys the
+ * header once used for them, and `parents` and `faq` were added there so all
+ * four read from one namespace.
  */
-const SECTIONS = ["about", "faq", "yty"] as const;
+const SECTIONS = ["about", "parents", "faq", "yty"] as const;
 type SectionId = (typeof SECTIONS)[number];
 
 /**
@@ -23,7 +23,7 @@ type SectionId = (typeof SECTIONS)[number];
  *
  * **Visible from first paint**, unlike the home page's version of this bar,
  * which stayed hidden until the reader scrolled past the hero. There is no hero
- * here — the reader arrives at the top of a three-section page — so hiding the
+ * here — the reader arrives at the top of a four-section page — so hiding the
  * navigation is hiding it at exactly the moment it is useful. It is `sticky`
  * rather than `fixed` for the same reason: with nothing to float over it can
  * take a slot of its own in the flow and stop overlapping the first heading.
@@ -123,7 +123,7 @@ export function SectionPill() {
       // scale, or a section's vertical padding, means re-checking where an
       // anchor click actually lands.
       // `max-w-full` plus the row's own horizontal scroll are the overflow
-      // floor at 360px: three labels in the widest locale must never widen the
+      // floor at 360px: four labels in the widest locale must never widen the
       // document.
       className="sticky top-[calc(var(--header-height)+1rem)] z-40 mx-auto mt-6 w-fit max-w-full px-4"
     >

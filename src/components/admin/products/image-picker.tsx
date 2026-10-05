@@ -1,26 +1,55 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { AlertCircle, Images, Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { ProductBanner } from "@/components/ui/product-banner";
-import { productImageSrc } from "@/lib/images/product-image-url";
+import { LibraryCover } from "@/components/library/library-cover";
+import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { cn } from "@/lib/utils";
 import {
-  PRODUCT_IMAGE_ACCEPT,
-  useUploadProductImage,
-} from "@/services/product-images";
+  useUploadCatalogueImage,
+} from "@/services/catalogue-images";
+import type { CatalogueImagePurpose } from "@/types";
+import { CATALOGUE_COPY } from "./catalogue-copy";
+import { useCatalogueCrop } from "./catalogue-crop";
 import { ImageCatalogueDialog } from "./image-catalogue-dialog";
-import { productImageErrorMessage } from "./product-image-error";
+import { catalogueImageErrorMessage } from "./catalogue-image-error";
 import type {
-  ProductImageEntry,
+  CatalogueImageEntry,
   ProductImageSelection,
 } from "./product-image-selection";
 
+/**
+ * The frame a purpose's pick is painted in — the same component the purpose's
+ * readers meet it through, so what an admin approves here is what a family or
+ * a reader sees — and the fixed width it takes in the form. The widths give
+ * the two ratios about the same weight on the page: a 3:2 product picture at
+ * 240px and a 16:9 cover at 288px stand the same height.
+ */
+const PICKER_FRAMES = {
+  product: { Frame: ProductBanner, width: "w-60", sizes: "240px" },
+  library_cover: { Frame: LibraryCover, width: "w-72", sizes: "288px" },
+} as const satisfies Record<
+  CatalogueImagePurpose,
+  {
+    Frame: typeof ProductBanner | typeof LibraryCover;
+    width: string;
+    sizes: string;
+  }
+>;
+
 interface ImagePickerProps {
-  /** The selected entry's id, or null for a product with no picture. */
+  /** Which catalogue the pick comes from, and so the frame, the crop and the
+   *  words the card uses. */
+  purpose: CatalogueImagePurpose;
+  /** The field's label and hint, which name what the picture is for. */
+  label: string;
+  hint: string;
+  optional?: boolean;
+  /** The selected entry's id, or null for no picture. */
   imageId: string | null;
   /** That entry's label and path. `null` when nothing is selected — or when
    *  the caller has not resolved the selection yet, in which case the card
@@ -29,7 +58,7 @@ interface ImagePickerProps {
   /**
    * The pick changed. Both halves travel together — the id the form saves and
    * the picture the card paints — so the two can never disagree. `null` for
-   * both is "this product has no picture".
+   * both is "no picture".
    */
   onChange: (
     imageId: string | null,
@@ -39,20 +68,22 @@ interface ImagePickerProps {
 }
 
 /**
- * **The product form's picture card.**
+ * **The form field that picks one entry of the shared image catalogue** — a
+ * product's picture or a Library article's cover, by `purpose`.
  *
- * A product does not have a file; it points at an entry in a catalogue every
- * product shares. So this card does two different things and keeps them
- * visibly apart:
+ * A product or an article does not have a file; it points at an entry in a
+ * catalogue shared by everything of its purpose. So this card does two
+ * different things and keeps them visibly apart:
  *
- *   - **Change image** opens the catalogue, where an entry can be browsed,
- *     renamed, replaced or retired. Those verbs reach every product using the
- *     entry, which is why they live behind a dialog that can show that reach.
- *   - **Remove from this product** and a **dropped file** touch this product
- *     and nothing else. Remove never warns, because there is nothing to warn
- *     about; a drop adds the file to the catalogue (or finds the entry that
- *     already holds those exact bytes) and selects the result *here*, which is
- *     the whole reason a drop is safe. A drop is never a shared action.
+ *   - **Change** opens the catalogue, where an entry can be browsed, renamed,
+ *     replaced or retired. Those verbs reach everything using the entry, which
+ *     is why they live behind a dialog that can show that reach.
+ *   - **Remove** and a **chosen or dropped file** touch this one product or
+ *     article and nothing else. Remove never warns, because there is nothing
+ *     to warn about; a file is cropped to the purpose's frame and added to the
+ *     catalogue (or finds the entry that already holds those exact bytes) and
+ *     selects the result *here*, which is the whole reason a drop is safe. A
+ *     drop is never a shared action.
  *
  * **The outcome slot under the card is reserved**, because it is the only place
  * that says which of "added" and "already in the catalogue" happened — the two
@@ -65,6 +96,10 @@ interface ImagePickerProps {
  * nobody touches must not pay for them.
  */
 export function ImagePicker({
+  purpose,
+  label,
+  hint,
+  optional,
   imageId,
   current,
   onChange,
@@ -72,7 +107,9 @@ export function ImagePicker({
 }: ImagePickerProps) {
   const t = useTranslations("admin.products.imagePicker");
   const tError = useTranslations("admin.products.imageCatalogue.errors");
-  const upload = useUploadProductImage();
+  const upload = useUploadCatalogueImage();
+  const copy = CATALOGUE_COPY[purpose];
+  const { Frame, width, sizes } = PICKER_FRAMES[purpose];
 
   const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -80,13 +117,11 @@ export function ImagePicker({
   const [outcome, setOutcome] = useState<
     { kind: "added" | "existing" } | { kind: "error"; message: string } | null
   >(null);
-  const fileInput = useRef<HTMLInputElement>(null);
-
   // A `current` that belongs to some other id is worse than none: it would
   // paint the wrong picture with a straight face. Selection is the id.
   const selected = imageId === null ? null : current;
 
-  function apply(entry: ProductImageEntry | null) {
+  function apply(entry: CatalogueImageEntry | null) {
     onChange(entry?.id ?? null, entry ? { label: entry.label, path: entry.path } : null);
   }
 
@@ -94,21 +129,27 @@ export function ImagePicker({
     setUploading(true);
     setOutcome(null);
     try {
-      const { status, image } = await upload.mutateAsync({ file });
+      const { status, image } = await upload.mutateAsync({ file, purpose });
       apply({ id: image.id, label: image.label, path: image.path });
       setOutcome({ kind: status });
     } catch (err) {
       setOutcome({
         kind: "error",
-        message: productImageErrorMessage(err, tError),
+        message: catalogueImageErrorMessage(err, tError),
       });
     } finally {
       setUploading(false);
     }
   }
 
+  // A picked or dropped file is cropped to the purpose's frame before it is
+  // added: the upload route takes nothing else.
+  const crop = useCatalogueCrop(purpose, (file) => {
+    void addFile(file);
+  });
+
   return (
-    <Field label={t("label")} hint={t("hint")}>
+    <Field label={label} hint={hint} optional={optional}>
       <div
         onDragOver={(e) => {
           if (disabled || uploading) return;
@@ -124,22 +165,20 @@ export function ImagePicker({
           // always-present, so an empty drop would hand `addFile` an undefined
           // it believes is a File. `item` answers null, which is the truth.
           const file = e.dataTransfer.files.item(0);
-          if (file) void addFile(file);
+          if (file) crop.crop(file);
         }}
         className={cn(
           "rounded-md border border-border bg-background p-4 transition-colors",
           dragging && "ring-2 ring-act",
         )}
       >
-        {/* The one 3:2 frame every product picture is painted in — the same
-            component and the same crop the shop card uses, so what an admin
-            approves here is what a family meets. `null` src is the frame's own
-            no-picture state, at the same size, so the card does not change
-            height when a picture is chosen. */}
-        <ProductBanner
-          src={productImageSrc(selected?.path)}
-          sizes="240px"
-          className="mx-auto w-60 rounded-md border border-border"
+        {/* The purpose's one frame, with the crop its readers meet. `null`
+            src is the frame's own no-picture state, at the same size, so the
+            card does not change height when a picture is chosen. */}
+        <Frame
+          src={catalogueImageSrc(purpose, selected?.path)}
+          sizes={sizes}
+          className={cn("mx-auto rounded-md border border-border", width)}
         />
 
         {/* No reserved slot for the label: an unselected card has nothing to
@@ -160,14 +199,14 @@ export function ImagePicker({
             onClick={() => setCatalogueOpen(true)}
           >
             <Images className="h-4 w-4" />
-            {t("change")}
+            {t(`${copy}.change`)}
           </Button>
           <Button
             type="button"
             variant="outline"
             size="sm"
             disabled={disabled || uploading}
-            onClick={() => fileInput.current?.click()}
+            onClick={crop.choose}
           >
             {uploading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -185,28 +224,16 @@ export function ImagePicker({
               onClick={() => apply(null)}
             >
               <X className="h-4 w-4" />
-              {t("remove")}
+              {t(`${copy}.remove`)}
             </Button>
           )}
         </div>
 
         <p className="mt-3 text-center text-xs text-muted-foreground">
-          {t("dropPrompt")} {t("formats")}
+          {t(`${copy}.dropPrompt`)} {t("formats")}
         </p>
 
-        <input
-          ref={fileInput}
-          type="file"
-          accept={PRODUCT_IMAGE_ACCEPT}
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            // Cleared before the request, so re-choosing the same file after a
-            // refusal still fires a change event.
-            e.target.value = "";
-            if (file) void addFile(file);
-          }}
-        />
+        {crop.element}
       </div>
 
       {/* Reserved one-line slot. Held open from first paint so the answer
@@ -219,14 +246,15 @@ export function ImagePicker({
           <AlertCircle className="h-3.5 w-3.5 shrink-0 text-destructive" aria-hidden />
         )}
         {uploading && t("uploading")}
-        {!uploading && outcome?.kind === "added" && t("outcomeAdded")}
-        {!uploading && outcome?.kind === "existing" && t("outcomeExisting")}
+        {!uploading && outcome?.kind === "added" && t(`${copy}.outcomeAdded`)}
+        {!uploading && outcome?.kind === "existing" && t(`${copy}.outcomeExisting`)}
         {!uploading && outcome?.kind === "error" && outcome.message}
       </p>
 
       {catalogueOpen && (
         <ImageCatalogueDialog
-          productImageId={imageId}
+          purpose={purpose}
+          currentImageId={imageId}
           onSelect={apply}
           onEntryChanged={apply}
           onClose={() => setCatalogueOpen(false)}

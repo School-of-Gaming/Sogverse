@@ -13,6 +13,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
+import { SeatKindBadge } from "./SeatKindBadge";
 import { CancelledAheadNotice } from "@/components/session-feed/CancelledAheadNotice";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
@@ -93,16 +94,19 @@ interface GeduAssignmentCardProps {
  *   inside it: a mark that swallowed the click on the exact spot the sweep
  *   sends a gedu to tap was a dead zone in the one place that could least
  *   afford one.
- * - **Liveness is the gradient and a badge in the top-right cluster**, next to
- *   the chevron. It replaced a "session in progress" line in the middle of the
- *   card, which was a whole row spent restating what the card's own colour
- *   already said, and which only ever existed on one card at a time. The badge's
+ * - **Liveness is the gradient and a badge in the eyebrow row**, beside the
+ *   chevron and across from the product type. It replaced a "session in
+ *   progress" line in the middle of the card, which was a whole row spent
+ *   restating what the card's own colour already said, and which only ever
+ *   existed on one card at a time. **The product name has the row below to
+ *   itself**: sat beside the name, a Finnish "Käynnissä" at phone width
+ *   squeezed it and pushed the card past the screen. The badge's
  *   **slot is reserved on every card that could ever wear it**, and the badge is
  *   merely hidden inside it until the session starts: it is the one thing on this
  *   card that appears on a *clock tick* rather than on something the reader did,
- *   so mounting it as a flex sibling would have widened the corner cluster — and
- *   reflowed the product name beside it, and possibly the row's height — while
- *   somebody was reading. The cards it can never land on — a finished run, and
+ *   so mounting it as a flex sibling would have widened the cluster — and
+ *   rewrapped the eyebrow beside it, and everything under it — while somebody
+ *   was reading. The cards it can never land on — a finished run, and
  *   an assignment with no session scheduled at all — drop the slot outright,
  *   because space held for something that is not coming is its own defect.
  *
@@ -125,7 +129,7 @@ interface GeduAssignmentCardProps {
  * "Open sessions" link in the bottom corner, which was a word doing a job that a
  * chevron, a pointer cursor and a hover state do better and in less space — and
  * which read as *the* target, when the whole card has always been one. Now the
- * chevron sits in the top-right cluster where a "there is more inside this"
+ * chevron ends the eyebrow row, top right, where a "there is more inside this"
  * marker belongs, the border brightens and the card lifts on hover or keyboard
  * focus, and the invisible stretched link over the whole card is what is
  * actually being clicked.
@@ -134,6 +138,13 @@ interface GeduAssignmentCardProps {
  * it.** A gedu holds at most one group per product, so the pair identifies one
  * thing — and "Group A" identifies it to nobody, while "Minecraft Monday Club"
  * identifies it immediately.
+ *
+ * **A trainee seat is this same card with a "Trainee" badge in the eyebrow**,
+ * after the product type. Trainee status is per seat, so one gedu may hold
+ * assignments and trainee seats on the same page, and the card's kind has to be
+ * legible before its name — the same reasoning that puts "Substitution" in the
+ * substitution card's eyebrow. On both cards the type leads and the badge
+ * follows it, so every card's eyebrow starts in the same place.
  *
  * **The card states the schedule; the Join states the next session.** They are
  * two different questions and each is answered once. A gedu sweeping this page
@@ -196,6 +207,7 @@ export function GeduAssignmentCard({
   scheduleLines,
 }: GeduAssignmentCardProps) {
   const p = useTranslations("productType");
+  const tr = useTranslations("gedu.trainee");
   const c = useTranslations("activityCard");
   const b = useTranslations("sessionBadge");
   const d = useTranslations("gedu.sessionDetails");
@@ -255,89 +267,96 @@ export function GeduAssignmentCard({
         )}
       >
         <CardContent className="flex h-full flex-col gap-4 p-5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {p(productType)}
-              </p>
-              {/* The identity keeps its weight and loses its tone on a finished
-                  run: a gedu looking for last term's club still has to read the
-                  name, they just must not trip over it while looking for this
-                  term's. */}
-              <p
-                className={cn(
-                  "text-lg font-semibold leading-tight",
-                  endedOn !== null && "text-muted-foreground",
-                )}
-              >
-                {productName}
-              </p>
-              {/* The group as one quiet line, not a name plus a bordered pill:
-                  the pill gave the gamer count the visual weight of a status
-                  badge sitting next to real ones, and a roster size is not a
-                  status. */}
-              <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
-                <span
-                  className={cn(
-                    "font-medium",
-                    endedOn === null && "text-foreground",
-                  )}
-                >
-                  {groupName ?? d("untitledGroup")}
-                </span>
-                {/* The separator is a pseudo-element, not a text node: it is
-                    punctuation between two translated strings rather than copy of
-                    its own, so it has no business in the message files. */}
-                <span className="inline-flex items-center gap-1 tabular-nums before:mr-1 before:content-['·']">
-                  <Users className="h-3.5 w-3.5" aria-hidden />
-                  {d("participantCount", { count: groupParticipantCount })}
-                </span>
-              </p>
-            </div>
+          <div className="min-w-0 space-y-1">
+            {/* The eyebrow row: the product type (and a trainee seat's badge)
+                on the left, the live state and the chevron on the right. The
+                product name is not in this row but under it, with the card's
+                whole width to itself, so a badge as wide as its translation
+                needs ("Käynnissä") never squeezes the name, and a long name
+                never pushes the card past a phone screen.
 
-            {/* The top-right cluster: the live state, then the chevron. It is a
-                flex sibling of the identity block rather than an absolutely
-                positioned corner, so the badge can be as wide as its translation
-                needs without a hand-tuned right padding for the identity block to
-                clear — "Live" is four characters in English and rather more in
-                Finnish. `shrink-0` keeps the long product name from squeezing it.
-                Neither element is interactive; the stretched link over the whole
-                card paints above both and receives the click.
+                The right-hand cluster is `shrink-0`: the eyebrow's own words
+                wrap before it gives way. Neither element in it is interactive;
+                the stretched link over the whole card paints above both and
+                receives the click.
 
                 The badge is always in the layout and only `invisible` until the
                 session starts: it is the one thing here that turns up on a clock
-                tick rather than on a click, and a badge mounting into a flex row
-                widens the cluster — which squeezes the product name beside it and,
-                through `items-stretch`, can move the row itself. `invisible` is
-                also `visibility: hidden`, so it leaves the accessibility tree
-                too and nothing announces a session that has not begun.
+                tick rather than on a click, and a badge mounting into the row
+                would widen the cluster, which could rewrap the eyebrow beside it
+                and move everything under it while somebody was reading.
+                `invisible` is also `visibility: hidden`, so it leaves the
+                accessibility tree too and nothing announces a session that has
+                not begun.
 
                 The cards the badge can never land on do not reserve it: a
                 finished run, and an assignment with no session on its schedule
                 at all. Holding the slot open there would be a gap waiting on
-                something that is not coming, and the width is better spent on
-                the product name — which is what a gedu is reading such a card
-                for. Nothing moves as a result: both facts are settled before the
-                card first paints and neither turns over under a reader the way a
-                session start does. */}
-            <div className="flex shrink-0 items-center gap-2">
-              {canGoLive && (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "gap-1 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
-                    !live && "invisible",
-                  )}
-                >
-                  <Radio className="h-3 w-3" aria-hidden />
-                  {b("live")}
-                </Badge>
-              )}
-              <ChevronRight
-                aria-hidden
-                className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-              />
+                something that is not coming. Nothing moves as a result: both
+                facts are settled before the card first paints and neither turns
+                over under a reader the way a session start does. */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {p(productType)}
+                </span>
+                {assignment.trainee && (
+                  <SeatKindBadge>{tr("badge")}</SeatKindBadge>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {canGoLive && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "gap-1 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
+                      !live && "invisible",
+                    )}
+                  >
+                    <Radio className="h-3 w-3" aria-hidden />
+                    {b("live")}
+                  </Badge>
+                )}
+                <ChevronRight
+                  aria-hidden
+                  className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                />
+              </div>
             </div>
+            {/* The identity keeps its weight and loses its tone on a finished
+                run: a gedu looking for last term's club still has to read the
+                name, they just must not trip over it while looking for this
+                term's. A word wider than the card breaks rather than widening
+                it. */}
+            <p
+              className={cn(
+                "text-lg font-semibold leading-tight wrap-anywhere",
+                endedOn !== null && "text-muted-foreground",
+              )}
+            >
+              {productName}
+            </p>
+            {/* The group as one quiet line, not a name plus a bordered pill:
+                the pill gave the gamer count the visual weight of a status
+                badge sitting next to real ones, and a roster size is not a
+                status. */}
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
+              <span
+                className={cn(
+                  "font-medium",
+                  endedOn === null && "text-foreground",
+                )}
+              >
+                {groupName ?? d("untitledGroup")}
+              </span>
+              {/* The separator is a pseudo-element, not a text node: it is
+                  punctuation between two translated strings rather than copy of
+                  its own, so it has no business in the message files. */}
+              <span className="inline-flex items-center gap-1 tabular-nums before:mr-1 before:content-['·']">
+                <Users className="h-3.5 w-3.5" aria-hidden />
+                {d("participantCount", { count: groupParticipantCount })}
+              </span>
+            </p>
           </div>
 
           {/* The cancelled sessions the card passes over before the next one

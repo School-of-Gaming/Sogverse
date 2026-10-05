@@ -1,12 +1,20 @@
 import { StorageApiError, type QueryData } from "@supabase/supabase-js";
-import { SUPPORTED_LOCALES, isSupportedLocale } from "@/lib/constants/locales";
+import { z } from "zod";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
+import { walkPages } from "@/lib/supabase/paging";
 import type { AppSupabaseClient } from "@/types";
+import {
+  publicTeamProfileRows,
+  type PublicTeamProfileRow,
+} from "./team-profiles.contracts";
 import {
   TEAM_PHOTOS_BUCKET,
   TEAM_PHOTO_HEIGHT,
   TEAM_PHOTO_URL_TTL_SECONDS,
   TEAM_PHOTO_WIDTH,
   pickFromId,
+  publicTeamPhotoUrl,
+  type PublicTeamProfile,
   type TeamProfilePhoto,
   type TeamProfileRecord,
   TeamPhotoUploadError,
@@ -29,13 +37,23 @@ import {
  * unauthenticated address, and with a new token on every read it would never
  * hit that cache anyway.
  *
- * **The public team page, when it is built, serves photos through the app's
- * own address**, which checks on every request that the profile is public,
- * backed by a storage read rule that anyone may read a photo while its profile
- * is public. Its responses cache for minutes, so a profile taken down stops
- * showing its photo soon after. Never a public bucket, which would leave a
- * taken-down photo readable by anyone holding its address, and never the
- * optimiser over signed URLs.
+ * **The public team page reads through two database functions**, the list
+ * and one profile, which return only approved profiles of admins and Gedus,
+ * narrowed to what the page shows: no email, no dates, no certification, and
+ * a Gedu's last name never. They work signed out, so the page reads them on
+ * whatever client it has. Each profile comes back as the same `TeamProfile`
+ * the editor previews, every translation the site serves included: the page
+ * picks the one to show at render time, through the body's own resolver.
+ *
+ * **Public photos are served through the app's own address**,
+ * `/api/team/photos/<id>?v=<version>`, which reads the photo with no session,
+ * through a storage read rule that anyone may read an object while it is the
+ * current photo of a public profile. So every request re-asks whether the
+ * profile is public. Its responses cache for minutes, so a profile taken down
+ * stops showing its photo soon after; the version token changes with the
+ * photo, so a new photo is a new address. Never a public bucket, which would
+ * leave a taken-down photo readable by anyone holding its address, and never
+ * the optimiser over signed URLs.
  */
 
 /**
@@ -106,6 +124,55 @@ function photoOf(src: string): TeamProfilePhoto {
   return { src, width: TEAM_PHOTO_WIDTH, height: TEAM_PHOTO_HEIGHT };
 }
 
+/**
+ * The translations in the site's own locale order, leaving out any locale the
+ * site no longer serves: the editor has no tab to open one in and the page no
+ * reader to show it to. A fixed order also makes two reads of one profile
+ * compare equal.
+ */
+function siteTranslations(
+  rows: readonly {
+    locale: string;
+    short_description: string;
+    long_description: string;
+    fun_fact: string | null;
+  }[],
+): TeamProfileTranslation[] {
+  return inLocaleOrder(rows).map((t) => ({
+    locale: t.locale,
+    shortDescription: t.short_description,
+    longDescription: t.long_description,
+    funFact: t.fun_fact,
+  }));
+}
+
+/** A row of the public read as the profile the page renders. */
+function toPublicProfile(row: PublicTeamProfileRow): PublicTeamProfile {
+  const common = {
+    id: row.user_id,
+    firstName: row.first_name,
+    nickname: row.nickname,
+    pick: pickFromId(row.pick),
+    photo:
+      row.photo_version === null
+        ? null
+        : photoOf(publicTeamPhotoUrl(row.user_id, row.photo_version)),
+    translations: siteTranslations(row.translations),
+    spokenLanguages: row.spoken_languages,
+    createdAt: row.created_at,
+  };
+  return row.role === "admin"
+    ? {
+        ...common,
+        kind: "admin",
+        // Never NULL for an admin: the column is NOT NULL, and a public
+        // admin's profile was complete, title included, when it was saved.
+        lastName: row.last_name ?? "",
+        title: row.title ?? "",
+      }
+    : { ...common, kind: "gedu" };
+}
+
 export class TeamProfilesService {
   constructor(private supabase: AppSupabaseClient) {}
 
@@ -127,9 +194,43 @@ export class TeamProfilesService {
   }
 
   /**
+   * Every public team profile, for the public team page: each approved
+   * profile of an admin or a Gedu, trainee Gedus included. Admins first, then
+   * Gedus; within each by first name, then nickname. Works signed out.
+   *
+   * Walked, because nothing bounds the team's size by construction. The
+   * function's own order ends in the person's id, so it is total, and a page
+   * of it is read off the function's result in that order.
+   */
+  async listPublicTeamProfiles(): Promise<PublicTeamProfile[]> {
+    const rows = await walkPages("list_public_team_profiles", (from, to) =>
+      this.supabase
+        .rpc("list_public_team_profiles", undefined, { count: "exact" })
+        .range(from, to),
+    );
+    return publicTeamProfileRows.parse(rows).map(toPublicProfile);
+  }
+
+  /**
+   * One person's public team profile, or `null` when it is not public, they
+   * are neither an admin nor a Gedu, or the id names no one — anything that is
+   * not an id included, so a page can answer every one of those with a 404.
+   * Works signed out.
+   */
+  async getPublicTeamProfile(userId: string): Promise<PublicTeamProfile | null> {
+    if (!z.string().uuid().safeParse(userId).success) return null;
+    const { data, error } = await this.supabase.rpc("get_public_team_profile", {
+      p_user_id: userId,
+    });
+    if (error) throw error;
+    const row = publicTeamProfileRows.parse(data).at(0);
+    return row === undefined ? null : toPublicProfile(row);
+  }
+
+  /**
    * Save a profile together with its "ready" checkbox: the caller's own, or
-   * any admin's or Gedu's for an admin. The checkbox is a readiness mark, not
-   * consent, so whoever may edit the profile sets it. The database refuses it
+   * any admin's or Gedu's for an admin. The checkbox is a readiness mark, so
+   * whoever may edit the profile sets it. The database refuses it
    * on while the profile is incomplete (`isTeamProfileIncompleteError`). A
    * save that leaves the profile not ready also hides it, whoever saves, so
    * ticking ready again waits for an admin to make it public; a save that
@@ -365,23 +466,9 @@ export class TeamProfilesService {
     // otherwise save the missing path back and be refused.
     const photoPath = photo === null ? null : storedPhotoPath;
 
-    const translations: TeamProfileTranslation[] = [];
-    for (const t of saved?.translations ?? []) {
-      // A locale the site no longer serves has no tab to open it in.
-      if (!isSupportedLocale(t.locale)) continue;
-      translations.push({
-        locale: t.locale,
-        shortDescription: t.short_description,
-        longDescription: t.long_description,
-        funFact: t.fun_fact,
-      });
-    }
     // In the site's own locale order, so the editor opens on the same tab
-    // every time and two reads of one profile compare equal.
-    translations.sort(
-      (a, b) =>
-        SUPPORTED_LOCALES.indexOf(a.locale) - SUPPORTED_LOCALES.indexOf(b.locale),
-    );
+    // every time.
+    const translations = siteTranslations(saved?.translations ?? []);
 
     const common = {
       id: row.id,

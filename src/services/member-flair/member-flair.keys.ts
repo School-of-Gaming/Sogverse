@@ -12,4 +12,7 @@ export const memberFlairKeys = {
   all: ["member-flair"] as const,
   overlays: () => [...memberFlairKeys.all, "overlay"] as const,
   overlay: (groupId: string) => [...memberFlairKeys.overlays(), groupId] as const,
+  /** The trainee's redacted twin — its own key, since it is a different document. */
+  traineeOverlay: (groupId: string) =>
+    [...memberFlairKeys.all, "trainee-overlay", groupId] as const,
 };

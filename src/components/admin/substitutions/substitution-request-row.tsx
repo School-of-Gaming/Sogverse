@@ -17,8 +17,8 @@ import {
 } from "./substitution-session-lines";
 
 /**
- * One open request: which session is short-staffed, how soon, who is away, why,
- * and who has volunteered.
+ * One open request: which session is short-staffed, how soon, online or where,
+ * who is away, why, and who has volunteered.
  *
  * **This is the card.** The requests are peers, each with an action of its own,
  * so the edge belongs at this level and the list around them is a heading over
@@ -30,9 +30,9 @@ import {
  * **The session comes first and the person second**, which is the reverse of
  * the certification queue on the dashboard. There the row *is* a person and the
  * decision is about them; here the decision is about a session — this Friday's
- * group needs a primary — and who is away is a fact about it. Both lines are
- * the ones the substituted-session card opens with too, so the two sections
- * state one session in the same words.
+ * group needs a primary — and who is away is a fact about it. The session's
+ * lines and the away line are the ones the substituted-session card opens with
+ * too, so the two sections state one session in the same words.
  *
  * **The urgency treatment is one tint and one rule, and it fires inside a
  * day.** A session starting within 24 hours wears `warning` on this card's own

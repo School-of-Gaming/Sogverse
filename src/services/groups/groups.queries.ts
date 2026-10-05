@@ -14,6 +14,7 @@ import { GroupsService } from "./groups.service";
 import type {
   GeduAssignmentRole,
   GroupGeduDetail,
+  GroupTraineeDetail,
   ProductGroupsSnapshot,
   ProductGroupWithDetails,
 } from "@/types";
@@ -212,6 +213,25 @@ function withGeduAdded(
   };
 }
 
+function withTraineeAdded(
+  snapshot: ProductGroupsSnapshot,
+  groupId: string,
+  trainee: GroupTraineeDetail,
+): ProductGroupsSnapshot {
+  return {
+    ...snapshot,
+    groups: snapshot.groups.map((g) => {
+      // Unlike an assignment, a trainee seat has no upsert — the RPC refuses a
+      // duplicate — so an id already on the list is left as it is and the
+      // refused write rolls the cache back to this same state.
+      if (g.id !== groupId || g.trainees.some((t) => t.id === trainee.id)) {
+        return g;
+      }
+      return { ...g, trainees: [...g.trainees, trainee] };
+    }),
+  };
+}
+
 function withGroupAdded(
   snapshot: ProductGroupsSnapshot,
   group: ProductGroupWithDetails,
@@ -313,6 +333,7 @@ export function useCreateGroup(productId: string) {
           name,
           created_at: new Date().toISOString(),
           gedus: [],
+          trainees: [],
           participations: [],
         };
         queryClient.setQueryData(key, withGroupAdded(previous, optimistic));
@@ -419,6 +440,64 @@ export function useRemoveGedu(productId: string) {
     mutationKey: [...groupMutationBase(productId), "removeGedu"],
     ...destructiveSettle(queryClient, key, ({ groupId, geduId }: RemoveGeduVars) =>
       service.removeGedu(productId, groupId, geduId),
+    ),
+  });
+}
+
+interface AddTraineeVars {
+  groupId: string;
+  geduId: string;
+  firstName: string;
+  email: string | null;
+}
+
+/**
+ * Place a gedu on a group as a trainee. The transform shape `useAddGedu` has:
+ * the pill appears at once, a refused write rolls it back.
+ */
+export function useAddTrainee(productId: string) {
+  const queryClient = useQueryClient();
+  const service = new GroupsService(getClient());
+  const key = groupsKeys.byProduct(productId);
+
+  return useMutation({
+    mutationKey: [...groupMutationBase(productId), "addTrainee"],
+    mutationFn: ({ groupId, geduId }: AddTraineeVars) =>
+      service.addTrainee(productId, groupId, geduId),
+    onMutate: async ({ groupId, geduId, firstName, email }) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<ProductGroupsSnapshot>(key);
+      if (previous) {
+        queryClient.setQueryData(
+          key,
+          withTraineeAdded(previous, groupId, {
+            id: geduId,
+            first_name: firstName,
+            email,
+          }),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
+    onSettled: () => {
+      invalidateGroupChange(queryClient, key);
+    },
+  });
+}
+
+/** Take a trainee off a group — destructive, so greyed until the refetch drops it. */
+export function useRemoveTrainee(productId: string) {
+  const queryClient = useQueryClient();
+  const service = new GroupsService(getClient());
+  const key = groupsKeys.byProduct(productId);
+
+  return useMutation({
+    mutationKey: [...groupMutationBase(productId), "removeTrainee"],
+    ...destructiveSettle(queryClient, key, ({ groupId, geduId }: RemoveGeduVars) =>
+      service.removeTrainee(productId, groupId, geduId),
     ),
   });
 }
@@ -674,6 +753,8 @@ export interface GroupPending {
   deletes: Set<string>;
   /** `${groupId}:${geduId}` for an in-flight add/remove Gedu */
   gedus: Set<string>;
+  /** `${groupId}:${geduId}` for an in-flight add/remove trainee */
+  trainees: Set<string>;
   /** a group create is in flight */
   creating: boolean;
 }
@@ -695,6 +776,7 @@ export function useGroupPending(productId: string): GroupPending {
   const renames = new Set<string>();
   const deletes = new Set<string>();
   const gedus = new Set<string>();
+  const trainees = new Set<string>();
   let creating = false;
 
   for (const { action, vars } of entries) {
@@ -717,10 +799,16 @@ export function useGroupPending(productId: string): GroupPending {
       vars.geduId
     ) {
       gedus.add(`${vars.groupId}:${vars.geduId}`);
+    } else if (
+      (action === "addTrainee" || action === "removeTrainee") &&
+      vars?.groupId &&
+      vars.geduId
+    ) {
+      trainees.add(`${vars.groupId}:${vars.geduId}`);
     } else if (action === "create") {
       creating = true;
     }
   }
 
-  return { moves, removes, renames, deletes, gedus, creating };
+  return { moves, removes, renames, deletes, gedus, trainees, creating };
 }

@@ -1,18 +1,4 @@
-import Image from "next/image";
-import { cn } from "@/lib/utils";
-
-/** The one frame every product picture is painted in. */
-const BANNER_FRAME = "aspect-[3/2] w-full";
-
-/**
- * What the no-image placeholder says, in every locale.
- *
- * A constant rather than a message key, for the same reason a room code is one:
- * it is machine text, not copy — the same two words wherever the app is read,
- * and nothing a translator is being asked to voice. Caps as furniture, so it
- * cannot be mistaken for something the design chose to show.
- */
-const NO_IMAGE_LABEL = "NO IMAGE";
+import { FramedImage } from "./framed-image";
 
 /**
  * **The 3:2 product picture, cropped — the only product-image presentation.**
@@ -24,59 +10,31 @@ const NO_IMAGE_LABEL = "NO IMAGE";
  * is an owner rule (2026-08-12), and the admin half of it is the half with the
  * reasoning worth keeping: the admin surfaces are how admins see and think
  * about products, so a thumb cropped differently from the shop has an admin
- * approving a picture families never meet. The frame is fixed and the picture
- * fills it (`object-cover`); the caller chooses only the box's *width* and its
- * corners, never its ratio — a surface free to pick its own ratio is a surface
- * where the same photo can be cropped two different ways.
+ * approving a picture families never meet. The caller chooses only the box's
+ * *width* and its corners, never its ratio — a surface free to pick its own
+ * ratio is a surface where the same photo can be cropped two different ways.
  *
  * `src` is an **already-resolved URL**, not a storage path: resolution belongs
- * to the caller that holds the row, through `productImageSrc`, which owns the
+ * to the caller that holds the row, through `catalogueImageSrc`, which owns the
  * empty-string-means-no-image rule. `null` is that no-image case, and it gets
- * the wordmark at the *same* ratio rather than a shorter box — so a grid does
- * not develop short cards, and a page does not reflow around whether a product
- * has a photo yet.
+ * the NO IMAGE placeholder at the same ratio.
  *
- * **The picture is decorative wherever this renders**, hence the empty `alt`:
- * every call site names the product in text immediately beside or beneath the
- * frame (the card's title and its stretched link's accessible name, the detail
- * page's h1, the confirmation row's product name, the admin row's name cell),
- * so alt text would announce the same name twice to a screen reader for no
- * added meaning.
- *
- * **Through `next/image`'s optimizer, which is the point of this being one
- * component.** The stored file is an admin-uploaded original — a 2–4 MB PNG is
- * ordinary — and every browser used to be handed it whole, at every viewport,
- * straight out of the Supabase bucket. Routing it through the optimizer buys
- * three things at once: a per-viewport `srcset`, so a 96px admin row thumb
- * fetches a 96px-class file instead of the 4 MB master; AVIF/WebP negotiated
- * from the request's `Accept`, which is most of the remaining bytes; and the
- * bytes served from our own edge cache rather than metered Supabase egress.
- * Because there is exactly one frame, that switch is one change here instead
- * of five at the call sites. `next/image` renders `blob:`/`data:` srcs and
- * `.svg` paths unoptimized on its own — the preview scenes' `/preview-art/*.svg`
- * fixtures and the picker's object-URL preview ride on that — so there is no
- * per-call-site opt-out here to get wrong.
- *
- * **`sizes` is a required decision, not a detail.** With `fill`, a missing
- * `sizes` makes the browser assume the image is the full viewport width and
- * pick the largest candidate — which hands back most of what the optimizer
- * just saved. Every caller states the CSS width its frame actually resolves
- * to; the `100vw` default is the safe-but-wasteful fallback, and a call site
- * relying on it is a call site that has not been measured yet.
+ * The frame, the optimizer handling, the placeholder and the hover lean are
+ * `FramedImage`'s, shared with the Library's 16:9 cover; what this component
+ * adds is that the frame is always a product picture's, never the caller's to
+ * choose.
  *
  * **Lazy by default, eager by request.** A storefront section trio can put
- * dozens of banners on one page, and fetching them all on first paint costs
- * the pages that can least afford it (family surfaces are mobile-first). So
- * the banner lazy-loads by default and the one caller whose banner is reliably
- * above the fold — the detail page's hero — opts into `eager`, which becomes
- * `priority` (preloaded, not lazy). Lazy or eager, the frame's size is fixed
- * by `aspect-[3/2]`, so loading order never moves layout.
+ * dozens of banners on one page, so the banner lazy-loads by default and the
+ * one caller whose banner is reliably above the fold — the detail page's hero
+ * — opts into `eager`.
  */
 export function ProductBanner({
   src,
   className,
-  sizes = "100vw",
-  eager = false,
+  sizes,
+  eager,
+  zoomOnHover,
 }: {
   /** Resolved image URL, or `null` for a product with no picture. */
   src: string | null;
@@ -88,76 +46,18 @@ export function ProductBanner({
   /** Fetch on first paint. For banners reliably above the fold (the detail
    *  hero); everything else lazy-loads as it scrolls into reach. */
   eager?: boolean;
+  /** Lean the picture in when its card is pointed at — for a card that opens
+   *  somewhere, and only then (`COVER_HOVER_ZOOM`). */
+  zoomOnHover?: boolean;
 }) {
-  if (src === null) {
-    return <SogFallback className={cn(BANNER_FRAME, className)} />;
-  }
   return (
-    // `fill` needs a positioned ancestor, so the frame moves off the image and
-    // onto a wrapper — which is also what now carries the caller's corners, and
-    // why the wrapper clips: an absolutely-positioned child ignores its
-    // parent's border radius unless the parent hides its overflow.
-    <div className={cn(BANNER_FRAME, "relative overflow-hidden", className)}>
-      <Image
-        src={src}
-        alt=""
-        fill
-        sizes={sizes}
-        priority={eager}
-        className="object-cover"
-      />
-    </div>
-  );
-}
-
-// The placeholder for a product with no picture, and a customer should never
-// meet it. It exists so a staging product can be created without an image and
-// so an admin can save a product on prod before its picture exists, unlisted:
-// the admin form requires an image but the DB does not enforce it, and mock
-// fixtures deliberately omit one. A customer seeing this is an admin's mistake,
-// not a design.
-//
-// So it is machine text, in the machine face, and deliberately not a mark. It
-// says NO IMAGE, in caps as furniture, so there is no reading of it in which it
-// looks like something we chose to show — a wordmark here would be a fallback
-// that passes for a visual, which is the failure that lets it survive on a live
-// product page. The words are a constant (`NO_IMAGE_LABEL`) rather than a
-// message key: they are the same in every locale, machine text like a room
-// code.
-//
-// SVG so it scales pixel-cleanly from an admin row's ~80px through a full-width
-// card banner without container queries. One shape only, the banner's own 3:2 —
-// the aspect-ratio rule above applies to the no-image case exactly as it does
-// to a photo, which is what keeps an imaged card and an un-imaged one the
-// same height on a grid. Private, so a caller cannot paint a product picture
-// without going through the one frame the design language allows; the rect
-// is sized in percentages and the text centred on them, so the placeholder
-// stays centred and proportional at any width. The label is set at 18 in the
-// viewBox's own units, a little under 60% of the 150-wide box: enough that it
-// reads at an admin row's thumbnail size, and short of the edges, where a
-// placeholder spanning the frame stops looking like a gap and starts looking
-// like a design.
-function SogFallback({ className }: { className?: string }) {
-  return (
-    <svg
-      role="img"
-      aria-hidden
-      viewBox="0 0 150 100"
-      preserveAspectRatio="xMidYMid meet"
-      className={cn("h-full w-full", className)}
-    >
-      <rect width="100%" height="100%" className="fill-lifted" />
-      <text
-        x="50%"
-        y="50%"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize="18"
-        fontWeight="400"
-        className="fill-act font-mono"
-      >
-        {NO_IMAGE_LABEL}
-      </text>
-    </svg>
+    <FramedImage
+      purpose="product"
+      src={src}
+      className={className}
+      sizes={sizes}
+      eager={eager}
+      zoomOnHover={zoomOnHover}
+    />
   );
 }

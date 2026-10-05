@@ -94,10 +94,6 @@ function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null): Vo
   };
 }
 
-function isModeratorRole(role: VoiceRole): boolean {
-  return role === "admin" || role === "gedu";
-}
-
 // ---------- Provider ----------
 
 interface VoiceRoomProviderProps {
@@ -145,6 +141,10 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const [localRole, setLocalRole] = useState<VoiceRole>("gamer");
+  // Whether this viewer moderates the room: the local token's owner flag, read
+  // once at join. **Never the role** — a trainee's role slot says `gedu`, and
+  // the owner flag is the one thing the server decides from who moderates.
+  const [isModerator, setIsModerator] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
   // The local media *health* channel — what is wrong with the device right now,
   // never whether the mic/camera is on. Fed from two places: Daily's normalized
@@ -171,7 +171,11 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   });
 
   const localSessionId = participants.find((p) => p.isLocal)?.sessionId ?? null;
-  const screenShare = useScreenShare({ callObjectRef, localRole, localSessionId });
+  const screenShare = useScreenShare({
+    callObjectRef,
+    isOwner: isModerator,
+    localSessionId,
+  });
 
   // Keep the screen awake while in a voice call.
   useWakeLock();
@@ -311,6 +315,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     setCameraOn(false);
     setCameraAllowed(false);
     setLocalRole("gamer");
+    setIsModerator(false);
     setIsDeafened(false);
     setMediaError(null);
     activeSpeakerIdRef.current = null;
@@ -380,7 +385,9 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
         const local = co.participants().local;
         const parsed = parseUserName(local.user_name);
         setLocalRole(parsed.role);
-        isModeratorRef.current = isModeratorRole(parsed.role);
+        // The owner flag the server minted, not a reading of the role slot.
+        isModeratorRef.current = local.owner;
+        setIsModerator(local.owner);
         localUserIdRef.current = parsed.userId || local.session_id;
 
         // Stamp our initial lobby zone onto userData so peers place us
@@ -669,8 +676,6 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   }, []);
 
   // --- Derived view state ---
-
-  const isModerator = isModeratorRole(localRole);
 
   const localUserId = participants.find((p) => p.isLocal)?.userId ?? null;
 

@@ -61,8 +61,10 @@ const JPEG_QUALITY = 80;
  * dimension CHECK already refuses past. Honest clients normalize to 2048 before
  * uploading, so nothing a real composer produces comes near this; a picture
  * that does is refused here rather than decoded and then refused by the RPC.
+ *
+ * Any other server-side decode of an image a user stored takes the same bound.
  */
-const MAX_INPUT_PIXELS = 4096 * 4096;
+export const MAX_INPUT_PIXELS = 4096 * 4096;
 
 /** One re-encoded image: the bytes to store, and their measured size. */
 export interface ReencodedJpeg {

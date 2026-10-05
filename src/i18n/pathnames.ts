@@ -105,6 +105,47 @@ export const PATHNAMES = {
     fr: "/a-propos",
     tlh: "/about",
   },
+  "/library": {
+    en: "/library",
+    fi: "/kirjasto",
+    sv: "/bibliotek",
+    fr: "/bibliotheque",
+    tlh: "/library",
+  },
+  // One segment, two addresses: an article's id or the slug of its title in
+  // the page's locale (`src/lib/slug.ts`).
+  "/library/[idOrSlug]": {
+    en: "/library/[idOrSlug]",
+    fi: "/kirjasto/[idOrSlug]",
+    sv: "/bibliotek/[idOrSlug]",
+    fr: "/bibliotheque/[idOrSlug]",
+    tlh: "/library/[idOrSlug]",
+  },
+  "/team": {
+    en: "/team",
+    fi: "/tiimi",
+    sv: "/team",
+    fr: "/equipe",
+    tlh: "/team",
+  },
+  // One segment, two addresses: a person's id or the slug of their first name
+  // and nickname (`src/lib/slug.ts`).
+  "/team/[idOrSlug]": {
+    en: "/team/[idOrSlug]",
+    fi: "/tiimi/[idOrSlug]",
+    sv: "/team/[idOrSlug]",
+    fr: "/equipe/[idOrSlug]",
+    tlh: "/team/[idOrSlug]",
+  },
+  // Admin-only, but the child of a translated route, so translated with it.
+  // Reached by the article's id alone; the segment is named for its parent's.
+  "/library/[idOrSlug]/preview": {
+    en: "/library/[idOrSlug]/preview",
+    fi: "/kirjasto/[idOrSlug]/esikatselu",
+    sv: "/bibliotek/[idOrSlug]/forhandsvisning",
+    fr: "/bibliotheque/[idOrSlug]/apercu",
+    tlh: "/library/[idOrSlug]/preview",
+  },
   "/attributions": {
     en: "/attributions",
     fi: "/lahteet",
@@ -132,6 +173,7 @@ export const PATHNAMES = {
   "/verify-email": "/verify-email",
   "/select-profile": "/select-profile",
   "/complete-registration": "/complete-registration",
+  "/oauth/consent": "/oauth/consent",
 
   // --- Shared ---------------------------------------------------------------
   "/settings": "/settings",
@@ -162,10 +204,22 @@ export const PATHNAMES = {
   "/admin/municipality-clubs/[id]/groups/[groupId]":
     "/admin/municipality-clubs/[id]/groups/[groupId]",
   "/admin/municipality-invoicing": "/admin/municipality-invoicing",
+  "/admin/platform-vision": "/admin/platform-vision",
+  "/admin/feedback": "/admin/feedback",
+  "/admin/feedback/products": "/admin/feedback/products",
+  "/admin/feedback/products/[id]": "/admin/feedback/products/[id]",
+  "/admin/feedback/groups/[id]": "/admin/feedback/groups/[id]",
+  "/admin/feedback/gedus": "/admin/feedback/gedus",
+  "/admin/feedback/gedus/[id]": "/admin/feedback/gedus/[id]",
+  "/admin/feedback/gamers/[id]": "/admin/feedback/gamers/[id]",
+  "/admin/feedback/responses": "/admin/feedback/responses",
   "/admin/gedu-invoicing": "/admin/gedu-invoicing",
   "/admin/invoice-customers": "/admin/invoice-customers",
   "/admin/invoice-customers/new": "/admin/invoice-customers/new",
   "/admin/invoice-customers/[id]": "/admin/invoice-customers/[id]",
+  "/admin/library": "/admin/library",
+  "/admin/library/new": "/admin/library/new",
+  "/admin/library/[id]": "/admin/library/[id]",
   "/admin/sites": "/admin/sites",
   "/admin/sites/[id]": "/admin/sites/[id]",
   "/admin/substitutions": "/admin/substitutions",

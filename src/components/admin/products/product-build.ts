@@ -24,11 +24,9 @@ import {
   isAttachableGamerPhotoConsent,
 } from "@/lib/constants/gamer-photo-consents";
 import { isSupportedCountry } from "@/lib/constants/location-hierarchies";
-import {
-  isSupportedLocale,
-  SUPPORTED_LOCALES,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
+import { SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/constants/locales";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
+import { openingLocaleTab } from "@/lib/i18n/locale-tabs";
 import { resolveWebUrl } from "@/lib/navigation/web-url";
 import { decimalToCents } from "@/lib/utils";
 import type {
@@ -728,26 +726,18 @@ export function existingFormState(
   uiLocale: SupportedLocale,
 ): FormState {
   const translations: Partial<Record<SupportedLocale, TranslationDraft>> = {};
-  // Row order, mirroring the Object.keys insertion order this replaced —
-  // `translationLocales[0]` is the first *fetched* translation, not the
-  // first locale in SUPPORTED_LOCALES order.
+  // In the one fixed language order, so the tab an admin opens on is the
+  // version a reader of their UI locale is shown on the public page.
   const translationLocales: SupportedLocale[] = [];
-  for (const t of product.product_translations) {
-    if (isSupportedLocale(t.locale)) {
-      translations[t.locale] = {
-        name: t.name,
-        shortDescription: t.short_description,
-        longDescription: t.long_description ?? "",
-      };
-      translationLocales.push(t.locale);
-    }
+  for (const t of inLocaleOrder(product.product_translations)) {
+    translations[t.locale] = {
+      name: t.name,
+      shortDescription: t.short_description,
+      longDescription: t.long_description ?? "",
+    };
+    translationLocales.push(t.locale);
   }
-  const activeLocale: SupportedLocale =
-    translations[uiLocale] !== undefined
-      ? uiLocale
-      : translations.en !== undefined
-        ? "en"
-        : (translationLocales[0] ?? uiLocale);
+  const activeLocale = openingLocaleTab(translationLocales, uiLocale);
 
   // EUR-only price map. A blank row is invalid for paid products, but
   // validate() catches that on save. Legacy non-EUR `product_prices` rows
@@ -815,7 +805,7 @@ export function existingFormState(
     // product itself. No row at all is the ordinary "no lesson link" case.
     materialUrl: product.product_staff_details?.material_url ?? "",
     // The id alone. The picture and its label ride in on the query's
-    // `product_images` embed and are handed to the form's image card
+    // `catalogue_images` embed and are handed to the form's image card
     // separately, so nothing about the entry is copied into editable state.
     imageId: product.image_id,
     forGamers: product.for_gamers,

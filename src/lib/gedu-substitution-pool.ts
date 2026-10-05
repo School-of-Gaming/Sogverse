@@ -1,24 +1,21 @@
 import { fromZonedTime } from "date-fns-tz";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { occurrenceOnDate } from "@/lib/session-date-occurrence";
+import {
+  buildSessionFacts,
+  sessionFactsProduct,
+  type SessionFacts,
+} from "@/lib/substitution-session-facts";
 import type { OpenSubstitutionRequest } from "@/services/session-substitution";
-import type {
-  GeduAssignmentRole,
-  ProductTopic,
-  ProductType,
-  SpokenLanguageCode,
-} from "@/types";
+import type { GeduAssignmentRole } from "@/types";
 
 /**
  * The pool a certified gedu picks a substitution out of — the wire rows turned into
  * what one card of it actually shows.
  *
- * **The calendar maths is here because it is not in SQL.** The read emits the
- * date plus the product's slots and timezone, exactly as both session feeds do,
- * and there is one schedule expansion in this codebase and it is on the client.
- * So this module is where a bare `YYYY-MM-DD` becomes the instants a reader is
- * shown in their own zone.
+ * **The session itself is described by the shared session facts**, as on every
+ * other substitution surface — the date and slots becoming instants included.
+ * What is the pool's own is the frame around it: the role, its fee, whether
+ * the caller has offered, and the order.
  *
  * **What is deliberately not here is the absent gedu.** The read does not name
  * them and never will: naming the person half-reveals a private reason —
@@ -38,25 +35,13 @@ export interface SubstitutionPoolRow {
   requestId: string;
   groupId: string;
   groupName: string;
-  /** Product-local `YYYY-MM-DD`, kept because it is the row's own identity. */
-  sessionDate: string;
   /**
-   * When the substituted session runs, or `null` where the schedule no longer
-   * projects that weekday — an orphaned request, which the queue still carries
-   * because it orders by date and never by a derived instant.
+   * The session — when, where, what and in which language. An orphaned
+   * request (a weekday the schedule no longer projects) has no instants, and
+   * the queue still carries it because it orders by date and never by a
+   * derived instant.
    */
-  startsAt: Date | null;
-  endsAt: Date | null;
-  /** The product's own zone, which `sessionDate` is a date in. */
-  timezone: string;
-  /** Translated, in the viewer's locale, exactly as a card resolves one. */
-  productName: string;
-  productType: ProductType;
-  topic: ProductTopic;
-  spokenLanguageCode: SpokenLanguageCode;
-  isRemote: boolean;
-  /** The venue on an in-person product; `null` on a remote one. */
-  siteName: string | null;
+  session: SessionFacts;
   /** The role being substituted — the absent gedu's, never the volunteer's. */
   role: GeduAssignmentRole;
   /**
@@ -91,11 +76,13 @@ export const SUBSTITUTION_URGENT_WITHIN_MS = 24 * 60 * 60 * 1000;
  * the schedule still projects to be late for.
  */
 export function isSubstitutionUrgent(
-  row: Pick<SubstitutionPoolRow, "startsAt">,
+  session: Pick<SessionFacts, "startsAt">,
   now: Date,
 ): boolean {
-  if (row.startsAt === null) return false;
-  return row.startsAt.getTime() - now.getTime() < SUBSTITUTION_URGENT_WITHIN_MS;
+  if (session.startsAt === null) return false;
+  return (
+    session.startsAt.getTime() - now.getTime() < SUBSTITUTION_URGENT_WITHIN_MS
+  );
 }
 
 /**
@@ -107,11 +94,11 @@ export function isSubstitutionUrgent(
  * only honest place for it: it is somewhere on that date, so it sorts after
  * every session that day whose time is known and before the next day's.
  */
-function poolSortInstant(row: SubstitutionPoolRow): number {
-  if (row.startsAt !== null) return row.startsAt.getTime();
+function poolSortInstant({ session }: SubstitutionPoolRow): number {
+  if (session.startsAt !== null) return session.startsAt.getTime();
   return fromZonedTime(
-    `${row.sessionDate}T23:59:59.999`,
-    row.timezone,
+    `${session.sessionDate}T23:59:59.999`,
+    session.timezone,
   ).getTime();
 }
 
@@ -149,37 +136,21 @@ export function buildSubstitutionPoolRows(
   requests: readonly OpenSubstitutionRequest[],
   locale: SupportedLocale,
 ): SubstitutionPoolRow[] {
-  const rows = requests.map((request) => {
-    const occurrence = occurrenceOnDate({
-      sessionDate: request.session_date,
-      slots: request.product.schedule_slots.map((slot) => ({
-        weekday: slot.weekday,
-        startTime: slot.start_time,
-        durationMinutes: slot.duration_minutes,
-      })),
-      timezone: request.product.timezone,
-    });
-
-    return {
+  const rows = requests.map(
+    (request): SubstitutionPoolRow => ({
       requestId: request.request_id,
       groupId: request.group_id,
       groupName: request.group_name,
-      sessionDate: request.session_date,
-      startsAt: occurrence?.start ?? null,
-      endsAt: occurrence?.end ?? null,
-      timezone: request.product.timezone,
-      productName:
-        resolveTranslation(request.product.translations, locale)?.name ?? "",
-      productType: request.product.product_type,
-      topic: request.product.topic,
-      spokenLanguageCode: request.product.spoken_language_code,
-      isRemote: request.product.is_remote,
-      siteName: request.product.site_name,
+      session: buildSessionFacts({
+        product: sessionFactsProduct(request.product),
+        sessionDate: request.session_date,
+        locale,
+      }),
       role: request.role,
       feeCents: request.fee_cents,
       hasOffered: request.has_offered,
-    } satisfies SubstitutionPoolRow;
-  });
+    }),
+  );
 
   return sortSubstitutionPoolRows(rows);
 }

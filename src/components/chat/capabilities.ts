@@ -1,4 +1,5 @@
-import type { ChatAccount, ChatMessage, ChatRole } from "./types";
+import type { LockExplanation } from "@/components/ui/locked-control";
+import type { ChatAccount, ChatMessage, ChatRole, ChatStanding } from "./types";
 
 /**
  * What this viewer may do — the one piece of chat permission logic that
@@ -64,25 +65,30 @@ import type { ChatAccount, ChatMessage, ChatRole } from "./types";
  */
 export type ChatLockControl = "lock" | "unlock" | null;
 
-/** Admin and gedu hold every moderator control; nobody else holds any. */
-const MODERATOR_ROLES: readonly ChatRole[] = ["admin", "gedu"];
+/** The roles a lock refuses as a target — the lock RPC's own list. */
+const STAFF_ROLES: readonly ChatRole[] = ["admin", "gedu"];
 
 /**
- * Whether a role moderates.
+ * Whether a role is staff, which is what makes a person unlockable.
  *
- * **A positive allow-list, never an exclusion.** The voice room learned this the
- * expensive way: a negative test ("not a gamer") hands moderation to whichever
- * role is admitted next, and admitting parents to voice rooms would have done
- * exactly that. A parent in a chat is a participant with no moderator
- * capabilities — guest-equivalent, exactly like a child.
+ * **This is a question about a *target*, never about the viewer.** Whether the
+ * viewer moderates is their {@link ChatStanding}, which the server decided: a
+ * trainee's role is `gedu`, so a role test on the viewer is exactly what would
+ * hand one the moderator's controls. A target is the other way round — the lock
+ * RPC refuses any admin or gedu, trainees included, so the offer does too.
+ *
+ * A positive allow-list, never an exclusion: a parent in a chat is a
+ * participant, exactly like a child, and lockable like one.
  */
-export function isChatModerator(role: ChatRole): boolean {
-  return MODERATOR_ROLES.includes(role);
+export function isChatStaffRole(role: ChatRole): boolean {
+  return STAFF_ROLES.includes(role);
 }
 
 /** What the viewer is, and what the channel has done to them. */
 export interface ChatViewerState {
   viewer: ChatAccount;
+  /** Whether the viewer moderates, or is shown moderation locked. */
+  standing: ChatStanding;
   /**
    * Whether a moderator has locked *this viewer* out of this channel.
    *
@@ -154,6 +160,15 @@ export interface ChatMessageCapabilities {
    * refused beside their name in the rail would be two answers to one question.
    */
   lockControl: ChatLockControl;
+  /**
+   * The moderator acts this viewer is shown **locked**, each with the words it
+   * explains itself in, or `null` for one not shown. Only a trainee is shown
+   * any, and each appears exactly where a moderator's working control would
+   * have — so a trainee's menu is the moderator's menu with padlocks on it.
+   */
+  lockedHide: LockExplanation | null;
+  lockedRestore: LockExplanation | null;
+  lockedLock: LockExplanation | null;
 }
 
 /**
@@ -170,8 +185,9 @@ export interface ChatMessageCapabilities {
  *
  * The rules, and each one's reason:
  *
- * - **Moderators only, from the positive allow-list.** A parent in a chat is a
- *   participant, exactly like a child.
+ * - **Moderators only, by the viewer's standing and never their role.** A
+ *   parent in a chat is a participant, exactly like a child, and a trainee is
+ *   one too, whose role says `gedu`.
  * - **Never against a fellow moderator, and never against yourself.** The
  *   asymmetric half of the principle in this module's header: between
  *   colleagues a lock is not moderation but one member of staff silencing
@@ -184,15 +200,28 @@ export interface ChatMessageCapabilities {
  */
 export function deriveChatLockControl(
   viewer: ChatAccount,
+  /** Whether the viewer moderates — the server's answer, never their role. */
+  standing: ChatStanding,
   /** The person the control would act on, or `null` where none is known. */
   target: ChatAccount | null,
   /** Whether that person is currently locked — points the switch. */
   targetLocked: boolean,
 ): ChatLockControl {
-  if (!isChatModerator(viewer.role)) return null;
-  if (target === null || target.id === viewer.id) return null;
-  if (isChatModerator(target.role)) return null;
+  if (standing.kind !== "moderator") return null;
+  if (!isLockableTarget(viewer, target)) return null;
   return targetLocked ? "unlock" : "lock";
+}
+
+/**
+ * Whether a lock could land on this person at all, whoever is asking: somebody
+ * the roster names, who is not the viewer, and who is not staff.
+ */
+function isLockableTarget(
+  viewer: ChatAccount,
+  target: ChatAccount | null,
+): target is ChatAccount {
+  if (target === null || target.id === viewer.id) return false;
+  return !isChatStaffRole(target.role);
 }
 
 /**
@@ -251,7 +280,7 @@ export function deriveChatMessageCapabilities(
   /** Whether the *sender* is currently locked — drives the lock/unlock switch. */
   senderLocked: boolean,
 ): ChatMessageCapabilities {
-  const moderator = isChatModerator(state.viewer.role);
+  const moderator = state.standing.kind === "moderator";
   const own = message.senderId === state.viewer.id;
   const hidden = message.hiddenAt !== null;
   const settled = message.delivery === "sent";
@@ -260,17 +289,33 @@ export function deriveChatMessageCapabilities(
   // of their own back from. A send still in flight is neither.
   const deletable = settled || message.delivery === "failed";
 
+  // Where a moderator would be offered each act — the one test both the
+  // working control and its locked twin answer, so a trainee's padlocks sit
+  // exactly where a moderator's controls would.
+  const hideable = !own && !hidden && settled;
+  const restorable = hidden;
+  const lockable = isLockableTarget(state.viewer, sender);
+  const locks = state.standing.kind === "trainee" ? state.standing.locks : null;
+
   return {
     canEdit: own && !hidden && writable && message.body !== null,
     canDelete: own && !hidden && deletable,
-    canHide: moderator && !own && !hidden && settled,
-    canRestore: moderator && hidden,
+    canHide: moderator && hideable,
+    canRestore: moderator && restorable,
     canReply: !hidden && writable,
     canReact: !hidden && writable,
     canSeeHiddenBody: moderator && hidden,
     // The person's answer, asked with the sender in hand. Nothing about the
     // message enters it — a lock is about who said it, not what was said — and
     // the rail asks the same function with no message at all.
-    lockControl: deriveChatLockControl(state.viewer, sender, senderLocked),
+    lockControl: deriveChatLockControl(
+      state.viewer,
+      state.standing,
+      sender,
+      senderLocked,
+    ),
+    lockedHide: locks !== null && hideable ? locks.hide : null,
+    lockedRestore: locks !== null && restorable ? locks.restore : null,
+    lockedLock: locks !== null && lockable ? locks.lock : null,
   };
 }

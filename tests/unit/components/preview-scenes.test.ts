@@ -183,8 +183,12 @@ describe("preview scene registry", () => {
     // back up to a scenario per state, and pinning the exact count would also
     // fail on the day somebody correctly *folds* two scenarios into one.
     const MAX_SCENARIOS: Record<string, number> = {
-      "gedu-product": 5,
-      "gedu-dashboard": 3,
+      // The sixth is the trainee's view of the club: a different viewer, which
+      // no other scenario can show beside its own.
+      "gedu-product": 6,
+      // The fourth is a trainee's seats, which the default page's pinned card
+      // census keeps off it.
+      "gedu-dashboard": 4,
       // Two, and there is no third: the page has a populated state and an empty
       // one, and the uncertified page is the empty one with a section missing.
       "gedu-substitutions": 2,
@@ -252,7 +256,12 @@ describe("registry scenarios match their fixtures", () => {
   });
 
   it("gedu product page", () => {
-    expect(slugsFor("gedu-product")).toEqual([...GROUP_WORKSPACE_SCENARIOS]);
+    // The trainee scenario is the club fixture through the trainee shell, so
+    // it is not a workspace fixture scenario of its own.
+    expect(slugsFor("gedu-product")).toEqual([
+      ...GROUP_WORKSPACE_SCENARIOS,
+      "trainee",
+    ]);
   });
 
   it("parent dashboard", () => {

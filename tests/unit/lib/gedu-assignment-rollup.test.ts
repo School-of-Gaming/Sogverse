@@ -11,6 +11,7 @@ import {
 // beside them, in the shared module's test.
 import { runEndedOn, runLiveness } from "@/lib/product-run";
 import { INERT_HREF } from "@/lib/constants/routes";
+import { geduSeatHrefs } from "@/components/gedu/gedu-seat-rows";
 
 /**
  * The roll-up is what replaced the dashboard's per-occurrence enumeration, so
@@ -42,6 +43,9 @@ function row(over: {
       startDate: over.startDate ?? "2025-01-06",
       endDate: over.endDate ?? null,
       isRemote: over.isRemote ?? true,
+      siteName: over.siteName ?? null,
+      topic: "minecraft_java",
+      spokenLanguageCode: "fi",
       productType: "consumer_club",
       translations: [{ locale: "en", name: over.name, description: "" }],
     },
@@ -56,7 +60,6 @@ function row(over: {
     participantCount: 14,
     groupName: `${over.name} A`,
     groupParticipantCount: 7,
-    siteName: over.siteName ?? null,
     slots:
       over.slots ??
       [
@@ -558,6 +561,53 @@ describe("rollUpGeduAssignments", () => {
     );
     expect(summaries.map((s) => s.productId)).toEqual(["p1"]);
   });
+
+  it("gives a trainee seat the same card, owing nothing, linking to the same workspace", () => {
+    const trainee = { ...row({ id: "p2", name: "Shadowed Club" }), kind: "trainee" as const };
+    const summaries = rollUp([row({ id: "p1", name: "Club" }), trainee], now, {
+      // A count keyed to the trainee's seat must not reach their card: what a
+      // session owes is the staff's work.
+      attentionByAssignment: {
+        [geduAssignmentKey("p2", "p2-group")]: 4,
+      },
+    });
+    const card = summaries.find((s) => s.productId === "p2");
+    expect(card).toBeDefined();
+    expect(card?.trainee).toBe(true);
+    expect(card?.attentionCount).toBe(0);
+    expect(card?.openHref).toEqual({
+      pathname: "/preview/[surface]/[scenario]",
+      params: { surface: "gedu-product", scenario: "p2" },
+    });
+    expect(summaries.find((s) => s.productId === "p1")?.trainee).toBe(false);
+  });
+
+  it("links a trainee card to its own group, and an assignment card to the bare product", () => {
+    // The trainee seat and a live substitution on a sibling group of the same
+    // product: with no group named, the workspace read would fall back to the
+    // substituted group and open its staff workspace from the trainee card.
+    const trainee = { ...row({ id: "p1", name: "Club" }), groupId: "g-a", kind: "trainee" as const };
+    const substitution = {
+      ...row({ id: "p1", name: "Club" }),
+      groupId: "g-b",
+      kind: "substitution" as const,
+      substitutionDate: "2026-02-16",
+    };
+    const assignment = row({ id: "p2", name: "Other Club" });
+    const rows = [trainee, substitution, assignment];
+    const { hrefByAssignment } = geduSeatHrefs(rows);
+
+    const summaries = rollUpGeduAssignments({ rows, now, locale: "en", hrefByAssignment });
+    expect(summaries.find((s) => s.productId === "p1")?.openHref).toEqual({
+      pathname: "/gedu/clubs/[id]",
+      params: { id: "p1" },
+      query: { groupId: "g-a" },
+    });
+    expect(summaries.find((s) => s.productId === "p2")?.openHref).toEqual({
+      pathname: "/gedu/clubs/[id]",
+      params: { id: "p2" },
+    });
+  });
 });
 
 /**
@@ -631,7 +681,7 @@ describe("rollUpGeduSubstitutions", () => {
       }),
     ]);
     expect(substitutions).toHaveLength(2);
-    expect(substitutions.map((c) => c.substitutionDate)).toEqual([
+    expect(substitutions.map((c) => c.session.sessionDate)).toEqual([
       "2026-02-16",
       "2026-02-23",
     ]);
@@ -642,8 +692,8 @@ describe("rollUpGeduSubstitutions", () => {
       substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
     ]);
     // 16:30 Helsinki on 16 Feb is 14:30 UTC; the slot runs 90 minutes.
-    expect(substitution.startsAt?.toISOString()).toBe("2026-02-16T14:30:00.000Z");
-    expect(substitution.endsAt?.toISOString()).toBe("2026-02-16T16:00:00.000Z");
+    expect(substitution.session.startsAt?.toISOString()).toBe("2026-02-16T14:30:00.000Z");
+    expect(substitution.session.endsAt?.toISOString()).toBe("2026-02-16T16:00:00.000Z");
   });
 
   it("marks a substitution whose session an admin has cancelled, and only that one", () => {
@@ -683,7 +733,7 @@ describe("rollUpGeduSubstitutions", () => {
     ]);
     expect(substitution.accessOpensAt.toISOString()).toBe("2026-02-14T14:30:00.000Z");
     expect(
-      substitution.startsAt!.getTime() - substitution.accessOpensAt.getTime(),
+      substitution.session.startsAt!.getTime() - substitution.accessOpensAt.getTime(),
     ).toBe(48 * 60 * 60 * 1000);
   });
 
@@ -697,7 +747,7 @@ describe("rollUpGeduSubstitutions", () => {
     const [substitution] = rollUpSubstitutions([
       substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-17" }),
     ]);
-    expect(substitution.startsAt).toBeNull();
+    expect(substitution.session.startsAt).toBeNull();
     expect(substitution.accessOpensAt.toISOString()).toBe("2026-02-14T22:00:00.000Z");
   });
 
@@ -731,7 +781,7 @@ describe("rollUpGeduSubstitutions", () => {
         weekday: 2,
       }),
     ]);
-    expect(substitution.startsAt).toBeNull();
+    expect(substitution.session.startsAt).toBeNull();
     expect(substitution.accessOpensAt.toISOString()).toBe("2026-03-27T21:00:00.000Z");
   });
 
@@ -741,9 +791,9 @@ describe("rollUpGeduSubstitutions", () => {
     const [substitution] = rollUpSubstitutions([
       substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-17" }),
     ]);
-    expect(substitution.substitutionDate).toBe("2026-02-17");
-    expect(substitution.startsAt).toBeNull();
-    expect(substitution.endsAt).toBeNull();
+    expect(substitution.session.sessionDate).toBe("2026-02-17");
+    expect(substitution.session.startsAt).toBeNull();
+    expect(substitution.session.endsAt).toBeNull();
   });
 
   it("puts the group on the workspace link", () => {
@@ -774,7 +824,7 @@ describe("rollUpGeduSubstitutions", () => {
         },
       },
     );
-    const byDate = new Map(substitutions.map((c) => [c.substitutionDate, c.attentionCount]));
+    const byDate = new Map(substitutions.map((c) => [c.session.sessionDate, c.attentionCount]));
     expect(byDate.get("2026-02-16")).toBe(1);
     expect(byDate.get("2026-02-23")).toBe(0);
   });
@@ -785,7 +835,7 @@ describe("rollUpGeduSubstitutions", () => {
       substitutionRow({ id: "b", name: "Orphan", substitutionDate: "2026-02-17" }),
       substitutionRow({ id: "a", name: "Sooner", substitutionDate: "2026-02-16" }),
     ]);
-    expect(substitutions.map((c) => c.productName)).toEqual([
+    expect(substitutions.map((c) => c.session.productName)).toEqual([
       "Sooner",
       "Later",
       "Orphan",
@@ -803,7 +853,7 @@ describe("rollUpGeduSubstitutions", () => {
       }),
     ]);
     expect(substitution.hasVoiceRoom).toBe(false);
-    expect(substitution.siteName).toBe("Sello Library, Espoo");
+    expect(substitution.session.siteName).toBe("Sello Library, Espoo");
     expect(substitution.voiceHref).toBe(INERT_HREF);
   });
 });

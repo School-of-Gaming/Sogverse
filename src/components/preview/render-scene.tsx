@@ -50,6 +50,7 @@ import {
 } from "./scenes/gedu-invoicing-scene";
 import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
+import { GeduTraineeProductPageScene } from "./scenes/gedu-trainee-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
 import { PurchaseConfirmationScene } from "./scenes/purchase-confirmation-scene";
 import { SeatOfferScene } from "./scenes/seat-offer-scene";
@@ -62,6 +63,14 @@ import {
   TeamProfileScene,
   isTeamProfileScenario,
 } from "./scenes/team-profile-scene";
+import {
+  TeamIndexScene,
+  isTeamIndexScenario,
+} from "./scenes/team-index-scene";
+import {
+  LibraryIndexScene,
+  isLibraryIndexScenario,
+} from "./scenes/library-index-scene";
 import {
   AdminTeamProfileEditorScene,
   GeduTeamProfileEditorScene,
@@ -162,6 +171,16 @@ const SCENE_RENDERERS: Record<
     if (!isTeamProfileScenario(scenario)) notFound();
     return <TeamProfileScene scenario={scenario} />;
   },
+  team: (scenario) => {
+    if (!isTeamIndexScenario(scenario)) notFound();
+    return <TeamIndexScene />;
+  },
+  // Checked and not handed on, like the shop grid: there is one empty index,
+  // so the body branches on nothing.
+  library: (scenario) => {
+    if (!isLibraryIndexScenario(scenario)) notFound();
+    return <LibraryIndexScene />;
+  },
   "gedu-profile-editor": (scenario) => {
     if (!isGeduTeamProfileEditorScenario(scenario)) notFound();
     return <GeduTeamProfileEditorScene scenario={scenario} />;
@@ -191,6 +210,10 @@ const SCENE_RENDERERS: Record<
     return <GeduContractScene scenario={scenario} />;
   },
   "gedu-product": (scenario) => {
+    // The trainee's view of the club scenario: a different shell over the same
+    // group rather than another shape of group, so it is not a workspace
+    // fixture scenario of its own.
+    if (scenario === "trainee") return <GeduTraineeProductPageScene />;
     if (!isGroupWorkspaceScenario(scenario)) notFound();
     return <GeduProductPageScene scenario={scenario} />;
   },

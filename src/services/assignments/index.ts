@@ -4,4 +4,6 @@ export { assignmentKeys } from "./assignments.keys";
 export {
   useMyAssignedProducts,
   useGeduAssignedProduct,
+  useTraineeAssignedProduct,
 } from "./assignments.queries";
+export type { TraineeAssignedProduct } from "./assignments.contracts";

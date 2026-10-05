@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { ProductBanner } from "@/components/ui/product-banner";
-import { productImageSrc } from "@/lib/images/product-image-url";
+import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate, formatDateOnly, formatDateRange } from "@/lib/utils";
@@ -159,7 +159,7 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                   cropped differently from the shop has them approving a
                   picture families never meet. */}
               <ProductBanner
-                src={productImageSrc(p.image_path)}
+                src={catalogueImageSrc("product", p.image_path)}
                 className="w-24 shrink-0 rounded-md"
                 // `w-24`, fixed at every breakpoint. This is the biggest single
                 // win of the optimizer: a list of thirty products used to pull

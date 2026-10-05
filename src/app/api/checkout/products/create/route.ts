@@ -29,6 +29,7 @@ import { stripe } from "@/lib/stripe/client";
 import { CHECKOUT_SESSION_LIFETIME_MINUTES } from "@/lib/constants/participations";
 import { isAdvertisedProduct } from "@/lib/marketing-events";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { getOrigin } from "@/lib/url";
 
 /**
@@ -128,7 +129,7 @@ export const POST = defineRoute({
     // items now name the shared Stripe Product, whose name is resolved at the
     // default locale and shared across every locale.
     const parentLocaleProductName =
-      resolveTranslation(product.product_translations, locale)?.name ??
+      resolveTranslation(inLocaleOrder(product.product_translations), locale)?.name ??
       fallbackProductName;
     // The default-locale name, for the session metadata a Stripe Workflow turns
     // into an internal Slack notification. Its audience is staff in one channel,
@@ -137,7 +138,7 @@ export const POST = defineRoute({
     // depending on who happened to buy it. Same convention as the shared Stripe
     // Product's name above.
     const defaultLocaleProductName =
-      resolveTranslation(product.product_translations, DEFAULT_LOCALE)?.name ??
+      resolveTranslation(inLocaleOrder(product.product_translations), DEFAULT_LOCALE)?.name ??
       fallbackProductName;
 
     // Shape x billing_mode must agree. Each billing mode has exactly one valid

@@ -3,7 +3,10 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { runEndedOn } from "@/lib/product-run";
-import { occurrenceOnDate } from "@/lib/session-date-occurrence";
+import {
+  buildSessionFacts,
+  type SessionFacts,
+} from "@/lib/substitution-session-facts";
 import {
   capPastCancellations,
   endDateToCutoff,
@@ -76,12 +79,6 @@ export interface GeduAssignmentRow extends MyAssignedProductSessionRow {
   groupName: string | null;
   /** Active participations in the gedu's own group — not the product total. */
   groupParticipantCount: number;
-  /**
-   * The site an in-person product runs at, or `null` for a remote one. Every
-   * in-person product has a location (the schema requires it), so `null` here
-   * means "no building involved" rather than "not loaded".
-   */
-  siteName: string | null;
 }
 
 /**
@@ -181,6 +178,14 @@ export interface GeduAssignmentSummary {
   /** Where a click anywhere on the card navigates — the product's feed. */
   openHref: MaybeInertHref;
   /**
+   * Whether this card is a **trainee seat** rather than an assignment. It is
+   * the same card, linking to the same workspace URL — the route decides the
+   * trainee's view from the seat — and the one thing it draws differently is a
+   * "Trainee" badge in its eyebrow, which this flag drives: trainee status is
+   * per seat, so one gedu's page can hold both kinds side by side.
+   */
+  trainee: boolean;
+  /**
    * How many owed past sessions still need something — the number behind the
    * card's badge, computed server-side by the assignment-summaries RPC and
    * carried through here rather than re-derived.
@@ -229,8 +234,9 @@ export function rollUpGeduAssignments({
   const summaries = rows
     // Substitution rows are the other roll-up's: a substitution is one dated afternoon, and
     // running it through the schedule walk would draw a sub a recurring card
-    // claiming they teach the club every week.
-    .filter((row) => row.kind === "assignment")
+    // claiming they teach the club every week. A trainee seat is a standing
+    // seat on a group like an assignment, so it takes the same card.
+    .filter((row) => row.kind !== "substitution")
     .map((row) => {
     const { next, cancelledAhead } = nextOccurrenceFor(row, now, windowCloseMs);
     const hasVoiceRoom = row.product.isRemote === true;
@@ -257,9 +263,14 @@ export function rollUpGeduAssignments({
       // Never carried by a remote product, whatever the row says: a product
       // with a voice room has no building, and a card showing both would be
       // claiming the group meets in two places.
-      siteName: hasVoiceRoom ? null : row.siteName,
+      siteName: hasVoiceRoom ? null : row.product.siteName,
       openHref: hrefByAssignment[key] ?? INERT_HREF,
-      attentionCount: attentionByAssignment?.[key] ?? 0,
+      // A trainee owes no session anything — what a session owes is the
+      // staff's work — so their card never carries a count, whatever a map
+      // keyed by (product, group) happens to hold.
+      attentionCount:
+        row.kind === "trainee" ? 0 : (attentionByAssignment?.[key] ?? 0),
+      trainee: row.kind === "trainee",
     } satisfies GeduAssignmentSummary;
     });
 
@@ -374,27 +385,21 @@ function bySoonestSession(
  */
 export interface GeduSubstitutionSummary {
   groupId: string;
-  /** Product-local `YYYY-MM-DD` — the other half of this card's identity. */
-  substitutionDate: string;
   productId: string;
-  /** Translated product name. */
-  productName: string;
-  productType: ProductType;
   groupName: string | null;
-  /** The product's own zone, which `substitutionDate` is a date in. */
-  timezone: string;
   /**
-   * The substituted session's start and end, or `null` when the schedule no longer
-   * projects that weekday.
+   * The session — when, where, what — described exactly as the pool and the
+   * admin page describe it. Its `sessionDate` is the other half of this card's
+   * identity.
    *
-   * `null` is a real answer rather than a failure: a substitution keys on (group,
-   * date) like every session record, so an admin moving the schedule's weekday
-   * afterwards leaves a row naming a day the schedule has stopped producing.
-   * The card then shows the date alone rather than disappearing, which is what
-   * the orphaned-request rule asks of every reader of one.
+   * An orphaned date (one the schedule no longer projects) has no instants:
+   * a substitution keys on (group, date) like every session record, so an admin
+   * moving the schedule's weekday afterwards leaves a row naming a day the
+   * schedule has stopped producing. The card then shows the date alone rather
+   * than disappearing, which is what the orphaned-request rule asks of every
+   * reader of one.
    */
-  startsAt: Date | null;
-  endsAt: Date | null;
+  session: SessionFacts;
   /**
    * When the group's workspace opens to this sub — 48 hours before the
    * substituted session starts.
@@ -428,8 +433,6 @@ export interface GeduSubstitutionSummary {
   hasVoiceRoom: boolean;
   /** Where the Join navigates. `"#"` keeps it inert. */
   voiceHref: MaybeInertHrefObject;
-  /** The building, on an in-person product; `null` on a remote one. */
-  siteName: string | null;
   /**
    * The workspace this card opens — **carrying the group as a query param**.
    *
@@ -474,12 +477,10 @@ const SUBSTITUTION_ACCESS_LEAD_MS = 48 * 60 * 60 * 1000;
  * runtime-local Date, which a DST transition would silently move.
  */
 function substitutionAccessAnchor(
-  occurrence: { start: Date } | null,
-  substitutionDate: string,
-  timezone: string,
+  session: Pick<SessionFacts, "startsAt" | "sessionDate" | "timezone">,
 ): Date {
-  if (occurrence !== null) return occurrence.start;
-  return fromZonedTime(`${substitutionDate}T00:00:00`, timezone);
+  if (session.startsAt !== null) return session.startsAt;
+  return fromZonedTime(`${session.sessionDate}T00:00:00`, session.timezone);
 }
 
 export interface SubstitutionRollUpArgs {
@@ -531,37 +532,27 @@ export function rollUpGeduSubstitutions({
     if (row.kind !== "substitution" || row.substitutionDate === null) return [];
 
     const key = geduAssignmentKey(row.product.id, row.groupId);
-    const occurrence = occurrenceOnDate({
+    const session = buildSessionFacts({
+      product: { ...row.product, slots: row.slots },
       sessionDate: row.substitutionDate,
-      slots: row.slots,
-      timezone: row.product.timezone,
+      locale,
     });
     const hasVoiceRoom = row.product.isRemote === true;
     return [
       {
         groupId: row.groupId,
-        substitutionDate: row.substitutionDate,
         productId: row.product.id,
-        productName:
-          resolveTranslation(row.product.translations, locale)?.name ?? "",
-        productType: row.product.productType,
         groupName: row.groupName,
-        timezone: row.product.timezone,
-        startsAt: occurrence?.start ?? null,
-        endsAt: occurrence?.end ?? null,
+        session,
         accessOpensAt: new Date(
-          substitutionAccessAnchor(
-            occurrence,
-            row.substitutionDate,
-            row.product.timezone,
-          ).getTime() - SUBSTITUTION_ACCESS_LEAD_MS,
+          substitutionAccessAnchor(session).getTime() -
+            SUBSTITUTION_ACCESS_LEAD_MS,
         ),
         cancelled: row.substitutionCancelled,
         hasVoiceRoom,
         voiceHref: hasVoiceRoom
           ? (voiceHrefByAssignment?.[key] ?? INERT_HREF)
           : INERT_HREF,
-        siteName: hasVoiceRoom ? null : row.siteName,
         openHref: substitutionWorkspaceHref(hrefByAssignment[key], row.groupId),
         attentionCount:
           attentionBySubstitution?.[geduSubstitutionKey(row.groupId, row.substitutionDate)] ?? 0,
@@ -602,15 +593,18 @@ function substitutionWorkspaceHref(
  * work, so it goes to the foot of the run for the same reason a finished
  * assignment does.
  */
-function bySubstitutionMoment(a: GeduSubstitutionSummary, b: GeduSubstitutionSummary): number {
+function bySubstitutionMoment(
+  { session: a }: GeduSubstitutionSummary,
+  { session: b }: GeduSubstitutionSummary,
+): number {
   if ((a.startsAt === null) !== (b.startsAt === null)) {
     return a.startsAt === null ? 1 : -1;
   }
   if (a.startsAt !== null && b.startsAt !== null) {
     const byStart = a.startsAt.getTime() - b.startsAt.getTime();
     if (byStart !== 0) return byStart;
-  } else if (a.substitutionDate !== b.substitutionDate) {
-    return a.substitutionDate < b.substitutionDate ? -1 : 1;
+  } else if (a.sessionDate !== b.sessionDate) {
+    return a.sessionDate < b.sessionDate ? -1 : 1;
   }
   return a.productName.localeCompare(b.productName);
 }

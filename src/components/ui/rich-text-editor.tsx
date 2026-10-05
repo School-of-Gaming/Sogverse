@@ -26,6 +26,10 @@ import {
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown as MarkdownExtension } from "tiptap-markdown";
 import { StatusLine } from "@/components/ui/alert";
+import {
+  MARKDOWN_USE_CASES,
+  type MarkdownUseCase,
+} from "@/lib/authored-markdown";
 import { cn } from "@/lib/utils";
 
 /**
@@ -48,15 +52,13 @@ import { cn } from "@/lib/utils";
  * has to survive a one-third-width rail and a phone, and a toolbar that reflows
  * to two rows as the viewport narrows moves the writing surface underneath it.
  *
- * **The variant matches the renderer's, and is a property of the field.**
- * `feed` is a staff-authored, family-facing note: no links, and headings scaled
- * to the card a report renders in. `marketing` is a product's long description
- * on our own public pages: links are part of the copy's job there, and headings
- * are scaled to a page. `profile` is a team member's "About me": no links and
- * no headings, because the page already titles it. Whichever a field stores,
- * both ends of it use the same
- * name — a toolbar wider than the renderer is a trap, and a renderer wider than
- * the toolbar is a construct that can only arrive by paste.
+ * **The use case matches the renderer's, and is a property of the field.** Its
+ * feature flags (`lib/authored-markdown`) decide what the toolbar and the
+ * schema offer — a heading control only with `headings`, a link control only
+ * with `links` — never how the text looks: every use case is written in the
+ * one style the renderer paints. Whichever a field stores, both ends of it use
+ * the same name — a toolbar wider than the renderer is a trap, and a renderer
+ * wider than the toolbar is a construct that can only arrive by paste.
  *
  * **Everything the toolbar cannot produce degrades rather than breaks.** Pasted
  * markdown genuinely goes through the same parser — plain text on the clipboard
@@ -70,11 +72,10 @@ import { cn } from "@/lib/utils";
  * it with a changed React key, which is both cheaper and less surprising than an
  * effect racing the user's typing.
  */
-export type RichTextEditorVariant = "feed" | "marketing" | "profile";
-
 export function RichTextEditor({
   initialValue,
   onChange,
+  onSeeded,
   placeholder,
   ariaLabel,
   describedBy,
@@ -86,6 +87,22 @@ export function RichTextEditor({
   initialValue: string;
   /** Fires with the serialised markdown on every edit. */
   onChange: (markdown: string) => void;
+  /**
+   * Fires once, when the editor is created, with its own serialisation of
+   * `initialValue` — what `onChange` would report for the document untouched.
+   *
+   * **Markdown does not round-trip byte for byte, and `onChange` can fire with
+   * no edit.** The document is parsed and written back in this editor's one
+   * dialect, so a stored value in another spelling (`*` bullets, `__strong__`,
+   * a two-space hard break, a run of blank lines) comes back out different
+   * while meaning the same. And the schema normalises the document on the
+   * first transaction it sees — a caret placed by a click is one — so a
+   * document ending in a list or a heading gains its trailing paragraph then,
+   * and `onChange` reports it. A caller deciding "unsaved" by comparing what
+   * it is handed with the stored value compares against this as well, or an
+   * untouched field reads as edited.
+   */
+  onSeeded?: (markdown: string) => void;
   placeholder?: string;
   /** Accessible name for the writing surface. */
   ariaLabel: string;
@@ -96,18 +113,18 @@ export function RichTextEditor({
    */
   describedBy?: string;
   /**
-   * Which field this is, matching the read-only renderer's variant of the same
-   * name. Defaults to `feed`, the conservative half: a caller that has not
-   * thought about it gets no link control rather than one whose output the
-   * renderer would strip. Read once, at mount — the schema is built from it.
+   * The field's use case, the same one the read-only renderer is given.
+   * Defaults to `feed`, the conservative half: a caller that has not thought
+   * about it gets no link control rather than one whose output the renderer
+   * would strip. Read once, at mount — the schema is built from it.
    */
-  variant?: RichTextEditorVariant;
+  variant?: MarkdownUseCase;
   className?: string;
   disabled?: boolean;
 }) {
   const t = useTranslations("richText");
-  const linksAllowed = variant === "marketing";
-  const headingsAllowed = variant !== "profile";
+  const { links: linksAllowed, headings: headingsAllowed } =
+    MARKDOWN_USE_CASES[variant].features;
 
   /**
    * The URL row's draft, and whether it is open.
@@ -145,16 +162,10 @@ export function RichTextEditor({
         role: "textbox",
         "aria-multiline": "true",
         class: cn(
-          // Matches the Textarea primitive's inner padding and type scale so a
-          // report field and a gedu-note field read as the same kind of box.
-          "min-h-40 w-full px-3 py-2 text-base focus-visible:outline-none",
-          // The rendered subset, styled with the same tokens the read-only
-          // renderer uses — what you type is what the reader sees.
-          "[&_p]:leading-relaxed [&_p:not(:first-child)]:mt-2",
-          "[&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mt-2 [&_ol]:list-decimal [&_ol]:pl-5",
-          "[&_li]:leading-relaxed",
-          "[&_strong]:font-semibold",
-          VARIANT_PROSE[variant],
+          // Matches the Textarea primitive's inner padding so a report field
+          // and a gedu-note field read as the same kind of box.
+          "min-h-40 w-full px-3 py-2 focus-visible:outline-none",
+          EDITOR_PROSE,
           // Placeholder: the extension marks the first empty node, and the
           // text is drawn as a non-selectable pseudo-element so it never
           // becomes content.
@@ -162,6 +173,7 @@ export function RichTextEditor({
         ),
       },
     },
+    onCreate: ({ editor: instance }) => onSeeded?.(readMarkdown(instance)),
     onUpdate: ({ editor: instance }) => onChange(readMarkdown(instance)),
   });
 
@@ -180,7 +192,7 @@ export function RichTextEditor({
    * rather than a render per keystroke.
    *
    * `link` is asked for unconditionally. Tiptap answers `false` for a mark its
-   * schema has never heard of, so the feed variant reads a permanent `false`
+   * schema has never heard of, so the feed use case reads a permanent `false`
    * and renders no button to show it on.
    */
   const activeTools =
@@ -327,7 +339,7 @@ export function RichTextEditor({
       run: () => editor?.chain().focus().toggleOrderedList().run(),
     },
   ];
-  // The headings group exists only where the field has headings: a `profile`
+  // The headings group exists only with the `headings` flag: a `profile`
   // field is already titled by the page it renders on.
   const toolGroups: ToolbarTool[][] = headingsAllowed
     ? [markTools, headingTools, listTools]
@@ -357,12 +369,12 @@ export function RichTextEditor({
     >
       {/* `flex-nowrap` and a fixed height: the seven shrink-proof buttons come
           to roughly 260px including their separators, which fits the narrowest
-          place the feed variant is used — a one-third-width rail on a phone —
+          place the feed use case is used — a one-third-width rail on a phone —
           and pinning the height means focusing or toggling a button can never
           change where the writing surface starts. The link group takes that to
-          roughly 305px, and it only ever appears on the marketing variant,
-          which lives on a full-width admin form. **A ninth button is a decision
-          about the narrow case, not a paste job.** */}
+          roughly 305px, and it only ever appears with the `links` flag, whose
+          fields live on full-width admin forms. **A ninth button is a
+          decision about the narrow case, not a paste job.** */}
       <div className="flex h-10 flex-nowrap items-center gap-0.5 border-b border-border px-1">
         {toolGroups.map((group, index) => (
           <div key={group[0].key} className="flex items-center gap-0.5">
@@ -468,9 +480,10 @@ export function richTextExtensions({
   variant,
   placeholder = "",
 }: {
-  variant: RichTextEditorVariant;
+  variant: MarkdownUseCase;
   placeholder?: string;
 }): Extensions {
+  const { features } = MARKDOWN_USE_CASES[variant];
   return [
     StarterKit.configure({
       // Everything the toolbar can't produce and the renderer doesn't style is
@@ -490,7 +503,7 @@ export function richTextExtensions({
       // draft. `isAllowedUri` narrows the accepted schemes to the ones the
       // reader's renderer keeps — see `ALLOWED_LINK_SCHEMES`.
       link:
-        variant === "marketing"
+        features.links
           ? {
               autolink: false,
               openOnClick: false,
@@ -499,9 +512,10 @@ export function richTextExtensions({
           : false,
       // Three levels, because a real write-up opens with a title line and then
       // sections under it. Anything deeper is switched off at the schema, so it
-      // cannot be typed, pasted or undone into existence — and a `profile`
-      // field has none at all, so a pasted heading lands as a paragraph.
-      heading: variant === "profile" ? false : { levels: [1, 2, 3] },
+      // cannot be typed, pasted or undone into existence — and a field without
+      // the `headings` flag has none at all, so a pasted heading lands as a
+      // paragraph.
+      heading: features.headings ? { levels: [1, 2, 3] } : false,
     }),
     Placeholder.configure({ placeholder }),
     MarkdownExtension.configure({
@@ -547,35 +561,31 @@ const NOTHING_ACTIVE: Record<ToolbarToolKey, boolean> = {
 };
 
 /**
- * The writing surface's heading scale, per variant — the read-only renderer's
- * own scale, restated in the arbitrary-variant form the editor's single class
- * attribute needs. The two have to move together: a heading that looks like a
- * section title while being typed and like body copy once saved is the trap the
- * same-subset rule exists to close.
+ * **The writing surface is the rendered style.** The read-only renderer's
+ * container and element classes (`MARKDOWN_CONTAINER_CLASSES` and
+ * `MARKDOWN_ELEMENT_CLASSES` in `./markdown`), restated in the
+ * arbitrary-variant form the editor's single class attribute needs — written
+ * out literally because Tailwind only generates classes it can read in the
+ * source. A unit test holds the two equal: a heading that looks like a section
+ * title while being typed and like body copy once saved is the trap the
+ * same-subset rule exists to close. One string serves every use case, because
+ * use cases differ only in what the toolbar can produce, never in how it looks.
  *
- * The marketing variant's link treatment is here for the same reason, and the
- * underline is persistent at both ends: a link the writer sees underlined and
- * the reader only sees underlined on hover is that same trap, one element down.
+ * Block margins target the surface's direct children, because ProseMirror
+ * wraps each list item's text in a paragraph that the renderer's tight lists
+ * do not have.
  */
-const FEED_PROSE = cn(
-  "[&_h1]:mt-3 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:leading-snug",
-  "[&_h2]:mt-3 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:leading-snug",
-  "[&_h3]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:leading-snug [&_h3]:text-muted-foreground",
+export const EDITOR_PROSE = cn(
+  "text-base leading-relaxed text-foreground [&>*:first-child]:mt-0",
+  "[&_h1]:mt-8 [&_h1]:text-h3",
+  "[&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:leading-snug",
+  "[&_h3]:mt-6 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:leading-snug",
+  "[&>p]:mt-4",
+  "[&_ul]:mt-4 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5 [&_ul]:[&_ul]:mt-1 [&_ul]:[&_ol]:mt-1",
+  "[&_ol]:mt-4 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5 [&_ol]:[&_ul]:mt-1 [&_ol]:[&_ol]:mt-1",
+  "[&_strong]:font-semibold",
+  "[&_a]:rounded-sm [&_a]:font-medium [&_a]:text-act [&_a]:underline [&_a]:underline-offset-4 [&_a]:focus-visible:outline-none [&_a]:focus-visible:ring-2 [&_a]:focus-visible:ring-act",
 );
-
-const MARKETING_PROSE = cn(
-  "[&_h1]:mt-5 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:leading-snug",
-  "[&_h2]:mt-5 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:leading-snug",
-  "[&_h3]:mt-5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:leading-snug",
-  "[&_a]:font-medium [&_a]:text-act [&_a]:underline [&_a]:underline-offset-4",
-);
-
-/** The scale each variant restates; `profile` has no headings to scale. */
-const VARIANT_PROSE: Record<RichTextEditorVariant, string> = {
-  feed: FEED_PROSE,
-  marketing: MARKETING_PROSE,
-  profile: "",
-};
 
 /**
  * **The schemes a link may carry — one decision, and the other half of it is

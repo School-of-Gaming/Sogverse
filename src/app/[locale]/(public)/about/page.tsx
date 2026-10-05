@@ -4,6 +4,7 @@ import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { useTranslations } from "next-intl";
 import { AboutFaq } from "@/components/about/about-faq";
 import { AboutSection } from "@/components/about/about-section";
+import { ParentTestimonials } from "@/components/about/parent-testimonials";
 import { SectionPill } from "@/components/about/section-pill";
 import { YtySection } from "@/components/about/yty-section";
 
@@ -17,18 +18,20 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * The public About page: identity, the public FAQ, and Yty.
+ * The public About page: identity, what parents say, the public FAQ, and Yty.
  *
- * The FAQ sits second because it is what a parent came for — the practical
- * questions they are deciding on — and Yty last because it is the idea behind
- * the offer rather than an answer to anything they asked.
+ * The parents' quotes follow the identity section, so a reader meets what
+ * families saw before the mechanics. The FAQ comes next because it is what a
+ * parent came for — the practical questions they are deciding on — and Yty
+ * last because it is the idea behind the offer rather than an answer to
+ * anything they asked.
  *
  * This copy used to be two anchored sections on the home page, which put it out
  * of reach of every family who has an account — the proxy bounces a signed-in
  * reader off `/` to their dashboard. It lives on its own route so the header
  * can point everyone at it, signed in or not.
  *
- * The page title is an `sr-only` `h1`. The three sections keep the heading
+ * The page title is an `sr-only` `h1`. The four sections keep the heading
  * levels they were written with (each opens at `h2`), so the outline reads
  * page → section → sub-heading with nothing renumbered, and a sighted reader
  * still meets the About section's own hero rather than a second title above it.
@@ -45,6 +48,8 @@ export default function AboutPage() {
       <SectionPill />
 
       <AboutSection id="about" />
+
+      <ParentTestimonials id="parents" />
 
       <AboutFaq id="faq" />
 

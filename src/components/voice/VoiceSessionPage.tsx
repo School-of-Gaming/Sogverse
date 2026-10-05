@@ -11,6 +11,11 @@ import { VoiceRoom } from "@/components/voice/VoiceRoom";
 import { GroupSessionChat } from "@/components/voice/GroupSessionChat";
 import type { ParticipantChatControls } from "@/components/voice/ParticipantRow";
 import { VoiceMemberFlairProvider } from "@/components/voice/VoiceMemberFlairProvider";
+import {
+  VoiceModeratorLocksProvider,
+  useTraineeRoomLocks,
+} from "@/components/voice/VoiceModeratorLocks";
+import type { ChatStanding } from "@/components/chat";
 import { SessionFeedbackScreen } from "@/components/voice/feedback/SessionFeedbackScreen";
 import { useSessionFeedbackItems } from "@/components/voice/feedback/use-session-feedback-items";
 import { deriveVoiceMemberFlair } from "@/components/voice/derive-voice-member-flair";
@@ -18,13 +23,14 @@ import {
   useGroupStaffOverlay,
   useSetGamerGroupCreations,
   useSetGamerGroupNote,
+  useTraineeGroupOverlay,
 } from "@/services/member-flair";
 import {
   isEmptySessionFeedback,
   useOwnSessionFeedback,
   useSaveSessionFeedback,
 } from "@/services/session-feedback";
-import { useVoiceToken } from "@/services/voice";
+import { useVoiceToken, type VoiceRoomStanding } from "@/services/voice";
 import type { SessionFeedbackResult } from "@/components/voice/feedback/session-feedback-items";
 import type { GamerCreation } from "@/types";
 
@@ -92,6 +98,30 @@ function VoiceSessionInner({
    * holds the prefill read.
    */
   const [sessionOpensAt, setSessionOpensAt] = useState<string | null>(null);
+  /**
+   * What the token route admitted this viewer as — moderator, trainee or
+   * participant. The room reads moderation off its own token's owner flag;
+   * this is for what the token cannot say: that a non-owner holds a trainee
+   * seat, and so is shown the moderator's controls locked, in the room and in
+   * its chat alike. Null until the token resolves, which is before either is
+   * drawn.
+   */
+  const [standing, setStanding] = useState<VoiceRoomStanding | null>(null);
+  const roomLocks = useTraineeRoomLocks();
+  /**
+   * The chat's half of the same answer. Memoised on the standing and the words,
+   * because the chat container republishes its rail controls whenever this
+   * identity changes, and the page re-renders on every republish.
+   */
+  const chatStanding = useMemo<ChatStanding>(
+    () =>
+      standing === "moderator"
+        ? { kind: "moderator" }
+        : standing === "trainee"
+          ? { kind: "trainee", locks: roomLocks.chat }
+          : { kind: "participant" },
+    [standing, roomLocks],
+  );
   const feedbackItems = useSessionFeedbackItems();
 
   /**
@@ -120,6 +150,15 @@ function VoiceSessionInner({
     [],
   );
 
+  /**
+   * Who on the chat roster holds a trainee seat, published by the chat
+   * container for the rail's "Trainee" tag. The database sets the flag only for
+   * a viewer who moderates or is a trainee of the group, and it rides the
+   * overlay below — the staff one or the trainee's — which a family viewer
+   * never has.
+   */
+  const [traineeIds, setTraineeIds] = useState<ReadonlySet<string>>(NO_TRAINEES);
+
   // Auto-join on mount (and reconnect on refresh). No client-side
   // session-end polling — Daily's token `exp` boundary is the hard
   // ejection, set to the session window close plus the configured grace
@@ -134,8 +173,9 @@ function VoiceSessionInner({
 
     getToken
       .mutateAsync(groupId)
-      .then(({ token, roomUrl, sessionOpensAt: opensAt }) => {
+      .then(({ token, roomUrl, sessionOpensAt: opensAt, standing: admittedAs }) => {
         setSessionOpensAt(opensAt);
+        setStanding(admittedAs);
         return join(roomUrl, token, { sessionOpensAt: opensAt });
       })
       .then(() => setWasJoined(true))
@@ -190,7 +230,17 @@ function VoiceSessionInner({
    * badge is last on the identity line, the note button is the left edge of the
    * right-packed trailing group), which is why nothing waits for it.
    */
-  const { data: overlay } = useGroupStaffOverlay(groupId, isModerator);
+  const { data: staffOverlay } = useGroupStaffOverlay(groupId, isModerator);
+  /**
+   * A trainee's overlay: the same map with each note's text replaced by
+   * whether one exists, so the rows draw the note buttons and badges an
+   * assigned gedu sees and the dialog opens with the note withheld. Gated on
+   * the standing the token route answered, for the same reason as above — the
+   * RPC's own refusal is the boundary.
+   */
+  const isTrainee = standing === "trainee";
+  const { data: traineeOverlay } = useTraineeGroupOverlay(groupId, isTrainee);
+  const overlay = isTrainee ? traineeOverlay : staffOverlay;
   const setGamerNote = useSetGamerGroupNote(groupId);
   const setGamerCreations = useSetGamerGroupCreations(groupId);
 
@@ -219,8 +269,8 @@ function VoiceSessionInner({
    * rules with their own unit tests, and none of them needs a React tree.
    */
   const flair = useMemo(
-    () => deriveVoiceMemberFlair(overlay, now, openFlair),
-    [overlay, now, openFlair],
+    () => deriveVoiceMemberFlair(overlay, now, openFlair, traineeIds),
+    [overlay, now, openFlair, traineeIds],
   );
 
   const handleLeave = useCallback(async () => {
@@ -383,26 +433,32 @@ function VoiceSessionInner({
   return (
     <>
       <VoiceMemberFlairProvider value={flair}>
-        <VoiceRoom
-          onLeave={handleLeave}
-          leaveLabel={t('leave')}
-          // The live chat, in the height the room grants it. This page is the
-          // seam for chat exactly as it is for the staff overlay: the room and
-          // everything in it are pure consumers, so the channel, the history
-          // read and the subscription belong out here beside the token.
-          chat={(heightClassName) => (
-            <GroupSessionChat
-              groupId={groupId}
-              heightClassName={heightClassName}
-              onChatControlsChange={publishChatControls}
-            />
-          )}
-          // ...and what that container knows about who may be locked, handed
-          // back to the rail on the other side of the room. Null until the
-          // channel opens, which is the same thing "this room has no chat"
-          // looks like from here.
-          participantChatControls={chatControls ?? undefined}
-        />
+        <VoiceModeratorLocksProvider
+          value={standing === "trainee" ? roomLocks.voice : null}
+        >
+          <VoiceRoom
+            onLeave={handleLeave}
+            leaveLabel={t('leave')}
+            // The live chat, in the height the room grants it. This page is the
+            // seam for chat exactly as it is for the staff overlay: the room and
+            // everything in it are pure consumers, so the channel, the history
+            // read and the subscription belong out here beside the token.
+            chat={(heightClassName) => (
+              <GroupSessionChat
+                groupId={groupId}
+                standing={chatStanding}
+                heightClassName={heightClassName}
+                onChatControlsChange={publishChatControls}
+                onTraineeIdsChange={setTraineeIds}
+              />
+            )}
+            // ...and what that container knows about who may be locked, handed
+            // back to the rail on the other side of the room. Null until the
+            // channel opens, which is the same thing "this room has no chat"
+            // looks like from here.
+            participantChatControls={chatControls ?? undefined}
+          />
+        </VoiceModeratorLocksProvider>
       </VoiceMemberFlairProvider>
 
       {/* Outside the provider's subtree and mounted by the page, exactly as the
@@ -421,19 +477,28 @@ function VoiceSessionInner({
           creations={flair?.creations[flairTarget.id] ?? NO_CREATIONS}
           // Each write's promise, straight through. The dialog owns the
           // committing flag that keeps Save disabled from the click until the
-          // close, so nothing here derives one from `isPending`.
-          onSaveNote={async (text) => {
-            await setGamerNote.mutateAsync({
-              participantId: flairTarget.id,
-              note: text,
-            });
-          }}
-          onSaveCreations={async (creations) => {
-            await setGamerCreations.mutateAsync({
-              participantId: flairTarget.id,
-              creations,
-            });
-          }}
+          // close, so nothing here derives one from `isPending`. A trainee is
+          // handed the lock instead, so the same dialog draws its Save locked.
+          onSaveNote={
+            isTrainee
+              ? roomLocks.flair
+              : async (text) => {
+                  await setGamerNote.mutateAsync({
+                    participantId: flairTarget.id,
+                    note: text,
+                  });
+                }
+          }
+          onSaveCreations={
+            isTrainee
+              ? roomLocks.flair
+              : async (creations) => {
+                  await setGamerCreations.mutateAsync({
+                    participantId: flairTarget.id,
+                    creations,
+                  });
+                }
+          }
         />
       )}
     </>
@@ -445,6 +510,9 @@ function VoiceSessionInner({
  * dialog's seed does not see a new empty array on every render.
  */
 const NO_CREATIONS: readonly GamerCreation[] = [];
+
+/** The trainee set before the chat roster has said anything. */
+const NO_TRAINEES: ReadonlySet<string> = new Set();
 
 export function VoiceSessionPage(props: VoiceSessionPageProps) {
   return (

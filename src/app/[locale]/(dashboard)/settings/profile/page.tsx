@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { teamMemberPublicAddress } from "@/components/team/team-address";
 import { TeamProfileEditor } from "@/components/team/team-profile-editor";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 // The service module, not the package index: the index re-exports the
@@ -31,11 +32,12 @@ export default async function TeamProfileSettingsPage() {
   const role = viewer?.profile?.role;
   if (!viewer || (role !== "admin" && role !== "gedu")) notFound();
 
-  const supabase = await createClient();
-  const record = await new TeamProfilesService(supabase).getTeamProfile(
-    viewer.user.id,
-  );
+  const service = new TeamProfilesService(await createClient());
+  const record = await service.getTeamProfile(viewer.user.id);
   if (record === null) notFound();
+  const publicAddress = await teamMemberPublicAddress(record, () =>
+    service.listPublicTeamProfiles(),
+  );
 
-  return <TeamProfileEditor record={record} />;
+  return <TeamProfileEditor record={record} publicAddress={publicAddress} />;
 }

@@ -24,6 +24,7 @@ export {
   geduAssignmentRole,
   openSubstitutionRequest,
   openSubstitutionRequests,
+  sessionProductDocument,
   sessionStaffGedu,
 } from "./session-substitution.contracts";
 export {
@@ -43,5 +44,6 @@ export type {
   SubstitutedAdminSubstitutionRequest,
   SubstitutionRequestDocument,
   OpenSubstitutionRequest,
+  SessionProductDocument,
   SessionStaffGedu,
 } from "./session-substitution.contracts";

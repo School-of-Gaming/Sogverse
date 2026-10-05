@@ -6,12 +6,13 @@ import { readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 
 // pin-session reads PIN_COOKIE_SECRET lazily, so setting it before importing the
 // proxy is enough for the HMAC unlock-token helpers used below.
 process.env.PIN_COOKIE_SECRET = "test-pin-cookie-secret";
 
-import { proxy } from "@/proxy";
+import { config, proxy } from "@/proxy";
 import { PIN_COOKIE_NAME, pinTokenFor } from "@/lib/pin-session";
 import {
   decodeExternalPathname,
@@ -190,10 +191,14 @@ describe("proxy", () => {
       "(public)",
     );
 
-    // URL-path prefixes that are in (public) for layout/chrome reasons but are
+    // Internal paths that are in (public) for layout/chrome reasons but are
     // deliberately NOT public — they have their own gate in the proxy.
-    const PUBLIC_GROUP_CARVE_OUTS: { prefix: string; reason: string }[] = [
-      { prefix: "/preview", reason: "admin-only mock surfaces, gated in the proxy" },
+    const PUBLIC_GROUP_CARVE_OUTS: { pattern: RegExp; reason: string }[] = [
+      { pattern: /^\/preview(\/|$)/, reason: "admin-only mock surfaces, gated in the proxy" },
+      {
+        pattern: /^\/library\/[^/]+\/preview$/,
+        reason: "an admin's preview of an unpublished Library article, gated in the proxy",
+      },
     ];
 
     function walkPages(dir: string): string[] {
@@ -223,7 +228,7 @@ describe("proxy", () => {
 
     const internalPaths = walkPages(PUBLIC_GROUP_DIR).map(toInternalPath);
     const carvedOut = (url: string) =>
-      PUBLIC_GROUP_CARVE_OUTS.some((c) => url === c.prefix || url.startsWith(`${c.prefix}/`));
+      PUBLIC_GROUP_CARVE_OUTS.some((c) => c.pattern.test(url));
     const publicPaths = internalPaths.filter((url) => !carvedOut(url));
 
     // **The URL a user actually hits, in one real locale.** The filesystem
@@ -463,6 +468,104 @@ describe("proxy", () => {
       );
       expect(response.status).toBe(307);
       expect(getRedirectUrl(response).pathname).toBe("/en/login");
+    });
+  });
+
+  // --- The Library: public pages, with an admin-only preview beneath them ---
+
+  describe("Library pages", () => {
+    const ARTICLE_ID = "482f0c6f-0fbc-4202-8790-a73a4520fb47";
+
+    it.each([
+      "/en/library",
+      "/en/library?category=online_safety",
+      "/fi/kirjasto",
+      `/en/library/${ARTICLE_ID}`,
+      `/fr/bibliotheque/${ARTICLE_ID}`,
+      // Not a UUID: the page answers not-found, but the proxy lets it through.
+      "/en/library/not-an-article",
+    ])("lets a signed-out reader in at %s", async (path) => {
+      mockNoUser();
+      const response = await proxy(createNextRequest(path));
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+    });
+
+    it("lets a gedu read an article rather than bouncing them to their dashboard", async () => {
+      mockUser("gedu");
+      const response = await proxy(createNextRequest(`/en/library/${ARTICLE_ID}`));
+      expect(response.status).toBe(200);
+    });
+  });
+
+  // --- The Team: public pages, each person at their id and at their slug ---
+
+  describe("Team pages", () => {
+    const PERSON_ID = "3f1d2c0e-5b7a-4c19-9e2d-8a6b4f0c1d23";
+
+    it.each([
+      "/en/team",
+      "/fi/tiimi",
+      "/fr/equipe",
+      `/en/team/${PERSON_ID}`,
+      `/sv/team/${PERSON_ID}`,
+      "/en/team/eetu-creeperhug",
+      "/fi/tiimi/eetu-creeperhug",
+    ])("lets a signed-out reader in at %s", async (path) => {
+      mockNoUser();
+      const response = await proxy(createNextRequest(path));
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+    });
+
+    it("lets a gedu read a profile rather than bouncing them to their dashboard", async () => {
+      mockUser("gedu");
+      const response = await proxy(createNextRequest("/fi/tiimi/eetu-creeperhug"));
+      expect(response.status).toBe(200);
+    });
+  });
+
+  describe("Library article preview", () => {
+    const ARTICLE_ID = "482f0c6f-0fbc-4202-8790-a73a4520fb47";
+
+    it.each([
+      `/library/${ARTICLE_ID}/preview`,
+      `/fi/kirjasto/${ARTICLE_ID}/esikatselu`,
+    ])("lets an admin in at %s", async (path) => {
+      mockUser("admin");
+      const response = await proxy(createNextRequest(path));
+      expect(response.status).toBe(200);
+    });
+
+    it("sends an unlocked customer to their own dashboard", async () => {
+      mockUser("customer");
+      const response = await proxy(
+        await unlockedCustomerRequest(`/library/${ARTICLE_ID}/preview`),
+      );
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/en/parent");
+    });
+
+    it("sends a gedu to their own dashboard, in the request's locale", async () => {
+      mockUser("gedu");
+      const response = await proxy(
+        createNextRequest(`/sv/bibliotek/${ARTICLE_ID}/forhandsvisning`),
+      );
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/sv/gedu");
+    });
+
+    it("sends a signed-out visitor to login, carrying the address", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createNextRequest(`/library/${ARTICLE_ID}/preview`),
+      );
+      expect(response.status).toBe(307);
+      const location = getRedirectUrl(response);
+      expect(location.pathname).toBe("/en/login");
+      expect(location.searchParams.get("redirect")).toBe(
+        `/en/library/${ARTICLE_ID}/preview`,
+      );
     });
   });
 
@@ -1312,4 +1415,38 @@ describe("proxy", () => {
     });
   });
 
+  // --- The matcher ------------------------------------------------------------
+
+  describe("matcher", () => {
+    // Next's own matcher compiler, so this asks exactly the question the
+    // deployment answers: does the proxy run on this path?
+    const runsOn = (path: string) =>
+      unstable_doesMiddlewareMatch({ config, url: path });
+
+    // The public folder's video is served `immutable` and must never carry a
+    // refreshed session cookie, so the proxy must not see it — and if it did,
+    // it would locale-redirect the file to a page that does not exist.
+    it.each(["/media/hero-calm-wide-v1.mp4", "/media/any/nested/file.webm"])(
+      "skips %s",
+      (path) => {
+        expect(runsOn(path)).toBe(false);
+      },
+    );
+
+    // The public team photos are served publicly cacheable, so a refreshed
+    // session cookie on one would be handed to every later requester.
+    it.each([
+      "/api/team/photos/00000000-0000-0000-0000-000000000003",
+      "/api/team/photos/00000000-0000-0000-0000-000000000003?v=abc123",
+    ])("skips %s", (path) => {
+      expect(runsOn(path)).toBe(false);
+    });
+
+    it.each(["/", "/en", "/fi/shop", "/mediatheque", "/api/team", "/fi/team"])(
+      "still runs on %s",
+      (path) => {
+        expect(runsOn(path)).toBe(true);
+      },
+    );
+  });
 });

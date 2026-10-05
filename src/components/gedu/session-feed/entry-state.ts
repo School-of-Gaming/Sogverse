@@ -12,6 +12,7 @@
  * with the family's read-only feed and lives in `@/components/session-feed`.
  */
 
+import { isWithheld, type Withheld } from "@/lib/withheld";
 import { hasReport, type AttendanceMark } from "@/components/session-feed";
 import type {
   AttendanceMarks,
@@ -600,7 +601,7 @@ export function editorStateFromEntry(
   return {
     attendance: rosterScopedMarks(roster, entry.attendance),
     report: entry.report ?? "",
-    staffNote: entry.staffNote ?? "",
+    staffNote: storedStaffNote(entry.staffNote),
   };
 }
 
@@ -671,7 +672,10 @@ export function applyDraftToEntry(
   const { id, startsAt, endsAt, staffing } = entry;
   const written = {
     report: draft.report.length > 0 ? draft.report : null,
-    staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
+    staffNote: foldedStaffNote(
+      entry.kind === "no_record" ? null : entry.staffNote,
+      draft.staffNote,
+    ),
     attendance: draft.attendance,
     // Carried through untouched, and never *from* the draft. Photos are draft
     // scope now, but they are committed by their own two writes rather than by
@@ -715,7 +719,7 @@ export function planEditorStateFromEntry(
 ): SessionPlanEditorState {
   return {
     report: entry.report ?? "",
-    staffNote: entry.staffNote ?? "",
+    staffNote: storedStaffNote(entry.staffNote),
   };
 }
 
@@ -742,6 +746,28 @@ export function applyPlanDraftToEntry(
   return {
     ...entry,
     report: draft.report.length > 0 ? draft.report : null,
-    staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
+    staffNote: foldedStaffNote(entry.staffNote, draft.staffNote),
   };
+}
+
+/**
+ * The stored gedu note as an editor seeds from it — `""` for none, and `""`
+ * for a withheld one too, because a reader who is not sent the note has
+ * nothing to seed with. Their editor draws filler in that slot and never
+ * reads this back.
+ */
+function storedStaffNote(note: string | null | Withheld): string {
+  return typeof note === "string" ? note : "";
+}
+
+/**
+ * The gedu note after a draft is folded in locally. A withheld note stays
+ * withheld — folding a draft must not turn "not sent to you" into "empty".
+ */
+function foldedStaffNote(
+  current: string | null | Withheld,
+  drafted: string,
+): string | null | Withheld {
+  if (isWithheld(current)) return current;
+  return drafted.length > 0 ? drafted : null;
 }

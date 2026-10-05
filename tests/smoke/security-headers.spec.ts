@@ -112,4 +112,20 @@ test.describe("Security Headers", () => {
     expect(csp1).toContain("default-src 'self'");
     expect(csp2).toContain("default-src 'self'");
   });
+  // The public folder's video: served from the build's own origin, cacheable
+  // for a year because a changed file always ships under a new versioned name,
+  // and never handled by the proxy — which would both locale-redirect it and,
+  // for a signed-in requester near token expiry, put a session cookie on a
+  // response a shared cache is allowed to keep. No proxy means no CSP header,
+  // which is how the response shows the proxy never ran.
+  test("serves /media/ immutable and outside the proxy", async ({ request }) => {
+    const response = await request.get("/media/hero-calm-wide-v1.mp4", { maxRedirects: 0 });
+    const headers = response.headers();
+
+    expect(response.status()).toBe(200);
+    expect(headers["content-type"]).toBe("video/mp4");
+    expect(headers["cache-control"]).toBe("public, max-age=31536000, immutable");
+    expect(headers["set-cookie"]).toBeUndefined();
+    expect(headers["content-security-policy"]).toBeUndefined();
+  });
 });

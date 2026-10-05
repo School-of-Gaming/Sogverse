@@ -11,8 +11,9 @@ import type { GeduAssignmentSummary } from "@/services/gedu-sessions";
 /**
  * The join every gedu page that draws seat cards has to make first: the
  * assignment rows, which carry the product and its schedule, against the
- * summaries, which carry the three facts that belong to the seat rather than to
- * the product — the group's name, its size, and its building.
+ * summaries, which carry the two facts that belong to the seat rather than to
+ * the product — the group's name and its size. The building is the product's,
+ * and rides on the assignment row itself.
  *
  * It lives here because two pages make it now. My SOG draws a gedu's standing
  * groups and their live substitutions; the Substitutions page draws the
@@ -32,7 +33,7 @@ import type { GeduAssignmentSummary } from "@/services/gedu-sessions";
  * them the other's badge.
  */
 function seatKey(
-  kind: "assignment" | "substitution",
+  kind: "assignment" | "substitution" | "trainee",
   groupId: string,
   substitutionDate: string | null,
 ): string {
@@ -63,10 +64,6 @@ export function joinGeduSeatRows(
       ...row,
       groupName: summary?.group_name ?? null,
       groupParticipantCount: summary?.group_participant_count ?? 0,
-      // Null on anything remote, and the RPC has already applied that test
-      // against `is_remote` rather than against the presence of a location — a
-      // remote municipality club carries one and has no building.
-      siteName: summary?.site_name ?? null,
     };
   });
 }
@@ -78,6 +75,13 @@ export function joinGeduSeatRows(
  * sibling group of a product they already teach holds two seats on one product,
  * and under a product key they would have shared a badge, a workspace link and
  * a voice room.
+ *
+ * **A trainee seat's link names its group**, the way a substitution card's does.
+ * A certified gedu can hold a trainee seat on one group and a live substitution
+ * on a sibling group of the same product; a bare product link asks the gedu
+ * read with no group, which falls back to the substituted group and opens its
+ * staff workspace from the trainee card. Named, the gedu read refuses the
+ * trainee's group and the page hands over to the trainee read for it.
  */
 export function geduSeatHrefs(rows: readonly MyAssignedProductSessionRow[]): {
   hrefByAssignment: Record<string, AppHrefObject>;
@@ -85,10 +89,18 @@ export function geduSeatHrefs(rows: readonly MyAssignedProductSessionRow[]): {
 } {
   return {
     hrefByAssignment: Object.fromEntries(
-      rows.map((row) => [
-        geduAssignmentKey(row.product.id, row.groupId),
-        ROUTES.gedu.assignedProduct(row.product.productType, row.product.id),
-      ]),
+      rows.map((row) => {
+        const workspace = ROUTES.gedu.assignedProduct(
+          row.product.productType,
+          row.product.id,
+        );
+        return [
+          geduAssignmentKey(row.product.id, row.groupId),
+          row.kind === "trainee"
+            ? { ...workspace, query: { groupId: row.groupId } }
+            : workspace,
+        ];
+      }),
     ),
     voiceHrefByAssignment: Object.fromEntries(
       rows.map((row) => [

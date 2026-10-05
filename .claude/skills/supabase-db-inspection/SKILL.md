@@ -51,7 +51,8 @@ the `remote-supabase` skill; incident forensics in the `prod-incident-investigat
 ## Egress / usage (billing metrics)
 
 - **The CLI has no usage/billing command.** "Cached Egress" = bytes served through
-  Supabase's CDN — for Sogverse that's the public `product-images` Storage bucket.
+  Supabase's CDN — for Sogverse that's the public `product-images` and
+  `library-covers` Storage buckets.
   Investigate the *cause* via psql (`storage.objects` metadata size joined to
   `products`) + a real GET on a public object URL (a HEAD lies about Cache-Control).
 - **Billing usage numbers (egress by category) are dashboard-only — stop looking for an

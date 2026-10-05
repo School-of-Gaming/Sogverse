@@ -14,7 +14,7 @@ import {
  * One upcoming session that already has a substitute: the session, who is
  * away, who stands in, and who seated them.
  *
- * It opens with the open card's own two lines, so a session reads the same
+ * It opens with the open card's own lines, so a session reads the same
  * before and after it is staffed, and an admin checking what they approved
  * finds it by the words they approved it under. It wears no urgency treatment,
  * though: a staffed session has nothing left to do about it.

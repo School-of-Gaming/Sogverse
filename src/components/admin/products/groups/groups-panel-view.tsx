@@ -86,6 +86,9 @@ export interface GroupsPanelActions {
   ) => void;
   /** Ask the shell to open its gedu picker for this group. */
   onRequestAddGedu: (groupId: string) => void;
+  /** Ask the shell to open its gedu picker, in trainee mode, for this group. */
+  onRequestAddTrainee: (groupId: string) => void;
+  onRemoveTrainee: (groupId: string, geduId: string) => void;
   /** Ask the shell to open its participant picker. */
   onRequestAddParticipant: () => void;
   /**
@@ -639,6 +642,8 @@ export function GroupsPanelView({
                 onAddGedu={actions.onRequestAddGedu}
                 onRemoveGedu={actions.onRemoveGedu}
                 onSetGeduRole={actions.onSetGeduRole}
+                onAddTrainee={actions.onRequestAddTrainee}
+                onRemoveTrainee={actions.onRemoveTrainee}
               />
             ))
           ) : (

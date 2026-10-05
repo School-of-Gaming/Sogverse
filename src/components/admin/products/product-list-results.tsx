@@ -1,8 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { AdminListShowingLine } from "@/components/admin/admin-list-narrowing";
 import { ProductRows } from "./product-rows";
 import type { ProductWithDetails } from "@/services/products";
 import type { ProductType } from "@/types";
@@ -42,22 +42,12 @@ export function ProductListResults({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-        <span>{t("filters.showing", { count: products.length, total })}</span>
-        {/* No vertical padding: with py-1 the button is taller than the bare
-            text, so toggling it in/out grows the row and shifts the cards below.
-            Its height now matches the showing-count span's line-height. */}
-        {narrowed && (
-          <button
-            type="button"
-            onClick={onClear}
-            className="inline-flex items-center gap-1 rounded-md px-2 transition-colors hover:text-foreground"
-          >
-            <X className="h-3 w-3" />
-            {t("filters.clear")}
-          </button>
-        )}
-      </div>
+      <AdminListShowingLine
+        showing={t("filters.showing", { count: products.length, total })}
+        clearLabel={t("filters.clear")}
+        narrowed={narrowed}
+        onClear={onClear}
+      />
 
       {products.length === 0 ? (
         <Card>

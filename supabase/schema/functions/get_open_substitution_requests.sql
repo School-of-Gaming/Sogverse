@@ -50,50 +50,9 @@ BEGIN
                   WHERE o.request_id = r.id
                     AND o.gedu_id    = v_caller
                ),
-               'product', jsonb_build_object(
-                 'id',                   p.id,
-                 'product_type',         p.product_type,
-                 'topic',                p.topic,
-                 'spoken_language_code', p.spoken_language_code,
-                 'timezone',             p.timezone,
-                 'is_remote',            p.is_remote,
-                 'start_date',           p.start_date,
-                 'end_date',             p.end_date,
-                 -- The venue, on in-person products only — the same test every
-                 -- other read on this surface makes, because a remote
-                 -- municipality club carries a location_id (a municipality, by
-                 -- CHECK) and has no building.
-                 'site_name', (
-                   SELECT l.name
-                     FROM public.locations l
-                    WHERE l.id = p.location_id
-                      AND p.is_remote = false
-                 ),
-                 'translations', COALESCE((
-                   SELECT jsonb_agg(
-                            jsonb_build_object(
-                              'locale',      pt.locale,
-                              'name',        pt.name,
-                              'description', pt.short_description
-                            )
-                            ORDER BY pt.locale
-                          )
-                     FROM public.product_translations pt
-                    WHERE pt.product_id = p.id
-                 ), '[]'::jsonb),
-                 'schedule_slots', COALESCE((
-                   SELECT jsonb_agg(
-                            jsonb_build_object(
-                              'weekday',          ss.weekday,
-                              'start_time',       to_char(ss.start_time, 'HH24:MI:SS'),
-                              'duration_minutes', ss.duration_minutes
-                            )
-                            ORDER BY ss.weekday, ss.start_time
-                          )
-                     FROM public.schedule_slots ss
-                    WHERE ss.product_id = p.id
-                 ), '[]'::jsonb)
-               )
+               -- The session, described exactly as every other substitution
+               -- surface describes it.
+               'product', public.session_product_document(p)
              )
              ORDER BY r.session_date, p.id, g.name, r.id
            )
@@ -115,7 +74,7 @@ $$;
 -- Name: FUNCTION get_open_substitution_requests(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_open_substitution_requests() IS 'The gedu dashboard''s "Sessions needing a substitute": every `open` request dated today or later in the product''s timezone, within the next 60 days, that the CALLER could actually take. The exclusion is gedu_may_substitute_session itself rather than a copy of its clauses, so this list and the offer button can never disagree. Each line carries the product shell (type, topic, spoken language, timezone, remote flag or site name, term dates, translations, schedule slots), the group name, the date, the role and THAT ROLE''s fee (null when the product has not set one — a blank field, not a volunteer session), and whether the caller has already offered. The ABSENT GEDU IS DELIBERATELY NOT NAMED: naming them half-reveals a private reason, and the seat belongs to the group. Contains no schedule expansion — the client owns the calendar math, exactly as both feeds do. Gedu-gated on its first statement; an uncertified gedu gets an empty list, because certification is one of the predicate''s four refusals.';
+COMMENT ON FUNCTION public.get_open_substitution_requests() IS 'The gedu dashboard''s "Sessions needing a substitute": every `open` request dated today or later in the product''s timezone, within the next 60 days, that the CALLER could actually take. The exclusion is gedu_may_substitute_session itself rather than a copy of its clauses, so this list and the offer button can never disagree. Each line carries the session''s product as session_product_document describes it — the one shell every substitution surface shares — plus the group name, the date, the role and THAT ROLE''s fee (null when the product has not set one — a blank field, not a volunteer session), and whether the caller has already offered. The ABSENT GEDU IS DELIBERATELY NOT NAMED: naming them half-reveals a private reason, and the seat belongs to the group. Contains no schedule expansion — the client owns the calendar math, exactly as both feeds do. Gedu-gated on its first statement; an uncertified gedu gets an empty list, because certification is one of the predicate''s four refusals.';
 
 
 --

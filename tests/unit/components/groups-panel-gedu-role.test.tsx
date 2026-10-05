@@ -83,6 +83,7 @@ const SNAPSHOT: ProductGroupsSnapshot = {
           role: "primary",
         },
       ],
+      trainees: [],
       participations: [],
     },
   ],
@@ -96,6 +97,7 @@ const NO_PENDING = {
   renames: new Set<string>(),
   deletes: new Set<string>(),
   gedus: new Set<string>(),
+  trainees: new Set<string>(),
   creating: false,
 };
 
@@ -109,6 +111,8 @@ const INERT_ACTIONS = {
   onCreateGroup: () => {},
   onRemoveGedu: () => {},
   onRequestAddGedu: () => {},
+  onRequestAddTrainee: () => {},
+  onRemoveTrainee: () => {},
   onRequestAddParticipant: () => {},
 };
 

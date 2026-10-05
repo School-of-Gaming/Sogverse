@@ -19,6 +19,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, getPathname } from "@/i18n/navigation";
+import { useLocaleSwitchPaths } from "@/i18n/locale-switch-paths";
 import { FLAGS } from "@/components/ui/flags";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { useLocaleControl } from "@/providers";
@@ -82,6 +83,10 @@ export function LocalePicker({ className }: { className?: string }) {
   // destination is built by `getPathname` and then has to carry the fragment,
   // and no typed href has a `hash` field to carry one in.
   const router = useRawRouter();
+  // A page whose segment is written per locale (a Library article's slug)
+  // tells the picker its own path in each locale: the same params under
+  // another prefix would name nothing there.
+  const switchPaths = useLocaleSwitchPaths();
 
   useClickOutside(ref, () => setOpen(false));
 
@@ -95,6 +100,10 @@ export function LocalePicker({ className }: { className?: string }) {
    * `/shop?category=camps` or on a `?session_id=…` confirmation page. The
    * fragment is appended by hand for the reason given at the router above.
    *
+   * A page that told the picker its own path in the chosen locale is sent
+   * there instead of having its route rebuilt, with the same query and
+   * fragment.
+   *
    * Persistence flows one way only, and only from here: the cookie and the
    * profile are written because someone *chose* a language. Visiting a
    * prefixed URL is reading, and writes nothing.
@@ -102,6 +111,16 @@ export function LocalePicker({ className }: { className?: string }) {
   function chooseLocale(next: SupportedLocale) {
     setLocale(next);
     setOpen(false);
+
+    const hash = typeof window === "undefined" ? "" : window.location.hash;
+    const registered = switchPaths?.[next];
+    if (registered !== undefined) {
+      // `toString()` re-emits every value of a repeated key, as the `getAll`
+      // record below does.
+      const search = searchParams.toString();
+      router.replace(`${registered}${search === "" ? "" : `?${search}`}${hash}`);
+      return;
+    }
 
     // **Built with `getAll`, so a repeated key survives as an array.**
     // `Object.fromEntries(entries())` keeps only the last value of a repeated
@@ -114,7 +133,6 @@ export function LocalePicker({ className }: { className?: string }) {
         return [key, values.length > 1 ? values : values[0]];
       }),
     );
-    const hash = typeof window === "undefined" ? "" : window.location.hash;
     const target = getPathname({
       // @ts-expect-error -- next-intl's own locale-switcher shape. `pathname`
       // is the union of every declared route while `params` is the loose
@@ -154,7 +172,7 @@ export function LocalePicker({ className }: { className?: string }) {
         <span className="h-4 w-6 [&>svg]:h-full">
           <FlagComponent country={config.country} nativeLabel={config.nativeLabel} />
         </span>
-        <span className="hidden sm:inline">{locale.toUpperCase()}</span>
+        <span>{locale.toUpperCase()}</span>
         <ChevronDown className="h-3 w-3 text-muted-foreground" />
       </button>
       {open && (

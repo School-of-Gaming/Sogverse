@@ -39,7 +39,7 @@ import { cn, formatCurrencyFromCents, formatDate, formatDateOnly } from "@/lib/u
 import { firstSessionDate, lastSessionDate } from "@/lib/session-dates";
 import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { ProductBanner } from "@/components/ui/product-banner";
-import { productImageSrc } from "@/lib/images/product-image-url";
+import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { productAudience } from "@/lib/products/product-audience";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import {
@@ -248,7 +248,7 @@ function HeaderCard({
             product they manage, and it must show the same crop the family
             surfaces paint. w-40 lands near the old square's 112px height. */}
         <ProductBanner
-          src={productImageSrc(imagePath)}
+          src={catalogueImageSrc("product", imagePath)}
           className="w-40 shrink-0 rounded-md"
           // `w-40` in both arrangements — the card stacks below `sm` but the
           // width is fixed, not fluid, so one length covers every breakpoint.

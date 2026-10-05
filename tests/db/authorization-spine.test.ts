@@ -104,6 +104,9 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // than a second 42501 — so unlike every gedu read below, the positive half of
   // the matrix IS assertable here with no fixture.
   get_admin_product_sessions: { permittedRoles: ["admin"] },
+  // All-NULL arguments reach the body past the guard and are refused as a
+  // missing range (22004), which is not the forbidden error.
+  get_admin_session_feedback: { permittedRoles: ["admin"] },
   // Takes no arguments at all, so the all-NULL convention hands it an empty
   // argument object and a permitted admin gets the whole document back — the
   // positive half of the matrix is assertable here without a fixture.
@@ -132,6 +135,33 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // forbidden role never reaches the validation at all.
   create_invoice_customer: { permittedRoles: ["admin"] },
   update_invoice_customer: { permittedRoles: ["admin"] },
+  // The four writers of the Library — the working copy's create and save, and
+  // publish and unpublish, which copy it over or remove its public published
+  // copy. Neither table carries a write grant for `authenticated`, so these are
+  // the only path in. The positive half is assertable with no fixture for all
+  // four: past the admin guard, all-NULL arguments are refused with
+  // `check_violation` (create and save: no title) or `no_data_found` (publish
+  // and unpublish: no such article) — errors, but not the forbidden one.
+  create_library_article: { permittedRoles: ["admin"] },
+  save_library_article: { permittedRoles: ["admin"] },
+  publish_library_article: { permittedRoles: ["admin"] },
+  unpublish_library_article: { permittedRoles: ["admin"] },
+  // The image catalogue's replace, for the Library's half: it moves every
+  // cover — working and published copies — from one catalogue entry to
+  // another. Past the admin guard, all-NULL arguments are refused with
+  // `null_value_not_allowed` — an error, but not the forbidden one.
+  repoint_library_covers: { permittedRoles: ["admin"] },
+  // The Library's partial writers, one version or one field at a time. Past
+  // the admin guard, all-NULL arguments are refused with `check_violation`
+  // (the version: no title) or `no_data_found` (category and cover: no such
+  // article).
+  save_library_article_version: { permittedRoles: ["admin"] },
+  set_library_article_category: { permittedRoles: ["admin"] },
+  set_library_article_cover: { permittedRoles: ["admin"] },
+  // One OAuth client's public description out of Supabase Auth, which no Data
+  // API role can read — how the Library editor names the AI app a save came
+  // through. Past the admin guard, a NULL id finds no client: an empty answer.
+  get_oauth_client: { permittedRoles: ["admin"] },
   promote_from_waitlist: { permittedRoles: ["admin"] },
   demote_to_waitlist: { permittedRoles: ["admin"] },
   set_gedu_certified: { permittedRoles: ["admin"] },
@@ -237,6 +267,14 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "refused by a second 42501 — the ownership half of this RPC's gate. Its " +
       "positive path is covered by get-gedu-assigned-product.test.ts.",
   },
+  // The trainee's twin of the above, and refused the same way past the guard:
+  // a gedu with no trainee seat on the (NULL) product is the ownership 42501.
+  get_trainee_assigned_product: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "past the role guard, a gedu with no trainee seat on the (NULL) product " +
+      "is refused by a second 42501. Positive path: trainee-gedus.test.ts.",
+  },
 
   // --- the session feed ----------------------------------------------------
   //
@@ -265,6 +303,27 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "refusal, so the annotation is carried for the gedu alone — it is per " +
       "function, not per role. Positive paths: gedu-session-feed.test.ts for " +
       "both roles.",
+  },
+  // The trainee's redacted twin of the feed, with the same two-part gate: an
+  // admin passes both halves (to preview the trainee's view), and a gedu
+  // passes the role half and then needs a trainee seat on the group.
+  get_trainee_group_feed: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "past the role guard, a NULL group is a group no gedu trains on, so the " +
+      "trainee-seat half of the gate refuses one with a second 42501. An admin " +
+      "passes that half and gets a null-shaped document back. Positive paths: " +
+      "trainee-gedus.test.ts for both roles.",
+  },
+  // The trainee's twin of get_group_staff_overlay for the voice room, gated
+  // exactly as get_trainee_group_feed is.
+  get_trainee_group_overlay: {
+    permittedRoles: ["gedu", "admin"],
+    permittedAlsoForbiddenOnNullArgs:
+      "past the role guard, a NULL group is a group no gedu trains on, so the " +
+      "trainee-seat half of the gate refuses one with a second 42501. An admin " +
+      "passes that half and gets a null-shaped document back. Positive paths: " +
+      "trainee-gedus.test.ts for both roles.",
   },
   // The one that CAN be asserted positively: it takes no id at all, only the
   // enforcement epoch, so a gedu with no assignments gets an empty list rather
@@ -640,7 +699,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   get_chat_channel_roster: {
     scopeTest: "tests/db/chat-rpcs.test.ts",
-    why: "the accounts one channel can name — its group's active seat-holders, the product's assigned gedus, and anyone who has a message in it — scoped on is_chat_channel_member. A deliberate hole in the `profiles` RLS that refuses cross-participant reads, and kept to the smallest shape that serves it: first name and role, nothing else about anybody. Deterministically ordered by profile id, which is a contract rather than tidiness — mention resolution settles two accounts sharing a name by list position",
+    why: "the accounts one channel can name — its group's active seat-holders, the product's assigned gedus, its group's trainees, and anyone who has a message in it — scoped on is_chat_channel_member. A deliberate hole in the `profiles` RLS that refuses cross-participant reads, and kept to the smallest shape that serves it: first name, role and is_trainee, nothing else about anybody. is_trainee is answered only to a caller who moderates the channel or is themselves a trainee of its group, and is false for everyone otherwise, so a gamer never learns which gedu is a trainee. Deterministically ordered by profile id, which is a contract rather than tidiness — mention resolution settles two accounts sharing a name by list position",
   },
   send_chat_message: {
     scopeTest: "tests/db/chat-rpcs.test.ts",
@@ -755,6 +814,23 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/team-profiles.test.ts",
     why: "the edit predicate the team-photos storage policies are evaluated with, so it has to be executable by the querying role. SECURITY INVOKER: it answers from the caller's own role and a profiles row the caller's RLS already shows them, so it says only what the caller could read for themselves — whether the named person is themselves, or an admin or a Gedu while the caller is an admin. The scope test asks it as a Gedu, an admin, a parent and a gamer about themselves and about each other",
   },
+  // The public team page's three reads. Self-scoping by the widest reading the
+  // category admits, the one can_read_product sits on: none names a user,
+  // reads a uid, or answers one caller differently from another. What could
+  // leak is which profiles and which columns, and the scope test pins both,
+  // asked as anon and as every signed-in role.
+  list_public_team_profiles: {
+    scopeTest: "tests/db/team-profiles-public.test.ts",
+    why: "SECURITY DEFINER over team_profiles, team_profile_translations and profiles, which anon holds no grant on and authenticated reads only its own row of (or everyone's as an admin). It crosses that boundary to hand back the public slice alone: approved profiles of people who are still an admin or a Gedu, narrowed to id, role, first name, an admin's last name and title (NULL for a Gedu), nickname, pick, spoken languages, a photo version token and the translations — no email, dates, certification or trainee standing, and never the photo's object path. It takes no argument and answers every caller identically, anon included, which the scope test proves alongside the columns and the order",
+  },
+  get_public_team_profile: {
+    scopeTest: "tests/db/team-profiles-public.test.ts",
+    why: "SECURITY INVOKER filter over list_public_team_profiles by one id, so it can answer with nothing the list would not: the id only narrows the public set, and an id that is not in it (not approved, not staff, no one) returns no row. Answers every caller identically, which the scope test proves for anon and every signed-in role",
+  },
+  is_public_team_photo: {
+    scopeTest: "tests/db/team-profiles-public.test.ts",
+    why: "the predicate of the team-photos public read policy, which anon evaluates itself, so it has to be executable by anon. SECURITY DEFINER over the team tables anon cannot read, and answers only yes or no: whether a name is the current photo of a profile list_public_team_profiles shows. It reveals nothing the public list does not, and answers every caller identically; the scope test asks it about a public photo, a hidden profile's, a former staffer's and a stray object, and proves the policy it backs lets anon read the first alone",
+  },
 };
 
 /**
@@ -797,12 +873,21 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  * functions over their arguments that read no table, so anon reaching them
  * exposes nothing; `location_search_blob` is deliberately *not* here, because
  * only the write path needs it and anon never writes to `locations`.
+ *
+ * The public team page's reads are here because the page is public:
+ * `list_public_team_profiles` and `get_public_team_profile` return the
+ * approved profiles narrowed to what the page shows, and `is_public_team_photo`
+ * is the team-photos public read policy's predicate, which anon evaluates
+ * itself when the public photo route reads with no session.
  */
 const ANON_ALLOWLIST = new Set([
   "can_read_product",
   "search_locations",
   "immutable_unaccent",
   "location_search_separator",
+  "list_public_team_profiles",
+  "get_public_team_profile",
+  "is_public_team_photo",
 ]);
 
 /**

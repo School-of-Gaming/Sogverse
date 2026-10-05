@@ -73,6 +73,8 @@ interface GroupColumnProps {
     geduId: string,
     role: GeduAssignmentRole,
   ) => void;
+  onAddTrainee: (groupId: string) => void;
+  onRemoveTrainee: (groupId: string, geduId: string) => void;
   /**
    * Participation ids whose chip is greyed and undraggable — an in-flight move
    * or removal, or a club switch committing. Handed down rather than derived
@@ -98,6 +100,8 @@ export function GroupColumn({
   busyChipIds,
   onRemoveGedu,
   onSetGeduRole,
+  onAddTrainee,
+  onRemoveTrainee,
 }: GroupColumnProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const c = useTranslations("common");
@@ -298,12 +302,17 @@ export function GroupColumn({
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Gedus row */}
+          {/* Gedus row — everyone here from our side: the assigned Gedus in
+              the snapshot's order, then the trainees shadowing the group. One
+              list and one pill, because it is one question; a trainee's pill
+              draws "Trainee" exactly as the Gedus' pills draw their role —
+              the select's look where they have a select, a label where they
+              have a label — and it never opens. */}
           <div className="space-y-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
               {t("group.assignedGedus")}
             </Label>
-            {group.gedus.length === 0 ? (
+            {group.gedus.length === 0 && group.trainees.length === 0 ? (
               <p className="text-xs text-muted-foreground">{t("group.noGedus")}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -324,19 +333,45 @@ export function GroupColumn({
                     onRemove={() => onRemoveGedu(group.id, ge.id)}
                   />
                 ))}
+                {group.trainees.map((tr) => (
+                  <GeduPill
+                    key={tr.id}
+                    seat="trainee"
+                    roleAsControl={onSetGeduRole !== undefined && !isTemp}
+                    geduId={tr.id}
+                    firstName={tr.first_name}
+                    email={tr.email}
+                    isSaving={pending.trainees.has(`${group.id}:${tr.id}`)}
+                    disabled={busy}
+                    onRemove={() => onRemoveTrainee(group.id, tr.id)}
+                  />
+                ))}
               </div>
             )}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onAddGedu(group.id)}
-              disabled={busy}
-              className="gap-1.5"
-            >
-              <UserPlus className="h-4 w-4" />
-              {t("group.addGedu")}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onAddGedu(group.id)}
+                disabled={busy}
+                className="gap-1.5"
+              >
+                <UserPlus className="h-4 w-4" />
+                {t("group.addGedu")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onAddTrainee(group.id)}
+                disabled={busy}
+                className="gap-1.5"
+              >
+                <UserPlus className="h-4 w-4" />
+                {t("trainee.add")}
+              </Button>
+            </div>
           </div>
 
           {/* Participations row */}

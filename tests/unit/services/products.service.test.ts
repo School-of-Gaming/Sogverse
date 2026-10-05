@@ -237,3 +237,50 @@ describe("ProductsService.listVisibleByTypes", () => {
     });
   });
 });
+
+describe("ProductsService.listVisibleListingByTypes", () => {
+  // The listing the sitemap and a product page's robots decision read: the
+  // browse query's own filters and ended pass, narrowed to ids and languages.
+  let fetchMock: FetchMock;
+  let service: ProductsService;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-04T09:00:00.000Z"));
+    fetchMock = vi.fn<typeof fetch>();
+    service = new ProductsService(createFetchStubbedClient(fetchMock));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("asks the browse query's filters, narrowed to one id when given, and drops an ended product", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestJson([
+        {
+          id: "ended",
+          start_date: "2026-01-01",
+          end_date: "2026-06-03",
+          timezone: "Europe/Helsinki",
+          product_translations: [{ locale: "en" }],
+        },
+      ]),
+    );
+
+    expect(await service.listVisibleListingByTypes(["consumer_club"], "ended")).toEqual([]);
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("product_type")).toBe("in.(consumer_club)");
+    expect(url.searchParams.get("is_visible")).toBe("eq.true");
+    expect(url.searchParams.get("id")).toBe("eq.ended");
+  });
+
+  it("reads the whole listing when no id is given", async () => {
+    fetchMock.mockResolvedValue(postgrestJson([]));
+
+    await service.listVisibleListingByTypes(["camp"]);
+
+    expect(requestedUrl(fetchMock.mock.calls[0][0]).searchParams.has("id")).toBe(false);
+  });
+});

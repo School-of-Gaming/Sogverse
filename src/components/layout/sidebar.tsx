@@ -4,19 +4,20 @@ import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import {
   ArrowLeftRight,
-  LayoutDashboard,
+  House,
   Users,
   Palette,
   MonitorPlay,
-  Settings,
   FlaskConical,
-  MessageCircle,
   Building2,
+  BookOpen,
   ChevronLeft,
   ChevronRight,
   MapPin,
+  MessageSquareHeart,
   Receipt,
   ReceiptText,
+  Sparkles,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
@@ -30,11 +31,11 @@ import type { StaticAppHref } from "@/lib/constants/routes";
 
 type SidebarKey =
   | "dashboard" | "users"
-  | "uiComponents" | "uiPreviews" | "whatsapp" | "testing" | "settings"
+  | "uiComponents" | "uiPreviews" | "testing"
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
-  | "invoiceCustomers" | "geduInvoicing"
+  | "invoiceCustomers" | "geduInvoicing" | "libraryContent" | "platformVision"
   | "camps" | "events"
-  | "sites" | "substitutions";
+  | "sites" | "substitutions" | "feedback";
 
 interface NavItemDef {
   href: StaticAppHref;
@@ -62,12 +63,15 @@ function kindIcon(kind: ProductType) {
 // no nested sub-routes that need sidebar nav.
 const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
   admin: [
-    { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
+    { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <House className="h-5 w-5" /> },
     { href: ROUTES.admin.users, labelKey: "users", icon: <Users className="h-5 w-5" /> },
     // Above the product entries because it is the one page here that is a queue
     // of work rather than a catalogue: a session with nobody teaching it is
     // answered today, and the clubs are answered whenever.
     { href: ROUTES.admin.substitutions, labelKey: "substitutions", icon: <ArrowLeftRight className="h-5 w-5" /> },
+    // Beside the queue rather than among the reports: it is the read of how
+    // sessions are landing, and a note that needs acting on is today's work too.
+    { href: ROUTES.admin.feedback, labelKey: "feedback", icon: <MessageSquareHeart className="h-5 w-5" /> },
     { href: ROUTES.admin.consumerClubs, labelKey: "consumerClubs", icon: kindIcon("consumer_club") },
     { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: kindIcon("municipality_club") },
     { href: ROUTES.admin.camps, labelKey: "camps", icon: kindIcon("camp") },
@@ -79,12 +83,14 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     // because an invoice is being raised, and the ledger is where a club with
     // no customer is reported.
     { href: ROUTES.admin.invoiceCustomers, labelKey: "invoiceCustomers", icon: <Building2 className="h-5 w-5" /> },
+    { href: ROUTES.admin.library, labelKey: "libraryContent", icon: <BookOpen className="h-5 w-5" /> },
+    // Last of the content entries and above the tooling: it is read, not
+    // worked in, and an admin reaches it from a link far more than by habit.
+    { href: ROUTES.admin.platformVision, labelKey: "platformVision", icon: <Sparkles className="h-5 w-5" /> },
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },
-    { href: ROUTES.admin.whatsapp, labelKey: "whatsapp", icon: <MessageCircle className="h-5 w-5" /> },
     { href: ROUTES.admin.testing, labelKey: "testing", icon: <FlaskConical className="h-5 w-5" /> },
-    { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
 };
 
@@ -108,14 +114,15 @@ export function Sidebar() {
         // Sticks to the bottom edge of the sticky Header by reading
         // `--header-height` from `globals.css` — the same variable the
         // header itself uses. Height is pinned to the visible viewport
-        // below the header so the user-info section stays anchored to the
-        // bottom while the dashboard <main> scrolls with the document.
+        // between the header and the mobile tab bar (`--tab-bar-height`, zero
+        // from `lg` up) so the user-info section stays anchored to the
+        // bottom, never behind the bar, while the dashboard <main> scrolls with the document.
         //
         // The rail has no palette of its own: it is chrome, and composes from
         // the general neutrals like every other surface. Its ground is the
         // card, its edge the general border, its hover fill `muted`, and the
         // active entry the brand pair.
-        `sticky top-[var(--header-height)] flex h-[calc(100vh-var(--header-height))] flex-col self-start border-r border-border bg-card ${collapseTransition}`,
+        `sticky top-[var(--header-height)] flex h-[calc(100vh-var(--header-height)-var(--tab-bar-height))] flex-col self-start border-r border-border bg-card ${collapseTransition}`,
         collapsed ? "w-18" : "w-18 md:w-64"
       )}
     >

@@ -156,7 +156,7 @@ export function GeduDashboardPageBody({
     ],
     (card) =>
       card.kind === "substitution"
-        ? card.item.productType
+        ? card.item.session.productType
         : card.item.assignment.productType,
   );
 

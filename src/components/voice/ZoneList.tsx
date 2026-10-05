@@ -17,7 +17,15 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  LockedButton,
+  LockGlyph,
+  useLockExplanation,
+  type LockExplanation,
+  type Locked,
+} from "@/components/ui/locked-control";
 import { useVoiceRoom } from "./VoiceRoomProvider";
+import { useVoiceModeratorLocks } from "./VoiceModeratorLocks";
 import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 import { PrivacyScreen } from "./PrivacyScreen";
 import { VoiceAvatar } from "./VoiceAvatar";
@@ -110,6 +118,13 @@ export function ZoneList() {
   );
 
   const canManage = isModerator && groupId !== null;
+  // A viewer the page handed locks sees the same zone controls, locked. Only
+  // in a group room — an instant room has no custom zones for anyone.
+  const moderatorLocks = useVoiceModeratorLocks();
+  const zoneLock =
+    !isModerator && groupId !== null && moderatorLocks !== null
+      ? moderatorLocks.zones
+      : null;
 
   // A gamer placed in a private zone is "locked in place" — only a moderator can
   // move them out. So no zone is tappable for them and their own avatar isn't
@@ -194,10 +209,23 @@ export function ZoneList() {
                       if (row) setDialog({ kind: "delete", zone: row });
                     },
                   }
-                : undefined
+                : zoneLock !== null && zone.kind === "custom"
+                  ? { locked: zoneLock }
+                  : undefined
             }
           />
         ))}
+
+        {zoneLock !== null && (
+          <LockedButton
+            explanation={zoneLock}
+            variant="outline"
+            className="w-full border-dashed"
+          >
+            <Plus className="h-4 w-4" />
+            {tv("newZone")}
+          </LockedButton>
+        )}
 
         {canManage && (
           <Button
@@ -264,8 +292,65 @@ interface ZoneCardProps {
   label: string;
   /** undefined → not tappable (a private zone a gamer can't self-enter). */
   onEnter?: () => void;
-  /** Moderator edit/delete controls (custom zones only); undefined → hidden. */
-  manage?: { onEdit: () => void; onDelete: () => void };
+  /**
+   * Moderator edit/delete controls (custom zones only); undefined → hidden. A
+   * lock in their place draws the same two buttons, which explain themselves.
+   */
+  manage?: { onEdit: () => void; onDelete: () => void } | Locked;
+}
+
+/**
+ * A custom zone's edit and delete buttons, locked: the same two glyphs at the
+ * same size, a padlock beside them, and one explanation for the pair.
+ *
+ * Its own component rather than two `LockedButton`s because the pair sits
+ * inside a card that is itself a tap target — each press stops there, exactly
+ * as the working buttons' presses do — and a padlock per 24px button would not
+ * fit beside the zone's name.
+ */
+function LockedZoneManage({ explanation }: { explanation: LockExplanation }) {
+  const t = useTranslations("voice");
+  const { open, isOpen, dialog } = useLockExplanation(explanation);
+  const press = () => open();
+  return (
+    // Every press and key stops here — the buttons' and the explanation's
+    // alike. The dialog is portalled but React events still bubble through the
+    // tree, so its own "Got it" would otherwise reach the card and walk the
+    // reader into the zone.
+    <div
+      className="flex items-center gap-0.5 opacity-80"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6"
+        onClick={press}
+        title={t("editZone")}
+        aria-label={t("editZone")}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+      >
+        <Pencil className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6"
+        onClick={press}
+        title={t("deleteZoneConfirm")}
+        aria-label={t("deleteZoneConfirm")}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </Button>
+      <LockGlyph className="text-muted-foreground" />
+      <span className="sr-only">{explanation.lockedHint}</span>
+      {dialog}
+    </div>
+  );
 }
 
 function ZoneCard({
@@ -340,7 +425,10 @@ function ZoneCard({
             {t("privateZone")}
           </span>
         )}
-        {manage && (
+        {manage && "locked" in manage && (
+          <LockedZoneManage explanation={manage.locked} />
+        )}
+        {manage && !("locked" in manage) && (
           <div className="flex items-center gap-0.5">
             {/* stopPropagation so these don't trigger the card's tap-to-enter. */}
             <Button

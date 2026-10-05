@@ -204,6 +204,6 @@ describe("substitutions on My SOG", () => {
     // The card's own eyebrow, which is what tells it apart from an assignment
     // card in the same grid.
     expect(html).toContain(messages.gedu.substitution.cardEyebrow);
-    expect(html).toContain(substitutions[0].productName);
+    expect(html).toContain(substitutions[0].session.productName);
   });
 });

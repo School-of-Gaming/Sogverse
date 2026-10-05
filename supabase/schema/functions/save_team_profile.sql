@@ -36,8 +36,8 @@ BEGIN
    WHERE tp.user_id = p_user_id
      FOR UPDATE;
 
-  -- The checkbox is a readiness mark, not consent: whoever may edit the
-  -- profile may set it. NULL keeps it as stored (off for a new profile).
+  -- The checkbox is a readiness mark: whoever may edit the profile may set
+  -- it. NULL keeps it as stored (off for a new profile).
   v_opted_in := COALESCE(p_opted_in, v_opted_in, false);
 
   IF v_target_role = 'gedu' AND NULLIF(btrim(p_title), '') IS NOT NULL THEN
@@ -135,7 +135,7 @@ $$;
 -- Name: FUNCTION save_team_profile(p_user_id uuid, p_translations jsonb, p_nickname text, p_title text, p_pick smallint, p_photo_path text, p_opted_in boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.save_team_profile(p_user_id uuid, p_translations jsonb, p_nickname text, p_title text, p_pick smallint, p_photo_path text, p_opted_in boolean) IS 'The one writer of a team profile''s content: nickname, title (an admin''s only; a Gedu''s raises 22023), pick, photo path, the whole translation set (a JSON array of {locale, short_description, long_description, fun_fact}, replacing what was stored) and the checkbox, in one transaction. Guard-first for an admin or a Gedu; the target half is can_edit_team_profile — their own, or any admin''s or Gedu''s for an admin. The checkbox is a readiness mark, not consent, so any editor may set it; NULL keeps the stored value. Refuses with P0026 when the checkbox would be on while the profile is incomplete (no photo, an admin''s profile with no title, no language, or a language missing either description), and with P0027 a photo path that has no object in the team-photos bucket (a save from a page opened before another save replaced and removed that photo). A save that leaves the checkbox off also hides the profile (approved false, the admin decision stamp left as it was), so ticking it again waits for an admin to make it public; a save that leaves it on does not change whether it is public, whoever saves. Returns the photo path the save replaced, or NULL, so the caller can remove that object through the storage API.';
+COMMENT ON FUNCTION public.save_team_profile(p_user_id uuid, p_translations jsonb, p_nickname text, p_title text, p_pick smallint, p_photo_path text, p_opted_in boolean) IS 'The one writer of a team profile''s content: nickname, title (an admin''s only; a Gedu''s raises 22023), pick, photo path, the whole translation set (a JSON array of {locale, short_description, long_description, fun_fact}, replacing what was stored) and the checkbox, in one transaction. Guard-first for an admin or a Gedu; the target half is can_edit_team_profile — their own, or any admin''s or Gedu''s for an admin. The checkbox is a readiness mark that any editor may set; NULL keeps the stored value. Refuses with P0026 when the checkbox would be on while the profile is incomplete (no photo, an admin''s profile with no title, no language, or a language missing either description), and with P0027 a photo path that has no object in the team-photos bucket (a save from a page opened before another save replaced and removed that photo). A save that leaves the checkbox off also hides the profile (approved false, the admin decision stamp left as it was), so ticking it again waits for an admin to make it public; a save that leaves it on does not change whether it is public, whoever saves. Returns the photo path the save replaced, or NULL, so the caller can remove that object through the storage API.';
 
 
 --

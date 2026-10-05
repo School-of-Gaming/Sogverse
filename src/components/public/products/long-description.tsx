@@ -10,7 +10,8 @@ import { Markdown } from "@/components/ui/markdown";
  * is the ordinary state for most products.
  *
  * `marketing` is the field's variant, not the reader's: it is what makes links
- * survive and gives headings a page-level scale, and every surface rendering
+ * survive and puts its headings under the product's name in the page outline,
+ * and every surface rendering
  * this field passes the same one.
  *
  * The caller hands over markdown, never the raw column — the stored value is
@@ -23,7 +24,7 @@ export function LongDescription({ markdown }: { markdown: string }) {
   return (
     <Card>
       <CardContent className="p-5 sm:p-6">
-        <Markdown variant="marketing" className="text-muted-foreground">
+        <Markdown variant="marketing">
           {markdown}
         </Markdown>
       </CardContent>

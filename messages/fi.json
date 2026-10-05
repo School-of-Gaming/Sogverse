@@ -5,7 +5,7 @@
       "site": {
         "alt": "School of Gaming: ruutuajasta laatuaikaa. Kerhoja, leirejä ja tapahtumia ammattipelikasvattajien johdolla.",
         "headline": "Ruutuajasta",
-        "headlineAccent": "Laatuaikaa",
+        "headlineAccent": "laatuaikaa",
         "subline": "Kerhoja, leirejä ja tapahtumia ammattipelikasvattajien johdolla"
       },
       "roblox": {
@@ -16,6 +16,9 @@
         "headlineTail": "Robloxiin",
         "subline": "Ilmainen ohjelma, jota vetävät oikeat pelikasvattajat",
         "collaboration": "Yhteistyössä"
+      },
+      "team": {
+        "alt": "{name}, {role}, School of Gaming"
       },
       "pages": {
         "signIn": {
@@ -35,6 +38,7 @@
       "resetPassword": "Vaihda salasana",
       "registerGedu": "Ryhdy pelikasvattajaksi",
       "about": "Tietoa meistä",
+      "library": "Kirjasto",
       "minecraftApi": "Minecraft Server API",
       "lynxApi": "Lynx Educaten kumppani-API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
@@ -42,6 +46,10 @@
       "adminInvoiceCustomers": "Laskutusasiakkaat",
       "adminInvoiceCustomerNew": "Uusi laskutusasiakas",
       "adminInvoiceCustomerEdit": "Muokkaa laskutusasiakasta",
+      "adminLibrary": "Kirjaston sisältö",
+      "adminLibraryArticleNew": "Uusi artikkeli",
+      "adminLibraryArticleEdit": "Muokkaa artikkelia",
+      "adminPlatformVision": "Alustan visio",
       "adminGeduInvoicing": "Gedujen laskutus",
       "adminTools": "Työkalut",
       "parentDashboard": "Oma SOG",
@@ -65,12 +73,15 @@
       "robloxSafeguarding": "Luojien akatemian lasten turvallisuuden toimintaohje",
       "robloxTerms": "Luojien akatemian käyttöehdot",
       "geduContract": "Gedu-sopimus",
+      "oauthConsent": "Yhdistä tekoälysovellus",
       "seatOffer": "Paikkatarjous",
       "geduSubstitutions": "Tuuraukset",
       "geduInvoicing": "Laskutus",
       "adminSubstitutions": "Tuuraukset",
       "teamProfile": "Oma profiili",
-      "adminTeamProfile": "Profiili"
+      "adminTeamProfile": "Profiili",
+      "adminFeedback": "Palaute",
+      "team": "Tiimi"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -79,12 +90,14 @@
       "resetPassword": "Aseta uusi salasana School of Gaming -tilillesi sähköpostitse lähettämämme linkin kautta ja kirjaudu heti sisään uudella salasanalla.",
       "registerGedu": "Hae pelikasvattajaksi School of Gamingiin ja vedä kerhoja, leirejä ja tapahtumia lapsille niissä peleissä, joita he jo pelaavat.",
       "about": "Keitä School of Gamingissa olemme, mitä Yty tarkoittaa ja vastaukset kysymyksiin, joita perheet miettivät ennen ilmoittautumista.",
+      "library": "School of Gamingin käytännön vinkkejä vanhemmille verkkoturvallisuudesta, ruutuajasta ja perheen arjesta sekä siitä, mitä lapset oppivat peleistä.",
       "shop": "Selaa School of Gamingin kerhoja, leirejä ja tapahtumia Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä ja löydä lapsellesi sopiva.",
       "resetPin": "Aseta uusi vanhemman PIN-koodi School of Gaming -tilillesi sähköpostilinkin kautta. PIN-koodi pitää vanhemmille tarkoitetut sivut lapsen ulottumattomissa.",
       "privacy": "Miten School of Gaming kerää, käyttää ja säilyttää perheesi tietoja: mitä lapsesta tallennetaan, kenelle tietoja luovutetaan ja mitä oikeuksia sinulla on.",
       "terms": "School of Gamingin käyttöehdot: miten ilmoittautuminen, maksut ja peruutukset toimivat ja mistä me ja sinä olemme kumpikin vastuussa.",
       "antiBullying": "Miten School of Gaming ehkäisee kiusaamista kerhoissa, leireillä ja tapahtumissa, mitä kiusaamistilanteessa tapahtuu ja miten pelikasvattaja puuttuu siihen.",
-      "attributions": "Lähteet ja lisenssit tiedoille, joita School of Gaming käyttää: paikannimet, postinumerot ja pelaajien hahmokuvat, kukin lisenssinsä edellyttämällä tavalla."
+      "attributions": "Lähteet ja lisenssit tiedoille, joita School of Gaming käyttää: paikannimet, postinumerot ja pelaajien hahmokuvat, kukin lisenssinsä edellyttämällä tavalla.",
+      "team": "Tutustu School of Gamingin ihmisiin: tiimiin, joka pyörittää toimintaa, ja pelikasvattajiin, jotka ohjaavat kerhoja, leirejä ja tapahtumia. Jokainen esittäytyy omin sanoin."
     }
   },
   "notFound": {
@@ -117,8 +130,6 @@
     "signIn": "Kirjaudu sisään",
     "signOut": "Kirjaudu ulos",
     "getStarted": "Aloita tästä",
-    "goToMySog": "Avaa Oma SOG",
-    "goToDashboard": "Avaa hallintapaneeli",
     "viewDetails": "Näytä tiedot",
     "learnMore": "Lue lisää",
     "exploreClubs": "Tutustu kerhoihin",
@@ -156,7 +167,13 @@
     "weekRange": "vk {from}–{to}",
     "weekRangeAcrossYears": "vk {from}/{fromYear} – vk {to}/{toYear}",
     "weekCount": "{count, plural, one {# viikko} other {# viikkoa}}",
-    "weekColumn": "vk"
+    "weekColumn": "vk",
+    "unsavedChanges": {
+      "title": "Poistutaanko tallentamatta?",
+      "description": "Muutoksiasi ei ole tallennettu. Jos poistut sivulta nyt, ne menetetään.",
+      "stay": "Jatka muokkaamista",
+      "leave": "Poistu tallentamatta"
+    }
   },
   "datePicker": {
     "openCalendar": "Avaa kalenteri",
@@ -166,6 +183,15 @@
     "goToWeek": "Siirry viikkoon",
     "selectWeek": "Valitse viikko {week}",
     "today": "Tänään"
+  },
+  "imageCrop": {
+    "title": "Rajaa kuva",
+    "description": "Vedä kuva paikalleen kehyksessä ja zoomaa sopivaksi.",
+    "zoom": "Zoomaus",
+    "confirm": "Käytä kuvaa",
+    "unreadable": "Tätä tiedostoa ei voi avata kuvana tässä. Valitse JPEG-, PNG- tai WebP-kuva. iPhonen HEIC-kuvat pitää muuntaa ensin.",
+    "chooseAnother": "Valitse toinen kuva",
+    "failed": "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
   },
   "about": {
     "pageTitle": "Tietoa meistä",
@@ -180,7 +206,9 @@
     },
     "mission": {
       "heading": "Missiomme",
-      "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa."
+      "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa.",
+      "photoAlt": "Kaksi School of Gamingin tiimiläistä violetit School of Gaming -hupparit päällään tapahtuman esittelypisteellä",
+      "meetTeam": "Tutustu tiimiin"
     },
     "values": {
       "heading": "Asiat, joista välitämme",
@@ -194,7 +222,7 @@
       },
       "keepChildrenSafe": {
         "title": "Pidetään lapset turvassa verkossa",
-        "description": "Sogverse-alustalla ei voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta. Jokaisen pelaajatilin luo vanhempi, tili on liitetty vanhemman tiliin, ja vanhempi valitsee, miten lapsi kirjautuu sisään: pelkästään vanhemman tilin kautta tai omalla käyttäjänimellä tai vahvistetulla sähköpostiosoitteella ja omalla salasanalla. Nollatoleranssi kiusaamiselle ja toksisuudelle."
+        "description": "Sogversessa keskustelu käydään yhteisissä ryhmätiloissa: kerran chatti menee koko huoneelle, jossa Gedu näkee sen. Jokaisen pelaajatilin luo vanhempi, tili on liitetty vanhemman tiliin, ja vanhempi valitsee, miten lapsi kirjautuu sisään: pelkästään vanhemman tilin kautta tai omalla käyttäjänimellä tai vahvistetulla sähköpostiosoitteella ja omalla salasanalla. Nollatoleranssi kiusaamiselle ja toksisuudelle."
       },
       "familyInTheLoop": {
         "title": "Perhe mukana",
@@ -206,7 +234,9 @@
       "paragraph1": "Joka viikko pelaajamme kirjautuvat sisään ja heitä tervehtii oma pelikasvattajansa — Gedu. Gedu ohjaa heidät päivän aiheen läpi antaen lapsille tilaa ja vapautta tehdä seikkailuista omiaan.",
       "paragraph2": "Gedumme ovat itsekin pelaajia. He ymmärtävät omakohtaisesti, että lapsina ja nuorina identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Tämä ymmärrys muokkaa jokaista heidän vetämäänsä kertaa.",
       "paragraph3": "Kaikki kerhomme on rakennettu tarinoiden ympärille, jotka antavat pelaajille tilaa tutkia, luoda ja kuvitella. Viikoittaisten kertojen välillä pelaajat saavat hauskoja haasteita tehtäväksi verkossa ja sen ulkopuolella. Lomien aikana järjestämme leirejä, ja joka viikko on yhteisötapahtumia, turnauksia ja kilpailuja.",
-      "paragraph4": "Jokainen pelaaja vannoo valan käyttäytyä ystävällisesti ja oikein — olipa kyseessä peli, äänichatti tai arki. Samat arvot pätevät kaikkialla."
+      "paragraph4": "Jokainen pelaaja vannoo valan käyttäytyä ystävällisesti ja oikein — olipa kyseessä peli, äänichatti tai arki. Samat arvot pätevät kaikkialla.",
+      "photoAlt": "Rivi tietokoneita studiollamme piirto-ohjelmat auki, valmiina kerhoa varten",
+      "photoCaption": "Studiomme Lauttasaaressa Helsingissä, jossa osa lähikerhoistamme kokoontuu."
     },
     "forParents": {
       "heading": "Vanhemmille",
@@ -230,7 +260,7 @@
         },
         "safety": {
           "question": "Voivatko tuntemattomat puhua lapselleni, ja tallennetaanko mitään?",
-          "answer": "<p>Eivät – kerhon äänihuone ei ole julkinen huone, jonka kuka tahansa löytää. Se on olemassa vain kyseisen ryhmän kerran ajan: se avautuu viisi minuuttia ennen kerran alkua ja sulkeutuu viisi minuuttia sen päätyttyä, ja sisään pääsevät vain kyseisen ryhmän jäsenet, kyseisessä kerhossa työskentelevä pelikasvattaja ja School of Gamingin ylläpitäjät. Tarkistus tehdään palvelimellamme joka kerta, kun joku liittyy, joten lapsi, jolla ei ole paikkaa siinä ryhmässä, ei pääse sisään mitenkään.</p><p>Alustalla ei ole missään yksityisviestitoimintoa: kerran chatti menee koko huoneelle, ei koskaan yhdelle lapselle kahden kesken, ja siinä kulkee sanojen lisäksi kuvia. Chatti on huoneessa, joka on auki saman ajan – siellä lapsesi sen lukee, eikä huoneen sulkeuduttua sitä pääse enää avaamaan. Säilytämme sen kuitenkin: kerhoa vetävät Gedut ja School of Gamingin ylläpitäjät voivat palata siihen, mitä on sanottu, ja juuri se tekee valvonnasta mahdollista. Viestin poistaminen jättää sen tilalle merkinnän eikä pyyhi sitä pois.</p><p>Itse kertaa ei tallenneta. Sovelluksessa mikään ei tallenna, litteroi tai säilytä kerran ääntä tai kuvaa, eikä huoneessa ole tallennuksen hallintapainikkeita.</p><p>Moderaattorin hallintapainikkeet ovat vain Gedulla ja ylläpitäjillä, ja ne ulottuvat pitkälle: mikrofonin mykistäminen tai lukitseminen, kameran sulkeminen tai lukitseminen, chatissa mykistäminen, jonkun siirtäminen omaan tilaansa ja puhuminen kaikkiin tiloihin yhtä aikaa. Pelin sisäinen chatti on eri asia, ja siitä vastaavat pelit itse – School of Gamingin omalla Minecraft-palvelimella Gedumme voivat mykistää, potkia ja porttikieltää pelaajan.</p>"
+          "answer": "<p>Eivät – kerhon äänihuone ei ole julkinen huone, jonka kuka tahansa löytää. Se on olemassa vain kyseisen ryhmän kerran ajan: se avautuu viisi minuuttia ennen kerran alkua ja sulkeutuu viisi minuuttia sen päätyttyä, ja sisään pääsevät vain kyseisen ryhmän jäsenet, kyseisessä kerhossa työskentelevä pelikasvattaja ja School of Gamingin ylläpitäjät. Tarkistus tehdään palvelimellamme joka kerta, kun joku liittyy, joten lapsi, jolla ei ole paikkaa siinä ryhmässä, ei pääse sisään mitenkään.</p><p>Kerran chatti menee koko huoneelle, ei koskaan yhdelle lapselle kahden kesken, ja siinä kulkee sanojen lisäksi kuvia. Chatti on huoneessa, joka on auki saman ajan – siellä lapsesi sen lukee, eikä huoneen sulkeuduttua sitä pääse enää avaamaan. Säilytämme sen kuitenkin: kerhoa vetävät Gedut ja School of Gamingin ylläpitäjät voivat palata siihen, mitä on sanottu, ja juuri se tekee valvonnasta mahdollista. Viestin poistaminen jättää sen tilalle merkinnän eikä pyyhi sitä pois.</p><p>Itse kertaa ei tallenneta. Sovelluksessa mikään ei tallenna, litteroi tai säilytä kerran ääntä tai videokuvaa, eikä huoneessa ole tallennuksen hallintapainikkeita.</p><p>Moderaattorin hallintapainikkeet ovat vain Gedulla ja ylläpitäjillä, ja ne ulottuvat pitkälle: mikrofonin mykistäminen tai lukitseminen, kameran sulkeminen tai lukitseminen, chatissa mykistäminen, jonkun siirtäminen omaan tilaansa ja puhuminen kaikkiin tiloihin yhtä aikaa. Pelin sisäinen chatti on eri asia, ja siitä vastaavat pelit itse – School of Gamingin omalla Minecraft-palvelimella Gedumme voivat mykistää, potkia ja porttikieltää pelaajan.</p>"
         },
         "howToStart": {
           "question": "Miten pääsen alkuun?",
@@ -258,7 +288,7 @@
         },
         "cancellation": {
           "question": "Voinko perua, ja millainen palautuskäytäntönne on?",
-          "answer": "<p>Kerho on kuukausitilaus ilman määräaikaa, ja voit perua sen milloin tahansa maksutta Oma SOG -sivun Maksut ja laskutus -kortista, joka avaa Stripen suojatun laskutussivun. Lapsesi säilyttää paikkansa jo maksetun laskutusjakson loppuun asti – kerhon sivu näyttää hänen viimeisen kertansa päivämäärän, kun jäsenyys on päättymässä.</p><p>Jokaiseen kerhoon kuuluu myös 30 päivän tyytyväisyystakuu: jos kerho ei osoittaudukaan lapsellesi sopivaksi, lähetä sähköpostia osoitteeseen {supportEmail} 30 päivän kuluessa hänen ensimmäisestä kerrastaan, niin palautamme kaiken, mitä olet siitä kerhosta maksanut – lomaketta ei ole eikä syytä tarvitse kertoa.</p><p>Leirit varataan ja maksetaan kertamaksuna, joten ne toimivat toisin: jos peruut vähintään 14 päivää ennen leirin alkua, saat täyden palautuksen; 7–14 päivää ennen palautamme maksun 50 euron käsittelykulun vähennettynä; alle 7 päivää ennen emme voi palauttaa maksua, koska paikka on varattu ja valmisteltu lapsellesi – ellei kyseessä ole äkillinen sairaustapaus tai muu aidosti sinusta riippumaton syy. Jos lapsesi ei pääse mukaan sairauden vuoksi, lähetä meille lääkärintodistus osoitteeseen {supportEmail}, niin palautamme maksun.</p>"
+          "answer": "<p>Kerho on kuukausitilaus ilman määräaikaa, ja voit perua sen milloin tahansa maksutta Oma SOG -sivun Maksut ja laskutus -kortista, joka avaa Stripen suojatun laskutussivun. Lapsesi säilyttää paikkansa jo maksetun laskutusjakson loppuun asti – kerhon sivu näyttää hänen viimeisen kertansa päivämäärän, kun jäsenyys on päättymässä.</p><p>Jokaiseen kerhoon kuuluu myös 30 päivän rahat takaisin -takuu: jos kerho ei osoittaudukaan lapsellesi sopivaksi, lähetä sähköpostia osoitteeseen {supportEmail} 30 päivän kuluessa hänen ensimmäisestä kerrastaan, niin palautamme kaiken, mitä olet siitä kerhosta maksanut – lomaketta ei ole eikä syytä tarvitse kertoa.</p><p>Leirit varataan ja maksetaan kertamaksuna, joten ne toimivat toisin: jos peruut vähintään 14 päivää ennen leirin alkua, saat täyden palautuksen; 7–14 päivää ennen palautamme maksun 50 euron käsittelykulun vähennettynä; alle 7 päivää ennen emme voi palauttaa maksua, koska paikka on varattu ja valmisteltu lapsellesi – ellei kyseessä ole äkillinen sairaustapaus tai muu aidosti sinusta riippumaton syy. Jos lapsesi ei pääse mukaan sairauden vuoksi, lähetä meille lääkärintodistus osoitteeseen {supportEmail}, niin palautamme maksun.</p>"
         },
         "severalChildren": {
           "question": "Minulla on useita lapsia – miten tilit ja maksut toimivat?",
@@ -274,7 +304,7 @@
         },
         "gamerAccounts": {
           "question": "Miten lapseni kirjautuu sisään, ja mikä vanhemman PIN on?",
-          "answer": "<p>Valitset Oma SOG -sivulla jokaiselle lapselle erikseen, miten hän kirjautuu sisään. Oletuksena pelaajatilillä ei ole omaa kirjautumista: sillä on sisäinen Sogverse-osoite eikä oikeaa sähköpostiosoitetta, se on liitetty vanhemman tiliisi, ja lapsesi tulee Sogverseen vaihtamalla sinun profiilistasi omaan profiiliinsa. Halutessasi voit antaa hänelle käyttäjätunnuksen ja salasanan tai hänen oman sähköpostiosoitteensa, jonka hän vahvistaa ennen kuin asettaa salasanan tavallisen palautuspolun kautta.</p><p>Valitsitpa minkä tavan tahansa, lapsen kirjautuminen avaa vain hänen oman tilinsä: lapsi, joka kirjautui sisään omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, ei voi vaihtaa sinun tai sisaruksen tilille lainkaan — hän kirjautuu ulos ja kirjautuu takaisin sisään joko sinuna, sinun salasanallasi, tai sisaruksena, jolla on omat tunnukset; sisarus, joka kirjautuu sisään sinun tilisi kautta, tavoitetaan sen sijaan sinun tililtäsi — ja lapsi, joka tuli sisään vaihtamalla sinun tililtäsi, tarvitsee vanhemman PIN-koodisi vaihtaakseen mihinkään muualle.</p><p>Vanhemman puolelle pääsee nelinumeroisella PIN-koodilla, jonka vain sinä tiedät, joten selaimeen tallennettu salasana ei riitä ostamiseen eikä lapsen tilin muuttamiseen, ja istunto lukittuu uudelleen heti, kun vaihdat lapsen profiiliin tai kirjaudut ulos.</p><p>Jos unohdat PIN-koodin, lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle – jos lapsi painaa ”Unohditko PIN-koodin?”, hän vain lähettää sinulle sähköpostia.</p>"
+          "answer": "<p>Valitset Oma SOG -sivulla jokaiselle lapselle erikseen, miten hän kirjautuu sisään. Oletuksena pelaajatilillä ei ole omaa kirjautumista: sillä on sisäinen Sogverse-osoite eikä oikeaa sähköpostiosoitetta, se on liitetty vanhemman tiliisi, ja lapsesi tulee Sogverseen vaihtamalla sinun profiilistasi omaan profiiliinsa. Halutessasi voit antaa hänelle käyttäjätunnuksen ja salasanan tai hänen oman sähköpostiosoitteensa, jonka hän vahvistaa ennen kuin asettaa salasanan tavallisen palautuspolun kautta.</p><p>Valitsitpa minkä tavan tahansa, lapsen kirjautuminen avaa vain hänen oman tilinsä: lapsi, joka kirjautui sisään omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, ei voi vaihtaa sinun tai sisaruksen tilille lainkaan — hän kirjautuu ulos ja kirjautuu takaisin sisään joko sinuna, sinun salasanallasi, tai sisaruksena, jolla on omat tunnukset; sisarus, joka kirjautuu sisään sinun tilisi kautta, tavoitetaan sen sijaan sinun tililtäsi — ja lapsi, joka tuli sisään vaihtamalla sinun tililtäsi, tarvitsee vanhemman PIN-koodisi vaihtaakseen mihinkään muualle.</p><p>Vanhemman puolelle pääsee nelinumeroisella PIN-koodilla, jonka vain sinä tiedät, joten selaimeen tallennettu salasana ei riitä ostamiseen eikä vanhemman tilin käyttämiseen, ja istunto lukittuu uudelleen heti, kun vaihdat lapsen profiiliin tai kirjaudut ulos.</p><p>Jos unohdat PIN-koodin, lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle – jos lapsi painaa ”Unohditko PIN-koodin?”, hän vain lähettää sinulle sähköpostia.</p>"
         },
         "childData": {
           "question": "Mitä tietoja lapsestani säilytätte?",
@@ -473,6 +503,98 @@
         "manage": "Hallinnoi laskutusasiakkaita",
         "option": "{name} ({number})"
       }
+    },
+    "library": {
+      "title": "Kirjaston sisältö",
+      "subtitle": "Julkisen Kirjaston artikkelit vanhemmille.",
+      "newArticle": "Uusi artikkeli",
+      "lastSaved": "Tallennettu {date}",
+      "search": {
+        "label": "Haku",
+        "placeholder": "Hae otsikolla tai aiheella…",
+        "showing": "Näytetään {count} / {total}",
+        "clear": "Tyhjennä",
+        "noMatches": "Yksikään artikkeli ei vastaa hakua."
+      },
+      "noCategory": "Ei aihetta",
+      "empty": "Artikkeleita ei vielä ole. Kirjoita ensimmäinen.",
+      "backToList": "Takaisin Kirjaston sisältöön",
+      "notFound": "Tällä tunnisteella ei ole artikkelia.",
+      "loadError": "Artikkelia ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
+      "newPage": {
+        "title": "Uusi artikkeli",
+        "submit": "Tallenna luonnos"
+      },
+      "editPage": {
+        "title": "Muokkaa artikkelia"
+      },
+      "status": {
+        "draft": "Luonnos",
+        "published": "Julkaistu",
+        "changed": "Julkaisemattomia muutoksia"
+      },
+      "statusPanel": {
+        "label": "Julkaiseminen",
+        "publishedLine": "Julkaistu {date}.",
+        "changedLine": "Lukijat näkevät version, joka julkaistiin {date}.",
+        "savedLine": "Tallennettu viimeksi {date}.",
+        "savedByLine": "Tallennettu viimeksi {date}, tallentaja {name}.",
+        "savedByViaLine": "Tallennettu viimeksi {date}, tallentaja {name} sovelluksen {app} kautta.",
+        "savedByViaUnnamedLine": "Tallennettu viimeksi {date}, tallentaja {name} tekoälysovelluksen kautta."
+      },
+      "viewLive": "Näytä Kirjastossa",
+      "preview": "Esikatselu",
+      "publish": "Julkaise",
+      "publishChanges": "Julkaise muutokset",
+      "unpublish": "Poista julkaisu",
+      "readiness": {
+        "missing": "Jotta artikkelin voi julkaista, lisää {fields}.",
+        "leftOut": "{count, plural, one {{languages}: kieliversio on kesken, joten sitä ei julkaista.} other {{languages}: kieliversiot ovat kesken, joten niitä ei julkaista.}}"
+      },
+      "missing": {
+        "category": "aihe",
+        "completeVersion": "kieliversio, jossa on otsikko, tiivistelmä ja artikkelin teksti"
+      },
+      "unpublishConfirm": {
+        "title": "Poistetaanko artikkelin julkaisu?",
+        "description": "Lukijat eivät enää löydä artikkelia Kirjastosta, eivätkä linkit siihen enää toimi. Artikkeli säilyy täällä, ja voit julkaista sen uudelleen milloin tahansa.",
+        "confirm": "Poista julkaisu"
+      },
+      "fields": {
+        "languages": "Kielet",
+        "title": "Otsikko",
+        "summary": "Tiivistelmä",
+        "category": "Aihe",
+        "cover": "Kansikuva",
+        "body": "Artikkelin teksti"
+      },
+      "hints": {
+        "languages": "Kirjoita jokainen kieliversio itse. Julkaistessa kaikki valmiit kieliversiot tulevat näkyviin: ne, joissa on otsikko, tiivistelmä ja artikkelin teksti.",
+        "summary": "Pelkkää tekstiä. Näkyy otsikon alla ja artikkelin kortissa Kirjastossa.",
+        "cover": "Näkyy artikkelin yläpuolella ja sen kortissa, rajattuna muotoon 16:9. Ilman kansikuvaa lukijat näkevät paikkamerkin.",
+        "body": "Lukijat näkevät tekstin kansikuvan alla muotoiltuna niin kuin se näkyy tässä."
+      },
+      "categoryPlaceholder": "Valitse aihe",
+      "bodyPlaceholder": "Kirjoita artikkeli…",
+      "actions": {
+        "save": "Tallenna",
+        "cancel": "Peruuta"
+      },
+      "errors": {
+        "titleRequired": "Artikkelilla on oltava otsikko.",
+        "saveFailed": "Artikkelia ei voitu tallentaa. Yritä uudelleen.",
+        "saveFailedWithReason": "Artikkelia ei voitu tallentaa – {reason}",
+        "publishFailed": "Artikkelia ei voitu julkaista. Yritä uudelleen.",
+        "publishFailedWithReason": "Artikkelia ei voitu julkaista – {reason}",
+        "unpublishFailed": "Artikkelin julkaisua ei voitu poistaa. Yritä uudelleen.",
+        "unpublishFailedWithReason": "Artikkelin julkaisua ei voitu poistaa – {reason}",
+        "versionTitleRequired": "{language}: kieliversiolta puuttuu otsikko."
+      },
+      "versionComplete": "valmis",
+      "versionIncomplete": "kesken",
+      "addLocale": "Lisää kieli",
+      "removeLocale": "Poista {language}",
+      "languagesLabel": "Kielet"
     },
     "geduRole": {
       "primary": "Vastaava Gedu",
@@ -880,52 +1002,82 @@
       },
       "imagePicker": {
         "label": "Kuva",
-        "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin se lisätään kirjastoon ja otetaan käyttöön tässä tuotteessa.",
-        "formats": "JPG, PNG, WebP, AVIF tai SVG, enintään 4 Mt.",
+        "formats": "JPEG, PNG tai WebP.",
         "chooseFile": "Valitse tiedosto",
         "uploading": "Lisätään…",
-        "change": "Vaihda kuva",
-        "remove": "Poista tästä tuotteesta",
-        "outcomeAdded": "Lisätty kirjastoon ja valittu tähän tuotteeseen.",
-        "outcomeExisting": "Kuva on jo kirjastossa – valittu tähän tuotteeseen.",
-        "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat. Kuva rajataan 3:2-kehykseen. Kuvat ovat tuotteiden yhteisiä, joten valinta tässä ei muuta muita tuotteita."
+        "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat. Kuva rajataan 3:2-kehykseen. Kuvat ovat tuotteiden yhteisiä, joten valinta tässä ei muuta muita tuotteita.",
+        "forPurpose": {
+          "product": {
+            "change": "Vaihda kuva",
+            "remove": "Poista tästä tuotteesta",
+            "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 3:2-kehykseen, se lisätään kirjastoon ja otetaan käyttöön tässä tuotteessa.",
+            "outcomeAdded": "Lisätty kirjastoon ja valittu tähän tuotteeseen.",
+            "outcomeExisting": "Kuva on jo kirjastossa – valittu tähän tuotteeseen."
+          },
+          "libraryCover": {
+            "change": "Vaihda kansikuva",
+            "remove": "Poista kansikuva",
+            "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 16:9-kehykseen, se lisätään kirjastoon ja siitä tulee tämän artikkelin kansikuva.",
+            "outcomeAdded": "Lisätty kirjastoon ja valittu tämän artikkelin kansikuvaksi.",
+            "outcomeExisting": "Kuva on jo kirjastossa – valittu tämän artikkelin kansikuvaksi."
+          }
+        }
       },
       "imageCatalogue": {
-        "title": "Tuotekuvat",
-        "description": "Sama kuva voi olla monessa tuotteessa. Valinta koskee vain tätä tuotetta, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä tuotteita.",
         "upload": "Lisää kuva",
         "uploading": "Lisätään…",
         "emptyCatalogue": "Kirjastossa ei ole vielä kuvia. Lisää ensimmäinen.",
-        "usedBadge": "{count, plural, one {# tuote} other {# tuotetta}}",
         "columnEmpty": "Valitse kuva",
         "use": "Käytä tätä kuvaa",
         "nameLabel": "Kuvan nimi",
         "rename": "Nimeä uudelleen",
-        "usedBy": "Kuvaa käyttävät tuotteet",
-        "usedByNone": "Mikään tuote ei käytä tätä kuvaa.",
         "live": "Julkaistu",
         "hidden": "Piilotettu",
+        "draft": "Luonnos",
         "replace": "Korvaa kuva",
         "remove": "Poista kirjastosta",
         "replaceConfirm": {
           "title": "Korvaa ”{label}”",
-          "consequence": "{count, plural, one {Alla oleva tuote näyttää jatkossa uuden kuvan.} other {Kaikki # alla olevaa tuotetta näyttävät jatkossa uuden kuvan.}}",
-          "unused": "Mikään tuote ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
           "choose": "Valitse uusi kuva",
-          "confirm": "Korvaa {count, plural, one {# tuotteessa} other {# tuotteessa}}",
           "confirmUnused": "Korvaa kuva"
         },
         "removeConfirm": {
           "title": "Poista ”{label}”",
-          "consequence": "{count, plural, one {Alla oleva tuote jää ilman kuvaa, kunnes valitset uuden.} other {Kaikki # alla olevaa tuotetta jäävät ilman kuvaa, kunnes valitset uuden.}}",
-          "unused": "Mikään tuote ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
-          "confirm": "Poista {count, plural, one {# tuotteesta} other {# tuotteesta}}",
           "confirmUnused": "Poista kirjastosta"
         },
         "errors": {
           "tooLarge": "Tiedosto on liian suuri. Kuvan enimmäiskoko on 4 Mt.",
-          "unsupportedType": "Tiedostomuotoa ei tueta. Käytä muotoa JPG, PNG, WebP, AVIF tai SVG.",
+          "unsupportedType": "Tiedosto ei ole JPEG-kuva. Rajaa kuva täällä ja yritä uudelleen.",
+          "wrongSize": "Kuva ei ole tarkalleen kehyksen vaatiman kokoinen. Rajaa se täällä ja yritä uudelleen.",
           "nameRequired": "Anna kuvalle nimi, jossa on 1–120 merkkiä."
+        },
+        "forPurpose": {
+          "product": {
+            "title": "Tuotekuvat",
+            "description": "Sama kuva voi olla monessa tuotteessa. Valinta koskee vain tätä tuotetta, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä tuotteita.",
+            "usedBadge": "{count, plural, one {# tuote} other {# tuotetta}}",
+            "usedBy": "Kuvaa käyttävät tuotteet",
+            "usedByNone": "Mikään tuote ei käytä tätä kuvaa.",
+            "replaceConsequence": "{count, plural, one {Alla oleva tuote näyttää jatkossa uuden kuvan.} other {Kaikki # alla olevaa tuotetta näyttävät jatkossa uuden kuvan.}}",
+            "replaceUnused": "Mikään tuote ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
+            "replaceConfirm": "Korvaa {count, plural, one {# tuotteessa} other {# tuotteessa}}",
+            "removeConsequence": "{count, plural, one {Alla oleva tuote jää ilman kuvaa, kunnes valitset uuden.} other {Kaikki # alla olevaa tuotetta jäävät ilman kuvaa, kunnes valitset uuden.}}",
+            "removeUnused": "Mikään tuote ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
+            "removeConfirm": "Poista {count, plural, one {# tuotteesta} other {# tuotteesta}}"
+          },
+          "libraryCover": {
+            "title": "Kirjaston kansikuvat",
+            "description": "Sama kuva voi olla useamman artikkelin kansikuva. Valinta koskee vain tätä artikkelia, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä artikkeleita, myös julkaistuja.",
+            "usedBadge": "{count, plural, one {# artikkeli} other {# artikkelia}}",
+            "usedBy": "Kuvaa käyttävät artikkelit",
+            "usedByNone": "Mikään artikkeli ei käytä tätä kuvaa.",
+            "replaceConsequence": "{count, plural, one {Alla oleva artikkeli näyttää jatkossa uuden kuvan, julkaistuna heti.} other {Kaikki # alla olevaa artikkelia näyttävät jatkossa uuden kuvan, julkaistut heti.}}",
+            "replaceUnused": "Mikään artikkeli ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
+            "replaceConfirm": "Korvaa {count, plural, one {# artikkelissa} other {# artikkelissa}}",
+            "removeConsequence": "{count, plural, one {Alla oleva artikkeli jää ilman kansikuvaa, kunnes valitset uuden, myös julkaistuna.} other {Kaikki # alla olevaa artikkelia jäävät ilman kansikuvaa, kunnes valitset uuden, myös julkaistut.}}",
+            "removeUnused": "Mikään artikkeli ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
+            "removeConfirm": "Poista {count, plural, one {# artikkelista} other {# artikkelista}}"
+          }
         }
       },
       "filters": {
@@ -954,7 +1106,9 @@
         "alreadyAssigned": "Jo nimetty",
         "alreadyExpected": "Jo tällä kerralla",
         "absentGedu": "Tuurattava Gedu",
-        "notCertified": "Ei hyväksytty"
+        "notCertified": "Ei hyväksytty",
+        "alreadyTrainee": "Jo harjoittelijana",
+        "traineeInstead": "Voidaan lisätä harjoittelijaksi."
       },
       "participantPicker": {
         "title": "Lisää osallistuja",
@@ -1021,7 +1175,14 @@
         },
         "picker": {
           "addTitle": "Lisää Gedu ryhmään {name}",
-          "addDescription": "Yksi Gedu voi vetää vain yhden ryhmän per tuote. Muualle nimetyt näkyvät harmaina."
+          "addDescription": "Yksi Gedu voi vetää vain yhden ryhmän per tuote. Muualle nimetyt näkyvät harmaina.",
+          "addTraineeTitle": "Lisää harjoittelija ryhmään {name}",
+          "addTraineeDescription": "Harjoittelija seuraa ryhmän toimintaa eikä hänen tarvitse olla hyväksytty. Tämän tuotteen Gedut ja harjoittelijat näkyvät harmaina."
+        },
+        "trainee": {
+          "role": "Harjoittelija",
+          "add": "Lisää harjoittelija",
+          "removeAria": "Poista harjoittelija {name}"
         },
         "removeParticipant": {
           "confirmTitle": "Poistetaanko {name} tästä tuotteesta?",
@@ -1409,6 +1570,115 @@
       "seatFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
       "seatFailedRequestWithdrawn": "{absent} on perunut tuurauspyyntönsä, joten tuurattavaa ei ole.",
       "seatFailedNotScheduled": "Ryhmällä ei ole enää kertaa tänä päivänä."
+    },
+    "feedback": {
+      "title": "Palaute",
+      "sources": {
+        "gamerOnline": "Pelaajilta verkkotapaamisten jälkeen"
+      },
+      "empty": "Palautetta ei ole vielä annettu.",
+      "loadError": "Palautetta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+      "loadErrorWithReason": "Palautetta ei voitu ladata: {reason}",
+      "noAnswers": "Ei vastauksia",
+      "answers": "{count, plural, one {# vastaus} other {# vastausta}}",
+      "skipped": "Ohitettu",
+      "belowAverage": "Alle keskiarvon",
+      "belowAverageOn": "Alle keskiarvon väitteessä: {statement}",
+      "statementLabels": {
+        "learned": "Oppi uutta",
+        "fun": "Oli kivaa",
+        "geduKnowledgeable": "Gedu osasi",
+        "geduKind": "Gedu ystävällinen",
+        "groupListens": "Tuli kuulluksi"
+      },
+      "timeline": {
+        "byWeek": "Myönteiset vastaukset viikoittain",
+        "byMonth": "Myönteiset vastaukset kuukausittain",
+        "platform": "Koko alusta"
+      },
+      "back": {
+        "overview": "Takaisin palautteeseen",
+        "list": {
+          "product": "Takaisin tuotteisiin",
+          "gedu": "Takaisin geduihin"
+        },
+        "responses": "Takaisin pelaajien vastauksiin",
+        "detail": {
+          "product": "Takaisin tuotteeseen",
+          "group": "Takaisin ryhmään",
+          "gedu": "Takaisin geduun",
+          "gamer": "Takaisin pelaajaan"
+        }
+      },
+      "hero": {
+        "positive": "myönteisiä",
+        "definition": "Vastaus Kyllä tai Ehdottomasti",
+        "responseRate": "{share} paikalla olleista pelaajista vastasi"
+      },
+      "statements": {
+        "heading": "Väitteittäin",
+        "legend": "Kielteinen on Ei tai Vähän, myönteinen on Kyllä tai Ehdottomasti.",
+        "positive": "{share} myönteisiä",
+        "negative": "{share} kielteisiä",
+        "saidPositive": "{positive}/{answers} vastasi {yes} tai {definitely}"
+      },
+      "explore": {
+        "heading": "Tutki tarkemmin",
+        "titles": {
+          "product": "Tuotteet",
+          "gedu": "Gedut",
+          "responses": "Pelaajat"
+        },
+        "counts": {
+          "product": "{count, plural, one {# tuote} other {# tuotetta}}",
+          "gedu": "{count, plural, one {# Gedu} other {# Gedua}}",
+          "responses": "{count, plural, one {# vastaus} other {# vastausta}}"
+        }
+      },
+      "rows": {
+        "none": "Täällä ei ole vielä mitään.",
+        "answers": "Vastaukset",
+        "positive": "Myönteiset",
+        "positiveAgainst": "Myönteiset (koko alusta {share})"
+      },
+      "lists": {
+        "titles": {
+          "product": "Tuotteet",
+          "gedu": "Gedut"
+        },
+        "subtitle": "Heikoin ensin, verrattuna koko alustan keskiarvoon"
+      },
+      "detail": {
+        "kinds": {
+          "product": "Tuote",
+          "group": "Ryhmä",
+          "gedu": "Gedu",
+          "gamer": "Pelaaja"
+        },
+        "open": {
+          "product": "Avaa tuote",
+          "group": "Avaa ryhmä",
+          "gedu": "Avaa gedun tili",
+          "gamer": "Avaa pelaajan tili"
+        },
+        "none": "Tästä ei ole vielä vastattu mitään.",
+        "platform": "Koko alusta {share}",
+        "groupsHeading": "Ryhmät",
+        "productsHeading": "Tuotteet",
+        "gedusHeading": "Gedut",
+        "gamersHeading": "Vastanneet pelaajat",
+        "responsesHeading": "Mitä pelaajat sanoivat"
+      },
+      "responses": {
+        "title": "Mitä pelaajat sanoivat",
+        "none": "Täällä ei ole vastauksia.",
+        "noneWorthReading": "Ei mitään poimittavaa: ei kielteisiä vastauksia eikä viestejä.",
+        "noGedu": "Gedua ei ole kirjattu",
+        "who": "Vastaus",
+        "filterLabel": "Näytettävät vastaukset",
+        "worthReading": "Lukemisen arvoiset ({count})",
+        "all": "Kaikki ({count})"
+      }
     }
   },
   "auth": {
@@ -2082,8 +2352,6 @@
       "accessOpens": "Työtila avautuu {date} klo {time}",
       "poolHeading": "Kerrat, jotka tarvitsevat tuuraajan",
       "poolAllClear": "Yksikään kerta ei tarvitse juuri nyt tuuraajaa.",
-      "poolRemote": "Etänä",
-      "poolSiteUnknown": "Paikka varmistuu myöhemmin",
       "poolRolePrimary": "Vastaava Gedu",
       "poolRoleAssistant": "Avustava Gedu",
       "poolFee": "{fee} / kerta",
@@ -2121,6 +2389,51 @@
       "loading": "Ladataan sijainteja...",
       "save": "Tallenna",
       "saving": "Tallennetaan..."
+    },
+    "groupWorkspace": {
+      "staffNoteWithheld": "Vain ryhmään nimetyt Gedut ja ylläpitäjät voivat lukea tämän muistiinpanon.",
+      "contactWithheld": "Yhteystiedot näkyvät vain ryhmään nimetyille Geduille ja ylläpitäjille."
+    },
+    "trainee": {
+      "badge": "Harjoittelija",
+      "dismiss": "Selvä",
+      "lockedHint": "(lukittu)",
+      "whyAction": "Tämä on ryhmään nimettyjen Gedujen tehtävä. Olet ryhmässä harjoittelijana.",
+      "whySave": "Tallentaminen on ryhmään nimettyjen Gedujen tehtävä. Olet ryhmässä harjoittelijana, joten voit kokeilla vapaasti – mitään kirjoittamaasi ei tallenneta.",
+      "sessionTitle": "Kerran tallentaminen",
+      "sessionWhat": "Tallentaa kerran raportin, Gedujen muistiinpanon, kuvat ja läsnäolomerkinnät.",
+      "groupNotesTitle": "Ryhmän muistiinpanojen tallentaminen",
+      "groupNotesWhat": "Tallentaa ryhmän muistiinpanot sen perheille ja Geduille.",
+      "siteNotesTitle": "Toimipisteen muistiinpanojen tallentaminen",
+      "siteNotesWhat": "Tallentaa toimipisteen muistiinpanot, jotka ovat yhteiset kaikille siellä järjestettäville tuotteille.",
+      "gamerTitle": "Pelaajan muistiinpanon tallentaminen",
+      "gamerWhat": "Tallentaa, mitä Gedut kirjoittavat pelaajasta, sekä luomuksen, jonka hänen perheensä näkee.",
+      "usernameTitle": "Pelinimen korjaaminen",
+      "usernameWhat": "Korjaa pelaajan käyttäjänimen vastaamaan pelissä olevaa nimeä.",
+      "sendTitle": "Lähettäminen vanhemmille",
+      "sendWhat": "Lähettää kerran raportin sähköpostilla ryhmän kaikille perheille.",
+      "photosTitle": "Kerran kuvat",
+      "photosWhat": "Lisää kuvia kerran raporttiin tai poistaa niitä.",
+      "substituteTitle": "Tuuraajan pyytäminen",
+      "substituteWhat": "Pyytää toista Gedua pitämään kerran puolestasi.",
+      "roomTitle": "Muiden ryhmien äänihuoneet",
+      "roomWhat": "Liittyy toisen ryhmän äänihuoneeseen, jotta voit tuurata sen Gedua hetken.",
+      "screenShareTitle": "Näytön jakaminen",
+      "screenShareWhat": "Näyttää näyttösi kaikille huoneessa oleville.",
+      "broadcastTitle": "Kuulutus",
+      "broadcastWhat": "Kaikki alueet kuulevat sinut yhtä aikaa, olitpa millä alueella tahansa.",
+      "deafenTitle": "Huoneen vaimentaminen",
+      "deafenWhat": "Vaimentaa kaikki sinulta, jotta voit puhua koko huoneelle kuulematta kaikkia yhtä aikaa.",
+      "zonesTitle": "Alueiden hallinta",
+      "zonesWhat": "Lisää, muokkaa ja poistaa huoneen alueita, myös yksityisiä.",
+      "moderateTitle": "Osallistujan moderointi",
+      "moderateWhat": "Mykistää tai lukitsee osallistujan mikrofonin ja kameran tai lukitsee hänet ulos keskustelusta.",
+      "chatHideTitle": "Viestin poistaminen",
+      "chatHideWhat": "Poistaa jonkun viestin kaikilta ja jättää tilalle merkinnän.",
+      "chatRestoreTitle": "Viestin palauttaminen",
+      "chatRestoreWhat": "Tuo poistetun viestin takaisin kaikille.",
+      "chatLockTitle": "Keskustelun lukitseminen",
+      "chatLockWhat": "Estää osallistujaa kirjoittamasta keskusteluun, kunnes lukitus avataan."
     },
     "sessionDetails": {
       "back": "Takaisin Omaan SOGiin",
@@ -2404,7 +2717,40 @@
     "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen.",
     "searchPlaceholder": "Hae nimellä tai sähköpostilla…",
     "searchAriaLabel": "Hae Geduja",
-    "searchNoMatches": "Hakua ”{query}” vastaavaa Gedua ei löydy tältä kuulta."
+    "searchNoMatches": "Hakua ”{query}” vastaavaa Gedua ei löydy tältä kuulta.",
+    "export": {
+      "statementTitle": "Työerittely",
+      "to": "Vastaanottaja: School of Gaming Galactic Oy",
+      "figuresAsOf": "Lukujen tilanne: {time}",
+      "completeTitle": "Erittely on valmis",
+      "completeBody": "Yksikään tämän kuukauden kerta ei ole enää tulossa eikä odota kirjausta.",
+      "incompleteTitle": "Erittely ei ole vielä valmis",
+      "incompleteUnrecorded": "{count, plural, one {# mennyt kerta on kirjaamatta, joten se ei ole mukana:} other {# mennyttä kertaa on kirjaamatta, joten ne eivät ole mukana:}}",
+      "incompleteUpcoming": "{count, plural, one {# kerta on vielä tulossa: kuukausi on kesken, joten luvut voivat muuttua.} other {# kertaa on vielä tulossa: kuukausi on kesken, joten luvut voivat muuttua.}}",
+      "summary": "Yhteenveto",
+      "municipalityExclVat": "Kuntalaskutus (ALV 0 %)",
+      "consumerExclVat": "Kuluttajalaskutus (ALV 0 %)",
+      "totalExclVat": "Yhteensä (ALV 0 %)",
+      "clubs": "Kerhot",
+      "amountsExclVat": "Kaikki summat ovat ilman arvonlisäveroa.",
+      "sessions": "Kertojen erittely",
+      "noSessions": "Tälle kuukaudelle ei ole kertoja.",
+      "pageOf": "Sivu {page}/{pages}",
+      "footer": "School of Gaming · {name} · {month}",
+      "columnDate": "Päivämäärä",
+      "columnWeek": "Viikko",
+      "columnSegment": "Laskutus",
+      "columnGroup": "Ryhmä",
+      "columnLocation": "Paikka",
+      "columnStatus": "Tila",
+      "columnOtherGedu": "Tuurattava / tuuraaja",
+      "columnFeeExclVat": "Kertapalkkio (ALV 0 %)",
+      "columnAmountExclVat": "Summa (ALV 0 %)",
+      "statusAway": "Poissa",
+      "notRecordedDetail": "Ei vielä raporttia, muistiinpanoa eikä läsnäoloja",
+      "downloadCsv": "Lataa CSV",
+      "downloadPdf": "Lataa PDF"
+    }
   },
   "productType": {
     "consumer_club": "Kerho",
@@ -2423,6 +2769,10 @@
     "nextSession": "Seuraava kerta",
     "upcoming": "Tuleva kerta",
     "cancelled": "Peruttu"
+  },
+  "sessionFacts": {
+    "remote": "Etänä",
+    "siteUnknown": "Paikka varmistuu myöhemmin"
   },
   "sessionFeed": {
     "readMore": "Lue lisää",
@@ -2475,16 +2825,22 @@
     "linkApply": "Lisää linkki",
     "linkRemove": "Poista linkki",
     "linkCancel": "Peruuta",
-    "linkInvalid": "Tätä osoitetta ei voi linkittää. Käytä verkko-osoitetta, sähköpostiosoitetta tai tämän sivuston sisäistä polkua."
+    "linkInvalid": "Tätä osoitetta ei voi linkittää. Käytä verkko-osoitetta, sähköpostiosoitetta tai tämän sivuston sisäistä polkua.",
+    "opensInNewTab": "(avautuu uuteen välilehteen)"
   },
   "header": {
     "nav": {
       "shop": "Kauppa",
       "yty": "Yty",
       "about": "Tietoa",
+      "parents": "Vanhemmat",
       "faq": "UKK",
       "substitutions": "Tuuraukset",
-      "substitutionsPhone": "Tuuraukset"
+      "home": "Etusivu",
+      "library": "Kirjasto",
+      "libraryShort": "Kirjasto",
+      "team": "Tiimi",
+      "tabBar": "Päävalikko"
     },
     "accountMenu": "Tilivalikko – {name}",
     "continueToAccount": "Jatka tilillesi",
@@ -2926,31 +3282,65 @@
     "municipalityClubs": "Kuntakerhot",
     "municipalityInvoicing": "Kuntalaskutus",
     "invoiceCustomers": "Laskutusasiakkaat",
+    "libraryContent": "Kirjaston sisältö",
+    "platformVision": "Alustan visio",
     "geduInvoicing": "Gedujen laskutus",
     "camps": "Leirit",
     "events": "Tapahtumat",
     "sites": "Toimipisteet",
     "uiComponents": "UI-komponentit",
     "uiPreviews": "UI-esikatselut",
-    "whatsapp": "WhatsApp",
     "testing": "Testaus",
-    "settings": "Asetukset",
     "tools": "Työkalut",
     "expandSidebar": "Laajenna sivupalkki",
     "collapseSidebar": "Pienennä sivupalkki",
-    "substitutions": "Tuuraukset"
+    "substitutions": "Tuuraukset",
+    "feedback": "Palaute"
   },
   "home": {
     "hero": {
-      "title": "Ruutuajasta<br></br><act>Laatuaikaa</act>",
-      "subtitle": "Taidolla suunnitellut kerhomme edistävät tervettä pelaamista harrastuksena Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Ammattitaitoiset pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat.",
-      "aboutCta": "Lue lisää meistä"
+      "title": "Ruutuajasta<br></br><act>laatuaikaa</act>",
+      "subtitle": "Viikoittaiset kerhot 7–17-vuotiaille verkossa ja paikan päällä alkaen 59 € kuukaudessa: pelikasvattaja ohjaa jokaista kertaa Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä."
+    },
+    "findClub": "Etsi kerho",
+    "trust": {
+      "cancel": "Peru milloin tahansa maksutta",
+      "guarantee": "30 päivän rahat takaisin -takuu"
+    },
+    "testimonials": {
+      "heading": "Mitä vanhemmat kertovat",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "”Kerho on pojan viikon kohokohta. Hiljaisesta ja arasta pojasta kuoriutuu joka viikko nauravainen ja kovaan ääneen höpöttävä lapsi, kun pääsee samanhenkisten lasten kanssa puuhailemaan. Kerhon sisältö ja kasvattajien osaaminen on yllättänyt minut todella positiivisesti.”",
+          "attribution": "Äiti, Suomi"
+        },
+        "sighWithHappiness": {
+          "quote": "”Mikään toinen asia, harrastus tai juttu ei ole saanut lastani huokailemaan sitä kuinka onnellinen on.”",
+          "attribution": "Äiti, Suomi"
+        },
+        "largeGroups": {
+          "quote": "”Isot ryhmät jännittävät lastamme. Tämä on täydellinen tapa meille harrastaa ja tutustua uusiin kavereihin.”",
+          "attribution": "Äiti, Suomi"
+        },
+        "finnishImproved": {
+          "quote": "”Tyttäreni suomen kieli on kehittynyt kuukaudessa valtavasti! Pelikasvattajat ovat olleet tosi taitavia, ystävällisiä ja pitkämielisiä. Tämä teidän juttu todella toimii!”",
+          "attribution": "Äiti, Norja"
+        },
+        "funAndSupervised": {
+          "quote": "”Pelaaminen on hauskaa ja valvottua. Ei kiusaamista eikä rähjäämistä tai pahaa mieltä.”",
+          "attribution": "Äiti, Suomi"
+        },
+        "positiveExperience": {
+          "quote": "”School of Gaming on ollut todella positiivinen kokemus sekä lapselle että vanhemmille. Lapset ovat saaneet hienoja pelikokemuksia uusien pelikaverien kanssa turvallisessa peliympäristössä kokeneitten ohjaajien kanssa – voin suositella!”",
+          "attribution": "Isä, Suomi"
+        }
+      }
     },
     "features": {
       "heading": "Tee pelaamisesta hieno harrastus",
       "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa.",
       "minecraftClubs": {
-        "title": "Jokaisessa tapaamisessa on Gedu",
+        "title": "Joka kerralla mukana on Gedu",
         "description": "Pelikasvattajamme eli Gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa pelikasvattaja, joka todella ymmärtää."
       },
       "screenTime": {
@@ -2964,6 +3354,36 @@
       "parents": {
         "title": "Koko perhe mukaan",
         "description": "Pidämme vanhemmat ajan tasalla ja mukana lastensa pelipolulla. Vanhempien tukeminen on meille yhtä tärkeää kuin itse kerhot."
+      }
+    },
+    "safety": {
+      "heading": "Miten lapseni turvallisuudesta huolehditaan?",
+      "facts": {
+        "vetted": {
+          "title": "Rikosrekisteriote vaaditaan",
+          "description": "Edellytämme, että jokainen Gedu näyttää meille lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen, ennen kuin hyväksymme hänet."
+        },
+        "noDirectMessages": {
+          "title": "Jokainen chatti on koko ryhmän",
+          "description": "Kerran chatti menee koko huoneelle, jossa Gedu näkee sen."
+        },
+        "groupOnlyRooms": {
+          "title": "Vain oma ryhmä pääsee sisään",
+          "description": "Kerhon äänihuone avautuu viisi minuuttia ennen kerran alkua ja sulkeutuu viisi minuuttia sen päätyttyä, ja sisään pääsevät vain ryhmän jäsenet, sen Gedut ja henkilökuntamme."
+        },
+        "notRecorded": {
+          "title": "Kertoja ei tallenneta",
+          "description": "Sovelluksessa mikään ei tallenna, litteroi tai säilytä kerran ääntä tai videokuvaa."
+        },
+        "parentPin": {
+          "title": "Ostoihin tarvitaan PIN-koodi",
+          "description": "Ostaminen vaatii nelinumeroisen vanhemman PIN-koodin, jonka vain sinä tiedät, eikä lapsesi pääse ilman sitä vanhemman tilillesi."
+        }
+      },
+      "faqLink": "Lue tarkemmat vastaukset UKK-osiosta",
+      "photo": {
+        "alt": "Lapset tietokoneiden ääressä School of Gamingin kerhossa takaapäin kuvattuna, vieressä istuu heidän pelikasvattajansa",
+        "caption": "Lähikerho studiollamme Lauttasaaressa Helsingissä."
       }
     },
     "howItWorks": {
@@ -2984,8 +3404,8 @@
     },
     "cta": {
       "heading": "Valmis muuttamaan pelaamisen oppimiseksi?",
-      "subheading": "Anna lapsellesi hauska ja turvallinen paikka pelata, oppia ja saada ystäviä — ammattitaitoisen pelikasvattajan ohjaamana.",
-      "createFreeAccount": "Luo ilmainen tili"
+      "subheading": "Anna lapsellesi paikka pelata, oppia ja saada ystäviä joka viikko: pelikasvattaja ohjaa jokaista kertaa, ja jokainen chatti on koko ryhmän nähtävillä.",
+      "whereWeAre": "Verkkokerhoihimme voi osallistua mistä päin maailmaa tahansa, ja kielinä ovat {languages}. Entä maailmanlaajuinen pääkonttorimme? Kodikas studio pienellä ja rauhallisella saarella, Lauttasaaressa Helsingissä, Suomessa."
     }
   },
   "locations": {
@@ -3209,6 +3629,18 @@
       "title": "Oma profiili",
       "description": "Julkinen profiilisi School of Gamingin verkkosivuilla: kuva sinusta ja muutama sana siitä, kuka olet.",
       "edit": "Muokkaa profiilia"
+    },
+    "mcp": {
+      "title": "Yhdistä tekoälysovellus",
+      "description": "Hallitse Sogversea omasta tekoälysovelluksestasi Sogversen MCP-palvelimen kautta.",
+      "urlLabel": "MCP-palvelimen osoite",
+      "copy": "Kopioi",
+      "copied": "Kopioitu",
+      "steps": {
+        "add": "Lisää tekoälysovelluksesi asetuksissa mukautettu liitin tai etä-MCP-palvelin tällä osoitteella.",
+        "signIn": "Kirjaudu ylläpitäjän tililläsi ja valitse Salli.",
+        "unsure": "Etkö tiedä, mistä asetus löytyy? Kysy tekoälysovellukseltasi, miten etä-MCP-palvelin lisätään osoitteen perusteella."
+      }
     }
   },
   "tools": {
@@ -3442,7 +3874,7 @@
     },
     "overview": {
       "heading": "Miten Yty toimii",
-      "paragraph1": "Jokainen pelaaja aloittaa nollasta. Jokaisesta tapaamisesta, jokaisesta suoritetusta tehtävästä ja jokaisesta ystävällisestä teosta pelaajat ansaitsevat Yty-pisteitä. Pisteet kertyvät neljään Yty-elementtiin, joista jokainen kuvastaa eri puolta hyvästä kasvusta.",
+      "paragraph1": "Jokainen pelaaja aloittaa nollasta. Jokaisesta kerrasta, jokaisesta suoritetusta tehtävästä ja jokaisesta ystävällisestä teosta pelaajat ansaitsevat Yty-pisteitä. Pisteet kertyvät neljään Yty-elementtiin, joista jokainen kuvastaa eri puolta hyvästä kasvusta.",
       "paragraph2": "Kun pelaajat keräävät Ytyä itselleen, he kasvattavat samalla koko Sogversen Ytyä — muokaten tarinaa ja avaten uusia mahdollisuuksia koko yhteisölle."
     },
     "elements": {
@@ -4782,6 +5214,25 @@
       "mcHeads": "Piirtää Minecraft-hahmon, joka näkyy liitetyn Minecraft-tilin vieressä. Palvelu ei vaadi mainintaa, joten tämä on kiitos eikä velvollisuus."
     }
   },
+  "oauthConsent": {
+    "title": "Yhdistä tekoälysovellus Sogverseen",
+    "body": "{clientName} pyytää lupaa toimia Sogversessa sinun nimissäsi kaikilla ylläpitäjän oikeuksillasi.",
+    "destinationLabel": "Kirjautumisesi lähetetään osoitteeseen",
+    "loopbackHint": "Tällä tietokoneella toimiva sovellus.",
+    "unrecognised": "School of Gaming ei tunnista tätä kohdetta. Salli yhteys vain, jos aloitit juuri yhdistämisen omasta tekoälysovelluksestasi. Muussa tapauksessa valitse Estä.",
+    "signedInAs": "Kirjautuneena: {email}",
+    "failed": "Tähän pyyntöön ei voi enää vastata. Aloita yhdistäminen uudelleen tekoälysovelluksestasi.",
+    "deny": "Estä",
+    "allow": "Salli",
+    "unavailable": {
+      "title": "Tämä kirjautumislinkki on jo käytetty",
+      "body": "Kukin linkki toimii kerran ja vanhenee pian. Aloita yhdistäminen uudelleen tekoälysovelluksestasi."
+    },
+    "refused": {
+      "title": "Vain School of Gamingin ylläpitäjät voivat yhdistää tekoälysovelluksen",
+      "body": "Olet kirjautuneena osoitteella {email}, joka ei ole ylläpitäjän tili."
+    }
+  },
   "seatOffer": {
     "offer": {
       "title": "Paikka vapautui",
@@ -4952,9 +5403,10 @@
   },
   "team": {
     "profile": {
-      "nameWithNickname": "{firstName} ”<nick>{nickname}</nick>” {lastName}",
-      "firstNameWithNickname": "{firstName} ”<nick>{nickname}</nick>”",
+      "nameWithNickname": "{firstName} ”{nickname}” {lastName}",
+      "firstNameWithNickname": "{firstName} ”{nickname}”",
       "geduTitle": "Gedu · pelikasvattaja",
+      "geduAltRole": "pelikasvattaja",
       "speaks": "Puhuu",
       "aboutMe": "Minusta",
       "funFact": "Hauska fakta",
@@ -4972,7 +5424,8 @@
         "waitingTitle": "Valmis, odottaa ylläpitäjää",
         "waitingBody": "Ylläpitäjä tarkistaa profiilisivusi ennen kuin se tulee julkiseksi.",
         "liveTitle": "Julkinen",
-        "liveBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti. Jos haluat piilottaa profiilin, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna. Kun rastitat sen uudelleen, ylläpitäjä julkaisee sen taas."
+        "liveBody": "Kuka tahansa näkee profiilisi School of Gamingin verkkosivuilla. Tallentamasi muutokset tulevat voimaan heti. Jos haluat piilottaa profiilin, poista rasti kohdasta ”Profiilini on valmis julkaistavaksi” ja tallenna. Kun rastitat sen uudelleen, ylläpitäjä julkaisee sen taas.",
+        "viewPublicPage": "Näytä julkinen sivu"
       },
       "actions": {
         "save": "Tallenna muutokset",
@@ -5020,12 +5473,7 @@
         },
         "crop": {
           "title": "Rajaa kuvasi",
-          "description": "Vedä kuva paikalleen kehyksessä ja zoomaa sopivaksi.",
-          "zoom": "Zoomaus",
-          "confirm": "Käytä kuvaa",
-          "unreadable": "Tätä tiedostoa ei voi avata kuvana tässä. Valitse JPEG-, PNG- tai WebP-kuva. iPhonen HEIC-kuvat pitää muuntaa ensin.",
-          "chooseAnother": "Valitse toinen kuva",
-          "failed": "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+          "confirm": "Käytä kuvaa"
         }
       },
       "about": {
@@ -5068,7 +5516,8 @@
         "waitingTitle": "Valmis, odottaa julkaisua",
         "waitingBody": "Profiili ({name}) on merkitty valmiiksi julkaistavaksi. Se tulee näkyviin School of Gamingin verkkosivuille heti, kun ylläpitäjä julkaisee sen.",
         "liveTitle": "Julkinen",
-        "liveBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti."
+        "liveBody": "Kuka tahansa voi nähdä profiilin ({name}) School of Gamingin verkkosivuilla. Siihen tallennetut muutokset näkyvät heti.",
+        "viewPublicPage": "Näytä julkinen sivu"
       },
       "edit": {
         "back": "Takaisin: {name}",
@@ -5098,6 +5547,54 @@
         "hide": "Piilota",
         "visibilityError": "Profiilin näkyvyyden muuttaminen ei onnistunut. Yritä uudelleen."
       }
+    },
+    "public": {
+      "index": {
+        "title": "Tutustu <act>tiimiin</act>",
+        "intro": "School of Gamingia pyörittävä tiimi ja kerhojamme ohjaavat pelikasvattajat – jokainen esittäytyy omin sanoin.",
+        "leadership": "Johto",
+        "gameEducators": "Pelikasvattajat",
+        "empty": "Tiimimme esittäytyy täällä pian"
+      },
+      "back": "Takaisin tiimiin",
+      "cta": {
+        "heading": "Etsitkö lapsellesi kerhoa?"
+      }
+    }
+  },
+  "library": {
+    "name": "Kirjasto",
+    "readingTime": "{minutes, plural, one {Lukuaika # min} other {Lukuaika # min}}",
+    "article": {
+      "breadcrumbLabel": "Murupolku",
+      "more": "Lisää kirjastosta",
+      "share": {
+        "heading": "Jaa artikkeli",
+        "copyLink": "Kopioi linkki",
+        "copied": "Linkki kopioitu",
+        "on": "Jaa palvelussa {platform} (avautuu uuteen välilehteen)",
+        "email": "Sähköposti",
+        "byEmail": "Jaa sähköpostilla",
+        "native": "Jaa…"
+      }
+    },
+    "index": {
+      "title": "School of Gamingin <act>kirjasto</act>",
+      "intro": "Käytännön tietoa vanhemmille verkkoturvallisuudesta, pelaamisesta osana perheen arkea ja siitä, mitä lapset oppivat pelatessaan.",
+      "empty": "Täällä ei ole vielä mitään",
+      "all": "Kaikki",
+      "filterLabel": "Aiheet"
+    },
+    "categories": {
+      "onlineSafety": "Verkkoturvallisuus",
+      "screenTime": "Ruutuaika ja perhe-elämä",
+      "learning": "Oppiminen pelaamalla",
+      "gamesExplained": "Pelit tutuiksi",
+      "forSchools": "Kouluille"
+    },
+    "cta": {
+      "heading": "Valmis aloittamaan?",
+      "button": "Aloita"
     }
   }
 }

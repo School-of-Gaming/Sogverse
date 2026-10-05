@@ -1,4 +1,7 @@
+import { ArrowUpRight } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Link } from "@/i18n/navigation";
+import type { AppHref } from "@/lib/constants/routes";
 
 /**
  * Where a saved profile stands, as one word — the combined state of the
@@ -43,21 +46,43 @@ const STATUS_VARIANT: Record<
  * The status as a status panel. It is a state message, so it is the panel even
  * inside a card. Every word is the caller's, because who is being told decides
  * the wording.
+ *
+ * **A live profile links to its public page**, under the words that say it is
+ * public, so whoever is told it is on the website can go and look. `publicHref`
+ * is that page; it is drawn only while the status is `live`, and opens in a
+ * new tab, so an editor with unsaved changes keeps them.
  */
 export function TeamProfileStatusPanel({
   status,
   title,
   body,
+  publicHref,
+  publicLabel,
 }: {
   status: TeamProfileStatus;
   title: string;
   body: string;
+  /** The profile's public page, linked while it is live. */
+  publicHref?: AppHref;
+  /** The link's words, "View public page". */
+  publicLabel?: string;
 }) {
   return (
     <Alert variant={STATUS_VARIANT[status]}>
       <div className="min-w-0 space-y-1.5">
         <AlertTitle>{title}</AlertTitle>
         <AlertDescription>{body}</AlertDescription>
+        {status === "live" && publicHref !== undefined && (
+          <Link
+            href={publicHref}
+            target="_blank"
+            rel="noopener"
+            className="inline-flex items-center gap-1.5 pt-1 font-semibold text-act underline-offset-4 hover:underline"
+          >
+            {publicLabel}
+            <ArrowUpRight aria-hidden className="h-4 w-4" />
+          </Link>
+        )}
       </div>
     </Alert>
   );

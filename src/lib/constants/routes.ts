@@ -1,5 +1,6 @@
 import type { Database } from "@/types/database.types";
 import type { getPathname } from "@/i18n/navigation";
+import type { LibraryCategory } from "@/types";
 
 type ProductType = Database["public"]["Enums"]["product_type"];
 
@@ -331,6 +332,22 @@ function adminProductPath(productType: ProductType, productId: string): string {
   return `/admin/${adminProductSegment(productType)}/${productId}`;
 }
 
+/** What the admin feedback pages can be opened on, as the routes spell it. */
+type FeedbackRouteList = "product" | "gedu";
+type FeedbackRouteKind = FeedbackRouteList | "group" | "gamer";
+
+const ADMIN_FEEDBACK_LIST_PATHNAMES = {
+  product: "/admin/feedback/products",
+  gedu: "/admin/feedback/gedus",
+} as const satisfies Record<FeedbackRouteList, string>;
+
+const ADMIN_FEEDBACK_DETAIL_PATHNAMES = {
+  product: "/admin/feedback/products/[id]",
+  group: "/admin/feedback/groups/[id]",
+  gedu: "/admin/feedback/gedus/[id]",
+  gamer: "/admin/feedback/gamers/[id]",
+} as const satisfies Record<FeedbackRouteKind, string>;
+
 /**
  * A product type's admin listing and create form — the two of its surfaces that
  * take no params, so a plain pathname is the whole href.
@@ -429,6 +446,15 @@ export const ROUTES = {
    */
   completeRegistration: "/complete-registration",
   /**
+   * Where Supabase Auth's OAuth server sends an admin to approve an AI app
+   * connecting to the MCP endpoint, carrying `?authorization_id=`. The path is
+   * fixed by `[auth.oauth_server]` in `supabase/config.toml` (and the hosted
+   * projects' Auth settings), so it is not translated. Public to the proxy,
+   * because the proxy's login bounce keeps only the pathname and would drop the
+   * id; the page gates itself.
+   */
+  oauthConsent: "/oauth/consent",
+  /**
    * Public identity page — who School of Gaming is, what Yty is, and the
    * public FAQ. Reached from the header in both auth states: it is the one
    * page carrying this copy, and the home page it used to live on is
@@ -439,6 +465,44 @@ export const ROUTES = {
    * parent-PIN pad here exactly as it does at `/shop`.
    */
   about: "/about",
+  /**
+   * The Library — School of Gaming's articles for parents. Public and
+   * promoted (`docs/architecture/site-quality.md`).
+   */
+  library: "/library",
+  /** The index filtered to one category — what a category eyebrow links to. */
+  libraryCategory: (category: LibraryCategory) =>
+    ({ pathname: "/library", query: { category } }) as const,
+  /**
+   * One published article, at either of its two addresses: its id, which
+   * resolves in every locale, or the slug of its title in the locale's own
+   * version, which is the one to share and the canonical. Build the segment
+   * with the Library's address helpers (`src/components/library/`), which
+   * know when an older article's title takes the slug first.
+   */
+  libraryArticle: (idOrSlug: string) =>
+    ({ pathname: "/library/[idOrSlug]", params: { idOrSlug } }) as const,
+  /**
+   * An article's saved working copy as a parent would meet it if it were
+   * published now, in the public chrome — what the editor's Preview opens.
+   * Admin-only, though it sits under the page it previews: the proxy gates it
+   * on the admin role, and the page answers not-found to anyone else.
+   */
+  libraryArticlePreview: (id: string) =>
+    ({ pathname: "/library/[idOrSlug]/preview", params: { idOrSlug: id } }) as const,
+  /**
+   * The Team — every public profile, leadership first, then the Game
+   * Educators. Public and promoted (`docs/architecture/site-quality.md`).
+   */
+  team: "/team",
+  /**
+   * One person's public profile, at either of their two addresses: their id,
+   * or the slug of their first name and nickname, which is the one to share
+   * and the canonical. Build the segment with `teamMemberAddress`, which knows
+   * when a person's slug is taken by an older profile.
+   */
+  teamMember: (idOrSlug: string) =>
+    ({ pathname: "/team/[idOrSlug]", params: { idOrSlug } }) as const,
   /** Public municipality-club discovery page — list + search of Finnish municipalities. */
   schools: "/schools",
   /**
@@ -624,6 +688,19 @@ export const ROUTES = {
      */
     geduInvoicing: "/admin/gedu-invoicing",
     /**
+     * What gamers say about their sessions, over the whole history: the
+     * overview, with no lists on it. The lists, the details and the notes hang
+     * off it below.
+     */
+    feedback: "/admin/feedback",
+    /** One dimension's list, worst first (`/admin/feedback/gedus`). */
+    feedbackList: (dimension: FeedbackRouteList) => ADMIN_FEEDBACK_LIST_PATHNAMES[dimension],
+    /** One product's, group's, Gedu's or gamer's feedback. */
+    feedbackDetail: (kind: FeedbackRouteKind, id: string) =>
+      ({ pathname: ADMIN_FEEDBACK_DETAIL_PATHNAMES[kind], params: { id } }) as const,
+    /** Every response, worth reading first. */
+    feedbackResponses: "/admin/feedback/responses",
+    /**
      * The Fennoa customers a municipality club can be invoiced to — the contract
      * parties the CFO's monthly files are addressed to.
      *
@@ -643,6 +720,18 @@ export const ROUTES = {
      */
     invoiceCustomer: (id: string) =>
       ({ pathname: "/admin/invoice-customers/[id]", params: { id } }) as const,
+    /** The Library's articles, published or not, and where they are written. */
+    library: "/admin/library",
+    /** The form a new article is written in. */
+    libraryArticleNew: "/admin/library/new",
+    /** One article's editor, where it is also published. */
+    libraryArticle: (id: string) =>
+      ({ pathname: "/admin/library/[id]", params: { id } }) as const,
+    /**
+     * The big picture of Sogverse: the vision board an admin is sent to when
+     * they ask what the dream is. Static prose and artwork, English only.
+     */
+    platformVision: "/admin/platform-vision",
     camps: "/admin/camps",
     events: "/admin/events",
     /**

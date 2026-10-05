@@ -295,6 +295,26 @@ export type TeamProfileRow = Database["public"]["Tables"]["team_profiles"]["Row"
 export type TeamProfileTranslationRow =
   Database["public"]["Tables"]["team_profile_translations"]["Row"];
 
+// The Library — `library_articles` is an article's admin-only working copy and
+// `library_article_publications` its public published copy, whose row existing
+// is the article being live; each copy's text is per language, one row per
+// (article, site locale) in its `_translations` table. Row aliases only: no
+// Library table carries a write grant for any Data API role, and the library
+// RPCs — with the image catalogue's `repoint_library_covers` for covers — are
+// the only writers.
+// The category enum is the Library's category vocabulary, spelled the same in
+// the app and its URLs (`src/components/library/categories.ts`).
+export type LibraryCategory =
+  Database["public"]["Enums"]["library_article_category"];
+export type LibraryArticleRow =
+  Database["public"]["Tables"]["library_articles"]["Row"];
+export type LibraryArticlePublicationRow =
+  Database["public"]["Tables"]["library_article_publications"]["Row"];
+export type LibraryArticleTranslationRow =
+  Database["public"]["Tables"]["library_article_translations"]["Row"];
+export type LibraryArticlePublicationTranslationRow =
+  Database["public"]["Tables"]["library_article_publication_translations"]["Row"];
+
 // product_staff_details — the staff-only half of a product, split off `products`
 // because that table is readable by anon and by every parent, and PostgREST lets
 // a caller pick the columns it wants. Sparse: a product with nothing staff-only
@@ -329,18 +349,22 @@ export type ProductPrice = Database["public"]["Tables"]["product_prices"]["Row"]
 export type ProductPriceInsert = Database["public"]["Tables"]["product_prices"]["Insert"];
 export type ProductPriceUpdate = Database["public"]["Tables"]["product_prices"]["Update"];
 
-// product_images — the admin-owned catalogue a product's picture is chosen
-// from. One row per distinct image, identified by the sha256 of its bytes;
-// `path` is the object key in the public product-images bucket and never
+// catalogue_images — the admin-owned catalogue a product's picture and a
+// Library article's cover are chosen from. One row per distinct image per
+// purpose, identified by the sha256 of its bytes; `path` is the object key in
+// the public bucket of the row's purpose and never
 // changes for a given row, so a bucket URL's bytes are immutable by
 // construction. `label` is the only mutable column.
 //
-// A product points at an entry through `products.image_id`; `image_path` stays
-// the column every reader paints and is DERIVED from the link by a trigger, so
-// nothing in app code should ever write it.
-export type ProductImage = Database["public"]["Tables"]["product_images"]["Row"];
-export type ProductImageInsert = Database["public"]["Tables"]["product_images"]["Insert"];
-export type ProductImageUpdate = Database["public"]["Tables"]["product_images"]["Update"];
+// A product points at an entry through `products.image_id`, and an article copy
+// through `cover_image_id`; `image_path` and `cover_path` are the columns every
+// reader paints, DERIVED from the link by a trigger, so nothing in app code
+// should ever write them.
+export type CatalogueImage = Database["public"]["Tables"]["catalogue_images"]["Row"];
+export type CatalogueImageInsert = Database["public"]["Tables"]["catalogue_images"]["Insert"];
+export type CatalogueImageUpdate = Database["public"]["Tables"]["catalogue_images"]["Update"];
+/** What a catalogue picture is for, which decides its bucket and its exact size. */
+export type CatalogueImagePurpose = Database["public"]["Enums"]["catalogue_image_purpose"];
 
 // site_details (member-visible) + site_staff_details (admin + Gedu only)
 export type SiteDetails = Database["public"]["Tables"]["site_details"]["Row"];
@@ -437,6 +461,9 @@ export type ProductGroupUpdate = Database["public"]["Tables"]["product_groups"][
 // gedu_group_assignments
 export type GeduGroupAssignment = Database["public"]["Tables"]["gedu_group_assignments"]["Row"];
 export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group_assignments"]["Insert"];
+
+// gedu_group_trainees — trainee seats, written only through apply_group_changes
+export type GeduGroupTrainee = Database["public"]["Tables"]["gedu_group_trainees"]["Row"];
 
 // Which capacity an educator holds a group in. A group holds any number
 // of each, and the only thing the role decides is pay — the product carries a
@@ -547,6 +574,7 @@ export type {
   GamerGroupNoteResult,
   GroupStaffOverlay,
   GroupStaffOverlayMember,
+  TraineeGroupOverlay,
 } from "@/services/member-flair/member-flair.contracts";
 
 // ---------------------------------------------------------------------------
@@ -626,6 +654,7 @@ export type ChatChannelLockRow = Database["public"]["Tables"]["chat_channel_lock
 export type {
   GroupGeduDetail,
   GroupParticipationDetail,
+  GroupTraineeDetail,
   ProductGroupWithDetails,
   ProductGroupsSnapshot,
 } from "@/services/groups/groups.contracts";
@@ -813,53 +842,6 @@ export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAP
 export type SessionFeedbackRow = Database["public"]["Tables"]["session_feedback"]["Row"];
 export type SessionFeedbackRowInsert =
   Database["public"]["Tables"]["session_feedback"]["Insert"];
-
-// get_my_assigned_products RPC — the generator marks every column of an RPC
-// RETURNS TABLE row as non-nullable from the column type alone, missing
-// products columns that are actually nullable (end_date). It also
-// degrades the jsonb arrays (product_translations,
-// schedule_slots) to `Json`, which forces every consumer to cast. Tighten
-// both: nullability matches the underlying products schema, and the
-// arrays get structured shapes that mirror the jsonb_build_object calls in
-// the RPC body. Keep this alias adjacent to its source in
-// supabase/schema/functions/get_my_assigned_products.sql.
-type _MyAssignedProductGenerated =
-  Database["public"]["Functions"]["get_my_assigned_products"]["Returns"][number];
-export type MyAssignedProductRow = Omit<
-  _MyAssignedProductGenerated,
-  | "start_date"
-  | "end_date"
-  | "product_translations"
-  | "schedule_slots"
-  | "kind"
-  | "substitution_date"
-> & {
-  start_date: string | null;
-  end_date: string | null;
-  /**
-   * Which kind of seat this row is. An `assignment` row is one per
-   * `gedu_group_assignments` row; a `substitution`
-   * row is one per live substitution date. Narrowed from the generated `string`
-   * because the RPC emits a closed pair and every consumer branches on it.
-   */
-  kind: "assignment" | "substitution";
-  /**
-   * The date a `substitution` row is for, and null on an `assignment` row — which the
-   * generator cannot see, because a RETURNS TABLE column is typed from the
-   * column type alone.
-   */
-  substitution_date: string | null;
-  product_translations: Array<{
-    locale: string;
-    name: string;
-    description: string;
-  }>;
-  schedule_slots: Array<{
-    weekday: number;
-    start_time: string;
-    duration_minutes: number;
-  }>;
-};
 
 // get_my_participation_subscription_states RPC — money-free read of the
 // caller's past_due/canceling subs feeding the dashboard payment-problem and

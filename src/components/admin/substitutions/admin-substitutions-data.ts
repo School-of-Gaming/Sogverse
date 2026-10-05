@@ -1,9 +1,6 @@
-import type {
-  GeduAssignmentRole,
-  ProductType,
-  SubstitutionReason,
-} from "@/types";
+import type { GeduAssignmentRole, SubstitutionReason } from "@/types";
 import type { AppHref } from "@/lib/constants/routes";
+import type { SessionFacts } from "@/lib/substitution-session-facts";
 
 /**
  * Everything the Substitutions page body renders, already in the reader's
@@ -59,27 +56,35 @@ export interface SubstitutionOffer {
  *
  * An **orphaned** request (an admin moved the schedule's weekday after it was
  * filed) resolves to no occurrence at all and carries `sessionTime: null` and
- * `startsAt: null`, rendering under its day with no time and no urgency
- * claimed. That is the case this page exists to tolerate: the read orders by
- * date and never by a derived instant.
+ * no start, rendering under its day with no time and no urgency claimed. That
+ * is the case this page exists to tolerate: the read orders by date and never
+ * by a derived instant.
  */
 export interface SubstitutionSession {
   id: string;
   groupId: string;
   groupName: string;
-  /** The product's name in the reader's locale — never truncated, as on a card. */
-  productName: string;
-  productType: ProductType;
   /**
-   * The session's product-local calendar date, `YYYY-MM-DD` — what the list
-   * groups by. Never derived from `startsAt`, so the orphan still has a day.
+   * The session itself — product, kind, when, online or where, topic and
+   * language — as every substitution surface describes it. Its `sessionDate`
+   * is the product-local day the list groups by, never derived from the start,
+   * so the orphan still has a day; its `startsAt` is what the list sorts on and
+   * how soon is said from.
    */
-  sessionDay: string;
-  /** The same date, already formatted, for the approval dialog's sentence. */
+  facts: SessionFacts;
+  /**
+   * The zone every clock face on this page is stated in — the one the page's
+   * zone line names. Carried rather than read from the viewer at render, so
+   * the card and that line cannot disagree about which clock they are on.
+   */
+  viewerTimeZone: string;
+  /** The date, already formatted, for the confirm dialogs' sentences. */
   sessionDate: string;
   /**
    * When the session runs, as `HH:MM–HH:MM` in the **viewer's** zone — or
-   * `null` where the product's schedule puts no slot on that weekday.
+   * `null` where the product's schedule puts no slot on that weekday. The
+   * card's own clock face, carried for the confirm dialogs' sentences so they
+   * name the session in the card's words.
    *
    * Both ends, unlike a schedule chip, which states a start and keeps its
    * duration in a `title`. A chip sits in a grid of a hundred others where the
@@ -88,14 +93,6 @@ export interface SubstitutionSession {
    * they are being asked.
    */
   sessionTime: string | null;
-  /**
-   * The instant the session begins, or `null` for the orphan.
-   *
-   * Here rather than pre-phrased because how long away it is has to be *said* —
-   * "in 3 hours", "tomorrow" — and the phrasing is the reader's locale's, which
-   * only a formatter in the component has.
-   */
-  startsAt: Date | null;
   /** The role being substituted — the absent gedu's, and what the sub is paid as. */
   role: GeduAssignmentRole;
   reason: SubstitutionReason | null;

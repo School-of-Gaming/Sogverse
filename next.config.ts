@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { CATALOGUE_IMAGE_PURPOSES } from "./src/lib/images/catalogue-image-purposes";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -109,17 +110,21 @@ const nextConfig: NextConfig = {
   agentRules: false,
   // `sharp` is a native module: it loads a platform-specific binary at require
   // time, which a bundler cannot trace and must not try to inline. Naming it
-  // here leaves it as a plain runtime `require` in the two upload routes that
-  // import it — the only places in the app that do — so its ~20 MB lands on
-  // those functions and nowhere else.
+  // here leaves it as a plain runtime `require` in the two upload routes and
+  // the MCP endpoint that import it — the only places in the app that do — so
+  // its ~20 MB lands on those functions and nowhere else.
   serverExternalPackages: ["sharp"],
   // The Open Graph cards read two vendored font files off disk at request time
   // (`src/components/og/fonts.ts`). A `process.cwd()` read is invisible to the
   // bundler's tracer, so the files have to be named here or they are simply not
   // deployed beside the handlers — and a card with no fonts is a card satori
-  // draws in nothing.
+  // draws in nothing. The gedu's PDF work statement reads the same files the
+  // same way, and the MCP endpoint serves its cover uploader likewise, from the
+  // file its workspace package builds (`src/lib/mcp/cover-uploader.ts`).
   outputFileTracingIncludes: {
     "/opengraph-images/**": ["./src/assets/fonts/*.ttf"],
+    "/api/gedu/invoicing/export": ["./src/assets/fonts/*.ttf"],
+    "/api/mcp": ["./packages/mcp-cover-uploader/dist/cover-uploader.html"],
   },
   images: {
     // Derived from the configured URL, never from NODE_ENV: what decides
@@ -128,7 +133,12 @@ const nextConfig: NextConfig = {
     // is false everywhere but a checkout running against `npm run db -- up`.
     dangerouslyAllowLocalIP: supabaseIsLocal(),
     remotePatterns: [
-      bucketPattern("product-images"),
+      // Every catalogue purpose's bucket — product pictures and Library covers
+      // — read off the one purpose map, so a purpose added there is optimizable
+      // here without a second list to remember.
+      ...Object.values(CATALOGUE_IMAGE_PURPOSES).map(({ bucket }) =>
+        bucketPattern(bucket),
+      ),
       // Gedu session-report photos. They go through the optimizer for the same
       // reason product banners do and a stronger one: a family feed card can
       // show five of them, unpaged, and serving ~300 KB masters into 200 px
@@ -199,6 +209,17 @@ const nextConfig: NextConfig = {
           },
           // CSP is set dynamically per-request in proxy.ts with a unique nonce
           // (nonce-based script-src blocks injected inline scripts in production)
+        ],
+      },
+      // The public folder's video. Every file there is named with a version
+      // (`hero-calm-wide-v1.mp4`), and changed bytes always ship under a new
+      // name, so a URL there never changes meaning and can be cached for a year
+      // without revalidating (`src/assets/marketing/CLAUDE.md`). The proxy's
+      // matcher skips this prefix, so no response here carries a cookie.
+      {
+        source: "/media/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
       },
     ];

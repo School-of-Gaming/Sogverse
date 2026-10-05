@@ -26,6 +26,19 @@ export const SESSION_FEEDBACK_RATING_KEYS = {
 } as const satisfies Record<SessionFeedbackRating, string>;
 
 /**
+ * How tall each level's block of the answer bar is drawn, in pixels, from the
+ * first to the fifth. The gamer's screen draws the bar at these heights and the
+ * admin's meter draws it as proportions of the tallest, so the two rise alike.
+ */
+export const SESSION_FEEDBACK_SEGMENT_PX = {
+  1: 24,
+  2: 29,
+  3: 34,
+  4: 39,
+  5: 44,
+} as const satisfies Record<SessionFeedbackRating, number>;
+
+/**
  * The themes the owner reports on, as the words they used for them.
  *
  * A tuple rather than a bare union so the set is enumerable at runtime if the

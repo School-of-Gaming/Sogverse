@@ -97,6 +97,7 @@ export const GEDU_DASHBOARD_SCENARIOS = [
   "default",
   "clubs-only",
   "uncertified",
+  "trainee",
 ] as const;
 
 export type GeduDashboardScenario = (typeof GEDU_DASHBOARD_SCENARIOS)[number];
@@ -138,6 +139,10 @@ const ENDED_CLUB_PRODUCT_ID = "mock-dashboard-splatoon-club";
 const SUBSTITUTION_PRODUCT_ID = "mock-dashboard-zelda-club";
 /** A second substitution, far enough out that its workspace has not opened yet. */
 const LOCKED_SUBSTITUTION_PRODUCT_ID = "mock-dashboard-pokemon-club";
+/** A club this gedu holds a trainee seat on — shadowing, not teaching. */
+const TRAINEE_CLUB_PRODUCT_ID = "mock-dashboard-minecraft-trainee-club";
+/** An in-person camp this gedu is a trainee on. */
+const TRAINEE_CAMP_PRODUCT_ID = "mock-dashboard-coding-trainee-camp";
 
 /**
  * The substituted session's own backlog: one, because that is the only non-zero a
@@ -411,8 +416,10 @@ export function buildGeduDashboardFixture(
    * **Both remote, so the pair differs in exactly one thing.** The open one
    * renders the locked Join every other future card renders; the locked one
    * renders no Join at all, because until the workspace opens there is no room
-   * to promise and the footer's one answer is when it opens. Reading them
-   * together is how you see that the height is held either way.
+   * to promise and the footer's one answer is when it opens. Both say "Remote"
+   * all the same: online or where is on the card from the moment the
+   * substitution is the sub's. Reading them together is how you see that the
+   * height is held either way.
    *
    * The open one carries a backlog of one, which is the only non-zero a substitution
    * can have. The locked one carries none, and that is not a choice: a substitution
@@ -457,22 +464,79 @@ export function buildGeduDashboardFixture(
   // An uncertified gedu has nothing assigned — certification is the gate on
   // group assignment — so the scenario that shows the awaiting-approval notice
   // is also the one that shows the empty state, and no card is built for it.
+  /**
+   * Two trainee seats beside two ordinary assignments, on the `trainee`
+   * scenario and its temporary badge twin — kept off the default page, whose
+   * card census the scene's tests pin. They are the assignment
+   * card exactly — the owner's rule is that a trainee's groups sit in the same
+   * list as everybody's — and the club one opens the trainee workspace scene.
+   * Certification is independent of a trainee seat, so these sit beside the
+   * gedu's ordinary assignments on a certified account.
+   */
+  const traineeRows: GeduAssignmentRow[] = [
+    assignmentRow({
+      now,
+      id: TRAINEE_CLUB_PRODUCT_ID,
+      name: "Minecraft Builders Club",
+      productType: "consumer_club",
+      isRemote: true,
+      slots: [futureSlot(now, 2, "16:30", 90, SESSION_FEED_TIMEZONE)],
+      startedDaysAgo: 56,
+      endsInDays: null,
+      groupCount: 2,
+      participantCount: 15,
+      groupName: "Tuesday A",
+      groupParticipantCount: 8,
+      kind: "trainee",
+    }),
+    assignmentRow({
+      now,
+      id: TRAINEE_CAMP_PRODUCT_ID,
+      name: "Coding Camp",
+      productType: "camp",
+      isRemote: false,
+      slots: [0, 1, 2, 3, 4].map((weekday) => ({
+        weekday,
+        startTime: "09:00",
+        durationMinutes: 240,
+      })),
+      startedDaysAgo: -3,
+      endsInDays: 7,
+      groupCount: 2,
+      participantCount: 20,
+      groupName: "Blue",
+      groupParticipantCount: 10,
+      siteName: EVENT_SITE_NAME,
+      kind: "trainee",
+    }),
+  ];
+
   const rows =
     scenario === "uncertified"
       ? []
       : scenario === "clubs-only"
         ? [...clubRows, ...extraClubRows]
-        : [...clubRows, ...endedRows, ...otherRows, ...substitutionRows];
+        : scenario === "trainee"
+          ? [...clubRows, ...traineeRows]
+          : [...clubRows, ...endedRows, ...otherRows, ...substitutionRows];
 
   // Every per-seat map is keyed by (product, group), the same key the live
   // dashboard builds — a product id alone stopped being unique the moment one
   // gedu could hold an assignment on one group and a substitution on another.
-  const hrefByAssignment = Object.fromEntries(
-    Object.entries(SCENE_BY_PRODUCT).map(([productId, sceneScenario]) => [
-      geduAssignmentKey(productId, `${productId}-group-a`),
-      previewSceneHref("gedu-product", sceneScenario),
-    ]),
-  );
+  const hrefByAssignment = {
+    ...Object.fromEntries(
+      Object.entries(SCENE_BY_PRODUCT).map(([productId, sceneScenario]) => [
+        geduAssignmentKey(productId, `${productId}-group-a`),
+        previewSceneHref("gedu-product", sceneScenario),
+      ]),
+    ),
+    // The trainee club opens the trainee workspace scene — the same URL an
+    // assigned gedu's card would open, rendered for the seat this card is.
+    [geduAssignmentKey(
+      TRAINEE_CLUB_PRODUCT_ID,
+      `${TRAINEE_CLUB_PRODUCT_ID}-group-a`,
+    )]: previewSceneHref("gedu-product", "trainee"),
+  };
 
   const assignments = rollUpGeduAssignments({
     rows,
@@ -555,7 +619,7 @@ export function buildGeduDashboardFixture(
      * subject is the grid.
      */
     contractAccepted: scenario !== "default",
-    criminalRecordCheckPassed: scenario === "clubs-only",
+    criminalRecordCheckPassed: scenario !== "default" && scenario !== "uncertified",
   };
 }
 
@@ -665,6 +729,11 @@ function assignmentRow(opts: {
           ? null
           : calendarDate(opts.now, opts.endsInDays, SESSION_FEED_TIMEZONE),
       isRemote: opts.isRemote,
+      // Remote products have no building, whatever a fixture passes — the
+      // read applies the same test.
+      siteName: opts.isRemote ? null : (opts.siteName ?? null),
+      topic: "minecraft_java",
+      spokenLanguageCode: "fi",
       productType: opts.productType,
       translations: [{ locale: "en", name: opts.name, description: "" }],
     },
@@ -680,7 +749,6 @@ function assignmentRow(opts: {
     participantCount: opts.participantCount,
     groupName: opts.groupName,
     groupParticipantCount: opts.groupParticipantCount,
-    siteName: opts.siteName ?? null,
     slots: opts.slots,
   };
 }

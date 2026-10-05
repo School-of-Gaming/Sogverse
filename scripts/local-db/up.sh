@@ -222,8 +222,8 @@ echo "               SUPABASE_SERVICE_ROLE_KEY now point here. Everything else i
 echo "               file, staging included, is untouched. Restart the dev server."
 echo "  database     postgresql://postgres:postgres@127.0.0.1:$db_port/postgres"
 if [ "$rich_seed_state" = "applied" ]; then
-  echo "  data         supabase/rich-seed.sql alone, with product images in the"
-  echo "               product-images bucket — seed.sql's fixtures are not on a rich"
+  echo "  data         supabase/rich-seed.sql alone, with product pictures and"
+  echo "               Library covers in their buckets — seed.sql's fixtures are not on a rich"
   echo "               stack. Sign in as admin@example.com, parent@example.com"
   echo "               (PIN 1111) or gedu@example.com, password \"password\"; every"
   echo "               other seeded account is testpassword123."

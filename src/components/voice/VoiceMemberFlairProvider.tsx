@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import type { Withheld } from "@/lib/withheld";
 import type { GamerCreation } from "@/types";
 
 /**
@@ -56,8 +57,11 @@ export interface VoiceMemberFlair {
    * A row needs only "is there one" — the lit state of its button. The text is
    * here because the dialog the button opens is mounted by the page, not by the
    * row, and it has to seed its draft from somewhere.
+   *
+   * **Withheld** for a trainee: their overlay says a note exists and never
+   * what it says, so the button lights and the dialog draws the note blurred.
    */
-  notes: Readonly<Record<string, string>>;
+  notes: Readonly<Record<string, string | Withheld>>;
   /** Who last wrote each note, keyed as `notes` is. */
   noteEditors?: Readonly<Record<string, string>>;
   /**
@@ -73,6 +77,17 @@ export interface VoiceMemberFlair {
    * A member with none has **no key**, exactly as with the notes above.
    */
   creations: Readonly<Record<string, readonly GamerCreation[]>>;
+  /**
+   * The `userId` of everyone in the room holding a trainee seat on the group,
+   * for the "Trainee" tag beside their name.
+   *
+   * A trainee's token says `gedu` to every peer, so the room itself cannot tell
+   * them apart and must not: this set comes from the chat roster, whose
+   * trainee flag the database answers only to a caller who moderates the
+   * channel or is a trainee of its group — never to a family. Empty until that
+   * roster lands, and for a room with no chat.
+   */
+  trainees: ReadonlySet<string>;
   /**
    * Open a member's per-gamer dialog. Only ever called for a `userId` in
    * {@link members}.

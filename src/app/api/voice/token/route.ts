@@ -16,7 +16,10 @@ import { platformForTopic } from "@/lib/products/topics";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GameExternalId } from "@/lib/voice/user-name";
 import { tokenCanReceiveFor } from "@/lib/voice/receive-permissions";
-import { voiceTokenResponse } from "@/services/voice/voice.contracts";
+import {
+  voiceTokenResponse,
+  type VoiceRoomStanding,
+} from "@/services/voice/voice.contracts";
 
 /**
  * Mint a Daily.co meeting token for a product group's voice room.
@@ -31,10 +34,11 @@ import { voiceTokenResponse } from "@/services/voice/voice.contracts";
  *   1. Membership — participants (a gamer, or a parent holding their own seat
  *      on a for-parents product) via an active participation, gedus via a
  *      product-level assignment (cross-group voice mobility) **or a live substitution
- *      on this group for the session being joined**, admins pass through. The
- *      substitution arm is date-scoped where the assignment arm is not: a sub joins
- *      the room on the session they are substituting and on none of the group's
- *      other sessions.
+ *      on this group for the session being joined** **or a trainee seat on this
+ *      group**, admins pass through. The substitution arm is date-scoped where the
+ *      assignment arm is not: a sub joins the room on the session they are
+ *      substituting and on none of the group's other sessions. The trainee arm is
+ *      group-scoped, and it is the one gedu arm that does not moderate.
  *   2. Session window — at least one slot's window must be open right now, and
  *      the session it belongs to must not have been cancelled by an admin.
  *
@@ -138,6 +142,11 @@ export const POST = defineRoute({
     }
 
     // ---- Membership gate ----
+    // Which arm admitted the joiner is kept, not just whether one did: the
+    // moderator flag below is read off it, so a trainee — admitted to the
+    // room, never to its moderation — cannot come out of this gate as one.
+    let admission: Admission;
+
     // One participant-keyed query for both seat-holding roles: `participant_id`
     // is whoever occupies the seat, so a gamer's row and a parent's own row are
     // the same shape and satisfy the same predicate. No customer-specific
@@ -158,34 +167,25 @@ export const POST = defineRoute({
           { status: 403 },
         );
       }
+      admission = "seat";
     } else if (role === "gedu") {
-      // The gedu assignment predicate is on `product_id` (cross-group voice
-      // mobility), not `group_id`.
-      const { data: assignment } = await admin
-        .from("gedu_group_assignments")
-        .select("group_id")
-        .eq("gedu_id", user.id)
-        .eq("product_id", group.product_id)
-        .limit(1)
-        .maybeSingle();
-
-      // A substitute reaches the room on the session they are substituting and on no
-      // other session of the group — the one place on this surface where the
-      // substitution arm is DATE-SCOPED. It *adds* to the assignment arm above rather
-      // than narrowing it: a gedu assigned to the product keeps the
-      // product-wide mobility they already had.
-      const substitutionDates = sessionDatesToAdmit(openSlot, productTimezone);
-      if (
-        !assignment &&
-        !(await holdsSubstitutionOn(admin, groupId, substitutionDates, user.id))
-      ) {
+      const geduAdmission = await admitGedu(admin, {
+        groupId,
+        productId: group.product_id,
+        userId: user.id,
+        substitutionDates: sessionDatesToAdmit(openSlot, productTimezone),
+      });
+      if (geduAdmission === null) {
         return NextResponse.json(
           { error: "You are not assigned to this group" },
           { status: 403 },
         );
       }
+      admission = geduAdmission;
+    } else {
+      // admin passes through.
+      admission = "admin";
     }
-    // admin passes through.
 
     // ---- Session window gate ----
     // The slot was resolved above, before the membership gate that needed its
@@ -287,9 +287,19 @@ export const POST = defineRoute({
     // feeds it to both Daily's `is_owner` and `enable_screenshare` — so this one
     // predicate is the whole moderator surface, and a negative test here
     // ("everyone who isn't a gamer") would silently hand moderator powers and
-    // screen share to the next role admitted to this route. It just was:
-    // customers now reach it as seat-holding participants.
-    const isModerator = role === "gedu" || role === "admin";
+    // screen share to the next role admitted to this route.
+    //
+    // **It is read off the arm that admitted the joiner, not off their role.**
+    // The arms it names are exactly `is_voice_group_moderator`'s — admin, the
+    // product assignment, the substitution — so the room's owners are the
+    // chat's moderators. A trainee's role is `gedu`, and a role test is what
+    // would have made one an owner.
+    const isModerator = MODERATOR_ADMISSIONS.includes(admission);
+    const standing: VoiceRoomStanding = isModerator
+      ? "moderator"
+      : admission === "trainee"
+        ? "trainee"
+        : "participant";
 
     const token = await createMeetingToken({
       roomName: dailyRoomName,
@@ -316,9 +326,78 @@ export const POST = defineRoute({
       roomUrl: `https://${domain}.daily.co/${dailyRoomName}`,
       role,
       sessionOpensAt: openSlot.windowOpensAt.toISOString(),
+      standing,
     };
   },
 });
+
+/**
+ * Which arm of the membership gate let the joiner in.
+ *
+ * Kept as a value rather than collapsed to a yes/no because the moderator flag
+ * is a function of it: every arm but the seat and the trainee seat is also an
+ * arm of the database's moderator predicate.
+ */
+type Admission = "seat" | "assignment" | "substitution" | "trainee" | "admin";
+
+/** The arms that moderate — `is_voice_group_moderator`'s own, restated. */
+const MODERATOR_ADMISSIONS: readonly Admission[] = [
+  "admin",
+  "assignment",
+  "substitution",
+];
+
+/**
+ * The gedu arms of the membership gate, in order, or `null` for none.
+ *
+ * - **Assignment** is on `product_id` (cross-group voice mobility), not
+ *   `group_id`.
+ * - **Substitution** reaches the room on the session being substituted and on
+ *   no other session of the group — the one place on this surface where an arm
+ *   is DATE-SCOPED. It *adds* to the assignment arm rather than narrowing it: a
+ *   gedu assigned to the product keeps the product-wide mobility they already
+ *   had.
+ * - **Trainee** is GROUP-SCOPED where the assignment is product-wide: a trainee
+ *   is in their own group's room and in no sibling group's, exactly as
+ *   `is_voice_group_member`'s trainee arm admits them. It is asked last, and a
+ *   gedu holds an assignment or a trainee seat on a product, never both, so
+ *   the order decides nothing but which question is asked first.
+ */
+async function admitGedu(
+  admin: ReturnType<typeof createAdminClient>,
+  {
+    groupId,
+    productId,
+    userId,
+    substitutionDates,
+  }: {
+    groupId: string;
+    productId: string;
+    userId: string;
+    substitutionDates: string[];
+  },
+): Promise<Admission | null> {
+  const { data: assignment } = await admin
+    .from("gedu_group_assignments")
+    .select("group_id")
+    .eq("gedu_id", userId)
+    .eq("product_id", productId)
+    .limit(1)
+    .maybeSingle();
+  if (assignment) return "assignment";
+
+  if (await holdsSubstitutionOn(admin, groupId, substitutionDates, userId)) {
+    return "substitution";
+  }
+
+  const { data: traineeSeat } = await admin
+    .from("gedu_group_trainees")
+    .select("group_id")
+    .eq("group_id", groupId)
+    .eq("gedu_id", userId)
+    .maybeSingle();
+  return traineeSeat ? "trainee" : null;
+}
 
 /**
  * Which session date(s) a substitution may be admitted for on this join.

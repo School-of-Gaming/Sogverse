@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import en from "@/../messages/en.json";
 import { Header } from "@/components/layout/header";
@@ -64,9 +64,13 @@ function renderAt(pathname: string) {
   );
 }
 
-/** The links the header marks as the reader's current page, by accessible name. */
+/**
+ * The links the header strip marks as the reader's current page, by accessible
+ * name. The strip only: the tab bar the header also renders names the same
+ * place below `lg`, and has its own suite.
+ */
 function currentLinks(): (string | null)[] {
-  return screen
+  return within(screen.getByRole("banner"))
     .getAllByRole("link")
     .filter((link) => link.getAttribute("aria-current") === "page")
     .map((link) => link.getAttribute("aria-label") ?? link.textContent);
@@ -142,37 +146,59 @@ describe("the account menu's My SOG row", () => {
     renderAt("/gedu/invoicing");
     expect(dashboardRow().getAttribute("aria-current")).toBeNull();
   });
+
+  it("hands Substitutions to its own row, which the menu carries below lg", () => {
+    renderAt("/gedu/substitutions");
+    expect(dashboardRow().getAttribute("aria-current")).toBeNull();
+    expect(
+      screen
+        .getByRole("menuitem", { name: en.header.nav.substitutions })
+        .getAttribute("aria-current"),
+    ).toBe("page");
+  });
 });
 
 /**
  * The profile page lives under settings, so the menu's Settings row would claim
- * it too. For a gedu the chrome has an item of its own for the page, and that
- * item is what marks it; an admin has no such item, so Settings still does.
+ * it too. A gedu and an admin both have an item of their own for the page, and
+ * that item is what marks it — on the strip and in the menu alike.
  */
-describe("the account menu on the profile page", () => {
+describe("the profile page", () => {
   function openRows() {
     fireEvent.click(screen.getByRole("button", { name: /Mikko|Kyle/ }));
   }
 
-  it("marks a gedu's My profile row current, and not Settings", () => {
-    renderAt("/settings/profile");
-    openRows();
-    expect(
-      screen
-        .getByRole("menuitem", { name: en.header.teamProfile })
-        .getAttribute("aria-current"),
-    ).toBe("page");
-    expect(
-      screen
-        .getByRole("menuitem", { name: en.common.settings })
-        .getAttribute("aria-current"),
-    ).toBeNull();
-  });
+  it.each([
+    ["gedu", "Mikko"],
+    ["admin", "Kyle"],
+  ] as const)(
+    "marks a %s's My profile current, on the strip and in the menu, and not Settings",
+    (role, firstName) => {
+      mockAuth.mockReturnValue({
+        user: USER,
+        profile: { id: USER.id, role, first_name: firstName },
+        isLoading: false,
+      });
+      renderAt("/settings/profile");
+      expect(currentLinks()).toEqual([en.header.teamProfile]);
+      openRows();
+      expect(
+        screen
+          .getByRole("menuitem", { name: en.header.teamProfile })
+          .getAttribute("aria-current"),
+      ).toBe("page");
+      expect(
+        screen
+          .getByRole("menuitem", { name: en.common.settings })
+          .getAttribute("aria-current"),
+      ).toBeNull();
+    },
+  );
 
-  it("leaves an admin, who has no profile row, with Settings current", () => {
+  it("leaves Settings current for a parent, who has no profile item", () => {
     mockAuth.mockReturnValue({
       user: USER,
-      profile: { id: USER.id, role: "admin", first_name: "Kyle" },
+      profile: { id: USER.id, role: "customer", first_name: "Kyle" },
       isLoading: false,
     });
     renderAt("/settings/profile");

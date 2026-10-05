@@ -50,6 +50,9 @@ function row(overrides: {
       startDate: overrides.startDate ?? "2026-01-05",
       endDate: overrides.endDate ?? null,
       isRemote: overrides.isRemote ?? true,
+      siteName: null,
+      topic: "minecraft_java",
+      spokenLanguageCode: "fi",
       productType: "consumer_club",
       translations: [
         {
@@ -69,7 +72,6 @@ function row(overrides: {
     participantCount: 8,
     groupName: `Group ${overrides.groupId}`,
     groupParticipantCount: 8,
-    siteName: null,
   };
 }
 
@@ -79,6 +81,24 @@ function weekly(weekday: number, startTime: string, durationMinutes = 90) {
 }
 
 describe("the gedu's own upcoming sessions", () => {
+  it("offers nothing from a trainee seat — a trainee cannot ask for a substitute", () => {
+    const sessions = buildGeduUpcomingSessions({
+      rows: [
+        row({ productId: "p", groupId: "g", slots: weekly(0, "17:00") }),
+        row({
+          productId: "t",
+          groupId: "tg",
+          slots: weekly(1, "17:00"),
+          kind: "trainee",
+        }),
+      ],
+      locale: "en",
+      now: NOW,
+    });
+    expect(sessions.length).toBeGreaterThan(0);
+    expect(sessions.every((session) => session.groupId === "g")).toBe(true);
+  });
+
   it("projects an open-ended run to the shared next-eight and no further", () => {
     const sessions = buildGeduUpcomingSessions({
       rows: [row({ productId: "p", groupId: "g", slots: weekly(0, "17:00") })],

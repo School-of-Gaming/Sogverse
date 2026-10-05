@@ -119,15 +119,19 @@ const CONSTRUCT_AT_A_STRENGTH =
   /\b[a-z:-]*(?:text|bg|border|ring|fill|stroke|from|to|via|outline|shadow|divide|decoration)-(?:scrim|hover)\/[0-9]+/g;
 
 describe("Sogverse tunes none of the library's constructs", () => {
+  // The sweep reads every source file, so it runs while the suite is collected
+  // rather than inside the test: a test's time limit is for its assertion, and
+  // a walk of the whole tree under a loaded full run can outlast it.
+  const found = sourceFiles(srcRoot).flatMap((file) =>
+    [
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- reads a file discovered by the fixed in-repo walk above
+      ...readFileSync(join(repoRoot, file), "utf8").matchAll(
+        CONSTRUCT_AT_A_STRENGTH,
+      ),
+    ].map((match) => `${file} :: ${match[0]}`),
+  );
+
   it("spends the scrim and the hover layer whole, never at a strength", () => {
-    const found = sourceFiles(srcRoot).flatMap((file) =>
-      [
-        // eslint-disable-next-line security/detect-non-literal-fs-filename -- reads a file discovered by the fixed in-repo walk above
-        ...readFileSync(join(repoRoot, file), "utf8").matchAll(
-          CONSTRUCT_AT_A_STRENGTH,
-        ),
-      ].map((match) => `${file} :: ${match[0]}`),
-    );
     expect(
       found,
       "`bg-scrim` and `bg-hover` each carry their own alpha, decided once in @sog/ui's surfaces.ts and measured there. A `/n` on one is a call site picking a strength again, which is exactly the drift a single construct exists to end — spend the construct whole, or take it to the library and change the value for everyone.",

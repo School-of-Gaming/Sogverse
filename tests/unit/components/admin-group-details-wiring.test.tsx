@@ -76,6 +76,8 @@ const IDS = {
   oskar: "2e7b6a54-3c1d-4f89-b0a2-7d8e9f0a1b2c",
   /** A join stamp and no note. */
   emil: "8c5d4e3f-2a1b-4c9d-8e7f-6a5b4c3d2e1f",
+  /** A gedu on a trainee seat on the group. */
+  trainee: "f2385255-5df1-4fca-8795-c1953616dc4d",
 } as const;
 
 const NOW = new Date("2026-03-16T12:00:00.000Z");
@@ -242,7 +244,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     product_staff_details: null,
     image_id: null,
     image_path: null,
-    product_images: null,
+    catalogue_images: null,
     start_date: "2025-09-01",
     end_date: null,
     seat_count: 10,
@@ -403,6 +405,9 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     gedus: [],
     substitutions: [],
     cancellations: [],
+    // One trainee, so the suite can see the admin shell hand the feed's
+    // trainees to the body rather than leave them behind.
+    trainees: [{ id: IDS.trainee, first_name: "Oliver" }],
   };
 }
 
@@ -474,6 +479,7 @@ function groupsSnapshot(): ProductGroupsSnapshot {
         name: "Monday A",
         created_at: "2025-09-01T00:00:00.000Z",
         gedus: [],
+        trainees: [],
         participations: [],
       },
     ],
@@ -611,6 +617,15 @@ describe("admin group details — the page an admin gets is the gedu's page", ()
     // Present but unlit: the affordance is how the first one gets written, so
     // gating it on having one would leave no way in.
     expect(isLit(flairButton("Emil"))).toBe(false);
+  });
+
+  it("chips the group's trainee among its gedus, tagged Trainee", () => {
+    renderPage("consumer_club");
+
+    // The admin shell hands the body the feed's trainees, as every shell must:
+    // the chip names them and carries the seat as its tag.
+    const chip = screen.getByText("Oliver").parentElement;
+    expect(chip?.textContent).toBe("OliverTrainee");
   });
 
   it("heads the roster rail with the category word, not the gedu's possessive", () => {

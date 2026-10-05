@@ -1403,7 +1403,7 @@ function buildBaseProduct(
     waitlist_enabled: config.waitlistEnabled,
     registration_opens_at: registrationOpensAt,
     // Demo art under `public/preview-art/`, reached through ordinary image
-    // resolution: `productImageUrl` passes a root-relative path through
+    // resolution: `catalogueImageUrl` passes a root-relative path through
     // untouched, so a fixture needs no image seam anywhere. Null renders the
     // wordmark banner.
     image_path: SCENARIO_ART[slug] ?? null,

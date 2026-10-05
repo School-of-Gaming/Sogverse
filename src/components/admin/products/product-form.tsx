@@ -35,7 +35,7 @@ interface ProductFormShellProps {
    *  edit wrapper passes `existingFormState(product, ...)`. */
   initialFormState: FormState;
   /** The catalogue entry `initialFormState.imageId` points at, from the
-   *  product read's `product_images` embed. `null` for a product with no
+   *  product read's `catalogue_images` embed. `null` for a product with no
    *  picture, and on the empty create form. Derived data, so it is a prop
    *  rather than form state — see `ImagePicker`. */
   initialImage?: ProductImageSelection | null;

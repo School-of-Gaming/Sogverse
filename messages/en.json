@@ -17,6 +17,9 @@
         "subline": "A free programme, run by real Game Educators",
         "collaboration": "A collaboration between"
       },
+      "team": {
+        "alt": "{name}, {role} at School of Gaming"
+      },
       "pages": {
         "signIn": {
           "title": "Sign in to School of Gaming",
@@ -35,6 +38,7 @@
       "resetPassword": "Reset Password",
       "registerGedu": "Become a Game Educator",
       "about": "About Us",
+      "library": "Library",
       "minecraftApi": "Minecraft Server API",
       "lynxApi": "Lynx Educate Partner API",
       "adminDashboard": "Admin Dashboard",
@@ -42,6 +46,10 @@
       "adminInvoiceCustomers": "Invoice Customers",
       "adminInvoiceCustomerNew": "New Invoice Customer",
       "adminInvoiceCustomerEdit": "Edit Invoice Customer",
+      "adminLibrary": "Library Content",
+      "adminLibraryArticleNew": "New Article",
+      "adminLibraryArticleEdit": "Edit Article",
+      "adminPlatformVision": "Platform Vision",
       "adminGeduInvoicing": "Gedu Invoicing",
       "adminTools": "Tools",
       "parentDashboard": "My SOG",
@@ -65,12 +73,15 @@
       "robloxSafeguarding": "Creator Academy Child Safeguarding Policy",
       "robloxTerms": "Creator Academy Terms & Conditions",
       "geduContract": "Gedu contract",
+      "oauthConsent": "Connect an AI app",
       "seatOffer": "Seat offer",
       "geduSubstitutions": "Substitutions",
       "geduInvoicing": "Invoicing",
       "adminSubstitutions": "Substitutions",
       "teamProfile": "My profile",
-      "adminTeamProfile": "Profile"
+      "adminTeamProfile": "Profile",
+      "adminFeedback": "Feedback",
+      "team": "Team"
     },
     "descriptions": {
       "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
@@ -79,12 +90,14 @@
       "resetPassword": "Choose a new password for your School of Gaming account from the link we emailed you, then sign in with it straight away.",
       "registerGedu": "Apply to become a Game Educator with School of Gaming and lead clubs, camps and events for children in the games they already play.",
       "about": "Who School of Gaming is, what Yty is, and answers to the questions families ask before they enrol their child.",
+      "library": "Practical guidance from School of Gaming for parents on online safety, screen time and family life, and what children learn through games.",
       "shop": "Browse School of Gaming’s clubs, camps and events in Minecraft, Roblox, Fortnite and more, and find one that fits your child’s week.",
       "resetPin": "Set a new parent PIN for your School of Gaming account from the link we emailed you. The PIN is what keeps the parent-only pages closed to your child.",
       "privacy": "How School of Gaming collects, uses and stores your family’s data: what we hold about a child, who we share it with, and the rights you can exercise.",
       "terms": "The terms you agree to when you use School of Gaming: how enrolments, payments and cancellations work, and what we and you are each responsible for.",
       "antiBullying": "How School of Gaming prevents bullying in its clubs, camps and events, what happens when it occurs, and the discipline steps a Game Educator follows.",
-      "attributions": "The sources and licences behind the data School of Gaming uses: place names, postcodes and player heads, each credited the way its licence requires."
+      "attributions": "The sources and licences behind the data School of Gaming uses: place names, postcodes and player heads, each credited the way its licence requires.",
+      "team": "Meet the people behind School of Gaming: the team who run it and the Game Educators who lead its clubs, camps and events, each introduced in their own words."
     }
   },
   "notFound": {
@@ -117,8 +130,6 @@
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "getStarted": "Get Started",
-    "goToMySog": "Go to My SOG",
-    "goToDashboard": "Go to Dashboard",
     "viewDetails": "View Details",
     "learnMore": "Learn More",
     "exploreClubs": "Explore Clubs",
@@ -156,7 +167,13 @@
     "weekRange": "wk {from}–{to}",
     "weekRangeAcrossYears": "wk {from}/{fromYear} – wk {to}/{toYear}",
     "weekCount": "{count, plural, one {# week} other {# weeks}}",
-    "weekColumn": "wk"
+    "weekColumn": "wk",
+    "unsavedChanges": {
+      "title": "Leave without saving?",
+      "description": "Your changes haven’t been saved. If you leave this page now, they’ll be lost.",
+      "stay": "Keep editing",
+      "leave": "Leave without saving"
+    }
   },
   "datePicker": {
     "openCalendar": "Open calendar",
@@ -166,6 +183,15 @@
     "goToWeek": "Go to week",
     "selectWeek": "Select week {week}",
     "today": "Today"
+  },
+  "imageCrop": {
+    "title": "Crop the image",
+    "description": "Drag the image to place it in the frame, and zoom to fit.",
+    "zoom": "Zoom",
+    "confirm": "Use image",
+    "unreadable": "This file can’t be opened as an image here. Choose a JPEG, PNG or WebP image. iPhone photos in HEIC format need converting first.",
+    "chooseAnother": "Choose another image",
+    "failed": "The image could not be cropped. Try again, or choose another image."
   },
   "about": {
     "pageTitle": "About us",
@@ -180,7 +206,9 @@
     },
     "mission": {
       "heading": "Our mission",
-      "text": "All screen content is not made equal. Gaming is a great hobby when it is treated like all the other hobbies. We use children’s love for games to their advantage — with good friends and a professional Game Educator who is there to guide and help."
+      "text": "All screen content is not made equal. Gaming is a great hobby when it is treated like all the other hobbies. We use children’s love for games to their advantage — with good friends and a professional Game Educator who is there to guide and help.",
+      "photoAlt": "Two of the School of Gaming team in purple School of Gaming hoodies at an event stand",
+      "meetTeam": "Meet the team"
     },
     "values": {
       "heading": "Things we care about",
@@ -194,7 +222,7 @@
       },
       "keepChildrenSafe": {
         "title": "Keep children safe online",
-        "description": "The Sogverse platform has no direct-message feature: conversation happens in shared group spaces, and chat during a call goes to the whole room and is never stored. Every gamer account is created by a parent and linked to their account, and the parent chooses how the child signs in — through the parent account alone, or with a username or a verified email address and a password of their own. Zero tolerance for bullying and toxicity."
+        "description": "In Sogverse, conversation happens in shared group spaces: chat in a lesson goes to the whole room, where the Gedu can see it. Every gamer account is created by a parent and linked to their account, and the parent chooses how the child signs in — through the parent account alone, or with a username or a verified email address and a password of their own. Zero tolerance for bullying and toxicity."
       },
       "familyInTheLoop": {
         "title": "Family in the loop",
@@ -204,9 +232,11 @@
     "howClubsWork": {
       "heading": "How our clubs work",
       "paragraph1": "Each week, our gamers log in and are greeted by their own Game Educator — a Gedu. The Gedu guides them through the day’s topic, giving children space and freedom to make the adventures their own.",
-      "paragraph2": "Our Gedus are gamers themselves. They understand firsthand that as children and teenagers, identity and friendships are built both online and offline. That understanding shapes every session they lead.",
-      "paragraph3": "All our clubs are built around stories that give space for gamers to explore, create, and imagine. Between weekly sessions, gamers get fun challenges to do online and offline. During holidays we organise camps, and every week there are community events, tournaments, and competitions.",
-      "paragraph4": "Every gamer takes an oath to behave kindly and righteously — whether in-game, on voice chat, or in everyday life. The same values apply everywhere."
+      "paragraph2": "Our Gedus are gamers themselves. They understand firsthand that as children and teenagers, identity and friendships are built both online and offline. That understanding shapes every lesson they lead.",
+      "paragraph3": "All our clubs are built around stories that give space for gamers to explore, create, and imagine. Between weekly lessons, gamers get fun challenges to do online and offline. During holidays we organise camps, and every week there are community events, tournaments, and competitions.",
+      "paragraph4": "Every gamer takes an oath to behave kindly and righteously — whether in-game, on voice chat, or in everyday life. The same values apply everywhere.",
+      "photoAlt": "A row of computers with drawing programs open in our studio, ready for a club",
+      "photoCaption": "Our studio in Lauttasaari, Helsinki, where some of our in-person clubs meet."
     },
     "forParents": {
       "heading": "For parents",
@@ -222,7 +252,7 @@
         },
         "isItASchool": {
           "question": "Is this school?",
-          "answer": "<p>No. Gaming is a hobby like any other, and that is how we run it: a Game Educator is there to guide and help, not to grade. Nothing in Sogverse gives a child a mark, sets homework or holds an exam.</p><p>What your child does get is a group of their own, a Gedu who knows them, and a written report after each session so you can see what they worked on and how it went.</p>"
+          "answer": "<p>No. Gaming is a hobby like any other, and that is how we run it: a Game Educator is there to guide and help, not to grade. Nothing in Sogverse gives a child a mark, sets homework or holds an exam.</p><p>What your child does get is a group of their own, a Gedu who knows them, and a written report after each lesson so you can see what they worked on and how it went.</p>"
         },
         "ages": {
           "question": "What ages is this for?",
@@ -230,11 +260,11 @@
         },
         "games": {
           "question": "Which games do you run, and does my child need to own the game?",
-          "answer": "<p>Our clubs, camps and events run in Minecraft (Java, Bedrock and Education editions), Roblox Studio, Fortnite, Rocket League and Pokémon GO, alongside sessions on esports, programming, AI and game creation — every club, camp and event page names the game it is built around and says plainly what you need.</p><p>Fortnite, Rocket League, Pokémon GO and Roblox Studio are free to download; your child needs a free account for them.</p><p>Minecraft Java and Minecraft Bedrock are paid games your family buys once from the publisher — the price is not included in ours, and the edition matters, so the page tells you which one and where to get it. For Minecraft Education there is nothing to buy and no school account to arrange: School of Gaming provides the accounts used in the session, and your child only downloads the game itself, free of charge.</p>"
+          "answer": "<p>Our clubs, camps and events run in Minecraft (Java, Bedrock and Education editions), Roblox Studio, Fortnite, Rocket League and Pokémon GO, and others are built around esports, programming, AI and game creation — every club, camp and event page names the game it is built around and says plainly what you need.</p><p>Fortnite, Rocket League, Pokémon GO and Roblox Studio are free to download; your child needs a free account for them.</p><p>Minecraft Java and Minecraft Bedrock are paid games your family buys once from the publisher — the price is not included in ours, and the edition matters, so the page tells you which one and where to get it. For Minecraft Education there is nothing to buy and no school account to arrange: School of Gaming provides the accounts used in the lesson, and your child only downloads the game itself, free of charge.</p>"
         },
         "equipment": {
           "question": "What equipment does my child need?",
-          "answer": "<p>It depends on the game, and every club, camp and event says so on its own page.</p><p>Minecraft Java needs a computer — Windows, Mac or Linux — and the console, phone and tablet edition will not work. Roblox Studio runs on Windows PCs and Macs only: not on a tablet, Chromebook, phone or console. Minecraft Bedrock runs on consoles, phones, tablets and Windows PCs, and Rocket League on Windows PCs, PlayStation, Xbox and Nintendo Switch. Pokémon GO needs a phone or tablet with GPS and a mobile data connection, because it is played outdoors.</p><p>Online sessions themselves run in the browser, over voice, so your child also needs a microphone — the session screen has a microphone picker and a live test bar so they can check it is the right one before they speak.</p>"
+          "answer": "<p>It depends on the game, and every club, camp and event says so on its own page.</p><p>Minecraft Java needs a computer — Windows, Mac or Linux — and the console, phone and tablet edition will not work. Roblox Studio runs on Windows PCs and Macs only: not on a tablet, Chromebook, phone or console. Minecraft Bedrock runs on consoles, phones, tablets and Windows PCs, and Rocket League on Windows PCs, PlayStation, Xbox and Nintendo Switch. Pokémon GO needs a phone or tablet with GPS and a mobile data connection, because it is played outdoors.</p><p>Online lessons themselves run in the browser, over voice, so your child also needs a microphone — the lesson screen has a microphone picker and a live test bar so they can check it is the right one before they speak.</p>"
         },
         "productTypes": {
           "question": "What’s the difference between clubs, camps, and events?",
@@ -246,39 +276,39 @@
         },
         "cancellation": {
           "question": "Can I cancel, and what is your refund policy?",
-          "answer": "<p>A club runs as a monthly subscription with no fixed commitment, and you can cancel whenever you like, at no cost, from the Payment & billing card on My SOG, which opens Stripe’s secure billing page. Your child keeps their place until the end of the billing period you have already paid for — their club page shows the date of their last session while the membership winds down.</p><p>Every club also carries a 30-day money-back guarantee: if it turns out not to be right for your child, email {supportEmail} within 30 days of their first session and we refund everything you have paid towards that club — there is no form and no reason to give.</p><p>Camps are booked and paid as a one-off, so they work differently: cancel 14 days or more before the camp starts and you get a full refund; between 7 and 14 days before, we refund you minus a €50 administration fee; less than 7 days before we cannot refund the payment, because the place has been held and prepared for your child — unless it is a medical emergency or something genuinely outside your control. If your child cannot attend because of illness, send us a doctor’s certificate at {supportEmail} and we refund you.</p>"
+          "answer": "<p>A club runs as a monthly subscription with no fixed commitment, and you can cancel whenever you like, at no cost, from the Payment & billing card on My SOG, which opens Stripe’s secure billing page. Your child keeps their place until the end of the billing period you have already paid for — their club page shows the date of their last lesson while the membership winds down.</p><p>Every club also carries a 30-day money-back guarantee: if it turns out not to be right for your child, email {supportEmail} within 30 days of their first lesson and we refund everything you have paid towards that club — there is no form and no reason to give.</p><p>Camps are booked and paid as a one-off, so they work differently: cancel 14 days or more before the camp starts and you get a full refund; between 7 and 14 days before, we refund you minus a €50 administration fee; less than 7 days before we cannot refund the payment, because the place has been held and prepared for your child — unless it is a medical emergency or something genuinely outside your control. If your child cannot attend because of illness, send us a doctor’s certificate at {supportEmail} and we refund you.</p>"
         },
         "severalChildren": {
           "question": "I have several children — how do accounts and payments work?",
           "answer": "<p>You hold one parent account, and you create a gamer account for each child from My SOG — first name, birth month and year, and optionally gender. A child never creates an account of their own, and your account can hold up to seven gamers.</p><p>Paying is yours to do: each child’s place in each club is its own line, so you can see and cancel them one at a time, and you reach them all from the Payment & billing card on My SOG.</p><p>There is no per-family bundle to buy and no separate account to set up per child.</p>"
         },
         "languages": {
-          "question": "What language are sessions run in?",
-          "answer": "<p>Two different settings, and they do not have to match.</p><p>Every club, camp and event is delivered in one language — Finnish, Swedish, English or French — shown on its page and usable as a filter in the shop.</p><p>Separately, the language you read Sogverse in is your own choice, from the picker in the site header. Changing it changes the app, not the language your child’s sessions are run in, so a Finnish-speaking parent can read the site in Finnish and enrol their child in an English club.</p>"
+          "question": "What language are lessons run in?",
+          "answer": "<p>Two different settings, and they do not have to match.</p><p>Every club, camp and event is delivered in one language — Finnish, Swedish, English or French — shown on its page and usable as a filter in the shop.</p><p>Separately, the language you read Sogverse in is your own choice, from the picker in the site header. Changing it changes the app, not the language your child’s lessons are run in, so a Finnish-speaking parent can read the site in Finnish and enrol their child in an English club.</p>"
         },
         "municipalityClubs": {
           "question": "What is a municipality club, and how do we join one?",
           "answer": "<p>A municipality club is a club we run together with a Finnish municipality. Depending on the municipality it meets either online from home or in person at your child’s school, and a professional Game Educator is there to guide it either way.</p><p>The municipality pays for it, so there is nothing to pay us when you register — some municipalities charge families a small fee of their own, which they will tell you about. You do not need a code or a referral: search for your municipality on our municipality clubs page, and if we have reached it, its clubs are listed there and you register your child directly, with no payment step.</p><p>Places are limited and clubs often have a waiting list, so if your child stops attending, please tell us so the place can be offered to the next gamer. We also run clubs that are open to everyone, which a gamer can join wherever they live.</p>"
         },
         "whoLeads": {
-          "question": "Who leads the sessions, and how are Gedus vetted?",
-          "answer": "<p>Every session is hosted by a Gedu — a Game Educator who’s also a gamer and knows how to support children in-game and out.</p><p>We require every Gedu to show us a criminal record extract for working with children before we certify them — the Finnish rikosrekisteriote, which they order themselves from the Legal Register Centre and which must be less than six months old when they show it to us — and to read and accept the contract they work under. We keep no copy of the extract and record nothing out of it, only that an acceptable one was shown and when.</p><p>Registering as a Gedu opens no group on its own: until an admin certifies the account, a Gedu cannot be assigned to a group or use the Gedu tools.</p>"
+          "question": "Who leads the lessons, and how are Gedus vetted?",
+          "answer": "<p>Every lesson is hosted by a Gedu — a Game Educator who’s also a gamer and knows how to support children in-game and out.</p><p>We require every Gedu to show us a criminal record extract for working with children before we certify them — the Finnish rikosrekisteriote, which they order themselves from the Legal Register Centre and which must be less than six months old when they show it to us — and to read and accept the contract they work under. We keep no copy of the extract and record nothing out of it, only that an acceptable one was shown and when.</p><p>Registering as a Gedu opens no group on its own: until an admin certifies the account, a Gedu cannot be assigned to a group or use the Gedu tools.</p>"
         },
         "safety": {
           "question": "Can strangers talk to my child, and is anything recorded?",
-          "answer": "<p>No — a club’s voice room is not a public room anyone can find. It exists only during that group’s session window, opening five minutes before the session starts and closing five minutes after it ends, and the only people who can enter are the members of that group, a Game Educator working on that club, and School of Gaming admins; that check runs on our server every time someone joins, so a child with no place in that group has no way in.</p><p>There is no direct-message feature anywhere on the platform: a session’s chat goes to the whole room, never to one child privately, and it carries pictures as well as words. It lives in the room, which is open for that same window — that is where your child reads it, and once the room closes there is no way to open it again. We do keep it: the Gedus running that club and School of Gaming admins can look back at what was said, which is what makes moderating it possible. Removing a message leaves a marker in its place rather than erasing it.</p><p>The session itself is not recorded. Nothing in the app records, transcribes or stores the voice or video of a session, and the room carries no recording controls.</p><p>Only the Gedu and admins hold the moderator controls, and those reach a long way: muting a microphone or locking it, turning a camera off or locking it, muting someone in the chat, moving someone into a space of their own, and speaking to every space at once. In-game chat is a separate thing, run by the games themselves — on School of Gaming’s own Minecraft server our Gedus can mute, kick and ban a player.</p>"
+          "answer": "<p>No — a club’s voice room is not a public room anyone can find. It exists only around that group’s lesson, opening five minutes before the lesson starts and closing five minutes after it ends, and the only people who can enter are the members of that group, a Game Educator working on that club, and School of Gaming admins; that check runs on our server every time someone joins, so a child with no place in that group has no way in.</p><p>A lesson’s chat goes to the whole room, never to one child privately, and it carries pictures as well as words. It lives in the room, which is open for that same window — that is where your child reads it, and once the room closes there is no way to open it again. We do keep it: the Gedus running that club and School of Gaming admins can look back at what was said, which is what makes moderating it possible. Removing a message leaves a marker in its place rather than erasing it.</p><p>The lesson itself is not recorded. Nothing in the app records, transcribes or stores the voice or video of a lesson, and the room carries no recording controls.</p><p>Only the Gedu and admins hold the moderator controls, and those reach a long way: muting a microphone or locking it, turning a camera off or locking it, muting someone in the chat, moving someone into a space of their own, and speaking to every space at once. In-game chat is a separate thing, run by the games themselves — on School of Gaming’s own Minecraft server our Gedus can mute, kick and ban a player.</p>"
         },
         "gamerAccounts": {
           "question": "How does my child sign in, and what is the parent PIN?",
-          "answer": "<p>You choose how your child signs in, for each child, from My SOG. By default a gamer account has no login of its own: it carries an internal Sogverse address rather than a real email address, it is linked to your parent account, and your child enters Sogverse by switching to their profile from yours. If you prefer, you can give them a username and a password, or their own email address — which they verify before setting a password through the normal reset flow.</p><p>Whichever you choose, a child’s sign-in opens only their own account: a child who signed in with their own username or email cannot switch to your account or a sibling’s at all — they sign out and sign in again, as you with your password, or as a sibling who has a login of their own; a sibling who signs in through your account is reached from your account instead — and a child who got in by switching from your account needs your parent PIN to switch anywhere else.</p><p>Getting into the parent side takes a four-digit PIN that only you know, so a password saved in the browser is not enough to buy anything or change a child’s account, and the session locks again the moment you switch to a child’s profile or sign out.</p><p>If you forget the PIN, we email a reset link to the address on your account and nowhere else — a child pressing “Forgot your PIN?” simply sends you an email.</p>"
+          "answer": "<p>You choose how your child signs in, for each child, from My SOG. By default a gamer account has no login of its own: it carries an internal Sogverse address rather than a real email address, it is linked to your parent account, and your child enters Sogverse by switching to their profile from yours. If you prefer, you can give them a username and a password, or their own email address — which they verify before setting a password through the normal reset flow.</p><p>Whichever you choose, a child’s sign-in opens only their own account: a child who signed in with their own username or email cannot switch to your account or a sibling’s at all — they sign out and sign in again, as you with your password, or as a sibling who has a login of their own; a sibling who signs in through your account is reached from your account instead — and a child who got in by switching from your account needs your parent PIN to switch anywhere else.</p><p>Getting into the parent side takes a four-digit PIN that only you know, so a password saved in the browser is not enough to buy anything or to use your parent account, and the session locks again the moment you switch to a child’s profile or sign out.</p><p>If you forget the PIN, we email a reset link to the address on your account and nowhere else — a child pressing “Forgot your PIN?” simply sends you an email.</p>"
         },
         "childData": {
           "question": "What do you store about my child?",
-          "answer": "<p>About your child:</p><list><item>Their first name, their birth month and year — we do not ask for the day — and optionally their gender.</item><item>Your family surname, because your child is part of your family. It is shown to nobody outside your family: a Gedu’s roster and the voice room show your child’s first name, their age, and any game username you have added.</item><item>An internal Sogverse address on their account, rather than a real email address — unless you chose to give your child a sign-in of their own with their own address, in which case we hold that address. Either way, no email address of your child’s is shown on a Gedu’s roster or in the voice room.</item><item>Optionally, their username in the games their clubs use — today Minecraft and Roblox — and the id that game gives them, so we can recognise them in a session. Their in-game character picture is loaded from that game’s own servers, so the username reaches Minecraft or Roblox whenever a roster is drawn.</item><item>A profile picture that is not a photo: with no game account linked, the image beside their name is a pattern generated from their account id.</item></list><p>Alongside that we keep what running a club requires: which clubs, camps and events they are signed up for, their attendance, the session reports and short staff notes their Gedus write, the chat from their sessions and any picture posted into it, anything they make that a Gedu links to their group, the consents recorded against their place, and the photos a Gedu attaches to a report. A Gedu’s moderation is on record too — a child moved into a private space, or muted in the chat, leaves a record of it. Those report photos are of the session rather than of one child — every family in that group sees them on the group’s page and receives them with the report by email.</p><p>To see, correct or delete anything we hold about your child, email {supportEmail}. We keep your information for as long as you have an account and delete or anonymise it if you close one, except where the law requires us to keep certain records longer, as Finnish accounting law does for payment records.</p>"
+          "answer": "<p>About your child:</p><list><item>Their first name, their birth month and year — we do not ask for the day — and optionally their gender.</item><item>Your family surname, because your child is part of your family. It is shown to nobody outside your family: a Gedu’s roster and the voice room show your child’s first name, their age, and any game username you have added.</item><item>An internal Sogverse address on their account, rather than a real email address — unless you chose to give your child a sign-in of their own with their own address, in which case we hold that address. Either way, no email address of your child’s is shown on a Gedu’s roster or in the voice room.</item><item>Optionally, their username in the games their clubs use — today Minecraft and Roblox — and the id that game gives them, so we can recognise them in a lesson. Their in-game character picture is loaded from that game’s own servers, so the username reaches Minecraft or Roblox whenever a roster is drawn.</item><item>A profile picture that is not a photo: with no game account linked, the image beside their name is a pattern generated from their account id.</item></list><p>Alongside that we keep what running a club requires: which clubs, camps and events they are signed up for, their attendance, the lesson reports and short staff notes their Gedus write, the chat from their lessons and any picture posted into it, anything they make that a Gedu links to their group, the consents recorded against their place, and the photos a Gedu attaches to a report. A Gedu’s moderation is on record too — a child moved into a private space, or muted in the chat, leaves a record of it. Those report photos are of the lesson rather than of one child — every family in that group sees them on the group’s page and receives them with the report by email.</p><p>To see, correct or delete anything we hold about your child, email {supportEmail}. We keep your information for as long as you have an account and delete or anonymise it if you close one, except where the law requires us to keep certain records longer, as Finnish accounting law does for payment records.</p>"
         },
         "howToStart": {
           "question": "How do I get started?",
-          "answer": "<p>Create a parent account, add your child as a gamer from My SOG, then browse the shop and enrol them — the signup panel asks who the seat is for, and prompts you to add a gamer if you have not yet.</p><p>Once you have signed up we place your child in a group with a Gedu before their first session, and the club then appears on My SOG for both of you.</p><p>They join sessions through your account — you switch to their profile — unless you choose to give them a sign-in of their own from My SOG.</p>"
+          "answer": "<p>Create a parent account, add your child as a gamer from My SOG, then browse the shop and enrol them — the signup panel asks who the seat is for, and prompts you to add a gamer if you have not yet.</p><p>Once you have signed up we place your child in a group with a Gedu before their first lesson, and the club then appears on My SOG for both of you.</p><p>They join lessons through your account — you switch to their profile — unless you choose to give them a sign-in of their own from My SOG.</p>"
         },
         "becomeGedu": {
           "question": "How do I become a Game Educator?",
@@ -473,6 +503,98 @@
         "manage": "Manage invoice customers",
         "option": "{name} ({number})"
       }
+    },
+    "library": {
+      "title": "Library content",
+      "subtitle": "The articles for parents in the public Library.",
+      "newArticle": "New article",
+      "lastSaved": "Last saved {date}",
+      "search": {
+        "label": "Search",
+        "placeholder": "Search by title or category…",
+        "showing": "Showing {count} of {total}",
+        "clear": "Clear",
+        "noMatches": "No articles match your search."
+      },
+      "noCategory": "No category",
+      "empty": "No articles yet. Write the first one.",
+      "backToList": "Back to Library content",
+      "notFound": "There is no article with this id.",
+      "loadError": "Could not load this article. Refresh to try again.",
+      "newPage": {
+        "title": "New article",
+        "submit": "Save draft"
+      },
+      "editPage": {
+        "title": "Edit article"
+      },
+      "status": {
+        "draft": "Draft",
+        "published": "Published",
+        "changed": "Unpublished changes"
+      },
+      "statusPanel": {
+        "label": "Publishing",
+        "publishedLine": "Published {date}.",
+        "changedLine": "Readers see the version published on {date}.",
+        "savedLine": "Last saved {date}.",
+        "savedByLine": "Last saved {date} by {name}.",
+        "savedByViaLine": "Last saved {date} by {name} via {app}.",
+        "savedByViaUnnamedLine": "Last saved {date} by {name} via an AI app."
+      },
+      "viewLive": "View in the Library",
+      "preview": "Preview",
+      "publish": "Publish",
+      "publishChanges": "Publish changes",
+      "unpublish": "Unpublish",
+      "readiness": {
+        "missing": "To publish, add {fields}.",
+        "leftOut": "{count, plural, one {{languages} is not complete, so publishing leaves it out.} other {{languages} are not complete, so publishing leaves them out.}}"
+      },
+      "missing": {
+        "category": "a category",
+        "completeVersion": "a language with a title, a summary and the article text"
+      },
+      "unpublishConfirm": {
+        "title": "Unpublish this article?",
+        "description": "Readers will no longer find it in the Library, and links to it will stop working. The article stays here, and you can publish it again at any time.",
+        "confirm": "Unpublish"
+      },
+      "fields": {
+        "languages": "Languages",
+        "title": "Title",
+        "summary": "Summary",
+        "category": "Category",
+        "cover": "Cover",
+        "body": "Article text"
+      },
+      "hints": {
+        "languages": "Write each language by hand. Publishing puts every complete language live: one with a title, a summary and the article text.",
+        "summary": "Plain text, set under the title and on the article’s card in the Library.",
+        "cover": "Shown above the article and on its card, cropped to 16:9. Without one, readers see a placeholder.",
+        "body": "Readers see it under the cover, formatted as it looks here."
+      },
+      "categoryPlaceholder": "Choose a category",
+      "bodyPlaceholder": "Write the article…",
+      "actions": {
+        "save": "Save",
+        "cancel": "Cancel"
+      },
+      "errors": {
+        "titleRequired": "An article needs a title.",
+        "saveFailed": "The article could not be saved. Try again.",
+        "saveFailedWithReason": "The article could not be saved — {reason}",
+        "publishFailed": "The article could not be published. Try again.",
+        "publishFailedWithReason": "The article could not be published — {reason}",
+        "unpublishFailed": "The article could not be unpublished. Try again.",
+        "unpublishFailedWithReason": "The article could not be unpublished — {reason}",
+        "versionTitleRequired": "The {language} version needs a title."
+      },
+      "versionComplete": "complete",
+      "versionIncomplete": "not complete yet",
+      "addLocale": "Add a language",
+      "removeLocale": "Remove {language}",
+      "languagesLabel": "Languages"
     },
     "geduRole": {
       "primary": "Primary",
@@ -880,52 +1002,82 @@
       },
       "imagePicker": {
         "label": "Image",
-        "dropPrompt": "Drop a file here, or choose one, to add it and use it for this product.",
-        "formats": "JPG, PNG, WebP, AVIF or SVG, up to 4 MB.",
+        "formats": "JPEG, PNG or WebP.",
         "chooseFile": "Choose file",
         "uploading": "Adding…",
-        "change": "Change image",
-        "remove": "Remove from this product",
-        "outcomeAdded": "Added to the catalogue and selected for this product.",
-        "outcomeExisting": "Already in the catalogue — selected for this product.",
-        "hint": "Shown on the product card when parents are browsing, cropped to a 3:2 frame. Pictures are shared between products, so choosing one here changes nothing else."
+        "hint": "Shown on the product card when parents are browsing, cropped to a 3:2 frame. Pictures are shared between products, so choosing one here changes nothing else.",
+        "forPurpose": {
+          "product": {
+            "change": "Change image",
+            "remove": "Remove from this product",
+            "dropPrompt": "Drop a file here, or choose one, to crop it to the 3:2 frame, add it and use it for this product.",
+            "outcomeAdded": "Added to the catalogue and selected for this product.",
+            "outcomeExisting": "Already in the catalogue — selected for this product."
+          },
+          "libraryCover": {
+            "change": "Change cover",
+            "remove": "Remove cover",
+            "dropPrompt": "Drop a file here, or choose one, to crop it to the 16:9 frame, add it and use it as this article’s cover.",
+            "outcomeAdded": "Added to the catalogue and chosen as this article’s cover.",
+            "outcomeExisting": "Already in the catalogue — chosen as this article’s cover."
+          }
+        }
       },
       "imageCatalogue": {
-        "title": "Product pictures",
-        "description": "One picture can be used by many products. Choosing one changes only this product; replacing or removing one changes every product using it.",
         "upload": "Upload",
         "uploading": "Adding…",
         "emptyCatalogue": "No pictures yet. Upload one to start the catalogue.",
-        "usedBadge": "{count, plural, one {# product} other {# products}}",
         "columnEmpty": "Select an image",
         "use": "Use this picture",
         "nameLabel": "Picture name",
         "rename": "Rename",
-        "usedBy": "Products using this picture",
-        "usedByNone": "No product uses this picture.",
         "live": "Live",
         "hidden": "Hidden",
+        "draft": "Draft",
         "replace": "Replace picture",
         "remove": "Remove from catalogue",
         "replaceConfirm": {
           "title": "Replace “{label}”",
-          "consequence": "{count, plural, one {The product below will show the new picture.} other {All # products below will show the new picture.}}",
-          "unused": "No product uses this picture. The new one takes its place in the catalogue.",
           "choose": "Choose the new picture",
-          "confirm": "Replace on {count, plural, one {# product} other {# products}}",
           "confirmUnused": "Replace picture"
         },
         "removeConfirm": {
           "title": "Remove “{label}”",
-          "consequence": "{count, plural, one {The product below will have no picture until you choose another.} other {All # products below will have no picture until you choose another.}}",
-          "unused": "No product uses this picture. It will be removed from the catalogue for good.",
-          "confirm": "Remove from {count, plural, one {# product} other {# products}}",
           "confirmUnused": "Remove from catalogue"
         },
         "errors": {
           "tooLarge": "That file is too large. Pictures must be 4 MB or smaller.",
-          "unsupportedType": "That file type is not supported. Use JPG, PNG, WebP, AVIF or SVG.",
+          "unsupportedType": "That file is not a JPEG. Crop the picture here and try again.",
+          "wrongSize": "That picture is not the exact size its frame needs. Crop it here and try again.",
           "nameRequired": "Give the picture a name of 1–120 characters."
+        },
+        "forPurpose": {
+          "product": {
+            "title": "Product pictures",
+            "description": "One picture can be used by many products. Choosing one changes only this product; replacing or removing one changes every product using it.",
+            "usedBadge": "{count, plural, one {# product} other {# products}}",
+            "usedBy": "Products using this picture",
+            "usedByNone": "No product uses this picture.",
+            "replaceConsequence": "{count, plural, one {The product below will show the new picture.} other {All # products below will show the new picture.}}",
+            "replaceUnused": "No product uses this picture. The new one takes its place in the catalogue.",
+            "replaceConfirm": "Replace on {count, plural, one {# product} other {# products}}",
+            "removeConsequence": "{count, plural, one {The product below will have no picture until you choose another.} other {All # products below will have no picture until you choose another.}}",
+            "removeUnused": "No product uses this picture. It will be removed from the catalogue for good.",
+            "removeConfirm": "Remove from {count, plural, one {# product} other {# products}}"
+          },
+          "libraryCover": {
+            "title": "Library covers",
+            "description": "One picture can be the cover of several articles. Choosing one changes only this article; replacing or removing one changes every article using it, live ones included.",
+            "usedBadge": "{count, plural, one {# article} other {# articles}}",
+            "usedBy": "Articles using this picture",
+            "usedByNone": "No article uses this picture.",
+            "replaceConsequence": "{count, plural, one {The article below will show the new picture, at once if it is live.} other {All # articles below will show the new picture, at once where they are live.}}",
+            "replaceUnused": "No article uses this picture. The new one takes its place in the catalogue.",
+            "replaceConfirm": "Replace on {count, plural, one {# article} other {# articles}}",
+            "removeConsequence": "{count, plural, one {The article below will have no cover until you choose another, even while it is live.} other {All # articles below will have no cover until you choose another, the live ones included.}}",
+            "removeUnused": "No article uses this picture. It will be removed from the catalogue for good.",
+            "removeConfirm": "Remove from {count, plural, one {# article} other {# articles}}"
+          }
         }
       },
       "filters": {
@@ -954,7 +1106,9 @@
         "alreadyAssigned": "Already assigned",
         "alreadyExpected": "Already at this session",
         "absentGedu": "The Gedu being substituted for",
-        "notCertified": "Not certified"
+        "notCertified": "Not certified",
+        "alreadyTrainee": "Already a trainee",
+        "traineeInstead": "Can be added as a trainee instead."
       },
       "participantPicker": {
         "title": "Add a participant",
@@ -1021,7 +1175,14 @@
         },
         "picker": {
           "addTitle": "Add Gedu to {name}",
-          "addDescription": "A Gedu can only run one group per product. Anyone already assigned is greyed out."
+          "addDescription": "A Gedu can only run one group per product. Anyone already assigned is greyed out.",
+          "addTraineeTitle": "Add trainee to {name}",
+          "addTraineeDescription": "A trainee shadows the group and doesn’t need to be certified. Anyone already on this product, as a Gedu or a trainee, is greyed out."
+        },
+        "trainee": {
+          "role": "Trainee",
+          "add": "Add trainee",
+          "removeAria": "Remove trainee {name}"
         },
         "removeParticipant": {
           "confirmTitle": "Remove {name} from this product?",
@@ -1409,6 +1570,115 @@
       "seatFailedSeatGone": "{absent} no longer has this session, so there is nothing to substitute for.",
       "seatFailedRequestWithdrawn": "{absent} has withdrawn their request, so there is no absence to cover.",
       "seatFailedNotScheduled": "The group no longer has a session on this date."
+    },
+    "feedback": {
+      "title": "Feedback",
+      "sources": {
+        "gamerOnline": "From gamers after online sessions"
+      },
+      "empty": "No feedback has been given yet.",
+      "loadError": "The feedback could not be loaded. Reload the page to try again.",
+      "loadErrorWithReason": "The feedback could not be loaded: {reason}",
+      "noAnswers": "No answers",
+      "answers": "{count, plural, one {# answer} other {# answers}}",
+      "skipped": "Skipped",
+      "belowAverage": "Below average",
+      "belowAverageOn": "Below average on: {statement}",
+      "statementLabels": {
+        "learned": "Learned",
+        "fun": "Fun",
+        "geduKnowledgeable": "Gedu knew",
+        "geduKind": "Gedu kind",
+        "groupListens": "Listened"
+      },
+      "timeline": {
+        "byWeek": "Positive answers by week",
+        "byMonth": "Positive answers by month",
+        "platform": "Platform"
+      },
+      "back": {
+        "overview": "Back to feedback",
+        "list": {
+          "product": "Back to products",
+          "gedu": "Back to Gedus"
+        },
+        "responses": "Back to what gamers said",
+        "detail": {
+          "product": "Back to the product",
+          "group": "Back to the group",
+          "gedu": "Back to the Gedu",
+          "gamer": "Back to the gamer"
+        }
+      },
+      "hero": {
+        "positive": "positive",
+        "definition": "Answered Yes or Definitely",
+        "responseRate": "{share} of gamers present answered"
+      },
+      "statements": {
+        "heading": "By statement",
+        "legend": "Negative is No or Not really; positive is Yes or Definitely.",
+        "positive": "{share} positive",
+        "negative": "{share} negative",
+        "saidPositive": "{positive} of {answers} said {yes} or {definitely}"
+      },
+      "explore": {
+        "heading": "Explore",
+        "titles": {
+          "product": "Products",
+          "gedu": "Gedus",
+          "responses": "Gamers"
+        },
+        "counts": {
+          "product": "{count, plural, one {# product} other {# products}}",
+          "gedu": "{count, plural, one {# Gedu} other {# Gedus}}",
+          "responses": "{count, plural, one {# response} other {# responses}}"
+        }
+      },
+      "rows": {
+        "none": "Nothing here yet.",
+        "answers": "Answers",
+        "positive": "Positive",
+        "positiveAgainst": "Positive (platform {share})"
+      },
+      "lists": {
+        "titles": {
+          "product": "Products",
+          "gedu": "Gedus"
+        },
+        "subtitle": "Worst first, against the platform average"
+      },
+      "detail": {
+        "kinds": {
+          "product": "Product",
+          "group": "Group",
+          "gedu": "Gedu",
+          "gamer": "Gamer"
+        },
+        "open": {
+          "product": "Open the product",
+          "group": "Open the group",
+          "gedu": "Open the Gedu's account",
+          "gamer": "Open the gamer's account"
+        },
+        "none": "Nothing has been answered about this yet.",
+        "platform": "Platform {share}",
+        "groupsHeading": "Groups",
+        "productsHeading": "Products",
+        "gedusHeading": "Gedus",
+        "gamersHeading": "Gamers who answered",
+        "responsesHeading": "What gamers said"
+      },
+      "responses": {
+        "title": "What gamers said",
+        "none": "No responses here.",
+        "noneWorthReading": "Nothing worth reading: no negative answers and no notes.",
+        "noGedu": "No Gedu recorded",
+        "who": "Response",
+        "filterLabel": "Which responses",
+        "worthReading": "Worth reading ({count})",
+        "all": "All ({count})"
+      }
     }
   },
   "auth": {
@@ -2082,8 +2352,6 @@
       "accessOpens": "Workspace opens {date} at {time}",
       "poolHeading": "Sessions needing a substitute",
       "poolAllClear": "No sessions need a substitute right now.",
-      "poolRemote": "Remote",
-      "poolSiteUnknown": "Place to be confirmed",
       "poolRolePrimary": "Primary",
       "poolRoleAssistant": "Assistant",
       "poolFee": "{fee} per session",
@@ -2121,6 +2389,51 @@
       "loading": "Loading locations...",
       "save": "Save",
       "saving": "Saving..."
+    },
+    "groupWorkspace": {
+      "staffNoteWithheld": "Only assigned Gedus and admins can read this note.",
+      "contactWithheld": "Contact details are for assigned Gedus and admins."
+    },
+    "trainee": {
+      "badge": "Trainee",
+      "dismiss": "Got it",
+      "lockedHint": "(locked)",
+      "whyAction": "Assigned Gedus can do this. You’re on this group as a trainee.",
+      "whySave": "Saving is for assigned Gedus. You’re on this group as a trainee, so try anything you like – nothing you type is kept.",
+      "sessionTitle": "Saving a session",
+      "sessionWhat": "Keeps the session’s report, the Gedu note, the photos and the attendance marks.",
+      "groupNotesTitle": "Saving the group’s notes",
+      "groupNotesWhat": "Keeps the notes about this group, for its families and for its Gedus.",
+      "siteNotesTitle": "Saving the site’s notes",
+      "siteNotesWhat": "Keeps the notes about this site, which every product running there shares.",
+      "gamerTitle": "Saving a gamer’s note",
+      "gamerWhat": "Keeps what Gedus write about this gamer, and the creation their family sees.",
+      "usernameTitle": "Correcting a game username",
+      "usernameWhat": "Changes this gamer’s username so it matches the one in the game.",
+      "sendTitle": "Sending to parents",
+      "sendWhat": "Emails this session’s report to every family in the group.",
+      "photosTitle": "Session photos",
+      "photosWhat": "Adds photos to the session report, or takes them off.",
+      "substituteTitle": "Asking for a substitute",
+      "substituteWhat": "Asks another Gedu to run this session in your place.",
+      "roomTitle": "Other groups’ voice rooms",
+      "roomWhat": "Joins another group’s voice room, to cover for its Gedu for a while.",
+      "screenShareTitle": "Sharing your screen",
+      "screenShareWhat": "Shows your screen to everyone in the room.",
+      "broadcastTitle": "Broadcasting",
+      "broadcastWhat": "Lets every zone hear you at once, wherever you are standing.",
+      "deafenTitle": "Silencing the room",
+      "deafenWhat": "Mutes everyone for you, so you can speak to the whole room without hearing it all at once.",
+      "zonesTitle": "Managing zones",
+      "zonesWhat": "Adds, edits and removes the room’s zones, private ones included.",
+      "moderateTitle": "Moderating someone",
+      "moderateWhat": "Mutes or locks a person’s mic and camera, or locks them out of the chat.",
+      "chatHideTitle": "Removing a message",
+      "chatHideWhat": "Removes someone’s message for everyone and leaves a note in its place.",
+      "chatRestoreTitle": "Putting a message back",
+      "chatRestoreWhat": "Brings a removed message back for everyone.",
+      "chatLockTitle": "Locking someone out of the chat",
+      "chatLockWhat": "Stops a person writing in the chat until they are let back in."
     },
     "sessionDetails": {
       "back": "Back to My SOG",
@@ -2404,7 +2717,40 @@
     "loadErrorWithReason": "Could not load the invoicing month — {reason}. Refresh to try again.",
     "searchPlaceholder": "Search by name or email…",
     "searchAriaLabel": "Search Gedus",
-    "searchNoMatches": "No Gedu this month matches “{query}”."
+    "searchNoMatches": "No Gedu this month matches “{query}”.",
+    "export": {
+      "statementTitle": "Work statement",
+      "to": "To: School of Gaming Galactic Oy",
+      "figuresAsOf": "Figures as of {time}",
+      "completeTitle": "This statement is complete",
+      "completeBody": "No session this month is still upcoming or waiting to be recorded.",
+      "incompleteTitle": "This statement is not complete",
+      "incompleteUnrecorded": "{count, plural, one {# past session has nothing recorded, so it is not included:} other {# past sessions have nothing recorded, so they are not included:}}",
+      "incompleteUpcoming": "{count, plural, one {# session is still upcoming: the month is in progress, so these figures can change.} other {# sessions are still upcoming: the month is in progress, so these figures can change.}}",
+      "summary": "Summary",
+      "municipalityExclVat": "Municipality, excl. VAT",
+      "consumerExclVat": "Consumer, excl. VAT",
+      "totalExclVat": "Total, excl. VAT",
+      "clubs": "Clubs",
+      "amountsExclVat": "All amounts exclude VAT.",
+      "sessions": "Session detail",
+      "noSessions": "No sessions this month.",
+      "pageOf": "Page {page} of {pages}",
+      "footer": "School of Gaming · {name} · {month}",
+      "columnDate": "Date",
+      "columnWeek": "Week",
+      "columnSegment": "Segment",
+      "columnGroup": "Group",
+      "columnLocation": "Location",
+      "columnStatus": "Status",
+      "columnOtherGedu": "Covering for / Substitute",
+      "columnFeeExclVat": "Fee excl. VAT",
+      "columnAmountExclVat": "Amount excl. VAT",
+      "statusAway": "Away",
+      "notRecordedDetail": "No report, note or attendance yet",
+      "downloadCsv": "Download CSV",
+      "downloadPdf": "Download PDF"
+    }
   },
   "productType": {
     "consumer_club": "Club",
@@ -2423,6 +2769,10 @@
     "nextSession": "Next session",
     "upcoming": "Upcoming",
     "cancelled": "Cancelled"
+  },
+  "sessionFacts": {
+    "remote": "Remote",
+    "siteUnknown": "Place to be confirmed"
   },
   "sessionFeed": {
     "readMore": "Read more",
@@ -2475,16 +2825,22 @@
     "linkApply": "Apply link",
     "linkRemove": "Remove link",
     "linkCancel": "Cancel",
-    "linkInvalid": "That address cannot be linked. Use a web address, an email address, or a path on this site."
+    "linkInvalid": "That address cannot be linked. Use a web address, an email address, or a path on this site.",
+    "opensInNewTab": "(opens in a new tab)"
   },
   "header": {
     "nav": {
       "shop": "Shop",
       "yty": "Yty",
       "about": "About",
+      "parents": "Parents",
       "faq": "FAQ",
       "substitutions": "Substitutions",
-      "substitutionsPhone": "Substitutions"
+      "home": "Home",
+      "library": "Library",
+      "libraryShort": "Library",
+      "team": "Team",
+      "tabBar": "Main"
     },
     "accountMenu": "Account menu – {name}",
     "continueToAccount": "Continue to your account",
@@ -2926,32 +3282,66 @@
     "municipalityClubs": "Municipality Clubs",
     "municipalityInvoicing": "Municipality Invoicing",
     "invoiceCustomers": "Invoice Customers",
+    "libraryContent": "Library Content",
+    "platformVision": "Platform Vision",
     "geduInvoicing": "Gedu Invoicing",
     "camps": "Camps",
     "events": "Events",
     "sites": "Sites",
     "uiComponents": "UI Components",
     "uiPreviews": "UI Previews",
-    "whatsapp": "WhatsApp",
     "testing": "Testing",
-    "settings": "Settings",
     "tools": "Tools",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
-    "substitutions": "Substitutions"
+    "substitutions": "Substitutions",
+    "feedback": "Feedback"
   },
   "home": {
     "hero": {
       "title": "Where<br></br>Screen Time<br></br>Becomes<br></br><act>Quality Time</act>",
-      "subtitle": "Our skilfully designed clubs promote healthy gaming as a hobby, in Minecraft, Roblox, Fortnite and more. Professional Game Educators make every session a playful learning experience where children make new friends, develop their unique talents, and have fun doing what they love.",
-      "aboutCta": "Learn more about us"
+      "subtitle": "Weekly clubs for ages 7–17, online and in person, from €59 per month: a Game Educator leads every lesson in Minecraft, Roblox, Fortnite and more."
+    },
+    "findClub": "Find a club",
+    "trust": {
+      "cancel": "Cancel any time, at no cost",
+      "guarantee": "30-day money-back guarantee"
+    },
+    "testimonials": {
+      "heading": "What parents tell us",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "“The club is the highlight of my son’s week. Every week, my quiet and shy boy transforms into a laughing, loudly chatting child when he gets to interact with like-minded kids. The club’s content and the educators’ expertise have pleasantly surprised me.”",
+          "attribution": "Mum, Finland"
+        },
+        "sighWithHappiness": {
+          "quote": "“Nothing else, no activity or hobby, has made my child sigh with happiness like this.”",
+          "attribution": "Mum, Finland"
+        },
+        "largeGroups": {
+          "quote": "“Large groups make our child anxious. This is the perfect way for us to engage in a hobby and make new friends.”",
+          "attribution": "Mum, Finland"
+        },
+        "finnishImproved": {
+          "quote": "“My daughter’s Finnish has improved tremendously in just a month! The gaming educators have been very skilled, friendly, and patient. This really works!”",
+          "attribution": "Mum, Norway"
+        },
+        "funAndSupervised": {
+          "quote": "“Gaming is fun and supervised. No bullying, no arguing, or bad vibes.”",
+          "attribution": "Mum, Finland"
+        },
+        "positiveExperience": {
+          "quote": "“School of Gaming has been a really positive experience for both the child and the parents. The children have had great gaming experiences with new friends in a safe gaming environment with experienced instructors – I can recommend it!”",
+          "attribution": "Dad, Finland"
+        }
+      }
     },
     "features": {
       "heading": "Make gaming a great hobby",
       "subheading": "Gaming is a hobby just like any other — better with good friends and with a professional Game Educator who is there to guide and help.",
       "minecraftClubs": {
-        "title": "Every session has a Gedu",
-        "description": "Our Game Educators — Gedus — are gamers themselves. They understand that as children, identity and friendships are built both online and offline. Every session is guided by someone who truly gets it."
+        "title": "Every lesson has a Gedu",
+        "description": "Our Game Educators — Gedus — are gamers themselves. They understand that as children, identity and friendships are built both online and offline. Every lesson is guided by someone who truly gets it."
       },
       "screenTime": {
         "title": "Designed to build real skills",
@@ -2964,6 +3354,36 @@
       "parents": {
         "title": "Parents are part of it",
         "description": "Parental game education is just as important as the clubs themselves. We keep you informed, involved, and equipped to support your child’s gaming journey."
+      }
+    },
+    "safety": {
+      "heading": "How is my child kept safe?",
+      "facts": {
+        "vetted": {
+          "title": "Record checks required",
+          "description": "We require every Gedu to show us a criminal record extract for working with children before we certify them."
+        },
+        "noDirectMessages": {
+          "title": "Every chat is the whole group’s",
+          "description": "Chat in a lesson goes to the whole room, where the Gedu can see it."
+        },
+        "groupOnlyRooms": {
+          "title": "Only the group gets in",
+          "description": "A club’s voice room opens five minutes before the lesson and closes five minutes after it, and only that group, its Gedus and our staff can enter."
+        },
+        "notRecorded": {
+          "title": "Lessons are not recorded",
+          "description": "Nothing in the app records, transcribes or stores the voice or video of a lesson."
+        },
+        "parentPin": {
+          "title": "A PIN before any spending",
+          "description": "Buying anything needs a four-digit parent PIN that only you know, and your child can’t get into your parent account without it."
+        }
+      },
+      "faqLink": "Read the full answers in our FAQ",
+      "photo": {
+        "alt": "Children at computers in a School of Gaming club, seen from behind, with their Game Educator sitting beside them",
+        "caption": "An in-person club at our studio in Lauttasaari, Helsinki."
       }
     },
     "howItWorks": {
@@ -2984,8 +3404,8 @@
     },
     "cta": {
       "heading": "Ready to turn gaming into learning?",
-      "subheading": "Give your child a fun, safe place to play, learn, and make friends — guided by a professional Game Educator.",
-      "createFreeAccount": "Create Free Account"
+      "subheading": "Give your child a place to play, learn and make friends every week, with a Game Educator in every lesson and every chat open to the whole group.",
+      "whereWeAre": "Our online clubs run in {languages}, for families anywhere in the world. And our global headquarters? A cosy studio in Lauttasaari, Helsinki, Finland, on a quiet little island."
     }
   },
   "roblox": {
@@ -3896,6 +4316,18 @@
       "title": "My profile",
       "description": "Your public profile on School of Gaming’s website: a photo of you and a few words about who you are.",
       "edit": "Edit profile"
+    },
+    "mcp": {
+      "title": "Connect an AI app",
+      "description": "Manage Sogverse from your own AI app through Sogverse’s MCP server.",
+      "urlLabel": "MCP server URL",
+      "copy": "Copy",
+      "copied": "Copied",
+      "steps": {
+        "add": "In your AI app’s settings, add a custom connector or remote MCP server with this URL.",
+        "signIn": "Sign in with your admin account and choose Allow.",
+        "unsure": "Not sure where to add it? Ask your AI app how to add a remote MCP server by its URL."
+      }
     }
   },
   "tools": {
@@ -4129,7 +4561,7 @@
     },
     "overview": {
       "heading": "How Yty works",
-      "paragraph1": "Every gamer starts at zero. From every session attended, every Quest completed, and every act of kindness shown, gamers earn Yty-Points. These points build up across the four Yty-Elements, each reflecting a different part of growing up well.",
+      "paragraph1": "Every gamer starts at zero. From every lesson attended, every Quest completed, and every act of kindness shown, gamers earn Yty-Points. These points build up across the four Yty-Elements, each reflecting a different part of growing up well.",
       "paragraph2": "As gamers collect Yty for themselves, they also raise the total Yty of Sogverse — shaping the story and unlocking new possibilities for the whole community."
     },
     "elements": {
@@ -4158,7 +4590,7 @@
     },
     "earning": {
       "heading": "How gamers earn Yty",
-      "paragraph1": "Yty-Points are earned through participation. Attending weekly club sessions, completing Quests, showing kindness to fellow gamers, joining community events and camps — all of these contribute to a gamer’s Yty.",
+      "paragraph1": "Yty-Points are earned through participation. Attending weekly club lessons, completing Quests, showing kindness to fellow gamers, joining community events and camps — all of these contribute to a gamer’s Yty.",
       "paragraph2": "As points accumulate under specific Achievement Badges, gamers level those badges up — from bronze to silver, gold, platinum, and diamond. Every point also feeds into their overall Yty-Level and the Yty-Element it belongs to.",
       "paragraph3": "And it’s not just gamers. Gedus, parents, and the entire community can take part in building the Yty of Sogverse through events and shared activities."
     }
@@ -4782,6 +5214,25 @@
       "mcHeads": "Draws the Minecraft character shown beside a linked Minecraft account. They ask for nothing in return, so this credit is a thank-you rather than a requirement."
     }
   },
+  "oauthConsent": {
+    "title": "Connect an AI app to Sogverse",
+    "body": "{clientName} is asking to act as you in Sogverse, with everything your admin account can do.",
+    "destinationLabel": "Your sign-in will be sent to",
+    "loopbackHint": "An app running on this computer.",
+    "unrecognised": "School of Gaming doesn't recognise this destination. Only allow this if you have just started connecting from your own AI app. If you didn't, choose Deny.",
+    "signedInAs": "Signed in as {email}",
+    "failed": "This request can no longer be answered. Start connecting again from your AI app.",
+    "deny": "Deny",
+    "allow": "Allow",
+    "unavailable": {
+      "title": "This sign-in link has already been used",
+      "body": "Each link works once and expires soon after. Start connecting again from your AI app."
+    },
+    "refused": {
+      "title": "Only School of Gaming admins can connect an AI app",
+      "body": "You're signed in as {email}, which isn't an admin account."
+    }
+  },
   "seatOffer": {
     "offer": {
       "title": "A seat has opened",
@@ -4952,9 +5403,10 @@
   },
   "team": {
     "profile": {
-      "nameWithNickname": "{firstName} “<nick>{nickname}</nick>” {lastName}",
-      "firstNameWithNickname": "{firstName} “<nick>{nickname}</nick>”",
+      "nameWithNickname": "{firstName} “{nickname}” {lastName}",
+      "firstNameWithNickname": "{firstName} “{nickname}”",
       "geduTitle": "Gedu · Game Educator",
+      "geduAltRole": "Game Educator",
       "speaks": "Speaks",
       "aboutMe": "About me",
       "funFact": "Fun fact",
@@ -4972,7 +5424,8 @@
         "waitingTitle": "Ready, waiting for an admin",
         "waitingBody": "An admin will review your profile page before it becomes public.",
         "liveTitle": "Public",
-        "liveBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away. To hide it, untick “My profile is ready to be public” and save; once you tick it again, an admin makes it public again."
+        "liveBody": "Anyone can see your profile on School of Gaming’s website. Changes you save go live straight away. To hide it, untick “My profile is ready to be public” and save; once you tick it again, an admin makes it public again.",
+        "viewPublicPage": "View public page"
       },
       "actions": {
         "save": "Save changes",
@@ -5020,12 +5473,7 @@
         },
         "crop": {
           "title": "Crop your photo",
-          "description": "Drag the photo to place it in the frame, and zoom to fit.",
-          "zoom": "Zoom",
-          "confirm": "Use photo",
-          "unreadable": "This file can’t be opened as a picture here. Choose a JPEG, PNG or WebP photo. iPhone photos in HEIC format need converting first.",
-          "chooseAnother": "Choose another photo",
-          "failed": "The photo could not be cropped. Try again, or choose another photo."
+          "confirm": "Use photo"
         }
       },
       "about": {
@@ -5068,7 +5516,8 @@
         "waitingTitle": "Ready, waiting to be made public",
         "waitingBody": "{name}’s profile is marked ready to be public. It goes on School of Gaming’s website as soon as an admin makes it public.",
         "liveTitle": "Public",
-        "liveBody": "Anyone can see {name}’s profile on School of Gaming’s website. Changes saved to it go live straight away."
+        "liveBody": "Anyone can see {name}’s profile on School of Gaming’s website. Changes saved to it go live straight away.",
+        "viewPublicPage": "View public page"
       },
       "edit": {
         "back": "Back to {name}",
@@ -5098,6 +5547,54 @@
         "hide": "Hide",
         "visibilityError": "Couldn’t change whether the profile is public. Please try again."
       }
+    },
+    "public": {
+      "index": {
+        "title": "Meet the <act>team</act>",
+        "intro": "The people who run School of Gaming and the Game Educators who lead our clubs, each introduced in their own words.",
+        "leadership": "Leadership",
+        "gameEducators": "Game Educators",
+        "empty": "Our team will be here soon"
+      },
+      "back": "Back to the team",
+      "cta": {
+        "heading": "Looking for a club for your child?"
+      }
+    }
+  },
+  "library": {
+    "name": "Library",
+    "readingTime": "{minutes, plural, one {# min read} other {# min read}}",
+    "article": {
+      "breadcrumbLabel": "Breadcrumb",
+      "more": "More from the Library",
+      "share": {
+        "heading": "Share this article",
+        "copyLink": "Copy link",
+        "copied": "Link copied",
+        "on": "Share on {platform} (opens in a new tab)",
+        "email": "Email",
+        "byEmail": "Share by email",
+        "native": "Share…"
+      }
+    },
+    "index": {
+      "title": "School of Gaming’s <act>Library</act>",
+      "intro": "Practical guidance for parents on online safety, everyday gaming at home, and what children learn through play.",
+      "empty": "Nothing here yet",
+      "all": "All",
+      "filterLabel": "Categories"
+    },
+    "categories": {
+      "onlineSafety": "Online safety",
+      "screenTime": "Screen time & family life",
+      "learning": "Learning through games",
+      "gamesExplained": "Games explained",
+      "forSchools": "For schools"
+    },
+    "cta": {
+      "heading": "Ready to get started?",
+      "button": "Get started"
     }
   }
 }

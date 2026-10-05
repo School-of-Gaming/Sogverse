@@ -52,6 +52,33 @@ export type Database = {
           },
         ]
       }
+      catalogue_images: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          path: string
+          purpose: Database["public"]["Enums"]["catalogue_image_purpose"]
+          sha256: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          path: string
+          purpose: Database["public"]["Enums"]["catalogue_image_purpose"]
+          sha256: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          path?: string
+          purpose?: Database["public"]["Enums"]["catalogue_image_purpose"]
+          sha256?: string
+        }
+        Relationships: []
+      }
       chat_channel_locks: {
         Row: {
           channel_id: string
@@ -916,6 +943,56 @@ export type Database = {
           },
         ]
       }
+      gedu_group_trainees: {
+        Row: {
+          created_at: string
+          gedu_id: string
+          group_id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          gedu_id: string
+          group_id: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          gedu_id?: string
+          group_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_group_trainees_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_group_trainees_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_group_trainees_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_group_trainees_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gedu_locations: {
         Row: {
           created_at: string
@@ -1253,6 +1330,199 @@ export type Database = {
           your_reference?: string | null
         }
         Relationships: []
+      }
+      library_article_publication_translations: {
+        Row: {
+          article_id: string
+          body: string
+          body_md5: string | null
+          locale: string
+          summary: string
+          title: string
+        }
+        Insert: {
+          article_id: string
+          body: string
+          body_md5?: string | null
+          locale: string
+          summary: string
+          title: string
+        }
+        Update: {
+          article_id?: string
+          body?: string
+          body_md5?: string | null
+          locale?: string
+          summary?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_article_publication_translations_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "library_article_publications"
+            referencedColumns: ["article_id"]
+          },
+        ]
+      }
+      library_article_publications: {
+        Row: {
+          article_id: string
+          category: Database["public"]["Enums"]["library_article_category"]
+          cover_image_id: string | null
+          cover_path: string | null
+          first_published_at: string
+          published_at: string
+        }
+        Insert: {
+          article_id: string
+          category: Database["public"]["Enums"]["library_article_category"]
+          cover_image_id?: string | null
+          cover_path?: string | null
+          first_published_at: string
+          published_at: string
+        }
+        Update: {
+          article_id?: string
+          category?: Database["public"]["Enums"]["library_article_category"]
+          cover_image_id?: string | null
+          cover_path?: string | null
+          first_published_at?: string
+          published_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_article_publications_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: true
+            referencedRelation: "library_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_article_publications_cover_image_id_fkey"
+            columns: ["cover_image_id"]
+            isOneToOne: false
+            referencedRelation: "catalogue_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_article_translations: {
+        Row: {
+          article_id: string
+          body: string
+          body_md5: string | null
+          is_complete: boolean | null
+          locale: string
+          summary: string
+          title: string
+        }
+        Insert: {
+          article_id: string
+          body?: string
+          body_md5?: string | null
+          is_complete?: boolean | null
+          locale: string
+          summary?: string
+          title: string
+        }
+        Update: {
+          article_id?: string
+          body?: string
+          body_md5?: string | null
+          is_complete?: boolean | null
+          locale?: string
+          summary?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_article_translations_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "library_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_articles: {
+        Row: {
+          author_id: string | null
+          category:
+            | Database["public"]["Enums"]["library_article_category"]
+            | null
+          cover_image_id: string | null
+          cover_path: string | null
+          created_at: string
+          id: string
+          last_saved_by: string | null
+          last_saved_via: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          category?:
+            | Database["public"]["Enums"]["library_article_category"]
+            | null
+          cover_image_id?: string | null
+          cover_path?: string | null
+          created_at?: string
+          id?: string
+          last_saved_by?: string | null
+          last_saved_via?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          category?:
+            | Database["public"]["Enums"]["library_article_category"]
+            | null
+          cover_image_id?: string | null
+          cover_path?: string | null
+          created_at?: string
+          id?: string
+          last_saved_by?: string | null
+          last_saved_via?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_articles_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_articles_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_articles_cover_image_id_fkey"
+            columns: ["cover_image_id"]
+            isOneToOne: false
+            referencedRelation: "catalogue_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_articles_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_articles_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       locations: {
         Row: {
@@ -1709,30 +1979,6 @@ export type Database = {
           },
         ]
       }
-      product_images: {
-        Row: {
-          created_at: string
-          id: string
-          label: string
-          path: string
-          sha256: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          label: string
-          path: string
-          sha256: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          label?: string
-          path?: string
-          sha256?: string
-        }
-        Relationships: []
-      }
       product_marketing_consents: {
         Row: {
           consent_type: Database["public"]["Enums"]["marketing_consent_type"]
@@ -2062,7 +2308,7 @@ export type Database = {
             foreignKeyName: "products_image_id_fkey"
             columns: ["image_id"]
             isOneToOne: false
-            referencedRelation: "product_images"
+            referencedRelation: "catalogue_images"
             referencedColumns: ["id"]
           },
           {
@@ -3140,6 +3386,8 @@ export type Database = {
           p_participation_moves?: Json
           p_product_id: string
           p_renamed_groups?: Json
+          p_trainees_added?: Json
+          p_trainees_removed?: Json
         }
         Returns: Json
       }
@@ -3232,6 +3480,14 @@ export type Database = {
           p_postal_code: string
           p_street: string
           p_your_reference?: string
+        }
+        Returns: string
+      }
+      create_library_article: {
+        Args: {
+          p_category?: Database["public"]["Enums"]["library_article_category"]
+          p_cover_image_id?: string
+          p_versions: Json
         }
         Returns: string
       }
@@ -3358,6 +3614,7 @@ export type Database = {
         Args: { p_group_id: string }
         Returns: boolean
       }
+      gedu_trains_group: { Args: { p_group_id: string }; Returns: boolean }
       get_admin_dashboard: { Args: never; Returns: Json }
       get_admin_gedu_invoicing: {
         Args: { p_month_start: string }
@@ -3371,12 +3628,17 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Json
       }
+      get_admin_session_feedback: {
+        Args: { p_from: string; p_to: string; p_window_before_minutes: number }
+        Returns: Json
+      }
       get_admin_substitution_requests: { Args: never; Returns: Json }
       get_chat_channel_roster: {
         Args: { p_channel_id: string }
         Returns: {
           first_name: string
           id: string
+          is_trainee: boolean
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
@@ -3390,20 +3652,13 @@ export type Database = {
         Args: never
         Returns: {
           cancelled_dates: string[]
-          end_date: string
           group_count: number
           group_id: string
-          is_remote: boolean
           kind: string
           participant_count: number
-          product_id: string
-          product_translations: Json
-          product_type: Database["public"]["Enums"]["product_type"]
-          schedule_slots: Json
-          start_date: string
+          product: Json
           substitution_cancelled: boolean
           substitution_date: string
-          timezone: string
         }[]
       }
       get_my_family_product_feed: {
@@ -3493,10 +3748,37 @@ export type Database = {
           waitlist_position: number
         }[]
       }
+      get_oauth_client: {
+        Args: { p_id: string }
+        Returns: {
+          client_name: string
+          client_uri: string
+          created_at: string
+          deleted_at: string
+          id: string
+          logo_uri: string
+        }[]
+      }
       get_open_substitution_requests: { Args: never; Returns: Json }
       get_product_groups_with_details: {
         Args: { p_product_id: string }
         Returns: Json
+      }
+      get_public_team_profile: {
+        Args: { p_user_id: string }
+        Returns: {
+          created_at: string
+          first_name: string
+          last_name: string
+          nickname: string
+          photo_version: string
+          pick: number
+          role: Database["public"]["Enums"]["user_role"]
+          spoken_languages: Database["public"]["Enums"]["spoken_language"][]
+          title: string
+          translations: Json
+          user_id: string
+        }[]
       }
       get_session_cancellations_in_effect: {
         Args: { p_group_ids: string[] }
@@ -3505,6 +3787,12 @@ export type Database = {
           session_date: string
         }[]
       }
+      get_trainee_assigned_product: {
+        Args: { p_group_id?: string; p_product_id: string }
+        Returns: Json
+      }
+      get_trainee_group_feed: { Args: { p_group_id: string }; Returns: Json }
+      get_trainee_group_overlay: { Args: { p_group_id: string }; Returns: Json }
       get_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
@@ -3553,6 +3841,7 @@ export type Database = {
         Returns: boolean
       }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
+      is_public_team_photo: { Args: { p_name: string }; Returns: boolean }
       is_subscription_shaped: {
         Args: {
           p_mode: Database["public"]["Enums"]["billing_mode"]
@@ -3586,6 +3875,22 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: Json
       }
+      list_public_team_profiles: {
+        Args: never
+        Returns: {
+          created_at: string
+          first_name: string
+          last_name: string
+          nickname: string
+          photo_version: string
+          pick: number
+          role: Database["public"]["Enums"]["user_role"]
+          spoken_languages: Database["public"]["Enums"]["spoken_language"][]
+          title: string
+          translations: Json
+          user_id: string
+        }[]
+      }
       location_search_blob: {
         Args: { p_external_code: string; p_name: string; p_name_i18n: Json }
         Returns: string
@@ -3612,6 +3917,7 @@ export type Database = {
         Args: { p_group_id?: string; p_participation_id: string }
         Returns: Json
       }
+      publish_library_article: { Args: { p_id: string }; Returns: string }
       record_account_consents: {
         Args: { p_customer_id: string; p_document_slugs: string[] }
         Returns: number
@@ -3659,6 +3965,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      repoint_library_covers: {
+        Args: { p_from: string; p_to: string }
+        Returns: number
+      }
       request_gamer_verification_email: {
         Args: { p_gamer_id: string }
         Returns: boolean
@@ -3685,6 +3995,25 @@ export type Database = {
       restore_session: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
+      }
+      save_library_article: {
+        Args: {
+          p_category?: Database["public"]["Enums"]["library_article_category"]
+          p_cover_image_id?: string
+          p_id: string
+          p_versions: Json
+        }
+        Returns: string
+      }
+      save_library_article_version: {
+        Args: {
+          p_body: string
+          p_id: string
+          p_locale: string
+          p_summary: string
+          p_title: string
+        }
+        Returns: string
       }
       save_team_profile: {
         Args: {
@@ -3732,6 +4061,10 @@ export type Database = {
           p_cancellation: Database["public"]["Tables"]["session_cancellations"]["Row"]
           p_include_detail: boolean
         }
+        Returns: Json
+      }
+      session_product_document: {
+        Args: { p_product: Database["public"]["Tables"]["products"]["Row"] }
         Returns: Json
       }
       set_chat_lock: {
@@ -3796,6 +4129,17 @@ export type Database = {
         }
         Returns: Json
       }
+      set_library_article_category: {
+        Args: {
+          p_category?: Database["public"]["Enums"]["library_article_category"]
+          p_id: string
+        }
+        Returns: string
+      }
+      set_library_article_cover: {
+        Args: { p_cover_image_id?: string; p_id: string }
+        Returns: string
+      }
       set_marketing_consent: {
         Args: {
           p_consent_type: Database["public"]["Enums"]["marketing_consent_type"]
@@ -3854,6 +4198,7 @@ export type Database = {
         Args: { p_code: string; p_message_id: string }
         Returns: boolean
       }
+      unpublish_library_article: { Args: { p_id: string }; Returns: string }
       update_invoice_customer: {
         Args: {
           p_city: string
@@ -3922,12 +4267,19 @@ export type Database = {
     }
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
+      catalogue_image_purpose: "product" | "library_cover"
       chat_channel_type: "group_session"
       effective_product_status: "pending" | "running" | "completed"
       gamer_photo_consent_type: "lynx_educate"
       gamer_sign_in: "parent" | "username" | "email"
       gedu_assignment_role: "primary" | "assistant"
       gender_type: "boy" | "girl" | "non_binary"
+      library_article_category:
+        | "online_safety"
+        | "screen_time"
+        | "learning"
+        | "games_explained"
+        | "for_schools"
       location_type: "country" | "region" | "municipality" | "district" | "site"
       marketing_consent_type: "school_of_gaming" | "lynx_educate"
       participation_status: "reserving" | "active" | "waitlisted" | "completed"
@@ -4084,12 +4436,20 @@ export const Constants = {
   public: {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
+      catalogue_image_purpose: ["product", "library_cover"],
       chat_channel_type: ["group_session"],
       effective_product_status: ["pending", "running", "completed"],
       gamer_photo_consent_type: ["lynx_educate"],
       gamer_sign_in: ["parent", "username", "email"],
       gedu_assignment_role: ["primary", "assistant"],
       gender_type: ["boy", "girl", "non_binary"],
+      library_article_category: [
+        "online_safety",
+        "screen_time",
+        "learning",
+        "games_explained",
+        "for_schools",
+      ],
       location_type: ["country", "region", "municipality", "district", "site"],
       marketing_consent_type: ["school_of_gaming", "lynx_educate"],
       participation_status: ["reserving", "active", "waitlisted", "completed"],

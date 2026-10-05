@@ -7,6 +7,12 @@ import { useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
+  LockedButton,
+  LockGlyph,
+  useLockExplanation,
+  type LockExplanation,
+} from "@/components/ui/locked-control";
+import {
   sessionThumbnailWidth,
   type SessionPhoto,
 } from "@/components/session-feed";
@@ -101,6 +107,13 @@ interface SessionPhotoStripProps extends SessionPhotoEditing {
    * presence is settled long before an editor opens.
    */
   consent: SessionPhotoConsentState | null;
+  /**
+   * The explanation the block gives instead of adding or removing, when the
+   * surface handed its photo writes in locked. The stored photos still draw,
+   * the Add button and every ✕ keep their places wearing a padlock, and a file
+   * dropped on the block is ignored rather than staged.
+   */
+  lock: LockExplanation | null;
 }
 
 /**
@@ -171,6 +184,7 @@ export function SessionPhotoStrip({
   landed,
   disabled,
   consent,
+  lock,
   error,
   onStageAdd,
   onUnstageAdd,
@@ -221,7 +235,8 @@ export function SessionPhotoStrip({
    * `onDragOver`), because a refusal a gedu can read beats a file the browser
    * quietly opens in the tab.
    */
-  const canDrop = !busy && room > 0;
+  const canDrop = !busy && room > 0 && lock === null;
+  const removeExplanation = useLockExplanation(lock);
 
   const handlePick = async (picked: readonly File[]) => {
     // Synchronous, before the first await: the button has to be disabled on the
@@ -277,7 +292,7 @@ export function SessionPhotoStrip({
     // A batch being prepared owns the remaining slots, and a save in flight owns
     // the whole card; the Add button is disabled for the same two reasons, and
     // it says nothing either.
-    if (busy) return;
+    if (busy || lock !== null) return;
     if (room === 0) {
       setTrimmed(null);
       onError("capReached");
@@ -365,7 +380,12 @@ export function SessionPhotoStrip({
             optimized
             disabled={busy}
             label={t("removePhoto", { index: index + 1 })}
-            onRemove={() => onStageRemoval(photo.id)}
+            lockedHint={lock?.lockedHint ?? null}
+            onRemove={() =>
+              lock !== null
+                ? removeExplanation.open()
+                : onStageRemoval(photo.id)
+            }
           />
         ))}
         {staged.adds.map((photo, index) => (
@@ -377,11 +397,20 @@ export function SessionPhotoStrip({
             optimized={false}
             disabled={busy}
             label={t("removePhoto", { index: kept.length + index + 1 })}
+            lockedHint={null}
             onRemove={() => onUnstageAdd(photo.key)}
           />
         ))}
 
-        {room > 0 && (
+        {room > 0 && lock !== null && (
+          <li className="shrink-0">
+            <LockedButton explanation={lock} variant="outline" size="sm">
+              <ImagePlus className="h-3.5 w-3.5" aria-hidden />
+              {t("addPhoto")}
+            </LockedButton>
+          </li>
+        )}
+        {room > 0 && lock === null && (
           <li className="shrink-0">
             <Button
               type="button"
@@ -448,11 +477,12 @@ export function SessionPhotoStrip({
           for something that cannot happen — and it sits *above* the two
           transient lines so a refusal arriving lands at the end of the run and
           pushes nothing already on screen. */}
-      {room > 0 && (
+      {room > 0 && lock === null && (
         <p className="mt-2 text-xs text-muted-foreground">
           {t("photosDropHint")}
         </p>
       )}
+      {removeExplanation.dialog}
 
       {trimmed !== null && (
         <p className="mt-2 text-xs text-muted-foreground">
@@ -493,6 +523,7 @@ function StripThumbnail({
   optimized,
   disabled,
   label,
+  lockedHint,
   onRemove,
 }: {
   src: string;
@@ -507,6 +538,11 @@ function StripThumbnail({
   optimized: boolean;
   disabled: boolean;
   label: string;
+  /**
+   * Set when the ✕ is locked: it wears a padlock in place of its cross, says
+   * this after its label, and its press explains rather than removes.
+   */
+  lockedHint: string | null;
   onRemove: () => void;
 }) {
   const boxWidth = sessionThumbnailWidth(width, height, STRIP_THUMB_HEIGHT);
@@ -541,12 +577,17 @@ function StripThumbnail({
 
       <button
         type="button"
-        aria-label={label}
+        aria-label={lockedHint === null ? label : `${label}, ${lockedHint}`}
+        aria-haspopup={lockedHint === null ? undefined : "dialog"}
         disabled={disabled}
         onClick={onRemove}
         className="glass absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act disabled:pointer-events-none disabled:opacity-50"
       >
-        <X className="h-3.5 w-3.5" aria-hidden />
+        {lockedHint === null ? (
+          <X className="h-3.5 w-3.5" aria-hidden />
+        ) : (
+          <LockGlyph />
+        )}
       </button>
     </li>
   );

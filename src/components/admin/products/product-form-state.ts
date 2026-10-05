@@ -112,7 +112,7 @@ export interface FormState {
   // The catalogue entry this product's picture comes from, or null for no
   // picture. An **id and nothing else**: the entry's label and the picture
   // itself are derived, never held here — at load from the admin detail read's
-  // `product_images` embed, and after that from whatever the catalogue surface
+  // `catalogue_images` embed, and after that from whatever the catalogue surface
   // last saw. Holding a copy is what would let a rename or a replace made
   // elsewhere leave a stale label sitting in a half-filled form.
   imageId: string | null;

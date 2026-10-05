@@ -3,11 +3,13 @@
 import { useState, type ReactNode } from "react";
 import { Eye, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
+import type { LockExplanation } from "@/components/ui/locked-control";
 import { planDraftFromEditorState } from "./entry-state";
 import { FamilyNoteBlock } from "./FamilyNoteBlock";
 import { RichNoteField } from "./RichNoteField";
 import { EditorActionRow } from "./SessionRecordEditor";
 import { StaffNoteBlock } from "./StaffNoteBlock";
+import { WithheldStaffNoteField } from "./WithheldStaffNoteField";
 import type { SessionPlanDraft, SessionPlanEditorState } from "./types";
 
 interface SessionPlanEditorProps {
@@ -45,6 +47,10 @@ interface SessionPlanEditorProps {
    * still time to do it, rather than only once the card has gone to the warning tone.
    */
   creationsBlock?: ReactNode;
+  /** Whether the gedu note was withheld from this reader — filler in its slot. */
+  staffNoteWithheld: boolean;
+  /** The Save's explanation when the save was handed in locked, or `null`. */
+  saveLock: LockExplanation | null;
   onCancel: () => void;
   onSave: (draft: SessionPlanDraft) => void;
 }
@@ -88,6 +94,8 @@ export function SessionPlanEditor({
   error,
   photoStrip,
   creationsBlock,
+  staffNoteWithheld,
+  saveLock,
   onCancel,
   onSave,
 }: SessionPlanEditorProps) {
@@ -138,22 +146,27 @@ export function SessionPlanEditor({
       {photoStrip}
 
       <StaffNoteBlock audienceStatedByField>
-        <RichNoteField
-          label={t("staffNoteTitle")}
-          icon={Lock}
-          hint={t("staffNoteHint")}
-          placeholder={t("staffNotePlaceholder")}
-          value={initialState.staffNote}
-          seed={opens}
-          ready={opens > 0}
-          disabled={committing}
-          onChange={(staffNote) => setDraft((d) => ({ ...d, staffNote }))}
-        />
+        {staffNoteWithheld ? (
+          <WithheldStaffNoteField />
+        ) : (
+          <RichNoteField
+            label={t("staffNoteTitle")}
+            icon={Lock}
+            hint={t("staffNoteHint")}
+            placeholder={t("staffNotePlaceholder")}
+            value={initialState.staffNote}
+            seed={opens}
+            ready={opens > 0}
+            disabled={committing}
+            onChange={(staffNote) => setDraft((d) => ({ ...d, staffNote }))}
+          />
+        )}
       </StaffNoteBlock>
 
       <EditorActionRow
         committing={committing}
         error={error}
+        saveLock={saveLock}
         onCancel={onCancel}
         onSave={() => onSave(planDraftFromEditorState(draft))}
       />

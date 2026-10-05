@@ -9,13 +9,14 @@ import { ProductBanner } from "@/components/ui/product-banner";
 import { TopicPrepContent } from "@/components/topic-prep/TopicPrepContent";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
-import { productImageSrc } from "@/lib/images/product-image-url";
+import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { resolveTopicPrep } from "@/lib/products/topics";
 import { formatCurrencyFromCents } from "@/lib/utils";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { useTimezone } from "@/providers";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
+import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import type { ProductBrowseRow } from "@/types";
 import { buildPricingOption, type PricingOption } from "./pricing-options";
 import { ProductOverviewCard } from "./product-overview-card";
@@ -82,7 +83,7 @@ export function PurchaseConfirmationView({
   const viewerTimezone = useTimezone();
 
   const isWaitlist = outcome === "waitlisted";
-  const tr = resolveTranslation(product.product_translations, locale);
+  const tr = resolveTranslation(inLocaleOrder(product.product_translations), locale);
   const productName = tr?.name ?? "";
   // The summary row keeps naming the person even on a self seat — the reader's
   // own first name is what they recognise beside "Enrolled", and it is the one
@@ -163,7 +164,7 @@ export function PurchaseConfirmationView({
                 square did not. */}
             <div className="mt-4 flex items-center gap-4">
               <ProductBanner
-                src={productImageSrc(product.image_path)}
+                src={catalogueImageSrc("product", product.image_path)}
                 className="w-24 shrink-0 rounded-lg"
                 // `w-24` at every breakpoint — a fixed inline thumb, so one
                 // length with no media conditions.

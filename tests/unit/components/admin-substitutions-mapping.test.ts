@@ -47,9 +47,14 @@ function product(args: {
   return {
     id: args.id,
     product_type: "consumer_club",
+    topic: "minecraft_java",
+    spoken_language_code: "fi",
     timezone: args.timezone,
     is_remote: true,
-    translations: [{ locale: "en", name: `Club ${args.id}` }],
+    start_date: null,
+    end_date: null,
+    site_name: null,
+    translations: [{ locale: "en", name: `Club ${args.id}`, description: "" }],
     schedule_slots: args.slots.map((slot) => ({
       weekday: slot.weekday,
       start_time: slot.startTime,
@@ -201,7 +206,7 @@ describe("the admin Substitutions mapping", () => {
       "after",
     ]);
     const mapped = data.open[1];
-    expect(mapped.startsAt).toBeNull();
+    expect(mapped.facts.startsAt).toBeNull();
     expect(mapped.sessionTime).toBeNull();
     // No start means no claim about how soon it is, so it is never urgent.
     expect(mapped.urgent).toBe(false);

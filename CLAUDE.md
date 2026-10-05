@@ -10,7 +10,7 @@ npm run dev:stripe       # Start dev server + Stripe webhook listener
 npm run build            # Production build
 npm run lint             # ESLint
 npm run type-check       # TypeScript check (tsc --noEmit)
-npm run gates            # All landing gates: lint + type-check + translations + tests (runs all, reports every failure)
+npm run gates            # All landing gates: lint + type-check + translations + the MCP cover uploader's build freshness + tests (runs all, reports every failure)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
 npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
@@ -47,7 +47,8 @@ file is opened are carried here as one-line reminders, with the full rule in the
 
 - **A new API route** lives under `src/app/api/` and is classified in the integration
   suite's route posture registry — the Testing section below says how.
-- **Admins are trusted**, including trusted to act only through the admin UI: "an admin
+- **Admins are trusted**, including trusted to act only through the admin UI and the admin
+  MCP tools: "an admin
   could reach an invalid state via the raw API" is not a defect worth building for, and a
   state the UI cannot produce fails loudly at the schema rather than corrupting silently.
 - **Caller-supplied redirect targets** go through `resolveInternalPath()`, and any absolute
@@ -100,6 +101,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Cookie consent and the advertising scripts (Meta Pixel, Tag Manager) | `src/components/consent/` |
 | Game accounts (Minecraft, Roblox) | `src/components/game-account/` |
 | Partner brand assets (Roblox, Lynx marks) | `src/assets/partners/` |
+| Marketing photos and the home hero video — masters, encodes, the cache rule | `src/assets/marketing/` |
 | Billing portal | `src/services/billing/` |
 | Parent PIN | `src/services/pin/` |
 | Gedu profiles, certification and the record check | `src/services/gedu/` |
@@ -109,7 +111,8 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Calendar invitations (the mailed `.ics`) | `src/lib/calendar-invitations/` |
 | Supabase clients & paged list reads | `src/lib/supabase/` |
 | Locations | `src/services/locations/` |
-| Product image catalogue | `src/services/product-images/` |
+| Image catalogue — product pictures and Library covers | `src/services/catalogue-images/` |
+| Library — articles, their working and published copies | `src/services/library/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |
@@ -123,12 +126,13 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Voice — instant rooms | `src/components/voice/instant/` |
 | Discord bot | `src/app/api/discord/` |
 | Partner API (Lynx Educate) | `src/app/api/partner/` |
+| MCP server — AI apps acting as an admin, its OAuth gate and consent page | `src/lib/mcp/` |
 | SOG-UI — the UI language package and its demo | `packages/sog-ui/` |
 | Database / migrations | `supabase/` |
 | Testing conventions | `tests/` |
 | Operational scripts — policy and the output folder | `scripts/` |
 
-- `docs/` holds the docs a human deliberately maintains and that don't map to one directory, organized by doc *type* — each subdirectory owns its rules in its own `CLAUDE.md`: `architecture/` (living cross-cutting systems and repo-wide topics), `investigations/` (researched, nothing decided), `plans/` (decided and ready to build; **deleted** when the work lands), `projects/` (a multi-session project's working context — decisions, ideas and tasks; **deleted** when it is done), `records/` (frozen stories behind how something got the way it is), `feedback/` (outside input — things to consider, not to do). `docs/CLAUDE.md` carries the category map and house style; a doc fitting no category sits at `docs/` top level. When a topic is in neither a colocated `CLAUDE.md` nor `docs/`, treat the code as the source of truth.
+- `docs/` holds the docs a human deliberately maintains and that don't map to one directory, organized by doc *type* — each subdirectory owns its rules in its own `CLAUDE.md`: `architecture/` (living cross-cutting systems and repo-wide topics), `investigations/` (researched, nothing decided), `plans/` (decided work being **parked** for a later session — never written for work starting now; **deleted** when the work lands), `records/` (frozen stories behind how something got the way it is), `feedback/` (outside input — things to consider, not to do). `docs/CLAUDE.md` carries the category map and house style; a doc fitting no category sits at `docs/` top level. When a topic is in neither a colocated `CLAUDE.md` nor `docs/`, treat the code as the source of truth.
 - `TODO.md` is the running list of cross-cutting work we know we want to come back to. Distinct from `docs/`. **When an item is fully done with nothing left to discuss, delete it — don't check it off (`[x]`).** `TODO.md` tracks open work, not a changelog; the record of what was done lives in git history and in the docs/code the work produced. Leave `[ ]`/`[x]` only for partially-done items where the checked sub-points still give context for the open ones. **Additions need the owner's explicit approval**: TODO.md is the owner's backlog — a statement of where the project's attention goes — so on finding something worth tracking, propose it with its justification and write it in only once approved. A mention in a work summary is not approval. (Items an approved plan or the owner's own instruction already names are fine.) **The approval is not written into the item** — no "owner-approved" stamp, no date: an item's presence in the file is the approval, and a stamp saying so is space spent on nothing the reader can act on.
 
 **Rule: Docs state their rules self-containedly — never cite a specific code symbol as an illustration.** A pointer like "see `getParticipationsForGamers` in `participations.service.ts`" rots silently: the function gets renamed, moved, or deleted, and the doc goes on citing something that no longer exists or no longer makes the point. Describe the *shape* of the code instead, so the rule stands on its own. Two things stay fair game: naming an API the rule mandates (a rule like "resolve redirect targets through `resolveInternalPath()`" *is* that name — it cannot be stated without it), and directory or module references used for navigation, which are stable.
@@ -188,7 +192,8 @@ work under `tests/`). Two things worth knowing from anywhere:
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
 - **`smoke/` is the only CI job that builds the app**, and it asserts security headers
-  and the per-request CSP against a served production build over plain HTTP. No browser
+  and the per-request CSP against a served production build over plain HTTP, and that the
+  build has dropped the dev-only code it must not contain. No browser
   is launched there; a test that needs one does not belong in that directory.
 - **There are no flaky tests. A test that fails intermittently is a broken test and MUST
   be fixed.** Passing on a re-run or in isolation proves nothing about the ordering that
@@ -233,6 +238,18 @@ is changing, and changing one half never obliges the other.
 4. **Ship the primitive that makes conforming the cheapest path** — a guard function, a wrapper, a canonical template, giving step 3 a single greppable call site to require.
 
 The first two without the last two is an audit, not a fix: prose decays, a failing test doesn't, and fixing instances leaves the class alive. Keep the scope to one surface and one bug class per pass. Three standing instances show the shape: DB grants + RLS presence (the access-control DB test), DB function bodies (the authorization spine — `docs/architecture/db-authorization.md`), and the HTTP route layer (the posture registry — `docs/architecture/route-boundary.md`).
+
+### A choice that doesn't matter goes to the simplest code, not the smallest diff
+
+**Rule: when the owner rules that a behaviour doesn't matter and defers the choice on
+complexity grounds, pick the outcome that is simplest for a first-time reader to
+understand — not the one that is least work to reach from here.** The ruling says the
+behaviour is not worth paying complexity for; the complexity it means is what every
+future reader pays, and a diff is paid once. So the answer can be more change today:
+two surfaces that order, name or shape the same thing differently make a reader stop
+and ask whether the difference is deliberate, and aligning them is the simpler answer
+even though leaving them alone is the smaller diff. Leaving the code as it stands is
+right only when it already reads as the simplest version of itself.
 
 ### A comment describes current behaviour, never a migration number
 

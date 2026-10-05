@@ -103,7 +103,20 @@ type Posture =
    * its own secret inline names the compare it uses, which records the
    * hand-roll as a wart rather than excusing it.
    */
-  | { kind: "api-key"; reason: string; primitive: string };
+  | { kind: "api-key"; reason: string; primitive: string }
+  /**
+   * An OAuth access token from the project's own Auth server, presented as a
+   * bearer by a client an admin approved — the MCP endpoint. No cookie session
+   * is involved, so neither `defineRoute` nor the bare role gate applies;
+   * `primitive` names the gate the file must call, and `roles` the roles that
+   * gate admits, re-read on every request.
+   */
+  | {
+      kind: "oauth-bearer";
+      roles: readonly UserRole[];
+      primitive: string;
+      reason: string;
+    };
 
 /**
  * Webhook verifier strategies, recorded per handler because their error
@@ -183,6 +196,7 @@ const TESTS = {
   geduGamerRoblox: "tests/integration/api/gedu-gamer-roblox.test.ts",
   geduCompleteRegistration:
     "tests/integration/api/gedu-complete-registration.test.ts",
+  geduInvoicingExport: "tests/integration/api/gedu-invoicing-export.test.ts",
   geduRegister: "tests/integration/api/gedu-register.test.ts",
   geduSessionEmailReport:
     "tests/integration/api/gedu-session-email-report.test.ts",
@@ -196,6 +210,7 @@ const TESTS = {
     "tests/integration/api/tools-minecraft-password-reset.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
+  mcp: "tests/integration/api/mcp.test.ts",
   municipalityInvoicingFinvoice:
     "tests/integration/api/municipality-invoicing-finvoice.test.ts",
   // The partner API: one suite for what its resources share (the key, query
@@ -211,10 +226,11 @@ const TESTS = {
   partnerRobloxResearch: "tests/integration/api/partner-roblox-research.test.ts",
   partnerSessions: "tests/integration/api/partner-sessions.test.ts",
   partnerTraffic: "tests/integration/api/partner-traffic.test.ts",
+  oauthConsent: "tests/integration/api/oauth-consent.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
-  productImagesManage: "tests/integration/api/product-images-manage.test.ts",
-  productImagesReplace: "tests/integration/api/product-images-replace.test.ts",
-  productImagesUpload: "tests/integration/api/product-images-upload.test.ts",
+  catalogueImagesManage: "tests/integration/api/catalogue-images-manage.test.ts",
+  catalogueImagesReplace: "tests/integration/api/catalogue-images-replace.test.ts",
+  catalogueImagesUpload: "tests/integration/api/catalogue-images-upload.test.ts",
   productsCreate: "tests/integration/api/products-create.test.ts",
   productsGroupsApply: "tests/integration/api/products-groups-apply.test.ts",
   productsParticipations: "tests/integration/api/products-participations.test.ts",
@@ -233,6 +249,7 @@ const TESTS = {
   seatOfferRespond: "tests/integration/api/seat-offer-respond.test.ts",
   seatOfferSweep: "tests/integration/api/admin-seat-offers-sweep.test.ts",
   seatOfferInApp: "tests/integration/api/participations-seat-offer.test.ts",
+  teamPhotos: "tests/integration/api/team-photos.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   signout: "tests/integration/auth/signout.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
@@ -400,55 +417,55 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-  // The catalogue routes. All three write the `product_images` table on the
+  // The catalogue routes. All three write the `catalogue_images` table on the
   // caller's own session — an admin-only RLS policy is what decides there — and
-  // reach for the service-role client for the storage bucket alone, which has
-  // no policies at all.
-  "src/app/api/admin/product-images/route.ts": {
+  // reach for the service-role client for the entry's purpose's storage bucket
+  // alone, the one writer the buckets' guarantees are kept behind.
+  "src/app/api/admin/catalogue-images/route.ts": {
     adminClient:
-      "privileged-bucket storage upload only (the bucket carries no policies); the catalogue row is inserted on the user client",
+      "privileged-bucket storage upload only, into the purpose's bucket; the catalogue row is inserted on the user client",
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
         body: {
           kind: "multipart",
           schema:
-            "inline: one `file` plus an optional `label`, read by readImageUpload — no JSON field, and the label is capped rather than refused (productImageLabel governs the rename route, where the label is the request)",
+            "inline: one `file`, its required `purpose` (parsed by the catalogueImagePurpose enum) and an optional `label`, read by readImageUpload — the file's size is measured against the purpose by refuseUnlessPurposeSize, and the label is capped rather than refused (catalogueImageLabel governs the rename route, where the label is the request)",
         },
-        test: TESTS.productImagesUpload,
+        test: TESTS.catalogueImagesUpload,
       },
     },
   },
 
-  "src/app/api/admin/product-images/[id]/route.ts": {
+  "src/app/api/admin/catalogue-images/[id]/route.ts": {
     adminClient:
-      "privileged-bucket object removal only; the row delete and the linked-product count run on the user client",
+      "privileged-bucket object removal only, from the entry's purpose's bucket; the row delete and the linked-product count run on the user client",
     handlers: {
       PATCH: {
         posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "renameProductImageBody" },
-        test: TESTS.productImagesManage,
+        body: { kind: "json", schema: "renameCatalogueImageBody" },
+        test: TESTS.catalogueImagesManage,
       },
       DELETE: {
         posture: ADMIN_ONLY,
         body: { kind: "none" },
-        test: TESTS.productImagesManage,
+        test: TESTS.catalogueImagesManage,
       },
     },
   },
 
-  "src/app/api/admin/product-images/[id]/replace/route.ts": {
+  "src/app/api/admin/catalogue-images/[id]/replace/route.ts": {
     adminClient:
-      "privileged-bucket storage upload only (the bucket carries no policies); the catalogue row and the one-statement repoint of every linked product run on the user client",
+      "privileged-bucket storage upload only, into the replaced entry's purpose's bucket; the catalogue row and the one-statement repoint of every linked product run on the user client",
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
         body: {
           kind: "multipart",
           schema:
-            "inline: one `file`, read by readImageUpload — the replaced entry supplies the label, so the form carries nothing else",
+            "inline: one `file`, read by readImageUpload — the replaced entry supplies the label and the purpose the file is measured against, so the form carries nothing else that is read",
         },
-        test: TESTS.productImagesReplace,
+        test: TESTS.catalogueImagesReplace,
       },
     },
   },
@@ -951,6 +968,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // --- Educator invoicing --------------------------------------------------
+
+  // The gedu's own month as a CSV or PDF attachment — a read, so a GET the page
+  // links to, with no body. Which seats reach the file is decided by the RPC
+  // underneath, on the gedu's own client: it answers for auth.uid() alone and
+  // is guard-first on the gedu role, so this gate is the first of two layers.
+  "src/app/api/gedu/invoicing/export/route.ts": {
+    handlers: {
+      GET: {
+        posture: { kind: "role-gated", roles: ["gedu"] },
+        body: { kind: "none" },
+        test: TESTS.geduInvoicingExport,
+      },
+    },
+  },
+
   // --- Educator sessions ---------------------------------------------------
 
   // Mailing every family in a group is a trust boundary, so the gate asks for a
@@ -1090,6 +1123,55 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "none" },
         test: TESTS.minecraftVerify,
+      },
+    },
+  },
+
+  // --- MCP (AI apps acting as an admin) --------------------------------------
+
+  // One gate for both methods: GET is the 2025-era stream opener, which the
+  // stateless server answers 405 once the caller is through.
+  "src/app/api/mcp/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "oauth-bearer",
+          roles: ["admin"],
+          primitive: "withMcpAdmin",
+          reason:
+            "an AI app working for an admin holds no Sogverse cookie session; it presents an OAuth access token the project's own Auth server issued to it after the admin approved it on the consent page. The gate verifies the token's signature and expiry, that the project's Auth server issued it, and that it carries a client_id — which refuses a first-party session token lifted out of a browser and presented as a bearer — and then reads the caller's role on a client bound to the token, so the read runs under the admin's own row policies and a role change takes effect on the next request rather than when the grant expires. Every tool acts on a client bound to that token; the one service-role client is the Library cover uploader's write to the covers bucket, pinned with its reason in NON_ROUTE_ADMIN_CLIENT_SITES",
+        },
+        body: { kind: "none" },
+        test: TESTS.mcp,
+      },
+      POST: {
+        posture: {
+          kind: "oauth-bearer",
+          roles: ["admin"],
+          primitive: "withMcpAdmin",
+          reason:
+            "the same gate as GET: the JSON-RPC traffic of an AI app holding an admin's OAuth grant, verified and role-checked on every request",
+        },
+        body: {
+          kind: "json",
+          schema:
+            "the MCP SDK: the JSON-RPC envelope, then each tool's own input schema under src/lib/mcp/",
+        },
+        test: TESTS.mcp,
+      },
+    },
+  },
+
+  // The consent page's two buttons. Admin-only to mirror the page's refusal,
+  // for the experience only: any signed-in user can approve their own
+  // authorization directly against Supabase Auth, so what keeps a non-admin out
+  // is the MCP endpoint's role check on every request.
+  "src/app/api/oauth/consent/route.ts": {
+    handlers: {
+      POST: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "oauthConsentBody" },
+        test: TESTS.oauthConsent,
       },
     },
   },
@@ -1253,6 +1335,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "none" },
         test: TESTS.robloxVerify,
+      },
+    },
+  },
+
+  // --- Team profiles -------------------------------------------------------
+
+  "src/app/api/team/photos/[userId]/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "public",
+          reason:
+            "the public team page shows each public profile's photo to anyone, signed in or not, so the photo cannot require a session. The route reads with the anon key and no cookies, so the team-photos storage policy decides every read: anon may read an object only while it is the current photo of an approved admin's or Gedu's profile, re-asked on every request. Anything else answers 404, so it discloses nothing the public team page does not, and the answer not depending on who asks is what lets it be cached publicly",
+        },
+        body: { kind: "none" },
+        test: TESTS.teamPhotos,
       },
     },
   },
@@ -1438,6 +1536,8 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
     "the shared family resolver — a gamer legitimately reads siblings beyond their own view",
   "src/app/[locale]/select-profile/page.tsx":
     "the profile chooser prefetch, through the same family resolver as the family-list route",
+  "src/lib/mcp/cover-uploader.ts":
+    "the MCP Library cover uploader stores the admin's JPEG in the library-covers bucket, which only the service role writes — the same split as the catalogue's upload route, through the same shared find-or-create: the bytes on the service-role client, the catalogue row on the admin's own token-bound client. It is reachable only behind the MCP endpoint's admin gate, and only after the upload passed the catalogue's own size, type and exact-dimension checks",
   "src/services/partner/partner-shared-db.server.ts":
     "the partner API's one construction site: Lynx Educate's tooling authenticates with an issued key and holds no Sogverse session for a row policy to evaluate, so every partner read runs as the service role, scoped to the Programme by the partner read modules and shaped by the published contract. Its accessor is confined to the partner routes and services by check 3",
 };
@@ -1562,6 +1662,9 @@ describe("check 1 — completeness: the surface and the registry agree", () => {
         expect(handler.posture.roles.length).toBeGreaterThan(0);
         return;
       }
+      if (handler.posture.kind === "oauth-bearer") {
+        expect(handler.posture.roles.length).toBeGreaterThan(0);
+      }
       expect(handler.posture.reason.trim().length).toBeGreaterThan(0);
     },
   );
@@ -1643,18 +1746,24 @@ describe("check 2 — static conformance: gated routes contain the primitive", (
   // answers: the partner routes share a helper, and the Minecraft join-check
   // still compares its own key inline. Naming each one keeps the hand-roll
   // visible and still verified, instead of exempting it.
+  //
+  // An oauth-bearer handler is held to the same check for the same reason: its
+  // gate is a bearer token rather than a cookie, so the shared session gate is
+  // nowhere in the file, and deleting the one call that verifies the token
+  // would put the MCP endpoint's admin tools on the open internet.
   const keyedHandlers = REGISTERED_HANDLERS.flatMap((h) =>
-    h.handler.posture.kind === "api-key"
+    h.handler.posture.kind === "api-key" ||
+    h.handler.posture.kind === "oauth-bearer"
       ? [[h.label, h.path, h.handler.posture.primitive] as const]
       : [],
   );
 
-  it("found api-key routes to check", () => {
+  it("found api-key and oauth-bearer routes to check", () => {
     expect(keyedHandlers.length).toBeGreaterThan(0);
   });
 
   it.each(keyedHandlers)(
-    "%s runs the key check it declares",
+    "%s runs the key or token check it declares",
     (_label, path, primitive) => {
       expect(
         runsKeyCheck(readSource(path), primitive),

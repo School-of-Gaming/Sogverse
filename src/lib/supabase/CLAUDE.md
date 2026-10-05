@@ -7,11 +7,9 @@ list read that can outgrow a single response goes through. The factories are des
 normative for every service in the codebase and not only the ones that happen to page
 today.
 
-(A cookie-free anon factory existed briefly in August 2026 for visibility-conditional
-robots metadata and was deleted when that policy became an unconditional static noindex —
-if a genuinely identity-free server read ever returns, that shape is in the git history,
-along with the caveat that it buys no caching while the root layout reads the session on
-every request.)
+(An identity-free server read goes through `createAnonClient()` in `anon.ts` — the anon
+key and no cookies, so its answer is the same for whoever asks. A page cannot buy caching
+that way while the root layout reads the session on every request.)
 
 ## The problem paging exists to solve
 

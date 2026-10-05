@@ -1,7 +1,10 @@
+import { headers } from "next/headers";
 import type { GeduContractSeed } from "@/components/gedu/contract/gedu-contract-settings-card";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES } from "@/lib/constants/gamer-photo-consents";
+import { MCP_ENDPOINT_PATH } from "@/lib/mcp/auth";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
+import { getOrigin } from "@/lib/url";
 // Imported from the service module rather than the package index because that
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
@@ -34,33 +37,6 @@ async function readGeduContractSeed(
   return { acceptances, fetchedAt: Date.now() };
 }
 
-/**
- * `/settings` — one page for every role, and a data shell in front of it.
- *
- * The body is a client component that reads the viewer's profile from the auth
- * provider, so almost nothing here needs resolving server-side. The exception is
- * the gedu contract card: it is the one card on the page whose body a read
- * decides, and reading it here is what lets it paint at its final height.
- *
- * **Only a gedu is read for.** The card is not rendered for anyone else, so a
- * query for anyone else would be a round trip for a component that will not
- * exist — the role is resolved from the `getClaims()`-verified profile, never
- * from request input. That also makes the seed's presence the role test the body
- * uses: it exists exactly when this route saw a gedu.
- *
- * **This page renders whole or it fails, which is a deliberate deviation from
- * the parent dashboard's precedent.** That dashboard swallows a failed prefetch
- * and seeds nothing, because its seeds *enrich* a page that is already useful
- * without them and it is the highest-traffic page we have — degrading there
- * keeps a working page working. Nothing of the sort is true here: this page
- * already hard-depends on a server identity read to render at all, it is a
- * low-traffic utility page, and the owner ruled for two-state simplicity over a
- * third state that exists only for an error nobody sees. So the read throws and
- * the page errors like any other server render.
- *
- * The accepted cost, stated plainly: a gedu's settings visit blocks on this read
- * before the first byte.
- */
 /**
  * How this gamer signs in, resolved before the first byte.
  *
@@ -130,6 +106,35 @@ async function readGamerPhotoConsentGranted(
   );
 }
 
+/**
+ * `/settings` — one page for every role, and a data shell in front of it.
+ *
+ * The body is a client component that reads the viewer's profile from the auth
+ * provider, so almost nothing here needs resolving server-side. The exceptions
+ * are the cards whose body a read decides — a gedu's contract card, a gamer's
+ * sign-in fields and photo sentence — and reading them here is what lets each
+ * paint at its final height. An admin's MCP card needs no read, but its URL is
+ * built here, because only the server knows the trusted origin to build it on.
+ *
+ * **Each role is read for only what it renders.** A query for a card that will
+ * not exist is a round trip for nothing — the role is resolved from the
+ * `getClaims()`-verified profile, never from request input. That also makes each
+ * seed's presence the role test the body uses: it exists exactly when this route
+ * saw that role.
+ *
+ * **This page renders whole or it fails, which is a deliberate deviation from
+ * the parent dashboard's precedent.** That dashboard swallows a failed prefetch
+ * and seeds nothing, because its seeds *enrich* a page that is already useful
+ * without them and it is the highest-traffic page we have — degrading there
+ * keeps a working page working. Nothing of the sort is true here: this page
+ * already hard-depends on a server identity read to render at all, it is a
+ * low-traffic utility page, and the owner ruled for two-state simplicity over a
+ * third state that exists only for an error nobody sees. So the gedu read throws
+ * and the page errors like any other server render.
+ *
+ * The accepted cost, stated plainly: a gedu's or gamer's settings visit blocks
+ * on its read before the first byte.
+ */
 export default async function SettingsPage() {
   const userWithProfile = await getUserWithProfile();
 
@@ -150,6 +155,14 @@ export default async function SettingsPage() {
         photoConsentGranted={photoConsentGranted}
       />
     );
+  }
+
+  if (userWithProfile?.profile?.role === "admin") {
+    // The MCP card shows this environment's own endpoint, so the origin is the
+    // request's — through `getOrigin`, which trusts the Host header only when it
+    // names this deployment, never the raw header and never the browser's.
+    const mcpServerUrl = `${getOrigin(await headers())}${MCP_ENDPOINT_PATH}`;
+    return <SettingsSectionContent mcpServerUrl={mcpServerUrl} />;
   }
 
   if (userWithProfile?.profile?.role !== "gedu") {

@@ -11,6 +11,7 @@ import type { UserListEntry } from "@/services/users";
 import { ROUTES } from "@/lib/constants";
 import { formatDayMonth } from "@/lib/calendar-date";
 import { formatDateOnly } from "@/lib/utils";
+import { sessionFacts } from "../../mocks/session-facts";
 
 /**
  * The admin Substitutions page's queue panel, and the claims that are only true
@@ -59,6 +60,10 @@ vi.mock("next-intl", () => ({
   useFormatter: () => ({ relativeTime: () => "in 3 hours" }),
   useLocale: () => "en",
 }));
+
+// The session facts read the viewer's zone; every row here names its own, so
+// what the provider would say is never used.
+vi.mock("@/providers", () => ({ useTimezone: () => "Europe/Helsinki" }));
 
 // Real UUIDs, hardcoded: every chip draws an identicon out of the id's hex
 // bytes, and a readable stand-in renders a degenerate one rather than a
@@ -130,12 +135,10 @@ const WITH_OFFERS: SubstitutionRequest = {
   id: "request-with-offers",
   groupId: "group-a",
   groupName: "Ryhmä A",
-  productName: "Minecraft-klubi Espoo",
-  productType: "consumer_club",
-  sessionDay: "2026-08-17",
+  facts: sessionFacts(),
+  viewerTimeZone: "Europe/Helsinki",
   sessionDate: "Mon 17 Aug",
   sessionTime: "17:00–18:30",
-  startsAt: new Date("2026-08-17T17:00:00+03:00"),
   urgent: true,
   role: "primary",
   reason: "sick",
@@ -158,15 +161,18 @@ const WITHOUT_OFFERS: SubstitutionRequest = {
   id: "request-without-offers",
   groupId: "group-b",
   groupName: "Ryhmä B",
-  productName: "Roblox Studio -leiri Espoo",
-  productType: "camp",
-  sessionDay: "2026-08-25",
-  sessionDate: "Tue 25 Aug",
   // The orphan: an admin moved the schedule's weekday after this request was
   // filed, so no slot names its date. It has no time and no claim about when it
   // starts, which is why it can never be urgent.
+  facts: sessionFacts({
+    productName: "Roblox Studio -leiri Espoo",
+    productType: "camp",
+    sessionDate: "2026-08-25",
+    startsAt: null,
+    endsAt: null,
+  }),
+  sessionDate: "Tue 25 Aug",
   sessionTime: null,
-  startsAt: null,
   urgent: false,
   reasonNote: null,
   groupHref: ROUTES.admin.productGroup("camp", "camp-2", "group-b"),
@@ -479,8 +485,11 @@ describe("the admin Substitutions page's queue panel", () => {
     const sameDayLater: SubstitutionRequest = {
       ...WITH_OFFERS,
       id: "request-same-day-later",
-      productName: "Roblox-klubben Solna",
-      startsAt: new Date("2026-08-17T19:00:00+03:00"),
+      facts: sessionFacts({
+        productName: "Roblox-klubben Solna",
+        startsAt: new Date("2026-08-17T19:00:00+03:00"),
+        endsAt: new Date("2026-08-17T20:00:00+03:00"),
+      }),
       urgent: false,
     };
     // Sorted by instant, a session just after midnight in one zone can come
@@ -489,9 +498,12 @@ describe("the admin Substitutions page's queue panel", () => {
     const nextDayEarly: SubstitutionRequest = {
       ...WITH_OFFERS,
       id: "request-next-day-early",
-      productName: "Fortnite-klubi Vantaa",
-      sessionDay: "2026-08-18",
-      startsAt: new Date("2026-08-17T21:30:00Z"),
+      facts: sessionFacts({
+        productName: "Fortnite-klubi Vantaa",
+        sessionDate: "2026-08-18",
+        startsAt: new Date("2026-08-17T21:30:00Z"),
+        endsAt: new Date("2026-08-17T23:00:00Z"),
+      }),
       urgent: false,
     };
     renderPanel(
@@ -517,7 +529,7 @@ describe("the admin Substitutions page's queue panel", () => {
     const september: SubstitutionRequest = {
       ...WITHOUT_OFFERS,
       id: "request-september",
-      sessionDay: "2026-09-01",
+      facts: { ...WITHOUT_OFFERS.facts, sessionDate: "2026-09-01" },
     };
     renderPanel([WITH_OFFERS, WITHOUT_OFFERS, september], () =>
       Promise.resolve(),

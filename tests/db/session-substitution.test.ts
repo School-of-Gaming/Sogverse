@@ -9,6 +9,7 @@ import {
   openSubstitutionRequests,
   sessionStaffGedu,
 } from "@/services/session-substitution/session-substitution.contracts";
+import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
@@ -581,6 +582,10 @@ describe("session substitutions", () => {
         "COUNTS the groups that have nobody assigned, for the attention queue. Admin-gated, and a substitution branch here would be WRONG rather than missing: a sub does not staff a group, so a group whose only body on the day is a substitute still has no gedu and still belongs on that queue.",
       "function:get_my_family_product_feed":
         "LISTS the group's gedus by first name for a FAMILY. The report attribution chip already names whoever wrote a report, so a family learns nothing new from a substitution — and this is the app's one STRICT client schema, so a widened document would fail the old app's parse rather than be stripped by it.",
+      "function:get_trainee_group_feed":
+        "LISTS the group's gedus by first name and role for a TRAINEE, the same list their colleagues' workspace shows. Its gate is the trainee seat, not an assignment.",
+      "function:get_trainee_assigned_product":
+        "LISTS the trainee's own group's gedus by first name and role. Its gate is the trainee seat, not an assignment.",
       "function:get_product_groups_with_details":
         "LISTS a group's gedus for the admin groups panel, which is the PERMANENT assignment editor. Admin-gated, and the list is exactly what that panel edits.",
       "policy:gedu_group_assignments.customers_read_assignments_via_gamers":
@@ -2334,7 +2339,7 @@ describe("session substitutions", () => {
       expect(mine?.product.schedule_slots.length).toBe(7);
       expect(
         mine?.product.schedule_slots.every(
-          (slot) => slot.start_time === "10:00" && slot.duration_minutes === 60,
+          (slot) => slot.start_time === "10:00:00" && slot.duration_minutes === 60,
         ),
       ).toBe(true);
       expect(
@@ -2344,6 +2349,48 @@ describe("session substitutions", () => {
       ).toEqual([0, 1, 2, 3, 4, 5, 6]);
       expect(mine?.offers.length).toBe(1);
       expect(mine?.offers[0].gedu_id).toBe(subId);
+    });
+
+    /**
+     * The pool, the admin page and the sub's own card describe the session
+     * through one database function, so they cannot disagree about it — and the
+     * admin page, whose shell once carried no venue, says where an in-person
+     * session is exactly as the pool does.
+     */
+    it("every surface describes the session through the one shell, venue and language included", async () => {
+      const open = await seedRequest({ groupId: GROUP_SITE, date: utcDate(7) });
+      await seedRequest({
+        groupId: GROUP_SITE,
+        date: utcDate(8),
+        substituteId: subId,
+      });
+
+      const queue = await adminAuth.rpc("get_admin_substitution_requests");
+      expect(queue.error).toBeNull();
+      const office = adminSubstitutionRequests
+        .parse(queue.data)
+        .find((row) => row.id === open);
+      expect(office?.product).toMatchObject({
+        id: SITE_PRODUCT,
+        is_remote: false,
+        site_name: "Substitution Hall",
+        topic: "minecraft_java",
+        spoken_language_code: "en",
+      });
+
+      const pool = await subAuth.rpc("get_open_substitution_requests");
+      expect(pool.error).toBeNull();
+      const volunteer = openSubstitutionRequests
+        .parse(pool.data)
+        .find((row) => row.request_id === open);
+      expect(volunteer?.product).toEqual(office?.product);
+
+      const seats = await subAuth.rpc("get_my_assigned_products");
+      expect(seats.error).toBeNull();
+      const card = myAssignedProductRows
+        .parse(seats.data)
+        .find((row) => row.group_id === GROUP_SITE && row.kind === "substitution");
+      expect(card?.product).toEqual(office?.product);
     });
 
     /**
@@ -2446,19 +2493,24 @@ describe("session substitutions", () => {
       const mine = await geduAuth.rpc("get_my_assigned_products");
       expect(mine.error).toBeNull();
       expect(
-        (mine.data ?? [])
-          .filter((row) => row.product_id === PRODUCT)
+        myAssignedProductRows
+          .parse(mine.data)
+          .filter((row) => row.product.id === PRODUCT)
           .map((row) => ({ kind: row.kind, substitution_date: row.substitution_date })),
       ).toEqual([{ kind: "assignment", substitution_date: null }]);
 
       const theirs = await subAuth.rpc("get_my_assigned_products");
       expect(theirs.error).toBeNull();
-      expect((theirs.data ?? []).filter((row) => row.group_id === GROUP_A)).toEqual([
+      expect(
+        myAssignedProductRows
+          .parse(theirs.data)
+          .filter((row) => row.group_id === GROUP_A),
+      ).toEqual([
         expect.objectContaining({
           kind: "substitution",
           substitution_date: date,
           group_id: GROUP_A,
-          product_id: PRODUCT,
+          product: expect.objectContaining({ id: PRODUCT }),
         }),
       ]);
     });

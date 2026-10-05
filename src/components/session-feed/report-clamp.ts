@@ -39,11 +39,22 @@
 export const REPORT_CLAMP_LINES = 6;
 
 /**
- * One line box of report body copy, in rem: `text-sm` (0.875rem) at
- * `leading-relaxed` (1.625). Kept as the product of its two factors so it stays
- * readable as "the type scale times the leading" rather than as a magic decimal.
+ * The renderer's type and spacing, in rem, as far as the estimate needs them.
+ * They restate the one markdown style in `src/components/ui/markdown.tsx` and
+ * have to move with it: body copy is `text-base` (1rem) at `leading-relaxed`
+ * (1.625), blocks sit `mt-4` apart, list items `space-y-1`.
  */
-export const REPORT_LINE_HEIGHT_REM = 0.875 * 1.625;
+const BODY_SIZE_REM = 1;
+const BODY_LEADING = 1.625;
+const BLOCK_GAP_REM = 1;
+const LIST_GAP_REM = 0.25;
+
+/**
+ * One line box of report body copy, in rem. Kept as the product of its two
+ * factors so it stays readable as "the type scale times the leading" rather
+ * than as a magic decimal.
+ */
+export const REPORT_LINE_HEIGHT_REM = BODY_SIZE_REM * BODY_LEADING;
 
 /** The collapsed height of a report body, in rem. */
 export const REPORT_CLAMP_REM = REPORT_CLAMP_LINES * REPORT_LINE_HEIGHT_REM;
@@ -56,54 +67,69 @@ export const REPORT_CLAMP_REM = REPORT_CLAMP_LINES * REPORT_LINE_HEIGHT_REM;
  * How many characters of report body fit on one rendered line.
  *
  * The feed's column is two thirds of a capped desktop workspace, less the
- * timeline rail and the card's padding — a little under 800 CSS pixels at
- * `text-sm`, which is around 105 characters of average Latin prose. Lines break
- * at word boundaries, though, so a wrapped paragraph only ever *fills* about
- * nine tenths of the width it is given, and counting the theoretical maximum
- * would systematically under-count the lines a paragraph actually takes.
+ * timeline rail and the card's padding — a little under 800 CSS pixels, which
+ * at 16px is around 92 characters of average Latin prose. Lines break at word
+ * boundaries, though, so a wrapped paragraph only ever *fills* about nine
+ * tenths of the width it is given, and counting the theoretical maximum would
+ * systematically under-count the lines a paragraph actually takes.
  */
-export const REPORT_ESTIMATED_CHARS_PER_LINE = 95;
+export const REPORT_ESTIMATED_CHARS_PER_LINE = 83;
 
 /**
- * The same number for a heading, which renders a size or two up and therefore
- * fits proportionally fewer characters on its line.
+ * What a heading at one level costs, all in body lines so it adds straight
+ * onto the paragraph count: the characters that fit on one of its lines
+ * (fewer than body copy, in proportion to its size), the height of one of
+ * those lines, and the margin it takes above itself beyond the ordinary block
+ * gap.
  */
-export const REPORT_ESTIMATED_HEADING_CHARS_PER_LINE = 72;
+function headingCost(sizeRem: number, leading: number, marginTopRem: number) {
+  return {
+    charsPerLine: Math.floor(
+      (REPORT_ESTIMATED_CHARS_PER_LINE * BODY_SIZE_REM) / sizeRem,
+    ),
+    lineCost: (sizeRem * leading) / REPORT_LINE_HEIGHT_REM,
+    extraTopLines: (marginTopRem - BLOCK_GAP_REM) / REPORT_LINE_HEIGHT_REM,
+  };
+}
 
 /**
- * What one line of a heading costs against the body-copy line budget: its own
- * larger line box, plus the small top padding the renderer gives every heading.
+ * Each heading level's cost, keyed by its markdown level. The sizes restate the
+ * renderer's: 24px at leading 1.3, then 20px and 18px at `leading-snug`
+ * (1.375); the margins are `mt-8`, `mt-6` and `mt-6`. A deeper level is outside
+ * the feed's subset and unwraps to body copy.
  */
-export const REPORT_HEADING_LINE_COST = 1.25;
+export const REPORT_HEADING_COSTS = {
+  1: headingCost(1.5, 1.3, 2),
+  2: headingCost(1.25, 1.375, 1.5),
+  3: headingCost(1.125, 1.375, 1.5),
+} as const;
 
 /**
  * The gap between two blocks, as a fraction of a body line.
  *
- * The renderer separates blocks with `space-y-2`, which is half a rem against a
- * line box of about 1.42rem. It is the single biggest thing a naive
- * character-count estimate misses: six one-line paragraphs are not six lines
- * tall, they are six lines plus five gaps — comfortably past a six-line clamp —
- * while one six-line paragraph fits exactly.
+ * It is the single biggest thing a naive character-count estimate misses: six
+ * one-line paragraphs are not six lines tall, they are six lines plus five
+ * gaps — comfortably past a six-line clamp — while one six-line paragraph fits
+ * exactly.
  */
-export const REPORT_BLOCK_GAP_LINES = 0.35;
+export const REPORT_BLOCK_GAP_LINES = BLOCK_GAP_REM / REPORT_LINE_HEIGHT_REM;
 
 /**
- * The gap between two items of the *same* list, which is half the one between
- * blocks: the renderer sets a list's items with `space-y-1` (a quarter rem
- * against the same 1.42rem line box) and only spends `space-y-2` on the
- * boundary between the list and whatever sits either side of it.
+ * The gap between two items of the *same* list, which is far tighter than the
+ * one between blocks: a list's boundaries with whatever sits either side of it
+ * take the block gap, its items only the list gap.
  *
  * Charging every list item the full block gap was the estimate's one systematic
  * over-count, and lists are where it bit hardest — a write-up that opens with a
- * title and then lists five things was credited with nearly a line it does not
- * occupy, which is enough to offer a "Read more" over almost nothing. Splitting
- * the two keeps the error inside the tolerance this file documents rather than
+ * title and then lists five things was credited with lines it does not occupy,
+ * which is enough to offer a "Read more" over almost nothing. Splitting the two
+ * keeps the error inside the tolerance this file documents rather than
  * spending most of it on the commonest shape a report takes.
  */
-export const REPORT_LIST_GAP_LINES = 0.18;
+export const REPORT_LIST_GAP_LINES = LIST_GAP_REM / REPORT_LINE_HEIGHT_REM;
 
 /** A markdown line that renders as a heading rather than as body copy. */
-const HEADING_LINE = /^\s*#{1,6}\s+/;
+const HEADING_LINE = /^\s*(#{1,6})\s+/;
 
 /** A markdown line that renders as one item of a bulleted or numbered list. */
 const LIST_ITEM_LINE = /^\s*(?:[-*+]|\d+\.)\s+/;
@@ -131,12 +157,12 @@ export function estimateReportLines(markdown: string): number {
   let previousWasListItem: boolean | null = null;
 
   for (const rawLine of markdown.split("\n")) {
-    const isHeading = HEADING_LINE.test(rawLine);
     const isListItem = LIST_ITEM_LINE.test(rawLine);
     const text = stripMarkdownSyntax(rawLine);
     if (text.length === 0) continue;
 
-    if (previousWasListItem !== null) {
+    const isFirstBlock = previousWasListItem === null;
+    if (!isFirstBlock) {
       gaps +=
         previousWasListItem && isListItem
           ? REPORT_LIST_GAP_LINES
@@ -144,13 +170,27 @@ export function estimateReportLines(markdown: string): number {
     }
     previousWasListItem = isListItem;
 
-    lines += isHeading
-      ? Math.ceil(text.length / REPORT_ESTIMATED_HEADING_CHARS_PER_LINE) *
-        REPORT_HEADING_LINE_COST
-      : Math.ceil(text.length / REPORT_ESTIMATED_CHARS_PER_LINE);
+    const heading = headingLevel(rawLine);
+    if (heading === null) {
+      lines += Math.ceil(text.length / REPORT_ESTIMATED_CHARS_PER_LINE);
+    } else {
+      const cost = REPORT_HEADING_COSTS[heading];
+      lines += Math.ceil(text.length / cost.charsPerLine) * cost.lineCost;
+      // The renderer zeroes the first block's top margin.
+      if (!isFirstBlock) lines += cost.extraTopLines;
+    }
   }
 
   return lines + gaps;
+}
+
+/**
+ * The markdown level of a line the feed renders as a heading, or `null` for
+ * body copy — including a level deeper than the subset, which unwraps to text.
+ */
+function headingLevel(line: string): 1 | 2 | 3 | null {
+  const hashes = HEADING_LINE.exec(line)?.[1].length;
+  return hashes === 1 || hashes === 2 || hashes === 3 ? hashes : null;
 }
 
 /**

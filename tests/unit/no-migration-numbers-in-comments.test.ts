@@ -256,9 +256,13 @@ const WHY =
   "A comment describes what the code does now and why — never which migration changed it. A migration number names a file git already remembers, and the numbered files are squashed into a new baseline periodically, so the citation ends up pointing at nothing. Rewrite the sentence around the behaviour it is describing; where the decision itself is the point, cite it by date and ruling or by its docs/records entry. Comments on database objects (a COMMENT ON body in supabase/schema/) are changed by a migration that re-issues the comment, never by editing the dump.";
 
 describe("no comment cites a migration number", () => {
+  // Each root is swept while the suite is collected rather than inside its
+  // test: a test's time limit is for its assertion, and a walk of the whole
+  // tree under a loaded full run can outlast it.
   for (const { label, paths } of ROOTS) {
+    const citations = citationsUnder(paths);
     it(`${label} cites none`, () => {
-      expect(citationsUnder(paths), WHY).toEqual([]);
+      expect(citations, WHY).toEqual([]);
     });
   }
 

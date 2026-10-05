@@ -9,6 +9,7 @@ import { TimezoneProvider } from "./timezone-provider";
 import { NowProvider } from "./now-provider";
 import { UtmProvider } from "./utm-provider";
 import { ConsentProvider } from "@/components/consent";
+import { LocaleSwitchPathsProvider } from "@/i18n/locale-switch-paths";
 import type { ConsentState } from "@/lib/consent";
 import type { UtmAttribution } from "@/lib/utm";
 import type { AuthenticatedUser, Profile } from "@/types";
@@ -88,19 +89,24 @@ export function Providers({
             to the viewer's actual zone. Tracked in TODO.md. */}
         <NextIntlClientProvider locale={initialLocale} messages={messages} timeZone={DEFAULT_TIMEZONE}>
           <LocaleProvider detectedLocale={detectedLocale}>
-            <TimezoneProvider initialTimezone={initialTimezone}>
-              <NowProvider initialNow={initialNow}>
-                <UtmProvider initialUtm={initialUtm}>
-                  {/* Innermost, and inside `NextIntlClientProvider` on
-                      purpose: the banner and the footer's Privacy choices link
-                      translate their own words, and the footer sits inside
-                      `children`. */}
-                  <ConsentProvider initial={initialConsent}>
-                    {children}
-                  </ConsentProvider>
-                </UtmProvider>
-              </NowProvider>
-            </TimezoneProvider>
+            {/* Holds the current page's own path in each locale, for a page
+                whose segment is written per locale. The picker in the header
+                reads it and the page writes it, so it wraps both. */}
+            <LocaleSwitchPathsProvider>
+              <TimezoneProvider initialTimezone={initialTimezone}>
+                <NowProvider initialNow={initialNow}>
+                  <UtmProvider initialUtm={initialUtm}>
+                    {/* Innermost, and inside `NextIntlClientProvider` on
+                        purpose: the banner and the footer's Privacy choices
+                        link translate their own words, and the footer sits
+                        inside `children`. */}
+                    <ConsentProvider initial={initialConsent}>
+                      {children}
+                    </ConsentProvider>
+                  </UtmProvider>
+                </NowProvider>
+              </TimezoneProvider>
+            </LocaleSwitchPathsProvider>
           </LocaleProvider>
         </NextIntlClientProvider>
       </AuthProvider>

@@ -56,6 +56,13 @@ CREATE TRIGGER trg_validate_gedu_assignment_product BEFORE INSERT OR UPDATE OF g
 
 
 --
+-- Name: gedu_group_assignments trg_validate_one_gedu_seat_per_product; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_validate_one_gedu_seat_per_product BEFORE INSERT OR UPDATE OF gedu_id, product_id ON public.gedu_group_assignments FOR EACH ROW EXECUTE FUNCTION public.validate_one_gedu_seat_per_product();
+
+
+--
 -- Name: gedu_group_assignments gedu_group_assignments_gedu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 

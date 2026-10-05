@@ -3,7 +3,9 @@
 import { ScreenShare, ScreenShareOff, Megaphone, Headphones, HeadphoneOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { LockedButton } from "@/components/ui/locked-control";
 import { useVoiceRoom } from "./VoiceRoomProvider";
+import { useVoiceModeratorLocks } from "./VoiceModeratorLocks";
 import { MicSettingsPopover } from "./MicSettingsPopover";
 import { MicLevelIndicator } from "./MicLevelIndicator";
 import { MicToggleButton, CameraToggleButton } from "./MediaToggleButtons";
@@ -31,6 +33,7 @@ export function VoiceControls() {
     isDeafened,
     toggleDeafen,
   } = useVoiceRoom();
+  const locks = useVoiceModeratorLocks();
   const t = useTranslations("voice");
 
   return (
@@ -76,6 +79,41 @@ export function VoiceControls() {
           />
         )}
       </div>
+
+      {/* Group 2, locked — the same three buttons a moderator has, for a
+          viewer the page handed locks (a trainee). Each looks like its
+          moderator twin, carries a padlock and explains itself when pressed. */}
+      {!isModerator && locks !== null && (
+        <div className="flex items-center gap-2">
+          <LockedButton
+            explanation={locks.screenShare}
+            variant="outline"
+            size="icon"
+            title={t("shareScreen")}
+            aria-label={t("shareScreen")}
+          >
+            <ScreenShare className="h-4 w-4" />
+          </LockedButton>
+          <LockedButton
+            explanation={locks.broadcast}
+            variant="outline"
+            size="icon"
+            title={t("broadcast")}
+            aria-label={t("broadcast")}
+          >
+            <Megaphone className="h-4 w-4" />
+          </LockedButton>
+          <LockedButton
+            explanation={locks.deafen}
+            variant="outline"
+            size="icon"
+            title={t("deafen")}
+            aria-label={t("deafen")}
+          >
+            <Headphones className="h-4 w-4" />
+          </LockedButton>
+        </div>
+      )}
 
       {/* Group 2 — screen share + moderator broadcast/deafen */}
       {(canScreenShare || isModerator) && (

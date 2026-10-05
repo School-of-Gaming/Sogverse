@@ -17,7 +17,7 @@ import type { GamerCreation, VoiceZone } from "@/types";
  * the same reason.
  */
 
-export const VOICE_ROOM_SCENARIOS = ["gedu", "gamer"] as const;
+export const VOICE_ROOM_SCENARIOS = ["gedu", "trainee", "gamer"] as const;
 export type VoiceRoomScenario = (typeof VOICE_ROOM_SCENARIOS)[number];
 
 export function isVoiceRoomScenario(value: string): value is VoiceRoomScenario {
@@ -26,6 +26,18 @@ export function isVoiceRoomScenario(value: string): value is VoiceRoomScenario {
 
 /** The Gedu whose view the staff scenario is. */
 export const VOICE_ROOM_GEDU_ID = "4a84d001-b789-41f5-ace3-cfcffa139869";
+/**
+ * Tiia, a Gedu on a trainee seat — whose view the trainee scenario is, and who
+ * wears the "Trainee" tag in the staff one. Her token says `gedu` like Sanna's;
+ * only the owner flag differs.
+ */
+export const VOICE_ROOM_TRAINEE_ID = "0f7b4155-a74f-434b-b93b-b36ecb920aee";
+/**
+ * Tuomas, a second trainee on the same group — there so the trainee scenario
+ * shows the tag on a fellow trainee's row as well as on Tiia's own. The room
+ * only: the chat scene's switcher keeps one trainee viewer.
+ */
+export const VOICE_ROOM_SECOND_TRAINEE_ID = "7c431fc6-985c-438a-9511-47981a52c129";
 /**
  * Marja — the parent holding a seat of her own.
  *
@@ -93,6 +105,7 @@ export function buildParticipants(
   });
 
   const localIsGedu = scenario === "gedu";
+  const localIsTrainee = scenario === "trainee";
 
   return [
     member({
@@ -103,7 +116,25 @@ export function buildParticipants(
       role: "gedu",
       gameUsername: "SannaBuilds",
       isLocal: localIsGedu,
-      isOwner: localIsGedu,
+      // Sanna runs the session, so hers is an owner's token whoever is looking.
+      isOwner: true,
+    }),
+    member({
+      sessionId: "s-tiia",
+      userId: VOICE_ROOM_TRAINEE_ID,
+      userName: "Tiia",
+      zoneId: "lobby",
+      role: "gedu",
+      gameUsername: "TiiaTrains",
+      isLocal: localIsTrainee,
+    }),
+    member({
+      sessionId: "s-tuomas",
+      userId: VOICE_ROOM_SECOND_TRAINEE_ID,
+      userName: "Tuomas",
+      zoneId: "yty-valor",
+      role: "gedu",
+      gameUsername: "TuomasTags",
     }),
     member({
       sessionId: "s-aino",
@@ -114,7 +145,7 @@ export function buildParticipants(
       isSpeaking: true,
       // The child whose view the family scenario is — the one row that proves
       // the overlay is absent rather than merely unrendered.
-      isLocal: !localIsGedu,
+      isLocal: scenario === "gamer",
     }),
     member({
       sessionId: "s-vaino",

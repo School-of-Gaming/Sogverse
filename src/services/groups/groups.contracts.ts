@@ -69,6 +69,23 @@ export const groupChangeSet = z.object({
       toGroupId: z.string().nullable(),
     })
   ),
+  /**
+   * Trainee seats to place and to remove. No role: a trainee is not paid. The
+   * RPC removes these with the assignment removes and adds them after the
+   * assignment adds, so the one-seat-per-product rule judges the batch's end
+   * state. An added
+   * seat has no upsert, so placing somebody already seated on the product is
+   * refused.
+   *
+   * Defaulted rather than required on the way in, for the deploy window: a
+   * browser still on the previous bundle posts a set without them.
+   */
+  traineesAdded: z
+    .array(z.object({ groupId: z.string(), geduId: z.string() }))
+    .default([]),
+  traineesRemoved: z
+    .array(z.object({ groupId: z.string(), geduId: z.string() }))
+    .default([]),
 });
 
 export type GroupChangeSet = z.infer<typeof groupChangeSet>;
@@ -211,11 +228,20 @@ export const groupGeduDetail = z.object({
   role: geduAssignmentRole,
 });
 
+/** One trainee seat on a group: a gedu shadowing it, placed by an admin. */
+export const groupTraineeDetail = z.object({
+  id: z.string(),
+  first_name: z.string(),
+  email: z.string().nullable(),
+});
+
 export const productGroupWithDetails = z.object({
   id: z.string(),
   name: z.string(),
   created_at: z.string(),
   gedus: z.array(groupGeduDetail),
+  /** The group's trainee seats, in placement order. */
+  trainees: z.array(groupTraineeDetail),
   participations: z.array(groupParticipationDetail),
 });
 
@@ -244,5 +270,6 @@ export const productGroupsSnapshot = z.object({
  */
 export type GroupParticipationDetail = z.infer<typeof groupParticipationDetail>;
 export type GroupGeduDetail = z.infer<typeof groupGeduDetail>;
+export type GroupTraineeDetail = z.infer<typeof groupTraineeDetail>;
 export type ProductGroupWithDetails = z.infer<typeof productGroupWithDetails>;
 export type ProductGroupsSnapshot = z.infer<typeof productGroupsSnapshot>;

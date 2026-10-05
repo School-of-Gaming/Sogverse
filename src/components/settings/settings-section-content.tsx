@@ -29,6 +29,7 @@ import {
   MARKETING_CONSENT_ORDER,
 } from "@/components/settings/marketing-preferences-fields";
 import { GamerPhotoConsentNotice } from "@/components/settings/gamer-photo-consent-notice";
+import { McpServerCard } from "@/components/settings/mcp-server-card";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
@@ -82,7 +83,17 @@ export function SettingsSectionContent({
   geduContractSeed,
   gamerSignIn,
   photoConsentGranted = false,
+  mcpServerUrl,
 }: {
+  /**
+   * This environment's MCP endpoint, built by the route on the request's
+   * trusted origin.
+   *
+   * **Absent means "not an admin"**, the same way `geduContractSeed`'s absence
+   * means "not a gedu": the route builds it only for an admin, so its presence
+   * is the role test the card renders on.
+   */
+  mcpServerUrl?: string;
   /**
    * Whether this child's parent has said photos and videos of them may be used,
    * read by the route before the page rendered.
@@ -712,6 +723,10 @@ export function SettingsSectionContent({
           </CardContent>
         </Card>
       )}
+
+      {/* Under the team profile, the admin's other card: where an AI app
+          connects to act as them. */}
+      {mcpServerUrl && <McpServerCard url={mcpServerUrl} />}
 
       {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
 

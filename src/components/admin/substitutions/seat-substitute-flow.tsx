@@ -119,7 +119,7 @@ export function seatSubstituteWrite({ request, sub }: SeatSubstituteDraft): {
 } {
   return {
     groupId: request.groupId,
-    sessionDate: request.sessionDay,
+    sessionDate: request.facts.sessionDate,
     absentGeduId: request.requesterId,
     subGeduId: sub.id,
   };
@@ -171,7 +171,7 @@ function SeatSubstituteDialog({
       description={t("seatConfirmBody", {
         name,
         absent,
-        product: request.productName,
+        product: request.facts.productName,
         group: request.groupName,
         // The card's own words for the session, as the approve dialog does.
         when:
