@@ -3704,6 +3704,19 @@
       "schoolOfGaming": "noH Quj yejHaD QIn HevmeH vIchaw’.",
       "lynxEducate": "<link>Lynx Educate</link>-vaD De’wI’ HeywI’ vInob ’e’ vIchaw’ — vaj wanI’ chu’ QIn Qujmey De’ je mungeHlaH. reH vImev’laH."
     },
+    "notifications": {
+      "title": "ghuHmoHmey DuHmey",
+      "channels": {
+        "email": "QIn"
+      },
+      "kinds": {
+        "session_report_copy": {
+          "label": "ghom De’ lutHom",
+          "hint": "ghom qorDu’pu’vaD ghom De’ ngeHlu’DI’, wa’ lutHom Daghaj."
+        }
+      },
+      "saveFailed": "ghuHmoHmey DuHmey pollaHbe’lu’. yInIDqa’!"
+    },
     "usernameLabel": "pong",
     "gamerPasswordFromParent": "My SOGDaj lo’ ’ej mu’mey chu’ DulanlaH SoSlI’ vav joq.",
     "photoConsent": {

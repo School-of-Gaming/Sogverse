@@ -194,6 +194,38 @@ COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a pa
 
 
 --
+-- Name: notification_channel; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.notification_channel AS ENUM (
+    'email'
+);
+
+
+--
+-- Name: TYPE notification_channel; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.notification_channel IS 'How a notification reaches a person. email: a mail to the address on their profile. The settings page groups its toggles by channel, in the order declared here.';
+
+
+--
+-- Name: notification_kind; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.notification_kind AS ENUM (
+    'session_report_copy'
+);
+
+
+--
+-- Name: TYPE notification_kind; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.notification_kind IS 'What a notification a person can opt into is about. session_report_copy: the copy of a session report mailed to its sender when a gedu or an admin emails the report to the group''s families; an admin who opted in on the email channel is in its CC. Every kind is off on every channel until the person turns it on. The app lists them in the order declared here, so a new value goes where it should appear.';
+
+
+--
 -- Name: participation_status; Type: TYPE; Schema: public; Owner: -
 --
 

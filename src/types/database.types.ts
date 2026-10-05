@@ -1797,6 +1797,45 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          enabled: boolean
+          kind: Database["public"]["Enums"]["notification_kind"]
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          enabled: boolean
+          kind: Database["public"]["Enums"]["notification_kind"]
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          enabled?: boolean
+          kind?: Database["public"]["Enums"]["notification_kind"]
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parent_gamer: {
         Row: {
           created_at: string | null
@@ -4265,6 +4304,14 @@ export type Database = {
         Returns: undefined
       }
       set_my_pin: { Args: { p_pin: string }; Returns: undefined }
+      set_notification_preference: {
+        Args: {
+          p_channel: Database["public"]["Enums"]["notification_channel"]
+          p_enabled: boolean
+          p_kind: Database["public"]["Enums"]["notification_kind"]
+        }
+        Returns: undefined
+      }
       set_pin_for_user: {
         Args: { p_pin: string; p_user_id: string }
         Returns: undefined
@@ -4401,6 +4448,8 @@ export type Database = {
         | "for_schools"
       location_type: "country" | "region" | "municipality" | "district" | "site"
       marketing_consent_type: "school_of_gaming" | "lynx_educate"
+      notification_channel: "email"
+      notification_kind: "session_report_copy"
       participation_status: "reserving" | "active" | "waitlisted" | "completed"
       payment_purpose:
         | "bundle"
@@ -4573,6 +4622,8 @@ export const Constants = {
       ],
       location_type: ["country", "region", "municipality", "district", "site"],
       marketing_consent_type: ["school_of_gaming", "lynx_educate"],
+      notification_channel: ["email"],
+      notification_kind: ["session_report_copy"],
       participation_status: ["reserving", "active", "waitlisted", "completed"],
       payment_purpose: [
         "bundle",

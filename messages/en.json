@@ -4351,6 +4351,19 @@
       "schoolOfGaming": "School of Gaming may send me news and offers by email.",
       "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time."
     },
+    "notifications": {
+      "title": "Notification preferences",
+      "channels": {
+        "email": "Email"
+      },
+      "kinds": {
+        "session_report_copy": {
+          "label": "Copies of session reports",
+          "hint": "A copy of each session report emailed to the families in a group."
+        }
+      },
+      "saveFailed": "Your notification preferences could not be saved. Please try again."
+    },
     "usernameLabel": "Username",
     "gamerPasswordFromParent": "Your parent can set a new password for you from their My SOG.",
     "photoConsent": {

@@ -3664,6 +3664,19 @@
       "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
       "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst."
     },
+    "notifications": {
+      "title": "Aviseringsinställningar",
+      "channels": {
+        "email": "E-post"
+      },
+      "kinds": {
+        "session_report_copy": {
+          "label": "Kopior av rapporter om tillfällen",
+          "hint": "En kopia av varje rapport om ett tillfälle som mejlas till familjerna i en grupp."
+        }
+      },
+      "saveFailed": "Det gick inte att spara aviseringsinställningarna. Försök igen."
+    },
     "usernameLabel": "Användarnamn",
     "gamerPasswordFromParent": "Din förälder kan ange ett nytt lösenord åt dig från sin Min SOG.",
     "photoConsent": {

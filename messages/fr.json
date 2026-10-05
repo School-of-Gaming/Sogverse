@@ -3664,6 +3664,19 @@
       "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
       "lynxEducate": "Partager mon adresse e-mail avec <link>Lynx Educate</link> afin qu’ils puissent m’envoyer des actualités sur les événements à venir et des ressources sur le jeu vidéo. Je peux me désabonner à tout moment."
     },
+    "notifications": {
+      "title": "Préférences de notification",
+      "channels": {
+        "email": "E-mail"
+      },
+      "kinds": {
+        "session_report_copy": {
+          "label": "Copies des comptes rendus de séance",
+          "hint": "Une copie de chaque compte rendu de séance envoyé par e-mail aux familles d’un groupe."
+        }
+      },
+      "saveFailed": "Impossible d’enregistrer vos préférences de notification. Veuillez réessayer."
+    },
     "usernameLabel": "Identifiant",
     "gamerPasswordFromParent": "Ton parent peut te définir un nouveau mot de passe depuis son Mon SOG.",
     "photoConsent": {
