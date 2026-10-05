@@ -123,8 +123,8 @@ export interface SubstitutionRequest extends SubstitutionSession {
   urgent: boolean;
   /**
    * What the session's product requires of whoever runs it — its
-   * qualifications and its language — which the picker behind "Seat someone
-   * else" warns about.
+   * qualifications, its language and, for an on-site session, its coverage —
+   * which the picker behind "Seat someone else" warns about.
    */
   requirements: SessionRequirements;
   /** As delivered: the read orders by date then product, and so does the list. */

@@ -11,6 +11,7 @@ import { getClient } from "@/lib/supabase/client";
 import { UsersService, type UserListFilters } from "./users.service";
 import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
 import { robloxKeys } from "@/services/roblox/roblox.queries";
+import { sessionSubstitutionKeys } from "@/services/session-substitution/session-substitution.keys";
 import { ADMIN_PEOPLE_LIST_PAGE_SIZE } from "@/lib/constants/admin-people-lists";
 import { nextKeysetCursor, type KeysetCursor } from "@/lib/supabase/keyset";
 import {
@@ -162,6 +163,9 @@ export function useUpdateProfile() {
     onSuccess: (data, { userId }) => {
       queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      // A gedu's substitution pool filters on their spoken languages, so a
+      // profile write can change what it should show.
+      queryClient.invalidateQueries({ queryKey: sessionSubstitutionKeys.all });
     },
   });
 }

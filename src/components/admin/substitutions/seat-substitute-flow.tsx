@@ -164,7 +164,7 @@ function absentOnly(
  *
  * **A missing requirement is a warning in this same dialog, never a second
  * one**: the seat is the question, and the gap is a fact about the answer, so
- * it is stated here — one line per missing qualification or language, last
+ * it is stated here — one line per missing qualification, language or coverage, last
  * before the buttons — and the admin may seat the gedu anyway.
  */
 function SeatSubstituteDialog({

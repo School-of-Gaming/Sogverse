@@ -48,7 +48,8 @@ interface GroupsPanelProps {
   productType: ProductType;
   /**
    * What the product requires of whoever runs it (`sessionRequirements`) — the
-   * qualifications and the language a staff seat on it warns about.
+   * requirements (qualifications, language and, for an on-site product,
+   * coverage) a staff seat on it warns about.
    */
   requirements: SessionRequirements;
   /**

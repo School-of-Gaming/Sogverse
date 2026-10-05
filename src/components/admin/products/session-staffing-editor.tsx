@@ -60,7 +60,8 @@ export interface SessionStaffingEditorProps {
   sessionDate: string;
   /**
    * What the product requires of whoever runs the session
-   * (`sessionRequirements`) — its qualifications and its language. The picker
+   * (`sessionRequirements`) — its qualifications, its language and, for an
+   * on-site session, its coverage. The picker
    * names a candidate's gap and the confirm step warns about it; neither
    * refuses them.
    */
@@ -674,9 +675,10 @@ function AbsentGeduStep({
  * showing it.
  *
  * **A sub falling short of what the session requires is warned about here,
- * not in a dialog of its own**: one warning line per missing qualification and
- * one for a language they do not speak, and the button stays the ordinary one, because for an admin the gap is a
- * fact to go past knowingly rather than a refusal.
+ * not in a dialog of its own**: one warning line per missing qualification,
+ * one for a language they do not speak and, for an on-site session, one for
+ * coverage they lack. The button stays the ordinary one, because for an admin
+ * the gap is a fact to go past knowingly rather than a refusal.
  */
 function ConfirmSubStep({
   absent,

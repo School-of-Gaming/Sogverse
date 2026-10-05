@@ -95,7 +95,7 @@ second list to keep current, and the last one was wrong.
   holds because admins are always trusted and assignment is an admin-only action driven
   entirely by this picker. If a non-admin assignment path is ever added, move the
   `certified` check into `apply_group_changes` — until then a DB-level check would be
-  redundant. A missing qualification or language is not part of this gate: it is a warning
+  redundant. A missing qualification, language or coverage is not part of this gate: it is a warning
   the admin confirms (Qualifications, below).
 - **Session-substitution gate (server-side, required)**: substituting a session is *gedu-initiated*,
   so unlike assignment this one is enforced in the database rather than in the picker.
