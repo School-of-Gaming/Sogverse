@@ -148,6 +148,7 @@ describe("the agreed documents reach the enrolment request", () => {
         regionGate={{ kind: "unlocked" }}
         homeLocationName={null}
         onLocationConfirmed={() => {}}
+        onCheckoutStart={() => {}}
       />,
     );
 
@@ -174,6 +175,7 @@ describe("the agreed documents reach the enrolment request", () => {
         regionGate={{ kind: "unlocked" }}
         homeLocationName={null}
         onLocationConfirmed={() => {}}
+        onCheckoutStart={() => {}}
       />,
     );
 
@@ -205,6 +207,7 @@ describe("the agreed documents reach the enrolment request", () => {
         regionGate={{ kind: "unlocked" }}
         homeLocationName={null}
         onLocationConfirmed={() => {}}
+        onCheckoutStart={() => {}}
       />,
     );
 

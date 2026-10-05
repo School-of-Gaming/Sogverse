@@ -295,8 +295,11 @@ describe("POST /api/auth/register", () => {
     // Handed to the post-response hook, not awaited inside the answer.
     expect(deferred).toHaveLength(1);
     expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
-    const [request, conversion] = mockReportMetaConversion.mock.calls[0];
+    const [request, conversion, account] =
+      mockReportMetaConversion.mock.calls[0];
     expect(request).toBeInstanceOf(Request);
+    // The address of the account this request just created, as GoTrue stored it.
+    expect(account).toEqual({ email: "parent@example.test" });
     // A bare account is a lead — someone reachable who has committed to
     // nothing — and the page it happened on is the registration form, stated
     // rather than taken from this route's own URL.

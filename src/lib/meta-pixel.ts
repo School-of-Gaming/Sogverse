@@ -1,9 +1,10 @@
 /**
  * The Meta Pixel, loaded from app code rather than from an inline snippet.
  *
- * Client-safe and React-free: one function that installs Meta's library and one
- * that reports a page view through it, so the component above it is only the
- * gates and the effect.
+ * Client-safe and React-free: one function that installs Meta's library and two
+ * that report an event through it — one that waits for the library, for a page
+ * reached, and one that does not, for a click — so the components above it are
+ * only the gates and the effect.
  *
  * **Why not the official inline snippet.** Meta's base code is a `<script>` in
  * the document that loads the library and reports a PageView the moment it
@@ -28,7 +29,10 @@
  */
 
 import { isReportableQuery } from "@/lib/marketing-pages";
-import { PIXEL_EVENTS } from "@/lib/marketing-events";
+import {
+  PIXEL_EVENTS,
+  type MetaProductDetails,
+} from "@/lib/marketing-events";
 
 const FBEVENTS_SRC = "https://connect.facebook.net/en_US/fbevents.js";
 
@@ -78,6 +82,14 @@ declare global {
  * earlier document (tests reset the global) starts the load over.
  */
 let libraryLoaded: Promise<boolean> | null = null;
+
+/**
+ * The global whose library has actually arrived, for the report that cannot
+ * wait for a promise (`reportMetaEventNow`). Held as the object rather than a
+ * flag so a stub installed since — a new load after the global was reset —
+ * reads as not arrived until its own script has.
+ */
+let arrivedFor: Fbq | null = null;
 
 /** Meta's queueing stub, exactly as its base code builds it. */
 function installStub(): Fbq {
@@ -135,7 +147,10 @@ export function loadMetaPixel(pixelId: string): Promise<boolean> {
   script.async = true;
   script.src = FBEVENTS_SRC;
   libraryLoaded = new Promise<boolean>((resolve) => {
-    script.addEventListener("load", () => resolve(true));
+    script.addEventListener("load", () => {
+      arrivedFor = fbq;
+      resolve(true);
+    });
     script.addEventListener("error", () => resolve(false));
   });
   document.head.appendChild(script);
@@ -157,8 +172,27 @@ export function loadMetaPixel(pixelId: string): Promise<boolean> {
 }
 
 /**
- * Report a page view of `pathname`, the page the caller has already checked
- * against the marketing-page allowlist.
+ * The events the browser may send, and what each carries. Only these three: a
+ * page view, a product view, and the click that starts signing up for a
+ * product. A conversion — something committed — is reported from the server
+ * that committed it, never from here.
+ */
+export type BrowserPixelEvent =
+  | { event: typeof PIXEL_EVENTS.pageView }
+  | {
+      event: typeof PIXEL_EVENTS.productView | typeof PIXEL_EVENTS.checkout;
+      product: MetaProductDetails;
+    };
+
+/**
+ * Report `report` as having happened on `pathname`, the page the caller has
+ * already checked against the marketing-page allowlist — a page view with no
+ * parameters, or a product view with the product's own fields.
+ *
+ * **Every event the browser sends comes through here, page view or not.** The
+ * library attaches the address bar's URL and the referrer to whatever it
+ * tracks, so an event with a payload of its own is exactly as able to leak a
+ * private URL as a page view is, and gets exactly the same checks.
  *
  * The report goes out only once the library has arrived, and only if the tab
  * is still on that pathname with a query string that may travel — re-read from
@@ -167,9 +201,10 @@ export function loadMetaPixel(pixelId: string): Promise<boolean> {
  * left, and none for the page they reached: the caller reports that one, or
  * refuses it, on its own terms.
  */
-export async function reportMetaPageView(
+export async function reportMetaEvent(
   pixelId: string,
   pathname: string,
+  report: BrowserPixelEvent,
 ): Promise<void> {
   // Checked before loading as well as before sending: a page whose query may
   // not travel gets no library at all, not merely no report. The proxy's
@@ -178,11 +213,50 @@ export async function reportMetaPageView(
   if (!isReportableQuery(window.location.search)) return;
   const ready = await loadMetaPixel(pixelId);
   if (!ready) return;
+  trackIfStillOn(pathname, report);
+}
+
+/**
+ * Report `report` right now, inside the caller's own task, or not at all —
+ * for an event that is a click, where the click usually navigates.
+ *
+ * **Only if the library has already arrived.** The awaiting report above would
+ * re-read the address bar after the download, and by then a click that
+ * navigated has moved the tab, so the event would be refused anyway; queueing
+ * it instead is the replay against a later URL this module exists to prevent.
+ * So a click before the library is here is simply not reported, and this never
+ * starts a load. On a page that has already reported its view the library is
+ * there, and the call below runs synchronously — the library reads the URL as
+ * it is called, so the event carries the page the click happened on, before
+ * any navigation the click sets off has begun.
+ *
+ * The same address-bar checks as every other report. Answers whether the event
+ * went out, so a caller counting "once per page" counts only a real send.
+ */
+export function reportMetaEventNow(
+  pathname: string,
+  report: BrowserPixelEvent,
+): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.fbq === undefined || window.fbq !== arrivedFor) return false;
+  return trackIfStillOn(pathname, report);
+}
+
+/**
+ * The checks made at the moment of sending, and the send. The tab must still
+ * be on `pathname`, with a query that may travel — re-read from the address
+ * bar, because that is the URL the library attaches.
+ */
+function trackIfStillOn(pathname: string, report: BrowserPixelEvent): boolean {
   // Both sides resolved through the URL parser, so a slug with a non-ASCII
   // character compares the same whether the router hands it over encoded or
   // not.
   const authorised = new URL(pathname, window.location.origin).pathname;
-  if (window.location.pathname !== authorised) return;
-  if (!isReportableQuery(window.location.search)) return;
-  window.fbq?.("track", PIXEL_EVENTS.pageView);
+  if (window.location.pathname !== authorised) return false;
+  if (!isReportableQuery(window.location.search)) return false;
+  const fbq = window.fbq;
+  if (fbq === undefined) return false;
+  if ("product" in report) fbq("track", report.event, report.product);
+  else fbq("track", report.event);
+  return true;
 }

@@ -136,6 +136,35 @@ one product is still one page. Every event the browser pushes states that same f
 same way, which is what lets a view and the enrolment that followed it meet in one funnel
 instead of forking into a template row and a concrete one.
 
+A product page also tells the pixel which product it showed, as Meta's product view, and
+only for a product we advertise — the same product-row rule the servers apply. It is not a
+second reporting path: it goes through every gate and check the page view does, once per
+product page reached, and it waits for the product to have been read rather than being
+dropped when the read is slow.
+
+**The checkout start is a click, reported from the browser.** A parent on an advertised
+product's page who clicks into the sign-up flow — the create-an-account link while signed
+out, or the button that enrols while signed in — is Meta's checkout start, for a free
+product exactly as for a paid one, once per product page reached however many times they
+click or retry. Joining a waitlist is not one, and neither is signing in. The click usually
+navigates, so the event goes out synchronously inside the click handler, while the address
+bar still shows the product page, or not at all: when the library has not arrived yet the
+click is dropped rather than queued, because a queued event would be replayed against
+whatever URL the tab shows by then. It never loads the library and never holds up the
+parent's navigation. Same gates as the views, same address-bar check at the moment of
+sending.
+
+**A checkout start counts attempts, not people, and that is accepted.** The once-per-page
+memory dies with the document, and every sign-in ends in a full load, so a parent who
+creates an account and comes back to enrol is two checkout starts for one sign-up, and so
+is one who abandons Stripe and retries. Meta keeps both — it deduplicates only a browser
+event against its server twin, never two from the browser. The enrolment itself is still
+reported exactly once, and that is the number a campaign is judged on; the checkout start
+is a higher-volume signal for steering delivery, where the same parent twice changes
+nothing about who Meta looks for. Making it once per person would mean storage of our own
+that the withdrawal sweep then has to clear — not worth building unless someone reports
+or bids on checkout starts as a figure in itself.
+
 From our servers, through Meta's Conversions API (`src/lib/meta-conversions.server.ts`),
 each one sent after the response has gone out so it can neither delay nor fail what the
 family asked for:
@@ -143,10 +172,24 @@ family asked for:
 - **an account was created** — reported as a lead, someone reachable who has committed to
   nothing;
 - **an enrolment** — a seat taken or a place in a queue accepted, carrying which of the
-  two it was;
-- **a checkout was started** — deliberately a different event name, because the platform
-  optimises a campaign on the name and an abandoned checkout must not train it as an
-  enrolment.
+  two it was.
+
+Handing a parent to Stripe is reported from neither side to Meta: its checkout start is the
+browser's click above, and a server report as well would count every paid attempt twice.
+(Analytics still hears it, as its own `checkout` push from the panel.)
+
+The enrolment, and the browser's product view and checkout start, name the product in
+Meta's standard product fields, built in one place so they cannot describe one product two
+ways: its id, its English name whatever the visitor's locale, its topic as the category —
+an enum value, stable across renames, and the axis a campaign is run per — and the price
+the family pays with its currency, zero for a free product. A paid product with no price in the currency
+states no value at all rather than a guessed one. **A queue place carries no value**: a
+waitlisted enrolment drops the value and currency in the server report itself, whatever the
+caller passed, because nobody has paid or committed to pay and a priced queue would train a
+campaign to count a full product's waitlist as revenue. On the browser's two product events
+these are only facts the product's public page shows anyone. On the server's enrolment they
+ride beside the parent's email hash, so Meta learns that an identifiable parent signed up
+for that named club, camp or event — which the privacy policy says.
 
 Each server report is gated on the **request's own consent cookie**, so a conversion for
 someone who refused marketing is impossible rather than unlikely. Products we do not
@@ -155,9 +198,14 @@ product row, never by the URL it was reached from**. No role check is needed on 
 the three routes are customer-only, so a gamer cannot reach one.
 
 **What identifies a person in a server report, exhaustively:** the user agent, the IP the
-request arrived from, and Meta's own browser and click cookies if the browser carries them.
-No email, no name, no user id, and nothing whatsoever about a child. Adding a field there
-is a privacy-policy edit.
+request arrived from, Meta's own browser and click cookies if the browser carries them, and
+a SHA-256 hash of the parent's own account email (Meta's advanced matching) — hashed on our
+server, so the address itself is never sent or logged, and never a gamer's address. The
+address is sent whether or not it has been verified; that is standard practice and
+accepted as such. With the product fields above, that tells Meta which product an
+identifiable parent signed up for. No name, no user id, and nothing about a child beyond
+that — not their name, age, account or anything else. The privacy policy's Meta entry says
+this in plain words; adding a field there is a privacy-policy edit.
 
 A completed purchase is reported nowhere today. When it is, it belongs on the same
 server-side path, from the payment webhook — which is the only place that knows money

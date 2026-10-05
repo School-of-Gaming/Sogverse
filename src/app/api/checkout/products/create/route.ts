@@ -27,7 +27,10 @@ import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
 import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
 import { stripe } from "@/lib/stripe/client";
 import { CHECKOUT_SESSION_LIFETIME_MINUTES } from "@/lib/constants/participations";
-import { isAdvertisedProduct } from "@/lib/marketing-events";
+import {
+  isAdvertisedProduct,
+  metaProductDetails,
+} from "@/lib/marketing-events";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { getOrigin } from "@/lib/url";
@@ -86,13 +89,14 @@ export const POST = defineRoute({
     // This one read is the single source for everything Stripe is told about
     // the product: the Stripe Product's name, tax code and metadata, and the
     // purchase metadata written onto the payment intent, the invoice and the
-    // subscription. Two reads could disagree; one cannot. It fails closed —
+    // subscription — and the product an advertising report names, its topic
+    // and price included. Two reads could disagree; one cannot. It fails closed —
     // a read error answers 404 rather than letting a defaulted product type
     // pick the wrong tax code downstream.
     const { data: product, error: productErr } = await admin
       .from("products")
       .select(
-        "id, product_type, billing_mode, seat_count, timezone, spoken_language_code, start_date, end_date, product_translations(locale, name)",
+        "id, product_type, billing_mode, topic, seat_count, timezone, spoken_language_code, start_date, end_date, product_translations(locale, name), product_prices(currency, price_cents)",
       )
       .eq("id", productId)
       // Embedded resources come back unordered, so a product without an English
@@ -295,11 +299,17 @@ export const POST = defineRoute({
       // — the route is customer-only, so a gamer cannot reach it at all.
       if (rpcJson.kind === "free_active" && isAdvertisedProduct(product)) {
         after(
-          reportMetaConversion(request, {
-            event: "enrolment",
-            outcome: "enrolled",
-            sourcePath: ROUTES.shopProductPath(productId),
-          }),
+          reportMetaConversion(
+            request,
+            {
+              event: "enrolment",
+              outcome: "enrolled",
+              product: metaProductDetails(product, currency),
+              sourcePath: ROUTES.shopProductPath(productId),
+            },
+            // The signed-in customer's own address, never the participant's.
+            { email: profile.email },
+          ),
         );
       }
 
@@ -606,22 +616,12 @@ export const POST = defineRoute({
         throw new ApiError("Stripe did not return a Checkout URL", 502);
       }
 
-      // Handed to Stripe, and reported as exactly that. It is deliberately NOT
-      // the enrolment event: Meta optimises a campaign on the event name, so
-      // reporting an abandoned checkout as an enrolment would train it on people
-      // who start paying rather than people who pay. The seat itself is written
-      // from the Stripe webhook, which is where a completed purchase would be
-      // reported from the day we report one.
-      if (isAdvertisedProduct(product)) {
-        after(
-          reportMetaConversion(request, {
-            event: "enrolment",
-            outcome: "sent_to_checkout",
-            sourcePath: ROUTES.shopProductPath(productId),
-          }),
-        );
-      }
-
+      // Nothing is reported to Meta here. Its checkout start is the parent's
+      // click on the product page, reported from the browser for free and paid
+      // products alike, so a report from this handler would count every paid
+      // attempt twice. The seat itself is written from the Stripe webhook, which
+      // is where a completed purchase would be reported from the day we report
+      // one.
       return { status: "redirect" as const, checkoutUrl: session.url };
     } catch (error) {
       // Deliberate status and message. This route discloses error text to the

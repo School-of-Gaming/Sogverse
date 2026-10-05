@@ -10,8 +10,14 @@ import {
 } from "@/services/participations/participations.contracts";
 import { consentRefusalError } from "@/services/participations/consent-refusal";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
-import { isAdvertisedProduct } from "@/lib/marketing-events";
-import { reportMetaConversion } from "@/lib/meta-conversions.server";
+import {
+  isAdvertisedProduct,
+  metaProductDetails,
+} from "@/lib/marketing-events";
+import {
+  reportMetaConversion,
+  type MetaRequestingAccount,
+} from "@/lib/meta-conversions.server";
 import { ROUTES } from "@/lib/constants/routes";
 import type { AppSupabaseClient } from "@/types";
 
@@ -124,7 +130,15 @@ export const POST = defineRoute({
       // wrote, and (inside the helper) a request that carried marketing consent.
       // No role check is needed on this side, because the route is customer-only
       // and a gamer cannot reach it.
-      after(reportWaitlistConversion(request, supabase, body.productId));
+      after(
+        reportWaitlistConversion(
+          request,
+          supabase,
+          body.productId,
+          // The signed-in customer's own address, never the participant's.
+          { email: profile.email },
+        ),
+      );
     }
 
     // The flag travels on to the browser for the same reason it is read here:
@@ -146,7 +160,8 @@ export const POST = defineRoute({
 /**
  * Report a waitlist join, if the product is one we advertise.
  *
- * The product's two advertising columns are read here rather than in the
+ * The product's two advertising columns, and the facts the report names it
+ * by, are read here rather than in the
  * handler, because nothing in the answer depends on them: this runs after the
  * response has gone out, on the caller's own client — a parent may read any
  * product they can browse, so the read needs no privilege the join did not
@@ -157,20 +172,29 @@ async function reportWaitlistConversion(
   request: Request,
   client: AppSupabaseClient,
   productId: string,
+  account: MetaRequestingAccount,
 ): Promise<void> {
   try {
     const { data: product } = await client
       .from("products")
-      .select("product_type, billing_mode")
+      .select(
+        "id, product_type, billing_mode, topic, product_translations(locale, name), product_prices(currency, price_cents)",
+      )
       .eq("id", productId)
       .maybeSingle();
     if (!product || !isAdvertisedProduct(product)) return;
 
-    await reportMetaConversion(request, {
-      event: "enrolment",
-      outcome: "waitlisted",
-      sourcePath: ROUTES.shopProductPath(productId),
-    });
+    await reportMetaConversion(
+      request,
+      {
+        event: "enrolment",
+        outcome: "waitlisted",
+        // The report drops the price itself: a queue place carries no value.
+        product: metaProductDetails(product),
+        sourcePath: ROUTES.shopProductPath(productId),
+      },
+      account,
+    );
   } catch (error) {
     console.error(
       "[participations/waitlist] could not report the conversion",

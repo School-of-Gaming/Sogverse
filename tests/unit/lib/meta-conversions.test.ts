@@ -4,6 +4,7 @@ import {
   serialiseConsent,
   type ConsentState,
 } from "@/lib/consent";
+import type { MetaProductDetails } from "@/lib/marketing-events";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
 import { asObject } from "../../helpers/json";
 
@@ -22,14 +23,32 @@ import { asObject } from "../../helpers/json";
  * makes an un-consented report impossible rather than merely unlikely; a
  * client-side gate could slip, and this one cannot.
  *
- * **The body is the privacy policy, in JSON.** The user agent, the IP, and
- * Meta's own two cookies. No email, no name, no id of a person and nothing about
- * a child. A field appearing here that this file does not assert on is a field
- * nobody promised.
+ * **The body is the privacy policy, in JSON.** The user agent, the IP, Meta's
+ * own two cookies, and the parent's email as a SHA-256 hash — never the address
+ * itself. No name, no id of a person and nothing about a child. A field appearing here that this file does not assert on is a field
+ * nobody promised. An enrolment adds its outcome and the product it was for —
+ * facts about the product, asserted whole.
  */
 
 const PIXEL_ID = "1234567890";
 const ACCESS_TOKEN = "meta-access-token";
+
+/** Which product an enrolment was for, as the routes build it. */
+const PRODUCT: MetaProductDetails = {
+  content_ids: ["abc-123"],
+  content_type: "product",
+  content_name: "Roblox Studio Club",
+  content_category: "roblox_studio",
+  value: 49,
+  currency: "EUR",
+};
+
+/** The parent the request acts as. */
+const PARENT = { email: "parent.example@sogverse.test" };
+
+/** SHA-256 of `parent.example@sogverse.test`, as lowercase hex. */
+const PARENT_EMAIL_SHA256 =
+  "b11323795248124001f4b3081ebd908d5bd36d5dad1bc90c1564358aea0a3bd6";
 
 const GRANTED: ConsentState = {
   analytics: true,
@@ -106,10 +125,11 @@ describe("reportMetaConversion — the three gates", () => {
   it("sends nothing without a pixel id", async () => {
     vi.stubEnv("NEXT_PUBLIC_META_PIXEL_ID", undefined);
 
-    await reportMetaConversion(request(), {
-      event: "account_created",
-      sourcePath: "/register",
-    });
+    await reportMetaConversion(
+      request(),
+      { event: "account_created", sourcePath: "/register" },
+      PARENT,
+    );
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -119,10 +139,11 @@ describe("reportMetaConversion — the three gates", () => {
   it("sends nothing for an id that is not digits", async () => {
     vi.stubEnv("NEXT_PUBLIC_META_PIXEL_ID", "your-meta-pixel-id");
 
-    await reportMetaConversion(request(), {
-      event: "account_created",
-      sourcePath: "/register",
-    });
+    await reportMetaConversion(
+      request(),
+      { event: "account_created", sourcePath: "/register" },
+      PARENT,
+    );
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -130,10 +151,11 @@ describe("reportMetaConversion — the three gates", () => {
   it("sends nothing without an access token", async () => {
     vi.stubEnv("META_CONVERSIONS_API_ACCESS_TOKEN", undefined);
 
-    await reportMetaConversion(request(), {
-      event: "account_created",
-      sourcePath: "/register",
-    });
+    await reportMetaConversion(
+      request(),
+      { event: "account_created", sourcePath: "/register" },
+      PARENT,
+    );
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -146,10 +168,11 @@ describe("reportMetaConversion — the three gates", () => {
       cookieHeaderFor({ ...GRANTED, marketing: false }),
     ],
   ])("sends nothing for %s", async (_label, cookie) => {
-    await reportMetaConversion(request({ cookie }), {
-      event: "account_created",
-      sourcePath: "/register",
-    });
+    await reportMetaConversion(
+      request({ cookie }),
+      { event: "account_created", sourcePath: "/register" },
+      PARENT,
+    );
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -166,6 +189,7 @@ describe("reportMetaConversion — the request", () => {
         cookie: `${cookieHeaderFor(GRANTED)}; _fbp=fb.1.123.456; _fbc=fb.1.123.IwAR`,
       }),
       { event: "account_created", sourcePath: "/register" },
+      PARENT,
     );
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -196,13 +220,14 @@ describe("reportMetaConversion — the request", () => {
     expect(event).not.toHaveProperty("custom_data");
 
     // The whole of what identifies a person, and nothing else: the first
-    // forwarded address (the client's, not a proxy's), the user agent, and
-    // Meta's own two cookies read off this request.
+    // forwarded address (the client's, not a proxy's), the user agent, Meta's
+    // own two cookies read off this request, and the parent's email as a hash.
     expect(event.user_data).toEqual({
       client_user_agent: "Mozilla/5.0 (test)",
       client_ip_address: "203.0.113.7",
       fbp: "fb.1.123.456",
       fbc: "fb.1.123.IwAR",
+      em: [PARENT_EMAIL_SHA256],
     });
   });
 
@@ -210,53 +235,162 @@ describe("reportMetaConversion — the request", () => {
     await reportMetaConversion(
       request({ headers: { "x-real-ip": "198.51.100.9" } }),
       { event: "account_created", sourcePath: "/register" },
+      PARENT,
     );
     expect(asObject(sentEvent().user_data).client_ip_address).toBe(
       "198.51.100.9",
     );
 
     fetchMock.mockClear();
-    await reportMetaConversion(request(), {
-      event: "account_created",
-      sourcePath: "/register",
+    await reportMetaConversion(
+      request(),
+      { event: "account_created", sourcePath: "/register" },
+      PARENT,
+    );
+    expect(sentEvent().user_data).toEqual({
+      client_user_agent: "Mozilla/5.0 (test)",
+      em: [PARENT_EMAIL_SHA256],
     });
+  });
+
+  // Meta's normalisation is trim, then lowercase, then SHA-256 as lowercase
+  // hex — the expected value is the digest of the normalised address, worked
+  // out independently of the code under test.
+  it("hashes the email the way Meta normalises it, in an array", async () => {
+    await reportMetaConversion(
+      request(),
+      { event: "account_created", sourcePath: "/register" },
+      { email: "  Parent.Example@Sogverse.TEST \n" },
+    );
+
+    expect(asObject(sentEvent().user_data).em).toEqual([PARENT_EMAIL_SHA256]);
+  });
+
+  it("never puts the plain email anywhere in the request", async () => {
+    await reportMetaConversion(
+      request(),
+      {
+        event: "enrolment",
+        outcome: "enrolled",
+        product: PRODUCT,
+        sourcePath: "/shop/abc-123",
+      },
+      PARENT,
+    );
+
+    const [url, init] = fetchMock.mock.calls[0];
+    const sent = `${url} ${String(init.body)}`.toLowerCase();
+    expect(sent).not.toContain("parent.example");
+    expect(sent).not.toContain("@sogverse.test");
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  // A missing address costs match quality, not the report.
+  it.each([
+    ["no email", null],
+    ["an empty email", ""],
+    ["a blank email", "   "],
+  ])("sends the report without `em` for %s", async (_label, email) => {
+    await reportMetaConversion(
+      request(),
+      { event: "account_created", sourcePath: "/register" },
+      { email },
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(sentEvent().user_data).toEqual({
       client_user_agent: "Mozilla/5.0 (test)",
     });
   });
 
   // The names are the campaign's optimisation target, so each outcome's is
-  // stated here rather than trusted to the caller.
+  // stated here rather than trusted to the caller. A checkout start is not
+  // among them: the browser reports it at the click, and the type cannot say it.
   it.each([
     ["enrolled", "CompleteRegistration"],
     ["waitlisted", "CompleteRegistration"],
-    ["sent_to_checkout", "InitiateCheckout"],
   ] as const)("reports %s as %s, with the outcome beside it", async (
     outcome,
     eventName,
   ) => {
-    await reportMetaConversion(request(), {
-      event: "enrolment",
-      outcome,
-      sourcePath: "/shop/abc-123",
-    });
+    await reportMetaConversion(
+      request(),
+      {
+        event: "enrolment",
+        outcome,
+        product: PRODUCT,
+        sourcePath: "/shop/abc-123",
+      },
+      PARENT,
+    );
 
     const event = sentEvent();
     expect(event.event_name).toBe(eventName);
-    expect(event.custom_data).toEqual({ outcome });
+    expect(event.custom_data).toMatchObject({
+      outcome,
+      content_ids: PRODUCT.content_ids,
+    });
     expect(event.event_source_url).toBe(
       "https://test.sogverse.local/shop/abc-123",
     );
   });
 
+  // A seat taken carries the product exactly as the caller built it, price
+  // included.
+  it("names the product with its price on an enrolled seat", async () => {
+    await reportMetaConversion(
+      request(),
+      {
+        event: "enrolment",
+        outcome: "enrolled",
+        product: PRODUCT,
+        sourcePath: "/shop/abc-123",
+      },
+      PARENT,
+    );
+
+    expect(sentEvent().custom_data).toEqual({
+      outcome: "enrolled",
+      ...PRODUCT,
+    });
+  });
+
+  // A queue place is not revenue: the report drops the price whatever the
+  // caller passed, and keeps every other product field.
+  it("names the product without a value on a waitlisted enrolment", async () => {
+    await reportMetaConversion(
+      request(),
+      {
+        event: "enrolment",
+        outcome: "waitlisted",
+        product: PRODUCT,
+        sourcePath: "/shop/abc-123",
+      },
+      PARENT,
+    );
+
+    expect(sentEvent().custom_data).toEqual({
+      outcome: "waitlisted",
+      content_ids: ["abc-123"],
+      content_type: "product",
+      content_name: "Roblox Studio Club",
+      content_category: "roblox_studio",
+    });
+  });
+
   it("carries the test event code only when one is configured", async () => {
     vi.stubEnv("META_CONVERSIONS_API_TEST_EVENT_CODE", "TEST12345");
 
-    await reportMetaConversion(request(), {
-      event: "enrolment",
-      outcome: "enrolled",
-      sourcePath: "/shop/abc-123",
-    });
+    await reportMetaConversion(
+      request(),
+      {
+        event: "enrolment",
+        outcome: "enrolled",
+        product: PRODUCT,
+        sourcePath: "/shop/abc-123",
+      },
+      PARENT,
+    );
 
     expect(sentBody().test_event_code).toBe("TEST12345");
   });
@@ -271,10 +405,11 @@ describe("reportMetaConversion — failure", () => {
     );
 
     await expect(
-      reportMetaConversion(request(), {
-        event: "account_created",
-        sourcePath: "/register",
-      }),
+      reportMetaConversion(
+        request(),
+        { event: "account_created", sourcePath: "/register" },
+        PARENT,
+      ),
     ).resolves.toBeUndefined();
 
     // Meta's own body, because the status alone says nothing: an expired token,
@@ -290,10 +425,11 @@ describe("reportMetaConversion — failure", () => {
     fetchMock.mockRejectedValue(new Error("network down"));
 
     await expect(
-      reportMetaConversion(request(), {
-        event: "account_created",
-        sourcePath: "/register",
-      }),
+      reportMetaConversion(
+        request(),
+        { event: "account_created", sourcePath: "/register" },
+        PARENT,
+      ),
     ).resolves.toBeUndefined();
 
     expect(console.error).toHaveBeenCalledWith(
