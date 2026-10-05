@@ -133,6 +133,31 @@ describe("the notification preferences card", () => {
     expect(sessionReportCopyBox().checked).toBe(true);
   });
 
+  it("keeps a stored answer through a failed refetch", () => {
+    read.data = [
+      {
+        profile_id: auth.profile.id,
+        kind: "session_report_copy",
+        channel: "email",
+        enabled: true,
+        updated_at: "2026-10-05T12:00:00Z",
+      },
+    ];
+    read.isError = true;
+    render(withMessages(<NotificationPreferencesCard />));
+
+    expect(sessionReportCopyBox().checked).toBe(true);
+  });
+
+  it("offers usable boxes, all off, when the first read fails", () => {
+    read.data = undefined;
+    read.isError = true;
+    render(withMessages(<NotificationPreferencesCard />));
+
+    expect(sessionReportCopyBox().checked).toBe(false);
+    expect(sessionReportCopyBox().disabled).toBe(false);
+  });
+
   it("keeps the box disabled until the read lands", () => {
     read.data = undefined;
     render(withMessages(<NotificationPreferencesCard />));

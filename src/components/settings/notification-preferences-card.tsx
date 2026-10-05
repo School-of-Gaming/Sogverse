@@ -62,9 +62,11 @@ export function NotificationPreferencesCard() {
    * read resolves to "all off" rather than "not known yet"**, so the boxes stay
    * usable instead of dead; the change-only save is what makes that safe — an
    * untouched box equals the assumed baseline and is never written. While the
-   * read is in flight it stays `undefined` and the boxes stay disabled.
+   * read is in flight it stays `undefined` and the boxes stay disabled. Rows
+   * already read win over a later failed refetch, which would otherwise flip a
+   * stored answer to "off" on screen.
    */
-  const saved = readFailed ? NO_PREFERENCES : rows;
+  const saved = rows ?? (readFailed ? NO_PREFERENCES : undefined);
   const savedAnswers = new Map(
     saved?.map((row) => [toggleKey(row.channel, row.kind), row.enabled]),
   );
