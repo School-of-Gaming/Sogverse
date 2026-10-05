@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import type { Profile } from "@/types";
+import { Constants, type Profile } from "@/types";
 
 /**
  * The scaffolding a settings-page test needs before it can render the page body
@@ -103,7 +103,7 @@ export function adminEmailPreferencesServiceModule(
   setMutateAsync: () => ReturnType<typeof vi.fn> = () => vi.fn(),
 ) {
   return {
-    ADMIN_EMAIL_KINDS: ["session_report_copy"] as const,
+    ADMIN_EMAIL_KINDS: Constants.public.Enums.admin_email_kind,
     useMyAdminEmailPreferences: () => ({ data: [], isError: false }),
     useSetAdminEmailPreference: () => ({ mutateAsync: setMutateAsync() }),
   };

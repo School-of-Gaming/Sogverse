@@ -38,7 +38,12 @@ describe("admin email preferences", () => {
     await admin
       .from("admin_email_preferences")
       .delete()
-      .in("admin_id", [TEST_IDS.ADMIN, TEST_IDS.GEDU, TEST_IDS.CUSTOMER]);
+      .in("admin_id", [
+        TEST_IDS.ADMIN,
+        TEST_IDS.GEDU,
+        TEST_IDS.CUSTOMER,
+        TEST_IDS.GAMER,
+      ]);
   }
 
   beforeAll(async () => {
