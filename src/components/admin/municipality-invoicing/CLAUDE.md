@@ -197,13 +197,14 @@ points at a place and at a buyer independently.
 ## The Finvoice export
 
 The invoices are raised in **Fennoa**, the accounting system, by importing **Finvoice 3.0
-XML** — one file per buyer per month. The page produces those files; nothing else in the
-app does, and nothing about producing one is recorded.
+XML** — one file per buyer per billing period, which for most buyers is a month. The page
+produces those files; nothing else in the app does, and nothing about producing one is
+recorded.
 
-The export's own code — the company constants, the month-to-invoice build and the
+The export's own code — the company constants, the period-to-invoice build and the
 document writer — lives in `src/lib/finvoice/`, because the route layer is what consumes
 it and no API route in this app reaches into a component directory. It reads this page's
-built view rather than the wire document, so the file and the ledger cannot disagree about
+built months rather than the wire documents, so the file and the ledger cannot disagree about
 a figure; the rules it follows are all here.
 
 **Everything below about what the import needs was established with the CFO by importing
@@ -220,10 +221,11 @@ that has to be re-verified against Fennoa rather than reasoned about.
   own address and the serializer states it.
 - **Fennoa assigns the invoice number when the invoice is sent.** Ours is provisional, it
   never reaches an accounting ledger, and it is what makes the export stateless: producing
-  a month's file twice produces the same file, and there is no counter for a failed
-  download to burn. It is the invoiced month followed by the digits of the buyer's Fennoa
-  customer number — numeric and above 100, which is the import's own rule for an
-  identifier. **Within a month it is unique across buyers whose customer numbers differ in
+  a period's file twice produces the same file, and there is no counter for a failed
+  download to burn. It is the period's last month followed by the digits of the buyer's
+  Fennoa customer number — for a monthly buyer that is simply the invoiced month — numeric
+  and above 100, which is the import's own rule for an identifier. A buyer is on one
+  cadence, so its periods end in distinct months and no two of its files share a number. **Within a month it is unique across buyers whose customer numbers differ in
   their digits**, which every number Fennoa issues does — so it is unique over real data,
   and that is the honest size of the guarantee. Two numbers differing only in a letter,
   `0204` and `F0204`, are one number here; so are a number carrying no digit at all, which
@@ -239,25 +241,30 @@ that has to be re-verified against Fennoa rather than reasoned about.
   are not sent. They belong to the accounting system; a second copy in the file would be a
   copy that goes stale.
 
-**One file is one customer's whole month, across every municipality.** A buyer is a
-contract party rather than a place, so a customer's clubs can sit in several sections of
+**One file is one customer's whole billing period, across every municipality.** A buyer is
+a contract party rather than a place, so a customer's clubs can sit in several sections of
 the ledger and still be one invoice — and one city can be two customers and therefore two
 files. Everything the export decides follows from that: the readiness shown beside a
-municipality's name is a claim about the customer's whole month, not about that section's
+municipality's name is a claim about the customer's whole period, not about that section's
 share of it, and a row takes its municipality from its own club rather than from the
 section the reader clicked in.
 
-**A file is refused rather than trimmed, on two grounds.** A customer with a club that
-**ran** — that has at least one billed session, recorded or not — and has no fee gets no
-file at all: dropping the club would produce an invoice short by whatever that club was
-worth, with nothing in it saying so, and a short total is the one error nobody downstream
-catches. A customer whose clubs have **no billed session** gets no file either — an invoice
-for nothing is a document somebody has to explain. Both are
-ordinary states of an ordinary month rather than faults, so both are values the callers
-render: the page shows the control disabled with the reason, and the download answers a
-conflict with the same reason. **One predicate decides both**, because a control that says
-a file cannot be produced and a route that then produces one is the worst outcome
-available.
+**A file is refused rather than trimmed, on two grounds, and only in its period's last
+month.** A customer with a club that **ran** in any month of the period — that has at
+least one billed session, recorded or not — and has no fee gets no file at all: dropping
+the club would produce an invoice short by whatever that club was worth, with nothing in it
+saying so, and a short total is the one error nobody downstream catches. The reason names
+the first month of the period where that happened, because a quarter refused in March over
+a club that met only in January has to send the reader to January. A customer whose clubs
+have **no billed session** in the period gets no file either — an invoice for nothing is a
+document somebody has to explain. A request for a period customer's file in a month that
+does not end its period is refused as well, with the month that does. These are ordinary
+states rather than faults, so they are values the callers render: the page shows the
+label, or the control disabled with the reason, and the download answers a conflict with
+the same reason. **One predicate decides all of them, over the whole period**, because a
+control that says a file cannot be produced and a route that then produces one is the
+worst outcome available. Where the page does not yet hold every month of a period, the
+predicate says so rather than deciding over the part it has.
 
 **What the refusal asks is whether the FILE would be wrong, never whether the data is.**
 Those are two questions with two readers. A club that ran without a fee makes the file
@@ -306,6 +313,48 @@ it that is not configuration.
 second thing to get right, and the import is per file anyway: the CFO works down the
 collapsed ledger taking one file per buyer, which is the same number of clicks as
 unpacking an archive would be. Revisit it when a month's customer count makes that false.
+
+## Billing cadence: a month, a quarter or a half-year
+
+**A customer is invoiced monthly, quarterly or half-yearly, as agreed with it**, and the
+cadence is stored on the customer (`../invoice-customers/`). **Periods are
+calendar-aligned**: quarters are Jan–Mar, Apr–Jun, Jul–Sep and Oct–Dec, half-years Jan–Jun
+and Jul–Dec, and a month is a one-month period — which is what lets a monthly buyer go
+through the very same path rather than a second one. A period never crosses a year.
+
+**The ledger stays a month view.** Every figure on the page — sessions, clubs,
+municipality and month totals — is the month being viewed, whatever any customer's
+cadence. Only a period customer's download control changes:
+
+- **In a month that is not its period's last**, there is no link and no warning, because
+  nothing is wrong: a quiet label says how often it is invoiced and which month its file
+  is produced in.
+- **In its period's last month**, the link downloads one invoice covering the whole
+  period, and it is labelled with the period's short name and the period's total, so the
+  figure on it cannot be mistaken for the month's own total beside it on the line.
+- **A customer whose period ends this month but who has no club this month** — a quarterly
+  buyer whose clubs stopped in May still owes the quarter that ends in June — sits on no
+  municipality's line, so its control gets a line of its own at the foot of the ledger,
+  and on an otherwise empty month it is the one thing under the empty-month sentence.
+
+**The period's file is built from one month document per month of the period**, each
+read through the same function and built by the same pure build the ledger uses: there is
+no aggregate read and no second arithmetic. So in a month that ends a period, the page
+reads the period's earlier months as well — which months is decided by the cadences
+customers are on, read from the customer list rather than from the month's own document,
+because the document does not mention a buyer with no club in it. A month that ends no
+period of a cadence anybody is on reads nothing more.
+
+**One row per club per month**, month by month, so a quarter's file reads in the order its
+months were checked. Each row carries its month's first and last day, and the invoice
+states the period's first and last day, which is what the Finvoice guide recommends for an
+invoice covering several months; a row's text also names its month, because three rows of
+one club otherwise read the same. The free text names the whole period (`1–3/26`), the
+invoice is dated the first day after the period, and the filename and number take the
+period's last month. **A monthly file states none of the period elements** and is the
+shape the imports were verified against; the elements a period file adds are the part of
+it that is checked against Fennoa on its first import. Cancelled sessions stay out of every
+file.
 
 ## How the month is read
 
@@ -537,15 +586,21 @@ The fixtures carry a customer whose file is blocked by a club with no fee and on
 file is blocked by having nothing to invoice — its one club's every due date cancelled,
 since anything else that was due would bill — because a month of ordinary clubs would show
 neither. They also carry cancellations on both sides of the pinned today and one on a
-date nothing projects and nothing is recorded on, which must render no line.
+date nothing projects and nothing is recorded on, which must render no line. Three
+customers are on a period: in the working month all three wait for June, and in March —
+which ends the first quarter and sits in the middle of the first half — one quarter's file
+is ready, one is refused over a club that ran without a fee in January and had stopped by
+March, and the half-year is still under way, beside the monthly files.
 
-**The month stepper stays inside the preview, and it is how the empty ledger is reached.**
-The stepper is one of the page's own controls rather than a way out of a row, so the shell
-takes its link target as a prop: the live page points it at another month of itself, and
-the scene points it back at the scene. The fixtures answer the month asked for — the
-working month has the ledger, and every other month is genuinely empty, because these clubs
-run one spring term — so an empty month is a step away and a step back on the same page in
-the same chrome, which is strictly more than a second scenario could have shown. The club
+**The month stepper stays inside the preview, and it is how the empty ledger and a
+quarter's file are reached.** The stepper is one of the page's own controls rather than a
+way out of a row, so the shell takes its link target as a prop: the live page points it at
+another month of itself, and the scene points it back at the scene. The fixtures answer the
+month asked for, and hand the shell a period's earlier months exactly as the live route
+does — the spring term's months have the ledger, with every per-month state in the working
+month, and every month outside the term is genuinely empty — so an empty month and March's
+period files are each a step away and a step back on the same page in the same chrome,
+which is strictly more than a second scenario could have shown. The club
 names remain real links out to the live admin pages, which is the honest behaviour for a
 control whose whole purpose is to leave the row.
 

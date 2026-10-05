@@ -1,5 +1,8 @@
 import { addCalendarDays, monthsAfter, weekdayOf } from "@/lib/calendar-date";
+import { earlierPeriodMonths } from "@/lib/finvoice/billing-period";
+import { monthEndOf } from "@/lib/invoicing/month";
 import type { InvoiceCustomerRow } from "@/services/invoice-customers";
+import type { InvoiceBillingCadence } from "@/types";
 import type {
   MunicipalityInvoicingClub,
   MunicipalityInvoicingLocation,
@@ -62,7 +65,11 @@ import type {
  * Everything that can share one render is in the working month — every club
  * state, every session state, the exclusion warning — because states that share
  * a render are compared side by side, and states behind separate links are
- * compared from memory.
+ * compared from memory. The one thing May cannot show is a quarter's file
+ * itself, because no period ends in May; March ends the first quarter, so it is
+ * the month a step or two back where a quarterly customer's file is ready, one
+ * is refused over an earlier month, and a half-yearly one is still under way —
+ * the stepper again, rather than a scenario.
  */
 export const MUNICIPALITY_INVOICING_SCENARIOS = ["working-month"] as const;
 
@@ -326,6 +333,24 @@ const INVOICE_CUSTOMERS = {
 type CustomerKey = keyof typeof INVOICE_CUSTOMERS;
 
 /**
+ * The customers invoiced less often than monthly; every other one is monthly.
+ *
+ * Three, because between them they put every state of a period customer's
+ * control on the page. In May — mid-quarter and mid-half — all three show the
+ * quiet "invoiced in June" label. Step back to March, the end of the first
+ * quarter and the middle of the first half, and the same render holds a
+ * quarter's file ready to download (Turku), a quarter's file refused over a
+ * club that ran without a fee in January and had stopped by March (Lahti), and
+ * a half-year still under way (Oulu) — beside the monthly files, which are
+ * there in every month.
+ */
+const CUSTOMER_CADENCE: Partial<Record<CustomerKey, InvoiceBillingCadence>> = {
+  turku: "quarterly",
+  lahti: "quarterly",
+  oulu: "half_yearly",
+};
+
+/**
  * Which customer a club is billed to when its spec does not say.
  *
  * Only the municipalities whose clubs all share one buyer have an entry:
@@ -396,7 +421,8 @@ interface ClubSpec {
 const SESSION_MINUTES = 90;
 
 /**
- * The working month's clubs: thirty-one of them across twelve municipalities,
+ * The spring term's clubs: thirty-one of them in the working month across
+ * twelve municipalities, and one more that stopped in February,
  * weighted the way production is — most municipalities with one or two clubs, a
  * few with four to six.
  *
@@ -729,6 +755,19 @@ const WORKING_MONTH_CLUBS: readonly ClubSpec[] = [
     slots: [{ weekday: MON, startTime: "15:00" }],
   },
   {
+    id: "preview-club-salpausrinne",
+    name: "Peliklubi Salpausrinne",
+    municipality: "lahti",
+    site: { name: "Salpausrinteen koulu" },
+    // A short winter term with no fee, which ended before March: the club is in
+    // January's and February's ledgers and in no later month's, and it is what
+    // refuses Lahti's first-quarter file in March — the reason naming January,
+    // the first month it ran unpriced, rather than the month on screen.
+    feeCents: null,
+    endDate: "2026-02-27",
+    slots: [{ weekday: THU, startTime: "15:00" }],
+  },
+  {
     id: "preview-club-niinivaaranportti",
     name: "Peliklubi Niinivaaranportti",
     municipality: "joensuu",
@@ -779,31 +818,71 @@ export function resolvePreviewInvoicingMonth(raw: string | null): string {
 }
 
 /**
+ * The months the fixture clubs' spring term reaches — January to May — and
+ * so the only months the scene has anything to show.
+ */
+const TERM_FIRST_MONTH = `${TERM_START.slice(0, 7)}-01`;
+const TERM_LAST_MONTH = `${TERM_END.slice(0, 7)}-01`;
+
+/**
  * One month of `get_admin_municipality_invoicing`, as the route would have
  * fetched it — for the month asked for.
  *
- * **The working month has the ledger in it and every other month is empty**,
- * which is the honest answer rather than a contrivance: the clubs here run one
- * spring term, and an invoicing month outside it genuinely has nothing in it.
- * That is what makes the scene's stepper worth using — a reader steps off May
- * and meets the empty state on the same page, in the same chrome, and steps back.
+ * **The spring term's months have clubs in them and every other month is
+ * empty**, which is the honest answer rather than a contrivance: the clubs here
+ * run one spring term, and an invoicing month outside it genuinely has nothing
+ * in it. That is what makes the scene's stepper worth using — a reader steps
+ * past May and meets the empty state on the same page, in the same chrome, and
+ * steps back. May, the working month, is where every per-month state is; the
+ * earlier months are the term's ordinary weeks, every date that was due having
+ * run, and they exist because a quarter's file in March is built from January
+ * and February as well.
  *
- * Pure and cheap: the rows are weekly arithmetic over thirty-one specs, and the
+ * A club is in a month's document exactly when the RPC would put it there: its
+ * term overlaps the month, or it has a stored row in it.
+ *
+ * Pure and cheap: the rows are weekly arithmetic over a few dozen specs, and the
  * whole point of returning the wire document rather than a view is that the
  * scene's numbers come out of the same builder the live page's do. A function of
- * the month alone, so the test can pin both answers without a browser.
+ * the month alone, so the test can pin every answer without a browser.
  */
 export function municipalityInvoicingMonthFixture(
   month: string,
 ): MunicipalityInvoicingSnapshot {
-  if (month !== WORKING_MONTH) return { month_start: month, clubs: [] };
+  if (month < TERM_FIRST_MONTH || month > TERM_LAST_MONTH) {
+    return { month_start: month, clubs: [] };
+  }
   return {
-    month_start: WORKING_MONTH,
-    clubs: WORKING_MONTH_CLUBS.map(buildClub),
+    month_start: month,
+    clubs: WORKING_MONTH_CLUBS.flatMap((spec) => {
+      const club = buildClub(spec, month);
+      const termReaches =
+        club.start_date !== null &&
+        club.start_date <= monthEndOf(month) &&
+        (club.end_date === null || club.end_date >= month);
+      return termReaches || club.sessions.length > 0 ? [club] : [];
+    }),
   };
 }
 
-function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
+/**
+ * The earlier months of every billing period that ends in `month`, for the
+ * cadences these customers are on — what the live route reads beside the month
+ * itself, answered from the same fixtures.
+ */
+export function municipalityInvoicingPeriodFixtures(
+  month: string,
+): MunicipalityInvoicingSnapshot[] {
+  const cadences = new Set<InvoiceBillingCadence>([
+    "monthly",
+    ...Object.values(CUSTOMER_CADENCE),
+  ]);
+  return earlierPeriodMonths(month, cadences).map(
+    municipalityInvoicingMonthFixture,
+  );
+}
+
+function buildClub(spec: ClubSpec, month: string): MunicipalityInvoicingClub {
   const startDate = spec.startDate ?? TERM_START;
   const endDate = spec.endDate === undefined ? TERM_END : spec.endDate;
   const slots: MunicipalityInvoicingScheduleSlot[] = (spec.slots ?? []).map(
@@ -813,6 +892,9 @@ function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
       duration_minutes: SESSION_MINUTES,
     }),
   );
+  const inMonth = (date: string) =>
+    date >= month && date <= monthEndOf(month);
+  const cancelledDates = (spec.cancelledDates ?? []).filter(inMonth);
 
   const municipality = MUNICIPALITIES[spec.municipality];
 
@@ -843,8 +925,8 @@ function buildClub(spec: ClubSpec): MunicipalityInvoicingClub {
       name_i18n: municipality.sv === null ? null : { sv: municipality.sv },
     },
     invoice_customer: invoiceCustomerOf(spec),
-    sessions: storedRows(spec, { startDate, endDate, slots }),
-    cancelled_sessions: (spec.cancelledDates ?? []).flatMap((date) =>
+    sessions: storedRows(spec, { month, startDate, endDate, slots }),
+    cancelled_sessions: cancelledDates.flatMap((date) =>
       groupIds(spec).map((groupId) => ({
         group_id: groupId,
         session_date: date,
@@ -881,6 +963,7 @@ function invoiceCustomerOf(spec: ClubSpec): InvoiceCustomerRow | null {
     country_code: "FI",
     your_reference: customer.yourReference,
     invoice_text: customer.invoiceText,
+    billing_cadence: CUSTOMER_CADENCE[key] ?? "monthly",
   };
 }
 
@@ -897,6 +980,7 @@ function invoiceCustomerOf(spec: ClubSpec): InvoiceCustomerRow | null {
 function storedRows(
   spec: ClubSpec,
   context: {
+    month: string;
     startDate: string;
     endDate: string | null;
     slots: readonly MunicipalityInvoicingScheduleSlot[];
@@ -911,7 +995,12 @@ function storedRows(
   const dates = new Set(
     projectedDates(context).filter((date) => date <= TODAY && !absent.has(date)),
   );
-  for (const date of spec.extraDates ?? []) dates.add(date);
+  // The hand-added dates are literal days of the working month; a month is
+  // only ever handed its own.
+  const monthEnd = monthEndOf(context.month);
+  for (const date of spec.extraDates ?? []) {
+    if (date >= context.month && date <= monthEnd) dates.add(date);
+  }
 
   return [...dates]
     .sort()
@@ -932,24 +1021,26 @@ function groupIds(spec: ClubSpec): string[] {
 }
 
 /**
- * Every date the club's weekly slots put inside the working month, clipped to
- * its term — the same walk the invoice makes, because the fixture has to agree
+ * Every date the club's weekly slots put inside the month, clipped to its
+ * term — the same walk the invoice makes, because the fixture has to agree
  * with it about what "a date the schedule projects" means.
  *
  * A club whose term does not reach into the month projects nothing, which is
  * what makes the not-yet-started spec carry its row by hand.
  */
 function projectedDates({
+  month,
   startDate,
   endDate,
   slots,
 }: {
+  month: string;
   startDate: string;
   endDate: string | null;
   slots: readonly MunicipalityInvoicingScheduleSlot[];
 }): string[] {
-  const monthEnd = addCalendarDays(monthsAfter(WORKING_MONTH, 1), -1);
-  const from = startDate > WORKING_MONTH ? startDate : WORKING_MONTH;
+  const monthEnd = addCalendarDays(monthsAfter(month, 1), -1);
+  const from = startDate > month ? startDate : month;
   const until = endDate !== null && endDate < monthEnd ? endDate : monthEnd;
   if (from > until) return [];
 

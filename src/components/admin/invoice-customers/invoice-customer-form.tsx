@@ -9,7 +9,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { InvoiceCustomerInput } from "@/services/invoice-customers";
+import {
+  invoiceBillingCadence,
+  type InvoiceCustomerInput,
+} from "@/services/invoice-customers";
+import { BILLING_CADENCE_LABEL } from "./billing-cadence-label";
 import {
   invoiceCustomerSaveFailure,
   validateInvoiceCustomerDraft,
@@ -86,6 +90,7 @@ export function InvoiceCustomerForm({
     postal_code: t("fields.postalCode"),
     city: t("fields.city"),
     country_code: t("fields.country"),
+    billing_cadence: t("fields.billingCadence"),
     your_reference: t("fields.yourReference"),
     invoice_text: t("fields.invoiceText"),
   };
@@ -232,6 +237,41 @@ export function InvoiceCustomerForm({
               </Field>
             </div>
           </div>
+
+          {/* A native select, hand-styled like the club form's customer picker:
+              there is no select primitive in this app yet, and three fixed
+              answers are what a select is for. */}
+          <Field
+            label={fieldLabel.billing_cadence}
+            htmlFor="invoice-customer-billing-cadence"
+            hint={t("hints.billingCadence")}
+          >
+            {({ hintId }) => (
+              <select
+                id="invoice-customer-billing-cadence"
+                value={draft.billing_cadence}
+                onChange={(event) => {
+                  const cadence = invoiceBillingCadence.safeParse(
+                    event.target.value,
+                  );
+                  if (cadence.success) {
+                    setDraft((current) => ({
+                      ...current,
+                      billing_cadence: cadence.data,
+                    }));
+                  }
+                }}
+                aria-describedby={hintId}
+                className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm sm:w-64"
+              >
+                {invoiceBillingCadence.options.map((cadence) => (
+                  <option key={cadence} value={cadence}>
+                    {t(BILLING_CADENCE_LABEL[cadence])}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
 
           <Field
             label={fieldLabel.your_reference}

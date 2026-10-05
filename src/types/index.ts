@@ -285,6 +285,12 @@ export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 // also where the trimming and country-code rules are stated.
 export type InvoiceCustomer =
   Database["public"]["Tables"]["invoice_customers"]["Row"];
+/**
+ * How often an invoice customer is invoiced: every calendar month, quarter or
+ * half-year. The period arithmetic lives in `@/lib/finvoice`.
+ */
+export type InvoiceBillingCadence =
+  Database["public"]["Enums"]["invoice_billing_cadence"];
 
 // team_profiles / team_profile_translations — an admin's or a Gedu's team
 // profile, one row per person and one per (person, site locale). Row aliases

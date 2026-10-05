@@ -8,6 +8,7 @@ import {
   MUNICIPALITY_INVOICING_NOW,
   MUNICIPALITY_INVOICING_WORKING_MONTH,
   municipalityInvoicingMonthFixture,
+  municipalityInvoicingPeriodFixtures,
   resolvePreviewInvoicingMonth,
   type MunicipalityInvoicingPreviewScenario,
 } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
@@ -32,15 +33,16 @@ import type { MonthHref } from "@/components/admin/municipality-invoicing/munici
  * because "today" is a property of the sitting rather than of the month on
  * screen.
  *
- * **The month stepper stays inside the preview, and it is how the empty month is
- * reached.** The stepper is one of the page's own controls, so a stepper that
+ * **The month stepper stays inside the preview, and it is how the empty month
+ * and a quarter's file are reached.** The stepper is one of the page's own controls, so a stepper that
  * navigated out to the live admin route would be the one control on the scene a
  * reviewer could not use twice. Instead the scene owns the `?month=` parameter
- * and answers it from the fixtures: the working month has the ledger, and every
- * other month is genuinely empty, because these clubs run one spring term. That
- * is why an empty month is not a scenario here — it is a step away and a step
- * back, on the same page, in the same chrome, which is more than a second link
- * could have shown.
+ * and answers it from the fixtures: the spring term's months have the ledger,
+ * and every other month is genuinely empty, because these clubs run one spring
+ * term. March is the end of the first quarter, which is where the quarterly
+ * customers' files are ready or refused. That is why neither is a scenario
+ * here — each is a step away and a step back, on the same page, in the same
+ * chrome, which is more than a second link could have shown.
  *
  * **Nothing here reaches the network, and it is the query client that guarantees
  * it.** The shell's read is a React Query hook seeded with the document it is
@@ -85,6 +87,13 @@ export function MunicipalityInvoicingScene({
     () => municipalityInvoicingMonthFixture(monthStart),
     [monthStart],
   );
+  // The earlier months of the periods ending in this one, answered from the
+  // same fixtures the route would read them from live — March reads January and
+  // February for its quarterly customers.
+  const periodSnapshots = useMemo(
+    () => municipalityInvoicingPeriodFixtures(monthStart),
+    [monthStart],
+  );
 
   // One client for the sitting, built once. Its defaults are the whole of the
   // no-network guarantee, so they are stated here rather than left to the app's.
@@ -109,6 +118,7 @@ export function MunicipalityInvoicingScene({
       <MunicipalityInvoicingPage
         monthStart={monthStart}
         initialSnapshot={snapshot}
+        initialPeriodSnapshots={periodSnapshots}
         now={MUNICIPALITY_INVOICING_NOW}
         monthHref={(month) => previewMonthHref(scenario, month)}
       />

@@ -32,6 +32,7 @@ import {
   MUNICIPALITY_INVOICING_SCENARIOS,
   MUNICIPALITY_INVOICING_WORKING_MONTH,
   municipalityInvoicingMonthFixture,
+  municipalityInvoicingPeriodFixtures,
   resolvePreviewInvoicingMonth,
 } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
 import { buildMunicipalityInvoicing } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
@@ -48,7 +49,7 @@ import {
   buildGeduInvoicing,
   type GeduInvoicingView,
 } from "@/components/gedu-invoicing/build-gedu-invoicing";
-import { finvoiceReadiness } from "@/lib/finvoice";
+import { customerFilesForMonth } from "@/lib/finvoice";
 import {
   INVOICE_CUSTOMER_EDIT_FIXTURE,
   INVOICE_CUSTOMER_FIXTURES,
@@ -2024,19 +2025,71 @@ describe("the municipality invoicing scene covers every ledger state", () => {
     ).toHaveLength(1);
   });
 
-  it("shows a downloadable file, and both reasons one can be refused", () => {
-    // The scene is where the export is reviewed, so every state its controls
-    // can be in has to be on the one working month: a file that can be taken,
-    // a file blocked by a club with no fee, and a file blocked by a customer
-    // whose clubs did not run. The third is the one a month of ordinary clubs
-    // would never produce by itself, which is why a customer here buys exactly
-    // one club and that club recorded nothing.
-    const readiness = invoice.customers.map((one) => finvoiceReadiness(one));
+  it("shows a downloadable file, both reasons one can be refused, and periods under way", () => {
+    // The scene is where the export is reviewed, so every state a monthly
+    // customer's control can be in has to be on the one working month: a file
+    // that can be taken, a file blocked by a club with no fee, and a file
+    // blocked by a customer whose clubs did not run. The third is the one a
+    // month of ordinary clubs would never produce by itself, which is why a
+    // customer here buys exactly one club and that club recorded nothing. May
+    // ends no quarter and no half-year, so every period customer is labelled
+    // rather than offered a file.
+    const states = [
+      ...customerFilesForMonth({
+        monthStart: MUNICIPALITY_INVOICING_WORKING_MONTH,
+        views: [invoice],
+      }).byCustomerId.values(),
+    ].map((file) => file.state);
 
-    expect(readiness.filter((one) => one.ok).length).toBeGreaterThanOrEqual(1);
+    expect(states.filter((one) => one.ok).length).toBeGreaterThanOrEqual(1);
     expect(
-      readiness.flatMap((one) => (one.ok ? [] : [one.reason])).sort(),
-    ).toEqual(["club_without_fee", "nothing_to_invoice"]);
+      states.flatMap((one) => (one.ok ? [] : [one.reason])).sort(),
+    ).toEqual([
+      "club_without_fee",
+      "not_period_end",
+      "not_period_end",
+      "not_period_end",
+      "nothing_to_invoice",
+    ]);
+  });
+
+  it("holds a quarter's file, a quarter refused over January, and a half-year under way in March", () => {
+    // March ends the first quarter and sits in the middle of the first half,
+    // so one step of the stepper shows every state a period customer's control
+    // has beside the monthly files. The refusal names January: the club that
+    // ran without a fee had stopped before March, so March's own ledger does
+    // not show it.
+    const march = "2026-03-01";
+    const views = [
+      municipalityInvoicingMonthFixture(march),
+      ...municipalityInvoicingPeriodFixtures(march),
+    ].map((snapshot) =>
+      buildMunicipalityInvoicing({
+        snapshot,
+        locale: "en",
+        now: MUNICIPALITY_INVOICING_NOW,
+      }),
+    );
+    const files = [
+      ...customerFilesForMonth({ monthStart: march, views }).byCustomerId.values(),
+    ];
+    const byCadence = (cadence: string) =>
+      files.filter((file) => file.customer.billing_cadence === cadence);
+
+    expect(
+      byCadence("quarterly").map((file) =>
+        file.state.ok ? "ready" : file.state.reason,
+      ).sort(),
+    ).toEqual(["club_without_fee", "ready"]);
+    expect(
+      byCadence("quarterly").find((file) => !file.state.ok)?.state,
+    ).toMatchObject({ monthStart: "2026-01-01" });
+    expect(byCadence("half_yearly").map((file) => file.state)).toEqual([
+      expect.objectContaining({ reason: "not_period_end" }),
+    ]);
+    expect(
+      byCadence("monthly").some((file) => file.state.ok),
+    ).toBe(true);
   });
 
   it("shows a municipality line carrying two customers' files", () => {

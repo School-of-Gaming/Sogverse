@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
-  buildFinvoiceForMonth,
+  buildFinvoiceForPeriod,
+  buildFinvoiceInvoice,
+  customerFilesForMonth,
+  customerMonths,
   finvoiceFileName,
+  finvoiceFileState,
   finvoiceHref,
-  finvoiceReadiness,
   serializeFinvoice,
   vatOf,
   type FinvoiceInvoice,
@@ -66,6 +69,7 @@ function customer(
     country_code: "FI",
     your_reference: null,
     invoice_text: null,
+    billing_cadence: "monthly",
     ...overrides,
   };
 }
@@ -92,6 +96,8 @@ interface ClubSpec {
   dates?: readonly string[];
   /** Dates an admin cancelled for the club's one group. */
   cancelled?: readonly string[];
+  /** The term's last day — the end of May unless a case stops it earlier. */
+  endDate?: string;
 }
 
 function club(spec: ClubSpec): MunicipalityInvoicingClub {
@@ -99,7 +105,7 @@ function club(spec: ClubSpec): MunicipalityInvoicingClub {
     id: spec.id,
     timezone: HELSINKI,
     start_date: "2026-01-12",
-    end_date: "2026-05-29",
+    end_date: spec.endDate ?? "2026-05-29",
     municipality_fee_cents: spec.feeCents === undefined ? 6_500 : spec.feeCents,
     product_translations: [{ locale: "fi", name: spec.name }],
     schedule_slots: spec.slots ?? [
@@ -137,8 +143,9 @@ function buildFor(
   clubs: MunicipalityInvoicingClub[],
   customerId: string = ESPOO_CUSTOMER.id,
 ) {
-  return buildFinvoiceForMonth({
-    snapshot: snapshotOf(clubs),
+  return buildFinvoiceForPeriod({
+    monthStart: MONTH,
+    snapshots: [snapshotOf(clubs)],
     customerId,
     now: NOW,
   });
@@ -545,11 +552,7 @@ describe("what refuses a file", () => {
   it("refuses a customer no club in the month is billed to", () => {
     const result = buildFor([club({ id: "a", name: "Klubi A" })], "cust-nobody");
 
-    expect(result).toEqual({
-      ok: false,
-      reason: "unknown_customer",
-      clubsWithoutFee: 0,
-    });
+    expect(result).toEqual({ ok: false, reason: "unknown_customer" });
   });
 
   it("refuses the whole file when a club that RAN has no fee", () => {
@@ -564,10 +567,11 @@ describe("what refuses a file", () => {
 
     // The count is of the clubs that ran without a price, because that is what
     // the ledger's line and the route's refusal both say out loud.
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
       reason: "club_without_fee",
       clubsWithoutFee: 2,
+      monthStart: MONTH,
     });
   });
 
@@ -580,7 +584,7 @@ describe("what refuses a file", () => {
       club({ id: "b", name: "Klubi B", feeCents: null, dates: [] }),
     ]);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
       reason: "club_without_fee",
       clubsWithoutFee: 1,
@@ -624,11 +628,7 @@ describe("what refuses a file", () => {
       }),
     ]);
 
-    expect(result).toEqual({
-      ok: false,
-      reason: "nothing_to_invoice",
-      clubsWithoutFee: 0,
-    });
+    expect(result).toMatchObject({ ok: false, reason: "nothing_to_invoice" });
   });
 
   it("answers the same question the page's control asks", () => {
@@ -646,9 +646,16 @@ describe("what refuses a file", () => {
     });
 
     expect(view.customers).toHaveLength(1);
-    const readiness = finvoiceReadiness(view.customers[0]);
-    expect(readiness.ok).toBe(false);
-    expect(buildFor(clubs).ok).toBe(false);
+    const state = finvoiceFileState({
+      monthStart: MONTH,
+      cadence: "monthly",
+      months: customerMonths([view], ESPOO_CUSTOMER.id),
+    });
+    expect(state).toMatchObject({ ok: false, reason: "club_without_fee" });
+    expect(buildFor(clubs)).toMatchObject({
+      ok: false,
+      reason: "club_without_fee",
+    });
   });
 
   it("does not count a club with no buyer as a customer of its own", () => {
@@ -862,5 +869,337 @@ describe("the download's path and filename", () => {
     expect(finvoiceFileName(MONTH, 'F02"04; x')).toBe(
       "invoice_202605_F02_04__x.xml",
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A quarterly or half-yearly customer's period
+// ---------------------------------------------------------------------------
+
+/**
+ * A customer invoiced once a quarter or once a half-year: one file per period,
+ * produced in the period's last month and covering every month of it.
+ *
+ * Its clubs meet on Mondays from 12 January. The first quarter's Mondays are
+ * three in January (12, 19, 26), four in February (2–23) and five in March
+ * (2–30) — twelve in all, every one passed by the pinned clock and none
+ * recorded or cancelled, so every one bills.
+ */
+describe("a period customer's file", () => {
+  const QUARTERLY = customer({
+    id: "cust-quarterly",
+    fennoa_customer_no: "F0221",
+    invoice_name: "Turun kaupunki",
+    billing_cadence: "quarterly",
+  });
+  const HALF_YEARLY = customer({
+    id: "cust-half",
+    fennoa_customer_no: "F0224",
+    invoice_name: "Oulun kaupunki",
+    billing_cadence: "half_yearly",
+  });
+
+  /** One month's document holding the clubs given. */
+  function monthOf(
+    month: string,
+    clubs: MunicipalityInvoicingClub[],
+  ): MunicipalityInvoicingSnapshot {
+    return { month_start: month, clubs };
+  }
+
+  /** A Monday club of `buyer`'s that recorded nothing — it bills every date it was due. */
+  function mondayClub(
+    buyer: InvoiceCustomerRow,
+    overrides: Partial<ClubSpec> = {},
+  ): MunicipalityInvoicingClub {
+    return club({
+      id: `${buyer.id}-club`,
+      name: "Peliklubi Runosmäenranta",
+      invoiceCustomer: buyer,
+      dates: [],
+      ...overrides,
+    });
+  }
+
+  const Q1 = ["2026-01-01", "2026-02-01", "2026-03-01"];
+
+  function q1Snapshots(
+    extra: (month: string) => MunicipalityInvoicingClub[] = () => [],
+  ): MunicipalityInvoicingSnapshot[] {
+    return Q1.map((month) =>
+      monthOf(month, [mondayClub(QUARTERLY), ...extra(month)]),
+    );
+  }
+
+  function quarterFor(
+    snapshots: MunicipalityInvoicingSnapshot[],
+    monthStart = "2026-03-01",
+    now = NOW,
+  ) {
+    return buildFinvoiceForPeriod({
+      monthStart,
+      snapshots,
+      customerId: QUARTERLY.id,
+      now,
+    });
+  }
+
+  function quarterInvoice(
+    snapshots: MunicipalityInvoicingSnapshot[] = q1Snapshots(),
+  ): FinvoiceInvoice {
+    const result = quarterFor(snapshots);
+    if (!result.ok) {
+      throw new Error(`expected an invoice, got a refusal: ${result.reason}`);
+    }
+    return result.invoice;
+  }
+
+  it("bills the whole quarter, a row per club per month", () => {
+    const invoice = quarterInvoice();
+
+    expect(
+      invoice.rows.map((row) => [row.monthStart, row.monthEnd, row.sessions]),
+    ).toEqual([
+      ["2026-01-01", "2026-01-31", 3],
+      ["2026-02-01", "2026-02-28", 4],
+      ["2026-03-01", "2026-03-31", 5],
+    ]);
+    expect(invoice.rows.map((row) => row.rowNumber)).toEqual([1, 2, 3]);
+    // Three rows of one club: the month is what tells them apart to a clerk.
+    expect(invoice.rows.map((row) => row.text)).toEqual([
+      "Espoo - Purolan koulu - Peliklubi Runosmäenranta ma 14:15–15:30 (1/26)",
+      "Espoo - Purolan koulu - Peliklubi Runosmäenranta ma 14:15–15:30 (2/26)",
+      "Espoo - Purolan koulu - Peliklubi Runosmäenranta ma 14:15–15:30 (3/26)",
+    ]);
+    // Twelve Mondays at €65.00, and the totals are the sums of the rows.
+    expect(invoice.netCents).toBe(12 * 6_500);
+    expect(invoice.vatCents).toBe(
+      invoice.rows.reduce((sum, row) => sum + row.vatCents, 0),
+    );
+    expect(invoice.grossCents).toBe(invoice.netCents + invoice.vatCents);
+  });
+
+  it("numbers, dates and names the quarter from its last month", () => {
+    const invoice = quarterInvoice();
+
+    expect(invoice.monthStart).toBe("2026-03-01");
+    expect(invoice.invoiceNumber).toBe("2026030221");
+    expect(invoice.invoiceDate).toBe("20260401");
+    expect(invoice.dueDate).toBe("20260415");
+    expect(invoice.freeText).toBe(
+      "Laskutuskausi 1–3/26\nLaskurivillä kerhokerrat laskutuskaudella",
+    );
+    expect(
+      finvoiceFileName(invoice.monthStart, invoice.customer.fennoa_customer_no),
+    ).toBe("invoice_202603_F0221.xml");
+  });
+
+  it("keeps the quarter's number when the rest of the period changes", () => {
+    // Another buyer appearing in February moves every position in that month's
+    // list; the number is the customer's own and does not move with it.
+    const before = quarterInvoice();
+    const after = quarterInvoice(
+      q1Snapshots((month) =>
+        month === "2026-02-01"
+          ? [
+              club({
+                id: "newcomer",
+                name: "Klubi Uusi",
+                dates: [],
+                invoiceCustomer: customer({
+                  id: "cust-aaa",
+                  fennoa_customer_no: "F0001",
+                }),
+              }),
+            ]
+          : [],
+      ),
+    );
+
+    expect(after.invoiceNumber).toBe(before.invoiceNumber);
+  });
+
+  it("refuses a month in the middle of the quarter", () => {
+    // February ends no quarter: the quarter's file is March's, and nowhere else.
+    const result = quarterFor(q1Snapshots().slice(0, 2), "2026-02-01");
+
+    expect(result).toMatchObject({
+      ok: false,
+      reason: "not_period_end",
+      period: { lastMonth: "2026-03-01" },
+    });
+  });
+
+  it("refuses the quarter over a club that ran with no fee in January, and names January", () => {
+    // The club's term ended in January, so March's ledger does not show it —
+    // which is exactly why the refusal names the month the problem is in.
+    const result = quarterFor(
+      q1Snapshots((month) =>
+        month === "2026-01-01"
+          ? [
+              mondayClub(QUARTERLY, {
+                id: "winter-club",
+                name: "Peliklubi Salpausrinne",
+                feeCents: null,
+                endDate: "2026-01-31",
+              }),
+            ]
+          : [],
+      ),
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      reason: "club_without_fee",
+      monthStart: "2026-01-01",
+      clubsWithoutFee: 1,
+    });
+  });
+
+  it("answers in the page exactly what the route answers", () => {
+    // One predicate, two readers, over the whole period: the page builds the
+    // same months and asks the same question of them.
+    const snapshots = q1Snapshots();
+    const views = snapshots.map((snapshot) =>
+      buildMunicipalityInvoicing({ snapshot, locale: "en", now: NOW }),
+    );
+    const files = customerFilesForMonth({ monthStart: "2026-03-01", views });
+    const state = files.byCustomerId.get(QUARTERLY.id)?.state;
+
+    expect(state).toMatchObject({ ok: true, billedCount: 12 });
+    expect(state?.ok && state.netCents).toBe(quarterInvoice().netCents);
+  });
+
+  it("labels a month in the middle of the period rather than offering a file", () => {
+    const views = q1Snapshots()
+      .slice(0, 2)
+      .map((snapshot) =>
+        buildMunicipalityInvoicing({ snapshot, locale: "en", now: NOW }),
+      );
+    const files = customerFilesForMonth({ monthStart: "2026-02-01", views });
+
+    expect(files.byCustomerId.get(QUARTERLY.id)?.state).toMatchObject({
+      ok: false,
+      reason: "not_period_end",
+      period: { lastMonth: "2026-03-01" },
+    });
+  });
+
+  it("waits for the period's earlier months rather than deciding over part of it", () => {
+    const march = buildMunicipalityInvoicing({
+      snapshot: q1Snapshots()[2],
+      locale: "en",
+      now: NOW,
+    });
+    const files = customerFilesForMonth({
+      monthStart: "2026-03-01",
+      views: [march],
+    });
+
+    expect(files.byCustomerId.get(QUARTERLY.id)?.state).toMatchObject({
+      ok: false,
+      reason: "period_not_read",
+    });
+    // And the builder refuses to write a file over part of a period at all.
+    expect(() =>
+      buildFinvoiceInvoice({
+        monthStart: "2026-03-01",
+        views: [march],
+        customerId: QUARTERLY.id,
+      }),
+    ).toThrow(/not read whole/);
+  });
+
+  it("produces the quarter in a month the customer has no club in", () => {
+    // The spring term ends in May, and the second quarter ends in June: the
+    // buyer owes April and May, and June's ledger has none of its clubs.
+    const july = new Date("2026-07-02T10:00:00+03:00");
+    const snapshots = [
+      monthOf("2026-04-01", [mondayClub(QUARTERLY)]),
+      monthOf("2026-05-01", [mondayClub(QUARTERLY)]),
+      monthOf("2026-06-01", []),
+    ];
+    const views = snapshots.map((snapshot) =>
+      buildMunicipalityInvoicing({ snapshot, locale: "en", now: july }),
+    );
+
+    const files = customerFilesForMonth({ monthStart: "2026-06-01", views });
+    expect(files.byCustomerId.has(QUARTERLY.id)).toBe(false);
+    expect(files.withoutClubThisMonth.map((file) => file.customer.id)).toEqual(
+      [QUARTERLY.id],
+    );
+    expect(files.withoutClubThisMonth[0].state).toMatchObject({ ok: true });
+
+    const result = quarterFor(snapshots, "2026-06-01", july);
+    if (!result.ok) throw new Error(result.reason);
+    // April's four Mondays and May's four; June bills nothing.
+    expect(result.invoice.rows.map((row) => row.sessions)).toEqual([4, 4]);
+    expect(result.invoice.invoiceNumber).toBe("2026060221");
+  });
+
+  it("bills a half-year over six months, and calls March the middle of it", () => {
+    const july = new Date("2026-07-02T10:00:00+03:00");
+    const months = [
+      "2026-01-01",
+      "2026-02-01",
+      "2026-03-01",
+      "2026-04-01",
+      "2026-05-01",
+      "2026-06-01",
+    ];
+    const snapshots = months.map((month) =>
+      monthOf(month, month === "2026-06-01" ? [] : [mondayClub(HALF_YEARLY)]),
+    );
+
+    const march = buildFinvoiceForPeriod({
+      monthStart: "2026-03-01",
+      snapshots: snapshots.slice(0, 3),
+      customerId: HALF_YEARLY.id,
+      now: july,
+    });
+    expect(march).toMatchObject({
+      ok: false,
+      reason: "not_period_end",
+      period: { lastMonth: "2026-06-01" },
+    });
+
+    const june = buildFinvoiceForPeriod({
+      monthStart: "2026-06-01",
+      snapshots,
+      customerId: HALF_YEARLY.id,
+      now: july,
+    });
+    if (!june.ok) throw new Error(june.reason);
+    // 3 + 4 + 5 + 4 + 4 Mondays, January to May.
+    expect(june.invoice.rows.map((row) => row.sessions)).toEqual([
+      3, 4, 5, 4, 4,
+    ]);
+    expect(june.invoice.freeText).toContain("Laskutuskausi 1–6/26");
+  });
+
+  it("states the period on the invoice and each row's month, where it covers several", () => {
+    const xml = serializeFinvoice(quarterInvoice(), GENERATED_AT);
+
+    expect(xml).toContain(
+      '<OriginCode>Original</OriginCode>\n    <InvoicingPeriodStartDate Format="CCYYMMDD">20260101</InvoicingPeriodStartDate><InvoicingPeriodEndDate Format="CCYYMMDD">20260331</InvoicingPeriodEndDate>\n    <InvoiceNumber>2026030221</InvoiceNumber>',
+    );
+    expect(xml.match(/<StartDate Format="CCYYMMDD">\d+<\/StartDate>/g)).toEqual([
+      '<StartDate Format="CCYYMMDD">20260101</StartDate>',
+      '<StartDate Format="CCYYMMDD">20260201</StartDate>',
+      '<StartDate Format="CCYYMMDD">20260301</StartDate>',
+    ]);
+    expect(xml).toContain(
+      '<DeliveredQuantity QuantityUnitCode="krt">3.00</DeliveredQuantity>\n    <StartDate Format="CCYYMMDD">20260101</StartDate><EndDate Format="CCYYMMDD">20260131</EndDate>\n    <UnitPriceAmount',
+    );
+  });
+
+  it("leaves a monthly file without the period elements it was verified without", () => {
+    const xml = serializeFinvoice(
+      invoiceFor([club({ id: "a", name: "Klubi A" })]),
+      GENERATED_AT,
+    );
+
+    expect(xml).not.toContain("InvoicingPeriod");
+    expect(xml).not.toContain("<StartDate");
   });
 });

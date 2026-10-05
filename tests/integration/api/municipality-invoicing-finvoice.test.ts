@@ -19,6 +19,15 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockRpc = vi.fn();
+/**
+ * The customer's own row, read first because its cadence decides which months
+ * the file covers — through the service's one-row read, which ends in
+ * `maybeSingle`.
+ */
+const mockMaybeSingle = vi.fn();
+const mockFrom = vi.fn(() => ({
+  select: () => ({ eq: () => ({ maybeSingle: mockMaybeSingle }) }),
+}));
 
 import { GET } from "@/app/api/admin/municipality-invoicing/finvoice/route";
 
@@ -35,7 +44,11 @@ const CUSTOMER = {
   country_code: "FI",
   your_reference: "TIL-2026-0418",
   invoice_text: null,
+  billing_cadence: "monthly",
 };
+
+/** The same buyer, invoiced once a quarter. */
+const QUARTERLY_CUSTOMER = { ...CUSTOMER, billing_cadence: "quarterly" };
 
 /**
  * One club of one municipality, in the wire document's own vocabulary.
@@ -87,7 +100,7 @@ function mockAdmin() {
   mockRequireRole.mockResolvedValue({
     user: { id: "admin-1" },
     profile: { role: "admin" },
-    supabase: { rpc: mockRpc },
+    supabase: { rpc: mockRpc, from: mockFrom },
   });
 }
 
@@ -138,6 +151,7 @@ describe("GET /api/admin/municipality-invoicing/finvoice", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRpc.mockResolvedValue({ data: snapshot(), error: null });
+    mockMaybeSingle.mockResolvedValue({ data: CUSTOMER, error: null });
   });
 
   // -- Auth --
@@ -328,8 +342,25 @@ describe("GET /api/admin/municipality-invoicing/finvoice", () => {
     });
   });
 
+  it("returns 409 when there is no such customer", async () => {
+    mockAdmin();
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+
+    const response = await GET(
+      request(`?month=2020-05&customer=${OTHER_CUSTOMER_ID}`),
+    );
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).code).toBe("unknown_customer");
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
   it("returns 409 when nothing in the month is invoiced to that customer", async () => {
     mockAdmin();
+    mockMaybeSingle.mockResolvedValue({
+      data: { ...CUSTOMER, id: OTHER_CUSTOMER_ID },
+      error: null,
+    });
 
     const response = await GET(
       request(`?month=2020-05&customer=${OTHER_CUSTOMER_ID}`),
@@ -385,5 +416,77 @@ describe("GET /api/admin/municipality-invoicing/finvoice", () => {
     );
 
     expect(response.status).toBe(403);
+  });
+
+  // -- A quarterly customer --
+
+  it("returns 409 for a quarterly customer in a month that ends no quarter", async () => {
+    // May is the middle of the second quarter; its file is June's. Refused
+    // before any month is read, by the same predicate the page's label asks.
+    mockAdmin();
+    mockMaybeSingle.mockResolvedValue({ data: QUARTERLY_CUSTOMER, error: null });
+
+    const response = await GET(
+      request(`?month=2020-05&customer=${CUSTOMER_ID}`),
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error: expect.stringContaining("June 2020"),
+      code: "not_period_end",
+    });
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("answers a quarter's file in its last month, read month by month", async () => {
+    // The club's term ends in May, so June's document has none of its clubs —
+    // and the quarter is still owed, and still June's to produce.
+    mockAdmin();
+    mockMaybeSingle.mockResolvedValue({ data: QUARTERLY_CUSTOMER, error: null });
+    mockRpc.mockImplementation(
+      (_name: string, args: { p_month_start: string }) =>
+        Promise.resolve({
+          data:
+            args.p_month_start === "2020-06-01"
+              ? { month_start: "2020-06-01", clubs: [] }
+              : {
+                  month_start: args.p_month_start,
+                  clubs: [
+                    club({
+                      invoice_customer: QUARTERLY_CUSTOMER,
+                      sessions: [],
+                    }),
+                  ],
+                },
+          error: null,
+        }),
+    );
+
+    const response = await GET(
+      request(`?month=2020-06&customer=${CUSTOMER_ID}`),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockRpc.mock.calls.map(([, args]) => args.p_month_start)).toEqual([
+      "2020-04-01",
+      "2020-05-01",
+      "2020-06-01",
+    ]);
+    // Named and numbered from the quarter's last month, as a monthly file is
+    // from its month.
+    expect(response.headers.get("Content-Disposition")).toBe(
+      'attachment; filename="invoice_202006_F0204.xml"',
+    );
+    const xml = await response.text();
+    expect(xmlElementStack(xml)).toEqual({ ok: true, detail: "" });
+    expect(xml).toContain("<InvoiceNumber>2020060204</InvoiceNumber>");
+    expect(xml).toContain(
+      '<InvoicingPeriodStartDate Format="CCYYMMDD">20200401</InvoicingPeriodStartDate><InvoicingPeriodEndDate Format="CCYYMMDD">20200630</InvoicingPeriodEndDate>',
+    );
+    // April's four Mondays and May's four, a row each.
+    expect(xml.match(/<DeliveredQuantity[^>]*>[\d.]+<\/DeliveredQuantity>/g)).toEqual([
+      '<DeliveredQuantity QuantityUnitCode="krt">4.00</DeliveredQuantity>',
+      '<DeliveredQuantity QuantityUnitCode="krt">4.00</DeliveredQuantity>',
+    ]);
   });
 });

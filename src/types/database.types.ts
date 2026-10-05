@@ -1291,6 +1291,7 @@ export type Database = {
       }
       invoice_customers: {
         Row: {
+          billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
           city: string
           country_code: string
           created_at: string
@@ -1304,6 +1305,7 @@ export type Database = {
           your_reference: string | null
         }
         Insert: {
+          billing_cadence?: Database["public"]["Enums"]["invoice_billing_cadence"]
           city: string
           country_code?: string
           created_at?: string
@@ -1317,6 +1319,7 @@ export type Database = {
           your_reference?: string | null
         }
         Update: {
+          billing_cadence?: Database["public"]["Enums"]["invoice_billing_cadence"]
           city?: string
           country_code?: string
           created_at?: string
@@ -3472,6 +3475,7 @@ export type Database = {
       }
       create_invoice_customer: {
         Args: {
+          p_billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
           p_city: string
           p_country_code?: string
           p_fennoa_customer_no: string
@@ -4201,6 +4205,7 @@ export type Database = {
       unpublish_library_article: { Args: { p_id: string }; Returns: string }
       update_invoice_customer: {
         Args: {
+          p_billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
           p_city: string
           p_country_code?: string
           p_fennoa_customer_no: string
@@ -4274,6 +4279,7 @@ export type Database = {
       gamer_sign_in: "parent" | "username" | "email"
       gedu_assignment_role: "primary" | "assistant"
       gender_type: "boy" | "girl" | "non_binary"
+      invoice_billing_cadence: "monthly" | "quarterly" | "half_yearly"
       library_article_category:
         | "online_safety"
         | "screen_time"
@@ -4443,6 +4449,7 @@ export const Constants = {
       gamer_sign_in: ["parent", "username", "email"],
       gedu_assignment_role: ["primary", "assistant"],
       gender_type: ["boy", "girl", "non_binary"],
+      invoice_billing_cadence: ["monthly", "quarterly", "half_yearly"],
       library_article_category: [
         "online_safety",
         "screen_time",

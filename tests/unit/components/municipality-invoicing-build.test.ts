@@ -86,6 +86,7 @@ function customer(
     country_code: "FI",
     your_reference: null,
     invoice_text: null,
+    billing_cadence: "monthly",
     ...overrides,
   };
 }

@@ -51,7 +51,9 @@ export function isInvoiceCustomerScenario(
  * Three of the rows are the reason the schema links a customer to a *club*
  * rather than to a municipality: Tampere is two customers, because two
  * departments buy under two agreements, and the association buys clubs that run
- * in a municipality it is not.
+ * in a municipality it is not. Turku is invoiced quarterly and Oulu
+ * half-yearly — the same two the ledger's fixtures put on those cadences — so
+ * the list's cadence column shows all three words.
  */
 export const INVOICE_CUSTOMER_FIXTURES: readonly InvoiceCustomerRow[] = [
   {
@@ -63,6 +65,7 @@ export const INVOICE_CUSTOMER_FIXTURES: readonly InvoiceCustomerRow[] = [
     city: "Espoo",
     country_code: "FI",
     your_reference: "TIL-2026-0418",
+    billing_cadence: "monthly",
     invoice_text: null,
   },
   {
@@ -74,6 +77,7 @@ export const INVOICE_CUSTOMER_FIXTURES: readonly InvoiceCustomerRow[] = [
     city: "Vantaa",
     country_code: "FI",
     your_reference: null,
+    billing_cadence: "monthly",
     invoice_text: null,
   },
   {
@@ -85,6 +89,7 @@ export const INVOICE_CUSTOMER_FIXTURES: readonly InvoiceCustomerRow[] = [
     city: "Helsinki",
     country_code: "FI",
     your_reference: "PO 4471182",
+    billing_cadence: "monthly",
     invoice_text: "Laskutusviite merkittävä jokaiselle riville.",
   },
   {
@@ -96,6 +101,7 @@ export const INVOICE_CUSTOMER_FIXTURES: readonly InvoiceCustomerRow[] = [
     city: "Oulu",
     country_code: "FI",
     your_reference: null,
+    billing_cadence: "half_yearly",
     invoice_text: null,
   },
   {
@@ -107,6 +113,7 @@ export const INVOICE_CUSTOMER_FIXTURES: readonly InvoiceCustomerRow[] = [
     city: "Tampere",
     country_code: "FI",
     your_reference: "KASVA-2026-310",
+    billing_cadence: "monthly",
     invoice_text: null,
   },
   {
@@ -118,6 +125,7 @@ export const INVOICE_CUSTOMER_FIXTURES: readonly InvoiceCustomerRow[] = [
     city: "Tampere",
     country_code: "FI",
     your_reference: "KIRJ-2026-77",
+    billing_cadence: "monthly",
     invoice_text: null,
   },
   {
@@ -129,6 +137,7 @@ export const INVOICE_CUSTOMER_FIXTURES: readonly InvoiceCustomerRow[] = [
     city: "Turku",
     country_code: "FI",
     your_reference: null,
+    billing_cadence: "quarterly",
     invoice_text: null,
   },
 ];

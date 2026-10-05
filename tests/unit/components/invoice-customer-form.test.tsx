@@ -53,6 +53,7 @@ function untidyDraft(): InvoiceCustomerDraft {
     postal_code: " 33100 ",
     city: " Testilä ",
     country_code: "fi",
+    billing_cadence: "monthly",
     your_reference: "   ",
     invoice_text: "",
   };
@@ -140,6 +141,7 @@ describe("the invoice customer form", () => {
       city: "Testilä",
       // Upper-cased rather than refused: an admin typing `fi` meant Finland.
       country_code: "FI",
+      billing_cadence: "monthly",
       // Both optional boxes fold to the one state the column has for "absent" —
       // a reference of three spaces and an untouched box are not two answers.
       your_reference: null,
@@ -248,5 +250,38 @@ describe("the invoice customer form", () => {
         expect.objectContaining({ your_reference: "PO 4471182" }),
       );
     });
+  });
+
+  it("opens a new customer on monthly, and hands on the cadence chosen", async () => {
+    // Monthly is the column's own default and what most customers are; the
+    // two others are what the select exists for.
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const { submit } = renderForm(untidyDraft(), onSubmit);
+    const select = screen.getByLabelText<HTMLSelectElement>(
+      /fields\.billingCadence/,
+    );
+    expect(select.value).toBe("monthly");
+    expect([...select.options].map((option) => option.value)).toEqual([
+      "monthly",
+      "quarterly",
+      "half_yearly",
+    ]);
+
+    fireEvent.change(select, { target: { value: "half_yearly" } });
+    submit();
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ billing_cadence: "half_yearly" }),
+      );
+    });
+  });
+
+  it("seeds the cadence from a stored customer", () => {
+    renderForm({ ...untidyDraft(), billing_cadence: "quarterly" }, vi.fn());
+
+    expect(
+      screen.getByLabelText<HTMLSelectElement>(/fields\.billingCadence/).value,
+    ).toBe("quarterly");
   });
 });
