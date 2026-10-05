@@ -652,6 +652,11 @@
       "notGranted": "Non accordée",
       "error": "Impossible de mettre à jour la qualification. Veuillez réessayer."
     },
+    "geduLanguages": {
+      "title": "Langues",
+      "note": "Les remplacements ne lui sont proposés que pour les séances dans une langue cochée ici. Si aucune n’est cochée, aucun remplacement ne lui est proposé.",
+      "error": "Impossible d’enregistrer les langues. Veuillez réessayer."
+    },
     "missingRequirements": {
       "qualification": "Ce Gedu n’a pas la qualification « {qualification} » qu’exige ce produit.",
       "language": "Ce produit se déroule en {language}, une langue que ce Gedu n’a pas indiquée parmi celles qu’il parle.",
@@ -1809,6 +1814,7 @@
       "coverageHeading": "Zones où vous pouvez animer",
       "coverageNote": "Choisissez les zones où vous pouvez intervenir sur place. Les remplacements sur place ne vous sont proposés que dans ces zones ; les séances en ligne n’en dépendent pas. Si vous n’intervenez qu’à distance, laissez ce champ vide. Vous pourrez le modifier plus tard dans vos paramètres.",
       "invalidPhone": "Veuillez saisir un numéro de téléphone valide",
+      "spokenLanguagesRequired": "Choisissez au moins une langue que vous parlez.",
       "creatingAccount": "Création du compte...",
       "alreadyHaveAccount": "Vous avez déjà un compte ? <link>Connectez-vous</link>"
     },

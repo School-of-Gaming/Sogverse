@@ -54,6 +54,11 @@ export function useGeduProfileFields() {
     /** The sentence refusing these answers, or null when they may be posted. */
     validate(): string | null {
       if (phone && !isValidPhoneNumber(phone)) return t("registerGedu.invalidPhone");
+      // The form's rule only: a Gedu is offered substitutions only in a
+      // language they speak, so registering with none would sign them up for
+      // an empty pool. The request body and the column still admit an empty
+      // list — older accounts have one, and the settings page may clear it.
+      if (spokenLanguages.length === 0) return t("registerGedu.spokenLanguagesRequired");
       return null;
     },
     /** These answers as the registration routes' request body takes them. */

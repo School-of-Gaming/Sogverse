@@ -652,6 +652,11 @@
       "notGranted": "Ei myönnetty",
       "error": "Pätevyyden päivitys epäonnistui. Yritä uudelleen."
     },
+    "geduLanguages": {
+      "title": "Kielet",
+      "note": "Hänelle tarjotaan tuurauksia vain kerroille, joiden kieli on valittu tässä. Jos yhtään kieltä ei ole valittu, tuurauksia ei tarjota lainkaan.",
+      "error": "Kielten tallentaminen epäonnistui. Yritä uudelleen."
+    },
     "missingRequirements": {
       "qualification": "Tällä Gedulla ei ole pätevyyttä, jota tämä tuote edellyttää: {qualification}.",
       "language": "Tämän tuotteen kieli on {language}, mutta tämä Gedu ei ole ilmoittanut puhuvansa sitä.",
@@ -1809,6 +1814,7 @@
       "coverageHeading": "Missä voit työskennellä?",
       "coverageNote": "Valitse alueet, joilla voit työskennellä paikan päällä. Paikan päällä pidettäviä tuurauksia tarjotaan sinulle vain näiltä alueilta; verkossa pidettävät kerrat eivät riipu niistä. Jos voit työskennellä vain etänä, jätä tämä tyhjäksi. Voit muuttaa valintaa myöhemmin asetuksissasi.",
       "invalidPhone": "Syötä kelvollinen puhelinnumero",
+      "spokenLanguagesRequired": "Valitse vähintään yksi kieli, jota puhut.",
       "creatingAccount": "Luodaan tiliä...",
       "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"
     },

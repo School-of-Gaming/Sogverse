@@ -450,7 +450,10 @@ a warning on what an admin does.** A gedu lacking a qualification the session's 
 requires, not speaking its language, or not covering its site, does not see its request
 in the pool and cannot offer on it, and the offer refuses each with a message of its own.
 A gedu who has listed no spoken language therefore sees an empty pool, and one who has
-ticked no coverage area sees online sessions only; both are accepted, not special-cased. An
+ticked no coverage area sees online sessions only; both are accepted, not special-cased.
+The registration forms refuse a Gedu with no language, but only the forms: the request
+contract and the column still admit an empty list, which older accounts hold and settings
+may leave, and an admin fills one in on the Gedu's admin user page. An
 admin assigning a gedu to a staff seat or seating a substitute is warned and may proceed;
 none of the admin writes asks. So each check is a predicate of its own and never a clause
 of the may-substitute predicate, which the admin writes share. Approving an offer is not

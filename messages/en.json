@@ -652,6 +652,11 @@
       "notGranted": "Not granted",
       "error": "Couldn’t update the qualification. Please try again."
     },
+    "geduLanguages": {
+      "title": "Languages",
+      "note": "They’re offered substitutions only for sessions in a language ticked here. With none ticked, they’re offered none.",
+      "error": "Couldn’t save the languages. Please try again."
+    },
     "missingRequirements": {
       "qualification": "This Gedu does not hold the {qualification} qualification, which this product requires.",
       "language": "This product is run in {language}, which this Gedu has not listed as a language they speak.",
@@ -1809,6 +1814,7 @@
       "coverageHeading": "Where can you work?",
       "coverageNote": "Pick the areas where you can work on-site. You’re offered on-site substitutions only in these areas; online sessions don’t depend on them. If you can only work remotely, leave this empty. You can change it later in your settings.",
       "invalidPhone": "Please enter a valid phone number",
+      "spokenLanguagesRequired": "Choose at least one language you speak.",
       "creatingAccount": "Creating account...",
       "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
     },

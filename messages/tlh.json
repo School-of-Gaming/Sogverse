@@ -696,6 +696,11 @@
       "notGranted": "nobbe’lu’",
       "error": "laH choHlu’be’pu’. yInID."
     },
+    "geduLanguages": {
+      "title": "Holmey",
+      "note": "Hol wIvlu’pu’bogh neH lo’taHvIS DIvI’ Quv ghojmoHwI’ tamlaH. Hol wIvlu’be’chugh, Qu’ tu’be’.",
+      "error": "Holmey choqlaHbe’. yInIDqa’!"
+    },
     "missingRequirements": {
       "qualification": "{qualification} laH ghajbe’ Geduvam. laHvam poQ Doch.",
       "language": "{language} Hol lo’ Dochvam. Hol jatlhlaHbe’ Geduvam.",
@@ -1853,6 +1858,7 @@
       "coverageHeading": "nuqDaq bIvum laH?",
       "coverageNote": "Daqmey yIwIv DaqDaq bIvum laH. Daqmeyvam neH lIw DaqDaq Danobta’. Hop may’mey Daqmeyvam luSo’be’. Hop pat neH DavumlaHchugh, naDev yIqonQo’. poH wInaQ pat’a’ choHlaH.",
       "invalidPhone": "HablI’ HSDu’ nIvbe’ yIchel",
+      "spokenLanguagesRequired": "wa’ Hol DajatlhlaHbogh yIwIv, Qu’vaD!",
       "creatingAccount": "account vIchenmoH...",
       "alreadyHaveAccount": "account Daghaj’a’? <link>yI’el</link>"
     },

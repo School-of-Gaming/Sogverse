@@ -18,7 +18,7 @@ import {
   type AdminGameAccountBody,
   type AdminUserSignInAddressBody,
 } from "./users.contracts";
-import type { Profile, ProfileUpdate, UserRole } from "@/types";
+import type { Profile, ProfileUpdate, SpokenLanguageCode, UserRole } from "@/types";
 
 /**
  * The people cache's key hierarchy.
@@ -163,6 +163,37 @@ export function useUpdateProfile() {
       queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },
+  });
+}
+
+/**
+ * An admin setting a Gedu's spoken languages from the admin user page.
+ *
+ * A plain profile update: the admin policy on `profiles` already admits it, and
+ * the column's UPDATE grant is the one the settings page uses. **The
+ * invalidations are returned**, so `mutateAsync` settles only once the profile
+ * has been refetched — the card drops its draft on settle, and dropping it any
+ * earlier would flash the old ticks. The people lists are invalidated too,
+ * because their rows carry the languages the gedu picker warns from.
+ */
+export function useSetUserSpokenLanguages() {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new UsersService(supabase);
+
+  return useMutation({
+    mutationFn: ({
+      userId,
+      spokenLanguages,
+    }: {
+      userId: string;
+      spokenLanguages: SpokenLanguageCode[];
+    }) => service.updateProfile(userId, { spoken_languages: spokenLanguages }),
+    onSuccess: (_data, { userId }) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) }),
+        queryClient.invalidateQueries({ queryKey: userKeys.lists() }),
+      ]),
   });
 }
 

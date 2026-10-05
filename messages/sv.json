@@ -652,6 +652,11 @@
       "notGranted": "Inte beviljad",
       "error": "Det gick inte att uppdatera behörigheten. Försök igen."
     },
+    "geduLanguages": {
+      "title": "Språk",
+      "note": "Hen erbjuds vikariat bara för tillfällen på ett språk som är valt här. Om inget språk är valt erbjuds inga vikariat.",
+      "error": "Det gick inte att spara språken. Försök igen."
+    },
     "missingRequirements": {
       "qualification": "Den här Gedun saknar behörigheten {qualification}, som den här produkten kräver.",
       "language": "Den här produkten hålls på {language}, som den här Gedun inte har angett att hen talar.",
@@ -1809,6 +1814,7 @@
       "coverageHeading": "Var kan du arbeta?",
       "coverageNote": "Välj de områden där du kan arbeta på plats. Du erbjuds vikariat på plats bara i de här områdena; tillfällen online påverkas inte av dem. Om du bara kan arbeta på distans, lämna detta tomt. Du kan ändra det senare i dina inställningar.",
       "invalidPhone": "Ange ett giltigt telefonnummer",
+      "spokenLanguagesRequired": "Välj minst ett språk som du talar.",
       "creatingAccount": "Skapar konto...",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
     },
