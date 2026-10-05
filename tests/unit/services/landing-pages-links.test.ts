@@ -1,11 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { z } from "zod";
-import {
-  LANDING_SECTION_TYPES,
-  LANDING_SECTIONS,
-  type LandingSection,
-} from "@/lib/landing-pages/sections";
-import { markdownText } from "@/lib/landing-pages/sections/shared";
+import type { LandingSection } from "@/lib/landing-pages/sections";
 import type { SlugResolver } from "@/lib/links/own-site";
 import {
   landingPageInput,
@@ -13,10 +7,8 @@ import {
 } from "@/services/landing-pages/landing-pages.contracts";
 import {
   canonicaliseLandingLinks,
-  LANDING_MARKDOWN_FIELDS,
   LandingLinkRefusal,
   siteSlugResolver,
-  type LandingMarkdownField,
   type LandingWrite,
 } from "@/services/landing-pages/landing-pages.links";
 import {
@@ -153,28 +145,6 @@ describe("canonicaliseLandingLinks", () => {
     );
     expect(result.sections).toBeNull();
     expect(result.versions[0].sectionTexts[I.text]).toMatchObject({ body: "[Shop](/shop)" });
-  });
-});
-
-describe("the markdown fields the links hook reads", () => {
-  /** The fields a type's text schema declares with the `landing` markdown schema. */
-  function declaredMarkdown(schema: z.ZodTypeAny): LandingMarkdownField[] {
-    if (!(schema instanceof z.ZodObject)) return [];
-    const fields: LandingMarkdownField[] = [];
-    for (const [name, field] of Object.entries<z.ZodTypeAny>(schema.shape)) {
-      if (field === markdownText) fields.push({ field: name });
-      const inner = field instanceof z.ZodOptional ? field.unwrap() : field;
-      if (inner instanceof z.ZodRecord && inner.valueSchema instanceof z.ZodObject) {
-        for (const [itemField, value] of Object.entries<z.ZodTypeAny>(inner.valueSchema.shape)) {
-          if (value === markdownText) fields.push({ items: name, field: itemField });
-        }
-      }
-    }
-    return fields;
-  }
-
-  it.each(LANDING_SECTION_TYPES)("are exactly the %s section's markdown fields", (type) => {
-    expect(LANDING_MARKDOWN_FIELDS[type]).toEqual(declaredMarkdown(LANDING_SECTIONS[type].text));
   });
 });
 

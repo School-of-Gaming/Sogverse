@@ -6,8 +6,6 @@ export {
   useCreateLandingPage,
   usePublishLandingPage,
   useSaveLandingPage,
-  useSaveLandingPageStructure,
-  useSaveLandingPageVersion,
   useUnpublishLandingPage,
 } from "./landing-pages.queries";
 export {

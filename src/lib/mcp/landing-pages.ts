@@ -10,6 +10,7 @@ import {
 } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
+  landingMarkdownValues,
   landingSections,
   type LandingSection,
   type LandingSectionOf,
@@ -185,7 +186,7 @@ function sectionWordsProblems(section: LandingSection, words: unknown): string[]
       }
     }
   }
-  for (const { path, value } of MCP_LANDING_SECTIONS[section.type].markdownFields(parsed.data)) {
+  for (const { path, value } of landingMarkdownValues(section.type, parsed.data)) {
     const outside = markdownOutsideSubset(value, "landing");
     if (outside.length === 0) continue;
     const named = outside

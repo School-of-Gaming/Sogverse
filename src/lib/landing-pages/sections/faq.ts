@@ -54,4 +54,5 @@ export const faqSection = {
       ];
     }),
   ],
+  markdownFields: [{ items: "items", field: "answer" }],
 } as const satisfies LandingSectionDefinition<"faq", typeof section, typeof text>;

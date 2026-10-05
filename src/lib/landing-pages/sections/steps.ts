@@ -48,4 +48,5 @@ export const stepsSection = {
       ];
     }),
   ],
+  markdownFields: [],
 } as const satisfies LandingSectionDefinition<"steps", typeof section, typeof text>;

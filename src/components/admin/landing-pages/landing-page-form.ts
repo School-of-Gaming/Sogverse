@@ -6,6 +6,7 @@ import { openingLocaleTab } from "@/lib/i18n/locale-tabs";
 import {
   LANDING_SECTION_TYPES,
   buttonTarget,
+  isLandingMarkdownPath,
   missingInLandingVersion,
   type ButtonTarget,
   type LandingIcon,
@@ -247,8 +248,14 @@ function sectionsReading(sections: readonly FormSection[]): LandingSection[] {
 // The words, per section type
 // ---------------------------------------------------------------------------
 
-/** How a text field is typed in: one line, a few plain lines, or rich text. */
-export type TextFieldKind = "line" | "lines" | "markdown";
+/** How a plain-text field is typed in: one line, or a few lines. */
+type PlainFieldKind = "line" | "lines";
+
+/**
+ * How a text field is typed in: plain, or as rich text when the registry
+ * declares the field markdown.
+ */
+export type TextFieldKind = PlainFieldKind | "markdown";
 
 /** The field names the editor labels, one message each. */
 export type TextFieldName =
@@ -278,16 +285,21 @@ export interface TextFieldSpec {
   item?: { id: string; number: number };
 }
 
+/** A field as the editor declares it: its plain kind, before the registry's say. */
+interface DeclaredTextField extends Omit<TextFieldSpec, "kind"> {
+  kind: PlainFieldKind;
+}
+
 const field = (
   name: TextFieldName,
-  kind: TextFieldKind,
+  kind: PlainFieldKind,
   optional = false,
-): TextFieldSpec => ({ path: name, name, kind, optional });
+): DeclaredTextField => ({ path: name, name, kind, optional });
 
 function itemFields(
   items: readonly { id: string }[],
-  fields: readonly [TextFieldName, TextFieldKind][],
-): TextFieldSpec[] {
+  fields: readonly [TextFieldName, PlainFieldKind][],
+): DeclaredTextField[] {
   return items.flatMap((item, index) =>
     fields.map(([name, kind]) => ({
       path: `items.${item.id}.${name}`,
@@ -304,10 +316,12 @@ function itemFields(
  * a section type added to the registry fails type-check here until the
  * editor can write it. A field that exists only beside a shared one (a
  * button's label, a picture's alt text) is listed only while that is set.
- * Which listed fields are required is the registry's rule, not this list's.
+ * Which listed fields are required is the registry's rule, not this list's,
+ * and so is which are markdown: a field the registry declares markdown is
+ * edited as rich text, whatever plain kind it is listed with here.
  */
-export const LANDING_TEXT_FIELDS: {
-  [Type in LandingSectionType]: (section: FormSectionOf<Type>) => TextFieldSpec[];
+const LANDING_TEXT_FIELDS: {
+  [Type in LandingSectionType]: (section: FormSectionOf<Type>) => DeclaredTextField[];
 } = {
   hero: (section) => [
     field("eyebrow", "line", true),
@@ -319,7 +333,7 @@ export const LANDING_TEXT_FIELDS: {
   text: (section) => [
     field("eyebrow", "line", true),
     field("heading", "line"),
-    field("body", "markdown"),
+    field("body", "lines"),
     ...(section.imageId === null ? [] : [field("imageAlt", "line")]),
   ],
   image: (section) => [
@@ -357,7 +371,7 @@ export const LANDING_TEXT_FIELDS: {
     field("heading", "line"),
     ...itemFields(section.items, [
       ["question", "line"],
-      ["answer", "markdown"],
+      ["answer", "lines"],
     ]),
   ],
   cta: () => [
@@ -368,8 +382,17 @@ export const LANDING_TEXT_FIELDS: {
   ],
 };
 
-/** A section's text fields, dispatched through the exhaustive map. */
+/**
+ * A section's text fields, dispatched through the exhaustive map, each
+ * markdown where the registry declares it so.
+ */
 export function textFieldsOf(section: FormSection): TextFieldSpec[] {
+  return declaredFieldsOf(section).map((spec): TextFieldSpec =>
+    isLandingMarkdownPath(section.type, spec.path) ? { ...spec, kind: "markdown" } : spec,
+  );
+}
+
+function declaredFieldsOf(section: FormSection): DeclaredTextField[] {
   switch (section.type) {
     case "hero":
       return LANDING_TEXT_FIELDS.hero(section);

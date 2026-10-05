@@ -83,4 +83,5 @@ export const pointsSection = {
       ];
     }),
   ],
+  markdownFields: [],
 } as const satisfies LandingSectionDefinition<"points", typeof section, typeof text>;

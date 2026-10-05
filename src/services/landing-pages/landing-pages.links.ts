@@ -3,6 +3,7 @@ import { findTeamMemberBySlug } from "@/components/team/team-address";
 import { LOCALE_CONFIG, type SupportedLocale } from "@/lib/constants/locales";
 import {
   LANDING_SECTIONS,
+  type LandingMarkdownField,
   type LandingSection,
   type LandingSectionText,
   type LandingSectionTexts,
@@ -27,27 +28,6 @@ export interface LandingWrite {
   sections: LandingSection[] | null;
   versions: ParsedLandingVersion[];
 }
-
-/**
- * Which text fields of each section type are authored markdown, and so can
- * hold links: a field of the section's words, or a field of each item's.
- * Exhaustive, so a type added to the registry fails type-check here until it
- * says; a unit test holds each entry equal to the fields the type's text
- * schema declares as markdown.
- */
-export type LandingMarkdownField =
-  | { readonly field: string }
-  | { readonly items: string; readonly field: string };
-
-export const LANDING_MARKDOWN_FIELDS = {
-  hero: [],
-  text: [{ field: "body" }],
-  image: [],
-  points: [],
-  steps: [],
-  faq: [{ items: "items", field: "answer" }],
-  cta: [],
-} as const satisfies Record<LandingSectionType, readonly LandingMarkdownField[]>;
 
 /**
  * A write refused because of a link it carries. It is a `check_violation`
@@ -196,7 +176,7 @@ async function canonicalText(
   rewrite: (markdown: string) => Promise<string>,
 ): Promise<LandingSectionText> {
   const value: Record<string, unknown> = isRecord(text) ? { ...text } : {};
-  const fields: readonly LandingMarkdownField[] = LANDING_MARKDOWN_FIELDS[type];
+  const fields: readonly LandingMarkdownField[] = LANDING_SECTIONS[type].markdownFields;
   for (const spec of fields) {
     if ("items" in spec) {
       const items = value[spec.items];

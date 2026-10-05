@@ -110,7 +110,22 @@ export interface LandingSectionDefinition<
    * order the editor asks for them.
    */
   readonly missingText: (section: z.output<Section>, text: TextReading) => string[];
+  /**
+   * The words that are authored markdown (the `landing` use case), and so
+   * render as rich text and can hold links: exactly the fields whose schema
+   * is `markdownText`. The one declaration the links hook, the MCP tools'
+   * subset check and the editor all read.
+   */
+  readonly markdownFields: readonly LandingMarkdownField[];
 }
+
+/**
+ * One authored-markdown field of a section type's words: a field of the
+ * section's own, or a field of each item's (`<items>.<item id>.<field>`).
+ */
+export type LandingMarkdownField =
+  | { readonly field: string }
+  | { readonly items: string; readonly field: string };
 
 /** Items carrying an id, distinct within their section. */
 export function distinctIds(items: readonly { id: string }[]): boolean {

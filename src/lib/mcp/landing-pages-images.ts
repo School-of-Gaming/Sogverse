@@ -29,12 +29,18 @@ const { width, height } = CATALOGUE_IMAGE_PURPOSES.landing_image;
 
 const PICTURE_RULES = `A landing page picture is a landing page entry of Sogverse's picture catalogue, a ${width} × ${height} JPEG; many sections and pages may share one. A hero or text section shows one picture, an image section one to four; each needs alt text in every language before that language is complete. Placing a picture changes the working copy only: readers see it after the next publish.`;
 
+/*
+ * Ids are stored lowercase, and compared with `===`: an id an AI app sends in
+ * capitals is lowercased first, as the registry's `landingId` does.
+ */
 const sectionId = z
   .guid()
+  .toLowerCase()
   .describe("The section's id, as get_landing_page lists it.");
 
 const pictureItemId = z
   .guid()
+  .toLowerCase()
   .describe(
     "In an image section, the picture item to replace or remove, by its item id (not its catalogue id). Left out, a new picture is added at the end.",
   );

@@ -45,4 +45,5 @@ export const heroSection = {
       ? ["imageAlt"]
       : []),
   ],
+  markdownFields: [],
 } as const satisfies LandingSectionDefinition<"hero", typeof section, typeof text>;

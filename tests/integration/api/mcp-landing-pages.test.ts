@@ -580,6 +580,19 @@ describe("pictures", () => {
     expect(result.structuredContent?.pictureId).toBe(gallery.images[1].id);
   });
 
+  it("reads a section id and a picture item id sent in capitals as the stored lowercase ids", async () => {
+    const result = await tool("set_landing_section_image", {
+      pageId: ID,
+      sectionId: GALLERY.toUpperCase(),
+      pictureId: PICTURE_ITEM.toUpperCase(),
+      imageId: FIELD,
+    });
+
+    expect(result.isError).toBeFalsy();
+    const [, sections] = landing.saveStructure.mock.calls[0];
+    expect(sections[3].images).toEqual([{ id: PICTURE_ITEM, imageId: FIELD }]);
+  });
+
   it.each([
     ["the last picture of an image section", { sectionId: GALLERY, imageId: null, pictureId: PICTURE_ITEM }, "remove the section"],
     ["a picture in a section with none", { sectionId: FAQ, imageId: FIELD }, "A faq section has no picture."],

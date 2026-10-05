@@ -2,20 +2,15 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import type { LandingSectionInput } from "@/lib/landing-pages/sections";
 import { catalogueImageUsageKey } from "@/services/catalogue-images/catalogue-images.keys";
 import { LandingPageService } from "./landing-pages.service";
-import type {
-  LandingPageInput,
-  LandingVersionInput,
-} from "./landing-pages.contracts";
+import type { LandingPageInput } from "./landing-pages.contracts";
 
 export const landingPageKeys = {
   all: ["landing-pages"] as const,
   admin: () => [...landingPageKeys.all, "admin"] as const,
   adminList: () => [...landingPageKeys.admin(), "list"] as const,
   adminDetail: (id: string) => [...landingPageKeys.admin(), "detail", id] as const,
-  published: () => [...landingPageKeys.all, "published"] as const,
 };
 
 /**
@@ -76,28 +71,6 @@ export function useSaveLandingPage() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: LandingPageInput }) =>
       service.savePage(id, input),
-    onSuccess: () => invalidate(),
-  });
-}
-
-export function useSaveLandingPageStructure() {
-  const service = new LandingPageService(getClient());
-  const invalidate = useLandingPageInvalidation();
-
-  return useMutation({
-    mutationFn: ({ id, sections }: { id: string; sections: LandingSectionInput[] }) =>
-      service.saveStructure(id, sections),
-    onSuccess: () => invalidate(),
-  });
-}
-
-export function useSaveLandingPageVersion() {
-  const service = new LandingPageService(getClient());
-  const invalidate = useLandingPageInvalidation();
-
-  return useMutation({
-    mutationFn: ({ id, version }: { id: string; version: LandingVersionInput }) =>
-      service.saveVersion(id, version),
     onSuccess: () => invalidate(),
   });
 }

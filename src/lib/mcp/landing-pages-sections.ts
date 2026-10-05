@@ -121,8 +121,6 @@ interface McpLandingSection<Type extends LandingSectionType> {
     readonly key: "items" | "alts";
     readonly ids: readonly string[];
   } | null;
-  /** The authored-markdown fields of its words, by path, for the subset check. */
-  readonly markdownFields: (text: unknown) => readonly { path: string; value: string }[];
 }
 
 /** Placeholders the rule descriptions read as words. */
@@ -130,19 +128,6 @@ const ANY_ID = "00000000-0000-4000-8000-000000000000";
 const ITEM = "<item id>";
 const PICTURE = "<picture id>";
 
-/** A string field of an object of unknown shape. */
-function stringField(value: unknown, key: string): string | null {
-  if (typeof value !== "object" || value === null) return null;
-  const field: unknown = Object.getOwnPropertyDescriptor(value, key)?.value;
-  return typeof field === "string" ? field : null;
-}
-
-/** Every entry of an object of unknown shape. */
-function entriesOf(value: unknown): [string, unknown][] {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-    ? Object.entries(value)
-    : [];
-}
 
 export const MCP_LANDING_SECTIONS: {
   readonly [Type in LandingSectionType]: McpLandingSection<Type>;
@@ -171,7 +156,6 @@ export const MCP_LANDING_SECTIONS: {
       },
     },
     itemIds: () => null,
-    markdownFields: () => [],
   },
   text: {
     about: `A heading and a body, with an optional picture beside them on the side imageSide names (${LANDING_IMAGE_SIDES.join(" or ")}).`,
@@ -198,10 +182,6 @@ export const MCP_LANDING_SECTIONS: {
       },
     },
     itemIds: () => null,
-    markdownFields: (text) => {
-      const body = stringField(text, "body");
-      return body === null ? [] : [{ path: "body", value: body }];
-    },
   },
   image: {
     about:
@@ -230,7 +210,6 @@ export const MCP_LANDING_SECTIONS: {
       withOptional: {},
     },
     itemIds: (section) => ({ key: "alts", ids: section.images.map((image) => image.id) }),
-    markdownFields: () => [],
   },
   points: {
     about: `Two to six points, each an icon with a title and a short body. Icons: ${LANDING_ICONS.join(", ")}.`,
@@ -261,7 +240,6 @@ export const MCP_LANDING_SECTIONS: {
       withOptional: {},
     },
     itemIds: (section) => ({ key: "items", ids: section.items.map((item) => item.id) }),
-    markdownFields: () => [],
   },
   steps: {
     about: "Two to six numbered steps, each a title and a short body.",
@@ -292,7 +270,6 @@ export const MCP_LANDING_SECTIONS: {
       withOptional: {},
     },
     itemIds: (section) => ({ key: "items", ids: section.items.map((item) => item.id) }),
-    markdownFields: () => [],
   },
   faq: {
     about:
@@ -325,11 +302,6 @@ export const MCP_LANDING_SECTIONS: {
       withOptional: {},
     },
     itemIds: (section) => ({ key: "items", ids: section.items.map((item) => item.id) }),
-    markdownFields: (text) =>
-      entriesOf(fieldOf(text, "items")).flatMap(([id, item]) => {
-        const answer = stringField(item, "answer");
-        return answer === null ? [] : [{ path: `items.${id}.answer`, value: answer }];
-      }),
   },
   cta: {
     about: "A closing ask: a heading, an optional line and a button.",
@@ -349,7 +321,6 @@ export const MCP_LANDING_SECTIONS: {
       withOptional: {},
     },
     itemIds: () => null,
-    markdownFields: () => [],
   },
 };
 

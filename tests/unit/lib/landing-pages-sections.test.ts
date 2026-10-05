@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 import {
   LANDING_SECTION_TYPES,
   LANDING_SECTIONS,
-  isCompleteLandingVersion,
+  isLandingMarkdownPath,
+  landingMarkdownValues,
   landingSection,
   landingSections,
   landingSectionTextsSchema,
   missingInLandingVersion,
+  type LandingMarkdownField,
 } from "@/lib/landing-pages/sections";
+import { markdownText } from "@/lib/landing-pages/sections/shared";
 import {
   CASE_IDS as I,
   everySection,
@@ -166,9 +170,46 @@ describe("the required-text rule (its TypeScript half)", () => {
       expect(missingInLandingVersion(testCase.sections, testCase)).toEqual(
         testCase.expected,
       );
-      expect(isCompleteLandingVersion(testCase.sections, testCase)).toBe(
-        testCase.expected.length === 0,
-      );
     });
   }
+});
+
+describe("the markdown fields", () => {
+  /** The fields a type's text schema declares with the `landing` markdown schema. */
+  function declaredMarkdown(schema: z.ZodTypeAny): LandingMarkdownField[] {
+    if (!(schema instanceof z.ZodObject)) return [];
+    const fields: LandingMarkdownField[] = [];
+    for (const [name, field] of Object.entries<z.ZodTypeAny>(schema.shape)) {
+      if (field === markdownText) fields.push({ field: name });
+      const inner = field instanceof z.ZodOptional ? field.unwrap() : field;
+      if (inner instanceof z.ZodRecord && inner.valueSchema instanceof z.ZodObject) {
+        for (const [itemField, value] of Object.entries<z.ZodTypeAny>(inner.valueSchema.shape)) {
+          if (value === markdownText) fields.push({ items: name, field: itemField });
+        }
+      }
+    }
+    return fields;
+  }
+
+  it.each(LANDING_SECTION_TYPES)("are exactly the %s text schema's markdown fields", (type) => {
+    expect(LANDING_SECTIONS[type].markdownFields).toEqual(
+      declaredMarkdown(LANDING_SECTIONS[type].text),
+    );
+  });
+
+  it("are read off a section's words by path, and matched by path", () => {
+    expect(
+      landingMarkdownValues("faq", {
+        heading: "Questions",
+        items: { [I.faqA]: { question: "Why?", answer: "Because." }, [I.stepA]: { question: "How?" } },
+      }),
+    ).toEqual([{ path: `items.${I.faqA}.answer`, value: "Because." }]);
+    expect(landingMarkdownValues("text", { heading: "Hi", body: "**Hello**" })).toEqual([
+      { path: "body", value: "**Hello**" },
+    ]);
+    expect(isLandingMarkdownPath("faq", `items.${I.faqA}.answer`)).toBe(true);
+    expect(isLandingMarkdownPath("faq", `items.${I.faqA}.question`)).toBe(false);
+    expect(isLandingMarkdownPath("text", "body")).toBe(true);
+    expect(isLandingMarkdownPath("cta", "body")).toBe(false);
+  });
 });

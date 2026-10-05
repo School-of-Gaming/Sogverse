@@ -34,4 +34,5 @@ export const ctaSection = {
     ...(isWritten(words.heading) ? [] : ["heading"]),
     ...(isWritten(words.buttonLabel) ? [] : ["buttonLabel"]),
   ],
+  markdownFields: [],
 } as const satisfies LandingSectionDefinition<"cta", typeof section, typeof text>;

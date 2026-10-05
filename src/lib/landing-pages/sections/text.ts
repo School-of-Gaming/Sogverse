@@ -42,4 +42,5 @@ export const textSection = {
       ? ["imageAlt"]
       : []),
   ],
+  markdownFields: [{ field: "body" }],
 } as const satisfies LandingSectionDefinition<"text", typeof section, typeof text>;

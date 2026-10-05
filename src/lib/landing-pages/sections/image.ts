@@ -45,4 +45,5 @@ export const imageSection = {
     block.images
       .filter((image) => !isWritten(fieldOf(words.alts, image.id)))
       .map((image) => `alts.${image.id}`),
+  markdownFields: [],
 } as const satisfies LandingSectionDefinition<"image", typeof section, typeof text>;

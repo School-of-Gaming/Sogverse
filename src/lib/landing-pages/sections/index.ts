@@ -6,11 +6,12 @@ import { imageSection } from "./image";
 import { pointsSection } from "./points";
 import { stepsSection } from "./steps";
 import { textSection } from "./text";
-import type { TextReading } from "./shared";
+import { fieldOf, type LandingMarkdownField, type TextReading } from "./shared";
 
 /**
  * The landing page section registry: every section type, its schemas, its
- * label and its required-text rule, one module per type.
+ * label, its required-text rule and which of its words are markdown, one
+ * module per type.
  *
  * Every other concern that varies by type — the public renderer, the admin
  * editor, the SEO contribution, the MCP schema — keeps its own exhaustive
@@ -186,11 +187,47 @@ export function missingInLandingVersion(
   return missing;
 }
 
-export function isCompleteLandingVersion(
-  sections: readonly LandingSection[],
-  version: LandingVersionReading,
-): boolean {
-  return missingInLandingVersion(sections, version).length === 0;
+/**
+ * Whether a path within a section of this type (`body`, `items.<id>.answer`)
+ * names one of its authored-markdown fields.
+ */
+export function isLandingMarkdownPath(type: LandingSectionType, path: string): boolean {
+  const fields: readonly LandingMarkdownField[] = LANDING_SECTIONS[type].markdownFields;
+  const parts = path.split(".");
+  return fields.some((spec) =>
+    "items" in spec
+      ? parts.length === 3 && parts[0] === spec.items && parts[2] === spec.field
+      : parts.length === 1 && parts[0] === spec.field,
+  );
+}
+
+/**
+ * Every authored-markdown value one section's words hold, with its path within
+ * the section — whatever shape the words are, a value that is not a string
+ * simply skipped.
+ */
+export function landingMarkdownValues(
+  type: LandingSectionType,
+  text: unknown,
+): { path: string; value: string }[] {
+  const fields: readonly LandingMarkdownField[] = LANDING_SECTIONS[type].markdownFields;
+  return fields.flatMap((spec) => {
+    if (!("items" in spec)) {
+      const value = fieldOf(text, spec.field);
+      return typeof value === "string" ? [{ path: spec.field, value }] : [];
+    }
+    const items = fieldOf(text, spec.items);
+    const entries: [string, unknown][] =
+      typeof items === "object" && items !== null && !Array.isArray(items)
+        ? Object.entries(items)
+        : [];
+    return entries.flatMap(([id, item]) => {
+      const value = fieldOf(item, spec.field);
+      return typeof value === "string"
+        ? [{ path: `${spec.items}.${id}.${spec.field}`, value }]
+        : [];
+    });
+  });
 }
 
 export { ctaSection } from "./cta";
@@ -206,5 +243,6 @@ export {
   LANDING_ID_PATTERN,
   landingId,
   type ButtonTarget,
+  type LandingMarkdownField,
   type LandingSectionDefinition,
 } from "./shared";
