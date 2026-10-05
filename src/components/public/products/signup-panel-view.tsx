@@ -332,6 +332,11 @@ export interface SignupPanelViewProps {
   onSubmit: () => void;
   /** Separate from onSubmit — the waitlist branch calls this. */
   onJoinWaitlist: () => void;
+  /**
+   * Called as a signed-out visitor follows the create-an-account link, before
+   * the link navigates. Absent where nothing listens (the preview panel).
+   */
+  onCreateAccount?: () => void;
   /** Mutation-state hint for disabling the CTA while in flight. */
   submitting?: boolean;
   /** Server-side error from the most recent submit. */
@@ -602,6 +607,7 @@ function FormOrAuth(props: FormOrAuthProps) {
         <UnauthenticatedOverlay
           signInHref={props.authState.signInHref}
           createAccountHref={props.authState.createAccountHref}
+          onCreateAccount={props.onCreateAccount}
         />
       );
     case "non_customer":
@@ -644,9 +650,11 @@ function FormOrAuth(props: FormOrAuthProps) {
 function UnauthenticatedOverlay({
   signInHref,
   createAccountHref,
+  onCreateAccount,
 }: {
   signInHref: AppHref;
   createAccountHref: AppHref;
+  onCreateAccount?: () => void;
 }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
@@ -671,6 +679,9 @@ function UnauthenticatedOverlay({
       </Link>
       <Link
         href={createAccountHref}
+        // Runs before the link's own navigation, which is what lets a listener
+        // report from the page the click happened on.
+        onClick={onCreateAccount}
         className={buttonVariants({
           size: "lg",
           className: "w-full text-base",

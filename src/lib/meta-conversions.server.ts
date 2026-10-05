@@ -2,10 +2,9 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { cookieValueFromHeader, parseConsentCookieHeader } from "@/lib/consent";
 import {
-  ENROLMENT_EVENTS,
   isValidPixelId,
   PIXEL_EVENTS,
-  type EnrolmentOutcome,
+  type MetaEnrolmentOutcome,
   type MetaProductDetails,
 } from "@/lib/marketing-events";
 import { getOrigin } from "@/lib/url";
@@ -16,12 +15,18 @@ import { getOrigin } from "@/lib/url";
  *
  * **Why the server and not the pixel.** A conversion happens where the decision
  * is committed — an account is created, a seat is taken, a queue place is
- * accepted, a parent is handed to Stripe — and every one of those is a route
- * handler. Reporting them from the browser meant telling the browser what had
+ * accepted — and every one of those is a route handler. Reporting them from the browser meant telling the browser what had
  * happened and trusting it to say so on the next page it loaded: a marker cookie,
  * a script that read it, and a report that was lost if the visitor closed the tab
  * or gained if anything else set the cookie. The handler that committed the
  * outcome is the only place that knows it happened, exactly once.
+ *
+ * **Starting a checkout is not one of them.** Meta's `InitiateCheckout` is the
+ * parent stepping into the sign-up flow, which is a click on a product page and
+ * commits nothing; the browser reports it there, for free products as well as
+ * paid ones (see `@/components/consent/meta-pixel`). Handing a parent to Stripe
+ * is therefore reported from nowhere on this side, so no attempt is counted
+ * twice under one name.
  *
  * **What is sent about a person, exhaustively:** the user agent, the IP address
  * the request arrived from, Meta's own `_fbp` / `_fbc` cookies if this browser
@@ -33,7 +38,7 @@ import { getOrigin } from "@/lib/url";
  * their account, not their address. This list is the
  * promise the privacy policy makes; a field added here is a policy edit.
  *
- * **What is sent about the enrolment** is `outcome`, one of three fixed words,
+ * **What is sent about the enrolment** is `outcome`, one of two fixed words,
  * and the product it was for in Meta's standard product fields — its id, name,
  * topic and price (no price on a queue place), the same facts the product's
  * public page shows anyone. On the same event as the email hash, so Meta
@@ -71,9 +76,11 @@ const REQUEST_TIMEOUT_MS = 10_000;
  *
  * **The caller names the event, never the event *name*.** The mapping from an
  * outcome to the name Meta optimises on lives in one place
- * (`@/lib/marketing-events`), so a caller cannot pair "went to Stripe" with the
- * enrolment name by mistake — which is the single error in this area that would
- * cost real money, because it would train a campaign on abandoned checkouts.
+ * (`@/lib/marketing-events`), so a caller can only say what it committed. The
+ * outcome type has no word for "went to Stripe" at all: reporting that as an
+ * enrolment is the single error in this area that would cost real money,
+ * because it would train a campaign on abandoned checkouts, and the browser
+ * already reports the checkout start under its own name.
  *
  * `sourcePath` is the public path the conversion happened on, supplied by the
  * caller: a marketing page's own path, so the URL Meta is told is one of the
@@ -89,7 +96,7 @@ export type MetaConversion =
   | { event: "account_created"; sourcePath: string }
   | {
       event: "enrolment";
-      outcome: EnrolmentOutcome;
+      outcome: MetaEnrolmentOutcome;
       product: MetaProductDetails;
       sourcePath: string;
     };
@@ -119,7 +126,7 @@ function hashEmailForMeta(email: string): string {
 function eventNameFor(conversion: MetaConversion): string {
   return conversion.event === "account_created"
     ? PIXEL_EVENTS.accountCreated
-    : ENROLMENT_EVENTS[conversion.outcome];
+    : PIXEL_EVENTS.enrolment;
 }
 
 /**

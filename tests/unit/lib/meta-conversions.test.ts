@@ -304,11 +304,11 @@ describe("reportMetaConversion — the request", () => {
   });
 
   // The names are the campaign's optimisation target, so each outcome's is
-  // stated here rather than trusted to the caller.
+  // stated here rather than trusted to the caller. A checkout start is not
+  // among them: the browser reports it at the click, and the type cannot say it.
   it.each([
     ["enrolled", "CompleteRegistration"],
     ["waitlisted", "CompleteRegistration"],
-    ["sent_to_checkout", "InitiateCheckout"],
   ] as const)("reports %s as %s, with the outcome beside it", async (
     outcome,
     eventName,
@@ -335,25 +335,25 @@ describe("reportMetaConversion — the request", () => {
     );
   });
 
-  // A seat taken or a checkout started carries the product exactly as the
-  // caller built it, price included.
-  it.each(["enrolled", "sent_to_checkout"] as const)(
-    "names the product with its price on %s",
-    async (outcome) => {
-      await reportMetaConversion(
-        request(),
-        {
-          event: "enrolment",
-          outcome,
-          product: PRODUCT,
-          sourcePath: "/shop/abc-123",
-        },
-        PARENT,
-      );
+  // A seat taken carries the product exactly as the caller built it, price
+  // included.
+  it("names the product with its price on an enrolled seat", async () => {
+    await reportMetaConversion(
+      request(),
+      {
+        event: "enrolment",
+        outcome: "enrolled",
+        product: PRODUCT,
+        sourcePath: "/shop/abc-123",
+      },
+      PARENT,
+    );
 
-      expect(sentEvent().custom_data).toEqual({ outcome, ...PRODUCT });
-    },
-  );
+    expect(sentEvent().custom_data).toEqual({
+      outcome: "enrolled",
+      ...PRODUCT,
+    });
+  });
 
   // A queue place is not revenue: the report drops the price whatever the
   // caller passed, and keeps every other product field.

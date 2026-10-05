@@ -616,27 +616,12 @@ export const POST = defineRoute({
         throw new ApiError("Stripe did not return a Checkout URL", 502);
       }
 
-      // Handed to Stripe, and reported as exactly that. It is deliberately NOT
-      // the enrolment event: Meta optimises a campaign on the event name, so
-      // reporting an abandoned checkout as an enrolment would train it on people
-      // who start paying rather than people who pay. The seat itself is written
-      // from the Stripe webhook, which is where a completed purchase would be
-      // reported from the day we report one.
-      if (isAdvertisedProduct(product)) {
-        after(
-          reportMetaConversion(
-            request,
-            {
-              event: "enrolment",
-              outcome: "sent_to_checkout",
-              product: metaProductDetails(product, currency),
-              sourcePath: ROUTES.shopProductPath(productId),
-            },
-            { email: profile.email },
-          ),
-        );
-      }
-
+      // Nothing is reported to Meta here. Its checkout start is the parent's
+      // click on the product page, reported from the browser for free and paid
+      // products alike, so a report from this handler would count every paid
+      // attempt twice. The seat itself is written from the Stripe webhook, which
+      // is where a completed purchase would be reported from the day we report
+      // one.
       return { status: "redirect" as const, checkoutUrl: session.url };
     } catch (error) {
       // Deliberate status and message. This route discloses error text to the

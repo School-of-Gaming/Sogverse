@@ -19,4 +19,8 @@ export {
 } from "./consent-provider";
 export { GoogleTagManager } from "./google-tag-manager";
 export { PrivacyChoicesLink } from "./privacy-choices-link";
-export { MetaPixel, MetaProductView } from "./meta-pixel";
+export {
+  MetaPixel,
+  MetaProductView,
+  useMetaCheckoutStart,
+} from "./meta-pixel";

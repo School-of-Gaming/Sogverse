@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   loadMetaPixel,
   reportMetaEvent,
+  reportMetaEventNow,
   type BrowserPixelEvent,
 } from "@/lib/meta-pixel";
 
@@ -284,5 +285,86 @@ describe("reportMetaEvent", () => {
     await report;
 
     expect(calls().some(([method]) => method === "track")).toBe(false);
+  });
+});
+
+/**
+ * The click's report: sent inside the caller's task or not at all. The click
+ * usually navigates, so an event that waited for anything would find the tab
+ * gone — and one left in Meta's queue would be replayed against the next page.
+ */
+describe("reportMetaEventNow", () => {
+  const PRODUCT = {
+    content_ids: ["abc-123"] as [string],
+    content_type: "product" as const,
+    content_name: "Roblox Studio Club",
+    content_category: "roblox_studio" as const,
+    value: 0,
+    currency: "EUR",
+  };
+  const CHECKOUT_START: BrowserPixelEvent = {
+    event: "InitiateCheckout",
+    product: PRODUCT,
+  };
+
+  async function libraryIsHere() {
+    const loaded = loadMetaPixel(PIXEL_ID);
+    libraryArrives();
+    await loaded;
+  }
+
+  function tracked() {
+    return calls().filter(([method]) => method === "track");
+  }
+
+  it("sends synchronously once the library has arrived", async () => {
+    tabIsOn("/shop/abc-123");
+    await libraryIsHere();
+
+    // No await: the call has been made by the time this returns, which is
+    // what lets a navigating click report the page it happened on.
+    const sent = reportMetaEventNow("/shop/abc-123", CHECKOUT_START);
+
+    expect(sent).toBe(true);
+    expect(tracked()).toEqual([["track", "InitiateCheckout", PRODUCT]]);
+  });
+
+  it("drops the event, rather than queueing it, while the library is still downloading", () => {
+    tabIsOn("/shop/abc-123");
+    void loadMetaPixel(PIXEL_ID);
+
+    const sent = reportMetaEventNow("/shop/abc-123", CHECKOUT_START);
+    libraryArrives();
+
+    expect(sent).toBe(false);
+    expect(tracked()).toEqual([]);
+  });
+
+  it("never starts a load of its own", () => {
+    tabIsOn("/shop/abc-123");
+
+    const sent = reportMetaEventNow("/shop/abc-123", CHECKOUT_START);
+
+    expect(sent).toBe(false);
+    expect(insertedScripts()).toHaveLength(0);
+    expect(window.fbq).toBeUndefined();
+  });
+
+  it("sends nothing when the tab is not on the page that authorised it", async () => {
+    tabIsOn("/shop/abc-123");
+    await libraryIsHere();
+    tabIsOn("/register");
+
+    expect(reportMetaEventNow("/shop/abc-123", CHECKOUT_START)).toBe(false);
+    expect(tracked()).toEqual([]);
+  });
+
+  it("sends nothing when the query carries anything but campaign keys", async () => {
+    tabIsOn("/shop/abc-123");
+    await libraryIsHere();
+    tabIsOn("/shop/abc-123?redirect=/en/parent/gamers/abc-123");
+
+    expect(reportMetaEventNow("/shop/abc-123", CHECKOUT_START)).toBe(false);
+    expect(tracked()).toEqual([]);
   });
 });

@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import {
   ConsentProvider,
   MetaPixel,
   MetaProductView,
+  useMetaCheckoutStart,
 } from "@/components/consent";
 import type { ConsentState } from "@/lib/consent";
 
@@ -50,8 +51,15 @@ vi.mock("@/providers/auth-provider", () => ({
 const mockReport = vi.hoisted(() =>
   vi.fn((..._args: unknown[]) => Promise.resolve()),
 );
+// The click's report, which answers whether it went out — false standing for
+// "the library has not arrived", the one case it drops the event. Its own
+// suite covers that decision; here the answer is set per case.
+const mockReportNow = vi.hoisted(() =>
+  vi.fn((..._args: unknown[]) => true),
+);
 vi.mock("@/lib/meta-pixel", () => ({
   reportMetaEvent: (...args: unknown[]) => mockReport(...args),
+  reportMetaEventNow: (...args: unknown[]) => mockReportNow(...args),
 }));
 
 const GRANTED_BOTH: ConsentState = {
@@ -342,5 +350,149 @@ describe("MetaProductView", () => {
     renderProductView(ROBLOX_CLUB);
 
     expect(mockReport).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The checkout start rides the same gate hook, so the cases below pin what is
+ * its own: it is sent from the click and not on mount, once per product page
+ * however often the parent clicks, only for a product we advertise, and — when
+ * the library has not arrived — not counted, so nothing is queued and a later
+ * click on the same page may still report.
+ */
+describe("useMetaCheckoutStart", () => {
+  const PRODUCT_ID = "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10";
+
+  type StartedProduct = NonNullable<Parameters<typeof useMetaCheckoutStart>[0]>;
+
+  const FREE_EVENT: StartedProduct = {
+    id: PRODUCT_ID,
+    product_type: "event",
+    billing_mode: "free",
+    topic: "roblox_studio",
+    product_translations: [{ locale: "en", name: "Roblox Studio Day" }],
+    product_prices: [],
+  };
+
+  function StartButton({ product }: { product: StartedProduct | null }) {
+    const start = useMetaCheckoutStart(product);
+    return (
+      <button type="button" onClick={start}>
+        Sign up
+      </button>
+    );
+  }
+
+  function renderStart(
+    product: StartedProduct | null = FREE_EVENT,
+    consent: ConsentState | null = GRANTED_BOTH,
+  ) {
+    return render(
+      <ConsentProvider initial={consent}>
+        <StartButton product={product} />
+      </ConsentProvider>,
+    );
+  }
+
+  const click = () => fireEvent.click(screen.getByRole("button"));
+
+  beforeEach(() => {
+    mockPathname.value = `/fi/kauppa/${PRODUCT_ID}`;
+    mockReportNow.mockReturnValue(true);
+  });
+
+  it("reports nothing until the parent clicks", () => {
+    renderStart();
+
+    expect(mockReportNow).not.toHaveBeenCalled();
+    expect(mockReport).not.toHaveBeenCalled();
+  });
+
+  it("reports the click once, with the product's fields, for an advertised product", () => {
+    renderStart();
+
+    click();
+
+    expect(mockReportNow).toHaveBeenCalledTimes(1);
+    expect(mockReportNow).toHaveBeenCalledWith(`/fi/kauppa/${PRODUCT_ID}`, {
+      event: "InitiateCheckout",
+      product: {
+        content_ids: [PRODUCT_ID],
+        content_type: "product",
+        content_name: "Roblox Studio Day",
+        content_category: "roblox_studio",
+        value: 0,
+        currency: "EUR",
+      },
+    });
+  });
+
+  // A second click, or a failed enrolment tried again, is the same parent on
+  // the same page.
+  it("reports nothing more on a second click on the same page", () => {
+    renderStart();
+
+    click();
+    click();
+
+    expect(mockReportNow).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports nothing for a product we do not advertise", () => {
+    renderStart({
+      ...FREE_EVENT,
+      product_type: "municipality_club",
+      billing_mode: "external_contract",
+    });
+
+    click();
+
+    expect(mockReportNow).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing without marketing consent", () => {
+    renderStart(FREE_EVENT, { ...GRANTED_BOTH, marketing: false });
+
+    click();
+
+    expect(mockReportNow).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing for a signed-in gamer", () => {
+    mockAuth.user = { id: "gamer-1" };
+    mockAuth.profile = { role: "gamer" };
+    renderStart();
+
+    click();
+
+    expect(mockReportNow).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing off the marketing-page allowlist", () => {
+    mockPathname.value = "/parent";
+    renderStart();
+
+    click();
+
+    expect(mockReportNow).not.toHaveBeenCalled();
+  });
+
+  // The library had not arrived: the event is dropped, never queued, and the
+  // page is not counted — so a click once it has arrived still reports, once.
+  it("drops a click before the library has arrived without spending the page's report", () => {
+    mockReportNow.mockReturnValueOnce(false);
+    renderStart();
+
+    click();
+    click();
+    click();
+
+    // Never through the awaiting reporter, which would load and wait.
+    expect(mockReport).not.toHaveBeenCalled();
+    expect(mockReportNow).toHaveBeenCalledTimes(2);
+    expect(mockReportNow.mock.results.map((result) => result.value)).toEqual([
+      false,
+      true,
+    ]);
   });
 });

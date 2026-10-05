@@ -1509,7 +1509,10 @@ describe("POST /api/checkout/products/create", () => {
       });
     });
 
-    it("reports a started checkout, not an enrolment, on the paid path", async () => {
+    // The checkout start is the browser's click on the product page, for free
+    // and paid products alike; a report from here as well would count every
+    // paid attempt twice.
+    it("reports nothing to Meta when handing the parent to Stripe", async () => {
       mockAuthenticatedCustomer();
       mockAdmin({ product: PAID_CLUB });
       mockAdminRpc.mockResolvedValueOnce({
@@ -1520,25 +1523,12 @@ describe("POST /api/checkout/products/create", () => {
 
       const res = await POST(createRequest(VALID_BODY));
 
-      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({
+        status: "redirect",
+        checkoutUrl: "https://checkout.stripe.com/c/test_sub",
+      });
       await settleDeferred();
-      expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
-      expect(mockReportMetaConversion.mock.calls[0][1]).toEqual({
-        event: "enrolment",
-        outcome: "sent_to_checkout",
-        product: {
-          content_ids: [PRODUCT_ID],
-          content_type: "product",
-          content_name: "Test Club",
-          content_category: "minecraft_java",
-          value: 50,
-          currency: "EUR",
-        },
-        sourcePath: `/shop/${PRODUCT_ID}`,
-      });
-      expect(mockReportMetaConversion.mock.calls[0][2]).toEqual({
-        email: CUSTOMER_EMAIL,
-      });
+      expect(mockReportMetaConversion).not.toHaveBeenCalled();
     });
 
     it("reports nothing for a municipality registration", async () => {
@@ -1593,27 +1583,6 @@ describe("POST /api/checkout/products/create", () => {
       const res = await POST(freeSignup());
 
       expect(await res.json()).toEqual({ status: "full" });
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
-    });
-
-    it("reports nothing when Stripe never returned a checkout URL", async () => {
-      mockAuthenticatedCustomer();
-      mockAdmin({ product: PAID_CLUB });
-      mockAdminRpc.mockResolvedValueOnce({
-        data: { kind: "validated" },
-        error: null,
-      });
-      mockGetOrCreateSubscriptionPrice.mockResolvedValue({
-        product_id: PRODUCT_ID,
-        currency: "eur",
-        stripe_price_id: STRIPE_PRICE_ID,
-        unit_amount_cents: 5000,
-      });
-      mockStripeSessionCreate.mockResolvedValue({ url: null });
-
-      const res = await POST(createRequest(VALID_BODY));
-
-      expect(res.status).toBe(502);
       expect(mockReportMetaConversion).not.toHaveBeenCalled();
     });
   });
@@ -2257,9 +2226,9 @@ describe("POST /api/checkout/products/create", () => {
       const res = await POST(createRequest(VALID_BODY));
 
       expect(res.status).toBe(200);
-      // One deferred item, and it is the checkout conversion rather than a
-      // mail: the seat does not exist yet, so there is nothing to confirm.
-      expect(deferred).toHaveLength(1);
+      // Nothing deferred at all: the seat does not exist yet, so there is
+      // nothing to confirm, and the checkout start is the browser's to report.
+      expect(deferred).toHaveLength(0);
       await settleDeferred();
       expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
     });

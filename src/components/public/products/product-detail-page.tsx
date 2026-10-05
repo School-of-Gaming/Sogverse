@@ -33,7 +33,7 @@ import { ProductDetailPageBody } from "./product-detail-page-body";
 import { audienceAdmitsRole, productAudience } from "@/lib/products/product-audience";
 import { resolveRegionGate, type RegionGate } from "./region-lock/region-gate";
 import { SignupPanel } from "./signup-panel";
-import { MetaProductView } from "@/components/consent";
+import { MetaProductView, useMetaCheckoutStart } from "@/components/consent";
 import type {
   AuthState,
   ConfirmedHomeLocation,
@@ -303,6 +303,11 @@ export function ProductDetailPage({
   // while the read is in flight is its "nothing to report yet", so the view
   // goes out once, when the product lands.
   const productView = <MetaProductView product={product ?? null} />;
+  // The advertising checkout start, handed to the panel to call from the click
+  // that starts signing up. Held here rather than in the panel for the same
+  // reason the view is: this component outlives the skeleton, so the
+  // once-per-page guard does too.
+  const reportCheckoutStart = useMetaCheckoutStart(product ?? null);
 
   if (
     productLoading ||
@@ -500,6 +505,7 @@ export function ProductDetailPage({
                 : null)
             }
             onLocationConfirmed={setConfirmedLocation}
+            onCheckoutStart={reportCheckoutStart}
           />
         }
         // The panel is where the region block is explained, so the phone-width

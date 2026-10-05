@@ -17,18 +17,22 @@
  *     or a place in its queue. The word in Meta's taxonomy is about signing up
  *     for a thing, not about creating a login, which is why account creation is
  *     the `Lead` above and not this.
- *   - `InitiateCheckout` — the parent has been handed to Stripe and has not paid
- *     yet. Reporting this as an enrolment would teach Meta to find people who
- *     *start* paying, and an abandoned checkout would train the campaign exactly
- *     as hard as a completed one.
+ *   - `InitiateCheckout` — the parent has stepped into the sign-up flow from a
+ *     product's page: clicked to create an account there, or clicked the button
+ *     that enrols. It is the top of the flow and commits nothing, which is why
+ *     it is reported from the browser at the click, for a free product exactly
+ *     as for a paid one — and never as an enrolment, because a name is what
+ *     Meta optimises on and an abandoned attempt would train the campaign as
+ *     hard as a seat.
  *
  *   - `ViewContent` — a product page was looked at. Reported from the browser,
  *     because a view commits nothing and no handler of ours sees it happen.
  *
- * The three enrolment outcomes travel beside the name as `outcome`, so a report
- * can separate "took a seat" from "joined the queue" from "went to Stripe"
- * without the names having to carry it — three labels, spelled one way, in every
- * report.
+ * The enrolment outcomes travel beside the name as `outcome`, so a report can
+ * separate "took a seat" from "joined the queue" without the name having to
+ * carry it — fixed labels, spelled one way, in every report. Analytics also
+ * hears "went to Stripe" under the same word list; Meta does not, because its
+ * checkout start is the click above.
  */
 
 import {
@@ -57,12 +61,13 @@ export const ENROLMENT_OUTCOMES = [
 
 export type EnrolmentOutcome = (typeof ENROLMENT_OUTCOMES)[number];
 
-/** Which event name each outcome is reported under. */
-export const ENROLMENT_EVENTS = {
-  enrolled: PIXEL_EVENTS.enrolment,
-  waitlisted: PIXEL_EVENTS.enrolment,
-  sent_to_checkout: PIXEL_EVENTS.checkout,
-} as const satisfies Record<EnrolmentOutcome, string>;
+/**
+ * The outcomes our servers report to Meta, both as `CompleteRegistration`.
+ * Being handed to Stripe is not one: Meta's checkout start is the browser's
+ * click, and a second report of it from here would count every paid attempt
+ * twice.
+ */
+export type MetaEnrolmentOutcome = Exclude<EnrolmentOutcome, "sent_to_checkout">;
 
 /**
  * Whether a product is one we advertise, and therefore one whose signups are
@@ -86,8 +91,9 @@ export function isAdvertisedProduct(product: {
 
 /**
  * Which product an event is about, in Meta's standard product fields — the
- * one shape the browser's product view and the servers' enrolment reports
- * both send, so a campaign reads the same product the same way at every step.
+ * one shape the browser's product view and checkout start and the servers'
+ * enrolment reports all send, so a campaign reads the same product the same
+ * way at every step.
  *
  * Every value is a fact about the product and none is about a person, and
  * none varies with who is looking:

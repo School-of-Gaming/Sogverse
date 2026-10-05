@@ -200,12 +200,17 @@ afterAll(() => {
   });
 });
 
+/** The page's checkout-start report, which the panel only calls. */
+const checkoutStart = vi.fn();
+
 function panel({
   product = PRODUCT,
   state = OPEN,
+  authState = AUTH,
 }: {
   product?: React.ComponentProps<typeof SignupPanel>["product"];
   state?: React.ComponentProps<typeof SignupPanel>["state"];
+  authState?: AuthState;
 } = {}) {
   return (
     <SignupPanel
@@ -214,10 +219,11 @@ function panel({
       marketingConsentTypes={[]}
       gamerPhotoConsentTypes={[]}
       state={state}
-      authState={AUTH}
+      authState={authState}
       regionGate={{ kind: "unlocked" }}
       homeLocationName={null}
       onLocationConfirmed={() => {}}
+      onCheckoutStart={checkoutStart}
     />
   );
 }
@@ -258,6 +264,7 @@ beforeEach(() => {
   createMutate.mockReset();
   waitlistMutate.mockReset();
   pushed.mockReset();
+  checkoutStart.mockReset();
   href = "http://localhost/";
   navigations.length = 0;
 });
@@ -409,5 +416,60 @@ describe("a place in the queue counts once", () => {
     });
 
     expect(pushed).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The advertising checkout start is not one of the outcomes above — it is the
+ * click into the flow, reported through the page's own gated hook — but it is
+ * this panel's clicks that call it, so where they call it is pinned here: on
+ * the button that enrols, before the mutation can answer with a navigation,
+ * and on the create-an-account link while signed out. Gates and the
+ * once-per-page count belong to the hook and are asserted with it.
+ */
+describe("the click into the flow is the checkout start", () => {
+  it("is reported by the button that enrols, before the enrolment is sent", () => {
+    const { container } = render(panel());
+    submit(container);
+
+    expect(checkoutStart).toHaveBeenCalledTimes(1);
+    expect(checkoutStart.mock.invocationCallOrder[0]).toBeLessThan(
+      createMutate.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("is reported by the create-an-account link while signed out", () => {
+    const { getByRole } = render(
+      panel({
+        authState: {
+          kind: "unauthenticated",
+          signInHref: "/login",
+          createAccountHref: "/register",
+        },
+      }),
+    );
+
+    fireEvent.click(getByRole("link", { name: "ctaCreateAccount" }));
+
+    expect(checkoutStart).toHaveBeenCalledTimes(1);
+  });
+
+  it("is not reported by signing in or by joining a queue", () => {
+    const { getByRole, unmount } = render(
+      panel({
+        authState: {
+          kind: "unauthenticated",
+          signInHref: "/login",
+          createAccountHref: "/register",
+        },
+      }),
+    );
+    fireEvent.click(getByRole("link", { name: "ctaSignIn" }));
+    unmount();
+
+    const { container } = render(panel({ state: FULL }));
+    submit(container);
+
+    expect(checkoutStart).not.toHaveBeenCalled();
   });
 });
