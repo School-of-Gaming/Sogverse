@@ -164,9 +164,12 @@ languages or areas are what is empty.
 a gedu falling short outright, the offer with a separate message for each; the admin's
 seating and approval do not ask — seating because the admin is warned in the UI and may
 proceed, approval because none is realistically taken away between the offer and its
-approval (`../gedu/CLAUDE.md`, Qualifications). That is why each test is its own predicate
-and never a clause of *may substitute*: the admin writes ask that one too, and a clause
-there would turn the warning into a refusal.
+approval (`../gedu/CLAUDE.md`, Qualifications). The one way it happens is accepted rather
+than handled *(owner, 2026-10)*: a gedu who offers and then removes that language or area
+in their settings loses the request from their pool, and with it the only Withdraw, while
+the offer stays approvable without a warning — the office withdraws it on request. That is
+why each test is its own predicate and never a clause of *may substitute*: the admin writes
+ask that one too, and a clause there would turn the warning into a refusal.
 
 **No instants travel.** The pool emits the date plus the product's timezone and slots, and
 the client owns the calendar math, exactly as both feeds do.
