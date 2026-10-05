@@ -650,7 +650,8 @@
       "grantedOn": "Granted on {date}",
       "grantedOnBy": "Granted on {date} by {name}",
       "notGranted": "Not granted",
-      "error": "Couldn’t update the qualification. Please try again."
+      "error": "Couldn’t update the qualification. Please try again.",
+      "missingWarning": "This Gedu does not hold the {qualification} qualification, which this product requires."
     },
     "geduCertifyWarnings": {
       "title": "Certify anyway?",
@@ -1135,7 +1136,8 @@
         "absentGedu": "The Gedu being substituted for",
         "notCertified": "Not certified",
         "alreadyTrainee": "Already a trainee",
-        "traineeInstead": "Can be added as a trainee instead."
+        "traineeInstead": "Can be added as a trainee instead.",
+        "notQualified": "Not qualified: {qualification}"
       },
       "participantPicker": {
         "title": "Add a participant",
@@ -1299,6 +1301,11 @@
             "failed": "The switch did not complete. Press Switch club again — a repeated press replays the same request, so it never charges the family twice."
           },
           "confirm": "Switch club"
+        },
+        "unqualified": {
+          "title": "Assign anyway?",
+          "body": "A missing qualification doesn’t block the assignment, so you can assign them anyway.",
+          "action": "Assign anyway"
         }
       },
       "seatLimitModes": {

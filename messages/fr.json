@@ -650,7 +650,8 @@
       "grantedOn": "Accordée le {date}",
       "grantedOnBy": "Accordée le {date} par {name}",
       "notGranted": "Non accordée",
-      "error": "Impossible de mettre à jour la qualification. Veuillez réessayer."
+      "error": "Impossible de mettre à jour la qualification. Veuillez réessayer.",
+      "missingWarning": "Ce Gedu n’a pas la qualification « {qualification} » qu’exige ce produit."
     },
     "geduCertifyWarnings": {
       "title": "Certifier quand même ?",
@@ -1135,7 +1136,8 @@
         "absentGedu": "Le Gedu remplacé",
         "notCertified": "Non certifié",
         "alreadyTrainee": "Déjà stagiaire",
-        "traineeInstead": "Peut être ajouté comme stagiaire."
+        "traineeInstead": "Peut être ajouté comme stagiaire.",
+        "notQualified": "Qualification manquante : {qualification}"
       },
       "participantPicker": {
         "title": "Ajouter un participant",
@@ -1299,6 +1301,11 @@
             "failed": "Le changement n’est pas allé jusqu’au bout. Appuyez de nouveau sur Changer de club — un nouvel appui rejoue la même requête, la famille n’est donc jamais facturée deux fois."
           },
           "confirm": "Changer de club"
+        },
+        "unqualified": {
+          "title": "Affecter quand même ?",
+          "body": "Une qualification manquante n’empêche pas l’affectation : vous pouvez donc l’affecter quand même.",
+          "action": "Affecter quand même"
         }
       },
       "seatLimitModes": {

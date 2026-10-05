@@ -9,6 +9,7 @@ import {
   type StaffingAssignment,
 } from "@/lib/session-staffing";
 import type { UserListEntry } from "@/services/users";
+import type { GeduQualification } from "@/types";
 
 /**
  * ============================================================================
@@ -71,7 +72,8 @@ function candidate(id: string): UserListEntry {
     certified: true,
     criminal_record_check_passed: true,
     linked_gamers: [],
-    qualifications: [],
+    // Joonas holds the neuroinclusive qualification; nobody else holds any.
+    qualifications: id === JOONAS ? ["neuroinclusive"] : [],
   };
 }
 
@@ -118,9 +120,11 @@ function renderEditor({
   onSetSubstitution = vi.fn(() => Promise.resolve()),
   onClearSubstitution = vi.fn(() => Promise.resolve()),
   onWithdrawRequest = vi.fn(() => Promise.resolve()),
+  requiredQualifications = [],
 }: {
   gedus: readonly StaffingAssignment[];
   requests?: readonly SubstitutionRequestInput[];
+  requiredQualifications?: readonly GeduQualification[];
   onSetSubstitution?: ReturnType<typeof vi.fn>;
   onClearSubstitution?: ReturnType<typeof vi.fn>;
   onWithdrawRequest?: ReturnType<typeof vi.fn>;
@@ -130,6 +134,7 @@ function renderEditor({
       <SessionStaffingEditor
         staffing={staffingOf(gedus, requests)}
         sessionDate={SESSION_DATE}
+        requiredQualifications={requiredQualifications}
         onSetSubstitution={onSetSubstitution}
         onClearSubstitution={onClearSubstitution}
         onWithdrawRequest={onWithdrawRequest}
@@ -594,6 +599,63 @@ describe("the admin session staffing editor", () => {
     fireEvent.click(button(messages.common.close));
 
     expect(screen.getByText(copy.absentStepTitle)).not.toBeNull();
+  });
+
+  it("seats a sub lacking a required qualification, warning in the confirm it already asks", async () => {
+    const { onSetSubstitution } = renderEditor({
+      gedus: ONE_PRIMARY,
+      requiredQualifications: ["neuroinclusive"],
+    });
+    const warning = messages.admin.geduQualifications.missingWarning.replace(
+      "{qualification}",
+      messages.productTag.neuroinclusive,
+    );
+
+    choose(copy.setSubstitute);
+    // The row is pickable and says what it lacks.
+    const petra = pickerRow(PETRA);
+    expect(isDisabled(petra)).toBe(false);
+    expect(
+      within(petra).getByText(
+        pickerCopy.notQualified.replace(
+          "{qualification}",
+          messages.productTag.neuroinclusive,
+        ),
+      ),
+    ).not.toBeNull();
+
+    fireEvent.click(petra);
+    // One dialog, the one this flow always asks — the warning is a line in it,
+    // and nothing is written until it is confirmed.
+    expect(screen.getByText(copy.confirmTitle)).not.toBeNull();
+    expect(screen.getByText(warning)).not.toBeNull();
+    expect(onSetSubstitution).not.toHaveBeenCalled();
+
+    chooseReason();
+    await act(async () => {
+      fireEvent.click(button(copy.confirmAction));
+    });
+    expect(onSetSubstitution).toHaveBeenCalledWith({
+      absentGeduId: SANNA,
+      subGeduId: PETRA,
+      reason: "sick",
+    });
+  });
+
+  it("warns about nothing when the sub holds every required qualification", () => {
+    renderEditor({
+      gedus: ONE_PRIMARY,
+      requiredQualifications: ["neuroinclusive"],
+    });
+
+    choose(copy.setSubstitute);
+    expect(
+      within(pickerRow(JOONAS)).queryByText(/Not qualified/),
+    ).toBeNull();
+    fireEvent.click(pickerRow(JOONAS));
+
+    expect(screen.getByText(copy.confirmTitle)).not.toBeNull();
+    expect(screen.queryByText(/qualification, which this product requires/)).toBeNull();
   });
 
   it("waits for a reason before the confirm will commit", () => {

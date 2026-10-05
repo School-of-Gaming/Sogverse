@@ -141,6 +141,7 @@ const WITH_OFFERS: SubstitutionRequest = {
   sessionDate: "Mon 17 Aug",
   sessionTime: "17:00–18:30",
   urgent: true,
+  requiredQualifications: [],
   role: "primary",
   reason: "sick",
   reasonNote: "Flunssa.",
@@ -370,6 +371,62 @@ describe("the admin Substitutions page's queue panel", () => {
       absentGeduId: IDS.requester,
       subGeduId: IDS.colleague,
     });
+  });
+
+  it("seats a gedu lacking a required qualification over a warning in the same confirm", async () => {
+    const seat = vi.fn((_draft: SeatSubstituteDraft) => Promise.resolve());
+    const { container } = renderPanel(
+      [{ ...WITHOUT_OFFERS, requiredQualifications: ["consumer_products"] }],
+      approveNothing,
+      seat,
+    );
+
+    await act(async () => pressSeat(container, 0));
+    // Iida holds nothing: still pickable, and the row says what she lacks.
+    const iida = pickerRow("Iida");
+    expect(iida.hasAttribute("disabled")).toBe(false);
+    expect(
+      within(iida).getByText("admin.products.geduPicker.notQualified"),
+    ).toBeTruthy();
+    await act(async () => iida.click());
+
+    // The dialog this flow always asks, with the gap as one line in it — and
+    // nothing written until it is confirmed.
+    expect(
+      screen.getByText("admin.substitutions.seatConfirmTitle"),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("admin.geduQualifications.missingWarning"),
+    ).toBeTruthy();
+    expect(seat).not.toHaveBeenCalled();
+
+    await act(async () =>
+      screen
+        .getByRole("button", { name: "admin.substitutions.seatConfirm" })
+        .click(),
+    );
+    expect(seat).toHaveBeenCalledTimes(1);
+    // The gap stays in the flow: the draft carries the seat, not the warning.
+    expect(seat.mock.calls[0][0].sub).toEqual({
+      id: IDS.colleague,
+      firstName: "Iida",
+      lastName: "Virtanen",
+    });
+  });
+
+  it("warns about nothing when the product requires nothing", async () => {
+    const { container } = renderPanel([WITHOUT_OFFERS], approveNothing);
+
+    await act(async () => pressSeat(container, 0));
+    expect(
+      within(pickerRow("Iida")).queryByText(
+        "admin.products.geduPicker.notQualified",
+      ),
+    ).toBeNull();
+    await act(async () => pickerRow("Iida").click());
+    expect(
+      screen.queryByText("admin.geduQualifications.missingWarning"),
+    ).toBeNull();
   });
 
   it("drops the request once the seat and the refetch have both landed", async () => {

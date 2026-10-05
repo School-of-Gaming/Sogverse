@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Identicon } from "@/components/ui/identicon";
@@ -22,7 +23,10 @@ import {
   SPOKEN_LANGUAGES,
   type SpokenLanguageCode,
 } from "@/lib/constants/spoken-languages";
+import { missingQualifications } from "@/lib/products/required-qualifications";
 import { cn } from "@/lib/utils";
+import type { GeduQualification } from "@/types";
+import { useQualificationNames } from "@/components/admin/qualification-names";
 
 /**
  * How far below the last row counts as reached — the same margin the sibling
@@ -102,7 +106,25 @@ interface GeduPickerSheetProps {
    * picker has no such alternative to offer.
    */
   offerTraineeInstead?: boolean;
-  onSelect: (gedu: UserListEntry) => void;
+  /**
+   * `staff` seats only: the qualifications the product being staffed requires
+   * (`productRequiredQualifications`). A row whose gedu lacks one **stays
+   * selectable** and says which it lacks — for an admin a missing
+   * qualification is a warning, never a refusal, and the caller's confirm step
+   * is where the admin says they meant it. Ignored on a `trainee` seat, which
+   * qualifications gate no more than certification does.
+   */
+  requiredQualifications?: readonly GeduQualification[];
+  /**
+   * The pick, with the required qualifications the gedu lacks — empty when
+   * they hold them all, and always empty on a `trainee` seat. Handed over
+   * rather than recomputed so the confirm step names exactly the gap the row
+   * showed.
+   */
+  onSelect: (
+    gedu: UserListEntry,
+    missingQualifications: readonly GeduQualification[],
+  ) => void;
 }
 
 /**
@@ -137,9 +159,12 @@ export function GeduPickerSheet({
   highlightId,
   seat = "staff",
   offerTraineeInstead = false,
+  requiredQualifications,
   onSelect,
 }: GeduPickerSheetProps) {
   const t = useTranslations("admin.products.geduPicker");
+  const qualificationNames = useQualificationNames();
+  const required = seat === "staff" ? (requiredQualifications ?? []) : [];
   const [search, setSearch] = useState("");
   const [languageFilter, setLanguageFilter] =
     useState<SpokenLanguageCode | null>(null);
@@ -307,6 +332,12 @@ export function GeduPickerSheet({
               const refusesUncertified = seat === "staff" && isUncertified;
               const isDisabled =
                 isCurrent || refusal !== null || refusesUncertified;
+              // Said only on a row that can be picked: a refused row already
+              // says why it cannot, and a second fact beside the refusal would
+              // be about a choice the admin is not being offered.
+              const missing = isDisabled
+                ? []
+                : missingQualifications(required, g.qualifications);
               return (
                 <GeduRow
                   key={g.id}
@@ -317,10 +348,16 @@ export function GeduPickerSheet({
                   isUncertified={isUncertified}
                   refusesUncertified={refusesUncertified}
                   showTraineeHint={refusesUncertified && offerTraineeInstead}
+                  qualificationGaps={missing.map((qualification) => ({
+                    qualification,
+                    line: t("notQualified", {
+                      qualification: qualificationNames[qualification],
+                    }),
+                  }))}
                   isDisabled={isDisabled}
                   onClick={() => {
                     if (isDisabled) return;
-                    onSelect(g);
+                    onSelect(g, missing);
                     onOpenChange(false);
                   }}
                 />
@@ -363,6 +400,14 @@ interface GeduRowProps {
   refusesUncertified: boolean;
   /** Say under the address that this educator can be placed as a trainee. */
   showTraineeHint: boolean;
+  /**
+   * One line per required qualification this selectable gedu lacks — empty
+   * where they hold every one the seat requires.
+   */
+  qualificationGaps: readonly {
+    qualification: GeduQualification;
+    line: string;
+  }[];
   isDisabled: boolean;
   onClick: () => void;
 }
@@ -375,6 +420,7 @@ function GeduRow({
   isUncertified,
   refusesUncertified,
   showTraineeHint,
+  qualificationGaps,
   isDisabled,
   onClick,
 }: GeduRowProps) {
@@ -428,6 +474,18 @@ function GeduRow({
         {showTraineeHint && (
           <p className="text-xs text-muted-foreground">{t("traineeInstead")}</p>
         )}
+        {/* Lines rather than badges beside the name: the qualification names
+            run long in the longer locales, and a row can lack both, which
+            beside a name would squeeze the surname that tells two Mikkos
+            apart. One line per gap, as the confirm step words them. They sit
+            where the trainee hint does, the other line a row carries about its
+            own standing, and never on the same row as it — the hint is for a
+            refused row, these for a selectable one. */}
+        {qualificationGaps.map(({ qualification, line }) => (
+          <StatusLine key={qualification} status="warning" size="xs" muted>
+            {line}
+          </StatusLine>
+        ))}
         {gedu.spoken_languages.length > 0 && (
           <div className="mt-1.5 flex gap-1">
             {gedu.spoken_languages.map((code) => (

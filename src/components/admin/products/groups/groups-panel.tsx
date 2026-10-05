@@ -34,12 +34,26 @@ import { useRobloxRenders } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
 import { computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
-import type { BillingMode, ProductTopic, ProductType } from "@/types";
+import type {
+  BillingMode,
+  GeduQualification,
+  ProductTag,
+  ProductTopic,
+  ProductType,
+} from "@/types";
 import { ROUTES } from "@/lib/constants";
+import { productRequiredQualifications } from "@/lib/products/required-qualifications";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { MissingQualificationsWarning } from "@/components/admin/missing-qualifications-warning";
 
 interface GroupsPanelProps {
   productId: string;
   productType: ProductType;
+  /**
+   * The product's tag, null when untagged. Read only together with the type,
+   * for the gedu qualifications a staff seat on it requires.
+   */
+  tag: ProductTag | null;
   /**
    * How the product is paid for — read only together with the type, to decide
    * whether this is a subscription-shaped seat. Passed straight through.
@@ -98,6 +112,7 @@ interface GroupsPanelProps {
 export function GroupsPanel({
   productId,
   productType,
+  tag,
   billingMode,
   topic,
   audience,
@@ -139,6 +154,16 @@ export function GroupsPanel({
   // never cleared on close, so a sheet animating out keeps the rows it opened
   // with rather than re-deciding which of them are selectable mid-exit.
   const [pickerSeat, setPickerSeat] = useState<GeduPickerSeat>("staff");
+  // A staff pick lacking a required qualification, held for the confirm that
+  // names the gap — the one add that is asked about before it is made.
+  const [unqualifiedAssignment, setUnqualifiedAssignment] = useState<{
+    assignment: Parameters<typeof addGedu.mutate>[0];
+    missing: readonly GeduQualification[];
+  } | null>(null);
+  const requiredQualifications = useMemo(
+    () => productRequiredQualifications({ product_type: productType, tag }),
+    [productType, tag],
+  );
   const [participantPickerOpen, setParticipantPickerOpen] = useState(false);
   // The seat whose club switch is open, and — separately — whether that switch
   // is currently moving money. The sheet reports the second back rather than
@@ -332,7 +357,8 @@ export function GroupsPanel({
             unavailable={alreadySeated}
             seat={pickerSeat}
             offerTraineeInstead
-            onSelect={(gedu) => {
+            requiredQualifications={requiredQualifications}
+            onSelect={(gedu, missing) => {
               if (!pickerForGroupId) return;
               if (pickerSeat === "trainee") {
                 addTrainee.mutate({
@@ -349,16 +375,46 @@ export function GroupsPanel({
               // stay. The pill's own select is where the other value is chosen,
               // one press later, rather than in a question every add has to
               // answer.
-              addGedu.mutate({
+              const assignment: Parameters<typeof addGedu.mutate>[0] = {
                 groupId: pickerForGroupId,
                 geduId: gedu.id,
                 firstName: gedu.first_name,
                 email: gedu.email,
                 role: "primary",
-              });
+              };
               setPickerForGroupId(null);
+              // A gedu lacking a qualification the product requires is
+              // assigned over a confirm that names the gap; anyone else is
+              // assigned on the press, as every add always was.
+              if (missing.length > 0) {
+                setUnqualifiedAssignment({ assignment, missing });
+                return;
+              }
+              addGedu.mutate(assignment);
             }}
           />
+
+          {/* Not held: the assignment is optimistic, so the pill is on the
+              group the moment the press lands and the dialog has nothing left
+              to wait for. Mounted only while asked, which is what clears the
+              question for the next pick. */}
+          {unqualifiedAssignment !== null && (
+            <ConfirmDialog
+              open
+              onOpenChange={(next) => {
+                if (!next) setUnqualifiedAssignment(null);
+              }}
+              title={t("unqualified.title")}
+              description={t("unqualified.body")}
+              confirmLabel={t("unqualified.action")}
+              confirmVariant="default"
+              onConfirm={() => addGedu.mutate(unqualifiedAssignment.assignment)}
+            >
+              <MissingQualificationsWarning
+                missing={unqualifiedAssignment.missing}
+              />
+            </ConfirmDialog>
+          )}
 
           {/* The club switch. An overlay like the two pickers above it, and
               here for the same reason: it reads reference data of its own

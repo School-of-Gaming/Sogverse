@@ -95,7 +95,8 @@ second list to keep current, and the last one was wrong.
   holds because admins are always trusted and assignment is an admin-only action driven
   entirely by this picker. If a non-admin assignment path is ever added, move the
   `certified` check into `apply_group_changes` — until then a DB-level check would be
-  redundant.
+  redundant. A missing qualification is not part of this gate: it is a warning the admin
+  confirms (Qualifications, below).
 - **Session-substitution gate (server-side, required)**: substituting a session is *gedu-initiated*,
   so unlike assignment this one is enforced in the database rather than in the picker.
   Certification is part of the may-substitute guard every substitution write shares, the pool of open
@@ -441,19 +442,23 @@ two in agreement, so a change to either is a change to both.
 **Rule: qualifications are a hard gate on substitution a gedu starts, and only a warning
 on what an admin does.** A gedu lacking a qualification the session's product requires
 does not see its request in the pool and cannot offer on it, and the offer's refusal is
-its own. An admin assigning a gedu to a group, seating a substitute or approving an offer
-is warned and may proceed; none of those writes asks. So the check is a predicate of its
-own and never a clause of the may-substitute predicate, which the admin writes share.
-Approval does not re-check the offerer: a qualification is effectively never revoked, so
-an offer made while qualified stays approvable. Nothing else reads qualifications —
+its own. An admin assigning a gedu to a staff seat or seating a substitute is warned and
+may proceed; none of the admin writes asks. So the check is a predicate of its own and
+never a clause of the may-substitute predicate, which the admin writes share. Approving
+an offer is not even warned about: a qualification is effectively never revoked, so an
+offer made while qualified stays approvable. A trainee seat asks nothing, as with
+certification. Nothing else reads qualifications —
 certification stays the only blocking lever over an educator everywhere else.
 
 The admin gedu picker learns what a gedu holds from its row: the qualifications ride on
-the paged people read beside `certified`, for the same reason it does.
+the paged people read beside `certified`, for the same reason it does. An unqualified row
+stays selectable and names each gap; the pick is then confirmed in a dialog carrying one
+warning line per missing qualification — the confirm the flow already asks where it has
+one (seating a sub), a dialog of its own only for a staff assignment.
 
 **Adding a qualification is a new `gedu_qualification` enum value plus its copy.** The
-app's list derives from the generated enum, in the enum's declared order; the admin card
-keys each name by the enum, so it fails to compile until the new value has one.
+app's list derives from the generated enum, in the enum's declared order; the admin
+surfaces key each name by the enum, so they fail to compile until the new value has one.
 
 ## Coverage field reuse
 

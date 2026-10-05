@@ -694,7 +694,8 @@
       "grantedOn": "nobpu’: {date}",
       "grantedOnBy": "nobpu’ {name}: {date}",
       "notGranted": "nobbe’lu’",
-      "error": "laH choHlu’be’pu’. yInID."
+      "error": "laH choHlu’be’pu’. yInID.",
+      "missingWarning": "{qualification} laH ghajbe’ Geduvam. laHvam poQ Doch."
     },
     "geduCertifyWarnings": {
       "title": "patlh yInob ’e’ DaHech’a’?",
@@ -1179,7 +1180,8 @@
         "absentGedu": "lIwlu’bogh Gedu",
         "notCertified": "patlh ghajbe’",
         "alreadyTrainee": "ghojwI’ ghaHpu’",
-        "traineeInstead": "ghojwI’ DachellaH."
+        "traineeInstead": "ghojwI’ DachellaH.",
+        "notQualified": "laH ghajbe’: {qualification}"
       },
       "participantPicker": {
         "title": "ghom yIchel",
@@ -1343,6 +1345,11 @@
             "failed": "rInbe’ chIjghach. ghom’a’ yIchIj yI’uy’qa’ — rap tlhobHa’ghach, vaj not cha’logh DIl qorDu’."
           },
           "confirm": "ghom’a’ yIchIj"
+        },
+        "unqualified": {
+          "title": "ghomvaD yIchu’ ’e’ DaHech’a’?",
+          "body": "laH ghajbe’, ’ach ghomvaD Dachu’laH.",
+          "action": "yIchu’ ’e’ yIruch"
         }
       },
       "seatLimitModes": {

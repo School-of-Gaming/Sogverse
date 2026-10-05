@@ -78,6 +78,7 @@ import type {
 } from "@/types";
 import type { SessionFeedEntry } from "@/components/gedu/session-feed";
 import { platformForTopic } from "@/lib/products/topics";
+import { productRequiredQualifications } from "@/lib/products/required-qualifications";
 import type { AppHref } from "@/lib/constants/routes";
 
 interface AdminGroupDetailsPageProps {
@@ -486,6 +487,13 @@ function Workspace({
   // the seat counts as being in this group — the last of the three because a
   // register has to know which sessions it is for. The family contact data
   // stays on this side of the map, most deliberately of all.
+  // What a sub seated from a card here has to hold — the picker and the
+  // confirm warn about a gap, and neither refuses it.
+  const requiredQualifications = useMemo(
+    () => productRequiredQualifications(product),
+    [product],
+  );
+
   const feedRoster = useMemo<SessionFeedGamer[]>(
     () =>
       feed.roster.map((member) => ({
@@ -774,6 +782,7 @@ function Workspace({
       <AdminSessionMenu
         staffing={entry.staffing}
         sessionDate={sessionDate}
+        requiredQualifications={requiredQualifications}
         onSetSubstitution={(draft) => handleSetSubstitution(sessionDate, draft)}
         onClearSubstitution={handleClearSubstitution}
         onWithdrawRequest={handleWithdrawRequest}

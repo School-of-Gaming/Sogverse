@@ -1,4 +1,8 @@
-import type { GeduAssignmentRole, SubstitutionReason } from "@/types";
+import type {
+  GeduAssignmentRole,
+  GeduQualification,
+  SubstitutionReason,
+} from "@/types";
 import type { AppHref } from "@/lib/constants/routes";
 import type { SessionFacts } from "@/lib/substitution-session-facts";
 
@@ -120,6 +124,11 @@ export interface SubstitutionRequest extends SubstitutionSession {
    * "soon".
    */
   urgent: boolean;
+  /**
+   * The gedu qualifications the session's product requires — what the picker
+   * behind "Seat someone else" warns about. Empty when it requires none.
+   */
+  requiredQualifications: readonly GeduQualification[];
   /** As delivered: the read orders by date then product, and so does the list. */
   offers: readonly SubstitutionOffer[];
 }

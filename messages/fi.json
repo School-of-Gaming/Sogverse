@@ -650,7 +650,8 @@
       "grantedOn": "Myönnetty {date}",
       "grantedOnBy": "Myöntänyt {name} {date}",
       "notGranted": "Ei myönnetty",
-      "error": "Pätevyyden päivitys epäonnistui. Yritä uudelleen."
+      "error": "Pätevyyden päivitys epäonnistui. Yritä uudelleen.",
+      "missingWarning": "Tällä Gedulla ei ole pätevyyttä, jota tämä tuote edellyttää: {qualification}."
     },
     "geduCertifyWarnings": {
       "title": "Hyväksytäänkö silti?",
@@ -1135,7 +1136,8 @@
         "absentGedu": "Tuurattava Gedu",
         "notCertified": "Ei hyväksytty",
         "alreadyTrainee": "Jo harjoittelijana",
-        "traineeInstead": "Voidaan lisätä harjoittelijaksi."
+        "traineeInstead": "Voidaan lisätä harjoittelijaksi.",
+        "notQualified": "Pätevyys puuttuu: {qualification}"
       },
       "participantPicker": {
         "title": "Lisää osallistuja",
@@ -1299,6 +1301,11 @@
             "failed": "Vaihto ei mennyt loppuun asti. Paina Vaihda kerhoa uudelleen — uusi painallus toistaa saman pyynnön, joten perhettä ei veloiteta kahteen kertaan."
           },
           "confirm": "Vaihda kerhoa"
+        },
+        "unqualified": {
+          "title": "Lisätäänkö silti?",
+          "body": "Puuttuva pätevyys ei estä lisäämistä, joten voit lisätä hänet ryhmään silti.",
+          "action": "Lisää silti"
         }
       },
       "seatLimitModes": {

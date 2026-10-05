@@ -650,7 +650,8 @@
       "grantedOn": "Beviljad {date}",
       "grantedOnBy": "Beviljad av {name} {date}",
       "notGranted": "Inte beviljad",
-      "error": "Det gick inte att uppdatera behörigheten. Försök igen."
+      "error": "Det gick inte att uppdatera behörigheten. Försök igen.",
+      "missingWarning": "Den här Gedun saknar behörigheten {qualification}, som den här produkten kräver."
     },
     "geduCertifyWarnings": {
       "title": "Certifiera ändå?",
@@ -1135,7 +1136,8 @@
         "absentGedu": "Gedun som vikarieras",
         "notCertified": "Inte certifierad",
         "alreadyTrainee": "Redan praktikant",
-        "traineeInstead": "Kan läggas till som praktikant i stället."
+        "traineeInstead": "Kan läggas till som praktikant i stället.",
+        "notQualified": "Saknar behörighet: {qualification}"
       },
       "participantPicker": {
         "title": "Lägg till en deltagare",
@@ -1299,6 +1301,11 @@
             "failed": "Bytet slutfördes inte. Tryck på Byt klubb igen — ett nytt tryck upprepar samma begäran, så familjen debiteras aldrig två gånger."
           },
           "confirm": "Byt klubb"
+        },
+        "unqualified": {
+          "title": "Tilldela ändå?",
+          "body": "En saknad behörighet hindrar inte tilldelningen, så du kan tilldela hen ändå.",
+          "action": "Tilldela ändå"
         }
       },
       "seatLimitModes": {
