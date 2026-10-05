@@ -25,6 +25,7 @@ import {
   type StyledMarkdownElement,
 } from "@/lib/authored-markdown";
 import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
+import { canonicalizeHref } from "@/lib/links/own-site";
 
 /**
  * **Authored markdown renders in one style everywhere, mail included.**
@@ -47,6 +48,7 @@ const VARIANTS = [
   "marketing",
   "profile",
   "article",
+  "landing",
 ] as const satisfies readonly MarkdownUseCase[];
 
 /** Every element the one map styles; a test below holds it equal to the map. */
@@ -536,6 +538,17 @@ describe("the mail and the page", () => {
   const withoutJoiners = (text: string) => text.split(JOINER).join("");
 
   /**
+   * Where a link leads, whatever form it is written in. The page writes an
+   * own-site link localised to its own language and the mail writes it absolute
+   * and bare, so the two are compared by the internal route they name.
+   */
+  const destinationOf = (href: string | null) => {
+    if (href === null) return null;
+    const canonical = canonicalizeHref(href);
+    return canonical.kind === "internal" ? canonical.path : href;
+  };
+
+  /**
    * What the two must agree on. The new-tab marker is lifted out first: it is
    * the page's affordance for a tab the mail never opens, not authored text.
    */
@@ -547,7 +560,7 @@ describe("the mail and the page", () => {
       tags: [...content.querySelectorAll("*")].map((el) => el.tagName.toLowerCase()),
       text: withoutJoiners(content.textContent).replace(/\s/g, ""),
       links: [...content.querySelectorAll("a")].map((a) => ({
-        href: a.getAttribute("href"),
+        href: destinationOf(a.getAttribute("href")),
         text: withoutJoiners(a.textContent),
       })),
     };

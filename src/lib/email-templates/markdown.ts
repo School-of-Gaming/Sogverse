@@ -17,6 +17,7 @@ import {
   type MarkdownLook,
   type MarkdownUseCase,
 } from "@/lib/authored-markdown";
+import { mailOwnSiteHref } from "@/lib/links/own-site";
 import { defuseAutolinks, escapeHtml } from "./utils";
 
 /**
@@ -338,11 +339,18 @@ function inline(name: string, look: MarkdownLook, inner: string, context: Contex
  * in a mail opens the browser anyway, so the app's new tab for another site's
  * address, and its marker saying so, have nothing to do here. The `rel`
  * withholds the referrer from every destination, as the app's does.
+ *
+ * **A link to one of our pages is written absolute and without a language**
+ * (`mailOwnSiteHref`, on `NEXT_PUBLIC_SITE_URL`'s origin): a mail has no page
+ * to resolve a relative address against, and a bare path lands the reader in
+ * their own stored language, as every server-built link does. The app shows
+ * the same link localised to the page it is on; both lead to the same page.
  */
 function link(url: string, label: string, context: Context): string {
   if (!context.links) return label;
-  const href = defaultUrlTransform(url);
-  if (href === "") return label;
+  const kept = defaultUrlTransform(url);
+  if (kept === "") return label;
+  const href = mailOwnSiteHref(kept);
   return `<a href="${escapeHtml(href)}" rel="noreferrer" style="${css(textDeclarations(MARKDOWN_LOOK.a))}">${label}</a>`;
 }
 
