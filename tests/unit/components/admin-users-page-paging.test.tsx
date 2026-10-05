@@ -77,6 +77,7 @@ function entry(id: string, firstName: string): UserListEntry {
     certified: false,
     criminal_record_check_passed: false,
     linked_gamers: [],
+    qualifications: [],
   };
 }
 

@@ -155,6 +155,11 @@ const sessionProductTranslation = z.object({
 export const sessionProductDocument = z.object({
   id: z.string(),
   product_type: z.enum(Constants.public.Enums.product_type),
+  /**
+   * Null when untagged. With the type, what the session's required gedu
+   * qualifications are read from.
+   */
+  tag: z.enum(Constants.public.Enums.product_tag).nullable(),
   topic: z.enum(Constants.public.Enums.product_topic),
   spoken_language_code: z.enum(Constants.public.Enums.spoken_language),
   timezone: z.string(),

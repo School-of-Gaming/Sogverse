@@ -13,6 +13,7 @@ import { myAssignedProductRows } from "@/services/assignments/assignments.contra
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
+import { productRequiredQualifications } from "@/lib/products/required-qualifications";
 
 /**
  * Session substitutions: who is absent, who stood in, who may reach what, and
@@ -64,7 +65,11 @@ import { deleteTestProducts } from "./product-helpers";
  *     the window's NEAR edge is measured against: an evening slot in a zone
  *     where it is currently midday (see MIDDAY_ZONE), identical but for the one
  *     weekday ORPHAN_PRODUCT's schedule skips.
- *   - SUB and THIRD are minted gedus, certified, torn down with the file.
+ *   - MUNI_PRODUCT (GROUP_MUNI) is an untagged municipality club: the one
+ *     kind of product that requires no gedu qualification at all.
+ *   - SUB and THIRD are minted gedus, certified and holding consumer_products
+ *     (every product above but MUNI_PRODUCT is a consumer club), torn down with
+ *     the file.
  */
 
 const PRODUCT = "00000000-0000-0000-0000-000000000810";
@@ -81,6 +86,9 @@ const GROUP_LATE = "00000000-0000-0000-0000-000000000819";
 /** Its twin, minus the one weekday, so the same date is an orphan on it. */
 const ORPHAN_PRODUCT = "00000000-0000-0000-0000-00000000081a";
 const GROUP_ORPHAN = "00000000-0000-0000-0000-00000000081b";
+/** The untagged municipality club, which requires no qualification. */
+const MUNI_PRODUCT = "00000000-0000-0000-0000-00000000082c";
+const GROUP_MUNI = "00000000-0000-0000-0000-00000000082d";
 
 const ALL_PRODUCTS = [
   PRODUCT,
@@ -88,6 +96,7 @@ const ALL_PRODUCTS = [
   OFF_PRODUCT,
   LATE_PRODUCT,
   ORPHAN_PRODUCT,
+  MUNI_PRODUCT,
 ];
 const ALL_GROUPS = [
   GROUP_A,
@@ -96,6 +105,7 @@ const ALL_GROUPS = [
   GROUP_OFF,
   GROUP_LATE,
   GROUP_ORPHAN,
+  GROUP_MUNI,
 ];
 
 /** The canonical forbidden SQLSTATE every guard primitive raises. */
@@ -363,6 +373,24 @@ describe("session substitutions", () => {
         max_age: 18,
         seat_count: null,
       })),
+      {
+        id: MUNI_PRODUCT,
+        product_type: "municipality_club",
+        billing_mode: "external_contract",
+        topic: "minecraft_java",
+        spoken_language_code: "en",
+        is_remote: true,
+        location_id: TEST_IDS.LOCATION_MUNICIPALITY,
+        timezone: "UTC",
+        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        is_visible: true,
+        created_by: TEST_IDS.ADMIN,
+        start_date: utcDate(-60),
+        end_date: utcDate(60),
+        min_age: 8,
+        max_age: 18,
+        seat_count: null,
+      },
     ]);
 
     await admin
@@ -375,7 +403,7 @@ describe("session substitutions", () => {
     // date in the term and no case has to pick its dates around a calendar.
     await admin.from("schedule_slots").insert(
       [0, 1, 2, 3, 4, 5, 6].flatMap((weekday) =>
-        [PRODUCT, SITE_PRODUCT].map((product_id) => ({
+        [PRODUCT, SITE_PRODUCT, MUNI_PRODUCT].map((product_id) => ({
           product_id,
           weekday,
           start_time: "10:00",
@@ -413,6 +441,7 @@ describe("session substitutions", () => {
       { id: GROUP_OFF, product_id: OFF_PRODUCT, name: "Elsewhere" },
       { id: GROUP_LATE, product_id: LATE_PRODUCT, name: "Evening Cohort" },
       { id: GROUP_ORPHAN, product_id: ORPHAN_PRODUCT, name: "Moved Cohort" },
+      { id: GROUP_MUNI, product_id: MUNI_PRODUCT, name: "Municipal Cohort" },
     ]);
 
     await admin.from("gedu_group_assignments").insert([
@@ -463,6 +492,18 @@ describe("session substitutions", () => {
       .from("gedu_group_assignments")
       .delete()
       .in("gedu_id", [subId, thirdId]);
+    // Both minted gedus hold consumer_products and nothing else, and the club
+    // is untagged: every product but MUNI_PRODUCT is a consumer club, so this
+    // is what lets them take a request there at all. The qualification cases
+    // take it away or add to it deliberately.
+    await admin.from("gedu_qualifications").delete().in("gedu_id", [subId, thirdId]);
+    await admin.from("gedu_qualifications").insert(
+      [subId, thirdId].map((gedu_id) => ({
+        gedu_id,
+        qualification: "consumer_products" as const,
+      })),
+    );
+    await admin.from("products").update({ tag: null }).eq("id", PRODUCT);
   });
 
   /** Writes a request row straight to the table, bypassing every RPC guard. */
@@ -1867,6 +1908,129 @@ describe("session substitutions", () => {
           .parse(data)
           .filter((row) => ALL_GROUPS.includes(row.group_id)),
       ).toEqual([]);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 7b. Qualifications: a hard gate on the gedu's paths, none on the admin's
+  // -------------------------------------------------------------------------
+
+  describe("qualifications gate the pool and the offer, and nothing an admin does", () => {
+    async function poolIds(client: SupabaseClient<Database>) {
+      const { data, error } = await client.rpc("get_open_substitution_requests");
+      expect(error).toBeNull();
+      return openSubstitutionRequests.parse(data).map((row) => row.request_id);
+    }
+
+    async function setQualification(
+      gedu: string,
+      qualification: Database["public"]["Enums"]["gedu_qualification"],
+      held: boolean,
+    ) {
+      const { error } = await adminAuth.rpc("set_gedu_qualification", {
+        p_gedu_id: gedu,
+        p_qualification: qualification,
+        p_held: held,
+      });
+      expect(error).toBeNull();
+    }
+
+    it("states the same requirement as the app's mirror, for every product type and tag", async () => {
+      const tags = [null, ...Constants.public.Enums.product_tag];
+      for (const product_type of Constants.public.Enums.product_type) {
+        for (const tag of tags) {
+          // An untagged product is the argument left out: its default is NULL.
+          const { data, error } = await admin.rpc(
+            "product_required_qualifications",
+            tag === null
+              ? { p_product_type: product_type }
+              : { p_product_type: product_type, p_tag: tag },
+          );
+          expect(error).toBeNull();
+          expect({ product_type, tag, required: data }).toEqual({
+            product_type,
+            tag,
+            required: productRequiredQualifications({ product_type, tag }),
+          });
+        }
+      }
+    });
+
+    it("keeps a consumer-club request out of the pool of a gedu without consumer_products, until granted", async () => {
+      const id = await seedRequest({ date: utcDate(7) });
+      await setQualification(subId, "consumer_products", false);
+
+      expect(await poolIds(subAuth)).not.toContain(id);
+
+      // Certified and otherwise able to take it: the qualification is the one
+      // thing missing, and the refusal says so in its own words.
+      const refused = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect(refused.error?.code).toBe(FORBIDDEN);
+      expect(refused.error?.message).toContain("is not qualified");
+
+      await setQualification(subId, "consumer_products", true);
+      expect(await poolIds(subAuth)).toContain(id);
+      const offered = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect(offered.error).toBeNull();
+    });
+
+    it("asks a neuroinclusive product for both of its qualifications", async () => {
+      await admin.from("products").update({ tag: "neuroinclusive" }).eq("id", PRODUCT);
+      const id = await seedRequest({ date: utcDate(7) });
+
+      // consumer_products alone is not enough on a neuroinclusive consumer club.
+      expect(await poolIds(subAuth)).not.toContain(id);
+      const refused = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect(refused.error?.message).toContain("is not qualified");
+
+      await setQualification(subId, "neuroinclusive", true);
+      expect(await poolIds(subAuth)).toContain(id);
+
+      // And neuroinclusive alone is not enough either.
+      await setQualification(subId, "consumer_products", false);
+      expect(await poolIds(subAuth)).not.toContain(id);
+    });
+
+    it("asks nothing of a gedu on an untagged municipality club", async () => {
+      await setQualification(subId, "consumer_products", false);
+      const id = await seedRequest({ groupId: GROUP_MUNI, date: utcDate(7) });
+
+      expect(await poolIds(subAuth)).toContain(id);
+      const { error } = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect(error).toBeNull();
+    });
+
+    it("lets an admin seat an unqualified gedu directly", async () => {
+      await setQualification(subId, "consumer_products", false);
+
+      const { data, error } = await adminAuth.rpc("set_session_substitution", {
+        p_group_id: GROUP_A,
+        p_session_date: utcDate(5),
+        p_absent_gedu_id: TEST_IDS.GEDU,
+        p_sub_gedu_id: subId,
+        p_reason: "sick",
+      });
+      expect(error).toBeNull();
+      expect(substitutionRequestDocument.parse(data).substitute_id).toBe(subId);
+    });
+
+    it("approves an offer whose gedu has since lost the qualification", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+      const offered = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect(offered.error).toBeNull();
+      await setQualification(subId, "consumer_products", false);
+
+      const { data: offer } = await admin
+        .from("session_substitution_offers")
+        .select("id")
+        .eq("request_id", id)
+        .eq("gedu_id", subId)
+        .single();
+      const { data, error } = await adminAuth.rpc("approve_session_substitution_offer", {
+        p_offer_id: offer?.id ?? "",
+      });
+      expect(error).toBeNull();
+      expect(substitutionRequestDocument.parse(data).substitute_id).toBe(subId);
     });
   });
 

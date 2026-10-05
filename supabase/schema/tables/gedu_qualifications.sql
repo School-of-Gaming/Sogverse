@@ -14,7 +14,7 @@ CREATE TABLE public.gedu_qualifications (
 -- Name: TABLE gedu_qualifications; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.gedu_qualifications IS 'The qualifications each game educator holds: a row means the gedu holds that qualification, and no row means they do not. Latest state only, with no history: revoking a qualification deletes its row. Keyed to gedu_profiles, so only an account carrying the gedu extension row can hold one, and the qualifications go with that row. Written only by set_gedu_qualification; authenticated holds SELECT alone, an admin reading every row and a gedu their own. Gates nothing.';
+COMMENT ON TABLE public.gedu_qualifications IS 'The qualifications each game educator holds: a row means the gedu holds that qualification, and no row means they do not. Latest state only, with no history: revoking a qualification deletes its row. Keyed to gedu_profiles, so only an account carrying the gedu extension row can hold one, and the qualifications go with that row. Written only by set_gedu_qualification; authenticated holds SELECT alone, an admin reading every row and a gedu their own. Read by gedu_holds_session_qualifications, which gates the substitution pool and offers, and carried on user_list_entries for the admin picker''s warning.';
 
 
 --

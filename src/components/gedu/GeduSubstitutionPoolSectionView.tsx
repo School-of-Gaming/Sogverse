@@ -13,6 +13,7 @@ import {
   sessionFactsWhen,
 } from "@/components/session-substitution/SubstitutionSessionFacts";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
+import { substitutionOfferFailureKey } from "@/services/session-substitution";
 import {
   isSubstitutionUrgent,
   type SubstitutionPoolRow,
@@ -210,7 +211,7 @@ function OfferConfirmDialog({
       confirmVariant="default"
       holdWhileCommitting
       onConfirm={onConfirm}
-      describeError={() => t("poolActionFailed")}
+      describeError={(error) => t(substitutionOfferFailureKey(error))}
     />
   );
 }

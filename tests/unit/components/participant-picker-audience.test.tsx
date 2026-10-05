@@ -81,6 +81,7 @@ function family(
     certified: false,
     criminal_record_check_passed: false,
     linked_gamers: gamers,
+    qualifications: [],
   };
 }
 

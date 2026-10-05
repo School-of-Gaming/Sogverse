@@ -87,6 +87,7 @@ function onePage(id: string, firstName: string, role: "customer" | "gedu") {
         certified: true,
         criminal_record_check_passed: false,
         linked_gamers: [],
+        qualifications: [],
       },
     ],
     { from: 0, total: 1 },

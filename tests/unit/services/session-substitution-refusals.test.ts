@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   seatSubstituteFailureKey,
+  substitutionOfferFailureKey,
   substitutionRequestFailureKey,
   substitutionRequestRefusalMeansAlreadyFiled,
 } from "@/services/session-substitution";
@@ -133,6 +134,35 @@ describe("seatSubstituteFailureKey", () => {
     ).toBe("seatFailedSeatGone");
     expect(seatSubstituteFailureKey(new Error("Failed to fetch"))).toBe(
       "seatFailed",
+    );
+  });
+});
+
+describe("substitutionOfferFailureKey", () => {
+  it("names a missing qualification, which trying again cannot fix", () => {
+    expect(
+      substitutionOfferFailureKey(
+        refusal("42501", "this gedu is not qualified for this session's product"),
+      ),
+    ).toBe("poolOfferFailedNotQualified");
+  });
+
+  it("leaves the may-substitute refusal and everything else on the generic line", () => {
+    // The same SQLSTATE without the phrase is the may-substitute guard, which
+    // says nothing about why; a closed request and a network failure likewise.
+    expect(substitutionOfferFailureKey(refusal("42501", "Forbidden"))).toBe(
+      "poolActionFailed",
+    );
+    expect(
+      substitutionOfferFailureKey(
+        refusal(
+          "23514",
+          "this substitution request is substituted and is no longer taking offers",
+        ),
+      ),
+    ).toBe("poolActionFailed");
+    expect(substitutionOfferFailureKey(new Error("Failed to fetch"))).toBe(
+      "poolActionFailed",
     );
   });
 });

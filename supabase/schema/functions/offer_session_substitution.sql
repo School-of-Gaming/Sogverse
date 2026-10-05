@@ -42,6 +42,13 @@ BEGIN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
+  -- Its own message, so the client can say why: the gedu is otherwise able to
+  -- take the session, and the qualification is the one thing missing.
+  IF NOT public.gedu_holds_session_qualifications(v_caller, v_row.group_id) THEN
+    RAISE EXCEPTION 'this gedu is not qualified for this session''s product'
+      USING ERRCODE = '42501';
+  END IF;
+
   -- Idempotent on the unique key: offering twice is one offer, and a double-tap
   -- is not an error worth surfacing.
   INSERT INTO public.session_substitution_offers (request_id, gedu_id)
@@ -58,7 +65,7 @@ $$;
 -- Name: FUNCTION offer_session_substitution(p_request_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.offer_session_substitution(p_request_id uuid) IS '"Offer to substitute", from the gedu dashboard''s pool list. Guarded on gedu_may_substitute_session — certified, not the absent gedu, not already expected at that session, and holding no non-withdrawn request of their own on that (group, date) — plus the request being `open` and dated today or later in the product''s timezone. Idempotent on (request, gedu): offering twice is one offer. There is deliberately no ranking, no eligibility beyond certification, and no notification on any channel; the office decides, and auto-approving the first offer was rejected because the admin step IS the product. Returns the request document, which carries no offer_count for an offerer — who else volunteered is not their business. The document it returns CONCEALS the absent gedu: requested_by and requested_by_first_name arrive as JSON null, because otherwise offering would be a way to unmask the absent person on any pool row, leaving the pool''s own "names the session, never the person" rule one button-press deep.';
+COMMENT ON FUNCTION public.offer_session_substitution(p_request_id uuid) IS '"Offer to substitute", from the gedu dashboard''s pool list. Guarded on gedu_may_substitute_session — certified, not the absent gedu, not already expected at that session, and holding no non-withdrawn request of their own on that (group, date) — then on gedu_holds_session_qualifications, refused with its own 42501 message saying the gedu "is not qualified" so the client can name it; plus the request being `open` and dated today or later in the product''s timezone. Idempotent on (request, gedu): offering twice is one offer. There is deliberately no ranking, no eligibility beyond certification and qualifications, and no notification on any channel; the office decides, and auto-approving the first offer was rejected because the admin step IS the product. Returns the request document, which carries no offer_count for an offerer — who else volunteered is not their business. The document it returns CONCEALS the absent gedu: requested_by and requested_by_first_name arrive as JSON null, because otherwise offering would be a way to unmask the absent person on any pool row, leaving the pool''s own "names the session, never the person" rule one button-press deep.';
 
 
 --

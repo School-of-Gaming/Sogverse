@@ -2399,6 +2399,7 @@
       "poolWithdrawAction": "Withdraw offer",
       "poolWithdrawPending": "Withdrawing…",
       "poolActionFailed": "That didn’t save. Try again.",
+      "poolOfferFailedNotQualified": "This session needs a qualification you don’t hold, so you can’t offer to cover it.",
       "pageTitle": "Substitutions",
       "back": "Back to My SOG",
       "mineHeading": "You’re substituting",

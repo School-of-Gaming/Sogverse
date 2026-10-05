@@ -2399,6 +2399,7 @@
       "poolWithdrawAction": "Retirer ma proposition",
       "poolWithdrawPending": "Retrait…",
       "poolActionFailed": "Cela n’a pas été enregistré. Réessayez.",
+      "poolOfferFailedNotQualified": "Cette séance exige une qualification que vous n’avez pas : vous ne pouvez donc pas proposer de remplacement.",
       "pageTitle": "Remplacements",
       "back": "Retour à Mon SOG",
       "mineHeading": "Vos remplacements",

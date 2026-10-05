@@ -70,6 +70,7 @@ function gedu(
     certified: id !== IDS.uncertified,
     criminal_record_check_passed: true,
     linked_gamers: [],
+    qualifications: [],
   };
 }
 

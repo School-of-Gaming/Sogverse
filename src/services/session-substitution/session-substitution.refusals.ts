@@ -144,6 +144,32 @@ export function seatSubstituteFailureKey(
   return "seatFailed";
 }
 
+/** The lines a refused offer can read as, all under `gedu.substitution`. */
+export type SubstitutionOfferFailureKey =
+  | "poolOfferFailedNotQualified"
+  | "poolActionFailed";
+
+/**
+ * Which refusal `offer_session_substitution` raised, for a gedu offering from
+ * the pool.
+ *
+ * Only one is worth telling apart: the session's product requires a
+ * qualification the gedu does not hold. The pool already leaves such requests
+ * out, so this is a list read before the requirement changed — and "try again"
+ * would be untrue, because trying again cannot succeed. It shares `42501` with
+ * the generic refusal and is told apart by its phrase. Everything else, the
+ * request having closed meanwhile included, falls to the generic line.
+ */
+export function substitutionOfferFailureKey(
+  error: unknown,
+): SubstitutionOfferFailureKey {
+  const { code, message } = wireError(error);
+  if (code === "42501" && message.includes("is not qualified")) {
+    return "poolOfferFailedNotQualified";
+  }
+  return "poolActionFailed";
+}
+
 /** The `code` and `message` off a Postgres error, or empty strings. */
 function wireError(error: unknown): { code: string; message: string } {
   if (typeof error !== "object" || error === null) {

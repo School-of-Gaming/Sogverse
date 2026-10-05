@@ -85,6 +85,7 @@ function request(
     product: {
       id: `product-${id}`,
       product_type: "consumer_club",
+      tag: null,
       topic: "minecraft_java",
       spoken_language_code: "fi",
       timezone: TIME_ZONE,

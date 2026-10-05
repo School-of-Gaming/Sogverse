@@ -2399,6 +2399,7 @@
       "poolWithdrawAction": "Dra tillbaka erbjudandet",
       "poolWithdrawPending": "Drar tillbaka…",
       "poolActionFailed": "Det sparades inte. Försök igen.",
+      "poolOfferFailedNotQualified": "Det här tillfället kräver en behörighet som du inte har, så du kan inte erbjuda dig att vikariera.",
       "pageTitle": "Vikariat",
       "back": "Tillbaka till Min SOG",
       "mineHeading": "Dina vikariat",

@@ -309,6 +309,9 @@ import { TEST_IDS } from "./constants";
  *                  that must NEVER exist, backing the "unknown id is refused"
  *                  cases, and 828-82b catalogue entries — three Library covers
  *                  and one product picture a cover may not be
+ *   82c-82d        session-substitution.test.ts again: the untagged
+ *                  municipality club 82c with group 82d, the one kind of
+ *                  product that requires no gedu qualification
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

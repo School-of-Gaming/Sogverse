@@ -97,6 +97,7 @@ function candidate(id: string, firstName: string): UserListEntry {
     certified: true,
     criminal_record_check_passed: true,
     linked_gamers: [],
+    qualifications: [],
   };
 }
 

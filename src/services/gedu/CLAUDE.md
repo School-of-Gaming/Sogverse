@@ -432,10 +432,24 @@ both server-side; an admin reads every gedu's qualifications, a gedu their own. 
 starting holdings were derived once from assignments, with no granting admin; nothing
 re-derives them.
 
-**Rule: qualifications gate nothing.** No assignment, picker or check reads them, for the
-same reason the contract and the record check don't: certification stays the only
-blocking lever over an educator. Making a qualification gate something is a separate
-decision.
+**A product requires `neuroinclusive` when it is tagged neuroinclusive, and
+`consumer_products` when families pay for it** — every product type but the municipality
+club. One product can require both or neither. The database states the mapping once and
+the app mirrors it in `src/lib/products/`; a DB test walking every type and tag holds the
+two in agreement, so a change to either is a change to both.
+
+**Rule: qualifications are a hard gate on substitution a gedu starts, and only a warning
+on what an admin does.** A gedu lacking a qualification the session's product requires
+does not see its request in the pool and cannot offer on it, and the offer's refusal is
+its own. An admin assigning a gedu to a group, seating a substitute or approving an offer
+is warned and may proceed; none of those writes asks. So the check is a predicate of its
+own and never a clause of the may-substitute predicate, which the admin writes share.
+Approval does not re-check the offerer: a qualification is effectively never revoked, so
+an offer made while qualified stays approvable. Nothing else reads qualifications —
+certification stays the only blocking lever over an educator everywhere else.
+
+The admin gedu picker learns what a gedu holds from its row: the qualifications ride on
+the paged people read beside `certified`, for the same reason it does.
 
 **Adding a qualification is a new `gedu_qualification` enum value plus its copy.** The
 app's list derives from the generated enum, in the enum's declared order; the admin card

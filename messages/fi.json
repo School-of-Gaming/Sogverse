@@ -2399,6 +2399,7 @@
       "poolWithdrawAction": "Peru tarjous",
       "poolWithdrawPending": "Perutaan…",
       "poolActionFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "poolOfferFailedNotQualified": "Tämä kerta vaatii pätevyyden, jota sinulla ei ole, joten et voi tarjoutua tuuraajaksi.",
       "pageTitle": "Tuuraukset",
       "back": "Takaisin Omaan SOGiin",
       "mineHeading": "Tuurauksesi",
