@@ -42,6 +42,7 @@ const ASSIGNMENT_ROW = {
   product: {
     id: PRODUCT_ID,
     product_type: "consumer_club",
+    tag: null,
     topic: "minecraft_java",
     spoken_language_code: "en",
     timezone: "UTC",
