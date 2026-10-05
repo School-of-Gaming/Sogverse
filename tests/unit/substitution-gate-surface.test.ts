@@ -76,9 +76,13 @@ const ASSIGNMENT_ONLY = new Map<string, string>([
   ],
 ]);
 
-/** Every file under `src/` whose bytes name the assignment table. */
-function filesNamingAssignments(): string[] {
-  const found: string[] = [];
+/**
+ * Every file under `src/` whose bytes name the assignment table, mapped to
+ * whether it also reaches for the substitution branch — one walk, each file
+ * read once, both questions answered from the same bytes.
+ */
+function surfaceOfAssignments(): Map<string, boolean> {
+  const surface = new Map<string, boolean>();
 
   const walk = (dir: string): void => {
     // eslint-disable-next-line security/detect-non-literal-fs-filename -- walks a fixed in-repo directory (src/) from a path built out of cwd and a literal, no external input; the walk IS the regeneration command this check is built on
@@ -90,32 +94,36 @@ function filesNamingAssignments(): string[] {
       }
       if (!EXTENSIONS.some((ext) => entry.name.endsWith(ext))) continue;
       // eslint-disable-next-line security/detect-non-literal-fs-filename -- reads a file the fixed in-repo walk above discovered
-      if (!readFileSync(full, "utf8").includes(ASSIGNMENTS)) continue;
-      found.push(relative(SRC, full).split(sep).join("/"));
+      const source = readFileSync(full, "utf8");
+      if (!source.includes(ASSIGNMENTS)) continue;
+      surface.set(
+        relative(SRC, full).split(sep).join("/"),
+        SUBSTITUTION_BRANCH.some((token) => source.includes(token)),
+      );
     }
   };
 
   walk(SRC);
-  return found.sort();
-}
-
-function hasSubstitutionBranch(path: string): boolean {
-  // eslint-disable-next-line security/detect-non-literal-fs-filename -- the path came out of the fixed in-repo walk above, or out of the annotated table in this file; reading it is the point of the check
-  const source = readFileSync(join(SRC, path.split("/").join(sep)), "utf8");
-  return SUBSTITUTION_BRANCH.some((token) => source.includes(token));
+  return surface;
 }
 
 describe("the substitution branch on every gate named in TypeScript", () => {
+  // Walked once, while the suite is collected rather than inside a test: a
+  // test's time limit is for its assertion, and a walk of the whole tree under
+  // a loaded full run can outlast it.
+  const surface = surfaceOfAssignments();
+
   it("finds the surface at all", () => {
     // A walk that matched nothing would make every assertion below vacuous —
     // which is exactly how a completeness check rots into a rubber stamp.
-    expect(filesNamingAssignments().length).toBeGreaterThan(3);
+    expect(surface.size).toBeGreaterThan(3);
   });
 
   it("classifies every file: the substitution branch, or a written reason", () => {
-    const unclassified = filesNamingAssignments().filter(
-      (path) => !hasSubstitutionBranch(path) && !ASSIGNMENT_ONLY.has(path),
-    );
+    const unclassified = [...surface]
+      .filter(([path, hasBranch]) => !hasBranch && !ASSIGNMENT_ONLY.has(path))
+      .map(([path]) => path)
+      .sort();
 
     expect(
       unclassified,
@@ -130,10 +138,9 @@ describe("the substitution branch on every gate named in TypeScript", () => {
     // An annotation for a file that no longer names the table, or that has
     // since grown the substitution branch, is a rubber stamp waiting to be inherited.
     // Deleting it is part of the change that made it untrue.
-    const surface = new Set(filesNamingAssignments());
-    const stale = [...ASSIGNMENT_ONLY.keys()].filter(
-      (path) => !surface.has(path) || hasSubstitutionBranch(path),
-    );
+    // `false` is the only live state: absent means the file stopped naming the
+    // table, `true` means it now carries the branch.
+    const stale = [...ASSIGNMENT_ONLY.keys()].filter((path) => surface.get(path) !== false);
 
     expect(
       stale,
