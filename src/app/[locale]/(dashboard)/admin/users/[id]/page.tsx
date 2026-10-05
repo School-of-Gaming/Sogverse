@@ -370,18 +370,16 @@ export default async function AdminUserDetailPage({
                 beside it already names the service, so the mark is hidden from
                 assistive technology. */}
             {canLinkDiscord && (
-              <p className="flex items-baseline gap-1.5 text-muted-foreground">
-                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide">
-                  <Image
-                    src={discordSymbol}
-                    alt=""
-                    height={10}
-                    unoptimized
-                    aria-hidden
-                    className="shrink-0"
-                  />
-                  {t("discordLabel")}
-                </span>
+              // The mark is the line's only label, so it carries the name as
+              // its alt text rather than sitting beside a word as decoration.
+              <p className="flex items-center gap-2 text-muted-foreground">
+                <Image
+                  src={discordSymbol}
+                  alt="Discord"
+                  height={16}
+                  unoptimized
+                  className="shrink-0"
+                />
                 <span>
                   {discordLink
                     ? t("discordLinked", {
