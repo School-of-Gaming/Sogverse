@@ -164,8 +164,8 @@ describe("buildSessionPickerMessage", () => {
     expect(message.components[0]).toMatchObject({ type: 17, accent_color: 0xfaa901 });
     expect(texts(message)).toEqual(
       expect.arrayContaining([
-        "### Which session can’t you make?",
-        "Pick the session you can’t make. Your reason and note are shown to admins only.",
+        "### Which session do you need a substitute for?",
+        "Your reason and note are shown to admins only.",
       ]),
     );
   });
@@ -255,7 +255,7 @@ describe("buildSessionPickerMessage", () => {
     const message = buildSessionPickerMessage({ copy: fi, logoUrl: LOGO, sessions, now: NOW, page: 0, substitutionsUrl: URL });
 
     expect(texts(message)).toEqual(
-      expect.arrayContaining(["### Mille kerralle et pääse?", "**Tämä viikko**"]),
+      expect.arrayContaining(["### Mille kerralle tarvitset tuuraajan?", "**Tämä viikko**"]),
     );
   });
 });
@@ -428,7 +428,7 @@ describe("the logo", () => {
     expect(lines.length).toBeGreaterThanOrEqual(1);
     expect(lines.length).toBeLessThanOrEqual(3);
     expect(lines.every((line) => line.type === 10)).toBe(true);
-    expect(lines[0].content).toBe("-# School of Gaming · Substitutions");
+    expect(lines[0].content).toBe("# School of Gaming · Substitutions");
   });
 
   it.each(steps)("heads %s with plain lines when there is no logo", (_, build) => {
@@ -439,7 +439,7 @@ describe("the logo", () => {
     expect(ofType(bare, 11)).toHaveLength(0);
     expect(containerChildren(bare)[0]).toEqual({
       type: 10,
-      content: "-# School of Gaming · Substitutions",
+      content: "# School of Gaming · Substitutions",
     });
     // The same lines and controls, only unwrapped.
     expect(texts(bare)).toEqual(texts(withLogo));
@@ -451,7 +451,7 @@ describe("the logo", () => {
     const [header] = containerChildren(message);
 
     expect(componentList.parse(header.components).map((line) => line.content)).toEqual([
-      "-# School of Gaming · Substitutions",
+      "# School of Gaming · Substitutions",
       "### I can’t make this session",
     ]);
   });

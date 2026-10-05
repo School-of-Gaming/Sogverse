@@ -2408,8 +2408,8 @@
       "mineHeading": "Vos remplacements",
       "mineAllClear": "Vous n’avez aucun remplacement à venir.",
       "fileAction": "Vous ne pouvez pas assurer une séance ?",
-      "filePickTitle": "Quelle séance ne pouvez-vous pas assurer ?",
-      "filePickBody": "Choisissez la séance que vous ne pouvez pas assurer. Votre motif et votre note ne sont visibles que par les administrateurs.",
+      "filePickTitle": "Pour quelle séance avez-vous besoin d’un remplaçant ?",
+      "filePickBody": "Votre motif et votre note ne sont visibles que par les administrateurs.",
       "fileAlreadyRequested": "Remplacement déjà demandé",
       "filePickWeekThis": "Cette semaine",
       "filePickWeekNext": "La semaine prochaine",
@@ -5286,13 +5286,13 @@
   "discordLink": {
     "confirm": {
       "title": "Associer votre compte Discord",
-      "body": "Associer le compte Discord <b>@{username}</b> à votre compte School of Gaming ? School of Gaming pourra alors vous joindre sur Discord.",
+      "body": "Associer le compte Discord <b>@{username}</b> à votre compte School of Gaming ? School of Gaming pourra alors vous joindre sur Discord, et ce compte Discord pourra utiliser le bot School of Gaming en votre nom. N’associez qu’un compte qui vous appartient.",
       "action": "Associer le compte",
       "failed": "Une erreur s’est produite et votre compte n’a pas été associé. Réessayez."
     },
     "linked": {
       "title": "Associé à @{username}",
-      "body": "School of Gaming peut désormais vous joindre sur Discord.",
+      "body": "School of Gaming peut désormais vous joindre sur Discord, et vous pouvez y utiliser le bot School of Gaming.",
       "goToMySog": "Aller à Mon SOG",
       "goToDashboard": "Aller au tableau de bord"
     },

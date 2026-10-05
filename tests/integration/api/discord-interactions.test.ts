@@ -625,7 +625,7 @@ describe("POST /api/discord/interactions — /sub", () => {
     });
     expect(patched.flags).toBe(1 << 15);
     expect(patched.content).toBeUndefined();
-    expect(texts(patched)).toContain("### Mille kerralle et pääse?");
+    expect(texts(patched)).toContain("### Mille kerralle tarvitset tuuraajan?");
     expect(ids(patched)).toEqual(["sub:s:2026-10-05:0", "sub:s:2026-10-12:0", "sub:p:1"]);
     const [select] = walk(patched.components).filter((component) => component.type === 3);
     expect(select.options).toMatchObject([
@@ -643,7 +643,7 @@ describe("POST /api/discord/interactions — /sub", () => {
         media: { url: "https://sogverse.sog.gg/apple-icon.png" },
       });
       expect(texts({ components: section.components })).toContain(
-        "-# School of Gaming · Substitutions",
+        "# School of Gaming · Substitutions",
       );
       mockFetch.mockClear();
     }
@@ -656,7 +656,7 @@ describe("POST /api/discord/interactions — /sub", () => {
 
       expect(ofType(patched, 9)).toHaveLength(0);
       expect(ofType(patched, 11)).toHaveLength(0);
-      expect(texts(patched)).toContain("-# School of Gaming · Substitutions");
+      expect(texts(patched)).toContain("# School of Gaming · Substitutions");
       expect(JSON.stringify(patched)).not.toContain("apple-icon");
     } finally {
       vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");

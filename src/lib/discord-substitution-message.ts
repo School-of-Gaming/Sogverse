@@ -271,7 +271,7 @@ function message(
   logoUrl: string | null,
   { head = [], body }: { head?: DiscordComponent[]; body: DiscordComponent[] },
 ): DiscordComponentsMessage {
-  const lines = [text(`-# School of Gaming · ${copy.picker("pageTitle")}`), ...head];
+  const lines = [text(`# School of Gaming · ${copy.picker("pageTitle")}`), ...head];
   const header =
     logoUrl === null
       ? lines
@@ -296,8 +296,9 @@ function message(
 
 /**
  * The session's day and clock face, **in the product's own zone**, which the
- * range names — Discord does not say where its reader is, and a session's own
- * zone is the one answer that is never wrong about it.
+ * range names. A sanctioned exception to the viewer-timezone rule: no reader
+ * zone ever reaches the bot, and Discord's own timestamps cannot sit in a
+ * select option (`src/app/api/discord/CLAUDE.md` has the ruling).
  */
 export function discordSessionWhen(
   session: GeduUpcomingSession,

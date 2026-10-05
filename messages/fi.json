@@ -2408,8 +2408,8 @@
       "mineHeading": "Tuurauksesi",
       "mineAllClear": "Sinulla ei ole tulevia tuurauksia.",
       "fileAction": "Etkö pääse jollekin kerralle?",
-      "filePickTitle": "Mille kerralle et pääse?",
-      "filePickBody": "Valitse kerta, jolle et pääse. Syy ja viesti näkyvät vain ylläpitäjille.",
+      "filePickTitle": "Mille kerralle tarvitset tuuraajan?",
+      "filePickBody": "Syy ja viesti näkyvät vain ylläpitäjille.",
       "fileAlreadyRequested": "Tuuraajaa on jo pyydetty",
       "filePickWeekThis": "Tämä viikko",
       "filePickWeekNext": "Ensi viikko",
@@ -5286,13 +5286,13 @@
   "discordLink": {
     "confirm": {
       "title": "Yhdistä Discord-tilisi",
-      "body": "Yhdistetäänkö Discord-tili <b>@{username}</b> School of Gaming -tiliisi? Silloin School of Gaming voi tavoittaa sinut Discordissa.",
+      "body": "Yhdistetäänkö Discord-tili <b>@{username}</b> School of Gaming -tiliisi? School of Gaming voi silloin tavoittaa sinut Discordissa, ja tuo Discord-tili voi käyttää School of Gamingin bottia puolestasi. Yhdistä vain oma tilisi.",
       "action": "Yhdistä tili",
       "failed": "Jokin meni vikaan, eikä tiliäsi yhdistetty. Yritä uudelleen."
     },
     "linked": {
       "title": "Yhdistetty Discord-tiliin @{username}",
-      "body": "School of Gaming voi nyt tavoittaa sinut Discordissa.",
+      "body": "School of Gaming voi nyt tavoittaa sinut Discordissa, ja voit käyttää siellä School of Gamingin bottia.",
       "goToMySog": "Siirry Oma SOG -sivulle",
       "goToDashboard": "Siirry hallintapaneeliin"
     },

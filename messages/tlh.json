@@ -2448,8 +2448,8 @@
       "mineHeading": "DalIwbogh may’mey",
       "mineAllClear": "may’ DalIwbogh tu’lu’be’.",
       "fileAction": "may’ DapawlaHbe’’a’?",
-      "filePickTitle": "nuq may’ DapawlaHbe’?",
-      "filePickBody": "may’ yIwIv. meq ghantoHmey je leghlaH ra’wI’pu’ neH.",
+      "filePickTitle": "nuq may’vaD lIwwI’ DaneH?",
+      "filePickBody": "meq ghantoHmey je leghlaH ra’wI’pu’ neH.",
       "fileAlreadyRequested": "lIw tlhobta’lu’bogh",
       "filePickWeekThis": "hoghvam",
       "filePickWeekNext": "hogh veb",
@@ -4405,13 +4405,13 @@
   "discordLink": {
     "confirm": {
       "title": "Discord ghItlhlIj yIrar",
-      "body": "Discord ghItlh <b>@{username}</b> School of Gaming ghItlhlIj DararneS'a'? vaj Discord Daq SoH ghoSlaH School of Gaming.",
+      "body": "Discord ghItlh <b>@{username}</b> School of Gaming ghItlhlIj DararneS'a'? vaj Discord Daq SoH ghoSlaH School of Gaming, ’ej SoHvaD School of Gaming bot lo’laH Discord ghItlhvam. ghItlhlIj neH yIrar.",
       "action": "ghItlh yIrar",
       "failed": "Qagh. ghItlhlIj rarlu'be'. yInIDqa'."
     },
     "linked": {
       "title": "@{username} rarlu'pu'",
-      "body": "DaH Discord Daq SoH ghoSlaH School of Gaming.",
+      "body": "DaH Discord Daq SoH ghoSlaH School of Gaming, ’ej pa’ School of Gaming bot Dalo’laH.",
       "goToMySog": "My SOG yIghoS",
       "goToDashboard": "QaD yIghoS"
     },

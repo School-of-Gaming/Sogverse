@@ -202,7 +202,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
     expect(message.flags).toBe(1 << 15);
     expect(message.content).toBeUndefined();
     const body = JSON.stringify(message);
-    expect(body).toContain("Mille kerralle et pääse?");
+    expect(body).toContain("Mille kerralle tarvitset tuuraajan?");
     const ids = customIds(message.components);
     expect(ids.length).toBeGreaterThan(1);
     expect(ids.every((id) => id.startsWith("subpreview:"))).toBe(true);
@@ -253,7 +253,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
 
     expect(response.status).toBe(200);
     const body = JSON.stringify(postedMessage());
-    expect(body).toContain("Vilket tillfälle kan du inte vara med på?");
+    expect(body).toContain("Vilket tillfälle behöver du en vikarie för?");
   });
 
   it("refuses a locale the app does not support, before calling Discord", async () => {

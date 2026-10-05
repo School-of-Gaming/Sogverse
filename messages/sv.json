@@ -2408,8 +2408,8 @@
       "mineHeading": "Dina vikariat",
       "mineAllClear": "Du har inga kommande vikariat.",
       "fileAction": "Kan du inte vara med på ett tillfälle?",
-      "filePickTitle": "Vilket tillfälle kan du inte vara med på?",
-      "filePickBody": "Välj tillfället du inte kan vara med på. Din orsak och din kommentar visas bara för administratörer.",
+      "filePickTitle": "Vilket tillfälle behöver du en vikarie för?",
+      "filePickBody": "Din orsak och din kommentar visas bara för administratörer.",
       "fileAlreadyRequested": "Vikarie är redan efterfrågad",
       "filePickWeekThis": "Den här veckan",
       "filePickWeekNext": "Nästa vecka",
@@ -5286,13 +5286,13 @@
   "discordLink": {
     "confirm": {
       "title": "Koppla ditt Discord-konto",
-      "body": "Koppla Discord-kontot <b>@{username}</b> till ditt School of Gaming-konto? Då kan School of Gaming nå dig på Discord.",
+      "body": "Koppla Discord-kontot <b>@{username}</b> till ditt School of Gaming-konto? Då kan School of Gaming nå dig på Discord, och det Discord-kontot kan använda School of Gamings bot för din räkning. Koppla bara ett konto som är ditt.",
       "action": "Koppla kontot",
       "failed": "Något gick fel och ditt konto kopplades inte. Försök igen."
     },
     "linked": {
       "title": "Kopplat till @{username}",
-      "body": "School of Gaming kan nu nå dig på Discord.",
+      "body": "School of Gaming kan nu nå dig på Discord, och du kan använda School of Gamings bot där.",
       "goToMySog": "Gå till Min SOG",
       "goToDashboard": "Gå till instrumentpanelen"
     },
