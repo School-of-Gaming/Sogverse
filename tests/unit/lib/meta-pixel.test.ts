@@ -6,7 +6,11 @@
 // guard would make every case a silent no-op that still passed.
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { loadMetaPixel, reportMetaPageView } from "@/lib/meta-pixel";
+import {
+  loadMetaPixel,
+  reportMetaEvent,
+  type BrowserPixelEvent,
+} from "@/lib/meta-pixel";
 
 /**
  * ============================================================================
@@ -33,6 +37,20 @@ import { loadMetaPixel, reportMetaPageView } from "@/lib/meta-pixel";
  */
 
 const PIXEL_ID = "1234567890";
+
+const PAGE_VIEW: BrowserPixelEvent = { event: "PageView" };
+
+const PRODUCT_VIEW: BrowserPixelEvent = {
+  event: "ViewContent",
+  product: {
+    content_ids: ["abc-123"],
+    content_type: "product",
+    content_name: "Roblox Studio Club",
+    content_category: "roblox_studio",
+    value: 49,
+    currency: "EUR",
+  },
+};
 
 /** Every call made through the stub, in order. */
 function calls(): unknown[][] {
@@ -153,9 +171,9 @@ describe("loadMetaPixel", () => {
   });
 });
 
-describe("reportMetaPageView", () => {
+describe("reportMetaEvent", () => {
   it("reports only after the library has arrived, never through the queue", async () => {
-    const report = reportMetaPageView(PIXEL_ID, "/shop");
+    const report = reportMetaEvent(PIXEL_ID, "/shop", PAGE_VIEW);
 
     // The library is still downloading: nothing may sit in its queue waiting
     // to be replayed against whatever URL the tab shows by then.
@@ -170,7 +188,7 @@ describe("reportMetaPageView", () => {
   // The whole reason for waiting: a parent who clicked from the shop into a
   // child's page while the library was downloading.
   it("reports nothing when the tab has moved to another page meanwhile", async () => {
-    const report = reportMetaPageView(PIXEL_ID, "/shop");
+    const report = reportMetaEvent(PIXEL_ID, "/shop", PAGE_VIEW);
     tabIsOn("/parent/gamers/abc-123");
 
     libraryArrives();
@@ -184,7 +202,7 @@ describe("reportMetaPageView", () => {
   it("loads nothing, let alone reports, when the query carries anything but campaign keys", async () => {
     tabIsOn("/login?redirect=/en/parent/gamers/abc-123");
 
-    await reportMetaPageView(PIXEL_ID, "/login");
+    await reportMetaEvent(PIXEL_ID, "/login", PAGE_VIEW);
 
     // Not even the library: a page we will not report from is a page Meta's
     // code has no business running on.
@@ -195,7 +213,7 @@ describe("reportMetaPageView", () => {
   // The query turning private between the request and the library's arrival —
   // the tab was bounced while the download was in flight.
   it("reports nothing when the query turned private meanwhile", async () => {
-    const report = reportMetaPageView(PIXEL_ID, "/login");
+    const report = reportMetaEvent(PIXEL_ID, "/login", PAGE_VIEW);
     tabIsOn("/login?redirect=/en/parent/gamers/abc-123");
 
     libraryArrives();
@@ -206,7 +224,7 @@ describe("reportMetaPageView", () => {
 
   it("reports a page whose query is an ad link's", async () => {
     tabIsOn("/roblox?utm_source=lynx&fbclid=IwAR0abc");
-    const report = reportMetaPageView(PIXEL_ID, "/roblox");
+    const report = reportMetaEvent(PIXEL_ID, "/roblox", PAGE_VIEW);
 
     libraryArrives();
     await report;
@@ -216,7 +234,7 @@ describe("reportMetaPageView", () => {
 
   it("compares the pathname through the URL parser, encoded or not", async () => {
     tabIsOn("/fr/%C3%A0-propos");
-    const report = reportMetaPageView(PIXEL_ID, "/fr/à-propos");
+    const report = reportMetaEvent(PIXEL_ID, "/fr/à-propos", PAGE_VIEW);
 
     libraryArrives();
     await report;
@@ -225,9 +243,44 @@ describe("reportMetaPageView", () => {
   });
 
   it("reports nothing when the library never loads", async () => {
-    const report = reportMetaPageView(PIXEL_ID, "/shop");
+    const report = reportMetaEvent(PIXEL_ID, "/shop", PAGE_VIEW);
 
     libraryFails();
+    await report;
+
+    expect(calls().some(([method]) => method === "track")).toBe(false);
+  });
+
+  it("reports a product view with the product's own fields", async () => {
+    tabIsOn("/shop/abc-123?utm_source=lynx");
+    const report = reportMetaEvent(PIXEL_ID, "/shop/abc-123", PRODUCT_VIEW);
+
+    libraryArrives();
+    await report;
+
+    expect(calls().at(-1)).toEqual([
+      "track",
+      "ViewContent",
+      {
+        content_ids: ["abc-123"],
+        content_type: "product",
+        content_name: "Roblox Studio Club",
+        content_category: "roblox_studio",
+        value: 49,
+        currency: "EUR",
+      },
+    ]);
+  });
+
+  // A payload of its own does not buy an event its way past the checks: the
+  // library attaches the address bar's URL to a product view just as it does
+  // to a page view.
+  it("reports no product view when the tab has moved on meanwhile", async () => {
+    tabIsOn("/shop/abc-123");
+    const report = reportMetaEvent(PIXEL_ID, "/shop/abc-123", PRODUCT_VIEW);
+    tabIsOn("/parent/gamers/abc-123");
+
+    libraryArrives();
     await report;
 
     expect(calls().some(([method]) => method === "track")).toBe(false);

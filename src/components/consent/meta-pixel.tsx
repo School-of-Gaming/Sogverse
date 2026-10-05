@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 // The RAW pathname, deliberately, and for both halves of what this does. The
 // wrapped `usePathname` answers with the internal *template*, which would make
 // every product page the same string — so a visitor walking from one product to
@@ -9,8 +9,13 @@ import { useEffect, useRef, useSyncExternalStore } from "react";
 // (`/fi/kauppa/abc`) and answers with the template.
 import { usePathname } from "next/navigation";
 import { isMarketingPage } from "@/lib/marketing-pages";
-import { isValidPixelId } from "@/lib/marketing-events";
-import { reportMetaPageView } from "@/lib/meta-pixel";
+import {
+  isAdvertisedProduct,
+  isValidPixelId,
+  metaProductDetails,
+  PIXEL_EVENTS,
+} from "@/lib/marketing-events";
+import { reportMetaEvent, type BrowserPixelEvent } from "@/lib/meta-pixel";
 import { normalizeExternalPath } from "@/lib/navigation/locale-path";
 import { useAuth } from "@/providers/auth-provider";
 import { useConsent } from "./consent-provider";
@@ -30,6 +35,9 @@ function useIsClient(): boolean {
     () => false,
   );
 }
+
+/** One object for the life of the module, so the effect never sees a new one. */
+const PAGE_VIEW: BrowserPixelEvent = { event: PIXEL_EVENTS.pageView };
 
 /**
  * The Meta Pixel: the one script on the site that exists to serve somebody
@@ -67,6 +75,56 @@ function useIsClient(): boolean {
  * server-side would not rescue it: it would count, in practice, no one.
  */
 export function MetaPixel() {
+  useMetaPixelReport(PAGE_VIEW);
+  return null;
+}
+
+/**
+ * A product view, reported from the product's own page — the one marketing
+ * page that knows which product it is showing, which the pixel above, mounted
+ * once for the whole site, does not.
+ *
+ * **Behind every gate the page view is, because it is the same machinery.**
+ * Consent, the client render, the gamer rule, the configured id, the allowlist
+ * and the address-bar re-read are not restated here: this reports through the
+ * same hook, once per page reached, so a gate added to the page view is a gate
+ * on this too.
+ *
+ * Only for a product we advertise, decided by the product row exactly as the
+ * servers decide their enrolment reports — a view of a municipality club is a
+ * family looking at their school's club, and no campaign is served by it.
+ * Nothing is reported until the product has been read, and the view is counted
+ * once the read lands rather than at the navigation, so a slow read delays the
+ * view rather than losing it.
+ */
+export function MetaProductView({
+  product,
+}: {
+  product: Parameters<typeof metaProductDetails>[0] &
+    Parameters<typeof isAdvertisedProduct>[0];
+}) {
+  // Memoised on the row so a re-render hands the hook the same report; the
+  // hook's once-per-page guard would hold either way.
+  const report = useMemo<BrowserPixelEvent | null>(
+    () =>
+      isAdvertisedProduct(product)
+        ? {
+            event: PIXEL_EVENTS.productView,
+            product: metaProductDetails(product),
+          }
+        : null,
+    [product],
+  );
+  useMetaPixelReport(report);
+  return null;
+}
+
+/**
+ * Report `report` once per marketing page reached, behind all six gates.
+ * `null` is "nothing to report on this page yet": it neither reports nor counts
+ * the page as reached, so the report goes out once it stops being `null`.
+ */
+function useMetaPixelReport(report: BrowserPixelEvent | null): void {
   const { consent } = useConsent();
   const { user, profile, isLoading } = useAuth();
   const isClient = useIsClient();
@@ -90,9 +148,9 @@ export function MetaPixel() {
   const allowed = isClient && consent?.marketing === true && isNotAGamer;
 
   useEffect(() => {
-    if (!allowed || pixelId === null) return;
+    if (!allowed || pixelId === null || report === null) return;
 
-    // One page view per marketing page *reached*, which is not the same as per
+    // One report per marketing page *reached*, which is not the same as per
     // render and not the same as per distinct page: a re-render reports nothing,
     // and coming back to a page after another one is a second view of it. The
     // ref is updated for every pathname the effect accepts, marketing or not,
@@ -107,8 +165,6 @@ export function MetaPixel() {
     // library has arrived and only if the tab is still on this page with a
     // query that may travel (the loader re-reads the address bar at that
     // moment). Fire and forget: it cannot throw, and nothing here waits on it.
-    void reportMetaPageView(pixelId, pathname);
-  }, [allowed, pathname, pixelId]);
-
-  return null;
+    void reportMetaEvent(pixelId, pathname, report);
+  }, [allowed, pathname, pixelId, report]);
 }

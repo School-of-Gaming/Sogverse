@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
-import { ConsentProvider, MetaPixel } from "@/components/consent";
+import {
+  ConsentProvider,
+  MetaPixel,
+  MetaProductView,
+} from "@/components/consent";
 import type { ConsentState } from "@/lib/consent";
 
 /**
@@ -47,7 +51,7 @@ const mockReport = vi.hoisted(() =>
   vi.fn((..._args: unknown[]) => Promise.resolve()),
 );
 vi.mock("@/lib/meta-pixel", () => ({
-  reportMetaPageView: (...args: unknown[]) => mockReport(...args),
+  reportMetaEvent: (...args: unknown[]) => mockReport(...args),
 }));
 
 const GRANTED_BOTH: ConsentState = {
@@ -165,7 +169,9 @@ describe("MetaPixel — what it reports", () => {
     renderPixel();
 
     expect(mockReport).toHaveBeenCalledTimes(1);
-    expect(mockReport).toHaveBeenCalledWith(PIXEL_ID, "/shop");
+    expect(mockReport).toHaveBeenCalledWith(PIXEL_ID, "/shop", {
+      event: "PageView",
+    });
   });
 
   // The visitor's own URL, in their own language, with a real product id in it
@@ -207,7 +213,11 @@ describe("MetaPixel — what it reports", () => {
 
     expect(mockReport).toHaveBeenCalledTimes(2);
     // And nothing was asked for on the private page in between.
-    expect(mockReport).not.toHaveBeenCalledWith(PIXEL_ID, "/parent/gamers/abc");
+    expect(mockReport).not.toHaveBeenCalledWith(
+      PIXEL_ID,
+      "/parent/gamers/abc",
+      expect.anything(),
+    );
   });
 
   it("reports each marketing page a visitor walks through", () => {
@@ -218,5 +228,96 @@ describe("MetaPixel — what it reports", () => {
     navigate(rerender, "/shop/abc-123");
 
     expect(mockReport).toHaveBeenCalledTimes(3);
+  });
+});
+
+/**
+ * The product view rides the page view's machinery, so the cases below do not
+ * re-walk every gate: they pin that it reports once, with the product's fields,
+ * for a product we advertise — and that two of the gates it shares (consent,
+ * and the advertising rule it adds) hold for it too.
+ */
+describe("MetaProductView", () => {
+  const PRODUCT_ID = "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10";
+
+  type ViewedProduct = Parameters<typeof MetaProductView>[0]["product"];
+
+  const ROBLOX_CLUB: ViewedProduct = {
+    id: PRODUCT_ID,
+    product_type: "consumer_club",
+    billing_mode: "paid",
+    topic: "roblox_studio",
+    product_translations: [
+      { locale: "fi", name: "Roblox Studio -kerho" },
+      { locale: "en", name: "Roblox Studio Club" },
+    ],
+    product_prices: [{ currency: "eur", price_cents: 4900 }],
+  };
+
+  function renderProductView(
+    product: ViewedProduct,
+    consent: ConsentState | null = GRANTED_BOTH,
+  ) {
+    return render(
+      <ConsentProvider initial={consent}>
+        <MetaProductView product={product} />
+      </ConsentProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    mockPathname.value = `/fi/kauppa/${PRODUCT_ID}`;
+  });
+
+  it("reports one product view, with the product's fields, on its page", () => {
+    const { rerender } = renderProductView(ROBLOX_CLUB);
+    // A re-render — the seat count ticking, a query settling — is not a view.
+    rerender(
+      <ConsentProvider initial={GRANTED_BOTH}>
+        <MetaProductView product={{ ...ROBLOX_CLUB }} />
+      </ConsentProvider>,
+    );
+
+    expect(mockReport).toHaveBeenCalledTimes(1);
+    expect(mockReport).toHaveBeenCalledWith(
+      PIXEL_ID,
+      `/fi/kauppa/${PRODUCT_ID}`,
+      {
+        event: "ViewContent",
+        product: {
+          content_ids: [PRODUCT_ID],
+          content_type: "product",
+          content_name: "Roblox Studio Club",
+          content_category: "roblox_studio",
+          value: 49,
+          currency: "EUR",
+        },
+      },
+    );
+  });
+
+  it("reports nothing without marketing consent", () => {
+    renderProductView(ROBLOX_CLUB, { ...GRANTED_BOTH, marketing: false });
+
+    expect(mockReport).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing for a product we do not advertise", () => {
+    renderProductView({
+      ...ROBLOX_CLUB,
+      product_type: "municipality_club",
+      billing_mode: "external_contract",
+    });
+
+    expect(mockReport).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing for a signed-in gamer", () => {
+    mockAuth.user = { id: "gamer-1" };
+    mockAuth.profile = { role: "gamer" };
+
+    renderProductView(ROBLOX_CLUB);
+
+    expect(mockReport).not.toHaveBeenCalled();
   });
 });

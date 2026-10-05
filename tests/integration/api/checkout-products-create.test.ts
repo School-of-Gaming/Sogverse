@@ -159,6 +159,9 @@ type ProductFixture = {
   start_date: string | null;
   end_date: string | null;
   product_translations: { locale: string; name: string }[];
+  // Read for the advertising report alone: what Stripe charges is priced
+  // separately, through the price helpers mocked below.
+  product_prices: { currency: string; price_cents: number }[];
 };
 
 const PAID_CLUB: ProductFixture = {
@@ -181,6 +184,7 @@ const PAID_CLUB: ProductFixture = {
   start_date: "2024-09-01",
   end_date: null,
   product_translations: [{ locale: "en", name: "Test Club" }],
+  product_prices: [{ currency: "eur", price_cents: 5000 }],
 };
 
 const PAID_CAMP: ProductFixture = {
@@ -1485,9 +1489,18 @@ describe("POST /api/checkout/products/create", () => {
       expect(request).toBeInstanceOf(Request);
       // The product's own public page, stated rather than taken from this
       // route's URL — which is an API path nobody browses.
+      // And the product, valued at nothing because nothing was charged.
       expect(conversion).toEqual({
         event: "enrolment",
         outcome: "enrolled",
+        product: {
+          content_ids: [PRODUCT_ID],
+          content_type: "product",
+          content_name: "Test Club",
+          content_category: "minecraft_java",
+          value: 0,
+          currency: "EUR",
+        },
         sourcePath: `/shop/${PRODUCT_ID}`,
       });
     });
@@ -1509,6 +1522,14 @@ describe("POST /api/checkout/products/create", () => {
       expect(mockReportMetaConversion.mock.calls[0][1]).toEqual({
         event: "enrolment",
         outcome: "sent_to_checkout",
+        product: {
+          content_ids: [PRODUCT_ID],
+          content_type: "product",
+          content_name: "Test Club",
+          content_category: "minecraft_java",
+          value: 50,
+          currency: "EUR",
+        },
         sourcePath: `/shop/${PRODUCT_ID}`,
       });
     });

@@ -4,6 +4,7 @@ import {
   serialiseConsent,
   type ConsentState,
 } from "@/lib/consent";
+import type { MetaProductDetails } from "@/lib/marketing-events";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
 import { asObject } from "../../helpers/json";
 
@@ -25,11 +26,22 @@ import { asObject } from "../../helpers/json";
  * **The body is the privacy policy, in JSON.** The user agent, the IP, and
  * Meta's own two cookies. No email, no name, no id of a person and nothing about
  * a child. A field appearing here that this file does not assert on is a field
- * nobody promised.
+ * nobody promised. An enrolment adds its outcome and the product it was for —
+ * facts about the product, asserted whole.
  */
 
 const PIXEL_ID = "1234567890";
 const ACCESS_TOKEN = "meta-access-token";
+
+/** Which product an enrolment was for, as the routes build it. */
+const PRODUCT: MetaProductDetails = {
+  content_ids: ["abc-123"],
+  content_type: "product",
+  content_name: "Roblox Studio Club",
+  content_category: "roblox_studio",
+  value: 49,
+  currency: "EUR",
+};
 
 const GRANTED: ConsentState = {
   analytics: true,
@@ -238,12 +250,15 @@ describe("reportMetaConversion — the request", () => {
     await reportMetaConversion(request(), {
       event: "enrolment",
       outcome,
+      product: PRODUCT,
       sourcePath: "/shop/abc-123",
     });
 
     const event = sentEvent();
     expect(event.event_name).toBe(eventName);
-    expect(event.custom_data).toEqual({ outcome });
+    // The outcome, and beside it which product converted — Meta's own
+    // product fields, exactly as the caller built them.
+    expect(event.custom_data).toEqual({ outcome, ...PRODUCT });
     expect(event.event_source_url).toBe(
       "https://test.sogverse.local/shop/abc-123",
     );
@@ -255,6 +270,7 @@ describe("reportMetaConversion — the request", () => {
     await reportMetaConversion(request(), {
       event: "enrolment",
       outcome: "enrolled",
+      product: PRODUCT,
       sourcePath: "/shop/abc-123",
     });
 

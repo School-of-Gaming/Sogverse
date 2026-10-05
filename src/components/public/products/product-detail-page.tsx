@@ -33,6 +33,7 @@ import { ProductDetailPageBody } from "./product-detail-page-body";
 import { audienceAdmitsRole, productAudience } from "@/lib/products/product-audience";
 import { resolveRegionGate, type RegionGate } from "./region-lock/region-gate";
 import { SignupPanel } from "./signup-panel";
+import { MetaProductView } from "@/components/consent";
 import type {
   AuthState,
   ConfirmedHomeLocation,
@@ -442,49 +443,54 @@ export function ProductDetailPage({
       : { kind: "unlocked" };
 
   return (
-    <ProductDetailPageBody
-      product={product}
-      municipalitySlug={municipalitySlug}
-      signupPanel={
-        <SignupPanel
-          product={product}
-          // Off the detail query's own embed, which is the only read that has
-          // it: the browse row deliberately does not publish a product's
-          // enrolment conditions, so the panel takes them beside the product
-          // rather than off it.
-          requiredConsentSlugs={product.product_required_consents.map(
-            (consent) => consent.document_slug,
-          )}
-          // The other embed on the same read, and the same reasoning: what a
-          // product asks at signup is not on the browse row, because a card
-          // never names it.
-          marketingConsentTypes={product.product_marketing_consents.map(
-            (consent) => consent.consent_type,
-          )}
-          // The third embed on the same read, same reasoning again: what a
-          // product asks about a child's photograph is not on the browse row.
-          gamerPhotoConsentTypes={product.product_gamer_photo_consents.map(
-            (consent) => consent.consent_type,
-          )}
-          state={state}
-          authState={authState}
-          regionGate={regionGate}
-          // Only the `eligible` variant reads it, and only the confirmed pick
-          // can answer before the row does — the same precedence the gate uses.
-          homeLocationName={
-            confirmedLocation?.name ??
-            (homeLocationRow !== null
-              ? localizedLocationName(homeLocationRow, locale)
-              : null)
-          }
-          onLocationConfirmed={setConfirmedLocation}
-        />
-      }
-      // The panel is where the region block is explained, so the phone-width
-      // jump button stays exactly as it was: it scrolls the reader to the
-      // answer, which is the same service it does for a gedu who lands here.
-      signupActionable={registrationCtaKind(state) === "primary"}
-    />
+    <>
+      {/* The advertising product view: renders nothing, and reports only
+          behind the pixel's own gates. */}
+      <MetaProductView product={product} />
+      <ProductDetailPageBody
+        product={product}
+        municipalitySlug={municipalitySlug}
+        signupPanel={
+          <SignupPanel
+            product={product}
+            // Off the detail query's own embed, which is the only read that has
+            // it: the browse row deliberately does not publish a product's
+            // enrolment conditions, so the panel takes them beside the product
+            // rather than off it.
+            requiredConsentSlugs={product.product_required_consents.map(
+              (consent) => consent.document_slug,
+            )}
+            // The other embed on the same read, and the same reasoning: what a
+            // product asks at signup is not on the browse row, because a card
+            // never names it.
+            marketingConsentTypes={product.product_marketing_consents.map(
+              (consent) => consent.consent_type,
+            )}
+            // The third embed on the same read, same reasoning again: what a
+            // product asks about a child's photograph is not on the browse row.
+            gamerPhotoConsentTypes={product.product_gamer_photo_consents.map(
+              (consent) => consent.consent_type,
+            )}
+            state={state}
+            authState={authState}
+            regionGate={regionGate}
+            // Only the `eligible` variant reads it, and only the confirmed pick
+            // can answer before the row does — the same precedence the gate uses.
+            homeLocationName={
+              confirmedLocation?.name ??
+              (homeLocationRow !== null
+                ? localizedLocationName(homeLocationRow, locale)
+                : null)
+            }
+            onLocationConfirmed={setConfirmedLocation}
+          />
+        }
+        // The panel is where the region block is explained, so the phone-width
+        // jump button stays exactly as it was: it scrolls the reader to the
+        // answer, which is the same service it does for a gedu who lands here.
+        signupActionable={registrationCtaKind(state) === "primary"}
+      />
+    </>
   );
 }
 

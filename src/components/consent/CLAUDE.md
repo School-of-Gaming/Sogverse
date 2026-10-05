@@ -136,6 +136,12 @@ one product is still one page. Every event the browser pushes states that same f
 same way, which is what lets a view and the enrolment that followed it meet in one funnel
 instead of forking into a template row and a concrete one.
 
+A product page also tells the pixel which product it showed, as Meta's product view, and
+only for a product we advertise — the same product-row rule the servers apply. It is not a
+second reporting path: it goes through every gate and check the page view does, once per
+product page reached, and it waits for the product to have been read rather than being
+dropped when the read is slow.
+
 From our servers, through Meta's Conversions API (`src/lib/meta-conversions.server.ts`),
 each one sent after the response has gone out so it can neither delay nor fail what the
 family asked for:
@@ -147,6 +153,14 @@ family asked for:
 - **a checkout was started** — deliberately a different event name, because the platform
   optimises a campaign on the name and an abandoned checkout must not train it as an
   enrolment.
+
+The last two, and the browser's product view, name the product in Meta's standard product
+fields, built in one place so the three cannot describe one product two ways: its id, its
+English name whatever the visitor's locale, its topic as the category — an enum value,
+stable across renames, and the axis a campaign is run per — and the price the family pays
+with its currency, zero for a free product. A paid product with no price in the currency
+states no value at all rather than a guessed one. These are facts the product's public page
+shows anyone, not facts about the family.
 
 Each server report is gated on the **request's own consent cookie**, so a conversion for
 someone who refused marketing is impossible rather than unlikely. Products we do not

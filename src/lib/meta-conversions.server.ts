@@ -5,6 +5,7 @@ import {
   isValidPixelId,
   PIXEL_EVENTS,
   type EnrolmentOutcome,
+  type MetaProductDetails,
 } from "@/lib/marketing-events";
 import { getOrigin } from "@/lib/url";
 
@@ -25,9 +26,14 @@ import { getOrigin } from "@/lib/url";
  * the request arrived from, and Meta's own `_fbp` / `_fbc` cookies if this
  * browser carries them. No email, no phone number, no name, no user id, no
  * participation id, and nothing whatsoever about a child — not their name, not
- * their age, not which product they joined. The enrolment events carry one
- * custom field, `outcome`, which is one of three fixed words. This list is the
- * promise the privacy policy makes; a field added here is a policy edit.
+ * their age. This list is the promise the privacy policy makes; a field added
+ * here is a policy edit.
+ *
+ * **What is sent about the enrolment** is `outcome`, one of three fixed words,
+ * and the product it was for in Meta's standard product fields — its id, name,
+ * topic and price, the same facts the product's public page shows anyone, and
+ * the same page the event's own source URL already names. They say which
+ * product converted; they say nothing about who did.
  *
  * **Gated on the request's own consent cookie.** The send is refused unless the
  * request that triggered it carried marketing consent — decided here, on the
@@ -68,10 +74,19 @@ const REQUEST_TIMEOUT_MS = 10_000;
  * pages the browser pixel is already allowed to report. It is never taken from
  * the request's own URL — that is an API route, and on some of these flows it
  * would carry a query string nobody vetted.
+ *
+ * `product` is built by `metaProductDetails()`, the one builder the browser's
+ * product view uses too, so the two sides cannot describe a product
+ * differently.
  */
 export type MetaConversion =
   | { event: "account_created"; sourcePath: string }
-  | { event: "enrolment"; outcome: EnrolmentOutcome; sourcePath: string };
+  | {
+      event: "enrolment";
+      outcome: EnrolmentOutcome;
+      product: MetaProductDetails;
+      sourcePath: string;
+    };
 
 function eventNameFor(conversion: MetaConversion): string {
   return conversion.event === "account_created"
@@ -135,7 +150,7 @@ export async function reportMetaConversion(
         ...(fbc && { fbc }),
       },
       ...(conversion.event === "enrolment" && {
-        custom_data: { outcome: conversion.outcome },
+        custom_data: { outcome: conversion.outcome, ...conversion.product },
       }),
     };
 

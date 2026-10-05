@@ -10,7 +10,10 @@ import {
 } from "@/services/participations/participations.contracts";
 import { consentRefusalError } from "@/services/participations/consent-refusal";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
-import { isAdvertisedProduct } from "@/lib/marketing-events";
+import {
+  isAdvertisedProduct,
+  metaProductDetails,
+} from "@/lib/marketing-events";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
 import { ROUTES } from "@/lib/constants/routes";
 import type { AppSupabaseClient } from "@/types";
@@ -146,7 +149,8 @@ export const POST = defineRoute({
 /**
  * Report a waitlist join, if the product is one we advertise.
  *
- * The product's two advertising columns are read here rather than in the
+ * The product's two advertising columns, and the facts the report names it
+ * by, are read here rather than in the
  * handler, because nothing in the answer depends on them: this runs after the
  * response has gone out, on the caller's own client — a parent may read any
  * product they can browse, so the read needs no privilege the join did not
@@ -161,7 +165,9 @@ async function reportWaitlistConversion(
   try {
     const { data: product } = await client
       .from("products")
-      .select("product_type, billing_mode")
+      .select(
+        "id, product_type, billing_mode, topic, product_translations(locale, name), product_prices(currency, price_cents)",
+      )
       .eq("id", productId)
       .maybeSingle();
     if (!product || !isAdvertisedProduct(product)) return;
@@ -169,6 +175,9 @@ async function reportWaitlistConversion(
     await reportMetaConversion(request, {
       event: "enrolment",
       outcome: "waitlisted",
+      // A queue place states no currency, so it is valued at the price the
+      // product is sold at — the one currency the platform sells in.
+      product: metaProductDetails(product),
       sourcePath: ROUTES.shopProductPath(productId),
     });
   } catch (error) {

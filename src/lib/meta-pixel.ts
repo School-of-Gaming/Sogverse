@@ -2,7 +2,7 @@
  * The Meta Pixel, loaded from app code rather than from an inline snippet.
  *
  * Client-safe and React-free: one function that installs Meta's library and one
- * that reports a page view through it, so the component above it is only the
+ * that reports an event through it, so the components above it are only the
  * gates and the effect.
  *
  * **Why not the official inline snippet.** Meta's base code is a `<script>` in
@@ -28,7 +28,10 @@
  */
 
 import { isReportableQuery } from "@/lib/marketing-pages";
-import { PIXEL_EVENTS } from "@/lib/marketing-events";
+import {
+  PIXEL_EVENTS,
+  type MetaProductDetails,
+} from "@/lib/marketing-events";
 
 const FBEVENTS_SRC = "https://connect.facebook.net/en_US/fbevents.js";
 
@@ -157,8 +160,22 @@ export function loadMetaPixel(pixelId: string): Promise<boolean> {
 }
 
 /**
- * Report a page view of `pathname`, the page the caller has already checked
- * against the marketing-page allowlist.
+ * The events the browser may send, and what each carries. Only these two: a
+ * conversion is reported from the server that committed it, never from here.
+ */
+export type BrowserPixelEvent =
+  | { event: typeof PIXEL_EVENTS.pageView }
+  | { event: typeof PIXEL_EVENTS.productView; product: MetaProductDetails };
+
+/**
+ * Report `report` as having happened on `pathname`, the page the caller has
+ * already checked against the marketing-page allowlist — a page view with no
+ * parameters, or a product view with the product's own fields.
+ *
+ * **Every event the browser sends comes through here, page view or not.** The
+ * library attaches the address bar's URL and the referrer to whatever it
+ * tracks, so an event with a payload of its own is exactly as able to leak a
+ * private URL as a page view is, and gets exactly the same checks.
  *
  * The report goes out only once the library has arrived, and only if the tab
  * is still on that pathname with a query string that may travel — re-read from
@@ -167,9 +184,10 @@ export function loadMetaPixel(pixelId: string): Promise<boolean> {
  * left, and none for the page they reached: the caller reports that one, or
  * refuses it, on its own terms.
  */
-export async function reportMetaPageView(
+export async function reportMetaEvent(
   pixelId: string,
   pathname: string,
+  report: BrowserPixelEvent,
 ): Promise<void> {
   // Checked before loading as well as before sending: a page whose query may
   // not travel gets no library at all, not merely no report. The proxy's
@@ -184,5 +202,6 @@ export async function reportMetaPageView(
   const authorised = new URL(pathname, window.location.origin).pathname;
   if (window.location.pathname !== authorised) return;
   if (!isReportableQuery(window.location.search)) return;
-  window.fbq?.("track", PIXEL_EVENTS.pageView);
+  if ("product" in report) window.fbq?.("track", report.event, report.product);
+  else window.fbq?.("track", report.event);
 }

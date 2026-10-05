@@ -149,16 +149,32 @@ function mockReadsForConfirmationEmail(
     participantFirstName = "Aino",
     gamer = {},
     advertisingColumns = {
+      id: PRODUCT_ID,
       product_type: "consumer_club",
       billing_mode: "paid",
+      topic: "roblox_studio",
+      product_translations: [
+        { locale: "fi", name: "Roblox Studio -kerho" },
+        { locale: "en", name: "Roblox Studio Club" },
+      ],
+      product_prices: [{ currency: "eur", price_cents: 4900 }],
     },
   }: {
     participantFirstName?: string;
     /**
-     * What the conversion's own read finds. The default is an ordinary
-     * advertised club; a municipality one is the case that must report nothing.
+     * What the conversion's own read finds: the two columns that decide whether
+     * the product is advertised, and the facts the report names it by. The
+     * default is an ordinary advertised club; a municipality one is the case
+     * that must report nothing, and needs only the two columns to say so.
      */
-    advertisingColumns?: { product_type: string; billing_mode: string } | null;
+    advertisingColumns?: {
+      id?: string;
+      product_type: string;
+      billing_mode: string;
+      topic?: string;
+      product_translations?: { locale: string; name: string }[];
+      product_prices?: { currency: string; price_cents: number }[];
+    } | null;
     /**
      * Overrides on the child's profile row. The default is the switch-only
      * sign-in every gamer is created with — no address of their own, so the
@@ -237,7 +253,8 @@ function mockReadsForConfirmationEmail(
         }),
       };
     }
-    // A waitlist join states no price, so `product_prices` is never read.
+    // A waitlist join is charged nothing, so `product_prices` is never read on
+    // its own — only embedded in the conversion's product read above.
     throw new Error(`Unexpected table in the caller's client mock: ${table}`);
   });
 }
@@ -879,9 +896,18 @@ describe("POST /api/participations/waitlist", () => {
       expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
       const [request, conversion] = mockReportMetaConversion.mock.calls[0];
       expect(request).toBeInstanceOf(Request);
+      // And which product the place in line is for, valued at its price.
       expect(conversion).toEqual({
         event: "enrolment",
         outcome: "waitlisted",
+        product: {
+          content_ids: [PRODUCT_ID],
+          content_type: "product",
+          content_name: "Roblox Studio Club",
+          content_category: "roblox_studio",
+          value: 49,
+          currency: "EUR",
+        },
         sourcePath: `/shop/${PRODUCT_ID}`,
       });
     });

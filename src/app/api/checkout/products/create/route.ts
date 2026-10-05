@@ -27,7 +27,10 @@ import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
 import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
 import { stripe } from "@/lib/stripe/client";
 import { CHECKOUT_SESSION_LIFETIME_MINUTES } from "@/lib/constants/participations";
-import { isAdvertisedProduct } from "@/lib/marketing-events";
+import {
+  isAdvertisedProduct,
+  metaProductDetails,
+} from "@/lib/marketing-events";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { getOrigin } from "@/lib/url";
@@ -86,13 +89,14 @@ export const POST = defineRoute({
     // This one read is the single source for everything Stripe is told about
     // the product: the Stripe Product's name, tax code and metadata, and the
     // purchase metadata written onto the payment intent, the invoice and the
-    // subscription. Two reads could disagree; one cannot. It fails closed —
+    // subscription — and the product an advertising report names, its topic
+    // and price included. Two reads could disagree; one cannot. It fails closed —
     // a read error answers 404 rather than letting a defaulted product type
     // pick the wrong tax code downstream.
     const { data: product, error: productErr } = await admin
       .from("products")
       .select(
-        "id, product_type, billing_mode, seat_count, timezone, spoken_language_code, start_date, end_date, product_translations(locale, name)",
+        "id, product_type, billing_mode, topic, seat_count, timezone, spoken_language_code, start_date, end_date, product_translations(locale, name), product_prices(currency, price_cents)",
       )
       .eq("id", productId)
       // Embedded resources come back unordered, so a product without an English
@@ -298,6 +302,7 @@ export const POST = defineRoute({
           reportMetaConversion(request, {
             event: "enrolment",
             outcome: "enrolled",
+            product: metaProductDetails(product, currency),
             sourcePath: ROUTES.shopProductPath(productId),
           }),
         );
@@ -617,6 +622,7 @@ export const POST = defineRoute({
           reportMetaConversion(request, {
             event: "enrolment",
             outcome: "sent_to_checkout",
+            product: metaProductDetails(product, currency),
             sourcePath: ROUTES.shopProductPath(productId),
           }),
         );
