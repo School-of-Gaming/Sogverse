@@ -2,6 +2,7 @@ import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { createTranslator } from "use-intl/core";
 import { BRAND } from "@sog/ui/tokens/brand";
 import { addCalendarDays } from "@/lib/calendar-date";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   DEFAULT_TIMEZONE,
   isSupportedLocale,
@@ -701,7 +702,16 @@ export function disabledControlsUpdate(
  * `/link`'s reply: the one-time URL that links the caller's Discord account,
  * and how long it lasts. Plain text, sent with {@link DISCORD_FLAG_SUPPRESS_EMBEDS}.
  */
-export function buildLinkReplyContent(linkUrl: string): string {
+export function buildLinkReplyContent({
+  origin,
+  token,
+}: {
+  origin: string;
+  token: string;
+}): string {
+  // The token is raw in the URL: a minted one is base64url, which needs no
+  // percent-encoding.
+  const linkUrl = `${origin}${ROUTES.linkDiscord}?token=${token}`;
   return (
     "Open this link to connect your Discord account to your School of Gaming account:\n" +
     `${linkUrl}\n\n` +

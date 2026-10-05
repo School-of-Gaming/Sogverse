@@ -64,9 +64,10 @@ export const POST = defineRoute({
           copy,
           // The real URL shape with a token no row holds: the page shows its
           // dead-link card for it, and nothing is minted.
-          linkReply: buildLinkReplyContent(
-            `${getOrigin(request)}${ROUTES.linkDiscord}?token=preview`,
-          ),
+          linkReply: buildLinkReplyContent({
+            origin: getOrigin(request),
+            token: "preview",
+          }),
         }),
         flags: DISCORD_FLAG_SUPPRESS_EMBEDS,
       };

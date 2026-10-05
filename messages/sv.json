@@ -1558,7 +1558,7 @@
         "sent": "Meddelandet skickades.",
         "openInDiscord": "Öppna i Discord",
         "templatePlain": "Ren text",
-        "templateSubSessions": "/sub: sessionslista",
+        "templateSubSessions": "/sub: lista över tillfällen",
         "templateSubNotLinked": "/sub: inte kopplad än",
         "subPreviewSent": "Förhandsvisningen skickades."
       }

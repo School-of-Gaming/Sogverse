@@ -1558,7 +1558,7 @@
         "sent": "Viesti lähetetty.",
         "openInDiscord": "Avaa Discordissa",
         "templatePlain": "Pelkkä teksti",
-        "templateSubSessions": "/sub: istuntolista",
+        "templateSubSessions": "/sub: tulevat kerrat",
         "templateSubNotLinked": "/sub: ei vielä yhdistetty",
         "subPreviewSent": "Esikatselu lähetetty."
       }

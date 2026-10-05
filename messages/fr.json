@@ -1559,7 +1559,7 @@
         "openInDiscord": "Ouvrir dans Discord",
         "templatePlain": "Texte brut",
         "templateSubSessions": "/sub : liste des séances",
-        "templateSubNotLinked": "/sub : pas encore lié",
+        "templateSubNotLinked": "/sub : pas encore associé",
         "subPreviewSent": "Aperçu envoyé."
       }
     },

@@ -571,7 +571,22 @@ describe("POST /api/discord/interactions — /sub", () => {
         type: 17,
         id: 1,
         components: [
-          { type: 10, id: 2, content: "# School of Gaming · Substitutions" },
+          {
+            type: 9,
+            id: 8,
+            components: [{ type: 10, id: 9, content: "# School of Gaming · Substitutions" }],
+            accessory: {
+              type: 11,
+              id: 10,
+              media: {
+                url: "https://sogverse.sog.gg/apple-icon.png",
+                proxy_url: "https://media.discordapp.net/external/abc/apple-icon.png",
+                width: 180,
+                height: 180,
+                content_type: "image/png",
+              },
+            },
+          },
           {
             type: 1,
             id: 3,
@@ -597,7 +612,22 @@ describe("POST /api/discord/interactions — /sub", () => {
         type: 17,
         id: 1,
         components: [
-          { type: 10, id: 2, content: "# School of Gaming · Substitutions" },
+          {
+            type: 9,
+            id: 8,
+            components: [{ type: 10, id: 9, content: "# School of Gaming · Substitutions" }],
+            accessory: {
+              type: 11,
+              id: 10,
+              media: {
+                url: "https://sogverse.sog.gg/apple-icon.png",
+                proxy_url: "https://media.discordapp.net/external/abc/apple-icon.png",
+                width: 180,
+                height: 180,
+                content_type: "image/png",
+              },
+            },
+          },
           {
             type: 1,
             id: 3,

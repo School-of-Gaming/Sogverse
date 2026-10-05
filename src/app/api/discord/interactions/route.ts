@@ -270,7 +270,7 @@ async function linkReply(
       .insert(row);
     if (error) throw error;
 
-    return buildLinkReplyContent(`${origin}/link-discord?token=${token}`);
+    return buildLinkReplyContent({ origin, token });
   } catch (error) {
     console.error("Discord link token error:", error);
     return "Sorry, I couldn't create a link right now. Try /link again in a moment.";
