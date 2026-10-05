@@ -561,14 +561,17 @@ describe("POST /api/discord/interactions — /sub", () => {
   const press = (customId: string, values?: string[]) =>
     run({ type: 3, data: { custom_id: customId, component_type: values ? 3 : 2, values } });
 
-  /** Every component in a payload, depth first. */
+  /** Every component in a payload, depth first, a section's accessory included. */
   function walk(components: unknown): Array<Record<string, unknown>> {
     if (!Array.isArray(components)) return [];
     return components.flatMap((component: Record<string, unknown>) => [
       component,
       ...walk(component.components),
+      ...walk(component.accessory === undefined ? [] : [component.accessory]),
     ]);
   }
+  const ofType = (body: { components: unknown }, type: number) =>
+    walk(body.components).filter((component) => component.type === type);
   const texts = (body: { components: unknown }) =>
     walk(body.components)
       .filter((component) => component.type === 10)
@@ -630,6 +633,34 @@ describe("POST /api/discord/interactions — /sub", () => {
       { value: `${GROUP_B}:2026-10-08` },
     ]);
     expect(select.options).toHaveLength(2);
+  });
+
+  it("heads every step with the favicon from this environment's own site", async () => {
+    for (const { patched } of [await command(), await press("sub:p:1")]) {
+      const [section] = ofType(patched, 9);
+      expect(section.accessory).toEqual({
+        type: 11,
+        media: { url: "https://sogverse.sog.gg/apple-icon.png" },
+      });
+      expect(texts({ components: section.components })).toContain(
+        "-# School of Gaming · Substitutions",
+      );
+      mockFetch.mockClear();
+    }
+  });
+
+  it("sends no logo where Discord could not fetch one, as from a dev machine", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+    try {
+      const { patched } = await command();
+
+      expect(ofType(patched, 9)).toHaveLength(0);
+      expect(ofType(patched, 11)).toHaveLength(0);
+      expect(texts(patched)).toContain("-# School of Gaming · Substitutions");
+      expect(JSON.stringify(patched)).not.toContain("apple-icon");
+    } finally {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+    }
   });
 
   it("points a gedu with nothing to file for at the web page", async () => {

@@ -9,6 +9,8 @@ import {
   buildRefusalMessage,
   buildSessionPickerMessage,
   buildSubPreviewSessions,
+  buildNoticeMessage,
+  discordSubLogoUrl,
   loadDiscordSubCopy,
   parseReasonValue,
   parseSessionValue,
@@ -32,6 +34,7 @@ const TZ = "Europe/Helsinki";
 /** A Monday morning in Helsinki. */
 const NOW = new Date("2026-10-05T06:00:00Z");
 const URL = "https://sogverse.sog.gg/gedu/substitutions";
+const LOGO = "https://sogverse.sog.gg/apple-icon.png";
 
 function session(
   groupId: string,
@@ -67,8 +70,9 @@ const optionList = z.array(
 );
 
 /**
- * Every component in a message, depth first — through a container's or a
- * row's `components` and a label's single `component`.
+ * Every component in a message, depth first — through a container's, a
+ * section's or a row's `components`, a label's single `component` and a
+ * section's `accessory`.
  */
 function walk(components: unknown): DiscordComponent[] {
   const list = componentList.safeParse(components);
@@ -77,6 +81,7 @@ function walk(components: unknown): DiscordComponent[] {
     component,
     ...walk(component.components),
     ...walk(component.component === undefined ? [] : [component.component]),
+    ...walk(component.accessory === undefined ? [] : [component.accessory]),
   ]);
 }
 
@@ -152,7 +157,7 @@ describe("buildSessionPickerMessage", () => {
   ];
 
   it("is one Components V2 container in the act colour", () => {
-    const message = buildSessionPickerMessage({ copy: en, sessions, now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 0, substitutionsUrl: URL });
 
     expect(message.flags).toBe(DISCORD_FLAG_IS_COMPONENTS_V2);
     expect(message.components).toHaveLength(1);
@@ -166,7 +171,7 @@ describe("buildSessionPickerMessage", () => {
   });
 
   it("opens on this week and next, one select a week, with the way to later weeks", () => {
-    const message = buildSessionPickerMessage({ copy: en, sessions, now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 0, substitutionsUrl: URL });
 
     expect(texts(message)).toEqual(expect.arrayContaining(["**This week**", "**Next week**"]));
     const [thisWeek, nextWeek] = selects(message);
@@ -191,7 +196,7 @@ describe("buildSessionPickerMessage", () => {
   });
 
   it("pages the later weeks two at a time, with the way back", () => {
-    const second = buildSessionPickerMessage({ copy: en, sessions, now: NOW, page: 1, substitutionsUrl: URL });
+    const second = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 1, substitutionsUrl: URL });
     expect(selects(second).map((select) => select.custom_id)).toEqual([
       "sub:s:2026-10-19:0",
       "sub:s:2026-10-26:0",
@@ -199,7 +204,7 @@ describe("buildSessionPickerMessage", () => {
     expect(texts(second)).toEqual(expect.arrayContaining(["**Week of Oct 19**"]));
     expect(buttons(second).map((button) => button.custom_id)).toEqual(["sub:p:0", "sub:p:2"]);
 
-    const last = buildSessionPickerMessage({ copy: en, sessions, now: NOW, page: 9, substitutionsUrl: URL });
+    const last = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 9, substitutionsUrl: URL });
     expect(selects(last).map((select) => select.custom_id)).toEqual(["sub:s:2026-11-02:0"]);
     expect(buttons(last).map((button) => button.custom_id)).toEqual(["sub:p:1"]);
   });
@@ -211,9 +216,11 @@ describe("buildSessionPickerMessage", () => {
         index % 2 === 0 ? "2026-10-06" : "2026-10-07",
       ),
     );
-    const message = buildSessionPickerMessage({ copy: en, sessions: crowded, now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: crowded, now: NOW, page: 0, substitutionsUrl: URL });
 
     expect(selects(message).map((select) => options(select).length)).toEqual([25, 5]);
+    // Discord refuses a Components V2 message of more than 40 components.
+    expect(walk(message.components).length).toBeLessThanOrEqual(40);
     expect(selects(message).map((select) => select.custom_id)).toEqual([
       "sub:s:2026-10-05:0",
       "sub:s:2026-10-05:1",
@@ -225,7 +232,7 @@ describe("buildSessionPickerMessage", () => {
       productName: "A product name long enough that the row would run past a hundred characters",
       groupName: "and a group name to push it further still",
     });
-    const message = buildSessionPickerMessage({ copy: en, sessions: [long], now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: [long], now: NOW, page: 0, substitutionsUrl: URL });
 
     for (const component of walk(message.components)) {
       if (typeof component.custom_id === "string") {
@@ -238,14 +245,14 @@ describe("buildSessionPickerMessage", () => {
   });
 
   it("says there is nothing to file for and points at the web page", () => {
-    const message = buildSessionPickerMessage({ copy: en, sessions: [], now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: [], now: NOW, page: 0, substitutionsUrl: URL });
 
     expect(selects(message)).toHaveLength(0);
     expect(texts(message).join("\n")).toContain(URL);
   });
 
   it("speaks the copy's locale", () => {
-    const message = buildSessionPickerMessage({ copy: fi, sessions, now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: fi, logoUrl: LOGO, sessions, now: NOW, page: 0, substitutionsUrl: URL });
 
     expect(texts(message)).toEqual(
       expect.arrayContaining(["### Mille kerralle et pääse?", "**Tämä viikko**"]),
@@ -258,6 +265,7 @@ describe("the admin preview", () => {
     const sessions = buildSubPreviewSessions(NOW);
     const message = buildSessionPickerMessage({
       copy: en,
+      logoUrl: LOGO,
       sessions,
       now: NOW,
       page: 0,
@@ -281,7 +289,7 @@ describe("the reason step", () => {
   const picked = session(GROUP_A, "2026-10-06");
 
   it("asks the web form's question, with nothing chosen and both ways to finish disabled", () => {
-    const message = buildReasonStepMessage({ copy: en, session: picked, reason: null });
+    const message = buildReasonStepMessage({ copy: en, logoUrl: LOGO, session: picked, reason: null });
 
     expect(texts(message)).toEqual(
       expect.arrayContaining([
@@ -303,7 +311,7 @@ describe("the reason step", () => {
   });
 
   it("keeps the chosen reason and enables the note and the confirm", () => {
-    const message = buildReasonStepMessage({ copy: fi, session: picked, reason: "sick" });
+    const message = buildReasonStepMessage({ copy: fi, logoUrl: LOGO, session: picked, reason: "sick" });
 
     expect(options(selects(message)[0])[0]).toMatchObject({ value: "sick", default: true });
     const [back, note, confirm] = buttons(message);
@@ -360,7 +368,7 @@ describe("the outcome", () => {
   const picked = session(GROUP_A, "2026-10-06");
 
   it("confirms in the web's own words", () => {
-    const message = buildFiledMessage({ copy: en, session: picked });
+    const message = buildFiledMessage({ copy: en, logoUrl: LOGO, session: picked });
 
     expect(texts(message).join("\n")).toContain(
       "Substitute requested for Minecraft Club — A on Tue, Oct 6, 16:00 – 17:30 GMT+3.",
@@ -371,6 +379,7 @@ describe("the outcome", () => {
   it("says why it was refused, with the way back to the list", () => {
     const message = buildRefusalMessage({
       copy: en,
+      logoUrl: LOGO,
       line: en.form("substitutionRequestFailedAlreadyAsked"),
       session: picked,
     });
@@ -379,5 +388,81 @@ describe("the outcome", () => {
       "You’ve already asked for a substitute for this session.",
     );
     expect(buttons(message).map((button) => button.custom_id)).toEqual(["sub:p:0"]);
+  });
+});
+
+describe("the logo", () => {
+  const picked = session(GROUP_A, "2026-10-06");
+  const sessions = [picked, session(GROUP_A, "2026-10-20")];
+
+  const steps: Array<[string, (logoUrl: string | null) => DiscordComponentsMessage]> = [
+    ["the first step", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions, now: NOW, page: 0, substitutionsUrl: URL })],
+    ["a later page", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions, now: NOW, page: 1, substitutionsUrl: URL })],
+    ["the empty list", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions: [], now: NOW, page: 0, substitutionsUrl: URL })],
+    [
+      "the preview",
+      (logoUrl) =>
+        buildSessionPickerMessage({
+          copy: en,
+          logoUrl,
+          sessions,
+          now: NOW,
+          page: 0,
+          prefix: "subpreview",
+          substitutionsUrl: URL,
+          notice: en.sub("previewBanner"),
+        }),
+    ],
+    ["the reason step", (logoUrl) => buildReasonStepMessage({ copy: en, logoUrl, session: picked, reason: null })],
+    ["the filed line", (logoUrl) => buildFiledMessage({ copy: en, logoUrl, session: picked })],
+    ["a refusal", (logoUrl) => buildRefusalMessage({ copy: en, logoUrl, line: "No.", session: null })],
+    ["a notice", (logoUrl) => buildNoticeMessage({ copy: en, logoUrl, line: "Hello." })],
+  ];
+
+  const containerChildren = (message: DiscordComponentsMessage) =>
+    componentList.parse(message.components[0].components);
+
+  it.each(steps)("heads %s with a section, the logo beside the brand line", (_, build) => {
+    const [header] = containerChildren(build(LOGO));
+
+    expect(header.type).toBe(9);
+    expect(header.accessory).toEqual({ type: 11, media: { url: LOGO } });
+    const lines = componentList.parse(header.components);
+    expect(lines.length).toBeGreaterThanOrEqual(1);
+    expect(lines.length).toBeLessThanOrEqual(3);
+    expect(lines.every((line) => line.type === 10)).toBe(true);
+    expect(lines[0].content).toBe("-# School of Gaming · Substitutions");
+  });
+
+  it.each(steps)("heads %s with plain lines when there is no logo", (_, build) => {
+    const bare = build(null);
+    const withLogo = build(LOGO);
+
+    expect(ofType(bare, 9)).toHaveLength(0);
+    expect(ofType(bare, 11)).toHaveLength(0);
+    expect(containerChildren(bare)[0]).toEqual({
+      type: 10,
+      content: "-# School of Gaming · Substitutions",
+    });
+    // The same lines and controls, only unwrapped.
+    expect(texts(bare)).toEqual(texts(withLogo));
+    expect([...selects(bare), ...buttons(bare)]).toEqual([...selects(withLogo), ...buttons(withLogo)]);
+  });
+
+  it("puts the step's heading beside the logo", () => {
+    const message = buildReasonStepMessage({ copy: en, logoUrl: LOGO, session: picked, reason: null });
+    const [header] = containerChildren(message);
+
+    expect(componentList.parse(header.components).map((line) => line.content)).toEqual([
+      "-# School of Gaming · Substitutions",
+      "### I can’t make this session",
+    ]);
+  });
+
+  it("is the favicon on the origin it is given, and nothing without one", () => {
+    expect(discordSubLogoUrl("https://sogverse-staging.sog.gg")).toBe(
+      "https://sogverse-staging.sog.gg/apple-icon.png",
+    );
+    expect(discordSubLogoUrl(null)).toBeNull();
   });
 });

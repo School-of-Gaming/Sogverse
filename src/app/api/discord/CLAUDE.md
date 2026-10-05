@@ -50,6 +50,8 @@ The web's "Can't make a session?" picker and reason form, as one ephemeral Compo
 3. **The reason** — the web form's two categories, nothing chosen to begin with; once one is picked, "Add a note" (a modal with the web's note field and length bound) and "Confirm without a note" are enabled.
 4. **The outcome** — the web's own confirmation line, or the refusal line the web's failure mapper picks, with the way back to the list.
 
+**The header carries the logo** — the favicon, as a thumbnail beside the brand line on every step — at this environment's own `NEXT_PUBLIC_SITE_URL`, which Discord has to fetch. Where it cannot (unset, malformed or loopback, by the mail logo's `sendableImageOrigin()` rule) the header goes without it rather than with a broken image, so a send from a dev machine shows no logo.
+
 **The copy** is next-intl's, in the Gedu's own app locale, else the one nearest their Discord client's language, else the default. Lines the web already says are read from the web's own keys; only the bot's own lines live under `discordSub`.
 
 **State lives in `custom_id`s, never in the server:** `sub:p:<page>` (a page of the list), `sub:s:<weekStart>:<n>` (a week's select; the picked value is `<groupId>:<date>`), `sub:r:<groupId>:<date>` (the reason select), `sub:m:<groupId>:<date>:<reason>:<locale>` (open the note modal — answered synchronously, so it carries the copy's locale), `sub:f:<groupId>:<date>:<reason>` (file with no note), `sub:n:<groupId>:<date>:<reason>` (the modal's submit). **A custom_id says what was picked, never who may act**: every step re-resolves the presser from the payload's Discord id, and the database re-derives the Gedu on every read and write.

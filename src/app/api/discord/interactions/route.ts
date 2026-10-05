@@ -24,6 +24,7 @@ import {
   buildReasonStepMessage,
   buildRefusalMessage,
   buildSessionPickerMessage,
+  discordSubLogoUrl,
   loadDiscordSubCopy,
   parseReasonValue,
   parseSessionValue,
@@ -40,6 +41,7 @@ import {
 import { askGeduGuru, askHappinappi } from "@/lib/gemini";
 import { resetPassword, type PasswordResetOutcome } from "@/lib/microsoft-graph";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendableImageOrigin } from "@/lib/email-templates/render-context";
 import { getOrigin } from "@/lib/url";
 // The module by name rather than the package index: that re-exports
 // `"use client"` query hooks, which a route has no business loading.
@@ -421,6 +423,7 @@ async function sendSubStep(
   step: SubStep
 ): Promise<void> {
   let reply: DiscordComponentsMessage;
+  const logoUrl = subLogoUrl();
   let fallback = await loadDiscordSubCopy(discordLanguage);
   try {
     const gedu = await resolveDiscordGedu(caller.id);
@@ -445,6 +448,7 @@ async function sendSubStep(
     if (step.kind === "start" || step.kind === "page") {
       reply = buildSessionPickerMessage({
         copy,
+        logoUrl,
         sessions,
         now,
         page: step.kind === "page" ? step.page : 0,
@@ -460,11 +464,12 @@ async function sendSubStep(
         // tried.
         reply = buildRefusalMessage({
           copy,
+          logoUrl,
           line: copy.form("substitutionRequestFailedNotScheduled"),
           session: null,
         });
       } else if (step.kind === "reason") {
-        reply = buildReasonStepMessage({ copy, session, reason: step.reason });
+        reply = buildReasonStepMessage({ copy, logoUrl, session, reason: step.reason });
       } else {
         try {
           await fileDiscordSubstitutionRequest({
@@ -474,7 +479,7 @@ async function sendSubStep(
             reason: step.reason,
             reasonNote: step.note,
           });
-          reply = buildFiledMessage({ copy, session });
+          reply = buildFiledMessage({ copy, logoUrl, session });
         } catch (refusal) {
           if (isDiscordGeduNotLinked(refusal)) {
             await sendSubNotLinked(interactionToken, caller, copy, requestHeaders, step);
@@ -484,16 +489,24 @@ async function sendSubStep(
           if (failure === "substitutionRequestFailed") {
             console.error("Discord /sub filing error:", refusal);
           }
-          reply = buildRefusalMessage({ copy, line: copy.form(failure), session });
+          reply = buildRefusalMessage({ copy, logoUrl, line: copy.form(failure), session });
         }
       }
     }
   } catch (error) {
     console.error("Discord /sub error:", error);
-    reply = buildNoticeMessage({ copy: fallback, line: fallback.sub("failed") });
+    reply = buildNoticeMessage({ copy: fallback, logoUrl, line: fallback.sub("failed") });
   }
 
   await patchDiscordMessage(interactionToken, reply);
+}
+
+/**
+ * The `/sub` header's logo, from this environment's own site — or none where
+ * Discord could not fetch it, as from a dev machine.
+ */
+function subLogoUrl(): string | null {
+  return discordSubLogoUrl(sendableImageOrigin());
 }
 
 /**
@@ -519,7 +532,7 @@ async function sendSubNotLinked(
   }
   await patchDiscordMessage(
     interactionToken,
-    buildNoticeMessage({ copy, line: copy.sub("notLinkedRunLink") })
+    buildNoticeMessage({ copy, logoUrl: subLogoUrl(), line: copy.sub("notLinkedRunLink") })
   );
 }
 

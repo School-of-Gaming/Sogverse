@@ -212,6 +212,46 @@ describe("POST /api/admin/send-test-discord-message", () => {
     expect(ids.every((id) => id.startsWith("subpreview:"))).toBe(true);
   });
 
+  /** The thumbnails in a posted message — the header's logo, when it has one. */
+  function thumbnails(components: unknown): unknown[] {
+    if (!Array.isArray(components)) return [];
+    return components.flatMap((component: Record<string, unknown>) => [
+      ...(component.type === 11 ? [component] : []),
+      ...thumbnails(component.components),
+      ...thumbnails(component.accessory === undefined ? [] : [component.accessory]),
+    ]);
+  }
+
+  it("heads the preview with the favicon from this environment's own site", async () => {
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: { discord_user_id: DISCORD_USER_ID }, error: null })
+      .mockResolvedValueOnce({ data: { locale: null }, error: null });
+
+    await POST(sendRequest({ kind: "subPreview", profileId: PROFILE_ID }));
+
+    expect(thumbnails(postedMessage().components)).toEqual([
+      { type: 11, media: { url: "https://sogverse.sog.gg/apple-icon.png" } },
+    ]);
+  });
+
+  it("sends the preview with no logo from a dev machine, which Discord cannot fetch from", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3007");
+    try {
+      mockMaybeSingle
+        .mockResolvedValueOnce({ data: { discord_user_id: DISCORD_USER_ID }, error: null })
+        .mockResolvedValueOnce({ data: { locale: null }, error: null });
+
+      const response = await POST(sendRequest({ kind: "subPreview", profileId: PROFILE_ID }));
+
+      expect(response.status).toBe(200);
+      const message = postedMessage();
+      expect(thumbnails(message.components)).toEqual([]);
+      expect(JSON.stringify(message)).toContain("School of Gaming · Substitutions");
+    } finally {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+    }
+  });
+
   it("falls back to English for a recipient who never chose a locale", async () => {
     mockMaybeSingle
       .mockResolvedValueOnce({ data: { discord_user_id: DISCORD_USER_ID }, error: null })

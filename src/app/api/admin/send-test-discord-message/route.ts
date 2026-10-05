@@ -8,8 +8,10 @@ import {
 import {
   buildSessionPickerMessage,
   buildSubPreviewSessions,
+  discordSubLogoUrl,
   loadDiscordSubCopy,
 } from "@/lib/discord-substitution-message";
+import { sendableImageOrigin } from "@/lib/email-templates/render-context";
 import { getOrigin } from "@/lib/url";
 import {
   sendTestDiscordMessageBody,
@@ -57,6 +59,9 @@ export const POST = defineRoute({
       const now = new Date();
       message = buildSessionPickerMessage({
         copy,
+        // This environment's own site, or no logo where Discord could not
+        // fetch one — a send from a dev machine.
+        logoUrl: discordSubLogoUrl(sendableImageOrigin()),
         sessions: buildSubPreviewSessions(now),
         now,
         page: 0,

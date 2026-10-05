@@ -45,7 +45,9 @@ const ACTION_ROW = 1;
 const BUTTON = 2;
 const STRING_SELECT = 3;
 const TEXT_INPUT = 4;
+const SECTION = 9;
 const TEXT_DISPLAY = 10;
+const THUMBNAIL = 11;
 const SEPARATOR = 14;
 const CONTAINER = 17;
 const LABEL = 18;
@@ -70,6 +72,17 @@ export type DiscordComponent = Record<string, unknown>;
 export interface DiscordComponentsMessage {
   flags: number;
   components: DiscordComponent[];
+}
+
+/**
+ * The logo every step shows beside its header: the favicon, as the site
+ * serves it. `null` when there is no origin Discord can fetch it from — the
+ * caller passes `sendableImageOrigin()`, which says so for an unset, malformed
+ * or loopback site URL — and the header then goes without it, never with a
+ * broken image.
+ */
+export function discordSubLogoUrl(origin: string | null): string | null {
+  return origin === null ? null : new URL("/apple-icon.png", origin).toString();
 }
 
 /** A MODAL response's `data`. */
@@ -246,18 +259,34 @@ function clip(value: string, max: number): string {
   return value.length <= max ? value : `${value.slice(0, max - 1)}…`;
 }
 
-/** The one container every step is drawn in, under the brand line. */
-function message(copy: DiscordSubCopy, body: DiscordComponent[]): DiscordComponentsMessage {
+/**
+ * The one container every step is drawn in. Its header is the brand line and
+ * the step's opening lines (at most two — a section holds three text
+ * displays); with a logo, they are a section with the logo beside them.
+ */
+function message(
+  copy: DiscordSubCopy,
+  logoUrl: string | null,
+  { head = [], body }: { head?: DiscordComponent[]; body: DiscordComponent[] },
+): DiscordComponentsMessage {
+  const lines = [text(`-# School of Gaming · ${copy.picker("pageTitle")}`), ...head];
+  const header =
+    logoUrl === null
+      ? lines
+      : [
+          {
+            type: SECTION,
+            components: lines,
+            accessory: { type: THUMBNAIL, media: { url: logoUrl } },
+          },
+        ];
   return {
     flags: DISCORD_FLAG_IS_COMPONENTS_V2,
     components: [
       {
         type: CONTAINER,
         accent_color: ACCENT_COLOR,
-        components: [
-          text(`-# School of Gaming · ${copy.picker("pageTitle")}`),
-          ...body,
-        ],
+        components: [...header, ...body],
       },
     ],
   };
@@ -338,6 +367,7 @@ export const DISCORD_SUB_WEEK_TIMEZONE = DEFAULT_TIMEZONE;
  */
 export function buildSessionPickerMessage({
   copy,
+  logoUrl,
   sessions,
   now,
   page,
@@ -346,6 +376,8 @@ export function buildSessionPickerMessage({
   notice,
 }: {
   copy: DiscordSubCopy;
+  /** The header's logo — `discordSubLogoUrl()` — or `null` for none. */
+  logoUrl: string | null;
   sessions: readonly GeduUpcomingSession[];
   now: Date;
   /** Clamped to the pages there are, since the list can shrink between presses. */
@@ -359,11 +391,10 @@ export function buildSessionPickerMessage({
   const lead = notice === undefined ? [] : [text(`-# ${notice}`)];
 
   if (sessions.length === 0) {
-    return message(copy, [
-      ...lead,
-      text(`### ${copy.picker("filePickTitle")}`),
-      text(copy.sub("empty", { url: substitutionsUrl })),
-    ]);
+    return message(copy, logoUrl, {
+      head: [...lead, text(`### ${copy.picker("filePickTitle")}`)],
+      body: [text(copy.sub("empty", { url: substitutionsUrl }))],
+    });
   }
 
   const timeZone = DISCORD_SUB_WEEK_TIMEZONE;
@@ -407,14 +438,15 @@ export function buildSessionPickerMessage({
     );
   }
 
-  return message(copy, [
-    ...lead,
-    text(`### ${copy.picker("filePickTitle")}`),
-    text(copy.picker("filePickBody")),
-    divider(),
-    ...weeks,
-    ...(nav.length > 0 ? [divider(), row(nav)] : []),
-  ]);
+  return message(copy, logoUrl, {
+    head: [...lead, text(`### ${copy.picker("filePickTitle")}`)],
+    body: [
+      text(copy.picker("filePickBody")),
+      divider(),
+      ...weeks,
+      ...(nav.length > 0 ? [divider(), row(nav)] : []),
+    ],
+  });
 }
 
 function weekHeading(
@@ -441,10 +473,13 @@ function weekHeading(
  */
 export function buildReasonStepMessage({
   copy,
+  logoUrl,
   session,
   reason,
 }: {
   copy: DiscordSubCopy;
+  /** The header's logo — `discordSubLogoUrl()` — or `null` for none. */
+  logoUrl: string | null;
   session: GeduUpcomingSession;
   reason: SubstitutionReason | null;
 }): DiscordComponentsMessage {
@@ -453,42 +488,44 @@ export function buildReasonStepMessage({
   // press on one could never parse.
   const chosen = reason ?? "-";
 
-  return message(copy, [
-    text(`### ${copy.form("substitutionRequestDialogTitle")}`),
-    text(copy.form("substitutionRequestDialogBody")),
-    divider(),
-    sessionSummary(copy, session),
-    row([
-      {
-        type: STRING_SELECT,
-        custom_id: `sub:r:${target}`,
-        placeholder: copy.form("substitutionReasonLabel"),
-        options: SUBSTITUTION_REASONS.map((value) => ({
-          label:
-            value === "sick"
-              ? copy.form("substitutionReasonSick")
-              : copy.form("substitutionReasonOther"),
-          value,
-          ...(value === reason ? { default: true } : {}),
-        })),
-      },
-    ]),
-    row([
-      button("sub:p:0", copy.common("back"), BUTTON_SECONDARY),
-      button(
-        `sub:m:${target}:${chosen}:${copy.locale}`,
-        copy.sub("addNote"),
-        BUTTON_SECONDARY,
-        reason === null,
-      ),
-      button(
-        `sub:f:${target}:${chosen}`,
-        copy.sub("confirmWithoutNote"),
-        BUTTON_PRIMARY,
-        reason === null,
-      ),
-    ]),
-  ]);
+  return message(copy, logoUrl, {
+    head: [text(`### ${copy.form("substitutionRequestDialogTitle")}`)],
+    body: [
+      text(copy.form("substitutionRequestDialogBody")),
+      divider(),
+      sessionSummary(copy, session),
+      row([
+        {
+          type: STRING_SELECT,
+          custom_id: `sub:r:${target}`,
+          placeholder: copy.form("substitutionReasonLabel"),
+          options: SUBSTITUTION_REASONS.map((value) => ({
+            label:
+              value === "sick"
+                ? copy.form("substitutionReasonSick")
+                : copy.form("substitutionReasonOther"),
+            value,
+            ...(value === reason ? { default: true } : {}),
+          })),
+        },
+      ]),
+      row([
+        button("sub:p:0", copy.common("back"), BUTTON_SECONDARY),
+        button(
+          `sub:m:${target}:${chosen}:${copy.locale}`,
+          copy.sub("addNote"),
+          BUTTON_SECONDARY,
+          reason === null,
+        ),
+        button(
+          `sub:f:${target}:${chosen}`,
+          copy.sub("confirmWithoutNote"),
+          BUTTON_PRIMARY,
+          reason === null,
+        ),
+      ]),
+    ],
+  });
 }
 
 /**
@@ -531,19 +568,24 @@ export function buildNoteModal({
 /** Filed: the web's own confirmation line, about the session filed for. */
 export function buildFiledMessage({
   copy,
+  logoUrl,
   session,
 }: {
   copy: DiscordSubCopy;
+  /** The header's logo — `discordSubLogoUrl()` — or `null` for none. */
+  logoUrl: string | null;
   session: GeduUpcomingSession;
 }): DiscordComponentsMessage {
-  return message(copy, [
-    text(
-      `✅ ${copy.picker("fileFiled", {
-        product: sessionWhat(session),
-        when: discordSessionWhen(session, copy.locale),
-      })}`,
-    ),
-  ]);
+  return message(copy, logoUrl, {
+    body: [
+      text(
+        `✅ ${copy.picker("fileFiled", {
+          product: sessionWhat(session),
+          when: discordSessionWhen(session, copy.locale),
+        })}`,
+      ),
+    ],
+  });
 }
 
 /**
@@ -552,29 +594,37 @@ export function buildFiledMessage({
  */
 export function buildRefusalMessage({
   copy,
+  logoUrl,
   line,
   session,
 }: {
   copy: DiscordSubCopy;
+  /** The header's logo — `discordSubLogoUrl()` — or `null` for none. */
+  logoUrl: string | null;
   line: string;
   session: GeduUpcomingSession | null;
 }): DiscordComponentsMessage {
-  return message(copy, [
-    ...(session === null ? [] : [sessionSummary(copy, session)]),
-    text(`⚠️ ${line}`),
-    row([button("sub:p:0", copy.common("back"), BUTTON_SECONDARY)]),
-  ]);
+  return message(copy, logoUrl, {
+    body: [
+      ...(session === null ? [] : [sessionSummary(copy, session)]),
+      text(`⚠️ ${line}`),
+      row([button("sub:p:0", copy.common("back"), BUTTON_SECONDARY)]),
+    ],
+  });
 }
 
 /** A line and nothing else — a failure, or a reader who is not linked. */
 export function buildNoticeMessage({
   copy,
+  logoUrl,
   line,
 }: {
   copy: DiscordSubCopy;
+  /** The header's logo — `discordSubLogoUrl()` — or `null` for none. */
+  logoUrl: string | null;
   line: string;
 }): DiscordComponentsMessage {
-  return message(copy, [text(line)]);
+  return message(copy, logoUrl, { body: [text(line)] });
 }
 
 // ---------------------------------------------------------------- the admin preview

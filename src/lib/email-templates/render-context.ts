@@ -45,6 +45,8 @@ export type EmailRenderContext =
  * there are two of them (the shell's brand mark and the testing tool's demo
  * photographs) and one rule: both are files served out of `public/`, both need
  * an absolute URL in front of them, and both would rather be absent than broken.
+ * The Discord `/sub` messages ask the same question of their header logo, whose
+ * fetcher is Discord rather than a mail client, and read the answer from here.
  */
 export function sendableImageOrigin(): string | null {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
