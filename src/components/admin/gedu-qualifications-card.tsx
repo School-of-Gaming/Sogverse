@@ -38,6 +38,7 @@ import {
   useSetGeduQualification,
   type HeldGeduQualification,
 } from "@/services/gedu";
+import { personName } from "@/components/admin/person-name";
 import { useTimezone } from "@/providers";
 import type { GeduQualification } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -191,16 +192,4 @@ function GeduQualificationRow({
       {failed && <StatusLine status="destructive">{errorMessage}</StatusLine>}
     </div>
   );
-}
-
-/**
- * The granting admin's display name, or `null` where there is none to give —
- * a departed admin (`ON DELETE SET NULL`) or a profile with no name on it.
- */
-function personName(
-  person: { first_name: string | null; last_name: string | null } | null,
-): string | null {
-  if (!person) return null;
-  const name = [person.first_name, person.last_name].filter(Boolean).join(" ");
-  return name === "" ? null : name;
 }

@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  GeduQualificationsService,
-  GEDU_QUALIFICATIONS,
-} from "@/services/gedu/gedu-qualifications.service";
+import { GeduQualificationsService } from "@/services/gedu/gedu-qualifications.service";
 import {
   createFetchStubbedClient,
   postgrestJson,
@@ -13,12 +10,6 @@ import {
 // Runs the REAL Supabase client over a fake fetch transport (see
 // tests/mocks/postgrest-fetch.ts), so what is asserted is the PostgREST request
 // the genuine query builder produced.
-
-describe("GEDU_QUALIFICATIONS", () => {
-  it("lists every qualification in the enum's declared order", () => {
-    expect(GEDU_QUALIFICATIONS).toEqual(["neuroinclusive", "consumer_products"]);
-  });
-});
 
 describe("GeduQualificationsService", () => {
   let fetchMock: FetchMock;

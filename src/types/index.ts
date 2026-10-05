@@ -62,9 +62,8 @@ export type GamerProfileUpdate = Database["public"]["Tables"]["gamer_profiles"][
 export type GeduProfile = Database["public"]["Tables"]["gedu_profiles"]["Row"];
 export type GeduProfileUpdate = Database["public"]["Tables"]["gedu_profiles"]["Update"];
 
-// gedu_qualifications — written only by set_gedu_qualification, so a Row alias alone.
+// gedu_qualification enum
 export type GeduQualification = Database["public"]["Enums"]["gedu_qualification"];
-export type GeduQualificationRow = Database["public"]["Tables"]["gedu_qualifications"]["Row"];
 
 // gedu_contract_versions / gedu_contract_acceptances
 //

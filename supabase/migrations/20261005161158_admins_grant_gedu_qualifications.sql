@@ -49,10 +49,12 @@ REVOKE ALL ON TABLE public.gedu_qualifications FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON TABLE public.gedu_qualifications TO authenticated;
 GRANT ALL ON TABLE public.gedu_qualifications TO service_role;
 
--- The starting holdings: a one-time snapshot of assignments as they stand when
--- this deploys. A gedu assigned to any group (either role) on a product tagged
--- neuroinclusive starts with neuroinclusive, and one assigned to any group on a
--- consumer_club, camp or event product starts with consumer_products. No admin
+-- The starting holdings: a one-time snapshot of the group seats that exist when
+-- this deploys. A gedu holding a seat (either role) on a group of a product
+-- tagged neuroinclusive starts with neuroinclusive, and one holding a seat on a
+-- consumer_club, camp or event product starts with consumer_products. Only seats
+-- count: covering sessions as a substitute or shadowing as a trainee does not,
+-- and a seat already removed has left nothing to read. No admin
 -- made these grants, so granted_by is NULL and the card shows the date alone.
 -- This runs once and nothing re-derives it: from here on every qualification
 -- is an admin's decision, and assignments neither grant nor revoke one.
