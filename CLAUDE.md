@@ -76,7 +76,11 @@ branch>`, which is `main` here and is the wrong answer.
 
 Branches are named `feat/<kebab-summary>`; feature work merges back into `dev`
 with a real merge commit (`--no-ff`) whose subject reads `Merge the <thing> into
-dev`. Releases go `dev` → `main` through the `/pr-dev-to-main` command.
+dev`. Releases go `dev` → `main` through the `/pr-dev-to-main` command, as a merge
+commit; a hotfix branches off `main` and is merged back into `dev` afterwards
+(`/hotfix-to-main`). **`dev` is never reset or force-pushed to `main`**: Vercel
+deduplicates deployments by commit SHA, so `main`'s commit landing on `dev` can
+build as a staging preview and skip the production deploy.
 
 **Rule: `dev` is always safe to push, including commits on it that are not
 yours.** A commit on `dev` means the work is ready for staging — that is what
