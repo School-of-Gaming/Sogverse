@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { after } from "next/server";
 import { z } from "zod";
@@ -8,6 +9,17 @@ import {
 } from "discord-interactions";
 import { askGeduGuru, askHappinappi } from "@/lib/gemini";
 import { resetPassword, type PasswordResetOutcome } from "@/lib/microsoft-graph";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getOrigin } from "@/lib/url";
+import type { DiscordLinkTokenInsert } from "@/types";
+
+// The Discord user who ran the command. `id` and `username` are read as
+// unknown and narrowed where used, so a shape change Discord makes to either
+// can only cost `/link` its answer, never break the webhook for every command.
+const discordUser = z.object({
+  id: z.unknown().optional(),
+  username: z.unknown().optional(),
+});
 
 // Just the slice of Discord's interaction payload we use. Lenient on
 // purpose — unknown fields and option value types Discord may add must not
@@ -15,6 +27,9 @@ import { resetPassword, type PasswordResetOutcome } from "@/lib/microsoft-graph"
 const discordInteraction = z.object({
   type: z.number(),
   token: z.string().optional(),
+  // In a server the caller is `member.user`; in a DM it is `user`.
+  member: z.object({ user: discordUser.optional() }).optional(),
+  user: discordUser.optional(),
   data: z
     .object({
       name: z.string(),
@@ -26,6 +41,11 @@ const discordInteraction = z.object({
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN!;
 const DISCORD_APPLICATION_ID = process.env.DISCORD_APPLICATION_ID!;
+
+/** Only the caller sees the message (Discord's EPHEMERAL message flag). */
+const EPHEMERAL = 1 << 6;
+/** No link preview under the message (Discord's SUPPRESS_EMBEDS flag). */
+const SUPPRESS_EMBEDS = 1 << 2;
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -52,6 +72,24 @@ export async function POST(request: Request) {
     const message = typeof value === "string" ? value : undefined;
     const token = interaction.token;
 
+    // `/link` takes no argument, so it is dispatched ahead of the check below
+    // that every other command carries one. Its answer is a sign-in link for
+    // the caller alone, so the deferred response is already ephemeral: that
+    // flag decides the visibility of the reply which later replaces it.
+    if (command === "link" && token) {
+      const caller = interaction.member?.user ?? interaction.user;
+      const id = caller?.id;
+      const username = caller?.username;
+      if (typeof id !== "string" || typeof username !== "string") {
+        return NextResponse.json({ type: InteractionResponseType.PONG });
+      }
+      after(sendLinkUrl(token, { id, username }, request.headers));
+      return NextResponse.json({
+        type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
+        data: { flags: EPHEMERAL },
+      });
+    }
+
     if (!command || !message || !token) {
       return NextResponse.json({ type: InteractionResponseType.PONG });
     }
@@ -71,7 +109,11 @@ export async function POST(request: Request) {
   return NextResponse.json({ error: "Unknown interaction" }, { status: 400 });
 }
 
-async function patchDiscordResponse(interactionToken: string, content: string) {
+async function patchDiscordResponse(
+  interactionToken: string,
+  content: string,
+  flags?: number
+) {
   await fetch(
     `https://discord.com/api/v10/webhooks/${DISCORD_APPLICATION_ID}/${interactionToken}/messages/@original`,
     {
@@ -80,9 +122,49 @@ async function patchDiscordResponse(interactionToken: string, content: string) {
         "Content-Type": "application/json",
         Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
       },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify(flags === undefined ? { content } : { content, flags }),
     }
   );
+}
+
+/**
+ * Answer `/link` with a one-time URL that links the caller's Discord account
+ * to whichever Gedu or admin account confirms it.
+ *
+ * Only the token's SHA-256 is stored, so the table never holds a usable token;
+ * the raw value exists in this reply alone. The database gives it ten minutes
+ * and spends it on first use. The path is bare on purpose: the proxy sends it
+ * on to the reader's own locale with the query intact.
+ */
+async function sendLinkUrl(
+  interactionToken: string,
+  caller: { id: string; username: string },
+  requestHeaders: Headers
+): Promise<void> {
+  let content: string;
+  try {
+    const origin = getOrigin(requestHeaders);
+    const token = randomBytes(32).toString("base64url");
+    const row: DiscordLinkTokenInsert = {
+      token_hash: createHash("sha256").update(token).digest("hex"),
+      discord_user_id: caller.id,
+      discord_username: caller.username,
+    };
+    const { error } = await createAdminClient()
+      .from("discord_link_tokens")
+      .insert(row);
+    if (error) throw error;
+
+    content =
+      "Open this link to connect your Discord account to your School of Gaming account:\n" +
+      `${origin}/link-discord?token=${token}\n\n` +
+      "The link expires in 10 minutes and works once.";
+  } catch (error) {
+    console.error("Discord link token error:", error);
+    content = "Sorry, I couldn't create a link right now. Try /link again in a moment.";
+  }
+
+  await patchDiscordResponse(interactionToken, content, SUPPRESS_EMBEDS);
 }
 
 /**

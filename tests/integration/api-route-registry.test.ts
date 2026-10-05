@@ -186,6 +186,7 @@ const TESTS = {
   checkout: "tests/integration/api/checkout-products-create.test.ts",
   completeRegistration: "tests/integration/auth/complete-registration.test.ts",
   discordInteractions: "tests/integration/api/discord-interactions.test.ts",
+  discordLink: "tests/integration/api/discord-link.test.ts",
   familyList: "tests/integration/api/family-list.test.ts",
   forgotPassword: "tests/integration/auth/forgot-password.test.ts",
   gamersCreate: "tests/integration/api/gamers-create.test.ts",
@@ -792,6 +793,8 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // --- Discord -------------------------------------------------------------
 
   "src/app/api/discord/interactions/route.ts": {
+    adminClient:
+      "webhook; no session by construction. `/link` inserts the hash of a one-time account-linking token into discord_link_tokens, which only the service role can write, for the Discord user Discord's signed payload names; the token links nothing until a signed-in Gedu or admin spends it through consume_discord_link_token on their own session",
     handlers: {
       POST: {
         posture: {
@@ -805,6 +808,16 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           reason: "the signature is computed over the exact bytes sent",
         },
         test: TESTS.discordInteractions,
+      },
+    },
+  },
+
+  "src/app/api/discord/link/route.ts": {
+    handlers: {
+      POST: {
+        posture: { kind: "role-gated", roles: ["admin", "gedu"] },
+        body: { kind: "json", schema: "discordLinkBody" },
+        test: TESTS.discordLink,
       },
     },
   },

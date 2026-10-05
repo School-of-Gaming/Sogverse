@@ -1,6 +1,6 @@
 # Discord Bot
 
-Slash-command webhook for the Sogverse Discord bot. Powers two AI assistants (Gedu Guru, Happinappi, via Gemini) and Minecraft Education account password resets (via Microsoft Graph / Azure AD).
+Slash-command webhook for the Sogverse Discord bot. Powers two AI assistants (Gedu Guru, Happinappi, via Gemini), Minecraft Education account password resets (via Microsoft Graph / Azure AD), and the linking of a Gedu's or an admin's Discord account to their Sogverse account.
 
 ## Request Flow
 
@@ -11,7 +11,7 @@ Slash-command webhook for the Sogverse Discord bot. Powers two AI assistants (Ge
 
 **Rule: Every command must return the deferred response synchronously and finish in `after()`.** Discord hard-times-out interactions at 3 seconds; cold starts plus Gemini/Graph calls blow past that. The handler returns `DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` and the real reply lands later via PATCH. Never do the AI/Graph call inline before responding.
 
-**Rule: Parse the Discord payload leniently.** Only validate the slice actually used (interaction type, token, command name, first option value). Unknown fields and new option value types Discord adds must not break the webhook — keep the schema permissive (`z.unknown()` for option values, `.optional()` liberally). Missing command/message/token falls back to a harmless `PONG`, not an error.
+**Rule: Parse the Discord payload leniently.** Only validate the slice actually used (interaction type, token, command name, first option value, and the calling user's id and username). Unknown fields and new option value types Discord adds must not break the webhook — keep the schema permissive (`z.unknown()` for option values, `.optional()` liberally). Missing command/message/token falls back to a harmless `PONG`, not an error.
 
 ## Commands
 
@@ -20,10 +20,23 @@ The first command option's value is the only argument read. Dispatch is by comma
 - `/geduguru` (`kysymys`) → `askGeduGuru` — answers from uploaded FAQ docs, in Finnish.
 - `/happinappi` (`viesti`) → `askHappinappi`.
 - `/reset-password` (`usernames`, space/comma separated) → Graph password reset, one result line per username.
+- `/link` (no option) → a one-time URL that links the caller's Discord account to a Gedu's or an admin's Sogverse account. See Account Linking below.
 
 AI command answers are wrapped as `**{question}**\n\n{answer}`. On a Gemini error, a Finnish fallback message is sent (do not surface raw errors to users).
 
 **Rule: Discord caps message content at 2000 chars — truncate before PATCHing** (slice to 1997 + `...`). There is no follow-up/threading support; each command is standalone with no conversation memory.
+
+## Account Linking
+
+A Gedu or an admin links their Discord account so School of Gaming can reach them there. No sign-in changes: Discord is a contact detail on the account, not a way into it. A Sogverse account has at most one link (a new one replaces it); one Discord account may be linked to several Sogverse accounts.
+
+1. `/link` mints a random token and stores **only its SHA-256** with the service-role client, beside the caller's Discord id and username. The raw token exists only in the reply, so the table never holds anything usable.
+2. The reply is **ephemeral** from the deferred response onward (the flag on the deferred response decides who sees the reply that replaces it) and suppresses embeds, so the URL is neither shown to the channel nor unfurled. It names `/link-discord?token=…` on a bare path, which the proxy sends on to the reader's locale with the query intact, and says the link lasts 10 minutes and works once. A failure sends a short English line, never the cause.
+3. `/link-discord` is public to the proxy, because its login bounce keeps only the pathname and would drop the token; the page gates itself — signed out to login with the token kept on the redirect (the post-auth allowlist admits this page exactly), a parent or gamer refused with no button.
+4. **A GET never spends the token.** The page only renders the question; the confirm button POSTs to `/api/discord/link`, so a preview bot or a mail scanner opening the URL leaves it good.
+5. The route calls `consume_discord_link_token` on the caller's own session, never the service role. The function is the boundary: it hashes the raw token itself, refuses every role but Gedu and admin, deletes the row so it works once, refuses an expired one, and replaces the caller's link. The route turns an unknown or used token and an expired one into two codes the page explains by sending the reader back to `/link`.
+
+The command is unauthenticated on the Sogverse side — anyone in a server with the bot can run it — and that is safe because a token links nothing until a signed-in Gedu or admin spends it.
 
 ## Registering Commands
 

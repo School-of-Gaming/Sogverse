@@ -74,6 +74,7 @@
       "robloxTerms": "Conditions générales d’utilisation de l’Académie des Créateurs",
       "geduContract": "Contrat Gedu",
       "oauthConsent": "Connecter une application d’IA",
+      "linkDiscord": "Associer Discord",
       "seatOffer": "Proposition de place",
       "geduSubstitutions": "Remplacements",
       "geduInvoicing": "Facturation",
@@ -5231,6 +5232,36 @@
     "refused": {
       "title": "Seuls les administrateurs de School of Gaming peuvent connecter une application d’IA",
       "body": "Vous êtes connecté en tant que {email}, qui n’est pas un compte administrateur."
+    }
+  },
+  "discordLink": {
+    "confirm": {
+      "title": "Associer votre compte Discord",
+      "body": "Cette action associe le compte Discord qui a demandé ce lien à votre compte School of Gaming, pour que School of Gaming puisse vous joindre sur Discord.",
+      "action": "Associer le compte",
+      "failed": "Une erreur s’est produite et votre compte n’a pas été associé. Réessayez."
+    },
+    "linked": {
+      "title": "Associé à @{username}",
+      "body": "School of Gaming peut désormais vous joindre sur Discord.",
+      "goToMySog": "Aller à Mon SOG",
+      "goToDashboard": "Aller au tableau de bord"
+    },
+    "used": {
+      "title": "Ce lien a déjà été utilisé",
+      "body": "Chaque lien ne fonctionne qu’une fois. Relancez /link dans Discord pour en obtenir un nouveau."
+    },
+    "expired": {
+      "title": "Ce lien a expiré",
+      "body": "Les liens expirent au bout de 10 minutes. Relancez /link dans Discord pour en obtenir un nouveau."
+    },
+    "missingToken": {
+      "title": "Ce lien est incomplet",
+      "body": "Relancez /link dans Discord pour en obtenir un nouveau."
+    },
+    "refused": {
+      "title": "Seule l’équipe de School of Gaming peut associer un compte Discord",
+      "body": "Ce compte ne peut pas en associer. Si vous faites partie de l’équipe, connectez-vous avec votre compte d’équipe."
     }
   },
   "seatOffer": {

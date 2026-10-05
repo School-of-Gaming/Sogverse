@@ -67,6 +67,7 @@
       "roblox": "chenmoHwI’ DuSaQ",
       "geduContract": "Gedu quv chut",
       "oauthConsent": "QoQ jan yIrar",
+      "linkDiscord": "Discord yIrar",
       "seatOffer": "quS nob",
       "geduSubstitutions": "lIwmey",
       "geduInvoicing": "DIlmeH ghItlh",
@@ -4350,6 +4351,36 @@
     "refused": {
       "title": "School of Gaming DIvI' HoS neH QoQ jan rarlaH",
       "body": "{email} SoH, 'ach DIvI' HoS ghItlh 'oHbe'."
+    }
+  },
+  "discordLink": {
+    "confirm": {
+      "title": "Discord ghItlhlIj yIrar",
+      "body": "ghItlhvam tlhobpu'bogh Discord ghItlh, School of Gaming ghItlhlIj rarmoH ghItlhvam. vaj Discord Daq SoH ghoSlaH School of Gaming.",
+      "action": "ghItlh yIrar",
+      "failed": "Qagh. ghItlhlIj rarlu'be'. yInIDqa'."
+    },
+    "linked": {
+      "title": "@{username} rarlu'pu'",
+      "body": "DaH Discord Daq SoH ghoSlaH School of Gaming.",
+      "goToMySog": "My SOG yIghoS",
+      "goToDashboard": "QaD yIghoS"
+    },
+    "used": {
+      "title": "ghItlhvam lo'pu'lu'",
+      "body": "wa'logh neH Qap ghItlh. ghItlh chu' DaghajmeH, Discord Daq /link yIlo'qa'."
+    },
+    "expired": {
+      "title": "ghItlhvam Heghpu'",
+      "body": "wa'maH tup pIq Hegh ghItlhmey. ghItlh chu' DaghajmeH, Discord Daq /link yIlo'qa'."
+    },
+    "missingToken": {
+      "title": "ghItlhvam naQbe'",
+      "body": "ghItlh chu' DaghajmeH, Discord Daq /link yIlo'qa'."
+    },
+    "refused": {
+      "title": "School of Gaming beqpu' neH Discord ghItlh rarlaH",
+      "body": "ghItlhvam rarlaHbe' ghItlhvam. beqpu' SoHchugh, beq ghItlhlIj yIlo'."
     }
   },
   "seatOffer": {

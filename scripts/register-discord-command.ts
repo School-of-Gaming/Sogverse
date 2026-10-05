@@ -72,6 +72,11 @@ const commands = [
       },
     ],
   },
+  {
+    name: "link",
+    description: "Connect your Discord account to your School of Gaming account",
+    type: 1,
+  },
 ];
 
 async function register() {

@@ -74,6 +74,7 @@
       "robloxTerms": "Användarvillkor för Skaparnas akademi",
       "geduContract": "Gedu-avtal",
       "oauthConsent": "Anslut en AI-app",
+      "linkDiscord": "Koppla Discord",
       "seatOffer": "Platserbjudande",
       "geduSubstitutions": "Vikariat",
       "geduInvoicing": "Fakturering",
@@ -5231,6 +5232,36 @@
     "refused": {
       "title": "Bara administratörer på School of Gaming kan ansluta en AI-app",
       "body": "Du är inloggad som {email}, som inte är ett administratörskonto."
+    }
+  },
+  "discordLink": {
+    "confirm": {
+      "title": "Koppla ditt Discord-konto",
+      "body": "Det här kopplar Discord-kontot som begärde länken till ditt School of Gaming-konto, så att School of Gaming kan nå dig på Discord.",
+      "action": "Koppla kontot",
+      "failed": "Något gick fel och ditt konto kopplades inte. Försök igen."
+    },
+    "linked": {
+      "title": "Kopplat till @{username}",
+      "body": "School of Gaming kan nu nå dig på Discord.",
+      "goToMySog": "Gå till Min SOG",
+      "goToDashboard": "Gå till instrumentpanelen"
+    },
+    "used": {
+      "title": "Den här länken har redan använts",
+      "body": "Varje länk fungerar en gång. Kör /link i Discord igen för att få en ny."
+    },
+    "expired": {
+      "title": "Den här länken har gått ut",
+      "body": "Länkar slutar gälla efter 10 minuter. Kör /link i Discord igen för att få en ny."
+    },
+    "missingToken": {
+      "title": "Den här länken är ofullständig",
+      "body": "Kör /link i Discord igen för att få en ny."
+    },
+    "refused": {
+      "title": "Bara personalen på School of Gaming kan koppla ett Discord-konto",
+      "body": "Det här kontot kan inte koppla ett. Om du hör till personalen, logga in med ditt personalkonto."
     }
   },
   "seatOffer": {

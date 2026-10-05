@@ -455,6 +455,13 @@ export const ROUTES = {
    */
   oauthConsent: "/oauth/consent",
   /**
+   * Where the Discord bot's `/link` reply sends a Gedu or an admin to link
+   * their Discord account, carrying the one-time `?token=`. Public to the proxy
+   * for the same reason as `oauthConsent`: its login bounce would drop the
+   * token. The page gates itself, and only its button spends the token.
+   */
+  linkDiscord: "/link-discord",
+  /**
    * Public identity page — who School of Gaming is, what Yty is, and the
    * public FAQ. Reached from the header in both auth states: it is the one
    * page carrying this copy, and the home page it used to live on is
