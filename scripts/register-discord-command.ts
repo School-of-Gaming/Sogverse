@@ -1,8 +1,10 @@
 /**
- * Registers slash commands with Discord.
- * Run once: npx tsx scripts/register-discord-command.ts
+ * Registers slash commands with Discord, on the staging app by default.
+ *   npx tsx scripts/register-discord-command.ts                # staging app
+ *   npx tsx scripts/register-discord-command.ts --production   # prod app
  *
- * Requires DISCORD_APPLICATION_ID and DISCORD_BOT_TOKEN in .env.local
+ * Reads DISCORD_APPLICATION_ID and DISCORD_BOT_TOKEN from .env.local, or their
+ * _PRODUCTION counterparts with --production.
  */
 
 import fs from "fs";
@@ -21,11 +23,12 @@ for (const line of envFile.split("\n")) {
   process.env[key] = value;
 }
 
-const APP_ID = process.env.DISCORD_APPLICATION_ID;
-const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
+const suffix = process.argv.includes("--production") ? "_PRODUCTION" : "";
+const APP_ID = process.env[`DISCORD_APPLICATION_ID${suffix}`];
+const BOT_TOKEN = process.env[`DISCORD_BOT_TOKEN${suffix}`];
 
 if (!APP_ID || !BOT_TOKEN) {
-  console.error("Missing DISCORD_APPLICATION_ID or DISCORD_BOT_TOKEN in .env.local");
+  console.error(`Missing DISCORD_APPLICATION_ID${suffix} or DISCORD_BOT_TOKEN${suffix} in .env.local`);
   process.exit(1);
 }
 
@@ -92,7 +95,7 @@ async function register() {
   }
 
   const result = await response.json();
-  console.log(`Registered ${result.length} commands:`, result.map((c: { name: string }) => `/${c.name}`).join(", "));
+  console.log(`Registered ${result.length} commands on app ${APP_ID}:`, result.map((c: { name: string }) => `/${c.name}`).join(", "));
 }
 
 register();

@@ -30,10 +30,11 @@ AI command answers are wrapped as `**{question}**\n\n{answer}`. On a Gemini erro
 Commands are registered out-of-band, not in this route and not via the Discord UI:
 
 ```bash
-npx tsx scripts/register-discord-command.ts
+npx tsx scripts/register-discord-command.ts                # the staging app
+npx tsx scripts/register-discord-command.ts --production   # the prod app
 ```
 
-This is a **bulk `PUT`** — the script's command list becomes the complete command set. To add/change/remove a command, edit the script and re-run.
+This is a **bulk `PUT`** — the script's command list becomes the complete command set. Commands belong to an application, so a change is registered on each app separately: staging first, prod once the change has shipped there.
 
 ## Password Reset Details
 
@@ -63,12 +64,14 @@ Resets passwords for shared Minecraft Education accounts in the sog.gg Azure AD 
 
 All in `.env.local` and Vercel:
 
-- `DISCORD_APPLICATION_ID`, `DISCORD_PUBLIC_KEY` (signature verification), `DISCORD_BOT_TOKEN` (PATCHing follow-ups).
+- `DISCORD_APPLICATION_ID`, `DISCORD_PUBLIC_KEY` (signature verification), `DISCORD_BOT_TOKEN` (PATCHing follow-ups). Staging and prod are **two separate Discord applications**: Vercel Preview and `.env.local` hold the staging app's values, Vercel Production holds the prod app's, and `.env.local` also keeps the prod set as `DISCORD_*_PRODUCTION` for the Production writes and for registering prod's commands. The local server never reads those.
 - `GEMINI_API_KEY` — Google AI Studio key, pay-as-you-go (billed under the "Sogverse Gedu Assistant" project at aistudio.google.com/billing).
 - `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` (the expiring secret above).
 
 ## Discord Portal Setup
 
-- General Information → Interactions Endpoint URL: `https://<domain>/api/discord/interactions`.
+Each app is set up the same way, pointed at its own deployment:
+
+- General Information → Interactions Endpoint URL: `https://sogverse.sog.gg/api/discord/interactions` for prod, `https://sogverse-staging.sog.gg/api/discord/interactions` for staging. Discord verifies the URL on save with a request signed by that app's key, so the deployment must already hold the app's `DISCORD_PUBLIC_KEY` — set the env vars and redeploy first, then save the URL.
 - Bot → Message Content Intent: enabled.
 - Invite via OAuth2 URL with `bot` scope + `Send Messages` and `Read Message History` permissions.
