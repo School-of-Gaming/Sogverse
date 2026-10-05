@@ -822,6 +822,8 @@ export const ROUTES = {
      * account menu, which is why it carries its own nav item.
      */
     invoicing: "/gedu/invoicing",
+    /** The badges School of Gaming has awarded this gedu, and the ones still to earn. */
+    badges: "/gedu/badges",
     assignedProduct: geduAssignedProductHref,
     /** The string form, for absolute URLs built server-side (email). */
     assignedProductPath: geduAssignedProductPath,

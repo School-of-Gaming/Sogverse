@@ -78,6 +78,7 @@
       "seatOffer": "Seat offer",
       "geduSubstitutions": "Substitutions",
       "geduInvoicing": "Invoicing",
+      "geduBadges": "Badges",
       "adminSubstitutions": "Substitutions",
       "teamProfile": "My profile",
       "adminTeamProfile": "Profile",
@@ -642,6 +643,15 @@
       "queueRecorded": "Extract recorded {date}",
       "queueNotRecorded": "Extract not recorded",
       "rowNotRecorded": "Has not presented a criminal record extract"
+    },
+    "geduBadges": {
+      "title": "Badges",
+      "neuroinclusive": "Qualified to run groups in products tagged Neuroinclusive.",
+      "flagship": "Cleared to run clubs, camps and events families buy themselves, not only municipality clubs.",
+      "grantedOn": "Granted on {date}",
+      "grantedOnBy": "Granted on {date} by {name}",
+      "notGranted": "Not granted",
+      "error": "Couldn’t update the badge. Please try again."
     },
     "geduCertifyWarnings": {
       "title": "Certify anyway?",
@@ -2397,6 +2407,17 @@
       "offerConfirmTitle": "Offer to substitute?",
       "offerConfirmBody": "You’re offering to run {product} on {when}. School of Gaming chooses who substitutes, and you can withdraw your offer until it is approved. Once it is approved, the session is yours under your Gedu contract, exactly like one of your own, and you can no longer withdraw: if you then can’t make it, ask for a substitute yourself, as for any of your sessions. The group’s workspace opens to you 48 hours before the session starts."
     },
+    "badges": {
+      "back": "Back to My SOG",
+      "pageTitle": "Badges",
+      "intro": "Each badge marks something you are qualified to run. School of Gaming awards them as you take on more, and the ones you have earned are shown in colour.",
+      "awardedBy": "Awarded by School of Gaming",
+      "earnedOn": "Earned {date}",
+      "notEarned": "Not earned yet",
+      "loadError": "Couldn’t load your badges. Please refresh the page.",
+      "neuroinclusive": "Lets you run groups in clubs, camps and events marked Neuroinclusive.",
+      "flagship": "Lets you run the clubs, camps and events families sign up for themselves, not only municipality clubs."
+    },
     "coverage": {
       "title": "Coverage areas",
       "remoteOnlyNote": "Used to match you as a substitute when another Gedu can’t make their club. Leave empty if you only substitute remotely.",
@@ -2771,6 +2792,20 @@
       "downloadPdf": "Download PDF"
     }
   },
+  "badges": {
+    "gedu": {
+      "neuroinclusive": {
+        "name": "Neuroinclusive"
+      },
+      "flagship": {
+        "name": "Flagship"
+      }
+    },
+    "art": {
+      "earned": "{name} badge",
+      "unearned": "{name} badge, not yet earned"
+    }
+  },
   "productType": {
     "consumer_club": "Club",
     "municipality_club": "Club",
@@ -2865,7 +2900,8 @@
     "continueToAccount": "Continue to your account",
     "switchTo": "Switch to",
     "invoicing": "Invoicing",
-    "teamProfile": "My profile"
+    "teamProfile": "My profile",
+    "badges": "Badges"
   },
   "schools": {
     "hero": {

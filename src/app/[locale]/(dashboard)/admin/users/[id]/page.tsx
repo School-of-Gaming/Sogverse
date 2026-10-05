@@ -13,6 +13,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { GeduCertificationCard } from "@/components/admin/gedu-certification-card";
+import { GeduBadgesCard } from "@/components/admin/gedu-badges-card";
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
 import { UserMarketingCard } from "@/components/admin/user-marketing-card";
 import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-consent-card";
@@ -36,6 +37,10 @@ import {
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
+import {
+  GeduBadgesService,
+  type HeldGeduBadge,
+} from "@/services/gedu/gedu-badges.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
 import {
   DiscordLinkService,
@@ -220,6 +225,7 @@ export default async function AdminUserDetailPage({
     robloxAccount,
     geduCertification,
     geduAcceptances,
+    geduBadges,
     { record: teamProfile, publicAddress: teamProfileAddress },
     viewer,
     discordLink,
@@ -250,6 +256,12 @@ export default async function AdminUserDetailPage({
     isGedu
       ? new GeduContractService(supabase).getAcceptances(userId).catch(() => null)
       : Promise.resolve<GeduContractAcceptance[] | null>(null),
+    // The badges this educator holds — at most one row per badge, read by the
+    // gedu's id. A failure answers `null` so the card asks again from the
+    // browser rather than drawing every box unticked.
+    isGedu
+      ? new GeduBadgesService(supabase).getForGedu(userId).catch(() => null)
+      : Promise.resolve<HeldGeduBadge[] | null>(null),
     // The team profile, read here so its card paints complete: its status
     // and summary differ in height from one profile to the next. Not caught:
     // the id has already matched a profile, so it cannot be malformed, and a
@@ -554,6 +566,11 @@ export default async function AdminUserDetailPage({
           initialAcceptances={geduAcceptances}
         />
       )}
+
+      {/* The educator's badges, directly after certification: the other
+          standing an admin grants an educator, though unlike certification
+          it gates nothing. */}
+      {isGedu && <GeduBadgesCard geduId={userId} initial={geduBadges} />}
 
       {/* Both game identities, editable. Admins have always had the database
           permission to fix these (a `FOR ALL` policy over `is_admin()` on both

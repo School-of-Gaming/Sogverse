@@ -13,6 +13,7 @@ import { usePathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowLeftRight,
+  Award,
   IdCard,
   House,
   Loader2,
@@ -158,7 +159,7 @@ interface AccountMenuProps {
    * The header's nav override, handed down unchanged — preview scenes only,
    * and documented on `Header`. It decides one thing here and nothing else:
    * whether this menu carries the nav rows the role's strip gives up below
-   * `lg` (a gedu's Invoicing and Substitutions, a gedu's or admin's My profile). The dashboard row, the household
+   * `lg` (a gedu's Invoicing, Substitutions and Badges, a gedu's or admin's My profile). The dashboard row, the household
    * and every label still follow `role`, because the account really does belong
    * to whoever is signed in.
    */
@@ -354,8 +355,8 @@ export function AccountMenu({
     (pathname === dashboardPath || pathname.startsWith(dashboardPath + "/")) &&
     !hasOwnNavItem(pathname);
   /**
-   * Whether this menu carries the role's nav rows — a gedu's Invoicing and
-   * Substitutions, and a gedu's or an admin's My profile, the other half of a
+   * Whether this menu carries the role's nav rows — a gedu's Invoicing,
+   * Substitutions and Badges, and a gedu's or an admin's My profile, the other half of a
    * decision the header makes. From `lg` up they are items on the strip; below
    * it the strip carries no nav at all and they live here. It reads the
    * header's nav override, exactly as the strip does, so the two halves can
@@ -369,6 +370,9 @@ export function AccountMenu({
   const isOnSubstitutions =
     pathname === ROUTES.gedu.substitutions ||
     pathname.startsWith(ROUTES.gedu.substitutions + "/");
+  const isOnBadges =
+    pathname === ROUTES.gedu.badges ||
+    pathname.startsWith(ROUTES.gedu.badges + "/");
   const isOnTeamProfile = pathname === ROUTES.settingsTeamProfile;
   // The profile page lives under settings, but where the chrome has an item of
   // its own for it, that item is what marks it current, not Settings.
@@ -639,6 +643,15 @@ export function AccountMenu({
                     onNavigate={() => setOpen(false)}
                     icon={<ArrowLeftRight className="h-4 w-4 shrink-0" />}
                     label={t("nav.substitutions")}
+                    className="lg:hidden"
+                  />
+                  <MenuLinkRow
+                    href={ROUTES.gedu.badges}
+                    active={isOnBadges}
+                    disabled={busy}
+                    onNavigate={() => setOpen(false)}
+                    icon={<Award className="h-4 w-4 shrink-0" />}
+                    label={t("badges")}
                     className="lg:hidden"
                   />
                 </>

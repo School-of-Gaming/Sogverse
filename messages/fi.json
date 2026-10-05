@@ -78,6 +78,7 @@
       "seatOffer": "Paikkatarjous",
       "geduSubstitutions": "Tuuraukset",
       "geduInvoicing": "Laskutus",
+      "geduBadges": "Merkit",
       "adminSubstitutions": "Tuuraukset",
       "teamProfile": "Oma profiili",
       "adminTeamProfile": "Profiili",
@@ -642,6 +643,15 @@
       "queueRecorded": "Ote kirjattu {date}",
       "queueNotRecorded": "Otetta ei ole kirjattu",
       "rowNotRecorded": "Ei ole esittänyt rikosrekisteriotetta"
+    },
+    "geduBadges": {
+      "title": "Merkit",
+      "neuroinclusive": "Pätevä ohjaamaan ryhmiä neuroinklusiivisissa tuotteissa.",
+      "flagship": "Saa ohjata kuntakerhojen lisäksi kerhoja, leirejä ja tapahtumia, joihin perheet ilmoittautuvat itse.",
+      "grantedOn": "Myönnetty {date}",
+      "grantedOnBy": "Myöntänyt {name} {date}",
+      "notGranted": "Ei myönnetty",
+      "error": "Merkin päivitys epäonnistui. Yritä uudelleen."
     },
     "geduCertifyWarnings": {
       "title": "Hyväksytäänkö silti?",
@@ -2397,6 +2407,17 @@
       "offerConfirmTitle": "Tarjoudutko tuuraajaksi?",
       "offerConfirmBody": "Tarjoudut vetämään kerran {product} {when}. School of Gaming valitsee tuuraajan, ja voit perua tarjouksesi siihen asti, kun se hyväksytään. Hyväksynnän jälkeen kerta on Gedu-sopimuksesi nojalla sinun vastuullasi aivan kuten omat kertasi, etkä voi enää perua tarjoustasi: jos et sittenkään pääse paikalle, pyydä itsellesi tuuraaja samoin kuin mille tahansa kerrallesi. Ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua."
     },
+    "badges": {
+      "back": "Takaisin Omaan SOGiin",
+      "pageTitle": "Merkit",
+      "intro": "Jokainen merkki kertoo, mitä olet pätevä ohjaamaan. School of Gaming myöntää merkkejä sitä mukaa kuin otat uusia tehtäviä, ja ansaitsemasi merkit näkyvät värillisinä.",
+      "awardedBy": "Myöntäjä: School of Gaming",
+      "earnedOn": "Ansaittu {date}",
+      "notEarned": "Ei vielä ansaittu",
+      "loadError": "Merkkien lataus epäonnistui. Päivitä sivu.",
+      "neuroinclusive": "Voit ohjata ryhmiä kerhoissa, leireillä ja tapahtumissa, jotka on merkitty neuroinklusiivisiksi.",
+      "flagship": "Voit ohjata kuntakerhojen lisäksi kerhoja, leirejä ja tapahtumia, joihin perheet ilmoittautuvat itse."
+    },
     "coverage": {
       "title": "Kattamasi alueet",
       "remoteOnlyNote": "Käytetään tuuraajan etsimiseen, kun toinen Gedu ei pääse pitämään kerhoaan. Jätä tyhjäksi, jos tuuraat vain etänä.",
@@ -2771,6 +2792,20 @@
       "downloadPdf": "Lataa PDF"
     }
   },
+  "badges": {
+    "gedu": {
+      "neuroinclusive": {
+        "name": "Neuroinklusiivinen"
+      },
+      "flagship": {
+        "name": "Lippulaiva"
+      }
+    },
+    "art": {
+      "earned": "Merkki: {name}",
+      "unearned": "Merkki: {name}, ei vielä ansaittu"
+    }
+  },
   "productType": {
     "consumer_club": "Kerho",
     "municipality_club": "Kerho",
@@ -2865,7 +2900,8 @@
     "continueToAccount": "Jatka tilillesi",
     "switchTo": "Vaihda profiiliin",
     "invoicing": "Laskutus",
-    "teamProfile": "Oma profiili"
+    "teamProfile": "Oma profiili",
+    "badges": "Merkit"
   },
   "schools": {
     "hero": {

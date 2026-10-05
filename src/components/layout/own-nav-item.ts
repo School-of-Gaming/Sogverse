@@ -17,6 +17,7 @@ import { ROUTES, type UserRole } from "@/lib/constants";
 const PAGES_WITH_THEIR_OWN_NAV_ITEM = [
   ROUTES.gedu.substitutions,
   ROUTES.gedu.invoicing,
+  ROUTES.gedu.badges,
 ];
 
 /**

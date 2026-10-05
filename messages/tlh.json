@@ -71,6 +71,7 @@
       "seatOffer": "quS nob",
       "geduSubstitutions": "lIwmey",
       "geduInvoicing": "DIlmeH ghItlh",
+      "geduBadges": "Deghmey",
       "adminSubstitutions": "lIwmey",
       "teamProfile": "Del’a’wIj",
       "adminTeamProfile": "Del’a’",
@@ -686,6 +687,15 @@
       "queueRecorded": "ghItlh cha’lu’pu’ {date}",
       "queueNotRecorded": "ghItlh cha’lu’be’",
       "rowNotRecorded": "HeS ta’ ghItlh cha’be’taH"
+    },
+    "geduBadges": {
+      "title": "Deghmey",
+      "neuroinclusive": "Hoch yab ghommey DevlaH.",
+      "flagship": "Qorwagh ghommey DevlaH, vengHom ghommey neH ghobe’.",
+      "grantedOn": "nobta’ {date}",
+      "grantedOnBy": "nobta’ {name} {date}",
+      "notGranted": "nobbe’lu’",
+      "error": "Degh choHlaHbe’. yInIDqa’."
     },
     "geduCertifyWarnings": {
       "title": "patlh yInob ’e’ DaHech’a’?",
@@ -2437,6 +2447,17 @@
       "offerConfirmTitle": "bIlIwqang’a’?",
       "offerConfirmBody": "{when} {product} may’ DalIwqang. lIwwI’ wIv School of Gaming; chaw’lu’pa’ nob DanatlhlaH. chaw’lu’DI’, Gedu quv chut tlhIH SoH may’ ’oH, SoHvaD may’ DaneHbogh rur, ’ej nob DanatlhlaHbe’: DaghoSlaHbe’chugh, lIwwI’ yItlhob. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’."
     },
+    "badges": {
+      "back": "jIH SOGDaq yIchegh",
+      "pageTitle": "Deghmey",
+      "intro": "Degh Hoch — Qu’ DaDevlaHbogh cha’. School of Gaming nob. Degh DaSuqta’bogh rItlh ghaj.",
+      "awardedBy": "School of Gaming nob",
+      "earnedOn": "Suqta’ {date}",
+      "notEarned": "wej Suqlu’",
+      "loadError": "Deghmey lI’laHbe’. Dalvetlh yIchu’qa’.",
+      "neuroinclusive": "Hoch yab ghommey DaDevlaH.",
+      "flagship": "Qorwagh ghommey DaDevlaH — vengHom ghommey neH ghobe’."
+    },
     "coverage": {
       "title": "So’ Daqmey",
       "remoteOnlyNote": "ghom’a’Daj qemlaHbe’ latlh Gedu ’e’ luneHchugh, SoH DaDIvmoH. Hop neH DaqaDchugh, yIchIm yImej.",
@@ -2811,6 +2832,20 @@
       "downloadPdf": "PDF-nav yISuq"
     }
   },
+  "badges": {
+    "gedu": {
+      "neuroinclusive": {
+        "name": "Hoch yab SuvwI’pu’"
+      },
+      "flagship": {
+        "name": "Duj’a’"
+      }
+    },
+    "art": {
+      "earned": "Degh: {name}",
+      "unearned": "Degh: {name} — wej Suqlu’"
+    }
+  },
   "productType": {
     "consumer_club": "ghom’a’",
     "municipality_club": "ghom’a’",
@@ -2905,7 +2940,8 @@
     "continueToAccount": "qa’lIj yIghoS",
     "switchTo": "pong yIchoH",
     "invoicing": "DIlmeH ghItlh",
-    "teamProfile": "Del’a’wIj"
+    "teamProfile": "Del’a’wIj",
+    "badges": "Deghmey"
   },
   "schools": {
     "hero": {

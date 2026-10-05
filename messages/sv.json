@@ -78,6 +78,7 @@
       "seatOffer": "Platserbjudande",
       "geduSubstitutions": "Vikariat",
       "geduInvoicing": "Fakturering",
+      "geduBadges": "Märken",
       "adminSubstitutions": "Vikariat",
       "teamProfile": "Min profil",
       "adminTeamProfile": "Profil",
@@ -642,6 +643,15 @@
       "queueRecorded": "Utdrag uppvisat {date}",
       "queueNotRecorded": "Utdrag inte uppvisat",
       "rowNotRecorded": "Har inte uppvisat något straffregisterutdrag"
+    },
+    "geduBadges": {
+      "title": "Märken",
+      "neuroinclusive": "Behörig att leda grupper i produkter märkta Neuroinkluderande.",
+      "flagship": "Får leda klubbar, läger och evenemang som familjer köper själva, inte bara kommunklubbar.",
+      "grantedOn": "Tilldelat {date}",
+      "grantedOnBy": "Tilldelat av {name} {date}",
+      "notGranted": "Inte tilldelat",
+      "error": "Det gick inte att uppdatera märket. Försök igen."
     },
     "geduCertifyWarnings": {
       "title": "Certifiera ändå?",
@@ -2397,6 +2407,17 @@
       "offerConfirmTitle": "Erbjuda dig att vikariera?",
       "offerConfirmBody": "Du erbjuder dig att hålla {product} {when}. School of Gaming väljer vikarien, och du kan dra tillbaka ditt erbjudande tills det har godkänts. När det har godkänts är tillfället ditt enligt ditt Gedu-avtal, precis som dina egna tillfällen, och du kan inte längre dra dig ur: kan du ändå inte vara med får du själv be om en vikarie, som för alla dina tillfällen. Gruppens arbetsyta öppnas för dig 48 timmar innan tillfället börjar."
     },
+    "badges": {
+      "back": "Tillbaka till Min SOG",
+      "pageTitle": "Märken",
+      "intro": "Varje märke visar något du är behörig att leda. School of Gaming delar ut dem allteftersom du tar dig an mer, och de du har förtjänat visas i färg.",
+      "awardedBy": "Utdelat av School of Gaming",
+      "earnedOn": "Förtjänat {date}",
+      "notEarned": "Inte förtjänat ännu",
+      "loadError": "Det gick inte att läsa in dina märken. Ladda om sidan.",
+      "neuroinclusive": "Du kan leda grupper i klubbar, läger och evenemang märkta Neuroinkluderande.",
+      "flagship": "Du kan leda klubbar, läger och evenemang som familjer anmäler sig till själva, inte bara kommunklubbar."
+    },
     "coverage": {
       "title": "Områden du täcker",
       "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan Gedu inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
@@ -2771,6 +2792,20 @@
       "downloadPdf": "Ladda ner PDF"
     }
   },
+  "badges": {
+    "gedu": {
+      "neuroinclusive": {
+        "name": "Neuroinkluderande"
+      },
+      "flagship": {
+        "name": "Flaggskepp"
+      }
+    },
+    "art": {
+      "earned": "Märke: {name}",
+      "unearned": "Märke: {name}, inte förtjänat ännu"
+    }
+  },
   "productType": {
     "consumer_club": "Klubb",
     "municipality_club": "Klubb",
@@ -2865,7 +2900,8 @@
     "continueToAccount": "Fortsätt till ditt konto",
     "switchTo": "Byt profil",
     "invoicing": "Fakturering",
-    "teamProfile": "Min profil"
+    "teamProfile": "Min profil",
+    "badges": "Märken"
   },
   "schools": {
     "hero": {

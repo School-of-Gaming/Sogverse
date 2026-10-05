@@ -433,7 +433,8 @@ and stamps both server-side; an admin reads every gedu's badges, a gedu their ow
 reason the contract and the record check don't: certification stays the only blocking
 lever over an educator. Making a badge gate something is a separate decision.
 
-**Adding a badge is a new `gedu_badge` enum value plus its copy.** The app's badge list
+**Adding a badge is a new `gedu_badge` enum value plus its art and copy**
+(`../../components/badges/`). The app's badge list
 derives from the generated enum, in the enum's declared order, so it needs no edit and a
 surface shows the new badge, unearned, everywhere badges are listed.
 

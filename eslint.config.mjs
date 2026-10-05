@@ -1050,6 +1050,9 @@ const eslintConfig = defineConfig([
     // around them is ordinary secondary text and takes the app's two inks,
     // which is why only the artwork is exempt here and the palette-class ban
     // still holds over the whole file.
+    // `badges/badge-art.tsx` is each badge's picture, and a badge's colours
+    // are its own: no theme token means "this badge", and borrowing a status
+    // or a Yty colour would say something the badge does not mean.
     // `lib/images/normalize-image.ts` is not artwork but is the same
     // shape of exception: its white is the ground a transparent PNG is
     // flattened onto when it is re-encoded as JPEG, a property of the image's
@@ -1059,6 +1062,7 @@ const eslintConfig = defineConfig([
       "src/components/og/marks.tsx",
       "src/components/admin/dashboard/pixel-art.tsx",
       "src/components/about/about-section.tsx",
+      "src/components/badges/badge-art.tsx",
       "src/lib/images/normalize-image.ts",
     ],
     rules: {

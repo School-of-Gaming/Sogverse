@@ -140,6 +140,7 @@ describe("Header nav — who gets the role's own items", () => {
     expect(navTexts()).toEqual([
       en.header.invoicing,
       en.header.nav.substitutions,
+      en.header.badges,
       en.header.teamProfile,
       ...PUBLIC_LINKS,
     ]);

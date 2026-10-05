@@ -109,6 +109,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Billing portal | `src/services/billing/` |
 | Parent PIN | `src/services/pin/` |
 | Gedu profiles, certification and the record check | `src/services/gedu/` |
+| Badges — the art every badge is drawn with, and what adding one takes | `src/components/badges/` |
 | Session substitutions — absences, offers and the sub an admin seats | `src/services/session-substitution/` |
 | i18n | `src/i18n/` |
 | Email templates | `src/lib/email-templates/` |

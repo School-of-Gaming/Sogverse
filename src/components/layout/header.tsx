@@ -105,7 +105,8 @@ export function Header({ navRole }: HeaderProps) {
 
   /**
    * The role's own nav items: a gedu's Invoicing (the month they invoice us
-   * for) and Substitutions (the sessions looking for a stand-in), and a gedu's
+   * for), Substitutions (the sessions looking for a stand-in) and Badges (what
+   * School of Gaming has awarded them), and a gedu's
    * or an admin's My profile (their own public profile, which they come back to
    * rather than set once).
    *
@@ -119,6 +120,7 @@ export function Header({ navRole }: HeaderProps) {
   const showsMyProfile = hasMyProfileItem(navFor);
   const isOnSubstitutions = isAtOrUnder(pathname, ROUTES.gedu.substitutions);
   const isOnInvoicing = isAtOrUnder(pathname, ROUTES.gedu.invoicing);
+  const isOnBadges = isAtOrUnder(pathname, ROUTES.gedu.badges);
   const isOnTeamProfile = pathname === ROUTES.settingsTeamProfile;
 
   const isHome = pathname === ROUTES.home;
@@ -346,7 +348,7 @@ export function Header({ navRole }: HeaderProps) {
             same for every role: the tab bar (`tab-bar.tsx`, rendered below)
             carries the public destinations, and a role's own items are rows in
             the account menu. From `lg` up the strip carries the nav run: a
-            gedu's Invoicing, Substitutions and My profile, or an admin's My
+            gedu's Invoicing, Substitutions, Badges and My profile, or an admin's My
             profile, then Shop, Library, Team and About, every one in its whole
             word. The logo is the Home / My SOG link at every width.
 
@@ -379,21 +381,25 @@ export function Header({ navRole }: HeaderProps) {
                      admin      452.0  425.1  474.9  410.8  501.3
               1024   signed out 398.7  385.7  376.7  304.7  360.7
                      admin      353.9  294.5  359.5  216.0  382.8
-                     gedu       174.2  147.1  171.8   26.1  156.9
+                     gedu       100.8   84.1   99.1  -47.3   68.4
               1280   signed out 654.7  641.7  632.7  560.7  616.7
-                     gedu       430.2  403.1  427.8  282.1  412.9
+                     gedu       356.8  340.1  355.1  208.7  324.4
 
             (1023 measures as 768 and 1440 as 1280: the container's width
             steps at those breakpoints. The "My SOG" rows are a parent and a
             gedu, which measure identically: below `lg` a parent's, gamer's or
             gedu's lockup word is "My SOG" in the locale's own form. Phone rows
             are measured without a classic scrollbar, as a phone draws none.
-            Every width from 360 to 1440 clears in every locale, and the strip
-            never overflows the header.) The tightest cases are a French admin
-            at 360 ("Tableau de bord" beside the FR code), clearing by 3px; a
+            The two gedu rows are the earlier measurement, taken with three
+            gedu items, less the width the fourth — Badges — adds: its word
+            measured in the app face in headless Chromium, plus its `px-2` and
+            the run's `gap-1`.) The tightest cases are a French admin at 360
+            ("Tableau de bord" beside the FR code), clearing by 3px; a
             signed-out Klingon visitor at 360 (the widest code, TLH), by 5px;
-            and a French gedu at 1024 (three gedu items and four public
-            links), by 26px.
+            and a French gedu at 1024 (four gedu items and four public links),
+            which **does not fit: it overruns by about 47px**. Every other
+            width and locale clears. That one is open for the owner — a third
+            layout is not the answer.
 
             **Do not add an item without redoing this table, per locale.**
             `NAV_LINK_CLASS`'s `whitespace-nowrap` is there so that the next word
@@ -437,6 +443,16 @@ export function Header({ navRole }: HeaderProps) {
                     aria-current={isOnSubstitutions ? "page" : undefined}
                   >
                     {t("nav.substitutions")}
+                  </Link>
+                  <Link
+                    href={ROUTES.gedu.badges}
+                    className={cn(
+                      NAV_LINK_CLASS,
+                      isOnBadges ? "text-act" : "text-muted-foreground",
+                    )}
+                    aria-current={isOnBadges ? "page" : undefined}
+                  >
+                    {t("badges")}
                   </Link>
                 </>
               )}

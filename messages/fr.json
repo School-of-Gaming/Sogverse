@@ -78,6 +78,7 @@
       "seatOffer": "Proposition de place",
       "geduSubstitutions": "Remplacements",
       "geduInvoicing": "Facturation",
+      "geduBadges": "Badges",
       "adminSubstitutions": "Remplacements",
       "teamProfile": "Mon profil",
       "adminTeamProfile": "Profil",
@@ -642,6 +643,15 @@
       "queueRecorded": "Extrait enregistré le {date}",
       "queueNotRecorded": "Extrait non enregistré",
       "rowNotRecorded": "N’a pas présenté d’extrait de casier judiciaire"
+    },
+    "geduBadges": {
+      "title": "Badges",
+      "neuroinclusive": "Qualification pour animer des groupes dans les produits marqués Neuro-inclusif.",
+      "flagship": "Autorisation d’animer les clubs, camps et événements auxquels les familles s’inscrivent elles-mêmes, et pas seulement les clubs municipaux.",
+      "grantedOn": "Attribué le {date}",
+      "grantedOnBy": "Attribué le {date} par {name}",
+      "notGranted": "Non attribué",
+      "error": "Impossible de mettre à jour le badge. Veuillez réessayer."
     },
     "geduCertifyWarnings": {
       "title": "Certifier quand même ?",
@@ -2397,6 +2407,17 @@
       "offerConfirmTitle": "Proposer un remplacement ?",
       "offerConfirmBody": "Vous proposez d’assurer {product} le {when}. School of Gaming choisit qui remplace, et vous pouvez retirer votre proposition tant qu’elle n’est pas approuvée. Une fois approuvée, la séance relève de votre contrat Gedu, exactement comme vos propres séances, et vous ne pouvez plus vous retirer : si vous ne pouvez finalement pas l’assurer, demandez vous-même un remplacement, comme pour toutes vos séances. L’espace de travail du groupe s’ouvre à vous 48 heures avant le début de la séance."
     },
+    "badges": {
+      "back": "Retour à Mon SOG",
+      "pageTitle": "Badges",
+      "intro": "Chaque badge atteste d’une qualification. School of Gaming les décerne au fil de vos nouvelles responsabilités, et ceux que vous avez obtenus apparaissent en couleur.",
+      "awardedBy": "Décerné par School of Gaming",
+      "earnedOn": "Obtenu le {date}",
+      "notEarned": "Pas encore obtenu",
+      "loadError": "Impossible de charger vos badges. Actualisez la page.",
+      "neuroinclusive": "Vous permet d’animer des groupes dans les clubs, camps et événements marqués Neuro-inclusif.",
+      "flagship": "Vous permet d’animer les clubs, camps et événements auxquels les familles s’inscrivent elles-mêmes, et pas seulement les clubs municipaux."
+    },
     "coverage": {
       "title": "Zones où vous pouvez animer",
       "remoteOnlyNote": "Sert à vous proposer pour un remplacement quand un autre Gedu ne peut pas assurer son club. Laissez vide si vous ne remplacez qu’à distance.",
@@ -2771,6 +2792,20 @@
       "downloadPdf": "Télécharger le PDF"
     }
   },
+  "badges": {
+    "gedu": {
+      "neuroinclusive": {
+        "name": "Neuro-inclusif"
+      },
+      "flagship": {
+        "name": "Phare"
+      }
+    },
+    "art": {
+      "earned": "Badge {name}",
+      "unearned": "Badge {name}, pas encore obtenu"
+    }
+  },
   "productType": {
     "consumer_club": "Club",
     "municipality_club": "Club",
@@ -2865,7 +2900,8 @@
     "continueToAccount": "Continuer vers votre compte",
     "switchTo": "Changer de profil",
     "invoicing": "Facturation",
-    "teamProfile": "Mon profil"
+    "teamProfile": "Mon profil",
+    "badges": "Badges"
   },
   "schools": {
     "hero": {

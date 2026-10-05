@@ -251,6 +251,7 @@ export const PATHNAMES = {
 
   // --- Gedu -----------------------------------------------------------------
   "/gedu": "/gedu",
+  "/gedu/badges": "/gedu/badges",
   "/gedu/camps/[id]": "/gedu/camps/[id]",
   "/gedu/clubs/[id]": "/gedu/clubs/[id]",
   "/gedu/contract": "/gedu/contract",
