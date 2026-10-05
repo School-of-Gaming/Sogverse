@@ -3,6 +3,7 @@
 // Node environment: the route hands a storage Blob straight to a Response, and
 // jsdom's Blob is not the undici Response's Blob.
 
+import { createHash } from "node:crypto";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 /**
@@ -19,8 +20,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  * - **Anything that is not a public photo is one 404**, whether the folder
  *   shows nothing (hidden, not yet public, not staff, no one) or the object
  *   vanishes between the listing and the download.
- * - **The cache header is pinned**: five minutes, public, no stale serving —
- *   the longest a hidden profile's photo keeps showing.
+ * - **Only the current version is served**, and it is cached for a year,
+ *   immutable. An address whose `v` is missing or names any other version is
+ *   the same 404, so no cache can hold a photo under any key but its own. The
+ *   version is the md5 of the object path, as the public profile reads
+ *   compute it in the database.
  * - **Only a JPEG or a WebP is served, sandboxed.** The route is outside the
  *   proxy and so outside the app's CSP; a stored SVG echoed as one would run
  *   script from our origin.
@@ -31,6 +35,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const USER_ID = "00000000-0000-0000-0000-000000000003";
 const JPEG_BYTES = new Uint8Array([0xff, 0xd8, 0xff, 0xdb, 0x00, 0x43]);
+
+/** The version token of the object at `<folder>/<name>`: `md5(photo_path)`. */
+function versionOf(folder: string, name: string): string {
+  return createHash("md5").update(`${folder}/${name}`).digest("hex");
+}
+
+/** The address of the current photo, `4b1f.jpg`, as the app renders it. */
+const CURRENT = `?v=${versionOf(USER_ID, "4b1f.jpg")}`;
 
 const mockList = vi.fn();
 const mockDownload = vi.fn();
@@ -67,7 +79,7 @@ import { GET } from "@/app/api/team/photos/[userId]/route";
 
 function photoRequest(
   userId: string,
-  query = "?v=0123456789abcdef",
+  query = CURRENT,
 ): [Request, { params: Promise<unknown> }] {
   return [
     new Request(`http://localhost:3000/api/team/photos/${userId}${query}`),
@@ -125,7 +137,9 @@ describe("GET /api/team/photos/[userId]", () => {
     });
     mockDownload.mockResolvedValue({ data: new Blob([JPEG_BYTES]), error: null });
 
-    const response = await GET(...photoRequest(USER_ID));
+    const response = await GET(
+      ...photoRequest(USER_ID, `?v=${versionOf(USER_ID, "4b1f.webp")}`),
+    );
 
     expect(response.headers.get("Content-Type")).toBe("image/webp");
   });
@@ -152,7 +166,12 @@ describe("GET /api/team/photos/[userId]", () => {
       error: null,
     });
 
-    const response = await GET(...photoRequest(USER_ID));
+    const response = await GET(
+      ...photoRequest(USER_ID, `?v=${versionOf(USER_ID, "4b1f.svg")}`),
+    );
+
+    // Refused for its type, not its version: it was downloaded.
+    expect(mockDownload).toHaveBeenCalledWith(`${USER_ID}/4b1f.svg`);
 
     expect(response.status).toBe(404);
     expect(response.headers.get("Content-Type")).not.toBe("image/svg+xml");
@@ -166,22 +185,42 @@ describe("GET /api/team/photos/[userId]", () => {
     );
   });
 
-  it("serves the current photo whatever version the address carries", async () => {
-    const response = await GET(...photoRequest(USER_ID, ""));
+  // -- Only the current version, cached for a year --
 
-    expect(response.status).toBe(200);
-  });
-
-  // -- The cache --
-
-  it("is publicly cacheable for five minutes, with no stale serving", async () => {
+  it("caches the current version's address publicly for a year, immutable", async () => {
     const response = await GET(...photoRequest(USER_ID));
 
+    expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe(
-      "public, max-age=300, s-maxage=300",
+      "public, max-age=31536000, immutable",
     );
     expect(response.headers.get("Set-Cookie")).toBeNull();
   });
+
+  it.each(["", "?v="])(
+    "answers 404 for an address naming no version (%j), without touching storage",
+    async (query) => {
+      const response = await GET(...photoRequest(USER_ID, query));
+
+      expect(response.status).toBe(404);
+      expect(response.headers.get("Cache-Control")).toBeNull();
+      expect(mockList).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ["a replaced photo's", `?v=${versionOf(USER_ID, "0a9e.jpg")}`],
+    ["an invented", "?v=0123456789abcdef"],
+  ])(
+    "answers 404 for %s version, without downloading the current photo",
+    async (_label, query) => {
+      const response = await GET(...photoRequest(USER_ID, query));
+
+      expect(response.status).toBe(404);
+      expect(response.headers.get("Cache-Control")).toBeNull();
+      expect(mockDownload).not.toHaveBeenCalled();
+    },
+  );
 
   // -- One 404 for everything that is not a public photo --
 

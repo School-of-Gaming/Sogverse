@@ -49,8 +49,8 @@ import {
  *
  * `v` (`teamCardVersion`) is ignored here: it exists to make a changed card a
  * new address, and the card drawn is always the profile as it is now. The
- * cache is the photo's five minutes rather than the site cards' year, for the
- * reason at `TEAM_CARD_CACHE_CONTROL`.
+ * cache is five minutes rather than the site cards' year, for the reason at
+ * `TEAM_CARD_CACHE_CONTROL`.
  */
 /**
  * The photo as the card draws it: a JPEG of the stored 4:5 size, covering the
@@ -93,7 +93,9 @@ export async function GET(
   const [t, fonts, photo] = await Promise.all([
     getTranslations({ locale, namespace: "team.profile" }),
     ogFonts(),
-    readPublicTeamPhoto(anon, person.id),
+    // Whichever photo is current: the card's own `v` is a card digest, not a
+    // photo version, and the card embeds the bytes rather than an address.
+    readPublicTeamPhoto(anon, person.id, null),
   ]);
   // A public profile always has a photo; one hidden or replaced between the
   // two reads, or one that will not decode, draws the frame empty rather than

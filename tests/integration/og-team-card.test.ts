@@ -62,7 +62,7 @@ const { GET } = await import("@/app/opengraph-images/team/[userId]/route");
  *
  * What is pinned is everything around the picture: the card reads as anon,
  * draws only a public profile and answers 404 for everything else, and is
- * cached for the photo's five minutes rather than the site cards' year. The
+ * cached for five minutes rather than the site cards' year. The
  * pixels are not asserted (see `og-cards.test.ts`).
  */
 
@@ -120,7 +120,7 @@ describe("GET /opengraph-images/team/[userId]", () => {
     mockDownload.mockResolvedValue({ data: await photo("jpeg"), error: null });
   });
 
-  it("draws a public Gedu's card as a PNG, cached for the photo's five minutes", async () => {
+  it("draws a public Gedu's card as a PNG, cached for five minutes", async () => {
     const response = await card(USER_ID);
 
     expect(response.status).toBe(200);

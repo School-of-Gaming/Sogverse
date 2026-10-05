@@ -66,12 +66,13 @@ export function teamCardUrl(
 }
 
 /**
- * **Five minutes, public, no stale serving — the photo route's own posture**,
- * not the site cards' year. The card embeds the person's photo, and a public
- * photo's promise is that a profile taken down stops showing its face within
- * five minutes (`src/app/api/team/photos/[userId]/route.ts`). A card cached for
- * a year would carry the face past that under an address anyone can hold, so
- * it inherits the photo's limit. The versioned URL is what keeps the short
+ * **Five minutes, public, no stale serving — not the site cards' year.** The
+ * route draws the profile as it is now whatever `v` it is asked for, so a
+ * year-long cache would pin a card under an address that is not its own: a
+ * profile changed and then changed back would go on sharing the version in
+ * between for a year. Nobody waits on the card — a link preview keeps its own
+ * copy and a share fetches it once — so the long cache would buy nothing
+ * (owner decision, 2026-10-05). The versioned URL is what keeps the short
  * cache cheap: an unchanged card is still one URL, re-drawn at most once per
  * five minutes per cache, and a changed one is a new URL at once.
  */

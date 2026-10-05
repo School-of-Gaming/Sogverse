@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { TEAM_PHOTOS_BUCKET } from "./team-profiles.types";
@@ -14,6 +15,12 @@ import { TEAM_PHOTOS_BUCKET } from "./team-profiles.types";
  * not yet saved, and every photo of a profile that is not public are all
  * invisible to it — so the object's name never comes from anywhere else and is
  * never handed out.
+ *
+ * **The photo route asks for one version, the share card for whichever is
+ * current.** A photo's version is the token the public profile reads hand out
+ * (the md5 of its object path, `<userId>/<name>`, computed in the database), so
+ * the route refuses an address naming any other version before downloading
+ * anything. The card embeds the bytes and has no photo version to name.
  */
 
 /** The only types served: what the photo editor saves. */
@@ -42,13 +49,24 @@ export type PublicTeamPhoto =
   | { ok: false; reason: string };
 
 /**
+ * A photo's version token, computed exactly as the public profile reads
+ * compute it: the hex md5 of the object path.
+ */
+function photoVersionOf(path: string): string {
+  return createHash("md5").update(path).digest("hex");
+}
+
+/**
  * The current photo of the person's public profile, or why there is none to
- * serve: not public (or no one), hidden or replaced between the listing and
- * the download, or stored as a type that is not served.
+ * serve: not public (or no one), not the version asked for, hidden or replaced
+ * between the listing and the download, or stored as a type that is not
+ * served. `version` is the photo version the caller's address names, or `null`
+ * for whichever photo is current.
  */
 export async function readPublicTeamPhoto(
   anon: SupabaseClient<Database>,
   userId: string,
+  version: string | null,
 ): Promise<PublicTeamPhoto> {
   const bucket = anon.storage.from(TEAM_PHOTOS_BUCKET);
 
@@ -61,7 +79,15 @@ export async function readPublicTeamPhoto(
     return { ok: false, reason: `no public team photo for ${userId}` };
   }
 
-  const { data, error } = await bucket.download(`${userId}/${name}`);
+  const path = `${userId}/${name}`;
+  if (version !== null && photoVersionOf(path) !== version) {
+    return {
+      ok: false,
+      reason: `public team photo for ${userId} is not at version ${version}`,
+    };
+  }
+
+  const { data, error } = await bucket.download(path);
   if (error !== null) {
     // Hidden or replaced between the listing and the download.
     return {
