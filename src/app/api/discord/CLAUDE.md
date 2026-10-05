@@ -38,6 +38,10 @@ A Gedu or an admin links their Discord account so School of Gaming can reach the
 
 The command is unauthenticated on the Sogverse side — anyone in a server with the bot can run it — and that is safe because a token links nothing until a signed-in Gedu or admin spends it.
 
+## Test DMs from the admin testing page
+
+The admin testing page has a Discord tool that DMs plain text to a linked account through `/api/admin/send-test-discord-message`, to prove the bot can reach someone. It sends as **this environment's own bot** (`DISCORD_BOT_TOKEN`), so a send from local or staging comes from the staging app's bot, not prod's. The client names the recipient by Sogverse profile; the route reads the Discord id from that profile's link on the admin's own session. **A bot can only DM someone it shares a server with** (and who has not closed DMs from server members): anyone else gets Discord's 50007 "Cannot send messages to this user", which the tool shows verbatim rather than as a generic failure.
+
 ## Registering Commands
 
 Commands are registered out-of-band, not in this route and not via the Discord UI:

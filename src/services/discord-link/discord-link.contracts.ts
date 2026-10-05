@@ -27,3 +27,25 @@ export const DISCORD_LINK_ERROR_CODES = {
   /** The token's ten minutes have passed. */
   expired: "DISCORD_LINK_TOKEN_EXPIRED",
 } as const;
+
+/** Discord's cap on a message's plain-text content. */
+export const DISCORD_MESSAGE_MAX_LENGTH = 2000;
+
+/**
+ * The admin testing page's Discord send: which linked Sogverse account to DM,
+ * and the plain text to send. The recipient is named by profile, never by
+ * Discord id — the route looks the Discord account up itself.
+ */
+export const sendTestDiscordMessageBody = z.object({
+  profileId: z.string().uuid(),
+  content: z.string().trim().min(1).max(DISCORD_MESSAGE_MAX_LENGTH),
+});
+export type SendTestDiscordMessageBody = z.infer<typeof sendTestDiscordMessageBody>;
+
+/** Where the sent message is: a link that opens it in Discord. */
+export const sendTestDiscordMessageResponse = z.object({
+  jumpUrl: z.string().url(),
+});
+export type SendTestDiscordMessageResponse = z.infer<
+  typeof sendTestDiscordMessageResponse
+>;

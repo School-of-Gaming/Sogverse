@@ -1536,7 +1536,19 @@
         "mobile": "Mobile"
       },
       "attachment": "Attachment: {name}",
-      "sentAttachment": "What was sent: {name}"
+      "sentAttachment": "What was sent: {name}",
+      "discord": {
+        "tool": "Discord Testing Tool",
+        "toolDescription": "Send a direct message from this environment’s Discord bot to a linked account, to check that sending works.",
+        "recipient": "Recipient",
+        "recipientOption": "{name} ({discordUsername})",
+        "noLinkedAccounts": "No account has a linked Discord account yet. Link one with /link in Discord first.",
+        "message": "Message",
+        "messagePlaceholder": "Plain text, up to 2,000 characters",
+        "send": "Send Test Message",
+        "sent": "Message sent.",
+        "openInDiscord": "Open in Discord"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",

@@ -7,6 +7,7 @@ import {
   InteractionType,
   InteractionResponseType,
 } from "discord-interactions";
+import { DISCORD_API_BASE, discordBotHeaders } from "@/lib/discord-api.server";
 import { hashDiscordLinkToken } from "@/lib/discord-link-token.server";
 import { askGeduGuru, askHappinappi } from "@/lib/gemini";
 import { resetPassword, type PasswordResetOutcome } from "@/lib/microsoft-graph";
@@ -40,7 +41,6 @@ const discordInteraction = z.object({
 });
 
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
-const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN!;
 const DISCORD_APPLICATION_ID = process.env.DISCORD_APPLICATION_ID!;
 
 /** Only the caller sees the message (Discord's EPHEMERAL message flag). */
@@ -116,13 +116,10 @@ async function patchDiscordResponse(
   flags?: number
 ) {
   await fetch(
-    `https://discord.com/api/v10/webhooks/${DISCORD_APPLICATION_ID}/${interactionToken}/messages/@original`,
+    `${DISCORD_API_BASE}/webhooks/${DISCORD_APPLICATION_ID}/${interactionToken}/messages/@original`,
     {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
-      },
+      headers: discordBotHeaders(),
       body: JSON.stringify(flags === undefined ? { content } : { content, flags }),
     }
   );
