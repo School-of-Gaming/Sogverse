@@ -1,7 +1,8 @@
 /**
  * What we report to an advertising platform, named once for both sides of the
- * wire: the browser reports the page and product views, our servers report the
- * conversions, and both have to mean the same thing by the same word.
+ * wire: the browser reports the page and product views and the start of a
+ * checkout, our servers report the conversions, and both have to mean the same
+ * thing by the same word.
  *
  * Client-safe and React-free — the component and the route handlers both import
  * it.

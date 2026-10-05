@@ -15,8 +15,9 @@ import { getOrigin } from "@/lib/url";
  *
  * **Why the server and not the pixel.** A conversion happens where the decision
  * is committed — an account is created, a seat is taken, a queue place is
- * accepted — and every one of those is a route handler. Reporting them from the browser meant telling the browser what had
- * happened and trusting it to say so on the next page it loaded: a marker cookie,
+ * accepted — and every one of those is a route handler. Reporting them from the
+ * browser meant telling the browser what had happened and trusting it to say so
+ * on the next page it loaded: a marker cookie,
  * a script that read it, and a report that was lost if the visitor closed the tab
  * or gained if anything else set the cookie. The handler that committed the
  * outcome is the only place that knows it happened, exactly once.
