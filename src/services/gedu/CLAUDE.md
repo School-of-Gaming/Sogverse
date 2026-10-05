@@ -421,6 +421,22 @@ would be provably dead. The admin's queue picks a new acceptance up on its own
 next read. This is the same line the dashboard key's own factory draws: admin
 writes invalidate it, writes from any other role reach it through their next read.
 
+## Badges
+
+Admins award **badges** to gedus — qualifications such as running neuroinclusive groups
+or flagship (non-municipality) products. A row in `gedu_badges` means the gedu holds that
+badge; there is no history, so revoking deletes the row and granting one already held
+keeps its original moment and admin. `set_gedu_badge` is the only writer, admin-only,
+and stamps both server-side; an admin reads every gedu's badges, a gedu their own.
+
+**Rule: badges gate nothing.** No assignment, picker or check reads them, for the same
+reason the contract and the record check don't: certification stays the only blocking
+lever over an educator. Making a badge gate something is a separate decision.
+
+**Adding a badge is a new `gedu_badge` enum value plus its copy.** The app's badge list
+derives from the generated enum, in the enum's declared order, so it needs no edit and a
+surface shows the new badge, unearned, everywhere badges are listed.
+
 ## Coverage field reuse
 
 The register form and the settings/admin coverage editor render the same coverage field

@@ -62,6 +62,10 @@ export type GamerProfileUpdate = Database["public"]["Tables"]["gamer_profiles"][
 export type GeduProfile = Database["public"]["Tables"]["gedu_profiles"]["Row"];
 export type GeduProfileUpdate = Database["public"]["Tables"]["gedu_profiles"]["Update"];
 
+// gedu_badges — written only by set_gedu_badge, so a Row alias alone.
+export type GeduBadge = Database["public"]["Enums"]["gedu_badge"];
+export type GeduBadgeRow = Database["public"]["Tables"]["gedu_badges"]["Row"];
+
 // gedu_contract_versions / gedu_contract_acceptances
 //
 // No Insert/Update aliases for either: neither table carries a write grant for

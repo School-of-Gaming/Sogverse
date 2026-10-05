@@ -899,6 +899,49 @@ export type Database = {
           },
         ]
       }
+      gedu_badges: {
+        Row: {
+          badge: Database["public"]["Enums"]["gedu_badge"]
+          gedu_id: string
+          granted_at: string
+          granted_by: string | null
+        }
+        Insert: {
+          badge: Database["public"]["Enums"]["gedu_badge"]
+          gedu_id: string
+          granted_at?: string
+          granted_by?: string | null
+        }
+        Update: {
+          badge?: Database["public"]["Enums"]["gedu_badge"]
+          gedu_id?: string
+          granted_at?: string
+          granted_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_badges_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "gedu_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "gedu_badges_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_badges_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gedu_contract_acceptances: {
         Row: {
           accepted_at: string
@@ -4157,6 +4200,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_gedu_badge: {
+        Args: {
+          p_badge: Database["public"]["Enums"]["gedu_badge"]
+          p_gedu_id: string
+          p_held: boolean
+        }
+        Returns: undefined
+      }
       set_gedu_certified: {
         Args: { p_certified: boolean; p_gedu_id: string }
         Returns: undefined
@@ -4339,6 +4390,7 @@ export type Database = {
       gamer_photo_consent_type: "lynx_educate"
       gamer_sign_in: "parent" | "username" | "email"
       gedu_assignment_role: "primary" | "assistant"
+      gedu_badge: "neuroinclusive" | "flagship"
       gender_type: "boy" | "girl" | "non_binary"
       invoice_billing_cadence: "monthly" | "quarterly" | "half_yearly"
       library_article_category:
@@ -4509,6 +4561,7 @@ export const Constants = {
       gamer_photo_consent_type: ["lynx_educate"],
       gamer_sign_in: ["parent", "username", "email"],
       gedu_assignment_role: ["primary", "assistant"],
+      gedu_badge: ["neuroinclusive", "flagship"],
       gender_type: ["boy", "girl", "non_binary"],
       invoice_billing_cadence: ["monthly", "quarterly", "half_yearly"],
       library_article_category: [

@@ -422,6 +422,20 @@ END;
 $$;
 COMMIT;
 
+-- Badges, admin-awarded and stamped server-side. gedu@example.com holds
+-- neuroinclusive and not flagship, so both the gedu's own view and the admin
+-- user page show one badge earned and one not.
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+SELECT public.set_gedu_badge(
+  (SELECT id FROM public.profiles WHERE email = 'gedu@example.com'),
+  'neuroinclusive', true);
+COMMIT;
+
 -- The contract each educator signs for themselves. Which version exists is
 -- reference data a migration publishes, so the newest is read rather than
 -- named. Thirteen sign: twelve certified educators and the one still awaiting

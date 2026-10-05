@@ -1,0 +1,44 @@
+--
+-- Name: set_gedu_badge(uuid, public.gedu_badge, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_gedu_badge(p_gedu_id uuid, p_badge public.gedu_badge, p_held boolean) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.assert_admin();
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = p_gedu_id AND role = 'gedu'
+  ) THEN
+    RAISE EXCEPTION 'set_gedu_badge: % is not a gedu', p_gedu_id;
+  END IF;
+
+  IF p_held THEN
+    INSERT INTO public.gedu_badges (gedu_id, badge, granted_at, granted_by)
+    VALUES (p_gedu_id, p_badge, now(), (SELECT auth.uid()))
+    ON CONFLICT (gedu_id, badge) DO NOTHING;
+  ELSE
+    DELETE FROM public.gedu_badges
+     WHERE gedu_id = p_gedu_id AND badge = p_badge;
+  END IF;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_gedu_badge(p_gedu_id uuid, p_badge public.gedu_badge, p_held boolean); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_gedu_badge(p_gedu_id uuid, p_badge public.gedu_badge, p_held boolean) IS 'Grant (p_held true) or revoke (p_held false) one badge for one game educator. Admin-only, guard-first on assert_admin, and it refuses a target that is not a gedu. Granting stamps granted_at and granted_by server-side from the clock and the calling session; granting a badge already held changes nothing, so the original moment and admin stand and a retry or double-click is harmless. Revoking deletes the row, and revoking a badge not held is a no-op. SECURITY DEFINER because gedu_badges carries no write grant for any Data API role: this is its only writer. Called from the admin user-detail page through the admin''s own session, which is why authenticated is the only role granted EXECUTE.';
+
+
+--
+-- Name: FUNCTION set_gedu_badge(p_gedu_id uuid, p_badge public.gedu_badge, p_held boolean); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_gedu_badge(p_gedu_id uuid, p_badge public.gedu_badge, p_held boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_gedu_badge(p_gedu_id uuid, p_badge public.gedu_badge, p_held boolean) TO authenticated;
+
+

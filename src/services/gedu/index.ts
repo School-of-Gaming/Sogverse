@@ -12,6 +12,17 @@ export {
   type GeduCriminalRecordCheck,
 } from "./gedu-profiles.service";
 export {
+  useGeduBadges,
+  useSetGeduBadge,
+  geduBadgeKeys,
+} from "./gedu-badges.queries";
+export {
+  GeduBadgesService,
+  GEDU_BADGES,
+  type GeduBadge,
+  type HeldGeduBadge,
+} from "./gedu-badges.service";
+export {
   useGeduContractAcceptances,
   useGeduContractAcceptanceMap,
   useAcceptGeduContract,

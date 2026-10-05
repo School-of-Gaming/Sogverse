@@ -98,6 +98,23 @@ CREATE TYPE public.gedu_assignment_role AS ENUM (
 
 
 --
+-- Name: gedu_badge; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.gedu_badge AS ENUM (
+    'neuroinclusive',
+    'flagship'
+);
+
+
+--
+-- Name: TYPE gedu_badge; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.gedu_badge IS 'A badge an admin awards a game educator. neuroinclusive: qualified to run groups in products tagged neuroinclusive. flagship: cleared to run the products that are not municipality ones (consumer clubs, camps, events). Badges gate nothing: no assignment, picker or check reads them. The app lists them in the order declared here, so a new value goes where it should appear.';
+
+
+--
 -- Name: gender_type; Type: TYPE; Schema: public; Owner: -
 --
 
