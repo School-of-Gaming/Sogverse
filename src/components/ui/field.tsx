@@ -78,7 +78,9 @@ export function Field({
     // flex+gap owns the label→input→hint spacing for every field. The gap is
     // sized so the input's focus ring (ring-2 + ring-offset-2 sits ~4px past
     // its top edge) doesn't crowd the label above it.
-    <div className="flex flex-col gap-2.5">
+    // `data-field` is what the global cursor rules read to tell a label whose
+    // control is disabled from one that still focuses something.
+    <div data-field className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between gap-2">
         <Label
           id={labelId}
