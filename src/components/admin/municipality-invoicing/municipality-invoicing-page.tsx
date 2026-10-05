@@ -12,6 +12,7 @@ import {
   DatedLine,
   DatedLinesTable,
   DisclosureButton,
+  LEDGER_ROW_INSET,
   LedgerFlag,
   LedgerHeaderRow,
   LedgerSection,
@@ -24,15 +25,25 @@ import {
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow } from "@/providers";
-import { finvoiceHref, finvoiceReadiness } from "@/lib/finvoice";
+import {
+  customerFilesForMonth,
+  earlierPeriodMonths,
+  finvoiceHref,
+  type BillingPeriod,
+  type CustomerFile,
+} from "@/lib/finvoice";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { cn, formatCurrencyFromCents, formatDateOnly } from "@/lib/utils";
 import type { MunicipalityInvoicingSnapshot } from "@/services/municipality-invoicing";
-import { useMunicipalityInvoicingMonth } from "@/services/municipality-invoicing";
+import {
+  useMunicipalityInvoicingMonth,
+  useMunicipalityInvoicingMonths,
+} from "@/services/municipality-invoicing";
+import type { InvoiceBillingCadence } from "@/types";
+import { BILLING_CADENCE_LABEL } from "@/components/admin/invoice-customers/billing-cadence-label";
 import {
   buildMunicipalityInvoicing,
   type InvoiceClub,
-  type InvoiceCustomerSummary,
   type InvoiceMunicipality,
   type InvoiceSession,
   type MunicipalityInvoicingView,
@@ -43,7 +54,7 @@ import {
  *
  * The page the CFO opens once a month to raise the invoices. It is read-only
  * from end to end: every number on it is derived at read time from the clubs'
- * current fees and the sessions that were actually recorded, and nothing here
+ * current fees, schedules, recorded sessions and cancellations, and nothing here
  * writes, snapshots or exports anything.
  *
  * The shell owns four things and nothing else: the month the URL names, the
@@ -75,40 +86,22 @@ import {
 export function MunicipalityInvoicingPage({
   monthStart,
   initialSnapshot,
-  now: pinnedNow,
-  monthHref: monthHrefProp,
+  initialPeriodSnapshots = NO_SNAPSHOTS,
 }: {
   /** The month on screen, as its first day (`YYYY-MM-01`). */
   monthStart: string;
   initialSnapshot: MunicipalityInvoicingSnapshot;
   /**
-   * A clock to read the month against, instead of the live one.
-   *
-   * Only the preview scene passes it, and it is a prop rather than a provider
-   * the scene could wrap because the provider's whole job is to *tick*: a
-   * fixture month pinned to one instant and a clock that moves to the real one
-   * thirty seconds later would reclassify every line on the page — today's
-   * recorded session and next week's upcoming ones both — while somebody was
-   * looking at it. Absent, which is every deployment, the page reads the live
-   * clock exactly as it did.
+   * The earlier months of every billing period that ends in this one, as the
+   * route read them — empty for a month that ends no quarterly or half-yearly
+   * period anybody is on. They decide the period customers' files and nothing
+   * else: every figure on the ledger is still this month's own.
    */
-  now?: Date;
-  /**
-   * Where a step of the month stepper goes, given the month it steps to.
-   *
-   * It defaults to the live admin route, which is the only answer a deployment
-   * ever wants. The preview scene passes its own, pointing back at itself,
-   * because a stepper that leaves the preview is a control the reviewer cannot
-   * use on the page they are reviewing — and stepping the month is how the
-   * preview reaches the one state a month with clubs in it cannot show.
-   */
-  monthHref?: (month: string) => MonthHref;
+  initialPeriodSnapshots?: readonly MunicipalityInvoicingSnapshot[];
 }) {
-  const monthHref = monthHrefProp ?? adminMonthHref;
   const t = useTranslations("admin.municipalityInvoicing");
   const locale = resolveLocale(useLocale());
-  const liveNow = useNow();
-  const now = pinnedNow ?? liveNow;
+  const now = useNow();
   const { data: snapshot } = useMunicipalityInvoicingMonth(
     monthStart,
     initialSnapshot,
@@ -117,6 +110,45 @@ export function MunicipalityInvoicingPage({
   const invoice = useMemo(
     () => buildMunicipalityInvoicing({ snapshot, locale, now }),
     [snapshot, locale, now],
+  );
+
+  // The earlier months of the periods ending in this one: the ones the route
+  // read, plus any a customer on this month's own document now needs — a
+  // cadence changed since the route ran is fetched here rather than decided
+  // over part of its period.
+  const periodMonths = useMemo(() => {
+    const cadences = new Set<InvoiceBillingCadence>(
+      snapshot.clubs.flatMap((club) =>
+        club.invoice_customer === null
+          ? []
+          : [club.invoice_customer.billing_cadence],
+      ),
+    );
+    return [
+      ...new Set([
+        ...initialPeriodSnapshots.map((one) => one.month_start),
+        ...earlierPeriodMonths(monthStart, cadences),
+      ]),
+    ].sort();
+  }, [snapshot, initialPeriodSnapshots, monthStart]);
+  const { documents: periodSnapshots, failed: periodReadFailed } =
+    useMunicipalityInvoicingMonths(periodMonths, initialPeriodSnapshots);
+
+  // Every customer's file, decided by the predicate the export route asks —
+  // over the whole period where the customer is on one. The earlier months are
+  // built by the same pure build as this one and read for nothing else.
+  const files = useMemo(
+    () =>
+      customerFilesForMonth({
+        monthStart: invoice.monthStart,
+        views: [
+          invoice,
+          ...periodSnapshots.map((one) =>
+            buildMunicipalityInvoicing({ snapshot: one, locale, now }),
+          ),
+        ],
+      }),
+    [invoice, periodSnapshots, locale, now],
   );
 
   // Collapsed is the default, so the set holds what is *open* — an empty set is
@@ -158,7 +190,7 @@ export function MunicipalityInvoicingPage({
         <MonthStepper
           monthStart={invoice.monthStart}
           locale={locale}
-          monthHref={monthHref}
+          monthHref={adminMonthHref}
           previousLabel={t("previousMonth")}
           nextLabel={t("nextMonth")}
         />
@@ -183,7 +215,21 @@ export function MunicipalityInvoicingPage({
       </div>
 
       {invoice.municipalities.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("emptyMonth")}</p>
+        <>
+          <p className="text-sm text-muted-foreground">{t("emptyMonth")}</p>
+          {/* A month with no club in it can still end a period somebody owes:
+              a quarter whose clubs all stopped the month before. */}
+          {files.withoutClubThisMonth.length > 0 && (
+            <Card className="overflow-hidden">
+              <PeriodFilesLine
+                monthStart={invoice.monthStart}
+                files={files.withoutClubThisMonth}
+                periodReadFailed={periodReadFailed}
+                locale={locale}
+              />
+            </Card>
+          )}
+        </>
       ) : (
         <Card className="overflow-hidden">
           <MonthSummaryRow invoice={invoice} locale={locale} />
@@ -192,6 +238,8 @@ export function MunicipalityInvoicingPage({
               <MunicipalitySection
                 key={municipality.id}
                 municipality={municipality}
+                files={files.byCustomerId}
+                periodReadFailed={periodReadFailed}
                 monthStart={invoice.monthStart}
                 locale={locale}
                 isOpen={openKeys.has(municipality.id)}
@@ -206,6 +254,14 @@ export function MunicipalityInvoicingPage({
                 }
               />
             ))}
+            {files.withoutClubThisMonth.length > 0 && (
+              <PeriodFilesLine
+                monthStart={invoice.monthStart}
+                files={files.withoutClubThisMonth}
+                periodReadFailed={periodReadFailed}
+                locale={locale}
+              />
+            )}
           </div>
         </Card>
       )}
@@ -213,7 +269,8 @@ export function MunicipalityInvoicingPage({
   );
 }
 
-export type { MonthHref };
+/** The default for a month that ends no period: one array, so memos hold. */
+const NO_SNAPSHOTS: readonly MunicipalityInvoicingSnapshot[] = [];
 
 /** The live page's own answer: another month of this route. */
 function adminMonthHref(month: string): MonthHref {
@@ -278,7 +335,7 @@ function MonthSummaryRow({
             parts={[
               t("municipalityCount", { count: invoice.municipalityCount }),
               t("clubCount", { count: invoice.clubCount }),
-              t("sessionCount", { count: invoice.recordedCount }),
+              t("sessionCount", { count: invoice.billedCount }),
             ]}
           />
           {invoice.clubsWithoutFee > 0 && (
@@ -350,11 +407,11 @@ function CustomerNotSet() {
  * A municipality's Finvoice downloads: one per Fennoa customer among its clubs.
  *
  * **One control per customer, not per municipality**, because one file is one
- * customer's whole month — a city that buys library clubs and school clubs
- * under two agreements imports two files, and an association that buys clubs
- * sited in three municipalities imports one. So the same control appears on
- * every municipality the customer's clubs sit in and fetches the same file from
- * each, which is the honest rendering of a buyer that spans sections.
+ * customer's whole billing period — a city that buys library clubs and school
+ * clubs under two agreements imports two files, and an association that buys
+ * clubs sited in three municipalities imports one. So the same control appears
+ * on every municipality the customer's clubs sit in and fetches the same file
+ * from each, which is the honest rendering of a buyer that spans sections.
  *
  * **A blocked file is shown as blocked rather than hidden**, with the reason in
  * the same warning tone the rest of this page reports a gap in: a control that
@@ -362,41 +419,74 @@ function CustomerNotSet() {
  * with nothing on the page saying why it is not there. It is a `span` rather
  * than a disabled anchor because an anchor with no destination is not inert.
  *
- * The readiness comes from the export's own predicate, so the state of this
- * control and the answer the download route gives cannot disagree.
+ * Each control's state comes from the export's own predicate, so what it shows
+ * and the answer the download route gives cannot disagree.
  */
 function CustomerFiles({
   monthStart,
-  customers,
+  files,
+  periodReadFailed,
+  locale,
 }: {
   monthStart: string;
-  customers: readonly InvoiceCustomerSummary[];
+  files: readonly CustomerFile[];
+  periodReadFailed: boolean;
+  locale: string;
 }) {
-  if (customers.length === 0) return null;
+  if (files.length === 0) return null;
 
   return (
     <span className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
-      {customers.map((summary) => (
-        <CustomerFile
-          key={summary.customer.id}
+      {files.map((file) => (
+        <CustomerFileControl
+          key={file.customer.id}
           monthStart={monthStart}
-          summary={summary}
+          file={file}
+          periodReadFailed={periodReadFailed}
+          locale={locale}
         />
       ))}
     </span>
   );
 }
 
-function CustomerFile({
+/**
+ * One customer's file, in whichever of four states the export's predicate
+ * puts it.
+ *
+ * - **Ready** — a link. A monthly customer's reads exactly as it always has;
+ *   a quarterly or half-yearly one's also names its period and what the whole
+ *   period comes to, so the figure on the link cannot be mistaken for the
+ *   month's own total beside it on the line.
+ * - **In the middle of its period** — no link at all, and no warning: nothing
+ *   is wrong. A quiet label says how often the customer is invoiced and in
+ *   which month its file is produced.
+ * - **Blocked** — the reason in warning tone, naming the month where the
+ *   problem is when the file covers several, because a quarter refused in
+ *   March over a club that met only in January has to send the reader to
+ *   January.
+ * - **Waiting on the period's earlier months** — muted, until they land; or,
+ *   where one of those reads failed and so never will, the page's own
+ *   load-error copy in warning tone, rather than a wait that never ends.
+ */
+function CustomerFileControl({
   monthStart,
-  summary,
+  file,
+  periodReadFailed,
+  locale,
 }: {
   monthStart: string;
-  summary: InvoiceCustomerSummary;
+  file: CustomerFile;
+  /** One of the period's earlier months could not be read. */
+  periodReadFailed: boolean;
+  locale: string;
 }) {
   const t = useTranslations("admin.municipalityInvoicing");
-  const { customer } = summary;
-  const readiness = finvoiceReadiness(summary);
+  const tc = useTranslations("admin.invoiceCustomers");
+  const { customer, state } = file;
+  const { period } = state;
+  const coversSeveralMonths = period.months.length > 1;
+  const periodName = coversSeveralMonths ? periodLabel(period, t) : null;
 
   const label = (
     <>
@@ -407,34 +497,142 @@ function CustomerFile({
     </>
   );
 
-  if (!readiness.ok) {
+  if (state.ok) {
+    return (
+      <a
+        href={finvoiceHref(monthStart, customer.id)}
+        download
+        // The row around this is listening for a click to open the municipality.
+        // Left to bubble, asking for a file would also expand the section it was
+        // asked for from.
+        onClick={(event) => event.stopPropagation()}
+        title={
+          periodName === null
+            ? t("downloadInvoiceFor", { customer: customer.invoice_name })
+            : t("downloadPeriodInvoiceFor", {
+                period: periodName,
+                year: String(period.year),
+                customer: customer.invoice_name,
+              })
+        }
+        className="flex min-w-0 items-baseline gap-1.5 text-xs text-act hover:underline"
+      >
+        <FileDown className="h-3 w-3 shrink-0 self-center" aria-hidden />
+        {label}
+        {periodName !== null && (
+          <span className="shrink-0 font-medium tabular-nums">
+            {t("periodFile", {
+              period: periodName,
+              total: formatCurrencyFromCents(state.netCents, "eur", locale),
+            })}
+          </span>
+        )}
+      </a>
+    );
+  }
+
+  if (state.reason === "period_not_read" && periodReadFailed) {
     return (
       <span className="flex min-w-0 items-baseline gap-1.5 text-xs text-warning">
         <TriangleAlert className="h-3 w-3 shrink-0 self-center" aria-hidden />
         {label}
-        <span className="shrink-0 font-medium">
-          {readiness.reason === "club_without_fee"
-            ? t("fileBlockedByFee", { count: readiness.clubsWithoutFee })
-            : t("fileBlockedByNothingToInvoice")}
+        <span className="shrink-0 font-medium">{t("loadError")}</span>
+      </span>
+    );
+  }
+
+  if (state.reason === "not_period_end" || state.reason === "period_not_read") {
+    return (
+      <span className="flex min-w-0 items-baseline gap-1.5 text-xs text-muted-foreground">
+        {label}
+        <span className="shrink-0">
+          {state.reason === "not_period_end"
+            ? t("invoicedInMonth", {
+                cadence: tc(BILLING_CADENCE_LABEL[period.cadence]),
+                month: formatDateOnly(period.lastMonth, locale, {
+                  month: "long",
+                }),
+              })
+            : t("periodNotRead")}
         </span>
       </span>
     );
   }
 
   return (
-    <a
-      href={finvoiceHref(monthStart, customer.id)}
-      download
-      // The row around this is listening for a click to open the municipality.
-      // Left to bubble, asking for a file would also expand the section it was
-      // asked for from.
-      onClick={(event) => event.stopPropagation()}
-      title={t("downloadInvoiceFor", { customer: customer.invoice_name })}
-      className="flex min-w-0 items-baseline gap-1.5 text-xs text-act hover:underline"
-    >
-      <FileDown className="h-3 w-3 shrink-0 self-center" aria-hidden />
+    <span className="flex min-w-0 items-baseline gap-1.5 text-xs text-warning">
+      <TriangleAlert className="h-3 w-3 shrink-0 self-center" aria-hidden />
       {label}
-    </a>
+      <span className="shrink-0 font-medium">
+        {state.reason === "club_without_fee"
+          ? periodName === null
+            ? t("fileBlockedByFee", { count: state.clubsWithoutFee })
+            : t("periodBlockedByFee", {
+                count: state.clubsWithoutFee,
+                month: formatDateOnly(state.monthStart, locale, {
+                  month: "long",
+                }),
+              })
+          : periodName === null
+            ? t("fileBlockedByNothingToInvoice")
+            : t("periodBlockedByNothingToInvoice", { period: periodName })}
+      </span>
+    </span>
+  );
+}
+
+/** `Q1`, `H2` — a period's short name, in the reader's locale. */
+function periodLabel(
+  period: BillingPeriod,
+  t: ReturnType<typeof useTranslations<"admin.municipalityInvoicing">>,
+): string {
+  return period.cadence === "half_yearly"
+    ? t("halfYearName", { ordinal: period.ordinal })
+    : t("quarterName", { ordinal: period.ordinal });
+}
+
+/**
+ * The files of customers whose billing period ends this month and who have no
+ * club in it — a quarterly buyer whose clubs' term ended in May still owes the
+ * quarter that ends in June.
+ *
+ * They belong under no municipality, because this month has no club of theirs
+ * to sit beside, so they get one line of their own at the foot of the ledger:
+ * the same controls, decided by the same predicate, with no total on the money
+ * axis — every figure there is this month's, and this month bills them nothing.
+ */
+function PeriodFilesLine({
+  monthStart,
+  files,
+  periodReadFailed,
+  locale,
+}: {
+  monthStart: string;
+  files: readonly CustomerFile[];
+  periodReadFailed: boolean;
+  locale: string;
+}) {
+  const t = useTranslations("admin.municipalityInvoicing");
+
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2.5",
+        LEDGER_ROW_INSET,
+      )}
+    >
+      <span className="shrink-0 text-xs text-muted-foreground">
+        {t("periodFilesWithoutClub")}
+      </span>
+      <span className="ml-auto flex min-w-0 justify-end">
+        <CustomerFiles
+          monthStart={monthStart}
+          files={files}
+          periodReadFailed={periodReadFailed}
+          locale={locale}
+        />
+      </span>
+    </div>
   );
 }
 
@@ -462,12 +660,17 @@ function CustomerFile({
  */
 function MunicipalitySection({
   municipality,
+  files,
+  periodReadFailed,
   monthStart,
   locale,
   isOpen,
   onToggle,
 }: {
   municipality: InvoiceMunicipality;
+  /** Every customer's file this month, by customer id. */
+  files: ReadonlyMap<string, CustomerFile>;
+  periodReadFailed: boolean;
   /** The month on screen — what a customer's file is asked for. */
   monthStart: string;
   locale: string;
@@ -493,7 +696,7 @@ function MunicipalitySection({
             <CountLine
               parts={[
                 t("clubCount", { count: municipality.clubs.length }),
-                t("sessionCount", { count: municipality.recordedCount }),
+                t("sessionCount", { count: municipality.billedCount }),
               ]}
             />
             {municipality.clubsWithoutFee > 0 && (
@@ -509,7 +712,12 @@ function MunicipalitySection({
           <span className="ml-auto flex min-w-0 justify-end">
             <CustomerFiles
               monthStart={monthStart}
-              customers={municipality.customers}
+              files={municipality.customers.flatMap((summary) => {
+                const file = files.get(summary.customer.id);
+                return file === undefined ? [] : [file];
+              })}
+              periodReadFailed={periodReadFailed}
+              locale={locale}
             />
           </span>
           <span className="shrink-0 text-sm font-semibold tabular-nums">
@@ -586,18 +794,18 @@ function ClubTable({
  * One club's line, and the dates behind its number when the reader opens it.
  *
  * Five facts on one line, in the order the arithmetic runs: what it is, when it
- * meets, what a session of it costs, how many ran, and what that comes to. The
+ * meets, what a session of it costs, how many bill, and what that comes to. The
  * total is the product of the two columns to its left, so a reader can check the
  * multiplication without leaving the row — which is the whole reason the fee is
  * on the line at all rather than only in the detail.
  *
- * **A club with sessions it should have run and did not says so on its own
- * line.** The count cell carries the missed count beside the recorded one, in
- * warning tone, so a month's problems are visible without opening anything —
- * which matters precisely because every club here is closed by default. Dates
- * still ahead of the club get no mention: nothing is wrong with a session that
- * has not happened yet, and a note about one would be indistinguishable at a
- * glance from a note about one that was missed.
+ * **A club billed for sessions nobody wrote up says so on its own line.** The
+ * count cell carries how many of its billed sessions are not recorded, in quiet
+ * secondary type beside the billed count, so a missing write-up can be chased
+ * without opening anything — which matters because every club here is closed
+ * by default. It is not a warning: those sessions are in the count and the
+ * total, and nothing about the invoice is wrong. Dates still ahead of the club
+ * and cancelled dates get no mention there.
  *
  * **The whole row toggles the dates, and the club's name is the one thing on it
  * that does not.** A row this dense is read by pointing at it, and a reader
@@ -692,20 +900,22 @@ function ClubRows({ club, locale }: { club: InvoiceClub; locale: string }) {
             formatCurrencyFromCents(club.feeCents, "eur", locale)
           )}
         </td>
-        {/* The warning comes first and the count last, so the count ends on the
+        {/* The note comes first and the count last, so the count ends on the
             column's right edge like every other figure on the page and the note
-            flows leftward into the column's slack. Read left to right it is also
-            the order the reader wants: what is wrong, then what is being billed.
-            Both halves are one phrase per locale, joined by punctuation rather
-            than by copy, so no locale has to word the pair. */}
+            flows leftward into the column's slack. The note is quiet secondary
+            type rather than a warning: the sessions it counts are billed and
+            already inside the count beside it, and it is there only so a
+            missing write-up can be chased. Both halves are one phrase per
+            locale, joined by punctuation rather than by copy, so no locale has
+            to word the pair. */}
         <td className="py-2 pr-2 text-right tabular-nums">
           {club.unrecordedCount > 0 && (
-            <span className="whitespace-nowrap text-xs font-medium text-warning">
+            <span className="whitespace-nowrap text-xs text-muted-foreground">
               {t("unrecordedSessions", { count: club.unrecordedCount })}
               {SCHEDULE_PART_SEPARATOR}
             </span>
           )}
-          {club.recordedCount}
+          {club.billedCount}
         </td>
         {/* The money axis. The last column's right edge is the row inset, which
             is the same edge the municipality total and the month total end on. */}
@@ -765,13 +975,13 @@ function ClubSessionDetail({
  *
  * The four kinds read differently on purpose. A recorded session carries the
  * fee and nothing else in the way of explanation — it is the ordinary case and
- * should be quiet. An unrecorded one is drawn in warning tone and says so in
- * words, because a zero with no explanation beside it is indistinguishable from
- * a free session. An upcoming one carries no amount at all: it has not
- * happened, and printing €0 against a date in the future would invite somebody
- * to go looking for a session nobody has missed. A cancelled one is muted and
- * worth €0, past or future: it is settled, nothing about it is wrong, and the
- * word beside the zero is what tells it apart from a missed one.
+ * should be quiet. An unrecorded one carries the same fee, muted, and says in
+ * words that it is billed without a record: nothing about the invoice is wrong,
+ * but a reader chasing write-ups has to be able to find it. An upcoming one
+ * carries no amount at all: it has not happened, and printing €0 against a date
+ * in the future would invite somebody to go looking for a session nobody has
+ * missed. A cancelled one is muted and worth €0, past or future: it is settled,
+ * and the word beside the zero is what tells it apart from a billed one.
  */
 function SessionRow({
   session,
@@ -789,16 +999,10 @@ function SessionRow({
       date={session.date}
       isoWeek={session.isoWeek}
       locale={locale}
-      tone={
-        session.kind === "unrecorded"
-          ? "warning"
-          : session.kind === "recorded"
-            ? "plain"
-            : "muted"
-      }
+      tone={session.kind === "recorded" ? "plain" : "muted"}
       outcome={t(SESSION_OUTCOME_KEY[session.kind])}
       amount={
-        session.kind === "recorded" ? (
+        session.kind === "recorded" || session.kind === "unrecorded" ? (
           feeCents === null ? (
             <FeeNotSet />
           ) : (
@@ -814,7 +1018,7 @@ function SessionRow({
 
 const SESSION_OUTCOME_KEY = {
   recorded: "recorded",
-  unrecorded: "notRecorded",
+  unrecorded: "billedNotRecorded",
   upcoming: "upcoming",
   cancelled: "cancelled",
 } as const satisfies Record<InvoiceSession["kind"], string>;

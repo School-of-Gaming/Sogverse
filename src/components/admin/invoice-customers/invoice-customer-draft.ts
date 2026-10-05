@@ -3,6 +3,7 @@ import {
   type InvoiceCustomerInputParsed,
   type InvoiceCustomerRow,
 } from "@/services/invoice-customers";
+import type { InvoiceBillingCadence } from "@/types";
 
 /**
  * The form's own state: one string per column, in the column's own name.
@@ -18,6 +19,10 @@ import {
  * the vocabulary the whole feature already speaks: a stored row seeds a draft
  * field by field with nothing to rename, and a validated draft is the RPC's
  * argument list with nothing to map.
+ *
+ * The cadence is the one field that is not free text: it is chosen from a
+ * select whose options are the enum's values, so the draft holds the value
+ * itself and there is nothing for the contract to fold.
  */
 export interface InvoiceCustomerDraft {
   fennoa_customer_no: string;
@@ -26,13 +31,15 @@ export interface InvoiceCustomerDraft {
   postal_code: string;
   city: string;
   country_code: string;
+  billing_cadence: InvoiceBillingCadence;
   your_reference: string;
   invoice_text: string;
 }
 
 /**
  * The fields in the order the form asks for them — who the buyer is, where it
- * is, then the two things it may have asked us to print.
+ * is, how often it is invoiced, then the two things it may have asked us to
+ * print.
  *
  * A tuple rather than a bare type, so a validation failure can be pointed at a
  * field and the page can name that field in a sentence.
@@ -44,6 +51,7 @@ export const INVOICE_CUSTOMER_FIELDS = [
   "postal_code",
   "city",
   "country_code",
+  "billing_cadence",
   "your_reference",
   "invoice_text",
 ] as const satisfies readonly (keyof InvoiceCustomerDraft)[];
@@ -61,6 +69,9 @@ export type InvoiceCustomerField = (typeof INVOICE_CUSTOMER_FIELDS)[number];
  * than pinning the value to `FI`, so a row that is not Finnish — one that
  * arrived some other way — survives a round trip through this form unharmed
  * instead of being silently rewritten.
+ *
+ * The cadence opens on monthly, the column's own default and what most
+ * customers are.
  */
 export function emptyInvoiceCustomerDraft(): InvoiceCustomerDraft {
   return {
@@ -70,6 +81,7 @@ export function emptyInvoiceCustomerDraft(): InvoiceCustomerDraft {
     postal_code: "",
     city: "",
     country_code: "FI",
+    billing_cadence: "monthly",
     your_reference: "",
     invoice_text: "",
   };
@@ -86,6 +98,7 @@ export function invoiceCustomerDraft(
     postal_code: row.postal_code,
     city: row.city,
     country_code: row.country_code,
+    billing_cadence: row.billing_cadence,
     // The absent half of each optional column becomes the empty box it was
     // typed into, which is the same round trip the other direction: save an
     // untouched empty box and the contract folds it back to NULL.

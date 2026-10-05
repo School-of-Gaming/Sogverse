@@ -19,21 +19,21 @@ vi.mock("next-intl", () => ({
 }));
 
 import { AdminInvoiceCustomersPage } from "@/components/admin/invoice-customers/admin-invoice-customers-page";
-import { INVOICE_CUSTOMER_FIXTURES } from "@/components/admin/invoice-customers/mock-invoice-customer-fixtures";
+import { INVOICE_CUSTOMERS } from "../../mocks/invoice-customers";
 
 describe("the invoice customers list", () => {
   it("renders one row per customer, with its number, name and city", () => {
     render(
       <AdminInvoiceCustomersPage
-        customers={INVOICE_CUSTOMER_FIXTURES}
+        customers={INVOICE_CUSTOMERS}
         settled
       />,
     );
 
     const rows = screen.getAllByRole("row").slice(1); // minus the header row
-    expect(rows).toHaveLength(INVOICE_CUSTOMER_FIXTURES.length);
+    expect(rows).toHaveLength(INVOICE_CUSTOMERS.length);
 
-    for (const [index, customer] of INVOICE_CUSTOMER_FIXTURES.entries()) {
+    for (const [index, customer] of INVOICE_CUSTOMERS.entries()) {
       const row = within(rows[index]);
       expect(row.getByText(customer.fennoa_customer_no)).toBeTruthy();
       expect(row.getByText(customer.city)).toBeTruthy();
@@ -48,17 +48,17 @@ describe("the invoice customers list", () => {
   it("says in words, not only with a tick, whether a row carries a reference", () => {
     render(
       <AdminInvoiceCustomersPage
-        customers={INVOICE_CUSTOMER_FIXTURES}
+        customers={INVOICE_CUSTOMERS}
         settled
       />,
     );
 
-    const withReference = INVOICE_CUSTOMER_FIXTURES.filter(
+    const withReference = INVOICE_CUSTOMERS.filter(
       (customer) => customer.your_reference !== null,
     ).length;
     expect(screen.getAllByText("hasReference")).toHaveLength(withReference);
     expect(screen.getAllByText("noReference")).toHaveLength(
-      INVOICE_CUSTOMER_FIXTURES.length - withReference,
+      INVOICE_CUSTOMERS.length - withReference,
     );
   });
 
@@ -83,7 +83,7 @@ describe("the invoice customers list", () => {
   it("keeps the empty state off a populated table", () => {
     render(
       <AdminInvoiceCustomersPage
-        customers={INVOICE_CUSTOMER_FIXTURES}
+        customers={INVOICE_CUSTOMERS}
         settled
       />,
     );

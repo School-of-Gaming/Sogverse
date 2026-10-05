@@ -24,9 +24,9 @@ import { previewSceneHref } from "@/components/preview/href";
  * Each renders the *same* client shell its live route renders, handed the wire
  * document the RPC answers with, so every figure is the page's own pure build.
  * What the scene replaces is what the route supplies — the document, the clock
- * and where the month stepper points — and nothing else, for the reasons the
- * municipality invoicing scene gives: the clock is pinned because every line is
- * a claim about where a date sits against today, the stepper stays in the
+ * and where the month stepper points — and nothing else: the clock is pinned
+ * because every line is a claim about where a date sits against today, the
+ * stepper stays in the
  * preview because it is how the empty month is reached, and the query client
  * never refetches so the real role-gated read can never replace the fixtures.
  */

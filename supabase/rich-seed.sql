@@ -8,9 +8,9 @@
 -- dashboards look like a real platform — products of every type and lifecycle
 -- state, families with children, certified and uncertified educators, groups
 -- with sessions, reports, attendance, feedback, substitutions, a few
--- cancelled sessions, and Library articles in every state an admin can find
--- one in. It exists so
--- a human can look at the UI. Nothing asserts anything here.
+-- cancelled sessions, municipality clubs and the customers they are invoiced
+-- to, and Library articles in every state an admin can find one in. It exists
+-- so a human can look at the UI. Nothing asserts anything here.
 --
 -- THE TWO SEEDS NEVER SHARE A DATABASE. What makes a good fixture for a DB test
 -- — a handful of accounts at fixed ids, with whole-table claims written around
@@ -586,7 +586,7 @@ COMMIT;
 -- =============================================================================
 -- 6. The catalogue
 -- =============================================================================
--- Fifteen products: every product type, every billing mode, and every lifecycle
+-- Nineteen products: every product type, every billing mode, and every lifecycle
 -- state the derivation can produce — pending, running and completed, a hidden
 -- draft, and one whose registration window has not opened — plus the live club,
 -- whose one weekly session is in progress when the stack is built, an online
@@ -602,6 +602,33 @@ COMMIT;
 -- either is the same fact stored twice — and the copy in the name is the one
 -- that goes stale when a term moves or a venue changes. Names here therefore
 -- say what the product IS and nothing about when or where it happens.
+--
+-- THE MUNICIPALITY CLUBS ARE THERE FOR THE INVOICING PAGE. Six of them, and
+-- five Fennoa customers they are invoiced to, written first so a club can name
+-- its buyer as it is created. Between them they put every state of
+-- /admin/municipality-invoicing on the page, and the month that shows the most
+-- of it at once is the last month of the last FINISHED calendar quarter — on a
+-- stack built in October, September:
+--
+--   * Espoo's one customer is monthly, and its file is ready: the Schools Game
+--     Club's month holds sessions written up and one cancelled.
+--   * Tampere is two customers, two departments under two agreements. The youth
+--     services are quarterly, and the Autumn Term Game Club, which ran into
+--     that quarter, makes their quarter's file ready. The education services
+--     are monthly and bought a pilot whose every session that month was called
+--     off (section 12), so their file is refused for having nothing to bill.
+--   * Turku is quarterly and its quarter's file is refused: its Library Game
+--     Club ran in the quarter's first month with no fee set, and stopped.
+--   * An association buys the Vantaa club — a buyer that is not the
+--     municipality — half-yearly, so the label says the half-year's file comes
+--     in its last month. Nobody has written any of that club's sessions up
+--     (section 9), so every past line is billed without a record.
+--   * The Helsinki club has a fee and no customer.
+--
+-- The current month holds the upcoming lines. The periods are calendar-aligned,
+-- so the clubs that have to sit inside one are dated from the start of the
+-- current quarter rather than from today; the others keep their now()-relative
+-- terms.
 
 BEGIN;
 SELECT set_config('request.jwt.claims',
@@ -609,6 +636,26 @@ SELECT set_config('request.jwt.claims',
                              WHERE email = 'admin@example.com'),
                     'role', 'authenticated')::text, true);
 SET LOCAL ROLE authenticated;
+
+-- The customers go through the admin RPC like every other write here. The
+-- numbers and addresses are invented, plausible rather than anybody's: a page
+-- naming a real customer's number looks like live data.
+SELECT public.create_invoice_customer(
+         v.no, v.invoice_name, v.street, v.postal_code, v.city,
+         v.cadence::public.invoice_billing_cadence,
+         p_your_reference => v.your_reference)
+  FROM (VALUES
+    ('F0204', 'Espoon kaupunki',
+     'Virastokuja 1',     '02070', 'Espoo',   'monthly',     'TIL-2026-0418'),
+    ('F0211', 'Tampereen kaupunki, nuorisopalvelut',
+     'Kirjastokuja 5',    '33101', 'Tampere', 'quarterly',   'NUOR-2026-77'),
+    ('F0212', 'Tampereen kaupunki, kasvatus- ja opetuspalvelut',
+     'Opintie 14',        '33101', 'Tampere', 'monthly',     'KASVA-2026-310'),
+    ('F0219', 'Föreningen Lekvänner rf',
+     'Sjöstigen 12 A',    '01300', 'Vantaa',  'half_yearly', NULL),
+    ('F0221', 'Turun kaupunki',
+     'Raatihuoneenkuja 2','20101', 'Turku',   'quarterly',   NULL)
+  ) AS v(no, invoice_name, street, postal_code, city, cadence, your_reference);
 
 DO $$
 DECLARE
@@ -628,6 +675,22 @@ DECLARE
   v_live     timestamp := date_trunc('minute', (now() AT TIME ZONE v_tz) - interval '10 minutes');
   -- The Redstone club's next session: this time tomorrow, on the same clock.
   v_next     timestamp := date_trunc('minute', now() AT TIME ZONE v_tz) + interval '1 day';
+  -- The online municipality clubs point at their municipality itself.
+  v_muni_helsinki uuid := (SELECT id FROM public.locations
+                            WHERE country_code = 'FI' AND type = 'municipality'
+                              AND name = 'Helsinki' AND geonames_id IS NOT NULL LIMIT 1);
+  v_muni_tampere  uuid := (SELECT id FROM public.locations
+                            WHERE country_code = 'FI' AND type = 'municipality'
+                              AND name = 'Tampere' AND geonames_id IS NOT NULL LIMIT 1);
+  v_muni_turku    uuid := (SELECT id FROM public.locations
+                            WHERE country_code = 'FI' AND type = 'municipality'
+                              AND name = 'Turku' AND geonames_id IS NOT NULL LIMIT 1);
+  v_muni_vantaa   uuid := (SELECT id FROM public.locations
+                            WHERE country_code = 'FI' AND type = 'municipality'
+                              AND name = 'Vantaa' AND geonames_id IS NOT NULL LIMIT 1);
+  -- The last finished calendar quarter, and its last month.
+  v_quarter  date := (date_trunc('quarter', current_date) - interval '3 months')::date;
+  v_q_last   date := (date_trunc('quarter', current_date) - interval '1 month')::date;
 BEGIN
 
   -- 1. Running, listed, paid consumer club. The busiest thing in the catalogue,
@@ -770,7 +833,9 @@ BEGIN
     p_schedule_slots => jsonb_build_array(
       jsonb_build_object('weekday', 1, 'start_time', '14:00', 'duration_minutes', 60)),
     p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
-    p_primary_gedu_fee_cents => 6000, p_municipality_fee_cents => 180000
+    p_primary_gedu_fee_cents => 6000, p_municipality_fee_cents => 180000,
+    p_invoice_customer_id => (SELECT id FROM public.invoice_customers
+                               WHERE fennoa_customer_no = 'F0204')
   );
 
   -- 7. A municipality club whose term is over — the completed state.
@@ -794,7 +859,9 @@ BEGIN
     p_schedule_slots => jsonb_build_array(
       jsonb_build_object('weekday', 2, 'start_time', '13:00', 'duration_minutes', 60)),
     p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
-    p_primary_gedu_fee_cents => 6000, p_municipality_fee_cents => 150000
+    p_primary_gedu_fee_cents => 6000, p_municipality_fee_cents => 150000,
+    p_invoice_customer_id => (SELECT id FROM public.invoice_customers
+                               WHERE fennoa_customer_no = 'F0211')
   );
 
   -- 8. An upcoming paid camp.
@@ -995,6 +1062,115 @@ BEGIN
     p_primary_gedu_fee_cents => 6000
   );
 
+  -- 16. An online municipality club with NO FEE, for a quarterly customer. It
+  --     ran from six weeks before the last finished quarter into that
+  --     quarter's first month and stopped, so the quarter's file is refused
+  --     naming that month.
+  PERFORM public.create_product(
+    'municipality_club', 'external_contract',
+    jsonb_build_array(
+      jsonb_build_object('locale','en','name','Library Game Club',
+        'short_description','An online club run with the city of Turku. Free to families.',
+        'long_description','Minecraft Education online, one afternoon a week, paid for by the city''s libraries.'),
+      jsonb_build_object('locale','fi','name','Kirjaston pelikerho',
+        'short_description','Turun kaupungin kanssa järjestettävä verkkokerho. Perheille maksuton.',
+        'long_description','Minecraft Educationia verkossa kerran viikossa iltapäivällä, kaupungin kirjastojen kustantamana.')
+    ),
+    'minecraft_education', 'fi', true, v_tz,
+    v_quarter - interval '60 days', true, false,
+    p_min_age => 9, p_max_age => 12, p_is_visible => true,
+    p_location_id => v_muni_turku,
+    p_start_date => v_quarter - 42,
+    p_end_date => v_quarter + 27,
+    p_seat_count => 16,
+    p_schedule_slots => jsonb_build_array(
+      jsonb_build_object('weekday', 3, 'start_time', '15:00', 'duration_minutes', 60)),
+    p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
+    p_primary_gedu_fee_cents => 6000,
+    p_invoice_customer_id => (SELECT id FROM public.invoice_customers
+                               WHERE fennoa_customer_no = 'F0221')
+  );
+
+  -- 17. A running online municipality club bought by an association that is
+  --     not the municipality it runs in, invoiced half-yearly.
+  PERFORM public.create_product(
+    'municipality_club', 'external_contract',
+    jsonb_build_array(
+      jsonb_build_object('locale','en','name','Association Game Club',
+        'short_description','An online club run with a Vantaa families'' association. Free to families.',
+        'long_description','Minecraft Bedrock online, one afternoon a week, paid for by the association.'),
+      jsonb_build_object('locale','fi','name','Yhdistyksen pelikerho',
+        'short_description','Vantaalaisen perheyhdistyksen kanssa järjestettävä verkkokerho. Perheille maksuton.',
+        'long_description','Minecraft Bedrockia verkossa kerran viikossa iltapäivällä, yhdistyksen kustantamana.')
+    ),
+    'minecraft_bedrock', 'sv', true, v_tz,
+    v_quarter - interval '80 days', true, false,
+    p_min_age => 8, p_max_age => 12, p_is_visible => true,
+    p_location_id => v_muni_vantaa,
+    p_start_date => v_quarter - 60,
+    p_end_date => current_date + 75,
+    p_seat_count => 12,
+    p_schedule_slots => jsonb_build_array(
+      jsonb_build_object('weekday', 2, 'start_time', '16:00', 'duration_minutes', 60)),
+    p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
+    p_primary_gedu_fee_cents => 6000, p_municipality_fee_cents => 16500,
+    p_invoice_customer_id => (SELECT id FROM public.invoice_customers
+                               WHERE fennoa_customer_no = 'F0219')
+  );
+
+  -- 18. A one-month pilot in the last finished quarter's last month, bought by
+  --     Tampere's second department. Every session it had was called off
+  --     (section 12), so that month it has nothing to bill.
+  PERFORM public.create_product(
+    'municipality_club', 'external_contract',
+    jsonb_build_array(
+      jsonb_build_object('locale','en','name','Esports Pilot Club',
+        'short_description','A month''s pilot with the city of Tampere''s schools. Finished.',
+        'long_description','Four afternoons of esports online, to see whether the schools wanted a full term of it.'),
+      jsonb_build_object('locale','fi','name','E-urheilun kokeilukerho',
+        'short_description','Kuukauden kokeilu Tampereen kaupungin koulujen kanssa. Päättynyt.',
+        'long_description','Neljä iltapäivää e-urheilua verkossa, jotta koulut näkivät, haluavatko ne siitä kokonaisen kauden.')
+    ),
+    'esports', 'fi', true, v_tz,
+    v_q_last - interval '30 days', true, false,
+    p_min_age => 10, p_max_age => 13, p_is_visible => true,
+    p_location_id => v_muni_tampere,
+    p_start_date => v_q_last,
+    p_end_date => (v_q_last + interval '1 month')::date - 1,
+    p_seat_count => 12,
+    p_schedule_slots => jsonb_build_array(
+      jsonb_build_object('weekday', 2, 'start_time', '14:00', 'duration_minutes', 60)),
+    p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
+    p_primary_gedu_fee_cents => 6000, p_municipality_fee_cents => 17000,
+    p_invoice_customer_id => (SELECT id FROM public.invoice_customers
+                               WHERE fennoa_customer_no = 'F0212')
+  );
+
+  -- 19. A running online municipality club nobody has named a customer for
+  --     yet, which blocks its own file and nothing else.
+  PERFORM public.create_product(
+    'municipality_club', 'external_contract',
+    jsonb_build_array(
+      jsonb_build_object('locale','en','name','Youth Centre Game Club',
+        'short_description','An online club run with the city of Helsinki. Free to families.',
+        'long_description','Roblox online, one afternoon a week, paid for by the city.'),
+      jsonb_build_object('locale','fi','name','Nuorisotalon pelikerho',
+        'short_description','Helsingin kaupungin kanssa järjestettävä verkkokerho. Perheille maksuton.',
+        'long_description','Robloxia verkossa kerran viikossa iltapäivällä, kaupungin kustantamana.')
+    ),
+    'roblox_studio', 'fi', true, v_tz,
+    v_quarter - interval '10 days', true, false,
+    p_min_age => 9, p_max_age => 13, p_is_visible => true,
+    p_location_id => v_muni_helsinki,
+    p_start_date => v_quarter + 14,
+    p_end_date => current_date + 60,
+    p_seat_count => 14,
+    p_schedule_slots => jsonb_build_array(
+      jsonb_build_object('weekday', 3, 'start_time', '16:00', 'duration_minutes', 60)),
+    p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
+    p_primary_gedu_fee_cents => 6000, p_municipality_fee_cents => 15500
+  );
+
 END;
 $$;
 
@@ -1037,6 +1213,10 @@ BEGIN
     ('Minecraft Redstone Club',                  'Ryhmä A',      v_aino,  'primary', NULL,           NULL),
     ('Schools Game Club',                        'Ryhmä 1',      v_gedu,  'primary', NULL,           NULL),
     ('Autumn Term Game Club',                    'Ryhmä 1',      v_sofia, 'primary', NULL,           NULL),
+    ('Library Game Club',                        'Ryhmä 1',      v_mikko, 'primary', NULL,           NULL),
+    ('Association Game Club',                    'Grupp 1',      v_aino,  'primary', NULL,           NULL),
+    ('Esports Pilot Club',                       'Ryhmä 1',      v_sofia, 'primary', NULL,           NULL),
+    ('Youth Centre Game Club',                   'Ryhmä 1',      v_lucas, 'primary', NULL,           NULL),
     ('Minecraft Summer Camp',                    'Camp Group A', v_lucas, 'primary', 'Camp Group B', v_emma),
     ('Roblox Winter Camp',                       'Camp Group A', v_mikko, 'primary', NULL,           NULL),
     ('AI and Game Design Camp',                  'AI Camp',      v_lucas, 'primary', NULL,           NULL),
@@ -1399,7 +1579,9 @@ COMMIT;
 -- production rather than all pointing at an admin. The ten most recent sessions
 -- of each in-person club are written up, and the thirty-one most recent of each
 -- online one — seven months, back to their start, so the admin feedback page's
--- timeline has history to draw.
+-- timeline has history to draw. Two municipality clubs are left out, for the
+-- invoicing page: the Association Game Club, so its sessions bill without a
+-- record, and the Esports Pilot Club, whose every session was called off.
 --
 -- On the ONLINE clubs, about seven in ten of the children marked present then
 -- answer the feedback screen on the way out — written as the child, the way
@@ -1484,6 +1666,10 @@ BEGIN
       JOIN public.schedule_slots s ON s.product_id = p.id
      WHERE p.product_type IN ('consumer_club', 'municipality_club')
        AND p.start_date <= current_date
+       -- Nobody has written up the association's club, so the invoicing page
+       -- bills its every past session without a record; and the Esports Pilot
+       -- Club never ran — section 12 calls off its every session.
+       AND t.name NOT IN ('Association Game Club', 'Esports Pilot Club')
   LOOP
     -- Both lists are read while the admin's claims are still in force; the
     -- educator's claims go on only around the writes, and come off again before
@@ -1895,7 +2081,7 @@ COMMIT;
 -- =============================================================================
 -- 12. Cancelled sessions
 -- =============================================================================
--- Three sessions an admin called off, through the admin's own RPC, each on a
+-- Sessions an admin called off, through the admin's own RPC. Three are each on a
 -- group one of parent@example.com's children sits in, so the family's My SOG,
 -- the gedu's and the admin's all have one to show:
 --
@@ -1906,6 +2092,10 @@ COMMIT;
 --     session (or the substitution section 11 seated on the next one);
 --   * the NEXT session of the Creator Studio Club, the online club Otso and Nea
 --     attend, so their cards name the session after it and say which is off.
+--
+-- And a fourth kind, for the municipality invoicing page: every session of the
+-- Esports Pilot Club, the one-month pilot Tampere's education services bought,
+-- so that customer's month has nothing to bill and its file is refused.
 --
 -- Every date is derived from the schedule rather than written out. `cancel_session`
 -- itself refuses a date the schedule does not project and that holds no record.
@@ -1995,6 +2185,23 @@ BEGIN
     ELSE
       PERFORM public.cancel_session(v_group, v_date, r.reason);
     END IF;
+  END LOOP;
+
+  -- The pilot: every date its one group was due, all of them past.
+  FOR r IN
+    SELECT g.id AS group_id, dd::date AS day
+      FROM public.product_groups g
+      JOIN public.products p ON p.id = g.product_id
+      JOIN public.product_translations t
+        ON t.product_id = p.id AND t.locale = 'en'
+      JOIN public.schedule_slots s ON s.product_id = p.id
+     CROSS JOIN LATERAL generate_series(p.start_date, p.end_date, interval '1 day') dd
+     WHERE t.name = 'Esports Pilot Club'
+       AND EXTRACT(ISODOW FROM dd)::integer - 1 = s.weekday
+     ORDER BY dd
+  LOOP
+    PERFORM public.cancel_session(r.group_id, r.day,
+      'The school''s computer room was not ready; the pilot moves to next term.');
   END LOOP;
 END;
 $$;

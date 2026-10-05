@@ -43,11 +43,11 @@ import {
   type FormState,
 } from "@/components/admin/products/product-form-state";
 import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products/product-type-config";
-import { INVOICE_CUSTOMER_FIXTURES } from "@/components/admin/invoice-customers/mock-invoice-customer-fixtures";
+import { INVOICE_CUSTOMERS } from "../../mocks/invoice-customers";
 import type { ProductType } from "@/types";
 
 const CUSTOMERS = {
-  data: INVOICE_CUSTOMER_FIXTURES,
+  data: INVOICE_CUSTOMERS,
   isPending: false,
   isError: false,
 };
@@ -88,10 +88,10 @@ describe("the invoice customer picker on the fees section", () => {
     // The empty option plus one per customer, and the empty one comes first:
     // "nobody has said yet" is the resting answer, not a value to scroll past.
     const options = Array.from(select.options);
-    expect(options).toHaveLength(INVOICE_CUSTOMER_FIXTURES.length + 1);
+    expect(options).toHaveLength(INVOICE_CUSTOMERS.length + 1);
     expect(options[0].value).toBe("");
     expect(options[1].textContent).toBe(
-      `picker.option name=${INVOICE_CUSTOMER_FIXTURES[0].invoice_name} number=${INVOICE_CUSTOMER_FIXTURES[0].fennoa_customer_no}`,
+      `picker.option name=${INVOICE_CUSTOMERS[0].invoice_name} number=${INVOICE_CUSTOMERS[0].fennoa_customer_no}`,
     );
   });
 
@@ -130,7 +130,7 @@ describe("the invoice customer picker on the fees section", () => {
   it("carries a pick through form state onto the wire", () => {
     mockUseInvoiceCustomers.mockReturnValue(CUSTOMERS);
     const { config, current } = renderFees("municipality_club");
-    const chosen = INVOICE_CUSTOMER_FIXTURES[3];
+    const chosen = INVOICE_CUSTOMERS[3];
 
     fireEvent.change(screen.getByLabelText(/picker\.label/), {
       target: { value: chosen.id },
@@ -149,7 +149,7 @@ describe("the invoice customer picker on the fees section", () => {
     const select = screen.getByLabelText(/picker\.label/);
 
     fireEvent.change(select, {
-      target: { value: INVOICE_CUSTOMER_FIXTURES[1].id },
+      target: { value: INVOICE_CUSTOMERS[1].id },
     });
     fireEvent.change(select, { target: { value: "" } });
 
@@ -204,9 +204,9 @@ describe("the invoice customer picker on the fees section", () => {
     // and drop the club's stored buyer — because of a refresh the admin never
     // asked for. The list is what the control waits on, so with a list in hand
     // there is nothing to report and nothing to disable.
-    const chosen = INVOICE_CUSTOMER_FIXTURES[2];
+    const chosen = INVOICE_CUSTOMERS[2];
     mockUseInvoiceCustomers.mockReturnValue({
-      data: INVOICE_CUSTOMER_FIXTURES,
+      data: INVOICE_CUSTOMERS,
       isPending: false,
       isError: true,
     });
@@ -219,7 +219,7 @@ describe("the invoice customer picker on the fees section", () => {
 
     const select = screen.getByLabelText<HTMLSelectElement>(/picker\.label/);
     expect(select.disabled).toBe(false);
-    expect(select.options).toHaveLength(INVOICE_CUSTOMER_FIXTURES.length + 1);
+    expect(select.options).toHaveLength(INVOICE_CUSTOMERS.length + 1);
     expect(select.value).toBe(chosen.id);
     expect(screen.queryByText(/errors\.listUnavailable/)).toBeNull();
   });

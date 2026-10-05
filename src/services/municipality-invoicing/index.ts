@@ -1,6 +1,9 @@
 export { MunicipalityInvoicingService } from "./municipality-invoicing.service";
 export { municipalityInvoicingKeys } from "./municipality-invoicing.keys";
-export { useMunicipalityInvoicingMonth } from "./municipality-invoicing.queries";
+export {
+  useMunicipalityInvoicingMonth,
+  useMunicipalityInvoicingMonths,
+} from "./municipality-invoicing.queries";
 export {
   municipalityInvoicingSnapshot,
   type MunicipalityInvoicingClub,

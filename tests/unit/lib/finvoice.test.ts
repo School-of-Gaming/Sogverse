@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
-  buildFinvoiceForMonth,
+  buildFinvoiceForPeriod,
+  buildFinvoiceInvoice,
+  customerFilesForMonth,
+  customerMonths,
   finvoiceFileName,
+  finvoiceFileState,
   finvoiceHref,
-  finvoiceReadiness,
   serializeFinvoice,
   vatOf,
   type FinvoiceInvoice,
@@ -29,8 +32,9 @@ import type {
  * to be re-verified against Fennoa rather than reasoned about.
  *
  * May 2026 throughout, with the clock pinned to Thursday the 21st in Helsinki,
- * so a month's Mondays fall either side of "today" and a club's recorded count
- * is a real answer rather than every date it was scheduled for.
+ * so a month's Mondays fall either side of "today": the 4th, 11th and 18th were
+ * due and bill whether or not anybody wrote them up, and the 25th is still
+ * ahead and bills nothing.
  */
 
 const HELSINKI = "Europe/Helsinki";
@@ -65,6 +69,7 @@ function customer(
     country_code: "FI",
     your_reference: null,
     invoice_text: null,
+    billing_cadence: "monthly",
     ...overrides,
   };
 }
@@ -82,12 +87,17 @@ interface ClubSpec {
   location?: MunicipalityInvoicingClub["location"];
   feeCents?: number | null;
   invoiceCustomer?: InvoiceCustomerRow | null;
-  /** Monday 14:15 for 75 minutes unless a case wants something else. */
+  /**
+   * Monday 14:15 for 75 minutes unless a case wants something else. An empty
+   * list projects nothing, so the club bills its stored rows and no more.
+   */
   slots?: MunicipalityInvoicingClub["schedule_slots"];
   /** Dates with a stored row. Mondays in May 2026 are 4, 11, 18 and 25. */
   dates?: readonly string[];
   /** Dates an admin cancelled for the club's one group. */
   cancelled?: readonly string[];
+  /** The term's last day — the end of May unless a case stops it earlier. */
+  endDate?: string;
 }
 
 function club(spec: ClubSpec): MunicipalityInvoicingClub {
@@ -95,7 +105,7 @@ function club(spec: ClubSpec): MunicipalityInvoicingClub {
     id: spec.id,
     timezone: HELSINKI,
     start_date: "2026-01-12",
-    end_date: "2026-05-29",
+    end_date: spec.endDate ?? "2026-05-29",
     municipality_fee_cents: spec.feeCents === undefined ? 6_500 : spec.feeCents,
     product_translations: [{ locale: "fi", name: spec.name }],
     schedule_slots: spec.slots ?? [
@@ -133,8 +143,9 @@ function buildFor(
   clubs: MunicipalityInvoicingClub[],
   customerId: string = ESPOO_CUSTOMER.id,
 ) {
-  return buildFinvoiceForMonth({
-    snapshot: snapshotOf(clubs),
+  return buildFinvoiceForPeriod({
+    monthStart: MONTH,
+    snapshots: [snapshotOf(clubs)],
     customerId,
     now: NOW,
   });
@@ -152,6 +163,9 @@ function invoiceFor(
   return result.invoice;
 }
 
+/** Every Monday of May 2026 that has passed by the pinned clock. */
+const ALL_DUE_MONDAYS = ["2026-05-04", "2026-05-11", "2026-05-18"] as const;
+
 // ---------------------------------------------------------------------------
 // The money
 // ---------------------------------------------------------------------------
@@ -159,8 +173,11 @@ function invoiceFor(
 describe("the money rule", () => {
   it("rounds one row's VAT half up at the standard Finnish rate", () => {
     // 65.00 at 25.5 % is 16.575, which is the awkward half-cent the whole rule
-    // exists for. Half up is 16.58.
-    const invoice = invoiceFor([club({ id: "a", name: "Peliklubi Purola" })]);
+    // exists for. Half up is 16.58. No slots, so the one stored row is the one
+    // session billed.
+    const invoice = invoiceFor([
+      club({ id: "a", name: "Peliklubi Purola", slots: [] }),
+    ]);
 
     expect(invoice.rows).toHaveLength(1);
     expect(invoice.rows[0].netCents).toBe(6_500);
@@ -175,9 +192,9 @@ describe("the money rule", () => {
     // rows, so 49.74 is the answer that foots — and 49.73 is what the previous
     // system's files carried.
     const invoice = invoiceFor([
-      club({ id: "a", name: "Klubi A" }),
-      club({ id: "b", name: "Klubi B" }),
-      club({ id: "c", name: "Klubi C" }),
+      club({ id: "a", name: "Klubi A", slots: [] }),
+      club({ id: "b", name: "Klubi B", slots: [] }),
+      club({ id: "c", name: "Klubi C", slots: [] }),
     ]);
 
     expect(invoice.rows.map((row) => row.vatCents)).toEqual([1_658, 1_658, 1_658]);
@@ -217,9 +234,10 @@ describe("the money rule", () => {
     }
   });
 
-  it("counts only the sessions that ran, not the ones that were scheduled", () => {
-    // Four Mondays in May, two of them written up, one missed and one still
-    // ahead of the pinned clock. The invoice bills two.
+  it("bills every session that was due, recorded or not, and none still ahead", () => {
+    // Four Mondays in May: two written up, one nobody wrote up, and one still
+    // ahead of the pinned clock. The unrecorded one was due and was not
+    // cancelled, so it bills like the recorded two; the one ahead does not.
     const invoice = invoiceFor([
       club({
         id: "a",
@@ -228,13 +246,22 @@ describe("the money rule", () => {
       }),
     ]);
 
-    expect(invoice.rows[0].sessions).toBe(2);
-    expect(invoice.rows[0].netCents).toBe(13_000);
+    expect(invoice.rows[0].sessions).toBe(3);
+    expect(invoice.rows[0].netCents).toBe(19_500);
+  });
+
+  it("bills a club that recorded nothing for every date it was due", () => {
+    const invoice = invoiceFor([
+      club({ id: "a", name: "Klubi A", dates: [] }),
+    ]);
+
+    expect(invoice.rows[0].sessions).toBe(3);
+    expect(invoice.netCents).toBe(19_500);
   });
 
   it("bills nothing for a cancelled session", () => {
     // The ledger shows a cancelled date at €0; the file must not carry it in a
-    // row's count or its money.
+    // row's count or its money. The 18th, due and not cancelled, still bills.
     const invoice = invoiceFor([
       club({
         id: "a",
@@ -244,16 +271,16 @@ describe("the money rule", () => {
       }),
     ]);
 
-    expect(invoice.rows[0].sessions).toBe(1);
-    expect(invoice.netCents).toBe(6_500);
+    expect(invoice.rows[0].sessions).toBe(2);
+    expect(invoice.netCents).toBe(13_000);
   });
 
-  it("leaves a club that recorded nothing off the invoice entirely", () => {
-    // A row worth €0.00 invites the buyer to ask what it is. A club that did
-    // not run this month is simply not on the invoice.
+  it("leaves a club with nothing billed off the invoice entirely", () => {
+    // A row worth €0.00 invites the buyer to ask what it is. A club whose every
+    // due date was cancelled bills nothing and is simply not on the invoice.
     const invoice = invoiceFor([
       club({ id: "a", name: "Klubi A" }),
-      club({ id: "b", name: "Klubi B", dates: [] }),
+      club({ id: "b", name: "Klubi B", dates: [], cancelled: ALL_DUE_MONDAYS }),
     ]);
 
     expect(invoice.rows.map((row) => row.clubId)).toEqual(["a"]);
@@ -437,10 +464,10 @@ describe("the invoice free text", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Dates and the provisional number
+// Dates and the reference
 // ---------------------------------------------------------------------------
 
-describe("the invoice's dates and number", () => {
+describe("the invoice's dates and reference", () => {
   it("dates the invoice to the first day after the month it bills", () => {
     const invoice = invoiceFor([club({ id: "a", name: "Klubi A" })]);
 
@@ -448,26 +475,26 @@ describe("the invoice's dates and number", () => {
     expect(invoice.dueDate).toBe("20260615");
   });
 
-  it("numbers a file by the month and the customer's Fennoa number", () => {
-    // Numeric and above 100, which is Fennoa's own rule for an imported
-    // identifier, and the same answer every time the month is exported —
-    // Fennoa replaces it with the real invoice number when the invoice is sent.
+  it("references a file by the month and the customer's Fennoa number", () => {
+    // The same answer every time the month is exported, and deliberately not a
+    // number: Fennoa keeps a numeric invoice number as the final one on
+    // approval and skips anything else, numbering from its own series.
     const second = customer({ id: "cust-b", fennoa_customer_no: "F0999" });
     const clubs = [
       club({ id: "a", name: "Klubi A" }),
       club({ id: "b", name: "Klubi B", invoiceCustomer: second }),
     ];
 
-    expect(invoiceFor(clubs).invoiceNumber).toBe("2026050204");
-    expect(invoiceFor(clubs, second.id).invoiceNumber).toBe("2026050999");
-    expect(Number(invoiceFor(clubs).invoiceNumber)).toBeGreaterThan(100);
+    expect(invoiceFor(clubs).invoiceReference).toBe("SOG-2026050204");
+    expect(invoiceFor(clubs, second.id).invoiceReference).toBe("SOG-2026050999");
+    expect(invoiceFor(clubs).invoiceReference).not.toMatch(/^\d+$/);
   });
 
-  it("keeps a customer's number across a change to the rest of the month", () => {
+  it("keeps a customer's reference across a change to the rest of the month", () => {
     // The property the derivation exists for: a re-export has to carry the same
-    // number as the export it replaces. Linking one more club to a new buyer
-    // moves every later customer's place in the month, so a number derived from
-    // that place would come back different and read as a second invoice.
+    // reference as the export it replaces. Linking one more club to a new buyer
+    // moves every later customer's place in the month, so a reference derived
+    // from that place would come back different.
     const later = customer({ id: "cust-b", fennoa_customer_no: "F0999" });
     const newcomer = customer({ id: "cust-new", fennoa_customer_no: "F0001" });
     const before = [
@@ -479,12 +506,12 @@ describe("the invoice's dates and number", () => {
       ...before,
     ];
 
-    expect(invoiceFor(after, later.id).invoiceNumber).toBe(
-      invoiceFor(before, later.id).invoiceNumber,
+    expect(invoiceFor(after, later.id).invoiceReference).toBe(
+      invoiceFor(before, later.id).invoiceReference,
     );
   });
 
-  it("numbers by customer number, so the reader's locale cannot change it", () => {
+  it("references by customer number, so the reader's locale cannot change it", () => {
     // The billing names sort differently per locale; the customer numbers do
     // not. A Swedish admin exporting the same month has to get the same file.
     const first = customer({ id: "cust-a", fennoa_customer_no: "F0100" });
@@ -498,22 +525,42 @@ describe("the invoice's dates and number", () => {
       club({ id: "b", name: "Klubi B", invoiceCustomer: first }),
     ];
 
-    expect(invoiceFor(clubs, first.id).invoiceNumber).toBe("2026050100");
-    expect(invoiceFor(clubs, second.id).invoiceNumber).toBe("2026050200");
+    expect(invoiceFor(clubs, first.id).invoiceReference).toBe("SOG-2026050100");
+    expect(invoiceFor(clubs, second.id).invoiceReference).toBe("SOG-2026050200");
   });
 
   it("falls back to the customer's place where the number has no digits", () => {
-    // Not a shape Fennoa issues, but the column is free text and the number
-    // still has to be numeric: the month plus the customer's 1-based position,
-    // padded to four.
+    // Not a shape Fennoa issues, but the column is free text: the month plus
+    // the customer's 1-based position, padded to four.
     const wordy = customer({ id: "cust-wordy", fennoa_customer_no: "ESPOO" });
     const invoice = invoiceFor(
       [club({ id: "a", name: "Klubi A", invoiceCustomer: wordy })],
       wordy.id,
     );
 
-    expect(invoice.invoiceNumber).toBe("2026050001");
-    expect(Number(invoice.invoiceNumber)).toBeGreaterThan(100);
+    expect(invoice.invoiceReference).toBe("SOG-2026050001");
+  });
+
+  it("never exceeds Finvoice's twenty characters for an invoice number", () => {
+    // The column is free text, so a customer number can carry any number of
+    // digits; the reference keeps the last ten, which is what fits beside
+    // `SOG-` and the month. The digitless fallback is shorter still.
+    const long = customer({
+      id: "cust-long",
+      fennoa_customer_no: "F123456789012345",
+    });
+    const wordy = customer({ id: "cust-wordy", fennoa_customer_no: "ESPOO" });
+    const clubs = [
+      club({ id: "a", name: "Klubi A", invoiceCustomer: long }),
+      club({ id: "b", name: "Klubi B", invoiceCustomer: wordy }),
+    ];
+
+    const longest = invoiceFor(clubs, long.id).invoiceReference;
+    expect(longest).toBe("SOG-2026056789012345");
+    expect(longest).toHaveLength(20);
+    const fallback = invoiceFor(clubs, wordy.id).invoiceReference;
+    expect(fallback).toBe("SOG-2026050001");
+    expect(fallback.length).toBeLessThanOrEqual(20);
   });
 });
 
@@ -525,11 +572,7 @@ describe("what refuses a file", () => {
   it("refuses a customer no club in the month is billed to", () => {
     const result = buildFor([club({ id: "a", name: "Klubi A" })], "cust-nobody");
 
-    expect(result).toEqual({
-      ok: false,
-      reason: "unknown_customer",
-      clubsWithoutFee: 0,
-    });
+    expect(result).toEqual({ ok: false, reason: "unknown_customer" });
   });
 
   it("refuses the whole file when a club that RAN has no fee", () => {
@@ -544,59 +587,68 @@ describe("what refuses a file", () => {
 
     // The count is of the clubs that ran without a price, because that is what
     // the ledger's line and the route's refusal both say out loud.
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
       reason: "club_without_fee",
       clubsWithoutFee: 2,
+      monthStart: MONTH,
     });
   });
 
-  it("produces the file where the only fee-less club recorded nothing", () => {
-    // A club that did not meet is on no invoice, so its missing price cannot
+  it("refuses the file when a fee-less club's only billed sessions are unrecorded", () => {
+    // Nobody wrote anything up, but the club was due on three Mondays and none
+    // was cancelled, so it bills them — and with no price the file would be
+    // short by exactly those.
+    const result = buildFor([
+      club({ id: "a", name: "Klubi A" }),
+      club({ id: "b", name: "Klubi B", feeCents: null, dates: [] }),
+    ]);
+
+    expect(result).toMatchObject({
+      ok: false,
+      reason: "club_without_fee",
+      clubsWithoutFee: 1,
+    });
+  });
+
+  it("produces the file where the only fee-less club billed nothing", () => {
+    // A club with nothing billed is on no invoice, so its missing price cannot
     // make one short — the file is about what ran. The gap is still an admin
     // error, and it is still reported where data problems are reported: on the
     // club's own line in the ledger and on the admin dashboard. Refusing the
     // file for it would be a third alarm, and one that stops the month's real
     // clubs being invoiced.
     const invoice = invoiceFor([
-      club({ id: "a", name: "Klubi A" }),
-      club({ id: "b", name: "Klubi B", feeCents: null, dates: [] }),
+      club({ id: "a", name: "Klubi A", slots: [] }),
+      club({
+        id: "b",
+        name: "Klubi B",
+        feeCents: null,
+        dates: [],
+        cancelled: ALL_DUE_MONDAYS,
+      }),
     ]);
 
     expect(invoice.rows.map((row) => row.clubId)).toEqual(["a"]);
     expect(invoice.netCents).toBe(6_500);
   });
 
-  it("refuses a customer whose clubs all recorded nothing", () => {
-    const result = buildFor([club({ id: "a", name: "Klubi A", dates: [] })]);
-
-    expect(result).toEqual({
-      ok: false,
-      reason: "nothing_to_invoice",
-      clubsWithoutFee: 0,
-    });
-  });
-
   it("refuses a customer whose clubs have only cancelled sessions", () => {
     // A month of cancellations is a month with nothing to invoice, and a club
     // with no fee that was only cancelled never ran, so it does not change the
-    // reason.
+    // reason. Every due Monday is cancelled: one left standing would bill.
     const result = buildFor([
-      club({ id: "a", name: "Klubi A", dates: [], cancelled: ["2026-05-04"] }),
+      club({ id: "a", name: "Klubi A", dates: [], cancelled: ALL_DUE_MONDAYS }),
       club({
         id: "b",
         name: "Klubi B",
         feeCents: null,
         dates: [],
-        cancelled: ["2026-05-11"],
+        cancelled: ALL_DUE_MONDAYS,
       }),
     ]);
 
-    expect(result).toEqual({
-      ok: false,
-      reason: "nothing_to_invoice",
-      clubsWithoutFee: 0,
-    });
+    expect(result).toMatchObject({ ok: false, reason: "nothing_to_invoice" });
   });
 
   it("answers the same question the page's control asks", () => {
@@ -614,9 +666,16 @@ describe("what refuses a file", () => {
     });
 
     expect(view.customers).toHaveLength(1);
-    const readiness = finvoiceReadiness(view.customers[0]);
-    expect(readiness.ok).toBe(false);
-    expect(buildFor(clubs).ok).toBe(false);
+    const state = finvoiceFileState({
+      monthStart: MONTH,
+      cadence: "monthly",
+      months: customerMonths([view], ESPOO_CUSTOMER.id),
+    });
+    expect(state).toMatchObject({ ok: false, reason: "club_without_fee" });
+    expect(buildFor(clubs)).toMatchObject({
+      ok: false,
+      reason: "club_without_fee",
+    });
   });
 
   it("does not count a club with no buyer as a customer of its own", () => {
@@ -652,7 +711,7 @@ const EXPECTED_DOCUMENT = `<?xml version="1.0" encoding="UTF-8"?>
   <MessageTransmissionDetails>
     <MessageSenderDetails><FromIdentifier>003731104611</FromIdentifier><FromIntermediator>003721291126</FromIntermediator></MessageSenderDetails>
     <MessageReceiverDetails><ToIdentifier></ToIdentifier><ToIntermediator></ToIntermediator></MessageReceiverDetails>
-    <MessageDetails><MessageIdentifier>2026050204</MessageIdentifier><MessageTimeStamp>2026-06-03T09:12:34</MessageTimeStamp></MessageDetails>
+    <MessageDetails><MessageIdentifier>SOG-2026050204</MessageIdentifier><MessageTimeStamp>2026-06-03T09:12:34</MessageTimeStamp></MessageDetails>
   </MessageTransmissionDetails>
   <SellerPartyDetails>
     <SellerPartyIdentifier>3110461-1</SellerPartyIdentifier>
@@ -671,7 +730,7 @@ const EXPECTED_DOCUMENT = `<?xml version="1.0" encoding="UTF-8"?>
   <DeliveryDetails><DeliveryMethodText>Electronic invoice</DeliveryMethodText></DeliveryDetails>
   <InvoiceDetails>
     <InvoiceTypeCode>INV01</InvoiceTypeCode><InvoiceTypeText>LASKU</InvoiceTypeText><OriginCode>Original</OriginCode>
-    <InvoiceNumber>2026050204</InvoiceNumber>
+    <InvoiceNumber>SOG-2026050204</InvoiceNumber>
     <InvoiceDate Format="CCYYMMDD">20260601</InvoiceDate>
     <InvoiceTotalVatExcludedAmount AmountCurrencyIdentifier="EUR">130.00</InvoiceTotalVatExcludedAmount>
     <InvoiceTotalVatAmount AmountCurrencyIdentifier="EUR">33.15</InvoiceTotalVatAmount>
@@ -697,11 +756,13 @@ Laskurivillä kerhokerrat laskutuskaudella</InvoiceFreeText>
 </Finvoice>`;
 
 describe("the Finvoice document", () => {
+  // Two Mondays written up and the third cancelled, so the row bills two.
   const oneClub = invoiceFor([
     club({
       id: "a",
       name: "Peliklubi Purola",
       dates: ["2026-05-04", "2026-05-11"],
+      cancelled: ["2026-05-18"],
     }),
   ]);
 
@@ -828,5 +889,337 @@ describe("the download's path and filename", () => {
     expect(finvoiceFileName(MONTH, 'F02"04; x')).toBe(
       "invoice_202605_F02_04__x.xml",
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A quarterly or half-yearly customer's period
+// ---------------------------------------------------------------------------
+
+/**
+ * A customer invoiced once a quarter or once a half-year: one file per period,
+ * produced in the period's last month and covering every month of it.
+ *
+ * Its clubs meet on Mondays from 12 January. The first quarter's Mondays are
+ * three in January (12, 19, 26), four in February (2–23) and five in March
+ * (2–30) — twelve in all, every one passed by the pinned clock and none
+ * recorded or cancelled, so every one bills.
+ */
+describe("a period customer's file", () => {
+  const QUARTERLY = customer({
+    id: "cust-quarterly",
+    fennoa_customer_no: "F0221",
+    invoice_name: "Turun kaupunki",
+    billing_cadence: "quarterly",
+  });
+  const HALF_YEARLY = customer({
+    id: "cust-half",
+    fennoa_customer_no: "F0224",
+    invoice_name: "Oulun kaupunki",
+    billing_cadence: "half_yearly",
+  });
+
+  /** One month's document holding the clubs given. */
+  function monthOf(
+    month: string,
+    clubs: MunicipalityInvoicingClub[],
+  ): MunicipalityInvoicingSnapshot {
+    return { month_start: month, clubs };
+  }
+
+  /** A Monday club of `buyer`'s that recorded nothing — it bills every date it was due. */
+  function mondayClub(
+    buyer: InvoiceCustomerRow,
+    overrides: Partial<ClubSpec> = {},
+  ): MunicipalityInvoicingClub {
+    return club({
+      id: `${buyer.id}-club`,
+      name: "Peliklubi Runosmäenranta",
+      invoiceCustomer: buyer,
+      dates: [],
+      ...overrides,
+    });
+  }
+
+  const Q1 = ["2026-01-01", "2026-02-01", "2026-03-01"];
+
+  function q1Snapshots(
+    extra: (month: string) => MunicipalityInvoicingClub[] = () => [],
+  ): MunicipalityInvoicingSnapshot[] {
+    return Q1.map((month) =>
+      monthOf(month, [mondayClub(QUARTERLY), ...extra(month)]),
+    );
+  }
+
+  function quarterFor(
+    snapshots: MunicipalityInvoicingSnapshot[],
+    monthStart = "2026-03-01",
+    now = NOW,
+  ) {
+    return buildFinvoiceForPeriod({
+      monthStart,
+      snapshots,
+      customerId: QUARTERLY.id,
+      now,
+    });
+  }
+
+  function quarterInvoice(
+    snapshots: MunicipalityInvoicingSnapshot[] = q1Snapshots(),
+  ): FinvoiceInvoice {
+    const result = quarterFor(snapshots);
+    if (!result.ok) {
+      throw new Error(`expected an invoice, got a refusal: ${result.reason}`);
+    }
+    return result.invoice;
+  }
+
+  it("bills the whole quarter, a row per club per month", () => {
+    const invoice = quarterInvoice();
+
+    expect(
+      invoice.rows.map((row) => [row.monthStart, row.monthEnd, row.sessions]),
+    ).toEqual([
+      ["2026-01-01", "2026-01-31", 3],
+      ["2026-02-01", "2026-02-28", 4],
+      ["2026-03-01", "2026-03-31", 5],
+    ]);
+    expect(invoice.rows.map((row) => row.rowNumber)).toEqual([1, 2, 3]);
+    // Three rows of one club: the month is what tells them apart to a clerk.
+    expect(invoice.rows.map((row) => row.text)).toEqual([
+      "Espoo - Purolan koulu - Peliklubi Runosmäenranta ma 14:15–15:30 (1/26)",
+      "Espoo - Purolan koulu - Peliklubi Runosmäenranta ma 14:15–15:30 (2/26)",
+      "Espoo - Purolan koulu - Peliklubi Runosmäenranta ma 14:15–15:30 (3/26)",
+    ]);
+    // Twelve Mondays at €65.00, and the totals are the sums of the rows.
+    expect(invoice.netCents).toBe(12 * 6_500);
+    expect(invoice.vatCents).toBe(
+      invoice.rows.reduce((sum, row) => sum + row.vatCents, 0),
+    );
+    expect(invoice.grossCents).toBe(invoice.netCents + invoice.vatCents);
+  });
+
+  it("references, dates and names the quarter from its last month", () => {
+    const invoice = quarterInvoice();
+
+    expect(invoice.monthStart).toBe("2026-03-01");
+    expect(invoice.invoiceReference).toBe("SOG-2026030221");
+    expect(invoice.invoiceDate).toBe("20260401");
+    expect(invoice.dueDate).toBe("20260415");
+    expect(invoice.freeText).toBe(
+      "Laskutuskausi 1–3/26\nLaskurivillä kerhokerrat laskutuskaudella",
+    );
+    expect(
+      finvoiceFileName(invoice.monthStart, invoice.customer.fennoa_customer_no),
+    ).toBe("invoice_202603_F0221.xml");
+  });
+
+  it("keeps the quarter's reference when the rest of the period changes", () => {
+    // Another buyer appearing in February moves every position in that month's
+    // list; the reference is the customer's own and does not move with it.
+    const before = quarterInvoice();
+    const after = quarterInvoice(
+      q1Snapshots((month) =>
+        month === "2026-02-01"
+          ? [
+              club({
+                id: "newcomer",
+                name: "Klubi Uusi",
+                dates: [],
+                invoiceCustomer: customer({
+                  id: "cust-aaa",
+                  fennoa_customer_no: "F0001",
+                }),
+              }),
+            ]
+          : [],
+      ),
+    );
+
+    expect(after.invoiceReference).toBe(before.invoiceReference);
+  });
+
+  it("refuses a month in the middle of the quarter", () => {
+    // February ends no quarter: the quarter's file is March's, and nowhere else.
+    const result = quarterFor(q1Snapshots().slice(0, 2), "2026-02-01");
+
+    expect(result).toMatchObject({
+      ok: false,
+      reason: "not_period_end",
+      period: { lastMonth: "2026-03-01" },
+    });
+  });
+
+  it("refuses the quarter over a club that ran with no fee in January, and names January", () => {
+    // The club's term ended in January, so March's ledger does not show it —
+    // which is exactly why the refusal names the month the problem is in.
+    const result = quarterFor(
+      q1Snapshots((month) =>
+        month === "2026-01-01"
+          ? [
+              mondayClub(QUARTERLY, {
+                id: "winter-club",
+                name: "Peliklubi Salpausrinne",
+                feeCents: null,
+                endDate: "2026-01-31",
+              }),
+            ]
+          : [],
+      ),
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      reason: "club_without_fee",
+      monthStart: "2026-01-01",
+      clubsWithoutFee: 1,
+    });
+  });
+
+  it("answers in the page exactly what the route answers", () => {
+    // One predicate, two readers, over the whole period: the page builds the
+    // same months and asks the same question of them.
+    const snapshots = q1Snapshots();
+    const views = snapshots.map((snapshot) =>
+      buildMunicipalityInvoicing({ snapshot, locale: "en", now: NOW }),
+    );
+    const files = customerFilesForMonth({ monthStart: "2026-03-01", views });
+    const state = files.byCustomerId.get(QUARTERLY.id)?.state;
+
+    expect(state).toMatchObject({ ok: true, billedCount: 12 });
+    expect(state?.ok && state.netCents).toBe(quarterInvoice().netCents);
+  });
+
+  it("labels a month in the middle of the period rather than offering a file", () => {
+    const views = q1Snapshots()
+      .slice(0, 2)
+      .map((snapshot) =>
+        buildMunicipalityInvoicing({ snapshot, locale: "en", now: NOW }),
+      );
+    const files = customerFilesForMonth({ monthStart: "2026-02-01", views });
+
+    expect(files.byCustomerId.get(QUARTERLY.id)?.state).toMatchObject({
+      ok: false,
+      reason: "not_period_end",
+      period: { lastMonth: "2026-03-01" },
+    });
+  });
+
+  it("waits for the period's earlier months rather than deciding over part of it", () => {
+    const march = buildMunicipalityInvoicing({
+      snapshot: q1Snapshots()[2],
+      locale: "en",
+      now: NOW,
+    });
+    const files = customerFilesForMonth({
+      monthStart: "2026-03-01",
+      views: [march],
+    });
+
+    expect(files.byCustomerId.get(QUARTERLY.id)?.state).toMatchObject({
+      ok: false,
+      reason: "period_not_read",
+    });
+    // And the builder refuses to write a file over part of a period at all.
+    expect(() =>
+      buildFinvoiceInvoice({
+        monthStart: "2026-03-01",
+        views: [march],
+        customerId: QUARTERLY.id,
+      }),
+    ).toThrow(/not read whole/);
+  });
+
+  it("produces the quarter in a month the customer has no club in", () => {
+    // The spring term ends in May, and the second quarter ends in June: the
+    // buyer owes April and May, and June's ledger has none of its clubs.
+    const july = new Date("2026-07-02T10:00:00+03:00");
+    const snapshots = [
+      monthOf("2026-04-01", [mondayClub(QUARTERLY)]),
+      monthOf("2026-05-01", [mondayClub(QUARTERLY)]),
+      monthOf("2026-06-01", []),
+    ];
+    const views = snapshots.map((snapshot) =>
+      buildMunicipalityInvoicing({ snapshot, locale: "en", now: july }),
+    );
+
+    const files = customerFilesForMonth({ monthStart: "2026-06-01", views });
+    expect(files.byCustomerId.has(QUARTERLY.id)).toBe(false);
+    expect(files.withoutClubThisMonth.map((file) => file.customer.id)).toEqual(
+      [QUARTERLY.id],
+    );
+    expect(files.withoutClubThisMonth[0].state).toMatchObject({ ok: true });
+
+    const result = quarterFor(snapshots, "2026-06-01", july);
+    if (!result.ok) throw new Error(result.reason);
+    // April's four Mondays and May's four; June bills nothing.
+    expect(result.invoice.rows.map((row) => row.sessions)).toEqual([4, 4]);
+    expect(result.invoice.invoiceReference).toBe("SOG-2026060221");
+  });
+
+  it("bills a half-year over six months, and calls March the middle of it", () => {
+    const july = new Date("2026-07-02T10:00:00+03:00");
+    const months = [
+      "2026-01-01",
+      "2026-02-01",
+      "2026-03-01",
+      "2026-04-01",
+      "2026-05-01",
+      "2026-06-01",
+    ];
+    const snapshots = months.map((month) =>
+      monthOf(month, month === "2026-06-01" ? [] : [mondayClub(HALF_YEARLY)]),
+    );
+
+    const march = buildFinvoiceForPeriod({
+      monthStart: "2026-03-01",
+      snapshots: snapshots.slice(0, 3),
+      customerId: HALF_YEARLY.id,
+      now: july,
+    });
+    expect(march).toMatchObject({
+      ok: false,
+      reason: "not_period_end",
+      period: { lastMonth: "2026-06-01" },
+    });
+
+    const june = buildFinvoiceForPeriod({
+      monthStart: "2026-06-01",
+      snapshots,
+      customerId: HALF_YEARLY.id,
+      now: july,
+    });
+    if (!june.ok) throw new Error(june.reason);
+    // 3 + 4 + 5 + 4 + 4 Mondays, January to May.
+    expect(june.invoice.rows.map((row) => row.sessions)).toEqual([
+      3, 4, 5, 4, 4,
+    ]);
+    expect(june.invoice.freeText).toContain("Laskutuskausi 1–6/26");
+  });
+
+  it("states the period on the invoice and each row's month, where it covers several", () => {
+    const xml = serializeFinvoice(quarterInvoice(), GENERATED_AT);
+
+    expect(xml).toContain(
+      '</InvoiceDate>\n    <InvoicingPeriodStartDate Format="CCYYMMDD">20260101</InvoicingPeriodStartDate><InvoicingPeriodEndDate Format="CCYYMMDD">20260331</InvoicingPeriodEndDate>\n    <InvoiceTotalVatExcludedAmount',
+    );
+    expect(xml.match(/<StartDate Format="CCYYMMDD">\d+<\/StartDate>/g)).toEqual([
+      '<StartDate Format="CCYYMMDD">20260101</StartDate>',
+      '<StartDate Format="CCYYMMDD">20260201</StartDate>',
+      '<StartDate Format="CCYYMMDD">20260301</StartDate>',
+    ]);
+    expect(xml).toContain(
+      '<DeliveredQuantity QuantityUnitCode="krt">3.00</DeliveredQuantity>\n    <StartDate Format="CCYYMMDD">20260101</StartDate><EndDate Format="CCYYMMDD">20260131</EndDate>\n    <UnitPriceAmount',
+    );
+  });
+
+  it("leaves a monthly file without the period elements it was verified without", () => {
+    const xml = serializeFinvoice(
+      invoiceFor([club({ id: "a", name: "Klubi A" })]),
+      GENERATED_AT,
+    );
+
+    expect(xml).not.toContain("InvoicingPeriod");
+    expect(xml).not.toContain("<StartDate");
   });
 });

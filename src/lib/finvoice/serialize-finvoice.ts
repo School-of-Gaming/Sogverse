@@ -12,7 +12,11 @@ import {
   FINVOICE_TRANSMISSION,
   FINVOICE_VAT_RATE_TEXT,
 } from "./finvoice-constants";
-import type { FinvoiceInvoice, FinvoiceRow } from "./build-finvoice-invoice";
+import {
+  compactDate,
+  type FinvoiceInvoice,
+  type FinvoiceRow,
+} from "./build-finvoice-invoice";
 
 /**
  * One invoice as the Finvoice 3.0 document Fennoa's import reads.
@@ -39,12 +43,23 @@ import type { FinvoiceInvoice, FinvoiceRow } from "./build-finvoice-invoice";
  * Amounts are written as `0.00` with a dot, from integer cents, by splitting
  * rather than dividing — the invoice's arithmetic is exact and the serializer
  * must not be the step that introduces a float.
+ *
+ * **An invoice covering several months states its period in two more places**,
+ * and a monthly one does not: the invoicing period's first and last day in the
+ * invoice details, and each row's own month as its start and end date — the
+ * Finvoice 3.0 guide's recommendation for a period invoice, where several rows
+ * bill one club and the month is what tells them apart. A monthly file is left
+ * byte for byte the shape the imports were verified against, since its free
+ * text already names its one month; the period elements are the part of a
+ * quarterly or half-yearly file that has to be verified against Fennoa on its
+ * own first import.
  */
 export function serializeFinvoice(
   invoice: FinvoiceInvoice,
   generatedAt: Date,
 ): string {
-  const { customer } = invoice;
+  const { customer, period } = invoice;
+  const statesPeriod = period.months.length > 1;
 
   return [
     `<?xml version="1.0" encoding="UTF-8"?>`,
@@ -55,7 +70,7 @@ export function serializeFinvoice(
     // e-invoice routing from the customer card when it sends the invoice, so an
     // address here would be a second copy of something we do not own.
     `    <MessageReceiverDetails><ToIdentifier></ToIdentifier><ToIntermediator></ToIntermediator></MessageReceiverDetails>`,
-    `    <MessageDetails><MessageIdentifier>${x(invoice.invoiceNumber)}</MessageIdentifier><MessageTimeStamp>${messageTimeStamp(generatedAt)}</MessageTimeStamp></MessageDetails>`,
+    `    <MessageDetails><MessageIdentifier>${x(invoice.invoiceReference)}</MessageIdentifier><MessageTimeStamp>${messageTimeStamp(generatedAt)}</MessageTimeStamp></MessageDetails>`,
     `  </MessageTransmissionDetails>`,
     `  <SellerPartyDetails>`,
     `    <SellerPartyIdentifier>${x(FINVOICE_SELLER.partyIdentifier)}</SellerPartyIdentifier>`,
@@ -80,8 +95,15 @@ export function serializeFinvoice(
     `  <DeliveryDetails><DeliveryMethodText>${x(FINVOICE_DELIVERY_METHOD_TEXT)}</DeliveryMethodText></DeliveryDetails>`,
     `  <InvoiceDetails>`,
     `    <InvoiceTypeCode>${x(FINVOICE_INVOICE_TYPE.code)}</InvoiceTypeCode><InvoiceTypeText>${x(FINVOICE_INVOICE_TYPE.text)}</InvoiceTypeText><OriginCode>${x(FINVOICE_INVOICE_TYPE.originCode)}</OriginCode>`,
-    `    <InvoiceNumber>${x(invoice.invoiceNumber)}</InvoiceNumber>`,
+    `    <InvoiceNumber>${x(invoice.invoiceReference)}</InvoiceNumber>`,
     `    <InvoiceDate Format="CCYYMMDD">${x(invoice.invoiceDate)}</InvoiceDate>`,
+    // Where the schema puts it: after the invoice date (and the original-invoice
+    // fields this file never writes), before the totals.
+    ...(statesPeriod
+      ? [
+          `    <InvoicingPeriodStartDate Format="CCYYMMDD">${compactDate(period.firstMonth)}</InvoicingPeriodStartDate><InvoicingPeriodEndDate Format="CCYYMMDD">${compactDate(period.endDate)}</InvoicingPeriodEndDate>`,
+        ]
+      : []),
     `    <InvoiceTotalVatExcludedAmount AmountCurrencyIdentifier="EUR">${euros(invoice.netCents)}</InvoiceTotalVatExcludedAmount>`,
     `    <InvoiceTotalVatAmount AmountCurrencyIdentifier="EUR">${euros(invoice.vatCents)}</InvoiceTotalVatAmount>`,
     `    <InvoiceTotalVatIncludedAmount AmountCurrencyIdentifier="EUR">${euros(invoice.grossCents)}</InvoiceTotalVatIncludedAmount>`,
@@ -93,16 +115,23 @@ export function serializeFinvoice(
     `    <BuyerReferenceIdentifier>${x(customer.your_reference ?? "")}</BuyerReferenceIdentifier>`,
     `  </InvoiceDetails>`,
     `  <VatSpecificationDetails><VatBaseAmount AmountCurrencyIdentifier="EUR">${euros(invoice.netCents)}</VatBaseAmount><VatRatePercent>${x(FINVOICE_VAT_RATE_TEXT)}</VatRatePercent><VatRateAmount AmountCurrencyIdentifier="EUR">${euros(invoice.vatCents)}</VatRateAmount></VatSpecificationDetails>`,
-    ...invoice.rows.flatMap(serializeRow),
+    ...invoice.rows.flatMap((row) => serializeRow(row, statesPeriod)),
     `</Finvoice>`,
   ].join("\n");
 }
 
-function serializeRow(row: FinvoiceRow): string[] {
+function serializeRow(row: FinvoiceRow, statesPeriod: boolean): string[] {
   return [
     `  <InvoiceRow>`,
     `    <RowNumber>${row.rowNumber}</RowNumber><ArticleIdentifier>${x(FINVOICE_ARTICLE.identifier)}</ArticleIdentifier><ArticleName>${x(FINVOICE_ARTICLE.name)}</ArticleName>`,
     `    <DeliveredQuantity QuantityUnitCode="${x(FINVOICE_QUANTITY_UNIT_CODE)}">${quantity(row.sessions)}</DeliveredQuantity>`,
+    // The row's own month, where the invoice covers several: between the
+    // quantity and the price, which is where the schema keeps a row's period.
+    ...(statesPeriod
+      ? [
+          `    <StartDate Format="CCYYMMDD">${compactDate(row.monthStart)}</StartDate><EndDate Format="CCYYMMDD">${compactDate(row.monthEnd)}</EndDate>`,
+        ]
+      : []),
     `    <UnitPriceAmount AmountCurrencyIdentifier="EUR">${euros(row.unitPriceCents)}</UnitPriceAmount>`,
     `    <RowVatRatePercent>${x(FINVOICE_VAT_RATE_TEXT)}</RowVatRatePercent>`,
     `    <RowVatAmount AmountCurrencyIdentifier="EUR">${euros(row.vatCents)}</RowVatAmount>`,

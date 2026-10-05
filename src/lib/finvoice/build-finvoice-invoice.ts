@@ -1,4 +1,5 @@
 import { addCalendarDays, monthsAfter } from "@/lib/calendar-date";
+import { monthEndOf } from "@/lib/invoicing/month";
 import { sumCents } from "@/lib/utils";
 import {
   buildMunicipalityInvoicing,
@@ -8,6 +9,8 @@ import {
 } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
 import type { InvoiceCustomerRow } from "@/services/invoice-customers";
 import type { MunicipalityInvoicingSnapshot } from "@/services/municipality-invoicing";
+import type { InvoiceBillingCadence } from "@/types";
+import { billingPeriodOf, type BillingPeriod } from "./billing-period";
 import {
   FINVOICE_LOCALE,
   FINVOICE_PAYMENT_TERM_DAYS,
@@ -16,14 +19,21 @@ import {
 } from "./finvoice-constants";
 
 /**
- * One Fennoa customer's month, turned into the invoice a Finvoice file states.
+ * One Fennoa customer's billing period, turned into the invoice a Finvoice
+ * file states.
  *
  * A second pure build over the ledger's own view model: the page and the file
- * are two readings of one document, and deriving the file from the built view
- * rather than from the wire is what makes "the file says what the page said" a
- * structural fact rather than a hope. Nothing here has a clock, a query or a
- * translator — the generation timestamp is the serializer's, and every name is
- * a name the view already resolved in the export's own locale.
+ * are two readings of the same documents, and deriving the file from the built
+ * months rather than from the wire is what makes "the file says what the page
+ * said" a structural fact rather than a hope. Nothing here has a clock, a query
+ * or a translator — the generation timestamp is the serializer's, and every
+ * name is a name the view already resolved in the export's own locale.
+ *
+ * **A period is a run of whole calendar months** — one month for a monthly
+ * customer, a calendar quarter or half-year for the others — and the file for
+ * it is built from one built month per month of the period. A monthly
+ * customer's period is its month, so the monthly file is the one-month case of
+ * the same build rather than a second path.
  *
  * The rules this implements are written out in
  * `src/components/admin/municipality-invoicing/CLAUDE.md`.
@@ -40,31 +50,36 @@ import {
  *
  * ## What it refuses, and why refusing beats answering
  *
- * Both refusals are typed values rather than exceptions, because both are
- * ordinary states of an ordinary month rather than faults: a club that ran with
- * no fee filled in, and a customer whose clubs all sat out the month.
- * The caller renders them — the page as a disabled control with the reason, the
- * route as a 409 — and the same predicate decides both, so a control that says
- * a file can be produced and a route that then refuses to produce it cannot
- * disagree.
+ * Every refusal is a typed value rather than an exception, because each is an
+ * ordinary state of an ordinary month rather than a fault: a period that has
+ * not ended yet, a club that ran with no fee filled in, and a customer whose
+ * clubs all sat the period out. The caller renders them — the page as a label
+ * or a disabled control with the reason, the route as a 409 — and one predicate
+ * decides all of them, so a control that says a file can be produced and a
+ * route that then refuses to produce it cannot disagree.
  */
 
 // ---------------------------------------------------------------------------
 // The invoice
 // ---------------------------------------------------------------------------
 
-/** One club's line on the invoice: what ran, at what price, and what it comes to. */
+/** One club's line for one month: what ran, at what price, and what it comes to. */
 export interface FinvoiceRow {
-  /** 1-based, in the order the ledger prints the clubs. */
+  /** 1-based: month by month, and within a month in the order the ledger prints the clubs. */
   rowNumber: number;
   /** The club this row bills for — carried so a caller can trace a figure back. */
   clubId: string;
+  /** The month this row bills, as its first day. */
+  monthStart: string;
+  /** The month's last day — with `monthStart`, the period this row bills for. */
+  monthEnd: string;
   /**
    * What the buyer reads: the municipality, the hall where the club is not the
-   * municipality's own, the club, and its weekly cadence.
+   * municipality's own, the club, and its weekly cadence — and, on an invoice
+   * covering several months, which month the row is.
    */
   text: string;
-  /** Sessions that ran — a whole number of them; the file states two decimals. */
+  /** Sessions billed — a whole number of them; the file states two decimals. */
   sessions: number;
   /** The club's current per-session fee, in cents. */
   unitPriceCents: number;
@@ -76,20 +91,27 @@ export interface FinvoiceRow {
   grossCents: number;
 }
 
-/** One customer's whole month as one invoice. */
+/** One customer's whole billing period as one invoice. */
 export interface FinvoiceInvoice {
   /** The buyer, whole — the number Fennoa matches on and the address it wants. */
   customer: InvoiceCustomerRow;
-  /** The month invoiced, as its first day (`YYYY-MM-01`). */
+  /** The months the invoice covers — one, three or six. */
+  period: BillingPeriod;
+  /**
+   * The period's last month, as its first day (`YYYY-MM-01`): what the
+   * reference, the invoice date and the filename are derived from, so a monthly
+   * invoice is named and referenced by the month it bills.
+   */
   monthStart: string;
   /**
-   * Our provisional number for the invoice — the month and the customer's own
-   * Fennoa number. **Fennoa assigns the real one when the invoice is sent**, so
-   * this exists to identify the file rather than the invoice, and re-exporting a
-   * month produces the same number again however the month's data has moved.
+   * Our reference for the invoice, written as its invoice number and its
+   * message identifier — `SOG-`, the period's last month and the customer's own
+   * Fennoa number. **Deliberately not numeric, so Fennoa skips it** and numbers
+   * the invoice from its own series; re-exporting a period produces the same
+   * reference again however its data has moved.
    */
-  invoiceNumber: string;
-  /** `CCYYMMDD` — the first day of the month *after* the one invoiced. */
+  invoiceReference: string;
+  /** `CCYYMMDD` — the first day of the month *after* the period invoiced. */
   invoiceDate: string;
   /** `CCYYMMDD` — the invoice date plus the payment term. */
   dueDate: string;
@@ -102,138 +124,348 @@ export interface FinvoiceInvoice {
 }
 
 /**
- * Why a file cannot be produced.
+ * Whether a customer's file can be produced for a month, and why not where it
+ * cannot.
  *
- * - `unknown_customer` — nothing in this month is billed to that customer. It
- *   is what a stale link or a hand-typed id reaches, and it is not an error
- *   about the customer: the customer may exist and simply have had no clubs
- *   running.
- * - `club_without_fee` — at least one club that **ran** this month has no
- *   per-session fee. **The whole file is refused rather than the club being
- *   dropped**, because a file that silently omits a club that ran is a total
- *   that is short, and a short total is the one thing nobody downstream
- *   catches. A club that recorded nothing is not in this count: it puts no row
+ * - `not_period_end` — the customer is invoiced quarterly or half-yearly and the
+ *   month is not its period's last. The period's file is produced in its last
+ *   month and nowhere else, so a month in the middle has no file of its own.
+ * - `period_not_read` — the month ends the period, but not every month of the
+ *   period is in hand. Only a caller that read less than the period can meet
+ *   it; it is a state to wait out, never a verdict about the data.
+ * - `club_without_fee` — at least one club that **ran** in a month of the
+ *   period — has at least one billed session, recorded or not — has no
+ *   per-session fee. `monthStart` names the first such month, which is where
+ *   the repair is to be looked for. **The whole file is refused rather than the
+ *   club being dropped**, because a file that silently omits a club that ran is
+ *   a total that is short, and a short total is the one thing nobody downstream
+ *   catches. A club with nothing billed is not in this count: it puts no row
  *   and no money on the file whatever its fee, so it cannot make the file
- *   wrong — its missing fee is a data problem, reported where data problems
- *   are, on the club's own line and on the admin dashboard.
- * - `nothing_to_invoice` — every one of the customer's clubs recorded no
- *   sessions. An invoice for nothing is a document somebody has to explain.
+ *   wrong.
+ * - `nothing_to_invoice` — none of the customer's clubs has a billed session
+ *   in the period. An invoice for nothing is a document somebody has to explain.
  */
-export type FinvoiceBlockedReason = "club_without_fee" | "nothing_to_invoice";
+export type FinvoiceFileState =
+  | {
+      ok: true;
+      period: BillingPeriod;
+      /** Sessions the file bills, across the period. */
+      billedCount: number;
+      /** What the file comes to before VAT — the ledger's own kind of figure. */
+      netCents: number;
+    }
+  | { ok: false; reason: "not_period_end"; period: BillingPeriod }
+  | { ok: false; reason: "period_not_read"; period: BillingPeriod }
+  | {
+      ok: false;
+      reason: "club_without_fee";
+      period: BillingPeriod;
+      /** The first month of the period in which a club ran with no fee. */
+      monthStart: string;
+      /** How many of the customer's clubs ran with no fee in that month. */
+      clubsWithoutFee: number;
+    }
+  | { ok: false; reason: "nothing_to_invoice"; period: BillingPeriod };
 
-export type FinvoiceRefusalReason = FinvoiceBlockedReason | "unknown_customer";
+/** Why the export route will not produce a file. */
+export type FinvoiceRefusal =
+  | { ok: false; reason: "unknown_customer" }
+  | Exclude<FinvoiceFileState, { ok: true } | { reason: "period_not_read" }>;
 
-export interface FinvoiceRefusal {
-  ok: false;
-  reason: FinvoiceRefusalReason;
-  /**
-   * How many of the customer's clubs ran this month with no fee set. Zero for
-   * the other reasons.
-   */
-  clubsWithoutFee: number;
-}
+export type FinvoiceRefusalReason = FinvoiceRefusal["reason"];
 
 export type FinvoiceResult =
   | { ok: true; invoice: FinvoiceInvoice }
   | FinvoiceRefusal;
 
-/**
- * Whether a customer's month can become a file, and why not where it cannot.
- *
- * `unknown_customer` is not among its answers by construction: a summary in
- * hand is a customer the month knows about, so that refusal belongs to the
- * lookup rather than to the readiness.
- */
-export type FinvoiceReadiness =
-  | { ok: true }
-  | { ok: false; reason: FinvoiceBlockedReason; clubsWithoutFee: number };
+export interface FinvoiceFileStateArgs {
+  /** The month the file is asked for. */
+  monthStart: string;
+  /** How often the customer is invoiced. */
+  cadence: InvoiceBillingCadence;
+  /**
+   * The customer's summary for each month that has been read, keyed by the
+   * month's first day: null where the month was read and has no club of the
+   * customer's in it, absent where the month has not been read at all.
+   */
+  months: ReadonlyMap<string, InvoiceCustomerSummary | null>;
+}
 
 /**
- * Whether a customer's month can become a file, from the facts the ledger's
- * build already collected.
+ * Whether a customer's file can be produced for a month — **the one predicate
+ * the page's control and the export route both ask.**
  *
- * Exported so the page and the route answer the question with the same code:
- * the page disables a download and says why, the route answers 409 and says the
- * same thing, and neither re-derives the rule.
+ * The page shows a label, a disabled control with the reason, or a link, and
+ * the route answers a 409 or a file, from this answer and from nothing else.
+ * Neither re-derives the rule, so a control that says a file can be produced and
+ * a route that then refuses to produce one cannot happen.
  *
  * **What it asks is whether the FILE would be wrong, never whether the data
- * is.** Those are different questions with different readers: a fee nobody has
- * set is an admin error, and it is already named on the club's own line in the
- * ledger and raised as an attention item on the admin dashboard. A refusal here
- * on top of that is a third alarm for the same thing — and a wrong one where the
- * club never met, because such a club is on no invoice at all and its price
- * therefore changes no figure in the file.
+ * is.** A fee nobody has set is an admin error, and it is already named on the
+ * club's own line in the ledger and raised as an attention item on the admin
+ * dashboard. A refusal here on top of that is a third alarm for the same thing
+ * — and a wrong one where the club never met, because such a club is on no
+ * invoice at all and its price therefore changes no figure in the file.
  */
-export function finvoiceReadiness(
-  summary: InvoiceCustomerSummary,
-): FinvoiceReadiness {
-  if (summary.clubsThatRanWithoutFee > 0) {
+export function finvoiceFileState({
+  monthStart,
+  cadence,
+  months,
+}: FinvoiceFileStateArgs): FinvoiceFileState {
+  const period = billingPeriodOf(cadence, monthStart);
+  if (period.lastMonth !== monthStart) {
+    return { ok: false, reason: "not_period_end", period };
+  }
+  if (!period.months.every((month) => months.has(month))) {
+    return { ok: false, reason: "period_not_read", period };
+  }
+
+  const summaries = period.months.flatMap((month) => {
+    const summary = months.get(month);
+    return summary === null || summary === undefined
+      ? []
+      : [{ month, summary }];
+  });
+
+  // The first month in which a club ran with no fee, because that is the month
+  // an admin has to open to find it — a quarter's file refused in March over a
+  // club that met only in January would otherwise send them looking at March.
+  const unpriced = summaries.find(
+    ({ summary }) => summary.clubsThatRanWithoutFee > 0,
+  );
+  if (unpriced !== undefined) {
     return {
       ok: false,
       reason: "club_without_fee",
-      clubsWithoutFee: summary.clubsThatRanWithoutFee,
+      period,
+      monthStart: unpriced.month,
+      clubsWithoutFee: unpriced.summary.clubsThatRanWithoutFee,
     };
   }
-  if (summary.recordedCount === 0) {
-    return { ok: false, reason: "nothing_to_invoice", clubsWithoutFee: 0 };
+
+  const billedCount = summaries.reduce(
+    (count, { summary }) => count + summary.billedCount,
+    0,
+  );
+  if (billedCount === 0) {
+    return { ok: false, reason: "nothing_to_invoice", period };
   }
-  return { ok: true };
+
+  return {
+    ok: true,
+    period,
+    billedCount,
+    // Every club that ran has a fee by now, so its total is a number; the
+    // file's net is exactly this sum of the same products.
+    netCents: sumCents(
+      summaries.flatMap(({ summary }) =>
+        summary.clubs.flatMap((club) =>
+          club.billedCount > 0 && club.totalCents !== null
+            ? [club.totalCents]
+            : [],
+        ),
+      ),
+    ),
+  };
+}
+
+/**
+ * One customer's summary in every month of `views`, keyed by the month's first
+ * day — null for a month that was read and has none of the customer's clubs.
+ * This is the shape `finvoiceFileState` takes.
+ */
+export function customerMonths(
+  views: readonly MunicipalityInvoicingView[],
+  customerId: string,
+): Map<string, InvoiceCustomerSummary | null> {
+  return new Map(
+    views.map((view) => [
+      view.monthStart,
+      view.customers.find((one) => one.customer.id === customerId) ?? null,
+    ]),
+  );
+}
+
+/** One customer's file as the page shows it beside a municipality. */
+export interface CustomerFile {
+  customer: InvoiceCustomerRow;
+  state: FinvoiceFileState;
+}
+
+export interface CustomerFilesForMonth {
+  /** Every customer with a club in the month, by customer id. */
+  byCustomerId: ReadonlyMap<string, CustomerFile>;
+  /**
+   * The customers whose period ends in the month and who have no club in the
+   * month itself — a quarterly buyer whose clubs' term ended in May still owes
+   * the quarter that ends in June. They sit on no municipality's line, because
+   * the month has no club of theirs to put them under, so the page lists them on
+   * a line of their own. Ordered by customer number, like every list of buyers.
+   */
+  withoutClubThisMonth: readonly CustomerFile[];
+}
+
+/**
+ * Every customer file the page shows for a month, decided by the same predicate
+ * the route asks.
+ *
+ * `views` holds the month itself and whichever earlier months have been read;
+ * a period whose earlier months are not among them is `period_not_read` rather
+ * than a figure computed over the part that is.
+ */
+export function customerFilesForMonth({
+  monthStart,
+  views,
+}: {
+  monthStart: string;
+  views: readonly MunicipalityInvoicingView[];
+}): CustomerFilesForMonth {
+  const current = views.find((view) => view.monthStart === monthStart);
+  const fileFor = (customer: InvoiceCustomerRow): CustomerFile => ({
+    customer,
+    state: finvoiceFileState({
+      monthStart,
+      cadence: customer.billing_cadence,
+      months: customerMonths(views, customer.id),
+    }),
+  });
+
+  const byCustomerId = new Map(
+    (current?.customers ?? []).map((summary) => [
+      summary.customer.id,
+      fileFor(summary.customer),
+    ]),
+  );
+
+  // The newest earlier reading of each absent customer, so a buyer whose
+  // details changed during the period is shown as it stands now.
+  const absent = new Map<string, InvoiceCustomerRow>();
+  const earlier = views
+    .filter((view) => view.monthStart < monthStart)
+    .sort((a, b) => (a.monthStart < b.monthStart ? 1 : -1));
+  for (const view of earlier) {
+    for (const summary of view.customers) {
+      const { customer } = summary;
+      if (byCustomerId.has(customer.id) || absent.has(customer.id)) continue;
+      const period = billingPeriodOf(customer.billing_cadence, monthStart);
+      if (
+        period.lastMonth === monthStart &&
+        period.months.includes(view.monthStart)
+      ) {
+        absent.set(customer.id, customer);
+      }
+    }
+  }
+
+  return {
+    byCustomerId,
+    withoutClubThisMonth: [...absent.values()]
+      .sort(compareCustomerNumbers)
+      .map(fileFor),
+  };
+}
+
+function compareCustomerNumbers(
+  a: InvoiceCustomerRow,
+  b: InvoiceCustomerRow,
+): number {
+  return a.fennoa_customer_no < b.fennoa_customer_no
+    ? -1
+    : a.fennoa_customer_no > b.fennoa_customer_no
+      ? 1
+      : 0;
 }
 
 export interface BuildFinvoiceInvoiceArgs {
-  /** The month, already built — the same view the ledger renders. */
-  view: MunicipalityInvoicingView;
-  /** Which of the month's customers the file is for. */
+  /** The month the file is asked for — for a period customer, its last month. */
+  monthStart: string;
+  /**
+   * Built months, in any order — the same views the ledger renders. They must
+   * include every month of the customer's period; the export route reads
+   * exactly those.
+   */
+  views: readonly MunicipalityInvoicingView[];
+  /** Which customer the file is for. */
   customerId: string;
 }
 
 export function buildFinvoiceInvoice({
-  view,
+  monthStart,
+  views,
   customerId,
 }: BuildFinvoiceInvoiceArgs): FinvoiceResult {
-  const position = view.customers.findIndex(
-    (one) => one.customer.id === customerId,
-  );
-  if (position === -1) {
-    return { ok: false, reason: "unknown_customer", clubsWithoutFee: 0 };
+  // The customer as the newest month that has it — its cadence decides the
+  // period, and its number, name and address go on the file.
+  const newestFirst = views
+    .filter((view) => view.monthStart <= monthStart)
+    .sort((a, b) => (a.monthStart < b.monthStart ? 1 : -1));
+  let found:
+    | { summary: InvoiceCustomerSummary; position: number }
+    | undefined;
+  for (const view of newestFirst) {
+    const position = view.customers.findIndex(
+      (one) => one.customer.id === customerId,
+    );
+    if (position !== -1) {
+      found = { summary: view.customers[position], position };
+      break;
+    }
+  }
+  if (found === undefined) return { ok: false, reason: "unknown_customer" };
+
+  const months = customerMonths(views, customerId);
+  const state = finvoiceFileState({
+    monthStart,
+    cadence: found.summary.customer.billing_cadence,
+    months,
+  });
+  if (!state.ok) {
+    if (state.reason === "period_not_read") {
+      // A caller that asks for a file has to have read the period; answering
+      // over part of it would be a short invoice with nothing saying so.
+      throw new Error(
+        `buildFinvoiceInvoice: the ${state.period.cadence} period ending ${monthStart} was not read whole`,
+      );
+    }
+    return state;
   }
 
-  const summary = view.customers[position];
-  const readiness = finvoiceReadiness(summary);
-  if (!readiness.ok) return readiness;
+  const { period } = state;
+  const severalMonths = period.months.length > 1;
 
-  // Only the clubs that actually ran get a row. A club with a fee and no
-  // sessions is not a zero line — it is a club that was not delivered this
-  // month, and a row worth €0.00 invites the buyer to ask what it is.
-  const rows = summary.clubs
-    .filter((club) => club.recordedCount > 0)
-    .map((club, index) => buildRow(club, index + 1));
+  // Only the clubs with a billed session get a row. A club with a fee and no
+  // sessions is not a zero line — it is a club that was not delivered that
+  // month, and a row worth €0.00 invites the buyer to ask what it is. Month by
+  // month, so the file reads in the order the months were checked.
+  const rows = period.months
+    .flatMap((month) =>
+      (months.get(month)?.clubs ?? [])
+        .filter((club) => club.billedCount > 0)
+        .map((club) => ({ club, month })),
+    )
+    .map(({ club, month }, index) =>
+      buildRow(club, month, index + 1, severalMonths),
+    );
 
-  // Only reachable where every club with a fee recorded nothing, which
-  // `finvoiceReadiness` has already refused — kept because the filter above is
-  // what decides it, and a zero-row invoice must never be serialized.
-  if (rows.length === 0) {
-    return { ok: false, reason: "nothing_to_invoice", clubsWithoutFee: 0 };
-  }
-
-  const invoiceDate = monthsAfter(view.monthStart, 1);
-  const customer = stripZeroWidthFromCustomer(summary.customer);
+  const invoiceDate = monthsAfter(period.lastMonth, 1);
+  const customer = stripZeroWidthFromCustomer(found.summary.customer);
 
   return {
     ok: true,
     invoice: {
       customer,
-      monthStart: view.monthStart,
-      invoiceNumber: provisionalInvoiceNumber(
+      period,
+      monthStart: period.lastMonth,
+      invoiceReference: invoiceReferenceFor(
         customer,
-        view.monthStart,
-        position,
+        period.lastMonth,
+        found.position,
       ),
       invoiceDate: compactDate(invoiceDate),
       dueDate: compactDate(
         addCalendarDays(invoiceDate, FINVOICE_PAYMENT_TERM_DAYS),
       ),
-      freeText: freeTextFor(customer, view.monthStart),
+      freeText: freeTextFor(customer, period),
       rows,
       // The three totals are the sums of the rows and nothing else, which is
       // what makes the invoice foot by construction.
@@ -244,56 +476,69 @@ export function buildFinvoiceInvoice({
   };
 }
 
-export interface BuildFinvoiceForMonthArgs {
-  /** One month of the invoicing document, exactly as the page's route reads it. */
-  snapshot: MunicipalityInvoicingSnapshot;
-  /** Which of the month's customers the file is for. */
+export interface BuildFinvoiceForPeriodArgs {
+  /** The month the file is asked for — for a period customer, its last month. */
+  monthStart: string;
+  /**
+   * The invoicing document for every month of the customer's period, exactly
+   * as the page's route reads them — one, for a monthly customer.
+   */
+  snapshots: readonly MunicipalityInvoicingSnapshot[];
+  /** Which customer the file is for. */
   customerId: string;
   /** Request-stable "now" — what decides which of a club's dates have arrived. */
   now: Date;
 }
 
 /**
- * The whole export in one call: build the month, then build the customer's
- * invoice out of it.
+ * The whole export in one call: build each month, then build the customer's
+ * invoice out of them.
  *
  * It exists so the route imports one module rather than two, and so the
  * export's locale is decided here rather than restated at every call site. The
  * file goes to a Finnish municipality's accounts payable, so it is built in
  * Finnish whatever locale the admin who asked for it reads the ledger in.
  */
-export function buildFinvoiceForMonth({
-  snapshot,
+export function buildFinvoiceForPeriod({
+  monthStart,
+  snapshots,
   customerId,
   now,
-}: BuildFinvoiceForMonthArgs): FinvoiceResult {
-  const view = buildMunicipalityInvoicing({
-    snapshot,
-    locale: FINVOICE_LOCALE,
-    now,
-  });
-  return buildFinvoiceInvoice({ view, customerId });
+}: BuildFinvoiceForPeriodArgs): FinvoiceResult {
+  const views = snapshots.map((snapshot) =>
+    buildMunicipalityInvoicing({ snapshot, locale: FINVOICE_LOCALE, now }),
+  );
+  return buildFinvoiceInvoice({ monthStart, views, customerId });
 }
 
 // ---------------------------------------------------------------------------
 // The pieces
 // ---------------------------------------------------------------------------
 
-function buildRow(club: InvoiceClub, rowNumber: number): FinvoiceRow {
-  // Non-null by `finvoiceReadiness`, which refuses the whole file when any club
+function buildRow(
+  club: InvoiceClub,
+  monthStart: string,
+  rowNumber: number,
+  namesTheMonth: boolean,
+): FinvoiceRow {
+  // Non-null by `finvoiceFileState`, which refuses the whole file when any club
   // that ran has no fee — and only a club that ran becomes a row. Coerced
-  // rather than asserted so a future
-  // caller that skipped the check produces a visible zero rather than a crash
-  // halfway through writing a file.
+  // rather than asserted so a future caller that skipped the check produces a
+  // visible zero rather than a crash halfway through writing a file.
   const unitPriceCents = club.feeCents ?? 0;
-  const netCents = sumCents([unitPriceCents * club.recordedCount]);
+  const netCents = sumCents([unitPriceCents * club.billedCount]);
   const vatCents = vatOf(netCents);
+  const text = rowText(club);
 
   return {
     rowNumber,
     clubId: club.id,
-    text: rowText(club),
-    sessions: club.recordedCount,
+    monthStart,
+    monthEnd: monthEndOf(monthStart),
+    // An invoice covering several months carries one row per club per month,
+    // so the month is part of what tells two rows of one club apart.
+    text: namesTheMonth ? `${text} (${monthLabel(monthStart)})` : text,
+    sessions: club.billedCount,
     unitPriceCents,
     netCents,
     vatCents,
@@ -395,57 +640,79 @@ function stripZeroWidthFromCustomer(
  * clerk scrolls past. Its line endings are normalized, so a value pasted from
  * Windows does not put stray carriage returns inside an XML element.
  */
-function freeTextFor(customer: InvoiceCustomerRow, monthStart: string): string {
+function freeTextFor(customer: InvoiceCustomerRow, period: BillingPeriod): string {
   const lines: string[] = [];
   const own = customer.invoice_text?.trim();
   if (own !== undefined && own !== "") {
     lines.push(own.replace(/\r\n?/g, "\n"));
   }
-  lines.push(`Laskutuskausi ${billingPeriodLabel(monthStart)}`);
+  lines.push(`Laskutuskausi ${billingPeriodLabel(period)}`);
   lines.push(FINVOICE_ROWS_EXPLANATION);
   return lines.join("\n");
 }
 
-/** `5/26` for May 2026 — the month unpadded, the year in two digits. */
-function billingPeriodLabel(monthStart: string): string {
-  const month = Number(monthStart.slice(5, 7));
-  return `${month}/${monthStart.slice(2, 4)}`;
+/**
+ * `5/26` for May 2026, and `1–3/26` for the quarter January to March — the
+ * months unpadded, the year in two digits. A calendar-aligned period never
+ * crosses a year, so one year closes the range.
+ */
+function billingPeriodLabel(period: BillingPeriod): string {
+  const first = Number(period.firstMonth.slice(5, 7));
+  const last = Number(period.lastMonth.slice(5, 7));
+  const year = period.lastMonth.slice(2, 4);
+  return first === last ? `${last}/${year}` : `${first}–${last}/${year}`;
+}
+
+/** `1/26` for January 2026 — how a period invoice's row says which month it is. */
+function monthLabel(monthStart: string): string {
+  return `${Number(monthStart.slice(5, 7))}/${monthStart.slice(2, 4)}`;
 }
 
 /** `2026-06-01` → `20260601`, which is what `Format="CCYYMMDD"` means. */
-function compactDate(date: string): string {
+export function compactDate(date: string): string {
   return date.replace(/-/g, "");
 }
 
+/** What every reference starts with, and what makes it not a number. */
+const INVOICE_REFERENCE_PREFIX = "SOG-";
+
 /**
- * Our provisional number for a month's file: the month, then the digits of the
- * customer's Fennoa number. `F0037` in May 2026 is `2026050037`.
+ * The most customer digits a reference keeps, from the right. `SOG-` and the
+ * `YYYYMM` take ten characters and Finvoice allows an invoice number twenty.
+ */
+const INVOICE_REFERENCE_TAIL_DIGITS = 10;
+
+/**
+ * Our reference for a file: `SOG-`, the period's last month, then the digits of
+ * the customer's Fennoa number. `F0037` in May 2026 is `SOG-2026050037`, and
+ * `F0037`'s quarter ending in June 2026 is `SOG-2026060037`.
  *
- * **Fennoa assigns the real invoice number on send**, so this one never reaches
- * an accounting ledger and the export stays stateless — nothing is written when
- * a file is produced, and producing one twice produces the same file. What the
- * number has to be is numeric and greater than 100, which is Fennoa's own rule
- * for an imported identifier: the `YYYYMM` alone already clears that, and the
- * customer's digits only make it longer.
+ * **It is written as the invoice number, and it is deliberately not a
+ * number.** Fennoa keeps a numeric invoice number from an imported file as the
+ * invoice's final number once the invoice is approved, and skips one carrying
+ * anything but digits, numbering the invoice from its own series instead. The
+ * prefix is what keeps our invoices in that series. Nothing is written when a
+ * file is produced, and producing one twice produces the same file.
  *
  * **It is derived from the customer rather than from the customer's place in
- * the month**, because a re-export has to carry the same number as the export it
- * replaces, whatever changed in between — and a position is not a property of
- * the customer at all. Link one more club to a new buyer and every later
- * customer's position shifts by one, so a file downloaded again after that edit
- * would come back under a different number and read as a second invoice for the
- * same month. A Fennoa number belongs to the customer and does not move, which
- * is what makes this number stable across every data change.
+ * the month**, because a re-export has to be recognisably the same invoice as
+ * the export it replaces, whatever changed in between — and a position is not a
+ * property of the customer at all. Link one more club to a new buyer and every
+ * later customer's position shifts by one, so a file downloaded again after
+ * that edit would come back under a different reference. A Fennoa number
+ * belongs to the customer and does not move. A customer is invoiced at one
+ * cadence, so its period ends are distinct months and no two of its files share
+ * a reference.
  *
  * **What it guarantees within a month, stated exactly**: it is unique across
- * customers whose numbers differ in their *digits*, because the digits are all
- * it keeps. Every number Fennoa issues differs there, so in practice this is
- * uniqueness — but `0204` and `F0204` are two customers with one number, and so
- * are the digitless fallback's first customer and a real `F0001`. Those are
- * shapes Fennoa does not issue; the column is free text, so they can be typed,
- * and this is what would happen if they were.
+ * customers whose numbers differ in their last ten *digits*, because those are
+ * all it keeps. Every number Fennoa issues differs there — but `0204` and
+ * `F0204` are two customers with one reference, and so are the digitless
+ * fallback's first customer and a real `F0001`. Those are shapes Fennoa does
+ * not issue; the column is free text, so they can be typed, and this is what
+ * would happen if they were.
  */
-function provisionalInvoiceNumber(
+function invoiceReferenceFor(
   customer: InvoiceCustomerRow,
   monthStart: string,
   position: number,
@@ -454,9 +721,10 @@ function provisionalInvoiceNumber(
   const digits = customer.fennoa_customer_no.replace(/\D/g, "");
   // A customer number with no digit in it is not a shape Fennoa issues, but the
   // column is free text, so there has to be an answer: the customer's 1-based
-  // position in the month, padded to four. It is stable only for as long as the
-  // month's customer list is, which is the most a number carrying nothing of the
-  // customer's own can promise.
+  // position in the newest month of the period it has a club in, padded to
+  // four. It is stable only for as long as that month's customer list is,
+  // which is the most a reference carrying nothing of the customer's own can
+  // promise.
   const tail = digits === "" ? String(position + 1).padStart(4, "0") : digits;
-  return `${yearMonth}${tail}`;
+  return `${INVOICE_REFERENCE_PREFIX}${yearMonth}${tail.slice(-INVOICE_REFERENCE_TAIL_DIGITS)}`;
 }

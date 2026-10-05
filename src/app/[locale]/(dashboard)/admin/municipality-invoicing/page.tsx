@@ -7,6 +7,8 @@ import {
   MunicipalityInvoicingPage,
 } from "@/components/admin/municipality-invoicing/municipality-invoicing-page";
 import { wireErrorMessage } from "@/lib/api/wire-error-message";
+import { earlierPeriodMonths } from "@/lib/finvoice";
+import { InvoiceCustomersService } from "@/services/invoice-customers";
 import { resolveInvoicingMonthStart } from "@/lib/invoicing/month-param";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -22,7 +24,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** The read, or the reason it did not happen. Never both, never neither. */
 type SnapshotResult =
-  | { ok: true; snapshot: MunicipalityInvoicingSnapshot }
+  | {
+      ok: true;
+      snapshot: MunicipalityInvoicingSnapshot;
+      /** The earlier months of every billing period that ends in this one. */
+      periodSnapshots: MunicipalityInvoicingSnapshot[];
+    }
   | { ok: false; reason: string | null };
 
 /**
@@ -40,6 +47,17 @@ type SnapshotResult =
  * the failure instead of the invoice, and the message off the wire travels with
  * it — including the refusal a mid-month argument would raise, which is a
  * sentence an admin can act on.
+ *
+ * **A month that ends a billing period reads the period's earlier months too.**
+ * A quarterly or half-yearly customer's file is produced in its period's last
+ * month and covers every month of it, and the page decides that file with the
+ * same predicate the export route asks — over the whole period, so a club that
+ * ran without a fee in January refuses the quarter in March. Which months to
+ * read is decided by the cadences the customers are on, read from the customer
+ * list rather than from this month's document: a buyer whose clubs stopped in
+ * May still owes the quarter that ends in June, and June's document does not
+ * mention it. Most months end no period of a cadence anybody is on, and read
+ * nothing more.
  */
 async function loadMonth(monthStart: string): Promise<SnapshotResult> {
   // Outside the `try` on purpose. Building the server client reads cookies, and
@@ -48,9 +66,21 @@ async function loadMonth(monthStart: string): Promise<SnapshotResult> {
   // silently break the render it was steering.
   const supabase = await createClient();
   const service = new MunicipalityInvoicingService(supabase);
+  const customers = new InvoiceCustomersService(supabase);
 
   try {
-    return { ok: true, snapshot: await service.getMonth(monthStart) };
+    const [snapshot, customerRows] = await Promise.all([
+      service.getMonth(monthStart),
+      customers.listInvoiceCustomers(),
+    ]);
+    const earlier = earlierPeriodMonths(
+      monthStart,
+      new Set(customerRows.map((row) => row.billing_cadence)),
+    );
+    const periodSnapshots = await Promise.all(
+      earlier.map((month) => service.getMonth(month)),
+    );
+    return { ok: true, snapshot, periodSnapshots };
   } catch (error) {
     return { ok: false, reason: wireErrorMessage(error) };
   }
@@ -88,16 +118,19 @@ export default async function MunicipalityInvoicingRoute({
   // Named through the hook's own key factory rather than a literal: a key one
   // segment off does not fail, it fills an entry nobody reads and buys nothing.
   const queryClient = new QueryClient();
-  queryClient.setQueryData(
-    municipalityInvoicingKeys.month(monthStart),
-    result.snapshot,
-  );
+  for (const snapshot of [result.snapshot, ...result.periodSnapshots]) {
+    queryClient.setQueryData(
+      municipalityInvoicingKeys.month(snapshot.month_start),
+      snapshot,
+    );
+  }
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <MunicipalityInvoicingPage
         monthStart={monthStart}
         initialSnapshot={result.snapshot}
+        initialPeriodSnapshots={result.periodSnapshots}
       />
     </HydrationBoundary>
   );
