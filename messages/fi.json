@@ -1316,7 +1316,6 @@
         },
         "requirementGaps": {
           "title": "Lisätäänkö silti?",
-          "body": "Puuttuva pätevyys tai kieli ei estä lisäämistä, joten voit lisätä hänet ryhmään silti.",
           "action": "Lisää silti"
         }
       },

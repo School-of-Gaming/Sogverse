@@ -1316,7 +1316,6 @@
         },
         "requirementGaps": {
           "title": "Affecter quand même ?",
-          "body": "Une qualification ou une langue manquante n’empêche pas l’affectation : vous pouvez donc l’affecter quand même.",
           "action": "Affecter quand même"
         }
       },

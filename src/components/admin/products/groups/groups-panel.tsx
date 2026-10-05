@@ -399,7 +399,6 @@ export function GroupsPanel({
                 if (!next) setAssignmentWithGaps(null);
               }}
               title={t("requirementGaps.title")}
-              description={t("requirementGaps.body")}
               confirmLabel={t("requirementGaps.action")}
               confirmVariant="default"
               onConfirm={() => addGedu.mutate(assignmentWithGaps.assignment)}

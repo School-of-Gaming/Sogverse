@@ -1316,7 +1316,6 @@
         },
         "requirementGaps": {
           "title": "Assign anyway?",
-          "body": "A missing qualification or language doesn’t block the assignment, so you can assign them anyway.",
           "action": "Assign anyway"
         }
       },

@@ -1316,7 +1316,6 @@
         },
         "requirementGaps": {
           "title": "Tilldela ändå?",
-          "body": "En saknad behörighet eller ett saknat språk hindrar inte tilldelningen, så du kan tilldela hen ändå.",
           "action": "Tilldela ändå"
         }
       },
