@@ -118,7 +118,22 @@ const GROUP_ROW = {
   },
 };
 
-const ADMINS = [{ email: "admin1@test.local" }, { email: "admin2@test.local" }];
+/**
+ * The `admin_email_preferences` rows the route reads, with each admin's address
+ * as the profile embed carries it. Two admins opted in and one turned it off;
+ * an admin who never answered has no row at all, which is what makes them off.
+ */
+interface AdminPreferenceFixture {
+  email: string;
+  kind: string;
+  enabled: boolean;
+}
+
+const ADMIN_PREFERENCES: AdminPreferenceFixture[] = [
+  { email: "admin1@test.local", kind: "session_report_copy", enabled: true },
+  { email: "admin2@test.local", kind: "session_report_copy", enabled: true },
+  { email: "opted-out@test.local", kind: "session_report_copy", enabled: false },
+];
 
 /** One row of the participations read, exactly as the route's select shapes it. */
 interface ParticipationFixture {
@@ -243,7 +258,7 @@ const PARENT_LINKS: ParentLinkFixture[] = [
 interface AdminData {
   group?: typeof GROUP_ROW | null;
   groupError?: { code: string; message: string } | null;
-  admins?: { email: string }[];
+  adminPreferences?: AdminPreferenceFixture[];
   participations?: ParticipationFixture[];
   participationsError?: { code: string; message: string } | null;
   parentLinks?: ParentLinkFixture[];
@@ -268,10 +283,15 @@ const release: {
  */
 const reads: {
   productGroups: [string, unknown][];
-  profiles: [string, unknown][];
+  adminEmailPreferences: [string, unknown][];
   participations: [string, unknown][];
   sessionImages: [string, unknown][];
-} = { productGroups: [], profiles: [], participations: [], sessionImages: [] };
+} = {
+  productGroups: [],
+  adminEmailPreferences: [],
+  participations: [],
+  sessionImages: [],
+};
 
 /** The columns the images read was ordered by, in the order it applied them. */
 const imageOrder: string[] = [];
@@ -283,7 +303,7 @@ function setupAdminClient(data: AdminData = {}) {
   const {
     group = GROUP_ROW,
     groupError = null,
-    admins = ADMINS,
+    adminPreferences = ADMIN_PREFERENCES,
     participations = PARTICIPATIONS,
     participationsError = null,
     parentLinks = PARENT_LINKS,
@@ -307,12 +327,32 @@ function setupAdminClient(data: AdminData = {}) {
         }),
       };
     }
-    if (table === "profiles") {
+    if (table === "admin_email_preferences") {
+      // The two filters are applied to the fixture rows, not just recorded, so
+      // an opted-out row reaches the CC only if the route forgets a filter.
+      const matching = (filters: [string, unknown][]) =>
+        adminPreferences
+          .filter((row) => {
+            const columns: Record<string, unknown> = { ...row };
+            return filters.every(([column, value]) => columns[column] === value);
+          })
+          .map((row) => ({ admin: { email: row.email } }));
       return {
         select: () => ({
-          eq: (column: string, value: unknown) => {
-            reads.profiles.push([column, value]);
-            return Promise.resolve({ data: admins, error: null });
+          eq: (columnA: string, valueA: unknown) => {
+            reads.adminEmailPreferences.push([columnA, valueA]);
+            return {
+              eq: (columnB: string, valueB: unknown) => {
+                reads.adminEmailPreferences.push([columnB, valueB]);
+                return Promise.resolve({
+                  data: matching([
+                    [columnA, valueA],
+                    [columnB, valueB],
+                  ]),
+                  error: null,
+                });
+              },
+            };
           },
         }),
       };
@@ -422,9 +462,9 @@ function mockGedu(overrides?: Record<string, unknown>) {
 /**
  * The same send, made by an admin from the product page.
  *
- * Deliberately given an address that is ALSO in the admin list, because that is
- * the real shape: every admin is in the CC, so the sender is in it too unless
- * something takes them out.
+ * Deliberately given an address that is ALSO an opted-in admin's, because that
+ * is the shape the CC filter exists for: an admin who turned the copies on is
+ * in the CC, so the sender is in it too unless something takes them out.
  */
 function mockAdmin() {
   mockRequireRole.mockResolvedValue({
@@ -484,7 +524,7 @@ describe("POST /api/gedu/sessions/email-report", () => {
     release.patch = null;
     release.filters = [];
     reads.productGroups = [];
-    reads.profiles = [];
+    reads.adminEmailPreferences = [];
     reads.participations = [];
     reads.sessionImages = [];
     imageOrder.length = 0;
@@ -617,10 +657,13 @@ describe("POST /api/gedu/sessions/email-report", () => {
     expect(reads.productGroups).toEqual([["id", CLAIM.group_id]]);
   });
 
-  it("puts only admins in the staff copy's CC", async () => {
+  it("reads only the admins who turned session report copies on", async () => {
     await POST(createRequest());
 
-    expect(reads.profiles).toEqual([["role", "admin"]]);
+    expect(reads.adminEmailPreferences).toEqual([
+      ["kind", "session_report_copy"],
+      ["enabled", true],
+    ]);
   });
 
   // -- The family fan-out --
@@ -1005,15 +1048,34 @@ describe("POST /api/gedu/sessions/email-report", () => {
 
   // -- The staff copy --
 
-  it("sends exactly one staff copy, to the gedu with every admin in CC", async () => {
+  it("sends exactly one staff copy, to the gedu with the opted-in admins in CC", async () => {
     await POST(createRequest());
 
     const copies = staffCopies();
     expect(copies).toHaveLength(1);
     expect(copies[0].toEmail).toBe("gedu@test.local");
+    // The admin who turned it off is not here, and neither is an admin with no
+    // row: every CC is a Brevo credit, so the copy goes only to those who
+    // asked for it.
     expect(copies[0].cc).toEqual(["admin1@test.local", "admin2@test.local"]);
     expect(copies[0].bcc).toBeUndefined();
     expect(copies[0].replyToEmail).toBe("help@sog.gg");
+  });
+
+  it("still sends the gedu their copy, with nobody in CC, when no admin opted in", async () => {
+    setupAdminClient({
+      adminPreferences: [
+        { email: "admin1@test.local", kind: "session_report_copy", enabled: false },
+      ],
+    });
+
+    await POST(createRequest());
+
+    const copies = staffCopies();
+    expect(copies).toHaveLength(1);
+    expect(copies[0].toEmail).toBe("gedu@test.local");
+    expect(copies[0].cc).toEqual([]);
+    expect(copies[0].htmlContent).toContain(`color:${STATUS.info}`);
   });
 
   it("links the staff copy to the gedu workspace's product page", async () => {
@@ -1072,7 +1134,7 @@ describe("POST /api/gedu/sessions/email-report", () => {
     expect(copies).toHaveLength(1);
     expect(copies[0].toEmail).toBe("admin1@test.local");
     // The To address is dropped from the CC, or Brevo delivers the same copy
-    // twice to the person who sent it. Every OTHER admin still gets it.
+    // twice to the person who sent it. Every OTHER opted-in admin still gets it.
     expect(copies[0].cc).toEqual(["admin2@test.local"]);
   });
 

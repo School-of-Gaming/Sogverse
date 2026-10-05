@@ -93,6 +93,22 @@ export function marketingConsentsServiceModule() {
   };
 }
 
+/**
+ * `@/services/admin-email-preferences` — an admin with no rows, which is every
+ * kind off, read and resolved. `setMutateAsync` lets a test hand in its own
+ * spy for the writer; the kinds list is the real one, because the settings page
+ * walks it.
+ */
+export function adminEmailPreferencesServiceModule(
+  setMutateAsync: () => ReturnType<typeof vi.fn> = () => vi.fn(),
+) {
+  return {
+    ADMIN_EMAIL_KINDS: ["session_report_copy"] as const,
+    useMyAdminEmailPreferences: () => ({ data: [], isError: false }),
+    useSetAdminEmailPreference: () => ({ mutateAsync: setMutateAsync() }),
+  };
+}
+
 /** `@/components/game-account` — a neighbouring section, reduced to a marker. */
 export function gameAccountModule() {
   return {

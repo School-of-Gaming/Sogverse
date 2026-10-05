@@ -30,6 +30,7 @@ import {
   MarketingPreferencesFields,
   MARKETING_CONSENT_ORDER,
 } from "@/components/settings/marketing-preferences-fields";
+import { AdminEmailPreferencesFields } from "@/components/settings/admin-email-preferences-fields";
 import { GamerPhotoConsentNotice } from "@/components/settings/gamer-photo-consent-notice";
 import { McpServerCard } from "@/components/settings/mcp-server-card";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
@@ -45,9 +46,16 @@ import {
   useMyMarketingConsents,
   useSetMarketingConsent,
 } from "@/services/marketing-consents";
+import {
+  ADMIN_EMAIL_KINDS,
+  useMyAdminEmailPreferences,
+  useSetAdminEmailPreference,
+} from "@/services/admin-email-preferences";
 import { hasRealEmail, gamerUsernameFromEmail } from "@/lib/gamer-sign-in";
 import {
   isGamerProfile,
+  type AdminEmailKind,
+  type AdminEmailPreference,
   type GamerSignIn,
   type MarketingConsent,
   type MarketingConsentType,
@@ -63,6 +71,9 @@ import {
  * time is churn with no reader.
  */
 const NO_MARKETING_CONSENTS: readonly MarketingConsent[] = [];
+
+/** The same failed-read baseline for an admin's email preferences: all off. */
+const NO_ADMIN_EMAIL_PREFERENCES: readonly AdminEmailPreference[] = [];
 
 /**
  * The read-only username row's id. A named constant rather than a literal in
@@ -152,6 +163,7 @@ export function SettingsSectionContent({
   const isGedu = profile?.role === "gedu";
   const isGamer = isGamerProfile(profile);
   const isParent = profile?.role === "customer";
+  const isAdmin = profile?.role === "admin";
   // **The question is whether this account's address reaches a person, not
   // whether its holder is a child.** Every adult holds a mailbox; a gamer holds
   // one only in `email` mode. The three rows below that used to test the role
@@ -391,6 +403,33 @@ export function SettingsSectionContent({
   const marketingGranted = (consentType: MarketingConsentType) =>
     marketingEdits[consentType] ?? savedMarketingGranted(consentType);
 
+  // ---------------------------------------------------------------------
+  // Admin email preferences
+  //
+  // The staff emails an admin has opted into, held exactly the way the
+  // marketing consents above are: a failed read falls back to "all off", the
+  // boxes stay disabled while the read is unresolved, and a save writes only
+  // the kinds the admin actually moved. Admins only — the setter is
+  // guard-first on `assert_admin`. Every kind is off until turned on: no row
+  // means off.
+  // ---------------------------------------------------------------------
+  const { data: adminEmailRows, isError: adminEmailReadFailed } =
+    useMyAdminEmailPreferences({ enabled: isAdmin });
+  const setAdminEmailPreference = useSetAdminEmailPreference();
+  const adminEmailPreferences = adminEmailReadFailed
+    ? NO_ADMIN_EMAIL_PREFERENCES
+    : adminEmailRows;
+  const savedAdminEmailAnswers = new Map(
+    adminEmailPreferences?.map((row) => [row.kind, row.enabled]),
+  );
+  const savedAdminEmailEnabled = (kind: AdminEmailKind) =>
+    savedAdminEmailAnswers.get(kind) ?? false;
+  const [adminEmailEdits, setAdminEmailEdits] = useState<
+    Partial<Record<AdminEmailKind, boolean>>
+  >({});
+  const adminEmailEnabled = (kind: AdminEmailKind) =>
+    adminEmailEdits[kind] ?? savedAdminEmailEnabled(kind);
+
   const handleSaveProfile = async () => {
     if (!user) return;
 
@@ -485,6 +524,21 @@ export function SettingsSectionContent({
           }
         } catch (consentError: unknown) {
           throw new Error(t('failedToUpdateProfile'), { cause: consentError });
+        }
+      }
+
+      // The admin's email preferences, on the same terms as the consents
+      // above: only the kinds that changed, skipped while the read is
+      // unresolved, and a refusal re-thrown as our own sentence.
+      if (isAdmin && adminEmailPreferences !== undefined) {
+        try {
+          for (const kind of ADMIN_EMAIL_KINDS) {
+            const next = adminEmailEnabled(kind);
+            if (next === savedAdminEmailEnabled(kind)) continue;
+            await setAdminEmailPreference.mutateAsync({ kind, enabled: next });
+          }
+        } catch (preferenceError: unknown) {
+          throw new Error(t('failedToUpdateProfile'), { cause: preferenceError });
         }
       }
 
@@ -608,6 +662,16 @@ export function SettingsSectionContent({
                 }))
               }
               disabled={marketingConsents === undefined || isSaving}
+            />
+          )}
+
+          {isAdmin && (
+            <AdminEmailPreferencesFields
+              enabled={adminEmailEnabled}
+              onChange={(kind, next) =>
+                setAdminEmailEdits((current) => ({ ...current, [kind]: next }))
+              }
+              disabled={adminEmailPreferences === undefined || isSaving}
             />
           )}
 

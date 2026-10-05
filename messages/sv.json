@@ -3664,6 +3664,13 @@
       "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
       "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst."
     },
+    "adminEmails": {
+      "title": "E-post jag får",
+      "session_report_copy": {
+        "label": "Kopior av rapporter om tillfällen",
+        "hint": "En kopia av varje rapport om ett tillfälle som en Gedu mejlar till familjerna i sin grupp."
+      }
+    },
     "usernameLabel": "Användarnamn",
     "gamerPasswordFromParent": "Din förälder kan ange ett nytt lösenord åt dig från sin Min SOG.",
     "photoConsent": {

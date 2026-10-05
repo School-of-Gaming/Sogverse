@@ -176,7 +176,8 @@ function failureName(reason: unknown): string {
  * The gedu presses **Send to parents** on a past session's card, and this route
  * mails that session's report to every family in the group — one mail per active
  * participation, each in its reader's locale, each linking that child's own page
- * in My SOG — and then one copy to the sender with every admin in CC.
+ * in My SOG — and then one copy to the sender, with every admin who opted into
+ * session report copies in CC.
  *
  * **A child with a mailbox of their own gets their own copy too**, beside the
  * parent's and never instead of it. Who that is, is decided by the shared
@@ -192,7 +193,7 @@ function failureName(reason: unknown): string {
  * an admin sending *this group's* report, and the families receive exactly what
  * they would have. Three things follow the sender rather than the role, and are
  * handled below: the name the mail is signed with, the staff copy's address
- * list (an admin is already in the CC, so they are not also the To), and the
+ * list (an opted-in admin is not also in the CC of their own copy), and the
  * link at the foot of the staff copy, which points at whichever surface the
  * sender can actually open.
  *
@@ -221,7 +222,7 @@ function failureName(reason: unknown): string {
  * here that still swallows: it is the record, not the outcome.
  *
  * **The sender is never told who was mailed.** The addresses and locales the
- * admin client reads (a child's linked parent, every admin) sit outside a
+ * admin client reads (a child's linked parent, the opted-in admins) sit outside a
  * gedu's own view; nothing read here is echoed back, only counted. An admin
  * could read all of it elsewhere, which is not a reason to start returning it
  * from a route whose answer is a tally.
@@ -288,7 +289,7 @@ export const POST = defineRoute({
     }
 
     // The service-role client from here down. What it reads is the group's
-    // families' addresses and locales and every admin's address — none of it in
+    // families' addresses and locales and the opted-in admins' addresses — none of it in
     // an educator's own view, and none of it returned to them. Created before
     // the parse because the parse is itself inside the claimed window: the row
     // is already stamped, so even a shape this route cannot read has to be
@@ -332,10 +333,13 @@ export const POST = defineRoute({
         );
       }
 
-      const { data: admins, error: adminsError } = await adminClient
-        .from("profiles")
-        .select("email")
-        .eq("role", "admin");
+      // The admins who opted into session report copies on their settings
+      // page. No row means off, so an admin who never answered is not here.
+      const { data: optedInAdmins, error: adminsError } = await adminClient
+        .from("admin_email_preferences")
+        .select("admin:profiles!inner(email)")
+        .eq("kind", "session_report_copy")
+        .eq("enabled", true);
 
       if (adminsError) throw adminsError;
 
@@ -536,10 +540,13 @@ export const POST = defineRoute({
 
       // --- 5. The staff copy ------------------------------------------------
       //
-      // One mail, not one per family: the gedu keeps a record of what went out
-      // and the admins can see reports reaching families, at a seventh of the
-      // inbox noise a BCC on every send would cost. Its failure is logged and
-      // changes nothing — the families are the outcome, this is the record.
+      // One mail, not one per family: the sender keeps a record of what went
+      // out, and the admins who opted in on their settings page see reports
+      // reaching families. Brevo bills per recipient, so every admin in the CC
+      // costs a credit on every send; that is why the CC is opt-in and empty
+      // until an admin turns it on. The sender is always the To. Its failure is
+      // logged and changes nothing — the families are the outcome, this is the
+      // record.
       //
       // The copy names itself as one, in a banner above the report: staff read
       // their own To and CC as evidence that a family mail exposed the address
@@ -550,12 +557,12 @@ export const POST = defineRoute({
           senderEmail: profile.email,
           senderLocale: resolveLocale(profile.locale),
           // The sender's own address is dropped from the CC. It matters only
-          // when the sender IS an admin, where To and CC would otherwise name
+          // when the sender IS an opted-in admin, where To and CC would otherwise name
           // the same mailbox and Brevo would deliver the copy twice. Compared
           // case-insensitively because an address is not case-sensitive in
           // practice and a stored capital would defeat the whole check.
-          adminEmails: admins
-            .map((admin) => admin.email)
+          adminEmails: optedInAdmins
+            .map((row) => row.admin.email)
             .filter(
               (email) =>
                 email.toLowerCase() !== profile.email.toLowerCase(),
@@ -705,7 +712,7 @@ async function sendStaffCopy({
   facts: SessionFacts;
   senderEmail: string;
   senderLocale: SupportedLocale;
-  /** Every admin except the sender — see the call site for why. */
+  /** The opted-in admins except the sender — see the call site for why. */
   adminEmails: string[];
   /** Path (not URL) to the sender's own view of this product. */
   workspacePath: string;

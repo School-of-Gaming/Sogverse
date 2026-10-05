@@ -52,6 +52,42 @@ export type Database = {
           },
         ]
       }
+      admin_email_preferences: {
+        Row: {
+          admin_id: string
+          enabled: boolean
+          kind: Database["public"]["Enums"]["admin_email_kind"]
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          enabled: boolean
+          kind: Database["public"]["Enums"]["admin_email_kind"]
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          enabled?: boolean
+          kind?: Database["public"]["Enums"]["admin_email_kind"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_email_preferences_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_email_preferences_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalogue_images: {
         Row: {
           created_at: string
@@ -4175,6 +4211,13 @@ export type Database = {
         Args: { p_product: Database["public"]["Tables"]["products"]["Row"] }
         Returns: Json
       }
+      set_admin_email_preference: {
+        Args: {
+          p_enabled: boolean
+          p_kind: Database["public"]["Enums"]["admin_email_kind"]
+        }
+        Returns: undefined
+      }
       set_chat_lock: {
         Args: { p_channel_id: string; p_locked: boolean; p_user_id: string }
         Returns: undefined
@@ -4383,6 +4426,7 @@ export type Database = {
       }
     }
     Enums: {
+      admin_email_kind: "session_report_copy"
       billing_mode: "paid" | "free" | "external_contract"
       catalogue_image_purpose: "product" | "library_cover"
       chat_channel_type: "group_session"
@@ -4554,6 +4598,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      admin_email_kind: ["session_report_copy"],
       billing_mode: ["paid", "free", "external_contract"],
       catalogue_image_purpose: ["product", "library_cover"],
       chat_channel_type: ["group_session"],

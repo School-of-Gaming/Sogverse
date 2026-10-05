@@ -65,6 +65,13 @@ export type GeduProfileUpdate = Database["public"]["Tables"]["gedu_profiles"]["U
 // gedu_qualification enum
 export type GeduQualification = Database["public"]["Enums"]["gedu_qualification"];
 
+// admin_email_preferences — the staff emails an admin has opted into. Row
+// alias only: the table carries no write grant for any Data API role, and an
+// admin's answer is written by `set_admin_email_preference`.
+export type AdminEmailKind = Database["public"]["Enums"]["admin_email_kind"];
+export type AdminEmailPreference =
+  Database["public"]["Tables"]["admin_email_preferences"]["Row"];
+
 // gedu_contract_versions / gedu_contract_acceptances
 //
 // No Insert/Update aliases for either: neither table carries a write grant for

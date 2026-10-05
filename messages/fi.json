@@ -3664,6 +3664,13 @@
       "schoolOfGaming": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
       "lynxEducate": "Sähköpostiosoitteeni saa jakaa <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia tulevista tapahtumista ja pelaamiseen liittyvistä aineistoista. Voin peruuttaa tilauksen milloin tahansa."
     },
+    "adminEmails": {
+      "title": "Saamani sähköpostit",
+      "session_report_copy": {
+        "label": "Kopiot kertojen raporteista",
+        "hint": "Kopio jokaisesta raportista, jonka Gedu lähettää kerrasta sähköpostitse ryhmänsä perheille."
+      }
+    },
     "usernameLabel": "Käyttäjätunnus",
     "gamerPasswordFromParent": "Vanhempasi voi asettaa sinulle uuden salasanan omasta Oma SOG -näkymästään.",
     "photoConsent": {

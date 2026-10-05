@@ -1,4 +1,20 @@
 --
+-- Name: admin_email_kind; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.admin_email_kind AS ENUM (
+    'session_report_copy'
+);
+
+
+--
+-- Name: TYPE admin_email_kind; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.admin_email_kind IS 'A kind of staff email an admin can opt into. session_report_copy: the copy of a session report mailed to its sender when a gedu or an admin emails the report to the group''s families; an admin who opted in is in its CC. Every kind is off for an admin until they turn it on. The app lists them in the order declared here, so a new value goes where it should appear.';
+
+
+--
 -- Name: billing_mode; Type: TYPE; Schema: public; Owner: -
 --
 

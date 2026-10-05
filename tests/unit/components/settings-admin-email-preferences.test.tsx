@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 // First among the imports, and load-bearing: the `vi.mock` factories below run
 // during this file's import phase, and each reads its module body out of here.
 import {
+  adminEmailPreferencesServiceModule,
   gameAccountModule,
   geduCoverageEditorModule,
   homeLocationFieldModule,
   locationsServiceModule,
-  adminEmailPreferencesServiceModule,
   marketingConsentsServiceModule,
   minecraftServiceModule,
   providersModule,
@@ -21,14 +21,13 @@ import { createMockProfile } from "../../mocks/supabase";
 import type { Profile } from "@/types";
 
 /**
- * **The MCP card is the admin's, and it hands over exactly the URL the route
- * built.** The route builds the URL only for an admin, so its presence is the
- * role test: no URL, no card. What is copied is the prop itself — the page
- * never rebuilds the address from the browser's location, which is what keeps
- * each environment showing its own endpoint.
+ * **An admin chooses which staff emails reach them, and every kind starts
+ * off.** The group renders for an admin alone, unticked when they have no row,
+ * and the Profile card's Save writes only a kind the admin actually moved.
  */
 
 const auth: { profile: Profile } = { profile: createMockProfile({ role: "admin" }) };
+const setPreference = vi.fn();
 
 vi.mock("@/providers", () => providersModule(() => auth.profile));
 vi.mock("@/services/users", () => usersServiceModule());
@@ -36,7 +35,7 @@ vi.mock("@/services/locations", () => locationsServiceModule());
 vi.mock("@/services/minecraft", () => minecraftServiceModule());
 vi.mock("@/services/roblox", () => robloxServiceModule());
 vi.mock("@/services/admin-email-preferences", () =>
-  adminEmailPreferencesServiceModule(),
+  adminEmailPreferencesServiceModule(() => setPreference),
 );
 vi.mock("@/services/marketing-consents", () =>
   marketingConsentsServiceModule(),
@@ -52,59 +51,67 @@ vi.mock("@/components/gedu/contract/gedu-contract-settings-card", () => ({
   GeduContractSettingsCard: () => <div data-testid="gedu-contract-card" />,
 }));
 
-const MCP_URL = "https://sogverse-staging.sog.gg/api/mcp";
+const copy = messages.settings.adminEmails;
 
-function renderSettings(mcpServerUrl?: string) {
+/** The box's accessible name is its label followed by the hint under it. */
+const sessionReportCopyBox = () =>
+  screen.getByRole<HTMLInputElement>("checkbox", {
+    name: (name) => name.startsWith(copy.session_report_copy.label),
+  });
+
+function renderSettings() {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <SettingsSectionContent mcpServerUrl={mcpServerUrl} />
+      <SettingsSectionContent />
     </NextIntlClientProvider>,
   );
 }
 
-const writeText = vi.fn();
-
 beforeEach(() => {
   vi.clearAllMocks();
+  setPreference.mockResolvedValue(undefined);
   auth.profile = createMockProfile({ role: "admin" });
-  writeText.mockResolvedValue(undefined);
-  vi.stubGlobal("navigator", { clipboard: { writeText } });
 });
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
-
-describe("the MCP card", () => {
-  it("shows the URL it was given, in a field that can be selected", () => {
-    renderSettings(MCP_URL);
-
-    expect(screen.getByText(messages.settings.mcp.title)).toBeTruthy();
-    const field = screen.getByLabelText<HTMLInputElement>(
-      messages.settings.mcp.urlLabel,
-    );
-    expect(field.value).toBe(MCP_URL);
-    expect(field.readOnly).toBe(true);
-    expect(field.disabled).toBe(false);
-  });
-
-  it("copies exactly that URL and confirms it", async () => {
-    renderSettings(MCP_URL);
-
-    await act(async () => {
-      screen.getByRole("button", { name: messages.settings.mcp.copy }).click();
-    });
-
-    expect(writeText).toHaveBeenCalledWith(MCP_URL);
-    expect(
-      screen.getByRole("button", { name: messages.settings.mcp.copied }),
-    ).toBeTruthy();
-  });
-
-  it("is absent when the route built no URL", () => {
-    auth.profile = createMockProfile({ role: "customer" });
+describe("the admin email preferences", () => {
+  it("offers session report copies to an admin, off until turned on", () => {
     renderSettings();
 
-    expect(screen.queryByText(messages.settings.mcp.title)).toBeNull();
+    expect(screen.getByText(copy.title)).toBeTruthy();
+    expect(screen.getByText(copy.session_report_copy.hint)).toBeTruthy();
+    expect(sessionReportCopyBox().checked).toBe(false);
+  });
+
+  it("saves a kind the admin turned on", async () => {
+    renderSettings();
+
+    await act(async () => {
+      sessionReportCopyBox().click();
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: messages.common.saveChanges }).click();
+    });
+
+    expect(setPreference).toHaveBeenCalledExactlyOnceWith({
+      kind: "session_report_copy",
+      enabled: true,
+    });
+  });
+
+  it("writes nothing when the admin left the box alone", async () => {
+    renderSettings();
+
+    await act(async () => {
+      screen.getByRole("button", { name: messages.common.saveChanges }).click();
+    });
+
+    expect(setPreference).not.toHaveBeenCalled();
+  });
+
+  it.each(["gedu", "customer"] as const)("is absent for a %s", (role) => {
+    auth.profile = createMockProfile({ role });
+    renderSettings();
+
+    expect(screen.queryByText(copy.title)).toBeNull();
   });
 });
