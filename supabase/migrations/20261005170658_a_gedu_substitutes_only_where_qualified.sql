@@ -14,9 +14,9 @@
 -- and a permanent assignment ask nothing about qualifications: an admin is
 -- warned in the UI and may proceed. That is why the test is a predicate of its
 -- own rather than a clause of gedu_may_substitute_session, which the admin
--- writes ask too. Approval deliberately does not re-check it either: a
--- qualification is effectively never revoked, so an offer made while qualified
--- stays approvable.
+-- writes ask too. Approval deliberately does not ask it either: approving is
+-- an admin's act, and qualifications are effectively never revoked, so the
+-- case where it would matter is not worth a check.
 --
 -- 1. `product_required_qualifications(product_type, product_tag)` — the one
 --    statement of which qualifications a product requires.

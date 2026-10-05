@@ -445,8 +445,8 @@ does not see its request in the pool and cannot offer on it, and the offer's ref
 its own. An admin assigning a gedu to a staff seat or seating a substitute is warned and
 may proceed; none of the admin writes asks. So the check is a predicate of its own and
 never a clause of the may-substitute predicate, which the admin writes share. Approving
-an offer is not even warned about: a qualification is effectively never revoked, so an
-offer made while qualified stays approvable. A trainee seat asks nothing, as with
+an offer is not even warned about: qualifications are effectively never revoked, so the
+case where it would matter is not worth a check. A trainee seat asks nothing, as with
 certification. Nothing else reads qualifications —
 certification stays the only blocking lever over an educator everywhere else.
 

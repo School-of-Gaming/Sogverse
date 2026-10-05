@@ -159,8 +159,8 @@ no coverage area, no language match, no schedule-clash check.
 
 **Qualifications gate only what a gedu starts.** The pool and the offer refuse an
 unqualified gedu outright; the admin's seating and approval do not ask — seating because
-the admin is warned in the UI and may proceed, approval because the offer was made while
-qualified (`../gedu/CLAUDE.md`, Qualifications). That is why
+the admin is warned in the UI and may proceed, approval because qualifications are
+effectively never revoked (`../gedu/CLAUDE.md`, Qualifications). That is why
 the qualification test is its own predicate and never a clause of *may substitute*: the
 admin writes ask that one too, and a clause there would turn the warning into a refusal.
 
