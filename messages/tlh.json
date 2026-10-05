@@ -49,6 +49,9 @@
       "adminLibrary": "paq qach ghItlhmey",
       "adminLibraryArticleNew": "ghItlh chu’",
       "adminLibraryArticleEdit": "ghItlh yIchoH",
+      "adminLandingPages": "Sap ghItlhmey",
+      "adminLandingPageNew": "Sap ghItlh chu’",
+      "adminLandingPageEdit": "Sap ghItlh yIchoH",
       "adminPlatformVision": "Sogverse naj",
       "adminGeduInvoicing": "Gedu DIlmeH ghItlh",
       "adminTools": "janmey",
@@ -657,6 +660,198 @@
       "addLocale": "Hol chu’",
       "removeLocale": "{language} yIteq",
       "languagesLabel": "Holmey"
+    },
+    "landingPages": {
+      "title": "Sap ghItlhmey",
+      "subtitle": "DuSaQ, veng, malja’ qoj wanI’ ghItlhmey. nejwI’ jabbI’IDmey ’ej De’wI’ qoq Dochmey luSamnIS.",
+      "newPageButton": "ghItlh chu’",
+      "empty": "Sap ghItlh tu’lu’be’. wa’DIch yIghItlh.",
+      "lastSaved": "Qav pollu’ {date}",
+      "languagesLabel": "Holmey",
+      "versionComplete": "rIn",
+      "versionIncomplete": "rInbe’ wej",
+      "search": {
+        "label": "yInej",
+        "placeholder": "pong qoj Daq yInej…",
+        "showing": "{total} Hutlh {count} yIcha’",
+        "clear": "yIteq",
+        "noMatches": "nejlIjvaD Sap ghItlh mattaHbe’."
+      },
+      "backToList": "Sap ghItlhmeyDaq yIchegh",
+      "notFound": "ngu’meH mI’vam ghaj Sap ghItlh tu’lu’be’.",
+      "loadError": "Sap ghItlhvam lI’laHbe’lu’. yIchu’qa’.",
+      "newPage": {
+        "title": "Sap ghItlh chu’",
+        "submit": "nab yIpol"
+      },
+      "editPage": {
+        "title": "Sap ghItlh yIchoH"
+      },
+      "status": {
+        "draft": "nab",
+        "live": "yIn",
+        "changed": "choHmey ngeHbe’lu’"
+      },
+      "statusPanel": {
+        "label": "ngeH",
+        "publishedLine": "{date} ngeHlu’.",
+        "changedLine": "{date} ngeHlu’pu’bogh ghItlh legh laDwI’pu’.",
+        "savedLine": "Qav pollu’ {date}.",
+        "savedByLine": "{date} Qav polpu’ {name}.",
+        "savedByViaLine": "{date} {app} lo’taHvIS Qav polpu’ {name}.",
+        "savedByViaUnnamedLine": "{date} De’wI’ qoq lo’taHvIS Qav polpu’ {name}."
+      },
+      "viewLive": "Daqvam yIlegh",
+      "preview": "wej yIlegh",
+      "publish": "yIngeH",
+      "publishChanges": "choHmey yIngeH",
+      "unpublish": "yIngeHQo’",
+      "readiness": {
+        "noCompleteLanguage": "ngeHmeH wa’ Hol yIrIn. Hol tIqmey Hoch luchaw’ chaH ’e’ ghaj.",
+        "takenDown": "{count, plural, one {{languages} yIn ’ach rInbe’; ngeHlu’chugh, Daq teqlu’.} other {{languages} yIn ’ach rInbe’; ngeHlu’chugh, Daq teqlu’.}}",
+        "leftOut": "{count, plural, one {{languages} rInbe’; ngeHlu’chugh, ngeHlu’be’.} other {{languages} rInbe’; ngeHlu’chugh, ngeHlu’be’.}}"
+      },
+      "unpublishConfirm": {
+        "title": "Sap ghItlhvam DangeHQo’’a’?",
+        "description": "laDwI’pu’ nejwI’mey je tu’be’ chaH; rarwI’mey Qapbe’. naDev ratlh ghItlh; ngeHqa’laH.",
+        "confirm": "yIngeHQo’"
+      },
+      "actions": {
+        "save": "yIpol",
+        "cancel": "yImev"
+      },
+      "errors": {
+        "titleRequired": "pong poQ Sap ghItlh.",
+        "versionTitleRequired": "pong poQ {language} ghItlh.",
+        "versionSlugShape": "{language} Daq: a–z ngutlhmey mach, mI’mey, wa’ tlhegh mach neH.",
+        "slugShape": "a–z ngutlhmey mach, mI’mey, wa’ tlhegh mach neH yIlo’.",
+        "needsPicture": "{number} DIchDaq mIllogh Daq chIm. mIllogh yIwIv qoj Daq yIteq.",
+        "needsAddress": "{number} DIch leQ Daq poQ.",
+        "badAddress": "{number} DIch leQ: / lo’bogh Daqvam He qoj Hoch Saw Daq poQ.",
+        "saveFailed": "Sap ghItlh pollaHbe’lu’. yInIDqa’.",
+        "saveFailedWithReason": "Sap ghItlh pollaHbe’lu’ — {reason}",
+        "publishFailed": "Sap ghItlh ngeHlaHbe’lu’. yInIDqa’.",
+        "publishFailedWithReason": "Sap ghItlh ngeHlaHbe’lu’ — {reason}",
+        "unpublishFailed": "Sap ghItlh ngeHQo’laHbe’lu’. yInIDqa’.",
+        "unpublishFailedWithReason": "Sap ghItlh ngeHQo’laHbe’lu’ — {reason}"
+      },
+      "addLocale": "Hol yIchel",
+      "removeLocale": "{language} yIteq",
+      "summaryCount": "{count} / {max}",
+      "markdownPlaceholder": "naDev yIghItlh…",
+      "markdownOpen": "{field} yIchoH",
+      "structure": {
+        "title": "ghItlh tlhoSmey",
+        "subtitle": "ghItlh mI’ ’ej Hoch Hol ghajbogh Dochmey: mIllogh, leQmey, Degh, tetlh Dochmey.",
+        "sectionName": "{number}. {type}",
+        "moveUp": "{section} yIDoQ’eghmoH Dung",
+        "moveDown": "{section} yIDoQ’eghmoH bIng",
+        "remove": "{section} yIteq",
+        "add": "tlhoS yIchel",
+        "removeConfirm": {
+          "title": "tlhoSvam DateqneS’a’?",
+          "description": "Hoch HolDaq mu’mey teqlu’. Dapol ’ej DangeH net, Daq choHbe’.",
+          "confirm": "yIteq"
+        },
+        "problems": {
+          "needsPicture": "Dapol net, Hoch DaqvaD mIllogh yIwIv.",
+          "needsAddress": "Dapol net, leQvaD Daq yInob.",
+          "badAddress": "/ lo’bogh Daqvam He qoj https:// lo’bogh Hoch Saw Daq yIlo’."
+        }
+      },
+      "sectionTypes": {
+        "hero": "tagh",
+        "text": "ghItlh",
+        "image": "mIllogh",
+        "points": "Dochmey",
+        "steps": "mIwmey",
+        "faq": "ghel ’ej jang",
+        "cta": "ra’ ghItlh"
+      },
+      "shared": {
+        "picture": "mIllogh",
+        "imageSide": "mIllogh Daq",
+        "imageSides": {
+          "start": "ghItlh tlhop",
+          "end": "ghItlh ret"
+        },
+        "addButton": "leQ yIchel",
+        "removeButton": "leQ yIteq",
+        "buttonAddress": "leQ Daq",
+        "icon": "{number} DIch Degh"
+      },
+      "hints": {
+        "heroPicture": "pong’a’ retlhDaq cha’lu’; 16:9 pe’lu’.",
+        "textPicture": "ghItlh retlhDaq cha’lu’; 16:9 pe’lu’.",
+        "imagePicture": "16:9 pe’lu’. Hoch HolDaq Hoch mIllogh ghItlh poQ.",
+        "buttonAddress": "Daqvam ghItlh (/shop rur) qoj latlh Daq Hoch Saw Daq. Hoch HolDaq Daqvam Daq ghItlh nuqDaq ghoS ’e’ polmeH lo’lu’.",
+        "summary": "ghItlh motlh. pong bIngDaq cha’ nejwI’mey; wa’ qoj cha’ mu’tlheghmey yIlo’.",
+        "slug": "HolvamDaq ghItlh Daq Qav. pong yIlo’lu’ DachoHpa’.",
+        "slugFixed": "Holvam ngeHlu’pu’, Daq choHlaHbe’lu’: choHlu’chugh, Hoch rarwI’ ghorlu’."
+      },
+      "items": {
+        "image": "mIllogh {number}",
+        "points": "Doch {number}",
+        "steps": "mIw {number}",
+        "faq": "ghel {number}",
+        "addImage": "mIllogh yIchel",
+        "addPoint": "Doch yIchel",
+        "addStep": "mIw yIchel",
+        "addQuestion": "ghel yIchel",
+        "moveUp": "{item} yIDoQ’eghmoH Dung",
+        "moveDown": "{item} yIDoQ’eghmoH bIng",
+        "remove": "{item} yIteq"
+      },
+      "icons": {
+        "sparkles": "wovmoHwI’mey",
+        "star": "Hov",
+        "heart": "tIq",
+        "shield-check": "yoD",
+        "users": "nuvpu’",
+        "gamepad-2": "Quj SeHwI’",
+        "graduation-cap": "ghojwI’ mIv",
+        "book-open": "paq poSmoHlu’bogh",
+        "map-pin": "pu’jIn Daq",
+        "calendar": "jaj tetlh",
+        "clock": "tlhaq",
+        "trophy": "quvmoHwI’",
+        "rocket": "Duj tIH",
+        "lightbulb": "wovmoHwI’",
+        "message-circle": "jatlhmeH ghom",
+        "smile": "Hagh",
+        "puzzle": "nISwI’ ’ay’",
+        "globe": "yuQ",
+        "laptop": "De’wI’ mach",
+        "circle-check": "lughbogh ghItlh",
+        "palette": "rItlh",
+        "handshake": "ghop",
+        "target": "DoS",
+        "leaf": "por"
+      },
+      "words": {
+        "title": "mu’mey",
+        "subtitle": "Hoch Hol yIghItlh. ngeHlu’chugh, Hoch Hol rIn ngeHlu’.",
+        "stillNeeded": "poQlu’taH: {fields}."
+      },
+      "fields": {
+        "languages": "Holmey",
+        "title": "pong",
+        "summary": "ghItlh mach",
+        "slug": "Daq",
+        "eyebrow": "pong Dung per",
+        "headline": "pong’a’",
+        "subline": "pong bIng tlhegh",
+        "heading": "pong",
+        "body": "ghItlh",
+        "caption": "mIllogh per",
+        "intro": "tagh ghItlh",
+        "buttonLabel": "leQ per",
+        "imageAlt": "mIllogh ghItlh",
+        "alt": "mIllogh ghItlh",
+        "question": "ghel",
+        "answer": "jang",
+        "ofItem": "{item}: {field}"
+      }
     },
     "geduRole": {
       "primary": "Gedu wa’DIch",
@@ -3383,6 +3578,7 @@
     "municipalityInvoicing": "veng DIlmeH ghItlh",
     "invoiceCustomers": "DIlwI’pu’",
     "libraryContent": "paq qach ghItlhmey",
+    "landingPages": "Sap ghItlhmey",
     "platformVision": "Sogverse naj",
     "geduInvoicing": "Gedu DIlmeH ghItlh",
     "camps": "pa’ Qugh",

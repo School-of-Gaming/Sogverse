@@ -49,6 +49,9 @@
       "adminLibrary": "Kirjaston sisältö",
       "adminLibraryArticleNew": "Uusi artikkeli",
       "adminLibraryArticleEdit": "Muokkaa artikkelia",
+      "adminLandingPages": "Laskeutumissivut",
+      "adminLandingPageNew": "Uusi laskeutumissivu",
+      "adminLandingPageEdit": "Muokkaa laskeutumissivua",
       "adminPlatformVision": "Alustan visio",
       "adminGeduInvoicing": "Gedujen laskutus",
       "adminTools": "Työkalut",
@@ -613,6 +616,198 @@
       "addLocale": "Lisää kieli",
       "removeLocale": "Poista {language}",
       "languagesLabel": "Kielet"
+    },
+    "landingPages": {
+      "title": "Laskeutumissivut",
+      "subtitle": "Sivut koululle, kaupungille, yritykselle tai tapahtumalle – kirjoitettu hakukoneiden ja tekoälysovellusten löydettäviksi.",
+      "newPageButton": "Uusi sivu",
+      "empty": "Laskeutumissivuja ei vielä ole. Kirjoita ensimmäinen.",
+      "lastSaved": "Tallennettu viimeksi {date}",
+      "languagesLabel": "Kielet",
+      "versionComplete": "valmis",
+      "versionIncomplete": "ei vielä valmis",
+      "search": {
+        "label": "Haku",
+        "placeholder": "Hae otsikolla tai osoitteella…",
+        "showing": "Näytetään {count}/{total}",
+        "clear": "Tyhjennä",
+        "noMatches": "Haullasi ei löytynyt laskeutumissivuja."
+      },
+      "backToList": "Takaisin laskeutumissivuihin",
+      "notFound": "Tällä tunnisteella ei ole laskeutumissivua.",
+      "loadError": "Laskeutumissivua ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
+      "newPage": {
+        "title": "Uusi laskeutumissivu",
+        "submit": "Tallenna luonnos"
+      },
+      "editPage": {
+        "title": "Muokkaa laskeutumissivua"
+      },
+      "status": {
+        "draft": "Luonnos",
+        "live": "Julkaistu",
+        "changed": "Julkaisemattomia muutoksia"
+      },
+      "statusPanel": {
+        "label": "Julkaisu",
+        "publishedLine": "Julkaistu {date}.",
+        "changedLine": "Lukijat näkevät version, joka julkaistiin {date}.",
+        "savedLine": "Tallennettu viimeksi {date}.",
+        "savedByLine": "Tallennettu viimeksi {date}, tallentaja {name}.",
+        "savedByViaLine": "Tallennettu viimeksi {date}, tallentaja {name} sovelluksella {app}.",
+        "savedByViaUnnamedLine": "Tallennettu viimeksi {date}, tallentaja {name} tekoälysovelluksella."
+      },
+      "viewLive": "Näytä sivustolla",
+      "preview": "Esikatsele",
+      "publish": "Julkaise",
+      "publishChanges": "Julkaise muutokset",
+      "unpublish": "Poista julkaisusta",
+      "readiness": {
+        "noCompleteLanguage": "Julkaistaksesi viimeistele vähintään yksi kieli. Jokaisen kielen välilehdellä luetellaan, mitä siitä vielä puuttuu.",
+        "takenDown": "{count, plural, one {{languages} on julkaistu mutta ei valmis, joten julkaiseminen poistaa sen sivustolta.} other {{languages} ovat julkaistuja mutta eivät valmiita, joten julkaiseminen poistaa ne sivustolta.}}",
+        "leftOut": "{count, plural, one {{languages} ei ole valmis, joten sitä ei julkaista.} other {{languages} eivät ole valmiita, joten niitä ei julkaista.}}"
+      },
+      "unpublishConfirm": {
+        "title": "Poistetaanko laskeutumissivu julkaisusta?",
+        "description": "Lukijat ja hakukoneet eivät enää löydä sitä, ja linkit siihen lakkaavat toimimasta. Sivu säilyy täällä, ja voit julkaista sen uudelleen milloin tahansa.",
+        "confirm": "Poista julkaisusta"
+      },
+      "actions": {
+        "save": "Tallenna",
+        "cancel": "Peruuta"
+      },
+      "errors": {
+        "titleRequired": "Laskeutumissivu tarvitsee otsikon.",
+        "versionTitleRequired": "Kieliversio {language} tarvitsee otsikon.",
+        "versionSlugShape": "Kieliversion {language} osoitteessa saa olla vain pieniä kirjaimia a–z, numeroita ja yksittäisiä yhdysmerkkejä.",
+        "slugShape": "Käytä vain pieniä kirjaimia a–z, numeroita ja niiden välissä yksittäisiä yhdysmerkkejä.",
+        "needsPicture": "Osiossa {number} on kuvapaikka ilman kuvaa. Valitse kuva tai poista kuvapaikka.",
+        "needsAddress": "Osion {number} painike tarvitsee osoitteen.",
+        "badAddress": "Osion {number} painike tarvitsee tämän sivuston polun, joka alkaa merkillä /, tai kokonaisen verkko-osoitteen.",
+        "saveFailed": "Laskeutumissivua ei voitu tallentaa. Yritä uudelleen.",
+        "saveFailedWithReason": "Laskeutumissivua ei voitu tallentaa – {reason}",
+        "publishFailed": "Laskeutumissivua ei voitu julkaista. Yritä uudelleen.",
+        "publishFailedWithReason": "Laskeutumissivua ei voitu julkaista – {reason}",
+        "unpublishFailed": "Laskeutumissivua ei voitu poistaa julkaisusta. Yritä uudelleen.",
+        "unpublishFailedWithReason": "Laskeutumissivua ei voitu poistaa julkaisusta – {reason}"
+      },
+      "addLocale": "Lisää kieli",
+      "removeLocale": "Poista {language}",
+      "summaryCount": "{count}/{max}",
+      "markdownPlaceholder": "Kirjoita tähän…",
+      "markdownOpen": "Muokkaa kenttää {field}",
+      "structure": {
+        "title": "Osiot",
+        "subtitle": "Sivun järjestys ja se, mikä on kaikille kielille yhteistä: kuvat, painikkeet, kuvakkeet ja luetteloiden kohdat.",
+        "sectionName": "{number}. {type}",
+        "moveUp": "Siirrä ylöspäin: {section}",
+        "moveDown": "Siirrä alaspäin: {section}",
+        "remove": "Poista {section}",
+        "add": "Lisää osio",
+        "removeConfirm": {
+          "title": "Poistetaanko osio?",
+          "description": "Sen tekstit poistuvat kaikilta kieliltä. Sivustolla ei muutu mitään, ennen kuin tallennat ja julkaiset.",
+          "confirm": "Poista"
+        },
+        "problems": {
+          "needsPicture": "Valitse kuva jokaiseen kuvapaikkaan ennen tallentamista.",
+          "needsAddress": "Anna painikkeelle osoite ennen tallentamista.",
+          "badAddress": "Käytä tämän sivuston polkua, joka alkaa merkillä /, tai kokonaista verkko-osoitetta, joka alkaa https://."
+        }
+      },
+      "sectionTypes": {
+        "hero": "Avausosio",
+        "text": "Teksti",
+        "image": "Kuvat",
+        "points": "Kohdat",
+        "steps": "Vaiheet",
+        "faq": "Kysymykset ja vastaukset",
+        "cta": "Toimintakehote"
+      },
+      "shared": {
+        "picture": "Kuva",
+        "imageSide": "Kuvan puoli",
+        "imageSides": {
+          "start": "Ennen tekstiä",
+          "end": "Tekstin jälkeen"
+        },
+        "addButton": "Lisää painike",
+        "removeButton": "Poista painike",
+        "buttonAddress": "Painikkeen osoite",
+        "icon": "Kohdan {number} kuvake"
+      },
+      "hints": {
+        "heroPicture": "Näytetään sivun pääotsikon vieressä, rajattuna kokoon 16:9.",
+        "textPicture": "Näytetään tekstin vieressä, rajattuna kokoon 16:9.",
+        "imagePicture": "Rajataan kokoon 16:9. Jokainen kuva tarvitsee vaihtoehtoisen tekstin jokaisella kielellä.",
+        "buttonAddress": "Tämän sivuston sivu, kuten /shop, tai toisen sivuston kokonainen verkko-osoite. Tämän sivuston osoite millä tahansa kielellä tallennetaan sivuksi, jolle se vie.",
+        "summary": "Pelkkää tekstiä. Hakukoneet näyttävät sen otsikon alla, joten se kertoo sivun ytimen yhdellä tai kahdella virkkeellä.",
+        "slug": "Sivun verkko-osoitteen loppuosa tällä kielellä. Täytetään otsikosta, kunnes muutat sitä.",
+        "slugFixed": "Tämä kieli on julkaistu, joten sen osoite on lukittu: muutos rikkoisi kaikki siihen johtavat linkit."
+      },
+      "items": {
+        "image": "Kuva {number}",
+        "points": "Kohta {number}",
+        "steps": "Vaihe {number}",
+        "faq": "Kysymys {number}",
+        "addImage": "Lisää kuva",
+        "addPoint": "Lisää kohta",
+        "addStep": "Lisää vaihe",
+        "addQuestion": "Lisää kysymys",
+        "moveUp": "Siirrä ylöspäin: {item}",
+        "moveDown": "Siirrä alaspäin: {item}",
+        "remove": "Poista {item}"
+      },
+      "icons": {
+        "sparkles": "Kimallus",
+        "star": "Tähti",
+        "heart": "Sydän",
+        "shield-check": "Kilpi",
+        "users": "Ihmiset",
+        "gamepad-2": "Peliohjain",
+        "graduation-cap": "Ylioppilaslakki",
+        "book-open": "Avoin kirja",
+        "map-pin": "Karttaneula",
+        "calendar": "Kalenteri",
+        "clock": "Kello",
+        "trophy": "Pokaali",
+        "rocket": "Raketti",
+        "lightbulb": "Hehkulamppu",
+        "message-circle": "Puhekupla",
+        "smile": "Hymy",
+        "puzzle": "Palapelin pala",
+        "globe": "Maapallo",
+        "laptop": "Kannettava tietokone",
+        "circle-check": "Valintamerkki",
+        "palette": "Paletti",
+        "handshake": "Kättely",
+        "target": "Maalitaulu",
+        "leaf": "Lehti"
+      },
+      "words": {
+        "title": "Tekstit",
+        "subtitle": "Kirjoita jokainen kieli itse. Julkaiseminen tuo sivustolle jokaisen valmiin kielen.",
+        "stillNeeded": "Vielä puuttuu: {fields}."
+      },
+      "fields": {
+        "languages": "Kielet",
+        "title": "Otsikko",
+        "summary": "Tiivistelmä",
+        "slug": "Osoite",
+        "eyebrow": "Yläotsake",
+        "headline": "Pääotsikko",
+        "subline": "Alaotsikko",
+        "heading": "Otsikko",
+        "body": "Teksti",
+        "caption": "Kuvateksti",
+        "intro": "Johdanto",
+        "buttonLabel": "Painikkeen teksti",
+        "imageAlt": "Kuvan vaihtoehtoinen teksti",
+        "alt": "Vaihtoehtoinen teksti",
+        "question": "Kysymys",
+        "answer": "Vastaus",
+        "ofItem": "{item}: {field}"
+      }
     },
     "geduRole": {
       "primary": "Vastaava Gedu",
@@ -3343,6 +3538,7 @@
     "municipalityInvoicing": "Kuntalaskutus",
     "invoiceCustomers": "Laskutusasiakkaat",
     "libraryContent": "Kirjaston sisältö",
+    "landingPages": "Laskeutumissivut",
     "platformVision": "Alustan visio",
     "geduInvoicing": "Gedujen laskutus",
     "camps": "Leirit",

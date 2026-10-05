@@ -30,8 +30,8 @@ import { ROUTES } from "@/lib/constants";
  * working title, and says whether this picture is the cover readers see now
  * (live) or only the draft's.
  *
- * A landing page row says the same about the page, by its working title. It
- * is not a link yet: the landing pages have no admin page of their own to open.
+ * A landing page row says the same about the page, by its working title, and
+ * is a link to the page's admin editor.
  *
  * The list is **bounded and scrolls**, in both hosts. An entry can reach 22
  * products, and a list that simply grows pushes whatever is under it — the
@@ -120,13 +120,16 @@ function ArticleRow({ article }: { article: LibraryArticleImageUser }) {
 function LandingPageRow({ page }: { page: LandingPageImageUser }) {
   const t = useTranslations("admin.products.imageCatalogue");
   return (
-    <div className={ROW}>
+    <Link
+      href={ROUTES.admin.landingPage(page.id)}
+      className={cn(ROW, "hover:bg-hover")}
+    >
       <span className="block min-w-0 truncate font-medium">{page.title}</span>
       <LiveMark
         live={page.is_live}
         label={page.is_live ? t("live") : t("draft")}
       />
-    </div>
+    </Link>
   );
 }
 

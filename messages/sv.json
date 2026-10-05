@@ -49,6 +49,9 @@
       "adminLibrary": "Bibliotekets innehåll",
       "adminLibraryArticleNew": "Ny artikel",
       "adminLibraryArticleEdit": "Redigera artikel",
+      "adminLandingPages": "Landningssidor",
+      "adminLandingPageNew": "Ny landningssida",
+      "adminLandingPageEdit": "Redigera landningssida",
       "adminPlatformVision": "Plattformens vision",
       "adminGeduInvoicing": "Gedufakturering",
       "adminTools": "Verktyg",
@@ -613,6 +616,198 @@
       "addLocale": "Lägg till språk",
       "removeLocale": "Ta bort {language}",
       "languagesLabel": "Språk"
+    },
+    "landingPages": {
+      "title": "Landningssidor",
+      "subtitle": "Sidor för en skola, en stad, ett företag eller ett evenemang, skrivna för att sökmotorer och AI-appar ska hitta dem.",
+      "newPageButton": "Ny sida",
+      "empty": "Inga landningssidor än. Skriv den första.",
+      "lastSaved": "Senast sparad {date}",
+      "languagesLabel": "Språk",
+      "versionComplete": "klar",
+      "versionIncomplete": "inte klar än",
+      "search": {
+        "label": "Sök",
+        "placeholder": "Sök på titel eller adress…",
+        "showing": "Visar {count} av {total}",
+        "clear": "Rensa",
+        "noMatches": "Inga landningssidor matchar din sökning."
+      },
+      "backToList": "Tillbaka till landningssidorna",
+      "notFound": "Det finns ingen landningssida med detta id.",
+      "loadError": "Landningssidan kunde inte laddas. Uppdatera för att försöka igen.",
+      "newPage": {
+        "title": "Ny landningssida",
+        "submit": "Spara utkast"
+      },
+      "editPage": {
+        "title": "Redigera landningssida"
+      },
+      "status": {
+        "draft": "Utkast",
+        "live": "Publicerad",
+        "changed": "Opublicerade ändringar"
+      },
+      "statusPanel": {
+        "label": "Publicering",
+        "publishedLine": "Publicerad {date}.",
+        "changedLine": "Läsarna ser versionen som publicerades {date}.",
+        "savedLine": "Senast sparad {date}.",
+        "savedByLine": "Senast sparad {date} av {name}.",
+        "savedByViaLine": "Senast sparad {date} av {name} via {app}.",
+        "savedByViaUnnamedLine": "Senast sparad {date} av {name} via en AI-app."
+      },
+      "viewLive": "Visa på webbplatsen",
+      "preview": "Förhandsgranska",
+      "publish": "Publicera",
+      "publishChanges": "Publicera ändringar",
+      "unpublish": "Avpublicera",
+      "readiness": {
+        "noCompleteLanguage": "Gör klart minst ett språk för att publicera. Varje språkflik visar vad som saknas.",
+        "takenDown": "{count, plural, one {{languages} är publicerad men inte klar, så publiceringen tar bort den från webbplatsen.} other {{languages} är publicerade men inte klara, så publiceringen tar bort dem från webbplatsen.}}",
+        "leftOut": "{count, plural, one {{languages} är inte klar, så publiceringen utelämnar den.} other {{languages} är inte klara, så publiceringen utelämnar dem.}}"
+      },
+      "unpublishConfirm": {
+        "title": "Avpublicera landningssidan?",
+        "description": "Läsare och sökmotorer hittar den inte längre, och länkar till den slutar fungera. Sidan finns kvar här, och du kan publicera den igen när som helst.",
+        "confirm": "Avpublicera"
+      },
+      "actions": {
+        "save": "Spara",
+        "cancel": "Avbryt"
+      },
+      "errors": {
+        "titleRequired": "En landningssida behöver en titel.",
+        "versionTitleRequired": "Versionen på {language} behöver en titel.",
+        "versionSlugShape": "Adressen på {language} får bara innehålla små bokstäver a–z, siffror och enstaka bindestreck.",
+        "slugShape": "Använd bara små bokstäver a–z, siffror och enstaka bindestreck mellan dem.",
+        "needsPicture": "Avsnitt {number} har en bildplats utan bild. Välj en bild eller ta bort platsen.",
+        "needsAddress": "Knappen i avsnitt {number} behöver en adress.",
+        "badAddress": "Knappen i avsnitt {number} behöver en sökväg på den här webbplatsen som börjar med / eller en fullständig webbadress.",
+        "saveFailed": "Landningssidan kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Landningssidan kunde inte sparas – {reason}",
+        "publishFailed": "Landningssidan kunde inte publiceras. Försök igen.",
+        "publishFailedWithReason": "Landningssidan kunde inte publiceras – {reason}",
+        "unpublishFailed": "Landningssidan kunde inte avpubliceras. Försök igen.",
+        "unpublishFailedWithReason": "Landningssidan kunde inte avpubliceras – {reason}"
+      },
+      "addLocale": "Lägg till ett språk",
+      "removeLocale": "Ta bort {language}",
+      "summaryCount": "{count} / {max}",
+      "markdownPlaceholder": "Skriv här…",
+      "markdownOpen": "Redigera {field}",
+      "structure": {
+        "title": "Avsnitt",
+        "subtitle": "Sidans ordning och det som alla språk delar: bilder, knappar, ikoner och punkterna i varje lista.",
+        "sectionName": "{number}. {type}",
+        "moveUp": "Flytta upp {section}",
+        "moveDown": "Flytta ner {section}",
+        "remove": "Ta bort {section}",
+        "add": "Lägg till ett avsnitt",
+        "removeConfirm": {
+          "title": "Ta bort avsnittet?",
+          "description": "Dess texter försvinner på alla språk. Inget ändras på webbplatsen förrän du sparar och publicerar.",
+          "confirm": "Ta bort"
+        },
+        "problems": {
+          "needsPicture": "Välj en bild till varje bildplats innan du sparar.",
+          "needsAddress": "Ge knappen en adress innan du sparar.",
+          "badAddress": "Använd en sökväg på den här webbplatsen som börjar med / eller en fullständig webbadress som börjar med https://."
+        }
+      },
+      "sectionTypes": {
+        "hero": "Inledning",
+        "text": "Text",
+        "image": "Bilder",
+        "points": "Punkter",
+        "steps": "Steg",
+        "faq": "Frågor och svar",
+        "cta": "Uppmaning"
+      },
+      "shared": {
+        "picture": "Bild",
+        "imageSide": "Bildens sida",
+        "imageSides": {
+          "start": "Före texten",
+          "end": "Efter texten"
+        },
+        "addButton": "Lägg till en knapp",
+        "removeButton": "Ta bort knappen",
+        "buttonAddress": "Knappens adress",
+        "icon": "Ikon för punkt {number}"
+      },
+      "hints": {
+        "heroPicture": "Visas bredvid sidans rubrik, beskuren till 16:9.",
+        "textPicture": "Visas bredvid texten, beskuren till 16:9.",
+        "imagePicture": "Beskärs till 16:9. Varje bild behöver sin alternativtext på alla språk.",
+        "buttonAddress": "En sida på den här webbplatsen, till exempel /shop, eller en fullständig webbadress till en annan webbplats. En adress på den här webbplatsen på vilket språk som helst sparas som sidan den leder till.",
+        "summary": "Ren text. Sökmotorer visar den under titeln, så den säljer in sidan med en eller två meningar.",
+        "slug": "Slutet på sidans webbadress på det här språket. Fylls i från titeln tills du ändrar den.",
+        "slugFixed": "Det här språket har publicerats, så adressen är låst: en ändring skulle bryta alla länkar till den."
+      },
+      "items": {
+        "image": "Bild {number}",
+        "points": "Punkt {number}",
+        "steps": "Steg {number}",
+        "faq": "Fråga {number}",
+        "addImage": "Lägg till en bild",
+        "addPoint": "Lägg till en punkt",
+        "addStep": "Lägg till ett steg",
+        "addQuestion": "Lägg till en fråga",
+        "moveUp": "Flytta upp {item}",
+        "moveDown": "Flytta ner {item}",
+        "remove": "Ta bort {item}"
+      },
+      "icons": {
+        "sparkles": "Glitter",
+        "star": "Stjärna",
+        "heart": "Hjärta",
+        "shield-check": "Sköld",
+        "users": "Personer",
+        "gamepad-2": "Handkontroll",
+        "graduation-cap": "Studentmössa",
+        "book-open": "Öppen bok",
+        "map-pin": "Kartnål",
+        "calendar": "Kalender",
+        "clock": "Klocka",
+        "trophy": "Pokal",
+        "rocket": "Raket",
+        "lightbulb": "Glödlampa",
+        "message-circle": "Pratbubbla",
+        "smile": "Leende",
+        "puzzle": "Pusselbit",
+        "globe": "Jordglob",
+        "laptop": "Bärbar dator",
+        "circle-check": "Bock",
+        "palette": "Palett",
+        "handshake": "Handslag",
+        "target": "Måltavla",
+        "leaf": "Löv"
+      },
+      "words": {
+        "title": "Texter",
+        "subtitle": "Skriv varje språk för hand. Publiceringen gör varje klart språk synligt.",
+        "stillNeeded": "Saknas fortfarande: {fields}."
+      },
+      "fields": {
+        "languages": "Språk",
+        "title": "Titel",
+        "summary": "Sammanfattning",
+        "slug": "Adress",
+        "eyebrow": "Etikett ovanför rubriken",
+        "headline": "Huvudrubrik",
+        "subline": "Rad under rubriken",
+        "heading": "Rubrik",
+        "body": "Text",
+        "caption": "Bildtext",
+        "intro": "Inledning",
+        "buttonLabel": "Knapptext",
+        "imageAlt": "Bildens alternativtext",
+        "alt": "Alternativtext",
+        "question": "Fråga",
+        "answer": "Svar",
+        "ofItem": "{item}: {field}"
+      }
     },
     "geduRole": {
       "primary": "Huvud-Gedu",
@@ -3343,6 +3538,7 @@
     "municipalityInvoicing": "Kommunfakturering",
     "invoiceCustomers": "Faktureringskunder",
     "libraryContent": "Bibliotekets innehåll",
+    "landingPages": "Landningssidor",
     "platformVision": "Plattformens vision",
     "geduInvoicing": "Gedufakturering",
     "camps": "Läger",
