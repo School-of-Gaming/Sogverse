@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 
 // Stubbed rather than assigned: the node project shares a worker between
@@ -5,6 +6,9 @@ import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 vi.stubEnv("DISCORD_PUBLIC_KEY", "test-public-key");
 vi.stubEnv("DISCORD_BOT_TOKEN", "test-bot-token");
 vi.stubEnv("DISCORD_APPLICATION_ID", "test-app-id");
+// The origin `/link` builds its URL on. The test requests carry no Host, so
+// it is the configured site URL that is used.
+vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
 afterAll(() => vi.unstubAllEnvs());
 
 // A webhook, so there is no session and no role: the Ed25519 signature over the
@@ -52,6 +56,13 @@ vi.mock("@/lib/microsoft-graph", () => ({
   resetPassword: (...args: unknown[]) => mockResetPassword(...args),
 }));
 
+// `/link` stores its token's hash with the service-role client.
+const mockInsert = vi.fn();
+const mockFrom = vi.fn((_table: string) => ({ insert: mockInsert }));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({ from: mockFrom }),
+}));
+
 // The deferred work PATCHes the answer back to Discord over the network, and
 // it is started eagerly (the platform hook receives an already-running
 // promise). Stub fetch so the suite stays hermetic, and give every downstream
@@ -92,6 +103,7 @@ describe("POST /api/discord/interactions", () => {
       password: "Sogverse42",
       forceChange: false,
     });
+    mockInsert.mockResolvedValue({ error: null });
   });
 
   /** Let the eagerly-started deferred work settle before the test ends. */
@@ -343,5 +355,110 @@ describe("POST /api/discord/interactions", () => {
 
     expect(await response.json()).toEqual({ type: 1 });
     expect(deferred).toHaveLength(0);
+  });
+
+  // -- /link -----------------------------------------------------------------
+  //
+  // The reply carries a one-time sign-in link, so three properties matter
+  // beyond the deferral every command shares: only the caller ever sees it,
+  // only the token's hash is stored, and a failure never leaks the cause.
+
+  const GUILD_CALLER = { user: { id: "112233445566778899", username: "kyle_sog" } };
+
+  /** Run `/link` and return the inserted row and the PATCHed message. */
+  async function runLink(payload: Record<string, unknown>) {
+    const response = await POST(
+      interactionRequest({ type: 2, token: "interaction-token", data: { name: "link" }, ...payload }),
+    );
+    await settleDeferred();
+    const [, init] = mockFetch.mock.calls[0] ?? [];
+    const patched = init ? JSON.parse(String(init.body)) : null;
+    const row = mockInsert.mock.calls[0]?.[0];
+    return { response, patched, row };
+  }
+
+  it("defers /link ephemerally, though it takes no argument", async () => {
+    const { response } = await runLink({ member: GUILD_CALLER });
+
+    // 64 = EPHEMERAL: the flag on the deferred response decides who sees the
+    // reply that later replaces it.
+    expect(await response.json()).toEqual({ type: 5, data: { flags: 64 } });
+    expect(deferred).toHaveLength(1);
+  });
+
+  it("stores only the hash of the token it sends, for the server member who ran it", async () => {
+    const { patched, row } = await runLink({ member: GUILD_CALLER });
+
+    expect(mockFrom).toHaveBeenCalledWith("discord_link_tokens");
+    const url = /(https:\/\/sogverse\.sog\.gg\/link-discord\?token=([A-Za-z0-9_-]+))/.exec(
+      patched.content,
+    );
+    expect(url).not.toBeNull();
+    const token = url?.[2] ?? "";
+    // 32 random bytes as base64url.
+    expect(token).toHaveLength(43);
+    expect(row).toEqual({
+      token_hash: createHash("sha256").update(token).digest("hex"),
+      discord_user_id: "112233445566778899",
+      discord_username: "kyle_sog",
+    });
+    expect(JSON.stringify(row)).not.toContain(token);
+  });
+
+  it("tells the caller the link expires and works once, with no preview under it", async () => {
+    const { patched } = await runLink({ member: GUILD_CALLER });
+
+    expect(patched.content).toContain("The link expires in 10 minutes and works once.");
+    // 4 = SUPPRESS_EMBEDS, so Discord does not unfurl the sign-in page.
+    expect(patched.flags).toBe(4);
+  });
+
+  it("reads the caller from `user` when the command is run in a DM", async () => {
+    const { row } = await runLink({
+      user: { id: "998877665544332211", username: "dm_caller" },
+    });
+
+    expect(row.discord_user_id).toBe("998877665544332211");
+    expect(row.discord_username).toBe("dm_caller");
+  });
+
+  it("mints a different token every time", async () => {
+    await runLink({ member: GUILD_CALLER });
+    await POST(
+      interactionRequest({
+        type: 2,
+        token: "interaction-token",
+        data: { name: "link" },
+        member: GUILD_CALLER,
+      }),
+    );
+    await settleDeferred();
+
+    const [first, second] = mockInsert.mock.calls.map(([row]) => row.token_hash);
+    expect(first).not.toBe(second);
+  });
+
+  it("sends a short failure line, never the cause, when the token cannot be stored", async () => {
+    mockInsert.mockResolvedValue({
+      error: { code: "23514", message: "discord_link_tokens_username_check" },
+    });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { patched } = await runLink({ member: GUILD_CALLER });
+
+    expect(patched.content).toBe(
+      "Sorry, I couldn't create a link right now. Try /link again in a moment.",
+    );
+    expect(patched.content).not.toContain("link-discord");
+  });
+
+  it("falls back to a PONG when the payload names no caller", async () => {
+    const response = await POST(
+      interactionRequest({ type: 2, token: "interaction-token", data: { name: "link" } }),
+    );
+
+    expect(await response.json()).toEqual({ type: 1 });
+    expect(deferred).toHaveLength(0);
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 });

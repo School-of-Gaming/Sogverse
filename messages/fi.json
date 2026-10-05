@@ -74,6 +74,7 @@
       "robloxTerms": "Luojien akatemian käyttöehdot",
       "geduContract": "Gedu-sopimus",
       "oauthConsent": "Yhdistä tekoälysovellus",
+      "linkDiscord": "Yhdistä Discord",
       "seatOffer": "Paikkatarjous",
       "geduSubstitutions": "Tuuraukset",
       "geduInvoicing": "Laskutus",
@@ -1481,7 +1482,8 @@
         "saving": "Tallennetaan…",
         "error": "Hyväksynnän päivitys epäonnistui. Yritä uudelleen."
       },
-      "usernameLabel": "Käyttäjätunnus"
+      "usernameLabel": "Käyttäjätunnus",
+      "discordNotLinked": "Ei yhdistetty"
     },
     "locations": {
       "editName": "Muokkaa: {name}",
@@ -3630,6 +3632,12 @@
     "verificationEmailSent": "Vahvistusviesti lähetetty – tarkista sähköpostisi.",
     "verificationEmailRateLimited": "Olet pyytänyt vahvistusviestiä liian monta kertaa. Odota hetki, ennen kuin yrität uudelleen.",
     "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen.",
+    "discord": {
+      "label": "Discord",
+      "notLinked": "Ei yhdistetty",
+      "linkHint": "Yhdistä Discord-tilisi kirjoittamalla <code>/link</code> School of Gamingin Discord-palvelimella.",
+      "relinkHint": "Voit yhdistää toisen Discord-tilin kirjoittamalla <code>/link</code> sillä tilillä School of Gamingin Discord-palvelimella."
+    },
     "marketing": {
       "title": "Markkinointiasetukset",
       "schoolOfGaming": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
@@ -5248,6 +5256,36 @@
     "refused": {
       "title": "Vain School of Gamingin ylläpitäjät voivat yhdistää tekoälysovelluksen",
       "body": "Olet kirjautuneena osoitteella {email}, joka ei ole ylläpitäjän tili."
+    }
+  },
+  "discordLink": {
+    "confirm": {
+      "title": "Yhdistä Discord-tilisi",
+      "body": "Yhdistetäänkö Discord-tili <b>@{username}</b> School of Gaming -tiliisi? Silloin School of Gaming voi tavoittaa sinut Discordissa.",
+      "action": "Yhdistä tili",
+      "failed": "Jokin meni vikaan, eikä tiliäsi yhdistetty. Yritä uudelleen."
+    },
+    "linked": {
+      "title": "Yhdistetty Discord-tiliin @{username}",
+      "body": "School of Gaming voi nyt tavoittaa sinut Discordissa.",
+      "goToMySog": "Siirry Oma SOG -sivulle",
+      "goToDashboard": "Siirry hallintapaneeliin"
+    },
+    "used": {
+      "title": "Tämä linkki on jo käytetty",
+      "body": "Kukin linkki toimii kerran. Saat uuden linkin, kun kirjoitat Discordissa uudelleen <code>/link</code>."
+    },
+    "expired": {
+      "title": "Tämä linkki on vanhentunut",
+      "body": "Linkki on voimassa 10 minuuttia. Saat uuden linkin, kun kirjoitat Discordissa uudelleen <code>/link</code>."
+    },
+    "missingToken": {
+      "title": "Tämä linkki on puutteellinen",
+      "body": "Saat uuden linkin, kun kirjoitat Discordissa uudelleen <code>/link</code>."
+    },
+    "refused": {
+      "title": "Vain School of Gamingin henkilökunta voi yhdistää Discord-tilin",
+      "body": "Tällä tilillä sitä ei voi yhdistää. Jos kuulut henkilökuntaan, kirjaudu sisään henkilökunnan tililläsi."
     }
   },
   "seatOffer": {

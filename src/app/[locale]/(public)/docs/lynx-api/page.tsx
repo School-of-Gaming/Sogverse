@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
+import { InlineCode as Code, codeTag } from "@/components/ui/inline-code";
 import { PRODUCT_STATUS } from "@/services/partner/partner.contracts";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -10,23 +11,6 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t("lynxApi"),
     robots: { index: false, follow: false },
   };
-}
-
-/**
- * An inline machine value: a field name, an enum value, a literal.
- *
- * The pill's vertical padding is a hairline, and every run of prose that holds
- * one carries `leading-relaxed`: an inline background does not push lines
- * apart, so a pill taller than its line box overlaps the pill on the next line
- * the moment a sentence wraps. `box-decoration-clone` keeps both ends of a
- * pill drawn when the name itself breaks across lines.
- */
-function Code({ children }: { children: React.ReactNode }) {
-  return (
-    <code className="box-decoration-clone rounded bg-lifted px-1.5 py-px font-mono text-[0.875em]">
-      {children}
-    </code>
-  );
 }
 
 function CodeBlock({ children, title }: { children: string; title?: string }) {
@@ -904,7 +888,7 @@ export default function LynxApiDocsPage() {
    * renders them all rather than each call site restating the tag map.
    */
   const rich = (key: Parameters<typeof t.rich>[0]) =>
-    t.rich(key, { code: (chunks) => <Code>{chunks}</Code> });
+    t.rich(key, { code: codeTag });
 
   /** Turns a declared row into a rendered one, resolving its message key. */
   const rows = <

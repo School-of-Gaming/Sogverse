@@ -116,12 +116,16 @@ input[type="checkbox"] {
    decided, and it has to be, because the pointer rule above outranks any
    utility class on the element (`label:has(input[type="checkbox"])` is more
    specific than `.cursor-not-allowed`), so a component cannot opt out on its
-   own — a disabled checkbox row that only set a utility kept the pointer. */
+   own — a disabled checkbox row that only set a utility kept the pointer.
+   A `label[for]` cannot be matched by its control's state, since CSS cannot
+   follow `for`; inside a `Field` (marked `data-field`) the control is the
+   label's neighbour, so the field's own disabled control decides it. */
 button:disabled,
 [type="button"]:disabled,
 [role="button"][aria-disabled="true"],
 input[type="checkbox"]:disabled,
-label:has(input[type="checkbox"]:disabled) {
+label:has(input[type="checkbox"]:disabled),
+[data-field]:has(:is(input, textarea, select):disabled) label[for] {
   cursor: default;
 }
 

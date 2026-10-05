@@ -31,6 +31,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Field } from "@/components/ui/field";
+import { InlineCode } from "@/components/ui/inline-code";
+import discordSymbol from "@/assets/partners/discord-symbol-blurple.svg";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
 import { Avatar } from "@/components/ui/avatar";
@@ -2589,6 +2591,29 @@ export default function AdminUIComponentsPage() {
                 id="demo-field-icon"
                 placeholder="Say hello…"
                 autoComplete="off"
+              />
+            </Field>
+            {/*
+              The brand-mark variant, for a field whose value is an account
+              on another service, with a rich hint setting a command in
+              inline code.
+            */}
+            <Field
+              label="Discord"
+              htmlFor="demo-field-brand-mark"
+              brandMark={discordSymbol}
+              hint={
+                <>
+                  To link your Discord account, type <InlineCode>/link</InlineCode>{" "}
+                  in the School of Gaming Discord server.
+                </>
+              }
+            >
+              <Input
+                id="demo-field-brand-mark"
+                placeholder="Not linked"
+                disabled
+                className="bg-lifted"
               />
             </Field>
           </form>

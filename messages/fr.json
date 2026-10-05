@@ -74,6 +74,7 @@
       "robloxTerms": "Conditions générales d’utilisation de l’Académie des Créateurs",
       "geduContract": "Contrat Gedu",
       "oauthConsent": "Connecter une application d’IA",
+      "linkDiscord": "Associer Discord",
       "seatOffer": "Proposition de place",
       "geduSubstitutions": "Remplacements",
       "geduInvoicing": "Facturation",
@@ -1481,7 +1482,8 @@
         "saving": "Enregistrement…",
         "error": "Impossible de mettre à jour la certification. Veuillez réessayer."
       },
-      "usernameLabel": "Identifiant"
+      "usernameLabel": "Identifiant",
+      "discordNotLinked": "Non associé"
     },
     "locations": {
       "editName": "Modifier {name}",
@@ -3630,6 +3632,12 @@
     "verificationEmailSent": "E-mail de vérification envoyé — consultez votre boîte de réception.",
     "verificationEmailRateLimited": "Vous avez demandé cet e-mail trop de fois. Veuillez patienter un moment avant de réessayer.",
     "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer.",
+    "discord": {
+      "label": "Discord",
+      "notLinked": "Non associé",
+      "linkHint": "Pour associer votre compte Discord, tapez <code>/link</code> sur le serveur Discord de School of Gaming.",
+      "relinkHint": "Pour associer un autre compte Discord, tapez <code>/link</code> depuis ce compte sur le serveur Discord de School of Gaming."
+    },
     "marketing": {
       "title": "Préférences marketing",
       "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
@@ -5248,6 +5256,36 @@
     "refused": {
       "title": "Seuls les administrateurs de School of Gaming peuvent connecter une application d’IA",
       "body": "Vous êtes connecté en tant que {email}, qui n’est pas un compte administrateur."
+    }
+  },
+  "discordLink": {
+    "confirm": {
+      "title": "Associer votre compte Discord",
+      "body": "Associer le compte Discord <b>@{username}</b> à votre compte School of Gaming ? School of Gaming pourra alors vous joindre sur Discord.",
+      "action": "Associer le compte",
+      "failed": "Une erreur s’est produite et votre compte n’a pas été associé. Réessayez."
+    },
+    "linked": {
+      "title": "Associé à @{username}",
+      "body": "School of Gaming peut désormais vous joindre sur Discord.",
+      "goToMySog": "Aller à Mon SOG",
+      "goToDashboard": "Aller au tableau de bord"
+    },
+    "used": {
+      "title": "Ce lien a déjà été utilisé",
+      "body": "Chaque lien ne fonctionne qu’une fois. Relancez <code>/link</code> dans Discord pour en obtenir un nouveau."
+    },
+    "expired": {
+      "title": "Ce lien a expiré",
+      "body": "Les liens expirent au bout de 10 minutes. Relancez <code>/link</code> dans Discord pour en obtenir un nouveau."
+    },
+    "missingToken": {
+      "title": "Ce lien est incomplet",
+      "body": "Relancez <code>/link</code> dans Discord pour en obtenir un nouveau."
+    },
+    "refused": {
+      "title": "Seule l’équipe de School of Gaming peut associer un compte Discord",
+      "body": "Ce compte ne peut pas en associer. Si vous faites partie de l’équipe, connectez-vous avec votre compte d’équipe."
     }
   },
   "seatOffer": {

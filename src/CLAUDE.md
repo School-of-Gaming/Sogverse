@@ -29,6 +29,13 @@ Four user roles with separate dashboards:
 - `gamer` → `/gamer` - Child accounts (email-first like every role; the parent chooses each child's sign-in, stored as `gamer_profiles.sign_in`: `parent` — switch-only from the parent's session, synthetic `<token>@gamer.sogverse.internal` address, no password; `username` — a parent-set handle and password behind a `<username>@gamer.sogverse.internal` address; `email` — the child's real address, verified by the child, then a password of their own. Leaving a gamer session costs the parent's PIN when the session came from a switch, and is refused outright when it came from a credential login — such a session signs out and signs in as the other person instead; a gedu's roster always shows the parent's address, never the child's)
 - `gedu` → `/gedu` - Game educators (self-register at `/register-gedu`; an account is unverified until an admin approves it — verification gates only group assignment, not platform access. See `src/services/gedu/`)
 
+**Rule: an account never changes role.** The role is fixed when registration completes — the
+only role write is `register_gedu` turning the brand-new `customer` row the new-user trigger
+creates into a `gedu`, inside the registration itself. So nothing role-scoped is built for a
+transition that cannot happen: no clean-up when an account "stops being" a gedu, no re-check
+of a role-gated record against a later role. A demotion, a promotion or a parent who also
+teaches is a separate account, not a role change.
+
 Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, redirects a bare path into its locale-prefixed form, enforces role-based routing, and sets a per-request nonce-based Content Security Policy (Next.js 16 uses `proxy.ts` instead of `middleware.ts`). **Every one of its pathname checks matches the locale-stripped, untranslated internal path** — unstripped, `/fi/admin` would sail past the `/admin` role gate (`src/i18n/CLAUDE.md`). RLS policies protect data at the database level.
 
 **Rule: admins are trusted — including trusted to act only through the admin UI and the admin MCP tools.** An admin hand-crafting API or RPC calls is neither a threat model nor a supported workflow, so "an admin could reach an invalid state via the raw API" is not a defect worth building UI or validation for. The database's own guarantees (CHECKs, constraints, grants) still stand behind everything — a state the UI cannot produce must fail loudly at the schema if it somehow arises, never corrupt silently — but the loud failure *is* the accepted handling, not a gap.

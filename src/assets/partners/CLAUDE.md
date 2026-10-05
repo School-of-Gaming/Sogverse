@@ -1,7 +1,8 @@
 # Partner brand assets
 
-Third-party logos: the two in the `/roblox` lockup, and Google's "G" on the
-"Continue with Google" buttons of the auth pages. The two lockup marks stand for
+Third-party logos: the two in the `/roblox` lockup, Google's "G" on the
+"Continue with Google" buttons of the auth pages, and Discord's symbol wherever a
+staff member's linked Discord account is shown. The two lockup marks stand for
 relationships that are not the same, and the copy beside them must not blur them: School of Gaming **partners
 with** Lynx Educate, and **collaborates with** Roblox — see the partner-brand rules in
 `src/CLAUDE.md`.
@@ -35,6 +36,7 @@ which is also what the Roblox guidelines require ("always at full resolution").
 | `lynx-educate.svg` | `lynxeducate.com/wp-content/uploads/2023/10/logo.svg` — as supplied, unmodified |
 | `lynx-educate-reversed.svg` | **Derived by us** from the file above — see below |
 | `google-g.svg` | **Written by us**: Google's standard four-colour 18x18 "G" (`#4285F4`, `#34A853`, `#FBBC05`, `#EA4335`) — see below |
+| `discord-symbol-blurple.svg` | Official Discord brand kit, `discord.com/branding` → Symbol, Blurple SVG (`Discord_Symbol_Color/Discord-Symbol-Blurple.svg` in the zip at `cdn.discordapp.com/assets/content/a736b95923ddbc155e828651c92471292e40727655d770a06cec89c48ba0b41f.zip`), downloaded 2026-10-05 — as supplied, unmodified |
 
 ### The Google "G"
 
@@ -84,3 +86,16 @@ see the partner-brand rules in `src/CLAUDE.md` before putting the mark anywhere 
 
 **Lynx Educate** — see "The derived Lynx mark" above. Their trademark is used with
 permission; the reversal is our own and needs confirming.
+
+**Discord** (from the brand guidelines at `discord.com/branding`): the symbol is never
+edited, distorted, recoloured or reconfigured, and comes only in Discord's own colours —
+Blurple `#5865F2`, black, white, or Light Blurple `#E0E3FF`; the Blurple file is the one
+vendored, because it reads on our dark grounds as shipped. Discord permits its marks to
+tell people that someone has a Discord account or server, never to suggest that we are
+Discord or act for it, and never inside our own branding — a product, event or bot name,
+a logo, or anything confusingly like theirs. So the mark is used digitally, beside the word
+"Discord", to indicate a Discord account (the linked account on the settings Discord
+field, the admin user page and the `/link-discord` confirm page), always decoratively, and
+sized by height so its proportions are kept. Discord is not a partner: this is the use
+their guidelines grant anyone, which is why the per-placement sign-off in `src/CLAUDE.md`
+does not apply to it.

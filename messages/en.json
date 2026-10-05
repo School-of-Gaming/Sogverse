@@ -74,6 +74,7 @@
       "robloxTerms": "Creator Academy Terms & Conditions",
       "geduContract": "Gedu contract",
       "oauthConsent": "Connect an AI app",
+      "linkDiscord": "Link Discord",
       "seatOffer": "Seat offer",
       "geduSubstitutions": "Substitutions",
       "geduInvoicing": "Invoicing",
@@ -1481,7 +1482,8 @@
         "saving": "Saving…",
         "error": "Couldn’t update certification. Please try again."
       },
-      "usernameLabel": "Username"
+      "usernameLabel": "Username",
+      "discordNotLinked": "Not linked"
     },
     "locations": {
       "editName": "Edit {name}",
@@ -4317,6 +4319,12 @@
     "verificationEmailSent": "Verification email sent — check your inbox.",
     "verificationEmailRateLimited": "You’ve asked for this too many times. Please wait a little while before trying again.",
     "verificationEmailFailed": "We couldn’t send the verification email. Please try again.",
+    "discord": {
+      "label": "Discord",
+      "notLinked": "Not linked",
+      "linkHint": "To link your Discord account, type <code>/link</code> in the School of Gaming Discord server.",
+      "relinkHint": "To link a different Discord account, type <code>/link</code> from that account in the School of Gaming Discord server."
+    },
     "marketing": {
       "title": "Marketing preferences",
       "schoolOfGaming": "School of Gaming may send me news and offers by email.",
@@ -5248,6 +5256,36 @@
     "refused": {
       "title": "Only School of Gaming admins can connect an AI app",
       "body": "You're signed in as {email}, which isn't an admin account."
+    }
+  },
+  "discordLink": {
+    "confirm": {
+      "title": "Link your Discord account",
+      "body": "Link the Discord account <b>@{username}</b> to your School of Gaming account? School of Gaming will then be able to reach you on Discord.",
+      "action": "Link account",
+      "failed": "Something went wrong and your account wasn’t linked. Try again."
+    },
+    "linked": {
+      "title": "Linked to @{username}",
+      "body": "School of Gaming can now reach you on Discord.",
+      "goToMySog": "Go to My SOG",
+      "goToDashboard": "Go to the dashboard"
+    },
+    "used": {
+      "title": "This link has already been used",
+      "body": "Each link works once. Run <code>/link</code> in Discord again to get a new one."
+    },
+    "expired": {
+      "title": "This link has expired",
+      "body": "Links expire after 10 minutes. Run <code>/link</code> in Discord again to get a new one."
+    },
+    "missingToken": {
+      "title": "This link is incomplete",
+      "body": "Run <code>/link</code> in Discord again to get a new one."
+    },
+    "refused": {
+      "title": "Only School of Gaming staff can link a Discord account",
+      "body": "This account can’t link one. If you’re on the staff, sign in with your staff account."
     }
   },
   "seatOffer": {
