@@ -8,6 +8,7 @@ import {
   AlertDescription,
   StatusLine,
 } from "@/components/ui/alert";
+import { DiscordToolCard } from "@/components/admin/testing/discord-tool-card";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -433,6 +434,8 @@ export default function TestingPage() {
           </form>
         </CardContent>
       </Card>
+
+      <DiscordToolCard selectClass={selectClass} />
 
       {/* The preview is a dialog rather than a second panel under the form:
           the mail is 720px of reading and the form is what the page is for, so

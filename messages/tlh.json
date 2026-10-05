@@ -1589,7 +1589,19 @@
         "mobile": "De’wI’ mach"
       },
       "attachment": "chelta’ghach: {name}",
-      "sentAttachment": "ngeHta’: {name}"
+      "sentAttachment": "ngeHta’: {name}",
+      "discord": {
+        "tool": "Discord QIn ngong jan",
+        "toolDescription": "QIn jabbI’ Discord jan’e’ vo’ Dochvam qo’, ’ej yInej: QIn ngeHlaH’a’?",
+        "recipient": "QIn Hev",
+        "recipientOption": "{name} ({discordUsername})",
+        "noLinkedAccounts": "Discord mab ghajbe’ pagh. wa’DIch Discord Daq /link yIlo’.",
+        "message": "QIn",
+        "messagePlaceholder": "ghItlh neH, 2000 Degh law’ be’",
+        "send": "ngong QIn yIngeH",
+        "sent": "QIn ngeHta’.",
+        "openInDiscord": "Discord Daq yIpoS"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",

@@ -1545,7 +1545,19 @@
         "mobile": "Mobiili"
       },
       "attachment": "Liite: {name}",
-      "sentAttachment": "Mitä lähetettiin: {name}"
+      "sentAttachment": "Mitä lähetettiin: {name}",
+      "discord": {
+        "tool": "Discord-testaustyökalu",
+        "toolDescription": "Lähetä tämän ympäristön Discord-botilta yksityisviesti linkitetylle tilille ja varmista, että lähetys toimii.",
+        "recipient": "Vastaanottaja",
+        "recipientOption": "{name} ({discordUsername})",
+        "noLinkedAccounts": "Yhdelläkään tilillä ei ole vielä linkitettyä Discord-tiliä. Linkitä tili ensin Discordissa komennolla /link.",
+        "message": "Viesti",
+        "messagePlaceholder": "Pelkkää tekstiä, enintään 2 000 merkkiä",
+        "send": "Lähetä testiviesti",
+        "sent": "Viesti lähetetty.",
+        "openInDiscord": "Avaa Discordissa"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",

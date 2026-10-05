@@ -1545,7 +1545,19 @@
         "mobile": "Mobile"
       },
       "attachment": "Pièce jointe : {name}",
-      "sentAttachment": "Ce qui a été envoyé : {name}"
+      "sentAttachment": "Ce qui a été envoyé : {name}",
+      "discord": {
+        "tool": "Outil de test Discord",
+        "toolDescription": "Envoyez un message privé depuis le bot Discord de cet environnement à un compte associé, pour vérifier que l’envoi fonctionne.",
+        "recipient": "Destinataire",
+        "recipientOption": "{name} ({discordUsername})",
+        "noLinkedAccounts": "Aucun compte n’a encore de compte Discord associé. Associez-en un d’abord avec /link dans Discord.",
+        "message": "Message",
+        "messagePlaceholder": "Texte brut, 2 000 caractères maximum",
+        "send": "Envoyer le message de test",
+        "sent": "Message envoyé.",
+        "openInDiscord": "Ouvrir dans Discord"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",

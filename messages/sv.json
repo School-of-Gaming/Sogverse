@@ -1545,7 +1545,19 @@
         "mobile": "Mobil"
       },
       "attachment": "Bilaga: {name}",
-      "sentAttachment": "Det som skickades: {name}"
+      "sentAttachment": "Det som skickades: {name}",
+      "discord": {
+        "tool": "Testverktyg för Discord",
+        "toolDescription": "Skicka ett direktmeddelande från den här miljöns Discord-bot till ett länkat konto för att kontrollera att utskicket fungerar.",
+        "recipient": "Mottagare",
+        "recipientOption": "{name} ({discordUsername})",
+        "noLinkedAccounts": "Inget konto har ett länkat Discord-konto ännu. Länka ett med /link i Discord först.",
+        "message": "Meddelande",
+        "messagePlaceholder": "Ren text, högst 2 000 tecken",
+        "send": "Skicka testmeddelande",
+        "sent": "Meddelandet skickades.",
+        "openInDiscord": "Öppna i Discord"
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",
