@@ -89,6 +89,13 @@ reference nobody asked to clear; demanding the field is what makes clearing it a
 null. The cadence goes one step further and has no default in either function at all, so a
 caller that leaves it out is refused rather than quietly turning a quarterly buyer monthly.
 
+**A customer's cadence is set when it is created and is not expected to change** (owner's
+ruling, October 2026), so nothing guards a change. The export remembers nothing it has
+produced and derives every period from the cadence as it stands, so a change partway
+through a period re-bills that period's months already invoiced under the old cadence, or
+never offers them again. A change that has to happen is a one-off made after the last file
+under the old cadence is downloaded.
+
 **The list is walked rather than read in one request.** It is a few dozen rows today and
 that is a fact about current data rather than a property of the query — the table only
 grows, and a truncated read would quietly stop offering the customers that fell off the
