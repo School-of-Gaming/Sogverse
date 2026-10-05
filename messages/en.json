@@ -650,8 +650,11 @@
       "grantedOn": "Granted on {date}",
       "grantedOnBy": "Granted on {date} by {name}",
       "notGranted": "Not granted",
-      "error": "Couldn’t update the qualification. Please try again.",
-      "missingWarning": "This Gedu does not hold the {qualification} qualification, which this product requires."
+      "error": "Couldn’t update the qualification. Please try again."
+    },
+    "missingRequirements": {
+      "qualification": "This Gedu does not hold the {qualification} qualification, which this product requires.",
+      "language": "This product is run in {language}, which this Gedu has not listed as a language they speak."
     },
     "geduCertifyWarnings": {
       "title": "Certify anyway?",
@@ -1137,7 +1140,8 @@
         "notCertified": "Not certified",
         "alreadyTrainee": "Already a trainee",
         "traineeInstead": "Can be added as a trainee instead.",
-        "notQualified": "Not qualified: {qualification}"
+        "notQualified": "Not qualified: {qualification}",
+        "doesNotSpeak": "Doesn’t speak {language}"
       },
       "participantPicker": {
         "title": "Add a participant",
@@ -1302,9 +1306,9 @@
           },
           "confirm": "Switch club"
         },
-        "unqualified": {
+        "requirementGaps": {
           "title": "Assign anyway?",
-          "body": "A missing qualification doesn’t block the assignment, so you can assign them anyway.",
+          "body": "A missing qualification or language doesn’t block the assignment, so you can assign them anyway.",
           "action": "Assign anyway"
         }
       },
@@ -2407,6 +2411,7 @@
       "poolWithdrawPending": "Withdrawing…",
       "poolActionFailed": "That didn’t save. Try again.",
       "poolOfferFailedNotQualified": "This session needs a qualification you don’t hold, so you can’t offer to cover it.",
+      "poolOfferFailedLanguage": "This session is run in a language you haven’t listed as one you speak, so you can’t offer to cover it. You can add languages in your settings.",
       "pageTitle": "Substitutions",
       "back": "Back to My SOG",
       "mineHeading": "You’re substituting",

@@ -9,7 +9,7 @@ import {
   type StaffingAssignment,
 } from "@/lib/session-staffing";
 import type { UserListEntry } from "@/services/users";
-import type { GeduQualification } from "@/types";
+import type { SessionRequirements } from "@/lib/products/session-requirements";
 
 /**
  * ============================================================================
@@ -120,11 +120,12 @@ function renderEditor({
   onSetSubstitution = vi.fn(() => Promise.resolve()),
   onClearSubstitution = vi.fn(() => Promise.resolve()),
   onWithdrawRequest = vi.fn(() => Promise.resolve()),
-  requiredQualifications = [],
+  requirements = { qualifications: [], language: "fi" },
 }: {
   gedus: readonly StaffingAssignment[];
   requests?: readonly SubstitutionRequestInput[];
-  requiredQualifications?: readonly GeduQualification[];
+  /** Every candidate speaks Finnish, so the default asks nothing of them. */
+  requirements?: SessionRequirements;
   onSetSubstitution?: ReturnType<typeof vi.fn>;
   onClearSubstitution?: ReturnType<typeof vi.fn>;
   onWithdrawRequest?: ReturnType<typeof vi.fn>;
@@ -134,7 +135,7 @@ function renderEditor({
       <SessionStaffingEditor
         staffing={staffingOf(gedus, requests)}
         sessionDate={SESSION_DATE}
-        requiredQualifications={requiredQualifications}
+        requirements={requirements}
         onSetSubstitution={onSetSubstitution}
         onClearSubstitution={onClearSubstitution}
         onWithdrawRequest={onWithdrawRequest}
@@ -604,9 +605,9 @@ describe("the admin session staffing editor", () => {
   it("seats a sub lacking a required qualification, warning in the confirm it already asks", async () => {
     const { onSetSubstitution } = renderEditor({
       gedus: ONE_PRIMARY,
-      requiredQualifications: ["neuroinclusive"],
+      requirements: { qualifications: ["neuroinclusive"], language: "fi" },
     });
-    const warning = messages.admin.geduQualifications.missingWarning.replace(
+    const warning = messages.admin.missingRequirements.qualification.replace(
       "{qualification}",
       messages.productTag.neuroinclusive,
     );
@@ -645,7 +646,7 @@ describe("the admin session staffing editor", () => {
   it("warns about nothing when the sub holds every required qualification", () => {
     renderEditor({
       gedus: ONE_PRIMARY,
-      requiredQualifications: ["neuroinclusive"],
+      requirements: { qualifications: ["neuroinclusive"], language: "fi" },
     });
 
     choose(copy.setSubstitute);
@@ -656,6 +657,42 @@ describe("the admin session staffing editor", () => {
 
     expect(screen.getByText(copy.confirmTitle)).not.toBeNull();
     expect(screen.queryByText(/qualification, which this product requires/)).toBeNull();
+  });
+
+  it("seats a sub who does not speak the session's language, warning in the same confirm", async () => {
+    const { onSetSubstitution } = renderEditor({
+      gedus: ONE_PRIMARY,
+      requirements: { qualifications: [], language: "en" },
+    });
+    // Every candidate speaks Finnish alone.
+    const warning = messages.admin.missingRequirements.language.replace(
+      "{language}",
+      "English",
+    );
+
+    choose(copy.setSubstitute);
+    const petra = pickerRow(PETRA);
+    expect(isDisabled(petra)).toBe(false);
+    expect(
+      within(petra).getByText(
+        pickerCopy.doesNotSpeak.replace("{language}", "English"),
+      ),
+    ).not.toBeNull();
+
+    fireEvent.click(petra);
+    expect(screen.getByText(copy.confirmTitle)).not.toBeNull();
+    expect(screen.getByText(warning)).not.toBeNull();
+    expect(onSetSubstitution).not.toHaveBeenCalled();
+
+    chooseReason();
+    await act(async () => {
+      fireEvent.click(button(copy.confirmAction));
+    });
+    expect(onSetSubstitution).toHaveBeenCalledWith({
+      absentGeduId: SANNA,
+      subGeduId: PETRA,
+      reason: "sick",
+    });
   });
 
   it("waits for a reason before the confirm will commit", () => {

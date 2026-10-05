@@ -3720,6 +3720,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      gedu_speaks_session_language: {
+        Args: { p_gedu_id: string; p_group_id: string }
+        Returns: boolean
+      }
       gedu_substitutes_group: { Args: { p_group_id: string }; Returns: boolean }
       gedu_substitutes_session: {
         Args: { p_group_id: string; p_session_date: string }

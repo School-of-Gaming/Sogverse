@@ -7,9 +7,9 @@ import {
   GeduPickerSheet,
   type GeduPickerUnavailability,
 } from "@/components/admin/products/gedu-picker-sheet";
-import { MissingQualificationsWarning } from "@/components/admin/missing-qualifications-warning";
+import { MissingRequirementsWarning } from "@/components/admin/missing-requirements-warning";
 import { seatSubstituteFailureKey } from "@/services/session-substitution";
-import type { GeduQualification } from "@/types";
+import type { MissingRequirement } from "@/lib/products/session-requirements";
 import type {
   SeatSubstituteDraft,
   SubstitutionRequest,
@@ -28,12 +28,11 @@ export interface SeatSubstituteFlowState {
   request: SubstitutionRequest;
   /**
    * The chosen gedu, once the picker has closed on a selection — with the
-   * qualifications the product requires that they lack, which the confirm
-   * names.
+   * session's requirements they fall short of, which the confirm names.
    */
   sub:
     | (SeatSubstituteDraft["sub"] & {
-        missingQualifications: readonly GeduQualification[];
+        missingRequirements: readonly MissingRequirement[];
       })
     | null;
 }
@@ -88,8 +87,8 @@ export function SeatSubstituteFlow({
         title={tStaffing("pickerTitle")}
         description={tStaffing("pickerDescription", { name: absent })}
         unavailable={absentOnly(request.requesterId)}
-        requiredQualifications={request.requiredQualifications}
-        onSelect={(gedu, missingQualifications) =>
+        requirements={request.requirements}
+        onSelect={(gedu, missingRequirements) =>
           setFlow({
             ...flow,
             step: "confirm",
@@ -97,7 +96,7 @@ export function SeatSubstituteFlow({
               id: gedu.id,
               firstName: gedu.first_name,
               lastName: gedu.last_name,
-              missingQualifications,
+              missingRequirements,
             },
           })
         }
@@ -107,7 +106,7 @@ export function SeatSubstituteFlow({
         <SeatSubstituteDialog
           request={request}
           sub={sub}
-          missingQualifications={sub.missingQualifications}
+          missingRequirements={sub.missingRequirements}
           onClose={() => setFlow(null)}
           onConfirm={() =>
             onConfirm({
@@ -163,21 +162,21 @@ function absentOnly(
  * group's workspace 48 hours before the session, and the write is refusable,
  * so the answer arrives where the question was asked.
  *
- * **A missing qualification is a warning in this same dialog, never a second
+ * **A missing requirement is a warning in this same dialog, never a second
  * one**: the seat is the question, and the gap is a fact about the answer, so
- * it is stated here — one line per qualification, last before the buttons —
- * and the admin may seat the gedu anyway.
+ * it is stated here — one line per missing qualification or language, last
+ * before the buttons — and the admin may seat the gedu anyway.
  */
 function SeatSubstituteDialog({
   request,
   sub,
-  missingQualifications,
+  missingRequirements,
   onClose,
   onConfirm,
 }: {
   request: SubstitutionRequest;
   sub: SeatSubstituteDraft["sub"];
-  missingQualifications: readonly GeduQualification[];
+  missingRequirements: readonly MissingRequirement[];
   onClose: () => void;
   onConfirm: () => Promise<void>;
 }) {
@@ -214,7 +213,7 @@ function SeatSubstituteDialog({
     >
       {/* Null rather than an empty box where there is neither, because the
           dialog spaces any children it is given. */}
-      {(request.reason !== null || missingQualifications.length > 0) && (
+      {(request.reason !== null || missingRequirements.length > 0) && (
         <div className="space-y-4">
           {request.reason !== null && (
             <dl className="text-sm">
@@ -234,7 +233,7 @@ function SeatSubstituteDialog({
           )}
           {/* After the gedu's reason, which is context, and directly above the
               buttons, so the gap is the last thing read before the choice. */}
-          <MissingQualificationsWarning missing={missingQualifications} />
+          <MissingRequirementsWarning missing={missingRequirements} />
         </div>
       )}
     </ConfirmDialog>

@@ -13,7 +13,7 @@ import { myAssignedProductRows } from "@/services/assignments/assignments.contra
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
-import { productRequiredQualifications } from "@/lib/products/required-qualifications";
+import { productRequiredQualifications } from "@/lib/products/session-requirements";
 
 /**
  * Session substitutions: who is absent, who stood in, who may reach what, and
@@ -67,9 +67,9 @@ import { productRequiredQualifications } from "@/lib/products/required-qualifica
  *     weekday ORPHAN_PRODUCT's schedule skips.
  *   - MUNI_PRODUCT (GROUP_MUNI) is an untagged municipality club: the one
  *     kind of product that requires no gedu qualification at all.
- *   - SUB and THIRD are minted gedus, certified and holding consumer_products
- *     (every product above but MUNI_PRODUCT is a consumer club), torn down with
- *     the file.
+ *   - SUB and THIRD are minted gedus, certified, holding consumer_products
+ *     (every product above but MUNI_PRODUCT is a consumer club) and speaking
+ *     English (every product above is run in it), torn down with the file.
  */
 
 const PRODUCT = "00000000-0000-0000-0000-000000000810";
@@ -504,6 +504,13 @@ describe("session substitutions", () => {
       })),
     );
     await admin.from("products").update({ tag: null }).eq("id", PRODUCT);
+    // Every product here is run in English, and a gedu who does not speak a
+    // session's language can neither see nor offer on its request. The
+    // language cases change this deliberately.
+    await admin
+      .from("profiles")
+      .update({ spoken_languages: ["en"] })
+      .in("id", [subId, thirdId]);
   });
 
   /** Writes a request row straight to the table, bypassing every RPC guard. */
@@ -2019,6 +2026,91 @@ describe("session substitutions", () => {
       const offered = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       expect(offered.error).toBeNull();
       await setQualification(subId, "consumer_products", false);
+
+      const { data: offer } = await admin
+        .from("session_substitution_offers")
+        .select("id")
+        .eq("request_id", id)
+        .eq("gedu_id", subId)
+        .single();
+      const { data, error } = await adminAuth.rpc("approve_session_substitution_offer", {
+        p_offer_id: offer?.id ?? "",
+      });
+      expect(error).toBeNull();
+      expect(substitutionRequestDocument.parse(data).substitute_id).toBe(subId);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 7c. Spoken language: the same hard gate on the gedu's paths, none on the
+  //     admin's
+  // -------------------------------------------------------------------------
+
+  describe("the session's language gates the pool and the offer, and nothing an admin does", () => {
+    async function poolIds(client: SupabaseClient<Database>) {
+      const { data, error } = await client.rpc("get_open_substitution_requests");
+      expect(error).toBeNull();
+      return openSubstitutionRequests.parse(data).map((row) => row.request_id);
+    }
+
+    async function setSpokenLanguages(
+      gedu: string,
+      languages: Database["public"]["Enums"]["spoken_language"][],
+    ) {
+      const { error } = await admin
+        .from("profiles")
+        .update({ spoken_languages: languages })
+        .eq("id", gedu);
+      expect(error).toBeNull();
+    }
+
+    it("keeps a request out of the pool of a gedu who does not speak its language, until they list it", async () => {
+      const id = await seedRequest({ date: utcDate(7) });
+      await setSpokenLanguages(subId, ["fi", "sv"]);
+
+      expect(await poolIds(subAuth)).not.toContain(id);
+
+      // Certified, qualified and otherwise able to take it: the language is the
+      // one thing missing, and the refusal says so in its own words.
+      const refused = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect(refused.error?.code).toBe(FORBIDDEN);
+      expect(refused.error?.message).toContain("does not speak the language");
+
+      await setSpokenLanguages(subId, ["fi", "en"]);
+      expect(await poolIds(subAuth)).toContain(id);
+      const offered = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect(offered.error).toBeNull();
+    });
+
+    it("shows a gedu who has listed no language an empty pool", async () => {
+      await seedRequest({ date: utcDate(7) });
+      await seedRequest({ groupId: GROUP_MUNI, date: utcDate(8) });
+      await setSpokenLanguages(subId, []);
+
+      // Not only this file's requests: no session anywhere is run in a
+      // language among none.
+      expect(await poolIds(subAuth)).toEqual([]);
+    });
+
+    it("lets an admin seat a gedu who does not speak the session's language", async () => {
+      await setSpokenLanguages(subId, ["fi"]);
+
+      const { data, error } = await adminAuth.rpc("set_session_substitution", {
+        p_group_id: GROUP_A,
+        p_session_date: utcDate(5),
+        p_absent_gedu_id: TEST_IDS.GEDU,
+        p_sub_gedu_id: subId,
+        p_reason: "sick",
+      });
+      expect(error).toBeNull();
+      expect(substitutionRequestDocument.parse(data).substitute_id).toBe(subId);
+    });
+
+    it("approves an offer whose gedu has since stopped listing the language", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+      const offered = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect(offered.error).toBeNull();
+      await setSpokenLanguages(subId, ["fi"]);
 
       const { data: offer } = await admin
         .from("session_substitution_offers")

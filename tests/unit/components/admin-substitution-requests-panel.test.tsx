@@ -141,7 +141,8 @@ const WITH_OFFERS: SubstitutionRequest = {
   sessionDate: "Mon 17 Aug",
   sessionTime: "17:00–18:30",
   urgent: true,
-  requiredQualifications: [],
+  // Every candidate speaks Finnish, so this asks nothing of them.
+  requirements: { qualifications: [], language: "fi" },
   role: "primary",
   reason: "sick",
   reasonNote: "Flunssa.",
@@ -376,7 +377,12 @@ describe("the admin Substitutions page's queue panel", () => {
   it("seats a gedu lacking a required qualification over a warning in the same confirm", async () => {
     const seat = vi.fn((_draft: SeatSubstituteDraft) => Promise.resolve());
     const { container } = renderPanel(
-      [{ ...WITHOUT_OFFERS, requiredQualifications: ["consumer_products"] }],
+      [
+        {
+          ...WITHOUT_OFFERS,
+          requirements: { qualifications: ["consumer_products"], language: "fi" },
+        },
+      ],
       approveNothing,
       seat,
     );
@@ -396,7 +402,7 @@ describe("the admin Substitutions page's queue panel", () => {
       screen.getByText("admin.substitutions.seatConfirmTitle"),
     ).toBeTruthy();
     expect(
-      screen.getByText("admin.geduQualifications.missingWarning"),
+      screen.getByText("admin.missingRequirements.qualification"),
     ).toBeTruthy();
     expect(seat).not.toHaveBeenCalled();
 
@@ -425,8 +431,43 @@ describe("the admin Substitutions page's queue panel", () => {
     ).toBeNull();
     await act(async () => pickerRow("Iida").click());
     expect(
-      screen.queryByText("admin.geduQualifications.missingWarning"),
+      screen.queryByText("admin.missingRequirements.qualification"),
     ).toBeNull();
+    expect(screen.queryByText("admin.missingRequirements.language")).toBeNull();
+  });
+
+  it("seats a gedu who does not speak the session's language over a warning in the same confirm", async () => {
+    const seat = vi.fn((_draft: SeatSubstituteDraft) => Promise.resolve());
+    const { container } = renderPanel(
+      [{ ...WITHOUT_OFFERS, requirements: { qualifications: [], language: "en" } }],
+      approveNothing,
+      seat,
+    );
+
+    await act(async () => pressSeat(container, 0));
+    // Iida speaks Finnish alone: still pickable, and the row says so.
+    const iida = pickerRow("Iida");
+    expect(iida.hasAttribute("disabled")).toBe(false);
+    expect(
+      within(iida).getByText("admin.products.geduPicker.doesNotSpeak"),
+    ).toBeTruthy();
+    expect(
+      within(iida).queryByText("admin.products.geduPicker.notQualified"),
+    ).toBeNull();
+    await act(async () => iida.click());
+
+    expect(
+      screen.getByText("admin.substitutions.seatConfirmTitle"),
+    ).toBeTruthy();
+    expect(screen.getByText("admin.missingRequirements.language")).toBeTruthy();
+    expect(seat).not.toHaveBeenCalled();
+
+    await act(async () =>
+      screen
+        .getByRole("button", { name: "admin.substitutions.seatConfirm" })
+        .click(),
+    );
+    expect(seat).toHaveBeenCalledTimes(1);
   });
 
   it("drops the request once the seat and the refetch have both landed", async () => {

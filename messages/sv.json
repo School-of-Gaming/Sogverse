@@ -650,8 +650,11 @@
       "grantedOn": "Beviljad {date}",
       "grantedOnBy": "Beviljad av {name} {date}",
       "notGranted": "Inte beviljad",
-      "error": "Det gick inte att uppdatera behörigheten. Försök igen.",
-      "missingWarning": "Den här Gedun saknar behörigheten {qualification}, som den här produkten kräver."
+      "error": "Det gick inte att uppdatera behörigheten. Försök igen."
+    },
+    "missingRequirements": {
+      "qualification": "Den här Gedun saknar behörigheten {qualification}, som den här produkten kräver.",
+      "language": "Den här produkten hålls på {language}, som den här Gedun inte har angett att hen talar."
     },
     "geduCertifyWarnings": {
       "title": "Certifiera ändå?",
@@ -1137,7 +1140,8 @@
         "notCertified": "Inte certifierad",
         "alreadyTrainee": "Redan praktikant",
         "traineeInstead": "Kan läggas till som praktikant i stället.",
-        "notQualified": "Saknar behörighet: {qualification}"
+        "notQualified": "Saknar behörighet: {qualification}",
+        "doesNotSpeak": "Talar inte {language}"
       },
       "participantPicker": {
         "title": "Lägg till en deltagare",
@@ -1302,9 +1306,9 @@
           },
           "confirm": "Byt klubb"
         },
-        "unqualified": {
+        "requirementGaps": {
           "title": "Tilldela ändå?",
-          "body": "En saknad behörighet hindrar inte tilldelningen, så du kan tilldela hen ändå.",
+          "body": "En saknad behörighet eller ett saknat språk hindrar inte tilldelningen, så du kan tilldela hen ändå.",
           "action": "Tilldela ändå"
         }
       },
@@ -2407,6 +2411,7 @@
       "poolWithdrawPending": "Drar tillbaka…",
       "poolActionFailed": "Det sparades inte. Försök igen.",
       "poolOfferFailedNotQualified": "Det här tillfället kräver en behörighet som du inte har, så du kan inte erbjuda dig att vikariera.",
+      "poolOfferFailedLanguage": "Det här tillfället hålls på ett språk som du inte har angett att du talar, så du kan inte erbjuda dig att vikariera. Du kan lägga till språk i dina inställningar.",
       "pageTitle": "Vikariat",
       "back": "Tillbaka till Min SOG",
       "mineHeading": "Dina vikariat",

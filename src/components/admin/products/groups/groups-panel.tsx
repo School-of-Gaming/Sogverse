@@ -34,26 +34,23 @@ import { useRobloxRenders } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
 import { computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
-import type {
-  BillingMode,
-  GeduQualification,
-  ProductTag,
-  ProductTopic,
-  ProductType,
-} from "@/types";
+import type { BillingMode, ProductTopic, ProductType } from "@/types";
 import { ROUTES } from "@/lib/constants";
-import { productRequiredQualifications } from "@/lib/products/required-qualifications";
+import type {
+  MissingRequirement,
+  SessionRequirements,
+} from "@/lib/products/session-requirements";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { MissingQualificationsWarning } from "@/components/admin/missing-qualifications-warning";
+import { MissingRequirementsWarning } from "@/components/admin/missing-requirements-warning";
 
 interface GroupsPanelProps {
   productId: string;
   productType: ProductType;
   /**
-   * The product's tag, null when untagged. Read only together with the type,
-   * for the gedu qualifications a staff seat on it requires.
+   * What the product requires of whoever runs it (`sessionRequirements`) — the
+   * qualifications and the language a staff seat on it warns about.
    */
-  tag: ProductTag | null;
+  requirements: SessionRequirements;
   /**
    * How the product is paid for — read only together with the type, to decide
    * whether this is a subscription-shaped seat. Passed straight through.
@@ -112,7 +109,7 @@ interface GroupsPanelProps {
 export function GroupsPanel({
   productId,
   productType,
-  tag,
+  requirements,
   billingMode,
   topic,
   audience,
@@ -154,16 +151,12 @@ export function GroupsPanel({
   // never cleared on close, so a sheet animating out keeps the rows it opened
   // with rather than re-deciding which of them are selectable mid-exit.
   const [pickerSeat, setPickerSeat] = useState<GeduPickerSeat>("staff");
-  // A staff pick lacking a required qualification, held for the confirm that
+  // A staff pick falling short of a requirement, held for the confirm that
   // names the gap — the one add that is asked about before it is made.
-  const [unqualifiedAssignment, setUnqualifiedAssignment] = useState<{
+  const [assignmentWithGaps, setAssignmentWithGaps] = useState<{
     assignment: Parameters<typeof addGedu.mutate>[0];
-    missing: readonly GeduQualification[];
+    missing: readonly MissingRequirement[];
   } | null>(null);
-  const requiredQualifications = useMemo(
-    () => productRequiredQualifications({ product_type: productType, tag }),
-    [productType, tag],
-  );
   const [participantPickerOpen, setParticipantPickerOpen] = useState(false);
   // The seat whose club switch is open, and — separately — whether that switch
   // is currently moving money. The sheet reports the second back rather than
@@ -357,7 +350,7 @@ export function GroupsPanel({
             unavailable={alreadySeated}
             seat={pickerSeat}
             offerTraineeInstead
-            requiredQualifications={requiredQualifications}
+            requirements={requirements}
             onSelect={(gedu, missing) => {
               if (!pickerForGroupId) return;
               if (pickerSeat === "trainee") {
@@ -383,11 +376,11 @@ export function GroupsPanel({
                 role: "primary",
               };
               setPickerForGroupId(null);
-              // A gedu lacking a qualification the product requires is
-              // assigned over a confirm that names the gap; anyone else is
-              // assigned on the press, as every add always was.
+              // A gedu falling short of what the product requires is assigned
+              // over a confirm that names the gap; anyone else is assigned on
+              // the press, as every add always was.
               if (missing.length > 0) {
-                setUnqualifiedAssignment({ assignment, missing });
+                setAssignmentWithGaps({ assignment, missing });
                 return;
               }
               addGedu.mutate(assignment);
@@ -398,21 +391,19 @@ export function GroupsPanel({
               group the moment the press lands and the dialog has nothing left
               to wait for. Mounted only while asked, which is what clears the
               question for the next pick. */}
-          {unqualifiedAssignment !== null && (
+          {assignmentWithGaps !== null && (
             <ConfirmDialog
               open
               onOpenChange={(next) => {
-                if (!next) setUnqualifiedAssignment(null);
+                if (!next) setAssignmentWithGaps(null);
               }}
-              title={t("unqualified.title")}
-              description={t("unqualified.body")}
-              confirmLabel={t("unqualified.action")}
+              title={t("requirementGaps.title")}
+              description={t("requirementGaps.body")}
+              confirmLabel={t("requirementGaps.action")}
               confirmVariant="default"
-              onConfirm={() => addGedu.mutate(unqualifiedAssignment.assignment)}
+              onConfirm={() => addGedu.mutate(assignmentWithGaps.assignment)}
             >
-              <MissingQualificationsWarning
-                missing={unqualifiedAssignment.missing}
-              />
+              <MissingRequirementsWarning missing={assignmentWithGaps.missing} />
             </ConfirmDialog>
           )}
 

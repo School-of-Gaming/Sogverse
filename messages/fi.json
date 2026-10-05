@@ -650,8 +650,11 @@
       "grantedOn": "Myönnetty {date}",
       "grantedOnBy": "Myöntänyt {name} {date}",
       "notGranted": "Ei myönnetty",
-      "error": "Pätevyyden päivitys epäonnistui. Yritä uudelleen.",
-      "missingWarning": "Tällä Gedulla ei ole pätevyyttä, jota tämä tuote edellyttää: {qualification}."
+      "error": "Pätevyyden päivitys epäonnistui. Yritä uudelleen."
+    },
+    "missingRequirements": {
+      "qualification": "Tällä Gedulla ei ole pätevyyttä, jota tämä tuote edellyttää: {qualification}.",
+      "language": "Tämän tuotteen kieli on {language}, mutta tämä Gedu ei ole ilmoittanut puhuvansa sitä."
     },
     "geduCertifyWarnings": {
       "title": "Hyväksytäänkö silti?",
@@ -1137,7 +1140,8 @@
         "notCertified": "Ei hyväksytty",
         "alreadyTrainee": "Jo harjoittelijana",
         "traineeInstead": "Voidaan lisätä harjoittelijaksi.",
-        "notQualified": "Pätevyys puuttuu: {qualification}"
+        "notQualified": "Pätevyys puuttuu: {qualification}",
+        "doesNotSpeak": "Ei puhu kieltä: {language}"
       },
       "participantPicker": {
         "title": "Lisää osallistuja",
@@ -1302,9 +1306,9 @@
           },
           "confirm": "Vaihda kerhoa"
         },
-        "unqualified": {
+        "requirementGaps": {
           "title": "Lisätäänkö silti?",
-          "body": "Puuttuva pätevyys ei estä lisäämistä, joten voit lisätä hänet ryhmään silti.",
+          "body": "Puuttuva pätevyys tai kieli ei estä lisäämistä, joten voit lisätä hänet ryhmään silti.",
           "action": "Lisää silti"
         }
       },
@@ -2407,6 +2411,7 @@
       "poolWithdrawPending": "Perutaan…",
       "poolActionFailed": "Tallennus epäonnistui. Yritä uudelleen.",
       "poolOfferFailedNotQualified": "Tämä kerta vaatii pätevyyden, jota sinulla ei ole, joten et voi tarjoutua tuuraajaksi.",
+      "poolOfferFailedLanguage": "Tämän kerran kieli ei ole niiden kielten joukossa, joita olet ilmoittanut puhuvasi, joten et voi tarjoutua tuuraajaksi. Voit lisätä kieliä asetuksissasi.",
       "pageTitle": "Tuuraukset",
       "back": "Takaisin Omaan SOGiin",
       "mineHeading": "Tuurauksesi",

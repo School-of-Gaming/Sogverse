@@ -23,9 +23,13 @@ import {
   SPOKEN_LANGUAGES,
   type SpokenLanguageCode,
 } from "@/lib/constants/spoken-languages";
-import { missingQualifications } from "@/lib/products/required-qualifications";
+import {
+  missingRequirementKey,
+  missingRequirements,
+  type MissingRequirement,
+  type SessionRequirements,
+} from "@/lib/products/session-requirements";
 import { cn } from "@/lib/utils";
-import type { GeduQualification } from "@/types";
 import { useQualificationNames } from "@/components/admin/qualification-names";
 
 /**
@@ -107,23 +111,22 @@ interface GeduPickerSheetProps {
    */
   offerTraineeInstead?: boolean;
   /**
-   * `staff` seats only: the qualifications the product being staffed requires
-   * (`productRequiredQualifications`). A row whose gedu lacks one **stays
-   * selectable** and says which it lacks — for an admin a missing
-   * qualification is a warning, never a refusal, and the caller's confirm step
+   * `staff` seats only: what the product being staffed requires of whoever
+   * runs it — its qualifications and its language. A row whose gedu falls
+   * short **stays selectable** and says where — for an admin a missing
+   * requirement is a warning, never a refusal, and the caller's confirm step
    * is where the admin says they meant it. Ignored on a `trainee` seat, which
-   * qualifications gate no more than certification does.
+   * the requirements gate no more than certification does.
    */
-  requiredQualifications?: readonly GeduQualification[];
+  requirements?: SessionRequirements;
   /**
-   * The pick, with the required qualifications the gedu lacks — empty when
-   * they hold them all, and always empty on a `trainee` seat. Handed over
-   * rather than recomputed so the confirm step names exactly the gap the row
-   * showed.
+   * The pick, with the requirements the gedu falls short of — empty when they
+   * meet them all, and always empty on a `trainee` seat. Handed over rather
+   * than recomputed so the confirm step names exactly the gap the row showed.
    */
   onSelect: (
     gedu: UserListEntry,
-    missingQualifications: readonly GeduQualification[],
+    missing: readonly MissingRequirement[],
   ) => void;
 }
 
@@ -159,12 +162,12 @@ export function GeduPickerSheet({
   highlightId,
   seat = "staff",
   offerTraineeInstead = false,
-  requiredQualifications,
+  requirements,
   onSelect,
 }: GeduPickerSheetProps) {
   const t = useTranslations("admin.products.geduPicker");
   const qualificationNames = useQualificationNames();
-  const required = seat === "staff" ? (requiredQualifications ?? []) : [];
+  const required = seat === "staff" ? requirements : undefined;
   const [search, setSearch] = useState("");
   const [languageFilter, setLanguageFilter] =
     useState<SpokenLanguageCode | null>(null);
@@ -335,9 +338,10 @@ export function GeduPickerSheet({
               // Said only on a row that can be picked: a refused row already
               // says why it cannot, and a second fact beside the refusal would
               // be about a choice the admin is not being offered.
-              const missing = isDisabled
-                ? []
-                : missingQualifications(required, g.qualifications);
+              const missing =
+                isDisabled || required === undefined
+                  ? []
+                  : missingRequirements(required, g);
               return (
                 <GeduRow
                   key={g.id}
@@ -348,11 +352,17 @@ export function GeduPickerSheet({
                   isUncertified={isUncertified}
                   refusesUncertified={refusesUncertified}
                   showTraineeHint={refusesUncertified && offerTraineeInstead}
-                  qualificationGaps={missing.map((qualification) => ({
-                    qualification,
-                    line: t("notQualified", {
-                      qualification: qualificationNames[qualification],
-                    }),
+                  requirementGaps={missing.map((requirement) => ({
+                    key: missingRequirementKey(requirement),
+                    line:
+                      requirement.kind === "qualification"
+                        ? t("notQualified", {
+                            qualification:
+                              qualificationNames[requirement.qualification],
+                          })
+                        : t("doesNotSpeak", {
+                            language: languageName(requirement.language),
+                          }),
                   }))}
                   isDisabled={isDisabled}
                   onClick={() => {
@@ -401,13 +411,10 @@ interface GeduRowProps {
   /** Say under the address that this educator can be placed as a trainee. */
   showTraineeHint: boolean;
   /**
-   * One line per required qualification this selectable gedu lacks — empty
-   * where they hold every one the seat requires.
+   * One line per requirement this selectable gedu falls short of — empty
+   * where they meet every one the seat requires.
    */
-  qualificationGaps: readonly {
-    qualification: GeduQualification;
-    line: string;
-  }[];
+  requirementGaps: readonly { key: string; line: string }[];
   isDisabled: boolean;
   onClick: () => void;
 }
@@ -420,7 +427,7 @@ function GeduRow({
   isUncertified,
   refusesUncertified,
   showTraineeHint,
-  qualificationGaps,
+  requirementGaps,
   isDisabled,
   onClick,
 }: GeduRowProps) {
@@ -475,14 +482,14 @@ function GeduRow({
           <p className="text-xs text-muted-foreground">{t("traineeInstead")}</p>
         )}
         {/* Lines rather than badges beside the name: the qualification names
-            run long in the longer locales, and a row can lack both, which
+            run long in the longer locales, and a row can lack several, which
             beside a name would squeeze the surname that tells two Mikkos
             apart. One line per gap, as the confirm step words them. They sit
             where the trainee hint does, the other line a row carries about its
             own standing, and never on the same row as it — the hint is for a
             refused row, these for a selectable one. */}
-        {qualificationGaps.map(({ qualification, line }) => (
-          <StatusLine key={qualification} status="warning" size="xs" muted>
+        {requirementGaps.map(({ key, line }) => (
+          <StatusLine key={key} status="warning" size="xs" muted>
             {line}
           </StatusLine>
         ))}

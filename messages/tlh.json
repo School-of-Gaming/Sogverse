@@ -694,8 +694,11 @@
       "grantedOn": "nobpu’: {date}",
       "grantedOnBy": "nobpu’ {name}: {date}",
       "notGranted": "nobbe’lu’",
-      "error": "laH choHlu’be’pu’. yInID.",
-      "missingWarning": "{qualification} laH ghajbe’ Geduvam. laHvam poQ Doch."
+      "error": "laH choHlu’be’pu’. yInID."
+    },
+    "missingRequirements": {
+      "qualification": "{qualification} laH ghajbe’ Geduvam. laHvam poQ Doch.",
+      "language": "{language} Hol lo’ Dochvam. Hol jatlhlaHbe’ Geduvam."
     },
     "geduCertifyWarnings": {
       "title": "patlh yInob ’e’ DaHech’a’?",
@@ -1181,7 +1184,8 @@
         "notCertified": "patlh ghajbe’",
         "alreadyTrainee": "ghojwI’ ghaHpu’",
         "traineeInstead": "ghojwI’ DachellaH.",
-        "notQualified": "laH ghajbe’: {qualification}"
+        "notQualified": "laH ghajbe’: {qualification}",
+        "doesNotSpeak": "Hol jatlhlaHbe’: {language}"
       },
       "participantPicker": {
         "title": "ghom yIchel",
@@ -1346,9 +1350,9 @@
           },
           "confirm": "ghom’a’ yIchIj"
         },
-        "unqualified": {
+        "requirementGaps": {
           "title": "ghomvaD yIchu’ ’e’ DaHech’a’?",
-          "body": "laH ghajbe’, ’ach ghomvaD Dachu’laH.",
+          "body": "laH pagh Hol ghajbe’, ’ach ghomvaD Dachu’laH.",
           "action": "yIchu’ ’e’ yIruch"
         }
       },
@@ -2447,6 +2451,7 @@
       "poolWithdrawPending": "natlhlI’…",
       "poolActionFailed": "pollu’be’. yIboq.",
       "poolOfferFailedNotQualified": "laH Daghajbe’bogh poQ may’vam. bIlIwqanglaHbe’.",
+      "poolOfferFailedLanguage": "Hol DajatlhlaHbe’bogh lo’ may’vam. bIlIwqanglaHbe’. DuHmey DaSeHbogh DaqDaq Hol DachellaH.",
       "pageTitle": "lIwmey",
       "back": "jIH SOGDaq yIchegh",
       "mineHeading": "DalIwbogh may’mey",

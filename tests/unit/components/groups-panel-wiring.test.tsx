@@ -7,12 +7,14 @@ import { TimezoneProvider } from "@/providers";
 import type { UserListEntry } from "@/services/users";
 import type {
   BillingMode,
-  GeduQualification,
   ProductGroupsSnapshot,
-  ProductTag,
   ProductTopic,
   ProductType,
 } from "@/types";
+import type {
+  MissingRequirement,
+  SessionRequirements,
+} from "@/lib/products/session-requirements";
 
 /**
  * The wiring the rules suite cannot see.
@@ -136,7 +138,7 @@ vi.mock("@/components/admin/products/groups/switch-club-sheet", () => ({
 vi.mock("@/components/admin/products/participant-picker-sheet", () => ({
   ParticipantPickerSheet: () => null,
 }));
-// Records what it was handed, so a case can read the qualifications the panel
+// Records what it was handed, so a case can read the requirements the panel
 // asked about and make the pick the real sheet would have handed back.
 vi.mock("@/components/admin/products/gedu-picker-sheet", () => ({
   GeduPickerSheet: (props: GeduPickerProps) => {
@@ -325,7 +327,7 @@ function renderPanel(
   // Minecraft unless a case is about the topic: every drag case here predates
   // the identity row and is decided without it.
   topic: ProductTopic = "minecraft_java",
-  tag: ProductTag | null = null,
+  requirements: SessionRequirements = { qualifications: [], language: "fi" },
 ) {
   render(
     // The chip prints an age in the viewer's zone, so a real chip needs the
@@ -334,7 +336,7 @@ function renderPanel(
       <GroupsPanel
         productId="product-1"
         productType={productType}
-        tag={tag}
+        requirements={requirements}
         billingMode={billingMode}
         topic={topic}
         // Irrelevant to every case here: the audience is read by the participant
@@ -685,7 +687,7 @@ describe("GroupsPanel — the two features meet on one product", () => {
   });
 });
 
-describe("GroupsPanel — a missing qualification is confirmed, never refused", () => {
+describe("GroupsPanel — a missing requirement is confirmed, never refused", () => {
   const GEDU: UserListEntry = {
     id: "8e5b2c41-7d3a-4f9e-b1c6-2a4d8f0e3b75",
     first_name: "Venla",
@@ -711,17 +713,18 @@ describe("GroupsPanel — a missing qualification is confirmed, never refused", 
   };
 
   /** Open the staff picker on the group, then make the pick it hands back. */
-  function assign(missing: readonly GeduQualification[]) {
+  function assign(missing: readonly MissingRequirement[]) {
     act(() => groupColumn.props?.onAddGedu(IDS.group));
     act(() => geduPicker.props?.onSelect(GEDU, missing));
   }
 
-  it("asks the picker about the qualifications the product requires", () => {
-    renderPanel("camp", "paid", "minecraft_java", "neuroinclusive");
-    expect(geduPicker.props?.requiredQualifications).toEqual([
-      "neuroinclusive",
-      "consumer_products",
-    ]);
+  it("asks the picker about what the product requires", () => {
+    const requirements: SessionRequirements = {
+      qualifications: ["neuroinclusive", "consumer_products"],
+      language: "sv",
+    };
+    renderPanel("camp", "paid", "minecraft_java", requirements);
+    expect(geduPicker.props?.requirements).toEqual(requirements);
   });
 
   it("assigns a qualified gedu on the pick, with nothing asked", () => {
@@ -736,27 +739,31 @@ describe("GroupsPanel — a missing qualification is confirmed, never refused", 
       role: "primary",
     });
     expect(
-      screen.queryByText("admin.products.groupsPanel.unqualified.title"),
+      screen.queryByText("admin.products.groupsPanel.requirementGaps.title"),
     ).toBeNull();
   });
 
-  it("assigns an unqualified gedu only once the warning is confirmed", () => {
+  it("assigns a gedu falling short only once the warning is confirmed", () => {
     renderPanel("consumer_club", "paid");
-    assign(["consumer_products"]);
+    assign([
+      { kind: "qualification", qualification: "consumer_products" },
+      { kind: "language", language: "fi" },
+    ]);
 
-    // Asked first, naming the gap, and nothing written yet.
+    // Asked first, naming each gap, and nothing written yet.
     expect(
-      screen.getByText("admin.products.groupsPanel.unqualified.title"),
+      screen.getByText("admin.products.groupsPanel.requirementGaps.title"),
     ).toBeTruthy();
     expect(
-      screen.getByText("admin.geduQualifications.missingWarning"),
+      screen.getByText("admin.missingRequirements.qualification"),
     ).toBeTruthy();
+    expect(screen.getByText("admin.missingRequirements.language")).toBeTruthy();
     expect(mutations.addGedu).not.toHaveBeenCalled();
 
     act(() =>
       screen
         .getByRole("button", {
-          name: "admin.products.groupsPanel.unqualified.action",
+          name: "admin.products.groupsPanel.requirementGaps.action",
         })
         .click(),
     );
@@ -768,14 +775,14 @@ describe("GroupsPanel — a missing qualification is confirmed, never refused", 
 
   it("writes nothing when the warning is cancelled", () => {
     renderPanel("consumer_club", "paid");
-    assign(["consumer_products"]);
+    assign([{ kind: "qualification", qualification: "consumer_products" }]);
 
     act(() =>
       screen.getByRole("button", { name: "common.cancel" }).click(),
     );
     expect(mutations.addGedu).not.toHaveBeenCalled();
     expect(
-      screen.queryByText("admin.products.groupsPanel.unqualified.title"),
+      screen.queryByText("admin.products.groupsPanel.requirementGaps.title"),
     ).toBeNull();
   });
 });

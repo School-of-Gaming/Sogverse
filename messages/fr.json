@@ -650,8 +650,11 @@
       "grantedOn": "Accordée le {date}",
       "grantedOnBy": "Accordée le {date} par {name}",
       "notGranted": "Non accordée",
-      "error": "Impossible de mettre à jour la qualification. Veuillez réessayer.",
-      "missingWarning": "Ce Gedu n’a pas la qualification « {qualification} » qu’exige ce produit."
+      "error": "Impossible de mettre à jour la qualification. Veuillez réessayer."
+    },
+    "missingRequirements": {
+      "qualification": "Ce Gedu n’a pas la qualification « {qualification} » qu’exige ce produit.",
+      "language": "Ce produit se déroule en {language}, une langue que ce Gedu n’a pas indiquée parmi celles qu’il parle."
     },
     "geduCertifyWarnings": {
       "title": "Certifier quand même ?",
@@ -1137,7 +1140,8 @@
         "notCertified": "Non certifié",
         "alreadyTrainee": "Déjà stagiaire",
         "traineeInstead": "Peut être ajouté comme stagiaire.",
-        "notQualified": "Qualification manquante : {qualification}"
+        "notQualified": "Qualification manquante : {qualification}",
+        "doesNotSpeak": "Ne parle pas {language}"
       },
       "participantPicker": {
         "title": "Ajouter un participant",
@@ -1302,9 +1306,9 @@
           },
           "confirm": "Changer de club"
         },
-        "unqualified": {
+        "requirementGaps": {
           "title": "Affecter quand même ?",
-          "body": "Une qualification manquante n’empêche pas l’affectation : vous pouvez donc l’affecter quand même.",
+          "body": "Une qualification ou une langue manquante n’empêche pas l’affectation : vous pouvez donc l’affecter quand même.",
           "action": "Affecter quand même"
         }
       },
@@ -2407,6 +2411,7 @@
       "poolWithdrawPending": "Retrait…",
       "poolActionFailed": "Cela n’a pas été enregistré. Réessayez.",
       "poolOfferFailedNotQualified": "Cette séance exige une qualification que vous n’avez pas : vous ne pouvez donc pas proposer de remplacement.",
+      "poolOfferFailedLanguage": "Cette séance se déroule dans une langue que vous n’avez pas indiquée parmi celles que vous parlez : vous ne pouvez donc pas proposer de remplacement. Vous pouvez ajouter des langues dans vos paramètres.",
       "pageTitle": "Remplacements",
       "back": "Retour à Mon SOG",
       "mineHeading": "Vos remplacements",

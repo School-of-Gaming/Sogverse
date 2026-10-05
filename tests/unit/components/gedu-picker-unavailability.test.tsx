@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { GeduPickerSheet } from "@/components/admin/products/gedu-picker-sheet";
 import type { UserListEntry } from "@/services/users";
+import type { MissingRequirement } from "@/lib/products/session-requirements";
 
 /**
  * Who the gedu picker will not let an admin take, and — the part that matters —
@@ -43,6 +44,7 @@ const IDS = {
   uncertified: "7b3e9c22-1a4d-4b6f-8e2c-0d5a6f7b8c93",
   surnameless: "3f8a6d14-9c2b-4e71-b5d0-2a7e1c9f4b86",
   qualified: "c6a1e3f2-8b4d-4f0a-9e7c-1d2b3a4c5e6f",
+  nonSpeaker: "30a0fd21-e720-479d-9333-154a1e742a90",
 } as const;
 
 function gedu(
@@ -65,15 +67,19 @@ function gedu(
     utm_medium: null,
     utm_campaign: null,
     registration_completed_at: "2026-01-01T00:00:00.000Z",
-    spoken_languages: [],
+    // The two qualified educators: one speaks Finnish, the other only English.
+    spoken_languages:
+      id === IDS.qualified ? ["fi"] : id === IDS.nonSpeaker ? ["en"] : [],
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     certified: id !== IDS.uncertified,
     criminal_record_check_passed: true,
     linked_gamers: [],
-    // One educator holds both; everyone else holds none.
+    // Two educators hold both; everyone else holds none.
     qualifications:
-      id === IDS.qualified ? ["neuroinclusive", "consumer_products"] : [],
+      id === IDS.qualified || id === IDS.nonSpeaker
+        ? ["neuroinclusive", "consumer_products"]
+        : [],
   };
 }
 
@@ -85,6 +91,7 @@ const GEDUS = [
   gedu(IDS.uncertified, "Onni"),
   gedu(IDS.surnameless, "Mikko", ""),
   gedu(IDS.qualified, "Venla"),
+  gedu(IDS.nonSpeaker, "Kerttu"),
 ];
 
 // One page of the shared people read is the whole fixture: certification rides
@@ -307,14 +314,20 @@ describe("the gedu picker's trainee seat", () => {
 });
 
 /**
- * A missing qualification is the admin's warning, never the sheet's refusal:
- * the row stays pressable, says what it lacks, and hands the gap to the caller,
- * whose confirm step names it.
+ * A missing requirement — a qualification, or the session's language — is the
+ * admin's warning, never the sheet's refusal: the row stays pressable, says
+ * what it lacks, and hands the gap to the caller, whose confirm step names it.
  */
-describe("the gedu picker's qualification gaps", () => {
+describe("the gedu picker's requirement gaps", () => {
+  const NOT_QUALIFIED = "admin.products.geduPicker.notQualified";
+  const DOES_NOT_SPEAK = "admin.products.geduPicker.doesNotSpeak";
+
   function openRequiring(
     seat: "staff" | "trainee",
-    onSelect: (gedu: UserListEntry, missing: readonly string[]) => void = () => {},
+    onSelect: (
+      gedu: UserListEntry,
+      missing: readonly MissingRequirement[],
+    ) => void = () => {},
   ) {
     render(
       <GeduPickerSheet
@@ -323,38 +336,58 @@ describe("the gedu picker's qualification gaps", () => {
         title="Pick a Gedu"
         description="For this group"
         seat={seat}
-        requiredQualifications={["neuroinclusive", "consumer_products"]}
+        requirements={{
+          qualifications: ["neuroinclusive", "consumer_products"],
+          language: "fi",
+        }}
         onSelect={onSelect}
       />,
     );
   }
 
-  it("keeps an unqualified row selectable, names each gap, and hands the gap to the pick", () => {
+  it("keeps a row falling short selectable, names each gap, and hands the gaps to the pick", () => {
     const onSelect = vi.fn();
     openRequiring("staff", onSelect);
 
     const row = rowFor("Aino Virtanen");
     expect(row.disabled).toBe(false);
-    // One line per missing qualification.
-    expect(
-      within(row).getAllByText("admin.products.geduPicker.notQualified"),
-    ).toHaveLength(2);
+    // One line per missing qualification, and one for the language.
+    expect(within(row).getAllByText(NOT_QUALIFIED)).toHaveLength(2);
+    expect(within(row).getAllByText(DOES_NOT_SPEAK)).toHaveLength(1);
 
     fireEvent.click(row);
     expect(onSelect).toHaveBeenCalledWith(
       expect.objectContaining({ id: IDS.free }),
-      ["neuroinclusive", "consumer_products"],
+      [
+        { kind: "qualification", qualification: "neuroinclusive" },
+        { kind: "qualification", qualification: "consumer_products" },
+        { kind: "language", language: "fi" },
+      ],
     );
   });
 
-  it("says nothing about a gedu holding every required qualification", () => {
+  it("names the language alone for a qualified gedu who does not speak it", () => {
+    const onSelect = vi.fn();
+    openRequiring("staff", onSelect);
+
+    const row = rowFor("Kerttu Virtanen");
+    expect(within(row).queryByText(NOT_QUALIFIED)).toBeNull();
+    expect(within(row).getAllByText(DOES_NOT_SPEAK)).toHaveLength(1);
+
+    fireEvent.click(row);
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: IDS.nonSpeaker }),
+      [{ kind: "language", language: "fi" }],
+    );
+  });
+
+  it("says nothing about a gedu meeting every requirement", () => {
     const onSelect = vi.fn();
     openRequiring("staff", onSelect);
 
     const row = rowFor("Venla Virtanen");
-    expect(
-      within(row).queryByText("admin.products.geduPicker.notQualified"),
-    ).toBeNull();
+    expect(within(row).queryByText(NOT_QUALIFIED)).toBeNull();
+    expect(within(row).queryByText(DOES_NOT_SPEAK)).toBeNull();
 
     fireEvent.click(row);
     expect(onSelect).toHaveBeenCalledWith(
@@ -366,11 +399,9 @@ describe("the gedu picker's qualification gaps", () => {
   it("adds no gap to a row already refused for another reason", () => {
     openRequiring("staff");
 
-    expect(
-      within(rowFor("Onni Virtanen")).queryByText(
-        "admin.products.geduPicker.notQualified",
-      ),
-    ).toBeNull();
+    const row = rowFor("Onni Virtanen");
+    expect(within(row).queryByText(NOT_QUALIFIED)).toBeNull();
+    expect(within(row).queryByText(DOES_NOT_SPEAK)).toBeNull();
   });
 
   it("asks nothing of a trainee seat", () => {
@@ -378,9 +409,8 @@ describe("the gedu picker's qualification gaps", () => {
     openRequiring("trainee", onSelect);
 
     const row = rowFor("Aino Virtanen");
-    expect(
-      within(row).queryByText("admin.products.geduPicker.notQualified"),
-    ).toBeNull();
+    expect(within(row).queryByText(NOT_QUALIFIED)).toBeNull();
+    expect(within(row).queryByText(DOES_NOT_SPEAK)).toBeNull();
     fireEvent.click(row);
     expect(onSelect).toHaveBeenCalledWith(
       expect.objectContaining({ id: IDS.free }),

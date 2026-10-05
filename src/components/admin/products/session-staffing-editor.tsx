@@ -29,12 +29,12 @@ import type {
   SessionStaffing,
 } from "@/lib/session-staffing";
 import { cn, formatDateOnly } from "@/lib/utils";
-import {
-  Constants,
-  type GeduQualification,
-  type SubstitutionReason,
-} from "@/types";
-import { MissingQualificationsWarning } from "@/components/admin/missing-qualifications-warning";
+import { Constants, type SubstitutionReason } from "@/types";
+import type {
+  MissingRequirement,
+  SessionRequirements,
+} from "@/lib/products/session-requirements";
+import { MissingRequirementsWarning } from "@/components/admin/missing-requirements-warning";
 import {
   SessionCardMenu,
   type SessionCardMenuItem,
@@ -59,11 +59,12 @@ export interface SessionStaffingEditorProps {
   /** Product-local `YYYY-MM-DD`: the session being staffed, as Postgres keys it. */
   sessionDate: string;
   /**
-   * The gedu qualifications the product requires
-   * (`productRequiredQualifications`). The picker names a candidate's gap and
-   * the confirm step warns about it; neither refuses them.
+   * What the product requires of whoever runs the session
+   * (`sessionRequirements`) — its qualifications and its language. The picker
+   * names a candidate's gap and the confirm step warns about it; neither
+   * refuses them.
    */
-  requiredQualifications: readonly GeduQualification[];
+  requirements: SessionRequirements;
   /**
    * Seat a sub. **Resolves only once the document this card is built from has
    * been read again**, which is what lets the control below clear its
@@ -130,7 +131,7 @@ export interface SessionStaffingEditorProps {
 export function SessionStaffingEditor({
   staffing,
   sessionDate,
-  requiredQualifications,
+  requirements,
   onSetSubstitution,
   onClearSubstitution,
   onWithdrawRequest,
@@ -237,7 +238,7 @@ export function SessionStaffingEditor({
           staffing={staffing}
           settable={settable}
           sessionDate={sessionDate}
-          requiredQualifications={requiredQualifications}
+          requirements={requirements}
           onSetSubstitution={onSetSubstitution}
         />
       )}
@@ -326,12 +327,12 @@ interface SetSubFlow {
   absent: AbsentSeat | null;
   /**
    * The chosen sub, once the picker has closed on a selection — with the
-   * required qualifications they lack, which the confirm step names.
+   * requirements they fall short of, which the confirm step names.
    */
   sub: {
     id: string;
     firstName: string;
-    missingQualifications: readonly GeduQualification[];
+    missingRequirements: readonly MissingRequirement[];
   } | null;
   /**
    * Whether this walk started by **asking** which seat is empty — which is the
@@ -350,7 +351,7 @@ function SetSubFlowOverlays({
   staffing,
   settable,
   sessionDate,
-  requiredQualifications,
+  requirements,
   onSetSubstitution,
 }: {
   flow: SetSubFlow;
@@ -364,7 +365,7 @@ function SetSubFlowOverlays({
   /** The seats the question may offer: those a substitute could still be set for. */
   settable: readonly AbsentSeat[];
   sessionDate: string;
-  requiredQualifications: readonly GeduQualification[];
+  requirements: SessionRequirements;
   onSetSubstitution: (draft: SetSessionSubstitutionDraft) => Promise<void>;
 }) {
   const t = useTranslations("admin.products.staffing");
@@ -440,8 +441,8 @@ function SetSubFlowOverlays({
         // naming them here is the whole fix: the row still cannot be picked,
         // and it now says why it is there *(owner, 2026-09)*.
         highlightId={currentSubstituteId(absent)}
-        requiredQualifications={requiredQualifications}
-        onSelect={(gedu, missingQualifications) =>
+        requirements={requirements}
+        onSelect={(gedu, missingRequirements) =>
           setFlow({
             ...flow,
             step: "confirm",
@@ -449,7 +450,7 @@ function SetSubFlowOverlays({
             sub: {
               id: gedu.id,
               firstName: gedu.first_name,
-              missingQualifications,
+              missingRequirements,
             },
           })
         }
@@ -672,9 +673,9 @@ function AbsentGeduStep({
  * does not ride on a card's staffing, so the step says it is kept rather than
  * showing it.
  *
- * **A sub lacking a qualification the product requires is warned about here,
- * not in a dialog of its own**: one warning line per missing qualification,
- * and the button stays the ordinary one, because for an admin the gap is a
+ * **A sub falling short of what the session requires is warned about here,
+ * not in a dialog of its own**: one warning line per missing qualification and
+ * one for a language they do not speak, and the button stays the ordinary one, because for an admin the gap is a
  * fact to go past knowingly rather than a refusal.
  */
 function ConfirmSubStep({
@@ -792,7 +793,7 @@ function ConfirmSubStep({
         {/* The last thing read before the buttons, after the reason fields it
             does not depend on. The pick's own gap, recomputed by every walk
             back through the picker. */}
-        <MissingQualificationsWarning missing={sub.missingQualifications} />
+        <MissingRequirementsWarning missing={sub.missingRequirements} />
 
         {failed && (
           <StatusLine status="destructive" size="xs" role="alert">

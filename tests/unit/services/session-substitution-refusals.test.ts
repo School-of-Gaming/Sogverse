@@ -147,6 +147,14 @@ describe("substitutionOfferFailureKey", () => {
     ).toBe("poolOfferFailedNotQualified");
   });
 
+  it("names a language the gedu has not listed, apart from a missing qualification", () => {
+    expect(
+      substitutionOfferFailureKey(
+        refusal("42501", "this gedu does not speak the language this session is run in"),
+      ),
+    ).toBe("poolOfferFailedLanguage");
+  });
+
   it("leaves the may-substitute refusal and everything else on the generic line", () => {
     // The same SQLSTATE without the phrase is the may-substitute guard, which
     // says nothing about why; a closed request and a network failure likewise.

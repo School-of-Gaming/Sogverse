@@ -71,6 +71,7 @@ import { ProductStatusChip } from "./product-status-chip";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
 import type { AppHref } from "@/lib/constants/routes";
+import { sessionRequirements } from "@/lib/products/session-requirements";
 
 interface ProductDetailsPageProps {
   productType: ProductType;
@@ -188,7 +189,7 @@ export function ProductDetailsPage({
       <GroupsPanel
         productId={productId}
         productType={productType}
-        tag={product.tag}
+        requirements={sessionRequirements(product)}
         billingMode={product.billing_mode}
         topic={product.topic}
         audience={productAudience(product)}

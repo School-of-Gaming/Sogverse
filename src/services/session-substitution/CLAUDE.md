@@ -152,17 +152,19 @@ about.
 Its exclusion is the database's own *may substitute* predicate rather than a copy of its
 clauses, so the list and the offer button cannot disagree: a session the caller is
 expected at, one they have their own request on, and their own absence are all out by
-construction. The list also asks the offer's second test, the gedu holding every
-qualification the session's product requires, so a request the gedu could not offer on is
-not in their pool either. Certification and qualifications are the only eligibility tests —
-no coverage area, no language match, no schedule-clash check.
+construction. The list also asks the offer's other two tests — the gedu holding every
+qualification the session's product requires, and speaking the language it is run in — so
+a request the gedu could not offer on is not in their pool either. Certification,
+qualifications and spoken language are the only eligibility tests — no coverage area, no
+schedule-clash check.
 
-**Qualifications gate only what a gedu starts.** The pool and the offer refuse an
-unqualified gedu outright; the admin's seating and approval do not ask — seating because
-the admin is warned in the UI and may proceed, approval because qualifications are
-effectively never revoked (`../gedu/CLAUDE.md`, Qualifications). That is why
-the qualification test is its own predicate and never a clause of *may substitute*: the
-admin writes ask that one too, and a clause there would turn the warning into a refusal.
+**Qualifications and language gate only what a gedu starts.** The pool and the offer
+refuse a gedu falling short outright, the offer with a separate message for each; the
+admin's seating and approval do not ask — seating because the admin is warned in the UI
+and may proceed, approval because neither is realistically taken away between the offer
+and its approval (`../gedu/CLAUDE.md`, Qualifications). That is why each test is its own
+predicate and never a clause of *may substitute*: the admin writes ask that one too, and a
+clause there would turn the warning into a refusal.
 
 **No instants travel.** The pool emits the date plus the product's timezone and slots, and
 the client owns the calendar math, exactly as both feeds do.
@@ -426,7 +428,8 @@ hook.
 ## What this directory deliberately does not do
 
 - **No notifications**, on any channel. In-app only.
-- **No ranking and no eligibility beyond certification and qualifications.**
+- **No ranking and no eligibility beyond certification, qualifications and spoken
+  language.**
 - **No per-request fee override.** The role's fee is the product's, and a sub fee above
   the base is a follow-up nobody has asked for yet.
 - **No affordance linking the session-card staffing editor to the permanent groups

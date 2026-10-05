@@ -95,8 +95,8 @@ second list to keep current, and the last one was wrong.
   holds because admins are always trusted and assignment is an admin-only action driven
   entirely by this picker. If a non-admin assignment path is ever added, move the
   `certified` check into `apply_group_changes` — until then a DB-level check would be
-  redundant. A missing qualification is not part of this gate: it is a warning the admin
-  confirms (Qualifications, below).
+  redundant. A missing qualification or language is not part of this gate: it is a warning
+  the admin confirms (Qualifications, below).
 - **Session-substitution gate (server-side, required)**: substituting a session is *gedu-initiated*,
   so unlike assignment this one is enforced in the database rather than in the picker.
   Certification is part of the may-substitute guard every substitution write shares, the pool of open
@@ -439,22 +439,29 @@ club. One product can require both or neither. The database states the mapping o
 the app mirrors it in `src/lib/products/`; a DB test walking every type and tag holds the
 two in agreement, so a change to either is a change to both.
 
-**Rule: qualifications are a hard gate on substitution a gedu starts, and only a warning
-on what an admin does.** A gedu lacking a qualification the session's product requires
-does not see its request in the pool and cannot offer on it, and the offer's refusal is
-its own. An admin assigning a gedu to a staff seat or seating a substitute is warned and
-may proceed; none of the admin writes asks. So the check is a predicate of its own and
-never a clause of the may-substitute predicate, which the admin writes share. Approving
-an offer is not even warned about: qualifications are effectively never revoked, so the
-case where it would matter is not worth a check. A trainee seat asks nothing, as with
-certification. Nothing else reads qualifications —
-certification stays the only blocking lever over an educator everywhere else.
+**A session also requires its language**: the product's spoken language has to be among
+the gedu's own spoken languages. Together with the qualifications these are the session's
+*requirements*, and the two are treated identically everywhere below.
 
-The admin gedu picker learns what a gedu holds from its row: the qualifications ride on
-the paged people read beside `certified`, for the same reason it does. An unqualified row
-stays selectable and names each gap; the pick is then confirmed in a dialog carrying one
-warning line per missing qualification — the confirm the flow already asks where it has
-one (seating a sub), a dialog of its own only for a staff assignment.
+**Rule: a session's requirements are a hard gate on substitution a gedu starts, and only
+a warning on what an admin does.** A gedu lacking a qualification the session's product
+requires, or not speaking its language, does not see its request in the pool and cannot
+offer on it, and the offer refuses each with a message of its own. A gedu who has listed
+no spoken language therefore sees an empty pool; that is accepted, not special-cased. An
+admin assigning a gedu to a staff seat or seating a substitute is warned and may proceed;
+none of the admin writes asks. So each check is a predicate of its own and never a clause
+of the may-substitute predicate, which the admin writes share. Approving an offer is not
+even warned about: neither a qualification nor a spoken language is realistically taken
+away between an offer and its approval, so the case is not worth a check. A trainee seat
+asks nothing, as with certification. Nothing else reads qualifications — certification
+stays the only blocking lever over an educator everywhere else.
+
+The admin gedu picker learns what a gedu holds and speaks from its row: the
+qualifications and spoken languages ride on the paged people read beside `certified`, for
+the same reason it does. A row falling short stays selectable and names each gap; the pick
+is then confirmed in a dialog carrying one warning line per missing qualification or
+language — the confirm the flow already asks where it has one (seating a sub), a dialog of
+its own only for a staff assignment.
 
 **Adding a qualification is a new `gedu_qualification` enum value plus its copy.** The
 app's list derives from the generated enum, in the enum's declared order; the admin
