@@ -1545,6 +1545,8 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
     "redeems an emailed verification token, which authorizes itself — the reader may hold no session or somebody else's, and `email_verified_at` has no write grant outside the service role",
   "src/lib/seat-offer.server.ts":
     "reads an emailed seat offer for its landing page, which authorizes itself — the reader may hold no session or their own child's, and the page renders identically either way. It only reads: accepting is a POST behind a button, so a mail scanner following the link reaches this and stops",
+  "src/lib/discord-link-token.server.ts":
+    "reads the Discord username and expiry of a /link token for the confirm page, which names the account before a Gedu or an admin links it; the token table is granted to the service role alone. The page calls it only past its Gedu-or-admin gate, and it only reads: the token is spent by consume_discord_link_token on the user's own session, behind the button's POST",
   "src/services/family/family.server.ts":
     "the shared family resolver — a gamer legitimately reads siblings beyond their own view",
   "src/app/[locale]/select-profile/page.tsx":

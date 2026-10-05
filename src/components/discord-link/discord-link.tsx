@@ -27,7 +27,8 @@ type LinkResult =
 
 /**
  * The question a Gedu or an admin answers after running `/link` in Discord:
- * link the Discord account that asked to this account.
+ * link the named Discord account to this account. The name is the point: a
+ * Gedu sent a link someone else minted can see that it is not theirs.
  *
  * Nothing is spent until the button is pressed — the page's GET only renders,
  * so a preview bot or a scanner opening the URL leaves the token alone. The
@@ -38,9 +39,12 @@ type LinkResult =
 export function DiscordLinkConfirm({
   token,
   role,
+  discordUsername,
 }: {
   token: string;
   role: DiscordLinkRole;
+  /** The Discord account the token was minted for, read by the page. */
+  discordUsername: string;
 }) {
   const t = useTranslations("discordLink.confirm");
   const [committing, setCommitting] = useState(false);
@@ -91,7 +95,12 @@ export function DiscordLinkConfirm({
       <Link2 className="h-12 w-12 text-act" aria-hidden />
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">{t("title")}</h1>
-        <p className="text-muted-foreground">{t("body")}</p>
+        <p className="text-muted-foreground">
+          {t.rich("body", {
+            username: discordUsername,
+            b: (chunks) => <b className="font-semibold text-foreground">{chunks}</b>,
+          })}
+        </p>
       </div>
 
       {failed ? (

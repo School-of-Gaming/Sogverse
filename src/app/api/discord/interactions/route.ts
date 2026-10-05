@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { after } from "next/server";
 import { z } from "zod";
@@ -7,6 +7,7 @@ import {
   InteractionType,
   InteractionResponseType,
 } from "discord-interactions";
+import { hashDiscordLinkToken } from "@/lib/discord-link-token.server";
 import { askGeduGuru, askHappinappi } from "@/lib/gemini";
 import { resetPassword, type PasswordResetOutcome } from "@/lib/microsoft-graph";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -146,7 +147,7 @@ async function sendLinkUrl(
     const origin = getOrigin(requestHeaders);
     const token = randomBytes(32).toString("base64url");
     const row: DiscordLinkTokenInsert = {
-      token_hash: createHash("sha256").update(token).digest("hex"),
+      token_hash: hashDiscordLinkToken(token),
       discord_user_id: caller.id,
       discord_username: caller.username,
     };

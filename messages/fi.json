@@ -3620,8 +3620,8 @@
     "discord": {
       "label": "Discord",
       "notLinked": "Ei yhdistetty",
-      "linkHint": "Yhdistä Discord-tilisi kirjoittamalla /link School of Gamingin Discord-palvelimella ja avaamalla linkin, jonka botti lähettää sinulle.",
-      "relinkHint": "Voit yhdistää toisen Discord-tilin kirjoittamalla /link sillä tilillä School of Gamingin Discord-palvelimella ja avaamalla linkin, jonka botti lähettää sinulle."
+      "linkHint": "Yhdistä Discord-tilisi kirjoittamalla /link School of Gamingin Discord-palvelimella.",
+      "relinkHint": "Voit yhdistää toisen Discord-tilin kirjoittamalla /link sillä tilillä School of Gamingin Discord-palvelimella."
     },
     "marketing": {
       "title": "Markkinointiasetukset",
@@ -5246,7 +5246,7 @@
   "discordLink": {
     "confirm": {
       "title": "Yhdistä Discord-tilisi",
-      "body": "Tämä yhdistää linkin pyytäneen Discord-tilin School of Gaming -tiliisi, jotta School of Gaming voi tavoittaa sinut Discordissa.",
+      "body": "Yhdistetäänkö Discord-tili <b>@{username}</b> School of Gaming -tiliisi? Silloin School of Gaming voi tavoittaa sinut Discordissa.",
       "action": "Yhdistä tili",
       "failed": "Jokin meni vikaan, eikä tiliäsi yhdistetty. Yritä uudelleen."
     },

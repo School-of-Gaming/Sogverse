@@ -3620,8 +3620,8 @@
     "discord": {
       "label": "Discord",
       "notLinked": "Non associé",
-      "linkHint": "Pour associer votre compte Discord, tapez /link sur le serveur Discord de School of Gaming et ouvrez le lien que le bot vous envoie.",
-      "relinkHint": "Pour associer un autre compte Discord, tapez /link depuis ce compte sur le serveur Discord de School of Gaming et ouvrez le lien que le bot vous envoie."
+      "linkHint": "Pour associer votre compte Discord, tapez /link sur le serveur Discord de School of Gaming.",
+      "relinkHint": "Pour associer un autre compte Discord, tapez /link depuis ce compte sur le serveur Discord de School of Gaming."
     },
     "marketing": {
       "title": "Préférences marketing",
@@ -5246,7 +5246,7 @@
   "discordLink": {
     "confirm": {
       "title": "Associer votre compte Discord",
-      "body": "Cette action associe le compte Discord qui a demandé ce lien à votre compte School of Gaming, pour que School of Gaming puisse vous joindre sur Discord.",
+      "body": "Associer le compte Discord <b>@{username}</b> à votre compte School of Gaming ? School of Gaming pourra alors vous joindre sur Discord.",
       "action": "Associer le compte",
       "failed": "Une erreur s’est produite et votre compte n’a pas été associé. Réessayez."
     },

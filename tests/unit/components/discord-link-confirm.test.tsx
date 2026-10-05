@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
-import { DiscordLinkConfirm } from "@/components/discord-link/discord-link";
+import {
+  DiscordLinkConfirm,
+  DiscordLinkDead,
+} from "@/components/discord-link/discord-link";
 
 /**
  * The confirm card turns the route's answer into the state the reader acts
@@ -19,7 +22,15 @@ vi.stubGlobal("fetch", mockFetch);
 function renderCard(role: "gedu" | "admin" = "gedu") {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <DiscordLinkConfirm token="tok-1" role={role} />
+      <DiscordLinkConfirm token="tok-1" role={role} discordUsername="kyle_sog" />
+    </NextIntlClientProvider>,
+  );
+}
+
+function renderDead(reason: "used" | "expired") {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <DiscordLinkDead reason={reason} />
     </NextIntlClientProvider>,
   );
 }
@@ -42,6 +53,18 @@ beforeEach(() => {
 });
 
 describe("the Discord link confirm card", () => {
+  it("names the Discord account it would link, before anything is pressed", () => {
+    renderCard();
+
+    // The name is the defence against confirming someone else's link.
+    const name = screen.getByText("@kyle_sog");
+    expect(name.tagName).toBe("B");
+    expect(name.parentElement?.textContent).toMatch(
+      /^Link the Discord account @kyle_sog to your School of Gaming account\?/,
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
   it("posts the token only when the button is pressed", async () => {
     answer(200, { discordUsername: "kyle_sog" });
     renderCard();
@@ -95,6 +118,15 @@ describe("the Discord link confirm card", () => {
     press();
 
     expect(await screen.findByRole("heading", { name: COPY.expired.title })).toBeTruthy();
+  });
+
+  it("renders the page's dead-link cards for a used or expired token with no button", () => {
+    for (const reason of ["used", "expired"] as const) {
+      const { unmount } = renderDead(reason);
+      expect(screen.getByRole("heading", { name: COPY[reason].title })).toBeTruthy();
+      expect(screen.queryByRole("button")).toBeNull();
+      unmount();
+    }
   });
 
   it("keeps the card and its button for any other failure", async () => {

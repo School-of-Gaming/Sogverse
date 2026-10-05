@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement } from "react";
 import { redirect } from "@/i18n/navigation";
@@ -10,8 +11,9 @@ import {
 /**
  * The `/link-discord` page gates itself, because the proxy lets it through to
  * keep the token on the address. What is pinned is which card it chooses for
- * whom — and that choosing never spends the token, which only the confirm
- * button's POST does.
+ * whom; that only a Gedu or an admin causes the token to be looked up, so
+ * nobody else learns whose it is; and that the lookup is a read — the token is
+ * only spent by the confirm button's POST.
  *
  * The page is an async server component; it is awaited and the element it
  * returns inspected.
@@ -27,6 +29,17 @@ vi.mock("next-intl/server", () => ({
   getTranslations: () => Promise.resolve((key: string) => key),
 }));
 
+/** The token row the service-role read finds, or null for none. */
+let tokenRow: { discord_username: string; expires_at: string } | null = null;
+const mockFrom = vi.fn();
+const mockSelect = vi.fn();
+const mockEq = vi.fn();
+const mockDelete = vi.fn();
+const mockRpc = vi.fn();
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({ from: mockFrom, rpc: mockRpc }),
+}));
+
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
@@ -34,6 +47,8 @@ import LinkDiscordPage from "@/app/[locale]/(auth)/link-discord/page";
 
 /** Next's redirects throw to stop the render; the setup's stub only records. */
 class Redirected extends Error {}
+
+const HOUR = 60 * 60 * 1000;
 
 function signedInAs(role: string) {
   mockGetUserWithProfile.mockResolvedValue({
@@ -53,6 +68,15 @@ beforeEach(() => {
   vi.mocked(redirect).mockImplementation(() => {
     throw new Redirected();
   });
+  tokenRow = {
+    discord_username: "kyle_sog",
+    expires_at: new Date(Date.now() + HOUR).toISOString(),
+  };
+  mockFrom.mockReturnValue({ select: mockSelect, delete: mockDelete });
+  mockSelect.mockReturnValue({ eq: mockEq });
+  mockEq.mockImplementation(() => ({
+    maybeSingle: () => Promise.resolve({ data: tokenRow, error: null }),
+  }));
 });
 
 describe("the Discord link page", () => {
@@ -65,25 +89,66 @@ describe("the Discord link page", () => {
       href: { pathname: "/login", query: { redirect: "/link-discord?token=tok-1" } },
       locale: "en",
     });
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it("refuses a parent or a gamer, with no button", async () => {
+  it("refuses a parent or a gamer, with no button and no token read", async () => {
     for (const role of ["customer", "gamer"]) {
       signedInAs(role);
       const element = await renderPage("tok-1");
       expect(element?.type).toBe(DiscordLinkRefused);
     }
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it("asks a Gedu or an admin, handing the card the token and the role", async () => {
+  it("asks a Gedu or an admin, naming the Discord account the token would link", async () => {
     for (const role of ["gedu", "admin"]) {
       signedInAs(role);
       const element = await renderPage("tok-1");
       expect(element?.type).toBe(DiscordLinkConfirm);
-      expect(element?.props).toEqual({ token: "tok-1", role });
+      expect(element?.props).toEqual({
+        token: "tok-1",
+        role,
+        discordUsername: "kyle_sog",
+      });
     }
-    // Rendering is a read: the token is only spent by the button.
+    // The row is found by the token's hash, the same one the bot stored.
+    expect(mockFrom).toHaveBeenCalledWith("discord_link_tokens");
+    expect(mockSelect).toHaveBeenCalledWith("discord_username, expires_at");
+    expect(mockEq).toHaveBeenCalledWith(
+      "token_hash",
+      createHash("sha256").update("tok-1").digest("hex"),
+    );
+  });
+
+  it("never spends the token on a GET", async () => {
+    signedInAs("gedu");
+    await renderPage("tok-1");
+
+    expect(mockDelete).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("shows the used card, with no button, for a token it cannot find", async () => {
+    signedInAs("gedu");
+    tokenRow = null;
+
+    const element = await renderPage("tok-1");
+    expect(element?.type).toBe(DiscordLinkDead);
+    expect(element?.props).toEqual({ reason: "used" });
+  });
+
+  it("shows the expired card, with no button, for a token past its time", async () => {
+    signedInAs("admin");
+    tokenRow = {
+      discord_username: "kyle_sog",
+      expires_at: new Date(Date.now() - HOUR).toISOString(),
+    };
+
+    const element = await renderPage("tok-1");
+    expect(element?.type).toBe(DiscordLinkDead);
+    expect(element?.props).toEqual({ reason: "expired" });
   });
 
   it("sends a Gedu back to Discord when the address carries no single token", async () => {
@@ -94,5 +159,6 @@ describe("the Discord link page", () => {
       expect(element?.type).toBe(DiscordLinkDead);
       expect(element?.props).toEqual({ reason: "missingToken" });
     }
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 });

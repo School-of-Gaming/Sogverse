@@ -3660,8 +3660,8 @@
     "discord": {
       "label": "Discord",
       "notLinked": "rarlu'be'",
-      "linkHint": "Discord ghItlhlIj DararmeH, School of Gaming Discord Daq /link yIlo'. vaj ghItlh ngeHbogh bot yIpoSmoH.",
-      "relinkHint": "Discord ghItlh latlh DararmeH, ghItlhvam vo' School of Gaming Discord Daq /link yIlo'. vaj ghItlh ngeHbogh bot yIpoSmoH."
+      "linkHint": "Discord ghItlhlIj DararmeH, School of Gaming Discord Daq /link yIlo'.",
+      "relinkHint": "Discord ghItlh latlh DararmeH, ghItlhvam vo' School of Gaming Discord Daq /link yIlo'."
     },
     "marketing": {
       "title": "QIn chaw’mey",
@@ -4365,7 +4365,7 @@
   "discordLink": {
     "confirm": {
       "title": "Discord ghItlhlIj yIrar",
-      "body": "ghItlhvam tlhobpu'bogh Discord ghItlh, School of Gaming ghItlhlIj rarmoH ghItlhvam. vaj Discord Daq SoH ghoSlaH School of Gaming.",
+      "body": "Discord ghItlh <b>@{username}</b> School of Gaming ghItlhlIj DararneS'a'? vaj Discord Daq SoH ghoSlaH School of Gaming.",
       "action": "ghItlh yIrar",
       "failed": "Qagh. ghItlhlIj rarlu'be'. yInIDqa'."
     },

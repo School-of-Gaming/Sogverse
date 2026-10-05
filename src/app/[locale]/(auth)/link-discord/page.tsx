@@ -8,6 +8,7 @@ import {
 } from "@/components/discord-link/discord-link";
 import { getPathname, redirect } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { readDiscordLinkToken } from "@/lib/discord-link-token.server";
 import { getUserWithProfile } from "@/lib/supabase/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -29,9 +30,12 @@ export async function generateMetadata(): Promise<Metadata> {
  *    redirect, token included.
  * 2. **Not a Gedu or an admin** → refused, with no button.
  * 3. **No single token** → the dead-link card, sending them back to Discord.
- * 4. Otherwise the question. **Rendering spends nothing**: the token is only
- *    spent by the button's POST, so a link opened by a preview bot or a
- *    scanner is still good when its owner presses it.
+ * 4. **An unknown, used or expired token** → its dead-link card, no button.
+ * 5. Otherwise the question, naming the Discord account the token would link,
+ *    so a Gedu sent a link someone else minted sees whose account it is
+ *    before linking it. **Rendering spends nothing**: the token is only spent
+ *    by the button's POST, so a link opened by a preview bot or a scanner is
+ *    still good when its owner presses it.
  */
 export default async function LinkDiscordPage({
   searchParams,
@@ -57,9 +61,19 @@ export default async function LinkDiscordPage({
   const role = viewer.profile?.role;
   if (role !== "admin" && role !== "gedu") return <DiscordLinkRefused />;
 
-  return token ? (
-    <DiscordLinkConfirm token={token} role={role} />
-  ) : (
-    <DiscordLinkDead reason="missingToken" />
+  if (!token) return <DiscordLinkDead reason="missingToken" />;
+
+  // A service-role read, because only the service role is granted the token
+  // table; it never deletes or spends the token. Reached only past the role
+  // gate above, so nobody but a Gedu or an admin learns whose a token is.
+  const state = await readDiscordLinkToken(token);
+  if (state.kind !== "live") return <DiscordLinkDead reason={state.kind} />;
+
+  return (
+    <DiscordLinkConfirm
+      token={token}
+      role={role}
+      discordUsername={state.discordUsername}
+    />
   );
 }

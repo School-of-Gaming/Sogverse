@@ -4307,8 +4307,8 @@
     "discord": {
       "label": "Discord",
       "notLinked": "Not linked",
-      "linkHint": "To link your Discord account, type /link in the School of Gaming Discord server and open the link the bot sends you.",
-      "relinkHint": "To link a different Discord account, type /link from that account in the School of Gaming Discord server and open the link the bot sends you."
+      "linkHint": "To link your Discord account, type /link in the School of Gaming Discord server.",
+      "relinkHint": "To link a different Discord account, type /link from that account in the School of Gaming Discord server."
     },
     "marketing": {
       "title": "Marketing preferences",
@@ -5246,7 +5246,7 @@
   "discordLink": {
     "confirm": {
       "title": "Link your Discord account",
-      "body": "This links the Discord account that requested this link to your School of Gaming account, so School of Gaming can reach you on Discord.",
+      "body": "Link the Discord account <b>@{username}</b> to your School of Gaming account? School of Gaming will then be able to reach you on Discord.",
       "action": "Link account",
       "failed": "Something went wrong and your account wasn’t linked. Try again."
     },

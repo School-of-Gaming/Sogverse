@@ -3620,8 +3620,8 @@
     "discord": {
       "label": "Discord",
       "notLinked": "Inte kopplat",
-      "linkHint": "Koppla ditt Discord-konto genom att skriva /link på School of Gamings Discord-server och öppna länken som boten skickar dig.",
-      "relinkHint": "Koppla ett annat Discord-konto genom att skriva /link från det kontot på School of Gamings Discord-server och öppna länken som boten skickar dig."
+      "linkHint": "Koppla ditt Discord-konto genom att skriva /link på School of Gamings Discord-server.",
+      "relinkHint": "Koppla ett annat Discord-konto genom att skriva /link från det kontot på School of Gamings Discord-server."
     },
     "marketing": {
       "title": "Marknadsföringsinställningar",
@@ -5246,7 +5246,7 @@
   "discordLink": {
     "confirm": {
       "title": "Koppla ditt Discord-konto",
-      "body": "Det här kopplar Discord-kontot som begärde länken till ditt School of Gaming-konto, så att School of Gaming kan nå dig på Discord.",
+      "body": "Koppla Discord-kontot <b>@{username}</b> till ditt School of Gaming-konto? Då kan School of Gaming nå dig på Discord.",
       "action": "Koppla kontot",
       "failed": "Något gick fel och ditt konto kopplades inte. Försök igen."
     },
