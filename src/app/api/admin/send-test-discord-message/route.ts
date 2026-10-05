@@ -6,7 +6,10 @@ import {
   sendDiscordDirectMessage,
 } from "@/lib/discord-api.server";
 import {
+  DISCORD_FLAG_SUPPRESS_EMBEDS,
+  buildLinkReplyContent,
   buildSessionPickerMessage,
+  buildSubNotLinkedContent,
   buildSubPreviewSessions,
   discordSubLogoUrl,
   loadDiscordSubCopy,
@@ -27,10 +30,12 @@ import { DiscordLinkService } from "@/services/discord-link/discord-link.service
  * looked up from the profile on the admin's own session (RLS lets an admin read
  * every link), so the client never names one.
  *
- * Two kinds of message: plain `text`, or a `subPreview` — the `/sub` command's
- * first step, built by the command's own builder over sample sessions and in
- * the chosen locale, or the recipient's when none is chosen. Its controls carry the preview prefix, so a press on
- * one answers "this is a preview" and files nothing.
+ * Two kinds of message: plain `text`, or a `subPreview` of one of the `/sub`
+ * command's two answers, built by the command's own builders in the chosen
+ * locale: the first step over sample sessions (its controls carry the preview
+ * prefix, so a press on one answers "this is a preview" and files nothing), or
+ * what a caller with no linked account is told, whose link carries a fixed
+ * token that links nothing.
  */
 export const POST = defineRoute({
   posture: "role-gated",
@@ -52,10 +57,21 @@ export const POST = defineRoute({
     let message: unknown;
     if (body.kind === "text") {
       message = { content: body.content };
+    } else if (body.variant === "notLinked") {
+      const copy = await loadDiscordSubCopy(body.locale);
+      message = {
+        content: buildSubNotLinkedContent({
+          copy,
+          // The real URL shape with a token no row holds: the page shows its
+          // dead-link card for it, and nothing is minted.
+          linkReply: buildLinkReplyContent(
+            `${getOrigin(request)}${ROUTES.linkDiscord}?token=preview`,
+          ),
+        }),
+        flags: DISCORD_FLAG_SUPPRESS_EMBEDS,
+      };
     } else {
-      const copy = await loadDiscordSubCopy(
-        body.locale ?? (await service.getRecipientLocale(body.profileId)),
-      );
+      const copy = await loadDiscordSubCopy(body.locale);
       const now = new Date();
       message = buildSessionPickerMessage({
         copy,

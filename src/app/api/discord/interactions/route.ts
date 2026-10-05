@@ -17,13 +17,16 @@ import { DISCORD_API_BASE, discordBotHeaders } from "@/lib/discord-api.server";
 import { hashDiscordLinkToken } from "@/lib/discord-link-token.server";
 import {
   DISCORD_FLAG_EPHEMERAL,
+  DISCORD_FLAG_SUPPRESS_EMBEDS,
   SUB_NOTE_INPUT_ID,
   buildFiledMessage,
+  buildLinkReplyContent,
   buildNoteModal,
   buildNoticeMessage,
   buildReasonStepMessage,
   buildRefusalMessage,
   buildSessionPickerMessage,
+  buildSubNotLinkedContent,
   discordSubLogoUrl,
   loadDiscordSubCopy,
   parseReasonValue,
@@ -89,7 +92,7 @@ const DISCORD_APPLICATION_ID = process.env.DISCORD_APPLICATION_ID!;
 /** Only the caller sees the message (Discord's EPHEMERAL message flag). */
 const EPHEMERAL = DISCORD_FLAG_EPHEMERAL;
 /** No link preview under the message (Discord's SUPPRESS_EMBEDS flag). */
-const SUPPRESS_EMBEDS = 1 << 2;
+const SUPPRESS_EMBEDS = DISCORD_FLAG_SUPPRESS_EMBEDS;
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -262,11 +265,7 @@ async function linkReply(
       .insert(row);
     if (error) throw error;
 
-    return (
-      "Open this link to connect your Discord account to your School of Gaming account:\n" +
-      `${origin}/link-discord?token=${token}\n\n` +
-      "The link expires in 10 minutes and works once."
-    );
+    return buildLinkReplyContent(`${origin}/link-discord?token=${token}`);
   } catch (error) {
     console.error("Discord link token error:", error);
     return "Sorry, I couldn't create a link right now. Try /link again in a moment.";
@@ -525,7 +524,10 @@ async function sendSubNotLinked(
   if (step.kind === "start") {
     await patchDiscordResponse(
       interactionToken,
-      `${copy.sub("notLinked")}\n\n${await linkReply(caller, requestHeaders)}`,
+      buildSubNotLinkedContent({
+        copy,
+        linkReply: await linkReply(caller, requestHeaders),
+      }),
       SUPPRESS_EMBEDS
     );
     return;

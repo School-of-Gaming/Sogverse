@@ -190,16 +190,13 @@ describe("POST /api/admin/send-test-discord-message", () => {
     ]);
   }
 
-  it("DMs the /sub first step in the recipient's locale, every control on the preview prefix", async () => {
-    mockMaybeSingle
-      .mockResolvedValueOnce({ data: { discord_user_id: DISCORD_USER_ID }, error: null })
-      .mockResolvedValueOnce({ data: { locale: "fi" }, error: null });
-
-    const response = await POST(sendRequest({ kind: "subPreview", profileId: PROFILE_ID }));
+  it("DMs the /sub first step in the chosen locale, every control on the preview prefix", async () => {
+    const response = await POST(
+      sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "fi", variant: "sessions" }),
+    );
 
     expect(response.status).toBe(200);
-    expect(mockFrom).toHaveBeenCalledWith("profiles");
-    expect(mockEq).toHaveBeenCalledWith("id", PROFILE_ID);
+    expect(mockFrom).not.toHaveBeenCalledWith("profiles");
 
     const message = postedMessage();
     expect(message.flags).toBe(1 << 15);
@@ -222,11 +219,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
   }
 
   it("heads the preview with the favicon from this environment's own site", async () => {
-    mockMaybeSingle
-      .mockResolvedValueOnce({ data: { discord_user_id: DISCORD_USER_ID }, error: null })
-      .mockResolvedValueOnce({ data: { locale: null }, error: null });
-
-    await POST(sendRequest({ kind: "subPreview", profileId: PROFILE_ID }));
+    await POST(sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "en", variant: "sessions" }));
 
     expect(thumbnails(postedMessage().components)).toEqual([
       { type: 11, media: { url: "https://sogverse.sog.gg/apple-icon.png" } },
@@ -236,11 +229,14 @@ describe("POST /api/admin/send-test-discord-message", () => {
   it("sends the preview with no logo from a dev machine, which Discord cannot fetch from", async () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3007");
     try {
-      mockMaybeSingle
-        .mockResolvedValueOnce({ data: { discord_user_id: DISCORD_USER_ID }, error: null })
-        .mockResolvedValueOnce({ data: { locale: null }, error: null });
-
-      const response = await POST(sendRequest({ kind: "subPreview", profileId: PROFILE_ID }));
+      const response = await POST(
+        sendRequest({
+          kind: "subPreview",
+          profileId: PROFILE_ID,
+          locale: "en",
+          variant: "sessions",
+        }),
+      );
 
       expect(response.status).toBe(200);
       const message = postedMessage();
@@ -251,34 +247,62 @@ describe("POST /api/admin/send-test-discord-message", () => {
     }
   });
 
-  it("falls back to English for a recipient who never chose a locale", async () => {
-    mockMaybeSingle
-      .mockResolvedValueOnce({ data: { discord_user_id: DISCORD_USER_ID }, error: null })
-      .mockResolvedValueOnce({ data: { locale: null }, error: null });
-
-    await POST(sendRequest({ kind: "subPreview", profileId: PROFILE_ID }));
-
-    expect(JSON.stringify(postedMessage())).toContain("Which session can’t you make?");
-  });
-
-  it("renders the preview in the chosen locale over the recipient's, without reading the recipient's", async () => {
+  it("renders the preview in the chosen locale", async () => {
     const response = await POST(
-      sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "sv" }),
+      sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "sv", variant: "sessions" }),
     );
 
     expect(response.status).toBe(200);
-    expect(mockFrom).not.toHaveBeenCalledWith("profiles");
     const body = JSON.stringify(postedMessage());
     expect(body).toContain("Vilket tillfälle kan du inte vara med på?");
   });
 
   it("refuses a locale the app does not support, before calling Discord", async () => {
     const response = await POST(
-      sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "de" }),
+      sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "de", variant: "sessions" }),
     );
 
     expect(response.status).toBe(400);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("refuses a preview that names no locale, before calling Discord", async () => {
+    const response = await POST(
+      sendRequest({ kind: "subPreview", profileId: PROFILE_ID, variant: "sessions" }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("refuses a preview that names no variant, or an unknown one, before calling Discord", async () => {
+    for (const variant of [undefined, "everything"]) {
+      const response = await POST(
+        sendRequest({ kind: "subPreview", profileId: PROFILE_ID, locale: "en", variant }),
+      );
+
+      expect(response.status).toBe(400);
+    }
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("DMs the not-linked answer, in the chosen locale, over a link that links nothing", async () => {
+    const response = await POST(
+      sendRequest({
+        kind: "subPreview",
+        profileId: PROFILE_ID,
+        locale: "sv",
+        variant: "notLinked",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const message = postedMessage();
+    expect(message.flags).toBe(1 << 2);
+    expect(message.components).toBeUndefined();
+    expect(message.content).toContain("För att använda /sub");
+    expect(message.content).toContain("https://sogverse.sog.gg/link-discord?token=preview");
+    expect(message.content).toContain("The link expires in 10 minutes and works once.");
   });
 
   it("refuses a body that names no kind", async () => {

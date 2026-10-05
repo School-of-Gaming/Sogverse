@@ -47,8 +47,10 @@ export const sendTestDiscordMessageBody = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("subPreview"),
     profileId: z.string().uuid(),
-    /** The locale to render the preview in; absent, the recipient's own. */
-    locale: z.enum(SUPPORTED_LOCALES).optional(),
+    /** The locale to render the preview in. */
+    locale: z.enum(SUPPORTED_LOCALES),
+    /** Which `/sub` message: the session list, or the answer to a caller who is not linked. */
+    variant: z.enum(["sessions", "notLinked"]),
   }),
 ]);
 export type SendTestDiscordMessageBody = z.infer<typeof sendTestDiscordMessageBody>;

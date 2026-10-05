@@ -15,10 +15,10 @@ import {
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  LOCALE_CONFIG,
-  SUPPORTED_LOCALES,
-  isSupportedLocale,
-} from "@/lib/constants/locales";
+  TestingLocaleSelect,
+  testingSelectClass as selectClass,
+} from "@/components/admin/testing/testing-locale-select";
+import { DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
 import { getClient } from "@/lib/supabase/client";
 import { useAuth } from "@/providers";
 import {
@@ -27,6 +27,13 @@ import {
 } from "@/services/discord-link/discord-link.contracts";
 import { useLinkedDiscordAccounts } from "@/services/discord-link/discord-link.queries";
 import { DiscordLinkService } from "@/services/discord-link/discord-link.service";
+
+type SubPreviewVariant = Extract<
+  SendTestDiscordMessageBody,
+  { kind: "subPreview" }
+>["variant"];
+
+const SUB_PREVIEW_VARIANTS: readonly SubPreviewVariant[] = ["sessions", "notLinked"];
 
 type SendResult =
   | { type: "success"; kind: SendTestDiscordMessageBody["kind"]; jumpUrl: string }
@@ -37,7 +44,7 @@ type SendResult =
  * linked account, proving the send works end to end — plain text, or a preview
  * of the `/sub` command's first step over sample sessions.
  */
-export function DiscordToolCard({ selectClass }: { selectClass: string }) {
+export function DiscordToolCard() {
   const t = useTranslations("admin.testing");
   const c = useTranslations("common");
   const { profile } = useAuth();
@@ -45,8 +52,8 @@ export function DiscordToolCard({ selectClass }: { selectClass: string }) {
 
   const [chosenProfileId, setChosenProfileId] = useState<string | null>(null);
   const [content, setContent] = useState("");
-  // "" is the recipient's own locale, which the /sub preview then takes from them.
-  const [previewLocale, setPreviewLocale] = useState("");
+  const [previewLocale, setPreviewLocale] = useState<SupportedLocale>(DEFAULT_LOCALE);
+  const [previewVariant, setPreviewVariant] = useState<SubPreviewVariant>("sessions");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<SendResult | null>(null);
 
@@ -131,21 +138,29 @@ export function DiscordToolCard({ selectClass }: { selectClass: string }) {
             />
           </Field>
 
-          <Field label={t("discord.previewLocale")} htmlFor="discordPreviewLocale">
+          <Field label={t("discord.previewVariant")} htmlFor="discordPreviewVariant">
             <select
-              id="discordPreviewLocale"
-              value={previewLocale}
-              onChange={(e) => setPreviewLocale(e.target.value)}
+              id="discordPreviewVariant"
+              value={previewVariant}
+              onChange={(e) => {
+                const variant = SUB_PREVIEW_VARIANTS.find((v) => v === e.target.value);
+                if (variant) setPreviewVariant(variant);
+              }}
               className={selectClass}
             >
-              <option value="">{t("discord.recipientsLocale")}</option>
-              {SUPPORTED_LOCALES.map((locale) => (
-                <option key={locale} value={locale}>
-                  {LOCALE_CONFIG[locale].nativeLabel}
+              {SUB_PREVIEW_VARIANTS.map((variant) => (
+                <option key={variant} value={variant}>
+                  {t(`discord.previewVariants.${variant}`)}
                 </option>
               ))}
             </select>
           </Field>
+
+          <TestingLocaleSelect
+            id="discordPreviewLocale"
+            value={previewLocale}
+            onChange={setPreviewLocale}
+          />
 
           {result && (
             <Alert variant={result.type === "success" ? "success" : "destructive"}>
@@ -189,7 +204,8 @@ export function DiscordToolCard({ selectClass }: { selectClass: string }) {
                 void send({
                   kind: "subPreview",
                   profileId: recipientId,
-                  ...(isSupportedLocale(previewLocale) && { locale: previewLocale }),
+                  locale: previewLocale,
+                  variant: previewVariant,
                 })
               }
             >

@@ -9,6 +9,10 @@ import {
   StatusLine,
 } from "@/components/ui/alert";
 import { DiscordToolCard } from "@/components/admin/testing/discord-tool-card";
+import {
+  TestingLocaleSelect,
+  testingSelectClass as selectClass,
+} from "@/components/admin/testing/testing-locale-select";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,8 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/providers";
-import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
-import { useLanguageNames } from "@/hooks/use-language-names";
+import { DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/utils";
 import {
   templateRegistry,
@@ -77,9 +80,6 @@ interface EmailResult {
   attachments?: { name: string; text: string }[];
 }
 
-const selectClass =
-  "flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act focus-visible:ring-offset-2";
-
 /**
  * What an untouched field posts: a select its first option, a text input its
  * placeholder — and a textarea whatever it holds, empty included.
@@ -124,7 +124,6 @@ function templateApiParams(
 
 export default function TestingPage() {
   const t = useTranslations('admin.testing');
-  const languageName = useLanguageNames();
   const c = useTranslations('common');
   const { profile } = useAuth();
 
@@ -308,24 +307,11 @@ export default function TestingPage() {
                   placeholder={t('toEmailPlaceholder')}
                 />
               </Field>
-              <Field label={t('language')} htmlFor="templateLocale">
-                <select
-                  id="templateLocale"
-                  value={templateLocale}
-                  onChange={(e) => {
-                    if (isSupportedLocale(e.target.value)) {
-                      setTemplateLocale(e.target.value);
-                    }
-                  }}
-                  className={selectClass}
-                >
-                  {SUPPORTED_LOCALES.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {LOCALE_CONFIG[opt].nativeLabel} ({languageName(opt, LOCALE_CONFIG[opt].label)})
-                    </option>
-                  ))}
-                </select>
-              </Field>
+              <TestingLocaleSelect
+                id="templateLocale"
+                value={templateLocale}
+                onChange={setTemplateLocale}
+              />
               <Field label={t('template')} htmlFor="template">
                 <select
                   id="template"
@@ -435,7 +421,7 @@ export default function TestingPage() {
         </CardContent>
       </Card>
 
-      <DiscordToolCard selectClass={selectClass} />
+      <DiscordToolCard />
 
       {/* The preview is a dialog rather than a second panel under the form:
           the mail is 720px of reading and the form is what the page is for, so

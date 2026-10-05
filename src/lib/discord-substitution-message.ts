@@ -38,6 +38,8 @@ import { Constants, type SubstitutionReason } from "@/types";
 
 /** Only the caller sees the message. */
 export const DISCORD_FLAG_EPHEMERAL = 1 << 6;
+/** No link preview under the message. */
+export const DISCORD_FLAG_SUPPRESS_EMBEDS = 1 << 2;
 /** The message is built from layout components and carries no `content`. */
 export const DISCORD_FLAG_IS_COMPONENTS_V2 = 1 << 15;
 
@@ -621,6 +623,33 @@ export function buildNoticeMessage({
   line: string;
 }): DiscordComponentsMessage {
   return message(copy, logoUrl, { body: [text(line)] });
+}
+
+/**
+ * `/link`'s reply: the one-time URL that links the caller's Discord account,
+ * and how long it lasts. Plain text, sent with {@link DISCORD_FLAG_SUPPRESS_EMBEDS}.
+ */
+export function buildLinkReplyContent(linkUrl: string): string {
+  return (
+    "Open this link to connect your Discord account to your School of Gaming account:\n" +
+    `${linkUrl}\n\n` +
+    "The link expires in 10 minutes and works once."
+  );
+}
+
+/**
+ * What `/sub` answers a caller with no Gedu account linked: the line saying a
+ * link is needed, over `/link`'s own reply. Plain text, sent with
+ * {@link DISCORD_FLAG_SUPPRESS_EMBEDS}.
+ */
+export function buildSubNotLinkedContent({
+  copy,
+  linkReply,
+}: {
+  copy: DiscordSubCopy;
+  linkReply: string;
+}): string {
+  return `${copy.sub("notLinked")}\n\n${linkReply}`;
 }
 
 // ---------------------------------------------------------------- the admin preview

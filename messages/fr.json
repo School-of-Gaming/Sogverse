@@ -1558,9 +1558,12 @@
         "sent": "Message envoyé.",
         "openInDiscord": "Ouvrir dans Discord",
         "sendSubPreview": "Envoyer l’aperçu de /sub",
-        "subPreviewSent": "Aperçu envoyé.",
-        "previewLocale": "Langue de l’aperçu",
-        "recipientsLocale": "Langue du destinataire"
+        "previewVariant": "Message à prévisualiser",
+        "previewVariants": {
+          "sessions": "Liste des séances",
+          "notLinked": "Pas encore lié"
+        },
+        "subPreviewSent": "Aperçu envoyé."
       }
     },
     "whatsapp": {

@@ -1558,9 +1558,12 @@
         "sent": "Viesti lähetetty.",
         "openInDiscord": "Avaa Discordissa",
         "sendSubPreview": "Lähetä /sub-esikatselu",
-        "subPreviewSent": "Esikatselu lähetetty.",
-        "previewLocale": "Esikatselun kieli",
-        "recipientsLocale": "Vastaanottajan kieli"
+        "previewVariant": "Esikatseltava viesti",
+        "previewVariants": {
+          "sessions": "Istuntolista",
+          "notLinked": "Ei vielä yhdistetty"
+        },
+        "subPreviewSent": "Esikatselu lähetetty."
       }
     },
     "whatsapp": {

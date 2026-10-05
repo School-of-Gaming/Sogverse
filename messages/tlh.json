@@ -1602,9 +1602,12 @@
         "sent": "QIn ngeHta’.",
         "openInDiscord": "Discord Daq yIpoS",
         "sendSubPreview": "/sub ghantoH yIngeH",
-        "subPreviewSent": "ghantoH ngeHta’.",
-        "previewLocale": "ghantoH Hol",
-        "recipientsLocale": "QIn Hev Hol"
+        "previewVariant": "ghantoH QIn",
+        "previewVariants": {
+          "sessions": "Qu' tlhegh",
+          "notLinked": "wej ghItlh pagh"
+        },
+        "subPreviewSent": "ghantoH ngeHta’."
       }
     },
     "whatsapp": {

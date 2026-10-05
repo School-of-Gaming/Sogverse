@@ -1,9 +1,4 @@
 import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
-import {
-  DEFAULT_LOCALE,
-  isSupportedLocale,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
 import type { AppSupabaseClient, DiscordLink } from "@/types";
 import {
   sendTestDiscordMessageResponse,
@@ -76,21 +71,6 @@ export class DiscordLinkService {
       .maybeSingle();
     if (error) throw error;
     return data?.discord_user_id ?? null;
-  }
-
-  /**
-   * The locale a DM to this profile is written in: the one they chose in the
-   * app, or the default when they never chose one.
-   */
-  async getRecipientLocale(profileId: string): Promise<SupportedLocale> {
-    const { data, error } = await this.supabase
-      .from("profiles")
-      .select("locale")
-      .eq("id", profileId)
-      .maybeSingle();
-    if (error) throw error;
-    const locale = data?.locale;
-    return isSupportedLocale(locale) ? locale : DEFAULT_LOCALE;
   }
 
   /**

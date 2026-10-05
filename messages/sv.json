@@ -1558,9 +1558,12 @@
         "sent": "Meddelandet skickades.",
         "openInDiscord": "Öppna i Discord",
         "sendSubPreview": "Skicka förhandsvisning av /sub",
-        "subPreviewSent": "Förhandsvisningen skickades.",
-        "previewLocale": "Förhandsvisningens språk",
-        "recipientsLocale": "Mottagarens språk"
+        "previewVariant": "Meddelande att förhandsvisa",
+        "previewVariants": {
+          "sessions": "Sessionslista",
+          "notLinked": "Inte kopplad än"
+        },
+        "subPreviewSent": "Förhandsvisningen skickades."
       }
     },
     "whatsapp": {
