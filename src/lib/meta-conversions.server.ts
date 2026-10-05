@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { cookieValueFromHeader, parseConsentCookieHeader } from "@/lib/consent";
 import {
   ENROLMENT_EVENTS,
@@ -23,11 +24,12 @@ import { getOrigin } from "@/lib/url";
  * outcome is the only place that knows it happened, exactly once.
  *
  * **What is sent about a person, exhaustively:** the user agent, the IP address
- * the request arrived from, and Meta's own `_fbp` / `_fbc` cookies if this
- * browser carries them. No email, no phone number, no name, no user id, no
- * participation id, and nothing whatsoever about a child — not their name, not
- * their age. This list is the promise the privacy policy makes; a field added
- * here is a policy edit.
+ * the request arrived from, Meta's own `_fbp` / `_fbc` cookies if this browser
+ * carries them, and a SHA-256 hash of the parent's own account email — hashed
+ * here, so the address itself is never sent and never logged. No phone number,
+ * no name, no user id, no participation id, and nothing whatsoever about a
+ * child — not their name, not their age, not their address. This list is the
+ * promise the privacy policy makes; a field added here is a policy edit.
  *
  * **What is sent about the enrolment** is `outcome`, one of three fixed words,
  * and the product it was for in Meta's standard product fields — its id, name,
@@ -88,6 +90,28 @@ export type MetaConversion =
       sourcePath: string;
     };
 
+/**
+ * The account the request acts as — the parent it just registered, or the
+ * signed-in customer — and never anyone else. Every caller is a customer-only
+ * route, so this is always the parent's own address and never a gamer's.
+ * `null` when the caller has none to hand: the report still goes, without the
+ * hashed email.
+ */
+export interface MetaRequestingAccount {
+  email: string | null;
+}
+
+/**
+ * Meta's advanced-matching form of an email: trimmed, lowercased, SHA-256,
+ * lowercase hex. Meta compares it with the hashes of its own users' addresses;
+ * the plain address never leaves this function.
+ */
+function hashEmailForMeta(email: string): string {
+  return createHash("sha256")
+    .update(email.trim().toLowerCase())
+    .digest("hex");
+}
+
 function eventNameFor(conversion: MetaConversion): string {
   return conversion.event === "account_created"
     ? PIXEL_EVENTS.accountCreated
@@ -112,6 +136,7 @@ function clientIpFrom(headers: Headers): string | undefined {
 export async function reportMetaConversion(
   request: Request,
   conversion: MetaConversion,
+  account: MetaRequestingAccount,
 ): Promise<void> {
   try {
     const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
@@ -131,6 +156,10 @@ export async function reportMetaConversion(
     // person as the browser's page view instead of counted as a stranger.
     const fbp = cookieValueFromHeader(cookieHeader, "_fbp");
     const fbc = cookieValueFromHeader(cookieHeader, "_fbc");
+    // Advanced matching: the hash, never the address, and only when there is
+    // an address to hash.
+    const email = account.email?.trim();
+    const emailHash = email ? hashEmailForMeta(email) : undefined;
 
     const event = {
       event_name: eventNameFor(conversion),
@@ -148,6 +177,7 @@ export async function reportMetaConversion(
         ...(clientIp && { client_ip_address: clientIp }),
         ...(fbp && { fbp }),
         ...(fbc && { fbc }),
+        ...(emailHash && { em: [emailHash] }),
       },
       ...(conversion.event === "enrolment" && {
         custom_data: { outcome: conversion.outcome, ...conversion.product },

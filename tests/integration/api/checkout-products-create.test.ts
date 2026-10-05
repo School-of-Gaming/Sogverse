@@ -137,6 +137,7 @@ vi.mock("@/lib/stripe/customer", () => ({
 // --- Fixtures ---
 
 const CUSTOMER_ID = "11111111-1111-1111-1111-111111111111";
+const CUSTOMER_EMAIL = "parent@example.test";
 const PRODUCT_ID = "22222222-2222-2222-2222-222222222222";
 const GAMER_ID = "33333333-3333-3333-3333-333333333333";
 const PARTICIPATION_ID = "44444444-4444-4444-4444-444444444444";
@@ -362,7 +363,7 @@ function mockForbidden(role: string) {
 function mockAuthenticatedCustomer(locale: string | null = null) {
   mockRequireRole.mockResolvedValue({
     user: { id: CUSTOMER_ID },
-    profile: { role: "customer", locale },
+    profile: { role: "customer", locale, email: CUSTOMER_EMAIL },
     supabase: {},
   });
 }
@@ -1485,8 +1486,11 @@ describe("POST /api/checkout/products/create", () => {
       expect(res.status).toBe(200);
       await settleDeferred();
       expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
-      const [request, conversion] = mockReportMetaConversion.mock.calls[0];
+      const [request, conversion, account] =
+        mockReportMetaConversion.mock.calls[0];
       expect(request).toBeInstanceOf(Request);
+      // The signed-in customer's own address, never the participant's.
+      expect(account).toEqual({ email: CUSTOMER_EMAIL });
       // The product's own public page, stated rather than taken from this
       // route's URL — which is an API path nobody browses.
       // And the product, valued at nothing because nothing was charged.
@@ -1531,6 +1535,9 @@ describe("POST /api/checkout/products/create", () => {
           currency: "EUR",
         },
         sourcePath: `/shop/${PRODUCT_ID}`,
+      });
+      expect(mockReportMetaConversion.mock.calls[0][2]).toEqual({
+        email: CUSTOMER_EMAIL,
       });
     });
 

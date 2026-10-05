@@ -169,9 +169,11 @@ product row, never by the URL it was reached from**. No role check is needed on 
 the three routes are customer-only, so a gamer cannot reach one.
 
 **What identifies a person in a server report, exhaustively:** the user agent, the IP the
-request arrived from, and Meta's own browser and click cookies if the browser carries them.
-No email, no name, no user id, and nothing whatsoever about a child. Adding a field there
-is a privacy-policy edit.
+request arrived from, Meta's own browser and click cookies if the browser carries them, and
+a SHA-256 hash of the parent's own account email (Meta's advanced matching) — hashed on our
+server, so the address itself is never sent or logged, and never a gamer's address. No
+name, no user id, and nothing whatsoever about a child. The privacy policy's Meta entry
+says this in plain words; adding a field there is a privacy-policy edit.
 
 A completed purchase is reported nowhere today. When it is, it belongs on the same
 server-side path, from the payment webhook — which is the only place that knows money

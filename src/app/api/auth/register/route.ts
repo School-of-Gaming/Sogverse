@@ -349,10 +349,12 @@ export const POST = defineRoute({
     // is an ordinary customer, and a gamer cannot reach a registration form at
     // all.
     after(
-      reportMetaConversion(request, {
-        event: "account_created",
-        sourcePath: ROUTES.register,
-      }),
+      reportMetaConversion(
+        request,
+        { event: "account_created", sourcePath: ROUTES.register },
+        // The account this request just created — the parent's own address.
+        { email: storedEmail },
+      ),
     );
 
     return response;

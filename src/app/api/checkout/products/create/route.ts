@@ -299,12 +299,17 @@ export const POST = defineRoute({
       // — the route is customer-only, so a gamer cannot reach it at all.
       if (rpcJson.kind === "free_active" && isAdvertisedProduct(product)) {
         after(
-          reportMetaConversion(request, {
-            event: "enrolment",
-            outcome: "enrolled",
-            product: metaProductDetails(product, currency),
-            sourcePath: ROUTES.shopProductPath(productId),
-          }),
+          reportMetaConversion(
+            request,
+            {
+              event: "enrolment",
+              outcome: "enrolled",
+              product: metaProductDetails(product, currency),
+              sourcePath: ROUTES.shopProductPath(productId),
+            },
+            // The signed-in customer's own address, never the participant's.
+            { email: profile.email },
+          ),
         );
       }
 
@@ -619,12 +624,16 @@ export const POST = defineRoute({
       // reported from the day we report one.
       if (isAdvertisedProduct(product)) {
         after(
-          reportMetaConversion(request, {
-            event: "enrolment",
-            outcome: "sent_to_checkout",
-            product: metaProductDetails(product, currency),
-            sourcePath: ROUTES.shopProductPath(productId),
-          }),
+          reportMetaConversion(
+            request,
+            {
+              event: "enrolment",
+              outcome: "sent_to_checkout",
+              product: metaProductDetails(product, currency),
+              sourcePath: ROUTES.shopProductPath(productId),
+            },
+            { email: profile.email },
+          ),
         );
       }
 

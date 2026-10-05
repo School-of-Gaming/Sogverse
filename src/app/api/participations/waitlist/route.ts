@@ -14,7 +14,10 @@ import {
   isAdvertisedProduct,
   metaProductDetails,
 } from "@/lib/marketing-events";
-import { reportMetaConversion } from "@/lib/meta-conversions.server";
+import {
+  reportMetaConversion,
+  type MetaRequestingAccount,
+} from "@/lib/meta-conversions.server";
 import { ROUTES } from "@/lib/constants/routes";
 import type { AppSupabaseClient } from "@/types";
 
@@ -127,7 +130,15 @@ export const POST = defineRoute({
       // wrote, and (inside the helper) a request that carried marketing consent.
       // No role check is needed on this side, because the route is customer-only
       // and a gamer cannot reach it.
-      after(reportWaitlistConversion(request, supabase, body.productId));
+      after(
+        reportWaitlistConversion(
+          request,
+          supabase,
+          body.productId,
+          // The signed-in customer's own address, never the participant's.
+          { email: profile.email },
+        ),
+      );
     }
 
     // The flag travels on to the browser for the same reason it is read here:
@@ -161,6 +172,7 @@ async function reportWaitlistConversion(
   request: Request,
   client: AppSupabaseClient,
   productId: string,
+  account: MetaRequestingAccount,
 ): Promise<void> {
   try {
     const { data: product } = await client
@@ -172,14 +184,18 @@ async function reportWaitlistConversion(
       .maybeSingle();
     if (!product || !isAdvertisedProduct(product)) return;
 
-    await reportMetaConversion(request, {
-      event: "enrolment",
-      outcome: "waitlisted",
-      // A queue place states no currency, so it is valued at the price the
-      // product is sold at — the one currency the platform sells in.
-      product: metaProductDetails(product),
-      sourcePath: ROUTES.shopProductPath(productId),
-    });
+    await reportMetaConversion(
+      request,
+      {
+        event: "enrolment",
+        outcome: "waitlisted",
+        // A queue place states no currency, so it is valued at the price the
+        // product is sold at — the one currency the platform sells in.
+        product: metaProductDetails(product),
+        sourcePath: ROUTES.shopProductPath(productId),
+      },
+      account,
+    );
   } catch (error) {
     console.error(
       "[participations/waitlist] could not report the conversion",
