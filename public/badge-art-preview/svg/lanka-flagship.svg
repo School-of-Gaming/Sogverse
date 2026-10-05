@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<defs>
+  <pattern id="twill" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
+    <rect width="5" height="5" fill="#122758"/><rect width="5" height="2" fill="#173068"/>
+  </pattern>
+  <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="0.45" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="0.5" stop-color="#fff" stop-opacity="0.22"/>
+    <stop offset="0.55" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    <animateTransform attributeName="gradientTransform" type="translate" values="-1 -1;-1 -1;1 1" keyTimes="0;0.55;1" dur="6s" repeatCount="indefinite"/>
+  </linearGradient>
+</defs>
+<circle cx="64" cy="64" r="61" fill="#6b400c"/>
+<circle cx="64" cy="64" r="52" fill="url(#twill)"/>
+<circle cx="64" cy="64" r="56" fill="none" stroke="#dda12b" stroke-width="9.5" stroke-dasharray="1.4 1.1"/>
+<circle cx="64" cy="64" r="56" fill="none" stroke="#6b400c" stroke-width="9.5" stroke-dasharray="1.1 1.4" stroke-dashoffset="1.4" opacity="0.55"/>
+<circle cx="64" cy="64" r="51.2" fill="none" stroke="#000" stroke-opacity="0.35" stroke-width="1.2"/>
+<circle class="m" cx="64" cy="64" r="56" fill="none" stroke="#fff5cf" stroke-width="9.5" stroke-linecap="round" pathLength="100" stroke-dasharray="5 95" transform="rotate(-90 64 64)" opacity="0.9">
+  <animate attributeName="stroke-dashoffset" values="0;-100" dur="6s" repeatCount="indefinite"/>
+</circle>
+<circle cx="64" cy="64" r="46" fill="none" stroke="#fff5cf" stroke-width="1.6" stroke-dasharray="4.5 3" stroke-linecap="round" opacity="0.8"/>
+<path d="M30,86 q5,-3 10,0 t10,0 t10,0 t10,0 t10,0 t10,0 t10,0" fill="none" stroke="#58bfe0" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="4 2"/><path d="M30,92 q5,-3 10,0 t10,0 t10,0 t10,0 t10,0 t10,0 t10,0" fill="none" stroke="#1f8bb6" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="4 2"/><path d="M30,98 q5,-3 10,0 t10,0 t10,0 t10,0 t10,0 t10,0 t10,0" fill="none" stroke="#1f8bb6" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="4 2"/>
+<g transform="translate(19.5 18) scale(0.7)" stroke-linejoin="round">
+  <path d="M18,74 H110 Q104,90 92,94 H36 Q24,90 18,74 Z" fill="#a4662f" stroke="#4b2a12" stroke-width="2"/>
+  <path d="M22,80 H106" stroke="#f6d267" stroke-width="2.4" stroke-dasharray="4 2"/>
+  <path d="M62.5,14 H65.5 V75 H62.5 Z" fill="#764420"/>
+  <path d="M68,22 Q88,46 98,70 H68 Z" fill="#f1f3f7" stroke="#9ea6b4" stroke-width="2"/>
+  <path d="M60,28 Q47,50 30,70 H60 Z" fill="#f1f3f7" stroke="#9ea6b4" stroke-width="2"/>
+  <path d="M74,36 L80,48 M70,46 L84,60" stroke="#d3d8e0" stroke-width="1.4" stroke-dasharray="3 1.5"/>
+  <path d="M65,14 L80,18.5 L65,23 Z" fill="#de3a3a" stroke="#681318" stroke-width="1.4"/>
+</g>
+<circle cx="64" cy="64" r="44" fill="url(#sheen)"/>
+</svg>

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#fff5cf"/><stop offset="0.25" stop-color="#f6d267"/><stop offset="0.6" stop-color="#dda12b"/><stop offset="1" stop-color="#a86c17"/>
+  </linearGradient>
+  <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f8bb6"/><stop offset="1" stop-color="#125d88"/></linearGradient>
+  <linearGradient id="navy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b66c9"/><stop offset="1" stop-color="#1b418c"/></linearGradient>
+  <linearGradient id="band" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+  </linearGradient>
+  <clipPath id="sil"><path d="M14,96 q8,-6 16,0 t16,0 t16,0 t16,0 t16,0 t16,0 Q110,110 96,110 H32 Q14,110 14,96 Z" stroke="#000" stroke-width="11" stroke-linejoin="round"/>
+<path d="M18,74 H110 Q104,90 92,94 H36 Q24,90 18,74 Z" stroke="#000" stroke-width="11" stroke-linejoin="round"/>
+<path d="M68,22 Q88,46 98,70 H68 Z" stroke="#000" stroke-width="11" stroke-linejoin="round"/>
+<path d="M60,28 Q47,50 30,70 H60 Z" stroke="#000" stroke-width="11" stroke-linejoin="round"/>
+<path d="M65,14 L80,18.5 L65,23 Z" stroke="#000" stroke-width="11" stroke-linejoin="round"/>
+<path d="M62.5,14 H65.5 V75 H62.5 Z" stroke="#000" stroke-width="11" stroke-linejoin="round"/></clipPath>
+</defs>
+<path d="M14,96 q8,-6 16,0 t16,0 t16,0 t16,0 t16,0 t16,0 Q110,110 96,110 H32 Q14,110 14,96 Z" fill="#6b400c" stroke="#6b400c" stroke-width="11" stroke-linejoin="round"/>
+<path d="M18,74 H110 Q104,90 92,94 H36 Q24,90 18,74 Z" fill="#6b400c" stroke="#6b400c" stroke-width="11" stroke-linejoin="round"/>
+<path d="M68,22 Q88,46 98,70 H68 Z" fill="#6b400c" stroke="#6b400c" stroke-width="11" stroke-linejoin="round"/>
+<path d="M60,28 Q47,50 30,70 H60 Z" fill="#6b400c" stroke="#6b400c" stroke-width="11" stroke-linejoin="round"/>
+<path d="M65,14 L80,18.5 L65,23 Z" fill="#6b400c" stroke="#6b400c" stroke-width="11" stroke-linejoin="round"/>
+<path d="M62.5,14 H65.5 V75 H62.5 Z" fill="#6b400c" stroke="#6b400c" stroke-width="11" stroke-linejoin="round"/>
+<path d="M14,96 q8,-6 16,0 t16,0 t16,0 t16,0 t16,0 t16,0 Q110,110 96,110 H32 Q14,110 14,96 Z" fill="url(#gold)" stroke="url(#gold)" stroke-width="7.5" stroke-linejoin="round"/>
+<path d="M18,74 H110 Q104,90 92,94 H36 Q24,90 18,74 Z" fill="url(#gold)" stroke="url(#gold)" stroke-width="7.5" stroke-linejoin="round"/>
+<path d="M68,22 Q88,46 98,70 H68 Z" fill="url(#gold)" stroke="url(#gold)" stroke-width="7.5" stroke-linejoin="round"/>
+<path d="M60,28 Q47,50 30,70 H60 Z" fill="url(#gold)" stroke="url(#gold)" stroke-width="7.5" stroke-linejoin="round"/>
+<path d="M65,14 L80,18.5 L65,23 Z" fill="url(#gold)" stroke="url(#gold)" stroke-width="7.5" stroke-linejoin="round"/>
+<path d="M62.5,14 H65.5 V75 H62.5 Z" fill="url(#gold)" stroke="url(#gold)" stroke-width="7.5" stroke-linejoin="round"/>
+<path d="M14,96 q8,-6 16,0 t16,0 t16,0 t16,0 t16,0 t16,0 Q110,110 96,110 H32 Q14,110 14,96 Z" fill="url(#sea)"/>
+<path d="M18,74 H110 Q104,90 92,94 H36 Q24,90 18,74 Z" fill="url(#navy)"/>
+<path d="M68,22 Q88,46 98,70 H68 Z" fill="#f1f3f7"/>
+<path d="M60,28 Q47,50 30,70 H60 Z" fill="#f1f3f7"/>
+<path d="M65,14 L80,18.5 L65,23 Z" fill="#de3a3a"/>
+<path d="M62.5,14 H65.5 V75 H62.5 Z" fill="url(#gold)"/>
+
+<path d="M24,82 H104" fill="none" stroke="url(#gold)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M72,32 l8,14" stroke="#fff" stroke-opacity="0.8" stroke-width="2.4" stroke-linecap="round"/><path d="M54,36 l-5,9" stroke="#fff" stroke-opacity="0.8" stroke-width="2.4" stroke-linecap="round"/>
+<g clip-path="url(#sil)">
+  
+</g>
+
+</svg>

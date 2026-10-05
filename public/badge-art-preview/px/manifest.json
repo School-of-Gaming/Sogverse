@@ -1,0 +1,52 @@
+{
+  "kide-flagship": {
+    "colours": 12,
+    "frames": 40,
+    "ms": 75
+  },
+  "kide-neuro": {
+    "colours": 11,
+    "frames": 40,
+    "ms": 75
+  },
+  "merkki-flagship": {
+    "colours": 17,
+    "frames": 48,
+    "ms": 70
+  },
+  "merkki-neuro": {
+    "colours": 8,
+    "frames": 48,
+    "ms": 70
+  },
+  "mitali-flagship": {
+    "colours": 11,
+    "frames": 48,
+    "ms": 70
+  },
+  "mitali-neuro": {
+    "colours": 23,
+    "frames": 48,
+    "ms": 70
+  },
+  "pinssi-flagship": {
+    "colours": 17,
+    "frames": 36,
+    "ms": 80
+  },
+  "pinssi-neuro": {
+    "colours": 13,
+    "frames": 36,
+    "ms": 80
+  },
+  "revontuli-flagship": {
+    "colours": 28,
+    "frames": 48,
+    "ms": 70
+  },
+  "revontuli-neuro": {
+    "colours": 17,
+    "frames": 48,
+    "ms": 70
+  }
+}

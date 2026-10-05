@@ -683,7 +683,10 @@ export const config = {
      * standing between us and session disclosure, not a decision this repo
      * made. Excluding the path makes it ours. The route needs nothing from the
      * proxy anyway: it reads no cookies and builds its own anonymous client.
+     *
+     * TEMP badge-art-preview: remove before merge. `badge-art-preview/` lets the
+     * static preview page in `public/badge-art-preview/` serve signed out.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|llms\\.txt|api/locations/search|api/team/photos/|media/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|llms\\.txt|api/locations/search|api/team/photos/|media/|badge-art-preview/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
