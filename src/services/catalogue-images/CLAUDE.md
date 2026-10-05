@@ -41,8 +41,13 @@ stays in the catalogue, unlinked, which is what makes a replace reversible. When
 bytes resolve to the entry being replaced, that is a no-op that relinks nothing — not an
 error.
 
+A landing page's pictures are named inside its section structure, where no foreign key
+reaches, so their half of a replace is `repoint_landing_images(old, new)`, the same shape
+over both of a page's copies (`src/services/landing-pages/CLAUDE.md`).
+
 Removal is the mirror: the row goes, the foreign keys null every link pointing at it —
-live covers included — the triggers null each path, and the object is deleted. An object left behind by a
+live covers included — the triggers null each path, and the object is deleted. A landing
+page's pictures are unlinked by a trigger on the row's delete instead, to the same effect. An object left behind by a
 failed removal is logged rather than retried — re-uploading the same file recreates the
 row over the surviving object, because the object's name is still the hash of those
 bytes.
@@ -141,6 +146,7 @@ changed:
 |---|---|---|
 | `product` | `product-images` | exactly 1200 × 800 |
 | `library_cover` | `library-covers` | exactly 1600 × 900 |
+| `landing_image` | `landing-images` | exactly 1600 × 900 |
 
 The purpose is a column; the bucket and the size live once, in the purpose map in
 `src/lib/images/`, which everything reads them from: URL building, the upload and the

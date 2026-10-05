@@ -27,4 +27,5 @@ export interface CatalogueImagePurposeSpec {
 export const CATALOGUE_IMAGE_PURPOSES = {
   product: { bucket: "product-images", width: 1200, height: 800 },
   library_cover: { bucket: "library-covers", width: 1600, height: 900 },
+  landing_image: { bucket: "landing-images", width: 1600, height: 900 },
 } as const satisfies Record<CatalogueImagePurpose, CatalogueImagePurposeSpec>;

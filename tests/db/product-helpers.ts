@@ -309,6 +309,12 @@ import { TEST_IDS } from "./constants";
  *                  that must NEVER exist, backing the "unknown id is refused"
  *                  cases, and 828-82b catalogue entries — three Library covers
  *                  and one product picture a cover may not be
+ *   82c-833        landing-pages.test.ts — `landing_pages` and
+ *                  `catalogue_images` rows rather than products: 82c a page
+ *                  seeded complete, 82d a draft, 82e an id that must NEVER
+ *                  exist, and 82f-833 catalogue entries — four landing
+ *                  pictures (two removed during the run) and one product
+ *                  picture a landing page may not show
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

@@ -329,6 +329,7 @@ const MAX_INPUT_PIXELS = 4096 * 4096;
 const PURPOSE_NAME: Record<CatalogueImagePurpose, string> = {
   product: "product picture",
   library_cover: "Library cover",
+  landing_image: "landing page picture",
 };
 
 /**
