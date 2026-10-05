@@ -103,18 +103,21 @@ that read only the text.
 
 ## Uploading through an MCP Apps view
 
-The bytes of a picture must never pass through the model, so a cover is uploaded through an
-**MCP Apps view** (extension `io.modelcontextprotocol/ui`): `open_cover_uploader` carries
-`_meta.ui.resourceUri` naming a `ui://` resource of type `text/html;profile=mcp-app`, which
-the AI app renders in a sandboxed frame inside the chat. The view crops the admin's picture
-to the cover's frame at exactly the catalogue's size and calls two tools through the AI
-app's own connection — `upload_library_cover`, then `set_library_article_cover` — and then
-puts the new entry's id in the model's context. It holds no token and opens no connection
-of its own, so the gate in front of those calls is the endpoint's. What the cover is — its
-size, the largest JPEG a call may carry, the article — arrives in the opening tool's
-result, so the view restates nothing the catalogue defines.
+The bytes of a picture must never pass through the model, so a catalogue picture is
+uploaded through an **MCP Apps view** (extension `io.modelcontextprotocol/ui`): an opening
+tool (`open_cover_uploader`, `open_landing_image_uploader`) carries `_meta.ui.resourceUri`
+naming a `ui://` resource of type `text/html;profile=mcp-app`, which the AI app renders in a
+sandboxed frame inside the chat. **One view serves every catalogue purpose.** The opening
+tool's `uploader` field says what it is for — the purpose's exact size and the largest JPEG
+a call may carry, the app-only tool that stores the picture, and the tool and arguments
+that place it (or none, to add it to the catalogue alone) — so the view restates nothing
+the catalogue or an area defines, and a new purpose is a new opening tool, never a new
+view. The view crops the admin's picture to that frame, calls the two tools through the AI
+app's own connection, and then puts the new entry's id in the model's context. It holds no
+token and opens no connection of its own, so the gate in front of those calls is the
+endpoint's.
 
-**An app-only tool is a tool all the same.** `upload_library_cover` carries
+**An app-only tool is a tool all the same.** An upload tool (`upload_library_cover`, `upload_landing_image`) carries
 `_meta.ui.visibility: ["app"]`, which tells a host to keep it out of the model's tool list
 and accept it only from this server's own views. That is the host's promise, not a gate:
 the tool is in `tools/list` and any client holding a grant can call it, so it checks its

@@ -2,9 +2,12 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   DEFAULT_MAX_REQUEST_BODY_SIZE,
+  type CallToolResult,
   type McpServer,
+  type ServerContext,
 } from "@modelcontextprotocol/server";
 import { z } from "zod-v4";
+import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
 import { coverUrl } from "@/lib/mcp/cover-images";
 import {
   NOT_FOUND,
@@ -23,34 +26,47 @@ import {
   sizeCapRefusal,
   vetCatalogueUpload,
 } from "@/services/catalogue-images/catalogue-images.server";
+import type { AppSupabaseClient, CatalogueImagePurpose } from "@/types";
 
 /*
- * Uploading a Library cover from an AI app, through an MCP Apps view
- * (extension `io.modelcontextprotocol/ui`). The bytes of a picture must never
- * pass through the model — it would have to read and repeat them, and a
- * client refuses a result that large anyway — so the model only opens the
- * uploader, and the uploader, a page the AI app renders in a sandboxed frame,
- * reads the admin's file, crops it to the cover's exact size and hands the
- * JPEG to an app-only tool through the AI app's own connection. The view
- * never holds a token: the AI app makes the call with its grant, so the gate
- * in front of it is the endpoint's like any other call.
+ * Uploading a catalogue picture from an AI app — a Library cover, a landing
+ * page picture — through an MCP Apps view (extension
+ * `io.modelcontextprotocol/ui`). The bytes of a picture must never pass
+ * through the model — it would have to read and repeat them, and a client
+ * refuses a result that large anyway — so the model only opens the uploader,
+ * and the uploader, a page the AI app renders in a sandboxed frame, reads the
+ * admin's file, crops it to the purpose's exact size and hands the JPEG to an
+ * app-only tool through the AI app's own connection, then places it with the
+ * tool the opening named. The view never holds a token: the AI app makes the
+ * calls with its grant, so the gate in front of them is the endpoint's like
+ * any other call.
  *
- * The view is `packages/mcp-cover-uploader`, built to one HTML file that is
- * committed and served here as the resource.
+ * One view serves every purpose: what it uploads for, and how, arrives in the
+ * opening tool's `uploader` field (`uploaderOpening`), so the view restates
+ * nothing the catalogue or an area defines. It is
+ * `packages/mcp-cover-uploader`, built to one HTML file that is committed and
+ * served here as the resource.
  */
 
 /** The view's address. Hosts may cache a view by it, so a breaking change to the view's protocol names a new one. */
-export const COVER_UPLOADER_URI = "ui://sogverse/library-cover-uploader.html";
+export const PICTURE_UPLOADER_URI = "ui://sogverse/picture-uploader.html";
 
 /** What MCP Apps calls an HTML view. */
 export const MCP_APP_MIME_TYPE = "text/html;profile=mcp-app";
+
+/** The `_meta` an opening tool carries, naming the view. */
+export const UPLOADER_VIEW_META = {
+  ui: { resourceUri: PICTURE_UPLOADER_URI },
+  // The key hosts from before `ui.resourceUri` read.
+  "ui/resourceUri": PICTURE_UPLOADER_URI,
+};
 
 /**
  * The built view, read from the workspace package that builds it.
  * `next.config.ts` names the file in `outputFileTracingIncludes`, since a
  * `process.cwd()` read is invisible to the tracer.
  */
-const COVER_UPLOADER_HTML = join(
+const UPLOADER_HTML = join(
   process.cwd(),
   "packages",
   "mcp-cover-uploader",
@@ -62,7 +78,7 @@ const COVER_UPLOADER_HTML = join(
 let cachedHtml: Promise<string> | null = null;
 
 function uploaderHtml(): Promise<string> {
-  cachedHtml ??= readFile(COVER_UPLOADER_HTML, "utf8");
+  cachedHtml ??= readFile(UPLOADER_HTML, "utf8");
   return cachedHtml;
 }
 
@@ -80,14 +96,145 @@ export const MAX_UPLOAD_BYTES = Math.min(
   Math.floor(((DEFAULT_MAX_REQUEST_BODY_SIZE - 64 * 1024) * 3) / 4),
 );
 
+/** Where the view puts a stored picture: a tool, its arguments, and the one the picture's id goes in. */
+export interface UploaderPlacement {
+  tool: string;
+  arguments: Record<string, unknown>;
+  imageArgument: string;
+  /** The upload button's words. */
+  actionLabel: string;
+  /** What the view tells the admin once the picture is placed. */
+  done: string;
+  /** What the model is told once it is, after the entry's id and label. */
+  outcome: string;
+}
+
+/**
+ * What the view is opened with, in the opening tool's result as `uploader`:
+ * the catalogue purpose, its exact size and the largest JPEG a call carries,
+ * the app-only tool that stores it, and where it is placed — or null, when it
+ * is only added to the catalogue and the model is told its id to place.
+ */
+export function uploaderOpening(
+  purpose: CatalogueImagePurpose,
+  view: {
+    heading: string;
+    subject: string;
+    uploadTool: string;
+    place: UploaderPlacement | null;
+  },
+) {
+  const { width, height } = CATALOGUE_IMAGE_PURPOSES[purpose];
+  return {
+    purpose,
+    heading: view.heading,
+    subject: view.subject,
+    frame: { width, height, maxBytes: MAX_UPLOAD_BYTES },
+    uploadTool: view.uploadTool,
+    place: view.place,
+  };
+}
+
+/**
+ * Register the app-only tool the view stores a picture of one purpose
+ * through. It adds a JPEG exactly the purpose's size to the catalogue, or
+ * answers the entry already holding the same bytes, and places it nowhere.
+ * `run` is the area's own way of running a tool as the admin.
+ */
+export function registerPictureUploadTool(
+  server: McpServer,
+  tool: {
+    name: string;
+    title: string;
+    description: string;
+    purpose: CatalogueImagePurpose;
+    run: (
+      ctx: ServerContext,
+      body: (client: AppSupabaseClient) => Promise<CallToolResult>,
+    ) => Promise<CallToolResult>;
+  },
+): void {
+  const { purpose } = tool;
+  server.registerTool(
+    tool.name,
+    {
+      title: tool.title,
+      description: tool.description,
+      inputSchema: z.object({
+        fileName: z
+          .string()
+          .min(1)
+          .max(255)
+          .describe("The picture's file name, ending .jpg or .jpeg."),
+        label: z
+          .string()
+          .max(500)
+          .optional()
+          .describe("The entry's label; the file name's stem when left out."),
+        jpegBase64: z.string().describe("The JPEG's bytes, base64."),
+      }),
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        // The same bytes answer the same entry.
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      _meta: {
+        ui: { resourceUri: PICTURE_UPLOADER_URI, visibility: ["app"] },
+        "ui/resourceUri": PICTURE_UPLOADER_URI,
+      },
+    },
+    ({ fileName, label, jpegBase64 }, ctx) =>
+      tool.run(ctx, async (client) => {
+        const encoded = jpegBase64.replace(/\s+/g, "");
+        // Measured from the text before it is decoded: four characters carry
+        // three bytes, so an oversized picture costs no buffer.
+        const overCap = sizeCapRefusal(Math.floor((encoded.length * 3) / 4));
+        if (overCap) return refusal(overCap.error);
+        if (encoded.length % 4 !== 0 || !BASE64.test(encoded)) {
+          return refusal("The picture did not arrive as base64.");
+        }
+        const file = new File([Buffer.from(encoded, "base64")], fileName, {
+          type: "image/jpeg",
+        });
+
+        const vetted = await vetCatalogueUpload(file, purpose);
+        if ("status" in vetted) return refusal(vetted.error);
+
+        // Storage on the service-role client, the one writer the buckets'
+        // guarantees are kept behind, exactly as the catalogue's upload route
+        // does it; the catalogue row on the admin's own client, where the
+        // table's admin-only policy decides.
+        const { status, image } = await findOrCreateCatalogueImage({
+          db: client,
+          admin: createAdminClient(),
+          file,
+          ext: vetted.ext,
+          contentType: vetted.contentType,
+          label: resolveEntryLabel(label ?? null, fileName),
+          purpose,
+        });
+        return answer({
+          status,
+          image: {
+            catalogueId: image.id,
+            label: image.label,
+            publicUrl: catalogueImageUrl(purpose, image.path),
+          },
+        });
+      }),
+  );
+}
+
 export function registerCoverUploader(server: McpServer): void {
   server.registerResource(
-    "Library cover uploader",
-    COVER_UPLOADER_URI,
+    "Picture uploader",
+    PICTURE_UPLOADER_URI,
     {
-      title: "Library cover uploader",
+      title: "Picture uploader",
       description:
-        "Where the admin picks a picture from their device to become a Library article's cover.",
+        "Where the admin picks a picture from their device to become a Library article's cover or a landing page's picture.",
       mimeType: MCP_APP_MIME_TYPE,
     },
     async (uri) => ({
@@ -110,24 +257,17 @@ export function registerCoverUploader(server: McpServer): void {
         "Show the admin an uploader, inside this chat, where they pick a picture from their device to become the article's cover. It is cropped to the middle 16:9 and saved as a 1600 × 900 JPEG in Sogverse's picture catalogue, then set as the article's working-copy cover; readers see it after the next publish. The picture never passes through you, and you are told the new catalogue id once it is set. Use it when the admin wants a cover that is not in list_library_covers yet. Only AI apps that show MCP Apps views can upload; in any other the admin uploads in the Sogverse editor, whose link get_library_article gives.",
       inputSchema: z.object({ articleId }),
       annotations: READ_ONLY,
-      _meta: {
-        ui: { resourceUri: COVER_UPLOADER_URI },
-        // The key hosts from before `ui.resourceUri` read.
-        "ui/resourceUri": COVER_UPLOADER_URI,
-      },
+      _meta: UPLOADER_VIEW_META,
     },
     ({ articleId: id }, ctx) =>
       asAdmin(ctx, async ({ service }) => {
         const article = await service.getAdminArticle(id);
         if (article === null) return refusal(NOT_FOUND);
         const { draft } = article;
-        const { width, height } = CATALOGUE_IMAGE_PURPOSES.library_cover;
+        const title = draft.versions[0]?.title ?? "";
         const value = {
           articleId: id,
-          title: draft.versions[0]?.title ?? "",
-          // What the uploader crops to and may send: the catalogue's rule, so
-          // the view restates none of it.
-          cover: { width, height, maxBytes: MAX_UPLOAD_BYTES },
+          title,
           currentCover:
             draft.coverImageId === null
               ? null
@@ -136,6 +276,19 @@ export function registerCoverUploader(server: McpServer): void {
                   label: draft.coverLabel,
                   publicUrl: draft.coverPath === null ? null : coverUrl(draft.coverPath),
                 },
+          uploader: uploaderOpening("library_cover", {
+            heading: "Library cover",
+            subject: title ? `For “${title}”` : "For this article",
+            uploadTool: "upload_library_cover",
+            place: {
+              tool: "set_library_article_cover",
+              arguments: { articleId: id },
+              imageArgument: "coverImageId",
+              actionLabel: "Upload and set as cover",
+              done: "The cover is set. Readers see it after the next publish.",
+              outcome: `It is now article ${id}'s working-copy cover; readers see it after the next publish.`,
+            },
+          }),
         };
         return {
           structuredContent: value,
@@ -149,75 +302,12 @@ export function registerCoverUploader(server: McpServer): void {
       }),
   );
 
-  server.registerTool(
-    "upload_library_cover",
-    {
-      title: "Store an uploaded Library cover",
-      description:
-        "Called by the cover uploader alone. Adds a 1600 × 900 JPEG to the picture catalogue as a Library cover entry, or answers the entry that already holds these exact bytes. It does not set any article's cover.",
-      inputSchema: z.object({
-        fileName: z
-          .string()
-          .min(1)
-          .max(255)
-          .describe("The picture's file name, ending .jpg or .jpeg."),
-        label: z
-          .string()
-          .max(500)
-          .optional()
-          .describe("The entry's label; the file name's stem when left out."),
-        jpegBase64: z.string().describe("The JPEG's bytes, base64."),
-      }),
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        // The same bytes answer the same entry.
-        idempotentHint: true,
-        openWorldHint: false,
-      },
-      _meta: {
-        ui: { resourceUri: COVER_UPLOADER_URI, visibility: ["app"] },
-        "ui/resourceUri": COVER_UPLOADER_URI,
-      },
-    },
-    ({ fileName, label, jpegBase64 }, ctx) =>
-      asAdmin(ctx, async ({ client }) => {
-        const encoded = jpegBase64.replace(/\s+/g, "");
-        // Measured from the text before it is decoded: four characters carry
-        // three bytes, so an oversized picture costs no buffer.
-        const overCap = sizeCapRefusal(Math.floor((encoded.length * 3) / 4));
-        if (overCap) return refusal(overCap.error);
-        if (encoded.length % 4 !== 0 || !BASE64.test(encoded)) {
-          return refusal("The picture did not arrive as base64.");
-        }
-        const file = new File([Buffer.from(encoded, "base64")], fileName, {
-          type: "image/jpeg",
-        });
-
-        const vetted = await vetCatalogueUpload(file, "library_cover");
-        if ("status" in vetted) return refusal(vetted.error);
-
-        // Storage on the service-role client, the one writer the buckets'
-        // guarantees are kept behind, exactly as the catalogue's upload route
-        // does it; the catalogue row on the admin's own client, where the
-        // table's admin-only policy decides.
-        const { status, image } = await findOrCreateCatalogueImage({
-          db: client,
-          admin: createAdminClient(),
-          file,
-          ext: vetted.ext,
-          contentType: vetted.contentType,
-          label: resolveEntryLabel(label ?? null, fileName),
-          purpose: "library_cover",
-        });
-        return answer({
-          status,
-          cover: {
-            catalogueId: image.id,
-            label: image.label,
-            publicUrl: coverUrl(image.path),
-          },
-        });
-      }),
-  );
+  registerPictureUploadTool(server, {
+    name: "upload_library_cover",
+    title: "Store an uploaded Library cover",
+    description:
+      "Called by the picture uploader alone. Adds a 1600 × 900 JPEG to the picture catalogue as a Library cover entry, or answers the entry that already holds these exact bytes. It does not set any article's cover.",
+    purpose: "library_cover",
+    run: (ctx, body) => asAdmin(ctx, ({ client }) => body(client)),
+  });
 }

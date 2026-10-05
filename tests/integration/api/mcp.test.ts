@@ -160,6 +160,18 @@ describe("/api/mcp", () => {
       "set_library_article_cover",
       "open_cover_uploader",
       "upload_library_cover",
+      "list_landing_pages",
+      "get_landing_page",
+      "get_landing_page_preview_link",
+      "create_landing_page",
+      "save_landing_page_structure",
+      "save_landing_page_text",
+      "publish_landing_page",
+      "unpublish_landing_page",
+      "list_landing_images",
+      "set_landing_section_image",
+      "open_landing_image_uploader",
+      "upload_landing_image",
     ]);
     expect(tools.find((tool) => tool.name === "whoami")?.annotations.readOnlyHint).toBe(true);
   });

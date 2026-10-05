@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "The Library cover uploader the MCP server shows an admin inside their AI app: an MCP Apps view, built to one committed HTML file.",
+  "description": "The picture uploader the MCP server shows an admin inside their AI app, for any catalogue purpose (a Library cover, a landing page picture): an MCP Apps view, built to one committed HTML file.",
   "scripts": {
     "build": "vite build",
     "check-fresh": "node scripts/check-fresh.ts",
