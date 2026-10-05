@@ -81,8 +81,10 @@ trigger pattern as the Library: no writer passes either, and publishing moves ne
 
 **Every write passes through one link hook in the service before it is sent**, so the
 editor and the MCP tools are held to the same links: own-site links in the markdown and in
-internal button targets are stored canonical there. Nothing else in the save path touches
-a link.
+button targets are stored canonical there, a slug address at the id of the live page it
+names. A link leading to no page — or to a slug no live page has — refuses the write as a
+`check_violation` naming the link, so it reaches the admin like the database's own
+refusals. Nothing else in the save path touches a link.
 
 **Every landing page write invalidates the whole `landing-pages` key tree**, the admin
 detail included, and the image catalogue's usage map.

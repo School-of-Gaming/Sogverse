@@ -7,6 +7,9 @@ import {
   type LandingSection,
   type LandingSectionInput,
 } from "@/lib/landing-pages/sections";
+import type { SlugResolver } from "@/lib/links/own-site";
+import { LibraryService } from "@/services/library/library.service";
+import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
 import type { AppSupabaseClient } from "@/types";
 import {
   defaultLandingSlug,
@@ -27,7 +30,7 @@ import {
   type PublishedLandingPage,
   type PublishedLandingPageSummary,
 } from "./landing-pages.contracts";
-import { canonicaliseLandingLinks } from "./landing-pages.links";
+import { canonicaliseLandingLinks, siteSlugResolver } from "./landing-pages.links";
 
 /** The shape Postgres accepts as a `uuid`, any case. */
 const UUID =
@@ -304,7 +307,9 @@ export class LandingPageService {
 
   /** Create a page's working copy, whole. Returns its id. */
   async createPage(input: LandingPageInput): Promise<string> {
-    const write = await canonicaliseLandingLinks(landingPageInput.parse(input));
+    const write = await canonicaliseLandingLinks(landingPageInput.parse(input), {
+      resolver: this.slugResolver(),
+    });
 
     const { data, error } = await this.supabase.rpc("create_landing_page", {
       p_sections: write.sections ?? [],
@@ -322,7 +327,9 @@ export class LandingPageService {
    * `publishPage`.
    */
   async savePage(id: string, input: LandingPageInput): Promise<string> {
-    const write = await canonicaliseLandingLinks(landingPageInput.parse(input));
+    const write = await canonicaliseLandingLinks(landingPageInput.parse(input), {
+      resolver: this.slugResolver(),
+    });
 
     const { data, error } = await this.supabase.rpc("save_landing_page", {
       p_id: id,
@@ -341,10 +348,10 @@ export class LandingPageService {
    * structure drops takes its words in every language with it.
    */
   async saveStructure(id: string, sections: LandingSectionInput[]): Promise<string> {
-    const write = await canonicaliseLandingLinks({
-      sections: landingSections.parse(sections),
-      versions: [],
-    });
+    const write = await canonicaliseLandingLinks(
+      { sections: landingSections.parse(sections), versions: [] },
+      { resolver: this.slugResolver() },
+    );
 
     const { data, error } = await this.supabase.rpc("save_landing_page_structure", {
       p_id: id,
@@ -375,7 +382,10 @@ export class LandingPageService {
           : landingSectionTextsSchema(sections).parse(parsed.sectionTexts),
     };
 
-    const write = await canonicaliseLandingLinks({ sections: null, versions: [checked] });
+    const write = await canonicaliseLandingLinks(
+      { sections: null, versions: [checked] },
+      { resolver: this.slugResolver(), structure: sections ?? [] },
+    );
     const [payload] = write.versions.map(toVersionPayload);
 
     const { data, error } = await this.supabase.rpc("save_landing_page_version", {
@@ -391,6 +401,20 @@ export class LandingPageService {
     if (error) throw error;
     if (!data) throw new Error("save_landing_page_version returned no id");
     return data;
+  }
+
+  /**
+   * A fresh resolver for one write's own-site links: a slug found among live
+   * pages only, through each area's public reader, so a stored id address is
+   * one a reader can open. Fresh per write, so its list reads are never stale.
+   */
+  private slugResolver(): SlugResolver {
+    return siteSlugResolver({
+      libraryArticles: () => new LibraryService(this.supabase).listPublishedArticles(),
+      teamProfiles: () => new TeamProfilesService(this.supabase).listPublicTeamProfiles(),
+      landingPageId: async (locale, slug) =>
+        (await this.getPublishedPageBySlug(locale, slug))?.id ?? null,
+    });
   }
 
   /** The working copy's current structure, or null when no page has that id. */

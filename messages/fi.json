@@ -1047,6 +1047,13 @@
             "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 16:9-kehykseen, se lisätään kirjastoon ja siitä tulee tämän artikkelin kansikuva.",
             "outcomeAdded": "Lisätty kirjastoon ja valittu tämän artikkelin kansikuvaksi.",
             "outcomeExisting": "Kuva on jo kirjastossa – valittu tämän artikkelin kansikuvaksi."
+          },
+          "landingImage": {
+            "change": "Vaihda kuva",
+            "remove": "Poista kuva",
+            "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 16:9-kehykseen, se lisätään kirjastoon ja otetaan käyttöön tällä laskeutumissivulla.",
+            "outcomeAdded": "Lisätty kirjastoon ja valittu tälle laskeutumissivulle.",
+            "outcomeExisting": "Kuva on jo kirjastossa — valittu tälle laskeutumissivulle."
           }
         }
       },
@@ -1104,6 +1111,19 @@
             "removeConsequence": "{count, plural, one {Alla oleva artikkeli jää ilman kansikuvaa, kunnes valitset uuden, myös julkaistuna.} other {Kaikki # alla olevaa artikkelia jäävät ilman kansikuvaa, kunnes valitset uuden, myös julkaistut.}}",
             "removeUnused": "Mikään artikkeli ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
             "removeConfirm": "Poista {count, plural, one {# artikkelista} other {# artikkelista}}"
+          },
+          "landingImage": {
+            "title": "Laskeutumissivujen kuvat",
+            "description": "Sama kuva voi olla usealla laskeutumissivulla ja useammassa kohdassa samaa sivua. Valinta koskee vain tätä kohtaa, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä laskeutumissivuja, myös julkaistuja.",
+            "usedBadge": "{count, plural, one {# sivu} other {# sivua}}",
+            "usedBy": "Kuvaa käyttävät laskeutumissivut",
+            "usedByNone": "Mikään laskeutumissivu ei käytä tätä kuvaa.",
+            "replaceConsequence": "{count, plural, one {Alla oleva laskeutumissivu näyttää jatkossa uuden kuvan, julkaistuna heti.} other {Kaikki # alla olevaa laskeutumissivua näyttävät jatkossa uuden kuvan, julkaistut heti.}}",
+            "replaceUnused": "Mikään laskeutumissivu ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
+            "replaceConfirm": "Korvaa {count, plural, one {# sivulla} other {# sivulla}}",
+            "removeConsequence": "{count, plural, one {Kuva poistuu alla olevalta laskeutumissivulta, myös julkaistulta. Kuvaosio, johon ei jää kuvia, poistetaan.} other {Kuva poistuu kaikilta # alla olevalta laskeutumissivulta, myös julkaistuilta. Kuvaosio, johon ei jää kuvia, poistetaan.}}",
+            "removeUnused": "Mikään laskeutumissivu ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
+            "removeConfirm": "Poista {count, plural, one {# sivulta} other {# sivulta}}"
           }
         }
       },

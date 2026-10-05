@@ -98,11 +98,12 @@ admin's own session is all the authority a read needs and a route would add noth
 reads are walked with the shared paging primitive: the catalogue only grows, and an image
 an admin cannot see is precisely what this feature exists to prevent.
 
-Usage — which products and Library articles a given entry reaches — is **derived** from
-a products read and an articles read and computed in JavaScript. An article is listed by
-its working title, under the entry its working copy links and under the one its live copy
-links, which differ while a cover change is unpublished; a replace or a remove reaches
-both. It is not stored, and there is no counts map beside the lists: a
+Usage — which products, Library articles and landing pages a given entry reaches — is
+**derived** from a products read, an articles read and a landing pages read and computed
+in JavaScript. An article is listed by its working title, under the entry its working copy
+links and under the one its live copy links, which differ while a cover change is
+unpublished; a replace or a remove reaches both. A landing page is listed the same way,
+under every entry either copy's derived picture map names. It is not stored, and there is no counts map beside the lists: a
 badge's number is its list's length, because two derivations of one number is how they
 come to disagree.
 
@@ -118,11 +119,11 @@ session.**
 ## Cache invalidation — and the one key that must not be touched
 
 Every catalogue mutation invalidates the catalogue list, the usage map, the products
-**list** keys and the Library's whole admin tree (those surfaces paint a derived path,
+**list** keys and the Library's and the landing pages' whole admin trees (those surfaces paint a derived path,
 and a repoint changes it under them).
 
-The usage map is read from products and Library articles together, so a product's create
-and update and every Library write (create, save, publish, unpublish) invalidate it too:
+The usage map is read from products, Library articles and landing pages together, so a
+product's create and update and every Library and landing page write invalidate it too:
 a stale map shows a live cover as unused, and removable without warning. Its key sits in
 `catalogue-images.keys.ts`, which imports no other feature's module, so the product and Library hooks can
 name it without an import cycle.
@@ -135,7 +136,8 @@ one parent key. The Library's admin detail is the opposite case and *must* be re
 a replace or a removal moves the working copy's cover in the database, and a detail left
 cached makes the open editor read the followed cover as an unsaved change. The Library
 editor seeds its form once per article id, so that refetch never touches the admin's
-typing.
+typing; a landing page's admin detail is refetched for the same reason, and its editor
+must seed the same way.
 
 ## Purposes, buckets and exact sizes
 

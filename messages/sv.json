@@ -1047,6 +1047,13 @@
             "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och blir omslagsbild för den här artikeln.",
             "outcomeAdded": "Tillagd i biblioteket och vald som omslagsbild för den här artikeln.",
             "outcomeExisting": "Finns redan i biblioteket – vald som omslagsbild för den här artikeln."
+          },
+          "landingImage": {
+            "change": "Byt bild",
+            "remove": "Ta bort bild",
+            "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och används på den här landningssidan.",
+            "outcomeAdded": "Tillagd i biblioteket och vald för den här landningssidan.",
+            "outcomeExisting": "Finns redan i biblioteket — vald för den här landningssidan."
           }
         }
       },
@@ -1104,6 +1111,19 @@
             "removeConsequence": "{count, plural, one {Artikeln nedan blir utan omslag tills du väljer ett annat, även om den är publicerad.} other {Alla # artiklar nedan blir utan omslag tills du väljer ett annat, även de publicerade.}}",
             "removeUnused": "Ingen artikel använder den här bilden. Den tas bort ur biblioteket för gott.",
             "removeConfirm": "Ta bort från {count, plural, one {# artikel} other {# artiklar}}"
+          },
+          "landingImage": {
+            "title": "Bilder för landningssidor",
+            "description": "En bild kan användas på flera landningssidor och på flera ställen på samma sida. Ditt val gäller bara det här stället, men att ersätta eller ta bort en bild påverkar alla landningssidor som använder den, även publicerade.",
+            "usedBadge": "{count, plural, one {# sida} other {# sidor}}",
+            "usedBy": "Landningssidor som använder bilden",
+            "usedByNone": "Ingen landningssida använder den här bilden.",
+            "replaceConsequence": "{count, plural, one {Landningssidan nedan kommer att visa den nya bilden, direkt om den är publicerad.} other {Alla # landningssidor nedan kommer att visa den nya bilden, de publicerade direkt.}}",
+            "replaceUnused": "Ingen landningssida använder den här bilden. Den nya tar dess plats i biblioteket.",
+            "replaceConfirm": "Ersätt på {count, plural, one {# sida} other {# sidor}}",
+            "removeConsequence": "{count, plural, one {Landningssidan nedan förlorar bilden, även om den är publicerad. En bildsektion som blir utan bilder tas bort.} other {Alla # landningssidor nedan förlorar bilden, även de publicerade. En bildsektion som blir utan bilder tas bort.}}",
+            "removeUnused": "Ingen landningssida använder den här bilden. Den tas bort ur biblioteket för gott.",
+            "removeConfirm": "Ta bort från {count, plural, one {# sida} other {# sidor}}"
           }
         }
       },

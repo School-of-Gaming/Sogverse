@@ -1091,6 +1091,13 @@
             "dropPrompt": "naDev DocH yIpum, qoj yIwIv. 16:9 ’echletvaD Dape’, qachDaq chellu’, ’ej ghItlhvamvaD DeghHom moj.",
             "outcomeAdded": "qachDaq chellu’, ’ej ghItlhvamvaD DeghHom wIvlu’.",
             "outcomeExisting": "qachDaq tu’lu’ — ghItlhvamvaD DeghHom wIvlu’."
+          },
+          "landingImage": {
+            "change": "nagh beQ yIchoH",
+            "remove": "nagh beQ yIteq",
+            "dropPrompt": "naDev DocH yIpum, qoj yIwIv. 16:9 ’echletvaD Dape’, qachDaq chellu’, ’ej navvamDaq lo’lu’.",
+            "outcomeAdded": "qachDaq chellu’, ’ej navvamvaD wIvlu’.",
+            "outcomeExisting": "qachDaq tu’lu’ — navvamvaD wIvlu’."
           }
         }
       },
@@ -1148,6 +1155,19 @@
             "removeConsequence": "{count, plural, one {latlh DawIvpa’, bIngDaq ghItlh nagh beQ Hutlh.} other {latlh DawIvpa’, bIngDaq Hoch # ghItlhmey nagh beQ luHutlh.}}",
             "removeUnused": "nagh beQvam lo’ pagh ghItlh. qachvo’ reH teqlu’.",
             "removeConfirm": "{count, plural, one {# ghItlhvo’} other {# ghItlhmeyvo’}} yIteq"
+          },
+          "landingImage": {
+            "title": "nav nagh beQmey",
+            "description": "wa’ nagh beQ lo’laH law’ navmey. naDev wIvlIj Daqvam neH choH; ’ach nagh beQ DachoHchugh qoj DateqchughvaD, Hoch lo’bogh navmey luchoH — cha’lu’bogh je.",
+            "usedBadge": "{count, plural, one {# nav} other {# navmey}}",
+            "usedBy": "nagh beQvam lo’bogh navmey",
+            "usedByNone": "nagh beQvam lo’ pagh nav.",
+            "replaceConsequence": "{count, plural, one {bIngDaq nav nagh beQ chu’ cha’ — DaH.} other {bIngDaq Hoch # navmey nagh beQ chu’ lucha’ — DaH.}}",
+            "replaceUnused": "nagh beQvam lo’ pagh nav. qachDaq DaqDaj tlhap chu’bogh.",
+            "replaceConfirm": "{count, plural, one {# navDaq} other {# navmeyDaq}} yIchoH",
+            "removeConsequence": "{count, plural, one {bIngDaq nav nagh beQvam Hutlh.} other {bIngDaq Hoch # navmey nagh beQvam luHutlh.}}",
+            "removeUnused": "nagh beQvam lo’ pagh nav. qachvo’ reH teqlu’.",
+            "removeConfirm": "{count, plural, one {# navvo’} other {# navmeyvo’}} yIteq"
           }
         }
       },

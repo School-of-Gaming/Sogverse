@@ -15,16 +15,17 @@ import {
  * new file is resolved to its own entry (created if we have not seen those
  * bytes, inheriting this entry's label so the picture keeps its name), and
  * then every link to the old entry is moved to the new one: one statement
- * for the products, and `repoint_library_covers` for the Library's covers,
- * working and published copies alike, so a live article changes picture with
- * no republish. Triggers write each served path. The new entry has the old
+ * for the products, `repoint_library_covers` for the Library's covers and
+ * `repoint_landing_images` for landing page pictures, working and published
+ * copies alike, so a live article or page changes picture with no republish. Triggers write each served path. The new entry has the old
  * one's purpose — its object goes to that purpose's bucket — and the file must
  * be exactly that purpose's size (422 `IMAGE_WRONG_SIZE` otherwise).
  *
  * One statement per kind of user is the safety argument — every linked
- * product follows or none does, and every linked article likewise. A product
- * links only a product entry and an article only a Library cover, so for any
- * entry at most one of the two moves anything. The old entry stays in the catalogue,
+ * product follows or none does, and every linked article and every linked
+ * landing page likewise. A product links only a product entry, an article only
+ * a Library cover and a landing page only a landing picture, so for any entry
+ * at most one of the three moves anything. The old entry stays in the catalogue,
  * unlinked, which is what makes a replace reversible. A failure between the
  * steps leaves a new entry some or none of the users moved to: visible,
  * harmless, and re-usable, and a retry finishes the move.
@@ -98,6 +99,13 @@ export const POST = defineRoute({
 
     if (coverError) throw coverError;
 
-    return { image, relinked: products.length + articles };
+    const { data: pages, error: landingError } = await supabase.rpc(
+      "repoint_landing_images",
+      { p_from: current.id, p_to: image.id },
+    );
+
+    if (landingError) throw landingError;
+
+    return { image, relinked: products.length + articles + pages };
   },
 });

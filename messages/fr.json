@@ -1047,6 +1047,13 @@
             "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 16:9, l’ajouter et en faire l’image de cet article.",
             "outcomeAdded": "Ajoutée au catalogue et choisie comme image de cet article.",
             "outcomeExisting": "Déjà dans le catalogue — choisie comme image de cet article."
+          },
+          "landingImage": {
+            "change": "Changer l’image",
+            "remove": "Retirer l’image",
+            "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 16:9, l’ajouter et l’utiliser sur cette page d’atterrissage.",
+            "outcomeAdded": "Ajoutée au catalogue et choisie pour cette page d’atterrissage.",
+            "outcomeExisting": "Déjà dans le catalogue — choisie pour cette page d’atterrissage."
           }
         }
       },
@@ -1104,6 +1111,19 @@
             "removeConsequence": "{count, plural, one {L’article ci-dessous restera sans couverture jusqu’à ce que vous en choisissiez une autre, même en ligne.} other {Les # articles ci-dessous resteront sans couverture jusqu’à ce que vous en choisissiez une autre, y compris ceux en ligne.}}",
             "removeUnused": "Aucun article n’utilise cette image. Elle sera définitivement retirée du catalogue.",
             "removeConfirm": "Retirer de {count, plural, one {# article} other {# articles}}"
+          },
+          "landingImage": {
+            "title": "Images des pages d’atterrissage",
+            "description": "Une même image peut servir sur plusieurs pages d’atterrissage, et à plusieurs endroits d’une même page. Votre choix ne concerne que cet endroit, mais remplacer ou retirer une image touche toutes les pages qui l’utilisent, y compris celles en ligne.",
+            "usedBadge": "{count, plural, one {# page} other {# pages}}",
+            "usedBy": "Pages d’atterrissage utilisant cette image",
+            "usedByNone": "Aucune page d’atterrissage n’utilise cette image.",
+            "replaceConsequence": "{count, plural, one {La page ci-dessous affichera la nouvelle image, aussitôt si elle est en ligne.} other {Les # pages ci-dessous afficheront toutes la nouvelle image, aussitôt pour celles qui sont en ligne.}}",
+            "replaceUnused": "Aucune page d’atterrissage n’utilise cette image. La nouvelle prend sa place dans le catalogue.",
+            "replaceConfirm": "Remplacer sur {count, plural, one {# page} other {# pages}}",
+            "removeConsequence": "{count, plural, one {La page ci-dessous perdra cette image, même en ligne. Une section d’images laissée sans image est supprimée.} other {Les # pages ci-dessous perdront cette image, y compris celles en ligne. Une section d’images laissée sans image est supprimée.}}",
+            "removeUnused": "Aucune page d’atterrissage n’utilise cette image. Elle sera définitivement retirée du catalogue.",
+            "removeConfirm": "Retirer de {count, plural, one {# page} other {# pages}}"
           }
         }
       },
