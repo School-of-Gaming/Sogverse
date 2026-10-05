@@ -159,8 +159,13 @@ fields, built in one place so the three cannot describe one product two ways: it
 English name whatever the visitor's locale, its topic as the category — an enum value,
 stable across renames, and the axis a campaign is run per — and the price the family pays
 with its currency, zero for a free product. A paid product with no price in the currency
-states no value at all rather than a guessed one. These are facts the product's public page
-shows anyone, not facts about the family.
+states no value at all rather than a guessed one. **A queue place carries no value**: a
+waitlisted enrolment drops the value and currency in the server report itself, whatever the
+caller passed, because nobody has paid or committed to pay and a priced queue would train a
+campaign to count a full product's waitlist as revenue. On the browser's product view these
+are only facts the product's public page shows anyone. On the two server events they ride
+beside the parent's email hash, so Meta learns that an identifiable parent signed up for
+that named club, camp or event — which the privacy policy says.
 
 Each server report is gated on the **request's own consent cookie**, so a conversion for
 someone who refused marketing is impossible rather than unlikely. Products we do not
@@ -171,9 +176,12 @@ the three routes are customer-only, so a gamer cannot reach one.
 **What identifies a person in a server report, exhaustively:** the user agent, the IP the
 request arrived from, Meta's own browser and click cookies if the browser carries them, and
 a SHA-256 hash of the parent's own account email (Meta's advanced matching) — hashed on our
-server, so the address itself is never sent or logged, and never a gamer's address. No
-name, no user id, and nothing whatsoever about a child. The privacy policy's Meta entry
-says this in plain words; adding a field there is a privacy-policy edit.
+server, so the address itself is never sent or logged, and never a gamer's address. The
+address is sent whether or not it has been verified; that is standard practice and
+accepted as such. With the product fields above, that tells Meta which product an
+identifiable parent signed up for. No name, no user id, and nothing about a child beyond
+that — not their name, age, account or anything else. The privacy policy's Meta entry says
+this in plain words; adding a field there is a privacy-policy edit.
 
 A completed purchase is reported nowhere today. When it is, it belongs on the same
 server-side path, from the payment webhook — which is the only place that knows money

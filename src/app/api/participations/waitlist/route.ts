@@ -189,8 +189,7 @@ async function reportWaitlistConversion(
       {
         event: "enrolment",
         outcome: "waitlisted",
-        // A queue place states no currency, so it is valued at the price the
-        // product is sold at — the one currency the platform sells in.
+        // The report drops the price itself: a queue place carries no value.
         product: metaProductDetails(product),
         sourcePath: ROUTES.shopProductPath(productId),
       },

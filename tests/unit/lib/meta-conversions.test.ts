@@ -326,12 +326,56 @@ describe("reportMetaConversion — the request", () => {
 
     const event = sentEvent();
     expect(event.event_name).toBe(eventName);
-    // The outcome, and beside it which product converted — Meta's own
-    // product fields, exactly as the caller built them.
-    expect(event.custom_data).toEqual({ outcome, ...PRODUCT });
+    expect(event.custom_data).toMatchObject({
+      outcome,
+      content_ids: PRODUCT.content_ids,
+    });
     expect(event.event_source_url).toBe(
       "https://test.sogverse.local/shop/abc-123",
     );
+  });
+
+  // A seat taken or a checkout started carries the product exactly as the
+  // caller built it, price included.
+  it.each(["enrolled", "sent_to_checkout"] as const)(
+    "names the product with its price on %s",
+    async (outcome) => {
+      await reportMetaConversion(
+        request(),
+        {
+          event: "enrolment",
+          outcome,
+          product: PRODUCT,
+          sourcePath: "/shop/abc-123",
+        },
+        PARENT,
+      );
+
+      expect(sentEvent().custom_data).toEqual({ outcome, ...PRODUCT });
+    },
+  );
+
+  // A queue place is not revenue: the report drops the price whatever the
+  // caller passed, and keeps every other product field.
+  it("names the product without a value on a waitlisted enrolment", async () => {
+    await reportMetaConversion(
+      request(),
+      {
+        event: "enrolment",
+        outcome: "waitlisted",
+        product: PRODUCT,
+        sourcePath: "/shop/abc-123",
+      },
+      PARENT,
+    );
+
+    expect(sentEvent().custom_data).toEqual({
+      outcome: "waitlisted",
+      content_ids: ["abc-123"],
+      content_type: "product",
+      content_name: "Roblox Studio Club",
+      content_category: "roblox_studio",
+    });
   });
 
   it("carries the test event code only when one is configured", async () => {

@@ -26,16 +26,20 @@ import { getOrigin } from "@/lib/url";
  * **What is sent about a person, exhaustively:** the user agent, the IP address
  * the request arrived from, Meta's own `_fbp` / `_fbc` cookies if this browser
  * carries them, and a SHA-256 hash of the parent's own account email — hashed
- * here, so the address itself is never sent and never logged. No phone number,
- * no name, no user id, no participation id, and nothing whatsoever about a
- * child — not their name, not their age, not their address. This list is the
+ * here, so the address itself is never sent and never logged, and sent whether
+ * or not the address has been verified (standard practice, accepted as such).
+ * No phone number, no name, no user id, no participation id, and nothing about
+ * a child beyond the product named below — not their name, not their age, not
+ * their account, not their address. This list is the
  * promise the privacy policy makes; a field added here is a policy edit.
  *
  * **What is sent about the enrolment** is `outcome`, one of three fixed words,
  * and the product it was for in Meta's standard product fields — its id, name,
- * topic and price, the same facts the product's public page shows anyone, and
- * the same page the event's own source URL already names. They say which
- * product converted; they say nothing about who did.
+ * topic and price (no price on a queue place), the same facts the product's
+ * public page shows anyone. On the same event as the email hash, so Meta
+ * learns that an identifiable parent signed up for that named club, camp or
+ * event — which the privacy policy states. Nothing about the child goes with
+ * it: not their name, age, account or anything else.
  *
  * **Gated on the request's own consent cookie.** The send is refused unless the
  * request that triggered it carried marketing consent — decided here, on the
@@ -119,6 +123,26 @@ function eventNameFor(conversion: MetaConversion): string {
 }
 
 /**
+ * The enrolment's `custom_data`: its outcome and the product it was for.
+ *
+ * **A queue place carries no value.** A waitlisted report keeps the product's
+ * id, name, topic and type but drops `value` and `currency`, whatever the
+ * caller passed: nobody has paid or committed to pay, and a price on it would
+ * teach the campaign that a full product's queue is revenue. Decided here
+ * rather than by each caller, so no route can get it wrong.
+ */
+function enrolmentCustomData(
+  conversion: Extract<MetaConversion, { event: "enrolment" }>,
+): Record<string, unknown> {
+  const { outcome, product } = conversion;
+  if (outcome === "waitlisted") {
+    const { value: _value, currency: _currency, ...unpriced } = product;
+    return { outcome, ...unpriced };
+  }
+  return { outcome, ...product };
+}
+
+/**
  * The address the request came from, as Meta's `client_ip_address`.
  *
  * `x-forwarded-for` is a list appended to by each hop, so the first entry is the
@@ -180,7 +204,7 @@ export async function reportMetaConversion(
         ...(emailHash && { em: [emailHash] }),
       },
       ...(conversion.event === "enrolment" && {
-        custom_data: { outcome: conversion.outcome, ...conversion.product },
+        custom_data: enrolmentCustomData(conversion),
       }),
     };
 
