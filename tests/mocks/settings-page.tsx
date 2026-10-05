@@ -93,6 +93,19 @@ export function marketingConsentsServiceModule() {
   };
 }
 
+/**
+ * `@/components/settings/notification-preferences-card` — a neighbouring
+ * section that reads and writes on its own, reduced to a marker. Its own
+ * behaviour is tested against the card directly.
+ */
+export function notificationPreferencesCardModule() {
+  return {
+    NotificationPreferencesCard: () => (
+      <div data-testid="notification-preferences-card" />
+    ),
+  };
+}
+
 /** `@/components/game-account` — a neighbouring section, reduced to a marker. */
 export function gameAccountModule() {
   return {

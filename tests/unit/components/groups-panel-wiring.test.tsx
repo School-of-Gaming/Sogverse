@@ -1,14 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { GroupsPanel } from "@/components/admin/products/groups/groups-panel";
+import type { GeduPickerSheet } from "@/components/admin/products/gedu-picker-sheet";
 import { TimezoneProvider } from "@/providers";
+import type { UserListEntry } from "@/services/users";
 import type {
   BillingMode,
   ProductGroupsSnapshot,
   ProductTopic,
   ProductType,
 } from "@/types";
+import type {
+  MissingRequirement,
+  SessionRequirements,
+} from "@/lib/products/session-requirements";
 
 /**
  * The wiring the rules suite cannot see.
@@ -89,8 +95,13 @@ vi.mock("next-intl", () => ({
 // decision that only the rendered chip can prove. Every drag case below uses a
 // grouped or waitlisted participation, so the real card changes nothing for
 // them.
+// It records the one intent the gedu-assignment cases press: asking for the
+// picker on its group.
 vi.mock("@/components/admin/products/groups/group-column", () => ({
-  GroupColumn: () => <div data-testid="group-column" />,
+  GroupColumn: (props: { onAddGedu: (groupId: string) => void }) => {
+    groupColumn.props = props;
+    return <div data-testid="group-column" />;
+  },
 }));
 // Stubbed like its siblings, but this one records what it was handed: whether
 // a product may offer seats at all is decided on the panel's side, from the
@@ -127,8 +138,13 @@ vi.mock("@/components/admin/products/groups/switch-club-sheet", () => ({
 vi.mock("@/components/admin/products/participant-picker-sheet", () => ({
   ParticipantPickerSheet: () => null,
 }));
+// Records what it was handed, so a case can read the requirements the panel
+// asked about and make the pick the real sheet would have handed back.
 vi.mock("@/components/admin/products/gedu-picker-sheet", () => ({
-  GeduPickerSheet: () => null,
+  GeduPickerSheet: (props: GeduPickerProps) => {
+    geduPicker.props = props;
+    return null;
+  },
 }));
 vi.mock("@/components/public/products/seat-availability-bar", () => ({
   SeatAvailabilityBar: () => <div data-testid="seat-bar" />,
@@ -143,7 +159,18 @@ const mutations = vi.hoisted(() => ({
   demote: vi.fn(),
   removeGamer: vi.fn(),
   addGamer: vi.fn(),
+  addGedu: vi.fn(),
   other: vi.fn(),
+}));
+
+type GeduPickerProps = ComponentProps<typeof GeduPickerSheet>;
+
+// What the group column and the gedu picker were last rendered with.
+const groupColumn = vi.hoisted(() => ({
+  props: null as { onAddGedu: (groupId: string) => void } | null,
+}));
+const geduPicker = vi.hoisted(() => ({
+  props: null as GeduPickerProps | null,
 }));
 
 // What the waitlist card was last rendered with. `vi.hoisted` for the same
@@ -212,7 +239,7 @@ vi.mock("@/services/groups", () => {
     useAdminAddParticipantToProduct: stub(() => mutations.addGamer),
     useRenameGroup: stub(() => mutations.other),
     useCreateGroup: stub(() => mutations.other),
-    useAddGedu: stub(() => mutations.other),
+    useAddGedu: stub(() => mutations.addGedu),
     useRemoveGedu: stub(() => mutations.other),
     useAddTrainee: stub(() => mutations.other),
     useRemoveTrainee: stub(() => mutations.other),
@@ -300,6 +327,11 @@ function renderPanel(
   // Minecraft unless a case is about the topic: every drag case here predates
   // the identity row and is decided without it.
   topic: ProductTopic = "minecraft_java",
+  requirements: SessionRequirements = {
+    qualifications: [],
+    language: "fi",
+    site: null,
+  },
 ) {
   render(
     // The chip prints an age in the viewer's zone, so a real chip needs the
@@ -308,6 +340,7 @@ function renderPanel(
       <GroupsPanel
         productId="product-1"
         productType={productType}
+        requirements={requirements}
         billingMode={billingMode}
         topic={topic}
         // Irrelevant to every case here: the audience is read by the participant
@@ -344,6 +377,8 @@ beforeEach(() => {
   dnd.onDragEnd = null;
   snapshotOverride = null;
   waitlistCard.props = null;
+  groupColumn.props = null;
+  geduPicker.props = null;
   seatOffer.send.mockReset();
   seatOffer.send.mockResolvedValue(undefined);
   roblox.renders.mockReset();
@@ -652,6 +687,109 @@ describe("GroupsPanel — the two features meet on one product", () => {
     expect(waitlistCard.props?.onSendSeatOffer).toBeTypeOf("function");
     expect(
       screen.queryByText("admin.products.groupsPanel.unassigned.title"),
+    ).toBeNull();
+  });
+});
+
+describe("GroupsPanel — a missing requirement is confirmed, never refused", () => {
+  const GEDU: UserListEntry = {
+    id: "8e5b2c41-7d3a-4f9e-b1c6-2a4d8f0e3b75",
+    first_name: "Venla",
+    last_name: "Virtanen",
+    email: "venla@example.test",
+    email_verified_at: null,
+    role: "gedu",
+    phone: null,
+    currency: null,
+    locale: null,
+    home_location_id: null,
+    utm_source: null,
+    utm_medium: null,
+    utm_campaign: null,
+    registration_completed_at: "2026-01-01T00:00:00.000Z",
+    spoken_languages: [],
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
+    certified: true,
+    criminal_record_check_passed: true,
+    linked_gamers: [],
+    qualifications: [],
+  };
+
+  /** Open the staff picker on the group, then make the pick it hands back. */
+  function assign(missing: readonly MissingRequirement[]) {
+    act(() => groupColumn.props?.onAddGedu(IDS.group));
+    act(() => geduPicker.props?.onSelect(GEDU, missing));
+  }
+
+  it("asks the picker about what the product requires", () => {
+    const requirements: SessionRequirements = {
+      qualifications: ["neuroinclusive", "consumer_products"],
+      language: "sv",
+      site: { productId: "product-1", name: "Kallio School" },
+    };
+    renderPanel("camp", "paid", "minecraft_java", requirements);
+    expect(geduPicker.props?.requirements).toEqual(requirements);
+  });
+
+  it("assigns a qualified gedu on the pick, with nothing asked", () => {
+    renderPanel("consumer_club", "paid");
+    assign([]);
+
+    expect(mutations.addGedu).toHaveBeenCalledWith({
+      groupId: IDS.group,
+      geduId: GEDU.id,
+      firstName: "Venla",
+      email: "venla@example.test",
+      role: "primary",
+    });
+    expect(
+      screen.queryByText("admin.products.groupsPanel.requirementGaps.title"),
+    ).toBeNull();
+  });
+
+  it("assigns a gedu falling short only once the warning is confirmed", () => {
+    renderPanel("consumer_club", "paid");
+    assign([
+      { kind: "qualification", qualification: "consumer_products" },
+      { kind: "language", language: "fi" },
+      { kind: "coverage", site: "Kallio School" },
+    ]);
+
+    // Asked first, naming each gap, and nothing written yet.
+    expect(
+      screen.getByText("admin.products.groupsPanel.requirementGaps.title"),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("admin.missingRequirements.qualification"),
+    ).toBeTruthy();
+    expect(screen.getByText("admin.missingRequirements.language")).toBeTruthy();
+    expect(screen.getByText("admin.missingRequirements.coverage")).toBeTruthy();
+    expect(mutations.addGedu).not.toHaveBeenCalled();
+
+    act(() =>
+      screen
+        .getByRole("button", {
+          name: "admin.products.groupsPanel.requirementGaps.action",
+        })
+        .click(),
+    );
+    expect(mutations.addGedu).toHaveBeenCalledTimes(1);
+    expect(mutations.addGedu).toHaveBeenCalledWith(
+      expect.objectContaining({ groupId: IDS.group, geduId: GEDU.id }),
+    );
+  });
+
+  it("writes nothing when the warning is cancelled", () => {
+    renderPanel("consumer_club", "paid");
+    assign([{ kind: "qualification", qualification: "consumer_products" }]);
+
+    act(() =>
+      screen.getByRole("button", { name: "common.cancel" }).click(),
+    );
+    expect(mutations.addGedu).not.toHaveBeenCalled();
+    expect(
+      screen.queryByText("admin.products.groupsPanel.requirementGaps.title"),
     ).toBeNull();
   });
 });

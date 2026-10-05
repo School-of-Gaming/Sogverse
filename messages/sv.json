@@ -652,6 +652,17 @@
       "notGranted": "Inte beviljad",
       "error": "Det gick inte att uppdatera behörigheten. Försök igen."
     },
+    "geduLanguages": {
+      "title": "Språk",
+      "note": "Hen erbjuds vikariat bara för tillfällen på ett språk som är valt här. Om inget språk är valt erbjuds inga vikariat.",
+      "error": "Det gick inte att spara språken. Försök igen."
+    },
+    "missingRequirements": {
+      "qualification": "Den här Gedun saknar behörigheten {qualification}, som den här produkten kräver.",
+      "language": "Den här produkten hålls på {language}, som den här Gedun inte har angett att hen talar.",
+      "coverage": "Den här produkten hålls på plats på {site}, utanför de områden den här Gedun täcker.",
+      "coverageUnnamed": "Den här produkten hålls på plats, utanför de områden den här Gedun täcker."
+    },
     "geduCertifyWarnings": {
       "title": "Certifiera ändå?",
       "body": "Certifieringen kräver ingetdera av dessa, så du kan certifiera hen ändå.",
@@ -1135,7 +1146,10 @@
         "absentGedu": "Gedun som vikarieras",
         "notCertified": "Inte certifierad",
         "alreadyTrainee": "Redan praktikant",
-        "traineeInstead": "Kan läggas till som praktikant i stället."
+        "traineeInstead": "Kan läggas till som praktikant i stället.",
+        "notQualified": "Saknar behörighet: {qualification}",
+        "doesNotSpeak": "Talar inte {language}",
+        "outsideCoverage": "Täcker inte området"
       },
       "participantPicker": {
         "title": "Lägg till en deltagare",
@@ -1299,6 +1313,10 @@
             "failed": "Bytet slutfördes inte. Tryck på Byt klubb igen — ett nytt tryck upprepar samma begäran, så familjen debiteras aldrig två gånger."
           },
           "confirm": "Byt klubb"
+        },
+        "requirementGaps": {
+          "title": "Tilldela ändå?",
+          "action": "Tilldela ändå"
         }
       },
       "seatLimitModes": {
@@ -1797,8 +1815,9 @@
       "certificationAlertTitle": "Ditt konto måste certifieras",
       "certificationAlertDescription": "Du kan logga in direkt, men en administratör måste certifiera ditt konto innan du kan tilldelas en klubb eller ett läger.",
       "coverageHeading": "Var kan du arbeta?",
-      "coverageNote": "Välj de områden där du kan arbeta på plats. Om du bara kan arbeta på distans, lämna detta fält tomt. Du kan ändra ditt val senare i dina profilinställningar.",
+      "coverageNote": "Välj de områden där du kan arbeta på plats. Du erbjuds vikariat på plats bara i de här områdena; tillfällen online påverkas inte av dem. Om du bara kan arbeta på distans, lämna detta tomt. Du kan ändra det senare i dina inställningar.",
       "invalidPhone": "Ange ett giltigt telefonnummer",
+      "spokenLanguagesRequired": "Välj minst ett språk som du talar.",
       "creatingAccount": "Skapar konto...",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
     },
@@ -2395,7 +2414,8 @@
       "cardLockedLabel": "{product} – tillfälle du vikarierar på. Gruppens arbetsyta öppnar 48 timmar innan det börjar.",
       "accessOpens": "Arbetsytan öppnar {date} kl. {time}",
       "poolHeading": "Tillfällen som behöver en vikarie",
-      "poolAllClear": "Inga tillfällen behöver en vikarie just nu.",
+      "poolRequirementsNote": "Du ser tillfällen på ett språk du talar och, för tillfällen på plats, bara i områden du täcker. Håll båda uppdaterade i dina <link>inställningar</link>.",
+      "poolAllClear": "Inga tillfällen som du kan ta behöver en vikarie just nu.",
       "poolRolePrimary": "Huvud-Gedu",
       "poolRoleAssistant": "Assisterande Gedu",
       "poolFee": "{fee} per tillfälle",
@@ -2403,6 +2423,9 @@
       "poolWithdrawAction": "Dra tillbaka erbjudandet",
       "poolWithdrawPending": "Drar tillbaka…",
       "poolActionFailed": "Det sparades inte. Försök igen.",
+      "poolOfferFailedNotQualified": "Det här tillfället kräver en behörighet som du inte har, så du kan inte erbjuda dig att vikariera.",
+      "poolOfferFailedLanguage": "Det här tillfället hålls på ett språk som du inte har angett att du talar, så du kan inte erbjuda dig att vikariera. Du kan lägga till språk i dina inställningar.",
+      "poolOfferFailedCoverage": "Det här tillfället hålls på plats utanför de områden du täcker, så du kan inte erbjuda dig att vikariera. Du kan ändra dina områden i dina inställningar.",
       "pageTitle": "Vikariat",
       "back": "Tillbaka till Min SOG",
       "mineHeading": "Dina vikariat",
@@ -2424,7 +2447,7 @@
     },
     "coverage": {
       "title": "Områden du täcker",
-      "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan Gedu inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
+      "remoteOnlyNote": "Du ser förfrågningar om vikariat på plats bara i de områden du väljer. Tillfällen online påverkas inte av dem. Lämna tomt om du bara arbetar på distans.",
       "selectedHeading": "Valda ({count})",
       "noneSelected": "Inga områden valda",
       "remove": "Ta bort {name}",
@@ -3667,6 +3690,19 @@
       "title": "Marknadsföringsinställningar",
       "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
       "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst."
+    },
+    "notifications": {
+      "title": "Aviseringsinställningar",
+      "channels": {
+        "email": "E-post"
+      },
+      "kinds": {
+        "session_report_copy": {
+          "label": "Kopior av rapporter om tillfällen",
+          "hint": "En kopia av varje rapport om ett tillfälle som mejlas till familjerna i en grupp."
+        }
+      },
+      "saveFailed": "Det gick inte att spara aviseringsinställningarna. Försök igen."
     },
     "usernameLabel": "Användarnamn",
     "gamerPasswordFromParent": "Din förälder kan ange ett nytt lösenord åt dig från sin Min SOG.",

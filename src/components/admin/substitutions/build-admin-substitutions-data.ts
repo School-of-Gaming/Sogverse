@@ -5,6 +5,7 @@ import {
   sessionClockFace,
   sessionFactsProduct,
 } from "@/lib/substitution-session-facts";
+import { sessionRequirements } from "@/lib/products/session-requirements";
 import { formatDateOnly } from "@/lib/utils";
 import type {
   AdminSubstitutionRequest,
@@ -131,6 +132,7 @@ function toSubstitutionRequest(
       startsAt !== null &&
       startsAt.getTime() > now.getTime() &&
       startsAt.getTime() - now.getTime() <= URGENT_WITHIN_MS,
+    requirements: sessionRequirements(request.product, request.product.site_name),
     offers: request.offers.map(
       (offer): SubstitutionOffer => ({
         id: offer.id,

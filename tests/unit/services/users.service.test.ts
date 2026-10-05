@@ -66,6 +66,7 @@ function listRows(count: number, offset = 0) {
     certified: false,
     criminal_record_check_passed: false,
     linked_gamers: [],
+    qualifications: [],
   }));
 }
 

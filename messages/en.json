@@ -652,6 +652,17 @@
       "notGranted": "Not granted",
       "error": "Couldn’t update the qualification. Please try again."
     },
+    "geduLanguages": {
+      "title": "Languages",
+      "note": "They’re offered substitutions only for sessions in a language ticked here. With none ticked, they’re offered none.",
+      "error": "Couldn’t save the languages. Please try again."
+    },
+    "missingRequirements": {
+      "qualification": "This Gedu does not hold the {qualification} qualification, which this product requires.",
+      "language": "This product is run in {language}, which this Gedu has not listed as a language they speak.",
+      "coverage": "This product runs on-site at {site}, which is outside this Gedu’s coverage areas.",
+      "coverageUnnamed": "This product runs on-site, outside this Gedu’s coverage areas."
+    },
     "geduCertifyWarnings": {
       "title": "Certify anyway?",
       "body": "Certification requires neither of these, so you can certify them anyway.",
@@ -1135,7 +1146,10 @@
         "absentGedu": "The Gedu being substituted for",
         "notCertified": "Not certified",
         "alreadyTrainee": "Already a trainee",
-        "traineeInstead": "Can be added as a trainee instead."
+        "traineeInstead": "Can be added as a trainee instead.",
+        "notQualified": "Not qualified: {qualification}",
+        "doesNotSpeak": "Doesn’t speak {language}",
+        "outsideCoverage": "Outside their coverage areas"
       },
       "participantPicker": {
         "title": "Add a participant",
@@ -1299,6 +1313,10 @@
             "failed": "The switch did not complete. Press Switch club again — a repeated press replays the same request, so it never charges the family twice."
           },
           "confirm": "Switch club"
+        },
+        "requirementGaps": {
+          "title": "Assign anyway?",
+          "action": "Assign anyway"
         }
       },
       "seatLimitModes": {
@@ -1797,8 +1815,9 @@
       "certificationAlertTitle": "Your account needs to be certified",
       "certificationAlertDescription": "You can sign in right away, but an admin needs to certify your account before you can be assigned to a club or camp.",
       "coverageHeading": "Where can you work?",
-      "coverageNote": "Pick the areas where you can work on-site. If you can only work remotely, leave this field empty. You can edit your selection later in your profile settings.",
+      "coverageNote": "Pick the areas where you can work on-site. You’re offered on-site substitutions only in these areas; online sessions don’t depend on them. If you can only work remotely, leave this empty. You can change it later in your settings.",
       "invalidPhone": "Please enter a valid phone number",
+      "spokenLanguagesRequired": "Choose at least one language you speak.",
       "creatingAccount": "Creating account...",
       "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
     },
@@ -2395,7 +2414,8 @@
       "cardLockedLabel": "{product} — session you’re substituting for. The group’s workspace opens 48 hours before it starts.",
       "accessOpens": "Workspace opens {date} at {time}",
       "poolHeading": "Sessions needing a substitute",
-      "poolAllClear": "No sessions need a substitute right now.",
+      "poolRequirementsNote": "You see sessions in a language you speak and, for on-site ones, in your coverage areas. Keep both up to date in your <link>settings</link>.",
+      "poolAllClear": "No sessions you can cover need a substitute right now.",
       "poolRolePrimary": "Primary",
       "poolRoleAssistant": "Assistant",
       "poolFee": "{fee} per session",
@@ -2403,6 +2423,9 @@
       "poolWithdrawAction": "Withdraw offer",
       "poolWithdrawPending": "Withdrawing…",
       "poolActionFailed": "That didn’t save. Try again.",
+      "poolOfferFailedNotQualified": "This session needs a qualification you don’t hold, so you can’t offer to cover it.",
+      "poolOfferFailedLanguage": "This session is run in a language you haven’t listed as one you speak, so you can’t offer to cover it. You can add languages in your settings.",
+      "poolOfferFailedCoverage": "This session is on-site outside your coverage areas, so you can’t offer to cover it. You can change your coverage areas in your settings.",
       "pageTitle": "Substitutions",
       "back": "Back to My SOG",
       "mineHeading": "You’re substituting",
@@ -2424,7 +2447,7 @@
     },
     "coverage": {
       "title": "Coverage areas",
-      "remoteOnlyNote": "Used to match you as a substitute when another Gedu can’t make their club. Leave empty if you only substitute remotely.",
+      "remoteOnlyNote": "You see on-site substitution requests only in the areas you pick. Online sessions don’t depend on them. Leave this empty if you only work remotely.",
       "selectedHeading": "Selected ({count})",
       "noneSelected": "No areas selected",
       "remove": "Remove {name}",
@@ -4354,6 +4377,19 @@
       "title": "Marketing preferences",
       "schoolOfGaming": "School of Gaming may send me news and offers by email.",
       "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time."
+    },
+    "notifications": {
+      "title": "Notification preferences",
+      "channels": {
+        "email": "Email"
+      },
+      "kinds": {
+        "session_report_copy": {
+          "label": "Copies of session reports",
+          "hint": "A copy of each session report emailed to the families in a group."
+        }
+      },
+      "saveFailed": "Your notification preferences could not be saved. Please try again."
     },
     "usernameLabel": "Username",
     "gamerPasswordFromParent": "Your parent can set a new password for you from their My SOG.",

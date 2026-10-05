@@ -15,7 +15,11 @@ BEGIN
   -- exclusion is the `may substitute` predicate itself rather than a hand-written
   -- copy of its clauses, so the list and the offer button can never disagree —
   -- a session the gedu is expected at, one they have their own request on, and
-  -- their own absence are all out by construction.
+  -- their own absence are all out by construction. The qualification, language
+  -- and coverage predicates are the offer's other three tests and are asked
+  -- here for the same reason: a request on a product the caller is not
+  -- qualified for, that is run in a language they have not listed, or whose
+  -- site is outside their coverage areas, is not in their pool.
   --
   -- The ABSENT GEDU IS NOT NAMED. Naming them half-reveals a private reason
   -- (everybody knows who is off sick), and the seat being substituted belongs to the
@@ -65,6 +69,9 @@ BEGIN
        AND public.gedu_may_substitute_session(
              v_caller, r.group_id, r.session_date, r.requested_by
            )
+       AND public.gedu_holds_session_qualifications(v_caller, r.group_id)
+       AND public.gedu_speaks_session_language(v_caller, r.group_id)
+       AND public.gedu_covers_product_site(v_caller, p.id)
   ), '[]'::jsonb);
 END;
 $$;
@@ -74,7 +81,7 @@ $$;
 -- Name: FUNCTION get_open_substitution_requests(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_open_substitution_requests() IS 'The gedu dashboard''s "Sessions needing a substitute": every `open` request dated today or later in the product''s timezone, within the next 60 days, that the CALLER could actually take. The exclusion is gedu_may_substitute_session itself rather than a copy of its clauses, so this list and the offer button can never disagree. Each line carries the session''s product as session_product_document describes it — the one shell every substitution surface shares — plus the group name, the date, the role and THAT ROLE''s fee (null when the product has not set one — a blank field, not a volunteer session), and whether the caller has already offered. The ABSENT GEDU IS DELIBERATELY NOT NAMED: naming them half-reveals a private reason, and the seat belongs to the group. Contains no schedule expansion — the client owns the calendar math, exactly as both feeds do. Gedu-gated on its first statement; an uncertified gedu gets an empty list, because certification is one of the predicate''s four refusals.';
+COMMENT ON FUNCTION public.get_open_substitution_requests() IS 'The gedu dashboard''s "Sessions needing a substitute": every `open` request dated today or later in the product''s timezone, within the next 60 days, that the CALLER could actually take. The exclusion is the offer''s own four tests — gedu_may_substitute_session, gedu_holds_session_qualifications, gedu_speaks_session_language and gedu_covers_product_site — rather than a copy of their clauses, so this list and the offer button can never disagree: a request on a product whose qualifications the caller does not hold, that is run in a language the caller has not listed, or that is in person at a site outside the caller''s coverage areas, is not in their pool. A gedu who has listed no language sees none, and one who has ticked no coverage area sees online sessions only. Each line carries the session''s product as session_product_document describes it — the one shell every substitution surface shares — plus the group name, the date, the role and THAT ROLE''s fee (null when the product has not set one — a blank field, not a volunteer session), and whether the caller has already offered. The ABSENT GEDU IS DELIBERATELY NOT NAMED: naming them half-reveals a private reason, and the seat belongs to the group. Contains no schedule expansion — the client owns the calendar math, exactly as both feeds do. Gedu-gated on its first statement; an uncertified gedu gets an empty list, because certification is one of the may-substitute predicate''s refusals.';
 
 
 --

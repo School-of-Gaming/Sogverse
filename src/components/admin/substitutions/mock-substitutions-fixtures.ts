@@ -90,6 +90,7 @@ function product(args: {
   return {
     id: args.id,
     product_type: args.productType,
+    tag: null,
     topic: args.topic,
     spoken_language_code: args.language,
     timezone: args.timezone,

@@ -280,6 +280,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       product: {
         id: "mock-pool-product-soon",
         product_type: "consumer_club",
+        tag: null,
         topic: "minecraft_java",
         spoken_language_code: "fi",
         timezone: SESSION_FEED_TIMEZONE,
@@ -307,6 +308,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       product: {
         id: "mock-pool-product-today",
         product_type: "camp",
+        tag: null,
         topic: "roblox_studio",
         spoken_language_code: "en",
         timezone: SESSION_FEED_TIMEZONE,
@@ -334,6 +336,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       product: {
         id: "mock-pool-product-tomorrow",
         product_type: "municipality_club",
+        tag: null,
         topic: "fortnite",
         spoken_language_code: "sv",
         timezone: SESSION_FEED_TIMEZONE,
@@ -358,6 +361,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       product: {
         id: "mock-pool-product-midweek",
         product_type: "event",
+        tag: null,
         topic: "minecraft_bedrock",
         spoken_language_code: "fi",
         timezone: SESSION_FEED_TIMEZONE,
@@ -382,6 +386,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       product: {
         id: "mock-pool-product-next-week",
         product_type: "consumer_club",
+        tag: null,
         topic: "creator_studio",
         spoken_language_code: "en",
         timezone: SESSION_FEED_TIMEZONE,
@@ -406,6 +411,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       product: {
         id: "mock-pool-product-far",
         product_type: "consumer_club",
+        tag: null,
         topic: "fortnite",
         spoken_language_code: "sv",
         timezone: SESSION_FEED_TIMEZONE,

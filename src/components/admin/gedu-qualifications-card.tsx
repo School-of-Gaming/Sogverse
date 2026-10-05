@@ -9,8 +9,9 @@
  * checkbox. Ticking grants and unticking revokes, in one click and with no
  * confirmation — the same interaction the criminal record check uses, for the
  * same reason: it records a standing fact about a person, and taking it back
- * has to be as plain as setting it. Qualifications gate nothing
- * (`services/gedu/CLAUDE.md`), so there is nothing to warn about.
+ * has to be as plain as setting it. Granting or revoking one warns about
+ * nothing; what a missing qualification means for staffing is stated where a
+ * gedu is placed (`services/gedu/CLAUDE.md`).
  *
  * Seeded with a server-fetched `initial` list so it paints complete on first
  * frame. `null` means that read failed: the rows still draw their words, and
@@ -39,6 +40,7 @@ import {
   type HeldGeduQualification,
 } from "@/services/gedu";
 import { personName } from "@/components/admin/person-name";
+import { useQualificationNames } from "@/components/admin/qualification-names";
 import { useTimezone } from "@/providers";
 import type { GeduQualification } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -51,8 +53,6 @@ interface GeduQualificationsCardProps {
 
 export function GeduQualificationsCard({ geduId, initial }: GeduQualificationsCardProps) {
   const t = useTranslations("admin.geduQualifications");
-  const tagT = useTranslations("productTag");
-  const typeT = useTranslations("admin.products.types");
   const { data: held } = useGeduQualifications(geduId, {
     initialData: initial ?? undefined,
   });
@@ -64,16 +64,7 @@ export function GeduQualificationsCard({ geduId, initial }: GeduQualificationsCa
   );
   const [failed, setFailed] = useState<GeduQualification | null>(null);
 
-  /**
-   * Each qualification's name is the wording the thing it qualifies for
-   * already carries: the product tag's label, and the consumer club type's
-   * plural. A record keyed by the enum, so a qualification added by migration
-   * fails to compile here until it is given a name.
-   */
-  const names: Record<GeduQualification, string> = {
-    neuroinclusive: tagT("neuroinclusive"),
-    consumer_products: typeT("consumerClub.plural"),
-  };
+  const names = useQualificationNames();
 
   /**
    * Grant or revoke one qualification. The flag is live before any render

@@ -32,6 +32,7 @@ import {
 } from "@/components/settings/marketing-preferences-fields";
 import { GamerPhotoConsentNotice } from "@/components/settings/gamer-photo-consent-notice";
 import { McpServerCard } from "@/components/settings/mcp-server-card";
+import { NotificationPreferencesCard } from "@/components/settings/notification-preferences-card";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
@@ -152,6 +153,7 @@ export function SettingsSectionContent({
   const isGedu = profile?.role === "gedu";
   const isGamer = isGamerProfile(profile);
   const isParent = profile?.role === "customer";
+  const isAdmin = profile?.role === "admin";
   // **The question is whether this account's address reaches a person, not
   // whether its holder is a child.** Every adult holds a mailbox; a gamer holds
   // one only in `email` mode. The three rows below that used to test the role
@@ -830,6 +832,11 @@ export function SettingsSectionContent({
       {user && geduContractSeed && (
         <GeduContractSettingsCard geduId={user.id} seed={geduContractSeed} />
       )}
+
+      {/* Which notifications reach the viewer, by channel. Shown only to a
+          viewer with at least one toggle — today an admin, since the only
+          kind is an admin's. */}
+      {isAdmin && <NotificationPreferencesCard />}
 
       {/* Security is the last card on the page for every role — an owner
           ruling. The exit and the rarely-used credential actions come after the

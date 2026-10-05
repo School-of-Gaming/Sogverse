@@ -445,6 +445,38 @@ describe("user_list_entries", () => {
     expect(customer!.certified).toBe(false);
   });
 
+  // The picker warns on a row lacking what the product requires, so the
+  // qualifications ride on the row the way certification does — in the enum's
+  // order whatever order they were granted in, and never NULL.
+  it("carries a gedu's qualifications in the enum's order, and none for a customer", async () => {
+    const { error: granted } = await admin.from("gedu_qualifications").insert([
+      { gedu_id: TEST_IDS.GEDU, qualification: "consumer_products" },
+      { gedu_id: TEST_IDS.GEDU, qualification: "neuroinclusive" },
+    ]);
+    expect(granted).toBeNull();
+
+    try {
+      const { data: gedu, error } = await adminClient
+        .from("user_list_entries")
+        .select("qualifications")
+        .eq("id", TEST_IDS.GEDU)
+        .single();
+
+      expect(error).toBeNull();
+      expect(gedu!.qualifications).toEqual(["neuroinclusive", "consumer_products"]);
+
+      const { data: customer } = await adminClient
+        .from("user_list_entries")
+        .select("qualifications")
+        .eq("id", TEST_IDS.CUSTOMER)
+        .single();
+
+      expect(customer!.qualifications).toEqual([]);
+    } finally {
+      await admin.from("gedu_qualifications").delete().eq("gedu_id", TEST_IDS.GEDU);
+    }
+  });
+
   // The column has to read the stored flag rather than restate the role, which
   // only a gedu who is NOT certified can show.
   it("reports an uncertified gedu as uncertified", async () => {

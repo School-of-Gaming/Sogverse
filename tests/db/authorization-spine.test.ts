@@ -174,6 +174,10 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // Granting or revoking a gedu's qualification. The same shape again: past the
   // admin guard, a NULL target raises "is not a gedu" (P0001), not 42501.
   set_gedu_qualification: { permittedRoles: ["admin"] },
+  // An admin turning one kind of notification on or off, on one channel, for
+  // themselves. Past the admin guard, all-NULL arguments are refused with
+  // `check_violation`.
+  set_notification_preference: { permittedRoles: ["admin"] },
   // Phase 3's new-RPC conversions. Past the admin guard, all-NULL arguments hit
   // "no such product" / "no such participation" — an error, but not 42501.
   admin_enroll_participant: { permittedRoles: ["admin"] },
@@ -200,6 +204,9 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // id, so a permitted admin gets a document — empty or not — rather than a
   // second refusal, and every other role is stopped by the guard.
   get_admin_substitution_requests: { permittedRoles: ["admin"] },
+  // The admin gedu picker's coverage answer. A NULL product is an unknown one,
+  // so a permitted admin gets an empty array back rather than an error.
+  get_gedus_covering_product: { permittedRoles: ["admin"] },
 
   // --- session cancellation ------------------------------------------------
   //

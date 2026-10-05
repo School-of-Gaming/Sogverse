@@ -14,6 +14,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { GeduCertificationCard } from "@/components/admin/gedu-certification-card";
 import { GeduQualificationsCard } from "@/components/admin/gedu-qualifications-card";
+import { GeduSpokenLanguagesCard } from "@/components/admin/gedu-spoken-languages-card";
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
 import { UserMarketingCard } from "@/components/admin/user-marketing-card";
 import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-consent-card";
@@ -586,7 +587,10 @@ export default async function AdminUserDetailPage({
         />
       )}
 
-      {/* Coverage areas, for substitute matching. */}
+      {/* Spoken languages and coverage areas, the two answers substitute
+          matching reads, side by side. The languages are seeded from the
+          profile row this page already read. */}
+      {isGedu && <GeduSpokenLanguagesCard geduId={userId} initialProfile={profile} />}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
 
       {/* The public team profile, for the two roles that have one. Seeded by

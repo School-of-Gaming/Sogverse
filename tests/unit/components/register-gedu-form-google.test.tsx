@@ -10,6 +10,9 @@ import { mockSupabaseClient } from "../../setup";
  *
  * The wrapped navigation mock builds paths with no locale prefix, so the
  * assertion is about the route and its query, not the language.
+ *
+ * The password path's one form-side refusal of its own, a Gedu with no spoken
+ * language, is pinned at the end: the finish page's Gedu variant shares it.
  */
 
 vi.mock("next-intl", () => ({
@@ -52,8 +55,14 @@ vi.mock("@/components/gedu/coverage-areas-field", () => ({
 vi.mock("@/components/ui/phone-input", () => ({
   InternationalPhoneInput: () => <div />,
 }));
+// One button speaking Finnish: what the form needs from the boxes is a
+// selection, not the boxes.
 vi.mock("@/components/ui/spoken-language-checkboxes", () => ({
-  SpokenLanguageCheckboxes: () => <div />,
+  SpokenLanguageCheckboxes: ({ onChange }: { onChange: (codes: string[]) => void }) => (
+    <button type="button" onClick={() => onChange(["fi"])}>
+      speaks-finnish
+    </button>
+  ),
 }));
 vi.mock("@/components/game-account", () => ({
   GAME_PLATFORMS: {
@@ -140,5 +149,67 @@ describe("the Gedu register page's Google button", () => {
     expect(nextUrl.searchParams.get("utm_source")).toBe("recruit");
     expect(nextUrl.searchParams.get("utm_campaign")).toBe("gedu-autumn");
     expect(nextUrl.searchParams.has("utm_medium")).toBe(false);
+  });
+});
+
+describe("the Gedu register form's spoken languages", () => {
+  const mockFetch = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", mockFetch);
+    mockFetch.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
+      data: { user: null, session: null },
+      error: null,
+    });
+  });
+
+  function fillAccount(container: HTMLElement) {
+    const set = (id: string, value: string) => {
+      const input = container.querySelector<HTMLInputElement>(`#${id}`);
+      if (!input) throw new Error(`no #${id}`);
+      fireEvent.change(input, { target: { value } });
+    };
+    set("firstName", "Aino");
+    set("lastName", "Virtanen");
+    set("email", "aino@example.test");
+    set("password", "a-long-password");
+    set("confirmPassword", "a-long-password");
+  }
+
+  const submit = (container: HTMLElement) =>
+    act(async () => {
+      const form = container.querySelector("form");
+      if (!form) throw new Error("no form");
+      fireEvent.submit(form);
+    });
+
+  // A Gedu is offered substitutions only in a language they speak, so the
+  // form refuses none — before anything is sent, and leaving it usable.
+  it("refuses a submit with no spoken language, and posts nothing", async () => {
+    const view = render(<RegisterGeduForm redirect={null} />);
+    fillAccount(view.container);
+
+    await submit(view.container);
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(screen.getByText("registerGedu.spokenLanguagesRequired")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "createAccount" })).toHaveProperty(
+      "disabled",
+      false,
+    );
+  });
+
+  it("posts once a language is chosen", async () => {
+    const view = render(<RegisterGeduForm redirect={null} />);
+    fillAccount(view.container);
+    fireEvent.click(screen.getByRole("button", { name: "speaks-finnish" }));
+
+    await submit(view.container);
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toBe("/api/gedu/register");
+    expect(JSON.parse(init.body)).toMatchObject({ spokenLanguages: ["fi"] });
   });
 });

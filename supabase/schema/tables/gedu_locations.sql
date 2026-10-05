@@ -10,6 +10,13 @@ CREATE TABLE public.gedu_locations (
 
 
 --
+-- Name: TABLE gedu_locations; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.gedu_locations IS 'A gedu''s coverage areas: one row per tick, each an independent "I cover this whole subtree" claim on a locations row — ticking a region does not tick its municipalities, and nothing enumerates descendants. No rows means the gedu works remotely only. Read by gedu_covers_product_site, which keeps an in-person substitution request out of a gedu''s pool, and refuses their offer, unless one of their ticks is the session''s site or a place above it; online sessions do not depend on it.';
+
+
+--
 -- Name: gedu_locations gedu_locations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
