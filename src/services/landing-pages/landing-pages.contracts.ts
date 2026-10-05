@@ -221,6 +221,11 @@ export interface LandingPageDraft extends LandingPageSaver {
    * `landing_image`. Derived by the database from the sections.
    */
   imagePaths: Record<string, string>;
+  /**
+   * The catalogue label of each picture in `imagePaths`, by the same id — what
+   * the editor shows under the picture.
+   */
+  imageLabels: Record<string, string>;
   /** Every version written, in `SUPPORTED_LOCALES` order; never empty. */
   versions: LandingPageDraftVersion[];
   createdAt: string;

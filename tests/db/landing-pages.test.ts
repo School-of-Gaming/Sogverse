@@ -700,6 +700,7 @@ describe("landing pages", () => {
       const view = await service.getAdminPage(PAGE_A);
       expect(view?.draft.sections[0]).toEqual({ id: HERO, type: "hero", imageId: PIC_B });
       expect(view?.draft.imagePaths).toEqual({ [PIC_B]: pathOf(PIC_B) });
+      expect(view?.draft.imageLabels).toEqual({ [PIC_B]: "Landing fixture B" });
       expect(view?.publication?.imagePaths).toEqual({ [PIC_B]: pathOf(PIC_B) });
       expect(view?.hasUnpublishedChanges).toBe(false);
     });
@@ -742,6 +743,7 @@ describe("landing pages", () => {
       const view = await service.getAdminPage(PAGE_A);
       expect(view?.draft.sections).toEqual(structure(null));
       expect(view?.draft.imagePaths).toEqual({});
+      expect(view?.draft.imageLabels).toEqual({});
       expect(view?.publication?.sections).toEqual(structure(null));
       expect(view?.publication?.imagePaths).toEqual({});
       expect(Object.keys(view?.publication?.versions[0].sectionTexts ?? {})).toEqual(
@@ -774,6 +776,10 @@ describe("landing pages", () => {
       expect(view?.draft.imagePaths).toEqual({
         [PIC_A]: pathOf(PIC_A),
         [PIC_B]: pathOf(PIC_B),
+      });
+      expect(view?.draft.imageLabels).toEqual({
+        [PIC_A]: "Landing fixture A",
+        [PIC_B]: "Landing fixture B",
       });
     });
   });

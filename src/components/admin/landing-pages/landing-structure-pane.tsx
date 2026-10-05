@@ -4,37 +4,14 @@ import { useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
-  BookOpen,
-  Calendar,
   CircleCheck,
   CircleDashed,
-  Clock,
-  Gamepad2,
-  Globe,
-  GraduationCap,
-  Handshake,
-  Heart,
-  Laptop,
-  Leaf,
-  Lightbulb,
-  MapPin,
-  MessageCircle,
-  Palette,
   Plus,
-  Puzzle,
-  Rocket,
-  ShieldCheck,
-  Smile,
-  Sparkles,
-  Star,
-  Target,
   Trash2,
-  Trophy,
-  Users,
   X,
-  type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { LANDING_ICON_GLYPHS } from "@/components/landing-pages/landing-icons";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
@@ -62,37 +39,6 @@ import {
   type FormSectionOf,
   type LandingPageForm,
 } from "./landing-page-form";
-
-/**
- * The lucide glyph of every icon a point may carry — exhaustive, so an icon
- * added to the registry's list fails type-check here until it can be shown.
- */
-export const LANDING_ICON_GLYPHS: Record<LandingIcon, LucideIcon> = {
-  sparkles: Sparkles,
-  star: Star,
-  heart: Heart,
-  "shield-check": ShieldCheck,
-  users: Users,
-  "gamepad-2": Gamepad2,
-  "graduation-cap": GraduationCap,
-  "book-open": BookOpen,
-  "map-pin": MapPin,
-  calendar: Calendar,
-  clock: Clock,
-  trophy: Trophy,
-  rocket: Rocket,
-  lightbulb: Lightbulb,
-  "message-circle": MessageCircle,
-  smile: Smile,
-  puzzle: Puzzle,
-  globe: Globe,
-  laptop: Laptop,
-  "circle-check": CircleCheck,
-  palette: Palette,
-  handshake: Handshake,
-  target: Target,
-  leaf: Leaf,
-};
 
 const SELECT =
   "h-10 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground";

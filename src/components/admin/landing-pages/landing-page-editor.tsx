@@ -125,12 +125,7 @@ function EditorForm(props: LandingPageEditorProps) {
     setReseed(null);
     if (JSON.stringify(landingPageInputFromForm(form)) === reseed.sent) {
       const stored = landingPageFormFromDraft(page.draft, uiLocale);
-      setForm({
-        ...stored,
-        activeLocale: form.activeLocale,
-        // The pictures met so far keep their labels.
-        pictures: { ...stored.pictures, ...form.pictures },
-      });
+      setForm({ ...stored, activeLocale: form.activeLocale });
       setGeneration((current) => current + 1);
     }
   }

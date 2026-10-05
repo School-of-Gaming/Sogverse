@@ -523,10 +523,12 @@ export function landingPageFormFromDraft(
       draft.versions.map((version) => version.locale),
       uiLocale,
     ),
-    // The read carries each picture's path and no label; a picture picked in
-    // the editor brings its label along.
+    // A picture picked in the editor brings its label along.
     pictures: Object.fromEntries(
-      Object.entries(draft.imagePaths).map(([id, path]) => [id, { label: "", path }]),
+      Object.entries(draft.imagePaths).map(([id, path]) => [
+        id,
+        { label: draft.imageLabels[id] ?? "", path },
+      ]),
     ),
   };
 }

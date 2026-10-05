@@ -37,9 +37,11 @@ vi.mock("@/providers", () => ({
 vi.mock("@/components/admin/products/image-picker", () => ({
   ImagePicker: ({
     label,
+    current,
     onChange,
   }: {
     label: string;
+    current: { label: string; path: string } | null;
     onChange: (id: string | null, image: { label: string; path: string } | null) => void;
   }) => (
     <button
@@ -49,6 +51,7 @@ vi.mock("@/components/admin/products/image-picker", () => ({
       }
     >
       {`pick ${label}`}
+      {current && ` showing ${current.label}`}
     </button>
   ),
 }));
@@ -90,6 +93,7 @@ const PAGE: AdminLandingPage = {
       { id: TEXT_ID, type: "text", imageSide: "end" },
     ],
     imagePaths: {},
+    imageLabels: {},
     versions: [EN],
     createdAt: "2026-10-01T08:00:00Z",
     updatedAt: "2026-10-02T08:00:00Z",
@@ -397,6 +401,21 @@ describe("the landing page editor", () => {
         }),
       ],
     });
+  });
+
+  it("shows a saved picture with its catalogue label", () => {
+    const picture = "0bfc2918-48f2-41bb-aae2-ad28a755a581";
+    renderEditor({
+      ...PAGE,
+      draft: {
+        ...PAGE.draft,
+        sections: [{ id: HERO_ID, type: "hero", imageId: picture }, PAGE.draft.sections[1]],
+        imagePaths: { [picture]: "castle.jpg" },
+        imageLabels: { [picture]: "Castle at dusk" },
+      },
+    });
+    const hero = within(structure()).getByRole("listitem", { name: sectionName(1, "hero") });
+    expect(hero.textContent).toContain("showing Castle at dusk");
   });
 
   it("names who last saved, and through which AI app", () => {

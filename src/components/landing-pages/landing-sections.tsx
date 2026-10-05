@@ -1,35 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import {
-  ArrowRight,
-  BookOpen,
-  Calendar,
-  CircleCheck,
-  Clock,
-  ExternalLink,
-  Gamepad2,
-  Globe,
-  GraduationCap,
-  Handshake,
-  Heart,
-  Laptop,
-  Leaf,
-  Lightbulb,
-  MapPin,
-  MessageCircle,
-  Palette,
-  Puzzle,
-  Rocket,
-  ShieldCheck,
-  Smile,
-  Sparkles,
-  Star,
-  Target,
-  Trophy,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, ExternalLink } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -44,12 +16,12 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
 import type {
   ButtonTarget,
-  LandingIcon,
   LandingSectionOf,
   LandingSectionType,
 } from "@/lib/landing-pages/sections";
 import { buttonTargetHref } from "@/lib/links/button-target";
 import { cn } from "@/lib/utils";
+import { LANDING_ICON_GLYPHS } from "./landing-icons";
 import {
   written,
   type LandingSectionByType,
@@ -383,34 +355,6 @@ function ImageSection({ section, text, context }: LandingSectionProps<"image">) 
   );
 }
 
-/** Each icon a point may carry, drawn — exhaustive over the curated list. */
-const ICONS: Record<LandingIcon, LucideIcon> = {
-  sparkles: Sparkles,
-  star: Star,
-  heart: Heart,
-  "shield-check": ShieldCheck,
-  users: Users,
-  "gamepad-2": Gamepad2,
-  "graduation-cap": GraduationCap,
-  "book-open": BookOpen,
-  "map-pin": MapPin,
-  calendar: Calendar,
-  clock: Clock,
-  trophy: Trophy,
-  rocket: Rocket,
-  lightbulb: Lightbulb,
-  "message-circle": MessageCircle,
-  smile: Smile,
-  puzzle: Puzzle,
-  globe: Globe,
-  laptop: Laptop,
-  "circle-check": CircleCheck,
-  palette: Palette,
-  handshake: Handshake,
-  target: Target,
-  leaf: Leaf,
-};
-
 /**
  * Two to six points as the home page's feature cards: the glyph tile with an
  * act edge, a title, a short body. Pairs on a tablet; three across from `lg`
@@ -429,7 +373,7 @@ function PointsSection({ section, text }: LandingSectionProps<"points">) {
       >
         {section.items.map((item) => {
           const words = text.items?.[item.id];
-          const Icon = ICONS[item.icon];
+          const Icon = LANDING_ICON_GLYPHS[item.icon];
           return (
             <Card key={item.id}>
               <CardHeader>

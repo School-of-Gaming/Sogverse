@@ -237,10 +237,12 @@ export class LandingPageService {
     if (!data) return null;
 
     const sections = readSections(data.sections);
+    const imagePaths = landingImagePaths.parse(data.image_paths);
     const draft: LandingPageDraft = {
       id: data.id,
       sections,
-      imagePaths: landingImagePaths.parse(data.image_paths),
+      imagePaths,
+      imageLabels: await this.catalogueLabels(Object.keys(imagePaths)),
       versions: inLocaleOrder(data.versions).map((version) => {
         const sectionTexts = readSectionTexts(sections, version.section_texts);
         return {
@@ -277,6 +279,22 @@ export class LandingPageService {
         data.publication,
       ),
     };
+  }
+
+  /**
+   * The catalogue label of each of these entries, by id. A second read rather
+   * than an embed, because the structure references its pictures from inside
+   * JSON, where no foreign key reaches. The catalogue is admin-only, which the
+   * admin read already is.
+   */
+  private async catalogueLabels(ids: readonly string[]): Promise<Record<string, string>> {
+    if (ids.length === 0) return {};
+    const { data, error } = await this.supabase
+      .from("catalogue_images")
+      .select("id, label")
+      .in("id", ids);
+    if (error) throw error;
+    return Object.fromEntries(data.map(({ id, label }) => [id, label]));
   }
 
   private async oauthClientNames(
