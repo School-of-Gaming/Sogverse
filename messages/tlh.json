@@ -1618,7 +1618,11 @@
         "messagePlaceholder": "ghItlh neH, 2000 Degh law’ be’",
         "send": "ngong QIn yIngeH",
         "sent": "QIn ngeHta’.",
-        "openInDiscord": "Discord Daq yIpoS"
+        "openInDiscord": "Discord Daq yIpoS",
+        "templatePlain": "ghItlh neH",
+        "templateSubSessions": "/sub: Qu' tlhegh",
+        "templateSubNotLinked": "/sub: wej ghItlh pagh",
+        "subPreviewSent": "ghantoH ngeHta’."
       }
     },
     "whatsapp": {
@@ -2467,8 +2471,8 @@
       "mineHeading": "DalIwbogh may’mey",
       "mineAllClear": "may’ DalIwbogh tu’lu’be’.",
       "fileAction": "may’ DapawlaHbe’’a’?",
-      "filePickTitle": "nuq may’ DapawlaHbe’?",
-      "filePickBody": "may’ yIwIv. meq ghantoHmey je leghlaH ra’wI’pu’ neH.",
+      "filePickTitle": "nuq may’vaD lIwwI’ DaneH?",
+      "filePickBody": "meq ghantoHmey je leghlaH ra’wI’pu’ neH.",
       "fileAlreadyRequested": "lIw tlhobta’lu’bogh",
       "filePickWeekThis": "hoghvam",
       "filePickWeekNext": "hogh veb",
@@ -2476,7 +2480,7 @@
       "filePickShowLater": "may’mey veb yI’ang",
       "filePickGroupLabel": "ghom",
       "filePickAllGroups": "ghommey Hoch",
-      "fileFiled": "lIw tlhobta’lu’: {product}, {when}. DaH may’vam ngoqDaq ’angchoHlu’.",
+      "fileFiled": "lIw tlhobta’lu’: {product}, {when}. DaH may’vam ngoqDaq ’angchoHlu’, jIH SOG Daq.",
       "fileFiledLink": "ghom vumtaHghach yIpoSmoH",
       "offerConfirmTitle": "bIlIwqang’a’?",
       "offerConfirmBody": "{when} {product} may’ DalIwqang. lIwwI’ wIv School of Gaming; chaw’lu’pa’ nob DanatlhlaH. chaw’lu’DI’, Gedu quv chut tlhIH SoH may’ ’oH, SoHvaD may’ DaneHbogh rur, ’ej nob DanatlhlaHbe’: DaghoSlaHbe’chugh, lIwwI’ yItlhob. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’."
@@ -4437,13 +4441,13 @@
   "discordLink": {
     "confirm": {
       "title": "Discord ghItlhlIj yIrar",
-      "body": "Discord ghItlh <b>@{username}</b> School of Gaming ghItlhlIj DararneS'a'? vaj Discord Daq SoH ghoSlaH School of Gaming.",
+      "body": "Discord ghItlh <b>@{username}</b> School of Gaming ghItlhlIj DararneS'a'? vaj Discord Daq SoH ghoSlaH School of Gaming, ’ej SoHvaD School of Gaming bot lo’laH Discord ghItlhvam. ghItlhlIj neH yIrar.",
       "action": "ghItlh yIrar",
       "failed": "Qagh. ghItlhlIj rarlu'be'. yInIDqa'."
     },
     "linked": {
       "title": "@{username} rarlu'pu'",
-      "body": "DaH Discord Daq SoH ghoSlaH School of Gaming.",
+      "body": "DaH Discord Daq SoH ghoSlaH School of Gaming, ’ej pa’ School of Gaming bot Dalo’laH.",
       "goToMySog": "My SOG yIghoS",
       "goToDashboard": "QaD yIghoS"
     },
@@ -4463,6 +4467,16 @@
       "title": "School of Gaming beqpu' neH Discord ghItlh rarlaH",
       "body": "ghItlhvam rarlaHbe' ghItlhvam. beqpu' SoHchugh, beq ghItlhlIj yIlo'."
     }
+  },
+  "discordSub": {
+    "pickPlaceholder": "may’ yIwIv",
+    "addNote": "qonta’ yIchel",
+    "confirmWithoutNote": "qonta’ Hutlh yIchav",
+    "empty": "may’ Daghajbe’, lIw DatlhoblaHbogh. lIwmeylIj Datu’ De’wI’ Daq: {url}",
+    "failed": "Qagh. tugh /sub yIlo’qa’.",
+    "notLinked": "/sub Dalo’meH, wa’DIch School of Gaming Gedu ghItlhlIjDaq Discord ghItlhlIj yIrar.",
+    "notLinkedRunLink": "School of Gaming Gedu ghItlhDaq Discord ghItlhlIj rarbe’lu’. /link yIlo’, ’ej /sub yIlo’qa’.",
+    "previewNotice": "ghantoH ’oH — pagh ngeHlu’."
   },
   "seatOffer": {
     "offer": {

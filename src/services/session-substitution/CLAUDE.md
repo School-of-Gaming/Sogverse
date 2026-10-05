@@ -82,6 +82,15 @@ this feature needs, for the admin writes as much as the gedu ones. Nothing here 
 server-side secret, so nothing here is worth a route: a route would add a hop and a second
 place to get the authorization wrong.
 
+**The Discord bot's `/sub` command is the one caller with no session, and it reaches the
+same bodies.** Filing an absence and the two seat reads behind the picker each live in an
+internal function that takes the gedu as an argument; the web's RPC calls it with
+`auth.uid()` after its role guard, and a `…_for_discord_user` wrapper, granted to the
+service role alone, calls it with the gedu linked to the caller's Discord id (refusing
+with P0031 when there is none). A rule about who may file, or what a seat read returns,
+is changed in the internal body, never in a wrapper — a check added to one wrapper is a
+check the other way in does not make. The bot's side is `src/lib/discord-substitution.server.ts`.
+
 **Refusals throw.** Every write is somebody pressing a button, and every refusal is news
 they have to be told — the session was substituted while the dialog was open, the offer
 went stale under an admin's approval, the request is already withdrawn. A refusal

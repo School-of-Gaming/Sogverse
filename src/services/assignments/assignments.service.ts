@@ -120,7 +120,7 @@ export class AssignmentsService {
   async getMyAssignedProducts(): Promise<MyAssignedProductSessionRow[]> {
     const { data, error } = await this.supabase.rpc("get_my_assigned_products");
     if (error) throw error;
-    return myAssignedProductRows.parse(data).map(toMyAssignedProductSessionRow);
+    return parseMyAssignedProductRows(data);
   }
 
   /**
@@ -190,6 +190,18 @@ export class AssignmentsService {
 
     return traineeAssignedProduct.parse(data);
   }
+}
+
+/**
+ * A gedu's seat rows as the seat read returns them, parsed and reshaped. Two
+ * reads return these rows — the web's own, for the signed-in gedu, and the
+ * Discord bot's, for the gedu a Discord account is linked to — so both parse
+ * through here.
+ */
+export function parseMyAssignedProductRows(
+  data: unknown,
+): MyAssignedProductSessionRow[] {
+  return myAssignedProductRows.parse(data).map(toMyAssignedProductSessionRow);
 }
 
 function toMyAssignedProductSessionRow(

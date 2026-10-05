@@ -1574,7 +1574,11 @@
         "messagePlaceholder": "Ren text, högst 2 000 tecken",
         "send": "Skicka testmeddelande",
         "sent": "Meddelandet skickades.",
-        "openInDiscord": "Öppna i Discord"
+        "openInDiscord": "Öppna i Discord",
+        "templatePlain": "Ren text",
+        "templateSubSessions": "/sub: lista över tillfällen",
+        "templateSubNotLinked": "/sub: inte kopplad än",
+        "subPreviewSent": "Förhandsvisningen skickades."
       }
     },
     "whatsapp": {
@@ -2427,8 +2431,8 @@
       "mineHeading": "Dina vikariat",
       "mineAllClear": "Du har inga kommande vikariat.",
       "fileAction": "Kan du inte vara med på ett tillfälle?",
-      "filePickTitle": "Vilket tillfälle kan du inte vara med på?",
-      "filePickBody": "Välj tillfället du inte kan vara med på. Din orsak och din kommentar visas bara för administratörer.",
+      "filePickTitle": "Vilket tillfälle behöver du en vikarie för?",
+      "filePickBody": "Din orsak och din kommentar visas bara för administratörer.",
       "fileAlreadyRequested": "Vikarie är redan efterfrågad",
       "filePickWeekThis": "Den här veckan",
       "filePickWeekNext": "Nästa vecka",
@@ -2436,7 +2440,7 @@
       "filePickShowLater": "Visa senare tillfällen",
       "filePickGroupLabel": "Grupp",
       "filePickAllGroups": "Alla grupper",
-      "fileFiled": "Vikarie efterfrågad för {product} den {when}. Det syns nu på det tillfällets kort.",
+      "fileFiled": "Vikarie efterfrågad för {product} den {when}. Det syns nu på det tillfällets kort i Min SOG.",
       "fileFiledLink": "Öppna gruppens arbetsyta",
       "offerConfirmTitle": "Erbjuda dig att vikariera?",
       "offerConfirmBody": "Du erbjuder dig att hålla {product} {when}. School of Gaming väljer vikarien, och du kan dra tillbaka ditt erbjudande tills det har godkänts. När det har godkänts är tillfället ditt enligt ditt Gedu-avtal, precis som dina egna tillfällen, och du kan inte längre dra dig ur: kan du ändå inte vara med får du själv be om en vikarie, som för alla dina tillfällen. Gruppens arbetsyta öppnas för dig 48 timmar innan tillfället börjar."
@@ -5318,13 +5322,13 @@
   "discordLink": {
     "confirm": {
       "title": "Koppla ditt Discord-konto",
-      "body": "Koppla Discord-kontot <b>@{username}</b> till ditt School of Gaming-konto? Då kan School of Gaming nå dig på Discord.",
+      "body": "Koppla Discord-kontot <b>@{username}</b> till ditt School of Gaming-konto? Då kan School of Gaming nå dig på Discord, och det Discord-kontot kan använda School of Gamings bot för din räkning. Koppla bara ett konto som är ditt.",
       "action": "Koppla kontot",
       "failed": "Något gick fel och ditt konto kopplades inte. Försök igen."
     },
     "linked": {
       "title": "Kopplat till @{username}",
-      "body": "School of Gaming kan nu nå dig på Discord.",
+      "body": "School of Gaming kan nu nå dig på Discord, och du kan använda School of Gamings bot där.",
       "goToMySog": "Gå till Min SOG",
       "goToDashboard": "Gå till instrumentpanelen"
     },
@@ -5344,6 +5348,16 @@
       "title": "Bara personalen på School of Gaming kan koppla ett Discord-konto",
       "body": "Det här kontot kan inte koppla ett. Om du hör till personalen, logga in med ditt personalkonto."
     }
+  },
+  "discordSub": {
+    "pickPlaceholder": "Välj ett tillfälle",
+    "addNote": "Lägg till en notering",
+    "confirmWithoutNote": "Bekräfta utan notering",
+    "empty": "Du har inga kommande tillfällen att be om en vikarie för. Dina vikariat finns på webbplatsen: {url}",
+    "failed": "Något gick fel. Kör /sub igen om en stund.",
+    "notLinked": "För att använda /sub måste du först koppla ditt Discord-konto till ditt Gedu-konto hos School of Gaming.",
+    "notLinkedRunLink": "Ditt Discord-konto är inte kopplat till ett Gedu-konto hos School of Gaming. Kör /link för att koppla det och sedan /sub igen.",
+    "previewNotice": "Det här är en förhandsvisning – inget skickades in."
   },
   "seatOffer": {
     "offer": {

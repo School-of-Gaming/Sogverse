@@ -1574,7 +1574,11 @@
         "messagePlaceholder": "Pelkkää tekstiä, enintään 2 000 merkkiä",
         "send": "Lähetä testiviesti",
         "sent": "Viesti lähetetty.",
-        "openInDiscord": "Avaa Discordissa"
+        "openInDiscord": "Avaa Discordissa",
+        "templatePlain": "Pelkkä teksti",
+        "templateSubSessions": "/sub: tulevat kerrat",
+        "templateSubNotLinked": "/sub: ei vielä yhdistetty",
+        "subPreviewSent": "Esikatselu lähetetty."
       }
     },
     "whatsapp": {
@@ -2427,8 +2431,8 @@
       "mineHeading": "Tuurauksesi",
       "mineAllClear": "Sinulla ei ole tulevia tuurauksia.",
       "fileAction": "Etkö pääse jollekin kerralle?",
-      "filePickTitle": "Mille kerralle et pääse?",
-      "filePickBody": "Valitse kerta, jolle et pääse. Syy ja viesti näkyvät vain ylläpitäjille.",
+      "filePickTitle": "Mille kerralle tarvitset tuuraajan?",
+      "filePickBody": "Syy ja viesti näkyvät vain ylläpitäjille.",
       "fileAlreadyRequested": "Tuuraajaa on jo pyydetty",
       "filePickWeekThis": "Tämä viikko",
       "filePickWeekNext": "Ensi viikko",
@@ -2436,7 +2440,7 @@
       "filePickShowLater": "Näytä myöhemmät kerrat",
       "filePickGroupLabel": "Ryhmä",
       "filePickAllGroups": "Kaikki ryhmät",
-      "fileFiled": "Tuuraajaa pyydetty: {product} {when}. Pyyntö näkyy nyt kyseisen kerran kortilla.",
+      "fileFiled": "Tuuraajaa pyydetty: {product} {when}. Pyyntö näkyy nyt kyseisen kerran kortilla Oma SOG -näkymässä.",
       "fileFiledLink": "Avaa ryhmän työtila",
       "offerConfirmTitle": "Tarjoudutko tuuraajaksi?",
       "offerConfirmBody": "Tarjoudut vetämään kerran {product} {when}. School of Gaming valitsee tuuraajan, ja voit perua tarjouksesi siihen asti, kun se hyväksytään. Hyväksynnän jälkeen kerta on Gedu-sopimuksesi nojalla sinun vastuullasi aivan kuten omat kertasi, etkä voi enää perua tarjoustasi: jos et sittenkään pääse paikalle, pyydä itsellesi tuuraaja samoin kuin mille tahansa kerrallesi. Ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua."
@@ -5318,13 +5322,13 @@
   "discordLink": {
     "confirm": {
       "title": "Yhdistä Discord-tilisi",
-      "body": "Yhdistetäänkö Discord-tili <b>@{username}</b> School of Gaming -tiliisi? Silloin School of Gaming voi tavoittaa sinut Discordissa.",
+      "body": "Yhdistetäänkö Discord-tili <b>@{username}</b> School of Gaming -tiliisi? School of Gaming voi silloin tavoittaa sinut Discordissa, ja tuo Discord-tili voi käyttää School of Gamingin bottia puolestasi. Yhdistä vain oma tilisi.",
       "action": "Yhdistä tili",
       "failed": "Jokin meni vikaan, eikä tiliäsi yhdistetty. Yritä uudelleen."
     },
     "linked": {
       "title": "Yhdistetty Discord-tiliin @{username}",
-      "body": "School of Gaming voi nyt tavoittaa sinut Discordissa.",
+      "body": "School of Gaming voi nyt tavoittaa sinut Discordissa, ja voit käyttää siellä School of Gamingin bottia.",
       "goToMySog": "Siirry Oma SOG -sivulle",
       "goToDashboard": "Siirry hallintapaneeliin"
     },
@@ -5344,6 +5348,16 @@
       "title": "Vain School of Gamingin henkilökunta voi yhdistää Discord-tilin",
       "body": "Tällä tilillä sitä ei voi yhdistää. Jos kuulut henkilökuntaan, kirjaudu sisään henkilökunnan tililläsi."
     }
+  },
+  "discordSub": {
+    "pickPlaceholder": "Valitse kerta",
+    "addNote": "Lisää viesti",
+    "confirmWithoutNote": "Vahvista ilman viestiä",
+    "empty": "Sinulla ei ole tulevia kertoja, joille voisit pyytää tuuraajaa. Tuuraukset näet verkkosivuilla: {url}",
+    "failed": "Jotain meni pieleen. Kokeile /sub-komentoa hetken päästä uudelleen.",
+    "notLinked": "Jotta voit käyttää /sub-komentoa, yhdistä ensin Discord-tilisi School of Gaming -gedutiliisi.",
+    "notLinkedRunLink": "Discord-tiliäsi ei ole yhdistetty School of Gaming -gedutiliin. Yhdistä se komennolla /link ja käytä sitten uudelleen /sub-komentoa.",
+    "previewNotice": "Tämä on esikatselu – mitään ei lähetetty."
   },
   "seatOffer": {
     "offer": {

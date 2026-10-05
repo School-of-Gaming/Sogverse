@@ -312,6 +312,10 @@ import { TEST_IDS } from "./constants";
  *   82c-82d        session-substitution.test.ts again: the untagged
  *                  municipality club 82c with group 82d, the one kind of
  *                  product that requires no gedu qualification
+ *   830-832        discord-substitution.test.ts (the club 830 with group 831,
+ *                  taught by the file's minted gedu, and its sister group 832
+ *                  that nobody teaches, so a filing there is refused for the
+ *                  derivation alone)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

@@ -3729,7 +3729,34 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
       }
+      file_session_substitution_request: {
+        Args: {
+          p_gedu_id: string
+          p_group_id: string
+          p_reason: Database["public"]["Enums"]["substitution_reason"]
+          p_reason_note: string
+          p_session_date: string
+        }
+        Returns: Json
+      }
       forfeit_password: { Args: { p_user_id: string }; Returns: undefined }
+      gedu_assigned_products: {
+        Args: { p_gedu_id: string }
+        Returns: {
+          cancelled_dates: string[]
+          group_count: number
+          group_id: string
+          kind: string
+          participant_count: number
+          product: Json
+          substitution_cancelled: boolean
+          substitution_date: string
+        }[]
+      }
+      gedu_assignment_summaries: {
+        Args: { p_epoch_date: string; p_gedu_id: string }
+        Returns: Json
+      }
       gedu_covers_product_site: {
         Args: { p_gedu_id: string; p_product_id: string }
         Returns: boolean
@@ -3743,7 +3770,7 @@ export type Database = {
         Returns: boolean
       }
       gedu_holds_unexpired_substitution: {
-        Args: { p_group_id: string; p_session_date: string }
+        Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
       }
       gedu_invoicing_document: {
@@ -3797,6 +3824,19 @@ export type Database = {
         Returns: Json
       }
       get_admin_substitution_requests: { Args: never; Returns: Json }
+      get_assigned_products_for_discord_user: {
+        Args: { p_discord_user_id: string }
+        Returns: {
+          cancelled_dates: string[]
+          group_count: number
+          group_id: string
+          kind: string
+          participant_count: number
+          product: Json
+          substitution_cancelled: boolean
+          substitution_date: string
+        }[]
+      }
       get_chat_channel_roster: {
         Args: { p_channel_id: string }
         Returns: {
@@ -3808,6 +3848,14 @@ export type Database = {
       }
       get_gedu_assigned_product: {
         Args: { p_group_id?: string; p_product_id: string }
+        Returns: Json
+      }
+      get_gedu_assignment_summaries_for_discord_user: {
+        Args: { p_discord_user_id: string; p_epoch_date?: string }
+        Returns: Json
+      }
+      get_gedu_for_discord_user: {
+        Args: { p_discord_user_id: string }
         Returns: Json
       }
       get_gedu_group_feed: { Args: { p_group_id: string }; Returns: Json }
@@ -4157,6 +4205,20 @@ export type Database = {
           p_session_date: string
         }
         Returns: Json
+      }
+      request_session_substitution_for_discord_user: {
+        Args: {
+          p_discord_user_id: string
+          p_group_id: string
+          p_reason?: Database["public"]["Enums"]["substitution_reason"]
+          p_reason_note?: string
+          p_session_date: string
+        }
+        Returns: Json
+      }
+      require_discord_linked_gedu: {
+        Args: { p_discord_user_id: string }
+        Returns: string
       }
       respond_seat_offer: {
         Args: {
