@@ -643,6 +643,15 @@
       "queueNotRecorded": "Utdrag inte uppvisat",
       "rowNotRecorded": "Har inte uppvisat något straffregisterutdrag"
     },
+    "geduQualifications": {
+      "title": "Behörigheter",
+      "neuroinclusive": "Behörig att leda grupper i produkter märkta Neuroinkluderande.",
+      "consumer_products": "Får leda klubbar, läger och evenemang som familjer betalar själva, inte bara kommunklubbar.",
+      "grantedOn": "Beviljad {date}",
+      "grantedOnBy": "Beviljad av {name} {date}",
+      "notGranted": "Inte beviljad",
+      "error": "Det gick inte att uppdatera behörigheten. Försök igen."
+    },
     "geduCertifyWarnings": {
       "title": "Certifiera ändå?",
       "body": "Certifieringen kräver ingetdera av dessa, så du kan certifiera hen ändå.",

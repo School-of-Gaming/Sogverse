@@ -643,6 +643,15 @@
       "queueNotRecorded": "Otetta ei ole kirjattu",
       "rowNotRecorded": "Ei ole esittänyt rikosrekisteriotetta"
     },
+    "geduQualifications": {
+      "title": "Pätevyydet",
+      "neuroinclusive": "Pätevä ohjaamaan ryhmiä neuroinklusiivisiksi merkityissä tuotteissa.",
+      "consumer_products": "Saa ohjata kuntakerhojen lisäksi kerhoja, leirejä ja tapahtumia, jotka perheet maksavat itse.",
+      "grantedOn": "Myönnetty {date}",
+      "grantedOnBy": "Myöntänyt {name} {date}",
+      "notGranted": "Ei myönnetty",
+      "error": "Pätevyyden päivitys epäonnistui. Yritä uudelleen."
+    },
     "geduCertifyWarnings": {
       "title": "Hyväksytäänkö silti?",
       "body": "Hyväksyntä ei edellytä kumpaakaan näistä, joten voit hyväksyä hänet silti.",

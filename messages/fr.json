@@ -643,6 +643,15 @@
       "queueNotRecorded": "Extrait non enregistré",
       "rowNotRecorded": "N’a pas présenté d’extrait de casier judiciaire"
     },
+    "geduQualifications": {
+      "title": "Qualifications",
+      "neuroinclusive": "Peut animer des groupes dans les produits marqués Neuro-inclusif.",
+      "consumer_products": "Peut animer les clubs, stages et événements que les familles paient elles-mêmes, et pas seulement les clubs municipaux.",
+      "grantedOn": "Accordée le {date}",
+      "grantedOnBy": "Accordée le {date} par {name}",
+      "notGranted": "Non accordée",
+      "error": "Impossible de mettre à jour la qualification. Veuillez réessayer."
+    },
     "geduCertifyWarnings": {
       "title": "Certifier quand même ?",
       "body": "La certification n’exige ni l’un ni l’autre : vous pouvez donc le certifier quand même.",
