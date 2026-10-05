@@ -1556,7 +1556,9 @@
         "messagePlaceholder": "Plain text, up to 2,000 characters",
         "send": "Send Test Message",
         "sent": "Message sent.",
-        "openInDiscord": "Open in Discord"
+        "openInDiscord": "Open in Discord",
+        "sendSubPreview": "Send /sub Preview",
+        "subPreviewSent": "Preview sent."
       }
     },
     "whatsapp": {
@@ -5308,6 +5310,17 @@
       "title": "Only School of Gaming staff can link a Discord account",
       "body": "This account can’t link one. If you’re on the staff, sign in with your staff account."
     }
+  },
+  "discordSub": {
+    "pickPlaceholder": "Pick a session",
+    "addNote": "Add a note",
+    "confirmWithoutNote": "Confirm without a note",
+    "empty": "You have no upcoming sessions to ask for a substitute for. Your substitutions are on the website: {url}",
+    "failed": "Something went wrong. Run /sub again in a moment.",
+    "notLinked": "To use /sub, first link your Discord account to your School of Gaming Gedu account.",
+    "notLinkedRunLink": "Your Discord account isn’t linked to a School of Gaming Gedu account. Run /link to link it, then /sub again.",
+    "previewBanner": "Preview with sample sessions. Nothing you pick here is filed.",
+    "previewNotice": "This is a preview — nothing was filed."
   },
   "seatOffer": {
     "offer": {

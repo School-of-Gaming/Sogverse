@@ -77,6 +77,17 @@ const commands = [
     description: "Connect your Discord account to your School of Gaming account",
     type: 1,
   },
+  {
+    name: "sub",
+    description: "Ask for a substitute for a session you can’t make",
+    // Discord's own locale codes, for the app locales it has one for.
+    description_localizations: {
+      fi: "Pyydä tuuraajaa kerralle, jolle et pääse",
+      "sv-SE": "Be om en vikarie till ett tillfälle du inte kan vara med på",
+      fr: "Demander un remplacement pour une séance que vous ne pouvez pas assurer",
+    },
+    type: 1,
+  },
 ];
 
 async function register() {

@@ -805,7 +805,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/discord/interactions/route.ts": {
     adminClient:
-      "webhook; no session by construction. `/link` inserts the hash of a one-time account-linking token into discord_link_tokens, which only the service role can write, for the Discord user Discord's signed payload names; the token links nothing until a signed-in Gedu or admin spends it through consume_discord_link_token on their own session",
+      "webhook; no session by construction. `/link` inserts the hash of a one-time account-linking token into discord_link_tokens, which only the service role can write, for the Discord user Discord's signed payload names; the token links nothing until a signed-in Gedu or admin spends it through consume_discord_link_token on their own session. `/sub` reads a gedu's seats and files their absence through functions granted to service_role alone, each of which resolves the gedu from the Discord id the signed payload names and refuses an id with no gedu linked",
     handlers: {
       POST: {
         posture: {

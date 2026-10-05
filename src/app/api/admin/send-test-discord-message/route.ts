@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   DiscordApiError,
   sendDiscordDirectMessage,
 } from "@/lib/discord-api.server";
+import {
+  buildSessionPickerMessage,
+  buildSubPreviewSessions,
+  loadDiscordSubCopy,
+} from "@/lib/discord-substitution-message";
+import { getOrigin } from "@/lib/url";
 import {
   sendTestDiscordMessageBody,
   sendTestDiscordMessageResponse,
@@ -13,10 +20,15 @@ import { DiscordLinkService } from "@/services/discord-link/discord-link.service
 /**
  * POST /api/admin/send-test-discord-message
  *
- * The admin testing page's Discord tool: DM a plain-text message from this
- * environment's bot to a linked Sogverse account, proving the send works end
- * to end. The Discord id is looked up from the profile on the admin's own
- * session (RLS lets an admin read every link), so the client never names one.
+ * The admin testing page's Discord tool: DM a linked Sogverse account from
+ * this environment's bot, proving the send works end to end. The Discord id is
+ * looked up from the profile on the admin's own session (RLS lets an admin read
+ * every link), so the client never names one.
+ *
+ * Two kinds of message: plain `text`, or a `subPreview` — the `/sub` command's
+ * first step, built by the command's own builder over sample sessions and in
+ * the recipient's locale. Its controls carry the preview prefix, so a press on
+ * one answers "this is a preview" and files nothing.
  */
 export const POST = defineRoute({
   posture: "role-gated",
@@ -25,10 +37,9 @@ export const POST = defineRoute({
   body: sendTestDiscordMessageBody,
   response: sendTestDiscordMessageResponse,
 
-  handler: async ({ body, supabase }) => {
-    const discordUserId = await new DiscordLinkService(
-      supabase,
-    ).getDiscordUserId(body.profileId);
+  handler: async ({ body, supabase, request }) => {
+    const service = new DiscordLinkService(supabase);
+    const discordUserId = await service.getDiscordUserId(body.profileId);
     if (discordUserId === null) {
       return NextResponse.json(
         { error: "That account has no linked Discord account" },
@@ -36,10 +47,28 @@ export const POST = defineRoute({
       );
     }
 
-    try {
-      const sent = await sendDiscordDirectMessage(discordUserId, {
-        content: body.content,
+    let message: unknown;
+    if (body.kind === "text") {
+      message = { content: body.content };
+    } else {
+      const copy = await loadDiscordSubCopy(
+        await service.getRecipientLocale(body.profileId),
+      );
+      const now = new Date();
+      message = buildSessionPickerMessage({
+        copy,
+        sessions: buildSubPreviewSessions(now),
+        now,
+        page: 0,
+        prefix: "subpreview",
+        // A bare path, which the proxy sends on to the reader's own locale.
+        substitutionsUrl: `${getOrigin(request)}${ROUTES.gedu.substitutions}`,
+        notice: copy.sub("previewBanner"),
       });
+    }
+
+    try {
+      const sent = await sendDiscordDirectMessage(discordUserId, message);
       return { jumpUrl: sent.jumpUrl };
     } catch (error) {
       // Discord's own refusal goes back to the admin verbatim: this is a test

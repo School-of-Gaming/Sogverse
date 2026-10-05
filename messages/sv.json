@@ -1556,7 +1556,9 @@
         "messagePlaceholder": "Ren text, högst 2 000 tecken",
         "send": "Skicka testmeddelande",
         "sent": "Meddelandet skickades.",
-        "openInDiscord": "Öppna i Discord"
+        "openInDiscord": "Öppna i Discord",
+        "sendSubPreview": "Skicka förhandsvisning av /sub",
+        "subPreviewSent": "Förhandsvisningen skickades."
       }
     },
     "whatsapp": {
@@ -5308,6 +5310,17 @@
       "title": "Bara personalen på School of Gaming kan koppla ett Discord-konto",
       "body": "Det här kontot kan inte koppla ett. Om du hör till personalen, logga in med ditt personalkonto."
     }
+  },
+  "discordSub": {
+    "pickPlaceholder": "Välj ett tillfälle",
+    "addNote": "Lägg till en notering",
+    "confirmWithoutNote": "Bekräfta utan notering",
+    "empty": "Du har inga kommande tillfällen att be om en vikarie för. Dina vikariat finns på webbplatsen: {url}",
+    "failed": "Något gick fel. Kör /sub igen om en stund.",
+    "notLinked": "För att använda /sub måste du först koppla ditt Discord-konto till ditt Gedu-konto hos School of Gaming.",
+    "notLinkedRunLink": "Ditt Discord-konto är inte kopplat till ett Gedu-konto hos School of Gaming. Kör /link för att koppla det och sedan /sub igen.",
+    "previewBanner": "Förhandsvisning med exempeltillfällen. Inget du väljer här skickas in.",
+    "previewNotice": "Det här är en förhandsvisning – inget skickades in."
   },
   "seatOffer": {
     "offer": {

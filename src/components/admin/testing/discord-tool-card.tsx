@@ -16,17 +16,21 @@ import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { getClient } from "@/lib/supabase/client";
 import { useAuth } from "@/providers";
-import { DISCORD_MESSAGE_MAX_LENGTH } from "@/services/discord-link/discord-link.contracts";
+import {
+  DISCORD_MESSAGE_MAX_LENGTH,
+  type SendTestDiscordMessageBody,
+} from "@/services/discord-link/discord-link.contracts";
 import { useLinkedDiscordAccounts } from "@/services/discord-link/discord-link.queries";
 import { DiscordLinkService } from "@/services/discord-link/discord-link.service";
 
 type SendResult =
-  | { type: "success"; jumpUrl: string }
+  | { type: "success"; kind: SendTestDiscordMessageBody["kind"]; jumpUrl: string }
   | { type: "error"; message: string };
 
 /**
- * The admin testing page's Discord tool: a plain-text DM from this
- * environment's bot to a linked account, proving the send works end to end.
+ * The admin testing page's Discord tool: a DM from this environment's bot to a
+ * linked account, proving the send works end to end — plain text, or a preview
+ * of the `/sub` command's first step over sample sessions.
  */
 export function DiscordToolCard({ selectClass }: { selectClass: string }) {
   const t = useTranslations("admin.testing");
@@ -48,16 +52,12 @@ export function DiscordToolCard({ selectClass }: { selectClass: string }) {
     "";
   const noneLinked = accounts !== undefined && accounts.length === 0;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function send(body: SendTestDiscordMessageBody) {
     setSending(true);
     setResult(null);
     try {
-      const sent = await new DiscordLinkService(getClient()).sendTestMessage({
-        profileId: recipientId,
-        content,
-      });
-      setResult({ type: "success", jumpUrl: sent.jumpUrl });
+      const sent = await new DiscordLinkService(getClient()).sendTestMessage(body);
+      setResult({ type: "success", kind: body.kind, jumpUrl: sent.jumpUrl });
     } catch (error) {
       // The route's own message, Discord's refusal included: this is admin
       // developer tooling, and "Cannot send messages to this user" is the
@@ -69,6 +69,11 @@ export function DiscordToolCard({ selectClass }: { selectClass: string }) {
     } finally {
       setSending(false);
     }
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    void send({ kind: "text", profileId: recipientId, content });
   }
 
   return (
@@ -124,7 +129,9 @@ export function DiscordToolCard({ selectClass }: { selectClass: string }) {
               <AlertDescription>
                 {result.type === "success" ? (
                   <>
-                    {t("discord.sent")}{" "}
+                    {result.kind === "text"
+                      ? t("discord.sent")
+                      : t("discord.subPreviewSent")}{" "}
                     <a
                       href={result.jumpUrl}
                       target="_blank"
@@ -141,12 +148,23 @@ export function DiscordToolCard({ selectClass }: { selectClass: string }) {
             </Alert>
           )}
 
-          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+          {/* Two sends, neither the other's alternative. The preview needs no
+              message, so it is not a submit and the text's required field does
+              not hold it back. */}
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               type="submit"
               disabled={sending || noneLinked || recipientId === ""}
             >
               {sending ? c("sending") : t("discord.send")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={sending || noneLinked || recipientId === ""}
+              onClick={() => void send({ kind: "subPreview", profileId: recipientId })}
+            >
+              {t("discord.sendSubPreview")}
             </Button>
           </div>
         </form>

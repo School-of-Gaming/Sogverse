@@ -2,14 +2,18 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextResponse } from "next/server";
 
 /**
- * The admin testing page's Discord tool: a plain-text DM from this
- * environment's bot to a linked account. Pinned here: the admin gate, that the
- * Discord id comes from the profile's link on the server (never the client),
- * that an unlinked profile and an empty or oversized message are refused
- * before Discord is called, and that Discord's own refusal reaches the admin.
+ * The admin testing page's Discord tool: a DM from this environment's bot to
+ * a linked account — plain text, or the `/sub` preview. Pinned here: the admin
+ * gate, that the Discord id comes from the profile's link on the server (never
+ * the client), that an unlinked profile and an empty or oversized message are
+ * refused before Discord is called, that Discord's own refusal reaches the
+ * admin, and that the preview is the command's first step, in the recipient's
+ * locale, with every control on the preview prefix.
  */
 
 vi.stubEnv("DISCORD_BOT_TOKEN", "test-bot-token");
+// The origin the /sub preview's web link is built on.
+vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
 afterAll(() => {
   vi.unstubAllEnvs();
 });
@@ -67,7 +71,11 @@ function discordAnswer(status: number, body: unknown): Response {
   });
 }
 
-const validBody = { profileId: PROFILE_ID, content: "Hello from Sogverse" };
+const validBody = {
+  kind: "text",
+  profileId: PROFILE_ID,
+  content: "Hello from Sogverse",
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -164,5 +172,62 @@ describe("POST /api/admin/send-test-discord-message", () => {
     expect(response.status).toBe(502);
     expect(data.error).toContain("Cannot send messages to this user");
     expect(data.error).toContain("50007");
+  });
+
+  // -- The /sub preview --
+
+  /** The message body the second Discord call posted. */
+  function postedMessage() {
+    const [, init] = mockFetch.mock.calls[1];
+    return JSON.parse(init.body);
+  }
+
+  function customIds(components: unknown): string[] {
+    if (!Array.isArray(components)) return [];
+    return components.flatMap((component: Record<string, unknown>) => [
+      ...(typeof component.custom_id === "string" ? [component.custom_id] : []),
+      ...customIds(component.components),
+    ]);
+  }
+
+  it("DMs the /sub first step in the recipient's locale, every control on the preview prefix", async () => {
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: { discord_user_id: DISCORD_USER_ID }, error: null })
+      .mockResolvedValueOnce({ data: { locale: "fi" }, error: null });
+
+    const response = await POST(sendRequest({ kind: "subPreview", profileId: PROFILE_ID }));
+
+    expect(response.status).toBe(200);
+    expect(mockFrom).toHaveBeenCalledWith("profiles");
+    expect(mockEq).toHaveBeenCalledWith("id", PROFILE_ID);
+
+    const message = postedMessage();
+    expect(message.flags).toBe(1 << 15);
+    expect(message.content).toBeUndefined();
+    const body = JSON.stringify(message);
+    expect(body).toContain("Mille kerralle et pääse?");
+    expect(body).toContain("Esikatselu esimerkkikerroilla.");
+    const ids = customIds(message.components);
+    expect(ids.length).toBeGreaterThan(1);
+    expect(ids.every((id) => id.startsWith("subpreview:"))).toBe(true);
+  });
+
+  it("falls back to English for a recipient who never chose a locale", async () => {
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: { discord_user_id: DISCORD_USER_ID }, error: null })
+      .mockResolvedValueOnce({ data: { locale: null }, error: null });
+
+    await POST(sendRequest({ kind: "subPreview", profileId: PROFILE_ID }));
+
+    expect(JSON.stringify(postedMessage())).toContain("Which session can’t you make?");
+  });
+
+  it("refuses a body that names no kind", async () => {
+    const response = await POST(
+      sendRequest({ profileId: PROFILE_ID, content: "Hello from Sogverse" }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

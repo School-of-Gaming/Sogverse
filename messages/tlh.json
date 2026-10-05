@@ -1600,7 +1600,9 @@
         "messagePlaceholder": "ghItlh neH, 2000 Degh law’ be’",
         "send": "ngong QIn yIngeH",
         "sent": "QIn ngeHta’.",
-        "openInDiscord": "Discord Daq yIpoS"
+        "openInDiscord": "Discord Daq yIpoS",
+        "sendSubPreview": "/sub ghantoH yIngeH",
+        "subPreviewSent": "ghantoH ngeHta’."
       }
     },
     "whatsapp": {
@@ -4427,6 +4429,17 @@
       "title": "School of Gaming beqpu' neH Discord ghItlh rarlaH",
       "body": "ghItlhvam rarlaHbe' ghItlhvam. beqpu' SoHchugh, beq ghItlhlIj yIlo'."
     }
+  },
+  "discordSub": {
+    "pickPlaceholder": "may’ yIwIv",
+    "addNote": "qonta’ yIchel",
+    "confirmWithoutNote": "qonta’ Hutlh yIchav",
+    "empty": "may’ Daghajbe’, lIw DatlhoblaHbogh. lIwmeylIj Datu’ De’wI’ Daq: {url}",
+    "failed": "Qagh. tugh /sub yIlo’qa’.",
+    "notLinked": "/sub Dalo’meH, wa’DIch School of Gaming Gedu ghItlhlIjDaq Discord ghItlhlIj yIrar.",
+    "notLinkedRunLink": "School of Gaming Gedu ghItlhDaq Discord ghItlhlIj rarbe’lu’. /link yIlo’, ’ej /sub yIlo’qa’.",
+    "previewBanner": "may’mey ghantoH neH. Dochmey DawIvbogh ngeHbe’lu’.",
+    "previewNotice": "ghantoH ’oH — pagh ngeHlu’."
   },
   "seatOffer": {
     "offer": {

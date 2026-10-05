@@ -33,13 +33,21 @@ export const DISCORD_MESSAGE_MAX_LENGTH = 2000;
 
 /**
  * The admin testing page's Discord send: which linked Sogverse account to DM,
- * and the plain text to send. The recipient is named by profile, never by
- * Discord id — the route looks the Discord account up itself.
+ * and what — plain `text`, or a `subPreview` of the `/sub` command's first step
+ * over sample sessions. The recipient is named by profile, never by Discord id
+ * — the route looks the Discord account up itself.
  */
-export const sendTestDiscordMessageBody = z.object({
-  profileId: z.string().uuid(),
-  content: z.string().trim().min(1).max(DISCORD_MESSAGE_MAX_LENGTH),
-});
+export const sendTestDiscordMessageBody = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("text"),
+    profileId: z.string().uuid(),
+    content: z.string().trim().min(1).max(DISCORD_MESSAGE_MAX_LENGTH),
+  }),
+  z.object({
+    kind: z.literal("subPreview"),
+    profileId: z.string().uuid(),
+  }),
+]);
 export type SendTestDiscordMessageBody = z.infer<typeof sendTestDiscordMessageBody>;
 
 /** Where the sent message is: a link that opens it in Discord. */
