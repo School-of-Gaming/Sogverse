@@ -111,7 +111,7 @@ CREATE TYPE public.gedu_qualification AS ENUM (
 -- Name: TYPE gedu_qualification; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.gedu_qualification IS 'A qualification an admin grants a game educator. neuroinclusive: qualified to run groups in products tagged neuroinclusive (product_tag). consumer_products: cleared to run the products families pay for themselves, which are the consumer_club, camp and event product types, everything except municipality_club. The name is broader than "consumer" on purpose: in this codebase "consumer" alone means the consumer_club product type, and this qualification also covers camps and events. Qualifications gate nothing: no assignment, picker or check reads them. The app lists them in the order declared here, so a new value goes where it should appear.';
+COMMENT ON TYPE public.gedu_qualification IS 'A qualification an admin grants a game educator. neuroinclusive: qualified to run groups in products tagged neuroinclusive (product_tag). consumer_products: cleared to run the products families pay for themselves, which are the consumer_club, camp and event product types, everything except municipality_club. The name is broader than "consumer" on purpose: in this codebase "consumer" alone means the consumer_club product type, and this qualification also covers camps and events. What a product requires is product_required_qualifications. A gedu lacking one cannot see or offer on a substitution request for such a product; an admin assigning or seating them is warned and may proceed. The app lists them in the order declared here, so a new value goes where it should appear.';
 
 
 --

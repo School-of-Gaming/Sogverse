@@ -652,6 +652,17 @@
       "notGranted": "Non accordée",
       "error": "Impossible de mettre à jour la qualification. Veuillez réessayer."
     },
+    "geduLanguages": {
+      "title": "Langues",
+      "note": "Les remplacements ne lui sont proposés que pour les séances dans une langue cochée ici. Si aucune n’est cochée, aucun remplacement ne lui est proposé.",
+      "error": "Impossible d’enregistrer les langues. Veuillez réessayer."
+    },
+    "missingRequirements": {
+      "qualification": "Ce Gedu n’a pas la qualification « {qualification} » qu’exige ce produit.",
+      "language": "Ce produit se déroule en {language}, une langue que ce Gedu n’a pas indiquée parmi celles qu’il parle.",
+      "coverage": "Ce produit se déroule sur place à {site}, en dehors des zones de ce Gedu.",
+      "coverageUnnamed": "Ce produit se déroule sur place, en dehors des zones de ce Gedu."
+    },
     "geduCertifyWarnings": {
       "title": "Certifier quand même ?",
       "body": "La certification n’exige ni l’un ni l’autre : vous pouvez donc le certifier quand même.",
@@ -1135,7 +1146,10 @@
         "absentGedu": "Le Gedu remplacé",
         "notCertified": "Non certifié",
         "alreadyTrainee": "Déjà stagiaire",
-        "traineeInstead": "Peut être ajouté comme stagiaire."
+        "traineeInstead": "Peut être ajouté comme stagiaire.",
+        "notQualified": "Qualification manquante : {qualification}",
+        "doesNotSpeak": "Ne parle pas {language}",
+        "outsideCoverage": "Hors de ses zones"
       },
       "participantPicker": {
         "title": "Ajouter un participant",
@@ -1299,6 +1313,10 @@
             "failed": "Le changement n’est pas allé jusqu’au bout. Appuyez de nouveau sur Changer de club — un nouvel appui rejoue la même requête, la famille n’est donc jamais facturée deux fois."
           },
           "confirm": "Changer de club"
+        },
+        "requirementGaps": {
+          "title": "Affecter quand même ?",
+          "action": "Affecter quand même"
         }
       },
       "seatLimitModes": {
@@ -1793,8 +1811,9 @@
       "certificationAlertTitle": "Votre compte doit être certifié",
       "certificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit certifier votre compte avant que vous puissiez être affecté à un club ou à un stage.",
       "coverageHeading": "Zones où vous pouvez animer",
-      "coverageNote": "Choisissez les zones où vous pouvez intervenir sur place. Si vous n’intervenez qu’à distance, laissez ce champ vide. Vous pourrez modifier votre sélection plus tard dans les paramètres de votre profil.",
+      "coverageNote": "Choisissez les zones où vous pouvez intervenir sur place. Les remplacements sur place ne vous sont proposés que dans ces zones ; les séances en ligne n’en dépendent pas. Si vous n’intervenez qu’à distance, laissez ce champ vide. Vous pourrez le modifier plus tard dans vos paramètres.",
       "invalidPhone": "Veuillez saisir un numéro de téléphone valide",
+      "spokenLanguagesRequired": "Choisissez au moins une langue que vous parlez.",
       "creatingAccount": "Création du compte...",
       "alreadyHaveAccount": "Vous avez déjà un compte ? <link>Connectez-vous</link>"
     },
@@ -2391,7 +2410,8 @@
       "cardLockedLabel": "{product} — séance que vous assurez en remplacement. L’espace de travail du groupe ouvre 48 heures avant son début.",
       "accessOpens": "L’espace de travail ouvre le {date} à {time}",
       "poolHeading": "Séances cherchant un remplacement",
-      "poolAllClear": "Aucune séance ne cherche de remplacement pour le moment.",
+      "poolRequirementsNote": "Vous voyez les séances dans une langue que vous parlez et, pour celles sur place, dans vos zones. Tenez les deux à jour dans vos <link>paramètres</link>.",
+      "poolAllClear": "Aucune séance que vous pouvez assurer ne cherche de remplacement pour le moment.",
       "poolRolePrimary": "Gedu principal",
       "poolRoleAssistant": "Gedu assistant",
       "poolFee": "{fee} par séance",
@@ -2399,6 +2419,9 @@
       "poolWithdrawAction": "Retirer ma proposition",
       "poolWithdrawPending": "Retrait…",
       "poolActionFailed": "Cela n’a pas été enregistré. Réessayez.",
+      "poolOfferFailedNotQualified": "Cette séance exige une qualification que vous n’avez pas : vous ne pouvez donc pas proposer de remplacement.",
+      "poolOfferFailedLanguage": "Cette séance se déroule dans une langue que vous n’avez pas indiquée parmi celles que vous parlez : vous ne pouvez donc pas proposer de remplacement. Vous pouvez ajouter des langues dans vos paramètres.",
+      "poolOfferFailedCoverage": "Cette séance se déroule sur place en dehors de vos zones : vous ne pouvez donc pas proposer de remplacement. Vous pouvez modifier vos zones dans vos paramètres.",
       "pageTitle": "Remplacements",
       "back": "Retour à Mon SOG",
       "mineHeading": "Vos remplacements",
@@ -2420,7 +2443,7 @@
     },
     "coverage": {
       "title": "Zones où vous pouvez animer",
-      "remoteOnlyNote": "Sert à vous proposer pour un remplacement quand un autre Gedu ne peut pas assurer son club. Laissez vide si vous ne remplacez qu’à distance.",
+      "remoteOnlyNote": "Vous ne voyez les demandes de remplacement sur place que dans les zones choisies. Les séances en ligne n’en dépendent pas. Laissez vide si vous n’intervenez qu’à distance.",
       "selectedHeading": "Sélection ({count})",
       "noneSelected": "Aucune zone sélectionnée",
       "remove": "Retirer {name}",

@@ -10,6 +10,7 @@ export {
   useUserList,
   useUsersByRole,
   useUpdateProfile,
+  useSetUserSpokenLanguages,
   useUpdateUserGameAccount,
   useUpdateUserSignInAddress,
   useSendVerificationEmail,

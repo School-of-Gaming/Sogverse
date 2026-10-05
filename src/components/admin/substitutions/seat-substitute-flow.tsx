@@ -7,7 +7,9 @@ import {
   GeduPickerSheet,
   type GeduPickerUnavailability,
 } from "@/components/admin/products/gedu-picker-sheet";
+import { MissingRequirementsWarning } from "@/components/admin/missing-requirements-warning";
 import { seatSubstituteFailureKey } from "@/services/session-substitution";
+import type { MissingRequirement } from "@/lib/products/session-requirements";
 import type {
   SeatSubstituteDraft,
   SubstitutionRequest,
@@ -24,8 +26,15 @@ import type {
 export interface SeatSubstituteFlowState {
   step: "picker" | "confirm";
   request: SubstitutionRequest;
-  /** The chosen gedu, once the picker has closed on a selection. */
-  sub: SeatSubstituteDraft["sub"] | null;
+  /**
+   * The chosen gedu, once the picker has closed on a selection — with the
+   * session's requirements they fall short of, which the confirm names.
+   */
+  sub:
+    | (SeatSubstituteDraft["sub"] & {
+        missingRequirements: readonly MissingRequirement[];
+      })
+    | null;
 }
 
 /**
@@ -78,7 +87,8 @@ export function SeatSubstituteFlow({
         title={tStaffing("pickerTitle")}
         description={tStaffing("pickerDescription", { name: absent })}
         unavailable={absentOnly(request.requesterId)}
-        onSelect={(gedu) =>
+        requirements={request.requirements}
+        onSelect={(gedu, missingRequirements) =>
           setFlow({
             ...flow,
             step: "confirm",
@@ -86,6 +96,7 @@ export function SeatSubstituteFlow({
               id: gedu.id,
               firstName: gedu.first_name,
               lastName: gedu.last_name,
+              missingRequirements,
             },
           })
         }
@@ -95,8 +106,14 @@ export function SeatSubstituteFlow({
         <SeatSubstituteDialog
           request={request}
           sub={sub}
+          missingRequirements={sub.missingRequirements}
           onClose={() => setFlow(null)}
-          onConfirm={() => onConfirm({ request, sub })}
+          onConfirm={() =>
+            onConfirm({
+              request,
+              sub: { id: sub.id, firstName: sub.firstName, lastName: sub.lastName },
+            })
+          }
         />
       )}
     </>
@@ -144,15 +161,22 @@ function absentOnly(
  * **Holding, for the approve dialog's reasons**: seating hands over the
  * group's workspace 48 hours before the session, and the write is refusable,
  * so the answer arrives where the question was asked.
+ *
+ * **A missing requirement is a warning in this same dialog, never a second
+ * one**: the seat is the question, and the gap is a fact about the answer, so
+ * it is stated here — one line per missing qualification, language or coverage, last
+ * before the buttons — and the admin may seat the gedu anyway.
  */
 function SeatSubstituteDialog({
   request,
   sub,
+  missingRequirements,
   onClose,
   onConfirm,
 }: {
   request: SubstitutionRequest;
   sub: SeatSubstituteDraft["sub"];
+  missingRequirements: readonly MissingRequirement[];
   onClose: () => void;
   onConfirm: () => Promise<void>;
 }) {
@@ -187,21 +211,30 @@ function SeatSubstituteDialog({
         t(seatSubstituteFailureKey(error), { name, absent })
       }
     >
-      {request.reason !== null && (
-        <dl className="text-sm">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <dt className="text-xs text-muted-foreground">
-              {t("seatReasonLabel")}
-            </dt>
-            <dd className="font-medium">{t(`reason.${request.reason}`)}</dd>
-            {/* The gedu's own words, whole — the card shows them the same way. */}
-            {request.reasonNote !== null && (
-              <dd className="w-full text-xs text-muted-foreground">
-                {request.reasonNote}
-              </dd>
-            )}
-          </div>
-        </dl>
+      {/* Null rather than an empty box where there is neither, because the
+          dialog spaces any children it is given. */}
+      {(request.reason !== null || missingRequirements.length > 0) && (
+        <div className="space-y-4">
+          {request.reason !== null && (
+            <dl className="text-sm">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <dt className="text-xs text-muted-foreground">
+                  {t("seatReasonLabel")}
+                </dt>
+                <dd className="font-medium">{t(`reason.${request.reason}`)}</dd>
+                {/* The gedu's own words, whole — the card shows them the same way. */}
+                {request.reasonNote !== null && (
+                  <dd className="w-full text-xs text-muted-foreground">
+                    {request.reasonNote}
+                  </dd>
+                )}
+              </div>
+            </dl>
+          )}
+          {/* After the gedu's reason, which is context, and directly above the
+              buttons, so the gap is the last thing read before the choice. */}
+          <MissingRequirementsWarning missing={missingRequirements} />
+        </div>
       )}
     </ConfirmDialog>
   );

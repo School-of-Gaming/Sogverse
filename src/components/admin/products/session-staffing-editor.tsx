@@ -30,6 +30,11 @@ import type {
 } from "@/lib/session-staffing";
 import { cn, formatDateOnly } from "@/lib/utils";
 import { Constants, type SubstitutionReason } from "@/types";
+import type {
+  MissingRequirement,
+  SessionRequirements,
+} from "@/lib/products/session-requirements";
+import { MissingRequirementsWarning } from "@/components/admin/missing-requirements-warning";
 import {
   SessionCardMenu,
   type SessionCardMenuItem,
@@ -53,6 +58,14 @@ export interface SessionStaffingEditorProps {
   staffing: SessionStaffing;
   /** Product-local `YYYY-MM-DD`: the session being staffed, as Postgres keys it. */
   sessionDate: string;
+  /**
+   * What the product requires of whoever runs the session
+   * (`sessionRequirements`) — its qualifications, its language and, for an
+   * on-site session, its coverage. The picker
+   * names a candidate's gap and the confirm step warns about it; neither
+   * refuses them.
+   */
+  requirements: SessionRequirements;
   /**
    * Seat a sub. **Resolves only once the document this card is built from has
    * been read again**, which is what lets the control below clear its
@@ -119,6 +132,7 @@ export interface SessionStaffingEditorProps {
 export function SessionStaffingEditor({
   staffing,
   sessionDate,
+  requirements,
   onSetSubstitution,
   onClearSubstitution,
   onWithdrawRequest,
@@ -225,6 +239,7 @@ export function SessionStaffingEditor({
           staffing={staffing}
           settable={settable}
           sessionDate={sessionDate}
+          requirements={requirements}
           onSetSubstitution={onSetSubstitution}
         />
       )}
@@ -311,8 +326,15 @@ interface SetSubFlow {
   step: "absent" | "picker" | "confirm";
   /** Which seat is empty. Settled before the picker opens, so never null after it. */
   absent: AbsentSeat | null;
-  /** The chosen sub, once the picker has closed on a selection. */
-  sub: { id: string; firstName: string } | null;
+  /**
+   * The chosen sub, once the picker has closed on a selection — with the
+   * requirements they fall short of, which the confirm step names.
+   */
+  sub: {
+    id: string;
+    firstName: string;
+    missingRequirements: readonly MissingRequirement[];
+  } | null;
   /**
    * Whether this walk started by **asking** which seat is empty — which is the
    * only thing that says where closing the picker goes back to.
@@ -330,6 +352,7 @@ function SetSubFlowOverlays({
   staffing,
   settable,
   sessionDate,
+  requirements,
   onSetSubstitution,
 }: {
   flow: SetSubFlow;
@@ -343,6 +366,7 @@ function SetSubFlowOverlays({
   /** The seats the question may offer: those a substitute could still be set for. */
   settable: readonly AbsentSeat[];
   sessionDate: string;
+  requirements: SessionRequirements;
   onSetSubstitution: (draft: SetSessionSubstitutionDraft) => Promise<void>;
 }) {
   const t = useTranslations("admin.products.staffing");
@@ -418,12 +442,17 @@ function SetSubFlowOverlays({
         // naming them here is the whole fix: the row still cannot be picked,
         // and it now says why it is there *(owner, 2026-09)*.
         highlightId={currentSubstituteId(absent)}
-        onSelect={(gedu) =>
+        requirements={requirements}
+        onSelect={(gedu, missingRequirements) =>
           setFlow({
             ...flow,
             step: "confirm",
             absent,
-            sub: { id: gedu.id, firstName: gedu.first_name },
+            sub: {
+              id: gedu.id,
+              firstName: gedu.first_name,
+              missingRequirements,
+            },
           })
         }
       />
@@ -644,6 +673,12 @@ function AbsentGeduStep({
  * sends neither field, and the write keeps what is recorded. The reason itself
  * does not ride on a card's staffing, so the step says it is kept rather than
  * showing it.
+ *
+ * **A sub falling short of what the session requires is warned about here,
+ * not in a dialog of its own**: one warning line per missing qualification,
+ * one for a language they do not speak and, for an on-site session, one for
+ * coverage they lack. The button stays the ordinary one, because for an admin
+ * the gap is a fact to go past knowingly rather than a refusal.
  */
 function ConfirmSubStep({
   absent,
@@ -658,7 +693,7 @@ function ConfirmSubStep({
   onConfirm,
 }: {
   absent: AbsentSeat;
-  sub: { id: string; firstName: string };
+  sub: NonNullable<SetSubFlow["sub"]>;
   sessionDate: string;
   /** `null` until the admin has chosen one, which the confirm waits for. */
   reason: SubstitutionReason | null;
@@ -756,6 +791,11 @@ function ConfirmSubStep({
             committing={committing}
           />
         )}
+
+        {/* The last thing read before the buttons, after the reason fields it
+            does not depend on. The pick's own gap, recomputed by every walk
+            back through the picker. */}
+        <MissingRequirementsWarning missing={sub.missingRequirements} />
 
         {failed && (
           <StatusLine status="destructive" size="xs" role="alert">

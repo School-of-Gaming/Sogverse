@@ -60,8 +60,15 @@ vi.mock("@/components/gedu/coverage-areas-field", () => ({
 vi.mock("@/components/ui/phone-input", () => ({
   InternationalPhoneInput: () => <div />,
 }));
+// The language boxes stand in as one button speaking Finnish: what this file
+// needs from them is a selection, not the boxes. A button, not a checkbox, so
+// the terms tick stays the form's only checkbox.
 vi.mock("@/components/ui/spoken-language-checkboxes", () => ({
-  SpokenLanguageCheckboxes: () => <div />,
+  SpokenLanguageCheckboxes: ({ onChange }: { onChange: (codes: string[]) => void }) => (
+    <button type="button" onClick={() => onChange(["fi"])}>
+      speaks-finnish
+    </button>
+  ),
 }));
 vi.mock("@/components/game-account", () => ({
   GAME_PLATFORMS: {
@@ -118,6 +125,14 @@ function tickTerms(view: ReturnType<typeof render>) {
     'input[type="checkbox"]',
   );
   fireEvent.click(terms);
+}
+
+function pickFinnish(view: ReturnType<typeof render>) {
+  const button = [...view.container.querySelectorAll("button")].find(
+    (candidate) => candidate.textContent === "speaks-finnish",
+  );
+  if (!button) throw new Error("no language picker");
+  fireEvent.click(button);
 }
 
 function sentBody(): Record<string, unknown> {
@@ -205,6 +220,7 @@ describe("CompleteRegistrationForm", () => {
       view.container.querySelectorAll('input[type="checkbox"]'),
     ).toHaveLength(0);
 
+    pickFinnish(view);
     await submit();
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -213,12 +229,31 @@ describe("CompleteRegistrationForm", () => {
       firstName: "Marja",
       lastName: "Virtanen",
       locale: "fi",
-      spokenLanguages: [],
+      spokenLanguages: ["fi"],
       locationIds: [],
       utm: { source: "Lynx", campaign: "lynx-summer-a" },
     });
     expect(mockPushGtmEvent).not.toHaveBeenCalled();
     expect(mockNavigateAfterAuth).toHaveBeenCalledWith(ROUTES.gedu.dashboard);
+  });
+
+  // A Gedu is offered substitutions only in a language they speak, so the
+  // form refuses none — before anything is sent, and leaving it usable.
+  it("refuses the Gedu submit with no spoken language, and posts nothing", async () => {
+    const { view, submit, submitButton } = renderForm("gedu");
+
+    await submit();
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(view.container.textContent).toContain(
+      "registerGedu.spokenLanguagesRequired",
+    );
+    expect(submitButton().disabled).toBe(false);
+
+    pickFinnish(view);
+    await submit();
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   it.each(["parent", "gedu"] as const)(
@@ -228,6 +263,7 @@ describe("CompleteRegistrationForm", () => {
         redirect: "/fi/kauppa/abc-123",
       });
       if (variant === "parent") tickTerms(view);
+      else pickFinnish(view);
 
       await submit();
 

@@ -152,8 +152,24 @@ about.
 Its exclusion is the database's own *may substitute* predicate rather than a copy of its
 clauses, so the list and the offer button cannot disagree: a session the caller is
 expected at, one they have their own request on, and their own absence are all out by
-construction. Certification is the only eligibility test there is — no coverage area, no
-language match, no schedule-clash check.
+construction. The list also asks the offer's other three tests — the gedu holding every
+qualification the session's product requires, speaking the language it is run in, and,
+for an in-person session, covering its site — so a request the gedu could not offer on is
+not in their pool either. Certification, qualifications, spoken language and coverage are
+the only eligibility tests — no schedule-clash check. The page says so under the pool's
+heading, because an empty pool otherwise reads as "nobody is absent" to a gedu whose
+languages or areas are what is empty.
+
+**The session's requirements gate only what a gedu starts.** The pool and the offer refuse
+a gedu falling short outright, the offer with a separate message for each; the admin's
+seating and approval do not ask — seating because the admin is warned in the UI and may
+proceed, approval because none is realistically taken away between the offer and its
+approval (`../gedu/CLAUDE.md`, Qualifications). The one way it happens is accepted rather
+than handled *(owner, 2026-10)*: a gedu who offers and then removes that language or area
+in their settings loses the request from their pool, and with it the only Withdraw, while
+the offer stays approvable without a warning — the office withdraws it on request. That is
+why each test is its own predicate and never a clause of *may substitute*: the admin writes
+ask that one too, and a clause there would turn the warning into a refusal.
 
 **No instants travel.** The pool emits the date plus the product's timezone and slots, and
 the client owns the calendar math, exactly as both feeds do.
@@ -417,7 +433,8 @@ hook.
 ## What this directory deliberately does not do
 
 - **No notifications**, on any channel. In-app only.
-- **No ranking and no eligibility beyond certification.**
+- **No ranking and no eligibility beyond certification, qualifications, spoken language
+  and coverage.**
 - **No per-request fee override.** The role's fee is the product's, and a sub fee above
   the base is a follow-up nobody has asked for yet.
 - **No affordance linking the session-card staffing editor to the permanent groups

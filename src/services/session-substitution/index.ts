@@ -29,11 +29,13 @@ export {
 } from "./session-substitution.contracts";
 export {
   seatSubstituteFailureKey,
+  substitutionOfferFailureKey,
   substitutionRequestFailureKey,
   substitutionRequestRefusalMeansAlreadyFiled,
 } from "./session-substitution.refusals";
 export type {
   SeatSubstituteFailureKey,
+  SubstitutionOfferFailureKey,
   SubstitutionRequestFailureKey,
 } from "./session-substitution.refusals";
 export type {

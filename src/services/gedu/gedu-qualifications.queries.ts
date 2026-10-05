@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { userKeys } from "@/services/users";
 import type { GeduQualification } from "@/types";
 import {
   GeduQualificationsService,
@@ -40,7 +41,9 @@ export function useGeduQualifications(
  *
  * **The invalidation is returned, not fired and forgotten**, so `mutateAsync`
  * settles only once the gedu's qualifications have been refetched — dropped, a
- * toggle re-enables still showing the value it just replaced.
+ * toggle re-enables still showing the value it just replaced. The people-list
+ * rows are invalidated too, because they carry the qualifications the gedu
+ * picker warns from.
  */
 export function useSetGeduQualification() {
   const queryClient = useQueryClient();
@@ -58,8 +61,11 @@ export function useSetGeduQualification() {
       held: boolean;
     }) => service.setQualification(geduId, qualification, held),
     onSuccess: (_data, { geduId }) =>
-      queryClient.invalidateQueries({
-        queryKey: geduQualificationKeys.byGedu(geduId),
-      }),
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: geduQualificationKeys.byGedu(geduId),
+        }),
+        queryClient.invalidateQueries({ queryKey: userKeys.lists() }),
+      ]),
   });
 }
