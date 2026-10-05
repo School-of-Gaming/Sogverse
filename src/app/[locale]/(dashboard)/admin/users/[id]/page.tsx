@@ -364,14 +364,10 @@ export default async function AdminUserDetailPage({
               />
             )}
             {/* The linked Discord account, for the two roles that can link
-                one. Read-only: only its holder links it, from Discord. Styled
-                as the username line above, the other labelled sign-in fact,
-                with Discord's own mark, as shipped, before the label: the word
-                beside it already names the service, so the mark is hidden from
-                assistive technology. */}
+                one. Read-only: only its holder links it, from Discord. Discord's
+                own mark, as shipped, is the line's only label, so it carries the
+                service's name as its alt text. */}
             {canLinkDiscord && (
-              // The mark is the line's only label, so it carries the name as
-              // its alt text rather than sitting beside a word as decoration.
               <p className="flex items-center gap-2 text-muted-foreground">
                 <Image
                   src={discordSymbol}
@@ -382,9 +378,7 @@ export default async function AdminUserDetailPage({
                 />
                 <span>
                   {discordLink
-                    ? t("discordLinked", {
-                        username: discordLink.discord_username,
-                      })
+                    ? `@${discordLink.discord_username}`
                     : t("discordNotLinked")}
                 </span>
               </p>

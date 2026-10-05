@@ -300,8 +300,9 @@ export type TeamProfileTranslationRow =
 // role, and `consume_discord_link_token` is its only writer.
 export type DiscordLink = Database["public"]["Tables"]["discord_links"]["Row"];
 // discord_link_tokens — the one-time tokens the Discord bot's webhook inserts
-// with the service-role client. Insert alias only: nothing reads the table but
-// `consume_discord_link_token`.
+// with the service-role client. Insert alias only: the confirm page reads a row
+// read-only, with the service role and past its role gate, to name the account,
+// and `consume_discord_link_token` spends it.
 export type DiscordLinkTokenInsert =
   Database["public"]["Tables"]["discord_link_tokens"]["Insert"];
 

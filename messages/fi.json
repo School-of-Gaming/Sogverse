@@ -1466,7 +1466,6 @@
         "error": "Hyväksynnän päivitys epäonnistui. Yritä uudelleen."
       },
       "usernameLabel": "Käyttäjätunnus",
-      "discordLinked": "@{username}",
       "discordNotLinked": "Ei yhdistetty"
     },
     "locations": {
