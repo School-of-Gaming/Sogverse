@@ -148,17 +148,19 @@ export function seatSubstituteFailureKey(
 export type SubstitutionOfferFailureKey =
   | "poolOfferFailedNotQualified"
   | "poolOfferFailedLanguage"
+  | "poolOfferFailedCoverage"
   | "poolActionFailed";
 
 /**
  * Which refusal `offer_session_substitution` raised, for a gedu offering from
  * the pool.
  *
- * Two are worth telling apart, the session's two requirements: its product
- * requires a qualification the gedu does not hold, or it is run in a language
- * the gedu has not listed as one they speak. The pool already leaves such
- * requests out, so either is a list read before something changed — and "try
- * again" would be untrue, because trying again cannot succeed. Both share
+ * Three are worth telling apart, the session's three requirements: its
+ * product requires a qualification the gedu does not hold, it is run in a
+ * language the gedu has not listed as one they speak, or it is in person at a
+ * site outside the gedu's coverage areas. The pool already leaves such
+ * requests out, so each is a list read before something changed — and "try
+ * again" would be untrue, because trying again cannot succeed. All three share
  * `42501` with the generic refusal and are told apart by their phrases.
  * Everything else, the request having closed meanwhile included, falls to the
  * generic line.
@@ -173,6 +175,9 @@ export function substitutionOfferFailureKey(
     }
     if (message.includes("does not speak the language")) {
       return "poolOfferFailedLanguage";
+    }
+    if (message.includes("does not cover the site")) {
+      return "poolOfferFailedCoverage";
     }
   }
   return "poolActionFailed";

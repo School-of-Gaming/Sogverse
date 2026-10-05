@@ -121,6 +121,15 @@ vi.mock("@/services/users", () => ({
   }),
 }));
 
+// Who covers an in-person session's site, as the database answers it for the
+// picker: nobody on this page's fixtures.
+vi.mock("@/services/gedu-locations", () => ({
+  useGedusCoveringProduct: (productId: string | null) => ({
+    data: productId === null ? undefined : new Set<string>(),
+    isError: false,
+  }),
+}));
+
 /** The panel's pinned clock. Nothing here reads it; every row carries it. */
 const NOW = new Date("2026-08-17T09:20:00+03:00");
 
@@ -142,7 +151,7 @@ const WITH_OFFERS: SubstitutionRequest = {
   sessionTime: "17:00–18:30",
   urgent: true,
   // Every candidate speaks Finnish, so this asks nothing of them.
-  requirements: { qualifications: [], language: "fi" },
+  requirements: { qualifications: [], language: "fi", site: null },
   role: "primary",
   reason: "sick",
   reasonNote: "Flunssa.",
@@ -380,7 +389,11 @@ describe("the admin Substitutions page's queue panel", () => {
       [
         {
           ...WITHOUT_OFFERS,
-          requirements: { qualifications: ["consumer_products"], language: "fi" },
+          requirements: {
+            qualifications: ["consumer_products"],
+            language: "fi",
+            site: null,
+          },
         },
       ],
       approveNothing,
@@ -439,7 +452,12 @@ describe("the admin Substitutions page's queue panel", () => {
   it("seats a gedu who does not speak the session's language over a warning in the same confirm", async () => {
     const seat = vi.fn((_draft: SeatSubstituteDraft) => Promise.resolve());
     const { container } = renderPanel(
-      [{ ...WITHOUT_OFFERS, requirements: { qualifications: [], language: "en" } }],
+      [
+        {
+          ...WITHOUT_OFFERS,
+          requirements: { qualifications: [], language: "en", site: null },
+        },
+      ],
       approveNothing,
       seat,
     );
@@ -460,6 +478,49 @@ describe("the admin Substitutions page's queue panel", () => {
       screen.getByText("admin.substitutions.seatConfirmTitle"),
     ).toBeTruthy();
     expect(screen.getByText("admin.missingRequirements.language")).toBeTruthy();
+    expect(seat).not.toHaveBeenCalled();
+
+    await act(async () =>
+      screen
+        .getByRole("button", { name: "admin.substitutions.seatConfirm" })
+        .click(),
+    );
+    expect(seat).toHaveBeenCalledTimes(1);
+  });
+
+  it("seats a gedu whose coverage areas miss an on-site session's site over a warning in the same confirm", async () => {
+    const seat = vi.fn((_draft: SeatSubstituteDraft) => Promise.resolve());
+    const { container } = renderPanel(
+      [
+        {
+          ...WITHOUT_OFFERS,
+          requirements: {
+            qualifications: [],
+            language: "fi",
+            site: {
+              productId: "0d6c8a4e-31f7-4b2a-8f1c-7e9a2b5d4c18",
+              name: "Kallio School",
+            },
+          },
+        },
+      ],
+      approveNothing,
+      seat,
+    );
+
+    await act(async () => pressSeat(container, 0));
+    // Iida covers nothing: still pickable, and the row says so.
+    const iida = pickerRow("Iida");
+    expect(iida.hasAttribute("disabled")).toBe(false);
+    expect(
+      within(iida).getByText("admin.products.geduPicker.outsideCoverage"),
+    ).toBeTruthy();
+    await act(async () => iida.click());
+
+    expect(
+      screen.getByText("admin.substitutions.seatConfirmTitle"),
+    ).toBeTruthy();
+    expect(screen.getByText("admin.missingRequirements.coverage")).toBeTruthy();
     expect(seat).not.toHaveBeenCalled();
 
     await act(async () =>

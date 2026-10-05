@@ -132,7 +132,7 @@ function toSubstitutionRequest(
       startsAt !== null &&
       startsAt.getTime() > now.getTime() &&
       startsAt.getTime() - now.getTime() <= URGENT_WITHIN_MS,
-    requirements: sessionRequirements(request.product),
+    requirements: sessionRequirements(request.product, request.product.site_name),
     offers: request.offers.map(
       (offer): SubstitutionOffer => ({
         id: offer.id,

@@ -654,7 +654,9 @@
     },
     "missingRequirements": {
       "qualification": "Tällä Gedulla ei ole pätevyyttä, jota tämä tuote edellyttää: {qualification}.",
-      "language": "Tämän tuotteen kieli on {language}, mutta tämä Gedu ei ole ilmoittanut puhuvansa sitä."
+      "language": "Tämän tuotteen kieli on {language}, mutta tämä Gedu ei ole ilmoittanut puhuvansa sitä.",
+      "coverage": "Tämä tuote pidetään paikan päällä kohteessa {site}, joka on tämän Gedun kattamien alueiden ulkopuolella.",
+      "coverageUnnamed": "Tämä tuote pidetään paikan päällä tämän Gedun kattamien alueiden ulkopuolella."
     },
     "geduCertifyWarnings": {
       "title": "Hyväksytäänkö silti?",
@@ -1141,7 +1143,8 @@
         "alreadyTrainee": "Jo harjoittelijana",
         "traineeInstead": "Voidaan lisätä harjoittelijaksi.",
         "notQualified": "Pätevyys puuttuu: {qualification}",
-        "doesNotSpeak": "Ei puhu kieltä: {language}"
+        "doesNotSpeak": "Ei puhu kieltä: {language}",
+        "outsideCoverage": "Ei kata tätä aluetta"
       },
       "participantPicker": {
         "title": "Lisää osallistuja",
@@ -1804,7 +1807,7 @@
       "certificationAlertTitle": "Tilisi on hyväksyttävä",
       "certificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on hyväksyttävä tilisi, ennen kuin sinut voidaan liittää kerhoon tai leirille.",
       "coverageHeading": "Missä voit työskennellä?",
-      "coverageNote": "Valitse alueet, joilla voit työskennellä paikan päällä. Jos voit työskennellä vain etänä, jätä tämä kohta tyhjäksi. Voit muokata valintaasi myöhemmin profiilisi asetuksista.",
+      "coverageNote": "Valitse alueet, joilla voit työskennellä paikan päällä. Paikan päällä pidettäviä tuurauksia tarjotaan sinulle vain näiltä alueilta; verkossa pidettävät kerrat eivät riipu niistä. Jos voit työskennellä vain etänä, jätä tämä tyhjäksi. Voit muuttaa valintaa myöhemmin asetuksissasi.",
       "invalidPhone": "Syötä kelvollinen puhelinnumero",
       "creatingAccount": "Luodaan tiliä...",
       "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"
@@ -2402,7 +2405,8 @@
       "cardLockedLabel": "{product} – tuuraamasi kerta. Ryhmän työtila avautuu 48 tuntia ennen kerran alkua.",
       "accessOpens": "Työtila avautuu {date} klo {time}",
       "poolHeading": "Kerrat, jotka tarvitsevat tuuraajan",
-      "poolAllClear": "Yksikään kerta ei tarvitse juuri nyt tuuraajaa.",
+      "poolRequirementsNote": "Näet kerrat, joiden kieltä puhut, ja paikan päällä pidettävistä vain ne, jotka ovat kattamillasi alueilla. Pidä molemmat ajan tasalla <link>asetuksissasi</link>.",
+      "poolAllClear": "Yksikään kerta, jonka voisit tuurata, ei tarvitse juuri nyt tuuraajaa.",
       "poolRolePrimary": "Vastaava Gedu",
       "poolRoleAssistant": "Avustava Gedu",
       "poolFee": "{fee} / kerta",
@@ -2412,6 +2416,7 @@
       "poolActionFailed": "Tallennus epäonnistui. Yritä uudelleen.",
       "poolOfferFailedNotQualified": "Tämä kerta vaatii pätevyyden, jota sinulla ei ole, joten et voi tarjoutua tuuraajaksi.",
       "poolOfferFailedLanguage": "Tämän kerran kieli ei ole niiden kielten joukossa, joita olet ilmoittanut puhuvasi, joten et voi tarjoutua tuuraajaksi. Voit lisätä kieliä asetuksissasi.",
+      "poolOfferFailedCoverage": "Tämä kerta pidetään paikan päällä kattamiesi alueiden ulkopuolella, joten et voi tarjoutua tuuraajaksi. Voit muuttaa kattamiasi alueita asetuksissasi.",
       "pageTitle": "Tuuraukset",
       "back": "Takaisin Omaan SOGiin",
       "mineHeading": "Tuurauksesi",
@@ -2433,7 +2438,7 @@
     },
     "coverage": {
       "title": "Kattamasi alueet",
-      "remoteOnlyNote": "Käytetään tuuraajan etsimiseen, kun toinen Gedu ei pääse pitämään kerhoaan. Jätä tyhjäksi, jos tuuraat vain etänä.",
+      "remoteOnlyNote": "Näet paikan päällä pidettävät tuurauspyynnöt vain valitsemiltasi alueilta. Verkossa pidettävät kerrat eivät riipu niistä. Jätä tämä tyhjäksi, jos työskentelet vain etänä.",
       "selectedHeading": "Valitut ({count})",
       "noneSelected": "Ei valittuja alueita",
       "remove": "Poista {name}",

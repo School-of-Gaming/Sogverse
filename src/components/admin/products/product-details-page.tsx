@@ -189,7 +189,7 @@ export function ProductDetailsPage({
       <GroupsPanel
         productId={productId}
         productType={productType}
-        requirements={sessionRequirements(product)}
+        requirements={sessionRequirements(product, product.locations?.name ?? null)}
         billingMode={product.billing_mode}
         topic={product.topic}
         audience={productAudience(product)}

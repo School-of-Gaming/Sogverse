@@ -698,7 +698,9 @@
     },
     "missingRequirements": {
       "qualification": "{qualification} laH ghajbe’ Geduvam. laHvam poQ Doch.",
-      "language": "{language} Hol lo’ Dochvam. Hol jatlhlaHbe’ Geduvam."
+      "language": "{language} Hol lo’ Dochvam. Hol jatlhlaHbe’ Geduvam.",
+      "coverage": "{site} Daq lo’ Dochvam. Daqvetlh So’be’ Geduvam.",
+      "coverageUnnamed": "Daq lo’ Dochvam. Daqvetlh So’be’ Geduvam."
     },
     "geduCertifyWarnings": {
       "title": "patlh yInob ’e’ DaHech’a’?",
@@ -1185,7 +1187,8 @@
         "alreadyTrainee": "ghojwI’ ghaHpu’",
         "traineeInstead": "ghojwI’ DachellaH.",
         "notQualified": "laH ghajbe’: {qualification}",
-        "doesNotSpeak": "Hol jatlhlaHbe’: {language}"
+        "doesNotSpeak": "Hol jatlhlaHbe’: {language}",
+        "outsideCoverage": "Daqmeyvetlh So’be’"
       },
       "participantPicker": {
         "title": "ghom yIchel",
@@ -1848,7 +1851,7 @@
       "certificationAlertTitle": "patlh DaghajnIS",
       "certificationAlertDescription": "DaH bI’el laH, ’ach ghob ghoSlu’pa’ patlhlIj nob qum.",
       "coverageHeading": "nuqDaq bIvum laH?",
-      "coverageNote": "Daqmey yIwIv DaqDaq bIvum laH. Hop pat neH DavumlaHchugh, naDev yIqonQo’. DaH yInaQ; poH wInaQ pat’a’ choHlaH.",
+      "coverageNote": "Daqmey yIwIv DaqDaq bIvum laH. Daqmeyvam neH lIw DaqDaq Danobta’. Hop may’mey Daqmeyvam luSo’be’. Hop pat neH DavumlaHchugh, naDev yIqonQo’. poH wInaQ pat’a’ choHlaH.",
       "invalidPhone": "HablI’ HSDu’ nIvbe’ yIchel",
       "creatingAccount": "account vIchenmoH...",
       "alreadyHaveAccount": "account Daghaj’a’? <link>yI’el</link>"
@@ -2442,7 +2445,8 @@
       "cardLockedLabel": "{product} — may’ DalIwbogh. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’.",
       "accessOpens": "{date} {time}Daq poSmoH Qu’meH pa’",
       "poolHeading": "lIw poQbogh may’mey",
-      "poolAllClear": "DaH lIw poQbogh may’ tu’lu’be’.",
+      "poolRequirementsNote": "Hol DajatlhlaHbogh may’mey Dalegh; Daq may’mey, Daqmey DaSo’bogh neH. cha’ DIvI’ <link>DuHmey</link> yIchoH.",
+      "poolAllClear": "DaH lIw poQbogh may’ DaqaDlaHbogh tu’lu’be’.",
       "poolRolePrimary": "Gedu wa’DIch",
       "poolRoleAssistant": "Gedu boQwI’",
       "poolFee": "{fee} / may’",
@@ -2452,6 +2456,7 @@
       "poolActionFailed": "pollu’be’. yIboq.",
       "poolOfferFailedNotQualified": "laH Daghajbe’bogh poQ may’vam. bIlIwqanglaHbe’.",
       "poolOfferFailedLanguage": "Hol DajatlhlaHbe’bogh lo’ may’vam. bIlIwqanglaHbe’. DuHmey DaSeHbogh DaqDaq Hol DachellaH.",
+      "poolOfferFailedCoverage": "Daqmey DaSo’be’bogh Daq lo’ may’vam. bIlIwqanglaHbe’. DuHmey DaSeHbogh DaqDaq Daqmey DachoHlaH.",
       "pageTitle": "lIwmey",
       "back": "jIH SOGDaq yIchegh",
       "mineHeading": "DalIwbogh may’mey",
@@ -2473,7 +2478,7 @@
     },
     "coverage": {
       "title": "So’ Daqmey",
-      "remoteOnlyNote": "ghom’a’Daj qemlaHbe’ latlh Gedu ’e’ luneHchugh, SoH DaDIvmoH. Hop neH DaqaDchugh, yIchIm yImej.",
+      "remoteOnlyNote": "Daqmey DawIvbogh neH lIw Daq poQmey Dalegh. Hop may’mey Daqmeyvam luSo’be’. Hop neH DavumchoHchugh, yIchIm yImej.",
       "selectedHeading": "wIvlu’ ({count})",
       "noneSelected": "pagh Daq wIvlu’",
       "remove": "{name} yIteq",

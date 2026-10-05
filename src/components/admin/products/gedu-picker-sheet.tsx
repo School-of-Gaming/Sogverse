@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sheet";
 import { useScrollSentinel } from "@/hooks/use-scroll-sentinel";
 import { useUserList, type UserListEntry } from "@/services/users";
+import { useGedusCoveringProduct } from "@/services/gedu-locations";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import {
   SPOKEN_LANGUAGES,
@@ -112,7 +113,8 @@ interface GeduPickerSheetProps {
   offerTraineeInstead?: boolean;
   /**
    * `staff` seats only: what the product being staffed requires of whoever
-   * runs it — its qualifications and its language. A row whose gedu falls
+   * runs it — its qualifications, its language and, in person, a coverage
+   * area reaching its site. A row whose gedu falls
    * short **stays selectable** and says where — for an admin a missing
    * requirement is a warning, never a refusal, and the caller's confirm step
    * is where the admin says they meant it. Ignored on a `trainee` seat, which
@@ -211,9 +213,31 @@ export function GeduPickerSheet({
     { enabled: hasOpened, withTotal: true },
   );
 
+  /**
+   * Who covers the product's site, on an in-person product only — the
+   * database's own answer, so this sheet carries no copy of the walk up the
+   * location tree that decides it.
+   *
+   * **The rows wait for it**, as they wait for their own page: a row on
+   * screen carries its own verdict, and a row drawn before this lands would
+   * grow a coverage line under the admin's cursor. It is a small read keyed
+   * by one product, so it lands with the page. Should it fail, the rows draw
+   * without the coverage line rather than not at all — the line is a warning,
+   * and a picker that cannot staff is worse than one that warns less.
+   */
+  const site = required?.site ?? null;
+  const covering = useGedusCoveringProduct(
+    hasOpened && site !== null ? site.productId : null,
+  );
+  const coverageSettled =
+    site === null || covering.data !== undefined || covering.isError;
+
   const gedus = useMemo(
-    () => list.data?.pages.flatMap((page) => page.rows) ?? [],
-    [list.data],
+    () =>
+      coverageSettled
+        ? (list.data?.pages.flatMap((page) => page.rows) ?? [])
+        : [],
+    [list.data, coverageSettled],
   );
 
   // The sheet body is the scroller while a sheet is open, so that box is what
@@ -250,6 +274,22 @@ export function GeduPickerSheet({
     if (total === undefined || total === null) return null;
     return { filtered, total };
   }, [list.data, everyGedu.data]);
+
+  /** The row's line for one requirement it falls short of. */
+  function gapLine(requirement: MissingRequirement): string {
+    switch (requirement.kind) {
+      case "qualification":
+        return t("notQualified", {
+          qualification: qualificationNames[requirement.qualification],
+        });
+      case "language":
+        return t("doesNotSpeak", {
+          language: languageName(requirement.language),
+        });
+      case "coverage":
+        return t("outsideCoverage");
+    }
+  }
 
   useEffect(() => {
     if (open) {
@@ -341,7 +381,11 @@ export function GeduPickerSheet({
               const missing =
                 isDisabled || required === undefined
                   ? []
-                  : missingRequirements(required, g);
+                  : missingRequirements(
+                      required,
+                      g,
+                      covering.data?.has(g.id) ?? true,
+                    );
               return (
                 <GeduRow
                   key={g.id}
@@ -354,15 +398,7 @@ export function GeduPickerSheet({
                   showTraineeHint={refusesUncertified && offerTraineeInstead}
                   requirementGaps={missing.map((requirement) => ({
                     key: missingRequirementKey(requirement),
-                    line:
-                      requirement.kind === "qualification"
-                        ? t("notQualified", {
-                            qualification:
-                              qualificationNames[requirement.qualification],
-                          })
-                        : t("doesNotSpeak", {
-                            language: languageName(requirement.language),
-                          }),
+                    line: gapLine(requirement),
                   }))}
                   isDisabled={isDisabled}
                   onClick={() => {
@@ -376,7 +412,7 @@ export function GeduPickerSheet({
             {/* Only once the first page has answered: "no results" is a claim
                 about who exists, and a page of 25 off an indexed view lands in
                 a frame or two, so nothing stands in for it in the meantime. */}
-            {gedus.length === 0 && !list.isPending && (
+            {gedus.length === 0 && !list.isPending && coverageSettled && (
               <p className="py-8 text-center text-sm text-muted-foreground">
                 {t("noResults")}
               </p>

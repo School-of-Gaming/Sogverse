@@ -1401,10 +1401,12 @@ the save button.
 
 - **Breadcrumb / full path** — read the ancestor chain the reads already return and
   reverse it. Nothing walks the table client-side to render a path.
-- **Substitute matching** — collect the product's location ancestor chain (its
-  `location_id` up to the root), then select the distinct gedus with a `gedu_locations` row
-  for any link in that chain. A product at a site matches every gedu who claimed that
-  site, its municipality, its region or its country — the "claim means subtree" semantics
-  are what make an ancestor row sufficient. Language matching
-  (`products.spoken_language_code ∈ profiles.spoken_languages`) layers on as an additional
-  `AND`.
+- **Substitute matching** — a gedu covers an in-person product when one of their
+  `gedu_locations` rows is any link of the product's ancestor-or-self chain: a product at
+  a site matches every gedu who claimed that site, its municipality, its region or its
+  country — the "claim means subtree" semantics are what make an ancestor row sufficient.
+  **An online product asks nothing of coverage**, an online municipality club's location
+  included: the remote flag decides, never the presence of a location. The walk lives in
+  one database predicate, and the admin gedu picker asks the database which gedus cover a
+  product rather than walking the chain in the browser; the substitution rules it gates
+  are in `../session-substitution/CLAUDE.md`.

@@ -96,6 +96,19 @@ vi.mock("@/services/users", () => ({
   }),
 }));
 
+// Who covers the session's site, as the database answers it for the picker.
+// Joonas alone; asked only of an in-person product.
+const COVERING = new Set([JOONAS]);
+vi.mock("@/services/gedu-locations", () => ({
+  useGedusCoveringProduct: (productId: string | null) => ({
+    data: productId === null ? undefined : COVERING,
+    isError: false,
+  }),
+}));
+
+/** An in-person session, at a site only Joonas covers. */
+const AT_KALLIO = { productId: "6f1a1d2e-0a51-4d3c-9a43-2b8e5f7c1d90", name: "Kallio School" };
+
 const copy = messages.admin.products.staffing;
 const pickerCopy = messages.admin.products.geduPicker;
 
@@ -120,7 +133,7 @@ function renderEditor({
   onSetSubstitution = vi.fn(() => Promise.resolve()),
   onClearSubstitution = vi.fn(() => Promise.resolve()),
   onWithdrawRequest = vi.fn(() => Promise.resolve()),
-  requirements = { qualifications: [], language: "fi" },
+  requirements = { qualifications: [], language: "fi", site: null },
 }: {
   gedus: readonly StaffingAssignment[];
   requests?: readonly SubstitutionRequestInput[];
@@ -605,7 +618,7 @@ describe("the admin session staffing editor", () => {
   it("seats a sub lacking a required qualification, warning in the confirm it already asks", async () => {
     const { onSetSubstitution } = renderEditor({
       gedus: ONE_PRIMARY,
-      requirements: { qualifications: ["neuroinclusive"], language: "fi" },
+      requirements: { qualifications: ["neuroinclusive"], language: "fi", site: null },
     });
     const warning = messages.admin.missingRequirements.qualification.replace(
       "{qualification}",
@@ -646,7 +659,7 @@ describe("the admin session staffing editor", () => {
   it("warns about nothing when the sub holds every required qualification", () => {
     renderEditor({
       gedus: ONE_PRIMARY,
-      requirements: { qualifications: ["neuroinclusive"], language: "fi" },
+      requirements: { qualifications: ["neuroinclusive"], language: "fi", site: null },
     });
 
     choose(copy.setSubstitute);
@@ -662,7 +675,7 @@ describe("the admin session staffing editor", () => {
   it("seats a sub who does not speak the session's language, warning in the same confirm", async () => {
     const { onSetSubstitution } = renderEditor({
       gedus: ONE_PRIMARY,
-      requirements: { qualifications: [], language: "en" },
+      requirements: { qualifications: [], language: "en", site: null },
     });
     // Every candidate speaks Finnish alone.
     const warning = messages.admin.missingRequirements.language.replace(
@@ -678,6 +691,41 @@ describe("the admin session staffing editor", () => {
         pickerCopy.doesNotSpeak.replace("{language}", "English"),
       ),
     ).not.toBeNull();
+
+    fireEvent.click(petra);
+    expect(screen.getByText(copy.confirmTitle)).not.toBeNull();
+    expect(screen.getByText(warning)).not.toBeNull();
+    expect(onSetSubstitution).not.toHaveBeenCalled();
+
+    chooseReason();
+    await act(async () => {
+      fireEvent.click(button(copy.confirmAction));
+    });
+    expect(onSetSubstitution).toHaveBeenCalledWith({
+      absentGeduId: SANNA,
+      subGeduId: PETRA,
+      reason: "sick",
+    });
+  });
+
+  it("seats a sub whose coverage areas miss the session's site, warning in the same confirm", async () => {
+    const { onSetSubstitution } = renderEditor({
+      gedus: ONE_PRIMARY,
+      requirements: { qualifications: [], language: "fi", site: AT_KALLIO },
+    });
+    const warning = messages.admin.missingRequirements.coverage.replace(
+      "{site}",
+      "Kallio School",
+    );
+
+    choose(copy.setSubstitute);
+    const petra = pickerRow(PETRA);
+    expect(isDisabled(petra)).toBe(false);
+    expect(within(petra).getByText(pickerCopy.outsideCoverage)).not.toBeNull();
+    // The one gedu covering the site carries no such line.
+    expect(
+      within(pickerRow(JOONAS)).queryByText(pickerCopy.outsideCoverage),
+    ).toBeNull();
 
     fireEvent.click(petra);
     expect(screen.getByText(copy.confirmTitle)).not.toBeNull();

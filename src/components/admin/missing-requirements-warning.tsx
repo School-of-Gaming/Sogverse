@@ -11,8 +11,9 @@ import { useQualificationNames } from "./qualification-names";
 
 /**
  * The warning lines a confirm step carries when the gedu being placed falls
- * short of what the session requires — one line per missing qualification, and
- * one if they do not speak the language the product is run in, the shape the
+ * short of what the session requires — one line per missing qualification, one
+ * if they do not speak the language the product is run in, and one if the
+ * session is in person at a site outside their coverage areas, the shape the
  * certify-anyway dialog gives each missing prerequisite.
  *
  * **A warning, never a refusal.** For an admin a missing requirement is a gap
@@ -34,17 +35,29 @@ export function MissingRequirementsWarning({
   const qualificationNames = useQualificationNames();
   const languageName = useLanguageNames();
   if (missing.length === 0) return null;
+
+  function line(requirement: MissingRequirement): string {
+    switch (requirement.kind) {
+      case "qualification":
+        return t("qualification", {
+          qualification: qualificationNames[requirement.qualification],
+        });
+      case "language":
+        return t("language", { language: languageName(requirement.language) });
+      case "coverage":
+        // Every in-person product names its site; the bare line is only for
+        // a read that somehow arrived without the name.
+        return requirement.site === null
+          ? t("coverageUnnamed")
+          : t("coverage", { site: requirement.site });
+    }
+  }
+
   return (
     <div className="space-y-2">
       {missing.map((requirement) => (
         <Alert key={missingRequirementKey(requirement)} variant="warning">
-          <AlertDescription>
-            {requirement.kind === "qualification"
-              ? t("qualification", {
-                  qualification: qualificationNames[requirement.qualification],
-                })
-              : t("language", { language: languageName(requirement.language) })}
-          </AlertDescription>
+          <AlertDescription>{line(requirement)}</AlertDescription>
         </Alert>
       ))}
     </div>

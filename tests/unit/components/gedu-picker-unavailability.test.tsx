@@ -110,6 +110,26 @@ vi.mock("@/services/users", () => ({
   }),
 }));
 
+// Who covers the site of the in-person product being staffed, as the database
+// answers it — Venla alone. `calls` records what the sheet asked about, and
+// `settled` lets a case hold the answer back.
+const covering = vi.hoisted(() => ({
+  calls: [] as (string | null)[],
+  settled: true,
+}));
+vi.mock("@/services/gedu-locations", () => ({
+  useGedusCoveringProduct: (productId: string | null) => {
+    covering.calls.push(productId);
+    return {
+      data:
+        productId === null || !covering.settled
+          ? undefined
+          : new Set(["c6a1e3f2-8b4d-4f0a-9e7c-1d2b3a4c5e6f"]),
+      isError: false,
+    };
+  },
+}));
+
 /** The row for one person, found by the full name it renders. */
 function rowFor(name: string): HTMLButtonElement {
   const row = screen.getByText(name).closest("button");
@@ -339,6 +359,7 @@ describe("the gedu picker's requirement gaps", () => {
         requirements={{
           qualifications: ["neuroinclusive", "consumer_products"],
           language: "fi",
+          site: null,
         }}
         onSelect={onSelect}
       />,
@@ -416,5 +437,89 @@ describe("the gedu picker's requirement gaps", () => {
       expect.objectContaining({ id: IDS.free }),
       [],
     );
+  });
+});
+
+/**
+ * An in-person product also asks for a coverage area reaching its site. The
+ * sheet asks the database which gedus cover it rather than walking the location
+ * tree itself, and the answer is a warning like the other two: the row stays
+ * pressable, says so, and hands the gap on with the site's name.
+ */
+describe("the gedu picker's coverage gap", () => {
+  const OUTSIDE = "admin.products.geduPicker.outsideCoverage";
+  const PRODUCT = "5b7e2c90-4d1f-4a8e-b3c6-9f0a1d2e3b47";
+
+  function openAt(
+    site: { productId: string; name: string } | null,
+    onSelect: (
+      gedu: UserListEntry,
+      missing: readonly MissingRequirement[],
+    ) => void = () => {},
+  ) {
+    covering.calls.length = 0;
+    render(
+      <GeduPickerSheet
+        open
+        onOpenChange={() => {}}
+        title="Pick a Gedu"
+        description="For this group"
+        requirements={{ qualifications: [], language: "fi", site }}
+        onSelect={onSelect}
+      />,
+    );
+  }
+
+  it("names the gap on a gedu whose areas miss the site, and hands it on with the site's name", () => {
+    const onSelect = vi.fn();
+    openAt({ productId: PRODUCT, name: "Kallio School" }, onSelect);
+
+    expect(covering.calls).toContain(PRODUCT);
+    const row = rowFor("Kerttu Virtanen");
+    expect(row.disabled).toBe(false);
+    expect(within(row).getByText(OUTSIDE)).toBeTruthy();
+
+    fireEvent.click(row);
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: IDS.nonSpeaker }),
+      // Kerttu speaks English alone, so the language comes first; the site
+      // follows it, as the confirm step lists them.
+      [
+        { kind: "language", language: "fi" },
+        { kind: "coverage", site: "Kallio School" },
+      ],
+    );
+  });
+
+  it("says nothing about a gedu who covers the site", () => {
+    const onSelect = vi.fn();
+    openAt({ productId: PRODUCT, name: "Kallio School" }, onSelect);
+
+    const row = rowFor("Venla Virtanen");
+    expect(within(row).queryByText(OUTSIDE)).toBeNull();
+    fireEvent.click(row);
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: IDS.qualified }),
+      [],
+    );
+  });
+
+  it("asks nothing about coverage for an online product", () => {
+    openAt(null);
+
+    expect(covering.calls.every((call) => call === null)).toBe(true);
+    expect(within(rowFor("Kerttu Virtanen")).queryByText(OUTSIDE)).toBeNull();
+  });
+
+  it("draws no row until the coverage answer is in, so no line arrives under the cursor", () => {
+    covering.settled = false;
+    try {
+      openAt({ productId: PRODUCT, name: "Kallio School" });
+      expect(screen.queryByText("Kerttu Virtanen")).toBeNull();
+      // Nor the "no results" line: nobody has answered who exists yet.
+      expect(screen.queryByText("admin.products.geduPicker.noResults")).toBeNull();
+    } finally {
+      covering.settled = true;
+    }
   });
 });

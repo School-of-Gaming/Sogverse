@@ -1,46 +1,58 @@
--- A gedu substitutes only where qualified, and only in a language they speak.
+-- A gedu substitutes only where qualified, only in a language they speak, and
+-- on-site only within their coverage areas.
 --
 -- WHAT THIS CHANGES
 --
 -- A session's requirements now gate the paths a gedu starts on their own: the
--- pool of open substitution requests, and offering on one. There are two: the
--- qualifications the session's product requires, and the language it is run
--- in (products.spoken_language_code), which the gedu must have among their
--- spoken languages (profiles.spoken_languages). A gedu who has listed no
--- language therefore sees an empty pool; that is accepted, not special-cased.
+-- pool of open substitution requests, and offering on one. There are three: the
+-- qualifications the session's product requires; the language it is run in
+-- (products.spoken_language_code), which the gedu must have among their spoken
+-- languages (profiles.spoken_languages); and, for an in-person product only,
+-- its site, which one of the gedu's coverage ticks (gedu_locations) must be or
+-- be an ancestor of. A gedu who has listed no language therefore sees an empty
+-- pool, and one who has ticked no area sees online sessions only; both are
+-- accepted, not special-cased. An online product has no coverage requirement,
+-- even an online municipality club that carries a location.
 --
 -- A product requires
 -- `neuroinclusive` when it is tagged neuroinclusive, and `consumer_products`
 -- when it is a consumer_club, camp or event (everything but municipality_club);
 -- a product can require both or neither. A gedu who does not hold every
--- qualification a session's product requires, or does not speak its language,
--- does not see its request in the pool and cannot offer on it.
+-- qualification a session's product requires, does not speak its language, or
+-- does not cover its site, does not see its request in the pool and cannot
+-- offer on it.
 --
 -- The admin paths are NOT gated here. Seating a substitute, approving an offer
--- and a permanent assignment ask nothing about either requirement: an admin is
--- warned in the UI and may proceed. That is why each test is a predicate of its
+-- and a permanent assignment ask nothing about any of the requirements: an admin
+-- is warned in the UI and may proceed. That is why each test is a predicate of its
 -- own rather than a clause of gedu_may_substitute_session, which the admin
 -- writes ask too. Approval deliberately does not ask them either: approving is
--- an admin's act, and neither a qualification nor a spoken language is
--- realistically taken away between an offer and its approval, so the case
--- where it would matter is not worth a check.
+-- an admin's act, and none of the three is realistically taken away between an
+-- offer and its approval, so the case where it would matter is not worth a
+-- check.
 --
 -- 1. `product_required_qualifications(product_type, product_tag)` — the one
 --    statement of which qualifications a product requires.
 -- 2. `gedu_holds_session_qualifications(uuid, uuid)` — does this gedu hold
 --    every qualification this group's product requires? And its sibling
 --    `gedu_speaks_session_language(uuid, uuid)` — does this gedu speak the
---    language this group's product is run in? Two predicates rather than one,
---    because the offer says which of the two is missing.
+--    language this group's product is run in? And `gedu_covers_product_site(
+--    uuid, uuid)` — does this gedu cover this product's site, or is it online?
+--    Separate predicates rather than one, because the offer says which is
+--    missing.
 -- 3. `get_open_substitution_requests()` and `offer_session_substitution(uuid)`
---    ask both. The offer refuses each with its own message, so the client can
---    tell "not qualified" and "does not speak" apart from the generic refusal.
+--    ask all three. The offer refuses each with its own message, so the client
+--    can tell "not qualified", "does not speak" and "does not cover" apart from
+--    the generic refusal.
 -- 4. `session_product_document` carries the product's tag, so a substitution
 --    surface can say what the session requires.
 -- 5. `user_list_entries` carries the qualifications each person holds, beside
 --    `certified`, for the admin gedu picker.
--- 6. The comments that said qualifications gate nothing and that language was
---    left to a follow-up.
+-- 6. The comments that said qualifications gate nothing and that language and
+--    coverage were left to follow-ups.
+-- 7. `get_gedus_covering_product(uuid)` — the admin picker's answer to which
+--    gedus cover an in-person product's site, asked of the same predicate, so
+--    the picker's warning and the pool cannot disagree.
 
 -- ---------------------------------------------------------------------------
 -- 1. What a product requires
@@ -118,8 +130,48 @@ COMMENT ON FUNCTION public.gedu_speaks_session_language(p_gedu_id uuid, p_group_
 REVOKE ALL ON FUNCTION public.gedu_speaks_session_language(p_gedu_id uuid, p_group_id uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.gedu_speaks_session_language(p_gedu_id uuid, p_group_id uuid) TO service_role;
 
+-- Keyed by product rather than group, unlike its two siblings: the admin
+-- picker asks it of a product, through get_gedus_covering_product.
+CREATE FUNCTION public.gedu_covers_product_site(p_gedu_id uuid, p_product_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+  WITH RECURSIVE
+  product AS (
+    SELECT p.is_remote, p.location_id
+      FROM public.products p
+     WHERE p.id = p_product_id
+  ),
+  -- The site and every place above it. A tick is an "I cover this subtree"
+  -- claim, so a tick on any of these covers the site. The depth bound is a
+  -- belt-and-braces stop on a tree the schema does not forbid a cycle in
+  -- beyond a row parenting itself.
+  lineage AS (
+    SELECT l.id, l.parent_id, 0 AS depth
+      FROM public.locations l
+      JOIN product ON l.id = product.location_id
+     UNION ALL
+    SELECT l.id, l.parent_id, w.depth + 1
+      FROM lineage w
+      JOIN public.locations l ON l.id = w.parent_id
+     WHERE w.depth < 16
+  )
+  SELECT EXISTS (SELECT 1 FROM product WHERE product.is_remote)
+      OR EXISTS (
+           SELECT 1
+             FROM lineage
+             JOIN public.gedu_locations gl ON gl.location_id = lineage.id
+            WHERE gl.gedu_id = p_gedu_id
+         );
+$$;
+
+COMMENT ON FUNCTION public.gedu_covers_product_site(p_gedu_id uuid, p_product_id uuid) IS 'Internal predicate: does this gedu cover this product''s site? True for an online product (is_remote), which has no coverage requirement — even an online municipality club, which carries a location. For an in-person product, true when one of the gedu''s gedu_locations ticks is the product''s site or any place above it, because a tick claims its whole subtree; a gedu who has ticked nothing therefore covers no in-person product. False for an unknown product. The third sibling of gedu_holds_session_qualifications and gedu_speaks_session_language, asked on the same gedu paths for the same reasons — by get_open_substitution_requests as its exclusion and by offer_session_substitution as a refusal with its own message — and deliberately NOT by gedu_may_substitute_session, because an admin seating, approving or assigning a gedu who does not cover the site is warned in the UI and may proceed. Also the whole of get_gedus_covering_product, the admin picker''s read, so the warning and the pool answer from one statement. Keyed by product rather than group, unlike the siblings, because the picker asks it of a product. SECURITY INVOKER and reached only from inside SECURITY DEFINER callers; not granted to `authenticated`.';
+
+REVOKE ALL ON FUNCTION public.gedu_covers_product_site(p_gedu_id uuid, p_product_id uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.gedu_covers_product_site(p_gedu_id uuid, p_product_id uuid) TO service_role;
+
 -- ---------------------------------------------------------------------------
--- 3. The pool and the offer ask both
+-- 3. The pool and the offer ask all three
 -- ---------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.get_open_substitution_requests() RETURNS jsonb
@@ -135,10 +187,11 @@ BEGIN
   -- exclusion is the `may substitute` predicate itself rather than a hand-written
   -- copy of its clauses, so the list and the offer button can never disagree —
   -- a session the gedu is expected at, one they have their own request on, and
-  -- their own absence are all out by construction. The qualification and
-  -- language predicates are the offer's other two tests and are asked here for
-  -- the same reason: a request on a product the caller is not qualified for,
-  -- or that is run in a language they have not listed, is not in their pool.
+  -- their own absence are all out by construction. The qualification, language
+  -- and coverage predicates are the offer's other three tests and are asked
+  -- here for the same reason: a request on a product the caller is not
+  -- qualified for, that is run in a language they have not listed, or whose
+  -- site is outside their coverage areas, is not in their pool.
   --
   -- The ABSENT GEDU IS NOT NAMED. Naming them half-reveals a private reason
   -- (everybody knows who is off sick), and the seat being substituted belongs to the
@@ -190,20 +243,22 @@ BEGIN
            )
        AND public.gedu_holds_session_qualifications(v_caller, r.group_id)
        AND public.gedu_speaks_session_language(v_caller, r.group_id)
+       AND public.gedu_covers_product_site(v_caller, p.id)
   ), '[]'::jsonb);
 END;
 $$;
 
-COMMENT ON FUNCTION public.get_open_substitution_requests() IS 'The gedu dashboard''s "Sessions needing a substitute": every `open` request dated today or later in the product''s timezone, within the next 60 days, that the CALLER could actually take. The exclusion is the offer''s own three tests — gedu_may_substitute_session, gedu_holds_session_qualifications and gedu_speaks_session_language — rather than a copy of their clauses, so this list and the offer button can never disagree: a request on a product whose qualifications the caller does not hold, or that is run in a language the caller has not listed, is not in their pool, and a gedu who has listed no language sees none. Each line carries the session''s product as session_product_document describes it — the one shell every substitution surface shares — plus the group name, the date, the role and THAT ROLE''s fee (null when the product has not set one — a blank field, not a volunteer session), and whether the caller has already offered. The ABSENT GEDU IS DELIBERATELY NOT NAMED: naming them half-reveals a private reason, and the seat belongs to the group. Contains no schedule expansion — the client owns the calendar math, exactly as both feeds do. Gedu-gated on its first statement; an uncertified gedu gets an empty list, because certification is one of the may-substitute predicate''s refusals.';
+COMMENT ON FUNCTION public.get_open_substitution_requests() IS 'The gedu dashboard''s "Sessions needing a substitute": every `open` request dated today or later in the product''s timezone, within the next 60 days, that the CALLER could actually take. The exclusion is the offer''s own four tests — gedu_may_substitute_session, gedu_holds_session_qualifications, gedu_speaks_session_language and gedu_covers_product_site — rather than a copy of their clauses, so this list and the offer button can never disagree: a request on a product whose qualifications the caller does not hold, that is run in a language the caller has not listed, or that is in person at a site outside the caller''s coverage areas, is not in their pool. A gedu who has listed no language sees none, and one who has ticked no coverage area sees online sessions only. Each line carries the session''s product as session_product_document describes it — the one shell every substitution surface shares — plus the group name, the date, the role and THAT ROLE''s fee (null when the product has not set one — a blank field, not a volunteer session), and whether the caller has already offered. The ABSENT GEDU IS DELIBERATELY NOT NAMED: naming them half-reveals a private reason, and the seat belongs to the group. Contains no schedule expansion — the client owns the calendar math, exactly as both feeds do. Gedu-gated on its first statement; an uncertified gedu gets an empty list, because certification is one of the may-substitute predicate''s refusals.';
 
 CREATE OR REPLACE FUNCTION public.offer_session_substitution(p_request_id uuid) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE
-  v_caller   uuid := (SELECT auth.uid());
-  v_timezone text;
-  v_row      public.session_substitution_requests;
+  v_caller     uuid := (SELECT auth.uid());
+  v_timezone   text;
+  v_product_id uuid;
+  v_row        public.session_substitution_requests;
 BEGIN
   PERFORM public.assert_role('gedu');
 
@@ -220,7 +275,7 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
-  SELECT p.timezone INTO v_timezone
+  SELECT p.timezone, p.id INTO v_timezone, v_product_id
     FROM public.product_groups g
     JOIN public.products p ON p.id = g.product_id
    WHERE g.id = v_row.group_id;
@@ -249,6 +304,12 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
+  -- Likewise its own message: the site is the one thing missing.
+  IF NOT public.gedu_covers_product_site(v_caller, v_product_id) THEN
+    RAISE EXCEPTION 'this gedu does not cover the site this session is run at'
+      USING ERRCODE = '42501';
+  END IF;
+
   -- Idempotent on the unique key: offering twice is one offer, and a double-tap
   -- is not an error worth surfacing.
   INSERT INTO public.session_substitution_offers (request_id, gedu_id)
@@ -260,14 +321,14 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.offer_session_substitution(p_request_id uuid) IS '"Offer to substitute", from the gedu dashboard''s pool list. Guarded on gedu_may_substitute_session — certified, not the absent gedu, not already expected at that session, and holding no non-withdrawn request of their own on that (group, date) — then on gedu_holds_session_qualifications, refused with its own 42501 message saying the gedu "is not qualified", then on gedu_speaks_session_language, refused with its own 42501 message saying the gedu "does not speak the language", so the client can name either; plus the request being `open` and dated today or later in the product''s timezone. Idempotent on (request, gedu): offering twice is one offer. There is deliberately no ranking, no eligibility beyond certification, qualifications and spoken language, and no notification on any channel; the office decides, and auto-approving the first offer was rejected because the admin step IS the product. Returns the request document, which carries no offer_count for an offerer — who else volunteered is not their business. The document it returns CONCEALS the absent gedu: requested_by and requested_by_first_name arrive as JSON null, because otherwise offering would be a way to unmask the absent person on any pool row, leaving the pool''s own "names the session, never the person" rule one button-press deep.';
+COMMENT ON FUNCTION public.offer_session_substitution(p_request_id uuid) IS '"Offer to substitute", from the gedu dashboard''s pool list. Guarded on gedu_may_substitute_session — certified, not the absent gedu, not already expected at that session, and holding no non-withdrawn request of their own on that (group, date) — then on gedu_holds_session_qualifications, refused with its own 42501 message saying the gedu "is not qualified", then on gedu_speaks_session_language, refused with its own 42501 message saying the gedu "does not speak the language", then on gedu_covers_product_site, refused with its own 42501 message saying the gedu "does not cover the site", so the client can name each; plus the request being `open` and dated today or later in the product''s timezone. Idempotent on (request, gedu): offering twice is one offer. There is deliberately no ranking, no eligibility beyond certification, qualifications, spoken language and coverage, and no notification on any channel; the office decides, and auto-approving the first offer was rejected because the admin step IS the product. Returns the request document, which carries no offer_count for an offerer — who else volunteered is not their business. The document it returns CONCEALS the absent gedu: requested_by and requested_by_first_name arrive as JSON null, because otherwise offering would be a way to unmask the absent person on any pool row, leaving the pool''s own "names the session, never the person" rule one button-press deep.';
 
 -- CREATE OR REPLACE keeps the grants, and the PUBLIC revoke is restated
 -- because a recreated function can come back PUBLIC-executable.
 REVOKE ALL ON FUNCTION public.get_open_substitution_requests() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.offer_session_substitution(p_request_id uuid) FROM PUBLIC;
 
-COMMENT ON FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid) IS 'Internal predicate: may this gedu be seated as the sub for this (group, date)? Five refusals: (1) not the absent gedu, (2) a certified gedu — the only eligibility test every path shares, with coverage area and schedule clash deliberately left to follow-ups, (3) not already expected at that session, (4) holding no non-withdrawn request of their own on that (group, date), and (5) the session is not cancelled. Together (3) and (4) stop a sub covering their own substitute and stop two seats collapsing onto one person, which would make "who did which job" unanswerable. Asked by offer_session_substitution, again by approve_session_substitution_offer under the request''s lock, by set_session_substitution, and by get_open_substitution_requests as its exclusion — the pool list shows a gedu exactly the requests they could actually take, and never one on a cancelled session. Qualifications and spoken language are deliberately NOT clauses here: they gate only the paths a gedu starts (the pool and the offer, through gedu_holds_session_qualifications and gedu_speaks_session_language), while the admin writes that ask this predicate leave them to a warning in the UI. Not granted to `authenticated`.';
+COMMENT ON FUNCTION public.gedu_may_substitute_session(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_absent_gedu_id uuid) IS 'Internal predicate: may this gedu be seated as the sub for this (group, date)? Five refusals: (1) not the absent gedu, (2) a certified gedu — the only eligibility test every path shares, with schedule clash deliberately left to a follow-up, (3) not already expected at that session, (4) holding no non-withdrawn request of their own on that (group, date), and (5) the session is not cancelled. Together (3) and (4) stop a sub covering their own substitute and stop two seats collapsing onto one person, which would make "who did which job" unanswerable. Asked by offer_session_substitution, again by approve_session_substitution_offer under the request''s lock, by set_session_substitution, and by get_open_substitution_requests as its exclusion — the pool list shows a gedu exactly the requests they could actually take, and never one on a cancelled session. Qualifications, spoken language and coverage are deliberately NOT clauses here: they gate only the paths a gedu starts (the pool and the offer, through gedu_holds_session_qualifications, gedu_speaks_session_language and gedu_covers_product_site), while the admin writes that ask this predicate leave them to a warning in the UI. Not granted to `authenticated`.';
 
 -- ---------------------------------------------------------------------------
 -- 4. The session's product carries its tag
@@ -398,3 +459,32 @@ COMMENT ON TYPE public.gedu_qualification IS 'A qualification an admin grants a 
 COMMENT ON TABLE public.gedu_qualifications IS 'The qualifications each game educator holds: a row means the gedu holds that qualification, and no row means they do not. Latest state only, with no history: revoking a qualification deletes its row. Keyed to gedu_profiles, so only an account carrying the gedu extension row can hold one, and the qualifications go with that row. Written only by set_gedu_qualification; authenticated holds SELECT alone, an admin reading every row and a gedu their own. Read by gedu_holds_session_qualifications, which gates the substitution pool and offers, and carried on user_list_entries for the admin picker''s warning.';
 
 COMMENT ON COLUMN public.profiles.spoken_languages IS 'Human languages the user speaks, as public.spoken_language values. Used for matching gamers/gedus to clubs; for a gedu it is also a substitution requirement — gedu_speaks_session_language keeps a request out of their pool, and refuses their offer, unless the session''s product is run in one of these. Distinct from locale, which controls UI translation. The enum guarantees every entry is a language we offer; the BEFORE trigger on this column is what guarantees no entry appears twice.';
+
+COMMENT ON TABLE public.gedu_locations IS 'A gedu''s coverage areas: one row per tick, each an independent "I cover this whole subtree" claim on a locations row — ticking a region does not tick its municipalities, and nothing enumerates descendants. No rows means the gedu works remotely only. Read by gedu_covers_product_site, which keeps an in-person substitution request out of a gedu''s pool, and refuses their offer, unless one of their ticks is the session''s site or a place above it; online sessions do not depend on it.';
+
+-- ---------------------------------------------------------------------------
+-- 7. The admin picker asks the same predicate
+-- ---------------------------------------------------------------------------
+
+CREATE FUNCTION public.get_gedus_covering_product(p_product_id uuid) RETURNS uuid[]
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.assert_admin();
+
+  RETURN ARRAY(
+    SELECT pr.id
+      FROM public.profiles pr
+     WHERE pr.role = 'gedu'::public.user_role
+       AND public.gedu_covers_product_site(pr.id, p_product_id)
+     ORDER BY pr.id
+  );
+END;
+$$;
+
+COMMENT ON FUNCTION public.get_gedus_covering_product(p_product_id uuid) IS 'Admin-only: the ids of every gedu who covers this product''s site, by gedu_covers_product_site — so the admin gedu picker''s "outside their coverage areas" warning and the gedus'' substitution pool answer from one statement, and the app carries no copy of the tree walk. On an online product that is every gedu, because an online product has no coverage requirement; the picker does not ask about one. Empty for an unknown product. A set rather than a column of the people list because the answer depends on the product being staffed, which a view row cannot be asked about.';
+
+REVOKE ALL ON FUNCTION public.get_gedus_covering_product(p_product_id uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_gedus_covering_product(p_product_id uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_gedus_covering_product(p_product_id uuid) TO service_role;

@@ -327,7 +327,11 @@ function renderPanel(
   // Minecraft unless a case is about the topic: every drag case here predates
   // the identity row and is decided without it.
   topic: ProductTopic = "minecraft_java",
-  requirements: SessionRequirements = { qualifications: [], language: "fi" },
+  requirements: SessionRequirements = {
+    qualifications: [],
+    language: "fi",
+    site: null,
+  },
 ) {
   render(
     // The chip prints an age in the viewer's zone, so a real chip needs the
@@ -722,6 +726,7 @@ describe("GroupsPanel — a missing requirement is confirmed, never refused", ()
     const requirements: SessionRequirements = {
       qualifications: ["neuroinclusive", "consumer_products"],
       language: "sv",
+      site: { productId: "product-1", name: "Kallio School" },
     };
     renderPanel("camp", "paid", "minecraft_java", requirements);
     expect(geduPicker.props?.requirements).toEqual(requirements);
@@ -748,6 +753,7 @@ describe("GroupsPanel — a missing requirement is confirmed, never refused", ()
     assign([
       { kind: "qualification", qualification: "consumer_products" },
       { kind: "language", language: "fi" },
+      { kind: "coverage", site: "Kallio School" },
     ]);
 
     // Asked first, naming each gap, and nothing written yet.
@@ -758,6 +764,7 @@ describe("GroupsPanel — a missing requirement is confirmed, never refused", ()
       screen.getByText("admin.missingRequirements.qualification"),
     ).toBeTruthy();
     expect(screen.getByText("admin.missingRequirements.language")).toBeTruthy();
+    expect(screen.getByText("admin.missingRequirements.coverage")).toBeTruthy();
     expect(mutations.addGedu).not.toHaveBeenCalled();
 
     act(() =>

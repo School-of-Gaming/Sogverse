@@ -3691,6 +3691,10 @@ export type Database = {
         Returns: string
       }
       forfeit_password: { Args: { p_user_id: string }; Returns: undefined }
+      gedu_covers_product_site: {
+        Args: { p_gedu_id: string; p_product_id: string }
+        Returns: boolean
+      }
       gedu_holds_seat_at_session: {
         Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
@@ -3768,6 +3772,10 @@ export type Database = {
         Returns: Json
       }
       get_gedu_group_feed: { Args: { p_group_id: string }; Returns: Json }
+      get_gedus_covering_product: {
+        Args: { p_product_id: string }
+        Returns: string[]
+      }
       get_group_staff_overlay: { Args: { p_group_id: string }; Returns: Json }
       get_my_assigned_products: {
         Args: never

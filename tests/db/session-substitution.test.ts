@@ -68,8 +68,10 @@ import { productRequiredQualifications } from "@/lib/products/session-requiremen
  *   - MUNI_PRODUCT (GROUP_MUNI) is an untagged municipality club: the one
  *     kind of product that requires no gedu qualification at all.
  *   - SUB and THIRD are minted gedus, certified, holding consumer_products
- *     (every product above but MUNI_PRODUCT is a consumer club) and speaking
- *     English (every product above is run in it), torn down with the file.
+ *     (every product above but MUNI_PRODUCT is a consumer club), speaking
+ *     English (every product above is run in it) and covering the
+ *     municipality SITE sits in (SITE_PRODUCT is the one in-person product),
+ *     torn down with the file.
  */
 
 const PRODUCT = "00000000-0000-0000-0000-000000000810";
@@ -511,6 +513,17 @@ describe("session substitutions", () => {
       .from("profiles")
       .update({ spoken_languages: ["en"] })
       .in("id", [subId, thirdId]);
+    // SITE_PRODUCT is in person, and a gedu whose coverage areas do not reach
+    // its site can neither see nor offer on its requests. One tick on the
+    // municipality SITE sits in reaches it, as a tick claims its subtree. The
+    // coverage cases change this deliberately.
+    await admin.from("gedu_locations").delete().in("gedu_id", [subId, thirdId]);
+    await admin.from("gedu_locations").insert(
+      [subId, thirdId].map((gedu_id) => ({
+        gedu_id,
+        location_id: TEST_IDS.LOCATION_MUNICIPALITY,
+      })),
+    );
   });
 
   /** Writes a request row straight to the table, bypassing every RPC guard. */
@@ -2123,6 +2136,102 @@ describe("session substitutions", () => {
       });
       expect(error).toBeNull();
       expect(substitutionRequestDocument.parse(data).substitute_id).toBe(subId);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 7d. Coverage: an in-person session's site gates the pool and the offer,
+  //     and nothing an admin does
+  // -------------------------------------------------------------------------
+
+  describe("an in-person session's site gates the pool and the offer, and nothing an admin does", () => {
+    async function poolIds(client: SupabaseClient<Database>) {
+      const { data, error } = await client.rpc("get_open_substitution_requests");
+      expect(error).toBeNull();
+      return openSubstitutionRequests.parse(data).map((row) => row.request_id);
+    }
+
+    async function setCoverage(gedu: string, locations: string[]) {
+      await admin.from("gedu_locations").delete().eq("gedu_id", gedu);
+      if (locations.length === 0) return;
+      const { error } = await admin
+        .from("gedu_locations")
+        .insert(locations.map((location_id) => ({ gedu_id: gedu, location_id })));
+      expect(error).toBeNull();
+    }
+
+    it("keeps an in-person request out of the pool of a gedu whose areas miss its site, until a place above it is ticked", async () => {
+      const id = await seedRequest({ groupId: GROUP_SITE, date: utcDate(7) });
+      // Another site in the same municipality: a sibling, not an ancestor.
+      await setCoverage(subId, [TEST_IDS.LOCATION_SITE]);
+
+      expect(await poolIds(subAuth)).not.toContain(id);
+
+      // Certified, qualified, speaking the language: the site is the one thing
+      // missing, and the refusal says so in its own words.
+      const refused = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect(refused.error?.code).toBe(FORBIDDEN);
+      expect(refused.error?.message).toContain("does not cover the site");
+
+      // The region, two levels above the site, claims the whole subtree.
+      await setCoverage(subId, [TEST_IDS.LOCATION_SITE, TEST_IDS.LOCATION_REGION]);
+      expect(await poolIds(subAuth)).toContain(id);
+      const offered = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect(offered.error).toBeNull();
+    });
+
+    it("counts a tick on the site itself", async () => {
+      const id = await seedRequest({ groupId: GROUP_SITE, date: utcDate(7) });
+      await setCoverage(subId, [SITE]);
+
+      expect(await poolIds(subAuth)).toContain(id);
+    });
+
+    it("shows a gedu who has ticked no area the online requests and none in person", async () => {
+      const online = await seedRequest({ date: utcDate(7) });
+      // An online municipality club carries a location; it still asks nothing.
+      const onlineMuni = await seedRequest({ groupId: GROUP_MUNI, date: utcDate(8) });
+      const inPerson = await seedRequest({ groupId: GROUP_SITE, date: utcDate(9) });
+      await setCoverage(subId, []);
+
+      const pool = await poolIds(subAuth);
+      expect(pool).toContain(online);
+      expect(pool).toContain(onlineMuni);
+      expect(pool).not.toContain(inPerson);
+    });
+
+    it("lets an admin seat a gedu whose areas miss the site", async () => {
+      await setCoverage(subId, []);
+
+      const { data, error } = await adminAuth.rpc("set_session_substitution", {
+        p_group_id: GROUP_SITE,
+        p_session_date: utcDate(5),
+        p_absent_gedu_id: TEST_IDS.GEDU,
+        p_sub_gedu_id: subId,
+        p_reason: "sick",
+      });
+      expect(error).toBeNull();
+      expect(substitutionRequestDocument.parse(data).substitute_id).toBe(subId);
+    });
+
+    it("answers the admin picker from the same predicate", async () => {
+      await setCoverage(subId, [TEST_IDS.LOCATION_COUNTRY]);
+      await setCoverage(thirdId, [TEST_IDS.LOCATION_SITE]);
+
+      const inPerson = await adminAuth.rpc("get_gedus_covering_product", {
+        p_product_id: SITE_PRODUCT,
+      });
+      expect(inPerson.error).toBeNull();
+      expect(inPerson.data).toContain(subId);
+      expect(inPerson.data).not.toContain(thirdId);
+
+      // Online, every gedu covers it, the one who ticked nothing included.
+      await setCoverage(thirdId, []);
+      const online = await adminAuth.rpc("get_gedus_covering_product", {
+        p_product_id: MUNI_PRODUCT,
+      });
+      expect(online.error).toBeNull();
+      expect(online.data).toEqual(expect.arrayContaining([subId, thirdId]));
     });
   });
 

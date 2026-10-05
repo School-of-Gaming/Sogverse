@@ -485,7 +485,10 @@ function Workspace({
 
   // What a sub seated from a card here has to bring — the picker and the
   // confirm warn about a gap, and neither refuses it.
-  const requirements = useMemo(() => sessionRequirements(product), [product]);
+  const requirements = useMemo(
+    () => sessionRequirements(product, product.locations?.name ?? null),
+    [product],
+  );
 
   // The attendance checklist takes id + first name and the instant from which
   // the seat counts as being in this group — the last of the three because a

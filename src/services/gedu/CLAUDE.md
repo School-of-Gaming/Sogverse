@@ -440,28 +440,34 @@ the app mirrors it in `src/lib/products/`; a DB test walking every type and tag 
 two in agreement, so a change to either is a change to both.
 
 **A session also requires its language**: the product's spoken language has to be among
-the gedu's own spoken languages. Together with the qualifications these are the session's
-*requirements*, and the two are treated identically everywhere below.
+the gedu's own spoken languages. **An in-person session also requires coverage**: one of
+the gedu's coverage ticks has to be its site or a place above it; an online session asks
+nothing of coverage. Together with the qualifications these are the session's
+*requirements*, and the three are treated identically everywhere below.
 
 **Rule: a session's requirements are a hard gate on substitution a gedu starts, and only
 a warning on what an admin does.** A gedu lacking a qualification the session's product
-requires, or not speaking its language, does not see its request in the pool and cannot
-offer on it, and the offer refuses each with a message of its own. A gedu who has listed
-no spoken language therefore sees an empty pool; that is accepted, not special-cased. An
+requires, not speaking its language, or not covering its site, does not see its request
+in the pool and cannot offer on it, and the offer refuses each with a message of its own.
+A gedu who has listed no spoken language therefore sees an empty pool, and one who has
+ticked no coverage area sees online sessions only; both are accepted, not special-cased. An
 admin assigning a gedu to a staff seat or seating a substitute is warned and may proceed;
 none of the admin writes asks. So each check is a predicate of its own and never a clause
 of the may-substitute predicate, which the admin writes share. Approving an offer is not
-even warned about: neither a qualification nor a spoken language is realistically taken
-away between an offer and its approval, so the case is not worth a check. A trainee seat
+even warned about: none of the three is realistically taken away between an offer and
+its approval, so the case is not worth a check. A trainee seat
 asks nothing, as with certification. Nothing else reads qualifications — certification
 stays the only blocking lever over an educator everywhere else.
 
 The admin gedu picker learns what a gedu holds and speaks from its row: the
 qualifications and spoken languages ride on the paged people read beside `certified`, for
-the same reason it does. A row falling short stays selectable and names each gap; the pick
-is then confirmed in a dialog carrying one warning line per missing qualification or
-language — the confirm the flow already asks where it has one (seating a sub), a dialog of
-its own only for a staff assignment.
+the same reason it does. Coverage cannot ride there, because whether a gedu covers a site
+depends on the product being staffed, so for an in-person product the picker asks the
+database which gedus cover it — the same predicate the pool asks — and draws its rows once
+both reads are in. A row falling short stays selectable and names each gap; the pick is
+then confirmed in a dialog carrying one warning line per missing requirement — the
+confirm the flow already asks where it has one (seating a sub), a dialog of its own only
+for a staff assignment.
 
 **Adding a qualification is a new `gedu_qualification` enum value plus its copy.** The
 app's list derives from the generated enum, in the enum's declared order; the admin
@@ -475,6 +481,9 @@ picker, with identical positive-selection semantics (one tick is one independent
 this subtree" claim; ticking a parent never touches its descendants). The editor wraps it
 with a Save button (immediate `gedu_locations` mutation); the register form collects the
 selection into the atomic `register_gedu` call instead.
+
+What the ticks are for is told to the gedu beside the field: on-site substitution requests
+reach a gedu only inside their coverage areas (Qualifications, above).
 
 Both hold ticks as `locations` row ids, because the picker browses that table and a
 ticked node is already a row. Nothing is resolved at commit, and there is no claim the

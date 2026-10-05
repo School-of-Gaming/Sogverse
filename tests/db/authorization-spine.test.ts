@@ -200,6 +200,9 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // id, so a permitted admin gets a document — empty or not — rather than a
   // second refusal, and every other role is stopped by the guard.
   get_admin_substitution_requests: { permittedRoles: ["admin"] },
+  // The admin gedu picker's coverage answer. A NULL product is an unknown one,
+  // so a permitted admin gets an empty array back rather than an error.
+  get_gedus_covering_product: { permittedRoles: ["admin"] },
 
   // --- session cancellation ------------------------------------------------
   //

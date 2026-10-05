@@ -155,6 +155,14 @@ describe("substitutionOfferFailureKey", () => {
     ).toBe("poolOfferFailedLanguage");
   });
 
+  it("names a site outside the gedu's coverage areas, apart from the other two", () => {
+    expect(
+      substitutionOfferFailureKey(
+        refusal("42501", "this gedu does not cover the site this session is run at"),
+      ),
+    ).toBe("poolOfferFailedCoverage");
+  });
+
   it("leaves the may-substitute refusal and everything else on the generic line", () => {
     // The same SQLSTATE without the phrase is the may-substitute guard, which
     // says nothing about why; a closed request and a network failure likewise.
