@@ -19,8 +19,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  * - **Anything that is not a public photo is one 404**, whether the folder
  *   shows nothing (hidden, not yet public, not staff, no one) or the object
  *   vanishes between the listing and the download.
- * - **The cache header is pinned**: five minutes, public, no stale serving —
- *   the longest a hidden profile's photo keeps showing.
+ * - **The cache header is pinned**: a year, immutable, for an address that
+ *   names a version of the photo, which is every address the app renders; five
+ *   minutes, public, no stale serving, for one that names none, which must not
+ *   pin today's photo for a year.
  * - **Only a JPEG or a WebP is served, sandboxed.** The route is outside the
  *   proxy and so outside the app's CSP; a stored SVG echoed as one would run
  *   script from our origin.
@@ -174,14 +176,26 @@ describe("GET /api/team/photos/[userId]", () => {
 
   // -- The cache --
 
-  it("is publicly cacheable for five minutes, with no stale serving", async () => {
+  it("caches a versioned address publicly for a year, immutable", async () => {
     const response = await GET(...photoRequest(USER_ID));
 
     expect(response.headers.get("Cache-Control")).toBe(
-      "public, max-age=300, s-maxage=300",
+      "public, max-age=31536000, immutable",
     );
     expect(response.headers.get("Set-Cookie")).toBeNull();
   });
+
+  it.each(["", "?v="])(
+    "caches an address naming no version (%j) for five minutes, with no stale serving",
+    async (query) => {
+      const response = await GET(...photoRequest(USER_ID, query));
+
+      expect(response.headers.get("Cache-Control")).toBe(
+        "public, max-age=300, s-maxage=300",
+      );
+      expect(response.headers.get("Set-Cookie")).toBeNull();
+    },
+  );
 
   // -- One 404 for everything that is not a public photo --
 

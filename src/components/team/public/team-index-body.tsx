@@ -28,6 +28,10 @@ export interface TeamIndexMember {
  *
  * Two columns on a phone, so a 4:5 portrait is a face rather than a screen;
  * three from `sm`, four from `lg`.
+ *
+ * **The first `EAGER_CARDS` cards on the page load their photos at once**,
+ * counted across both groups in page order; the rest load as they near the
+ * screen.
  */
 export function TeamIndexBody({ members }: { members: readonly TeamIndexMember[] }) {
   const t = useTranslations("team.public.index");
@@ -59,8 +63,16 @@ export function TeamIndexBody({ members }: { members: readonly TeamIndexMember[]
         </div>
       ) : (
         <>
-          <TeamGroup heading={t("leadership")} members={leadership} />
-          <TeamGroup heading={t("gameEducators")} members={educators} />
+          <TeamGroup
+            heading={t("leadership")}
+            members={leadership}
+            eagerCount={EAGER_CARDS}
+          />
+          <TeamGroup
+            heading={t("gameEducators")}
+            members={educators}
+            eagerCount={Math.max(0, EAGER_CARDS - leadership.length)}
+          />
         </>
       )}
 
@@ -69,12 +81,23 @@ export function TeamIndexBody({ members }: { members: readonly TeamIndexMember[]
   );
 }
 
+/**
+ * How many cards, from the top of the page, load their photos at once: the
+ * widest row, four from `lg`, so it covers the first row at every width:
+ * three from `sm` and one more, two rows of two on a phone. Past it, an eager
+ * load would compete with the photos the reader is looking at.
+ */
+const EAGER_CARDS = 4;
+
 function TeamGroup({
   heading,
   members,
+  eagerCount,
 }: {
   heading: string;
   members: readonly TeamIndexMember[];
+  /** How many of this group's first cards load their photos at once. */
+  eagerCount: number;
 }) {
   const headingId = useId();
   if (members.length === 0) return null;
@@ -84,9 +107,13 @@ function TeamGroup({
         {heading}
       </h2>
       <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-4">
-        {members.map(({ profile, href }) => (
+        {members.map(({ profile, href }, index) => (
           <li key={profile.id}>
-            <TeamMemberCard profile={profile} href={href} />
+            <TeamMemberCard
+              profile={profile}
+              href={href}
+              eager={index < eagerCount}
+            />
           </li>
         ))}
       </ul>

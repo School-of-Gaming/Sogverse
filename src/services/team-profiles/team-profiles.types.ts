@@ -26,6 +26,9 @@ export const TEAM_PHOTO_HEIGHT = 1000;
  */
 export const TEAM_PHOTO_URL_TTL_SECONDS = 60 * 60;
 
+/** The app's own route the public photos are served from. */
+const PUBLIC_TEAM_PHOTO_PATH = "/api/team/photos/";
+
 /**
  * The address a public profile's photo is served from: the app's own route,
  * which serves a photo only while its profile is public. `version` is the
@@ -34,7 +37,17 @@ export const TEAM_PHOTO_URL_TTL_SECONDS = 60 * 60;
  * one under it.
  */
 export function publicTeamPhotoUrl(userId: string, version: string): string {
-  return `/api/team/photos/${encodeURIComponent(userId)}?v=${encodeURIComponent(version)}`;
+  return `${PUBLIC_TEAM_PHOTO_PATH}${encodeURIComponent(userId)}?v=${encodeURIComponent(version)}`;
+}
+
+/**
+ * Is this photo address the public route's? Only that address may go through
+ * the image optimiser: the editor's photos are a signed URL to a private
+ * object or a local object URL, and neither may be cached under an address
+ * anyone can hold.
+ */
+export function isPublicTeamPhotoUrl(src: string): boolean {
+  return src.startsWith(PUBLIC_TEAM_PHOTO_PATH);
 }
 
 /**

@@ -13,10 +13,10 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { MAX_INPUT_PIXELS } from "@/lib/images/reencode-jpeg.server";
 import { cardLocaleOf, OG_CARD_SIZE } from "@/lib/og/cards";
 import {
-  TEAM_CARD_CACHE_CONTROL,
   TEAM_CARD_COLUMN_WIDTH,
   TEAM_CARD_HEADLINE_SIZE,
   TEAM_CARD_LAYOUT,
+  teamCardCacheControl,
   teamCardFrame,
 } from "@/lib/og/team-card";
 // The modules directly rather than the feature barrel: the barrel carries
@@ -47,10 +47,10 @@ import {
  * (a request from the server to itself, on the request a crawler is waiting
  * on).
  *
- * `v` (`teamCardVersion`) is ignored here: it exists to make a changed card a
- * new address, and the card drawn is always the profile as it is now. The
- * cache is the photo's five minutes rather than the site cards' year, for the
- * reason at `TEAM_CARD_CACHE_CONTROL`.
+ * `v` (`teamCardVersion`) decides only the caching: it exists to make a
+ * changed card a new address, so a versioned card is cached for the site
+ * cards' year and an unversioned one briefly (`teamCardCacheControl`). The
+ * card drawn is always the profile as it is now.
  */
 /**
  * The photo as the card draws it: a JPEG of the stored 4:5 size, covering the
@@ -253,7 +253,11 @@ export async function GET(
     {
       ...OG_CARD_SIZE,
       fonts,
-      headers: { "Cache-Control": TEAM_CARD_CACHE_CONTROL },
+      headers: {
+        "Cache-Control": teamCardCacheControl(
+          Boolean(new URL(request.url).searchParams.get("v")),
+        ),
+      },
     },
   );
 }

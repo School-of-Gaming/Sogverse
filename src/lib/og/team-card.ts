@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { PICKS } from "@sog/ui";
 import { DARK_THEME } from "@/lib/constants/colors";
 import type { SupportedLocale } from "@/lib/constants/locales";
+import { OG_CARD_CACHE_CONTROL } from "@/lib/og/cards";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 
@@ -11,7 +12,8 @@ import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
  * `src/app/opengraph-images/team/[userId]/route.tsx`; it shares the site
  * cards' shape (`./cards`) — a root-level route handler the proxy's matcher
  * excludes, the locale as a query parameter — and differs from them in one
- * thing, its caching, for the reason given at `TEAM_CARD_CACHE_CONTROL`.
+ * thing, the version its address carries, which its caching keys on
+ * (`teamCardCacheControl`).
  */
 
 /** The path the card of the person with this id is served at. */
@@ -66,16 +68,20 @@ export function teamCardUrl(
 }
 
 /**
- * **Five minutes, public, no stale serving — the photo route's own posture**,
- * not the site cards' year. The card embeds the person's photo, and a public
- * photo's promise is that a profile taken down stops showing its face within
- * five minutes (`src/app/api/team/photos/[userId]/route.ts`). A card cached for
- * a year would carry the face past that under an address anyone can hold, so
- * it inherits the photo's limit. The versioned URL is what keeps the short
- * cache cheap: an unchanged card is still one URL, re-drawn at most once per
- * five minutes per cache, and a changed one is a new URL at once.
+ * **The photo route's own posture** (`src/app/api/team/photos/[userId]/route.ts`):
+ * a versioned card is cached for a year, immutable, like the site cards, and
+ * one asked for without `v` for five minutes, with no stale serving. The
+ * version covers everything the card shows that a profile can change, so a
+ * changed card is a new URL at once. A hidden profile's card may go on serving
+ * from a cache, as its photo may (owner ruling, 2026-10-05): hiding takes the
+ * person off the Team page and their profile page, and the page that pointed
+ * at the card with it.
  */
-export const TEAM_CARD_CACHE_CONTROL = "public, max-age=300, s-maxage=300";
+export function teamCardCacheControl(versioned: boolean): string {
+  return versioned
+    ? OG_CARD_CACHE_CONTROL
+    : "public, max-age=300, s-maxage=300";
+}
 
 /**
  * **The card's layout, in pixels of its 1200×630.** The text column's width is

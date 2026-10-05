@@ -102,10 +102,15 @@ export function TeamProfileBody({
     <div className="@container">
       <article className="mx-auto w-full max-w-3xl px-4 py-8 @min-[40rem]:px-6 @min-[40rem]:py-12">
         <header className="flex flex-col gap-6 @min-[40rem]:flex-row @min-[40rem]:items-center @min-[40rem]:gap-8">
+          {/* The frame's two widths. The step is a container query, and on
+              the public page the container spans the viewport, so the
+              viewport's 640px stands in for it; in the editor's narrower
+              preview the photo is never optimised and `sizes` picks nothing. */}
           <TeamPortrait
             photo={profile.photo}
             pick={profile.pick}
-            priority
+            sizes="(min-width: 640px) 192px, 144px"
+            loading="preload"
             className="w-36 shrink-0 @min-[40rem]:w-48"
           />
           <div className="min-w-0 flex-1">

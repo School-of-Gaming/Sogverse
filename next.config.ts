@@ -145,6 +145,19 @@ const nextConfig: NextConfig = {
       // thumbnails is the real delivery cost of the feature.
       bucketPattern("session-images"),
     ],
+    // The local addresses the optimizer may fetch. Declaring any replaces
+    // Next's default, which is the first entry: every local path, with no
+    // query string. Next appends the statically imported images' own folders
+    // to whatever is declared, so the Home and About stills need no entry.
+    localPatterns: [
+      { pathname: "**", search: "" },
+      // Public team photos, through the app's own route. The version token
+      // `?v=` is part of the address, so the query is left open (`search`
+      // matches a query exactly or not at all). An address is the photo at one
+      // version and the route caches it for a year; the owner's ruling of
+      // 2026-10-05 lets a hidden profile's photo go on serving from a cache.
+      { pathname: "/api/team/photos/**" },
+    ],
     // WebP only — AVIF was weighed and rejected (owner decision, 2026-08-18).
     // AVIF saves a further ~20–30% over WebP but its encode is far slower, and
     // the encode is paid synchronously by the FIRST visitor to each
@@ -179,6 +192,11 @@ const nextConfig: NextConfig = {
     // object — harmless, because nothing renders a photo whose row is gone, and
     // the acceptance criterion for deletion is stated against the raw bucket
     // URL rather than an optimizer variant.
+    //
+    // A team photo's address carries its version, which changes whenever the
+    // photo does, so a replaced photo is a new address and a miss. A hidden
+    // profile's photo can outlive the hiding in this cache, which the owner
+    // accepted (ruling of 2026-10-05).
     minimumCacheTTL: 31_536_000,
   },
   async headers() {

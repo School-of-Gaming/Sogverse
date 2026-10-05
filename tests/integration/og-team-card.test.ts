@@ -62,8 +62,8 @@ const { GET } = await import("@/app/opengraph-images/team/[userId]/route");
  *
  * What is pinned is everything around the picture: the card reads as anon,
  * draws only a public profile and answers 404 for everything else, and is
- * cached for the photo's five minutes rather than the site cards' year. The
- * pixels are not asserted (see `og-cards.test.ts`).
+ * cached as the photo is: a year at a versioned address, five minutes at one
+ * naming no version. The pixels are not asserted (see `og-cards.test.ts`).
  */
 
 const USER_ID = "3c3ca18c-c44b-40df-86f7-98ad3e277aba";
@@ -120,15 +120,25 @@ describe("GET /opengraph-images/team/[userId]", () => {
     mockDownload.mockResolvedValue({ data: await photo("jpeg"), error: null });
   });
 
-  it("draws a public Gedu's card as a PNG, cached for the photo's five minutes", async () => {
+  it("draws a public Gedu's card as a PNG, cached for a year at its versioned address", async () => {
     const response = await card(USER_ID);
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("image/png");
     expect(response.headers.get("cache-control")).toBe(
-      "public, max-age=300, s-maxage=300",
+      "public, max-age=31536000, immutable",
     );
     expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(0);
+  });
+
+  it("caches a card asked for without a version for five minutes, with no stale serving", async () => {
+    const response = await card(USER_ID, "?locale=en");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe(
+      "public, max-age=300, s-maxage=300",
+    );
+    await response.arrayBuffer();
   });
 
   it("draws a leader's card, and one whose photo is a WebP", async () => {
