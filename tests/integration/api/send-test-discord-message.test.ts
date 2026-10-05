@@ -71,6 +71,9 @@ const validBody = { profileId: PROFILE_ID, content: "Hello from Sogverse" };
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // clearAllMocks leaves queued once-answers in place, and the refusal cases
+  // never reach Discord — reset so each case starts from its own two answers.
+  mockFetch.mockReset();
   vi.spyOn(console, "error").mockImplementation(() => {});
   signedInAs("admin");
   mockMaybeSingle.mockResolvedValue({
