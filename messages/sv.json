@@ -1465,7 +1465,10 @@
         "saving": "Sparar…",
         "error": "Det gick inte att uppdatera certifieringen. Försök igen."
       },
-      "usernameLabel": "Användarnamn"
+      "usernameLabel": "Användarnamn",
+      "discordLabel": "Discord",
+      "discordLinked": "@{username} · kopplat {date}",
+      "discordNotLinked": "Inte kopplat"
     },
     "locations": {
       "editName": "Redigera {name}",
@@ -3614,6 +3617,12 @@
     "verificationEmailSent": "Verifieringsmejlet är skickat – kolla din inkorg.",
     "verificationEmailRateLimited": "Du har begärt det här mejlet för många gånger. Vänta en liten stund innan du försöker igen.",
     "verificationEmailFailed": "Vi kunde inte skicka verifieringsmejlet. Försök igen.",
+    "discord": {
+      "label": "Discord",
+      "notLinked": "Inte kopplat",
+      "linkHint": "Koppla ditt Discord-konto genom att skriva /link på School of Gamings Discord-server och öppna länken som boten skickar dig.",
+      "relinkHint": "Koppla ett annat Discord-konto genom att skriva /link från det kontot på School of Gamings Discord-server och öppna länken som boten skickar dig."
+    },
     "marketing": {
       "title": "Marknadsföringsinställningar",
       "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",

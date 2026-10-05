@@ -1465,7 +1465,10 @@
         "saving": "Saving…",
         "error": "Couldn’t update certification. Please try again."
       },
-      "usernameLabel": "Username"
+      "usernameLabel": "Username",
+      "discordLabel": "Discord",
+      "discordLinked": "@{username} · linked {date}",
+      "discordNotLinked": "Not linked"
     },
     "locations": {
       "editName": "Edit {name}",
@@ -4301,6 +4304,12 @@
     "verificationEmailSent": "Verification email sent — check your inbox.",
     "verificationEmailRateLimited": "You’ve asked for this too many times. Please wait a little while before trying again.",
     "verificationEmailFailed": "We couldn’t send the verification email. Please try again.",
+    "discord": {
+      "label": "Discord",
+      "notLinked": "Not linked",
+      "linkHint": "To link your Discord account, type /link in the School of Gaming Discord server and open the link the bot sends you.",
+      "relinkHint": "To link a different Discord account, type /link from that account in the School of Gaming Discord server and open the link the bot sends you."
+    },
     "marketing": {
       "title": "Marketing preferences",
       "schoolOfGaming": "School of Gaming may send me news and offers by email.",

@@ -1465,7 +1465,10 @@
         "saving": "Tallennetaan…",
         "error": "Hyväksynnän päivitys epäonnistui. Yritä uudelleen."
       },
-      "usernameLabel": "Käyttäjätunnus"
+      "usernameLabel": "Käyttäjätunnus",
+      "discordLabel": "Discord",
+      "discordLinked": "@{username} · yhdistetty {date}",
+      "discordNotLinked": "Ei yhdistetty"
     },
     "locations": {
       "editName": "Muokkaa: {name}",
@@ -3614,6 +3617,12 @@
     "verificationEmailSent": "Vahvistusviesti lähetetty – tarkista sähköpostisi.",
     "verificationEmailRateLimited": "Olet pyytänyt vahvistusviestiä liian monta kertaa. Odota hetki, ennen kuin yrität uudelleen.",
     "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen.",
+    "discord": {
+      "label": "Discord",
+      "notLinked": "Ei yhdistetty",
+      "linkHint": "Yhdistä Discord-tilisi kirjoittamalla /link School of Gamingin Discord-palvelimella ja avaamalla linkin, jonka botti lähettää sinulle.",
+      "relinkHint": "Voit yhdistää toisen Discord-tilin kirjoittamalla /link sillä tilillä School of Gamingin Discord-palvelimella ja avaamalla linkin, jonka botti lähettää sinulle."
+    },
     "marketing": {
       "title": "Markkinointiasetukset",
       "schoolOfGaming": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",

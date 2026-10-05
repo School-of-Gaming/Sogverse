@@ -36,6 +36,10 @@ import {
 // pull in as client references.
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
+import {
+  DiscordLinkService,
+  type DiscordLinkSummary,
+} from "@/services/discord-link/discord-link.service";
 import type { TeamProfileRecord } from "@/services/team-profiles/team-profiles.types";
 import { UserTeamProfileCard } from "@/components/admin/user-team-profile-card";
 import { teamMemberPublicAddress } from "@/components/team/team-address";
@@ -185,6 +189,8 @@ export default async function AdminUserDetailPage({
   const isGedu = profile.role === "gedu";
   // The two roles with a public team profile: office staff and Gedus.
   const hasTeamProfile = isGedu || profile.role === "admin";
+  // The same two roles, and the only ones that can link a Discord account.
+  const canLinkDiscord = isGedu || profile.role === "admin";
 
   // Game identities belong to the people who play — a child, and the educator
   // running the session. A parent's or another admin's account has none, which
@@ -214,6 +220,7 @@ export default async function AdminUserDetailPage({
     geduAcceptances,
     { record: teamProfile, publicAddress: teamProfileAddress },
     viewer,
+    discordLink,
   ] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
@@ -252,6 +259,12 @@ export default async function AdminUserDetailPage({
     // Who is looking, so the card can send an admin to their own profile
     // through settings. Cached for the request: the layout has read it.
     hasTeamProfile ? getUserWithProfile() : Promise.resolve(null),
+    // At most one row, by primary key; admin RLS permits the cross-user read.
+    // Not caught, for the team profile's reason: a failed read shown as "not
+    // linked" would be the wrong answer.
+    canLinkDiscord
+      ? new DiscordLinkService(supabase).getLink(userId)
+      : Promise.resolve<DiscordLinkSummary | null>(null),
   ]);
 
   // Products this user is assigned to. For a gamer, their own participations;
@@ -347,6 +360,27 @@ export default async function AdminUserDetailPage({
                 initialProfile={profile}
                 editable={!isGamer}
               />
+            )}
+            {/* The linked Discord account, for the two roles that can link
+                one. Read-only: only its holder links it, from Discord. Styled
+                as the username line above, the other labelled sign-in fact. */}
+            {canLinkDiscord && (
+              <p className="flex items-baseline gap-1.5 text-muted-foreground">
+                <span className="text-[10px] uppercase tracking-wide">
+                  {t("discordLabel")}
+                </span>
+                <span>
+                  {discordLink
+                    ? t("discordLinked", {
+                        username: discordLink.discord_username,
+                        date: formatDate(discordLink.linked_at, locale, {
+                          dateStyle: "medium",
+                          timeZone,
+                        }),
+                      })
+                    : t("discordNotLinked")}
+                </span>
+              </p>
             )}
             {/* Age and gender, with a pencil that opens their editor — which
                 also edits the child's email address or username where their

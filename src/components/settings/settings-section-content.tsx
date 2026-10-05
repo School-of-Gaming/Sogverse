@@ -69,6 +69,9 @@ const NO_MARKETING_CONSENTS: readonly MarketingConsent[] = [];
  */
 const GAMER_USERNAME_FIELD_ID = "settings-gamer-username";
 
+/** The Discord row's id, a constant for the same reason as the one above. */
+const DISCORD_FIELD_ID = "settings-discord";
+
 /**
  * A keyed location read, as the picker's own value shape. The two are already
  * the same information — a row plus its ancestors, nearest first — so this only
@@ -84,7 +87,18 @@ export function SettingsSectionContent({
   gamerSignIn,
   photoConsentGranted = false,
   mcpServerUrl,
+  discordUsername,
 }: {
+  /**
+   * The Discord username this account has linked, read by the route; `null`
+   * when it has linked none.
+   *
+   * **Absent means "neither an admin nor a Gedu"**, the same way
+   * `mcpServerUrl`'s absence means "not an admin": only staff link a Discord
+   * account, the route reads the link only for them, and so its presence is the
+   * role test the field renders on.
+   */
+  discordUsername?: string | null;
   /**
    * This environment's MCP endpoint, built by the route on the request's
    * trusted origin.
@@ -690,6 +704,32 @@ export function SettingsSectionContent({
                     </StatusLine>
                   )}
                 </div>
+              )}
+            </Field>
+          )}
+
+          {/* Read-only like the address above it: the link is made from
+              Discord, by the bot's /link command, so the sentence under the
+              field says how rather than offering a control here. */}
+          {discordUsername !== undefined && (
+            <Field
+              label={t('discord.label')}
+              htmlFor={DISCORD_FIELD_ID}
+              hint={
+                discordUsername === null
+                  ? t('discord.linkHint')
+                  : t('discord.relinkHint')
+              }
+            >
+              {({ hintId }) => (
+                <Input
+                  id={DISCORD_FIELD_ID}
+                  value={discordUsername === null ? "" : `@${discordUsername}`}
+                  placeholder={t('discord.notLinked')}
+                  disabled
+                  className="bg-lifted"
+                  aria-describedby={hintId}
+                />
               )}
             </Field>
           )}

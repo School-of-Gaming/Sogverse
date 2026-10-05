@@ -1509,7 +1509,10 @@
         "saving": "vISaH...",
         "error": "patlh choHlu’be’pu’. yInID."
       },
-      "usernameLabel": "pong"
+      "usernameLabel": "pong",
+      "discordLabel": "Discord",
+      "discordLinked": "@{username} · rarlu'pu' {date}",
+      "discordNotLinked": "rarlu'be'"
     },
     "locations": {
       "editName": "{name} yIchoH",
@@ -3654,6 +3657,12 @@
     "verificationEmailSent": "ngeHlu’pu’ QIn — QIn tepqengwI’lIj yIbej.",
     "verificationEmailRateLimited": "law’qu’ Datlhobpu’! yIloS. tugh yInID je.",
     "verificationEmailFailed": "QIn ngeHlu’be’pu’. yInID.",
+    "discord": {
+      "label": "Discord",
+      "notLinked": "rarlu'be'",
+      "linkHint": "Discord ghItlhlIj DararmeH, School of Gaming Discord Daq /link yIlo'. vaj ghItlh ngeHbogh bot yIpoSmoH.",
+      "relinkHint": "Discord ghItlh latlh DararmeH, ghItlhvam vo' School of Gaming Discord Daq /link yIlo'. vaj ghItlh ngeHbogh bot yIpoSmoH."
+    },
     "marketing": {
       "title": "QIn chaw’mey",
       "schoolOfGaming": "noH Quj yejHaD QIn HevmeH vIchaw’.",

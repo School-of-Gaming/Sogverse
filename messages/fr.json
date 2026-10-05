@@ -1465,7 +1465,10 @@
         "saving": "Enregistrement…",
         "error": "Impossible de mettre à jour la certification. Veuillez réessayer."
       },
-      "usernameLabel": "Identifiant"
+      "usernameLabel": "Identifiant",
+      "discordLabel": "Discord",
+      "discordLinked": "@{username} · associé le {date}",
+      "discordNotLinked": "Non associé"
     },
     "locations": {
       "editName": "Modifier {name}",
@@ -3614,6 +3617,12 @@
     "verificationEmailSent": "E-mail de vérification envoyé — consultez votre boîte de réception.",
     "verificationEmailRateLimited": "Vous avez demandé cet e-mail trop de fois. Veuillez patienter un moment avant de réessayer.",
     "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer.",
+    "discord": {
+      "label": "Discord",
+      "notLinked": "Non associé",
+      "linkHint": "Pour associer votre compte Discord, tapez /link sur le serveur Discord de School of Gaming et ouvrez le lien que le bot vous envoie.",
+      "relinkHint": "Pour associer un autre compte Discord, tapez /link depuis ce compte sur le serveur Discord de School of Gaming et ouvrez le lien que le bot vous envoie."
+    },
     "marketing": {
       "title": "Préférences marketing",
       "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
