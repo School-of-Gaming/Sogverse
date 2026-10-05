@@ -30,8 +30,8 @@ export function teamCardPath(userId: string): string {
  *
  * It exists for the caches we do not control. A link preview stores the image
  * under its URL, often for weeks, and ignores our headers; a new URL is the
- * only thing that makes it fetch again. The route itself ignores the value and
- * draws whatever the profile says now.
+ * only thing that makes it fetch again. The value decides only the caching; the
+ * card drawn is always the profile as it is now.
  */
 export function teamCardVersion(
   person: TeamProfile,
@@ -68,9 +68,11 @@ export function teamCardUrl(
 }
 
 /**
- * **The photo route's own posture** (`src/app/api/team/photos/[userId]/route.ts`):
- * a versioned card is cached for a year, immutable, like the site cards, and
- * one asked for without `v` for five minutes, with no stale serving. The
+ * **The card's cache**: a versioned card is cached for a year, immutable, like
+ * the site cards, and one asked for without `v` for five minutes, with no
+ * stale serving. The card, unlike the photo route
+ * (`src/app/api/team/photos/[userId]/route.ts`), still answers any `v`: it
+ * draws the profile as it is now and its `v` is a card digest. The
  * version covers everything the card shows that a profile can change, so a
  * changed card is a new URL at once. A hidden profile's card may go on serving
  * from a cache, as its photo may (owner ruling, 2026-10-05): hiding takes the

@@ -154,7 +154,9 @@ const nextConfig: NextConfig = {
       // Public team photos, through the app's own route. The version token
       // `?v=` is part of the address, so the query is left open (`search`
       // matches a query exactly or not at all). An address is the photo at one
-      // version and the route caches it for a year; the owner's ruling of
+      // version: the route serves only the current one, for a year, and
+      // answers 404 for a stale or missing `v`, so the optimiser can never
+      // hold a photo under another version's key. The owner's ruling of
       // 2026-10-05 lets a hidden profile's photo go on serving from a cache.
       { pathname: "/api/team/photos/**" },
     ],

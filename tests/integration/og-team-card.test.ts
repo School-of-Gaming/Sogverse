@@ -62,8 +62,8 @@ const { GET } = await import("@/app/opengraph-images/team/[userId]/route");
  *
  * What is pinned is everything around the picture: the card reads as anon,
  * draws only a public profile and answers 404 for everything else, and is
- * cached as the photo is: a year at a versioned address, five minutes at one
- * naming no version. The pixels are not asserted (see `og-cards.test.ts`).
+ * cached for a year at a versioned address and five minutes at one naming no
+ * version. The pixels are not asserted (see `og-cards.test.ts`).
  */
 
 const USER_ID = "3c3ca18c-c44b-40df-86f7-98ad3e277aba";
