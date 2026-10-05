@@ -251,6 +251,7 @@ const TESTS = {
   seatOfferSweep: "tests/integration/api/admin-seat-offers-sweep.test.ts",
   seatOfferInApp: "tests/integration/api/participations-seat-offer.test.ts",
   teamPhotos: "tests/integration/api/team-photos.test.ts",
+  sendTestDiscordMessage: "tests/integration/api/send-test-discord-message.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   signout: "tests/integration/auth/signout.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
@@ -490,6 +491,16 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "createProductData" },
         test: TESTS.productsCreate,
+      },
+    },
+  },
+
+  "src/app/api/admin/send-test-discord-message/route.ts": {
+    handlers: {
+      POST: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "sendTestDiscordMessageBody" },
+        test: TESTS.sendTestDiscordMessage,
       },
     },
   },
