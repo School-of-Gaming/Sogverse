@@ -109,6 +109,24 @@ CREATE TYPE public.gender_type AS ENUM (
 
 
 --
+-- Name: invoice_billing_cadence; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.invoice_billing_cadence AS ENUM (
+    'monthly',
+    'quarterly',
+    'half_yearly'
+);
+
+
+--
+-- Name: TYPE invoice_billing_cadence; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.invoice_billing_cadence IS 'How often an invoice customer is invoiced: every calendar month, every calendar quarter (Jan–Mar, Apr–Jun, Jul–Sep, Oct–Dec), or every calendar half-year (Jan–Jun, Jul–Dec). A period is a run of whole calendar months, and its invoice is produced in the period''s last month.';
+
+
+--
 -- Name: library_article_category; Type: TYPE; Schema: public; Owner: -
 --
 

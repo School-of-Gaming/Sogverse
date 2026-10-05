@@ -1,4 +1,14 @@
 import { z } from "zod";
+import { Constants } from "@/types";
+
+/**
+ * How often a customer is invoiced — monthly, quarterly or half-yearly, every
+ * period calendar-aligned. Derived from the generated enum so a new cadence is
+ * a codegen change rather than a second list to keep in step.
+ */
+export const invoiceBillingCadence = z.enum(
+  Constants.public.Enums.invoice_billing_cadence,
+);
 
 /**
  * Contracts for the Fennoa invoice customers — the buyers a municipality club's
@@ -45,6 +55,11 @@ export const invoiceCustomerRow = z.object({
   your_reference: z.string().nullable(),
   /** Extra free text the customer wants on every invoice. Null for most. */
   invoice_text: z.string().nullable(),
+  /**
+   * How often the customer is invoiced. Decides whether a month's file is the
+   * month's own, or one invoice covering a whole quarter or half-year.
+   */
+  billing_cadence: invoiceBillingCadence,
 });
 
 /** One customer as every reader of this feature deals with it. */
@@ -61,7 +76,7 @@ export type InvoiceCustomerRow = z.infer<typeof invoiceCustomerRow>;
  * and the read cannot quietly widen.
  */
 export const INVOICE_CUSTOMER_COLUMNS =
-  "id, fennoa_customer_no, invoice_name, street, postal_code, city, country_code, your_reference, invoice_text";
+  "id, fennoa_customer_no, invoice_name, street, postal_code, city, country_code, your_reference, invoice_text, billing_cadence";
 
 /**
  * A required address field: trimmed, and non-empty once trimmed.
@@ -118,6 +133,10 @@ export const invoiceCustomerInput = z.object({
     .regex(/^[A-Z]{2}$/, "Use a two-letter country code, e.g. FI"),
   your_reference: optionalField,
   invoice_text: optionalField,
+  // Required like every other field: the update assigns it on every call and
+  // the function has no default for it, so leaving it out is refused rather
+  // than quietly resetting a quarterly customer to monthly.
+  billing_cadence: invoiceBillingCadence,
 });
 
 /**

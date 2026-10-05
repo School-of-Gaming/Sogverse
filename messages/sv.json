@@ -437,7 +437,7 @@
       "emptyMonth": "Ingen kommunklubb har något registrerat eller inplanerat den här månaden.",
       "excludedClubs": "{count, plural, one {Exklusive # klubb utan avgift} other {Exklusive # klubbar utan avgift}}",
       "feeNotSet": "Avgift saknas",
-      "notRecorded": "Inte registrerat",
+      "billedNotRecorded": "Fakturerat, inte registrerat",
       "upcoming": "Kommande",
       "cancelled": "Inställt",
       "unrecordedSessions": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
@@ -447,7 +447,16 @@
       "customerNotSet": "Faktureringskund saknas",
       "downloadInvoiceFor": "Ladda ner Finvoice-filen för {customer}",
       "fileBlockedByFee": "{count, plural, one {Ingen fil: # klubb hölls utan avgift} other {Ingen fil: # klubbar hölls utan avgift}}",
-      "fileBlockedByNothingToInvoice": "Ingen fil: inget registrerat",
+      "fileBlockedByNothingToInvoice": "Ingen fil: inget att fakturera",
+      "downloadPeriodInvoiceFor": "Ladda ner Finvoice-filen för {period} {year} för {customer}",
+      "periodFile": "{period} · {total}",
+      "invoicedInMonth": "{cadence} · faktureras i {month}",
+      "periodNotRead": "Resten av perioden läses in",
+      "periodBlockedByFee": "{count, plural, one {Ingen fil: # klubb hölls utan avgift i {month}} other {Ingen fil: # klubbar hölls utan avgift i {month}}}",
+      "periodBlockedByNothingToInvoice": "Ingen fil: inget att fakturera för {period}",
+      "quarterName": "K{ordinal}",
+      "halfYearName": "H{ordinal}",
+      "periodFilesWithoutClub": "Perioder som slutar den här månaden, för kunder utan klubb den här månaden",
       "loadError": "Det gick inte att läsa in faktureringsmånaden. Uppdatera sidan och försök igen.",
       "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen."
     },
@@ -459,7 +468,8 @@
         "number": "Fennoa-nr",
         "invoiceName": "Fakturanamn",
         "city": "Ort",
-        "reference": "Referens"
+        "reference": "Referens",
+        "billingCadence": "Faktureras"
       },
       "hasReference": "Har en referens",
       "noReference": "Ingen referens",
@@ -481,13 +491,20 @@
         "city": "Ort",
         "country": "Land",
         "yourReference": "Er referens",
-        "invoiceText": "Fakturatext"
+        "invoiceText": "Fakturatext",
+        "billingCadence": "Faktureringsintervall"
       },
       "hints": {
         "number": "Numret på kundens kort i Fennoa, till exempel F0037. Fennoa kopplar en importerad faktura till kunden med det här numret.",
         "invoiceName": "Exakt som det står på kundkortet i Fennoa.",
         "yourReference": "Ett inköpsordernummer eller en kontaktperson som kunden vill ha på varje faktura.",
-        "invoiceText": "Extra rader högst upp i fakturatexten, till exempel en hänvisning till ramavtalet. Ren text – den når fakturan precis som den skrivs."
+        "invoiceText": "Extra rader högst upp i fakturatexten, till exempel en hänvisning till ramavtalet. Ren text – den når fakturan precis som den skrivs.",
+        "billingCadence": "Hur ofta kunden faktureras. För en kund som faktureras kvartalsvis eller halvårsvis täcker fakturan hela kalenderperioden och laddas ner från faktureringssidan under periodens sista månad."
+      },
+      "cadence": {
+        "monthly": "Månadsvis",
+        "quarterly": "Kvartalsvis",
+        "halfYearly": "Halvårsvis"
       },
       "errors": {
         "required": "{field} måste fyllas i.",

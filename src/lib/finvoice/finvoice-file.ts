@@ -9,7 +9,8 @@
  */
 
 /**
- * `GET /api/admin/municipality-invoicing/finvoice?month=…&customer=…`
+ * `GET /api/admin/municipality-invoicing/finvoice?month=…&customer=…` — for a
+ * period customer, `month` is the period's last.
  *
  * A bare path, not the app's wrapped `Link`: an API response has no locale, and
  * the proxy's locale ladder carves `/api/*` out for exactly that reason.
@@ -23,7 +24,9 @@ export function finvoiceHref(monthStart: string, customerId: string): string {
 }
 
 /**
- * `invoice_202605_F0204.xml` — the month, then the Fennoa customer number.
+ * `invoice_202605_F0204.xml` — the month, then the Fennoa customer number. For
+ * a quarterly or half-yearly customer the month is the period's last, which is
+ * the month its file is produced in and asked for.
  *
  * That order is the useful one: a folder of a month's downloads sorts into
  * months first and customers within them, which is how the CFO works through

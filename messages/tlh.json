@@ -481,7 +481,7 @@
       "emptyMonth": "jarvam qaSpu’bogh ghomHom veng tu’lu’be’.",
       "excludedClubs": "{count, plural, one {mI’vamDaq # ghomHom tu’lu’be’ — DIl SaHbe’} other {mI’vamDaq # ghomHom tu’lu’be’ — DIl SaHbe’}}",
       "feeNotSet": "DIl wIvlu’pu’be’",
-      "notRecorded": "qonlu’pu’be’",
+      "billedNotRecorded": "DIl ’ach qonlu’pu’be’",
       "upcoming": "qaSbe’lI’",
       "cancelled": "qIllu’",
       "unrecordedSessions": "{count, plural, one {# qonlu’pu’be’} other {# qonlu’pu’be’}}",
@@ -491,7 +491,16 @@
       "customerNotSet": "DIlwI’ wIvlu’pu’be’",
       "downloadInvoiceFor": "{customer} Finvoice-nav yISuq",
       "fileBlockedByFee": "{count, plural, one {nav tu’lu’be’: # ghomHom qaSpu’ ’ach DIl SaHbe’} other {nav tu’lu’be’: # ghomHom qaSpu’ ’ach DIl SaHbe’}}",
-      "fileBlockedByNothingToInvoice": "nav tu’lu’be’: qonlu’pu’be’",
+      "fileBlockedByNothingToInvoice": "nav tu’lu’be’: DIl vay’ tu’be’",
+      "downloadPeriodInvoiceFor": "{customer} {period} {year} Finvoice-nav yISuq",
+      "periodFile": "{period} · {total}",
+      "invoicedInMonth": "{cadence} · {month} DIl tlhoghDaq",
+      "periodNotRead": "poH ratlhbogh vIlaDtaH",
+      "periodBlockedByFee": "{count, plural, one {nav tu’lu’be’: # ghomHom qaSpu’ ’ach DIl SaHbe’ ({month})} other {nav tu’lu’be’: # ghomHom qaSpu’ ’ach DIl SaHbe’ ({month})}}",
+      "periodBlockedByNothingToInvoice": "nav tu’lu’be’: {period} DIl vay’ tu’be’",
+      "quarterName": "loS{ordinal}",
+      "halfYearName": "chap{ordinal}",
+      "periodFilesWithoutClub": "DaHjaj jarDaq poH Qaw’lu’, ghomHom ghajbe’bogh DIlwI’pu’",
       "loadError": "DIl jar laDlaHbe’. yIchu’qa’ ’ej yInID.",
       "loadErrorWithReason": "DIl jar laDlaHbe’ – {reason}. yIchu’qa’ ’ej yInID."
     },
@@ -503,7 +512,8 @@
         "number": "Fennoa mI’",
         "invoiceName": "ghItlh pong",
         "city": "veng",
-        "reference": "ngoq"
+        "reference": "ngoq",
+        "billingCadence": "DIl poH"
       },
       "hasReference": "ngoq ghaj",
       "noReference": "ngoq ghajbe’",
@@ -525,13 +535,20 @@
         "city": "veng",
         "country": "Sep",
         "yourReference": "DIlwI’ ngoq",
-        "invoiceText": "ghItlh mu’mey"
+        "invoiceText": "ghItlh mu’mey",
+        "billingCadence": "DIl poH"
       },
       "hints": {
         "number": "Fennoa nav’e’ lutu’lu’bogh mI’, F0037 rurbogh. mI’vam lo’ Fennoa ’ej ghItlh DIlwI’ je boqmoH.",
         "invoiceName": "Fennoa navDaq qonlu’pu’bogh pong rap.",
         "yourReference": "je’meH mI’ pagh ghot pong ’e’ poQbogh DIlwI’ — Hoch ghItlhDaq qonlu’.",
-        "invoiceText": "ghItlh mu’mey tIQDaq chelbogh mu’mey. mu’mey neH – qonlu’pu’bogh rap ghItlhDaq jaH."
+        "invoiceText": "ghItlh mu’mey tIQDaq chelbogh mu’mey. mu’mey neH – qonlu’pu’bogh rap ghItlhDaq jaH.",
+        "billingCadence": "ramlogh DIlwI’ DIllu’. loS jar pagh jav jar DIlbogh DIlwI’ DIl nav, poH Hoch Daj; poH jar Qav DIlmeH nav yISuq."
+      },
+      "cadence": {
+        "monthly": "Hoch jar",
+        "quarterly": "Hoch loS jar",
+        "halfYearly": "Hoch jav jar"
       },
       "errors": {
         "required": "{field} yIqon.",

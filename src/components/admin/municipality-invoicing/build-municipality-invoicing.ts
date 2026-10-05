@@ -36,24 +36,26 @@ import type {
  *
  * ## What the month counts
  *
- * **A session ran iff a stored session row exists** for one of the club's
- * groups on a date inside the month. Those rows are written lazily — one
- * appears when an educator records a report, a note or an attendance mark — so
- * a row is the evidence somebody was there, and it is the only evidence that
- * bills.
+ * **A municipality is billed for every session that was due and not
+ * cancelled.** A session is due on a date the club's schedule projects, and on
+ * a date where one of its groups holds a stored session row. Those rows are
+ * written lazily — one appears when an educator records a report, a note or an
+ * attendance mark — so a row is the evidence somebody was there; a projected
+ * date that has passed with no row is assumed to have run and bills exactly as
+ * a recorded one does. It stays a line of its own, `unrecorded`, because a
+ * missing write-up is still something an admin may want to chase, but it is
+ * worth the fee.
  *
  * **Counting is per club, per calendar date.** A club may run several groups,
  * and two groups meeting on the same date are one session of that club. The
  * rows arrive raw, one per group and date, and are collapsed here.
  *
- * **A schedule is a claim, not a session.** The weekly slots are projected
- * across the month, clipped to the club's own term, so a date the club was
- * supposed to run and has no row for is visible. Such a date is worth nothing —
- * it is shown at zero so the CFO can go and find out what happened — and a date
- * still in the future is not a problem at all, only a date not yet reached.
- * "Today" is the club's own local today, because the dates being compared are
- * the club's own local dates. **Records beat projections**: a stored row on a
- * date the schedule does not project still counts, which is the same rule every
+ * **The schedule is projected across the month**, clipped to the club's own
+ * term. A projected date before the club's own today with no row is
+ * `unrecorded` and bills; one from today on is `upcoming` and does not. "Today"
+ * is the club's own local today, because the dates being compared are the
+ * club's own local dates. **Records beat projections**: a stored row on a date
+ * the schedule does not project still counts, which is the same rule every
  * session feed in this app follows.
  *
  * **A date after the club's own today never bills, whatever is stored on it.**
@@ -64,8 +66,8 @@ import type {
  * club's own local day, and an educator writing a session up in the afternoon is
  * recording one that ran.
  *
- * **A cancellation turns a projected date into `cancelled`, and a cancelled
- * record into nothing billed.** It is never billed and never counted as missed.
+ * **A cancellation is the only thing that stops a due date billing.** It turns
+ * a projected date into `cancelled` and a cancelled record into nothing billed.
  * It holds on a date the schedule projects or one where its group holds a
  * stored row — a cancelled record stays cancelled through any later schedule
  * edit — and one on a date with neither is ignored. Only a projected date gets
@@ -73,8 +75,8 @@ import type {
  * line at all, because the document leaves its row out. A club cancels per
  * group while the invoice counts per club, so the date is cancelled only where
  * no group ran it and every group the month's document names for the club
- * cancelled it: a sibling group that was due and recorded nothing is still a
- * missed session, and the doubt always falls on the side of reporting one.
+ * cancelled it: a sibling group that was due and did not cancel still owes the
+ * session, so the date bills.
  *
  * **Projection is offered wherever the club has a start date to clip against.**
  * That date is the whole of the "has it begun" rule: the walk starts at the
@@ -82,7 +84,7 @@ import type {
  * projects nothing here anyway. A club with no start date contributes its stored
  * rows alone, because there is no day to start walking from.
  *
- * **Money is integer cents from end to end.** The recorded count is multiplied
+ * **Money is integer cents from end to end.** The billed count is multiplied
  * by the fee in cents, the cents are summed, and the division into euros
  * happens once, at render. A null fee is never worth zero: the club's total is
  * null, it is excluded from its municipality's total, and the municipality
@@ -102,9 +104,14 @@ import type {
 
 /** What one session line on the invoice is. */
 export type InvoiceSessionKind =
-  /** A stored row exists on a date that has arrived. This is what bills. */
+  /** A stored row exists on a date that has arrived. It bills. */
   | "recorded"
-  /** The schedule projected it, no row exists, and the date has passed. */
+  /**
+   * The schedule projected it, no row exists, the date has passed and it was
+   * not cancelled. It is assumed to have run and bills at the fee exactly as a
+   * recorded one does; it is a kind of its own only so the page can show which
+   * billed sessions have no write-up behind them.
+   */
   | "unrecorded"
   /**
    * The date has not arrived yet — whether the schedule merely projects it or a
@@ -114,8 +121,8 @@ export type InvoiceSessionKind =
   | "upcoming"
   /**
    * The schedule projects it, an admin cancelled it, and no group of the club
-   * ran it. Never billed and never missed — past or future, it is a known fact
-   * about the day rather than something to investigate or wait for.
+   * ran it. Never billed — past or future, it is a known fact about the day
+   * rather than something to bill or wait for.
    */
   | "cancelled";
 
@@ -183,20 +190,23 @@ export interface InvoiceClub {
    * which is why the counts beside it are separate from `clubsWithoutFee`.
    */
   invoiceCustomer: InvoiceCustomerRow | null;
-  /** Distinct dates with a stored row that has arrived — what bills. */
-  recordedCount: number;
   /**
-   * Dates the schedule projected, that have passed, and that carry no stored
-   * row — the one thing on this page worth investigating, counted here so the
-   * club's own line can say so without being opened.
+   * Distinct dates that bill: the `recorded` lines and the `unrecorded` ones —
+   * every date that was due, has arrived and was not cancelled.
+   */
+  billedCount: number;
+  /**
+   * How many of those billed dates are `unrecorded` — billed with no stored
+   * row behind them — counted here so the club's own line can say so without
+   * being opened.
    *
    * It is on the view model rather than derived in the component for the same
-   * reason every other count is: a number the CFO acts on belongs to the one
+   * reason every other count is: a number the CFO reads belongs to the one
    * function that is tested, and a component filtering the session lines itself
-   * would be a second definition of "missed" nothing holds to the first.
+   * would be a second definition nothing holds to the first.
    */
   unrecordedCount: number;
-  /** `recordedCount × feeCents`, or null where the fee is unset. */
+  /** `billedCount × feeCents`, or null where the fee is unset. */
   totalCents: number | null;
   sessions: readonly InvoiceSession[];
 }
@@ -219,8 +229,8 @@ export interface InvoiceMunicipality {
    * numbers because a club can be either, both or neither.
    */
   clubsWithoutCustomer: number;
-  /** Sessions that ran across this municipality's clubs — what bills. */
-  recordedCount: number;
+  /** Sessions billed across this municipality's clubs. */
+  billedCount: number;
   clubs: readonly InvoiceClub[];
   /**
    * The Fennoa customers that appear among this municipality's clubs, each as
@@ -261,17 +271,18 @@ export interface InvoiceCustomerSummary {
   clubs: readonly InvoiceClub[];
   /** `clubs.length`, stated so a reader of the summary need not count. */
   clubCount: number;
-  /** Sessions that ran across those clubs — what the file's rows will bill. */
-  recordedCount: number;
+  /** Sessions billed across those clubs — what the file's rows will bill. */
+  billedCount: number;
   /**
-   * How many of those clubs **ran and have no fee**. Non-zero refuses the whole
+   * How many of those clubs **ran and have no fee** — "ran" meaning at least
+   * one billed session, recorded or not. Non-zero refuses the whole
    * file: the club's sessions belong on the invoice and there is no price to put
    * on them, so the file would be quietly short by whatever they were worth, and
    * a short total is the one failure this feature cannot afford.
    *
    * Deliberately narrower than the `clubsWithoutFee` counts on a municipality
    * and on the month, which are about the *data*: every club whose fee is unset,
-   * whether or not it met. A club that recorded nothing contributes no row and
+   * whether or not it met. A club with nothing billed contributes no row and
    * no money to the file, so its missing fee cannot make the file wrong — and it
    * is still an admin error, still warned about on the club's own line here and
    * still raised on the dashboard. Hence the different name: this one counts
@@ -323,8 +334,8 @@ export interface MunicipalityInvoicingView {
   municipalityCount: number;
   /** How many clubs are on the invoice, across every municipality. */
   clubCount: number;
-  /** How many sessions ran across the whole month — what `totalCents` bills. */
-  recordedCount: number;
+  /** How many sessions the whole month bills — what `totalCents` is. */
+  billedCount: number;
 }
 
 export interface BuildMunicipalityInvoicingArgs {
@@ -396,8 +407,8 @@ export function buildMunicipalityInvoicing({
         clubsWithoutCustomer: clubs.filter(
           (club) => club.invoiceCustomer === null,
         ).length,
-        recordedCount: clubs.reduce(
-          (count, club) => count + club.recordedCount,
+        billedCount: clubs.reduce(
+          (count, club) => count + club.billedCount,
           0,
         ),
         clubs,
@@ -440,8 +451,8 @@ export function buildMunicipalityInvoicing({
     ),
     municipalityCount: municipalities.length,
     clubCount: municipalities.reduce((count, one) => count + one.clubs.length, 0),
-    recordedCount: municipalities.reduce(
-      (count, one) => count + one.recordedCount,
+    billedCount: municipalities.reduce(
+      (count, one) => count + one.billedCount,
       0,
     ),
   };
@@ -503,12 +514,12 @@ function summarizeCustomers(
       customer: entry.customer,
       clubs: entry.clubs,
       clubCount: entry.clubs.length,
-      recordedCount: entry.clubs.reduce(
-        (count, club) => count + club.recordedCount,
+      billedCount: entry.clubs.reduce(
+        (count, club) => count + club.billedCount,
         0,
       ),
       clubsThatRanWithoutFee: entry.clubs.filter(
-        (club) => club.recordedCount > 0 && club.feeCents === null,
+        (club) => club.billedCount > 0 && club.feeCents === null,
       ).length,
       municipalityNames: entry.municipalityNames,
     }))
@@ -561,8 +572,8 @@ function buildClub(
 
   // The club's own today. The dates on both sides of this comparison are
   // club-local calendar dates, so the clock has to be read in the club's zone —
-  // a UTC "today" would call this evening's Helsinki session unrecorded for the
-  // two hours before midnight there, every night of the year.
+  // a UTC "today" would bill this evening's Helsinki session as unrecorded for
+  // the two hours before midnight there, every night of the year.
   const today = productLocalDate(now, club.timezone);
 
   // A stored row is evidence only for a day that has happened. The table takes
@@ -596,7 +607,12 @@ function buildClub(
   lines.sort((a, b) => compareCalendarDates(a.date, b.date));
 
   const feeCents = club.municipality_fee_cents;
-  const recordedCount = billableDates.size;
+  const unrecordedCount = lines.filter(
+    (line) => line.kind === "unrecorded",
+  ).length;
+  // An unrecorded line is only ever written for a date with no stored row, so
+  // the two halves never share a date and add without double-counting.
+  const billedCount = billableDates.size + unrecordedCount;
 
   const schedule = scheduleSummary(club, locale, now);
 
@@ -624,11 +640,11 @@ function buildClub(
     // count and no total — and that is the point: it is carried so the file the
     // export writes comes out of the same build every figure on this page does.
     invoiceCustomer: club.invoice_customer,
-    recordedCount,
-    unrecordedCount: lines.filter((line) => line.kind === "unrecorded").length,
+    billedCount,
+    unrecordedCount,
     // One multiplication in cents, through the same guard every sum goes
     // through, and no division anywhere: the euros appear once, at render.
-    totalCents: feeCents === null ? null : sumCents([feeCents * recordedCount]),
+    totalCents: feeCents === null ? null : sumCents([feeCents * billedCount]),
     sessions: lines,
   };
 }
@@ -643,9 +659,8 @@ function pairKey(groupId: string, date: string): string {
  * A cancellation is per group and the invoice is per club, so a date qualifies
  * only when every group the club has cancelled it — including a group the
  * month otherwise says nothing about. One group cancelling while a sibling was
- * due and recorded nothing leaves the date unrecorded: of the two ways to be
- * wrong, reporting a missed session that was half cancelled is the one
- * somebody can check. Only projected dates are lines to mark: a cancellation
+ * due and did not leaves the date unrecorded, and so billed: the sibling still
+ * owed the session. Only projected dates are lines to mark: a cancellation
  * off the projection either keeps a record from billing (above) or is inert.
  */
 function cancelledClubDates(

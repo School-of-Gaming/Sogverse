@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
 import { isAdminDashboardScenario } from "@/components/admin/dashboard/mock-dashboard-fixtures";
 import { isAdminSubstitutionsScenario } from "@/components/admin/substitutions/mock-substitutions-fixtures";
-import { isInvoiceCustomerScenario } from "@/components/admin/invoice-customers/mock-invoice-customer-fixtures";
-import { isMunicipalityInvoicingScenario } from "@/components/admin/municipality-invoicing/mock-invoicing-fixtures";
 import {
   isAdminGeduInvoicingScenario,
   isMyGeduInvoicingScenario,
@@ -42,8 +40,6 @@ import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
 import { GeduContractScene } from "./scenes/gedu-contract-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
 import { GeduSubstitutionsScene } from "./scenes/gedu-substitutions-scene";
-import { InvoiceCustomersScene } from "./scenes/invoice-customers-scene";
-import { MunicipalityInvoicingScene } from "./scenes/municipality-invoicing-scene";
 import {
   AdminGeduInvoicingScene,
   MyGeduInvoicingScene,
@@ -260,10 +256,6 @@ const SCENE_RENDERERS: Record<
     if (!isAdminSubstitutionsScenario(scenario)) notFound();
     return <AdminSubstitutionsScene scenario={scenario} />;
   },
-  "municipality-invoicing": (scenario) => {
-    if (!isMunicipalityInvoicingScenario(scenario)) notFound();
-    return <MunicipalityInvoicingScene scenario={scenario} />;
-  },
   "gedu-invoicing": (scenario) => {
     if (!isAdminGeduInvoicingScenario(scenario)) notFound();
     return <AdminGeduInvoicingScene scenario={scenario} />;
@@ -271,10 +263,6 @@ const SCENE_RENDERERS: Record<
   "gedu-my-invoicing": (scenario) => {
     if (!isMyGeduInvoicingScenario(scenario)) notFound();
     return <MyGeduInvoicingScene scenario={scenario} />;
-  },
-  "invoice-customers": (scenario) => {
-    if (!isInvoiceCustomerScenario(scenario)) notFound();
-    return <InvoiceCustomersScene scenario={scenario} />;
   },
   // The one scene with no product behind it: it enumerates the topic registry
   // itself, so its scenarios are the two forms a guide filters into rather than

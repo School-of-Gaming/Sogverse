@@ -84,6 +84,7 @@ export class InvoiceCustomersService {
       p_postal_code: parsed.postal_code,
       p_city: parsed.city,
       p_country_code: parsed.country_code,
+      p_billing_cadence: parsed.billing_cadence,
       // Null maps to an OMISSION, so the RPC's DEFAULT NULL writes the null —
       // the same shape a product's tag takes, and the reason the field is
       // required-nullable on the way in rather than optional.
@@ -117,6 +118,7 @@ export class InvoiceCustomersService {
       p_postal_code: parsed.postal_code,
       p_city: parsed.city,
       p_country_code: parsed.country_code,
+      p_billing_cadence: parsed.billing_cadence,
       p_your_reference: parsed.your_reference ?? undefined,
       p_invoice_text: parsed.invoice_text ?? undefined,
     });

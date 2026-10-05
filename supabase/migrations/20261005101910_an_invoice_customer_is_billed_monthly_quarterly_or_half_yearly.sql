@@ -1,0 +1,612 @@
+-- An invoice customer is billed monthly, quarterly or half-yearly.
+--
+-- Most Fennoa customers are invoiced once a month, one file per month. Some
+-- have agreed to be invoiced once a quarter or once every half year instead,
+-- and that is a property of the agreement with the buyer — so it lives on the
+-- customer, beside the number and the address the file is written from.
+--
+-- Periods are calendar-aligned: a quarter is Jan–Mar, Apr–Jun, Jul–Sep or
+-- Oct–Dec, a half-year Jan–Jun or Jul–Dec, and a month is a one-month period.
+-- The arithmetic is the invoicing page's own; the database stores only which
+-- of the three a customer is.
+--
+--   1. The enum and the column, NOT NULL and monthly by default, so every
+--      existing customer keeps being invoiced exactly as before.
+--   2. create_invoice_customer and update_invoice_customer take the cadence.
+--      The parameter is REQUIRED on both: the update assigns every editable
+--      column on every call, so a defaulted parameter would let an omitting
+--      caller reset a quarterly customer to monthly without a word. Adding a
+--      parameter changes each function's signature, so both are dropped and
+--      created again rather than replaced.
+--   3. get_admin_municipality_invoicing carries the cadence inside the
+--      customer it embeds against every club — the document carries the
+--      customer whole.
+
+-- ---------------------------------------------------------------------------
+-- 1. The cadence
+-- ---------------------------------------------------------------------------
+
+CREATE TYPE public.invoice_billing_cadence AS ENUM (
+  'monthly',
+  'quarterly',
+  'half_yearly'
+);
+
+COMMENT ON TYPE public.invoice_billing_cadence IS
+  'How often an invoice customer is invoiced: every calendar month, every '
+  'calendar quarter (Jan–Mar, Apr–Jun, Jul–Sep, Oct–Dec), or every calendar '
+  'half-year (Jan–Jun, Jul–Dec). A period is a run of whole calendar months, '
+  'and its invoice is produced in the period''s last month.';
+
+ALTER TABLE public.invoice_customers
+  ADD COLUMN billing_cadence public.invoice_billing_cadence
+    NOT NULL DEFAULT 'monthly';
+
+COMMENT ON COLUMN public.invoice_customers.billing_cadence IS
+  'How often this buyer is invoiced, as agreed with it: monthly, quarterly or '
+  'half-yearly, with every period calendar-aligned. The invoicing page still '
+  'shows every figure per month; what the cadence changes is the file — one '
+  'Finvoice invoice per customer per period, downloadable in the period''s '
+  'last month and covering every month of it, a row per club per month. '
+  'Defaults to monthly, which is what every customer was before the column '
+  'existed.';
+
+-- ---------------------------------------------------------------------------
+-- 2. The two writers
+-- ---------------------------------------------------------------------------
+
+DROP FUNCTION public.create_invoice_customer(
+  text, text, text, text, text, text, text, text
+);
+
+CREATE FUNCTION public.create_invoice_customer(
+  p_fennoa_customer_no text,
+  p_invoice_name       text,
+  p_street             text,
+  p_postal_code        text,
+  p_city               text,
+  p_billing_cadence    public.invoice_billing_cadence,
+  p_country_code       text DEFAULT 'FI',
+  p_your_reference     text DEFAULT NULL,
+  p_invoice_text       text DEFAULT NULL
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $$
+DECLARE
+  v_id             uuid;
+  v_customer_no    text;
+  v_invoice_name   text;
+  v_street         text;
+  v_postal_code    text;
+  v_city           text;
+  v_country_code   text;
+  v_your_reference text;
+  v_invoice_text   text;
+BEGIN
+  PERFORM public.assert_admin();
+
+  v_customer_no    := btrim(COALESCE(p_fennoa_customer_no, ''));
+  v_invoice_name   := btrim(COALESCE(p_invoice_name, ''));
+  v_street         := btrim(COALESCE(p_street, ''));
+  v_postal_code    := btrim(COALESCE(p_postal_code, ''));
+  v_city           := btrim(COALESCE(p_city, ''));
+  v_country_code   := upper(btrim(COALESCE(p_country_code, '')));
+  v_your_reference := NULLIF(btrim(COALESCE(p_your_reference, '')), '');
+  v_invoice_text   := NULLIF(btrim(COALESCE(p_invoice_text, '')), '');
+
+  -- Written out here and again in update_invoice_customer rather than factored
+  -- into a shared assertion: a private helper would be a third function in the
+  -- schema that no role may call, and the two copies are the same lines next
+  -- to each other in one file.
+  IF v_customer_no = '' THEN
+    RAISE EXCEPTION 'A Fennoa customer number is required'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_invoice_name = '' THEN
+    RAISE EXCEPTION 'An invoice name is required'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_street = '' OR v_postal_code = '' OR v_city = '' THEN
+    RAISE EXCEPTION 'A street, postal code and city are required — the Finvoice import refuses a file with no buyer address'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_country_code !~ '^[A-Z]{2}$' THEN
+    RAISE EXCEPTION 'The country must be a two-letter ISO 3166-1 code (got %)', v_country_code
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF p_billing_cadence IS NULL THEN
+    RAISE EXCEPTION 'A billing cadence is required — monthly, quarterly or half-yearly'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  INSERT INTO public.invoice_customers (
+    fennoa_customer_no, invoice_name, street, postal_code, city,
+    country_code, your_reference, invoice_text, billing_cadence
+  )
+  VALUES (
+    v_customer_no, v_invoice_name, v_street, v_postal_code, v_city,
+    v_country_code, v_your_reference, v_invoice_text, p_billing_cadence
+  )
+  RETURNING id INTO v_id;
+
+  RETURN v_id;
+END;
+$$;
+
+COMMENT ON FUNCTION public.create_invoice_customer(
+  text, text, text, text, text, public.invoice_billing_cadence, text, text, text
+) IS
+  'Admin-gated create of a Fennoa invoice customer, and one of the two ways '
+  'any row reaches invoice_customers at all: the table carries no write grant '
+  'for authenticated, so a browser''s only path in is this function. SECURITY '
+  'DEFINER with an empty search_path, guard-first on assert_admin() so the '
+  'authorization decision is made before an argument is read, and '
+  'deliberately not STRICT — a STRICT function skips its body on NULL input '
+  'and would skip the guard with it. Returns the new row''s id. Every text '
+  'field is trimmed and the country code upper-cased before the write, and a '
+  'blank optional field folds to NULL, so "no reference" is one state rather '
+  'than two; the table''s own CHECKs are the backstop for any row arriving '
+  'another way. The validation mirrors those CHECKs and raises check_violation '
+  'with a readable sentence, because the admin form shows an RPC''s message '
+  'verbatim and a raw constraint name is not something an admin can act on. '
+  'p_billing_cadence is required — monthly, quarterly or half_yearly — like '
+  'its update sibling''s, so the two writers take the same arguments. '
+  'p_country_code defaults to FI, the column''s own default and the resting '
+  'state of a Finnish contract system, so an omitting caller writes FI rather '
+  'than failing; p_your_reference and p_invoice_text default NULL because '
+  'null is their legal empty and codegen cannot express an explicit null for '
+  'a non-defaulted argument — which is why the wire schema demands both '
+  'fields, so omission stays deliberate.';
+
+REVOKE ALL ON FUNCTION public.create_invoice_customer(
+  text, text, text, text, text, public.invoice_billing_cadence, text, text, text
+) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.create_invoice_customer(
+  text, text, text, text, text, public.invoice_billing_cadence, text, text, text
+) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_invoice_customer(
+  text, text, text, text, text, public.invoice_billing_cadence, text, text, text
+) TO service_role;
+
+DROP FUNCTION public.update_invoice_customer(
+  uuid, text, text, text, text, text, text, text, text
+);
+
+CREATE FUNCTION public.update_invoice_customer(
+  p_id                 uuid,
+  p_fennoa_customer_no text,
+  p_invoice_name       text,
+  p_street             text,
+  p_postal_code        text,
+  p_city               text,
+  p_billing_cadence    public.invoice_billing_cadence,
+  p_country_code       text DEFAULT 'FI',
+  p_your_reference     text DEFAULT NULL,
+  p_invoice_text       text DEFAULT NULL
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $$
+DECLARE
+  v_customer_no    text;
+  v_invoice_name   text;
+  v_street         text;
+  v_postal_code    text;
+  v_city           text;
+  v_country_code   text;
+  v_your_reference text;
+  v_invoice_text   text;
+BEGIN
+  PERFORM public.assert_admin();
+
+  v_customer_no    := btrim(COALESCE(p_fennoa_customer_no, ''));
+  v_invoice_name   := btrim(COALESCE(p_invoice_name, ''));
+  v_street         := btrim(COALESCE(p_street, ''));
+  v_postal_code    := btrim(COALESCE(p_postal_code, ''));
+  v_city           := btrim(COALESCE(p_city, ''));
+  v_country_code   := upper(btrim(COALESCE(p_country_code, '')));
+  v_your_reference := NULLIF(btrim(COALESCE(p_your_reference, '')), '');
+  v_invoice_text   := NULLIF(btrim(COALESCE(p_invoice_text, '')), '');
+
+  -- The same lines its create sibling carries, for the reason stated there: a
+  -- private validator would be a third function no role may call.
+  IF v_customer_no = '' THEN
+    RAISE EXCEPTION 'A Fennoa customer number is required'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_invoice_name = '' THEN
+    RAISE EXCEPTION 'An invoice name is required'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_street = '' OR v_postal_code = '' OR v_city = '' THEN
+    RAISE EXCEPTION 'A street, postal code and city are required — the Finvoice import refuses a file with no buyer address'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_country_code !~ '^[A-Z]{2}$' THEN
+    RAISE EXCEPTION 'The country must be a two-letter ISO 3166-1 code (got %)', v_country_code
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF p_billing_cadence IS NULL THEN
+    RAISE EXCEPTION 'A billing cadence is required — monthly, quarterly or half-yearly'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- Every editable column is assigned on every call, which is why a new column
+  -- has to reach this statement in the same change that adds it: a column this
+  -- function does not know about is cleared by the next admin edit. Both
+  -- optional fields are exactly that shape — their parameters default NULL, so
+  -- an omitting caller clears them, which IS how one is cleared, and the wire
+  -- schema demanding the field is what stops it happening by accident. The
+  -- cadence has no default at all, so it cannot be reset by omission.
+  UPDATE public.invoice_customers SET
+    fennoa_customer_no = v_customer_no,
+    invoice_name       = v_invoice_name,
+    street             = v_street,
+    postal_code        = v_postal_code,
+    city               = v_city,
+    country_code       = v_country_code,
+    your_reference     = v_your_reference,
+    invoice_text       = v_invoice_text,
+    billing_cadence    = p_billing_cadence
+  WHERE id = p_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Invoice customer not found'
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  RETURN p_id;
+END;
+$$;
+
+COMMENT ON FUNCTION public.update_invoice_customer(
+  uuid, text, text, text, text, text, public.invoice_billing_cadence, text, text, text
+) IS
+  'Admin-gated edit of a Fennoa invoice customer — the second and last way a '
+  'row in invoice_customers changes, because the table carries no write grant '
+  'for authenticated. SECURITY DEFINER with an empty search_path, guard-first '
+  'on assert_admin(), not STRICT for the reason its create sibling is not, '
+  'and returns the edited row''s id. It ASSIGNS EVERY EDITABLE COLUMN on every '
+  'call, so a column added later has to reach this statement in the same '
+  'change or the next admin edit clears it. Both optional fields have that '
+  'shape already: their parameters default NULL, so omission is how one is '
+  'cleared — the only expressible way — and the wire schema demanding the '
+  'field on every save is what keeps a clearing deliberate. p_billing_cadence '
+  'has no default, so a caller that leaves it out is refused rather than '
+  'resetting a quarterly or half-yearly customer to monthly. Normalisation and '
+  'validation are its create sibling''s, unchanged: trimmed text, an '
+  'upper-cased country code, a blank optional field folded to NULL, and '
+  'check_violation carrying a sentence. An id no customer has raises '
+  'no_data_found rather than silently affecting zero rows, because an edit '
+  'that changed nothing and said so is a save the admin would believe.';
+
+REVOKE ALL ON FUNCTION public.update_invoice_customer(
+  uuid, text, text, text, text, text, public.invoice_billing_cadence, text, text, text
+) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.update_invoice_customer(
+  uuid, text, text, text, text, text, public.invoice_billing_cadence, text, text, text
+) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.update_invoice_customer(
+  uuid, text, text, text, text, text, public.invoice_billing_cadence, text, text, text
+) TO service_role;
+
+-- ---------------------------------------------------------------------------
+-- 3. The invoicing document carries the cadence
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.get_admin_municipality_invoicing(p_month_start date)
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path TO ''
+AS $$
+DECLARE
+  v_month_end date;
+  v_clubs     jsonb;
+  v_orphans   text;
+BEGIN
+  PERFORM public.assert_admin();
+
+  -- The month is named by its first day and nothing else. A mid-month argument
+  -- is a caller that has not decided what it is asking for — the window would
+  -- be a month-long span that matches no calendar month, and every total drawn
+  -- from it would be wrong in a way nobody could see. Refused loudly, after the
+  -- guard, so an unauthorized caller learns nothing about the argument shape.
+  IF p_month_start IS NULL
+     OR p_month_start <> date_trunc('month', p_month_start::timestamp)::date THEN
+    RAISE EXCEPTION
+      'get_admin_municipality_invoicing: p_month_start must be the first day of a month (got %)',
+      p_month_start
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  v_month_end := (p_month_start + INTERVAL '1 month' - INTERVAL '1 day')::date;
+
+  WITH RECURSIVE candidate AS (
+    SELECT p.*
+      FROM public.products p
+     WHERE p.product_type = 'municipality_club'
+       AND (
+             EXISTS (
+               SELECT 1
+                 FROM public.product_groups g
+                 JOIN public.group_sessions gs ON gs.group_id = g.id
+                WHERE g.product_id = p.id
+                  AND gs.session_date >= p_month_start
+                  AND gs.session_date <= v_month_end
+                  -- Cancellation: the same exclusion as `sessions` below.
+                  AND NOT public.group_session_is_cancelled(gs.group_id, gs.session_date)
+             )
+          OR (
+               p.start_date IS NOT NULL
+               AND p.start_date <= v_month_end
+               AND (p.end_date IS NULL OR p.end_date >= p_month_start)
+             )
+           )
+  ),
+  -- The ancestor-or-self walk, one chain per candidate's own location. It
+  -- stops climbing the moment it has emitted a municipality, so the shortest
+  -- chain wins by construction; `depth` is kept so the DISTINCT ON below picks
+  -- the nearest one even if a tree ever nests two municipalities.
+  walk AS (
+    SELECT l.id AS origin_id,
+           l.id,
+           l.parent_id,
+           l.type,
+           l.name,
+           l.name_i18n,
+           0 AS depth
+      FROM public.locations l
+     WHERE l.id IN (
+             SELECT c.location_id FROM candidate c WHERE c.location_id IS NOT NULL
+           )
+     UNION ALL
+    SELECT w.origin_id,
+           l.id,
+           l.parent_id,
+           l.type,
+           l.name,
+           l.name_i18n,
+           w.depth + 1
+      FROM walk w
+      JOIN public.locations l ON l.id = w.parent_id
+     -- Two stops, and each earns its place: the first is the answer, the second
+     -- is a belt-and-braces bound on a tree the schema does not forbid a cycle
+     -- in beyond a row parenting itself.
+     WHERE w.type <> 'municipality'
+       AND w.depth < 16
+  ),
+  municipality AS (
+    SELECT DISTINCT ON (w.origin_id)
+           w.origin_id,
+           w.id,
+           w.name,
+           w.name_i18n
+      FROM walk w
+     WHERE w.type = 'municipality'
+     ORDER BY w.origin_id, w.depth
+  )
+  SELECT COALESCE(jsonb_agg(club.doc ORDER BY club.id), '[]'::jsonb)
+    INTO v_clubs
+    FROM (
+      SELECT c.id,
+             jsonb_build_object(
+               'id',                     c.id,
+               'timezone',               c.timezone,
+               'start_date',             c.start_date,
+               'end_date',               c.end_date,
+               'municipality_fee_cents', c.municipality_fee_cents,
+               'product_translations',   tr.items,
+               'schedule_slots',         sl.items,
+               'location',
+                 CASE WHEN l.id IS NULL THEN NULL
+                      ELSE jsonb_build_object(
+                             'id',        l.id,
+                             'name',      l.name,
+                             'name_i18n', l.name_i18n,
+                             'type',      l.type
+                           )
+                 END,
+               'municipality',
+                 CASE WHEN m.id IS NULL THEN NULL
+                      ELSE jsonb_build_object(
+                             'id',        m.id,
+                             'name',      m.name,
+                             'name_i18n', m.name_i18n
+                           )
+                 END,
+               -- The buyer of this club, whole rather than by id: the caller
+               -- turns it into a Finvoice file, so a second admin-gated round
+               -- trip per club would buy nothing. Null where nobody has said
+               -- who pays yet — flagged by the page, refused by the export.
+               'invoice_customer',
+                 CASE WHEN ic.id IS NULL THEN NULL
+                      ELSE jsonb_build_object(
+                             'id',                 ic.id,
+                             'fennoa_customer_no', ic.fennoa_customer_no,
+                             'invoice_name',       ic.invoice_name,
+                             'street',             ic.street,
+                             'postal_code',        ic.postal_code,
+                             'city',               ic.city,
+                             'country_code',       ic.country_code,
+                             'your_reference',     ic.your_reference,
+                             'invoice_text',       ic.invoice_text,
+                             'billing_cadence',    ic.billing_cadence
+                           )
+                 END,
+               'sessions',               se.items,
+               'cancelled_sessions',     cx.items,
+               'group_ids',              gr.items
+             ) AS doc
+        FROM candidate c
+        LEFT JOIN public.locations l ON l.id = c.location_id
+        LEFT JOIN municipality m ON m.origin_id = c.location_id
+        -- The link is the club's own column and never the location's: one city
+        -- can be two customers, and an association can buy clubs sited in a
+        -- municipality it is not.
+        LEFT JOIN public.invoice_customers ic ON ic.id = c.invoice_customer_id
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(
+                            jsonb_build_object('locale', pt.locale, 'name', pt.name)
+                            ORDER BY pt.locale
+                          )
+                     FROM public.product_translations pt
+                    WHERE pt.product_id = c.id
+                 ), '[]'::jsonb) AS items
+        ) tr
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(
+                            jsonb_build_object(
+                              'weekday',          ss.weekday,
+                              'start_time',       to_char(ss.start_time, 'HH24:MI'),
+                              'duration_minutes', ss.duration_minutes
+                            )
+                            ORDER BY ss.weekday, ss.start_time
+                          )
+                     FROM public.schedule_slots ss
+                    WHERE ss.product_id = c.id
+                 ), '[]'::jsonb) AS items
+        ) sl
+        -- Raw rows, one per (group, date). The page collapses two groups on one
+        -- date into the single session the club is paid for, and can still say
+        -- which groups met — an aggregate here would have thrown that away.
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(
+                            jsonb_build_object(
+                              'group_id',     gs.group_id,
+                              'session_date', gs.session_date
+                            )
+                            ORDER BY gs.session_date, gs.group_id
+                          )
+                     FROM public.group_sessions gs
+                     JOIN public.product_groups g ON g.id = gs.group_id
+                    WHERE g.product_id = c.id
+                      AND gs.session_date >= p_month_start
+                      AND gs.session_date <= v_month_end
+                      -- Cancellation: a row kept under a cancellation is not a
+                      -- session that ran, so it never reaches the bill. Left
+                      -- out here rather than trusted to the page, so no reader
+                      -- of this document can count one.
+                      AND NOT public.group_session_is_cancelled(gs.group_id, gs.session_date)
+                 ), '[]'::jsonb) AS items
+        ) se
+        -- Cancellation: the month's cancelled (group, date) pairs in effect,
+        -- in the same shape as `sessions`, so the page can show a cancelled
+        -- date as Cancelled rather than as unrecorded and never bill it. The
+        -- same predicate `sessions` excludes by, so a pair here never also
+        -- appears there, and an inert cancellation appears in neither.
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(
+                            jsonb_build_object(
+                              'group_id',     sc.group_id,
+                              'session_date', sc.session_date
+                            )
+                            ORDER BY sc.session_date, sc.group_id
+                          )
+                     FROM public.session_cancellations sc
+                     JOIN public.product_groups g ON g.id = sc.group_id
+                    WHERE g.product_id = c.id
+                      AND sc.session_date >= p_month_start
+                      AND sc.session_date <= v_month_end
+                      AND public.group_session_is_cancelled(sc.group_id, sc.session_date)
+                 ), '[]'::jsonb) AS items
+        ) cx
+        -- Every group the club has, whether or not the month says anything
+        -- about it. A date is cancelled for the club only when every one of its
+        -- groups cancelled it, and a group that neither met nor cancelled is
+        -- exactly the one neither list above can name — without this a
+        -- sibling's cancellation would hide its missed session. Every row, with
+        -- no filter: a group has no archived state and no start date, so any
+        -- group the product holds is one its schedule is due to meet.
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(g.id ORDER BY g.id)
+                     FROM public.product_groups g
+                    WHERE g.product_id = c.id
+                 ), '[]'::jsonb) AS items
+        ) gr
+    ) club;
+
+  -- Every club on the invoice belongs to a municipality, or there is no invoice.
+  -- A municipality club whose chain reaches no municipality cannot be billed to
+  -- anybody, and the reader of this document has no way to tell such a club from
+  -- one whose location was mistyped an hour ago — so the read stops and names the
+  -- products, which is the whole of the repair instruction. Checked against the
+  -- document that was built rather than against a second walk of the tree,
+  -- because what matters is what would have been emitted.
+  --
+  -- A missing invoice CUSTOMER is deliberately NOT refused here, and the
+  -- difference is real: a club with no municipality has nobody to bill and
+  -- cannot be rendered on a page that is organised by municipality, while a club
+  -- with no customer renders perfectly well and simply cannot have a file
+  -- produced for it yet. Refusing the month would take every other file down
+  -- with it.
+  SELECT string_agg(club.value ->> 'id', ', ' ORDER BY club.value ->> 'id')
+    INTO v_orphans
+    FROM jsonb_array_elements(v_clubs) AS club(value)
+   WHERE jsonb_typeof(club.value -> 'municipality') = 'null';
+
+  IF v_orphans IS NOT NULL THEN
+    RAISE EXCEPTION
+      'get_admin_municipality_invoicing: no municipality is an ancestor-or-self of the location of municipality club(s) % — repoint the location so the club can be invoiced',
+      v_orphans
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  RETURN jsonb_build_object(
+    'month_start', to_char(p_month_start, 'YYYY-MM-DD'),
+    'clubs',       v_clubs
+  );
+END;
+$$;
+
+COMMENT ON FUNCTION public.get_admin_municipality_invoicing(date) IS
+  'One calendar month of municipality-club invoicing, as a single document: '
+  'every municipality club that either recorded a session in the month or '
+  'could have (a term that overlaps it), each with its timezone, term dates, '
+  'current municipality_fee_cents, the whole product_translations array, its '
+  'weekly schedule slots, its own location row, the nearest ancestor-or-self '
+  'location of type municipality, the FENNOA INVOICE CUSTOMER it is billed '
+  'to, every stored group_sessions row in the month as a raw (group_id, '
+  'session_date) pair, the month''s cancelled (group_id, session_date) pairs '
+  'in effect, and every group id the club has. Admin-only, guard-first on '
+  'assert_admin, and deliberately not STRICT so the guard cannot be skipped '
+  'on NULL input. p_month_start must be the first day of a month; anything '
+  'else raises check_violation. A stored row on a date a cancellation covers '
+  'is left out of sessions, so no reader can bill a cancelled session. The '
+  'candidate test is the TERM alone and the document carries no lifecycle '
+  'column. The municipality walk climbs parent_id THROUGH retired rows and '
+  'never filters them, because a school that has since closed still sat in '
+  'its municipality. Every club in the document HAS a municipality: a club '
+  'whose chain reaches none cannot be invoiced to anybody, so the whole read '
+  'raises check_violation naming those product ids rather than shipping a '
+  'null the caller would have to render somewhere outside every total. Each '
+  'club also carries invoice_customer — the WHOLE customer row (number, '
+  'invoice name, address, optional reference and invoice text, and the '
+  'billing cadence that decides whether its file covers a month, a quarter '
+  'or a half-year) rather than an id, because the caller turns it into a '
+  'Finvoice file — or null where nobody has said who pays yet. A null '
+  'customer is NOT refused, unlike a null municipality: such a club renders '
+  'on the page perfectly well and only its own file is blocked, so refusing '
+  'the month would take every other file down with it. The link is the '
+  'club''s own column and is never derived from its location, because one '
+  'city can be two customers and an association can buy clubs sited in a '
+  'municipality it is not. The fee is the current column value with no '
+  'snapshotting, and NULL means unset — the client shows that as a blank to '
+  'fix, never as zero. A quarterly or half-yearly file is built by reading '
+  'this document once per month of the period. Every array ships as [] '
+  'rather than null.';
+
+REVOKE ALL ON FUNCTION public.get_admin_municipality_invoicing(date) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_admin_municipality_invoicing(date) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_admin_municipality_invoicing(date) TO service_role;
