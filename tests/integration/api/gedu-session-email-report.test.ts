@@ -119,20 +119,22 @@ const GROUP_ROW = {
 };
 
 /**
- * The `admin_email_preferences` rows the route reads, with each admin's address
- * as the profile embed carries it. Two admins opted in and one turned it off;
- * an admin who never answered has no row at all, which is what makes them off.
+ * The `notification_preferences` rows the route reads, with each admin's
+ * address as the profile embed carries it. Two admins opted in by email and one
+ * turned it off; an admin who never answered has no row at all, which is what
+ * makes them off.
  */
 interface AdminPreferenceFixture {
   email: string;
   kind: string;
+  channel: string;
   enabled: boolean;
 }
 
 const ADMIN_PREFERENCES: AdminPreferenceFixture[] = [
-  { email: "admin1@test.local", kind: "session_report_copy", enabled: true },
-  { email: "admin2@test.local", kind: "session_report_copy", enabled: true },
-  { email: "opted-out@test.local", kind: "session_report_copy", enabled: false },
+  { email: "admin1@test.local", kind: "session_report_copy", channel: "email", enabled: true },
+  { email: "admin2@test.local", kind: "session_report_copy", channel: "email", enabled: true },
+  { email: "opted-out@test.local", kind: "session_report_copy", channel: "email", enabled: false },
 ];
 
 /** One row of the participations read, exactly as the route's select shapes it. */
@@ -283,12 +285,12 @@ const release: {
  */
 const reads: {
   productGroups: [string, unknown][];
-  adminEmailPreferences: [string, unknown][];
+  notificationPreferences: [string, unknown][];
   participations: [string, unknown][];
   sessionImages: [string, unknown][];
 } = {
   productGroups: [],
-  adminEmailPreferences: [],
+  notificationPreferences: [],
   participations: [],
   sessionImages: [],
 };
@@ -327,35 +329,30 @@ function setupAdminClient(data: AdminData = {}) {
         }),
       };
     }
-    if (table === "admin_email_preferences") {
-      // The two filters are applied to the fixture rows, not just recorded, so
-      // an opted-out row reaches the CC only if the route forgets a filter.
-      const matching = (filters: [string, unknown][]) =>
-        adminPreferences
+    if (table === "notification_preferences") {
+      // The filters are applied to the fixture rows, not just recorded, so an
+      // opted-out row reaches the CC only if the route forgets a filter. The
+      // chain is thenable at every step, so it answers however many `.eq()`s
+      // the route applies.
+      const chain = () => {
+        const matching = adminPreferences
           .filter((row) => {
             const columns: Record<string, unknown> = { ...row };
-            return filters.every(([column, value]) => columns[column] === value);
+            return reads.notificationPreferences.every(
+              ([column, value]) => columns[column] === value,
+            );
           })
-          .map((row) => ({ admin: { email: row.email } }));
-      return {
-        select: () => ({
-          eq: (columnA: string, valueA: unknown) => {
-            reads.adminEmailPreferences.push([columnA, valueA]);
-            return {
-              eq: (columnB: string, valueB: unknown) => {
-                reads.adminEmailPreferences.push([columnB, valueB]);
-                return Promise.resolve({
-                  data: matching([
-                    [columnA, valueA],
-                    [columnB, valueB],
-                  ]),
-                  error: null,
-                });
-              },
-            };
+          .map((row) => ({ profile: { email: row.email } }));
+        const result = { data: matching, error: null };
+        return {
+          eq: (column: string, value: unknown) => {
+            reads.notificationPreferences.push([column, value]);
+            return chain();
           },
-        }),
+          then: <T>(resolve: (value: typeof result) => T) => resolve(result),
+        };
       };
+      return { select: () => chain() };
     }
     if (table === "participations") {
       return {
@@ -524,7 +521,7 @@ describe("POST /api/gedu/sessions/email-report", () => {
     release.patch = null;
     release.filters = [];
     reads.productGroups = [];
-    reads.adminEmailPreferences = [];
+    reads.notificationPreferences = [];
     reads.participations = [];
     reads.sessionImages = [];
     imageOrder.length = 0;
@@ -660,8 +657,9 @@ describe("POST /api/gedu/sessions/email-report", () => {
   it("reads only the admins who turned session report copies on", async () => {
     await POST(createRequest());
 
-    expect(reads.adminEmailPreferences).toEqual([
+    expect(reads.notificationPreferences).toEqual([
       ["kind", "session_report_copy"],
+      ["channel", "email"],
       ["enabled", true],
     ]);
   });
@@ -1065,7 +1063,7 @@ describe("POST /api/gedu/sessions/email-report", () => {
   it("still sends the gedu their copy, with nobody in CC, when no admin opted in", async () => {
     setupAdminClient({
       adminPreferences: [
-        { email: "admin1@test.local", kind: "session_report_copy", enabled: false },
+        { email: "admin1@test.local", kind: "session_report_copy", channel: "email", enabled: false },
       ],
     });
 

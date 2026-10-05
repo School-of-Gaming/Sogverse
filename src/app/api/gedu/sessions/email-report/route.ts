@@ -333,12 +333,14 @@ export const POST = defineRoute({
         );
       }
 
-      // The admins who opted into session report copies on their settings
-      // page. No row means off, so an admin who never answered is not here.
+      // The admins who turned on session report copies by email on their
+      // settings page. No row means off, so an admin who never answered is not
+      // here; only an admin can hold a row, because the setter is admin-only.
       const { data: optedInAdmins, error: adminsError } = await adminClient
-        .from("admin_email_preferences")
-        .select("admin:profiles!inner(email)")
+        .from("notification_preferences")
+        .select("profile:profiles!inner(email)")
         .eq("kind", "session_report_copy")
+        .eq("channel", "email")
         .eq("enabled", true);
 
       if (adminsError) throw adminsError;
@@ -562,7 +564,7 @@ export const POST = defineRoute({
           // case-insensitively because an address is not case-sensitive in
           // practice and a stored capital would defeat the whole check.
           adminEmails: optedInAdmins
-            .map((row) => row.admin.email)
+            .map((row) => row.profile.email)
             .filter(
               (email) =>
                 email.toLowerCase() !== profile.email.toLowerCase(),

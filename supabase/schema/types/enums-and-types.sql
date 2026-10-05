@@ -1,20 +1,4 @@
 --
--- Name: admin_email_kind; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.admin_email_kind AS ENUM (
-    'session_report_copy'
-);
-
-
---
--- Name: TYPE admin_email_kind; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TYPE public.admin_email_kind IS 'A kind of staff email an admin can opt into. session_report_copy: the copy of a session report mailed to its sender when a gedu or an admin emails the report to the group''s families; an admin who opted in is in its CC. Every kind is off for an admin until they turn it on. The app lists them in the order declared here, so a new value goes where it should appear.';
-
-
---
 -- Name: billing_mode; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -207,6 +191,38 @@ CREATE TYPE public.marketing_consent_type AS ENUM (
 --
 
 COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a parent can hold. school_of_gaming is our own mailing list, asked for at parent registration. lynx_educate is our partner''s, asked for only on products an admin has attached it to — see product_marketing_consents. An enum rather than a whitelist table because a marketing consent, unlike a consent DOCUMENT, has no text to version and no republication for a stored row to outlive: it is a standing permission to mail, and the party it names is the whole of it.';
+
+
+--
+-- Name: notification_channel; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.notification_channel AS ENUM (
+    'email'
+);
+
+
+--
+-- Name: TYPE notification_channel; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.notification_channel IS 'How a notification reaches a person. email: a mail to the address on their profile. The settings page groups its toggles by channel, in the order declared here.';
+
+
+--
+-- Name: notification_kind; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.notification_kind AS ENUM (
+    'session_report_copy'
+);
+
+
+--
+-- Name: TYPE notification_kind; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.notification_kind IS 'What a notification a person can opt into is about. session_report_copy: the copy of a session report mailed to its sender when a gedu or an admin emails the report to the group''s families; an admin who opted in on the email channel is in its CC. Every kind is off on every channel until the person turns it on. The app lists them in the order declared here, so a new value goes where it should appear.';
 
 
 --

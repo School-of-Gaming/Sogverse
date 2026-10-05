@@ -6,7 +6,7 @@ import {
   geduCoverageEditorModule,
   homeLocationFieldModule,
   locationsServiceModule,
-  adminEmailPreferencesServiceModule,
+  notificationPreferencesCardModule,
   marketingConsentsServiceModule,
   minecraftServiceModule,
   providersModule,
@@ -49,8 +49,8 @@ vi.mock("@/services/users", () => usersServiceModule());
 vi.mock("@/services/locations", () => locationsServiceModule());
 vi.mock("@/services/minecraft", () => minecraftServiceModule());
 vi.mock("@/services/roblox", () => robloxServiceModule());
-vi.mock("@/services/admin-email-preferences", () =>
-  adminEmailPreferencesServiceModule(),
+vi.mock("@/components/settings/notification-preferences-card", () =>
+  notificationPreferencesCardModule(),
 );
 vi.mock("@/services/marketing-consents", () => marketingConsentsServiceModule());
 vi.mock("@/components/game-account", () => gameAccountModule());

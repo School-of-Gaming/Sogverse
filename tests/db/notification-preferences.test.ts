@@ -5,8 +5,9 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
- * Admin email preferences: `set_admin_email_preference` (the one writer) and
- * the owner-only read policy on `admin_email_preferences`.
+ * Notification preferences: `set_notification_preference` (the one writer,
+ * admin-only while every kind is an admin's) and the owner-only read policy on
+ * `notification_preferences`.
  *
  * No row means off, so the seeded admin starts with nothing and every case
  * begins from that state.
@@ -15,8 +16,9 @@ import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 const FORBIDDEN = "42501";
 const CHECK_VIOLATION = "23514";
 const KIND = "session_report_copy" as const;
+const CHANNEL = "email" as const;
 
-describe("admin email preferences", () => {
+describe("notification preferences", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
   let geduAuth: SupabaseClient<Database>;
@@ -25,10 +27,11 @@ describe("admin email preferences", () => {
 
   async function rowOf(profileId: string) {
     const { data, error } = await admin
-      .from("admin_email_preferences")
+      .from("notification_preferences")
       .select("*")
-      .eq("admin_id", profileId)
+      .eq("profile_id", profileId)
       .eq("kind", KIND)
+      .eq("channel", CHANNEL)
       .maybeSingle();
     expect(error).toBeNull();
     return data;
@@ -36,9 +39,9 @@ describe("admin email preferences", () => {
 
   async function reset(): Promise<void> {
     await admin
-      .from("admin_email_preferences")
+      .from("notification_preferences")
       .delete()
-      .in("admin_id", [
+      .in("profile_id", [
         TEST_IDS.ADMIN,
         TEST_IDS.GEDU,
         TEST_IDS.CUSTOMER,
@@ -77,8 +80,9 @@ describe("admin email preferences", () => {
     });
 
     it("lets an admin turn a kind on for themselves", async () => {
-      const { error } = await adminAuth.rpc("set_admin_email_preference", {
+      const { error } = await adminAuth.rpc("set_notification_preference", {
         p_kind: KIND,
+        p_channel: CHANNEL,
         p_enabled: true,
       });
       expect(error).toBeNull();
@@ -86,12 +90,14 @@ describe("admin email preferences", () => {
     });
 
     it("records turning it off again as an explicit false", async () => {
-      await adminAuth.rpc("set_admin_email_preference", {
+      await adminAuth.rpc("set_notification_preference", {
         p_kind: KIND,
+        p_channel: CHANNEL,
         p_enabled: true,
       });
-      const { error } = await adminAuth.rpc("set_admin_email_preference", {
+      const { error } = await adminAuth.rpc("set_notification_preference", {
         p_kind: KIND,
+        p_channel: CHANNEL,
         p_enabled: false,
       });
       expect(error).toBeNull();
@@ -99,13 +105,15 @@ describe("admin email preferences", () => {
     });
 
     it("leaves updated_at alone when the answer is already on file", async () => {
-      await adminAuth.rpc("set_admin_email_preference", {
+      await adminAuth.rpc("set_notification_preference", {
         p_kind: KIND,
+        p_channel: CHANNEL,
         p_enabled: true,
       });
       const before = await rowOf(TEST_IDS.ADMIN);
-      const { error } = await adminAuth.rpc("set_admin_email_preference", {
+      const { error } = await adminAuth.rpc("set_notification_preference", {
         p_kind: KIND,
+        p_channel: CHANNEL,
         p_enabled: true,
       });
       expect(error).toBeNull();
@@ -113,10 +121,22 @@ describe("admin email preferences", () => {
     });
 
     it("refuses a missing answer", async () => {
-      const { error } = await adminAuth.rpc("set_admin_email_preference", {
+      const { error } = await adminAuth.rpc("set_notification_preference", {
         p_kind: KIND,
+        p_channel: CHANNEL,
         // @ts-expect-error -- the generated type forbids null; the function must still refuse it
         p_enabled: null,
+      });
+      expect(error?.code).toBe(CHECK_VIOLATION);
+      expect(await rowOf(TEST_IDS.ADMIN)).toBeNull();
+    });
+
+    it("refuses a missing channel", async () => {
+      const { error } = await adminAuth.rpc("set_notification_preference", {
+        p_kind: KIND,
+        // @ts-expect-error -- the generated type forbids null; the function must still refuse it
+        p_channel: null,
+        p_enabled: true,
       });
       expect(error?.code).toBe(CHECK_VIOLATION);
       expect(await rowOf(TEST_IDS.ADMIN)).toBeNull();
@@ -127,8 +147,9 @@ describe("admin email preferences", () => {
       ["customer", () => customerAuth, TEST_IDS.CUSTOMER],
       ["gamer", () => gamerAuth, TEST_IDS.GAMER],
     ] as const)("refuses a %s", async (_role, client, profileId) => {
-      const { error } = await client().rpc("set_admin_email_preference", {
+      const { error } = await client().rpc("set_notification_preference", {
         p_kind: KIND,
+        p_channel: CHANNEL,
         p_enabled: true,
       });
       expect(error?.code).toBe(FORBIDDEN);
@@ -138,38 +159,54 @@ describe("admin email preferences", () => {
 
   describe("reading preferences", () => {
     it("shows an admin their own rows and nobody else's", async () => {
-      await adminAuth.rpc("set_admin_email_preference", {
+      await adminAuth.rpc("set_notification_preference", {
         p_kind: KIND,
+        p_channel: CHANNEL,
         p_enabled: true,
       });
       // A row on another profile, written past the setter, stands in for a
       // second admin's answer.
       const { error: seedError } = await admin
-        .from("admin_email_preferences")
-        .insert({ admin_id: TEST_IDS.CUSTOMER, kind: KIND, enabled: true });
+        .from("notification_preferences")
+        .insert({
+          profile_id: TEST_IDS.CUSTOMER,
+          kind: KIND,
+          channel: CHANNEL,
+          enabled: true,
+        });
       expect(seedError).toBeNull();
 
       const { data, error } = await adminAuth
-        .from("admin_email_preferences")
-        .select("admin_id, kind, enabled");
+        .from("notification_preferences")
+        .select("profile_id, kind, channel, enabled");
       expect(error).toBeNull();
       expect(data).toEqual([
-        { admin_id: TEST_IDS.ADMIN, kind: KIND, enabled: true },
+        {
+          profile_id: TEST_IDS.ADMIN,
+          kind: KIND,
+          channel: CHANNEL,
+          enabled: true,
+        },
       ]);
 
       const other = await customerAuth
-        .from("admin_email_preferences")
-        .select("admin_id");
+        .from("notification_preferences")
+        .select("profile_id");
       expect(other.error).toBeNull();
       expect(other.data).toEqual([
-        { admin_id: TEST_IDS.CUSTOMER },
+        { profile_id: TEST_IDS.CUSTOMER },
       ]);
     });
 
     it("gives no Data API role a direct write", async () => {
       const { error } = await adminAuth
-        .from("admin_email_preferences")
-        .insert({ admin_id: TEST_IDS.ADMIN, kind: KIND, enabled: true });
+        .from("notification_preferences")
+        .insert({
+          profile_id: TEST_IDS.ADMIN,
+          kind: KIND,
+          channel: CHANNEL,
+          enabled: true,
+        });
       expect(error?.code).toBe(FORBIDDEN);
       expect(await rowOf(TEST_IDS.ADMIN)).toBeNull();
     });

@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { Constants, type Profile } from "@/types";
+import type { Profile } from "@/types";
 
 /**
  * The scaffolding a settings-page test needs before it can render the page body
@@ -94,18 +94,15 @@ export function marketingConsentsServiceModule() {
 }
 
 /**
- * `@/services/admin-email-preferences` — an admin with no rows, which is every
- * kind off, read and resolved. `setMutateAsync` lets a test hand in its own
- * spy for the writer; the kinds list is the real one, because the settings page
- * walks it.
+ * `@/components/settings/notification-preferences-card` — a neighbouring
+ * section that reads and writes on its own, reduced to a marker. Its own
+ * behaviour is tested against the card directly.
  */
-export function adminEmailPreferencesServiceModule(
-  setMutateAsync: () => ReturnType<typeof vi.fn> = () => vi.fn(),
-) {
+export function notificationPreferencesCardModule() {
   return {
-    ADMIN_EMAIL_KINDS: Constants.public.Enums.admin_email_kind,
-    useMyAdminEmailPreferences: () => ({ data: [], isError: false }),
-    useSetAdminEmailPreference: () => ({ mutateAsync: setMutateAsync() }),
+    NotificationPreferencesCard: () => (
+      <div data-testid="notification-preferences-card" />
+    ),
   };
 }
 

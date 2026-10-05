@@ -174,9 +174,10 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // Granting or revoking a gedu's qualification. The same shape again: past the
   // admin guard, a NULL target raises "is not a gedu" (P0001), not 42501.
   set_gedu_qualification: { permittedRoles: ["admin"] },
-  // An admin turning one kind of staff email on or off for themselves. Past
-  // the admin guard, all-NULL arguments are refused with `check_violation`.
-  set_admin_email_preference: { permittedRoles: ["admin"] },
+  // An admin turning one kind of notification on or off, on one channel, for
+  // themselves. Past the admin guard, all-NULL arguments are refused with
+  // `check_violation`.
+  set_notification_preference: { permittedRoles: ["admin"] },
   // Phase 3's new-RPC conversions. Past the admin guard, all-NULL arguments hit
   // "no such product" / "no such participation" — an error, but not 42501.
   admin_enroll_participant: { permittedRoles: ["admin"] },

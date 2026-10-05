@@ -52,42 +52,6 @@ export type Database = {
           },
         ]
       }
-      admin_email_preferences: {
-        Row: {
-          admin_id: string
-          enabled: boolean
-          kind: Database["public"]["Enums"]["admin_email_kind"]
-          updated_at: string
-        }
-        Insert: {
-          admin_id: string
-          enabled: boolean
-          kind: Database["public"]["Enums"]["admin_email_kind"]
-          updated_at?: string
-        }
-        Update: {
-          admin_id?: string
-          enabled?: boolean
-          kind?: Database["public"]["Enums"]["admin_email_kind"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admin_email_preferences_admin_id_fkey"
-            columns: ["admin_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "admin_email_preferences_admin_id_fkey"
-            columns: ["admin_id"]
-            isOneToOne: false
-            referencedRelation: "user_list_entries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       catalogue_images: {
         Row: {
           created_at: string
@@ -1828,6 +1792,45 @@ export type Database = {
             foreignKeyName: "minecraft_accounts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          enabled: boolean
+          kind: Database["public"]["Enums"]["notification_kind"]
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          enabled: boolean
+          kind: Database["public"]["Enums"]["notification_kind"]
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          enabled?: boolean
+          kind?: Database["public"]["Enums"]["notification_kind"]
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
@@ -4211,13 +4214,6 @@ export type Database = {
         Args: { p_product: Database["public"]["Tables"]["products"]["Row"] }
         Returns: Json
       }
-      set_admin_email_preference: {
-        Args: {
-          p_enabled: boolean
-          p_kind: Database["public"]["Enums"]["admin_email_kind"]
-        }
-        Returns: undefined
-      }
       set_chat_lock: {
         Args: { p_channel_id: string; p_locked: boolean; p_user_id: string }
         Returns: undefined
@@ -4308,6 +4304,14 @@ export type Database = {
         Returns: undefined
       }
       set_my_pin: { Args: { p_pin: string }; Returns: undefined }
+      set_notification_preference: {
+        Args: {
+          p_channel: Database["public"]["Enums"]["notification_channel"]
+          p_enabled: boolean
+          p_kind: Database["public"]["Enums"]["notification_kind"]
+        }
+        Returns: undefined
+      }
       set_pin_for_user: {
         Args: { p_pin: string; p_user_id: string }
         Returns: undefined
@@ -4426,7 +4430,6 @@ export type Database = {
       }
     }
     Enums: {
-      admin_email_kind: "session_report_copy"
       billing_mode: "paid" | "free" | "external_contract"
       catalogue_image_purpose: "product" | "library_cover"
       chat_channel_type: "group_session"
@@ -4445,6 +4448,8 @@ export type Database = {
         | "for_schools"
       location_type: "country" | "region" | "municipality" | "district" | "site"
       marketing_consent_type: "school_of_gaming" | "lynx_educate"
+      notification_channel: "email"
+      notification_kind: "session_report_copy"
       participation_status: "reserving" | "active" | "waitlisted" | "completed"
       payment_purpose:
         | "bundle"
@@ -4598,7 +4603,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      admin_email_kind: ["session_report_copy"],
       billing_mode: ["paid", "free", "external_contract"],
       catalogue_image_purpose: ["product", "library_cover"],
       chat_channel_type: ["group_session"],
@@ -4618,6 +4622,8 @@ export const Constants = {
       ],
       location_type: ["country", "region", "municipality", "district", "site"],
       marketing_consent_type: ["school_of_gaming", "lynx_educate"],
+      notification_channel: ["email"],
+      notification_kind: ["session_report_copy"],
       participation_status: ["reserving", "active", "waitlisted", "completed"],
       payment_purpose: [
         "bundle",
