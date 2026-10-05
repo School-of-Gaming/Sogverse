@@ -952,7 +952,7 @@ describe("buildMunicipalityInvoicing", () => {
     });
 
     it("orders customers by their Fennoa number, not by their billing name", () => {
-      // The position in this list is part of the provisional invoice number,
+      // The position in this list is part of the file's invoice reference,
       // and a billing name sorts differently per locale.
       const first = customer("1", {
         fennoa_customer_no: "F0100",

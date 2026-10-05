@@ -219,24 +219,27 @@ that has to be re-verified against Fennoa rather than reasoned about.
 - **The buyer's postal address has to be in the file**, and the import refuses one without
   it, even though the customer card already holds an address. So the customer carries its
   own address and the serializer states it.
-- **Fennoa assigns the invoice number when the invoice is sent.** Ours is provisional, it
-  never reaches an accounting ledger, and it is what makes the export stateless: producing
-  a period's file twice produces the same file, and there is no counter for a failed
-  download to burn. It is the period's last month followed by the digits of the buyer's
-  Fennoa customer number — for a monthly buyer that is simply the invoiced month — numeric
-  and above 100, which is the import's own rule for an identifier. A buyer is on one
-  cadence, so its periods end in distinct months and no two of its files share a number. **Within a month it is unique across buyers whose customer numbers differ in
-  their digits**, which every number Fennoa issues does — so it is unique over real data,
-  and that is the honest size of the guarantee. Two numbers differing only in a letter,
-  `0204` and `F0204`, are one number here; so are a number carrying no digit at all, which
-  falls back to the buyer's padded place in the month, and a real `F0001`. Neither is a
-  shape Fennoa issues, and the field is free text, which is the whole reason either can be
-  written down. **It is derived from the buyer rather than from where the buyer sits in
-  the month**, because a re-export has to carry the same number as the export it replaces,
-  whatever changed in between: a position moves the moment another club names a new
-  customer, so every later buyer's file would come back under a different number and read
-  as a second invoice for the same month. The digitless fallback is the one place a
-  position is used, and it is stable only for as long as the month's list of buyers is.
+- **The invoices are numbered from Fennoa's own series, so the file's invoice number is
+  deliberately not a number.** Fennoa keeps a numeric invoice number from an imported file
+  as the invoice's final number once the invoice is approved, and skips one carrying
+  anything but digits, numbering the invoice from its own series instead. So the file
+  carries our reference — `SOG-`, then the period's last month, then the digits of the
+  buyer's Fennoa customer number, e.g. `SOG-2026050204` — as both the invoice number and
+  the message identifier, within Finvoice's twenty characters. **This rests on Fennoa's API
+  documentation, not on an import**: it is confirmed by importing a file and checking that
+  the draft carries no number of ours, without approving it, since approval is what
+  reserves a number in the series.
+- **The reference is deterministic per buyer and period**, so a re-download is recognisably
+  the same invoice and the export stays stateless: producing a period's file twice
+  produces the same file, and there is no counter for a failed download to burn. A buyer is
+  on one cadence, so its periods end in distinct months and no two of its files share a
+  reference. **It is derived from the buyer rather than from where the buyer sits in the
+  month**, because a position moves the moment another club names a new customer, and
+  every later buyer's re-download would come back under a different reference. Within a
+  month it is unique across buyers whose customer numbers differ in their digits, which
+  every number Fennoa issues does. A number carrying no digit at all — not a shape Fennoa
+  issues, but the field is free text — falls back to the buyer's padded place in the
+  month, and is stable only for as long as the month's list of buyers is.
 - **Payment terms, e-invoice routing and department names live on the customer card** and
   are not sent. They belong to the accounting system; a second copy in the file would be a
   copy that goes stale.

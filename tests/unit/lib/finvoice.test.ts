@@ -464,10 +464,10 @@ describe("the invoice free text", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Dates and the provisional number
+// Dates and the reference
 // ---------------------------------------------------------------------------
 
-describe("the invoice's dates and number", () => {
+describe("the invoice's dates and reference", () => {
   it("dates the invoice to the first day after the month it bills", () => {
     const invoice = invoiceFor([club({ id: "a", name: "Klubi A" })]);
 
@@ -475,26 +475,26 @@ describe("the invoice's dates and number", () => {
     expect(invoice.dueDate).toBe("20260615");
   });
 
-  it("numbers a file by the month and the customer's Fennoa number", () => {
-    // Numeric and above 100, which is Fennoa's own rule for an imported
-    // identifier, and the same answer every time the month is exported —
-    // Fennoa replaces it with the real invoice number when the invoice is sent.
+  it("references a file by the month and the customer's Fennoa number", () => {
+    // The same answer every time the month is exported, and deliberately not a
+    // number: Fennoa keeps a numeric invoice number as the final one on
+    // approval and skips anything else, numbering from its own series.
     const second = customer({ id: "cust-b", fennoa_customer_no: "F0999" });
     const clubs = [
       club({ id: "a", name: "Klubi A" }),
       club({ id: "b", name: "Klubi B", invoiceCustomer: second }),
     ];
 
-    expect(invoiceFor(clubs).invoiceNumber).toBe("2026050204");
-    expect(invoiceFor(clubs, second.id).invoiceNumber).toBe("2026050999");
-    expect(Number(invoiceFor(clubs).invoiceNumber)).toBeGreaterThan(100);
+    expect(invoiceFor(clubs).invoiceReference).toBe("SOG-2026050204");
+    expect(invoiceFor(clubs, second.id).invoiceReference).toBe("SOG-2026050999");
+    expect(invoiceFor(clubs).invoiceReference).not.toMatch(/^\d+$/);
   });
 
-  it("keeps a customer's number across a change to the rest of the month", () => {
+  it("keeps a customer's reference across a change to the rest of the month", () => {
     // The property the derivation exists for: a re-export has to carry the same
-    // number as the export it replaces. Linking one more club to a new buyer
-    // moves every later customer's place in the month, so a number derived from
-    // that place would come back different and read as a second invoice.
+    // reference as the export it replaces. Linking one more club to a new buyer
+    // moves every later customer's place in the month, so a reference derived
+    // from that place would come back different.
     const later = customer({ id: "cust-b", fennoa_customer_no: "F0999" });
     const newcomer = customer({ id: "cust-new", fennoa_customer_no: "F0001" });
     const before = [
@@ -506,12 +506,12 @@ describe("the invoice's dates and number", () => {
       ...before,
     ];
 
-    expect(invoiceFor(after, later.id).invoiceNumber).toBe(
-      invoiceFor(before, later.id).invoiceNumber,
+    expect(invoiceFor(after, later.id).invoiceReference).toBe(
+      invoiceFor(before, later.id).invoiceReference,
     );
   });
 
-  it("numbers by customer number, so the reader's locale cannot change it", () => {
+  it("references by customer number, so the reader's locale cannot change it", () => {
     // The billing names sort differently per locale; the customer numbers do
     // not. A Swedish admin exporting the same month has to get the same file.
     const first = customer({ id: "cust-a", fennoa_customer_no: "F0100" });
@@ -525,22 +525,42 @@ describe("the invoice's dates and number", () => {
       club({ id: "b", name: "Klubi B", invoiceCustomer: first }),
     ];
 
-    expect(invoiceFor(clubs, first.id).invoiceNumber).toBe("2026050100");
-    expect(invoiceFor(clubs, second.id).invoiceNumber).toBe("2026050200");
+    expect(invoiceFor(clubs, first.id).invoiceReference).toBe("SOG-2026050100");
+    expect(invoiceFor(clubs, second.id).invoiceReference).toBe("SOG-2026050200");
   });
 
   it("falls back to the customer's place where the number has no digits", () => {
-    // Not a shape Fennoa issues, but the column is free text and the number
-    // still has to be numeric: the month plus the customer's 1-based position,
-    // padded to four.
+    // Not a shape Fennoa issues, but the column is free text: the month plus
+    // the customer's 1-based position, padded to four.
     const wordy = customer({ id: "cust-wordy", fennoa_customer_no: "ESPOO" });
     const invoice = invoiceFor(
       [club({ id: "a", name: "Klubi A", invoiceCustomer: wordy })],
       wordy.id,
     );
 
-    expect(invoice.invoiceNumber).toBe("2026050001");
-    expect(Number(invoice.invoiceNumber)).toBeGreaterThan(100);
+    expect(invoice.invoiceReference).toBe("SOG-2026050001");
+  });
+
+  it("never exceeds Finvoice's twenty characters for an invoice number", () => {
+    // The column is free text, so a customer number can carry any number of
+    // digits; the reference keeps the last ten, which is what fits beside
+    // `SOG-` and the month. The digitless fallback is shorter still.
+    const long = customer({
+      id: "cust-long",
+      fennoa_customer_no: "F123456789012345",
+    });
+    const wordy = customer({ id: "cust-wordy", fennoa_customer_no: "ESPOO" });
+    const clubs = [
+      club({ id: "a", name: "Klubi A", invoiceCustomer: long }),
+      club({ id: "b", name: "Klubi B", invoiceCustomer: wordy }),
+    ];
+
+    const longest = invoiceFor(clubs, long.id).invoiceReference;
+    expect(longest).toBe("SOG-2026056789012345");
+    expect(longest).toHaveLength(20);
+    const fallback = invoiceFor(clubs, wordy.id).invoiceReference;
+    expect(fallback).toBe("SOG-2026050001");
+    expect(fallback.length).toBeLessThanOrEqual(20);
   });
 });
 
@@ -691,7 +711,7 @@ const EXPECTED_DOCUMENT = `<?xml version="1.0" encoding="UTF-8"?>
   <MessageTransmissionDetails>
     <MessageSenderDetails><FromIdentifier>003731104611</FromIdentifier><FromIntermediator>003721291126</FromIntermediator></MessageSenderDetails>
     <MessageReceiverDetails><ToIdentifier></ToIdentifier><ToIntermediator></ToIntermediator></MessageReceiverDetails>
-    <MessageDetails><MessageIdentifier>2026050204</MessageIdentifier><MessageTimeStamp>2026-06-03T09:12:34</MessageTimeStamp></MessageDetails>
+    <MessageDetails><MessageIdentifier>SOG-2026050204</MessageIdentifier><MessageTimeStamp>2026-06-03T09:12:34</MessageTimeStamp></MessageDetails>
   </MessageTransmissionDetails>
   <SellerPartyDetails>
     <SellerPartyIdentifier>3110461-1</SellerPartyIdentifier>
@@ -710,7 +730,7 @@ const EXPECTED_DOCUMENT = `<?xml version="1.0" encoding="UTF-8"?>
   <DeliveryDetails><DeliveryMethodText>Electronic invoice</DeliveryMethodText></DeliveryDetails>
   <InvoiceDetails>
     <InvoiceTypeCode>INV01</InvoiceTypeCode><InvoiceTypeText>LASKU</InvoiceTypeText><OriginCode>Original</OriginCode>
-    <InvoiceNumber>2026050204</InvoiceNumber>
+    <InvoiceNumber>SOG-2026050204</InvoiceNumber>
     <InvoiceDate Format="CCYYMMDD">20260601</InvoiceDate>
     <InvoiceTotalVatExcludedAmount AmountCurrencyIdentifier="EUR">130.00</InvoiceTotalVatExcludedAmount>
     <InvoiceTotalVatAmount AmountCurrencyIdentifier="EUR">33.15</InvoiceTotalVatAmount>
@@ -979,11 +999,11 @@ describe("a period customer's file", () => {
     expect(invoice.grossCents).toBe(invoice.netCents + invoice.vatCents);
   });
 
-  it("numbers, dates and names the quarter from its last month", () => {
+  it("references, dates and names the quarter from its last month", () => {
     const invoice = quarterInvoice();
 
     expect(invoice.monthStart).toBe("2026-03-01");
-    expect(invoice.invoiceNumber).toBe("2026030221");
+    expect(invoice.invoiceReference).toBe("SOG-2026030221");
     expect(invoice.invoiceDate).toBe("20260401");
     expect(invoice.dueDate).toBe("20260415");
     expect(invoice.freeText).toBe(
@@ -994,9 +1014,9 @@ describe("a period customer's file", () => {
     ).toBe("invoice_202603_F0221.xml");
   });
 
-  it("keeps the quarter's number when the rest of the period changes", () => {
+  it("keeps the quarter's reference when the rest of the period changes", () => {
     // Another buyer appearing in February moves every position in that month's
-    // list; the number is the customer's own and does not move with it.
+    // list; the reference is the customer's own and does not move with it.
     const before = quarterInvoice();
     const after = quarterInvoice(
       q1Snapshots((month) =>
@@ -1016,7 +1036,7 @@ describe("a period customer's file", () => {
       ),
     );
 
-    expect(after.invoiceNumber).toBe(before.invoiceNumber);
+    expect(after.invoiceReference).toBe(before.invoiceReference);
   });
 
   it("refuses a month in the middle of the quarter", () => {
@@ -1134,7 +1154,7 @@ describe("a period customer's file", () => {
     if (!result.ok) throw new Error(result.reason);
     // April's four Mondays and May's four; June bills nothing.
     expect(result.invoice.rows.map((row) => row.sessions)).toEqual([4, 4]);
-    expect(result.invoice.invoiceNumber).toBe("2026060221");
+    expect(result.invoice.invoiceReference).toBe("SOG-2026060221");
   });
 
   it("bills a half-year over six months, and calls March the middle of it", () => {

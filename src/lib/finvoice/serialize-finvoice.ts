@@ -70,7 +70,7 @@ export function serializeFinvoice(
     // e-invoice routing from the customer card when it sends the invoice, so an
     // address here would be a second copy of something we do not own.
     `    <MessageReceiverDetails><ToIdentifier></ToIdentifier><ToIntermediator></ToIntermediator></MessageReceiverDetails>`,
-    `    <MessageDetails><MessageIdentifier>${x(invoice.invoiceNumber)}</MessageIdentifier><MessageTimeStamp>${messageTimeStamp(generatedAt)}</MessageTimeStamp></MessageDetails>`,
+    `    <MessageDetails><MessageIdentifier>${x(invoice.invoiceReference)}</MessageIdentifier><MessageTimeStamp>${messageTimeStamp(generatedAt)}</MessageTimeStamp></MessageDetails>`,
     `  </MessageTransmissionDetails>`,
     `  <SellerPartyDetails>`,
     `    <SellerPartyIdentifier>${x(FINVOICE_SELLER.partyIdentifier)}</SellerPartyIdentifier>`,
@@ -95,7 +95,7 @@ export function serializeFinvoice(
     `  <DeliveryDetails><DeliveryMethodText>${x(FINVOICE_DELIVERY_METHOD_TEXT)}</DeliveryMethodText></DeliveryDetails>`,
     `  <InvoiceDetails>`,
     `    <InvoiceTypeCode>${x(FINVOICE_INVOICE_TYPE.code)}</InvoiceTypeCode><InvoiceTypeText>${x(FINVOICE_INVOICE_TYPE.text)}</InvoiceTypeText><OriginCode>${x(FINVOICE_INVOICE_TYPE.originCode)}</OriginCode>`,
-    `    <InvoiceNumber>${x(invoice.invoiceNumber)}</InvoiceNumber>`,
+    `    <InvoiceNumber>${x(invoice.invoiceReference)}</InvoiceNumber>`,
     `    <InvoiceDate Format="CCYYMMDD">${x(invoice.invoiceDate)}</InvoiceDate>`,
     // Where the schema puts it: after the invoice date (and the original-invoice
     // fields this file never writes), before the totals.

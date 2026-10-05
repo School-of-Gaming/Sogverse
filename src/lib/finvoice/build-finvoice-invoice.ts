@@ -98,19 +98,19 @@ export interface FinvoiceInvoice {
   /** The months the invoice covers — one, three or six. */
   period: BillingPeriod;
   /**
-   * The period's last month, as its first day (`YYYY-MM-01`): what the number,
-   * the invoice date and the filename are derived from, so a monthly invoice is
-   * named and numbered exactly as it always was.
+   * The period's last month, as its first day (`YYYY-MM-01`): what the
+   * reference, the invoice date and the filename are derived from, so a monthly
+   * invoice is named and referenced by the month it bills.
    */
   monthStart: string;
   /**
-   * Our provisional number for the invoice — the period's last month and the
-   * customer's own Fennoa number. **Fennoa assigns the real one when the
-   * invoice is sent**, so this exists to identify the file rather than the
-   * invoice, and re-exporting a period produces the same number again however
-   * its data has moved.
+   * Our reference for the invoice, written as its invoice number and its
+   * message identifier — `SOG-`, the period's last month and the customer's own
+   * Fennoa number. **Deliberately not numeric, so Fennoa skips it** and numbers
+   * the invoice from its own series; re-exporting a period produces the same
+   * reference again however its data has moved.
    */
-  invoiceNumber: string;
+  invoiceReference: string;
   /** `CCYYMMDD` — the first day of the month *after* the period invoiced. */
   invoiceDate: string;
   /** `CCYYMMDD` — the invoice date plus the payment term. */
@@ -456,7 +456,7 @@ export function buildFinvoiceInvoice({
       customer,
       period,
       monthStart: period.lastMonth,
-      invoiceNumber: provisionalInvoiceNumber(
+      invoiceReference: invoiceReferenceFor(
         customer,
         period.lastMonth,
         found.position,
@@ -673,38 +673,46 @@ export function compactDate(date: string): string {
   return date.replace(/-/g, "");
 }
 
+/** What every reference starts with, and what makes it not a number. */
+const INVOICE_REFERENCE_PREFIX = "SOG-";
+
 /**
- * Our provisional number for a file: the period's last month, then the digits
- * of the customer's Fennoa number. `F0037` in May 2026 is `2026050037`, and so
- * is `F0037`'s quarter ending in June 2026 `2026060037`.
+ * The most customer digits a reference keeps, from the right. `SOG-` and the
+ * `YYYYMM` take ten characters and Finvoice allows an invoice number twenty.
+ */
+const INVOICE_REFERENCE_TAIL_DIGITS = 10;
+
+/**
+ * Our reference for a file: `SOG-`, the period's last month, then the digits of
+ * the customer's Fennoa number. `F0037` in May 2026 is `SOG-2026050037`, and
+ * `F0037`'s quarter ending in June 2026 is `SOG-2026060037`.
  *
- * **Fennoa assigns the real invoice number on send**, so this one never reaches
- * an accounting ledger and the export stays stateless — nothing is written when
- * a file is produced, and producing one twice produces the same file. What the
- * number has to be is numeric and greater than 100, which is Fennoa's own rule
- * for an imported identifier: the `YYYYMM` alone already clears that, and the
- * customer's digits only make it longer.
+ * **It is written as the invoice number, and it is deliberately not a
+ * number.** Fennoa keeps a numeric invoice number from an imported file as the
+ * invoice's final number once the invoice is approved, and skips one carrying
+ * anything but digits, numbering the invoice from its own series instead. The
+ * prefix is what keeps our invoices in that series. Nothing is written when a
+ * file is produced, and producing one twice produces the same file.
  *
  * **It is derived from the customer rather than from the customer's place in
- * the month**, because a re-export has to carry the same number as the export it
- * replaces, whatever changed in between — and a position is not a property of
- * the customer at all. Link one more club to a new buyer and every later
- * customer's position shifts by one, so a file downloaded again after that edit
- * would come back under a different number and read as a second invoice for the
- * same period. A Fennoa number belongs to the customer and does not move, which
- * is what makes this number stable across every data change. A customer is
- * invoiced at one cadence, so its period ends are distinct months and no two
- * of its files share a number.
+ * the month**, because a re-export has to be recognisably the same invoice as
+ * the export it replaces, whatever changed in between — and a position is not a
+ * property of the customer at all. Link one more club to a new buyer and every
+ * later customer's position shifts by one, so a file downloaded again after
+ * that edit would come back under a different reference. A Fennoa number
+ * belongs to the customer and does not move. A customer is invoiced at one
+ * cadence, so its period ends are distinct months and no two of its files share
+ * a reference.
  *
  * **What it guarantees within a month, stated exactly**: it is unique across
- * customers whose numbers differ in their *digits*, because the digits are all
- * it keeps. Every number Fennoa issues differs there, so in practice this is
- * uniqueness — but `0204` and `F0204` are two customers with one number, and so
- * are the digitless fallback's first customer and a real `F0001`. Those are
- * shapes Fennoa does not issue; the column is free text, so they can be typed,
- * and this is what would happen if they were.
+ * customers whose numbers differ in their last ten *digits*, because those are
+ * all it keeps. Every number Fennoa issues differs there — but `0204` and
+ * `F0204` are two customers with one reference, and so are the digitless
+ * fallback's first customer and a real `F0001`. Those are shapes Fennoa does
+ * not issue; the column is free text, so they can be typed, and this is what
+ * would happen if they were.
  */
-function provisionalInvoiceNumber(
+function invoiceReferenceFor(
   customer: InvoiceCustomerRow,
   monthStart: string,
   position: number,
@@ -715,8 +723,8 @@ function provisionalInvoiceNumber(
   // column is free text, so there has to be an answer: the customer's 1-based
   // position in the newest month of the period it has a club in, padded to
   // four. It is stable only for as long as that month's customer list is,
-  // which is the most a number carrying nothing of the customer's own can
+  // which is the most a reference carrying nothing of the customer's own can
   // promise.
   const tail = digits === "" ? String(position + 1).padStart(4, "0") : digits;
-  return `${yearMonth}${tail}`;
+  return `${INVOICE_REFERENCE_PREFIX}${yearMonth}${tail.slice(-INVOICE_REFERENCE_TAIL_DIGITS)}`;
 }

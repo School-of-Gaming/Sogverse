@@ -472,14 +472,14 @@ describe("GET /api/admin/municipality-invoicing/finvoice", () => {
       "2020-05-01",
       "2020-06-01",
     ]);
-    // Named and numbered from the quarter's last month, as a monthly file is
+    // Named and referenced from the quarter's last month, as a monthly file is
     // from its month.
     expect(response.headers.get("Content-Disposition")).toBe(
       'attachment; filename="invoice_202006_F0204.xml"',
     );
     const xml = await response.text();
     expect(xmlElementStack(xml)).toEqual({ ok: true, detail: "" });
-    expect(xml).toContain("<InvoiceNumber>2020060204</InvoiceNumber>");
+    expect(xml).toContain("<InvoiceNumber>SOG-2020060204</InvoiceNumber>");
     expect(xml).toContain(
       '<InvoicingPeriodStartDate Format="CCYYMMDD">20200401</InvoicingPeriodStartDate><InvoicingPeriodEndDate Format="CCYYMMDD">20200630</InvoicingPeriodEndDate>',
     );
