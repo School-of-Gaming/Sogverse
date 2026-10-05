@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { PICKS } from "@sog/ui";
 import { DARK_THEME } from "@/lib/constants/colors";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { OG_CARD_CACHE_CONTROL } from "@/lib/og/cards";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 
@@ -12,8 +11,7 @@ import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
  * `src/app/opengraph-images/team/[userId]/route.tsx`; it shares the site
  * cards' shape (`./cards`) — a root-level route handler the proxy's matcher
  * excludes, the locale as a query parameter — and differs from them in one
- * thing, the version its address carries, which its caching keys on
- * (`teamCardCacheControl`).
+ * thing, its caching, for the reason given at `TEAM_CARD_CACHE_CONTROL`.
  */
 
 /** The path the card of the person with this id is served at. */
@@ -30,8 +28,8 @@ export function teamCardPath(userId: string): string {
  *
  * It exists for the caches we do not control. A link preview stores the image
  * under its URL, often for weeks, and ignores our headers; a new URL is the
- * only thing that makes it fetch again. The value decides only the caching; the
- * card drawn is always the profile as it is now.
+ * only thing that makes it fetch again. The route itself ignores the value and
+ * draws whatever the profile says now.
  */
 export function teamCardVersion(
   person: TeamProfile,
@@ -68,22 +66,17 @@ export function teamCardUrl(
 }
 
 /**
- * **The card's cache**: a versioned card is cached for a year, immutable, like
- * the site cards, and one asked for without `v` for five minutes, with no
- * stale serving. The card, unlike the photo route
- * (`src/app/api/team/photos/[userId]/route.ts`), still answers any `v`: it
- * draws the profile as it is now and its `v` is a card digest. The
- * version covers everything the card shows that a profile can change, so a
- * changed card is a new URL at once. A hidden profile's card may go on serving
- * from a cache, as its photo may (owner ruling, 2026-10-05): hiding takes the
- * person off the Team page and their profile page, and the page that pointed
- * at the card with it.
+ * **Five minutes, public, no stale serving — not the site cards' year.** The
+ * route draws the profile as it is now whatever `v` it is asked for, so a
+ * year-long cache would pin a card under an address that is not its own: a
+ * profile changed and then changed back would go on sharing the version in
+ * between for a year. Nobody waits on the card — a link preview keeps its own
+ * copy and a share fetches it once — so the long cache would buy nothing
+ * (owner decision, 2026-10-05). The versioned URL is what keeps the short
+ * cache cheap: an unchanged card is still one URL, re-drawn at most once per
+ * five minutes per cache, and a changed one is a new URL at once.
  */
-export function teamCardCacheControl(versioned: boolean): string {
-  return versioned
-    ? OG_CARD_CACHE_CONTROL
-    : "public, max-age=300, s-maxage=300";
-}
+export const TEAM_CARD_CACHE_CONTROL = "public, max-age=300, s-maxage=300";
 
 /**
  * **The card's layout, in pixels of its 1200×630.** The text column's width is
