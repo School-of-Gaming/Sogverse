@@ -5319,7 +5319,6 @@
     "failed": "Un problème est survenu. Relancez /sub dans un instant.",
     "notLinked": "Pour utiliser /sub, associez d’abord votre compte Discord à votre compte Gedu School of Gaming.",
     "notLinkedRunLink": "Votre compte Discord n’est associé à aucun compte Gedu School of Gaming. Lancez /link pour l’associer, puis relancez /sub.",
-    "previewBanner": "Aperçu avec des séances d’exemple. Rien de ce que vous choisissez ici n’est envoyé.",
     "previewNotice": "Ceci est un aperçu — rien n’a été envoyé."
   },
   "seatOffer": {

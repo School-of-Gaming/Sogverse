@@ -206,7 +206,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
     expect(message.content).toBeUndefined();
     const body = JSON.stringify(message);
     expect(body).toContain("Mille kerralle et pääse?");
-    expect(body).toContain("Esikatselu esimerkkikerroilla.");
+    expect(body).toContain("Mille kerralle et pääse?");
     const ids = customIds(message.components);
     expect(ids.length).toBeGreaterThan(1);
     expect(ids.every((id) => id.startsWith("subpreview:"))).toBe(true);

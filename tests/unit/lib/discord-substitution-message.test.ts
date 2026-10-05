@@ -271,10 +271,8 @@ describe("the admin preview", () => {
       page: 0,
       prefix: "subpreview",
       substitutionsUrl: URL,
-      notice: en.sub("previewBanner"),
     });
 
-    expect(texts(message)).toContain(`-# ${en.sub("previewBanner")}`);
     const controls = [...selects(message), ...buttons(message)];
     expect(controls.length).toBeGreaterThan(1);
     for (const control of controls) {
@@ -410,7 +408,6 @@ describe("the logo", () => {
           page: 0,
           prefix: "subpreview",
           substitutionsUrl: URL,
-          notice: en.sub("previewBanner"),
         }),
     ],
     ["the reason step", (logoUrl) => buildReasonStepMessage({ copy: en, logoUrl, session: picked, reason: null })],

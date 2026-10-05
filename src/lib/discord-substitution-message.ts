@@ -373,7 +373,6 @@ export function buildSessionPickerMessage({
   page,
   prefix = "sub",
   substitutionsUrl,
-  notice,
 }: {
   copy: DiscordSubCopy;
   /** The header's logo — `discordSubLogoUrl()` — or `null` for none. */
@@ -385,14 +384,11 @@ export function buildSessionPickerMessage({
   prefix?: SubPrefix;
   /** The web Substitutions page, which the empty state points at. */
   substitutionsUrl: string;
-  /** A line above the list — the preview's banner. */
-  notice?: string;
 }): DiscordComponentsMessage {
-  const lead = notice === undefined ? [] : [text(`-# ${notice}`)];
 
   if (sessions.length === 0) {
     return message(copy, logoUrl, {
-      head: [...lead, text(`### ${copy.picker("filePickTitle")}`)],
+      head: [text(`### ${copy.picker("filePickTitle")}`)],
       body: [text(copy.sub("empty", { url: substitutionsUrl }))],
     });
   }
@@ -439,7 +435,7 @@ export function buildSessionPickerMessage({
   }
 
   return message(copy, logoUrl, {
-    head: [...lead, text(`### ${copy.picker("filePickTitle")}`)],
+    head: [text(`### ${copy.picker("filePickTitle")}`)],
     body: [
       text(copy.picker("filePickBody")),
       divider(),

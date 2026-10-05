@@ -5319,7 +5319,6 @@
     "failed": "Något gick fel. Kör /sub igen om en stund.",
     "notLinked": "För att använda /sub måste du först koppla ditt Discord-konto till ditt Gedu-konto hos School of Gaming.",
     "notLinkedRunLink": "Ditt Discord-konto är inte kopplat till ett Gedu-konto hos School of Gaming. Kör /link för att koppla det och sedan /sub igen.",
-    "previewBanner": "Förhandsvisning med exempeltillfällen. Inget du väljer här skickas in.",
     "previewNotice": "Det här är en förhandsvisning – inget skickades in."
   },
   "seatOffer": {

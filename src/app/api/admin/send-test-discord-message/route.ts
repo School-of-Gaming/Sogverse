@@ -68,7 +68,6 @@ export const POST = defineRoute({
         prefix: "subpreview",
         // A bare path, which the proxy sends on to the reader's own locale.
         substitutionsUrl: `${getOrigin(request)}${ROUTES.gedu.substitutions}`,
-        notice: copy.sub("previewBanner"),
       });
     }
 

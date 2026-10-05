@@ -5319,7 +5319,6 @@
     "failed": "Something went wrong. Run /sub again in a moment.",
     "notLinked": "To use /sub, first link your Discord account to your School of Gaming Gedu account.",
     "notLinkedRunLink": "Your Discord account isn’t linked to a School of Gaming Gedu account. Run /link to link it, then /sub again.",
-    "previewBanner": "Preview with sample sessions. Nothing you pick here is filed.",
     "previewNotice": "This is a preview — nothing was filed."
   },
   "seatOffer": {
