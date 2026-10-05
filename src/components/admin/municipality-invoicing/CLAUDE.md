@@ -550,8 +550,8 @@ clubs in a trailing bucket, which meant a figure printed outside every total on 
 the exact shape of a total that is quietly short — and a reader with no way to tell a club
 that was never invoiceable from one whose location was mistyped an hour ago. Refusing sends
 the same person to the same repair, raises no invoice in the meantime, and costs this page
-a state it no longer has to carry anywhere: not in the contract, not in the arithmetic, not
-in the copy, and not in the fixtures.
+a state it no longer has to carry anywhere: not in the contract, not in the arithmetic, and not
+in the copy.
 
 What the schema guarantees on its own is only that a municipality club carries a location;
 it does not force that location's ancestor chain to reach a municipality. The refusal is
@@ -559,59 +559,10 @@ where that last step is enforced, so it belongs to the read rather than to any o
 surface — a second page over the same document inherits the guarantee rather than having
 to re-decide what to draw.
 
-## How the page is looked at: the preview scene, not the database
+## How the page is reviewed
 
-**This page is reviewed from fixtures, in the UI Previews scene, and not by pointing it
-at production data.** It is the densest surface in the app and most of what there is to
-judge about it is a state — a session billed without a record, a fee nobody set, a term
-ending mid-month.
-Live data shows whichever of those the month happens to contain, changes between two
-readings, and cannot be screenshotted twice; a month of invented clubs in the shape of
-production shows all of them at once and shows the same ones tomorrow. Its invented names
-are held to being *plausible* rather than recognisable: a fixture naming a real school or a
-real customer's club is a page that looks like live data.
-
-The scene renders **this shell**, not a copy of it, over a fixture that satisfies the
-wire contract — so every figure on it is produced by the same pure build the live
-document goes through, and a scene that looked right could not be a page that is wrong.
-Two things make that possible, and both are deliberately visible in the code:
-
-- **The shell takes an optional clock.** Every state here is a claim about where a date
-  sits relative to today, so a fixture month is pinned to a fixed instant inside itself.
-  The live page passes nothing and reads the ticking clock exactly as before; the tick is
-  precisely what a pinned month cannot have, which is why this is a prop rather than a
-  provider the scene could wrap.
-- **The scene owns a query client that never refetches.** The shell's read is seeded —
-  hydrated server-side on the live route, handed in as the seed in the scene — and the
-  default one-minute staleness would otherwise let a window focus fire the real
-  admin-gated read behind the preview and replace the fixtures with production's own
-  month.
-
-**The download links are real and cost the scene nothing.** Each points at the live export
-route with the fixture's own month and customer id, so what a reviewer sees is the href the
-live page would build — and an anchor is fetched when it is followed, not when it is
-rendered, so the scene still reaches the network exactly as often as it did before: never.
-The fixtures carry a customer whose file is blocked by a club with no fee and one whose
-file is blocked by having nothing to invoice — its one club's every due date cancelled,
-since anything else that was due would bill — because a month of ordinary clubs would show
-neither. They also carry cancellations on both sides of the pinned today and one on a
-date nothing projects and nothing is recorded on, which must render no line. Three
-customers are on a period: in the working month all three wait for June, and in March —
-which ends the first quarter and sits in the middle of the first half — one quarter's file
-is ready, one is refused over a club that ran without a fee in January and had stopped by
-March, and the half-year is still under way, beside the monthly files.
-
-**The month stepper stays inside the preview, and it is how the empty ledger and a
-quarter's file are reached.** The stepper is one of the page's own controls rather than a
-way out of a row, so the shell takes its link target as a prop: the live page points it at
-another month of itself, and the scene points it back at the scene. The fixtures answer the
-month asked for, and hand the shell a period's earlier months exactly as the live route
-does — the spring term's months have the ledger, with every per-month state in the working
-month, and every month outside the term is genuinely empty — so an empty month and March's
-period files are each a step away and a step back on the same page in the same chrome,
-which is strictly more than a second scenario could have shown. The club
-names remain real links out to the live admin pages, which is the honest behaviour for a
-control whose whole purpose is to leave the row.
+**On a local stack built from the rich seed**, which holds an invoice customer of each
+cadence and every state the ledger can be in.
 
 ## Which municipality a club belongs to
 

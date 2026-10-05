@@ -13,10 +13,8 @@ import { BILLING_CADENCE_LABEL } from "./billing-cadence-label";
 /**
  * Every Fennoa invoice customer, one row each.
  *
- * **Presentational, and that is what the preview scene rides on**: the rows
- * arrive as a prop, so the live page hands it a read and the scene hands it
- * fixtures, and there is one body between them. `settled` is separate from the
- * rows because "no customers yet" and "the read has not answered" are different
+ * **Presentational**: the rows arrive as a prop, handed in by the live data
+ * shell beside it. `settled` is separate from the rows because "no customers yet" and "the read has not answered" are different
  * pages, and only the first of them may print an empty state.
  *
  * **No loading affordance.** The table is the whole table — a few dozen rows of

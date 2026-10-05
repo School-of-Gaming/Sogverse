@@ -87,8 +87,6 @@ export function MunicipalityInvoicingPage({
   monthStart,
   initialSnapshot,
   initialPeriodSnapshots = NO_SNAPSHOTS,
-  now: pinnedNow,
-  monthHref: monthHrefProp,
 }: {
   /** The month on screen, as its first day (`YYYY-MM-01`). */
   monthStart: string;
@@ -100,34 +98,10 @@ export function MunicipalityInvoicingPage({
    * else: every figure on the ledger is still this month's own.
    */
   initialPeriodSnapshots?: readonly MunicipalityInvoicingSnapshot[];
-  /**
-   * A clock to read the month against, instead of the live one.
-   *
-   * Only the preview scene passes it, and it is a prop rather than a provider
-   * the scene could wrap because the provider's whole job is to *tick*: a
-   * fixture month pinned to one instant and a clock that moves to the real one
-   * thirty seconds later would reclassify every line on the page — today's
-   * recorded session and next week's upcoming ones both — while somebody was
-   * looking at it. Absent, which is every deployment, the page reads the live
-   * clock exactly as it did.
-   */
-  now?: Date;
-  /**
-   * Where a step of the month stepper goes, given the month it steps to.
-   *
-   * It defaults to the live admin route, which is the only answer a deployment
-   * ever wants. The preview scene passes its own, pointing back at itself,
-   * because a stepper that leaves the preview is a control the reviewer cannot
-   * use on the page they are reviewing — and stepping the month is how the
-   * preview reaches the one state a month with clubs in it cannot show.
-   */
-  monthHref?: (month: string) => MonthHref;
 }) {
-  const monthHref = monthHrefProp ?? adminMonthHref;
   const t = useTranslations("admin.municipalityInvoicing");
   const locale = resolveLocale(useLocale());
-  const liveNow = useNow();
-  const now = pinnedNow ?? liveNow;
+  const now = useNow();
   const { data: snapshot } = useMunicipalityInvoicingMonth(
     monthStart,
     initialSnapshot,
@@ -216,7 +190,7 @@ export function MunicipalityInvoicingPage({
         <MonthStepper
           monthStart={invoice.monthStart}
           locale={locale}
-          monthHref={monthHref}
+          monthHref={adminMonthHref}
           previousLabel={t("previousMonth")}
           nextLabel={t("nextMonth")}
         />
@@ -294,8 +268,6 @@ export function MunicipalityInvoicingPage({
     </div>
   );
 }
-
-export type { MonthHref };
 
 /** The default for a month that ends no period: one array, so memos hold. */
 const NO_SNAPSHOTS: readonly MunicipalityInvoicingSnapshot[] = [];

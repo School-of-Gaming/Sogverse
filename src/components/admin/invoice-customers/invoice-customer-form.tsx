@@ -43,10 +43,8 @@ interface InvoiceCustomerFormProps {
  * The create and edit form for one Fennoa invoice customer.
  *
  * **Presentational end to end**: it takes a draft and a submit function and
- * knows nothing about React Query, which is what lets the create page, the edit
- * page and the preview scene render this exact component — the scene hands it a
- * submit that refuses, and what a reviewer looks at is the real error state
- * rather than a drawing of one.
+ * knows nothing about React Query, which is what lets the create page and the
+ * edit page render this exact component.
  *
  * **The contract validates, this only says so.** Every rule lives in
  * `invoiceCustomerInput`, shared with the service and mirrored by the table's

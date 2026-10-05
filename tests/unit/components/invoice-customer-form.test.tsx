@@ -42,7 +42,7 @@ import {
   emptyInvoiceCustomerDraft,
   type InvoiceCustomerDraft,
 } from "@/components/admin/invoice-customers/invoice-customer-draft";
-import { INVOICE_CUSTOMER_DUPLICATE_REFUSAL } from "@/components/admin/invoice-customers/mock-invoice-customer-fixtures";
+import { INVOICE_CUSTOMER_DUPLICATE_REFUSAL } from "../../mocks/invoice-customers";
 
 /** A draft with something in every box, deliberately untidy. */
 function untidyDraft(): InvoiceCustomerDraft {
