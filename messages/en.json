@@ -847,6 +847,17 @@
       "notGranted": "Not granted",
       "error": "Couldn’t update the qualification. Please try again."
     },
+    "geduLanguages": {
+      "title": "Languages",
+      "note": "They’re offered substitutions only for sessions in a language ticked here. With none ticked, they’re offered none.",
+      "error": "Couldn’t save the languages. Please try again."
+    },
+    "missingRequirements": {
+      "qualification": "This Gedu does not hold the {qualification} qualification, which this product requires.",
+      "language": "This product is run in {language}, which this Gedu has not listed as a language they speak.",
+      "coverage": "This product runs on-site at {site}, which is outside this Gedu’s coverage areas.",
+      "coverageUnnamed": "This product runs on-site, outside this Gedu’s coverage areas."
+    },
     "geduCertifyWarnings": {
       "title": "Certify anyway?",
       "body": "Certification requires neither of these, so you can certify them anyway.",
@@ -1350,7 +1361,10 @@
         "absentGedu": "The Gedu being substituted for",
         "notCertified": "Not certified",
         "alreadyTrainee": "Already a trainee",
-        "traineeInstead": "Can be added as a trainee instead."
+        "traineeInstead": "Can be added as a trainee instead.",
+        "notQualified": "Not qualified: {qualification}",
+        "doesNotSpeak": "Doesn’t speak {language}",
+        "outsideCoverage": "Outside their coverage areas"
       },
       "participantPicker": {
         "title": "Add a participant",
@@ -1514,6 +1528,10 @@
             "failed": "The switch did not complete. Press Switch club again — a repeated press replays the same request, so it never charges the family twice."
           },
           "confirm": "Switch club"
+        },
+        "requirementGaps": {
+          "title": "Assign anyway?",
+          "action": "Assign anyway"
         }
       },
       "seatLimitModes": {
@@ -1771,7 +1789,11 @@
         "messagePlaceholder": "Plain text, up to 2,000 characters",
         "send": "Send Test Message",
         "sent": "Message sent.",
-        "openInDiscord": "Open in Discord"
+        "openInDiscord": "Open in Discord",
+        "templatePlain": "Plain text",
+        "templateSubSessions": "/sub: session list",
+        "templateSubNotLinked": "/sub: not linked yet",
+        "subPreviewSent": "Preview sent."
       }
     },
     "whatsapp": {
@@ -2008,8 +2030,9 @@
       "certificationAlertTitle": "Your account needs to be certified",
       "certificationAlertDescription": "You can sign in right away, but an admin needs to certify your account before you can be assigned to a club or camp.",
       "coverageHeading": "Where can you work?",
-      "coverageNote": "Pick the areas where you can work on-site. If you can only work remotely, leave this field empty. You can edit your selection later in your profile settings.",
+      "coverageNote": "Pick the areas where you can work on-site. You’re offered on-site substitutions only in these areas; online sessions don’t depend on them. If you can only work remotely, leave this empty. You can change it later in your settings.",
       "invalidPhone": "Please enter a valid phone number",
+      "spokenLanguagesRequired": "Choose at least one language you speak.",
       "creatingAccount": "Creating account...",
       "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
     },
@@ -2606,7 +2629,8 @@
       "cardLockedLabel": "{product} — session you’re substituting for. The group’s workspace opens 48 hours before it starts.",
       "accessOpens": "Workspace opens {date} at {time}",
       "poolHeading": "Sessions needing a substitute",
-      "poolAllClear": "No sessions need a substitute right now.",
+      "poolRequirementsNote": "You see sessions in a language you speak and, for on-site ones, in your coverage areas. Keep both up to date in your <link>settings</link>.",
+      "poolAllClear": "No sessions you can cover need a substitute right now.",
       "poolRolePrimary": "Primary",
       "poolRoleAssistant": "Assistant",
       "poolFee": "{fee} per session",
@@ -2614,13 +2638,16 @@
       "poolWithdrawAction": "Withdraw offer",
       "poolWithdrawPending": "Withdrawing…",
       "poolActionFailed": "That didn’t save. Try again.",
+      "poolOfferFailedNotQualified": "This session needs a qualification you don’t hold, so you can’t offer to cover it.",
+      "poolOfferFailedLanguage": "This session is run in a language you haven’t listed as one you speak, so you can’t offer to cover it. You can add languages in your settings.",
+      "poolOfferFailedCoverage": "This session is on-site outside your coverage areas, so you can’t offer to cover it. You can change your coverage areas in your settings.",
       "pageTitle": "Substitutions",
       "back": "Back to My SOG",
       "mineHeading": "You’re substituting",
       "mineAllClear": "You have no substitutions coming up.",
       "fileAction": "Can’t make a session?",
-      "filePickTitle": "Which session can’t you make?",
-      "filePickBody": "Pick the session you can’t make. Your reason and note are shown to admins only.",
+      "filePickTitle": "Which session do you need a substitute for?",
+      "filePickBody": "Your reason and note are shown to admins only.",
       "fileAlreadyRequested": "Already asked for a substitute",
       "filePickWeekThis": "This week",
       "filePickWeekNext": "Next week",
@@ -2628,14 +2655,14 @@
       "filePickShowLater": "Show later sessions",
       "filePickGroupLabel": "Group",
       "filePickAllGroups": "All groups",
-      "fileFiled": "Substitute requested for {product} on {when}. It now shows on that session’s card.",
+      "fileFiled": "Substitute requested for {product} on {when}. It now shows on that session’s card in My SOG.",
       "fileFiledLink": "Open the group’s workspace",
       "offerConfirmTitle": "Offer to substitute?",
       "offerConfirmBody": "You’re offering to run {product} on {when}. School of Gaming chooses who substitutes, and you can withdraw your offer until it is approved. Once it is approved, the session is yours under your Gedu contract, exactly like one of your own, and you can no longer withdraw: if you then can’t make it, ask for a substitute yourself, as for any of your sessions. The group’s workspace opens to you 48 hours before the session starts."
     },
     "coverage": {
       "title": "Coverage areas",
-      "remoteOnlyNote": "Used to match you as a substitute when another Gedu can’t make their club. Leave empty if you only substitute remotely.",
+      "remoteOnlyNote": "You see on-site substitution requests only in the areas you pick. Online sessions don’t depend on them. Leave this empty if you only work remotely.",
       "selectedHeading": "Selected ({count})",
       "noneSelected": "No areas selected",
       "remove": "Remove {name}",
@@ -4567,6 +4594,19 @@
       "schoolOfGaming": "School of Gaming may send me news and offers by email.",
       "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time."
     },
+    "notifications": {
+      "title": "Notification preferences",
+      "channels": {
+        "email": "Email"
+      },
+      "kinds": {
+        "session_report_copy": {
+          "label": "Copies of session reports",
+          "hint": "A copy of each session report emailed to the families in a group."
+        }
+      },
+      "saveFailed": "Your notification preferences could not be saved. Please try again."
+    },
     "usernameLabel": "Username",
     "gamerPasswordFromParent": "Your parent can set a new password for you from their My SOG.",
     "photoConsent": {
@@ -5498,13 +5538,13 @@
   "discordLink": {
     "confirm": {
       "title": "Link your Discord account",
-      "body": "Link the Discord account <b>@{username}</b> to your School of Gaming account? School of Gaming will then be able to reach you on Discord.",
+      "body": "Link the Discord account <b>@{username}</b> to your School of Gaming account? School of Gaming will be able to reach you on Discord, and that Discord account will be able to use the School of Gaming bot on your behalf. Only link an account that is yours.",
       "action": "Link account",
       "failed": "Something went wrong and your account wasn’t linked. Try again."
     },
     "linked": {
       "title": "Linked to @{username}",
-      "body": "School of Gaming can now reach you on Discord.",
+      "body": "School of Gaming can now reach you on Discord, and you can use the School of Gaming bot there.",
       "goToMySog": "Go to My SOG",
       "goToDashboard": "Go to the dashboard"
     },
@@ -5524,6 +5564,16 @@
       "title": "Only School of Gaming staff can link a Discord account",
       "body": "This account can’t link one. If you’re on the staff, sign in with your staff account."
     }
+  },
+  "discordSub": {
+    "pickPlaceholder": "Pick a session",
+    "addNote": "Add a note",
+    "confirmWithoutNote": "Confirm without a note",
+    "empty": "You have no upcoming sessions to ask for a substitute for. Your substitutions are on the website: {url}",
+    "failed": "Something went wrong. Run /sub again in a moment.",
+    "notLinked": "To use /sub, first link your Discord account to your School of Gaming Gedu account.",
+    "notLinkedRunLink": "Your Discord account isn’t linked to a School of Gaming Gedu account. Run /link to link it, then /sub again.",
+    "previewNotice": "This is a preview — nothing was filed."
   },
   "seatOffer": {
     "offer": {

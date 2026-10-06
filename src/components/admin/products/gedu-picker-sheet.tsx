@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { StatusLine } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Identicon } from "@/components/ui/identicon";
@@ -17,12 +18,20 @@ import {
 } from "@/components/ui/sheet";
 import { useScrollSentinel } from "@/hooks/use-scroll-sentinel";
 import { useUserList, type UserListEntry } from "@/services/users";
+import { useGedusCoveringProduct } from "@/services/gedu-locations";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import {
   SPOKEN_LANGUAGES,
   type SpokenLanguageCode,
 } from "@/lib/constants/spoken-languages";
+import {
+  missingRequirementKey,
+  missingRequirements,
+  type MissingRequirement,
+  type SessionRequirements,
+} from "@/lib/products/session-requirements";
 import { cn } from "@/lib/utils";
+import { useQualificationNames } from "@/components/admin/qualification-names";
 
 /**
  * How far below the last row counts as reached — the same margin the sibling
@@ -102,7 +111,25 @@ interface GeduPickerSheetProps {
    * picker has no such alternative to offer.
    */
   offerTraineeInstead?: boolean;
-  onSelect: (gedu: UserListEntry) => void;
+  /**
+   * `staff` seats only: what the product being staffed requires of whoever
+   * runs it — its qualifications, its language and, in person, a coverage
+   * area reaching its site. A row whose gedu falls
+   * short **stays selectable** and says where — for an admin a missing
+   * requirement is a warning, never a refusal, and the caller's confirm step
+   * is where the admin says they meant it. Ignored on a `trainee` seat, which
+   * the requirements gate no more than certification does.
+   */
+  requirements?: SessionRequirements;
+  /**
+   * The pick, with the requirements the gedu falls short of — empty when they
+   * meet them all, and always empty on a `trainee` seat. Handed over rather
+   * than recomputed so the confirm step names exactly the gap the row showed.
+   */
+  onSelect: (
+    gedu: UserListEntry,
+    missing: readonly MissingRequirement[],
+  ) => void;
 }
 
 /**
@@ -137,9 +164,12 @@ export function GeduPickerSheet({
   highlightId,
   seat = "staff",
   offerTraineeInstead = false,
+  requirements,
   onSelect,
 }: GeduPickerSheetProps) {
   const t = useTranslations("admin.products.geduPicker");
+  const qualificationNames = useQualificationNames();
+  const required = seat === "staff" ? requirements : undefined;
   const [search, setSearch] = useState("");
   const [languageFilter, setLanguageFilter] =
     useState<SpokenLanguageCode | null>(null);
@@ -183,9 +213,31 @@ export function GeduPickerSheet({
     { enabled: hasOpened, withTotal: true },
   );
 
+  /**
+   * Who covers the product's site, on an in-person product only — the
+   * database's own answer, so this sheet carries no copy of the walk up the
+   * location tree that decides it.
+   *
+   * **The rows wait for it**, as they wait for their own page: a row on
+   * screen carries its own verdict, and a row drawn before this lands would
+   * grow a coverage line under the admin's cursor. It is a small read keyed
+   * by one product, so it lands with the page. Should it fail, the rows draw
+   * without the coverage line rather than not at all — the line is a warning,
+   * and a picker that cannot staff is worse than one that warns less.
+   */
+  const site = required?.site ?? null;
+  const covering = useGedusCoveringProduct(
+    hasOpened && site !== null ? site.productId : null,
+  );
+  const coverageSettled =
+    site === null || covering.data !== undefined || covering.isError;
+
   const gedus = useMemo(
-    () => list.data?.pages.flatMap((page) => page.rows) ?? [],
-    [list.data],
+    () =>
+      coverageSettled
+        ? (list.data?.pages.flatMap((page) => page.rows) ?? [])
+        : [],
+    [list.data, coverageSettled],
   );
 
   // The sheet body is the scroller while a sheet is open, so that box is what
@@ -222,6 +274,22 @@ export function GeduPickerSheet({
     if (total === undefined || total === null) return null;
     return { filtered, total };
   }, [list.data, everyGedu.data]);
+
+  /** The row's line for one requirement it falls short of. */
+  function gapLine(requirement: MissingRequirement): string {
+    switch (requirement.kind) {
+      case "qualification":
+        return t("notQualified", {
+          qualification: qualificationNames[requirement.qualification],
+        });
+      case "language":
+        return t("doesNotSpeak", {
+          language: languageName(requirement.language),
+        });
+      case "coverage":
+        return t("outsideCoverage");
+    }
+  }
 
   useEffect(() => {
     if (open) {
@@ -307,6 +375,17 @@ export function GeduPickerSheet({
               const refusesUncertified = seat === "staff" && isUncertified;
               const isDisabled =
                 isCurrent || refusal !== null || refusesUncertified;
+              // Said only on a row that can be picked: a refused row already
+              // says why it cannot, and a second fact beside the refusal would
+              // be about a choice the admin is not being offered.
+              const missing =
+                isDisabled || required === undefined
+                  ? []
+                  : missingRequirements(
+                      required,
+                      g,
+                      covering.data?.has(g.id) ?? true,
+                    );
               return (
                 <GeduRow
                   key={g.id}
@@ -317,10 +396,14 @@ export function GeduPickerSheet({
                   isUncertified={isUncertified}
                   refusesUncertified={refusesUncertified}
                   showTraineeHint={refusesUncertified && offerTraineeInstead}
+                  requirementGaps={missing.map((requirement) => ({
+                    key: missingRequirementKey(requirement),
+                    line: gapLine(requirement),
+                  }))}
                   isDisabled={isDisabled}
                   onClick={() => {
                     if (isDisabled) return;
-                    onSelect(g);
+                    onSelect(g, missing);
                     onOpenChange(false);
                   }}
                 />
@@ -329,7 +412,7 @@ export function GeduPickerSheet({
             {/* Only once the first page has answered: "no results" is a claim
                 about who exists, and a page of 25 off an indexed view lands in
                 a frame or two, so nothing stands in for it in the meantime. */}
-            {gedus.length === 0 && !list.isPending && (
+            {gedus.length === 0 && !list.isPending && coverageSettled && (
               <p className="py-8 text-center text-sm text-muted-foreground">
                 {t("noResults")}
               </p>
@@ -363,6 +446,11 @@ interface GeduRowProps {
   refusesUncertified: boolean;
   /** Say under the address that this educator can be placed as a trainee. */
   showTraineeHint: boolean;
+  /**
+   * One line per requirement this selectable gedu falls short of — empty
+   * where they meet every one the seat requires.
+   */
+  requirementGaps: readonly { key: string; line: string }[];
   isDisabled: boolean;
   onClick: () => void;
 }
@@ -375,6 +463,7 @@ function GeduRow({
   isUncertified,
   refusesUncertified,
   showTraineeHint,
+  requirementGaps,
   isDisabled,
   onClick,
 }: GeduRowProps) {
@@ -428,6 +517,18 @@ function GeduRow({
         {showTraineeHint && (
           <p className="text-xs text-muted-foreground">{t("traineeInstead")}</p>
         )}
+        {/* Lines rather than badges beside the name: the qualification names
+            run long in the longer locales, and a row can lack several, which
+            beside a name would squeeze the surname that tells two Mikkos
+            apart. One line per gap, as the confirm step words them. They sit
+            where the trainee hint does, the other line a row carries about its
+            own standing, and never on the same row as it — the hint is for a
+            refused row, these for a selectable one. */}
+        {requirementGaps.map(({ key, line }) => (
+          <StatusLine key={key} status="warning" size="xs" muted>
+            {line}
+          </StatusLine>
+        ))}
         {gedu.spoken_languages.length > 0 && (
           <div className="mt-1.5 flex gap-1">
             {gedu.spoken_languages.map((code) => (

@@ -97,9 +97,24 @@ export function GeduSubstitutionsPageBody({
           aria-labelledby="substitution-pool-heading"
           className="space-y-4"
         >
-          <h2 id="substitution-pool-heading" className="text-xl font-semibold">
-            {t("poolHeading")}
-          </h2>
+          {/* The note travels with the heading rather than the pool's own
+              body: it says what the queue is filtered by, which is true
+              whether or not the queue has anything in it, and is what makes
+              an empty queue legible to a gedu whose settings are thin. */}
+          <div className="space-y-1">
+            <h2 id="substitution-pool-heading" className="text-xl font-semibold">
+              {t("poolHeading")}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {t.rich("poolRequirementsNote", {
+                link: (chunks) => (
+                  <Link href={ROUTES.settings} className="text-act hover:underline">
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </p>
+          </div>
           {pool}
         </section>
       )}

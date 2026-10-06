@@ -1979,6 +1979,45 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          enabled: boolean
+          kind: Database["public"]["Enums"]["notification_kind"]
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          enabled: boolean
+          kind: Database["public"]["Enums"]["notification_kind"]
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          enabled?: boolean
+          kind?: Database["public"]["Enums"]["notification_kind"]
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parent_gamer: {
         Row: {
           created_at: string | null
@@ -3476,6 +3515,9 @@ export type Database = {
           linked_gamers: Json | null
           locale: string | null
           phone: string | null
+          qualifications:
+            | Database["public"]["Enums"]["gedu_qualification"][]
+            | null
           registration_completed_at: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           spoken_languages:
@@ -3501,6 +3543,7 @@ export type Database = {
           linked_gamers?: never
           locale?: string | null
           phone?: string | null
+          qualifications?: never
           registration_completed_at?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           spoken_languages?:
@@ -3526,6 +3569,7 @@ export type Database = {
           linked_gamers?: never
           locale?: string | null
           phone?: string | null
+          qualifications?: never
           registration_completed_at?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           spoken_languages?:
@@ -3871,13 +3915,48 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
       }
+      file_session_substitution_request: {
+        Args: {
+          p_gedu_id: string
+          p_group_id: string
+          p_reason: Database["public"]["Enums"]["substitution_reason"]
+          p_reason_note: string
+          p_session_date: string
+        }
+        Returns: Json
+      }
       forfeit_password: { Args: { p_user_id: string }; Returns: undefined }
+      gedu_assigned_products: {
+        Args: { p_gedu_id: string }
+        Returns: {
+          cancelled_dates: string[]
+          group_count: number
+          group_id: string
+          kind: string
+          participant_count: number
+          product: Json
+          substitution_cancelled: boolean
+          substitution_date: string
+        }[]
+      }
+      gedu_assignment_summaries: {
+        Args: { p_epoch_date: string; p_gedu_id: string }
+        Returns: Json
+      }
+      gedu_covers_product_site: {
+        Args: { p_gedu_id: string; p_product_id: string }
+        Returns: boolean
+      }
       gedu_holds_seat_at_session: {
         Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
       }
+      gedu_holds_session_qualifications: {
+        Args: { p_gedu_id: string; p_group_id: string }
+        Returns: boolean
+      }
       gedu_holds_unexpired_substitution: {
-        Args: { p_group_id: string; p_session_date: string }
+        Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
       }
       gedu_invoicing_document: {
@@ -3895,6 +3974,10 @@ export type Database = {
           p_group_id: string
           p_session_date: string
         }
+        Returns: boolean
+      }
+      gedu_speaks_session_language: {
+        Args: { p_gedu_id: string; p_group_id: string }
         Returns: boolean
       }
       gedu_substitutes_group: { Args: { p_group_id: string }; Returns: boolean }
@@ -3927,6 +4010,19 @@ export type Database = {
         Returns: Json
       }
       get_admin_substitution_requests: { Args: never; Returns: Json }
+      get_assigned_products_for_discord_user: {
+        Args: { p_discord_user_id: string }
+        Returns: {
+          cancelled_dates: string[]
+          group_count: number
+          group_id: string
+          kind: string
+          participant_count: number
+          product: Json
+          substitution_cancelled: boolean
+          substitution_date: string
+        }[]
+      }
       get_chat_channel_roster: {
         Args: { p_channel_id: string }
         Returns: {
@@ -3940,7 +4036,19 @@ export type Database = {
         Args: { p_group_id?: string; p_product_id: string }
         Returns: Json
       }
+      get_gedu_assignment_summaries_for_discord_user: {
+        Args: { p_discord_user_id: string; p_epoch_date?: string }
+        Returns: Json
+      }
+      get_gedu_for_discord_user: {
+        Args: { p_discord_user_id: string }
+        Returns: Json
+      }
       get_gedu_group_feed: { Args: { p_group_id: string }; Returns: Json }
+      get_gedus_covering_product: {
+        Args: { p_product_id: string }
+        Returns: string[]
+      }
       get_group_staff_overlay: { Args: { p_group_id: string }; Returns: Json }
       get_my_assigned_products: {
         Args: never
@@ -4232,6 +4340,13 @@ export type Database = {
         Returns: string
       }
       pin_is_set: { Args: never; Returns: boolean }
+      product_required_qualifications: {
+        Args: {
+          p_product_type: Database["public"]["Enums"]["product_type"]
+          p_tag?: Database["public"]["Enums"]["product_tag"]
+        }
+        Returns: Database["public"]["Enums"]["gedu_qualification"][]
+      }
       promote_from_waitlist: {
         Args: { p_group_id?: string; p_participation_id: string }
         Returns: Json
@@ -4306,6 +4421,20 @@ export type Database = {
           p_session_date: string
         }
         Returns: Json
+      }
+      request_session_substitution_for_discord_user: {
+        Args: {
+          p_discord_user_id: string
+          p_group_id: string
+          p_reason?: Database["public"]["Enums"]["substitution_reason"]
+          p_reason_note?: string
+          p_session_date: string
+        }
+        Returns: Json
+      }
+      require_discord_linked_gedu: {
+        Args: { p_discord_user_id: string }
+        Returns: string
       }
       respond_seat_offer: {
         Args: {
@@ -4501,6 +4630,14 @@ export type Database = {
         Returns: undefined
       }
       set_my_pin: { Args: { p_pin: string }; Returns: undefined }
+      set_notification_preference: {
+        Args: {
+          p_channel: Database["public"]["Enums"]["notification_channel"]
+          p_enabled: boolean
+          p_kind: Database["public"]["Enums"]["notification_kind"]
+        }
+        Returns: undefined
+      }
       set_pin_for_user: {
         Args: { p_pin: string; p_user_id: string }
         Returns: undefined
@@ -4650,6 +4787,8 @@ export type Database = {
         | "for_schools"
       location_type: "country" | "region" | "municipality" | "district" | "site"
       marketing_consent_type: "school_of_gaming" | "lynx_educate"
+      notification_channel: "email"
+      notification_kind: "session_report_copy"
       participation_status: "reserving" | "active" | "waitlisted" | "completed"
       payment_purpose:
         | "bundle"
@@ -4822,6 +4961,8 @@ export const Constants = {
       ],
       location_type: ["country", "region", "municipality", "district", "site"],
       marketing_consent_type: ["school_of_gaming", "lynx_educate"],
+      notification_channel: ["email"],
+      notification_kind: ["session_report_copy"],
       participation_status: ["reserving", "active", "waitlisted", "completed"],
       payment_purpose: [
         "bundle",

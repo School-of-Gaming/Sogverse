@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 
 /**
  * The confirm page's request: the raw token from the `/link` URL. The bot
@@ -33,13 +34,31 @@ export const DISCORD_MESSAGE_MAX_LENGTH = 2000;
 
 /**
  * The admin testing page's Discord send: which linked Sogverse account to DM,
- * and the plain text to send. The recipient is named by profile, never by
- * Discord id — the route looks the Discord account up itself.
+ * and which template — plain `text`, or one of the `/sub` command's two
+ * answers, `subSessions` (the first step over sample sessions) and
+ * `subNotLinked` (what a caller with no linked account is told). The recipient
+ * is named by profile, never by Discord id — the route looks the Discord
+ * account up itself.
  */
-export const sendTestDiscordMessageBody = z.object({
-  profileId: z.string().uuid(),
-  content: z.string().trim().min(1).max(DISCORD_MESSAGE_MAX_LENGTH),
-});
+export const sendTestDiscordMessageBody = z.discriminatedUnion("template", [
+  z.object({
+    template: z.literal("text"),
+    profileId: z.string().uuid(),
+    content: z.string().trim().min(1).max(DISCORD_MESSAGE_MAX_LENGTH),
+  }),
+  z.object({
+    template: z.literal("subSessions"),
+    profileId: z.string().uuid(),
+    /** The locale to render the preview in. */
+    locale: z.enum(SUPPORTED_LOCALES),
+  }),
+  z.object({
+    template: z.literal("subNotLinked"),
+    profileId: z.string().uuid(),
+    /** The locale to render the preview in. */
+    locale: z.enum(SUPPORTED_LOCALES),
+  }),
+]);
 export type SendTestDiscordMessageBody = z.infer<typeof sendTestDiscordMessageBody>;
 
 /** Where the sent message is: a link that opens it in Discord. */

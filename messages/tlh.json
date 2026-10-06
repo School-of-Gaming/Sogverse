@@ -891,6 +891,17 @@
       "notGranted": "nobbe’lu’",
       "error": "laH choHlu’be’pu’. yInID."
     },
+    "geduLanguages": {
+      "title": "Holmey",
+      "note": "Hol wIvlu’pu’bogh neH lo’taHvIS DIvI’ Quv ghojmoHwI’ tamlaH. Hol wIvlu’be’chugh, Qu’ tu’be’.",
+      "error": "Holmey choqlaHbe’. yInIDqa’!"
+    },
+    "missingRequirements": {
+      "qualification": "{qualification} laH ghajbe’ Geduvam. laHvam poQ Doch.",
+      "language": "{language} Hol lo’ Dochvam. Hol jatlhlaHbe’ Geduvam.",
+      "coverage": "{site} Daq lo’ Dochvam. Daqvetlh So’be’ Geduvam.",
+      "coverageUnnamed": "Daq lo’ Dochvam. Daqvetlh So’be’ Geduvam."
+    },
     "geduCertifyWarnings": {
       "title": "patlh yInob ’e’ DaHech’a’?",
       "body": "patlh nobmeH pagh poQlu’ — vaj patlh Danob laH.",
@@ -1394,7 +1405,10 @@
         "absentGedu": "lIwlu’bogh Gedu",
         "notCertified": "patlh ghajbe’",
         "alreadyTrainee": "ghojwI’ ghaHpu’",
-        "traineeInstead": "ghojwI’ DachellaH."
+        "traineeInstead": "ghojwI’ DachellaH.",
+        "notQualified": "laH ghajbe’: {qualification}",
+        "doesNotSpeak": "Hol jatlhlaHbe’: {language}",
+        "outsideCoverage": "Daqmeyvetlh So’be’"
       },
       "participantPicker": {
         "title": "ghom yIchel",
@@ -1558,6 +1572,10 @@
             "failed": "rInbe’ chIjghach. ghom’a’ yIchIj yI’uy’qa’ — rap tlhobHa’ghach, vaj not cha’logh DIl qorDu’."
           },
           "confirm": "ghom’a’ yIchIj"
+        },
+        "requirementGaps": {
+          "title": "ghomvaD yIchu’ ’e’ DaHech’a’?",
+          "action": "yIchu’ ’e’ yIruch"
         }
       },
       "seatLimitModes": {
@@ -1815,7 +1833,11 @@
         "messagePlaceholder": "ghItlh neH, 2000 Degh law’ be’",
         "send": "ngong QIn yIngeH",
         "sent": "QIn ngeHta’.",
-        "openInDiscord": "Discord Daq yIpoS"
+        "openInDiscord": "Discord Daq yIpoS",
+        "templatePlain": "ghItlh neH",
+        "templateSubSessions": "/sub: Qu' tlhegh",
+        "templateSubNotLinked": "/sub: wej ghItlh pagh",
+        "subPreviewSent": "ghantoH ngeHta’."
       }
     },
     "whatsapp": {
@@ -2052,8 +2074,9 @@
       "certificationAlertTitle": "patlh DaghajnIS",
       "certificationAlertDescription": "DaH bI’el laH, ’ach ghob ghoSlu’pa’ patlhlIj nob qum.",
       "coverageHeading": "nuqDaq bIvum laH?",
-      "coverageNote": "Daqmey yIwIv DaqDaq bIvum laH. Hop pat neH DavumlaHchugh, naDev yIqonQo’. DaH yInaQ; poH wInaQ pat’a’ choHlaH.",
+      "coverageNote": "Daqmey yIwIv DaqDaq bIvum laH. Daqmeyvam neH lIw DaqDaq Danobta’. Hop may’mey Daqmeyvam luSo’be’. Hop pat neH DavumlaHchugh, naDev yIqonQo’. poH wInaQ pat’a’ choHlaH.",
       "invalidPhone": "HablI’ HSDu’ nIvbe’ yIchel",
+      "spokenLanguagesRequired": "wa’ Hol DajatlhlaHbogh yIwIv, Qu’vaD!",
       "creatingAccount": "account vIchenmoH...",
       "alreadyHaveAccount": "account Daghaj’a’? <link>yI’el</link>"
     },
@@ -2646,7 +2669,8 @@
       "cardLockedLabel": "{product} — may’ DalIwbogh. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’.",
       "accessOpens": "{date} {time}Daq poSmoH Qu’meH pa’",
       "poolHeading": "lIw poQbogh may’mey",
-      "poolAllClear": "DaH lIw poQbogh may’ tu’lu’be’.",
+      "poolRequirementsNote": "Hol DajatlhlaHbogh may’mey Dalegh; Daq may’mey, Daqmey DaSo’bogh neH. cha’ DIvI’ <link>DuHmey</link> yIchoH.",
+      "poolAllClear": "DaH lIw poQbogh may’ DaqaDlaHbogh tu’lu’be’.",
       "poolRolePrimary": "Gedu wa’DIch",
       "poolRoleAssistant": "Gedu boQwI’",
       "poolFee": "{fee} / may’",
@@ -2654,13 +2678,16 @@
       "poolWithdrawAction": "nob yInatlh",
       "poolWithdrawPending": "natlhlI’…",
       "poolActionFailed": "pollu’be’. yIboq.",
+      "poolOfferFailedNotQualified": "laH Daghajbe’bogh poQ may’vam. bIlIwqanglaHbe’.",
+      "poolOfferFailedLanguage": "Hol DajatlhlaHbe’bogh lo’ may’vam. bIlIwqanglaHbe’. DuHmey DaSeHbogh DaqDaq Hol DachellaH.",
+      "poolOfferFailedCoverage": "Daqmey DaSo’be’bogh Daq lo’ may’vam. bIlIwqanglaHbe’. DuHmey DaSeHbogh DaqDaq Daqmey DachoHlaH.",
       "pageTitle": "lIwmey",
       "back": "jIH SOGDaq yIchegh",
       "mineHeading": "DalIwbogh may’mey",
       "mineAllClear": "may’ DalIwbogh tu’lu’be’.",
       "fileAction": "may’ DapawlaHbe’’a’?",
-      "filePickTitle": "nuq may’ DapawlaHbe’?",
-      "filePickBody": "may’ yIwIv. meq ghantoHmey je leghlaH ra’wI’pu’ neH.",
+      "filePickTitle": "nuq may’vaD lIwwI’ DaneH?",
+      "filePickBody": "meq ghantoHmey je leghlaH ra’wI’pu’ neH.",
       "fileAlreadyRequested": "lIw tlhobta’lu’bogh",
       "filePickWeekThis": "hoghvam",
       "filePickWeekNext": "hogh veb",
@@ -2668,14 +2695,14 @@
       "filePickShowLater": "may’mey veb yI’ang",
       "filePickGroupLabel": "ghom",
       "filePickAllGroups": "ghommey Hoch",
-      "fileFiled": "lIw tlhobta’lu’: {product}, {when}. DaH may’vam ngoqDaq ’angchoHlu’.",
+      "fileFiled": "lIw tlhobta’lu’: {product}, {when}. DaH may’vam ngoqDaq ’angchoHlu’, jIH SOG Daq.",
       "fileFiledLink": "ghom vumtaHghach yIpoSmoH",
       "offerConfirmTitle": "bIlIwqang’a’?",
       "offerConfirmBody": "{when} {product} may’ DalIwqang. lIwwI’ wIv School of Gaming; chaw’lu’pa’ nob DanatlhlaH. chaw’lu’DI’, Gedu quv chut tlhIH SoH may’ ’oH, SoHvaD may’ DaneHbogh rur, ’ej nob DanatlhlaHbe’: DaghoSlaHbe’chugh, lIwwI’ yItlhob. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’."
     },
     "coverage": {
       "title": "So’ Daqmey",
-      "remoteOnlyNote": "ghom’a’Daj qemlaHbe’ latlh Gedu ’e’ luneHchugh, SoH DaDIvmoH. Hop neH DaqaDchugh, yIchIm yImej.",
+      "remoteOnlyNote": "Daqmey DawIvbogh neH lIw Daq poQmey Dalegh. Hop may’mey Daqmeyvam luSo’be’. Hop neH DavumchoHchugh, yIchIm yImej.",
       "selectedHeading": "wIvlu’ ({count})",
       "noneSelected": "pagh Daq wIvlu’",
       "remove": "{name} yIteq",
@@ -3920,6 +3947,19 @@
       "schoolOfGaming": "noH Quj yejHaD QIn HevmeH vIchaw’.",
       "lynxEducate": "<link>Lynx Educate</link>-vaD De’wI’ HeywI’ vInob ’e’ vIchaw’ — vaj wanI’ chu’ QIn Qujmey De’ je mungeHlaH. reH vImev’laH."
     },
+    "notifications": {
+      "title": "ghuHmoHmey DuHmey",
+      "channels": {
+        "email": "QIn"
+      },
+      "kinds": {
+        "session_report_copy": {
+          "label": "ghom De’ lutHom",
+          "hint": "ghom qorDu’pu’vaD ghom De’ ngeHlu’DI’, wa’ lutHom Daghaj."
+        }
+      },
+      "saveFailed": "ghuHmoHmey DuHmey pollaHbe’lu’. yInIDqa’!"
+    },
     "usernameLabel": "pong",
     "gamerPasswordFromParent": "My SOGDaj lo’ ’ej mu’mey chu’ DulanlaH SoSlI’ vav joq.",
     "photoConsent": {
@@ -4617,13 +4657,13 @@
   "discordLink": {
     "confirm": {
       "title": "Discord ghItlhlIj yIrar",
-      "body": "Discord ghItlh <b>@{username}</b> School of Gaming ghItlhlIj DararneS'a'? vaj Discord Daq SoH ghoSlaH School of Gaming.",
+      "body": "Discord ghItlh <b>@{username}</b> School of Gaming ghItlhlIj DararneS'a'? vaj Discord Daq SoH ghoSlaH School of Gaming, ’ej SoHvaD School of Gaming bot lo’laH Discord ghItlhvam. ghItlhlIj neH yIrar.",
       "action": "ghItlh yIrar",
       "failed": "Qagh. ghItlhlIj rarlu'be'. yInIDqa'."
     },
     "linked": {
       "title": "@{username} rarlu'pu'",
-      "body": "DaH Discord Daq SoH ghoSlaH School of Gaming.",
+      "body": "DaH Discord Daq SoH ghoSlaH School of Gaming, ’ej pa’ School of Gaming bot Dalo’laH.",
       "goToMySog": "My SOG yIghoS",
       "goToDashboard": "QaD yIghoS"
     },
@@ -4643,6 +4683,16 @@
       "title": "School of Gaming beqpu' neH Discord ghItlh rarlaH",
       "body": "ghItlhvam rarlaHbe' ghItlhvam. beqpu' SoHchugh, beq ghItlhlIj yIlo'."
     }
+  },
+  "discordSub": {
+    "pickPlaceholder": "may’ yIwIv",
+    "addNote": "qonta’ yIchel",
+    "confirmWithoutNote": "qonta’ Hutlh yIchav",
+    "empty": "may’ Daghajbe’, lIw DatlhoblaHbogh. lIwmeylIj Datu’ De’wI’ Daq: {url}",
+    "failed": "Qagh. tugh /sub yIlo’qa’.",
+    "notLinked": "/sub Dalo’meH, wa’DIch School of Gaming Gedu ghItlhlIjDaq Discord ghItlhlIj yIrar.",
+    "notLinkedRunLink": "School of Gaming Gedu ghItlhDaq Discord ghItlhlIj rarbe’lu’. /link yIlo’, ’ej /sub yIlo’qa’.",
+    "previewNotice": "ghantoH ’oH — pagh ngeHlu’."
   },
   "seatOffer": {
     "offer": {

@@ -4,44 +4,27 @@ import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
-import { isValidPhoneNumber } from "react-phone-number-input";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { HomeLocationField } from "@/components/locations/home-location-field";
-import type { LocationPick } from "@/components/locations/location-picker-panel";
-import { GAME_PLATFORMS, GameUsernameEditableRow } from "@/components/game-account";
-import { InternationalPhoneInput } from "@/components/ui/phone-input";
-import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
-import { CoverageAreasField } from "@/components/gedu/coverage-areas-field";
-import { toggleCoverageTick, type CoverageTick } from "@/components/gedu/coverage-ticks";
 import { readErrorMessage } from "@/lib/api/json-response";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
-import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
 import type { UtmAttribution } from "@/lib/utm";
 import {
   COMPLETE_REGISTRATION_PARENT_QUERY,
   completeRegistrationQuery,
 } from "@/lib/navigation/post-auth-redirect";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
-import type { SpokenLanguageCode } from "@/types";
+import { GeduProfileFields, useGeduProfileFields } from "./gedu-profile-fields";
+import { NameFields, nameSchemaFields } from "./name-fields";
+import { ParentAccountFields, useParentAccountFields } from "./parent-account-fields";
 
-/**
- * The same name rules the register forms hold a parent and a Gedu to, stated
- * for this form's own sentence before the round trip. The routes' contracts
- * are the ones that have to hold.
- */
-const namesSchema = z.object({
-  firstName: z.string().trim().min(DISPLAY_NAME_MIN, `First name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `First name must be at most ${DISPLAY_NAME_MAX} characters`),
-  lastName: z.string().trim().min(DISPLAY_NAME_MIN, `Last name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Last name must be at most ${DISPLAY_NAME_MAX} characters`),
-});
-
-const MINECRAFT_USERNAME_INPUT_ID = "complete-registration-minecraft-username";
-const ROBLOX_USERNAME_INPUT_ID = "complete-registration-roblox-username";
+/** The name rules the register forms hold a parent and a Gedu to. */
+const namesSchema = z.object(nameSchemaFields);
 
 export interface CompleteRegistrationFormProps {
   /** Which registration this account is finishing — the register page it began on. */
@@ -231,53 +214,6 @@ function CompletionShell({
   );
 }
 
-function NameFields({
-  firstLabel,
-  lastLabel,
-  firstName,
-  lastName,
-  setFirstName,
-  setLastName,
-  disabled,
-}: {
-  firstLabel: string;
-  lastLabel: string;
-  firstName: string;
-  lastName: string;
-  setFirstName: (value: string) => void;
-  setLastName: (value: string) => void;
-  disabled: boolean;
-}) {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <Field label={firstLabel} htmlFor="firstName">
-        <Input
-          id="firstName"
-          type="text"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          disabled={disabled}
-          required
-          maxLength={DISPLAY_NAME_MAX}
-          autoComplete="given-name"
-        />
-      </Field>
-      <Field label={lastLabel} htmlFor="lastName">
-        <Input
-          id="lastName"
-          type="text"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          disabled={disabled}
-          required
-          maxLength={DISPLAY_NAME_MAX}
-          autoComplete="family-name"
-        />
-      </Field>
-    </div>
-  );
-}
-
 function ParentCompletion({
   email,
   initialFirstName,
@@ -291,11 +227,7 @@ function ParentCompletion({
   const { navigateAfterAuth } = useAuthRedirect(redirect);
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
-  const [homeLocation, setHomeLocation] = useState<LocationPick | null>(null);
-  // Unticked by default, both of them, exactly as on the register form: a
-  // pre-ticked box is not an agreement, and not an opt-in either.
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [marketingConsent, setMarketingConsent] = useState(false);
+  const account = useParentAccountFields();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -303,10 +235,11 @@ function ParentCompletion({
     e.preventDefault();
     setError(null);
 
-    // The register form's refusal, word for word, and before the busy flag so
-    // a refused submit leaves the form as usable as it was.
-    if (!acceptedTerms) {
-      setError(t("register.termsRequired"));
+    // Before the busy flag, so a refused submit leaves the form as usable as
+    // it was.
+    const accountError = account.validate();
+    if (accountError) {
+      setError(accountError);
       return;
     }
 
@@ -327,11 +260,9 @@ function ParentCompletion({
         body: JSON.stringify({
           firstName: names.data.firstName,
           lastName: names.data.lastName,
-          homeLocationId: homeLocation?.location.id,
+          ...account.requestBody,
           locale,
           utm: utmBody(utm),
-          marketingConsent,
-          acceptedTerms: true,
         }),
       });
 
@@ -393,51 +324,7 @@ function ParentCompletion({
         setLastName={setLastName}
         disabled={isLoading}
       />
-      <Field label={t("register.location")} htmlFor="homeLocation" optional>
-        <HomeLocationField
-          id="homeLocation"
-          value={homeLocation}
-          onChange={setHomeLocation}
-          disabled={isLoading}
-        />
-      </Field>
-      {/* The register form's two rows, in the register form's order: the
-          required acknowledgement first, the optional box under it. */}
-      <CheckboxRow
-        checked={acceptedTerms}
-        onCheckedChange={setAcceptedTerms}
-        disabled={isLoading}
-        label={t.rich("register.termsLabel", {
-          terms: (chunks) => (
-            <Link
-              href={ROUTES.termsAndConditions}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-act hover:underline"
-            >
-              {chunks}
-            </Link>
-          ),
-          privacy: (chunks) => (
-            <Link
-              href={ROUTES.privacy}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-act hover:underline"
-            >
-              {chunks}
-            </Link>
-          ),
-        })}
-      />
-      <CheckboxRow
-        checked={marketingConsent}
-        onCheckedChange={setMarketingConsent}
-        disabled={isLoading}
-        label={t("register.marketingConsentLabel")}
-        hint={t("register.marketingConsentHint")}
-        hintTone="info"
-      />
+      <ParentAccountFields fields={account} disabled={isLoading} />
     </CompletionShell>
   );
 }
@@ -450,19 +337,12 @@ function GeduCompletion({
   redirect,
 }: CompleteRegistrationFormProps) {
   const t = useTranslations("auth");
-  const g = useTranslations("gameAccount");
   const c = useTranslations("common");
   const locale = useLocale();
   const { navigateAfterAuth } = useAuthRedirect(redirect);
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
-  const [minecraftUsername, setMinecraftUsername] = useState<string | null>(null);
-  const [robloxUsername, setRobloxUsername] = useState<string | null>(null);
-  const [phone, setPhone] = useState("");
-  const [spokenLanguages, setSpokenLanguages] = useState<SpokenLanguageCode[]>([]);
-  const [coverage, setCoverage] = useState<ReadonlyMap<string, CoverageTick>>(
-    new Map(),
-  );
+  const profile = useGeduProfileFields();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -476,8 +356,9 @@ function GeduCompletion({
       return;
     }
 
-    if (phone && !isValidPhoneNumber(phone)) {
-      setError(t("registerGedu.invalidPhone"));
+    const profileError = profile.validate();
+    if (profileError) {
+      setError(profileError);
       return;
     }
 
@@ -492,12 +373,8 @@ function GeduCompletion({
         body: JSON.stringify({
           firstName: names.data.firstName,
           lastName: names.data.lastName,
-          phone: phone || undefined,
-          spokenLanguages,
+          ...profile.requestBody,
           locale,
-          locationIds: [...coverage.keys()],
-          minecraftUsername: minecraftUsername ?? undefined,
-          robloxUsername: robloxUsername ?? undefined,
           utm: utmBody(utm),
         }),
       });
@@ -553,68 +430,7 @@ function GeduCompletion({
         setLastName={setLastName}
         disabled={isLoading}
       />
-      {/* The register-gedu form's game-handle pair, for the same reasons it
-          has it: first capture, so each row opens straight into edit mode, and
-          two independent optional answers side by side. */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label={g("label", { platform: GAME_PLATFORMS.minecraft.name })}
-          htmlFor={MINECRAFT_USERNAME_INPUT_ID}
-          optional
-        >
-          <GameUsernameEditableRow
-            platform="minecraft"
-            username={minecraftUsername}
-            autoEdit
-            inputId={MINECRAFT_USERNAME_INPUT_ID}
-            onCommit={({ username }) => setMinecraftUsername(username)}
-          />
-        </Field>
-        <Field
-          label={g("label", { platform: GAME_PLATFORMS.roblox.name })}
-          htmlFor={ROBLOX_USERNAME_INPUT_ID}
-          optional
-        >
-          <GameUsernameEditableRow
-            platform="roblox"
-            username={robloxUsername}
-            autoEdit
-            inputId={ROBLOX_USERNAME_INPUT_ID}
-            onCommit={({ username }) => setRobloxUsername(username)}
-          />
-        </Field>
-      </div>
-      <Field label={c("phoneNumber")} htmlFor="phone" optional>
-        <InternationalPhoneInput
-          id="phone"
-          value={phone || undefined}
-          onChange={(value) => setPhone(value ?? "")}
-        />
-      </Field>
-      <SpokenLanguageCheckboxes
-        selected={spokenLanguages}
-        onChange={setSpokenLanguages}
-        disabled={isLoading}
-      />
-      <div className="space-y-2">
-        <p className="text-sm font-medium">{t("registerGedu.coverageHeading")}</p>
-        <p className="text-sm text-muted-foreground">{t("registerGedu.coverageNote")}</p>
-        <CoverageAreasField
-          ticks={coverage}
-          onToggle={(pick) =>
-            setCoverage((current) => toggleCoverageTick(current, pick, locale))
-          }
-          onRemove={(locationId) =>
-            setCoverage((current) => {
-              const next = new Map(current);
-              next.delete(locationId);
-              return next;
-            })
-          }
-          onClear={() => setCoverage(new Map())}
-          disabled={isLoading}
-        />
-      </div>
+      <GeduProfileFields fields={profile} disabled={isLoading} />
     </CompletionShell>
   );
 }

@@ -37,25 +37,25 @@ import { requiredTextCases } from "../helpers/landing-required-text-cases";
  * is asserted here once per table. Each wrong role is tried on every RPC with
  * a payload an admin would succeed with.
  *
- * Fixture UUIDs 82c-833 (see the allocation registry in product-helpers.ts).
+ * Fixture UUIDs 834-83b (see the allocation registry in product-helpers.ts).
  * Every assertion is scoped to this file's own rows.
  */
 
 /** A page seeded complete in English. */
-const PAGE_A = "00000000-0000-0000-0000-00000000082c";
+const PAGE_A = "00000000-0000-0000-0000-000000000834";
 /** A second page, for addresses two pages would share. */
-const PAGE_B = "00000000-0000-0000-0000-00000000082d";
+const PAGE_B = "00000000-0000-0000-0000-000000000835";
 /** A page id that must NEVER exist. */
-const PAGE_MISSING = "00000000-0000-0000-0000-00000000082e";
+const PAGE_MISSING = "00000000-0000-0000-0000-000000000836";
 
 /** Landing pictures. */
-const PIC_A = "00000000-0000-0000-0000-00000000082f";
-const PIC_B = "00000000-0000-0000-0000-000000000830";
+const PIC_A = "00000000-0000-0000-0000-000000000837";
+const PIC_B = "00000000-0000-0000-0000-000000000838";
 /** A product picture — a purpose a landing page may not show. */
-const PRODUCT_PICTURE = "00000000-0000-0000-0000-000000000831";
+const PRODUCT_PICTURE = "00000000-0000-0000-0000-000000000839";
 /** Two pictures removed during the run. */
-const PIC_DOOMED = "00000000-0000-0000-0000-000000000832";
-const PIC_DOOMED_TOO = "00000000-0000-0000-0000-000000000833";
+const PIC_DOOMED = "00000000-0000-0000-0000-00000000083a";
+const PIC_DOOMED_TOO = "00000000-0000-0000-0000-00000000083b";
 const ENTRIES = [PIC_A, PIC_B, PRODUCT_PICTURE, PIC_DOOMED, PIC_DOOMED_TOO];
 
 /** Section and item ids inside the fixture structures. */
@@ -70,11 +70,11 @@ const FAQ_1 = "00000000-0000-4000-8000-0000000008a5";
 const hex = (seed: string): string => seed.repeat(8);
 
 const ENTRY_ROWS: CatalogueImageInsert[] = [
-  { id: PIC_A, label: "Landing fixture A", sha256: hex("1a2c082f"), path: `${hex("1a2c082f")}.jpg`, purpose: "landing_image" },
-  { id: PIC_B, label: "Landing fixture B", sha256: hex("1a2c0830"), path: `${hex("1a2c0830")}.jpg`, purpose: "landing_image" },
-  { id: PRODUCT_PICTURE, label: "Landing fixture product", sha256: hex("1a2c0831"), path: `${hex("1a2c0831")}.jpg`, purpose: "product" },
-  { id: PIC_DOOMED, label: "Landing fixture doomed", sha256: hex("1a2c0832"), path: `${hex("1a2c0832")}.jpg`, purpose: "landing_image" },
-  { id: PIC_DOOMED_TOO, label: "Landing fixture doomed too", sha256: hex("1a2c0833"), path: `${hex("1a2c0833")}.jpg`, purpose: "landing_image" },
+  { id: PIC_A, label: "Landing fixture A", sha256: hex("1a2c0837"), path: `${hex("1a2c0837")}.jpg`, purpose: "landing_image" },
+  { id: PIC_B, label: "Landing fixture B", sha256: hex("1a2c0838"), path: `${hex("1a2c0838")}.jpg`, purpose: "landing_image" },
+  { id: PRODUCT_PICTURE, label: "Landing fixture product", sha256: hex("1a2c0839"), path: `${hex("1a2c0839")}.jpg`, purpose: "product" },
+  { id: PIC_DOOMED, label: "Landing fixture doomed", sha256: hex("1a2c083a"), path: `${hex("1a2c083a")}.jpg`, purpose: "landing_image" },
+  { id: PIC_DOOMED_TOO, label: "Landing fixture doomed too", sha256: hex("1a2c083b"), path: `${hex("1a2c083b")}.jpg`, purpose: "landing_image" },
 ];
 
 const pathOf = (entry: string): string | undefined =>

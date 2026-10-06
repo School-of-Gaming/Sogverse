@@ -1,6 +1,6 @@
 # Discord Bot
 
-Slash-command webhook for the Sogverse Discord bot. Powers two AI assistants (Gedu Guru, Happinappi, via Gemini), Minecraft Education account password resets (via Microsoft Graph / Azure AD), and the linking of a Gedu's or an admin's Discord account to their Sogverse account.
+Slash-command webhook for the Sogverse Discord bot. Powers two AI assistants (Gedu Guru, Happinappi, via Gemini), Minecraft Education account password resets (via Microsoft Graph / Azure AD), the linking of a Gedu's or an admin's Discord account to their Sogverse account, and a linked Gedu asking for a substitute for a session they cannot make (`/sub`).
 
 ## Request Flow
 
@@ -9,9 +9,11 @@ Slash-command webhook for the Sogverse Discord bot. Powers two AI assistants (Ge
 3. `PING` interactions get an immediate `PONG`.
 4. `APPLICATION_COMMAND` interactions return a **deferred** response immediately, then do the slow work in `after()` and PATCH the final answer back to `…/webhooks/{appId}/{token}/messages/@original` with `Authorization: Bot {DISCORD_BOT_TOKEN}`.
 
-**Rule: Every command must return the deferred response synchronously and finish in `after()`.** Discord hard-times-out interactions at 3 seconds; cold starts plus Gemini/Graph calls blow past that. The handler returns `DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` and the real reply lands later via PATCH. Never do the AI/Graph call inline before responding.
+5. `MESSAGE_COMPONENT` (a press on a button or select) and `MODAL_SUBMIT` interactions are `/sub`'s later steps. Anything that reads or writes finishes in `after()` by PATCHing the same `@original`, which for a component interaction is the message the control sits on. Its immediate answer is `UPDATE_MESSAGE` redrawing that message, from the payload's own copy, with every control greyed out, so a second tap cannot start a second run racing the first to `@original`; a payload with no usable message gets a plain `DEFERRED_UPDATE_MESSAGE`. A PATCH that never lands therefore leaves the message greyed out with no error line, and that is accepted *(owner, 2026-10-05)*: it is rare, and running `/sub` again recovers.
 
-**Rule: Parse the Discord payload leniently.** Only validate the slice actually used (interaction type, token, command name, first option value, and the calling user's id and username). Unknown fields and new option value types Discord adds must not break the webhook — keep the schema permissive (`z.unknown()` for option values, `.optional()` liberally). Missing command/message/token falls back to a harmless `PONG`, not an error.
+**Rule: Every command must return the deferred response synchronously and finish in `after()`.** Discord hard-times-out interactions at 3 seconds; cold starts plus Gemini/Graph calls blow past that. The handler returns `DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` and the real reply lands later via PATCH. Never do the AI/Graph call inline before responding. The same holds for a control press that touches the database; the only synchronous answers are the ones that read nothing (`/sub`'s note modal and the admin preview's line).
+
+**Rule: Parse the Discord payload leniently.** Only validate the slice actually used (interaction type, token, the caller's Discord locale, command name, first option value, a control's `custom_id` and picked values, a modal's fields, the pressed message's components and flags, and the calling user's id and username). Unknown fields and new option value types Discord adds must not break the webhook — keep the schema permissive (`z.unknown()` for option values, `.optional()` liberally). Missing command/message/token falls back to a harmless `PONG`, not an error; a control press the route cannot place is acknowledged with `DEFERRED_UPDATE_MESSAGE` and nothing else.
 
 ## Commands
 
@@ -21,14 +23,15 @@ The first command option's value is the only argument read. Dispatch is by comma
 - `/happinappi` (`viesti`) → `askHappinappi`.
 - `/reset-password` (`usernames`, space/comma separated) → Graph password reset, one result line per username.
 - `/link` (no option) → a one-time URL that links the caller's Discord account to a Gedu's or an admin's Sogverse account. See Account Linking below.
+- `/sub` (no option) → the "Can't make a session?" flow, entirely in Discord. See `/sub` below.
 
 AI command answers are wrapped as `**{question}**\n\n{answer}`. On a Gemini error, a Finnish fallback message is sent (do not surface raw errors to users).
 
-**Rule: Discord caps message content at 2000 chars — truncate before PATCHing** (slice to 1997 + `...`). There is no follow-up/threading support; each command is standalone with no conversation memory.
+**Rule: Discord caps message content at 2000 chars — truncate before PATCHing** (slice to 1997 + `...`). The server remembers nothing between interactions: each command is standalone, and `/sub`'s steps carry what was picked in their controls' `custom_id`s.
 
 ## Account Linking
 
-A Gedu or an admin links their Discord account so School of Gaming can reach them there. No sign-in changes: Discord is a contact detail on the account, not a way into it. A Sogverse account has at most one link (a new one replaces it); one Discord account may be linked to several Sogverse accounts.
+A Gedu or an admin links their Discord account so School of Gaming can reach them there and they can use the bot. The confirm page's copy names both generically, never a list of commands, so it does not go stale as the bot grows, and it warns to link only an account that is one's own. No sign-in changes, and the link opens no session. **It does carry one capability: a Discord account linked to a Gedu can file a substitution request as that Gedu through `/sub`, and nothing else.** The bot reaches the database only through functions granted to the service role alone, each of which resolves the Gedu from the Discord id in Discord's signed payload — the most recently linked Gedu account when there are several — and refuses an id with no Gedu linked. A Sogverse account has at most one link (a new one replaces it); one Discord account may be linked to several Sogverse accounts.
 
 1. `/link` mints a random token and stores **only its SHA-256** with the service-role client, beside the caller's Discord id and username. The raw token exists only in the reply, so the table never holds anything usable.
 2. The reply is **ephemeral** from the deferred response onward (the flag on the deferred response decides who sees the reply that replaces it) and suppresses embeds, so the URL is neither shown to the channel nor unfurled. It names `/link-discord?token=…` on a bare path, which the proxy sends on to the reader's locale with the query intact, and says the link lasts 10 minutes and works once. A failure sends a short English line, never the cause.
@@ -38,9 +41,26 @@ A Gedu or an admin links their Discord account so School of Gaming can reach the
 
 The command is unauthenticated on the Sogverse side — anyone in a server with the bot can run it — and that is safe because a token links nothing until a signed-in Gedu or admin spends it.
 
+## `/sub` — asking for a substitute from Discord
+
+The web's "Can't make a session?" picker and reason form, as one ephemeral Components V2 message that each step edits in place. The messages are built as data in `src/lib/discord-substitution-message.ts`, shared with the admin preview below; the database half is `src/lib/discord-substitution.server.ts` (`src/services/session-substitution/CLAUDE.md` says why the wrappers exist and where a rule about filing belongs).
+
+1. **Not linked** → `/link`'s own reply under one line saying a link is needed. Pressed on an older message instead, the line says to run `/link`: a components message cannot become a plain-text one.
+2. **The session list** — exactly the web picker's entries, one select per week under the week's heading, opening on this week and next. "Show later sessions" pages on two weeks at a time, and a week with more than Discord's 25 options takes a second select. A session's day and time are written in the product's zone with its abbreviation (see below); the weeks are counted in the app's default zone, since no reader zone reaches the bot. No session → a line pointing at the web Substitutions page.
+3. **The reason** — the web form's two categories, nothing chosen to begin with; once one is picked, "Add a note" (a modal with the web's note field and length bound) and "Confirm without a note" are enabled.
+4. **The outcome** — the web's own confirmation line, or the refusal line the web's failure mapper picks, with the way back to the list.
+
+**The header carries the logo** — the favicon, as a thumbnail beside the brand line on every step — at this environment's own `NEXT_PUBLIC_SITE_URL`, which Discord has to fetch. Where it cannot (unset, malformed or loopback, by the mail logo's `sendableImageOrigin()` rule) the header goes without it rather than with a broken image, so a send from a dev machine shows no logo.
+
+**Session times are in the product's zone, not the reader's — a sanctioned exception to the app's viewer-timezone rule (owner ruling, 2026-10-05).** Discord never tells a bot the reader's zone, Sogverse stores none for anyone, and Discord's own `<t:…>` timestamps, which do render in the reader's zone, cannot appear inside a select option and would show no zone name where they can. So the time is the product's own wall clock with its short zone name beside it: the one answer that is right, and visibly so, for every reader.
+
+**The copy** is next-intl's, in the Gedu's own app locale, else the one nearest their Discord client's language, else the default. Lines the web already says are read from the web's own keys; only the bot's own lines live under `discordSub`.
+
+**State lives in `custom_id`s, never in the server:** `sub:p:<page>` (a page of the list), `sub:s:<weekStart>:<n>` (a week's select; the picked value is `<groupId>:<date>`), `sub:r:<groupId>:<date>` (the reason select), `sub:m:<groupId>:<date>:<reason>:<locale>` (open the note modal — answered synchronously, so it carries the copy's locale), `sub:f:<groupId>:<date>:<reason>` (file with no note), `sub:n:<groupId>:<date>:<reason>` (the modal's submit). **A custom_id says what was picked, never who may act**: every step re-resolves the presser from the payload's Discord id, and the database re-derives the Gedu on every read and write.
+
 ## Test DMs from the admin testing page
 
-The admin testing page has a Discord tool that DMs plain text to a linked account through `/api/admin/send-test-discord-message`, to prove the bot can reach someone. It sends as **this environment's own bot** (`DISCORD_BOT_TOKEN`), so a send from local or staging comes from the staging app's bot, not prod's. The client names the recipient by Sogverse profile; the route reads the Discord id from that profile's link on the admin's own session. **A bot can only DM someone it shares a server with** (and who has not closed DMs from server members): anyone else gets Discord's 50007 "Cannot send messages to this user", which the tool shows verbatim rather than as a generic failure.
+The admin testing page has a Discord tool that DMs a chosen template to a linked account through `/api/admin/send-test-discord-message`, to prove the bot can reach someone: plain text, or **a `/sub` preview**, in the locale the admin picks, of either answer the command gives: the first step, from the command's own builder over sample sessions, or what an unlinked caller is told, from the same builders the command uses, with a fixed `preview` token in the link so nothing is minted and the page shows its dead-link card. Every control on the session list carries the `subpreview:` prefix, and a press on one answers an ephemeral "this is a preview" line and touches nothing. It sends as **this environment's own bot** (`DISCORD_BOT_TOKEN`), so a send from local or staging comes from the staging app's bot, not prod's. The client names the recipient by Sogverse profile; the route reads the Discord id from that profile's link on the admin's own session. **A bot can only DM someone it shares a server with** (and who has not closed DMs from server members): anyone else gets Discord's 50007 "Cannot send messages to this user", which the tool shows verbatim rather than as a generic failure.
 
 ## Registering Commands
 

@@ -12,6 +12,7 @@ import {
 } from "@/components/gedu/mock-substitutions-fixtures";
 import { buttonVariants } from "@/components/ui/button";
 import { NowProvider, TimezoneProvider } from "@/providers";
+import { ROUTES } from "@/lib/constants";
 
 /**
  * ============================================================================
@@ -98,6 +99,18 @@ describe("the substitutions page, populated", () => {
     expect(text).toContain(copy.mineHeading);
     expect(text.indexOf(copy.poolHeading)).toBeLessThan(
       text.indexOf(copy.mineHeading),
+    );
+  });
+
+  it("says under the pool's heading what the pool is filtered by, linking to settings", () => {
+    renderPage("populated");
+
+    const link = screen.getByRole("link", { name: "settings" });
+    expect(link.getAttribute("href")).toBe(ROUTES.settings);
+    // The whole note, with the link's own word inside it.
+    const note = link.closest("p");
+    expect(note?.textContent).toBe(
+      copy.poolRequirementsNote.replace(/<\/?link>/g, ""),
     );
   });
 
@@ -499,7 +512,7 @@ describe("the page's file-an-absence entry", () => {
     expect(
       screen.queryByText(feedCopy.substitutionRequestDialogTitle),
     ).toBeNull();
-    expect(screen.getByText(/It now shows on that session’s card\./)).toBeTruthy();
+    expect(screen.getByText(/It now shows on that session’s card in My SOG./)).toBeTruthy();
   });
 
   it("puts the workspace link on the confirmation where there is a destination", async () => {
@@ -547,7 +560,7 @@ describe("the page's file-an-absence entry", () => {
 
     expect(screen.queryByRole("link", { name: copy.fileFiledLink })).toBeNull();
     // And no dangling space where the link would have been.
-    const line = screen.getByText(/It now shows on that session’s card\./);
+    const line = screen.getByText(/It now shows on that session’s card in My SOG./);
     expect(line.textContent).toBe(line.textContent.trimEnd());
   });
 
@@ -593,7 +606,7 @@ describe("the page's file-an-absence entry", () => {
     expect(confirm.hasAttribute("disabled")).toBe(false);
     // Nothing has been confirmed, so nothing is claimed on the page behind it.
     expect(
-      screen.queryByText(/It now shows on that session’s card\./),
+      screen.queryByText(/It now shows on that session’s card in My SOG./),
     ).toBeNull();
   });
 

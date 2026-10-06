@@ -2,14 +2,18 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextResponse } from "next/server";
 
 /**
- * The admin testing page's Discord tool: a plain-text DM from this
- * environment's bot to a linked account. Pinned here: the admin gate, that the
- * Discord id comes from the profile's link on the server (never the client),
- * that an unlinked profile and an empty or oversized message are refused
- * before Discord is called, and that Discord's own refusal reaches the admin.
+ * The admin testing page's Discord tool: a DM from this environment's bot to
+ * a linked account — plain text, or the `/sub` preview. Pinned here: the admin
+ * gate, that the Discord id comes from the profile's link on the server (never
+ * the client), that an unlinked profile and an empty or oversized message are
+ * refused before Discord is called, that Discord's own refusal reaches the
+ * admin, and that the preview is the command's first step, in the recipient's
+ * locale, with every control on the preview prefix.
  */
 
 vi.stubEnv("DISCORD_BOT_TOKEN", "test-bot-token");
+// The origin the /sub preview's web link is built on.
+vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
 afterAll(() => {
   vi.unstubAllEnvs();
 });
@@ -67,7 +71,11 @@ function discordAnswer(status: number, body: unknown): Response {
   });
 }
 
-const validBody = { profileId: PROFILE_ID, content: "Hello from Sogverse" };
+const validBody = {
+  template: "text",
+  profileId: PROFILE_ID,
+  content: "Hello from Sogverse",
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -164,5 +172,152 @@ describe("POST /api/admin/send-test-discord-message", () => {
     expect(response.status).toBe(502);
     expect(data.error).toContain("Cannot send messages to this user");
     expect(data.error).toContain("50007");
+  });
+
+  // -- The /sub preview --
+
+  /** The message body the second Discord call posted. */
+  function postedMessage() {
+    const [, init] = mockFetch.mock.calls[1];
+    return JSON.parse(init.body);
+  }
+
+  function customIds(components: unknown): string[] {
+    if (!Array.isArray(components)) return [];
+    return components.flatMap((component: Record<string, unknown>) => [
+      ...(typeof component.custom_id === "string" ? [component.custom_id] : []),
+      ...customIds(component.components),
+    ]);
+  }
+
+  it("DMs the /sub first step in the chosen locale, every control on the preview prefix", async () => {
+    const response = await POST(
+      sendRequest({ template: "subSessions", profileId: PROFILE_ID, locale: "fi" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockFrom).not.toHaveBeenCalledWith("profiles");
+
+    const message = postedMessage();
+    expect(message.flags).toBe(1 << 15);
+    expect(message.content).toBeUndefined();
+    const body = JSON.stringify(message);
+    expect(body).toContain("Mille kerralle tarvitset tuuraajan?");
+    const ids = customIds(message.components);
+    expect(ids.length).toBeGreaterThan(1);
+    expect(ids.every((id) => id.startsWith("subpreview:"))).toBe(true);
+  });
+
+  /** The thumbnails in a posted message — the header's logo, when it has one. */
+  function thumbnails(components: unknown): unknown[] {
+    if (!Array.isArray(components)) return [];
+    return components.flatMap((component: Record<string, unknown>) => [
+      ...(component.type === 11 ? [component] : []),
+      ...thumbnails(component.components),
+      ...thumbnails(component.accessory === undefined ? [] : [component.accessory]),
+    ]);
+  }
+
+  it("heads the preview with the favicon from this environment's own site", async () => {
+    await POST(sendRequest({ template: "subSessions", profileId: PROFILE_ID, locale: "en" }));
+
+    expect(thumbnails(postedMessage().components)).toEqual([
+      { type: 11, media: { url: "https://sogverse.sog.gg/apple-icon.png" } },
+    ]);
+  });
+
+  it("sends the preview with no logo from a dev machine, which Discord cannot fetch from", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3007");
+    try {
+      const response = await POST(
+        sendRequest({
+          template: "subSessions",
+          profileId: PROFILE_ID,
+          locale: "en",
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      const message = postedMessage();
+      expect(thumbnails(message.components)).toEqual([]);
+      expect(JSON.stringify(message)).toContain("School of Gaming · Substitutions");
+    } finally {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+    }
+  });
+
+  it("renders the preview in the chosen locale", async () => {
+    const response = await POST(
+      sendRequest({ template: "subSessions", profileId: PROFILE_ID, locale: "sv" }),
+    );
+
+    expect(response.status).toBe(200);
+    const body = JSON.stringify(postedMessage());
+    expect(body).toContain("Vilket tillfälle behöver du en vikarie för?");
+  });
+
+  it("refuses a locale the app does not support, before calling Discord", async () => {
+    const response = await POST(
+      sendRequest({ template: "subSessions", profileId: PROFILE_ID, locale: "de" }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("refuses a preview that names no locale, before calling Discord", async () => {
+    const response = await POST(
+      sendRequest({ template: "subSessions", profileId: PROFILE_ID }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("refuses a body that names an unknown template, before calling Discord", async () => {
+    for (const template of [undefined, "everything"]) {
+      const response = await POST(
+        sendRequest({ template, profileId: PROFILE_ID, locale: "en" }),
+      );
+
+      expect(response.status).toBe(400);
+    }
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("refuses a not-linked preview that names no locale, before calling Discord", async () => {
+    const response = await POST(
+      sendRequest({ template: "subNotLinked", profileId: PROFILE_ID }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("DMs the not-linked answer, in the chosen locale, over a link that links nothing", async () => {
+    const response = await POST(
+      sendRequest({
+        template: "subNotLinked",
+        profileId: PROFILE_ID,
+        locale: "sv",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const message = postedMessage();
+    expect(message.flags).toBe(1 << 2);
+    expect(message.components).toBeUndefined();
+    expect(message.content).toContain("För att använda /sub");
+    expect(message.content).toContain("https://sogverse.sog.gg/link-discord?token=preview");
+    expect(message.content).toContain("The link expires in 10 minutes and works once.");
+  });
+
+  it("refuses a body that names no template", async () => {
+    const response = await POST(
+      sendRequest({ profileId: PROFILE_ID, content: "Hello from Sogverse" }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

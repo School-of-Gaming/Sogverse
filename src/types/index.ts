@@ -65,6 +65,15 @@ export type GeduProfileUpdate = Database["public"]["Tables"]["gedu_profiles"]["U
 // gedu_qualification enum
 export type GeduQualification = Database["public"]["Enums"]["gedu_qualification"];
 
+// notification_preferences — which notifications each person receives, per
+// kind and channel. Row alias only: the table carries no write grant for any
+// Data API role, and an answer is written by `set_notification_preference`.
+export type NotificationKind = Database["public"]["Enums"]["notification_kind"];
+export type NotificationChannel =
+  Database["public"]["Enums"]["notification_channel"];
+export type NotificationPreference =
+  Database["public"]["Tables"]["notification_preferences"]["Row"];
+
 // gedu_contract_versions / gedu_contract_acceptances
 //
 // No Insert/Update aliases for either: neither table carries a write grant for

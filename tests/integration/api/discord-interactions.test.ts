@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterAll, afterEach } from "vitest";
 
 // Stubbed rather than assigned: the node project shares a worker between
 // files, so a bare assignment would outlive this one.
@@ -25,11 +25,33 @@ const deferred: unknown[] = [];
 
 vi.mock("discord-interactions", () => ({
   verifyKey: (...args: unknown[]) => mockVerifyKey(...args),
-  InteractionType: { PING: 1, APPLICATION_COMMAND: 2 },
+  InteractionType: {
+    PING: 1,
+    APPLICATION_COMMAND: 2,
+    MESSAGE_COMPONENT: 3,
+    MODAL_SUBMIT: 5,
+  },
   InteractionResponseType: {
     PONG: 1,
+    CHANNEL_MESSAGE_WITH_SOURCE: 4,
     DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE: 5,
+    DEFERRED_UPDATE_MESSAGE: 6,
+    UPDATE_MESSAGE: 7,
+    MODAL: 9,
   },
+}));
+
+// `/sub` reaches the database only through the bot's server module, whose
+// service-role wrappers resolve the gedu from the Discord id themselves.
+const mockResolveDiscordGedu = vi.fn();
+const mockGetSessions = vi.fn();
+const mockFileRequest = vi.fn();
+vi.mock("@/lib/discord-substitution.server", () => ({
+  resolveDiscordGedu: (...args: unknown[]) => mockResolveDiscordGedu(...args),
+  getDiscordGeduUpcomingSessions: (...args: unknown[]) => mockGetSessions(...args),
+  fileDiscordSubstitutionRequest: (...args: unknown[]) => mockFileRequest(...args),
+  isDiscordGeduNotLinked: (error: unknown) =>
+    typeof error === "object" && error !== null && "code" in error && error.code === "P0031",
 }));
 
 vi.mock("next/server", async (importOriginal) => {
@@ -460,5 +482,481 @@ describe("POST /api/discord/interactions", () => {
     expect(await response.json()).toEqual({ type: 1 });
     expect(deferred).toHaveLength(0);
     expect(mockInsert).not.toHaveBeenCalled();
+  });
+});
+
+// -- /sub ---------------------------------------------------------------------
+//
+// A gedu files "I can't make this session" without leaving Discord. Pinned
+// beyond the deferral every command shares: an unlinked caller gets `/link`'s
+// own reply, every step that reads or writes is deferred and lands by PATCH,
+// the presser is always the Discord id the signed payload names (never an id
+// out of a custom_id), the web's refusal mapping reaches the reader, and the
+// admin preview's controls file nothing at all.
+
+describe("POST /api/discord/interactions — /sub", () => {
+  const CALLER = { user: { id: "112233445566778899", username: "gedu_sog" } };
+  const GROUP_A = "6f1c2c1e-6d43-4c1a-9a5e-2f8f0d1b7a10";
+  const GROUP_B = "0b7e2a56-3c1d-4f7e-8a2b-9c4d5e6f7a81";
+  /** A Monday morning in Helsinki. */
+  const NOW = new Date("2026-10-05T06:00:00Z");
+
+  function session(groupId: string, sessionDate: string) {
+    const startsAt = new Date(`${sessionDate}T13:00:00Z`);
+    return {
+      key: `${groupId}:${sessionDate}`,
+      groupId,
+      sessionDate,
+      startsAt,
+      endsAt: new Date(startsAt.getTime() + 90 * 60_000),
+      timezone: "Europe/Helsinki",
+      productId: groupId,
+      productName: "Minecraft Club",
+      productType: "consumer_club",
+      groupName: "A",
+      isRemote: false,
+      siteName: "Kallio School",
+    };
+  }
+
+  const SESSIONS = [
+    session(GROUP_A, "2026-10-06"),
+    session(GROUP_B, "2026-10-08"),
+    session(GROUP_A, "2026-10-13"),
+    session(GROUP_A, "2026-10-20"),
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
+    deferred.length = 0;
+    mockVerifyKey.mockResolvedValue(true);
+    mockFetch.mockResolvedValue(new Response(null, { status: 200 }));
+    mockInsert.mockResolvedValue({ error: null });
+    mockResolveDiscordGedu.mockResolvedValue({ profileId: "gedu-profile", locale: null });
+    mockGetSessions.mockResolvedValue(SESSIONS);
+    mockFileRequest.mockResolvedValue({});
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** POST one interaction, let its deferred work land, return both halves. */
+  async function run(payload: Record<string, unknown>) {
+    const response = await POST(
+      interactionRequest({ token: "interaction-token", member: CALLER, ...payload }),
+    );
+    await Promise.all(deferred);
+    const [url, init] = mockFetch.mock.calls[0] ?? [];
+    return {
+      response: await response.json(),
+      patchedUrl: String(url),
+      patched: init ? JSON.parse(String(init.body)) : null,
+    };
+  }
+
+  const command = (extra: Record<string, unknown> = {}) =>
+    run({ type: 2, data: { name: "sub" }, ...extra });
+  /**
+   * The message a control sits on, as Discord sends it with the press: an
+   * ephemeral Components V2 message with a select, a button and a link.
+   */
+  const PRESSED_MESSAGE = {
+    id: "1300000000000000000",
+    flags: (1 << 15) | 64,
+    components: [
+      {
+        type: 17,
+        id: 1,
+        components: [
+          {
+            type: 9,
+            id: 8,
+            components: [{ type: 10, id: 9, content: "# School of Gaming · Substitutions" }],
+            accessory: {
+              type: 11,
+              id: 10,
+              media: {
+                url: "https://sogverse.sog.gg/apple-icon.png",
+                proxy_url: "https://media.discordapp.net/external/abc/apple-icon.png",
+                width: 180,
+                height: 180,
+                content_type: "image/png",
+              },
+            },
+          },
+          {
+            type: 1,
+            id: 3,
+            components: [{ type: 3, id: 4, custom_id: "sub:s:2026-10-05:0", options: [] }],
+          },
+          {
+            type: 1,
+            id: 5,
+            components: [
+              { type: 2, id: 6, style: 2, custom_id: "sub:p:1", label: "Show later sessions" },
+              { type: 2, id: 7, style: 5, url: "https://sogverse.sog.gg", label: "Web" },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  /** {@link PRESSED_MESSAGE} with every control that raises an interaction disabled. */
+  const GREYED_OUT = {
+    flags: 1 << 15,
+    components: [
+      {
+        type: 17,
+        id: 1,
+        components: [
+          {
+            type: 9,
+            id: 8,
+            components: [{ type: 10, id: 9, content: "# School of Gaming · Substitutions" }],
+            accessory: {
+              type: 11,
+              id: 10,
+              media: {
+                url: "https://sogverse.sog.gg/apple-icon.png",
+                proxy_url: "https://media.discordapp.net/external/abc/apple-icon.png",
+                width: 180,
+                height: 180,
+                content_type: "image/png",
+              },
+            },
+          },
+          {
+            type: 1,
+            id: 3,
+            components: [
+              { type: 3, id: 4, custom_id: "sub:s:2026-10-05:0", options: [], disabled: true },
+            ],
+          },
+          {
+            type: 1,
+            id: 5,
+            components: [
+              {
+                type: 2,
+                id: 6,
+                style: 2,
+                custom_id: "sub:p:1",
+                label: "Show later sessions",
+                disabled: true,
+              },
+              { type: 2, id: 7, style: 5, url: "https://sogverse.sog.gg", label: "Web" },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  const press = (
+    customId: string,
+    values?: string[],
+    options: { message?: unknown } = {},
+  ) =>
+    run({
+      type: 3,
+      // Explicitly `undefined` is a press with no message at all.
+      message: "message" in options ? options.message : PRESSED_MESSAGE,
+      data: { custom_id: customId, component_type: values ? 3 : 2, values },
+    });
+
+  /** Every component in a payload, depth first, a section's accessory included. */
+  function walk(components: unknown): Array<Record<string, unknown>> {
+    if (!Array.isArray(components)) return [];
+    return components.flatMap((component: Record<string, unknown>) => [
+      component,
+      ...walk(component.components),
+      ...walk(component.accessory === undefined ? [] : [component.accessory]),
+    ]);
+  }
+  const ofType = (body: { components: unknown }, type: number) =>
+    walk(body.components).filter((component) => component.type === type);
+  const texts = (body: { components: unknown }) =>
+    walk(body.components)
+      .filter((component) => component.type === 10)
+      .map((component) => String(component.content))
+      .join("\n");
+  const ids = (body: { components: unknown }) =>
+    walk(body.components)
+      .map((component) => component.custom_id)
+      .filter((id) => id !== undefined);
+
+  it("defers /sub ephemerally, though it takes no argument", async () => {
+    const { response } = await command();
+
+    expect(response).toEqual({ type: 5, data: { flags: 64 } });
+  });
+
+  it("answers an unlinked caller with /link's own reply, under a line saying why", async () => {
+    mockResolveDiscordGedu.mockResolvedValue(null);
+
+    const { patched } = await command();
+
+    expect(patched.content).toMatch(
+      /^To use \/sub, first link your Discord account to your School of Gaming Gedu account\.\n\nOpen this link to connect your Discord account to your School of Gaming account:\nhttps:\/\/sogverse\.sog\.gg\/link-discord\?token=[A-Za-z0-9_-]{43}\n\nThe link expires in 10 minutes and works once\.$/,
+    );
+    expect(patched.flags).toBe(4);
+    expect(mockInsert).toHaveBeenCalledTimes(1);
+    expect(mockGetSessions).not.toHaveBeenCalled();
+  });
+
+  it("says it in the caller's Discord language when there is no account to read one from", async () => {
+    mockResolveDiscordGedu.mockResolvedValue(null);
+
+    const { patched } = await command({ locale: "sv-SE" });
+
+    expect(patched.content).toMatch(/^För att använda \/sub/);
+  });
+
+  it("lists a linked gedu's sessions as a Components V2 message, in their own locale", async () => {
+    mockResolveDiscordGedu.mockResolvedValue({ profileId: "gedu-profile", locale: "fi" });
+
+    const { patched, patchedUrl } = await command({ locale: "en-GB" });
+
+    // The application id is read when the route module loads, ahead of the
+    // env stub, so only the interaction's own half of the URL is pinned.
+    expect(patchedUrl).toMatch(/\/interaction-token\/messages\/@original$/);
+    expect(mockResolveDiscordGedu).toHaveBeenCalledWith("112233445566778899");
+    expect(mockGetSessions).toHaveBeenCalledWith({
+      discordUserId: "112233445566778899",
+      locale: "fi",
+      now: NOW,
+    });
+    expect(patched.flags).toBe(1 << 15);
+    expect(patched.content).toBeUndefined();
+    expect(texts(patched)).toContain("### Mille kerralle tarvitset tuuraajan?");
+    expect(ids(patched)).toEqual(["sub:s:2026-10-05:0", "sub:s:2026-10-12:0", "sub:p:1"]);
+    const [select] = walk(patched.components).filter((component) => component.type === 3);
+    expect(select.options).toMatchObject([
+      { value: `${GROUP_A}:2026-10-06` },
+      { value: `${GROUP_B}:2026-10-08` },
+    ]);
+    expect(select.options).toHaveLength(2);
+  });
+
+  it("heads every step with the favicon from this environment's own site", async () => {
+    for (const { patched } of [await command(), await press("sub:p:1")]) {
+      const [section] = ofType(patched, 9);
+      expect(section.accessory).toEqual({
+        type: 11,
+        media: { url: "https://sogverse.sog.gg/apple-icon.png" },
+      });
+      expect(texts({ components: section.components })).toContain(
+        "# School of Gaming · Substitutions",
+      );
+      mockFetch.mockClear();
+    }
+  });
+
+  it("sends no logo where Discord could not fetch one, as from a dev machine", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+    try {
+      const { patched } = await command();
+
+      expect(ofType(patched, 9)).toHaveLength(0);
+      expect(ofType(patched, 11)).toHaveLength(0);
+      expect(texts(patched)).toContain("# School of Gaming · Substitutions");
+      expect(JSON.stringify(patched)).not.toContain("apple-icon");
+    } finally {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+    }
+  });
+
+  it("points a gedu with nothing to file for at the web page", async () => {
+    mockGetSessions.mockResolvedValue([]);
+
+    const { patched } = await command();
+
+    expect(texts(patched)).toContain("https://sogverse.sog.gg/gedu/substitutions");
+    expect(ids(patched)).toEqual([]);
+  });
+
+  it("sends a short line, never the cause, when a read fails", async () => {
+    mockGetSessions.mockRejectedValue(new Error("connection reset"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { patched } = await command();
+
+    expect(texts(patched)).toContain("Something went wrong. Run /sub again in a moment.");
+    expect(JSON.stringify(patched)).not.toContain("connection reset");
+  });
+
+  it("pages forward, greying the pressed message's controls out meanwhile", async () => {
+    const { response, patched } = await press("sub:p:1");
+
+    expect(response).toEqual({ type: 7, data: GREYED_OUT });
+    expect(ids(patched)).toEqual(["sub:s:2026-10-19:0", "sub:p:0"]);
+  });
+
+  it("re-resolves the presser on every step, from the payload's Discord id", async () => {
+    await press("sub:s:2026-10-05:0", [`${GROUP_A}:2026-10-06`]);
+
+    expect(mockResolveDiscordGedu).toHaveBeenCalledWith("112233445566778899");
+  });
+
+  it("asks for the reason once a session is picked", async () => {
+    const { response, patched } = await press("sub:s:2026-10-05:0", [`${GROUP_A}:2026-10-06`]);
+
+    expect(response).toEqual({ type: 7, data: GREYED_OUT });
+    expect(texts(patched)).toContain("### I can’t make this session");
+    expect(ids(patched)).toEqual([
+      `sub:r:${GROUP_A}:2026-10-06`,
+      "sub:p:0",
+      `sub:m:${GROUP_A}:2026-10-06:-:en`,
+      `sub:f:${GROUP_A}:2026-10-06:-`,
+    ]);
+  });
+
+  it("enables the two ways to finish once a reason is picked", async () => {
+    const { patched } = await press(`sub:r:${GROUP_A}:2026-10-06`, ["sick"]);
+
+    expect(ids(patched)).toEqual([
+      `sub:r:${GROUP_A}:2026-10-06`,
+      "sub:p:0",
+      `sub:m:${GROUP_A}:2026-10-06:sick:en`,
+      `sub:f:${GROUP_A}:2026-10-06:sick`,
+    ]);
+  });
+
+  it("says a session that left the list is no longer on the schedule, and files nothing", async () => {
+    const { patched } = await press(`sub:f:${GROUP_A}:2026-12-01:sick`);
+
+    expect(texts(patched)).toContain("This session is no longer on the schedule.");
+    expect(mockFileRequest).not.toHaveBeenCalled();
+  });
+
+  it("opens the note modal synchronously, without reading anything", async () => {
+    const { response } = await press(`sub:m:${GROUP_A}:2026-10-06:other:fi`);
+
+    expect(response).toMatchObject({
+      type: 9,
+      data: {
+        custom_id: `sub:n:${GROUP_A}:2026-10-06:other`,
+        title: "En pääse tälle kerralle",
+      },
+    });
+    expect(deferred).toHaveLength(0);
+    expect(mockResolveDiscordGedu).not.toHaveBeenCalled();
+  });
+
+  it("files with the note from the modal, as the presser", async () => {
+    const { response, patched } = await run({
+      type: 5,
+      message: PRESSED_MESSAGE,
+      data: {
+        custom_id: `sub:n:${GROUP_A}:2026-10-06:other`,
+        components: [
+          { type: 18, component: { type: 4, custom_id: "note", value: "Dentist" } },
+        ],
+      },
+    });
+
+    // The message the modal was opened from is greyed out while the filing
+    // runs, so a second submit cannot race the first to the outcome.
+    expect(response).toEqual({ type: 7, data: GREYED_OUT });
+    expect(mockFileRequest).toHaveBeenCalledWith({
+      discordUserId: "112233445566778899",
+      groupId: GROUP_A,
+      sessionDate: "2026-10-06",
+      reason: "other",
+      reasonNote: "Dentist",
+    });
+    expect(texts(patched)).toContain("Substitute requested for Minecraft Club — A on Tue, Oct 6,");
+  });
+
+  it("reads the note from an action-row modal too", async () => {
+    await run({
+      type: 5,
+      data: {
+        custom_id: `sub:n:${GROUP_A}:2026-10-06:sick`,
+        components: [{ type: 1, components: [{ type: 4, custom_id: "note", value: "Flu" }] }],
+      },
+    });
+
+    expect(mockFileRequest).toHaveBeenCalledWith(expect.objectContaining({ reasonNote: "Flu" }));
+  });
+
+  it("files with no note from the confirm button, greying the controls out meanwhile", async () => {
+    const { response, patched } = await press(`sub:f:${GROUP_A}:2026-10-06:sick`);
+
+    // The press answers at once with the controls disabled; the filing still
+    // runs afterwards and replaces the message with its outcome.
+    expect(response).toEqual({ type: 7, data: GREYED_OUT });
+    expect(deferred).toHaveLength(1);
+    expect(texts(patched)).toContain("Substitute requested for Minecraft Club — A on Tue, Oct 6,");
+    expect(mockFileRequest).toHaveBeenCalledWith({
+      discordUserId: "112233445566778899",
+      groupId: GROUP_A,
+      sessionDate: "2026-10-06",
+      reason: "sick",
+      reasonNote: "",
+    });
+  });
+
+  it("reads a refusal through the web's own mapping", async () => {
+    mockFileRequest.mockRejectedValue({ code: "42501", message: "not expected" });
+
+    const { patched } = await press(`sub:f:${GROUP_A}:2026-10-06:sick`);
+
+    expect(texts(patched)).toContain(
+      "You’ve already asked for a substitute for this session, or you’re no longer down to run it.",
+    );
+    expect(ids(patched)).toEqual(["sub:p:0"]);
+  });
+
+  it("tells a presser whose link has gone to run /link", async () => {
+    mockFileRequest.mockRejectedValue({ code: "P0031", message: "not linked" });
+
+    const { patched } = await press(`sub:f:${GROUP_A}:2026-10-06:sick`);
+
+    expect(patched.flags).toBe(1 << 15);
+    expect(texts(patched)).toContain("Run /link to link it, then /sub again.");
+  });
+
+  it("answers a press on the admin preview with a line, and nothing else", async () => {
+    const { response } = await run({
+      type: 3,
+      locale: "fr",
+      user: { id: "998877665544332211", username: "admin_sog" },
+      member: undefined,
+      data: { custom_id: "subpreview:s:2026-10-05:0", values: [`${GROUP_A}:2026-10-06`] },
+    });
+
+    expect(response).toEqual({
+      type: 4,
+      data: { content: "Ceci est un aperçu — rien n’a été envoyé.", flags: 64 },
+    });
+    expect(deferred).toHaveLength(0);
+    expect(mockResolveDiscordGedu).not.toHaveBeenCalled();
+    expect(mockFileRequest).not.toHaveBeenCalled();
+  });
+
+  it("falls back to a plain deferred update when the press carries no usable message", async () => {
+    for (const message of [undefined, { flags: 1 << 15 }, "not a message"]) {
+      mockFetch.mockClear();
+      mockFileRequest.mockClear();
+      deferred.length = 0;
+      const { response, patched } = await press(`sub:f:${GROUP_A}:2026-10-06:sick`, undefined, {
+        message,
+      });
+
+      expect(response).toEqual({ type: 6 });
+      expect(mockFileRequest).toHaveBeenCalledTimes(1);
+      expect(texts(patched)).toContain("Substitute requested for Minecraft Club");
+    }
+  });
+
+  it("acknowledges a control it cannot place, and does nothing", async () => {
+    const { response } = await press("somebody-else:1");
+
+    expect(response).toEqual({ type: 6 });
+    expect(deferred).toHaveLength(0);
   });
 });

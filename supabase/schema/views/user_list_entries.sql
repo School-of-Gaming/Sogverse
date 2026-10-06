@@ -40,7 +40,11 @@ CREATE VIEW public.user_list_entries WITH (security_invoker='true') AS
              LEFT JOIN public.minecraft_accounts gmc ON ((gmc.user_id = g.id)))
              LEFT JOIN public.roblox_accounts grb ON ((grb.user_id = g.id)))
           WHERE (pg.parent_id = p.id))) AS family_search_blob,
-    registration_completed_at
+    registration_completed_at,
+    ARRAY( SELECT gq.qualification
+           FROM public.gedu_qualifications gq
+          WHERE (gq.gedu_id = p.id)
+          ORDER BY gq.qualification) AS qualifications
    FROM public.profiles p
   WHERE ((role <> 'gamer'::public.user_role) OR (NOT (EXISTS ( SELECT 1
            FROM public.parent_gamer pg
@@ -51,7 +55,7 @@ CREATE VIEW public.user_list_entries WITH (security_invoker='true') AS
 -- Name: VIEW user_list_entries; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON VIEW public.user_list_entries IS 'One row per entry of the admin user list: every non-gamer profile, plus any gamer with no parent link. A linked gamer is not a row — it rides inside its parent''s linked_gamers array, so the parent-child collapse happens in the database rather than in the browser from two whole-table reads. Carries every profiles column, the two gedu standing flags, the children as JSON, and a family-wide search blob, so a page of 25 rows is one request and nothing a row renders needs a keyed follow-up read. SECURITY INVOKER, so RLS on profiles, parent_gamer, gamer_profiles, gedu_profiles, minecraft_accounts and roblox_accounts governs it exactly as a direct read of those tables would — which also means a role granted SELECT here must hold SELECT on all six, and that a caller who cannot see a link sees the child as a top-level row rather than as somebody''s. The FROM names one table and every derived value is a scalar subquery on purpose: that is what lets the newest page be an ordered index scan under a LIMIT, evaluating the children and the blob for the 25 rows it returns rather than for the whole table, and what lets an exact count skip them entirely. A join in the FROM would cost both.';
+COMMENT ON VIEW public.user_list_entries IS 'One row per entry of the admin user list: every non-gamer profile, plus any gamer with no parent link. A linked gamer is not a row — it rides inside its parent''s linked_gamers array, so the parent-child collapse happens in the database rather than in the browser from two whole-table reads. Carries every profiles column, the two gedu standing flags, the gedu''s qualifications, the children as JSON, and a family-wide search blob, so a page of 25 rows is one request and nothing a row renders needs a keyed follow-up read. SECURITY INVOKER, so RLS on profiles, parent_gamer, gamer_profiles, gedu_profiles, gedu_qualifications, minecraft_accounts and roblox_accounts governs it exactly as a direct read of those tables would — which also means a role granted SELECT here must hold SELECT on all seven, and that a caller who cannot see a link sees the child as a top-level row rather than as somebody''s. The FROM names one table and every derived value is a scalar subquery on purpose: that is what lets the newest page be an ordered index scan under a LIMIT, evaluating the children and the blob for the 25 rows it returns rather than for the whole table, and what lets an exact count skip them entirely. A join in the FROM would cost both.';
 
 
 --
@@ -80,6 +84,13 @@ COMMENT ON COLUMN public.user_list_entries.linked_gamers IS 'This family''s chil
 --
 
 COMMENT ON COLUMN public.user_list_entries.family_search_blob IS 'Every string this family can be found by — name, email, phone and each game handle, for this person AND for every linked child — space-joined. Derived, never written, and never selected: the search filters on it and reads the other columns beside it, so it does not cross the wire. Family-wide rather than per-person because the list shows families: a hit on a child''s name or handle has to return the row the child is inside, and matching per person returned a row the page then collapsed away. The utm_* columns and email_verified_at are deliberately absent: those label where a family came from and when they verified, and neither is a name anyone should be findable by. The phone is the stored digits (E.164 without the +), which is why a needle reduced to its trailing digits matches a number typed either nationally or internationally without the search knowing any dialling rules.';
+
+
+--
+-- Name: COLUMN user_list_entries.qualifications; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.user_list_entries.qualifications IS 'The gedu qualifications this person holds, in the enum''s declared order, from gedu_qualifications; an empty array for anyone holding none, never NULL. Carried here, beside certified, because the admin gedu picker warns on a row lacking what the product being staffed requires.';
 
 
 --

@@ -309,10 +309,17 @@ import { TEST_IDS } from "./constants";
  *                  that must NEVER exist, backing the "unknown id is refused"
  *                  cases, and 828-82b catalogue entries — three Library covers
  *                  and one product picture a cover may not be
- *   82c-833        landing-pages.test.ts — `landing_pages` and
- *                  `catalogue_images` rows rather than products: 82c a page
- *                  seeded complete, 82d a draft, 82e an id that must NEVER
- *                  exist, and 82f-833 catalogue entries — four landing
+ *   82c-82d        session-substitution.test.ts again: the untagged
+ *                  municipality club 82c with group 82d, the one kind of
+ *                  product that requires no gedu qualification
+ *   830-832        discord-substitution.test.ts (the club 830 with group 831,
+ *                  taught by the file's minted gedu, and its sister group 832
+ *                  that nobody teaches, so a filing there is refused for the
+ *                  derivation alone)
+ *   834-83b        landing-pages.test.ts — `landing_pages` and
+ *                  `catalogue_images` rows rather than products: 834 a page
+ *                  seeded complete, 835 a draft, 836 an id that must NEVER
+ *                  exist, and 837-83b catalogue entries — four landing
  *                  pictures (two removed during the run) and one product
  *                  picture a landing page may not show
  *

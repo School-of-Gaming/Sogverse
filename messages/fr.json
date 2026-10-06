@@ -847,6 +847,17 @@
       "notGranted": "Non accordée",
       "error": "Impossible de mettre à jour la qualification. Veuillez réessayer."
     },
+    "geduLanguages": {
+      "title": "Langues",
+      "note": "Les remplacements ne lui sont proposés que pour les séances dans une langue cochée ici. Si aucune n’est cochée, aucun remplacement ne lui est proposé.",
+      "error": "Impossible d’enregistrer les langues. Veuillez réessayer."
+    },
+    "missingRequirements": {
+      "qualification": "Ce Gedu n’a pas la qualification « {qualification} » qu’exige ce produit.",
+      "language": "Ce produit se déroule en {language}, une langue que ce Gedu n’a pas indiquée parmi celles qu’il parle.",
+      "coverage": "Ce produit se déroule sur place à {site}, en dehors des zones de ce Gedu.",
+      "coverageUnnamed": "Ce produit se déroule sur place, en dehors des zones de ce Gedu."
+    },
     "geduCertifyWarnings": {
       "title": "Certifier quand même ?",
       "body": "La certification n’exige ni l’un ni l’autre : vous pouvez donc le certifier quand même.",
@@ -1350,7 +1361,10 @@
         "absentGedu": "Le Gedu remplacé",
         "notCertified": "Non certifié",
         "alreadyTrainee": "Déjà stagiaire",
-        "traineeInstead": "Peut être ajouté comme stagiaire."
+        "traineeInstead": "Peut être ajouté comme stagiaire.",
+        "notQualified": "Qualification manquante : {qualification}",
+        "doesNotSpeak": "Ne parle pas {language}",
+        "outsideCoverage": "Hors de ses zones"
       },
       "participantPicker": {
         "title": "Ajouter un participant",
@@ -1514,6 +1528,10 @@
             "failed": "Le changement n’est pas allé jusqu’au bout. Appuyez de nouveau sur Changer de club — un nouvel appui rejoue la même requête, la famille n’est donc jamais facturée deux fois."
           },
           "confirm": "Changer de club"
+        },
+        "requirementGaps": {
+          "title": "Affecter quand même ?",
+          "action": "Affecter quand même"
         }
       },
       "seatLimitModes": {
@@ -1771,7 +1789,11 @@
         "messagePlaceholder": "Texte brut, 2 000 caractères maximum",
         "send": "Envoyer le message de test",
         "sent": "Message envoyé.",
-        "openInDiscord": "Ouvrir dans Discord"
+        "openInDiscord": "Ouvrir dans Discord",
+        "templatePlain": "Texte brut",
+        "templateSubSessions": "/sub : liste des séances",
+        "templateSubNotLinked": "/sub : pas encore associé",
+        "subPreviewSent": "Aperçu envoyé."
       }
     },
     "whatsapp": {
@@ -2008,8 +2030,9 @@
       "certificationAlertTitle": "Votre compte doit être certifié",
       "certificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit certifier votre compte avant que vous puissiez être affecté à un club ou à un stage.",
       "coverageHeading": "Zones où vous pouvez animer",
-      "coverageNote": "Choisissez les zones où vous pouvez intervenir sur place. Si vous n’intervenez qu’à distance, laissez ce champ vide. Vous pourrez modifier votre sélection plus tard dans les paramètres de votre profil.",
+      "coverageNote": "Choisissez les zones où vous pouvez intervenir sur place. Les remplacements sur place ne vous sont proposés que dans ces zones ; les séances en ligne n’en dépendent pas. Si vous n’intervenez qu’à distance, laissez ce champ vide. Vous pourrez le modifier plus tard dans vos paramètres.",
       "invalidPhone": "Veuillez saisir un numéro de téléphone valide",
+      "spokenLanguagesRequired": "Choisissez au moins une langue que vous parlez.",
       "creatingAccount": "Création du compte...",
       "alreadyHaveAccount": "Vous avez déjà un compte ? <link>Connectez-vous</link>"
     },
@@ -2606,7 +2629,8 @@
       "cardLockedLabel": "{product} — séance que vous assurez en remplacement. L’espace de travail du groupe ouvre 48 heures avant son début.",
       "accessOpens": "L’espace de travail ouvre le {date} à {time}",
       "poolHeading": "Séances cherchant un remplacement",
-      "poolAllClear": "Aucune séance ne cherche de remplacement pour le moment.",
+      "poolRequirementsNote": "Vous voyez les séances dans une langue que vous parlez et, pour celles sur place, dans vos zones. Tenez les deux à jour dans vos <link>paramètres</link>.",
+      "poolAllClear": "Aucune séance que vous pouvez assurer ne cherche de remplacement pour le moment.",
       "poolRolePrimary": "Gedu principal",
       "poolRoleAssistant": "Gedu assistant",
       "poolFee": "{fee} par séance",
@@ -2614,13 +2638,16 @@
       "poolWithdrawAction": "Retirer ma proposition",
       "poolWithdrawPending": "Retrait…",
       "poolActionFailed": "Cela n’a pas été enregistré. Réessayez.",
+      "poolOfferFailedNotQualified": "Cette séance exige une qualification que vous n’avez pas : vous ne pouvez donc pas proposer de remplacement.",
+      "poolOfferFailedLanguage": "Cette séance se déroule dans une langue que vous n’avez pas indiquée parmi celles que vous parlez : vous ne pouvez donc pas proposer de remplacement. Vous pouvez ajouter des langues dans vos paramètres.",
+      "poolOfferFailedCoverage": "Cette séance se déroule sur place en dehors de vos zones : vous ne pouvez donc pas proposer de remplacement. Vous pouvez modifier vos zones dans vos paramètres.",
       "pageTitle": "Remplacements",
       "back": "Retour à Mon SOG",
       "mineHeading": "Vos remplacements",
       "mineAllClear": "Vous n’avez aucun remplacement à venir.",
       "fileAction": "Vous ne pouvez pas assurer une séance ?",
-      "filePickTitle": "Quelle séance ne pouvez-vous pas assurer ?",
-      "filePickBody": "Choisissez la séance que vous ne pouvez pas assurer. Votre motif et votre note ne sont visibles que par les administrateurs.",
+      "filePickTitle": "Pour quelle séance avez-vous besoin d’un remplaçant ?",
+      "filePickBody": "Votre motif et votre note ne sont visibles que par les administrateurs.",
       "fileAlreadyRequested": "Remplacement déjà demandé",
       "filePickWeekThis": "Cette semaine",
       "filePickWeekNext": "La semaine prochaine",
@@ -2628,14 +2655,14 @@
       "filePickShowLater": "Afficher les séances suivantes",
       "filePickGroupLabel": "Groupe",
       "filePickAllGroups": "Tous les groupes",
-      "fileFiled": "Remplacement demandé pour {product} le {when}. Il apparaît maintenant sur la fiche de cette séance.",
+      "fileFiled": "Remplacement demandé pour {product} le {when}. Il apparaît maintenant sur la fiche de cette séance dans Mon SOG.",
       "fileFiledLink": "Ouvrir l’espace de travail du groupe",
       "offerConfirmTitle": "Proposer un remplacement ?",
       "offerConfirmBody": "Vous proposez d’assurer {product} le {when}. School of Gaming choisit qui remplace, et vous pouvez retirer votre proposition tant qu’elle n’est pas approuvée. Une fois approuvée, la séance relève de votre contrat Gedu, exactement comme vos propres séances, et vous ne pouvez plus vous retirer : si vous ne pouvez finalement pas l’assurer, demandez vous-même un remplacement, comme pour toutes vos séances. L’espace de travail du groupe s’ouvre à vous 48 heures avant le début de la séance."
     },
     "coverage": {
       "title": "Zones où vous pouvez animer",
-      "remoteOnlyNote": "Sert à vous proposer pour un remplacement quand un autre Gedu ne peut pas assurer son club. Laissez vide si vous ne remplacez qu’à distance.",
+      "remoteOnlyNote": "Vous ne voyez les demandes de remplacement sur place que dans les zones choisies. Les séances en ligne n’en dépendent pas. Laissez vide si vous n’intervenez qu’à distance.",
       "selectedHeading": "Sélection ({count})",
       "noneSelected": "Aucune zone sélectionnée",
       "remove": "Retirer {name}",
@@ -3879,6 +3906,19 @@
       "title": "Préférences marketing",
       "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
       "lynxEducate": "Partager mon adresse e-mail avec <link>Lynx Educate</link> afin qu’ils puissent m’envoyer des actualités sur les événements à venir et des ressources sur le jeu vidéo. Je peux me désabonner à tout moment."
+    },
+    "notifications": {
+      "title": "Préférences de notification",
+      "channels": {
+        "email": "E-mail"
+      },
+      "kinds": {
+        "session_report_copy": {
+          "label": "Copies des comptes rendus de séance",
+          "hint": "Une copie de chaque compte rendu de séance envoyé par e-mail aux familles d’un groupe."
+        }
+      },
+      "saveFailed": "Impossible d’enregistrer vos préférences de notification. Veuillez réessayer."
     },
     "usernameLabel": "Identifiant",
     "gamerPasswordFromParent": "Ton parent peut te définir un nouveau mot de passe depuis son Mon SOG.",
@@ -5498,13 +5538,13 @@
   "discordLink": {
     "confirm": {
       "title": "Associer votre compte Discord",
-      "body": "Associer le compte Discord <b>@{username}</b> à votre compte School of Gaming ? School of Gaming pourra alors vous joindre sur Discord.",
+      "body": "Associer le compte Discord <b>@{username}</b> à votre compte School of Gaming ? School of Gaming pourra alors vous joindre sur Discord, et ce compte Discord pourra utiliser le bot School of Gaming en votre nom. N’associez qu’un compte qui vous appartient.",
       "action": "Associer le compte",
       "failed": "Une erreur s’est produite et votre compte n’a pas été associé. Réessayez."
     },
     "linked": {
       "title": "Associé à @{username}",
-      "body": "School of Gaming peut désormais vous joindre sur Discord.",
+      "body": "School of Gaming peut désormais vous joindre sur Discord, et vous pouvez y utiliser le bot School of Gaming.",
       "goToMySog": "Aller à Mon SOG",
       "goToDashboard": "Aller au tableau de bord"
     },
@@ -5524,6 +5564,16 @@
       "title": "Seule l’équipe de School of Gaming peut associer un compte Discord",
       "body": "Ce compte ne peut pas en associer. Si vous faites partie de l’équipe, connectez-vous avec votre compte d’équipe."
     }
+  },
+  "discordSub": {
+    "pickPlaceholder": "Choisissez une séance",
+    "addNote": "Ajouter une note",
+    "confirmWithoutNote": "Confirmer sans note",
+    "empty": "Vous n’avez aucune séance à venir pour laquelle demander un remplacement. Vos remplacements sont sur le site : {url}",
+    "failed": "Un problème est survenu. Relancez /sub dans un instant.",
+    "notLinked": "Pour utiliser /sub, associez d’abord votre compte Discord à votre compte Gedu School of Gaming.",
+    "notLinkedRunLink": "Votre compte Discord n’est associé à aucun compte Gedu School of Gaming. Lancez /link pour l’associer, puis relancez /sub.",
+    "previewNotice": "Ceci est un aperçu — rien n’a été envoyé."
   },
   "seatOffer": {
     "offer": {

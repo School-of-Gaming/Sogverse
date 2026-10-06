@@ -847,6 +847,17 @@
       "notGranted": "Ei myönnetty",
       "error": "Pätevyyden päivitys epäonnistui. Yritä uudelleen."
     },
+    "geduLanguages": {
+      "title": "Kielet",
+      "note": "Hänelle tarjotaan tuurauksia vain kerroille, joiden kieli on valittu tässä. Jos yhtään kieltä ei ole valittu, tuurauksia ei tarjota lainkaan.",
+      "error": "Kielten tallentaminen epäonnistui. Yritä uudelleen."
+    },
+    "missingRequirements": {
+      "qualification": "Tällä Gedulla ei ole pätevyyttä, jota tämä tuote edellyttää: {qualification}.",
+      "language": "Tämän tuotteen kieli on {language}, mutta tämä Gedu ei ole ilmoittanut puhuvansa sitä.",
+      "coverage": "Tämä tuote pidetään paikan päällä kohteessa {site}, joka on tämän Gedun kattamien alueiden ulkopuolella.",
+      "coverageUnnamed": "Tämä tuote pidetään paikan päällä tämän Gedun kattamien alueiden ulkopuolella."
+    },
     "geduCertifyWarnings": {
       "title": "Hyväksytäänkö silti?",
       "body": "Hyväksyntä ei edellytä kumpaakaan näistä, joten voit hyväksyä hänet silti.",
@@ -1350,7 +1361,10 @@
         "absentGedu": "Tuurattava Gedu",
         "notCertified": "Ei hyväksytty",
         "alreadyTrainee": "Jo harjoittelijana",
-        "traineeInstead": "Voidaan lisätä harjoittelijaksi."
+        "traineeInstead": "Voidaan lisätä harjoittelijaksi.",
+        "notQualified": "Pätevyys puuttuu: {qualification}",
+        "doesNotSpeak": "Ei puhu kieltä: {language}",
+        "outsideCoverage": "Ei kata tätä aluetta"
       },
       "participantPicker": {
         "title": "Lisää osallistuja",
@@ -1514,6 +1528,10 @@
             "failed": "Vaihto ei mennyt loppuun asti. Paina Vaihda kerhoa uudelleen — uusi painallus toistaa saman pyynnön, joten perhettä ei veloiteta kahteen kertaan."
           },
           "confirm": "Vaihda kerhoa"
+        },
+        "requirementGaps": {
+          "title": "Lisätäänkö silti?",
+          "action": "Lisää silti"
         }
       },
       "seatLimitModes": {
@@ -1771,7 +1789,11 @@
         "messagePlaceholder": "Pelkkää tekstiä, enintään 2 000 merkkiä",
         "send": "Lähetä testiviesti",
         "sent": "Viesti lähetetty.",
-        "openInDiscord": "Avaa Discordissa"
+        "openInDiscord": "Avaa Discordissa",
+        "templatePlain": "Pelkkä teksti",
+        "templateSubSessions": "/sub: tulevat kerrat",
+        "templateSubNotLinked": "/sub: ei vielä yhdistetty",
+        "subPreviewSent": "Esikatselu lähetetty."
       }
     },
     "whatsapp": {
@@ -2008,8 +2030,9 @@
       "certificationAlertTitle": "Tilisi on hyväksyttävä",
       "certificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on hyväksyttävä tilisi, ennen kuin sinut voidaan liittää kerhoon tai leirille.",
       "coverageHeading": "Missä voit työskennellä?",
-      "coverageNote": "Valitse alueet, joilla voit työskennellä paikan päällä. Jos voit työskennellä vain etänä, jätä tämä kohta tyhjäksi. Voit muokata valintaasi myöhemmin profiilisi asetuksista.",
+      "coverageNote": "Valitse alueet, joilla voit työskennellä paikan päällä. Paikan päällä pidettäviä tuurauksia tarjotaan sinulle vain näiltä alueilta; verkossa pidettävät kerrat eivät riipu niistä. Jos voit työskennellä vain etänä, jätä tämä tyhjäksi. Voit muuttaa valintaa myöhemmin asetuksissasi.",
       "invalidPhone": "Syötä kelvollinen puhelinnumero",
+      "spokenLanguagesRequired": "Valitse vähintään yksi kieli, jota puhut.",
       "creatingAccount": "Luodaan tiliä...",
       "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"
     },
@@ -2606,7 +2629,8 @@
       "cardLockedLabel": "{product} – tuuraamasi kerta. Ryhmän työtila avautuu 48 tuntia ennen kerran alkua.",
       "accessOpens": "Työtila avautuu {date} klo {time}",
       "poolHeading": "Kerrat, jotka tarvitsevat tuuraajan",
-      "poolAllClear": "Yksikään kerta ei tarvitse juuri nyt tuuraajaa.",
+      "poolRequirementsNote": "Näet kerrat, joiden kieltä puhut, ja paikan päällä pidettävistä vain ne, jotka ovat kattamillasi alueilla. Pidä molemmat ajan tasalla <link>asetuksissasi</link>.",
+      "poolAllClear": "Yksikään kerta, jonka voisit tuurata, ei tarvitse juuri nyt tuuraajaa.",
       "poolRolePrimary": "Vastaava Gedu",
       "poolRoleAssistant": "Avustava Gedu",
       "poolFee": "{fee} / kerta",
@@ -2614,13 +2638,16 @@
       "poolWithdrawAction": "Peru tarjous",
       "poolWithdrawPending": "Perutaan…",
       "poolActionFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "poolOfferFailedNotQualified": "Tämä kerta vaatii pätevyyden, jota sinulla ei ole, joten et voi tarjoutua tuuraajaksi.",
+      "poolOfferFailedLanguage": "Tämän kerran kieli ei ole niiden kielten joukossa, joita olet ilmoittanut puhuvasi, joten et voi tarjoutua tuuraajaksi. Voit lisätä kieliä asetuksissasi.",
+      "poolOfferFailedCoverage": "Tämä kerta pidetään paikan päällä kattamiesi alueiden ulkopuolella, joten et voi tarjoutua tuuraajaksi. Voit muuttaa kattamiasi alueita asetuksissasi.",
       "pageTitle": "Tuuraukset",
       "back": "Takaisin Omaan SOGiin",
       "mineHeading": "Tuurauksesi",
       "mineAllClear": "Sinulla ei ole tulevia tuurauksia.",
       "fileAction": "Etkö pääse jollekin kerralle?",
-      "filePickTitle": "Mille kerralle et pääse?",
-      "filePickBody": "Valitse kerta, jolle et pääse. Syy ja viesti näkyvät vain ylläpitäjille.",
+      "filePickTitle": "Mille kerralle tarvitset tuuraajan?",
+      "filePickBody": "Syy ja viesti näkyvät vain ylläpitäjille.",
       "fileAlreadyRequested": "Tuuraajaa on jo pyydetty",
       "filePickWeekThis": "Tämä viikko",
       "filePickWeekNext": "Ensi viikko",
@@ -2628,14 +2655,14 @@
       "filePickShowLater": "Näytä myöhemmät kerrat",
       "filePickGroupLabel": "Ryhmä",
       "filePickAllGroups": "Kaikki ryhmät",
-      "fileFiled": "Tuuraajaa pyydetty: {product} {when}. Pyyntö näkyy nyt kyseisen kerran kortilla.",
+      "fileFiled": "Tuuraajaa pyydetty: {product} {when}. Pyyntö näkyy nyt kyseisen kerran kortilla Oma SOG -näkymässä.",
       "fileFiledLink": "Avaa ryhmän työtila",
       "offerConfirmTitle": "Tarjoudutko tuuraajaksi?",
       "offerConfirmBody": "Tarjoudut vetämään kerran {product} {when}. School of Gaming valitsee tuuraajan, ja voit perua tarjouksesi siihen asti, kun se hyväksytään. Hyväksynnän jälkeen kerta on Gedu-sopimuksesi nojalla sinun vastuullasi aivan kuten omat kertasi, etkä voi enää perua tarjoustasi: jos et sittenkään pääse paikalle, pyydä itsellesi tuuraaja samoin kuin mille tahansa kerrallesi. Ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua."
     },
     "coverage": {
       "title": "Kattamasi alueet",
-      "remoteOnlyNote": "Käytetään tuuraajan etsimiseen, kun toinen Gedu ei pääse pitämään kerhoaan. Jätä tyhjäksi, jos tuuraat vain etänä.",
+      "remoteOnlyNote": "Näet paikan päällä pidettävät tuurauspyynnöt vain valitsemiltasi alueilta. Verkossa pidettävät kerrat eivät riipu niistä. Jätä tämä tyhjäksi, jos työskentelet vain etänä.",
       "selectedHeading": "Valitut ({count})",
       "noneSelected": "Ei valittuja alueita",
       "remove": "Poista {name}",
@@ -3879,6 +3906,19 @@
       "title": "Markkinointiasetukset",
       "schoolOfGaming": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
       "lynxEducate": "Sähköpostiosoitteeni saa jakaa <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia tulevista tapahtumista ja pelaamiseen liittyvistä aineistoista. Voin peruuttaa tilauksen milloin tahansa."
+    },
+    "notifications": {
+      "title": "Ilmoitusasetukset",
+      "channels": {
+        "email": "Sähköposti"
+      },
+      "kinds": {
+        "session_report_copy": {
+          "label": "Kopiot kertojen raporteista",
+          "hint": "Kopio jokaisesta kerran raportista, joka lähetetään sähköpostitse ryhmän perheille."
+        }
+      },
+      "saveFailed": "Ilmoitusasetusten tallentaminen epäonnistui. Yritä uudelleen."
     },
     "usernameLabel": "Käyttäjätunnus",
     "gamerPasswordFromParent": "Vanhempasi voi asettaa sinulle uuden salasanan omasta Oma SOG -näkymästään.",
@@ -5498,13 +5538,13 @@
   "discordLink": {
     "confirm": {
       "title": "Yhdistä Discord-tilisi",
-      "body": "Yhdistetäänkö Discord-tili <b>@{username}</b> School of Gaming -tiliisi? Silloin School of Gaming voi tavoittaa sinut Discordissa.",
+      "body": "Yhdistetäänkö Discord-tili <b>@{username}</b> School of Gaming -tiliisi? School of Gaming voi silloin tavoittaa sinut Discordissa, ja tuo Discord-tili voi käyttää School of Gamingin bottia puolestasi. Yhdistä vain oma tilisi.",
       "action": "Yhdistä tili",
       "failed": "Jokin meni vikaan, eikä tiliäsi yhdistetty. Yritä uudelleen."
     },
     "linked": {
       "title": "Yhdistetty Discord-tiliin @{username}",
-      "body": "School of Gaming voi nyt tavoittaa sinut Discordissa.",
+      "body": "School of Gaming voi nyt tavoittaa sinut Discordissa, ja voit käyttää siellä School of Gamingin bottia.",
       "goToMySog": "Siirry Oma SOG -sivulle",
       "goToDashboard": "Siirry hallintapaneeliin"
     },
@@ -5524,6 +5564,16 @@
       "title": "Vain School of Gamingin henkilökunta voi yhdistää Discord-tilin",
       "body": "Tällä tilillä sitä ei voi yhdistää. Jos kuulut henkilökuntaan, kirjaudu sisään henkilökunnan tililläsi."
     }
+  },
+  "discordSub": {
+    "pickPlaceholder": "Valitse kerta",
+    "addNote": "Lisää viesti",
+    "confirmWithoutNote": "Vahvista ilman viestiä",
+    "empty": "Sinulla ei ole tulevia kertoja, joille voisit pyytää tuuraajaa. Tuuraukset näet verkkosivuilla: {url}",
+    "failed": "Jotain meni pieleen. Kokeile /sub-komentoa hetken päästä uudelleen.",
+    "notLinked": "Jotta voit käyttää /sub-komentoa, yhdistä ensin Discord-tilisi School of Gaming -gedutiliisi.",
+    "notLinkedRunLink": "Discord-tiliäsi ei ole yhdistetty School of Gaming -gedutiliin. Yhdistä se komennolla /link ja käytä sitten uudelleen /sub-komentoa.",
+    "previewNotice": "Tämä on esikatselu – mitään ei lähetetty."
   },
   "seatOffer": {
     "offer": {

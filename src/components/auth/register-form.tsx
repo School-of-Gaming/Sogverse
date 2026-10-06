@@ -6,37 +6,28 @@ import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { HomeLocationField } from "@/components/locations/home-location-field";
 import { getClient } from "@/lib/supabase/client";
 import { readErrorMessage } from "@/lib/api/json-response";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
-import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
+import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
-import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
 import { completeRegistrationQuery } from "@/lib/navigation/post-auth-redirect";
 import { ContinueWithGoogle } from "./continue-with-google";
+import { NameFields, nameSchemaFields } from "./name-fields";
+import { ParentAccountFields, useParentAccountFields } from "./parent-account-fields";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
-  // `.trim()` before the length checks, so they measure the name rather than
-  // the whitespace around it — " A" is not a two-character first name. The
-  // route's own contract (`registerParentBody`) trims again for the same
-  // reason: it is the one that has to hold, because the name goes from there
-  // into the auth user's metadata and the handle_new_user trigger copies it
-  // verbatim into the profile. This copy exists so the message a parent reads
-  // is this form's, in their language, before a round trip.
-  firstName: z.string().trim().min(DISPLAY_NAME_MIN, `First name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `First name must be at most ${DISPLAY_NAME_MAX} characters`),
-  lastName: z.string().trim().min(DISPLAY_NAME_MIN, `Last name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Last name must be at most ${DISPLAY_NAME_MAX} characters`),
+  ...nameSchemaFields,
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -95,18 +86,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [homeLocation, setHomeLocation] = useState<LocationPick | null>(null);
-  // The required acknowledgement: agreement to the terms, having been given the
-  // Privacy Policy to read. It used to carry a parent-or-guardian declaration
-  // too; that moved to the add-gamer form, where the child is named and the
-  // declaration can be about somebody in particular — see the consent-document
-  // registry for why an account-level version answered the wrong question.
-  // Unticked by default for the same reason the optional box below is: a
-  // pre-ticked box is not an agreement.
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  // Unticked by default, and it stays that way unless the parent ticks it: an
-  // opt-in that arrives pre-ticked is not an opt-in.
-  const [marketingConsent, setMarketingConsent] = useState(false);
+  const account = useParentAccountFields();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [googlePending, setGooglePending] = useState(false);
@@ -117,15 +97,11 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
     e.preventDefault();
     setError(null);
 
-    // Refused here rather than by the browser, and the reason is the shape of
-    // the rest of the form: `CheckboxRow` takes no `required`, and the one
-    // other rule this form enforces before posting — the two passwords having
-    // to agree — is likewise a local refusal with a sentence in the parent's
-    // own language. A native validity bubble beside a translated Alert would be
-    // two idioms for one job. Before `setIsLoading`, so a refused submit leaves
-    // the form exactly as usable as it was.
-    if (!acceptedTerms) {
-      setError(t('register.termsRequired'));
+    // Before `setIsLoading`, so a refused submit leaves the form exactly as
+    // usable as it was.
+    const accountError = account.validate();
+    if (accountError) {
+      setError(accountError);
       return;
     }
 
@@ -154,7 +130,6 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           password: validatedData.password,
           firstName: validatedData.firstName,
           lastName: validatedData.lastName,
-          homeLocationId: homeLocation?.location.id,
           // Which language to write the welcome mail in. The profile has no
           // stored preference yet — it is created by this very request — so the
           // locale the form is being read in is the best answer anyone has.
@@ -171,16 +146,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
             medium: utm.medium ?? undefined,
             campaign: utm.campaign ?? undefined,
           },
-          // Always an explicit boolean, never omitted. The schema takes it as
-          // optional so an older client that predates the box can still
-          // register — but a form that *shows* the question has an answer
-          // either way, and "unticked" is a decision the parent made rather
-          // than a field they were never asked about.
-          marketingConsent,
-          // The required acknowledgement. Always `true` when it is sent at
-          // all: the submit above returns before this line unless the box is
-          // ticked, and the route's schema takes nothing else.
-          acceptedTerms: true,
+          ...account.requestBody,
         }),
       });
 
@@ -309,39 +275,17 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               setError(message);
             }}
           />
-          {/* The two halves of one name, side by side from `sm` and stacked
-              below it — the educator form's arrangement, for the same reason it
-              has it: a first and last name are one answer split in two, and a
-              wide card that runs them down the middle wastes the width the card
-              was widened for. */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={t('register.parentFirstName')} htmlFor="firstName">
-              <Input
-                id="firstName"
-                type="text"
-                placeholder={t('register.firstNamePlaceholder')}
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                disabled={isLoading}
-                required
-                maxLength={DISPLAY_NAME_MAX}
-                autoComplete="given-name"
-              />
-            </Field>
-            <Field label={t('register.parentLastName')} htmlFor="lastName">
-              <Input
-                id="lastName"
-                type="text"
-                placeholder={t('register.lastNamePlaceholder')}
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                disabled={isLoading}
-                required
-                maxLength={DISPLAY_NAME_MAX}
-                autoComplete="family-name"
-              />
-            </Field>
-          </div>
+          <NameFields
+            firstLabel={t('register.parentFirstName')}
+            lastLabel={t('register.parentLastName')}
+            firstPlaceholder={t('register.firstNamePlaceholder')}
+            lastPlaceholder={t('register.lastNamePlaceholder')}
+            firstName={firstName}
+            lastName={lastName}
+            setFirstName={setFirstName}
+            setLastName={setLastName}
+            disabled={isLoading}
+          />
           <Field label={c('email')} htmlFor="email">
             <Input
               id="email"
@@ -385,77 +329,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
               />
             </Field>
           </div>
-          <Field
-            label={t('register.location')}
-            htmlFor="homeLocation"
-            optional
-          >
-            <HomeLocationField
-              id="homeLocation"
-              value={homeLocation}
-              onChange={setHomeLocation}
-              disabled={isLoading}
-            />
-          </Field>
-          {/* Both boxes are deliberately not `Field`s: that primitive puts a
-              label above its control, and a checkbox is named by the sentence
-              beside it — a label above one would be a second name for the same
-              thing. The shared row is the composition instead: the sentence is
-              the label, any hint sits under it in the same column, and
-              `aria-describedby` is wired for us.
-
-              The required acknowledgement sits directly above the optional box,
-              so the two read as one pair and the one that gates the form is met
-              first. It carries NO hint: per the `CheckboxRow` doc the absence
-              of the optional marker IS the "required", and the row below is the
-              exception that says so in words. The two documents are named
-              inside the sentence and each name is its own link, which is what a
-              parent has to be able to reach before agreeing; a click landing on
-              a link reads instead of ticking, which the DOM gives for free. */}
-          <CheckboxRow
-            checked={acceptedTerms}
-            onCheckedChange={setAcceptedTerms}
-            disabled={isLoading}
-            label={t.rich('register.termsLabel', {
-              // A new tab for both, as the signup panel opens its consent
-              // documents: the parent is mid-way through a form, and the
-              // document is the thing they have to read *before* submitting
-              // it. In this tab, the way back would be an empty form.
-              terms: (chunks) => (
-                <Link
-                  href={ROUTES.termsAndConditions}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-act hover:underline"
-                >
-                  {chunks}
-                </Link>
-              ),
-              privacy: (chunks) => (
-                <Link
-                  href={ROUTES.privacy}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-act hover:underline"
-                >
-                  {chunks}
-                </Link>
-              ),
-            })}
-          />
-          {/* The hint is info-toned, exactly as the signup panel's marketing
-              row is — it is the same sentence, opening on the same word, doing
-              the same job of saying this one may be skipped. Leaving one of the
-              two muted and the other coloured would be drift a reader could
-              actually notice, since a parent meets both within one signup. */}
-          <CheckboxRow
-            checked={marketingConsent}
-            onCheckedChange={setMarketingConsent}
-            disabled={isLoading}
-            label={t('register.marketingConsentLabel')}
-            hint={t('register.marketingConsentHint')}
-            hintTone="info"
-          />
+          <ParentAccountFields fields={account} disabled={isLoading} />
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading || googlePending}>
