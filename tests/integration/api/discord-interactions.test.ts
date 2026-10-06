@@ -111,6 +111,12 @@ function interactionRequest(
   });
 }
 
+/** The URL on a PATCHed reply's link button — `/link`'s, and `/sub`'s not-linked answer. */
+function linkButtonUrl(patched: { components?: unknown }): string {
+  const url = JSON.stringify(patched.components ?? []).match(/"url":"([^"]+)"/)?.[1];
+  return url ?? "";
+}
+
 describe("POST /api/discord/interactions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -412,8 +418,8 @@ describe("POST /api/discord/interactions", () => {
     const { patched, row } = await runLink({ member: GUILD_CALLER });
 
     expect(mockFrom).toHaveBeenCalledWith("discord_link_tokens");
-    const url = /(https:\/\/sogverse\.sog\.gg\/link-discord\?token=([A-Za-z0-9_-]+))/.exec(
-      patched.content,
+    const url = /^(https:\/\/sogverse\.sog\.gg\/link-discord\?token=([A-Za-z0-9_-]+))$/.exec(
+      linkButtonUrl(patched),
     );
     expect(url).not.toBeNull();
     const token = url?.[2] ?? "";
@@ -427,12 +433,19 @@ describe("POST /api/discord/interactions", () => {
     expect(JSON.stringify(row)).not.toContain(token);
   });
 
-  it("tells the caller the link expires and works once, with no preview under it", async () => {
+  it("puts the link on a button, never in the text, and says it expires and works once", async () => {
     const { patched } = await runLink({ member: GUILD_CALLER });
 
-    expect(patched.content).toContain("The link expires in 10 minutes and works once.");
-    // 4 = SUPPRESS_EMBEDS, so Discord does not unfurl the sign-in page.
-    expect(patched.flags).toBe(4);
+    expect(patched.content).toBe(
+      "Connect your Discord account to your School of Gaming account. " +
+        "The link expires in 10 minutes and works once.",
+    );
+    // 5 = a link button, which opens the URL and raises no interaction.
+    expect(patched.components?.[0]?.components?.[0]).toMatchObject({
+      type: 2,
+      style: 5,
+      label: "Connect account",
+    });
   });
 
   it("reads the caller from `user` when the command is run in a DM", async () => {
@@ -699,10 +712,14 @@ describe("POST /api/discord/interactions — /sub", () => {
 
     const { patched } = await command();
 
-    expect(patched.content).toMatch(
-      /^To use \/sub, first link your Discord account to your School of Gaming Gedu account\.\n\nOpen this link to connect your Discord account to your School of Gaming account:\nhttps:\/\/sogverse\.sog\.gg\/link-discord\?token=[A-Za-z0-9_-]{43}\n\nThe link expires in 10 minutes and works once\.$/,
+    expect(patched.content).toBe(
+      "To use /sub, first link your Discord account to your School of Gaming Gedu account.\n\n" +
+        "Connect your Discord account to your School of Gaming account. " +
+        "The link expires in 10 minutes and works once.",
     );
-    expect(patched.flags).toBe(4);
+    expect(linkButtonUrl(patched)).toMatch(
+      /^https:\/\/sogverse\.sog\.gg\/link-discord\?token=[A-Za-z0-9_-]{43}$/,
+    );
     expect(mockInsert).toHaveBeenCalledTimes(1);
     expect(mockGetSessions).not.toHaveBeenCalled();
   });
@@ -769,12 +786,12 @@ describe("POST /api/discord/interactions — /sub", () => {
     }
   });
 
-  it("points a gedu with nothing to file for at the web page", async () => {
+  it("tells a gedu with nothing to file for so", async () => {
     mockGetSessions.mockResolvedValue([]);
 
     const { patched } = await command();
 
-    expect(texts(patched)).toContain("https://sogverse.sog.gg/gedu/substitutions");
+    expect(texts(patched)).toContain("You have no upcoming sessions to ask for a substitute for.");
     expect(ids(patched)).toEqual([]);
   });
 

@@ -23,7 +23,7 @@ import { Constants, type SubstitutionReason } from "@/types";
 /**
  * **The Discord `/sub` command's messages**, built as data so the route that
  * answers the command and the admin tool that DMs a preview of it send the
- * very same first step.
+ * very same messages.
  *
  * Every message is a Components V2 message: one container in the brand's act
  * colour, holding text and controls. Pure — the clock, the sessions and the
@@ -57,6 +57,7 @@ const LABEL = 18;
 
 const BUTTON_PRIMARY = 1;
 const BUTTON_SECONDARY = 2;
+const BUTTON_LINK = 5;
 const TEXT_INPUT_PARAGRAPH = 2;
 
 /** Discord's caps, which a longer string is refused for rather than cut at. */
@@ -367,7 +368,7 @@ export const DISCORD_SUB_WEEK_TIMEZONE = DEFAULT_TIMEZONE;
  * heading — a week holding more sessions than a select can carry gets a second
  * select under the same heading — and the way to the later weeks below.
  *
- * Built for the empty list too, which says so and points at the web page.
+ * Built for the empty list too, which says so.
  */
 export function buildSessionPickerMessage({
   copy,
@@ -376,7 +377,6 @@ export function buildSessionPickerMessage({
   now,
   page,
   prefix = "sub",
-  substitutionsUrl,
 }: {
   copy: DiscordSubCopy;
   /** The header's logo — `discordSubLogoUrl()` — or `null` for none. */
@@ -386,14 +386,12 @@ export function buildSessionPickerMessage({
   /** Clamped to the pages there are, since the list can shrink between presses. */
   page: number;
   prefix?: SubPrefix;
-  /** The web Substitutions page, which the empty state points at. */
-  substitutionsUrl: string;
 }): DiscordComponentsMessage {
 
   if (sessions.length === 0) {
     return message(copy, logoUrl, {
       head: [text(`### ${copy.picker("filePickTitle")}`)],
-      body: [text(copy.sub("empty", { url: substitutionsUrl }))],
+      body: [text(copy.sub("empty"))],
     });
   }
 
@@ -441,7 +439,6 @@ export function buildSessionPickerMessage({
   return message(copy, logoUrl, {
     head: [text(`### ${copy.picker("filePickTitle")}`)],
     body: [
-      text(copy.picker("filePickBody")),
       divider(),
       ...weeks,
       ...(nav.length > 0 ? [divider(), row(nav)] : []),
@@ -476,12 +473,14 @@ export function buildReasonStepMessage({
   logoUrl,
   session,
   reason,
+  prefix = "sub",
 }: {
   copy: DiscordSubCopy;
   /** The header's logo — `discordSubLogoUrl()` — or `null` for none. */
   logoUrl: string | null;
   session: GeduUpcomingSession;
   reason: SubstitutionReason | null;
+  prefix?: SubPrefix;
 }): DiscordComponentsMessage {
   const target = `${session.groupId}:${session.sessionDate}`;
   // A disabled button still needs an id of its own; `-` is no reason, so a
@@ -497,7 +496,7 @@ export function buildReasonStepMessage({
       row([
         {
           type: STRING_SELECT,
-          custom_id: `sub:r:${target}`,
+          custom_id: `${prefix}:r:${target}`,
           placeholder: copy.form("substitutionReasonLabel"),
           options: SUBSTITUTION_REASONS.map((value) => ({
             label:
@@ -510,15 +509,15 @@ export function buildReasonStepMessage({
         },
       ]),
       row([
-        button("sub:p:0", copy.common("back"), BUTTON_SECONDARY),
+        button(`${prefix}:p:0`, copy.common("back"), BUTTON_SECONDARY),
         button(
-          `sub:m:${target}:${chosen}:${copy.locale}`,
+          `${prefix}:m:${target}:${chosen}:${copy.locale}`,
           copy.sub("addNote"),
           BUTTON_SECONDARY,
           reason === null,
         ),
         button(
-          `sub:f:${target}:${chosen}`,
+          `${prefix}:f:${target}:${chosen}`,
           copy.sub("confirmWithoutNote"),
           BUTTON_PRIMARY,
           reason === null,
@@ -565,7 +564,7 @@ export function buildNoteModal({
 
 // ---------------------------------------------------------------- the outcome
 
-/** Filed: the web's own confirmation line, about the session filed for. */
+/** Filed: the confirmation line, about the session filed for. */
 export function buildFiledMessage({
   copy,
   logoUrl,
@@ -579,7 +578,7 @@ export function buildFiledMessage({
   return message(copy, logoUrl, {
     body: [
       text(
-        `✅ ${copy.picker("fileFiled", {
+        `✅ ${copy.sub("filed", {
           product: sessionWhat(session),
           when: discordSessionWhen(session, copy.locale),
         })}`,
@@ -597,18 +596,20 @@ export function buildRefusalMessage({
   logoUrl,
   line,
   session,
+  prefix = "sub",
 }: {
   copy: DiscordSubCopy;
   /** The header's logo — `discordSubLogoUrl()` — or `null` for none. */
   logoUrl: string | null;
   line: string;
   session: GeduUpcomingSession | null;
+  prefix?: SubPrefix;
 }): DiscordComponentsMessage {
   return message(copy, logoUrl, {
     body: [
       ...(session === null ? [] : [sessionSummary(copy, session)]),
       text(`⚠️ ${line}`),
-      row([button("sub:p:0", copy.common("back"), BUTTON_SECONDARY)]),
+      row([button(`${prefix}:p:0`, copy.common("back"), BUTTON_SECONDARY)]),
     ],
   });
 }
@@ -698,40 +699,49 @@ export function disabledControlsUpdate(
   };
 }
 
+/** A message with text and, optionally, classic action rows — not Components V2. */
+export interface DiscordContentMessage {
+  content: string;
+  components?: DiscordComponent[];
+}
+
 /**
- * `/link`'s reply: the one-time URL that links the caller's Discord account,
- * and how long it lasts. Plain text, sent with {@link DISCORD_FLAG_SUPPRESS_EMBEDS}.
+ * `/link`'s reply: a link button to the one-time URL that links the caller's
+ * Discord account, and how long it lasts. The URL is on the button, never in
+ * the text, so the message carries no link preview to suppress.
  */
-export function buildLinkReplyContent({
+export function buildLinkReply({
   origin,
   token,
 }: {
   origin: string;
   token: string;
-}): string {
+}): DiscordContentMessage {
   // The token is raw in the URL: a minted one is base64url, which needs no
   // percent-encoding.
   const linkUrl = `${origin}${ROUTES.linkDiscord}?token=${token}`;
-  return (
-    "Open this link to connect your Discord account to your School of Gaming account:\n" +
-    `${linkUrl}\n\n` +
-    "The link expires in 10 minutes and works once."
-  );
+  return {
+    content:
+      "Connect your Discord account to your School of Gaming account. " +
+      "The link expires in 10 minutes and works once.",
+    components: [
+      row([{ type: BUTTON, style: BUTTON_LINK, label: "Connect account", url: linkUrl }]),
+    ],
+  };
 }
 
 /**
  * What `/sub` answers a caller with no Gedu account linked: the line saying a
- * link is needed, over `/link`'s own reply. Plain text, sent with
- * {@link DISCORD_FLAG_SUPPRESS_EMBEDS}.
+ * link is needed, over `/link`'s own reply.
  */
-export function buildSubNotLinkedContent({
+export function buildSubNotLinkedMessage({
   copy,
   linkReply,
 }: {
   copy: DiscordSubCopy;
-  linkReply: string;
-}): string {
-  return `${copy.sub("notLinked")}\n\n${linkReply}`;
+  linkReply: DiscordContentMessage;
+}): DiscordContentMessage {
+  return { ...linkReply, content: `${copy.sub("notLinked")}\n\n${linkReply.content}` };
 }
 
 // ---------------------------------------------------------------- the admin preview
@@ -773,4 +783,63 @@ export function buildSubPreviewSessions(now: Date): GeduUpcomingSession[] {
     });
   }
   return sessions.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+}
+
+/**
+ * Every message `/sub` can draw, in the order a gedu meets them, for the admin
+ * tool to DM as one set: the not-linked answer, the session list and its later
+ * page, the reason step before and after a reason is picked, the filed line, a
+ * refusal, the empty list and the failure notice. Built by the command's own
+ * builders over {@link buildSubPreviewSessions}, so a change to how a step looks
+ * shows here from whatever machine sends it. Every control carries the preview
+ * prefix. The note modal is not here: a modal only opens in answer to a press.
+ */
+export function buildSubPreviewFlow({
+  copy,
+  logoUrl,
+  now,
+  origin,
+}: {
+  copy: DiscordSubCopy;
+  /** The header's logo — `discordSubLogoUrl()` — or `null` for none. */
+  logoUrl: string | null;
+  now: Date;
+  /** The origin the not-linked answer's link is built on. */
+  origin: string;
+}): [DiscordContentMessage, ...DiscordComponentsMessage[]] {
+  const prefix = "subpreview";
+  const sessions = buildSubPreviewSessions(now);
+  const [session] = sessions;
+  const picker = (page: number, shown: readonly GeduUpcomingSession[]) =>
+    buildSessionPickerMessage({
+      copy,
+      logoUrl,
+      sessions: shown,
+      now,
+      page,
+      prefix,
+    });
+
+  return [
+    buildSubNotLinkedMessage({
+      copy,
+      // The real URL shape with a token no row holds: the page shows its
+      // dead-link card for it, and nothing is minted.
+      linkReply: buildLinkReply({ origin, token: "preview" }),
+    }),
+    picker(0, sessions),
+    picker(1, sessions),
+    buildReasonStepMessage({ copy, logoUrl, session, reason: null, prefix }),
+    buildReasonStepMessage({ copy, logoUrl, session, reason: "sick", prefix }),
+    buildFiledMessage({ copy, logoUrl, session }),
+    buildRefusalMessage({
+      copy,
+      logoUrl,
+      line: copy.form("substitutionRequestFailedAlreadyAsked"),
+      session,
+      prefix,
+    }),
+    picker(0, []),
+    buildNoticeMessage({ copy, logoUrl, line: copy.sub("failed") }),
+  ];
 }

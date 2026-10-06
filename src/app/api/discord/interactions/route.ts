@@ -12,21 +12,19 @@ import {
   matchLocaleFromHeader,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { ROUTES } from "@/lib/constants/routes";
 import { DISCORD_API_BASE, discordBotHeaders } from "@/lib/discord-api.server";
 import { hashDiscordLinkToken } from "@/lib/discord-link-token.server";
 import {
   DISCORD_FLAG_EPHEMERAL,
-  DISCORD_FLAG_SUPPRESS_EMBEDS,
   SUB_NOTE_INPUT_ID,
   buildFiledMessage,
-  buildLinkReplyContent,
+  buildLinkReply,
   buildNoteModal,
   buildNoticeMessage,
   buildReasonStepMessage,
   buildRefusalMessage,
   buildSessionPickerMessage,
-  buildSubNotLinkedContent,
+  buildSubNotLinkedMessage,
   disabledControlsUpdate,
   discordSubLogoUrl,
   loadDiscordSubCopy,
@@ -34,6 +32,7 @@ import {
   parseSessionValue,
   parseSubCustomId,
   type DiscordComponentsMessage,
+  type DiscordContentMessage,
   type DiscordSubCopy,
 } from "@/lib/discord-substitution-message";
 import {
@@ -96,8 +95,6 @@ const DISCORD_APPLICATION_ID = process.env.DISCORD_APPLICATION_ID!;
 
 /** Only the caller sees the message (Discord's EPHEMERAL message flag). */
 const EPHEMERAL = DISCORD_FLAG_EPHEMERAL;
-/** No link preview under the message (Discord's SUPPRESS_EMBEDS flag). */
-const SUPPRESS_EMBEDS = DISCORD_FLAG_SUPPRESS_EMBEDS;
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -188,10 +185,10 @@ async function patchDiscordResponse(
   );
 }
 
-/** Replace the interaction's message with a Components V2 body. */
+/** Replace the interaction's message with a built body. */
 async function patchDiscordMessage(
   interactionToken: string,
-  body: DiscordComponentsMessage
+  body: DiscordComponentsMessage | DiscordContentMessage
 ): Promise<void> {
   const response = await fetch(
     `${DISCORD_API_BASE}/webhooks/${DISCORD_APPLICATION_ID}/${interactionToken}/messages/@original`,
@@ -238,11 +235,7 @@ async function sendLinkUrl(
   caller: { id: string; username: string },
   requestHeaders: Headers
 ): Promise<void> {
-  await patchDiscordResponse(
-    interactionToken,
-    await linkReply(caller, requestHeaders),
-    SUPPRESS_EMBEDS
-  );
+  await patchDiscordMessage(interactionToken, await linkReply(caller, requestHeaders));
 }
 
 /**
@@ -256,7 +249,7 @@ async function sendLinkUrl(
 async function linkReply(
   caller: { id: string; username: string },
   requestHeaders: Headers
-): Promise<string> {
+): Promise<DiscordContentMessage> {
   try {
     const origin = getOrigin(requestHeaders);
     const token = randomBytes(32).toString("base64url");
@@ -270,10 +263,12 @@ async function linkReply(
       .insert(row);
     if (error) throw error;
 
-    return buildLinkReplyContent({ origin, token });
+    return buildLinkReply({ origin, token });
   } catch (error) {
     console.error("Discord link token error:", error);
-    return "Sorry, I couldn't create a link right now. Try /link again in a moment.";
+    return {
+      content: "Sorry, I couldn't create a link right now. Try /link again in a moment.",
+    };
   }
 }
 
@@ -464,8 +459,6 @@ async function sendSubStep(
         sessions,
         now,
         page: step.kind === "page" ? step.page : 0,
-        // A bare path, which the proxy sends on to the reader's own locale.
-        substitutionsUrl: `${getOrigin(requestHeaders)}${ROUTES.gedu.substitutions}`,
       });
     } else {
       const key = `${step.groupId}:${step.sessionDate}`;
@@ -535,13 +528,12 @@ async function sendSubNotLinked(
   step: SubStep
 ): Promise<void> {
   if (step.kind === "start") {
-    await patchDiscordResponse(
+    await patchDiscordMessage(
       interactionToken,
-      buildSubNotLinkedContent({
+      buildSubNotLinkedMessage({
         copy,
         linkReply: await linkReply(caller, requestHeaders),
-      }),
-      SUPPRESS_EMBEDS
+      })
     );
     return;
   }

@@ -8,6 +8,7 @@ import {
   buildReasonStepMessage,
   buildRefusalMessage,
   buildSessionPickerMessage,
+  buildSubPreviewFlow,
   buildSubPreviewSessions,
   buildNoticeMessage,
   disableMessageControls,
@@ -27,7 +28,8 @@ import type { GeduUpcomingSession } from "@/lib/gedu-upcoming-sessions";
  * The `/sub` command's messages, as the data Discord is sent. Pinned: the
  * custom_id scheme both ways round, the session list's weeks and pages, the
  * caps Discord refuses a message for exceeding, and that the admin preview is
- * the same builder with every control on the preview prefix.
+ * every message the command draws, from the same builders, with every control
+ * on the preview prefix.
  */
 
 const GROUP_A = "6f1c2c1e-6d43-4c1a-9a5e-2f8f0d1b7a10";
@@ -35,7 +37,6 @@ const GROUP_B = "0b7e2a56-3c1d-4f7e-8a2b-9c4d5e6f7a81";
 const TZ = "Europe/Helsinki";
 /** A Monday morning in Helsinki. */
 const NOW = new Date("2026-10-05T06:00:00Z");
-const URL = "https://sogverse.sog.gg/gedu/substitutions";
 const LOGO = "https://sogverse.sog.gg/apple-icon.png";
 
 function session(
@@ -159,21 +160,18 @@ describe("buildSessionPickerMessage", () => {
   ];
 
   it("is one Components V2 container in the act colour", () => {
-    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 0 });
 
     expect(message.flags).toBe(DISCORD_FLAG_IS_COMPONENTS_V2);
     expect(message.components).toHaveLength(1);
     expect(message.components[0]).toMatchObject({ type: 17, accent_color: 0xfaa901 });
-    expect(texts(message)).toEqual(
-      expect.arrayContaining([
-        "### Which session do you need a substitute for?",
-        "Your reason and note are shown to admins only.",
-      ]),
-    );
+    expect(texts(message)).toContain("### Which session do you need a substitute for?");
+    // Who sees a reason is said where the reason is asked for, not before.
+    expect(texts(message).join("\n")).not.toContain("admins only");
   });
 
   it("opens on this week and next, one select a week, with the way to later weeks", () => {
-    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 0 });
 
     expect(texts(message)).toEqual(expect.arrayContaining(["**This week**", "**Next week**"]));
     const [thisWeek, nextWeek] = selects(message);
@@ -198,7 +196,7 @@ describe("buildSessionPickerMessage", () => {
   });
 
   it("pages the later weeks two at a time, with the way back", () => {
-    const second = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 1, substitutionsUrl: URL });
+    const second = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 1 });
     expect(selects(second).map((select) => select.custom_id)).toEqual([
       "sub:s:2026-10-19:0",
       "sub:s:2026-10-26:0",
@@ -206,7 +204,7 @@ describe("buildSessionPickerMessage", () => {
     expect(texts(second)).toEqual(expect.arrayContaining(["**Week of Oct 19**"]));
     expect(buttons(second).map((button) => button.custom_id)).toEqual(["sub:p:0", "sub:p:2"]);
 
-    const last = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 9, substitutionsUrl: URL });
+    const last = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 9 });
     expect(selects(last).map((select) => select.custom_id)).toEqual(["sub:s:2026-11-02:0"]);
     expect(buttons(last).map((button) => button.custom_id)).toEqual(["sub:p:1"]);
   });
@@ -218,7 +216,7 @@ describe("buildSessionPickerMessage", () => {
         index % 2 === 0 ? "2026-10-06" : "2026-10-07",
       ),
     );
-    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: crowded, now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: crowded, now: NOW, page: 0 });
 
     expect(selects(message).map((select) => options(select).length)).toEqual([25, 5]);
     // Discord refuses a Components V2 message of more than 40 components.
@@ -234,7 +232,7 @@ describe("buildSessionPickerMessage", () => {
       productName: "A product name long enough that the row would run past a hundred characters",
       groupName: "and a group name to push it further still",
     });
-    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: [long], now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: [long], now: NOW, page: 0 });
 
     for (const component of walk(message.components)) {
       if (typeof component.custom_id === "string") {
@@ -246,15 +244,15 @@ describe("buildSessionPickerMessage", () => {
     expect(option.description?.endsWith("…")).toBe(true);
   });
 
-  it("says there is nothing to file for and points at the web page", () => {
-    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: [], now: NOW, page: 0, substitutionsUrl: URL });
+  it("says there is nothing to file for, and nothing more", () => {
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: [], now: NOW, page: 0 });
 
     expect(selects(message)).toHaveLength(0);
-    expect(texts(message).join("\n")).toContain(URL);
+    expect(texts(message)).toContain("You have no upcoming sessions to ask for a substitute for.");
   });
 
   it("speaks the copy's locale", () => {
-    const message = buildSessionPickerMessage({ copy: fi, logoUrl: LOGO, sessions, now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: fi, logoUrl: LOGO, sessions, now: NOW, page: 0 });
 
     expect(texts(message)).toEqual(
       expect.arrayContaining(["### Mille kerralle tarvitset tuuraajan?", "**Tämä viikko**"]),
@@ -263,6 +261,14 @@ describe("buildSessionPickerMessage", () => {
 });
 
 describe("the admin preview", () => {
+  const flow = () =>
+    buildSubPreviewFlow({
+      copy: en,
+      logoUrl: LOGO,
+      now: NOW,
+      origin: "https://sogverse.sog.gg",
+    });
+
   it("is the same first step over sample sessions, every control on the preview prefix", () => {
     const sessions = buildSubPreviewSessions(NOW);
     const message = buildSessionPickerMessage({
@@ -272,7 +278,7 @@ describe("the admin preview", () => {
       now: NOW,
       page: 0,
       prefix: "subpreview",
-      substitutionsUrl: URL,
+      
     });
 
     const controls = [...selects(message), ...buttons(message)];
@@ -282,6 +288,49 @@ describe("the admin preview", () => {
     }
     // Enough weeks that the later-sessions button has somewhere to go.
     expect(buttons(message).map((button) => button.custom_id)).toContain("subpreview:p:1");
+  });
+
+  it("draws every message the command can, in the order a gedu meets them", () => {
+    const [notLinked, ...steps] = flow();
+
+    expect(notLinked.content).not.toContain("https://");
+    expect(notLinked.components).toEqual([
+      {
+        type: 1,
+        components: [
+          {
+            type: 2,
+            style: 5,
+            label: "Connect account",
+            url: "https://sogverse.sog.gg/link-discord?token=preview",
+          },
+        ],
+      },
+    ]);
+    expect(steps.map((step) => texts(step).join("\n"))).toEqual([
+      expect.stringContaining("Which session do you need a substitute for?"),
+      expect.stringContaining("Which session do you need a substitute for?"),
+      expect.stringContaining("I can’t make this session"),
+      expect.stringContaining("I can’t make this session"),
+      expect.stringContaining("✅"),
+      expect.stringContaining("You’ve already asked for a substitute for this session."),
+      expect.stringContaining("You have no upcoming sessions to ask for a substitute for."),
+      expect.stringContaining(en.sub("failed")),
+    ]);
+    // The list's later page has the way back; the reason step comes unpicked, then picked.
+    expect(buttons(steps[1]).map((button) => button.custom_id)).toContain("subpreview:p:0");
+    expect(options(selects(steps[2])[0]).some((option) => option.default)).toBe(false);
+    expect(options(selects(steps[3])[0])[0]).toMatchObject({ value: "sick", default: true });
+  });
+
+  it("puts every control of every step on the preview prefix", () => {
+    const [, ...steps] = flow();
+    const controls = steps.flatMap((step) => [...selects(step), ...buttons(step)]);
+
+    expect(controls.length).toBeGreaterThan(5);
+    for (const control of controls) {
+      expect(parseSubCustomId(String(control.custom_id))).toEqual({ kind: "preview" });
+    }
   });
 });
 
@@ -367,11 +416,11 @@ describe("the reason step", () => {
 describe("the outcome", () => {
   const picked = session(GROUP_A, "2026-10-06");
 
-  it("confirms in the web's own words", () => {
+  it("confirms what was filed, and nothing more", () => {
     const message = buildFiledMessage({ copy: en, logoUrl: LOGO, session: picked });
 
-    expect(texts(message).join("\n")).toContain(
-      "Substitute requested for Minecraft Club — A on Tue, Oct 6, 16:00 – 17:30 GMT+3.",
+    expect(texts(message)).toContain(
+      "✅ Substitute requested for Minecraft Club — A on Tue, Oct 6, 16:00 – 17:30 GMT+3.",
     );
     expect(buttons(message)).toHaveLength(0);
   });
@@ -396,9 +445,9 @@ describe("the logo", () => {
   const sessions = [picked, session(GROUP_A, "2026-10-20")];
 
   const steps: Array<[string, (logoUrl: string | null) => DiscordComponentsMessage]> = [
-    ["the first step", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions, now: NOW, page: 0, substitutionsUrl: URL })],
-    ["a later page", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions, now: NOW, page: 1, substitutionsUrl: URL })],
-    ["the empty list", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions: [], now: NOW, page: 0, substitutionsUrl: URL })],
+    ["the first step", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions, now: NOW, page: 0 })],
+    ["a later page", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions, now: NOW, page: 1 })],
+    ["the empty list", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions: [], now: NOW, page: 0 })],
     [
       "the preview",
       (logoUrl) =>
@@ -409,7 +458,7 @@ describe("the logo", () => {
           now: NOW,
           page: 0,
           prefix: "subpreview",
-          substitutionsUrl: URL,
+          
         }),
     ],
     ["the reason step", (logoUrl) => buildReasonStepMessage({ copy: en, logoUrl, session: picked, reason: null })],
