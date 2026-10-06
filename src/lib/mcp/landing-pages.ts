@@ -121,7 +121,7 @@ const summary = z
     `A summary is at most ${LANDING_SUMMARY_MAX_LENGTH} characters`,
   )
   .describe(
-    `A sentence or two saying what the page offers: its search engines' description. At most ${LANDING_SUMMARY_MAX_LENGTH} characters.`,
+    `A sentence or two saying what the page offers, at most ${LANDING_SUMMARY_MAX_LENGTH} characters. It is how the page is found: the description under its search result, its line in the site's llms.txt for AI apps, and the text on its link card when shared. Write it as that snippet, for someone who has not seen the page: who it is for, what it offers and, where it matters, where — never a repeat of the title or a teaser.`,
   );
 
 /** A slug, by the service's own rule. */

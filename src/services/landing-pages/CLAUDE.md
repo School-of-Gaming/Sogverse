@@ -104,6 +104,6 @@ detail included, and the image catalogue's usage map.
 page is built by its address module** — the slug a locale's live version stores, else the
 id — never by handing a segment to the route builder, because a slug resolves in its own
 locale only and a hand-picked one is a 404 in every other. The renderer and the SEO
-contribution (structured data, plain text) are each an exhaustive map over the section
+contribution (structured data) are each an exhaustive map over the section
 types. Every section sits on the plain page ground: an admin chooses the order, so a
 tinted band could land beside another and read as one section.

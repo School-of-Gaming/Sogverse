@@ -34,7 +34,7 @@ const { landingPageMetadata } = await import(
 const { landingPageJsonLd } = await import(
   "@/components/landing-pages/landing-page-json-ld"
 );
-const { landingPagePlainText, landingStructuredParts } = await import(
+const { landingStructuredParts } = await import(
   "@/components/landing-pages/landing-section-seo"
 );
 const { markdownToPlainText } = await import(
@@ -254,22 +254,6 @@ describe("the SEO contribution map", () => {
     ]);
   });
 
-  it("reads the page's words as plain text", () => {
-    expect(landingPagePlainText(SHOWN.sections, SHOWN.sectionTexts)).toBe(
-      [
-        "Clubs in Espoo",
-        "How to join",
-        "1. Pick a club",
-        "Browse.",
-        "2. Sign up",
-        "Pay.",
-        "Questions",
-        "Who leads it?",
-        "A Game Educator, see the team.",
-        "Unanswered",
-      ].join("\n\n"),
-    );
-  });
 
   it("flattens markdown to its words, a block to a paragraph", () => {
     expect(markdownToPlainText("## Heading\n\nSome *text*  \nwith `code`.\n\n- one\n- two")).toBe(

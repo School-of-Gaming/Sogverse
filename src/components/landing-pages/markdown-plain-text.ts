@@ -4,8 +4,8 @@ import { unified } from "unified";
 
 /**
  * Authored markdown as plain text: the words a reader sees, without the
- * syntax — for the places a page's words are restated outside its markup (a
- * `FAQPage` answer, the plain text of a section). Parsed with the same
+ * syntax — for where a page's words are restated outside its markup (a
+ * `FAQPage` answer). Parsed with the same
  * markdown grammar the shared renderer reads, so a construct is the same
  * construct in both; each block is one paragraph of the result, a link is its
  * label, and a hard break is a space.
