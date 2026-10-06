@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { DARK_THEME, BRAND } from "@/lib/constants/colors";
 import { SogMark } from "@/components/og/marks";
 import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
+import { ogCardResponse } from "@/lib/og/card-response.server";
 import {
   cardLocaleOf,
   OG_CARD_CACHE_CONTROL,
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
     ogFonts(),
   ]);
 
-  return new ImageResponse(
+  const image = new ImageResponse(
     (
       <div
         style={{
@@ -127,10 +128,8 @@ export async function GET(request: Request) {
         </div>
       </div>
     ),
-    {
-      ...OG_CARD_SIZE,
-      fonts,
-      headers: { "Cache-Control": OG_CARD_CACHE_CONTROL },
-    },
+    { ...OG_CARD_SIZE, fonts },
   );
+
+  return ogCardResponse(image, { cacheControl: OG_CARD_CACHE_CONTROL });
 }

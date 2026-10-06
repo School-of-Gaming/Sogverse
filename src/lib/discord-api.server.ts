@@ -42,13 +42,38 @@ const discordErrorBody = z.object({
   message: z.string().optional(),
 });
 
+/** A 429's body: how many seconds Discord asks the caller to wait. */
+const rateLimitBody = z.object({ retry_after: z.number() });
+
+/** How many 429s one request waits out, and the longest wait it will take. */
+const RATE_LIMIT_RETRIES = 3;
+const RATE_LIMIT_MAX_WAIT_MS = 10_000;
+
 async function discordPost(path: string, body: unknown): Promise<unknown> {
-  const response = await fetch(`${DISCORD_API_BASE}${path}`, {
-    method: "POST",
-    headers: discordBotHeaders(),
-    body: JSON.stringify(body),
-  });
-  const payload: unknown = await response.json().catch(() => null);
+  for (let attempt = 0; ; attempt += 1) {
+    const response = await fetch(`${DISCORD_API_BASE}${path}`, {
+      method: "POST",
+      headers: discordBotHeaders(),
+      body: JSON.stringify(body),
+    });
+    const payload: unknown = await response.json().catch(() => null);
+    // A burst into one channel — the /sub preview's set of messages — runs
+    // into Discord's per-channel limit, which asks for a short wait rather
+    // than refusing. A wait past the cap is thrown like any other refusal.
+    const limited = response.status === 429 ? rateLimitBody.safeParse(payload) : null;
+    if (
+      limited?.success &&
+      attempt < RATE_LIMIT_RETRIES &&
+      limited.data.retry_after * 1000 <= RATE_LIMIT_MAX_WAIT_MS
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, limited.data.retry_after * 1000));
+      continue;
+    }
+    return discordAnswer(response, payload);
+  }
+}
+
+function discordAnswer(response: Response, payload: unknown): unknown {
   if (!response.ok) {
     const parsed = discordErrorBody.safeParse(payload);
     throw new DiscordApiError(
@@ -80,22 +105,24 @@ export interface SentDiscordMessage {
 }
 
 /**
- * Open (or reuse) the bot's DM channel with a Discord user and post a message
- * there. A bot can only DM someone it shares a server with, and Discord
+ * Open (or reuse) the bot's DM channel with a Discord user and post messages
+ * there, one after another so they arrive in order. Answers where the first
+ * one landed. A bot can only DM someone it shares a server with, and Discord
  * answers anyone else with a refusal, thrown here as a `DiscordApiError`.
  */
-export async function sendDiscordDirectMessage(
+export async function sendDiscordDirectMessages(
   recipientId: string,
-  message: unknown,
+  messages: readonly [unknown, ...unknown[]],
 ): Promise<SentDiscordMessage> {
   const channelId = idOf(
     await discordPost("/users/@me/channels", { recipient_id: recipientId }),
     "DM channel",
   );
-  const messageId = idOf(
-    await discordPost(`/channels/${channelId}/messages`, message),
-    "message",
-  );
+  const post = async (message: unknown) =>
+    idOf(await discordPost(`/channels/${channelId}/messages`, message), "message");
+  const [first, ...rest] = messages;
+  const messageId = await post(first);
+  for (const message of rest) await post(message);
   return {
     channelId,
     messageId,

@@ -3964,6 +3964,10 @@ export type Database = {
         Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
       }
+      gedu_live_substitution_requests: {
+        Args: { p_gedu_id: string }
+        Returns: Json
+      }
       gedu_may_substitute_session: {
         Args: {
           p_absent_gedu_id: string
@@ -4047,6 +4051,10 @@ export type Database = {
         Returns: string[]
       }
       get_group_staff_overlay: { Args: { p_group_id: string }; Returns: Json }
+      get_live_substitution_requests_for_discord_user: {
+        Args: { p_discord_user_id: string }
+        Returns: Json
+      }
       get_my_assigned_products: {
         Args: never
         Returns: {
@@ -4097,6 +4105,7 @@ export type Database = {
         Returns: Json
       }
       get_my_gedu_invoicing: { Args: { p_month_start: string }; Returns: Json }
+      get_my_live_substitution_requests: { Args: never; Returns: Json }
       get_my_parents: {
         Args: never
         Returns: {

@@ -30,12 +30,11 @@ import { DiscordLinkService } from "@/services/discord-link/discord-link.service
 
 type DiscordTemplate = SendTestDiscordMessageBody["template"];
 
-const TEMPLATES: readonly DiscordTemplate[] = ["text", "subSessions", "subNotLinked"];
+const TEMPLATES: readonly DiscordTemplate[] = ["text", "subFlow"];
 
 const TEMPLATE_LABEL_KEYS = {
   text: "discord.templatePlain",
-  subSessions: "discord.templateSubSessions",
-  subNotLinked: "discord.templateSubNotLinked",
+  subFlow: "discord.templateSubFlow",
 } as const satisfies Record<DiscordTemplate, string>;
 
 type SendResult =
@@ -44,8 +43,8 @@ type SendResult =
 
 /**
  * The admin testing page's Discord tool: a DM from this environment's bot to a
- * linked account, proving the send works end to end — a template chosen from
- * plain text and the `/sub` command's two answers, like the email tool beside it.
+ * linked account, proving the send works end to end — plain text, or every
+ * message the `/sub` command can draw as a set, like the email tool beside it.
  */
 export function DiscordToolCard() {
   const t = useTranslations("admin.testing");
@@ -109,7 +108,7 @@ export function DiscordToolCard() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* The email tool's row: who it goes to and which template. The
-              language belongs to the /sub templates only (plain text goes as
+              language belongs to the /sub template only (plain text goes as
               typed), so it joins the row last, after the template that decides
               it: choosing a template never moves the select just used. */}
           <div className="grid gap-4 md:grid-cols-3">

@@ -4,6 +4,7 @@ import { GeduSubstitutionsPage } from "@/components/gedu/GeduSubstitutionsPage";
 import {
   getInitialAssignmentRows,
   getInitialAssignmentSummaries,
+  getInitialLiveSubstitutionRequests,
   getInitialSubstitutionRequests,
   getIsCertified,
 } from "../gedu-page-reads";
@@ -17,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * `/gedu/substitutions` — the sessions that need somebody, and the ones this
  * gedu has taken.
  *
- * A data shell and nothing else: prefetch the three reads the body draws from
+ * A data shell and nothing else: prefetch the four reads the body draws from
  * and hand them over. The proxy has already gated the `/gedu` prefix to the gedu
  * role, so nothing here re-checks who is asking.
  *
@@ -27,11 +28,13 @@ export async function generateMetadata(): Promise<Metadata> {
  * nobody wanted.
  */
 export default async function GeduSubstitutionsRoute() {
-  const [initialRows, initialSummaries, certified] = await Promise.all([
-    getInitialAssignmentRows(),
-    getInitialAssignmentSummaries(),
-    getIsCertified(),
-  ]);
+  const [initialRows, initialSummaries, initialLiveRequests, certified] =
+    await Promise.all([
+      getInitialAssignmentRows(),
+      getInitialAssignmentSummaries(),
+      getInitialLiveSubstitutionRequests(),
+      getIsCertified(),
+    ]);
 
   const initialSubstitutionRequests =
     await getInitialSubstitutionRequests(certified);
@@ -41,6 +44,7 @@ export default async function GeduSubstitutionsRoute() {
       initialRows={initialRows}
       initialSummaries={initialSummaries}
       initialSubstitutionRequests={initialSubstitutionRequests}
+      initialLiveRequests={initialLiveRequests}
       certified={certified}
     />
   );

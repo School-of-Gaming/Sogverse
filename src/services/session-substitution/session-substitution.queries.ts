@@ -16,6 +16,7 @@ import { SessionSubstitutionService } from "./session-substitution.service";
 import type {
   AdminSubstitutionRequest,
   OpenSubstitutionRequest,
+  SubstitutionRequestDocument,
 } from "./session-substitution.contracts";
 
 /** React Query bindings for session substitutions. */
@@ -28,8 +29,10 @@ import type {
  * wrong. The four, and why each is in the list:
  *
  * - the substitution root — the pool a gedu picks from, which any approval
- *   shortens, and the admin page's own document, where an approval moves a row
- *   out of the queue and into the fortnight behind it;
+ *   shortens, the gedu's own live requests, which filing and withdrawing an
+ *   absence change and which the absence picker disables its rows by, and the
+ *   admin page's own document, where an approval moves a row out of the queue
+ *   and into the fortnight behind it;
  * - the gedu-sessions root — both the group feed's `substitutions` array and the
  *   dashboard summaries, whose per-card badge stops counting a session on a
  *   date its viewer has filed an absence for;
@@ -75,6 +78,27 @@ export function useOpenSubstitutionRequests(options?: {
     queryKey: sessionSubstitutionKeys.openRequests(),
     queryFn: () => service.getOpenRequests(),
     enabled: options?.enabled ?? true,
+    initialData: options?.initialData,
+  });
+}
+
+/**
+ * The signed-in gedu's own live requests — the sessions the absence picker
+ * shows as already asked for.
+ *
+ * A small, indexed, bounded read, server-prefetched by the Substitutions route
+ * so the picker's rows are settled before the dialog can open. Every
+ * substitution write invalidates the root it lives under, so filing or
+ * withdrawing an absence anywhere refreshes it.
+ */
+export function useMyLiveSubstitutionRequests(options?: {
+  initialData?: SubstitutionRequestDocument[];
+}) {
+  const service = new SessionSubstitutionService(getClient());
+
+  return useQuery({
+    queryKey: sessionSubstitutionKeys.myLiveRequests(),
+    queryFn: () => service.getMyLiveRequests(),
     initialData: options?.initialData,
   });
 }

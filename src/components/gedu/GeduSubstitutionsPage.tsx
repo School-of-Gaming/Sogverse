@@ -8,7 +8,10 @@ import {
   geduAssignmentKey,
   rollUpGeduSubstitutions,
 } from "@/lib/gedu-assignment-rollup";
-import { buildGeduUpcomingSessions } from "@/lib/gedu-upcoming-sessions";
+import {
+  alreadyRequestedSessionKeys,
+  buildGeduUpcomingSessions,
+} from "@/lib/gedu-upcoming-sessions";
 import { useNow } from "@/providers";
 import {
   geduSeatHrefs,
@@ -24,25 +27,28 @@ import {
   type GeduAssignmentSummary,
 } from "@/services/gedu-sessions";
 import {
+  useMyLiveSubstitutionRequests,
   useOpenSubstitutionRequests,
   useRequestSessionSubstitution,
   type OpenSubstitutionRequest,
+  type SubstitutionRequestDocument,
 } from "@/services/session-substitution";
 import { GeduFileAbsenceEntry } from "./GeduFileAbsenceEntry";
 import { GeduSubstitutionPoolSection } from "./GeduSubstitutionPoolSection";
 import { GeduSubstitutionsPageBody } from "./gedu-substitutions-page-body";
 
 /**
- * The Substitutions page's data shell: three reads and one write, no layout.
+ * The Substitutions page's data shell: four reads and one write, no layout.
  *
- * The pool is this feature's own read. The other two are the dashboard's, and
- * they are here for the same reason they are there — the seats a gedu holds
- * arrive as assignment rows, and the group name and the outstanding-write-up
- * count that go on each card arrive with the summaries. Joining them is the
- * shared seat-row helper's job, so the two pages cannot disagree about which
- * workspace a substitution opens.
+ * The pool and the gedu's own live requests are this feature's reads — the
+ * second is what the absence picker disables its already-asked rows by. The
+ * other two are the dashboard's, and they are here for the same reason they are
+ * there — the seats a gedu holds arrive as assignment rows, and the group name
+ * and the outstanding-write-up count that go on each card arrive with the
+ * summaries. Joining them is the shared seat-row helper's job, so the two pages
+ * cannot disagree about which workspace a substitution opens.
  *
- * All three are server-prefetched by the route, so the ordinary visit paints
+ * All four are server-prefetched by the route, so the ordinary visit paints
  * complete on the first frame with no loading state at all. Each is a small
  * indexed read of a bounded set, so where a prefetch failed the section renders
  * **nothing** while the browser asks again rather than a skeleton that would
@@ -52,6 +58,7 @@ export function GeduSubstitutionsPage({
   initialRows,
   initialSummaries,
   initialSubstitutionRequests,
+  initialLiveRequests,
   certified,
 }: {
   initialRows: MyAssignedProductSessionRow[];
@@ -72,6 +79,13 @@ export function GeduSubstitutionsPage({
    */
   initialSubstitutionRequests: OpenSubstitutionRequest[] | null;
   /**
+   * The gedu's own live requests, prefetched by the route — or `null` when that
+   * read failed, which sends the client to ask again. Until it answers, the
+   * file-an-absence entry renders nothing: the picker snapshots these keys when
+   * it opens, and a dialog opened before the answer would hold none of them.
+   */
+  initialLiveRequests: SubstitutionRequestDocument[] | null;
+  /**
    * Has an admin certified this gedu? Certification is what gates offering and
    * holding a substitution server-side, so an uncertified account gets no open
    * queue at all rather than an all-clear line about a queue it is not in.
@@ -90,6 +104,21 @@ export function GeduSubstitutionsPage({
     enabled: certified,
     initialData: initialSubstitutionRequests ?? undefined,
   });
+  const { data: liveRequests } = useMyLiveSubstitutionRequests(
+    initialLiveRequests === null ? undefined : { initialData: initialLiveRequests },
+  );
+
+  /**
+   * The sessions already asked for, which the picker shows disabled — or
+   * `undefined` while the browser is still asking, when the entry is withheld.
+   */
+  const alreadyRequested = useMemo(
+    () =>
+      liveRequests === undefined
+        ? undefined
+        : [...alreadyRequestedSessionKeys(liveRequests)],
+    [liveRequests],
+  );
 
   const substitutions = useMemo(() => {
     if (summaries === undefined) return null;
@@ -133,25 +162,31 @@ export function GeduSubstitutionsPage({
   return (
     <GeduSubstitutionsPageBody
       fileAbsence={
-        <GeduFileAbsenceEntry
-          sessions={upcomingSessions}
-          resolveWorkspaceHref={(session) =>
-            filedWorkspaceHref(
-              workspaceHrefs[
-                geduAssignmentKey(session.productId, session.groupId)
-              ],
-              session.groupId,
-            )
-          }
-          onFile={async (session, draft) => {
-            await requestSubstitution.mutateAsync({
-              groupId: session.groupId,
-              sessionDate: session.sessionDate,
-              reason: draft.reason,
-              reasonNote: draft.note,
-            });
-          }}
-        />
+        // Withheld until the live-requests read has answered: the picker takes
+        // its already-asked keys once, at the press that opens it, so an entry
+        // pressable before the answer could open a dialog that knows none.
+        alreadyRequested === undefined ? null : (
+          <GeduFileAbsenceEntry
+            sessions={upcomingSessions}
+            filedSessionKeys={alreadyRequested}
+            resolveWorkspaceHref={(session) =>
+              filedWorkspaceHref(
+                workspaceHrefs[
+                  geduAssignmentKey(session.productId, session.groupId)
+                ],
+                session.groupId,
+              )
+            }
+            onFile={async (session, draft) => {
+              await requestSubstitution.mutateAsync({
+                groupId: session.groupId,
+                sessionDate: session.sessionDate,
+                reason: draft.reason,
+                reasonNote: draft.note,
+              });
+            }}
+          />
+        )
       }
       // `null` for the account that may substitute for nothing, and only for
       // that account: an answer that has not arrived is the section's own

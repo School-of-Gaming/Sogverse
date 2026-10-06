@@ -46,7 +46,7 @@ const SUMMARY = "Why a written agreement ends arguments.";
 const PUBLISHED: PublishedLibraryArticle = {
   id: ID,
   category: "screen_time",
-  coverPath: "covers/agreement.jpg",
+  coverPath: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08.jpg",
   firstPublishedAt: "2026-05-01T08:00:00Z",
   publishedAt: "2026-09-01T08:00:00Z",
   versions: [
@@ -93,7 +93,7 @@ const ARTICLE: LocalizedLibraryArticle = {
   summary: SUMMARY,
   body: "A rule in one head.",
   category: "screen_time",
-  coverPath: "covers/agreement.jpg",
+  coverPath: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08.jpg",
   firstPublishedAt: "2026-05-01T08:00:00Z",
   publishedAt: "2026-09-01T08:00:00Z",
 };
@@ -101,8 +101,10 @@ const ARTICLE: LocalizedLibraryArticle = {
 const EN_PATH = "/en/library/setting-up-a-family-gaming-agreement";
 const FI_PATH = "/fi/kirjasto/pelisopimus-perheelle";
 
+const KEY = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08.jpg";
+
 const COVER_URL =
-  "https://test.supabase.co/storage/v1/object/public/library-covers/covers/agreement.jpg";
+  "https://test.supabase.co/storage/v1/object/public/library-covers/9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08.jpg";
 
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://test.supabase.co");
@@ -197,7 +199,16 @@ describe("a Library article's metadata", () => {
       [PUBLISHED],
       "en",
     );
-    const images = [{ url: COVER_URL, alt: TITLE }];
+    // The cover's preview rendition through the picture route, at the
+    // library_cover size narrowed to preview width — never the stored object.
+    const images = [
+      {
+        url: `/opengraph-images/picture/library_cover/${KEY}`,
+        alt: TITLE,
+        width: 1200,
+        height: 675,
+      },
+    ];
     expect(openGraph).toMatchObject({
       type: "article",
       siteName: "School of Gaming",

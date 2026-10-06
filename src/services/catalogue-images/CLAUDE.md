@@ -151,7 +151,8 @@ changed:
 | `landing_image` | `landing-images` | exactly 1600 × 900 |
 
 The purpose is a column; the bucket and the size live once, in the purpose map in
-`src/lib/images/`, which everything reads them from: URL building, the upload and the
+`src/lib/images/` — the catalogue's slice of the image purpose registry there — which
+everything reads them from: URL building, the upload and the
 removal, the crop dialog, the size check and the image optimizer's allowed patterns in
 `next.config.ts`. Both buckets are public, and every URL is built from the purpose, since
 the same path can exist in both.
@@ -178,7 +179,8 @@ Where each rule is enforced:
 
 Entries uploaded before sizes were enforced may be any size, and they keep working
 everywhere. **They are corrected by hand rather than by code**: the app neither detects
-nor repairs one.
+nor repairs one. A link preview of such an entry is still served at the
+purpose's declared preview size, because the preview rendition crops to it.
 
 ## Uploads
 

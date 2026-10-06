@@ -13,6 +13,7 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { NowProvider, TimezoneProvider } from "@/providers";
 import { ROUTES } from "@/lib/constants";
+import { alreadyRequestedSessionKeys } from "@/lib/gedu-upcoming-sessions";
 
 /**
  * ============================================================================
@@ -287,6 +288,7 @@ function renderEntry({
 function rerenderEntry(
   rerender: ReturnType<typeof renderEntry>["rerender"],
   sessions: ReturnType<typeof entryFixture>["upcomingSessions"],
+  filedSessionKeys: string[] = [],
 ) {
   rerender(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -294,7 +296,7 @@ function rerenderEntry(
         <NowProvider initialNow={NOW}>
           <GeduFileAbsenceEntry
             sessions={sessions}
-            filedSessionKeys={[]}
+            filedSessionKeys={filedSessionKeys}
             resolveWorkspaceHref={() => null}
             onFile={() => Promise.resolve()}
           />
@@ -479,6 +481,26 @@ describe("the page's file-an-absence entry", () => {
     expect(rows[0].textContent).not.toContain(copy.fileAlreadyRequested);
   });
 
+  it("disables the sessions the server says were already asked for, and only those", () => {
+    // The page's own wiring: the gedu's live requests, read from the server,
+    // turned into the picker's keys. A request on a session not in the list —
+    // another group, a date already gone — marks nothing.
+    const sessions = entryFixture().upcomingSessions;
+    const asked = sessions[0];
+    const filedSessionKeys = [
+      ...alreadyRequestedSessionKeys([
+        { group_id: asked.groupId, session_date: asked.sessionDate },
+        { group_id: asked.groupId, session_date: "2020-01-06" },
+      ]),
+    ];
+    renderEntry({ sessions, filedSessionKeys });
+    openPicker();
+
+    const disabled = pickerRows().filter((row) => row.hasAttribute("disabled"));
+    expect(disabled.map((row) => row.dataset.sessionKey)).toEqual([asked.key]);
+    expect(disabled[0].textContent).toContain(copy.fileAlreadyRequested);
+  });
+
   it("goes from the picker to the one shared form, and writes once", async () => {
     const sessions = entryFixture().upcomingSessions;
     const onFile = vi.fn<FileAbsenceProps["onFile"]>(() => Promise.resolve());
@@ -611,9 +633,10 @@ describe("the page's file-an-absence entry", () => {
   });
 
   /**
-   * **This picker cannot know which dates the viewer has already filed on**, so
-   * the write's refusal is its backstop — and a backstop that says only "that
-   * didn't save, try again" invites the same press forever. Each refusal the
+   * **The write's refusal is the backstop for whatever changed after the list
+   * was read** — a filing from the session card, another tab or Discord — and
+   * a backstop that says only "that didn't save, try again" invites the same
+   * press forever. Each refusal the
    * RPC can raise is therefore read out in the dialog the gedu is still
    * standing in front of, with the reason and the note where they left them.
    */
@@ -687,8 +710,8 @@ describe("the page's file-an-absence entry", () => {
   }
 
   it("stops offering a row the write said was already asked for", async () => {
-    // The reason the refusal is read rather than swallowed: a request filed in
-    // an earlier visit is invisible to every read this page makes, so the
+    // The reason the refusal is read rather than swallowed: a request filed
+    // after the page read the gedu's live requests is not in that read, so the
     // refusal is where the row learns it is spoken for.
     const sessions = entryFixture().upcomingSessions;
     renderEntry({
@@ -768,6 +791,29 @@ describe("the page's file-an-absence entry", () => {
 
     expect(screen.getByText(copy.filePickTitle)).toBeTruthy();
     expect(pickerRows().length).toBeGreaterThan(0);
+  });
+
+  /**
+   * The live-requests read refetches on window focus, so a filing made from
+   * Discord can land while the dialog is up. A row that turned disabled then
+   * would grow its reason line and push every row below it down — so the keys
+   * are frozen at the press, and the next open picks them up.
+   */
+  it("does not disable a row under an open dialog when the server's keys change", () => {
+    const sessions = entryFixture().upcomingSessions;
+    const { rerender } = renderEntry({ sessions });
+    openPicker();
+    expect(pickerRows().some((row) => row.hasAttribute("disabled"))).toBe(false);
+
+    rerenderEntry(rerender, sessions, [sessions[0].key]);
+
+    expect(pickerRows().some((row) => row.hasAttribute("disabled"))).toBe(false);
+    expect(document.body.textContent).not.toContain(copy.fileAlreadyRequested);
+
+    fireEvent.click(screen.getByRole("button", { name: messages.common.cancel }));
+    openPicker();
+    expect(pickerRows()[0].hasAttribute("disabled")).toBe(true);
+    expect(pickerRows()[0].textContent).toContain(copy.fileAlreadyRequested);
   });
 
   it("picks the fresher list up on the next open", () => {

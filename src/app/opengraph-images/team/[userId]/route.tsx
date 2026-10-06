@@ -9,6 +9,7 @@ import {
   teamMemberSubline,
 } from "@/components/team/team-name";
 import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
+import { ogCardResponse } from "@/lib/og/card-response.server";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { MAX_INPUT_PIXELS } from "@/lib/images/reencode-jpeg.server";
 import { cardLocaleOf, OG_CARD_SIZE } from "@/lib/og/cards";
@@ -64,6 +65,11 @@ import {
  * the stored bytes are capped, their decoded size is not, and a Gedu writes
  * their own photo folder. A photo that will not decode inside the bound, or at
  * all, is `null` — the card draws the frame empty, as it does for no photo.
+ *
+ * This JPEG is the renderer's input, not the card's output: the drawn card is
+ * a PNG with the photo in it, and what it is served as — a JPEG under the
+ * preview budget, since a photo makes the PNG too large — is decided after
+ * drawing, by `ogCardResponse`.
  */
 async function portraitJpeg(stored: Blob): Promise<Buffer | null> {
   try {
@@ -111,7 +117,7 @@ export async function GET(
   const { sideMargin, portraitWidth, portraitHeight, gap } = TEAM_CARD_LAYOUT;
   const radius = 30;
 
-  return new ImageResponse(
+  const image = new ImageResponse(
     (
       <div
         style={{
@@ -252,10 +258,8 @@ export async function GET(
         </div>
       </div>
     ),
-    {
-      ...OG_CARD_SIZE,
-      fonts,
-      headers: { "Cache-Control": TEAM_CARD_CACHE_CONTROL },
-    },
+    { ...OG_CARD_SIZE, fonts },
   );
+
+  return ogCardResponse(image, { cacheControl: TEAM_CARD_CACHE_CONTROL });
 }

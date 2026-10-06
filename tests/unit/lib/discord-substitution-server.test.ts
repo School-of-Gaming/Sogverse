@@ -6,8 +6,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  * to that; what this module owns, and what is asserted here, is the seam: the
  * not-linked refusal read as `null` by the reads and thrown by the write, every
  * other refusal handed on unchanged for the web's own mapper, the note left out
- * rather than sent blank, and the picker's list built from the two reads by the
- * web's own expansion.
+ * rather than sent blank, and the picker's list built from the two seat reads by
+ * the web's own expansion, less the sessions the live-requests read names.
  */
 
 const rpc = vi.hoisted(() => vi.fn());
@@ -138,6 +138,7 @@ describe("getDiscordGeduUpcomingSessions", () => {
     answer({
       get_assigned_products_for_discord_user: { data: [ASSIGNMENT_ROW] },
       get_gedu_assignment_summaries_for_discord_user: { data: [SUMMARY] },
+      get_live_substitution_requests_for_discord_user: { data: [] },
     });
 
     const sessions = await getDiscordGeduUpcomingSessions({
@@ -164,21 +165,58 @@ describe("getDiscordGeduUpcomingSessions", () => {
     });
   });
 
+  it("leaves out a session the gedu has already asked a substitute for", async () => {
+    // A Discord option cannot be disabled, so the web's greyed-out row is no row
+    // here. The request on the 26th belongs to another group and marks nothing.
+    answer({
+      get_assigned_products_for_discord_user: { data: [ASSIGNMENT_ROW] },
+      get_gedu_assignment_summaries_for_discord_user: { data: [SUMMARY] },
+      get_live_substitution_requests_for_discord_user: {
+        data: [
+          REQUEST_DOCUMENT,
+          {
+            ...REQUEST_DOCUMENT,
+            id: "3c4d5e6f-7a8b-4c9d-8e0f-2a3b4c5d6e7f",
+            group_id: PRODUCT_ID,
+            session_date: "2026-10-26",
+          },
+        ],
+      },
+    });
+
+    const sessions = await getDiscordGeduUpcomingSessions({
+      discordUserId: DISCORD_ID,
+      locale: "en",
+      now: new Date("2026-10-05T08:00:00Z"),
+    });
+
+    expect(sessions?.map((s) => s.sessionDate)).toEqual(["2026-10-05", "2026-10-26"]);
+    expect(rpc).toHaveBeenCalledWith("get_live_substitution_requests_for_discord_user", {
+      p_discord_user_id: DISCORD_ID,
+    });
+  });
+
   it("answers null when no gedu is linked", async () => {
     answer({
       get_assigned_products_for_discord_user: { error: NOT_LINKED },
       get_gedu_assignment_summaries_for_discord_user: { error: NOT_LINKED },
+      get_live_substitution_requests_for_discord_user: { error: NOT_LINKED },
     });
     await expect(
       getDiscordGeduUpcomingSessions({ discordUserId: DISCORD_ID, locale: "en", now: new Date() }),
     ).resolves.toBeNull();
   });
 
-  it("throws when either read fails otherwise", async () => {
+  it.each([
+    "get_gedu_assignment_summaries_for_discord_user",
+    "get_live_substitution_requests_for_discord_user",
+  ])("throws when %s fails otherwise", async (failing) => {
     const failure = { code: "08006", message: "connection failure" };
     answer({
       get_assigned_products_for_discord_user: { data: [ASSIGNMENT_ROW] },
-      get_gedu_assignment_summaries_for_discord_user: { error: failure },
+      get_gedu_assignment_summaries_for_discord_user: { data: [SUMMARY] },
+      get_live_substitution_requests_for_discord_user: { data: [] },
+      [failing]: { error: failure },
     });
     await expect(
       getDiscordGeduUpcomingSessions({ discordUserId: DISCORD_ID, locale: "en", now: new Date() }),

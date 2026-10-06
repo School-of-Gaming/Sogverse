@@ -12,28 +12,28 @@ import {
   matchLocaleFromHeader,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { ROUTES } from "@/lib/constants/routes";
 import { DISCORD_API_BASE, discordBotHeaders } from "@/lib/discord-api.server";
 import { hashDiscordLinkToken } from "@/lib/discord-link-token.server";
 import {
   DISCORD_FLAG_EPHEMERAL,
-  DISCORD_FLAG_SUPPRESS_EMBEDS,
   SUB_NOTE_INPUT_ID,
+  SUB_REASON_INPUT_ID,
   buildFiledMessage,
-  buildLinkReplyContent,
-  buildNoteModal,
+  buildLinkReply,
   buildNoticeMessage,
-  buildReasonStepMessage,
   buildRefusalMessage,
+  buildRequestModal,
   buildSessionPickerMessage,
-  buildSubNotLinkedContent,
+  buildSubNotLinkedMessage,
   disabledControlsUpdate,
   discordSubLogoUrl,
   loadDiscordSubCopy,
   parseReasonValue,
   parseSessionValue,
   parseSubCustomId,
+  pickedSessionOption,
   type DiscordComponentsMessage,
+  type DiscordContentMessage,
   type DiscordSubCopy,
 } from "@/lib/discord-substitution-message";
 import {
@@ -85,7 +85,8 @@ const discordInteraction = z.object({
     .optional(),
   // The message a pressed control sits on — also sent with a modal submit the
   // modal was opened from a control for. Read only to redraw it with its
-  // controls greyed out, so it is not parsed here.
+  // controls greyed out and to name the picked session in the modal, so it is
+  // not parsed here.
   message: z.unknown().optional(),
 });
 
@@ -96,8 +97,6 @@ const DISCORD_APPLICATION_ID = process.env.DISCORD_APPLICATION_ID!;
 
 /** Only the caller sees the message (Discord's EPHEMERAL message flag). */
 const EPHEMERAL = DISCORD_FLAG_EPHEMERAL;
-/** No link preview under the message (Discord's SUPPRESS_EMBEDS flag). */
-const SUPPRESS_EMBEDS = DISCORD_FLAG_SUPPRESS_EMBEDS;
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -188,10 +187,10 @@ async function patchDiscordResponse(
   );
 }
 
-/** Replace the interaction's message with a Components V2 body. */
+/** Replace the interaction's message with a built body. */
 async function patchDiscordMessage(
   interactionToken: string,
-  body: DiscordComponentsMessage
+  body: DiscordComponentsMessage | DiscordContentMessage
 ): Promise<void> {
   const response = await fetch(
     `${DISCORD_API_BASE}/webhooks/${DISCORD_APPLICATION_ID}/${interactionToken}/messages/@original`,
@@ -238,11 +237,7 @@ async function sendLinkUrl(
   caller: { id: string; username: string },
   requestHeaders: Headers
 ): Promise<void> {
-  await patchDiscordResponse(
-    interactionToken,
-    await linkReply(caller, requestHeaders),
-    SUPPRESS_EMBEDS
-  );
+  await patchDiscordMessage(interactionToken, await linkReply(caller, requestHeaders));
 }
 
 /**
@@ -256,7 +251,7 @@ async function sendLinkUrl(
 async function linkReply(
   caller: { id: string; username: string },
   requestHeaders: Headers
-): Promise<string> {
+): Promise<DiscordContentMessage> {
   try {
     const origin = getOrigin(requestHeaders);
     const token = randomBytes(32).toString("base64url");
@@ -270,10 +265,12 @@ async function linkReply(
       .insert(row);
     if (error) throw error;
 
-    return buildLinkReplyContent({ origin, token });
+    return buildLinkReply({ origin, token });
   } catch (error) {
     console.error("Discord link token error:", error);
-    return "Sorry, I couldn't create a link right now. Try /link again in a moment.";
+    return {
+      content: "Sorry, I couldn't create a link right now. Try /link again in a moment.",
+    };
   }
 }
 
@@ -282,13 +279,7 @@ async function linkReply(
 /** What a `/sub` step that reads or writes the database is asked to do. */
 type SubStep =
   | { kind: "start" }
-  | { kind: "page"; page: number }
-  | {
-      kind: "reason";
-      groupId: string;
-      sessionDate: string;
-      reason: SubstitutionReason | null;
-    }
+  | { kind: "list" }
   | {
       kind: "file";
       groupId: string;
@@ -305,11 +296,12 @@ type SubStep =
  * deferred for. The immediate answer redraws that message with its controls
  * greyed out (`UPDATE_MESSAGE`), so a second tap cannot race the first; where
  * the payload carries no usable message it is a plain `DEFERRED_UPDATE_MESSAGE`.
- * Two answers are synchronous because
- * they read nothing: the note modal, whose custom_id already carries the
- * session, the reason and the copy's locale, and the admin preview's "nothing
- * was filed" line. A press this route cannot place is acknowledged and
- * otherwise ignored.
+ * Two answers are synchronous because they read nothing: the request modal a
+ * session pick opens — Discord lets a modal be neither deferred nor late, so
+ * the select's custom_id carries the copy's locale and the pressed message's
+ * own option names the session — and the admin preview's "nothing was filed"
+ * line. A press this route cannot place, and a submission without a valid
+ * reason, are acknowledged and otherwise ignored.
  *
  * The presser is whoever Discord's signed payload names; nothing in a
  * custom_id says who may act, and the database re-derives the gedu from the
@@ -337,15 +329,19 @@ async function answerSubControl(
     });
   }
 
-  if (action.kind === "note") {
+  if (action.kind === "session") {
+    // No greyed-out redraw: a press answered with a modal leaves its message
+    // as it is, and dismissing the modal leaves the list to pick from again.
+    const picked = firstValue(interaction);
+    const session = picked === null ? null : parseSessionValue(picked);
+    if (picked === null || session === null) return acknowledge;
     const copy = await loadDiscordSubCopy(action.locale);
     return NextResponse.json({
       type: InteractionResponseType.MODAL,
-      data: buildNoteModal({
+      data: buildRequestModal({
         copy,
-        groupId: action.groupId,
-        sessionDate: action.sessionDate,
-        reason: action.reason,
+        ...session,
+        picked: pickedSessionOption(interaction.message, picked),
       }),
     });
   }
@@ -353,30 +349,15 @@ async function answerSubControl(
   const caller = discordCaller(interaction);
   if (caller === null) return acknowledge;
 
-  const picked = firstValue(interaction);
-  let step: SubStep | null = null;
-  switch (action.kind) {
-    case "page":
-      step = { kind: "page", page: action.page };
-      break;
-    case "session": {
-      const session = picked === null ? null : parseSessionValue(picked);
-      if (session !== null) step = { kind: "reason", ...session, reason: null };
-      break;
-    }
-    case "reason": {
-      const reason = picked === null ? null : parseReasonValue(picked);
-      if (reason !== null) step = { ...action, reason };
-      break;
-    }
-    case "file":
-      step = { ...action, note: "" };
-      break;
-    case "submit":
-      step = { ...action, kind: "file", note: modalNote(interaction.data?.components) };
-      break;
+  let step: SubStep;
+  if (action.kind === "list") {
+    step = { kind: "list" };
+  } else {
+    const fields = interaction.data?.components;
+    const reason = modalReason(fields);
+    if (reason === null) return acknowledge;
+    step = { ...action, kind: "file", reason, note: modalNote(fields) };
   }
-  if (step === null) return acknowledge;
 
   after(sendSubStep(token, caller, locale, requestHeaders, step));
   // Grey the message's controls out in the same reply, so a second tap — easy
@@ -394,29 +375,44 @@ function firstValue(interaction: DiscordInteraction): string | null {
 }
 
 /**
- * The note field's value out of a modal submission, wherever Discord nests it —
- * under a label or an action row — or `""` when it is absent or blank.
+ * The note field's value out of a modal submission, or `""` when it is absent
+ * or blank.
  */
 function modalNote(components: unknown): string {
+  const field = modalField(components, SUB_NOTE_INPUT_ID);
+  return field !== null && "value" in field && typeof field.value === "string"
+    ? field.value
+    : "";
+}
+
+/**
+ * The reason picked in a modal submission — a select reports its pick as
+ * `values` — or `null` when there is none or it is not a reason.
+ */
+function modalReason(components: unknown): SubstitutionReason | null {
+  const field = modalField(components, SUB_REASON_INPUT_ID);
+  const values = field !== null && "values" in field ? field.values : undefined;
+  const [value] = Array.isArray(values) ? values : [];
+  return typeof value === "string" ? parseReasonValue(value) : null;
+}
+
+/**
+ * The submitted field with this custom_id, wherever Discord nests it — under
+ * a label or an action row — or `null` when the submission has none.
+ */
+function modalField(components: unknown, customId: string): object | null {
   if (Array.isArray(components)) {
     for (const component of components) {
-      const note = modalNote(component);
-      if (note !== "") return note;
+      const field = modalField(component, customId);
+      if (field !== null) return field;
     }
-    return "";
+    return null;
   }
-  if (typeof components !== "object" || components === null) return "";
-  if (
-    "custom_id" in components &&
-    components.custom_id === SUB_NOTE_INPUT_ID &&
-    "value" in components &&
-    typeof components.value === "string"
-  ) {
-    return components.value;
-  }
+  if (typeof components !== "object" || components === null) return null;
+  if ("custom_id" in components && components.custom_id === customId) return components;
   const nested = "components" in components ? components.components : undefined;
   const single = "component" in components ? components.component : undefined;
-  return modalNote(nested) || modalNote(single);
+  return modalField(nested, customId) ?? modalField(single, customId);
 }
 
 /**
@@ -457,52 +453,40 @@ async function sendSubStep(
       return;
     }
 
-    if (step.kind === "start" || step.kind === "page") {
-      reply = buildSessionPickerMessage({
-        copy,
-        logoUrl,
-        sessions,
-        now,
-        page: step.kind === "page" ? step.page : 0,
-        // A bare path, which the proxy sends on to the reader's own locale.
-        substitutionsUrl: `${getOrigin(requestHeaders)}${ROUTES.gedu.substitutions}`,
-      });
+    if (step.kind === "start" || step.kind === "list") {
+      reply = buildSessionPickerMessage({ copy, logoUrl, sessions });
     } else {
       const key = `${step.groupId}:${step.sessionDate}`;
+      // The list is read only to name the session in the outcome. A session
+      // missing from it is still filed for: the list leaves out the sessions
+      // already asked for as well as those that ended, were cancelled or lost
+      // their seat, and only the write can tell those apart — so its own
+      // refusal is the answer. Where it accepts one anyway, the confirmation
+      // names the session by its date alone.
       const session = sessions.find((candidate) => candidate.key === key) ?? null;
-      if (session === null) {
-        // Not on the list any more — it ended, was cancelled or the seat went
-        // while the message sat open. The write would refuse it, so it is not
-        // tried.
-        reply = buildRefusalMessage({
+      try {
+        await fileDiscordSubstitutionRequest({
+          discordUserId: caller.id,
+          groupId: step.groupId,
+          sessionDate: step.sessionDate,
+          reason: step.reason,
+          reasonNote: step.note,
+        });
+        reply = buildFiledMessage({
           copy,
           logoUrl,
-          line: copy.form("substitutionRequestFailedNotScheduled"),
-          session: null,
+          session: session ?? { sessionDate: step.sessionDate },
         });
-      } else if (step.kind === "reason") {
-        reply = buildReasonStepMessage({ copy, logoUrl, session, reason: step.reason });
-      } else {
-        try {
-          await fileDiscordSubstitutionRequest({
-            discordUserId: caller.id,
-            groupId: step.groupId,
-            sessionDate: step.sessionDate,
-            reason: step.reason,
-            reasonNote: step.note,
-          });
-          reply = buildFiledMessage({ copy, logoUrl, session });
-        } catch (refusal) {
-          if (isDiscordGeduNotLinked(refusal)) {
-            await sendSubNotLinked(interactionToken, caller, copy, requestHeaders, step);
-            return;
-          }
-          const failure = substitutionRequestFailureKey(refusal);
-          if (failure === "substitutionRequestFailed") {
-            console.error("Discord /sub filing error:", refusal);
-          }
-          reply = buildRefusalMessage({ copy, logoUrl, line: copy.form(failure), session });
+      } catch (refusal) {
+        if (isDiscordGeduNotLinked(refusal)) {
+          await sendSubNotLinked(interactionToken, caller, copy, requestHeaders, step);
+          return;
         }
+        const failure = substitutionRequestFailureKey(refusal);
+        if (failure === "substitutionRequestFailed") {
+          console.error("Discord /sub filing error:", refusal);
+        }
+        reply = buildRefusalMessage({ copy, logoUrl, line: copy.form(failure), session });
       }
     }
   } catch (error) {
@@ -535,13 +519,12 @@ async function sendSubNotLinked(
   step: SubStep
 ): Promise<void> {
   if (step.kind === "start") {
-    await patchDiscordResponse(
+    await patchDiscordMessage(
       interactionToken,
-      buildSubNotLinkedContent({
+      buildSubNotLinkedMessage({
         copy,
         linkReply: await linkReply(caller, requestHeaders),
-      }),
-      SUPPRESS_EMBEDS
+      })
     );
     return;
   }

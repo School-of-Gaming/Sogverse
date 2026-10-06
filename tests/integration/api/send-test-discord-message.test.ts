@@ -7,8 +7,8 @@ import { NextResponse } from "next/server";
  * gate, that the Discord id comes from the profile's link on the server (never
  * the client), that an unlinked profile and an empty or oversized message are
  * refused before Discord is called, that Discord's own refusal reaches the
- * admin, and that the preview is the command's first step, in the recipient's
- * locale, with every control on the preview prefix.
+ * admin, and that the preview is every message the command draws, in the
+ * chosen locale, with every control on the preview prefix.
  */
 
 vi.stubEnv("DISCORD_BOT_TOKEN", "test-bot-token");
@@ -176,10 +176,25 @@ describe("POST /api/admin/send-test-discord-message", () => {
 
   // -- The /sub preview --
 
-  /** The message body the second Discord call posted. */
-  function postedMessage() {
-    const [, init] = mockFetch.mock.calls[1];
-    return JSON.parse(init.body);
+  /**
+   * Discord accepting every request: the DM channel, then each message with an
+   * id of its own. A queued answer — a rate limit — goes first.
+   */
+  function discordAcceptsEverything() {
+    mockFetch.mockReset();
+    let sent = 0;
+    mockFetch.mockImplementation(async (url: string) =>
+      url.endsWith("/users/@me/channels")
+        ? discordAnswer(200, { id: "dm-channel-1" })
+        : discordAnswer(200, { id: `message-${(sent += 1)}` }),
+    );
+  }
+
+  /** The message bodies posted to the DM channel, in order. */
+  function postedMessages(): Record<string, unknown>[] {
+    return mockFetch.mock.calls
+      .filter(([url]) => String(url).endsWith("/messages"))
+      .map(([, init]) => JSON.parse(init.body));
   }
 
   function customIds(components: unknown): string[] {
@@ -190,25 +205,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
     ]);
   }
 
-  it("DMs the /sub first step in the chosen locale, every control on the preview prefix", async () => {
-    const response = await POST(
-      sendRequest({ template: "subSessions", profileId: PROFILE_ID, locale: "fi" }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(mockFrom).not.toHaveBeenCalledWith("profiles");
-
-    const message = postedMessage();
-    expect(message.flags).toBe(1 << 15);
-    expect(message.content).toBeUndefined();
-    const body = JSON.stringify(message);
-    expect(body).toContain("Mille kerralle tarvitset tuuraajan?");
-    const ids = customIds(message.components);
-    expect(ids.length).toBeGreaterThan(1);
-    expect(ids.every((id) => id.startsWith("subpreview:"))).toBe(true);
-  });
-
-  /** The thumbnails in a posted message — the header's logo, when it has one. */
+  /** The thumbnails in posted messages — the header's logo, when it has one. */
   function thumbnails(components: unknown): unknown[] {
     if (!Array.isArray(components)) return [];
     return components.flatMap((component: Record<string, unknown>) => [
@@ -218,47 +215,124 @@ describe("POST /api/admin/send-test-discord-message", () => {
     ]);
   }
 
-  it("heads the preview with the favicon from this environment's own site", async () => {
-    await POST(sendRequest({ template: "subSessions", profileId: PROFILE_ID, locale: "en" }));
+  it("DMs every /sub message in the chosen locale, every control on the preview prefix", async () => {
+    discordAcceptsEverything();
 
-    expect(thumbnails(postedMessage().components)).toEqual([
-      { type: 11, media: { url: "https://sogverse.sog.gg/apple-icon.png" } },
-    ]);
+    const response = await POST(
+      sendRequest({ template: "subFlow", profileId: PROFILE_ID, locale: "fi" }),
+    );
+
+    expect(response.status).toBe(200);
+    // The jump link opens the first of the set.
+    expect(await response.json()).toEqual({
+      jumpUrl: "https://discord.com/channels/@me/dm-channel-1/message-1",
+    });
+    expect(mockFrom).not.toHaveBeenCalledWith("profiles");
+    // One DM channel, opened once.
+    expect(
+      mockFetch.mock.calls.filter(([url]) => String(url).endsWith("/users/@me/channels")),
+    ).toHaveLength(1);
+
+    const [notLinked, ...steps] = postedMessages();
+    expect(notLinked.content).toContain("Jotta voit käyttää /sub-komentoa");
+    expect(notLinked.content).toContain("The link expires in 10 minutes and works once.");
+    expect(JSON.stringify(notLinked.components)).toContain(
+      "https://sogverse.sog.gg/link-discord?token=preview",
+    );
+
+    // The list, the filed line, a refusal, the empty list and the failure
+    // notice; the request modal cannot be DMed.
+    expect(steps).toHaveLength(5);
+    for (const step of steps) {
+      expect(step.flags).toBe(1 << 15);
+      expect(step.content).toBeUndefined();
+    }
+    expect(JSON.stringify(steps[0])).toContain("Mille kerralle tarvitset tuuraajan?");
+    const ids = steps.flatMap((step) => customIds(step.components));
+    expect(ids).toEqual(["subpreview:s:fi", "subpreview:l"]);
   });
 
-  it("sends the preview with no logo from a dev machine, which Discord cannot fetch from", async () => {
+  it("heads every step with the favicon from this environment's own site", async () => {
+    discordAcceptsEverything();
+
+    await POST(sendRequest({ template: "subFlow", profileId: PROFILE_ID, locale: "en" }));
+
+    const [, ...steps] = postedMessages();
+    for (const step of steps) {
+      expect(thumbnails(step.components)).toEqual([
+        { type: 11, media: { url: "https://sogverse.sog.gg/apple-icon.png" } },
+      ]);
+    }
+  });
+
+  it("sends the steps with no logo from a dev machine, which Discord cannot fetch from", async () => {
+    discordAcceptsEverything();
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3007");
     try {
       const response = await POST(
-        sendRequest({
-          template: "subSessions",
-          profileId: PROFILE_ID,
-          locale: "en",
-        }),
+        sendRequest({ template: "subFlow", profileId: PROFILE_ID, locale: "en" }),
       );
 
       expect(response.status).toBe(200);
-      const message = postedMessage();
-      expect(thumbnails(message.components)).toEqual([]);
-      expect(JSON.stringify(message)).toContain("School of Gaming · Substitutions");
+      const [, ...steps] = postedMessages();
+      expect(steps.flatMap((step) => thumbnails(step.components))).toEqual([]);
+      expect(JSON.stringify(steps[0])).toContain("School of Gaming · Substitutions");
     } finally {
       vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
     }
   });
 
-  it("renders the preview in the chosen locale", async () => {
+  it("renders the steps in the chosen locale", async () => {
+    discordAcceptsEverything();
+
     const response = await POST(
-      sendRequest({ template: "subSessions", profileId: PROFILE_ID, locale: "sv" }),
+      sendRequest({ template: "subFlow", profileId: PROFILE_ID, locale: "sv" }),
     );
 
     expect(response.status).toBe(200);
-    const body = JSON.stringify(postedMessage());
-    expect(body).toContain("Vilket tillfälle behöver du en vikarie för?");
+    const [notLinked, sessionList] = postedMessages();
+    expect(notLinked.content).toContain("För att använda /sub");
+    expect(JSON.stringify(sessionList)).toContain("Vilket tillfälle behöver du en vikarie för?");
+  });
+
+  it("waits out Discord's per-channel rate limit and carries on", async () => {
+    discordAcceptsEverything();
+    const accept = mockFetch.getMockImplementation();
+    let limited = false;
+    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+      if (!limited && url.endsWith("/messages")) {
+        limited = true;
+        return discordAnswer(429, { message: "You are being rate limited.", retry_after: 0.01 });
+      }
+      return accept?.(url, init);
+    });
+
+    const response = await POST(
+      sendRequest({ template: "subFlow", profileId: PROFILE_ID, locale: "en" }),
+    );
+
+    expect(response.status).toBe(200);
+    // The limited message is sent again, so the set arrives whole.
+    expect(postedMessages()[0]).toEqual(postedMessages()[1]);
+  });
+
+  it("hands back a rate limit longer than it will wait", async () => {
+    mockFetch.mockReset();
+    mockFetch
+      .mockResolvedValueOnce(discordAnswer(200, { id: "dm-channel-1" }))
+      .mockResolvedValueOnce(
+        discordAnswer(429, { message: "You are being rate limited.", retry_after: 60 }),
+      );
+
+    const response = await POST(sendRequest(validBody));
+
+    expect(response.status).toBe(502);
+    expect((await response.json()).error).toContain("You are being rate limited.");
   });
 
   it("refuses a locale the app does not support, before calling Discord", async () => {
     const response = await POST(
-      sendRequest({ template: "subSessions", profileId: PROFILE_ID, locale: "de" }),
+      sendRequest({ template: "subFlow", profileId: PROFILE_ID, locale: "de" }),
     );
 
     expect(response.status).toBe(400);
@@ -266,9 +340,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
   });
 
   it("refuses a preview that names no locale, before calling Discord", async () => {
-    const response = await POST(
-      sendRequest({ template: "subSessions", profileId: PROFILE_ID }),
-    );
+    const response = await POST(sendRequest({ template: "subFlow", profileId: PROFILE_ID }));
 
     expect(response.status).toBe(400);
     expect(mockFetch).not.toHaveBeenCalled();
@@ -283,33 +355,6 @@ describe("POST /api/admin/send-test-discord-message", () => {
       expect(response.status).toBe(400);
     }
     expect(mockFetch).not.toHaveBeenCalled();
-  });
-
-  it("refuses a not-linked preview that names no locale, before calling Discord", async () => {
-    const response = await POST(
-      sendRequest({ template: "subNotLinked", profileId: PROFILE_ID }),
-    );
-
-    expect(response.status).toBe(400);
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
-
-  it("DMs the not-linked answer, in the chosen locale, over a link that links nothing", async () => {
-    const response = await POST(
-      sendRequest({
-        template: "subNotLinked",
-        profileId: PROFILE_ID,
-        locale: "sv",
-      }),
-    );
-
-    expect(response.status).toBe(200);
-    const message = postedMessage();
-    expect(message.flags).toBe(1 << 2);
-    expect(message.components).toBeUndefined();
-    expect(message.content).toContain("För att använda /sub");
-    expect(message.content).toContain("https://sogverse.sog.gg/link-discord?token=preview");
-    expect(message.content).toContain("The link expires in 10 minutes and works once.");
   });
 
   it("refuses a body that names no template", async () => {

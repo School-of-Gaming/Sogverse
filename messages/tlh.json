@@ -1758,9 +1758,8 @@
         "sent": "QIn ngeHta’.",
         "openInDiscord": "Discord Daq yIpoS",
         "templatePlain": "ghItlh neH",
-        "templateSubSessions": "/sub: Qu' tlhegh",
-        "templateSubNotLinked": "/sub: wej ghItlh pagh",
-        "subPreviewSent": "ghantoH ngeHta’."
+        "templateSubFlow": "/sub: Hoch mIw",
+        "subPreviewSent": "Hoch mIw ngeHta’."
       }
     },
     "whatsapp": {
@@ -4608,10 +4607,10 @@
     }
   },
   "discordSub": {
+    "requestTitle": "lIw yItlhob",
     "pickPlaceholder": "may’ yIwIv",
-    "addNote": "qonta’ yIchel",
-    "confirmWithoutNote": "qonta’ Hutlh yIchav",
-    "empty": "may’ Daghajbe’, lIw DatlhoblaHbogh. lIwmeylIj Datu’ De’wI’ Daq: {url}",
+    "empty": "may’ Daghajbe’, lIw DatlhoblaHbogh.",
+    "filed": "lIw tlhobta’lu’: {product}, {when}.",
     "failed": "Qagh. tugh /sub yIlo’qa’.",
     "notLinked": "/sub Dalo’meH, wa’DIch School of Gaming Gedu ghItlhlIjDaq Discord ghItlhlIj yIrar.",
     "notLinkedRunLink": "School of Gaming Gedu ghItlhDaq Discord ghItlhlIj rarbe’lu’. /link yIlo’, ’ej /sub yIlo’qa’.",

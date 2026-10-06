@@ -6,7 +6,6 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import {
   translatedCanonicalPath,
   translatedPageLocales,
@@ -14,6 +13,7 @@ import {
   type TranslatedPagePath,
 } from "@/lib/metadata/translated-page";
 import { ogCardImage } from "@/lib/og/card-metadata";
+import { ogPictureImage } from "@/lib/og/picture";
 import {
   localizeArticle,
   type PublishedLibraryArticle,
@@ -108,6 +108,12 @@ export function libraryArticleLocales(
  *   It cannot be left to inheritance: Next assigns a child's `openGraph` and
  *   `twitter` over the parent's rather than merging them, so declaring either
  *   block drops the layout's image. `siteName` is restated for the same reason.
+ * - **The cover is named as its preview rendition**, served by the picture
+ *   route (`ogPictureImage`), never as the stored object: a stored cover is
+ *   full size with nothing bounding its bytes, and WhatsApp drops a preview
+ *   image past roughly 300 KB without a word. The rendition is under the
+ *   preview budget at a size known in advance, so its width and height are
+ *   declared.
  * - **`og:type` is `article`**, with the day it first went live and the day
  *   the live versions were published. `og:locale` is the language of the
  *   version whose title and summary the card shows.
@@ -120,9 +126,8 @@ export async function libraryArticleMetadata(
   const locale = resolveLocale(requestLocale);
   const shown = localizeArticle(article, locale);
   if (shown === null) return {};
-  const cover = catalogueImageSrc("library_cover", article.coverPath);
-  const images = cover
-    ? [{ url: cover, alt: shown.title }]
+  const images = article.coverPath
+    ? [ogPictureImage("library_cover", article.coverPath, shown.title)]
     : [await ogCardImage("site", locale)];
   const { title, summary: description } = shown;
   const alternates = translatedPageMetadataAlternates(
