@@ -90,6 +90,11 @@ loses that picture, and an image section left with none is dropped with its word
 done by a trigger on the catalogue's own delete, so it needs nothing from the remover.
 Either moves the working copy's "last saved" time and saver, as a cover removal does.
 
+**A page's link preview is its hero's picture**, the one its structured data names as the
+picture the page leads with, with the shown version's alt text; a hero without one shares
+the site-wide card. So placing a hero picture places it in every chat and feed the page is
+shared to, and a partner's mark in one needs that partner's sign-off (`src/CLAUDE.md`).
+
 **The working copy records who last saved it, and through which AI app**, by the same
 trigger pattern as the Library: no writer passes either, and publishing moves neither.
 

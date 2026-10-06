@@ -11,6 +11,7 @@ import {
   type LandingTextByType,
   type LandingTextOf,
 } from "./landing-section-types";
+import type { LocalizedLandingPage } from "@/services/landing-pages/landing-pages.contracts";
 import { markdownToPlainText } from "./markdown-plain-text";
 
 /**
@@ -27,12 +28,13 @@ import { markdownToPlainText } from "./markdown-plain-text";
  * One piece of a page's structured data, as a section contributes it; the
  * page's JSON-LD builder folds the pieces into its one node.
  *
- * - `image` — the picture the page leads with (the hero's).
+ * - `image` — the picture the page leads with (the hero's), with its alt text
+ *   in the version's language.
  * - `question` — one question and its answer, as plain text; any question
  *   makes the page a `FAQPage`.
  */
 export type LandingStructuredPart =
-  | { kind: "image"; imageId: string }
+  | { kind: "image"; imageId: string; alt: string | null }
   | { kind: "question"; question: string; answer: string };
 
 interface LandingSectionSeo<Type extends LandingSectionType> {
@@ -59,8 +61,10 @@ export const LANDING_SECTION_SEO: {
   [Type in LandingSectionType]: LandingSectionSeo<Type>;
 } = {
   hero: {
-    structuredData: (section) =>
-      section.imageId === undefined ? [] : [{ kind: "image", imageId: section.imageId }],
+    structuredData: (section, text) =>
+      section.imageId === undefined
+        ? []
+        : [{ kind: "image", imageId: section.imageId, alt: written(text.imageAlt) }],
   },
   text: {
     structuredData: none,
@@ -106,4 +110,22 @@ export function landingStructuredParts(
   return sections.flatMap((section) =>
     structuredDataOf(section.type, section, landingSectionText(texts, section.id)),
   );
+}
+
+/**
+ * The picture a live page leads with — the hero's — as its stored path and
+ * alt text, or null when the hero has none. The page's structured data and
+ * its link preview both name this one picture, so they cannot disagree. A
+ * picture with no path is treated as none: the database derives the paths
+ * and unlinks a removed picture, so it should not arise, and naming no
+ * picture is the safe answer if it does.
+ */
+export function landingLeadPicture(
+  page: LocalizedLandingPage,
+): { path: string; alt: string | null } | null {
+  const part = landingStructuredParts(page.sections, page.sectionTexts).find(
+    (candidate) => candidate.kind === "image",
+  );
+  if (part === undefined || !Object.hasOwn(page.imagePaths, part.imageId)) return null;
+  return { path: page.imagePaths[part.imageId], alt: part.alt };
 }

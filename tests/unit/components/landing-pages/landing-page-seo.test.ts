@@ -143,7 +143,7 @@ describe("landing page addresses", () => {
 });
 
 describe("landingPageMetadata", () => {
-  it("takes its title and description from the version, with the site card", async () => {
+  it("takes its title, description and hero picture's alt text from the version", async () => {
     const metadata = await landingPageMetadata(PAGE, "fi");
 
     expect(metadata.title).toBe("Pelikerhot Espoossa");
@@ -160,18 +160,48 @@ describe("landingPageMetadata", () => {
       type: "website",
       locale: "fi",
       url: "/fi/tutustu/pelikerhot-espoo",
-      images: [expect.objectContaining({ alt: "fi:metadata.og.site.alt" })],
+      images: [
+        {
+          url: "/opengraph-images/picture/landing_image/pictures/club.jpg",
+          alt: "Lapsia",
+          width: 1200,
+          height: 675,
+        },
+      ],
+    });
+    expect(metadata.twitter).toMatchObject({
+      card: "summary_large_image",
+      images: [expect.objectContaining({ alt: "Lapsia" })],
     });
   });
 
-  it("canonicalises a fallback locale to the version shown, card at the request locale", async () => {
+  it("canonicalises a fallback locale to the version shown, alt text included", async () => {
     const metadata = await landingPageMetadata(PAGE, "fr");
 
     expect(metadata.title).toBe("Gaming clubs in Espoo");
     expect(metadata.alternates?.canonical).toBe("/en/discover/gaming-clubs-espoo");
     expect(metadata.openGraph).toMatchObject({
       locale: "en",
+      images: [expect.objectContaining({ alt: "Children at a club" })],
+    });
+  });
+
+  it("takes the site card at the request locale when the hero has no picture", async () => {
+    const metadata = await landingPageMetadata(
+      { ...PAGE, sections: [{ id: HERO, type: "hero" }], imagePaths: {} },
+      "fr",
+    );
+
+    expect(metadata.openGraph).toMatchObject({
       images: [expect.objectContaining({ alt: "fr:metadata.og.site.alt" })],
+    });
+  });
+
+  it("takes the site card when the hero's picture has no path", async () => {
+    const metadata = await landingPageMetadata({ ...PAGE, imagePaths: {} }, "en");
+
+    expect(metadata.openGraph).toMatchObject({
+      images: [expect.objectContaining({ alt: "en:metadata.og.site.alt" })],
     });
   });
 
@@ -249,7 +279,7 @@ describe("landingPageJsonLd", () => {
 describe("the SEO contribution map", () => {
   it("collects each section's structured data in page order", () => {
     expect(landingStructuredParts(SHOWN.sections, SHOWN.sectionTexts)).toEqual([
-      { kind: "image", imageId: PICTURE },
+      { kind: "image", imageId: PICTURE, alt: "Children at a club" },
       { kind: "question", question: "Who leads it?", answer: "A Game Educator, see the team." },
     ]);
   });
