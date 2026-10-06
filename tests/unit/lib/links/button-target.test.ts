@@ -32,6 +32,12 @@ describe("canonicalizeButtonTarget", () => {
     ).resolves.toEqual({ ok: true, target: { kind: "internal", path: "/shop" } });
   });
 
+  it("keeps a stored email target as it is: it names no page", async () => {
+    await expect(
+      canonicalizeButtonTarget({ kind: "email", to: "hello@sog.gg" }, resolver, SITE),
+    ).resolves.toEqual({ ok: true, target: { kind: "email", to: "hello@sog.gg" } });
+  });
+
   it.each([
     ["another site", "https://example.com/x"],
     ["a www variant of our host", "https://www.sogverse.sog.gg/fi/kauppa"],
@@ -60,14 +66,23 @@ describe("canonicalizeButtonTarget", () => {
 
 describe("buttonTargetHref", () => {
   it("shows an internal target in the page's language", () => {
-    expect(buttonTargetHref({ kind: "internal", path: "/shop/123" }, "fi", SITE)).toBe(
+    expect(buttonTargetHref({ kind: "internal", path: "/shop/123" }, "fi", { siteUrl: SITE })).toBe(
       "/fi/kauppa/123",
     );
   });
 
   it("shows an external target as written", () => {
     expect(
-      buttonTargetHref({ kind: "external", url: "https://example.com" }, "fi", SITE),
+      buttonTargetHref({ kind: "external", url: "https://example.com" }, "fi", { siteUrl: SITE }),
     ).toBe("https://example.com");
+  });
+
+  it("opens an email target as a message, with the page's subject line when written", () => {
+    const email = { kind: "email", to: "hello@sog.gg" } as const;
+    expect(buttonTargetHref(email, "fi")).toBe("mailto:hello@sog.gg");
+    expect(buttonTargetHref(email, "fi", { subject: "  " })).toBe("mailto:hello@sog.gg");
+    expect(buttonTargetHref(email, "fi", { subject: "Kerho & kysymys?" })).toBe(
+      "mailto:hello@sog.gg?subject=Kerho%20%26%20kysymys%3F",
+    );
   });
 });

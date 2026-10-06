@@ -82,6 +82,16 @@ describe("canonicaliseLandingLinks", () => {
     expect(cta).toMatchObject({ button: { kind: "external", url: "https://example.com/x" } });
   });
 
+  it("stores an email button as it is, resolving nothing", async () => {
+    const lookups = vi.fn(resolver);
+    const sections = everySection().map((section): LandingSection =>
+      section.type === "cta" ? { ...section, button: { kind: "email", to: "hello@sog.gg" } } : section,
+    );
+    const result = await canonicaliseLandingLinks(write(sections), { resolver: lookups, siteUrl: SITE });
+    expect(result.sections?.at(-1)).toMatchObject({ button: { kind: "email", to: "hello@sog.gg" } });
+    expect(lookups).not.toHaveBeenCalled();
+  });
+
   it("canonicalises the links in every markdown field — a text body and a question's answer", async () => {
     const result = await canonicaliseLandingLinks(
       write(everySection(), textsWith(

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight, ExternalLink, Mail } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -142,40 +142,53 @@ function LandingPicture({
 
 /**
  * A section's button: an own-site target in the page's language, in the same
- * tab; another site's in a new one, saying so. A plain anchor rather than the
- * wrapped `Link`, because the target is stored as a path (`buttonTargetHref`
- * localises it), not as a typed route — the shared markdown renderer opens
- * its own-site links the same way.
+ * tab; another site's in a new one, saying so; an email address in the
+ * reader's mail app, with the page's subject line when one is written. A plain
+ * anchor rather than the wrapped `Link`, because the target is stored as a
+ * path (`buttonTargetHref` localises it), not as a typed route — the shared
+ * markdown renderer opens its own-site links the same way.
  */
 function LandingButton({
   target,
   label,
+  subject,
   locale,
   className,
 }: {
   target: ButtonTarget;
   label: string;
+  /** The email's subject line in this language, for an email target. */
+  subject: string | undefined;
   locale: SupportedLocale;
   className?: string;
 }) {
   const t = useTranslations("richText");
   const classes = buttonVariants({ size: "lg", className: cn("gap-2", className) });
-  const href = buttonTargetHref(target, locale);
-  if (target.kind === "external") {
-    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={classes}>
-        {label}
-        <ExternalLink aria-hidden="true" className="h-4 w-4" />
-        <span className="sr-only">{t("opensInNewTab")}</span>
-      </a>
-    );
+  const href = buttonTargetHref(target, locale, { subject });
+  switch (target.kind) {
+    case "external":
+      return (
+        <a href={href} target="_blank" rel="noopener noreferrer" className={classes}>
+          {label}
+          <ExternalLink aria-hidden="true" className="h-4 w-4" />
+          <span className="sr-only">{t("opensInNewTab")}</span>
+        </a>
+      );
+    case "email":
+      return (
+        <a href={href} className={classes}>
+          {label}
+          <Mail aria-hidden="true" className="h-4 w-4" />
+        </a>
+      );
+    case "internal":
+      return (
+        <a href={href} className={classes}>
+          {label}
+          <ArrowRight aria-hidden="true" className="h-4 w-4" />
+        </a>
+      );
   }
-  return (
-    <a href={href} className={classes}>
-      {label}
-      <ArrowRight aria-hidden="true" className="h-4 w-4" />
-    </a>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -232,6 +245,7 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
               <LandingButton
                 target={section.button}
                 label={buttonLabel}
+                subject={text.emailSubject}
                 locale={context.locale}
               />
             </div>
@@ -503,6 +517,7 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
             <LandingButton
               target={section.button}
               label={buttonLabel}
+              subject={text.emailSubject}
               locale={context.locale}
               className="mt-8"
             />

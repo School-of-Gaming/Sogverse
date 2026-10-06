@@ -23,9 +23,17 @@ export const landingId = z
   .regex(LANDING_ID_PATTERN, "Not an id");
 
 /**
+ * The one shape of an email address a button may open: something@a.domain,
+ * without spaces or the characters that would carry extra `mailto:` fields.
+ * The SQL half (`landing_button_is_valid`) states the same pattern.
+ */
+export const LANDING_EMAIL_PATTERN = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9.-]+$/;
+
+/**
  * Where a section's button leads: a route of this site, without its locale
- * (`/shop/<id>`), rendered in the page's locale — or, uncommonly, another
- * site's http(s) address.
+ * (`/shop/<id>`), rendered in the page's locale; uncommonly, another site's
+ * http(s) address; or an email to one address. An email's subject line is a
+ * word, written per language beside the button's label (`emailSubject`).
  */
 export const buttonTarget = z.discriminatedUnion("kind", [
   z
@@ -45,6 +53,15 @@ export const buttonTarget = z.discriminatedUnion("kind", [
         .trim()
         .url("Not a web address")
         .regex(/^https?:\/\//, "A web address starts with http:// or https://"),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("email"),
+      to: z
+        .string()
+        .trim()
+        .regex(LANDING_EMAIL_PATTERN, "Not an email address"),
     })
     .strict(),
 ]);

@@ -62,7 +62,7 @@ BEGIN
       WHEN 'hero' THEN
         v_heroes := v_heroes + 1;
         IF v_section ? 'button' AND NOT public.landing_button_is_valid(v_section->'button') THEN
-          RETURN format('The button of section %s needs a site path or an http(s) URL', v_id);
+          RETURN format('The button of section %s needs a site path, an http(s) URL or an email address', v_id);
         END IF;
       WHEN 'text' THEN
         IF v_section->>'imageSide' IS NULL OR v_section->>'imageSide' NOT IN ('start', 'end') THEN
@@ -78,7 +78,7 @@ BEGIN
         v_key := 'items';  v_min := 1; v_max := 20; v_field := NULL;
       WHEN 'cta' THEN
         IF NOT public.landing_button_is_valid(v_section->'button') THEN
-          RETURN format('The button of section %s needs a site path or an http(s) URL', v_id);
+          RETURN format('The button of section %s needs a site path, an http(s) URL or an email address', v_id);
         END IF;
       ELSE
         RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));

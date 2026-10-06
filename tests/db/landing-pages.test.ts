@@ -14,10 +14,12 @@ import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import type { CatalogueImageInsert } from "@/types";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import {
+  buttonTarget,
   missingInLandingVersion,
   type LandingSection,
 } from "@/lib/landing-pages/sections";
 import { asObject } from "../helpers/json";
+import { BUTTON_TARGET_CASES } from "../helpers/landing-button-cases";
 import { requiredTextCases } from "../helpers/landing-required-text-cases";
 
 /**
@@ -240,6 +242,24 @@ describe("landing pages", () => {
         (await draftVersions(PAGE_A)).map(({ locale, is_complete }) => [locale, is_complete]),
       ).toEqual([["en", true]]);
       expect((await draftVersions(PAGE_B))[0].is_complete).toBe(false);
+    });
+  });
+
+  describe("the button check", () => {
+    it("judges a button target in SQL as the registry does, on what the registry would store", async () => {
+      const cases = BUTTON_TARGET_CASES.map((testCase) => {
+        const parsed = buttonTarget.safeParse(testCase.target);
+        return { ...testCase, accepted: parsed.success, stored: parsed.success ? parsed.data : testCase.target };
+      });
+      const answers = await Promise.all(
+        cases.map((testCase) => admin.rpc("landing_button_is_valid", { p_button: testCase.stored })),
+      );
+      cases.forEach((testCase, index) => {
+        const { data, error } = answers[index];
+        expect(error, testCase.name).toBeNull();
+        expect(testCase.accepted, testCase.name).toBe(testCase.valid);
+        expect(data, testCase.name).toBe(testCase.valid);
+      });
     });
   });
 

@@ -30,6 +30,7 @@ const ids = (n: number) =>
 
 const internal = { kind: "internal", path: "/shop/123" };
 const external = { kind: "external", url: "https://example.com/x" };
+const email = { kind: "email", to: "hello@sog.gg" };
 
 /** Shared-field samples per type, accepted and refused alike. */
 const STRUCTURES: Record<LandingSectionType, unknown[]> = {
@@ -37,6 +38,11 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "hero" },
     { id: ` ${ID.toUpperCase()} `, type: "hero", imageId: ID2, button: internal },
     { id: ID, type: "hero", button: external },
+    { id: ID, type: "hero", button: email },
+    { id: ID, type: "hero", button: { kind: "email", to: " Hello.There@mail.sog.gg " } },
+    { id: ID, type: "hero", button: { kind: "email", to: "hello@sog" } },
+    { id: ID, type: "hero", button: { kind: "email", to: "hello@sog.gg", subject: "Hi" } },
+    { id: ID, type: "hero", button: { kind: "email", url: "hello@sog.gg" } },
     { id: ID, type: "hero", button: { kind: "internal", path: "//evil.com" } },
     { id: ID, type: "hero", button: { kind: "internal", path: "shop" } },
     { id: ID, type: "hero", button: { kind: "external", url: "ftp://example.com" } },
@@ -89,6 +95,8 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "cta", button: external },
     { id: ID, type: "cta" },
     { id: ID, type: "cta", button: { kind: "email", to: "a@b.c" } },
+    { id: ID, type: "cta", button: { kind: "email", to: "a b@sog.gg" } },
+    { id: ID, type: "cta", button: { kind: "external", url: "mailto:a@sog.gg" } },
   ],
 };
 
@@ -97,6 +105,8 @@ const TEXTS: Record<LandingSectionType, unknown[]> = {
   hero: [
     {},
     { eyebrow: " New ", headline: "Hi", subline: "There", buttonLabel: "Go", imageAlt: "A castle" },
+    { headline: "Hi", buttonLabel: "Email us", emailSubject: " A question " },
+    { emailSubject: 3 },
     { headline: 3 },
     { heading: "Not a hero field" },
   ],
@@ -127,6 +137,7 @@ const TEXTS: Record<LandingSectionType, unknown[]> = {
   ],
   cta: [
     { heading: "H", body: "B", buttonLabel: "Go" },
+    { heading: "H", buttonLabel: "Go", emailSubject: "Joining" },
     { buttonLabel: { label: "Go" } },
     { items: {} },
   ],

@@ -70,7 +70,8 @@ const BUTTON_REFUSAL: Record<ButtonTargetRefusal, string> = {
  * Every button target and every link in a `landing` markdown field is stored
  * canonical: an own-site address becomes its locale-less internal route path,
  * a page with per-language slugs is stored at its id address, and another
- * site's address is left as written. A button or a markdown link leading to
+ * site's address is left as written. An email button names no page, so it is
+ * stored as it is. A button or a markdown link leading to
  * no page on the site refuses the whole write, with one sentence per link
  * naming where it is and what it says.
  */
@@ -89,7 +90,7 @@ export async function canonicaliseLandingLinks(
       : await Promise.all(
           write.sections.map(async (section, index) => {
             const button = buttonOf(section);
-            if (button === undefined) return section;
+            if (button === undefined || button.kind === "email") return section;
             const result = await canonicalizeButtonTarget(button, resolver, siteUrl);
             if (!result.ok) {
               refusals.push(
@@ -158,7 +159,14 @@ function withButton(section: LandingSection, button: ButtonTarget): LandingSecti
 }
 
 function hrefOf(target: ButtonTarget): string {
-  return target.kind === "internal" ? target.path : target.url;
+  switch (target.kind) {
+    case "internal":
+      return target.path;
+    case "external":
+      return target.url;
+    case "email":
+      return `mailto:${target.to}`;
+  }
 }
 
 function languageName(locale: SupportedLocale): string {

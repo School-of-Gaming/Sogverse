@@ -240,6 +240,7 @@ export { LANDING_IMAGE_SIDES, textSection } from "./text";
 export {
   buttonTarget,
   isWritten,
+  LANDING_EMAIL_PATTERN,
   LANDING_ID_PATTERN,
   landingId,
   type ButtonTarget,

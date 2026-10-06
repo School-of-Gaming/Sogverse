@@ -7,18 +7,19 @@ import {
 
 /**
  * **Where a button goes**: a page on our own site, stored as its locale-less
- * internal route path (`/shop/<id>`) and shown in the page's language, or
- * another site's address, stored as written.
+ * internal route path (`/shop/<id>`) and shown in the page's language;
+ * another site's address, stored as written; or an email to one address.
  */
 export type ButtonTarget =
   | { kind: "internal"; path: string }
-  | { kind: "external"; url: string };
+  | { kind: "external"; url: string }
+  | { kind: "email"; to: string };
 
 /**
  * Why an address cannot be a button's target: `dead` is our own site at a
  * path no page is served from; `same-page` is a fragment or query alone
- * (`#faq`), which names no page; `not-web` is a non-web scheme (`mailto:`),
- * which a button does not lead to; `unusable` is nothing a browser should
+ * (`#faq`), which names no page; `not-web` is a non-web scheme pasted as an
+ * address (`mailto:`), since an email button is a target of its own kind; `unusable` is nothing a browser should
  * follow (empty, unparseable, `javascript:` and the like).
  */
 export type ButtonTargetRefusal = "dead" | "same-page" | "not-web" | "unusable";
@@ -32,13 +33,17 @@ export type ButtonTargetResult =
  * relative or absolute, or a target already stored, which is canonicalised
  * again so a save never keeps a stale form. Own-site addresses become
  * `internal` at their canonical path (a slug address at its id, through
- * `resolver`); another site's http(s) address is `external` as written.
+ * `resolver`); another site's http(s) address is `external` as written. An
+ * email target names no page, so it is kept as it is.
  */
 export async function canonicalizeButtonTarget(
   input: string | ButtonTarget,
   resolver: SlugResolver,
   siteUrl: string | undefined = process.env.NEXT_PUBLIC_SITE_URL,
 ): Promise<ButtonTargetResult> {
+  if (typeof input !== "string" && input.kind === "email") {
+    return { ok: true, target: input };
+  }
   const href =
     typeof input === "string"
       ? input
@@ -63,13 +68,29 @@ export async function canonicalizeButtonTarget(
   }
 }
 
-/** The href a button renders with, on a page in `locale`. */
+/**
+ * The href a button renders with, on a page in `locale`. An email target opens
+ * a message to its address, with `subject` — the page's words in that
+ * language — as its subject line when one is written.
+ */
 export function buttonTargetHref(
   target: ButtonTarget,
   locale: SupportedLocale,
-  siteUrl: string | undefined = process.env.NEXT_PUBLIC_SITE_URL,
+  {
+    subject,
+    siteUrl = process.env.NEXT_PUBLIC_SITE_URL,
+  }: { subject?: string; siteUrl?: string } = {},
 ): string {
-  return target.kind === "internal"
-    ? localizeOwnSiteHref(target.path, locale, siteUrl)
-    : target.url;
+  switch (target.kind) {
+    case "internal":
+      return localizeOwnSiteHref(target.path, locale, siteUrl);
+    case "external":
+      return target.url;
+    case "email": {
+      const line = subject?.trim();
+      return line
+        ? `mailto:${target.to}?subject=${encodeURIComponent(line)}`
+        : `mailto:${target.to}`;
+    }
+  }
 }

@@ -27,6 +27,8 @@ const text = z
     headline: plainText,
     subline: plainText,
     buttonLabel: plainText,
+    /** The subject line of the email the button opens, when it opens one. */
+    emailSubject: plainText,
     imageAlt: plainText,
   })
   .strict();

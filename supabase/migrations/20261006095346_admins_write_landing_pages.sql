@@ -74,6 +74,8 @@ SET search_path TO ''
 AS $$
   SELECT COALESCE(
     jsonb_typeof(p_button) = 'object'
+    -- The kind and its one field, and nothing else.
+    AND (SELECT count(*) FROM jsonb_object_keys(p_button)) = 2
     AND (
       (p_button->>'kind' = 'internal'
         AND jsonb_typeof(p_button->'path') = 'string'
@@ -83,11 +85,15 @@ AS $$
       (p_button->>'kind' = 'external'
         AND jsonb_typeof(p_button->'url') = 'string'
         AND p_button->>'url' ~ '^https?://')
+      OR
+      (p_button->>'kind' = 'email'
+        AND jsonb_typeof(p_button->'to') = 'string'
+        AND p_button->>'to' ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9.-]+$')
     ),
     false);
 $$;
 
-COMMENT ON FUNCTION public.landing_button_is_valid(p_button jsonb) IS 'Whether a landing section''s button target has its shape: {kind: ''internal'', path} with a path that starts with one slash (a locale-less route of this site), or {kind: ''external'', url} with an http(s) URL.';
+COMMENT ON FUNCTION public.landing_button_is_valid(p_button jsonb) IS 'Whether a landing section''s button target has its shape, with no other field: {kind: ''internal'', path} with a path that starts with one slash (a locale-less route of this site), {kind: ''external'', url} with an http(s) URL, or {kind: ''email'', to} with one email address. An email''s subject line is a word of each language version (emailSubject), not part of the target. The registry''s buttonTarget in src/lib/landing-pages/sections/ is the other half, and a DB test holds the two equal.';
 
 REVOKE ALL ON FUNCTION public.landing_button_is_valid(p_button jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.landing_button_is_valid(p_button jsonb) TO service_role;
@@ -154,7 +160,7 @@ BEGIN
       WHEN 'hero' THEN
         v_heroes := v_heroes + 1;
         IF v_section ? 'button' AND NOT public.landing_button_is_valid(v_section->'button') THEN
-          RETURN format('The button of section %s needs a site path or an http(s) URL', v_id);
+          RETURN format('The button of section %s needs a site path, an http(s) URL or an email address', v_id);
         END IF;
       WHEN 'text' THEN
         IF v_section->>'imageSide' IS NULL OR v_section->>'imageSide' NOT IN ('start', 'end') THEN
@@ -170,7 +176,7 @@ BEGIN
         v_key := 'items';  v_min := 1; v_max := 20; v_field := NULL;
       WHEN 'cta' THEN
         IF NOT public.landing_button_is_valid(v_section->'button') THEN
-          RETURN format('The button of section %s needs a site path or an http(s) URL', v_id);
+          RETURN format('The button of section %s needs a site path, an http(s) URL or an email address', v_id);
         END IF;
       ELSE
         RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));

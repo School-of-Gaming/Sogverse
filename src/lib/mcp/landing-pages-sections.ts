@@ -1,6 +1,7 @@
 import { z } from "zod-v4";
 import { describeMarkdownSubset } from "@/lib/authored-markdown-subset";
 import {
+  LANDING_EMAIL_PATTERN,
   LANDING_ICONS,
   LANDING_ID_PATTERN,
   LANDING_IMAGE_SIDES,
@@ -73,8 +74,18 @@ const buttonTarget = z
         .regex(/^https?:\/\//, "A web address starts with http:// or https://")
         .describe("Another site's http(s) address. Uncommon: prefer a page of this site."),
     }),
+    z.strictObject({
+      kind: z.literal("email"),
+      to: z
+        .string()
+        .trim()
+        .regex(LANDING_EMAIL_PATTERN, "Not an email address")
+        .describe(
+          "The one email address the button opens a message to, e.g. info@example.com. Its subject line, if any, is a word written per language (emailSubject).",
+        ),
+    }),
   ])
-  .describe("Where the button leads.");
+  .describe("Where the button leads: a page of this site, another site, or an email.");
 
 /** Items whose ids, where given, are distinct. */
 function distinctGivenIds(items: readonly { id?: string }[]): boolean {
@@ -86,6 +97,10 @@ const plainText = z.string().trim().optional();
 const markdownText = z.string().trim().optional();
 
 const eyebrow = plainText.describe("A short label above the heading. Optional.");
+
+const emailSubject = plainText.describe(
+  "The subject line of the email the button opens, when its target is an email address. Optional; other buttons ignore it.",
+);
 
 /** The words of each item of a section, keyed by the item's id. */
 function itemWords<Shape extends z.ZodRawShape>(shape: Shape, what: string) {
@@ -146,6 +161,7 @@ export const MCP_LANDING_SECTIONS: {
       headline: plainText.describe("The page's headline, its only H1."),
       subline: plainText.describe("A line under the headline. Optional."),
       buttonLabel: plainText.describe("The button's words."),
+      emailSubject,
       imageAlt: plainText.describe("The picture's alt text."),
     }),
     ruleSamples: {
@@ -315,6 +331,7 @@ export const MCP_LANDING_SECTIONS: {
       heading: plainText.describe("The section's heading."),
       body: plainText.describe("A line under the heading, plain text. Optional."),
       buttonLabel: plainText.describe("The button's words."),
+      emailSubject,
     }),
     ruleSamples: {
       minimal: { id: ANY_ID, type: "cta", button: { kind: "internal", path: "/" } },

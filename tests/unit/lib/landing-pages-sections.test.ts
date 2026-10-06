@@ -12,6 +12,7 @@ import {
   type LandingMarkdownField,
 } from "@/lib/landing-pages/sections";
 import { markdownText } from "@/lib/landing-pages/sections/shared";
+import { BUTTON_TARGET_CASES } from "../../helpers/landing-button-cases";
 import {
   CASE_IDS as I,
   everySection,
@@ -57,15 +58,22 @@ describe("a section's shared fields", () => {
     expect(landingSection.safeParse({ id: "hero-1", type: "hero" }).success).toBe(false);
   });
 
-  it("takes an internal button as a site path and an external one as an http(s) address", () => {
-    const button = (target: unknown) =>
-      landingSection.safeParse({ id: I.cta, type: "cta", button: target }).success;
-    expect(button({ kind: "internal", path: "/shop/123" })).toBe(true);
-    expect(button({ kind: "internal", path: "//evil.example" })).toBe(false);
-    expect(button({ kind: "internal", path: "shop" })).toBe(false);
-    expect(button({ kind: "external", url: "https://example.com/x" })).toBe(true);
-    expect(button({ kind: "external", url: "mailto:hi@example.com" })).toBe(false);
-    expect(button({ kind: "external", url: "javascript:alert(1)" })).toBe(false);
+  it.each(BUTTON_TARGET_CASES.map((c) => [c.name, c.target, c.valid] as const))(
+    "judges a button target, %s, by the verdict SQL is held to",
+    (_, target, valid) => {
+      const parsed = landingSection.safeParse({ id: I.cta, type: "cta", button: target });
+      expect(parsed.success).toBe(valid);
+    },
+  );
+
+  it("has button cases of every kind, accepted and refused", () => {
+    for (const kind of ["internal", "external", "email"]) {
+      const verdicts = BUTTON_TARGET_CASES.filter(
+        (c) => typeof c.target === "object" && c.target !== null && !Array.isArray(c.target) && c.target.kind === kind,
+      ).map((c) => c.valid);
+      expect(verdicts, kind).toContain(true);
+      expect(verdicts, kind).toContain(false);
+    }
   });
 
   it("holds each list to its counts", () => {

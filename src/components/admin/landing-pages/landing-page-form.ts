@@ -109,7 +109,14 @@ export function newSection(
 
 /** A stored button target as an admin reads and edits it. */
 export function buttonHref(target: ButtonTarget): string {
-  return target.kind === "internal" ? target.path : target.url;
+  switch (target.kind) {
+    case "internal":
+      return target.path;
+    case "external":
+      return target.url;
+    case "email":
+      return `mailto:${target.to}`;
+  }
 }
 
 /**
