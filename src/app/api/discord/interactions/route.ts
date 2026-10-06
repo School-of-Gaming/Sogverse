@@ -457,38 +457,36 @@ async function sendSubStep(
       reply = buildSessionPickerMessage({ copy, logoUrl, sessions });
     } else {
       const key = `${step.groupId}:${step.sessionDate}`;
+      // The list is read only to name the session in the outcome. A session
+      // missing from it is still filed for: the list leaves out the sessions
+      // already asked for as well as those that ended, were cancelled or lost
+      // their seat, and only the write can tell those apart — so its own
+      // refusal is the answer. Where it accepts one anyway, the confirmation
+      // names the session by its bare date.
       const session = sessions.find((candidate) => candidate.key === key) ?? null;
-      if (session === null) {
-        // Not on the list any more — it ended, was cancelled or the seat went
-        // while the message sat open. The write would refuse it, so it is not
-        // tried.
-        reply = buildRefusalMessage({
+      try {
+        await fileDiscordSubstitutionRequest({
+          discordUserId: caller.id,
+          groupId: step.groupId,
+          sessionDate: step.sessionDate,
+          reason: step.reason,
+          reasonNote: step.note,
+        });
+        reply = buildFiledMessage({
           copy,
           logoUrl,
-          line: copy.form("substitutionRequestFailedNotScheduled"),
-          session: null,
+          session: session ?? { sessionDate: step.sessionDate },
         });
-      } else {
-        try {
-          await fileDiscordSubstitutionRequest({
-            discordUserId: caller.id,
-            groupId: step.groupId,
-            sessionDate: step.sessionDate,
-            reason: step.reason,
-            reasonNote: step.note,
-          });
-          reply = buildFiledMessage({ copy, logoUrl, session });
-        } catch (refusal) {
-          if (isDiscordGeduNotLinked(refusal)) {
-            await sendSubNotLinked(interactionToken, caller, copy, requestHeaders, step);
-            return;
-          }
-          const failure = substitutionRequestFailureKey(refusal);
-          if (failure === "substitutionRequestFailed") {
-            console.error("Discord /sub filing error:", refusal);
-          }
-          reply = buildRefusalMessage({ copy, logoUrl, line: copy.form(failure), session });
+      } catch (refusal) {
+        if (isDiscordGeduNotLinked(refusal)) {
+          await sendSubNotLinked(interactionToken, caller, copy, requestHeaders, step);
+          return;
         }
+        const failure = substitutionRequestFailureKey(refusal);
+        if (failure === "substitutionRequestFailed") {
+          console.error("Discord /sub filing error:", refusal);
+        }
+        reply = buildRefusalMessage({ copy, logoUrl, line: copy.form(failure), session });
       }
     }
   } catch (error) {

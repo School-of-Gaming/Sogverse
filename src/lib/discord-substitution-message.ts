@@ -466,7 +466,12 @@ export function buildRequestModal({
 
 // ---------------------------------------------------------------- the outcome
 
-/** Filed: the confirmation line, about the session filed for. */
+/**
+ * Filed: the confirmation line, about the session filed for. A filing for a
+ * session the list does not carry — the write accepted what the list left out —
+ * has only its date to go on, so it is named by that bare date, as the request
+ * pop-up names one, under the web's own "you've asked" line.
+ */
 export function buildFiledMessage({
   copy,
   logoUrl,
@@ -475,8 +480,17 @@ export function buildFiledMessage({
   copy: DiscordSubCopy;
   /** The header's logo — `discordSubLogoUrl()` — or `null` for none. */
   logoUrl: string | null;
-  session: GeduUpcomingSession;
+  /** The session filed for, or just its date when the list does not carry it. */
+  session: GeduUpcomingSession | { sessionDate: string };
 }): DiscordComponentsMessage {
+  if (!("startsAt" in session)) {
+    return message(copy, logoUrl, {
+      body: [
+        text(`**${session.sessionDate}**`),
+        text(`✅ ${copy.form("substitutionRequestStatusOpen")}`),
+      ],
+    });
+  }
   return message(copy, logoUrl, {
     body: [
       text(

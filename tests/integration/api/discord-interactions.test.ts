@@ -948,11 +948,46 @@ describe("POST /api/discord/interactions — /sub", () => {
     },
   );
 
-  it("says a session that left the list is no longer on the schedule, and files nothing", async () => {
+  // The list leaves out the sessions already asked for, so a session missing
+  // from it is not evidence it left the schedule: the write is tried, and its
+  // own refusal is the answer.
+  it("still files for a session missing from the list", async () => {
+    await submit("2026-12-01");
+
+    expect(mockFileRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ groupId: GROUP_A, sessionDate: "2026-12-01" }),
+    );
+  });
+
+  it("says a session missing from the list was already asked for, not that it left the schedule", async () => {
+    mockFileRequest.mockRejectedValue({ code: "42501", message: "Forbidden" });
+
+    const { patched } = await submit("2026-12-01");
+
+    expect(texts(patched)).toContain(
+      "You’ve already asked for a substitute for this session, or you’re no longer down to run it.",
+    );
+    expect(texts(patched)).not.toContain("This session is no longer on the schedule.");
+    expect(ids(patched)).toEqual(["sub:l"]);
+  });
+
+  it("says a session missing from the list is off the schedule when the write says so", async () => {
+    mockFileRequest.mockRejectedValue({
+      code: "23514",
+      message: "No scheduled session on 2026-12-01 for this group",
+    });
+
     const { patched } = await submit("2026-12-01");
 
     expect(texts(patched)).toContain("This session is no longer on the schedule.");
-    expect(mockFileRequest).not.toHaveBeenCalled();
+    expect(ids(patched)).toEqual(["sub:l"]);
+  });
+
+  it("names a filed session the list does not carry by its bare date", async () => {
+    const { patched } = await submit("2026-12-01");
+
+    expect(texts(patched)).toContain("**2026-12-01**");
+    expect(texts(patched)).toContain("You’ve asked for a substitute for this session. Waiting for one.");
   });
 
   it("reads a refusal through the web's own mapping", async () => {

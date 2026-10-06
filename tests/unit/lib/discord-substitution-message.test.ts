@@ -401,6 +401,20 @@ describe("the outcome", () => {
     expect(buttons(message)).toHaveLength(0);
   });
 
+  it("names a session the list does not carry by its bare date", () => {
+    const message = buildFiledMessage({
+      copy: en,
+      logoUrl: LOGO,
+      session: { sessionDate: "2026-12-01" },
+    });
+
+    expect(texts(message)).toContain("**2026-12-01**");
+    expect(texts(message)).toContain(
+      "✅ You’ve asked for a substitute for this session. Waiting for one.",
+    );
+    expect(buttons(message)).toHaveLength(0);
+  });
+
   it("says why it was refused, with the way back to the list", () => {
     const message = buildRefusalMessage({
       copy: en,
