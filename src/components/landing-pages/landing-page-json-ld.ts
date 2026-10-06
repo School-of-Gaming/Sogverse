@@ -1,7 +1,7 @@
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { organizationId } from "@/lib/seo/organization";
 import type { LocalizedLandingPage } from "@/services/landing-pages/landing-pages.contracts";
-import { landingStructuredParts } from "./landing-section-seo";
+import { landingLeadPicture, landingStructuredParts } from "./landing-section-seo";
 
 export interface LandingPageJsonLdInput {
   /** The canonical site origin — `NEXT_PUBLIC_SITE_URL`. */
@@ -43,11 +43,8 @@ export function landingPageJsonLd({
   const url = `${siteUrl}${canonicalPath}`;
   const parts = landingStructuredParts(page.sections, page.sectionTexts);
 
-  const imageId = parts.find((part) => part.kind === "image")?.imageId;
-  const image =
-    imageId === undefined
-      ? null
-      : catalogueImageSrc("landing_image", page.imagePaths[imageId]);
+  const picture = landingLeadPicture(page);
+  const image = picture === null ? null : catalogueImageSrc("landing_image", picture.path);
   const questions = parts.flatMap((part) =>
     part.kind === "question"
       ? [
