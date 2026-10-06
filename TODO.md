@@ -230,6 +230,7 @@ Test cases to add:
 - [ ] **Direct-to-storage upload, once originals may exceed 4 MB.** The upload route carries the file through a Vercel function today and function bodies stop at roughly 4.5 MB. A phone photo goes straight past that, so a signed direct upload is part of this step rather than a later one — the rendition work is what makes bigger originals worth accepting.
 - [ ] **Decide the shape against the gedu session-photo pipeline, which has since landed.** That feature was the second consumer, and it settled its own answer instead of waiting for this step: client-side normalization at the edge of trust — decode, capped-edge downscale, JPEG re-encode (which strips metadata for free) — with the normalized image as the master and no server rendition machinery. Adopting that module for admin uploads is the candidate shape here; HEIC, stripping and retention were all decided there and no longer constrain this item.
 - [ ] **Confirm a WhatsApp/Slack unfurl fetches the smaller og:image** once the rendition is what that tag points at.
+- [ ] **Fold the session, chat and team photo uploads onto the image purpose registry's shared ingest**, when the next upload surface is built and can prove the shared ingest on a real consumer. The three routes work and differ deliberately today; rewriting them earlier buys a cleaner tree at the price of a regression surface across chat, the session feed and team profiles with nothing visible to show for it.
 
 ### WhatsApp Service Layer Extraction
 
