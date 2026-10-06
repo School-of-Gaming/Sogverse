@@ -39,9 +39,13 @@ shared into.
   bucket URL builder: the stored object is the full-size original, and older product
   pictures are PNGs of a couple of megabytes. The URL leads to the picture route under
   `src/app/opengraph-images/`, which serves only a public catalogue purpose and a
-  hash-shaped key (anything else is refused before storage is asked), reads as anon, and
-  answers the budgeted rendition or a 500 — never an oversized image. The tag declares the
-  rendition's width and height, known from the purpose's stored size.
+  hash-shaped key (anything else is refused before storage is asked), fetches the bucket's
+  public object URL, and answers the budgeted rendition or a 500 — never an oversized
+  image. It fetches the URL rather than downloading through a Supabase client because a
+  client download checks the reader's rules on `storage.objects` even for a public bucket,
+  and the catalogue buckets deliberately give anon none (one would also let anon list
+  them). The route crops every picture of a purpose to one size whatever is stored, so the
+  tag declares the rendition's width and height in advance.
 
 The routes under `src/app/opengraph-images/` are public images fetched by crawlers and are
 excluded from the proxy so they stay cacheable; they sit outside the API route posture
@@ -59,8 +63,10 @@ card keeps the old bytes.
 ## What keeps it true
 
 A unit test enumerates every route under `src/app/opengraph-images/` and requires each to
-return through the card helper or the encoder and none to return a raw `ImageResponse`;
-and enumerates every file under `src/` declaring `openGraph:` and requires each to take
-its image from `src/lib/og/` (or from another emitter it extends) and never name a
-storage URL builder. Both surfaces are found from disk on every run, so a new route or
-page is checked without anyone listing it.
+call the card helper or the encoder, and any route that builds an `ImageResponse` to call
+the card helper; enumerates every file under `src/` declaring an `openGraph` or `twitter`
+block and requires each to take its image from `src/lib/og/` (or from another emitter it
+extends) and never name a storage URL builder; and fails on any `opengraph-image.*` or
+`twitter-image.*` file under `src/app/`, which Next would turn into an image tag outside
+this mechanism. All three are found from disk on every run, so a new route or page is
+checked without anyone listing it.

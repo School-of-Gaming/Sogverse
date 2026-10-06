@@ -20,12 +20,19 @@ import { describe, expect, it } from "vitest";
  * 1. **What serves it.** Every route under `src/app/opengraph-images/` is
  *    either a drawn card, which returns through `ogCardResponse`, or a stored
  *    picture's rendition, which encodes through `encodeWithinBudget` itself.
- *    Returning the `ImageResponse` directly is the unencoded path: a PNG of
- *    whatever size the drawing came to.
- * 2. **What points at it.** Every file declaring an `openGraph` block takes its
- *    image from `src/lib/og/`, whose URLs all lead to a route of the first
- *    half — and never names a storage URL builder, which would hand the
- *    preview the stored file as it is, at whatever size it was uploaded.
+ *    The check wants the call, not just the import: an import left behind by a
+ *    refactor proves nothing about what the handler returns. And a route that
+ *    builds an `ImageResponse` must also call `ogCardResponse`, because an
+ *    `ImageResponse` handed back by any path — returned directly, assigned
+ *    first, returned from a helper — is the unencoded one: a PNG of whatever
+ *    size the drawing came to.
+ * 2. **What points at it.** Every file declaring an `openGraph` or `twitter`
+ *    metadata block takes its image from `src/lib/og/`, whose URLs all lead to
+ *    a route of the first half — and never names a storage URL builder, which
+ *    would hand the preview the stored file as it is, at whatever size it was
+ *    uploaded. Next's file convention is the other way to emit an `og:image`:
+ *    an `opengraph-image.*` or `twitter-image.*` file anywhere under `src/app/`
+ *    becomes the tag with no metadata block at all, so none may exist.
  */
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -68,17 +75,16 @@ describe("every Open Graph image route encodes within the preview budget", () =>
 
   it.each(routes)("%s returns through the budget", (route) => {
     const source = read(route);
-    const specifiers = importsOf(source);
-    const drawnCard = specifiers.includes("@/lib/og/card-response.server");
-    const storedRendition = specifiers.includes("@/lib/images/encode-within-budget.server");
+    const drawnCard = source.includes("ogCardResponse(");
+    const storedRendition = source.includes("encodeWithinBudget(");
 
     expect(
       drawnCard || storedRendition,
       `${route} serves an image without encoding it within the preview budget. A drawn card returns through ogCardResponse (@/lib/og/card-response.server); a stored picture encodes through encodeWithinBudget (@/lib/images/encode-within-budget.server).`,
     ).toBe(true);
     expect(
-      source.includes("return new ImageResponse("),
-      `${route} returns its ImageResponse directly — a PNG of whatever size the drawing came to. Build it, then return ogCardResponse(image, { cacheControl }).`,
+      source.includes("new ImageResponse(") && !drawnCard,
+      `${route} draws an ImageResponse without passing it through ogCardResponse, so it serves a PNG of whatever size the drawing came to. Build it, then return ogCardResponse(image, { cacheControl }).`,
     ).toBe(false);
   });
 });
@@ -90,14 +96,33 @@ describe("every Open Graph image route encodes within the preview budget", () =>
 const STORAGE_URL_TOKENS = [
   "catalogueImageSrc",
   "catalogueImageUrl",
+  "getPublicUrl",
   "storage/v1/object",
   "sessionImageUrl",
 ] as const;
 
+/**
+ * An `openGraph` or `twitter` metadata block, as an object key: `openGraph:`,
+ * and also the shorthand `{ openGraph, twitter }` and a block declaring only
+ * `twitter`, either of which emits an image tag as surely as the long form.
+ */
+const PREVIEW_BLOCK_KEY = /\b(openGraph|twitter)\b\s*[:,}]/;
+
 describe("every og:image emitter takes its image from src/lib/og/", () => {
   const emitters = filesUnder("src")
     .filter((file) => /\.tsx?$/.test(file) && !file.startsWith("src/lib/og/"))
-    .filter((file) => read(file).includes("openGraph:"));
+    .filter((file) => PREVIEW_BLOCK_KEY.test(read(file)));
+
+  it("finds no opengraph-image or twitter-image file under src/app/", () => {
+    // Next turns either file into the page's image tag by convention, with no
+    // metadata block for the check below to find and no route of the first
+    // half behind it.
+    expect(
+      filesUnder("src/app").filter((file) =>
+        /\/(opengraph|twitter)-image\.[^/]+$/.test(file),
+      ),
+    ).toEqual([]);
+  });
 
   /**
    * The specifier each emitter is imported by. A page that spreads another
@@ -131,7 +156,7 @@ describe("every og:image emitter takes its image from src/lib/og/", () => {
 
     expect(
       routed,
-      `${file} declares an openGraph block without importing from @/lib/og/ (or extending an emitter that does). A preview image's URL comes from there, so it leads to a route that encodes within the preview budget.`,
+      `${file} declares an openGraph or twitter block without importing from @/lib/og/ (or extending an emitter that does). A preview image's URL comes from there, so it leads to a route that encodes within the preview budget.`,
     ).toBe(true);
     expect(
       STORAGE_URL_TOKENS.filter((token) => source.includes(token)).map(

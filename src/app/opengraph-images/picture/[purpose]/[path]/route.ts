@@ -1,5 +1,5 @@
-import { createAnonClient } from "@/lib/supabase/anon";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
+import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
 import { encodeWithinBudget } from "@/lib/images/encode-within-budget.server";
 import { IMAGE_PURPOSES, type ImagePurposeSpec } from "@/lib/images/image-purposes";
 import { OG_CARD_CACHE_CONTROL } from "@/lib/og/cards";
@@ -32,9 +32,17 @@ import type { CatalogueImagePurpose } from "@/types";
  * **It can reach only a public catalogue bucket.** The purpose has to be a
  * catalogue purpose and its registry entry has to say `public`, checked here on
  * every request rather than assumed, so a private bucket stays unreachable from
- * this address whatever a later registry entry declares. The read is the anon
- * client's, with no cookies, so storage's own anon rule is what answers — the
- * route reads exactly what the bucket's public URL would hand anyone.
+ * this address whatever a later registry entry declares. The bytes are fetched
+ * from the bucket's public object URL (`catalogueImageUrl`) with no cookies and
+ * no key, so the route reads exactly what that URL hands anyone.
+ *
+ * **Why the public URL, not a Supabase client's `download`.** `download` goes
+ * through storage's authenticated object endpoint, which checks the reader's
+ * row-level rules on `storage.objects` even for a public bucket — and the
+ * catalogue buckets give anon no read rule there, only admin writes. Giving
+ * them one would also let anon list every object in them; the public URL
+ * serves a named object of a public bucket without consulting those rules, which
+ * is exactly the access a link preview needs and nothing more.
  *
  * **Only a catalogue object key is looked up.** Every catalogue object is named
  * by the sha256 of its bytes, `<sha256>.<ext>`; anything else answers 404
@@ -94,16 +102,20 @@ export async function GET(
   const bucket = publicBucketOf(purpose);
   if (bucket === null || !CATALOGUE_OBJECT_KEY.test(path)) return notFound();
 
-  const { data, error } = await createAnonClient().storage.from(bucket).download(path);
-  if (error !== null) return notFound();
+  // A missing object answers 400 or 404 from storage, and anything else not ok
+  // is no more servable; none of it is ours to log, since a crawler asking for a
+  // key that is not there is ordinary.
+  const stored = await fetch(catalogueImageUrl(purpose, path));
+  if (!stored.ok) return notFound();
 
   try {
-    const picture = await encodeWithinBudget(Buffer.from(await data.arrayBuffer()), {
+    const picture = await encodeWithinBudget(Buffer.from(await stored.arrayBuffer()), {
       cover: ogPictureSize(purpose),
     });
     return new Response(new Uint8Array(picture.bytes), {
       headers: {
         "Content-Type": picture.contentType,
+        "Content-Length": String(picture.bytes.length),
         "Cache-Control": OG_CARD_CACHE_CONTROL,
         "Content-Security-Policy": CONTENT_SECURITY_POLICY,
       },

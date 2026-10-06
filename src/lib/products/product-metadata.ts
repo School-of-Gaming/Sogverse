@@ -171,10 +171,13 @@ export async function buildProductMetadata(
   // product picture can be a legacy PNG of a couple of megabytes, and WhatsApp
   // drops any preview image past roughly 300 KB without a word, so the card
   // points at the picture route (`ogPictureImage`), which serves the same
-  // picture at preview width under the preview byte budget. That rendition's
-  // size is known before it is fetched — a product is stored at one exact size
-  // and the route only narrows it — so `width` and `height` are declared, and a
-  // consumer that trusts them reserves the right frame instead of measuring.
+  // picture under the preview byte budget. That rendition's size is known
+  // before it is fetched: the route crops every product picture to one size,
+  // `ogPictureSize("product")`, whatever is stored — a legacy entry uploaded
+  // before sizes were enforced can be any shape, so it is the crop, not the
+  // stored bytes, that makes the size true. So `width` and `height` are
+  // declared, and a consumer that trusts them reserves the right frame instead
+  // of measuring.
   //
   // **A product with no picture falls back to the parent's resolved images —
   // the site-wide card the `[locale]` layout emits at this URL's locale — and

@@ -1,22 +1,22 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import sharp from "sharp";
 import { PREVIEW_IMAGE_BUDGET_BYTES } from "@/lib/images/preview-budget";
 
-const mockDownload = vi.fn();
-const mockFrom = vi.fn();
+/**
+ * The route fetches the bucket's public object URL. Global `fetch` is replaced
+ * so a test decides what storage answers and sees exactly what was asked for.
+ */
+const mockFetch = vi.fn<(input: string | URL | Request) => Promise<Response>>();
+vi.stubGlobal("fetch", mockFetch);
+
+/**
+ * No Supabase client takes part: the public URL is the whole read. Both the
+ * client library and the cookie-reading server client are mocked so a test can
+ * prove neither is ever constructed.
+ */
 const mockCreateClient = vi.fn();
 vi.mock("@supabase/supabase-js", () => ({
-  createClient: (...args: unknown[]) => {
-    mockCreateClient(...args);
-    return {
-      storage: {
-        from: (bucket: string) => {
-          mockFrom(bucket);
-          return { download: (path: string) => mockDownload(path) };
-        },
-      },
-    };
-  },
+  createClient: (...args: unknown[]) => mockCreateClient(...args),
 }));
 
 const mockCreateServerClient = vi.fn();
@@ -34,7 +34,7 @@ const { GET } = await import("@/app/opengraph-images/picture/[purpose]/[path]/ro
  * what comes back is a PNG or a JPEG at exactly the size the page declares for
  * its purpose and under the preview budget, cached for a year — and the route
  * reaches only a public catalogue bucket, only by a catalogue object key, only
- * as anon.
+ * through that bucket's public object URL.
  */
 
 const KEY = "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef.png";
@@ -67,8 +67,22 @@ async function photograph(width: number, height: number): Promise<Buffer> {
     .toBuffer();
 }
 
-function stored(bytes: Buffer, type: string): { data: Blob; error: null } {
-  return { data: new Blob([new Uint8Array(bytes)], { type }), error: null };
+function stored(bytes: Buffer, type: string): Response {
+  return new Response(new Uint8Array(bytes), { headers: { "Content-Type": type } });
+}
+
+const SUPABASE_URL = "https://project.supabase.test";
+
+/** The public object URL of `path` in `bucket`, as storage serves it. */
+function publicObjectUrl(bucket: string, path: string): string {
+  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+}
+
+/** The body, after checking the declared `Content-Length` is its real length. */
+async function served(response: Response): Promise<Buffer> {
+  const body = Buffer.from(await response.arrayBuffer());
+  expect(response.headers.get("content-length")).toBe(String(body.length));
+  return body;
 }
 
 function picture(purpose: string, path: string) {
@@ -81,12 +95,17 @@ function picture(purpose: string, path: string) {
 describe("GET /opengraph-images/picture/[purpose]/[path]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", SUPABASE_URL);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("serves a megabyte-class product PNG as a JPEG under the preview budget, cached for a year", async () => {
     const original = await photograph(1200, 800);
     expect(original.length).toBeGreaterThan(PREVIEW_IMAGE_BUDGET_BYTES);
-    mockDownload.mockResolvedValue(stored(original, "image/png"));
+    mockFetch.mockResolvedValue(stored(original, "image/png"));
 
     const response = await picture("product", KEY);
 
@@ -95,15 +114,14 @@ describe("GET /opengraph-images/picture/[purpose]/[path]", () => {
     expect(response.headers.get("cache-control")).toBe(
       "public, max-age=31536000, immutable",
     );
-    const body = Buffer.from(await response.arrayBuffer());
+    const body = await served(response);
     expect(body.length).toBeLessThanOrEqual(PREVIEW_IMAGE_BUDGET_BYTES);
     expect(await sharp(body).metadata()).toMatchObject({
       format: "jpeg",
       width: 1200,
       height: 800,
     });
-    expect(mockFrom).toHaveBeenCalledWith("product-images");
-    expect(mockDownload).toHaveBeenCalledWith(KEY);
+    expect(mockFetch).toHaveBeenCalledExactlyOnceWith(publicObjectUrl("product-images", KEY));
   });
 
   it("crops an off-size legacy product picture to the declared 1200×800", async () => {
@@ -112,12 +130,12 @@ describe("GET /opengraph-images/picture/[purpose]/[path]", () => {
     })
       .png()
       .toBuffer();
-    mockDownload.mockResolvedValue(stored(legacy, "image/png"));
+    mockFetch.mockResolvedValue(stored(legacy, "image/png"));
 
     const response = await picture("product", KEY);
 
     expect(response.status).toBe(200);
-    expect(await sharp(Buffer.from(await response.arrayBuffer())).metadata()).toMatchObject({
+    expect(await sharp(await served(response)).metadata()).toMatchObject({
       width: 1200,
       height: 800,
     });
@@ -125,15 +143,16 @@ describe("GET /opengraph-images/picture/[purpose]/[path]", () => {
 
   it("narrows a 1600×900 Library cover to the declared 1200×675", async () => {
     const cover = await sharp(await photograph(1600, 900)).jpeg({ quality: 90 }).toBuffer();
-    mockDownload.mockResolvedValue(stored(cover, "image/jpeg"));
+    mockFetch.mockResolvedValue(stored(cover, "image/jpeg"));
 
-    const response = await picture("library_cover", KEY.replace(".png", ".jpg"));
+    const coverKey = KEY.replace(".png", ".jpg");
+    const response = await picture("library_cover", coverKey);
 
     expect(response.status).toBe(200);
-    const body = Buffer.from(await response.arrayBuffer());
+    const body = await served(response);
     expect(body.length).toBeLessThanOrEqual(PREVIEW_IMAGE_BUDGET_BYTES);
     expect(await sharp(body).metadata()).toMatchObject({ width: 1200, height: 675 });
-    expect(mockFrom).toHaveBeenCalledWith("library-covers");
+    expect(mockFetch).toHaveBeenCalledExactlyOnceWith(publicObjectUrl("library-covers", coverKey));
   });
 
   it("serves a small JPEG as a JPEG, enlarged to the declared size", async () => {
@@ -142,30 +161,29 @@ describe("GET /opengraph-images/picture/[purpose]/[path]", () => {
     })
       .jpeg()
       .toBuffer();
-    mockDownload.mockResolvedValue(stored(small, "image/jpeg"));
+    mockFetch.mockResolvedValue(stored(small, "image/jpeg"));
 
     const response = await picture("product", KEY.replace(".png", ".jpg"));
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("image/jpeg");
-    expect(await sharp(Buffer.from(await response.arrayBuffer())).metadata()).toMatchObject({
+    expect(await sharp(await served(response)).metadata()).toMatchObject({
       format: "jpeg",
       width: 1200,
       height: 800,
     });
   });
 
-  it("reads storage as anon, never with a cookie-reading client", async () => {
-    mockDownload.mockResolvedValue(stored(await photograph(300, 200), "image/png"));
+  it("reads the bucket's public object URL, with no Supabase client and no cookies", async () => {
+    mockFetch.mockResolvedValue(stored(await photograph(300, 200), "image/png"));
 
     await picture("product", KEY);
 
+    // A bare URL and nothing else: no init, so no cookie or key header rides
+    // along, and storage answers as it would to anyone.
+    expect(mockFetch).toHaveBeenCalledExactlyOnceWith(publicObjectUrl("product-images", KEY));
     expect(mockCreateServerClient).not.toHaveBeenCalled();
-    expect(mockCreateClient).toHaveBeenCalledWith(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      expect.objectContaining({ auth: { persistSession: false } }),
-    );
+    expect(mockCreateClient).not.toHaveBeenCalled();
   });
 
   it.each(["team_photo", "chat_image", "session_photo", "constructor", "products"])(
@@ -174,7 +192,7 @@ describe("GET /opengraph-images/picture/[purpose]/[path]", () => {
       const response = await picture(purpose, KEY);
 
       expect(response.status).toBe(404);
-      expect(mockDownload).not.toHaveBeenCalled();
+      expect(mockFetch).not.toHaveBeenCalled();
     },
   );
 
@@ -188,17 +206,22 @@ describe("GET /opengraph-images/picture/[purpose]/[path]", () => {
     const response = await picture("product", path);
 
     expect(response.status).toBe(404);
-    expect(mockCreateClient).not.toHaveBeenCalled();
-    expect(mockDownload).not.toHaveBeenCalled();
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("answers 404 for an object that is not there", async () => {
-    mockDownload.mockResolvedValue({ data: null, error: { message: "Object not found" } });
+  it.each([400, 404])(
+    "answers 404, unlogged, for an object that is not there (storage answers %i)",
+    async (status) => {
+      const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockResolvedValue(new Response("Object not found", { status }));
 
-    const response = await picture("product", KEY);
+      const response = await picture("product", KEY);
 
-    expect(response.status).toBe(404);
-  });
+      expect(response.status).toBe(404);
+      expect(quiet).not.toHaveBeenCalled();
+      quiet.mockRestore();
+    },
+  );
 
   it("answers 500, logged, never an oversized image, for a picture nothing fits under budget", async () => {
     const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -206,7 +229,7 @@ describe("GET /opengraph-images/picture/[purpose]/[path]", () => {
     const png = await sharp(noise(1200, 800), { raw: { width: 1200, height: 800, channels: 3 } })
       .png()
       .toBuffer();
-    mockDownload.mockResolvedValue(stored(png, "image/png"));
+    mockFetch.mockResolvedValue(stored(png, "image/png"));
 
     const response = await picture("product", KEY);
 
@@ -218,7 +241,7 @@ describe("GET /opengraph-images/picture/[purpose]/[path]", () => {
 
   it("answers 500, logged, for stored bytes that are not a picture", async () => {
     const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
-    mockDownload.mockResolvedValue(
+    mockFetch.mockResolvedValue(
       stored(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x01, 0x02]), "image/png"),
     );
 
