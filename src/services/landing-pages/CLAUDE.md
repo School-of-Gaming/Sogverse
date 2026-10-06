@@ -8,9 +8,8 @@ the sections are the registry's, in `src/lib/landing-pages/sections/`.
 **Pages are written only through the MCP server** (`src/lib/mcp/`), by an AI app acting as
 the admin. In Sogverse an admin has the list of pages and, for each, a status page that is
 read-only apart from publishing: per language, complete or what is still missing, its
-preview and live links, and its slug and whether that is fixed; for the page, whether it
-has unpublished changes, who last saved it and through which AI app, and Publish and
-Unpublish.
+preview and live links, and its address; for the page, whether it has unpublished
+changes, who last saved it and through which AI app, and Publish and Unpublish.
 
 **A page has two copies, and a published row existing is what "live" means.** The working
 copy (`landing_pages`) is admin-only; the published copy (`landing_page_publications`) is
@@ -48,8 +47,8 @@ complete, refuse.
 
 **One Publish puts every complete version live at once**, leaves the incomplete ones in
 the working copy, and refuses a page with none complete. What a publish would do — the
-languages going live, those left out, the live ones taken down, and the slugs a first
-publish makes permanent — is forecast from one admin read by one pure function in this
+languages going live, those left out, the live ones taken down, and the live addresses
+it would change — is forecast from one admin read by one pure function in this
 directory, which the status page shows before Publish is confirmed and the MCP tools hand
 the AI app before it publishes. The database still decides; the forecast is never a gate.
 
@@ -57,16 +56,18 @@ the AI app before it publishes. The database still decides; the forecast is neve
 structure's digest and, for the complete versions, their short fields and the digest of
 their words — so the admin list never reads a page's words.
 
-**Slugs are stored, per language, and fixed once that language has been published.** A
-slug is lowercase a–z, digits and single hyphens, length-capped, and never shaped like a
-uuid, so an id address and a slug address cannot be mistaken for each other. It is unique
-per locale across every page, live or not, and a slug another page still has live is
-refused even when that page's working version no longer holds it. A save that sends no
-slug keeps the one stored; a version that has none takes its title's, derived in the
-application. Once a language has gone live its slug never changes — through unpublishing
-too, and when a whole save drops a live language and a later save writes it again, it
-takes its live slug back. There are no redirects, so a slug that could change would be a
-link that could break.
+**Slugs are stored, per language, and can change at any time, a live language's
+included.** A slug is lowercase a–z, digits and single hyphens, length-capped, and never
+shaped like a uuid, so an id address and a slug address cannot be mistaken for each other.
+It is unique per locale across every page, live or not, and a slug another page still has
+live is refused even when that page's working version no longer holds it; a page's own
+live slug never blocks it. A save that sends no slug keeps the one stored; a version that
+has none takes its title's, derived in the application. A live language's new slug goes
+live with the next publish, and there are no redirects, so links to the old address
+shared outside the site stop working then. Nothing refuses that: the forecast lists each
+live address a publish would change, the status page warns on the language and in the
+publish confirmation, and the MCP tools tell the AI app to confirm the change with the
+admin before publishing.
 
 **Readers fall back from their locale to English to the first version written**, and the
 service hands back every live version in `SUPPORTED_LOCALES` order so "first" is stable —
