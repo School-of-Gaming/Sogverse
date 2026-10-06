@@ -31,9 +31,10 @@ const { GET } = await import("@/app/opengraph-images/picture/[purpose]/[path]/ro
  * integration test.
  *
  * What is pinned is the guarantee the route exists for: whatever is stored,
- * what comes back is a PNG or a JPEG no wider than preview width and under the
- * preview budget, cached for a year — and the route reaches only a public
- * catalogue bucket, only by a catalogue object key, only as anon.
+ * what comes back is a PNG or a JPEG at exactly the size the page declares for
+ * its purpose and under the preview budget, cached for a year — and the route
+ * reaches only a public catalogue bucket, only by a catalogue object key, only
+ * as anon.
  */
 
 const KEY = "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef.png";
@@ -105,7 +106,24 @@ describe("GET /opengraph-images/picture/[purpose]/[path]", () => {
     expect(mockDownload).toHaveBeenCalledWith(KEY);
   });
 
-  it("narrows a 1600×900 Library cover to preview width", async () => {
+  it("crops an off-size legacy product picture to the declared 1200×800", async () => {
+    const legacy = await sharp({
+      create: { width: 1000, height: 1000, channels: 3, background: "#336699" },
+    })
+      .png()
+      .toBuffer();
+    mockDownload.mockResolvedValue(stored(legacy, "image/png"));
+
+    const response = await picture("product", KEY);
+
+    expect(response.status).toBe(200);
+    expect(await sharp(Buffer.from(await response.arrayBuffer())).metadata()).toMatchObject({
+      width: 1200,
+      height: 800,
+    });
+  });
+
+  it("narrows a 1600×900 Library cover to the declared 1200×675", async () => {
     const cover = await sharp(await photograph(1600, 900)).jpeg({ quality: 90 }).toBuffer();
     mockDownload.mockResolvedValue(stored(cover, "image/jpeg"));
 
@@ -118,7 +136,7 @@ describe("GET /opengraph-images/picture/[purpose]/[path]", () => {
     expect(mockFrom).toHaveBeenCalledWith("library-covers");
   });
 
-  it("serves a small JPEG as a JPEG", async () => {
+  it("serves a small JPEG as a JPEG, enlarged to the declared size", async () => {
     const small = await sharp({
       create: { width: 600, height: 400, channels: 3, background: "#336699" },
     })
@@ -132,7 +150,8 @@ describe("GET /opengraph-images/picture/[purpose]/[path]", () => {
     expect(response.headers.get("content-type")).toBe("image/jpeg");
     expect(await sharp(Buffer.from(await response.arrayBuffer())).metadata()).toMatchObject({
       format: "jpeg",
-      width: 600,
+      width: 1200,
+      height: 800,
     });
   });
 

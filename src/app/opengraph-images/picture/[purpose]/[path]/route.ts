@@ -3,7 +3,7 @@ import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes"
 import { encodeWithinBudget } from "@/lib/images/encode-within-budget.server";
 import { IMAGE_PURPOSES, type ImagePurposeSpec } from "@/lib/images/image-purposes";
 import { OG_CARD_CACHE_CONTROL } from "@/lib/og/cards";
-import { CATALOGUE_OBJECT_KEY } from "@/lib/og/picture";
+import { CATALOGUE_OBJECT_KEY, ogPictureSize } from "@/lib/og/picture";
 import type { CatalogueImagePurpose } from "@/types";
 
 /**
@@ -21,6 +21,13 @@ import type { CatalogueImagePurpose } from "@/types";
  * itself whether its picture is "probably small enough". Pages name it through
  * `ogPictureImage` (`src/lib/og/picture.ts`), which also declares the
  * rendition's exact size.
+ *
+ * **The declared size is the served size, whatever is stored.** The picture is
+ * cropped to cover `ogPictureSize` — the very size `ogPictureImage` declares —
+ * rather than merely narrowed. Catalogue entries uploaded before sizes were
+ * enforced can be any shape and nothing detects them, so narrowing alone would
+ * serve such an entry at a size the tag contradicts, and a preview that trusts
+ * the tag would letterbox or mis-crop it.
  *
  * **It can reach only a public catalogue bucket.** The purpose has to be a
  * catalogue purpose and its registry entry has to say `public`, checked here on
@@ -64,13 +71,12 @@ function isCataloguePurpose(segment: string): segment is CatalogueImagePurpose {
 }
 
 /**
- * The purpose's bucket when it is a catalogue purpose whose bucket is public,
- * otherwise `null`. The registry entry is read at its declared type so the
- * visibility check stands for whatever a future entry says.
+ * The catalogue purpose's bucket when that bucket is public, otherwise `null`.
+ * The registry entry is read at its declared type so the visibility check
+ * stands for whatever a future entry says.
  */
-function publicCatalogueBucketOf(segment: string): string | null {
-  if (!isCataloguePurpose(segment)) return null;
-  const spec: ImagePurposeSpec = IMAGE_PURPOSES[segment];
+function publicBucketOf(purpose: CatalogueImagePurpose): string | null {
+  const spec: ImagePurposeSpec = IMAGE_PURPOSES[purpose];
   return spec.visibility === "public" ? spec.bucket : null;
 }
 
@@ -84,14 +90,17 @@ export async function GET(
 ) {
   const { purpose, path } = await params;
 
-  const bucket = publicCatalogueBucketOf(purpose);
+  if (!isCataloguePurpose(purpose)) return notFound();
+  const bucket = publicBucketOf(purpose);
   if (bucket === null || !CATALOGUE_OBJECT_KEY.test(path)) return notFound();
 
   const { data, error } = await createAnonClient().storage.from(bucket).download(path);
   if (error !== null) return notFound();
 
   try {
-    const picture = await encodeWithinBudget(Buffer.from(await data.arrayBuffer()));
+    const picture = await encodeWithinBudget(Buffer.from(await data.arrayBuffer()), {
+      cover: ogPictureSize(purpose),
+    });
     return new Response(new Uint8Array(picture.bytes), {
       headers: {
         "Content-Type": picture.contentType,

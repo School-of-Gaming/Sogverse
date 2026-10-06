@@ -97,6 +97,37 @@ describe("encodeWithinBudget", () => {
     expect(measured.orientation ?? 1).toBe(1);
   });
 
+  describe("with cover", () => {
+    const frame = { width: 1200, height: 800 };
+
+    it("crops an input of another shape to exactly the frame", async () => {
+      const result = await encodeWithinBudget(await flatPng(1600, 1200), { cover: frame });
+
+      expect({ width: result.width, height: result.height }).toEqual(frame);
+      const measured = await sharp(result.bytes).metadata();
+      expect({ width: measured.width, height: measured.height }).toEqual(frame);
+    });
+
+    it("passes a PNG already at the frame through as a PNG", async () => {
+      const input = await flatPng(1200, 800);
+      const result = await encodeWithinBudget(input, { cover: frame });
+
+      expect(result.contentType).toBe("image/png");
+      expect(result.bytes.equals(input)).toBe(true);
+      expect({ width: result.width, height: result.height }).toEqual(frame);
+    });
+
+    it("crops a PNG under budget but of another shape rather than passing it through", async () => {
+      const input = await flatPng(1200, 900);
+      const result = await encodeWithinBudget(input, { cover: frame });
+
+      expect(result.bytes.equals(input)).toBe(false);
+      expect({ width: result.width, height: result.height }).toEqual(frame);
+      const measured = await sharp(result.bytes).metadata();
+      expect({ width: measured.width, height: measured.height }).toEqual(frame);
+    });
+  });
+
   it("throws ImageOverBudgetError when nothing fits, carrying the sizes", async () => {
     const input = await photoPng(800, 600, { blur: false });
     const error: unknown = await encodeWithinBudget(input, { budgetBytes: 2 * 1024 }).catch(

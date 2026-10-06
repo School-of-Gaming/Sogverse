@@ -3,6 +3,7 @@ import {
   CATALOGUE_OBJECT_KEY,
   ogPictureImage,
   ogPicturePath,
+  ogPictureSize,
 } from "@/lib/og/picture";
 
 /**
@@ -20,6 +21,16 @@ describe("ogPicturePath", () => {
     expect(ogPicturePath("library_cover", KEY)).toBe(
       `/opengraph-images/picture/library_cover/${KEY}`,
     );
+  });
+});
+
+describe("ogPictureSize", () => {
+  it("is a product picture's stored 1200×800, already preview width", () => {
+    expect(ogPictureSize("product")).toEqual({ width: 1200, height: 800 });
+  });
+
+  it("is a Library cover's 1600×900 narrowed to 1200×675", () => {
+    expect(ogPictureSize("library_cover")).toEqual({ width: 1200, height: 675 });
   });
 });
 

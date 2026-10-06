@@ -11,11 +11,14 @@
  * no picture. The route serves the same picture inside the budget, so a page
  * names it here and never builds the bucket URL into its card.
  *
- * **Why the size can be declared.** Every catalogue purpose is stored at one
- * exact size (`CATALOGUE_IMAGE_PURPOSES`), and the route only ever narrows it
- * to `PREVIEW_IMAGE_MAX_WIDTH`, keeping its shape. So the rendition's pixel
- * size is known before it is fetched, and a consumer that trusts
- * `og:image:width`/`height` can reserve the right frame.
+ * **Why the size can be declared.** The route serves every picture of a
+ * purpose at one size, `ogPictureSize`, cropping to it whatever the stored
+ * object is. The purpose's catalogue size (`CATALOGUE_IMAGE_PURPOSES`) only
+ * decides what that size is; entries uploaded before sizes were enforced can
+ * be any shape, so the stored bytes cannot be what makes the declaration true.
+ * The rendition's pixel size is therefore known before it is fetched, and a
+ * consumer that trusts `og:image:width`/`height` reserves the frame the picture
+ * actually fills.
  *
  * Builds strings and numbers only, so any metadata builder can import it.
  */
@@ -40,11 +43,12 @@ export function ogPicturePath(purpose: CatalogueImagePurpose, path: string): str
 }
 
 /**
- * The size the route serves a purpose's pictures at: the stored size, narrowed
- * to preview width with its aspect kept and never enlarged, the height rounded
- * as sharp rounds it when it resizes to a width.
+ * The size the route serves a purpose's pictures at, and the size a page
+ * declares for them: the purpose's catalogue size narrowed to preview width
+ * with its aspect kept and never enlarged, the height rounded. One function
+ * for both, so the declaration and the rendition cannot drift apart.
  */
-function previewSizeOf(purpose: CatalogueImagePurpose): { width: number; height: number } {
+export function ogPictureSize(purpose: CatalogueImagePurpose): { width: number; height: number } {
   const { width, height } = CATALOGUE_IMAGE_PURPOSES[purpose];
   if (width <= PREVIEW_IMAGE_MAX_WIDTH) return { width, height };
   return {
@@ -59,5 +63,5 @@ export function ogPictureImage(
   path: string,
   alt: string,
 ): { url: string; alt: string; width: number; height: number } {
-  return { url: ogPicturePath(purpose, path), alt, ...previewSizeOf(purpose) };
+  return { url: ogPicturePath(purpose, path), alt, ...ogPictureSize(purpose) };
 }

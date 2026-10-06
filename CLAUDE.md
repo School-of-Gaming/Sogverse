@@ -115,6 +115,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Calendar invitations (the mailed `.ics`) | `src/lib/calendar-invitations/` |
 | Supabase clients & paged list reads | `src/lib/supabase/` |
 | Locations | `src/services/locations/` |
+| Images — the purpose registry, the preview budget and the og:image renditions | `src/lib/images/` |
 | Image catalogue — product pictures and Library covers | `src/services/catalogue-images/` |
 | Library — articles, their working and published copies | `src/services/library/` |
 | WhatsApp | `src/services/whatsapp/` |

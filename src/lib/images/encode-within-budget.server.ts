@@ -66,10 +66,20 @@ export class ImageOverBudgetError extends Error {
 
 /**
  * Encode `input` as a PNG or JPEG of at most `budgetBytes`, no wider than
- * `maxWidth`.
+ * `maxWidth` — or, given `cover`, at exactly that size.
  *
  * - **Orientation is baked in** and the picture is downscaled to `maxWidth`
  *   with its aspect kept, never enlarged.
+ * - **`cover` is for a rendition whose size is declared to consumers.** A page
+ *   that names a picture in `og:image` also states its width and height, and a
+ *   preview consumer that trusts them reserves that frame before the bytes
+ *   arrive; a picture of another shape is then letterboxed or cropped where we
+ *   did not choose. The declared size comes from what the picture is *meant*
+ *   to be, while the stored bytes are whatever was uploaded — and catalogue
+ *   entries from before sizes were enforced can be any size — so the declared
+ *   size is made the served size here, whatever the input is: scaled to cover
+ *   the frame (enlarging if it must) and centre-cropped to it. `maxWidth` is
+ *   ignored, since the frame already fixes the width.
  * - **A PNG stays a PNG when it fits.** A drawn card — flat colour and text —
  *   is small and crisp as PNG and would only pick up ringing as JPEG, so a PNG
  *   that is under budget at preview width is kept. One that already is, as it
@@ -85,19 +95,29 @@ export class ImageOverBudgetError extends Error {
  */
 export async function encodeWithinBudget(
   input: Buffer,
-  options: { budgetBytes?: number; maxWidth?: number } = {},
+  options: {
+    budgetBytes?: number;
+    maxWidth?: number;
+    cover?: { width: number; height: number };
+  } = {},
 ): Promise<BudgetedImage> {
   const budgetBytes = options.budgetBytes ?? PREVIEW_IMAGE_BUDGET_BYTES;
   const maxWidth = options.maxWidth ?? PREVIEW_IMAGE_MAX_WIDTH;
+  const { cover } = options;
 
   const metadata = await sharp(input, { limitInputPixels: MAX_INPUT_PIXELS }).metadata();
   const isPng = metadata.format === "png";
 
-  // A PNG that already fits as it is — upright, narrow enough, under budget —
+  // A PNG that already fits as it is — upright, the right size, under budget —
   // is what a drawn card usually is. Returning it untouched keeps the card
-  // exactly as it was rendered.
+  // exactly as it was rendered. Under `cover` the right size is the frame
+  // exactly: a PNG of any other shape has to be cropped, so it cannot pass.
   const upright = (metadata.orientation ?? 1) === 1;
-  if (isPng && upright && metadata.width <= maxWidth && input.length <= budgetBytes) {
+  const sizedAlready =
+    cover === undefined
+      ? metadata.width <= maxWidth
+      : metadata.width === cover.width && metadata.height === cover.height;
+  if (isPng && upright && sizedAlready && input.length <= budgetBytes) {
     return {
       bytes: input,
       contentType: "image/png",
@@ -106,11 +126,16 @@ export async function encodeWithinBudget(
     };
   }
 
-  // One decode-orient-downscale pipeline, cloned for each encode tried.
-  const prepared = sharp(input, { limitInputPixels: MAX_INPUT_PIXELS })
+  // One decode-orient-resize pipeline, cloned for each encode tried. The
+  // rotation comes first so `cover` frames the upright picture, not the
+  // sideways one the bytes may store.
+  const oriented = sharp(input, { limitInputPixels: MAX_INPUT_PIXELS })
     // No argument: apply the orientation the EXIF tag claims, then forget it.
-    .rotate()
-    .resize({ width: maxWidth, fit: "inside", withoutEnlargement: true });
+    .rotate();
+  const prepared =
+    cover === undefined
+      ? oriented.resize({ width: maxWidth, fit: "inside", withoutEnlargement: true })
+      : oriented.resize(cover.width, cover.height, { fit: "cover" });
 
   let smallestBytes = Number.POSITIVE_INFINITY;
 
