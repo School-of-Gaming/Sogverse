@@ -9,6 +9,7 @@ import {
   SUPPORTED_LOCALES,
 } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { describeMissingWords } from "@/lib/landing-pages/describe-missing";
 import {
   landingMarkdownValues,
   landingSections,
@@ -23,11 +24,13 @@ import {
 import { OVERWRITES, READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
 import {
   NOT_FOUND,
+  adminLink,
   asLandingAdmin,
-  editorLink,
+  issueSentence,
   pageId,
   previewLink,
   publicLink,
+  readableInput,
   slugLink,
 } from "@/lib/mcp/landing-pages-call";
 import {
@@ -38,7 +41,11 @@ import {
   withIds,
 } from "@/lib/mcp/landing-pages-sections";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
-import { landingSlug, type AdminLandingPage } from "@/services/landing-pages";
+import {
+  defaultLandingSlug,
+  landingSlug,
+  type AdminLandingPage,
+} from "@/services/landing-pages";
 import {
   LANDING_SLUG_MAX_LENGTH,
   LANDING_SUMMARY_MAX_LENGTH,
@@ -47,12 +54,13 @@ import {
 
 /*
  * The landing page tools: an admin authors, publishes and unpublishes the
- * marketing landing pages from an AI app. Every tool runs the landing page
- * service on the admin's own token-bound client, so the admin-guarded
- * functions decide exactly as they do in the editor, and a save is stamped
- * with the admin and the app it came through. Writes go through the two
- * partial writers — the structure alone, or one language's words alone —
- * never the editor's whole save (`src/services/landing-pages/CLAUDE.md`).
+ * marketing landing pages from an AI app, the only place they are written.
+ * Every tool runs the landing page service on the admin's own token-bound
+ * client, so the admin-guarded functions decide exactly as they do for the
+ * admin in Sogverse, and a save is stamped with the admin and the app it came
+ * through. Writes go through the two partial writers — the structure alone,
+ * or one language's words alone — never the whole save
+ * (`src/services/landing-pages/CLAUDE.md`).
  *
  * The picture tools are in `landing-pages-images.ts`; the sections as an AI
  * app writes them in `landing-pages-sections.ts`.
@@ -130,16 +138,18 @@ const slug = z
   })
   .describe(`The version's address. ${SLUGS}`);
 
+/**
+ * A language's words as the call is checked: any object keyed by section id.
+ * The JSON Schema the AI app is shown is `mcpSectionTexts`; each section's
+ * words are then checked by the tool against that section's own type
+ * (`readWords`), which names a problem far better than a check against every
+ * type at once could.
+ */
+const wordsByHand = z.record(z.string(), z.unknown());
+
 // ---------------------------------------------------------------------------
 // Checking an AI app's input against the page
 // ---------------------------------------------------------------------------
-
-/** A zod 3 issue list, as one line per issue with its path. */
-function issueLines(issues: readonly { path: (string | number)[]; message: string }[]): string {
-  return issues
-    .map(({ path, message }) => (path.length === 0 ? message : `${path.join(".")}: ${message}`))
-    .join("; ");
-}
 
 /**
  * The structure an AI app sent, with new sections and items given ids and
@@ -151,9 +161,15 @@ function readStructure(
 ): { sections: LandingSection[] } | { refusal: CallToolResult } {
   const parsed = landingSections.safeParse(withIds(sections, () => crypto.randomUUID()));
   if (parsed.success) return { sections: parsed.data };
+  const named = sections.map((section) =>
+    typeof section === "object" && section !== null ? section : {},
+  );
+  const problems = parsed.error.issues.map((issue) =>
+    issueSentence({ path: ["sections", ...issue.path], message: issue.message }, named),
+  );
   return {
     refusal: refusal(
-      `Nothing was saved: the structure is not one a page can have — ${issueLines(parsed.error.issues)}.`,
+      `Nothing was saved: the structure is not one a page can have. ${problems.join(". ")}.`,
     ),
   };
 }
@@ -166,23 +182,37 @@ function itemIdsOf<Type extends LandingSectionType>(
   return MCP_LANDING_SECTIONS[type].itemIds(section);
 }
 
-/** What is wrong with one section's words, as lines. */
-function sectionWordsProblems(section: LandingSection, words: unknown): string[] {
-  const name = `section ${section.id} (${section.type})`;
+/**
+ * One section's words checked by its type's schema — fields, item keys and
+ * markdown — as the words to save, or the problems, each a sentence naming
+ * the section as every answer does.
+ */
+function readSectionWords(
+  sections: readonly LandingSection[],
+  section: LandingSection,
+  words: unknown,
+): { words: unknown } | { problems: string[] } {
+  const items = itemIdsOf(section.type, section);
+  // An item named by its id is said by its number, as the structure counts it.
+  const numbered = (path: readonly PropertyKey[]): PropertyKey[] => {
+    const [key, id, ...rest] = path;
+    const index = typeof id === "string" ? (items?.ids.indexOf(id) ?? -1) : -1;
+    return key === items?.key && index !== -1 ? [key, index, ...rest] : [...path];
+  };
+  const at = (path: readonly PropertyKey[], message: string) =>
+    issueSentence({ path: ["sectionTexts", section.id, ...numbered(path)], message }, sections);
   const parsed = MCP_LANDING_SECTIONS[section.type].text.safeParse(words);
   if (!parsed.success) {
-    return parsed.error.issues.map(
-      (issue) =>
-        `${name}${issue.path.length ? ` ${issue.path.join(".")}` : ""}: ${issue.message}`,
-    );
+    return { problems: parsed.error.issues.map((issue) => at(issue.path, issue.message)) };
   }
   const problems: string[] = [];
-  const items = itemIdsOf(section.type, section);
   if (items !== null) {
     const keyed: unknown = Object.getOwnPropertyDescriptor(parsed.data, items.key)?.value;
     for (const key of Object.keys(typeof keyed === "object" && keyed !== null ? keyed : {})) {
       if (!items.ids.includes(key)) {
-        problems.push(`${name} ${items.key}: ${key} is not one of the section's item ids`);
+        problems.push(
+          at([items.key], `${key} is not the id of one of the section's ${items.key === "alts" ? "pictures" : "items"}`),
+        );
       }
     }
   }
@@ -194,32 +224,44 @@ function sectionWordsProblems(section: LandingSection, words: unknown): string[]
         lines.length === 0 ? construct : `${construct} on line ${lines.join(", ")}`,
       )
       .join("; ");
-    problems.push(`${name} ${path} uses markdown a landing page does not show — ${named}`);
+    problems.push(at(path.split("."), `uses markdown a landing page does not show — ${named}`));
   }
-  return problems;
+  return problems.length === 0 ? { words: parsed.data } : { problems };
 }
 
 /**
  * One language's words checked against the page's structure — every key a
  * section, every entry its type's fields, item keys its items, markdown
- * inside the subset — or the refusal naming each problem.
+ * inside the subset — as the words to save, or the refusal naming each
+ * problem.
  */
 function readWords(
   sections: readonly LandingSection[],
   texts: Record<string, unknown>,
 ): { texts: Record<string, unknown> } | { refusal: CallToolResult } {
   const byId = new Map(sections.map((section) => [section.id, section]));
-  const problems = Object.entries(texts).flatMap(([id, words]) => {
-    const section = byId.get(id);
-    return section === undefined
-      ? [`${id} is not the id of a section of this page`]
-      : sectionWordsProblems(section, words);
-  });
-  if (problems.length === 0) return { texts };
+  const checked: Record<string, unknown> = {};
+  const problems: string[] = [];
+  let unknownSection = false;
+  for (const [id, words] of Object.entries(texts)) {
+    const section = byId.get(id.trim().toLowerCase());
+    if (section === undefined) {
+      unknownSection = true;
+      problems.push(
+        `Words were sent for a section this page's structure does not have (id ${id})`,
+      );
+      continue;
+    }
+    const read = readSectionWords(sections, section, words);
+    if ("problems" in read) problems.push(...read.problems);
+    else checked[section.id] = read.words;
+  }
+  if (problems.length === 0) return { texts: checked };
+  const advice = unknownSection
+    ? "Read get_landing_page for the page's current section ids, and key the words by them."
+    : "get_landing_page lists the page's section and item ids.";
   return {
-    refusal: refusal(
-      `Nothing was saved: ${problems.join("; ")}. get_landing_page lists the page's section and item ids.`,
-    ),
+    refusal: refusal(`Nothing was saved. ${problems.join(". ")}. ${advice}`),
   };
 }
 
@@ -227,13 +269,39 @@ function readWords(
 // Reading a page
 // ---------------------------------------------------------------------------
 
+type DraftVersion = AdminLandingPage["draft"]["versions"][number];
+
+/**
+ * What a version still needs, each path with its description in an admin's
+ * terms (section and item numbers from one, the section's type by name).
+ */
+function missingWords(page: AdminLandingPage, version: DraftVersion) {
+  return version.missing.map((path) => describeMissingWords(path, page.draft.sections));
+}
+
+/**
+ * The slug a publish would fix for good in each language it puts live for the
+ * first time, and whether it is the one derived from the title — likely never
+ * chosen by anyone — rather than one written.
+ */
+function slugsBecomingPermanent(page: AdminLandingPage, origin: string) {
+  return page.draft.versions
+    .filter((v) => v.missing.length === 0 && !v.slugFixed)
+    .map((v) => ({
+      locale: v.locale,
+      slug: v.slug,
+      address: slugLink(origin, v.slug, v.locale),
+      derivedFromTitle: v.slug === defaultLandingSlug(v.title),
+    }));
+}
+
 /**
  * What a publish would do now: the languages it would put live, the written
- * ones it would leave out, the live ones it would take down. The database
- * decides completeness by the same rule, so this is a forecast of its answer
- * and never a gate.
+ * ones it would leave out, the live ones it would take down, and the slugs it
+ * would fix for good. The database decides completeness by the same rule, so
+ * this is a forecast of its answer and never a gate.
  */
-function publishForecast(page: AdminLandingPage) {
+function publishForecast(page: AdminLandingPage, origin: string) {
   const { draft, publication } = page;
   const complete = draft.versions.filter((v) => v.missing.length === 0).map((v) => v.locale);
   const live = publication?.versions.map((v) => v.locale) ?? [];
@@ -242,8 +310,9 @@ function publishForecast(page: AdminLandingPage) {
     wouldPutLive: complete,
     wouldLeaveOut: draft.versions
       .filter((v) => !complete.includes(v.locale))
-      .map((v) => ({ locale: v.locale, missing: v.missing })),
+      .map((v) => ({ locale: v.locale, missing: missingWords(page, v) })),
     wouldTakeDown: live.filter((l) => !complete.includes(l)),
+    slugsBecomingPermanent: slugsBecomingPermanent(page, origin),
   };
 }
 
@@ -273,12 +342,12 @@ function pageView(page: AdminLandingPage, origin: string) {
       address: slugLink(origin, version.slug, version.locale),
       sectionTexts: version.sectionTexts,
       complete: version.missing.length === 0,
-      missing: version.missing,
+      missing: missingWords(page, version),
       live: liveLocales.has(version.locale),
       previewLink: previewLink(origin, draft.id, version.locale),
     })),
     hasUnpublishedChanges: page.hasUnpublishedChanges,
-    publish: publishForecast(page),
+    publish: publishForecast(page, origin),
     live:
       publication === null
         ? null
@@ -292,7 +361,7 @@ function pageView(page: AdminLandingPage, origin: string) {
               publicLink: publicLink(origin, publication, version.locale),
             })),
           },
-    editorLink: editorLink(origin, draft.id),
+    adminLink: adminLink(origin, draft.id),
   };
 }
 
@@ -301,7 +370,7 @@ function languages(page: AdminLandingPage) {
   return page.draft.versions.map((version) => ({
     locale: version.locale,
     complete: version.missing.length === 0,
-    missing: version.missing,
+    missing: missingWords(page, version),
   }));
 }
 
@@ -345,8 +414,8 @@ export function registerLandingPageTools(server: McpServer): void {
     "get_landing_page",
     {
       title: "Read a landing page",
-      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures shown small, and every language version — title, summary, slug and whether it is fixed, its address, every section's words, whether it is complete and what it still needs (as paths: sections.<section id>.<field>) — with what a publish now would put live, leave out and take down; what readers see now, with each live language's public link; a preview link per language; and the link to its editor in Sogverse. ${COMPLETE} ${PUBLISHING}`,
-      inputSchema: z.object({ pageId }),
+      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures shown small, and every language version — title, summary, slug and whether it is fixed, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one) — with what a publish now would put live, leave out and take down, and the slugs it would fix for good (publish.slugsBecomingPermanent: each language going live for the first time, its slug and whether that slug was derived from the title rather than written); what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING}`,
+      inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: READ_ONLY,
     },
     ({ pageId: id }, ctx) =>
@@ -371,8 +440,8 @@ export function registerLandingPageTools(server: McpServer): void {
     {
       title: "Preview a landing page",
       description:
-        "A link the admin opens in their browser, signed in to Sogverse as an admin, to see the page's saved working copy as a reader would meet it if it were published now, in one language. Without a version in that language the preview shows the one a reader there would get: theirs, else English, else the first written. Only admins can open it.",
-      inputSchema: z.object({ pageId, locale }),
+        "A link the admin opens in their browser, signed in to Sogverse as an admin, to see the page's saved working copy as a reader would meet it if it were published now, in one language. Use it when the admin wants to see the page — after a round of edits, or before publishing — and offer it when seeing the page would help them judge it; there is no need to hand one over after every save. Without a version in that language the preview shows the one a reader there would get: theirs, else English, else the first written. Only admins can open it.",
+      inputSchema: readableInput(z.object({ pageId, locale }), z.object({ pageId, locale })),
       annotations: READ_ONLY,
     },
     ({ pageId: id, locale: at }, ctx) =>
@@ -393,15 +462,25 @@ export function registerLandingPageTools(server: McpServer): void {
     "create_landing_page",
     {
       title: "Create a landing page",
-      description: `Start a new landing page with its structure and one language version; add the other languages one at a time with save_landing_page_text. It is created unpublished. Sections and items sent without ids are given them, and the answer lists the structure with every id. To write the sections' words in this same call, give the sections and items ids of your own (any lowercase uuid) and key sectionTexts by them; otherwise write the words afterwards with save_landing_page_text. The answer says the address the page will have once published. ${MODEL} ${COMPLETE} ${SLUGS} ${MARKDOWN}\n\n${SECTIONS_MANUAL}`,
-      inputSchema: z.object({
-        locale,
-        title,
-        summary: summary.optional(),
-        slug: slug.optional(),
-        sections: mcpLandingStructure,
-        sectionTexts: mcpSectionTexts.optional(),
-      }),
+      description: `Start a new landing page with its structure and one language version; add the other languages one at a time with save_landing_page_text. It is created unpublished. Sections and items sent without ids are given them, and the answer lists the structure with every id. To write the sections' words in this same call, give the sections and items ids of your own (any lowercase uuid) and key sectionTexts by them; otherwise write the words afterwards with save_landing_page_text. The answer says the address the page will have once published, what the language still needs, and the page's status page in Sogverse admin (adminLink). ${MODEL} ${COMPLETE} ${SLUGS} ${MARKDOWN}\n\n${SECTIONS_MANUAL}`,
+      inputSchema: readableInput(
+        z.object({
+          locale,
+          title,
+          summary: summary.optional(),
+          slug: slug.optional(),
+          sections: mcpLandingStructure,
+          sectionTexts: mcpSectionTexts.optional(),
+        }),
+        z.object({
+          locale,
+          title,
+          summary: summary.optional(),
+          slug: slug.optional(),
+          sections: mcpLandingStructure,
+          sectionTexts: wordsByHand.optional(),
+        }),
+      ),
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -437,9 +516,9 @@ export function registerLandingPageTools(server: McpServer): void {
           slug: version?.slug ?? "",
           address: slugLink(origin, version?.slug ?? "", input.locale),
           complete: version !== undefined && version.missing.length === 0,
-          missing: version?.missing ?? [],
+          missing: version === undefined ? [] : missingWords(page, version),
           previewLink: previewLink(origin, id, input.locale),
-          editorLink: editorLink(origin, id),
+          adminLink: adminLink(origin, id),
         });
       }),
   );
@@ -449,11 +528,14 @@ export function registerLandingPageTools(server: McpServer): void {
     {
       title: "Save a landing page's structure",
       description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, and each language's completeness under the new structure. Readers see nothing until the next publish. ${PUBLISHING}\n\n${SECTIONS_MANUAL}`,
-      inputSchema: z.object({ pageId, sections: mcpLandingStructure }),
+      inputSchema: readableInput(
+        z.object({ pageId, sections: mcpLandingStructure }),
+        z.object({ pageId, sections: mcpLandingStructure }),
+      ),
       annotations: OVERWRITES,
     },
     ({ pageId: id, sections }, ctx) =>
-      asLandingAdmin(ctx, async ({ service }) => {
+      asLandingAdmin(ctx, async ({ service, origin }) => {
         const before = await service.getAdminPage(id);
         if (before === null) return refusal(NOT_FOUND);
         const structure = readStructure(sections);
@@ -470,7 +552,7 @@ export function registerLandingPageTools(server: McpServer): void {
             .map((section) => ({ id: section.id, type: section.type })),
           languages: languages(after),
           hasUnpublishedChanges: after.hasUnpublishedChanges,
-          publish: publishForecast(after),
+          publish: publishForecast(after, origin),
         });
       }),
   );
@@ -480,14 +562,24 @@ export function registerLandingPageTools(server: McpServer): void {
     {
       title: "Save a landing page's language version",
       description: `Write one language version of the page — its title, summary, optional slug and every section's words — replacing what that language held, or add a language it does not have yet. No other language, nor the structure, is touched. sectionTexts is the whole of this language's words: a section left out is saved with no words in this language. The words are checked against the page's structure as it is now. Readers see nothing until the next publish; leaving a live language incomplete means the next publish takes it down. ${SLUGS} ${MARKDOWN}`,
-      inputSchema: z.object({
-        pageId,
-        locale,
-        title,
-        summary,
-        slug: slug.optional(),
-        sectionTexts: mcpSectionTexts,
-      }),
+      inputSchema: readableInput(
+        z.object({
+          pageId,
+          locale,
+          title,
+          summary,
+          slug: slug.optional(),
+          sectionTexts: mcpSectionTexts,
+        }),
+        z.object({
+          pageId,
+          locale,
+          title,
+          summary,
+          slug: slug.optional(),
+          sectionTexts: wordsByHand,
+        }),
+      ),
       annotations: OVERWRITES,
     },
     (input, ctx) =>
@@ -513,11 +605,11 @@ export function registerLandingPageTools(server: McpServer): void {
           slugFixed: saved?.slugFixed ?? false,
           address: slugLink(origin, saved?.slug ?? "", input.locale),
           complete: saved !== undefined && saved.missing.length === 0,
-          missing: saved?.missing ?? [],
+          missing: saved === undefined ? [] : missingWords(page, saved),
           languageIsLive:
             page.publication?.versions.some((v) => v.locale === input.locale) ?? false,
           hasUnpublishedChanges: page.hasUnpublishedChanges,
-          publish: publishForecast(page),
+          publish: publishForecast(page, origin),
         });
       }),
   );
@@ -526,8 +618,8 @@ export function registerLandingPageTools(server: McpServer): void {
     "publish_landing_page",
     {
       title: "Publish a landing page",
-      description: `Make the page's saved working copy what readers see, replacing what was live. ${PUBLISHING} Publishing a language fixes its slug for good. Answers which languages went live, which were left out or taken down, and each live language's public link. ${ADDRESSES} Read get_landing_page first to see what a publish would do.`,
-      inputSchema: z.object({ pageId }),
+      description: `Make the page's saved working copy what readers see, replacing what was live. ${PUBLISHING} Publishing a language for the first time fixes its slug for good, and a slug nobody wrote is derived from the title, often long. So read get_landing_page first: its publish.slugsBecomingPermanent lists, for each language this publish would put live for the first time, the slug that becomes permanent and whether it was derived from the title rather than written. Before publishing a language for the first time, confirm those slugs with the admin, and change any they do not want with save_landing_page_text first. Answers which languages went live, which were left out or taken down, the slugs this publish fixed, and each live language's public link. ${ADDRESSES}`,
+      inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: OVERWRITES,
     },
     ({ pageId: id }, ctx) =>
@@ -547,8 +639,15 @@ export function registerLandingPageTools(server: McpServer): void {
           live: liveLocales,
           leftOut: after.draft.versions
             .filter((v) => !liveLocales.includes(v.locale))
-            .map((v) => ({ locale: v.locale, missing: v.missing })),
+            .map((v) => ({ locale: v.locale, missing: missingWords(after, v) })),
           takenDown: wasLive.filter((l) => !liveLocales.includes(l)),
+          slugsFixedNow: after.draft.versions
+            .filter(
+              (v) =>
+                liveLocales.includes(v.locale) &&
+                !(before.draft.versions.find((b) => b.locale === v.locale)?.slugFixed ?? false),
+            )
+            .map((v) => ({ locale: v.locale, slug: v.slug })),
           publicLinks: liveLocales.map((l) => ({
             locale: l,
             publicLink: publication === null ? null : publicLink(origin, publication, l),
@@ -562,7 +661,7 @@ export function registerLandingPageTools(server: McpServer): void {
     {
       title: "Unpublish a landing page",
       description: `Take the page off the site, every language at once. Its working copy is kept exactly as it was, to edit and publish again, and every slug that was published stays fixed. ${NO_DELETE} Unpublishing a page that is not live changes nothing.`,
-      inputSchema: z.object({ pageId }),
+      inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: OVERWRITES,
     },
     ({ pageId: id }, ctx) =>

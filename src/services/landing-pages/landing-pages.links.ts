@@ -1,6 +1,7 @@
 import { findArticleBySlug, type AddressableArticle } from "@/components/library/article-address";
 import { findTeamMemberBySlug } from "@/components/team/team-address";
 import { LOCALE_CONFIG, type SupportedLocale } from "@/lib/constants/locales";
+import { landingSectionName } from "@/lib/landing-pages/describe-missing";
 import {
   LANDING_SECTIONS,
   type LandingMarkdownField,
@@ -82,7 +83,7 @@ export async function canonicaliseLandingLinks(
   const refusals: string[] = [];
   const position = new Map(structure.map((section, index) => [section.id, index]));
   const sectionName = (section: Pick<LandingSection, "id" | "type">, index?: number) =>
-    `section ${(index ?? position.get(section.id) ?? 0) + 1} (${LANDING_SECTIONS[section.type].label})`;
+    landingSectionName((index ?? position.get(section.id) ?? 0) + 1, section.type);
 
   const sections =
     write.sections === null

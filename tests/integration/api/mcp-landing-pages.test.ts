@@ -166,6 +166,16 @@ const LIST_ITEM: AdminLandingPageListItem = {
   hasUnpublishedChanges: false,
 };
 
+/** The Finnish version's one missing word, as every answer describes it. */
+const FI_MISSING = {
+  path: `sections.${FAQ}.items.${QUESTION}.answer`,
+  sectionNumber: 3,
+  sectionType: "faq",
+  itemNumber: 1,
+  field: "answer",
+  text: "Section 3 (Questions and answers), question 1: the answer",
+};
+
 function entry(n: number): CatalogueImage {
   return {
     id: `10000000-0000-4000-8000-${String(n).padStart(12, "0")}`,
@@ -248,15 +258,17 @@ describe("reading", () => {
       publish: {
         canPublish: true,
         wouldPutLive: ["en"],
-        wouldLeaveOut: [{ locale: "fi", missing: [`sections.${FAQ}.items.${QUESTION}.answer`] }],
+        wouldLeaveOut: [{ locale: "fi", missing: [FI_MISSING] }],
         wouldTakeDown: [],
+        // English is live already, so its slug was fixed long ago.
+        slugsBecomingPermanent: [],
       },
       live: {
         versions: [
           { locale: "en", publicLink: `${ORIGIN}/en/discover/gaming-clubs-in-espoo` },
         ],
       },
-      editorLink: `${ORIGIN}/en/admin/landing-pages/${ID}`,
+      adminLink: `${ORIGIN}/en/admin/landing-pages/${ID}`,
     });
     expect(result.structuredContent?.versions).toEqual([
       expect.objectContaining({
@@ -279,6 +291,41 @@ describe("reading", () => {
     // The page's picture, shown small and named in text.
     expect(result.content.filter((block) => block.type === "image")).toHaveLength(1);
     expect(resultText(result)).toContain(`Picture ${CASTLE}: ${BUCKET}/castle.jpg`);
+  });
+
+  it("lists the slugs a publish would fix for good, saying which were derived from the title", async () => {
+    const [en, fi] = PAGE.draft.versions;
+    landing.getAdminPage.mockResolvedValue({
+      ...PAGE,
+      publication: null,
+      draft: {
+        ...PAGE.draft,
+        versions: [
+          { ...en, slugFixed: false, slug: "espoo-clubs" },
+          { ...fi, missing: [] },
+        ],
+      },
+    } satisfies AdminLandingPage);
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    expect(result.structuredContent?.publish).toMatchObject({
+      wouldPutLive: ["en", "fi"],
+      slugsBecomingPermanent: [
+        {
+          locale: "en",
+          slug: "espoo-clubs",
+          address: `${ORIGIN}/en/discover/espoo-clubs`,
+          derivedFromTitle: false,
+        },
+        {
+          locale: "fi",
+          slug: "pelikerhot-espoossa",
+          address: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa`,
+          derivedFromTitle: true,
+        },
+      ],
+    });
   });
 
   it("answers an id no page has as a tool error", async () => {
@@ -315,6 +362,13 @@ describe("reading", () => {
     expect(structure).toContain("drops its words in every language");
     const text = tools.find((t) => t.name === "save_landing_page_text")?.description;
     expect(text).toContain("its slug is fixed for good");
+    const publish = tools.find((t) => t.name === "publish_landing_page")?.description;
+    expect(publish).toContain("confirm those slugs with the admin");
+    expect(publish).toContain("slugsBecomingPermanent");
+    // Landing pages are written only here: nothing sends the admin to an editor.
+    for (const { name, description } of tools) {
+      if (name.includes("landing")) expect(description, name).not.toMatch(/editor/i);
+    }
   });
 });
 
@@ -373,15 +427,74 @@ describe("creating", () => {
     expect(landing.createPage).not.toHaveBeenCalled();
   });
 
-  it("refuses a slug shaped like an id before anything is sent", async () => {
+  it.each([
+    ["shaped like an id", ID, "may not look like a page id: those are kept for each page's id address"],
+    ["in capitals, suggesting the lowercase", "Gaming-Clubs", '"gaming-clubs" would do'],
+  ])("refuses a slug %s before anything is sent", async (_, slug, named) => {
     const result = await tool("create_landing_page", {
       locale: "en",
       title: "A page",
-      slug: ID,
+      slug,
       sections: [{ type: "hero" }],
     });
 
     expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain(named);
+    expect(landing.createPage).not.toHaveBeenCalled();
+  });
+
+  it("takes a button that opens an email", async () => {
+    landing.createPage.mockResolvedValue(ID);
+
+    const result = await tool("create_landing_page", {
+      locale: "en",
+      title: "A page",
+      sections: [
+        { id: HERO, type: "hero", button: { kind: "email", to: " hello@sog.gg " } },
+      ],
+      sectionTexts: {
+        [HERO]: { headline: "Hello", buttonLabel: "Email us", emailSubject: "A club" },
+      },
+    });
+
+    expect(result.isError).toBeUndefined();
+    const [input] = landing.createPage.mock.calls[0];
+    expect(input.sections).toEqual([
+      { id: HERO, type: "hero", button: { kind: "email", to: "hello@sog.gg" } },
+    ]);
+    expect(input.versions[0].sectionTexts).toEqual({
+      [HERO]: { headline: "Hello", buttonLabel: "Email us", emailSubject: "A club" },
+    });
+  });
+
+  it.each([
+    [
+      "a button's address, naming the section by number and type",
+      [
+        { type: "hero" },
+        { type: "cta", button: { kind: "external", url: "ftp://example.com" } },
+      ],
+      "Section 2 (Call to action), button.url: ",
+    ],
+    [
+      "an item's field, naming the item by number",
+      [
+        { type: "hero" },
+        { type: "points", items: [{ icon: "star" }, { icon: "unicorn" }] },
+      ],
+      "Section 2 (Points), point 2, icon: ",
+    ],
+    [
+      "an email button with more than an address",
+      [{ type: "hero", button: { kind: "email", to: "a@sog.gg", subject: "Hi" } }],
+      "Section 1 (Hero), button: ",
+    ],
+  ])("refuses %s, counting from one", async (_, sections, named) => {
+    const result = await tool("create_landing_page", { locale: "en", title: "A page", sections });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain(named);
+    expect(resultText(result)).not.toMatch(/sections[.,]\d/);
     expect(landing.createPage).not.toHaveBeenCalled();
   });
 });
@@ -446,10 +559,27 @@ describe("saving", () => {
   });
 
   it.each([
-    ["a section the page does not have", { "c3000000-0000-4000-8000-000000000009": { heading: "x" } }, "is not the id of a section of this page"],
-    ["another type's fields", { [TEXT]: { headline: "x" } }, `section ${TEXT} (text)`],
-    ["words for an item the section does not have", { [FAQ]: { items: { [PICTURE_ITEM]: { question: "?" } } } }, "is not one of the section's item ids"],
-    ["markdown outside the landing subset", { [TEXT]: { heading: "x", body: "![A castle](https://x.test/c.jpg)" } }, "an image (![alt](url)) on line 1"],
+    [
+      "a section the page does not have",
+      { "c3000000-0000-4000-8000-000000000009": { heading: "x" } },
+      "Words were sent for a section this page's structure does not have (id c3000000-0000-4000-8000-000000000009). Read get_landing_page for the page's current section ids",
+    ],
+    ["another type's fields", { [TEXT]: { headline: "x" } }, "The words of section 2 (Text): "],
+    [
+      "a field of the wrong shape inside an item",
+      { [FAQ]: { items: { [QUESTION]: { question: 3 } } } },
+      "The words of section 3 (Questions and answers), question 1, question: ",
+    ],
+    [
+      "words for an item the section does not have",
+      { [FAQ]: { items: { [PICTURE_ITEM]: { question: "?" } } } },
+      `The words of section 3 (Questions and answers), items: ${PICTURE_ITEM} is not the id of one of the section's items`,
+    ],
+    [
+      "markdown outside the landing subset",
+      { [TEXT]: { heading: "x", body: "![A castle](https://x.test/c.jpg)" } },
+      "The words of section 2 (Text), body: uses markdown a landing page does not show — an image (![alt](url)) on line 1",
+    ],
   ])("refuses %s, naming it, and saves nothing", async (_, sectionTexts, named) => {
     const result = await tool("save_landing_page_text", {
       pageId: ID,
@@ -505,9 +635,31 @@ describe("publishing", () => {
     expect(result.structuredContent).toEqual({
       pageId: ID,
       live: ["en"],
-      leftOut: [{ locale: "fi", missing: [`sections.${FAQ}.items.${QUESTION}.answer`] }],
+      leftOut: [{ locale: "fi", missing: [FI_MISSING] }],
       takenDown: [],
+      slugsFixedNow: [],
       publicLinks: [{ locale: "en", publicLink: `${ORIGIN}/en/discover/gaming-clubs-in-espoo` }],
+    });
+  });
+
+  it("names the slugs this publish fixed for good", async () => {
+    const [en] = PAGE.draft.versions;
+    const before: AdminLandingPage = {
+      ...PAGE,
+      publication: null,
+      draft: { ...PAGE.draft, versions: [{ ...en, slugFixed: false }] },
+    };
+    const after: AdminLandingPage = {
+      ...PAGE,
+      draft: { ...PAGE.draft, versions: [{ ...en, slugFixed: true }] },
+    };
+    landing.getAdminPage.mockResolvedValueOnce(before).mockResolvedValueOnce(after);
+
+    const result = await tool("publish_landing_page", { pageId: ID });
+
+    expect(result.structuredContent).toMatchObject({
+      live: ["en"],
+      slugsFixedNow: [{ locale: "en", slug: "gaming-clubs-in-espoo" }],
     });
   });
 

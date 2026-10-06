@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod-v4";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
+import { describeMissingWords } from "@/lib/landing-pages/describe-missing";
 import type { LandingSection } from "@/lib/landing-pages/sections";
 import {
   COVER_THUMBNAIL,
@@ -195,7 +196,9 @@ export function registerLandingImageTools(server: McpServer): void {
           pictureId: result.pictureId,
           // The alt text the picture still needs, per language.
           missingInSection: after.draft.versions.flatMap((version) => {
-            const missing = version.missing.filter((path) => path.startsWith(prefix));
+            const missing = version.missing
+              .filter((path) => path.startsWith(prefix))
+              .map((path) => describeMissingWords(path, after.draft.sections));
             return missing.length === 0 ? [] : [{ locale: version.locale, missing }];
           }),
           hasUnpublishedChanges: after.hasUnpublishedChanges,
@@ -207,7 +210,7 @@ export function registerLandingImageTools(server: McpServer): void {
     "open_landing_image_uploader",
     {
       title: "Upload a landing page picture",
-      description: `Show the admin an uploader, inside this chat, where they pick a picture from their device. It is cropped to the middle ${width}:${height} frame and saved as a ${width} × ${height} JPEG in Sogverse's picture catalogue; with a sectionId it is then placed in that section as set_landing_section_image would (pictureId as there), and without one it is only added to the catalogue. The picture never passes through you, and you are told the new catalogue id once it is stored. Use it when the admin wants a picture that is not in list_landing_images yet. Only AI apps that show MCP Apps views can upload; in any other the admin uploads in the Sogverse editor, whose link get_landing_page gives. ${PICTURE_RULES}`,
+      description: `Show the admin an uploader, inside this chat, where they pick a picture from their device. It is cropped to the middle ${width}:${height} frame and saved as a ${width} × ${height} JPEG in Sogverse's picture catalogue; with a sectionId it is then placed in that section as set_landing_section_image would (pictureId as there), and without one it is only added to the catalogue. The picture never passes through you, and you are told the new catalogue id once it is stored. Use it when the admin wants a picture that is not in list_landing_images yet. Only AI apps that show MCP Apps views can upload; in any other, tell the admin the picture has to be uploaded from an AI app that does, or choose one already in list_landing_images. ${PICTURE_RULES}`,
       inputSchema: z.object({
         pageId,
         sectionId: sectionId.optional(),
@@ -262,7 +265,7 @@ export function registerLandingImageTools(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: `The picture uploader for "${title}" is shown to the admin. Wait for them to pick a picture; you will be told its catalogue id once it is stored${where === null ? "" : ` and placed in ${where}`}. If your app shows no uploader, it cannot render MCP Apps views: the admin can upload the picture in the Sogverse editor instead, or choose an existing one from list_landing_images.\n\n${JSON.stringify(value, null, 2)}`,
+              text: `The picture uploader for "${title}" is shown to the admin. Wait for them to pick a picture; you will be told its catalogue id once it is stored${where === null ? "" : ` and placed in ${where}`}. If your app shows no uploader, it cannot render MCP Apps views: the admin can upload the picture from an AI app that does, or choose an existing one from list_landing_images.\n\n${JSON.stringify(value, null, 2)}`,
             },
           ],
         };

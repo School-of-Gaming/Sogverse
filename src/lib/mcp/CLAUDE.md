@@ -72,7 +72,9 @@ thrown error into a tool error carrying its raw message, which would hand the ap
 developer's sentence. A tool catches instead: a database refusal written for an admin (the
 area's own refusal reader decides which SQLSTATEs those are) is quoted as is, anything
 else is logged and answered with a generic line. Input the schema refuses never reaches the
-database.
+database. The SDK prints a schema's refusal as its raw issue path, zero-based, so the landing
+tools wrap their input schemas in `readableInput`, which says where each issue is the way
+their answers do: a section as "section N (Type label)", numbered from one.
 
 **The descriptions are the AI app's whole manual.** The editor teaches its rules by what it
 lets the admin do; an AI app learns them only from the tool descriptions, so each tool
@@ -122,8 +124,9 @@ endpoint's.
 and accept it only from this server's own views. That is the host's promise, not a gate:
 the tool is in `tools/list` and any client holding a grant can call it, so it checks its
 input exactly as a model-visible tool would. A host that cannot show views gets the opening
-tool's text instead, which says so and sends the admin to the Sogverse editor; there is no
-other way to upload from an AI app, by the owner's ruling. The server cannot ask the client
+tool's text instead, which says so and sends the admin elsewhere — to the Library's editor
+for a cover, to an AI app that shows views for a landing page picture, since landing pages
+have no editor; there is no other way to upload from an AI app, by the owner's ruling. The server cannot ask the client
 first — it is stateless, so the initialize capabilities are gone by the next request.
 
 **The picture travels as base64 inside one JSON-RPC request.** The catalogue's cap is 4 MB,
