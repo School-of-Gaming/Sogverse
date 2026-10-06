@@ -108,6 +108,9 @@ type Listing = "listed" | "absent" | "ended" | "failed";
 
 let fetchMock: FetchMock;
 let listing: Listing;
+/** The product's picture as the card's read returns it: a catalogue key. */
+const IMAGE_PATH =
+  "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae.jpg";
 
 function respond(input: Parameters<typeof fetch>[0]): Response {
   const select = requestedUrl(input).searchParams.get("select") ?? "";
@@ -129,7 +132,7 @@ function respond(input: Parameters<typeof fetch>[0]): Response {
   }
   if (select.startsWith("image_path")) {
     return postgrestJson({
-      image_path: "products/minecraft.jpg",
+      image_path: IMAGE_PATH,
       product_translations: TRANSLATIONS,
     });
   }
@@ -251,6 +254,23 @@ describe("buildProductMetadata", () => {
       locale: "fi",
       title: "Minecraft-kerho",
     });
+  });
+
+  it("unfurls into the picture's preview rendition, at its declared size", async () => {
+    const metadata = await buildProductMetadata(ID, parent, true);
+
+    // The picture route, never the stored object: a legacy product PNG can be
+    // megabytes, past what WhatsApp shows.
+    const images = [
+      {
+        url: `/opengraph-images/picture/product/${IMAGE_PATH}`,
+        alt: "Minecraft club",
+        width: 1200,
+        height: 800,
+      },
+    ];
+    expect(metadata.openGraph?.images).toEqual(images);
+    expect(metadata.twitter?.images).toEqual(images);
   });
 
   it("keeps a product that is not promoted noindex, with no alternates and its own card", async () => {

@@ -1,7 +1,10 @@
 import "server-only";
 import sharp from "sharp";
 import { JPEG_FLATTEN_GROUND } from "./normalize-image";
+import { PREVIEW_IMAGE_BUDGET_BYTES, PREVIEW_IMAGE_MAX_WIDTH } from "./preview-budget";
 import { MAX_INPUT_PIXELS } from "./reencode-jpeg.server";
+
+export { PREVIEW_IMAGE_BUDGET_BYTES, PREVIEW_IMAGE_MAX_WIDTH };
 
 /**
  * **Bytes a link preview will actually show.** One pass that takes any picture
@@ -21,19 +24,6 @@ import { MAX_INPUT_PIXELS } from "./reencode-jpeg.server";
  * preview consumer decodes; WebP and AVIF are smaller but not universally read
  * by crawlers, and a smaller preview nobody renders is no preview.
  */
-
-/**
- * The most a preview image may weigh. WhatsApp drops preview images over
- * ~300 KB; the margin below that absorbs the difference between how we count a
- * kilobyte and how it does, and whatever headers ride along.
- */
-export const PREVIEW_IMAGE_BUDGET_BYTES = 250 * 1024;
-
-/**
- * The widest a preview image is served. 1200 is the width every platform's
- * card guidance designs to; anything wider is bytes the crawler scales away.
- */
-export const PREVIEW_IMAGE_MAX_WIDTH = 1200;
 
 /**
  * The JPEG qualities tried in turn, best first, as sharp counts them (1–100).
