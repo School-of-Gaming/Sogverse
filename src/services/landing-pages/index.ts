@@ -31,4 +31,8 @@ export {
   type PublishedLandingVersion,
   type PublishedLandingVersionSummary,
 } from "./landing-pages.contracts";
+export {
+  landingPublishForecast,
+  type LandingPublishForecast,
+} from "./landing-pages.forecast";
 export { canonicaliseLandingLinks, type LandingWrite } from "./landing-pages.links";

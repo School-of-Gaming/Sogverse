@@ -42,7 +42,7 @@ import {
 } from "@/lib/mcp/landing-pages-sections";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
 import {
-  defaultLandingSlug,
+  landingPublishForecast,
   landingSlug,
   type AdminLandingPage,
 } from "@/services/landing-pages";
@@ -280,39 +280,21 @@ function missingWords(page: AdminLandingPage, version: DraftVersion) {
 }
 
 /**
- * The slug a publish would fix for good in each language it puts live for the
- * first time, and whether it is the one derived from the title — likely never
- * chosen by anyone — rather than one written.
- */
-function slugsBecomingPermanent(page: AdminLandingPage, origin: string) {
-  return page.draft.versions
-    .filter((v) => v.missing.length === 0 && !v.slugFixed)
-    .map((v) => ({
-      locale: v.locale,
-      slug: v.slug,
-      address: slugLink(origin, v.slug, v.locale),
-      derivedFromTitle: v.slug === defaultLandingSlug(v.title),
-    }));
-}
-
-/**
- * What a publish would do now: the languages it would put live, the written
- * ones it would leave out, the live ones it would take down, and the slugs it
- * would fix for good. The database decides completeness by the same rule, so
- * this is a forecast of its answer and never a gate.
+ * What a publish would do now (`landingPublishForecast`), with each language
+ * it would leave out carrying what it still needs, and each slug it would fix
+ * for good carrying the address it would be read at.
  */
 function publishForecast(page: AdminLandingPage, origin: string) {
-  const { draft, publication } = page;
-  const complete = draft.versions.filter((v) => v.missing.length === 0).map((v) => v.locale);
-  const live = publication?.versions.map((v) => v.locale) ?? [];
+  const forecast = landingPublishForecast(page);
   return {
-    canPublish: complete.length > 0,
-    wouldPutLive: complete,
-    wouldLeaveOut: draft.versions
-      .filter((v) => !complete.includes(v.locale))
+    ...forecast,
+    wouldLeaveOut: page.draft.versions
+      .filter((v) => forecast.wouldLeaveOut.includes(v.locale))
       .map((v) => ({ locale: v.locale, missing: missingWords(page, v) })),
-    wouldTakeDown: live.filter((l) => !complete.includes(l)),
-    slugsBecomingPermanent: slugsBecomingPermanent(page, origin),
+    slugsBecomingPermanent: forecast.slugsBecomingPermanent.map((permanent) => ({
+      ...permanent,
+      address: slugLink(origin, permanent.slug, permanent.locale),
+    })),
   };
 }
 
