@@ -4634,11 +4634,11 @@
       "geduTitle": "Gedu · Quj ghojmoHwI’",
       "geduAltRole": "Quj ghojmoHwI’",
       "speaks": "jatlh",
-      "aboutMe": "jIH",
+      "whoIs": "’Iv ghaH {firstName}’e’?",
       "funFact": "De’ Quch",
       "draft": {
         "shortDescription": "naDev wa’ tlhegh jIH DaghItlhbogh",
-        "longDescription": "naDev “jIH” DaghItlhbogh"
+        "longDescription": "naDev “ghaH” DaghItlhbogh"
       }
     },
     "edit": {
@@ -4666,11 +4666,11 @@
         "missing": {
           "photo": "mIllogh yIlab, vaj DawIvlaH.",
           "title": "patlhlIj yIghItlh, vaj DawIvlaH.",
-          "text": "“wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "text": "“wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
           "photoTitle": "mIllogh yIlab ’ej patlhlIj yIghItlh, vaj DawIvlaH.",
-          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
-          "titleText": "patlhlIj yIghItlh ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
-          "photoTitleText": "mIllogh yIlab, patlhlIj yIghItlh, ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH."
+          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "titleText": "patlhlIj yIghItlh ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "photoTitleText": "mIllogh yIlab, patlhlIj yIghItlh, ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH."
         }
       },
       "photo": {
@@ -4679,7 +4679,7 @@
         "replace": "mIllogh yIchoH",
         "remove": "mIllogh yIteq",
         "guidance": {
-          "intro": "naDev wa’DIch Du ghom qorDu’pu’ QujwI’pu’ je. DawIvDI’, mIllogh Dape’.",
+          "intro": "naDev wa’DIch Du ghom qorDu’pu’ QujwI’pu’ je.",
           "doHeading": "yIruch",
           "dontHeading": "yImev",
           "do": {
@@ -4706,7 +4706,6 @@
         "heading": "SoH",
         "nickname": "QujwI’pu’ jIH ponglu’:",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "ponglIjDaq cha’lu’, DaghItlhbogh rur.",
         "title": "patlh",
         "titleHint": "School of Gaming Daq Qu’lIj. mu’tlheghvam: Head of Clubs.",
         "pick": "nguvlIj"
@@ -4718,11 +4717,11 @@
         "removeLocale": "{locale} yIteq",
         "shortDescription": "wa’ tlhegh: jIH",
         "shortDescriptionPlaceholder": "redstone Qun ’ej chenmoHwI’",
-        "longDescription": "jIH",
-        "longDescriptionHint": "Quj Dachenmo’, Quj DaQujmo’. qorDu’pu’ yIja’.",
-        "longDescriptionPlaceholder": "qorDu’pu’ yIja’",
+        "longDescription": "ghaH",
+        "longDescriptionHint": "Quj Dachenmo’, Quj DaQujmo’. qorDu’pu’ yIja’. ghaH yIjatlh: “Minecraft ghom DevtaH Anna.”",
+        "longDescriptionPlaceholder": "qorDu’pu’ yIja’. ghaH yIjatlh",
         "funFact": "De’ Quch",
-        "funFactPlaceholder": "Minecraft Daq SIvwI’ vIchenmoH.",
+        "funFactPlaceholder": "Minecraft Daq SIvwI’ chenmoH.",
         "count": "{count}/{max}"
       },
       "preview": {
@@ -4755,11 +4754,11 @@
         "missing": {
           "photo": "mIllogh yIlab, vaj DawIvlaH.",
           "title": "patlh yIghItlh, vaj DawIvlaH.",
-          "text": "“wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "text": "“wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
           "photoTitle": "mIllogh yIlab ’ej patlh yIghItlh, vaj DawIvlaH.",
-          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
-          "titleText": "patlh yIghItlh ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
-          "photoTitleText": "mIllogh yIlab, patlh yIghItlh, ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH."
+          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "titleText": "patlh yIghItlh ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "photoTitleText": "mIllogh yIlab, patlh yIghItlh, ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH."
         }
       },
       "userPage": {

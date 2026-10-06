@@ -5533,11 +5533,11 @@
       "geduTitle": "Gedu · Game Educator",
       "geduAltRole": "Game Educator",
       "speaks": "Speaks",
-      "aboutMe": "About me",
+      "whoIs": "Who is {firstName}?",
       "funFact": "Fun fact",
       "draft": {
         "shortDescription": "Your one-line intro appears here",
-        "longDescription": "What you write in “About me” appears here"
+        "longDescription": "What you write in “Bio” appears here"
       }
     },
     "edit": {
@@ -5565,11 +5565,11 @@
         "missing": {
           "photo": "Add a photo to be able to tick this.",
           "title": "Add your title to be able to tick this.",
-          "text": "Fill in “Introduce yourself in one line” and “About me” in every language you write in to be able to tick this.",
+          "text": "Fill in “Introduce yourself in one line” and “Bio” in every language you write in to be able to tick this.",
           "photoTitle": "Add a photo and your title to be able to tick this.",
-          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this.",
-          "titleText": "Add your title, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this.",
-          "photoTitleText": "Add a photo and your title, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this."
+          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “Bio” in every language you write in, to be able to tick this.",
+          "titleText": "Add your title, and fill in “Introduce yourself in one line” and “Bio” in every language you write in, to be able to tick this.",
+          "photoTitleText": "Add a photo and your title, and fill in “Introduce yourself in one line” and “Bio” in every language you write in, to be able to tick this."
         }
       },
       "photo": {
@@ -5578,7 +5578,7 @@
         "replace": "Replace photo",
         "remove": "Remove photo",
         "guidance": {
-          "intro": "This is the first thing families and gamers see of you. Once you have chosen a photo, you crop it to fit the frame.",
+          "intro": "This is the first thing families and gamers see of you.",
           "doHeading": "Do",
           "dontHeading": "Don’t",
           "do": {
@@ -5605,7 +5605,6 @@
         "heading": "About you",
         "nickname": "Gamers know me as",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "Shown in quotes in your name, exactly as you write it.",
         "title": "Title",
         "titleHint": "Your job at School of Gaming, for example Head of Clubs.",
         "pick": "Your colour"
@@ -5617,11 +5616,11 @@
         "removeLocale": "Remove {locale}",
         "shortDescription": "Introduce yourself in one line",
         "shortDescriptionPlaceholder": "Redstone nerd and speedrun fan",
-        "longDescription": "About me",
-        "longDescriptionHint": "What you do in sessions, what you play, and what families might like to know about you.",
-        "longDescriptionPlaceholder": "Tell families a little about yourself",
+        "longDescription": "Bio",
+        "longDescriptionHint": "What you do in sessions, what you play, and what families might like to know about you. Write it in the third person, as if someone were introducing you: “Anna has led Minecraft clubs since 2023 and loves teaching redstone.”",
+        "longDescriptionPlaceholder": "Tell families about yourself, in the third person",
         "funFact": "Fun fact",
-        "funFactPlaceholder": "I once built a working calculator in Minecraft.",
+        "funFactPlaceholder": "Once built a working calculator in Minecraft.",
         "count": "{count}/{max}"
       },
       "preview": {
@@ -5654,11 +5653,11 @@
         "missing": {
           "photo": "Add a photo to be able to tick this.",
           "title": "Add a title to be able to tick this.",
-          "text": "Fill in “Introduce yourself in one line” and “About me” in every language written to be able to tick this.",
+          "text": "Fill in “Introduce yourself in one line” and “Bio” in every language written to be able to tick this.",
           "photoTitle": "Add a photo and a title to be able to tick this.",
-          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this.",
-          "titleText": "Add a title, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this.",
-          "photoTitleText": "Add a photo and a title, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this."
+          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “Bio” in every language written, to be able to tick this.",
+          "titleText": "Add a title, and fill in “Introduce yourself in one line” and “Bio” in every language written, to be able to tick this.",
+          "photoTitleText": "Add a photo and a title, and fill in “Introduce yourself in one line” and “Bio” in every language written, to be able to tick this."
         }
       },
       "userPage": {

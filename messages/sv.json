@@ -5533,11 +5533,11 @@
       "geduTitle": "Gedu · spelfostrare",
       "geduAltRole": "spelfostrare",
       "speaks": "Talar",
-      "aboutMe": "Om mig",
+      "whoIs": "Vem är {firstName}?",
       "funFact": "Kul fakta",
       "draft": {
         "shortDescription": "Din presentation på en rad visas här",
-        "longDescription": "Det du skriver under ”Om mig” visas här"
+        "longDescription": "Det du skriver under ”Beskrivning” visas här"
       }
     },
     "edit": {
@@ -5565,11 +5565,11 @@
         "missing": {
           "photo": "Lägg till ett foto för att kunna kryssa i detta.",
           "title": "Lägg till din titel för att kunna kryssa i detta.",
-          "text": "Fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
+          "text": "Fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk du skriver på för att kunna kryssa i detta.",
           "photoTitle": "Lägg till ett foto och din titel för att kunna kryssa i detta.",
-          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
-          "titleText": "Lägg till din titel och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
-          "photoTitleText": "Lägg till ett foto och din titel, och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på, för att kunna kryssa i detta."
+          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk du skriver på för att kunna kryssa i detta.",
+          "titleText": "Lägg till din titel och fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk du skriver på för att kunna kryssa i detta.",
+          "photoTitleText": "Lägg till ett foto och din titel, och fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk du skriver på, för att kunna kryssa i detta."
         }
       },
       "photo": {
@@ -5578,7 +5578,7 @@
         "replace": "Byt foto",
         "remove": "Ta bort foto",
         "guidance": {
-          "intro": "Det här är det första familjer och gamers ser av dig. När du har valt ett foto beskär du det så att det passar ramen.",
+          "intro": "Det här är det första familjer och gamers ser av dig.",
           "doHeading": "Gör så här",
           "dontHeading": "Undvik",
           "do": {
@@ -5605,7 +5605,6 @@
         "heading": "Om dig",
         "nickname": "Gamers känner mig som",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "Visas inom citattecken i ditt namn, precis som du skriver den.",
         "title": "Titel",
         "titleHint": "Ditt jobb på School of Gaming, till exempel klubbansvarig.",
         "pick": "Din färg"
@@ -5617,11 +5616,11 @@
         "removeLocale": "Ta bort {locale}",
         "shortDescription": "Presentera dig på en rad",
         "shortDescriptionPlaceholder": "Redstone-nörd och speedrun-fan",
-        "longDescription": "Om mig",
-        "longDescriptionHint": "Vad du gör på sessionerna, vad du spelar och vad familjer kan vilja veta om dig.",
-        "longDescriptionPlaceholder": "Berätta lite om dig själv för familjerna",
+        "longDescription": "Beskrivning",
+        "longDescriptionHint": "Vad du gör på sessionerna, vad du spelar och vad familjer kan vilja veta om dig. Skriv i tredje person, som om någon annan presenterade dig: ”Anna har lett Minecraft-klubbar sedan 2023 och älskar att lära ut redstone.”",
+        "longDescriptionPlaceholder": "Berätta om dig själv för familjerna, i tredje person",
         "funFact": "Kul fakta",
-        "funFactPlaceholder": "Jag har byggt en fungerande miniräknare i Minecraft.",
+        "funFactPlaceholder": "Har byggt en fungerande miniräknare i Minecraft.",
         "count": "{count}/{max}"
       },
       "preview": {
@@ -5654,11 +5653,11 @@
         "missing": {
           "photo": "Lägg till ett foto för att kunna kryssa i detta.",
           "title": "Lägg till en titel för att kunna kryssa i detta.",
-          "text": "Fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
+          "text": "Fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk som skrivits för att kunna kryssa i detta.",
           "photoTitle": "Lägg till ett foto och en titel för att kunna kryssa i detta.",
-          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
-          "titleText": "Lägg till en titel och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
-          "photoTitleText": "Lägg till ett foto och en titel, och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits, för att kunna kryssa i detta."
+          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk som skrivits för att kunna kryssa i detta.",
+          "titleText": "Lägg till en titel och fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk som skrivits för att kunna kryssa i detta.",
+          "photoTitleText": "Lägg till ett foto och en titel, och fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk som skrivits, för att kunna kryssa i detta."
         }
       },
       "userPage": {

@@ -24,7 +24,7 @@ export type { MarkdownEmphasis, MarkdownUseCase };
 /**
  * The app's one markdown renderer, for authored prose that is *stored* as
  * markdown — a gedu's session report, a product's marketing long description,
- * a team member's "About me", a Library article's body, and the email a report
+ * a team member's bio, a Library article's body, and the email a report
  * is later converted into.
  *
  * **Authored markdown looks the same wherever it appears, a mail included.**
