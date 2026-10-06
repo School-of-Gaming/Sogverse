@@ -5350,8 +5350,6 @@
   },
   "discordSub": {
     "pickPlaceholder": "Valitse kerta",
-    "addNote": "Lisää viesti",
-    "confirmWithoutNote": "Vahvista ilman viestiä",
     "empty": "Sinulla ei ole tulevia kertoja, joille voisit pyytää tuuraajaa.",
     "filed": "Tuuraajaa pyydetty: {product} {when}.",
     "failed": "Jotain meni pieleen. Kokeile /sub-komentoa hetken päästä uudelleen.",

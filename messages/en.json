@@ -5350,8 +5350,6 @@
   },
   "discordSub": {
     "pickPlaceholder": "Pick a session",
-    "addNote": "Add a note",
-    "confirmWithoutNote": "Confirm without a note",
     "empty": "You have no upcoming sessions to ask for a substitute for.",
     "filed": "Substitute requested for {product} on {when}.",
     "failed": "Something went wrong. Run /sub again in a moment.",

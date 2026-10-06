@@ -5350,8 +5350,6 @@
   },
   "discordSub": {
     "pickPlaceholder": "Välj ett tillfälle",
-    "addNote": "Lägg till en notering",
-    "confirmWithoutNote": "Bekräfta utan notering",
     "empty": "Du har inga kommande tillfällen att be om en vikarie för.",
     "filed": "Vikarie efterfrågad för {product} den {when}.",
     "failed": "Något gick fel. Kör /sub igen om en stund.",

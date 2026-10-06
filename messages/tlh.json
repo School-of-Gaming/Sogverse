@@ -4469,8 +4469,6 @@
   },
   "discordSub": {
     "pickPlaceholder": "may’ yIwIv",
-    "addNote": "qonta’ yIchel",
-    "confirmWithoutNote": "qonta’ Hutlh yIchav",
     "empty": "may’ Daghajbe’, lIw DatlhoblaHbogh.",
     "filed": "lIw tlhobta’lu’: {product}, {when}.",
     "failed": "Qagh. tugh /sub yIlo’qa’.",

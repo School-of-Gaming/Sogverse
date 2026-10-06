@@ -240,15 +240,16 @@ describe("POST /api/admin/send-test-discord-message", () => {
       "https://sogverse.sog.gg/link-discord?token=preview",
     );
 
-    expect(steps.length).toBeGreaterThan(5);
+    // The list, the filed line, a refusal, the empty list and the failure
+    // notice; the request modal cannot be DMed.
+    expect(steps).toHaveLength(5);
     for (const step of steps) {
       expect(step.flags).toBe(1 << 15);
       expect(step.content).toBeUndefined();
     }
     expect(JSON.stringify(steps[0])).toContain("Mille kerralle tarvitset tuuraajan?");
     const ids = steps.flatMap((step) => customIds(step.components));
-    expect(ids.length).toBeGreaterThan(5);
-    expect(ids.every((id) => id.startsWith("subpreview:"))).toBe(true);
+    expect(ids).toEqual(["subpreview:s:fi", "subpreview:l"]);
   });
 
   it("heads every step with the favicon from this environment's own site", async () => {

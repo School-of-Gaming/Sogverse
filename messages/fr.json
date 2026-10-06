@@ -5350,8 +5350,6 @@
   },
   "discordSub": {
     "pickPlaceholder": "Choisissez une séance",
-    "addNote": "Ajouter une note",
-    "confirmWithoutNote": "Confirmer sans note",
     "empty": "Vous n’avez aucune séance à venir pour laquelle demander un remplacement.",
     "filed": "Remplacement demandé pour {product} le {when}.",
     "failed": "Un problème est survenu. Relancez /sub dans un instant.",
