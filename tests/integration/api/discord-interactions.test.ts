@@ -111,6 +111,12 @@ function interactionRequest(
   });
 }
 
+/** The URL on a PATCHed reply's link button — `/link`'s, and `/sub`'s not-linked answer. */
+function linkButtonUrl(patched: { components?: unknown }): string {
+  const url = JSON.stringify(patched.components ?? []).match(/"url":"([^"]+)"/)?.[1];
+  return url ?? "";
+}
+
 describe("POST /api/discord/interactions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -412,8 +418,8 @@ describe("POST /api/discord/interactions", () => {
     const { patched, row } = await runLink({ member: GUILD_CALLER });
 
     expect(mockFrom).toHaveBeenCalledWith("discord_link_tokens");
-    const url = /(https:\/\/sogverse\.sog\.gg\/link-discord\?token=([A-Za-z0-9_-]+))/.exec(
-      patched.content,
+    const url = /^(https:\/\/sogverse\.sog\.gg\/link-discord\?token=([A-Za-z0-9_-]+))$/.exec(
+      linkButtonUrl(patched),
     );
     expect(url).not.toBeNull();
     const token = url?.[2] ?? "";
@@ -427,12 +433,19 @@ describe("POST /api/discord/interactions", () => {
     expect(JSON.stringify(row)).not.toContain(token);
   });
 
-  it("tells the caller the link expires and works once, with no preview under it", async () => {
+  it("puts the link on a button, never in the text, and says it expires and works once", async () => {
     const { patched } = await runLink({ member: GUILD_CALLER });
 
-    expect(patched.content).toContain("The link expires in 10 minutes and works once.");
-    // 4 = SUPPRESS_EMBEDS, so Discord does not unfurl the sign-in page.
-    expect(patched.flags).toBe(4);
+    expect(patched.content).toBe(
+      "Connect your Discord account to your School of Gaming account. " +
+        "The link expires in 10 minutes and works once.",
+    );
+    // 5 = a link button, which opens the URL and raises no interaction.
+    expect(patched.components?.[0]?.components?.[0]).toMatchObject({
+      type: 2,
+      style: 5,
+      label: "Connect account",
+    });
   });
 
   it("reads the caller from `user` when the command is run in a DM", async () => {
@@ -559,6 +572,19 @@ describe("POST /api/discord/interactions — /sub", () => {
 
   const command = (extra: Record<string, unknown> = {}) =>
     run({ type: 2, data: { name: "sub" }, ...extra });
+  /** The session select's options on the pressed message, as the list drew them. */
+  const PRESSED_OPTIONS = [
+    {
+      label: "Tue, Oct 6, 16:00 – 17:30 GMT+3",
+      description: "Minecraft Club — A · Kallio School",
+      value: `${GROUP_A}:2026-10-06`,
+    },
+    {
+      label: "Thu, Oct 8, 16:00 – 17:30 GMT+3",
+      description: "Minecraft Club — A · Kallio School",
+      value: `${GROUP_B}:2026-10-08`,
+    },
+  ];
   /**
    * The message a control sits on, as Discord sends it with the press: an
    * ephemeral Components V2 message with a select, a button and a link.
@@ -590,13 +616,13 @@ describe("POST /api/discord/interactions — /sub", () => {
           {
             type: 1,
             id: 3,
-            components: [{ type: 3, id: 4, custom_id: "sub:s:2026-10-05:0", options: [] }],
+            components: [{ type: 3, id: 4, custom_id: "sub:s:en", options: PRESSED_OPTIONS }],
           },
           {
             type: 1,
             id: 5,
             components: [
-              { type: 2, id: 6, style: 2, custom_id: "sub:p:1", label: "Show later sessions" },
+              { type: 2, id: 6, style: 2, custom_id: "sub:l", label: "Back" },
               { type: 2, id: 7, style: 5, url: "https://sogverse.sog.gg", label: "Web" },
             ],
           },
@@ -632,7 +658,7 @@ describe("POST /api/discord/interactions — /sub", () => {
             type: 1,
             id: 3,
             components: [
-              { type: 3, id: 4, custom_id: "sub:s:2026-10-05:0", options: [], disabled: true },
+              { type: 3, id: 4, custom_id: "sub:s:en", options: PRESSED_OPTIONS, disabled: true },
             ],
           },
           {
@@ -643,8 +669,8 @@ describe("POST /api/discord/interactions — /sub", () => {
                 type: 2,
                 id: 6,
                 style: 2,
-                custom_id: "sub:p:1",
-                label: "Show later sessions",
+                custom_id: "sub:l",
+                label: "Back",
                 disabled: true,
               },
               { type: 2, id: 7, style: 5, url: "https://sogverse.sog.gg", label: "Web" },
@@ -699,10 +725,14 @@ describe("POST /api/discord/interactions — /sub", () => {
 
     const { patched } = await command();
 
-    expect(patched.content).toMatch(
-      /^To use \/sub, first link your Discord account to your School of Gaming Gedu account\.\n\nOpen this link to connect your Discord account to your School of Gaming account:\nhttps:\/\/sogverse\.sog\.gg\/link-discord\?token=[A-Za-z0-9_-]{43}\n\nThe link expires in 10 minutes and works once\.$/,
+    expect(patched.content).toBe(
+      "To use /sub, first link your Discord account to your School of Gaming Gedu account.\n\n" +
+        "Connect your Discord account to your School of Gaming account. " +
+        "The link expires in 10 minutes and works once.",
     );
-    expect(patched.flags).toBe(4);
+    expect(linkButtonUrl(patched)).toMatch(
+      /^https:\/\/sogverse\.sog\.gg\/link-discord\?token=[A-Za-z0-9_-]{43}$/,
+    );
     expect(mockInsert).toHaveBeenCalledTimes(1);
     expect(mockGetSessions).not.toHaveBeenCalled();
   });
@@ -732,17 +762,15 @@ describe("POST /api/discord/interactions — /sub", () => {
     expect(patched.flags).toBe(1 << 15);
     expect(patched.content).toBeUndefined();
     expect(texts(patched)).toContain("### Mille kerralle tarvitset tuuraajan?");
-    expect(ids(patched)).toEqual(["sub:s:2026-10-05:0", "sub:s:2026-10-12:0", "sub:p:1"]);
+    // The select carries the gedu's locale for the modal it opens.
+    expect(ids(patched)).toEqual(["sub:s:fi"]);
     const [select] = walk(patched.components).filter((component) => component.type === 3);
-    expect(select.options).toMatchObject([
-      { value: `${GROUP_A}:2026-10-06` },
-      { value: `${GROUP_B}:2026-10-08` },
-    ]);
-    expect(select.options).toHaveLength(2);
+    expect(select.options).toMatchObject(SESSIONS.map((entry) => ({ value: entry.key })));
+    expect(select.options).toHaveLength(SESSIONS.length);
   });
 
   it("heads every step with the favicon from this environment's own site", async () => {
-    for (const { patched } of [await command(), await press("sub:p:1")]) {
+    for (const { patched } of [await command(), await press("sub:l")]) {
       const [section] = ofType(patched, 9);
       expect(section.accessory).toEqual({
         type: 11,
@@ -769,12 +797,12 @@ describe("POST /api/discord/interactions — /sub", () => {
     }
   });
 
-  it("points a gedu with nothing to file for at the web page", async () => {
+  it("tells a gedu with nothing to file for so", async () => {
     mockGetSessions.mockResolvedValue([]);
 
     const { patched } = await command();
 
-    expect(texts(patched)).toContain("https://sogverse.sog.gg/gedu/substitutions");
+    expect(texts(patched)).toContain("You have no upcoming sessions to ask for a substitute for.");
     expect(ids(patched)).toEqual([]);
   });
 
@@ -788,79 +816,92 @@ describe("POST /api/discord/interactions — /sub", () => {
     expect(JSON.stringify(patched)).not.toContain("connection reset");
   });
 
-  it("pages forward, greying the pressed message's controls out meanwhile", async () => {
-    const { response, patched } = await press("sub:p:1");
+  it("goes back to the list, greying the pressed message's controls out meanwhile", async () => {
+    const { response, patched } = await press("sub:l");
 
     expect(response).toEqual({ type: 7, data: GREYED_OUT });
-    expect(ids(patched)).toEqual(["sub:s:2026-10-19:0", "sub:p:0"]);
+    expect(texts(patched)).toContain("### Which session do you need a substitute for?");
+    expect(ids(patched)).toEqual(["sub:s:en"]);
   });
 
-  it("re-resolves the presser on every step, from the payload's Discord id", async () => {
-    await press("sub:s:2026-10-05:0", [`${GROUP_A}:2026-10-06`]);
+  /**
+   * The request modal's submission, as Discord sends it: a Label holding a
+   * select reports its pick as `values`, a Label holding a text input its
+   * `value`.
+   */
+  const submit = (
+    sessionDate = "2026-10-06",
+    options: { reason?: unknown[]; note?: string; message?: unknown } = {},
+  ) => {
+    const { reason = ["sick"], note = "" } = options;
+    return run({
+      type: 5,
+      // Explicitly `undefined` is a submit with no message at all.
+      message: "message" in options ? options.message : PRESSED_MESSAGE,
+      data: {
+        custom_id: `sub:n:${GROUP_A}:${sessionDate}`,
+        components: [
+          { type: 10, id: 1, content: "**Tue, Oct 6, 16:00 – 17:30 GMT+3**" },
+          { type: 10, id: 2, content: "Only admins see the reason." },
+          { type: 18, id: 3, component: { type: 3, id: 4, custom_id: "reason", values: reason } },
+          { type: 18, id: 5, component: { type: 4, id: 6, custom_id: "note", value: note } },
+        ],
+      },
+    });
+  };
 
-    expect(mockResolveDiscordGedu).toHaveBeenCalledWith("112233445566778899");
-  });
+  it("opens the request modal synchronously on a pick, without reading anything", async () => {
+    const { response } = await press("sub:s:fi", [`${GROUP_B}:2026-10-08`]);
 
-  it("asks for the reason once a session is picked", async () => {
-    const { response, patched } = await press("sub:s:2026-10-05:0", [`${GROUP_A}:2026-10-06`]);
-
-    expect(response).toEqual({ type: 7, data: GREYED_OUT });
-    expect(texts(patched)).toContain("### I can’t make this session");
-    expect(ids(patched)).toEqual([
-      `sub:r:${GROUP_A}:2026-10-06`,
-      "sub:p:0",
-      `sub:m:${GROUP_A}:2026-10-06:-:en`,
-      `sub:f:${GROUP_A}:2026-10-06:-`,
+    // A modal answers the press itself: no greyed-out redraw, nothing deferred.
+    expect(response.type).toBe(9);
+    expect(response.data.custom_id).toBe(`sub:n:${GROUP_B}:2026-10-08`);
+    // In the locale the select carries, not the presser's Discord client's.
+    expect(response.data.title).toBe("En pääse tälle kerralle");
+    // The session line is the option picked on the pressed message.
+    expect(response.data.components[0]).toEqual({
+      type: 10,
+      content: "**Thu, Oct 8, 16:00 – 17:30 GMT+3**\nMinecraft Club — A · Kallio School",
+    });
+    const reason = response.data.components.find(
+      (component: { type: number; component?: { custom_id?: string } }) =>
+        component.type === 18 && component.component?.custom_id === "reason",
+    );
+    expect(reason.component.options.map((option: { value: string }) => option.value)).toEqual([
+      "sick",
+      "other",
     ]);
-  });
-
-  it("enables the two ways to finish once a reason is picked", async () => {
-    const { patched } = await press(`sub:r:${GROUP_A}:2026-10-06`, ["sick"]);
-
-    expect(ids(patched)).toEqual([
-      `sub:r:${GROUP_A}:2026-10-06`,
-      "sub:p:0",
-      `sub:m:${GROUP_A}:2026-10-06:sick:en`,
-      `sub:f:${GROUP_A}:2026-10-06:sick`,
-    ]);
-  });
-
-  it("says a session that left the list is no longer on the schedule, and files nothing", async () => {
-    const { patched } = await press(`sub:f:${GROUP_A}:2026-12-01:sick`);
-
-    expect(texts(patched)).toContain("This session is no longer on the schedule.");
+    expect(deferred).toHaveLength(0);
+    expect(mockResolveDiscordGedu).not.toHaveBeenCalled();
+    expect(mockGetSessions).not.toHaveBeenCalled();
     expect(mockFileRequest).not.toHaveBeenCalled();
   });
 
-  it("opens the note modal synchronously, without reading anything", async () => {
-    const { response } = await press(`sub:m:${GROUP_A}:2026-10-06:other:fi`);
+  it("names the session by its date alone when the pressed message does not carry it", async () => {
+    const { response } = await press("sub:s:en", [`${GROUP_A}:2026-10-13`]);
 
-    expect(response).toMatchObject({
-      type: 9,
-      data: {
-        custom_id: `sub:n:${GROUP_A}:2026-10-06:other`,
-        title: "En pääse tälle kerralle",
-      },
-    });
-    expect(deferred).toHaveLength(0);
-    expect(mockResolveDiscordGedu).not.toHaveBeenCalled();
+    expect(response.type).toBe(9);
+    expect(response.data.components[0]).toEqual({ type: 10, content: "**Tue, Oct 13**" });
   });
 
-  it("files with the note from the modal, as the presser", async () => {
-    const { response, patched } = await run({
-      type: 5,
-      message: PRESSED_MESSAGE,
-      data: {
-        custom_id: `sub:n:${GROUP_A}:2026-10-06:other`,
-        components: [
-          { type: 18, component: { type: 4, custom_id: "note", value: "Dentist" } },
-        ],
-      },
+  it("acknowledges a pick that is not a session, and opens nothing", async () => {
+    const { response } = await press("sub:s:en", ["nonsense"]);
+
+    expect(response).toEqual({ type: 6 });
+    expect(deferred).toHaveLength(0);
+  });
+
+  it("files with the reason and the note from the modal, as the presser", async () => {
+    const { response, patched } = await submit("2026-10-06", {
+      reason: ["other"],
+      note: "Dentist",
     });
 
     // The message the modal was opened from is greyed out while the filing
     // runs, so a second submit cannot race the first to the outcome.
     expect(response).toEqual({ type: 7, data: GREYED_OUT });
+    expect(deferred).toHaveLength(1);
+    expect(mockResolveDiscordGedu).toHaveBeenCalledWith("112233445566778899");
     expect(mockFileRequest).toHaveBeenCalledWith({
       discordUserId: "112233445566778899",
       groupId: GROUP_A,
@@ -871,50 +912,99 @@ describe("POST /api/discord/interactions — /sub", () => {
     expect(texts(patched)).toContain("Substitute requested for Minecraft Club — A on Tue, Oct 6,");
   });
 
-  it("reads the note from an action-row modal too", async () => {
+  it("files with no note when the note is left blank", async () => {
+    await submit();
+
+    expect(mockFileRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "sick", reasonNote: "" }),
+    );
+  });
+
+  it("reads the fields from an action-row modal too", async () => {
     await run({
       type: 5,
       data: {
-        custom_id: `sub:n:${GROUP_A}:2026-10-06:sick`,
-        components: [{ type: 1, components: [{ type: 4, custom_id: "note", value: "Flu" }] }],
+        custom_id: `sub:n:${GROUP_A}:2026-10-06`,
+        components: [
+          { type: 1, components: [{ type: 3, custom_id: "reason", values: ["sick"] }] },
+          { type: 1, components: [{ type: 4, custom_id: "note", value: "Flu" }] },
+        ],
       },
     });
 
-    expect(mockFileRequest).toHaveBeenCalledWith(expect.objectContaining({ reasonNote: "Flu" }));
+    expect(mockFileRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "sick", reasonNote: "Flu" }),
+    );
   });
 
-  it("files with no note from the confirm button, greying the controls out meanwhile", async () => {
-    const { response, patched } = await press(`sub:f:${GROUP_A}:2026-10-06:sick`);
+  it.each([[[]], [["holiday"]], [[7]]])(
+    "files nothing from a submission whose reason is %j",
+    async (reason) => {
+      const { response } = await submit("2026-10-06", { reason });
 
-    // The press answers at once with the controls disabled; the filing still
-    // runs afterwards and replaces the message with its outcome.
-    expect(response).toEqual({ type: 7, data: GREYED_OUT });
-    expect(deferred).toHaveLength(1);
-    expect(texts(patched)).toContain("Substitute requested for Minecraft Club — A on Tue, Oct 6,");
-    expect(mockFileRequest).toHaveBeenCalledWith({
-      discordUserId: "112233445566778899",
-      groupId: GROUP_A,
-      sessionDate: "2026-10-06",
-      reason: "sick",
-      reasonNote: "",
+      expect(response).toEqual({ type: 6 });
+      expect(deferred).toHaveLength(0);
+      expect(mockFileRequest).not.toHaveBeenCalled();
+    },
+  );
+
+  // The list leaves out the sessions already asked for, so a session missing
+  // from it is not evidence it left the schedule: the write is tried, and its
+  // own refusal is the answer.
+  it("still files for a session missing from the list", async () => {
+    await submit("2026-12-01");
+
+    expect(mockFileRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ groupId: GROUP_A, sessionDate: "2026-12-01" }),
+    );
+  });
+
+  it("says a session missing from the list was already asked for, not that it left the schedule", async () => {
+    mockFileRequest.mockRejectedValue({ code: "42501", message: "Forbidden" });
+
+    const { patched } = await submit("2026-12-01");
+
+    expect(texts(patched)).toContain(
+      "You’ve already asked for a substitute for this session, or you’re no longer down to run it.",
+    );
+    expect(texts(patched)).not.toContain("This session is no longer on the schedule.");
+    expect(ids(patched)).toEqual(["sub:l"]);
+  });
+
+  it("says a session missing from the list is off the schedule when the write says so", async () => {
+    mockFileRequest.mockRejectedValue({
+      code: "23514",
+      message: "No scheduled session on 2026-12-01 for this group",
     });
+
+    const { patched } = await submit("2026-12-01");
+
+    expect(texts(patched)).toContain("This session is no longer on the schedule.");
+    expect(ids(patched)).toEqual(["sub:l"]);
+  });
+
+  it("names a filed session the list does not carry by its date alone", async () => {
+    const { patched } = await submit("2026-12-01");
+
+    expect(texts(patched)).toContain("**Tue, Dec 1**");
+    expect(texts(patched)).toContain("You’ve asked for a substitute for this session. Waiting for one.");
   });
 
   it("reads a refusal through the web's own mapping", async () => {
     mockFileRequest.mockRejectedValue({ code: "42501", message: "not expected" });
 
-    const { patched } = await press(`sub:f:${GROUP_A}:2026-10-06:sick`);
+    const { patched } = await submit();
 
     expect(texts(patched)).toContain(
       "You’ve already asked for a substitute for this session, or you’re no longer down to run it.",
     );
-    expect(ids(patched)).toEqual(["sub:p:0"]);
+    expect(ids(patched)).toEqual(["sub:l"]);
   });
 
   it("tells a presser whose link has gone to run /link", async () => {
     mockFileRequest.mockRejectedValue({ code: "P0031", message: "not linked" });
 
-    const { patched } = await press(`sub:f:${GROUP_A}:2026-10-06:sick`);
+    const { patched } = await submit();
 
     expect(patched.flags).toBe(1 << 15);
     expect(texts(patched)).toContain("Run /link to link it, then /sub again.");
@@ -926,7 +1016,7 @@ describe("POST /api/discord/interactions — /sub", () => {
       locale: "fr",
       user: { id: "998877665544332211", username: "admin_sog" },
       member: undefined,
-      data: { custom_id: "subpreview:s:2026-10-05:0", values: [`${GROUP_A}:2026-10-06`] },
+      data: { custom_id: "subpreview:s", values:[`${GROUP_A}:2026-10-06`] },
     });
 
     expect(response).toEqual({
@@ -938,14 +1028,12 @@ describe("POST /api/discord/interactions — /sub", () => {
     expect(mockFileRequest).not.toHaveBeenCalled();
   });
 
-  it("falls back to a plain deferred update when the press carries no usable message", async () => {
+  it("falls back to a plain deferred update when the submit carries no usable message", async () => {
     for (const message of [undefined, { flags: 1 << 15 }, "not a message"]) {
       mockFetch.mockClear();
       mockFileRequest.mockClear();
       deferred.length = 0;
-      const { response, patched } = await press(`sub:f:${GROUP_A}:2026-10-06:sick`, undefined, {
-        message,
-      });
+      const { response, patched } = await submit("2026-10-06", { message });
 
       expect(response).toEqual({ type: 6 });
       expect(mockFileRequest).toHaveBeenCalledTimes(1);

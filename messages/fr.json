@@ -1576,9 +1576,8 @@
         "sent": "Message envoyé.",
         "openInDiscord": "Ouvrir dans Discord",
         "templatePlain": "Texte brut",
-        "templateSubSessions": "/sub : liste des séances",
-        "templateSubNotLinked": "/sub : pas encore associé",
-        "subPreviewSent": "Aperçu envoyé."
+        "templateSubFlow": "/sub : toutes les étapes",
+        "subPreviewSent": "Toutes les étapes ont été envoyées."
       }
     },
     "whatsapp": {
@@ -5351,9 +5350,8 @@
   },
   "discordSub": {
     "pickPlaceholder": "Choisissez une séance",
-    "addNote": "Ajouter une note",
-    "confirmWithoutNote": "Confirmer sans note",
-    "empty": "Vous n’avez aucune séance à venir pour laquelle demander un remplacement. Vos remplacements sont sur le site : {url}",
+    "empty": "Vous n’avez aucune séance à venir pour laquelle demander un remplacement.",
+    "filed": "Remplacement demandé pour {product} le {when}.",
     "failed": "Un problème est survenu. Relancez /sub dans un instant.",
     "notLinked": "Pour utiliser /sub, associez d’abord votre compte Discord à votre compte Gedu School of Gaming.",
     "notLinkedRunLink": "Votre compte Discord n’est associé à aucun compte Gedu School of Gaming. Lancez /link pour l’associer, puis relancez /sub.",

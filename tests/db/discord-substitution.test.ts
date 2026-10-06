@@ -5,7 +5,10 @@ import { SESSION_RECORDING_EPOCH } from "@/lib/constants";
 import { discordLinkedGedu } from "@/lib/discord-substitution.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
 import { geduAssignmentSummaries } from "@/services/gedu-sessions/gedu-sessions.contracts";
-import { substitutionRequestDocument } from "@/services/session-substitution/session-substitution.contracts";
+import {
+  liveSubstitutionRequests,
+  substitutionRequestDocument,
+} from "@/services/session-substitution/session-substitution.contracts";
 import {
   createAdminTestClient,
   createAnonTestClient,
@@ -28,9 +31,13 @@ import { deleteTestProducts } from "./product-helpers";
  * below prove the Discord path reaches it too and surfaces its refusals
  * unchanged, not that the body is right.
  *
+ * The read of the gedu's own live requests is tested in full here rather than
+ * there, because it exists for the two ways into the filing — the web picker
+ * and Discord's list — and its whole point is agreeing with the write.
+ *
  * Layout: PRODUCT (remote club, UTC, a slot on every weekday so any date in the
- * term is writable) with GROUP, taught by GEDU, and its sister group
- * OTHER_GROUP that nobody teaches.
+ * term is writable) with GROUP, taught by GEDU as its primary and by a second
+ * gedu as its assistant, and its sister group OTHER_GROUP that nobody teaches.
  */
 
 const PRODUCT = "00000000-0000-0000-0000-000000000830";
@@ -61,6 +68,7 @@ describe("substitutions from Discord", () => {
   let admin: SupabaseClient<Database>;
   let anon: SupabaseClient<Database>;
   let geduAuth: SupabaseClient<Database>;
+  let secondGeduAuth: SupabaseClient<Database>;
 
   let geduId = "";
   let secondGeduId = "";
@@ -106,10 +114,12 @@ describe("substitutions from Discord", () => {
 
     const gedu = await mint("gedu", "gedu");
     geduId = gedu.id;
-    secondGeduId = (await mint("second", "gedu")).id;
+    const secondGedu = await mint("second", "gedu");
+    secondGeduId = secondGedu.id;
     adminId = (await mint("admin", "admin")).id;
     await admin.from("profiles").update({ locale: "fi" }).eq("id", geduId);
     geduAuth = await createAuthenticatedClient(gedu.email, "testpassword123");
+    secondGeduAuth = await createAuthenticatedClient(secondGedu.email, "testpassword123");
 
     await deleteTestProducts(admin, [PRODUCT]);
     const { error: productError } = await admin.from("products").insert({
@@ -149,9 +159,10 @@ describe("substitutions from Discord", () => {
       { id: GROUP, product_id: PRODUCT, name: "Discord Cohort" },
       { id: OTHER_GROUP, product_id: PRODUCT, name: "Elsewhere Cohort" },
     ]);
-    const { error: assignmentError } = await admin
-      .from("gedu_group_assignments")
-      .insert({ group_id: GROUP, gedu_id: geduId, product_id: PRODUCT, role: "primary" });
+    const { error: assignmentError } = await admin.from("gedu_group_assignments").insert([
+      { group_id: GROUP, gedu_id: geduId, product_id: PRODUCT, role: "primary" },
+      { group_id: GROUP, gedu_id: secondGeduId, product_id: PRODUCT, role: "assistant" },
+    ]);
     expect(assignmentError).toBeNull();
   });
 
@@ -165,7 +176,7 @@ describe("substitutions from Discord", () => {
   });
 
   afterAll(async () => {
-    await admin.from("gedu_group_assignments").delete().eq("gedu_id", geduId);
+    await admin.from("gedu_group_assignments").delete().in("gedu_id", [geduId, secondGeduId]);
     await deleteTestProducts(admin, [PRODUCT]);
     for (const id of [geduId, secondGeduId, adminId]) {
       await admin.auth.admin.deleteUser(id);
@@ -375,11 +386,152 @@ describe("substitutions from Discord", () => {
     });
   });
 
+  describe("the live requests", () => {
+    /** The (group, date) pairs a live-requests read names, in its order. */
+    function keysOf(data: unknown): string[] {
+      return liveSubstitutionRequests
+        .parse(data)
+        .map((request) => `${request.group_id}:${request.session_date}`);
+    }
+
+    async function liveOnTheWeb(client: SupabaseClient<Database>) {
+      const { data, error } = await client.rpc("get_my_live_substitution_requests");
+      expect(error).toBeNull();
+      return data;
+    }
+
+    async function fileOnTheWeb(client: SupabaseClient<Database>, sessionDate: string) {
+      const { data, error } = await client.rpc("request_session_substitution", {
+        p_group_id: GROUP,
+        p_session_date: sessionDate,
+        p_reason: "sick",
+      });
+      expect(error).toBeNull();
+      return substitutionRequestDocument.parse(data);
+    }
+
+    it("names an open and a substituted request, on the web and from Discord alike, and the write refuses each", async () => {
+      await link(geduId, DISCORD_GEDU, new Date());
+      const open = await fileOnTheWeb(geduAuth, utcDate(5));
+      // Substituted by the office: stored directly, because seating a sub is
+      // not what is under test — only what the filer reads afterwards.
+      const { error: substitutedError } = await admin
+        .from("session_substitution_requests")
+        .insert({
+          group_id: GROUP,
+          session_date: utcDate(7),
+          requested_by: geduId,
+          role: "primary",
+          reason: "other",
+          status: "substituted",
+          substitute_id: secondGeduId,
+          approved_by: adminId,
+          approved_at: new Date().toISOString(),
+        });
+      expect(substitutedError).toBeNull();
+
+      const web = await liveOnTheWeb(geduAuth);
+      const requests = liveSubstitutionRequests.parse(web);
+      expect(keysOf(web)).toEqual([`${GROUP}:${utcDate(5)}`, `${GROUP}:${utcDate(7)}`]);
+      expect(requests.map((request) => request.status)).toEqual(["open", "substituted"]);
+      // The requester's own reading: their name, never the reason.
+      expect(requests[0]).toMatchObject({
+        id: open.id,
+        requested_by: geduId,
+        is_requester: true,
+        reason: null,
+        reason_note: null,
+      });
+
+      const viaDiscord = await admin.rpc("get_live_substitution_requests_for_discord_user", {
+        p_discord_user_id: DISCORD_GEDU,
+      });
+      expect(viaDiscord.error).toBeNull();
+      expect(liveSubstitutionRequests.parse(viaDiscord.data)).toEqual(requests);
+
+      // And the list cannot disagree with the write: each is refused again.
+      for (const sessionDate of [utcDate(5), utcDate(7)]) {
+        const again = await geduAuth.rpc("request_session_substitution", {
+          p_group_id: GROUP,
+          p_session_date: sessionDate,
+          p_reason: "sick",
+        });
+        expect(again.error?.code).toBe(FORBIDDEN);
+      }
+    });
+
+    it("leaves out a withdrawn request, which the gedu may ask about again", async () => {
+      const filed = await fileOnTheWeb(geduAuth, utcDate(9));
+      const { error: withdrawError } = await geduAuth.rpc(
+        "withdraw_session_substitution_request",
+        { p_request_id: filed.id },
+      );
+      expect(withdrawError).toBeNull();
+
+      expect(keysOf(await liveOnTheWeb(geduAuth))).toEqual([]);
+      await fileOnTheWeb(geduAuth, utcDate(9));
+      expect(keysOf(await liveOnTheWeb(geduAuth))).toEqual([`${GROUP}:${utcDate(9)}`]);
+    });
+
+    it("keeps a request on a cancelled session, where the write still refuses a second filing", async () => {
+      await fileOnTheWeb(geduAuth, utcDate(11));
+      await admin.from("session_cancellations").insert({
+        group_id: GROUP,
+        session_date: utcDate(11),
+        cancelled_by: TEST_IDS.ADMIN,
+      });
+
+      expect(keysOf(await liveOnTheWeb(geduAuth))).toEqual([`${GROUP}:${utcDate(11)}`]);
+      const again = await geduAuth.rpc("request_session_substitution", {
+        p_group_id: GROUP,
+        p_session_date: utcDate(11),
+        p_reason: "sick",
+      });
+      expect(again.error?.code).toBe(FORBIDDEN);
+    });
+
+    it("leaves out a request dated before today in the product's zone", async () => {
+      const { error } = await admin.from("session_substitution_requests").insert({
+        group_id: GROUP,
+        session_date: utcDate(-3),
+        requested_by: geduId,
+        role: "primary",
+        reason: "sick",
+      });
+      expect(error).toBeNull();
+      expect(keysOf(await liveOnTheWeb(geduAuth))).toEqual([]);
+    });
+
+    it("answers each gedu about their own requests and never a colleague's", async () => {
+      await link(geduId, DISCORD_GEDU, new Date());
+      // The colleague on the same group asks for a substitute; the gedu does not.
+      await fileOnTheWeb(secondGeduAuth, utcDate(13));
+
+      expect(keysOf(await liveOnTheWeb(geduAuth))).toEqual([]);
+      const viaDiscord = await admin.rpc("get_live_substitution_requests_for_discord_user", {
+        p_discord_user_id: DISCORD_GEDU,
+      });
+      expect(keysOf(viaDiscord.data)).toEqual([]);
+      expect(keysOf(await liveOnTheWeb(secondGeduAuth))).toEqual([`${GROUP}:${utcDate(13)}`]);
+    });
+
+    it("refuses an unlinked Discord user from Discord", async () => {
+      await link(adminId, DISCORD_ADMIN_ONLY, new Date());
+      for (const discordUserId of [DISCORD_NOBODY, DISCORD_ADMIN_ONLY]) {
+        const { error } = await admin.rpc("get_live_substitution_requests_for_discord_user", {
+          p_discord_user_id: discordUserId,
+        });
+        expect(error?.code).toBe(NOT_LINKED);
+      }
+    });
+  });
+
   describe("who may call what", () => {
     const discordWrappers = [
       ["get_gedu_for_discord_user", { p_discord_user_id: DISCORD_GEDU }],
       ["get_assigned_products_for_discord_user", { p_discord_user_id: DISCORD_GEDU }],
       ["get_gedu_assignment_summaries_for_discord_user", { p_discord_user_id: DISCORD_GEDU }],
+      ["get_live_substitution_requests_for_discord_user", { p_discord_user_id: DISCORD_GEDU }],
       [
         "request_session_substitution_for_discord_user",
         {
@@ -398,6 +550,7 @@ describe("substitutions from Discord", () => {
         "gedu_assignment_summaries",
         { p_gedu_id: TEST_IDS.GEDU, p_epoch_date: SESSION_RECORDING_EPOCH },
       ],
+      ["gedu_live_substitution_requests", { p_gedu_id: TEST_IDS.GEDU }],
       [
         "file_session_substitution_request",
         {

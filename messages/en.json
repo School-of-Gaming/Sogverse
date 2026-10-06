@@ -1576,9 +1576,8 @@
         "sent": "Message sent.",
         "openInDiscord": "Open in Discord",
         "templatePlain": "Plain text",
-        "templateSubSessions": "/sub: session list",
-        "templateSubNotLinked": "/sub: not linked yet",
-        "subPreviewSent": "Preview sent."
+        "templateSubFlow": "/sub: every step",
+        "subPreviewSent": "Every step sent."
       }
     },
     "whatsapp": {
@@ -5351,9 +5350,8 @@
   },
   "discordSub": {
     "pickPlaceholder": "Pick a session",
-    "addNote": "Add a note",
-    "confirmWithoutNote": "Confirm without a note",
-    "empty": "You have no upcoming sessions to ask for a substitute for. Your substitutions are on the website: {url}",
+    "empty": "You have no upcoming sessions to ask for a substitute for.",
+    "filed": "Substitute requested for {product} on {when}.",
     "failed": "Something went wrong. Run /sub again in a moment.",
     "notLinked": "To use /sub, first link your Discord account to your School of Gaming Gedu account.",
     "notLinkedRunLink": "Your Discord account isn’t linked to a School of Gaming Gedu account. Run /link to link it, then /sub again.",

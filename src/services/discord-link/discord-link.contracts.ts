@@ -34,11 +34,9 @@ export const DISCORD_MESSAGE_MAX_LENGTH = 2000;
 
 /**
  * The admin testing page's Discord send: which linked Sogverse account to DM,
- * and which template — plain `text`, or one of the `/sub` command's two
- * answers, `subSessions` (the first step over sample sessions) and
- * `subNotLinked` (what a caller with no linked account is told). The recipient
- * is named by profile, never by Discord id — the route looks the Discord
- * account up itself.
+ * and which template — plain `text`, or `subFlow`, every message the `/sub`
+ * command can draw, over sample sessions. The recipient is named by profile,
+ * never by Discord id — the route looks the Discord account up itself.
  */
 export const sendTestDiscordMessageBody = z.discriminatedUnion("template", [
   z.object({
@@ -47,13 +45,7 @@ export const sendTestDiscordMessageBody = z.discriminatedUnion("template", [
     content: z.string().trim().min(1).max(DISCORD_MESSAGE_MAX_LENGTH),
   }),
   z.object({
-    template: z.literal("subSessions"),
-    profileId: z.string().uuid(),
-    /** The locale to render the preview in. */
-    locale: z.enum(SUPPORTED_LOCALES),
-  }),
-  z.object({
-    template: z.literal("subNotLinked"),
+    template: z.literal("subFlow"),
     profileId: z.string().uuid(),
     /** The locale to render the preview in. */
     locale: z.enum(SUPPORTED_LOCALES),
@@ -61,7 +53,7 @@ export const sendTestDiscordMessageBody = z.discriminatedUnion("template", [
 ]);
 export type SendTestDiscordMessageBody = z.infer<typeof sendTestDiscordMessageBody>;
 
-/** Where the sent message is: a link that opens it in Discord. */
+/** Where the sent message is — the first, for a set — as a link that opens it in Discord. */
 export const sendTestDiscordMessageResponse = z.object({
   jumpUrl: z.string().url(),
 });

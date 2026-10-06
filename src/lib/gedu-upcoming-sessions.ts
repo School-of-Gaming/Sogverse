@@ -166,6 +166,27 @@ export function buildGeduUpcomingSessions({
 }
 
 /**
+ * **Which sessions the gedu has already asked a substitute for**, by
+ * {@link GeduUpcomingSession.key}, from their live requests.
+ *
+ * The list above is built from seats, and a seat does not say whether its
+ * holder has filed an absence on one of its dates — so the live requests are a
+ * read of their own, and this turns them into the keys the list is matched
+ * against. The two ways into the write answer a match differently: the web
+ * picker keeps the row and disables it, and the Discord bot, whose dropdown
+ * cannot disable an option, leaves it out.
+ */
+export function alreadyRequestedSessionKeys(
+  requests: ReadonlyArray<{ group_id: string; session_date: string }>,
+): Set<string> {
+  return new Set(
+    requests.map((request) =>
+      sessionEntryId(request.group_id, request.session_date),
+    ),
+  );
+}
+
+/**
  * The one afternoon a substitution seat covers, if it is still ahead —
  * otherwise nothing.
  *

@@ -6,6 +6,7 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import {
+  alreadyRequestedSessionKeys,
   buildGeduUpcomingSessions,
   type GeduUpcomingSession,
 } from "@/lib/gedu-upcoming-sessions";
@@ -15,6 +16,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { parseMyAssignedProductRows } from "@/services/assignments/assignments.service";
 import { geduAssignmentSummaries } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
+  liveSubstitutionRequests,
   substitutionRequestDocument,
   type SubstitutionRequestDocument,
 } from "@/services/session-substitution/session-substitution.contracts";
@@ -32,7 +34,8 @@ import {
  * `service_role` alone, which first resolves that id to the gedu account linked
  * to it. Everything past the resolution is the web's own: the seat reads and
  * the filing write are the very bodies the Substitutions page reaches through
- * `auth.uid()`, and their results parse through the web's own schemas.
+ * `auth.uid()` — the gedu's live requests included — and their results parse
+ * through the web's own schemas.
  *
  * **An unlinked caller is one refusal, P0031**, raised by every function when
  * the Discord id has no gedu account linked to it. The reads answer it as
@@ -85,9 +88,17 @@ export async function resolveDiscordGedu(
 
 /**
  * The sessions this Discord user's gedu could file an absence for, soonest
- * first — exactly the list the Substitutions page's picker offers, built from
- * the same two seat reads through the same expansion. `null` when no gedu
- * account is linked to them.
+ * first — the list the Substitutions page's picker offers, built from the same
+ * two seat reads through the same expansion. `null` when no gedu account is
+ * linked to them.
+ *
+ * **A session the gedu has already asked a substitute for is left out.** The
+ * web picker shows it disabled with the reason; a Discord dropdown cannot
+ * disable an option, and an option that can only be refused is worse than none.
+ * Which sessions those are is the gedu's live requests — the third read here,
+ * the same one the web makes, and the very condition the write refuses a
+ * second filing on. The write's own refusal still stands behind it, for a
+ * filing made elsewhere between the list and the press.
  *
  * The locale names the products, so it is the caller's choice: the gedu's own
  * from {@link resolveDiscordGedu}, or Discord's when they have none.
@@ -102,7 +113,7 @@ export async function getDiscordGeduUpcomingSessions({
   now: Date;
 }): Promise<GeduUpcomingSession[] | null> {
   const supabase = createAdminClient();
-  const [rows, summaries] = await Promise.all([
+  const [rows, summaries, liveRequests] = await Promise.all([
     supabase.rpc("get_assigned_products_for_discord_user", {
       p_discord_user_id: discordUserId,
     }),
@@ -110,14 +121,21 @@ export async function getDiscordGeduUpcomingSessions({
       p_discord_user_id: discordUserId,
       p_epoch_date: SESSION_RECORDING_EPOCH,
     }),
+    supabase.rpc("get_live_substitution_requests_for_discord_user", {
+      p_discord_user_id: discordUserId,
+    }),
   ]);
 
-  for (const { error } of [rows, summaries]) {
+  for (const { error } of [rows, summaries, liveRequests]) {
     if (error && isDiscordGeduNotLinked(error)) return null;
   }
   if (rows.error) throw rows.error;
   if (summaries.error) throw summaries.error;
+  if (liveRequests.error) throw liveRequests.error;
 
+  const alreadyRequested = alreadyRequestedSessionKeys(
+    liveSubstitutionRequests.parse(liveRequests.data),
+  );
   return buildGeduUpcomingSessions({
     rows: joinGeduSeatRows(
       parseMyAssignedProductRows(rows.data),
@@ -125,7 +143,7 @@ export async function getDiscordGeduUpcomingSessions({
     ),
     locale,
     now,
-  });
+  }).filter((session) => !alreadyRequested.has(session.key));
 }
 
 /**

@@ -1,13 +1,14 @@
 /**
  * Why filing an absence was refused, as a message key.
  *
- * **The picker cannot know what it is about to be refused for.** No read on the
- * Substitutions page carries which dates the viewer has already filed on — the
- * assignment rows are per seat and the summaries per card — so the picker
- * disables only what it wrote itself and the write's own refusal is the backstop
- * for everything filed in an earlier visit. A backstop that says "that didn't
- * save, try again" invites the reader to press the same button again forever, so
- * it has to say *why*.
+ * **The refusal is the backstop for races.** The picker disables the sessions
+ * the viewer already holds a live request on, read from the server, plus what
+ * it has just filed itself — and the Discord bot leaves those sessions out — so
+ * what is left to be refused is what changed after the list was read: a filing
+ * from the session card, another tab or Discord, a seat taken away, a session
+ * that ended or was cancelled with the dialog open. A backstop that says "that
+ * didn't save, try again" invites the reader to press the same button again
+ * forever, so it has to say *why*.
  *
  * Two signals, in the order they are worth trusting, which is the same shape the
  * admin approval dialog uses:
@@ -28,8 +29,8 @@
  * you are expected at — and a gedu already holding a live request is not
  * expected at it. So "you have already asked" and "you no longer hold that seat"
  * raise one error with one message, and a line claiming either one alone would
- * be wrong half the time. The first is overwhelmingly the real case, and both
- * mean the same thing about the row: it cannot be filed on.
+ * be wrong half the time. Both mean the same thing about the row: it cannot be
+ * filed on.
  *
  * Pure, and it names keys rather than translating: the two entry points render
  * the line through their own translator.

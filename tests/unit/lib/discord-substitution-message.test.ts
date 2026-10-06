@@ -4,10 +4,10 @@ import { z } from "zod";
 import {
   DISCORD_FLAG_IS_COMPONENTS_V2,
   buildFiledMessage,
-  buildNoteModal,
-  buildReasonStepMessage,
   buildRefusalMessage,
+  buildRequestModal,
   buildSessionPickerMessage,
+  buildSubPreviewFlow,
   buildSubPreviewSessions,
   buildNoticeMessage,
   disableMessageControls,
@@ -17,17 +17,20 @@ import {
   parseReasonValue,
   parseSessionValue,
   parseSubCustomId,
+  pickedSessionOption,
   type DiscordComponent,
   type DiscordComponentsMessage,
   type DiscordSubCopy,
 } from "@/lib/discord-substitution-message";
 import type { GeduUpcomingSession } from "@/lib/gedu-upcoming-sessions";
+import { addCalendarDays } from "@/lib/calendar-date";
 
 /**
  * The `/sub` command's messages, as the data Discord is sent. Pinned: the
- * custom_id scheme both ways round, the session list's weeks and pages, the
+ * custom_id scheme both ways round, the session list's one capped select, the
  * caps Discord refuses a message for exceeding, and that the admin preview is
- * the same builder with every control on the preview prefix.
+ * every message the command draws, from the same builders, with every control
+ * on the preview prefix.
  */
 
 const GROUP_A = "6f1c2c1e-6d43-4c1a-9a5e-2f8f0d1b7a10";
@@ -35,7 +38,6 @@ const GROUP_B = "0b7e2a56-3c1d-4f7e-8a2b-9c4d5e6f7a81";
 const TZ = "Europe/Helsinki";
 /** A Monday morning in Helsinki. */
 const NOW = new Date("2026-10-05T06:00:00Z");
-const URL = "https://sogverse.sog.gg/gedu/substitutions";
 const LOGO = "https://sogverse.sog.gg/apple-icon.png";
 
 function session(
@@ -104,33 +106,27 @@ beforeAll(async () => {
 
 describe("parseSubCustomId", () => {
   it.each([
-    ["sub:p:0", { kind: "page", page: 0 }],
-    ["sub:p:3", { kind: "page", page: 3 }],
-    ["sub:s:2026-10-05:0", { kind: "session" }],
-    [`sub:r:${GROUP_A}:2026-10-06`, { kind: "reason", groupId: GROUP_A, sessionDate: "2026-10-06" }],
-    [
-      `sub:m:${GROUP_A}:2026-10-06:sick:fi`,
-      { kind: "note", groupId: GROUP_A, sessionDate: "2026-10-06", reason: "sick", locale: "fi" },
-    ],
-    [`sub:f:${GROUP_A}:2026-10-06:other`, { kind: "file", groupId: GROUP_A, sessionDate: "2026-10-06", reason: "other" }],
-    [`sub:n:${GROUP_A}:2026-10-06:sick`, { kind: "submit", groupId: GROUP_A, sessionDate: "2026-10-06", reason: "sick" }],
-    ["subpreview:s:2026-10-05:0", { kind: "preview" }],
-    ["subpreview:p:1", { kind: "preview" }],
+    ["sub:l", { kind: "list" }],
+    ["sub:s:fi", { kind: "session", locale: "fi" }],
+    [`sub:n:${GROUP_A}:2026-10-06`, { kind: "submit", groupId: GROUP_A, sessionDate: "2026-10-06" }],
+    ["subpreview:s:en", { kind: "preview" }],
+    ["subpreview:l", { kind: "preview" }],
   ])("reads %s", (customId, expected) => {
     expect(parseSubCustomId(customId)).toEqual(expected);
   });
 
   it.each([
-    "other:p:0",
-    "sub:p:-1",
-    "sub:p:x",
+    "other:l",
+    "sub:l:0",
+    "sub:s",
+    "sub:s:de",
+    "sub:s:fi:0",
     "sub:x",
-    `sub:r:not-a-uuid:2026-10-06`,
-    `sub:r:${GROUP_A}:06.10.2026`,
-    `sub:f:${GROUP_A}:2026-10-06:-`,
-    `sub:f:${GROUP_A}:2026-10-06:holiday`,
-    `sub:m:${GROUP_A}:2026-10-06:sick:de`,
-    `sub:n:${GROUP_A}:2026-10-06:sick:extra`,
+    `sub:n:not-a-uuid:2026-10-06`,
+    `sub:n:${GROUP_A}:06.10.2026`,
+    `sub:n:${GROUP_A}:2026-10-06:sick`,
+    `sub:r:${GROUP_A}:2026-10-06`,
+    `sub:f:${GROUP_A}:2026-10-06:sick`,
   ])("refuses %s", (customId) => {
     expect(parseSubCustomId(customId)).toBeNull();
   });
@@ -148,39 +144,40 @@ describe("parseSubCustomId", () => {
 });
 
 describe("buildSessionPickerMessage", () => {
-  // Two this week, one next week, and three later weeks.
   const sessions = [
     session(GROUP_A, "2026-10-06"),
     session(GROUP_B, "2026-10-08", { isRemote: true, siteName: null, groupName: null, productName: "Roblox Studio" }),
     session(GROUP_A, "2026-10-13"),
-    session(GROUP_A, "2026-10-20"),
-    session(GROUP_A, "2026-10-27"),
     session(GROUP_A, "2026-11-03"),
   ];
 
+  /** `count` sessions a day apart from Oct 6, soonest first. */
+  const daily = (count: number) =>
+    Array.from({ length: count }, (_, index) =>
+      session(GROUP_A, addCalendarDays("2026-10-06", index)),
+    );
+
   it("is one Components V2 container in the act colour", () => {
-    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions });
 
     expect(message.flags).toBe(DISCORD_FLAG_IS_COMPONENTS_V2);
     expect(message.components).toHaveLength(1);
     expect(message.components[0]).toMatchObject({ type: 17, accent_color: 0xfaa901 });
-    expect(texts(message)).toEqual(
-      expect.arrayContaining([
-        "### Which session do you need a substitute for?",
-        "Your reason and note are shown to admins only.",
-      ]),
-    );
+    expect(texts(message)).toContain("### Which session do you need a substitute for?");
+    // Who sees a reason is said where the reason is asked for, not before.
+    expect(texts(message).join("\n")).not.toContain("admins only");
   });
 
-  it("opens on this week and next, one select a week, with the way to later weeks", () => {
-    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 0, substitutionsUrl: URL });
+  it("lists every session in one select, soonest first, with no headings and no paging", () => {
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions });
 
-    expect(texts(message)).toEqual(expect.arrayContaining(["**This week**", "**Next week**"]));
-    const [thisWeek, nextWeek] = selects(message);
-    expect(selects(message)).toHaveLength(2);
-    expect(thisWeek.custom_id).toBe("sub:s:2026-10-05:0");
-    expect(nextWeek.custom_id).toBe("sub:s:2026-10-12:0");
-    expect(options(thisWeek)).toEqual([
+    expect(selects(message)).toHaveLength(1);
+    const [select] = selects(message);
+    expect(select.custom_id).toBe("sub:s:en");
+    expect(options(select).map((option) => option.value)).toEqual(
+      sessions.map((entry) => entry.key),
+    );
+    expect(options(select).slice(0, 2)).toEqual([
       {
         label: "Tue, Oct 6, 16:00 – 17:30 GMT+3",
         description: "Minecraft Club — A · Kallio School",
@@ -192,41 +189,25 @@ describe("buildSessionPickerMessage", () => {
         value: `${GROUP_B}:2026-10-08`,
       },
     ]);
-    expect(buttons(message).map((button) => [button.custom_id, button.label])).toEqual([
-      ["sub:p:1", "Show later sessions"],
-    ]);
+    expect(buttons(message)).toHaveLength(0);
+    expect(texts(message).some((line) => line.startsWith("**"))).toBe(false);
   });
 
-  it("pages the later weeks two at a time, with the way back", () => {
-    const second = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 1, substitutionsUrl: URL });
-    expect(selects(second).map((select) => select.custom_id)).toEqual([
-      "sub:s:2026-10-19:0",
-      "sub:s:2026-10-26:0",
-    ]);
-    expect(texts(second)).toEqual(expect.arrayContaining(["**Week of Oct 19**"]));
-    expect(buttons(second).map((button) => button.custom_id)).toEqual(["sub:p:0", "sub:p:2"]);
+  it("offers exactly 25 sessions when there are 25", () => {
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: daily(25) });
 
-    const last = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions, now: NOW, page: 9, substitutionsUrl: URL });
-    expect(selects(last).map((select) => select.custom_id)).toEqual(["sub:s:2026-11-02:0"]);
-    expect(buttons(last).map((button) => button.custom_id)).toEqual(["sub:p:1"]);
+    expect(options(selects(message)[0])).toHaveLength(25);
   });
 
-  it("splits a week past Discord's 25 options into a second select", () => {
-    const crowded = Array.from({ length: 30 }, (_, index) =>
-      session(
-        `${GROUP_A.slice(0, -2)}${String(index).padStart(2, "0")}`,
-        index % 2 === 0 ? "2026-10-06" : "2026-10-07",
-      ),
+  it("offers only the soonest 25 when there are more, and nothing to reach the rest", () => {
+    const many = daily(40);
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: many });
+
+    expect(selects(message)).toHaveLength(1);
+    expect(options(selects(message)[0]).map((option) => option.value)).toEqual(
+      many.slice(0, 25).map((entry) => entry.key),
     );
-    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: crowded, now: NOW, page: 0, substitutionsUrl: URL });
-
-    expect(selects(message).map((select) => options(select).length)).toEqual([25, 5]);
-    // Discord refuses a Components V2 message of more than 40 components.
-    expect(walk(message.components).length).toBeLessThanOrEqual(40);
-    expect(selects(message).map((select) => select.custom_id)).toEqual([
-      "sub:s:2026-10-05:0",
-      "sub:s:2026-10-05:1",
-    ]);
+    expect(buttons(message)).toHaveLength(0);
   });
 
   it("stays inside Discord's caps on every id and option", () => {
@@ -234,7 +215,7 @@ describe("buildSessionPickerMessage", () => {
       productName: "A product name long enough that the row would run past a hundred characters",
       groupName: "and a group name to push it further still",
     });
-    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: [long], now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: [long] });
 
     for (const component of walk(message.components)) {
       if (typeof component.custom_id === "string") {
@@ -246,132 +227,193 @@ describe("buildSessionPickerMessage", () => {
     expect(option.description?.endsWith("…")).toBe(true);
   });
 
-  it("says there is nothing to file for and points at the web page", () => {
-    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: [], now: NOW, page: 0, substitutionsUrl: URL });
+  it("says there is nothing to file for, and nothing more", () => {
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions: [] });
 
     expect(selects(message)).toHaveLength(0);
-    expect(texts(message).join("\n")).toContain(URL);
+    expect(buttons(message)).toHaveLength(0);
+    expect(texts(message)).toContain("You have no upcoming sessions to ask for a substitute for.");
   });
 
   it("speaks the copy's locale", () => {
-    const message = buildSessionPickerMessage({ copy: fi, logoUrl: LOGO, sessions, now: NOW, page: 0, substitutionsUrl: URL });
+    const message = buildSessionPickerMessage({ copy: fi, logoUrl: LOGO, sessions });
 
-    expect(texts(message)).toEqual(
-      expect.arrayContaining(["### Mille kerralle tarvitset tuuraajan?", "**Tämä viikko**"]),
-    );
+    expect(texts(message)).toContain("### Mille kerralle tarvitset tuuraajan?");
+    expect(selects(message)[0].placeholder).toBe(fi.sub("pickPlaceholder"));
+    // The modal the pick opens is answered unread, in the locale drawn here.
+    expect(parseSubCustomId(String(selects(message)[0].custom_id))).toEqual({
+      kind: "session",
+      locale: "fi",
+    });
   });
 });
 
 describe("the admin preview", () => {
+  const flow = () =>
+    buildSubPreviewFlow({
+      copy: en,
+      logoUrl: LOGO,
+      now: NOW,
+      origin: "https://sogverse.sog.gg",
+    });
+
   it("is the same first step over sample sessions, every control on the preview prefix", () => {
     const sessions = buildSubPreviewSessions(NOW);
     const message = buildSessionPickerMessage({
       copy: en,
       logoUrl: LOGO,
       sessions,
-      now: NOW,
-      page: 0,
       prefix: "subpreview",
-      substitutionsUrl: URL,
     });
 
-    const controls = [...selects(message), ...buttons(message)];
-    expect(controls.length).toBeGreaterThan(1);
+    expect(selects(message)).toHaveLength(1);
+    expect(selects(message)[0].custom_id).toBe("subpreview:s:en");
+    expect(parseSubCustomId("subpreview:s:en")).toEqual({ kind: "preview" });
+    expect(options(selects(message)[0]).length).toBeGreaterThan(1);
+  });
+
+  it("draws every message the command can, in the order a gedu meets them", () => {
+    const [notLinked, ...steps] = flow();
+
+    expect(notLinked.content).not.toContain("https://");
+    expect(notLinked.components).toEqual([
+      {
+        type: 1,
+        components: [
+          {
+            type: 2,
+            style: 5,
+            label: "Connect account",
+            url: "https://sogverse.sog.gg/link-discord?token=preview",
+          },
+        ],
+      },
+    ]);
+    expect(steps.map((step) => texts(step).join("\n"))).toEqual([
+      expect.stringContaining("Which session do you need a substitute for?"),
+      expect.stringContaining("✅"),
+      expect.stringContaining("You’ve already asked for a substitute for this session."),
+      expect.stringContaining("You have no upcoming sessions to ask for a substitute for."),
+      expect.stringContaining(en.sub("failed")),
+    ]);
+    // The refusal keeps its way back to the list.
+    expect(buttons(steps[2]).map((button) => button.custom_id)).toEqual(["subpreview:l"]);
+  });
+
+  it("puts every control of every step on the preview prefix", () => {
+    const [, ...steps] = flow();
+    const controls = steps.flatMap((step) => [...selects(step), ...buttons(step)]);
+
+    // The session select and the refusal's way back.
+    expect(controls).toHaveLength(2);
     for (const control of controls) {
       expect(parseSubCustomId(String(control.custom_id))).toEqual({ kind: "preview" });
     }
-    // Enough weeks that the later-sessions button has somewhere to go.
-    expect(buttons(message).map((button) => button.custom_id)).toContain("subpreview:p:1");
   });
 });
 
-describe("the reason step", () => {
-  const picked = session(GROUP_A, "2026-10-06");
+describe("the request modal", () => {
+  const picked = { label: "Tue, Oct 6, 16:00 – 17:30 GMT+3", description: "Minecraft Club — A · Kallio School" };
+  const modalTexts = (components: DiscordComponent[]) =>
+    components.filter((component) => component.type === 10).map((component) => String(component.content));
+  const labels = (components: DiscordComponent[]) =>
+    components.filter((component) => component.type === 18);
 
-  it("asks the web form's question, with nothing chosen and both ways to finish disabled", () => {
-    const message = buildReasonStepMessage({ copy: en, logoUrl: LOGO, session: picked, reason: null });
-
-    expect(texts(message)).toEqual(
-      expect.arrayContaining([
-        "### I can’t make this session",
-        "**Tue, Oct 6, 16:00 – 17:30 GMT+3**\nMinecraft Club — A\n-# Kallio School",
-      ]),
-    );
-    const [reasons] = selects(message);
-    expect(reasons.custom_id).toBe(`sub:r:${GROUP_A}:2026-10-06`);
-    expect(options(reasons)).toEqual([
-      { label: "Sick", value: "sick" },
-      { label: "Something else", value: "other" },
-    ]);
-    expect(buttons(message).map((button) => [button.label, button.disabled ?? false])).toEqual([
-      ["Back", false],
-      ["Add a note", true],
-      ["Confirm without a note", true],
-    ]);
-  });
-
-  it("keeps the chosen reason and enables the note and the confirm", () => {
-    const message = buildReasonStepMessage({ copy: fi, logoUrl: LOGO, session: picked, reason: "sick" });
-
-    expect(options(selects(message)[0])[0]).toMatchObject({ value: "sick", default: true });
-    const [back, note, confirm] = buttons(message);
-    expect(parseSubCustomId(String(back.custom_id))).toEqual({ kind: "page", page: 0 });
-    expect(parseSubCustomId(String(note.custom_id))).toEqual({
-      kind: "note",
-      groupId: GROUP_A,
-      sessionDate: "2026-10-06",
-      reason: "sick",
-      locale: "fi",
-    });
-    expect(parseSubCustomId(String(confirm.custom_id))).toEqual({
-      kind: "file",
-      groupId: GROUP_A,
-      sessionDate: "2026-10-06",
-      reason: "sick",
-    });
-    expect(note.disabled).toBeUndefined();
-  });
-
-  it("opens a modal with the web form's note field and bound", () => {
-    const modal = buildNoteModal({ copy: en, groupId: GROUP_A, sessionDate: "2026-10-06", reason: "other" });
+  it("names the session, says who sees a reason, and asks for the reason and the note", () => {
+    const modal = buildRequestModal({ copy: en, groupId: GROUP_A, sessionDate: "2026-10-06", picked });
 
     expect(parseSubCustomId(modal.custom_id)).toEqual({
       kind: "submit",
       groupId: GROUP_A,
       sessionDate: "2026-10-06",
-      reason: "other",
     });
     expect(modal.title).toBe("I can’t make this session");
-    expect(modal.components[0]).toMatchObject({
-      type: 18,
+    expect(modalTexts(modal.components)).toEqual([
+      "**Tue, Oct 6, 16:00 – 17:30 GMT+3**\nMinecraft Club — A · Kallio School",
+      en.form("substitutionRequestDialogBody"),
+    ]);
+    const [reason, note] = labels(modal.components);
+    expect(reason).toMatchObject({
+      label: en.form("substitutionReasonLabel"),
+      component: { type: 3, custom_id: "reason", required: true },
+    });
+    // Nothing chosen to begin with, as on the web.
+    expect(options(z.record(z.unknown()).parse(reason.component))).toEqual([
+      { label: "Sick", value: "sick" },
+      { label: "Something else", value: "other" },
+    ]);
+    expect(note).toMatchObject({
       label: "Note for the office",
       component: { type: 4, custom_id: "note", required: false, max_length: 500 },
     });
   });
 
-  it("fits every locale's modal title and label inside Discord's 45", async () => {
+  it("falls back to the session's date, in the copy's locale, when the picked option is not known", () => {
+    const modal = buildRequestModal({ copy: en, groupId: GROUP_A, sessionDate: "2026-10-06", picked: null });
+    expect(modalTexts(modal.components)[0]).toBe("**Tue, Oct 6**");
+
+    // Never the raw ISO date, whatever the locale.
+    const finnish = buildRequestModal({ copy: fi, groupId: GROUP_A, sessionDate: "2026-10-06", picked: null });
+    expect(modalTexts(finnish.components)[0]).toBe("**ti 6.10.**");
+  });
+
+  it("fits every locale's modal inside Discord's caps", async () => {
     for (const locale of ["en", "fi", "sv", "fr", "tlh"] as const) {
-      const modal = buildNoteModal({
+      const modal = buildRequestModal({
         copy: await loadDiscordSubCopy(locale),
         groupId: GROUP_A,
         sessionDate: "2026-10-06",
-        reason: "sick",
+        picked,
       });
+      expect(modal.custom_id.length).toBeLessThanOrEqual(100);
+      expect(modal.components.length).toBeLessThanOrEqual(5);
       expect(modal.title.length).toBeLessThanOrEqual(45);
-      expect(String(modal.components[0].label).length).toBeLessThanOrEqual(45);
       expect(modal.title.endsWith("…")).toBe(false);
+      for (const label of labels(modal.components)) {
+        expect(String(label.label).length).toBeLessThanOrEqual(45);
+      }
     }
+  });
+
+  it("finds the picked option on the pressed message, leniently", () => {
+    const pressed = buildSessionPickerMessage({
+      copy: en,
+      logoUrl: LOGO,
+      sessions: [session(GROUP_A, "2026-10-06"), session(GROUP_B, "2026-10-08")],
+    });
+
+    expect(pickedSessionOption(pressed, `${GROUP_B}:2026-10-08`)).toEqual({
+      label: "Thu, Oct 8, 16:00 – 17:30 GMT+3",
+      description: "Minecraft Club — A · Kallio School",
+    });
+    expect(pickedSessionOption(pressed, `${GROUP_A}:2026-12-01`)).toBeNull();
+    expect(pickedSessionOption({ components: "nope" }, `${GROUP_A}:2026-10-06`)).toBeNull();
+    expect(pickedSessionOption(undefined, `${GROUP_A}:2026-10-06`)).toBeNull();
   });
 });
 
 describe("the outcome", () => {
   const picked = session(GROUP_A, "2026-10-06");
 
-  it("confirms in the web's own words", () => {
+  it("confirms what was filed, and nothing more", () => {
     const message = buildFiledMessage({ copy: en, logoUrl: LOGO, session: picked });
 
-    expect(texts(message).join("\n")).toContain(
-      "Substitute requested for Minecraft Club — A on Tue, Oct 6, 16:00 – 17:30 GMT+3.",
+    expect(texts(message)).toContain(
+      "✅ Substitute requested for Minecraft Club — A on Tue, Oct 6, 16:00 – 17:30 GMT+3.",
+    );
+    expect(buttons(message)).toHaveLength(0);
+  });
+
+  it("names a session the list does not carry by its date, in the copy's locale", () => {
+    const message = buildFiledMessage({
+      copy: en,
+      logoUrl: LOGO,
+      session: { sessionDate: "2026-12-01" },
+    });
+
+    expect(texts(message)).toContain("**Tue, Dec 1**");
+    expect(texts(message)).toContain(
+      "✅ You’ve asked for a substitute for this session. Waiting for one.",
     );
     expect(buttons(message)).toHaveLength(0);
   });
@@ -387,7 +429,7 @@ describe("the outcome", () => {
     expect(texts(message).join("\n")).toContain(
       "You’ve already asked for a substitute for this session.",
     );
-    expect(buttons(message).map((button) => button.custom_id)).toEqual(["sub:p:0"]);
+    expect(buttons(message).map((button) => button.custom_id)).toEqual(["sub:l"]);
   });
 });
 
@@ -396,23 +438,12 @@ describe("the logo", () => {
   const sessions = [picked, session(GROUP_A, "2026-10-20")];
 
   const steps: Array<[string, (logoUrl: string | null) => DiscordComponentsMessage]> = [
-    ["the first step", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions, now: NOW, page: 0, substitutionsUrl: URL })],
-    ["a later page", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions, now: NOW, page: 1, substitutionsUrl: URL })],
-    ["the empty list", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions: [], now: NOW, page: 0, substitutionsUrl: URL })],
+    ["the first step", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions })],
+    ["the empty list", (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions: [] })],
     [
       "the preview",
-      (logoUrl) =>
-        buildSessionPickerMessage({
-          copy: en,
-          logoUrl,
-          sessions,
-          now: NOW,
-          page: 0,
-          prefix: "subpreview",
-          substitutionsUrl: URL,
-        }),
+      (logoUrl) => buildSessionPickerMessage({ copy: en, logoUrl, sessions, prefix: "subpreview" }),
     ],
-    ["the reason step", (logoUrl) => buildReasonStepMessage({ copy: en, logoUrl, session: picked, reason: null })],
     ["the filed line", (logoUrl) => buildFiledMessage({ copy: en, logoUrl, session: picked })],
     ["a refusal", (logoUrl) => buildRefusalMessage({ copy: en, logoUrl, line: "No.", session: null })],
     ["a notice", (logoUrl) => buildNoticeMessage({ copy: en, logoUrl, line: "Hello." })],
@@ -449,12 +480,12 @@ describe("the logo", () => {
   });
 
   it("puts the step's heading beside the logo", () => {
-    const message = buildReasonStepMessage({ copy: en, logoUrl: LOGO, session: picked, reason: null });
+    const message = buildSessionPickerMessage({ copy: en, logoUrl: LOGO, sessions });
     const [header] = containerChildren(message);
 
     expect(componentList.parse(header.components).map((line) => line.content)).toEqual([
       "# School of Gaming · Substitutions",
-      "### I can’t make this session",
+      "### Which session do you need a substitute for?",
     ]);
   });
 
@@ -480,9 +511,9 @@ describe("greying out a pressed message's controls", () => {
         {
           type: 9,
           components: [{ type: 10, content: "Row with a button" }],
-          accessory: { type: 2, style: 2, custom_id: "sub:p:1", label: "More" },
+          accessory: { type: 2, style: 2, custom_id: "sub:l", label: "More" },
         },
-        { type: 1, components: [{ type: 3, custom_id: "sub:s:2026-10-05:0", options: [] }] },
+        { type: 1, components: [{ type: 3, custom_id: "sub:s", options: [] }] },
         {
           type: 1,
           components: [
@@ -505,9 +536,9 @@ describe("greying out a pressed message's controls", () => {
     const [header, section, selectRow, buttonRow, otherSelects] = greyed();
 
     expect(header.accessory).toEqual({ type: 11, media: { url: LOGO } });
-    expect(section.accessory).toMatchObject({ custom_id: "sub:p:1", disabled: true });
+    expect(section.accessory).toMatchObject({ custom_id: "sub:l", disabled: true });
     expect(selectRow.components).toEqual([
-      { type: 3, custom_id: "sub:s:2026-10-05:0", options: [], disabled: true },
+      { type: 3, custom_id: "sub:s", options: [], disabled: true },
     ]);
     expect(buttonRow.components).toEqual([
       { type: 2, style: 1, custom_id: "sub:f:x", label: "File", disabled: true },

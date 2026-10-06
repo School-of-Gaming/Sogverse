@@ -1576,9 +1576,8 @@
         "sent": "Meddelandet skickades.",
         "openInDiscord": "Öppna i Discord",
         "templatePlain": "Ren text",
-        "templateSubSessions": "/sub: lista över tillfällen",
-        "templateSubNotLinked": "/sub: inte kopplad än",
-        "subPreviewSent": "Förhandsvisningen skickades."
+        "templateSubFlow": "/sub: alla steg",
+        "subPreviewSent": "Alla steg skickades."
       }
     },
     "whatsapp": {
@@ -5351,9 +5350,8 @@
   },
   "discordSub": {
     "pickPlaceholder": "Välj ett tillfälle",
-    "addNote": "Lägg till en notering",
-    "confirmWithoutNote": "Bekräfta utan notering",
-    "empty": "Du har inga kommande tillfällen att be om en vikarie för. Dina vikariat finns på webbplatsen: {url}",
+    "empty": "Du har inga kommande tillfällen att be om en vikarie för.",
+    "filed": "Vikarie efterfrågad för {product} den {when}.",
     "failed": "Något gick fel. Kör /sub igen om en stund.",
     "notLinked": "För att använda /sub måste du först koppla ditt Discord-konto till ditt Gedu-konto hos School of Gaming.",
     "notLinkedRunLink": "Ditt Discord-konto är inte kopplat till ett Gedu-konto hos School of Gaming. Kör /link för att koppla det och sedan /sub igen.",
