@@ -383,6 +383,24 @@ export class LandingPageService {
   }
 
   /**
+   * Remove one language version from the working copy — its title, summary,
+   * slug and words. A live language stays live until the next publish takes
+   * it down. The database refuses the page's last language with
+   * `check_violation`, and a language the page does not have with
+   * `no_data_found`.
+   */
+  async removeVersion(id: string, locale: string): Promise<string> {
+    const { data, error } = await this.supabase.rpc("remove_landing_page_version", {
+      p_id: id,
+      p_locale: locale,
+    });
+
+    if (error) throw error;
+    if (!data) throw new Error("remove_landing_page_version returned no id");
+    return data;
+  }
+
+  /**
    * A fresh resolver for one write's own-site links: a slug found among live
    * pages only, through each area's public reader, so a stored id address is
    * one a reader can open. Fresh per write, so its list reads are never stale.

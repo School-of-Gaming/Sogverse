@@ -24,7 +24,7 @@ CREATE TABLE public.landing_page_translations (
 -- Name: TABLE landing_page_translations; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.landing_page_translations IS 'One language version of a landing page''s WORKING COPY — its title, summary, slug and the text of every section in that locale, which may be saved incomplete. At least one per page: save_landing_page refuses an empty set, and nothing else removes a version. The public never reads this table: publishing copies the complete versions to landing_page_publication_translations. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are save_landing_page, which replaces the whole set, and save_landing_page_version, which writes one.';
+COMMENT ON TABLE public.landing_page_translations IS 'One language version of a landing page''s WORKING COPY — its title, summary, slug and the text of every section in that locale, which may be saved incomplete. At least one per page: save_landing_page refuses an empty set, and remove_landing_page_version refuses to remove the last. The public never reads this table: publishing copies the complete versions to landing_page_publication_translations. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are save_landing_page, which replaces the whole set, save_landing_page_version, which writes one, and remove_landing_page_version, which removes one.';
 
 
 --

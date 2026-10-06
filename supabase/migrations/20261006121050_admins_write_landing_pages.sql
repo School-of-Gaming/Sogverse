@@ -381,7 +381,7 @@ CREATE TABLE public.landing_pages (
   last_saved_via uuid
 );
 
-COMMENT ON TABLE public.landing_pages IS 'The WORKING COPY of each landing page — what an admin is editing, which may be saved incomplete: the section structure here, shared by every language, and the words per language in landing_page_translations. The public never reads this table: what is live is the page''s row in landing_page_publications, copied from this one by publish_landing_page. The id is the page''s id address. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_landing_page, save_landing_page, save_landing_page_structure and save_landing_page_version, and the catalogue''s repoint_landing_images and removal trigger. No delete: a page that has to come down is unpublished.';
+COMMENT ON TABLE public.landing_pages IS 'The WORKING COPY of each landing page — what an admin is editing, which may be saved incomplete: the section structure here, shared by every language, and the words per language in landing_page_translations. The public never reads this table: what is live is the page''s row in landing_page_publications, copied from this one by publish_landing_page. The id is the page''s id address. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_landing_page, save_landing_page, save_landing_page_structure, save_landing_page_version and remove_landing_page_version, and the catalogue''s repoint_landing_images and removal trigger. No delete: a page that has to come down is unpublished.';
 
 COMMENT ON COLUMN public.landing_pages.author_id IS 'The admin who created the page, stamped from auth.uid() by create_landing_page and never changed. SET NULL when that account goes.';
 COMMENT ON COLUMN public.landing_pages.sections IS 'The ordered section structure, a JSON array of {id, type, ...shared fields}: pictures, button targets, icons, and the ids and order of a section''s items. Its shape is landing_sections_problem''s; the writers refuse anything it names. The text of each section is per language, in landing_page_translations.section_texts, keyed by the section''s id.';
@@ -417,7 +417,7 @@ CREATE UNIQUE INDEX uq_landing_page_translations_locale_slug
   ON public.landing_page_translations (locale, slug)
   WHERE slug <> '';
 
-COMMENT ON TABLE public.landing_page_translations IS 'One language version of a landing page''s WORKING COPY — its title, summary, slug and the text of every section in that locale, which may be saved incomplete. At least one per page: save_landing_page refuses an empty set, and nothing else removes a version. The public never reads this table: publishing copies the complete versions to landing_page_publication_translations. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are save_landing_page, which replaces the whole set, and save_landing_page_version, which writes one.';
+COMMENT ON TABLE public.landing_page_translations IS 'One language version of a landing page''s WORKING COPY — its title, summary, slug and the text of every section in that locale, which may be saved incomplete. At least one per page: save_landing_page refuses an empty set, and remove_landing_page_version refuses to remove the last. The public never reads this table: publishing copies the complete versions to landing_page_publication_translations. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are save_landing_page, which replaces the whole set, save_landing_page_version, which writes one, and remove_landing_page_version, which removes one.';
 COMMENT ON COLUMN public.landing_page_translations.locale IS 'A site locale code (en, fi, sv, ...), the same code set as profiles.locale. Not a spoken language.';
 COMMENT ON COLUMN public.landing_page_translations.title IS 'The title in this language: the page''s <title> and the name the admin list shows. The one field a version must carry.';
 COMMENT ON COLUMN public.landing_page_translations.summary IS 'The summary in this language — the page''s meta description and its line in llms.txt — plain text, at most 160 characters, and the empty string while unwritten.';
@@ -972,6 +972,52 @@ COMMENT ON FUNCTION public.save_landing_page_version(p_id uuid, p_locale text, p
 REVOKE ALL ON FUNCTION public.save_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.save_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.save_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) TO service_role;
+
+CREATE FUNCTION public.remove_landing_page_version(p_id uuid, p_locale text)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $$
+BEGIN
+  PERFORM public.assert_admin();
+
+  -- Written first, so an id no page has is refused before anything else, the
+  -- row's updated_at and saver move, and the row lock orders this removal
+  -- against a publish and against another removal: two removals racing for
+  -- a page's last two languages cannot both see the other still there.
+  UPDATE public.landing_pages SET updated_at = now()
+  WHERE id = p_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Landing page not found'
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM public.landing_page_translations
+                  WHERE page_id = p_id AND locale = p_locale) THEN
+    RAISE EXCEPTION 'The page has no % version to remove', COALESCE(p_locale, 'unnamed')
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM public.landing_page_translations
+                  WHERE page_id = p_id AND locale <> p_locale) THEN
+    RAISE EXCEPTION 'The % version is the page''s only language, and a page keeps at least one; write another language before removing this one', p_locale
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  DELETE FROM public.landing_page_translations
+   WHERE page_id = p_id AND locale = p_locale;
+
+  RETURN p_id;
+END;
+$$;
+
+COMMENT ON FUNCTION public.remove_landing_page_version(p_id uuid, p_locale text) IS 'Admin-gated removal of ONE language version from a landing page''s working copy — its title, summary, slug and every section''s text in that locale; returns the page id. Never touches the published copy: a live language stays live until the next publish, which copies only the working versions and so takes it down. Refuses the page''s last version with check_violation, since a page keeps at least one. An id no page has, or a locale the page has no version in, raises no_data_found. The working copy''s updated_at and saver move. SECURITY DEFINER because no working table carries a write grant.';
+
+REVOKE ALL ON FUNCTION public.remove_landing_page_version(p_id uuid, p_locale text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.remove_landing_page_version(p_id uuid, p_locale text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.remove_landing_page_version(p_id uuid, p_locale text) TO service_role;
 
 CREATE FUNCTION public.publish_landing_page(p_id uuid)
 RETURNS uuid

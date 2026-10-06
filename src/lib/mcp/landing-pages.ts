@@ -597,6 +597,37 @@ export function registerLandingPageTools(server: McpServer): void {
   );
 
   server.registerTool(
+    "remove_landing_page_language",
+    {
+      title: "Remove a language from a landing page",
+      description: `Remove one language version from the page's working copy: its title, summary, slug and every section's words in that language. No other language, nor the structure, is touched. If the language is live, readers keep seeing it until the next publish, which takes it down. It cannot be undone except by writing the language again with save_landing_page_text. A page keeps at least one language, so removing its last one is refused. Confirm with the admin before removing a language. The answer lists the languages left with their completeness, and what a publish now would do. ${PUBLISHING}`,
+      inputSchema: readableInput(z.object({ pageId, locale }), z.object({ pageId, locale })),
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    ({ pageId: id, locale: removed }, ctx) =>
+      asLandingAdmin(ctx, async ({ service, origin }) => {
+        const before = await service.getAdminPage(id);
+        if (before === null) return refusal(NOT_FOUND);
+        await service.removeVersion(id, removed);
+        const page = await service.getAdminPage(id);
+        if (page === null) return refusal(NOT_FOUND);
+        return answer({
+          pageId: id,
+          removed,
+          languageIsLive: page.publication?.versions.some((v) => v.locale === removed) ?? false,
+          languages: languages(page),
+          hasUnpublishedChanges: page.hasUnpublishedChanges,
+          publish: publishForecast(page, origin),
+        });
+      }),
+  );
+
+  server.registerTool(
     "publish_landing_page",
     {
       title: "Publish a landing page",

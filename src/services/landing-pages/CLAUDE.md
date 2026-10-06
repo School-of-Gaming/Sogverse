@@ -33,6 +33,9 @@ structure write that removes a section drops that section's words from every lan
 the database does it, whoever wrote the structure — and nothing else a structure write
 does touches the words. A one-language write is checked against the structure as it is at
 that moment, and refused if it carries words for a section the page does not have.
+**A language leaves by a writer of its own**, which removes that version from the working
+copy alone and refuses the page's last one: a live language stays live until the next
+publish, which takes it down.
 
 **A version is complete when its title, summary and slug are written and every section
 has every required word in that language.** Which words a type requires is declared in

@@ -29,7 +29,7 @@ import { requiredTextCases } from "../helpers/landing-required-text-cases";
  * the section structure), `landing_page_publications` (its public published
  * copy, whose row existing IS the page being live), each with its
  * per-language versions; the admin-guarded writers — whole, structure-only
- * and one-language — publish and unpublish; the stored, per-language slugs
+ * and one-language, and a language's removal — publish and unpublish; the stored, per-language slugs
  * and their rules; the derived completeness; pictures from the image
  * catalogue, with the catalogue's replace (`repoint_landing_images`) and
  * removal (a trigger) reaching both copies; the record of who last saved
@@ -599,6 +599,94 @@ describe("landing pages", () => {
   });
 
   // -------------------------------------------------------------------------
+  // Removing a language
+  // -------------------------------------------------------------------------
+
+  describe("removing a language", () => {
+    it("removes that language from the working copy alone", async () => {
+      await reseed();
+      await service.saveVersion(PAGE_A, version("fi", "fixture-landing-a-fi"));
+      await service.saveVersion(PAGE_A, version("sv", "fixture-landing-a-sv"));
+
+      expect(await service.removeVersion(PAGE_A, "fi")).toBe(PAGE_A);
+
+      const left = await draftVersions(PAGE_A);
+      expect(left.map((v) => v.locale)).toEqual(["en", "sv"]);
+      expect(left.find((v) => v.locale === "sv")).toMatchObject({
+        slug: "fixture-landing-a-sv",
+        section_texts: words("sv"),
+        is_complete: true,
+      });
+      // Its slug is free again for another page.
+      await service.saveVersion(PAGE_B, {
+        locale: "fi",
+        title: "B fi",
+        summary: "",
+        slug: "fixture-landing-a-fi",
+        sectionTexts: {},
+      });
+      expect((await draftVersions(PAGE_B)).find((v) => v.locale === "fi")?.slug).toBe(
+        "fixture-landing-a-fi",
+      );
+    });
+
+    it("refuses the page's last language, an unknown language and an unknown page, removing nothing", async () => {
+      await reseed();
+      const last = await adminAuth.rpc("remove_landing_page_version", {
+        p_id: PAGE_A,
+        p_locale: "en",
+      });
+      expect(last.error?.code).toBe("23514");
+      expect(last.error?.message).toContain("only language");
+
+      const absent = await adminAuth.rpc("remove_landing_page_version", {
+        p_id: PAGE_A,
+        p_locale: "fi",
+      });
+      expect(absent.error?.code).toBe("P0002");
+
+      const missing = await adminAuth.rpc("remove_landing_page_version", {
+        p_id: PAGE_MISSING,
+        p_locale: "en",
+      });
+      expect(missing.error?.code).toBe("P0002");
+
+      expect((await draftVersions(PAGE_A)).map((v) => v.locale)).toEqual(["en"]);
+    });
+
+    it("leaves a live language live until the next publish, which takes it down and keeps the others", async () => {
+      await reseed();
+      await service.saveVersion(PAGE_A, version("fi", "fixture-landing-a-fi"));
+      await service.publishPage(PAGE_A);
+
+      await service.removeVersion(PAGE_A, "fi");
+
+      const reader = new LandingPageService(anon);
+      expect((await reader.getPublishedPage(PAGE_A))?.versions.map((v) => v.locale)).toEqual([
+        "en",
+        "fi",
+      ]);
+      const page = await service.getAdminPage(PAGE_A);
+      expect(page?.hasUnpublishedChanges).toBe(true);
+      expect(page && landingPublishForecast(page)).toEqual({
+        canPublish: true,
+        wouldPutLive: ["en"],
+        wouldLeaveOut: [],
+        wouldTakeDown: ["fi"],
+        slugsChanging: [],
+      });
+
+      await service.publishPage(PAGE_A);
+
+      expect((await reader.getPublishedPage(PAGE_A))?.versions.map((v) => v.locale)).toEqual([
+        "en",
+      ]);
+      expect(await reader.getPublishedPageBySlug("fi", "fixture-landing-a-fi")).toBeNull();
+      expect((await reader.getPublishedPageBySlug("en", SLUG_A))?.id).toBe(PAGE_A);
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // Publishing
   // -------------------------------------------------------------------------
 
@@ -684,6 +772,7 @@ describe("landing pages", () => {
     for (const role of WRONG_ROLES) {
       it(`refuses every writer to a ${role}, on a payload an admin would succeed with`, async () => {
         await reseed();
+        await service.saveVersion(PAGE_A, version("fi", "fixture-landing-a-fi"));
         const client = clientFor(role);
         const calls = [
           client.rpc("create_landing_page", {
@@ -697,6 +786,7 @@ describe("landing pages", () => {
           }),
           client.rpc("save_landing_page_structure", { p_id: PAGE_A, p_sections: structure(null) }),
           client.rpc("save_landing_page_version", { p_id: PAGE_A, p_locale: "en", p_title: "T" }),
+          client.rpc("remove_landing_page_version", { p_id: PAGE_A, p_locale: "fi" }),
           client.rpc("publish_landing_page", { p_id: PAGE_A }),
           client.rpc("unpublish_landing_page", { p_id: PAGE_A }),
           client.rpc("repoint_landing_images", { p_from: PIC_A, p_to: PIC_B }),
@@ -898,6 +988,18 @@ describe("landing pages", () => {
 
       await service.saveStructure(PAGE_A, structure());
       expect(await saver()).toEqual({ last_saved_by: TEST_IDS.ADMIN, last_saved_via: null });
+    });
+
+    it("a removal is a save: it records the AI app and moves the last-saved time", async () => {
+      await reseed();
+      await service.saveVersion(PAGE_A, version("fi", "fixture-landing-a-fi"));
+      const { data: before } = await admin.from("landing_pages").select("updated_at").eq("id", PAGE_A).single();
+
+      await viaApp.removeVersion(PAGE_A, "fi");
+
+      expect(await saver()).toEqual({ last_saved_by: TEST_IDS.ADMIN, last_saved_via: grant.clientId });
+      const { data: after } = await admin.from("landing_pages").select("updated_at").eq("id", PAGE_A).single();
+      expect(Date.parse(after?.updated_at ?? "")).toBeGreaterThan(Date.parse(before?.updated_at ?? ""));
     });
 
     it("publishing records no save", async () => {

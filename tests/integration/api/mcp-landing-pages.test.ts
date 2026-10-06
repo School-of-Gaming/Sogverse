@@ -41,6 +41,7 @@ const landing = {
   createPage: vi.fn(),
   saveStructure: vi.fn(),
   saveVersion: vi.fn(),
+  removeVersion: vi.fn(),
   publishPage: vi.fn(),
   unpublishPage: vi.fn(),
 };
@@ -621,6 +622,55 @@ describe("saving", () => {
     });
 
     expect(resultText(result)).toContain("Sogverse could not complete this.");
+  });
+});
+
+describe("removing a language", () => {
+  it("removes it from the working copy and forecasts the publish taking a live one down", async () => {
+    const [, fi] = PAGE.draft.versions;
+    const after: AdminLandingPage = {
+      ...PAGE,
+      draft: { ...PAGE.draft, versions: [fi] },
+    };
+    landing.getAdminPage.mockResolvedValueOnce(PAGE).mockResolvedValueOnce(after);
+
+    const result = await tool("remove_landing_page_language", { pageId: ID, locale: "en" });
+
+    expect(landing.removeVersion).toHaveBeenCalledWith(ID, "en");
+    expect(result.structuredContent).toEqual({
+      pageId: ID,
+      removed: "en",
+      languageIsLive: true,
+      languages: [{ locale: "fi", complete: false, missing: [FI_MISSING] }],
+      hasUnpublishedChanges: true,
+      publish: {
+        canPublish: false,
+        wouldPutLive: [],
+        wouldLeaveOut: [{ locale: "fi", missing: [FI_MISSING] }],
+        wouldTakeDown: ["en"],
+        slugsChanging: [],
+      },
+    });
+  });
+
+  it("quotes the database's refusal of the page's last language", async () => {
+    const sentence =
+      "The en version is the page's only language, and a page keeps at least one; write another language before removing this one";
+    landing.removeVersion.mockRejectedValue(dbError("23514", sentence));
+
+    const result = await tool("remove_landing_page_language", { pageId: ID, locale: "en" });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe(sentence);
+  });
+
+  it("answers an id no page has as a tool error, removing nothing", async () => {
+    landing.getAdminPage.mockResolvedValue(null);
+
+    const result = await tool("remove_landing_page_language", { pageId: ID, locale: "en" });
+
+    expect(result.isError).toBe(true);
+    expect(landing.removeVersion).not.toHaveBeenCalled();
   });
 });
 

@@ -4406,6 +4406,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      remove_landing_page_version: {
+        Args: { p_id: string; p_locale: string }
+        Returns: string
+      }
       repoint_landing_images: {
         Args: { p_from: string; p_to: string }
         Returns: number

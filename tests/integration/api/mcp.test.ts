@@ -166,6 +166,7 @@ describe("/api/mcp", () => {
       "create_landing_page",
       "save_landing_page_structure",
       "save_landing_page_text",
+      "remove_landing_page_language",
       "publish_landing_page",
       "unpublish_landing_page",
       "list_landing_images",
