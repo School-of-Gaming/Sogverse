@@ -93,6 +93,9 @@ const STRUCTURE_WRITES =
 
 const MARKDOWN = `Markdown fields (a text section's body, an FAQ answer) take only ${describeMarkdownSubset("landing")}; anything else is refused with the construct named, and nothing is saved. Every other field is plain text.`;
 
+const OFFER_PREVIEW =
+  "After creating a page, or after a large change, offer the admin the preview link.";
+
 const NO_DELETE =
   "There is no delete: unpublishing takes a page down and keeps it to work on.";
 
@@ -423,7 +426,7 @@ export function registerLandingPageTools(server: McpServer): void {
     {
       title: "Preview a landing page",
       description:
-        "A link the admin opens in their browser, signed in to Sogverse as an admin, to see the page's saved working copy as a reader would meet it if it were published now, in one language. Use it when the admin wants to see the page — after a round of edits, or before publishing — and offer it when seeing the page would help them judge it; there is no need to hand one over after every save. Without a version in that language the preview shows the one a reader there would get: theirs, else English, else the first written. Only admins can open it.",
+        `A link the admin opens in their browser, signed in to Sogverse as an admin, to see the page's saved working copy as a reader would meet it if it were published now, in one language. Use it when the admin wants to see the page — after a round of edits, or before publishing — and offer it when seeing the page would help them judge it; there is no need to hand one over after every save. ${OFFER_PREVIEW} Without a version in that language the preview shows the one a reader there would get: theirs, else English, else the first written. Only admins can open it.`,
       inputSchema: readableInput(z.object({ pageId, locale }), z.object({ pageId, locale })),
       annotations: READ_ONLY,
     },
@@ -445,7 +448,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "create_landing_page",
     {
       title: "Create a landing page",
-      description: `Start a new landing page with its structure and one language version; add the other languages one at a time with save_landing_page_text. It is created unpublished. Sections and items sent without ids are given them, and the answer lists the structure with every id. To write the sections' words in this same call, give the sections and items ids of your own (any lowercase uuid) and key sectionTexts by them; otherwise write the words afterwards with save_landing_page_text. The answer says the address the page will have once published, what the language still needs, and the page's status page in Sogverse admin (adminLink). ${MODEL} ${COMPLETE} ${SLUGS} ${MARKDOWN}\n\n${SECTIONS_MANUAL}`,
+      description: `Start a new landing page with its structure and one language version; add the other languages one at a time with save_landing_page_text. It is created unpublished. Sections and items sent without ids are given them, and the answer lists the structure with every id. To write the sections' words in this same call, give the sections and items ids of your own (any lowercase uuid) and key sectionTexts by them; otherwise write the words afterwards with save_landing_page_text. The answer says the address the page will have once published, what the language still needs, a preview link in that language (previewLink), and the page's status page in Sogverse admin (adminLink). ${OFFER_PREVIEW} ${MODEL} ${COMPLETE} ${SLUGS} ${MARKDOWN}\n\n${SECTIONS_MANUAL}`,
       inputSchema: readableInput(
         z.object({
           locale,
