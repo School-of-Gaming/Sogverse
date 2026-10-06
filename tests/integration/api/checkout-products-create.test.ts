@@ -1489,8 +1489,8 @@ describe("POST /api/checkout/products/create", () => {
       const [request, conversion, account] =
         mockReportMetaConversion.mock.calls[0];
       expect(request).toBeInstanceOf(Request);
-      // The signed-in customer's own address, never the participant's.
-      expect(account).toEqual({ email: CUSTOMER_EMAIL });
+      // The signed-in customer's own id and address, never the participant's.
+      expect(account).toEqual({ id: CUSTOMER_ID, email: CUSTOMER_EMAIL });
       // The product's own public page, stated rather than taken from this
       // route's URL — which is an API path nobody browses.
       // And the product, valued at nothing because nothing was charged.

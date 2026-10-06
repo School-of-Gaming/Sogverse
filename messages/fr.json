@@ -4478,7 +4478,7 @@
           "Roblox — reçoit l’identifiant de compte Roblox de votre enfant, pour que nous puissions vérifier le compte, et votre navigateur récupère son avatar directement auprès de Roblox.",
           "Mojang (Microsoft) — reçoit le nom d’utilisateur Minecraft de votre enfant, pour que nous puissions vérifier le compte.",
           "mc-heads.net — votre navigateur y récupère directement l’image du personnage Minecraft de votre enfant, à partir de son nom d’utilisateur Minecraft, qui est public dans le jeu. C’est un service public gratuit et non l’un de nos prestataires, et il ne voit que cette requête.",
-          "Meta (Facebook et Instagram) — voit, via le pixel Meta dans votre navigateur et les rapports envoyés par nos serveurs, comment vous utilisez notre site, pour que nous puissions vous y montrer nos publicités et mesurer leurs performances. Lorsque vous créez un compte ou que vous vous inscrivez, nos serveurs envoient aussi à Meta une copie brouillée (hachée) de votre adresse e-mail, ainsi que le club, le stage ou l’événement concerné par votre inscription, afin que Meta puisse vous reconnaître si vous utilisez Facebook ou Instagram — jamais le nom, l’âge ou d’autres informations sur votre enfant. Uniquement si vous autorisez les cookies marketing.",
+          "Meta (Facebook et Instagram) — voit, via le pixel Meta dans votre navigateur et les rapports envoyés par nos serveurs, comment vous utilisez notre site, pour que nous puissions vous y montrer nos publicités et mesurer leurs performances. Lorsque vous créez un compte ou que vous vous inscrivez, nos serveurs envoient aussi à Meta des copies brouillées (hachées) de votre adresse e-mail et de l’identifiant de votre compte School of Gaming, ainsi que le club, le stage ou l’événement concerné par votre inscription, ou celui depuis la page duquel vous avez créé votre compte, afin que Meta puisse vous reconnaître si vous utilisez Facebook ou Instagram et savoir qu’il s’agit du même parent d’une visite à l’autre. Ni l’adresse ni l’identifiant eux-mêmes ne sont jamais envoyés, et jamais le nom, l’âge ou d’autres informations sur votre enfant. Uniquement si vous autorisez les cookies marketing.",
           "Google (Analytics et Ads) — voit, via un gestionnaire de balises présent dans votre navigateur, quelles pages publiques de notre site vous consultez et ce à quoi votre famille s’est inscrite, pour que nous puissions mesurer les performances de notre publicité et vous montrer nos annonces. Uniquement si vous autorisez les cookies marketing — et non les statistiques : les statistiques que vous pouvez activer sont uniquement celles de Vercel."
         ]
       },
@@ -5668,11 +5668,11 @@
       "geduTitle": "Gedu · animateur ou animatrice",
       "geduAltRole": "animateur ou animatrice",
       "speaks": "Parle",
-      "aboutMe": "À propos de moi",
+      "whoIs": "Qui est {firstName} ?",
       "funFact": "Anecdote",
       "draft": {
         "shortDescription": "Votre présentation en une ligne apparaît ici",
-        "longDescription": "Ce que vous écrivez dans « À propos de moi » apparaît ici"
+        "longDescription": "Ce que vous écrivez dans « Bio » apparaît ici"
       }
     },
     "edit": {
@@ -5700,11 +5700,11 @@
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
           "title": "Ajoutez votre titre pour pouvoir cocher cette case.",
-          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
           "photoTitle": "Ajoutez une photo et votre titre pour pouvoir cocher cette case.",
-          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
-          "titleText": "Ajoutez votre titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
-          "photoTitleText": "Ajoutez une photo et votre titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez, pour pouvoir cocher cette case."
+          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez votre titre et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et votre titre, et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez, pour pouvoir cocher cette case."
         }
       },
       "photo": {
@@ -5713,7 +5713,7 @@
         "replace": "Remplacer la photo",
         "remove": "Supprimer la photo",
         "guidance": {
-          "intro": "C’est la première chose que les familles et les gamers voient de vous. Une fois la photo choisie, vous la recadrez pour l’adapter au cadre.",
+          "intro": "C’est la première chose que les familles et les gamers voient de vous.",
           "doHeading": "À faire",
           "dontHeading": "À éviter",
           "do": {
@@ -5740,7 +5740,6 @@
         "heading": "À propos de vous",
         "nickname": "Les gamers me connaissent sous le nom de",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "Affiché entre guillemets dans votre nom, exactement comme vous l’écrivez.",
         "title": "Titre",
         "titleHint": "Votre poste chez School of Gaming, par exemple responsable des clubs.",
         "pick": "Votre couleur"
@@ -5752,11 +5751,11 @@
         "removeLocale": "Supprimer {locale}",
         "shortDescription": "Présentez-vous en une ligne",
         "shortDescriptionPlaceholder": "Fan de redstone et de speedrun",
-        "longDescription": "À propos de moi",
-        "longDescriptionHint": "Ce que vous faites en session, ce à quoi vous jouez, et ce que les familles aimeraient savoir sur vous.",
-        "longDescriptionPlaceholder": "Présentez-vous un peu aux familles",
+        "longDescription": "Bio",
+        "longDescriptionHint": "Ce que vous faites en session, ce à quoi vous jouez, et ce que les familles aimeraient savoir sur vous. Écrivez à la troisième personne, comme si quelqu’un vous présentait : « Anna anime des clubs Minecraft depuis 2023 et adore enseigner la redstone. »",
+        "longDescriptionPlaceholder": "Présentez-vous aux familles, à la troisième personne",
         "funFact": "Anecdote",
-        "funFactPlaceholder": "J’ai un jour construit une calculatrice qui fonctionne dans Minecraft.",
+        "funFactPlaceholder": "A un jour construit une calculatrice qui fonctionne dans Minecraft.",
         "count": "{count}/{max}"
       },
       "preview": {
@@ -5789,11 +5788,11 @@
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
           "title": "Ajoutez un titre pour pouvoir cocher cette case.",
-          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
           "photoTitle": "Ajoutez une photo et un titre pour pouvoir cocher cette case.",
-          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
-          "titleText": "Ajoutez un titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
-          "photoTitleText": "Ajoutez une photo et un titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée, pour pouvoir cocher cette case."
+          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez un titre et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et un titre, et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée, pour pouvoir cocher cette case."
         }
       },
       "userPage": {

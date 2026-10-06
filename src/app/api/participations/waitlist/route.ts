@@ -51,7 +51,7 @@ export const POST = defineRoute({
   discloseErrorMessages:
     "the guarded RPC's messages are the user-facing explanation of a refused join",
 
-  handler: async ({ request, supabase, profile, body }) => {
+  handler: async ({ request, supabase, user, profile, body }) => {
     const { data, error } = await supabase.rpc("join_product_waitlist", {
       p_product_id: body.productId,
       p_participant_id: body.participantId,
@@ -135,8 +135,9 @@ export const POST = defineRoute({
           request,
           supabase,
           body.productId,
-          // The signed-in customer's own address, never the participant's.
-          { email: profile.email },
+          // The signed-in customer's own id and address, never the
+          // participant's.
+          { id: user.id, email: profile.email },
         ),
       );
     }

@@ -24,9 +24,10 @@ import { asObject } from "../../helpers/json";
  * client-side gate could slip, and this one cannot.
  *
  * **The body is the privacy policy, in JSON.** The user agent, the IP, Meta's
- * own two cookies, and the parent's email as a SHA-256 hash — never the address
- * itself. No name, no id of a person and nothing about a child. A field appearing here that this file does not assert on is a field
- * nobody promised. An enrolment adds its outcome and the product it was for —
+ * own two cookies, and the parent's email and account id as SHA-256 hashes —
+ * never the address or the id itself. No name and nothing about a child. A
+ * field appearing here that this file does not assert on is a field nobody
+ * promised. An enrolment adds its outcome and the product it was for —
  * facts about the product, asserted whole.
  */
 
@@ -43,12 +44,19 @@ const PRODUCT: MetaProductDetails = {
   currency: "EUR",
 };
 
+/** The parent's own account id. */
+const PARENT_ID = "6f1c2a4e-3b5d-4c7e-8f90-1a2b3c4d5e6f";
+
 /** The parent the request acts as. */
-const PARENT = { email: "parent.example@sogverse.test" };
+const PARENT = { id: PARENT_ID, email: "parent.example@sogverse.test" };
 
 /** SHA-256 of `parent.example@sogverse.test`, as lowercase hex. */
 const PARENT_EMAIL_SHA256 =
   "b11323795248124001f4b3081ebd908d5bd36d5dad1bc90c1564358aea0a3bd6";
+
+/** SHA-256 of `PARENT_ID`, as lowercase hex — worked out outside the code. */
+const PARENT_ID_SHA256 =
+  "39bdf0f78b90b6e231792f2f62f58e1b3c8d8396a4e56ed69893d26a65f873d3";
 
 const GRANTED: ConsentState = {
   analytics: true,
@@ -221,13 +229,15 @@ describe("reportMetaConversion — the request", () => {
 
     // The whole of what identifies a person, and nothing else: the first
     // forwarded address (the client's, not a proxy's), the user agent, Meta's
-    // own two cookies read off this request, and the parent's email as a hash.
+    // own two cookies read off this request, and the parent's email and
+    // account id as hashes.
     expect(event.user_data).toEqual({
       client_user_agent: "Mozilla/5.0 (test)",
       client_ip_address: "203.0.113.7",
       fbp: "fb.1.123.456",
       fbc: "fb.1.123.IwAR",
       em: [PARENT_EMAIL_SHA256],
+      external_id: [PARENT_ID_SHA256],
     });
   });
 
@@ -250,6 +260,7 @@ describe("reportMetaConversion — the request", () => {
     expect(sentEvent().user_data).toEqual({
       client_user_agent: "Mozilla/5.0 (test)",
       em: [PARENT_EMAIL_SHA256],
+      external_id: [PARENT_ID_SHA256],
     });
   });
 
@@ -260,13 +271,13 @@ describe("reportMetaConversion — the request", () => {
     await reportMetaConversion(
       request(),
       { event: "account_created", sourcePath: "/register" },
-      { email: "  Parent.Example@Sogverse.TEST \n" },
+      { id: PARENT_ID, email: "  Parent.Example@Sogverse.TEST \n" },
     );
 
     expect(asObject(sentEvent().user_data).em).toEqual([PARENT_EMAIL_SHA256]);
   });
 
-  it("never puts the plain email anywhere in the request", async () => {
+  it("never puts the plain email or account id anywhere in the request", async () => {
     await reportMetaConversion(
       request(),
       {
@@ -282,7 +293,44 @@ describe("reportMetaConversion — the request", () => {
     const sent = `${url} ${String(init.body)}`.toLowerCase();
     expect(sent).not.toContain("parent.example");
     expect(sent).not.toContain("@sogverse.test");
+    expect(sent).not.toContain(PARENT_ID);
+    // Nor any fragment of it: the id's longest run of hex is its last group.
+    expect(sent).not.toContain("1a2b3c4d5e6f");
     expect(console.error).not.toHaveBeenCalled();
+  });
+
+  // `external_id` is the hash of the parent's own account id, in an array —
+  // the expected value is the digest of the id, computed independently.
+  it("sends the account id as a SHA-256 hash under `external_id`", async () => {
+    await reportMetaConversion(
+      request(),
+      { event: "account_created", sourcePath: "/register" },
+      PARENT,
+    );
+
+    expect(asObject(sentEvent().user_data).external_id).toEqual([
+      PARENT_ID_SHA256,
+    ]);
+  });
+
+  // A missing id costs match quality, not the report — and the email hash
+  // still goes.
+  it.each([
+    ["no account id", null],
+    ["an empty account id", ""],
+    ["a blank account id", "   "],
+  ])("sends the report without `external_id` for %s", async (_label, id) => {
+    await reportMetaConversion(
+      request(),
+      { event: "account_created", sourcePath: "/register" },
+      { id, email: PARENT.email },
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(sentEvent().user_data).toEqual({
+      client_user_agent: "Mozilla/5.0 (test)",
+      em: [PARENT_EMAIL_SHA256],
+    });
   });
 
   // A missing address costs match quality, not the report.
@@ -294,7 +342,7 @@ describe("reportMetaConversion — the request", () => {
     await reportMetaConversion(
       request(),
       { event: "account_created", sourcePath: "/register" },
-      { email },
+      { id: null, email },
     );
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -376,6 +424,41 @@ describe("reportMetaConversion — the request", () => {
       content_name: "Roblox Studio Club",
       content_category: "roblox_studio",
     });
+  });
+
+  // A sign-up that started from an advertised product's page names that
+  // product, so a dataset filtering on the topic sees the lead — but a new
+  // account is not revenue: the report drops the price whatever the caller
+  // passed, and keeps every other product field.
+  it("names the product without a value on a lead from a product page", async () => {
+    await reportMetaConversion(
+      request(),
+      { event: "account_created", product: PRODUCT, sourcePath: "/register" },
+      PARENT,
+    );
+
+    const event = sentEvent();
+    expect(event.event_name).toBe("Lead");
+    expect(event.custom_data).toEqual({
+      content_ids: ["abc-123"],
+      content_type: "product",
+      content_name: "Roblox Studio Club",
+      content_category: "roblox_studio",
+    });
+    // Still the page the account was created on, not the product's page.
+    expect(event.event_source_url).toBe(
+      "https://test.sogverse.local/register",
+    );
+  });
+
+  it("names nothing on a lead that did not start from a product page", async () => {
+    await reportMetaConversion(
+      request(),
+      { event: "account_created", product: undefined, sourcePath: "/register" },
+      PARENT,
+    );
+
+    expect(sentEvent()).not.toHaveProperty("custom_data");
   });
 
   it("carries the test event code only when one is configured", async () => {

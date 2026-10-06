@@ -31,21 +31,29 @@ import { getOrigin } from "@/lib/url";
  *
  * **What is sent about a person, exhaustively:** the user agent, the IP address
  * the request arrived from, Meta's own `_fbp` / `_fbc` cookies if this browser
- * carries them, and a SHA-256 hash of the parent's own account email — hashed
- * here, so the address itself is never sent and never logged, and sent whether
- * or not the address has been verified (standard practice, accepted as such).
- * No phone number, no name, no user id, no participation id, and nothing about
- * a child beyond the product named below — not their name, not their age, not
- * their account, not their address. This list is the
- * promise the privacy policy makes; a field added here is a policy edit.
+ * carries them, a SHA-256 hash of the parent's own account email, and a SHA-256
+ * hash of the parent's own account id (Meta's `external_id`). Both are hashed
+ * here, so neither the address nor the id itself is ever sent or logged; the
+ * address is sent whether or not it has been verified (standard practice,
+ * accepted as such). The id hash is stable for the account, which is what lets
+ * Meta recognise the same parent across visits and devices. No phone number,
+ * no name, no participation id, and nothing about a child beyond the product
+ * named below — not their name, not their age, not their account or its id,
+ * not their address. This list is the promise the privacy policy makes; a
+ * field added here is a policy edit.
  *
  * **What is sent about the enrolment** is `outcome`, one of two fixed words,
  * and the product it was for in Meta's standard product fields — its id, name,
  * topic and price (no price on a queue place), the same facts the product's
- * public page shows anyone. On the same event as the email hash, so Meta
+ * public page shows anyone. On the same event as the two hashes, so Meta
  * learns that an identifiable parent signed up for that named club, camp or
  * event — which the privacy policy states. Nothing about the child goes with
  * it: not their name, age, account or anything else.
+ *
+ * **What is sent about the account creation** is nothing, unless the sign-up
+ * started from an advertised product's page: then the same product fields,
+ * without a price, so Meta learns that an identifiable parent opened an
+ * account from that named club, camp or event's page.
  *
  * **Gated on the request's own consent cookie.** The send is refused unless the
  * request that triggered it carried marketing consent — decided here, on the
@@ -91,10 +99,15 @@ const REQUEST_TIMEOUT_MS = 10_000;
  *
  * `product` is built by `metaProductDetails()`, the one builder the browser's
  * product view uses too, so the two sides cannot describe a product
- * differently.
+ * differently. On an account creation it is optional: the product page the
+ * sign-up started from, when that was an advertised product's page.
  */
 export type MetaConversion =
-  | { event: "account_created"; sourcePath: string }
+  | {
+      event: "account_created";
+      product?: MetaProductDetails;
+      sourcePath: string;
+    }
   | {
       event: "enrolment";
       outcome: MetaEnrolmentOutcome;
@@ -105,12 +118,19 @@ export type MetaConversion =
 /**
  * The account the request acts as — the parent it just registered, or the
  * signed-in customer — and never anyone else. Every caller is a customer-only
- * route, so this is always the parent's own address and never a gamer's.
- * `null` when the caller has none to hand: the report still goes, without the
- * hashed email.
+ * route, so this is always the parent's own address and account id, and never
+ * a gamer's or a participant's. Either is `null` when the caller has none to
+ * hand: the report still goes, without that field's hash.
  */
 export interface MetaRequestingAccount {
+  /** The parent's own account id — their auth user, which is their profile. */
+  id: string | null;
   email: string | null;
+}
+
+/** SHA-256 as lowercase hex, the form Meta expects every hashed field in. */
+function sha256Hex(value: string): string {
+  return createHash("sha256").update(value).digest("hex");
 }
 
 /**
@@ -119,9 +139,17 @@ export interface MetaRequestingAccount {
  * the plain address never leaves this function.
  */
 function hashEmailForMeta(email: string): string {
-  return createHash("sha256")
-    .update(email.trim().toLowerCase())
-    .digest("hex");
+  return sha256Hex(email.trim().toLowerCase());
+}
+
+/**
+ * The account id as Meta's `external_id`: trimmed, lowercased, SHA-256,
+ * lowercase hex. Meta never sees the id itself, only a value that is the same
+ * every time this parent converts — so it joins their events to one another,
+ * and to nothing of ours it could read back.
+ */
+function hashAccountIdForMeta(id: string): string {
+  return sha256Hex(id.trim().toLowerCase());
 }
 
 function eventNameFor(conversion: MetaConversion): string {
@@ -130,23 +158,32 @@ function eventNameFor(conversion: MetaConversion): string {
     : PIXEL_EVENTS.enrolment;
 }
 
+/** A product's fields without its price. */
+function unpriced(product: MetaProductDetails): Record<string, unknown> {
+  const { value: _value, currency: _currency, ...rest } = product;
+  return rest;
+}
+
 /**
- * The enrolment's `custom_data`: its outcome and the product it was for.
+ * The event's `custom_data`: for an enrolment its outcome and the product it
+ * was for; for an account creation the product its sign-up started from, if
+ * any, and otherwise none at all.
  *
- * **A queue place carries no value.** A waitlisted report keeps the product's
- * id, name, topic and type but drops `value` and `currency`, whatever the
- * caller passed: nobody has paid or committed to pay, and a price on it would
- * teach the campaign that a full product's queue is revenue. Decided here
- * rather than by each caller, so no route can get it wrong.
+ * **Only a seat carries a value.** A waitlisted report and an account creation
+ * keep the product's id, name, topic and type but drop `value` and `currency`,
+ * whatever the caller passed: nobody has paid or committed to pay, and a price
+ * on either would teach the campaign that a queue place or a new account is
+ * revenue. Decided here rather than by each caller, so no route can get it
+ * wrong.
  */
-function enrolmentCustomData(
-  conversion: Extract<MetaConversion, { event: "enrolment" }>,
-): Record<string, unknown> {
-  const { outcome, product } = conversion;
-  if (outcome === "waitlisted") {
-    const { value: _value, currency: _currency, ...unpriced } = product;
-    return { outcome, ...unpriced };
+function customDataFor(
+  conversion: MetaConversion,
+): Record<string, unknown> | undefined {
+  if (conversion.event === "account_created") {
+    return conversion.product && unpriced(conversion.product);
   }
+  const { outcome, product } = conversion;
+  if (outcome === "waitlisted") return { outcome, ...unpriced(product) };
   return { outcome, ...product };
 }
 
@@ -192,7 +229,13 @@ export async function reportMetaConversion(
     // an address to hash.
     const email = account.email?.trim();
     const emailHash = email ? hashEmailForMeta(email) : undefined;
+    // The same for the account id, as Meta's `external_id`.
+    const accountId = account.id?.trim();
+    const accountIdHash = accountId
+      ? hashAccountIdForMeta(accountId)
+      : undefined;
 
+    const customData = customDataFor(conversion);
     const event = {
       event_name: eventNameFor(conversion),
       event_time: Math.floor(Date.now() / 1000),
@@ -210,10 +253,9 @@ export async function reportMetaConversion(
         ...(fbp && { fbp }),
         ...(fbc && { fbc }),
         ...(emailHash && { em: [emailHash] }),
+        ...(accountIdHash && { external_id: [accountIdHash] }),
       },
-      ...(conversion.event === "enrolment" && {
-        custom_data: enrolmentCustomData(conversion),
-      }),
+      ...(customData && { custom_data: customData }),
     };
 
     // Present only when configured, and only ever on a preview deployment: it

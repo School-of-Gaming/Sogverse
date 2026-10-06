@@ -75,7 +75,7 @@ export interface TeamProfileTranslation {
   locale: SupportedLocale;
   /** One line, plain text: their friendly opening line under the name. */
   shortDescription: string;
-  /** "About me": markdown, rendered in the `profile` variant. */
+  /** The bio, written in the third person: markdown, rendered in the `profile` variant. */
   longDescription: string;
   /** Optional. `null` leaves the aside off the page. */
   funFact: string | null;

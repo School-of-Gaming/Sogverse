@@ -4478,7 +4478,7 @@
           "Roblox – vastaanottaa lapsesi Roblox-tilitunnisteen, jotta voimme varmistaa tilin, ja selaimesi hakee hänen hahmokuvansa suoraan Robloxilta.",
           "Mojang (Microsoft) – vastaanottaa lapsesi Minecraft-käyttäjätunnuksen, jotta voimme varmistaa tilin.",
           "mc-heads.net – selaimesi hakee kuvan lapsesi Minecraft-hahmosta suoraan siltä hänen Minecraft-käyttäjätunnuksensa perusteella, joka on pelissä julkinen. Se on ilmainen julkinen palvelu eikä meidän alihankkijamme, ja se näkee vain tämän pyynnön.",
-          "Meta (Facebook ja Instagram) – näkee selaimesi Meta-pikselin ja palvelimiltamme tulevien raporttien kautta, miten käytät sivustoamme, jotta voimme näyttää sinulle mainoksiamme siellä ja mitata, miten ne toimivat. Kun luot tilin tai ilmoittaudut, palvelimemme lähettävät Metalle myös sähköpostiosoitteestasi sotketun muodon (tiivisteen) ja tiedon siitä, mihin kerhoon, leiriin tai tapahtumaan ilmoittauduit, jotta Meta voi tunnistaa sinut, jos käytät Facebookia tai Instagramia – ei koskaan lapsesi nimeä, ikää tai muita tietoja hänestä. Vain jos sallit markkinointievästeet.",
+          "Meta (Facebook ja Instagram) – näkee selaimesi Meta-pikselin ja palvelimiltamme tulevien raporttien kautta, miten käytät sivustoamme, jotta voimme näyttää sinulle mainoksiamme siellä ja mitata, miten ne toimivat. Kun luot tilin tai ilmoittaudut, palvelimemme lähettävät Metalle myös sähköpostiosoitteestasi ja School of Gaming -tilisi tunnisteesta sotketut muodot (tiivisteet) sekä tiedon kerhosta, leiristä tai tapahtumasta, johon ilmoittauduit tai jonka sivulta loit tilisi, jotta Meta voi tunnistaa sinut, jos käytät Facebookia tai Instagramia, ja tietää, että kyse on samasta vanhemmasta käynnistä toiseen. Itse osoitetta tai tunnistetta ei koskaan lähetetä, eikä myöskään lapsesi nimeä, ikää tai muita tietoja hänestä. Vain jos sallit markkinointievästeet.",
           "Google (Analytics ja Ads) – näkee selaimeesi ladattavan tunnistehallinnan kautta, millä julkisilla sivuillamme käyt ja mihin olet ilmoittautunut, jotta voimme mitata mainontamme tuloksia ja näyttää sinulle mainoksiamme. Vain jos sallit markkinointievästeet – ei analytiikkaa: analytiikka, jonka voit ottaa käyttöön, on yksin Vercelin."
         ]
       },
@@ -5668,11 +5668,11 @@
       "geduTitle": "Gedu · pelikasvattaja",
       "geduAltRole": "pelikasvattaja",
       "speaks": "Puhuu",
-      "aboutMe": "Minusta",
+      "whoIs": "Kuka on {firstName}?",
       "funFact": "Hauska fakta",
       "draft": {
         "shortDescription": "Yhden rivin esittelysi näkyy tässä",
-        "longDescription": "”Minusta”-tekstisi näkyy tässä"
+        "longDescription": "”Kuvaus”-tekstisi näkyy tässä"
       }
     },
     "edit": {
@@ -5700,11 +5700,11 @@
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
           "title": "Lisää tittelisi, jotta voit rastittaa tämän.",
-          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
           "photoTitle": "Lisää kuva ja tittelisi, jotta voit rastittaa tämän.",
-          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
-          "titleText": "Lisää tittelisi ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
-          "photoTitleText": "Lisää kuva ja tittelisi sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän."
+          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "titleText": "Lisää tittelisi ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "photoTitleText": "Lisää kuva ja tittelisi sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän."
         }
       },
       "photo": {
@@ -5713,7 +5713,7 @@
         "replace": "Vaihda kuva",
         "remove": "Poista kuva",
         "guidance": {
-          "intro": "Perheet ja pelaajat näkevät tämän sinusta ensimmäisenä. Kun olet valinnut kuvan, rajaat sen kehykseen sopivaksi.",
+          "intro": "Perheet ja pelaajat näkevät tämän sinusta ensimmäisenä.",
           "doHeading": "Tee näin",
           "dontHeading": "Vältä",
           "do": {
@@ -5740,7 +5740,6 @@
         "heading": "Sinusta",
         "nickname": "Pelaajat tuntevat minut nimellä",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "Näkyy lainausmerkeissä nimesi keskellä juuri niin kuin sen kirjoitat.",
         "title": "Titteli",
         "titleHint": "Tehtäväsi School of Gamingissa, esimerkiksi kerhovastaava.",
         "pick": "Värisi"
@@ -5752,11 +5751,11 @@
         "removeLocale": "Poista {locale}",
         "shortDescription": "Esittele itsesi yhdellä rivillä",
         "shortDescriptionPlaceholder": "Redstone-nörtti ja speedrun-fani",
-        "longDescription": "Minusta",
-        "longDescriptionHint": "Mitä teet sessioissa, mitä pelaat ja mitä perheet voisivat haluta tietää sinusta.",
-        "longDescriptionPlaceholder": "Kerro perheille vähän itsestäsi",
+        "longDescription": "Kuvaus",
+        "longDescriptionHint": "Mitä teet sessioissa, mitä pelaat ja mitä perheet voisivat haluta tietää sinusta. Kirjoita kolmannessa persoonassa, ikään kuin joku muu esittelisi sinut: ”Anna on ohjannut Minecraft-kerhoja vuodesta 2023 lähtien ja opettaa mielellään redstonea.”",
+        "longDescriptionPlaceholder": "Kerro perheille itsestäsi kolmannessa persoonassa",
         "funFact": "Hauska fakta",
-        "funFactPlaceholder": "Rakensin kerran toimivan laskimen Minecraftissa.",
+        "funFactPlaceholder": "Rakensi kerran toimivan laskimen Minecraftissa.",
         "count": "{count}/{max}"
       },
       "preview": {
@@ -5789,11 +5788,11 @@
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
           "title": "Lisää titteli, jotta voit rastittaa tämän.",
-          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
           "photoTitle": "Lisää kuva ja titteli, jotta voit rastittaa tämän.",
-          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
-          "titleText": "Lisää titteli ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
-          "photoTitleText": "Lisää kuva ja titteli sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän."
+          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "titleText": "Lisää titteli ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "photoTitleText": "Lisää kuva ja titteli sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän."
         }
       },
       "userPage": {

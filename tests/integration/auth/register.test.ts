@@ -86,6 +86,23 @@ vi.mock("@/lib/meta-conversions.server", () => ({
   reportMetaConversion: (...args: unknown[]) => mockReportMetaConversion(...args),
 }));
 
+// The product a sign-up started from is resolved by its own module, unit-tested
+// beside it; here only what the route hands it and does with its answer.
+const mockSignUpProductFor = vi.fn();
+vi.mock("@/lib/meta-sign-up-product.server", () => ({
+  signUpProductFor: (...args: unknown[]) => mockSignUpProductFor(...args),
+}));
+
+/** The advertised product a sign-up started from, as the resolver answers it. */
+const SIGN_UP_PRODUCT = {
+  content_ids: ["0f8b6c1e-3c2a-4d5e-9f60-7a8b9c0d1e2f"],
+  content_type: "product",
+  content_name: "Roblox Studio Club",
+  content_category: "roblox_studio",
+  value: 49,
+  currency: "EUR",
+};
+
 // The report is handed to the platform's post-response hook, so the parent's
 // registration never waits on Meta. Capture the deferred work instead of letting
 // the hook run it — outside a request scope there is nothing to keep alive.
@@ -99,6 +116,14 @@ vi.mock("next/server", async (importOriginal) => {
     },
   };
 });
+
+/** Run the work handed to the post-response hook, as the platform would. */
+async function runDeferred(): Promise<void> {
+  for (const work of deferred) {
+    if (typeof work === "function") await work();
+    else await work;
+  }
+}
 
 import { POST } from "@/app/api/auth/register/route";
 import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
@@ -182,6 +207,7 @@ describe("POST /api/auth/register", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     deferred.length = 0;
+    mockSignUpProductFor.mockResolvedValue(undefined);
     mockCreateUser.mockResolvedValue({
       data: { user: { id: NEW_USER_ID, email: "parent@example.test" } },
       error: null,
@@ -294,21 +320,69 @@ describe("POST /api/auth/register", () => {
     expect(response.status).toBe(200);
     // Handed to the post-response hook, not awaited inside the answer.
     expect(deferred).toHaveLength(1);
+    expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    expect(mockSignUpProductFor).not.toHaveBeenCalled();
+    await runDeferred();
     expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
     const [request, conversion, account] =
       mockReportMetaConversion.mock.calls[0];
     expect(request).toBeInstanceOf(Request);
-    // The address of the account this request just created, as GoTrue stored it.
-    expect(account).toEqual({ email: "parent@example.test" });
+    // The id and address of the account this request just created, the address
+    // as GoTrue stored it.
+    expect(account).toEqual({ id: NEW_USER_ID, email: "parent@example.test" });
     // A bare account is a lead — someone reachable who has committed to
     // nothing — and the page it happened on is the registration form, stated
     // rather than taken from this route's own URL.
     expect(conversion).toEqual({
       event: "account_created",
+      product: undefined,
       sourcePath: "/register",
     });
     // The body is unchanged by any of this.
     expect(await response.json()).toEqual({ userId: NEW_USER_ID });
+  });
+
+  // A sign-up that started from a product page names that product, so a
+  // dataset filtering on its topic sees the lead. The route hands the body's
+  // redirect to the resolver untouched — the resolver is what distrusts it —
+  // and reports whatever product it answers; the reporter drops the price.
+  it("names the product page the sign-up started from", async () => {
+    mockSignUpProductFor.mockResolvedValue(SIGN_UP_PRODUCT);
+    const redirect = `/fi/kauppa/${SIGN_UP_PRODUCT.content_ids[0]}`;
+
+    const response = await POST(
+      registerRequestWithConsent(
+        { analytics: true, marketing: true },
+        { ...validBody, redirect },
+      ),
+    );
+    await runDeferred();
+
+    expect(response.status).toBe(200);
+    expect(mockSignUpProductFor).toHaveBeenCalledWith(redirect);
+    const [, conversion] = mockReportMetaConversion.mock.calls[0];
+    expect(conversion).toEqual({
+      event: "account_created",
+      product: SIGN_UP_PRODUCT,
+      sourcePath: "/register",
+    });
+  });
+
+  // The redirect is a hint for a report, never a reason to refuse an account:
+  // whatever a client puts there, the registration goes through.
+  it("registers whatever the redirect says", async () => {
+    const response = await POST(
+      registerRequestWithConsent(
+        { analytics: true, marketing: true },
+        { ...validBody, redirect: "https://evil.example/shop/x" },
+      ),
+    );
+    await runDeferred();
+
+    expect(response.status).toBe(200);
+    expect(mockSignUpProductFor).toHaveBeenCalledWith(
+      "https://evil.example/shop/x",
+    );
   });
 
   // The cookie the pixels used to read is gone entirely: nothing on this

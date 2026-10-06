@@ -5165,7 +5165,7 @@
           "Roblox — receives your child’s Roblox account id, so we can confirm the account, and your browser fetches their avatar picture from Roblox directly.",
           "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account.",
           "mc-heads.net — your browser fetches the picture of your child’s Minecraft character from it directly, using their Minecraft username, which is public in the game. It is a free public service rather than a contractor of ours, and it sees only that request.",
-          "Meta (Facebook and Instagram) — through the Meta Pixel in your browser and reports from our servers, sees how you use our site, so we can show you our ads there and measure how they perform. When you create an account or sign up, our servers also send Meta a scrambled (hashed) copy of your email address and which club, camp or event you signed up for, so it can recognise you if you use Facebook or Instagram — never your child’s name, age or other details about them. Only if you allow marketing cookies.",
+          "Meta (Facebook and Instagram) — through the Meta Pixel in your browser and reports from our servers, sees how you use our site, so we can show you our ads there and measure how they perform. When you create an account or sign up, our servers also send Meta scrambled (hashed) copies of your email address and of your School of Gaming account id, and which club, camp or event you signed up for or created your account from, so it can recognise you if you use Facebook or Instagram and tell that it is the same parent from one visit to the next. Neither the address nor the id itself is ever sent, and never your child’s name, age or other details about them. Only if you allow marketing cookies.",
           "Google (Analytics and Ads) — through a tag manager in your browser, sees which of our public pages you visit and what you signed up for, so we can measure how our advertising performs and show you our ads. Only if you allow marketing cookies — not analytics: the analytics you can switch on is Vercel’s alone."
         ]
       },
@@ -5668,11 +5668,11 @@
       "geduTitle": "Gedu · Game Educator",
       "geduAltRole": "Game Educator",
       "speaks": "Speaks",
-      "aboutMe": "About me",
+      "whoIs": "Who is {firstName}?",
       "funFact": "Fun fact",
       "draft": {
         "shortDescription": "Your one-line intro appears here",
-        "longDescription": "What you write in “About me” appears here"
+        "longDescription": "What you write in “Bio” appears here"
       }
     },
     "edit": {
@@ -5700,11 +5700,11 @@
         "missing": {
           "photo": "Add a photo to be able to tick this.",
           "title": "Add your title to be able to tick this.",
-          "text": "Fill in “Introduce yourself in one line” and “About me” in every language you write in to be able to tick this.",
+          "text": "Fill in “Introduce yourself in one line” and “Bio” in every language you write in to be able to tick this.",
           "photoTitle": "Add a photo and your title to be able to tick this.",
-          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this.",
-          "titleText": "Add your title, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this.",
-          "photoTitleText": "Add a photo and your title, and fill in “Introduce yourself in one line” and “About me” in every language you write in, to be able to tick this."
+          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “Bio” in every language you write in, to be able to tick this.",
+          "titleText": "Add your title, and fill in “Introduce yourself in one line” and “Bio” in every language you write in, to be able to tick this.",
+          "photoTitleText": "Add a photo and your title, and fill in “Introduce yourself in one line” and “Bio” in every language you write in, to be able to tick this."
         }
       },
       "photo": {
@@ -5713,7 +5713,7 @@
         "replace": "Replace photo",
         "remove": "Remove photo",
         "guidance": {
-          "intro": "This is the first thing families and gamers see of you. Once you have chosen a photo, you crop it to fit the frame.",
+          "intro": "This is the first thing families and gamers see of you.",
           "doHeading": "Do",
           "dontHeading": "Don’t",
           "do": {
@@ -5740,7 +5740,6 @@
         "heading": "About you",
         "nickname": "Gamers know me as",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "Shown in quotes in your name, exactly as you write it.",
         "title": "Title",
         "titleHint": "Your job at School of Gaming, for example Head of Clubs.",
         "pick": "Your colour"
@@ -5752,11 +5751,11 @@
         "removeLocale": "Remove {locale}",
         "shortDescription": "Introduce yourself in one line",
         "shortDescriptionPlaceholder": "Redstone nerd and speedrun fan",
-        "longDescription": "About me",
-        "longDescriptionHint": "What you do in sessions, what you play, and what families might like to know about you.",
-        "longDescriptionPlaceholder": "Tell families a little about yourself",
+        "longDescription": "Bio",
+        "longDescriptionHint": "What you do in sessions, what you play, and what families might like to know about you. Write it in the third person, as if someone were introducing you: “Anna has led Minecraft clubs since 2023 and loves teaching redstone.”",
+        "longDescriptionPlaceholder": "Tell families about yourself, in the third person",
         "funFact": "Fun fact",
-        "funFactPlaceholder": "I once built a working calculator in Minecraft.",
+        "funFactPlaceholder": "Once built a working calculator in Minecraft.",
         "count": "{count}/{max}"
       },
       "preview": {
@@ -5789,11 +5788,11 @@
         "missing": {
           "photo": "Add a photo to be able to tick this.",
           "title": "Add a title to be able to tick this.",
-          "text": "Fill in “Introduce yourself in one line” and “About me” in every language written to be able to tick this.",
+          "text": "Fill in “Introduce yourself in one line” and “Bio” in every language written to be able to tick this.",
           "photoTitle": "Add a photo and a title to be able to tick this.",
-          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this.",
-          "titleText": "Add a title, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this.",
-          "photoTitleText": "Add a photo and a title, and fill in “Introduce yourself in one line” and “About me” in every language written, to be able to tick this."
+          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “Bio” in every language written, to be able to tick this.",
+          "titleText": "Add a title, and fill in “Introduce yourself in one line” and “Bio” in every language written, to be able to tick this.",
+          "photoTitleText": "Add a photo and a title, and fill in “Introduce yourself in one line” and “Bio” in every language written, to be able to tick this."
         }
       },
       "userPage": {
