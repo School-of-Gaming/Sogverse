@@ -327,10 +327,10 @@ describe("the request modal", () => {
       groupId: GROUP_A,
       sessionDate: "2026-10-06",
     });
-    expect(modal.title).toBe("I can’t make this session");
+    expect(modal.title).toBe("Request a substitute");
     expect(modalTexts(modal.components)).toEqual([
       "**Tue, Oct 6, 16:00 – 17:30 GMT+3**\nMinecraft Club — A · Kallio School",
-      en.form("substitutionRequestDialogBody"),
+      "Your reason and note are shown to admins only.",
     ]);
     const [reason, note] = labels(modal.components);
     expect(reason).toMatchObject({
