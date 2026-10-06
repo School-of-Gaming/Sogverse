@@ -7,8 +7,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
  * Pinned here: each written language says whether it is complete and, when it
  * is not, what it still needs — built from the structured description, never
  * the English sentence; each has its preview, its live link only while live,
- * and its address, with a warning when the saved one differs from the live
- * one; Publish is held back with a reason when nothing is complete or nothing
+ * and its address, with a warning exactly where the publish forecast moves a
+ * live address; Publish is held back with a reason when nothing is complete or nothing
  * has changed, and shows the forecast — live, left out, taken down, live
  * addresses changing — before it calls the write; Unpublish confirms first.
  *
@@ -199,6 +199,17 @@ describe("the landing page status page", () => {
     ).toBeTruthy();
     // Swedish is live at the address it has saved: nothing to warn about.
     expect(within(card("Swedish")).getByText("/discover/spelklubbar-i-esbo")).toBeTruthy();
+    expect(within(card("Swedish")).queryByText(/addressChanging/)).toBeNull();
+  });
+
+  it("warns of no address change for an incomplete live language, which the publish takes down instead", () => {
+    renderStatus({
+      ...draftPage([EN, { ...SV, slug: "esbo-spelklubbar" }]),
+      publication: publication(["en", "sv"]),
+      hasUnpublishedChanges: true,
+    });
+
+    expect(within(card("Swedish")).getByText("/discover/esbo-spelklubbar")).toBeTruthy();
     expect(within(card("Swedish")).queryByText(/addressChanging/)).toBeNull();
   });
 

@@ -69,6 +69,9 @@ export function LandingPageStatusPage({
   const uiLocale = resolveLocale(useLocale());
   const version = resolveTranslation(page.draft.versions, uiLocale);
   const liveLocales = new Set(page.publication?.versions.map((v) => v.locale) ?? []);
+  // The card's address warning is the publish confirmation's, so the two
+  // never disagree: a live language the publish would take down moves nowhere.
+  const { slugsChanging } = landingPublishForecast(page);
 
   return (
     <div className="space-y-6">
@@ -100,6 +103,9 @@ export function LandingPageStatusPage({
             version={v}
             sections={page.draft.sections}
             publication={liveLocales.has(v.locale) ? page.publication : null}
+            movingFrom={
+              slugsChanging.find((change) => change.locale === v.locale)?.from ?? null
+            }
           />
         ))}
       </section>
@@ -315,30 +321,30 @@ function slugPath(slug: string, locale: SupportedLocale): string {
 
 /**
  * One written language: complete or what it still needs, its address, its
- * preview and — while it is live — its live page. When the saved address
- * differs from the live one, the card warns that the next publish moves the
- * language and that links to the old address stop working.
+ * preview and — while it is live — its live page. When the next publish would
+ * move the language to a new address, the card warns that links to the old
+ * one stop working.
  */
 function LanguageCard({
   pageId,
   version,
   sections,
   publication,
+  movingFrom,
 }: {
   pageId: string;
   version: LandingPageDraftVersion;
   sections: LandingPageDraft["sections"];
   /** The live copy, when this language is in it. */
   publication: AdminLandingPage["publication"];
+  /** The live slug the next publish moves this language from, if it does. */
+  movingFrom: string | null;
 }) {
   const t = useTranslations("admin.landingPages");
   const languageName = useLanguageNames();
   const describeMissing = useMissingWords();
   const complete = version.missing.length === 0;
   const headingId = useId();
-  const liveSlug = publication?.versions.find((v) => v.locale === version.locale)?.slug;
-  const movingFrom =
-    version.slug !== "" && liveSlug !== undefined && liveSlug !== version.slug ? liveSlug : null;
 
   return (
     <Card>
@@ -425,31 +431,26 @@ type FieldKey =
   | "title"
   | "summary"
   | "slug"
-  | "eyebrow"
   | "headline"
-  | "subline"
   | "heading"
   | "body"
-  | "caption"
-  | "intro"
   | "buttonLabel"
   | "imageAlt"
   | "alt"
   | "question"
   | "answer";
 
-/** The field names a missing-words path can end in, each with its label's key. */
+/**
+ * The field names a missing-words path can end in, each with its label's key:
+ * the version's own fields and every field a section type requires.
+ */
 const FIELD_KEYS: Readonly<Partial<Record<string, FieldKey>>> = {
   title: "title",
   summary: "summary",
   slug: "slug",
-  eyebrow: "eyebrow",
   headline: "headline",
-  subline: "subline",
   heading: "heading",
   body: "body",
-  caption: "caption",
-  intro: "intro",
   buttonLabel: "buttonLabel",
   imageAlt: "imageAlt",
   alt: "alt",
