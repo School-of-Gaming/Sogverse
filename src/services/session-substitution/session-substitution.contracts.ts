@@ -96,6 +96,18 @@ export const substitutionRequestDocument = z.object({
 export type SubstitutionRequestDocument = z.infer<typeof substitutionRequestDocument>;
 
 /**
+ * **The caller's own live requests** — every request they filed that is not
+ * withdrawn, dated today or later in the product's zone, soonest first.
+ *
+ * "Live" is the very condition the filing write refuses a second filing on, so
+ * a session whose `(group_id, session_date)` is here is one the write would
+ * refuse: the absence picker shows it disabled and the Discord bot leaves it
+ * out. The documents are the requester's own reading, so the named schema
+ * holds — the requester is always disclosed to themselves.
+ */
+export const liveSubstitutionRequests = z.array(substitutionRequestDocument);
+
+/**
  * **The same document with the absent gedu withheld** — what the two offer RPCs
  * return to the gedu who answered the pool.
  *

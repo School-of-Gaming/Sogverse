@@ -355,13 +355,19 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
 
   // --- the gedu half of session substitutions ------------------------------
   //
-  // Four writes and one read. The read is the assertable one, for the same
-  // reason the summaries RPC above is: it takes no id, so a gedu with nothing to
+  // Four writes and two reads. The reads are the assertable ones, for the same
+  // reason the summaries RPC above is. The pool takes no id, so a gedu with nothing to
   // substitute at gets an empty list rather than a refusal. An UNCERTIFIED gedu also
   // gets an empty list rather than a refusal, which is deliberate — certification
   // is one of the four refusals inside the may-substitute predicate the list filters
   // on, not a gate on the function.
   get_open_substitution_requests: { permittedRoles: ["gedu"] },
+  // The caller's own live requests, which the absence picker disables its rows
+  // by. Assertable for the same reason: it takes no argument at all, and past
+  // the guard it is keyed to auth.uid() alone, so a gedu who has filed nothing
+  // gets an empty list. discord-substitution.test.ts proves a gedu never reads
+  // a colleague's request.
+  get_my_live_substitution_requests: { permittedRoles: ["gedu"] },
   request_session_substitution: {
     permittedRoles: ["gedu"],
     permittedAlsoForbiddenOnNullArgs:

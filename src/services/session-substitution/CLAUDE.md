@@ -83,9 +83,9 @@ server-side secret, so nothing here is worth a route: a route would add a hop an
 place to get the authorization wrong.
 
 **The Discord bot's `/sub` command is the one caller with no session, and it reaches the
-same bodies.** Filing an absence and the two seat reads behind the picker each live in an
-internal function that takes the gedu as an argument; the web's RPC calls it with
-`auth.uid()` after its role guard, and a `…_for_discord_user` wrapper, granted to the
+same bodies.** Filing an absence, the two seat reads behind the picker and the read of
+the gedu's own live requests each live in an internal function that takes the gedu as
+an argument; the web's RPC calls it with `auth.uid()` after its role guard, and a `…_for_discord_user` wrapper, granted to the
 service role alone, calls it with the gedu linked to the caller's Discord id (refusing
 with P0031 when there is none). A rule about who may file, or what a seat read returns,
 is changed in the internal body, never in a wrapper — a check added to one wrapper is a
@@ -266,16 +266,20 @@ what is already on screen. Where the list spans more than one group it carries a
 group filter, and a list that is one group's is never gated: a single club's
 term is a scroll, not a wall.
 
-**What no read on that page carries is which of those dates the viewer has
-already filed on.** The assignment rows are per seat and the summaries are per
-card; a group's own document has the requests, but it is a whole club's history
-and a page of seats cannot fetch one per seat — that is the same reason the
-dashboard's badge is counted in SQL rather than out of a feed. So the picker
-disables the rows it *knows* about — what it has just written itself, plus
-whatever the surface hands it — and the write's own refusal is the backstop for
-the rest, read inside the dialog with the draft still in place. Closing that gap
-means a read that returns the caller's live (group, date) pairs, which is a
-database change and has not been made.
+**Which of those dates the viewer has already asked a substitute for is a read
+of its own** — the caller's *live* requests, every one they filed that is not
+withdrawn, from product-local today on. The seats cannot say it: the assignment
+rows are per seat and the summaries per card. "Live" is the first clause of the
+derivation above, so a session it names is exactly one the write refuses a
+second filing on, and the list and the refusal cannot disagree. A request on a
+cancelled session counts, because the write refuses there too. **The two ways
+in answer it differently, by the owner's ruling:** the web picker keeps such a
+row, disabled with its "already asked" reason, while the Discord bot leaves it
+out of its list, because a dropdown option cannot be disabled. The picker adds
+what it has just filed itself to the same set, which covers the moment before
+the read refetches, and the write's own refusal is the backstop for what
+changed after the list was read — a filing from elsewhere, a seat taken away —
+read inside the dialog with the draft still in place.
 
 **Being the backstop, the refusal has to say why** — "that didn't save, try
 again" invites the same press forever — so one shared mapper turns it into a
@@ -434,8 +438,8 @@ than naming leaves. Roots, because a single write can move a group the caller wa
 looking at: unseating somebody cascades, withdrawing every request whose requester no
 longer holds a seat on that date, and a client cannot know which those are.
 
-The four are this feature's own key (both the gedu's pool and the admin page's document
-live under it), both staff session documents, and the gedu's assignment rows — a live
+The four are this feature's own key (the gedu's pool, the gedu's own live requests and
+the admin page's document all live under it), both staff session documents, and the gedu's assignment rows — a live
 substitution *is* a row there. The fan-out is stated once in the queries module, not per
 hook.
 

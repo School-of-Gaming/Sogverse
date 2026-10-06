@@ -2,6 +2,7 @@ import type { AppSupabaseClient, SubstitutionReason } from "@/types";
 import {
   adminSubstitutionRequests,
   anonymousSubstitutionRequestDocument,
+  liveSubstitutionRequests,
   substitutionRequestDocument,
   openSubstitutionRequests,
   type AdminSubstitutionRequest,
@@ -49,6 +50,19 @@ export class SessionSubstitutionService {
     const { data, error } = await this.supabase.rpc("get_open_substitution_requests");
     if (error) throw error;
     return openSubstitutionRequests.parse(data);
+  }
+
+  /**
+   * The calling gedu's own live requests — not withdrawn, dated today or later
+   * — which are exactly the sessions the filing write would refuse a second
+   * absence on. The absence picker shows those sessions disabled.
+   */
+  async getMyLiveRequests(): Promise<SubstitutionRequestDocument[]> {
+    const { data, error } = await this.supabase.rpc(
+      "get_my_live_substitution_requests",
+    );
+    if (error) throw error;
+    return liveSubstitutionRequests.parse(data);
   }
 
   /**

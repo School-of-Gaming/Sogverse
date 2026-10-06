@@ -75,13 +75,11 @@ export function GeduFileAbsenceEntry({
    * Sessions the viewer already holds a live request on, by
    * {@link GeduUpcomingSession.key} — shown disabled, with the reason in place.
    *
-   * **Whatever the caller knows, and no more.** The page's own reads do not
-   * carry the caller's requests: the assignment rows are per seat and the
-   * summaries per card, so which dates a gedu has already filed on is not a
-   * fact this page has without a read of its own. What is always known is what
-   * *this* component just wrote, which it adds to this list itself. A caller
-   * with a better source hands it over here; the write's own refusal is the
-   * backstop either way, and it is read inside the dialog.
+   * The page hands over the viewer's live requests, read from the server. This
+   * component adds what it has just written itself, which covers the moment
+   * between a filing and that read's refetch; the write's own refusal is the
+   * backstop for a filing made elsewhere meanwhile, and it is read inside the
+   * dialog.
    */
   filedSessionKeys?: readonly string[];
   /**
@@ -119,8 +117,8 @@ export function GeduFileAbsenceEntry({
    * What this component has filed in this visit.
    *
    * It is knowledge the page really has — it made the write — and it is what
-   * stops the obvious second mistake: filing for Monday, reopening the picker,
-   * and being offered Monday again.
+   * stops the obvious second mistake, filing for Monday and being offered
+   * Monday again, in the moment before the live-requests read has refetched.
    */
   const [filedHere, setFiledHere] = useState<readonly string[]>([]);
   /**
@@ -185,10 +183,11 @@ export function GeduFileAbsenceEntry({
       setGroupFilter("");
       setShowingLater(false);
     } catch (refusal) {
-      // The write's refusal is this picker's only way of learning about a
-      // request filed in an earlier visit, so it is read rather than flattened:
-      // the reason and the note stay where the gedu left them, and the line
-      // above the footer says which of the refusals happened.
+      // The write's refusal is how this picker learns about a request filed
+      // after its list was read — from the session card, another tab or
+      // Discord — so it is read rather than flattened: the reason and the note
+      // stay where the gedu left them, and the line above the footer says which
+      // of the refusals happened.
       const key = substitutionRequestFailureKey(refusal);
       setError(f(key));
       // And where the refusal means the seat is already spoken for, the row
