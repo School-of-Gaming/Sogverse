@@ -43,13 +43,13 @@ export const SHORT_DESCRIPTION_MAX_LENGTH = 140;
 export const FUN_FACT_MAX_LENGTH = 200;
 
 /**
- * How long "About me" may run, as its stored markdown: the database's own
+ * How long the bio may run, as its stored markdown: the database's own
  * limit. The rich editor cannot cap its input the way a text field can, so
  * the form counts it and Save waits until every language is back under it.
  */
 export const LONG_DESCRIPTION_MAX_LENGTH = 5000;
 
-/** Whether a language's "About me" runs past what can be saved. */
+/** Whether a language's bio runs past what can be saved. */
 function longDescriptionTooLong(longDescription: string): boolean {
   return longDescription.trim().length > LONG_DESCRIPTION_MAX_LENGTH;
 }
@@ -241,7 +241,7 @@ export function teamProfileGap(content: TeamProfileContent): TeamProfileGap {
 
 /**
  * Whether any language's text runs past what the database stores. The other
- * fields cap their own input; "About me" cannot, so a save waits on this.
+ * fields cap their own input; the bio cannot, so a save waits on this.
  */
 export function teamProfileTooLong(content: TeamProfileContent): boolean {
   return content.translations.some((row) =>
@@ -264,7 +264,7 @@ const RICH_EDITOR_MIN_HEIGHT = "min-h-[12.5rem]";
  * The rich editor, loaded on demand and never rendered on the server: it is
  * the heaviest thing on the page, and only the open language tab mounts one.
  */
-const AboutMeEditor = dynamic(
+const BioEditor = dynamic(
   () => import("@/components/ui/rich-text-editor").then((m) => m.RichTextEditor),
   {
     ssr: false,
@@ -577,7 +577,7 @@ export function TeamProfileAboutSection({
  * remains, an "add a language" select for the rest, and the rule of at least
  * one — here enforced by the ready switch rather than by the save.
  *
- * **"About me" is the shared rich-text editor in its `profile` variant** — no
+ * **The bio is the shared rich-text editor in its `profile` variant** — no
  * links and no headings, matching the public page's renderer of the same name
  * — loaded on demand behind a same-sized placeholder. The editor reads its
  * content once, at mount, so the locale is its key and switching tabs remounts
@@ -650,7 +650,7 @@ export function TeamProfileWritingSection({
           {addedLocales.map((l) => {
             const isActive = locale === l;
             const canRemove = addedLocales.length > 1;
-            // A language whose "About me" is too long to save is marked on
+            // A language whose bio is too long to save is marked on
             // its tab, since Save waits on it while another tab is open.
             const tooLong = longDescriptionTooLong(
               form.translations[l]?.longDescription ?? "",
@@ -756,7 +756,7 @@ export function TeamProfileWritingSection({
         }
       >
         {({ hintId }) => (
-          <AboutMeEditor
+          <BioEditor
             key={locale}
             variant="profile"
             initialValue={draft.longDescription}

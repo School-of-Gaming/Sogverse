@@ -5533,11 +5533,11 @@
       "geduTitle": "Gedu · pelikasvattaja",
       "geduAltRole": "pelikasvattaja",
       "speaks": "Puhuu",
-      "aboutMe": "Minusta",
+      "whoIs": "Kuka on {firstName}?",
       "funFact": "Hauska fakta",
       "draft": {
         "shortDescription": "Yhden rivin esittelysi näkyy tässä",
-        "longDescription": "”Minusta”-tekstisi näkyy tässä"
+        "longDescription": "”Kuvaus”-tekstisi näkyy tässä"
       }
     },
     "edit": {
@@ -5565,11 +5565,11 @@
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
           "title": "Lisää tittelisi, jotta voit rastittaa tämän.",
-          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
           "photoTitle": "Lisää kuva ja tittelisi, jotta voit rastittaa tämän.",
-          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
-          "titleText": "Lisää tittelisi ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
-          "photoTitleText": "Lisää kuva ja tittelisi sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän."
+          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "titleText": "Lisää tittelisi ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "photoTitleText": "Lisää kuva ja tittelisi sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän."
         }
       },
       "photo": {
@@ -5617,11 +5617,11 @@
         "removeLocale": "Poista {locale}",
         "shortDescription": "Esittele itsesi yhdellä rivillä",
         "shortDescriptionPlaceholder": "Redstone-nörtti ja speedrun-fani",
-        "longDescription": "Minusta",
-        "longDescriptionHint": "Mitä teet sessioissa, mitä pelaat ja mitä perheet voisivat haluta tietää sinusta.",
-        "longDescriptionPlaceholder": "Kerro perheille vähän itsestäsi",
+        "longDescription": "Kuvaus",
+        "longDescriptionHint": "Mitä teet sessioissa, mitä pelaat ja mitä perheet voisivat haluta tietää sinusta. Kirjoita kolmannessa persoonassa, ikään kuin joku muu esittelisi sinut: ”Anna on ohjannut Minecraft-kerhoja vuodesta 2023 lähtien ja opettaa mielellään redstonea.”",
+        "longDescriptionPlaceholder": "Kerro perheille itsestäsi kolmannessa persoonassa",
         "funFact": "Hauska fakta",
-        "funFactPlaceholder": "Rakensin kerran toimivan laskimen Minecraftissa.",
+        "funFactPlaceholder": "Rakensi kerran toimivan laskimen Minecraftissa.",
         "count": "{count}/{max}"
       },
       "preview": {
@@ -5654,11 +5654,11 @@
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
           "title": "Lisää titteli, jotta voit rastittaa tämän.",
-          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
           "photoTitle": "Lisää kuva ja titteli, jotta voit rastittaa tämän.",
-          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
-          "titleText": "Lisää titteli ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
-          "photoTitleText": "Lisää kuva ja titteli sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän."
+          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "titleText": "Lisää titteli ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "photoTitleText": "Lisää kuva ja titteli sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän."
         }
       },
       "userPage": {

@@ -323,7 +323,7 @@ export const MARKDOWN_USE_CASES: Record<MarkdownUseCase, MarkdownUseCaseDefiniti
    */
   marketing: defineUseCase({ headings: true, links: true }, "section"),
   /**
-   * **A team member's "About me", on their public page.** No headings, since
+   * **A team member's bio, on their public page.** No headings, since
    * the page already sets the heading it sits under, and no links. No heading
    * survives, so its outline is never reached; `section` is nominal.
    */

@@ -30,7 +30,7 @@ import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
  * follows that: the photo leads, then the person headed as everywhere they
  * are shown (`team-name.ts`) — the first name with the nickname gamers use,
  * and under the rule a Gedu's role or an admin's full name and title — then
- * the person's own opening line, the languages they speak, "About me", and
+ * the person's own opening line, the languages they speak, the bio under "Who is <first name>?", and
  * the fun fact as a playful aside to finish on.
  *
  * **One reading column.** Every section shares the article's measure; nothing
@@ -62,7 +62,7 @@ import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
  * preview in a column beside the form, it lays out for the column it is in.
  *
  * **The required sections always hold their place.** The one-line intro and
- * "About me" render a muted placeholder while empty, which only ever happens
+ * the bio render a muted placeholder while empty, which only ever happens
  * in the editor's preview (a profile cannot go public without both), so the
  * preview does not jump when the person starts typing. The fun fact is
  * optional and appears only when there is one.
@@ -170,7 +170,7 @@ export function TeamProfileBody({
 
         <section aria-labelledby={aboutId} className="mt-12">
           <h2 id={aboutId} className="text-xl font-semibold">
-            {t("aboutMe")}
+            {t("whoIs", { firstName: profile.firstName })}
           </h2>
           {longDescription === "" ? (
             <p className="mt-4 leading-relaxed text-muted-foreground">

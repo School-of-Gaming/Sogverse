@@ -5533,11 +5533,11 @@
       "geduTitle": "Gedu · animateur ou animatrice",
       "geduAltRole": "animateur ou animatrice",
       "speaks": "Parle",
-      "aboutMe": "À propos de moi",
+      "whoIs": "Qui est {firstName} ?",
       "funFact": "Anecdote",
       "draft": {
         "shortDescription": "Votre présentation en une ligne apparaît ici",
-        "longDescription": "Ce que vous écrivez dans « À propos de moi » apparaît ici"
+        "longDescription": "Ce que vous écrivez dans « Bio » apparaît ici"
       }
     },
     "edit": {
@@ -5565,11 +5565,11 @@
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
           "title": "Ajoutez votre titre pour pouvoir cocher cette case.",
-          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
           "photoTitle": "Ajoutez une photo et votre titre pour pouvoir cocher cette case.",
-          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
-          "titleText": "Ajoutez votre titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
-          "photoTitleText": "Ajoutez une photo et votre titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez, pour pouvoir cocher cette case."
+          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez votre titre et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et votre titre, et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez, pour pouvoir cocher cette case."
         }
       },
       "photo": {
@@ -5617,11 +5617,11 @@
         "removeLocale": "Supprimer {locale}",
         "shortDescription": "Présentez-vous en une ligne",
         "shortDescriptionPlaceholder": "Fan de redstone et de speedrun",
-        "longDescription": "À propos de moi",
-        "longDescriptionHint": "Ce que vous faites en session, ce à quoi vous jouez, et ce que les familles aimeraient savoir sur vous.",
-        "longDescriptionPlaceholder": "Présentez-vous un peu aux familles",
+        "longDescription": "Bio",
+        "longDescriptionHint": "Ce que vous faites en session, ce à quoi vous jouez, et ce que les familles aimeraient savoir sur vous. Écrivez à la troisième personne, comme si quelqu’un vous présentait : « Anna anime des clubs Minecraft depuis 2023 et adore enseigner la redstone. »",
+        "longDescriptionPlaceholder": "Présentez-vous aux familles, à la troisième personne",
         "funFact": "Anecdote",
-        "funFactPlaceholder": "J’ai un jour construit une calculatrice qui fonctionne dans Minecraft.",
+        "funFactPlaceholder": "A un jour construit une calculatrice qui fonctionne dans Minecraft.",
         "count": "{count}/{max}"
       },
       "preview": {
@@ -5654,11 +5654,11 @@
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
           "title": "Ajoutez un titre pour pouvoir cocher cette case.",
-          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
           "photoTitle": "Ajoutez une photo et un titre pour pouvoir cocher cette case.",
-          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
-          "titleText": "Ajoutez un titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
-          "photoTitleText": "Ajoutez une photo et un titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée, pour pouvoir cocher cette case."
+          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez un titre et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et un titre, et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée, pour pouvoir cocher cette case."
         }
       },
       "userPage": {

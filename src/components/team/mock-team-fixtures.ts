@@ -190,7 +190,7 @@ export interface TeamProfileEditorFixture {
 /**
  * Saana's profile the day she opens the editor: a few words in Finnish and no
  * photo, so the switch is disabled with both reasons, and the preview shows
- * the drawn placeholder, her one line, and "About me" holding its place.
+ * the drawn placeholder, her one line, and the bio holding its place.
  */
 const SAANA_NEW: GeduTeamProfile = {
   ...SAANA,
