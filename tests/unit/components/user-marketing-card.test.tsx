@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // First among the imports, and load-bearing: the `vi.mock` factories below run
 // during this file's import phase and read their module bodies out of here.
 import {
+  notificationPreferencesCardModule,
   gameAccountModule,
   geduCoverageEditorModule,
   homeLocationFieldModule,
@@ -73,6 +74,9 @@ vi.mock("@/services/users", () => ({
 
 const auth: { profile: Profile } = { profile: createMockProfile() };
 vi.mock("@/providers", () => providersModule(() => auth.profile));
+vi.mock("@/components/settings/notification-preferences-card", () =>
+  notificationPreferencesCardModule(),
+);
 vi.mock("@/services/locations", () => locationsServiceModule());
 vi.mock("@/services/minecraft", () => minecraftServiceModule());
 vi.mock("@/services/roblox", () => robloxServiceModule());

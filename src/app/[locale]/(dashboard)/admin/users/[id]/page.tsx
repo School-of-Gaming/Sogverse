@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { AlertTriangle, ArrowLeft, Package, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -12,6 +13,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { GeduCertificationCard } from "@/components/admin/gedu-certification-card";
+import { GeduQualificationsCard } from "@/components/admin/gedu-qualifications-card";
+import { GeduSpokenLanguagesCard } from "@/components/admin/gedu-spoken-languages-card";
 import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
 import { UserMarketingCard } from "@/components/admin/user-marketing-card";
 import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-consent-card";
@@ -35,10 +38,19 @@ import {
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
+import {
+  GeduQualificationsService,
+  type HeldGeduQualification,
+} from "@/services/gedu/gedu-qualifications.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
+import {
+  DiscordLinkService,
+  type DiscordLinkSummary,
+} from "@/services/discord-link/discord-link.service";
 import type { TeamProfileRecord } from "@/services/team-profiles/team-profiles.types";
 import { UserTeamProfileCard } from "@/components/admin/user-team-profile-card";
 import { teamMemberPublicAddress } from "@/components/team/team-address";
+import discordSymbol from "@/assets/partners/discord-symbol-blurple.svg";
 import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@/types";
 
 /**
@@ -185,6 +197,8 @@ export default async function AdminUserDetailPage({
   const isGedu = profile.role === "gedu";
   // The two roles with a public team profile: office staff and Gedus.
   const hasTeamProfile = isGedu || profile.role === "admin";
+  // The same two roles, and the only ones that can link a Discord account.
+  const canLinkDiscord = isGedu || profile.role === "admin";
 
   // Game identities belong to the people who play — a child, and the educator
   // running the session. A parent's or another admin's account has none, which
@@ -212,8 +226,10 @@ export default async function AdminUserDetailPage({
     robloxAccount,
     geduCertification,
     geduAcceptances,
+    geduQualifications,
     { record: teamProfile, publicAddress: teamProfileAddress },
     viewer,
+    discordLink,
   ] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
@@ -241,6 +257,12 @@ export default async function AdminUserDetailPage({
     isGedu
       ? new GeduContractService(supabase).getAcceptances(userId).catch(() => null)
       : Promise.resolve<GeduContractAcceptance[] | null>(null),
+    // The qualifications this educator holds — at most one row per
+    // qualification, read by the gedu's id. A failure answers `null` so the
+    // card asks again from the browser rather than drawing every box unticked.
+    isGedu
+      ? new GeduQualificationsService(supabase).getForGedu(userId).catch(() => null)
+      : Promise.resolve<HeldGeduQualification[] | null>(null),
     // The team profile, read here so its card paints complete: its status
     // and summary differ in height from one profile to the next. Not caught:
     // the id has already matched a profile, so it cannot be malformed, and a
@@ -252,6 +274,12 @@ export default async function AdminUserDetailPage({
     // Who is looking, so the card can send an admin to their own profile
     // through settings. Cached for the request: the layout has read it.
     hasTeamProfile ? getUserWithProfile() : Promise.resolve(null),
+    // At most one row, by primary key; admin RLS permits the cross-user read.
+    // Not caught, for the team profile's reason: a failed read shown as "not
+    // linked" would be the wrong answer.
+    canLinkDiscord
+      ? new DiscordLinkService(supabase).getLink(userId)
+      : Promise.resolve<DiscordLinkSummary | null>(null),
   ]);
 
   // Products this user is assigned to. For a gamer, their own participations;
@@ -347,6 +375,26 @@ export default async function AdminUserDetailPage({
                 initialProfile={profile}
                 editable={!isGamer}
               />
+            )}
+            {/* The linked Discord account, for the two roles that can link
+                one. Read-only: only its holder links it, from Discord. Discord's
+                own mark, as shipped, is the line's only label, so it carries the
+                service's name as its alt text. */}
+            {canLinkDiscord && (
+              <p className="flex items-center gap-2 text-muted-foreground">
+                <Image
+                  src={discordSymbol}
+                  alt="Discord"
+                  height={16}
+                  unoptimized
+                  className="shrink-0"
+                />
+                <span>
+                  {discordLink
+                    ? `@${discordLink.discord_username}`
+                    : t("discordNotLinked")}
+                </span>
+              </p>
             )}
             {/* Age and gender, with a pencil that opens their editor — which
                 also edits the child's email address or username where their
@@ -520,6 +568,13 @@ export default async function AdminUserDetailPage({
         />
       )}
 
+      {/* The educator's qualifications, directly after certification: the
+          other standing an admin grants an educator, though unlike
+          certification it gates nothing. */}
+      {isGedu && (
+        <GeduQualificationsCard geduId={userId} initial={geduQualifications} />
+      )}
+
       {/* Both game identities, editable. Admins have always had the database
           permission to fix these (a `FOR ALL` policy over `is_admin()` on both
           tables); this is the surface that finally uses it. */}
@@ -532,7 +587,10 @@ export default async function AdminUserDetailPage({
         />
       )}
 
-      {/* Coverage areas, for substitute matching. */}
+      {/* Spoken languages and coverage areas, the two answers substitute
+          matching reads, side by side. The languages are seeded from the
+          profile row this page already read. */}
+      {isGedu && <GeduSpokenLanguagesCard geduId={userId} initialProfile={profile} />}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
 
       {/* The public team profile, for the two roles that have one. Seeded by

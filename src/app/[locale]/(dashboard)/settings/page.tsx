@@ -9,6 +9,7 @@ import { getOrigin } from "@/lib/url";
 // index re-exports `"use client"` query hooks, which a server component would
 // pull in as client references.
 import { resolveGamerPhotoConsents } from "@/services/gamer-photo-consents/resolve-gamer-photo-consents";
+import { DiscordLinkService } from "@/services/discord-link/discord-link.service";
 import { GeduContractService } from "@/services/gedu/gedu-contract.service";
 import type { AppSupabaseClient, GamerSignIn } from "@/types";
 
@@ -107,12 +108,27 @@ async function readGamerPhotoConsentGranted(
 }
 
 /**
+ * The Discord username an admin or a Gedu has linked, or `null` when they have
+ * not linked one. Read here so the Discord field paints with its value and its
+ * matching sentence underneath, rather than changing both a round trip later.
+ * The owner's own row, through their own client: RLS is the gate.
+ */
+async function readDiscordUsername(
+  supabase: AppSupabaseClient,
+  profileId: string,
+): Promise<string | null> {
+  const link = await new DiscordLinkService(supabase).getLink(profileId);
+  return link?.discord_username ?? null;
+}
+
+/**
  * `/settings` — one page for every role, and a data shell in front of it.
  *
  * The body is a client component that reads the viewer's profile from the auth
  * provider, so almost nothing here needs resolving server-side. The exceptions
  * are the cards whose body a read decides — a gedu's contract card, a gamer's
- * sign-in fields and photo sentence — and reading them here is what lets each
+ * sign-in fields and photo sentence, a staff member's linked Discord account —
+ * and reading them here is what lets each
  * paint at its final height. An admin's MCP card needs no read, but its URL is
  * built here, because only the server knows the trusted origin to build it on.
  *
@@ -129,11 +145,11 @@ async function readGamerPhotoConsentGranted(
  * keeps a working page working. Nothing of the sort is true here: this page
  * already hard-depends on a server identity read to render at all, it is a
  * low-traffic utility page, and the owner ruled for two-state simplicity over a
- * third state that exists only for an error nobody sees. So the gedu read throws
- * and the page errors like any other server render.
+ * third state that exists only for an error nobody sees. So the gedu and Discord
+ * reads throw and the page errors like any other server render.
  *
- * The accepted cost, stated plainly: a gedu's or gamer's settings visit blocks
- * on its read before the first byte.
+ * The accepted cost, stated plainly: every settings visit but a parent's blocks
+ * on its reads before the first byte.
  */
 export default async function SettingsPage() {
   const userWithProfile = await getUserWithProfile();
@@ -161,8 +177,18 @@ export default async function SettingsPage() {
     // The MCP card shows this environment's own endpoint, so the origin is the
     // request's — through `getOrigin`, which trusts the Host header only when it
     // names this deployment, never the raw header and never the browser's.
-    const mcpServerUrl = `${getOrigin(await headers())}${MCP_ENDPOINT_PATH}`;
-    return <SettingsSectionContent mcpServerUrl={mcpServerUrl} />;
+    const supabase = await createClient();
+    const [requestHeaders, discordUsername] = await Promise.all([
+      headers(),
+      readDiscordUsername(supabase, userWithProfile.user.id),
+    ]);
+    const mcpServerUrl = `${getOrigin(requestHeaders)}${MCP_ENDPOINT_PATH}`;
+    return (
+      <SettingsSectionContent
+        mcpServerUrl={mcpServerUrl}
+        discordUsername={discordUsername}
+      />
+    );
   }
 
   if (userWithProfile?.profile?.role !== "gedu") {
@@ -172,10 +198,15 @@ export default async function SettingsPage() {
   // One client, threaded — the same shape the sibling /gedu/contract route
   // uses. The read helper takes it rather than building a second one.
   const supabase = await createClient();
-  const geduContractSeed = await readGeduContractSeed(
-    supabase,
-    userWithProfile.user.id,
-  );
+  const [geduContractSeed, discordUsername] = await Promise.all([
+    readGeduContractSeed(supabase, userWithProfile.user.id),
+    readDiscordUsername(supabase, userWithProfile.user.id),
+  ]);
 
-  return <SettingsSectionContent geduContractSeed={geduContractSeed} />;
+  return (
+    <SettingsSectionContent
+      geduContractSeed={geduContractSeed}
+      discordUsername={discordUsername}
+    />
+  );
 }

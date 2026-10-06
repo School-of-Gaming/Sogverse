@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { GeduPickerSheet } from "@/components/admin/products/gedu-picker-sheet";
 import type { UserListEntry } from "@/services/users";
+import type { MissingRequirement } from "@/lib/products/session-requirements";
 
 /**
  * Who the gedu picker will not let an admin take, and — the part that matters —
@@ -42,6 +43,8 @@ const IDS = {
   absent: "9e7f1a45-2d61-4c8b-9f0e-6c2d1b3a4e57",
   uncertified: "7b3e9c22-1a4d-4b6f-8e2c-0d5a6f7b8c93",
   surnameless: "3f8a6d14-9c2b-4e71-b5d0-2a7e1c9f4b86",
+  qualified: "c6a1e3f2-8b4d-4f0a-9e7c-1d2b3a4c5e6f",
+  nonSpeaker: "30a0fd21-e720-479d-9333-154a1e742a90",
 } as const;
 
 function gedu(
@@ -64,12 +67,19 @@ function gedu(
     utm_medium: null,
     utm_campaign: null,
     registration_completed_at: "2026-01-01T00:00:00.000Z",
-    spoken_languages: [],
+    // The two qualified educators: one speaks Finnish, the other only English.
+    spoken_languages:
+      id === IDS.qualified ? ["fi"] : id === IDS.nonSpeaker ? ["en"] : [],
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     certified: id !== IDS.uncertified,
     criminal_record_check_passed: true,
     linked_gamers: [],
+    // Two educators hold both; everyone else holds none.
+    qualifications:
+      id === IDS.qualified || id === IDS.nonSpeaker
+        ? ["neuroinclusive", "consumer_products"]
+        : [],
   };
 }
 
@@ -80,6 +90,8 @@ const GEDUS = [
   gedu(IDS.absent, "Milo"),
   gedu(IDS.uncertified, "Onni"),
   gedu(IDS.surnameless, "Mikko", ""),
+  gedu(IDS.qualified, "Venla"),
+  gedu(IDS.nonSpeaker, "Kerttu"),
 ];
 
 // One page of the shared people read is the whole fixture: certification rides
@@ -96,6 +108,26 @@ vi.mock("@/services/users", () => ({
     isFetchingNextPage: false,
     fetchNextPage: () => Promise.resolve(),
   }),
+}));
+
+// Who covers the site of the in-person product being staffed, as the database
+// answers it — Venla alone. `calls` records what the sheet asked about, and
+// `settled` lets a case hold the answer back.
+const covering = vi.hoisted(() => ({
+  calls: [] as (string | null)[],
+  settled: true,
+}));
+vi.mock("@/services/gedu-locations", () => ({
+  useGedusCoveringProduct: (productId: string | null) => {
+    covering.calls.push(productId);
+    return {
+      data:
+        productId === null || !covering.settled
+          ? undefined
+          : new Set(["c6a1e3f2-8b4d-4f0a-9e7c-1d2b3a4c5e6f"]),
+      isError: false,
+    };
+  },
 }));
 
 /** The row for one person, found by the full name it renders. */
@@ -298,5 +330,196 @@ describe("the gedu picker's trainee seat", () => {
         "admin.products.geduPicker.traineeInstead",
       ),
     ).toBeNull();
+  });
+});
+
+/**
+ * A missing requirement — a qualification, or the session's language — is the
+ * admin's warning, never the sheet's refusal: the row stays pressable, says
+ * what it lacks, and hands the gap to the caller, whose confirm step names it.
+ */
+describe("the gedu picker's requirement gaps", () => {
+  const NOT_QUALIFIED = "admin.products.geduPicker.notQualified";
+  const DOES_NOT_SPEAK = "admin.products.geduPicker.doesNotSpeak";
+
+  function openRequiring(
+    seat: "staff" | "trainee",
+    onSelect: (
+      gedu: UserListEntry,
+      missing: readonly MissingRequirement[],
+    ) => void = () => {},
+  ) {
+    render(
+      <GeduPickerSheet
+        open
+        onOpenChange={() => {}}
+        title="Pick a Gedu"
+        description="For this group"
+        seat={seat}
+        requirements={{
+          qualifications: ["neuroinclusive", "consumer_products"],
+          language: "fi",
+          site: null,
+        }}
+        onSelect={onSelect}
+      />,
+    );
+  }
+
+  it("keeps a row falling short selectable, names each gap, and hands the gaps to the pick", () => {
+    const onSelect = vi.fn();
+    openRequiring("staff", onSelect);
+
+    const row = rowFor("Aino Virtanen");
+    expect(row.disabled).toBe(false);
+    // One line per missing qualification, and one for the language.
+    expect(within(row).getAllByText(NOT_QUALIFIED)).toHaveLength(2);
+    expect(within(row).getAllByText(DOES_NOT_SPEAK)).toHaveLength(1);
+
+    fireEvent.click(row);
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: IDS.free }),
+      [
+        { kind: "qualification", qualification: "neuroinclusive" },
+        { kind: "qualification", qualification: "consumer_products" },
+        { kind: "language", language: "fi" },
+      ],
+    );
+  });
+
+  it("names the language alone for a qualified gedu who does not speak it", () => {
+    const onSelect = vi.fn();
+    openRequiring("staff", onSelect);
+
+    const row = rowFor("Kerttu Virtanen");
+    expect(within(row).queryByText(NOT_QUALIFIED)).toBeNull();
+    expect(within(row).getAllByText(DOES_NOT_SPEAK)).toHaveLength(1);
+
+    fireEvent.click(row);
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: IDS.nonSpeaker }),
+      [{ kind: "language", language: "fi" }],
+    );
+  });
+
+  it("says nothing about a gedu meeting every requirement", () => {
+    const onSelect = vi.fn();
+    openRequiring("staff", onSelect);
+
+    const row = rowFor("Venla Virtanen");
+    expect(within(row).queryByText(NOT_QUALIFIED)).toBeNull();
+    expect(within(row).queryByText(DOES_NOT_SPEAK)).toBeNull();
+
+    fireEvent.click(row);
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: IDS.qualified }),
+      [],
+    );
+  });
+
+  it("adds no gap to a row already refused for another reason", () => {
+    openRequiring("staff");
+
+    const row = rowFor("Onni Virtanen");
+    expect(within(row).queryByText(NOT_QUALIFIED)).toBeNull();
+    expect(within(row).queryByText(DOES_NOT_SPEAK)).toBeNull();
+  });
+
+  it("asks nothing of a trainee seat", () => {
+    const onSelect = vi.fn();
+    openRequiring("trainee", onSelect);
+
+    const row = rowFor("Aino Virtanen");
+    expect(within(row).queryByText(NOT_QUALIFIED)).toBeNull();
+    expect(within(row).queryByText(DOES_NOT_SPEAK)).toBeNull();
+    fireEvent.click(row);
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: IDS.free }),
+      [],
+    );
+  });
+});
+
+/**
+ * An in-person product also asks for a coverage area reaching its site. The
+ * sheet asks the database which gedus cover it rather than walking the location
+ * tree itself, and the answer is a warning like the other two: the row stays
+ * pressable, says so, and hands the gap on with the site's name.
+ */
+describe("the gedu picker's coverage gap", () => {
+  const OUTSIDE = "admin.products.geduPicker.outsideCoverage";
+  const PRODUCT = "5b7e2c90-4d1f-4a8e-b3c6-9f0a1d2e3b47";
+
+  function openAt(
+    site: { productId: string; name: string } | null,
+    onSelect: (
+      gedu: UserListEntry,
+      missing: readonly MissingRequirement[],
+    ) => void = () => {},
+  ) {
+    covering.calls.length = 0;
+    render(
+      <GeduPickerSheet
+        open
+        onOpenChange={() => {}}
+        title="Pick a Gedu"
+        description="For this group"
+        requirements={{ qualifications: [], language: "fi", site }}
+        onSelect={onSelect}
+      />,
+    );
+  }
+
+  it("names the gap on a gedu whose areas miss the site, and hands it on with the site's name", () => {
+    const onSelect = vi.fn();
+    openAt({ productId: PRODUCT, name: "Kallio School" }, onSelect);
+
+    expect(covering.calls).toContain(PRODUCT);
+    const row = rowFor("Kerttu Virtanen");
+    expect(row.disabled).toBe(false);
+    expect(within(row).getByText(OUTSIDE)).toBeTruthy();
+
+    fireEvent.click(row);
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: IDS.nonSpeaker }),
+      // Kerttu speaks English alone, so the language comes first; the site
+      // follows it, as the confirm step lists them.
+      [
+        { kind: "language", language: "fi" },
+        { kind: "coverage", site: "Kallio School" },
+      ],
+    );
+  });
+
+  it("says nothing about a gedu who covers the site", () => {
+    const onSelect = vi.fn();
+    openAt({ productId: PRODUCT, name: "Kallio School" }, onSelect);
+
+    const row = rowFor("Venla Virtanen");
+    expect(within(row).queryByText(OUTSIDE)).toBeNull();
+    fireEvent.click(row);
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: IDS.qualified }),
+      [],
+    );
+  });
+
+  it("asks nothing about coverage for an online product", () => {
+    openAt(null);
+
+    expect(covering.calls.every((call) => call === null)).toBe(true);
+    expect(within(rowFor("Kerttu Virtanen")).queryByText(OUTSIDE)).toBeNull();
+  });
+
+  it("draws no row until the coverage answer is in, so no line arrives under the cursor", () => {
+    covering.settled = false;
+    try {
+      openAt({ productId: PRODUCT, name: "Kallio School" });
+      expect(screen.queryByText("Kerttu Virtanen")).toBeNull();
+      // Nor the "no results" line: nobody has answered who exists yet.
+      expect(screen.queryByText("admin.products.geduPicker.noResults")).toBeNull();
+    } finally {
+      covering.settled = true;
+    }
   });
 });

@@ -14,6 +14,7 @@ CREATE TABLE public.invoice_customers (
     invoice_text text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    billing_cadence public.invoice_billing_cadence DEFAULT 'monthly'::public.invoice_billing_cadence NOT NULL,
     CONSTRAINT chk_invoice_customers_city_present CHECK ((btrim(city) <> ''::text)),
     CONSTRAINT chk_invoice_customers_country_code_shape CHECK ((country_code ~ '^[A-Z]{2}$'::text)),
     CONSTRAINT chk_invoice_customers_fennoa_customer_no_present CHECK ((btrim(fennoa_customer_no) <> ''::text)),
@@ -100,6 +101,13 @@ COMMENT ON COLUMN public.invoice_customers.created_at IS 'When the customer was 
 --
 
 COMMENT ON COLUMN public.invoice_customers.updated_at IS 'When the customer was last edited, maintained by the invoice_customers_updated_at trigger rather than by any writer — a timestamp a caller supplies proves nothing about when the row changed.';
+
+
+--
+-- Name: COLUMN invoice_customers.billing_cadence; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.invoice_customers.billing_cadence IS 'How often this buyer is invoiced, as agreed with it: monthly, quarterly or half-yearly, with every period calendar-aligned. The invoicing page still shows every figure per month; what the cadence changes is the file — one Finvoice invoice per customer per period, downloadable in the period''s last month and covering every month of it, a row per club per month. Defaults to monthly, which is what every customer was before the column existed.';
 
 
 --

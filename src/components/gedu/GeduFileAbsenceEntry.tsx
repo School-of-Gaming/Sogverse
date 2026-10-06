@@ -75,13 +75,12 @@ export function GeduFileAbsenceEntry({
    * Sessions the viewer already holds a live request on, by
    * {@link GeduUpcomingSession.key} — shown disabled, with the reason in place.
    *
-   * **Whatever the caller knows, and no more.** The page's own reads do not
-   * carry the caller's requests: the assignment rows are per seat and the
-   * summaries per card, so which dates a gedu has already filed on is not a
-   * fact this page has without a read of its own. What is always known is what
-   * *this* component just wrote, which it adds to this list itself. A caller
-   * with a better source hands it over here; the write's own refusal is the
-   * backstop either way, and it is read inside the dialog.
+   * The page hands over the viewer's live requests, read from the server. This
+   * component adds what it has just written itself, which covers the moment
+   * between a filing and that read's refetch; the write's own refusal is the
+   * backstop for a filing made elsewhere meanwhile, and it is read inside the
+   * dialog. Read once per open: a change while the dialog is up shows on the
+   * next open, never under the reader.
    */
   filedSessionKeys?: readonly string[];
   /**
@@ -119,8 +118,8 @@ export function GeduFileAbsenceEntry({
    * What this component has filed in this visit.
    *
    * It is knowledge the page really has — it made the write — and it is what
-   * stops the obvious second mistake: filing for Monday, reopening the picker,
-   * and being offered Monday again.
+   * stops the obvious second mistake, filing for Monday and being offered
+   * Monday again, in the moment before the live-requests read has refetched.
    */
   const [filedHere, setFiledHere] = useState<readonly string[]>([]);
   /**
@@ -152,6 +151,20 @@ export function GeduFileAbsenceEntry({
   const [openSessions, setOpenSessions] = useState<
     readonly GeduUpcomingSession[] | null
   >(null);
+  /**
+   * The server's already-asked keys, captured at the same press as the rows.
+   *
+   * **Snapshotted, not live, and that is load-bearing**: a disabled row grows a
+   * reason line, so a key arriving while the dialog is up — the live-requests
+   * read refetching on window focus after a filing from Discord — would push
+   * every row below it down, on data's own schedule. A key that lands after the
+   * press is refused by the write instead, inside the dialog. What this
+   * component files itself (`filedHere`) stays live, because that change is the
+   * gedu's own action.
+   */
+  const [openFiledKeys, setOpenFiledKeys] = useState<readonly string[] | null>(
+    null,
+  );
 
   // Nothing to file against and no dialog over a snapshot of one: an account
   // awaiting certification holds no assignments, and a button that could only
@@ -159,12 +172,16 @@ export function GeduFileAbsenceEntry({
   // an open dialog from vanishing when the last of them ends.
   if (sessions.length === 0 && openSessions === null) return null;
 
-  const unavailable = new Set([...filedSessionKeys, ...filedHere]);
+  const unavailable = new Set([
+    ...(openFiledKeys ?? filedSessionKeys),
+    ...filedHere,
+  ]);
 
   const close = () => {
     if (committing) return;
     setOpen(false);
     setOpenSessions(null);
+    setOpenFiledKeys(null);
     setPicked(null);
     setError(null);
     setGroupFilter("");
@@ -181,14 +198,16 @@ export function GeduFileAbsenceEntry({
       setFiledHere((was) => [...was, picked.key]);
       setOpen(false);
       setOpenSessions(null);
+      setOpenFiledKeys(null);
       setPicked(null);
       setGroupFilter("");
       setShowingLater(false);
     } catch (refusal) {
-      // The write's refusal is this picker's only way of learning about a
-      // request filed in an earlier visit, so it is read rather than flattened:
-      // the reason and the note stay where the gedu left them, and the line
-      // above the footer says which of the refusals happened.
+      // The write's refusal is how this picker learns about a request filed
+      // after its list was read — from the session card, another tab or
+      // Discord — so it is read rather than flattened: the reason and the note
+      // stay where the gedu left them, and the line above the footer says which
+      // of the refusals happened.
       const key = substitutionRequestFailureKey(refusal);
       setError(f(key));
       // And where the refusal means the seat is already spoken for, the row
@@ -215,7 +234,10 @@ export function GeduFileAbsenceEntry({
           setError(null);
           // Captured here, in the handler, so the dialog opens over the list as
           // it stood at the press and no later tick can rewrite it underneath.
+          // The already-asked keys are taken in the same handler, so the rows
+          // and their disabled states describe one moment.
           setOpenSessions(sessions);
+          setOpenFiledKeys(filedSessionKeys);
           setOpen(true);
         }}
       >

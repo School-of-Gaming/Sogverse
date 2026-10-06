@@ -76,3 +76,16 @@ export function cardLocaleOf(request: Request): SupportedLocale {
  * at.
  */
 export const OG_CARD_CACHE_CONTROL = "public, max-age=31536000, immutable";
+
+/**
+ * **The version of how cards are encoded**, folded into every card URL that
+ * carries a version. A preview consumer caches an image under its URL, often
+ * for weeks, and ignores our headers — so a change to the bytes a card is
+ * served as (its format, its budget, its encoder) reaches a consumer that
+ * already fetched the card only if the URL changes with it. Bump this whenever
+ * the encoding changes.
+ *
+ * The site and Roblox card URLs carry no version: they change only on deploy
+ * and the crawlers that matter re-fetch them then.
+ */
+export const OG_CARD_ENCODING_VERSION = 1;

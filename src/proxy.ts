@@ -164,7 +164,10 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // it would drop `?authorization_id=`, which is the whole of the request. The
 // page gates itself — signed out to login with the full path and query, anyone
 // but an admin refused — so being public here grants nothing.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix, ROUTES.oauthConsent];
+// ROUTES.linkDiscord is the same shape: the Discord bot's `/link` reply sends a
+// Gedu or an admin there with a one-time `?token=` the login bounce would drop.
+// The page gates itself, and spending the token is a role-gated POST.
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix, ROUTES.oauthConsent, ROUTES.linkDiscord];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — seat-holders (a gamer, or a parent on

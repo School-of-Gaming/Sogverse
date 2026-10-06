@@ -28,6 +28,7 @@ function document(
   return {
     id: "consumer-club-1",
     product_type: "consumer_club",
+    tag: null,
     topic: "minecraft_java",
     spoken_language_code: "fi",
     timezone: "Europe/Helsinki",

@@ -40,7 +40,7 @@ COMMENT ON COLUMN public.profiles.email IS 'Email address (NOT NULL for every ro
 -- Name: COLUMN profiles.spoken_languages; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.profiles.spoken_languages IS 'Human languages the user speaks, as public.spoken_language values. Used for matching gamers/gedus to clubs. Distinct from locale, which controls UI translation. The enum guarantees every entry is a language we offer; the BEFORE trigger on this column is what guarantees no entry appears twice.';
+COMMENT ON COLUMN public.profiles.spoken_languages IS 'Human languages the user speaks, as public.spoken_language values. Used for matching gamers/gedus to clubs; for a gedu it is also a substitution requirement — gedu_speaks_session_language keeps a request out of their pool, and refuses their offer, unless the session''s product is run in one of these. Distinct from locale, which controls UI translation. The enum guarantees every entry is a language we offer; the BEFORE trigger on this column is what guarantees no entry appears twice.';
 
 
 --

@@ -26,14 +26,23 @@ import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
  * accessible name is the person's name. Hover and focus lean the photo in,
  * as a Library or product card's picture does; keyboard focus rings the
  * portrait.
+ *
+ * **The photo is drawn at the grid's column width** (`sizes`): half the
+ * viewport on a phone, a third from `sm`, a quarter from `lg`, and from
+ * 1152px a fixed 264px: the `max-w-6xl` column less its padding and three
+ * gaps, quartered, is 262px, rounded up. Each step is a ceiling, since the
+ * gaps and padding only take away.
  */
 export function TeamMemberCard({
   profile,
   href,
+  eager = false,
 }: {
   profile: TeamProfile;
   /** The person's page, at their canonical address. */
   href: AppHref;
+  /** Load the photo at once, for a card on the first screen. */
+  eager?: boolean;
 }) {
   const t = useTranslations("team.profile");
   const locale = resolveLocale(useLocale());
@@ -46,6 +55,8 @@ export function TeamMemberCard({
       <TeamPortrait
         photo={profile.photo}
         pick={profile.pick}
+        sizes="(min-width: 1152px) 264px, (min-width: 1024px) 25vw, (min-width: 640px) 34vw, 50vw"
+        loading={eager ? "eager" : "lazy"}
         zoomOnHover
         className="ring-act ring-offset-4 ring-offset-background group-has-[a:focus-visible]:ring-2"
       />

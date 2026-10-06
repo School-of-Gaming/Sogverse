@@ -52,16 +52,26 @@ pinned to an old API version, so `search` calls take `--stripe-version 2020-08-2
   through the forgot-password link. The signup trigger makes the `customer` profile and
   `customer_profiles` row, and reads `first_name`/`last_name` from `user_metadata`; omit
   them and the profile lands as `New User`. The parent sets their PIN on first sign-in.
-- **Gamer:** the same create call (a synthetic `g<16hex>@gamer.sogverse.internal` email and
-  a password), then **one `create_gamer` RPC call does the whole promotion
-  transactionally**. Read its current signature from
-  `supabase/schema/functions/create_gamer.sql` and mirror the gamer-create API route
-  rather than a remembered sequence. If the RPC fails, delete the
-  auth user through the Admin API before retrying — the trigger already made a `customer`
-  profile, and a retry collides with it.
+- **Gamer:** the same create call with a synthetic `g<16hex>@gamer.sogverse.internal`
+  email and **no password** — a switch-only child never types a credential; the parent
+  switches in. Mirror the gamer-create API route rather than a remembered sequence.
+- **`create_gamer` refuses a parent you just created**: it requires the parent to hold a
+  PIN (`P0025`), and it records the parent's guardian declaration for the child, which
+  this parent has not made. Don't set a PIN or attest on the parent's behalf. With the
+  owner's go-ahead for the batch, write the function's own steps by hand in one
+  transaction, minus those two, reading them from
+  `supabase/schema/functions/create_gamer.sql`: promote the trigger-made profile to
+  `gamer` (guarded on `role = 'customer'`), delete its `customer_profiles` row, insert
+  `gamer_profiles` (DOB, `sign_in = 'parent'`), insert `parent_gamer`. The owner ruled
+  this safe (2026-10-05): until the parent sets a PIN, switching out of the child is
+  refused outright, and the parent's first sign-in forces PIN creation. The child is left
+  with no guardian declaration on record. Without the go-ahead, the alternative is the
+  parent adding the child themselves after setting their PIN.
 - **DOB:** the UI stores month and year as `YYYY-MM-01`. **Never infer a birth date** — a
   blank one blocks the child (the column is NOT NULL, and it drives age gating); seat the
-  rest and ask for month and year. Look in SOGGA first (the `sogga-legacy-data` skill): a
+  rest and ask for month and year. When the owner says to seat now anyway, write a
+  placeholder inside the club's age band, name it as a placeholder in the report, and
+  support collects the real month and year. Look in SOGGA first (the `sogga-legacy-data` skill): a
   migrated child's real name and birthdate are usually there, and only a Chargebee-only
   signup has no SOGGA row at all. Old WooCommerce `childAge` metadata is stamped at
   original signup and years stale — use it to confirm identity, never to derive an age.

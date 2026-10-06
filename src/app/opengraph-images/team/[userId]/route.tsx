@@ -9,6 +9,7 @@ import {
   teamMemberSubline,
 } from "@/components/team/team-name";
 import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
+import { ogCardResponse } from "@/lib/og/card-response.server";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { MAX_INPUT_PIXELS } from "@/lib/images/reencode-jpeg.server";
 import { cardLocaleOf, OG_CARD_SIZE } from "@/lib/og/cards";
@@ -49,8 +50,8 @@ import {
  *
  * `v` (`teamCardVersion`) is ignored here: it exists to make a changed card a
  * new address, and the card drawn is always the profile as it is now. The
- * cache is the photo's five minutes rather than the site cards' year, for the
- * reason at `TEAM_CARD_CACHE_CONTROL`.
+ * cache is five minutes rather than the site cards' year, for the reason at
+ * `TEAM_CARD_CACHE_CONTROL`.
  */
 /**
  * The photo as the card draws it: a JPEG of the stored 4:5 size, covering the
@@ -64,6 +65,11 @@ import {
  * the stored bytes are capped, their decoded size is not, and a Gedu writes
  * their own photo folder. A photo that will not decode inside the bound, or at
  * all, is `null` — the card draws the frame empty, as it does for no photo.
+ *
+ * This JPEG is the renderer's input, not the card's output: the drawn card is
+ * a PNG with the photo in it, and what it is served as — a JPEG under the
+ * preview budget, since a photo makes the PNG too large — is decided after
+ * drawing, by `ogCardResponse`.
  */
 async function portraitJpeg(stored: Blob): Promise<Buffer | null> {
   try {
@@ -93,7 +99,9 @@ export async function GET(
   const [t, fonts, photo] = await Promise.all([
     getTranslations({ locale, namespace: "team.profile" }),
     ogFonts(),
-    readPublicTeamPhoto(anon, person.id),
+    // Whichever photo is current: the card's own `v` is a card digest, not a
+    // photo version, and the card embeds the bytes rather than an address.
+    readPublicTeamPhoto(anon, person.id, null),
   ]);
   // A public profile always has a photo; one hidden or replaced between the
   // two reads, or one that will not decode, draws the frame empty rather than
@@ -109,7 +117,7 @@ export async function GET(
   const { sideMargin, portraitWidth, portraitHeight, gap } = TEAM_CARD_LAYOUT;
   const radius = 30;
 
-  return new ImageResponse(
+  const image = new ImageResponse(
     (
       <div
         style={{
@@ -250,10 +258,8 @@ export async function GET(
         </div>
       </div>
     ),
-    {
-      ...OG_CARD_SIZE,
-      fonts,
-      headers: { "Cache-Control": TEAM_CARD_CACHE_CONTROL },
-    },
+    { ...OG_CARD_SIZE, fonts },
   );
+
+  return ogCardResponse(image, { cacheControl: TEAM_CARD_CACHE_CONTROL });
 }

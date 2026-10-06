@@ -96,6 +96,13 @@ export const userListEntry = userListProfile.extend({
   certified: z.boolean(),
   criminal_record_check_passed: z.boolean(),
   linked_gamers: z.array(userListGamer),
+  /**
+   * The gedu qualifications this person holds, in the enum's declared order;
+   * empty for anyone holding none. Rides along for the same reason `certified`
+   * does: the gedu picker warns, per row, on a gedu lacking what the product
+   * being staffed requires.
+   */
+  qualifications: z.array(z.enum(Constants.public.Enums.gedu_qualification)),
 });
 
 export type UserListEntry = z.infer<typeof userListEntry>;
@@ -120,7 +127,7 @@ export type UserListEntry = z.infer<typeof userListEntry>;
  * exactly the schema's keys, in order.
  */
 export const USER_LIST_ENTRY_COLUMNS =
-  "id,email,email_verified_at,first_name,last_name,role,phone,currency,home_location_id,utm_source,utm_medium,utm_campaign,locale,registration_completed_at,spoken_languages,created_at,updated_at,certified,criminal_record_check_passed,linked_gamers" as const;
+  "id,email,email_verified_at,first_name,last_name,role,phone,currency,home_location_id,utm_source,utm_medium,utm_campaign,locale,registration_completed_at,spoken_languages,created_at,updated_at,certified,criminal_record_check_passed,linked_gamers,qualifications" as const;
 
 /**
  * How much has to be typed before the box is searching rather than listing.

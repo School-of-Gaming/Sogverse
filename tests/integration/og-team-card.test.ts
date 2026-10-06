@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import sharp from "sharp";
 import { createTranslator } from "next-intl";
+import { PREVIEW_IMAGE_BUDGET_BYTES } from "@/lib/images/encode-within-budget.server";
 import type { PublicTeamProfileRow } from "@/services/team-profiles/team-profiles.contracts";
 
 // The real catalogs behind a stand-in for the RSC-only `getTranslations`
@@ -61,9 +62,10 @@ const { GET } = await import("@/app/opengraph-images/team/[userId]/route");
  * so an integration test.
  *
  * What is pinned is everything around the picture: the card reads as anon,
- * draws only a public profile and answers 404 for everything else, and is
- * cached for the photo's five minutes rather than the site cards' year. The
- * pixels are not asserted (see `og-cards.test.ts`).
+ * draws only a public profile and answers 404 for everything else, is
+ * cached for five minutes rather than the site cards' year, and is served
+ * inside the preview budget whatever photo it carries. The pixels are not
+ * asserted (see `og-cards.test.ts`).
  */
 
 const USER_ID = "3c3ca18c-c44b-40df-86f7-98ad3e277aba";
@@ -102,6 +104,45 @@ async function photo(format: "jpeg" | "webp"): Promise<Blob> {
   return new Blob([new Uint8Array(bytes)], { type: `image/${format}` });
 }
 
+/**
+ * The photo a link preview is hardest on: 800×1000 of seeded random noise,
+ * blurred just enough to be a picture. Unblurred noise fits no budget at any
+ * quality and is no photo anyone uploads; blurred, it is still far busier than
+ * a face, so a card that carries it under budget carries any real portrait.
+ * Seeded rather than `Math.random`, so every run draws the same card.
+ */
+async function noisyPhoto(): Promise<Blob> {
+  const width = 800;
+  const height = 1000;
+  const pixels = Buffer.alloc(width * height * 3);
+  // mulberry32: a small, fixed-seed generator.
+  let seed = 0x5eed;
+  for (let index = 0; index < pixels.length; index++) {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let mixed = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    mixed = (mixed + Math.imul(mixed ^ (mixed >>> 7), 61 | mixed)) ^ mixed;
+    pixels[index] = (mixed ^ (mixed >>> 14)) & 0xff;
+  }
+  const bytes = await sharp(pixels, { raw: { width, height, channels: 3 } })
+    .blur(1.5)
+    .jpeg({ quality: 95 })
+    .toBuffer();
+  return new Blob([new Uint8Array(bytes)], { type: "image/jpeg" });
+}
+
+/**
+ * The body of a drawn card, after asserting what every card answers: a body
+ * no larger than the preview budget, whose `Content-Length` says its size.
+ */
+async function served(response: Response): Promise<Buffer> {
+  expect(response.status).toBe(200);
+  const bytes = Buffer.from(await response.arrayBuffer());
+  expect(bytes.length).toBeGreaterThan(0);
+  expect(bytes.length).toBeLessThanOrEqual(PREVIEW_IMAGE_BUDGET_BYTES);
+  expect(response.headers.get("content-length")).toBe(String(bytes.length));
+  return bytes;
+}
+
 function card(userId: string, query = "?locale=en&v=0123456789abcdef") {
   return GET(
     new Request(`https://sogverse.test/opengraph-images/team/${userId}${query}`),
@@ -120,15 +161,32 @@ describe("GET /opengraph-images/team/[userId]", () => {
     mockDownload.mockResolvedValue({ data: await photo("jpeg"), error: null });
   });
 
-  it("draws a public Gedu's card as a PNG, cached for the photo's five minutes", async () => {
+  it("draws a public Gedu's card, cached for five minutes", async () => {
     const response = await card(USER_ID);
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toBe("image/png");
     expect(response.headers.get("cache-control")).toBe(
       "public, max-age=300, s-maxage=300",
     );
-    expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(0);
+    await served(response);
+  });
+
+  it("keeps a card whose photo is one flat colour as the PNG it was drawn as, since it fits", async () => {
+    // The fixture photo is a single colour, so the drawn card is flat colour
+    // and text throughout and fits the budget as a PNG. A real photograph is
+    // what turns it into a JPEG, which the next case pins.
+    const response = await card(USER_ID);
+
+    expect(response.headers.get("content-type")).toBe("image/png");
+    await served(response);
+  });
+
+  it("carries the busiest photo it can be given inside the preview budget, as a JPEG", async () => {
+    mockDownload.mockResolvedValue({ data: await noisyPhoto(), error: null });
+
+    const response = await card(USER_ID);
+
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
+    await served(response);
   });
 
   it("draws a leader's card, and one whose photo is a WebP", async () => {
@@ -153,10 +211,9 @@ describe("GET /opengraph-images/team/[userId]", () => {
 
     const response = await card(USER_ID, "?locale=fi");
 
-    expect(response.status).toBe(200);
     // The picture is drawn as the body streams, so a card that cannot be
     // drawn fails here and not at the status.
-    expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(0);
+    await served(response);
   });
 
   it("reads the profile and the photo as anon, never with a cookie-reading client", async () => {
@@ -190,19 +247,19 @@ describe("GET /opengraph-images/team/[userId]", () => {
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  it("still draws the card when the photo vanished between the two reads", async () => {
+  it("still draws the card when the photo vanished between the two reads, as a PNG: an empty frame is flat colour and text", async () => {
     mockList.mockResolvedValue({ data: [], error: null });
 
     const response = await card(USER_ID);
 
-    expect(response.status).toBe(200);
-    expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(0);
+    expect(response.headers.get("content-type")).toBe("image/png");
+    await served(response);
   });
 
   /** The card as drawn with no photo at all: the empty frame. */
   async function emptyFrameCard(): Promise<Buffer> {
     mockList.mockResolvedValueOnce({ data: [], error: null });
-    return Buffer.from(await (await card(USER_ID)).arrayBuffer());
+    return served(await card(USER_ID));
   }
 
   it("draws the empty frame for a photo too large to decode", async () => {
@@ -220,8 +277,7 @@ describe("GET /opengraph-images/team/[userId]", () => {
 
     const response = await card(USER_ID);
 
-    expect(response.status).toBe(200);
-    expect(Buffer.from(await response.arrayBuffer()).equals(expected)).toBe(true);
+    expect((await served(response)).equals(expected)).toBe(true);
   });
 
   it("draws the empty frame for a photo that will not decode", async () => {
@@ -235,7 +291,6 @@ describe("GET /opengraph-images/team/[userId]", () => {
 
     const response = await card(USER_ID);
 
-    expect(response.status).toBe(200);
-    expect(Buffer.from(await response.arrayBuffer()).equals(expected)).toBe(true);
+    expect((await served(response)).equals(expected)).toBe(true);
   });
 });

@@ -62,6 +62,18 @@ export type GamerProfileUpdate = Database["public"]["Tables"]["gamer_profiles"][
 export type GeduProfile = Database["public"]["Tables"]["gedu_profiles"]["Row"];
 export type GeduProfileUpdate = Database["public"]["Tables"]["gedu_profiles"]["Update"];
 
+// gedu_qualification enum
+export type GeduQualification = Database["public"]["Enums"]["gedu_qualification"];
+
+// notification_preferences — which notifications each person receives, per
+// kind and channel. Row alias only: the table carries no write grant for any
+// Data API role, and an answer is written by `set_notification_preference`.
+export type NotificationKind = Database["public"]["Enums"]["notification_kind"];
+export type NotificationChannel =
+  Database["public"]["Enums"]["notification_channel"];
+export type NotificationPreference =
+  Database["public"]["Tables"]["notification_preferences"]["Row"];
+
 // gedu_contract_versions / gedu_contract_acceptances
 //
 // No Insert/Update aliases for either: neither table carries a write grant for
@@ -285,6 +297,12 @@ export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 // also where the trimming and country-code rules are stated.
 export type InvoiceCustomer =
   Database["public"]["Tables"]["invoice_customers"]["Row"];
+/**
+ * How often an invoice customer is invoiced: every calendar month, quarter or
+ * half-year. The period arithmetic lives in `@/lib/finvoice`.
+ */
+export type InvoiceBillingCadence =
+  Database["public"]["Enums"]["invoice_billing_cadence"];
 
 // team_profiles / team_profile_translations — an admin's or a Gedu's team
 // profile, one row per person and one per (person, site locale). Row aliases
@@ -294,6 +312,17 @@ export type InvoiceCustomer =
 export type TeamProfileRow = Database["public"]["Tables"]["team_profiles"]["Row"];
 export type TeamProfileTranslationRow =
   Database["public"]["Tables"]["team_profile_translations"]["Row"];
+
+// discord_links — an admin's or a Gedu's linked Discord account, at most one per
+// profile. Row alias only: the table carries no write grant for any Data API
+// role, and `consume_discord_link_token` is its only writer.
+export type DiscordLink = Database["public"]["Tables"]["discord_links"]["Row"];
+// discord_link_tokens — the one-time tokens the Discord bot's webhook inserts
+// with the service-role client. Insert alias only: the confirm page reads a row
+// read-only, with the service role and past its role gate, to name the account,
+// and `consume_discord_link_token` spends it.
+export type DiscordLinkTokenInsert =
+  Database["public"]["Tables"]["discord_link_tokens"]["Insert"];
 
 // The Library — `library_articles` is an article's admin-only working copy and
 // `library_article_publications` its public published copy, whose row existing

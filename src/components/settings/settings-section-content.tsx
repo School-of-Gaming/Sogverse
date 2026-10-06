@@ -12,6 +12,8 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
+import { codeTag } from "@/components/ui/inline-code";
+import discordSymbol from "@/assets/partners/discord-symbol-blurple.svg";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -30,6 +32,7 @@ import {
 } from "@/components/settings/marketing-preferences-fields";
 import { GamerPhotoConsentNotice } from "@/components/settings/gamer-photo-consent-notice";
 import { McpServerCard } from "@/components/settings/mcp-server-card";
+import { NotificationPreferencesCard } from "@/components/settings/notification-preferences-card";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
@@ -69,6 +72,9 @@ const NO_MARKETING_CONSENTS: readonly MarketingConsent[] = [];
  */
 const GAMER_USERNAME_FIELD_ID = "settings-gamer-username";
 
+/** The Discord row's id, a constant for the same reason as the one above. */
+const DISCORD_FIELD_ID = "settings-discord";
+
 /**
  * A keyed location read, as the picker's own value shape. The two are already
  * the same information — a row plus its ancestors, nearest first — so this only
@@ -84,7 +90,18 @@ export function SettingsSectionContent({
   gamerSignIn,
   photoConsentGranted = false,
   mcpServerUrl,
+  discordUsername,
 }: {
+  /**
+   * The Discord username this account has linked, read by the route; `null`
+   * when it has linked none.
+   *
+   * **Absent means "neither an admin nor a Gedu"**, the same way
+   * `mcpServerUrl`'s absence means "not an admin": only staff link a Discord
+   * account, the route reads the link only for them, and so its presence is the
+   * role test the field renders on.
+   */
+  discordUsername?: string | null;
   /**
    * This environment's MCP endpoint, built by the route on the request's
    * trusted origin.
@@ -136,6 +153,7 @@ export function SettingsSectionContent({
   const isGedu = profile?.role === "gedu";
   const isGamer = isGamerProfile(profile);
   const isParent = profile?.role === "customer";
+  const isAdmin = profile?.role === "admin";
   // **The question is whether this account's address reaches a person, not
   // whether its holder is a child.** Every adult holds a mailbox; a gamer holds
   // one only in `email` mode. The three rows below that used to test the role
@@ -694,6 +712,34 @@ export function SettingsSectionContent({
             </Field>
           )}
 
+          {/* Read-only like the address above it: the link is made from
+              Discord, by the bot's /link command, so the sentence under the
+              field says how rather than offering a control here. */}
+          {discordUsername !== undefined && (
+            <Field
+              label={t('discord.label')}
+              brandMark={discordSymbol}
+              htmlFor={DISCORD_FIELD_ID}
+              hint={t.rich(
+                discordUsername === null
+                  ? 'discord.linkHint'
+                  : 'discord.relinkHint',
+                { code: codeTag },
+              )}
+            >
+              {({ hintId }) => (
+                <Input
+                  id={DISCORD_FIELD_ID}
+                  value={discordUsername === null ? "" : `@${discordUsername}`}
+                  placeholder={t('discord.notLinked')}
+                  disabled
+                  className="bg-lifted"
+                  aria-describedby={hintId}
+                />
+              )}
+            </Field>
+          )}
+
           <Button onClick={handleSaveProfile} disabled={isSaving}>
             {isSaving ? c('saving') : c('saveChanges')}
           </Button>
@@ -786,6 +832,11 @@ export function SettingsSectionContent({
       {user && geduContractSeed && (
         <GeduContractSettingsCard geduId={user.id} seed={geduContractSeed} />
       )}
+
+      {/* Which notifications reach the viewer, by channel. Shown only to a
+          viewer with at least one toggle — today an admin, since the only
+          kind is an admin's. */}
+      {isAdmin && <NotificationPreferencesCard />}
 
       {/* Security is the last card on the page for every role — an owner
           ruling. The exit and the rarely-used credential actions come after the

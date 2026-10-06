@@ -7,10 +7,16 @@ the form that creates or edits one, and the picker a club's own form uses to nam
 
 **It is a contract party in Fennoa, our accounting system — not a place and not an
 organisation we model.** It carries exactly what raising an invoice needs: the Fennoa
-customer number, the name the invoice must be addressed to, a postal address, and two
-optional fields a buyer may have asked for — their own reference, and standing text they
-want on every invoice. Nothing else about the buyer is stored here, because nothing else
-about the buyer is ours to know.
+customer number, the name the invoice must be addressed to, a postal address, how often it
+is invoiced, and two optional fields a buyer may have asked for — their own reference, and
+standing text they want on every invoice. Nothing else about the buyer is stored here,
+because nothing else about the buyer is ours to know.
+
+**How often it is invoiced — monthly, quarterly or half-yearly — is part of the agreement
+with the buyer**, so it lives here rather than on a club: one buyer gets one file per
+calendar-aligned period, however many clubs it buys. Monthly is the default and what most
+buyers are. What a period means for the invoice — which months, which month the file is
+produced in, what refuses it — is the invoicing page's (`../municipality-invoicing/`).
 
 **The customer number is the join key, and it is the whole point of the record.** Fennoa
 matches an imported invoice to a customer on that number; an identifier it does not
@@ -80,7 +86,15 @@ than a change to the schema.
 **Every field is required on the wire, including the two nullable ones.** The update
 function assigns every editable column on every call, so an omitted field would clear a
 reference nobody asked to clear; demanding the field is what makes clearing it a deliberate
-null.
+null. The cadence goes one step further and has no default in either function at all, so a
+caller that leaves it out is refused rather than quietly turning a quarterly buyer monthly.
+
+**A customer's cadence is set when it is created and is not expected to change** (owner's
+ruling, October 2026), so nothing guards a change. The export remembers nothing it has
+produced and derives every period from the cadence as it stands, so a change partway
+through a period re-bills that period's months already invoiced under the old cadence, or
+never offers them again. A change that has to happen is a one-off made after the last file
+under the old cadence is downloaded.
 
 **The list is walked rather than read in one request.** It is a few dozen rows today and
 that is a fact about current data rather than a property of the query — the table only
@@ -90,9 +104,12 @@ end, on a picker whose whole job is to offer all of them.
 ## The pages
 
 **One customer's page *is* its edit form.** There is no read-only detail page between the
-list and the form: a customer is eight fields, and the list already shows the ones that
-tell two apart. The list is the number, the billing name, the city and whether a reference
-is set — enough to find the right buyer, and not a second rendering of the form.
+list and the form: a customer is nine fields, and the list already shows the ones that
+tell two apart. The list is the number, the billing name, the city, the billing cadence and
+whether a reference is set — enough to find the right buyer, and not a second rendering of
+the form. The cadence is on the list because nothing else shows it: a quarterly buyer's
+agreement checked only by opening the form is one nobody checks before the quarter's
+invoice is due.
 
 **The picker on a club names the customer and the number together**, because two
 departments of one city can share a billing name and the number is the only thing that

@@ -130,6 +130,9 @@ describe("invoice_customers", () => {
       p_city: "Espoo",
       p_country_code: "FI",
       ...overrides,
+      // Required by the function, so a case that does not vary it still has
+      // to state it.
+      p_billing_cadence: overrides.p_billing_cadence ?? "monthly",
     };
   }
 
@@ -244,6 +247,7 @@ describe("invoice_customers", () => {
           p_postal_code: " 02070 ",
           p_city: " Espoo ",
           p_country_code: " fi ",
+          p_billing_cadence: "half_yearly",
           p_your_reference: "  TIL-2026-0418 ",
           // Blank rather than absent: it has to fold to NULL, or "no invoice
           // text" becomes two states the serializer would have to tell apart.
@@ -270,6 +274,7 @@ describe("invoice_customers", () => {
         country_code: "FI",
         your_reference: "TIL-2026-0418",
         invoice_text: null,
+        billing_cadence: "half_yearly",
       });
     });
 
@@ -378,6 +383,7 @@ describe("invoice_customers", () => {
         p_postal_code: "33101",
         p_city: "Tampere",
         p_country_code: "FI",
+        p_billing_cadence: "monthly",
         p_your_reference: "KIRJ-2026-77",
       };
     }
@@ -394,6 +400,7 @@ describe("invoice_customers", () => {
         p_postal_code: "33200",
         p_city: "Tampere",
         p_country_code: "se",
+        p_billing_cadence: "quarterly",
       });
 
       expect(error).toBeNull();
@@ -412,6 +419,7 @@ describe("invoice_customers", () => {
         country_code: "SE",
         your_reference: null,
         invoice_text: null,
+        billing_cadence: "quarterly",
       });
 
       // Put it back, so every case after this one reads the fixture it expects.
@@ -476,6 +484,9 @@ describe("invoice_customers", () => {
         id: CUSTOMER_A,
         fennoa_customer_no: NUMBER_A,
         country_code: "FI",
+        // Seeded without stating one: the column's default, which is what
+        // every customer recorded before the cadence existed reads as.
+        billing_cadence: "monthly",
       });
     });
 

@@ -235,6 +235,9 @@ describe("get_admin_municipality_invoicing", () => {
       postal_code: "33101",
       city: "Tampere",
       your_reference: "KIRJ-2026-77",
+      // Not the default, so the document is seen carrying the stored value
+      // rather than happening to agree with the column's default.
+      billing_cadence: "quarterly",
     });
     expect(buyer.error).toBeNull();
 
@@ -450,6 +453,9 @@ describe("get_admin_municipality_invoicing", () => {
       country_code: "FI",
       your_reference: "KIRJ-2026-77",
       invoice_text: null,
+      // The cadence travels with the customer, because whether a month's
+      // file is the month's own or a whole quarter's is decided from it.
+      billing_cadence: "quarterly",
     });
   });
 

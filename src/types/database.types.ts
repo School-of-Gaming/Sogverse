@@ -479,6 +479,66 @@ export type Database = {
           },
         ]
       }
+      discord_link_tokens: {
+        Row: {
+          created_at: string
+          discord_user_id: string
+          discord_username: string
+          expires_at: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          discord_user_id: string
+          discord_username: string
+          expires_at?: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          discord_user_id?: string
+          discord_username?: string
+          expires_at?: string
+          token_hash?: string
+        }
+        Relationships: []
+      }
+      discord_links: {
+        Row: {
+          discord_user_id: string
+          discord_username: string
+          linked_at: string
+          profile_id: string
+        }
+        Insert: {
+          discord_user_id: string
+          discord_username: string
+          linked_at?: string
+          profile_id: string
+        }
+        Update: {
+          discord_user_id?: string
+          discord_username?: string
+          linked_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discord_links_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discord_links_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_subscriptions: {
         Row: {
           created_at: string
@@ -1106,6 +1166,49 @@ export type Database = {
           },
         ]
       }
+      gedu_qualifications: {
+        Row: {
+          gedu_id: string
+          granted_at: string
+          granted_by: string | null
+          qualification: Database["public"]["Enums"]["gedu_qualification"]
+        }
+        Insert: {
+          gedu_id: string
+          granted_at?: string
+          granted_by?: string | null
+          qualification: Database["public"]["Enums"]["gedu_qualification"]
+        }
+        Update: {
+          gedu_id?: string
+          granted_at?: string
+          granted_by?: string | null
+          qualification?: Database["public"]["Enums"]["gedu_qualification"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_qualifications_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "gedu_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "gedu_qualifications_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_qualifications_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_session_images: {
         Row: {
           created_at: string
@@ -1291,6 +1394,7 @@ export type Database = {
       }
       invoice_customers: {
         Row: {
+          billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
           city: string
           country_code: string
           created_at: string
@@ -1304,6 +1408,7 @@ export type Database = {
           your_reference: string | null
         }
         Insert: {
+          billing_cadence?: Database["public"]["Enums"]["invoice_billing_cadence"]
           city: string
           country_code?: string
           created_at?: string
@@ -1317,6 +1422,7 @@ export type Database = {
           your_reference?: string | null
         }
         Update: {
+          billing_cadence?: Database["public"]["Enums"]["invoice_billing_cadence"]
           city?: string
           country_code?: string
           created_at?: string
@@ -1686,6 +1792,45 @@ export type Database = {
             foreignKeyName: "minecraft_accounts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          enabled: boolean
+          kind: Database["public"]["Enums"]["notification_kind"]
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          enabled: boolean
+          kind: Database["public"]["Enums"]["notification_kind"]
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          enabled?: boolean
+          kind?: Database["public"]["Enums"]["notification_kind"]
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
@@ -3188,6 +3333,9 @@ export type Database = {
           linked_gamers: Json | null
           locale: string | null
           phone: string | null
+          qualifications:
+            | Database["public"]["Enums"]["gedu_qualification"][]
+            | null
           registration_completed_at: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           spoken_languages:
@@ -3213,6 +3361,7 @@ export type Database = {
           linked_gamers?: never
           locale?: string | null
           phone?: string | null
+          qualifications?: never
           registration_completed_at?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           spoken_languages?:
@@ -3238,6 +3387,7 @@ export type Database = {
           linked_gamers?: never
           locale?: string | null
           phone?: string | null
+          qualifications?: never
           registration_completed_at?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           spoken_languages?:
@@ -3452,6 +3602,7 @@ export type Database = {
         }
         Returns: Json
       }
+      consume_discord_link_token: { Args: { p_token: string }; Returns: string }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
       create_gamer: {
         Args: {
@@ -3472,6 +3623,7 @@ export type Database = {
       }
       create_invoice_customer: {
         Args: {
+          p_billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
           p_city: string
           p_country_code?: string
           p_fennoa_customer_no: string
@@ -3577,13 +3729,48 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
       }
+      file_session_substitution_request: {
+        Args: {
+          p_gedu_id: string
+          p_group_id: string
+          p_reason: Database["public"]["Enums"]["substitution_reason"]
+          p_reason_note: string
+          p_session_date: string
+        }
+        Returns: Json
+      }
       forfeit_password: { Args: { p_user_id: string }; Returns: undefined }
+      gedu_assigned_products: {
+        Args: { p_gedu_id: string }
+        Returns: {
+          cancelled_dates: string[]
+          group_count: number
+          group_id: string
+          kind: string
+          participant_count: number
+          product: Json
+          substitution_cancelled: boolean
+          substitution_date: string
+        }[]
+      }
+      gedu_assignment_summaries: {
+        Args: { p_epoch_date: string; p_gedu_id: string }
+        Returns: Json
+      }
+      gedu_covers_product_site: {
+        Args: { p_gedu_id: string; p_product_id: string }
+        Returns: boolean
+      }
       gedu_holds_seat_at_session: {
         Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
       }
+      gedu_holds_session_qualifications: {
+        Args: { p_gedu_id: string; p_group_id: string }
+        Returns: boolean
+      }
       gedu_holds_unexpired_substitution: {
-        Args: { p_group_id: string; p_session_date: string }
+        Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
       }
       gedu_invoicing_document: {
@@ -3594,6 +3781,10 @@ export type Database = {
         Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
       }
+      gedu_live_substitution_requests: {
+        Args: { p_gedu_id: string }
+        Returns: Json
+      }
       gedu_may_substitute_session: {
         Args: {
           p_absent_gedu_id: string
@@ -3601,6 +3792,10 @@ export type Database = {
           p_group_id: string
           p_session_date: string
         }
+        Returns: boolean
+      }
+      gedu_speaks_session_language: {
+        Args: { p_gedu_id: string; p_group_id: string }
         Returns: boolean
       }
       gedu_substitutes_group: { Args: { p_group_id: string }; Returns: boolean }
@@ -3633,6 +3828,19 @@ export type Database = {
         Returns: Json
       }
       get_admin_substitution_requests: { Args: never; Returns: Json }
+      get_assigned_products_for_discord_user: {
+        Args: { p_discord_user_id: string }
+        Returns: {
+          cancelled_dates: string[]
+          group_count: number
+          group_id: string
+          kind: string
+          participant_count: number
+          product: Json
+          substitution_cancelled: boolean
+          substitution_date: string
+        }[]
+      }
       get_chat_channel_roster: {
         Args: { p_channel_id: string }
         Returns: {
@@ -3646,8 +3854,24 @@ export type Database = {
         Args: { p_group_id?: string; p_product_id: string }
         Returns: Json
       }
+      get_gedu_assignment_summaries_for_discord_user: {
+        Args: { p_discord_user_id: string; p_epoch_date?: string }
+        Returns: Json
+      }
+      get_gedu_for_discord_user: {
+        Args: { p_discord_user_id: string }
+        Returns: Json
+      }
       get_gedu_group_feed: { Args: { p_group_id: string }; Returns: Json }
+      get_gedus_covering_product: {
+        Args: { p_product_id: string }
+        Returns: string[]
+      }
       get_group_staff_overlay: { Args: { p_group_id: string }; Returns: Json }
+      get_live_substitution_requests_for_discord_user: {
+        Args: { p_discord_user_id: string }
+        Returns: Json
+      }
       get_my_assigned_products: {
         Args: never
         Returns: {
@@ -3698,6 +3922,7 @@ export type Database = {
         Returns: Json
       }
       get_my_gedu_invoicing: { Args: { p_month_start: string }; Returns: Json }
+      get_my_live_substitution_requests: { Args: never; Returns: Json }
       get_my_parents: {
         Args: never
         Returns: {
@@ -3913,6 +4138,13 @@ export type Database = {
         Returns: string
       }
       pin_is_set: { Args: never; Returns: boolean }
+      product_required_qualifications: {
+        Args: {
+          p_product_type: Database["public"]["Enums"]["product_type"]
+          p_tag?: Database["public"]["Enums"]["product_tag"]
+        }
+        Returns: Database["public"]["Enums"]["gedu_qualification"][]
+      }
       promote_from_waitlist: {
         Args: { p_group_id?: string; p_participation_id: string }
         Returns: Json
@@ -3982,6 +4214,20 @@ export type Database = {
           p_session_date: string
         }
         Returns: Json
+      }
+      request_session_substitution_for_discord_user: {
+        Args: {
+          p_discord_user_id: string
+          p_group_id: string
+          p_reason?: Database["public"]["Enums"]["substitution_reason"]
+          p_reason_note?: string
+          p_session_date: string
+        }
+        Returns: Json
+      }
+      require_discord_linked_gedu: {
+        Args: { p_discord_user_id: string }
+        Returns: string
       }
       respond_seat_offer: {
         Args: {
@@ -4100,6 +4346,14 @@ export type Database = {
         Args: { p_gedu_id: string; p_passed: boolean }
         Returns: undefined
       }
+      set_gedu_qualification: {
+        Args: {
+          p_gedu_id: string
+          p_held: boolean
+          p_qualification: Database["public"]["Enums"]["gedu_qualification"]
+        }
+        Returns: undefined
+      }
       set_group_member_minecraft: {
         Args: {
           p_minecraft_username: string
@@ -4149,6 +4403,14 @@ export type Database = {
         Returns: undefined
       }
       set_my_pin: { Args: { p_pin: string }; Returns: undefined }
+      set_notification_preference: {
+        Args: {
+          p_channel: Database["public"]["Enums"]["notification_channel"]
+          p_enabled: boolean
+          p_kind: Database["public"]["Enums"]["notification_kind"]
+        }
+        Returns: undefined
+      }
       set_pin_for_user: {
         Args: { p_pin: string; p_user_id: string }
         Returns: undefined
@@ -4201,6 +4463,7 @@ export type Database = {
       unpublish_library_article: { Args: { p_id: string }; Returns: string }
       update_invoice_customer: {
         Args: {
+          p_billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
           p_city: string
           p_country_code?: string
           p_fennoa_customer_no: string
@@ -4273,7 +4536,9 @@ export type Database = {
       gamer_photo_consent_type: "lynx_educate"
       gamer_sign_in: "parent" | "username" | "email"
       gedu_assignment_role: "primary" | "assistant"
+      gedu_qualification: "neuroinclusive" | "consumer_products"
       gender_type: "boy" | "girl" | "non_binary"
+      invoice_billing_cadence: "monthly" | "quarterly" | "half_yearly"
       library_article_category:
         | "online_safety"
         | "screen_time"
@@ -4282,6 +4547,8 @@ export type Database = {
         | "for_schools"
       location_type: "country" | "region" | "municipality" | "district" | "site"
       marketing_consent_type: "school_of_gaming" | "lynx_educate"
+      notification_channel: "email"
+      notification_kind: "session_report_copy"
       participation_status: "reserving" | "active" | "waitlisted" | "completed"
       payment_purpose:
         | "bundle"
@@ -4442,7 +4709,9 @@ export const Constants = {
       gamer_photo_consent_type: ["lynx_educate"],
       gamer_sign_in: ["parent", "username", "email"],
       gedu_assignment_role: ["primary", "assistant"],
+      gedu_qualification: ["neuroinclusive", "consumer_products"],
       gender_type: ["boy", "girl", "non_binary"],
+      invoice_billing_cadence: ["monthly", "quarterly", "half_yearly"],
       library_article_category: [
         "online_safety",
         "screen_time",
@@ -4452,6 +4721,8 @@ export const Constants = {
       ],
       location_type: ["country", "region", "municipality", "district", "site"],
       marketing_consent_type: ["school_of_gaming", "lynx_educate"],
+      notification_channel: ["email"],
+      notification_kind: ["session_report_copy"],
       participation_status: ["reserving", "active", "waitlisted", "completed"],
       payment_purpose: [
         "bundle",

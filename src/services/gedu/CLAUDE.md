@@ -95,7 +95,8 @@ second list to keep current, and the last one was wrong.
   holds because admins are always trusted and assignment is an admin-only action driven
   entirely by this picker. If a non-admin assignment path is ever added, move the
   `certified` check into `apply_group_changes` — until then a DB-level check would be
-  redundant.
+  redundant. A missing qualification, language or coverage is not part of this gate: it is a warning
+  the admin confirms (Qualifications, below).
 - **Session-substitution gate (server-side, required)**: substituting a session is *gedu-initiated*,
   so unlike assignment this one is enforced in the database rather than in the picker.
   Certification is part of the may-substitute guard every substitution write shares, the pool of open
@@ -421,6 +422,60 @@ would be provably dead. The admin's queue picks a new acceptance up on its own
 next read. This is the same line the dashboard key's own factory draws: admin
 writes invalidate it, writes from any other role reach it through their next read.
 
+## Qualifications
+
+Admins grant gedus **qualifications** — what kinds of group an educator is qualified to
+run: neuroinclusive groups, and the family-paid products (consumer clubs, camps and
+events). A row in `gedu_qualifications` means the gedu holds that qualification; there is
+no history, so revoking deletes the row and granting one already held keeps its original
+moment and admin. `set_gedu_qualification` is the only writer, admin-only, and stamps
+both server-side; an admin reads every gedu's qualifications, a gedu their own. The
+starting holdings were derived once from assignments, with no granting admin; nothing
+re-derives them.
+
+**A product requires `neuroinclusive` when it is tagged neuroinclusive, and
+`consumer_products` when families pay for it** — every product type but the municipality
+club. One product can require both or neither. The database states the mapping once and
+the app mirrors it in `src/lib/products/`; a DB test walking every type and tag holds the
+two in agreement, so a change to either is a change to both.
+
+**A session also requires its language**: the product's spoken language has to be among
+the gedu's own spoken languages. **An in-person session also requires coverage**: one of
+the gedu's coverage ticks has to be its site or a place above it; an online session asks
+nothing of coverage. Together with the qualifications these are the session's
+*requirements*, and the three are treated identically everywhere below.
+
+**Rule: a session's requirements are a hard gate on substitution a gedu starts, and only
+a warning on what an admin does.** A gedu lacking a qualification the session's product
+requires, not speaking its language, or not covering its site, does not see its request
+in the pool and cannot offer on it, and the offer refuses each with a message of its own.
+A gedu who has listed no spoken language therefore sees an empty pool, and one who has
+ticked no coverage area sees online sessions only; both are accepted, not special-cased.
+The registration forms refuse a Gedu with no language, but only the forms: the request
+contract and the column still admit an empty list, which older accounts hold and settings
+may leave, and an admin fills one in on the Gedu's admin user page. An
+admin assigning a gedu to a staff seat or seating a substitute is warned and may proceed;
+none of the admin writes asks. So each check is a predicate of its own and never a clause
+of the may-substitute predicate, which the admin writes share. Approving an offer is not
+even warned about: none of the three is realistically taken away between an offer and
+its approval, so the case is not worth a check. A trainee seat
+asks nothing, as with certification. Nothing else reads qualifications — certification
+stays the only blocking lever over an educator everywhere else.
+
+The admin gedu picker learns what a gedu holds and speaks from its row: the
+qualifications and spoken languages ride on the paged people read beside `certified`, for
+the same reason it does. Coverage cannot ride there, because whether a gedu covers a site
+depends on the product being staffed, so for an in-person product the picker asks the
+database which gedus cover it — the same predicate the pool asks — and draws its rows once
+both reads are in. A row falling short stays selectable and names each gap; the pick is
+then confirmed in a dialog carrying one warning line per missing requirement — the
+confirm the flow already asks where it has one (seating a sub), a dialog of its own only
+for a staff assignment.
+
+**Adding a qualification is a new `gedu_qualification` enum value plus its copy.** The
+app's list derives from the generated enum, in the enum's declared order; the admin
+surfaces key each name by the enum, so they fail to compile until the new value has one.
+
 ## Coverage field reuse
 
 The register form and the settings/admin coverage editor render the same coverage field
@@ -429,6 +484,9 @@ picker, with identical positive-selection semantics (one tick is one independent
 this subtree" claim; ticking a parent never touches its descendants). The editor wraps it
 with a Save button (immediate `gedu_locations` mutation); the register form collects the
 selection into the atomic `register_gedu` call instead.
+
+What the ticks are for is told to the gedu beside the field: on-site substitution requests
+reach a gedu only inside their coverage areas (Qualifications, above).
 
 Both hold ticks as `locations` row ids, because the picker browses that table and a
 ticked node is already a row. Nothing is resolved at commit, and there is no claim the

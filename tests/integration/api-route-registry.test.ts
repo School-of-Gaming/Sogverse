@@ -186,6 +186,7 @@ const TESTS = {
   checkout: "tests/integration/api/checkout-products-create.test.ts",
   completeRegistration: "tests/integration/auth/complete-registration.test.ts",
   discordInteractions: "tests/integration/api/discord-interactions.test.ts",
+  discordLink: "tests/integration/api/discord-link.test.ts",
   familyList: "tests/integration/api/family-list.test.ts",
   forgotPassword: "tests/integration/auth/forgot-password.test.ts",
   gamersCreate: "tests/integration/api/gamers-create.test.ts",
@@ -250,6 +251,7 @@ const TESTS = {
   seatOfferSweep: "tests/integration/api/admin-seat-offers-sweep.test.ts",
   seatOfferInApp: "tests/integration/api/participations-seat-offer.test.ts",
   teamPhotos: "tests/integration/api/team-photos.test.ts",
+  sendTestDiscordMessage: "tests/integration/api/send-test-discord-message.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   signout: "tests/integration/auth/signout.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
@@ -489,6 +491,16 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "createProductData" },
         test: TESTS.productsCreate,
+      },
+    },
+  },
+
+  "src/app/api/admin/send-test-discord-message/route.ts": {
+    handlers: {
+      POST: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "sendTestDiscordMessageBody" },
+        test: TESTS.sendTestDiscordMessage,
       },
     },
   },
@@ -792,6 +804,8 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // --- Discord -------------------------------------------------------------
 
   "src/app/api/discord/interactions/route.ts": {
+    adminClient:
+      "webhook; no session by construction. `/link` inserts the hash of a one-time account-linking token into discord_link_tokens, which only the service role can write, for the Discord user Discord's signed payload names; the token links nothing until a signed-in Gedu or admin spends it through consume_discord_link_token on their own session. `/sub` reads a gedu's seats and files their absence through functions granted to service_role alone, each of which resolves the gedu from the Discord id the signed payload names and refuses an id with no gedu linked",
     handlers: {
       POST: {
         posture: {
@@ -805,6 +819,16 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           reason: "the signature is computed over the exact bytes sent",
         },
         test: TESTS.discordInteractions,
+      },
+    },
+  },
+
+  "src/app/api/discord/link/route.ts": {
+    handlers: {
+      POST: {
+        posture: { kind: "role-gated", roles: ["admin", "gedu"] },
+        body: { kind: "json", schema: "discordLinkBody" },
+        test: TESTS.discordLink,
       },
     },
   },
@@ -1532,6 +1556,10 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
     "redeems an emailed verification token, which authorizes itself — the reader may hold no session or somebody else's, and `email_verified_at` has no write grant outside the service role",
   "src/lib/seat-offer.server.ts":
     "reads an emailed seat offer for its landing page, which authorizes itself — the reader may hold no session or their own child's, and the page renders identically either way. It only reads: accepting is a POST behind a button, so a mail scanner following the link reaches this and stops",
+  "src/lib/discord-link-token.server.ts":
+    "reads the Discord username and expiry of a /link token for the confirm page, which names the account before a Gedu or an admin links it; the token table is granted to the service role alone. The page calls it only past its Gedu-or-admin gate, and it only reads: the token is spent by consume_discord_link_token on the user's own session, behind the button's POST",
+  "src/lib/discord-substitution.server.ts":
+    "the Discord bot's /sub command acts for a gedu it knows only by the Discord user id on a signature-verified interaction, with no Sogverse session to act through. Every call is to a function granted to the service role alone that first resolves that id to the gedu account linked to it and refuses when there is none; past that, the reads and the filing are the very bodies the web reaches through auth.uid(), so the service role widens nothing but who the gedu is taken to be",
   "src/services/family/family.server.ts":
     "the shared family resolver — a gamer legitimately reads siblings beyond their own view",
   "src/app/[locale]/select-profile/page.tsx":

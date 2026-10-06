@@ -14,10 +14,16 @@ function that has no clock, no query and no translator of its own.
 
 ## What the invoice counts
 
-**A session ran iff a stored session row exists** for one of the club's groups on a date
-inside the month. Session records are materialized lazily — one is written the moment an
-educator records a report, a note or an attendance mark, and not before — so the row is
-the evidence that somebody was there, and it is the only evidence that bills.
+**A municipality is billed for every session that was due and not cancelled.** A session
+is due on a date the club's schedule projects and on a date where one of its groups holds a
+stored session row. Session records are materialized lazily — one is written the moment an
+educator records a report, a note or an attendance mark, and not before — so a row is the
+evidence that somebody was there; but a missing write-up is not evidence that nobody was,
+and the municipality owes for a session that was due whether or not a gedu recorded it.
+Only a cancellation takes a due date off the bill, and only a date not yet reached keeps
+one off it. Gedu invoicing answers the same question the other way — a gedu is paid only
+for what they recorded — and that difference is deliberate: it is two contracts, not one
+rule applied twice.
 
 **Counting is per club, per calendar date.** A club may run several groups, and two
 groups meeting on the same date are one session of that club. The rows arrive raw, one
@@ -25,24 +31,24 @@ per group and date, and the collapse happens in the builder: it is a rule of the
 not a property of the data, and doing it in the query would have thrown away which groups
 met.
 
-**A schedule is a claim, not a session.** The club's weekly slots are projected across the
-month, clipped to its own term, both ends inclusive. A projected date with no stored row is
-shown, never counted, and its treatment splits on whether it has passed:
+**The club's weekly slots are projected across the month**, clipped to its own term, both
+ends inclusive. A projected date with no stored row splits on whether it has passed:
 
-- **Before today — unrecorded.** Worth nothing, shown at zero in a warning tone, because a
-  club that was supposed to meet and recorded nothing is the one thing on this page worth
-  investigating. **The zero is printed even where the club's own fee is unset**, and it is
-  not an inconsistency: a missed session is worth nothing whatever the fee would have been,
-  so the zero is a fact rather than the unknown the fee column has to admit to.
+- **Before today — unrecorded, and billed.** It was due, so it bills at the club's fee
+  exactly as a recorded session does, and it is in every count and every total. It keeps
+  a line state of its own, muted and labelled as billed without a record, because a
+  missing write-up is still something an admin may want to chase — but it is not a
+  warning: nothing about the invoice is wrong. Where the club's fee is unset it shows
+  "fee not set" like a recorded line, because what is unknown is the price, not whether
+  it bills.
 - **Today or later — upcoming.** Shown muted with no amount at all. It has not happened;
-  printing zero against it would send somebody looking for a session nobody has missed.
+  printing an amount against it would bill a session not yet owed.
 
-**A cancelled date is a third answer, and it holds either side of today.** An admin can
+**A cancelled date is the third answer, and it holds either side of today.** An admin can
 cancel a session, and a projected date no group of the club ran and that is cancelled is
-shown as **cancelled**: worth nothing, printed at zero in a muted tone, and never counted
-as missed. Nothing about it is wrong, so it takes no warning; it is settled, so a future
-one says cancelled rather than upcoming. Three rules keep it from hiding a real miss or
-billing a cancellation:
+shown as **cancelled**: worth nothing, printed at zero in a muted tone. It is settled, so a
+future one says cancelled rather than upcoming. Because a cancellation is the only thing
+that stops a due date billing, three rules fix exactly what it covers:
 
 - **Only a projected date gets a cancelled line.** The document carries only the
   cancellations in effect — the database's one answer, the same every surface reads — so
@@ -52,20 +58,19 @@ billing a cancellation:
 - **A club cancels per group and is invoiced per date, so a date is cancelled only when
   every group the club has cancelled it.** The document lists every group of the club,
   including one that neither met nor cancelled all month — the rows and cancellations alone
-  cannot name that group, and it is exactly the one whose miss a sibling's cancellation
-  would otherwise hide. One group
-  cancelling while a sibling was due and recorded nothing leaves the date unrecorded: a
-  half-cancelled date reported as missed is a question somebody can answer, and a real
-  miss hidden behind a sibling's cancellation is not. If any group ran the date, it bills
-  as recorded exactly as before.
+  cannot name that group, and it is exactly the one whose due session a sibling's
+  cancellation would otherwise take off the bill. One group cancelling while a sibling
+  was due and did not leaves the date unrecorded, and so billed: the sibling still owed
+  the session. If any group ran the date, it bills as recorded.
 - **A cancelled (group, date) pair never bills, even beside a stored row.** An admin may
   cancel a session that was recorded, and the admin's word wins — whatever the schedule
   or the term does afterwards: the document leaves such a row out of its sessions
   altogether, so no reader can bill it, and a restore puts it back.
 
-The month's session count, every total and every Finvoice row are the stored rows no
-cancellation covers; a customer whose clubs were only cancelled has nothing to invoice and
-is refused on that ground.
+The month's session count, every total and every Finvoice row's quantity are the **billed**
+dates: the recorded ones no cancellation covers, plus the unrecorded ones. A recorded date
+and an unrecorded one are never the same date, so the two add. A customer whose clubs'
+due dates were all cancelled has nothing to invoice and is refused on that ground.
 
 "Today" is **the club's own local today**, resolved in the club's timezone, because every
 date on either side of that comparison is one of the club's own local dates. A UTC "today"
@@ -91,7 +96,7 @@ that is short is a question somebody asks, and a total that is long is one nobod
 line at all.** It is a shape production has and staging did not — a club whose schedule was
 never filled in, or emptied after the term began — and it reaches the invoice on the
 strength of its stored rows alone. Nothing about it is exceptional: it has no projected
-dates, so it carries no unrecorded lines and nothing to report as missed, and its schedule
+dates, so nothing is due beyond its rows and nothing bills unrecorded, and its schedule
 column is simply empty rather than printing a weekly cadence it does not have. What it must
 never do is fail: one such club would otherwise take the whole month's invoice down with it, so the
 build is required to survive every document the wire contract accepts.
@@ -99,13 +104,13 @@ build is required to survive every document the wire contract accepts.
 **Projection is offered wherever the club has a start date.** That date is the whole of the
 "had it begun" rule: the walk is clipped to it, so a term that starts after the month being
 invoiced projects nothing without a second test for it. A club with no first day has no date
-to start walking from — guessing one would invent work — and it can still appear on the
-invoice, on the strength of its stored rows alone.
+to start walking from — guessing one would invent billed sessions — and it can still appear
+on the invoice, on the strength of its stored rows alone.
 
 A club's lifecycle is nowhere in this page's arithmetic, deliberately. A stored status was
 here once, and it was the defect: it never advanced past its initial value, so a test on it
-was a test that never passed, and the missed-session flagging this page exists for was dead
-for every club on the invoice. The term dates say everything a projection needs to know.
+was a test that never passed, and projection was dead for every club on the invoice. The
+term dates say everything a projection needs to know.
 
 **A club is on the invoice iff it has at least one line of any kind in the month**, and a
 municipality is on it iff at least one of its clubs is. An empty club row would say it did
@@ -120,11 +125,11 @@ every month that has not been sent yet.
 
 **The schedule and the term are read the same way, and the consequence is worth stating.**
 Editing a club's weekly slots or moving its start or end date changes, retroactively, which
-dates a past month projects — so a month looked at last week can show a different set of
-unrecorded lines today. What it cannot change is a **total**: a total is stored rows times
-the current fee, and a schedule edit touches neither. So the drift is confined to the
-flags — which is the half of the page that exists to be investigated rather than invoiced —
-and a club that has just had its schedule corrected is expected to look different here.
+dates a past month projects — and because a passed projected date bills, it changes that
+month's **totals** too, not only its lines. A month looked at last week can bill a different
+amount today, and a club that has just had its schedule corrected is expected to. That is
+the same contract as the fee: an invoice is recomputed from today's facts until it is sent,
+so a schedule has to be right before a month is invoiced, exactly as a fee does.
 
 **An unset fee is never worth zero.** A club whose fee has never been filled in shows a
 translated "fee not set" label in warning tone in place of both its per-session fee and its
@@ -144,7 +149,7 @@ the sum of the municipality totals — not a second pass over the clubs — so t
 top of the page cannot disagree with the figures it stands over, and a club with no fee is
 outside it exactly as it is outside its own municipality's, with the same warning saying how
 many were left out. It lives in the pure build beside the counts it is printed with (how
-many municipalities, how many clubs, how many sessions ran), because a figure the finance
+many municipalities, how many clubs, how many sessions it bills), because a figure the finance
 officer reads first has no business being the one figure nothing tests.
 
 ## Who the invoice is addressed to
@@ -192,13 +197,14 @@ points at a place and at a buyer independently.
 ## The Finvoice export
 
 The invoices are raised in **Fennoa**, the accounting system, by importing **Finvoice 3.0
-XML** — one file per buyer per month. The page produces those files; nothing else in the
-app does, and nothing about producing one is recorded.
+XML** — one file per buyer per billing period, which for most buyers is a month. The page
+produces those files; nothing else in the app does, and nothing about producing one is
+recorded.
 
-The export's own code — the company constants, the month-to-invoice build and the
+The export's own code — the company constants, the period-to-invoice build and the
 document writer — lives in `src/lib/finvoice/`, because the route layer is what consumes
 it and no API route in this app reaches into a component directory. It reads this page's
-built view rather than the wire document, so the file and the ledger cannot disagree about
+built months rather than the wire documents, so the file and the ledger cannot disagree about
 a figure; the rules it follows are all here.
 
 **Everything below about what the import needs was established with the CFO by importing
@@ -213,49 +219,59 @@ that has to be re-verified against Fennoa rather than reasoned about.
 - **The buyer's postal address has to be in the file**, and the import refuses one without
   it, even though the customer card already holds an address. So the customer carries its
   own address and the serializer states it.
-- **Fennoa assigns the invoice number when the invoice is sent.** Ours is provisional, it
-  never reaches an accounting ledger, and it is what makes the export stateless: producing
-  a month's file twice produces the same file, and there is no counter for a failed
-  download to burn. It is the invoiced month followed by the digits of the buyer's Fennoa
-  customer number — numeric and above 100, which is the import's own rule for an
-  identifier. **Within a month it is unique across buyers whose customer numbers differ in
-  their digits**, which every number Fennoa issues does — so it is unique over real data,
-  and that is the honest size of the guarantee. Two numbers differing only in a letter,
-  `0204` and `F0204`, are one number here; so are a number carrying no digit at all, which
-  falls back to the buyer's padded place in the month, and a real `F0001`. Neither is a
-  shape Fennoa issues, and the field is free text, which is the whole reason either can be
-  written down. **It is derived from the buyer rather than from where the buyer sits in
-  the month**, because a re-export has to carry the same number as the export it replaces,
-  whatever changed in between: a position moves the moment another club names a new
-  customer, so every later buyer's file would come back under a different number and read
-  as a second invoice for the same month. The digitless fallback is the one place a
-  position is used, and it is stable only for as long as the month's list of buyers is.
+- **The invoices are numbered from Fennoa's own series, so the file's invoice number is
+  deliberately not a number.** Fennoa keeps a numeric invoice number from an imported file
+  as the invoice's final number once the invoice is approved, and skips one carrying
+  anything but digits, numbering the invoice from its own series instead. So the file
+  carries our reference — `SOG-`, then the period's last month, then the digits of the
+  buyer's Fennoa customer number, e.g. `SOG-2026050204` — as both the invoice number and
+  the message identifier, within Finvoice's twenty characters. **This rests on Fennoa's API
+  documentation, not on an import**: it is confirmed by importing a file and checking that
+  the draft carries no number of ours, without approving it, since approval is what
+  reserves a number in the series.
+- **The reference is deterministic per buyer and period**, so a re-download is recognisably
+  the same invoice and the export stays stateless: producing a period's file twice
+  produces the same file, and there is no counter for a failed download to burn. A buyer is
+  on one cadence, so its periods end in distinct months and no two of its files share a
+  reference. **It is derived from the buyer rather than from where the buyer sits in the
+  month**, because a position moves the moment another club names a new customer, and
+  every later buyer's re-download would come back under a different reference. Within a
+  month it is unique across buyers whose customer numbers differ in their digits, which
+  every number Fennoa issues does. A number carrying no digit at all — not a shape Fennoa
+  issues, but the field is free text — falls back to the buyer's padded place in the
+  month, and is stable only for as long as the month's list of buyers is.
 - **Payment terms, e-invoice routing and department names live on the customer card** and
   are not sent. They belong to the accounting system; a second copy in the file would be a
   copy that goes stale.
 
-**One file is one customer's whole month, across every municipality.** A buyer is a
-contract party rather than a place, so a customer's clubs can sit in several sections of
+**One file is one customer's whole billing period, across every municipality.** A buyer is
+a contract party rather than a place, so a customer's clubs can sit in several sections of
 the ledger and still be one invoice — and one city can be two customers and therefore two
 files. Everything the export decides follows from that: the readiness shown beside a
-municipality's name is a claim about the customer's whole month, not about that section's
+municipality's name is a claim about the customer's whole period, not about that section's
 share of it, and a row takes its municipality from its own club rather than from the
 section the reader clicked in.
 
-**A file is refused rather than trimmed, on two grounds.** A customer with a club that
-**ran** and has no fee gets no file at all: dropping the club would produce an invoice
-short by whatever that club was worth, with nothing in it saying so, and a short total is
-the one error nobody downstream catches. A customer whose clubs recorded **nothing** gets
-no file either — an invoice for nothing is a document somebody has to explain. Both are
-ordinary states of an ordinary month rather than faults, so both are values the callers
-render: the page shows the control disabled with the reason, and the download answers a
-conflict with the same reason. **One predicate decides both**, because a control that says
-a file cannot be produced and a route that then produces one is the worst outcome
-available.
+**A file is refused rather than trimmed, on two grounds, and only in its period's last
+month.** A customer with a club that **ran** in any month of the period — that has at
+least one billed session, recorded or not — and has no fee gets no file at all: dropping
+the club would produce an invoice short by whatever that club was worth, with nothing in it
+saying so, and a short total is the one error nobody downstream catches. The reason names
+the first month of the period where that happened, because a quarter refused in March over
+a club that met only in January has to send the reader to January. A customer whose clubs
+have **no billed session** in the period gets no file either — an invoice for nothing is a
+document somebody has to explain. A request for a period customer's file in a month that
+does not end its period is refused as well, with the month that does. These are ordinary
+states rather than faults, so they are values the callers render: the page shows the
+label, or the control disabled with the reason, and the download answers a conflict with
+the same reason. **One predicate decides all of them, over the whole period**, because a
+control that says a file cannot be produced and a route that then produces one is the
+worst outcome available. Where the page does not yet hold every month of a period, the
+predicate says so rather than deciding over the part it has.
 
 **What the refusal asks is whether the FILE would be wrong, never whether the data is.**
 Those are two questions with two readers. A club that ran without a fee makes the file
-short, so the file is refused. A club that ran **nothing** is not on the file at all —
+short, so the file is refused. A club that billed **nothing** is not on the file at all —
 exactly as it is not in the ledger's total — so no price it lacks can change a figure in
 it, and refusing would stop every real club of that buyer being invoiced over a club that
 did not meet. The missing fee is an admin error either way, and it stays reported where
@@ -267,7 +283,7 @@ municipality: one says what a file would be wrong about, the other what the mont
 missing.
 
 **The money rule is the one improvement over the files the previous system wrote, whose
-totals sometimes did not foot.** Integer cents end to end: a row's net is its session count
+totals sometimes did not foot.** Integer cents end to end: a row's net is its billed count
 times its fee, its VAT is that net at the rate rounded half up, its gross is the two added
 — and the invoice's three totals are **the sums of the rows**, never a second calculation
 over the invoice's own net. The two differ by a cent exactly where it matters most: three
@@ -301,6 +317,54 @@ second thing to get right, and the import is per file anyway: the CFO works down
 collapsed ledger taking one file per buyer, which is the same number of clicks as
 unpacking an archive would be. Revisit it when a month's customer count makes that false.
 
+## Billing cadence: a month, a quarter or a half-year
+
+**A customer is invoiced monthly, quarterly or half-yearly, as agreed with it**, and the
+cadence is stored on the customer (`../invoice-customers/`). **Periods are
+calendar-aligned**: quarters are Jan–Mar, Apr–Jun, Jul–Sep and Oct–Dec, half-years Jan–Jun
+and Jul–Dec, and a month is a one-month period — which is what lets a monthly buyer go
+through the very same path rather than a second one. A period never crosses a year.
+
+**The ledger stays a month view.** Every figure on the page — sessions, clubs,
+municipality and month totals — is the month being viewed, whatever any customer's
+cadence. Only a period customer's download control changes:
+
+- **In a month that is not its period's last**, there is no link and no warning, because
+  nothing is wrong: a quiet label says how often it is invoiced and which month its file
+  is produced in.
+- **In its period's last month**, the link downloads one invoice covering the whole
+  period, and it is labelled with the period's short name and the period's total, so the
+  figure on it cannot be mistaken for the month's own total beside it on the line.
+- **A customer whose period ends this month but who has no club this month** — a quarterly
+  buyer whose clubs stopped in May still owes the quarter that ends in June — sits on no
+  municipality's line, so its control gets a line of its own at the foot of the ledger,
+  and on an otherwise empty month it is the one thing under the empty-month sentence.
+
+**The period's file is built from one month document per month of the period**, each
+read through the same function and built by the same pure build the ledger uses: there is
+no aggregate read and no second arithmetic. So in a month that ends a period, the page
+reads the period's earlier months as well — which months is decided by the cadences
+customers are on, read from the customer list rather than from the month's own document,
+because the document does not mention a buyer with no club in it. A month that ends no
+period of a cadence anybody is on reads nothing more.
+
+**A long period makes the no-snapshot rule reach back further.** A period's file is priced
+at the fee read when it is downloaded, and its sessions are derived from the schedule as it
+stands then — so a fee or schedule edit in the middle of a quarter or a half-year reprices
+and rebills every month of it already delivered, not only the months still to come. The fee
+and the schedule have to be right for the whole period before its file is raised.
+
+**One row per club per month**, month by month, so a quarter's file reads in the order its
+months were checked. Each row carries its month's first and last day, and the invoice
+states the period's first and last day, which is what the Finvoice guide recommends for an
+invoice covering several months; a row's text also names its month, because three rows of
+one club otherwise read the same. The free text names the whole period (`1–3/26`), the
+invoice is dated the first day after the period, and the filename and number take the
+period's last month. **A monthly file states none of the period elements** and is the
+shape the imports were verified against; the elements a period file adds are the part of
+it that is checked against Fennoa on its first import. Cancelled sessions stay out of every
+file.
+
 ## How the month is read
 
 **The parts this ledger is drawn from are shared with gedu invoicing**
@@ -324,10 +388,9 @@ total and every club's total end on one right inset, because there is one right 
 **The month states itself on the panel's first line**: how many municipalities, how many
 clubs and how many sessions on the left, the month's total on the right, and the exclusion
 warning where one applies travelling along the left-hand line with the counts rather than
-under the figure, so the line stays one line. The session count says "sessions" and not
-"recorded sessions": every session this page counts is one that was recorded, so the word
-was spent per locale on a distinction no line on the page draws — and the one place the
-recording *is* the point, a club's missed count, says so in its own words.
+under the figure, so the line stays one line. The session count says "sessions": it is the
+billed count, recorded and unrecorded alike, and the one place the recording *is* the
+point, a club's not-recorded count, says so in its own words.
 
 **A municipality is one line, and it opens closed.** Chevron, name, then how many clubs and
 how many sessions, then one download per Fennoa customer among its clubs, with its total on
@@ -355,7 +418,7 @@ not — see the export section on why there is no zip.
 
 **A club is one line of five columns, and the columns are one table for the whole
 municipality.** In the order the arithmetic runs: what the club is, when it meets, what one
-session of it costs, how many ran, and what that comes to. The last two columns multiply into
+session of it costs, how many bill, and what that comes to. The last two columns multiply into
 the third, so the reader can check the multiplication without leaving the row — which is the
 whole reason the fee is on the line rather than only in the detail. The table is
 fixed-layout, one per municipality, so every club's columns land where the club above them
@@ -392,12 +455,12 @@ admin page repairs. It carries no link — the club's name beside it is already 
 exactly that page, and a second anchor on one row would give the reader two targets for one
 repair.
 
-**A club that missed sessions says so on its own line.** The count column carries the missed
-count beside the recorded one, in warning tone — so the problems in a month are visible with
-every club still closed, which is what makes closing them by default affordable. Dates still
-ahead of the club and cancelled dates are never mentioned there: nothing is wrong with a
-session nobody has missed, and a note about one would be indistinguishable at a glance from
-a note about one that was.
+**A club billed for sessions nobody wrote up says so on its own line.** The count column is
+the billed count, and beside it, in quiet secondary type, how many of those billed sessions
+are not recorded — so a missing write-up can be chased with every club still closed. It is
+deliberately not a warning: those sessions are in the count and the total, the invoice is
+right, and a warning tone there would read as a figure to doubt. Dates still ahead of the
+club and cancelled dates are never mentioned there.
 
 **The dates behind a club's number are a second disclosure, under its own line.** A compact
 table of the club's month, two columns wide: the day, its ISO week and what became of it as
@@ -487,8 +550,8 @@ clubs in a trailing bucket, which meant a figure printed outside every total on 
 the exact shape of a total that is quietly short — and a reader with no way to tell a club
 that was never invoiceable from one whose location was mistyped an hour ago. Refusing sends
 the same person to the same repair, raises no invoice in the meantime, and costs this page
-a state it no longer has to carry anywhere: not in the contract, not in the arithmetic, not
-in the copy, and not in the fixtures.
+a state it no longer has to carry anywhere: not in the contract, not in the arithmetic, and not
+in the copy.
 
 What the schema guarantees on its own is only that a municipality club carries a location;
 it does not force that location's ancestor chain to reach a municipality. The refusal is
@@ -496,51 +559,10 @@ where that last step is enforced, so it belongs to the read rather than to any o
 surface — a second page over the same document inherits the guarantee rather than having
 to re-decide what to draw.
 
-## How the page is looked at: the preview scene, not the database
+## How the page is reviewed
 
-**This page is reviewed from fixtures, in the UI Previews scene, and not by pointing it
-at production data.** It is the densest surface in the app and most of what there is to
-judge about it is a state — a missed session, a fee nobody set, a term ending mid-month.
-Live data shows whichever of those the month happens to contain, changes between two
-readings, and cannot be screenshotted twice; a month of invented clubs in the shape of
-production shows all of them at once and shows the same ones tomorrow. Its invented names
-are held to being *plausible* rather than recognisable: a fixture naming a real school or a
-real customer's club is a page that looks like live data.
-
-The scene renders **this shell**, not a copy of it, over a fixture that satisfies the
-wire contract — so every figure on it is produced by the same pure build the live
-document goes through, and a scene that looked right could not be a page that is wrong.
-Two things make that possible, and both are deliberately visible in the code:
-
-- **The shell takes an optional clock.** Every state here is a claim about where a date
-  sits relative to today, so a fixture month is pinned to a fixed instant inside itself.
-  The live page passes nothing and reads the ticking clock exactly as before; the tick is
-  precisely what a pinned month cannot have, which is why this is a prop rather than a
-  provider the scene could wrap.
-- **The scene owns a query client that never refetches.** The shell's read is seeded —
-  hydrated server-side on the live route, handed in as the seed in the scene — and the
-  default one-minute staleness would otherwise let a window focus fire the real
-  admin-gated read behind the preview and replace the fixtures with production's own
-  month.
-
-**The download links are real and cost the scene nothing.** Each points at the live export
-route with the fixture's own month and customer id, so what a reviewer sees is the href the
-live page would build — and an anchor is fetched when it is followed, not when it is
-rendered, so the scene still reaches the network exactly as often as it did before: never.
-The fixtures carry a customer whose file is blocked by a club with no fee and one whose
-file is blocked by having nothing to invoice, because a month of ordinary clubs would show
-neither. They also carry cancellations on both sides of the pinned today and one on a
-date nothing projects and nothing is recorded on, which must render no line.
-
-**The month stepper stays inside the preview, and it is how the empty ledger is reached.**
-The stepper is one of the page's own controls rather than a way out of a row, so the shell
-takes its link target as a prop: the live page points it at another month of itself, and
-the scene points it back at the scene. The fixtures answer the month asked for — the
-working month has the ledger, and every other month is genuinely empty, because these clubs
-run one spring term — so an empty month is a step away and a step back on the same page in
-the same chrome, which is strictly more than a second scenario could have shown. The club
-names remain real links out to the live admin pages, which is the honest behaviour for a
-control whose whole purpose is to leave the row.
+**On a local stack built from the rich seed**, which holds an invoice customer of each
+cadence and every state the ledger can be in.
 
 ## Which municipality a club belongs to
 

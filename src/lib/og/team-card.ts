@@ -4,6 +4,7 @@ import { DARK_THEME } from "@/lib/constants/colors";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
+import { OG_CARD_ENCODING_VERSION } from "./cards";
 
 /**
  * The team member's share card: its address, its version, the numbers the
@@ -22,8 +23,9 @@ export function teamCardPath(userId: string): string {
 /**
  * **The version of a card: a digest of everything the card shows at this
  * locale** — the photo's own version token, the names, the title, the pick and
- * the intro the locale resolves to (with the locale it resolves to). The
- * catalog copy the card also draws ("Gedu · Game Educator") is not in it: that
+ * the intro the locale resolves to (with the locale it resolves to) — and the
+ * version of how cards are encoded (`OG_CARD_ENCODING_VERSION`), so a change
+ * to the served bytes is a new address too. The catalog copy the card also draws ("Gedu · Game Educator") is not in it: that
  * changes only with a deploy, as the site cards' copy does.
  *
  * It exists for the caches we do not control. A link preview stores the image
@@ -37,6 +39,7 @@ export function teamCardVersion(
 ): string {
   const written = resolveTranslation(person.translations, locale);
   const shown = [
+    OG_CARD_ENCODING_VERSION,
     person.kind,
     person.firstName,
     person.nickname,
@@ -66,12 +69,13 @@ export function teamCardUrl(
 }
 
 /**
- * **Five minutes, public, no stale serving — the photo route's own posture**,
- * not the site cards' year. The card embeds the person's photo, and a public
- * photo's promise is that a profile taken down stops showing its face within
- * five minutes (`src/app/api/team/photos/[userId]/route.ts`). A card cached for
- * a year would carry the face past that under an address anyone can hold, so
- * it inherits the photo's limit. The versioned URL is what keeps the short
+ * **Five minutes, public, no stale serving — not the site cards' year.** The
+ * route draws the profile as it is now whatever `v` it is asked for, so a
+ * year-long cache would pin a card under an address that is not its own: a
+ * profile changed and then changed back would go on sharing the version in
+ * between for a year. Nobody waits on the card — a link preview keeps its own
+ * copy and a share fetches it once — so the long cache would buy nothing
+ * (owner decision, 2026-10-05). The versioned URL is what keeps the short
  * cache cheap: an unchanged card is still one URL, re-drawn at most once per
  * five minutes per cache, and a changed one is a new URL at once.
  */

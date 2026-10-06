@@ -97,6 +97,7 @@ function candidate(id: string, firstName: string): UserListEntry {
     certified: true,
     criminal_record_check_passed: true,
     linked_gamers: [],
+    qualifications: [],
   };
 }
 
@@ -120,6 +121,15 @@ vi.mock("@/services/users", () => ({
   }),
 }));
 
+// Who covers an in-person session's site, as the database answers it for the
+// picker: nobody on this page's fixtures.
+vi.mock("@/services/gedu-locations", () => ({
+  useGedusCoveringProduct: (productId: string | null) => ({
+    data: productId === null ? undefined : new Set<string>(),
+    isError: false,
+  }),
+}));
+
 /** The panel's pinned clock. Nothing here reads it; every row carries it. */
 const NOW = new Date("2026-08-17T09:20:00+03:00");
 
@@ -140,6 +150,8 @@ const WITH_OFFERS: SubstitutionRequest = {
   sessionDate: "Mon 17 Aug",
   sessionTime: "17:00–18:30",
   urgent: true,
+  // Every candidate speaks Finnish, so this asks nothing of them.
+  requirements: { qualifications: [], language: "fi", site: null },
   role: "primary",
   reason: "sick",
   reasonNote: "Flunssa.",
@@ -369,6 +381,154 @@ describe("the admin Substitutions page's queue panel", () => {
       absentGeduId: IDS.requester,
       subGeduId: IDS.colleague,
     });
+  });
+
+  it("seats a gedu lacking a required qualification over a warning in the same confirm", async () => {
+    const seat = vi.fn((_draft: SeatSubstituteDraft) => Promise.resolve());
+    const { container } = renderPanel(
+      [
+        {
+          ...WITHOUT_OFFERS,
+          requirements: {
+            qualifications: ["consumer_products"],
+            language: "fi",
+            site: null,
+          },
+        },
+      ],
+      approveNothing,
+      seat,
+    );
+
+    await act(async () => pressSeat(container, 0));
+    // Iida holds nothing: still pickable, and the row says what she lacks.
+    const iida = pickerRow("Iida");
+    expect(iida.hasAttribute("disabled")).toBe(false);
+    expect(
+      within(iida).getByText("admin.products.geduPicker.notQualified"),
+    ).toBeTruthy();
+    await act(async () => iida.click());
+
+    // The dialog this flow always asks, with the gap as one line in it — and
+    // nothing written until it is confirmed.
+    expect(
+      screen.getByText("admin.substitutions.seatConfirmTitle"),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("admin.missingRequirements.qualification"),
+    ).toBeTruthy();
+    expect(seat).not.toHaveBeenCalled();
+
+    await act(async () =>
+      screen
+        .getByRole("button", { name: "admin.substitutions.seatConfirm" })
+        .click(),
+    );
+    expect(seat).toHaveBeenCalledTimes(1);
+    // The gap stays in the flow: the draft carries the seat, not the warning.
+    expect(seat.mock.calls[0][0].sub).toEqual({
+      id: IDS.colleague,
+      firstName: "Iida",
+      lastName: "Virtanen",
+    });
+  });
+
+  it("warns about nothing when the product requires nothing", async () => {
+    const { container } = renderPanel([WITHOUT_OFFERS], approveNothing);
+
+    await act(async () => pressSeat(container, 0));
+    expect(
+      within(pickerRow("Iida")).queryByText(
+        "admin.products.geduPicker.notQualified",
+      ),
+    ).toBeNull();
+    await act(async () => pickerRow("Iida").click());
+    expect(
+      screen.queryByText("admin.missingRequirements.qualification"),
+    ).toBeNull();
+    expect(screen.queryByText("admin.missingRequirements.language")).toBeNull();
+  });
+
+  it("seats a gedu who does not speak the session's language over a warning in the same confirm", async () => {
+    const seat = vi.fn((_draft: SeatSubstituteDraft) => Promise.resolve());
+    const { container } = renderPanel(
+      [
+        {
+          ...WITHOUT_OFFERS,
+          requirements: { qualifications: [], language: "en", site: null },
+        },
+      ],
+      approveNothing,
+      seat,
+    );
+
+    await act(async () => pressSeat(container, 0));
+    // Iida speaks Finnish alone: still pickable, and the row says so.
+    const iida = pickerRow("Iida");
+    expect(iida.hasAttribute("disabled")).toBe(false);
+    expect(
+      within(iida).getByText("admin.products.geduPicker.doesNotSpeak"),
+    ).toBeTruthy();
+    expect(
+      within(iida).queryByText("admin.products.geduPicker.notQualified"),
+    ).toBeNull();
+    await act(async () => iida.click());
+
+    expect(
+      screen.getByText("admin.substitutions.seatConfirmTitle"),
+    ).toBeTruthy();
+    expect(screen.getByText("admin.missingRequirements.language")).toBeTruthy();
+    expect(seat).not.toHaveBeenCalled();
+
+    await act(async () =>
+      screen
+        .getByRole("button", { name: "admin.substitutions.seatConfirm" })
+        .click(),
+    );
+    expect(seat).toHaveBeenCalledTimes(1);
+  });
+
+  it("seats a gedu whose coverage areas miss an on-site session's site over a warning in the same confirm", async () => {
+    const seat = vi.fn((_draft: SeatSubstituteDraft) => Promise.resolve());
+    const { container } = renderPanel(
+      [
+        {
+          ...WITHOUT_OFFERS,
+          requirements: {
+            qualifications: [],
+            language: "fi",
+            site: {
+              productId: "0d6c8a4e-31f7-4b2a-8f1c-7e9a2b5d4c18",
+              name: "Kallio School",
+            },
+          },
+        },
+      ],
+      approveNothing,
+      seat,
+    );
+
+    await act(async () => pressSeat(container, 0));
+    // Iida covers nothing: still pickable, and the row says so.
+    const iida = pickerRow("Iida");
+    expect(iida.hasAttribute("disabled")).toBe(false);
+    expect(
+      within(iida).getByText("admin.products.geduPicker.outsideCoverage"),
+    ).toBeTruthy();
+    await act(async () => iida.click());
+
+    expect(
+      screen.getByText("admin.substitutions.seatConfirmTitle"),
+    ).toBeTruthy();
+    expect(screen.getByText("admin.missingRequirements.coverage")).toBeTruthy();
+    expect(seat).not.toHaveBeenCalled();
+
+    await act(async () =>
+      screen
+        .getByRole("button", { name: "admin.substitutions.seatConfirm" })
+        .click(),
+    );
+    expect(seat).toHaveBeenCalledTimes(1);
   });
 
   it("drops the request once the seat and the refetch have both landed", async () => {

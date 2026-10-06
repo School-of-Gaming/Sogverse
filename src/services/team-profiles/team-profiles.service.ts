@@ -48,12 +48,14 @@ import {
  * **Public photos are served through the app's own address**,
  * `/api/team/photos/<id>?v=<version>`, which reads the photo with no session,
  * through a storage read rule that anyone may read an object while it is the
- * current photo of a public profile. So every request re-asks whether the
- * profile is public. Its responses cache for minutes, so a profile taken down
- * stops showing its photo soon after; the version token changes with the
- * photo, so a new photo is a new address. Never a public bucket, which would
- * leave a taken-down photo readable by anyone holding its address, and never
- * the optimiser over signed URLs.
+ * current photo of a public profile. So every request that reaches it
+ * re-asks whether the profile is public. The version token changes with the
+ * photo, so a new photo is a new address, and an address is cached for a
+ * year: a hidden profile leaves the Team page and its profile page at once,
+ * and its photo's address may go on serving from a cache (owner ruling,
+ * 2026-10-05). Never a public bucket, which would serve every object in it,
+ * photos never made public and replaced ones included, and never the
+ * optimiser over signed URLs.
  */
 
 /**

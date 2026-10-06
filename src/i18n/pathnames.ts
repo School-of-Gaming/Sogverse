@@ -174,6 +174,7 @@ export const PATHNAMES = {
   "/select-profile": "/select-profile",
   "/complete-registration": "/complete-registration",
   "/oauth/consent": "/oauth/consent",
+  "/link-discord": "/link-discord",
 
   // --- Shared ---------------------------------------------------------------
   "/settings": "/settings",

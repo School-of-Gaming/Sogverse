@@ -8,14 +8,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { ROUTES } from "@/lib/constants";
 import type { InvoiceCustomerRow } from "@/services/invoice-customers";
+import { BILLING_CADENCE_LABEL } from "./billing-cadence-label";
 
 /**
  * Every Fennoa invoice customer, one row each.
  *
- * **Presentational, and that is what the preview scene rides on**: the rows
- * arrive as a prop, so the live page hands it a read and the scene hands it
- * fixtures, and there is one body between them. `settled` is separate from the
- * rows because "no customers yet" and "the read has not answered" are different
+ * **Presentational**: the rows arrive as a prop, handed in by the live data
+ * shell beside it. `settled` is separate from the rows because "no customers yet" and "the read has not answered" are different
  * pages, and only the first of them may print an empty state.
  *
  * **No loading affordance.** The table is the whole table — a few dozen rows of
@@ -61,7 +60,7 @@ export function AdminInvoiceCustomersPage({
           {/* A table stays a table on an admin surface; below the design floor
               it scrolls inside its own container rather than the document. */}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[34rem] border-collapse text-sm">
+            <table className="w-full min-w-[42rem] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
                   <th scope="col" className="w-32 px-3 py-2 font-medium">
@@ -72,6 +71,9 @@ export function AdminInvoiceCustomersPage({
                   </th>
                   <th scope="col" className="px-3 py-2 font-medium">
                     {t("columns.city")}
+                  </th>
+                  <th scope="col" className="w-32 px-3 py-2 font-medium">
+                    {t("columns.billingCadence")}
                   </th>
                   <th scope="col" className="w-28 px-3 py-2 font-medium">
                     {t("columns.reference")}
@@ -102,6 +104,13 @@ export function AdminInvoiceCustomersPage({
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {customer.city}
+                    </td>
+                    {/* Shown on the list because there is no read-only page
+                        behind it: a cadence an admin had to open the form to
+                        see would be one nobody checks before the quarter's
+                        invoice is due. */}
+                    <td className="w-32 px-3 py-2 text-muted-foreground">
+                      {t(BILLING_CADENCE_LABEL[customer.billing_cadence])}
                     </td>
                     {/* A mark, not a word: the column is scanned down rather
                         than read across, and the tick is announced by the

@@ -315,9 +315,10 @@ export function FormSection({
  * caller (`onCropped`), who keeps them for the save that uploads them; what
  * the form holds is the local URL either way.
  *
- * **Every team photo is drawn `unoptimized`.** A saved one is a private object
- * behind a short-lived signed URL, which the image optimiser would cache for a
- * year under an unauthenticated address; a new crop is a local object URL the
+ * **The editor's photo is drawn `unoptimized`**, as `TeamPortrait` draws
+ * every photo but a public one. A saved one is a private object behind a
+ * short-lived signed URL, which the image optimiser would cache for a year
+ * under an unauthenticated address; a new crop is a local object URL the
  * optimiser cannot fetch at all.
  *
  * **Object URLs are owned in pairs.** The picked file's URL lives exactly as

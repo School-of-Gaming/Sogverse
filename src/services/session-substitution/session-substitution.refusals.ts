@@ -1,13 +1,14 @@
 /**
  * Why filing an absence was refused, as a message key.
  *
- * **The picker cannot know what it is about to be refused for.** No read on the
- * Substitutions page carries which dates the viewer has already filed on — the
- * assignment rows are per seat and the summaries per card — so the picker
- * disables only what it wrote itself and the write's own refusal is the backstop
- * for everything filed in an earlier visit. A backstop that says "that didn't
- * save, try again" invites the reader to press the same button again forever, so
- * it has to say *why*.
+ * **The refusal is the backstop for races.** The picker disables the sessions
+ * the viewer already holds a live request on, read from the server, plus what
+ * it has just filed itself — and the Discord bot leaves those sessions out — so
+ * what is left to be refused is what changed after the list was read: a filing
+ * from the session card, another tab or Discord, a seat taken away, a session
+ * that ended or was cancelled with the dialog open. A backstop that says "that
+ * didn't save, try again" invites the reader to press the same button again
+ * forever, so it has to say *why*.
  *
  * Two signals, in the order they are worth trusting, which is the same shape the
  * admin approval dialog uses:
@@ -28,8 +29,8 @@
  * you are expected at — and a gedu already holding a live request is not
  * expected at it. So "you have already asked" and "you no longer hold that seat"
  * raise one error with one message, and a line claiming either one alone would
- * be wrong half the time. The first is overwhelmingly the real case, and both
- * mean the same thing about the row: it cannot be filed on.
+ * be wrong half the time. Both mean the same thing about the row: it cannot be
+ * filed on.
  *
  * Pure, and it names keys rather than translating: the two entry points render
  * the line through their own translator.
@@ -142,6 +143,45 @@ export function seatSubstituteFailureKey(
     }
   }
   return "seatFailed";
+}
+
+/** The lines a refused offer can read as, all under `gedu.substitution`. */
+export type SubstitutionOfferFailureKey =
+  | "poolOfferFailedNotQualified"
+  | "poolOfferFailedLanguage"
+  | "poolOfferFailedCoverage"
+  | "poolActionFailed";
+
+/**
+ * Which refusal `offer_session_substitution` raised, for a gedu offering from
+ * the pool.
+ *
+ * Three are worth telling apart, the session's three requirements: its
+ * product requires a qualification the gedu does not hold, it is run in a
+ * language the gedu has not listed as one they speak, or it is in person at a
+ * site outside the gedu's coverage areas. The pool already leaves such
+ * requests out, so each is a list read before something changed — and "try
+ * again" would be untrue, because trying again cannot succeed. All three share
+ * `42501` with the generic refusal and are told apart by their phrases.
+ * Everything else, the request having closed meanwhile included, falls to the
+ * generic line.
+ */
+export function substitutionOfferFailureKey(
+  error: unknown,
+): SubstitutionOfferFailureKey {
+  const { code, message } = wireError(error);
+  if (code === "42501") {
+    if (message.includes("is not qualified")) {
+      return "poolOfferFailedNotQualified";
+    }
+    if (message.includes("does not speak the language")) {
+      return "poolOfferFailedLanguage";
+    }
+    if (message.includes("does not cover the site")) {
+      return "poolOfferFailedCoverage";
+    }
+  }
+  return "poolActionFailed";
 }
 
 /** The `code` and `message` off a Postgres error, or empty strings. */

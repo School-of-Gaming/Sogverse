@@ -171,6 +171,13 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // rather than a second 42501 — so the positive half of the matrix is
   // assertable here with no fixture.
   set_gedu_criminal_record_check: { permittedRoles: ["admin"] },
+  // Granting or revoking a gedu's qualification. The same shape again: past the
+  // admin guard, a NULL target raises "is not a gedu" (P0001), not 42501.
+  set_gedu_qualification: { permittedRoles: ["admin"] },
+  // An admin turning one kind of notification on or off, on one channel, for
+  // themselves. Past the admin guard, all-NULL arguments are refused with
+  // `check_violation`.
+  set_notification_preference: { permittedRoles: ["admin"] },
   // Phase 3's new-RPC conversions. Past the admin guard, all-NULL arguments hit
   // "no such product" / "no such participation" — an error, but not 42501.
   admin_enroll_participant: { permittedRoles: ["admin"] },
@@ -197,6 +204,9 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // id, so a permitted admin gets a document — empty or not — rather than a
   // second refusal, and every other role is stopped by the guard.
   get_admin_substitution_requests: { permittedRoles: ["admin"] },
+  // The admin gedu picker's coverage answer. A NULL product is an unknown one,
+  // so a permitted admin gets an empty array back rather than an error.
+  get_gedus_covering_product: { permittedRoles: ["admin"] },
 
   // --- session cancellation ------------------------------------------------
   //
@@ -336,16 +346,28 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // the first-of-month check with `check_violation`, so the positive half is
   // assertable with no fixture.
   get_my_gedu_invoicing: { permittedRoles: ["gedu"] },
+  // Links the caller's own profile to the Discord user a bot-minted token
+  // names. Past the role guard it writes only the caller's own row. A NULL
+  // token hashes to NULL and matches no pending token, so a permitted role is
+  // refused with P0029 rather than a second 42501 and the positive half is
+  // assertable with no fixture. discord-links.test.ts drives the real path.
+  consume_discord_link_token: { permittedRoles: ["gedu", "admin"] },
 
   // --- the gedu half of session substitutions ------------------------------
   //
-  // Four writes and one read. The read is the assertable one, for the same
-  // reason the summaries RPC above is: it takes no id, so a gedu with nothing to
+  // Four writes and two reads. The reads are the assertable ones, for the same
+  // reason the summaries RPC above is. The pool takes no id, so a gedu with nothing to
   // substitute at gets an empty list rather than a refusal. An UNCERTIFIED gedu also
   // gets an empty list rather than a refusal, which is deliberate — certification
   // is one of the four refusals inside the may-substitute predicate the list filters
   // on, not a gate on the function.
   get_open_substitution_requests: { permittedRoles: ["gedu"] },
+  // The caller's own live requests, which the absence picker disables its rows
+  // by. Assertable for the same reason: it takes no argument at all, and past
+  // the guard it is keyed to auth.uid() alone, so a gedu who has filed nothing
+  // gets an empty list. discord-substitution.test.ts proves a gedu never reads
+  // a colleague's request.
+  get_my_live_substitution_requests: { permittedRoles: ["gedu"] },
   request_session_substitution: {
     permittedRoles: ["gedu"],
     permittedAlsoForbiddenOnNullArgs:

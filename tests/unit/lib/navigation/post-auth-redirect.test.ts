@@ -86,6 +86,23 @@ describe("resolveSafeRedirect", () => {
     expect(resolveSafeRedirect("/oauth")).toBe(null);
   });
 
+  it("admits the Discord link page with its token, in any locale", () => {
+    // The token is single-use and the only way back to it is `/link` again, so
+    // a sign-in that dropped it would strand the Gedu on a dead page.
+    expect(resolveSafeRedirect("/en/link-discord?token=abc")).toBe(
+      "/en/link-discord?token=abc",
+    );
+    expect(resolveSafeRedirect("/fi/link-discord?token=abc")).toBe(
+      "/fi/link-discord?token=abc",
+    );
+  });
+
+  it("admits the Discord link page exactly, never what sits beneath it", () => {
+    expect(resolveSafeRedirect("/link-discord/../admin")).toBe(null);
+    expect(resolveSafeRedirect("/link-discordx")).toBe(null);
+    expect(resolveSafeRedirect("/en/link-discord/extra")).toBe(null);
+  });
+
   it("normalizes in-allowlist traversal to the real path", () => {
     // A `..` that stays within /shop/ is harmless; it collapses and is
     // returned as the normalized path the browser would actually visit.

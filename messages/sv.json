@@ -74,6 +74,7 @@
       "robloxTerms": "Användarvillkor för Skaparnas akademi",
       "geduContract": "Gedu-avtal",
       "oauthConsent": "Anslut en AI-app",
+      "linkDiscord": "Koppla Discord",
       "seatOffer": "Platserbjudande",
       "geduSubstitutions": "Vikariat",
       "geduInvoicing": "Fakturering",
@@ -437,7 +438,7 @@
       "emptyMonth": "Ingen kommunklubb har något registrerat eller inplanerat den här månaden.",
       "excludedClubs": "{count, plural, one {Exklusive # klubb utan avgift} other {Exklusive # klubbar utan avgift}}",
       "feeNotSet": "Avgift saknas",
-      "notRecorded": "Inte registrerat",
+      "billedNotRecorded": "Fakturerat, inte registrerat",
       "upcoming": "Kommande",
       "cancelled": "Inställt",
       "unrecordedSessions": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
@@ -447,7 +448,16 @@
       "customerNotSet": "Faktureringskund saknas",
       "downloadInvoiceFor": "Ladda ner Finvoice-filen för {customer}",
       "fileBlockedByFee": "{count, plural, one {Ingen fil: # klubb hölls utan avgift} other {Ingen fil: # klubbar hölls utan avgift}}",
-      "fileBlockedByNothingToInvoice": "Ingen fil: inget registrerat",
+      "fileBlockedByNothingToInvoice": "Ingen fil: inget att fakturera",
+      "downloadPeriodInvoiceFor": "Ladda ner Finvoice-filen för {period} {year} för {customer}",
+      "periodFile": "{period} · {total}",
+      "invoicedInMonth": "{cadence} · faktureras i {month}",
+      "periodNotRead": "Resten av perioden läses in",
+      "periodBlockedByFee": "{count, plural, one {Ingen fil: # klubb hölls utan avgift i {month}} other {Ingen fil: # klubbar hölls utan avgift i {month}}}",
+      "periodBlockedByNothingToInvoice": "Ingen fil: inget att fakturera för {period}",
+      "quarterName": "K{ordinal}",
+      "halfYearName": "H{ordinal}",
+      "periodFilesWithoutClub": "Perioder som slutar den här månaden, för kunder utan klubb den här månaden",
       "loadError": "Det gick inte att läsa in faktureringsmånaden. Uppdatera sidan och försök igen.",
       "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen."
     },
@@ -459,7 +469,8 @@
         "number": "Fennoa-nr",
         "invoiceName": "Fakturanamn",
         "city": "Ort",
-        "reference": "Referens"
+        "reference": "Referens",
+        "billingCadence": "Faktureras"
       },
       "hasReference": "Har en referens",
       "noReference": "Ingen referens",
@@ -481,13 +492,20 @@
         "city": "Ort",
         "country": "Land",
         "yourReference": "Er referens",
-        "invoiceText": "Fakturatext"
+        "invoiceText": "Fakturatext",
+        "billingCadence": "Faktureringsintervall"
       },
       "hints": {
         "number": "Numret på kundens kort i Fennoa, till exempel F0037. Fennoa kopplar en importerad faktura till kunden med det här numret.",
         "invoiceName": "Exakt som det står på kundkortet i Fennoa.",
         "yourReference": "Ett inköpsordernummer eller en kontaktperson som kunden vill ha på varje faktura.",
-        "invoiceText": "Extra rader högst upp i fakturatexten, till exempel en hänvisning till ramavtalet. Ren text – den når fakturan precis som den skrivs."
+        "invoiceText": "Extra rader högst upp i fakturatexten, till exempel en hänvisning till ramavtalet. Ren text – den når fakturan precis som den skrivs.",
+        "billingCadence": "Hur ofta kunden faktureras. För en kund som faktureras kvartalsvis eller halvårsvis täcker fakturan hela kalenderperioden och laddas ner från faktureringssidan under periodens sista månad."
+      },
+      "cadence": {
+        "monthly": "Månadsvis",
+        "quarterly": "Kvartalsvis",
+        "halfYearly": "Halvårsvis"
       },
       "errors": {
         "required": "{field} måste fyllas i.",
@@ -624,6 +642,26 @@
       "queueRecorded": "Utdrag uppvisat {date}",
       "queueNotRecorded": "Utdrag inte uppvisat",
       "rowNotRecorded": "Har inte uppvisat något straffregisterutdrag"
+    },
+    "geduQualifications": {
+      "title": "Behörigheter",
+      "neuroinclusive": "Behörig att leda grupper i produkter märkta Neuroinkluderande.",
+      "consumer_products": "Får leda klubbar, läger och evenemang som familjer betalar själva, inte bara kommunklubbar.",
+      "grantedOn": "Beviljad {date}",
+      "grantedOnBy": "Beviljad av {name} {date}",
+      "notGranted": "Inte beviljad",
+      "error": "Det gick inte att uppdatera behörigheten. Försök igen."
+    },
+    "geduLanguages": {
+      "title": "Språk",
+      "note": "Hen erbjuds vikariat bara för tillfällen på ett språk som är valt här. Om inget språk är valt erbjuds inga vikariat.",
+      "error": "Det gick inte att spara språken. Försök igen."
+    },
+    "missingRequirements": {
+      "qualification": "Den här Gedun saknar behörigheten {qualification}, som den här produkten kräver.",
+      "language": "Den här produkten hålls på {language}, som den här Gedun inte har angett att hen talar.",
+      "coverage": "Den här produkten hålls på plats på {site}, utanför de områden den här Gedun täcker.",
+      "coverageUnnamed": "Den här produkten hålls på plats, utanför de områden den här Gedun täcker."
     },
     "geduCertifyWarnings": {
       "title": "Certifiera ändå?",
@@ -1108,7 +1146,10 @@
         "absentGedu": "Gedun som vikarieras",
         "notCertified": "Inte certifierad",
         "alreadyTrainee": "Redan praktikant",
-        "traineeInstead": "Kan läggas till som praktikant i stället."
+        "traineeInstead": "Kan läggas till som praktikant i stället.",
+        "notQualified": "Saknar behörighet: {qualification}",
+        "doesNotSpeak": "Talar inte {language}",
+        "outsideCoverage": "Täcker inte området"
       },
       "participantPicker": {
         "title": "Lägg till en deltagare",
@@ -1272,6 +1313,10 @@
             "failed": "Bytet slutfördes inte. Tryck på Byt klubb igen — ett nytt tryck upprepar samma begäran, så familjen debiteras aldrig två gånger."
           },
           "confirm": "Byt klubb"
+        },
+        "requirementGaps": {
+          "title": "Tilldela ändå?",
+          "action": "Tilldela ändå"
         }
       },
       "seatLimitModes": {
@@ -1464,7 +1509,8 @@
         "saving": "Sparar…",
         "error": "Det gick inte att uppdatera certifieringen. Försök igen."
       },
-      "usernameLabel": "Användarnamn"
+      "usernameLabel": "Användarnamn",
+      "discordNotLinked": "Inte kopplat"
     },
     "locations": {
       "editName": "Redigera {name}",
@@ -1517,7 +1563,22 @@
         "mobile": "Mobil"
       },
       "attachment": "Bilaga: {name}",
-      "sentAttachment": "Det som skickades: {name}"
+      "sentAttachment": "Det som skickades: {name}",
+      "discord": {
+        "tool": "Testverktyg för Discord",
+        "toolDescription": "Skicka ett direktmeddelande från den här miljöns Discord-bot till ett länkat konto för att kontrollera att utskicket fungerar.",
+        "recipient": "Mottagare",
+        "recipientOption": "{name} ({discordUsername})",
+        "noLinkedAccounts": "Inget konto har ett länkat Discord-konto ännu. Länka ett med /link i Discord först.",
+        "message": "Meddelande",
+        "messagePlaceholder": "Ren text, högst 2 000 tecken",
+        "send": "Skicka testmeddelande",
+        "sent": "Meddelandet skickades.",
+        "openInDiscord": "Öppna i Discord",
+        "templatePlain": "Ren text",
+        "templateSubFlow": "/sub: alla steg",
+        "subPreviewSent": "Alla steg skickades."
+      }
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -1753,8 +1814,9 @@
       "certificationAlertTitle": "Ditt konto måste certifieras",
       "certificationAlertDescription": "Du kan logga in direkt, men en administratör måste certifiera ditt konto innan du kan tilldelas en klubb eller ett läger.",
       "coverageHeading": "Var kan du arbeta?",
-      "coverageNote": "Välj de områden där du kan arbeta på plats. Om du bara kan arbeta på distans, lämna detta fält tomt. Du kan ändra ditt val senare i dina profilinställningar.",
+      "coverageNote": "Välj de områden där du kan arbeta på plats. Du erbjuds vikariat på plats bara i de här områdena; tillfällen online påverkas inte av dem. Om du bara kan arbeta på distans, lämna detta tomt. Du kan ändra det senare i dina inställningar.",
       "invalidPhone": "Ange ett giltigt telefonnummer",
+      "spokenLanguagesRequired": "Välj minst ett språk som du talar.",
       "creatingAccount": "Skapar konto...",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
     },
@@ -2351,7 +2413,8 @@
       "cardLockedLabel": "{product} – tillfälle du vikarierar på. Gruppens arbetsyta öppnar 48 timmar innan det börjar.",
       "accessOpens": "Arbetsytan öppnar {date} kl. {time}",
       "poolHeading": "Tillfällen som behöver en vikarie",
-      "poolAllClear": "Inga tillfällen behöver en vikarie just nu.",
+      "poolRequirementsNote": "Du ser tillfällen på ett språk du talar och, för tillfällen på plats, bara i områden du täcker. Håll båda uppdaterade i dina <link>inställningar</link>.",
+      "poolAllClear": "Inga tillfällen som du kan ta behöver en vikarie just nu.",
       "poolRolePrimary": "Huvud-Gedu",
       "poolRoleAssistant": "Assisterande Gedu",
       "poolFee": "{fee} per tillfälle",
@@ -2359,13 +2422,16 @@
       "poolWithdrawAction": "Dra tillbaka erbjudandet",
       "poolWithdrawPending": "Drar tillbaka…",
       "poolActionFailed": "Det sparades inte. Försök igen.",
+      "poolOfferFailedNotQualified": "Det här tillfället kräver en behörighet som du inte har, så du kan inte erbjuda dig att vikariera.",
+      "poolOfferFailedLanguage": "Det här tillfället hålls på ett språk som du inte har angett att du talar, så du kan inte erbjuda dig att vikariera. Du kan lägga till språk i dina inställningar.",
+      "poolOfferFailedCoverage": "Det här tillfället hålls på plats utanför de områden du täcker, så du kan inte erbjuda dig att vikariera. Du kan ändra dina områden i dina inställningar.",
       "pageTitle": "Vikariat",
       "back": "Tillbaka till Min SOG",
       "mineHeading": "Dina vikariat",
       "mineAllClear": "Du har inga kommande vikariat.",
       "fileAction": "Kan du inte vara med på ett tillfälle?",
-      "filePickTitle": "Vilket tillfälle kan du inte vara med på?",
-      "filePickBody": "Välj tillfället du inte kan vara med på. Din orsak och din kommentar visas bara för administratörer.",
+      "filePickTitle": "Vilket tillfälle behöver du en vikarie för?",
+      "filePickBody": "Din orsak och din kommentar visas bara för administratörer.",
       "fileAlreadyRequested": "Vikarie är redan efterfrågad",
       "filePickWeekThis": "Den här veckan",
       "filePickWeekNext": "Nästa vecka",
@@ -2373,14 +2439,14 @@
       "filePickShowLater": "Visa senare tillfällen",
       "filePickGroupLabel": "Grupp",
       "filePickAllGroups": "Alla grupper",
-      "fileFiled": "Vikarie efterfrågad för {product} den {when}. Det syns nu på det tillfällets kort.",
+      "fileFiled": "Vikarie efterfrågad för {product} den {when}. Det syns nu på det tillfällets kort i Min SOG.",
       "fileFiledLink": "Öppna gruppens arbetsyta",
       "offerConfirmTitle": "Erbjuda dig att vikariera?",
       "offerConfirmBody": "Du erbjuder dig att hålla {product} {when}. School of Gaming väljer vikarien, och du kan dra tillbaka ditt erbjudande tills det har godkänts. När det har godkänts är tillfället ditt enligt ditt Gedu-avtal, precis som dina egna tillfällen, och du kan inte längre dra dig ur: kan du ändå inte vara med får du själv be om en vikarie, som för alla dina tillfällen. Gruppens arbetsyta öppnas för dig 48 timmar innan tillfället börjar."
     },
     "coverage": {
       "title": "Områden du täcker",
-      "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan Gedu inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
+      "remoteOnlyNote": "Du ser förfrågningar om vikariat på plats bara i de områden du väljer. Tillfällen online påverkas inte av dem. Lämna tomt om du bara arbetar på distans.",
       "selectedHeading": "Valda ({count})",
       "noneSelected": "Inga områden valda",
       "remove": "Ta bort {name}",
@@ -3613,10 +3679,29 @@
     "verificationEmailSent": "Verifieringsmejlet är skickat – kolla din inkorg.",
     "verificationEmailRateLimited": "Du har begärt det här mejlet för många gånger. Vänta en liten stund innan du försöker igen.",
     "verificationEmailFailed": "Vi kunde inte skicka verifieringsmejlet. Försök igen.",
+    "discord": {
+      "label": "Discord",
+      "notLinked": "Inte kopplat",
+      "linkHint": "Koppla ditt Discord-konto genom att skriva <code>/link</code> på School of Gamings Discord-server.",
+      "relinkHint": "Koppla ett annat Discord-konto genom att skriva <code>/link</code> från det kontot på School of Gamings Discord-server."
+    },
     "marketing": {
       "title": "Marknadsföringsinställningar",
       "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
       "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst."
+    },
+    "notifications": {
+      "title": "Aviseringsinställningar",
+      "channels": {
+        "email": "E-post"
+      },
+      "kinds": {
+        "session_report_copy": {
+          "label": "Kopior av rapporter om tillfällen",
+          "hint": "En kopia av varje rapport om ett tillfälle som mejlas till familjerna i en grupp."
+        }
+      },
+      "saveFailed": "Det gick inte att spara aviseringsinställningarna. Försök igen."
     },
     "usernameLabel": "Användarnamn",
     "gamerPasswordFromParent": "Din förälder kan ange ett nytt lösenord åt dig från sin Min SOG.",
@@ -5232,6 +5317,46 @@
       "title": "Bara administratörer på School of Gaming kan ansluta en AI-app",
       "body": "Du är inloggad som {email}, som inte är ett administratörskonto."
     }
+  },
+  "discordLink": {
+    "confirm": {
+      "title": "Koppla ditt Discord-konto",
+      "body": "Koppla Discord-kontot <b>@{username}</b> till ditt School of Gaming-konto? Då kan School of Gaming nå dig på Discord, och det Discord-kontot kan använda School of Gamings bot för din räkning. Koppla bara ett konto som är ditt.",
+      "action": "Koppla kontot",
+      "failed": "Något gick fel och ditt konto kopplades inte. Försök igen."
+    },
+    "linked": {
+      "title": "Kopplat till @{username}",
+      "body": "School of Gaming kan nu nå dig på Discord, och du kan använda School of Gamings bot där.",
+      "goToMySog": "Gå till Min SOG",
+      "goToDashboard": "Gå till instrumentpanelen"
+    },
+    "used": {
+      "title": "Den här länken har redan använts",
+      "body": "Varje länk fungerar en gång. Kör <code>/link</code> i Discord igen för att få en ny."
+    },
+    "expired": {
+      "title": "Den här länken har gått ut",
+      "body": "Länkar slutar gälla efter 10 minuter. Kör <code>/link</code> i Discord igen för att få en ny."
+    },
+    "missingToken": {
+      "title": "Den här länken är ofullständig",
+      "body": "Kör <code>/link</code> i Discord igen för att få en ny."
+    },
+    "refused": {
+      "title": "Bara personalen på School of Gaming kan koppla ett Discord-konto",
+      "body": "Det här kontot kan inte koppla ett. Om du hör till personalen, logga in med ditt personalkonto."
+    }
+  },
+  "discordSub": {
+    "requestTitle": "Be om en vikarie",
+    "pickPlaceholder": "Välj ett tillfälle",
+    "empty": "Du har inga kommande tillfällen att be om en vikarie för.",
+    "filed": "Vikarie efterfrågad för {product} den {when}.",
+    "failed": "Något gick fel. Kör /sub igen om en stund.",
+    "notLinked": "För att använda /sub måste du först koppla ditt Discord-konto till ditt Gedu-konto hos School of Gaming.",
+    "notLinkedRunLink": "Ditt Discord-konto är inte kopplat till ett Gedu-konto hos School of Gaming. Kör /link för att koppla det och sedan /sub igen.",
+    "previewNotice": "Det här är en förhandsvisning – inget skickades in."
   },
   "seatOffer": {
     "offer": {

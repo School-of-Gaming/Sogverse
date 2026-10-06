@@ -3,9 +3,10 @@ import { TeamPhotoPlaceholder } from "@/components/team/team-photo-placeholder";
 import { COVER_HOVER_ZOOM } from "@/components/ui/cover-hover-zoom";
 import { VOICE_ZONE_COLORS } from "@/lib/constants/voice-zones";
 import { cn } from "@/lib/utils";
-import type {
-  TeamProfile,
-  TeamProfilePhoto,
+import {
+  isPublicTeamPhotoUrl,
+  type TeamProfile,
+  type TeamProfilePhoto,
 } from "@/services/team-profiles/team-profiles.types";
 
 /** The classes a person's pick draws with, or `null` with no pick. */
@@ -32,25 +33,42 @@ export function teamPickClasses(pick: TeamProfile["pick"]) {
  * photo in while the link is pointed at (`zoomOnHover`), the same 2% the
  * Library and product cards use; the frame and its glow stay put.
  *
- * **The photo is drawn `unoptimized`**: in the editor a saved one is a private
- * object behind a short-lived signed URL, which the image optimiser would
- * cache for a year under an unauthenticated address, and a new crop is a local
- * object URL it cannot fetch at all; on the public pages it is the app's photo
- * route, whose five-minute cache is what takes a hidden profile's photo down,
- * and the optimiser's year would outlive it. The frame holds its 4:5 before
- * the bytes arrive, so nothing moves when they do.
+ * **A public photo goes through the image optimiser; every other is drawn
+ * `unoptimized`**, decided from the address (`isPublicTeamPhotoUrl`), so no
+ * caller can get it wrong. A public photo is the app's photo route at one
+ * version of the photo, and the optimiser serves it resized and as WebP from
+ * its year-long cache, as it does every other public picture on the site. A
+ * hidden profile's photo may go on being served from that cache, which the
+ * owner accepted (ruling of 2026-10-05): hiding takes the person off the Team
+ * page and their profile page. In the editor a saved photo is a private object
+ * behind a short-lived signed URL, which the optimiser would cache for a year
+ * under an unauthenticated address, and a new crop is a local object URL it
+ * cannot fetch at all. The frame holds its 4:5 before the bytes arrive, so
+ * nothing moves when they do.
+ *
+ * **`sizes` is the caller's**: the CSS width the frame resolves to in its
+ * layout. Without it the optimiser's candidates are the photo's own 800px and
+ * twice that, which hands a 150px card most of what the optimiser saved.
  */
 export function TeamPortrait({
   photo,
   pick,
-  priority = false,
+  sizes,
+  loading = "lazy",
   zoomOnHover = false,
   className,
   imageClassName,
 }: {
   photo: TeamProfilePhoto | null;
   pick: TeamProfile["pick"];
-  priority?: boolean;
+  /** The width the frame is drawn at, as an `<img sizes>` value. */
+  sizes: string;
+  /**
+   * When the photo loads: as it nears the screen (the default), at once for a
+   * frame on the first screen (`eager`), or preloaded from the head for a
+   * page's one leading image (`preload`).
+   */
+  loading?: "lazy" | "eager" | "preload";
   /** Lean the photo in when its card is pointed at (`COVER_HOVER_ZOOM`). */
   zoomOnHover?: boolean;
   /** The frame's size. */
@@ -73,13 +91,15 @@ export function TeamPortrait({
           width={photo.width}
           height={photo.height}
           alt=""
-          unoptimized
+          sizes={sizes}
+          unoptimized={!isPublicTeamPhotoUrl(photo.src)}
           className={cn(
             "h-full w-full object-cover",
             zoomOnHover && COVER_HOVER_ZOOM,
             imageClassName,
           )}
-          priority={priority}
+          loading={loading === "eager" ? "eager" : undefined}
+          preload={loading === "preload"}
         />
       ) : (
         <TeamPhotoPlaceholder className="h-full w-full" />

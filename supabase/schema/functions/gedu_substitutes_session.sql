@@ -6,7 +6,7 @@ CREATE FUNCTION public.gedu_substitutes_session(p_group_id uuid, p_session_date 
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
-  SELECT public.gedu_holds_unexpired_substitution(p_group_id, p_session_date)
+  SELECT public.gedu_holds_unexpired_substitution((SELECT auth.uid()), p_group_id, p_session_date)
      AND EXISTS (
        SELECT 1
          FROM public.product_groups g

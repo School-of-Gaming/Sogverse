@@ -32,10 +32,12 @@ change the plan:
   money or staffing history, so it is a decision rather than an obstacle. Accounting
   records carry a statutory retention obligation, so raise it with finance before
   touching them. Do not delete these rows to clear the way.
-- **`consent_acceptances.accepted_by`, `products.created_by` and the `voice_*` columns
-  carry no `ON DELETE` action.** A row there blocks the delete unless the same delete
-  cascades it away by another column. A parent's own `consent_acceptances` go with
-  `customer_id`, so only an acceptance made on someone else's behalf blocks.
+- **`consent_acceptances.accepted_by`, `gamer_consent_acceptances.accepted_by`,
+  `products.created_by` and the `voice_*` columns carry no `ON DELETE` action.** A row
+  there blocks the delete unless the same delete cascades it away by another column. A
+  parent's own `consent_acceptances` go with `customer_id`, and their gamers'
+  `gamer_consent_acceptances` go with the gamer (step 3 deletes the gamers first), so
+  only an acceptance made for someone who survives the delete blocks.
 - **`customer_profiles.stripe_customer_id`** set means a Stripe customer exists (step 5).
 
 **Then scan every column for the ids and the address**, which catches anything that
@@ -85,6 +87,7 @@ outside the database — and wait for an explicit go-ahead.
 SET default_transaction_read_only = off;
 BEGIN READ WRITE;
 DELETE FROM auth.flow_state WHERE user_id IN ('<parent-uuid>', '<gamer-uuid>');
+DELETE FROM auth.users WHERE id IN ('<gamer-uuid>') AND email LIKE '%@gamer.sogverse.internal';
 DELETE FROM auth.users WHERE id = '<parent-uuid>' AND email = '<address>';
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM auth.users WHERE id IN ('<parent-uuid>', '<gamer-uuid>')) THEN
@@ -94,16 +97,21 @@ END $$;
 COMMIT;
 ```
 
-- **One row, the parent, deletes the whole family.** `auth.users` cascades to
+- **The gamers go first, then the parent.** A gamer's `gamer_consent_acceptances` rows
+  name the parent in `accepted_by`, an FK with no `ON DELETE` action, so deleting the
+  parent first is refused while the gamer still holds them (hit on prod 2026-10-05; the
+  transaction rolled back whole). Deleting the gamer cascades those rows away by
+  `gamer_id`, and the parent then goes cleanly. Each `auth.users` delete cascades to
   `auth.identities`, `auth.sessions` (and through them `auth.refresh_tokens`), the other
   auth tables that key on the user, and `public.profiles`, and from there through every
-  cascading FK.
+  cascading FK. A gamer's address is the synthetic `@gamer.sogverse.internal` one unless
+  their sign-in is `email`; match the gamer's real address in that case.
 - **`auth.flow_state` is the exception in `auth`**: it carries a `user_id` with no FK, so
   its rows survive a SQL delete and are removed explicitly.
-- **List every gamer being erased in both id lists, and only those.** A gamer who keeps
-  another parent stays out of the guard, or it rolls back a correct delete. The `parent_gamer` delete fires a trigger that
-  deletes a gamer's auth user once their last parent link is gone. A gamer with another
-  parent is left alone, which is correct: the other parent still holds them.
+- **List every gamer being erased in every id list, and only those.** A gamer who keeps
+  another parent is not deleted: the other parent still holds them. Such a gamer's
+  consent rows accepted by the erased parent still block the parent's delete, so they are
+  the one case to settle with the owner before running anything.
 - **The `email` in the `WHERE`** guards against a pasted id belonging to someone else.
 - **The guard block** rolls the transaction back unless every expected auth user is gone,
   so a gamer who unexpectedly survives is caught before commit, not after.

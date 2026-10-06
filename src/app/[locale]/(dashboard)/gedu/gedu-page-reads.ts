@@ -11,7 +11,10 @@ import {
 // two above are imported by name: that index re-exports `"use client"` query
 // hooks, which a server component would pull in as client references.
 import { SessionSubstitutionService } from "@/services/session-substitution/session-substitution.service";
-import type { OpenSubstitutionRequest } from "@/services/session-substitution/session-substitution.contracts";
+import type {
+  OpenSubstitutionRequest,
+  SubstitutionRequestDocument,
+} from "@/services/session-substitution/session-substitution.contracts";
 import { isGeduCertified } from "@/services/gedu/gedu-profiles.service";
 
 /**
@@ -19,7 +22,7 @@ import { isGeduCertified } from "@/services/gedu/gedu-profiles.service";
  *
  * They are here rather than in either route because **what a failure answers is
  * a policy, not a detail**: an empty list and a failed read are different
- * answers on three of these four, and a second copy of that decision is a
+ * answers on four of these five, and a second copy of that decision is a
  * second chance to get it backwards on one page and not the other.
  */
 
@@ -90,6 +93,25 @@ export async function getInitialSubstitutionRequests(
   try {
     const supabase = await createClient();
     return await new SessionSubstitutionService(supabase).getOpenRequests();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Prefetch the gedu's own live substitution requests — the sessions the absence
+ * picker shows as already asked for.
+ *
+ * **Failure answers `null`, not an empty list**, for the reason the two above
+ * give: an empty list would claim the gedu has filed nothing, and the picker
+ * would offer every session again. `null` sends the client to ask again.
+ */
+export async function getInitialLiveSubstitutionRequests(): Promise<
+  SubstitutionRequestDocument[] | null
+> {
+  try {
+    const supabase = await createClient();
+    return await new SessionSubstitutionService(supabase).getMyLiveRequests();
   } catch {
     return null;
   }

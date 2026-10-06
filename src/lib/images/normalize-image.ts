@@ -99,8 +99,12 @@ const FALLBACK_QUALITY = 0.8;
  * value from the app's dark palette. Session photos are overwhelmingly opaque
  * screenshots and camera photos; this only ever shows on the rare pick that
  * genuinely has transparency.
+ *
+ * Exported because the server's link-preview encoder flattens onto the same
+ * ground for the same reason, and one white spelled once keeps the two passes
+ * from drifting apart.
  */
-const JPEG_FLATTEN_GROUND = "#ffffff";
+export const JPEG_FLATTEN_GROUND = "#ffffff";
 
 /**
  * Decode `file`, downscale it under the edge cap, and re-encode it as JPEG.

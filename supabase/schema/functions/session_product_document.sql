@@ -9,6 +9,7 @@ CREATE FUNCTION public.session_product_document(p_product public.products) RETUR
   SELECT jsonb_build_object(
     'id',                   p_product.id,
     'product_type',         p_product.product_type,
+    'tag',                  p_product.tag,
     'topic',                p_product.topic,
     'spoken_language_code', p_product.spoken_language_code,
     'timezone',             p_product.timezone,
@@ -60,7 +61,7 @@ $$;
 -- Name: FUNCTION session_product_document(p_product public.products); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.session_product_document(p_product public.products) IS 'Internal: the ONE description of the product a session belongs to, as every substitution surface states it — id, type, topic, spoken language, timezone, the remote flag, the venue (site_name, the location''s name on an in-person product and null on a remote one, tested on is_remote because a remote municipality club still carries a location), the term dates, the translations (locale, name, and the short teaser as `description`) and the schedule slots. Called by get_open_substitution_requests, get_admin_substitution_requests and get_my_assigned_products, so the gedus'' pool, the admin Substitutions page and the sub''s own card on My SOG cannot disagree about the session, and a fact added here reaches all three. It carries NOTHING about a person, which is what makes it safe to share: who is absent, why, who offered and what the role pays stay in each reader''s own body under that reader''s own rules. Slots and never an instant — the client owns the calendar maths. SECURITY INVOKER and reached only from inside SECURITY DEFINER readers, so it reads as their owner; not granted to `authenticated`.';
+COMMENT ON FUNCTION public.session_product_document(p_product public.products) IS 'Internal: the ONE description of the product a session belongs to, as every substitution surface states it — id, type, tag (null when untagged), topic, spoken language, timezone, the remote flag, the venue (site_name, the location''s name on an in-person product and null on a remote one, tested on is_remote because a remote municipality club still carries a location), the term dates, the translations (locale, name, and the short teaser as `description`) and the schedule slots. The type and tag are what the app reads the qualifications a session requires from. Called by get_open_substitution_requests, get_admin_substitution_requests and get_my_assigned_products, so the gedus'' pool, the admin Substitutions page and the sub''s own card on My SOG cannot disagree about the session, and a fact added here reaches all three. It carries NOTHING about a person, which is what makes it safe to share: who is absent, why, who offered and what the role pays stay in each reader''s own body under that reader''s own rules. Slots and never an instant — the client owns the calendar maths. SECURITY INVOKER and reached only from inside SECURITY DEFINER readers, so it reads as their owner; not granted to `authenticated`.';
 
 
 --

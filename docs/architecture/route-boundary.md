@@ -73,11 +73,13 @@ the end of §5 — how bodies are parsed, how errors map, and what is tested.*
 47 `route.ts` files, 50 handlers (three files export two methods). Auth postures found in
 the wild — this taxonomy is exhaustive over today's surface, and §3.1 adopts it:
 
-**The surface is `src/app/api/**`, not every route handler in the app.** The two Open
-Graph card handlers sit at the app root outside it — they are public images reached by a
-crawler, deliberately excluded from the proxy so they stay cacheable, and they have no
-caller to authenticate — so they carry no registry entry and are covered by an
-integration test that renders both cards instead.
+**The surface is `src/app/api/**`, not every route handler in the app.** The Open Graph
+image handlers under `src/app/opengraph-images/` (four today: two flat cards, the team
+card and the stored-picture rendition) sit outside it — they are public images reached by
+a crawler, deliberately excluded from the proxy so they stay cacheable, and they have no
+caller to authenticate — so they carry no registry entry and are covered instead by their
+integration tests and by the unit test that holds every one of them to the preview
+budget.
 
 | Posture | Handlers | Notes |
 |---|---|---|

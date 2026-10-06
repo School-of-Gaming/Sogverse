@@ -4,6 +4,7 @@ export {
   useAdminSubstitutionQueue,
   useApproveSessionSubstitutionOffer,
   useClearSessionSubstitution,
+  useMyLiveSubstitutionRequests,
   useOfferSessionSubstitution,
   useOpenSubstitutionRequests,
   useRequestSessionSubstitution,
@@ -18,6 +19,7 @@ export {
   adminSubstitutionRequest,
   adminSubstitutionRequests,
   anonymousSubstitutionRequestDocument,
+  liveSubstitutionRequests,
   substitutionReason,
   substitutionRequestDocument,
   substitutionRequestStatus,
@@ -29,11 +31,13 @@ export {
 } from "./session-substitution.contracts";
 export {
   seatSubstituteFailureKey,
+  substitutionOfferFailureKey,
   substitutionRequestFailureKey,
   substitutionRequestRefusalMeansAlreadyFiled,
 } from "./session-substitution.refusals";
 export type {
   SeatSubstituteFailureKey,
+  SubstitutionOfferFailureKey,
   SubstitutionRequestFailureKey,
 } from "./session-substitution.refusals";
 export type {

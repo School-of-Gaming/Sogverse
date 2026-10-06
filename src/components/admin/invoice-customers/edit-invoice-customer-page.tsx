@@ -15,10 +15,10 @@ import { invoiceCustomerDraft } from "./invoice-customer-draft";
 /**
  * `/admin/invoice-customers/[id]` — one customer, which is its edit form.
  *
- * There is no read-only page between the list and the form. A customer is eight
+ * There is no read-only page between the list and the form. A customer is nine
  * fields with no history, no children and nothing derived from it; the list
  * already carries the three that tell two apart, and a detail page would be the
- * same eight values printed twice in one tree.
+ * same nine values printed twice in one tree.
  *
  * **The title is the page's own and not the customer's name**, which is a layout
  * decision: the name arrives a round trip after the heading is painted, and a
