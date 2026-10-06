@@ -5,6 +5,13 @@ to be found by search engines and AI apps first and people second. The model is 
 Library's (`src/services/library/CLAUDE.md`) wherever this file says nothing different;
 the sections are the registry's, in `src/lib/landing-pages/sections/`.
 
+**Pages are written only through the MCP server** (`src/lib/mcp/`), by an AI app acting as
+the admin. In Sogverse an admin has the list of pages and, for each, a status page that is
+read-only apart from publishing: per language, complete or what is still missing, its
+preview and live links, and its slug and whether that is fixed; for the page, whether it
+has unpublished changes, who last saved it and through which AI app, and Publish and
+Unpublish.
+
 **A page has two copies, and a published row existing is what "live" means.** The working
 copy (`landing_pages`) is admin-only; the published copy (`landing_page_publications`) is
 public, with no flag beside it. A save changes only the working copy; publishing copies it
@@ -20,10 +27,9 @@ must be the same in every language is structure. An item inside a section (a poi
 step, a question, a picture of an image section) has an id of its own and its words are
 keyed by it, so reordering or removing items never misaligns another language's words.
 
-**Writes are whole or partial, and the partial ones are two pieces that never overwrite
-each other.** The editor saves whole: the structure and every version, the set replacing
-what is stored, so a language left out is removed. Everything that edits a piece at a time
-(the MCP tools) writes either the structure alone or one language's words alone. A
+**A page is created whole, and every later write is one of two pieces that never
+overwrite each other.** Creating sends the structure and the first versions together;
+after that, a write carries either the structure alone or one language's words alone. A
 structure write that removes a section drops that section's words from every language —
 the database does it, whoever wrote the structure — and nothing else a structure write
 does touches the words. A one-language write is checked against the structure as it is at
@@ -36,12 +42,16 @@ reads, and a DB test runs both halves over one set of generated cases and requir
 same answer. A change to a type's required words is therefore two edits, and the test
 fails until both are made. Completeness depends on the structure, so it is recomputed for
 every version whenever the structure changes: adding a section to a live page makes every
-live language incomplete until its words are written, and the editor has to say so,
-because publishing then would leave those languages out — or, with none left complete,
-refuse.
+live language incomplete until its words are written, and the status page and the MCP
+tools say so, because publishing then would leave those languages out — or, with none left
+complete, refuse.
 
 **One Publish puts every complete version live at once**, leaves the incomplete ones in
-the working copy, and refuses a page with none complete.
+the working copy, and refuses a page with none complete. What a publish would do — the
+languages going live, those left out, the live ones taken down, and the slugs a first
+publish makes permanent — is forecast from one admin read by one pure function in this
+directory, which the status page shows before Publish is confirmed and the MCP tools hand
+the AI app before it publishes. The database still decides; the forecast is never a gate.
 
 **"Unpublished changes" compares what publishing would copy with what is live** — the
 structure's digest and, for the complete versions, their short fields and the digest of
@@ -79,8 +89,8 @@ Either moves the working copy's "last saved" time and saver, as a cover removal 
 **The working copy records who last saved it, and through which AI app**, by the same
 trigger pattern as the Library: no writer passes either, and publishing moves neither.
 
-**Every write passes through one link hook in the service before it is sent**, so the
-editor and the MCP tools are held to the same links: own-site links in the markdown and in
+**Every write passes through one link hook in the service before it is sent**, so every
+writer is held to the same links: own-site links in the markdown and in
 button targets are stored canonical there, a slug address at the id of the live page it
 names. A link leading to no page — or to a slug no live page has — refuses the write as a
 `check_violation` naming the link, so it reaches the admin like the database's own

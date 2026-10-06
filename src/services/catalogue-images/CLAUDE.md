@@ -136,8 +136,8 @@ one parent key. The Library's admin detail is the opposite case and *must* be re
 a replace or a removal moves the working copy's cover in the database, and a detail left
 cached makes the open editor read the followed cover as an unsaved change. The Library
 editor seeds its form once per article id, so that refetch never touches the admin's
-typing; a landing page's admin detail is refetched for the same reason, and its editor
-must seed the same way.
+typing. A landing page's admin detail is refetched too, since its status page shows the
+last-saved time and saver a replace or a removal moves, and holds no form.
 
 ## Purposes, buckets and exact sizes
 
