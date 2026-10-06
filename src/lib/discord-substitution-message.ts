@@ -9,7 +9,7 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { type GeduUpcomingSession } from "@/lib/gedu-upcoming-sessions";
-import { formatDate, formatTimeRange } from "@/lib/utils";
+import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/utils";
 import { loadMessages, type Messages } from "@/i18n/messages";
 import { SUBSTITUTION_REASON_NOTE_MAX_LENGTH } from "@/services/session-substitution/session-substitution.contracts";
 import { Constants, type SubstitutionReason } from "@/types";
@@ -33,8 +33,6 @@ import { Constants, type SubstitutionReason } from "@/types";
 
 /** Only the caller sees the message. */
 export const DISCORD_FLAG_EPHEMERAL = 1 << 6;
-/** No link preview under the message. */
-export const DISCORD_FLAG_SUPPRESS_EMBEDS = 1 << 2;
 /** The message is built from layout components and carries no `content`. */
 export const DISCORD_FLAG_IS_COMPONENTS_V2 = 1 << 15;
 
@@ -276,6 +274,19 @@ export function discordSessionWhen(
   })}, ${formatTimeRange(session.startsAt, session.endsAt, locale, session.timezone)}`;
 }
 
+/**
+ * A session known only by its product-local date — "Wed 18 Mar" — for the two
+ * places that have nothing else to name it by. A zoneless calendar date, so it
+ * renders UTC-pinned rather than re-anchored to any zone.
+ */
+function discordSessionDate(sessionDate: string, locale: SupportedLocale): string {
+  return formatDateOnly(sessionDate, locale, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
 /** What it is — product and group — as the web picker's row names it. */
 function sessionWhat(session: GeduUpcomingSession): string {
   return session.groupName === null
@@ -408,7 +419,7 @@ function findOption(node: unknown, value: string): PickedSessionOption | null {
  *
  * Answered without a database read, so the session line is the option the
  * gedu picked, as the pressed message offered it; without one it falls back to
- * the bare date.
+ * the session's date alone.
  */
 export function buildRequestModal({
   copy,
@@ -423,7 +434,7 @@ export function buildRequestModal({
 }): DiscordModal {
   const sessionLine =
     picked === null
-      ? `**${sessionDate}**`
+      ? `**${discordSessionDate(sessionDate, copy.locale)}**`
       : `**${picked.label}**${picked.description === null ? "" : `\n${picked.description}`}`;
 
   return {
@@ -469,7 +480,7 @@ export function buildRequestModal({
 /**
  * Filed: the confirmation line, about the session filed for. A filing for a
  * session the list does not carry — the write accepted what the list left out —
- * has only its date to go on, so it is named by that bare date, as the request
+ * has only its date to go on, so it is named by that date alone, as the request
  * pop-up names one, under the web's own "you've asked" line.
  */
 export function buildFiledMessage({
@@ -486,7 +497,7 @@ export function buildFiledMessage({
   if (!("startsAt" in session)) {
     return message(copy, logoUrl, {
       body: [
-        text(`**${session.sessionDate}**`),
+        text(`**${discordSessionDate(session.sessionDate, copy.locale)}**`),
         text(`✅ ${copy.form("substitutionRequestStatusOpen")}`),
       ],
     });

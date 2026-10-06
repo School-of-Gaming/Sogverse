@@ -81,8 +81,8 @@ export function GeduSubstitutionsPage({
   /**
    * The gedu's own live requests, prefetched by the route — or `null` when that
    * read failed, which sends the client to ask again. Until it answers, the
-   * picker disables only what it filed itself, and the write's own refusal
-   * covers the rest.
+   * file-an-absence entry renders nothing: the picker snapshots these keys when
+   * it opens, and a dialog opened before the answer would hold none of them.
    */
   initialLiveRequests: SubstitutionRequestDocument[] | null;
   /**
@@ -108,9 +108,15 @@ export function GeduSubstitutionsPage({
     initialLiveRequests === null ? undefined : { initialData: initialLiveRequests },
   );
 
-  /** The sessions already asked for, which the picker shows disabled. */
+  /**
+   * The sessions already asked for, which the picker shows disabled — or
+   * `undefined` while the browser is still asking, when the entry is withheld.
+   */
   const alreadyRequested = useMemo(
-    () => [...alreadyRequestedSessionKeys(liveRequests ?? [])],
+    () =>
+      liveRequests === undefined
+        ? undefined
+        : [...alreadyRequestedSessionKeys(liveRequests)],
     [liveRequests],
   );
 
@@ -156,26 +162,31 @@ export function GeduSubstitutionsPage({
   return (
     <GeduSubstitutionsPageBody
       fileAbsence={
-        <GeduFileAbsenceEntry
-          sessions={upcomingSessions}
-          filedSessionKeys={alreadyRequested}
-          resolveWorkspaceHref={(session) =>
-            filedWorkspaceHref(
-              workspaceHrefs[
-                geduAssignmentKey(session.productId, session.groupId)
-              ],
-              session.groupId,
-            )
-          }
-          onFile={async (session, draft) => {
-            await requestSubstitution.mutateAsync({
-              groupId: session.groupId,
-              sessionDate: session.sessionDate,
-              reason: draft.reason,
-              reasonNote: draft.note,
-            });
-          }}
-        />
+        // Withheld until the live-requests read has answered: the picker takes
+        // its already-asked keys once, at the press that opens it, so an entry
+        // pressable before the answer could open a dialog that knows none.
+        alreadyRequested === undefined ? null : (
+          <GeduFileAbsenceEntry
+            sessions={upcomingSessions}
+            filedSessionKeys={alreadyRequested}
+            resolveWorkspaceHref={(session) =>
+              filedWorkspaceHref(
+                workspaceHrefs[
+                  geduAssignmentKey(session.productId, session.groupId)
+                ],
+                session.groupId,
+              )
+            }
+            onFile={async (session, draft) => {
+              await requestSubstitution.mutateAsync({
+                groupId: session.groupId,
+                sessionDate: session.sessionDate,
+                reason: draft.reason,
+                reasonNote: draft.note,
+              });
+            }}
+          />
+        )
       }
       // `null` for the account that may substitute for nothing, and only for
       // that account: an answer that has not arrived is the section's own

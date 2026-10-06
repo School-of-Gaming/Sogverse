@@ -462,7 +462,7 @@ async function sendSubStep(
       // already asked for as well as those that ended, were cancelled or lost
       // their seat, and only the write can tell those apart — so its own
       // refusal is the answer. Where it accepts one anyway, the confirmation
-      // names the session by its bare date.
+      // names the session by its date alone.
       const session = sessions.find((candidate) => candidate.key === key) ?? null;
       try {
         await fileDiscordSubstitutionRequest({

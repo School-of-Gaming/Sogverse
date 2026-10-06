@@ -877,11 +877,11 @@ describe("POST /api/discord/interactions — /sub", () => {
     expect(mockFileRequest).not.toHaveBeenCalled();
   });
 
-  it("names the session by its bare date when the pressed message does not carry it", async () => {
+  it("names the session by its date alone when the pressed message does not carry it", async () => {
     const { response } = await press("sub:s:en", [`${GROUP_A}:2026-10-13`]);
 
     expect(response.type).toBe(9);
-    expect(response.data.components[0]).toEqual({ type: 10, content: "**2026-10-13**" });
+    expect(response.data.components[0]).toEqual({ type: 10, content: "**Tue, Oct 13**" });
   });
 
   it("acknowledges a pick that is not a session, and opens nothing", async () => {
@@ -983,10 +983,10 @@ describe("POST /api/discord/interactions — /sub", () => {
     expect(ids(patched)).toEqual(["sub:l"]);
   });
 
-  it("names a filed session the list does not carry by its bare date", async () => {
+  it("names a filed session the list does not carry by its date alone", async () => {
     const { patched } = await submit("2026-12-01");
 
-    expect(texts(patched)).toContain("**2026-12-01**");
+    expect(texts(patched)).toContain("**Tue, Dec 1**");
     expect(texts(patched)).toContain("You’ve asked for a substitute for this session. Waiting for one.");
   });
 

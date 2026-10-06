@@ -288,6 +288,7 @@ function renderEntry({
 function rerenderEntry(
   rerender: ReturnType<typeof renderEntry>["rerender"],
   sessions: ReturnType<typeof entryFixture>["upcomingSessions"],
+  filedSessionKeys: string[] = [],
 ) {
   rerender(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -295,7 +296,7 @@ function rerenderEntry(
         <NowProvider initialNow={NOW}>
           <GeduFileAbsenceEntry
             sessions={sessions}
-            filedSessionKeys={[]}
+            filedSessionKeys={filedSessionKeys}
             resolveWorkspaceHref={() => null}
             onFile={() => Promise.resolve()}
           />
@@ -790,6 +791,29 @@ describe("the page's file-an-absence entry", () => {
 
     expect(screen.getByText(copy.filePickTitle)).toBeTruthy();
     expect(pickerRows().length).toBeGreaterThan(0);
+  });
+
+  /**
+   * The live-requests read refetches on window focus, so a filing made from
+   * Discord can land while the dialog is up. A row that turned disabled then
+   * would grow its reason line and push every row below it down — so the keys
+   * are frozen at the press, and the next open picks them up.
+   */
+  it("does not disable a row under an open dialog when the server's keys change", () => {
+    const sessions = entryFixture().upcomingSessions;
+    const { rerender } = renderEntry({ sessions });
+    openPicker();
+    expect(pickerRows().some((row) => row.hasAttribute("disabled"))).toBe(false);
+
+    rerenderEntry(rerender, sessions, [sessions[0].key]);
+
+    expect(pickerRows().some((row) => row.hasAttribute("disabled"))).toBe(false);
+    expect(document.body.textContent).not.toContain(copy.fileAlreadyRequested);
+
+    fireEvent.click(screen.getByRole("button", { name: messages.common.cancel }));
+    openPicker();
+    expect(pickerRows()[0].hasAttribute("disabled")).toBe(true);
+    expect(pickerRows()[0].textContent).toContain(copy.fileAlreadyRequested);
   });
 
   it("picks the fresher list up on the next open", () => {

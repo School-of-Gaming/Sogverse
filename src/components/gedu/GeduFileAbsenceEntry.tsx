@@ -79,7 +79,8 @@ export function GeduFileAbsenceEntry({
    * component adds what it has just written itself, which covers the moment
    * between a filing and that read's refetch; the write's own refusal is the
    * backstop for a filing made elsewhere meanwhile, and it is read inside the
-   * dialog.
+   * dialog. Read once per open: a change while the dialog is up shows on the
+   * next open, never under the reader.
    */
   filedSessionKeys?: readonly string[];
   /**
@@ -150,6 +151,20 @@ export function GeduFileAbsenceEntry({
   const [openSessions, setOpenSessions] = useState<
     readonly GeduUpcomingSession[] | null
   >(null);
+  /**
+   * The server's already-asked keys, captured at the same press as the rows.
+   *
+   * **Snapshotted, not live, and that is load-bearing**: a disabled row grows a
+   * reason line, so a key arriving while the dialog is up — the live-requests
+   * read refetching on window focus after a filing from Discord — would push
+   * every row below it down, on data's own schedule. A key that lands after the
+   * press is refused by the write instead, inside the dialog. What this
+   * component files itself (`filedHere`) stays live, because that change is the
+   * gedu's own action.
+   */
+  const [openFiledKeys, setOpenFiledKeys] = useState<readonly string[] | null>(
+    null,
+  );
 
   // Nothing to file against and no dialog over a snapshot of one: an account
   // awaiting certification holds no assignments, and a button that could only
@@ -157,12 +172,16 @@ export function GeduFileAbsenceEntry({
   // an open dialog from vanishing when the last of them ends.
   if (sessions.length === 0 && openSessions === null) return null;
 
-  const unavailable = new Set([...filedSessionKeys, ...filedHere]);
+  const unavailable = new Set([
+    ...(openFiledKeys ?? filedSessionKeys),
+    ...filedHere,
+  ]);
 
   const close = () => {
     if (committing) return;
     setOpen(false);
     setOpenSessions(null);
+    setOpenFiledKeys(null);
     setPicked(null);
     setError(null);
     setGroupFilter("");
@@ -179,6 +198,7 @@ export function GeduFileAbsenceEntry({
       setFiledHere((was) => [...was, picked.key]);
       setOpen(false);
       setOpenSessions(null);
+      setOpenFiledKeys(null);
       setPicked(null);
       setGroupFilter("");
       setShowingLater(false);
@@ -214,7 +234,10 @@ export function GeduFileAbsenceEntry({
           setError(null);
           // Captured here, in the handler, so the dialog opens over the list as
           // it stood at the press and no later tick can rewrite it underneath.
+          // The already-asked keys are taken in the same handler, so the rows
+          // and their disabled states describe one moment.
           setOpenSessions(sessions);
+          setOpenFiledKeys(filedSessionKeys);
           setOpen(true);
         }}
       >

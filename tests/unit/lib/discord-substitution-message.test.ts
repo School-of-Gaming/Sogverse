@@ -348,10 +348,13 @@ describe("the request modal", () => {
     });
   });
 
-  it("falls back to the bare date when the picked option is not known", () => {
+  it("falls back to the session's date, in the copy's locale, when the picked option is not known", () => {
     const modal = buildRequestModal({ copy: en, groupId: GROUP_A, sessionDate: "2026-10-06", picked: null });
+    expect(modalTexts(modal.components)[0]).toBe("**Tue, Oct 6**");
 
-    expect(modalTexts(modal.components)[0]).toBe("**2026-10-06**");
+    // Never the raw ISO date, whatever the locale.
+    const finnish = buildRequestModal({ copy: fi, groupId: GROUP_A, sessionDate: "2026-10-06", picked: null });
+    expect(modalTexts(finnish.components)[0]).toBe("**ti 6.10.**");
   });
 
   it("fits every locale's modal inside Discord's caps", async () => {
@@ -401,14 +404,14 @@ describe("the outcome", () => {
     expect(buttons(message)).toHaveLength(0);
   });
 
-  it("names a session the list does not carry by its bare date", () => {
+  it("names a session the list does not carry by its date, in the copy's locale", () => {
     const message = buildFiledMessage({
       copy: en,
       logoUrl: LOGO,
       session: { sessionDate: "2026-12-01" },
     });
 
-    expect(texts(message)).toContain("**2026-12-01**");
+    expect(texts(message)).toContain("**Tue, Dec 1**");
     expect(texts(message)).toContain(
       "✅ You’ve asked for a substitute for this session. Waiting for one.",
     );
