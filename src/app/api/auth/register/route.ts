@@ -352,8 +352,9 @@ export const POST = defineRoute({
       reportMetaConversion(
         request,
         { event: "account_created", sourcePath: ROUTES.register },
-        // The account this request just created — the parent's own address.
-        { email: storedEmail },
+        // The account this request just created — the parent's own id and
+        // address.
+        { id: userId, email: storedEmail },
       ),
     );
 

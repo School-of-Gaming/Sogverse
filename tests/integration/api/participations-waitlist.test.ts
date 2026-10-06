@@ -897,8 +897,8 @@ describe("POST /api/participations/waitlist", () => {
       const [request, conversion, account] =
         mockReportMetaConversion.mock.calls[0];
       expect(request).toBeInstanceOf(Request);
-      // The signed-in customer's own address, never the participant's.
-      expect(account).toEqual({ email: "parent@example.test" });
+      // The signed-in customer's own id and address, never the participant's.
+      expect(account).toEqual({ id: CUSTOMER_ID, email: "parent@example.test" });
       // And which product the place in line is for, as the shared builder
       // describes it. The price it carries never reaches Meta: the report
       // itself drops value and currency from every waitlisted enrolment

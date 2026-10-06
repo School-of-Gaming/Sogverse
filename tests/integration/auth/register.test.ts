@@ -298,8 +298,9 @@ describe("POST /api/auth/register", () => {
     const [request, conversion, account] =
       mockReportMetaConversion.mock.calls[0];
     expect(request).toBeInstanceOf(Request);
-    // The address of the account this request just created, as GoTrue stored it.
-    expect(account).toEqual({ email: "parent@example.test" });
+    // The id and address of the account this request just created, the address
+    // as GoTrue stored it.
+    expect(account).toEqual({ id: NEW_USER_ID, email: "parent@example.test" });
     // A bare account is a lead — someone reachable who has committed to
     // nothing — and the page it happened on is the registration form, stated
     // rather than taken from this route's own URL.

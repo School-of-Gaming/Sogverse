@@ -477,7 +477,7 @@ describe("POST /api/auth/complete-registration", () => {
       event: "account_created",
       sourcePath: ROUTES.register,
     });
-    // The signed-in account's own address, from its profile.
-    expect(account).toEqual({ email: EMAIL });
+    // The signed-in account's own id and address, from its profile.
+    expect(account).toEqual({ id: USER_ID, email: EMAIL });
   });
 });

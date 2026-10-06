@@ -31,18 +31,21 @@ import { getOrigin } from "@/lib/url";
  *
  * **What is sent about a person, exhaustively:** the user agent, the IP address
  * the request arrived from, Meta's own `_fbp` / `_fbc` cookies if this browser
- * carries them, and a SHA-256 hash of the parent's own account email — hashed
- * here, so the address itself is never sent and never logged, and sent whether
- * or not the address has been verified (standard practice, accepted as such).
- * No phone number, no name, no user id, no participation id, and nothing about
- * a child beyond the product named below — not their name, not their age, not
- * their account, not their address. This list is the
- * promise the privacy policy makes; a field added here is a policy edit.
+ * carries them, a SHA-256 hash of the parent's own account email, and a SHA-256
+ * hash of the parent's own account id (Meta's `external_id`). Both are hashed
+ * here, so neither the address nor the id itself is ever sent or logged; the
+ * address is sent whether or not it has been verified (standard practice,
+ * accepted as such). The id hash is stable for the account, which is what lets
+ * Meta recognise the same parent across visits and devices. No phone number,
+ * no name, no participation id, and nothing about a child beyond the product
+ * named below — not their name, not their age, not their account or its id,
+ * not their address. This list is the promise the privacy policy makes; a
+ * field added here is a policy edit.
  *
  * **What is sent about the enrolment** is `outcome`, one of two fixed words,
  * and the product it was for in Meta's standard product fields — its id, name,
  * topic and price (no price on a queue place), the same facts the product's
- * public page shows anyone. On the same event as the email hash, so Meta
+ * public page shows anyone. On the same event as the two hashes, so Meta
  * learns that an identifiable parent signed up for that named club, camp or
  * event — which the privacy policy states. Nothing about the child goes with
  * it: not their name, age, account or anything else.
@@ -105,12 +108,19 @@ export type MetaConversion =
 /**
  * The account the request acts as — the parent it just registered, or the
  * signed-in customer — and never anyone else. Every caller is a customer-only
- * route, so this is always the parent's own address and never a gamer's.
- * `null` when the caller has none to hand: the report still goes, without the
- * hashed email.
+ * route, so this is always the parent's own address and account id, and never
+ * a gamer's or a participant's. Either is `null` when the caller has none to
+ * hand: the report still goes, without that field's hash.
  */
 export interface MetaRequestingAccount {
+  /** The parent's own account id — their auth user, which is their profile. */
+  id: string | null;
   email: string | null;
+}
+
+/** SHA-256 as lowercase hex, the form Meta expects every hashed field in. */
+function sha256Hex(value: string): string {
+  return createHash("sha256").update(value).digest("hex");
 }
 
 /**
@@ -119,9 +129,17 @@ export interface MetaRequestingAccount {
  * the plain address never leaves this function.
  */
 function hashEmailForMeta(email: string): string {
-  return createHash("sha256")
-    .update(email.trim().toLowerCase())
-    .digest("hex");
+  return sha256Hex(email.trim().toLowerCase());
+}
+
+/**
+ * The account id as Meta's `external_id`: trimmed, lowercased, SHA-256,
+ * lowercase hex. Meta never sees the id itself, only a value that is the same
+ * every time this parent converts — so it joins their events to one another,
+ * and to nothing of ours it could read back.
+ */
+function hashAccountIdForMeta(id: string): string {
+  return sha256Hex(id.trim().toLowerCase());
 }
 
 function eventNameFor(conversion: MetaConversion): string {
@@ -192,6 +210,11 @@ export async function reportMetaConversion(
     // an address to hash.
     const email = account.email?.trim();
     const emailHash = email ? hashEmailForMeta(email) : undefined;
+    // The same for the account id, as Meta's `external_id`.
+    const accountId = account.id?.trim();
+    const accountIdHash = accountId
+      ? hashAccountIdForMeta(accountId)
+      : undefined;
 
     const event = {
       event_name: eventNameFor(conversion),
@@ -210,6 +233,7 @@ export async function reportMetaConversion(
         ...(fbp && { fbp }),
         ...(fbc && { fbc }),
         ...(emailHash && { em: [emailHash] }),
+        ...(accountIdHash && { external_id: [accountIdHash] }),
       },
       ...(conversion.event === "enrolment" && {
         custom_data: enrolmentCustomData(conversion),

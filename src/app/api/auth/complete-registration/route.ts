@@ -234,7 +234,7 @@ export const POST = defineRoute({
       reportMetaConversion(
         request,
         { event: "account_created", sourcePath: ROUTES.register },
-        { email: profile.email },
+        { id: userId, email: profile.email },
       ),
     );
 

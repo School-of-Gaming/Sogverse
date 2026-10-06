@@ -188,7 +188,7 @@ waitlisted enrolment drops the value and currency in the server report itself, w
 caller passed, because nobody has paid or committed to pay and a priced queue would train a
 campaign to count a full product's waitlist as revenue. On the browser's two product events
 these are only facts the product's public page shows anyone. On the server's enrolment they
-ride beside the parent's email hash, so Meta learns that an identifiable parent signed up
+ride beside the parent's email and account-id hashes, so Meta learns that an identifiable parent signed up
 for that named club, camp or event — which the privacy policy says.
 
 Each server report is gated on the **request's own consent cookie**, so a conversion for
@@ -198,13 +198,15 @@ product row, never by the URL it was reached from**. No role check is needed on 
 the three routes are customer-only, so a gamer cannot reach one.
 
 **What identifies a person in a server report, exhaustively:** the user agent, the IP the
-request arrived from, Meta's own browser and click cookies if the browser carries them, and
-a SHA-256 hash of the parent's own account email (Meta's advanced matching) — hashed on our
-server, so the address itself is never sent or logged, and never a gamer's address. The
-address is sent whether or not it has been verified; that is standard practice and
-accepted as such. With the product fields above, that tells Meta which product an
-identifiable parent signed up for. No name, no user id, and nothing about a child beyond
-that — not their name, age, account or anything else. The privacy policy's Meta entry says
+request arrived from, Meta's own browser and click cookies if the browser carries them, a
+SHA-256 hash of the parent's own account email (Meta's advanced matching), and a SHA-256
+hash of the parent's own account id (Meta's `external_id`) — both hashed on our server, so
+neither the address nor the id is ever sent or logged, and never a gamer's. The address is
+sent whether or not it has been verified; that is standard practice and accepted as such.
+The id hash is the same on every report for that account, so Meta can join one parent's
+events across visits and devices. With the product fields above, that tells Meta which
+product an identifiable parent signed up for. No name, and nothing about a child beyond
+that — not their name, age, account or its id, or anything else. The privacy policy's Meta entry says
 this in plain words; adding a field there is a privacy-policy edit.
 
 A completed purchase is reported nowhere today. When it is, it belongs on the same
