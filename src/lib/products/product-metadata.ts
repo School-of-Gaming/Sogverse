@@ -7,11 +7,11 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import {
   translatedPageMetadataAlternates,
   type TranslatedPagePath,
 } from "@/lib/metadata/translated-page";
+import { ogPictureImage } from "@/lib/og/picture";
 import { createClient } from "@/lib/supabase/server";
 import { ProductsService } from "@/services/products/products.service";
 
@@ -167,15 +167,17 @@ export async function buildProductMetadata(
   // there is nothing here to choose a better break than they will. An empty
   // one omits the key rather than emitting a blank description.
   const description = translation.short_description || undefined;
-  const image = catalogueImageSrc("product", product.image_path);
-  // **No `width`/`height`.** Every product picture uploaded or replaced now is
-  // cropped to a 1200×800 JPEG, and the upload routes refuse anything else —
-  // but a product can still be linked to an older catalogue entry stored at
-  // some other size, so the size of the file behind a given product is not
-  // known here. Declaring dimensions the file may not have is worse than
-  // declaring none, because the consumers that trust them reserve the frame
-  // before fetching and then letterbox or mis-crop what actually arrives.
-  // Omitted, they fetch and measure, which is slower and right.
+  // **The picture is a preview rendition, not the stored object.** A stored
+  // product picture can be a legacy PNG of a couple of megabytes, and WhatsApp
+  // drops any preview image past roughly 300 KB without a word, so the card
+  // points at the picture route (`ogPictureImage`), which serves the same
+  // picture under the preview byte budget. That rendition's size is known
+  // before it is fetched: the route crops every product picture to one size,
+  // `ogPictureSize("product")`, whatever is stored — a legacy entry uploaded
+  // before sizes were enforced can be any shape, so it is the crop, not the
+  // stored bytes, that makes the size true. So `width` and `height` are
+  // declared, and a consumer that trusts them reserves the right frame instead
+  // of measuring.
   //
   // **A product with no picture falls back to the parent's resolved images —
   // the site-wide card the `[locale]` layout emits at this URL's locale — and
@@ -183,9 +185,10 @@ export async function buildProductMetadata(
   // rather than merging it, so declaring the block at all discards the layout's
   // images, and `{ images: undefined }` is a declared, empty one. An imageless
   // product would then emit no `og:image` whatsoever, which is strictly worse
-  // than the card it used to inherit.
-  const images = image
-    ? [{ url: image, alt: translation.name }]
+  // than the card it used to inherit. `image_path` is tested for truthiness, as
+  // every reader of it is: an empty string means no picture, like null.
+  const images = product.image_path
+    ? [ogPictureImage("product", product.image_path, translation.name)]
     : (await parent).openGraph?.images;
 
   const alternates = (await promoted)

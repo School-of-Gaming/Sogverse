@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { PREVIEW_IMAGE_BUDGET_BYTES } from "@/lib/images/encode-within-budget.server";
 
 // The real catalogs behind a stand-in for the RSC-only `getTranslations`: under
 // vitest, next-intl resolves to its client build, whose server API throws. The
@@ -45,7 +46,7 @@ const { GET: robloxCard } = await import(
  * a card has to be drawn in the locale the URL it was shared from carries, and
  * the convention gives a file no locale and no overridable URL. What is worth
  * pinning here is everything around the picture — the parameter is validated,
- * the response is a cacheable PNG — because a card that 500s or that is
+ * the response is a cacheable PNG inside the preview budget — because a card that 500s or that is
  * re-rendered per crawler fetch fails silently on a surface nobody looks at.
  *
  * The pixels themselves are not asserted: satori's output is a rendering
@@ -65,12 +66,17 @@ describe.each([
   ["site", siteCard],
   ["roblox", robloxCard],
 ] as const)("the %s card", (_name, handler) => {
-  it("renders a PNG for a locale it ships", async () => {
+  it("renders a PNG for a locale it ships, inside the preview budget", async () => {
     const response = await card(handler, "?locale=fi");
 
     expect(response.status).toBe(200);
+    // Flat colour and text: it fits the budget as the PNG it was drawn as, so
+    // it is served as one rather than re-encoded.
     expect(response.headers.get("content-type")).toBe("image/png");
-    expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(0);
+    const bytes = (await response.arrayBuffer()).byteLength;
+    expect(bytes).toBeGreaterThan(0);
+    expect(bytes).toBeLessThanOrEqual(PREVIEW_IMAGE_BUDGET_BYTES);
+    expect(response.headers.get("content-length")).toBe(String(bytes));
   });
 
   it("caches hard, because it changes only when we deploy", async () => {

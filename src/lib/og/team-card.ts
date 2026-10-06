@@ -4,6 +4,7 @@ import { DARK_THEME } from "@/lib/constants/colors";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
+import { OG_CARD_ENCODING_VERSION } from "./cards";
 
 /**
  * The team member's share card: its address, its version, the numbers the
@@ -22,8 +23,9 @@ export function teamCardPath(userId: string): string {
 /**
  * **The version of a card: a digest of everything the card shows at this
  * locale** — the photo's own version token, the names, the title, the pick and
- * the intro the locale resolves to (with the locale it resolves to). The
- * catalog copy the card also draws ("Gedu · Game Educator") is not in it: that
+ * the intro the locale resolves to (with the locale it resolves to) — and the
+ * version of how cards are encoded (`OG_CARD_ENCODING_VERSION`), so a change
+ * to the served bytes is a new address too. The catalog copy the card also draws ("Gedu · Game Educator") is not in it: that
  * changes only with a deploy, as the site cards' copy does.
  *
  * It exists for the caches we do not control. A link preview stores the image
@@ -37,6 +39,7 @@ export function teamCardVersion(
 ): string {
   const written = resolveTranslation(person.translations, locale);
   const shown = [
+    OG_CARD_ENCODING_VERSION,
     person.kind,
     person.firstName,
     person.nickname,
