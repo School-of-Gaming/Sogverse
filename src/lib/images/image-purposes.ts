@@ -51,6 +51,11 @@ export const IMAGE_PURPOSES = {
     visibility: "public",
     catalogue: { width: 1600, height: 900 },
   },
+  landing_image: {
+    bucket: "landing-images",
+    visibility: "public",
+    catalogue: { width: 1600, height: 900 },
+  },
   team_photo: { bucket: "team-photos", visibility: "private" },
   session_photo: { bucket: "session-images", visibility: "public" },
   chat_image: { bucket: "chat-images", visibility: "private" },

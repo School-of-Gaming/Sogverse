@@ -286,7 +286,12 @@ export const OUTLINE_TAGS = {
  * where they may part later, and a field that shares another's name would be
  * dragged along when that one changes.
  */
-export type MarkdownUseCase = "feed" | "marketing" | "profile" | "article";
+export type MarkdownUseCase =
+  | "feed"
+  | "marketing"
+  | "profile"
+  | "article"
+  | "landing";
 
 export interface MarkdownUseCaseDefinition {
   /** Every flag, stated — a new flag is a decision for every use case. */
@@ -323,13 +328,19 @@ export const MARKDOWN_USE_CASES: Record<MarkdownUseCase, MarkdownUseCaseDefiniti
    */
   marketing: defineUseCase({ headings: true, links: true }, "section"),
   /**
-   * **A team member's "About me", on their public page.** No headings, since
+   * **A team member's bio, on their public page.** No headings, since
    * the page already sets the heading it sits under, and no links. No heading
    * survives, so its outline is never reached; `section` is nominal.
    */
   profile: defineUseCase({ headings: false, links: false }, "section"),
   /** **A Library article's body**: admin-authored, on our own public pages. */
   article: defineUseCase({ headings: true, links: true }, "section"),
+  /**
+   * **A landing page's prose** — a text section's body, an FAQ answer:
+   * admin-authored copy on our own public pages, read by a stranger arriving
+   * from a search, so links are part of its job.
+   */
+  landing: defineUseCase({ headings: true, links: true }, "section"),
 };
 
 /**

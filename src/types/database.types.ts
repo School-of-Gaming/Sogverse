@@ -1437,6 +1437,185 @@ export type Database = {
         }
         Relationships: []
       }
+      landing_page_publication_translations: {
+        Row: {
+          locale: string
+          page_id: string
+          section_texts: Json
+          slug: string
+          summary: string
+          texts_md5: string | null
+          title: string
+        }
+        Insert: {
+          locale: string
+          page_id: string
+          section_texts: Json
+          slug: string
+          summary: string
+          texts_md5?: string | null
+          title: string
+        }
+        Update: {
+          locale?: string
+          page_id?: string
+          section_texts?: Json
+          slug?: string
+          summary?: string
+          texts_md5?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "landing_page_publication_translations_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "landing_page_publications"
+            referencedColumns: ["page_id"]
+          },
+        ]
+      }
+      landing_page_publications: {
+        Row: {
+          first_published_at: string
+          image_paths: Json
+          page_id: string
+          published_at: string
+          sections: Json
+          sections_md5: string | null
+        }
+        Insert: {
+          first_published_at: string
+          image_paths?: Json
+          page_id: string
+          published_at: string
+          sections: Json
+          sections_md5?: string | null
+        }
+        Update: {
+          first_published_at?: string
+          image_paths?: Json
+          page_id?: string
+          published_at?: string
+          sections?: Json
+          sections_md5?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "landing_page_publications_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: true
+            referencedRelation: "landing_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      landing_page_translations: {
+        Row: {
+          is_complete: boolean
+          locale: string
+          page_id: string
+          section_texts: Json
+          slug: string
+          summary: string
+          texts_md5: string | null
+          title: string
+        }
+        Insert: {
+          is_complete?: boolean
+          locale: string
+          page_id: string
+          section_texts?: Json
+          slug?: string
+          summary?: string
+          texts_md5?: string | null
+          title: string
+        }
+        Update: {
+          is_complete?: boolean
+          locale?: string
+          page_id?: string
+          section_texts?: Json
+          slug?: string
+          summary?: string
+          texts_md5?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "landing_page_translations_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "landing_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      landing_pages: {
+        Row: {
+          author_id: string | null
+          created_at: string
+          id: string
+          image_paths: Json
+          last_saved_by: string | null
+          last_saved_via: string | null
+          sections: Json
+          sections_md5: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          created_at?: string
+          id?: string
+          image_paths?: Json
+          last_saved_by?: string | null
+          last_saved_via?: string | null
+          sections: Json
+          sections_md5?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          created_at?: string
+          id?: string
+          image_paths?: Json
+          last_saved_by?: string | null
+          last_saved_via?: string | null
+          sections?: Json
+          sections_md5?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "landing_pages_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "landing_pages_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "landing_pages_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "landing_pages_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       library_article_publication_translations: {
         Row: {
           article_id: string
@@ -3635,6 +3814,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_landing_page: {
+        Args: { p_sections: Json; p_versions: Json }
+        Returns: string
+      }
       create_library_article: {
         Args: {
           p_category?: Database["public"]["Enums"]["library_article_category"]
@@ -4096,6 +4279,31 @@ export type Database = {
         }
         Returns: Json
       }
+      landing_button_is_valid: { Args: { p_button: Json }; Returns: boolean }
+      landing_sections_problem: { Args: { p_sections: Json }; Returns: string }
+      landing_sections_repointed: {
+        Args: { p_from: string; p_sections: Json; p_to: string }
+        Returns: Json
+      }
+      landing_sections_without_image: {
+        Args: { p_image: string; p_sections: Json }
+        Returns: Json
+      }
+      landing_text_is_written: { Args: { p_value: Json }; Returns: boolean }
+      landing_texts_for_sections: {
+        Args: { p_section_texts: Json; p_sections: Json }
+        Returns: Json
+      }
+      landing_version_missing: {
+        Args: {
+          p_section_texts: Json
+          p_sections: Json
+          p_slug: string
+          p_summary: string
+          p_title: string
+        }
+        Returns: string[]
+      }
       leave_my_waitlist_spot: {
         Args: { p_participation_id: string }
         Returns: Json
@@ -4149,6 +4357,7 @@ export type Database = {
         Args: { p_group_id?: string; p_participation_id: string }
         Returns: Json
       }
+      publish_landing_page: { Args: { p_id: string }; Returns: string }
       publish_library_article: { Args: { p_id: string }; Returns: string }
       record_account_consents: {
         Args: { p_customer_id: string; p_document_slugs: string[] }
@@ -4197,6 +4406,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      remove_landing_page_version: {
+        Args: { p_id: string; p_locale: string }
+        Returns: string
+      }
+      repoint_landing_images: {
+        Args: { p_from: string; p_to: string }
+        Returns: number
+      }
       repoint_library_covers: {
         Args: { p_from: string; p_to: string }
         Returns: number
@@ -4241,6 +4458,26 @@ export type Database = {
       restore_session: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
+      }
+      save_landing_page: {
+        Args: { p_id: string; p_sections: Json; p_versions: Json }
+        Returns: string
+      }
+      save_landing_page_structure: {
+        Args: { p_id: string; p_sections: Json }
+        Returns: string
+      }
+      save_landing_page_version: {
+        Args: {
+          p_default_slug?: string
+          p_id: string
+          p_locale: string
+          p_section_texts?: Json
+          p_slug?: string
+          p_summary?: string
+          p_title: string
+        }
+        Returns: string
       }
       save_library_article: {
         Args: {
@@ -4460,6 +4697,7 @@ export type Database = {
         Args: { p_code: string; p_message_id: string }
         Returns: boolean
       }
+      unpublish_landing_page: { Args: { p_id: string }; Returns: string }
       unpublish_library_article: { Args: { p_id: string }; Returns: string }
       update_invoice_customer: {
         Args: {
@@ -4527,10 +4765,22 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: Json
       }
+      write_landing_page_version: {
+        Args: {
+          p_default_slug: string
+          p_id: string
+          p_locale: string
+          p_section_texts: Json
+          p_slug: string
+          p_summary: string
+          p_title: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
-      catalogue_image_purpose: "product" | "library_cover"
+      catalogue_image_purpose: "product" | "library_cover" | "landing_image"
       chat_channel_type: "group_session"
       effective_product_status: "pending" | "running" | "completed"
       gamer_photo_consent_type: "lynx_educate"
@@ -4703,7 +4953,7 @@ export const Constants = {
   public: {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
-      catalogue_image_purpose: ["product", "library_cover"],
+      catalogue_image_purpose: ["product", "library_cover", "landing_image"],
       chat_channel_type: ["group_session"],
       effective_product_status: ["pending", "running", "completed"],
       gamer_photo_consent_type: ["lynx_educate"],

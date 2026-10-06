@@ -1,7 +1,9 @@
 import { createMcpHandler } from "mcp-handler";
 import { registerCoreTools } from "@/lib/mcp/core";
-import { registerCoverUploader } from "@/lib/mcp/cover-uploader";
+import { registerImageUploader } from "@/lib/mcp/image-uploader";
 import { registerLibraryTools } from "@/lib/mcp/library";
+import { registerLandingPageTools } from "@/lib/mcp/landing-pages";
+import { registerLandingImageTools } from "@/lib/mcp/landing-pages-images";
 import { registerLibraryCoverTools } from "@/lib/mcp/library-covers";
 
 /**
@@ -18,7 +20,9 @@ export function createSogverseMcpHandler(): (request: Request) => Promise<Respon
       registerCoreTools(server);
       registerLibraryTools(server);
       registerLibraryCoverTools(server);
-      registerCoverUploader(server);
+      registerImageUploader(server);
+      registerLandingPageTools(server);
+      registerLandingImageTools(server);
     },
     {
       serverInfo: { name: "sogverse", version: "1.0.0" },
@@ -29,7 +33,7 @@ export function createSogverseMcpHandler(): (request: Request) => Promise<Respon
         if (event.type === "REQUEST_RECEIVED") console.info(`[mcp] ${event.method}`);
       },
       instructions:
-        "Sogverse is School of Gaming's platform. This server acts as the signed-in School of Gaming admin. Call whoami first to confirm which environment you are connected to. The Library tools read, write and publish the parent-facing articles of the public Library, and choose, show and upload their covers.",
+        "Sogverse is School of Gaming's platform. This server acts as the signed-in School of Gaming admin. Call whoami first to confirm which environment you are connected to. The Library tools read, write and publish the parent-facing articles of the public Library, and choose, show and upload their covers. The landing page tools write, publish and unpublish the marketing landing pages on the public site, and choose, show and upload their pictures.",
     },
   );
 }

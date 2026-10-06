@@ -49,6 +49,8 @@
       "adminLibrary": "paq qach ghItlhmey",
       "adminLibraryArticleNew": "ghItlh chu’",
       "adminLibraryArticleEdit": "ghItlh yIchoH",
+      "adminLandingPages": "Sap ghItlhmey",
+      "adminLandingPage": "Sap ghItlh",
       "adminPlatformVision": "Sogverse naj",
       "adminGeduInvoicing": "Gedu DIlmeH ghItlh",
       "adminTools": "janmey",
@@ -658,6 +660,118 @@
       "removeLocale": "{language} yIteq",
       "languagesLabel": "Holmey"
     },
+    "landingPages": {
+      "title": "Sap ghItlhmey",
+      "subtitle": "DuSaQ, veng, malja’ qoj wanI’ ghItlhmey. nejwI’ jabbI’IDmey ’ej De’wI’ qoq Dochmey luSamnIS.",
+      "empty": "Sap ghItlh tu’lu’be’. Sogverse rarlu’bogh De’wI’ qoq lo’lu’DI’ Sap ghItlhlu’.",
+      "lastSaved": "Qav pollu’ {date}",
+      "languagesLabel": "Holmey",
+      "versionComplete": "rIn",
+      "versionIncomplete": "rInbe’ wej",
+      "search": {
+        "label": "yInej",
+        "placeholder": "pong qoj Daq yInej…",
+        "showing": "{total} Hutlh {count} yIcha’",
+        "clear": "yIteq",
+        "noMatches": "nejlIjvaD Sap ghItlh mattaHbe’."
+      },
+      "backToList": "Sap ghItlhmeyDaq yIchegh",
+      "notFound": "ngu’meH mI’vam ghaj Sap ghItlh tu’lu’be’.",
+      "loadError": "Sap ghItlhvam lI’laHbe’lu’. yIchu’qa’.",
+      "statusPage": {
+        "title": "Sap ghItlh",
+        "authoring": "Sapvam DachoHchugh, Sogverse rarlu’bogh De’wI’ qoq yItlhob.",
+        "languagesHeading": "Holmey",
+        "readiness": {
+          "noCompleteLanguage": "rInbe’ Hol. ngeHlu’meH pagh tu’lu’.",
+          "upToDate": "Qav Qavlu’pu’bogh ghItlh legh laDwI’pu’."
+        },
+        "language": {
+          "complete": "rIn",
+          "incomplete": "rInbe’",
+          "live": "Daq yIn.",
+          "notLive": "Daq yInbe’.",
+          "stillNeeded": "pIm ’e’ ghajnIS:",
+          "address": "Daq:",
+          "noAddress": "pagh",
+          "addressChanging": "DaH {address} Daq. ngeHlu’qa’DI’, Daqvam Daq choHlu’; Daq ngo’ rar mutlhwI’ Qapbe’."
+        },
+        "missing": {
+          "inSection": "{number} ’ay’ ({type}): {field}",
+          "inItem": "{number} ’ay’ ({type}), {item}: {field}",
+          "goneSection": "Sapvam ’ay’ tu’lu’be’: {field}"
+        }
+      },
+      "status": {
+        "draft": "nab",
+        "live": "yIn",
+        "changed": "choHmey ngeHbe’lu’"
+      },
+      "statusPanel": {
+        "publishedLine": "{date} ngeHlu’.",
+        "changedLine": "{date} ngeHlu’pu’bogh ghItlh legh laDwI’pu’.",
+        "savedLine": "Qav pollu’ {date}.",
+        "savedByLine": "{date} Qav polpu’ {name}.",
+        "savedByViaLine": "{date} {app} lo’taHvIS Qav polpu’ {name}.",
+        "savedByViaUnnamedLine": "{date} De’wI’ qoq lo’taHvIS Qav polpu’ {name}."
+      },
+      "viewLive": "Daqvam yIlegh",
+      "preview": "wej yIlegh",
+      "publish": "yIngeH",
+      "publishChanges": "choHmey yIngeH",
+      "unpublish": "yIngeHQo’",
+      "publishConfirm": {
+        "title": "Sap ghItlhvam DangeHneS’a’?",
+        "changesTitle": "choHmey DangeHneS’a’?",
+        "goesLive": "yIn: {languages}.",
+        "takenDown": "{count, plural, one {rInbe’qa’mo’, Daq teqlu’: {languages}.} other {rInbe’qa’mo’, Daq teqlu’: {languages}.}}",
+        "leftOut": "{count, plural, one {rInbe’mo’, ngeHlu’be’: {languages}.} other {rInbe’mo’, ngeHlu’be’: {languages}.}}",
+        "changing": "{count, plural, one {choH Daqvam; Daq ngo’ rar mutlhwI’ Qapbe’:} other {choH Daqmeyvam; Daqmey ngo’ rar mutlhwI’ Qapbe’:}}",
+        "changingItem": "{language}: {from} moj {to}"
+      },
+      "unpublishConfirm": {
+        "title": "Sap ghItlhvam DangeHQo’’a’?",
+        "description": "laDwI’pu’ nejwI’mey je tu’be’ chaH; rarwI’mey Qapbe’. naDev ratlh ghItlh; ngeHqa’laH.",
+        "confirm": "yIngeHQo’"
+      },
+      "actions": {
+        "cancel": "yImev"
+      },
+      "errors": {
+        "publishFailed": "Sap ghItlh ngeHlaHbe’lu’. yInIDqa’.",
+        "publishFailedWithReason": "Sap ghItlh ngeHlaHbe’lu’ — {reason}",
+        "unpublishFailed": "Sap ghItlh ngeHQo’laHbe’lu’. yInIDqa’.",
+        "unpublishFailedWithReason": "Sap ghItlh ngeHQo’laHbe’lu’ — {reason}"
+      },
+      "sectionTypes": {
+        "hero": "tagh",
+        "text": "ghItlh",
+        "image": "mIllogh",
+        "points": "Dochmey",
+        "steps": "mIwmey",
+        "faq": "ghel ’ej jang",
+        "cta": "ra’ ghItlh"
+      },
+      "items": {
+        "image": "mIllogh {number}",
+        "points": "Doch {number}",
+        "steps": "mIw {number}",
+        "faq": "ghel {number}"
+      },
+      "fields": {
+        "title": "pong",
+        "summary": "ghItlh mach",
+        "slug": "Daq",
+        "headline": "pong’a’",
+        "heading": "pong",
+        "body": "ghItlh",
+        "buttonLabel": "leQ per",
+        "imageAlt": "mIllogh ghItlh",
+        "alt": "mIllogh ghItlh",
+        "question": "ghel",
+        "answer": "jang"
+      }
+    },
     "geduRole": {
       "primary": "Gedu wa’DIch",
       "assistant": "Gedu boQwI’",
@@ -1102,6 +1216,13 @@
             "dropPrompt": "naDev DocH yIpum, qoj yIwIv. 16:9 ’echletvaD Dape’, qachDaq chellu’, ’ej ghItlhvamvaD DeghHom moj.",
             "outcomeAdded": "qachDaq chellu’, ’ej ghItlhvamvaD DeghHom wIvlu’.",
             "outcomeExisting": "qachDaq tu’lu’ — ghItlhvamvaD DeghHom wIvlu’."
+          },
+          "landingImage": {
+            "change": "nagh beQ yIchoH",
+            "remove": "nagh beQ yIteq",
+            "dropPrompt": "naDev DocH yIpum, qoj yIwIv. 16:9 ’echletvaD Dape’, qachDaq chellu’, ’ej navvamDaq lo’lu’.",
+            "outcomeAdded": "qachDaq chellu’, ’ej navvamvaD wIvlu’.",
+            "outcomeExisting": "qachDaq tu’lu’ — navvamvaD wIvlu’."
           }
         }
       },
@@ -1159,6 +1280,19 @@
             "removeConsequence": "{count, plural, one {latlh DawIvpa’, bIngDaq ghItlh nagh beQ Hutlh.} other {latlh DawIvpa’, bIngDaq Hoch # ghItlhmey nagh beQ luHutlh.}}",
             "removeUnused": "nagh beQvam lo’ pagh ghItlh. qachvo’ reH teqlu’.",
             "removeConfirm": "{count, plural, one {# ghItlhvo’} other {# ghItlhmeyvo’}} yIteq"
+          },
+          "landingImage": {
+            "title": "nav nagh beQmey",
+            "description": "wa’ nagh beQ lo’laH law’ navmey. naDev wIvlIj Daqvam neH choH; ’ach nagh beQ DachoHchugh qoj DateqchughvaD, Hoch lo’bogh navmey luchoH — cha’lu’bogh je.",
+            "usedBadge": "{count, plural, one {# nav} other {# navmey}}",
+            "usedBy": "nagh beQvam lo’bogh navmey",
+            "usedByNone": "nagh beQvam lo’ pagh nav.",
+            "replaceConsequence": "{count, plural, one {bIngDaq nav nagh beQ chu’ cha’ — DaH.} other {bIngDaq Hoch # navmey nagh beQ chu’ lucha’ — DaH.}}",
+            "replaceUnused": "nagh beQvam lo’ pagh nav. qachDaq DaqDaj tlhap chu’bogh.",
+            "replaceConfirm": "{count, plural, one {# navDaq} other {# navmeyDaq}} yIchoH",
+            "removeConsequence": "{count, plural, one {bIngDaq nav nagh beQvam Hutlh.} other {bIngDaq Hoch # navmey nagh beQvam luHutlh.}}",
+            "removeUnused": "nagh beQvam lo’ pagh nav. qachvo’ reH teqlu’.",
+            "removeConfirm": "{count, plural, one {# navvo’} other {# navmeyvo’}} yIteq"
           }
         }
       },
@@ -3389,6 +3523,7 @@
     "municipalityInvoicing": "veng DIlmeH ghItlh",
     "invoiceCustomers": "DIlwI’pu’",
     "libraryContent": "paq qach ghItlhmey",
+    "landingPages": "Sap ghItlhmey",
     "platformVision": "Sogverse naj",
     "geduInvoicing": "Gedu DIlmeH ghItlh",
     "camps": "pa’ Qugh",
@@ -4634,11 +4769,11 @@
       "geduTitle": "Gedu · Quj ghojmoHwI’",
       "geduAltRole": "Quj ghojmoHwI’",
       "speaks": "jatlh",
-      "aboutMe": "jIH",
+      "whoIs": "’Iv ghaH {firstName}’e’?",
       "funFact": "De’ Quch",
       "draft": {
         "shortDescription": "naDev wa’ tlhegh jIH DaghItlhbogh",
-        "longDescription": "naDev “jIH” DaghItlhbogh"
+        "longDescription": "naDev “ghaH” DaghItlhbogh"
       }
     },
     "edit": {
@@ -4666,11 +4801,11 @@
         "missing": {
           "photo": "mIllogh yIlab, vaj DawIvlaH.",
           "title": "patlhlIj yIghItlh, vaj DawIvlaH.",
-          "text": "“wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "text": "“wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
           "photoTitle": "mIllogh yIlab ’ej patlhlIj yIghItlh, vaj DawIvlaH.",
-          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
-          "titleText": "patlhlIj yIghItlh ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
-          "photoTitleText": "mIllogh yIlab, patlhlIj yIghItlh, ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH."
+          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "titleText": "patlhlIj yIghItlh ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "photoTitleText": "mIllogh yIlab, patlhlIj yIghItlh, ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH."
         }
       },
       "photo": {
@@ -4679,7 +4814,7 @@
         "replace": "mIllogh yIchoH",
         "remove": "mIllogh yIteq",
         "guidance": {
-          "intro": "naDev wa’DIch Du ghom qorDu’pu’ QujwI’pu’ je. DawIvDI’, mIllogh Dape’.",
+          "intro": "naDev wa’DIch Du ghom qorDu’pu’ QujwI’pu’ je.",
           "doHeading": "yIruch",
           "dontHeading": "yImev",
           "do": {
@@ -4706,7 +4841,6 @@
         "heading": "SoH",
         "nickname": "QujwI’pu’ jIH ponglu’:",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "ponglIjDaq cha’lu’, DaghItlhbogh rur.",
         "title": "patlh",
         "titleHint": "School of Gaming Daq Qu’lIj. mu’tlheghvam: Head of Clubs.",
         "pick": "nguvlIj"
@@ -4718,11 +4852,11 @@
         "removeLocale": "{locale} yIteq",
         "shortDescription": "wa’ tlhegh: jIH",
         "shortDescriptionPlaceholder": "redstone Qun ’ej chenmoHwI’",
-        "longDescription": "jIH",
-        "longDescriptionHint": "Quj Dachenmo’, Quj DaQujmo’. qorDu’pu’ yIja’.",
-        "longDescriptionPlaceholder": "qorDu’pu’ yIja’",
+        "longDescription": "ghaH",
+        "longDescriptionHint": "Quj Dachenmo’, Quj DaQujmo’. qorDu’pu’ yIja’. ghaH yIjatlh: “Minecraft ghom DevtaH Anna.”",
+        "longDescriptionPlaceholder": "qorDu’pu’ yIja’. ghaH yIjatlh",
         "funFact": "De’ Quch",
-        "funFactPlaceholder": "Minecraft Daq SIvwI’ vIchenmoH.",
+        "funFactPlaceholder": "Minecraft Daq SIvwI’ chenmoH.",
         "count": "{count}/{max}"
       },
       "preview": {
@@ -4755,11 +4889,11 @@
         "missing": {
           "photo": "mIllogh yIlab, vaj DawIvlaH.",
           "title": "patlh yIghItlh, vaj DawIvlaH.",
-          "text": "“wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "text": "“wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
           "photoTitle": "mIllogh yIlab ’ej patlh yIghItlh, vaj DawIvlaH.",
-          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
-          "titleText": "patlh yIghItlh ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
-          "photoTitleText": "mIllogh yIlab, patlh yIghItlh, ’ej “wa’ tlhegh: jIH” ’ej “jIH” yIghItlh Hol HochDaq, vaj DawIvlaH."
+          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "titleText": "patlh yIghItlh ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "photoTitleText": "mIllogh yIlab, patlh yIghItlh, ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH."
         }
       },
       "userPage": {

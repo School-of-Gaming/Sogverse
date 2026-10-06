@@ -136,7 +136,7 @@ export function UserTeamProfileCard({
  * inside the frame: the row itself holds its place, and nothing above moves.
  *
  * **No height cap.** The editor bounds its preview because it stays in view
- * beside a form; here nothing sits beside it, so a long "About me" lets the
+ * beside a form; here nothing sits beside it, so a long bio lets the
  * page scroll rather than nesting a scroll area in it.
  */
 function ProfilePreview({ profile }: { profile: TeamProfile }) {

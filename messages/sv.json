@@ -49,6 +49,8 @@
       "adminLibrary": "Bibliotekets innehåll",
       "adminLibraryArticleNew": "Ny artikel",
       "adminLibraryArticleEdit": "Redigera artikel",
+      "adminLandingPages": "Landningssidor",
+      "adminLandingPage": "Landningssida",
       "adminPlatformVision": "Plattformens vision",
       "adminGeduInvoicing": "Gedufakturering",
       "adminTools": "Verktyg",
@@ -614,6 +616,118 @@
       "removeLocale": "Ta bort {language}",
       "languagesLabel": "Språk"
     },
+    "landingPages": {
+      "title": "Landningssidor",
+      "subtitle": "Sidor för en skola, en stad, ett företag eller ett evenemang, skrivna för att sökmotorer och AI-appar ska hitta dem.",
+      "empty": "Inga landningssidor än. Sidorna skrivs med en AI-app som är kopplad till Sogverse.",
+      "lastSaved": "Senast sparad {date}",
+      "languagesLabel": "Språk",
+      "versionComplete": "klar",
+      "versionIncomplete": "inte klar än",
+      "search": {
+        "label": "Sök",
+        "placeholder": "Sök på titel eller adress…",
+        "showing": "Visar {count} av {total}",
+        "clear": "Rensa",
+        "noMatches": "Inga landningssidor matchar din sökning."
+      },
+      "backToList": "Tillbaka till landningssidorna",
+      "notFound": "Det finns ingen landningssida med detta id.",
+      "loadError": "Landningssidan kunde inte laddas. Uppdatera för att försöka igen.",
+      "statusPage": {
+        "title": "Landningssida",
+        "authoring": "Be en AI-app som är kopplad till Sogverse om du vill ändra sidan.",
+        "languagesHeading": "Språk",
+        "readiness": {
+          "noCompleteLanguage": "Inget språk är klart än, så det finns inget att publicera.",
+          "upToDate": "Läsarna ser redan den senast sparade versionen."
+        },
+        "language": {
+          "complete": "Klar",
+          "incomplete": "Inte klar",
+          "live": "Publicerad på webbplatsen.",
+          "notLive": "Inte på webbplatsen.",
+          "stillNeeded": "Saknas fortfarande:",
+          "address": "Adress:",
+          "noAddress": "ingen än",
+          "addressChanging": "Publicerad på {address} nu. Nästa publicering flyttar den till den här adressen, och länkar till den gamla slutar fungera."
+        },
+        "missing": {
+          "inSection": "Avsnitt {number} ({type}): {field}",
+          "inItem": "Avsnitt {number} ({type}), {item}: {field}",
+          "goneSection": "Ett avsnitt som inte längre finns på sidan: {field}"
+        }
+      },
+      "status": {
+        "draft": "Utkast",
+        "live": "Publicerad",
+        "changed": "Opublicerade ändringar"
+      },
+      "statusPanel": {
+        "publishedLine": "Publicerad {date}.",
+        "changedLine": "Läsarna ser versionen som publicerades {date}.",
+        "savedLine": "Senast sparad {date}.",
+        "savedByLine": "Senast sparad {date} av {name}.",
+        "savedByViaLine": "Senast sparad {date} av {name} via {app}.",
+        "savedByViaUnnamedLine": "Senast sparad {date} av {name} via en AI-app."
+      },
+      "viewLive": "Visa på webbplatsen",
+      "preview": "Förhandsgranska",
+      "publish": "Publicera",
+      "publishChanges": "Publicera ändringar",
+      "unpublish": "Avpublicera",
+      "publishConfirm": {
+        "title": "Publicera landningssidan?",
+        "changesTitle": "Publicera ändringarna?",
+        "goesLive": "Publiceras: {languages}.",
+        "takenDown": "{count, plural, one {Tas bort från webbplatsen eftersom det inte längre är klart: {languages}.} other {Tas bort från webbplatsen eftersom de inte längre är klara: {languages}.}}",
+        "leftOut": "{count, plural, one {Utelämnas eftersom det inte är klart: {languages}.} other {Utelämnas eftersom de inte är klara: {languages}.}}",
+        "changing": "{count, plural, one {Den här publicerade adressen ändras, och länkar till den gamla slutar fungera:} other {De här publicerade adresserna ändras, och länkar till de gamla slutar fungera:}}",
+        "changingItem": "{language}: {from} blir {to}"
+      },
+      "unpublishConfirm": {
+        "title": "Avpublicera landningssidan?",
+        "description": "Läsare och sökmotorer hittar den inte längre, och länkar till den slutar fungera. Sidan finns kvar här, och du kan publicera den igen när som helst.",
+        "confirm": "Avpublicera"
+      },
+      "actions": {
+        "cancel": "Avbryt"
+      },
+      "errors": {
+        "publishFailed": "Landningssidan kunde inte publiceras. Försök igen.",
+        "publishFailedWithReason": "Landningssidan kunde inte publiceras – {reason}",
+        "unpublishFailed": "Landningssidan kunde inte avpubliceras. Försök igen.",
+        "unpublishFailedWithReason": "Landningssidan kunde inte avpubliceras – {reason}"
+      },
+      "sectionTypes": {
+        "hero": "Inledning",
+        "text": "Text",
+        "image": "Bilder",
+        "points": "Punkter",
+        "steps": "Steg",
+        "faq": "Frågor och svar",
+        "cta": "Uppmaning"
+      },
+      "items": {
+        "image": "Bild {number}",
+        "points": "Punkt {number}",
+        "steps": "Steg {number}",
+        "faq": "Fråga {number}"
+      },
+      "fields": {
+        "title": "Titel",
+        "summary": "Sammanfattning",
+        "slug": "Adress",
+        "headline": "Huvudrubrik",
+        "heading": "Rubrik",
+        "body": "Text",
+        "buttonLabel": "Knapptext",
+        "imageAlt": "Bildens alternativtext",
+        "alt": "Alternativtext",
+        "question": "Fråga",
+        "answer": "Svar"
+      }
+    },
     "geduRole": {
       "primary": "Huvud-Gedu",
       "assistant": "Assisterande Gedu",
@@ -1058,6 +1172,13 @@
             "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och blir omslagsbild för den här artikeln.",
             "outcomeAdded": "Tillagd i biblioteket och vald som omslagsbild för den här artikeln.",
             "outcomeExisting": "Finns redan i biblioteket – vald som omslagsbild för den här artikeln."
+          },
+          "landingImage": {
+            "change": "Byt bild",
+            "remove": "Ta bort bild",
+            "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och används på den här landningssidan.",
+            "outcomeAdded": "Tillagd i biblioteket och vald för den här landningssidan.",
+            "outcomeExisting": "Finns redan i biblioteket — vald för den här landningssidan."
           }
         }
       },
@@ -1115,6 +1236,19 @@
             "removeConsequence": "{count, plural, one {Artikeln nedan blir utan omslag tills du väljer ett annat, även om den är publicerad.} other {Alla # artiklar nedan blir utan omslag tills du väljer ett annat, även de publicerade.}}",
             "removeUnused": "Ingen artikel använder den här bilden. Den tas bort ur biblioteket för gott.",
             "removeConfirm": "Ta bort från {count, plural, one {# artikel} other {# artiklar}}"
+          },
+          "landingImage": {
+            "title": "Bilder för landningssidor",
+            "description": "En bild kan användas på flera landningssidor och på flera ställen på samma sida. Ditt val gäller bara det här stället, men att ersätta eller ta bort en bild påverkar alla landningssidor som använder den, även publicerade.",
+            "usedBadge": "{count, plural, one {# sida} other {# sidor}}",
+            "usedBy": "Landningssidor som använder bilden",
+            "usedByNone": "Ingen landningssida använder den här bilden.",
+            "replaceConsequence": "{count, plural, one {Landningssidan nedan kommer att visa den nya bilden, direkt om den är publicerad.} other {Alla # landningssidor nedan kommer att visa den nya bilden, de publicerade direkt.}}",
+            "replaceUnused": "Ingen landningssida använder den här bilden. Den nya tar dess plats i biblioteket.",
+            "replaceConfirm": "Ersätt på {count, plural, one {# sida} other {# sidor}}",
+            "removeConsequence": "{count, plural, one {Landningssidan nedan förlorar bilden, även om den är publicerad. En bildsektion som blir utan bilder tas bort.} other {Alla # landningssidor nedan förlorar bilden, även de publicerade. En bildsektion som blir utan bilder tas bort.}}",
+            "removeUnused": "Ingen landningssida använder den här bilden. Den tas bort ur biblioteket för gott.",
+            "removeConfirm": "Ta bort från {count, plural, one {# sida} other {# sidor}}"
           }
         }
       },
@@ -3349,6 +3483,7 @@
     "municipalityInvoicing": "Kommunfakturering",
     "invoiceCustomers": "Faktureringskunder",
     "libraryContent": "Bibliotekets innehåll",
+    "landingPages": "Landningssidor",
     "platformVision": "Plattformens vision",
     "geduInvoicing": "Gedufakturering",
     "camps": "Läger",
@@ -4343,7 +4478,7 @@
           "Roblox – tar emot ditt barns Roblox-konto-id, så att vi kan bekräfta kontot, och din webbläsare hämtar barnets avatarbild direkt från Roblox.",
           "Mojang (Microsoft) – tar emot ditt barns Minecraft-användarnamn, så att vi kan bekräfta kontot.",
           "mc-heads.net – din webbläsare hämtar bilden av ditt barns Minecraft-figur direkt därifrån, utifrån barnets Minecraft-användarnamn, som är offentligt i spelet. Det är en gratis offentlig tjänst och inte en underleverantör till oss, och den ser bara den förfrågan.",
-          "Meta (Facebook och Instagram) – ser via Meta-pixeln i din webbläsare och rapporter från våra servrar hur du använder vår webbplats, så att vi kan visa dig våra annonser där och mäta hur de presterar. När du skapar ett konto eller anmäler dig skickar våra servrar också en förvrängd (hashad) kopia av din e-postadress till Meta, tillsammans med vilken klubb, vilket läger eller vilket evenemang du anmälde dig till, så att Meta kan känna igen dig om du använder Facebook eller Instagram – aldrig ditt barns namn, ålder eller andra uppgifter om barnet. Bara om du tillåter cookies för marknadsföring.",
+          "Meta (Facebook och Instagram) – ser via Meta-pixeln i din webbläsare och rapporter från våra servrar hur du använder vår webbplats, så att vi kan visa dig våra annonser där och mäta hur de presterar. När du skapar ett konto eller anmäler dig skickar våra servrar också förvrängda (hashade) kopior av din e-postadress och av ditt School of Gaming-kontos id till Meta, tillsammans med vilken klubb, vilket läger eller vilket evenemang du anmälde dig till eller skapade ditt konto från, så att Meta kan känna igen dig om du använder Facebook eller Instagram och se att det är samma förälder från ett besök till nästa. Varken själva adressen eller själva id:t skickas någonsin, och aldrig ditt barns namn, ålder eller andra uppgifter om barnet. Bara om du tillåter cookies för marknadsföring.",
           "Google (Analytics och Ads) – ser, via en tagghanterare i din webbläsare, vilka av våra offentliga sidor du besöker och vad du har anmält dig till, så att vi kan mäta hur vår annonsering fungerar och visa dig våra annonser. Bara om du tillåter cookies för marknadsföring – inte analys: den analys du kan slå på är Vercels ensam."
         ]
       },
@@ -5533,11 +5668,11 @@
       "geduTitle": "Gedu · spelfostrare",
       "geduAltRole": "spelfostrare",
       "speaks": "Talar",
-      "aboutMe": "Om mig",
+      "whoIs": "Vem är {firstName}?",
       "funFact": "Kul fakta",
       "draft": {
         "shortDescription": "Din presentation på en rad visas här",
-        "longDescription": "Det du skriver under ”Om mig” visas här"
+        "longDescription": "Det du skriver under ”Beskrivning” visas här"
       }
     },
     "edit": {
@@ -5565,11 +5700,11 @@
         "missing": {
           "photo": "Lägg till ett foto för att kunna kryssa i detta.",
           "title": "Lägg till din titel för att kunna kryssa i detta.",
-          "text": "Fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
+          "text": "Fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk du skriver på för att kunna kryssa i detta.",
           "photoTitle": "Lägg till ett foto och din titel för att kunna kryssa i detta.",
-          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
-          "titleText": "Lägg till din titel och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på för att kunna kryssa i detta.",
-          "photoTitleText": "Lägg till ett foto och din titel, och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk du skriver på, för att kunna kryssa i detta."
+          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk du skriver på för att kunna kryssa i detta.",
+          "titleText": "Lägg till din titel och fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk du skriver på för att kunna kryssa i detta.",
+          "photoTitleText": "Lägg till ett foto och din titel, och fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk du skriver på, för att kunna kryssa i detta."
         }
       },
       "photo": {
@@ -5578,7 +5713,7 @@
         "replace": "Byt foto",
         "remove": "Ta bort foto",
         "guidance": {
-          "intro": "Det här är det första familjer och gamers ser av dig. När du har valt ett foto beskär du det så att det passar ramen.",
+          "intro": "Det här är det första familjer och gamers ser av dig.",
           "doHeading": "Gör så här",
           "dontHeading": "Undvik",
           "do": {
@@ -5605,7 +5740,6 @@
         "heading": "Om dig",
         "nickname": "Gamers känner mig som",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "Visas inom citattecken i ditt namn, precis som du skriver den.",
         "title": "Titel",
         "titleHint": "Ditt jobb på School of Gaming, till exempel klubbansvarig.",
         "pick": "Din färg"
@@ -5617,11 +5751,11 @@
         "removeLocale": "Ta bort {locale}",
         "shortDescription": "Presentera dig på en rad",
         "shortDescriptionPlaceholder": "Redstone-nörd och speedrun-fan",
-        "longDescription": "Om mig",
-        "longDescriptionHint": "Vad du gör på sessionerna, vad du spelar och vad familjer kan vilja veta om dig.",
-        "longDescriptionPlaceholder": "Berätta lite om dig själv för familjerna",
+        "longDescription": "Beskrivning",
+        "longDescriptionHint": "Vad du gör på sessionerna, vad du spelar och vad familjer kan vilja veta om dig. Skriv i tredje person, som om någon annan presenterade dig: ”Anna har lett Minecraft-klubbar sedan 2023 och älskar att lära ut redstone.”",
+        "longDescriptionPlaceholder": "Berätta om dig själv för familjerna, i tredje person",
         "funFact": "Kul fakta",
-        "funFactPlaceholder": "Jag har byggt en fungerande miniräknare i Minecraft.",
+        "funFactPlaceholder": "Har byggt en fungerande miniräknare i Minecraft.",
         "count": "{count}/{max}"
       },
       "preview": {
@@ -5654,11 +5788,11 @@
         "missing": {
           "photo": "Lägg till ett foto för att kunna kryssa i detta.",
           "title": "Lägg till en titel för att kunna kryssa i detta.",
-          "text": "Fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
+          "text": "Fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk som skrivits för att kunna kryssa i detta.",
           "photoTitle": "Lägg till ett foto och en titel för att kunna kryssa i detta.",
-          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
-          "titleText": "Lägg till en titel och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits för att kunna kryssa i detta.",
-          "photoTitleText": "Lägg till ett foto och en titel, och fyll i ”Presentera dig på en rad” och ”Om mig” på varje språk som skrivits, för att kunna kryssa i detta."
+          "photoText": "Lägg till ett foto och fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk som skrivits för att kunna kryssa i detta.",
+          "titleText": "Lägg till en titel och fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk som skrivits för att kunna kryssa i detta.",
+          "photoTitleText": "Lägg till ett foto och en titel, och fyll i ”Presentera dig på en rad” och ”Beskrivning” på varje språk som skrivits, för att kunna kryssa i detta."
         }
       },
       "userPage": {

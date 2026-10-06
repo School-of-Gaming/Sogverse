@@ -5,7 +5,7 @@ import { COVER_HOVER_ZOOM } from "./cover-hover-zoom";
 
 /**
  * The frame each catalogue purpose is painted in: 3:2 for a product picture,
- * 16:9 for a Library cover. A picture is cut for exactly one purpose, so a
+ * 16:9 for a Library cover and for a landing page picture. A picture is cut for exactly one purpose, so a
  * frame is chosen by naming the purpose, and there is no ratio here for a
  * caller to pick. The ratio matches the purpose's stored size in
  * `CATALOGUE_IMAGE_PURPOSES`; the two change together.
@@ -13,6 +13,7 @@ import { COVER_HOVER_ZOOM } from "./cover-hover-zoom";
 const FRAME: Record<CatalogueImagePurpose, string> = {
   product: "aspect-[3/2] w-full",
   library_cover: "aspect-video w-full",
+  landing_image: "aspect-video w-full",
 };
 
 /**
@@ -26,6 +27,7 @@ const PLACEHOLDER_BOX: Record<
 > = {
   product: { width: 150, height: 100 },
   library_cover: { width: 160, height: 90 },
+  landing_image: { width: 160, height: 90 },
 };
 
 const PLACEHOLDER_LABEL_SHARE = 0.12;

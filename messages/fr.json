@@ -49,6 +49,8 @@
       "adminLibrary": "Contenu de la Bibliothèque",
       "adminLibraryArticleNew": "Nouvel article",
       "adminLibraryArticleEdit": "Modifier l’article",
+      "adminLandingPages": "Pages d’atterrissage",
+      "adminLandingPage": "Page d’atterrissage",
       "adminPlatformVision": "Vision de la plateforme",
       "adminGeduInvoicing": "Facturation des Gedus",
       "adminTools": "Outils",
@@ -614,6 +616,118 @@
       "removeLocale": "Supprimer {language}",
       "languagesLabel": "Langues"
     },
+    "landingPages": {
+      "title": "Pages d’atterrissage",
+      "subtitle": "Des pages pour une école, une ville, une entreprise ou un événement, écrites pour être trouvées par les moteurs de recherche et les applications d’IA.",
+      "empty": "Aucune page d’atterrissage pour l’instant. Les pages s’écrivent avec une application d’IA connectée à Sogverse.",
+      "lastSaved": "Dernier enregistrement {date}",
+      "languagesLabel": "Langues",
+      "versionComplete": "complète",
+      "versionIncomplete": "pas encore complète",
+      "search": {
+        "label": "Rechercher",
+        "placeholder": "Rechercher par titre ou adresse…",
+        "showing": "{count} sur {total}",
+        "clear": "Effacer",
+        "noMatches": "Aucune page d’atterrissage ne correspond à votre recherche."
+      },
+      "backToList": "Retour aux pages d’atterrissage",
+      "notFound": "Aucune page d’atterrissage ne porte cet identifiant.",
+      "loadError": "Impossible de charger cette page d’atterrissage. Actualisez pour réessayer.",
+      "statusPage": {
+        "title": "Page d’atterrissage",
+        "authoring": "Pour modifier cette page, demandez-le à une application d’IA connectée à Sogverse.",
+        "languagesHeading": "Langues",
+        "readiness": {
+          "noCompleteLanguage": "Aucune langue n’est encore complète : il n’y a donc rien à publier.",
+          "upToDate": "Les lecteurs voient déjà la dernière version enregistrée."
+        },
+        "language": {
+          "complete": "Complète",
+          "incomplete": "Incomplète",
+          "live": "En ligne sur le site.",
+          "notLive": "Pas sur le site.",
+          "stillNeeded": "Il manque encore :",
+          "address": "Adresse :",
+          "noAddress": "pas encore d’adresse",
+          "addressChanging": "En ligne à l’adresse {address} pour l’instant. La prochaine publication la déplace à cette adresse, et les liens vers l’ancienne cesseront de fonctionner."
+        },
+        "missing": {
+          "inSection": "Section {number} ({type}) : {field}",
+          "inItem": "Section {number} ({type}), {item} : {field}",
+          "goneSection": "Une section qui n’est plus sur la page : {field}"
+        }
+      },
+      "status": {
+        "draft": "Brouillon",
+        "live": "En ligne",
+        "changed": "Modifications non publiées"
+      },
+      "statusPanel": {
+        "publishedLine": "Publiée le {date}.",
+        "changedLine": "Les lecteurs voient la version publiée le {date}.",
+        "savedLine": "Dernier enregistrement le {date}.",
+        "savedByLine": "Dernier enregistrement le {date} par {name}.",
+        "savedByViaLine": "Dernier enregistrement le {date} par {name} via {app}.",
+        "savedByViaUnnamedLine": "Dernier enregistrement le {date} par {name} via une application d’IA."
+      },
+      "viewLive": "Voir sur le site",
+      "preview": "Aperçu",
+      "publish": "Publier",
+      "publishChanges": "Publier les modifications",
+      "unpublish": "Dépublier",
+      "publishConfirm": {
+        "title": "Publier cette page d’atterrissage ?",
+        "changesTitle": "Publier les modifications ?",
+        "goesLive": "Mise en ligne : {languages}.",
+        "takenDown": "{count, plural, one {Retirée du site, car elle n’est plus complète : {languages}.} other {Retirées du site, car elles ne sont plus complètes : {languages}.}}",
+        "leftOut": "{count, plural, one {Laissée de côté, car elle n’est pas complète : {languages}.} other {Laissées de côté, car elles ne sont pas complètes : {languages}.}}",
+        "changing": "{count, plural, one {Cette adresse en ligne change, et les liens vers l’ancienne cesseront de fonctionner :} other {Ces adresses en ligne changent, et les liens vers les anciennes cesseront de fonctionner :}}",
+        "changingItem": "{language} : {from} devient {to}"
+      },
+      "unpublishConfirm": {
+        "title": "Dépublier cette page d’atterrissage ?",
+        "description": "Les lecteurs et les moteurs de recherche ne la trouveront plus, et les liens qui y mènent cesseront de fonctionner. La page reste ici, et vous pouvez la republier à tout moment.",
+        "confirm": "Dépublier"
+      },
+      "actions": {
+        "cancel": "Annuler"
+      },
+      "errors": {
+        "publishFailed": "La page d’atterrissage n’a pas pu être publiée. Réessayez.",
+        "publishFailedWithReason": "La page d’atterrissage n’a pas pu être publiée — {reason}",
+        "unpublishFailed": "La page d’atterrissage n’a pas pu être dépubliée. Réessayez.",
+        "unpublishFailedWithReason": "La page d’atterrissage n’a pas pu être dépubliée — {reason}"
+      },
+      "sectionTypes": {
+        "hero": "Ouverture",
+        "text": "Texte",
+        "image": "Images",
+        "points": "Points",
+        "steps": "Étapes",
+        "faq": "Questions et réponses",
+        "cta": "Appel à l’action"
+      },
+      "items": {
+        "image": "Image {number}",
+        "points": "Point {number}",
+        "steps": "Étape {number}",
+        "faq": "Question {number}"
+      },
+      "fields": {
+        "title": "Titre",
+        "summary": "Résumé",
+        "slug": "Adresse",
+        "headline": "Titre principal",
+        "heading": "Titre",
+        "body": "Texte",
+        "buttonLabel": "Texte du bouton",
+        "imageAlt": "Texte alternatif de l’image",
+        "alt": "Texte alternatif",
+        "question": "Question",
+        "answer": "Réponse"
+      }
+    },
     "geduRole": {
       "primary": "Gedu principal",
       "assistant": "Gedu assistant",
@@ -1058,6 +1172,13 @@
             "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 16:9, l’ajouter et en faire l’image de cet article.",
             "outcomeAdded": "Ajoutée au catalogue et choisie comme image de cet article.",
             "outcomeExisting": "Déjà dans le catalogue — choisie comme image de cet article."
+          },
+          "landingImage": {
+            "change": "Changer l’image",
+            "remove": "Retirer l’image",
+            "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 16:9, l’ajouter et l’utiliser sur cette page d’atterrissage.",
+            "outcomeAdded": "Ajoutée au catalogue et choisie pour cette page d’atterrissage.",
+            "outcomeExisting": "Déjà dans le catalogue — choisie pour cette page d’atterrissage."
           }
         }
       },
@@ -1115,6 +1236,19 @@
             "removeConsequence": "{count, plural, one {L’article ci-dessous restera sans couverture jusqu’à ce que vous en choisissiez une autre, même en ligne.} other {Les # articles ci-dessous resteront sans couverture jusqu’à ce que vous en choisissiez une autre, y compris ceux en ligne.}}",
             "removeUnused": "Aucun article n’utilise cette image. Elle sera définitivement retirée du catalogue.",
             "removeConfirm": "Retirer de {count, plural, one {# article} other {# articles}}"
+          },
+          "landingImage": {
+            "title": "Images des pages d’atterrissage",
+            "description": "Une même image peut servir sur plusieurs pages d’atterrissage, et à plusieurs endroits d’une même page. Votre choix ne concerne que cet endroit, mais remplacer ou retirer une image touche toutes les pages qui l’utilisent, y compris celles en ligne.",
+            "usedBadge": "{count, plural, one {# page} other {# pages}}",
+            "usedBy": "Pages d’atterrissage utilisant cette image",
+            "usedByNone": "Aucune page d’atterrissage n’utilise cette image.",
+            "replaceConsequence": "{count, plural, one {La page ci-dessous affichera la nouvelle image, aussitôt si elle est en ligne.} other {Les # pages ci-dessous afficheront toutes la nouvelle image, aussitôt pour celles qui sont en ligne.}}",
+            "replaceUnused": "Aucune page d’atterrissage n’utilise cette image. La nouvelle prend sa place dans le catalogue.",
+            "replaceConfirm": "Remplacer sur {count, plural, one {# page} other {# pages}}",
+            "removeConsequence": "{count, plural, one {La page ci-dessous perdra cette image, même en ligne. Une section d’images laissée sans image est supprimée.} other {Les # pages ci-dessous perdront cette image, y compris celles en ligne. Une section d’images laissée sans image est supprimée.}}",
+            "removeUnused": "Aucune page d’atterrissage n’utilise cette image. Elle sera définitivement retirée du catalogue.",
+            "removeConfirm": "Retirer de {count, plural, one {# page} other {# pages}}"
           }
         }
       },
@@ -3349,6 +3483,7 @@
     "municipalityInvoicing": "Facturation municipale",
     "invoiceCustomers": "Clients de facturation",
     "libraryContent": "Contenu de la Bibliothèque",
+    "landingPages": "Pages d’atterrissage",
     "platformVision": "Vision de la plateforme",
     "geduInvoicing": "Facturation des Gedus",
     "camps": "Stages",
@@ -4343,7 +4478,7 @@
           "Roblox — reçoit l’identifiant de compte Roblox de votre enfant, pour que nous puissions vérifier le compte, et votre navigateur récupère son avatar directement auprès de Roblox.",
           "Mojang (Microsoft) — reçoit le nom d’utilisateur Minecraft de votre enfant, pour que nous puissions vérifier le compte.",
           "mc-heads.net — votre navigateur y récupère directement l’image du personnage Minecraft de votre enfant, à partir de son nom d’utilisateur Minecraft, qui est public dans le jeu. C’est un service public gratuit et non l’un de nos prestataires, et il ne voit que cette requête.",
-          "Meta (Facebook et Instagram) — voit, via le pixel Meta dans votre navigateur et les rapports envoyés par nos serveurs, comment vous utilisez notre site, pour que nous puissions vous y montrer nos publicités et mesurer leurs performances. Lorsque vous créez un compte ou que vous vous inscrivez, nos serveurs envoient aussi à Meta une copie brouillée (hachée) de votre adresse e-mail, ainsi que le club, le stage ou l’événement concerné par votre inscription, afin que Meta puisse vous reconnaître si vous utilisez Facebook ou Instagram — jamais le nom, l’âge ou d’autres informations sur votre enfant. Uniquement si vous autorisez les cookies marketing.",
+          "Meta (Facebook et Instagram) — voit, via le pixel Meta dans votre navigateur et les rapports envoyés par nos serveurs, comment vous utilisez notre site, pour que nous puissions vous y montrer nos publicités et mesurer leurs performances. Lorsque vous créez un compte ou que vous vous inscrivez, nos serveurs envoient aussi à Meta des copies brouillées (hachées) de votre adresse e-mail et de l’identifiant de votre compte School of Gaming, ainsi que le club, le stage ou l’événement concerné par votre inscription, ou celui depuis la page duquel vous avez créé votre compte, afin que Meta puisse vous reconnaître si vous utilisez Facebook ou Instagram et savoir qu’il s’agit du même parent d’une visite à l’autre. Ni l’adresse ni l’identifiant eux-mêmes ne sont jamais envoyés, et jamais le nom, l’âge ou d’autres informations sur votre enfant. Uniquement si vous autorisez les cookies marketing.",
           "Google (Analytics et Ads) — voit, via un gestionnaire de balises présent dans votre navigateur, quelles pages publiques de notre site vous consultez et ce à quoi votre famille s’est inscrite, pour que nous puissions mesurer les performances de notre publicité et vous montrer nos annonces. Uniquement si vous autorisez les cookies marketing — et non les statistiques : les statistiques que vous pouvez activer sont uniquement celles de Vercel."
         ]
       },
@@ -5533,11 +5668,11 @@
       "geduTitle": "Gedu · animateur ou animatrice",
       "geduAltRole": "animateur ou animatrice",
       "speaks": "Parle",
-      "aboutMe": "À propos de moi",
+      "whoIs": "Qui est {firstName} ?",
       "funFact": "Anecdote",
       "draft": {
         "shortDescription": "Votre présentation en une ligne apparaît ici",
-        "longDescription": "Ce que vous écrivez dans « À propos de moi » apparaît ici"
+        "longDescription": "Ce que vous écrivez dans « Bio » apparaît ici"
       }
     },
     "edit": {
@@ -5565,11 +5700,11 @@
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
           "title": "Ajoutez votre titre pour pouvoir cocher cette case.",
-          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
           "photoTitle": "Ajoutez une photo et votre titre pour pouvoir cocher cette case.",
-          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
-          "titleText": "Ajoutez votre titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
-          "photoTitleText": "Ajoutez une photo et votre titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue où vous écrivez, pour pouvoir cocher cette case."
+          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez votre titre et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et votre titre, et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez, pour pouvoir cocher cette case."
         }
       },
       "photo": {
@@ -5578,7 +5713,7 @@
         "replace": "Remplacer la photo",
         "remove": "Supprimer la photo",
         "guidance": {
-          "intro": "C’est la première chose que les familles et les gamers voient de vous. Une fois la photo choisie, vous la recadrez pour l’adapter au cadre.",
+          "intro": "C’est la première chose que les familles et les gamers voient de vous.",
           "doHeading": "À faire",
           "dontHeading": "À éviter",
           "do": {
@@ -5605,7 +5740,6 @@
         "heading": "À propos de vous",
         "nickname": "Les gamers me connaissent sous le nom de",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "Affiché entre guillemets dans votre nom, exactement comme vous l’écrivez.",
         "title": "Titre",
         "titleHint": "Votre poste chez School of Gaming, par exemple responsable des clubs.",
         "pick": "Votre couleur"
@@ -5617,11 +5751,11 @@
         "removeLocale": "Supprimer {locale}",
         "shortDescription": "Présentez-vous en une ligne",
         "shortDescriptionPlaceholder": "Fan de redstone et de speedrun",
-        "longDescription": "À propos de moi",
-        "longDescriptionHint": "Ce que vous faites en session, ce à quoi vous jouez, et ce que les familles aimeraient savoir sur vous.",
-        "longDescriptionPlaceholder": "Présentez-vous un peu aux familles",
+        "longDescription": "Bio",
+        "longDescriptionHint": "Ce que vous faites en session, ce à quoi vous jouez, et ce que les familles aimeraient savoir sur vous. Écrivez à la troisième personne, comme si quelqu’un vous présentait : « Anna anime des clubs Minecraft depuis 2023 et adore enseigner la redstone. »",
+        "longDescriptionPlaceholder": "Présentez-vous aux familles, à la troisième personne",
         "funFact": "Anecdote",
-        "funFactPlaceholder": "J’ai un jour construit une calculatrice qui fonctionne dans Minecraft.",
+        "funFactPlaceholder": "A un jour construit une calculatrice qui fonctionne dans Minecraft.",
         "count": "{count}/{max}"
       },
       "preview": {
@@ -5654,11 +5788,11 @@
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
           "title": "Ajoutez un titre pour pouvoir cocher cette case.",
-          "text": "Remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
           "photoTitle": "Ajoutez une photo et un titre pour pouvoir cocher cette case.",
-          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
-          "titleText": "Ajoutez un titre et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée pour pouvoir cocher cette case.",
-          "photoTitleText": "Ajoutez une photo et un titre, et remplissez « Présentez-vous en une ligne » et « À propos de moi » dans chaque langue rédigée, pour pouvoir cocher cette case."
+          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez un titre et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et un titre, et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée, pour pouvoir cocher cette case."
         }
       },
       "userPage": {

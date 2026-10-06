@@ -20,7 +20,7 @@ CREATE TABLE public.catalogue_images (
 -- Name: TABLE catalogue_images; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.catalogue_images IS 'The catalogue of pictures admins pick from for content: product pictures and Library article covers, each entry marked with its purpose. One row per distinct image per purpose, identified by the sha256 of its bytes; the object key is <sha256>.<ext> in the public bucket of the entry''s purpose (product-images or library-covers). A row is immutable except for its label — the bytes behind a path never change, which is what makes the image optimizer''s one-year cache floor safe. Admin-only: no anon grant and no anon policy, because nothing family-facing reads this table. Products reference it by products.image_id and Library article copies by cover_image_id; the served products.image_path and cover_path are derived from those links by triggers and are what every reader reads.';
+COMMENT ON TABLE public.catalogue_images IS 'The catalogue of pictures admins pick from for content: product pictures, Library article covers and landing page pictures, each entry marked with its purpose. One row per distinct image per purpose, identified by the sha256 of its bytes; the object key is <sha256>.<ext> in the public bucket of the entry''s purpose (product-images, library-covers or landing-images). A row is immutable except for its label — the bytes behind a path never change, which is what makes the image optimizer''s one-year cache floor safe. Admin-only: no anon grant and no anon policy, because nothing family-facing reads this table. Products reference it by products.image_id, Library article copies by cover_image_id, and landing page copies by the image ids in their sections; the served products.image_path, cover_path and image_paths are derived from those links by triggers and are what every reader reads.';
 
 
 --
@@ -41,7 +41,7 @@ COMMENT ON COLUMN public.catalogue_images.path IS 'Object key in the public buck
 -- Name: COLUMN catalogue_images.purpose; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.catalogue_images.purpose IS 'What this picture is for, which decides the bucket its object lives in and the exact size it was cropped to. Set once, when the entry is created, and never changed: a replace creates an entry of the same purpose. A product may link only a ''product'' entry (apply_product_image_path refuses anything else), and a Library cover only a ''library_cover'' one (apply_library_cover_path). An UPDATE changing it is refused by trg_catalogue_images_purpose_is_fixed.';
+COMMENT ON COLUMN public.catalogue_images.purpose IS 'What this picture is for, which decides the bucket its object lives in and the exact size it was cropped to. Set once, when the entry is created, and never changed: a replace creates an entry of the same purpose. A product may link only a ''product'' entry (apply_product_image_path refuses anything else), a Library cover only a ''library_cover'' one (apply_library_cover_path), and a landing page only ''landing_image'' ones (apply_landing_image_paths). An UPDATE changing it is refused by trg_catalogue_images_purpose_is_fixed.';
 
 
 --
@@ -87,6 +87,13 @@ ALTER TABLE ONLY public.catalogue_images
 --
 
 CREATE TRIGGER trg_catalogue_images_purpose_is_fixed BEFORE UPDATE ON public.catalogue_images FOR EACH ROW EXECUTE FUNCTION public.refuse_catalogue_image_purpose_change();
+
+
+--
+-- Name: catalogue_images trg_catalogue_images_unlink_landing_pages; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_catalogue_images_unlink_landing_pages BEFORE DELETE ON public.catalogue_images FOR EACH ROW EXECUTE FUNCTION public.unlink_removed_landing_image();
 
 
 --

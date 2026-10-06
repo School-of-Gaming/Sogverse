@@ -65,4 +65,5 @@ function cataloguePurposeSpec(purpose: CatalogueImagePurpose): CatalogueImagePur
 export const CATALOGUE_IMAGE_PURPOSES = {
   product: cataloguePurposeSpec("product"),
   library_cover: cataloguePurposeSpec("library_cover"),
+  landing_image: cataloguePurposeSpec("landing_image"),
 } as const satisfies Record<CatalogueImagePurpose, CatalogueImagePurposeSpec>;

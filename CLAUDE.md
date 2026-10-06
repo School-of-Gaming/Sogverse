@@ -10,7 +10,7 @@ npm run dev:stripe       # Start dev server + Stripe webhook listener
 npm run build            # Production build
 npm run lint             # ESLint
 npm run type-check       # TypeScript check (tsc --noEmit)
-npm run gates            # All landing gates: lint + type-check + translations + the MCP cover uploader's build freshness + tests (runs all, reports every failure)
+npm run gates            # All landing gates: lint + type-check + translations + the MCP picture uploader's build freshness + tests (runs all, reports every failure)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
 npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
@@ -118,6 +118,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Images — the purpose registry, the preview budget and the og:image renditions | `src/lib/images/` |
 | Image catalogue — product pictures and Library covers | `src/services/catalogue-images/` |
 | Library — articles, their working and published copies | `src/services/library/` |
+| Landing pages — their sections, copies, slugs and pictures | `src/services/landing-pages/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |

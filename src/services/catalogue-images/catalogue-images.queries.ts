@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { landingPageKeys } from "@/services/landing-pages/landing-pages.queries";
 import { libraryKeys } from "@/services/library/library.queries";
 import { productKeys } from "@/services/products/products.queries";
 import type { CatalogueImagePurpose } from "@/types";
@@ -51,7 +52,9 @@ export function useCatalogueImageUsage() {
  * cached would keep the old cover id, so the editor would compare the form's
  * followed id against it and call the article unsaved. That refetch is safe
  * because the Library editor seeds its form once per article id, never from a
- * refetch.
+ * refetch. Landing pages' admin tree too: a replace or a remove moves the
+ * pictures in a page's working structure and its last-saved time and saver,
+ * which its status page shows, and nothing there is a form.
  *
  * Never `productKeys.all` and never the product's admin **detail** key: the
  * product form seeds its state from that query, so refetching it mid-edit
@@ -68,6 +71,7 @@ function useCatalogueInvalidation(): () => Promise<void> {
       queryClient.invalidateQueries({ queryKey: catalogueImageUsageKey }),
       queryClient.invalidateQueries({ queryKey: productKeys.lists() }),
       queryClient.invalidateQueries({ queryKey: libraryKeys.admin() }),
+      queryClient.invalidateQueries({ queryKey: landingPageKeys.admin() }),
     ]);
   };
 }

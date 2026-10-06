@@ -49,6 +49,8 @@
       "adminLibrary": "Kirjaston sisältö",
       "adminLibraryArticleNew": "Uusi artikkeli",
       "adminLibraryArticleEdit": "Muokkaa artikkelia",
+      "adminLandingPages": "Laskeutumissivut",
+      "adminLandingPage": "Laskeutumissivu",
       "adminPlatformVision": "Alustan visio",
       "adminGeduInvoicing": "Gedujen laskutus",
       "adminTools": "Työkalut",
@@ -614,6 +616,118 @@
       "removeLocale": "Poista {language}",
       "languagesLabel": "Kielet"
     },
+    "landingPages": {
+      "title": "Laskeutumissivut",
+      "subtitle": "Sivut koululle, kaupungille, yritykselle tai tapahtumalle – kirjoitettu hakukoneiden ja tekoälysovellusten löydettäviksi.",
+      "empty": "Laskeutumissivuja ei vielä ole. Sivut kirjoitetaan Sogverseen yhdistetyllä tekoälysovelluksella.",
+      "lastSaved": "Tallennettu viimeksi {date}",
+      "languagesLabel": "Kielet",
+      "versionComplete": "valmis",
+      "versionIncomplete": "ei vielä valmis",
+      "search": {
+        "label": "Haku",
+        "placeholder": "Hae otsikolla tai osoitteella…",
+        "showing": "Näytetään {count}/{total}",
+        "clear": "Tyhjennä",
+        "noMatches": "Haullasi ei löytynyt laskeutumissivuja."
+      },
+      "backToList": "Takaisin laskeutumissivuihin",
+      "notFound": "Tällä tunnisteella ei ole laskeutumissivua.",
+      "loadError": "Laskeutumissivua ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
+      "statusPage": {
+        "title": "Laskeutumissivu",
+        "authoring": "Jos haluat muuttaa sivua, pyydä sitä Sogverseen yhdistetyltä tekoälysovellukselta.",
+        "languagesHeading": "Kielet",
+        "readiness": {
+          "noCompleteLanguage": "Yksikään kieli ei ole vielä valmis, joten julkaistavaa ei ole.",
+          "upToDate": "Lukijat näkevät jo viimeksi tallennetun version."
+        },
+        "language": {
+          "complete": "Valmis",
+          "incomplete": "Ei valmis",
+          "live": "Julkaistu sivustolla.",
+          "notLive": "Ei sivustolla.",
+          "stillNeeded": "Vielä puuttuu:",
+          "address": "Osoite:",
+          "noAddress": "ei vielä osoitetta",
+          "addressChanging": "Nyt julkaistu osoitteessa {address}. Seuraava julkaisu siirtää sen tähän osoitteeseen, eivätkä vanhaan osoitteeseen johtavat linkit enää toimi."
+        },
+        "missing": {
+          "inSection": "Osio {number} ({type}): {field}",
+          "inItem": "Osio {number} ({type}), {item}: {field}",
+          "goneSection": "Osio, jota sivulla ei enää ole: {field}"
+        }
+      },
+      "status": {
+        "draft": "Luonnos",
+        "live": "Julkaistu",
+        "changed": "Julkaisemattomia muutoksia"
+      },
+      "statusPanel": {
+        "publishedLine": "Julkaistu {date}.",
+        "changedLine": "Lukijat näkevät version, joka julkaistiin {date}.",
+        "savedLine": "Tallennettu viimeksi {date}.",
+        "savedByLine": "Tallennettu viimeksi {date}, tallentaja {name}.",
+        "savedByViaLine": "Tallennettu viimeksi {date}, tallentaja {name} sovelluksella {app}.",
+        "savedByViaUnnamedLine": "Tallennettu viimeksi {date}, tallentaja {name} tekoälysovelluksella."
+      },
+      "viewLive": "Näytä sivustolla",
+      "preview": "Esikatsele",
+      "publish": "Julkaise",
+      "publishChanges": "Julkaise muutokset",
+      "unpublish": "Poista julkaisusta",
+      "publishConfirm": {
+        "title": "Julkaistaanko laskeutumissivu?",
+        "changesTitle": "Julkaistaanko muutokset?",
+        "goesLive": "Julkaistaan: {languages}.",
+        "takenDown": "{count, plural, one {Poistetaan sivustolta, koska se ei ole enää valmis: {languages}.} other {Poistetaan sivustolta, koska ne eivät ole enää valmiita: {languages}.}}",
+        "leftOut": "{count, plural, one {Jätetään pois, koska se ei ole valmis: {languages}.} other {Jätetään pois, koska ne eivät ole valmiita: {languages}.}}",
+        "changing": "{count, plural, one {Tämä julkaistu osoite muuttuu, eivätkä vanhaan osoitteeseen johtavat linkit enää toimi:} other {Nämä julkaistut osoitteet muuttuvat, eivätkä vanhoihin osoitteisiin johtavat linkit enää toimi:}}",
+        "changingItem": "{language}: {from} muuttuu osoitteeksi {to}"
+      },
+      "unpublishConfirm": {
+        "title": "Poistetaanko laskeutumissivu julkaisusta?",
+        "description": "Lukijat ja hakukoneet eivät enää löydä sitä, ja linkit siihen lakkaavat toimimasta. Sivu säilyy täällä, ja voit julkaista sen uudelleen milloin tahansa.",
+        "confirm": "Poista julkaisusta"
+      },
+      "actions": {
+        "cancel": "Peruuta"
+      },
+      "errors": {
+        "publishFailed": "Laskeutumissivua ei voitu julkaista. Yritä uudelleen.",
+        "publishFailedWithReason": "Laskeutumissivua ei voitu julkaista – {reason}",
+        "unpublishFailed": "Laskeutumissivua ei voitu poistaa julkaisusta. Yritä uudelleen.",
+        "unpublishFailedWithReason": "Laskeutumissivua ei voitu poistaa julkaisusta – {reason}"
+      },
+      "sectionTypes": {
+        "hero": "Avausosio",
+        "text": "Teksti",
+        "image": "Kuvat",
+        "points": "Kohdat",
+        "steps": "Vaiheet",
+        "faq": "Kysymykset ja vastaukset",
+        "cta": "Toimintakehote"
+      },
+      "items": {
+        "image": "Kuva {number}",
+        "points": "Kohta {number}",
+        "steps": "Vaihe {number}",
+        "faq": "Kysymys {number}"
+      },
+      "fields": {
+        "title": "Otsikko",
+        "summary": "Tiivistelmä",
+        "slug": "Osoite",
+        "headline": "Pääotsikko",
+        "heading": "Otsikko",
+        "body": "Teksti",
+        "buttonLabel": "Painikkeen teksti",
+        "imageAlt": "Kuvan vaihtoehtoinen teksti",
+        "alt": "Vaihtoehtoinen teksti",
+        "question": "Kysymys",
+        "answer": "Vastaus"
+      }
+    },
     "geduRole": {
       "primary": "Vastaava Gedu",
       "assistant": "Avustava Gedu",
@@ -1058,6 +1172,13 @@
             "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 16:9-kehykseen, se lisätään kirjastoon ja siitä tulee tämän artikkelin kansikuva.",
             "outcomeAdded": "Lisätty kirjastoon ja valittu tämän artikkelin kansikuvaksi.",
             "outcomeExisting": "Kuva on jo kirjastossa – valittu tämän artikkelin kansikuvaksi."
+          },
+          "landingImage": {
+            "change": "Vaihda kuva",
+            "remove": "Poista kuva",
+            "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 16:9-kehykseen, se lisätään kirjastoon ja otetaan käyttöön tällä laskeutumissivulla.",
+            "outcomeAdded": "Lisätty kirjastoon ja valittu tälle laskeutumissivulle.",
+            "outcomeExisting": "Kuva on jo kirjastossa — valittu tälle laskeutumissivulle."
           }
         }
       },
@@ -1115,6 +1236,19 @@
             "removeConsequence": "{count, plural, one {Alla oleva artikkeli jää ilman kansikuvaa, kunnes valitset uuden, myös julkaistuna.} other {Kaikki # alla olevaa artikkelia jäävät ilman kansikuvaa, kunnes valitset uuden, myös julkaistut.}}",
             "removeUnused": "Mikään artikkeli ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
             "removeConfirm": "Poista {count, plural, one {# artikkelista} other {# artikkelista}}"
+          },
+          "landingImage": {
+            "title": "Laskeutumissivujen kuvat",
+            "description": "Sama kuva voi olla usealla laskeutumissivulla ja useammassa kohdassa samaa sivua. Valinta koskee vain tätä kohtaa, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä laskeutumissivuja, myös julkaistuja.",
+            "usedBadge": "{count, plural, one {# sivu} other {# sivua}}",
+            "usedBy": "Kuvaa käyttävät laskeutumissivut",
+            "usedByNone": "Mikään laskeutumissivu ei käytä tätä kuvaa.",
+            "replaceConsequence": "{count, plural, one {Alla oleva laskeutumissivu näyttää jatkossa uuden kuvan, julkaistuna heti.} other {Kaikki # alla olevaa laskeutumissivua näyttävät jatkossa uuden kuvan, julkaistut heti.}}",
+            "replaceUnused": "Mikään laskeutumissivu ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
+            "replaceConfirm": "Korvaa {count, plural, one {# sivulla} other {# sivulla}}",
+            "removeConsequence": "{count, plural, one {Kuva poistuu alla olevalta laskeutumissivulta, myös julkaistulta. Kuvaosio, johon ei jää kuvia, poistetaan.} other {Kuva poistuu kaikilta # alla olevalta laskeutumissivulta, myös julkaistuilta. Kuvaosio, johon ei jää kuvia, poistetaan.}}",
+            "removeUnused": "Mikään laskeutumissivu ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
+            "removeConfirm": "Poista {count, plural, one {# sivulta} other {# sivulta}}"
           }
         }
       },
@@ -3349,6 +3483,7 @@
     "municipalityInvoicing": "Kuntalaskutus",
     "invoiceCustomers": "Laskutusasiakkaat",
     "libraryContent": "Kirjaston sisältö",
+    "landingPages": "Laskeutumissivut",
     "platformVision": "Alustan visio",
     "geduInvoicing": "Gedujen laskutus",
     "camps": "Leirit",
@@ -4343,7 +4478,7 @@
           "Roblox – vastaanottaa lapsesi Roblox-tilitunnisteen, jotta voimme varmistaa tilin, ja selaimesi hakee hänen hahmokuvansa suoraan Robloxilta.",
           "Mojang (Microsoft) – vastaanottaa lapsesi Minecraft-käyttäjätunnuksen, jotta voimme varmistaa tilin.",
           "mc-heads.net – selaimesi hakee kuvan lapsesi Minecraft-hahmosta suoraan siltä hänen Minecraft-käyttäjätunnuksensa perusteella, joka on pelissä julkinen. Se on ilmainen julkinen palvelu eikä meidän alihankkijamme, ja se näkee vain tämän pyynnön.",
-          "Meta (Facebook ja Instagram) – näkee selaimesi Meta-pikselin ja palvelimiltamme tulevien raporttien kautta, miten käytät sivustoamme, jotta voimme näyttää sinulle mainoksiamme siellä ja mitata, miten ne toimivat. Kun luot tilin tai ilmoittaudut, palvelimemme lähettävät Metalle myös sähköpostiosoitteestasi sotketun muodon (tiivisteen) ja tiedon siitä, mihin kerhoon, leiriin tai tapahtumaan ilmoittauduit, jotta Meta voi tunnistaa sinut, jos käytät Facebookia tai Instagramia – ei koskaan lapsesi nimeä, ikää tai muita tietoja hänestä. Vain jos sallit markkinointievästeet.",
+          "Meta (Facebook ja Instagram) – näkee selaimesi Meta-pikselin ja palvelimiltamme tulevien raporttien kautta, miten käytät sivustoamme, jotta voimme näyttää sinulle mainoksiamme siellä ja mitata, miten ne toimivat. Kun luot tilin tai ilmoittaudut, palvelimemme lähettävät Metalle myös sähköpostiosoitteestasi ja School of Gaming -tilisi tunnisteesta sotketut muodot (tiivisteet) sekä tiedon kerhosta, leiristä tai tapahtumasta, johon ilmoittauduit tai jonka sivulta loit tilisi, jotta Meta voi tunnistaa sinut, jos käytät Facebookia tai Instagramia, ja tietää, että kyse on samasta vanhemmasta käynnistä toiseen. Itse osoitetta tai tunnistetta ei koskaan lähetetä, eikä myöskään lapsesi nimeä, ikää tai muita tietoja hänestä. Vain jos sallit markkinointievästeet.",
           "Google (Analytics ja Ads) – näkee selaimeesi ladattavan tunnistehallinnan kautta, millä julkisilla sivuillamme käyt ja mihin olet ilmoittautunut, jotta voimme mitata mainontamme tuloksia ja näyttää sinulle mainoksiamme. Vain jos sallit markkinointievästeet – ei analytiikkaa: analytiikka, jonka voit ottaa käyttöön, on yksin Vercelin."
         ]
       },
@@ -5533,11 +5668,11 @@
       "geduTitle": "Gedu · pelikasvattaja",
       "geduAltRole": "pelikasvattaja",
       "speaks": "Puhuu",
-      "aboutMe": "Minusta",
+      "whoIs": "Kuka on {firstName}?",
       "funFact": "Hauska fakta",
       "draft": {
         "shortDescription": "Yhden rivin esittelysi näkyy tässä",
-        "longDescription": "”Minusta”-tekstisi näkyy tässä"
+        "longDescription": "”Kuvaus”-tekstisi näkyy tässä"
       }
     },
     "edit": {
@@ -5565,11 +5700,11 @@
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
           "title": "Lisää tittelisi, jotta voit rastittaa tämän.",
-          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
           "photoTitle": "Lisää kuva ja tittelisi, jotta voit rastittaa tämän.",
-          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
-          "titleText": "Lisää tittelisi ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
-          "photoTitleText": "Lisää kuva ja tittelisi sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän."
+          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "titleText": "Lisää tittelisi ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "photoTitleText": "Lisää kuva ja tittelisi sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän."
         }
       },
       "photo": {
@@ -5578,7 +5713,7 @@
         "replace": "Vaihda kuva",
         "remove": "Poista kuva",
         "guidance": {
-          "intro": "Perheet ja pelaajat näkevät tämän sinusta ensimmäisenä. Kun olet valinnut kuvan, rajaat sen kehykseen sopivaksi.",
+          "intro": "Perheet ja pelaajat näkevät tämän sinusta ensimmäisenä.",
           "doHeading": "Tee näin",
           "dontHeading": "Vältä",
           "do": {
@@ -5605,7 +5740,6 @@
         "heading": "Sinusta",
         "nickname": "Pelaajat tuntevat minut nimellä",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "Näkyy lainausmerkeissä nimesi keskellä juuri niin kuin sen kirjoitat.",
         "title": "Titteli",
         "titleHint": "Tehtäväsi School of Gamingissa, esimerkiksi kerhovastaava.",
         "pick": "Värisi"
@@ -5617,11 +5751,11 @@
         "removeLocale": "Poista {locale}",
         "shortDescription": "Esittele itsesi yhdellä rivillä",
         "shortDescriptionPlaceholder": "Redstone-nörtti ja speedrun-fani",
-        "longDescription": "Minusta",
-        "longDescriptionHint": "Mitä teet sessioissa, mitä pelaat ja mitä perheet voisivat haluta tietää sinusta.",
-        "longDescriptionPlaceholder": "Kerro perheille vähän itsestäsi",
+        "longDescription": "Kuvaus",
+        "longDescriptionHint": "Mitä teet sessioissa, mitä pelaat ja mitä perheet voisivat haluta tietää sinusta. Kirjoita kolmannessa persoonassa, ikään kuin joku muu esittelisi sinut: ”Anna on ohjannut Minecraft-kerhoja vuodesta 2023 lähtien ja opettaa mielellään redstonea.”",
+        "longDescriptionPlaceholder": "Kerro perheille itsestäsi kolmannessa persoonassa",
         "funFact": "Hauska fakta",
-        "funFactPlaceholder": "Rakensin kerran toimivan laskimen Minecraftissa.",
+        "funFactPlaceholder": "Rakensi kerran toimivan laskimen Minecraftissa.",
         "count": "{count}/{max}"
       },
       "preview": {
@@ -5654,11 +5788,11 @@
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
           "title": "Lisää titteli, jotta voit rastittaa tämän.",
-          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
           "photoTitle": "Lisää kuva ja titteli, jotta voit rastittaa tämän.",
-          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
-          "titleText": "Lisää titteli ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
-          "photoTitleText": "Lisää kuva ja titteli sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Minusta” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän."
+          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "titleText": "Lisää titteli ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "photoTitleText": "Lisää kuva ja titteli sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän."
         }
       },
       "userPage": {

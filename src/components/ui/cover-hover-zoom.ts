@@ -12,6 +12,13 @@
  * feedback. It is not withheld from readers who ask for reduced motion (owner
  * ruling, 2026-09-28): a 2% lean the reader sets off by pointing at the card
  * is feedback on their own action, not motion the page imposes.
+ *
+ * The picture keeps a compositor layer of its own at all times. Without the
+ * hint the browser gives it one only while the transition runs, placed at its
+ * exact fractional position, and drops it when the transition ends; painting
+ * then snaps a picture that sits between device pixels to whole ones, so it
+ * jumps by a pixel on the last frame of the lean back out. The cost is one GPU
+ * layer per card.
  */
 export const COVER_HOVER_ZOOM =
-  "transition-transform duration-300 group-hover:scale-[1.02] group-focus-within:scale-[1.02]";
+  "transition-transform duration-300 will-change-transform group-hover:scale-[1.02] group-focus-within:scale-[1.02]";

@@ -7,13 +7,14 @@ import { cn } from "@/lib/utils";
 import type {
   LibraryArticleImageUser,
   CatalogueImageUser,
+  LandingPageImageUser,
   ProductPictureUser,
 } from "@/services/catalogue-images";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import { ROUTES } from "@/lib/constants";
 
 /**
- * **Which products and Library articles a catalogue entry reaches**, in the
+ * **Which products, Library articles and landing pages a catalogue entry reaches**, in the
  * one shape both places that ask the question use: the reference column, where
  * it is information, and the confirm dialogs, where it is the thing the admin
  * is being asked to weigh. One component so the two cannot drift into showing
@@ -28,6 +29,9 @@ import { ROUTES } from "@/lib/constants";
  * An article row is a link to the article's admin editor, names it by its
  * working title, and says whether this picture is the cover readers see now
  * (live) or only the draft's.
+ *
+ * A landing page row says the same about the page, by its working title, and
+ * is a link to the page's admin editor.
  *
  * The list is **bounded and scrolls**, in both hosts. An entry can reach 22
  * products, and a list that simply grows pushes whatever is under it — the
@@ -49,11 +53,7 @@ export function CatalogueImageUserList({
     >
       {users.map((user) => (
         <li key={`${user.kind}:${user.id}`}>
-          {user.kind === "product" ? (
-            <ProductRow product={user} />
-          ) : (
-            <ArticleRow article={user} />
-          )}
+          <UserRow user={user} />
         </li>
       ))}
     </ul>
@@ -61,6 +61,17 @@ export function CatalogueImageUserList({
 }
 
 const ROW = "flex items-center justify-between gap-3 px-3 py-2 text-sm";
+
+function UserRow({ user }: { user: CatalogueImageUser }) {
+  switch (user.kind) {
+    case "product":
+      return <ProductRow product={user} />;
+    case "library-article":
+      return <ArticleRow article={user} />;
+    case "landing-page":
+      return <LandingPageRow page={user} />;
+  }
+}
 
 function ProductRow({ product }: { product: ProductPictureUser }) {
   const t = useTranslations("admin.products");
@@ -101,6 +112,22 @@ function ArticleRow({ article }: { article: LibraryArticleImageUser }) {
       <LiveMark
         live={article.is_live}
         label={article.is_live ? t("live") : t("draft")}
+      />
+    </Link>
+  );
+}
+
+function LandingPageRow({ page }: { page: LandingPageImageUser }) {
+  const t = useTranslations("admin.products.imageCatalogue");
+  return (
+    <Link
+      href={ROUTES.admin.landingPage(page.id)}
+      className={cn(ROW, "hover:bg-hover")}
+    >
+      <span className="block min-w-0 truncate font-medium">{page.title}</span>
+      <LiveMark
+        live={page.is_live}
+        label={page.is_live ? t("live") : t("draft")}
       />
     </Link>
   );

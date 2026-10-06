@@ -55,9 +55,8 @@ import { Constants } from "@/types";
  * one language version or the category alone — never the editor's whole save
  * (`src/services/library/CLAUDE.md`).
  *
- * The cover tools are in `library-covers.ts` and the uploader in
- * `cover-uploader.ts`; this module shows a cover as a picture where it reads
- * one (`cover-images.ts`).
+ * The cover tools, uploading included, are in `library-covers.ts`; this
+ * module shows a cover as a picture where it reads one (`cover-images.ts`).
  */
 
 // ---------------------------------------------------------------------------

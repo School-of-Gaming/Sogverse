@@ -49,6 +49,35 @@ mockListPublishedArticles.mockResolvedValue([
   },
 ]);
 
+// The live landing pages the file lists: one in English and Finnish, one in
+// Swedish alone, and one in Klingon alone.
+const mockListPublishedLandingPages = vi.fn();
+vi.mock("@/services/landing-pages/landing-pages.service", () => ({
+  LandingPageService: class {
+    listPublishedPages = mockListPublishedLandingPages;
+  },
+}));
+function livePage(id: string, versions: { locale: string; title: string; summary: string; slug: string }[]) {
+  return {
+    id,
+    firstPublishedAt: "2026-09-01T08:00:00Z",
+    publishedAt: "2026-09-01T08:00:00Z",
+    versions,
+  };
+}
+mockListPublishedLandingPages.mockResolvedValue([
+  livePage("9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c5d", [
+    { locale: "en", title: "Gaming clubs in Espoo", summary: "After-school clubs in Espoo.", slug: "gaming-clubs-in-espoo" },
+    { locale: "fi", title: "Pelikerhot Espoossa", summary: "Kerhot.", slug: "pelikerhot-espoossa" },
+  ]),
+  livePage("1f2e3d4c-5b6a-4978-8695-a4b3c2d1e0f9", [
+    { locale: "sv", title: "Spelklubbar i Esbo", summary: "Klubbar i Esbo.", slug: "spelklubbar-i-esbo" },
+  ]),
+  livePage("2b3c4d5e-6f70-4812-9a3b-4c5d6e7f8091", [
+    { locale: "tlh", title: "Qapla", summary: "Qapla.", slug: "qapla" },
+  ]),
+]);
+
 const { GET } = await import("@/app/llms.txt/route");
 const { PATHNAMES } = await import("@/i18n/pathnames");
 const { FAQ_ITEM_KEYS } = await import("@/components/about/about-faq");
@@ -120,6 +149,29 @@ describe("/llms.txt", () => {
 
     expect(without).not.toContain("## Library");
     expect(without).toContain(`(${BASE}/en/library)`);
+  });
+
+  it("lists each live landing page at the address an English reader is sent to", () => {
+    expect(body).toContain("## Featured pages");
+    expect(body).toContain(
+      `- [Gaming clubs in Espoo](${BASE}/en/discover/gaming-clubs-in-espoo): After-school clubs in Espoo.`,
+    );
+    // Live in Swedish alone: listed in Swedish, at its Swedish address.
+    expect(body).toContain(
+      `- [Spelklubbar i Esbo](${BASE}/sv/upptack/spelklubbar-i-esbo): Klubbar i Esbo.`,
+    );
+    // Live in Klingon alone: not a page of any indexed language, so not listed.
+    expect(body).not.toContain("Qapla");
+  });
+
+  it("leaves the landing pages out, and keeps the rest, when they cannot be read", async () => {
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockListPublishedLandingPages.mockRejectedValueOnce(new Error("down"));
+    const without = await (await GET()).text();
+    quiet.mockRestore();
+
+    expect(without).not.toContain("## Featured pages");
+    expect(without).toContain("## Library");
   });
 
   it("lists each indexed locale's home URL and no Klingon one", () => {

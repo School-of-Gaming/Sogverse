@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import ReactMarkdown, { type Components } from "react-markdown";
 import { cn } from "@/lib/utils";
 import {
@@ -18,13 +18,15 @@ import {
   type MarkdownUseCase,
   type StyledMarkdownElement,
 } from "@/lib/authored-markdown";
+import { resolveLocale } from "@/lib/constants/locales";
+import { localizeOwnSiteHref } from "@/lib/links/own-site";
 
 export type { MarkdownEmphasis, MarkdownUseCase };
 
 /**
  * The app's one markdown renderer, for authored prose that is *stored* as
  * markdown — a gedu's session report, a product's marketing long description,
- * a team member's "About me", a Library article's body, and the email a report
+ * a team member's bio, a Library article's body, and the email a report
  * is later converted into.
  *
  * **Authored markdown looks the same wherever it appears, a mail included.**
@@ -215,6 +217,12 @@ function componentsFor(
  * referrer from every destination, our own included, which buys the same as
  * inspecting each href would; `noopener` is spelled out beside the new tab.
  * The mail never adds a target — a link in a mail opens the browser anyway.
+ *
+ * **A link to one of our pages is shown in the page's language.** It is stored
+ * without one (`/shop/123`), or carries whichever language its writer was
+ * browsing in, so it is localised to the locale of the page it is read on:
+ * `/shop/123` and `/sv/butik/123` both become `/fi/kauppa/123` on a Finnish
+ * page (`localizeOwnSiteHref`).
  */
 function AuthoredLink({
   href,
@@ -225,10 +233,16 @@ function AuthoredLink({
   className: string;
   children?: ReactNode;
 }) {
+  const locale = resolveLocale(useLocale());
   if (href === undefined || href === "") return <>{children}</>;
-  if (authoredLinkKind(href, process.env.NEXT_PUBLIC_SITE_URL) !== "other-site") {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (authoredLinkKind(href, siteUrl) !== "other-site") {
     return (
-      <a href={href} rel="noreferrer" className={className}>
+      <a
+        href={localizeOwnSiteHref(href, locale, siteUrl)}
+        rel="noreferrer"
+        className={className}
+      >
         {children}
       </a>
     );

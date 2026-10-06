@@ -1,5 +1,9 @@
 import { FAQ_ITEM_KEYS } from "@/components/about/about-faq";
 import {
+  landingPageCanonicalPath,
+  landingPageLocales,
+} from "@/components/landing-pages/landing-page-address";
+import {
   libraryArticleCanonicalPath,
   libraryArticleLocales,
 } from "@/components/library/article/article-metadata";
@@ -12,6 +16,11 @@ import { messageToPlainText } from "@/lib/i18n/plain-text";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
 import { BUSINESS_ID, LEGAL_NAME, VAT_ID } from "@/lib/seo/organization";
 import { createAnonClient } from "@/lib/supabase/anon";
+import {
+  localizeLandingPageSummary,
+  type PublishedLandingPageSummary,
+} from "@/services/landing-pages/landing-pages.contracts";
+import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import {
   localizeArticleSummary,
   type PublishedLibraryArticleSummary,
@@ -51,7 +60,9 @@ import { LibraryService } from "@/services/library/library.service";
  * writing for parents, which is exactly what a model pointed here can cite.
  * They are read from the database on every request, anonymously and with no
  * cookies, so the file is the same for whoever asks; a failed read leaves the
- * section out rather than failing the file.
+ * section out rather than failing the file. **The live landing pages are
+ * listed the same way**, in a section of their own: each is a page an admin
+ * wrote for a model or a search engine to find, which is this file's purpose.
  *
  * **Nothing here names a `/schools` URL, a product page or an unlisted
  * product.** Municipality clubs are offered to families in specific Finnish
@@ -158,10 +169,29 @@ function libraryLines(
   });
 }
 
+/**
+ * One line per live landing page written in an indexed locale, as an article
+ * is listed: its title and summary in the version an English reader is shown,
+ * linked to the page that version canonicalises to. Newest first, by the day
+ * each first went live.
+ */
+function landingPageLines(
+  live: readonly PublishedLandingPageSummary[],
+  baseUrl: string,
+): string[] {
+  return live.flatMap((page) => {
+    const shown = localizeLandingPageSummary(page, "en");
+    if (shown === null || landingPageLocales(page).length === 0) return [];
+    const path = landingPageCanonicalPath(page, "en");
+    return [`- [${shown.title}](${baseUrl}${path}): ${shown.summary}`];
+  });
+}
+
 function buildLlmsTxt(
   messages: Awaited<ReturnType<typeof loadMessages>>,
   baseUrl: string,
   published: readonly PublishedLibraryArticleSummary[] | null,
+  landingPages: readonly PublishedLandingPageSummary[] | null,
 ): string {
   const { about } = messages;
   const url = (href: StaticAppHref) =>
@@ -175,6 +205,18 @@ function buildLlmsTxt(
           section("Library", [
             "Articles for parents, written by School of Gaming. An article not written in English is listed in the language it was written in, at that language's address.",
             articles.join("\n"),
+          ]),
+        ];
+
+  const pages =
+    landingPages === null ? [] : landingPageLines(landingPages, baseUrl);
+  const featured =
+    pages.length === 0
+      ? []
+      : [
+          section("Featured pages", [
+            "Pages School of Gaming has written about what it offers particular places, schools, organisations and events. A page not written in English is listed in the language it was written in, at that language's address.",
+            pages.join("\n"),
           ]),
         ];
 
@@ -221,6 +263,7 @@ function buildLlmsTxt(
       ).join("\n"),
     ]),
     ...library,
+    ...featured,
     section("Languages", [
       "The same pages, in each language we publish. English is the source.",
       INDEXED_LOCALES.map(
@@ -236,19 +279,34 @@ async function readLiveArticles() {
   return new LibraryService(createAnonClient()).listPublishedArticles();
 }
 
-/** Built per request: the Library section reads the live articles, and no build may need a database. */
+/** The live landing pages, read with the anon key and no cookies. */
+async function readLiveLandingPages() {
+  return new LandingPageService(createAnonClient()).listPublishedPages();
+}
+
+/**
+ * Built per request: the Library and featured-pages sections read what is
+ * live, and no build may need a database.
+ */
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const messages = await loadMessages("en");
-  const published = await readLiveArticles().catch((error: unknown) => {
-    console.error("[llms.txt] the live Library articles were not read:", error);
-    return null;
-  });
+  const [published, landingPages] = await Promise.all([
+    readLiveArticles().catch((error: unknown) => {
+      console.error("[llms.txt] the live Library articles were not read:", error);
+      return null;
+    }),
+    readLiveLandingPages().catch((error: unknown) => {
+      console.error("[llms.txt] the live landing pages were not read:", error);
+      return null;
+    }),
+  ]);
   const body = buildLlmsTxt(
     messages,
     process.env.NEXT_PUBLIC_SITE_URL!,
     published,
+    landingPages,
   );
 
   return new Response(body, {

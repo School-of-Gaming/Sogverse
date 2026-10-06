@@ -48,11 +48,27 @@ export interface LibraryArticleImageUser {
 }
 
 /**
- * Anything a catalogue entry reaches. A product links only a product entry and
- * an article only a Library cover, so one entry's list is in practice all of
- * one kind; the type does not rely on that.
+ * One landing page showing a catalogue entry somewhere in its sections, named
+ * by its working title. `is_live` is whether readers see the entry on the page
+ * right now — its published copy shows it — rather than only its working copy.
  */
-export type CatalogueImageUser = ProductPictureUser | LibraryArticleImageUser;
+export interface LandingPageImageUser {
+  kind: "landing-page";
+  id: string;
+  title: string;
+  is_live: boolean;
+}
+
+/**
+ * Anything a catalogue entry reaches. A product links only a product entry, an
+ * article only a Library cover and a landing page only a landing picture, so
+ * one entry's list is in practice all of one kind; the type does not rely on
+ * that.
+ */
+export type CatalogueImageUser =
+  | ProductPictureUser
+  | LibraryArticleImageUser
+  | LandingPageImageUser;
 
 /**
  * Which products and articles use which entry, keyed by entry id. The count a
@@ -102,8 +118,9 @@ export class CatalogueImagesService {
   }
 
   /**
-   * Which products and Library articles each entry reaches, derived from a
-   * products read and an articles read rather than stored anywhere.
+   * Which products, Library articles and landing pages each entry reaches,
+   * derived from a products read, an articles read and a landing pages read
+   * rather than stored anywhere.
    *
    * Only imaged products are fetched: a product with no entry contributes to
    * no entry's list, so reading it would be payload for nothing. The name is
@@ -115,12 +132,14 @@ export class CatalogueImagesService {
    * An article is named by its working copy's title in the default locale,
    * resolved the same way. It reaches the entry its working copy links and
    * the one its published copy links, which differ while a cover change is unpublished —
-   * and a replace or a remove reaches both.
+   * and a replace or a remove reaches both. A landing page is named and
+   * listed the same way, under every entry either of its copies shows.
    */
   async getUsage(): Promise<CatalogueImageUsage> {
-    const [productRows, articleRows] = await Promise.all([
+    const [productRows, articleRows, landingRows] = await Promise.all([
       this.readProductUsage(),
       this.readArticleUsage(),
+      this.readLandingPageUsage(),
     ]);
 
     const usage: CatalogueImageUsage = {};
@@ -155,6 +174,22 @@ export class CatalogueImagesService {
               DEFAULT_LOCALE,
             )?.title ?? "",
           is_live: entryId === liveId,
+        });
+      }
+    }
+
+    for (const row of landingRows) {
+      const liveIds = new Set(entryIdsOf(row.publication?.image_paths));
+      const entryIds = new Set([...entryIdsOf(row.image_paths), ...liveIds]);
+      const title =
+        resolveTranslation(inLocaleOrder(row.landing_page_translations), DEFAULT_LOCALE)
+          ?.title ?? "";
+      for (const entryId of entryIds) {
+        (usage[entryId] ??= []).push({
+          kind: "landing-page",
+          id: row.id,
+          title,
+          is_live: liveIds.has(entryId),
         });
       }
     }
@@ -200,6 +235,24 @@ export class CatalogueImagesService {
         .from("library_articles")
         .select(
           "id, cover_image_id, library_article_translations(locale, title), publication:library_article_publications(cover_image_id)",
+          { count: "exact" },
+        )
+        .order("id")
+        .range(from, to),
+    );
+  }
+
+  /**
+   * Every landing page with the pictures of both its copies. Each copy's
+   * `image_paths` is keyed by the entries its sections show, derived by the
+   * database, so the structure itself is never read here.
+   */
+  private readLandingPageUsage() {
+    return walkPages("landingPageImageUsage", (from, to) =>
+      this.supabase
+        .from("landing_pages")
+        .select(
+          "id, image_paths, landing_page_translations(locale, title), publication:landing_page_publications(image_paths)",
           { count: "exact" },
         )
         .order("id")
@@ -303,7 +356,7 @@ export class CatalogueImagesService {
   }
 }
 
-/** What a usage list is sorted by: a product's name, an article's title. */
+/** What a usage list is sorted by: a product's name, an article's or a page's title. */
 function userName(user: CatalogueImageUser): string {
   return user.kind === "product" ? user.name : user.title;
 }
@@ -347,4 +400,11 @@ async function uploadError(
     );
   }
   return error;
+}
+
+/** The entry ids a landing page copy's `image_paths` is keyed by. */
+function entryIdsOf(imagePaths: unknown): string[] {
+  return typeof imagePaths === "object" && imagePaths !== null && !Array.isArray(imagePaths)
+    ? Object.keys(imagePaths)
+    : [];
 }

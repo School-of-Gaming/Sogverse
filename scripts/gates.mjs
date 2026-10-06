@@ -39,7 +39,7 @@ const GATES = [
   { name: 'lint', cmd: 'npm run lint', stage: 1 },
   { name: 'type-check', cmd: 'npm run type-check', stage: 1 },
   { name: 'check-translations', cmd: 'npm run check-translations', stage: 1 },
-  { name: 'cover-uploader', cmd: 'npm run check-fresh --workspace=@sog/mcp-cover-uploader', stage: 1 },
+  { name: 'image-uploader', cmd: 'npm run check-fresh --workspace=@sog/mcp-image-uploader', stage: 1 },
   { name: 'test', cmd: 'npm run test', stage: 2 },
 ];
 
