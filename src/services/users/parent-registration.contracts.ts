@@ -116,6 +116,16 @@ export const registerParentBody = z.object({
    */
   utm: registrationUtmBody.optional(),
   /**
+   * The `?redirect=` the register page was opened with — the product page a
+   * sign-up started from — so the account-creation report can name that
+   * product.
+   *
+   * **A plain optional string, no format rule**, for `utm`'s reason: a bad
+   * value must never cost a registration. The route treats it as untrusted and
+   * names a product only for an advertised shop product page it resolves to.
+   */
+  redirect: z.string().optional(),
+  /**
    * Whether the parent ticked the optional School of Gaming marketing box.
    *
    * **Optional, and absent means `false`** — a registration must never fail
@@ -193,6 +203,7 @@ export const completeParentRegistrationBody = registerParentBody.pick({
   homeLocationId: true,
   locale: true,
   utm: true,
+  redirect: true,
   marketingConsent: true,
   acceptedTerms: true,
 });

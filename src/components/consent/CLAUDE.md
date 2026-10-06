@@ -170,7 +170,8 @@ each one sent after the response has gone out so it can neither delay nor fail w
 family asked for:
 
 - **an account was created** — reported as a lead, someone reachable who has committed to
-  nothing;
+  nothing, and naming the product whose page the sign-up started from when that was an
+  advertised product's page;
 - **an enrolment** — a seat taken or a place in a queue accepted, carrying which of the
   two it was.
 
@@ -178,18 +179,30 @@ Handing a parent to Stripe is reported from neither side to Meta: its checkout s
 browser's click above, and a server report as well would count every paid attempt twice.
 (Analytics still hears it, as its own `checkout` push from the panel.)
 
-The enrolment, and the browser's product view and checkout start, name the product in
-Meta's standard product fields, built in one place so they cannot describe one product two
+The enrolment, the lead from a product page, and the browser's product view and checkout
+start, name the product in Meta's standard product fields, built in one place so they cannot describe one product two
 ways: its id, its English name whatever the visitor's locale, its topic as the category —
 an enum value, stable across renames, and the axis a campaign is run per — and the price
 the family pays with its currency, zero for a free product. A paid product with no price in the currency
 states no value at all rather than a guessed one. **A queue place carries no value**: a
 waitlisted enrolment drops the value and currency in the server report itself, whatever the
 caller passed, because nobody has paid or committed to pay and a priced queue would train a
-campaign to count a full product's waitlist as revenue. On the browser's two product events
-these are only facts the product's public page shows anyone. On the server's enrolment they
-ride beside the parent's email and account-id hashes, so Meta learns that an identifiable parent signed up
-for that named club, camp or event — which the privacy policy says.
+campaign to count a full product's waitlist as revenue. **A lead carries no value either**,
+for the same reason and by the same rule in the server report. On the browser's two product
+events these are only facts the product's public page shows anyone. On the server's
+enrolment they ride beside the parent's email and account-id hashes, so Meta learns that an
+identifiable parent signed up for that named club, camp or event — which the privacy policy
+says — and on a lead, that an identifiable parent opened an account from that product's page.
+
+**Which product a lead names comes from the register page's own `?redirect=`**, the product
+page the visitor left to create an account. Both forms send it in the registration body —
+the password form from its address, the finish page of a Google sign-up from the intent it
+carried across the round trip — and the server treats it as untrusted: resolved through
+`resolveInternalPath()`, matched on its locale-stripped internal path, accepted only as a
+shop product page, and read through the anon client after the response has gone out.
+Anything else — no redirect, another page, an unknown or unadvertised product, a failed
+read — sends the lead without a product, and never touches the registration. The lead's
+`event_source_url` stays the register page, which is where the account was created.
 
 Each server report is gated on the **request's own consent cookie**, so a conversion for
 someone who refused marketing is impossible rather than unlikely. Products we do not
@@ -205,8 +218,9 @@ neither the address nor the id is ever sent or logged, and never a gamer's. The 
 sent whether or not it has been verified; that is standard practice and accepted as such.
 The id hash is the same on every report for that account, so Meta can join one parent's
 events across visits and devices. With the product fields above, that tells Meta which
-product an identifiable parent signed up for. No name, and nothing about a child beyond
-that — not their name, age, account or its id, or anything else. The privacy policy's Meta entry says
+product an identifiable parent signed up for, or opened an account from. No name, and
+nothing about a child beyond that — not their name, age, account or its id, or anything
+else. The privacy policy's Meta entry says
 this in plain words; adding a field there is a privacy-policy edit.
 
 A completed purchase is reported nowhere today. When it is, it belongs on the same

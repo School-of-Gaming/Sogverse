@@ -50,6 +50,11 @@ import { getOrigin } from "@/lib/url";
  * event — which the privacy policy states. Nothing about the child goes with
  * it: not their name, age, account or anything else.
  *
+ * **What is sent about the account creation** is nothing, unless the sign-up
+ * started from an advertised product's page: then the same product fields,
+ * without a price, so Meta learns that an identifiable parent opened an
+ * account from that named club, camp or event's page.
+ *
  * **Gated on the request's own consent cookie.** The send is refused unless the
  * request that triggered it carried marketing consent — decided here, on the
  * server, from the cookie the browser actually sent, so a report for someone who
@@ -94,10 +99,15 @@ const REQUEST_TIMEOUT_MS = 10_000;
  *
  * `product` is built by `metaProductDetails()`, the one builder the browser's
  * product view uses too, so the two sides cannot describe a product
- * differently.
+ * differently. On an account creation it is optional: the product page the
+ * sign-up started from, when that was an advertised product's page.
  */
 export type MetaConversion =
-  | { event: "account_created"; sourcePath: string }
+  | {
+      event: "account_created";
+      product?: MetaProductDetails;
+      sourcePath: string;
+    }
   | {
       event: "enrolment";
       outcome: MetaEnrolmentOutcome;
@@ -148,23 +158,32 @@ function eventNameFor(conversion: MetaConversion): string {
     : PIXEL_EVENTS.enrolment;
 }
 
+/** A product's fields without its price. */
+function unpriced(product: MetaProductDetails): Record<string, unknown> {
+  const { value: _value, currency: _currency, ...rest } = product;
+  return rest;
+}
+
 /**
- * The enrolment's `custom_data`: its outcome and the product it was for.
+ * The event's `custom_data`: for an enrolment its outcome and the product it
+ * was for; for an account creation the product its sign-up started from, if
+ * any, and otherwise none at all.
  *
- * **A queue place carries no value.** A waitlisted report keeps the product's
- * id, name, topic and type but drops `value` and `currency`, whatever the
- * caller passed: nobody has paid or committed to pay, and a price on it would
- * teach the campaign that a full product's queue is revenue. Decided here
- * rather than by each caller, so no route can get it wrong.
+ * **Only a seat carries a value.** A waitlisted report and an account creation
+ * keep the product's id, name, topic and type but drop `value` and `currency`,
+ * whatever the caller passed: nobody has paid or committed to pay, and a price
+ * on either would teach the campaign that a queue place or a new account is
+ * revenue. Decided here rather than by each caller, so no route can get it
+ * wrong.
  */
-function enrolmentCustomData(
-  conversion: Extract<MetaConversion, { event: "enrolment" }>,
-): Record<string, unknown> {
-  const { outcome, product } = conversion;
-  if (outcome === "waitlisted") {
-    const { value: _value, currency: _currency, ...unpriced } = product;
-    return { outcome, ...unpriced };
+function customDataFor(
+  conversion: MetaConversion,
+): Record<string, unknown> | undefined {
+  if (conversion.event === "account_created") {
+    return conversion.product && unpriced(conversion.product);
   }
+  const { outcome, product } = conversion;
+  if (outcome === "waitlisted") return { outcome, ...unpriced(product) };
   return { outcome, ...product };
 }
 
@@ -216,6 +235,7 @@ export async function reportMetaConversion(
       ? hashAccountIdForMeta(accountId)
       : undefined;
 
+    const customData = customDataFor(conversion);
     const event = {
       event_name: eventNameFor(conversion),
       event_time: Math.floor(Date.now() / 1000),
@@ -235,9 +255,7 @@ export async function reportMetaConversion(
         ...(emailHash && { em: [emailHash] }),
         ...(accountIdHash && { external_id: [accountIdHash] }),
       },
-      ...(conversion.event === "enrolment" && {
-        custom_data: enrolmentCustomData(conversion),
-      }),
+      ...(customData && { custom_data: customData }),
     };
 
     // Present only when configured, and only ever on a preview deployment: it

@@ -13,6 +13,7 @@ import { createEmailVerificationToken } from "@/lib/email-verification";
 import { utmMetadataForConsent } from "@/lib/utm";
 import { parseConsentCookieHeader } from "@/lib/consent";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
+import { signUpProductFor } from "@/lib/meta-sign-up-product.server";
 import { getOrigin } from "@/lib/url";
 import {
   REGISTER_WEAK_PASSWORD,
@@ -72,6 +73,7 @@ export const POST = defineRoute({
       homeLocationId,
       locale: requestedLocale,
       utm,
+      redirect,
       marketingConsent,
     } = body;
 
@@ -343,15 +345,21 @@ export const POST = defineRoute({
     // whether to send anything: it refuses unless this request's own consent
     // cookie says marketing is allowed, so an un-consented registration reports
     // nothing. The source path is the page the parent was on, stated rather than
-    // derived from this route's own URL.
+    // derived from this route's own URL. The product is the advertised product
+    // page the sign-up started from, if it did — looked up after the response
+    // too, so it can neither delay nor fail the registration.
     //
     // No role check, and none is possible to need: the account this just created
     // is an ordinary customer, and a gamer cannot reach a registration form at
     // all.
-    after(
+    after(async () =>
       reportMetaConversion(
         request,
-        { event: "account_created", sourcePath: ROUTES.register },
+        {
+          event: "account_created",
+          product: await signUpProductFor(redirect),
+          sourcePath: ROUTES.register,
+        },
         // The account this request just created — the parent's own id and
         // address.
         { id: userId, email: storedEmail },

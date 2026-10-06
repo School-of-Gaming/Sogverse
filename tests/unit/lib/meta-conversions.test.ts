@@ -426,6 +426,41 @@ describe("reportMetaConversion — the request", () => {
     });
   });
 
+  // A sign-up that started from an advertised product's page names that
+  // product, so a dataset filtering on the topic sees the lead — but a new
+  // account is not revenue: the report drops the price whatever the caller
+  // passed, and keeps every other product field.
+  it("names the product without a value on a lead from a product page", async () => {
+    await reportMetaConversion(
+      request(),
+      { event: "account_created", product: PRODUCT, sourcePath: "/register" },
+      PARENT,
+    );
+
+    const event = sentEvent();
+    expect(event.event_name).toBe("Lead");
+    expect(event.custom_data).toEqual({
+      content_ids: ["abc-123"],
+      content_type: "product",
+      content_name: "Roblox Studio Club",
+      content_category: "roblox_studio",
+    });
+    // Still the page the account was created on, not the product's page.
+    expect(event.event_source_url).toBe(
+      "https://test.sogverse.local/register",
+    );
+  });
+
+  it("names nothing on a lead that did not start from a product page", async () => {
+    await reportMetaConversion(
+      request(),
+      { event: "account_created", product: undefined, sourcePath: "/register" },
+      PARENT,
+    );
+
+    expect(sentEvent()).not.toHaveProperty("custom_data");
+  });
+
   it("carries the test event code only when one is configured", async () => {
     vi.stubEnv("META_CONVERSIONS_API_TEST_EVENT_CODE", "TEST12345");
 
