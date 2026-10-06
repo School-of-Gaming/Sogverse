@@ -146,6 +146,9 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
             medium: utm.medium ?? undefined,
             campaign: utm.campaign ?? undefined,
           },
+          // The product page this visit came from, so the account-creation
+          // report can name it. The route re-checks it; nothing navigates on it.
+          redirect: safeRedirect ?? undefined,
           ...account.requestBody,
         }),
       });

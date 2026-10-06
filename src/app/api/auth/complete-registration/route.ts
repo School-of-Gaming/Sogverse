@@ -10,6 +10,7 @@ import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
+import { signUpProductFor } from "@/lib/meta-sign-up-product.server";
 import { registrationCompletedResponse } from "@/lib/registration-intent-cookie";
 import { getOrigin } from "@/lib/url";
 import {
@@ -62,6 +63,7 @@ export const POST = defineRoute({
       homeLocationId,
       locale: requestedLocale,
       utm,
+      redirect,
       marketingConsent,
     } = body;
 
@@ -230,10 +232,16 @@ export const POST = defineRoute({
     // Google account becomes a registered one — exactly once, since only the
     // request whose stamp changed a row gets this far. After the response, and
     // only with the request's own marketing consent (the reporter decides).
-    after(
+    // The product is the advertised product page the sign-up started from, if
+    // it did, read off the finish page's `redirect` after the response as well.
+    after(async () =>
       reportMetaConversion(
         request,
-        { event: "account_created", sourcePath: ROUTES.register },
+        {
+          event: "account_created",
+          product: await signUpProductFor(redirect),
+          sourcePath: ROUTES.register,
+        },
         { email: profile.email },
       ),
     );

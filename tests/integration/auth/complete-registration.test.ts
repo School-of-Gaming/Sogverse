@@ -81,6 +81,23 @@ vi.mock("@/lib/meta-conversions.server", () => ({
   reportMetaConversion: (...args: unknown[]) => mockReportMetaConversion(...args),
 }));
 
+// The product a sign-up started from is resolved by its own module, unit-tested
+// beside it; here only what the route hands it and does with its answer.
+const mockSignUpProductFor = vi.fn();
+vi.mock("@/lib/meta-sign-up-product.server", () => ({
+  signUpProductFor: (...args: unknown[]) => mockSignUpProductFor(...args),
+}));
+
+/** The advertised product a sign-up started from, as the resolver answers it. */
+const SIGN_UP_PRODUCT = {
+  content_ids: ["0f8b6c1e-3c2a-4d5e-9f60-7a8b9c0d1e2f"],
+  content_type: "product",
+  content_name: "Roblox Studio Club",
+  content_category: "roblox_studio",
+  value: 49,
+  currency: "EUR",
+};
+
 // The conversion is handed to the post-response hook; capture it instead.
 const deferred: unknown[] = [];
 vi.mock("next/server", async (importOriginal) => {
@@ -92,6 +109,14 @@ vi.mock("next/server", async (importOriginal) => {
     },
   };
 });
+
+/** Run the work handed to the post-response hook, as the platform would. */
+async function runDeferred(): Promise<void> {
+  for (const work of deferred) {
+    if (typeof work === "function") await work();
+    else await work;
+  }
+}
 
 import { POST } from "@/app/api/auth/complete-registration/route";
 import {
@@ -189,6 +214,7 @@ describe("POST /api/auth/complete-registration", () => {
     vi.clearAllMocks();
     writes.length = 0;
     deferred.length = 0;
+    mockSignUpProductFor.mockResolvedValue(undefined);
     signedInCustomer();
     googleIdentity({ email: EMAIL, email_verified: true });
     mockProfileUpdate.mockResolvedValue({ error: null });
@@ -471,13 +497,34 @@ describe("POST /api/auth/complete-registration", () => {
     await POST(request(validBody, { marketing: true }));
 
     expect(deferred).toHaveLength(1);
+    expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    await runDeferred();
     expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
     const [, conversion, account] = mockReportMetaConversion.mock.calls[0];
     expect(conversion).toEqual({
       event: "account_created",
+      product: undefined,
       sourcePath: ROUTES.register,
     });
     // The signed-in account's own address, from its profile.
     expect(account).toEqual({ email: EMAIL });
+  });
+
+  // The finish page sends the product page the Google sign-up set out from,
+  // and the conversion names that product exactly as the password path does.
+  it("names the product page the sign-up started from", async () => {
+    mockSignUpProductFor.mockResolvedValue(SIGN_UP_PRODUCT);
+    const redirect = `/en/shop/${SIGN_UP_PRODUCT.content_ids[0]}`;
+
+    await POST(request({ ...validBody, redirect }, { marketing: true }));
+    await runDeferred();
+
+    expect(mockSignUpProductFor).toHaveBeenCalledWith(redirect);
+    const [, conversion] = mockReportMetaConversion.mock.calls[0];
+    expect(conversion).toEqual({
+      event: "account_created",
+      product: SIGN_UP_PRODUCT,
+      sourcePath: ROUTES.register,
+    });
   });
 });
