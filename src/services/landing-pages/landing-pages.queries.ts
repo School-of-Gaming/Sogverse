@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { catalogueImageUsageKey } from "@/services/catalogue-images/catalogue-images.keys";
 import { LandingPageService } from "./landing-pages.service";
-import type { LandingPageInput } from "./landing-pages.contracts";
 
 export const landingPageKeys = {
   all: ["landing-pages"] as const,
@@ -52,27 +51,6 @@ function useLandingPageInvalidation(): () => Promise<void> {
       queryClient.invalidateQueries({ queryKey: catalogueImageUsageKey }),
     ]);
   };
-}
-
-export function useCreateLandingPage() {
-  const service = new LandingPageService(getClient());
-  const invalidate = useLandingPageInvalidation();
-
-  return useMutation({
-    mutationFn: (input: LandingPageInput) => service.createPage(input),
-    onSuccess: () => invalidate(),
-  });
-}
-
-export function useSaveLandingPage() {
-  const service = new LandingPageService(getClient());
-  const invalidate = useLandingPageInvalidation();
-
-  return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: LandingPageInput }) =>
-      service.savePage(id, input),
-    onSuccess: () => invalidate(),
-  });
 }
 
 export function usePublishLandingPage() {

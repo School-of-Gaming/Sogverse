@@ -103,7 +103,6 @@ const PAGE: AdminLandingPage = {
       { id: GALLERY, type: "image", images: [{ id: PICTURE_ITEM, imageId: CASTLE }] },
     ],
     imagePaths: { [CASTLE]: "castle.jpg" },
-    imageLabels: { [CASTLE]: "Castle" },
     versions: [
       {
         locale: "en",

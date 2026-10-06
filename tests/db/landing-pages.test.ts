@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
 import {
   createAdminTestClient,
   createAnonTestClient,
@@ -172,6 +172,29 @@ describe("landing pages", () => {
     expect(versions.error).toBeNull();
   }
 
+  /**
+   * The whole save, `save_landing_page` — what `create_landing_page` runs in
+   * SQL: the structure and the version set together, the set replacing what is
+   * stored. No application writer sends it, so it is called here directly.
+   */
+  async function saveWhole(
+    id: string,
+    page: {
+      sections: LandingSection[];
+      versions: { locale: string; title: string; summary: string; slug: string; sectionTexts: Json }[];
+    },
+  ) {
+    const { error } = await adminAuth.rpc("save_landing_page", {
+      p_id: id,
+      p_sections: page.sections,
+      p_versions: page.versions.map(({ sectionTexts, ...rest }) => ({
+        ...rest,
+        section_texts: sectionTexts,
+      })),
+    });
+    if (error) throw error;
+  }
+
   async function draftVersions(id: string) {
     const { data } = await admin
       .from("landing_page_translations")
@@ -335,13 +358,13 @@ describe("landing pages", () => {
 
     it("replaces the version set whole, removing a language left out", async () => {
       await reseed();
-      await service.savePage(PAGE_A, {
+      await saveWhole(PAGE_A, {
         sections: structure(),
         versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
       });
       expect((await draftVersions(PAGE_A)).map((v) => v.locale)).toEqual(["en", "fi"]);
 
-      await service.savePage(PAGE_A, {
+      await saveWhole(PAGE_A, {
         sections: structure(),
         versions: [version("fi", "fixture-landing-a-fi")],
       });
@@ -442,12 +465,12 @@ describe("landing pages", () => {
 
     it("keeps a live language's slug when a whole save removes it and a later one writes it again", async () => {
       await reseed();
-      await service.savePage(PAGE_A, {
+      await saveWhole(PAGE_A, {
         sections: structure(),
         versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
       });
       await service.publishPage(PAGE_A);
-      await service.savePage(PAGE_A, { sections: structure(), versions: [version("en", SLUG_A)] });
+      await saveWhole(PAGE_A, { sections: structure(), versions: [version("en", SLUG_A)] });
 
       // Another page cannot take the address the live Finnish version holds.
       const taken = await adminAuth.rpc("save_landing_page_version", {
@@ -486,7 +509,7 @@ describe("landing pages", () => {
   describe("partial writes", () => {
     it("a structure save drops a removed section's words from every language", async () => {
       await reseed();
-      await service.savePage(PAGE_A, {
+      await saveWhole(PAGE_A, {
         sections: structure(),
         versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
       });
@@ -528,7 +551,7 @@ describe("landing pages", () => {
 
     it("a one-language save touches no other language and not the structure", async () => {
       await reseed();
-      await service.savePage(PAGE_A, {
+      await saveWhole(PAGE_A, {
         sections: structure(),
         versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
       });
@@ -561,7 +584,7 @@ describe("landing pages", () => {
 
     it("puts every complete version live at once and leaves an incomplete one out", async () => {
       await reseed();
-      await service.savePage(PAGE_A, {
+      await saveWhole(PAGE_A, {
         sections: structure(),
         versions: [
           version("en", SLUG_A),
@@ -722,7 +745,6 @@ describe("landing pages", () => {
       const view = await service.getAdminPage(PAGE_A);
       expect(view?.draft.sections[0]).toEqual({ id: HERO, type: "hero", imageId: PIC_B });
       expect(view?.draft.imagePaths).toEqual({ [PIC_B]: pathOf(PIC_B) });
-      expect(view?.draft.imageLabels).toEqual({ [PIC_B]: "Landing fixture B" });
       expect(view?.publication?.imagePaths).toEqual({ [PIC_B]: pathOf(PIC_B) });
       expect(view?.hasUnpublishedChanges).toBe(false);
     });
@@ -745,7 +767,7 @@ describe("landing pages", () => {
         type: "image",
         images: [{ id: SHOT_1, imageId: PIC_DOOMED_TOO }],
       };
-      await service.savePage(PAGE_A, {
+      await saveWhole(PAGE_A, {
         sections: [...structure(PIC_DOOMED), gallery],
         versions: [
           {
@@ -765,7 +787,6 @@ describe("landing pages", () => {
       const view = await service.getAdminPage(PAGE_A);
       expect(view?.draft.sections).toEqual(structure(null));
       expect(view?.draft.imagePaths).toEqual({});
-      expect(view?.draft.imageLabels).toEqual({});
       expect(view?.publication?.sections).toEqual(structure(null));
       expect(view?.publication?.imagePaths).toEqual({});
       expect(Object.keys(view?.publication?.versions[0].sectionTexts ?? {})).toEqual(
@@ -798,10 +819,6 @@ describe("landing pages", () => {
       expect(view?.draft.imagePaths).toEqual({
         [PIC_A]: pathOf(PIC_A),
         [PIC_B]: pathOf(PIC_B),
-      });
-      expect(view?.draft.imageLabels).toEqual({
-        [PIC_A]: "Landing fixture A",
-        [PIC_B]: "Landing fixture B",
       });
     });
   });

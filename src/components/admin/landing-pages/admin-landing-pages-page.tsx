@@ -1,10 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { CircleCheck, CircleDashed, Clock, Languages, Plus } from "lucide-react";
+import { CircleCheck, CircleDashed, Clock, Languages } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import {
@@ -21,14 +20,14 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cn, formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { AdminLandingPageListItem } from "@/services/landing-pages";
-import { landingPageStatus } from "./landing-page-form";
-import { LandingPageStatusChip } from "./landing-page-status-chip";
+import { LandingPageStatusChip, landingPageStatus } from "./landing-page-status-chip";
 
 /**
  * Every landing page, live or not, one row each — the Library list's layout:
- * the heading with its "new" button, a search row, the count line, and a
- * clickable row per page with its title, its status and its languages, each
- * marked complete or not.
+ * the heading, a search row, the count line, and a clickable row per page,
+ * into its status page, with its title, its status and its languages, each
+ * marked complete or not. There is no way to start a page here: pages are
+ * written through the MCP server, by an AI app acting as the admin.
  *
  * **Presentational**: the rows arrive as a prop. `settled` is separate from
  * the rows because "no pages yet" and "the read has not answered" are
@@ -50,15 +49,9 @@ export function AdminLandingPagesPage({
 
   return (
     <div className="space-y-6" data-reserve-scroll-gutter>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <Link href={ROUTES.admin.landingPageNew} className={buttonVariants()}>
-          <Plus className="mr-1 h-4 w-4" />
-          {t("newPageButton")}
-        </Link>
+      <div>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {settled && pages.length === 0 && (

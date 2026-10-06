@@ -3,9 +3,7 @@ export {
   landingPageKeys,
   useAdminLandingPage,
   useAdminLandingPages,
-  useCreateLandingPage,
   usePublishLandingPage,
-  useSaveLandingPage,
   useUnpublishLandingPage,
 } from "./landing-pages.queries";
 export {

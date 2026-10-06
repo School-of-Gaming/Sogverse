@@ -13,8 +13,9 @@ export const metadata: Metadata = {
 
 /**
  * **A landing page's saved working copy, exactly as a reader would meet it if
- * it were published now** — what the editor's Preview opens, in a new tab, in
- * the public site's own chrome, through the same body the live page renders.
+ * it were published now** — what the admin status page's and the MCP tools'
+ * preview links open, in the public site's own chrome, through the same body
+ * the live page renders.
  *
  * Admin-only. The proxy gates the route on the admin role, and this page
  * answers not-found to anyone else as well, rather than rendering what an
@@ -22,8 +23,8 @@ export const metadata: Metadata = {
  * the working copy's table admits admins alone — so there is no service role
  * here. What would be published is the saved copy, so that is what is shown.
  *
- * The version shown is the page locale's, which the editor's Preview opens on
- * for the language tab in front of the admin; without one, the same fallback a
+ * The version shown is the page locale's, which each preview link names for
+ * its own language; without one, the same fallback a
  * reader gets (English, then the first written). A version still being written
  * is shown as it stands, its unwritten words left out, since it is the one
  * being worked on.

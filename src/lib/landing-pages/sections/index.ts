@@ -13,8 +13,8 @@ import { fieldOf, type LandingMarkdownField, type TextReading } from "./shared";
  * label, its required-text rule and which of its words are markdown, one
  * module per type.
  *
- * Every other concern that varies by type — the public renderer, the admin
- * editor, the SEO contribution, the MCP schema — keeps its own exhaustive
+ * Every other concern that varies by type — the public renderer, the SEO
+ * contribution, the MCP schema — keeps its own exhaustive
  * `Record<LandingSectionType, …>`, so a type added here fails type-check
  * everywhere it is not yet handled.
  *

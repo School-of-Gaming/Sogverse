@@ -6,48 +6,40 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   useAdminLandingPage,
   usePublishLandingPage,
-  useSaveLandingPage,
   useUnpublishLandingPage,
 } from "@/services/landing-pages";
-import { LandingPageEditor } from "./landing-page-editor";
 import { LandingPagePageShell } from "./landing-page-page-shell";
+import { LandingPageStatusPage } from "./landing-page-status-page";
 
 /**
- * `/admin/landing-pages/[id]` — one page's editor, where it is also published,
- * and from which its preview opens.
+ * `/admin/landing-pages/[id]` — the data shell around one page's status.
  *
  * Every write resolves only once the page has been read again (the mutations
- * await their invalidation), so the status and the publishing controls
- * already describe the new state when a button comes back. The editor seeds
- * its form once per page, so that read never touches what is being typed.
+ * await their invalidation), so the status already describes the new state
+ * when a confirm closes.
  *
- * Nothing is rendered in the editor's place until the read answers: one row
- * by primary key, into a page whose heading and back link are already
- * painted.
+ * Nothing is rendered in the body's place until the read answers: one row by
+ * primary key, into a page whose heading and back link are already painted.
  */
-export function EditLandingPagePage({ pageId }: { pageId: string }) {
+export function LandingPageStatusView({ pageId }: { pageId: string }) {
   const t = useTranslations("admin.landingPages");
   const { data: page, isError, isSuccess } = useAdminLandingPage(pageId);
-  const savePage = useSaveLandingPage();
   const publishPage = usePublishLandingPage();
   const unpublishPage = useUnpublishLandingPage();
 
   return (
-    <LandingPagePageShell title={t("editPage.title")}>
+    <LandingPagePageShell title={t("statusPage.title")}>
       {page && (
-        <LandingPageEditor
+        <LandingPageStatusPage
           page={page}
           actions={{
-            save: async (input) => {
-              await savePage.mutateAsync({ id: page.draft.id, input });
-            },
             publish: () => publishPage.mutateAsync(page.draft.id),
             unpublish: () => unpublishPage.mutateAsync(page.draft.id),
           }}
         />
       )}
 
-      {/* A failed refetch under an open editor keeps the page it had. */}
+      {/* A failed refetch keeps the page it had. */}
       {isError && !page && (
         <Alert variant="destructive">
           <AlertDescription>{t("loadError")}</AlertDescription>

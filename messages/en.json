@@ -50,8 +50,7 @@
       "adminLibraryArticleNew": "New Article",
       "adminLibraryArticleEdit": "Edit Article",
       "adminLandingPages": "Landing Pages",
-      "adminLandingPageNew": "New Landing Page",
-      "adminLandingPageEdit": "Edit Landing Page",
+      "adminLandingPage": "Landing Page",
       "adminPlatformVision": "Platform Vision",
       "adminGeduInvoicing": "Gedu Invoicing",
       "adminTools": "Tools",
@@ -620,8 +619,7 @@
     "landingPages": {
       "title": "Landing pages",
       "subtitle": "Pages for a school, a city, a business or an event, written for search engines and AI apps to find.",
-      "newPageButton": "New page",
-      "empty": "No landing pages yet. Write the first one.",
+      "empty": "No landing pages yet. Pages are written with an AI app connected to Sogverse.",
       "lastSaved": "Last saved {date}",
       "languagesLabel": "Languages",
       "versionComplete": "complete",
@@ -636,12 +634,30 @@
       "backToList": "Back to landing pages",
       "notFound": "There is no landing page with this id.",
       "loadError": "Could not load this landing page. Refresh to try again.",
-      "newPage": {
-        "title": "New landing page",
-        "submit": "Save draft"
-      },
-      "editPage": {
-        "title": "Edit landing page"
+      "statusPage": {
+        "title": "Landing page",
+        "authoring": "To change this page, ask an AI app connected to Sogverse.",
+        "languagesHeading": "Languages",
+        "readiness": {
+          "noCompleteLanguage": "No language is complete yet, so there is nothing to publish.",
+          "upToDate": "Readers already see the latest saved version."
+        },
+        "language": {
+          "complete": "Complete",
+          "incomplete": "Not complete",
+          "live": "Live on the site.",
+          "notLive": "Not on the site.",
+          "stillNeeded": "Still needed:",
+          "address": "Address:",
+          "noAddress": "none yet",
+          "addressFixed": "Fixed for good: this language has been published.",
+          "addressOpen": "Becomes permanent when this language is first published."
+        },
+        "missing": {
+          "inSection": "Section {number} ({type}): {field}",
+          "inItem": "Section {number} ({type}), {item}: {field}",
+          "goneSection": "A section no longer on the page: {field}"
+        }
       },
       "status": {
         "draft": "Draft",
@@ -649,7 +665,6 @@
         "changed": "Unpublished changes"
       },
       "statusPanel": {
-        "label": "Publishing",
         "publishedLine": "Published {date}.",
         "changedLine": "Readers see the version published on {date}.",
         "savedLine": "Last saved {date}.",
@@ -662,10 +677,15 @@
       "publish": "Publish",
       "publishChanges": "Publish changes",
       "unpublish": "Unpublish",
-      "readiness": {
-        "noCompleteLanguage": "To publish, finish at least one language. Each language tab lists what it still needs.",
-        "takenDown": "{count, plural, one {{languages} is live but not complete, so publishing takes it off the site.} other {{languages} are live but not complete, so publishing takes them off the site.}}",
-        "leftOut": "{count, plural, one {{languages} is not complete, so publishing leaves it out.} other {{languages} are not complete, so publishing leaves them out.}}"
+      "publishConfirm": {
+        "title": "Publish this landing page?",
+        "changesTitle": "Publish the changes?",
+        "goesLive": "Goes live: {languages}.",
+        "takenDown": "{count, plural, one {Taken off the site, as it is no longer complete: {languages}.} other {Taken off the site, as they are no longer complete: {languages}.}}",
+        "leftOut": "{count, plural, one {Left out, as it is not complete: {languages}.} other {Left out, as they are not complete: {languages}.}}",
+        "permanent": "{count, plural, one {This address becomes permanent and can never change:} other {These addresses become permanent and can never change:}}",
+        "permanentWritten": "{language}: {address}",
+        "permanentFromTitle": "{language}: {address} (made from the title)"
       },
       "unpublishConfirm": {
         "title": "Unpublish this landing page?",
@@ -673,47 +693,13 @@
         "confirm": "Unpublish"
       },
       "actions": {
-        "save": "Save",
         "cancel": "Cancel"
       },
       "errors": {
-        "titleRequired": "A landing page needs a title.",
-        "versionTitleRequired": "The {language} version needs a title.",
-        "versionSlugShape": "The {language} address can hold only lowercase letters a–z, digits and single hyphens.",
-        "slugShape": "Use only lowercase letters a–z, digits and single hyphens between them.",
-        "needsPicture": "Section {number} has a picture slot with no picture. Choose one or remove the slot.",
-        "needsAddress": "The button in section {number} needs an address.",
-        "badAddress": "The button in section {number} needs a path on this site, starting with /, or a full web address.",
-        "saveFailed": "The landing page could not be saved. Try again.",
-        "saveFailedWithReason": "The landing page could not be saved — {reason}",
         "publishFailed": "The landing page could not be published. Try again.",
         "publishFailedWithReason": "The landing page could not be published — {reason}",
         "unpublishFailed": "The landing page could not be unpublished. Try again.",
         "unpublishFailedWithReason": "The landing page could not be unpublished — {reason}"
-      },
-      "addLocale": "Add a language",
-      "removeLocale": "Remove {language}",
-      "summaryCount": "{count} / {max}",
-      "markdownPlaceholder": "Write here…",
-      "markdownOpen": "Edit {field}",
-      "structure": {
-        "title": "Sections",
-        "subtitle": "The order of the page and what every language shares: pictures, buttons, icons and the items in each list.",
-        "sectionName": "{number}. {type}",
-        "moveUp": "Move {section} up",
-        "moveDown": "Move {section} down",
-        "remove": "Remove {section}",
-        "add": "Add a section",
-        "removeConfirm": {
-          "title": "Remove this section?",
-          "description": "Its words go with it in every language. Nothing changes on the site until you save and publish.",
-          "confirm": "Remove"
-        },
-        "problems": {
-          "needsPicture": "Choose a picture for every slot before saving.",
-          "needsAddress": "Give the button an address before saving.",
-          "badAddress": "Use a path on this site starting with /, or a full web address starting with https://."
-        }
       },
       "sectionTypes": {
         "hero": "Opening",
@@ -724,73 +710,13 @@
         "faq": "Questions and answers",
         "cta": "Call to action"
       },
-      "shared": {
-        "picture": "Picture",
-        "imageSide": "Picture side",
-        "imageSides": {
-          "start": "Before the text",
-          "end": "After the text"
-        },
-        "addButton": "Add a button",
-        "removeButton": "Remove button",
-        "buttonAddress": "Button address",
-        "icon": "Icon for point {number}"
-      },
-      "hints": {
-        "heroPicture": "Shown beside the page's headline, cropped to 16:9.",
-        "textPicture": "Shown beside the text, cropped to 16:9.",
-        "imagePicture": "Cropped to 16:9. Each picture needs its alt text in every language.",
-        "buttonAddress": "A page on this site, such as /shop, or a full web address for another site. An address on this site in any language is saved as the page it leads to.",
-        "summary": "Plain text. Search engines show it under the title, so it is the page's pitch in one or two sentences.",
-        "slug": "The end of the page's web address in this language. Filled in from the title until you change it.",
-        "slugFixed": "This language has been published, so its address is fixed: changing it would break every link to it."
-      },
       "items": {
         "image": "Picture {number}",
         "points": "Point {number}",
         "steps": "Step {number}",
-        "faq": "Question {number}",
-        "addImage": "Add a picture",
-        "addPoint": "Add a point",
-        "addStep": "Add a step",
-        "addQuestion": "Add a question",
-        "moveUp": "Move {item} up",
-        "moveDown": "Move {item} down",
-        "remove": "Remove {item}"
-      },
-      "icons": {
-        "sparkles": "Sparkles",
-        "star": "Star",
-        "heart": "Heart",
-        "shield-check": "Shield",
-        "users": "People",
-        "gamepad-2": "Game controller",
-        "graduation-cap": "Graduation cap",
-        "book-open": "Open book",
-        "map-pin": "Map pin",
-        "calendar": "Calendar",
-        "clock": "Clock",
-        "trophy": "Trophy",
-        "rocket": "Rocket",
-        "lightbulb": "Light bulb",
-        "message-circle": "Speech bubble",
-        "smile": "Smile",
-        "puzzle": "Puzzle piece",
-        "globe": "Globe",
-        "laptop": "Laptop",
-        "circle-check": "Tick",
-        "palette": "Palette",
-        "handshake": "Handshake",
-        "target": "Target",
-        "leaf": "Leaf"
-      },
-      "words": {
-        "title": "Words",
-        "subtitle": "Write each language by hand. Publishing puts every complete language live.",
-        "stillNeeded": "Still needed: {fields}."
+        "faq": "Question {number}"
       },
       "fields": {
-        "languages": "Languages",
         "title": "Title",
         "summary": "Summary",
         "slug": "Address",
@@ -805,8 +731,7 @@
         "imageAlt": "Picture alt text",
         "alt": "Alt text",
         "question": "Question",
-        "answer": "Answer",
-        "ofItem": "{item}: {field}"
+        "answer": "Answer"
       }
     },
     "geduRole": {

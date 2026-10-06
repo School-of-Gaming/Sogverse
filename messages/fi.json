@@ -50,8 +50,7 @@
       "adminLibraryArticleNew": "Uusi artikkeli",
       "adminLibraryArticleEdit": "Muokkaa artikkelia",
       "adminLandingPages": "Laskeutumissivut",
-      "adminLandingPageNew": "Uusi laskeutumissivu",
-      "adminLandingPageEdit": "Muokkaa laskeutumissivua",
+      "adminLandingPage": "Laskeutumissivu",
       "adminPlatformVision": "Alustan visio",
       "adminGeduInvoicing": "Gedujen laskutus",
       "adminTools": "Työkalut",
@@ -620,8 +619,7 @@
     "landingPages": {
       "title": "Laskeutumissivut",
       "subtitle": "Sivut koululle, kaupungille, yritykselle tai tapahtumalle – kirjoitettu hakukoneiden ja tekoälysovellusten löydettäviksi.",
-      "newPageButton": "Uusi sivu",
-      "empty": "Laskeutumissivuja ei vielä ole. Kirjoita ensimmäinen.",
+      "empty": "Laskeutumissivuja ei vielä ole. Sivut kirjoitetaan Sogverseen yhdistetyllä tekoälysovelluksella.",
       "lastSaved": "Tallennettu viimeksi {date}",
       "languagesLabel": "Kielet",
       "versionComplete": "valmis",
@@ -636,12 +634,30 @@
       "backToList": "Takaisin laskeutumissivuihin",
       "notFound": "Tällä tunnisteella ei ole laskeutumissivua.",
       "loadError": "Laskeutumissivua ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
-      "newPage": {
-        "title": "Uusi laskeutumissivu",
-        "submit": "Tallenna luonnos"
-      },
-      "editPage": {
-        "title": "Muokkaa laskeutumissivua"
+      "statusPage": {
+        "title": "Laskeutumissivu",
+        "authoring": "Jos haluat muuttaa sivua, pyydä sitä Sogverseen yhdistetyltä tekoälysovellukselta.",
+        "languagesHeading": "Kielet",
+        "readiness": {
+          "noCompleteLanguage": "Yksikään kieli ei ole vielä valmis, joten julkaistavaa ei ole.",
+          "upToDate": "Lukijat näkevät jo viimeksi tallennetun version."
+        },
+        "language": {
+          "complete": "Valmis",
+          "incomplete": "Ei valmis",
+          "live": "Julkaistu sivustolla.",
+          "notLive": "Ei sivustolla.",
+          "stillNeeded": "Vielä puuttuu:",
+          "address": "Osoite:",
+          "noAddress": "ei vielä osoitetta",
+          "addressFixed": "Lukittu pysyvästi: tämä kieli on julkaistu.",
+          "addressOpen": "Lukitaan pysyvästi, kun tämä kieli julkaistaan ensimmäisen kerran."
+        },
+        "missing": {
+          "inSection": "Osio {number} ({type}): {field}",
+          "inItem": "Osio {number} ({type}), {item}: {field}",
+          "goneSection": "Osio, jota sivulla ei enää ole: {field}"
+        }
       },
       "status": {
         "draft": "Luonnos",
@@ -649,7 +665,6 @@
         "changed": "Julkaisemattomia muutoksia"
       },
       "statusPanel": {
-        "label": "Julkaisu",
         "publishedLine": "Julkaistu {date}.",
         "changedLine": "Lukijat näkevät version, joka julkaistiin {date}.",
         "savedLine": "Tallennettu viimeksi {date}.",
@@ -662,10 +677,15 @@
       "publish": "Julkaise",
       "publishChanges": "Julkaise muutokset",
       "unpublish": "Poista julkaisusta",
-      "readiness": {
-        "noCompleteLanguage": "Julkaistaksesi viimeistele vähintään yksi kieli. Jokaisen kielen välilehdellä luetellaan, mitä siitä vielä puuttuu.",
-        "takenDown": "{count, plural, one {{languages} on julkaistu mutta ei valmis, joten julkaiseminen poistaa sen sivustolta.} other {{languages} ovat julkaistuja mutta eivät valmiita, joten julkaiseminen poistaa ne sivustolta.}}",
-        "leftOut": "{count, plural, one {{languages} ei ole valmis, joten sitä ei julkaista.} other {{languages} eivät ole valmiita, joten niitä ei julkaista.}}"
+      "publishConfirm": {
+        "title": "Julkaistaanko laskeutumissivu?",
+        "changesTitle": "Julkaistaanko muutokset?",
+        "goesLive": "Julkaistaan: {languages}.",
+        "takenDown": "{count, plural, one {Poistetaan sivustolta, koska se ei ole enää valmis: {languages}.} other {Poistetaan sivustolta, koska ne eivät ole enää valmiita: {languages}.}}",
+        "leftOut": "{count, plural, one {Jätetään pois, koska se ei ole valmis: {languages}.} other {Jätetään pois, koska ne eivät ole valmiita: {languages}.}}",
+        "permanent": "{count, plural, one {Tämä osoite lukitaan pysyvästi, eikä sitä voi enää muuttaa:} other {Nämä osoitteet lukitaan pysyvästi, eikä niitä voi enää muuttaa:}}",
+        "permanentWritten": "{language}: {address}",
+        "permanentFromTitle": "{language}: {address} (muodostettu otsikosta)"
       },
       "unpublishConfirm": {
         "title": "Poistetaanko laskeutumissivu julkaisusta?",
@@ -673,47 +693,13 @@
         "confirm": "Poista julkaisusta"
       },
       "actions": {
-        "save": "Tallenna",
         "cancel": "Peruuta"
       },
       "errors": {
-        "titleRequired": "Laskeutumissivu tarvitsee otsikon.",
-        "versionTitleRequired": "Kieliversio {language} tarvitsee otsikon.",
-        "versionSlugShape": "Kieliversion {language} osoitteessa saa olla vain pieniä kirjaimia a–z, numeroita ja yksittäisiä yhdysmerkkejä.",
-        "slugShape": "Käytä vain pieniä kirjaimia a–z, numeroita ja niiden välissä yksittäisiä yhdysmerkkejä.",
-        "needsPicture": "Osiossa {number} on kuvapaikka ilman kuvaa. Valitse kuva tai poista kuvapaikka.",
-        "needsAddress": "Osion {number} painike tarvitsee osoitteen.",
-        "badAddress": "Osion {number} painike tarvitsee tämän sivuston polun, joka alkaa merkillä /, tai kokonaisen verkko-osoitteen.",
-        "saveFailed": "Laskeutumissivua ei voitu tallentaa. Yritä uudelleen.",
-        "saveFailedWithReason": "Laskeutumissivua ei voitu tallentaa – {reason}",
         "publishFailed": "Laskeutumissivua ei voitu julkaista. Yritä uudelleen.",
         "publishFailedWithReason": "Laskeutumissivua ei voitu julkaista – {reason}",
         "unpublishFailed": "Laskeutumissivua ei voitu poistaa julkaisusta. Yritä uudelleen.",
         "unpublishFailedWithReason": "Laskeutumissivua ei voitu poistaa julkaisusta – {reason}"
-      },
-      "addLocale": "Lisää kieli",
-      "removeLocale": "Poista {language}",
-      "summaryCount": "{count}/{max}",
-      "markdownPlaceholder": "Kirjoita tähän…",
-      "markdownOpen": "Muokkaa kenttää {field}",
-      "structure": {
-        "title": "Osiot",
-        "subtitle": "Sivun järjestys ja se, mikä on kaikille kielille yhteistä: kuvat, painikkeet, kuvakkeet ja luetteloiden kohdat.",
-        "sectionName": "{number}. {type}",
-        "moveUp": "Siirrä ylöspäin: {section}",
-        "moveDown": "Siirrä alaspäin: {section}",
-        "remove": "Poista {section}",
-        "add": "Lisää osio",
-        "removeConfirm": {
-          "title": "Poistetaanko osio?",
-          "description": "Sen tekstit poistuvat kaikilta kieliltä. Sivustolla ei muutu mitään, ennen kuin tallennat ja julkaiset.",
-          "confirm": "Poista"
-        },
-        "problems": {
-          "needsPicture": "Valitse kuva jokaiseen kuvapaikkaan ennen tallentamista.",
-          "needsAddress": "Anna painikkeelle osoite ennen tallentamista.",
-          "badAddress": "Käytä tämän sivuston polkua, joka alkaa merkillä /, tai kokonaista verkko-osoitetta, joka alkaa https://."
-        }
       },
       "sectionTypes": {
         "hero": "Avausosio",
@@ -724,73 +710,13 @@
         "faq": "Kysymykset ja vastaukset",
         "cta": "Toimintakehote"
       },
-      "shared": {
-        "picture": "Kuva",
-        "imageSide": "Kuvan puoli",
-        "imageSides": {
-          "start": "Ennen tekstiä",
-          "end": "Tekstin jälkeen"
-        },
-        "addButton": "Lisää painike",
-        "removeButton": "Poista painike",
-        "buttonAddress": "Painikkeen osoite",
-        "icon": "Kohdan {number} kuvake"
-      },
-      "hints": {
-        "heroPicture": "Näytetään sivun pääotsikon vieressä, rajattuna kokoon 16:9.",
-        "textPicture": "Näytetään tekstin vieressä, rajattuna kokoon 16:9.",
-        "imagePicture": "Rajataan kokoon 16:9. Jokainen kuva tarvitsee vaihtoehtoisen tekstin jokaisella kielellä.",
-        "buttonAddress": "Tämän sivuston sivu, kuten /shop, tai toisen sivuston kokonainen verkko-osoite. Tämän sivuston osoite millä tahansa kielellä tallennetaan sivuksi, jolle se vie.",
-        "summary": "Pelkkää tekstiä. Hakukoneet näyttävät sen otsikon alla, joten se kertoo sivun ytimen yhdellä tai kahdella virkkeellä.",
-        "slug": "Sivun verkko-osoitteen loppuosa tällä kielellä. Täytetään otsikosta, kunnes muutat sitä.",
-        "slugFixed": "Tämä kieli on julkaistu, joten sen osoite on lukittu: muutos rikkoisi kaikki siihen johtavat linkit."
-      },
       "items": {
         "image": "Kuva {number}",
         "points": "Kohta {number}",
         "steps": "Vaihe {number}",
-        "faq": "Kysymys {number}",
-        "addImage": "Lisää kuva",
-        "addPoint": "Lisää kohta",
-        "addStep": "Lisää vaihe",
-        "addQuestion": "Lisää kysymys",
-        "moveUp": "Siirrä ylöspäin: {item}",
-        "moveDown": "Siirrä alaspäin: {item}",
-        "remove": "Poista {item}"
-      },
-      "icons": {
-        "sparkles": "Kimallus",
-        "star": "Tähti",
-        "heart": "Sydän",
-        "shield-check": "Kilpi",
-        "users": "Ihmiset",
-        "gamepad-2": "Peliohjain",
-        "graduation-cap": "Ylioppilaslakki",
-        "book-open": "Avoin kirja",
-        "map-pin": "Karttaneula",
-        "calendar": "Kalenteri",
-        "clock": "Kello",
-        "trophy": "Pokaali",
-        "rocket": "Raketti",
-        "lightbulb": "Hehkulamppu",
-        "message-circle": "Puhekupla",
-        "smile": "Hymy",
-        "puzzle": "Palapelin pala",
-        "globe": "Maapallo",
-        "laptop": "Kannettava tietokone",
-        "circle-check": "Valintamerkki",
-        "palette": "Paletti",
-        "handshake": "Kättely",
-        "target": "Maalitaulu",
-        "leaf": "Lehti"
-      },
-      "words": {
-        "title": "Tekstit",
-        "subtitle": "Kirjoita jokainen kieli itse. Julkaiseminen tuo sivustolle jokaisen valmiin kielen.",
-        "stillNeeded": "Vielä puuttuu: {fields}."
+        "faq": "Kysymys {number}"
       },
       "fields": {
-        "languages": "Kielet",
         "title": "Otsikko",
         "summary": "Tiivistelmä",
         "slug": "Osoite",
@@ -805,8 +731,7 @@
         "imageAlt": "Kuvan vaihtoehtoinen teksti",
         "alt": "Vaihtoehtoinen teksti",
         "question": "Kysymys",
-        "answer": "Vastaus",
-        "ofItem": "{item}: {field}"
+        "answer": "Vastaus"
       }
     },
     "geduRole": {

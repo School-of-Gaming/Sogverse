@@ -242,7 +242,6 @@ export class LandingPageService {
       id: data.id,
       sections,
       imagePaths,
-      imageLabels: await this.catalogueLabels(Object.keys(imagePaths)),
       versions: inLocaleOrder(data.versions).map((version) => {
         const sectionTexts = readSectionTexts(sections, version.section_texts);
         return {
@@ -279,22 +278,6 @@ export class LandingPageService {
         data.publication,
       ),
     };
-  }
-
-  /**
-   * The catalogue label of each of these entries, by id. A second read rather
-   * than an embed, because the structure references its pictures from inside
-   * JSON, where no foreign key reaches. The catalogue is admin-only, which the
-   * admin read already is.
-   */
-  private async catalogueLabels(ids: readonly string[]): Promise<Record<string, string>> {
-    if (ids.length === 0) return {};
-    const { data, error } = await this.supabase
-      .from("catalogue_images")
-      .select("id, label")
-      .in("id", ids);
-    if (error) throw error;
-    return Object.fromEntries(data.map(({ id, label }) => [id, label]));
   }
 
   private async oauthClientNames(
@@ -336,27 +319,6 @@ export class LandingPageService {
 
     if (error) throw error;
     if (!data) throw new Error("create_landing_page returned no id");
-    return data;
-  }
-
-  /**
-   * Save a page's working copy whole — the structure and every version, the
-   * set replacing what is stored. What is live does not change until
-   * `publishPage`.
-   */
-  async savePage(id: string, input: LandingPageInput): Promise<string> {
-    const write = await canonicaliseLandingLinks(landingPageInput.parse(input), {
-      resolver: this.slugResolver(),
-    });
-
-    const { data, error } = await this.supabase.rpc("save_landing_page", {
-      p_id: id,
-      p_sections: write.sections ?? [],
-      p_versions: write.versions.map(toVersionPayload),
-    });
-
-    if (error) throw error;
-    if (!data) throw new Error("save_landing_page returned no id");
     return data;
   }
 

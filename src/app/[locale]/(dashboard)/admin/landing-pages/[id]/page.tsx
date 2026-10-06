@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { EditLandingPagePage } from "@/components/admin/landing-pages/edit-landing-page-page";
+import { LandingPageStatusView } from "@/components/admin/landing-pages/landing-page-status-view";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return { title: t("adminLandingPageEdit") };
+  return { title: t("adminLandingPage") };
 }
 
 export default async function LandingPageRoute({
@@ -13,5 +13,5 @@ export default async function LandingPageRoute({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <EditLandingPagePage pageId={id} />;
+  return <LandingPageStatusView pageId={id} />;
 }

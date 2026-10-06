@@ -50,8 +50,7 @@
       "adminLibraryArticleNew": "Nouvel article",
       "adminLibraryArticleEdit": "Modifier l’article",
       "adminLandingPages": "Pages d’atterrissage",
-      "adminLandingPageNew": "Nouvelle page d’atterrissage",
-      "adminLandingPageEdit": "Modifier la page d’atterrissage",
+      "adminLandingPage": "Page d’atterrissage",
       "adminPlatformVision": "Vision de la plateforme",
       "adminGeduInvoicing": "Facturation des Gedus",
       "adminTools": "Outils",
@@ -620,8 +619,7 @@
     "landingPages": {
       "title": "Pages d’atterrissage",
       "subtitle": "Des pages pour une école, une ville, une entreprise ou un événement, écrites pour être trouvées par les moteurs de recherche et les applications d’IA.",
-      "newPageButton": "Nouvelle page",
-      "empty": "Aucune page d’atterrissage pour l’instant. Écrivez la première.",
+      "empty": "Aucune page d’atterrissage pour l’instant. Les pages s’écrivent avec une application d’IA connectée à Sogverse.",
       "lastSaved": "Dernier enregistrement {date}",
       "languagesLabel": "Langues",
       "versionComplete": "complète",
@@ -636,12 +634,30 @@
       "backToList": "Retour aux pages d’atterrissage",
       "notFound": "Aucune page d’atterrissage ne porte cet identifiant.",
       "loadError": "Impossible de charger cette page d’atterrissage. Actualisez pour réessayer.",
-      "newPage": {
-        "title": "Nouvelle page d’atterrissage",
-        "submit": "Enregistrer le brouillon"
-      },
-      "editPage": {
-        "title": "Modifier la page d’atterrissage"
+      "statusPage": {
+        "title": "Page d’atterrissage",
+        "authoring": "Pour modifier cette page, demandez-le à une application d’IA connectée à Sogverse.",
+        "languagesHeading": "Langues",
+        "readiness": {
+          "noCompleteLanguage": "Aucune langue n’est encore complète : il n’y a donc rien à publier.",
+          "upToDate": "Les lecteurs voient déjà la dernière version enregistrée."
+        },
+        "language": {
+          "complete": "Complète",
+          "incomplete": "Incomplète",
+          "live": "En ligne sur le site.",
+          "notLive": "Pas sur le site.",
+          "stillNeeded": "Il manque encore :",
+          "address": "Adresse :",
+          "noAddress": "pas encore d’adresse",
+          "addressFixed": "Fixée définitivement : cette langue a été publiée.",
+          "addressOpen": "Devient définitive à la première publication de cette langue."
+        },
+        "missing": {
+          "inSection": "Section {number} ({type}) : {field}",
+          "inItem": "Section {number} ({type}), {item} : {field}",
+          "goneSection": "Une section qui n’est plus sur la page : {field}"
+        }
       },
       "status": {
         "draft": "Brouillon",
@@ -649,7 +665,6 @@
         "changed": "Modifications non publiées"
       },
       "statusPanel": {
-        "label": "Publication",
         "publishedLine": "Publiée le {date}.",
         "changedLine": "Les lecteurs voient la version publiée le {date}.",
         "savedLine": "Dernier enregistrement le {date}.",
@@ -662,10 +677,15 @@
       "publish": "Publier",
       "publishChanges": "Publier les modifications",
       "unpublish": "Dépublier",
-      "readiness": {
-        "noCompleteLanguage": "Pour publier, terminez au moins une langue. Chaque onglet de langue indique ce qu’il lui manque.",
-        "takenDown": "{count, plural, one {{languages} est en ligne mais incomplète : la publication la retire donc du site.} other {{languages} sont en ligne mais incomplètes : la publication les retire donc du site.}}",
-        "leftOut": "{count, plural, one {{languages} n’est pas complète : la publication la laisse donc de côté.} other {{languages} ne sont pas complètes : la publication les laisse donc de côté.}}"
+      "publishConfirm": {
+        "title": "Publier cette page d’atterrissage ?",
+        "changesTitle": "Publier les modifications ?",
+        "goesLive": "Mise en ligne : {languages}.",
+        "takenDown": "{count, plural, one {Retirée du site, car elle n’est plus complète : {languages}.} other {Retirées du site, car elles ne sont plus complètes : {languages}.}}",
+        "leftOut": "{count, plural, one {Laissée de côté, car elle n’est pas complète : {languages}.} other {Laissées de côté, car elles ne sont pas complètes : {languages}.}}",
+        "permanent": "{count, plural, one {Cette adresse devient définitive et ne pourra plus jamais changer :} other {Ces adresses deviennent définitives et ne pourront plus jamais changer :}}",
+        "permanentWritten": "{language} : {address}",
+        "permanentFromTitle": "{language} : {address} (tirée du titre)"
       },
       "unpublishConfirm": {
         "title": "Dépublier cette page d’atterrissage ?",
@@ -673,47 +693,13 @@
         "confirm": "Dépublier"
       },
       "actions": {
-        "save": "Enregistrer",
         "cancel": "Annuler"
       },
       "errors": {
-        "titleRequired": "Une page d’atterrissage a besoin d’un titre.",
-        "versionTitleRequired": "La version en {language} a besoin d’un titre.",
-        "versionSlugShape": "L’adresse en {language} ne peut contenir que des lettres minuscules a–z, des chiffres et des traits d’union isolés.",
-        "slugShape": "Utilisez uniquement des lettres minuscules a–z, des chiffres et des traits d’union isolés entre eux.",
-        "needsPicture": "La section {number} a un emplacement d’image sans image. Choisissez-en une ou retirez l’emplacement.",
-        "needsAddress": "Le bouton de la section {number} a besoin d’une adresse.",
-        "badAddress": "Le bouton de la section {number} a besoin d’un chemin de ce site commençant par / ou d’une adresse web complète.",
-        "saveFailed": "La page d’atterrissage n’a pas pu être enregistrée. Réessayez.",
-        "saveFailedWithReason": "La page d’atterrissage n’a pas pu être enregistrée — {reason}",
         "publishFailed": "La page d’atterrissage n’a pas pu être publiée. Réessayez.",
         "publishFailedWithReason": "La page d’atterrissage n’a pas pu être publiée — {reason}",
         "unpublishFailed": "La page d’atterrissage n’a pas pu être dépubliée. Réessayez.",
         "unpublishFailedWithReason": "La page d’atterrissage n’a pas pu être dépubliée — {reason}"
-      },
-      "addLocale": "Ajouter une langue",
-      "removeLocale": "Retirer {language}",
-      "summaryCount": "{count} / {max}",
-      "markdownPlaceholder": "Écrivez ici…",
-      "markdownOpen": "Modifier : {field}",
-      "structure": {
-        "title": "Sections",
-        "subtitle": "L’ordre de la page et ce que toutes les langues partagent : images, boutons, icônes et éléments de chaque liste.",
-        "sectionName": "{number}. {type}",
-        "moveUp": "Monter {section}",
-        "moveDown": "Descendre {section}",
-        "remove": "Retirer {section}",
-        "add": "Ajouter une section",
-        "removeConfirm": {
-          "title": "Retirer cette section ?",
-          "description": "Ses textes disparaissent dans toutes les langues. Rien ne change sur le site avant que vous enregistriez et publiiez.",
-          "confirm": "Retirer"
-        },
-        "problems": {
-          "needsPicture": "Choisissez une image pour chaque emplacement avant d’enregistrer.",
-          "needsAddress": "Donnez une adresse au bouton avant d’enregistrer.",
-          "badAddress": "Utilisez un chemin de ce site commençant par / ou une adresse web complète commençant par https://."
-        }
       },
       "sectionTypes": {
         "hero": "Ouverture",
@@ -724,73 +710,13 @@
         "faq": "Questions et réponses",
         "cta": "Appel à l’action"
       },
-      "shared": {
-        "picture": "Image",
-        "imageSide": "Côté de l’image",
-        "imageSides": {
-          "start": "Avant le texte",
-          "end": "Après le texte"
-        },
-        "addButton": "Ajouter un bouton",
-        "removeButton": "Retirer le bouton",
-        "buttonAddress": "Adresse du bouton",
-        "icon": "Icône du point {number}"
-      },
-      "hints": {
-        "heroPicture": "Affichée à côté du titre de la page, recadrée en 16:9.",
-        "textPicture": "Affichée à côté du texte, recadrée en 16:9.",
-        "imagePicture": "Recadrée en 16:9. Chaque image a besoin de son texte alternatif dans toutes les langues.",
-        "buttonAddress": "Une page de ce site, comme /shop, ou l’adresse web complète d’un autre site. Une adresse de ce site, dans n’importe quelle langue, est enregistrée comme la page vers laquelle elle mène.",
-        "summary": "Texte brut. Les moteurs de recherche l’affichent sous le titre : c’est la page résumée en une ou deux phrases.",
-        "slug": "La fin de l’adresse web de la page dans cette langue. Remplie à partir du titre jusqu’à ce que vous la modifiiez.",
-        "slugFixed": "Cette langue a été publiée, son adresse est donc fixée : la modifier casserait tous les liens qui y mènent."
-      },
       "items": {
         "image": "Image {number}",
         "points": "Point {number}",
         "steps": "Étape {number}",
-        "faq": "Question {number}",
-        "addImage": "Ajouter une image",
-        "addPoint": "Ajouter un point",
-        "addStep": "Ajouter une étape",
-        "addQuestion": "Ajouter une question",
-        "moveUp": "Monter {item}",
-        "moveDown": "Descendre {item}",
-        "remove": "Retirer {item}"
-      },
-      "icons": {
-        "sparkles": "Étincelles",
-        "star": "Étoile",
-        "heart": "Cœur",
-        "shield-check": "Bouclier",
-        "users": "Personnes",
-        "gamepad-2": "Manette",
-        "graduation-cap": "Toque de diplômé",
-        "book-open": "Livre ouvert",
-        "map-pin": "Repère",
-        "calendar": "Calendrier",
-        "clock": "Horloge",
-        "trophy": "Trophée",
-        "rocket": "Fusée",
-        "lightbulb": "Ampoule",
-        "message-circle": "Bulle",
-        "smile": "Sourire",
-        "puzzle": "Pièce de puzzle",
-        "globe": "Globe",
-        "laptop": "Ordinateur portable",
-        "circle-check": "Coche",
-        "palette": "Palette",
-        "handshake": "Poignée de main",
-        "target": "Cible",
-        "leaf": "Feuille"
-      },
-      "words": {
-        "title": "Textes",
-        "subtitle": "Écrivez chaque langue à la main. La publication met en ligne chaque langue complète.",
-        "stillNeeded": "Encore à écrire : {fields}."
+        "faq": "Question {number}"
       },
       "fields": {
-        "languages": "Langues",
         "title": "Titre",
         "summary": "Résumé",
         "slug": "Adresse",
@@ -805,8 +731,7 @@
         "imageAlt": "Texte alternatif de l’image",
         "alt": "Texte alternatif",
         "question": "Question",
-        "answer": "Réponse",
-        "ofItem": "{item} : {field}"
+        "answer": "Réponse"
       }
     },
     "geduRole": {

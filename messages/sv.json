@@ -50,8 +50,7 @@
       "adminLibraryArticleNew": "Ny artikel",
       "adminLibraryArticleEdit": "Redigera artikel",
       "adminLandingPages": "Landningssidor",
-      "adminLandingPageNew": "Ny landningssida",
-      "adminLandingPageEdit": "Redigera landningssida",
+      "adminLandingPage": "Landningssida",
       "adminPlatformVision": "Plattformens vision",
       "adminGeduInvoicing": "Gedufakturering",
       "adminTools": "Verktyg",
@@ -620,8 +619,7 @@
     "landingPages": {
       "title": "Landningssidor",
       "subtitle": "Sidor för en skola, en stad, ett företag eller ett evenemang, skrivna för att sökmotorer och AI-appar ska hitta dem.",
-      "newPageButton": "Ny sida",
-      "empty": "Inga landningssidor än. Skriv den första.",
+      "empty": "Inga landningssidor än. Sidorna skrivs med en AI-app som är kopplad till Sogverse.",
       "lastSaved": "Senast sparad {date}",
       "languagesLabel": "Språk",
       "versionComplete": "klar",
@@ -636,12 +634,30 @@
       "backToList": "Tillbaka till landningssidorna",
       "notFound": "Det finns ingen landningssida med detta id.",
       "loadError": "Landningssidan kunde inte laddas. Uppdatera för att försöka igen.",
-      "newPage": {
-        "title": "Ny landningssida",
-        "submit": "Spara utkast"
-      },
-      "editPage": {
-        "title": "Redigera landningssida"
+      "statusPage": {
+        "title": "Landningssida",
+        "authoring": "Be en AI-app som är kopplad till Sogverse om du vill ändra sidan.",
+        "languagesHeading": "Språk",
+        "readiness": {
+          "noCompleteLanguage": "Inget språk är klart än, så det finns inget att publicera.",
+          "upToDate": "Läsarna ser redan den senast sparade versionen."
+        },
+        "language": {
+          "complete": "Klar",
+          "incomplete": "Inte klar",
+          "live": "Publicerad på webbplatsen.",
+          "notLive": "Inte på webbplatsen.",
+          "stillNeeded": "Saknas fortfarande:",
+          "address": "Adress:",
+          "noAddress": "ingen än",
+          "addressFixed": "Låst för gott: språket har publicerats.",
+          "addressOpen": "Låses för gott när språket publiceras första gången."
+        },
+        "missing": {
+          "inSection": "Avsnitt {number} ({type}): {field}",
+          "inItem": "Avsnitt {number} ({type}), {item}: {field}",
+          "goneSection": "Ett avsnitt som inte längre finns på sidan: {field}"
+        }
       },
       "status": {
         "draft": "Utkast",
@@ -649,7 +665,6 @@
         "changed": "Opublicerade ändringar"
       },
       "statusPanel": {
-        "label": "Publicering",
         "publishedLine": "Publicerad {date}.",
         "changedLine": "Läsarna ser versionen som publicerades {date}.",
         "savedLine": "Senast sparad {date}.",
@@ -662,10 +677,15 @@
       "publish": "Publicera",
       "publishChanges": "Publicera ändringar",
       "unpublish": "Avpublicera",
-      "readiness": {
-        "noCompleteLanguage": "Gör klart minst ett språk för att publicera. Varje språkflik visar vad som saknas.",
-        "takenDown": "{count, plural, one {{languages} är publicerad men inte klar, så publiceringen tar bort den från webbplatsen.} other {{languages} är publicerade men inte klara, så publiceringen tar bort dem från webbplatsen.}}",
-        "leftOut": "{count, plural, one {{languages} är inte klar, så publiceringen utelämnar den.} other {{languages} är inte klara, så publiceringen utelämnar dem.}}"
+      "publishConfirm": {
+        "title": "Publicera landningssidan?",
+        "changesTitle": "Publicera ändringarna?",
+        "goesLive": "Publiceras: {languages}.",
+        "takenDown": "{count, plural, one {Tas bort från webbplatsen eftersom det inte längre är klart: {languages}.} other {Tas bort från webbplatsen eftersom de inte längre är klara: {languages}.}}",
+        "leftOut": "{count, plural, one {Utelämnas eftersom det inte är klart: {languages}.} other {Utelämnas eftersom de inte är klara: {languages}.}}",
+        "permanent": "{count, plural, one {Den här adressen låses för gott och kan aldrig ändras:} other {De här adresserna låses för gott och kan aldrig ändras:}}",
+        "permanentWritten": "{language}: {address}",
+        "permanentFromTitle": "{language}: {address} (skapad från titeln)"
       },
       "unpublishConfirm": {
         "title": "Avpublicera landningssidan?",
@@ -673,47 +693,13 @@
         "confirm": "Avpublicera"
       },
       "actions": {
-        "save": "Spara",
         "cancel": "Avbryt"
       },
       "errors": {
-        "titleRequired": "En landningssida behöver en titel.",
-        "versionTitleRequired": "Versionen på {language} behöver en titel.",
-        "versionSlugShape": "Adressen på {language} får bara innehålla små bokstäver a–z, siffror och enstaka bindestreck.",
-        "slugShape": "Använd bara små bokstäver a–z, siffror och enstaka bindestreck mellan dem.",
-        "needsPicture": "Avsnitt {number} har en bildplats utan bild. Välj en bild eller ta bort platsen.",
-        "needsAddress": "Knappen i avsnitt {number} behöver en adress.",
-        "badAddress": "Knappen i avsnitt {number} behöver en sökväg på den här webbplatsen som börjar med / eller en fullständig webbadress.",
-        "saveFailed": "Landningssidan kunde inte sparas. Försök igen.",
-        "saveFailedWithReason": "Landningssidan kunde inte sparas – {reason}",
         "publishFailed": "Landningssidan kunde inte publiceras. Försök igen.",
         "publishFailedWithReason": "Landningssidan kunde inte publiceras – {reason}",
         "unpublishFailed": "Landningssidan kunde inte avpubliceras. Försök igen.",
         "unpublishFailedWithReason": "Landningssidan kunde inte avpubliceras – {reason}"
-      },
-      "addLocale": "Lägg till ett språk",
-      "removeLocale": "Ta bort {language}",
-      "summaryCount": "{count} / {max}",
-      "markdownPlaceholder": "Skriv här…",
-      "markdownOpen": "Redigera {field}",
-      "structure": {
-        "title": "Avsnitt",
-        "subtitle": "Sidans ordning och det som alla språk delar: bilder, knappar, ikoner och punkterna i varje lista.",
-        "sectionName": "{number}. {type}",
-        "moveUp": "Flytta upp {section}",
-        "moveDown": "Flytta ner {section}",
-        "remove": "Ta bort {section}",
-        "add": "Lägg till ett avsnitt",
-        "removeConfirm": {
-          "title": "Ta bort avsnittet?",
-          "description": "Dess texter försvinner på alla språk. Inget ändras på webbplatsen förrän du sparar och publicerar.",
-          "confirm": "Ta bort"
-        },
-        "problems": {
-          "needsPicture": "Välj en bild till varje bildplats innan du sparar.",
-          "needsAddress": "Ge knappen en adress innan du sparar.",
-          "badAddress": "Använd en sökväg på den här webbplatsen som börjar med / eller en fullständig webbadress som börjar med https://."
-        }
       },
       "sectionTypes": {
         "hero": "Inledning",
@@ -724,73 +710,13 @@
         "faq": "Frågor och svar",
         "cta": "Uppmaning"
       },
-      "shared": {
-        "picture": "Bild",
-        "imageSide": "Bildens sida",
-        "imageSides": {
-          "start": "Före texten",
-          "end": "Efter texten"
-        },
-        "addButton": "Lägg till en knapp",
-        "removeButton": "Ta bort knappen",
-        "buttonAddress": "Knappens adress",
-        "icon": "Ikon för punkt {number}"
-      },
-      "hints": {
-        "heroPicture": "Visas bredvid sidans rubrik, beskuren till 16:9.",
-        "textPicture": "Visas bredvid texten, beskuren till 16:9.",
-        "imagePicture": "Beskärs till 16:9. Varje bild behöver sin alternativtext på alla språk.",
-        "buttonAddress": "En sida på den här webbplatsen, till exempel /shop, eller en fullständig webbadress till en annan webbplats. En adress på den här webbplatsen på vilket språk som helst sparas som sidan den leder till.",
-        "summary": "Ren text. Sökmotorer visar den under titeln, så den säljer in sidan med en eller två meningar.",
-        "slug": "Slutet på sidans webbadress på det här språket. Fylls i från titeln tills du ändrar den.",
-        "slugFixed": "Det här språket har publicerats, så adressen är låst: en ändring skulle bryta alla länkar till den."
-      },
       "items": {
         "image": "Bild {number}",
         "points": "Punkt {number}",
         "steps": "Steg {number}",
-        "faq": "Fråga {number}",
-        "addImage": "Lägg till en bild",
-        "addPoint": "Lägg till en punkt",
-        "addStep": "Lägg till ett steg",
-        "addQuestion": "Lägg till en fråga",
-        "moveUp": "Flytta upp {item}",
-        "moveDown": "Flytta ner {item}",
-        "remove": "Ta bort {item}"
-      },
-      "icons": {
-        "sparkles": "Glitter",
-        "star": "Stjärna",
-        "heart": "Hjärta",
-        "shield-check": "Sköld",
-        "users": "Personer",
-        "gamepad-2": "Handkontroll",
-        "graduation-cap": "Studentmössa",
-        "book-open": "Öppen bok",
-        "map-pin": "Kartnål",
-        "calendar": "Kalender",
-        "clock": "Klocka",
-        "trophy": "Pokal",
-        "rocket": "Raket",
-        "lightbulb": "Glödlampa",
-        "message-circle": "Pratbubbla",
-        "smile": "Leende",
-        "puzzle": "Pusselbit",
-        "globe": "Jordglob",
-        "laptop": "Bärbar dator",
-        "circle-check": "Bock",
-        "palette": "Palett",
-        "handshake": "Handslag",
-        "target": "Måltavla",
-        "leaf": "Löv"
-      },
-      "words": {
-        "title": "Texter",
-        "subtitle": "Skriv varje språk för hand. Publiceringen gör varje klart språk synligt.",
-        "stillNeeded": "Saknas fortfarande: {fields}."
+        "faq": "Fråga {number}"
       },
       "fields": {
-        "languages": "Språk",
         "title": "Titel",
         "summary": "Sammanfattning",
         "slug": "Adress",
@@ -805,8 +731,7 @@
         "imageAlt": "Bildens alternativtext",
         "alt": "Alternativtext",
         "question": "Fråga",
-        "answer": "Svar",
-        "ofItem": "{item}: {field}"
+        "answer": "Svar"
       }
     },
     "geduRole": {

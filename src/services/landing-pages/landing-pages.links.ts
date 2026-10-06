@@ -33,7 +33,7 @@ export interface LandingWrite {
 /**
  * A write refused because of a link it carries. It is a `check_violation`
  * with an admin-facing sentence, the shape the database's own refusals take,
- * so `landingWriteFailure` quotes it to the editor and the MCP tools alike.
+ * so `landingWriteFailure` quotes it the way it quotes the database's.
  */
 export class LandingLinkRefusal extends Error {
   readonly code = "23514";
@@ -65,8 +65,8 @@ const BUTTON_REFUSAL: Record<ButtonTargetRefusal, string> = {
 
 /**
  * Every landing page write passes through here, in the service, after its
- * input is parsed and before anything is sent to the database — so the editor
- * and the MCP tools are held to the same links.
+ * input is parsed and before anything is sent to the database — so every
+ * writer is held to the same links.
  *
  * Every button target and every link in a `landing` markdown field is stored
  * canonical: an own-site address becomes its locale-less internal route path,

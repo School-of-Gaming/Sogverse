@@ -150,7 +150,7 @@ const distinctLocales = (versions: readonly { locale: string }[]) =>
   new Set(versions.map((version) => version.locale)).size === versions.length;
 
 /**
- * A page's working copy as the editor saves it, whole: the structure and the
+ * A page's working copy whole, as a page is created: the structure and the
  * whole version set, replacing what is stored — a language left out is
  * removed. At least one version, each with a title; the rest may wait, because
  * publishing is what demands it.
@@ -215,7 +215,7 @@ export interface LandingPageSaver {
   lastSavedVia: { clientId: string; name: string | null } | null;
 }
 
-/** A page's working copy, as the admin edit page reads it. */
+/** A page's working copy, as the admin reads it: the status page, the MCP tools, the preview. */
 export interface LandingPageDraft extends LandingPageSaver {
   id: string;
   sections: LandingSection[];
@@ -225,11 +225,6 @@ export interface LandingPageDraft extends LandingPageSaver {
    * `landing_image`. Derived by the database from the sections.
    */
   imagePaths: Record<string, string>;
-  /**
-   * The catalogue label of each picture in `imagePaths`, by the same id — what
-   * the editor shows under the picture.
-   */
-  imageLabels: Record<string, string>;
   /** Every version written, in `SUPPORTED_LOCALES` order; never empty. */
   versions: LandingPageDraftVersion[];
   createdAt: string;
@@ -303,7 +298,7 @@ export interface AdminLandingPageListItem extends LandingPageSaver {
   hasUnpublishedChanges: boolean;
 }
 
-/** One page on the admin edit page: its working copy and what is live. */
+/** One page as the admin reads it: its working copy and what is live. */
 export interface AdminLandingPage {
   draft: LandingPageDraft;
   /** Null while the page is not live. */
@@ -375,7 +370,7 @@ export function localizeLandingPage(
  * page is gone), `foreign_key_violation` (a picture left the catalogue) and
  * `unique_violation` (an address another page holds). Every other code carries
  * a message written for a developer, so it falls back to a generic line. The
- * editor and the MCP tools both read a refusal through this.
+ * status page and the MCP tools both read a refusal through this.
  */
 export type LandingWriteFailure =
   | { kind: "reason"; reason: string }

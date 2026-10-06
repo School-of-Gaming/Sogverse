@@ -50,8 +50,7 @@
       "adminLibraryArticleNew": "ghItlh chu’",
       "adminLibraryArticleEdit": "ghItlh yIchoH",
       "adminLandingPages": "Sap ghItlhmey",
-      "adminLandingPageNew": "Sap ghItlh chu’",
-      "adminLandingPageEdit": "Sap ghItlh yIchoH",
+      "adminLandingPage": "Sap ghItlh",
       "adminPlatformVision": "Sogverse naj",
       "adminGeduInvoicing": "Gedu DIlmeH ghItlh",
       "adminTools": "janmey",
@@ -664,8 +663,7 @@
     "landingPages": {
       "title": "Sap ghItlhmey",
       "subtitle": "DuSaQ, veng, malja’ qoj wanI’ ghItlhmey. nejwI’ jabbI’IDmey ’ej De’wI’ qoq Dochmey luSamnIS.",
-      "newPageButton": "ghItlh chu’",
-      "empty": "Sap ghItlh tu’lu’be’. wa’DIch yIghItlh.",
+      "empty": "Sap ghItlh tu’lu’be’. Sogverse rarlu’bogh De’wI’ qoq lo’lu’DI’ Sap ghItlhlu’.",
       "lastSaved": "Qav pollu’ {date}",
       "languagesLabel": "Holmey",
       "versionComplete": "rIn",
@@ -680,12 +678,30 @@
       "backToList": "Sap ghItlhmeyDaq yIchegh",
       "notFound": "ngu’meH mI’vam ghaj Sap ghItlh tu’lu’be’.",
       "loadError": "Sap ghItlhvam lI’laHbe’lu’. yIchu’qa’.",
-      "newPage": {
-        "title": "Sap ghItlh chu’",
-        "submit": "nab yIpol"
-      },
-      "editPage": {
-        "title": "Sap ghItlh yIchoH"
+      "statusPage": {
+        "title": "Sap ghItlh",
+        "authoring": "Sapvam DachoHchugh, Sogverse rarlu’bogh De’wI’ qoq yItlhob.",
+        "languagesHeading": "Holmey",
+        "readiness": {
+          "noCompleteLanguage": "rInbe’ Hol. ngeHlu’meH pagh tu’lu’.",
+          "upToDate": "Qav Qavlu’pu’bogh ghItlh legh laDwI’pu’."
+        },
+        "language": {
+          "complete": "rIn",
+          "incomplete": "rInbe’",
+          "live": "Daq yIn.",
+          "notLive": "Daq yInbe’.",
+          "stillNeeded": "pIm ’e’ ghajnIS:",
+          "address": "Daq:",
+          "noAddress": "pagh",
+          "addressFixed": "reH ratlh: Holvam ngeHlu’pu’.",
+          "addressOpen": "Holvam wa’DIch ngeHlu’DI’, reH ratlh."
+        },
+        "missing": {
+          "inSection": "{number} ’ay’ ({type}): {field}",
+          "inItem": "{number} ’ay’ ({type}), {item}: {field}",
+          "goneSection": "Sapvam ’ay’ tu’lu’be’: {field}"
+        }
       },
       "status": {
         "draft": "nab",
@@ -693,7 +709,6 @@
         "changed": "choHmey ngeHbe’lu’"
       },
       "statusPanel": {
-        "label": "ngeH",
         "publishedLine": "{date} ngeHlu’.",
         "changedLine": "{date} ngeHlu’pu’bogh ghItlh legh laDwI’pu’.",
         "savedLine": "Qav pollu’ {date}.",
@@ -706,10 +721,15 @@
       "publish": "yIngeH",
       "publishChanges": "choHmey yIngeH",
       "unpublish": "yIngeHQo’",
-      "readiness": {
-        "noCompleteLanguage": "ngeHmeH wa’ Hol yIrIn. Hol tIqmey Hoch luchaw’ chaH ’e’ ghaj.",
-        "takenDown": "{count, plural, one {{languages} yIn ’ach rInbe’; ngeHlu’chugh, Daq teqlu’.} other {{languages} yIn ’ach rInbe’; ngeHlu’chugh, Daq teqlu’.}}",
-        "leftOut": "{count, plural, one {{languages} rInbe’; ngeHlu’chugh, ngeHlu’be’.} other {{languages} rInbe’; ngeHlu’chugh, ngeHlu’be’.}}"
+      "publishConfirm": {
+        "title": "Sap ghItlhvam DangeHneS’a’?",
+        "changesTitle": "choHmey DangeHneS’a’?",
+        "goesLive": "yIn: {languages}.",
+        "takenDown": "{count, plural, one {rInbe’qa’mo’, Daq teqlu’: {languages}.} other {rInbe’qa’mo’, Daq teqlu’: {languages}.}}",
+        "leftOut": "{count, plural, one {rInbe’mo’, ngeHlu’be’: {languages}.} other {rInbe’mo’, ngeHlu’be’: {languages}.}}",
+        "permanent": "{count, plural, one {reH ratlh Daqvam, not choHlaH:} other {reH ratlh Daqmeyvam, not choHlaH:}}",
+        "permanentWritten": "{language}: {address}",
+        "permanentFromTitle": "{language}: {address} (pong vo’ chenmoHlu’)"
       },
       "unpublishConfirm": {
         "title": "Sap ghItlhvam DangeHQo’’a’?",
@@ -717,47 +737,13 @@
         "confirm": "yIngeHQo’"
       },
       "actions": {
-        "save": "yIpol",
         "cancel": "yImev"
       },
       "errors": {
-        "titleRequired": "pong poQ Sap ghItlh.",
-        "versionTitleRequired": "pong poQ {language} ghItlh.",
-        "versionSlugShape": "{language} Daq: a–z ngutlhmey mach, mI’mey, wa’ tlhegh mach neH.",
-        "slugShape": "a–z ngutlhmey mach, mI’mey, wa’ tlhegh mach neH yIlo’.",
-        "needsPicture": "{number} DIchDaq mIllogh Daq chIm. mIllogh yIwIv qoj Daq yIteq.",
-        "needsAddress": "{number} DIch leQ Daq poQ.",
-        "badAddress": "{number} DIch leQ: / lo’bogh Daqvam He qoj Hoch Saw Daq poQ.",
-        "saveFailed": "Sap ghItlh pollaHbe’lu’. yInIDqa’.",
-        "saveFailedWithReason": "Sap ghItlh pollaHbe’lu’ — {reason}",
         "publishFailed": "Sap ghItlh ngeHlaHbe’lu’. yInIDqa’.",
         "publishFailedWithReason": "Sap ghItlh ngeHlaHbe’lu’ — {reason}",
         "unpublishFailed": "Sap ghItlh ngeHQo’laHbe’lu’. yInIDqa’.",
         "unpublishFailedWithReason": "Sap ghItlh ngeHQo’laHbe’lu’ — {reason}"
-      },
-      "addLocale": "Hol yIchel",
-      "removeLocale": "{language} yIteq",
-      "summaryCount": "{count} / {max}",
-      "markdownPlaceholder": "naDev yIghItlh…",
-      "markdownOpen": "{field} yIchoH",
-      "structure": {
-        "title": "ghItlh tlhoSmey",
-        "subtitle": "ghItlh mI’ ’ej Hoch Hol ghajbogh Dochmey: mIllogh, leQmey, Degh, tetlh Dochmey.",
-        "sectionName": "{number}. {type}",
-        "moveUp": "{section} yIDoQ’eghmoH Dung",
-        "moveDown": "{section} yIDoQ’eghmoH bIng",
-        "remove": "{section} yIteq",
-        "add": "tlhoS yIchel",
-        "removeConfirm": {
-          "title": "tlhoSvam DateqneS’a’?",
-          "description": "Hoch HolDaq mu’mey teqlu’. Dapol ’ej DangeH net, Daq choHbe’.",
-          "confirm": "yIteq"
-        },
-        "problems": {
-          "needsPicture": "Dapol net, Hoch DaqvaD mIllogh yIwIv.",
-          "needsAddress": "Dapol net, leQvaD Daq yInob.",
-          "badAddress": "/ lo’bogh Daqvam He qoj https:// lo’bogh Hoch Saw Daq yIlo’."
-        }
       },
       "sectionTypes": {
         "hero": "tagh",
@@ -768,73 +754,13 @@
         "faq": "ghel ’ej jang",
         "cta": "ra’ ghItlh"
       },
-      "shared": {
-        "picture": "mIllogh",
-        "imageSide": "mIllogh Daq",
-        "imageSides": {
-          "start": "ghItlh tlhop",
-          "end": "ghItlh ret"
-        },
-        "addButton": "leQ yIchel",
-        "removeButton": "leQ yIteq",
-        "buttonAddress": "leQ Daq",
-        "icon": "{number} DIch Degh"
-      },
-      "hints": {
-        "heroPicture": "pong’a’ retlhDaq cha’lu’; 16:9 pe’lu’.",
-        "textPicture": "ghItlh retlhDaq cha’lu’; 16:9 pe’lu’.",
-        "imagePicture": "16:9 pe’lu’. Hoch HolDaq Hoch mIllogh ghItlh poQ.",
-        "buttonAddress": "Daqvam ghItlh (/shop rur) qoj latlh Daq Hoch Saw Daq. Hoch HolDaq Daqvam Daq ghItlh nuqDaq ghoS ’e’ polmeH lo’lu’.",
-        "summary": "ghItlh motlh. pong bIngDaq cha’ nejwI’mey; wa’ qoj cha’ mu’tlheghmey yIlo’.",
-        "slug": "HolvamDaq ghItlh Daq Qav. pong yIlo’lu’ DachoHpa’.",
-        "slugFixed": "Holvam ngeHlu’pu’, Daq choHlaHbe’lu’: choHlu’chugh, Hoch rarwI’ ghorlu’."
-      },
       "items": {
         "image": "mIllogh {number}",
         "points": "Doch {number}",
         "steps": "mIw {number}",
-        "faq": "ghel {number}",
-        "addImage": "mIllogh yIchel",
-        "addPoint": "Doch yIchel",
-        "addStep": "mIw yIchel",
-        "addQuestion": "ghel yIchel",
-        "moveUp": "{item} yIDoQ’eghmoH Dung",
-        "moveDown": "{item} yIDoQ’eghmoH bIng",
-        "remove": "{item} yIteq"
-      },
-      "icons": {
-        "sparkles": "wovmoHwI’mey",
-        "star": "Hov",
-        "heart": "tIq",
-        "shield-check": "yoD",
-        "users": "nuvpu’",
-        "gamepad-2": "Quj SeHwI’",
-        "graduation-cap": "ghojwI’ mIv",
-        "book-open": "paq poSmoHlu’bogh",
-        "map-pin": "pu’jIn Daq",
-        "calendar": "jaj tetlh",
-        "clock": "tlhaq",
-        "trophy": "quvmoHwI’",
-        "rocket": "Duj tIH",
-        "lightbulb": "wovmoHwI’",
-        "message-circle": "jatlhmeH ghom",
-        "smile": "Hagh",
-        "puzzle": "nISwI’ ’ay’",
-        "globe": "yuQ",
-        "laptop": "De’wI’ mach",
-        "circle-check": "lughbogh ghItlh",
-        "palette": "rItlh",
-        "handshake": "ghop",
-        "target": "DoS",
-        "leaf": "por"
-      },
-      "words": {
-        "title": "mu’mey",
-        "subtitle": "Hoch Hol yIghItlh. ngeHlu’chugh, Hoch Hol rIn ngeHlu’.",
-        "stillNeeded": "poQlu’taH: {fields}."
+        "faq": "ghel {number}"
       },
       "fields": {
-        "languages": "Holmey",
         "title": "pong",
         "summary": "ghItlh mach",
         "slug": "Daq",
@@ -849,8 +775,7 @@
         "imageAlt": "mIllogh ghItlh",
         "alt": "mIllogh ghItlh",
         "question": "ghel",
-        "answer": "jang",
-        "ofItem": "{item}: {field}"
+        "answer": "jang"
       }
     },
     "geduRole": {

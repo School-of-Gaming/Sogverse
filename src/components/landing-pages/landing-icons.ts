@@ -29,8 +29,7 @@ import type { LandingIcon } from "@/lib/landing-pages/sections";
 
 /**
  * The lucide glyph of every icon a point may carry — exhaustive, so an icon
- * added to the curated list fails type-check here until it can be drawn. The
- * public page and the admin editor both draw from this one map.
+ * added to the curated list fails type-check here until it can be drawn.
  */
 export const LANDING_ICON_GLYPHS: Record<LandingIcon, LucideIcon> = {
   sparkles: Sparkles,

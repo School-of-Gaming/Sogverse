@@ -509,8 +509,8 @@ export const ROUTES = {
     ({ pathname: "/discover/[idOrSlug]", params: { idOrSlug } }) as const,
   /**
    * A landing page's saved working copy as a reader would meet it if it were
-   * published now — what the editor's Preview opens. Admin-only, gated like
-   * the Library article preview.
+   * published now — what the admin status page's and the MCP tools' preview
+   * links open. Admin-only, gated like the Library article preview.
    */
   landingPagePreview: (id: string) =>
     ({ pathname: "/discover/[idOrSlug]/preview", params: { idOrSlug: id } }) as const,
@@ -751,11 +751,12 @@ export const ROUTES = {
     /** One article's editor, where it is also published. */
     libraryArticle: (id: string) =>
       ({ pathname: "/admin/library/[id]", params: { id } }) as const,
-    /** Every landing page, live or not, and where they are written. */
+    /** Every landing page, live or not. They are written through the MCP server alone. */
     landingPages: "/admin/landing-pages",
-    /** The form a new landing page is written in. */
-    landingPageNew: "/admin/landing-pages/new",
-    /** One landing page's editor, where it is also published. */
+    /**
+     * One landing page's status: each language's state, its preview and live
+     * links, and where the page is published and unpublished.
+     */
     landingPage: (id: string) =>
       ({ pathname: "/admin/landing-pages/[id]", params: { id } }) as const,
     /**

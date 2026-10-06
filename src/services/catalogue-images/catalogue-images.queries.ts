@@ -52,9 +52,9 @@ export function useCatalogueImageUsage() {
  * cached would keep the old cover id, so the editor would compare the form's
  * followed id against it and call the article unsaved. That refetch is safe
  * because the Library editor seeds its form once per article id, never from a
- * refetch. Landing pages' admin tree likewise, for the same reason: a replace
- * or a remove moves the pictures in a page's working structure, and the
- * landing editor seeds its form once per page id too.
+ * refetch. Landing pages' admin tree too: a replace or a remove moves the
+ * pictures in a page's working structure and its last-saved time and saver,
+ * which its status page shows, and nothing there is a form.
  *
  * Never `productKeys.all` and never the product's admin **detail** key: the
  * product form seeds its state from that query, so refetching it mid-edit

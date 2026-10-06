@@ -5,7 +5,7 @@ import { z } from "zod";
  * target, the text field schemas and the one test of "written".
  *
  * Kept free of React and of any service import, so the registry can be read by
- * the renderer, the editor, the service, the SEO code and the MCP tools alike.
+ * the renderer, the service, the SEO code and the MCP tools alike.
  */
 
 /**
@@ -124,14 +124,14 @@ export interface LandingSectionDefinition<
   /**
    * The required text fields this section has not got written, as paths
    * within the section (`headline`, `items.<id>.title`, `alts.<id>`), in the
-   * order the editor asks for them.
+   * order the section reads them.
    */
   readonly missingText: (section: z.output<Section>, text: TextReading) => string[];
   /**
    * The words that are authored markdown (the `landing` use case), and so
    * render as rich text and can hold links: exactly the fields whose schema
-   * is `markdownText`. The one declaration the links hook, the MCP tools'
-   * subset check and the editor all read.
+   * is `markdownText`. The one declaration the links hook and the MCP tools'
+   * subset check both read.
    */
   readonly markdownFields: readonly LandingMarkdownField[];
 }
