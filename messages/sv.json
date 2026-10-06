@@ -650,8 +650,7 @@
           "stillNeeded": "Saknas fortfarande:",
           "address": "Adress:",
           "noAddress": "ingen än",
-          "addressFixed": "Låst för gott: språket har publicerats.",
-          "addressOpen": "Låses för gott när språket publiceras första gången."
+          "addressChanging": "Publicerad på {address} nu. Nästa publicering flyttar den till den här adressen, och länkar till den gamla slutar fungera."
         },
         "missing": {
           "inSection": "Avsnitt {number} ({type}): {field}",
@@ -683,9 +682,8 @@
         "goesLive": "Publiceras: {languages}.",
         "takenDown": "{count, plural, one {Tas bort från webbplatsen eftersom det inte längre är klart: {languages}.} other {Tas bort från webbplatsen eftersom de inte längre är klara: {languages}.}}",
         "leftOut": "{count, plural, one {Utelämnas eftersom det inte är klart: {languages}.} other {Utelämnas eftersom de inte är klara: {languages}.}}",
-        "permanent": "{count, plural, one {Den här adressen låses för gott och kan aldrig ändras:} other {De här adresserna låses för gott och kan aldrig ändras:}}",
-        "permanentWritten": "{language}: {address}",
-        "permanentFromTitle": "{language}: {address} (skapad från titeln)"
+        "changing": "{count, plural, one {Den här publicerade adressen ändras, och länkar till den gamla slutar fungera:} other {De här publicerade adresserna ändras, och länkar till de gamla slutar fungera:}}",
+        "changingItem": "{language}: {from} blir {to}"
       },
       "unpublishConfirm": {
         "title": "Avpublicera landningssidan?",

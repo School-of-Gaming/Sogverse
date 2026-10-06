@@ -650,8 +650,7 @@
           "stillNeeded": "Still needed:",
           "address": "Address:",
           "noAddress": "none yet",
-          "addressFixed": "Fixed for good: this language has been published.",
-          "addressOpen": "Becomes permanent when this language is first published."
+          "addressChanging": "Live at {address} now. The next publish moves it to this address, and links to the old one will stop working."
         },
         "missing": {
           "inSection": "Section {number} ({type}): {field}",
@@ -683,9 +682,8 @@
         "goesLive": "Goes live: {languages}.",
         "takenDown": "{count, plural, one {Taken off the site, as it is no longer complete: {languages}.} other {Taken off the site, as they are no longer complete: {languages}.}}",
         "leftOut": "{count, plural, one {Left out, as it is not complete: {languages}.} other {Left out, as they are not complete: {languages}.}}",
-        "permanent": "{count, plural, one {This address becomes permanent and can never change:} other {These addresses become permanent and can never change:}}",
-        "permanentWritten": "{language}: {address}",
-        "permanentFromTitle": "{language}: {address} (made from the title)"
+        "changing": "{count, plural, one {This live address changes, and links to the old one will stop working:} other {These live addresses change, and links to the old ones will stop working:}}",
+        "changingItem": "{language}: {from} becomes {to}"
       },
       "unpublishConfirm": {
         "title": "Unpublish this landing page?",

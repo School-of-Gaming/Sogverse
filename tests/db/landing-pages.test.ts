@@ -13,6 +13,8 @@ import {
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import type { CatalogueImageInsert } from "@/types";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
+import { defaultLandingSlug } from "@/services/landing-pages/landing-pages.contracts";
+import { landingPublishForecast } from "@/services/landing-pages/landing-pages.forecast";
 import {
   buttonTarget,
   missingInLandingVersion,
@@ -198,7 +200,7 @@ describe("landing pages", () => {
   async function draftVersions(id: string) {
     const { data } = await admin
       .from("landing_page_translations")
-      .select("locale, slug, section_texts, is_complete, first_published_at")
+      .select("locale, slug, section_texts, is_complete")
       .eq("page_id", id)
       .order("locale");
     return data ?? [];
@@ -438,32 +440,62 @@ describe("landing pages", () => {
       expect((await draftVersions(PAGE_A))[0].slug).toBe(SLUG_A);
     });
 
-    it("fixes a language's slug once it has been published, through unpublishing too", async () => {
+    it("changes a live language's slug, which goes live with the next publish and retires the old address", async () => {
       await reseed();
       await service.publishPage(PAGE_A);
-      expect((await draftVersions(PAGE_A))[0].first_published_at).not.toBeNull();
-      expect((await service.getAdminPage(PAGE_A))?.draft.versions[0].slugFixed).toBe(true);
+      const renamed = "fixture-landing-a-renamed";
+      const reader = new LandingPageService(anon);
 
-      const changed = await adminAuth.rpc("save_landing_page_version", {
-        p_id: PAGE_A,
+      // The page's own live slug never blocks it.
+      await service.saveVersion(PAGE_A, version("en", renamed));
+      expect((await draftVersions(PAGE_A))[0].slug).toBe(renamed);
+
+      // Readers keep the old address until the next publish.
+      expect((await reader.getPublishedPageBySlug("en", SLUG_A))?.id).toBe(PAGE_A);
+      expect(await reader.getPublishedPageBySlug("en", renamed)).toBeNull();
+
+      // The forecast names the move.
+      const before = await service.getAdminPage(PAGE_A);
+      expect(before && landingPublishForecast(before).slugsChanging).toEqual([
+        { locale: "en", from: SLUG_A, to: renamed },
+      ]);
+
+      // Another page cannot take the address while it is still live here.
+      const taken = await adminAuth.rpc("save_landing_page_version", {
+        p_id: PAGE_B,
         p_locale: "en",
         p_title: "T",
-        p_slug: "fixture-landing-a-renamed",
+        p_slug: SLUG_A,
       });
-      expect(changed.error?.code).toBe("23514");
-      expect(changed.error?.message).toContain(SLUG_A);
+      expect(taken.error?.code).toBe("23505");
+      expect(taken.error?.message).toContain('the landing page "Fixture landing en"');
 
-      await service.unpublishPage(PAGE_A);
-      const afterUnpublish = await adminAuth.rpc("save_landing_page_version", {
-        p_id: PAGE_A,
-        p_locale: "en",
-        p_title: "T",
-        p_slug: "fixture-landing-a-renamed",
-      });
-      expect(afterUnpublish.error?.code).toBe("23514");
+      await service.publishPage(PAGE_A);
+      expect((await reader.getPublishedPageBySlug("en", renamed))?.id).toBe(PAGE_A);
+      expect(await reader.getPublishedPageBySlug("en", SLUG_A)).toBeNull();
+      const after = await service.getAdminPage(PAGE_A);
+      expect(after && landingPublishForecast(after).slugsChanging).toEqual([]);
+
+      // Once no copy of any page holds it, the old address is free.
+      await service.saveVersion(PAGE_B, { ...version("en", SLUG_A), sectionTexts: {} });
+      expect((await draftVersions(PAGE_B))[0].slug).toBe(SLUG_A);
     });
 
-    it("keeps a live language's slug when a whole save removes it and a later one writes it again", async () => {
+    it("changes a slug after unpublishing", async () => {
+      await reseed();
+      await service.publishPage(PAGE_A);
+      await service.unpublishPage(PAGE_A);
+      const { error } = await adminAuth.rpc("save_landing_page_version", {
+        p_id: PAGE_A,
+        p_locale: "en",
+        p_title: "T",
+        p_slug: "fixture-landing-a-renamed",
+      });
+      expect(error).toBeNull();
+      expect((await draftVersions(PAGE_A))[0].slug).toBe("fixture-landing-a-renamed");
+    });
+
+    it("writes a language again after a whole save removed it while live, its live slug still held from other pages", async () => {
       await reseed();
       await saveWhole(PAGE_A, {
         sections: structure(),
@@ -481,24 +513,23 @@ describe("landing pages", () => {
       });
       expect(taken.error?.code).toBe("23505");
 
-      // Written again with no slug, Finnish takes its live one back, fixed.
+      // Written again with no slug, Finnish is a new version: its title's slug.
+      const title = "Fixture: something else entirely";
       await service.saveVersion(PAGE_A, {
         locale: "fi",
-        title: "Fixture: something else entirely",
+        title,
         summary: "S",
         sectionTexts: words("fi"),
       });
-      const fi = (await draftVersions(PAGE_A)).find((v) => v.locale === "fi");
-      expect(fi?.slug).toBe("fixture-landing-a-fi");
-      expect(fi?.first_published_at).not.toBeNull();
+      expect((await draftVersions(PAGE_A)).find((v) => v.locale === "fi")?.slug).toBe(
+        defaultLandingSlug(title),
+      );
 
-      const renamed = await adminAuth.rpc("save_landing_page_version", {
-        p_id: PAGE_A,
-        p_locale: "fi",
-        p_title: "T",
-        p_slug: "fixture-landing-a-fi-2",
-      });
-      expect(renamed.error?.code).toBe("23514");
+      // The page itself may write its live slug back.
+      await service.saveVersion(PAGE_A, version("fi", "fixture-landing-a-fi"));
+      expect((await draftVersions(PAGE_A)).find((v) => v.locale === "fi")?.slug).toBe(
+        "fixture-landing-a-fi",
+      );
     });
   });
 

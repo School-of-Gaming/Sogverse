@@ -11,7 +11,6 @@ CREATE TABLE public.landing_page_translations (
     section_texts jsonb DEFAULT '{}'::jsonb NOT NULL,
     texts_md5 text GENERATED ALWAYS AS (md5((section_texts)::text)) STORED,
     is_complete boolean DEFAULT false NOT NULL,
-    first_published_at timestamp with time zone,
     CONSTRAINT chk_landing_page_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}$'::text)),
     CONSTRAINT chk_landing_page_translations_slug_format CHECK (((slug = ''::text) OR ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text) AND (char_length(slug) <= 80) AND (slug !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text)))),
     CONSTRAINT chk_landing_page_translations_summary_length CHECK ((char_length(summary) <= 160)),
@@ -53,7 +52,7 @@ COMMENT ON COLUMN public.landing_page_translations.summary IS 'The summary in th
 -- Name: COLUMN landing_page_translations.slug; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.landing_page_translations.slug IS 'The page''s address in this language, stored: lowercase a-z, 0-9 and single hyphens, at most 80 characters, never shaped like a uuid so it cannot be read as an id address, and the empty string while unwritten. Unique per locale among the working versions (uq_landing_page_translations_locale_slug), and the writers refuse one another page has live too. Fixed once this language has been published (guard_landing_page_slug).';
+COMMENT ON COLUMN public.landing_page_translations.slug IS 'The page''s address in this language, stored: lowercase a-z, 0-9 and single hyphens, at most 80 characters, never shaped like a uuid so it cannot be read as an id address, and the empty string while unwritten. Unique per locale among the working versions (uq_landing_page_translations_locale_slug), and the writers refuse one another page has live too. It may change at any time, a live language''s included: the published copy keeps the old address until the next publish, and nothing redirects from it after.';
 
 
 --
@@ -78,13 +77,6 @@ COMMENT ON COLUMN public.landing_page_translations.is_complete IS 'Whether publi
 
 
 --
--- Name: COLUMN landing_page_translations.first_published_at; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.landing_page_translations.first_published_at IS 'When this language first went live, stamped by publish_landing_page and kept from then on. From that moment the version''s slug is fixed: guard_landing_page_slug refuses a change.';
-
-
---
 -- Name: landing_page_translations landing_page_translations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -104,13 +96,6 @@ CREATE UNIQUE INDEX uq_landing_page_translations_locale_slug ON public.landing_p
 --
 
 CREATE TRIGGER trg_landing_page_translations_completeness BEFORE INSERT OR UPDATE ON public.landing_page_translations FOR EACH ROW EXECUTE FUNCTION public.apply_landing_version_completeness();
-
-
---
--- Name: landing_page_translations trg_landing_page_translations_guard_slug; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER trg_landing_page_translations_guard_slug BEFORE INSERT OR UPDATE OF slug ON public.landing_page_translations FOR EACH ROW EXECUTE FUNCTION public.guard_landing_page_slug();
 
 
 --

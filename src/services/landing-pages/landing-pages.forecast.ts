@@ -1,10 +1,10 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { defaultLandingSlug, type AdminLandingPage } from "./landing-pages.contracts";
+import type { AdminLandingPage } from "./landing-pages.contracts";
 
 /**
  * **What a publish would do now**, read from one admin read of the page: the
  * languages it would put live, the written ones it would leave out, the live
- * ones it would take down, and the slugs it would fix for good. The admin
+ * ones it would take down, and the live addresses it would change. The admin
  * status page shows it before Publish is confirmed, and the MCP tools hand it
  * to an AI app before it publishes.
  *
@@ -24,14 +24,15 @@ export interface LandingPublishForecast {
   /** The live languages that are no longer complete, or no longer written. */
   wouldTakeDown: SupportedLocale[];
   /**
-   * Each language going live for the first time, with the slug that becomes
-   * permanent, and whether that slug is the one derived from the title —
-   * likely never chosen by anyone — rather than one written.
+   * Each language live now that stays live, whose saved slug differs from its
+   * live one: the publish moves it from `from` to `to`, and nothing redirects
+   * from the old address, so links to it shared outside the site stop working.
+   * A language going live for the first time has no entry.
    */
-  slugsBecomingPermanent: {
+  slugsChanging: {
     locale: SupportedLocale;
-    slug: string;
-    derivedFromTitle: boolean;
+    from: string;
+    to: string;
   }[];
 }
 
@@ -47,12 +48,11 @@ export function landingPublishForecast(
     wouldPutLive: completeLocales,
     wouldLeaveOut: draft.versions.filter((v) => v.missing.length > 0).map((v) => v.locale),
     wouldTakeDown: live.filter((locale) => !completeLocales.includes(locale)),
-    slugsBecomingPermanent: complete
-      .filter((v) => !v.slugFixed)
-      .map((v) => ({
-        locale: v.locale,
-        slug: v.slug,
-        derivedFromTitle: v.slug === defaultLandingSlug(v.title),
-      })),
+    slugsChanging: complete.flatMap((v) => {
+      const from = publication?.versions.find((l) => l.locale === v.locale)?.slug;
+      return from !== undefined && from !== v.slug
+        ? [{ locale: v.locale, from, to: v.slug }]
+        : [];
+    }),
   };
 }

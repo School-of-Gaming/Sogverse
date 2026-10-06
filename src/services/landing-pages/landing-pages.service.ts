@@ -38,7 +38,7 @@ const UUID =
 
 /** A working version whole, with what comparing and publishing read off it. */
 const DRAFT_VERSION_COLUMNS =
-  "locale, title, summary, slug, section_texts, texts_md5, is_complete, first_published_at";
+  "locale, title, summary, slug, section_texts, texts_md5, is_complete";
 
 /** A working version for the list: no words, but their digest and completeness. */
 const DRAFT_VERSION_LIST_COLUMNS =
@@ -256,7 +256,6 @@ export class LandingPageService {
             slug: version.slug,
             sectionTexts,
           }),
-          slugFixed: version.first_published_at !== null,
         };
       }),
       createdAt: data.created_at,

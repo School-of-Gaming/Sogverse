@@ -694,8 +694,7 @@
           "stillNeeded": "pIm ’e’ ghajnIS:",
           "address": "Daq:",
           "noAddress": "pagh",
-          "addressFixed": "reH ratlh: Holvam ngeHlu’pu’.",
-          "addressOpen": "Holvam wa’DIch ngeHlu’DI’, reH ratlh."
+          "addressChanging": "DaH {address} Daq. ngeHlu’qa’DI’, Daqvam Daq choHlu’; Daq ngo’ rar mutlhwI’ Qapbe’."
         },
         "missing": {
           "inSection": "{number} ’ay’ ({type}): {field}",
@@ -727,9 +726,8 @@
         "goesLive": "yIn: {languages}.",
         "takenDown": "{count, plural, one {rInbe’qa’mo’, Daq teqlu’: {languages}.} other {rInbe’qa’mo’, Daq teqlu’: {languages}.}}",
         "leftOut": "{count, plural, one {rInbe’mo’, ngeHlu’be’: {languages}.} other {rInbe’mo’, ngeHlu’be’: {languages}.}}",
-        "permanent": "{count, plural, one {reH ratlh Daqvam, not choHlaH:} other {reH ratlh Daqmeyvam, not choHlaH:}}",
-        "permanentWritten": "{language}: {address}",
-        "permanentFromTitle": "{language}: {address} (pong vo’ chenmoHlu’)"
+        "changing": "{count, plural, one {choH Daqvam; Daq ngo’ rar mutlhwI’ Qapbe’:} other {choH Daqmeyvam; Daqmey ngo’ rar mutlhwI’ Qapbe’:}}",
+        "changingItem": "{language}: {from} moj {to}"
       },
       "unpublishConfirm": {
         "title": "Sap ghItlhvam DangeHQo’’a’?",

@@ -650,8 +650,7 @@
           "stillNeeded": "Vielä puuttuu:",
           "address": "Osoite:",
           "noAddress": "ei vielä osoitetta",
-          "addressFixed": "Lukittu pysyvästi: tämä kieli on julkaistu.",
-          "addressOpen": "Lukitaan pysyvästi, kun tämä kieli julkaistaan ensimmäisen kerran."
+          "addressChanging": "Nyt julkaistu osoitteessa {address}. Seuraava julkaisu siirtää sen tähän osoitteeseen, eivätkä vanhaan osoitteeseen johtavat linkit enää toimi."
         },
         "missing": {
           "inSection": "Osio {number} ({type}): {field}",
@@ -683,9 +682,8 @@
         "goesLive": "Julkaistaan: {languages}.",
         "takenDown": "{count, plural, one {Poistetaan sivustolta, koska se ei ole enää valmis: {languages}.} other {Poistetaan sivustolta, koska ne eivät ole enää valmiita: {languages}.}}",
         "leftOut": "{count, plural, one {Jätetään pois, koska se ei ole valmis: {languages}.} other {Jätetään pois, koska ne eivät ole valmiita: {languages}.}}",
-        "permanent": "{count, plural, one {Tämä osoite lukitaan pysyvästi, eikä sitä voi enää muuttaa:} other {Nämä osoitteet lukitaan pysyvästi, eikä niitä voi enää muuttaa:}}",
-        "permanentWritten": "{language}: {address}",
-        "permanentFromTitle": "{language}: {address} (muodostettu otsikosta)"
+        "changing": "{count, plural, one {Tämä julkaistu osoite muuttuu, eivätkä vanhaan osoitteeseen johtavat linkit enää toimi:} other {Nämä julkaistut osoitteet muuttuvat, eivätkä vanhoihin osoitteisiin johtavat linkit enää toimi:}}",
+        "changingItem": "{language}: {from} muuttuu osoitteeksi {to}"
       },
       "unpublishConfirm": {
         "title": "Poistetaanko laskeutumissivu julkaisusta?",

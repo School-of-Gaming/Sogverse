@@ -49,13 +49,13 @@ export interface LandingPageStatusActions {
  *
  * Top to bottom: where the page stands with readers and who last saved it
  * (and through which AI app); the publishing row; then one card per written
- * language — complete or what it still needs, its address and whether that
- * is fixed, its preview of the saved working copy and, while it is live, its
- * live page.
+ * language — complete or what it still needs, its address (and, when that
+ * differs from the live one, that the next publish moves it), its preview of
+ * the saved working copy and, while it is live, its live page.
  *
  * **Publish says what it would do before it does it**: the confirm lists the
  * languages going live, those left out as incomplete, the live ones taken
- * down, and the addresses a first publish of a language makes permanent —
+ * down, and the live addresses it changes, whose old links stop working —
  * the one forecast the MCP tools hand an AI app.
  */
 export function LandingPageStatusPage({
@@ -252,8 +252,8 @@ function affirmative(enabled: boolean) {
 
 /**
  * What the publish about to be confirmed would do: the languages going live,
- * those left out as incomplete, the live ones it takes down, and the
- * addresses it makes permanent. A language taken down is named once, there,
+ * those left out as incomplete, the live ones it takes down, and the live
+ * addresses it changes. A language taken down is named once, there,
  * rather than also among those left out.
  */
 function PublishForecast({ forecast }: { forecast: LandingPublishForecast }) {
@@ -286,25 +286,21 @@ function PublishForecast({ forecast }: { forecast: LandingPublishForecast }) {
           {t("leftOut", { languages: list(leftOut), count: leftOut.length })}
         </StatusLine>
       )}
-      {forecast.slugsBecomingPermanent.length > 0 && (
+      {forecast.slugsChanging.length > 0 && (
         <div className="space-y-1">
           <StatusLine status="warning">
-            {t("permanent", { count: forecast.slugsBecomingPermanent.length })}
+            {t("changing", { count: forecast.slugsChanging.length })}
           </StatusLine>
           <ul className="space-y-1 pl-6">
-            {forecast.slugsBecomingPermanent.map((permanent) => {
-              const values = {
-                language: language(permanent.locale),
-                address: slugPath(permanent.slug, permanent.locale),
-              };
-              return (
-                <li key={permanent.locale}>
-                  {permanent.derivedFromTitle
-                    ? t("permanentFromTitle", values)
-                    : t("permanentWritten", values)}
-                </li>
-              );
-            })}
+            {forecast.slugsChanging.map((change) => (
+              <li key={change.locale}>
+                {t("changingItem", {
+                  language: language(change.locale),
+                  from: slugPath(change.from, change.locale),
+                  to: slugPath(change.to, change.locale),
+                })}
+              </li>
+            ))}
           </ul>
         </div>
       )}
@@ -318,8 +314,10 @@ function slugPath(slug: string, locale: SupportedLocale): string {
 }
 
 /**
- * One written language: complete or what it still needs, its address and
- * whether that is fixed, its preview and — while it is live — its live page.
+ * One written language: complete or what it still needs, its address, its
+ * preview and — while it is live — its live page. When the saved address
+ * differs from the live one, the card warns that the next publish moves the
+ * language and that links to the old address stop working.
  */
 function LanguageCard({
   pageId,
@@ -338,6 +336,9 @@ function LanguageCard({
   const describeMissing = useMissingWords();
   const complete = version.missing.length === 0;
   const headingId = useId();
+  const liveSlug = publication?.versions.find((v) => v.locale === version.locale)?.slug;
+  const movingFrom =
+    version.slug !== "" && liveSlug !== undefined && liveSlug !== version.slug ? liveSlug : null;
 
   return (
     <Card>
@@ -407,12 +408,12 @@ function LanguageCard({
               ? t("statusPage.language.noAddress")
               : slugPath(version.slug, version.locale)}
           </p>
-          {version.slug !== "" && (
-            <p className="text-muted-foreground">
-              {version.slugFixed
-                ? t("statusPage.language.addressFixed")
-                : t("statusPage.language.addressOpen")}
-            </p>
+          {movingFrom !== null && (
+            <StatusLine status="warning">
+              {t("statusPage.language.addressChanging", {
+                address: slugPath(movingFrom, version.locale),
+              })}
+            </StatusLine>
           )}
         </div>
       </CardContent>

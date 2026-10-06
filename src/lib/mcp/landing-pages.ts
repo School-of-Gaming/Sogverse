@@ -83,7 +83,7 @@ const COMPLETE =
 const PUBLISHING =
   "Publishing puts the structure and every complete version live at once, leaves an incomplete version out (taking that language down if it was live), and is refused when no version is complete. Saving never changes what readers see until the next publish; a section added to a live page makes every language incomplete until its words are written there.";
 
-const SLUGS = `A version's slug is its address: lowercase a–z, digits and single hyphens, at most ${LANDING_SLUG_MAX_LENGTH} characters, never shaped like an id, unique per language across every page. Left out, a version keeps the slug it has, or one is derived from its title when it has none. Once a language has been published its slug is fixed for good, through unpublishing too — there are no redirects — and a change is refused.`;
+const SLUGS = `A version's slug is its address: lowercase a–z, digits and single hyphens, at most ${LANDING_SLUG_MAX_LENGTH} characters, never shaped like an id, unique per language across every page. Left out, a version keeps the slug it has, or one is derived from its title when it has none. A slug can be changed at any time, a live language's included: readers keep the old address until the next publish moves the language to the new one, and nothing redirects from the old. Before a publish that changes a live language's address, confirm the change with the admin, because links shared outside the site to the old address stop working.`;
 
 const ADDRESSES =
   "A live language is read at its slug address, /<language>/discover/<slug> with the discover segment in that language; the id address /<language>/discover/<id> works in every language, showing a reader the version in their language, else English, else the first written.";
@@ -281,8 +281,9 @@ function missingWords(page: AdminLandingPage, version: DraftVersion) {
 
 /**
  * What a publish would do now (`landingPublishForecast`), with each language
- * it would leave out carrying what it still needs, and each slug it would fix
- * for good carrying the address it would be read at.
+ * it would leave out carrying what it still needs, and each live address it
+ * would change carrying both links, the one that stops working and its
+ * replacement.
  */
 function publishForecast(page: AdminLandingPage, origin: string) {
   const forecast = landingPublishForecast(page);
@@ -291,9 +292,10 @@ function publishForecast(page: AdminLandingPage, origin: string) {
     wouldLeaveOut: page.draft.versions
       .filter((v) => forecast.wouldLeaveOut.includes(v.locale))
       .map((v) => ({ locale: v.locale, missing: missingWords(page, v) })),
-    slugsBecomingPermanent: forecast.slugsBecomingPermanent.map((permanent) => ({
-      ...permanent,
-      address: slugLink(origin, permanent.slug, permanent.locale),
+    slugsChanging: forecast.slugsChanging.map((change) => ({
+      ...change,
+      fromAddress: slugLink(origin, change.from, change.locale),
+      toAddress: slugLink(origin, change.to, change.locale),
     })),
   };
 }
@@ -320,7 +322,6 @@ function pageView(page: AdminLandingPage, origin: string) {
       title: version.title,
       summary: version.summary,
       slug: version.slug,
-      slugFixed: version.slugFixed,
       address: slugLink(origin, version.slug, version.locale),
       sectionTexts: version.sectionTexts,
       complete: version.missing.length === 0,
@@ -396,7 +397,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "get_landing_page",
     {
       title: "Read a landing page",
-      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures shown small, and every language version — title, summary, slug and whether it is fixed, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one) — with what a publish now would put live, leave out and take down, and the slugs it would fix for good (publish.slugsBecomingPermanent: each language going live for the first time, its slug and whether that slug was derived from the title rather than written); what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING}`,
+      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING}`,
       inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: READ_ONLY,
     },
@@ -584,7 +585,6 @@ export function registerLandingPageTools(server: McpServer): void {
           pageId: input.pageId,
           locale: input.locale,
           slug: saved?.slug ?? "",
-          slugFixed: saved?.slugFixed ?? false,
           address: slugLink(origin, saved?.slug ?? "", input.locale),
           complete: saved !== undefined && saved.missing.length === 0,
           missing: saved === undefined ? [] : missingWords(page, saved),
@@ -600,7 +600,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "publish_landing_page",
     {
       title: "Publish a landing page",
-      description: `Make the page's saved working copy what readers see, replacing what was live. ${PUBLISHING} Publishing a language for the first time fixes its slug for good, and a slug nobody wrote is derived from the title, often long. So read get_landing_page first: its publish.slugsBecomingPermanent lists, for each language this publish would put live for the first time, the slug that becomes permanent and whether it was derived from the title rather than written. Before publishing a language for the first time, confirm those slugs with the admin, and change any they do not want with save_landing_page_text first. Answers which languages went live, which were left out or taken down, the slugs this publish fixed, and each live language's public link. ${ADDRESSES}`,
+      description: `Make the page's saved working copy what readers see, replacing what was live. ${PUBLISHING} A publish moves a live language whose saved slug differs from its live one to the new address, and nothing redirects from the old, so links to it shared outside the site stop working. So read get_landing_page first: its publish.slugsChanging lists each live language whose address this publish would change, with the old address and the new. Before a publish that changes a live language's address, confirm it with the admin, because links shared outside the site to the old address stop working. Answers which languages went live, which were left out or taken down, the live addresses this publish changed, and each live language's public link. ${ADDRESSES}`,
       inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: OVERWRITES,
     },
@@ -623,13 +623,12 @@ export function registerLandingPageTools(server: McpServer): void {
             .filter((v) => !liveLocales.includes(v.locale))
             .map((v) => ({ locale: v.locale, missing: missingWords(after, v) })),
           takenDown: wasLive.filter((l) => !liveLocales.includes(l)),
-          slugsFixedNow: after.draft.versions
-            .filter(
-              (v) =>
-                liveLocales.includes(v.locale) &&
-                !(before.draft.versions.find((b) => b.locale === v.locale)?.slugFixed ?? false),
-            )
-            .map((v) => ({ locale: v.locale, slug: v.slug })),
+          slugsChanged: (publication?.versions ?? []).flatMap((v) => {
+            const from = before.publication?.versions.find((b) => b.locale === v.locale)?.slug;
+            return from !== undefined && from !== v.slug
+              ? [{ locale: v.locale, from, to: v.slug }]
+              : [];
+          }),
           publicLinks: liveLocales.map((l) => ({
             locale: l,
             publicLink: publication === null ? null : publicLink(origin, publication, l),
@@ -642,7 +641,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "unpublish_landing_page",
     {
       title: "Unpublish a landing page",
-      description: `Take the page off the site, every language at once. Its working copy is kept exactly as it was, to edit and publish again, and every slug that was published stays fixed. ${NO_DELETE} Unpublishing a page that is not live changes nothing.`,
+      description: `Take the page off the site, every language at once. Its working copy is kept exactly as it was, slugs included, to edit and publish again. ${NO_DELETE} Unpublishing a page that is not live changes nothing.`,
       inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: OVERWRITES,
     },

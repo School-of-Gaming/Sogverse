@@ -51,13 +51,6 @@ BEGIN
    WHERE page_id = p_id
      AND is_complete;
 
-  -- From now on these languages' addresses are fixed.
-  UPDATE public.landing_page_translations
-     SET first_published_at = now()
-   WHERE page_id = p_id
-     AND is_complete
-     AND first_published_at IS NULL;
-
   RETURN p_id;
 END;
 $$;
@@ -67,7 +60,7 @@ $$;
 -- Name: FUNCTION publish_landing_page(p_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.publish_landing_page(p_id uuid) IS 'Admin-gated publish: copies the page''s working copy over its published copy, making it live or replacing the live version — the structure and every complete language version at once (is_complete: title, summary, slug and every section''s required text written); the live version set becomes exactly those. An incomplete version stays in the working copy. Refuses a page with no complete version with check_violation. Stamps first_published_at on each version going live for the first time, which fixes its slug. A republish moves published_at and keeps first_published_at. The working copy is locked for the copy. An id no page has raises no_data_found. SECURITY DEFINER because no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.publish_landing_page(p_id uuid) IS 'Admin-gated publish: copies the page''s working copy over its published copy, making it live or replacing the live version — the structure and every complete language version at once (is_complete: title, summary, slug and every section''s required text written); the live version set becomes exactly those. An incomplete version stays in the working copy. Refuses a page with no complete version with check_violation. A version whose slug differs from its live one moves that language to the new address; nothing redirects from the old. A republish moves published_at and keeps first_published_at. The working copy is locked for the copy. An id no page has raises no_data_found. SECURITY DEFINER because no landing page table carries a write grant.';
 
 
 --

@@ -111,7 +111,6 @@ const PAGE: AdminLandingPage = {
         slug: "gaming-clubs-in-espoo",
         sectionTexts: {},
         missing: [],
-        slugFixed: true,
       },
       {
         locale: "fi",
@@ -120,7 +119,6 @@ const PAGE: AdminLandingPage = {
         slug: "pelikerhot-espoossa",
         sectionTexts: {},
         missing: [`sections.${FAQ}.items.${QUESTION}.answer`],
-        slugFixed: false,
       },
     ],
     createdAt: "2026-10-01T10:00:00Z",
@@ -259,8 +257,8 @@ describe("reading", () => {
         wouldPutLive: ["en"],
         wouldLeaveOut: [{ locale: "fi", missing: [FI_MISSING] }],
         wouldTakeDown: [],
-        // English is live already, so its slug was fixed long ago.
-        slugsBecomingPermanent: [],
+        // English is live at the address it has saved.
+        slugsChanging: [],
       },
       live: {
         versions: [
@@ -272,7 +270,6 @@ describe("reading", () => {
     expect(result.structuredContent?.versions).toEqual([
       expect.objectContaining({
         locale: "en",
-        slugFixed: true,
         complete: true,
         live: true,
         address: `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
@@ -280,7 +277,6 @@ describe("reading", () => {
       }),
       expect.objectContaining({
         locale: "fi",
-        slugFixed: false,
         complete: false,
         live: false,
         address: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa`,
@@ -292,15 +288,14 @@ describe("reading", () => {
     expect(resultText(result)).toContain(`Picture ${CASTLE}: ${BUCKET}/castle.jpg`);
   });
 
-  it("lists the slugs a publish would fix for good, saying which were derived from the title", async () => {
+  it("lists the live addresses a publish would change, with both links, and none for a language going live first", async () => {
     const [en, fi] = PAGE.draft.versions;
     landing.getAdminPage.mockResolvedValue({
       ...PAGE,
-      publication: null,
       draft: {
         ...PAGE.draft,
         versions: [
-          { ...en, slugFixed: false, slug: "espoo-clubs" },
+          { ...en, slug: "espoo-clubs" },
           { ...fi, missing: [] },
         ],
       },
@@ -310,18 +305,13 @@ describe("reading", () => {
 
     expect(result.structuredContent?.publish).toMatchObject({
       wouldPutLive: ["en", "fi"],
-      slugsBecomingPermanent: [
+      slugsChanging: [
         {
           locale: "en",
-          slug: "espoo-clubs",
-          address: `${ORIGIN}/en/discover/espoo-clubs`,
-          derivedFromTitle: false,
-        },
-        {
-          locale: "fi",
-          slug: "pelikerhot-espoossa",
-          address: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa`,
-          derivedFromTitle: true,
+          from: "gaming-clubs-in-espoo",
+          to: "espoo-clubs",
+          fromAddress: `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+          toAddress: `${ORIGIN}/en/discover/espoo-clubs`,
         },
       ],
     });
@@ -360,10 +350,18 @@ describe("reading", () => {
     expect(structure).toContain("headline; imageAlt when imageId is set; buttonLabel when button is set");
     expect(structure).toContain("drops its words in every language");
     const text = tools.find((t) => t.name === "save_landing_page_text")?.description;
-    expect(text).toContain("its slug is fixed for good");
+    expect(text).toContain("A slug can be changed at any time");
+    expect(text).toContain(
+      "Before a publish that changes a live language's address, confirm the change with the admin",
+    );
     const publish = tools.find((t) => t.name === "publish_landing_page")?.description;
-    expect(publish).toContain("confirm those slugs with the admin");
-    expect(publish).toContain("slugsBecomingPermanent");
+    expect(publish).toContain(
+      "Before a publish that changes a live language's address, confirm it with the admin, because links shared outside the site to the old address stop working",
+    );
+    expect(publish).toContain("slugsChanging");
+    for (const { name, description } of tools) {
+      if (name.includes("landing")) expect(description, name).not.toMatch(/fixed for good|permanent/i);
+    }
     // Landing pages are written only here: nothing sends the admin to an editor.
     for (const { name, description } of tools) {
       if (name.includes("landing")) expect(description, name).not.toMatch(/editor/i);
@@ -551,7 +549,6 @@ describe("saving", () => {
     expect(result.structuredContent).toMatchObject({
       locale: "fi",
       slug: "pelikerhot-espoossa",
-      slugFixed: false,
       languageIsLive: false,
       complete: false,
     });
@@ -593,9 +590,10 @@ describe("saving", () => {
     expect(landing.saveVersion).not.toHaveBeenCalled();
   });
 
-  it("quotes the database's refusal of a fixed slug", async () => {
-    const sentence = "The English address is fixed once published";
-    landing.saveVersion.mockRejectedValue(dbError("23514", sentence));
+  it("quotes the database's refusal of a slug another page holds", async () => {
+    const sentence =
+      'The en address "another-address" is already the address of the landing page "Clubs in Vantaa"; choose another';
+    landing.saveVersion.mockRejectedValue(dbError("23505", sentence));
 
     const result = await tool("save_landing_page_text", {
       pageId: ID,
@@ -636,21 +634,22 @@ describe("publishing", () => {
       live: ["en"],
       leftOut: [{ locale: "fi", missing: [FI_MISSING] }],
       takenDown: [],
-      slugsFixedNow: [],
+      slugsChanged: [],
       publicLinks: [{ locale: "en", publicLink: `${ORIGIN}/en/discover/gaming-clubs-in-espoo` }],
     });
   });
 
-  it("names the slugs this publish fixed for good", async () => {
+  it("names the live addresses this publish changed", async () => {
     const [en] = PAGE.draft.versions;
-    const before: AdminLandingPage = {
-      ...PAGE,
-      publication: null,
-      draft: { ...PAGE.draft, versions: [{ ...en, slugFixed: false }] },
-    };
+    const draft = { ...PAGE.draft, versions: [{ ...en, slug: "espoo-clubs" }] };
+    const before: AdminLandingPage = { ...PAGE, draft };
     const after: AdminLandingPage = {
       ...PAGE,
-      draft: { ...PAGE.draft, versions: [{ ...en, slugFixed: true }] },
+      draft,
+      publication: PAGE.publication && {
+        ...PAGE.publication,
+        versions: PAGE.publication.versions.map((v) => ({ ...v, slug: "espoo-clubs" })),
+      },
     };
     landing.getAdminPage.mockResolvedValueOnce(before).mockResolvedValueOnce(after);
 
@@ -658,7 +657,7 @@ describe("publishing", () => {
 
     expect(result.structuredContent).toMatchObject({
       live: ["en"],
-      slugsFixedNow: [{ locale: "en", slug: "gaming-clubs-in-espoo" }],
+      slugsChanged: [{ locale: "en", from: "gaming-clubs-in-espoo", to: "espoo-clubs" }],
     });
   });
 

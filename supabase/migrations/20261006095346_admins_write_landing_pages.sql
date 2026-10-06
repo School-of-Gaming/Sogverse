@@ -27,8 +27,10 @@
 -- 3. Slugs are stored, per language, rather than derived from the title on
 --    every read: a format (lowercase a-z, 0-9 and single hyphens, at most 80
 --    characters, never shaped like a uuid, so a slug and an id address can
---    never collide), unique per (locale, slug) across every page live or not,
---    and fixed once that language has been published.
+--    never collide), unique per (locale, slug) across every page live or not.
+--    A slug may change at any time, a live one included: the change goes
+--    live with the next publish, and there are no redirects, so links to the
+--    old address stop working then.
 -- 4. Pictures are catalogue entries of purpose 'landing_image', referenced by
 --    id from the sections JSON rather than by a foreign key column. Each copy
 --    carries `image_paths`, an object from entry id to its path, derived by a
@@ -398,7 +400,6 @@ CREATE TABLE public.landing_page_translations (
   section_texts      jsonb NOT NULL DEFAULT '{}'::jsonb,
   texts_md5          text GENERATED ALWAYS AS (md5(section_texts::text)) STORED,
   is_complete        boolean NOT NULL DEFAULT false,
-  first_published_at timestamptz,
   PRIMARY KEY (page_id, locale),
   CONSTRAINT chk_landing_page_translations_locale_format CHECK (locale ~ '^[a-z]{2,3}$'),
   CONSTRAINT chk_landing_page_translations_title_present CHECK (btrim(title) <> ''),
@@ -420,11 +421,10 @@ COMMENT ON TABLE public.landing_page_translations IS 'One language version of a 
 COMMENT ON COLUMN public.landing_page_translations.locale IS 'A site locale code (en, fi, sv, ...), the same code set as profiles.locale. Not a spoken language.';
 COMMENT ON COLUMN public.landing_page_translations.title IS 'The title in this language: the page''s <title> and the name the admin list shows. The one field a version must carry.';
 COMMENT ON COLUMN public.landing_page_translations.summary IS 'The summary in this language — the page''s meta description and its line in llms.txt — plain text, at most 160 characters, and the empty string while unwritten.';
-COMMENT ON COLUMN public.landing_page_translations.slug IS 'The page''s address in this language, stored: lowercase a-z, 0-9 and single hyphens, at most 80 characters, never shaped like a uuid so it cannot be read as an id address, and the empty string while unwritten. Unique per locale among the working versions (uq_landing_page_translations_locale_slug), and the writers refuse one another page has live too. Fixed once this language has been published (guard_landing_page_slug).';
+COMMENT ON COLUMN public.landing_page_translations.slug IS 'The page''s address in this language, stored: lowercase a-z, 0-9 and single hyphens, at most 80 characters, never shaped like a uuid so it cannot be read as an id address, and the empty string while unwritten. Unique per locale among the working versions (uq_landing_page_translations_locale_slug), and the writers refuse one another page has live too. It may change at any time, a live language''s included: the published copy keeps the old address until the next publish, and nothing redirects from it after.';
 COMMENT ON COLUMN public.landing_page_translations.section_texts IS 'The text of each section in this language, as {section id: {field: text, ...}}. A key names a section of the page''s structure; the text of a section the structure drops is dropped with it. Which fields each section type has, and which are required, is the application''s section registry; landing_version_missing is the SQL half of the required rule.';
 COMMENT ON COLUMN public.landing_page_translations.texts_md5 IS 'md5 of section_texts, generated — compared with the live version''s own to tell whether this version has unpublished changes without reading either.';
 COMMENT ON COLUMN public.landing_page_translations.is_complete IS 'Whether publishing would take this version: title, summary and slug written and every section''s required text written, by landing_version_missing against the page''s current structure. Derived by apply_landing_version_completeness on every write of the row, and recomputed for every version when the structure changes; never written by anything else.';
-COMMENT ON COLUMN public.landing_page_translations.first_published_at IS 'When this language first went live, stamped by publish_landing_page and kept from then on. From that moment the version''s slug is fixed: guard_landing_page_slug refuses a change.';
 
 -- ---------------------------------------------------------------------------
 -- 3. The published copy
@@ -661,53 +661,6 @@ CREATE TRIGGER trg_landing_page_publications_cascade_structure
   AFTER UPDATE OF sections ON public.landing_page_publications
   FOR EACH ROW EXECUTE FUNCTION public.cascade_landing_structure();
 
-CREATE FUNCTION public.guard_landing_page_slug()
-RETURNS trigger
-LANGUAGE plpgsql
-SET search_path TO ''
-AS $$
-DECLARE
-  v_live text;
-BEGIN
-  IF TG_OP = 'UPDATE' THEN
-    IF OLD.first_published_at IS NOT NULL AND NEW.slug IS DISTINCT FROM OLD.slug THEN
-      RAISE EXCEPTION 'The % address of this page is fixed now that it has been published: it stays "%"', NEW.locale, OLD.slug
-        USING ERRCODE = 'check_violation';
-    END IF;
-    NEW.first_published_at := OLD.first_published_at;
-    RETURN NEW;
-  END IF;
-
-  -- A version written again after a whole save removed it, while the
-  -- language is still live: the live address holds, and the version is fixed
-  -- from the start.
-  SELECT slug INTO v_live
-    FROM public.landing_page_publication_translations
-   WHERE page_id = NEW.page_id AND locale = NEW.locale;
-
-  IF v_live IS NOT NULL THEN
-    IF NEW.slug IS DISTINCT FROM v_live THEN
-      RAISE EXCEPTION 'The % address of this page is fixed now that it has been published: it stays "%"', NEW.locale, v_live
-        USING ERRCODE = 'check_violation';
-    END IF;
-    NEW.first_published_at := now();
-  ELSE
-    NEW.first_published_at := NULL;
-  END IF;
-
-  RETURN NEW;
-END;
-$$;
-
-COMMENT ON FUNCTION public.guard_landing_page_slug() IS 'BEFORE INSERT, and BEFORE UPDATE of slug, on landing_page_translations: a version''s slug is fixed once its language has been published. An update changing the slug of a version with first_published_at set raises check_violation, and an update naming the slug keeps first_published_at as it was; publish_landing_page''s stamp names only first_published_at. An insert for a language that is live must carry the live slug, and starts fixed; any other insert starts unfixed.';
-
-REVOKE ALL ON FUNCTION public.guard_landing_page_slug() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.guard_landing_page_slug() TO service_role;
-
-CREATE TRIGGER trg_landing_page_translations_guard_slug
-  BEFORE INSERT OR UPDATE OF slug ON public.landing_page_translations
-  FOR EACH ROW EXECUTE FUNCTION public.guard_landing_page_slug();
-
 -- ---------------------------------------------------------------------------
 -- 6. The writers
 -- ---------------------------------------------------------------------------
@@ -778,19 +731,11 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
-  -- The slug: the one sent; else the one stored; else the live one, for a
-  -- language written again after a whole save removed it while it was live;
-  -- else the default derived from the title by the application, which owns
-  -- slug derivation.
+  -- The slug: the one sent; else the one stored; else the default derived
+  -- from the title by the application, which owns slug derivation.
   SELECT NULLIF(slug, '') INTO v_stored
     FROM public.landing_page_translations
    WHERE page_id = p_id AND locale = p_locale;
-
-  IF v_stored IS NULL THEN
-    SELECT slug INTO v_stored
-      FROM public.landing_page_publication_translations
-     WHERE page_id = p_id AND locale = p_locale;
-  END IF;
 
   v_slug := COALESCE(NULLIF(btrim(p_slug), ''), v_stored, NULLIF(btrim(p_default_slug), ''), '');
 
@@ -803,8 +748,11 @@ BEGIN
       RAISE EXCEPTION 'The % address "%" looks like a page id, and those are kept for each page''s id address; choose words instead', p_locale, v_slug
         USING ERRCODE = 'check_violation';
     END IF;
-    -- The holder named by its title in this language: its working version's,
-    -- else its live one's when only the live version still holds the slug.
+    -- Another page holding it, working or live, refuses it; this page's own
+    -- live version never does, so a live language can change its address.
+    -- The holder is named by its title in this language: its working
+    -- version's, else its live one's when only the live version still holds
+    -- the slug.
     SELECT h.title INTO v_holder
       FROM (SELECT title, 1 AS rank FROM public.landing_page_translations
              WHERE locale = p_locale AND slug = v_slug AND page_id <> p_id
@@ -835,7 +783,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) IS 'Internal: validates and upserts one language version of a landing page''s working copy, for save_landing_page and save_landing_page_version, which have already locked the page row. A blank or over-long title, an over-long summary, or text for a section the page does not have raises check_violation; section texts, or one section''s text, that are not an object raise 22023. The slug is p_slug when sent, else the stored one, else the live one, else p_default_slug (the application''s derivation from the title), else unwritten; a malformed or uuid-shaped one raises check_violation, and one another page holds in that locale, working or live, raises unique_violation naming that page by its title. Carries no guard: not granted to any Data API role.';
+COMMENT ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) IS 'Internal: validates and upserts one language version of a landing page''s working copy, for save_landing_page and save_landing_page_version, which have already locked the page row. A blank or over-long title, an over-long summary, or text for a section the page does not have raises check_violation; section texts, or one section''s text, that are not an object raise 22023. The slug is p_slug when sent, else the stored one, else p_default_slug (the application''s derivation from the title), else unwritten; it may differ from the page''s own live slug, which changes at the next publish. A malformed or uuid-shaped one raises check_violation, and one another page holds in that locale, working or live, raises unique_violation naming that page by its title. Carries no guard: not granted to any Data API role.';
 
 REVOKE ALL ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) TO service_role;
@@ -1076,18 +1024,11 @@ BEGIN
    WHERE page_id = p_id
      AND is_complete;
 
-  -- From now on these languages' addresses are fixed.
-  UPDATE public.landing_page_translations
-     SET first_published_at = now()
-   WHERE page_id = p_id
-     AND is_complete
-     AND first_published_at IS NULL;
-
   RETURN p_id;
 END;
 $$;
 
-COMMENT ON FUNCTION public.publish_landing_page(p_id uuid) IS 'Admin-gated publish: copies the page''s working copy over its published copy, making it live or replacing the live version — the structure and every complete language version at once (is_complete: title, summary, slug and every section''s required text written); the live version set becomes exactly those. An incomplete version stays in the working copy. Refuses a page with no complete version with check_violation. Stamps first_published_at on each version going live for the first time, which fixes its slug. A republish moves published_at and keeps first_published_at. The working copy is locked for the copy. An id no page has raises no_data_found. SECURITY DEFINER because no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.publish_landing_page(p_id uuid) IS 'Admin-gated publish: copies the page''s working copy over its published copy, making it live or replacing the live version — the structure and every complete language version at once (is_complete: title, summary, slug and every section''s required text written); the live version set becomes exactly those. An incomplete version stays in the working copy. Refuses a page with no complete version with check_violation. A version whose slug differs from its live one moves that language to the new address; nothing redirects from the old. A republish moves published_at and keeps first_published_at. The working copy is locked for the copy. An id no page has raises no_data_found. SECURITY DEFINER because no landing page table carries a write grant.';
 
 REVOKE ALL ON FUNCTION public.publish_landing_page(p_id uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.publish_landing_page(p_id uuid) TO authenticated;
@@ -1113,7 +1054,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.unpublish_landing_page(p_id uuid) IS 'Admin-gated unpublish: deletes the page''s published copy, every language version with it, and leaves the working copy exactly as it was — slugs that have been published stay fixed. Unpublishing a page that is not live is a no-op; an id no page has raises no_data_found. Publishing again afterwards starts a new first_published_at.';
+COMMENT ON FUNCTION public.unpublish_landing_page(p_id uuid) IS 'Admin-gated unpublish: deletes the page''s published copy, every language version with it, and leaves the working copy exactly as it was, slugs included. Unpublishing a page that is not live is a no-op; an id no page has raises no_data_found. Publishing again afterwards starts a new first_published_at.';
 
 REVOKE ALL ON FUNCTION public.unpublish_landing_page(p_id uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.unpublish_landing_page(p_id uuid) TO authenticated;

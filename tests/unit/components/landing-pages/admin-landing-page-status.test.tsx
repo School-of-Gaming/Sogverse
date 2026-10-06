@@ -7,10 +7,10 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
  * Pinned here: each written language says whether it is complete and, when it
  * is not, what it still needs — built from the structured description, never
  * the English sentence; each has its preview, its live link only while live,
- * and its address marked fixed or not; Publish is held back with a reason
- * when nothing is complete or nothing has changed, and shows the forecast —
- * live, left out, taken down, addresses made permanent — before it calls the
- * write; Unpublish confirms first.
+ * and its address, with a warning when the saved one differs from the live
+ * one; Publish is held back with a reason when nothing is complete or nothing
+ * has changed, and shows the forecast — live, left out, taken down, live
+ * addresses changing — before it calls the write; Unpublish confirms first.
  *
  * Translations echo their key plus the values they were handed; a language is
  * named by its English label.
@@ -58,7 +58,6 @@ const EN: LandingPageDraftVersion = {
   slug: "espoo-clubs",
   sectionTexts: {},
   missing: [],
-  slugFixed: false,
 };
 
 /** Swedish, missing a summary, a text section's heading and an answer. */
@@ -73,10 +72,9 @@ const SV: LandingPageDraftVersion = {
     `sections.${TEXT_ID}.heading`,
     `sections.${FAQ_ID}.items.${QUESTION_ID}.answer`,
   ],
-  slugFixed: false,
 };
 
-/** Finnish, complete, with the slug derived from its title. */
+/** Finnish, complete, not yet live. */
 const FI: LandingPageDraftVersion = {
   locale: "fi",
   title: "Pelikerhot Espoossa",
@@ -84,7 +82,6 @@ const FI: LandingPageDraftVersion = {
   slug: "pelikerhot-espoossa",
   sectionTexts: {},
   missing: [],
-  slugFixed: false,
 };
 
 const SECTIONS: AdminLandingPage["draft"]["sections"] = [
@@ -174,7 +171,7 @@ describe("the landing page status page", () => {
     const page = { ...draftPage([EN, SV]), publication: publication(["en"]) };
     renderStatus({
       ...page,
-      draft: { ...page.draft, versions: [{ ...EN, slugFixed: true }, SV] },
+      draft: { ...page.draft, versions: [EN, SV] },
     });
 
     const preview = within(card("Swedish")).getByRole("link", { name: "preview" });
@@ -187,13 +184,22 @@ describe("the landing page status page", () => {
     expect(live.getAttribute("locale")).toBe("en");
   });
 
-  it("marks an address fixed once its language has been published, and open before", () => {
-    const page = draftPage([{ ...EN, slugFixed: true }, SV]);
-    renderStatus(page);
+  it("shows each address, warning where the saved one differs from the live one", () => {
+    renderStatus({
+      ...draftPage([{ ...EN, slug: "espoo-gaming-clubs" }, SV]),
+      publication: publication(["en", "sv"]),
+      hasUnpublishedChanges: true,
+    });
 
-    expect(within(card("English")).getByText("/discover/espoo-clubs")).toBeTruthy();
-    expect(within(card("English")).getByText("statusPage.language.addressFixed")).toBeTruthy();
-    expect(within(card("Swedish")).getByText("statusPage.language.addressOpen")).toBeTruthy();
+    expect(within(card("English")).getByText("/discover/espoo-gaming-clubs")).toBeTruthy();
+    expect(
+      within(card("English")).getByText(
+        "statusPage.language.addressChanging address=/discover/espoo-clubs",
+      ),
+    ).toBeTruthy();
+    // Swedish is live at the address it has saved: nothing to warn about.
+    expect(within(card("Swedish")).getByText("/discover/spelklubbar-i-esbo")).toBeTruthy();
+    expect(within(card("Swedish")).queryByText(/addressChanging/)).toBeNull();
   });
 
   it("says who last saved the page and through which AI app", () => {
@@ -208,16 +214,16 @@ describe("the landing page status page", () => {
   });
 
   it("holds Publish back while readers already see the latest saved version", () => {
-    renderStatus({ ...draftPage([{ ...EN, slugFixed: true }]), publication: publication(["en"]) });
+    renderStatus({ ...draftPage([EN]), publication: publication(["en"]) });
     expect(publishButton().hasAttribute("disabled")).toBe(true);
     expect(screen.getByText("statusPage.readiness.upToDate")).toBeTruthy();
   });
 
   it("shows what a publish would do before it publishes", async () => {
-    // English and Swedish are live; Swedish is no longer complete, and
-    // Finnish goes live for the first time with its title's slug.
+    // English and Swedish are live; English has a new address, Swedish is no
+    // longer complete, and Finnish goes live for the first time.
     const page: AdminLandingPage = {
-      ...draftPage([{ ...EN, slugFixed: true }, FI, { ...SV, slugFixed: true }]),
+      ...draftPage([{ ...EN, slug: "espoo-gaming-clubs" }, FI, SV]),
       publication: publication(["en", "sv"]),
       hasUnpublishedChanges: true,
     };
@@ -230,10 +236,11 @@ describe("the landing page status page", () => {
     expect(within(dialog).getByText("takenDown languages=Swedish count=1")).toBeTruthy();
     // Swedish is named once, as taken down, not again as left out.
     expect(within(dialog).queryByText(/^leftOut/)).toBeNull();
-    expect(within(dialog).getByText("permanent count=1")).toBeTruthy();
+    // Only English changes a live address; Finnish has none to change.
+    expect(within(dialog).getByText("changing count=1")).toBeTruthy();
     expect(
       within(dialog).getByText(
-        "permanentFromTitle language=Finnish address=/discover/pelikerhot-espoossa",
+        "changingItem language=English from=/discover/espoo-clubs to=/discover/espoo-gaming-clubs",
       ),
     ).toBeTruthy();
     expect(pageActions.publish).not.toHaveBeenCalled();
@@ -242,7 +249,7 @@ describe("the landing page status page", () => {
     await waitFor(() => expect(pageActions.publish).toHaveBeenCalledTimes(1));
   });
 
-  it("names a language left out, and an address someone wrote, on a first publish", async () => {
+  it("names a language left out, and no address change, on a first publish", async () => {
     renderStatus(draftPage([EN, SV]));
 
     fireEvent.click(publishButton());
@@ -250,14 +257,12 @@ describe("the landing page status page", () => {
 
     expect(within(dialog).getByText("leftOut languages=Swedish count=1")).toBeTruthy();
     expect(within(dialog).queryByText(/^takenDown/)).toBeNull();
-    expect(
-      within(dialog).getByText("permanentWritten language=English address=/discover/espoo-clubs"),
-    ).toBeTruthy();
+    expect(within(dialog).queryByText(/^changing/)).toBeNull();
   });
 
   it("unpublishes only after a confirm", async () => {
     const pageActions = renderStatus({
-      ...draftPage([{ ...EN, slugFixed: true }]),
+      ...draftPage([EN]),
       publication: publication(["en"]),
     });
 

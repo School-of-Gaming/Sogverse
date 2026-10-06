@@ -650,8 +650,7 @@
           "stillNeeded": "Il manque encore :",
           "address": "Adresse :",
           "noAddress": "pas encore d’adresse",
-          "addressFixed": "Fixée définitivement : cette langue a été publiée.",
-          "addressOpen": "Devient définitive à la première publication de cette langue."
+          "addressChanging": "En ligne à l’adresse {address} pour l’instant. La prochaine publication la déplace à cette adresse, et les liens vers l’ancienne cesseront de fonctionner."
         },
         "missing": {
           "inSection": "Section {number} ({type}) : {field}",
@@ -683,9 +682,8 @@
         "goesLive": "Mise en ligne : {languages}.",
         "takenDown": "{count, plural, one {Retirée du site, car elle n’est plus complète : {languages}.} other {Retirées du site, car elles ne sont plus complètes : {languages}.}}",
         "leftOut": "{count, plural, one {Laissée de côté, car elle n’est pas complète : {languages}.} other {Laissées de côté, car elles ne sont pas complètes : {languages}.}}",
-        "permanent": "{count, plural, one {Cette adresse devient définitive et ne pourra plus jamais changer :} other {Ces adresses deviennent définitives et ne pourront plus jamais changer :}}",
-        "permanentWritten": "{language} : {address}",
-        "permanentFromTitle": "{language} : {address} (tirée du titre)"
+        "changing": "{count, plural, one {Cette adresse en ligne change, et les liens vers l’ancienne cesseront de fonctionner :} other {Ces adresses en ligne changent, et les liens vers les anciennes cesseront de fonctionner :}}",
+        "changingItem": "{language} : {from} devient {to}"
       },
       "unpublishConfirm": {
         "title": "Dépublier cette page d’atterrissage ?",

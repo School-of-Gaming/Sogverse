@@ -1512,7 +1512,6 @@ export type Database = {
       }
       landing_page_translations: {
         Row: {
-          first_published_at: string | null
           is_complete: boolean
           locale: string
           page_id: string
@@ -1523,7 +1522,6 @@ export type Database = {
           title: string
         }
         Insert: {
-          first_published_at?: string | null
           is_complete?: boolean
           locale: string
           page_id: string
@@ -1534,7 +1532,6 @@ export type Database = {
           title: string
         }
         Update: {
-          first_published_at?: string | null
           is_complete?: boolean
           locale?: string
           page_id?: string

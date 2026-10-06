@@ -55,19 +55,11 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
-  -- The slug: the one sent; else the one stored; else the live one, for a
-  -- language written again after a whole save removed it while it was live;
-  -- else the default derived from the title by the application, which owns
-  -- slug derivation.
+  -- The slug: the one sent; else the one stored; else the default derived
+  -- from the title by the application, which owns slug derivation.
   SELECT NULLIF(slug, '') INTO v_stored
     FROM public.landing_page_translations
    WHERE page_id = p_id AND locale = p_locale;
-
-  IF v_stored IS NULL THEN
-    SELECT slug INTO v_stored
-      FROM public.landing_page_publication_translations
-     WHERE page_id = p_id AND locale = p_locale;
-  END IF;
 
   v_slug := COALESCE(NULLIF(btrim(p_slug), ''), v_stored, NULLIF(btrim(p_default_slug), ''), '');
 
@@ -80,8 +72,11 @@ BEGIN
       RAISE EXCEPTION 'The % address "%" looks like a page id, and those are kept for each page''s id address; choose words instead', p_locale, v_slug
         USING ERRCODE = 'check_violation';
     END IF;
-    -- The holder named by its title in this language: its working version's,
-    -- else its live one's when only the live version still holds the slug.
+    -- Another page holding it, working or live, refuses it; this page's own
+    -- live version never does, so a live language can change its address.
+    -- The holder is named by its title in this language: its working
+    -- version's, else its live one's when only the live version still holds
+    -- the slug.
     SELECT h.title INTO v_holder
       FROM (SELECT title, 1 AS rank FROM public.landing_page_translations
              WHERE locale = p_locale AND slug = v_slug AND page_id <> p_id
@@ -117,7 +112,7 @@ $_$;
 -- Name: FUNCTION write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) IS 'Internal: validates and upserts one language version of a landing page''s working copy, for save_landing_page and save_landing_page_version, which have already locked the page row. A blank or over-long title, an over-long summary, or text for a section the page does not have raises check_violation; section texts, or one section''s text, that are not an object raise 22023. The slug is p_slug when sent, else the stored one, else the live one, else p_default_slug (the application''s derivation from the title), else unwritten; a malformed or uuid-shaped one raises check_violation, and one another page holds in that locale, working or live, raises unique_violation naming that page by its title. Carries no guard: not granted to any Data API role.';
+COMMENT ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) IS 'Internal: validates and upserts one language version of a landing page''s working copy, for save_landing_page and save_landing_page_version, which have already locked the page row. A blank or over-long title, an over-long summary, or text for a section the page does not have raises check_violation; section texts, or one section''s text, that are not an object raise 22023. The slug is p_slug when sent, else the stored one, else p_default_slug (the application''s derivation from the title), else unwritten; it may differ from the page''s own live slug, which changes at the next publish. A malformed or uuid-shaped one raises check_violation, and one another page holds in that locale, working or live, raises unique_violation naming that page by its title. Carries no guard: not granted to any Data API role.';
 
 
 --

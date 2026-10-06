@@ -95,8 +95,8 @@ export const LANDING_SUMMARY_MAX_LENGTH = 160;
  *
  * `slug` is optional: left out (or blank), the version keeps the address it
  * has, and a version that has none takes its title's (`defaultLandingSlug`). A
- * slug is fixed once its language has been published; the database refuses a
- * change after that. `sectionTexts` is the whole of this language's words,
+ * slug may change at any time; a live language's new address goes live with
+ * the next publish. `sectionTexts` is the whole of this language's words,
  * keyed by section id, and is checked against the page's structure by the
  * writer that has it.
  */
@@ -196,8 +196,6 @@ export interface LandingPageDraftVersion {
    * (`missingInLandingVersion`); empty when complete.
    */
   missing: string[];
-  /** True once this language has been published: its slug can no longer change. */
-  slugFixed: boolean;
 }
 
 /** Who last saved a working copy, and through which AI app. */
@@ -365,8 +363,8 @@ export function localizeLandingPage(
  * Why a write was refused: the database's own sentence when it wrote one for
  * a reader, or nothing to quote. The landing page writers raise their
  * admin-facing sentences under four SQLSTATEs — `check_violation` (a missing
- * title, a malformed structure or address, a fixed address changed, nothing
- * complete to publish, a picture of another purpose), `no_data_found` (the
+ * title, a malformed structure or address, nothing complete to publish, a
+ * picture of another purpose), `no_data_found` (the
  * page is gone), `foreign_key_violation` (a picture left the catalogue) and
  * `unique_violation` (an address another page holds). Every other code carries
  * a message written for a developer, so it falls back to a generic line. The

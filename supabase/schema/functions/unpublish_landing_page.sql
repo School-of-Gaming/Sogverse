@@ -25,7 +25,7 @@ $$;
 -- Name: FUNCTION unpublish_landing_page(p_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.unpublish_landing_page(p_id uuid) IS 'Admin-gated unpublish: deletes the page''s published copy, every language version with it, and leaves the working copy exactly as it was — slugs that have been published stay fixed. Unpublishing a page that is not live is a no-op; an id no page has raises no_data_found. Publishing again afterwards starts a new first_published_at.';
+COMMENT ON FUNCTION public.unpublish_landing_page(p_id uuid) IS 'Admin-gated unpublish: deletes the page''s published copy, every language version with it, and leaves the working copy exactly as it was, slugs included. Unpublishing a page that is not live is a no-op; an id no page has raises no_data_found. Publishing again afterwards starts a new first_published_at.';
 
 
 --
