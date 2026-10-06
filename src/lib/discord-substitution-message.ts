@@ -412,7 +412,7 @@ function findOption(node: unknown, value: string): PickedSessionOption | null {
 
 /**
  * Step two: the pop-up that holds everything left to say — which session, the
- * web form's line on who sees a reason, the reason (required, nothing chosen
+ * web picker's line on who sees a reason, the reason (required, nothing chosen
  * to begin with, as on the web, so nobody records `sick` by pressing through)
  * and the optional note, with the web form's field, bound and placeholder.
  * Submitting it files.
@@ -439,10 +439,10 @@ export function buildRequestModal({
 
   return {
     custom_id: `sub:n:${groupId}:${sessionDate}`,
-    title: clip(copy.form("substitutionRequestDialogTitle"), MODAL_TITLE_MAX),
+    title: clip(copy.sub("requestTitle"), MODAL_TITLE_MAX),
     components: [
       text(sessionLine),
-      text(copy.form("substitutionRequestDialogBody")),
+      text(copy.picker("filePickBody")),
       {
         type: LABEL,
         label: clip(copy.form("substitutionReasonLabel"), LABEL_MAX),

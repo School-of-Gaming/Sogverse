@@ -5349,6 +5349,7 @@
     }
   },
   "discordSub": {
+    "requestTitle": "Be om en vikarie",
     "pickPlaceholder": "Välj ett tillfälle",
     "empty": "Du har inga kommande tillfällen att be om en vikarie för.",
     "filed": "Vikarie efterfrågad för {product} den {when}.",

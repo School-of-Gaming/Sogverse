@@ -5349,6 +5349,7 @@
     }
   },
   "discordSub": {
+    "requestTitle": "Pyydä tuuraajaa",
     "pickPlaceholder": "Valitse kerta",
     "empty": "Sinulla ei ole tulevia kertoja, joille voisit pyytää tuuraajaa.",
     "filed": "Tuuraajaa pyydetty: {product} {when}.",

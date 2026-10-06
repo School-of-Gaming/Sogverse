@@ -857,7 +857,7 @@ describe("POST /api/discord/interactions — /sub", () => {
     expect(response.type).toBe(9);
     expect(response.data.custom_id).toBe(`sub:n:${GROUP_B}:2026-10-08`);
     // In the locale the select carries, not the presser's Discord client's.
-    expect(response.data.title).toBe("En pääse tälle kerralle");
+    expect(response.data.title).toBe("Pyydä tuuraajaa");
     // The session line is the option picked on the pressed message.
     expect(response.data.components[0]).toEqual({
       type: 10,
