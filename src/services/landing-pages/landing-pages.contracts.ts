@@ -47,18 +47,22 @@ export const landingSlug = z
   .string()
   .trim()
   .max(LANDING_SLUG_MAX_LENGTH, "An address is at most 80 characters")
-  .refine(
-    (slug) =>
-      /^[a-z0-9-]+$/.test(slug) &&
-      !slug.startsWith("-") &&
-      !slug.endsWith("-") &&
-      !slug.includes("--"),
-    "An address holds only lowercase letters a–z, digits and single hyphens between them",
-  )
+  .refine(isSlugFormat, (slug) => ({
+    message: `An address holds only lowercase letters a–z, digits and single hyphens between them${isSlugFormat(slug.toLowerCase()) ? ` — "${slug.toLowerCase()}" would do` : ""}`,
+  }))
   .refine(
     (slug) => !LANDING_ID_PATTERN.test(slug),
-    "An address may not be shaped like an id",
+    "An address may not look like a page id: those are kept for each page's id address",
   );
+
+function isSlugFormat(slug: string): boolean {
+  return (
+    /^[a-z0-9-]+$/.test(slug) &&
+    !slug.startsWith("-") &&
+    !slug.endsWith("-") &&
+    !slug.includes("--")
+  );
+}
 
 /**
  * The address a version gets when none is given: its title's slug, cut at a

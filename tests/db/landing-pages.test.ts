@@ -384,6 +384,8 @@ describe("landing pages", () => {
       });
       expect(taken.error?.code).toBe("23505");
       expect(taken.error?.message).toContain(SLUG_A);
+      // The page holding it is named by its title, so the admin knows which.
+      expect(taken.error?.message).toContain('the landing page "Fixture landing en"');
 
       await service.saveVersion(PAGE_B, { ...version("sv", SLUG_A), sectionTexts: {} });
       expect((await draftVersions(PAGE_B)).find((v) => v.locale === "sv")?.slug).toBe(SLUG_A);

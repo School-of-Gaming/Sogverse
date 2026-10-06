@@ -103,7 +103,7 @@ export const landingSections = z
  * The schema of one language's section texts for a given structure: an
  * object keyed by the structure's section ids, each entry its type's text
  * schema. A key naming no section of the structure is refused, as the
- * database refuses it.
+ * database refuses it, saying which.
  */
 export function landingSectionTextsSchema(
   sections: readonly LandingSection[],
@@ -114,7 +114,18 @@ export function landingSectionTextsSchema(
   }
   return z
     .object(shape)
-    .strict()
+    .passthrough()
+    .superRefine((texts, context) => {
+      for (const key of Object.keys(texts)) {
+        if (!Object.hasOwn(shape, key)) {
+          context.addIssue({
+            code: "custom",
+            path: [key],
+            message: `Words were sent for a section this page's structure does not have (id ${key})`,
+          });
+        }
+      }
+    })
     .transform((texts) => {
       const kept: LandingSectionTexts = {};
       for (const section of sections) {

@@ -76,6 +76,18 @@ describe("a section's shared fields", () => {
     }
   });
 
+  it("names a section the words were sent for that the structure does not have", () => {
+    const stray = "00000000-0000-4000-8000-00000000ffff";
+    const parsed = landingSectionTextsSchema(everySection()).safeParse({
+      ...everyText(),
+      [stray]: { heading: "x" },
+    });
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.issues.map((issue) => issue.message)).toEqual([
+      `Words were sent for a section this page's structure does not have (id ${stray})`,
+    ]);
+  });
+
   it("holds each list to its counts", () => {
     const points = (n: number) =>
       landingSection.safeParse({

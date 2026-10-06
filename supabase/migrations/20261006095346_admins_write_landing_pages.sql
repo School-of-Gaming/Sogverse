@@ -733,6 +733,7 @@ DECLARE
   v_sections jsonb;
   v_stored   text;
   v_slug     text;
+  v_holder   text;
   v_unknown  text;
 BEGIN
   -- The admin list names a page by a title, so every version has one.
@@ -799,14 +800,21 @@ BEGIN
         USING ERRCODE = 'check_violation';
     END IF;
     IF v_slug ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
-      RAISE EXCEPTION 'The % address "%" is shaped like an id; choose words instead', p_locale, v_slug
+      RAISE EXCEPTION 'The % address "%" looks like a page id, and those are kept for each page''s id address; choose words instead', p_locale, v_slug
         USING ERRCODE = 'check_violation';
     END IF;
-    IF EXISTS (SELECT 1 FROM public.landing_page_translations
-                WHERE locale = p_locale AND slug = v_slug AND page_id <> p_id)
-       OR EXISTS (SELECT 1 FROM public.landing_page_publication_translations
-                   WHERE locale = p_locale AND slug = v_slug AND page_id <> p_id) THEN
-      RAISE EXCEPTION 'The % address "%" is already another landing page''s; choose another', p_locale, v_slug
+    -- The holder named by its title in this language: its working version's,
+    -- else its live one's when only the live version still holds the slug.
+    SELECT h.title INTO v_holder
+      FROM (SELECT title, 1 AS rank FROM public.landing_page_translations
+             WHERE locale = p_locale AND slug = v_slug AND page_id <> p_id
+            UNION ALL
+            SELECT title, 2 FROM public.landing_page_publication_translations
+             WHERE locale = p_locale AND slug = v_slug AND page_id <> p_id) AS h
+     ORDER BY h.rank
+     LIMIT 1;
+    IF FOUND THEN
+      RAISE EXCEPTION 'The % address "%" is already the address of the landing page "%"; choose another', p_locale, v_slug, v_holder
         USING ERRCODE = 'unique_violation';
     END IF;
   END IF;
@@ -827,7 +835,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) IS 'Internal: validates and upserts one language version of a landing page''s working copy, for save_landing_page and save_landing_page_version, which have already locked the page row. A blank or over-long title, an over-long summary, or text for a section the page does not have raises check_violation; section texts, or one section''s text, that are not an object raise 22023. The slug is p_slug when sent, else the stored one, else the live one, else p_default_slug (the application''s derivation from the title), else unwritten; a malformed or uuid-shaped one raises check_violation, and one another page holds in that locale, working or live, raises unique_violation. Carries no guard: not granted to any Data API role.';
+COMMENT ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) IS 'Internal: validates and upserts one language version of a landing page''s working copy, for save_landing_page and save_landing_page_version, which have already locked the page row. A blank or over-long title, an over-long summary, or text for a section the page does not have raises check_violation; section texts, or one section''s text, that are not an object raise 22023. The slug is p_slug when sent, else the stored one, else the live one, else p_default_slug (the application''s derivation from the title), else unwritten; a malformed or uuid-shaped one raises check_violation, and one another page holds in that locale, working or live, raises unique_violation naming that page by its title. Carries no guard: not granted to any Data API role.';
 
 REVOKE ALL ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) TO service_role;

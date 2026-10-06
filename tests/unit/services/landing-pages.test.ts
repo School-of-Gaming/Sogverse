@@ -28,8 +28,20 @@ describe("landing page slugs", () => {
     }
   });
 
-  it("refuses a slug shaped like an id, so the two addresses never collide", () => {
-    expect(landingSlug.safeParse("123e4567-e89b-42d3-a456-426614174000").success).toBe(false);
+  it("refuses a slug shaped like an id, so the two addresses never collide, saying why", () => {
+    const parsed = landingSlug.safeParse("123e4567-e89b-42d3-a456-426614174000");
+    expect(parsed.error?.issues[0].message).toBe(
+      "An address may not look like a page id: those are kept for each page's id address",
+    );
+  });
+
+  it("suggests the lowercase form of a slug that is right but for its capitals", () => {
+    expect(landingSlug.safeParse("Gaming-Clubs").error?.issues[0].message).toBe(
+      'An address holds only lowercase letters a–z, digits and single hyphens between them — "gaming-clubs" would do',
+    );
+    expect(landingSlug.safeParse("Gaming_Clubs").error?.issues[0].message).toBe(
+      "An address holds only lowercase letters a–z, digits and single hyphens between them",
+    );
   });
 
   it("derives a default from the title, cut at a word boundary", () => {
