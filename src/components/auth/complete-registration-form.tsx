@@ -263,6 +263,9 @@ function ParentCompletion({
           ...account.requestBody,
           locale,
           utm: utmBody(utm),
+          // The product page the sign-up started from, so the account-creation
+          // report can name it. The route re-checks it.
+          redirect: redirect ?? undefined,
         }),
       });
 

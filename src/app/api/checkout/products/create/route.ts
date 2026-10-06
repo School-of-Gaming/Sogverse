@@ -307,8 +307,9 @@ export const POST = defineRoute({
               product: metaProductDetails(product, currency),
               sourcePath: ROUTES.shopProductPath(productId),
             },
-            // The signed-in customer's own address, never the participant's.
-            { email: profile.email },
+            // The signed-in customer's own id and address, never the
+            // participant's.
+            { id: user.id, email: profile.email },
           ),
         );
       }
