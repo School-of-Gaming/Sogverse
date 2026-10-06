@@ -13,7 +13,7 @@ import {
   UPLOADER_VIEW_META,
   registerPictureUploadTool,
   uploaderOpening,
-} from "@/lib/mcp/cover-uploader";
+} from "@/lib/mcp/image-uploader";
 import { OVERWRITES, READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
 import { NOT_FOUND, asLandingAdmin, pageId } from "@/lib/mcp/landing-pages-call";
 import { CatalogueImagesService } from "@/services/catalogue-images/catalogue-images.service";
@@ -23,7 +23,7 @@ import { CatalogueImagesService } from "@/services/catalogue-images/catalogue-im
  * page's sections show, the write that puts one in a section, and the
  * uploader that adds a new one. They run the catalogue's and the landing page
  * service on the admin's client, like every landing page tool; the uploader
- * is the shared picture uploader (`cover-uploader.ts`).
+ * is the shared picture uploader (`image-uploader.ts`).
  */
 
 const { width, height } = CATALOGUE_IMAGE_PURPOSES.landing_image;

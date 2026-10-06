@@ -4,7 +4,7 @@
 The branch is pushed to `origin` and has no worktree; to resume, check it out into a fresh
 worktree (`git worktree add .claude/worktrees/landing-pages feat/landing-pages` from the
 main checkout, then enter it by path), copy `.env.local` in, and junction or install the
-nested `packages/mcp-cover-uploader` dependencies the way `.claude/scripts/worktree-setup.ps1`
+nested `packages/mcp-image-uploader` dependencies the way `.claude/scripts/worktree-setup.ps1`
 does. Merge `origin/dev` in first if `dev` has moved. Everything below the
 "Open decisions" section is already implemented, tested and reviewed; this plan exists so a
 fresh session can pick the branch up cold, take the owner's rulings, finish and land it.

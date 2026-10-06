@@ -47,9 +47,9 @@ is removing the person's admin role, which the gate reads on every request.
 **Rule: tools act as the admin, through `createBearerClient(authInfo.token)`, and never
 through the service-role client.** Row policies and guarded RPCs then decide exactly as
 they do for the admin in the browser. A tool reads who is calling with `readMcpCaller`.
-The one exception is the bytes of an uploaded cover, which go to the covers bucket on the
-service-role client exactly as the image catalogue's upload route sends them — that bucket
-has no other writer — while the catalogue row is still written on the admin's client.
+The one exception is the bytes of an uploaded picture, which go to its purpose's bucket on
+the service-role client exactly as the image catalogue's upload route sends them — that
+bucket has no other writer — while the catalogue row is still written on the admin's client.
 
 ## Adding tools
 
@@ -134,12 +134,12 @@ but the SDK refuses a request body over 4 MB (Vercel's own limit, 4.5 MB, sits a
 the view is told a smaller cap and re-encodes at a lower quality to fit; a 1600 × 900 JPEG is
 a few hundred kilobytes, so neither limit is near in practice.
 
-**The view is its own workspace package, `packages/mcp-cover-uploader`, built to one HTML
+**The view is its own workspace package, `packages/mcp-image-uploader`, built to one HTML
 file that is committed.** `@modelcontextprotocol/ext-apps` needs zod 4 as a peer, which the
 root package cannot give it, and the deployment installs only the root and `@sog/ui`, so
-the server never builds the view: it reads `dist/cover-uploader.html` from disk (named in
+the server never builds the view: it reads `dist/image-uploader.html` from disk (named in
 `next.config.ts`'s tracing includes). After editing the view, run `npm run build
---workspace=@sog/mcp-cover-uploader` and commit the output; `check-fresh` in the same
+--workspace=@sog/mcp-image-uploader` and commit the output; `check-fresh` in the same
 package rebuilds it in memory and fails on a difference, in CI and in `npm run gates`. The
 view takes its colours and face from `@sog/ui`'s token modules (not the package index, which
 would bundle the icon set and React); its words are English, outside the app's message files.

@@ -1,8 +1,8 @@
 /**
- * Fails when the committed `dist/cover-uploader.html` is not what the source
+ * Fails when the committed `dist/image-uploader.html` is not what the source
  * builds to now.
  *
- *     npm run check-fresh --workspace=@sog/mcp-cover-uploader
+ *     npm run check-fresh --workspace=@sog/mcp-image-uploader
  *
  * The built view is committed because the deployment never builds it: the
  * server reads the file as it is. That leaves one failure mode — a source
@@ -30,17 +30,17 @@ const outputs: Rollup.RollupOutput[] = Array.isArray(result)
     : [];
 const html = outputs
   .flatMap((output) => output.output)
-  .find((chunk) => chunk.fileName === "cover-uploader.html");
+  .find((chunk) => chunk.fileName === "image-uploader.html");
 if (html?.type !== "asset") {
-  console.error("The build produced no cover-uploader.html.");
+  console.error("The build produced no image-uploader.html.");
   process.exit(1);
 }
 
-const committed = readFileSync(join(packageDir, "dist", "cover-uploader.html"), "utf8");
+const committed = readFileSync(join(packageDir, "dist", "image-uploader.html"), "utf8");
 if (String(html.source) !== committed) {
   console.error(
-    "packages/mcp-cover-uploader/dist/cover-uploader.html is stale: run `npm run build --workspace=@sog/mcp-cover-uploader` and commit the result.",
+    "packages/mcp-image-uploader/dist/image-uploader.html is stale: run `npm run build --workspace=@sog/mcp-image-uploader` and commit the result.",
   );
   process.exit(1);
 }
-console.log("dist/cover-uploader.html matches what the source builds to.");
+console.log("dist/image-uploader.html matches what the source builds to.");

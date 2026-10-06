@@ -1,6 +1,6 @@
 import { createMcpHandler } from "mcp-handler";
 import { registerCoreTools } from "@/lib/mcp/core";
-import { registerCoverUploader } from "@/lib/mcp/cover-uploader";
+import { registerImageUploader } from "@/lib/mcp/image-uploader";
 import { registerLibraryTools } from "@/lib/mcp/library";
 import { registerLandingPageTools } from "@/lib/mcp/landing-pages";
 import { registerLandingImageTools } from "@/lib/mcp/landing-pages-images";
@@ -20,7 +20,7 @@ export function createSogverseMcpHandler(): (request: Request) => Promise<Respon
       registerCoreTools(server);
       registerLibraryTools(server);
       registerLibraryCoverTools(server);
-      registerCoverUploader(server);
+      registerImageUploader(server);
       registerLandingPageTools(server);
       registerLandingImageTools(server);
     },

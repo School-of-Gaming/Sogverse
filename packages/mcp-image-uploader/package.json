@@ -1,5 +1,5 @@
 {
-  "name": "@sog/mcp-cover-uploader",
+  "name": "@sog/mcp-image-uploader",
   "version": "0.1.0",
   "private": true,
   "type": "module",

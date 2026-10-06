@@ -8,15 +8,7 @@ import {
 } from "@modelcontextprotocol/server";
 import { z } from "zod-v4";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
-import { coverUrl } from "@/lib/mcp/cover-images";
-import {
-  NOT_FOUND,
-  READ_ONLY,
-  answer,
-  articleId,
-  asAdmin,
-  refusal,
-} from "@/lib/mcp/library-call";
+import { answer, refusal } from "@/lib/mcp/library-call";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CATALOGUE_IMAGE_MAX_BYTES } from "@/services/catalogue-images/catalogue-images.contracts";
@@ -44,7 +36,7 @@ import type { AppSupabaseClient, CatalogueImagePurpose } from "@/types";
  * One view serves every purpose: what it uploads for, and how, arrives in the
  * opening tool's `uploader` field (`uploaderOpening`), so the view restates
  * nothing the catalogue or an area defines. It is
- * `packages/mcp-cover-uploader`, built to one HTML file that is committed and
+ * `packages/mcp-image-uploader`, built to one HTML file that is committed and
  * served here as the resource.
  */
 
@@ -69,9 +61,9 @@ export const UPLOADER_VIEW_META = {
 const UPLOADER_HTML = join(
   process.cwd(),
   "packages",
-  "mcp-cover-uploader",
+  "mcp-image-uploader",
   "dist",
-  "cover-uploader.html",
+  "image-uploader.html",
 );
 
 /** Read once per server instance: the file only changes with a deploy. */
@@ -227,7 +219,12 @@ export function registerPictureUploadTool(
   );
 }
 
-export function registerCoverUploader(server: McpServer): void {
+/**
+ * Register the view itself, as the resource every opening tool names. The
+ * opening and storing tools are each area's own (`library-covers.ts`,
+ * `landing-pages-images.ts`).
+ */
+export function registerImageUploader(server: McpServer): void {
   server.registerResource(
     "Picture uploader",
     PICTURE_UPLOADER_URI,
@@ -248,66 +245,4 @@ export function registerCoverUploader(server: McpServer): void {
       ],
     }),
   );
-
-  server.registerTool(
-    "open_cover_uploader",
-    {
-      title: "Upload a Library cover",
-      description:
-        "Show the admin an uploader, inside this chat, where they pick a picture from their device to become the article's cover. It is cropped to the middle 16:9 and saved as a 1600 × 900 JPEG in Sogverse's picture catalogue, then set as the article's working-copy cover; readers see it after the next publish. The picture never passes through you, and you are told the new catalogue id once it is set. Use it when the admin wants a cover that is not in list_library_covers yet. Only AI apps that show MCP Apps views can upload; in any other the admin uploads in the Sogverse editor, whose link get_library_article gives.",
-      inputSchema: z.object({ articleId }),
-      annotations: READ_ONLY,
-      _meta: UPLOADER_VIEW_META,
-    },
-    ({ articleId: id }, ctx) =>
-      asAdmin(ctx, async ({ service }) => {
-        const article = await service.getAdminArticle(id);
-        if (article === null) return refusal(NOT_FOUND);
-        const { draft } = article;
-        const title = draft.versions[0]?.title ?? "";
-        const value = {
-          articleId: id,
-          title,
-          currentCover:
-            draft.coverImageId === null
-              ? null
-              : {
-                  catalogueId: draft.coverImageId,
-                  label: draft.coverLabel,
-                  publicUrl: draft.coverPath === null ? null : coverUrl(draft.coverPath),
-                },
-          uploader: uploaderOpening("library_cover", {
-            heading: "Library cover",
-            subject: title ? `For “${title}”` : "For this article",
-            uploadTool: "upload_library_cover",
-            place: {
-              tool: "set_library_article_cover",
-              arguments: { articleId: id },
-              imageArgument: "coverImageId",
-              actionLabel: "Upload and set as cover",
-              done: "The cover is set. Readers see it after the next publish.",
-              outcome: `It is now article ${id}'s working-copy cover; readers see it after the next publish.`,
-            },
-          }),
-        };
-        return {
-          structuredContent: value,
-          content: [
-            {
-              type: "text",
-              text: `The cover uploader for "${value.title}" is shown to the admin. Wait for them to pick a picture; you will be told the new cover's catalogue id once it is set. If your app shows no uploader, it cannot render MCP Apps views: the admin can upload the cover in the Sogverse editor instead, or choose an existing one from list_library_covers.\n\n${JSON.stringify(value, null, 2)}`,
-            },
-          ],
-        };
-      }),
-  );
-
-  registerPictureUploadTool(server, {
-    name: "upload_library_cover",
-    title: "Store an uploaded Library cover",
-    description:
-      "Called by the picture uploader alone. Adds a 1600 × 900 JPEG to the picture catalogue as a Library cover entry, or answers the entry that already holds these exact bytes. It does not set any article's cover.",
-    purpose: "library_cover",
-    run: (ctx, body) => asAdmin(ctx, ({ client }) => body(client)),
-  });
 }
