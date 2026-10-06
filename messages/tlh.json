@@ -4679,7 +4679,7 @@
         "replace": "mIllogh yIchoH",
         "remove": "mIllogh yIteq",
         "guidance": {
-          "intro": "naDev wa’DIch Du ghom qorDu’pu’ QujwI’pu’ je. DawIvDI’, mIllogh Dape’.",
+          "intro": "naDev wa’DIch Du ghom qorDu’pu’ QujwI’pu’ je.",
           "doHeading": "yIruch",
           "dontHeading": "yImev",
           "do": {
@@ -4706,7 +4706,6 @@
         "heading": "SoH",
         "nickname": "QujwI’pu’ jIH ponglu’:",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "ponglIjDaq cha’lu’, DaghItlhbogh rur.",
         "title": "patlh",
         "titleHint": "School of Gaming Daq Qu’lIj. mu’tlheghvam: Head of Clubs.",
         "pick": "nguvlIj"

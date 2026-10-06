@@ -5578,7 +5578,7 @@
         "replace": "Remplacer la photo",
         "remove": "Supprimer la photo",
         "guidance": {
-          "intro": "C’est la première chose que les familles et les gamers voient de vous. Une fois la photo choisie, vous la recadrez pour l’adapter au cadre.",
+          "intro": "C’est la première chose que les familles et les gamers voient de vous.",
           "doHeading": "À faire",
           "dontHeading": "À éviter",
           "do": {
@@ -5605,7 +5605,6 @@
         "heading": "À propos de vous",
         "nickname": "Les gamers me connaissent sous le nom de",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "Affiché entre guillemets dans votre nom, exactement comme vous l’écrivez.",
         "title": "Titre",
         "titleHint": "Votre poste chez School of Gaming, par exemple responsable des clubs.",
         "pick": "Votre couleur"

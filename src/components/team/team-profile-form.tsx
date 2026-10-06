@@ -508,25 +508,17 @@ export function TeamProfileAboutSection({
 
   return (
     <FormSection heading={t("heading")}>
-      <Field
-        label={t("nickname")}
-        htmlFor={nicknameId}
-        optional
-        hint={t("nicknameHint")}
-      >
-        {({ hintId }) => (
-          <Input
-            id={nicknameId}
-            value={form.nickname}
-            maxLength={NICKNAME_MAX_LENGTH}
-            placeholder={t("nicknamePlaceholder")}
-            aria-describedby={hintId}
-            onChange={(e) => {
-              const nickname = e.target.value;
-              update((prev) => ({ ...prev, nickname }));
-            }}
-          />
-        )}
+      <Field label={t("nickname")} htmlFor={nicknameId} optional>
+        <Input
+          id={nicknameId}
+          value={form.nickname}
+          maxLength={NICKNAME_MAX_LENGTH}
+          placeholder={t("nicknamePlaceholder")}
+          onChange={(e) => {
+            const nickname = e.target.value;
+            update((prev) => ({ ...prev, nickname }));
+          }}
+        />
       </Field>
 
       {kind === "admin" && (

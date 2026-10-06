@@ -5578,7 +5578,7 @@
         "replace": "Replace photo",
         "remove": "Remove photo",
         "guidance": {
-          "intro": "This is the first thing families and gamers see of you. Once you have chosen a photo, you crop it to fit the frame.",
+          "intro": "This is the first thing families and gamers see of you.",
           "doHeading": "Do",
           "dontHeading": "Don’t",
           "do": {
@@ -5605,7 +5605,6 @@
         "heading": "About you",
         "nickname": "Gamers know me as",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "Shown in quotes in your name, exactly as you write it.",
         "title": "Title",
         "titleHint": "Your job at School of Gaming, for example Head of Clubs.",
         "pick": "Your colour"

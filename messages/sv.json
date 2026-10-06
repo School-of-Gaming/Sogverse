@@ -5578,7 +5578,7 @@
         "replace": "Byt foto",
         "remove": "Ta bort foto",
         "guidance": {
-          "intro": "Det här är det första familjer och gamers ser av dig. När du har valt ett foto beskär du det så att det passar ramen.",
+          "intro": "Det här är det första familjer och gamers ser av dig.",
           "doHeading": "Gör så här",
           "dontHeading": "Undvik",
           "do": {
@@ -5605,7 +5605,6 @@
         "heading": "Om dig",
         "nickname": "Gamers känner mig som",
         "nicknamePlaceholder": "PixelPirate",
-        "nicknameHint": "Visas inom citattecken i ditt namn, precis som du skriver den.",
         "title": "Titel",
         "titleHint": "Ditt jobb på School of Gaming, till exempel klubbansvarig.",
         "pick": "Din färg"
