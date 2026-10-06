@@ -7,6 +7,11 @@ import {
   coverUrl,
 } from "@/lib/mcp/cover-images";
 import {
+  UPLOADER_VIEW_META,
+  registerPictureUploadTool,
+  uploaderOpening,
+} from "@/lib/mcp/image-uploader";
+import {
   NOT_FOUND,
   OVERWRITES,
   READ_ONLY,
@@ -19,10 +24,10 @@ import { CatalogueImagesService } from "@/services/catalogue-images/catalogue-im
 
 /*
  * The Library's covers: the image catalogue's `library_cover` entries an
- * article's cover is chosen from, and the write that sets one. Both run the
- * catalogue's and the Library's own services on the admin's client, like
- * every Library tool. Uploading a new picture is the uploader's
- * (`cover-uploader.ts`).
+ * article's cover is chosen from, the write that sets one, and the uploader
+ * that adds a new one. They run the catalogue's and the Library's own
+ * services on the admin's client, like every Library tool; the uploader is
+ * the shared picture uploader (`image-uploader.ts`).
  */
 
 const COVER_RULES =
@@ -122,4 +127,66 @@ export function registerLibraryCoverTools(server: McpServer): void {
         });
       }),
   );
+
+  server.registerTool(
+    "open_cover_uploader",
+    {
+      title: "Upload a Library cover",
+      description:
+        "Show the admin an uploader, inside this chat, where they pick a picture from their device to become the article's cover. It is cropped to the middle 16:9 and saved as a 1600 × 900 JPEG in Sogverse's picture catalogue, then set as the article's working-copy cover; readers see it after the next publish. The picture never passes through you, and you are told the new catalogue id once it is set. Use it when the admin wants a cover that is not in list_library_covers yet. Only AI apps that show MCP Apps views can upload; in any other the admin uploads in the Sogverse editor, whose link get_library_article gives.",
+      inputSchema: z.object({ articleId }),
+      annotations: READ_ONLY,
+      _meta: UPLOADER_VIEW_META,
+    },
+    ({ articleId: id }, ctx) =>
+      asAdmin(ctx, async ({ service }) => {
+        const article = await service.getAdminArticle(id);
+        if (article === null) return refusal(NOT_FOUND);
+        const { draft } = article;
+        const title = draft.versions[0]?.title ?? "";
+        const value = {
+          articleId: id,
+          title,
+          currentCover:
+            draft.coverImageId === null
+              ? null
+              : {
+                  catalogueId: draft.coverImageId,
+                  label: draft.coverLabel,
+                  publicUrl: draft.coverPath === null ? null : coverUrl(draft.coverPath),
+                },
+          uploader: uploaderOpening("library_cover", {
+            heading: "Library cover",
+            subject: title ? `For “${title}”` : "For this article",
+            uploadTool: "upload_library_cover",
+            place: {
+              tool: "set_library_article_cover",
+              arguments: { articleId: id },
+              imageArgument: "coverImageId",
+              actionLabel: "Upload and set as cover",
+              done: "The cover is set. Readers see it after the next publish.",
+              outcome: `It is now article ${id}'s working-copy cover; readers see it after the next publish.`,
+            },
+          }),
+        };
+        return {
+          structuredContent: value,
+          content: [
+            {
+              type: "text",
+              text: `The cover uploader for "${value.title}" is shown to the admin. Wait for them to pick a picture; you will be told the new cover's catalogue id once it is set. If your app shows no uploader, it cannot render MCP Apps views: the admin can upload the cover in the Sogverse editor instead, or choose an existing one from list_library_covers.\n\n${JSON.stringify(value, null, 2)}`,
+            },
+          ],
+        };
+      }),
+  );
+
+  registerPictureUploadTool(server, {
+    name: "upload_library_cover",
+    title: "Store an uploaded Library cover",
+    description:
+      "Called by the picture uploader alone. Adds a 1600 × 900 JPEG to the picture catalogue as a Library cover entry, or answers the entry that already holds these exact bytes. It does not set any article's cover.",
+    purpose: "library_cover",
+    run: (ctx, body) => asAdmin(ctx, ({ client }) => body(client)),
+  });
 }

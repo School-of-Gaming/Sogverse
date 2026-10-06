@@ -316,6 +316,12 @@ import { TEST_IDS } from "./constants";
  *                  taught by the file's minted gedu, and its sister group 832
  *                  that nobody teaches, so a filing there is refused for the
  *                  derivation alone)
+ *   834-83b        landing-pages.test.ts — `landing_pages` and
+ *                  `catalogue_images` rows rather than products: 834 a page
+ *                  seeded complete, 835 a draft, 836 an id that must NEVER
+ *                  exist, and 837-83b catalogue entries — four landing
+ *                  pictures (two removed during the run) and one product
+ *                  picture a landing page may not show
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

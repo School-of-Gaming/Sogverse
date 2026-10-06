@@ -344,6 +344,22 @@ export type LibraryArticleTranslationRow =
 export type LibraryArticlePublicationTranslationRow =
   Database["public"]["Tables"]["library_article_publication_translations"]["Row"];
 
+// Landing pages — `landing_pages` is a page's admin-only working copy and
+// `landing_page_publications` its public published copy, whose row existing is
+// the page being live; the section structure is the copy's, and each copy's
+// words are per language, one row per (page, site locale) in its
+// `_translations` table. Row aliases only: no landing page table carries a
+// write grant for any Data API role, and the landing page RPCs — with the
+// image catalogue's `repoint_landing_images` and removal trigger for pictures —
+// are the only writers.
+export type LandingPageRow = Database["public"]["Tables"]["landing_pages"]["Row"];
+export type LandingPagePublicationRow =
+  Database["public"]["Tables"]["landing_page_publications"]["Row"];
+export type LandingPageTranslationRow =
+  Database["public"]["Tables"]["landing_page_translations"]["Row"];
+export type LandingPagePublicationTranslationRow =
+  Database["public"]["Tables"]["landing_page_publication_translations"]["Row"];
+
 // product_staff_details — the staff-only half of a product, split off `products`
 // because that table is readable by anon and by every parent, and PostgREST lets
 // a caller pick the columns it wants. Sparse: a product with nothing staff-only

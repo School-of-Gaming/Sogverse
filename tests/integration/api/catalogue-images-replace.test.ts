@@ -21,9 +21,10 @@ import { plainJpeg } from "../../mocks/exif-jpeg";
  * What matters here is that replacing is never an edit of an entry: the new
  * bytes get their own entry (inheriting the replaced entry's name) and every
  * product that used the old one is moved across in a single statement, and
- * every Library cover — draft and live — in `repoint_library_covers`. The
- * cases below are the forms that takes — nothing to move, products to move,
- * covers to move, and the entry having vanished under the admin.
+ * every Library cover — draft and live — in `repoint_library_covers`, and
+ * every landing page picture in `repoint_landing_images`. The cases below are
+ * the forms that takes — nothing to move, products to move, covers to move,
+ * landing pictures to move, and the entry having vanished under the admin.
  */
 
 // --- Mocks ---
@@ -168,7 +169,9 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
       postgrestJson([]),
       postgrestJson(NEW_ENTRY),
       postgrestJson([{ id: "p1" }, { id: "p2" }, { id: "p3" }]),
-      // A product picture is no Library cover, so no article moves.
+      // A product picture is no Library cover or landing picture, so no
+      // article or page moves.
+      postgrestJson(0),
       postgrestJson(0),
     );
 
@@ -203,9 +206,10 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
       postgrestJson([{ ...OLD_ENTRY, purpose: "library_cover" }]),
       postgrestJson([]),
       postgrestJson(wideEntry),
-      // No product links a cover.
+      // No product links a cover, and no landing page shows one.
       postgrestJson([]),
       postgrestJson(2),
+      postgrestJson(0),
     );
 
     const response = await POST(
@@ -248,6 +252,61 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
     expect(response.status).toBe(500);
   });
 
+  it("moves every landing page picture using the entry, draft and live, and counts the pages", async () => {
+    mockAdmin();
+    const wideBytes = new Uint8Array(await plainJpeg(1600, 900));
+    const wideSha = createHash("sha256").update(wideBytes).digest("hex");
+    const wideEntry = {
+      ...NEW_ENTRY,
+      sha256: wideSha,
+      path: `${wideSha}.jpg`,
+      purpose: "landing_image",
+    };
+    respondWith(
+      postgrestJson([{ ...OLD_ENTRY, purpose: "landing_image" }]),
+      postgrestJson([]),
+      postgrestJson(wideEntry),
+      // No product or article links a landing picture.
+      postgrestJson([]),
+      postgrestJson(0),
+      postgrestJson(3),
+    );
+
+    const response = await POST(
+      ...createRequest(OLD_ID, new File([wideBytes], "hero-v2.jpg")),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ image: wideEntry, relinked: 3 });
+
+    const pages = fetchMock.mock.calls[5];
+    expect(requestedUrl(pages[0]).pathname).toBe(
+      "/rest/v1/rpc/repoint_landing_images",
+    );
+    expect(requestBody(5)).toEqual({ p_from: OLD_ID, p_to: NEW_ID });
+    expect(requestBody(2)).toMatchObject({ purpose: "landing_image" });
+    expect(mockStorageFrom).toHaveBeenCalledWith("landing-images");
+  });
+
+  it("fails loudly when the landing pictures cannot follow, rather than reporting a partial move", async () => {
+    mockAdmin();
+    respondWith(
+      postgrestJson([OLD_ENTRY]),
+      postgrestJson([]),
+      postgrestJson(NEW_ENTRY),
+      postgrestJson([{ id: "p1" }]),
+      postgrestJson(0),
+      postgrestJson(
+        { message: "connection lost", code: "08006", details: null, hint: null },
+        500,
+      ),
+    );
+
+    const response = await POST(...createRequest(OLD_ID));
+
+    expect(response.status).toBe(500);
+  });
+
   it("gives a newly created entry the replaced entry's name", async () => {
     mockAdmin();
     respondWith(
@@ -255,6 +314,7 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
       postgrestJson([]),
       postgrestJson(NEW_ENTRY),
       postgrestJson([]),
+      postgrestJson(0),
       postgrestJson(0),
     );
 

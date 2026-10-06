@@ -370,7 +370,7 @@ describe("the uploader", () => {
     expect(Buffer.from(await file.arrayBuffer()).equals(bytes)).toBe(true);
     expect(result.structuredContent).toEqual({
       status: "added",
-      cover: { catalogueId: STORED.id, label: "Castle", publicUrl: `${BUCKET}/${STORED.path}` },
+      image: { catalogueId: STORED.id, label: "Castle", publicUrl: `${BUCKET}/${STORED.path}` },
     });
   });
 
@@ -384,7 +384,7 @@ describe("the uploader", () => {
     });
 
     expect(mockFindOrCreate).toHaveBeenCalledWith(expect.objectContaining({ label: "Another name" }));
-    expect(result.structuredContent).toMatchObject({ status: "existing", cover: { catalogueId: STORED.id } });
+    expect(result.structuredContent).toMatchObject({ status: "existing", image: { catalogueId: STORED.id } });
   });
 
   it.each([
@@ -426,8 +426,21 @@ describe("the uploader", () => {
     expect(result.structuredContent).toEqual({
       articleId: ID,
       title: "Screen time is not the enemy",
-      cover: { width: 1600, height: 900, maxBytes: expect.any(Number) },
       currentCover: { catalogueId: COVER_ID, label: "Clock", publicUrl: `${BUCKET}/clock.jpg` },
+      // What the shared picture uploader reads: the purpose's size, and the
+      // store-then-set calls it makes.
+      uploader: {
+        purpose: "library_cover",
+        heading: "Library cover",
+        subject: "For “Screen time is not the enemy”",
+        frame: { width: 1600, height: 900, maxBytes: expect.any(Number) },
+        uploadTool: "upload_library_cover",
+        place: expect.objectContaining({
+          tool: "set_library_article_cover",
+          arguments: { articleId: ID },
+          imageArgument: "coverImageId",
+        }),
+      },
     });
     expect(resultText(result)).toContain("the admin can upload the cover in the Sogverse editor");
   });
@@ -452,7 +465,7 @@ describe("the uploader as an MCP Apps view", () => {
       })
       .parse((await rpc("tools/list")).result);
 
-    const uri = "ui://sogverse/library-cover-uploader.html";
+    const uri = "ui://sogverse/picture-uploader.html";
     expect(tools.find((t) => t.name === "open_cover_uploader")?._meta).toEqual({
       ui: { resourceUri: uri },
       "ui/resourceUri": uri,
@@ -464,7 +477,7 @@ describe("the uploader as an MCP Apps view", () => {
   });
 
   it("serves the built view as an MCP Apps resource", async () => {
-    const uri = "ui://sogverse/library-cover-uploader.html";
+    const uri = "ui://sogverse/picture-uploader.html";
 
     const listed = z
       .object({ resources: z.array(z.object({ uri: z.string(), mimeType: z.string() })) })
@@ -487,7 +500,8 @@ describe("the uploader as an MCP Apps view", () => {
       _meta: { ui: { prefersBorder: true } },
     });
     expect(read.contents[0].text).toMatch(/^<!doctype html>/i);
-    expect(read.contents[0].text).toContain("upload_library_cover");
+    // The view names no tool of its own: the opening tool hands it them.
+    expect(read.contents[0].text).toContain("uploadTool");
     // One file: nothing for the host's default policy to block.
     expect(read.contents[0].text).not.toMatch(/<script[^>]+src=/);
   });

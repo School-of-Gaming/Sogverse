@@ -5,9 +5,11 @@ import type {
 } from "@modelcontextprotocol/server";
 import sharp from "sharp";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
+import type { CatalogueImagePurpose } from "@/types";
 
 /*
- * Library covers as pictures the AI app's model can look at. A tool answer
+ * Catalogue pictures — Library covers, landing page pictures — as pictures
+ * the AI app's model can look at. A tool answer
  * carries a cover as MCP image content — base64 JPEG bytes — beside the text
  * that names it, so the model sees the picture and a client that drops images
  * still reads which entry it was.
@@ -55,7 +57,7 @@ export function coverUrl(path: string): string {
 }
 
 /**
- * A cover re-encoded as image content at `size`, or null when it could not be
+ * A picture re-encoded as image content at `size`, or null when it could not be
  * read — a picture that fails to load must not fail the answer it sits in.
  * The original is fetched from the public bucket, where every reader's
  * browser gets it, and fitted inside the box whole: an entry from before
@@ -64,9 +66,10 @@ export function coverUrl(path: string): string {
 export async function coverImage(
   path: string,
   size: CoverImageSize,
+  purpose: CatalogueImagePurpose = "library_cover",
 ): Promise<ImageContent | null> {
   try {
-    const response = await fetch(coverUrl(path), {
+    const response = await fetch(catalogueImageUrl(purpose, path), {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     if (!response.ok) {
@@ -100,18 +103,22 @@ export interface CoverToShow {
 
 /**
  * `answer` with pictures: the structured value and its JSON text, then each
- * cover as its caption followed by its picture, in order, until the count or
- * the budget runs out. A cover past either limit, or one that could not be
+ * picture as its caption followed by its picture, in order, until the count or
+ * the budget runs out. A picture past either limit, or one that could not be
  * read, keeps its caption and says why it has no picture, so the text alone
- * always names every cover.
+ * always names every one. `purpose` is the catalogue purpose every path is
+ * of, which names the bucket it is read from.
  */
 export async function answerWithCovers<T extends Record<string, unknown>>(
   value: T,
   covers: readonly CoverToShow[],
   size: CoverImageSize,
+  purpose: CatalogueImagePurpose = "library_cover",
 ): Promise<CallToolResult> {
   const shown = covers.slice(0, MAX_IMAGES_PER_RESULT);
-  const images = await Promise.all(shown.map(({ path }) => coverImage(path, size)));
+  const images = await Promise.all(
+    shown.map(({ path }) => coverImage(path, size, purpose)),
+  );
 
   const content: ContentBlock[] = [{ type: "text", text: JSON.stringify(value, null, 2) }];
   let spent = 0;

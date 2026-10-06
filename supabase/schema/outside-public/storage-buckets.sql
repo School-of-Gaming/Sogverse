@@ -6,6 +6,10 @@ VALUES ('chat-images', 'chat-images', false, 3145728, NULL)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('landing-images', 'landing-images', true, 4194304, ARRAY['image/jpeg'])
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('library-covers', 'library-covers', true, 4194304, ARRAY['image/jpeg'])
 ON CONFLICT (id) DO NOTHING;
 

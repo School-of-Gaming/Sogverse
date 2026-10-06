@@ -48,7 +48,8 @@ key off.
 
 1. **Promoted.** The marketing pages (home, about, the legal documents, attributions), the
    auth entry points, the `/shop` browse grid, the Team pages (the index and every
-   public profile), and the Library (the index and every live article). In the sitemap, self-canonical with the full `hreflang` set, a
+   public profile), the Library (the index and every live article), and every live
+   landing page. In the sitemap, self-canonical with the full `hreflang` set, a
    page-specific localized description, structured data, and linked from `llms.txt` where
    a reader would want the link. **A team profile's language versions are the locales the
    person wrote** (owner, 2026-10-01): its `hreflang` names only those, a locale they did
@@ -66,7 +67,11 @@ key off.
    stay in the page's locale, as a shop card's do: the URL's locale is the site's, and a
    page showing fallback text is still a page in that locale, canonical to the version it
    shows (owner, 2026-10-01). The rules are in
-   `src/services/library/CLAUDE.md`. **A product's page is promoted while the product is
+   `src/services/library/CLAUDE.md`. **A landing page follows the same rule** (owner,
+   2026-10-05), with two differences: its slug is stored per language rather than derived
+   from the title, so no two pages contest one, and its link card is the site-wide one —
+   the admin writes a title, a summary and a slug, and every other affordance is the
+   system's. **A product's page is promoted while the product is
    on the shop's listing** (owner, 2026-10-01) — listed, a shop type, not ended: exactly
    what the shop grid shows — and only at its shop address. Its language versions follow
    the same rule as an article's, the locales its text was written in, and its structured
@@ -97,7 +102,7 @@ key off.
    - Also here: the unpublished Roblox programme pages (the flip to published is
      nav, sitemap and noindex together — see the note on the route in
      `src/lib/constants/routes.ts`), the Minecraft API docs, the preview scenes, the
-     admin's preview of a Library article, and every Klingon URL.
+     admin's previews of a Library article and of a landing page, and every Klingon URL.
 3. **Gated.** The role dashboards, settings and voice. Behind a login, disallowed in
    `robots.txt` for tidiness (the control is the proxy and RLS), and they carry no
    description of their own — the root's translated one is inherited and no crawler
@@ -122,15 +127,16 @@ Each one exists to make the posture above hold by construction rather than by me
   external link. Allowing the crawl and serving the tag is what deindexes.
 - **The sitemap** lists the promoted routes, one URL per indexed locale, every entry
   carrying the whole language set as alternates, plus each public team profile in the
-  locales its person wrote, each live Library article in the locales it was written
-  in, at its slug address there, and each product on the shop's listing in the locales
-  its text was written in, at its shop address. **It reads the database, and is rendered
-  per request**: the public team, the live articles and the shop's listing are read
-  anonymously with no cookies, so a profile made public or hidden, an article published
-  or unpublished, or a product listed, unlisted or ended, is in or out of the next fetch, and no build has to reach a database (a revalidating sitemap would be
+  locales its person wrote, each live Library article and each live landing page in the
+  locales it was written in, at its slug address there, and each product on the shop's
+  listing in the locales its text was written in, at its shop address. **It reads the
+  database, and is rendered per request**: the public team, the live articles, the live
+  landing pages and the shop's listing are read anonymously with no cookies, so a
+  profile made public or hidden, an article or a landing page published or unpublished,
+  or a product listed, unlisted or ended, is in or out of the next fetch, and no build has to reach a database (a revalidating sitemap would be
   prerendered at build, in CI's smoke build and in a preview built before its migration
   ran). A failed read leaves those entries out rather than failing the file. **Only an
-  article carries a `lastmod`**, the time its live versions were published: for every
+  article and a landing page carry a `lastmod`**, the time their live versions were published: for every
   other URL the only value available is the fetch time — one date on every URL whether
   or not that page changed — and search engines discard a modification date they cannot
   trust. A product row's update time is not a real one either: the page shows seats left
@@ -146,11 +152,14 @@ Each one exists to make the posture above hold by construction rather than by me
 - **Structured data** is JSON-LD, emitted through one server component that escapes the
   serialized JSON so an admin-authored product name containing `</script>` cannot break
   out of the data block. A data block is never executed, so the CSP's script nonce does
-  not apply to it. Six blocks exist: `Organization` + `WebSite` on every page from the
+  not apply to it. Seven blocks exist: `Organization` + `WebSite` on every page from the
   locale layout, `FAQPage` on About, an `ItemList` on the shop, a `ProfilePage` about
   a `Person` on each team profile, whose `worksFor` names the layout's `Organization` by
   `@id`, an `Article` on each Library article, whose `publisher` names it the same
-  way, and on each promoted product page a `Course` for a club — one `CourseInstance`
+  way, a `WebPage` on each landing page, publisher the same, that becomes a `FAQPage`
+  when a section asks questions — each section type declares its contribution in one
+  exhaustive map, so a new type has to say what it adds, if only nothing — and on each
+  promoted product page a `Course` for a club — one `CourseInstance`
   whose weekly `courseSchedule` is the club's slots in its own timezone — or an `Event`
   for a camp or an event, naming the `Organization` as provider or organizer. A product
   block states the price but never seats or availability: those are live, and a stale
@@ -172,9 +181,10 @@ Each one exists to make the posture above hold by construction rather than by me
 - **`llms.txt`** is one English file at the site root, generated at request time from the
   English catalog (the site description, the About prose, every FAQ question and answer
   flattened to plain text) so it cannot drift from the site, with absolute links to the
-  promoted pages only, a section listing every live Library article (read anonymously
-  per request, each at the address an English reader is sent to, with its summary), and
-  a section naming each indexed locale's home URL. It is
+  promoted pages only, a section listing every live Library article and one listing
+  every live landing page (each read anonymously per request, each entry at the address
+  an English reader is sent to, with its summary), and a section naming each indexed
+  locale's home URL. It is
   publicly cacheable, which is why it is excluded from the proxy: a response the proxy
   handles may carry a refreshed session cookie, and a shared cache must never hold one.
 - **Open Graph cards** are route handlers taking a locale parameter; the reasoning is in

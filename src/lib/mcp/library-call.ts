@@ -10,8 +10,8 @@ import type { AppSupabaseClient } from "@/types";
 /*
  * What every Library tool runs on: the admin's own token-bound client, the
  * answer and refusal shapes, and the annotations the tools share. The article
- * tools (`library.ts`) and the cover tools (`library-covers.ts`,
- * `cover-uploader.ts`) are one area split for size, so they speak alike.
+ * tools (`library.ts`) and the cover tools (`library-covers.ts`) are one
+ * area split for size, so they speak alike.
  */
 
 export const articleId = z

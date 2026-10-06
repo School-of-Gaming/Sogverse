@@ -79,6 +79,37 @@ mockListPublishedArticles.mockResolvedValue([
   ]),
 ]);
 
+// The live landing pages the sitemap reads: one live in English and Finnish
+// (and Klingon, which is never listed), one in Swedish alone.
+const LANDING_ID = "9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c5d";
+const SWEDISH_LANDING_ID = "1f2e3d4c-5b6a-4978-8695-a4b3c2d1e0f9";
+const mockListPublishedLandingPages = vi.fn();
+vi.mock("@/services/landing-pages/landing-pages.service", () => ({
+  LandingPageService: class {
+    listPublishedPages = mockListPublishedLandingPages;
+  },
+}));
+mockListPublishedLandingPages.mockResolvedValue([
+  {
+    id: LANDING_ID,
+    firstPublishedAt: "2026-09-01T08:00:00.000Z",
+    publishedAt: "2026-10-02T08:00:00.000Z",
+    versions: [
+      { locale: "en", title: "Clubs in Espoo", summary: "Espoo.", slug: "clubs-in-espoo" },
+      { locale: "fi", title: "Kerhot Espoossa", summary: "Espoo.", slug: "kerhot-espoossa" },
+      { locale: "tlh", title: "Qapla", summary: "Qapla.", slug: "qapla-espoo" },
+    ],
+  },
+  {
+    id: SWEDISH_LANDING_ID,
+    firstPublishedAt: "2026-09-02T08:00:00.000Z",
+    publishedAt: "2026-09-03T08:00:00.000Z",
+    versions: [
+      { locale: "sv", title: "Klubbar i Esbo", summary: "Esbo.", slug: "klubbar-i-esbo" },
+    ],
+  },
+]);
+
 // The shop's listing the sitemap reads — the grid's own query, so it holds
 // only listed, unended shop products: one written in English and Finnish, one
 // in Swedish and Klingon. An unlisted, ended or municipality product is never
@@ -150,18 +181,48 @@ describe("sitemap", () => {
     expect(urls).not.toContain(`${BASE}/fi/privacy`);
   });
 
-  it("claims a lastModified only for a Library article", () => {
+  it("claims a lastModified only for a Library article or a landing page", () => {
     // It used to be `new Date()`, evaluated per request, so every URL said it
     // had changed on this crawl and on every previous one. A lastmod that is
     // always today is a lastmod a search engine stops reading; no field at all
     // sends it to its own change detection, which is where it was going anyway.
-    // An article's publish time is real, and is the one date given.
+    // An article's and a landing page's publish times are real, and are the
+    // only dates given.
     const dated = entries.filter((entry) => entry.lastModified !== undefined);
     expect(dated.length).toBeGreaterThan(0);
     expect(
-      dated.every((entry) => /\/(library|kirjasto)\/./.test(entry.url)),
+      dated.every((entry) =>
+        /\/(library|kirjasto|discover|tutustu|upptack)\/./.test(entry.url),
+      ),
     ).toBe(true);
     expect(dated[0].lastModified).toBe("2026-09-15T08:00:00.000Z");
+  });
+
+  it("lists each live landing page at its slug address, in the indexed locales it is live in, dated by its publish", () => {
+    const espoo = entries.filter((entry) => entry.url.includes("espo"));
+    expect(espoo.map((entry) => entry.url)).toEqual([
+      `${BASE}/en/discover/clubs-in-espoo`,
+      `${BASE}/fi/tutustu/kerhot-espoossa`,
+    ]);
+    expect(espoo[0].alternates?.languages).toEqual({
+      en: `${BASE}/en/discover/clubs-in-espoo`,
+      fi: `${BASE}/fi/tutustu/kerhot-espoossa`,
+    });
+    expect(espoo[0].lastModified).toBe("2026-10-02T08:00:00.000Z");
+    expect(
+      entries.filter((entry) => entry.url.includes("esbo")).map((entry) => entry.url),
+    ).toEqual([`${BASE}/sv/upptack/klubbar-i-esbo`]);
+  });
+
+  it("still lists the static routes when the landing pages cannot be read", async () => {
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockListPublishedLandingPages.mockRejectedValueOnce(new Error("down"));
+
+    const urls = (await sitemap()).map((entry) => entry.url);
+    quiet.mockRestore();
+
+    expect(urls).toContain(`${BASE}/en/library`);
+    expect(urls.some((url) => url.includes("espoo"))).toBe(false);
   });
 
   it("carries nothing noindex", () => {

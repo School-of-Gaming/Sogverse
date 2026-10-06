@@ -9,6 +9,7 @@ import { ProductBanner } from "@/components/ui/product-banner";
 import { LibraryCover } from "@/components/library/library-cover";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { cn } from "@/lib/utils";
+import { FramedImage } from "@/components/ui/framed-image";
 import {
   useUploadCatalogueImage,
 } from "@/services/catalogue-images";
@@ -26,20 +27,36 @@ import type {
  * The frame a purpose's pick is painted in — the same component the purpose's
  * readers meet it through, so what an admin approves here is what a family or
  * a reader sees — and the fixed width it takes in the form. The widths give
- * the two ratios about the same weight on the page: a 3:2 product picture at
- * 240px and a 16:9 cover at 288px stand the same height.
+ * the ratios about the same weight on the page: a 3:2 product picture at
+ * 240px and a 16:9 cover or landing picture at 288px stand the same height.
  */
 const PICKER_FRAMES = {
   product: { Frame: ProductBanner, width: "w-60", sizes: "240px" },
   library_cover: { Frame: LibraryCover, width: "w-72", sizes: "288px" },
+  landing_image: { Frame: LandingImageFrame, width: "w-72", sizes: "288px" },
 } as const satisfies Record<
   CatalogueImagePurpose,
   {
-    Frame: typeof ProductBanner | typeof LibraryCover;
+    Frame: typeof ProductBanner | typeof LibraryCover | typeof LandingImageFrame;
     width: string;
     sizes: string;
   }
 >;
+
+/** A landing page picture in its purpose's 16:9 frame. */
+function LandingImageFrame({
+  src,
+  className,
+  sizes,
+}: {
+  src: string | null;
+  className?: string;
+  sizes?: string;
+}) {
+  return (
+    <FramedImage purpose="landing_image" src={src} className={className} sizes={sizes} />
+  );
+}
 
 interface ImagePickerProps {
   /** Which catalogue the pick comes from, and so the frame, the crop and the

@@ -42,6 +42,7 @@ export const MARKETING_PAGES = [
   "/roblox",
   "/shop",
   "/shop/[id]",
+  "/discover/[idOrSlug]",
   "/register",
   "/login",
 ] as const satisfies readonly InternalPathname[];

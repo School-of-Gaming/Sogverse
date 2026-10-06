@@ -41,8 +41,13 @@ stays in the catalogue, unlinked, which is what makes a replace reversible. When
 bytes resolve to the entry being replaced, that is a no-op that relinks nothing — not an
 error.
 
+A landing page's pictures are named inside its section structure, where no foreign key
+reaches, so their half of a replace is `repoint_landing_images(old, new)`, the same shape
+over both of a page's copies (`src/services/landing-pages/CLAUDE.md`).
+
 Removal is the mirror: the row goes, the foreign keys null every link pointing at it —
-live covers included — the triggers null each path, and the object is deleted. An object left behind by a
+live covers included — the triggers null each path, and the object is deleted. A landing
+page's pictures are unlinked by a trigger on the row's delete instead, to the same effect. An object left behind by a
 failed removal is logged rather than retried — re-uploading the same file recreates the
 row over the surviving object, because the object's name is still the hash of those
 bytes.
@@ -93,17 +98,18 @@ admin's own session is all the authority a read needs and a route would add noth
 reads are walked with the shared paging primitive: the catalogue only grows, and an image
 an admin cannot see is precisely what this feature exists to prevent.
 
-Usage — which products and Library articles a given entry reaches — is **derived** from
-a products read and an articles read and computed in JavaScript. An article is listed by
-its working title, under the entry its working copy links and under the one its live copy
-links, which differ while a cover change is unpublished; a replace or a remove reaches
-both. It is not stored, and there is no counts map beside the lists: a
+Usage — which products, Library articles and landing pages a given entry reaches — is
+**derived** from a products read, an articles read and a landing pages read and computed
+in JavaScript. An article is listed by its working title, under the entry its working copy
+links and under the one its live copy links, which differ while a cover change is
+unpublished; a replace or a remove reaches both. A landing page is listed the same way,
+under every entry either copy's derived picture map names. It is not stored, and there is no counts map beside the lists: a
 badge's number is its list's length, because two derivations of one number is how they
 come to disagree.
 
 Writes go through the API routes because they touch the storage buckets, which the routes
 write through the service-role client the browser must never hold. The one other writer is
-the MCP server's Library cover uploader (`src/lib/mcp/`), which adds a cover through the
+the MCP server's picture uploader (`src/lib/mcp/`), which adds a picture of any purpose through the
 same checks and the same find-or-create as the upload route, from the server module here. Each bucket also
 carries admin-only write policies on `storage.objects`, the same three on both; nothing
 uses them today, and they are what an admin's own session would be held to. Inside a route the
@@ -113,11 +119,11 @@ session.**
 ## Cache invalidation — and the one key that must not be touched
 
 Every catalogue mutation invalidates the catalogue list, the usage map, the products
-**list** keys and the Library's whole admin tree (those surfaces paint a derived path,
+**list** keys and the Library's and the landing pages' whole admin trees (those surfaces paint a derived path,
 and a repoint changes it under them).
 
-The usage map is read from products and Library articles together, so a product's create
-and update and every Library write (create, save, publish, unpublish) invalidate it too:
+The usage map is read from products, Library articles and landing pages together, so a
+product's create and update and every Library and landing page write invalidate it too:
 a stale map shows a live cover as unused, and removable without warning. Its key sits in
 `catalogue-images.keys.ts`, which imports no other feature's module, so the product and Library hooks can
 name it without an import cycle.
@@ -130,7 +136,8 @@ one parent key. The Library's admin detail is the opposite case and *must* be re
 a replace or a removal moves the working copy's cover in the database, and a detail left
 cached makes the open editor read the followed cover as an unsaved change. The Library
 editor seeds its form once per article id, so that refetch never touches the admin's
-typing.
+typing. A landing page's admin detail is refetched too, since its status page shows the
+last-saved time and saver a replace or a removal moves, and holds no form.
 
 ## Purposes, buckets and exact sizes
 
@@ -141,6 +148,7 @@ changed:
 |---|---|---|
 | `product` | `product-images` | exactly 1200 × 800 |
 | `library_cover` | `library-covers` | exactly 1600 × 900 |
+| `landing_image` | `landing-images` | exactly 1600 × 900 |
 
 The purpose is a column; the bucket and the size live once, in the purpose map in
 `src/lib/images/` — the catalogue's slice of the image purpose registry there — which
@@ -156,7 +164,7 @@ database never sees the bytes either, so a stored size would be a claim nobody c
 
 Where each rule is enforced:
 
-- **The size — the upload routes and the MCP cover uploader**, the only writers to the
+- **The size — the upload routes and the MCP picture uploader**, the only writers to the
   buckets, sharing one set of checks. Each reads the pixel
   size from the uploaded bytes and refuses anything that is not a JPEG of exactly its
   purpose's size, with a stable code. A new entry's purpose is the form's `purpose` field;

@@ -159,6 +159,9 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // of that match by `isAdminOnlySurface` below.
 // ROUTES.team is the Team index, and its prefix match covers each person's
 // page at either address (/team/[idOrSlug]).
+// A landing page (/discover/[idOrSlug]) has no index to prefix-match, so it is
+// admitted by its template (`isLandingPage` below). Its admin preview is a
+// template of its own, so that match never reaches it.
 // ROUTES.oauthConsent is where an AI app sends an admin to approve it, and it
 // is listed here only because the login bounce below keeps the pathname alone:
 // it would drop `?authorization_id=`, which is the whole of the request. The
@@ -490,12 +493,19 @@ export async function proxy(request: NextRequest) {
   }
 
   // The admin-only pages that live outside `/admin`: the preview scenes, and
-  // the preview of a Library article's saved working copy. The article preview
-  // sits under the public `/library/[idOrSlug]` it previews, so it is matched by its
-  // own template and held out of the public-route list below, whose `/library`
-  // prefix match would otherwise reach it.
+  // the previews of a Library article's and a landing page's saved working
+  // copy. The article preview sits under the public `/library/[idOrSlug]` it
+  // previews, so it is matched by its own template and held out of the
+  // public-route list below, whose `/library` prefix match would otherwise
+  // reach it.
   const isAdminOnlySurface =
-    pathname.startsWith("/preview/") || template === "/library/[idOrSlug]/preview";
+    pathname.startsWith("/preview/") ||
+    template === "/library/[idOrSlug]/preview" ||
+    template === "/discover/[idOrSlug]/preview";
+
+  // A live landing page, public at either address. Matched by its exact
+  // template, so nothing else under the segment is admitted with it.
+  const isLandingPage = template === "/discover/[idOrSlug]";
 
   // Check if route is public. A non-page path always passes (an API handler
   // owns its own auth; a `/_vercel/*` or `/.well-known/*` file has none).
@@ -503,6 +513,7 @@ export async function proxy(request: NextRequest) {
   // can't shadow the authenticated-route handling below.
   const isPublicRoute =
     isNonPagePath(pathname) ||
+    isLandingPage ||
     (!pathname.startsWith(AUTH_REQUIRED_VOICE_PREFIX) &&
       !isAdminOnlySurface &&
       PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)));
@@ -624,11 +635,11 @@ export async function proxy(request: NextRequest) {
 
   // /preview/* are admin-only mock surfaces indexed on /admin/ui-previews:
   // full pages rendered from fixtures, each composing the chrome of the role
-  // whose page it mocks. The Library article preview is the same kind of page
-  // over a real, unpublished article. Only admins should be able to reach
-  // either. Non-admins bounce to their own dashboard; unauthenticated users
-  // were already redirected to /login above. The prefix match covers every
-  // future scene.
+  // whose page it mocks. The Library article and landing page previews are
+  // the same kind of page over a real, unpublished working copy. Only admins
+  // should be able to reach any of them. Non-admins bounce to their own
+  // dashboard; unauthenticated users were already redirected to /login above.
+  // The prefix match covers every future scene.
   if (isAdminOnlySurface && userRole !== "admin") {
     return redirect(localizedUrl(ROLE_DASHBOARD_PATHS[userRole]));
   }

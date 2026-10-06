@@ -3,6 +3,7 @@ export type {
   LibraryArticleImageUser,
   CatalogueImageUsage,
   CatalogueImageUser,
+  LandingPageImageUser,
   ProductPictureUser,
 } from "./catalogue-images.service";
 export { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";

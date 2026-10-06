@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { Markdown } from "@/components/ui/markdown";
 import { authoredLinkKind, type MarkdownUseCase } from "@/lib/authored-markdown";
+import type { SupportedLocale } from "@/lib/constants/locales";
 
 /**
  * **Where a link in authored markdown opens.** A link to our own site opens in
@@ -20,9 +21,13 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-function renderLink(href: string, variant: MarkdownUseCase = "article") {
+function renderLink(
+  href: string,
+  variant: MarkdownUseCase = "article",
+  locale: SupportedLocale = "en",
+) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={messages}>
       <Markdown variant={variant}>{`Read [the page](${href}).`}</Markdown>
     </NextIntlClientProvider>,
   ).container;
@@ -36,12 +41,12 @@ function anchor(container: HTMLElement): HTMLAnchorElement {
 
 describe("a link in authored markdown", () => {
   it.each([
-    ["a relative path", "/shop"],
-    ["a relative path with a locale and a fragment", "/fi/kauppa#clubs"],
-    ["an absolute address on our own site", `${SITE}/library`],
-  ])("opens %s in the same tab, unmarked", (_name, href) => {
+    ["a relative path", "/shop", "/en/shop"],
+    ["a relative path with a locale and a fragment", "/fi/kauppa#clubs", "/en/shop#clubs"],
+    ["an absolute address on our own site", `${SITE}/library`, "/en/library"],
+  ])("opens %s in the same tab, unmarked", (_name, href, shown) => {
     const a = anchor(renderLink(href));
-    expect(a.getAttribute("href")).toBe(href);
+    expect(a.getAttribute("href")).toBe(shown);
     expect(a.getAttribute("target")).toBeNull();
     expect(a.getAttribute("rel")).toBe("noreferrer");
     expect(a.querySelector("svg")).toBeNull();
@@ -100,6 +105,25 @@ describe("a link in authored markdown", () => {
       expect(container.textContent).toContain("Read the page.");
     },
   );
+
+  it.each([
+    ["a locale-less internal path", "/shop/123", "/fi/kauppa/123"],
+    ["a path pinned to another language", "/sv/butik/123?x=1#y", "/fi/kauppa/123?x=1#y"],
+    ["an absolute address on our own site", `${SITE}/fr/a-propos`, "/fi/meista"],
+    ["the root", "/", "/fi"],
+  ])("shows %s in the page's language", (_name, href, shown) => {
+    expect(anchor(renderLink(href, "landing", "fi")).getAttribute("href")).toBe(shown);
+  });
+
+  it.each([
+    ["another site", "https://example.com/fi/kauppa"],
+    ["a mailto: address", "mailto:hi@sog.gg"],
+    ["a same-page fragment", "#faq"],
+    ["a path no route matches", "/llms.txt"],
+    ["a slug address, kept in its own language", "/sv/bibliotek/guide"],
+  ])("leaves %s as written", (_name, href) => {
+    expect(anchor(renderLink(href, "landing", "fi")).getAttribute("href")).toBe(href);
+  });
 
   it("holds the same rule in the marketing use case", () => {
     expect(anchor(renderLink("/shop", "marketing")).getAttribute("target")).toBeNull();

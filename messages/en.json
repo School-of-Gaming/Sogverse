@@ -49,6 +49,8 @@
       "adminLibrary": "Library Content",
       "adminLibraryArticleNew": "New Article",
       "adminLibraryArticleEdit": "Edit Article",
+      "adminLandingPages": "Landing Pages",
+      "adminLandingPage": "Landing Page",
       "adminPlatformVision": "Platform Vision",
       "adminGeduInvoicing": "Gedu Invoicing",
       "adminTools": "Tools",
@@ -614,6 +616,118 @@
       "removeLocale": "Remove {language}",
       "languagesLabel": "Languages"
     },
+    "landingPages": {
+      "title": "Landing pages",
+      "subtitle": "Pages for a school, a city, a business or an event, written for search engines and AI apps to find.",
+      "empty": "No landing pages yet. Pages are written with an AI app connected to Sogverse.",
+      "lastSaved": "Last saved {date}",
+      "languagesLabel": "Languages",
+      "versionComplete": "complete",
+      "versionIncomplete": "not complete yet",
+      "search": {
+        "label": "Search",
+        "placeholder": "Search by title or address…",
+        "showing": "Showing {count} of {total}",
+        "clear": "Clear",
+        "noMatches": "No landing pages match your search."
+      },
+      "backToList": "Back to landing pages",
+      "notFound": "There is no landing page with this id.",
+      "loadError": "Could not load this landing page. Refresh to try again.",
+      "statusPage": {
+        "title": "Landing page",
+        "authoring": "To change this page, ask an AI app connected to Sogverse.",
+        "languagesHeading": "Languages",
+        "readiness": {
+          "noCompleteLanguage": "No language is complete yet, so there is nothing to publish.",
+          "upToDate": "Readers already see the latest saved version."
+        },
+        "language": {
+          "complete": "Complete",
+          "incomplete": "Not complete",
+          "live": "Live on the site.",
+          "notLive": "Not on the site.",
+          "stillNeeded": "Still needed:",
+          "address": "Address:",
+          "noAddress": "none yet",
+          "addressChanging": "Live at {address} now. The next publish moves it to this address, and links to the old one will stop working."
+        },
+        "missing": {
+          "inSection": "Section {number} ({type}): {field}",
+          "inItem": "Section {number} ({type}), {item}: {field}",
+          "goneSection": "A section no longer on the page: {field}"
+        }
+      },
+      "status": {
+        "draft": "Draft",
+        "live": "Live",
+        "changed": "Unpublished changes"
+      },
+      "statusPanel": {
+        "publishedLine": "Published {date}.",
+        "changedLine": "Readers see the version published on {date}.",
+        "savedLine": "Last saved {date}.",
+        "savedByLine": "Last saved {date} by {name}.",
+        "savedByViaLine": "Last saved {date} by {name} via {app}.",
+        "savedByViaUnnamedLine": "Last saved {date} by {name} via an AI app."
+      },
+      "viewLive": "View on the site",
+      "preview": "Preview",
+      "publish": "Publish",
+      "publishChanges": "Publish changes",
+      "unpublish": "Unpublish",
+      "publishConfirm": {
+        "title": "Publish this landing page?",
+        "changesTitle": "Publish the changes?",
+        "goesLive": "Goes live: {languages}.",
+        "takenDown": "{count, plural, one {Taken off the site, as it is no longer complete: {languages}.} other {Taken off the site, as they are no longer complete: {languages}.}}",
+        "leftOut": "{count, plural, one {Left out, as it is not complete: {languages}.} other {Left out, as they are not complete: {languages}.}}",
+        "changing": "{count, plural, one {This live address changes, and links to the old one will stop working:} other {These live addresses change, and links to the old ones will stop working:}}",
+        "changingItem": "{language}: {from} becomes {to}"
+      },
+      "unpublishConfirm": {
+        "title": "Unpublish this landing page?",
+        "description": "Readers and search engines will no longer find it, and links to it will stop working. The page stays here, and you can publish it again at any time.",
+        "confirm": "Unpublish"
+      },
+      "actions": {
+        "cancel": "Cancel"
+      },
+      "errors": {
+        "publishFailed": "The landing page could not be published. Try again.",
+        "publishFailedWithReason": "The landing page could not be published — {reason}",
+        "unpublishFailed": "The landing page could not be unpublished. Try again.",
+        "unpublishFailedWithReason": "The landing page could not be unpublished — {reason}"
+      },
+      "sectionTypes": {
+        "hero": "Opening",
+        "text": "Text",
+        "image": "Pictures",
+        "points": "Points",
+        "steps": "Steps",
+        "faq": "Questions and answers",
+        "cta": "Call to action"
+      },
+      "items": {
+        "image": "Picture {number}",
+        "points": "Point {number}",
+        "steps": "Step {number}",
+        "faq": "Question {number}"
+      },
+      "fields": {
+        "title": "Title",
+        "summary": "Summary",
+        "slug": "Address",
+        "headline": "Headline",
+        "heading": "Heading",
+        "body": "Text",
+        "buttonLabel": "Button label",
+        "imageAlt": "Picture alt text",
+        "alt": "Alt text",
+        "question": "Question",
+        "answer": "Answer"
+      }
+    },
     "geduRole": {
       "primary": "Primary",
       "assistant": "Assistant",
@@ -1058,6 +1172,13 @@
             "dropPrompt": "Drop a file here, or choose one, to crop it to the 16:9 frame, add it and use it as this article’s cover.",
             "outcomeAdded": "Added to the catalogue and chosen as this article’s cover.",
             "outcomeExisting": "Already in the catalogue — chosen as this article’s cover."
+          },
+          "landingImage": {
+            "change": "Change picture",
+            "remove": "Remove picture",
+            "dropPrompt": "Drop a file here, or choose one, to crop it to the 16:9 frame, add it and use it on this landing page.",
+            "outcomeAdded": "Added to the catalogue and chosen for this landing page.",
+            "outcomeExisting": "Already in the catalogue — chosen for this landing page."
           }
         }
       },
@@ -1115,6 +1236,19 @@
             "removeConsequence": "{count, plural, one {The article below will have no cover until you choose another, even while it is live.} other {All # articles below will have no cover until you choose another, the live ones included.}}",
             "removeUnused": "No article uses this picture. It will be removed from the catalogue for good.",
             "removeConfirm": "Remove from {count, plural, one {# article} other {# articles}}"
+          },
+          "landingImage": {
+            "title": "Landing page pictures",
+            "description": "One picture can be used on several landing pages, and in more than one place on a page. Choosing one changes only this place; replacing or removing one changes every landing page using it, live ones included.",
+            "usedBadge": "{count, plural, one {# page} other {# pages}}",
+            "usedBy": "Landing pages using this picture",
+            "usedByNone": "No landing page uses this picture.",
+            "replaceConsequence": "{count, plural, one {The landing page below will show the new picture, at once if it is live.} other {All # landing pages below will show the new picture, at once where they are live.}}",
+            "replaceUnused": "No landing page uses this picture. The new one takes its place in the catalogue.",
+            "replaceConfirm": "Replace on {count, plural, one {# page} other {# pages}}",
+            "removeConsequence": "{count, plural, one {The landing page below will lose this picture, even while it is live. A pictures section left with none is removed.} other {All # landing pages below will lose this picture, the live ones included. A pictures section left with none is removed.}}",
+            "removeUnused": "No landing page uses this picture. It will be removed from the catalogue for good.",
+            "removeConfirm": "Remove from {count, plural, one {# page} other {# pages}}"
           }
         }
       },
@@ -3349,6 +3483,7 @@
     "municipalityInvoicing": "Municipality Invoicing",
     "invoiceCustomers": "Invoice Customers",
     "libraryContent": "Library Content",
+    "landingPages": "Landing Pages",
     "platformVision": "Platform Vision",
     "geduInvoicing": "Gedu Invoicing",
     "camps": "Camps",

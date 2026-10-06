@@ -1163,7 +1163,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           roles: ["admin"],
           primitive: "withMcpAdmin",
           reason:
-            "an AI app working for an admin holds no Sogverse cookie session; it presents an OAuth access token the project's own Auth server issued to it after the admin approved it on the consent page. The gate verifies the token's signature and expiry, that the project's Auth server issued it, and that it carries a client_id — which refuses a first-party session token lifted out of a browser and presented as a bearer — and then reads the caller's role on a client bound to the token, so the read runs under the admin's own row policies and a role change takes effect on the next request rather than when the grant expires. Every tool acts on a client bound to that token; the one service-role client is the Library cover uploader's write to the covers bucket, pinned with its reason in NON_ROUTE_ADMIN_CLIENT_SITES",
+            "an AI app working for an admin holds no Sogverse cookie session; it presents an OAuth access token the project's own Auth server issued to it after the admin approved it on the consent page. The gate verifies the token's signature and expiry, that the project's Auth server issued it, and that it carries a client_id — which refuses a first-party session token lifted out of a browser and presented as a bearer — and then reads the caller's role on a client bound to the token, so the read runs under the admin's own row policies and a role change takes effect on the next request rather than when the grant expires. Every tool acts on a client bound to that token; the one service-role client is the picture uploader's write to its purpose's bucket, pinned with its reason in NON_ROUTE_ADMIN_CLIENT_SITES",
         },
         body: { kind: "none" },
         test: TESTS.mcp,
@@ -1564,8 +1564,8 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
     "the shared family resolver — a gamer legitimately reads siblings beyond their own view",
   "src/app/[locale]/select-profile/page.tsx":
     "the profile chooser prefetch, through the same family resolver as the family-list route",
-  "src/lib/mcp/cover-uploader.ts":
-    "the MCP Library cover uploader stores the admin's JPEG in the library-covers bucket, which only the service role writes — the same split as the catalogue's upload route, through the same shared find-or-create: the bytes on the service-role client, the catalogue row on the admin's own token-bound client. It is reachable only behind the MCP endpoint's admin gate, and only after the upload passed the catalogue's own size, type and exact-dimension checks",
+  "src/lib/mcp/image-uploader.ts":
+    "the MCP picture uploader stores the admin's JPEG in its purpose's bucket, which only the service role writes — the same split as the catalogue's upload route, through the same shared find-or-create: the bytes on the service-role client, the catalogue row on the admin's own token-bound client. It is reachable only behind the MCP endpoint's admin gate, and only after the upload passed the catalogue's own size, type and exact-dimension checks",
   "src/services/partner/partner-shared-db.server.ts":
     "the partner API's one construction site: Lynx Educate's tooling authenticates with an issued key and holds no Sogverse session for a row policy to evaluate, so every partner read runs as the service role, scoped to the Programme by the partner read modules and shaped by the published contract. Its accessor is confined to the partner routes and services by check 3",
 };

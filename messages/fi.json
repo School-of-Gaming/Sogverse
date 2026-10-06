@@ -49,6 +49,8 @@
       "adminLibrary": "Kirjaston sisältö",
       "adminLibraryArticleNew": "Uusi artikkeli",
       "adminLibraryArticleEdit": "Muokkaa artikkelia",
+      "adminLandingPages": "Laskeutumissivut",
+      "adminLandingPage": "Laskeutumissivu",
       "adminPlatformVision": "Alustan visio",
       "adminGeduInvoicing": "Gedujen laskutus",
       "adminTools": "Työkalut",
@@ -614,6 +616,118 @@
       "removeLocale": "Poista {language}",
       "languagesLabel": "Kielet"
     },
+    "landingPages": {
+      "title": "Laskeutumissivut",
+      "subtitle": "Sivut koululle, kaupungille, yritykselle tai tapahtumalle – kirjoitettu hakukoneiden ja tekoälysovellusten löydettäviksi.",
+      "empty": "Laskeutumissivuja ei vielä ole. Sivut kirjoitetaan Sogverseen yhdistetyllä tekoälysovelluksella.",
+      "lastSaved": "Tallennettu viimeksi {date}",
+      "languagesLabel": "Kielet",
+      "versionComplete": "valmis",
+      "versionIncomplete": "ei vielä valmis",
+      "search": {
+        "label": "Haku",
+        "placeholder": "Hae otsikolla tai osoitteella…",
+        "showing": "Näytetään {count}/{total}",
+        "clear": "Tyhjennä",
+        "noMatches": "Haullasi ei löytynyt laskeutumissivuja."
+      },
+      "backToList": "Takaisin laskeutumissivuihin",
+      "notFound": "Tällä tunnisteella ei ole laskeutumissivua.",
+      "loadError": "Laskeutumissivua ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
+      "statusPage": {
+        "title": "Laskeutumissivu",
+        "authoring": "Jos haluat muuttaa sivua, pyydä sitä Sogverseen yhdistetyltä tekoälysovellukselta.",
+        "languagesHeading": "Kielet",
+        "readiness": {
+          "noCompleteLanguage": "Yksikään kieli ei ole vielä valmis, joten julkaistavaa ei ole.",
+          "upToDate": "Lukijat näkevät jo viimeksi tallennetun version."
+        },
+        "language": {
+          "complete": "Valmis",
+          "incomplete": "Ei valmis",
+          "live": "Julkaistu sivustolla.",
+          "notLive": "Ei sivustolla.",
+          "stillNeeded": "Vielä puuttuu:",
+          "address": "Osoite:",
+          "noAddress": "ei vielä osoitetta",
+          "addressChanging": "Nyt julkaistu osoitteessa {address}. Seuraava julkaisu siirtää sen tähän osoitteeseen, eivätkä vanhaan osoitteeseen johtavat linkit enää toimi."
+        },
+        "missing": {
+          "inSection": "Osio {number} ({type}): {field}",
+          "inItem": "Osio {number} ({type}), {item}: {field}",
+          "goneSection": "Osio, jota sivulla ei enää ole: {field}"
+        }
+      },
+      "status": {
+        "draft": "Luonnos",
+        "live": "Julkaistu",
+        "changed": "Julkaisemattomia muutoksia"
+      },
+      "statusPanel": {
+        "publishedLine": "Julkaistu {date}.",
+        "changedLine": "Lukijat näkevät version, joka julkaistiin {date}.",
+        "savedLine": "Tallennettu viimeksi {date}.",
+        "savedByLine": "Tallennettu viimeksi {date}, tallentaja {name}.",
+        "savedByViaLine": "Tallennettu viimeksi {date}, tallentaja {name} sovelluksella {app}.",
+        "savedByViaUnnamedLine": "Tallennettu viimeksi {date}, tallentaja {name} tekoälysovelluksella."
+      },
+      "viewLive": "Näytä sivustolla",
+      "preview": "Esikatsele",
+      "publish": "Julkaise",
+      "publishChanges": "Julkaise muutokset",
+      "unpublish": "Poista julkaisusta",
+      "publishConfirm": {
+        "title": "Julkaistaanko laskeutumissivu?",
+        "changesTitle": "Julkaistaanko muutokset?",
+        "goesLive": "Julkaistaan: {languages}.",
+        "takenDown": "{count, plural, one {Poistetaan sivustolta, koska se ei ole enää valmis: {languages}.} other {Poistetaan sivustolta, koska ne eivät ole enää valmiita: {languages}.}}",
+        "leftOut": "{count, plural, one {Jätetään pois, koska se ei ole valmis: {languages}.} other {Jätetään pois, koska ne eivät ole valmiita: {languages}.}}",
+        "changing": "{count, plural, one {Tämä julkaistu osoite muuttuu, eivätkä vanhaan osoitteeseen johtavat linkit enää toimi:} other {Nämä julkaistut osoitteet muuttuvat, eivätkä vanhoihin osoitteisiin johtavat linkit enää toimi:}}",
+        "changingItem": "{language}: {from} muuttuu osoitteeksi {to}"
+      },
+      "unpublishConfirm": {
+        "title": "Poistetaanko laskeutumissivu julkaisusta?",
+        "description": "Lukijat ja hakukoneet eivät enää löydä sitä, ja linkit siihen lakkaavat toimimasta. Sivu säilyy täällä, ja voit julkaista sen uudelleen milloin tahansa.",
+        "confirm": "Poista julkaisusta"
+      },
+      "actions": {
+        "cancel": "Peruuta"
+      },
+      "errors": {
+        "publishFailed": "Laskeutumissivua ei voitu julkaista. Yritä uudelleen.",
+        "publishFailedWithReason": "Laskeutumissivua ei voitu julkaista – {reason}",
+        "unpublishFailed": "Laskeutumissivua ei voitu poistaa julkaisusta. Yritä uudelleen.",
+        "unpublishFailedWithReason": "Laskeutumissivua ei voitu poistaa julkaisusta – {reason}"
+      },
+      "sectionTypes": {
+        "hero": "Avausosio",
+        "text": "Teksti",
+        "image": "Kuvat",
+        "points": "Kohdat",
+        "steps": "Vaiheet",
+        "faq": "Kysymykset ja vastaukset",
+        "cta": "Toimintakehote"
+      },
+      "items": {
+        "image": "Kuva {number}",
+        "points": "Kohta {number}",
+        "steps": "Vaihe {number}",
+        "faq": "Kysymys {number}"
+      },
+      "fields": {
+        "title": "Otsikko",
+        "summary": "Tiivistelmä",
+        "slug": "Osoite",
+        "headline": "Pääotsikko",
+        "heading": "Otsikko",
+        "body": "Teksti",
+        "buttonLabel": "Painikkeen teksti",
+        "imageAlt": "Kuvan vaihtoehtoinen teksti",
+        "alt": "Vaihtoehtoinen teksti",
+        "question": "Kysymys",
+        "answer": "Vastaus"
+      }
+    },
     "geduRole": {
       "primary": "Vastaava Gedu",
       "assistant": "Avustava Gedu",
@@ -1058,6 +1172,13 @@
             "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 16:9-kehykseen, se lisätään kirjastoon ja siitä tulee tämän artikkelin kansikuva.",
             "outcomeAdded": "Lisätty kirjastoon ja valittu tämän artikkelin kansikuvaksi.",
             "outcomeExisting": "Kuva on jo kirjastossa – valittu tämän artikkelin kansikuvaksi."
+          },
+          "landingImage": {
+            "change": "Vaihda kuva",
+            "remove": "Poista kuva",
+            "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 16:9-kehykseen, se lisätään kirjastoon ja otetaan käyttöön tällä laskeutumissivulla.",
+            "outcomeAdded": "Lisätty kirjastoon ja valittu tälle laskeutumissivulle.",
+            "outcomeExisting": "Kuva on jo kirjastossa — valittu tälle laskeutumissivulle."
           }
         }
       },
@@ -1115,6 +1236,19 @@
             "removeConsequence": "{count, plural, one {Alla oleva artikkeli jää ilman kansikuvaa, kunnes valitset uuden, myös julkaistuna.} other {Kaikki # alla olevaa artikkelia jäävät ilman kansikuvaa, kunnes valitset uuden, myös julkaistut.}}",
             "removeUnused": "Mikään artikkeli ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
             "removeConfirm": "Poista {count, plural, one {# artikkelista} other {# artikkelista}}"
+          },
+          "landingImage": {
+            "title": "Laskeutumissivujen kuvat",
+            "description": "Sama kuva voi olla usealla laskeutumissivulla ja useammassa kohdassa samaa sivua. Valinta koskee vain tätä kohtaa, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä laskeutumissivuja, myös julkaistuja.",
+            "usedBadge": "{count, plural, one {# sivu} other {# sivua}}",
+            "usedBy": "Kuvaa käyttävät laskeutumissivut",
+            "usedByNone": "Mikään laskeutumissivu ei käytä tätä kuvaa.",
+            "replaceConsequence": "{count, plural, one {Alla oleva laskeutumissivu näyttää jatkossa uuden kuvan, julkaistuna heti.} other {Kaikki # alla olevaa laskeutumissivua näyttävät jatkossa uuden kuvan, julkaistut heti.}}",
+            "replaceUnused": "Mikään laskeutumissivu ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
+            "replaceConfirm": "Korvaa {count, plural, one {# sivulla} other {# sivulla}}",
+            "removeConsequence": "{count, plural, one {Kuva poistuu alla olevalta laskeutumissivulta, myös julkaistulta. Kuvaosio, johon ei jää kuvia, poistetaan.} other {Kuva poistuu kaikilta # alla olevalta laskeutumissivulta, myös julkaistuilta. Kuvaosio, johon ei jää kuvia, poistetaan.}}",
+            "removeUnused": "Mikään laskeutumissivu ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
+            "removeConfirm": "Poista {count, plural, one {# sivulta} other {# sivulta}}"
           }
         }
       },
@@ -3349,6 +3483,7 @@
     "municipalityInvoicing": "Kuntalaskutus",
     "invoiceCustomers": "Laskutusasiakkaat",
     "libraryContent": "Kirjaston sisältö",
+    "landingPages": "Laskeutumissivut",
     "platformVision": "Alustan visio",
     "geduInvoicing": "Gedujen laskutus",
     "camps": "Leirit",
