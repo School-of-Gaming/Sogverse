@@ -118,6 +118,16 @@ describe("gamer_profiles birth date and gender writers", () => {
       .eq("user_id", TEST_IDS.GAMER);
   });
 
+  it("lets the gamer see their own row, so a refusal below is the missing policy", async () => {
+    const { data, error } = await gamerAuth
+      .from("gamer_profiles")
+      .select("user_id")
+      .eq("user_id", TEST_IDS.GAMER);
+
+    expect(error).toBeNull();
+    expect(data).toEqual([{ user_id: TEST_IDS.GAMER }]);
+  });
+
   it("refuses the gamer rewriting their own date of birth", async () => {
     const { data, error } = await gamerAuth
       .from("gamer_profiles")
