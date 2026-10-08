@@ -6,20 +6,36 @@ import { z } from "zod";
  *
  * The token is the environment's own `SLACK_BOT_TOKEN`, the `xoxb-` Bot User
  * OAuth Token of a Slack app made for this — a separate app from the Stripe
- * Workflows for Slack app behind the purchase notifications. Setting one up,
- * once, at api.slack.com/apps:
+ * Workflows for Slack app behind the purchase notifications. Staging and prod
+ * are **two separate Slack apps**, as with Discord: `.env.local` and Vercel
+ * Preview hold the staging app's `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET` and
+ * `SLACK_SUBSTITUTIONS_CHANNEL_ID`, Vercel Production holds the prod app's, and
+ * `.env.local` also keeps the prod set as `SLACK_*_PRODUCTION` for the
+ * Production writes. The code reads only the unsuffixed names.
  *
- * 1. Create an app for the workspace and give it the Bot Token Scope
- *    `chat:write` (plus `chat:write.public` to post to public channels the bot
- *    is not a member of).
- * 2. Install it to the workspace, which mints the token. The install may need
+ * Setting one app up, once, at api.slack.com/apps:
+ *
+ * 1. Create an app for the workspace and give it the Bot Token Scopes
+ *    `chat:write` (posting and editing the substitution messages; plus
+ *    `chat:write.public` to post to a public channel the bot is not in) and
+ *    `commands` (the link slash command).
+ * 2. Interactivity & Shortcuts → on, Request URL
+ *    `https://<deployment>/api/slack/interactions` — `sogverse.sog.gg` for prod,
+ *    `sogverse-staging.sog.gg` for staging.
+ * 3. Slash Commands → create the link command with the same Request URL:
+ *    `/link` on prod, `/link-staging` on staging, so the two apps' commands
+ *    can live in one workspace. The route treats any command as the link one.
+ * 4. Install it to the workspace, which mints the token. The install may need
  *    a workspace admin's approval, depending on the workspace's settings.
- * 3. A private channel needs the bot in it: `/invite @<bot>` there.
- * 4. The token goes in `.env.local` as `SLACK_BOT_TOKEN`, and on Vercel through
- *    the CLI (the vercel-env-vars skill), sensitive on Preview and Production.
+ * 5. A private channel needs the bot in it: `/invite @<bot>` there.
+ * 6. Basic Information → Signing Secret is `SLACK_SIGNING_SECRET`, which the
+ *    interactions route verifies every request against; the channel's id
+ *    (channel details → bottom) is `SLACK_SUBSTITUTIONS_CHANNEL_ID`. All three
+ *    go in `.env.local`, and on Vercel through the CLI (the vercel-env-vars
+ *    skill), sensitive on Preview and Production.
  *
  * Slack answers a refusal with HTTP 200 and `{ ok: false, error }` in the body,
- * so every call made here reads `ok`, never the status.
+ * so every Web API call made here reads `ok`, never the status.
  */
 
 const SLACK_API_BASE = "https://slack.com/api";
@@ -27,6 +43,19 @@ const SLACK_API_BASE = "https://slack.com/api";
 /** Whether this environment has a bot token to send with. */
 export function isSlackConfigured(): boolean {
   return Boolean(process.env.SLACK_BOT_TOKEN);
+}
+
+/**
+ * Whether this environment can post the substitution messages: a bot token
+ * and the channel they go to.
+ */
+export function isSlackSubstitutionsConfigured(): boolean {
+  return isSlackConfigured() && Boolean(process.env.SLACK_SUBSTITUTIONS_CHANNEL_ID);
+}
+
+/** The channel the substitution messages are posted to, or `null` when unset. */
+export function slackSubstitutionsChannelId(): string | null {
+  return process.env.SLACK_SUBSTITUTIONS_CHANNEL_ID || null;
 }
 
 /**
@@ -46,8 +75,16 @@ const slackEnvelope = z.object({
   error: z.string().optional(),
 });
 
-/** Throw unless Slack's answer is its envelope with `ok: true`. */
-async function assertSlackAccepted(response: Response): Promise<void> {
+/** Call a Web API method as the bot, answering its payload once `ok` is true. */
+async function slackCall(method: string, body: Record<string, unknown>): Promise<unknown> {
+  const response = await fetch(`${SLACK_API_BASE}/${method}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+    },
+    body: JSON.stringify(body),
+  });
   const payload: unknown = await response.json().catch(() => null);
   const envelope = slackEnvelope.safeParse(payload);
   if (!envelope.success) {
@@ -56,6 +93,7 @@ async function assertSlackAccepted(response: Response): Promise<void> {
   if (!envelope.data.ok) {
     throw new SlackApiError(envelope.data.error ?? "unknown_error");
   }
+  return payload;
 }
 
 /**
@@ -64,19 +102,88 @@ async function assertSlackAccepted(response: Response): Promise<void> {
  * back as a `SlackApiError`.
  */
 export async function postSlackMessage(channel: string, text: string): Promise<void> {
-  await assertSlackAccepted(
-    await fetch(`${SLACK_API_BASE}/chat.postMessage`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
-      },
-      body: JSON.stringify({
-        channel,
-        text,
-        unfurl_links: false,
-        unfurl_media: false,
-      }),
-    }),
-  );
+  await slackCall("chat.postMessage", {
+    channel,
+    text,
+    unfurl_links: false,
+    unfurl_media: false,
+  });
+}
+
+/** A Block Kit message: the blocks, and the text shown where they cannot be. */
+export interface SlackBlocksMessage {
+  text: string;
+  blocks: readonly unknown[];
+}
+
+/** Where a posted message landed — the pair `chat.update` names it by. */
+export interface PostedSlackMessage {
+  channel: string;
+  ts: string;
+}
+
+const postedMessage = z.object({ channel: z.string(), ts: z.string() });
+
+/**
+ * Post a Block Kit message, previews off, answering where it landed: the
+ * channel's id (Slack resolves a name to it) and the message's `ts`.
+ */
+export async function postSlackBlocks(
+  channel: string,
+  message: SlackBlocksMessage,
+): Promise<PostedSlackMessage> {
+  const payload = await slackCall("chat.postMessage", {
+    channel,
+    text: message.text,
+    blocks: message.blocks,
+    unfurl_links: false,
+    unfurl_media: false,
+  });
+  const parsed = postedMessage.safeParse(payload);
+  if (!parsed.success) throw new SlackApiError("missing_ts");
+  return parsed.data;
+}
+
+/** Replace a posted message's text and blocks in place. */
+export async function updateSlackMessage(
+  channel: string,
+  ts: string,
+  message: SlackBlocksMessage,
+): Promise<void> {
+  await slackCall("chat.update", {
+    channel,
+    ts,
+    text: message.text,
+    blocks: message.blocks,
+  });
+}
+
+/**
+ * Answer an interaction or a slash command through its `response_url` — the
+ * way to send the presser an ephemeral reply after the 3-second window. The
+ * URL is Slack's own and carries its authority, so no token is sent. Slack
+ * answers a plain `ok` rather than the Web API's envelope, so the status is
+ * what is read.
+ */
+export async function respondViaResponseUrl(url: string, body: unknown): Promise<void> {
+  // The URL arrives in a signed payload, but it is still a URL the server is
+  // about to POST to: anything not on Slack's own hooks host is refused.
+  let target: URL;
+  try {
+    target = new URL(url);
+  } catch {
+    throw new SlackApiError("invalid_response_url");
+  }
+  if (target.protocol !== "https:" || target.hostname !== "hooks.slack.com") {
+    throw new SlackApiError("invalid_response_url");
+  }
+  const response = await fetch(target, {
+    method: "POST",
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new SlackApiError(detail || `HTTP ${response.status}`);
+  }
 }

@@ -1571,6 +1571,8 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
     "reads the Discord username and expiry of a /link token for the confirm page, which names the account before a Gedu or an admin links it; the token table is granted to the service role alone. The page calls it only past its Gedu-or-admin gate, and it only reads: the token is spent by consume_discord_link_token on the user's own session, behind the button's POST",
   "src/lib/discord-substitution.server.ts":
     "the Discord bot's /sub command acts for a gedu it knows only by the Discord user id on a signature-verified interaction, with no Sogverse session to act through. Every call is to a function granted to the service role alone that first resolves that id to the gedu account linked to it and refuses when there is none; past that, the reads and the filing are the very bodies the web reaches through auth.uid(), so the service role widens nothing but who the gedu is taken to be",
+  "src/lib/substitution-notifications/sync.server.ts":
+    "the notification sync runs with no caller at all — the outbox drain behind the sync route, or a button press after its own write — and reads a snapshot that carries the absence reason and writes the message tables, all granted to the service role alone. It sends only what the snapshot's own disclosure rules allow: the DMs carry the pool's session facts and nothing about the absent gedu, and the reason goes only to the staff Slack channel",
   "src/services/family/family.server.ts":
     "the shared family resolver — a gamer legitimately reads siblings beyond their own view",
   "src/app/[locale]/select-profile/page.tsx":
