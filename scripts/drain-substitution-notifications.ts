@@ -28,13 +28,20 @@ if (!secret) {
 const base = process.argv[2] ?? "http://localhost:3000";
 const url = new URL("/api/substitution-notifications/sync", base);
 
-const response = await fetch(url, {
-  method: "POST",
-  headers: { Authorization: `Bearer ${secret}` },
-});
+async function main() {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${secret}` },
+  });
 
-if (response.status !== 202) {
-  console.error(`${url} answered ${response.status}: ${await response.text()}`);
-  process.exit(1);
+  if (response.status !== 202) {
+    console.error(`${url} answered ${response.status}: ${await response.text()}`);
+    process.exit(1);
+  }
+  console.log(`Drain started on ${url.origin}; its outcome is in the server's log.`);
 }
-console.log(`Drain started on ${url.origin}; its outcome is in the server's log.`);
+
+main().catch((error: unknown) => {
+  console.error(error);
+  process.exit(1);
+});
