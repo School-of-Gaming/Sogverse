@@ -19,7 +19,7 @@ import { SLACK_MESSAGE_MAX_LENGTH } from "@/services/slack/slack.contracts";
 import { SlackService } from "@/services/slack/slack.service";
 
 type SendResult =
-  | { type: "success"; permalink: string }
+  | { type: "success" }
   | { type: "error"; message: string };
 
 /**
@@ -39,8 +39,8 @@ export function SlackToolCard() {
     setSending(true);
     setResult(null);
     try {
-      const sent = await new SlackService().sendTestMessage({ channel, text });
-      setResult({ type: "success", permalink: sent.permalink });
+      await new SlackService().sendTestMessage({ channel, text });
+      setResult({ type: "success" });
     } catch (error) {
       // The route's own message, Slack's refusal included: this is admin
       // developer tooling, and "channel_not_found" is the whole of what makes
@@ -96,21 +96,7 @@ export function SlackToolCard() {
           {result && (
             <Alert variant={result.type === "success" ? "success" : "destructive"}>
               <AlertDescription>
-                {result.type === "success" ? (
-                  <>
-                    {t("slack.sent")}{" "}
-                    <a
-                      href={result.permalink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium underline underline-offset-2"
-                    >
-                      {t("slack.openInSlack")}
-                    </a>
-                  </>
-                ) : (
-                  result.message
-                )}
+                {result.type === "success" ? t("slack.sent") : result.message}
               </AlertDescription>
             </Alert>
           )}

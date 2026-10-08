@@ -16,8 +16,6 @@ export const sendTestSlackMessageBody = z.object({
 });
 export type SendTestSlackMessageBody = z.infer<typeof sendTestSlackMessageBody>;
 
-/** Where the message landed, as a link that opens it in Slack. */
-export const sendTestSlackMessageResponse = z.object({
-  permalink: z.string().url(),
-});
+/** Slack took the message. */
+export const sendTestSlackMessageResponse = z.object({ ok: z.literal(true) });
 export type SendTestSlackMessageResponse = z.infer<typeof sendTestSlackMessageResponse>;

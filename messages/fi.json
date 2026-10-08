@@ -1721,8 +1721,7 @@
         "message": "Viesti",
         "messagePlaceholder": "Pelkkää tekstiä, enintään 4 000 merkkiä",
         "send": "Lähetä testiviesti",
-        "sent": "Viesti lähetetty.",
-        "openInSlack": "Avaa Slackissa"
+        "sent": "Viesti lähetetty."
       }
     },
     "whatsapp": {

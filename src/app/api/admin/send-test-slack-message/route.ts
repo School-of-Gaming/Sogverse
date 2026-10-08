@@ -33,8 +33,8 @@ export const POST = defineRoute({
     }
 
     try {
-      const sent = await postSlackMessage(body.channel, body.text);
-      return { permalink: sent.permalink };
+      await postSlackMessage(body.channel, body.text);
+      return { ok: true } as const;
     } catch (error) {
       // Slack's own refusal goes back to the admin verbatim: this is a test
       // tool, and "channel_not_found" or "not_in_channel" is the answer they

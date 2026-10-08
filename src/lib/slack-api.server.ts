@@ -46,7 +46,8 @@ const slackEnvelope = z.object({
   error: z.string().optional(),
 });
 
-async function slackAnswer<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
+/** Throw unless Slack's answer is its envelope with `ok: true`. */
+async function assertSlackAccepted(response: Response): Promise<void> {
   const payload: unknown = await response.json().catch(() => null);
   const envelope = slackEnvelope.safeParse(payload);
   if (!envelope.success) {
@@ -55,44 +56,20 @@ async function slackAnswer<T>(response: Response, schema: z.ZodType<T>): Promise
   if (!envelope.data.ok) {
     throw new SlackApiError(envelope.data.error ?? "unknown_error");
   }
-  const parsed = schema.safeParse(payload);
-  if (!parsed.success) {
-    throw new Error("Slack accepted the request but answered in an unexpected shape");
-  }
-  return parsed.data;
-}
-
-function slackAuthorization(): string {
-  return `Bearer ${process.env.SLACK_BOT_TOKEN}`;
-}
-
-const postMessageAnswer = z.object({ channel: z.string(), ts: z.string() });
-const permalinkAnswer = z.object({ permalink: z.string().url() });
-
-export interface SentSlackMessage {
-  /** The channel's id, whichever way the caller named it. */
-  channel: string;
-  /** The message's timestamp, which is Slack's id for it within the channel. */
-  ts: string;
-  /** A link that opens the message in Slack. */
-  permalink: string;
 }
 
 /**
  * Post plain text to a channel, named by its id (`C0123456789`) or its name,
- * with link and media previews off, and answer where it landed. A channel the
- * bot cannot post to comes back as a `SlackApiError`.
+ * with link and media previews off. A channel the bot cannot post to comes
+ * back as a `SlackApiError`.
  */
-export async function postSlackMessage(
-  channel: string,
-  text: string,
-): Promise<SentSlackMessage> {
-  const posted = await slackAnswer(
+export async function postSlackMessage(channel: string, text: string): Promise<void> {
+  await assertSlackAccepted(
     await fetch(`${SLACK_API_BASE}/chat.postMessage`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        Authorization: slackAuthorization(),
+        Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
       },
       body: JSON.stringify({
         channel,
@@ -101,15 +78,5 @@ export async function postSlackMessage(
         unfurl_media: false,
       }),
     }),
-    postMessageAnswer,
   );
-  // The permalink needs no scope beyond the one that posted the message.
-  const params = new URLSearchParams({ channel: posted.channel, message_ts: posted.ts });
-  const { permalink } = await slackAnswer(
-    await fetch(`${SLACK_API_BASE}/chat.getPermalink?${params}`, {
-      headers: { Authorization: slackAuthorization() },
-    }),
-    permalinkAnswer,
-  );
-  return { channel: posted.channel, ts: posted.ts, permalink };
 }

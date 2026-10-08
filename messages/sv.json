@@ -1721,8 +1721,7 @@
         "message": "Meddelande",
         "messagePlaceholder": "Ren text, högst 4 000 tecken",
         "send": "Skicka testmeddelande",
-        "sent": "Meddelandet skickades.",
-        "openInSlack": "Öppna i Slack"
+        "sent": "Meddelandet skickades."
       }
     },
     "whatsapp": {

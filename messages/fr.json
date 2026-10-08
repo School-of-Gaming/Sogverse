@@ -1721,8 +1721,7 @@
         "message": "Message",
         "messagePlaceholder": "Texte brut, 4 000 caractères maximum",
         "send": "Envoyer le message de test",
-        "sent": "Message envoyé.",
-        "openInSlack": "Ouvrir dans Slack"
+        "sent": "Message envoyé."
       }
     },
     "whatsapp": {

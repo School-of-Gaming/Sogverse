@@ -25,8 +25,6 @@ vi.stubGlobal("fetch", mockFetch);
 
 import { POST } from "@/app/api/admin/send-test-slack-message/route";
 
-const PERMALINK = "https://sog.slack.com/archives/C0123456789/p1700000000000100";
-
 function signedInAs(role: string) {
   if (role !== "admin") {
     mockRequireRole.mockResolvedValue(
@@ -61,18 +59,14 @@ const validBody = { channel: "C0123456789", text: "Hello from Sogverse" };
 beforeEach(() => {
   vi.clearAllMocks();
   // The refusal cases never reach Slack — reset so each case starts from its
-  // own two answers.
+  // own answer.
   mockFetch.mockReset();
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubEnv("SLACK_BOT_TOKEN", "xoxb-test-token");
   signedInAs("admin");
-  mockFetch
-    .mockResolvedValueOnce(
-      slackAnswer({ ok: true, channel: "C0123456789", ts: "1700000000.000100" }),
-    )
-    .mockResolvedValueOnce(
-      slackAnswer({ ok: true, channel: "C0123456789", permalink: PERMALINK }),
-    );
+  mockFetch.mockResolvedValueOnce(
+    slackAnswer({ ok: true, channel: "C0123456789", ts: "1700000000.000100" }),
+  );
 });
 
 describe("POST /api/admin/send-test-slack-message", () => {
@@ -110,11 +104,12 @@ describe("POST /api/admin/send-test-slack-message", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("posts plain text with previews off and returns the permalink", async () => {
+  it("posts plain text with previews off", async () => {
     const response = await POST(sendRequest(validBody));
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ permalink: PERMALINK });
+    expect(await response.json()).toEqual({ ok: true });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
 
     const [postUrl, postInit] = mockFetch.mock.calls[0];
     expect(postUrl).toBe("https://slack.com/api/chat.postMessage");
@@ -125,15 +120,6 @@ describe("POST /api/admin/send-test-slack-message", () => {
       text: "Hello from Sogverse",
       unfurl_links: false,
       unfurl_media: false,
-    });
-
-    const [permalinkUrl, permalinkInit] = mockFetch.mock.calls[1];
-    const url = new URL(permalinkUrl);
-    expect(url.origin + url.pathname).toBe("https://slack.com/api/chat.getPermalink");
-    expect(url.searchParams.get("channel")).toBe("C0123456789");
-    expect(url.searchParams.get("message_ts")).toBe("1700000000.000100");
-    expect(permalinkInit.headers).toMatchObject({
-      Authorization: "Bearer xoxb-test-token",
     });
   });
 
