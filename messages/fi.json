@@ -2129,7 +2129,7 @@
         "heading": "Päätepiste",
         "queryParams": "Kyselyparametrit",
         "uuidType": "merkkijono (pakollinen)",
-        "uuidDescription": "Pelaajan Minecraft-UUID. Sekä viivallinen (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) että viivaton (<code2>069a79f444e94726a5befca90e38aaf5</code2>) muoto hyväksytään."
+        "uuidDescription": "Pelaajan Minecraft Java Editionin UUID. Sekä viivallinen (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) että viivaton (<code2>069a79f444e94726a5befca90e38aaf5</code2>) muoto hyväksytään."
       },
       "responses": {
         "heading": "Vastaukset",

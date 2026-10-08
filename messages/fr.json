@@ -2129,7 +2129,7 @@
         "heading": "Point de terminaison",
         "queryParams": "Paramètres de requête",
         "uuidType": "chaîne (obligatoire)",
-        "uuidDescription": "L’UUID Minecraft du joueur. Les formats avec tirets (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) et sans tirets (<code2>069a79f444e94726a5befca90e38aaf5</code2>) sont tous deux acceptés."
+        "uuidDescription": "L’UUID Minecraft Java Edition du joueur. Les formats avec tirets (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) et sans tirets (<code2>069a79f444e94726a5befca90e38aaf5</code2>) sont tous deux acceptés."
       },
       "responses": {
         "heading": "Réponses",

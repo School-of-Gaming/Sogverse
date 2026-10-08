@@ -105,7 +105,7 @@ describe("seatGrantsServerAccess", () => {
 });
 
 describe("buildJoinCheckResponse", () => {
-  const paid = { ...seat(), product: "Minecraft Bedrock Club", productType: "consumer_club" as const };
+  const paid = { ...seat(), product: "Minecraft Java Club", productType: "consumer_club" as const };
   const muni = {
     ...seat({ billingMode: "external_contract", startDate: "2026-08-15", endDate: "2026-12-15" }),
     product: "School Club",
@@ -126,7 +126,7 @@ describe("buildJoinCheckResponse", () => {
       false,
     ]);
     expect(response.message).toBe(
-      "Allowed: Aino has a paid seat on Minecraft Bedrock Club.",
+      "Allowed: Aino has a paid seat on Minecraft Java Club.",
     );
   });
 

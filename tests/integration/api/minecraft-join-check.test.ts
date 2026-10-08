@@ -123,7 +123,7 @@ function account(overrides: Partial<AccountRow> & Pick<AccountRow, "user_id">): 
 function seat(overrides: Partial<SeatRow> & Pick<SeatRow, "participant_id">): SeatRow {
   return {
     status: "active",
-    name: "Minecraft Bedrock Club",
+    name: "Minecraft Java Club",
     product_type: "consumer_club",
     billing_mode: "paid",
     start_date: "2026-09-01",
@@ -303,14 +303,14 @@ describe("GET /api/minecraft/join-check", () => {
     expect(body).toEqual({
       allowed: true,
       reason: "paid_enrollment",
-      message: "Allowed: Aino has a paid seat on Minecraft Bedrock Club.",
+      message: "Allowed: Aino has a paid seat on Minecraft Java Club.",
       gamers: [
         {
           firstName: "Aino",
           minecraftUsername: "AinoMC",
           enrollments: [
             {
-              product: "Minecraft Bedrock Club",
+              product: "Minecraft Java Club",
               productType: "consumer_club",
               billingMode: "paid",
               startDate: "2026-09-01",
@@ -336,7 +336,7 @@ describe("GET /api/minecraft/join-check", () => {
     const { status, body } = await check();
     expect(status).toBe(200);
     expect(body.allowed).toBe(true);
-    expect(body.message).toBe("Allowed: Eero has a paid seat on Minecraft Bedrock Club.");
+    expect(body.message).toBe("Allowed: Eero has a paid seat on Minecraft Java Club.");
     expect(body.gamers.map((g: { firstName: string }) => g.firstName)).toEqual([
       "Aino",
       "Eero",

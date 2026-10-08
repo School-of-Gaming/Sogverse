@@ -55,14 +55,14 @@ function Field({
 const ALLOWED_EXAMPLE = `{
   "allowed": true,
   "reason": "paid_enrollment",
-  "message": "Allowed: Aino has a paid seat on Minecraft Bedrock Club.",
+  "message": "Allowed: Aino has a paid seat on Minecraft Java Club.",
   "gamers": [
     {
       "firstName": "Aino",
       "minecraftUsername": "AinoMC",
       "enrollments": [
         {
-          "product": "Minecraft Bedrock Club",
+          "product": "Minecraft Java Club",
           "productType": "consumer_club",
           "billingMode": "paid",
           "startDate": "2026-09-01",

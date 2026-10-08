@@ -2129,7 +2129,7 @@
         "heading": "Endpoint",
         "queryParams": "Query parameters",
         "uuidType": "string (required)",
-        "uuidDescription": "The player’s Minecraft UUID. Both dashed (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) and undashed (<code2>069a79f444e94726a5befca90e38aaf5</code2>) formats are accepted."
+        "uuidDescription": "The player’s Minecraft Java Edition UUID. Both dashed (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) and undashed (<code2>069a79f444e94726a5befca90e38aaf5</code2>) formats are accepted."
       },
       "responses": {
         "heading": "Responses",
