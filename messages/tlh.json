@@ -1689,7 +1689,8 @@
         "error": "patlh choHlu’be’pu’. yInID."
       },
       "usernameLabel": "pong",
-      "discordNotLinked": "rarlu'be'"
+      "discordNotLinked": "rarlu'be'",
+      "slackNotLinked": "rarlu'be'"
     },
     "locations": {
       "editName": "{name} yIchoH",
@@ -3920,6 +3921,12 @@
       "notLinked": "rarlu'be'",
       "linkHint": "Discord ghItlhlIj DararmeH, School of Gaming Discord Daq <code>/link</code> yIlo'.",
       "relinkHint": "Discord ghItlh latlh DararmeH, ghItlhvam vo' School of Gaming Discord Daq <code>/link</code> yIlo'."
+    },
+    "slack": {
+      "label": "Slack",
+      "notLinked": "rarlu'be'",
+      "linkHint": "Slack ghItlhlIj DararmeH, School of Gaming Slack Daq <code>/link</code> yIlo'.",
+      "relinkHint": "Slack ghItlh latlh DararmeH, ghItlhvam vo' School of Gaming Slack Daq <code>/link</code> yIlo'."
     },
     "marketing": {
       "title": "QIn chaw’mey",

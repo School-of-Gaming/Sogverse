@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { codeTag } from "@/components/ui/inline-code";
 import discordSymbol from "@/assets/partners/discord-symbol-blurple.svg";
+import slackMark from "@/assets/partners/slack-mark-color.svg";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -78,6 +79,9 @@ const GAMER_USERNAME_FIELD_ID = "settings-gamer-username";
 /** The Discord row's id, a constant for the same reason as the one above. */
 const DISCORD_FIELD_ID = "settings-discord";
 
+/** The Slack row's id, likewise. */
+const SLACK_FIELD_ID = "settings-slack";
+
 /**
  * A keyed location read, as the picker's own value shape. The two are already
  * the same information — a row plus its ancestors, nearest first — so this only
@@ -94,6 +98,7 @@ export function SettingsSectionContent({
   photoConsentGranted = false,
   mcpServerUrl,
   discordUsername,
+  slackUsername,
 }: {
   /**
    * The Discord username this account has linked, read by the route; `null`
@@ -105,6 +110,15 @@ export function SettingsSectionContent({
    * role test the field renders on.
    */
   discordUsername?: string | null;
+  /**
+   * The Slack username this account has linked, read by the route; `null` when
+   * it has linked none.
+   *
+   * **Absent means "not an admin"**: only an admin links a Slack account, so
+   * the route reads the link only for one, and its presence is the role test
+   * the field renders on.
+   */
+  slackUsername?: string | null;
   /**
    * This environment's MCP endpoint, built by the route on the request's
    * trusted origin.
@@ -728,6 +742,31 @@ export function SettingsSectionContent({
                   id={DISCORD_FIELD_ID}
                   value={discordUsername === null ? "" : `@${discordUsername}`}
                   placeholder={t('discord.notLinked')}
+                  disabled
+                  className="bg-lifted"
+                  aria-describedby={hintId}
+                />
+              )}
+            </Field>
+          )}
+
+          {/* The Discord field's twin, for an admin: read-only, because the
+              link is made from Slack, by the app's /link command. */}
+          {slackUsername !== undefined && (
+            <Field
+              label={t('slack.label')}
+              brandMark={slackMark}
+              htmlFor={SLACK_FIELD_ID}
+              hint={t.rich(
+                slackUsername === null ? 'slack.linkHint' : 'slack.relinkHint',
+                { code: codeTag },
+              )}
+            >
+              {({ hintId }) => (
+                <Input
+                  id={SLACK_FIELD_ID}
+                  value={slackUsername === null ? "" : `@${slackUsername}`}
+                  placeholder={t('slack.notLinked')}
                   disabled
                   className="bg-lifted"
                   aria-describedby={hintId}

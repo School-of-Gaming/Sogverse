@@ -1645,7 +1645,8 @@
         "error": "Det gick inte att uppdatera certifieringen. Försök igen."
       },
       "usernameLabel": "Användarnamn",
-      "discordNotLinked": "Inte kopplat"
+      "discordNotLinked": "Inte kopplat",
+      "slackNotLinked": "Inte kopplat"
     },
     "locations": {
       "editName": "Redigera {name}",
@@ -3880,6 +3881,12 @@
       "notLinked": "Inte kopplat",
       "linkHint": "Koppla ditt Discord-konto genom att skriva <code>/link</code> på School of Gamings Discord-server.",
       "relinkHint": "Koppla ett annat Discord-konto genom att skriva <code>/link</code> från det kontot på School of Gamings Discord-server."
+    },
+    "slack": {
+      "label": "Slack",
+      "notLinked": "Inte kopplat",
+      "linkHint": "Koppla ditt Slack-konto genom att skriva <code>/link</code> i School of Gamings Slack-arbetsyta.",
+      "relinkHint": "Koppla ett annat Slack-konto genom att skriva <code>/link</code> från det kontot i School of Gamings Slack-arbetsyta."
     },
     "marketing": {
       "title": "Marknadsföringsinställningar",

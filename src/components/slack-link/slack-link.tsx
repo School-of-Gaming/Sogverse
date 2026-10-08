@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import slackMark from "@/assets/partners/slack-mark-color.svg";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { codeTag } from "@/components/ui/inline-code";
@@ -83,6 +85,7 @@ export function SlackLinkConfirm({
 
   return (
     <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
+      <SlackMark />
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground">
@@ -133,6 +136,17 @@ export function SlackLinkRefused() {
   return <Outcome title={t("title")} body={t("body")} />;
 }
 
+/**
+ * Slack's own mark, as Slack ships it, at the head of every card on the page —
+ * the page is about a Slack account whatever its outcome, and the title beside
+ * it says which outcome. Decorative: the copy names Slack. Height only, so the
+ * width follows the file's proportions; `unoptimized` because the optimizer
+ * refuses SVG.
+ */
+function SlackMark() {
+  return <Image src={slackMark} alt="" height={40} unoptimized aria-hidden />;
+}
+
 function Outcome({
   title,
   body,
@@ -144,6 +158,7 @@ function Outcome({
 }) {
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
+      <SlackMark />
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">{title}</h1>
         <p className="text-muted-foreground">{body}</p>

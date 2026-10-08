@@ -1645,7 +1645,8 @@
         "error": "Hyväksynnän päivitys epäonnistui. Yritä uudelleen."
       },
       "usernameLabel": "Käyttäjätunnus",
-      "discordNotLinked": "Ei yhdistetty"
+      "discordNotLinked": "Ei yhdistetty",
+      "slackNotLinked": "Ei yhdistetty"
     },
     "locations": {
       "editName": "Muokkaa: {name}",
@@ -3880,6 +3881,12 @@
       "notLinked": "Ei yhdistetty",
       "linkHint": "Yhdistä Discord-tilisi kirjoittamalla <code>/link</code> School of Gamingin Discord-palvelimella.",
       "relinkHint": "Voit yhdistää toisen Discord-tilin kirjoittamalla <code>/link</code> sillä tilillä School of Gamingin Discord-palvelimella."
+    },
+    "slack": {
+      "label": "Slack",
+      "notLinked": "Ei yhdistetty",
+      "linkHint": "Yhdistä Slack-tilisi kirjoittamalla <code>/link</code> School of Gamingin Slack-työtilassa.",
+      "relinkHint": "Voit yhdistää toisen Slack-tilin kirjoittamalla <code>/link</code> sillä tilillä School of Gamingin Slack-työtilassa."
     },
     "marketing": {
       "title": "Markkinointiasetukset",

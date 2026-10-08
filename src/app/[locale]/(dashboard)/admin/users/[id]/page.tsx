@@ -50,7 +50,12 @@ import {
 import type { TeamProfileRecord } from "@/services/team-profiles/team-profiles.types";
 import { UserTeamProfileCard } from "@/components/admin/user-team-profile-card";
 import { teamMemberPublicAddress } from "@/components/team/team-address";
+import {
+  SlackLinkService,
+  type SlackLinkSummary,
+} from "@/services/slack-link/slack-link.service";
 import discordSymbol from "@/assets/partners/discord-symbol-blurple.svg";
+import slackMark from "@/assets/partners/slack-mark-color.svg";
 import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@/types";
 
 /**
@@ -199,6 +204,8 @@ export default async function AdminUserDetailPage({
   const hasTeamProfile = isGedu || profile.role === "admin";
   // The same two roles, and the only ones that can link a Discord account.
   const canLinkDiscord = isGedu || profile.role === "admin";
+  // Only an admin can link a Slack account.
+  const canLinkSlack = profile.role === "admin";
 
   // Game identities belong to the people who play — a child, and the educator
   // running the session. A parent's or another admin's account has none, which
@@ -230,6 +237,7 @@ export default async function AdminUserDetailPage({
     { record: teamProfile, publicAddress: teamProfileAddress },
     viewer,
     discordLink,
+    slackLink,
   ] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
@@ -280,6 +288,10 @@ export default async function AdminUserDetailPage({
     canLinkDiscord
       ? new DiscordLinkService(supabase).getLink(userId)
       : Promise.resolve<DiscordLinkSummary | null>(null),
+    // The same, for the Slack link only an admin can hold.
+    canLinkSlack
+      ? new SlackLinkService(supabase).getLink(userId)
+      : Promise.resolve<SlackLinkSummary | null>(null),
   ]);
 
   // Products this user is assigned to. For a gamer, their own participations;
@@ -393,6 +405,25 @@ export default async function AdminUserDetailPage({
                   {discordLink
                     ? `@${discordLink.discord_username}`
                     : t("discordNotLinked")}
+                </span>
+              </p>
+            )}
+            {/* The linked Slack account, for an admin, the one role that can
+                link one — the Discord line's twin, labelled the same way by
+                Slack's own mark. */}
+            {canLinkSlack && (
+              <p className="flex items-center gap-2 text-muted-foreground">
+                <Image
+                  src={slackMark}
+                  alt="Slack"
+                  height={16}
+                  unoptimized
+                  className="shrink-0"
+                />
+                <span>
+                  {slackLink
+                    ? `@${slackLink.slack_username}`
+                    : t("slackNotLinked")}
                 </span>
               </p>
             )}

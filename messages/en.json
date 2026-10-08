@@ -1645,7 +1645,8 @@
         "error": "Couldn’t update certification. Please try again."
       },
       "usernameLabel": "Username",
-      "discordNotLinked": "Not linked"
+      "discordNotLinked": "Not linked",
+      "slackNotLinked": "Not linked"
     },
     "locations": {
       "editName": "Edit {name}",
@@ -4567,6 +4568,12 @@
       "notLinked": "Not linked",
       "linkHint": "To link your Discord account, type <code>/link</code> in the School of Gaming Discord server.",
       "relinkHint": "To link a different Discord account, type <code>/link</code> from that account in the School of Gaming Discord server."
+    },
+    "slack": {
+      "label": "Slack",
+      "notLinked": "Not linked",
+      "linkHint": "To link your Slack account, type <code>/link</code> in the School of Gaming Slack workspace.",
+      "relinkHint": "To link a different Slack account, type <code>/link</code> from that account in the School of Gaming Slack workspace."
     },
     "marketing": {
       "title": "Marketing preferences",
