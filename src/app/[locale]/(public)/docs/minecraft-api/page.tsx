@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CodeBlock } from "@/components/ui/code-block";
 import { InlineCode as Code, codeTag } from "@/components/ui/inline-code";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -10,21 +11,6 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t("minecraftApi"),
     robots: { index: false, follow: false },
   };
-}
-
-function CodeBlock({ children, title }: { children: string; title?: string }) {
-  return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-lifted">
-      {title && (
-        <div className="border-b border-border px-4 py-2 text-xs font-medium text-muted-foreground">
-          {title}
-        </div>
-      )}
-      <pre className="p-4 text-sm leading-relaxed">
-        <code>{children}</code>
-      </pre>
-    </div>
-  );
 }
 
 function Field({

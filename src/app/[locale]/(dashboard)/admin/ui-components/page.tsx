@@ -31,6 +31,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Field } from "@/components/ui/field";
+import { CodeBlock } from "@/components/ui/code-block";
 import { InlineCode } from "@/components/ui/inline-code";
 import discordSymbol from "@/assets/partners/discord-symbol-blurple.svg";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
@@ -2515,6 +2516,32 @@ export default function AdminUIComponentsPage() {
               {label}
             </Badge>
           ))}
+        </div>
+      </Section>
+
+      <Section title="Code — inline and block">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-2">
+            <DemoCaption>Inline</DemoCaption>
+            <p className="text-sm leading-relaxed">
+              Send the key in the <InlineCode>Authorization</InlineCode> header;
+              a refused join answers <InlineCode>allowed: false</InlineCode>{" "}
+              with a <InlineCode>reason</InlineCode>.
+            </p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              To link your Discord account, type <InlineCode>/link</InlineCode>{" "}
+              in the School of Gaming Discord server.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>Block, untitled</DemoCaption>
+            <CodeBlock>{`Authorization: Bearer <key>`}</CodeBlock>
+          </div>
+          <div className="space-y-2 lg:col-span-2">
+            <DemoCaption>Block, titled, long line</DemoCaption>
+            <CodeBlock title="curl">{`curl -H "Authorization: Bearer <key>" \\
+  "https://sogverse.example/api/minecraft/join-check?uuid=069a79f4-44e9-4726-a5be-fca90e38aaf5"`}</CodeBlock>
+          </div>
         </div>
       </Section>
 
