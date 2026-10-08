@@ -1,8 +1,19 @@
+-- A session nobody in the group was expected at owes nothing.
 --
--- Name: gedu_assignment_summaries(uuid, date); Type: FUNCTION; Schema: public; Owner: -
+-- A group with nobody in it for its first weeks, whose first members joined
+-- later, flagged those first weeks as needing attention the moment anybody
+-- joined: the dashboard count exempted an empty group by its CURRENT roster,
+-- so a group that filled up later owed a report and a mail for sessions
+-- nobody was in. The register condition already measured only the members
+-- expected on each occurrence; the exemption now measures the same set. An
+-- occurrence on which no active member had joined before it ended is not
+-- counted, and an empty group falls out of the same test.
 --
+-- The TypeScript twin — the gedu feed's entry-state derivation — makes the
+-- same change in the same commit. The function's grants are unchanged by
+-- CREATE OR REPLACE.
 
-CREATE FUNCTION public.gedu_assignment_summaries(p_gedu_id uuid, p_epoch_date date) RETURNS jsonb
+CREATE OR REPLACE FUNCTION public.gedu_assignment_summaries(p_gedu_id uuid, p_epoch_date date) RETURNS jsonb
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -426,18 +437,4 @@ BEGIN
 END;
 $$;
 
-
---
--- Name: FUNCTION gedu_assignment_summaries(p_gedu_id uuid, p_epoch_date date); Type: COMMENT; Schema: public; Owner: -
---
-
 COMMENT ON FUNCTION public.gedu_assignment_summaries(p_gedu_id uuid, p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s participant count (an active seat may be held by an adult as well as by a child), the venue name on in-person products, and how many past sessions still need attention. A finished session on or after the epoch counts until ALL of: the register is in, a family-facing report is written, the mail telling the families it is there has been sent, and — on the run''s FINAL session of a product with requires_gamer_creations set — every current roster member has at least one creation. The register condition is scoped to the members who had JOINED the group before that occurrence ended: both the marks counted and the size they are compared against, off participations.group_joined_at against an end instant resolved once per occurrence (the stored row''s ends_at, else the min slot end for that weekday, which is the same instant the "has it finished" test already used). group_participant_count deliberately keeps measuring the WHOLE current roster — a card''s headcount is not a per-occurrence question. The empty-group exemption is: an occurrence on which no member was expected owes nothing at all, so a group whose first members joined after its first sessions had run owes no register, report or mail for those sessions. The report and mail conditions are unscoped because a session owes those whoever was in the room. The creations condition carries the SAME join-date scoping as the register condition, on the owner''s principle that a gedu owes a creation for every gamer who was in the group at the time of the last session — so a seat placed into the group after the final session ended owes nothing, and one occurrence cannot answer "who was this for" two different ways. Only the JOIN half of that principle is expressible: a member who has since LEFT owes nothing, because the roster is active seats and a departure leaves no trace. The final session is the last occurrence the schedule projects on or before end_date that the group has not cancelled, derived here rather than stored — so a cancelled last session hands the creations condition to the one before it; an open-ended product (end_date NULL) has none and therefore never owes creations, which is documented behaviour rather than an error. A CANCELLED occurrence is never owed, by group_session_is_cancelled — including a cancelled record the schedule no longer projects, which the stored-row arm would otherwise reach: nothing ran, and a record kept under a cancellation is frozen. The badge''s unit is the SESSION: it counts sessions needing attention, and the final one simply has one more way to need it. The enforcement epoch travels in as an argument because it is a code constant, not a column. This count has a twin in TypeScript — the gedu feed''s entry-state derivation, which answers the same question for one card — and the two must be changed together, on all four conditions and on who a session is for, which scopes two of them. A SECOND KIND OF SEAT feeds the same machinery: a `substitution` row per substitution date, carrying `kind` and `substitution_date`, whose owed count is the same four conditions applied to a set of one occurrence — so it is 0 or 1 and never a term''s worth. That arm asks gedu_holds_unexpired_substitution rather than gedu_substitutes_session: the card stands from approval, where the workspace behind it opens 48 hours before the substituted session, and a card that waited for the workspace would hide from a sub the afternoon they had agreed to take. A substitution still locked owes nothing by construction, because every occurrence this count ranges over has already ended. A THIRD KIND, `trainee`: a row per gedu_group_trainees seat with substitution_date null, the group name, participant count and venue name like an assignment row, and an attention_count that is always 0 — what a session owes is the staff''s work, so no staff-only aggregate is computed for a trainee seat.';
-
-
---
--- Name: FUNCTION gedu_assignment_summaries(p_gedu_id uuid, p_epoch_date date); Type: ACL; Schema: public; Owner: -
---
-
-REVOKE ALL ON FUNCTION public.gedu_assignment_summaries(p_gedu_id uuid, p_epoch_date date) FROM PUBLIC;
-
-

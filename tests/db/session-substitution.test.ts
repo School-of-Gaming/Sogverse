@@ -460,8 +460,11 @@ describe("session substitutions", () => {
       },
     ]);
 
-    // One active seat on GROUP_A, because the assignment summaries' owed count is
-    // guarded on a non-empty roster.
+    // One active seat on GROUP_A, because the assignment summaries only count a
+    // past session someone was expected at. Its join is backdated a month: the
+    // stamping trigger sets `group_joined_at` to now(), which would put the seat
+    // in its group after every past occurrence. An UPDATE that does not name
+    // `group_id` leaves the trigger silent.
     await admin.from("participations").insert({
       product_id: PRODUCT,
       group_id: GROUP_A,
@@ -469,6 +472,10 @@ describe("session substitutions", () => {
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
     });
+    await admin
+      .from("participations")
+      .update({ group_joined_at: `${utcDate(-30)}T00:00:00.000Z` })
+      .eq("product_id", PRODUCT);
   });
 
   afterAll(async () => {

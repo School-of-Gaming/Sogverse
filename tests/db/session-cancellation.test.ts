@@ -152,6 +152,16 @@ describe("session cancellation", () => {
       status: "active",
     });
     expect(seat.error).toBeNull();
+    // The seat joins at the product's start, not at the instant it was built:
+    // the stamping trigger sets `group_joined_at` to now(), and a member who
+    // joined today was expected at no past session, so the owed count these
+    // tests measure would be nought before anything is cancelled. An UPDATE
+    // that does not name `group_id` leaves the trigger silent.
+    const joined = await admin
+      .from("participations")
+      .update({ group_joined_at: `${dayOffset(-30)}T00:00:00.000Z` })
+      .eq("id", PARTICIPATION);
+    expect(joined.error).toBeNull();
 
     const assignment = await admin.from("gedu_group_assignments").insert({
       product_id: PRODUCT,

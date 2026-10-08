@@ -503,6 +503,26 @@ describe("entryCompleteness", () => {
     ).toBe("complete");
   });
 
+  it("never flags a session nobody in the group was expected at", () => {
+    // A group empty for its first weeks, whose first members joined after
+    // those weeks had run. Nobody was there to mark and no family was owed a
+    // write-up, so the exemption is measured on who the session expected, not
+    // on who is in the group today.
+    const joinedLater = [lateJoiner("d", "Linnéa"), lateJoiner("e", "Onni")];
+    expect(entryCompleteness(past("empty-week"), joinedLater)).toBeNull();
+    // One member the session did expect is enough to owe it again.
+    expect(
+      entryCompleteness(past("empty-week"), [...joinedLater, ROSTER[0]]),
+    ).toBe("needs_attention");
+    // Only the warning is suppressed: finishing it still earns the check.
+    expect(
+      entryCompleteness(
+        past("written", { report: "# Week", reportEmailedAt: EMAILED_AT }),
+        joinedLater,
+      ),
+    ).toBe("complete");
+  });
+
   it("stays complete when a child joins the group after the sheet was finished", () => {
     // The reported bug, at the level the card decides it. There is no
     // unanswered question about a child who was not in the group, so growing
@@ -716,6 +736,23 @@ describe("countEntriesNeedingAttention", () => {
 
   it("is zero for an empty feed", () => {
     expect(countEntriesNeedingAttention([], ROSTER)).toBe(0);
+  });
+
+  it("skips the sessions that ran before anybody in the group had joined", () => {
+    // The early weeks of a group that filled up later, beside one it ran
+    // with a member in it. Only the second is anybody's work.
+    const before = past("before");
+    const after: PastSessionFeedEntry = {
+      ...past("after"),
+      startsAt: new Date(START.getTime() + 7 * 24 * 60 * 60 * 1000),
+      endsAt: new Date(END.getTime() + 7 * 24 * 60 * 60 * 1000),
+    };
+    expect(
+      countEntriesNeedingAttention(
+        [before, after],
+        [lateJoiner("d", "Linnéa"), lateJoiner("e", "Onni")],
+      ),
+    ).toBe(1);
   });
 
   it("counts the final session once, however many members owe a creation", () => {

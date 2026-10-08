@@ -239,14 +239,18 @@ export type SessionCompleteness = "needs_attention" | "complete";
  * neutral however little is on them, and both can still reach `complete` —
  * somebody who goes back and finishes an old session earns the check for it.
  *
- * **A group with nobody in it is never flagged.** There is no register to finish
- * and no family to write to, so an empty roster must not turn into a backlog of
- * one alert per week — the same exemption the dashboard's server-side count
- * applies, and the two have to agree or the badge and the feed behind it tell
- * different stories. It is only the *warning* that is suppressed: a week that
- * was finished while the group still had children in it keeps its check when
- * the last of them leaves, rather than a whole year of history going grey the
- * day a club empties out.
+ * **A session nobody in the group was expected at is never flagged.** There
+ * was no register to take and no family to write to, so an empty group must not
+ * turn into a backlog of one alert per week — and nor must a group whose first
+ * members joined after its first weeks had already run. The test is the roster
+ * **expected on that session** (see {@link isExpectedOnEntry}), never the
+ * current roster: a group that fills up later owes nothing for the weeks before
+ * it did. It is the same exemption the dashboard's server-side count applies,
+ * and the two have to agree or the badge and the feed behind it tell different
+ * stories. It is only the *warning* that is suppressed: a week that was finished
+ * while the group still had children in it keeps its check when the last of
+ * them leaves, rather than a whole year of history going grey the day a club
+ * empties out.
  *
  * Attendance is measured against the *current* roster, never the stored map's
  * keys — but only over the members that roster **expected** on this session.
@@ -342,7 +346,9 @@ export function entryCompleteness(
   // `viewerRequest` is null for a surface with no viewer, which is what keeps
   // the admin group page flagging a session the admin still has to chase.
   if (entry.staffing.viewerRequest !== null) return null;
-  return entry.owed && roster.length > 0 ? "needs_attention" : null;
+  return entry.owed && roster.some((gamer) => isExpectedOnEntry(entry, gamer))
+    ? "needs_attention"
+    : null;
 }
 
 /**
@@ -371,7 +377,7 @@ export function entryNeedsAttention(
   roster: readonly SessionFeedGamer[],
   creations: CreationsObligation | null = null,
 ): boolean {
-  // Reads the state rather than re-deriving it, so the epoch and empty-roster
+  // Reads the state rather than re-deriving it, so the epoch and nobody-expected
   // exemptions above are applied exactly once and the badge can never disagree
   // with the card.
   return entryCompleteness(entry, roster, creations) === "needs_attention";
