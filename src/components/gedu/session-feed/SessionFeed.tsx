@@ -926,7 +926,7 @@ export function SessionFeed({
  *
  * The neutral dot is what is left when a past session says nothing about
  * itself: a pre-epoch week, a session still under way, an unfinished sheet on a
- * group with nobody in it. A session marked off but never written up is **not**
+ * session nobody in the group was expected at. A session marked off but never written up is **not**
  * one of them any more — the report is owed work now, so that dot takes the
  * warning tone like any other gap. The run of grey is what the green and the
  * warning are measured
