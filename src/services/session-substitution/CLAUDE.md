@@ -244,6 +244,16 @@ the seat is still open, because a session with nobody in it is the thing this
 feature exists to prevent, and the *informational* one once a sub is approved,
 because that is settled. No colour is invented for either.
 
+**A gedu also sees their own requests on the Substitutions page**, under "Your
+requests" above the pool *(owner, 2026-10)*: one card per live request — the
+session in the shared session facts, and the **same panel component** the
+session card draws, withdraw included, so the two cannot disagree. Its rows are
+the caller's live-requests read, which carries each request's group name,
+product shell and whether the session is cancelled; a cancelled session's
+request is left out there, as everywhere a request is described. The section is
+not drawn at all — no heading, no empty line — while the gedu has no live
+request.
+
 **The two can never be on one card**, and nothing checks for that: a gedu
 holding a non-withdrawn request is not expected at the session, so the menu's
 own condition already excludes them. Do not add a second test for it — a card

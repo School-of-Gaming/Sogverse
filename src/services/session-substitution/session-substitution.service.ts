@@ -7,6 +7,7 @@ import {
   openSubstitutionRequests,
   type AdminSubstitutionRequest,
   type AnonymousSubstitutionRequestDocument,
+  type LiveSubstitutionRequest,
   type SubstitutionRequestDocument,
   type OpenSubstitutionRequest,
 } from "./session-substitution.contracts";
@@ -57,7 +58,7 @@ export class SessionSubstitutionService {
    * — which are exactly the sessions the filing write would refuse a second
    * absence on. The absence picker shows those sessions disabled.
    */
-  async getMyLiveRequests(): Promise<SubstitutionRequestDocument[]> {
+  async getMyLiveRequests(): Promise<LiveSubstitutionRequest[]> {
     const { data, error } = await this.supabase.rpc(
       "get_my_live_substitution_requests",
     );

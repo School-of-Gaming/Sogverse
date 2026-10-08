@@ -15,8 +15,8 @@ import { sessionSubstitutionKeys } from "./session-substitution.keys";
 import { SessionSubstitutionService } from "./session-substitution.service";
 import type {
   AdminSubstitutionRequest,
+  LiveSubstitutionRequest,
   OpenSubstitutionRequest,
-  SubstitutionRequestDocument,
 } from "./session-substitution.contracts";
 
 /** React Query bindings for session substitutions. */
@@ -92,7 +92,7 @@ export function useOpenSubstitutionRequests(options?: {
  * withdrawing an absence anywhere refreshes it.
  */
 export function useMyLiveSubstitutionRequests(options?: {
-  initialData?: SubstitutionRequestDocument[];
+  initialData?: LiveSubstitutionRequest[];
 }) {
   const service = new SessionSubstitutionService(getClient());
 

@@ -106,18 +106,6 @@ export const substitutionRequestDocument = z.object({
 export type SubstitutionRequestDocument = z.infer<typeof substitutionRequestDocument>;
 
 /**
- * **The caller's own live requests** — every request they filed that is not
- * withdrawn, dated today or later in the product's zone, soonest first.
- *
- * "Live" is the very condition the filing write refuses a second filing on, so
- * a session whose `(group_id, session_date)` is here is one the write would
- * refuse: the absence picker shows it disabled and the Discord bot leaves it
- * out. The documents are the requester's own reading, so the named schema
- * holds — the requester is always disclosed to themselves.
- */
-export const liveSubstitutionRequests = z.array(substitutionRequestDocument);
-
-/**
  * **The same document with the absent gedu withheld** — what the offer and the
  * decline return to the gedu who answered the pool.
  *
@@ -196,6 +184,36 @@ export const sessionProductDocument = z.object({
 });
 
 export type SessionProductDocument = z.infer<typeof sessionProductDocument>;
+
+/**
+ * **One of the caller's own live requests** — the request document as its
+ * requester reads it, plus the session it is on: the group's name and the
+ * product shell every substitution surface describes a session from.
+ *
+ * Live means not withdrawn and dated today or later in the product's zone,
+ * which is the very condition the filing write refuses a second filing on, so
+ * a session whose `(group_id, session_date)` is here is one the write would
+ * refuse: the absence picker shows it disabled and the Discord bot leaves it
+ * out. The same rows are the Substitutions page's "Your requests" cards. The
+ * documents are the requester's own reading, so the named schema holds — the
+ * requester is always disclosed to themselves, and the offer count travels.
+ */
+export const liveSubstitutionRequest = substitutionRequestDocument.extend({
+  group_name: z.string(),
+  product: sessionProductDocument,
+  /**
+   * Whether the session is cancelled. Its request is still live — the filing
+   * write refuses a second one there, so the picker still disables it — but a
+   * surface describing requests hides it, as the pool and the admin page do: a
+   * session that is not happening needs no cover.
+   */
+  session_cancelled: z.boolean(),
+});
+
+export type LiveSubstitutionRequest = z.infer<typeof liveSubstitutionRequest>;
+
+/** Every one of them, soonest date first. */
+export const liveSubstitutionRequests = z.array(liveSubstitutionRequest);
 
 /**
  * One line of the pool — an open request this gedu could actually take.

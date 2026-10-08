@@ -2580,6 +2580,7 @@
       "back": "Retour à Mon SOG",
       "mineHeading": "Vos remplacements",
       "mineAllClear": "Vous n’avez aucun remplacement à venir.",
+      "ownRequestsHeading": "Vos demandes",
       "fileAction": "Vous ne pouvez pas assurer une séance ?",
       "filePickTitle": "Pour quelle séance avez-vous besoin d’un remplaçant ?",
       "filePickBody": "Votre motif et votre note ne sont visibles que par les administrateurs.",

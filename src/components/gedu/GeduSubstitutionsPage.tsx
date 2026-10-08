@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocale } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
 import type { AppHrefObject } from "@/lib/constants/routes";
@@ -8,6 +9,7 @@ import {
   geduAssignmentKey,
   rollUpGeduSubstitutions,
 } from "@/lib/gedu-assignment-rollup";
+import { buildOwnSubstitutionRequestRows } from "@/lib/gedu-own-substitution-requests";
 import {
   alreadyRequestedSessionKeys,
   buildGeduUpcomingSessions,
@@ -27,21 +29,24 @@ import {
   type GeduAssignmentSummary,
 } from "@/services/gedu-sessions";
 import {
+  sessionSubstitutionKeys,
   useMyLiveSubstitutionRequests,
   useOpenSubstitutionRequests,
   useRequestSessionSubstitution,
+  useWithdrawSessionSubstitutionRequest,
+  type LiveSubstitutionRequest,
   type OpenSubstitutionRequest,
-  type SubstitutionRequestDocument,
 } from "@/services/session-substitution";
 import { GeduFileAbsenceEntry } from "./GeduFileAbsenceEntry";
 import { GeduSubstitutionPoolSection } from "./GeduSubstitutionPoolSection";
 import { GeduSubstitutionsPageBody } from "./gedu-substitutions-page-body";
 
 /**
- * The Substitutions page's data shell: four reads and one write, no layout.
+ * The Substitutions page's data shell: four reads and two writes, no layout.
  *
  * The pool and the gedu's own live requests are this feature's reads — the
- * second is what the absence picker disables its already-asked rows by. The
+ * second is both the "Your requests" cards and what the absence picker disables
+ * its already-asked rows by, and withdrawing is those cards' write. The
  * other two are the dashboard's, and they are here for the same reason they are
  * there — the seats a gedu holds arrive as assignment rows, and the group name
  * and the outstanding-write-up count that go on each card arrive with the
@@ -84,7 +89,7 @@ export function GeduSubstitutionsPage({
    * file-an-absence entry renders nothing: the picker snapshots these keys when
    * it opens, and a dialog opened before the answer would hold none of them.
    */
-  initialLiveRequests: SubstitutionRequestDocument[] | null;
+  initialLiveRequests: LiveSubstitutionRequest[] | null;
   /**
    * Has an admin certified this gedu? Certification is what gates offering and
    * holding a substitution server-side, so an uncertified account gets no open
@@ -95,6 +100,8 @@ export function GeduSubstitutionsPage({
   const locale = resolveLocale(useLocale());
   const now = useNow();
   const requestSubstitution = useRequestSessionSubstitution();
+  const withdrawRequest = useWithdrawSessionSubstitutionRequest();
+  const queryClient = useQueryClient();
 
   const { data: rows } = useMyAssignedProducts({ initialData: initialRows });
   const { data: summaries } = useGeduAssignmentSummaries(
@@ -119,6 +126,28 @@ export function GeduSubstitutionsPage({
         : [...alreadyRequestedSessionKeys(liveRequests)],
     [liveRequests],
   );
+
+  const ownRequests = useMemo(
+    () =>
+      liveRequests === undefined
+        ? null
+        : buildOwnSubstitutionRequestRows(liveRequests, locale),
+    [liveRequests, locale],
+  );
+
+  /**
+   * Withdrawing one of the reader's own requests, for the panel's confirm to
+   * hold on. The mutation invalidates the feature's four roots and waits for
+   * none of them, so this also waits for the feature's own reads — the card is
+   * gone by the time the dialog lets go. **It does not catch**: a refusal is
+   * what the dialog is still open to read out.
+   */
+  const withdrawOwnRequest = async (requestId: string) => {
+    await withdrawRequest.mutateAsync({ requestId });
+    await queryClient.invalidateQueries({
+      queryKey: sessionSubstitutionKeys.all,
+    });
+  };
 
   const substitutions = useMemo(() => {
     if (summaries === undefined) return null;
@@ -188,6 +217,8 @@ export function GeduSubstitutionsPage({
           />
         )
       }
+      ownRequests={ownRequests}
+      onWithdrawOwnRequest={withdrawOwnRequest}
       // `null` for the account that may substitute for nothing, and only for
       // that account: an answer that has not arrived is the section's own
       // business, so the heading stands either way.

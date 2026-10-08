@@ -25,9 +25,9 @@ import type { GeduAssignmentRole, SubstitutionOfferResponse } from "@/types";
  * which language, and what the role pays.
  *
  * Pure, and clock-free. Whether a request is still worth offering on is the
- * database's answer — it returns open requests dated today or later inside a
- * sixty-day window — and a second filter here would be the page disagreeing
- * with the write it is about to make.
+ * database's answer — it returns open requests dated today or later — and a
+ * second filter here would be the page disagreeing with the write it is about
+ * to make.
  */
 
 /** One offerable session, in the shape the section renders it. */
@@ -90,6 +90,15 @@ export function isSubstitutionUrgent(
 }
 
 /**
+ * What the soonest-first order reads off a row — the pool's, and the gedu's own
+ * requests on the same page, which are ordered the same way.
+ */
+export interface SortableSubstitutionRow {
+  requestId: string;
+  session: Pick<SessionFacts, "startsAt" | "sessionDate" | "timezone">;
+}
+
+/**
  * The instant a row is ordered by: when its session starts, or — for a date the
  * schedule no longer projects — the last moment of that day in the product's own
  * zone.
@@ -98,7 +107,7 @@ export function isSubstitutionUrgent(
  * only honest place for it: it is somewhere on that date, so it sorts after
  * every session that day whose time is known and before the next day's.
  */
-function poolSortInstant({ session }: SubstitutionPoolRow): number {
+function poolSortInstant({ session }: SortableSubstitutionRow): number {
   if (session.startsAt !== null) return session.startsAt.getTime();
   return fromZonedTime(
     `${session.sessionDate}T23:59:59.999`,
@@ -115,9 +124,9 @@ function poolSortInstant({ session }: SubstitutionPoolRow): number {
  * grid under a reader's pointer. Pure, and clock-free: what makes a row urgent
  * is a question for the moment of render, and it is asked separately.
  */
-export function sortSubstitutionPoolRows(
-  rows: readonly SubstitutionPoolRow[],
-): SubstitutionPoolRow[] {
+export function sortSubstitutionPoolRows<Row extends SortableSubstitutionRow>(
+  rows: readonly Row[],
+): Row[] {
   return [...rows].sort((a, b) => {
     const byMoment = poolSortInstant(a) - poolSortInstant(b);
     if (byMoment !== 0) return byMoment;

@@ -14,14 +14,15 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 
 /**
- * The Substitutions page as a gedu meets it: the open queue above, what they
- * have taken below.
+ * The Substitutions page as a gedu meets it: their own requests first, the
+ * open queue below them, what they have taken last.
  *
  * The real section view over fixture rows, with every write inert — the same
  * split every other scene takes. Offering, withdrawing and filing an absence
  * reach the database, so they do nothing here; what is on show is the card
  * itself, the two resting states of its one control, the urgency treatment on
- * the sessions inside the next day, the confirm dialog the offer opens, and the
+ * the sessions inside the next day, the confirm dialog the offer opens, the
+ * reader's own requests in both states with the withdraw confirm, and the
  * quiet "Can't make a session?" entry under the title with its two-step dialog
  * — the picker over this gedu's own sessions, one of them already asked for,
  * and the reason form the session cards open from their own overflow menus.
@@ -74,6 +75,8 @@ export function GeduSubstitutionsScene({
           onFile={inertWrite}
         />
       }
+      ownRequests={fixture.ownRequests}
+      onWithdrawOwnRequest={inertWrite}
       pool={
         <GeduSubstitutionPoolSectionView
           rows={fixture.pool}

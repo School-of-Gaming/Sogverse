@@ -2580,6 +2580,7 @@
       "back": "Takaisin Omaan SOGiin",
       "mineHeading": "Tuurauksesi",
       "mineAllClear": "Sinulla ei ole tulevia tuurauksia.",
+      "ownRequestsHeading": "Tuurauspyyntösi",
       "fileAction": "Etkö pääse jollekin kerralle?",
       "filePickTitle": "Mille kerralle tarvitset tuuraajan?",
       "filePickBody": "Syy ja viesti näkyvät vain ylläpitäjille.",

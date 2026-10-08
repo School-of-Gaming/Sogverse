@@ -90,6 +90,14 @@ const REQUEST_DOCUMENT = {
   reason_note: null,
 };
 
+/** The same request as the live-requests read returns it, with its session. */
+const LIVE_REQUEST = {
+  ...REQUEST_DOCUMENT,
+  group_name: "Monday Cohort",
+  product: ASSIGNMENT_ROW.product,
+  session_cancelled: false,
+};
+
 /** Answers each function by name, as the service-role client would. */
 function answer(byName: Record<string, { data?: unknown; error?: unknown }>) {
   const results = new Map(Object.entries(byName));
@@ -173,9 +181,9 @@ describe("getDiscordGeduUpcomingSessions", () => {
       get_gedu_assignment_summaries_for_discord_user: { data: [SUMMARY] },
       get_live_substitution_requests_for_discord_user: {
         data: [
-          REQUEST_DOCUMENT,
+          LIVE_REQUEST,
           {
-            ...REQUEST_DOCUMENT,
+            ...LIVE_REQUEST,
             id: "3c4d5e6f-7a8b-4c9d-8e0f-2a3b4c5d6e7f",
             group_id: PRODUCT_ID,
             session_date: "2026-10-26",

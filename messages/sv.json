@@ -2580,6 +2580,7 @@
       "back": "Tillbaka till Min SOG",
       "mineHeading": "Dina vikariat",
       "mineAllClear": "Du har inga kommande vikariat.",
+      "ownRequestsHeading": "Dina förfrågningar",
       "fileAction": "Kan du inte vara med på ett tillfälle?",
       "filePickTitle": "Vilket tillfälle behöver du en vikarie för?",
       "filePickBody": "Din orsak och din kommentar visas bara för administratörer.",
