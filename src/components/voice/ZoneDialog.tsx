@@ -54,7 +54,7 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
   );
   const [isLocked, setIsLocked] = useState(zone?.is_locked ?? false);
   const [committing, setCommitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
 
   // The dialog frame previews the selected color the same way an active zone
   // card does: high-contrast border + the color's inset glow spilling in from
@@ -70,7 +70,7 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setCommitting(true);
-    setError(null);
+    setSaveFailed(false);
     try {
       if (isEdit) {
         await updateZone(zone.id, { name: nameValue, icon, color });
@@ -79,7 +79,10 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
       }
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : c("unexpectedError"));
+      // A zone write goes straight to Supabase, so its refusal is Postgres
+      // English: for the log, never the dialog.
+      console.error("[zone-dialog] zone save failed:", err);
+      setSaveFailed(true);
       setCommitting(false);
     }
   };
@@ -147,7 +150,7 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
             </button>
           )}
 
-          {error && <StatusLine status="destructive">{error}</StatusLine>}
+          {saveFailed && <StatusLine status="destructive">{t("zoneSaveFailed")}</StatusLine>}
         </div>
 
         <DialogFooter>

@@ -17,6 +17,7 @@ import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
 import { robloxKeys } from "@/services/roblox/roblox.queries";
 import { familyKeys } from "@/services/family";
 import type { CreateGamerInput, GamerProfile } from "@/types";
+import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 
 export const gamerKeys = {
   all: ["gamers"] as const,
@@ -32,8 +33,8 @@ export const gamerKeys = {
   // Keyed on the ids asked about, sorted so the same set of children asked
   // about in a different order is one cache entry rather than a second fetch of
   // identical rows.
-  birthDates: (userIds: readonly string[]) =>
-    [...gamerKeys.all, "birth-dates", [...userIds].sort().join(",")] as const,
+  births: (userIds: readonly string[]) =>
+    [...gamerKeys.all, "births", [...userIds].sort().join(",")] as const,
 };
 
 // Defaults to enabled so dashboard call sites (which are already gated to
@@ -153,8 +154,8 @@ export function useSendGamerVerificationEmail() {
 }
 
 /**
- * The birth date of each named child, keyed by id, for a surface rendering a
- * whole roster at once.
+ * The birth year and month of each named child, keyed by id, for a surface
+ * rendering a whole roster at once.
  *
  * The sign-in hook above in every respect that matters — bounded by the ids the
  * caller is already holding, a `Map` because every caller looks a child up by
@@ -163,7 +164,7 @@ export function useSendGamerVerificationEmail() {
  *
  * **`isPending` is the load-bearing part here, and it means "has never
  * resolved" rather than "is not resolved right now".** The enrolment panel
- * decides from this whether a picker row is selectable at all, so a birth date
+ * decides from this whether a picker row is selectable at all, so a birth
  * landing after first paint would flip a row from enabled to disabled under a
  * parent who may already have clicked it — a change on data's own schedule,
  * which the layout rules forbid. The detail page holds its skeleton on this
@@ -175,7 +176,7 @@ export function useSendGamerVerificationEmail() {
  * `placeholderData` the new key would be pending, the page would return to its
  * skeleton, and the panel would unmount with every ticked box and the new
  * child's preselection in it. `keepPreviousData` holds the previous map across
- * the re-key instead: the child who has just arrived carries no birth date for
+ * the re-key instead: the child who has just arrived carries no birth for
  * one round trip (no age pill, blocked by nothing) and gains one when the read
  * lands. That late arrival is a change inside the row the parent themselves
  * just created, by the action they just took, which is what the layout rule
@@ -192,22 +193,27 @@ export function useSendGamerVerificationEmail() {
  * whole retry window. The first failed attempt is enough to know this read is
  * not going to answer in time.
  */
-export function useGamerBirthDates(userIds?: readonly string[]) {
+export function useGamerBirths(userIds?: readonly string[]) {
   const supabase = getClient();
   const service = new GamerService(supabase);
 
   const ids = useMemo(() => userIds ?? [], [userIds]);
 
   const { data, isPending, isError, failureCount } = useQuery({
-    queryKey: gamerKeys.birthDates(ids),
-    queryFn: () => service.getGamerBirthDates(ids),
+    queryKey: gamerKeys.births(ids),
+    queryFn: () => service.getGamerBirths(ids),
     enabled: ids.length > 0,
     placeholderData: keepPreviousData,
   });
 
   const map = useMemo(
     () =>
-      new Map((data ?? []).map((row) => [row.user_id, row.date_of_birth])),
+      new Map<string, GamerBirthMonthYear>(
+        (data ?? []).map((row) => [
+          row.user_id,
+          { year: row.birth_year, month: row.birth_month },
+        ]),
+      ),
     [data],
   );
 
@@ -242,7 +248,7 @@ export function useGamerProfile(
 }
 
 /**
- * An admin correcting the birth date / gender on a gamer's profile row.
+ * An admin correcting the birth year and month / gender on a gamer's profile row.
  *
  * The write returns the stored row, so the cache is *set* from it before being
  * invalidated: the card reads its values back from this key, and seeding it

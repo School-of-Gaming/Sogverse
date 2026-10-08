@@ -11,7 +11,6 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
-import { readErrorMessage } from "@/lib/api/json-response";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
@@ -20,54 +19,44 @@ import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
 import { completeRegistrationQuery } from "@/lib/navigation/post-auth-redirect";
 import { ContinueWithGoogle } from "./continue-with-google";
-import { NameFields, nameSchemaFields } from "./name-fields";
+import { NameFields, useNameSchemaFields } from "./name-fields";
 import { ParentAccountFields, useParentAccountFields } from "./parent-account-fields";
 
-const registerSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string(),
-  ...nameSchemaFields,
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+const MIN_PASSWORD_LENGTH = 8;
 
-/** Just the machine-readable half of a refusal; the message is read separately. */
-const refusalCode = z.object({ code: z.string().optional() });
+/** The machine-readable half of a refusal; the route's `error` is for the log. */
+const refusal = z.object({ error: z.string().optional(), code: z.string().optional() });
 
 /**
- * Which sentence a refused registration shows.
+ * Which `auth.register` sentence a refused registration shows.
  *
- * Two refusals are ours to word, because the parent can act on both and the
- * route's `error` strings are raw English written for a log. A 409 is the
- * address already having an account. A `WEAK_PASSWORD` code is the password
- * being the problem — the case that most needs its own answer, because the
- * generic one ends "if you already have an account, sign in instead", and going
- * to look for a sign-in is precisely the wrong move when no account exists and
- * the fix is one field away. Everything else keeps the route's own message,
- * which is the honest thing to show for a refusal nobody predicted.
- *
- * The code is read off a clone so `readErrorMessage` can still read the
- * original: a Response body is consumed once, and both readers want it.
+ * The route's `error` strings are raw English written for a log, so every
+ * refusal is ours to word. A 409 is the address already having an account. A
+ * `WEAK_PASSWORD` code is the password being the problem, and gets its own
+ * answer: looking for a sign-in is precisely the wrong move when no account
+ * exists and the fix is one field away. Anything else is the route's catch-all
+ * for a failure it did not recognise — which can still be an address that
+ * already has an account — so the generic line says the address could not be
+ * registered and points an existing account holder at sign-in. That hint is
+ * safe there only because the weak-password case never reaches it. The
+ * route's own words go to the console.
  */
-async function refusalMessage(
+async function refusalKey(
   response: Response,
-  messages: { accountExists: string; weakPassword: string; unexpected: string },
-): Promise<string> {
-  if (response.status === 409) return messages.accountExists;
+): Promise<"accountExists" | "weakPassword" | "failed"> {
+  if (response.status === 409) return "accountExists";
 
-  const parsed = refusalCode.safeParse(
-    await response
-      .clone()
-      .json()
-      .catch(() => null),
-  );
+  const parsed = refusal.safeParse(await response.json().catch(() => null));
   if (parsed.success && parsed.data.code === REGISTER_WEAK_PASSWORD) {
-    return messages.weakPassword;
+    return "weakPassword";
   }
 
-  return readErrorMessage(response, messages.unexpected);
+  console.error(
+    "[register-form] registration refused:",
+    response.status,
+    parsed.success ? parsed.data.error : undefined,
+  );
+  return "failed";
 }
 
 export function RegisterForm({ redirect: redirectParam }: { redirect: string | null }) {
@@ -87,11 +76,28 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const account = useParentAccountFields();
+  const nameFields = useNameSchemaFields();
+  // Every writer hands this an already-translated sentence: the schema below,
+  // the account fields' refusal and the Google button's failure.
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [googlePending, setGooglePending] = useState(false);
 
   const supabase = getClient();
+
+  // Built here rather than at module level so its refusals are in the reader's
+  // language. Compared via member expressions (d.password), not a bare
+  // `password === confirmPassword`, which trips
+  // security/detect-possible-timing-attacks for two client-side form fields.
+  const registerSchema = z.object({
+    email: z.string().email(t('validation.emailInvalid')),
+    password: z.string().min(MIN_PASSWORD_LENGTH, c('passwordMinLength', { count: MIN_PASSWORD_LENGTH })),
+    confirmPassword: z.string(),
+    ...nameFields,
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: t('resetPassword.passwordsDoNotMatch'),
+    path: ["confirmPassword"],
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,13 +160,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
       });
 
       if (!response.ok) {
-        setError(
-          await refusalMessage(response, {
-            accountExists: t('register.accountExists'),
-            weakPassword: t('register.weakPassword'),
-            unexpected: c('unexpectedError'),
-          }),
-        );
+        setError(t(`register.${await refusalKey(response)}`));
         setIsLoading(false);
         return;
       }
@@ -195,8 +195,11 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
         password: validatedData.password,
       });
       if (signInError) {
+        // The account exists; only this browser's session is missing. GoTrue's
+        // reason is English for the log, and the parent's way on is to sign in.
+        console.error("[register-form] sign-in after registration failed:", signInError);
         unfreezeAuthState();
-        setError(signInError.message);
+        setError(t('signInAfterRegisterFailed'));
         setIsLoading(false);
         return;
       }
@@ -308,7 +311,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
             <Field
               label={c('password')}
               htmlFor="password"
-              hint={c('passwordMinLength', { count: 8 })}
+              hint={c('passwordMinLength', { count: MIN_PASSWORD_LENGTH })}
             >
               <PasswordInput
                 id="password"

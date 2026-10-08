@@ -12,13 +12,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-});
-
 export function ForgotPasswordForm() {
   const t = useTranslations('auth');
   const c = useTranslations('common');
+  // Built here rather than at module level so its refusal is in the reader's
+  // language.
+  const forgotPasswordSchema = z.object({
+    email: z.string().email(t('validation.emailInvalid')),
+  });
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);

@@ -7,7 +7,7 @@ import {
 } from "@/services/assignments/assignments.contracts";
 import { applyGroupChangesResult } from "@/services/groups/groups.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
-import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
+import { SEED, TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import {
   createScheduleSlot,
   createTestProduct,
@@ -314,7 +314,8 @@ describe("get_gedu_assigned_product", () => {
 
       expect(entry?.participant_id).toBe(TEST_IDS.GAMER);
       expect(entry?.first_name).toBe("Test");
-      expect(entry?.date_of_birth).toBe("2015-06-15");
+      expect(entry?.birth_year).toBe(SEED.GAMER_BIRTH.birth_year);
+      expect(entry?.birth_month).toBe(SEED.GAMER_BIRTH.birth_month);
       expect(entry?.gender).toBe("boy");
       expect(entry?.minecraft_username).toBe(GAMER_MINECRAFT_USERNAME);
       expect(entry?.minecraft_uuid).toBe(GAMER_MINECRAFT_UUID);

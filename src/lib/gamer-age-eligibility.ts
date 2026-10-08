@@ -1,3 +1,5 @@
+import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
+
 /**
  * **Is this child inside the product's age range?**
  *
@@ -8,16 +10,13 @@
  * action cannot apply to is refused where the parent can see it, not after the
  * click.
  *
- * **The stored birth date is a month, not a day.** Nothing in the product's
- * forms asks a parent for the day of the month — `gamer-birth.ts` assembles
- * `date_of_birth` as the 1st of the chosen month — so a stored `2017-03-01`
- * means "born some time in March 2017" and the child's real age today is one of
- * two adjacent numbers. (The schema does not enforce the 1st, so both the band
- * and the range below read the year and month alone.) That ambiguity is
- * resolved *in the family's favour* at
- * both ends, because the cost of the two errors is not symmetric: letting a
- * child who might be in range enrol is a conversation, and locking a child who
- * really is in range out of a club is a family we never hear from again. So:
+ * **The stored birth is a month, not a day.** `gamer_profiles` holds a birth
+ * year and month and nothing finer, so a stored March 2017 means "born some
+ * time in March 2017" and the child's real age today is one of two adjacent
+ * numbers. That ambiguity is resolved *in the family's favour* at both ends,
+ * because the cost of the two errors is not symmetric: letting a child who
+ * might be in range enrol is a conversation, and locking a child who really is
+ * in range out of a club is a family we never hear from again. So:
  *
  * - the **oldest** they could be (born on the 1st) is what the minimum is
  *   tested against, and
@@ -53,11 +52,8 @@ export interface GamerAgeEligibilityInput {
   minAge: number | null;
   /** `products.max_age` — null on a product that names no upper bound. */
   maxAge: number | null;
-  /**
-   * `gamer_profiles.date_of_birth`, `YYYY-MM-DD`. The forms write the 1st, but
-   * nothing enforces it; only its year and month are read.
-   */
-  dateOfBirth: string;
+  /** `gamer_profiles.birth_year` and `birth_month`. */
+  birth: GamerBirthMonthYear;
   /** Today as a calendar date in the viewer's zone, `YYYY-MM-DD`. */
   today: string;
   /** `products.start_date`, `YYYY-MM-DD`, or null on an open-ended product. */
@@ -67,7 +63,7 @@ export interface GamerAgeEligibilityInput {
 export function gamerAgeBlock({
   minAge,
   maxAge,
-  dateOfBirth,
+  birth,
   today,
   startDate,
 }: GamerAgeEligibilityInput): GamerAgeBlock | null {
@@ -80,16 +76,16 @@ export function gamerAgeBlock({
     // dates — no parsing, and so no zone to get wrong.
     const reference =
       startDate !== null && startDate > today ? startDate : today;
-    // The oldest they could be: born on the 1st of the stored month, whatever
-    // day the row happens to carry.
-    if (ageOnDate(firstDayOfBirthMonth(dateOfBirth), reference) < minAge) {
+    // The oldest they could be: born on the 1st of the birth month, which is
+    // the age `ageOnDate` states.
+    if (ageOnDate(birth, reference) < minAge) {
       return "under";
     }
   }
 
   if (maxAge !== null) {
-    // The youngest they could be: born on the last day of the stored month.
-    if (ageOnDate(lastDayOfBirthMonth(dateOfBirth), today) > maxAge) {
+    // The youngest they could be: born on the last day of the birth month.
+    if (possibleAgeOnDate(birth, today).min > maxAge) {
       return "over";
     }
   }
@@ -98,10 +94,16 @@ export function gamerAgeBlock({
 }
 
 /**
- * **Age in whole years on a given calendar date** — the arithmetic behind both
- * the band above and the age the picker prints beside a child's name, with the
- * reference date handed in as digits instead of being read off a clock in a
- * zone.
+ * **A child's age in whole years on a given calendar date — the one age rule.**
+ *
+ * The stored birth is a year and a month, so the rule has to say when in the
+ * birth month a child turns a year older, and it says: **on the 1st.** A child
+ * born in March 2017 is 8 from 1 March 2025 to the end of February 2026. Every
+ * age the product shows — the pill beside a child in the enrolment picker, the
+ * age on a roster or a chip, the age on a gamer's own page — is this number,
+ * and the trainee rosters compute the same one in the database. It is the
+ * oldest the child could be, which is the end of the range below that the
+ * band's minimum is tested against.
  *
  * Exported because the pill and the block have to be one reading of one clock.
  * A surface deriving the pill from its own `new Date()` while the block reads a
@@ -110,36 +112,21 @@ export function gamerAgeBlock({
  * arguing with itself about a child's birthday. One date string in, both
  * answers out.
  *
- * Split textually and never parsed as a `Date`: a bare calendar date carries no
- * instant, and `new Date("2017-03-01")` is UTC midnight, which reads back as
- * February for any viewer west of UTC.
- *
- * Note what it is *not* generous about: this is the age of somebody born on the
- * stored day, and the stored day is the 1st of a month nobody was asked the day
- * of. The band above resolves that ambiguity per end; the pill states the
- * stored date's own age, which is the only number there is to state.
+ * `on` is split textually and never parsed as a `Date`: a bare calendar date
+ * carries no instant, and `new Date("2026-03-01")` is UTC midnight, which reads
+ * back as February for any viewer west of UTC.
  */
-export function ageOnDate(birth: string, on: string): number {
-  const [birthY, birthM, birthD] = birth.split("-").map(Number);
-  const [onY, onM, onD] = on.split("-").map(Number);
-  let years = onY - birthY;
-  if (onM < birthM || (onM === birthM && onD < birthD)) years--;
-  return years;
+export function ageOnDate(birth: GamerBirthMonthYear, on: string): number {
+  const [onY, onM] = on.split("-").map(Number);
+  return onY - birth.year - (onM < birth.month ? 1 : 0);
 }
 
 /**
  * **Every age the child could be on a given calendar date**, as the inclusive
  * range the birth month allows: `max` is the age of somebody born on the
- * month's 1st, `min` the age of somebody born on its last day. The two are
- * equal except in the child's birth month, where the real birthday may or may
- * not have passed.
- *
- * **Only the year and month of `dateOfBirth` are read; its day is ignored.** The
- * forms write the 1st, but nothing in the schema enforces it, and rows with
- * other days exist. A reader of this range treats the birth date as a month —
- * the partner API publishes nothing finer — so the answer must be the same for
- * every day of that month: otherwise a stored day would shift the range on a
- * date inside the birth month, and the range would disclose part of the day.
+ * month's 1st — `ageOnDate`'s answer — and `min` the age of somebody born on
+ * its last day. The two are equal except in the child's birth month, where the
+ * real birthday may or may not have passed.
  *
  * The same reading of the same ambiguity as the band above, stated as a range
  * rather than resolved in anyone's favour — for a reader that reports the
@@ -148,34 +135,25 @@ export function ageOnDate(birth: string, on: string): number {
  * `max >= band min`).
  */
 export function possibleAgeOnDate(
-  dateOfBirth: string,
+  birth: GamerBirthMonthYear,
   on: string,
 ): { min: number; max: number } {
-  return {
-    min: ageOnDate(lastDayOfBirthMonth(dateOfBirth), on),
-    max: ageOnDate(firstDayOfBirthMonth(dateOfBirth), on),
-  };
+  const max = ageOnDate(birth, on);
+  const [onY, onM, onD] = on.split("-").map(Number);
+  // Inside a later year's birth month, somebody born on the month's last day
+  // has had their birthday only once `on` is that day.
+  const beforeLastDay =
+    onY > birth.year &&
+    onM === birth.month &&
+    onD < lastDayOfMonth(birth.year, birth.month);
+  return { min: beforeLastDay ? max - 1 : max, max };
 }
 
 /**
- * The stored birth month's 1st, as a `YYYY-MM-DD` string — the earliest day the
- * child could have been born on, whatever day the row happens to carry.
- */
-function firstDayOfBirthMonth(dateOfBirth: string): string {
-  const [year, month] = dateOfBirth.split("-").map(Number);
-  return `${year}-${String(month).padStart(2, "0")}-01`;
-}
-
-/**
- * The stored birth month's last day, as a `YYYY-MM-DD` string — the latest day
- * the child could actually have been born on.
- *
- * `Date.UTC(y, m, 0)` is the last day of month `m` (day zero of the following
- * month, counting from a 1-based month index that is already the next one), and
+ * The last day of a month, as a day number. `Date.UTC(y, m, 0)` is day zero of
+ * the month after the 1-based month `m`, which is the last day of `m`, and
  * UTC-pinned so no runtime zone can shift it across a boundary.
  */
-function lastDayOfBirthMonth(dateOfBirth: string): string {
-  const [year, month] = dateOfBirth.split("-").map(Number);
-  const day = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+function lastDayOfMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }

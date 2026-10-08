@@ -65,6 +65,9 @@ import {
  */
 const NO_MARKETING_CONSENTS: readonly MarketingConsent[] = [];
 
+/** Which sentence a refused personal-information save shows: a `settings` key. */
+type ProfileSaveError = "invalidPhone" | "lastNameRequired" | "failedToUpdateProfile";
+
 /**
  * The read-only username row's id. A named constant rather than a literal in
  * the markup because the literal-string lint reads JSX attributes and cannot
@@ -181,7 +184,7 @@ export function SettingsSectionContent({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<ProfileSaveError | null>(null);
 
   // ---------------------------------------------------------------------
   // Email verification
@@ -398,11 +401,11 @@ export function SettingsSectionContent({
 
     setIsSaving(true);
     setSuccessMessage(null);
-    setErrorMessage(null);
+    setSaveError(null);
 
     try {
       if (phone && !isValidPhoneNumber(phone)) {
-        setErrorMessage(t('invalidPhone'));
+        setSaveError("invalidPhone");
         setIsSaving(false);
         return;
       }
@@ -411,7 +414,7 @@ export function SettingsSectionContent({
       // keep their inherited name). This also gradually backfills legacy rows
       // that hold an empty last name from before it was required.
       if (!isGamer && lastName.trim().length < DISPLAY_NAME_MIN) {
-        setErrorMessage(t('lastNameRequired', { min: DISPLAY_NAME_MIN }));
+        setSaveError("lastNameRequired");
         setIsSaving(false);
         return;
       }
@@ -465,40 +468,29 @@ export function SettingsSectionContent({
       // edits are local and a failed write leaves them untouched), so pressing
       // Save again re-attempts exactly the consents that still differ. The
       // profile update re-running with identical values is harmless.
-      //
-      // **The refusal is re-thrown as our own translated sentence**, and that is
-      // the point of the inner catch. These are `.rpc()` calls, so a failure
-      // arrives as a PostgrestError carrying raw Postgres English — a guard's
-      // message, a constraint name — and the catch below prints an error's
-      // `message` verbatim. Showing a parent "new row violates row-level
-      // security policy" is worse than useless: it is untranslated, it means
-      // nothing to them, and it leaks the shape of the schema. The original is
-      // kept as `cause` so it still reaches a console or a report.
       if (isParent && marketingConsents !== undefined) {
-        try {
-          for (const consentType of MARKETING_CONSENT_ORDER) {
-            const next = marketingGranted(consentType);
-            if (next === savedMarketingGranted(consentType)) continue;
-            await setMarketingConsent.mutateAsync({
-              consentType,
-              granted: next,
-              source: "settings",
-            });
-          }
-        } catch (consentError: unknown) {
-          throw new Error(t('failedToUpdateProfile'), { cause: consentError });
+        for (const consentType of MARKETING_CONSENT_ORDER) {
+          const next = marketingGranted(consentType);
+          if (next === savedMarketingGranted(consentType)) continue;
+          await setMarketingConsent.mutateAsync({
+            consentType,
+            granted: next,
+            source: "settings",
+          });
         }
       }
 
       setSuccessMessage(t('profileUpdated'));
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error !== null && "message" in error
-            ? String((error as { message: unknown }).message)
-            : t('failedToUpdateProfile');
-      setErrorMessage(message);
+      // Both halves write straight to Supabase — a profile update and the
+      // consent `.rpc()` calls — so a failure arrives as a PostgrestError
+      // carrying raw Postgres English: a guard's message, a constraint name.
+      // Showing a parent "new row violates row-level security policy" is worse
+      // than useless: it is untranslated, it means nothing to them, and it
+      // leaks the shape of the schema. So the reader gets our own sentence,
+      // and the original goes to the console.
+      console.error("[settings] profile save failed:", error);
+      setSaveError("failedToUpdateProfile");
     } finally {
       setIsSaving(false);
     }
@@ -550,9 +542,13 @@ export function SettingsSectionContent({
             </Alert>
           )}
 
-          {errorMessage && (
+          {saveError && (
             <Alert variant="destructive">
-              <AlertDescription>{errorMessage}</AlertDescription>
+              <AlertDescription>
+                {saveError === "lastNameRequired"
+                  ? t("lastNameRequired", { min: DISPLAY_NAME_MIN })
+                  : t(saveError)}
+              </AlertDescription>
             </Alert>
           )}
 

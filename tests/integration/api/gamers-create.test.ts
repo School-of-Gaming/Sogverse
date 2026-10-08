@@ -70,7 +70,7 @@ function createRequest(body: Record<string, unknown>): Request {
 
 const validBody = {
   firstName: "New Gamer",
-  dateOfBirth: "2015-06-15",
+  birthYear: 2015, birthMonth: 6,
   gender: "boy",
   // Every valid body carries it: without the parent's declaration about this
   // child the schema answers 400 before the handler runs, which is the subject
@@ -120,31 +120,32 @@ function mockPreCreateChecks(config: {
 
 // --- Tests ---
 
-describe("POST /api/gamers/create — DOB validation", () => {
+describe("POST /api/gamers/create — birth month validation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("should return 400 when dateOfBirth is missing", async () => {
+  it("should return 400 when the birth month is missing", async () => {
     mockAuthenticated();
 
-    const { dateOfBirth: _, ...body } = validBody;
+    const { birthMonth: _, ...body } = validBody;
     const response = await POST(createRequest(body));
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("dateOfBirth");
+    expect(data.error).toContain("birthMonth");
   });
 
-  it("should return 400 when dateOfBirth is in the future", async () => {
+  it("should return 400 when the birth month is in the future", async () => {
     mockAuthenticated();
 
-    const futureDate = new Date();
-    futureDate.setFullYear(futureDate.getFullYear() + 1);
-    const futureDateStr = futureDate.toISOString().split("T")[0];
-
+    const now = new Date();
     const response = await POST(
-      createRequest({ ...validBody, dateOfBirth: futureDateStr }),
+      createRequest({
+        ...validBody,
+        birthYear: now.getUTCFullYear() + 1,
+        birthMonth: now.getUTCMonth() + 1,
+      }),
     );
     const data = await response.json();
 
@@ -152,16 +153,27 @@ describe("POST /api/gamers/create — DOB validation", () => {
     expect(data.error).toContain("future");
   });
 
-  it("should return 400 when dateOfBirth is not a valid date", async () => {
+  it.each([0, 13])("should return 400 for birth month %i", async (birthMonth) => {
     mockAuthenticated();
 
-    const response = await POST(
-      createRequest({ ...validBody, dateOfBirth: "not-a-date" }),
-    );
+    const response = await POST(createRequest({ ...validBody, birthMonth }));
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("future");
+    expect(data.error).toContain("birthMonth");
+  });
+
+  it("should return 400 for a date where the year and month go", async () => {
+    // A day has nowhere to go: a body still shaped the old way is refused
+    // rather than read for its year and month.
+    mockAuthenticated();
+
+    const { birthYear: _y, birthMonth: _m, ...rest } = validBody;
+    const response = await POST(
+      createRequest({ ...rest, dateOfBirth: "2015-06-15" }),
+    );
+
+    expect(response.status).toBe(400);
   });
 
   it("should return 401 when unauthenticated", async () => {
@@ -407,7 +419,7 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated email, pas
     vi.clearAllMocks();
   });
 
-  it("accepts a body with only firstName + dateOfBirth and creates a passwordless auth user", async () => {
+  it("accepts a body with only firstName + birth month and creates a passwordless auth user", async () => {
     mockAuthenticated();
     mockPreCreateChecks({ emailExists: false });
     // Stop the flow at createUser so we can inspect what got passed.
@@ -416,7 +428,7 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated email, pas
       error: { message: "mock-stop" },
     });
 
-    await POST(createRequest({ firstName: "Lily", dateOfBirth: "2018-04-15", guardianAttested: true }));
+    await POST(createRequest({ firstName: "Lily", birthYear: 2018, birthMonth: 4, guardianAttested: true }));
 
     expect(mockCreateUser).toHaveBeenCalledTimes(1);
     const callArg = z
@@ -443,7 +455,7 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated email, pas
     const response = await POST(
       createRequest({
         firstName: "Lily",
-        dateOfBirth: "2018-04-15",
+        birthYear: 2018, birthMonth: 4,
         gender: "robot",
         guardianAttested: true,
       }),
@@ -463,7 +475,7 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated email, pas
     });
 
     const response = await POST(
-      createRequest({ firstName: "Lily", dateOfBirth: "2018-04-15", guardianAttested: true }),
+      createRequest({ firstName: "Lily", birthYear: 2018, birthMonth: 4, guardianAttested: true }),
     );
 
     // 400 from createUser's mock-stop, not from a gender validation error.
@@ -503,7 +515,8 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
         p_parent_id: "customer-123",
         p_first_name: "New Gamer",
         p_last_name: "Parentson",
-        p_date_of_birth: "2015-06-15",
+        p_birth_year: 2015,
+        p_birth_month: 6,
         p_gender: "boy",
         // The parent's declaration about this child, recorded by the RPC in the
         // same transaction as the child. Pinned here because the route is the
@@ -621,7 +634,7 @@ describe("POST /api/gamers/create — the sign-in modes", () => {
 
   const base = {
     firstName: "Aino",
-    dateOfBirth: "2015-06-15",
+    birthYear: 2015, birthMonth: 6,
     guardianAttested: true,
   };
 

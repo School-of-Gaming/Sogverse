@@ -39,7 +39,7 @@
       "registerGedu": "Become a Game Educator",
       "about": "About Us",
       "library": "Library",
-      "minecraftApi": "Minecraft Server API",
+      "minecraftApi": "Minecraft server API",
       "lynxApi": "Lynx Educate Partner API",
       "adminDashboard": "Admin Dashboard",
       "adminMunicipalityInvoicing": "Municipality Invoicing",
@@ -1926,7 +1926,8 @@
       "creatingAccount": "Creating account...",
       "accountExists": "An account with this email already exists",
       "weakPassword": "That password is too easy to guess — try a longer one, or one you don't use anywhere else",
-      "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
+      "alreadyHaveAccount": "Already have an account? <link>Sign in</link>",
+      "failed": "That email could not be registered. If you already have an account, sign in instead."
     },
     "forgotPassword": {
       "title": "Forgot password?",
@@ -1978,8 +1979,17 @@
       "submit": "Finish setting up",
       "finishing": "Finishing...",
       "alreadyComplete": "This account is already set up. Sign in again to continue.",
-      "switchToParent": "Not a Gedu? <link>Create a parent account instead</link>"
-    }
+      "switchToParent": "Not a Gedu? <link>Create a parent account instead</link>",
+      "failed": "We couldn’t finish setting up your account. Please try again."
+    },
+    "validation": {
+      "emailInvalid": "Enter a valid email address.",
+      "firstNameTooShort": "First name must be at least {min} characters.",
+      "firstNameTooLong": "First name must be at most {max} characters.",
+      "lastNameTooShort": "Last name must be at least {min} characters.",
+      "lastNameTooLong": "Last name must be at most {max} characters."
+    },
+    "signInAfterRegisterFailed": "Your account is ready, but we couldn’t sign you in. Sign in with your email and password."
   },
   "pin": {
     "create": {
@@ -2109,8 +2119,17 @@
   },
   "docs": {
     "minecraftApi": {
-      "title": "Minecraft Server API",
-      "description": "Use this endpoint to check whether a connecting player is allowed to join the Minecraft world. The server sends the player’s Minecraft UUID and receives an allow/deny decision with session timing.",
+      "title": "Minecraft server API",
+      "description": "School of Gaming’s Minecraft servers call this endpoint when a player tries to join. The server sends the player’s Minecraft UUID, and Sogverse answers whether to let them in, with the reason and the seats behind the decision.",
+      "eligibility": {
+        "heading": "Who is let in",
+        "intro": "A Minecraft account is let in when it is linked to a gamer account on Sogverse that currently holds a seat on a product the family pays for.",
+        "paidProducts": "Paid products count: a club subscription, a paid camp or a paid event.",
+        "notCounted": "Free products and municipality clubs don’t count, even when the gamer holds a seat on one.",
+        "current": "A seat counts on the days its product runs, from the start date to the end date. A club with no end date counts from its start date onwards.",
+        "sharedAccounts": "Several Sogverse accounts can link the same Minecraft account, as siblings often share one. The player is let in if any linked gamer qualifies.",
+        "gedus": "A Minecraft account linked only to a Gedu’s account is not let in by this check."
+      },
       "authentication": {
         "heading": "Authentication",
         "description": "All requests require a static API key passed as a Bearer token in the <code>Authorization</code> header.",
@@ -2118,41 +2137,61 @@
       },
       "endpoint": {
         "heading": "Endpoint",
-        "queryParams": "Query Parameters",
+        "queryParams": "Query parameters",
         "uuidType": "string (required)",
-        "uuidDescription": "The player’s Minecraft UUID. Both dashed (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) and undashed (<code2>069a79f444e94726a5befca90e38aaf5</code2>) formats are accepted."
+        "uuidDescription": "The player’s Minecraft Java Edition UUID. Both dashed (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) and undashed (<code2>069a79f444e94726a5befca90e38aaf5</code2>) formats are accepted."
       },
       "responses": {
         "heading": "Responses",
-        "playerAllowed": "Player Allowed",
-        "playerDenied": "Player Denied",
-        "errorResponses": "Error Responses",
-        "notImplementedTitle": "Not yet implemented",
-        "notImplementedBody": "The session gating is still being rebuilt against the current product system. Every authenticated, well-formed request answers 501 today — no player is admitted. The responses below describe the contract this endpoint will return once it is live; build against them, but expect 501 until then.",
-        "error501": "Session gating not yet built. The request was valid and authenticated, but no admission decision can be made — fail closed rather than treating this as a denial.",
-        "deniedDescription": "The player exists in Sogverse but has no active session right now. No <code>endTime</code> is included.",
-        "fields": {
-          "allowedTrue": "Player has an active session right now.",
-          "role": "The player’s role in Sogverse.",
-          "firstName": "The player’s first name.",
-          "endTime": "When the session window closes (includes a 5-minute buffer after the scheduled end). Use this to schedule a kick or re-check.",
-          "reason": "Human-readable description: the product name and Gedu name."
+        "intro": "Every authenticated request with a valid <code>uuid</code> is answered with 200, whether the player is let in or not. An unknown UUID is a denial, not an error.",
+        "playerAllowed": "Player allowed",
+        "playerDenied": "Player denied",
+        "deniedDescription": "Eero holds a seat on a municipality club, which doesn’t count, so the seat comes back with <code1>qualifies: false</code1> and the reason is <code2>no_paid_enrollment</code2>.",
+        "errorResponses": "Error responses",
+        "error401": "The <code>Authorization</code> header is missing or malformed, or the key is wrong.",
+        "error400": "The <code>uuid</code> query parameter is missing or is not a valid Minecraft UUID.",
+        "error500": "The server is misconfigured or a lookup failed. No decision was made.",
+        "errorShape": "Every error response has the shape <code>'{ \"error\": \"message\" }'</code>."
+      },
+      "fields": {
+        "heading": "Response fields",
+        "allowed": "Whether to let the player in. True exactly when <code1>reason</code1> is <code2>paid_enrollment</code2>.",
+        "reason": "Why the player was let in or denied. One of the values below.",
+        "message": "One sentence explaining the decision, for a server admin’s logs or a kick message. Always in English, whatever language this page is read in.",
+        "gamers": "Every gamer account linked to this Minecraft UUID. Empty when the reason is <code1>no_linked_account</code1> or <code2>no_linked_gamer</code2>.",
+        "reasonsHeading": "Reasons",
+        "reasons": {
+          "paidEnrollment": "A linked gamer currently holds a seat on a product the family pays for.",
+          "noLinkedAccount": "No Sogverse account has linked this Minecraft UUID.",
+          "noLinkedGamer": "The UUID is linked, but only to accounts that are not gamers, such as a Gedu’s.",
+          "noPaidEnrollment": "Linked gamers exist, but none of them holds a seat that qualifies."
         },
-        "error401": "Missing, malformed, or invalid API key.",
-        "error400": "Missing or invalid <code>uuid</code> query parameter.",
-        "error404": "No Sogverse account linked to this Minecraft UUID.",
-        "error500": "Server error. Retry with backoff."
+        "gamerHeading": "Gamer fields",
+        "gamer": {
+          "firstName": "The gamer’s first name.",
+          "minecraftUsername": "The Minecraft username linked to the gamer account.",
+          "enrollments": "Every seat the gamer currently holds, whether or not it qualifies."
+        },
+        "enrollmentHeading": "Enrolment fields",
+        "enrollment": {
+          "product": "The product’s name.",
+          "productType": "What kind of product the seat is on. Only consumer clubs, camps and events can qualify.",
+          "billingMode": "How the product is paid for. Only paid products qualify; free products and municipality contracts don’t.",
+          "startDate": "The day the product starts.",
+          "endDate": "The day the product ends, or <code>null</code> for an open-ended club.",
+          "qualifies": "Whether this seat lets the gamer in."
+        }
       },
       "example": {
         "heading": "Example"
       },
       "integrationNotes": {
         "heading": "Integration notes",
-        "note1": "Call this endpoint on every player join. Both gedus and gamers are session-gated — they can only join during their scheduled session window.",
-        "note2": "The session window opens 5 minutes before the scheduled start and closes 5 minutes after the scheduled end.",
-        "note3": "When <code1>allowed: true</code1>, use <code2>endTime</code2> to schedule a re-check or kick. If back-to-back sessions exist (e.g. one ends 14:00, next starts 14:05), the player gets kicked at the first session’s end and rejoins for the next.",
-        "note4": "A <code>404</code> means the player hasn’t linked their Minecraft account in Sogverse yet. You can show them a message to link their account in their profile settings.",
-        "note5": "All error responses follow the shape <code>'{ \"error\": \"message\" }'</code>."
+        "branchOnAllowed": "Call this endpoint on every join and decide on <code1>allowed</code1> alone. Use <code2>reason</code2> and <code3>message</code3> for logs and kick messages.",
+        "failClosed": "Fail closed: after a 5xx response, a timeout or a network error, don’t let the player in. A check that could not be made is never a reason to admit someone.",
+        "noLongCache": "Don’t cache a decision for long. A seat can start or end at any time, so a cached answer goes stale; checking on every join is the safe default.",
+        "notLinked": "<code>no_linked_account</code> means nobody has linked this Minecraft account on Sogverse yet. Your kick message can ask the player to link their Minecraft account to their Sogverse account.",
+        "keyServerSide": "The API key belongs on the server only. Never put it in a client mod, a config players can read or a public repository."
       }
     },
     "lynxApi": {
@@ -2598,7 +2637,8 @@
       "chooseAreas": "Choose areas",
       "loading": "Loading locations...",
       "save": "Save",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "saveFailed": "Your coverage areas didn’t save. Try again."
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Only assigned Gedus and admins can read this note.",
@@ -3020,7 +3060,8 @@
     "creationTitlePlaceholder": "What they made",
     "creationUrlLabel": "Creation link",
     "creationUrlPlaceholder": "Link to it",
-    "creationIncomplete": "A creation needs both a title and a link."
+    "creationIncomplete": "A creation needs both a title and a link.",
+    "saveFailed": "That didn’t save. Try again."
   },
   "richText": {
     "bold": "Bold",
@@ -4778,7 +4819,8 @@
       "audience": "Your Gedu and the School of Gaming team will read your feedback. Thank you!",
       "saveFailed": "Your answers were not saved. Press Done to try again.",
       "done": "Done"
-    }
+    },
+    "zoneSaveFailed": "That zone didn’t save. Try again."
   },
   "voiceButton": {
     "joinVoice": "Join voice room",

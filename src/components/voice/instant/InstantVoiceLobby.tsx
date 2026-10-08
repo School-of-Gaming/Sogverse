@@ -54,8 +54,8 @@ interface InstantVoiceLobbyProps {
    *  route's business and a signed-in non-moderator still joins as a guest. */
   viewer: InstantRoomViewer | null;
   joining: boolean;
-  /** Most recent error from a failed join attempt; rendered above the join button. */
-  error: string | null;
+  /** Whether the last join attempt failed; the line sits above the join button. */
+  joinFailed: boolean;
 }
 
 /**
@@ -74,8 +74,9 @@ interface InstantVoiceLobbyProps {
  * (the token route's Vector D mitigation), so the pattern won't match.
  * Acceptable: identicons are abstract and don't function as identity.
  */
-export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: InstantVoiceLobbyProps) {
+export function InstantVoiceLobby({ code, onJoin, viewer, joining, joinFailed }: InstantVoiceLobbyProps) {
   const t = useTranslations("voice.instant.lobby");
+  const tInstant = useTranslations("voice.instant");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -331,9 +332,9 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: Inst
               </div>
             )}
 
-            {error && (
+            {joinFailed && (
               <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{tInstant("joinFailed")}</AlertDescription>
               </Alert>
             )}
 

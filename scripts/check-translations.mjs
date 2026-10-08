@@ -108,10 +108,28 @@ const isEnglishUnderKlingon = (locale, key) =>
   locale === "tlh" &&
   ENGLISH_UNDER_KLINGON.some((root) => key === root || key.startsWith(`${root}.`));
 
+/**
+ * The key holding the name the header and the account menu give a role's
+ * dashboard — "My SOG" in English. A locale that names it otherwise in its
+ * navigation must name it that way everywhere: copy pointing a reader at the
+ * English name sends them to a place whose name they will not find on screen.
+ * The expected name is read from this key in each catalog, so renaming the
+ * navigation label carries the check with it.
+ */
+const DASHBOARD_NAME_KEY = "dashboardSections.pageTitle";
+
+/**
+ * Keys allowed to carry the English dashboard name in a locale whose navigation
+ * names it otherwise, as `{ locale: [key, …] }` — for a string that genuinely
+ * quotes the English UI. Empty today; an entry says why next to it.
+ */
+const ENGLISH_DASHBOARD_NAME_ALLOWED = {};
+
 const sourceFile = join(MESSAGES_DIR, `${SOURCE_LOCALE}.json`);
 const sourceMessages = JSON.parse(readFileSync(sourceFile, "utf-8"));
 const sourceKeys = flattenKeys(sourceMessages);
 const sourceKeySet = new Set(Object.keys(sourceKeys));
+const englishDashboardName = sourceKeys[DASHBOARD_NAME_KEY];
 
 const localeFiles = readdirSync(MESSAGES_DIR)
   .filter((f) => f.endsWith(".json") && basename(f, ".json") !== SOURCE_LOCALE);
@@ -182,6 +200,26 @@ for (const file of localeFiles) {
     console.error(`\n[${locale}] Mismatched placeholders in ${mismatchedPlaceholders.length} key(s):`);
     for (const { key, expected, actual } of mismatchedPlaceholders) {
       console.error(`  - ${key}: expected {${expected}} but got {${actual}}`);
+    }
+  }
+
+  // The English dashboard name in a locale whose navigation names it otherwise.
+  const localDashboardName = keys[DASHBOARD_NAME_KEY];
+  if (
+    typeof englishDashboardName === "string" &&
+    typeof localDashboardName === "string" &&
+    localDashboardName !== englishDashboardName
+  ) {
+    const allowed = new Set(ENGLISH_DASHBOARD_NAME_ALLOWED[locale] ?? []);
+    const englishName = Object.entries(keys)
+      .filter(([k, v]) => typeof v === "string" && v.includes(englishDashboardName) && !allowed.has(k))
+      .map(([k]) => k);
+    if (englishName.length > 0) {
+      hasErrors = true;
+      console.error(
+        `\n[${locale}] ${englishName.length} string(s) call the dashboard "${englishDashboardName}", but this locale's navigation (${DASHBOARD_NAME_KEY}) names it "${localDashboardName}":`,
+      );
+      for (const k of englishName) console.error(`  - ${k}`);
     }
   }
 
