@@ -237,8 +237,8 @@ describe("POST /api/admin/send-test-discord-message", () => {
 
     // The list, the filed line, a refusal, the empty list and the failure
     // notice — the request modal cannot be DMed — then a substitution
-    // request's seven DMs.
-    expect(steps).toHaveLength(5 + 7);
+    // request's eight DMs, the last telling the absent gedu it was filled.
+    expect(steps).toHaveLength(5 + 8);
     for (const step of steps) {
       expect(step.flags).toBe(1 << 15);
       expect(step.content).toBeUndefined();
@@ -250,6 +250,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
       "subpreview:s:fi",
       "subpreview:l",
     ]);
+    expect(JSON.stringify(requestDms.at(-1))).toContain("Tuuraajasi on löytynyt");
     const dmIds = requestDms.flatMap((step) => customIds(step.components));
     expect(dmIds.length).toBeGreaterThan(0);
     for (const id of dmIds) expect(id).toMatch(/^subpreview:[od]:/);

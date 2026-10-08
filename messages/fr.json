@@ -5592,6 +5592,8 @@
     "acceptedHeading": "Votre proposition a été acceptée",
     "acceptedBody": "Vous assurez le remplacement de {product} — {group} le {when}. La séance relève désormais de votre contrat Gedu, et l’espace de travail du groupe s’ouvre à vous 48 heures avant son début.",
     "openMySog": "Ouvrir Mon SOG",
+    "requesterFilledHeading": "Votre remplacement est assuré",
+    "requesterFilledBody": "{substitute} vous remplace pour cette séance.",
     "previewNotice": "Ceci est un aperçu — les boutons ne modifient rien."
   },
   "seatOffer": {

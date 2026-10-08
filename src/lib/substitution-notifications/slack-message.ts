@@ -131,7 +131,9 @@ function discordStatus(candidate: SnapshotCandidate, dm: SnapshotDm | undefined)
   return "not DM'd";
 }
 
-function answerLabel(candidate: SnapshotCandidate): string {
+/** A gedu's answer — and "Accepted" for the gedu seated on the request, however they were seated. */
+function answerLabel(candidate: SnapshotCandidate, seatedId: string | null): string {
+  if (candidate.gedu_id === seatedId) return "Accepted";
   if (candidate.response === "offer") return "Offered";
   if (candidate.response === "decline") return "Declined";
   return "—";
@@ -178,6 +180,11 @@ function cell(value: string): { type: "raw_text"; text: string } {
   return { type: "raw_text", text: value === "" ? "—" : value };
 }
 
+/** A stored phone — E.164 digits with no plus — as it is dialled; empty when there is none. */
+function phoneLabel(phone: string | null): string {
+  return phone === null ? "" : `+${phone}`;
+}
+
 /**
  * The channel's message about one request.
  *
@@ -186,8 +193,10 @@ function cell(value: string): { type: "raw_text"; text: string } {
  * role, reason, where, language, topic, required qualifications, fee) with the
  * reason's note under it; the offers as cards, oldest first, each with an Accept that asks
  * before it seats anybody — only while the request is open; then every gedu
- * the request concerns as a table — offers, declines, then those yet to
- * answer.
+ * the request concerns as a table, with their phone — offers, declines, then
+ * those yet to answer. The gedu seated on the request leads both, marked
+ * Accepted, so a filled request reads as settled at every place an admin
+ * looks; the other cards keep their offers but lose their buttons.
  *
  * `preview` puts every control on the preview prefix, for the admin tool.
  */
@@ -253,9 +262,15 @@ export function buildSubstitutionSlackMessage({
   blocks.push({ type: "divider" });
 
   const dmOf = new Map(snapshot.dms.map((dm) => [dm.gedu_id, dm]));
+  // The seated gedu leads the offers and the table, marked Accepted, so the
+  // message says who has the session wherever an admin looks.
+  const seatedId = request.status === "substituted" ? request.substitute.id : null;
+  const seatedFirst = (a: SnapshotCandidate, b: SnapshotCandidate) =>
+    Number(b.gedu_id === seatedId) - Number(a.gedu_id === seatedId);
   const offers = snapshot.candidates
     .filter((c) => c.response === "offer" && c.offer_id !== null)
-    .sort((a, b) => (a.responded_at ?? "").localeCompare(b.responded_at ?? ""));
+    .sort((a, b) => (a.responded_at ?? "").localeCompare(b.responded_at ?? ""))
+    .sort(seatedFirst);
   const declined = snapshot.candidates.filter((c) => c.response === "decline");
   const unanswered = snapshot.candidates.filter((c) => c.response === null);
   const isOpen = state.kind === "open";
@@ -270,10 +285,19 @@ export function buildSubstitutionSlackMessage({
     blocks.push({
       type: "carousel",
       elements: shownOffers.map((candidate) => {
+        const seated = candidate.gedu_id === seatedId;
         const card: SlackBlock = {
           type: "card",
-          title: plain(fullName(candidate), CARD_TITLE_MAX),
-          subtitle: plain(offeredLine(candidate, facts.timezone), CARD_SUBTITLE_MAX),
+          title: plain(
+            seated ? `:white_check_mark: ${fullName(candidate)}` : fullName(candidate),
+            CARD_TITLE_MAX,
+          ),
+          subtitle: plain(
+            seated && request.status === "substituted"
+              ? acceptedLine(request.approver, request.approved_at, facts.timezone)
+              : offeredLine(candidate, facts.timezone),
+            CARD_SUBTITLE_MAX,
+          ),
         };
         if (isOpen && candidate.offer_id !== null) {
           card.actions = [
@@ -305,24 +329,27 @@ export function buildSubstitutionSlackMessage({
     }
   }
 
-  const concerned = [...offers, ...declined, ...unanswered];
+  // Stable, so the seated gedu moves to the top and everyone else keeps their place.
+  const concerned = [...offers, ...declined, ...unanswered].sort(seatedFirst);
   if (concerned.length === 0) {
     blocks.push(section("_No gedu can take this session._"));
   } else {
-    const header = ["Gedu", "Discord", "Answer"];
+    const header = ["Gedu", "Phone", "Discord", "Answer"];
     const rows: { type: "raw_text"; text: string }[][] = [header.map(cell)];
     // Slack's character cap is per message, so the facts table spends it first.
     let used = factRows.flat().join("").length + header.join("").length;
     for (const candidate of concerned) {
       const row = [
-        clipText(fullName(candidate) || "—", TABLE_NAME_MAX),
+        clipText(fullName(candidate), TABLE_NAME_MAX),
+        phoneLabel(candidate.phone),
         discordStatus(candidate, dmOf.get(candidate.gedu_id)),
-        answerLabel(candidate),
-      ];
-      const size = row.join("").length;
+        answerLabel(candidate, seatedId),
+      ].map(cell);
+      // Counted as sent: an empty value goes out as its dash.
+      const size = row.reduce((total, { text }) => total + text.length, 0);
       if (rows.length > TABLE_MAX_ROWS || used + size > TABLE_TEXT_BUDGET) break;
       used += size;
-      rows.push(row.map(cell));
+      rows.push(row);
     }
     blocks.push({
       type: "data_table",
@@ -340,6 +367,18 @@ export function buildSubstitutionSlackMessage({
     text: fallbackText(productName, request.group_name, when, state),
     blocks,
   };
+}
+
+/** Who accepted the seated gedu's offer and when, in the session's zone. */
+function acceptedLine(approver: SnapshotPerson, approvedAt: string, timezone: string): string {
+  return `Accepted by ${fullName(approver)}, ${formatDate(approvedAt, LOCALE, {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: timezone,
+  })}`;
 }
 
 /** When a gedu offered, in the session's zone. */

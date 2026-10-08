@@ -9,6 +9,7 @@ import {
   filledRequest,
   notificationSnapshot,
   snapshotCandidate,
+  snapshotNotification,
 } from "../../../mocks/substitution-notifications";
 
 /**
@@ -95,7 +96,7 @@ type Patch = Partial<SnapshotDm> & Partial<SnapshotNotification>;
 
 /** A thenable query over the two message tables, enough for the sync's calls. */
 class Query {
-  private filters: [column: keyof SnapshotDm, value: string | null][] = [];
+  private filters: [column: keyof Patch, value: string | null][] = [];
   private isSingle = false;
 
   constructor(
@@ -112,11 +113,11 @@ class Query {
     this.isSingle = true;
     return this;
   }
-  eq(column: keyof SnapshotDm, value: string | null) {
+  eq(column: keyof Patch, value: string | null) {
     this.filters.push([column, value]);
     return this;
   }
-  is(column: keyof SnapshotDm, value: null) {
+  is(column: keyof Patch, value: null) {
     return this.eq(column, value);
   }
 
@@ -128,24 +129,23 @@ class Query {
   private notifications(): SnapshotNotification[] {
     const { payload } = this;
     if (this.op === "insert") {
-      db.notification = {
+      db.notification = snapshotNotification({
         request_id: payload.request_id ?? SNAPSHOT_IDS.request,
         announced_at: payload.announced_at ?? "2026-10-08T08:00:00.000Z",
-        slack_channel_id: null,
-        slack_message_ts: null,
-        slack_rendered_hash: null,
-        updated_at: "2026-10-08T08:00:00.000Z",
-      };
+      });
       return [db.notification];
     }
-    if (db.notification === null) return [];
-    db.notification = {
-      ...db.notification,
-      slack_channel_id: payload.slack_channel_id ?? db.notification.slack_channel_id,
-      slack_message_ts: payload.slack_message_ts ?? db.notification.slack_message_ts,
-      slack_rendered_hash: payload.slack_rendered_hash ?? db.notification.slack_rendered_hash,
-    };
+    const current = db.notification;
+    if (current === null) return [];
+    if (!this.matches(current)) return [];
+    db.notification = { ...current, ...payload };
     return [db.notification];
+  }
+
+  /** Whether a row passes every `eq` and `is` filter. */
+  private matches(row: object): boolean {
+    const values = new Map<string, unknown>(Object.entries(row));
+    return this.filters.every(([column, value]) => values.get(column) === value);
   }
 
   private dms(): SnapshotDm[] {
@@ -157,9 +157,7 @@ class Query {
       db.dms.set(geduId, row);
       return [row];
     }
-    const matched = [...db.dms.values()].filter((row) =>
-      this.filters.every(([column, value]) => row[column] === value),
-    );
+    const matched = [...db.dms.values()].filter((row) => this.matches(row));
     return matched.map((row) => {
       const next: SnapshotDm = { ...row, ...this.payload };
       db.dms.set(row.gedu_id, next);
@@ -471,6 +469,110 @@ describe("drainSubstitutionNotifications", () => {
       setRequest({ request: filledRequest(), product_today: "2026-10-20" });
       await drain();
       expect(discord.sendDiscordChannelMessage).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("the requester's DM", () => {
+    const requester = (discordUserId: string | null, locale: string | null = "fi") => ({
+      id: SNAPSHOT_IDS.requester,
+      first_name: "Ville",
+      last_name: "Virtanen",
+      locale,
+      discord_user_id: discordUserId,
+    });
+
+    async function announceThenFill(discordUserId: string | null = "999") {
+      setRequest({ request: { requester: requester(discordUserId) } });
+      await drain();
+      setRequest({
+        request: { ...filledRequest(), requester: requester(discordUserId) },
+        candidates: [aino({ response: "offer", offer_id: SNAPSHOT_IDS.offerAino })],
+      });
+    }
+
+    /** What was sent to the requester's own DM channel. */
+    const toRequester = () =>
+      discord.sendDiscordChannelMessage.mock.calls.filter(([channelId]) => channelId === "dm-999");
+
+    it("goes once, in their locale, naming the substitute and the session", async () => {
+      await announceThenFill();
+      await drain();
+      expect(discord.openDiscordDmChannel).toHaveBeenCalledWith("999");
+      expect(toRequester()).toHaveLength(1);
+      const body = JSON.stringify(toRequester()[0]?.[1]);
+      expect(body).toContain("Tuuraajasi on löytynyt");
+      expect(body).toContain("Aino Korhonen tuuraa sinua");
+      expect(body).toContain("Minecraft-klubi");
+      // The role's pay is the substitute's business, not the absent gedu's.
+      expect(body).not.toContain("45");
+      expect(db.notification).toMatchObject({
+        requester_dm_claimed_at: expect.any(String),
+        requester_dm_message_id: expect.any(String),
+        requester_dm_sent_at: expect.any(String),
+        requester_dm_error: null,
+      });
+
+      await drain();
+      expect(toRequester()).toHaveLength(1);
+    });
+
+    it("is not sent to a requester with no Discord account acting as them", async () => {
+      await announceThenFill(null);
+      await drain();
+      expect(db.notification?.requester_dm_claimed_at).toBeNull();
+      // The offer DM and the accepted DM, nothing more.
+      expect(discord.sendDiscordChannelMessage).toHaveBeenCalledTimes(2);
+    });
+
+    it("is not sent while the request is open, nor once the session has passed", async () => {
+      setRequest({ request: { requester: requester("999") } });
+      await drain();
+      expect(toRequester()).toHaveLength(0);
+
+      setRequest({
+        request: { ...filledRequest(), requester: requester("999") },
+        product_today: "2026-10-20",
+      });
+      await drain();
+      expect(toRequester()).toHaveLength(0);
+    });
+
+    it("records a refusal Discord will repeat, keeps the claim, and never tries again", async () => {
+      await announceThenFill();
+      discord.sendDiscordChannelMessage.mockImplementation(async (channelId) => {
+        if (channelId === "dm-999") {
+          throw new DiscordApiError(403, 50007, "Cannot send messages to this user");
+        }
+        return `msg-${++messageCounter}`;
+      });
+      expect(await drain()).toMatchObject({ synced: 1, failed: 0 });
+      expect(db.notification).toMatchObject({
+        requester_dm_claimed_at: expect.any(String),
+        requester_dm_message_id: null,
+        requester_dm_error: expect.stringContaining("50007"),
+      });
+
+      setRequest({
+        request: { ...filledRequest(), requester: requester("999"), reason_note: "changed" },
+        candidates: [aino({ response: "offer", offer_id: SNAPSHOT_IDS.offerAino })],
+      });
+      await drain();
+      expect(toRequester()).toHaveLength(1);
+    });
+
+    it("hands its claim back on a failure worth retrying, and the retry sends it", async () => {
+      await announceThenFill();
+      discord.sendDiscordChannelMessage.mockImplementation(async (channelId) => {
+        if (channelId === "dm-999") throw new DiscordApiError(502, null, "Bad gateway");
+        return `msg-${++messageCounter}`;
+      });
+      expect(await drain()).toMatchObject({ failed: 1 });
+      expect(db.notification).toMatchObject({ requester_dm_claimed_at: null, requester_dm_sent_at: null });
+
+      discord.sendDiscordChannelMessage.mockImplementation(async () => `msg-${++messageCounter}`);
+      await drain();
+      expect(db.notification?.requester_dm_sent_at).toEqual(expect.any(String));
+      expect(toRequester()).toHaveLength(2);
     });
   });
 

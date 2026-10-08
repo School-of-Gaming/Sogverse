@@ -4,8 +4,9 @@ When a substitution request is open, every gedu who could take it and has a link
 account gets a DM with Offer and Decline buttons, and the admins' Slack channel gets one
 message listing the request — who is absent and why, the session, what it requires, and
 every gedu it concerns with their DM status and answer — with an Accept button on each
-offer. Every later change to the request redraws all of them in place, and whoever ends up
-seated on it gets a DM saying the session is theirs. The request itself is
+offer. Every later change to the request redraws all of them in place, whoever ends up
+seated on it gets a DM saying the session is theirs, and the gedu who filed it gets a DM
+saying who is covering it. The request itself is
 `src/services/session-substitution/`; the DM buttons are answered in `src/app/api/discord/`
 and the Slack app in `src/app/api/slack/`.
 
@@ -84,6 +85,18 @@ admin's seating of somebody who never offered, a re-pointed substitution. Never 
 session already past or cancelled, never on a request that was never announced, and never
 twice: a sub unseated and seated again is not told again.
 
+**The gedu who filed the request is told it is filled by the same rule, at most once per
+request** — whenever the accepted DM would go, it goes too, naming the substitute and the
+session but not what the role pays. Once per request, not per substitute: a request
+re-pointed to a different sub after the first was named does not tell its requester again.
+It goes to the Discord account that acts as the requester, and its record lives on the
+announcement's row, since the requester is never one of the DM'd gedus.
+
+**A filled request reads as settled everywhere on the Slack message.** The seated gedu
+leads the offer cards and the gedus table, marked Accepted however they were seated; every
+other offer keeps its card but, like every closed state, loses its Accept button. The
+table carries each gedu's phone, written `+` and the stored digits, for an admin to ring.
+
 **Order within one sync:** the announcement, then the DMs, then the Slack message last, so
 its tags say who was reached.
 
@@ -111,11 +124,12 @@ screen readers get — has to say on its own what the request is and where it st
   rendering is stored as a hash, so a sync with nothing new to say makes no Discord or Slack
   call. A DM press forgets its DM's hash before answering, so the next sync redraws that DM
   whatever the press left on it.
-- **A duplicate post is accepted; a duplicate accepted DM is not.** The offer DMs and the
-  Slack message are stored right after they are sent, so a crash between the two posts a
-  second copy on the retry — rare, and harmless. The accepted DM is claimed *before* it is
-  sent, so a crash after the claim loses it rather than sending it twice; a transient
-  failure hands the claim back and retries.
+- **A duplicate post is accepted; a duplicate accepted or requester DM is not.** The offer
+  DMs and the Slack message are stored right after they are sent, so a crash between the
+  two posts a second copy on the retry — rare, and harmless. The accepted DM and the
+  requester's DM are claimed *before* they are sent, so a crash after the claim loses one
+  rather than sending it twice; a transient failure hands the claim back and retries, and
+  a refusal Discord will repeat is recorded with the claim kept.
 - **Discord and Slack are each skipped where the environment has no credentials** for them,
   and the logo and the My SOG button are left off where `NEXT_PUBLIC_SITE_URL` is not an
   origin Discord can reach.

@@ -562,6 +562,11 @@ describe("substitution notifications", () => {
         rendered_hash: "abc",
       });
       expect(dmError).toBeNull();
+      const { error: phoneError } = await admin
+        .from("profiles")
+        .update({ phone: "358401234567" })
+        .eq("id", ids.eligible);
+      expect(phoneError).toBeNull();
 
       const shot = await snapshot(requestId);
       expect(shot.request).toMatchObject({
@@ -574,7 +579,14 @@ describe("substitution notifications", () => {
         fee_cents: 4500,
         reason: "sick",
         reason_note: "a private note",
-        requester: { id: ids.requester, first_name: "Notify", last_name: "requester" },
+        // No Discord account acts as the requester, so their DM has nowhere to go.
+        requester: {
+          id: ids.requester,
+          first_name: "Notify",
+          last_name: "requester",
+          locale: "fi",
+          discord_user_id: null,
+        },
         substitute: null,
         approver: null,
         approved_at: null,
@@ -594,9 +606,11 @@ describe("substitution notifications", () => {
         eligible: true,
         locale: "fi",
         last_name: "eligible",
+        phone: "358401234567",
         discord_user_id: DISCORD_ELIGIBLE,
         response: "offer",
       });
+      expect(byId.get(ids.acting)?.phone).toBeNull();
       expect(byId.get(ids.eligible)?.offer_id).toEqual(expect.any(String));
       expect(byId.get(ids.eligible)?.responded_at).toEqual(expect.any(String));
       // The shared Discord id acts for the account linked to it last.
@@ -629,6 +643,10 @@ describe("substitution notifications", () => {
         slack_channel_id: "C1",
         slack_message_ts: "123.456",
         slack_rendered_hash: null,
+        requester_dm_claimed_at: null,
+        requester_dm_message_id: null,
+        requester_dm_sent_at: null,
+        requester_dm_error: null,
       });
     });
 
@@ -650,6 +668,18 @@ describe("substitution notifications", () => {
       if (shot.request.status !== "substituted") return;
       expect(shot.request.substitute.id).toBe(ids.eligible);
       expect(shot.request.approver.id).toBe(TEST_IDS.ADMIN);
+    });
+
+    it("gives the requester the Discord account that acts as them, for their filled DM", async () => {
+      const discordRequester = "920000000000000004";
+      await link(ids.requester, discordRequester, new Date());
+      try {
+        const requestId = await file(ids.requester, utcDate(3));
+        const shot = await snapshot(requestId);
+        expect(shot.request.requester).toMatchObject({ locale: "fi", discord_user_id: discordRequester });
+      } finally {
+        await admin.from("discord_links").delete().eq("profile_id", ids.requester);
+      }
     });
 
     it("lists a sub an admin seated, who never answered and was never sent a DM", async () => {

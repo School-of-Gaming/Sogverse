@@ -5592,6 +5592,8 @@
     "acceptedHeading": "Du har godkänts som vikarie",
     "acceptedBody": "Du har godkänts som vikarie för {product} – {group} den {when}. Tillfället är nu ditt enligt ditt Gedu-avtal, och gruppens arbetsyta öppnas för dig 48 timmar innan det börjar.",
     "openMySog": "Öppna Min SOG",
+    "requesterFilledHeading": "Du har fått en vikarie",
+    "requesterFilledBody": "{substitute} vikarierar för dig vid det här tillfället.",
     "previewNotice": "Det här är en förhandsvisning – knapparna ändrar ingenting."
   },
   "seatOffer": {

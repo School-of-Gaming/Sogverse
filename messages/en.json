@@ -5592,6 +5592,8 @@
     "acceptedHeading": "You’ve been accepted",
     "acceptedBody": "You’ve been accepted to substitute for {product} – {group} on {when}. The session is yours now under your Gedu contract, and the group’s workspace opens to you 48 hours before it starts.",
     "openMySog": "Open My SOG",
+    "requesterFilledHeading": "Your substitution request has been filled",
+    "requesterFilledBody": "{substitute} will substitute for you at this session.",
     "previewNotice": "This is a preview — pressing a button changes nothing."
   },
   "seatOffer": {

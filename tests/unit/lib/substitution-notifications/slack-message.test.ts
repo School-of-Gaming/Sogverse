@@ -157,7 +157,9 @@ describe("buildSubstitutionSlackMessage", () => {
         candidates: [
           snapshotCandidate({ gedu_id: SNAPSHOT_IDS.requester, first_name: "Noora", discord_user_id: "333" }),
           snapshotCandidate({ gedu_id: SNAPSHOT_IDS.lumi, first_name: "Lumi", response: "decline", eligible: false }),
-          ...offers,
+          ...offers.map((offer) =>
+            offer.gedu_id === SNAPSHOT_IDS.aino ? { ...offer, phone: "358401234567" } : offer,
+          ),
         ],
         dms: [
           snapshotDm({ gedu_id: SNAPSHOT_IDS.aino, message_id: "m1", channel_id: "c1" }),
@@ -166,11 +168,50 @@ describe("buildSubstitutionSlackMessage", () => {
       }),
     );
     expect(tableRows(blocks)).toEqual([
-      ["Gedu", "Discord", "Answer"],
-      ["Aino Korhonen", "DM'd", "Offered"],
-      ["Eero Mäki", "DM failed", "Offered"],
-      ["Lumi Example", "not on Discord", "Declined"],
-      ["Noora Example", "not DM'd", "—"],
+      ["Gedu", "Phone", "Discord", "Answer"],
+      ["Aino Korhonen", "+358401234567", "DM'd", "Offered"],
+      ["Eero Mäki", "—", "DM failed", "Offered"],
+      ["Lumi Example", "—", "not on Discord", "Declined"],
+      ["Noora Example", "—", "not DM'd", "—"],
+    ]);
+  });
+
+  it("filled: the seated gedu leads the cards and the table as Accepted, and no offer keeps its button", () => {
+    // Eero offered first, so he leads while the request is open.
+    const { blocks } = render(
+      notificationSnapshot({
+        request: filledRequest(),
+        candidates: [...offers].reverse().map((offer) =>
+          offer.gedu_id === SNAPSHOT_IDS.eero ? { ...offer, responded_at: "2026-10-08T08:00:00.000Z" } : offer,
+        ),
+      }),
+    );
+    expect(cards(blocks).map(cardTitle)).toEqual([":white_check_mark: Aino Korhonen", "Eero Mäki"]);
+    expect(allText([cards(blocks)[0]])).toContain("Accepted by Admin Person, Oct 9, 12:00");
+    expect(allText([cards(blocks)[1]])).toContain("Offered Oct 8, 11:00");
+    expect(buttons(blocks)).toEqual([]);
+    expect(tableRows(blocks).slice(1).map((row) => [row[0], row[3]])).toEqual([
+      ["Aino Korhonen", "Accepted"],
+      ["Eero Mäki", "Offered"],
+    ]);
+  });
+
+  it("filled by an admin's seating of a gedu who never answered: they lead the table as Accepted", () => {
+    const { blocks } = render(
+      notificationSnapshot({
+        request: filledRequest(),
+        candidates: [
+          offers[0],
+          snapshotCandidate({ gedu_id: SNAPSHOT_IDS.lumi, first_name: "Lumi", response: "decline" }),
+          snapshotCandidate({ gedu_id: SNAPSHOT_IDS.aino, first_name: "Aino", last_name: "Korhonen", eligible: false }),
+        ],
+      }),
+    );
+    expect(cards(blocks).map(cardTitle)).toEqual(["Eero Mäki"]);
+    expect(tableRows(blocks).slice(1).map((row) => [row[0], row[3]])).toEqual([
+      ["Aino Korhonen", "Accepted"],
+      ["Eero Mäki", "Offered"],
+      ["Lumi Example", "Declined"],
     ]);
   });
 
@@ -264,7 +305,7 @@ describe("buildSubstitutionSlackMessage", () => {
     // Slack's character cap is across every table in the message.
     const facts = tableRows(blocks, FACTS_CAPTION);
     expect([...facts, ...rows].flat().join("").length).toBeLessThanOrEqual(20_000);
-    expect(new Set(rows.map((row) => row.length))).toEqual(new Set([3]));
+    expect(new Set(rows.map((row) => row.length))).toEqual(new Set([4]));
     expect(allText(blocks)).toMatch(/\+\d+ more gedus/);
   });
 
@@ -331,14 +372,24 @@ describe("buildSubstitutionSlackPreviewSet", () => {
 
   it("opens with nobody answered, then two offers, a decline and a gedu in every Discord status", () => {
     expect(cards(set[0].blocks)).toEqual([]);
-    expect(tableRows(set[0].blocks).slice(1).map((row) => row[2])).toEqual(["—", "—", "—"]);
+    expect(tableRows(set[0].blocks).slice(1).map((row) => row[3])).toEqual(["—", "—", "—"]);
 
     const rows = tableRows(set[1].blocks).slice(1);
-    expect(rows.map((row) => row[2])).toEqual(["Offered", "Offered", "Declined", "—", "—"]);
-    expect(new Set(rows.map((row) => row[1]))).toEqual(
+    expect(rows.map((row) => row[3])).toEqual(["Offered", "Offered", "Declined", "—", "—"]);
+    expect(new Set(rows.map((row) => row[2]))).toEqual(
       new Set(["DM'd", "DM failed", "not on Discord", "not DM'd"]),
     );
-    expect(rows.every((row) => row.length === 3)).toBe(true);
+    // A phone where the gedu gave one, the dash where they did not.
+    expect(rows.map((row) => row[1])).toContain("—");
+    expect(rows.some((row) => row[1].startsWith("+358"))).toBe(true);
+    expect(rows.every((row) => row.length === 4)).toBe(true);
+  });
+
+  it("shows the filled request settled: Aino leads as Accepted, and no Accept is left to press", () => {
+    const filled = set[2];
+    expect(cards(filled.blocks).map(cardTitle)).toEqual([":white_check_mark: Aino Korhonen", "Eero Mäki"]);
+    expect(buttons(filled.blocks)).toEqual([]);
+    expect(tableRows(filled.blocks)[1]).toEqual(expect.arrayContaining(["Aino Korhonen", "Accepted"]));
   });
 
   it("puts every control on the preview prefix, and the link on a token no row holds", () => {

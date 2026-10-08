@@ -3328,6 +3328,10 @@ export type Database = {
         Row: {
           announced_at: string
           request_id: string
+          requester_dm_claimed_at: string | null
+          requester_dm_error: string | null
+          requester_dm_message_id: string | null
+          requester_dm_sent_at: string | null
           slack_channel_id: string | null
           slack_message_ts: string | null
           slack_rendered_hash: string | null
@@ -3336,6 +3340,10 @@ export type Database = {
         Insert: {
           announced_at: string
           request_id: string
+          requester_dm_claimed_at?: string | null
+          requester_dm_error?: string | null
+          requester_dm_message_id?: string | null
+          requester_dm_sent_at?: string | null
           slack_channel_id?: string | null
           slack_message_ts?: string | null
           slack_rendered_hash?: string | null
@@ -3344,6 +3352,10 @@ export type Database = {
         Update: {
           announced_at?: string
           request_id?: string
+          requester_dm_claimed_at?: string | null
+          requester_dm_error?: string | null
+          requester_dm_message_id?: string | null
+          requester_dm_sent_at?: string | null
           slack_channel_id?: string | null
           slack_message_ts?: string | null
           slack_rendered_hash?: string | null

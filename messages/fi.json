@@ -5592,6 +5592,8 @@
     "acceptedHeading": "Sinut on hyväksytty tuuraajaksi",
     "acceptedBody": "Sinut on hyväksytty tuuraamaan: {product} – {group} {when}. Kerta on nyt Gedu-sopimuksesi nojalla sinun vastuullasi, ja ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua.",
     "openMySog": "Avaa Oma SOG",
+    "requesterFilledHeading": "Tuuraajasi on löytynyt",
+    "requesterFilledBody": "{substitute} tuuraa sinua tällä kerralla.",
     "previewNotice": "Tämä on esikatselu – painikkeet eivät muuta mitään."
   },
   "seatOffer": {

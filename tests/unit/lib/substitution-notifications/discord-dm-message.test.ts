@@ -8,6 +8,7 @@ import {
   buildSubstitutionAcceptedDm,
   buildSubstitutionOfferDm,
   buildSubstitutionPreviewFlow,
+  buildSubstitutionRequesterFilledDm,
   loadDiscordSubOfferCopy,
   parseSubReqCustomId,
   substitutionDmSession,
@@ -218,6 +219,37 @@ describe("buildSubstitutionAcceptedDm", () => {
   });
 });
 
+describe("buildSubstitutionRequesterFilledDm", () => {
+  const dm = (copy: DiscordSubOfferCopy, mySogUrl: string | null) =>
+    buildSubstitutionRequesterFilledDm({
+      copy,
+      logoUrl: LOGO,
+      session: substitutionDmSession(notificationSnapshot(), copy.locale),
+      substituteName: "Aino Korhonen",
+      mySogUrl,
+    });
+
+  it("names the substitute and the session, without the role's pay, with a link to My SOG", () => {
+    const message = dm(en, "https://sogverse.sog.gg/gedu");
+    expect(message.flags).toBe(DISCORD_FLAG_IS_COMPONENTS_V2);
+    expect(texts(message)).toContain("Your substitution request has been filled");
+    expect(texts(message)).toContain("Aino Korhonen will substitute for you");
+    expect(texts(message)).toContain("Wed, Oct 14");
+    expect(texts(message)).toContain("Minecraft Club — A");
+    expect(texts(message)).not.toContain("€");
+    expect(buttons(message)).toEqual([
+      expect.objectContaining({ style: 5, url: "https://sogverse.sog.gg/gedu" }),
+    ]);
+  });
+
+  it("speaks the requester's locale, and goes without the button where Discord could open no URL", () => {
+    const message = dm(finnish, null);
+    expect(texts(message)).toContain(fi.discordSubOffer.requesterFilledHeading);
+    expect(texts(message)).toContain("Aino Korhonen tuuraa sinua");
+    expect(buttons(message)).toEqual([]);
+  });
+});
+
 describe("buildSubstitutionPreviewFlow", () => {
   it("draws every DM, every control on the preview prefix", () => {
     const flow = buildSubstitutionPreviewFlow({
@@ -227,7 +259,8 @@ describe("buildSubstitutionPreviewFlow", () => {
       mySogUrl: "https://sogverse.sog.gg/gedu",
       refusalLine: "This session has already passed.",
     });
-    expect(flow).toHaveLength(7);
+    expect(flow).toHaveLength(8);
+    expect(texts(flow[7])).toContain("Your substitution request has been filled");
     const pressable = flow.flatMap(buttons).filter((b) => b.style !== 5);
     expect(pressable.length).toBeGreaterThan(0);
     for (const control of pressable) {

@@ -23,8 +23,9 @@ import type { NotificationState } from "./state";
  * **The admin testing tool's Slack preview**: every message the staff channel
  * can show about a substitution request, in the order an admin meets them,
  * built by the live builder over sample snapshots — open with no answers yet;
- * open with offers, a decline and a gedu in every Discord status; filled;
- * withdrawn; cancelled; passed — then the three ephemeral replies.
+ * open with offers, a decline and a gedu in every Discord status; filled, the
+ * accepted gedu leading as Accepted and the other offer left without its
+ * button; withdrawn; cancelled; passed — then the three ephemeral replies.
  *
  * Every control is on the preview prefix, so a press is answered as a preview
  * and changes nothing. An ephemeral reply can only be sent through a press's
@@ -55,6 +56,14 @@ function person(id: string, first: string, last: string): SnapshotPerson {
   return { id, first_name: first, last_name: last };
 }
 
+/** The sample gedus' phones, as stored — E.164 digits with no plus. Lumi has none. */
+const PHONES: Record<string, string> = {
+  [IDS.aino]: "358401234561",
+  [IDS.eero]: "358401234562",
+  [IDS.onni]: "358401234564",
+  [IDS.venla]: "358401234565",
+};
+
 const AINO = person(IDS.aino, "Aino", "Korhonen");
 const ADMIN = person(IDS.admin, "Sample", "Admin");
 
@@ -67,6 +76,7 @@ function candidate(
     first_name: who.first_name,
     last_name: who.last_name,
     locale: null,
+    phone: PHONES[who.id] ?? null,
     discord_user_id: null,
     eligible: true,
     response: null,
@@ -118,7 +128,7 @@ function sampleSnapshot(
     reason: "sick",
     reason_note: "Down with the flu, back next week.",
     created_at: `${sessionDate}T06:00:00.000Z`,
-    requester: person(IDS.requester, "Ville", "Virtanen"),
+    requester: { ...person(IDS.requester, "Ville", "Virtanen"), locale: null, discord_user_id: null },
   };
   return {
     request:

@@ -4711,6 +4711,8 @@
     "acceptedHeading": "SoH lajlu’pu’",
     "acceptedBody": "{when} {product} — {group} DalIwmeH SoH lajlu’pu’. DaH SoH may’ ’oH, Gedu quv chut tlhIH. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’.",
     "openMySog": "jIH SOG yIpoSmoH",
+    "requesterFilledHeading": "lIwwI’lIj tu’lu’pu’",
+    "requesterFilledBody": "may’vamDaq SoH DulIw {substitute}.",
     "previewNotice": "ghantoH ’oH — leQmey DayuvDI’ pagh choHlu’."
   },
   "seatOffer": {
