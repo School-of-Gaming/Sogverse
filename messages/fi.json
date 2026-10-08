@@ -1927,7 +1927,7 @@
       "accountExists": "Tällä sähköpostiosoitteella on jo tili",
       "weakPassword": "Salasana on liian helppo arvata — kokeile pidempää tai sellaista, jota et käytä muualla",
       "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>",
-      "failed": "Tilin luominen epäonnistui. Yritä uudelleen."
+      "failed": "Tätä sähköpostiosoitetta ei voitu rekisteröidä. Jos sinulla on jo tili, kirjaudu sisään."
     },
     "forgotPassword": {
       "title": "Unohditko salasanan?",
@@ -3791,7 +3791,7 @@
       "items": {
         "joiningSession": {
           "question": "Miten pelaajani pääsee mukaan, kun kerta alkaa?",
-          "answer": "<p>Se riippuu siitä, missä kerta pidetään, ja Oma SOG -sivusi kortti kertoo sen: verkossa pidettävän kerran kortissa on painike, ja paikan päällä pidettävän kerran kortissa lukee paikan nimi.</p><p>Verkossa kerta pidetään selaimessa äänihuoneessa, eikä mitään tarvitse asentaa:</p><steps><step>Etsi Oma SOG -sivultasi kortti lapsesi nimen alta. Ennen kerran alkua kortin painike on lukittuna ja kertoo, minä päivänä ja mihin aikaan se avautuu.</step><step>Viisi minuuttia ennen kerran alkua painikkeen teksti vaihtuu: siinä lukee ”Liity äänihuoneeseen”.</step><step>Napauta sitä. Huoneeseen pääsevät vain ryhmään kuuluvat, joten tililtäsi sinua pyydetään ensin vaihtamaan lapsesi profiiliin – samalla sinut kirjataan ulos vanhemman tililtä – ja huone avautuu lapsesi nimissä.</step><step>Salli mikrofonin käyttö, jos selain kysyy sitä.</step></steps><p>Omaan profiiliisi palaamiseen tarvitset jälkeenpäin vanhemman PIN-koodin. Jos lapsesi kirjautuu omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, hän voi myös avata oman Oma SOG -sivunsa ja napauttaa samaa painiketta siellä. Huone pysyy auki viisi minuuttia kerran päättymisen jälkeen.</p><p>Paikan päällä pidettävässä kerrassa painiketta ei ole. Kerhon, leirin tai tapahtuman sivulla näkyy paikka osoitteineen sekä perheille tarkoitettu huomautus paikasta, jos sellainen on – tuo siis lapsesi sinne kerran alkuun mennessä.</p><p>Jos kortissa lukee sen sijaan, että etsimme lapsellesi Gedua ja ryhmää, liityttävää ei vielä ole: se tapahtuu ennen ensimmäistä kertaa, ja sen jälkeen kortissa näkyy painike tai paikka.</p>"
+          "answer": "<p>Se riippuu siitä, missä kerta pidetään, ja Oma SOG -sivusi kortti kertoo sen: verkossa pidettävän kerran kortissa on painike, ja paikan päällä pidettävän kerran kortissa lukee paikan nimi.</p><p>Verkossa kerta pidetään selaimessa äänihuoneessa, eikä mitään tarvitse asentaa:</p><steps><step>Etsi Oma SOG -sivultasi kortti lapsesi nimen alta. Ennen kerran alkua kortin painike on lukittuna ja kertoo, minä päivänä ja mihin aikaan se avautuu.</step><step>Viisi minuuttia ennen kerran alkua painikkeen teksti vaihtuu: siinä lukee ”Liity äänihuoneeseen”.</step><step>Napauta sitä. Huoneeseen pääsevät vain ryhmään kuuluvat, joten tililtäsi sinua pyydetään ensin vaihtamaan lapsesi profiiliin – samalla sinut kirjataan ulos vanhemman tililtä – ja huone avautuu lapsesi nimissä.</step><step>Salli mikrofonin käyttö, jos selain kysyy sitä.</step></steps><p>Omaan profiiliisi palaamiseen tarvitset jälkeenpäin vanhemman PIN-koodin. Jos lapsesi kirjautuu omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, hän voi myös avata Oma SOG -sivunsa ja napauttaa samaa painiketta siellä. Huone pysyy auki viisi minuuttia kerran päättymisen jälkeen.</p><p>Paikan päällä pidettävässä kerrassa painiketta ei ole. Kerhon, leirin tai tapahtuman sivulla näkyy paikka osoitteineen sekä perheille tarkoitettu huomautus paikasta, jos sellainen on – tuo siis lapsesi sinne kerran alkuun mennessä.</p><p>Jos kortissa lukee sen sijaan, että etsimme lapsellesi Gedua ja ryhmää, liityttävää ei vielä ole: se tapahtuu ennen ensimmäistä kertaa, ja sen jälkeen kortissa näkyy painike tai paikka.</p>"
         },
         "parentPin": {
           "question": "Mikä vanhemman PIN on, ja mitä jos unohdan sen?",
@@ -3799,7 +3799,7 @@
         },
         "sessionReports": {
           "question": "Kuulenko, miten kerrat sujuivat?",
-          "answer": "<p>Kuulet. Kerran jälkeen lapsesi pelikasvattaja kirjoittaa siitä raportin – mitä ryhmä teki, miten meni ja mitkä hetket kannattaa muistaa – usein kuvien kera.</p><p>Raportti näkyy kyseisen kerhon, leirin tai tapahtuman sivulla Oma SOG -osiossa kohdassa Kerrat, kaikkien aiempien raporttien ja vielä tulevien kertojen rinnalla, ja lapsesi näkee samat raportit omalla Oma SOG -sivullaan. Kun Gedu lähettää raportin, se saapuu myös sähköpostitse ja on osoitettu vain sinulle – jokainen perhe saa oman erillisen viestinsä, eikä yksikään perhe näe toisen viestiä.</p><p>Näet samalla sivulla myös oman lapsesi läsnäolomerkinnän jokaiselta kerralta; lapsesi ei näe läsnäoloja, eikä yksikään perhe näe koskaan toisen lapsen merkintöjä.</p>"
+          "answer": "<p>Kuulet. Kerran jälkeen lapsesi pelikasvattaja kirjoittaa siitä raportin – mitä ryhmä teki, miten meni ja mitkä hetket kannattaa muistaa – usein kuvien kera.</p><p>Raportti näkyy kyseisen kerhon, leirin tai tapahtuman sivulla Oma SOG -osiossa kohdassa Kerrat, kaikkien aiempien raporttien ja vielä tulevien kertojen rinnalla, ja lapsesi näkee samat raportit Oma SOG -sivullaan. Kun Gedu lähettää raportin, se saapuu myös sähköpostitse ja on osoitettu vain sinulle – jokainen perhe saa oman erillisen viestinsä, eikä yksikään perhe näe toisen viestiä.</p><p>Näet samalla sivulla myös oman lapsesi läsnäolomerkinnän jokaiselta kerralta; lapsesi ei näe läsnäoloja, eikä yksikään perhe näe koskaan toisen lapsen merkintöjä.</p>"
         },
         "missedSessions": {
           "question": "Mitä jos jäämme pois yhdeltä kerralta tai liitymme kerhoon kesken kauden?",
@@ -3861,7 +3861,7 @@
       "saveFailed": "Ilmoitusasetusten tallentaminen epäonnistui. Yritä uudelleen."
     },
     "usernameLabel": "Käyttäjätunnus",
-    "gamerPasswordFromParent": "Vanhempasi voi asettaa sinulle uuden salasanan omasta Oma SOG -näkymästään.",
+    "gamerPasswordFromParent": "Vanhempasi voi asettaa sinulle uuden salasanan Oma SOG -näkymästään.",
     "photoConsent": {
       "title": "Kuvat ja videot",
       "granted": "Vanhempasi on sallinut, että sinusta otettuja kuvia ja videoita saa käyttää kertojen raporteissa ja että School of Gaming, Lynx Educate ja Roblox saavat käyttää niitä. Gedu kysyy silti sinulta ennen kuin ottaa sinusta kuvan.",

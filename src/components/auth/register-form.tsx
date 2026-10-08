@@ -32,12 +32,14 @@ const refusal = z.object({ error: z.string().optional(), code: z.string().option
  *
  * The route's `error` strings are raw English written for a log, so every
  * refusal is ours to word. A 409 is the address already having an account. A
- * `WEAK_PASSWORD` code is the password being the problem — the case that most
- * needs its own answer, because the account-exists one ends "if you already
- * have an account, sign in instead", and going to look for a sign-in is
- * precisely the wrong move when no account exists and the fix is one field
- * away. Anything else is a refusal nobody predicted, and gets the generic
- * try-again line while the route's own words go to the console.
+ * `WEAK_PASSWORD` code is the password being the problem, and gets its own
+ * answer: looking for a sign-in is precisely the wrong move when no account
+ * exists and the fix is one field away. Anything else is the route's catch-all
+ * for a failure it did not recognise — which can still be an address that
+ * already has an account — so the generic line says the address could not be
+ * registered and points an existing account holder at sign-in. That hint is
+ * safe there only because the weak-password case never reaches it. The
+ * route's own words go to the console.
  */
 async function refusalKey(
   response: Response,
