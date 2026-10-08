@@ -151,6 +151,8 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 
 All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — including `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_REF`, which the Supabase CLI commands in `supabase/CLAUDE.md` read from there.
 
+**Rule: a change that introduces an env var writes its line into both `.env.local` and `.env.local.example` itself, rather than asking the owner to.** The example gets a placeholder value and a comment saying what the var is; `.env.local` gets the line with an empty value, which the owner fills in by hand — a secret is never written there by a session. From a worktree, the line goes into the main checkout's `.env.local` first and is then copied into the worktree's, since the worktree's copy dies at teardown. An agent launched inside the worktree cannot write the main checkout, so it hands the line to the session that launched it.
+
 ## Database
 
 Migrations in `supabase/migrations/`. The migration workflow, the same in a worktree as

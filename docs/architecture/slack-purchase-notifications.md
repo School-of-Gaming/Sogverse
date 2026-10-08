@@ -5,8 +5,8 @@ runs in the path**: a Stripe Dashboard Workflow reads Checkout Session metadata 
 Stripe app for Slack posts the message. Sogverse's only contribution is writing the
 metadata when it creates the session. Everything you might change is in the Stripe
 Dashboard, not in this repo — do not build an app-side helper to get these notifications.
-(Sogverse sending a Slack message *itself* is a separate, unbuilt idea: see
-`../investigations/slack-sending-from-sogverse.md`.)
+(Sogverse posting to Slack *itself* — the admin testing page's Slack tool — goes through
+a separate Slack app's bot, set up as `src/lib/slack-api.server.ts` describes.)
 
 ## Shape of the mechanism
 

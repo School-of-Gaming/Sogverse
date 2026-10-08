@@ -253,6 +253,7 @@ const TESTS = {
   teamPhotos: "tests/integration/api/team-photos.test.ts",
   sendTestDiscordMessage: "tests/integration/api/send-test-discord-message.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
+  sendTestSlackMessage: "tests/integration/api/send-test-slack-message.test.ts",
   signout: "tests/integration/auth/signout.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
   switchAccount: "tests/integration/auth/switch-account.test.ts",
@@ -514,6 +515,16 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           schema: "inline: requestSchema (declared on the primitive)",
         },
         test: TESTS.sendTestEmail,
+      },
+    },
+  },
+
+  "src/app/api/admin/send-test-slack-message/route.ts": {
+    handlers: {
+      POST: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "sendTestSlackMessageBody" },
+        test: TESTS.sendTestSlackMessage,
       },
     },
   },
