@@ -77,6 +77,7 @@
       "geduContract": "Contrat Gedu",
       "oauthConsent": "Connecter une application d’IA",
       "linkDiscord": "Associer Discord",
+      "linkSlack": "Associer Slack",
       "seatOffer": "Proposition de place",
       "geduSubstitutions": "Remplacements",
       "geduInvoicing": "Facturation",
@@ -1710,7 +1711,7 @@
         "sent": "Message envoyé.",
         "openInDiscord": "Ouvrir dans Discord",
         "templatePlain": "Texte brut",
-        "templateSubFlow": "/sub : toutes les étapes",
+        "templateSubFlow": "/sub et messages de remplacement : tous les messages",
         "subPreviewSent": "Toutes les étapes ont été envoyées."
       },
       "slack": {
@@ -5539,6 +5540,7 @@
     "previewNotice": "Ceci est un aperçu — rien n’a été envoyé."
   },
   "discordSubOffer": {
+    "notLinked": "Votre compte Discord n’est associé à aucun compte Gedu School of Gaming. Lancez /link pour l’associer, puis répondez à nouveau.",
     "heading": "Une séance cherche un remplacement",
     "filled": "Un remplacement a été trouvé pour cette séance",
     "notNeeded": "Le remplacement n’est plus nécessaire",

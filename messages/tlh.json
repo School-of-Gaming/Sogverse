@@ -70,6 +70,7 @@
       "geduContract": "Gedu quv chut",
       "oauthConsent": "QoQ jan yIrar",
       "linkDiscord": "Discord yIrar",
+      "linkSlack": "Slack yIrar",
       "seatOffer": "quS nob",
       "geduSubstitutions": "lIwmey",
       "geduInvoicing": "DIlmeH ghItlh",
@@ -1754,7 +1755,7 @@
         "sent": "QIn ngeHta’.",
         "openInDiscord": "Discord Daq yIpoS",
         "templatePlain": "ghItlh neH",
-        "templateSubFlow": "/sub: Hoch mIw",
+        "templateSubFlow": "/sub QIn je: Hoch QIn",
         "subPreviewSent": "Hoch mIw ngeHta’."
       },
       "slack": {
@@ -4658,6 +4659,7 @@
     "previewNotice": "ghantoH ’oH — pagh ngeHlu’."
   },
   "discordSubOffer": {
+    "notLinked": "School of Gaming Gedu ghItlhDaq Discord ghItlhlIj rarbe’lu’. /link yIlo’, ’ej yIjangqa’.",
     "heading": "lIwwI’ poQ may’",
     "filled": "may’vam lIwwI’ tu’lu’pu’",
     "notNeeded": "lIwwI’ poQbe’lu’ DaH",

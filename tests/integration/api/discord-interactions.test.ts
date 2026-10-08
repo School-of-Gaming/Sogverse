@@ -46,12 +46,22 @@ vi.mock("discord-interactions", () => ({
 const mockResolveDiscordGedu = vi.fn();
 const mockGetSessions = vi.fn();
 const mockFileRequest = vi.fn();
+const mockAnswerRequest = vi.fn();
+const mockReadDm = vi.fn();
 vi.mock("@/lib/discord-substitution.server", () => ({
   resolveDiscordGedu: (...args: unknown[]) => mockResolveDiscordGedu(...args),
   getDiscordGeduUpcomingSessions: (...args: unknown[]) => mockGetSessions(...args),
   fileDiscordSubstitutionRequest: (...args: unknown[]) => mockFileRequest(...args),
+  answerDiscordSubstitutionRequest: (...args: unknown[]) => mockAnswerRequest(...args),
+  readDiscordSubstitutionDm: (...args: unknown[]) => mockReadDm(...args),
   isDiscordGeduNotLinked: (error: unknown) =>
     typeof error === "object" && error !== null && "code" in error && error.code === "P0031",
+}));
+
+// A substitution DM's press syncs its request in-process.
+const mockDrain = vi.fn();
+vi.mock("@/lib/substitution-notifications/sync.server", () => ({
+  drainSubstitutionNotifications: (...args: unknown[]) => mockDrain(...args),
 }));
 
 vi.mock("next/server", async (importOriginal) => {
@@ -95,6 +105,12 @@ const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
 import { POST } from "@/app/api/discord/interactions/route";
+import fiMessages from "../../../messages/fi.json";
+import {
+  SNAPSHOT_IDS,
+  notificationSnapshot,
+  snapshotCandidate,
+} from "../../mocks/substitution-notifications";
 
 function interactionRequest(
   payload: unknown,
@@ -1043,6 +1059,193 @@ describe("POST /api/discord/interactions — /sub", () => {
 
   it("acknowledges a control it cannot place, and does nothing", async () => {
     const { response } = await press("somebody-else:1");
+
+    expect(response).toEqual({ type: 6 });
+    expect(deferred).toHaveLength(0);
+  });
+});
+
+describe("POST /api/discord/interactions — a substitution request's DM", () => {
+  const GEDU = { id: "112233445566778899", username: "gedu_sog" };
+  const REQUEST = SNAPSHOT_IDS.request;
+  /** The DM as Discord sends it with a press: Decline and Offer under the session. */
+  const PRESSED_DM = {
+    id: "1300000000000000001",
+    flags: 1 << 15,
+    components: [
+      {
+        type: 17,
+        id: 1,
+        components: [
+          { type: 10, id: 2, content: "### A session needs a substitute" },
+          {
+            type: 1,
+            id: 3,
+            components: [
+              { type: 2, id: 4, style: 2, custom_id: `subreq:d:${REQUEST}`, label: "Decline" },
+              { type: 2, id: 5, style: 1, custom_id: `subreq:o:${REQUEST}`, label: "Offer" },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  function readAs(
+    candidate: Partial<Parameters<typeof snapshotCandidate>[0]> | null,
+    snapshot = notificationSnapshot(),
+  ) {
+    mockReadDm.mockResolvedValue({
+      snapshot,
+      candidate:
+        candidate === null
+          ? null
+          : snapshotCandidate({ gedu_id: SNAPSHOT_IDS.aino, discord_user_id: GEDU.id, ...candidate }),
+    });
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-08T09:00:00Z"));
+    deferred.length = 0;
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mockVerifyKey.mockResolvedValue(true);
+    mockFetch.mockResolvedValue(new Response(null, { status: 200 }));
+    mockAnswerRequest.mockResolvedValue(undefined);
+    mockDrain.mockResolvedValue({ synced: 1, failed: 0, outOfTime: false });
+    readAs({ response: "offer" });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function press(customId: string, extra: Record<string, unknown> = {}) {
+    const response = await POST(
+      interactionRequest({
+        type: 3,
+        token: "interaction-token",
+        user: GEDU,
+        message: PRESSED_DM,
+        data: { custom_id: customId, component_type: 2 },
+        ...extra,
+      }),
+    );
+    await Promise.all(deferred);
+    const [url, init] = mockFetch.mock.calls[0] ?? [];
+    return {
+      response: await response.json(),
+      patchedUrl: String(url),
+      patched: init ? JSON.parse(String(init.body)) : null,
+    };
+  }
+
+  /** Every text and custom_id in a drawn message, depth first. */
+  function contents(body: { components: unknown }): { texts: string; ids: unknown[] } {
+    const all: Array<Record<string, unknown>> = [];
+    const walkInto = (components: unknown) => {
+      if (!Array.isArray(components)) return;
+      for (const component of components) {
+        if (typeof component !== "object" || component === null) continue;
+        all.push(component);
+        walkInto(component.components);
+        if (component.accessory !== undefined) walkInto([component.accessory]);
+      }
+    };
+    walkInto(body.components);
+    return {
+      texts: all
+        .filter((c) => c.type === 10)
+        .map((c) => String(c.content))
+        .join("\n"),
+      ids: all.map((c) => c.custom_id).filter((id) => id !== undefined),
+    };
+  }
+
+  it("greys the DM's buttons out at once and answers afterwards", async () => {
+    const { response } = await press(`subreq:o:${REQUEST}`);
+
+    expect(response.type).toBe(7);
+    expect(JSON.stringify(response.data)).toContain('"disabled":true');
+    expect(deferred).toHaveLength(1);
+  });
+
+  it("offers as the presser, syncs that one request, and redraws the DM", async () => {
+    const { patched, patchedUrl } = await press(`subreq:o:${REQUEST}`);
+
+    expect(mockAnswerRequest).toHaveBeenCalledWith({
+      discordUserId: GEDU.id,
+      requestId: REQUEST,
+      response: "offer",
+    });
+    expect(mockDrain).toHaveBeenCalledWith({ requestIds: [REQUEST] });
+    expect(patchedUrl).toMatch(/\/interaction-token\/messages\/@original$/);
+    // Offered: Decline alone remains.
+    expect(contents(patched).ids).toEqual([`subreq:d:${REQUEST}`]);
+  });
+
+  it("declines as the presser", async () => {
+    readAs({ response: "decline" });
+
+    const { patched } = await press(`subreq:d:${REQUEST}`);
+
+    expect(mockAnswerRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ response: "decline" }),
+    );
+    expect(contents(patched).ids).toEqual([`subreq:o:${REQUEST}`]);
+  });
+
+  it("redraws a refused answer under the write's own line, in the gedu's language, with its buttons back", async () => {
+    mockAnswerRequest.mockRejectedValue({
+      code: "23514",
+      message: "this substitution request is no longer taking offers",
+    });
+    readAs({ locale: "fi" });
+
+    const { patched } = await press(`subreq:o:${REQUEST}`);
+
+    expect(mockDrain).not.toHaveBeenCalled();
+    const { texts, ids } = contents(patched);
+    expect(texts).toContain(fiMessages.gedu.substitution.poolAnswerFailedClosed);
+    expect(ids).toEqual([`subreq:d:${REQUEST}`, `subreq:o:${REQUEST}`]);
+  });
+
+  it("tells a presser with no gedu linked to run /link", async () => {
+    mockAnswerRequest.mockRejectedValue({ code: "P0031", message: "not linked" });
+    readAs(null);
+
+    const { patched } = await press(`subreq:o:${REQUEST}`);
+
+    expect(mockDrain).not.toHaveBeenCalled();
+    expect(contents(patched).texts).toContain("Run /link to link it, then answer again.");
+  });
+
+  it("draws a closed request without buttons, whatever was pressed", async () => {
+    mockAnswerRequest.mockRejectedValue({
+      code: "23514",
+      message: "this substitution request is no longer taking offers",
+    });
+    readAs({}, notificationSnapshot({ request: { status: "withdrawn" } }));
+
+    const { patched } = await press(`subreq:o:${REQUEST}`);
+
+    expect(contents(patched).ids).toEqual([]);
+  });
+
+  it("answers a press on the admin preview of a DM with its preview line, and nothing else", async () => {
+    const { response } = await press(`subpreview:o:${REQUEST}`, { locale: "en-GB" });
+
+    expect(response).toEqual({
+      type: 4,
+      data: { content: "This is a preview — pressing a button changes nothing.", flags: 64 },
+    });
+    expect(deferred).toHaveLength(0);
+    expect(mockAnswerRequest).not.toHaveBeenCalled();
+  });
+
+  it("acknowledges a press that names no caller, and does nothing", async () => {
+    const { response } = await press(`subreq:o:${REQUEST}`, { user: undefined });
 
     expect(response).toEqual({ type: 6 });
     expect(deferred).toHaveLength(0);

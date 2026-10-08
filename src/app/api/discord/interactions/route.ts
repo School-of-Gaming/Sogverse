@@ -9,6 +9,7 @@ import {
 } from "discord-interactions";
 import {
   DEFAULT_LOCALE,
+  isSupportedLocale,
   matchLocaleFromHeader,
   type SupportedLocale,
 } from "@/lib/constants/locales";
@@ -37,19 +38,34 @@ import {
   type DiscordSubCopy,
 } from "@/lib/discord-substitution-message";
 import {
+  answerDiscordSubstitutionRequest,
   fileDiscordSubstitutionRequest,
   getDiscordGeduUpcomingSessions,
   isDiscordGeduNotLinked,
+  readDiscordSubstitutionDm,
   resolveDiscordGedu,
 } from "@/lib/discord-substitution.server";
 import { askGeduGuru, askHappinappi } from "@/lib/gemini";
 import { resetPassword, type PasswordResetOutcome } from "@/lib/microsoft-graph";
+import {
+  buildSubstitutionOfferDm,
+  loadDiscordSubOfferCopy,
+  parseSubReqCustomId,
+  substitutionDmSession,
+  type DiscordSubOfferCopy,
+  type SubReqAction,
+} from "@/lib/substitution-notifications/discord-dm-message";
+import { deriveNotificationState } from "@/lib/substitution-notifications/state";
+import { drainSubstitutionNotifications } from "@/lib/substitution-notifications/sync.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendableImageOrigin } from "@/lib/email-templates/render-context";
 import { getOrigin } from "@/lib/url";
 // The module by name rather than the package index: that re-exports
 // `"use client"` query hooks, which a route has no business loading.
-import { substitutionRequestFailureKey } from "@/services/session-substitution/session-substitution.refusals";
+import {
+  substitutionAnswerFailureKey,
+  substitutionRequestFailureKey,
+} from "@/services/session-substitution/session-substitution.refusals";
 import type { DiscordLinkTokenInsert, SubstitutionReason } from "@/types";
 
 // The Discord user who ran the command. `id` and `username` are read as
@@ -117,7 +133,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ type: InteractionResponseType.PONG });
   }
 
-  // Every control the bot draws belongs to `/sub` or its admin preview.
+  // Every control the bot draws belongs to `/sub`, a substitution request's
+  // DM, or the admin preview of either.
   if (
     interaction.type === InteractionType.MESSAGE_COMPONENT ||
     interaction.type === InteractionType.MODAL_SUBMIT
@@ -316,10 +333,28 @@ async function answerSubControl(
   });
   const customId = interaction.data?.custom_id;
   const token = interaction.token;
-  const action = typeof customId === "string" ? parseSubCustomId(customId) : null;
-  if (action === null || !token) return acknowledge;
-
+  if (typeof customId !== "string" || !token) return acknowledge;
   const locale = discordLocale(interaction);
+
+  // A substitution DM's preview buttons answer with the DM's own preview line.
+  if (SUB_REQ_PREVIEW.test(customId)) {
+    const copy = await loadDiscordSubOfferCopy(locale);
+    return NextResponse.json({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: { content: copy.offer("previewNotice"), flags: EPHEMERAL },
+    });
+  }
+
+  const answer = parseSubReqCustomId(customId);
+  if (answer !== null) {
+    const caller = discordCaller(interaction);
+    if (caller === null) return acknowledge;
+    after(sendSubReqAnswer(token, caller, locale, answer));
+    return greyOut(interaction, acknowledge);
+  }
+
+  const action = parseSubCustomId(customId);
+  if (action === null) return acknowledge;
 
   if (action.kind === "preview") {
     const copy = await loadDiscordSubCopy(locale);
@@ -360,8 +395,14 @@ async function answerSubControl(
   }
 
   after(sendSubStep(token, caller, locale, requestHeaders, step));
-  // Grey the message's controls out in the same reply, so a second tap — easy
-  // on a phone — cannot start a second run racing this one to `@original`.
+  return greyOut(interaction, acknowledge);
+}
+
+/**
+ * Grey the pressed message's controls out in the reply, so a second tap — easy
+ * on a phone — cannot start a second run racing this one to `@original`.
+ */
+function greyOut(interaction: DiscordInteraction, acknowledge: NextResponse): NextResponse {
   const greyedOut = disabledControlsUpdate(interaction.message);
   return greyedOut === null
     ? acknowledge
@@ -532,6 +573,91 @@ async function sendSubNotLinked(
     interactionToken,
     buildNoticeMessage({ copy, logoUrl: subLogoUrl(), line: copy.sub("notLinkedRunLink") })
   );
+}
+
+// ---------------------------------------------------------------- the substitution DM
+
+/** A press on the admin preview of a substitution DM — `subpreview:o:…` or `subpreview:d:…`. */
+const SUB_REQ_PREVIEW = /^subpreview:[od]:/;
+
+/**
+ * Answer a substitution request from its DM — Offer or Decline — as the gedu
+ * the presser's Discord account acts as, then redraw the DM.
+ *
+ * An accepted answer syncs the request in-process, which redraws every message
+ * about it (this DM among them) and the Slack message; the DM is then redrawn
+ * once more through the press's own token, so it comes back even where the
+ * sync had no change to draw or another worker holds the request. A refused
+ * one redraws the DM under the write's own refusal line — through the pool's
+ * mapper, in the DM's language — with its buttons back so the gedu can answer
+ * again; a presser with no gedu linked is told to run `/link`.
+ *
+ * The DM is drawn exactly as the sync draws it — the candidate's own locale,
+ * else the default — so the sync's record of it stays true. Where the redraw
+ * itself fails the message stays greyed out, as a `/sub` step's would.
+ */
+async function sendSubReqAnswer(
+  interactionToken: string,
+  caller: { id: string; username: string },
+  discordLanguage: SupportedLocale,
+  action: SubReqAction
+): Promise<void> {
+  let refusalLine: ((copy: DiscordSubOfferCopy) => string) | null = null;
+  try {
+    await answerDiscordSubstitutionRequest({
+      discordUserId: caller.id,
+      requestId: action.requestId,
+      response: action.kind,
+    });
+  } catch (refusal) {
+    if (isDiscordGeduNotLinked(refusal)) {
+      refusalLine = (copy) => copy.offer("notLinked");
+    } else {
+      const failure = substitutionAnswerFailureKey(refusal);
+      if (failure === "poolActionFailed") {
+        console.error("Discord substitution answer error:", refusal);
+      }
+      refusalLine = (copy) => copy.pool(failure);
+    }
+  }
+
+  if (refusalLine === null) {
+    try {
+      await drainSubstitutionNotifications({ requestIds: [action.requestId] });
+    } catch (error) {
+      // The answer stands; the outbox retries the sync.
+      console.error("Discord substitution answer: notification sync failed:", error);
+    }
+  }
+
+  try {
+    const read = await readDiscordSubstitutionDm({
+      discordUserId: caller.id,
+      requestId: action.requestId,
+    });
+    if (read === null) return;
+    const { snapshot, candidate } = read;
+    const locale =
+      candidate === null
+        ? discordLanguage
+        : candidate.locale !== null && isSupportedLocale(candidate.locale)
+          ? candidate.locale
+          : DEFAULT_LOCALE;
+    const copy = await loadDiscordSubOfferCopy(locale);
+    await patchDiscordMessage(
+      interactionToken,
+      buildSubstitutionOfferDm({
+        copy,
+        logoUrl: subLogoUrl(),
+        session: substitutionDmSession(snapshot, locale),
+        response: candidate?.response ?? null,
+        state: deriveNotificationState(snapshot).kind,
+        refusalLine: refusalLine === null ? null : refusalLine(copy),
+      })
+    );
+  } catch (error) {
+    console.error("Discord substitution DM redraw error:", error);
+  }
 }
 
 // ---------------------------------------------------------------- /reset-password

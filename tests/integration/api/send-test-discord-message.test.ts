@@ -241,15 +241,23 @@ describe("POST /api/admin/send-test-discord-message", () => {
     );
 
     // The list, the filed line, a refusal, the empty list and the failure
-    // notice; the request modal cannot be DMed.
-    expect(steps).toHaveLength(5);
+    // notice — the request modal cannot be DMed — then a substitution
+    // request's seven DMs.
+    expect(steps).toHaveLength(5 + 7);
     for (const step of steps) {
       expect(step.flags).toBe(1 << 15);
       expect(step.content).toBeUndefined();
     }
-    expect(JSON.stringify(steps[0])).toContain("Mille kerralle tarvitset tuuraajan?");
-    const ids = steps.flatMap((step) => customIds(step.components));
-    expect(ids).toEqual(["subpreview:s:fi", "subpreview:l"]);
+    const subSteps = steps.slice(0, 5);
+    const requestDms = steps.slice(5);
+    expect(JSON.stringify(subSteps[0])).toContain("Mille kerralle tarvitset tuuraajan?");
+    expect(subSteps.flatMap((step) => customIds(step.components))).toEqual([
+      "subpreview:s:fi",
+      "subpreview:l",
+    ]);
+    const dmIds = requestDms.flatMap((step) => customIds(step.components));
+    expect(dmIds.length).toBeGreaterThan(0);
+    for (const id of dmIds) expect(id).toMatch(/^subpreview:[od]:/);
   });
 
   it("heads every step with the favicon from this environment's own site", async () => {

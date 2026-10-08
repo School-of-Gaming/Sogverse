@@ -462,6 +462,13 @@ export const ROUTES = {
    */
   linkDiscord: "/link-discord",
   /**
+   * Where the Slack app's link command sends an admin to link their Slack
+   * account, carrying the one-time `?token=`. Public to the proxy for the same
+   * reason as `linkDiscord`; the page gates itself to admins, and only its
+   * button spends the token.
+   */
+  linkSlack: "/link-slack",
+  /**
    * Public identity page — who School of Gaming is, what Yty is, and the
    * public FAQ. Reached from the header in both auth states: it is the one
    * page carrying this copy, and the home page it used to live on is
