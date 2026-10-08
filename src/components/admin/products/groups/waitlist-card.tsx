@@ -123,7 +123,8 @@ export function WaitlistCard({
                   participantId={p.participant_id}
                   participantEmail={p.participant_email}
                   firstName={p.participant_first_name}
-                  dateOfBirth={p.participant_date_of_birth}
+                  birthYear={p.participant_birth_year}
+                  birthMonth={p.participant_birth_month}
                   gender={p.participant_gender}
                   parentFirstName={p.parent_first_name}
                   parentLastName={p.parent_last_name}

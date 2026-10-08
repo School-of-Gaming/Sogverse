@@ -348,30 +348,38 @@ describe("RegisterForm", () => {
     expect(mockSupabaseClient.auth.signInWithPassword).not.toHaveBeenCalled();
   });
 
-  it("shows the route's own message on any other refusal", async () => {
+  // The route's `error` is English written for a log; a refusal nobody
+  // predicted gets the generic translated line, and the English goes to the
+  // console.
+  it("shows the translated generic message on any other refusal, never the route's", async () => {
     mockFetch.mockResolvedValue(
       new Response(JSON.stringify({ error: "That email could not be registered." }), {
         status: 400,
       }),
     );
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const form = renderForm();
 
     await form.submit();
 
-    expect(form.container.textContent).toContain(
-      "That email could not be registered.",
-    );
+    expect(form.container.textContent).toContain("register.failed");
+    expect(form.container.textContent).not.toContain("could not be registered");
     expect(form.button().disabled).toBe(false);
+    consoleError.mockRestore();
   });
 
   it("re-enables and unfreezes when the sign-in that follows fails", async () => {
     mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
       error: { message: "Invalid login credentials" },
     });
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const form = renderForm();
 
     await form.submit();
 
+    expect(form.container.textContent).toContain("signInAfterRegisterFailed");
+    expect(form.container.textContent).not.toContain("Invalid login credentials");
+    consoleError.mockRestore();
     expect(mockUnfreezeAuthState).toHaveBeenCalled();
     expect(form.button().disabled).toBe(false);
     expect(mockNavigateAfterAuth).not.toHaveBeenCalled();
@@ -384,7 +392,7 @@ describe("RegisterForm", () => {
     await form.submit();
 
     expect(mockFetch).not.toHaveBeenCalled();
-    expect(form.container.textContent).toContain("Passwords do not match");
+    expect(form.container.textContent).toContain("resetPassword.passwordsDoNotMatch");
     expect(form.button().disabled).toBe(false);
   });
 });

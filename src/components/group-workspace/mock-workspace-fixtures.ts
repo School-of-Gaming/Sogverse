@@ -1867,7 +1867,7 @@ function substitutionRequestsFor(
  * A bare `YYYY-MM-DD` offset from today, **as today falls in the product's own
  * zone**.
  *
- * Product start/end dates and dates of birth are zoneless calendar dates, but
+ * Product start/end dates and birth months are zoneless calendar values, but
  * the offset has to be taken from a day that means something, and the day these
  * are read against is the one the schedule is authored in. Stepping in UTC
  * instead moved every date a day early for the evening hours between UTC and
@@ -1972,7 +1972,8 @@ function buildRoster(
       return {
         participant_id: person.id,
         first_name: person.firstName,
-        date_of_birth: null,
+        birth_year: null,
+        birth_month: null,
         // An adult seat carries no linked game account on either platform.
         minecraft_username: null,
         minecraft_uuid: null,
@@ -2004,11 +2005,16 @@ function buildRoster(
     // moment a surface read the column its topic did not name.
     const minecraft = platform === "minecraft";
     const roblox = platform === "roblox";
+    // Taken from a day comfortably more than a month before the birthday, so
+    // the birth month has already begun and the computed age is the one stated.
+    const [birthYear, birthMonth] = calendarDate(now, -(detail.age * 365 + 40))
+      .split("-")
+      .map(Number);
     return {
       participant_id: person.id,
       first_name: person.firstName,
-      // Offset a few days past the birthday so the computed age is exact.
-      date_of_birth: calendarDate(now, -(detail.age * 365 + 12)),
+      birth_year: birthYear,
+      birth_month: birthMonth,
       minecraft_username: minecraft ? detail.minecraftUsername : null,
       minecraft_uuid:
         minecraft && detail.minecraftUsername ? detail.minecraftUuid : null,

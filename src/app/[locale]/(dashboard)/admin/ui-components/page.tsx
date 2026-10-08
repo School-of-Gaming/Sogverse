@@ -4609,7 +4609,7 @@ function GameAccountDemo() {
  * renders a degenerate square and a freshly generated one gives the same person
  * a different face on every reload.
  *
- * `marja` is an adult holding a seat of her own. She has no date of birth, no
+ * `marja` is an adult holding a seat of her own. She has no birth month, no
  * gender and no game account on purpose — those live on `gamer_profiles` and
  * the per-platform account tables, and an adult seat has none of those rows.
  *
@@ -4703,7 +4703,8 @@ function ParticipantChipRow() {
           participationId="demo-1"
           participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
-          dateOfBirth="2014-03-11"
+          birthYear={2014}
+          birthMonth={3}
           gender="girl"
           parentFirstName="Sanna"
           parentLastName="Virtanen"
@@ -4714,7 +4715,8 @@ function ParticipantChipRow() {
           participationId="demo-2"
           participantId={CHIP_PEOPLE.joonas}
           firstName="Joonas"
-          dateOfBirth="2012-09-02"
+          birthYear={2012}
+          birthMonth={9}
           gender="boy"
           parentFirstName="Petra"
           parentLastName="Nieminen"
@@ -4725,7 +4727,8 @@ function ParticipantChipRow() {
           participationId="demo-3"
           participantId={CHIP_PEOPLE.petra}
           firstName="Petra"
-          dateOfBirth={null}
+          birthYear={null}
+          birthMonth={null}
           gender={null}
           parentFirstName={null}
           parentLastName={null}
@@ -4741,7 +4744,8 @@ function ParticipantChipRow() {
           participationId="demo-5"
           participantId={CHIP_PEOPLE.marja}
           firstName="Marja"
-          dateOfBirth={null}
+          birthYear={null}
+          birthMonth={null}
           gender={null}
           parentFirstName={null}
           parentLastName={null}
@@ -4759,7 +4763,8 @@ function ParticipantChipRow() {
           participationId="demo-6"
           participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
-          dateOfBirth="2014-03-11"
+          birthYear={2014}
+          birthMonth={3}
           gender="girl"
           parentFirstName="Sanna"
           parentLastName="Virtanen"
@@ -4770,7 +4775,8 @@ function ParticipantChipRow() {
           participationId="demo-7"
           participantId={CHIP_PEOPLE.joonas}
           firstName="Joonas"
-          dateOfBirth="2012-09-02"
+          birthYear={2012}
+          birthMonth={9}
           gender="boy"
           parentFirstName="Petra"
           parentLastName="Nieminen"
@@ -4788,7 +4794,8 @@ function ParticipantChipRow() {
           participationId="demo-8"
           participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
-          dateOfBirth="2014-03-11"
+          birthYear={2014}
+          birthMonth={3}
           gender="girl"
           parentFirstName="Sanna"
           parentLastName="Virtanen"
@@ -4799,7 +4806,8 @@ function ParticipantChipRow() {
           participationId="demo-9"
           participantId={CHIP_PEOPLE.petra}
           firstName="Petra"
-          dateOfBirth={null}
+          birthYear={null}
+          birthMonth={null}
           gender={null}
           parentFirstName={null}
           parentLastName={null}
@@ -4814,7 +4822,8 @@ function ParticipantChipRow() {
           participationId="demo-4"
           participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
-          dateOfBirth="2014-03-11"
+          birthYear={2014}
+          birthMonth={3}
           gender="girl"
           parentFirstName="Sanna"
           parentLastName="Virtanen"

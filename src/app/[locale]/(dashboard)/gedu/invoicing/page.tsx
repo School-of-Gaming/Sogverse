@@ -18,10 +18,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("geduInvoicing") };
 }
 
-/** The read, or the reason it did not happen. Never both, never neither. */
+/** The read, or the fact that it did not happen. */
 type SnapshotResult =
   | { ok: true; snapshot: GeduInvoicingSnapshot }
-  | { ok: false; reason: string | null };
+  | { ok: false };
 
 /**
  * The calling gedu's month, awaited here so the page arrives finished. The RPC
@@ -29,7 +29,9 @@ type SnapshotResult =
  * proxy has already required of this path.
  *
  * A failure is carried rather than flattened into an empty month: "you have
- * nothing to invoice" is a wrong answer a gedu could act on.
+ * nothing to invoice" is a wrong answer a gedu could act on. The reason is
+ * Postgres English, so it goes to the server log and the gedu reads the one
+ * translated line; the admin pages, whose readers can act on it, show it.
  */
 async function loadMonth(monthStart: string): Promise<SnapshotResult> {
   // Outside the `try`, for the reason the admin route gives.
@@ -39,7 +41,8 @@ async function loadMonth(monthStart: string): Promise<SnapshotResult> {
   try {
     return { ok: true, snapshot: await service.getMyMonth(monthStart) };
   } catch (error) {
-    return { ok: false, reason: wireErrorMessage(error) };
+    console.error("[gedu-invoicing] month read failed:", wireErrorMessage(error));
+    return { ok: false };
   }
 }
 
@@ -60,7 +63,7 @@ export default async function GeduInvoicingRoute({
   const result = await loadMonth(monthStart);
 
   if (!result.ok) {
-    return <GeduInvoicingLoadFailure reason={result.reason} />;
+    return <GeduInvoicingLoadFailure />;
   }
 
   const queryClient = new QueryClient();
@@ -80,7 +83,7 @@ export default async function GeduInvoicingRoute({
 }
 
 /** The page's heading over a band saying why there is nothing under it. */
-async function GeduInvoicingLoadFailure({ reason }: { reason: string | null }) {
+async function GeduInvoicingLoadFailure() {
   const t = await getTranslations("geduInvoicing");
 
   return (
@@ -89,11 +92,7 @@ async function GeduInvoicingLoadFailure({ reason }: { reason: string | null }) {
     <div className="mx-auto max-w-5xl space-y-6 pb-24" data-reserve-scroll-gutter>
       <MyGeduInvoicingHeading />
       <Alert variant="destructive">
-        <AlertDescription>
-          {reason === null
-            ? t("loadError")
-            : t("loadErrorWithReason", { reason })}
-        </AlertDescription>
+        <AlertDescription>{t("loadError")}</AlertDescription>
       </Alert>
     </div>
   );

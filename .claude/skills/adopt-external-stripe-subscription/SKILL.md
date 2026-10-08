@@ -30,7 +30,7 @@ pinned to an old API version, so `search` calls take `--stripe-version 2020-08-2
 - **Check whether the family is already in Sogverse, three ways**: by parent email, by the
   child's Minecraft UUID (resolve the username through Mojang, look it up in
   `minecraft_accounts.minecraft_uuid`), and — for rosters with no Minecraft handle — by
-  child first name plus stored DOB month and year. A household often exists under a
+  child first name plus stored birth month and year. A household often exists under a
   *different guardian's* email; only the child-side checks catch it. If found, consolidate
   onto the existing account.
 - **When a parent holds several live subs, first check which are already bound**
@@ -62,14 +62,14 @@ pinned to an old API version, so `search` calls take `--stripe-version 2020-08-2
   transaction, minus those two, reading them from
   `supabase/schema/functions/create_gamer.sql`: promote the trigger-made profile to
   `gamer` (guarded on `role = 'customer'`), delete its `customer_profiles` row, insert
-  `gamer_profiles` (DOB, `sign_in = 'parent'`), insert `parent_gamer`. The owner ruled
+  `gamer_profiles` (`birth_year`, `birth_month`, `sign_in = 'parent'`), insert `parent_gamer`. The owner ruled
   this safe (2026-10-05): until the parent sets a PIN, switching out of the child is
   refused outright, and the parent's first sign-in forces PIN creation. The child is left
   with no guardian declaration on record. Without the go-ahead, the alternative is the
   parent adding the child themselves after setting their PIN.
-- **DOB:** the UI stores month and year as `YYYY-MM-01`. **Never infer a birth date** — a
-  blank one blocks the child (the column is NOT NULL, and it drives age gating); seat the
-  rest and ask for month and year. When the owner says to seat now anyway, write a
+- **Birth month and year:** the row holds the birth year and month only, never a day.
+  **Never infer them** — both columns are NOT NULL and drive age gating, so a blank blocks
+  the child; seat the rest and ask for month and year. When the owner says to seat now anyway, write a
   placeholder inside the club's age band, name it as a placeholder in the report, and
   support collects the real month and year. Look in SOGGA first (the `sogga-legacy-data` skill): a
   migrated child's real name and birthdate are usually there, and only a Chargebee-only
@@ -171,7 +171,7 @@ A parent with several Stripe customers is a known, handled case — read
 
 - **Once a batch is applied, assume it is correct.** The organizer and support deal with
   families directly and will raise complaints; that loop is the check. Apply the roster as
-  given, report what landed, stop. Ask only where the work cannot proceed: a missing DOB, a
+  given, report what landed, stop. Ask only where the work cannot proceed: a missing birth month and year, a
   bundle naming no club, a child with no live sub to bind.
 - **That removes confirmation questions, not warnings.** Anything that genuinely looks wrong
   is raised unprompted, once, with the evidence: a family billed for a club that has not
@@ -190,7 +190,7 @@ A parent with several Stripe customers is a known, handled case — read
 - **A club price change does not move existing subscribers** — they are grandfathered.
   Don't chase the split. The exception worth flagging is a native signup and a migrated
   cohort on the **same club at different prices**.
-- **A child's DOB stays as the parent entered it**; never correct it to the roster.
+- **A child's birth month and year stay as the parent entered them**; never correct it to the roster.
 - **Attendance, not billing, settles which club a child is in and whether they churned.**
   Billing records only what a family started paying for. Ask the organizer to check
   attendance. "Club X got combined into Y" never identifies which children moved — one
@@ -266,7 +266,7 @@ the clipboard UTF-8-safely (€, –, ä reach a real person).
 ## The standing sweep for unbound subs
 
 Nothing ever links a pre-existing sub to a family who self-registers later, and a family
-parked for a missing DOB is never re-checked. So re-run this sweep rather than treating
+parked for a missing birth month and year is never re-checked. So re-run this sweep rather than treating
 each report as a one-off: **from the Stripe side**, page every live sub (`active`,
 `trialing`, `past_due`, `unpaid`, paginating on `--starting-after`) and diff the ids
 against `family_subscriptions`. The Sogverse-side query (profiles with no customer and no

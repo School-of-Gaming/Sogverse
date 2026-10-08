@@ -63,10 +63,9 @@ export function InstantVoiceSession({ code, viewer, copyright }: InstantVoiceSes
 
 function InstantVoiceSessionInner({ code, viewer, copyright }: InstantVoiceSessionProps) {
   const t = useTranslations("voice");
-  const tInstant = useTranslations("voice.instant");
   const { joined, join, leave, callObject } = useVoiceRoom();
   const [state, setState] = useState<SessionState>({ phase: "checking" });
-  const [joinError, setJoinError] = useState<string | null>(null);
+  const [joinFailed, setJoinFailed] = useState(false);
   const [joining, setJoining] = useState(false);
   const [endModalOpen, setEndModalOpen] = useState(false);
   const [localRole, setLocalRole] = useState<"admin" | "gedu" | "guest" | null>(
@@ -113,7 +112,7 @@ function InstantVoiceSessionInner({ code, viewer, copyright }: InstantVoiceSessi
       displayName: string,
       media: { micOn: boolean; cameraOn: boolean; audioDeviceId: string | null },
     ) => {
-      setJoinError(null);
+      setJoinFailed(false);
       setJoining(true);
       try {
         const response = await fetch("/api/voice/instant/token", {
@@ -135,16 +134,24 @@ function InstantVoiceSessionInner({ code, viewer, copyright }: InstantVoiceSessi
         }
 
         if (!response.ok) {
+          // Every other refusal gets the one generic line, never the route's
+          // English. Its two 400s are both answered on the client first: the
+          // page only renders this component for a code that already passed
+          // the route's own format check, and the lobby holds the join button
+          // until a typed name is within the display-name limits.
+          //
           // Known edge: `viewer` is a server-render snapshot, so if the
           // session dies between page load and this POST (sign-out in another
           // tab, an account switch), the route takes the signed-out path and
           // 400s for a name the lobby isn't showing an input for. A reload
           // recovers — the page re-derives the lobby from the live session —
           // and that's accepted as the answer for how rare it is.
-          const data = await response.json().catch(() => ({}));
-          setJoinError(
-            typeof data.error === "string" ? data.error : tInstant("joinFailed"),
+          console.error(
+            "[instant-voice] token request refused:",
+            response.status,
+            await response.text().catch(() => ""),
           );
+          setJoinFailed(true);
           setJoining(false);
           return;
         }
@@ -162,11 +169,13 @@ function InstantVoiceSessionInner({ code, viewer, copyright }: InstantVoiceSessi
         setState({ phase: "in-call" });
         setJoining(false);
       } catch (err) {
-        setJoinError(err instanceof Error ? err.message : tInstant("joinFailed"));
+        // Daily's join rejects with its own English; it is for the log.
+        console.error("[instant-voice] join failed:", err);
+        setJoinFailed(true);
         setJoining(false);
       }
     },
-    [code, join, tInstant],
+    [code, join],
   );
 
   // Listen for the moderator's "ended for everyone" broadcast. Lands BEFORE
@@ -315,7 +324,7 @@ function InstantVoiceSessionInner({ code, viewer, copyright }: InstantVoiceSessi
         onJoin={handleJoin}
         viewer={viewer}
         joining={joining}
-        error={joinError}
+        joinFailed={joinFailed}
       />
     );
   }

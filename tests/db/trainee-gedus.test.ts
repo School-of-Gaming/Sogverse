@@ -8,7 +8,9 @@ import { chatChannelRoster } from "@/services/chat/chat.contracts";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import { traineeGroupOverlay } from "@/services/member-flair/member-flair.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
-import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
+import { SEED, TEST_CREDENTIALS, TEST_IDS } from "./constants";
+import { ageOnDate } from "@/lib/gamer-age-eligibility";
+import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 import {
   createScheduleSlot,
   createTestProduct,
@@ -63,11 +65,12 @@ function dayOffset(offset: number): string {
 
 const YESTERDAY = dayOffset(-1);
 
-/** Whole years between a date of birth and today in UTC, as the RPC counts them. */
-function ageInUtc(dateOfBirth: string): number {
-  const [by, bm, bd] = dateOfBirth.split("-").map(Number);
-  const [ty, tm, td] = dayOffset(0).split("-").map(Number);
-  return ty - by - (tm < bm || (tm === bm && td < bd) ? 1 : 0);
+/**
+ * A birth month's age today in UTC, by the application's own rule — which the
+ * RPC has to agree with.
+ */
+function ageInUtc(birth: GamerBirthMonthYear): number {
+  return ageOnDate(birth, dayOffset(0));
 }
 
 type Admin = SupabaseClient<Database>;
@@ -389,7 +392,10 @@ describe("trainee gedus", () => {
       expect(roster).toHaveLength(1);
       expect(Object.keys(roster[0]).sort()).toEqual(TRAINEE_ROSTER_KEYS);
       expect(roster[0].participant_id).toBe(TEST_IDS.GAMER);
-      expect(roster[0].age).toBe(ageInUtc("2015-06-15"));
+      expect(roster[0].age).toBe(ageInUtc({
+        year: SEED.GAMER_BIRTH.birth_year,
+        month: SEED.GAMER_BIRTH.birth_month,
+      }));
       expect(roster[0].gender).toBe("boy");
       expect(roster[0].has_note).toBe(true);
       expect(roster[0].creations).toEqual([]);

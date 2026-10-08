@@ -545,7 +545,7 @@ export function robloxIdsFrom(
 export type SwitchTargetFact =
   /**
    * The club's authored range, and the seat holder's age where there is one.
-   * `gamerAge` is null on an adult seat, which carries no date of birth: the
+   * `gamerAge` is null on an adult seat, which carries no birth month: the
    * range is stated alone rather than beside a guessed age.
    */
   | {

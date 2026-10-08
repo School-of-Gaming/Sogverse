@@ -83,7 +83,7 @@ export function WhenSection({
   // A consumer club's first charge is deferred to its start date, so the date
   // is now editable — with the warning that moving it later does NOT move the
   // anchor on subscriptions that already exist (that correction is manual in
-  // Stripe; see the checkout route and TODO.md).
+  // Stripe; see the checkout route and GitHub issue #154).
   const startDateMovesBilling = productType === "consumer_club";
 
   // Today in the *product's* zone, not the reader's: these fields are about the

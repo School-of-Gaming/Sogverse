@@ -1761,13 +1761,13 @@
       "loadError": "Vikariaten kunde inte laddas.",
       "loadErrorWithReason": "Vikariaten kunde inte laddas: {reason}",
       "approveConfirmTitle": "Godkänn {name} som vikarie?",
-      "approveConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på My SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från de andra frivilligas lista, och på kortet står nu att {name} vikarierar för {absent}.",
+      "approveConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på Min SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från de andra frivilligas lista, och på kortet står nu att {name} vikarierar för {absent}.",
       "approveFailedOfferGone": "{name} har tagit tillbaka sitt erbjudande, så det finns inget att godkänna.",
       "approveFailedAlreadySettled": "Någon annan har redan löst det här tillfället.",
       "approveFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
       "approveFailedIneligible": "{name} kan inte längre ta det här tillfället.",
       "seatConfirmTitle": "Sätt in {name} som vikarie?",
-      "seatConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på My SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från listan där Geduer erbjuder sig, och på kortet står nu att {name} vikarierar för {absent}.",
+      "seatConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på Min SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från listan där Geduer erbjuder sig, och på kortet står nu att {name} vikarierar för {absent}.",
       "seatConfirm": "Sätt in vikarien",
       "seatReasonLabel": "Angiven orsak",
       "seatFailed": "Vikarien kunde inte sättas in – försök igen.",
@@ -1926,7 +1926,8 @@
       "creatingAccount": "Skapar konto...",
       "accountExists": "Ett konto med denna e-postadress finns redan",
       "weakPassword": "Det lösenordet är för lätt att gissa — prova ett längre, eller ett som du inte använder någon annanstans",
-      "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
+      "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>",
+      "failed": "Den e-postadressen kunde inte registreras. Om du redan har ett konto, logga in i stället."
     },
     "forgotPassword": {
       "title": "Glömt lösenordet?",
@@ -1978,8 +1979,17 @@
       "submit": "Slutför",
       "finishing": "Slutförs...",
       "alreadyComplete": "Det här kontot är redan klart. Logga in igen för att fortsätta.",
-      "switchToParent": "Inte spelfostrare? <link>Skapa ett föräldrakonto i stället</link>"
-    }
+      "switchToParent": "Inte spelfostrare? <link>Skapa ett föräldrakonto i stället</link>",
+      "failed": "Vi kunde inte slutföra ditt konto. Försök igen."
+    },
+    "validation": {
+      "emailInvalid": "Ange en giltig e-postadress.",
+      "firstNameTooShort": "Förnamnet måste vara minst {min} tecken.",
+      "firstNameTooLong": "Förnamnet får vara högst {max} tecken.",
+      "lastNameTooShort": "Efternamnet måste vara minst {min} tecken.",
+      "lastNameTooLong": "Efternamnet får vara högst {max} tecken."
+    },
+    "signInAfterRegisterFailed": "Ditt konto är klart, men vi kunde inte logga in dig. Logga in med din e-postadress och ditt lösenord."
   },
   "pin": {
     "create": {
@@ -2441,7 +2451,7 @@
       "pinTitle": "Be en förälder att ange sin PIN-kod",
       "pinDescription": "En förälders PIN-kod behövs för att byta till {name}.",
       "pinNotSetTitle": "Ingen föräldra-PIN ännu",
-      "pinNotSetDescription": "En förälder måste först skapa en PIN-kod från sin Min SOG. Sedan kan du byta konto.",
+      "pinNotSetDescription": "En förälder måste först skapa en PIN-kod från Min SOG. Sedan kan du byta konto.",
       "signOutTitle": "Logga ut först",
       "signOutOwnSession": "{name} är inloggad med sin egen inloggning, så det här kontot kan inte byta till ett annat. Så förblir allas konton privata.",
       "signOutHow": "Logga ut och logga sedan in som {name}.",
@@ -2598,7 +2608,8 @@
       "chooseAreas": "Välj områden",
       "loading": "Laddar platser...",
       "save": "Spara",
-      "saving": "Sparar..."
+      "saving": "Sparar...",
+      "saveFailed": "Dina områden sparades inte. Försök igen."
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Bara tilldelade Geduer och administratörer kan läsa den här anteckningen.",
@@ -2859,11 +2870,11 @@
         },
         "groupAssignment": {
           "question": "Hur blir jag tilldelad en grupp?",
-          "answer": "<p>En administratör tilldelar dig. Tilldelningar görs från gruppanelen för en klubb, ett läger eller ett evenemang på administratörssidan — du kan inte tilldela dig själv, och det finns ingen ansökan att skicka in — och du kan ha en grupp per klubb, läger eller evenemang.</p><p>Två saker avgör om du dyker upp som ett alternativ: ditt konto måste vara certifierat, och administratören som väljer en Gedu ser vilka språk du talar bredvid ditt namn och kan filtrera på dem, så att hålla dina talade språk aktuella i inställningarna är det som placerar dig framför rätt grupper. Dina områden är till för något annat — att hitta dig som vikarie när en annan Gedu inte kan ta ett tillfälle — så de är också värda att hålla aktuella.</p><p>Det kommer inget mejl när en tilldelning görs — gruppen och dess nästa tillfälle dyker upp på ditt Min SOG nästa gång du öppnar det.</p>"
+          "answer": "<p>En administratör tilldelar dig. Tilldelningar görs från gruppanelen för en klubb, ett läger eller ett evenemang på administratörssidan — du kan inte tilldela dig själv, och det finns ingen ansökan att skicka in — och du kan ha en grupp per klubb, läger eller evenemang.</p><p>Två saker avgör om du dyker upp som ett alternativ: ditt konto måste vara certifierat, och administratören som väljer en Gedu ser vilka språk du talar bredvid ditt namn och kan filtrera på dem, så att hålla dina talade språk aktuella i inställningarna är det som placerar dig framför rätt grupper. Dina områden är till för något annat — att hitta dig som vikarie när en annan Gedu inte kan ta ett tillfälle — så de är också värda att hålla aktuella.</p><p>Det kommer inget mejl när en tilldelning görs — gruppen och dess nästa tillfälle dyker upp på Min SOG nästa gång du öppnar det.</p>"
         },
         "takingAttendance": {
           "question": "Hur markerar jag närvaro?",
-          "answer": "<p>Från din Min SOG:</p><steps><step>Öppna klubben, lägret eller evenemanget du håller i. Alla dess tillfällen finns listade på sidan.</step><step>Leta upp tillfället och tryck på Redigera.</step><step>Närvaron ligger först i redigeraren: en rad per spelare, var och en med Närvarande och Frånvarande.</step><step>Markera varje spelare i listan och tryck sedan på Spara.</step></steps><p>En rad börjar omarkerad, och omarkerad är ett verkligt tredje tillstånd och inte ett tyst ”frånvarande”. Att trycka på ett svar du redan valt tar bort markeringen, så en feltryckning kostar ingenting, och räknaren ovanför listan visar hur många i gruppen du har markerat hittills.</p><p>Du kan spara en halvmarkerad lista och avsluta senare — ingenting du redan markerat går förlorat. Det finns med flit ingen ”markera alla närvarande”: närvarolistan är också din bekräftelse på att tillfället hölls, och det är den du får betalt för. Att spara den avslutar dock inte tillfället i sig — rapporten och att skicka den till familjerna är resten.</p>"
+          "answer": "<p>Från Min SOG:</p><steps><step>Öppna klubben, lägret eller evenemanget du håller i. Alla dess tillfällen finns listade på sidan.</step><step>Leta upp tillfället och tryck på Redigera.</step><step>Närvaron ligger först i redigeraren: en rad per spelare, var och en med Närvarande och Frånvarande.</step><step>Markera varje spelare i listan och tryck sedan på Spara.</step></steps><p>En rad börjar omarkerad, och omarkerad är ett verkligt tredje tillstånd och inte ett tyst ”frånvarande”. Att trycka på ett svar du redan valt tar bort markeringen, så en feltryckning kostar ingenting, och räknaren ovanför listan visar hur många i gruppen du har markerat hittills.</p><p>Du kan spara en halvmarkerad lista och avsluta senare — ingenting du redan markerat går förlorat. Det finns med flit ingen ”markera alla närvarande”: närvarolistan är också din bekräftelse på att tillfället hölls, och det är den du får betalt för. Att spara den avslutar dock inte tillfället i sig — rapporten och att skicka den till familjerna är resten.</p>"
         },
         "attendanceAlert": {
           "question": "Varför visar min klubb fortfarande en gul ”behöver åtgärd”-markering?",
@@ -3020,7 +3031,8 @@
     "creationTitlePlaceholder": "Vad de gjorde",
     "creationUrlLabel": "Länk till skapelsen",
     "creationUrlPlaceholder": "Länk till den",
-    "creationIncomplete": "En skapelse behöver både en titel och en länk."
+    "creationIncomplete": "En skapelse behöver både en titel och en länk.",
+    "saveFailed": "Det sparades inte. Försök igen."
   },
   "richText": {
     "bold": "Fet stil",
@@ -3278,7 +3290,7 @@
         "gamerPhoto": {
           "lynxEducate": "Foton och videor på mitt barn får tas med i sessionsrapporter, delas med Lynx Educate och Roblox för effektrapportering och användas på School of Gamings, Lynx Educates och Roblox webbplatser och sociala medier. Detaljerna finns i <privacy>Skaparnas akademis integritetspolicy</privacy>.",
           "lynxEducateTitle": "Foton och videor på ditt barn",
-          "hint": "Valfritt — du kan ändra detta när som helst på ditt barns sida i My SOG."
+          "hint": "Valfritt — du kan ändra detta när som helst på ditt barns sida i Min SOG."
         },
         "marketing": {
           "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst.",
@@ -3779,7 +3791,7 @@
       "items": {
         "joiningSession": {
           "question": "Hur går min spelare med i ett tillfälle när det börjar?",
-          "answer": "<p>Det beror på var tillfället hålls, och kortet på ditt Min SOG visar vilket: ett tillfälle som hålls online har en knapp på kortet, och ett som hålls på plats visar namnet på platsen.</p><p>Online är tillfället ett röstrum i webbläsaren, och det finns ingenting att installera:</p><steps><step>Leta upp kortet under ditt barns namn på ditt Min SOG. Fram till strax före tillfället är knappen på det låst, och den talar om vilken dag och vilken tid den öppnar.</step><step>Fem minuter innan tillfället börjar ändras knappen till ”Gå med i röstrum”.</step><step>Tryck på den. Rummet släpper bara in dem som hör till gruppen, så från ditt konto ombeds du först att byta till ditt barns profil — då loggas du ut från ditt föräldrakonto — och sedan öppnas rummet som ditt barn.</step><step>Tillåt mikrofonen om webbläsaren frågar.</step></steps><p>För att komma tillbaka till din egen profil efteråt behövs din föräldra-PIN. Om ditt barn loggar in med ett eget användarnamn eller en egen e-postadress kan hen i stället öppna sitt eget Min SOG och trycka på samma knapp där. Rummet står öppet till fem minuter efter att tillfället har slutat.</p><p>På plats finns ingen knapp. Sidan för klubben, lägret eller evenemanget visar platsen där det hålls, med adress, och en anteckning om platsen för familjer när det finns en — så ta med ditt barn dit till starttiden.</p><p>Om kortet i stället säger att vi letar upp en Gedu och en grupp åt ditt barn finns det ingenting att gå med i än: det sker före första tillfället, och därefter visar kortet knappen eller platsen.</p>"
+          "answer": "<p>Det beror på var tillfället hålls, och kortet på Min SOG visar vilket: ett tillfälle som hålls online har en knapp på kortet, och ett som hålls på plats visar namnet på platsen.</p><p>Online är tillfället ett röstrum i webbläsaren, och det finns ingenting att installera:</p><steps><step>Leta upp kortet under ditt barns namn på Min SOG. Fram till strax före tillfället är knappen på det låst, och den talar om vilken dag och vilken tid den öppnar.</step><step>Fem minuter innan tillfället börjar ändras knappen till ”Gå med i röstrum”.</step><step>Tryck på den. Rummet släpper bara in dem som hör till gruppen, så från ditt konto ombeds du först att byta till ditt barns profil — då loggas du ut från ditt föräldrakonto — och sedan öppnas rummet som ditt barn.</step><step>Tillåt mikrofonen om webbläsaren frågar.</step></steps><p>För att komma tillbaka till din egen profil efteråt behövs din föräldra-PIN. Om ditt barn loggar in med ett eget användarnamn eller en egen e-postadress kan hen i stället öppna Min SOG och trycka på samma knapp där. Rummet står öppet till fem minuter efter att tillfället har slutat.</p><p>På plats finns ingen knapp. Sidan för klubben, lägret eller evenemanget visar platsen där det hålls, med adress, och en anteckning om platsen för familjer när det finns en — så ta med ditt barn dit till starttiden.</p><p>Om kortet i stället säger att vi letar upp en Gedu och en grupp åt ditt barn finns det ingenting att gå med i än: det sker före första tillfället, och därefter visar kortet knappen eller platsen.</p>"
         },
         "parentPin": {
           "question": "Vad är föräldra-PIN-koden, och vad gör jag om jag glömmer den?",
@@ -3787,7 +3799,7 @@
         },
         "sessionReports": {
           "question": "Får jag veta hur tillfällena gick?",
-          "answer": "<p>Ja. Efter ett tillfälle skriver ditt barns spelfostrare en rapport om det — vad gruppen arbetade med, hur det gick, och ögonblicken värda att minnas — ofta med bilder.</p><p>Den visas på den klubbens, det lägrets eller det evenemangets sida på Min SOG, under Tillfällen, tillsammans med alla tidigare rapporter och de tillfällen som återstår, och ditt barn ser samma rapporter på sitt eget Min SOG. När Gedun skickar rapporten kommer den också med e-post, adresserad till dig ensam — varje familj får sitt eget separata mejl och ingen familj ser någon annans.</p><p>På samma sida ser du också ditt eget barns närvaromarkering för varje tillfälle; ditt barn ser inte närvaron, och ingen familj ser någonsin ett annat barns.</p>"
+          "answer": "<p>Ja. Efter ett tillfälle skriver ditt barns spelfostrare en rapport om det — vad gruppen arbetade med, hur det gick, och ögonblicken värda att minnas — ofta med bilder.</p><p>Den visas på den klubbens, det lägrets eller det evenemangets sida på Min SOG, under Tillfällen, tillsammans med alla tidigare rapporter och de tillfällen som återstår, och ditt barn ser samma rapporter på Min SOG. När Gedun skickar rapporten kommer den också med e-post, adresserad till dig ensam — varje familj får sitt eget separata mejl och ingen familj ser någon annans.</p><p>På samma sida ser du också ditt eget barns närvaromarkering för varje tillfälle; ditt barn ser inte närvaron, och ingen familj ser någonsin ett annat barns.</p>"
         },
         "missedSessions": {
           "question": "Vad händer om vi missar ett tillfälle, eller går med i en klubb mitt i?",
@@ -3849,7 +3861,7 @@
       "saveFailed": "Det gick inte att spara aviseringsinställningarna. Försök igen."
     },
     "usernameLabel": "Användarnamn",
-    "gamerPasswordFromParent": "Din förälder kan ange ett nytt lösenord åt dig från sin Min SOG.",
+    "gamerPasswordFromParent": "Din förälder kan ange ett nytt lösenord åt dig från Min SOG.",
     "photoConsent": {
       "title": "Foton och videor",
       "granted": "Din förälder har sagt att foton och videor på dig får användas i rapporter från tillfällena och av School of Gaming, Lynx Educate och Roblox. En Gedu frågar dig ändå innan de tar ett foto på dig.",
@@ -4091,7 +4103,8 @@
       "audience": "Din Gedu och teamet på School of Gaming läser din feedback. Tack!",
       "saveFailed": "Dina svar sparades inte. Tryck på Klart för att försöka igen.",
       "done": "Klart"
-    }
+    },
+    "zoneSaveFailed": "Zonen sparades inte. Försök igen."
   },
   "voiceButton": {
     "joinVoice": "Gå med i röstrum",
@@ -4520,7 +4533,7 @@
           "Det finns två saker att säga ja eller nej till:"
         ],
         "bullets": [
-          "Analys – Vercels, och bara om du väljer den. Den räknar besök, mäter hur snabbt sidorna laddas och tar emot några anonyma händelser om hur webbplatsen används: hur någon tar sig till sin My SOG och när språket byts. Den kan inte se vem du är, och vi lämnar den aldrig till annonsörer.",
+          "Analys – Vercels, och bara om du väljer den. Den räknar besök, mäter hur snabbt sidorna laddas och tar emot några anonyma händelser om hur webbplatsen används: hur någon tar sig till Min SOG och när språket byts. Den kan inte se vem du är, och vi lämnar den aldrig till annonsörer.",
           "Marknadsföring – annonscookies, och bara om du väljer dem. De låter annonsplattformarna som nämns ovan – i dag Meta och Google – se hur du använder vår webbplats, så att de kan visa dig våra annonser och vi kan se vilka annonser som fungerar. Googles taggar når din webbläsare via en tagghanterare, som låter oss och den partner som sköter våra kampanjer lägga till eller ta bort en plattform utan att ändra webbplatsen; de plattformar den för tillfället bär står alltid namngivna i listan ovan, och den listan är daterad. Om du skapar ett konto under ett besök sparas även kampanjkoden från länken du kom från på kontot. De är aldrig igång medan en spelare är inloggad. Att stänga av marknadsföring raderar dessa cookies, och den lilla mängd data som dessa skript sparar i din webbläsare vid sidan av dem, men inte det plattformarna redan har – du kan be dem radera det i dina inställningar hos dem."
         ]
       },
@@ -4866,7 +4879,7 @@
         },
         "media": {
           "question": "Kommer mitt barn att fotograferas eller filmas?",
-          "answer": "<p>Träffarna kan fotograferas. Ditt barn syns på ett foto bara om du kryssar i det frivilliga mediavalet när du anmäler barnet, och du kan ändra svaret när som helst på barnets sida i My SOG.</p>"
+          "answer": "<p>Träffarna kan fotograferas. Ditt barn syns på ett foto bara om du kryssar i det frivilliga mediavalet när du anmäler barnet, och du kan ändra svaret när som helst på barnets sida i Min SOG.</p>"
         },
         "facilitators": {
           "question": "Vem håller i träffarna, och hur kontrolleras de?",
@@ -5154,7 +5167,7 @@
       "mediaChanging": {
         "heading": "Ändra ett mediaval",
         "blocks": [
-          "En förälder eller ett barn kan återkalla ett mediatillstånd genom att kontakta {supportEmail}, eller så kan föräldern ändra det när som helst på barnets sida i My SOG.",
+          "En förälder eller ett barn kan återkalla ett mediatillstånd genom att kontakta {supportEmail}, eller så kan föräldern ändra det när som helst på barnets sida i Min SOG.",
           "Efter återkallelsen slutar vi använda materialet på nya sätt och tar bort det från kanaler vi själva styr över, när det rimligen går. En återkallelse kan inte göra tidigare laglig användning olaglig, ta tillbaka tryckt material som redan spridits eller garantera att kopior som tredje part redan delat raderas."
         ]
       },
@@ -5349,7 +5362,7 @@
       "data": {
         "heading": "Uppgifter och foton",
         "blocks": [
-          "Ett barn syns identifierbart på ett foto endast när barnets förälder kryssat i det frivilliga mediasamtycket för barnet vid anmälan. Föräldern kan ändra svaret när som helst på barnets sida i My SOG, och en spelfostrare frågar barnet innan ett foto tas, även när föräldern har samtyckt. <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> beskriver vad samtycket omfattar. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
+          "Ett barn syns identifierbart på ett foto endast när barnets förälder kryssat i det frivilliga mediasamtycket för barnet vid anmälan. Föräldern kan ändra svaret när som helst på barnets sida i Min SOG, och en spelfostrare frågar barnet innan ett foto tas, även när föräldern har samtyckt. <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> beskriver vad samtycket omfattar. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
         ]
       },
       "review": {
@@ -5415,7 +5428,7 @@
       "media": {
         "heading": "Foto, video och marknadsföring",
         "blocks": [
-          "Om ditt barn fotograferas eller filmas, och om materialet används i marknadsföring, avgörs helt av de val du gör vid anmälan. Valen är frivilliga och du kan ändra dig när som helst på barnets sida i My SOG."
+          "Om ditt barn fotograferas eller filmas, och om materialet används i marknadsföring, avgörs helt av de val du gör vid anmälan. Valen är frivilliga och du kan ändra dig när som helst på barnets sida i Min SOG."
         ]
       },
       "concern": {

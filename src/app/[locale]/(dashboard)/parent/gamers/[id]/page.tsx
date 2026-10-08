@@ -64,7 +64,7 @@ export default function GamerDetailsPage() {
 
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
-  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileFailed, setProfileFailed] = useState(false);
 
   // Initialize display name once gamer data loads
   if (gamer && !profileInitialized) {
@@ -77,7 +77,7 @@ export default function GamerDetailsPage() {
 
     setIsSavingProfile(true);
     setProfileSuccess(null);
-    setProfileError(null);
+    setProfileFailed(false);
 
     try {
       await updateGamer.mutateAsync({
@@ -86,13 +86,11 @@ export default function GamerDetailsPage() {
       });
       setProfileSuccess(t('gamerDetail.profileUpdated'));
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error !== null && "message" in error
-            ? String((error as { message: unknown }).message)
-            : t('gamerDetail.failedUpdateDisplayName');
-      setProfileError(message);
+      // The name field already holds the form to the rules the route enforces,
+      // so a refusal here is unexpected: the route's English reason is for the
+      // log, and the parent gets the one sentence they can act on.
+      console.error("[gamer-detail] first name save failed:", error);
+      setProfileFailed(true);
     } finally {
       setIsSavingProfile(false);
     }
@@ -185,7 +183,7 @@ export default function GamerDetailsPage() {
               <p className="font-medium">{gamer.first_name}</p>
               {gamerProfile && (
                 <p className="text-sm text-muted-foreground">
-                  <span>{t('gamerDetail.ageYears', { age: computeAge(gamerProfile.date_of_birth, timeZone) })}</span>
+                  <span>{t('gamerDetail.ageYears', { age: computeAge({ year: gamerProfile.birth_year, month: gamerProfile.birth_month }, timeZone) })}</span>
                   {gamerProfile.gender && (
                     <>
                       {/* eslint-disable-next-line i18next/no-literal-string -- visual separator between two i18n strings, not user-facing copy */}
@@ -204,9 +202,9 @@ export default function GamerDetailsPage() {
             </Alert>
           )}
 
-          {profileError && (
+          {profileFailed && (
             <Alert variant="destructive">
-              <AlertDescription>{profileError}</AlertDescription>
+              <AlertDescription>{t('gamerDetail.failedUpdateDisplayName')}</AlertDescription>
             </Alert>
           )}
 
