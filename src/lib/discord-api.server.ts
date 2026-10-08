@@ -29,6 +29,8 @@ export function discordBotHeaders(): Record<string, string> {
 export const DISCORD_CANNOT_DM_USER = 50007;
 /** "Unknown user" — the account no longer exists. */
 export const DISCORD_UNKNOWN_USER = 10013;
+/** "Invalid Recipient(s)" — an id Discord will not open a DM with. */
+export const DISCORD_INVALID_RECIPIENT = 50033;
 
 /**
  * Discord refused a request. Carries Discord's own message and numeric error
@@ -55,7 +57,8 @@ export function isPermanentDiscordDmError(error: unknown): error is DiscordApiEr
   return (
     error instanceof DiscordApiError &&
     (error.discordCode === DISCORD_CANNOT_DM_USER ||
-      error.discordCode === DISCORD_UNKNOWN_USER)
+      error.discordCode === DISCORD_UNKNOWN_USER ||
+      error.discordCode === DISCORD_INVALID_RECIPIENT)
   );
 }
 
