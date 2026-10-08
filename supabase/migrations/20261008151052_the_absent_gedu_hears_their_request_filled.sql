@@ -1,8 +1,28 @@
+-- The absent gedu hears that their substitution request was filled, and the
+-- staff channel's gedus table carries each gedu's phone number.
 --
--- Name: get_substitution_notification_snapshot(uuid); Type: FUNCTION; Schema: public; Owner: -
+-- WHAT THIS CHANGES
 --
+-- 1. `substitution_notifications` gains the record of the DM that tells the
+--    gedu who filed the request that somebody is now seated on it: claimed
+--    before it is sent, so it goes at most once per request, with its message
+--    id, when it was sent, and Discord's refusal when Discord will not take it.
+-- 2. `get_substitution_notification_snapshot` now gives the requester their
+--    app locale and the Discord account that acts as them, which that DM is
+--    written in and sent to, and gives every candidate their phone number.
 
-CREATE FUNCTION public.get_substitution_notification_snapshot(p_request_id uuid) RETURNS jsonb
+ALTER TABLE public.substitution_notifications
+  ADD COLUMN requester_dm_claimed_at timestamp with time zone,
+  ADD COLUMN requester_dm_message_id text,
+  ADD COLUMN requester_dm_sent_at timestamp with time zone,
+  ADD COLUMN requester_dm_error text;
+
+COMMENT ON COLUMN public.substitution_notifications.requester_dm_claimed_at IS 'Claimed before the "your request has been filled" DM is sent to the gedu who filed the request, so it goes at most once per request; nulled again when a send fails in a way worth retrying.';
+COMMENT ON COLUMN public.substitution_notifications.requester_dm_message_id IS 'The "your request has been filled" DM''s message id.';
+COMMENT ON COLUMN public.substitution_notifications.requester_dm_sent_at IS 'When the "your request has been filled" DM was sent.';
+COMMENT ON COLUMN public.substitution_notifications.requester_dm_error IS 'Why Discord refused the "your request has been filled" DM for good (the user takes no DMs, or is unknown). The claim stays, so it is never retried.';
+
+CREATE OR REPLACE FUNCTION public.get_substitution_notification_snapshot(p_request_id uuid) RETURNS jsonb
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -152,19 +172,7 @@ BEGIN
 END;
 $$;
 
-
---
--- Name: FUNCTION get_substitution_notification_snapshot(p_request_id uuid); Type: COMMENT; Schema: public; Owner: -
---
-
 COMMENT ON FUNCTION public.get_substitution_notification_snapshot(p_request_id uuid) IS 'Everything the notification sync renders a substitution request''s Slack message and Discord DMs from, or NULL when the request does not exist. `request`: the row with its group name, the fee for its role (null when unset), the reason and note, the substitute and approver as {id, first_name, last_name} (null when unset), and the requester as {id, first_name, last_name, locale, discord_user_id}, the last non-null only when that Discord account acts as the requester (discord_acting_gedu). `product`: session_product_document, the shell every substitution surface shares. `required_qualifications`, `is_cancelled` (group_session_is_cancelled), and `product_today`, the date in the product''s zone, which tells a passed request from an open one. `candidates`: every gedu eligible now — exactly the pool''s four tests, gedu_may_substitute_session, gedu_holds_session_qualifications, gedu_speaks_session_language and gedu_covers_product_site — together with every gedu who has answered, every gedu who was sent a DM and the seated substitute, each with their name, locale, phone (E.164 digits, no plus; null when unset), `eligible`, their answer (response, offer_id, responded_at; null when none) and discord_user_id, which is non-null only when that Discord account acts as this gedu (discord_acting_gedu). `notification` and `dms`: the message records as stored. Carries the reason and phone numbers, so it is for the service role alone.';
 
-
---
--- Name: FUNCTION get_substitution_notification_snapshot(p_request_id uuid); Type: ACL; Schema: public; Owner: -
---
-
 REVOKE ALL ON FUNCTION public.get_substitution_notification_snapshot(p_request_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.get_substitution_notification_snapshot(p_request_id uuid) TO service_role;
-
-
+GRANT EXECUTE ON FUNCTION public.get_substitution_notification_snapshot(p_request_id uuid) TO service_role;

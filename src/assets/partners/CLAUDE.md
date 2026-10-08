@@ -1,8 +1,9 @@
 # Partner brand assets
 
 Third-party logos: the two in the `/roblox` lockup, Google's "G" on the
-"Continue with Google" buttons of the auth pages, and Discord's symbol wherever a
-staff member's linked Discord account is shown. The two lockup marks stand for
+"Continue with Google" buttons of the auth pages, Discord's symbol wherever a
+staff member's linked Discord account is shown, and Slack's mark wherever an admin's
+linked Slack account is. The two lockup marks stand for
 relationships that are not the same, and the copy beside them must not blur them: School of Gaming **partners
 with** Lynx Educate, and **collaborates with** Roblox — see the partner-brand rules in
 `src/CLAUDE.md`.
@@ -37,6 +38,7 @@ which is also what the Roblox guidelines require ("always at full resolution").
 | `lynx-educate-reversed.svg` | **Derived by us** from the file above — see below |
 | `google-g.svg` | **Written by us**: Google's standard four-colour 18x18 "G" (`#4285F4`, `#34A853`, `#FBBC05`, `#EA4335`) — see below |
 | `discord-symbol-blurple.svg` | Official Discord brand kit, `discord.com/branding` → Symbol, Blurple SVG (`Discord_Symbol_Color/Discord-Symbol-Blurple.svg` in the zip at `cdn.discordapp.com/assets/content/a736b95923ddbc155e828651c92471292e40727655d770a06cec89c48ba0b41f.zip`), downloaded 2026-10-05 — as supplied, unmodified |
+| `slack-mark-color.svg` | Official Slack media kit, `slack.com/media-kit` → Logos → "Slack Media Kit Logos" collection (`salesforce.widencollective.com/c/yn6bxnam`), `SLA-Slack-icon-RGB.svg`, original file, downloaded 2026-10-08 — as supplied, unmodified |
 
 ### The Google "G"
 
@@ -99,3 +101,22 @@ field, the admin user page and the `/link-discord` confirm page), always decorat
 sized by height so its proportions are kept. Discord is not a partner: this is the use
 their guidelines grant anyone, which is why the per-placement sign-off in `src/CLAUDE.md`
 does not apply to it.
+
+**Slack** (from the Slack brand terms at `slack.com/terms-of-service/slack-brand`; the
+brand centre's logo page, `brand.slackhq.com/logo`, sits behind a sign-in): the mark is
+never modified, cropped, rotated, distorted, outlined, made transparent, given an effect
+or shadow, overprinted, or recoloured — the octothorpe's four colours are never shuffled
+or swapped — and it keeps clear space around it. Only the kit's own files represent
+Slack. The full-colour mark is the one vendored: Slack's own dark-ground lockup in the
+same kit (`…-logo-inverse-RGB.svg`) turns only the wordmark white and keeps the mark in
+its four colours, so the colour mark is Slack's own treatment on our dark grounds. It is
+used exactly as the Discord symbol is — digitally, beside the word "Slack", to indicate an
+admin's linked Slack account (the settings Slack field, the admin user page and the
+`/link-slack` confirm page), always decoratively, sized by height — and never inside our
+own branding or to suggest Slack endorses us. **Unlike Discord's, Slack's terms grant no
+explicit account-indicator use**: the media kit offers the files "without having to
+negotiate legal agreements", but the same terms also say most uses need a written licence
+and list "Don't use the Slack logo" among their don'ts. The three placements are
+admin-only screens, never public, and that is the whole of the use: a public or
+marketing placement is a request to Slack (`feedback@slack.com`), not a decision to make
+here.

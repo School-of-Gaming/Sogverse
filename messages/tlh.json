@@ -1689,7 +1689,8 @@
         "error": "patlh choHlu’be’pu’. yInID."
       },
       "usernameLabel": "pong",
-      "discordNotLinked": "rarlu'be'"
+      "discordNotLinked": "rarlu'be'",
+      "slackNotLinked": "rarlu'be'"
     },
     "locations": {
       "editName": "{name} yIchoH",
@@ -3921,6 +3922,12 @@
       "linkHint": "Discord ghItlhlIj DararmeH, School of Gaming Discord Daq <code>/link</code> yIlo'.",
       "relinkHint": "Discord ghItlh latlh DararmeH, ghItlhvam vo' School of Gaming Discord Daq <code>/link</code> yIlo'."
     },
+    "slack": {
+      "label": "Slack",
+      "notLinked": "rarlu'be'",
+      "linkHint": "Slack ghItlhlIj DararmeH, School of Gaming Slack Daq <code>/link</code> yIlo'.",
+      "relinkHint": "Slack ghItlh latlh DararmeH, ghItlhvam vo' School of Gaming Slack Daq <code>/link</code> yIlo'."
+    },
     "marketing": {
       "title": "QIn chaw’mey",
       "schoolOfGaming": "noH Quj yejHaD QIn HevmeH vIchaw’.",
@@ -4711,6 +4718,8 @@
     "acceptedHeading": "SoH lajlu’pu’",
     "acceptedBody": "{when} {product} — {group} DalIwmeH SoH lajlu’pu’. DaH SoH may’ ’oH, Gedu quv chut tlhIH. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’.",
     "openMySog": "jIH SOG yIpoSmoH",
+    "requesterFilledHeading": "lIwwI’lIj tu’lu’pu’",
+    "requesterFilledBody": "may’vamDaq SoH DulIw {substitute}.",
     "previewNotice": "ghantoH ’oH — leQmey DayuvDI’ pagh choHlu’."
   },
   "seatOffer": {

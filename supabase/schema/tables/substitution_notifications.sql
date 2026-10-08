@@ -8,7 +8,11 @@ CREATE TABLE public.substitution_notifications (
     slack_channel_id text,
     slack_message_ts text,
     slack_rendered_hash text,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    requester_dm_claimed_at timestamp with time zone,
+    requester_dm_message_id text,
+    requester_dm_sent_at timestamp with time zone,
+    requester_dm_error text
 );
 
 
@@ -45,6 +49,34 @@ COMMENT ON COLUMN public.substitution_notifications.slack_message_ts IS 'The Sla
 --
 
 COMMENT ON COLUMN public.substitution_notifications.slack_rendered_hash IS 'A hash of the message as last sent, so a sync whose rendering has not changed skips the edit.';
+
+
+--
+-- Name: COLUMN substitution_notifications.requester_dm_claimed_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.substitution_notifications.requester_dm_claimed_at IS 'Claimed before the "your request has been filled" DM is sent to the gedu who filed the request, so it goes at most once per request; nulled again when a send fails in a way worth retrying.';
+
+
+--
+-- Name: COLUMN substitution_notifications.requester_dm_message_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.substitution_notifications.requester_dm_message_id IS 'The "your request has been filled" DM''s message id.';
+
+
+--
+-- Name: COLUMN substitution_notifications.requester_dm_sent_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.substitution_notifications.requester_dm_sent_at IS 'When the "your request has been filled" DM was sent.';
+
+
+--
+-- Name: COLUMN substitution_notifications.requester_dm_error; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.substitution_notifications.requester_dm_error IS 'Why Discord refused the "your request has been filled" DM for good (the user takes no DMs, or is unknown). The claim stays, so it is never retried.';
 
 
 --

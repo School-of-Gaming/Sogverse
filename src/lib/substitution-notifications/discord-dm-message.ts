@@ -31,7 +31,8 @@ import type { NotificationStateKind } from "./state";
 /**
  * **The Discord DMs about a substitution request**, built as data: the one a
  * gedu the request could go to is sent while it is open, which every later
- * change redraws in place, and the one the gedu seated on it is sent.
+ * change redraws in place, the one the gedu seated on it is sent, and the one
+ * telling the gedu who filed it that it has been filled.
  *
  * Drawn in the `/sub` command's frame — one Components V2 container in the act
  * colour under the brand line and the logo — so the bot looks like one bot.
@@ -171,8 +172,15 @@ export function substitutionDmWhen(facts: SessionFacts, locale: SupportedLocale)
   })}, ${formatTimeRange(facts.startsAt, facts.endsAt, locale, facts.timezone)}`;
 }
 
-/** The session as lines: when, what, then where, topic, language and the role's terms. */
-function sessionLines(copy: DiscordSubOfferCopy, session: SubstitutionDmSession): DiscordComponent {
+/**
+ * The session as lines: when, what, then where, topic, language and — for a
+ * gedu who could take it — the role's terms.
+ */
+function sessionLines(
+  copy: DiscordSubOfferCopy,
+  session: SubstitutionDmSession,
+  { withTerms = true }: { withTerms?: boolean } = {},
+): DiscordComponent {
   const { facts } = session;
   const where = facts.isRemote ? copy.facts("remote") : (facts.siteName ?? copy.facts("siteUnknown"));
   const role = session.role === "primary" ? copy.pool("poolRolePrimary") : copy.pool("poolRoleAssistant");
@@ -187,7 +195,7 @@ function sessionLines(copy: DiscordSubOfferCopy, session: SubstitutionDmSession)
       `**${substitutionDmWhen(facts, copy.locale)}**`,
       `${facts.productName} — ${session.groupName}`,
       `-# ${where} · ${PRODUCT_TOPICS[facts.topic].label} · ${languageNameIn(facts.spokenLanguageCode, copy.locale)}`,
-      `-# ${terms}`,
+      ...(withTerms ? [`-# ${terms}`] : []),
     ].join("\n"),
   );
 }
@@ -288,6 +296,45 @@ export function buildSubstitutionAcceptedDm({
   });
 }
 
+// ---------------------------------------------------------------- the requester's DM
+
+/**
+ * The DM the gedu who filed the request is sent once somebody is seated on
+ * it: the session, and who is covering it. The role's terms are left off —
+ * what the session pays its substitute is not the absent gedu's to weigh —
+ * and the way to My SOG is on a link button, as on the accepted DM.
+ */
+export function buildSubstitutionRequesterFilledDm({
+  copy,
+  logoUrl,
+  session,
+  substituteName,
+  mySogUrl,
+}: {
+  copy: DiscordSubOfferCopy;
+  /** The header's logo — `discordSubLogoUrl()` — or `null` for none. */
+  logoUrl: string | null;
+  session: SubstitutionDmSession;
+  /** The seated substitute's full name. */
+  substituteName: string;
+  /** The gedu's My SOG, absolute, or `null` for no button. */
+  mySogUrl: string | null;
+}): DiscordComponentsMessage {
+  const body: DiscordComponent[] = [
+    divider(),
+    sessionLines(copy, session, { withTerms: false }),
+    divider(),
+    text(copy.offer("requesterFilledBody", { substitute: substituteName })),
+  ];
+  if (mySogUrl !== null) {
+    body.push(row([linkButton(copy.offer("openMySog"), mySogUrl)]));
+  }
+  return brandedMessage(copy.pool("pageTitle"), logoUrl, {
+    head: [text(`### ${copy.offer("requesterFilledHeading")}`)],
+    body,
+  });
+}
+
 // ---------------------------------------------------------------- the admin preview
 
 /** The request id every preview control names — no request holds it. */
@@ -334,8 +381,9 @@ export function buildSubstitutionPreviewSession(
 /**
  * Every substitution DM, in the order a gedu meets them, for the admin tool to
  * DM as part of its preview set: unanswered, offered, declined, a refused
- * press, filled, no longer needed, and the accepted DM. Built by the live
- * builders, every control on the preview prefix.
+ * press, filled, no longer needed, the accepted DM, and the DM telling the
+ * absent gedu their request was filled. Built by the live builders, every
+ * control on the preview prefix.
  */
 export function buildSubstitutionPreviewFlow({
   copy,
@@ -375,5 +423,12 @@ export function buildSubstitutionPreviewFlow({
     dm("offer", "filled"),
     dm(null, "withdrawn"),
     buildSubstitutionAcceptedDm({ copy, logoUrl, session, mySogUrl }),
+    buildSubstitutionRequesterFilledDm({
+      copy,
+      logoUrl,
+      session,
+      substituteName: "Aino Korhonen",
+      mySogUrl,
+    }),
   ];
 }

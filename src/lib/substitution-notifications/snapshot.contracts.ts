@@ -28,6 +28,18 @@ const snapshotPerson = z.object({
 
 export type SnapshotPerson = z.infer<typeof snapshotPerson>;
 
+/**
+ * The gedu who filed the request, with what their "your request has been
+ * filled" DM needs: the locale it is written in and the Discord account it
+ * goes to — non-null only when that account ACTS as them, as for every DM.
+ */
+const snapshotRequester = snapshotPerson.extend({
+  locale: z.string().nullable(),
+  discord_user_id: z.string().nullable(),
+});
+
+export type SnapshotRequester = z.infer<typeof snapshotRequester>;
+
 const snapshotRequestBase = z.object({
   id: z.string(),
   group_id: z.string(),
@@ -41,7 +53,7 @@ const snapshotRequestBase = z.object({
   reason_note: z.string().nullable(),
   created_at: z.string(),
   /** The requester is a NOT NULL column under ON DELETE RESTRICT, so never null. */
-  requester: snapshotPerson,
+  requester: snapshotRequester,
 });
 
 /**
@@ -76,6 +88,8 @@ const snapshotCandidate = z.object({
   last_name: z.string(),
   /** The gedu's app locale; null when they have never chosen one. */
   locale: z.string().nullable(),
+  /** E.164 digits with no plus; null when the gedu has given none. */
+  phone: z.string().nullable(),
   /**
    * The Discord account to DM, non-null only when that account ACTS as this
    * gedu — one linked to another gedu account more recently answers for that
@@ -100,6 +114,12 @@ const snapshotNotification = z.object({
   slack_channel_id: z.string().nullable(),
   slack_message_ts: z.string().nullable(),
   slack_rendered_hash: z.string().nullable(),
+  /** The "your request has been filled" DM to the requester, as for the accepted DM. */
+  requester_dm_claimed_at: z.string().nullable(),
+  requester_dm_message_id: z.string().nullable(),
+  requester_dm_sent_at: z.string().nullable(),
+  /** Discord's refusal of it for good; the claim stays, so it is never retried. */
+  requester_dm_error: z.string().nullable(),
   updated_at: z.string(),
 });
 

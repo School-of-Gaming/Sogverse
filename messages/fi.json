@@ -1645,7 +1645,8 @@
         "error": "Hyväksynnän päivitys epäonnistui. Yritä uudelleen."
       },
       "usernameLabel": "Käyttäjätunnus",
-      "discordNotLinked": "Ei yhdistetty"
+      "discordNotLinked": "Ei yhdistetty",
+      "slackNotLinked": "Ei yhdistetty"
     },
     "locations": {
       "editName": "Muokkaa: {name}",
@@ -3881,6 +3882,12 @@
       "linkHint": "Yhdistä Discord-tilisi kirjoittamalla <code>/link</code> School of Gamingin Discord-palvelimella.",
       "relinkHint": "Voit yhdistää toisen Discord-tilin kirjoittamalla <code>/link</code> sillä tilillä School of Gamingin Discord-palvelimella."
     },
+    "slack": {
+      "label": "Slack",
+      "notLinked": "Ei yhdistetty",
+      "linkHint": "Yhdistä Slack-tilisi kirjoittamalla <code>/link</code> School of Gamingin Slack-työtilassa.",
+      "relinkHint": "Voit yhdistää toisen Slack-tilin kirjoittamalla <code>/link</code> sillä tilillä School of Gamingin Slack-työtilassa."
+    },
     "marketing": {
       "title": "Markkinointiasetukset",
       "schoolOfGaming": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
@@ -5592,6 +5599,8 @@
     "acceptedHeading": "Sinut on hyväksytty tuuraajaksi",
     "acceptedBody": "Sinut on hyväksytty tuuraamaan: {product} – {group} {when}. Kerta on nyt Gedu-sopimuksesi nojalla sinun vastuullasi, ja ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua.",
     "openMySog": "Avaa Oma SOG",
+    "requesterFilledHeading": "Tuuraajasi on löytynyt",
+    "requesterFilledBody": "{substitute} tuuraa sinua tällä kerralla.",
     "previewNotice": "Tämä on esikatselu – painikkeet eivät muuta mitään."
   },
   "seatOffer": {

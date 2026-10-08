@@ -1645,7 +1645,8 @@
         "error": "Impossible de mettre à jour la certification. Veuillez réessayer."
       },
       "usernameLabel": "Identifiant",
-      "discordNotLinked": "Non associé"
+      "discordNotLinked": "Non associé",
+      "slackNotLinked": "Non associé"
     },
     "locations": {
       "editName": "Modifier {name}",
@@ -3881,6 +3882,12 @@
       "linkHint": "Pour associer votre compte Discord, tapez <code>/link</code> sur le serveur Discord de School of Gaming.",
       "relinkHint": "Pour associer un autre compte Discord, tapez <code>/link</code> depuis ce compte sur le serveur Discord de School of Gaming."
     },
+    "slack": {
+      "label": "Slack",
+      "notLinked": "Non associé",
+      "linkHint": "Pour associer votre compte Slack, tapez <code>/link</code> dans l’espace de travail Slack de School of Gaming.",
+      "relinkHint": "Pour associer un autre compte Slack, tapez <code>/link</code> depuis ce compte dans l’espace de travail Slack de School of Gaming."
+    },
     "marketing": {
       "title": "Préférences marketing",
       "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
@@ -5592,6 +5599,8 @@
     "acceptedHeading": "Votre proposition a été acceptée",
     "acceptedBody": "Vous assurez le remplacement de {product} — {group} le {when}. La séance relève désormais de votre contrat Gedu, et l’espace de travail du groupe s’ouvre à vous 48 heures avant son début.",
     "openMySog": "Ouvrir Mon SOG",
+    "requesterFilledHeading": "Votre remplacement est assuré",
+    "requesterFilledBody": "{substitute} vous remplace pour cette séance.",
     "previewNotice": "Ceci est un aperçu — les boutons ne modifient rien."
   },
   "seatOffer": {

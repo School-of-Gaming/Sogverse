@@ -1645,7 +1645,8 @@
         "error": "Couldn’t update certification. Please try again."
       },
       "usernameLabel": "Username",
-      "discordNotLinked": "Not linked"
+      "discordNotLinked": "Not linked",
+      "slackNotLinked": "Not linked"
     },
     "locations": {
       "editName": "Edit {name}",
@@ -4568,6 +4569,12 @@
       "linkHint": "To link your Discord account, type <code>/link</code> in the School of Gaming Discord server.",
       "relinkHint": "To link a different Discord account, type <code>/link</code> from that account in the School of Gaming Discord server."
     },
+    "slack": {
+      "label": "Slack",
+      "notLinked": "Not linked",
+      "linkHint": "To link your Slack account, type <code>/link</code> in the School of Gaming Slack workspace.",
+      "relinkHint": "To link a different Slack account, type <code>/link</code> from that account in the School of Gaming Slack workspace."
+    },
     "marketing": {
       "title": "Marketing preferences",
       "schoolOfGaming": "School of Gaming may send me news and offers by email.",
@@ -5592,6 +5599,8 @@
     "acceptedHeading": "You’ve been accepted",
     "acceptedBody": "You’ve been accepted to substitute for {product} – {group} on {when}. The session is yours now under your Gedu contract, and the group’s workspace opens to you 48 hours before it starts.",
     "openMySog": "Open My SOG",
+    "requesterFilledHeading": "Your substitution request has been filled",
+    "requesterFilledBody": "{substitute} will substitute for you at this session.",
     "previewNotice": "This is a preview — pressing a button changes nothing."
   },
   "seatOffer": {

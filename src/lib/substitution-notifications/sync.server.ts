@@ -25,6 +25,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   buildSubstitutionAcceptedDm,
   buildSubstitutionOfferDm,
+  buildSubstitutionRequesterFilledDm,
   loadDiscordSubOfferCopy,
   substitutionDmSession,
   type DiscordSubOfferCopy,
@@ -44,8 +45,9 @@ import { deriveNotificationState, type NotificationState } from "./state";
  * **The notification sync**: drains the outbox the database fills whenever a
  * substitution request, an answer to it or its session's cancellation
  * changes, and brings that request's messages up to date — the Discord DMs to
- * the gedus it could go to, the DM to the gedu seated on it, and the Slack
- * message in the staff channel.
+ * the gedus it could go to, the DM to the gedu seated on it, the DM telling
+ * the gedu who filed it that it is filled, and the Slack message in the staff
+ * channel.
  *
  * **The outbox lease is the concurrency.** A claim leases one request to one
  * worker; a change while it syncs bumps the row's seq, so the finish hands the
@@ -171,7 +173,7 @@ export async function syncRequest(
   let deferred: unknown = null;
 
   if (isDiscordBotConfigured()) {
-    const discord = new DmSync(supabase, snapshot, state, dms);
+    const discord = new DmSync(supabase, snapshot, state, dms, notification);
     deferred = await discord.run();
   }
 
@@ -199,6 +201,8 @@ class DmSync {
     private readonly state: NotificationState,
     /** The DM records, kept current as this sync writes them. */
     private readonly dms: Map<string, SnapshotDm>,
+    /** The announcement, which records the requester's DM. */
+    private readonly notification: SnapshotNotification,
   ) {
     // Discord fetches the logo and opens the button's link itself, so both
     // need an origin it can reach — a dev machine's has neither.
@@ -212,13 +216,15 @@ class DmSync {
       await this.syncOfferDm(candidate);
     }
     await this.syncAcceptedDm();
+    await this.syncRequesterDm();
     return this.deferred;
   }
 
-  private copyFor(candidate: SnapshotCandidate): Promise<DiscordSubOfferCopy> {
+  /** The DM copy in the recipient's app locale, else the default. */
+  private copyFor(recipient: { locale: string | null }): Promise<DiscordSubOfferCopy> {
     const locale =
-      candidate.locale !== null && isSupportedLocale(candidate.locale)
-        ? candidate.locale
+      recipient.locale !== null && isSupportedLocale(recipient.locale)
+        ? recipient.locale
         : DEFAULT_LOCALE;
     let copy = this.copies.get(locale);
     if (copy === undefined) {
@@ -349,6 +355,80 @@ class DmSync {
       accepted_dm_message_id: messageId,
       accepted_dm_sent_at: new Date().toISOString(),
     });
+  }
+
+  /**
+   * The "your request has been filled" DM, at most once per request, to the
+   * gedu who filed it, once somebody is seated on the announced request while
+   * the session is still ahead — the accepted DM's own rule, with the same
+   * claim-before-send discipline, kept on the announcement's row.
+   */
+  private async syncRequesterDm(): Promise<void> {
+    if (this.state.kind !== "filled") return;
+    if (this.snapshot.request.session_date < this.snapshot.product_today) return;
+    const { requester } = this.snapshot.request;
+    const discordUserId = requester.discord_user_id;
+    if (discordUserId === null) return;
+    if (this.notification.requester_dm_claimed_at) return;
+
+    const requestId = this.snapshot.request.id;
+    const claim = await this.supabase
+      .from("substitution_notifications")
+      .update({ requester_dm_claimed_at: new Date().toISOString() })
+      .eq("request_id", requestId)
+      .is("requester_dm_claimed_at", null)
+      .select();
+    if (claim.error) throw claim.error;
+    if (claim.data.length === 0) return;
+
+    const copy = await this.copyFor(requester);
+    const body = buildSubstitutionRequesterFilledDm({
+      copy,
+      logoUrl: this.logoUrl,
+      session: this.sessionFor(copy.locale),
+      substituteName: `${this.state.substitute.first_name} ${this.state.substitute.last_name}`.trim(),
+      mySogUrl: this.mySogUrl,
+    });
+
+    let messageId: string;
+    try {
+      const channelId = await openDiscordDmChannel(discordUserId);
+      messageId = await sendDiscordChannelMessage(channelId, body);
+    } catch (error) {
+      if (isPermanentDiscordDmError(error)) {
+        // The claim stays: it would fail the same way every time.
+        await this.writeNotification({ requester_dm_error: describeError(error) });
+        return;
+      }
+      await this.writeNotification({ requester_dm_claimed_at: null });
+      this.deferred ??= error;
+      return;
+    }
+    // Outside the try: the DM has gone, so a failure to record it must not
+    // hand the claim back and send it twice.
+    await this.writeNotification({
+      requester_dm_message_id: messageId,
+      requester_dm_sent_at: new Date().toISOString(),
+    });
+  }
+
+  /** Write the requester's DM record on the announcement's row. */
+  private async writeNotification(
+    fields: Partial<
+      Pick<
+        SnapshotNotification,
+        | "requester_dm_claimed_at"
+        | "requester_dm_message_id"
+        | "requester_dm_sent_at"
+        | "requester_dm_error"
+      >
+    >,
+  ): Promise<void> {
+    const written = await this.supabase
+      .from("substitution_notifications")
+      .update(fields)
+      .eq("request_id", this.snapshot.request.id);
+    if (written.error) throw written.error;
   }
 
   /**
