@@ -22,7 +22,7 @@ import { z } from "zod";
  * so every call made here reads `ok`, never the status.
  */
 
-export const SLACK_API_BASE = "https://slack.com/api";
+const SLACK_API_BASE = "https://slack.com/api";
 
 /** Whether this environment has a bot token to send with. */
 export function isSlackConfigured(): boolean {

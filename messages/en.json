@@ -1678,7 +1678,7 @@
     "testing": {
       "title": "Testing",
       "description": "Internal tools for testing and development",
-      "emailTool": "Email Testing Tool",
+      "emailTool": "Email testing tool",
       "emailToolDescription": "Send test emails via Brevo (SMTP) to verify delivery and templates.",
       "template": "Template",
       "language": "Language",
@@ -1699,7 +1699,7 @@
       "attachment": "Attachment: {name}",
       "sentAttachment": "What was sent: {name}",
       "discord": {
-        "tool": "Discord Testing Tool",
+        "tool": "Discord testing tool",
         "toolDescription": "Send a direct message from this environment’s Discord bot to a linked account, to check that sending works.",
         "recipient": "Recipient",
         "recipientOption": "{name} ({discordUsername})",
@@ -1714,7 +1714,7 @@
         "subPreviewSent": "Every step sent."
       },
       "slack": {
-        "tool": "Slack Testing Tool",
+        "tool": "Slack testing tool",
         "toolDescription": "Post a message to a channel from this environment’s Slack bot, to check that sending works.",
         "channel": "Channel",
         "channelPlaceholder": "Channel ID, e.g. C0123456789",
