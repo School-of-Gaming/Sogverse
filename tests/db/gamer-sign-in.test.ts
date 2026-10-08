@@ -189,9 +189,9 @@ describe("gamer sign-in mode", () => {
     });
 
     it("refuses the gamer flipping their own mode", async () => {
-      // The self-update policy still admits this row — what stops the statement
-      // is the grant, which reaches date_of_birth and gender and nothing else.
-      // So the refusal is an error rather than zero rows affected.
+      // The grant stops the statement before any policy is consulted: it
+      // reaches date_of_birth and gender and nothing else. So the refusal is an
+      // error rather than zero rows affected.
       const { error } = await gamerAuth
         .from("gamer_profiles")
         .update({ sign_in: "username" })
@@ -225,16 +225,17 @@ describe("gamer sign-in mode", () => {
       expect(data?.sign_in).toBe("parent");
     });
 
-    it("still lets the gamer edit their own facts", async () => {
-      // The other direction, and it is what keeps the case above from passing
+    it("still lets an admin edit the child's facts", async () => {
+      // The other direction, and it is what keeps the cases above from passing
       // for the wrong reason: the grant was narrowed, not withdrawn.
-      const { error } = await gamerAuth
+      const { data, error } = await adminAuth
         .from("gamer_profiles")
         .update({ gender: "non_binary" })
         .eq("user_id", TEST_IDS.GAMER)
         .select("user_id");
 
       expect(error).toBeNull();
+      expect(data).toHaveLength(1);
 
       await admin
         .from("gamer_profiles")

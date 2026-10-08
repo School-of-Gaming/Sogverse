@@ -1009,8 +1009,8 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
  *
  * `gamer_profiles` is column-scoped for the reason column scoping exists: the
  * table carries `sign_in`, which decides whether a child can sign in without
- * their parent at all. The self-update policy reaches only the two columns
- * left, which are the child's own facts.
+ * their parent at all. The two columns left are the child's birth date and
+ * gender, which only the admin policy admits a row for.
  */
 const COLUMN_SCOPED_UPDATE_TABLES: Record<string, readonly string[]> = {
   profiles: [

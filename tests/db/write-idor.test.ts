@@ -440,7 +440,7 @@ const CASES: Record<string, IdorCase> = {
 
   gamer_profiles: {
     attacker: "customer",
-    why: "the linked *parent* — who may read this row — must still not write it; the only self-update policy is the gamer's own",
+    why: "the linked *parent* — who may read this row — must still not write it; only the admin policy admits a write",
     probe: async (admin) =>
       (
         await admin

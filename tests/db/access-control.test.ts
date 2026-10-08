@@ -63,11 +63,11 @@ describe("Access Control", () => {
     // policy intact but silently breaks every authenticated write against
     // the table — exactly how products/games writes regressed in the past.
     // profiles and gamer_profiles are intentionally NOT in this allowlist: both
-    // use column-level UPDATE grants on the safe self-editable fields rather
-    // than table-level UPDATE. gamer_profiles is off a table-wide grant
+    // use column-level UPDATE grants on the editable fields rather than
+    // table-level UPDATE. gamer_profiles is off a table-wide grant
     // because of `sign_in` — a column that decides whether a child
     // can sign in without their parent, and so may not be reachable by the same
-    // grant that lets them correct their own date of birth. Column privileges
+    // grant an admin corrects a child's date of birth through. Column privileges
     // live in information_schema.column_privileges — out of scope for
     // _list_table_grants, and covered by the column-grant audit in
     // authorization-spine.test.ts.

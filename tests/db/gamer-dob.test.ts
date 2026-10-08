@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient } from "./helpers";
-import { TEST_IDS } from "./constants";
+import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 describe("gamer_profiles date_of_birth constraint", () => {
   let admin: SupabaseClient<Database>;
@@ -67,5 +67,98 @@ describe("gamer_profiles date_of_birth constraint", () => {
       .eq("user_id", TEST_IDS.GAMER);
 
     expect(error).toBeNull();
+  });
+});
+
+/**
+ * After creation a child's birth date and gender are written by admins alone.
+ * The parent supplies them once, through the creation write, and the admin edit
+ * card is the one surface that changes them; the child may read their own row
+ * but not rewrite the age a gedu sees on the roster.
+ *
+ * `authenticated` holds UPDATE on both columns — it is the grant the admin edit
+ * card writes through — so what refuses the gamer is the absence of any UPDATE
+ * policy admitting their own row. The refusal is therefore zero rows affected,
+ * not an error, and the admin case beside it is what keeps that from passing
+ * because the write was impossible for everybody.
+ */
+describe("gamer_profiles birth date and gender writers", () => {
+  const SEEDED = { date_of_birth: "2015-06-15", gender: "boy" } as const;
+
+  let admin: SupabaseClient<Database>;
+  let adminAuth: SupabaseClient<Database>;
+  let gamerAuth: SupabaseClient<Database>;
+
+  async function storedFacts() {
+    const { data, error } = await admin
+      .from("gamer_profiles")
+      .select("date_of_birth, gender")
+      .eq("user_id", TEST_IDS.GAMER)
+      .single();
+    expect(error).toBeNull();
+    return data;
+  }
+
+  beforeAll(async () => {
+    admin = createAdminTestClient();
+    adminAuth = await createAuthenticatedClient(
+      TEST_CREDENTIALS.ADMIN.email,
+      TEST_CREDENTIALS.ADMIN.password,
+    );
+    gamerAuth = await createAuthenticatedClient(
+      TEST_CREDENTIALS.GAMER.email,
+      TEST_CREDENTIALS.GAMER.password,
+    );
+  });
+
+  afterAll(async () => {
+    await admin
+      .from("gamer_profiles")
+      .update(SEEDED)
+      .eq("user_id", TEST_IDS.GAMER);
+  });
+
+  it("refuses the gamer rewriting their own date of birth", async () => {
+    const { data, error } = await gamerAuth
+      .from("gamer_profiles")
+      .update({ date_of_birth: "2010-01-01" })
+      .eq("user_id", TEST_IDS.GAMER)
+      .select("user_id");
+
+    expect(error).toBeNull();
+    expect(data).toEqual([]);
+    expect(await storedFacts()).toEqual(SEEDED);
+  });
+
+  it("refuses the gamer rewriting their own gender", async () => {
+    const { data, error } = await gamerAuth
+      .from("gamer_profiles")
+      .update({ gender: "girl" })
+      .eq("user_id", TEST_IDS.GAMER)
+      .select("user_id");
+
+    expect(error).toBeNull();
+    expect(data).toEqual([]);
+    expect(await storedFacts()).toEqual(SEEDED);
+  });
+
+  it("lets an admin rewrite both", async () => {
+    const { data, error } = await adminAuth
+      .from("gamer_profiles")
+      .update({ date_of_birth: "2014-03-01", gender: "non_binary" })
+      .eq("user_id", TEST_IDS.GAMER)
+      .select("user_id");
+
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+    expect(await storedFacts()).toEqual({
+      date_of_birth: "2014-03-01",
+      gender: "non_binary",
+    });
+
+    await admin
+      .from("gamer_profiles")
+      .update(SEEDED)
+      .eq("user_id", TEST_IDS.GAMER);
   });
 });

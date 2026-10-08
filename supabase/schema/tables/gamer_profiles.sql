@@ -55,13 +55,6 @@ CREATE POLICY gamers_read_own_gamer_profile ON public.gamer_profiles FOR SELECT 
 
 
 --
--- Name: gamer_profiles gamers_update_own_gamer_profile; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY gamers_update_own_gamer_profile ON public.gamer_profiles FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
-
-
---
 -- Name: gamer_profiles parents_read_linked_gamer_profiles; Type: POLICY; Schema: public; Owner: -
 --
 
