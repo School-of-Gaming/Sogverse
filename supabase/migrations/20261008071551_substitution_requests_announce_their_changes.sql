@@ -520,6 +520,12 @@ BEGIN
         SELECT d.gedu_id
           FROM public.substitution_notification_dms d
          WHERE d.request_id = v_row.id
+        UNION
+        -- The seated substitute, who may never have answered or been sent a
+        -- DM (an admin can seat anyone) and is no longer eligible once
+        -- expected at the session — the sync still owes them their DM.
+        SELECT v_row.substitute_id
+         WHERE v_row.substitute_id IS NOT NULL
       )
       SELECT jsonb_agg(
                jsonb_build_object(
@@ -564,7 +570,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.get_substitution_notification_snapshot(p_request_id uuid) IS 'Everything the notification sync renders a substitution request''s Slack message and Discord DMs from, or NULL when the request does not exist. `request`: the row with its group name, the fee for its role (null when unset), the reason and note, and the requester, substitute and approver as {id, first_name, last_name} (null when unset). `product`: session_product_document, the shell every substitution surface shares. `required_qualifications`, `is_cancelled` (group_session_is_cancelled), and `product_today`, the date in the product''s zone, which tells a passed request from an open one. `candidates`: every gedu eligible now — exactly the pool''s four tests, gedu_may_substitute_session, gedu_holds_session_qualifications, gedu_speaks_session_language and gedu_covers_product_site — together with every gedu who has answered and every gedu who was sent a DM, each with their name, locale, `eligible`, their answer (response, offer_id, responded_at; null when none) and discord_user_id, which is non-null only when that Discord account acts as this gedu (discord_acting_gedu). `notification` and `dms`: the message records as stored. Carries the reason, so it is for the service role alone.';
+COMMENT ON FUNCTION public.get_substitution_notification_snapshot(p_request_id uuid) IS 'Everything the notification sync renders a substitution request''s Slack message and Discord DMs from, or NULL when the request does not exist. `request`: the row with its group name, the fee for its role (null when unset), the reason and note, and the requester, substitute and approver as {id, first_name, last_name} (null when unset). `product`: session_product_document, the shell every substitution surface shares. `required_qualifications`, `is_cancelled` (group_session_is_cancelled), and `product_today`, the date in the product''s zone, which tells a passed request from an open one. `candidates`: every gedu eligible now — exactly the pool''s four tests, gedu_may_substitute_session, gedu_holds_session_qualifications, gedu_speaks_session_language and gedu_covers_product_site — together with every gedu who has answered, every gedu who was sent a DM and the seated substitute, each with their name, locale, `eligible`, their answer (response, offer_id, responded_at; null when none) and discord_user_id, which is non-null only when that Discord account acts as this gedu (discord_acting_gedu). `notification` and `dms`: the message records as stored. Carries the reason, so it is for the service role alone.';
 
 REVOKE ALL ON FUNCTION public.get_substitution_notification_snapshot(p_request_id uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_substitution_notification_snapshot(p_request_id uuid) TO service_role;

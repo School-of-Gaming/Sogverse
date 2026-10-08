@@ -10,7 +10,7 @@ import {
   createAnonTestClient,
   createAuthenticatedClient,
 } from "./helpers";
-import { TEST_IDS } from "./constants";
+import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
 
 /**
@@ -650,6 +650,47 @@ describe("substitution notifications", () => {
       if (shot.request.status !== "substituted") return;
       expect(shot.request.substitute.id).toBe(ids.eligible);
       expect(shot.request.approver.id).toBe(TEST_IDS.ADMIN);
+    });
+
+    it("lists a sub an admin seated, who never answered and was never sent a DM", async () => {
+      const discordUnqualified = "920000000000000003";
+      await link(ids.unqualified, discordUnqualified, new Date());
+      try {
+        const adminAuth = await createAuthenticatedClient(
+          TEST_CREDENTIALS.ADMIN.email,
+          TEST_CREDENTIALS.ADMIN.password,
+        );
+        const { error: seatError } = await adminAuth.rpc("set_session_substitution", {
+          p_group_id: GROUP,
+          p_session_date: utcDate(5),
+          p_absent_gedu_id: ids.requester,
+          p_sub_gedu_id: ids.unqualified,
+          p_reason: "sick",
+        });
+        expect(seatError).toBeNull();
+        const { data: request, error: requestError } = await admin
+          .from("session_substitution_requests")
+          .select("id")
+          .eq("group_id", GROUP)
+          .single();
+        expect(requestError).toBeNull();
+
+        const shot = await snapshot(request?.id ?? "");
+        expect(shot.request.status).toBe("substituted");
+        // Seated, they are expected at the session and so no longer eligible —
+        // and they fail the qualification test besides.
+        expect(shot.candidates.find((candidate) => candidate.gedu_id === ids.unqualified)).toMatchObject({
+          eligible: false,
+          locale: "fi",
+          last_name: "unqualified",
+          discord_user_id: discordUnqualified,
+          response: null,
+          offer_id: null,
+          responded_at: null,
+        });
+      } finally {
+        await admin.from("discord_links").delete().eq("profile_id", ids.unqualified);
+      }
     });
 
     it("says when the session is cancelled, and takes everyone off the eligible list", async () => {

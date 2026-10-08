@@ -68,7 +68,7 @@ export type SnapshotRequest = z.infer<typeof snapshotRequest>;
 
 /**
  * One gedu the notifications concern: eligible now, or who has answered, or who
- * was sent a DM — any of the three.
+ * was sent a DM, or who is seated as the substitute — any of the four.
  */
 const snapshotCandidate = z.object({
   gedu_id: z.string(),
