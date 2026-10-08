@@ -75,7 +75,10 @@ async function slackCall(method: string, body: Record<string, unknown>): Promise
     throw new SlackApiError(`HTTP ${response.status}`);
   }
   if (!envelope.data.ok) {
-    const retryAfter = Number(response.headers.get("retry-after"));
+    // A missing header must stay null: Number(null) is 0, which would read as
+    // "retry at once" and starve the caller's own fallback wait.
+    const header = response.headers.get("retry-after");
+    const retryAfter = header === null || header.trim() === "" ? NaN : Number(header);
     throw new SlackApiError(
       envelope.data.error ?? "unknown_error",
       Number.isFinite(retryAfter) && retryAfter >= 0 ? retryAfter : null,

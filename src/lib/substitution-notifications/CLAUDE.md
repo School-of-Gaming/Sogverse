@@ -96,13 +96,14 @@ times in both are the product's wall clock with its zone's short name, as `/sub`
 Slack accepts in modals only: a message carrying one is refused whole as `invalid_blocks`,
 so every sync's post and edit would fail. The offers' carousel and the two data tables —
 the session's facts and the gedus — are message blocks, but Slack documents no fallback
-for a client that cannot draw them, so the top-level `text` — what notifications and screen readers get — has to say on its own
-what the request is and where it stands.
+for a client that cannot draw them, so the top-level `text` — what notifications and
+screen readers get — has to say on its own what the request is and where it stands.
 
 ## Failures, edits and duplicates
 
 - **Discord refusing a DM for good is recorded and never retried**: "cannot send messages to
-  this user" (no shared server, or DMs closed) and "unknown user". The gedu's record keeps
+  this user" (no shared server, or DMs closed), "unknown user" and "invalid recipient" (an
+  id Discord will not open a DM with). The gedu's record keeps
   the error, Slack tags them "DM failed", and that request never tries them again — even
   after they open their DMs. Any other failure lets the rest of the sync run, then fails the
   job so the outbox retries it.
