@@ -39,7 +39,7 @@
       "registerGedu": "Gedu yImoj!",
       "about": "maH tIqel",
       "library": "paq qach",
-      "minecraftApi": "Minecraft Server API",
+      "minecraftApi": "Minecraft server API",
       "lynxApi": "Lynx Educate boq API",
       "adminDashboard": "Admin QaD",
       "adminMunicipalityInvoicing": "veng DIlmeH ghItlh",
@@ -2163,8 +2163,17 @@
   },
   "docs": {
     "minecraftApi": {
-      "title": "Minecraft Server API",
-      "description": "Daq’vam yIlo’ — toy’wI’ Minecraft pong legh. Server toy’wI’ UUID ngeH — ’eb qoj bejbe’ janglu’.",
+      "title": "Minecraft server API",
+      "description": "School of Gaming Minecraft server’mey Daq’vam lo’ — toy’wI’ ’elqangDI’. server toy’wI’ UUID ngeH; Sogverse jang: ’el’a’ qoj ’elbe’? meq je, Daqmey je.",
+      "eligibility": {
+        "heading": "’Iv ’el?",
+        "intro": "Minecraft account ’el, Sogverse QujwI’ account rarchugh ’ej DaH QujwI’ Daq ghajchugh — tuq DIlbogh Doch Daq.",
+        "paidProducts": "DIlbogh Doch neH lI’: club, DIlbogh raQ, DIlbogh wanI’.",
+        "notCounted": "DIlbe’bogh Doch, veng club je — lI’be’. Daq ghajchugh QujwI’ je.",
+        "current": "Doch taghDI’ Daq chergh, Doch rInpa’ Daq chergh.",
+        "sharedAccounts": "law’ Sogverse account Minecraft account wa’ rarlaH — loDnI’pu’ be’nI’pu’ je wa’ lo’. wa’ QujwI’ chergh? ’el!",
+        "gedus": "Gedu’ account neH rarchugh, ’elbe’. Daq’vam Gedu’ ’elmoHbe’."
+      },
       "authentication": {
         "heading": "ngoQHa’ yIchel",
         "description": "Hoch tlhob API key nIS — Bearer token <code>Authorization</code> Daq.",
@@ -2174,39 +2183,59 @@
         "heading": "Daq",
         "queryParams": "tlhob ngoQmey",
         "uuidType": "tlhIngan mu’ (nIS)",
-        "uuidDescription": "toy’wI’ Minecraft UUID. Hoch (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1> je <code2>069a79f444e94726a5befca90e38aaf5</code2>) chergh."
+        "uuidDescription": "toy’wI’ Minecraft Java UUID. Hoch (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1> je <code2>069a79f444e94726a5befca90e38aaf5</code2>) chergh."
       },
       "responses": {
         "heading": "jangmey",
-        "playerAllowed": "toy’wI’ ’eb",
-        "playerDenied": "toy’wI’ bejbe’",
+        "intro": "Hoch QaQ tlhob, <code>uuid</code> QaQ je — 200 jang, toy’wI’ ’elbe’chugh je. UUID Sovbe’lu’? bejbe’ — Qagh ’oHbe’.",
+        "playerAllowed": "toy’wI’ ’el",
+        "playerDenied": "toy’wI’ ’elbe’",
+        "deniedDescription": "Eero veng club Daq ghaj — lI’be’. <code1>qualifies: false</code1>, meq <code2>no_paid_enrollment</code2>.",
         "errorResponses": "Qagh jangmey",
-        "notImplementedTitle": "ghItlhlaHbe’ — chenmoHlu’taH",
-        "notImplementedBody": "reH chenmoHlu’taH nughom qImmey. DaHjaj Hoch tlhob QaQ jang 501 — pagh QujwI’ ’el. bIng jangmeydaj ’oH pIqDaq jangbogh Deghmey; tImaq, ’ach 501 yIloS.",
-        "error501": "nughom qImmey chenmoHlu’pu’be’. tlhob ’oH QaQ ’ej ngoq ’oH lu’, ’ach ’el wuq lujlaHbe’ — yIngaQmoH; qImHa’ghach ’oHbe’.",
-        "deniedDescription": "toy’wI’ Sogverse tu’lu’ — DaH poH tu’be’lu’. <code>endTime</code> tu’be’lu’.",
-        "fields": {
-          "allowedTrue": "toy’wI’ DaH poH tu’lu’.",
-          "role": "toy’wI’ Sogverse Qu’.",
-          "firstName": "toy’wI’ wa’DIch pong.",
-          "endTime": "poH SoQmoH (5 tup ngeHlu’ Qu’ pawpa’). tIqmeH qoj boq.",
-          "reason": "Del lo’laH: De’ pong je Gedu’ pong."
+        "error401": "<code>Authorization</code> Hutlh qoj Qagh, qoj key muj.",
+        "error400": "<code>uuid</code> Hutlh, qoj Minecraft UUID ’oHbe’.",
+        "error500": "server Qagh qoj nej luj. wuq tu’be’lu’.",
+        "errorShape": "Hoch Qagh jangmey <code>'{ \"error\": \"message\" }'</code> lo’."
+      },
+      "fields": {
+        "heading": "jang mIwmey",
+        "allowed": "’el’a’? teH — <code1>reason</code1> <code2>paid_enrollment</code2> ’oHDI’ neH.",
+        "reason": "qatlh ’el qoj ’elbe’. bIng mu’mey wa’.",
+        "message": "wa’ mu’tlhegh — server pIn ghItlhmeH qoj voqmeH. reH DIvI’ Hol, Hol Daj ’oHbe’.",
+        "gamers": "Hoch QujwI’ account UUID’vam rar. pagh — <code1>no_linked_account</code1> qoj <code2>no_linked_gamer</code2> ’oHDI’.",
+        "reasonsHeading": "meqmey",
+        "reasons": {
+          "paidEnrollment": "QujwI’ rar DaH DIlbogh Doch Daq ghaj.",
+          "noLinkedAccount": "pagh Sogverse account UUID’vam rar.",
+          "noLinkedGamer": "UUID rarlu’, ’ach QujwI’ ’oHbe’bogh account neH — Gedu’ account rur.",
+          "noPaidEnrollment": "QujwI’pu’ rarlu’, ’ach pagh chergh Daq ghaj."
         },
-        "error401": "API key Hutlh, Qagh, qoj nIvbe’.",
-        "error400": "uuid ngoQ Hutlh qoj Qagh.",
-        "error404": "Minecraft UUID Sogverse account jonbe’lu’.",
-        "error500": "Server Qagh. yIboq."
+        "gamerHeading": "QujwI’ mIwmey",
+        "gamer": {
+          "firstName": "QujwI’ wa’DIch pong.",
+          "minecraftUsername": "Minecraft pong, QujwI’ account rar.",
+          "enrollments": "Hoch Daq QujwI’ DaH ghaj — chergh qoj cherghbe’."
+        },
+        "enrollmentHeading": "Daq mIwmey",
+        "enrollment": {
+          "product": "Doch pong.",
+          "productType": "Doch Segh. club, raQ, wanI’ je neH cherghlaH.",
+          "billingMode": "chay’ DIllu’. DIlbogh Doch neH chergh; DIlbe’bogh Doch, veng mabmey je — ghobe’.",
+          "startDate": "Doch tagh jaj.",
+          "endDate": "Doch rIn jaj — <code>null</code>: club rInbe’.",
+          "qualifies": "Daq’vam QujwI’ ’elmoH’a’?"
+        }
       },
       "example": {
         "heading": "pab"
       },
       "integrationNotes": {
         "heading": "boq De’mey",
-        "note1": "Hoch toy’wI’ muv Daq’vam yIlo’. Gedu’pu’ je toy’wI’pu’ poH nIS — chaH poHDaq neH muv.",
-        "note2": "poH 5 tup pawpa’ SoQ — 5 tup Qu’ Qav pawDaq.",
-        "note3": "<code1>allowed: true</code1> DaleghDI’, <code2>endTime</code2> yIlo’ — tIqmeH qoj boq. back-to-back poHmey tu’lu’chugh, wa’DIch toy’wI’ voq.",
-        "note4": "<code>404</code> — toy’wI’ Minecraft account Sogverse jonbe’lu’. chaH leghmoH — Sogverse profile Daq jonmoH.",
-        "note5": "Hoch Qagh jangmey <code>'{ \"error\": \"mu''\" }'</code> lo'."
+        "branchOnAllowed": "Hoch muv Daq’vam yItlhob. <code1>allowed</code1> neH yIwuq. <code2>reason</code2> <code3>message</code3> je — ghItlhmeH voqmeH je.",
+        "failClosed": "5xx, poH Hutlh, qoj Qagh — lojmIt yISoQmoH! toy’wI’ ’elbe’. tlhob QapHa’ — ’elmeH meq ’oHbe’.",
+        "noLongCache": "wuq yIpol DaH neH. Daq tagh qoj rIn, DaH; Hoch muv yItlhob.",
+        "notLinked": "<code>no_linked_account</code> — Minecraft account Sogverse rarbe’lu’. voqmeH QIn: Sogverse Daq yIrar!",
+        "keyServerSide": "API key server Daq neH pol. client mod Daq, toy’wI’ laDlaHbogh config Daq, Hoch leghlaHbogh repository Daq — ghobe’!"
       }
     },
     "lynxApi": {
