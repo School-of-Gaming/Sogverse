@@ -1712,6 +1712,17 @@
         "templatePlain": "Texte brut",
         "templateSubFlow": "/sub : toutes les étapes",
         "subPreviewSent": "Toutes les étapes ont été envoyées."
+      },
+      "slack": {
+        "tool": "Outil de test Slack",
+        "toolDescription": "Publiez un message dans un canal depuis le bot Slack de cet environnement, pour vérifier que l’envoi fonctionne.",
+        "channel": "Canal",
+        "channelPlaceholder": "ID du canal, p. ex. C0123456789",
+        "message": "Message",
+        "messagePlaceholder": "Texte brut, 4 000 caractères maximum",
+        "send": "Envoyer le message de test",
+        "sent": "Message envoyé.",
+        "openInSlack": "Ouvrir dans Slack"
       }
     },
     "whatsapp": {

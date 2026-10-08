@@ -1712,6 +1712,17 @@
         "templatePlain": "Plain text",
         "templateSubFlow": "/sub: every step",
         "subPreviewSent": "Every step sent."
+      },
+      "slack": {
+        "tool": "Slack Testing Tool",
+        "toolDescription": "Post a message to a channel from this environment’s Slack bot, to check that sending works.",
+        "channel": "Channel",
+        "channelPlaceholder": "Channel ID, e.g. C0123456789",
+        "message": "Message",
+        "messagePlaceholder": "Plain text, up to 4,000 characters",
+        "send": "Send Test Message",
+        "sent": "Message sent.",
+        "openInSlack": "Open in Slack"
       }
     },
     "whatsapp": {

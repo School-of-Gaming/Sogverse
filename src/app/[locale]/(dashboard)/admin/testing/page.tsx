@@ -9,6 +9,7 @@ import {
   StatusLine,
 } from "@/components/ui/alert";
 import { DiscordToolCard } from "@/components/admin/testing/discord-tool-card";
+import { SlackToolCard } from "@/components/admin/testing/slack-tool-card";
 import {
   TestingLocaleSelect,
   testingSelectClass as selectClass,
@@ -422,6 +423,8 @@ export default function TestingPage() {
       </Card>
 
       <DiscordToolCard />
+
+      <SlackToolCard />
 
       {/* The preview is a dialog rather than a second panel under the form:
           the mail is 720px of reading and the form is what the page is for, so

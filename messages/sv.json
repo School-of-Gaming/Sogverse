@@ -1712,6 +1712,17 @@
         "templatePlain": "Ren text",
         "templateSubFlow": "/sub: alla steg",
         "subPreviewSent": "Alla steg skickades."
+      },
+      "slack": {
+        "tool": "Testverktyg för Slack",
+        "toolDescription": "Skicka ett meddelande till en kanal från den här miljöns Slack-bot för att kontrollera att utskicket fungerar.",
+        "channel": "Kanal",
+        "channelPlaceholder": "Kanal-ID, t.ex. C0123456789",
+        "message": "Meddelande",
+        "messagePlaceholder": "Ren text, högst 4 000 tecken",
+        "send": "Skicka testmeddelande",
+        "sent": "Meddelandet skickades.",
+        "openInSlack": "Öppna i Slack"
       }
     },
     "whatsapp": {

@@ -1712,6 +1712,17 @@
         "templatePlain": "Pelkkä teksti",
         "templateSubFlow": "/sub: kaikki vaiheet",
         "subPreviewSent": "Kaikki vaiheet lähetetty."
+      },
+      "slack": {
+        "tool": "Slack-testaustyökalu",
+        "toolDescription": "Lähetä tämän ympäristön Slack-botilla viesti kanavalle ja varmista, että lähetys toimii.",
+        "channel": "Kanava",
+        "channelPlaceholder": "Kanavan tunnus, esim. C0123456789",
+        "message": "Viesti",
+        "messagePlaceholder": "Pelkkää tekstiä, enintään 4 000 merkkiä",
+        "send": "Lähetä testiviesti",
+        "sent": "Viesti lähetetty.",
+        "openInSlack": "Avaa Slackissa"
       }
     },
     "whatsapp": {

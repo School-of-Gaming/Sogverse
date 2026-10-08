@@ -1756,6 +1756,17 @@
         "templatePlain": "ghItlh neH",
         "templateSubFlow": "/sub: Hoch mIw",
         "subPreviewSent": "Hoch mIw ngeHta’."
+      },
+      "slack": {
+        "tool": "Slack QIn ngong jan",
+        "toolDescription": "QIn yIngeH Slack jan’e’ vo’ Dochvam qo’, ’ej yInej: QIn ngeHlaH’a’?",
+        "channel": "Hogh",
+        "channelPlaceholder": "Hogh ngu’meH mI’, mIw: C0123456789",
+        "message": "QIn",
+        "messagePlaceholder": "ghItlh neH, 4000 Degh law’ be’",
+        "send": "ngong QIn yIngeH",
+        "sent": "QIn ngeHta’.",
+        "openInSlack": "Slack Daq yIpoS"
       }
     },
     "whatsapp": {
