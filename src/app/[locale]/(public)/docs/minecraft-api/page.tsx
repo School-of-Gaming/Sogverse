@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InlineCode as Code, codeTag } from "@/components/ui/inline-code";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -9,12 +10,6 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t("minecraftApi"),
     robots: { index: false, follow: false },
   };
-}
-
-function Code({ children }: { children: React.ReactNode }) {
-  return (
-    <code className="rounded bg-lifted px-1.5 py-0.5 text-sm">{children}</code>
-  );
 }
 
 function CodeBlock({ children, title }: { children: string; title?: string }) {
@@ -47,7 +42,7 @@ function Field({
         <Code>{name}</Code>
         <span className="text-xs text-muted-foreground">{type}</span>
       </div>
-      <p className="text-sm text-muted-foreground">{children}</p>
+      <p className="text-sm leading-relaxed text-muted-foreground">{children}</p>
     </div>
   );
 }
@@ -99,8 +94,7 @@ const DENIED_EXAMPLE = `{
 export default function MinecraftApiDocsPage() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
   const t = useTranslations('docs.minecraftApi');
-  const code = (chunks: React.ReactNode) => <Code>{chunks}</Code>;
-  const codes = { code, code1: code, code2: code, code3: code };
+  const codes = { code: codeTag, code1: codeTag, code2: codeTag, code3: codeTag };
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
@@ -115,7 +109,7 @@ export default function MinecraftApiDocsPage() {
       <section className="mt-12">
         <h2 className="text-2xl font-semibold">{t('eligibility.heading')}</h2>
         <p className="mt-3 text-muted-foreground">{t('eligibility.intro')}</p>
-        <ul className="mt-4 list-inside list-disc space-y-3 text-muted-foreground">
+        <ul className="mt-4 list-inside list-disc space-y-3 leading-relaxed text-muted-foreground">
           <li>{t('eligibility.paidProducts')}</li>
           <li>{t('eligibility.notCounted')}</li>
           <li>{t('eligibility.current')}</li>
@@ -127,7 +121,7 @@ export default function MinecraftApiDocsPage() {
       {/* Authentication */}
       <section className="mt-12">
         <h2 className="text-2xl font-semibold">{t('authentication.heading')}</h2>
-        <p className="mt-3 text-muted-foreground">
+        <p className="mt-3 leading-relaxed text-muted-foreground">
           {t.rich('authentication.description', codes)}
         </p>
         <CodeBlock>{`Authorization: Bearer <MINECRAFT_SERVER_API_KEY>`}</CodeBlock>
@@ -154,7 +148,7 @@ export default function MinecraftApiDocsPage() {
       {/* Responses */}
       <section className="mt-12">
         <h2 className="text-2xl font-semibold">{t('responses.heading')}</h2>
-        <p className="mt-3 text-muted-foreground">
+        <p className="mt-3 leading-relaxed text-muted-foreground">
           {t.rich('responses.intro', codes)}
         </p>
 
@@ -186,7 +180,7 @@ export default function MinecraftApiDocsPage() {
             </CardHeader>
             <CardContent>
               <CodeBlock>{DENIED_EXAMPLE}</CodeBlock>
-              <p className="mt-4 text-sm text-muted-foreground">
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                 {t.rich('responses.deniedDescription', codes)}
               </p>
             </CardContent>
@@ -202,7 +196,7 @@ export default function MinecraftApiDocsPage() {
                 <span className="mt-0.5 shrink-0 rounded border border-border px-2 py-0.5 text-xs font-semibold text-destructive">
                   401
                 </span>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   {t.rich('responses.error401', codes)}
                 </p>
               </div>
@@ -210,7 +204,7 @@ export default function MinecraftApiDocsPage() {
                 <span className="mt-0.5 shrink-0 rounded border border-border px-2 py-0.5 text-xs font-semibold text-destructive">
                   400
                 </span>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   {t.rich('responses.error400', codes)}
                 </p>
               </div>
@@ -218,11 +212,11 @@ export default function MinecraftApiDocsPage() {
                 <span className="mt-0.5 shrink-0 rounded border border-border px-2 py-0.5 text-xs font-semibold text-destructive">
                   500
                 </span>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   {t('responses.error500')}
                 </p>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm leading-relaxed text-muted-foreground">
                 {t.rich('responses.errorShape', codes)}
               </p>
             </CardContent>
@@ -313,7 +307,7 @@ export default function MinecraftApiDocsPage() {
       {/* Integration notes */}
       <section className="mt-12">
         <h2 className="text-2xl font-semibold">{t('integrationNotes.heading')}</h2>
-        <ul className="mt-4 list-inside list-disc space-y-3 text-muted-foreground">
+        <ul className="mt-4 list-inside list-disc space-y-3 leading-relaxed text-muted-foreground">
           <li>{t.rich('integrationNotes.branchOnAllowed', codes)}</li>
           <li>{t('integrationNotes.failClosed')}</li>
           <li>{t('integrationNotes.noLongCache')}</li>
