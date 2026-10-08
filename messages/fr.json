@@ -1761,13 +1761,13 @@
       "loadError": "Impossible de charger les remplacements.",
       "loadErrorWithReason": "Impossible de charger les remplacements : {reason}",
       "approveConfirmTitle": "Valider {name} pour ce remplacement ?",
-      "approveConfirmBody": "{name} prend {product} — {group} le {when}, à la place de {absent}. La séance apparaît aussitôt sur sa page Remplacements et sur My SOG, et l’espace de travail du groupe lui est ouvert 48 heures avant le début. Personne n’est prévenu : la séance disparaît de la liste des autres volontaires, et sa fiche indique désormais que {name} remplace {absent}.",
+      "approveConfirmBody": "{name} prend {product} — {group} le {when}, à la place de {absent}. La séance apparaît aussitôt sur sa page Remplacements et sur Mon SOG, et l’espace de travail du groupe lui est ouvert 48 heures avant le début. Personne n’est prévenu : la séance disparaît de la liste des autres volontaires, et sa fiche indique désormais que {name} remplace {absent}.",
       "approveFailedOfferGone": "{name} a retiré sa proposition, il n’y a donc rien à valider.",
       "approveFailedAlreadySettled": "Quelqu’un d’autre a déjà réglé cette séance.",
       "approveFailedSeatGone": "{absent} n’a plus cette séance, il n’y a donc personne à remplacer.",
       "approveFailedIneligible": "{name} ne peut plus prendre cette séance.",
       "seatConfirmTitle": "Désigner {name} pour ce remplacement ?",
-      "seatConfirmBody": "{name} prend {product} — {group} le {when}, à la place de {absent}. La séance apparaît aussitôt sur sa page Remplacements et sur My SOG, et l’espace de travail du groupe lui est ouvert 48 heures avant le début. Personne n’est prévenu : la séance disparaît de la liste où les Gedus proposent un remplacement, et sa fiche indique désormais que {name} remplace {absent}.",
+      "seatConfirmBody": "{name} prend {product} — {group} le {when}, à la place de {absent}. La séance apparaît aussitôt sur sa page Remplacements et sur Mon SOG, et l’espace de travail du groupe lui est ouvert 48 heures avant le début. Personne n’est prévenu : la séance disparaît de la liste où les Gedus proposent un remplacement, et sa fiche indique désormais que {name} remplace {absent}.",
       "seatConfirm": "Confirmer le remplacement",
       "seatReasonLabel": "Motif indiqué",
       "seatFailed": "Le remplacement n’a pas pu être enregistré – réessayez.",
@@ -3278,7 +3278,7 @@
         "gamerPhoto": {
           "lynxEducate": "Les photos et vidéos de mon enfant peuvent figurer dans les comptes rendus de séance, être partagées avec Lynx Educate et Roblox à des fins de rapport d’impact, et être utilisées sur les sites web et les réseaux sociaux de School of Gaming, de Lynx Educate et de Roblox. Les détails figurent dans la <privacy>Politique de confidentialité de l’Académie des Créateurs</privacy>.",
           "lynxEducateTitle": "Photos et vidéos de votre enfant",
-          "hint": "Facultatif — vous pouvez modifier ce choix à tout moment sur la page de votre enfant dans My SOG."
+          "hint": "Facultatif — vous pouvez modifier ce choix à tout moment sur la page de votre enfant dans Mon SOG."
         },
         "marketing": {
           "lynxEducate": "Partager mon adresse e-mail avec <link>Lynx Educate</link> afin qu’ils puissent m’envoyer des actualités sur les événements à venir et des ressources sur le jeu vidéo. Je peux me désabonner à tout moment.",
@@ -4520,7 +4520,7 @@
           "Deux choses appellent un oui ou un non :"
         ],
         "bullets": [
-          "Les statistiques — celles de Vercel, et seulement si vous les acceptez. Elles comptent les visites, mesurent la vitesse d’affichage des pages et reçoivent quelques événements anonymes sur l’usage du site : comment on accède à son My SOG, quand la langue est changée. Elles ne peuvent pas savoir qui vous êtes, et nous ne les transmettons jamais à des annonceurs.",
+          "Les statistiques — celles de Vercel, et seulement si vous les acceptez. Elles comptent les visites, mesurent la vitesse d’affichage des pages et reçoivent quelques événements anonymes sur l’usage du site : comment on accède à son Mon SOG, quand la langue est changée. Elles ne peuvent pas savoir qui vous êtes, et nous ne les transmettons jamais à des annonceurs.",
           "Le marketing — des cookies publicitaires, et seulement si vous les acceptez. Ils permettent aux plateformes publicitaires citées plus haut — aujourd’hui Meta et Google — de voir comment vous utilisez notre site, afin qu’elles puissent vous montrer nos publicités et que nous sachions lesquelles fonctionnent. Les balises de Google arrivent dans votre navigateur via un gestionnaire de balises, qui nous permet, ainsi qu’au partenaire qui gère nos campagnes, d’ajouter ou de retirer une plateforme sans modifier le site ; quelles que soient les plateformes qu’il embarque, elles sont nommées dans la liste ci-dessus, et cette liste porte une date. Si vous créez un compte au cours d’une visite, l’étiquette de campagne portée par le lien à l’origine de celle-ci y est également enregistrée. Ils ne sont jamais actifs pendant qu’un joueur est connecté. Désactiver le marketing supprime ces cookies, ainsi que le peu de données que ces scripts conservent à côté d’eux dans votre navigateur, mais pas ce que les plateformes détiennent déjà — vous pouvez leur demander de le supprimer dans vos paramètres chez elles."
         ]
       },
@@ -4866,7 +4866,7 @@
         },
         "media": {
           "question": "Mon enfant sera-t-il photographié ou filmé ?",
-          "answer": "<p>Les séances peuvent être photographiées. Votre enfant n’apparaît sur une photographie que si vous cochez le choix média facultatif au moment de l’inscrire, et vous pouvez modifier cette réponse à tout moment sur la page de votre enfant dans My SOG.</p>"
+          "answer": "<p>Les séances peuvent être photographiées. Votre enfant n’apparaît sur une photographie que si vous cochez le choix média facultatif au moment de l’inscrire, et vous pouvez modifier cette réponse à tout moment sur la page de votre enfant dans Mon SOG.</p>"
         },
         "facilitators": {
           "question": "Qui anime les sessions, et comment les animateurs sont-ils vérifiés ?",
@@ -5154,7 +5154,7 @@
       "mediaChanging": {
         "heading": "Modifier un choix média",
         "blocks": [
-          "Un parent ou un enfant peut retirer une autorisation média en écrivant à {supportEmail}, ou le parent peut la modifier à tout moment sur la page de son enfant dans My SOG.",
+          "Un parent ou un enfant peut retirer une autorisation média en écrivant à {supportEmail}, ou le parent peut la modifier à tout moment sur la page de son enfant dans Mon SOG.",
           "Après le retrait, nous cessons tout nouvel usage et retirons les éléments des canaux que nous maîtrisons, dans la mesure du raisonnable. Le retrait ne peut pas rendre illicite un usage antérieur qui était licite, ni annuler la diffusion de supports imprimés déjà distribués, ni garantir la suppression des copies déjà partagées par des tiers."
         ]
       },
@@ -5349,7 +5349,7 @@
       "data": {
         "heading": "Données et photos",
         "blocks": [
-          "Un enfant n’apparaît de manière identifiable sur une photographie que si son parent a coché le consentement média facultatif le concernant au moment de l’inscription. Le parent peut modifier cette réponse à tout moment sur la page de l’enfant dans My SOG, et un animateur demande à l’enfant avant de prendre une photographie, même lorsque le parent a consenti. La <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy> précise ce que ce consentement couvre. Des vues d’ensemble d’un événement ou d’un atelier peuvent être prises à distance, lorsqu’aucun enfant n’est identifiable."
+          "Un enfant n’apparaît de manière identifiable sur une photographie que si son parent a coché le consentement média facultatif le concernant au moment de l’inscription. Le parent peut modifier cette réponse à tout moment sur la page de l’enfant dans Mon SOG, et un animateur demande à l’enfant avant de prendre une photographie, même lorsque le parent a consenti. La <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy> précise ce que ce consentement couvre. Des vues d’ensemble d’un événement ou d’un atelier peuvent être prises à distance, lorsqu’aucun enfant n’est identifiable."
         ]
       },
       "review": {
@@ -5415,7 +5415,7 @@
       "media": {
         "heading": "Photos, vidéos et communication",
         "blocks": [
-          "Toute photographie ou vidéo de votre enfant, et leur utilisation à des fins de communication, dépend uniquement de ce que vous avez choisi lors de l’inscription. Ces choix sont facultatifs et vous pouvez changer d’avis à tout moment sur la page de votre enfant dans My SOG."
+          "Toute photographie ou vidéo de votre enfant, et leur utilisation à des fins de communication, dépend uniquement de ce que vous avez choisi lors de l’inscription. Ces choix sont facultatifs et vous pouvez changer d’avis à tout moment sur la page de votre enfant dans Mon SOG."
         ]
       },
       "concern": {

@@ -1761,13 +1761,13 @@
       "loadError": "Vikariaten kunde inte laddas.",
       "loadErrorWithReason": "Vikariaten kunde inte laddas: {reason}",
       "approveConfirmTitle": "Godkänn {name} som vikarie?",
-      "approveConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på My SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från de andra frivilligas lista, och på kortet står nu att {name} vikarierar för {absent}.",
+      "approveConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på Min SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från de andra frivilligas lista, och på kortet står nu att {name} vikarierar för {absent}.",
       "approveFailedOfferGone": "{name} har tagit tillbaka sitt erbjudande, så det finns inget att godkänna.",
       "approveFailedAlreadySettled": "Någon annan har redan löst det här tillfället.",
       "approveFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
       "approveFailedIneligible": "{name} kan inte längre ta det här tillfället.",
       "seatConfirmTitle": "Sätt in {name} som vikarie?",
-      "seatConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på My SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från listan där Geduer erbjuder sig, och på kortet står nu att {name} vikarierar för {absent}.",
+      "seatConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på Min SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från listan där Geduer erbjuder sig, och på kortet står nu att {name} vikarierar för {absent}.",
       "seatConfirm": "Sätt in vikarien",
       "seatReasonLabel": "Angiven orsak",
       "seatFailed": "Vikarien kunde inte sättas in – försök igen.",
@@ -3278,7 +3278,7 @@
         "gamerPhoto": {
           "lynxEducate": "Foton och videor på mitt barn får tas med i sessionsrapporter, delas med Lynx Educate och Roblox för effektrapportering och användas på School of Gamings, Lynx Educates och Roblox webbplatser och sociala medier. Detaljerna finns i <privacy>Skaparnas akademis integritetspolicy</privacy>.",
           "lynxEducateTitle": "Foton och videor på ditt barn",
-          "hint": "Valfritt — du kan ändra detta när som helst på ditt barns sida i My SOG."
+          "hint": "Valfritt — du kan ändra detta när som helst på ditt barns sida i Min SOG."
         },
         "marketing": {
           "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst.",
@@ -4520,7 +4520,7 @@
           "Det finns två saker att säga ja eller nej till:"
         ],
         "bullets": [
-          "Analys – Vercels, och bara om du väljer den. Den räknar besök, mäter hur snabbt sidorna laddas och tar emot några anonyma händelser om hur webbplatsen används: hur någon tar sig till sin My SOG och när språket byts. Den kan inte se vem du är, och vi lämnar den aldrig till annonsörer.",
+          "Analys – Vercels, och bara om du väljer den. Den räknar besök, mäter hur snabbt sidorna laddas och tar emot några anonyma händelser om hur webbplatsen används: hur någon tar sig till sin Min SOG och när språket byts. Den kan inte se vem du är, och vi lämnar den aldrig till annonsörer.",
           "Marknadsföring – annonscookies, och bara om du väljer dem. De låter annonsplattformarna som nämns ovan – i dag Meta och Google – se hur du använder vår webbplats, så att de kan visa dig våra annonser och vi kan se vilka annonser som fungerar. Googles taggar når din webbläsare via en tagghanterare, som låter oss och den partner som sköter våra kampanjer lägga till eller ta bort en plattform utan att ändra webbplatsen; de plattformar den för tillfället bär står alltid namngivna i listan ovan, och den listan är daterad. Om du skapar ett konto under ett besök sparas även kampanjkoden från länken du kom från på kontot. De är aldrig igång medan en spelare är inloggad. Att stänga av marknadsföring raderar dessa cookies, och den lilla mängd data som dessa skript sparar i din webbläsare vid sidan av dem, men inte det plattformarna redan har – du kan be dem radera det i dina inställningar hos dem."
         ]
       },
@@ -4866,7 +4866,7 @@
         },
         "media": {
           "question": "Kommer mitt barn att fotograferas eller filmas?",
-          "answer": "<p>Träffarna kan fotograferas. Ditt barn syns på ett foto bara om du kryssar i det frivilliga mediavalet när du anmäler barnet, och du kan ändra svaret när som helst på barnets sida i My SOG.</p>"
+          "answer": "<p>Träffarna kan fotograferas. Ditt barn syns på ett foto bara om du kryssar i det frivilliga mediavalet när du anmäler barnet, och du kan ändra svaret när som helst på barnets sida i Min SOG.</p>"
         },
         "facilitators": {
           "question": "Vem håller i träffarna, och hur kontrolleras de?",
@@ -5154,7 +5154,7 @@
       "mediaChanging": {
         "heading": "Ändra ett mediaval",
         "blocks": [
-          "En förälder eller ett barn kan återkalla ett mediatillstånd genom att kontakta {supportEmail}, eller så kan föräldern ändra det när som helst på barnets sida i My SOG.",
+          "En förälder eller ett barn kan återkalla ett mediatillstånd genom att kontakta {supportEmail}, eller så kan föräldern ändra det när som helst på barnets sida i Min SOG.",
           "Efter återkallelsen slutar vi använda materialet på nya sätt och tar bort det från kanaler vi själva styr över, när det rimligen går. En återkallelse kan inte göra tidigare laglig användning olaglig, ta tillbaka tryckt material som redan spridits eller garantera att kopior som tredje part redan delat raderas."
         ]
       },
@@ -5349,7 +5349,7 @@
       "data": {
         "heading": "Uppgifter och foton",
         "blocks": [
-          "Ett barn syns identifierbart på ett foto endast när barnets förälder kryssat i det frivilliga mediasamtycket för barnet vid anmälan. Föräldern kan ändra svaret när som helst på barnets sida i My SOG, och en spelfostrare frågar barnet innan ett foto tas, även när föräldern har samtyckt. <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> beskriver vad samtycket omfattar. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
+          "Ett barn syns identifierbart på ett foto endast när barnets förälder kryssat i det frivilliga mediasamtycket för barnet vid anmälan. Föräldern kan ändra svaret när som helst på barnets sida i Min SOG, och en spelfostrare frågar barnet innan ett foto tas, även när föräldern har samtyckt. <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> beskriver vad samtycket omfattar. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
         ]
       },
       "review": {
@@ -5415,7 +5415,7 @@
       "media": {
         "heading": "Foto, video och marknadsföring",
         "blocks": [
-          "Om ditt barn fotograferas eller filmas, och om materialet används i marknadsföring, avgörs helt av de val du gör vid anmälan. Valen är frivilliga och du kan ändra dig när som helst på barnets sida i My SOG."
+          "Om ditt barn fotograferas eller filmas, och om materialet används i marknadsföring, avgörs helt av de val du gör vid anmälan. Valen är frivilliga och du kan ändra dig när som helst på barnets sida i Min SOG."
         ]
       },
       "concern": {
