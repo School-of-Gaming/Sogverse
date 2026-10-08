@@ -7,19 +7,28 @@ import type {
   GeduSubstitutionSummary,
 } from "@/lib/gedu-assignment-rollup";
 import {
+  buildOwnSubstitutionRequestRows,
+  type OwnSubstitutionRequestRow,
+} from "@/lib/gedu-own-substitution-requests";
+import {
   buildSubstitutionPoolRows,
   type SubstitutionPoolRow,
 } from "@/lib/gedu-substitution-pool";
 import {
+  alreadyRequestedSessionKeys,
   buildGeduUpcomingSessions,
   type GeduUpcomingSession,
 } from "@/lib/gedu-upcoming-sessions";
-import type { OpenSubstitutionRequest } from "@/services/session-substitution";
+import type {
+  LiveSubstitutionRequest,
+  OpenSubstitutionRequest,
+} from "@/services/session-substitution";
 import { buildGeduDashboardFixture } from "./mock-dashboard-fixtures";
 
 /**
- * Fixtures for the **Substitutions** page scene: the open queue a certified
- * gedu picks from, and the substitutions they have already taken.
+ * Fixtures for the **Substitutions** page scene: the gedu's own live requests,
+ * the open queue a certified gedu picks from, and the substitutions they have
+ * already taken.
  *
  * The open rows are **wire-shaped and run through the real derivation**, so the
  * weekday arithmetic that turns a bare date into a clock face in the viewer's
@@ -34,9 +43,11 @@ import { buildGeduDashboardFixture } from "./mock-dashboard-fixtures";
 
 /**
  * **Two scenarios, because the page has two states and they cannot share a
- * render.** `populated` is both sections with something in them — every way an
- * open card can differ, and both states a taken substitution has. `empty` is
- * the two all-clear lines, which a populated page structurally cannot show.
+ * render.** `populated` is every section with something in it — both states a
+ * request of the reader's own can be in, every way an open card can differ,
+ * and both states a taken substitution has. `empty` is the page with no request
+ * of the reader's own, whose section is then not drawn at all, and the two
+ * all-clear lines, which a populated page structurally cannot show.
  *
  * There is deliberately no *uncertified* scenario: that page is the accepted
  * section alone with the queue withheld, which is a section this list already
@@ -54,6 +65,11 @@ export function isGeduSubstitutionsScenario(
 }
 
 export interface GeduSubstitutionsFixture {
+  /**
+   * The reader's own live requests — one still waiting with offers on it, one
+   * a colleague is substituting on — shaped by the real derivation.
+   */
+  ownRequests: OwnSubstitutionRequestRow[];
   /** The open queue, already shaped and ordered by the real derivation. */
   pool: SubstitutionPoolRow[];
   /** What this gedu is standing in for, soonest first. */
@@ -68,8 +84,8 @@ export interface GeduSubstitutionsFixture {
    */
   upcomingSessions: GeduUpcomingSession[];
   /**
-   * The one picker row that is already asked for, so the disabled state and
-   * the pickable one are on screen together.
+   * The picker rows already asked for — the sessions the reader's own requests
+   * are on, so the disabled state and the pickable one are on screen together.
    */
   filedSessionKeys: string[];
 }
@@ -82,8 +98,9 @@ export function buildGeduSubstitutionsFixture(
   timeZone: string,
 ): GeduSubstitutionsFixture {
   const dashboard = buildGeduDashboardFixture(now, "default", locale, timeZone);
+  const seats = pickerSeats(now);
   const upcomingSessions = buildGeduUpcomingSessions({
-    rows: pickerSeats(now),
+    rows: seats,
     locale,
     now,
   });
@@ -94,6 +111,7 @@ export function buildGeduSubstitutionsFixture(
     // when the queue is full. A page with no seats at all is the uncertified
     // one, which has no queue either and is therefore not a scenario here.
     return {
+      ownRequests: [],
       pool: [],
       substitutions: [],
       upcomingSessions,
@@ -101,16 +119,20 @@ export function buildGeduSubstitutionsFixture(
     };
   }
 
+  const liveRequests = ownLiveRequests(upcomingSessions, seats);
+
   return {
+    ownRequests: buildOwnSubstitutionRequestRows(liveRequests, locale),
     pool: buildSubstitutionPoolRows(openRequests(now), locale),
     // The dashboard's pair: one substitution whose workspace has opened and one
     // still locked, which is the whole of what a taken substitution can look
     // like.
     substitutions: dashboard.substitutions,
     upcomingSessions,
-    // The second row, so the picker's two states sit next to each other. The
-    // first is left pickable, because the scene's write has to be reachable.
-    filedSessionKeys: upcomingSessions.slice(1, 2).map((s) => s.key),
+    // The reader's own requests, read the way the page reads them: the second
+    // row among them, so the picker's two states sit next to each other, and
+    // the first left pickable, because the scene's write has to be reachable.
+    filedSessionKeys: [...alreadyRequestedSessionKeys(liveRequests)],
   };
 }
 
@@ -235,6 +257,101 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
 }
 
 /**
+ * The reader's own live requests, as the RPC would hand them over — on two of
+ * the picker's own sessions, so a card and the picker's disabled row name the
+ * same afternoon.
+ *
+ * One of each state the panel draws: **waiting**, on the picker's second row,
+ * with two colleagues having offered; and **substituted**, later on another
+ * club, by a named colleague.
+ */
+function ownLiveRequests(
+  sessions: readonly GeduUpcomingSession[],
+  seats: readonly GeduAssignmentRow[],
+): LiveSubstitutionRequest[] {
+  const first = sessions.at(0);
+  const waiting = sessions.at(1);
+  if (first === undefined || waiting === undefined) return [];
+  const settled = sessions.find(
+    (session) =>
+      session.productId !== waiting.productId &&
+      session.productId !== first.productId &&
+      session.sessionDate > waiting.sessionDate,
+  );
+  if (settled === undefined) return [];
+
+  const request = (
+    session: GeduUpcomingSession,
+    fields: Pick<
+      LiveSubstitutionRequest,
+      | "id"
+      | "status"
+      | "substitute_id"
+      | "substitute_first_name"
+      | "approved_at"
+      | "offer_count"
+    >,
+  ): LiveSubstitutionRequest => {
+    const seat = seats.find((s) => s.product.id === session.productId);
+    if (seat === undefined) throw new Error(`no seat for ${session.productId}`);
+    return {
+      ...fields,
+      group_id: session.groupId,
+      group_name: seat.groupName ?? "",
+      session_date: session.sessionDate,
+      role: "primary",
+      created_at: "2026-10-01T09:00:00+00:00",
+      requested_by: OWN_REQUESTER_ID,
+      requested_by_first_name: "Sanna",
+      is_requester: true,
+      reason: null,
+      reason_note: null,
+      session_cancelled: false,
+      product: {
+        id: seat.product.id,
+        product_type: seat.product.productType,
+        tag: null,
+        topic: seat.product.topic,
+        spoken_language_code: seat.product.spokenLanguageCode,
+        timezone: seat.product.timezone,
+        is_remote: seat.product.isRemote,
+        start_date: seat.product.startDate,
+        end_date: seat.product.endDate,
+        site_name: seat.product.siteName,
+        translations: seat.product.translations,
+        schedule_slots: seat.slots.map((slot) => ({
+          weekday: slot.weekday,
+          start_time: slot.startTime,
+          duration_minutes: slot.durationMinutes,
+        })),
+      },
+    };
+  };
+
+  return [
+    request(waiting, {
+      id: "7a375442-e5ce-4fd5-9bc8-b1ba04c79881",
+      status: "open",
+      substitute_id: null,
+      substitute_first_name: null,
+      approved_at: null,
+      offer_count: 2,
+    }),
+    request(settled, {
+      id: "c7a8e78b-e5f0-4059-8ef8-82cdfd1c0051",
+      status: "substituted",
+      substitute_id: "35fc19f2-600e-427b-9430-e84132806358",
+      substitute_first_name: "Saana",
+      approved_at: "2026-10-02T12:00:00+00:00",
+      offer_count: 0,
+    }),
+  ];
+}
+
+/** The reader, as the absent gedu on their own requests. */
+const OWN_REQUESTER_ID = "fec1339c-c33a-4660-ac39-4cafd24c89b5";
+
+/**
  * The queue, as the RPC would hand it over — six open requests a certified gedu
  * could take, chosen so that every axis a card varies on is on one screen and
  * the urgency treatment has both sides of its boundary beside it.
@@ -276,7 +393,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       session_date: soon.sessionDate,
       role: "primary",
       fee_cents: 6500,
-      has_offered: false,
+      my_response: null,
       product: {
         id: "mock-pool-product-soon",
         product_type: "consumer_club",
@@ -304,7 +421,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       // says nothing about money rather than flagging a gap nobody is expected
       // to close.
       fee_cents: null,
-      has_offered: false,
+      my_response: null,
       product: {
         id: "mock-pool-product-today",
         product_type: "camp",
@@ -329,10 +446,9 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       session_date: calendarDate(now, 1, SESSION_FEED_TIMEZONE),
       role: "primary",
       fee_cents: 7500,
-      // Already offered — the other resting state of the one control, which
-      // cannot be seen on the same card as the offer state and has to be on a
-      // card of its own.
-      has_offered: true,
+      // Already offered — one of the two answered states, each of which can
+      // only be seen on a card of its own.
+      my_response: "offer",
       product: {
         id: "mock-pool-product-tomorrow",
         product_type: "municipality_club",
@@ -357,7 +473,9 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       session_date: calendarDate(now, 3, SESSION_FEED_TIMEZONE),
       role: "primary",
       fee_cents: 7000,
-      has_offered: false,
+      // Declined — the other answered state: the card stays, marked, with
+      // Offer still on it.
+      my_response: "decline",
       product: {
         id: "mock-pool-product-midweek",
         product_type: "event",
@@ -382,7 +500,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       session_date: calendarDate(now, 7, SESSION_FEED_TIMEZONE),
       role: "assistant",
       fee_cents: 4500,
-      has_offered: false,
+      my_response: null,
       product: {
         id: "mock-pool-product-next-week",
         product_type: "consumer_club",
@@ -407,7 +525,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       session_date: calendarDate(now, 12, SESSION_FEED_TIMEZONE),
       role: "primary",
       fee_cents: 6500,
-      has_offered: false,
+      my_response: null,
       product: {
         id: "mock-pool-product-far",
         product_type: "consumer_club",

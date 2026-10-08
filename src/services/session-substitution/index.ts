@@ -4,22 +4,25 @@ export {
   useAdminSubstitutionQueue,
   useApproveSessionSubstitutionOffer,
   useClearSessionSubstitution,
+  useDeclineSessionSubstitution,
   useMyLiveSubstitutionRequests,
   useOfferSessionSubstitution,
   useOpenSubstitutionRequests,
   useRequestSessionSubstitution,
   useSetSessionSubstitution,
-  useWithdrawSessionSubstitutionOffer,
   useWithdrawSessionSubstitutionRequest,
   useWithdrawSessionSubstitutionRequestAsAdmin,
 } from "./session-substitution.queries";
 export {
   SUBSTITUTION_REASON_NOTE_MAX_LENGTH,
+  adminSubstitutionDecline,
   adminSubstitutionOffer,
   adminSubstitutionRequest,
   adminSubstitutionRequests,
   anonymousSubstitutionRequestDocument,
+  liveSubstitutionRequest,
   liveSubstitutionRequests,
+  substitutionOfferResponse,
   substitutionReason,
   substitutionRequestDocument,
   substitutionRequestStatus,
@@ -31,19 +34,21 @@ export {
 } from "./session-substitution.contracts";
 export {
   seatSubstituteFailureKey,
-  substitutionOfferFailureKey,
+  substitutionAnswerFailureKey,
   substitutionRequestFailureKey,
   substitutionRequestRefusalMeansAlreadyFiled,
 } from "./session-substitution.refusals";
 export type {
   SeatSubstituteFailureKey,
-  SubstitutionOfferFailureKey,
+  SubstitutionAnswerFailureKey,
   SubstitutionRequestFailureKey,
 } from "./session-substitution.refusals";
 export type {
+  AdminSubstitutionDecline,
   AdminSubstitutionOffer,
   AdminSubstitutionRequest,
   AnonymousSubstitutionRequestDocument,
+  LiveSubstitutionRequest,
   OpenAdminSubstitutionRequest,
   SubstitutedAdminSubstitutionRequest,
   SubstitutionRequestDocument,

@@ -77,6 +77,7 @@
       "geduContract": "Gedu contract",
       "oauthConsent": "Connect an AI app",
       "linkDiscord": "Link Discord",
+      "linkSlack": "Link Slack",
       "seatOffer": "Seat offer",
       "geduSubstitutions": "Substitutions",
       "geduInvoicing": "Invoicing",
@@ -1708,9 +1709,8 @@
         "messagePlaceholder": "Plain text, up to 2,000 characters",
         "send": "Send Test Message",
         "sent": "Message sent.",
-        "openInDiscord": "Open in Discord",
         "templatePlain": "Plain text",
-        "templateSubFlow": "/sub: every step",
+        "templateSubFlow": "/sub and substitution DMs: every message",
         "subPreviewSent": "Every step sent."
       },
       "slack": {
@@ -1721,7 +1721,10 @@
         "message": "Message",
         "messagePlaceholder": "Plain text, up to 4,000 characters",
         "send": "Send Test Message",
-        "sent": "Message sent."
+        "sent": "Message sent.",
+        "templatePlain": "Plain text",
+        "templateSubFlow": "Substitution messages: every state",
+        "subPreviewSent": "Every message sent."
       }
     },
     "whatsapp": {
@@ -1754,6 +1757,7 @@
         "other": "Other"
       },
       "noOffers": "No offers yet.",
+      "declinedBy": "Declined: {names}",
       "openGroup": "Open the group",
       "seatSomeoneElse": "Seat someone else",
       "approve": "Approve",
@@ -1761,13 +1765,13 @@
       "loadError": "The substitutions could not be loaded.",
       "loadErrorWithReason": "The substitutions could not be loaded: {reason}",
       "approveConfirmTitle": "Approve {name} as the substitute?",
-      "approveConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. Nobody is notified: the session leaves the other volunteers’ list, and its card now says {name} is substituting for {absent}.",
+      "approveConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. If their Discord account is linked, they’re told there too. The session leaves the other volunteers’ list, its message in Slack shows who took it, and its card now says {name} is substituting for {absent}.",
       "approveFailedOfferGone": "{name} has taken their offer back, so there is nobody to approve.",
       "approveFailedAlreadySettled": "This session has already been settled by someone else.",
       "approveFailedSeatGone": "{absent} no longer has this session, so there is nothing to substitute for.",
       "approveFailedIneligible": "{name} can no longer take this session.",
       "seatConfirmTitle": "Seat {name} as the substitute?",
-      "seatConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. Nobody is notified: the session leaves the list Gedus offer from, and its card now says {name} is substituting for {absent}.",
+      "seatConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. If their Discord account is linked, they’re told there too. The session leaves the list Gedus offer from, its message in Slack shows who took it, and its card now says {name} is substituting for {absent}.",
       "seatConfirm": "Seat the substitute",
       "seatReasonLabel": "Reason given",
       "seatFailed": "The substitute could not be seated — try again.",
@@ -2602,8 +2606,13 @@
       "poolRoleAssistant": "Assistant",
       "poolFee": "{fee} per session",
       "poolOfferAction": "Offer to substitute",
-      "poolWithdrawAction": "Withdraw offer",
-      "poolWithdrawPending": "Withdrawing…",
+      "poolDeclineAction": "Decline",
+      "poolDeclinePending": "Declining…",
+      "poolOffered": "You offered to substitute",
+      "poolDeclined": "You declined",
+      "poolAnswerFailedApproved": "You’ve already been approved to substitute this session. If you can’t make it, ask for a substitute yourself, as for any of your sessions.",
+      "poolAnswerFailedClosed": "This session no longer needs a substitute.",
+      "poolAnswerFailedPast": "This session has already passed.",
       "poolActionFailed": "That didn’t save. Try again.",
       "poolOfferFailedNotQualified": "This session needs a qualification you don’t hold, so you can’t offer to cover it.",
       "poolOfferFailedLanguage": "This session is run in a language you haven’t listed as one you speak, so you can’t offer to cover it. You can add languages in your settings.",
@@ -2612,6 +2621,7 @@
       "back": "Back to My SOG",
       "mineHeading": "You’re substituting",
       "mineAllClear": "You have no substitutions coming up.",
+      "ownRequestsHeading": "Your requests",
       "fileAction": "Can’t make a session?",
       "filePickTitle": "Which session do you need a substitute for?",
       "filePickBody": "Your reason and note are shown to admins only.",
@@ -2625,7 +2635,7 @@
       "fileFiled": "Substitute requested for {product} on {when}. It now shows on that session’s card in My SOG.",
       "fileFiledLink": "Open the group’s workspace",
       "offerConfirmTitle": "Offer to substitute?",
-      "offerConfirmBody": "You’re offering to run {product} on {when}. School of Gaming chooses who substitutes, and you can withdraw your offer until it is approved. Once it is approved, the session is yours under your Gedu contract, exactly like one of your own, and you can no longer withdraw: if you then can’t make it, ask for a substitute yourself, as for any of your sessions. The group’s workspace opens to you 48 hours before the session starts."
+      "offerConfirmBody": "You’re offering to run {product} on {when}. School of Gaming chooses who substitutes, and you can decline until your offer is approved. Once it is approved, the session is yours under your Gedu contract, exactly like one of your own, and you can no longer decline: if you then can’t make it, ask for a substitute yourself, as for any of your sessions. The group’s workspace opens to you 48 hours before the session starts."
     },
     "coverage": {
       "title": "Coverage areas",
@@ -5535,6 +5545,35 @@
       "body": "This account can’t link one. If you’re on the staff, sign in with your staff account."
     }
   },
+  "slackLink": {
+    "confirm": {
+      "title": "Link your Slack account",
+      "body": "Link the Slack account <b>@{username}</b> to your School of Gaming admin account? That Slack account will be able to approve substitutes on your behalf. Only link an account that is yours.",
+      "action": "Link account",
+      "failed": "Something went wrong and your account wasn’t linked. Try again."
+    },
+    "linked": {
+      "title": "Linked to @{username}",
+      "body": "You can now approve substitutes from Slack.",
+      "goToDashboard": "Go to the dashboard"
+    },
+    "used": {
+      "title": "This link has already been used",
+      "body": "Each link works once. Run <code>/link</code> in Slack again to get a new one."
+    },
+    "expired": {
+      "title": "This link has expired",
+      "body": "Links expire after 10 minutes. Run <code>/link</code> in Slack again to get a new one."
+    },
+    "missingToken": {
+      "title": "This link is incomplete",
+      "body": "Run <code>/link</code> in Slack again to get a new one."
+    },
+    "refused": {
+      "title": "Only admins can link a Slack account",
+      "body": "This account can’t link one. If you’re an admin, sign in with your admin account."
+    }
+  },
   "discordSub": {
     "requestTitle": "Request a substitute",
     "pickPlaceholder": "Pick a session",
@@ -5544,6 +5583,16 @@
     "notLinked": "To use /sub, first link your Discord account to your School of Gaming Gedu account.",
     "notLinkedRunLink": "Your Discord account isn’t linked to a School of Gaming Gedu account. Run /link to link it, then /sub again.",
     "previewNotice": "This is a preview — nothing was filed."
+  },
+  "discordSubOffer": {
+    "notLinked": "Your Discord account isn’t linked to a School of Gaming Gedu account. Run /link to link it, then answer again.",
+    "heading": "A session needs a substitute",
+    "filled": "This session has been filled",
+    "notNeeded": "A substitute is no longer needed",
+    "acceptedHeading": "You’ve been accepted",
+    "acceptedBody": "You’ve been accepted to substitute for {product} – {group} on {when}. The session is yours now under your Gedu contract, and the group’s workspace opens to you 48 hours before it starts.",
+    "openMySog": "Open My SOG",
+    "previewNotice": "This is a preview — pressing a button changes nothing."
   },
   "seatOffer": {
     "offer": {

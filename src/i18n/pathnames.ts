@@ -193,6 +193,7 @@ export const PATHNAMES = {
   "/complete-registration": "/complete-registration",
   "/oauth/consent": "/oauth/consent",
   "/link-discord": "/link-discord",
+  "/link-slack": "/link-slack",
 
   // --- Shared ---------------------------------------------------------------
   "/settings": "/settings",

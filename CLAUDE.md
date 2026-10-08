@@ -110,6 +110,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Parent PIN | `src/services/pin/` |
 | Gedu profiles, certification and the record check | `src/services/gedu/` |
 | Session substitutions — absences, offers and the sub an admin seats | `src/services/session-substitution/` |
+| Substitution notifications — the Discord DMs, the Slack message, the outbox and the operator setup | `src/lib/substitution-notifications/` |
 | i18n | `src/i18n/` |
 | Email templates | `src/lib/email-templates/` |
 | Calendar invitations (the mailed `.ics`) | `src/lib/calendar-invitations/` |
@@ -131,6 +132,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Voice — scheduled group rooms | `src/components/voice/` |
 | Voice — instant rooms | `src/components/voice/instant/` |
 | Discord bot | `src/app/api/discord/` |
+| Slack app — the link command and Accept | `src/app/api/slack/` |
 | Partner API (Lynx Educate) | `src/app/api/partner/` |
 | MCP server — AI apps acting as an admin, its OAuth gate and consent page | `src/lib/mcp/` |
 | SOG-UI — the UI language package and its demo | `packages/sog-ui/` |

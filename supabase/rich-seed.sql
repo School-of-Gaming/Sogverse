@@ -94,6 +94,12 @@
 -- the live club's is placed on the day of it, so the second card is open on
 -- a fresh stack whatever day it is built (section 11).
 --
+-- ONE REQUEST IS STILL OPEN. lucas.moreau@example.com is away from his online
+-- Youth Centre Game Club about four days after the build; mikko.lehtinen@ has
+-- offered to cover it and aino.virtanen@ has declined, so the admin's
+-- Substitutions page has an offer to approve, and gedu@example.com, who has
+-- not answered, finds it in their pool with Offer and Decline (section 11).
+--
 -- IDS ARE GENERATED, NEVER WRITTEN OUT. Every account gets `gen_random_uuid()`,
 -- because the avatar identicon derives its pattern from the id's hex bytes and
 -- a hand-written id — all ones, all twos — draws a degenerate face that is not
@@ -1994,6 +2000,90 @@ $$;
 
 COMMIT;
 
+-- One request still open, so the pool and the admin's Substitutions page each
+-- have one waiting: Lucas files for his online Youth Centre Game Club session
+-- nearest four days after the build, Mikko offers to take it and Aino declines,
+-- and gedu@example.com has not answered. Their pool lists it with Offer and
+-- Decline, and the admin's page shows Mikko's offer to approve above a
+-- "Declined:" line naming Aino.
+--
+-- It has to be a municipality club, because those are the products that ask no
+-- qualification: a consumer club, camp or event asks for one nobody seeded here
+-- holds, so none of them can be in anybody's pool. gedu@example.com is in this
+-- one's on all four tests — certified, not expected at the session, the club
+-- run in Finnish, which they speak, and online, which every coverage area
+-- reaches. So are Mikko and Aino. The date is read off the schedule the way
+-- the block above reads its own: the club runs until two months after the
+-- build and meets once a week, so its nearest session to four days out starts
+-- between half a day and seven and a half days after the build, on any day.
+--
+-- Each of the three acts under their own claims: Lucas files with a reason, as
+-- a gedu's own filing must, taking the role he holds on the group, and the two
+-- answers go through the pool's own buttons.
+
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+DO $$
+DECLARE
+  v_group   uuid := (SELECT g.id FROM public.product_groups g
+                       JOIN public.product_translations t
+                         ON t.product_id = g.product_id AND t.locale = 'en'
+                      WHERE t.name = 'Youth Centre Game Club'
+                        AND g.name = 'Ryhmä 1');
+  -- Every account is read here, under the admin's claims: a gedu's own claims
+  -- cannot see another gedu's profile.
+  v_lucas   uuid := (SELECT id FROM public.profiles WHERE email = 'lucas.moreau@example.com');
+  v_mikko   uuid := (SELECT id FROM public.profiles WHERE email = 'mikko.lehtinen@example.com');
+  v_aino    uuid := (SELECT id FROM public.profiles WHERE email = 'aino.virtanen@example.com');
+  v_date    date;
+  v_request uuid;
+BEGIN
+  v_date := (SELECT c.day
+               FROM (SELECT p.local_today + i AS day,
+                            ((p.local_today + i) + s.start_time) AT TIME ZONE p.timezone AS starts
+                       FROM (SELECT pp.id, pp.timezone, pp.start_date, pp.end_date,
+                                    (now() AT TIME ZONE pp.timezone)::date AS local_today
+                               FROM public.products pp
+                               JOIN public.product_groups g ON g.product_id = pp.id
+                              WHERE g.id = v_group) p
+                       JOIN public.schedule_slots s ON s.product_id = p.id
+                      CROSS JOIN generate_series(0, 28) i
+                      WHERE EXTRACT(ISODOW FROM p.local_today + i)::integer - 1 = s.weekday
+                        AND (p.start_date IS NULL OR p.local_today + i >= p.start_date)
+                        AND (p.end_date   IS NULL OR p.local_today + i <= p.end_date)
+                    ) c
+              WHERE c.starts > now()
+              ORDER BY abs(EXTRACT(EPOCH FROM c.starts - (now() + interval '4 days')))
+              LIMIT 1);
+
+  IF v_group IS NULL OR v_date IS NULL THEN
+    RAISE NOTICE 'rich-seed: no coming Youth Centre Game Club session to leave open';
+    RETURN;
+  END IF;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', v_lucas::text, 'role', 'authenticated')::text, true);
+  v_request := (public.request_session_substitution(
+                  v_group, v_date, 'other'::public.substitution_reason,
+                  'Visiting family in Lyon that week.') ->> 'id')::uuid;
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', v_mikko::text, 'role', 'authenticated')::text, true);
+  PERFORM public.offer_session_substitution(v_request);
+
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', v_aino::text, 'role', 'authenticated')::text, true);
+  PERFORM public.decline_session_substitution(v_request);
+END;
+$$;
+
+COMMIT;
+
 -- Last month, a substitution each way round gedu@example.com, so their
 -- Invoicing page has a settled one of each on the month before the build: an
 -- afternoon they were away from and Mikko ran (an "away" line naming him, and a
@@ -2955,6 +3045,22 @@ BEGIN
             WHERE sub.email = 'gedu@example.com'
               AND sr.status = 'substituted'
               AND sr.session_date >= current_date
+            ORDER BY sr.session_date
+  LOOP RAISE NOTICE '  % : %', r.k, r.n; END LOOP;
+
+  RAISE NOTICE 'rich-seed: requests still open, in gedu@example.com''s pool';
+  FOR r IN SELECT t.name || ' ' || g.name || ', ' || to_char(sr.session_date, 'Dy DD Mon')
+                  || ' at ' || to_char(s.start_time, 'HH24:MI') AS k,
+                  'for ' || ab.email AS n
+             FROM public.session_substitution_requests sr
+             JOIN public.profiles ab  ON ab.id = sr.requested_by
+             JOIN public.product_groups g ON g.id = sr.group_id
+             JOIN public.product_translations t
+               ON t.product_id = g.product_id AND t.locale = 'en'
+             JOIN public.schedule_slots s
+               ON s.product_id = g.product_id
+              AND s.weekday = EXTRACT(ISODOW FROM sr.session_date)::integer - 1
+            WHERE sr.status = 'open'
             ORDER BY sr.session_date
   LOOP RAISE NOTICE '  % : %', r.k, r.n; END LOOP;
 

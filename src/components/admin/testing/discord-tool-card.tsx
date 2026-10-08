@@ -38,7 +38,7 @@ const TEMPLATE_LABEL_KEYS = {
 } as const satisfies Record<DiscordTemplate, string>;
 
 type SendResult =
-  | { type: "success"; template: DiscordTemplate; jumpUrl: string }
+  | { type: "success"; template: DiscordTemplate }
   | { type: "error"; message: string };
 
 /**
@@ -72,8 +72,8 @@ export function DiscordToolCard() {
     setSending(true);
     setResult(null);
     try {
-      const sent = await new DiscordLinkService(getClient()).sendTestMessage(body);
-      setResult({ type: "success", template: body.template, jumpUrl: sent.jumpUrl });
+      await new DiscordLinkService(getClient()).sendTestMessage(body);
+      setResult({ type: "success", template: body.template });
     } catch (error) {
       // The route's own message, Discord's refusal included: this is admin
       // developer tooling, and "Cannot send messages to this user" is the
@@ -184,23 +184,11 @@ export function DiscordToolCard() {
           {result && (
             <Alert variant={result.type === "success" ? "success" : "destructive"}>
               <AlertDescription>
-                {result.type === "success" ? (
-                  <>
-                    {result.template === "text"
-                      ? t("discord.sent")
-                      : t("discord.subPreviewSent")}{" "}
-                    <a
-                      href={result.jumpUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium underline underline-offset-2"
-                    >
-                      {t("discord.openInDiscord")}
-                    </a>
-                  </>
-                ) : (
-                  result.message
-                )}
+                {result.type === "success"
+                  ? result.template === "text"
+                    ? t("discord.sent")
+                    : t("discord.subPreviewSent")
+                  : result.message}
               </AlertDescription>
             </Alert>
           )}

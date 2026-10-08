@@ -78,9 +78,9 @@ export function resolveSafeRedirect(
   // sent them there signs in and comes back to the same authorization, whose
   // id rides on the query this path keeps.
   if (internal === ROUTES.oauthConsent) return path;
-  // The Discord link page, exactly, on the same reasoning: its one-time token
-  // rides on the query this path keeps.
-  if (internal === ROUTES.linkDiscord) return path;
+  // The Discord and Slack link pages, exactly, on the same reasoning: their
+  // one-time token rides on the query this path keeps.
+  if (internal === ROUTES.linkDiscord || internal === ROUTES.linkSlack) return path;
   return SAFE_REDIRECT_PREFIXES.some((p) => internal.startsWith(p))
     ? path
     : null;
