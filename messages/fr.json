@@ -1709,7 +1709,6 @@
         "messagePlaceholder": "Texte brut, 2 000 caractères maximum",
         "send": "Envoyer le message de test",
         "sent": "Message envoyé.",
-        "openInDiscord": "Ouvrir dans Discord",
         "templatePlain": "Texte brut",
         "templateSubFlow": "/sub et messages de remplacement : tous les messages",
         "subPreviewSent": "Toutes les étapes ont été envoyées."

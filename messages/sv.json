@@ -1709,7 +1709,6 @@
         "messagePlaceholder": "Ren text, högst 2 000 tecken",
         "send": "Skicka testmeddelande",
         "sent": "Meddelandet skickades.",
-        "openInDiscord": "Öppna i Discord",
         "templatePlain": "Ren text",
         "templateSubFlow": "/sub och vikarie-DM:er: alla meddelanden",
         "subPreviewSent": "Alla steg skickades."

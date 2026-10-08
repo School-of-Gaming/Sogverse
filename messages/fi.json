@@ -1709,7 +1709,6 @@
         "messagePlaceholder": "Pelkkää tekstiä, enintään 2 000 merkkiä",
         "send": "Lähetä testiviesti",
         "sent": "Viesti lähetetty.",
-        "openInDiscord": "Avaa Discordissa",
         "templatePlain": "Pelkkä teksti",
         "templateSubFlow": "/sub ja tuurausviestit: kaikki viestit",
         "subPreviewSent": "Kaikki vaiheet lähetetty."

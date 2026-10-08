@@ -61,8 +61,8 @@ export const POST = defineRoute({
         : await buildPreviewSet(body.locale, getOrigin(request));
 
     try {
-      const sent = await sendDiscordDirectMessages(discordUserId, messages);
-      return { jumpUrl: sent.jumpUrl };
+      await sendDiscordDirectMessages(discordUserId, messages);
+      return { ok: true } as const;
     } catch (error) {
       // Discord's own refusal goes back to the admin verbatim: this is a test
       // tool, and "Cannot send messages to this user (50007)" is the answer

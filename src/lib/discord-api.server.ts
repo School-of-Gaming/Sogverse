@@ -163,30 +163,17 @@ export async function editDiscordMessage(
   await discordRequest("PATCH", `/channels/${channelId}/messages/${messageId}`, body);
 }
 
-export interface SentDiscordMessage {
-  channelId: string;
-  messageId: string;
-  /** A link that opens the message in Discord. */
-  jumpUrl: string;
-}
-
 /**
  * Open (or reuse) the bot's DM channel with a Discord user and post messages
- * there, one after another so they arrive in order. Answers where the first
- * one landed. A bot can only DM someone it shares a server with, and Discord
+ * there, one after another so they arrive in order. A bot can only DM someone it shares a server with, and Discord
  * answers anyone else with a refusal, thrown here as a `DiscordApiError`.
  */
 export async function sendDiscordDirectMessages(
   recipientId: string,
   messages: readonly [unknown, ...unknown[]],
-): Promise<SentDiscordMessage> {
+): Promise<void> {
   const channelId = await openDiscordDmChannel(recipientId);
   const [first, ...rest] = messages;
-  const messageId = await sendDiscordChannelMessage(channelId, first);
+  await sendDiscordChannelMessage(channelId, first);
   for (const message of rest) await sendDiscordChannelMessage(channelId, message);
-  return {
-    channelId,
-    messageId,
-    jumpUrl: `https://discord.com/channels/@me/${channelId}/${messageId}`,
-  };
 }

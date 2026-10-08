@@ -1709,7 +1709,6 @@
         "messagePlaceholder": "Plain text, up to 2,000 characters",
         "send": "Send Test Message",
         "sent": "Message sent.",
-        "openInDiscord": "Open in Discord",
         "templatePlain": "Plain text",
         "templateSubFlow": "/sub and substitution DMs: every message",
         "subPreviewSent": "Every step sent."

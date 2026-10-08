@@ -125,14 +125,12 @@ describe("POST /api/admin/send-test-discord-message", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("DMs the profile's linked Discord user and returns the jump URL", async () => {
+  it("DMs the profile's linked Discord user and answers ok", async () => {
     const response = await POST(sendRequest(validBody));
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({
-      jumpUrl: "https://discord.com/channels/@me/dm-channel-1/message-1",
-    });
+    expect(data).toEqual({ ok: true });
 
     expect(mockFrom).toHaveBeenCalledWith("discord_links");
     expect(mockEq).toHaveBeenCalledWith("profile_id", PROFILE_ID);
@@ -223,10 +221,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
     );
 
     expect(response.status).toBe(200);
-    // The jump link opens the first of the set.
-    expect(await response.json()).toEqual({
-      jumpUrl: "https://discord.com/channels/@me/dm-channel-1/message-1",
-    });
+    expect(await response.json()).toEqual({ ok: true });
     expect(mockFrom).not.toHaveBeenCalledWith("profiles");
     // One DM channel, opened once.
     expect(
