@@ -20,9 +20,9 @@ import type { NotificationState } from "./state";
 /**
  * **The Slack message a substitution request is announced with** in the staff
  * channel, built as Block Kit data: everything an admin answers an absence
- * with — who is absent and why, the session, what it needs, and every gedu it
- * concerns with how they answered and whether the bot reached them — and an
- * Accept button on each offer while the request is open.
+ * with — who is absent and why, the session, what it needs, the offers with an
+ * Accept on each while the request is open, and every gedu it concerns with
+ * how they answered and whether the bot reached them.
  *
  * **The strings are English, here in the renderer.** The channel is staff-only
  * and has no locale, like the Discord bot's staff commands; message keys would
@@ -33,23 +33,45 @@ import type { NotificationState } from "./state";
  * the DM the gedus read and the message the admins read then state one time
  * two ways.
  *
+ * **The state leads as a section, not an alert block.** Slack's alert block
+ * renders in modals only; a message carrying one is refused as
+ * `invalid_blocks`. The offers are cards in a carousel and the gedus a data
+ * table — both message blocks. Slack documents no fallback for a client that
+ * cannot draw them, so the top-level `text` (what notifications and screen
+ * readers read) says on its own what the request is and where it stands.
+ *
  * Pure. Slack refuses a message past its caps rather than cutting it, so the
- * builder keeps under them: under 50 blocks, and every text under its limit,
- * with "+N more" where a list had to stop.
+ * builder keeps under them — ten cards to a carousel, every text under its
+ * limit, the table under its row and character caps — with "+N more" where a
+ * list had to stop.
  */
 
 /** The locale the message's dates, money and product name are written in. */
 const LOCALE: SupportedLocale = "en";
 
 /** Slack's caps. */
-const MAX_BLOCKS = 50;
 const SECTION_TEXT_MAX = 3000;
 const HEADER_TEXT_MAX = 150;
-/** Room for the blocks around the offers: see {@link buildSubstitutionSlackMessage}. */
-const MAX_OFFER_BLOCKS = MAX_BLOCKS - 12;
+const CARD_TITLE_MAX = 150;
+const CARD_SUBTITLE_MAX = 150;
+const CARD_BODY_MAX = 200;
+const CAROUSEL_MAX_CARDS = 10;
+/** A data table holds 200 rows under its header… */
+const TABLE_MAX_ROWS = 200;
+/** …and 20,000 characters across its cells; the margin is for the header. */
+const TABLE_TEXT_BUDGET = 19_500;
+/** A name longer than this is cut in its cell, so one name cannot eat the table. */
+const TABLE_NAME_MAX = 100;
+const TABLE_PAGE_SIZE = 20;
 
 /** The action id the Accept button carries; its value is the offer's id. */
 export const SLACK_ACCEPT_ACTION_ID = "sub_accept";
+
+/**
+ * The prefix every control on the admin tool's preview carries in its
+ * `action_id`. A press on one is answered as a preview and changes nothing.
+ */
+export const SLACK_PREVIEW_ACTION_PREFIX = "subpreview";
 
 /** A Block Kit block, as Slack reads it — plain JSON. */
 export type SlackBlock = Record<string, unknown>;
@@ -97,56 +119,35 @@ const QUALIFICATION_LABEL: Record<GeduQualification, string> = {
 };
 
 /**
- * How the bot reached a gedu, and whether they still could take it:
- * DM'd, DM failed, not on Discord, or not DM'd (on Discord, but the request
- * had closed, or Discord is not configured here) — plus "no longer eligible"
- * for a gedu the pool would no longer offer it to.
+ * How the bot reached a gedu: DM'd, DM failed, not on Discord, or not DM'd
+ * (on Discord, but the request had closed, or Discord is not configured here).
  */
-export function candidateTags(candidate: SnapshotCandidate, dm: SnapshotDm | undefined): string[] {
-  const tags: string[] = [];
-  if (dm?.message_id) tags.push("DM'd");
-  else if (dm?.delivery_error) tags.push("DM failed");
-  else if (candidate.discord_user_id === null) tags.push("not on Discord");
-  else tags.push("not DM'd");
-  if (!candidate.eligible) tags.push("no longer eligible");
-  return tags;
+function discordStatus(candidate: SnapshotCandidate, dm: SnapshotDm | undefined): string {
+  if (dm?.message_id) return "DM'd";
+  if (dm?.delivery_error) return "DM failed";
+  if (candidate.discord_user_id === null) return "not on Discord";
+  return "not DM'd";
 }
 
-function taggedName(candidate: SnapshotCandidate, dm: SnapshotDm | undefined): string {
-  return `${escapeSlack(fullName(candidate))} _(${candidateTags(candidate, dm).join(", ")})_`;
+function answerLabel(candidate: SnapshotCandidate): string {
+  if (candidate.response === "offer") return "Offered";
+  if (candidate.response === "decline") return "Declined";
+  return "—";
 }
 
-/**
- * A labelled list of names as one line, cut with "+N more" where the next name
- * would carry it past Slack's text cap.
- */
-function nameLine(label: string, names: readonly string[]): string {
-  const head = `*${label}:* `;
-  // Room for the " +N more" the line may have to end on.
-  const budget = SECTION_TEXT_MAX - head.length - 16;
-  let body = "";
-  for (let index = 0; index < names.length; index += 1) {
-    const next = `${index === 0 ? "" : ", "}${names[index]}`;
-    if (body.length + next.length > budget) {
-      return `${head}${body} +${names.length - index} more`;
-    }
-    body += next;
-  }
-  return `${head}${body}`;
-}
-
-function statusLine(state: NotificationState): string {
+/** Where the request stands, as the message's first line. */
+function stateLine(state: NotificationState): string {
   switch (state.kind) {
     case "open":
-      return "*Open* — waiting for an admin to accept an offer";
+      return ":warning: *Needs a substitute* — waiting for an admin to accept an offer";
     case "filled":
-      return `*Filled* by ${escapeSlack(fullName(state.substitute))} (approved by ${escapeSlack(fullName(state.approver))})`;
+      return `:white_check_mark: *Filled by ${escapeSlack(fullName(state.substitute))}*, approved by ${escapeSlack(fullName(state.approver))}`;
     case "withdrawn":
-      return "*Withdrawn* — the gedu can make it after all";
+      return ":information_source: *Withdrawn* — the gedu can make it after all";
     case "cancelled":
-      return "*Session cancelled*";
+      return ":information_source: *Session cancelled* — no substitute needed";
     case "past":
-      return "*Session passed* — nobody was accepted";
+      return ":information_source: *Session passed* — nobody was accepted";
   }
 }
 
@@ -167,25 +168,35 @@ function fallbackText(product: string, group: string, when: string, state: Notif
   }
 }
 
+/** One cell of the data table: unformatted, so nothing in it needs escaping. */
+function cell(value: string): { type: "raw_text"; text: string } {
+  return { type: "raw_text", text: value };
+}
+
 /**
  * The channel's message about one request.
  *
- * Laid out top to bottom: the product as the header; the group and when; the
- * facts as fields (absent gedu, role, reason, where, language, topic, required
- * qualifications, fee) with the reason's note under them; then where the
- * request stands; one section per offer, oldest first, with Accept beside it
- * while the request is open; and the declines and the gedus yet to answer as
- * one line each. The Accept button asks before it seats anybody.
+ * Laid out top to bottom: where the request stands; the product as the
+ * header; the group and when; the facts as fields (absent gedu, role, reason,
+ * where, language, topic, required qualifications, fee) with the reason's note
+ * under them; the offers as cards, oldest first, each with an Accept that asks
+ * before it seats anybody — only while the request is open; then every gedu
+ * the request concerns as a table — offers, declines, then those yet to
+ * answer.
+ *
+ * `preview` puts every control on the preview prefix, for the admin tool.
  */
 export function buildSubstitutionSlackMessage({
   snapshot,
   state,
+  preview = false,
 }: {
   snapshot: Pick<
     SubstitutionNotificationSnapshot,
     "request" | "product" | "required_qualifications" | "candidates" | "dms"
   >;
   state: NotificationState;
+  preview?: boolean;
 }): SlackMessage {
   const { request, product } = snapshot;
   const facts = buildSessionFacts({
@@ -217,6 +228,7 @@ export function buildSubstitutionSlackMessage({
   ];
 
   const blocks: SlackBlock[] = [
+    section(stateLine(state)),
     { type: "header", text: plain(productName, HEADER_TEXT_MAX) },
     section(`*${escapeSlack(request.group_name)}* · ${escapeSlack(when)}`),
     { type: "section", fields: fields.map((field) => mrkdwn(field)) },
@@ -224,7 +236,7 @@ export function buildSubstitutionSlackMessage({
   if (request.reason_note !== null && request.reason_note.trim() !== "") {
     blocks.push(section(`*Note:* ${escapeSlack(request.reason_note)}`));
   }
-  blocks.push({ type: "divider" }, section(statusLine(state)));
+  blocks.push({ type: "divider" });
 
   const dmOf = new Map(snapshot.dms.map((dm) => [dm.gedu_id, dm]));
   const offers = snapshot.candidates
@@ -233,62 +245,101 @@ export function buildSubstitutionSlackMessage({
   const declined = snapshot.candidates.filter((c) => c.response === "decline");
   const unanswered = snapshot.candidates.filter((c) => c.response === null);
   const isOpen = state.kind === "open";
+  const acceptActionId = preview
+    ? `${SLACK_PREVIEW_ACTION_PREFIX}_accept`
+    : SLACK_ACCEPT_ACTION_ID;
 
   if (offers.length === 0) {
     blocks.push(section("_No offers yet._"));
-  }
-  const shownOffers = offers.length > MAX_OFFER_BLOCKS ? offers.slice(0, MAX_OFFER_BLOCKS - 1) : offers;
-  for (const candidate of shownOffers) {
-    const offered =
-      candidate.responded_at === null
-        ? ""
-        : ` · offered ${formatDate(candidate.responded_at, LOCALE, {
-            day: "numeric",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-            hourCycle: "h23",
-            timeZone: facts.timezone,
-          })}`;
-    const block: SlackBlock = section(`*Offer:* ${taggedName(candidate, dmOf.get(candidate.gedu_id))}${offered}`);
-    if (isOpen && candidate.offer_id !== null) {
-      block.accessory = {
-        type: "button",
-        action_id: SLACK_ACCEPT_ACTION_ID,
-        value: candidate.offer_id,
-        style: "primary",
-        text: plain("Accept", 75),
-        confirm: {
-          title: plain("Accept this offer?", 100),
-          text: plain(
-            `${fullName(candidate)} will be seated as the substitute for ${productName} – ${request.group_name}, ${when}.`,
-            300,
-          ),
-          confirm: plain("Accept", 30),
-          deny: plain("Cancel", 30),
-        },
-      };
+  } else {
+    const shownOffers = offers.slice(0, CAROUSEL_MAX_CARDS);
+    blocks.push({
+      type: "carousel",
+      elements: shownOffers.map((candidate) => {
+        const card: SlackBlock = {
+          type: "card",
+          title: plain(fullName(candidate), CARD_TITLE_MAX),
+          subtitle: plain(offeredLine(candidate, facts.timezone), CARD_SUBTITLE_MAX),
+        };
+        if (!candidate.eligible) card.body = plain("No longer eligible", CARD_BODY_MAX);
+        if (isOpen && candidate.offer_id !== null) {
+          card.actions = [
+            {
+              type: "button",
+              action_id: acceptActionId,
+              value: candidate.offer_id,
+              style: "primary",
+              text: plain("Accept", 75),
+              confirm: {
+                title: plain("Accept this offer?", 100),
+                text: plain(
+                  `${fullName(candidate)} will be seated as the substitute for ${productName} – ${request.group_name}, ${when}.`,
+                  300,
+                ),
+                confirm: plain("Accept", 30),
+                deny: plain("Cancel", 30),
+              },
+            },
+          ];
+        }
+        return card;
+      }),
+    });
+    if (shownOffers.length < offers.length) {
+      blocks.push(
+        section(`_+${offers.length - shownOffers.length} more offers — see the Substitutions page._`),
+      );
     }
-    blocks.push(block);
-  }
-  if (shownOffers.length < offers.length) {
-    blocks.push(section(`_+${offers.length - shownOffers.length} more offers — see the Substitutions page._`));
   }
 
-  const lines: string[] = [];
-  if (declined.length > 0) {
-    lines.push(nameLine("Declined", declined.map((c) => taggedName(c, dmOf.get(c.gedu_id)))));
+  const concerned = [...offers, ...declined, ...unanswered];
+  if (concerned.length === 0) {
+    blocks.push(section("_No gedu can take this session._"));
+  } else {
+    const header = ["Gedu", "Discord", "Answer", "Eligibility"];
+    const rows: { type: "raw_text"; text: string }[][] = [header.map(cell)];
+    let used = header.join("").length;
+    for (const candidate of concerned) {
+      const row = [
+        clipText(fullName(candidate) || "—", TABLE_NAME_MAX),
+        discordStatus(candidate, dmOf.get(candidate.gedu_id)),
+        answerLabel(candidate),
+        candidate.eligible ? "Eligible" : "No longer eligible",
+      ];
+      const size = row.join("").length;
+      if (rows.length > TABLE_MAX_ROWS || used + size > TABLE_TEXT_BUDGET) break;
+      used += size;
+      rows.push(row.map(cell));
+    }
+    blocks.push({
+      type: "data_table",
+      caption: "Gedus this request concerns",
+      page_size: TABLE_PAGE_SIZE,
+      rows,
+    });
+    const left = concerned.length - (rows.length - 1);
+    if (left > 0) {
+      blocks.push(section(`_+${left} more gedus — see the Substitutions page._`));
+    }
   }
-  if (unanswered.length > 0) {
-    lines.push(nameLine("No answer", unanswered.map((c) => taggedName(c, dmOf.get(c.gedu_id)))));
-  }
-  if (lines.length > 0) blocks.push({ type: "divider" });
-  for (const line of lines) blocks.push(section(line));
 
   return {
     text: fallbackText(productName, request.group_name, when, state),
     blocks,
   };
+}
+
+/** When a gedu offered, in the session's zone. */
+function offeredLine(candidate: SnapshotCandidate, timezone: string): string {
+  if (candidate.responded_at === null) return "Offered";
+  return `Offered ${formatDate(candidate.responded_at, LOCALE, {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: timezone,
+  })}`;
 }
 
 // ---------------------------------------------------------------- ephemeral replies
@@ -308,10 +359,11 @@ function ephemeral(text: string, blocks: SlackBlock[]): SlackEphemeralReply {
  * caller's Slack account to their Sogverse admin account, and how long it
  * lasts. The URL is on the button, so the reply unfurls nothing.
  */
-export function buildSlackLinkReply(linkUrl: string): SlackEphemeralReply {
+export function buildSlackLinkReply(linkUrl: string, preview = false): SlackEphemeralReply {
   return buildLinkReply(
     "Connect your Slack account to your School of Gaming admin account. The link expires in 10 minutes and works once.",
     linkUrl,
+    preview,
   );
 }
 
@@ -319,14 +371,15 @@ export function buildSlackLinkReply(linkUrl: string): SlackEphemeralReply {
  * An Accept pressed by somebody whose Slack account is not linked to an admin
  * account: nothing changed, and the way to link it.
  */
-export function buildSlackLinkFirstReply(linkUrl: string): SlackEphemeralReply {
+export function buildSlackLinkFirstReply(linkUrl: string, preview = false): SlackEphemeralReply {
   return buildLinkReply(
     "Nothing was accepted: link your Slack account to your School of Gaming admin account first, then press Accept again. The link expires in 10 minutes and works once.",
     linkUrl,
+    preview,
   );
 }
 
-function buildLinkReply(line: string, linkUrl: string): SlackEphemeralReply {
+function buildLinkReply(line: string, linkUrl: string, preview: boolean): SlackEphemeralReply {
   return ephemeral(line, [
     section(escapeSlack(line)),
     {
@@ -337,6 +390,9 @@ function buildLinkReply(line: string, linkUrl: string): SlackEphemeralReply {
           text: plain("Connect account", 75),
           url: linkUrl,
           style: "primary",
+          // A URL button still reports its press; on the preview it is
+          // answered as one.
+          ...(preview ? { action_id: `${SLACK_PREVIEW_ACTION_PREFIX}_link` } : {}),
         },
       ],
     },
@@ -346,4 +402,10 @@ function buildLinkReply(line: string, linkUrl: string): SlackEphemeralReply {
 /** An Accept the write refused: its refusal line, to the presser alone. */
 export function buildSlackRefusalReply(line: string): SlackEphemeralReply {
   return ephemeral(line, [section(`:warning: ${escapeSlack(line)}`)]);
+}
+
+/** A press on a preview control: nothing happened, to the presser alone. */
+export function buildSlackPreviewPressReply(): SlackEphemeralReply {
+  const line = "This is a preview — nothing was approved.";
+  return ephemeral(line, [section(line)]);
 }

@@ -7,8 +7,10 @@ import { hashSlackLinkToken } from "@/lib/slack-link-token.server";
 import { verifySlackSignature } from "@/lib/slack-signature.server";
 import {
   SLACK_ACCEPT_ACTION_ID,
+  SLACK_PREVIEW_ACTION_PREFIX,
   buildSlackLinkFirstReply,
   buildSlackLinkReply,
+  buildSlackPreviewPressReply,
   buildSlackRefusalReply,
   type SlackEphemeralReply,
 } from "@/lib/substitution-notifications/slack-message";
@@ -37,6 +39,9 @@ import type { SlackLinkTokenInsert } from "@/types";
  *   account is linked to, then syncs the request's messages in-process, so the
  *   channel's message changes under the presser's eyes. An unlinked presser
  *   gets the link button and nothing changes; a refusal gets its line.
+ * - **A press on the admin tool's preview** — any control whose `action_id`
+ *   carries the preview prefix — answers that it is a preview and touches
+ *   nothing.
  *
  * Parsing is lenient: only the fields used are read, and anything this route
  * cannot place is acknowledged and ignored.
@@ -70,8 +75,12 @@ export async function POST(request: Request) {
     return acknowledge();
   }
 
-  const accept = acceptPress(form.get("payload"));
-  if (accept !== null) after(answerAccept(accept, origin));
+  const press = buttonPress(form.get("payload"));
+  if (press?.kind === "preview") {
+    after(respond(press.responseUrl, buildSlackPreviewPressReply()));
+  } else if (press?.kind === "accept") {
+    after(answerAccept(press, origin));
+  }
   return acknowledge();
 }
 
@@ -118,13 +127,23 @@ interface SlackCaller {
 }
 
 interface AcceptPress {
+  kind: "accept";
   offerId: string;
   responseUrl: string;
   caller: SlackCaller;
 }
 
-/** An Accept press out of an interaction's `payload`, or `null` for anything else. */
-function acceptPress(raw: string | null): AcceptPress | null {
+/** A press on a control of the admin tool's preview: answered, never acted on. */
+interface PreviewPress {
+  kind: "preview";
+  responseUrl: string;
+}
+
+/**
+ * A press this route answers, out of an interaction's `payload` — an Accept,
+ * or anything on the preview prefix — or `null` for anything else.
+ */
+function buttonPress(raw: string | null): AcceptPress | PreviewPress | null {
   if (raw === null) return null;
   let json: unknown;
   try {
@@ -136,6 +155,15 @@ function acceptPress(raw: string | null): AcceptPress | null {
   if (!parsed.success || parsed.data.type !== "block_actions") return null;
   const { user, team, response_url: responseUrl, actions } = parsed.data;
 
+  const isPreview = actions?.some(
+    (candidate) =>
+      typeof candidate.action_id === "string" &&
+      candidate.action_id.startsWith(SLACK_PREVIEW_ACTION_PREFIX),
+  );
+  if (isPreview) {
+    return typeof responseUrl === "string" ? { kind: "preview", responseUrl } : null;
+  }
+
   const action = actions?.find((candidate) => candidate.action_id === SLACK_ACCEPT_ACTION_ID);
   const offerId = action?.value;
   if (typeof offerId !== "string" || !UUID.test(offerId)) return null;
@@ -146,6 +174,7 @@ function acceptPress(raw: string | null): AcceptPress | null {
   if (typeof userId !== "string" || typeof teamId !== "string") return null;
   if (typeof responseUrl !== "string") return null;
   return {
+    kind: "accept",
     offerId,
     responseUrl,
     caller: {

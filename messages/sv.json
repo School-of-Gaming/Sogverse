@@ -1722,7 +1722,10 @@
         "message": "Meddelande",
         "messagePlaceholder": "Ren text, högst 4 000 tecken",
         "send": "Skicka testmeddelande",
-        "sent": "Meddelandet skickades."
+        "sent": "Meddelandet skickades.",
+        "templatePlain": "Ren text",
+        "templateSubFlow": "Vikariemeddelanden: alla lägen",
+        "subPreviewSent": "Alla meddelanden skickades."
       }
     },
     "whatsapp": {

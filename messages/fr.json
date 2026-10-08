@@ -1722,7 +1722,10 @@
         "message": "Message",
         "messagePlaceholder": "Texte brut, 4 000 caractères maximum",
         "send": "Envoyer le message de test",
-        "sent": "Message envoyé."
+        "sent": "Message envoyé.",
+        "templatePlain": "Texte brut",
+        "templateSubFlow": "Messages de remplacement : tous les états",
+        "subPreviewSent": "Tous les messages ont été envoyés."
       }
     },
     "whatsapp": {

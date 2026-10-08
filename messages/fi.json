@@ -1711,7 +1711,7 @@
         "sent": "Viesti lähetetty.",
         "openInDiscord": "Avaa Discordissa",
         "templatePlain": "Pelkkä teksti",
-        "templateSubFlow": "/sub ja sijaisuusviestit: kaikki viestit",
+        "templateSubFlow": "/sub ja tuurausviestit: kaikki viestit",
         "subPreviewSent": "Kaikki vaiheet lähetetty."
       },
       "slack": {
@@ -1722,7 +1722,10 @@
         "message": "Viesti",
         "messagePlaceholder": "Pelkkää tekstiä, enintään 4 000 merkkiä",
         "send": "Lähetä testiviesti",
-        "sent": "Viesti lähetetty."
+        "sent": "Viesti lähetetty.",
+        "templatePlain": "Pelkkä teksti",
+        "templateSubFlow": "Tuurausviestit: kaikki tilat",
+        "subPreviewSent": "Kaikki viestit lähetetty."
       }
     },
     "whatsapp": {

@@ -1722,7 +1722,10 @@
         "message": "Message",
         "messagePlaceholder": "Plain text, up to 4,000 characters",
         "send": "Send Test Message",
-        "sent": "Message sent."
+        "sent": "Message sent.",
+        "templatePlain": "Plain text",
+        "templateSubFlow": "Substitution messages: every state",
+        "subPreviewSent": "Every message sent."
       }
     },
     "whatsapp": {

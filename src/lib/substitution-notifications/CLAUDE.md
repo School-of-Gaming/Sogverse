@@ -91,6 +91,13 @@ is staff-only and has no locale. The DMs are in the gedu's own app locale, else 
 times in both are the product's wall clock with its zone's short name, as `/sub` writes them
 (`src/app/api/discord/` has the ruling).
 
+**The state leads the Slack message as a plain section, never Slack's alert block**, which
+Slack accepts in modals only: a message carrying one is refused whole as `invalid_blocks`,
+so every sync's post and edit would fail. The offers' carousel and the gedus' data table
+are message blocks, but Slack documents no fallback for a client that cannot draw them, so
+the top-level `text` — what notifications and screen readers get — has to say on its own
+what the request is and where it stands.
+
 ## Failures, edits and duplicates
 
 - **Discord refusing a DM for good is recorded and never retried**: "cannot send messages to

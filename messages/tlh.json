@@ -1766,7 +1766,10 @@
         "message": "QIn",
         "messagePlaceholder": "ghItlh neH, 4000 Degh law’ be’",
         "send": "ngong QIn yIngeH",
-        "sent": "QIn ngeHta’."
+        "sent": "QIn ngeHta’.",
+        "templatePlain": "ghItlh neH",
+        "templateSubFlow": "QIn tlhIn: Hoch Dotlh",
+        "subPreviewSent": "Hoch QIn ngeHta’."
       }
     },
     "whatsapp": {

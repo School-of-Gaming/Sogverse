@@ -28,6 +28,19 @@ in-process. **An unlinked presser is answered link-first**: the reply carries a 
 button and nothing is approved. A refusal is read out as one of the web dialog's four
 refusals, in English, naming nobody — the press carries only an offer id.
 
+## Previews from the admin testing page
+
+The admin testing page's Slack tool posts, besides plain text, **every message the channel
+can show about a substitution request** — each state in the order an admin meets it, then
+the three ephemeral replies posted as ordinary messages labelled as the ephemeral they stand
+for, since an ephemeral can only be sent through a press's `response_url`. The set is built
+by the sending server from the live builder over sample requests, so it is how a change to
+the message's look is checked from a dev machine. A press on it is answered by whichever
+deployment the Slack app's interactivity URL points at, never by the machine that sent it:
+**every control carries the `subpreview` prefix in its `action_id`, and a press on one is
+answered with an ephemeral "this is a preview" line and touches nothing** — no approval, no
+token minted. The link replies carry a fixed `preview` token that no row holds.
+
 ## Linking
 
 Copied from Discord's linking (`src/app/api/discord/`), admins only. The command mints a

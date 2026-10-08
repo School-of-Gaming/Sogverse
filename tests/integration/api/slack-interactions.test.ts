@@ -337,6 +337,52 @@ describe("POST /api/slack/interactions — Accept", () => {
     expect(sent).toHaveLength(0);
   });
 
+  it("answers a press on the preview's Accept as a preview, and touches nothing", async () => {
+    const response = await POST(slackRequest(acceptBody({}, "subpreview_accept")));
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("");
+    expect(deferred).toHaveLength(1);
+    await Promise.all(deferred);
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockDrain).not.toHaveBeenCalled();
+    const sent = mockFetch.mock.calls.map(([url, init]) => ({
+      url: String(url),
+      body: JSON.parse(String(init.body)),
+    }));
+    expect(sent).toHaveLength(1);
+    expect(sent[0].url).toBe(RESPONSE_URL);
+    expect(sent[0].body).toMatchObject({
+      response_type: "ephemeral",
+      replace_original: false,
+      text: "This is a preview — nothing was approved.",
+    });
+  });
+
+  it("answers any control on the preview prefix the same way, whatever its value", async () => {
+    const { sent } = await run(
+      slackRequest(
+        acceptBody({ actions: [{ action_id: "subpreview_link", type: "button" }] }),
+      ),
+    );
+
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(sent).toHaveLength(1);
+    expect(sent[0].body.text).toContain("This is a preview");
+  });
+
+  it("acknowledges a preview press with no response_url and does nothing", async () => {
+    const { response, sent } = await run(
+      slackRequest(acceptBody({ response_url: undefined }, "subpreview_accept")),
+    );
+
+    expect(response.status).toBe(200);
+    expect(deferred).toHaveLength(0);
+    expect(sent).toHaveLength(0);
+  });
+
   it("acknowledges and ignores what it cannot place", async () => {
     for (const body of [
       acceptBody({}, "some_other_action"),

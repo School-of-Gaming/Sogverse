@@ -43,7 +43,11 @@ export function slackSubstitutionsChannelId(): string | null {
  * `not_in_channel`, `missing_scope`, …), which is the whole of what Slack says.
  */
 export class SlackApiError extends Error {
-  constructor(readonly slackCode: string) {
+  constructor(
+    readonly slackCode: string,
+    /** On `ratelimited`, how long Slack asked to wait, from its `Retry-After`. */
+    readonly retryAfterSeconds: number | null = null,
+  ) {
     super(slackCode);
     this.name = "SlackApiError";
   }
@@ -71,7 +75,11 @@ async function slackCall(method: string, body: Record<string, unknown>): Promise
     throw new SlackApiError(`HTTP ${response.status}`);
   }
   if (!envelope.data.ok) {
-    throw new SlackApiError(envelope.data.error ?? "unknown_error");
+    const retryAfter = Number(response.headers.get("retry-after"));
+    throw new SlackApiError(
+      envelope.data.error ?? "unknown_error",
+      Number.isFinite(retryAfter) && retryAfter >= 0 ? retryAfter : null,
+    );
   }
   return payload;
 }
@@ -122,6 +130,39 @@ export async function postSlackBlocks(
   const parsed = postedMessage.safeParse(payload);
   if (!parsed.success) throw new SlackApiError("missing_ts");
   return parsed.data;
+}
+
+/** How many times one message of a set is retried after Slack rate-limits it. */
+const MAX_RATE_LIMIT_RETRIES = 3;
+
+/**
+ * Post several Block Kit messages to one channel, in order. `chat.postMessage`
+ * allows about one message a second per channel, so a set can be rate-limited
+ * part way: the limited message waits out Slack's `Retry-After` and is sent
+ * again, so the set arrives whole and in order. Any other refusal ends the set.
+ */
+export async function postSlackBlocksInOrder(
+  channel: string,
+  messages: readonly SlackBlocksMessage[],
+): Promise<void> {
+  for (const message of messages) {
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        await postSlackBlocks(channel, message);
+        break;
+      } catch (error) {
+        if (
+          !(error instanceof SlackApiError) ||
+          error.slackCode !== "ratelimited" ||
+          attempt >= MAX_RATE_LIMIT_RETRIES
+        ) {
+          throw error;
+        }
+        const seconds = error.retryAfterSeconds ?? 1;
+        await new Promise((done) => setTimeout(done, seconds * 1000));
+      }
+    }
+  }
 }
 
 /** Replace a posted message's text and blocks in place. */
