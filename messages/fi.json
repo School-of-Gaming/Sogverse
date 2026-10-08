@@ -39,7 +39,7 @@
       "registerGedu": "Ryhdy pelikasvattajaksi",
       "about": "Tietoa meistä",
       "library": "Kirjasto",
-      "minecraftApi": "Minecraft Server API",
+      "minecraftApi": "Minecraft-palvelimen API",
       "lynxApi": "Lynx Educaten kumppani-API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
       "adminMunicipalityInvoicing": "Kuntalaskutus",
@@ -2110,9 +2110,18 @@
   "docs": {
     "minecraftApi": {
       "title": "Minecraft-palvelimen API",
-      "description": "Käytä tätä päätepistettä tarkistaaksesi, onko yhdistävällä pelaajalla lupa liittyä Minecraft-maailmaan. Palvelin lähettää pelaajan Minecraft UUID:n ja saa salli/estä-päätöksen istunnon ajoitustiedoilla.",
+      "description": "School of Gamingin Minecraft-palvelimet kutsuvat tätä päätepistettä, kun pelaaja yrittää liittyä. Palvelin lähettää pelaajan Minecraft-UUID:n, ja Sogverse vastaa, päästetäänkö pelaaja sisään, sekä kertoo syyn ja paikat, joihin päätös perustuu.",
+      "eligibility": {
+        "heading": "Kuka pääsee sisään",
+        "intro": "Minecraft-tili pääsee sisään, kun se on linkitetty Sogversen pelaajatiliin, jolla on tällä hetkellä paikka perheen maksamassa tuotteessa.",
+        "paidProducts": "Maksulliset tuotteet lasketaan: kerhotilaus, maksullinen leiri tai maksullinen tapahtuma.",
+        "notCounted": "Maksuttomia tuotteita ja kuntien kerhoja ei lasketa, vaikka pelaajalla olisi niissä paikka.",
+        "current": "Paikka lasketaan, kun se on voimassa eikä tuote ole päättynyt.",
+        "sharedAccounts": "Useampi Sogverse-tili voi linkittää saman Minecraft-tilin, sillä sisarukset käyttävät usein yhteistä tiliä. Pelaaja pääsee sisään, jos yksikin linkitetyistä pelaajista täyttää ehdot.",
+        "gedus": "Minecraft-tili, joka on linkitetty vain Gedun tiliin, ei pääse sisään tämän tarkistuksen kautta."
+      },
       "authentication": {
-        "heading": "Autentikointi",
+        "heading": "Tunnistautuminen",
         "description": "Kaikki pyynnöt vaativat staattisen API-avaimen Bearer-tokenina <code>Authorization</code>-otsakkeessa.",
         "contactNote": "Ota yhteyttä Sogverse-tiimiin, jos tarvitset avaimen tai sen vaihdon."
       },
@@ -2120,39 +2129,59 @@
         "heading": "Päätepiste",
         "queryParams": "Kyselyparametrit",
         "uuidType": "merkkijono (pakollinen)",
-        "uuidDescription": "Pelaajan Minecraft UUID. Sekä viivoitettu (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) että viivottamaton (<code2>069a79f444e94726a5befca90e38aaf5</code2>) muoto hyväksytään."
+        "uuidDescription": "Pelaajan Minecraft-UUID. Sekä viivallinen (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) että viivaton (<code2>069a79f444e94726a5befca90e38aaf5</code2>) muoto hyväksytään."
       },
       "responses": {
         "heading": "Vastaukset",
-        "playerAllowed": "Pelaaja sallittu",
-        "playerDenied": "Pelaaja estetty",
-        "errorResponses": "Virheresponssit",
-        "notImplementedTitle": "Ei vielä toteutettu",
-        "notImplementedBody": "Istuntojen käyttöoikeustarkistusta rakennetaan parhaillaan uudelleen nykyisen tuotejärjestelmän pohjalta. Jokainen tunnistautunut ja oikein muotoiltu pyyntö palauttaa tällä hetkellä koodin 501 – yhtään pelaajaa ei päästetä sisään. Alla kuvatut vastaukset kertovat, millaisen rajapinnan tämä päätepiste palauttaa käyttöönoton jälkeen. Toteuta integraatio niiden mukaan, mutta varaudu siihen asti 501-vastaukseen.",
-        "error501": "Istuntojen käyttöoikeustarkistusta ei ole vielä rakennettu. Pyyntö oli kelvollinen ja tunnistautuminen onnistui, mutta pääsystä ei voida tehdä päätöstä – estä pääsy oletusarvoisesti äläkä tulkitse tätä epäämiseksi.",
-        "deniedDescription": "Pelaaja löytyy Sogversesta, mutta hänellä ei ole aktiivista istuntoa juuri nyt. <code>endTime</code>-kenttää ei sisällytetä.",
-        "fields": {
-          "allowedTrue": "Pelaajalla on aktiivinen istunto juuri nyt.",
-          "role": "Pelaajan rooli Sogversessa.",
-          "firstName": "Pelaajan etunimi.",
-          "endTime": "Milloin istuntoikkuna sulkeutuu (sisältää 5 minuutin puskurin suunnitellun lopun jälkeen). Käytä tätä ajoittaaksesi poiston tai uudelleentarkistuksen.",
-          "reason": "Ihmisluettava kuvaus: tuotteen nimi ja Gedun nimi."
+        "intro": "Jokaiseen tunnistautuneeseen pyyntöön, jossa on kelvollinen <code>uuid</code>, vastataan koodilla 200, pääsi pelaaja sisään tai ei. Tuntematon UUID on epääminen eikä virhe.",
+        "playerAllowed": "Pelaaja päästetään sisään",
+        "playerDenied": "Pelaajaa ei päästetä sisään",
+        "deniedDescription": "Eerolla on paikka kunnan kerhossa, jota ei lasketa, joten paikka palautuu arvolla <code1>qualifies: false</code1> ja syy on <code2>no_paid_enrollment</code2>.",
+        "errorResponses": "Virhevastaukset",
+        "error401": "<code>Authorization</code>-otsake puuttuu tai on virheellinen, tai avain on väärä.",
+        "error400": "<code>uuid</code>-kyselyparametri puuttuu, tai se ei ole kelvollinen Minecraft-UUID.",
+        "error500": "Palvelimen asetukset ovat virheelliset tai haku epäonnistui. Päätöstä ei tehty.",
+        "errorShape": "Jokainen virhevastaus on muotoa <code>'{ \"error\": \"message\" }'</code>."
+      },
+      "fields": {
+        "heading": "Vastauksen kentät",
+        "allowed": "Päästetäänkö pelaaja sisään. Tosi täsmälleen silloin, kun <code1>reason</code1> on <code2>paid_enrollment</code2>.",
+        "reason": "Miksi pelaaja päästettiin sisään tai miksi ei. Jokin alla olevista arvoista.",
+        "message": "Yksi päätöksen selittävä virke palvelimen ylläpitäjän lokeihin tai poistoviestiin. Aina englanniksi, millä kielellä tahansa tätä sivua luetaan.",
+        "gamers": "Kaikki tähän Minecraft-UUID:hen linkitetyt pelaajatilit. Tyhjä, kun syy on <code1>no_linked_account</code1> tai <code2>no_linked_gamer</code2>.",
+        "reasonsHeading": "Syyt",
+        "reasons": {
+          "paidEnrollment": "Linkitetyllä pelaajalla on tällä hetkellä paikka perheen maksamassa tuotteessa.",
+          "noLinkedAccount": "Mikään Sogverse-tili ei ole linkittänyt tätä Minecraft-UUID:tä.",
+          "noLinkedGamer": "UUID on linkitetty, mutta vain tileihin, jotka eivät ole pelaajatilejä, kuten Gedun tiliin.",
+          "noPaidEnrollment": "Linkitettyjä pelaajia on, mutta kenelläkään heistä ei ole ehdot täyttävää paikkaa."
         },
-        "error401": "Puuttuva, virheellinen tai kelvoton API-avain.",
-        "error400": "Puuttuva tai kelvoton <code>uuid</code>-kyselyparametri.",
-        "error404": "Tähän Minecraft UUID:hen ei ole liitetty Sogverse-tiliä.",
-        "error500": "Palvelinvirhe. Yritä uudelleen viiveellä."
+        "gamerHeading": "Pelaajan kentät",
+        "gamer": {
+          "firstName": "Pelaajan etunimi.",
+          "minecraftUsername": "Pelaajatiliin linkitetty Minecraft-käyttäjänimi.",
+          "enrollments": "Kaikki pelaajan tämänhetkiset paikat, täyttävät ne ehdot tai eivät."
+        },
+        "enrollmentHeading": "Ilmoittautumisen kentät",
+        "enrollment": {
+          "product": "Tuotteen nimi.",
+          "productType": "Minkä tyyppisessä tuotteessa paikka on. Vain kuluttajakerhot, leirit ja tapahtumat voivat täyttää ehdot.",
+          "billingMode": "Miten tuote maksetaan. Vain maksulliset tuotteet täyttävät ehdot, maksuttomat tuotteet ja kuntasopimukset eivät.",
+          "startDate": "Tuotteen alkamispäivä.",
+          "endDate": "Tuotteen päättymispäivä tai <code>null</code>, jos kerho jatkuu toistaiseksi.",
+          "qualifies": "Päästääkö tämä paikka pelaajan sisään."
+        }
       },
       "example": {
         "heading": "Esimerkki"
       },
       "integrationNotes": {
         "heading": "Integraatio-ohjeet",
-        "note1": "Kutsu tätä päätepistettä jokaisella pelaajan liittymisellä. Sekä Gedut että pelaajat ovat istuntorajoitettuja — he voivat liittyä vain ajoitetun istuntoikkunan aikana.",
-        "note2": "Istuntoikkuna aukeaa 5 minuuttia ennen suunniteltua alkua ja sulkeutuu 5 minuuttia suunnitellun lopun jälkeen.",
-        "note3": "Kun <code1>allowed: true</code1>, käytä <code2>endTime</code2>-arvoa ajoittaaksesi uudelleentarkistuksen tai poiston. Jos peräkkäisiä istuntoja on (esim. yksi päättyy 14:00, seuraava alkaa 14:05), pelaaja poistetaan ensimmäisen istunnon päättyessä ja liittyy uudelleen seuraavaan.",
-        "note4": "<code>404</code> tarkoittaa, ettei pelaaja ole vielä linkittänyt Minecraft-tiliään Sogversessä. Voit näyttää viestin, joka kehottaa linkittämään tilin profiiliasetuksissa.",
-        "note5": "Kaikki virheresponssit noudattavat muotoa <code>'{ \"error\": \"viesti\" }'</code>."
+        "branchOnAllowed": "Kutsu tätä päätepistettä jokaisella liittymiskerralla ja tee päätös pelkän <code1>allowed</code1>-kentän perusteella. Käytä <code2>reason</code2>- ja <code3>message</code3>-kenttiä lokeihin ja poistoviesteihin.",
+        "failClosed": "Estä pääsy virhetilanteissa: jos vastaus on 5xx, pyyntö aikakatkaistaan tai yhteys katkeaa, älä päästä pelaajaa sisään. Epäonnistunut tarkistus ei ole koskaan syy päästää ketään sisään.",
+        "noLongCache": "Älä säilytä päätöstä välimuistissa pitkään. Paikka voi alkaa tai päättyä milloin tahansa, joten tallennettu vastaus vanhenee. Turvallisinta on tarkistaa jokaisella liittymiskerralla.",
+        "notLinked": "<code>no_linked_account</code> tarkoittaa, ettei kukaan ole vielä linkittänyt tätä Minecraft-tiliä Sogversessa. Poistoviestissä voit pyytää pelaajaa linkittämään Minecraft-tilinsä Sogverse-tiliinsä.",
+        "keyServerSide": "API-avain kuuluu vain palvelimelle. Älä koskaan laita sitä asiakasmodiin, pelaajien luettavissa olevaan asetustiedostoon tai julkiseen repositorioon."
       }
     },
     "lynxApi": {

@@ -39,7 +39,7 @@
       "registerGedu": "Bli spelfostrare",
       "about": "Om oss",
       "library": "Biblioteket",
-      "minecraftApi": "Minecraft Server API",
+      "minecraftApi": "API för Minecraft-servern",
       "lynxApi": "Lynx Educate partner-API",
       "adminDashboard": "Administratörspanel",
       "adminMunicipalityInvoicing": "Kommunfakturering",
@@ -2109,8 +2109,17 @@
   },
   "docs": {
     "minecraftApi": {
-      "title": "Minecraft Server API",
-      "description": "Använd detta endpoint för att kontrollera om en anslutande spelare får gå med i Minecraft-världen. Servern skickar spelarens Minecraft-UUID och får ett tillåt/neka-beslut med sessionstiming.",
+      "title": "API för Minecraft-servern",
+      "description": "School of Gamings Minecraft-servrar anropar denna endpoint när en spelare försöker ansluta. Servern skickar spelarens Minecraft-UUID, och Sogverse svarar om spelaren ska släppas in, tillsammans med orsaken och de platser beslutet bygger på.",
+      "eligibility": {
+        "heading": "Vem som släpps in",
+        "intro": "Ett Minecraft-konto släpps in när det är kopplat till ett spelarkonto på Sogverse som just nu har en plats på en produkt som familjen betalar för.",
+        "paidProducts": "Betalda produkter räknas: en klubbprenumeration, ett betalt läger eller ett betalt evenemang.",
+        "notCounted": "Gratisprodukter och kommunala klubbar räknas inte, även om spelaren har en plats på en sådan.",
+        "current": "En plats räknas så länge den är aktiv och produkten inte har tagit slut.",
+        "sharedAccounts": "Flera Sogverse-konton kan koppla samma Minecraft-konto, eftersom syskon ofta delar ett. Spelaren släpps in om något av de kopplade spelarkontona uppfyller villkoren.",
+        "gedus": "Ett Minecraft-konto som bara är kopplat till en Gedus konto släpps inte in av denna kontroll."
+      },
       "authentication": {
         "heading": "Autentisering",
         "description": "Alla förfrågningar kräver en statisk API-nyckel som skickas som en Bearer-token i <code>Authorization</code>-headern.",
@@ -2124,35 +2133,55 @@
       },
       "responses": {
         "heading": "Svar",
-        "playerAllowed": "Spelaren tillåts",
+        "intro": "Varje autentiserad förfrågan med ett giltigt <code>uuid</code> besvaras med 200, oavsett om spelaren släpps in eller inte. Ett okänt UUID är ett avslag, inte ett fel.",
+        "playerAllowed": "Spelaren släpps in",
         "playerDenied": "Spelaren nekas",
+        "deniedDescription": "Eero har en plats i en kommunal klubb, som inte räknas, så platsen returneras med <code1>qualifies: false</code1> och orsaken är <code2>no_paid_enrollment</code2>.",
         "errorResponses": "Felsvar",
-        "notImplementedTitle": "Inte implementerat ännu",
-        "notImplementedBody": "Sessionsbehörigheten byggs fortfarande om mot det nuvarande produktsystemet. Varje autentiserad och korrekt utformad förfrågan svarar i dag med 501 – ingen spelare släpps in. Svaren nedan beskriver det kontrakt som slutpunkten kommer att returnera när den är i drift. Bygg mot dem, men räkna med 501 tills vidare.",
-        "error501": "Sessionsbehörigheten är inte byggd ännu. Förfrågan var giltig och autentiserad, men inget antagningsbeslut kan fattas – misslyckas stängt i stället för att tolka detta som ett avslag.",
-        "deniedDescription": "Spelaren finns i Sogverse men har ingen aktiv session just nu. Inget <code>endTime</code> inkluderas.",
-        "fields": {
-          "allowedTrue": "Spelaren har en aktiv session just nu.",
-          "role": "Spelarens roll i Sogverse.",
-          "firstName": "Spelarens förnamn.",
-          "endTime": "När sessionsfönstret stängs (inkluderar en 5-minuters buffert efter schemalagt slut). Använd detta för att schemalägga en kick eller ny kontroll.",
-          "reason": "Läsbar beskrivning: produktnamn och Geduns namn."
+        "error401": "<code>Authorization</code>-headern saknas eller är felformaterad, eller så är nyckeln fel.",
+        "error400": "Frågeparametern <code>uuid</code> saknas eller är inte ett giltigt Minecraft-UUID.",
+        "error500": "Servern är felkonfigurerad eller en sökning misslyckades. Inget beslut fattades.",
+        "errorShape": "Varje felsvar har formatet <code>'{ \"error\": \"message\" }'</code>."
+      },
+      "fields": {
+        "heading": "Fält i svaret",
+        "allowed": "Om spelaren ska släppas in. Sant exakt när <code1>reason</code1> är <code2>paid_enrollment</code2>.",
+        "reason": "Varför spelaren släpptes in eller nekades. Ett av värdena nedan.",
+        "message": "En mening som förklarar beslutet, för en serveradministratörs loggar eller ett kickmeddelande. Alltid på engelska, oavsett vilket språk den här sidan läses på.",
+        "gamers": "Alla spelarkonton som är kopplade till detta Minecraft-UUID. Tom när orsaken är <code1>no_linked_account</code1> eller <code2>no_linked_gamer</code2>.",
+        "reasonsHeading": "Orsaker",
+        "reasons": {
+          "paidEnrollment": "Ett kopplat spelarkonto har just nu en plats på en produkt som familjen betalar för.",
+          "noLinkedAccount": "Inget Sogverse-konto har kopplat detta Minecraft-UUID.",
+          "noLinkedGamer": "UUID:t är kopplat, men bara till konton som inte är spelarkonton, till exempel en Gedus.",
+          "noPaidEnrollment": "Det finns kopplade spelarkonton, men inget av dem har en plats som uppfyller villkoren."
         },
-        "error401": "Saknad, felformaterad eller ogiltig API-nyckel.",
-        "error400": "Saknad eller ogiltig <code>uuid</code>-frågeparameter.",
-        "error404": "Inget Sogverse-konto kopplat till detta Minecraft-UUID.",
-        "error500": "Serverfel. Försök igen med fördröjning."
+        "gamerHeading": "Fält för ett spelarkonto",
+        "gamer": {
+          "firstName": "Spelarens förnamn.",
+          "minecraftUsername": "Minecraft-användarnamnet som är kopplat till spelarkontot.",
+          "enrollments": "Alla platser spelaren har just nu, oavsett om de uppfyller villkoren eller inte."
+        },
+        "enrollmentHeading": "Fält för en anmälan",
+        "enrollment": {
+          "product": "Produktens namn.",
+          "productType": "Vilken typ av produkt platsen gäller. Bara konsumentklubbar, läger och evenemang kan uppfylla villkoren.",
+          "billingMode": "Hur produkten betalas. Bara betalda produkter uppfyller villkoren; gratisprodukter och kommunala avtal gör det inte.",
+          "startDate": "Dagen då produkten börjar.",
+          "endDate": "Dagen då produkten slutar, eller <code>null</code> för en klubb utan slutdatum.",
+          "qualifies": "Om den här platsen släpper in spelaren."
+        }
       },
       "example": {
         "heading": "Exempel"
       },
       "integrationNotes": {
         "heading": "Integrationsanteckningar",
-        "note1": "Anropa detta endpoint vid varje spelaranslutning. Både Geduer och spelare är sessionsstyrda — de kan bara gå med under sitt schemalagda sessionsfönster.",
-        "note2": "Sessionsfönstret öppnas 5 minuter före schemalagd start och stängs 5 minuter efter schemalagt slut.",
-        "note3": "När <code1>allowed: true</code1>, använd <code2>endTime</code2> för att schemalägga en ny kontroll eller kick. Om det finns sessioner rygg i rygg (t.ex. en slutar 14:00, nästa börjar 14:05) kickas spelaren vid den första sessionens slut och ansluter igen för nästa.",
-        "note4": "En <code>404</code> betyder att spelaren inte har kopplat sitt Minecraft-konto i Sogverse ännu. Du kan visa ett meddelande om att koppla sitt konto i profilinställningarna.",
-        "note5": "Alla felsvar följer formatet <code>'{ \"error\": \"message\" }'</code>."
+        "branchOnAllowed": "Anropa denna endpoint vid varje anslutning och fatta beslutet enbart utifrån <code1>allowed</code1>. Använd <code2>reason</code2> och <code3>message</code3> för loggar och kickmeddelanden.",
+        "failClosed": "Neka vid fel: efter ett 5xx-svar, en timeout eller ett nätverksfel ska spelaren inte släppas in. En kontroll som inte gick att göra är aldrig ett skäl att släppa in någon.",
+        "noLongCache": "Cacha inte ett beslut länge. En plats kan börja eller sluta när som helst, så ett cachat svar blir inaktuellt; att kontrollera vid varje anslutning är det säkra standardvalet.",
+        "notLinked": "<code>no_linked_account</code> betyder att ingen har kopplat detta Minecraft-konto på Sogverse ännu. Ditt kickmeddelande kan be spelaren att koppla sitt Minecraft-konto till sitt Sogverse-konto.",
+        "keyServerSide": "API-nyckeln hör bara hemma på servern. Lägg den aldrig i en klientmod, i en konfiguration som spelarna kan läsa eller i ett offentligt repository."
       }
     },
     "lynxApi": {

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -44,7 +43,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1 border-b border-border py-3 last:border-0">
-      <div className="flex items-baseline gap-2">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <Code>{name}</Code>
         <span className="text-xs text-muted-foreground">{type}</span>
       </div>
@@ -53,9 +52,55 @@ function Field({
   );
 }
 
+const ALLOWED_EXAMPLE = `{
+  "allowed": true,
+  "reason": "paid_enrollment",
+  "message": "Allowed: Aino has a paid seat on Minecraft Bedrock Club.",
+  "gamers": [
+    {
+      "firstName": "Aino",
+      "minecraftUsername": "AinoMC",
+      "enrollments": [
+        {
+          "product": "Minecraft Bedrock Club",
+          "productType": "consumer_club",
+          "billingMode": "paid",
+          "startDate": "2026-09-01",
+          "endDate": null,
+          "qualifies": true
+        }
+      ]
+    }
+  ]
+}`;
+
+const DENIED_EXAMPLE = `{
+  "allowed": false,
+  "reason": "no_paid_enrollment",
+  "message": "Denied: Eero has no current paid seat.",
+  "gamers": [
+    {
+      "firstName": "Eero",
+      "minecraftUsername": "EeroBuilds",
+      "enrollments": [
+        {
+          "product": "Minecraft Club Espoo",
+          "productType": "municipality_club",
+          "billingMode": "external_contract",
+          "startDate": "2026-08-17",
+          "endDate": "2026-12-11",
+          "qualifies": false
+        }
+      ]
+    }
+  ]
+}`;
+
 export default function MinecraftApiDocsPage() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
   const t = useTranslations('docs.minecraftApi');
+  const code = (chunks: React.ReactNode) => <Code>{chunks}</Code>;
+  const codes = { code, code1: code, code2: code, code3: code };
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
@@ -66,13 +111,24 @@ export default function MinecraftApiDocsPage() {
         {t('description')}
       </p>
 
+      {/* Who is let in */}
+      <section className="mt-12">
+        <h2 className="text-2xl font-semibold">{t('eligibility.heading')}</h2>
+        <p className="mt-3 text-muted-foreground">{t('eligibility.intro')}</p>
+        <ul className="mt-4 list-inside list-disc space-y-3 text-muted-foreground">
+          <li>{t('eligibility.paidProducts')}</li>
+          <li>{t('eligibility.notCounted')}</li>
+          <li>{t('eligibility.current')}</li>
+          <li>{t('eligibility.sharedAccounts')}</li>
+          <li>{t('eligibility.gedus')}</li>
+        </ul>
+      </section>
+
       {/* Authentication */}
       <section className="mt-12">
         <h2 className="text-2xl font-semibold">{t('authentication.heading')}</h2>
         <p className="mt-3 text-muted-foreground">
-          {t.rich('authentication.description', {
-            code: (chunks) => <Code>{chunks}</Code>,
-          })}
+          {t.rich('authentication.description', codes)}
         </p>
         <CodeBlock>{`Authorization: Bearer <MINECRAFT_SERVER_API_KEY>`}</CodeBlock>
         <p className="mt-3 text-sm text-muted-foreground">
@@ -90,10 +146,7 @@ export default function MinecraftApiDocsPage() {
         <h3 className="mt-6 text-lg font-medium">{t('endpoint.queryParams')}</h3>
         <div className="mt-2">
           <Field name="uuid" type={t('endpoint.uuidType')}>
-            {t.rich('endpoint.uuidDescription', {
-              code1: (chunks) => <Code>{chunks}</Code>,
-              code2: (chunks) => <Code>{chunks}</Code>,
-            })}
+            {t.rich('endpoint.uuidDescription', codes)}
           </Field>
         </div>
       </section>
@@ -101,20 +154,9 @@ export default function MinecraftApiDocsPage() {
       {/* Responses */}
       <section className="mt-12">
         <h2 className="text-2xl font-semibold">{t('responses.heading')}</h2>
-
-        {/* The session gating queried product tables that have since been
-            dropped, so the endpoint answers 501 to every well-formed call today.
-            The contract below is what it will return once rebuilt — say so here
-            rather than let an integrator match against responses nothing can
-            currently produce. */}
-        <Alert variant="warning" className="mt-4">
-          <div>
-            <AlertTitle>{t('responses.notImplementedTitle')}</AlertTitle>
-            <AlertDescription className="mt-1">
-              {t('responses.notImplementedBody')}
-            </AlertDescription>
-          </div>
-        </Alert>
+        <p className="mt-3 text-muted-foreground">
+          {t.rich('responses.intro', codes)}
+        </p>
 
         <div className="mt-6 space-y-6">
           {/* 200 Allowed */}
@@ -128,30 +170,7 @@ export default function MinecraftApiDocsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CodeBlock>{`{
-  "allowed": true,
-  "role": "gamer",
-  "firstName": "CoolKid",
-  "endTime": "2026-03-19T15:05:00.000Z",
-  "reason": "Intro to Redstone with GeduSteve"
-}`}</CodeBlock>
-              <div className="mt-4">
-                <Field name="allowed" type="true">
-                  {t('responses.fields.allowedTrue')}
-                </Field>
-                <Field name="role" type={`"gamer" | "gedu"`}>
-                  {t('responses.fields.role')}
-                </Field>
-                <Field name="firstName" type="string">
-                  {t('responses.fields.firstName')}
-                </Field>
-                <Field name="endTime" type="ISO 8601 string">
-                  {t('responses.fields.endTime')}
-                </Field>
-                <Field name="reason" type="string">
-                  {t('responses.fields.reason')}
-                </Field>
-              </div>
+              <CodeBlock>{ALLOWED_EXAMPLE}</CodeBlock>
             </CardContent>
           </Card>
 
@@ -166,16 +185,9 @@ export default function MinecraftApiDocsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CodeBlock>{`{
-  "allowed": false,
-  "role": "gamer",
-  "firstName": "CoolKid",
-  "reason": "No active session"
-}`}</CodeBlock>
+              <CodeBlock>{DENIED_EXAMPLE}</CodeBlock>
               <p className="mt-4 text-sm text-muted-foreground">
-                {t.rich('responses.deniedDescription', {
-                  code: (chunks) => <Code>{chunks}</Code>,
-                })}
+                {t.rich('responses.deniedDescription', codes)}
               </p>
             </CardContent>
           </Card>
@@ -187,19 +199,11 @@ export default function MinecraftApiDocsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 rounded border border-border px-2 py-0.5 text-xs font-semibold text-warning">
-                  501
-                </span>
-                <p className="text-sm text-muted-foreground">
-                  {t('responses.error501')}
-                </p>
-              </div>
-              <div className="flex items-start gap-3">
                 <span className="mt-0.5 shrink-0 rounded border border-border px-2 py-0.5 text-xs font-semibold text-destructive">
                   401
                 </span>
                 <p className="text-sm text-muted-foreground">
-                  {t('responses.error401')}
+                  {t.rich('responses.error401', codes)}
                 </p>
               </div>
               <div className="flex items-start gap-3">
@@ -207,17 +211,7 @@ export default function MinecraftApiDocsPage() {
                   400
                 </span>
                 <p className="text-sm text-muted-foreground">
-                  {t.rich('responses.error400', {
-                    code: (chunks) => <Code>{chunks}</Code>,
-                  })}
-                </p>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 rounded border border-border px-2 py-0.5 text-xs font-semibold text-destructive">
-                  404
-                </span>
-                <p className="text-sm text-muted-foreground">
-                  {t('responses.error404')}
+                  {t.rich('responses.error400', codes)}
                 </p>
               </div>
               <div className="flex items-start gap-3">
@@ -228,8 +222,81 @@ export default function MinecraftApiDocsPage() {
                   {t('responses.error500')}
                 </p>
               </div>
+              <p className="text-sm text-muted-foreground">
+                {t.rich('responses.errorShape', codes)}
+              </p>
             </CardContent>
           </Card>
+        </div>
+      </section>
+
+      {/* Field reference */}
+      <section className="mt-12">
+        <h2 className="text-2xl font-semibold">{t('fields.heading')}</h2>
+        <div className="mt-2">
+          <Field name="allowed" type="boolean">
+            {t.rich('fields.allowed', codes)}
+          </Field>
+          <Field name="reason" type="string">
+            {t('fields.reason')}
+          </Field>
+          <Field name="message" type="string">
+            {t('fields.message')}
+          </Field>
+          <Field name="gamers" type="array">
+            {t.rich('fields.gamers', codes)}
+          </Field>
+        </div>
+
+        <h3 className="mt-6 text-lg font-medium">{t('fields.reasonsHeading')}</h3>
+        <div className="mt-2">
+          <Field name="paid_enrollment" type="allowed: true">
+            {t('fields.reasons.paidEnrollment')}
+          </Field>
+          <Field name="no_linked_account" type="allowed: false">
+            {t('fields.reasons.noLinkedAccount')}
+          </Field>
+          <Field name="no_linked_gamer" type="allowed: false">
+            {t('fields.reasons.noLinkedGamer')}
+          </Field>
+          <Field name="no_paid_enrollment" type="allowed: false">
+            {t('fields.reasons.noPaidEnrollment')}
+          </Field>
+        </div>
+
+        <h3 className="mt-6 text-lg font-medium">{t('fields.gamerHeading')}</h3>
+        <div className="mt-2">
+          <Field name="firstName" type="string">
+            {t('fields.gamer.firstName')}
+          </Field>
+          <Field name="minecraftUsername" type="string">
+            {t('fields.gamer.minecraftUsername')}
+          </Field>
+          <Field name="enrollments" type="array">
+            {t('fields.gamer.enrollments')}
+          </Field>
+        </div>
+
+        <h3 className="mt-6 text-lg font-medium">{t('fields.enrollmentHeading')}</h3>
+        <div className="mt-2">
+          <Field name="product" type="string">
+            {t('fields.enrollment.product')}
+          </Field>
+          <Field name="productType" type={`"consumer_club" | "municipality_club" | "camp" | "event"`}>
+            {t('fields.enrollment.productType')}
+          </Field>
+          <Field name="billingMode" type={`"paid" | "free" | "external_contract"`}>
+            {t('fields.enrollment.billingMode')}
+          </Field>
+          <Field name="startDate" type="YYYY-MM-DD">
+            {t('fields.enrollment.startDate')}
+          </Field>
+          <Field name="endDate" type="YYYY-MM-DD | null">
+            {t.rich('fields.enrollment.endDate', codes)}
+          </Field>
+          <Field name="qualifies" type="boolean">
+            {t('fields.enrollment.qualifies')}
+          </Field>
         </div>
       </section>
 
@@ -243,28 +310,15 @@ export default function MinecraftApiDocsPage() {
         </div>
       </section>
 
-      {/* Integration Notes */}
+      {/* Integration notes */}
       <section className="mt-12">
         <h2 className="text-2xl font-semibold">{t('integrationNotes.heading')}</h2>
         <ul className="mt-4 list-inside list-disc space-y-3 text-muted-foreground">
-          <li>{t('integrationNotes.note1')}</li>
-          <li>{t('integrationNotes.note2')}</li>
-          <li>
-            {t.rich('integrationNotes.note3', {
-              code1: (chunks) => <Code>{chunks}</Code>,
-              code2: (chunks) => <Code>{chunks}</Code>,
-            })}
-          </li>
-          <li>
-            {t.rich('integrationNotes.note4', {
-              code: (chunks) => <Code>{chunks}</Code>,
-            })}
-          </li>
-          <li>
-            {t.rich('integrationNotes.note5', {
-              code: (chunks) => <Code>{chunks}</Code>,
-            })}
-          </li>
+          <li>{t.rich('integrationNotes.branchOnAllowed', codes)}</li>
+          <li>{t('integrationNotes.failClosed')}</li>
+          <li>{t('integrationNotes.noLongCache')}</li>
+          <li>{t.rich('integrationNotes.notLinked', codes)}</li>
+          <li>{t('integrationNotes.keyServerSide')}</li>
         </ul>
       </section>
     </div>

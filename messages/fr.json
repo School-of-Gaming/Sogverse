@@ -2110,7 +2110,16 @@
   "docs": {
     "minecraftApi": {
       "title": "API du serveur Minecraft",
-      "description": "Utilisez ce point de terminaison pour vérifier si un joueur qui se connecte est autorisé à rejoindre le monde Minecraft. Le serveur envoie l’UUID Minecraft du joueur et reçoit une décision d’autorisation ou de refus, accompagnée des horaires de session.",
+      "description": "Les serveurs Minecraft de School of Gaming appellent ce point de terminaison lorsqu’un joueur tente de se connecter. Le serveur envoie l’UUID Minecraft du joueur, et Sogverse indique s’il faut le laisser entrer, avec la raison et les places sur lesquelles repose la décision.",
+      "eligibility": {
+        "heading": "Qui peut entrer",
+        "intro": "Un compte Minecraft est admis lorsqu’il est lié à un compte joueur sur Sogverse qui occupe actuellement une place sur un produit payé par la famille.",
+        "paidProducts": "Les produits payants comptent : un abonnement à un club, un camp payant ou un événement payant.",
+        "notCounted": "Les produits gratuits et les clubs municipaux ne comptent pas, même si le joueur y occupe une place.",
+        "current": "Une place compte tant qu’elle est active et que le produit n’est pas terminé.",
+        "sharedAccounts": "Plusieurs comptes Sogverse peuvent lier le même compte Minecraft, car des frères et sœurs en partagent souvent un. Le joueur est admis si l’un des comptes joueur liés remplit les conditions.",
+        "gedus": "Un compte Minecraft lié uniquement au compte d’un Gedu n’est pas admis par cette vérification."
+      },
       "authentication": {
         "heading": "Authentification",
         "description": "Toutes les requêtes nécessitent une clé d’API statique transmise en tant que jeton Bearer dans l’en-tête <code>Authorization</code>.",
@@ -2124,35 +2133,55 @@
       },
       "responses": {
         "heading": "Réponses",
-        "playerAllowed": "Joueur autorisé",
+        "intro": "Toute requête authentifiée avec un <code>uuid</code> valide reçoit une réponse 200, que le joueur soit admis ou non. Un UUID inconnu est un refus, pas une erreur.",
+        "playerAllowed": "Joueur admis",
         "playerDenied": "Joueur refusé",
+        "deniedDescription": "Eero occupe une place dans un club municipal, qui ne compte pas : la place est renvoyée avec <code1>qualifies: false</code1> et la raison est <code2>no_paid_enrollment</code2>.",
         "errorResponses": "Réponses d’erreur",
-        "notImplementedTitle": "Pas encore implémenté",
-        "notImplementedBody": "Le contrôle d’accès aux sessions est en cours de reconstruction sur le système de produits actuel. Toute requête authentifiée et bien formée renvoie aujourd’hui un 501 — aucun joueur n’est admis. Les réponses ci-dessous décrivent le contrat que ce point de terminaison renverra une fois en service : développez en vous y appuyant, mais attendez-vous à un 501 d’ici là.",
-        "error501": "Contrôle d’accès aux sessions pas encore construit. La requête était valide et authentifiée, mais aucune décision d’admission ne peut être prise — échouez en mode fermé plutôt que de traiter ceci comme un refus.",
-        "deniedDescription": "Le joueur existe dans Sogverse mais n’a aucune session active en ce moment. Aucun <code>endTime</code> n’est renvoyé.",
-        "fields": {
-          "allowedTrue": "Le joueur a une session active en ce moment.",
-          "role": "Le rôle du joueur dans Sogverse.",
-          "firstName": "Le prénom du joueur.",
-          "endTime": "Moment où la fenêtre de session se ferme (comprend une marge de 5 minutes après la fin prévue). À utiliser pour programmer une exclusion ou une nouvelle vérification.",
-          "reason": "Description lisible : le nom du produit et le nom du Gedu."
+        "error401": "L’en-tête <code>Authorization</code> est absent ou mal formé, ou la clé est incorrecte.",
+        "error400": "Le paramètre de requête <code>uuid</code> est absent ou n’est pas un UUID Minecraft valide.",
+        "error500": "Le serveur est mal configuré ou une recherche a échoué. Aucune décision n’a été prise.",
+        "errorShape": "Toute réponse d’erreur a la forme <code>'{ \"error\": \"message\" }'</code>."
+      },
+      "fields": {
+        "heading": "Champs de la réponse",
+        "allowed": "Indique s’il faut laisser entrer le joueur. Vaut true exactement lorsque <code1>reason</code1> vaut <code2>paid_enrollment</code2>.",
+        "reason": "Pourquoi le joueur a été admis ou refusé. L’une des valeurs ci-dessous.",
+        "message": "Une phrase expliquant la décision, pour les journaux d’un administrateur de serveur ou un message d’exclusion. Toujours en anglais, quelle que soit la langue dans laquelle cette page est lue.",
+        "gamers": "Tous les comptes joueur liés à cet UUID Minecraft. Vide lorsque la raison est <code1>no_linked_account</code1> ou <code2>no_linked_gamer</code2>.",
+        "reasonsHeading": "Raisons",
+        "reasons": {
+          "paidEnrollment": "Un compte joueur lié occupe actuellement une place sur un produit payé par la famille.",
+          "noLinkedAccount": "Aucun compte Sogverse n’a lié cet UUID Minecraft.",
+          "noLinkedGamer": "L’UUID est lié, mais uniquement à des comptes qui ne sont pas des comptes joueur, comme celui d’un Gedu.",
+          "noPaidEnrollment": "Des comptes joueur liés existent, mais aucun n’occupe une place qui remplit les conditions."
         },
-        "error401": "Clé d’API absente, mal formée ou invalide.",
-        "error400": "Paramètre de requête <code>uuid</code> absent ou invalide.",
-        "error404": "Aucun compte Sogverse n’est lié à cet UUID Minecraft.",
-        "error500": "Erreur serveur. Réessayez avec un délai progressif."
+        "gamerHeading": "Champs d’un compte joueur",
+        "gamer": {
+          "firstName": "Le prénom du joueur.",
+          "minecraftUsername": "Le nom d’utilisateur Minecraft lié au compte joueur.",
+          "enrollments": "Toutes les places que le joueur occupe actuellement, qu’elles remplissent les conditions ou non."
+        },
+        "enrollmentHeading": "Champs d’une inscription",
+        "enrollment": {
+          "product": "Le nom du produit.",
+          "productType": "Le type de produit sur lequel porte la place. Seuls les clubs grand public, les camps et les événements peuvent remplir les conditions.",
+          "billingMode": "Le mode de paiement du produit. Seuls les produits payants remplissent les conditions ; les produits gratuits et les contrats municipaux, non.",
+          "startDate": "Le jour où le produit commence.",
+          "endDate": "Le jour où le produit se termine, ou <code>null</code> pour un club sans date de fin.",
+          "qualifies": "Indique si cette place permet au joueur d’entrer."
+        }
       },
       "example": {
         "heading": "Exemple"
       },
       "integrationNotes": {
         "heading": "Notes d’intégration",
-        "note1": "Appelez ce point de terminaison à chaque connexion d’un joueur. Les gedus comme les joueurs sont soumis aux horaires de session — ils ne peuvent se connecter que pendant la fenêtre de leur session programmée.",
-        "note2": "La fenêtre de session s’ouvre 5 minutes avant le début prévu et se ferme 5 minutes après la fin prévue.",
-        "note3": "Lorsque <code1>allowed: true</code1>, utilisez <code2>endTime</code2> pour programmer une nouvelle vérification ou une exclusion. En cas de sessions consécutives (par exemple l’une se terminant à 14:00 et la suivante commençant à 14:05), le joueur est exclu à la fin de la première session puis se reconnecte pour la suivante.",
-        "note4": "Un <code>404</code> signifie que le joueur n’a pas encore lié son compte Minecraft dans Sogverse. Vous pouvez lui afficher un message l’invitant à lier son compte dans les paramètres de son profil.",
-        "note5": "Toutes les réponses d’erreur suivent la forme <code>'{ \"error\": \"message\" }'</code>."
+        "branchOnAllowed": "Appelez ce point de terminaison à chaque connexion et décidez uniquement d’après <code1>allowed</code1>. Utilisez <code2>reason</code2> et <code3>message</code3> pour les journaux et les messages d’exclusion.",
+        "failClosed": "En cas d’échec, refusez l’accès : après une réponse 5xx, un délai dépassé ou une erreur réseau, ne laissez pas entrer le joueur. Une vérification impossible n’est jamais une raison d’admettre quelqu’un.",
+        "noLongCache": "Ne gardez pas une décision en cache longtemps. Une place peut commencer ou se terminer à tout moment, et une réponse en cache devient alors obsolète ; vérifier à chaque connexion est le choix le plus sûr.",
+        "notLinked": "<code>no_linked_account</code> signifie que personne n’a encore lié ce compte Minecraft sur Sogverse. Votre message d’exclusion peut inviter le joueur à lier son compte Minecraft à son compte Sogverse.",
+        "keyServerSide": "La clé d’API reste sur le serveur. Ne la mettez jamais dans un mod client, dans une configuration lisible par les joueurs ni dans un dépôt public."
       }
     },
     "lynxApi": {
