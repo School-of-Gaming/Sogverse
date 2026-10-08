@@ -91,6 +91,7 @@ function openRequest(args: {
     requested_by_last_name: "Korhonen",
     product: args.product,
     offers: [],
+    declines: [],
   };
 }
 

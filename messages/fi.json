@@ -77,6 +77,7 @@
       "geduContract": "Gedu-sopimus",
       "oauthConsent": "Yhdistä tekoälysovellus",
       "linkDiscord": "Yhdistä Discord",
+      "linkSlack": "Yhdistä Slack",
       "seatOffer": "Paikkatarjous",
       "geduSubstitutions": "Tuuraukset",
       "geduInvoicing": "Laskutus",
@@ -1708,9 +1709,8 @@
         "messagePlaceholder": "Pelkkää tekstiä, enintään 2 000 merkkiä",
         "send": "Lähetä testiviesti",
         "sent": "Viesti lähetetty.",
-        "openInDiscord": "Avaa Discordissa",
         "templatePlain": "Pelkkä teksti",
-        "templateSubFlow": "/sub: kaikki vaiheet",
+        "templateSubFlow": "/sub ja tuurausviestit: kaikki viestit",
         "subPreviewSent": "Kaikki vaiheet lähetetty."
       },
       "slack": {
@@ -1721,7 +1721,10 @@
         "message": "Viesti",
         "messagePlaceholder": "Pelkkää tekstiä, enintään 4 000 merkkiä",
         "send": "Lähetä testiviesti",
-        "sent": "Viesti lähetetty."
+        "sent": "Viesti lähetetty.",
+        "templatePlain": "Pelkkä teksti",
+        "templateSubFlow": "Tuurausviestit: kaikki tilat",
+        "subPreviewSent": "Kaikki viestit lähetetty."
       }
     },
     "whatsapp": {
@@ -1754,6 +1757,7 @@
         "other": "Muu"
       },
       "noOffers": "Ei vielä tarjouksia.",
+      "declinedBy": "Kieltäytyneet: {names}",
       "openGroup": "Avaa ryhmä",
       "seatSomeoneElse": "Valitse muu tuuraaja",
       "approve": "Hyväksy",
@@ -1761,13 +1765,13 @@
       "loadError": "Tuurauksia ei voitu ladata.",
       "loadErrorWithReason": "Tuurauksia ei voitu ladata: {reason}",
       "approveConfirmTitle": "Hyväksytäänkö {name} tuuraajaksi?",
-      "approveConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja Oma SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Kenellekään ei lähetetä ilmoitusta: kerta poistuu muiden tarjoutuneiden listalta, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
+      "approveConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja Oma SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Jos hänen Discord-tilinsä on yhdistetty, hän saa tiedon myös Discordissa. Kerta poistuu muiden tarjoutuneiden listalta, Slackin viestissä näkyy, kuka sen otti, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
       "approveFailedOfferGone": "{name} on perunut tarjouksensa, joten hyväksyttävää ei ole.",
       "approveFailedAlreadySettled": "Joku muu on jo hoitanut tämän kerran.",
       "approveFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
       "approveFailedIneligible": "{name} ei voi enää ottaa tätä kertaa.",
       "seatConfirmTitle": "Asetetaanko {name} tuuraajaksi?",
-      "seatConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja Oma SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Kenellekään ei lähetetä ilmoitusta: kerta poistuu listalta, jolta Gedut tarjoutuvat tuuraamaan, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
+      "seatConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja Oma SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Jos hänen Discord-tilinsä on yhdistetty, hän saa tiedon myös Discordissa. Kerta poistuu listalta, jolta Gedut tarjoutuvat tuuraamaan, Slackin viestissä näkyy, kuka sen otti, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
       "seatConfirm": "Aseta tuuraaja",
       "seatReasonLabel": "Ilmoitettu syy",
       "seatFailed": "Tuuraajan asettaminen epäonnistui – yritä uudelleen.",
@@ -2602,8 +2606,13 @@
       "poolRoleAssistant": "Avustava Gedu",
       "poolFee": "{fee} / kerta",
       "poolOfferAction": "Voin tuurata",
-      "poolWithdrawAction": "Peru tarjous",
-      "poolWithdrawPending": "Perutaan…",
+      "poolDeclineAction": "En voi tuurata",
+      "poolDeclinePending": "Tallennetaan…",
+      "poolOffered": "Tarjouduit tuuraamaan",
+      "poolDeclined": "Kieltäydyit",
+      "poolAnswerFailedApproved": "Sinut on jo hyväksytty tuuraamaan tämä kerta. Jos et pääse paikalle, pyydä itsellesi tuuraaja samoin kuin mille tahansa kerrallesi.",
+      "poolAnswerFailedClosed": "Tälle kerralle ei enää tarvita tuuraajaa.",
+      "poolAnswerFailedPast": "Tämä kerta on jo mennyt.",
       "poolActionFailed": "Tallennus epäonnistui. Yritä uudelleen.",
       "poolOfferFailedNotQualified": "Tämä kerta vaatii pätevyyden, jota sinulla ei ole, joten et voi tarjoutua tuuraajaksi.",
       "poolOfferFailedLanguage": "Tämän kerran kieli ei ole niiden kielten joukossa, joita olet ilmoittanut puhuvasi, joten et voi tarjoutua tuuraajaksi. Voit lisätä kieliä asetuksissasi.",
@@ -2612,6 +2621,7 @@
       "back": "Takaisin Omaan SOGiin",
       "mineHeading": "Tuurauksesi",
       "mineAllClear": "Sinulla ei ole tulevia tuurauksia.",
+      "ownRequestsHeading": "Tuurauspyyntösi",
       "fileAction": "Etkö pääse jollekin kerralle?",
       "filePickTitle": "Mille kerralle tarvitset tuuraajan?",
       "filePickBody": "Syy ja viesti näkyvät vain ylläpitäjille.",
@@ -2625,7 +2635,7 @@
       "fileFiled": "Tuuraajaa pyydetty: {product} {when}. Pyyntö näkyy nyt kyseisen kerran kortilla Oma SOG -näkymässä.",
       "fileFiledLink": "Avaa ryhmän työtila",
       "offerConfirmTitle": "Tarjoudutko tuuraajaksi?",
-      "offerConfirmBody": "Tarjoudut vetämään kerran {product} {when}. School of Gaming valitsee tuuraajan, ja voit perua tarjouksesi siihen asti, kun se hyväksytään. Hyväksynnän jälkeen kerta on Gedu-sopimuksesi nojalla sinun vastuullasi aivan kuten omat kertasi, etkä voi enää perua tarjoustasi: jos et sittenkään pääse paikalle, pyydä itsellesi tuuraaja samoin kuin mille tahansa kerrallesi. Ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua."
+      "offerConfirmBody": "Tarjoudut vetämään kerran {product} {when}. School of Gaming valitsee tuuraajan, ja voit kieltäytyä siihen asti, kun tarjouksesi hyväksytään. Hyväksynnän jälkeen kerta on Gedu-sopimuksesi nojalla sinun vastuullasi aivan kuten omat kertasi, etkä voi enää kieltäytyä: jos et sittenkään pääse paikalle, pyydä itsellesi tuuraaja samoin kuin mille tahansa kerrallesi. Ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua."
     },
     "coverage": {
       "title": "Kattamasi alueet",
@@ -5535,6 +5545,35 @@
       "body": "Tällä tilillä sitä ei voi yhdistää. Jos kuulut henkilökuntaan, kirjaudu sisään henkilökunnan tililläsi."
     }
   },
+  "slackLink": {
+    "confirm": {
+      "title": "Yhdistä Slack-tilisi",
+      "body": "Yhdistetäänkö Slack-tili <b>@{username}</b> School of Gaming -ylläpitäjätiliisi? Tuo Slack-tili voi silloin hyväksyä tuuraajia puolestasi. Yhdistä vain oma tilisi.",
+      "action": "Yhdistä tili",
+      "failed": "Jokin meni vikaan, eikä tiliäsi yhdistetty. Yritä uudelleen."
+    },
+    "linked": {
+      "title": "Yhdistetty Slack-tiliin @{username}",
+      "body": "Voit nyt hyväksyä tuuraajia Slackissa.",
+      "goToDashboard": "Siirry hallintapaneeliin"
+    },
+    "used": {
+      "title": "Tämä linkki on jo käytetty",
+      "body": "Kukin linkki toimii kerran. Saat uuden linkin, kun kirjoitat Slackissa uudelleen <code>/link</code>."
+    },
+    "expired": {
+      "title": "Tämä linkki on vanhentunut",
+      "body": "Linkki on voimassa 10 minuuttia. Saat uuden linkin, kun kirjoitat Slackissa uudelleen <code>/link</code>."
+    },
+    "missingToken": {
+      "title": "Tämä linkki on puutteellinen",
+      "body": "Saat uuden linkin, kun kirjoitat Slackissa uudelleen <code>/link</code>."
+    },
+    "refused": {
+      "title": "Vain ylläpitäjät voivat yhdistää Slack-tilin",
+      "body": "Tällä tilillä sitä ei voi yhdistää. Jos olet ylläpitäjä, kirjaudu sisään ylläpitäjätililläsi."
+    }
+  },
   "discordSub": {
     "requestTitle": "Pyydä tuuraajaa",
     "pickPlaceholder": "Valitse kerta",
@@ -5544,6 +5583,16 @@
     "notLinked": "Jotta voit käyttää /sub-komentoa, yhdistä ensin Discord-tilisi School of Gaming -gedutiliisi.",
     "notLinkedRunLink": "Discord-tiliäsi ei ole yhdistetty School of Gaming -gedutiliin. Yhdistä se komennolla /link ja käytä sitten uudelleen /sub-komentoa.",
     "previewNotice": "Tämä on esikatselu – mitään ei lähetetty."
+  },
+  "discordSubOffer": {
+    "notLinked": "Discord-tiliäsi ei ole yhdistetty School of Gaming -gedutiliin. Yhdistä se komennolla /link ja vastaa sitten uudelleen.",
+    "heading": "Kerralle tarvitaan tuuraaja",
+    "filled": "Kerralle on löytynyt tuuraaja",
+    "notNeeded": "Tuuraajaa ei enää tarvita",
+    "acceptedHeading": "Sinut on hyväksytty tuuraajaksi",
+    "acceptedBody": "Sinut on hyväksytty tuuraamaan: {product} – {group} {when}. Kerta on nyt Gedu-sopimuksesi nojalla sinun vastuullasi, ja ryhmän työtila avautuu sinulle 48 tuntia ennen kerran alkua.",
+    "openMySog": "Avaa Oma SOG",
+    "previewNotice": "Tämä on esikatselu – painikkeet eivät muuta mitään."
   },
   "seatOffer": {
     "offer": {

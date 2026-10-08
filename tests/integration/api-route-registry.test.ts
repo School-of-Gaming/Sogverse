@@ -127,7 +127,8 @@ type WebhookVerifier =
   | "stripe-signature"
   | "meta-hmac-sha256"
   | "meta-challenge-timing-safe"
-  | "discord-ed25519";
+  | "discord-ed25519"
+  | "slack-signature";
 
 /**
  * How the handler takes its request payload. `schema: null` on a `json` entry
@@ -255,6 +256,10 @@ const TESTS = {
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   sendTestSlackMessage: "tests/integration/api/send-test-slack-message.test.ts",
   signout: "tests/integration/auth/signout.test.ts",
+  slackInteractions: "tests/integration/api/slack-interactions.test.ts",
+  slackLink: "tests/integration/api/slack-link.test.ts",
+  substitutionNotificationsSync:
+    "tests/integration/api/substitution-notifications-sync.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
   switchAccount: "tests/integration/auth/switch-account.test.ts",
   userLocale: "tests/integration/api/user-locale.test.ts",
@@ -816,7 +821,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/discord/interactions/route.ts": {
     adminClient:
-      "webhook; no session by construction. `/link` inserts the hash of a one-time account-linking token into discord_link_tokens, which only the service role can write, for the Discord user Discord's signed payload names; the token links nothing until a signed-in Gedu or admin spends it through consume_discord_link_token on their own session. `/sub` reads a gedu's seats and files their absence through functions granted to service_role alone, each of which resolves the gedu from the Discord id the signed payload names and refuses an id with no gedu linked",
+      "webhook; no session by construction. `/link` inserts the hash of a one-time account-linking token into discord_link_tokens, which only the service role can write, for the Discord user Discord's signed payload names; the token links nothing until a signed-in Gedu or admin spends it through consume_discord_link_token on their own session. `/sub` reads a gedu's seats and files their absence, and a substitution DM's Offer and Decline buttons answer a request, through functions granted to service_role alone, each of which resolves the gedu from the Discord id the signed payload names and refuses an id with no gedu linked. After a DM press it reads the request's notification snapshot to redraw that DM, which shows the presser only the pool's session facts and their own answer, and runs the notification sync for that one request",
     handlers: {
       POST: {
         posture: {
@@ -1373,6 +1378,55 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // --- Slack ---------------------------------------------------------------
+
+  "src/app/api/slack/interactions/route.ts": {
+    adminClient:
+      "webhook; no session by construction. The link command inserts the hash of a one-time account-linking token into slack_link_tokens, which only the service role can write, for the Slack user Slack's signed request names; the token links nothing until a signed-in admin spends it through consume_slack_link_token on their own session. Accept approves an offer through approve_session_substitution_offer_for_slack_user, granted to service_role alone, which resolves the admin from the Slack user id the signed payload names and refuses an id with no admin linked; it then runs the notification sync for that one request",
+    handlers: {
+      POST: {
+        posture: {
+          kind: "webhook",
+          verifier: "slack-signature",
+          reason:
+            "the Slack app's slash command and interactivity endpoint. There is no session — Slack's HMAC-SHA256 over the timestamp and raw body with the app's signing secret, compared in constant time and refused when the timestamp is more than five minutes off, is the authorization. Every request is answered with an empty 200 inside Slack's three seconds and the work runs after it",
+        },
+        body: {
+          kind: "raw",
+          reason: "the signature is computed over the exact bytes sent",
+        },
+        test: TESTS.slackInteractions,
+      },
+    },
+  },
+
+  "src/app/api/slack/link/route.ts": {
+    handlers: {
+      POST: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "slackLinkBody" },
+        test: TESTS.slackLink,
+      },
+    },
+  },
+
+  // --- Substitution notifications ------------------------------------------
+
+  "src/app/api/substitution-notifications/sync/route.ts": {
+    handlers: {
+      POST: {
+        posture: {
+          kind: "api-key",
+          primitive: "verifySubstitutionSyncRequest",
+          reason:
+            "pg_net and pg_cron call it from the database, and the local drain script by hand; there is no session. The environment's SUBSTITUTION_SYNC_SECRET as a bearer token, compared in constant time, is the authorization, and an unset secret refuses everything. It only drains the substitution notification outbox and takes no input, so a caller can choose nothing about what is sent",
+        },
+        body: { kind: "none" },
+        test: TESTS.substitutionNotificationsSync,
+      },
+    },
+  },
+
   // --- Team profiles -------------------------------------------------------
 
   "src/app/api/team/photos/[userId]/route.ts": {
@@ -1568,8 +1622,12 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
     "reads an emailed seat offer for its landing page, which authorizes itself — the reader may hold no session or their own child's, and the page renders identically either way. It only reads: accepting is a POST behind a button, so a mail scanner following the link reaches this and stops",
   "src/lib/discord-link-token.server.ts":
     "reads the Discord username and expiry of a /link token for the confirm page, which names the account before a Gedu or an admin links it; the token table is granted to the service role alone. The page calls it only past its Gedu-or-admin gate, and it only reads: the token is spent by consume_discord_link_token on the user's own session, behind the button's POST",
+  "src/lib/slack-link-token.server.ts":
+    "reads the Slack username and expiry of a Slack link token for the confirm page, which names the account before an admin links it; the token table is granted to the service role alone. The page calls it only past its admin gate, and it only reads: the token is spent by consume_slack_link_token on the admin's own session, behind the button's POST",
   "src/lib/discord-substitution.server.ts":
-    "the Discord bot's /sub command acts for a gedu it knows only by the Discord user id on a signature-verified interaction, with no Sogverse session to act through. Every call is to a function granted to the service role alone that first resolves that id to the gedu account linked to it and refuses when there is none; past that, the reads and the filing are the very bodies the web reaches through auth.uid(), so the service role widens nothing but who the gedu is taken to be",
+    "the Discord bot's /sub command acts for a gedu it knows only by the Discord user id on a signature-verified interaction, with no Sogverse session to act through. Every call is to a function granted to the service role alone that first resolves that id to the gedu account linked to it and refuses when there is none; past that, the reads and the filing are the very bodies the web reaches through auth.uid(), so the service role widens nothing but who the gedu is taken to be. The same holds for a substitution DM's Offer and Decline buttons. The one read that is not the web's is the notification snapshot a pressed DM is redrawn from, which carries the absence reason: the redraw reads only the pool's session facts and the presser's own answer from it",
+  "src/lib/substitution-notifications/sync.server.ts":
+    "the notification sync runs with no caller at all — the outbox drain behind the sync route, or a button press after its own write — and reads a snapshot that carries the absence reason and writes the message tables, all granted to the service role alone. It sends only what the snapshot's own disclosure rules allow: the DMs carry the pool's session facts and nothing about the absent gedu, and the reason goes only to the staff Slack channel",
   "src/services/family/family.server.ts":
     "the shared family resolver — a gamer legitimately reads siblings beyond their own view",
   "src/app/[locale]/select-profile/page.tsx":

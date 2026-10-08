@@ -15,8 +15,8 @@ import { sessionSubstitutionKeys } from "./session-substitution.keys";
 import { SessionSubstitutionService } from "./session-substitution.service";
 import type {
   AdminSubstitutionRequest,
+  LiveSubstitutionRequest,
   OpenSubstitutionRequest,
-  SubstitutionRequestDocument,
 } from "./session-substitution.contracts";
 
 /** React Query bindings for session substitutions. */
@@ -60,8 +60,8 @@ function invalidateSubstitutionWrite(queryClient: QueryClient): void {
 /**
  * The pool: every open request the signed-in gedu could take.
  *
- * A small, indexed, bounded read — open requests inside a sixty-day window,
- * filtered by a predicate the database applies — so the section built on it
+ * A small, indexed read — the open requests dated today or later, filtered
+ * by a predicate the database applies — so the section built on it
  * renders nothing while it lands rather than a skeleton.
  *
  * `enabled` is how the dashboard hides the section from an uncertified gedu: an
@@ -92,7 +92,7 @@ export function useOpenSubstitutionRequests(options?: {
  * withdrawing an absence anywhere refreshes it.
  */
 export function useMyLiveSubstitutionRequests(options?: {
-  initialData?: SubstitutionRequestDocument[];
+  initialData?: LiveSubstitutionRequest[];
 }) {
   const service = new SessionSubstitutionService(getClient());
 
@@ -163,14 +163,17 @@ export function useOfferSessionSubstitution() {
   });
 }
 
-/** Take an offer back — keyed on the request, as the pool row knows it. */
-export function useWithdrawSessionSubstitutionOffer() {
+/**
+ * "I cannot" — keyed on the request, as the pool row knows it. Also how an
+ * offer is taken back.
+ */
+export function useDeclineSessionSubstitution() {
   const queryClient = useQueryClient();
   const service = new SessionSubstitutionService(getClient());
 
   return useMutation({
     mutationFn: (vars: { requestId: string }) =>
-      service.withdrawOffer(vars.requestId),
+      service.declineSubstitution(vars.requestId),
     onSuccess: () => invalidateSubstitutionWrite(queryClient),
   });
 }

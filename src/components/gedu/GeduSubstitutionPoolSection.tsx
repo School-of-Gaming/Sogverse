@@ -7,8 +7,9 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { buildSubstitutionPoolRows } from "@/lib/gedu-substitution-pool";
 import {
   sessionSubstitutionKeys,
+  substitutionAnswerFailureKey,
+  useDeclineSessionSubstitution,
   useOfferSessionSubstitution,
-  useWithdrawSessionSubstitutionOffer,
   type OpenSubstitutionRequest,
 } from "@/services/session-substitution";
 import { GeduSubstitutionPoolSectionView } from "./GeduSubstitutionPoolSectionView";
@@ -29,9 +30,9 @@ import { GeduSubstitutionPoolSectionView } from "./GeduSubstitutionPoolSectionVi
  * volunteer needs that answer before they move on, so it runs inside the
  * confirm dialog's holding mode: this component hands over a promise that
  * rejects on refusal, and the dialog owns the latch, the disabled buttons and
- * the failure line. The withdrawal is the undo of a decision already made, so
- * it keeps the inline flag: set before the mutation runs and cleared on settle,
- * once the pool has been read again.
+ * the failure line. A decline commits the gedu to nothing and the other button
+ * undoes it, so it keeps the inline flag: set before the mutation runs and
+ * cleared on settle, once the pool has been read again.
  *
  * **Both resolve only after the awaited invalidation**, and that is what makes
  * either safe to hand back on: the mutation's own `onSuccess` fires five
@@ -63,7 +64,7 @@ export function GeduSubstitutionPoolSection({
   } | null>(null);
 
   const offerSubstitution = useOfferSessionSubstitution();
-  const withdrawOffer = useWithdrawSessionSubstitutionOffer();
+  const declineSubstitution = useDeclineSessionSubstitution();
   const queryClient = useQueryClient();
 
   const rows = useMemo(
@@ -90,16 +91,16 @@ export function GeduSubstitutionPoolSection({
     await settle();
   };
 
-  const withdraw = async (requestId: string) => {
+  const decline = async (requestId: string) => {
     setError(null);
     setCommittingRequestId(requestId);
     try {
-      await withdrawOffer.mutateAsync({ requestId });
+      await declineSubstitution.mutateAsync({ requestId });
       await settle();
-    } catch {
+    } catch (refusal) {
       // The card is still in the pool and the gedu may try again, so the
       // refusal is named on it.
-      setError({ requestId, message: t("poolActionFailed") });
+      setError({ requestId, message: t(substitutionAnswerFailureKey(refusal)) });
     } finally {
       setCommittingRequestId(null);
     }
@@ -111,7 +112,7 @@ export function GeduSubstitutionPoolSection({
       committingRequestId={committingRequestId}
       error={error}
       onOffer={offer}
-      onWithdraw={(requestId) => void withdraw(requestId)}
+      onDecline={(requestId) => void decline(requestId)}
     />
   );
 }

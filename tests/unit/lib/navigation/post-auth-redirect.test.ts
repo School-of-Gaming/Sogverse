@@ -103,6 +103,12 @@ describe("resolveSafeRedirect", () => {
     expect(resolveSafeRedirect("/en/link-discord/extra")).toBe(null);
   });
 
+  it("admits the Slack link page with its token, exactly", () => {
+    expect(resolveSafeRedirect("/fi/link-slack?token=abc")).toBe("/fi/link-slack?token=abc");
+    expect(resolveSafeRedirect("/link-slackx")).toBe(null);
+    expect(resolveSafeRedirect("/en/link-slack/extra")).toBe(null);
+  });
+
   it("normalizes in-allowlist traversal to the real path", () => {
     // A `..` that stays within /shop/ is harmless; it collapses and is
     // returned as the normalized path the browser would actually visit.

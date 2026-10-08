@@ -77,6 +77,7 @@
       "geduContract": "Gedu-avtal",
       "oauthConsent": "Anslut en AI-app",
       "linkDiscord": "Koppla Discord",
+      "linkSlack": "Koppla Slack",
       "seatOffer": "Platserbjudande",
       "geduSubstitutions": "Vikariat",
       "geduInvoicing": "Fakturering",
@@ -1708,9 +1709,8 @@
         "messagePlaceholder": "Ren text, högst 2 000 tecken",
         "send": "Skicka testmeddelande",
         "sent": "Meddelandet skickades.",
-        "openInDiscord": "Öppna i Discord",
         "templatePlain": "Ren text",
-        "templateSubFlow": "/sub: alla steg",
+        "templateSubFlow": "/sub och vikarie-DM:er: alla meddelanden",
         "subPreviewSent": "Alla steg skickades."
       },
       "slack": {
@@ -1721,7 +1721,10 @@
         "message": "Meddelande",
         "messagePlaceholder": "Ren text, högst 4 000 tecken",
         "send": "Skicka testmeddelande",
-        "sent": "Meddelandet skickades."
+        "sent": "Meddelandet skickades.",
+        "templatePlain": "Ren text",
+        "templateSubFlow": "Vikariemeddelanden: alla lägen",
+        "subPreviewSent": "Alla meddelanden skickades."
       }
     },
     "whatsapp": {
@@ -1754,6 +1757,7 @@
         "other": "Annat"
       },
       "noOffers": "Inga erbjudanden än.",
+      "declinedBy": "Tackade nej: {names}",
       "openGroup": "Öppna gruppen",
       "seatSomeoneElse": "Välj en annan vikarie",
       "approve": "Godkänn",
@@ -1761,13 +1765,13 @@
       "loadError": "Vikariaten kunde inte laddas.",
       "loadErrorWithReason": "Vikariaten kunde inte laddas: {reason}",
       "approveConfirmTitle": "Godkänn {name} som vikarie?",
-      "approveConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på Min SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från de andra frivilligas lista, och på kortet står nu att {name} vikarierar för {absent}.",
+      "approveConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på Min SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Om hens Discord-konto är kopplat får hen besked där också. Tillfället försvinner från de andra frivilligas lista, meddelandet i Slack visar vem som tog det, och på kortet står nu att {name} vikarierar för {absent}.",
       "approveFailedOfferGone": "{name} har tagit tillbaka sitt erbjudande, så det finns inget att godkänna.",
       "approveFailedAlreadySettled": "Någon annan har redan löst det här tillfället.",
       "approveFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
       "approveFailedIneligible": "{name} kan inte längre ta det här tillfället.",
       "seatConfirmTitle": "Sätt in {name} som vikarie?",
-      "seatConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på Min SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från listan där Geduer erbjuder sig, och på kortet står nu att {name} vikarierar för {absent}.",
+      "seatConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på Min SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Om hens Discord-konto är kopplat får hen besked där också. Tillfället försvinner från listan där Geduer erbjuder sig, meddelandet i Slack visar vem som tog det, och på kortet står nu att {name} vikarierar för {absent}.",
       "seatConfirm": "Sätt in vikarien",
       "seatReasonLabel": "Angiven orsak",
       "seatFailed": "Vikarien kunde inte sättas in – försök igen.",
@@ -2602,8 +2606,13 @@
       "poolRoleAssistant": "Assisterande Gedu",
       "poolFee": "{fee} per tillfälle",
       "poolOfferAction": "Jag kan vikariera",
-      "poolWithdrawAction": "Dra tillbaka erbjudandet",
-      "poolWithdrawPending": "Drar tillbaka…",
+      "poolDeclineAction": "Jag kan inte vikariera",
+      "poolDeclinePending": "Sparar…",
+      "poolOffered": "Du har erbjudit dig att vikariera",
+      "poolDeclined": "Du tackade nej",
+      "poolAnswerFailedApproved": "Du är redan godkänd som vikarie för det här tillfället. Kan du inte vara med får du själv be om en vikarie, som för alla dina tillfällen.",
+      "poolAnswerFailedClosed": "Det här tillfället behöver inte längre någon vikarie.",
+      "poolAnswerFailedPast": "Det här tillfället har redan varit.",
       "poolActionFailed": "Det sparades inte. Försök igen.",
       "poolOfferFailedNotQualified": "Det här tillfället kräver en behörighet som du inte har, så du kan inte erbjuda dig att vikariera.",
       "poolOfferFailedLanguage": "Det här tillfället hålls på ett språk som du inte har angett att du talar, så du kan inte erbjuda dig att vikariera. Du kan lägga till språk i dina inställningar.",
@@ -2612,6 +2621,7 @@
       "back": "Tillbaka till Min SOG",
       "mineHeading": "Dina vikariat",
       "mineAllClear": "Du har inga kommande vikariat.",
+      "ownRequestsHeading": "Dina förfrågningar",
       "fileAction": "Kan du inte vara med på ett tillfälle?",
       "filePickTitle": "Vilket tillfälle behöver du en vikarie för?",
       "filePickBody": "Din orsak och din kommentar visas bara för administratörer.",
@@ -2625,7 +2635,7 @@
       "fileFiled": "Vikarie efterfrågad för {product} den {when}. Det syns nu på det tillfällets kort i Min SOG.",
       "fileFiledLink": "Öppna gruppens arbetsyta",
       "offerConfirmTitle": "Erbjuda dig att vikariera?",
-      "offerConfirmBody": "Du erbjuder dig att hålla {product} {when}. School of Gaming väljer vikarien, och du kan dra tillbaka ditt erbjudande tills det har godkänts. När det har godkänts är tillfället ditt enligt ditt Gedu-avtal, precis som dina egna tillfällen, och du kan inte längre dra dig ur: kan du ändå inte vara med får du själv be om en vikarie, som för alla dina tillfällen. Gruppens arbetsyta öppnas för dig 48 timmar innan tillfället börjar."
+      "offerConfirmBody": "Du erbjuder dig att hålla {product} {when}. School of Gaming väljer vikarien, och du kan tacka nej tills ditt erbjudande har godkänts. När det har godkänts är tillfället ditt enligt ditt Gedu-avtal, precis som dina egna tillfällen, och du kan inte längre tacka nej: kan du ändå inte vara med får du själv be om en vikarie, som för alla dina tillfällen. Gruppens arbetsyta öppnas för dig 48 timmar innan tillfället börjar."
     },
     "coverage": {
       "title": "Områden du täcker",
@@ -5535,6 +5545,35 @@
       "body": "Det här kontot kan inte koppla ett. Om du hör till personalen, logga in med ditt personalkonto."
     }
   },
+  "slackLink": {
+    "confirm": {
+      "title": "Koppla ditt Slack-konto",
+      "body": "Koppla Slack-kontot <b>@{username}</b> till ditt administratörskonto hos School of Gaming? Då kan det Slack-kontot godkänna vikarier för din räkning. Koppla bara ett konto som är ditt.",
+      "action": "Koppla kontot",
+      "failed": "Något gick fel och ditt konto kopplades inte. Försök igen."
+    },
+    "linked": {
+      "title": "Kopplat till @{username}",
+      "body": "Nu kan du godkänna vikarier i Slack.",
+      "goToDashboard": "Gå till instrumentpanelen"
+    },
+    "used": {
+      "title": "Den här länken har redan använts",
+      "body": "Varje länk fungerar en gång. Kör <code>/link</code> i Slack igen för att få en ny."
+    },
+    "expired": {
+      "title": "Den här länken har gått ut",
+      "body": "Länkar slutar gälla efter 10 minuter. Kör <code>/link</code> i Slack igen för att få en ny."
+    },
+    "missingToken": {
+      "title": "Den här länken är ofullständig",
+      "body": "Kör <code>/link</code> i Slack igen för att få en ny."
+    },
+    "refused": {
+      "title": "Bara administratörer kan koppla ett Slack-konto",
+      "body": "Det här kontot kan inte koppla ett. Om du är administratör, logga in med ditt administratörskonto."
+    }
+  },
   "discordSub": {
     "requestTitle": "Be om en vikarie",
     "pickPlaceholder": "Välj ett tillfälle",
@@ -5544,6 +5583,16 @@
     "notLinked": "För att använda /sub måste du först koppla ditt Discord-konto till ditt Gedu-konto hos School of Gaming.",
     "notLinkedRunLink": "Ditt Discord-konto är inte kopplat till ett Gedu-konto hos School of Gaming. Kör /link för att koppla det och sedan /sub igen.",
     "previewNotice": "Det här är en förhandsvisning – inget skickades in."
+  },
+  "discordSubOffer": {
+    "notLinked": "Ditt Discord-konto är inte kopplat till ett Gedu-konto hos School of Gaming. Kör /link för att koppla det och svara sedan igen.",
+    "heading": "Ett tillfälle behöver en vikarie",
+    "filled": "Tillfället har fått en vikarie",
+    "notNeeded": "Ingen vikarie behövs längre",
+    "acceptedHeading": "Du har godkänts som vikarie",
+    "acceptedBody": "Du har godkänts som vikarie för {product} – {group} den {when}. Tillfället är nu ditt enligt ditt Gedu-avtal, och gruppens arbetsyta öppnas för dig 48 timmar innan det börjar.",
+    "openMySog": "Öppna Min SOG",
+    "previewNotice": "Det här är en förhandsvisning – knapparna ändrar ingenting."
   },
   "seatOffer": {
     "offer": {

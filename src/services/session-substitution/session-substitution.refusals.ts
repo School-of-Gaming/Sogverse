@@ -145,30 +145,42 @@ export function seatSubstituteFailureKey(
   return "seatFailed";
 }
 
-/** The lines a refused offer can read as, all under `gedu.substitution`. */
-export type SubstitutionOfferFailureKey =
+/** The lines a refused answer can read as, all under `gedu.substitution`. */
+export type SubstitutionAnswerFailureKey =
   | "poolOfferFailedNotQualified"
   | "poolOfferFailedLanguage"
   | "poolOfferFailedCoverage"
+  | "poolAnswerFailedApproved"
+  | "poolAnswerFailedClosed"
+  | "poolAnswerFailedPast"
   | "poolActionFailed";
 
 /**
- * Which refusal `offer_session_substitution` raised, for a gedu offering from
- * the pool.
+ * Which refusal a gedu's answer to a request raised — an offer or a decline,
+ * from the pool or from a Discord DM. **One mapper for both answers because
+ * one database body answers both**: the two writes differ only in the tests
+ * an offer asks on top.
  *
- * Three are worth telling apart, the session's three requirements: its
- * product requires a qualification the gedu does not hold, it is run in a
- * language the gedu has not listed as one they speak, or it is in person at a
- * site outside the gedu's coverage areas. The pool already leaves such
- * requests out, so each is a list read before something changed — and "try
- * again" would be untrue, because trying again cannot succeed. All three share
- * `42501` with the generic refusal and are told apart by their phrases.
- * Everything else, the request having closed meanwhile included, falls to the
- * generic line.
+ * Every answer can be refused three ways that share `check_violation` and are
+ * told apart by their phrases: the gedu is already the approved substitute
+ * (stepping down is a new absence, not a change of answer), the request is no
+ * longer open — filled by somebody else or withdrawn — and the session's date
+ * has passed.
+ *
+ * An offer adds the session's three requirements: its product requires a
+ * qualification the gedu does not hold, it is run in a language the gedu has
+ * not listed as one they speak, or it is in person at a site outside the
+ * gedu's coverage areas. The pool already leaves such requests out, so each is
+ * a list read before something changed — and "try again" would be untrue,
+ * because trying again cannot succeed. All three share `42501` with the bare
+ * refusal and are told apart by their phrases.
+ *
+ * Everything else — the bare `42501`, which is also what an unknown request
+ * answers, and a network failure — falls to the generic line.
  */
-export function substitutionOfferFailureKey(
+export function substitutionAnswerFailureKey(
   error: unknown,
-): SubstitutionOfferFailureKey {
+): SubstitutionAnswerFailureKey {
   const { code, message } = wireError(error);
   if (code === "42501") {
     if (message.includes("is not qualified")) {
@@ -179,6 +191,17 @@ export function substitutionOfferFailureKey(
     }
     if (message.includes("does not cover the site")) {
       return "poolOfferFailedCoverage";
+    }
+  }
+  if (code === "23514") {
+    if (message.includes("you are the approved substitute")) {
+      return "poolAnswerFailedApproved";
+    }
+    if (message.includes("no longer taking offers")) {
+      return "poolAnswerFailedClosed";
+    }
+    if (message.includes("is in the past")) {
+      return "poolAnswerFailedPast";
     }
   }
   return "poolActionFailed";

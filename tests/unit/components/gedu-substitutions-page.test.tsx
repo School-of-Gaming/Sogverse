@@ -48,7 +48,10 @@ const TIME_ZONE = "Europe/Helsinki";
  */
 const NOW = new Date("2026-03-17T09:00:00Z");
 
-function renderPage(scenario: GeduSubstitutionsScenario) {
+function renderPage(
+  scenario: GeduSubstitutionsScenario,
+  onWithdrawOwnRequest: (requestId: string) => Promise<void> = inertWrite,
+) {
   const fixture = buildGeduSubstitutionsFixture(NOW, scenario, "en", TIME_ZONE);
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -71,9 +74,11 @@ function renderPage(scenario: GeduSubstitutionsScenario) {
                 committingRequestId={null}
                 error={null}
                 onOffer={inertWrite}
-                onWithdraw={noop}
+                onDecline={noop}
               />
             }
+            ownRequests={fixture.ownRequests}
+            onWithdrawOwnRequest={onWithdrawOwnRequest}
             substitutions={fixture.substitutions}
           />
         </NowProvider>
@@ -149,8 +154,12 @@ describe("the substitutions page, populated", () => {
     expect(due).toHaveLength(2);
 
     // The status ink the warning mark is drawn in — the app's own token, spent
-    // on the glyph. Nothing else on this page wears it.
-    expect(container.querySelectorAll(".text-warning")).toHaveLength(2);
+    // on the glyph. Nothing else in the pool wears it; the reader's own waiting
+    // request above wears its own warning panel, which is not this mark.
+    const pool = container.querySelector(
+      'section[aria-labelledby="substitution-pool-heading"]',
+    );
+    expect(pool?.querySelectorAll(".text-warning")).toHaveLength(2);
   });
 
   it("draws the offer in the act colour, not the world one", () => {
@@ -187,13 +196,17 @@ describe("the substitutions page, populated", () => {
     }
   });
 
-  it("offers the withdrawal on the card already offered on", () => {
+  it("marks the offered card and the declined card, each with the other answer left", () => {
     const { container } = renderPage("populated");
     const labels = [...container.querySelectorAll("button")].map((b) =>
       b.textContent.trim(),
     );
-    expect(labels).toContain(copy.poolWithdrawAction);
-    expect(labels.filter((l) => l === copy.poolWithdrawAction)).toHaveLength(1);
+    // Six cards: four unanswered with both answers, one offered with Decline
+    // alone, one declined with Offer alone.
+    expect(labels.filter((l) => l === copy.poolDeclineAction)).toHaveLength(5);
+    expect(labels.filter((l) => l === copy.poolOfferAction)).toHaveLength(5);
+    expect(screen.getAllByText(copy.poolOffered)).toHaveLength(1);
+    expect(screen.getAllByText(copy.poolDeclined)).toHaveLength(1);
   });
 
   it("shows what the gedu has already taken, locked card included", () => {
@@ -347,6 +360,94 @@ function oneGroup(
 ) {
   return sessions.filter((session) => session.groupId === sessions[0].groupId);
 }
+
+const feedStatusCopy = messages.gedu.sessionFeed;
+
+describe("the reader's own requests", () => {
+  it("sits above the pool, under its own heading", () => {
+    const { container } = renderPage("populated");
+    const text = container.textContent;
+
+    expect(text).toContain(copy.ownRequestsHeading);
+    expect(text.indexOf(copy.ownRequestsHeading)).toBeLessThan(
+      text.indexOf(copy.poolHeading),
+    );
+  });
+
+  it("is not drawn at all, heading included, when there is no live request", () => {
+    const { container } = renderPage("empty");
+
+    expect(container.textContent).not.toContain(copy.ownRequestsHeading);
+    expect(
+      screen.queryByRole("button", {
+        name: feedStatusCopy.substitutionWithdrawAction,
+      }),
+    ).toBeNull();
+  });
+
+  it("draws the session card's own panel: waiting with the offers, or who is substituting", () => {
+    const { container } = renderPage("populated");
+    const section = container.querySelector(
+      'section[aria-labelledby="substitution-own-requests-heading"]',
+    );
+    const text = section?.textContent ?? "";
+
+    expect(text).toContain(feedStatusCopy.substitutionRequestStatusOpen);
+    expect(text).toContain("2 offers waiting");
+    expect(text).toContain(
+      feedStatusCopy.substitutionRequestStatusSubstituted.replace(
+        "{name}",
+        "Saana",
+      ),
+    );
+    // Withdraw on the open request alone: a substituted one is the office's.
+    expect(
+      screen.getAllByRole("button", {
+        name: feedStatusCopy.substitutionWithdrawAction,
+      }),
+    ).toHaveLength(1);
+  });
+
+  it("withdraws through the confirm, holding until the write settles", async () => {
+    let settle: () => void = () => {};
+    const onWithdraw = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          settle = resolve;
+        }),
+    );
+    renderPage("populated", onWithdraw);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: feedStatusCopy.substitutionWithdrawAction,
+      }),
+    );
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: feedStatusCopy.substitutionWithdrawConfirm,
+        }),
+      );
+    });
+
+    expect(onWithdraw).toHaveBeenCalledTimes(1);
+    expect(onWithdraw).toHaveBeenCalledWith(
+      "7a375442-e5ce-4fd5-9bc8-b1ba04c79881",
+    );
+    // Still asking while the write is in the air.
+    expect(
+      screen.getByText(feedStatusCopy.substitutionWithdrawTitle),
+    ).toBeTruthy();
+
+    await act(async () => {
+      settle();
+    });
+    expect(
+      screen.queryByText(feedStatusCopy.substitutionWithdrawTitle),
+    ).toBeNull();
+  });
+});
 
 describe("the page's file-an-absence entry", () => {
   it("is outlined rather than drawn in the act colour", () => {

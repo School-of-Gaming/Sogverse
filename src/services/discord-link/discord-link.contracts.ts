@@ -53,10 +53,8 @@ export const sendTestDiscordMessageBody = z.discriminatedUnion("template", [
 ]);
 export type SendTestDiscordMessageBody = z.infer<typeof sendTestDiscordMessageBody>;
 
-/** Where the sent message is — the first, for a set — as a link that opens it in Discord. */
-export const sendTestDiscordMessageResponse = z.object({
-  jumpUrl: z.string().url(),
-});
+/** Discord took the message, or the set. */
+export const sendTestDiscordMessageResponse = z.object({ ok: z.literal(true) });
 export type SendTestDiscordMessageResponse = z.infer<
   typeof sendTestDiscordMessageResponse
 >;

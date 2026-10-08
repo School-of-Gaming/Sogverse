@@ -42,6 +42,13 @@ ALTER TABLE ONLY public.session_cancellations
 
 
 --
+-- Name: session_cancellations session_cancellations_notify; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER session_cancellations_notify AFTER INSERT OR DELETE ON public.session_cancellations FOR EACH ROW EXECUTE FUNCTION public.notify_session_cancellation_changed();
+
+
+--
 -- Name: session_cancellations session_cancellations_cancelled_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
