@@ -199,16 +199,19 @@ describe("CompleteRegistrationForm", () => {
     expect(submitButton().disabled).toBe(true);
   });
 
-  it("re-enables and says why when the route refuses", async () => {
+  it("re-enables and shows the translated try-again line, never the route's English, when the route refuses", async () => {
     mockFetch.mockResolvedValue(
       new Response(JSON.stringify({ error: "Invalid request" }), { status: 400 }),
     );
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const { view, submit, submitButton } = renderForm("parent");
     tickTerms(view);
 
     await submit();
+    consoleError.mockRestore();
 
-    expect(view.container.textContent).toContain("Invalid request");
+    expect(view.container.textContent).toContain("completeRegistration.failed");
+    expect(view.container.textContent).not.toContain("Invalid request");
     expect(submitButton().disabled).toBe(false);
     expect(mockNavigateAfterAuth).not.toHaveBeenCalled();
   });

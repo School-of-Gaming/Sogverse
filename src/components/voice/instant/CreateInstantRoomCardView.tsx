@@ -20,8 +20,8 @@ export interface CreateInstantRoomCardViewProps {
   creating: boolean;
   /** Join is in flight — the navigation is under way. */
   joining: boolean;
-  /** Already-translated failure message, or `null`. */
-  error: string | null;
+  /** Whether the last create attempt failed. */
+  createFailed: boolean;
   onCreate: () => void;
   onJoin: () => void;
 }
@@ -42,7 +42,7 @@ export function CreateInstantRoomCardView({
   createdCode,
   creating,
   joining,
-  error,
+  createFailed,
   onCreate,
   onJoin,
 }: CreateInstantRoomCardViewProps) {
@@ -83,7 +83,7 @@ export function CreateInstantRoomCardView({
           </Button>
         )}
 
-        {error && <StatusLine status="destructive">{error}</StatusLine>}
+        {createFailed && <StatusLine status="destructive">{t("createFailed")}</StatusLine>}
       </CardContent>
     </Card>
   );

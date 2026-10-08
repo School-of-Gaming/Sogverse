@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { readErrorMessage } from "@/lib/api/json-response";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
 import { ROUTES } from "@/lib/constants";
@@ -20,11 +19,13 @@ import {
 } from "@/lib/navigation/post-auth-redirect";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { GeduProfileFields, useGeduProfileFields } from "./gedu-profile-fields";
-import { NameFields, nameSchemaFields } from "./name-fields";
+import { NameFields, useNameSchemaFields } from "./name-fields";
 import { ParentAccountFields, useParentAccountFields } from "./parent-account-fields";
 
 /** The name rules the register forms hold a parent and a Gedu to. */
-const namesSchema = z.object(nameSchemaFields);
+function useNamesSchema() {
+  return z.object(useNameSchemaFields());
+}
 
 export interface CompleteRegistrationFormProps {
   /** Which registration this account is finishing — the register page it began on. */
@@ -72,21 +73,25 @@ function utmBody(utm: UtmAttribution) {
 }
 
 /**
- * What a refused completion shows, and whether the page has to move on. A 409
- * is an account that no longer owes registration — finished in another tab, or
- * never a fresh one — and signing in again lands it wherever it now belongs.
+ * Which `auth.completeRegistration` sentence a refused completion shows, and
+ * whether the page has to move on. A 409 is an account that no longer owes
+ * registration — finished in another tab, or never a fresh one — and signing in
+ * again lands it wherever it now belongs. Anything else is a try-again: the
+ * form has already checked every field the route would refuse, and the route's
+ * own English goes to the console.
  */
 async function refusal(
   response: Response,
-  messages: { alreadyComplete: string; unexpected: string },
-): Promise<{ message: string; leave: boolean }> {
+): Promise<{ key: "alreadyComplete" | "failed"; leave: boolean }> {
   if (response.status === 409) {
-    return { message: messages.alreadyComplete, leave: true };
+    return { key: "alreadyComplete", leave: true };
   }
-  return {
-    message: await readErrorMessage(response, messages.unexpected),
-    leave: false,
-  };
+  console.error(
+    "[complete-registration-form] completion refused:",
+    response.status,
+    await response.text().catch(() => ""),
+  );
+  return { key: "failed", leave: false };
 }
 
 /**
@@ -228,6 +233,7 @@ function ParentCompletion({
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const account = useParentAccountFields();
+  const namesSchema = useNamesSchema();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -270,11 +276,8 @@ function ParentCompletion({
       });
 
       if (!response.ok) {
-        const { message, leave } = await refusal(response, {
-          alreadyComplete: t("completeRegistration.alreadyComplete"),
-          unexpected: c("unexpectedError"),
-        });
-        setError(message);
+        const { key, leave } = await refusal(response);
+        setError(t(`completeRegistration.${key}`));
         if (leave) {
           // Still busy: the document is about to unload.
           window.location.href = ROUTES.login;
@@ -346,6 +349,7 @@ function GeduCompletion({
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const profile = useGeduProfileFields();
+  const namesSchema = useNamesSchema();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -383,11 +387,8 @@ function GeduCompletion({
       });
 
       if (!response.ok) {
-        const { message, leave } = await refusal(response, {
-          alreadyComplete: t("completeRegistration.alreadyComplete"),
-          unexpected: c("unexpectedError"),
-        });
-        setError(message);
+        const { key, leave } = await refusal(response);
+        setError(t(`completeRegistration.${key}`));
         if (leave) {
           // Still busy: the document is about to unload.
           window.location.href = ROUTES.login;

@@ -556,8 +556,8 @@ describe("gedu product page — writing a note", () => {
     // `Forbidden`, which is English, untranslated, and written for a log.
     //
     // The whole chain runs here — the real service over a fake transport, the
-    // real dialog — because the mapping and the fallback live in two files and
-    // only their meeting point is the claim.
+    // real dialog — so the claim is about what a refusal the service really
+    // throws turns into on screen.
     const fetchMock = vi.fn<typeof fetch>();
     fetchMock.mockResolvedValue(
       postgrestJson(
@@ -577,7 +577,7 @@ describe("gedu product page — writing a note", () => {
 
     await waitFor(() =>
       expect(
-        flairDialog().getByText("An unexpected error occurred"),
+        flairDialog().getByText(messages.memberFlair.saveFailed),
       ).toBeTruthy(),
     );
     expect(screen.queryByText("Forbidden")).toBeNull();
@@ -797,7 +797,7 @@ describe("gedu product page — writing the creation", () => {
 
     await waitFor(() =>
       expect(
-        flairDialog().getByText("An unexpected error occurred"),
+        flairDialog().getByText(messages.memberFlair.saveFailed),
       ).toBeTruthy(),
     );
     expect(setNote).toHaveBeenCalledTimes(1);
@@ -828,7 +828,7 @@ describe("gedu product page — writing the creation", () => {
 
     await waitFor(() =>
       expect(
-        flairDialog().getByText("An unexpected error occurred"),
+        flairDialog().getByText(messages.memberFlair.saveFailed),
       ).toBeTruthy(),
     );
     expect(setNote).toHaveBeenCalledTimes(1);

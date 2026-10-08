@@ -1926,7 +1926,8 @@
       "creatingAccount": "Luodaan tiliä...",
       "accountExists": "Tällä sähköpostiosoitteella on jo tili",
       "weakPassword": "Salasana on liian helppo arvata — kokeile pidempää tai sellaista, jota et käytä muualla",
-      "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"
+      "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>",
+      "failed": "Tilin luominen epäonnistui. Yritä uudelleen."
     },
     "forgotPassword": {
       "title": "Unohditko salasanan?",
@@ -1978,8 +1979,17 @@
       "submit": "Viimeistele",
       "finishing": "Viimeistellään...",
       "alreadyComplete": "Tämä tili on jo valmis. Kirjaudu uudelleen sisään jatkaaksesi.",
-      "switchToParent": "Etkö ole pelikasvattaja? <link>Luo sen sijaan vanhemman tili</link>"
-    }
+      "switchToParent": "Etkö ole pelikasvattaja? <link>Luo sen sijaan vanhemman tili</link>",
+      "failed": "Tilin viimeistely epäonnistui. Yritä uudelleen."
+    },
+    "validation": {
+      "emailInvalid": "Anna kelvollinen sähköpostiosoite.",
+      "firstNameTooShort": "Etunimessä on oltava vähintään {min} merkkiä.",
+      "firstNameTooLong": "Etunimessä saa olla enintään {max} merkkiä.",
+      "lastNameTooShort": "Sukunimessä on oltava vähintään {min} merkkiä.",
+      "lastNameTooLong": "Sukunimessä saa olla enintään {max} merkkiä."
+    },
+    "signInAfterRegisterFailed": "Tilisi on valmis, mutta sisäänkirjautuminen ei onnistunut. Kirjaudu sisään sähköpostiosoitteellasi ja salasanallasi."
   },
   "pin": {
     "create": {
@@ -2598,7 +2608,8 @@
       "chooseAreas": "Valitse alueet",
       "loading": "Ladataan sijainteja...",
       "save": "Tallenna",
-      "saving": "Tallennetaan..."
+      "saving": "Tallennetaan...",
+      "saveFailed": "Alueiden tallennus ei onnistunut. Yritä uudelleen."
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Vain ryhmään nimetyt Gedut ja ylläpitäjät voivat lukea tämän muistiinpanon.",
@@ -3020,7 +3031,8 @@
     "creationTitlePlaceholder": "Mitä hän teki",
     "creationUrlLabel": "Teoksen linkki",
     "creationUrlPlaceholder": "Linkki teokseen",
-    "creationIncomplete": "Teos tarvitsee sekä nimen että linkin."
+    "creationIncomplete": "Teos tarvitsee sekä nimen että linkin.",
+    "saveFailed": "Tallennus ei onnistunut. Yritä uudelleen."
   },
   "richText": {
     "bold": "Lihavointi",
@@ -4091,7 +4103,8 @@
       "audience": "Gedusi ja School of Gamingin tiimi lukevat palautteesi. Kiitos!",
       "saveFailed": "Vastauksiasi ei tallennettu. Paina Valmis ja yritä uudelleen.",
       "done": "Valmis"
-    }
+    },
+    "zoneSaveFailed": "Alueen tallennus ei onnistunut. Yritä uudelleen."
   },
   "voiceButton": {
     "joinVoice": "Liity äänihuoneeseen",

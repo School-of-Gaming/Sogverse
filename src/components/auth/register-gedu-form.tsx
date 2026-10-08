@@ -18,17 +18,9 @@ import { readErrorMessage } from "@/lib/api/json-response";
 import { completeRegistrationQuery } from "@/lib/navigation/post-auth-redirect";
 import { ContinueWithGoogle } from "./continue-with-google";
 import { GeduProfileFields, useGeduProfileFields } from "./gedu-profile-fields";
-import { NameFields, nameSchemaFields } from "./name-fields";
+import { NameFields, useNameSchemaFields } from "./name-fields";
 
-const registerGeduSchema = z.object({
-  ...nameSchemaFields,
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+const MIN_PASSWORD_LENGTH = 8;
 
 export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
   const t = useTranslations("auth");
@@ -51,6 +43,19 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
   const [googlePending, setGooglePending] = useState(false);
 
   const supabase = getClient();
+  const nameFields = useNameSchemaFields();
+
+  // Built here rather than at module level so its refusals are in the reader's
+  // language; the same shape as the parent registration form's.
+  const registerGeduSchema = z.object({
+    ...nameFields,
+    email: z.string().email(t("validation.emailInvalid")),
+    password: z.string().min(MIN_PASSWORD_LENGTH, c("passwordMinLength", { count: MIN_PASSWORD_LENGTH })),
+    confirmPassword: z.string(),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: t("resetPassword.passwordsDoNotMatch"),
+    path: ["confirmPassword"],
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,8 +123,11 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
         password: validated.password,
       });
       if (signInError) {
+        // The account exists; only this browser's session is missing. GoTrue's
+        // reason is English for the log, and the Gedu's way on is to sign in.
+        console.error("[register-gedu-form] sign-in after registration failed:", signInError);
         unfreezeAuthState();
-        setError(signInError.message);
+        setError(t("signInAfterRegisterFailed"));
         setIsLoading(false);
         return;
       }

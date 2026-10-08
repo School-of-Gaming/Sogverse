@@ -1926,7 +1926,8 @@
       "creatingAccount": "Création du compte...",
       "accountExists": "Un compte existe déjà avec cette adresse e-mail",
       "weakPassword": "Ce mot de passe est trop facile à deviner — essayez-en un plus long, ou un que vous n'utilisez nulle part ailleurs",
-      "alreadyHaveAccount": "Vous avez déjà un compte ? <link>Connectez-vous</link>"
+      "alreadyHaveAccount": "Vous avez déjà un compte ? <link>Connectez-vous</link>",
+      "failed": "Nous n’avons pas pu créer votre compte. Veuillez réessayer."
     },
     "forgotPassword": {
       "title": "Mot de passe oublié ?",
@@ -1978,8 +1979,17 @@
       "submit": "Terminer",
       "finishing": "Finalisation...",
       "alreadyComplete": "Ce compte est déjà configuré. Reconnectez-vous pour continuer.",
-      "switchToParent": "Vous n’êtes pas Gedu ? <link>Créer plutôt un compte parent</link>"
-    }
+      "switchToParent": "Vous n’êtes pas Gedu ? <link>Créer plutôt un compte parent</link>",
+      "failed": "Nous n’avons pas pu finaliser votre compte. Veuillez réessayer."
+    },
+    "validation": {
+      "emailInvalid": "Saisissez une adresse e-mail valide.",
+      "firstNameTooShort": "Le prénom doit contenir au moins {min} caractères.",
+      "firstNameTooLong": "Le prénom ne doit pas dépasser {max} caractères.",
+      "lastNameTooShort": "Le nom doit contenir au moins {min} caractères.",
+      "lastNameTooLong": "Le nom ne doit pas dépasser {max} caractères."
+    },
+    "signInAfterRegisterFailed": "Votre compte est prêt, mais nous n’avons pas pu vous connecter. Connectez-vous avec votre adresse e-mail et votre mot de passe."
   },
   "pin": {
     "create": {
@@ -2598,7 +2608,8 @@
       "chooseAreas": "Choisir des zones",
       "loading": "Chargement des lieux...",
       "save": "Enregistrer",
-      "saving": "Enregistrement..."
+      "saving": "Enregistrement...",
+      "saveFailed": "Vos zones n’ont pas été enregistrées. Réessayez."
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Seuls les Gedus assignés et les admins peuvent lire cette note.",
@@ -3020,7 +3031,8 @@
     "creationTitlePlaceholder": "Ce qui a été réalisé",
     "creationUrlLabel": "Lien de la création",
     "creationUrlPlaceholder": "Lien vers la création",
-    "creationIncomplete": "Une création a besoin d’un titre et d’un lien."
+    "creationIncomplete": "Une création a besoin d’un titre et d’un lien.",
+    "saveFailed": "L’enregistrement a échoué. Réessayez."
   },
   "richText": {
     "bold": "Gras",
@@ -4091,7 +4103,8 @@
       "audience": "Ton Gedu et l’équipe de School of Gaming liront ton retour. Merci !",
       "saveFailed": "Tes réponses n’ont pas été enregistrées. Appuie sur Terminé pour réessayer.",
       "done": "Terminé"
-    }
+    },
+    "zoneSaveFailed": "La zone n’a pas été enregistrée. Réessayez."
   },
   "voiceButton": {
     "joinVoice": "Rejoindre la salle vocale",

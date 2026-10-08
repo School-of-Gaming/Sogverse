@@ -1970,7 +1970,8 @@
       "creatingAccount": "account vIchenmoH...",
       "accountExists": "QIn’vamDaq account tu’lu’",
       "weakPassword": "mu’ pegh nap yIlo’Qo’! mu’ pegh tIn yIchel, pagh latlhDaq Dalo’be’bogh wa’",
-      "alreadyHaveAccount": "account DaHutlhpa’? <link>bI’el</link>"
+      "alreadyHaveAccount": "account DaHutlhpa’? <link>bI’el</link>",
+      "failed": "mI’ chenmoHlaHbe’lu’. yInID."
     },
     "forgotPassword": {
       "title": "mu’mey DaSovbe’?",
@@ -2022,8 +2023,17 @@
       "submit": "yIrInmoH",
       "finishing": "vIrInmoH...",
       "alreadyComplete": "account’vam rInta’. yI’el’qa’ ’ej yItaH.",
-      "switchToParent": "Gedu SoHbe’’a’? <link>vav/SoS account yIchenmoH</link>"
-    }
+      "switchToParent": "Gedu SoHbe’’a’? <link>vav/SoS account yIchenmoH</link>",
+      "failed": "mI’ naQmoHlaHbe’lu’. yInID."
+    },
+    "validation": {
+      "emailInvalid": "QIn Daq lugh yIghItlh.",
+      "firstNameTooShort": "wa’DIch pong tIn law’ {min} Hap puS.",
+      "firstNameTooLong": "wa’DIch pong tIn law’ {max} Hap law’.",
+      "lastNameTooShort": "qorDu’ pong tIn law’ {min} Hap puS.",
+      "lastNameTooLong": "qorDu’ pong tIn law’ {max} Hap law’."
+    },
+    "signInAfterRegisterFailed": "mI’lIj ghaj! ’ach Du’elmoHlaHbe’lu’. QIn Daq mu’ pegh je yIlo’ ’ej yI’el."
   },
   "pin": {
     "create": {
@@ -2638,7 +2648,8 @@
       "chooseAreas": "Daqmey yIwIv",
       "loading": "Daqmey Huqtaw...",
       "save": "yIpol",
-      "saving": "polchoH..."
+      "saving": "polchoH...",
+      "saveFailed": "Daqmey pollu’be’. yInID."
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Gedupu’ ngeHlu’bogh che’wI’pu’ je neH laDlaH.",
@@ -3060,7 +3071,8 @@
     "creationTitlePlaceholder": "nuq chenmoHta’",
     "creationUrlLabel": "chenmoHta’ ghItlhHom",
     "creationUrlPlaceholder": "ghItlhHom",
-    "creationIncomplete": "chenmoHta’ pong ghItlhHom je poQ."
+    "creationIncomplete": "chenmoHta’ pong ghItlhHom je poQ.",
+    "saveFailed": "pollu’be’. yInID."
   },
   "richText": {
     "bold": "ngutlh tIn",
@@ -4131,7 +4143,8 @@
       "audience": "QInlIj laD Gedu’lI’ School of Gaming ghom je. qatlho’!",
       "saveFailed": "QInlIj polbe’lu’pu’. rIn yIqIp ’ej yInIDqa’!",
       "done": "rIn"
-    }
+    },
+    "zoneSaveFailed": "Daq pollu’be’. yInID."
   },
   "voiceButton": {
     "joinVoice": "ghogh pa’Daq yIghoS",

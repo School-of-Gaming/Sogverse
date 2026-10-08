@@ -1926,7 +1926,8 @@
       "creatingAccount": "Creating account...",
       "accountExists": "An account with this email already exists",
       "weakPassword": "That password is too easy to guess — try a longer one, or one you don't use anywhere else",
-      "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
+      "alreadyHaveAccount": "Already have an account? <link>Sign in</link>",
+      "failed": "We couldn’t create your account. Please try again."
     },
     "forgotPassword": {
       "title": "Forgot password?",
@@ -1978,8 +1979,17 @@
       "submit": "Finish setting up",
       "finishing": "Finishing...",
       "alreadyComplete": "This account is already set up. Sign in again to continue.",
-      "switchToParent": "Not a Gedu? <link>Create a parent account instead</link>"
-    }
+      "switchToParent": "Not a Gedu? <link>Create a parent account instead</link>",
+      "failed": "We couldn’t finish setting up your account. Please try again."
+    },
+    "validation": {
+      "emailInvalid": "Enter a valid email address.",
+      "firstNameTooShort": "First name must be at least {min} characters.",
+      "firstNameTooLong": "First name must be at most {max} characters.",
+      "lastNameTooShort": "Last name must be at least {min} characters.",
+      "lastNameTooLong": "Last name must be at most {max} characters."
+    },
+    "signInAfterRegisterFailed": "Your account is ready, but we couldn’t sign you in. Sign in with your email and password."
   },
   "pin": {
     "create": {
@@ -2598,7 +2608,8 @@
       "chooseAreas": "Choose areas",
       "loading": "Loading locations...",
       "save": "Save",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "saveFailed": "Your coverage areas didn’t save. Try again."
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Only assigned Gedus and admins can read this note.",
@@ -3020,7 +3031,8 @@
     "creationTitlePlaceholder": "What they made",
     "creationUrlLabel": "Creation link",
     "creationUrlPlaceholder": "Link to it",
-    "creationIncomplete": "A creation needs both a title and a link."
+    "creationIncomplete": "A creation needs both a title and a link.",
+    "saveFailed": "That didn’t save. Try again."
   },
   "richText": {
     "bold": "Bold",
@@ -4778,7 +4790,8 @@
       "audience": "Your Gedu and the School of Gaming team will read your feedback. Thank you!",
       "saveFailed": "Your answers were not saved. Press Done to try again.",
       "done": "Done"
-    }
+    },
+    "zoneSaveFailed": "That zone didn’t save. Try again."
   },
   "voiceButton": {
     "joinVoice": "Join voice room",

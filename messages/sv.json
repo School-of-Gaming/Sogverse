@@ -1926,7 +1926,8 @@
       "creatingAccount": "Skapar konto...",
       "accountExists": "Ett konto med denna e-postadress finns redan",
       "weakPassword": "Det lösenordet är för lätt att gissa — prova ett längre, eller ett som du inte använder någon annanstans",
-      "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
+      "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>",
+      "failed": "Vi kunde inte skapa ditt konto. Försök igen."
     },
     "forgotPassword": {
       "title": "Glömt lösenordet?",
@@ -1978,8 +1979,17 @@
       "submit": "Slutför",
       "finishing": "Slutförs...",
       "alreadyComplete": "Det här kontot är redan klart. Logga in igen för att fortsätta.",
-      "switchToParent": "Inte spelfostrare? <link>Skapa ett föräldrakonto i stället</link>"
-    }
+      "switchToParent": "Inte spelfostrare? <link>Skapa ett föräldrakonto i stället</link>",
+      "failed": "Vi kunde inte slutföra ditt konto. Försök igen."
+    },
+    "validation": {
+      "emailInvalid": "Ange en giltig e-postadress.",
+      "firstNameTooShort": "Förnamnet måste vara minst {min} tecken.",
+      "firstNameTooLong": "Förnamnet får vara högst {max} tecken.",
+      "lastNameTooShort": "Efternamnet måste vara minst {min} tecken.",
+      "lastNameTooLong": "Efternamnet får vara högst {max} tecken."
+    },
+    "signInAfterRegisterFailed": "Ditt konto är klart, men vi kunde inte logga in dig. Logga in med din e-postadress och ditt lösenord."
   },
   "pin": {
     "create": {
@@ -2598,7 +2608,8 @@
       "chooseAreas": "Välj områden",
       "loading": "Laddar platser...",
       "save": "Spara",
-      "saving": "Sparar..."
+      "saving": "Sparar...",
+      "saveFailed": "Dina områden sparades inte. Försök igen."
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Bara tilldelade Geduer och administratörer kan läsa den här anteckningen.",
@@ -3020,7 +3031,8 @@
     "creationTitlePlaceholder": "Vad de gjorde",
     "creationUrlLabel": "Länk till skapelsen",
     "creationUrlPlaceholder": "Länk till den",
-    "creationIncomplete": "En skapelse behöver både en titel och en länk."
+    "creationIncomplete": "En skapelse behöver både en titel och en länk.",
+    "saveFailed": "Det sparades inte. Försök igen."
   },
   "richText": {
     "bold": "Fet stil",
@@ -4091,7 +4103,8 @@
       "audience": "Din Gedu och teamet på School of Gaming läser din feedback. Tack!",
       "saveFailed": "Dina svar sparades inte. Tryck på Klart för att försöka igen.",
       "done": "Klart"
-    }
+    },
+    "zoneSaveFailed": "Zonen sparades inte. Försök igen."
   },
   "voiceButton": {
     "joinVoice": "Gå med i röstrum",
