@@ -1798,6 +1798,7 @@
         "other": "latlh"
       },
       "noOffers": "nob tu’lu’be’ DaH.",
+      "declinedBy": "lajQo’pu’: {names}",
       "openGroup": "ghom’a’ yIpoS",
       "seatSomeoneElse": "latlh lIwwI’ yIwIv",
       "approve": "yIlaj",
@@ -2603,8 +2604,13 @@
       "poolRoleAssistant": "Gedu boQwI’",
       "poolFee": "{fee} / may’",
       "poolOfferAction": "jIlIwlaH",
-      "poolWithdrawAction": "nob yInatlh",
-      "poolWithdrawPending": "natlhlI’…",
+      "poolDeclineAction": "jIlIwlaHbe’",
+      "poolDeclinePending": "ngeHlI’…",
+      "poolOffered": "lIwmeH bInobpu’",
+      "poolDeclined": "bIlajQo’pu’",
+      "poolAnswerFailedApproved": "may’vam DalIwmeH chaw’lu’pu’. DaghoSlaHbe’chugh, lIwwI’ yItlhob.",
+      "poolAnswerFailedClosed": "may’vam lIwwI’ poQbe’lu’ DaH.",
+      "poolAnswerFailedPast": "may’vam Hoch rInpu’.",
       "poolActionFailed": "pollu’be’. yIboq.",
       "poolOfferFailedNotQualified": "laH Daghajbe’bogh poQ may’vam. bIlIwqanglaHbe’.",
       "poolOfferFailedLanguage": "Hol DajatlhlaHbe’bogh lo’ may’vam. bIlIwqanglaHbe’. DuHmey DaSeHbogh DaqDaq Hol DachellaH.",
@@ -4612,6 +4618,35 @@
       "body": "ghItlhvam rarlaHbe' ghItlhvam. beqpu' SoHchugh, beq ghItlhlIj yIlo'."
     }
   },
+  "slackLink": {
+    "confirm": {
+      "title": "Slack ghItlhlIj yIrar",
+      "body": "Slack ghItlh <b>@{username}</b> School of Gaming loH ghItlhlIj DararneS’a’? vaj SoHvaD lIwwI’mey chaw’laH Slack ghItlhvam. ghItlhlIj neH yIrar.",
+      "action": "ghItlh yIrar",
+      "failed": "Qagh. ghItlhlIj rarlu’be’. yInIDqa’."
+    },
+    "linked": {
+      "title": "@{username} rarlu’pu’",
+      "body": "DaH Slack Daq lIwwI’mey Dachaw’laH.",
+      "goToDashboard": "QaD yIghoS"
+    },
+    "used": {
+      "title": "ghItlhvam lo’pu’lu’",
+      "body": "wa’logh neH Qap ghItlh. ghItlh chu’ DaghajmeH, Slack Daq <code>/link</code> yIlo’qa’."
+    },
+    "expired": {
+      "title": "ghItlhvam Heghpu’",
+      "body": "wa’maH tup pIq Hegh ghItlhmey. ghItlh chu’ DaghajmeH, Slack Daq <code>/link</code> yIlo’qa’."
+    },
+    "missingToken": {
+      "title": "ghItlhvam naQbe’",
+      "body": "ghItlh chu’ DaghajmeH, Slack Daq <code>/link</code> yIlo’qa’."
+    },
+    "refused": {
+      "title": "loHwI’pu’ neH Slack ghItlh rarlaH",
+      "body": "ghItlhvam rarlaHbe’ ghItlhvam. loHwI’ SoHchugh, loHwI’ ghItlhlIj yIlo’."
+    }
+  },
   "discordSub": {
     "requestTitle": "lIw yItlhob",
     "pickPlaceholder": "may’ yIwIv",
@@ -4621,6 +4656,15 @@
     "notLinked": "/sub Dalo’meH, wa’DIch School of Gaming Gedu ghItlhlIjDaq Discord ghItlhlIj yIrar.",
     "notLinkedRunLink": "School of Gaming Gedu ghItlhDaq Discord ghItlhlIj rarbe’lu’. /link yIlo’, ’ej /sub yIlo’qa’.",
     "previewNotice": "ghantoH ’oH — pagh ngeHlu’."
+  },
+  "discordSubOffer": {
+    "heading": "lIwwI’ poQ may’",
+    "filled": "may’vam lIwwI’ tu’lu’pu’",
+    "notNeeded": "lIwwI’ poQbe’lu’ DaH",
+    "acceptedHeading": "SoH lajlu’pu’",
+    "acceptedBody": "{when} {product} — {group} DalIwmeH SoH lajlu’pu’. DaH SoH may’ ’oH, Gedu quv chut tlhIH. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’.",
+    "openMySog": "My SOG yIpoSmoH",
+    "previewNotice": "ghantoH ’oH — leQmey DayuvDI’ pagh choHlu’."
   },
   "seatOffer": {
     "offer": {

@@ -6,7 +6,7 @@ import {
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
 import type { OpenSubstitutionRequest } from "@/services/session-substitution";
-import type { GeduAssignmentRole } from "@/types";
+import type { GeduAssignmentRole, SubstitutionOfferResponse } from "@/types";
 
 /**
  * The pool a certified gedu picks a substitution out of — the wire rows turned into
@@ -14,8 +14,8 @@ import type { GeduAssignmentRole } from "@/types";
  *
  * **The session itself is described by the shared session facts**, as on every
  * other substitution surface — the date and slots becoming instants included.
- * What is the pool's own is the frame around it: the role, its fee, whether
- * the caller has offered, and the order.
+ * What is the pool's own is the frame around it: the role, its fee, the
+ * caller's own answer, and the order.
  *
  * **What is deliberately not here is the absent gedu.** The read does not name
  * them and never will: naming the person half-reveals a private reason —
@@ -51,8 +51,12 @@ export interface SubstitutionPoolRow {
    * fee.
    */
   feeCents: number | null;
-  /** Whether the caller has already offered — the button's two resting states. */
-  hasOffered: boolean;
+  /**
+   * The caller's own answer — `offer`, `decline`, or `null` before they have
+   * given one. The card's three resting states; a declined request stays in
+   * the pool so the gedu can still offer.
+   */
+  response: SubstitutionOfferResponse | null;
 }
 
 /**
@@ -148,7 +152,7 @@ export function buildSubstitutionPoolRows(
       }),
       role: request.role,
       feeCents: request.fee_cents,
-      hasOffered: request.has_offered,
+      response: request.my_response,
     }),
   );
 

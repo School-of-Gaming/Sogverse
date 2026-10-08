@@ -20,6 +20,16 @@ export const geduAssignmentRole = z.enum(
 /** Why the absent gedu cannot be there. Admin-visible only. */
 export const substitutionReason = z.enum(Constants.public.Enums.substitution_reason);
 
+/**
+ * A gedu's answer to a request: `offer` ("I can") or `decline` ("I cannot").
+ * One per (request, gedu), and the two replace each other freely until an
+ * admin approves somebody — declining after offering is how an offer is taken
+ * back.
+ */
+export const substitutionOfferResponse = z.enum(
+  Constants.public.Enums.substitution_offer_response,
+);
+
 /** `open` → `substituted` (an admin seated a sub) or `withdrawn` (history). */
 export const substitutionRequestStatus = z.enum(
   Constants.public.Enums.substitution_request_status,
@@ -108,20 +118,21 @@ export type SubstitutionRequestDocument = z.infer<typeof substitutionRequestDocu
 export const liveSubstitutionRequests = z.array(substitutionRequestDocument);
 
 /**
- * **The same document with the absent gedu withheld** — what the two offer RPCs
- * return to the gedu who answered the pool.
+ * **The same document with the absent gedu withheld** — what the offer and the
+ * decline return to the gedu who answered the pool.
  *
  * Volunteering must not be a way to learn who is off sick. The pool list never
  * names the absent gedu, and before this the offer that followed it did: the
  * write returned the full document, so one button-press unmasked the person the
- * list had deliberately left out — and withdrawing an offer the caller never
- * made did the same without writing anything at all (the database now refuses
- * that outright).
+ * list had deliberately left out — and taking back an offer the caller never
+ * made did the same without writing anything at all. A decline from somebody
+ * the request could not have been asked of, holding no answer on it, is
+ * refused outright for the same reason.
  *
  * A second schema rather than a nullable field on the first, because the two
  * documents are read by different surfaces and the difference is worth being a
  * type: everything that renders a requester's name reads the named shape and
- * keeps its guarantee, while the offer mutations — whose callers use the result
+ * keeps its guarantee, while the two answer mutations — whose callers use the result
  * for nothing but invalidation — say in their return type that the name is not
  * theirs to have. The keys are still present and still null, exactly as every
  * other withheld field on this document is.
@@ -210,8 +221,12 @@ export const openSubstitutionRequest = z.object({
   session_date: z.string(),
   role: geduAssignmentRole,
   fee_cents: z.number().nullable(),
-  /** Whether the caller has already offered — the button's two states. */
-  has_offered: z.boolean(),
+  /**
+   * The caller's own answer, or null before they have given one — the card's
+   * three states. A request the caller declined stays in the pool, so they can
+   * still offer.
+   */
+  my_response: substitutionOfferResponse.nullable(),
   product: sessionProductDocument,
 });
 
@@ -242,10 +257,25 @@ export const adminSubstitutionOffer = z.object({
   gedu_id: z.string(),
   first_name: z.string(),
   last_name: z.string(),
-  created_at: z.string(),
+  /** When this answer was last given — an offer made, or re-made after a decline. */
+  responded_at: z.string(),
 });
 
 export type AdminSubstitutionOffer = z.infer<typeof adminSubstitutionOffer>;
+
+/**
+ * One gedu who has said they cannot stand in, on the admin queue. Named so the
+ * office knows whom asking again is pointless; carries no id of its own because
+ * nothing on the admin page acts on a decline.
+ */
+export const adminSubstitutionDecline = z.object({
+  gedu_id: z.string(),
+  first_name: z.string(),
+  last_name: z.string(),
+  responded_at: z.string(),
+});
+
+export type AdminSubstitutionDecline = z.infer<typeof adminSubstitutionDecline>;
 
 /**
  * What every row of the admin document carries, open or substituted: which
@@ -284,7 +314,10 @@ const adminSubstitutionRequestBase = z.object({
    * orphaned request, which a row renders as a bare date.
    */
   product: sessionProductDocument,
+  /** Answers of `offer` only, in the order they were given. */
   offers: z.array(adminSubstitutionOffer),
+  /** Answers of `decline`, in the order they were given. */
+  declines: z.array(adminSubstitutionDecline),
 });
 
 /**
@@ -310,8 +343,8 @@ const openAdminSubstitutionRequest = adminSubstitutionRequestBase.extend({
  * Every field here is non-null because the table's state CHECK sets the
  * substitute, the approver and the approval instant together on every
  * substituted row, and neither profile can be deleted out from under it; a
- * parse failure would mean that invariant stopped holding. `offers` is always
- * empty: the approval answered them.
+ * parse failure would mean that invariant stopped holding. `offers` and
+ * `declines` are always empty: the approval answered them.
  */
 const substitutedAdminSubstitutionRequest = adminSubstitutionRequestBase.extend({
   status: z.literal("substituted"),

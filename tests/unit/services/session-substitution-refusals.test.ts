@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   seatSubstituteFailureKey,
-  substitutionOfferFailureKey,
+  substitutionAnswerFailureKey,
   substitutionRequestFailureKey,
   substitutionRequestRefusalMeansAlreadyFiled,
 } from "@/services/session-substitution";
@@ -138,10 +138,10 @@ describe("seatSubstituteFailureKey", () => {
   });
 });
 
-describe("substitutionOfferFailureKey", () => {
+describe("substitutionAnswerFailureKey", () => {
   it("names a missing qualification, which trying again cannot fix", () => {
     expect(
-      substitutionOfferFailureKey(
+      substitutionAnswerFailureKey(
         refusal("42501", "this gedu is not qualified for this session's product"),
       ),
     ).toBe("poolOfferFailedNotQualified");
@@ -149,7 +149,7 @@ describe("substitutionOfferFailureKey", () => {
 
   it("names a language the gedu has not listed, apart from a missing qualification", () => {
     expect(
-      substitutionOfferFailureKey(
+      substitutionAnswerFailureKey(
         refusal("42501", "this gedu does not speak the language this session is run in"),
       ),
     ).toBe("poolOfferFailedLanguage");
@@ -157,27 +157,46 @@ describe("substitutionOfferFailureKey", () => {
 
   it("names a site outside the gedu's coverage areas, apart from the other two", () => {
     expect(
-      substitutionOfferFailureKey(
+      substitutionAnswerFailureKey(
         refusal("42501", "this gedu does not cover the site this session is run at"),
       ),
     ).toBe("poolOfferFailedCoverage");
   });
 
-  it("leaves the may-substitute refusal and everything else on the generic line", () => {
-    // The same SQLSTATE without the phrase is the may-substitute guard, which
-    // says nothing about why; a closed request and a network failure likewise.
-    expect(substitutionOfferFailureKey(refusal("42501", "Forbidden"))).toBe(
-      "poolActionFailed",
-    );
+  it("names the three refusals either answer can meet", () => {
     expect(
-      substitutionOfferFailureKey(
+      substitutionAnswerFailureKey(
+        refusal(
+          "23514",
+          "you are the approved substitute for this session; file a substitution request instead",
+        ),
+      ),
+    ).toBe("poolAnswerFailedApproved");
+    expect(
+      substitutionAnswerFailureKey(
         refusal(
           "23514",
           "this substitution request is substituted and is no longer taking offers",
         ),
       ),
+    ).toBe("poolAnswerFailedClosed");
+    expect(
+      substitutionAnswerFailureKey(
+        refusal("23514", "this session (2026-10-01) is in the past"),
+      ),
+    ).toBe("poolAnswerFailedPast");
+  });
+
+  it("leaves the bare refusal and everything else on the generic line", () => {
+    // The same SQLSTATE without a phrase is the may-substitute guard — or an
+    // unknown request — which says nothing about why; a network failure too.
+    expect(substitutionAnswerFailureKey(refusal("42501", "Forbidden"))).toBe(
+      "poolActionFailed",
+    );
+    expect(
+      substitutionAnswerFailureKey(refusal("23514", "something else entirely")),
     ).toBe("poolActionFailed");
-    expect(substitutionOfferFailureKey(new Error("Failed to fetch"))).toBe(
+    expect(substitutionAnswerFailureKey(new Error("Failed to fetch"))).toBe(
       "poolActionFailed",
     );
   });

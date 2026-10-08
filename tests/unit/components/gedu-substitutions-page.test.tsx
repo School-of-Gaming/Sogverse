@@ -71,7 +71,7 @@ function renderPage(scenario: GeduSubstitutionsScenario) {
                 committingRequestId={null}
                 error={null}
                 onOffer={inertWrite}
-                onWithdraw={noop}
+                onDecline={noop}
               />
             }
             substitutions={fixture.substitutions}
@@ -187,13 +187,17 @@ describe("the substitutions page, populated", () => {
     }
   });
 
-  it("offers the withdrawal on the card already offered on", () => {
+  it("marks the offered card and the declined card, each with the other answer left", () => {
     const { container } = renderPage("populated");
     const labels = [...container.querySelectorAll("button")].map((b) =>
       b.textContent.trim(),
     );
-    expect(labels).toContain(copy.poolWithdrawAction);
-    expect(labels.filter((l) => l === copy.poolWithdrawAction)).toHaveLength(1);
+    // Six cards: four unanswered with both answers, one offered with Decline
+    // alone, one declined with Offer alone.
+    expect(labels.filter((l) => l === copy.poolDeclineAction)).toHaveLength(5);
+    expect(labels.filter((l) => l === copy.poolOfferAction)).toHaveLength(5);
+    expect(screen.getAllByText(copy.poolOffered)).toHaveLength(1);
+    expect(screen.getAllByText(copy.poolDeclined)).toHaveLength(1);
   });
 
   it("shows what the gedu has already taken, locked card included", () => {

@@ -163,14 +163,17 @@ export function useOfferSessionSubstitution() {
   });
 }
 
-/** Take an offer back — keyed on the request, as the pool row knows it. */
-export function useWithdrawSessionSubstitutionOffer() {
+/**
+ * "I cannot" — keyed on the request, as the pool row knows it. Also how an
+ * offer is taken back.
+ */
+export function useDeclineSessionSubstitution() {
   const queryClient = useQueryClient();
   const service = new SessionSubstitutionService(getClient());
 
   return useMutation({
     mutationFn: (vars: { requestId: string }) =>
-      service.withdrawOffer(vars.requestId),
+      service.declineSubstitution(vars.requestId),
     onSuccess: () => invalidateSubstitutionWrite(queryClient),
   });
 }

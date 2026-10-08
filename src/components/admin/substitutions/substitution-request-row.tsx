@@ -1,7 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PersonChip } from "@/components/ui/person-chip";
@@ -132,9 +132,40 @@ export function SubstitutionRequestRow({
               </div>
             </>
           )}
+          <DeclinesLine declines={request.declines} />
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Who has said they cannot stand in, as one quiet line under the offers —
+ * nothing, when nobody has.
+ *
+ * **Names and no actions.** The office reads it to know whom asking again is
+ * pointless; there is nothing to press about a decline, so it is a sentence
+ * after the offer rows rather than a row of its own.
+ */
+function DeclinesLine({
+  declines,
+}: {
+  declines: SubstitutionRequest["declines"];
+}) {
+  const t = useTranslations("admin.substitutions");
+  const format = useFormatter();
+
+  if (declines.length === 0) return null;
+
+  return (
+    <p className="pt-1 text-xs text-muted-foreground">
+      {t("declinedBy", {
+        names: format.list(
+          declines.map((decline) => decline.name ?? t("unnamed")),
+          { type: "conjunction" },
+        ),
+      })}
+    </p>
   );
 }
 

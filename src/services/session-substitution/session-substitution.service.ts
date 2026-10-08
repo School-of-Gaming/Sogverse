@@ -119,7 +119,8 @@ export class SessionSubstitutionService {
 
   /**
    * "Offer to substitute." Idempotent on the (request, gedu) unique key, so a
-   * double-tap is one offer rather than an error.
+   * double-tap is one offer rather than an error; it replaces the caller's
+   * decline when they hold one.
    *
    * **Returns the anonymous document**: volunteering does not tell you whose
    * absence you volunteered for, exactly as the pool row it came from does not.
@@ -133,21 +134,23 @@ export class SessionSubstitutionService {
   }
 
   /**
-   * Take an offer back. Keyed on the **request**, because that is what the pool
-   * row knows about — an offer id would be a second identifier for the caller's
-   * one row. Refused when the caller is the approved substitute (taking back an offer
-   * somebody has already staffed you on is a new absence, not an un-offer) and
-   * refused when the caller holds no offer at all — a withdraw that deletes
+   * "I cannot." Keyed on the **request**, because that is what the pool row
+   * knows about. It replaces the caller's offer when they hold one, so it is
+   * also how an offer is taken back; the two answers switch freely until an
+   * admin approves somebody. Refused when the caller is the approved substitute
+   * (taking back a session somebody has already staffed you on is a new
+   * absence, not a change of mind), and refused for a gedu the request could
+   * not have been asked of who holds no answer on it — a decline that answers
    * nothing would be a read of somebody else's absence wearing a write's
    * clothes.
    *
    * **Returns the anonymous document**, as `offerSubstitution` does.
    */
-  async withdrawOffer(
+  async declineSubstitution(
     requestId: string,
   ): Promise<AnonymousSubstitutionRequestDocument> {
     const { data, error } = await this.supabase.rpc(
-      "withdraw_session_substitution_offer",
+      "decline_session_substitution",
       { p_request_id: requestId },
     );
     if (error) throw error;

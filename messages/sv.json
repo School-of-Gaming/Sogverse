@@ -1754,6 +1754,7 @@
         "other": "Annat"
       },
       "noOffers": "Inga erbjudanden än.",
+      "declinedBy": "Tackade nej: {names}",
       "openGroup": "Öppna gruppen",
       "seatSomeoneElse": "Välj en annan vikarie",
       "approve": "Godkänn",
@@ -2563,8 +2564,13 @@
       "poolRoleAssistant": "Assisterande Gedu",
       "poolFee": "{fee} per tillfälle",
       "poolOfferAction": "Jag kan vikariera",
-      "poolWithdrawAction": "Dra tillbaka erbjudandet",
-      "poolWithdrawPending": "Drar tillbaka…",
+      "poolDeclineAction": "Jag kan inte vikariera",
+      "poolDeclinePending": "Sparar…",
+      "poolOffered": "Du har erbjudit dig att vikariera",
+      "poolDeclined": "Du tackade nej",
+      "poolAnswerFailedApproved": "Du är redan godkänd som vikarie för det här tillfället. Kan du inte vara med får du själv be om en vikarie, som för alla dina tillfällen.",
+      "poolAnswerFailedClosed": "Det här tillfället behöver inte längre någon vikarie.",
+      "poolAnswerFailedPast": "Det här tillfället har redan varit.",
       "poolActionFailed": "Det sparades inte. Försök igen.",
       "poolOfferFailedNotQualified": "Det här tillfället kräver en behörighet som du inte har, så du kan inte erbjuda dig att vikariera.",
       "poolOfferFailedLanguage": "Det här tillfället hålls på ett språk som du inte har angett att du talar, så du kan inte erbjuda dig att vikariera. Du kan lägga till språk i dina inställningar.",
@@ -5493,6 +5499,35 @@
       "body": "Det här kontot kan inte koppla ett. Om du hör till personalen, logga in med ditt personalkonto."
     }
   },
+  "slackLink": {
+    "confirm": {
+      "title": "Koppla ditt Slack-konto",
+      "body": "Koppla Slack-kontot <b>@{username}</b> till ditt administratörskonto hos School of Gaming? Då kan det Slack-kontot godkänna vikarier för din räkning. Koppla bara ett konto som är ditt.",
+      "action": "Koppla kontot",
+      "failed": "Något gick fel och ditt konto kopplades inte. Försök igen."
+    },
+    "linked": {
+      "title": "Kopplat till @{username}",
+      "body": "Nu kan du godkänna vikarier i Slack.",
+      "goToDashboard": "Gå till instrumentpanelen"
+    },
+    "used": {
+      "title": "Den här länken har redan använts",
+      "body": "Varje länk fungerar en gång. Kör <code>/link</code> i Slack igen för att få en ny."
+    },
+    "expired": {
+      "title": "Den här länken har gått ut",
+      "body": "Länkar slutar gälla efter 10 minuter. Kör <code>/link</code> i Slack igen för att få en ny."
+    },
+    "missingToken": {
+      "title": "Den här länken är ofullständig",
+      "body": "Kör <code>/link</code> i Slack igen för att få en ny."
+    },
+    "refused": {
+      "title": "Bara administratörer kan koppla ett Slack-konto",
+      "body": "Det här kontot kan inte koppla ett. Om du är administratör, logga in med ditt administratörskonto."
+    }
+  },
   "discordSub": {
     "requestTitle": "Be om en vikarie",
     "pickPlaceholder": "Välj ett tillfälle",
@@ -5502,6 +5537,15 @@
     "notLinked": "För att använda /sub måste du först koppla ditt Discord-konto till ditt Gedu-konto hos School of Gaming.",
     "notLinkedRunLink": "Ditt Discord-konto är inte kopplat till ett Gedu-konto hos School of Gaming. Kör /link för att koppla det och sedan /sub igen.",
     "previewNotice": "Det här är en förhandsvisning – inget skickades in."
+  },
+  "discordSubOffer": {
+    "heading": "Ett tillfälle behöver en vikarie",
+    "filled": "Tillfället har fått en vikarie",
+    "notNeeded": "Ingen vikarie behövs längre",
+    "acceptedHeading": "Du har godkänts som vikarie",
+    "acceptedBody": "Du har godkänts som vikarie för {product} – {group} den {when}. Tillfället är nu ditt enligt ditt Gedu-avtal, och gruppens arbetsyta öppnas för dig 48 timmar innan det börjar.",
+    "openMySog": "Öppna Min SOG",
+    "previewNotice": "Det här är en förhandsvisning – knapparna ändrar ingenting."
   },
   "seatOffer": {
     "offer": {

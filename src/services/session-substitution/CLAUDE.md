@@ -141,11 +141,12 @@ entitled and they are entitled for different reasons, so the rule is stated per 
 - **The requester** sees their own name, on their own request, by the same arm.
 
 **A volunteer never does.** The pool list omits the absent gedu, and so does the document
-the offer and the offer-withdrawal return — otherwise the anonymity would be one
-button-press deep, which is exactly what it was until it was fixed. Those two writes parse
-their result through a separate schema whose requester fields are nullable, so the
-difference is a type rather than a comment; a withdrawal by somebody holding no offer is
-**refused** rather than answered, because a write that writes nothing must not be a read.
+the offer and the decline return — otherwise the anonymity would be one button-press deep,
+which is exactly what it was until it was fixed. Those two writes parse their result
+through a separate schema whose requester fields are nullable, so the difference is a type
+rather than a comment; a decline by somebody the request could not have been asked of,
+holding no answer on it, is **refused** rather than answered, because a write that answers
+nothing must not be a read.
 
 The SQL flag that reveals the requester **defaults to closed**, so a caller added later
 that forgets it conceals — a missing name on a screen, rather than a disclosure.
@@ -175,8 +176,10 @@ seating and approval do not ask — seating because the admin is warned in the U
 proceed, approval because none is realistically taken away between the offer and its
 approval (`../gedu/CLAUDE.md`, Qualifications). The one way it happens is accepted rather
 than handled *(owner, 2026-10)*: a gedu who offers and then removes that language or area
-in their settings loses the request from their pool, and with it the only Withdraw, while
-the offer stays approvable without a warning — the office withdraws it on request. That is
+in their settings loses the request from their pool, and with it the web's Decline, while
+the offer stays approvable without a warning. The decline write itself still takes their
+answer — it asks only that the gedu could be asked *or* already holds an answer on the
+request — so the gap is the pool's and not the database's. That is
 why each test is its own predicate and never a clause of *may substitute*: the admin writes
 ask that one too, and a clause there would turn the warning into a refusal.
 
@@ -320,13 +323,23 @@ comparator inside a component. A session inside the next day is drawn with the a
 existing warning status; nothing else about the card changes, because a queue that shouts
 in several registers at once is a queue nobody reads.
 
-**Offering asks a confirm question and holds it open until the write settles; withdrawing
-an offer does not ask at all.** Offering is refusable — the request may have been filled,
-the session may have started — and the refusal is news the volunteer needs before they
-move on, which is what the holding mode is for. The question is also where the volunteer
-learns the offer's weight: once approved, the session is theirs under their gedu contract and
-there is no taking it back, so its wording states that plainly. Withdrawing is the undo of a decision
-already made, so a question in front of it would be a question about a question.
+**A gedu answers a request with Offer or Decline, one answer per (request, gedu), and the
+two replace each other freely until an admin approves somebody.** Declining after offering
+is how an offer is taken back — there is no separate withdrawal. A declined request stays
+in the gedu's pool, marked as declined with Offer still on it *(owner, 2026-10)*: the mark
+tells them their answer was sent, and a misclick or a change of mind is one press from
+being undone. Only the office sees who declined, as one line under the offers; the
+offer count every other reader may see counts offers alone.
+
+**Offering asks a confirm question and holds it open until the write settles; declining
+does not ask at all.** Offering is refusable — the request may have been filled, the
+session may have started — and the refusal is news the volunteer needs before they move
+on, which is what the holding mode is for. The question is also where the volunteer
+learns the offer's weight: once approved, the session is theirs under their gedu contract
+and there is no taking it back, so its wording states that plainly. A decline commits the
+gedu to nothing and the other button undoes it, so a question in front of it would guard
+nothing. Both answers read their refusals through one mapper, because one database body
+writes both.
 
 ## Access, and the two places it is narrower
 
@@ -396,6 +409,9 @@ filing needs the reason this confirm never asked, so the write refuses and the d
 the request was withdrawn. A request another admin settled meanwhile is not refused: the
 write re-points the substitution they made at this sub. Closing that half means the write
 taking the request's id — a database change not yet made.
+
+**Who declined is listed under the offers, by name, with no actions** — the office reads
+it to know whom asking again is pointless. A substituted row carries neither list.
 
 **An offer on it carries the offerer's name and nothing else.** It used to carry the
 certification queue's two standings so the page could draw the same chips, and they are

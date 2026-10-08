@@ -80,7 +80,7 @@ export function GeduSubstitutionsScene({
           committingRequestId={null}
           error={null}
           onOffer={inertWrite}
-          onWithdraw={noop}
+          onDecline={noop}
         />
       }
       substitutions={fixture.substitutions}

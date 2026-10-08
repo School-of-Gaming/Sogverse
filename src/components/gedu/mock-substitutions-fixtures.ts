@@ -276,7 +276,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       session_date: soon.sessionDate,
       role: "primary",
       fee_cents: 6500,
-      has_offered: false,
+      my_response: null,
       product: {
         id: "mock-pool-product-soon",
         product_type: "consumer_club",
@@ -304,7 +304,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       // says nothing about money rather than flagging a gap nobody is expected
       // to close.
       fee_cents: null,
-      has_offered: false,
+      my_response: null,
       product: {
         id: "mock-pool-product-today",
         product_type: "camp",
@@ -329,10 +329,9 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       session_date: calendarDate(now, 1, SESSION_FEED_TIMEZONE),
       role: "primary",
       fee_cents: 7500,
-      // Already offered — the other resting state of the one control, which
-      // cannot be seen on the same card as the offer state and has to be on a
-      // card of its own.
-      has_offered: true,
+      // Already offered — one of the two answered states, each of which can
+      // only be seen on a card of its own.
+      my_response: "offer",
       product: {
         id: "mock-pool-product-tomorrow",
         product_type: "municipality_club",
@@ -357,7 +356,9 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       session_date: calendarDate(now, 3, SESSION_FEED_TIMEZONE),
       role: "primary",
       fee_cents: 7000,
-      has_offered: false,
+      // Declined — the other answered state: the card stays, marked, with
+      // Offer still on it.
+      my_response: "decline",
       product: {
         id: "mock-pool-product-midweek",
         product_type: "event",
@@ -382,7 +383,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       session_date: calendarDate(now, 7, SESSION_FEED_TIMEZONE),
       role: "assistant",
       fee_cents: 4500,
-      has_offered: false,
+      my_response: null,
       product: {
         id: "mock-pool-product-next-week",
         product_type: "consumer_club",
@@ -407,7 +408,7 @@ function openRequests(now: Date): OpenSubstitutionRequest[] {
       session_date: calendarDate(now, 12, SESSION_FEED_TIMEZONE),
       role: "primary",
       fee_cents: 6500,
-      has_offered: false,
+      my_response: null,
       product: {
         id: "mock-pool-product-far",
         product_type: "consumer_club",
