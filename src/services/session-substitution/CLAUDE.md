@@ -252,7 +252,10 @@ the caller's live-requests read, which carries each request's group name,
 product shell and whether the session is cancelled; a cancelled session's
 request is left out there, as everywhere a request is described. The section is
 not drawn at all — no heading, no empty line — while the gedu has no live
-request.
+request. A request filed or settled elsewhere while the page is open therefore
+adds or removes the section above the pool on the next refetch and moves the
+pool's cards: that shift is accepted *(owner, 2026-10-08)* — it needs action on
+another surface mid-visit, and a misplaced answer is switched straight back.
 
 **The two can never be on one card**, and nothing checks for that: a gedu
 holding a non-withdrawn request is not expected at the session, so the menu's
