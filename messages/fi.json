@@ -2116,7 +2116,7 @@
         "intro": "Minecraft-tili pääsee sisään, kun se on linkitetty Sogversen pelaajatiliin, jolla on tällä hetkellä paikka perheen maksamassa tuotteessa.",
         "paidProducts": "Maksulliset tuotteet lasketaan: kerhotilaus, maksullinen leiri tai maksullinen tapahtuma.",
         "notCounted": "Maksuttomia tuotteita ja kuntien kerhoja ei lasketa, vaikka pelaajalla olisi niissä paikka.",
-        "current": "Paikka lasketaan, kun se on voimassa eikä tuote ole päättynyt.",
+        "current": "Paikka lasketaan tuotteen päivinä alkupäivästä loppupäivään. Kerho, jolla ei ole loppupäivää, lasketaan alkupäivästä alkaen.",
         "sharedAccounts": "Useampi Sogverse-tili voi linkittää saman Minecraft-tilin, sillä sisarukset käyttävät usein yhteistä tiliä. Pelaaja pääsee sisään, jos yksikin linkitetyistä pelaajista täyttää ehdot.",
         "gedus": "Minecraft-tili, joka on linkitetty vain Gedun tiliin, ei pääse sisään tämän tarkistuksen kautta."
       },

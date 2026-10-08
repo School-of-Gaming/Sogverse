@@ -16,7 +16,9 @@ import type { JoinCheckLookup, LinkedGamer } from "./join-check";
  * Two round trips: the linked accounts with their profiles, then the gamers'
  * active seats with their products. Only gamers are carried forward; a gedu who
  * linked the UUID makes it "linked" and nothing more, and no gedu's name leaves
- * this function. Which seats qualify is not decided here.
+ * this function. Which seats qualify is decided by `seatGrantsServerAccess`,
+ * with one exception: only `active` seats are fetched, so a rule admitting a
+ * seat in any other status has to widen this read's status filter as well.
  *
  * Returns the database error rather than throwing, so the route answers it.
  */

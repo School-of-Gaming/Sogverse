@@ -50,6 +50,32 @@ describe("seatGrantsServerAccess", () => {
     expect(seatGrantsServerAccess(seat({ endDate: "2026-10-07" }), NOW)).toBe(false);
   });
 
+  it("refuses a seat whose product has not started", () => {
+    expect(seatGrantsServerAccess(seat({ startDate: "2026-10-09" }), NOW)).toBe(false);
+  });
+
+  it("admits on the start date itself", () => {
+    expect(seatGrantsServerAccess(seat({ startDate: "2026-10-08" }), NOW)).toBe(true);
+  });
+
+  it("admits a single-day event on its day and no other", () => {
+    const event = { startDate: "2026-10-08", endDate: "2026-10-08" };
+    expect(seatGrantsServerAccess(seat(event), NOW)).toBe(true);
+    expect(
+      seatGrantsServerAccess(seat(event), new Date("2026-10-09T12:00:00Z")),
+    ).toBe(false);
+  });
+
+  it("reads the start date in the product's own zone", () => {
+    // 21:30 UTC on 8 October is already 00:30 on 9 October in Helsinki.
+    expect(
+      seatGrantsServerAccess(
+        seat({ startDate: "2026-10-09" }),
+        new Date("2026-10-08T21:30:00Z"),
+      ),
+    ).toBe(true);
+  });
+
   describe("reads the end date in the product's own zone", () => {
     // 22:30 UTC on 8 October is already 01:30 on 9 October in Helsinki (UTC+3).
     const lateUtc = new Date("2026-10-08T22:30:00Z");
@@ -111,7 +137,7 @@ describe("buildJoinCheckResponse", () => {
     );
     expect(response).toMatchObject({ allowed: false, reason: "no_paid_enrollment" });
     expect(response.message).toBe(
-      "Denied: none of Aino and Eero has a current paid seat.",
+      "Denied: neither Aino nor Eero has a current paid seat.",
     );
   });
 });

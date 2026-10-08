@@ -2116,7 +2116,7 @@
         "intro": "Ett Minecraft-konto släpps in när det är kopplat till ett spelarkonto på Sogverse som just nu har en plats på en produkt som familjen betalar för.",
         "paidProducts": "Betalda produkter räknas: en klubbprenumeration, ett betalt läger eller ett betalt evenemang.",
         "notCounted": "Gratisprodukter och kommunala klubbar räknas inte, även om spelaren har en plats på en sådan.",
-        "current": "En plats räknas så länge den är aktiv och produkten inte har tagit slut.",
+        "current": "En plats räknas de dagar produkten pågår, från startdatum till slutdatum. En klubb utan slutdatum räknas från sitt startdatum och framåt.",
         "sharedAccounts": "Flera Sogverse-konton kan koppla samma Minecraft-konto, eftersom syskon ofta delar ett. Spelaren släpps in om något av de kopplade spelarkontona uppfyller villkoren.",
         "gedus": "Ett Minecraft-konto som bara är kopplat till en Gedus konto släpps inte in av denna kontroll."
       },

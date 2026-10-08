@@ -2116,7 +2116,7 @@
         "intro": "Un compte Minecraft est admis lorsqu’il est lié à un compte joueur sur Sogverse qui occupe actuellement une place sur un produit payé par la famille.",
         "paidProducts": "Les produits payants comptent : un abonnement à un club, un camp payant ou un événement payant.",
         "notCounted": "Les produits gratuits et les clubs municipaux ne comptent pas, même si le joueur y occupe une place.",
-        "current": "Une place compte tant qu’elle est active et que le produit n’est pas terminé.",
+        "current": "Une place compte les jours où le produit a lieu, de sa date de début à sa date de fin. Un club sans date de fin compte à partir de sa date de début.",
         "sharedAccounts": "Plusieurs comptes Sogverse peuvent lier le même compte Minecraft, car des frères et sœurs en partagent souvent un. Le joueur est admis si l’un des comptes joueur liés remplit les conditions.",
         "gedus": "Un compte Minecraft lié uniquement au compte d’un Gedu n’est pas admis par cette vérification."
       },

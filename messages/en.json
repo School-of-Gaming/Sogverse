@@ -2116,7 +2116,7 @@
         "intro": "A Minecraft account is let in when it is linked to a gamer account on Sogverse that currently holds a seat on a product the family pays for.",
         "paidProducts": "Paid products count: a club subscription, a paid camp or a paid event.",
         "notCounted": "Free products and municipality clubs don’t count, even when the gamer holds a seat on one.",
-        "current": "A seat counts while it is active and its product has not ended.",
+        "current": "A seat counts on the days its product runs, from the start date to the end date. A club with no end date counts from its start date onwards.",
         "sharedAccounts": "Several Sogverse accounts can link the same Minecraft account, as siblings often share one. The player is let in if any linked gamer qualifies.",
         "gedus": "A Minecraft account linked only to a Gedu’s account is not let in by this check."
       },

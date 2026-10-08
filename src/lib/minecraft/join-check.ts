@@ -58,17 +58,25 @@ export interface JoinCheckSeat {
  * Whether this seat lets its gamer's Minecraft account onto the servers at `now`.
  *
  * The whole access rule lives here, so a change to it is a change to this
- * function alone. Provisional, pending the organiser's ruling on what
- * "currently" means: a seat qualifies when it is active, on a product the
- * family pays for, and the product has not ended — open-ended, or its end date
- * not yet past in the product's own zone. Whether the time before a camp
- * starts, a cancelled subscription's paid-up remainder or the hours outside
- * sessions should count is what the ruling will settle.
+ * function alone. A seat qualifies when it is active, on a product the family
+ * pays for, and today in the product's own zone falls within the product's
+ * dates, both ends included; an open-ended club has no last day. One rule for
+ * every product type, and deliberately no more than that (the organiser's
+ * ruling, October 2026):
+ * - before a club, camp or event starts and after it ends, the seat is out;
+ * - the hours between sessions are in — the servers keep their own opening
+ *   times, and this gate only answers whether the account may play at all;
+ * - a cancelled subscription's paid-up remainder, a payment Stripe is still
+ *   retrying and a comped trial visit are all in, because each of them leaves
+ *   the seat active until Stripe ends the subscription.
+ * The loader fetches only `active` seats, so admitting another status means
+ * widening its read too.
  */
 export function seatGrantsServerAccess(seat: JoinCheckSeat, now: Date): boolean {
   if (seat.status !== "active" || seat.billingMode !== "paid") return false;
-  if (seat.endDate === null) return true;
-  return formatInTimeZone(now, seat.timezone, "yyyy-MM-dd") <= seat.endDate;
+  const today = formatInTimeZone(now, seat.timezone, "yyyy-MM-dd");
+  if (today < seat.startDate) return false;
+  return seat.endDate === null || today <= seat.endDate;
 }
 
 /** A linked gamer and their active seats, as the loader gathered them. */
@@ -155,7 +163,9 @@ export function buildJoinCheckResponse(
     message:
       gamers.length === 1
         ? `Denied: ${names} has no current paid seat.`
-        : `Denied: none of ${names} has a current paid seat.`,
+        : gamers.length === 2
+          ? `Denied: neither ${gamers[0].firstName} nor ${gamers[1].firstName} has a current paid seat.`
+          : `Denied: none of ${names} has a current paid seat.`,
     gamers,
   };
 }
