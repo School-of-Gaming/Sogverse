@@ -12,6 +12,7 @@ import type { Database, Json } from "./database.types";
 // shape the zod contracts do. Re-exported further down with the rest of the
 // member-flair types.
 import type { GamerCreation } from "@/services/member-flair/member-flair.contracts";
+import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 
 // ---------------------------------------------------------------------------
 // Convenience type aliases
@@ -738,7 +739,8 @@ export interface GeduAssignedProductRosterEntry {
    * `gamer_profiles` row and no linked game account. Rendered as a deliberate
    * absence, not as missing data.
    */
-  date_of_birth: string | null;
+  birth_year: number | null;
+  birth_month: number | null;
   minecraft_username: string | null;
   /** UUID present only when the account's Minecraft username is *verified*. */
   minecraft_uuid: string | null;
@@ -946,7 +948,7 @@ export type AppSupabaseClient = Omit<SupabaseClient<Database>, "auth"> & {
 
 export interface CreateGamerInput {
   firstName: string;
-  dateOfBirth: string;
+  birth: GamerBirthMonthYear;
   gender?: "boy" | "girl" | "non_binary" | null;
   minecraftUsername?: string;
   robloxUsername?: string;

@@ -9,6 +9,7 @@ import type {
 } from "@/types";
 import { isGamerProfile } from "@/types";
 import { ApiError } from "@/lib/api/api-error";
+import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 import { readErrorMessage } from "@/lib/api/json-response";
 import { chunkKeys } from "@/lib/supabase/paging";
 
@@ -46,7 +47,7 @@ export interface GamerUpdate {
 
 /**
  * The two facts a gamer's own profile row holds beyond the link to their
- * account: when they were born and, optionally, their gender.
+ * account: the year and month they were born and, optionally, their gender.
  *
  * Both are written together because they are edited together — the admin card
  * that owns them saves the whole pair on one button, so there is no partial
@@ -54,8 +55,7 @@ export interface GamerUpdate {
  * answer, and clearing it is a write of `null` rather than an omission.
  */
 export interface GamerProfileEdit {
-  /** `YYYY-MM-DD`, composed by `assembleGamerDateOfBirth`. */
-  dateOfBirth: string;
+  birth: GamerBirthMonthYear;
   gender: GenderType | null;
 }
 
@@ -123,12 +123,13 @@ export class GamerService {
   }
 
   /**
-   * The birth date of each named gamer, as `{ user_id, date_of_birth }` rows.
+   * The birth year and month of each named gamer, as
+   * `{ user_id, birth_year, birth_month }` rows.
    *
    * For a surface that has to know how old several children are at once and
    * cannot ask per child: the shop's enrolment panel, which prints an age
    * beside every row in the picker and disables the rows outside the product's
-   * age band. `get_my_gamers` returns `profiles` rows, and a birth date is not
+   * age band. `get_my_gamers` returns `profiles` rows, and a birth is not
    * one of them — it lives on `gamer_profiles` — so this is the second read the
    * panel makes about the roster it is already holding.
    *
@@ -147,14 +148,15 @@ export class GamerService {
    */
   async getGamerBirthDates(
     userIds: readonly string[],
-  ): Promise<Pick<GamerProfile, "user_id" | "date_of_birth">[]> {
+  ): Promise<Pick<GamerProfile, "user_id" | "birth_year" | "birth_month">[]> {
     if (userIds.length === 0) return [];
 
-    const rows: Pick<GamerProfile, "user_id" | "date_of_birth">[] = [];
+    const rows: Pick<GamerProfile, "user_id" | "birth_year" | "birth_month">[] =
+      [];
     for (const batch of chunkKeys(userIds)) {
       const { data, error } = await this.supabase
         .from("gamer_profiles")
-        .select("user_id,date_of_birth")
+        .select("user_id,birth_year,birth_month")
         .in("user_id", batch);
 
       if (error) throw error;
@@ -164,16 +166,16 @@ export class GamerService {
   }
 
   /**
-   * Writes a gamer's birth date and gender, returning the stored row.
+   * Writes a gamer's birth year and month and gender, returning the stored row.
    *
    * **Through the injected client rather than an API route.** Nothing here
    * needs a server-side secret: `gamer_profiles` already carries a `FOR ALL`
    * admin policy over `is_admin()` and `authenticated` already holds UPDATE on
    * the table, so the caller's own session is the authorization — and adding a
    * route would only put our own re-check of `is_admin()` in front of the
-   * database's. The `date_of_birth <= CURRENT_DATE` CHECK still stands behind
+   * database's. The CHECK refusing a future birth month still stands behind
    * it: the editor's month select is clamped against the year beside it, so the
-   * UI cannot compose a future date in the first place, and the CHECK is there
+   * UI cannot compose a future month in the first place, and the CHECK is there
    * to fail loudly rather than store one if anything else ever tries.
    *
    * The updated row is returned (rather than the caller re-reading it) so the
@@ -187,7 +189,11 @@ export class GamerService {
   ): Promise<GamerProfile> {
     const { data, error } = await this.supabase
       .from("gamer_profiles")
-      .update({ date_of_birth: edit.dateOfBirth, gender: edit.gender })
+      .update({
+        birth_year: edit.birth.year,
+        birth_month: edit.birth.month,
+        gender: edit.gender,
+      })
       .eq("user_id", gamerId)
       .select("*")
       .single();
@@ -205,7 +211,8 @@ export class GamerService {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         firstName: input.firstName,
-        dateOfBirth: input.dateOfBirth,
+        birthYear: input.birth.year,
+        birthMonth: input.birth.month,
         gender: input.gender,
         minecraftUsername: input.minecraftUsername,
         robloxUsername: input.robloxUsername,

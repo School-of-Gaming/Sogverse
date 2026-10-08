@@ -108,9 +108,9 @@ BEGIN
                    'first_name',         gmp.first_name,
                    'signed_up_at',       part.signed_up_at,
                    'group_joined_at',    part.group_joined_at,
-                   'age', CASE WHEN gprof.date_of_birth IS NOT NULL THEN
+                   'age', CASE WHEN gprof.birth_year IS NOT NULL THEN
                             EXTRACT(YEAR FROM age(v_today::timestamp,
-                                                  gprof.date_of_birth::timestamp))::integer
+                                                  make_date(gprof.birth_year, gprof.birth_month, 1)::timestamp))::integer
                           END,
                    'gender',             gprof.gender,
                    'minecraft_username', mca.minecraft_username,
@@ -149,7 +149,7 @@ $$;
 -- Name: FUNCTION get_trainee_assigned_product(p_product_id uuid, p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_trainee_assigned_product(p_product_id uuid, p_group_id uuid) IS 'The trainee''s door to a product: get_gedu_assigned_product''s document for a gedu holding a TRAINEE seat on it, refused with 42501 otherwise (gedu-only on its first statement). p_group_id is optional and, when given, must be the caller''s trainee group. The shell is the gedu one''s (topic included). `groups` holds every group of the product, ordered by created_at then id. A sibling group carries {id, name, created_at, is_my_group: false} and nothing else — its name is shown so the trainee can see it exists, but its size, staff and members are nothing a gamer on this group is shown. The caller''s own group carries is_my_group true, participant_count, `gedus` as {id, first_name, role}, and the same redacted roster get_trainee_group_feed serves: an integer `age` instead of date_of_birth, `has_note` instead of the note, `creations` always [], and no contact address.';
+COMMENT ON FUNCTION public.get_trainee_assigned_product(p_product_id uuid, p_group_id uuid) IS 'The trainee''s door to a product: get_gedu_assigned_product''s document for a gedu holding a TRAINEE seat on it, refused with 42501 otherwise (gedu-only on its first statement). p_group_id is optional and, when given, must be the caller''s trainee group. The shell is the gedu one''s (topic included). `groups` holds every group of the product, ordered by created_at then id. A sibling group carries {id, name, created_at, is_my_group: false} and nothing else — its name is shown so the trainee can see it exists, but its size, staff and members are nothing a gamer on this group is shown. The caller''s own group carries is_my_group true, participant_count, `gedus` as {id, first_name, role}, and the same redacted roster get_trainee_group_feed serves: an integer `age` instead of the birth year and month, `has_note` instead of the note, `creations` always [], and no contact address.';
 
 
 --

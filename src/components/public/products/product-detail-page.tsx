@@ -11,6 +11,7 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { formatInTimeZone } from "date-fns-tz";
 import { useNow, useTimezone } from "@/providers";
+import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 import {
   ageOnDate,
   gamerAgeBlock,
@@ -52,7 +53,7 @@ import type {
  * gets. Module-level so its identity is stable across renders; a fresh `Map`
  * each render would be a new one for no reason.
  */
-const NO_BIRTH_DATES: ReadonlyMap<string, string | null> = new Map();
+const NO_BIRTH_DATES: ReadonlyMap<string, GamerBirthMonthYear> = new Map();
 
 interface ProductDetailPageProps {
   productId: string;
@@ -378,25 +379,26 @@ export function ProductDetailPage({
     // seat is already filed under the reader's own id.
     const audience = productAudience(product);
     const participantStates = myCount?.myGamerStates ?? {};
-    // A child's age and their eligibility come off the same stored birth date,
-    // and both are absent together when the row has none — a gamer profile
-    // with no birth date shows no age pill and is refused by nothing, which is
-    // the honest answer rather than a guess in either direction.
+    // A child's age and their eligibility come off the same stored birth
+    // month, and both are absent together when there is none — a child whose
+    // birth month could not be read shows no age pill and is refused by
+    // nothing, which is the honest answer rather than a guess in either
+    // direction.
     const gamerRows = audienceAdmitsRole(audience, "gamer")
       ? (gamers ?? []).map((g) => {
-          const dateOfBirth = birthDates.get(g.id) ?? null;
+          const birth = birthDates.get(g.id) ?? null;
           return {
             id: g.id,
             name: g.first_name,
-            age: dateOfBirth === null ? null : ageOnDate(dateOfBirth, today),
+            age: birth === null ? null : ageOnDate(birth, today),
             ageBlock:
-              dateOfBirth === null
+              birth === null
                 ? null
                 : describeAgeBlock(
                     gamerAgeBlock({
                       minAge: product.min_age,
                       maxAge: product.max_age,
-                      dateOfBirth,
+                      birth,
                       today,
                       startDate: product.start_date,
                     }),

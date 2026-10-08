@@ -453,7 +453,7 @@ const CASES: Record<string, IdorCase> = {
       outcomeOf(
         await client
           .from("gamer_profiles")
-          .update({ date_of_birth: "2001-01-01" })
+          .update({ birth_year: 2001, birth_month: 1 })
           .eq("user_id", TEST_IDS.GAMER)
           .select("user_id")
       ),

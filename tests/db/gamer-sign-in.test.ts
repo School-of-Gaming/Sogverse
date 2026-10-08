@@ -19,7 +19,7 @@ import {
  * preference, and the two halves of this file are the two things that follow.
  *
  *   1. **Nobody in the family writes it.** `authenticated` holds column-scoped
- *      UPDATE on this table — date_of_birth and gender, the child's own facts —
+ *      UPDATE on this table — birth year, birth month and gender, the child's own facts —
  *      and `sign_in` is deliberately outside the grant, so neither the child nor
  *      their parent can hand the child a login from the browser. Only the API
  *      routes, on the service-role client, after the PIN check they make.
@@ -137,7 +137,8 @@ describe("gamer sign-in mode", () => {
       p_guardian_attested: true,
       p_first_name: "Boundary",
       p_last_name: "Parentson",
-      p_date_of_birth: "2015-06-15",
+      p_birth_year: 2015,
+      p_birth_month: 6,
       p_sign_in: "email",
     });
     expect(createError).toBeNull();
@@ -190,7 +191,7 @@ describe("gamer sign-in mode", () => {
 
     it("refuses the gamer flipping their own mode", async () => {
       // The grant stops the statement before any policy is consulted: it
-      // reaches date_of_birth and gender and nothing else. So the refusal is an
+      // reaches the birth year and month and gender and nothing else. So the refusal is an
       // error rather than zero rows affected.
       const { error } = await gamerAuth
         .from("gamer_profiles")

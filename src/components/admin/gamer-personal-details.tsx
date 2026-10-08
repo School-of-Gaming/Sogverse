@@ -29,10 +29,8 @@ import {
 } from "@/services/users";
 import { ApiError } from "@/lib/api/api-error";
 import {
-  assembleGamerDateOfBirth,
   gamerBirthMonthOptions,
   gamerBirthYearOptionsIncluding,
-  splitGamerDateOfBirth,
 } from "@/lib/gamer-birth";
 import {
   GAMER_USERNAME_MAX_LENGTH,
@@ -133,7 +131,12 @@ export function GamerPersonalDetails({
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           <span>
-            {t("ageYears", { age: computeAge(profile.date_of_birth, timeZone) })}
+            {t("ageYears", {
+              age: computeAge(
+                { year: profile.birth_year, month: profile.birth_month },
+                timeZone,
+              ),
+            })}
           </span>
           {profile.gender && (
             <>
@@ -201,9 +204,9 @@ function currentIdentifier(kind: IdentifierKind, account: Profile): string {
  *
  * - `invalid` / `taken` — the identifier was refused; nothing was saved.
  * - `identifierFailed` — its write failed for any other reason; nothing was saved.
- * - `detailsFailedAfterIdentifier` — the identifier landed, the birth date and
+ * - `detailsFailedAfterIdentifier` — the identifier landed, the birth month and
  *   gender did not.
- * - `detailsFailed` — only the birth date and gender were being saved, and did
+ * - `detailsFailed` — only the birth month and gender were being saved, and did
  *   not take.
  */
 type Problem =
@@ -271,11 +274,10 @@ function identifierEdit(
  * The dialog's body: the sign-in identifier where the child's mode has one,
  * birth month, birth year, gender, and one save.
  *
- * **Month granularity, not a date input.** The column is a full `date` but no
- * form in the product ever asks for the day — a parent picks a month and a year,
- * and the stored value is anchored to the 1st. An admin editing it picks the
- * same two, through the same enrollment year band, so a correction cannot
- * introduce a shape the create path could not have produced.
+ * **Month granularity, not a date input.** The row holds a birth year and month
+ * and nothing finer, and a parent picks the same two when creating the child.
+ * An admin editing them picks through the same enrollment year band, so a
+ * correction cannot introduce a value the create path could not have produced.
  *
  * **Two writes behind one Save, each sent only when its values changed, the
  * identifier first.** The identifier goes through the admin sign-in-address
@@ -315,14 +317,9 @@ function GamerPersonalDetailsForm({
   // does not send it again.
   const storedIdentifier = kind ? currentIdentifier(kind, account) : "";
 
-  /**
-   * The stored date is split textually rather than parsed — a bare calendar
-   * date has no instant to convert, and `new Date("2017-01-01")` read back
-   * through the runtime's zone lands in December for any viewer west of UTC.
-   */
   const stored = useMemo(
-    () => splitGamerDateOfBirth(profile.date_of_birth),
-    [profile.date_of_birth],
+    () => ({ year: profile.birth_year, month: profile.birth_month }),
+    [profile.birth_year, profile.birth_month],
   );
 
   // Seeded once, because this component exists only while the dialog is open:
@@ -357,9 +354,8 @@ function GamerPersonalDetailsForm({
   }, [timeZone]);
 
   // Clamped against the year beside it: with the current year selected, a month
-  // after this one would assemble a future date the `date_of_birth <=
-  // CURRENT_DATE` CHECK rejects, and the admin would get only the generic save
-  // error back. Recomputed as the year changes, which is what the `year` dep is
+  // after this one would be a future birth month, which a CHECK on the table
+  // rejects, and the admin would get only the generic save error back. Recomputed as the year changes, which is what the `year` dep is
   // for — the list is a function of both selects, not of the locale alone.
   const months = useMemo(
     () =>
@@ -415,7 +411,7 @@ function GamerPersonalDetailsForm({
         await updateProfile.mutateAsync({
           gamerId,
           edit: {
-            dateOfBirth: assembleGamerDateOfBirth(Number(year), Number(month)),
+            birth: { year: Number(year), month: Number(month) },
             gender: gender === "" ? null : gender,
           },
         });

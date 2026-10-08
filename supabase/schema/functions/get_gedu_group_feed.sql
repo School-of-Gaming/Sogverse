@@ -118,7 +118,7 @@ BEGIN
   --
   -- The identity key is `participant_id`. Every row on this roster is whoever
   -- holds the seat, and that can be an adult — the
-  -- date_of_birth / gender / game-account columns below simply come back NULL
+  -- birth year and month / gender / game-account columns below simply come back NULL
   -- for one, which is the deliberate empty the row renders rather than a gap.
   --
   -- Both platforms travel, and neither implies the other: a child may
@@ -137,7 +137,8 @@ BEGIN
         'participant_id',     part.participant_id,
         'first_name',         gmp.first_name,
         'signed_up_at',       part.signed_up_at,
-        'date_of_birth',      gprof.date_of_birth,
+        'birth_year',         gprof.birth_year,
+        'birth_month',        gprof.birth_month,
         'gender',             gprof.gender,
         'minecraft_username', mca.minecraft_username,
         'minecraft_uuid',     mca.minecraft_uuid,

@@ -51,7 +51,7 @@ import {
  * The child's embed is inner so filtering on its role narrows the seats; the
  * activity's is inner so `from`/`to` on its start date do.
  */
-const RESEARCH_SEAT_COLUMNS = `id, product_id, group_id, participant_id, ${IN_SCOPE_SEAT_EMBED}, child:profiles!participations_participant_id_fkey!inner(role, gamer_profiles(date_of_birth)), holder:profiles!participations_customer_id_fkey(home_location_id), activity:products!inner(product_type, is_remote, start_date, spoken_language_code)`;
+const RESEARCH_SEAT_COLUMNS = `id, product_id, group_id, participant_id, ${IN_SCOPE_SEAT_EMBED}, child:profiles!participations_participant_id_fkey!inner(role, gamer_profiles(birth_year, birth_month)), holder:profiles!participations_customer_id_fkey(home_location_id), activity:products!inner(product_type, is_remote, start_date, spoken_language_code)`;
 
 const seatId = z.string().uuid();
 
@@ -131,8 +131,8 @@ export async function readRobloxResearch(
 
       // A gamer's profile is written in the same transaction as the gamer, so
       // a child without one is a broken account, not a row to guess at.
-      const dateOfBirth = row.child.gamer_profiles?.date_of_birth;
-      if (dateOfBirth === undefined) {
+      const profile = row.child.gamer_profiles;
+      if (profile === null) {
         throw new Error(
           `partner /roblox-research: seat ${row.id} is held by a gamer with no gamer profile`,
         );
@@ -157,7 +157,10 @@ export async function readRobloxResearch(
         // country still comes from the location's own chain.
         country_code: home?.place?.country_code ?? home?.country_code ?? null,
         city: home?.place?.city ?? null,
-        age: possibleAgeOnDate(dateOfBirth, start_date),
+        age: possibleAgeOnDate(
+          { year: profile.birth_year, month: profile.birth_month },
+          start_date,
+        ),
         activity: {
           product_id: row.product_id,
           name: activityName(

@@ -215,7 +215,7 @@ public catalog policies.
 `authenticated` holds `UPDATE` on exactly the safe columns (name, phone, spoken
 languages, locale) — `role` is not grantable — and the self-update policy's `WITH CHECK`
 additionally pins `role` to its current value. On `gamer_profiles` it holds `UPDATE` on
-`date_of_birth` and `gender` only, so `sign_in` sits outside the grant; the only policy
+`birth_year`, `birth_month` and `gender` only, so `sign_in` sits outside the grant; the only policy
 that admits an update there is the admin's. The §3.4 column-grant audit asserts each
 table's updatable columns and that no other table carries a column-level write grant.
 
@@ -766,7 +766,7 @@ policy re-derives an ownership question a predicate already answers.
   and would refuse an admin's legitimate role correction.
 - **A drift between the hosted databases and migration history surfaced here and was
   repaired.** Two admin full-access policies — on the tables holding the parent PIN hash
-  and a child's date of birth — existed on the hosted databases but had never been
+  and a child's birth — existed on the hosted databases but had never been
   written into a migration, so a database built from migrations alone did not have them.
   CI builds exactly such a database, which means the DB suite had been verifying a
   different RLS surface from the one that runs in production on those two tables. The

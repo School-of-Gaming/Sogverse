@@ -174,7 +174,7 @@ async function oneFamily(rate) {
     res = await fetch(`${TARGET}/api/gamers/create`, {
       method: "POST",
       headers: { "content-type": "application/json", cookie: jarHeader(jar) },
-      body: JSON.stringify({ firstName: `Lapsi${i}`, dateOfBirth: "2015-05-14" }),
+      body: JSON.stringify({ firstName: `Lapsi${i}`, birthYear: 2015, birthMonth: 5 }),
     });
     if (!res.ok) { row.failedAt = "gamer"; row.failStatus = res.status; throw new Error(); }
     const { gamerId } = JSON.parse(await res.text());

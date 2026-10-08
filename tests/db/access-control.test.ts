@@ -67,7 +67,7 @@ describe("Access Control", () => {
     // table-level UPDATE. gamer_profiles is off a table-wide grant
     // because of `sign_in` — a column that decides whether a child
     // can sign in without their parent, and so may not be reachable by the same
-    // grant an admin corrects a child's date of birth through. Column privileges
+    // grant an admin corrects a child's birth month through. Column privileges
     // live in information_schema.column_privileges — out of scope for
     // _list_table_grants, and covered by the column-grant audit in
     // authorization-spine.test.ts.

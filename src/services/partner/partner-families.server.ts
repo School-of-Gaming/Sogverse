@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { keysetInMemory, readPartnerPage } from "@/lib/api/partner-cursor.server";
 import { chunkKeys, walkPages } from "@/lib/supabase/paging";
+import { formatGamerBirthMonth } from "@/lib/gamer-birth";
 import type { GamerPhotoConsentType, MarketingConsentType, Profile } from "@/types";
 import type {
   PartnerConsentState,
@@ -268,9 +269,9 @@ async function readPhotoConsents(
  * that family on that pull; the next full pull reads it whole.
  *
  * **What a record reports is read for the page alone:** a parent's email only
- * while their own Lynx marketing consent is granted, a gamer's birth month from
- * the stored date of birth, and each consent as it stands now, `null` where the
- * person was never asked.
+ * while their own Lynx marketing consent is granted, a gamer's birth month as
+ * stored, and each consent as it stands now, `null` where the person was never
+ * asked.
  *
  * A person deleted between the scope read and the page read is left out, and a
  * family left with no parent with them: the account is gone, which is what the
@@ -366,7 +367,7 @@ export async function readPartnerFamilies(
             id,
             first_name: profile.first_name,
             created_at: toUtcIso(profile.created_at),
-            birth_month: birth.slice(0, 7),
+            birth_month: formatGamerBirthMonth(birth),
             roblox: roblox.get(id) ?? null,
             photo_consent: photo.get(id) ?? null,
           },

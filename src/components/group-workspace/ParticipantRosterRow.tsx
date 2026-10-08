@@ -27,6 +27,7 @@ import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 import { cn, computeAge } from "@/lib/utils";
+import { gamerBirthOf } from "@/lib/gamer-birth";
 import { useTimezone } from "@/providers";
 import {
   isRedactedMember,
@@ -44,7 +45,7 @@ const GENDER_KEY = {
 interface ParticipantRosterRowProps {
   /**
    * The seat — the staff row, or its redacted twin. The redacted row has no
-   * contact address and carries an age rather than a date of birth; the row
+   * contact address and carries an age rather than a birth month; the row
    * draws the same two lines either way, with the address line as filler.
    */
   participant: WorkspaceRosterMember;
@@ -258,10 +259,13 @@ export function ParticipantRosterRow({
   const isAdult = !redacted && participant.participant_email !== null;
   const contactEmail = rosterContactEmail(participant);
 
+  const birth = redacted
+    ? null
+    : gamerBirthOf(participant.birth_year, participant.birth_month);
   const age = redacted
     ? participant.age
-    : participant.date_of_birth
-      ? computeAge(participant.date_of_birth, timeZone)
+    : birth
+      ? computeAge(birth, timeZone)
       : null;
   const detailParts: string[] = [];
   if (age !== null) {

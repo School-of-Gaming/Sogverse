@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
+import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 import { chunkKeys, walkPages } from "@/lib/supabase/paging";
 import { LocationsService } from "@/services/locations/locations.service";
 import {
@@ -330,23 +331,25 @@ export async function readParentGamerLinks(
 }
 
 /**
- * Each gamer's stored date of birth, `YYYY-MM-DD` as stored, keyed by gamer id.
- * The day is not always the 1st, so a reader derives ages from the month alone
- * (`possibleAgeOnDate`) and publishes nothing finer than the month. One row per id — the primary key — so bounded by the chunk. A
- * gamer with no profile row is absent from the map.
+ * Each gamer's stored birth year and month, keyed by gamer id — the whole of
+ * what is held, so nothing finer can be published. One row per id — the
+ * primary key — so bounded by the chunk. A gamer with no profile row is absent
+ * from the map.
  */
 export async function readBirthDates(
   db: PartnerDb,
   gamerIds: readonly string[],
-): Promise<Map<string, string>> {
-  const births = new Map<string, string>();
+): Promise<Map<string, GamerBirthMonthYear>> {
+  const births = new Map<string, GamerBirthMonthYear>();
   for (const chunk of chunkKeys(unique(gamerIds))) {
     const { data, error } = await db
       .from("gamer_profiles")
-      .select("user_id, date_of_birth")
+      .select("user_id, birth_year, birth_month")
       .in("user_id", chunk);
     if (error) throw error;
-    for (const row of data) births.set(row.user_id, row.date_of_birth);
+    for (const row of data) {
+      births.set(row.user_id, { year: row.birth_year, month: row.birth_month });
+    }
   }
   return births;
 }

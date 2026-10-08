@@ -104,21 +104,21 @@ describe("computeAge", () => {
     vi.useRealTimers();
   });
 
-  it("returns whole years between DOB and today in the supplied zone", () => {
+  it("counts a child a year older from the 1st of their birth month", () => {
     // Fixed wall-clock instant: 2026-05-19 12:00 UTC.
     vi.setSystemTime(new Date("2026-05-19T12:00:00Z"));
-    expect(computeAge("2010-05-19", "Europe/Helsinki")).toBe(16);
-    expect(computeAge("2010-05-20", "Europe/Helsinki")).toBe(15);
-    expect(computeAge("2010-05-18", "Europe/Helsinki")).toBe(16);
+    expect(computeAge({ year: 2010, month: 4 }, "Europe/Helsinki")).toBe(16);
+    expect(computeAge({ year: 2010, month: 5 }, "Europe/Helsinki")).toBe(16);
+    expect(computeAge({ year: 2010, month: 6 }, "Europe/Helsinki")).toBe(15);
   });
 
-  it("crosses the day boundary in the supplied zone, not UTC", () => {
+  it("turns the month in the supplied zone, not UTC", () => {
     // 2026-01-01 02:00 UTC is still 2025-12-31 in America/Los_Angeles.
-    // A child whose 10th birthday is 2026-01-01 turns 10 on the UTC date,
-    // but in LA they are still 9. computeAge must follow the LA calendar.
+    // A child born in January 2016 turns 10 on the UTC date, but in LA it is
+    // still December and they are 9. computeAge must follow the LA calendar.
     vi.setSystemTime(new Date("2026-01-01T02:00:00Z"));
-    expect(computeAge("2016-01-01", "UTC")).toBe(10);
-    expect(computeAge("2016-01-01", "America/Los_Angeles")).toBe(9);
+    expect(computeAge({ year: 2016, month: 1 }, "UTC")).toBe(10);
+    expect(computeAge({ year: 2016, month: 1 }, "America/Los_Angeles")).toBe(9);
   });
 });
 

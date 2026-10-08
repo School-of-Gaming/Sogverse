@@ -91,7 +91,7 @@ interface SwitchClubSheetProps {
   gamerName: string;
   /**
    * The seat holder's age today, or null on an adult seat, which carries no
-   * date of birth. Stated beside the target's own age range on stage two.
+   * birth month. Stated beside the target's own age range on stage two.
    */
   gamerAge: number | null;
   /**

@@ -5,7 +5,7 @@ import {
   createAdminTestClient,
   createAuthenticatedClient,
 } from "./helpers";
-import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
+import { SEED, TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 describe("Row Level Security", () => {
   // Service-role client — bypasses RLS. Use only for setup/teardown.
@@ -182,19 +182,20 @@ describe("Row Level Security", () => {
     it("gamer can read own gamer_profile", async () => {
       const { data, error } = await gamerClient
         .from("gamer_profiles")
-        .select("user_id, date_of_birth, gender")
+        .select("user_id, birth_year, birth_month, gender")
         .eq("user_id", TEST_IDS.GAMER)
         .single();
 
       expect(error).toBeNull();
-      expect(data!.date_of_birth).toBe("2015-06-15");
+      expect(data!.birth_year).toBe(SEED.GAMER_BIRTH.birth_year);
+      expect(data!.birth_month).toBe(SEED.GAMER_BIRTH.birth_month);
       expect(data!.gender).toBe("boy");
     });
 
     it("parent can read linked gamer's gamer_profile", async () => {
       const { data, error } = await customerClient
         .from("gamer_profiles")
-        .select("user_id, date_of_birth")
+        .select("user_id, birth_year, birth_month")
         .eq("user_id", TEST_IDS.GAMER)
         .single();
 
@@ -421,7 +422,8 @@ describe("Row Level Security", () => {
           .eq("user_id", TEMP_GAMER_ID);
         await admin.from("gamer_profiles").insert({
           user_id: TEMP_GAMER_ID,
-          date_of_birth: "2016-01-01",
+          birth_year: 2016,
+          birth_month: 1,
           gender: "girl",
         });
 

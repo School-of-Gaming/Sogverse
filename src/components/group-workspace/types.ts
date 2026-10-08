@@ -23,7 +23,7 @@ export type ParticipantSessionRow = GeduAssignedProductRosterEntry;
  *
  * It is not the staff row with blanks in it. What that reader may not see is
  * absent from the type: no contact address of any kind, an `age` where the
- * staff row has a date of birth, and `has_note` — whether a staff note exists —
+ * staff row has a birth year and month, and `has_note` — whether a staff note exists —
  * where it has the note and its editor. So a component handed one cannot print
  * a parent's address or a note's text from it: there is no field to print.
  */

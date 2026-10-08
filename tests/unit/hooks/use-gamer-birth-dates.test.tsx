@@ -46,9 +46,9 @@ function wrapper() {
 const AINO = "6aaac864-5ea7-451b-8d02-93f9ae6f25b5";
 const VILLE = "decdae83-3f51-4209-bf1a-254e88f1c32f";
 
-const DOB: Record<string, string> = {
-  [AINO]: "2016-03-01",
-  [VILLE]: "2018-11-01",
+const BIRTHS: Record<string, { birth_year: number; birth_month: number }> = {
+  [AINO]: { birth_year: 2016, birth_month: 3 },
+  [VILLE]: { birth_year: 2018, birth_month: 11 },
 };
 
 beforeEach(() => {
@@ -56,8 +56,8 @@ beforeEach(() => {
   getGamerBirthDates.mockImplementation((ids: readonly string[]) =>
     Promise.resolve(
       ids
-        .filter((id) => id in DOB)
-        .map((id) => ({ user_id: id, date_of_birth: DOB[id] })),
+        .filter((id) => id in BIRTHS)
+        .map((id) => ({ user_id: id, ...BIRTHS[id] })),
     ),
   );
 });
@@ -78,7 +78,7 @@ describe("useGamerBirthDates", () => {
 
     await waitFor(() => expect(result.current.isPending).toBe(false));
     expect(pendings[0]).toBe(true);
-    expect(result.current.map.get(AINO)).toBe("2016-03-01");
+    expect(result.current.map.get(AINO)).toEqual({ year: 2016, month: 3 });
 
     // The parent adds a child in the panel's dialog: the roster read is
     // invalidated, the ids change, and this query re-keys under them.
@@ -89,13 +89,13 @@ describe("useGamerBirthDates", () => {
     // previous map is still there, so the page never returns to its skeleton
     // and the panel is never unmounted.
     expect(result.current.isPending).toBe(false);
-    expect(result.current.map.get(AINO)).toBe("2016-03-01");
+    expect(result.current.map.get(AINO)).toEqual({ year: 2016, month: 3 });
     // The new child simply has no birth date yet — no age pill, blocked by
     // nothing — for the one round trip it takes to arrive.
     expect(result.current.map.has(VILLE)).toBe(false);
 
     await waitFor(() =>
-      expect(result.current.map.get(VILLE)).toBe("2018-11-01"),
+      expect(result.current.map.get(VILLE)).toEqual({ year: 2018, month: 11 }),
     );
     expect(pendings.slice(before)).not.toContain(true);
   });
