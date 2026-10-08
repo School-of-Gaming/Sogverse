@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { useGamerBirthDates } from "@/services/gamers";
+import { useGamerBirths } from "@/services/gamers";
 
 /**
  * **The read the enrolment picker's age band is built on, and the one thing it
@@ -22,13 +22,13 @@ import { useGamerBirthDates } from "@/services/gamers";
  * fetched.
  */
 
-const getGamerBirthDates = vi.fn();
+const getGamerBirths = vi.fn();
 
 vi.mock("@/lib/supabase/client", () => ({ getClient: () => ({}) }));
 
 vi.mock("@/services/gamers/gamers.service", () => ({
   GamerService: class {
-    getGamerBirthDates = (ids: readonly string[]) => getGamerBirthDates(ids);
+    getGamerBirths = (ids: readonly string[]) => getGamerBirths(ids);
   },
 }));
 
@@ -52,8 +52,8 @@ const BIRTHS: Record<string, { birth_year: number; birth_month: number }> = {
 };
 
 beforeEach(() => {
-  getGamerBirthDates.mockReset();
-  getGamerBirthDates.mockImplementation((ids: readonly string[]) =>
+  getGamerBirths.mockReset();
+  getGamerBirths.mockImplementation((ids: readonly string[]) =>
     Promise.resolve(
       ids
         .filter((id) => id in BIRTHS)
@@ -62,14 +62,14 @@ beforeEach(() => {
   );
 });
 
-describe("useGamerBirthDates", () => {
+describe("useGamerBirths", () => {
   it("is pending exactly once, and never again when the roster grows", async () => {
     // Every value the hook reported, in order — the assertion is about the
     // whole sequence rather than about whatever happened to be true at the end.
     const pendings: boolean[] = [];
     const { result, rerender } = renderHook(
       ({ ids }: { ids: readonly string[] }) => {
-        const read = useGamerBirthDates(ids);
+        const read = useGamerBirths(ids);
         pendings.push(read.isPending);
         return read;
       },
@@ -90,7 +90,7 @@ describe("useGamerBirthDates", () => {
     // and the panel is never unmounted.
     expect(result.current.isPending).toBe(false);
     expect(result.current.map.get(AINO)).toEqual({ year: 2016, month: 3 });
-    // The new child simply has no birth date yet — no age pill, blocked by
+    // The new child simply has no birth year and month yet — no age pill, blocked by
     // nothing — for the one round trip it takes to arrive.
     expect(result.current.map.has(VILLE)).toBe(false);
 
@@ -104,9 +104,9 @@ describe("useGamerBirthDates", () => {
     // What lets the page stop waiting: a caller gating a skeleton on `isError`
     // would hold it for the whole retry window, so the count is what is
     // exposed and the count turns over immediately.
-    getGamerBirthDates.mockRejectedValue(new Error("gamer_profiles is down"));
+    getGamerBirths.mockRejectedValue(new Error("gamer_profiles is down"));
 
-    const { result } = renderHook(() => useGamerBirthDates([AINO]), {
+    const { result } = renderHook(() => useGamerBirths([AINO]), {
       wrapper: wrapper(),
     });
 
@@ -116,7 +116,7 @@ describe("useGamerBirthDates", () => {
   });
 
   it("asks nothing, and waits for nothing, before the roster resolves", () => {
-    const { result } = renderHook(() => useGamerBirthDates(undefined), {
+    const { result } = renderHook(() => useGamerBirths(undefined), {
       wrapper: wrapper(),
     });
 
@@ -124,6 +124,6 @@ describe("useGamerBirthDates", () => {
     // disabled query would otherwise stay pending forever and hold the page.
     expect(result.current.isPending).toBe(false);
     expect(result.current.map.size).toBe(0);
-    expect(getGamerBirthDates).not.toHaveBeenCalled();
+    expect(getGamerBirths).not.toHaveBeenCalled();
   });
 });

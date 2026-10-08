@@ -14,8 +14,8 @@ import { SEED, TEST_CREDENTIALS, TEST_IDS } from "./constants";
  * is not one: a month outside 1–12, a year before 1900, a year and month still
  * in the future, and either half missing. There is no day column to test.
  *
- * "Now" is read in UTC, the zone the database's CURRENT_DATE answers in; the
- * future case is a whole year ahead so no boundary can make it ambiguous.
+ * "Now" is read in UTC, the zone the database's CURRENT_DATE answers in, so
+ * the test and the CHECK agree on which month is the current one.
  */
 describe("gamer_profiles birth year and month constraints", () => {
   // Never inserted: each CHECK fires before the foreign key would.
@@ -73,6 +73,23 @@ describe("gamer_profiles birth year and month constraints", () => {
     const { error } = await admin
       .from("gamer_profiles")
       .update({ birth_year: birth_year + 1, birth_month })
+      .eq("user_id", TEST_IDS.GAMER);
+
+    expect(error?.message).toContain("gamer_profiles_birth_not_future_check");
+  });
+
+  it("refuses next month in the current year", async () => {
+    // The cases above step the year, so this one holds the month half of the
+    // CHECK to account: the year alone does not put next month in the future.
+    // December's next month is January of the following year.
+    const { birth_year, birth_month } = thisMonth();
+    const nextMonth =
+      birth_month === 12
+        ? { birth_year: birth_year + 1, birth_month: 1 }
+        : { birth_year, birth_month: birth_month + 1 };
+    const { error } = await admin
+      .from("gamer_profiles")
+      .update(nextMonth)
       .eq("user_id", TEST_IDS.GAMER);
 
     expect(error?.message).toContain("gamer_profiles_birth_not_future_check");

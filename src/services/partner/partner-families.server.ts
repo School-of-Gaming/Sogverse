@@ -16,7 +16,7 @@ import type {
 import { readInScopeSeats, type InScopeSeat } from "./partner-scope.server";
 import type { PartnerDb } from "./partner-shared-db.server";
 import {
-  readBirthDates,
+  readBirths,
   readParentGamerLinks,
   readPlaces,
   readRobloxAccounts,
@@ -317,7 +317,7 @@ export async function readPartnerFamilies(
       const [profiles, marketing, births, photo, roblox] = await Promise.all([
         readProfiles(db, [...parentIds, ...gamerIds]),
         readMarketingConsents(db, parentIds),
-        readBirthDates(db, gamerIds),
+        readBirths(db, gamerIds),
         readPhotoConsents(db, gamerIds),
         readRobloxAccounts(db, gamerIds),
       ]);

@@ -146,7 +146,7 @@ export class GamerService {
    * the rows to their own linked children, so asking about somebody else's
    * child returns nothing rather than being refused.
    */
-  async getGamerBirthDates(
+  async getGamerBirths(
     userIds: readonly string[],
   ): Promise<Pick<GamerProfile, "user_id" | "birth_year" | "birth_month">[]> {
     if (userIds.length === 0) return [];

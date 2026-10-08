@@ -20,7 +20,7 @@ import {
 import { useAuth } from "@/providers/auth-provider";
 import { useLocationsByIds } from "@/services/locations";
 import { useProductDetail } from "@/services/products";
-import { useGamerBirthDates, useMyGamers } from "@/services/gamers";
+import { useGamerBirths, useMyGamers } from "@/services/gamers";
 import {
   useParticipationCounts,
   useProductSeatCountsRealtime,
@@ -48,12 +48,12 @@ import type {
 // route can render it directly with fixture data.
 
 /**
- * The map a failed birth-date read resolves to: no ages, and so nothing
- * blocked — the same answer a roster whose children have no stored birth date
- * gets. Module-level so its identity is stable across renders; a fresh `Map`
+ * The map a failed births read resolves to: no ages, and so nothing
+ * blocked — the same answer a roster whose children have no stored birth
+ * year and month gets. Module-level so its identity is stable across renders; a fresh `Map`
  * each render would be a new one for no reason.
  */
-const NO_BIRTH_DATES: ReadonlyMap<string, GamerBirthMonthYear> = new Map();
+const NO_BIRTHS: ReadonlyMap<string, GamerBirthMonthYear> = new Map();
 
 interface ProductDetailPageProps {
   productId: string;
@@ -128,8 +128,8 @@ export function ProductDetailPage({
   // ---------------------------------------------------------------------
   // How old each child is, for the picker
   //
-  // `get_my_gamers` returns `profiles` rows and a birth date is not one of
-  // them, so the age the picker prints beside a name — and the age band it
+  // `get_my_gamers` returns `profiles` rows and a birth year and month are not
+  // among them, so the age the picker prints beside a name — and the age band it
   // refuses a row on — takes a second keyed read against `gamer_profiles`,
   // scoped to this parent's own children by RLS.
   //
@@ -150,10 +150,10 @@ export function ProductDetailPage({
     [ageBandApplies, gamers],
   );
   const {
-    map: birthDatesRead,
-    isPending: birthDatesNeverResolved,
-    failureCount: birthDateFailures,
-  } = useGamerBirthDates(rosterIds);
+    map: birthsRead,
+    isPending: birthsNeverResolved,
+    failureCount: birthFailures,
+  } = useGamerBirths(rosterIds);
 
   // **The fail-open is latched, exactly as the home-location read's is** — see
   // the block below it, which states the reasoning in full. Same shape, same
@@ -162,14 +162,14 @@ export function ProductDetailPage({
   // and flip rows from enabled to disabled under a parent's cursor, which is a
   // change on data's own schedule. So the first failed attempt is remembered
   // for the life of the mount and the page settles on "no ages, nothing
-  // blocked" — the same answer a roster with no stored birth dates gets, which
+  // blocked" — the same answer a roster with no stored births gets, which
   // is the honest one when we cannot read them.
-  const [birthDatesEverFailed, setBirthDatesEverFailed] = useState(false);
-  const birthDatesReadFailed = birthDatesEverFailed || birthDateFailures > 0;
-  if (birthDatesReadFailed && !birthDatesEverFailed) {
-    setBirthDatesEverFailed(true);
+  const [birthsEverFailed, setBirthsEverFailed] = useState(false);
+  const birthsReadFailed = birthsEverFailed || birthFailures > 0;
+  if (birthsReadFailed && !birthsEverFailed) {
+    setBirthsEverFailed(true);
   }
-  const birthDates = birthDatesReadFailed ? NO_BIRTH_DATES : birthDatesRead;
+  const births = birthsReadFailed ? NO_BIRTHS : birthsRead;
 
   const { data: counts, isLoading: countsLoading } = useParticipationCounts(
     product ? [product.id] : [],
@@ -252,17 +252,17 @@ export function ProductDetailPage({
   // Wait on every query the signup panel depends on before painting, so we
   // don't show a child as selectable and then snap them to a disabled
   // "Signed up" row a tick later. countsLoading carries `myGamerStates`
-  // (the per-child already-enrolled signal); the birth dates carry the other
+  // (the per-child already-enrolled signal); the births carry the other
   // per-child reason a row can be refused, the product's age band, and are
   // waited on for exactly the same reason — an age landing after paint would
   // both insert the age pill beside a name already on screen and flip its row
   // from enabled to disabled.
   //
   // **That wait is "until the read has resolved once", not "whenever it is not
-  // resolved".** The birth-date query is keyed on the roster's ids, and the
+  // resolved".** The births query is keyed on the roster's ids, and the
   // roster grows while this page is open: a parent adds a child in the panel's
   // own dialog, the create invalidates the roster key, the ids change, and the
-  // birth-date query re-keys. Were the gate a live "is it pending" this page
+  // births query re-keys. Were the gate a live "is it pending" this page
   // would drop back to its skeleton at that moment and unmount the panel —
   // taking every ticked box with it, and the preselection the dialog had just
   // handed the new child. The hook keeps the previous map across a re-key
@@ -314,7 +314,7 @@ export function ProductDetailPage({
     productLoading ||
     authLoading ||
     (isCustomer && gamersLoading) ||
-    (isCustomer && birthDatesNeverResolved && !birthDatesReadFailed) ||
+    (isCustomer && birthsNeverResolved && !birthsReadFailed) ||
     (isCustomer && countsLoading) ||
     (isCustomer &&
       product?.region_lock_country != null &&
@@ -386,7 +386,7 @@ export function ProductDetailPage({
     // direction.
     const gamerRows = audienceAdmitsRole(audience, "gamer")
       ? (gamers ?? []).map((g) => {
-          const birth = birthDates.get(g.id) ?? null;
+          const birth = births.get(g.id) ?? null;
           return {
             id: g.id,
             name: g.first_name,
@@ -554,14 +554,14 @@ function describeAgeBlock(
  * this is a perceptibly slow call and gets a structured skeleton immediately,
  * with no delay and no fade. It is not one indexed row, and it is not
  * something React Query can already have. One of the three is deliberately
- * *behind* the others rather than beside them: the children's birth dates are
+ * *behind* the others rather than beside them: the children's births are
  * keyed on ids that only the roster read can supply, so the wait covers two
  * hops on a product with a gamer audience and one on any other.
  *
  * **Every one of those waits is a first resolution, and none of them can come
  * back.** This is the whole page, so returning to it is not a loading state but
  * an unmount: the signup panel goes with it, and with the panel go the boxes a
- * parent has ticked and the child they had selected. The birth-date read is the
+ * parent has ticked and the child they had selected. The births read is the
  * one that could plausibly re-open — its key is the roster's ids, and adding a
  * child changes them — so it is the one that carries the previous answer across
  * a re-key rather than returning to pending. Nothing here waits twice.

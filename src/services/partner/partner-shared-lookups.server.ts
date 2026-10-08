@@ -336,7 +336,7 @@ export async function readParentGamerLinks(
  * primary key — so bounded by the chunk. A gamer with no profile row is absent
  * from the map.
  */
-export async function readBirthDates(
+export async function readBirths(
   db: PartnerDb,
   gamerIds: readonly string[],
 ): Promise<Map<string, GamerBirthMonthYear>> {

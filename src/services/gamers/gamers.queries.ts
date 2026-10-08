@@ -33,8 +33,8 @@ export const gamerKeys = {
   // Keyed on the ids asked about, sorted so the same set of children asked
   // about in a different order is one cache entry rather than a second fetch of
   // identical rows.
-  birthDates: (userIds: readonly string[]) =>
-    [...gamerKeys.all, "birth-dates", [...userIds].sort().join(",")] as const,
+  births: (userIds: readonly string[]) =>
+    [...gamerKeys.all, "births", [...userIds].sort().join(",")] as const,
 };
 
 // Defaults to enabled so dashboard call sites (which are already gated to
@@ -193,15 +193,15 @@ export function useSendGamerVerificationEmail() {
  * whole retry window. The first failed attempt is enough to know this read is
  * not going to answer in time.
  */
-export function useGamerBirthDates(userIds?: readonly string[]) {
+export function useGamerBirths(userIds?: readonly string[]) {
   const supabase = getClient();
   const service = new GamerService(supabase);
 
   const ids = useMemo(() => userIds ?? [], [userIds]);
 
   const { data, isPending, isError, failureCount } = useQuery({
-    queryKey: gamerKeys.birthDates(ids),
-    queryFn: () => service.getGamerBirthDates(ids),
+    queryKey: gamerKeys.births(ids),
+    queryFn: () => service.getGamerBirths(ids),
     enabled: ids.length > 0,
     placeholderData: keepPreviousData,
   });

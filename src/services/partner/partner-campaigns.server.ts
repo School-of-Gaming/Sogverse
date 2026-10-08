@@ -16,7 +16,7 @@ import {
 import { readInScopeSeats } from "./partner-scope.server";
 import type { PartnerDb } from "./partner-shared-db.server";
 import {
-  readBirthDates,
+  readBirths,
   readParentGamerLinks,
 } from "./partner-shared-lookups.server";
 import { PROGRAMME_AGE_RANGE } from "./partner-shared-values";
@@ -176,7 +176,7 @@ export async function readPartnerCampaigns(
   const childIds = [...new Set([...children.values()].flat())];
 
   const [births, seats] = await Promise.all([
-    readBirthDates(db, childIds),
+    readBirths(db, childIds),
     readInScopeSeats(db, { participantIds: [...accountIds, ...childIds] }),
   ]);
   const seated = new Set(seats.map((seat) => seat.participant_id));
