@@ -27,6 +27,11 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown as MarkdownExtension } from "tiptap-markdown";
 import { StatusLine } from "@/components/ui/alert";
 import {
+  HeadingLineBreak,
+  LineHeading,
+  PastedText,
+} from "@/components/ui/rich-text-editor-lines";
+import {
   MARKDOWN_USE_CASES,
   type MarkdownUseCase,
 } from "@/lib/authored-markdown";
@@ -510,13 +515,19 @@ export function richTextExtensions({
               isAllowedUri: (url) => isRenderableHref(url),
             }
           : false,
-      // Three levels, because a real write-up opens with a title line and then
-      // sections under it. Anything deeper is switched off at the schema, so it
-      // cannot be typed, pasted or undone into existence — and a field without
-      // the `headings` flag has none at all, so a pasted heading lands as a
-      // paragraph.
-      heading: features.headings ? { levels: [1, 2, 3] } : false,
+      // Replaced below by the line-aware heading, or absent.
+      heading: false,
     }),
+    // Three levels, because a real write-up opens with a title line and then
+    // sections under it. Anything deeper is switched off at the schema, so it
+    // cannot be typed, pasted or undone into existence — and a field without
+    // the `headings` flag has none at all, so a pasted heading lands as a
+    // paragraph. A heading applies to the lines it is given and never holds a
+    // line break (`./rich-text-editor-lines`).
+    ...(features.headings
+      ? [LineHeading.configure({ levels: [1, 2, 3] }), HeadingLineBreak]
+      : []),
+    PastedText,
     Placeholder.configure({ placeholder }),
     MarkdownExtension.configure({
       // No HTML in, no HTML out: the read-only renderer refuses raw HTML for
@@ -527,12 +538,11 @@ export function richTextExtensions({
       bulletListMarker: "-",
       linkify: false,
       breaks: false,
-      // Plain text arriving on the clipboard is parsed as markdown rather than
-      // pasted literally, so a write-up drafted elsewhere keeps its headings
-      // and lists instead of showing the writer their own `##`. Only plain
-      // text: a paste carrying HTML already has structure and goes through the
-      // schema's own parser.
-      transformPastedText: true,
+      // Pasted plain text is read by `PastedText` above — as markdown, through
+      // this extension's parser, one paragraph per line — so this extension's
+      // own paste handling is off. A paste carrying HTML already has structure
+      // and goes through the schema's own parser.
+      transformPastedText: false,
     }),
   ];
 }
