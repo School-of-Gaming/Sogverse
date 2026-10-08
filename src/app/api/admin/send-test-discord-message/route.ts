@@ -108,7 +108,7 @@ async function buildPreviewSet(
         sendableOrigin === null
           ? null
           : new URL(ROUTES.gedu.dashboard, sendableOrigin).toString(),
-      refusalLine: offerCopy.pool("poolAnswerFailedClosed"),
+      refusalLine: offerCopy.pool("poolActionFailed"),
     }),
   ];
 }
