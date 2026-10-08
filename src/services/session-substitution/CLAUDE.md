@@ -82,14 +82,18 @@ this feature needs, for the admin writes as much as the gedu ones. Nothing here 
 server-side secret, so nothing here is worth a route: a route would add a hop and a second
 place to get the authorization wrong.
 
-**The Discord bot's `/sub` command is the one caller with no session, and it reaches the
-same bodies.** Filing an absence, the two seat reads behind the picker and the read of
-the gedu's own live requests each live in an internal function that takes the gedu as
-an argument; the web's RPC calls it with `auth.uid()` after its role guard, and a `…_for_discord_user` wrapper, granted to the
-service role alone, calls it with the gedu linked to the caller's Discord id (refusing
-with P0031 when there is none). A rule about who may file, or what a seat read returns,
+**The Discord bot and the Slack app are the callers with no session, and they reach the
+same bodies.** Filing an absence, the two seat reads behind the picker, the read of the
+gedu's own live requests, answering a request (offer or decline) and approving an offer
+each live in an internal function that takes the acting person as an argument; the web's
+RPC calls it with `auth.uid()` after its role guard, and a wrapper granted to the service
+role alone calls it with the person linked to the caller's chat account — a
+`…_for_discord_user` wrapper with the gedu linked to the Discord id (refusing with P0031
+when there is none), the `…_for_slack_user` approval with the admin linked to the Slack
+id (P0034). A rule about who may file, answer or approve, or what a seat read returns,
 is changed in the internal body, never in a wrapper — a check added to one wrapper is a
-check the other way in does not make. The bot's side is `src/lib/discord-substitution.server.ts`.
+check the other way in does not make. The bot's side is
+`src/lib/discord-substitution.server.ts`; the Slack side is `src/app/api/slack/`.
 
 **Refusals throw.** Every write is somebody pressing a button, and every refusal is news
 they have to be told — the session was substituted while the dialog was open, the offer
@@ -461,7 +465,11 @@ hook.
 
 ## What this directory deliberately does not do
 
-- **No notifications**, on any channel. In-app only.
+- **No notifying.** Nothing here sends a DM or a Slack message: the database announces
+  each change to a request and `src/lib/substitution-notifications/` draws the Discord DMs
+  and the staff channel's Slack message from it, so a write here never waits on Discord
+  or Slack and never needs to know they exist. There is no email and no in-app
+  notification.
 - **No ranking and no eligibility beyond certification, qualifications, spoken language
   and coverage.**
 - **No per-request fee override.** The role's fee is the product's, and a sub fee above

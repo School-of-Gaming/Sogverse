@@ -1,6 +1,6 @@
 # Discord Bot
 
-Slash-command webhook for the Sogverse Discord bot. Powers two AI assistants (Gedu Guru, Happinappi, via Gemini), Minecraft Education account password resets (via Microsoft Graph / Azure AD), the linking of a Gedu's or an admin's Discord account to their Sogverse account, and a linked Gedu asking for a substitute for a session they cannot make (`/sub`).
+Slash-command webhook for the Sogverse Discord bot. Powers two AI assistants (Gedu Guru, Happinappi, via Gemini), Minecraft Education account password resets (via Microsoft Graph / Azure AD), the linking of a Gedu's or an admin's Discord account to their Sogverse account, a linked Gedu asking for a substitute for a session they cannot make (`/sub`), and the buttons on the DMs a substitution request sends.
 
 ## Request Flow
 
@@ -9,7 +9,7 @@ Slash-command webhook for the Sogverse Discord bot. Powers two AI assistants (Ge
 3. `PING` interactions get an immediate `PONG`.
 4. `APPLICATION_COMMAND` interactions return a **deferred** response immediately, then do the slow work in `after()` and PATCH the final answer back to `…/webhooks/{appId}/{token}/messages/@original` with `Authorization: Bot {DISCORD_BOT_TOKEN}`.
 
-5. `MESSAGE_COMPONENT` (a press on a button or select) and `MODAL_SUBMIT` interactions are `/sub`'s later steps. A session pick is answered with a `MODAL` at once, since a modal can be neither deferred nor sent late. Anything that reads or writes finishes in `after()` by PATCHing the same `@original`, which for a component interaction is the message the control sits on. Its immediate answer is `UPDATE_MESSAGE` redrawing that message, from the payload's own copy, with every control greyed out, so a second tap cannot start a second run racing the first to `@original`; a payload with no usable message gets a plain `DEFERRED_UPDATE_MESSAGE`. A PATCH that never lands therefore leaves the message greyed out with no error line, and that is accepted *(owner, 2026-10-05)*: it is rare, and running `/sub` again recovers.
+5. `MESSAGE_COMPONENT` (a press on a button or select) and `MODAL_SUBMIT` interactions are `/sub`'s later steps, or a substitution DM's Offer and Decline (below). A session pick is answered with a `MODAL` at once, since a modal can be neither deferred nor sent late. Anything that reads or writes finishes in `after()` by PATCHing the same `@original`, which for a component interaction is the message the control sits on. Its immediate answer is `UPDATE_MESSAGE` redrawing that message, from the payload's own copy, with every control greyed out, so a second tap cannot start a second run racing the first to `@original`; a payload with no usable message gets a plain `DEFERRED_UPDATE_MESSAGE`. A PATCH that never lands therefore leaves the message greyed out with no error line, and that is accepted *(owner, 2026-10-05)*: it is rare, and running `/sub` again recovers.
 
 **Rule: Every command must return the deferred response synchronously and finish in `after()`.** Discord hard-times-out interactions at 3 seconds; cold starts plus Gemini/Graph calls blow past that. The handler returns `DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` and the real reply lands later via PATCH. Never do the AI/Graph call inline before responding. The same holds for a control press that touches the database; the only synchronous answers are the ones that read nothing (`/sub`'s request modal and the admin preview's line). So the modal is built from what the press itself carries: the copy's locale from the select's `custom_id`, and the session's line from the picked option on the pressed message.
 
@@ -31,7 +31,7 @@ AI command answers are wrapped as `**{question}**\n\n{answer}`. On a Gemini erro
 
 ## Account Linking
 
-A Gedu or an admin links their Discord account so School of Gaming can reach them there and they can use the bot. The confirm page's copy names both generically, never a list of commands, so it does not go stale as the bot grows, and it warns to link only an account that is one's own. No sign-in changes, and the link opens no session. **It does carry one capability: a Discord account linked to a Gedu can file a substitution request as that Gedu through `/sub`, and nothing else.** The bot reaches the database only through functions granted to the service role alone, each of which resolves the Gedu from the Discord id in Discord's signed payload — the most recently linked Gedu account when there are several — and refuses an id with no Gedu linked. A Sogverse account has at most one link (a new one replaces it); one Discord account may be linked to several Sogverse accounts.
+A Gedu or an admin links their Discord account so School of Gaming can reach them there and they can use the bot. The confirm page's copy names both generically, never a list of commands, so it does not go stale as the bot grows, and it warns to link only an account that is one's own. No sign-in changes, and the link opens no session. **It does carry capabilities, all about substitutions: a Discord account linked to a Gedu can file a substitution request as that Gedu through `/sub`, and offer on or decline a request from the DM about it, and nothing else.** The bot reaches the database only through functions granted to the service role alone, each of which resolves the Gedu from the Discord id in Discord's signed payload — the most recently linked Gedu account when there are several — and refuses an id with no Gedu linked. A Sogverse account has at most one link (a new one replaces it); one Discord account may be linked to several Sogverse accounts.
 
 1. `/link` mints a random token and stores **only its SHA-256** with the service-role client, beside the caller's Discord id and username. The raw token exists only in the reply, so the table never holds anything usable.
 2. The reply is **ephemeral** from the deferred response onward (the flag on the deferred response decides who sees the reply that replaces it) and carries the URL on a link button rather than in its text, so it is neither shown to the channel nor unfurled. The button opens `/link-discord?token=…` on a bare path, which the proxy sends on to the reader's locale with the query intact, and says the link lasts 10 minutes and works once. A failure sends a short English line, never the cause.
@@ -58,9 +58,30 @@ The web's "Can't make a session?" picker and reason form, as one ephemeral Compo
 
 **State lives in `custom_id`s, never in the server:** `sub:l` (show the list, the refusal's way back), `sub:s:<locale>` (the session select; the picked value is `<groupId>:<date>`, and the locale is the copy's, because the modal it opens is answered without a read), `sub:n:<groupId>:<date>` (the modal's submit; the reason and the note arrive as its fields). **A custom_id says what was picked, never who may act**: every step re-resolves the presser from the payload's Discord id, and the database re-derives the Gedu on every read and write.
 
+## Substitution DMs and their buttons
+
+The DMs a substitution request sends are drawn and kept up to date by the notification sync
+(`src/lib/substitution-notifications/`); this route only answers their buttons. Their
+`custom_id`s are `subreq:o:<requestId>` (Offer) and `subreq:d:<requestId>` (Decline), read
+before `/sub`'s, and like those they say what was pressed, never who pressed it. A new
+state of the DM joins the admin preview set below in the same change.
+
+A press greys the DM's buttons out in the immediate answer, exactly as a `/sub` step does,
+then in `after()` answers the request as the Gedu the presser's Discord account acts as —
+the same database body the web pool's buttons write through — syncs that request in-process
+so every message about it moves, and PATCHes the pressed DM with a fresh redraw, so it comes
+back even where the sync had nothing to change or another worker held the request. The
+redraw is the sync's own rendering in the Gedu's app locale, so the sync's record of the DM
+stays true.
+
+- **A refused answer** redraws the DM with the write's own refusal line — the web pool's
+  mapper, in the DM's language — above the buttons, which come back so the Gedu can answer
+  again.
+- **A presser with no Gedu linked** gets the DM back with a line saying to run `/link`.
+
 ## Test DMs from the admin testing page
 
-The admin testing page has a Discord tool that DMs a chosen template to a linked account through `/api/admin/send-test-discord-message`, to prove the bot can reach someone: plain text, or **a `/sub` preview** in the locale the admin picks — every message the command can draw, sent as one set of DMs in the order a gedu meets them, from the command's own builders over sample sessions, with a fixed `preview` token in the not-linked answer's link so nothing is minted and the page shows its dead-link card. The set is built entirely by the sending server, so it is how a change to the messages' look is checked from a dev machine: a press on a sent message is answered by whichever deployment the Discord app's endpoint points at, never by the machine that sent it. Every control carries the `subpreview:` prefix, and a press on one answers an ephemeral "this is a preview" line and touches nothing. The request pop-up is the one step not in the set, since a modal cannot be DMed and only opens in answer to a press. It sends as **this environment's own bot** (`DISCORD_BOT_TOKEN`), so a send from local or staging comes from the staging app's bot, not prod's. The client names the recipient by Sogverse profile; the route reads the Discord id from that profile's link on the admin's own session. **A bot can only DM someone it shares a server with** (and who has not closed DMs from server members): anyone else gets Discord's 50007 "Cannot send messages to this user", which the tool shows verbatim rather than as a generic failure.
+The admin testing page has a Discord tool that DMs a chosen template to a linked account through `/api/admin/send-test-discord-message`, to prove the bot can reach someone: plain text, or **a substitutions preview** in the locale the admin picks — every message `/sub` can draw, then every DM a substitution request sends (unanswered, offered, declined, refused, filled, no longer needed, accepted), as one set of DMs in the order a gedu meets them, from the live builders over sample sessions, with a fixed `preview` token in the not-linked answer's link so nothing is minted and the page shows its dead-link card. The set is built entirely by the sending server, so it is how a change to the messages' look is checked from a dev machine: a press on a sent message is answered by whichever deployment the Discord app's endpoint points at, never by the machine that sent it. Every control carries the `subpreview:` prefix, and a press on one answers an ephemeral "this is a preview" line and touches nothing. The request pop-up is the one step not in the set, since a modal cannot be DMed and only opens in answer to a press. It sends as **this environment's own bot** (`DISCORD_BOT_TOKEN`), so a send from local or staging comes from the staging app's bot, not prod's. The client names the recipient by Sogverse profile; the route reads the Discord id from that profile's link on the admin's own session. **A bot can only DM someone it shares a server with** (and who has not closed DMs from server members): anyone else gets Discord's 50007 "Cannot send messages to this user", which the tool shows verbatim rather than as a generic failure.
 
 ## Registering Commands
 

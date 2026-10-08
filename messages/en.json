@@ -1763,13 +1763,13 @@
       "loadError": "The substitutions could not be loaded.",
       "loadErrorWithReason": "The substitutions could not be loaded: {reason}",
       "approveConfirmTitle": "Approve {name} as the substitute?",
-      "approveConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. Nobody is notified: the session leaves the other volunteers’ list, and its card now says {name} is substituting for {absent}.",
+      "approveConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. If their Discord account is linked, they’re told there too. The session leaves the other volunteers’ list, its message in Slack shows who took it, and its card now says {name} is substituting for {absent}.",
       "approveFailedOfferGone": "{name} has taken their offer back, so there is nobody to approve.",
       "approveFailedAlreadySettled": "This session has already been settled by someone else.",
       "approveFailedSeatGone": "{absent} no longer has this session, so there is nothing to substitute for.",
       "approveFailedIneligible": "{name} can no longer take this session.",
       "seatConfirmTitle": "Seat {name} as the substitute?",
-      "seatConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. Nobody is notified: the session leaves the list Gedus offer from, and its card now says {name} is substituting for {absent}.",
+      "seatConfirmBody": "{name} takes {product} — {group} on {when}, in {absent}’s place. They see the session on their Substitutions page and on My SOG straight away, and the group’s workspace opens to them 48 hours before it starts. If their Discord account is linked, they’re told there too. The session leaves the list Gedus offer from, its message in Slack shows who took it, and its card now says {name} is substituting for {absent}.",
       "seatConfirm": "Seat the substitute",
       "seatReasonLabel": "Reason given",
       "seatFailed": "The substitute could not be seated — try again.",
@@ -2593,7 +2593,7 @@
       "fileFiled": "Substitute requested for {product} on {when}. It now shows on that session’s card in My SOG.",
       "fileFiledLink": "Open the group’s workspace",
       "offerConfirmTitle": "Offer to substitute?",
-      "offerConfirmBody": "You’re offering to run {product} on {when}. School of Gaming chooses who substitutes, and you can withdraw your offer until it is approved. Once it is approved, the session is yours under your Gedu contract, exactly like one of your own, and you can no longer withdraw: if you then can’t make it, ask for a substitute yourself, as for any of your sessions. The group’s workspace opens to you 48 hours before the session starts."
+      "offerConfirmBody": "You’re offering to run {product} on {when}. School of Gaming chooses who substitutes, and you can decline until your offer is approved. Once it is approved, the session is yours under your Gedu contract, exactly like one of your own, and you can no longer decline: if you then can’t make it, ask for a substitute yourself, as for any of your sessions. The group’s workspace opens to you 48 hours before the session starts."
     },
     "coverage": {
       "title": "Coverage areas",

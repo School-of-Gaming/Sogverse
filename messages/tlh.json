@@ -1807,13 +1807,13 @@
       "loadError": "lIwmey laDlaHbe’.",
       "loadErrorWithReason": "lIwmey laDlaHbe’: {reason}",
       "approveConfirmTitle": "{name} lIwwI' 'oH 'e' DalajlaH'a'?",
-      "approveConfirmBody": "{product} — {group} may' {when} tlhap {name}, {absent} qaStaHvIS. DaH Hoch lIwmey ghItlhDaj My SOG je luchaw'. may' 'oH 'e' bIH 48 rep pa' ghom pa' poSmoH. vay' ja'be'lu': latlh tlhobwI'pu' tetlhvo' may' mej, 'ej DaH ja' may' 'echleth: {absent} lIw {name}.",
+      "approveConfirmBody": "{product} — {group} may' {when} tlhap {name}, {absent} qaStaHvIS. DaH Hoch lIwmey ghItlhDaj My SOG je luchaw'. may' 'oH 'e' bIH 48 rep pa' ghom pa' poSmoH. Discord ghItlhDaj rarlu'chugh, pa' ja'lu' je. latlh tlhobwI'pu' tetlhvo' may' mej, Slack QIn tlhapwI' ngu', 'ej DaH ja' may' 'echleth: {absent} lIw {name}.",
       "approveFailedOfferGone": "nobDaj teq {name}. lajmeH pagh tu'lu'.",
       "approveFailedAlreadySettled": "latlh vay' may'vam rIntaH.",
       "approveFailedSeatGone": "may'vam ghaj {absent} 'e' mev. lIwmeH pagh tu'lu'.",
       "approveFailedIneligible": "may'vam tlhaplaHbe' {name} DaH.",
       "seatConfirmTitle": "{name} lIwwI’ ’oH ’e’ DawIv’a’?",
-      "seatConfirmBody": "{product} — {group} may’ {when} tlhap {name}, {absent} qaStaHvIS. DaH Hoch lIwmey ghItlhDaj My SOG je luchaw’. 48 rep pa’ ghom pa’ poSmoH. vay’ ja’be’lu’: tlhobwI’pu’ tetlhvo’ may’ mej, ’ej DaH ja’ may’ ’echleth: {absent} lIw {name}.",
+      "seatConfirmBody": "{product} — {group} may’ {when} tlhap {name}, {absent} qaStaHvIS. DaH Hoch lIwmey ghItlhDaj My SOG je luchaw’. 48 rep pa’ ghom pa’ poSmoH. Discord ghItlhDaj rarlu’chugh, pa’ ja’lu’ je. tlhobwI’pu’ tetlhvo’ may’ mej, Slack QIn tlhapwI’ ngu’, ’ej DaH ja’ may’ ’echleth: {absent} lIw {name}.",
       "seatConfirm": "lIwwI’ yIwIv",
       "seatReasonLabel": "meq ja’lu’pu’bogh",
       "seatFailed": "lIwwI’ wIvlu’be’ – yInID.",
@@ -2633,7 +2633,7 @@
       "fileFiled": "lIw tlhobta’lu’: {product}, {when}. DaH may’vam ngoqDaq ’angchoHlu’, jIH SOG Daq.",
       "fileFiledLink": "ghom vumtaHghach yIpoSmoH",
       "offerConfirmTitle": "bIlIwqang’a’?",
-      "offerConfirmBody": "{when} {product} may’ DalIwqang. lIwwI’ wIv School of Gaming; chaw’lu’pa’ nob DanatlhlaH. chaw’lu’DI’, Gedu quv chut tlhIH SoH may’ ’oH, SoHvaD may’ DaneHbogh rur, ’ej nob DanatlhlaHbe’: DaghoSlaHbe’chugh, lIwwI’ yItlhob. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’."
+      "offerConfirmBody": "{when} {product} may’ DalIwqang. lIwwI’ wIv School of Gaming; chaw’lu’pa’ bIlajQo’laH. chaw’lu’DI’, Gedu quv chut tlhIH SoH may’ ’oH, SoHvaD may’ DaneHbogh rur, ’ej bIlajQo’laHbe’: DaghoSlaHbe’chugh, lIwwI’ yItlhob. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’."
     },
     "coverage": {
       "title": "So’ Daqmey",

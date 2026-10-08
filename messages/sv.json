@@ -1763,13 +1763,13 @@
       "loadError": "Vikariaten kunde inte laddas.",
       "loadErrorWithReason": "Vikariaten kunde inte laddas: {reason}",
       "approveConfirmTitle": "Godkänn {name} som vikarie?",
-      "approveConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på My SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från de andra frivilligas lista, och på kortet står nu att {name} vikarierar för {absent}.",
+      "approveConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på My SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Om hens Discord-konto är kopplat får hen besked där också. Tillfället försvinner från de andra frivilligas lista, meddelandet i Slack visar vem som tog det, och på kortet står nu att {name} vikarierar för {absent}.",
       "approveFailedOfferGone": "{name} har tagit tillbaka sitt erbjudande, så det finns inget att godkänna.",
       "approveFailedAlreadySettled": "Någon annan har redan löst det här tillfället.",
       "approveFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
       "approveFailedIneligible": "{name} kan inte längre ta det här tillfället.",
       "seatConfirmTitle": "Sätt in {name} som vikarie?",
-      "seatConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på My SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Ingen får något meddelande: tillfället försvinner från listan där Geduer erbjuder sig, och på kortet står nu att {name} vikarierar för {absent}.",
+      "seatConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på My SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Om hens Discord-konto är kopplat får hen besked där också. Tillfället försvinner från listan där Geduer erbjuder sig, meddelandet i Slack visar vem som tog det, och på kortet står nu att {name} vikarierar för {absent}.",
       "seatConfirm": "Sätt in vikarien",
       "seatReasonLabel": "Angiven orsak",
       "seatFailed": "Vikarien kunde inte sättas in – försök igen.",
@@ -2593,7 +2593,7 @@
       "fileFiled": "Vikarie efterfrågad för {product} den {when}. Det syns nu på det tillfällets kort i Min SOG.",
       "fileFiledLink": "Öppna gruppens arbetsyta",
       "offerConfirmTitle": "Erbjuda dig att vikariera?",
-      "offerConfirmBody": "Du erbjuder dig att hålla {product} {when}. School of Gaming väljer vikarien, och du kan dra tillbaka ditt erbjudande tills det har godkänts. När det har godkänts är tillfället ditt enligt ditt Gedu-avtal, precis som dina egna tillfällen, och du kan inte längre dra dig ur: kan du ändå inte vara med får du själv be om en vikarie, som för alla dina tillfällen. Gruppens arbetsyta öppnas för dig 48 timmar innan tillfället börjar."
+      "offerConfirmBody": "Du erbjuder dig att hålla {product} {when}. School of Gaming väljer vikarien, och du kan tacka nej tills ditt erbjudande har godkänts. När det har godkänts är tillfället ditt enligt ditt Gedu-avtal, precis som dina egna tillfällen, och du kan inte längre tacka nej: kan du ändå inte vara med får du själv be om en vikarie, som för alla dina tillfällen. Gruppens arbetsyta öppnas för dig 48 timmar innan tillfället börjar."
     },
     "coverage": {
       "title": "Områden du täcker",

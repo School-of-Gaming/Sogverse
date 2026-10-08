@@ -11,28 +11,8 @@ import { z } from "zod";
  * Preview hold the staging app's `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET` and
  * `SLACK_SUBSTITUTIONS_CHANNEL_ID`, Vercel Production holds the prod app's, and
  * `.env.local` also keeps the prod set as `SLACK_*_PRODUCTION` for the
- * Production writes. The code reads only the unsuffixed names.
- *
- * Setting one app up, once, at api.slack.com/apps:
- *
- * 1. Create an app for the workspace and give it the Bot Token Scopes
- *    `chat:write` (posting and editing the substitution messages; plus
- *    `chat:write.public` to post to a public channel the bot is not in) and
- *    `commands` (the link slash command).
- * 2. Interactivity & Shortcuts → on, Request URL
- *    `https://<deployment>/api/slack/interactions` — `sogverse.sog.gg` for prod,
- *    `sogverse-staging.sog.gg` for staging.
- * 3. Slash Commands → create the link command with the same Request URL:
- *    `/link` on prod, `/link-staging` on staging, so the two apps' commands
- *    can live in one workspace. The route treats any command as the link one.
- * 4. Install it to the workspace, which mints the token. The install may need
- *    a workspace admin's approval, depending on the workspace's settings.
- * 5. A private channel needs the bot in it: `/invite @<bot>` there.
- * 6. Basic Information → Signing Secret is `SLACK_SIGNING_SECRET`, which the
- *    interactions route verifies every request against; the channel's id
- *    (channel details → bottom) is `SLACK_SUBSTITUTIONS_CHANNEL_ID`. All three
- *    go in `.env.local`, and on Vercel through the CLI (the vercel-env-vars
- *    skill), sensitive on Preview and Production.
+ * Production writes. The code reads only the unsuffixed names. Setting an app
+ * up is in `src/lib/substitution-notifications/CLAUDE.md` (Operator setup).
  *
  * Slack answers a refusal with HTTP 200 and `{ ok: false, error }` in the body,
  * so every Web API call made here reads `ok`, never the status.

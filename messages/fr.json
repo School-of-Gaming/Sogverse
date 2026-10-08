@@ -1763,13 +1763,13 @@
       "loadError": "Impossible de charger les remplacements.",
       "loadErrorWithReason": "Impossible de charger les remplacements : {reason}",
       "approveConfirmTitle": "Valider {name} pour ce remplacement ?",
-      "approveConfirmBody": "{name} prend {product} — {group} le {when}, à la place de {absent}. La séance apparaît aussitôt sur sa page Remplacements et sur My SOG, et l’espace de travail du groupe lui est ouvert 48 heures avant le début. Personne n’est prévenu : la séance disparaît de la liste des autres volontaires, et sa fiche indique désormais que {name} remplace {absent}.",
+      "approveConfirmBody": "{name} prend {product} — {group} le {when}, à la place de {absent}. La séance apparaît aussitôt sur sa page Remplacements et sur My SOG, et l’espace de travail du groupe lui est ouvert 48 heures avant le début. Si son compte Discord est associé, un message l’en informe aussi sur Discord. La séance disparaît de la liste des autres volontaires, son message dans Slack indique qui l’a prise, et sa fiche indique désormais que {name} remplace {absent}.",
       "approveFailedOfferGone": "{name} a retiré sa proposition, il n’y a donc rien à valider.",
       "approveFailedAlreadySettled": "Quelqu’un d’autre a déjà réglé cette séance.",
       "approveFailedSeatGone": "{absent} n’a plus cette séance, il n’y a donc personne à remplacer.",
       "approveFailedIneligible": "{name} ne peut plus prendre cette séance.",
       "seatConfirmTitle": "Désigner {name} pour ce remplacement ?",
-      "seatConfirmBody": "{name} prend {product} — {group} le {when}, à la place de {absent}. La séance apparaît aussitôt sur sa page Remplacements et sur My SOG, et l’espace de travail du groupe lui est ouvert 48 heures avant le début. Personne n’est prévenu : la séance disparaît de la liste où les Gedus proposent un remplacement, et sa fiche indique désormais que {name} remplace {absent}.",
+      "seatConfirmBody": "{name} prend {product} — {group} le {when}, à la place de {absent}. La séance apparaît aussitôt sur sa page Remplacements et sur My SOG, et l’espace de travail du groupe lui est ouvert 48 heures avant le début. Si son compte Discord est associé, un message l’en informe aussi sur Discord. La séance disparaît de la liste où les Gedus proposent un remplacement, son message dans Slack indique qui l’a prise, et sa fiche indique désormais que {name} remplace {absent}.",
       "seatConfirm": "Confirmer le remplacement",
       "seatReasonLabel": "Motif indiqué",
       "seatFailed": "Le remplacement n’a pas pu être enregistré – réessayez.",
@@ -2593,7 +2593,7 @@
       "fileFiled": "Remplacement demandé pour {product} le {when}. Il apparaît maintenant sur la fiche de cette séance dans Mon SOG.",
       "fileFiledLink": "Ouvrir l’espace de travail du groupe",
       "offerConfirmTitle": "Proposer un remplacement ?",
-      "offerConfirmBody": "Vous proposez d’assurer {product} le {when}. School of Gaming choisit qui remplace, et vous pouvez retirer votre proposition tant qu’elle n’est pas approuvée. Une fois approuvée, la séance relève de votre contrat Gedu, exactement comme vos propres séances, et vous ne pouvez plus vous retirer : si vous ne pouvez finalement pas l’assurer, demandez vous-même un remplacement, comme pour toutes vos séances. L’espace de travail du groupe s’ouvre à vous 48 heures avant le début de la séance."
+      "offerConfirmBody": "Vous proposez d’assurer {product} le {when}. School of Gaming choisit qui remplace, et vous pouvez décliner tant que votre proposition n’est pas approuvée. Une fois approuvée, la séance relève de votre contrat Gedu, exactement comme vos propres séances, et vous ne pouvez plus décliner : si vous ne pouvez finalement pas l’assurer, demandez vous-même un remplacement, comme pour toutes vos séances. L’espace de travail du groupe s’ouvre à vous 48 heures avant le début de la séance."
     },
     "coverage": {
       "title": "Zones où vous pouvez animer",
