@@ -100,8 +100,8 @@ times in both are the product's wall clock with its zone's short name, as `/sub`
   job so the outbox retries it.
 - **An edit is skipped when the rendering's hash is unchanged.** Each message's last-sent
   rendering is stored as a hash, so a sync with nothing new to say makes no Discord or Slack
-  call. A press's redraw with a refusal line is not recorded, so the line stays until the
-  next real change redraws the DM.
+  call. A DM press forgets its DM's hash before answering, so the next sync redraws that DM
+  whatever the press left on it.
 - **A duplicate post is accepted; a duplicate accepted DM is not.** The offer DMs and the
   Slack message are stored right after they are sent, so a crash between the two posts a
   second copy on the retry — rare, and harmless. The accepted DM is claimed *before* it is

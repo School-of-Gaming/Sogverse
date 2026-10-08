@@ -71,8 +71,9 @@ then in `after()` answers the request as the Gedu the presser's Discord account 
 the same database body the web pool's buttons write through — syncs that request in-process
 so every message about it moves, and PATCHes the pressed DM with a fresh redraw, so it comes
 back even where the sync had nothing to change or another worker held the request. The
-redraw is the sync's own rendering in the Gedu's app locale, so the sync's record of the DM
-stays true.
+redraw is the sync's own rendering, in the Gedu's app locale. Before answering, the press
+forgets the sync's record of that DM, so the next sync redraws it whatever the press left on
+screen — a refusal line, or buttons greyed out by a redraw that never landed.
 
 - **A refused answer** redraws the DM with the write's own refusal line — the web pool's
   mapper, in the DM's language — above the buttons, which come back so the Gedu can answer

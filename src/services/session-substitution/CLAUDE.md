@@ -260,11 +260,10 @@ every other list of what is coming shows. The session card carries the same
 action under the same rule by construction rather than by a second test — a card
 exists only for an entry the feed projected.
 
-**A request filed beyond the queue's own window is not lost.** The gedus' pool
-reads open requests dated **today or inside the next sixty days**, while the
-admin page's queue has a lower bound and no upper one — so an absence filed
-further ahead reaches the office immediately and joins the gedus' queue when its
-date comes into range.
+**The gedus' pool has no horizon.** It lists every open request dated today or
+later that the gedu could take, however far ahead — as the admin page's queue
+does, and as the notification DMs do, which go out when a request is filed
+whatever its date.
 
 **A term of weekly clubs is a long list, so the picker is grouped by week** — the
 viewer's week, Monday to Sunday — and opens on this week and next, which is

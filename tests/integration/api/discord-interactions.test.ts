@@ -88,9 +88,16 @@ vi.mock("@/lib/microsoft-graph", () => ({
   resetPassword: (...args: unknown[]) => mockResetPassword(...args),
 }));
 
-// `/link` stores its token's hash with the service-role client.
+// `/link` stores its token's hash with the service-role client, and a
+// substitution DM's press forgets the DM's recorded rendering with it.
 const mockInsert = vi.fn();
-const mockFrom = vi.fn((_table: string) => ({ insert: mockInsert }));
+const mockUpdate = vi.fn((_values: unknown) => updateChain);
+const mockUpdateEq = vi.fn((_column: string, _value: unknown) => updateChain);
+const updateChain = {
+  eq: (column: string, value: unknown) => mockUpdateEq(column, value),
+  then: (resolve: (result: { error: null }) => unknown) => resolve({ error: null }),
+};
+const mockFrom = vi.fn((_table: string) => ({ insert: mockInsert, update: mockUpdate }));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({ from: mockFrom }),
 }));
@@ -1209,6 +1216,34 @@ describe("POST /api/discord/interactions — a substitution request's DM", () =>
     const { texts, ids } = contents(patched);
     expect(texts).toContain(fiMessages.gedu.substitution.poolAnswerFailedClosed);
     expect(ids).toEqual([`subreq:d:${REQUEST}`, `subreq:o:${REQUEST}`]);
+  });
+
+  it("forgets the pressed DM's recorded rendering before answering, so the next sync redraws it", async () => {
+    mockAnswerRequest.mockRejectedValue({
+      code: "23514",
+      message: "this substitution request is no longer taking offers",
+    });
+
+    await press(`subreq:o:${REQUEST}`);
+
+    expect(mockFrom).toHaveBeenCalledWith("substitution_notification_dms");
+    expect(mockUpdate).toHaveBeenCalledWith({ rendered_hash: null });
+    expect(mockUpdateEq.mock.calls).toEqual([
+      ["request_id", REQUEST],
+      ["gedu_id", SNAPSHOT_IDS.aino],
+    ]);
+    expect(mockUpdate.mock.invocationCallOrder[0]).toBeLessThan(
+      mockAnswerRequest.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("forgets no rendering for a presser who is no candidate on the request", async () => {
+    mockAnswerRequest.mockRejectedValue({ code: "P0031", message: "not linked" });
+    readAs(null);
+
+    await press(`subreq:o:${REQUEST}`);
+
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   it("tells a presser with no gedu linked to run /link", async () => {

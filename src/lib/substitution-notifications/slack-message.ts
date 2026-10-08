@@ -152,12 +152,12 @@ function statusLine(state: NotificationState): string {
 
 /** The fallback text: what, when, and where it stands. */
 function fallbackText(product: string, group: string, when: string, state: NotificationState): string {
-  const what = `${product} – ${group}, ${when}`;
+  const what = `${escapeSlack(product)} – ${escapeSlack(group)}, ${escapeSlack(when)}`;
   switch (state.kind) {
     case "open":
       return `Substitute needed: ${what}`;
     case "filled":
-      return `Substitute found: ${what} — ${fullName(state.substitute)}`;
+      return `Substitute found: ${what} — ${escapeSlack(fullName(state.substitute))}`;
     case "withdrawn":
       return `Substitute request withdrawn: ${what}`;
     case "cancelled":

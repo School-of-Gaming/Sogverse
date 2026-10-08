@@ -593,8 +593,9 @@ const SUB_REQ_PREVIEW = /^subpreview:[od]:/;
  * again; a presser with no gedu linked is told to run `/link`.
  *
  * The DM is drawn exactly as the sync draws it — the candidate's own locale,
- * else the default — so the sync's record of it stays true. Where the redraw
- * itself fails the message stays greyed out, as a `/sub` step's would.
+ * else the default. Its recorded rendering is forgotten before anything else,
+ * so the next sync redraws it whatever the press leaves on screen: a refusal
+ * line the sync never draws, or — where this redraw fails — greyed-out buttons.
  */
 async function sendSubReqAnswer(
   interactionToken: string,
@@ -602,6 +603,8 @@ async function sendSubReqAnswer(
   discordLanguage: SupportedLocale,
   action: SubReqAction
 ): Promise<void> {
+  await forgetSubReqDmRendering(caller.id, action.requestId);
+
   let refusalLine: ((copy: DiscordSubOfferCopy) => string) | null = null;
   try {
     await answerDiscordSubstitutionRequest({
@@ -657,6 +660,29 @@ async function sendSubReqAnswer(
     );
   } catch (error) {
     console.error("Discord substitution DM redraw error:", error);
+  }
+}
+
+/**
+ * Forget the recorded rendering of the DM a press came from, so the sync's
+ * unchanged-hash skip cannot leave it as the press left it. The row is the
+ * gedu this Discord account acts as on the request; a presser who is none has
+ * no DM row to forget. A failure here costs only that skip, so it never stops
+ * the answer.
+ */
+async function forgetSubReqDmRendering(discordUserId: string, requestId: string): Promise<void> {
+  try {
+    const read = await readDiscordSubstitutionDm({ discordUserId, requestId });
+    const geduId = read?.candidate?.gedu_id;
+    if (geduId === undefined) return;
+    const { error } = await createAdminClient()
+      .from("substitution_notification_dms")
+      .update({ rendered_hash: null })
+      .eq("request_id", requestId)
+      .eq("gedu_id", geduId);
+    if (error) throw error;
+  } catch (error) {
+    console.error("Discord substitution DM: forgetting its rendering failed:", error);
   }
 }
 

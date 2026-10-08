@@ -1993,6 +1993,17 @@ describe("session substitutions", () => {
       expect(await myResponse(subAuth)).toBe("decline");
     });
 
+    it("lists a request however far ahead its session is", async () => {
+      // The pool matches the notification DMs, which go out at filing whatever
+      // the date — so nothing caps how far ahead it reaches.
+      const id = await seedRequest({ date: utcDate(90) });
+
+      const { data, error } = await subAuth.rpc("get_open_substitution_requests");
+      expect(error).toBeNull();
+      const ids = openSubstitutionRequests.parse(data).map((row) => row.request_id);
+      expect(ids).toContain(id);
+    });
+
     it("excludes the caller's own absence, a substituted request and a past one", async () => {
       const own = await seedRequest({ date: utcDate(7) });
       const taken = await seedRequest({

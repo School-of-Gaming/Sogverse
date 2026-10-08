@@ -145,6 +145,22 @@ describe("buildSubstitutionSlackMessage", () => {
     expect(escapeSlack("a<b>&c")).toBe("a&lt;b&gt;&amp;c");
   });
 
+  it("escapes what people typed in the fallback text too", () => {
+    const { text } = render(
+      notificationSnapshot({
+        request: {
+          ...filledRequest(),
+          group_name: "<!channel> & co",
+          substitute: { id: SNAPSHOT_IDS.aino, first_name: "<!here>", last_name: "<b>" },
+        },
+      }),
+    );
+    expect(text).not.toContain("<!channel>");
+    expect(text).not.toContain("<!here>");
+    expect(text).toContain("&lt;!channel&gt; &amp; co");
+    expect(text).toContain("&lt;!here&gt; &lt;b&gt;");
+  });
+
   it("stays under Slack's caps with many gedus", () => {
     const many = Array.from({ length: 300 }, (_, index) =>
       snapshotCandidate({
