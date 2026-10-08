@@ -142,10 +142,10 @@ describe("a heading applies to the lines it is given", () => {
     editor.commands.setTextSelection(3);
     editor.chain().focus().toggleHeading({ level: 1 }).run();
 
-    expect(blocks(editor)).toEqual(["h1:line1", "paragraph:line2", "paragraph:line3"]);
+    expect(blocks(editor)).toEqual(["h1:line1", "paragraph:line2⏎line3"]);
     const markdown = readMarkdown(editor);
-    expect(markdown).toBe("# line1\n\nline2\n\nline3");
-    expect(markdown).not.toContain("\\");
+    expect(markdown).toBe("# line1\n\nline2\\\nline3");
+    expect(markdown.split("\n")[0]).toBe("# line1");
 
     const reloaded = makeEditor(markdown);
     expect(blocks(reloaded)).toEqual(blocks(editor));
@@ -170,14 +170,50 @@ describe("a heading applies to the lines it is given", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "title" }));
 
-    expect(onChange).toHaveBeenLastCalledWith("# line1\n\nline2\n\nline3");
+    expect(onChange).toHaveBeenLastCalledWith("# line1\n\nline2\\\nline3");
   });
 
   it("a caret at the very end of line 1 is still line 1", () => {
     const editor = makeEditor("line1\\\nline2\\\nline3");
     editor.commands.setTextSelection(1 + "line1".length);
     editor.commands.toggleHeading({ level: 2 });
-    expect(blocks(editor)).toEqual(["h2:line1", "paragraph:line2", "paragraph:line3"]);
+    expect(blocks(editor)).toEqual(["h2:line1", "paragraph:line2⏎line3"]);
+  });
+
+  it("the lines around a heading stay one paragraph each, their breaks intact", () => {
+    const editor = makeEditor("a\\\nb\\\nc\\\nd\\\ne");
+    // A caret in line 3.
+    editor.commands.setTextSelection(1 + "a".length + 1 + "b".length + 1 + 1);
+    editor.commands.toggleHeading({ level: 1 });
+    expect(blocks(editor)).toEqual(["paragraph:a⏎b", "h1:c", "paragraph:d⏎e"]);
+    expect(readMarkdown(editor)).toBe("a\\\nb\n\n# c\n\nd\\\ne");
+  });
+
+  it("a selection across lines 1 and 2 of four leaves lines 3 and 4 together", () => {
+    const editor = makeEditor("a\\\nb\\\nc\\\nd");
+    editor.commands.setTextSelection({ from: 1, to: 4 });
+    editor.commands.toggleHeading({ level: 1 });
+    expect(blocks(editor)).toEqual(["h1:a", "h1:b", "paragraph:c⏎d"]);
+  });
+
+  it("empty lines at a new boundary are dropped, and kept away from it", () => {
+    const editor = makeEditor("a\\\n\\\nb\\\n\\\nc\\\n\\\nd");
+    expect(blocks(editor)).toEqual(["paragraph:a⏎⏎b⏎⏎c⏎⏎d"]);
+    // A caret in `c`, the fifth line.
+    editor.commands.setTextSelection(1 + "a⏎⏎b⏎⏎".length);
+    editor.commands.toggleHeading({ level: 1 });
+    expect(blocks(editor)).toEqual(["paragraph:a⏎⏎b", "h1:c", "paragraph:d"]);
+  });
+
+  it("a caret on line 1 of a list item heads that line and lifts it, and the rest stays together", () => {
+    const editor = makeEditor("- a\\\n  b\\\n  c");
+    expect(blocks(editor)).toEqual(["bulletList:"]);
+    editor.commands.setTextSelection(3);
+    editor.chain().focus().toggleHeading({ level: 1 }).run();
+    expect(blocks(editor)).toEqual(["h1:a", "paragraph:b⏎c"]);
+    expect(headingsHoldNoBreak(editor)).toBe(true);
+    editor.commands.undo();
+    expect(readMarkdown(editor)).toBe("- a\\\n  b\\\n  c");
   });
 
   it("a caret in a middle line makes only that line a heading", () => {
@@ -249,9 +285,11 @@ describe("a heading never holds a line break", () => {
   it("Mod+Enter, the other hard-break key, does the same", () => {
     const editor = makeEditor("# Title");
     editor.commands.focus("end");
+    // Ctrl on this platform. Without the heading's own binding the break would
+    // land in the heading and be split into a second heading, not a paragraph.
     press(editor, "Enter", { ctrlKey: true });
-    press(editor, "Enter", { metaKey: true });
-    expect(headingsHoldNoBreak(editor)).toBe(true);
+    type(editor, "body");
+    expect(blocks(editor)).toEqual(["h1:Title", "paragraph:body"]);
   });
 
   it("Shift+Enter in a paragraph is still a line break, and round-trips", () => {
@@ -294,27 +332,32 @@ describe("a heading never holds a line break", () => {
 });
 
 describe("pasted plain text keeps its lines", () => {
-  it("each line of a multi-line paste is its own paragraph", () => {
+  it("a single line break is a hard break, and a blank line starts a paragraph", () => {
     const editor = makeEditor("");
-    paste(editor, "a\nb\nc");
-    expect(blocks(editor)).toEqual(["paragraph:a", "paragraph:b", "paragraph:c"]);
-    expect(readMarkdown(editor)).toBe("a\n\nb\n\nc");
+    paste(editor, "a\nb\nc\n\nd");
+    expect(blocks(editor)).toEqual(["paragraph:a⏎b⏎c", "paragraph:d"]);
+    expect(readMarkdown(editor)).toBe("a\\\nb\\\nc\n\nd");
   });
 
-  it("so does each line of a paste taken as typed", () => {
-    const editor = makeEditor("");
-    pasteAsTyped(editor, "## a\nb");
-    expect(blocks(editor)).toEqual(["paragraph:## a", "paragraph:b"]);
+  it("lands as the same document as the same lines pasted from a formatted document", () => {
+    const fromNotepad = makeEditor("");
+    paste(fromNotepad, "a\nb\nc");
+    const fromDocs = makeEditor("");
+    fromDocs.view.pasteHTML("<p>a<br>b<br>c</p>");
+    expect(blocks(fromNotepad)).toEqual(["paragraph:a⏎b⏎c"]);
+    expect(fromNotepad.getJSON()).toEqual(fromDocs.getJSON());
   });
 
-  it("a pasted `## heading` is still a heading", () => {
+  it("a paste taken as typed has the same shape, with no markdown read into it", () => {
+    const editor = makeEditor("");
+    pasteAsTyped(editor, "## a\nb\n\nc");
+    expect(blocks(editor)).toEqual(["paragraph:## a⏎b", "paragraph:c"]);
+  });
+
+  it("a pasted `## heading` is still a heading, holding no break", () => {
     const editor = makeEditor("");
     paste(editor, "## Title\nbody line 1\nbody line 2");
-    expect(blocks(editor)).toEqual([
-      "h2:Title",
-      "paragraph:body line 1",
-      "paragraph:body line 2",
-    ]);
+    expect(blocks(editor)).toEqual(["h2:Title", "paragraph:body line 1⏎body line 2"]);
   });
 
   it("a pasted list is still a list", () => {
@@ -326,8 +369,8 @@ describe("pasted plain text keeps its lines", () => {
   it("the first and last lines merge into the paragraph the caret is in", () => {
     const editor = makeEditor("XY");
     editor.commands.setTextSelection(2);
-    paste(editor, "a\nb");
-    expect(blocks(editor)).toEqual(["paragraph:Xa", "paragraph:bY"]);
+    paste(editor, "a\nb\n\nc\nd");
+    expect(blocks(editor)).toEqual(["paragraph:Xa⏎b", "paragraph:c⏎dY"]);
   });
 
   it("a one-line paste is still read as inline markdown", () => {
@@ -335,6 +378,23 @@ describe("pasted plain text keeps its lines", () => {
     editor.commands.setTextSelection(2);
     paste(editor, "**bold** ");
     expect(readMarkdown(editor)).toBe("X**bold** Y");
+  });
+});
+
+describe("pasted formatted text", () => {
+  it("a pasted heading holding a break lands as a heading per line", () => {
+    const editor = makeEditor("");
+    editor.view.pasteHTML("<h1>a<br>b</h1>");
+    expect(blocks(editor)).toEqual(["h1:a", "h1:b"]);
+  });
+
+  it("a pasted paragraph of lines heads only the line the caret is on", () => {
+    const editor = makeEditor("");
+    editor.view.pasteHTML("<p>Title<br>b<br>c</p>");
+    expect(blocks(editor)).toEqual(["paragraph:Title⏎b⏎c"]);
+    editor.commands.setTextSelection(3);
+    editor.commands.toggleHeading({ level: 1 });
+    expect(blocks(editor)).toEqual(["h1:Title", "paragraph:b⏎c"]);
   });
 });
 

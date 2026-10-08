@@ -8,7 +8,13 @@ import {
 } from "@tiptap/pm/model";
 import { Plugin, PluginKey, type Transaction } from "@tiptap/pm/state";
 import { ReplaceStep } from "@tiptap/pm/transform";
-import { Extension, InputRule } from "@tiptap/react";
+import { setBlockType } from "@tiptap/pm/commands";
+import {
+  Extension,
+  InputRule,
+  isNodeActive,
+  type Command,
+} from "@tiptap/react";
 
 /**
  * **A line is the unit the writer sees, so it is the unit a heading takes.**
@@ -21,16 +27,18 @@ import { Extension, InputRule } from "@tiptap/react";
  * in a stray `\` with the rest demoted to body text on reload. Everything here
  * keeps the two pictures equal:
  *
- * - **Applying a heading splits the paragraph at its hard breaks first**, and
- *   then converts only the lines the selection touches: a caret is its own
- *   line, a selection is every line it reaches.
+ * - **Applying a heading converts only the lines the selection touches**: a
+ *   caret is its own line, a selection is every line it reaches. The paragraph
+ *   is cut at the breaks bordering those lines and nowhere else, so the lines
+ *   above and below stay one paragraph each, their own breaks intact.
  * - **A heading never holds a hard break.** Shift+Enter in one starts a new
  *   block exactly as Enter does; any other path that leaves a break inside a
  *   heading — a paste, a join, stored content — is split into one heading per
  *   line by the end of the same transaction; and the serialiser writes a
  *   heading per line, so a backslash break cannot be saved inside one.
- * - **Pasted plain text keeps its lines.** Each line of a multi-line paste is
- *   its own paragraph rather than one paragraph joined by spaces.
+ * - **Pasted plain text keeps its lines.** A single line break in a paste is a
+ *   hard break rather than a space, as it is when the same lines are pasted
+ *   from a formatted document; a blank line still separates paragraphs.
  *
  * The schema is left allowing a break inside a heading on purpose. Excluding it
  * there would make ProseMirror *delete* the break wherever a paragraph is turned
@@ -72,32 +80,85 @@ function linesOf(block: ProseMirrorNode): Fragment[] {
 }
 
 /**
- * Turn the textblock at `pos` into one block of its own type per line, inside
- * `tr`.
+ * Where the textblock at `pos` breaks: the position of each hard break, and
+ * for each of the lines between them (one more than there are breaks, empty
+ * ones included) whether it holds nothing.
+ */
+function breaksOf(
+  pos: number,
+  block: ProseMirrorNode,
+): { breaks: number[]; empty: boolean[] } {
+  const breaks: number[] = [];
+  const empty: boolean[] = [true];
+  let offset = pos + 1;
+  block.forEach((child) => {
+    if (isHardBreak(child)) {
+      breaks.push(offset);
+      empty.push(true);
+    } else {
+      empty[empty.length - 1] = false;
+    }
+    offset += child.nodeSize;
+  });
+  return { breaks, empty };
+}
+
+/** A run of a textblock's lines, by index, first and last included. */
+type LineRun = readonly [first: number, last: number];
+
+/** Every line of a block with `lineCount` lines, each a run of its own. */
+function everyLine(lineCount: number): LineRun[] {
+  return Array.from({ length: lineCount }, (_, line) => [line, line] as const);
+}
+
+/**
+ * The runs that make lines `first` to `last` blocks of their own: the lines
+ * before them stay together as one block, each of them is one, and the lines
+ * after them stay together as one.
+ */
+function aroundLines(
+  lineCount: number,
+  first: number,
+  last: number,
+): LineRun[] {
+  return [
+    ...(first > 0 ? [[0, first - 1] as const] : []),
+    ...everyLine(lineCount).slice(first, last + 1),
+    ...(last < lineCount - 1 ? [[last + 1, lineCount - 1] as const] : []),
+  ];
+}
+
+/**
+ * Cut the textblock at `pos` into one block of its own type per run of lines,
+ * inside `tr`. `runs` covers every line, in order.
  *
- * Each break between two lines becomes a block boundary; a break with no line
- * on one side of it — at either end, or the second of a run — is deleted
- * instead, so the split never leaves an empty block behind. Done as one replace
+ * A break inside a run stays a break. A break between two runs becomes a block
+ * boundary — except that a run does not start or end on an empty line at a
+ * boundary: those empty lines are dropped with the breaks around them, and a
+ * run of nothing but empty lines is dropped whole, so the cut never leaves an
+ * empty block or one starting or ending in a stray break. Done as one replace
  * per break rather than by rebuilding the block, so the selection maps through
  * it: a caret at the end of a line stays on that line, and one at the start of
  * the next lands on the next.
  */
-function splitLines(tr: Transaction, pos: number, block: ProseMirrorNode) {
-  const children: ProseMirrorNode[] = [];
-  block.forEach((child) => children.push(child));
-  const lastLine = children.findLastIndex((child) => !isHardBreak(child));
-
-  const breaks: { at: number; split: boolean }[] = [];
-  let offset = pos + 1;
-  children.forEach((child, index) => {
-    if (isHardBreak(child)) {
-      breaks.push({
-        at: offset,
-        split:
-          index > 0 && !isHardBreak(children[index - 1]) && index < lastLine,
-      });
+function splitRuns(
+  tr: Transaction,
+  pos: number,
+  block: ProseMirrorNode,
+  runs: readonly LineRun[],
+) {
+  const { breaks, empty } = breaksOf(pos, block);
+  const kept: LineRun[] = [];
+  runs.forEach(([first, last], index) => {
+    const filled: number[] = [];
+    for (let line = first; line <= last; line++) {
+      if (!empty[line]) filled.push(line);
     }
-    offset += child.nodeSize;
+    if (filled.length === 0) return;
+    kept.push([
+      index === 0 ? first : filled[0],
+      index === runs.length - 1 ? last : filled[filled.length - 1],
+    ]);
   });
 
   const boundary = new Slice(
@@ -108,9 +169,19 @@ function splitLines(tr: Transaction, pos: number, block: ProseMirrorNode) {
     1,
     1,
   );
-  // Last first, so the positions still to be replaced are not moved.
-  for (const { at, split } of breaks.reverse()) {
-    tr.step(new ReplaceStep(at, at + 1, split ? boundary : Slice.empty));
+  // Break `index` sits between lines `index` and `index + 1`. Last first, so
+  // the positions still to be replaced are not moved.
+  for (let index = breaks.length - 1; index >= 0; index--) {
+    if (kept.some(([first, last]) => first <= index && index < last)) continue;
+    const ending = kept.findIndex(([, last]) => last === index);
+    const at = breaks[index];
+    tr.step(
+      new ReplaceStep(
+        at,
+        at + 1,
+        ending !== -1 && ending < kept.length - 1 ? boundary : Slice.empty,
+      ),
+    );
   }
 }
 
@@ -137,24 +208,70 @@ function blocksWithBreaks(
 }
 
 /**
- * Split every paragraph the selection touches into its lines, ahead of making
- * the selected ones headings. Only a paragraph whose place could hold a heading
- * is split: one that cannot (the first paragraph of a list item) is left as the
- * writer had it, since the heading command will not convert it anyway.
+ * Cut every paragraph the selection touches at the breaks bordering the lines
+ * it touches, ahead of making those lines headings: a caret is its own line, a
+ * selection is every line it reaches. The lines before the touched ones stay
+ * together as one paragraph with their breaks, and so do the lines after.
+ *
+ * A paragraph whose place cannot hold a heading — one inside a list item — is
+ * not cut where it stands, since a second paragraph there would make the list
+ * loose. The heading command lifts it out of the list instead and then calls
+ * this again, cutting it once it stands where a heading can.
  */
 function splitSelectedParagraphs(tr: Transaction, headingType: NodeType) {
-  const targets = tr.selection.ranges.flatMap((range) =>
-    blocksWithBreaks(
-      tr,
-      range.$from.pos,
-      range.$to.pos,
-      (block, parent, index) =>
-        block.type.name === "paragraph" &&
-        parent !== null &&
-        parent.canReplaceWith(index, index + 1, headingType),
-    ),
+  const { from, to } = tr.selection;
+  const targets = blocksWithBreaks(
+    tr,
+    from,
+    to,
+    (block, parent, index) =>
+      block.type.name === "paragraph" &&
+      parent !== null &&
+      parent.canReplaceWith(index, index + 1, headingType),
   );
-  for (const { pos, block } of targets.reverse()) splitLines(tr, pos, block);
+  for (const { pos, block } of targets.reverse()) {
+    const { breaks } = breaksOf(pos, block);
+    const starts = [pos + 1, ...breaks.map((at) => at + 1)];
+    const ends = [...breaks, pos + block.nodeSize - 1];
+    const touched = starts.flatMap((start, line) =>
+      start <= to && ends[line] >= from ? [line] : [],
+    );
+    splitRuns(
+      tr,
+      pos,
+      block,
+      aroundLines(starts.length, touched[0], touched[touched.length - 1]),
+    );
+  }
+}
+
+/**
+ * Make the selected lines headings, as Tiptap's own `setNode` makes a block
+ * one but with the lines cut out first: cut the selected paragraphs at the
+ * lines' borders; only if a heading still cannot stand there (a list item),
+ * lift the selection out to the top level; cut again, now that it is there;
+ * convert. All in one transaction, so it is one undo step.
+ */
+function setLineHeading(
+  headingType: NodeType,
+  attributes: Record<string, unknown>,
+): Command {
+  const cut: Command = ({ tr, dispatch }) => {
+    if (dispatch) splitSelectedParagraphs(tr, headingType);
+    return true;
+  };
+  return ({ chain }) =>
+    chain()
+      .command(cut)
+      .command(
+        ({ state, commands }) =>
+          setBlockType(headingType, attributes)(state) || commands.clearNodes(),
+      )
+      .command(cut)
+      .command(({ state, dispatch }) =>
+        setBlockType(headingType, attributes)(state, dispatch),
+      )
+      .run();
 }
 
 /** The slice of the serialiser's state this heading writes with. */
@@ -168,25 +285,27 @@ interface HeadingSerializerState {
  * The heading node, with every way of making one working on lines.
  *
  * `toggleHeading` and `setHeading` are what the toolbar and the `Mod-Alt-n`
- * shortcuts call; the input rule is the typed `# ` at the start of a block.
- * Each splits the block into its lines first and then converts as before.
+ * shortcuts call; the input rule is the typed `# ` at the start of a block,
+ * which heads the block's first line. Each cuts the lines it converts out of
+ * their paragraph first.
  */
 export const LineHeading = Heading.extend({
   addCommands() {
     return {
       setHeading:
         (attributes) =>
-        ({ tr, dispatch, commands }) => {
+        (props) => {
           if (!this.options.levels.includes(attributes.level)) return false;
-          if (dispatch) splitSelectedParagraphs(tr, this.type);
-          return commands.setNode(this.name, attributes);
+          return setLineHeading(this.type, attributes)(props);
         },
       toggleHeading:
         (attributes) =>
-        ({ tr, dispatch, commands }) => {
+        (props) => {
           if (!this.options.levels.includes(attributes.level)) return false;
-          if (dispatch) splitSelectedParagraphs(tr, this.type);
-          return commands.toggleNode(this.name, "paragraph", attributes);
+          if (isNodeActive(props.state, this.type, attributes)) {
+            return props.commands.setNode("paragraph");
+          }
+          return setLineHeading(this.type, attributes)(props);
         },
     };
   },
@@ -219,7 +338,10 @@ export const LineHeading = Heading.extend({
           const blockPos = $start.before();
           tr.delete(range.from, range.to);
           const block = tr.doc.nodeAt(blockPos);
-          if (block !== null) splitLines(tr, blockPos, block);
+          if (block !== null) {
+            const lineCount = breaksOf(blockPos, block).breaks.length + 1;
+            splitRuns(tr, blockPos, block, aroundLines(lineCount, 0, 0));
+          }
           tr.setBlockType(range.from, range.from, this.type, { level });
         },
       }),
@@ -248,7 +370,8 @@ export const LineHeading = Heading.extend({
           );
           if (broken.length === 0) return null;
           for (const { pos, block } of broken.reverse()) {
-            splitLines(tr, pos, block);
+            const lineCount = breaksOf(pos, block).breaks.length + 1;
+            splitRuns(tr, pos, block, everyLine(lineCount));
           }
           return tr;
         },
@@ -301,9 +424,8 @@ export const HeadingLineBreak = Extension.create({
 
 /**
  * In a paste's markdown, the paragraphs' single line breaks — the ones
- * markdown would join with a space — made into hard breaks, which
- * `splitPastedLines` then turns into paragraphs. A line break inside a list
- * item is left alone: it continues that item.
+ * markdown would join with a space — made into hard breaks. A line break
+ * inside a list item is left alone: it continues that item.
  */
 function lineBreaksToHardBreaks(root: HTMLElement) {
   for (const paragraph of root.querySelectorAll("p")) {
@@ -330,19 +452,6 @@ function lineBreaksToHardBreaks(root: HTMLElement) {
   }
 }
 
-/** A pasted slice with each top-level paragraph cut into one per line. */
-function splitPastedLines(slice: Slice): Slice {
-  const blocks: ProseMirrorNode[] = [];
-  slice.content.forEach((node) => {
-    if (node.type.name === "paragraph" && hasHardBreak(node)) {
-      for (const line of linesOf(node)) blocks.push(node.copy(line));
-    } else {
-      blocks.push(node);
-    }
-  });
-  return new Slice(Fragment.from(blocks), slice.openStart, slice.openEnd);
-}
-
 /** Markdown rendered to HTML, as a detached element the schema can parse. */
 function htmlRoot(html: string): HTMLElement {
   return new window.DOMParser().parseFromString(`<body>${html}</body>`, "text/html")
@@ -350,20 +459,22 @@ function htmlRoot(html: string): HTMLElement {
 }
 
 /**
- * **Plain text on the clipboard: markdown, one paragraph per line.**
+ * **Plain text on the clipboard: markdown, with its line breaks kept.**
  *
  * Pasted plain text is parsed as markdown, so a write-up drafted elsewhere
  * keeps its headings and lists instead of showing the writer their own `##`.
- * But markdown joins lines with no blank line between them into one paragraph,
- * which is not what a writer pasting a few lines from their notes is looking
- * at — so a paste with a line break inside it is parsed block by block, and each
- * line of each paragraph is then made a paragraph of its own. The parse is
+ * But markdown joins lines with no blank line between them with a space, which
+ * is not what a writer pasting a few lines from their notes is looking at — so
+ * each single line break inside a paragraph becomes a hard break, and a blank
+ * line still starts a new paragraph. That is the shape a formatted paste of the
+ * same lines arrives in, so plain and formatted pastes agree. The parse is
  * opened at both ends, so the first and last lines still merge into the block
  * the caret is in.
  *
  * A one-line paste is read exactly as the markdown extension reads it, inline
  * and keeping its surrounding spaces. A Shift-paste (`plainText`) is taken as
- * typed text, one paragraph per line, as ProseMirror's own parser takes it.
+ * typed text with no markdown read into it, in the same shape: a hard break per
+ * line break, a paragraph per run of lines between blank ones.
  *
  * This replaces the markdown extension's own paste handling outright, which is
  * switched off where the extension is configured: a clipboard parser has to
@@ -381,11 +492,22 @@ export const PastedText = Extension.create({
             const { schema } = editor;
             if (plainText) {
               const marks = $context.marks();
-              const paragraphs = text
-                .split(/\r\n?|\n/)
-                .filter((line) => line !== "")
-                .map((line) =>
-                  schema.nodes.paragraph.create(null, schema.text(line, marks)),
+              // Runs of lines, a blank line ending each.
+              const runs: string[][] = [[]];
+              for (const line of text.split(/\r\n?|\n/)) {
+                if (line.trim() === "") runs.push([]);
+                else runs[runs.length - 1].push(line);
+              }
+              const paragraphs = runs
+                .filter((lines) => lines.length > 0)
+                .map((lines) =>
+                  schema.nodes.paragraph.create(
+                    null,
+                    lines.flatMap((line, index) => [
+                      ...(index > 0 ? [schema.nodes[HARD_BREAK].create()] : []),
+                      schema.text(line, marks),
+                    ]),
+                  ),
                 );
               return Slice.maxOpen(Fragment.from(paragraphs));
             }
@@ -400,7 +522,7 @@ export const PastedText = Extension.create({
             }
             const root = htmlRoot(parser.parse(text));
             lineBreaksToHardBreaks(root);
-            return splitPastedLines(parse(root));
+            return parse(root);
           },
         },
       }),

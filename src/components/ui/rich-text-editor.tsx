@@ -539,7 +539,7 @@ export function richTextExtensions({
       linkify: false,
       breaks: false,
       // Pasted plain text is read by `PastedText` above — as markdown, through
-      // this extension's parser, one paragraph per line — so this extension's
+      // this extension's parser, keeping its line breaks — so this extension's
       // own paste handling is off. A paste carrying HTML already has structure
       // and goes through the schema's own parser.
       transformPastedText: false,
