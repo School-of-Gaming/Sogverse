@@ -323,6 +323,14 @@ export type DiscordLink = Database["public"]["Tables"]["discord_links"]["Row"];
 // and `consume_discord_link_token` spends it.
 export type DiscordLinkTokenInsert =
   Database["public"]["Tables"]["discord_link_tokens"]["Insert"];
+// slack_links — an admin's linked Slack account, at most one per profile. Row
+// alias only: no write grant for any Data API role, and
+// `consume_slack_link_token` is its only writer.
+export type SlackLink = Database["public"]["Tables"]["slack_links"]["Row"];
+// slack_link_tokens — the one-time tokens the Slack webhook inserts with the
+// service-role client, spent by `consume_slack_link_token`.
+export type SlackLinkTokenInsert =
+  Database["public"]["Tables"]["slack_link_tokens"]["Insert"];
 
 // The Library — `library_articles` is an article's admin-only working copy and
 // `library_article_publications` its public published copy, whose row existing
@@ -530,11 +538,13 @@ export type SessionSubstitutionRequest = Database["public"]["Tables"]["session_s
 export type SessionSubstitutionRequestInsert = Database["public"]["Tables"]["session_substitution_requests"]["Insert"];
 export type SessionSubstitutionRequestUpdate = Database["public"]["Tables"]["session_substitution_requests"]["Update"];
 
-// session_substitution_offers — "Offer to substitute", one row per (request, gedu).
-// Withdrawing an offer DELETES the row, so there is no status column and no
-// Update alias worth having.
+// session_substitution_offers — a gedu's answer to a request, one row per
+// (request, gedu), carrying `offer` or `decline`. Only
+// `respond_to_session_substitution` writes it, updating the row when the gedu
+// changes their answer, so there is no Update alias worth having.
 export type SessionSubstitutionOffer = Database["public"]["Tables"]["session_substitution_offers"]["Row"];
 export type SessionSubstitutionOfferInsert = Database["public"]["Tables"]["session_substitution_offers"]["Insert"];
+export type SubstitutionOfferResponse = Database["public"]["Enums"]["substitution_offer_response"];
 
 // Why the gedu is away — admin-visible only, and nullable on the row because
 // the gedu path requires it (RPC-enforced) while an admin recording an

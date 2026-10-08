@@ -2957,18 +2957,24 @@ export type Database = {
           gedu_id: string
           id: string
           request_id: string
+          responded_at: string
+          response: Database["public"]["Enums"]["substitution_offer_response"]
         }
         Insert: {
           created_at?: string
           gedu_id: string
           id?: string
           request_id: string
+          responded_at?: string
+          response?: Database["public"]["Enums"]["substitution_offer_response"]
         }
         Update: {
           created_at?: string
           gedu_id?: string
           id?: string
           request_id?: string
+          responded_at?: string
+          response?: Database["public"]["Enums"]["substitution_offer_response"]
         }
         Relationships: [
           {
@@ -3149,6 +3155,72 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: true
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      slack_link_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          slack_team_id: string
+          slack_user_id: string
+          slack_username: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          slack_team_id: string
+          slack_user_id: string
+          slack_username: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          slack_team_id?: string
+          slack_user_id?: string
+          slack_username?: string
+          token_hash?: string
+        }
+        Relationships: []
+      }
+      slack_links: {
+        Row: {
+          linked_at: string
+          profile_id: string
+          slack_team_id: string
+          slack_user_id: string
+          slack_username: string
+        }
+        Insert: {
+          linked_at?: string
+          profile_id: string
+          slack_team_id: string
+          slack_user_id: string
+          slack_username: string
+        }
+        Update: {
+          linked_at?: string
+          profile_id?: string
+          slack_team_id?: string
+          slack_user_id?: string
+          slack_username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slack_links_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "slack_links_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "user_list_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -3724,6 +3796,14 @@ export type Database = {
         Args: { p_offer_id: string }
         Returns: Json
       }
+      approve_session_substitution_offer_for_slack_user: {
+        Args: { p_offer_id: string; p_slack_user_id: string }
+        Returns: Json
+      }
+      approve_substitution_offer_as: {
+        Args: { p_admin_id: string; p_offer_id: string }
+        Returns: Json
+      }
       assert_admin: { Args: never; Returns: undefined }
       assert_can_delete_session_image: {
         Args: { p_image_id: string }
@@ -3782,6 +3862,7 @@ export type Database = {
         Returns: Json
       }
       consume_discord_link_token: { Args: { p_token: string }; Returns: string }
+      consume_slack_link_token: { Args: { p_token: string }; Returns: string }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
       create_gamer: {
         Args: {
@@ -3871,6 +3952,14 @@ export type Database = {
         }
         Returns: string
       }
+      decline_session_substitution: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
+      decline_session_substitution_for_discord_user: {
+        Args: { p_discord_user_id: string; p_request_id: string }
+        Returns: Json
+      }
       delete_group_session_image: {
         Args: { p_image_id: string }
         Returns: undefined
@@ -3882,6 +3971,10 @@ export type Database = {
       derive_group_session_window: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: unknown
+      }
+      discord_acting_gedu: {
+        Args: { p_discord_user_id: string }
+        Returns: string
       }
       edit_chat_message: {
         Args: { p_body: string; p_id: string }
@@ -4338,6 +4431,10 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: Json
       }
+      offer_session_substitution_for_discord_user: {
+        Args: { p_discord_user_id: string; p_request_id: string }
+        Returns: Json
+      }
       participation_state: {
         Args: {
           p_group_id: string
@@ -4446,11 +4543,23 @@ export type Database = {
         Args: { p_discord_user_id: string }
         Returns: string
       }
+      require_slack_linked_admin: {
+        Args: { p_slack_user_id: string }
+        Returns: string
+      }
       respond_seat_offer: {
         Args: {
           p_accept: boolean
           p_offer_sent_at: string
           p_participation_id: string
+        }
+        Returns: Json
+      }
+      respond_to_session_substitution: {
+        Args: {
+          p_gedu_id: string
+          p_request_id: string
+          p_response: Database["public"]["Enums"]["substitution_offer_response"]
         }
         Returns: Json
       }
@@ -4753,10 +4862,6 @@ export type Database = {
         Args: { p_pin: string; p_user_ids: string[] }
         Returns: string
       }
-      withdraw_session_substitution_offer: {
-        Args: { p_request_id: string }
-        Returns: Json
-      }
       withdraw_session_substitution_request: {
         Args: { p_request_id: string }
         Returns: Json
@@ -4822,6 +4927,7 @@ export type Database = {
         | "digital_safety"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       spoken_language: "fi" | "sv" | "en" | "fr"
+      substitution_offer_response: "offer" | "decline"
       substitution_reason: "sick" | "other"
       substitution_request_status: "open" | "substituted" | "withdrawn"
       user_role: "admin" | "customer" | "gamer" | "gedu"
@@ -4998,6 +5104,7 @@ export const Constants = {
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       spoken_language: ["fi", "sv", "en", "fr"],
+      substitution_offer_response: ["offer", "decline"],
       substitution_reason: ["sick", "other"],
       substitution_request_status: ["open", "substituted", "withdrawn"],
       user_role: ["admin", "customer", "gamer", "gedu"],

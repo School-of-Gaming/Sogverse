@@ -10,7 +10,11 @@ import {
   sessionStaffGedu,
 } from "@/services/session-substitution/session-substitution.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAnonTestClient,
+  createAuthenticatedClient,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
 import { productRequiredQualifications } from "@/lib/products/session-requirements";
@@ -554,6 +558,29 @@ describe("session substitutions", () => {
       .single();
     expect(error).toBeNull();
     return data?.id ?? "";
+  }
+
+  /** Every answer on a request, as (gedu, response), in gedu order. */
+  async function answersOn(requestId: string) {
+    const { data, error } = await admin
+      .from("session_substitution_offers")
+      .select("gedu_id, response")
+      .eq("request_id", requestId)
+      .order("gedu_id");
+    expect(error).toBeNull();
+    return data ?? [];
+  }
+
+  /** One gedu's answer row on a request, or null. */
+  async function answerRow(requestId: string, geduId: string) {
+    const { data, error } = await admin
+      .from("session_substitution_offers")
+      .select("id, response, responded_at")
+      .eq("request_id", requestId)
+      .eq("gedu_id", geduId)
+      .maybeSingle();
+    expect(error).toBeNull();
+    return data;
   }
 
   async function isExpected(gedu: string, date: string, group = GROUP_A) {
@@ -1738,21 +1765,22 @@ describe("session substitutions", () => {
       expect(takenOffer.error?.code).toBe(CHECK_VIOLATION);
     });
 
-    it("withdraws an offer, and refuses once the caller IS the substitution", async () => {
+    it("switches one row between offer and decline, and refuses either once the caller IS the substitute", async () => {
       const id = await seedRequest({ date: utcDate(5) });
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
 
-      const { error } = await subAuth.rpc("withdraw_session_substitution_offer", {
+      const declined = await subAuth.rpc("decline_session_substitution", {
         p_request_id: id,
       });
-      expect(error).toBeNull();
-      const { count } = await admin
-        .from("session_substitution_offers")
-        .select("id", { count: "exact", head: true })
-        .eq("request_id", id);
-      expect(count).toBe(0);
+      expect(declined.error).toBeNull();
+      expect(await answersOn(id)).toEqual([{ gedu_id: subId, response: "decline" }]);
 
-      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      const offered = await subAuth.rpc("offer_session_substitution", {
+        p_request_id: id,
+      });
+      expect(offered.error).toBeNull();
+      expect(await answersOn(id)).toEqual([{ gedu_id: subId, response: "offer" }]);
+
       await admin
         .from("session_substitution_requests")
         .update({
@@ -1763,10 +1791,60 @@ describe("session substitutions", () => {
         })
         .eq("id", id);
 
-      const late = await subAuth.rpc("withdraw_session_substitution_offer", {
+      for (const name of [
+        "decline_session_substitution",
+        "offer_session_substitution",
+      ] as const) {
+        const late = await subAuth.rpc(name, { p_request_id: id });
+        expect(late.error?.code).toBe(CHECK_VIOLATION);
+        expect(late.error?.message).toContain("you are the approved substitute");
+      }
+      expect(await answersOn(id)).toEqual([{ gedu_id: subId, response: "offer" }]);
+    });
+
+    it("stamps responded_at when the answer changes, and not when it is repeated", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      const first = await answerRow(id, subId);
+
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect((await answerRow(id, subId))?.responded_at).toBe(first?.responded_at);
+
+      await subAuth.rpc("decline_session_substitution", { p_request_id: id });
+      const switched = await answerRow(id, subId);
+      expect(switched?.id).toBe(first?.id);
+      expect(Date.parse(switched?.responded_at ?? "")).toBeGreaterThan(
+        Date.parse(first?.responded_at ?? ""),
+      );
+    });
+
+    it("lets a gedu who could be asked decline without having offered", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+      const { error } = await thirdAuth.rpc("decline_session_substitution", {
         p_request_id: id,
       });
-      expect(late.error?.code).toBe(CHECK_VIOLATION);
+      expect(error).toBeNull();
+      expect(await answersOn(id)).toEqual([{ gedu_id: thirdId, response: "decline" }]);
+    });
+
+    it("lets a gedu who has answered decline after losing their eligibility", async () => {
+      // The answer is theirs to take back whatever has changed since: an
+      // offerer who is no longer certified — and so could no longer offer —
+      // still declines, which is the only way to take the offer off the
+      // office's list.
+      const id = await seedRequest({ date: utcDate(5) });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      await admin.from("gedu_profiles").update({ certified: false }).eq("user_id", subId);
+
+      const { error } = await subAuth.rpc("decline_session_substitution", {
+        p_request_id: id,
+      });
+      expect(error).toBeNull();
+      expect(await answersOn(id)).toEqual([{ gedu_id: subId, response: "decline" }]);
+
+      // And having declined, they cannot offer again until they could be asked.
+      const offer = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect(offer.error?.code).toBe(FORBIDDEN);
     });
 
     it("never names the absent gedu to the gedu who offers", async () => {
@@ -1796,28 +1874,29 @@ describe("session substitutions", () => {
       expect(JSON.stringify(doc)).not.toContain(TEST_IDS.GEDU);
     });
 
-    it("refuses a withdraw from a gedu holding no offer, rather than answering with the document", async () => {
-      // The same leak without even a write: withdrawing an offer that was never
-      // made deleted nothing and returned the request anyway, which made this
-      // RPC a free lookup of who is away, keyed by request id. 42501 is the
-      // answer an unknown id already gets, so it is not an existence oracle
-      // either.
+    it("refuses a decline from a gedu who could not be asked and holds no answer, rather than answering with the document", async () => {
+      // A decline that may write for anybody would be a free lookup of the
+      // request, keyed by its id. 42501 is the answer an unknown id already
+      // gets, so it is not an existence oracle either.
       const id = await seedRequest({ date: utcDate(5) });
+      await admin.from("gedu_profiles").update({ certified: false }).eq("user_id", thirdId);
 
-      const { data, error } = await thirdAuth.rpc(
-        "withdraw_session_substitution_offer",
-        { p_request_id: id },
-      );
-
+      const { data, error } = await thirdAuth.rpc("decline_session_substitution", {
+        p_request_id: id,
+      });
       expect(error?.code).toBe(FORBIDDEN);
       expect(data).toBeNull();
+
+      // The absent gedu is not somebody who could be asked either.
+      const own = await geduAuth.rpc("decline_session_substitution", { p_request_id: id });
+      expect(own.error?.code).toBe(FORBIDDEN);
+      expect(await answersOn(id)).toEqual([]);
     });
 
-    it("conceals the absent gedu on a withdraw that does delete an offer", async () => {
+    it("conceals the absent gedu on a decline", async () => {
       const id = await seedRequest({ date: utcDate(5) });
-      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
 
-      const { data, error } = await subAuth.rpc("withdraw_session_substitution_offer", {
+      const { data, error } = await subAuth.rpc("decline_session_substitution", {
         p_request_id: id,
       });
       expect(error).toBeNull();
@@ -1828,7 +1907,9 @@ describe("session substitutions", () => {
       expect(JSON.stringify(doc)).not.toContain(TEST_IDS.GEDU);
     });
 
-    it("lets a losing offerer withdraw from a request somebody else took", async () => {
+    it("refuses a losing offerer's decline once somebody else took the request", async () => {
+      // Nothing is left to answer: the request is settled, and "not selected"
+      // is derived from it being substituted by somebody else.
       const id = await seedRequest({ date: utcDate(5) });
       await thirdAuth.rpc("offer_session_substitution", { p_request_id: id });
       await admin
@@ -1841,10 +1922,21 @@ describe("session substitutions", () => {
         })
         .eq("id", id);
 
-      const { error } = await thirdAuth.rpc("withdraw_session_substitution_offer", {
+      const { error } = await thirdAuth.rpc("decline_session_substitution", {
         p_request_id: id,
       });
-      expect(error).toBeNull();
+      expect(error?.code).toBe(CHECK_VIOLATION);
+      expect(error?.message).toContain("no longer taking offers");
+      expect(await answersOn(id)).toEqual([{ gedu_id: thirdId, response: "offer" }]);
+    });
+
+    it("refuses a decline on a past session", async () => {
+      const id = await seedRequest({ date: utcDate(-5) });
+      const { error } = await subAuth.rpc("decline_session_substitution", {
+        p_request_id: id,
+      });
+      expect(error?.code).toBe(CHECK_VIOLATION);
+      expect(error?.message).toContain("is in the past");
     });
   });
 
@@ -1863,7 +1955,7 @@ describe("session substitutions", () => {
       expect(mine?.session_date).toBe(date);
       expect(mine?.role).toBe("primary");
       expect(mine?.fee_cents).toBe(5000);
-      expect(mine?.has_offered).toBe(false);
+      expect(mine?.my_response).toBeNull();
       expect(mine?.product.site_name).toBeNull();
       expect(mine?.product.schedule_slots.length).toBe(7);
       // The absent gedu is not named, anywhere on the row. Naming them
@@ -1880,15 +1972,25 @@ describe("session substitutions", () => {
       expect(row?.fee_cents).toBe(3000);
     });
 
-    it("flips has_offered once the caller has offered", async () => {
+    it("carries the caller's own answer, keeps a declined request listed, and never shows a colleague's", async () => {
       const id = await seedRequest({ date: utcDate(7) });
-      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      const myResponse = async (client: SupabaseClient<Database>) => {
+        const { data, error } = await client.rpc("get_open_substitution_requests");
+        expect(error).toBeNull();
+        const row = openSubstitutionRequests
+          .parse(data)
+          .find((entry) => entry.request_id === id);
+        expect(row).toBeDefined();
+        return row?.my_response;
+      };
 
-      const { data } = await subAuth.rpc("get_open_substitution_requests");
-      const row = openSubstitutionRequests
-        .parse(data)
-        .find((entry) => entry.request_id === id);
-      expect(row?.has_offered).toBe(true);
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      expect(await myResponse(subAuth)).toBe("offer");
+      // A colleague's answer is not the caller's.
+      expect(await myResponse(thirdAuth)).toBeNull();
+
+      await subAuth.rpc("decline_session_substitution", { p_request_id: id });
+      expect(await myResponse(subAuth)).toBe("decline");
     });
 
     it("excludes the caller's own absence, a substituted request and a past one", async () => {
@@ -2269,6 +2371,28 @@ describe("session substitutions", () => {
         .select("id", { count: "exact", head: true })
         .eq("request_id", id);
       expect(count).toBe(2);
+    });
+
+    it("counts offers and not declines, and refuses to approve a declined answer as not found", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      await thirdAuth.rpc("offer_session_substitution", { p_request_id: id });
+      await thirdAuth.rpc("decline_session_substitution", { p_request_id: id });
+
+      const declined = await answerRow(id, thirdId);
+      expect(declined?.response).toBe("decline");
+      const refused = await adminAuth.rpc("approve_session_substitution_offer", {
+        p_offer_id: declined?.id ?? "",
+      });
+      expect(refused.error?.code).toBe("P0002");
+      expect((await statusOf(id))?.status).toBe("open");
+
+      const offered = await answerRow(id, subId);
+      const { data, error } = await adminAuth.rpc("approve_session_substitution_offer", {
+        p_offer_id: offered?.id ?? "",
+      });
+      expect(error).toBeNull();
+      expect(substitutionRequestDocument.parse(data).offer_count).toBe(1);
     });
 
     it("refuses a second approval on the same request", async () => {
@@ -2714,6 +2838,15 @@ describe("session substitutions", () => {
       ).toEqual([0, 1, 2, 3, 4, 5, 6]);
       expect(mine?.offers.length).toBe(1);
       expect(mine?.offers[0].gedu_id).toBe(subId);
+      // A decline is beside the offers, never among them.
+      expect(mine?.declines).toEqual([]);
+      await thirdAuth.rpc("decline_session_substitution", { p_request_id: id });
+      const again = adminSubstitutionRequests
+        .parse((await adminAuth.rpc("get_admin_substitution_requests")).data)
+        .find((row) => row.id === id);
+      expect(again?.offers.map((offer) => offer.gedu_id)).toEqual([subId]);
+      expect(again?.declines.map((decline) => decline.gedu_id)).toEqual([thirdId]);
+      expect(again?.declines[0].first_name).toBe("Kolme");
     });
 
     /**
@@ -2770,23 +2903,32 @@ describe("session substitutions", () => {
      * because a strict schema would refuse the *document* while what this is
      * about is the RPC not putting the field on the wire.
      */
-    it("an offer carries no certification or criminal-record data", async () => {
+    it("an offer and a decline carry no certification or criminal-record data", async () => {
       const id = await seedRequest({ date: utcDate(7) });
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      await thirdAuth.rpc("decline_session_substitution", { p_request_id: id });
 
       const { data } = await adminAuth.rpc("get_admin_substitution_requests");
+      const answers = z.array(z.record(z.string(), z.unknown()));
       const raw = z
-        .array(z.object({ id: z.string(), offers: z.array(z.record(z.string(), z.unknown())) }))
+        .array(z.object({ id: z.string(), offers: answers, declines: answers }))
         .parse(data)
         .find((row) => row.id === id);
 
       expect(raw?.offers.length).toBe(1);
       expect(Object.keys(raw?.offers[0] ?? {}).sort()).toEqual([
-        "created_at",
         "first_name",
         "gedu_id",
         "id",
         "last_name",
+        "responded_at",
+      ]);
+      expect(raw?.declines.length).toBe(1);
+      expect(Object.keys(raw?.declines[0] ?? {}).sort()).toEqual([
+        "first_name",
+        "gedu_id",
+        "last_name",
+        "responded_at",
       ]);
     });
 
@@ -2836,6 +2978,7 @@ describe("session substitutions", () => {
       expect(mine.approved_at).toBeTruthy();
       expect(mine.requested_by).toBe(TEST_IDS.GEDU);
       expect(mine.offers).toEqual([]);
+      expect(mine.declines).toEqual([]);
     });
 
     it("the admin document drops a substituted request whose date has passed", async () => {
@@ -2974,6 +3117,249 @@ describe("session substitutions", () => {
       expect(
         groups.find((group) => group.id === GROUP_B)?.gedus[0]?.role,
       ).toBe("assistant");
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 9b. Answering from Discord, approving from Slack
+  // -------------------------------------------------------------------------
+
+  /**
+   * The bot and the Slack app reach the very bodies the web does, through
+   * wrappers granted to the service role alone: an answer as the gedu a Discord
+   * user acts as, an approval as the admin a Slack user is linked to. What is
+   * proved here is that each wrapper reaches its body, surfaces its refusals
+   * unchanged, and refuses a caller with no link — the bodies' own rules are
+   * the cases above.
+   *
+   * The Slack admin is minted rather than the seeded one, because
+   * slack-link.test.ts wipes the seeded admin's link before each of its cases.
+   */
+  describe("answering from Discord and approving from Slack", () => {
+    const NOT_LINKED_DISCORD = "P0031";
+    const NOT_LINKED_SLACK = "P0034";
+    /** Discord ids no other suite uses. */
+    const DISCORD_SUB = "920000000000000001";
+    const DISCORD_NOBODY = "920000000000000002";
+    /** Slack ids no other suite uses. */
+    const SLACK_ADMIN = "USUBTESTADMIN";
+    const SLACK_GEDU = "USUBTESTGEDU";
+    const SLACK_NOBODY = "USUBTESTNOBODY";
+    const SLACK_TEAM = "TSUBTEST";
+
+    let anon: SupabaseClient<Database>;
+    let slackAdminId = "";
+
+    beforeAll(async () => {
+      anon = createAnonTestClient();
+      const email = `substitution-slack-admin-${Date.now()}@test.local`;
+      const { data, error } = await admin.auth.admin.createUser({
+        email,
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Slack", last_name: "Admin" },
+      });
+      expect(error).toBeNull();
+      slackAdminId = data.user?.id ?? "";
+      expect(slackAdminId).toBeTruthy();
+      await admin.from("profiles").update({ role: "admin" }).eq("id", slackAdminId);
+      await admin.from("customer_profiles").delete().eq("user_id", slackAdminId);
+
+      const { error: discordError } = await admin.from("discord_links").upsert({
+        profile_id: subId,
+        discord_user_id: DISCORD_SUB,
+        discord_username: "saku",
+      });
+      expect(discordError).toBeNull();
+      const { error: slackError } = await admin.from("slack_links").upsert([
+        {
+          profile_id: slackAdminId,
+          slack_user_id: SLACK_ADMIN,
+          slack_team_id: SLACK_TEAM,
+          slack_username: "slack.admin",
+        },
+        // A Slack user linked to a gedu account: linking is the admin's alone
+        // through the RPC, so the row is written here to prove the wrapper asks
+        // the role, not merely the link.
+        {
+          profile_id: thirdId,
+          slack_user_id: SLACK_GEDU,
+          slack_team_id: SLACK_TEAM,
+          slack_username: "kolme",
+        },
+      ]);
+      expect(slackError).toBeNull();
+    });
+
+    afterAll(async () => {
+      await admin.from("discord_links").delete().eq("profile_id", subId);
+      await admin.from("slack_links").delete().in("profile_id", [slackAdminId, thirdId]);
+      // A substituted request names its approver, and the approver's profile
+      // going would null approved_by against the state check — so the rows go
+      // first.
+      await admin.from("session_substitution_requests").delete().in("group_id", ALL_GROUPS);
+      await admin.auth.admin.deleteUser(slackAdminId);
+    });
+
+    it("offers and declines as the gedu the Discord user acts as", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+
+      const offered = await admin.rpc("offer_session_substitution_for_discord_user", {
+        p_discord_user_id: DISCORD_SUB,
+        p_request_id: id,
+      });
+      expect(offered.error).toBeNull();
+      const doc = anonymousSubstitutionRequestDocument.parse(offered.data);
+      expect(doc.id).toBe(id);
+      expect(doc.requested_by).toBeNull();
+      expect(await answersOn(id)).toEqual([{ gedu_id: subId, response: "offer" }]);
+
+      const declined = await admin.rpc("decline_session_substitution_for_discord_user", {
+        p_discord_user_id: DISCORD_SUB,
+        p_request_id: id,
+      });
+      expect(declined.error).toBeNull();
+      expect(await answersOn(id)).toEqual([{ gedu_id: subId, response: "decline" }]);
+    });
+
+    it("refuses a Discord user nobody has linked, and writes nothing", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+      for (const name of [
+        "offer_session_substitution_for_discord_user",
+        "decline_session_substitution_for_discord_user",
+      ] as const) {
+        const { error } = await admin.rpc(name, {
+          p_discord_user_id: DISCORD_NOBODY,
+          p_request_id: id,
+        });
+        expect(error?.code).toBe(NOT_LINKED_DISCORD);
+      }
+      expect(await answersOn(id)).toEqual([]);
+    });
+
+    it("surfaces the answer's own refusals unchanged", async () => {
+      const past = await seedRequest({ date: utcDate(-5) });
+      const pastOffer = await admin.rpc("offer_session_substitution_for_discord_user", {
+        p_discord_user_id: DISCORD_SUB,
+        p_request_id: past,
+      });
+      expect(pastOffer.error?.code).toBe(CHECK_VIOLATION);
+      expect(pastOffer.error?.message).toContain("is in the past");
+
+      await admin.from("profiles").update({ spoken_languages: [] }).eq("id", subId);
+      const current = await seedRequest({ date: utcDate(5) });
+      const unspoken = await admin.rpc("offer_session_substitution_for_discord_user", {
+        p_discord_user_id: DISCORD_SUB,
+        p_request_id: current,
+      });
+      expect(unspoken.error?.code).toBe(FORBIDDEN);
+      expect(unspoken.error?.message).toContain("does not speak the language");
+    });
+
+    it("approves an offer as the admin the Slack user is linked to", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      const offer = await answerRow(id, subId);
+
+      const { data, error } = await admin.rpc(
+        "approve_session_substitution_offer_for_slack_user",
+        { p_slack_user_id: SLACK_ADMIN, p_offer_id: offer?.id ?? "" },
+      );
+      expect(error).toBeNull();
+      const doc = substitutionRequestDocument.parse(data);
+      expect(doc.status).toBe("substituted");
+      expect(doc.substitute_id).toBe(subId);
+      // The admin document: the reason travels, as on the web.
+      expect(doc.requested_by).toBe(TEST_IDS.GEDU);
+
+      const { data: row } = await admin
+        .from("session_substitution_requests")
+        .select("approved_by")
+        .eq("id", id)
+        .single();
+      expect(row?.approved_by).toBe(slackAdminId);
+    });
+
+    it("refuses a Slack user with no admin link — none at all, or one to a gedu account — and approves nothing", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+      await subAuth.rpc("offer_session_substitution", { p_request_id: id });
+      const offer = await answerRow(id, subId);
+
+      for (const slackUserId of [SLACK_NOBODY, SLACK_GEDU]) {
+        const { error } = await admin.rpc(
+          "approve_session_substitution_offer_for_slack_user",
+          { p_slack_user_id: slackUserId, p_offer_id: offer?.id ?? "" },
+        );
+        expect(error?.code).toBe(NOT_LINKED_SLACK);
+        expect(error?.message).toBe("SLACK_ADMIN_NOT_LINKED");
+      }
+      expect((await statusOf(id))?.status).toBe("open");
+    });
+
+    it("surfaces the approval's own refusals unchanged", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+      await subAuth.rpc("decline_session_substitution", { p_request_id: id });
+      const declined = await answerRow(id, subId);
+
+      const { error } = await admin.rpc(
+        "approve_session_substitution_offer_for_slack_user",
+        { p_slack_user_id: SLACK_ADMIN, p_offer_id: declined?.id ?? "" },
+      );
+      expect(error?.code).toBe("P0002");
+      expect((await statusOf(id))?.status).toBe("open");
+    });
+
+    /**
+     * A call refused at the grant: Postgres answers `permission denied for
+     * function`, which shares 42501 with the guard primitives' refusal, so the
+     * message is what proves the body never ran.
+     */
+    function expectDeniedAtTheGrant(error: { code?: string; message?: string } | null) {
+      expect(error?.code).toBe(FORBIDDEN);
+      expect(error?.message).toContain("permission denied for function");
+    }
+
+    it("the wrappers are closed to signed-in and anonymous callers", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+      const wrappers = [
+        [
+          "offer_session_substitution_for_discord_user",
+          { p_discord_user_id: DISCORD_SUB, p_request_id: id },
+        ],
+        [
+          "decline_session_substitution_for_discord_user",
+          { p_discord_user_id: DISCORD_SUB, p_request_id: id },
+        ],
+        [
+          "approve_session_substitution_offer_for_slack_user",
+          { p_slack_user_id: SLACK_ADMIN, p_offer_id: id },
+        ],
+      ] as const;
+      for (const [name, args] of wrappers) {
+        for (const client of [subAuth, adminAuth, anon]) {
+          expectDeniedAtTheGrant((await client.rpc(name, args)).error);
+        }
+      }
+      expect(await answersOn(id)).toEqual([]);
+    });
+
+    it("the bodies behind them are closed to every API role, the service role included", async () => {
+      const id = await seedRequest({ date: utcDate(5) });
+      const internals = [
+        [
+          "respond_to_session_substitution",
+          { p_gedu_id: subId, p_request_id: id, p_response: "offer" },
+        ],
+        ["approve_substitution_offer_as", { p_admin_id: slackAdminId, p_offer_id: id }],
+        ["require_slack_linked_admin", { p_slack_user_id: SLACK_ADMIN }],
+        ["discord_acting_gedu", { p_discord_user_id: DISCORD_SUB }],
+      ] as const;
+      for (const [name, args] of internals) {
+        for (const client of [subAuth, adminAuth, anon, admin]) {
+          expectDeniedAtTheGrant((await client.rpc(name, args)).error);
+        }
+      }
+      expect(await answersOn(id)).toEqual([]);
     });
   });
 
