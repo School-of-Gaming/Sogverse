@@ -263,8 +263,12 @@ export function buildSubstitutionSlackMessage({
 
   const dmOf = new Map(snapshot.dms.map((dm) => [dm.gedu_id, dm]));
   // The seated gedu leads the offers and the table, marked Accepted, so the
-  // message says who has the session wherever an admin looks.
-  const seatedId = request.status === "substituted" ? request.substitute.id : null;
+  // message says who has the session wherever an admin looks. Only while filled:
+  // a cancelled session outranks its sub and reads as plain cancelled.
+  const seatedId =
+    state.kind === "filled" && request.status === "substituted"
+      ? request.substitute.id
+      : null;
   const seatedFirst = (a: SnapshotCandidate, b: SnapshotCandidate) =>
     Number(b.gedu_id === seatedId) - Number(a.gedu_id === seatedId);
   const offers = snapshot.candidates

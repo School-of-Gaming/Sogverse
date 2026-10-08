@@ -95,6 +95,7 @@ announcement's row, since the requester is never one of the DM'd gedus.
 **A filled request reads as settled everywhere on the Slack message.** The seated gedu
 leads the offer cards and the gedus table, marked Accepted however they were seated; every
 other offer keeps its card but, like every closed state, loses its Accept button. The
+marker is the filled state's alone: a cancelled session's message marks no one Accepted. The
 table carries each gedu's phone, written `+` and the stored digits, for an admin to ring.
 
 **Order within one sync:** the announcement, then the DMs, then the Slack message last, so

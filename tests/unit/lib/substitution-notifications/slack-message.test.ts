@@ -215,6 +215,15 @@ describe("buildSubstitutionSlackMessage", () => {
     ]);
   });
 
+  it("a cancelled session with a sub seated reads as plain cancelled: no one is marked Accepted", () => {
+    const { blocks } = render(
+      notificationSnapshot({ request: filledRequest(), is_cancelled: true, candidates: offers }),
+    );
+    expect(allText([blocks[0]])).toContain("*Session cancelled*");
+    expect(cards(blocks).map(cardTitle)).not.toContain(":white_check_mark: Aino Korhonen");
+    expect(allText(blocks)).not.toContain("Accepted");
+  });
+
   it("tags no one as no longer eligible: a card holds only its title, subtitle and actions", () => {
     const { blocks } = render(notificationSnapshot({ candidates: [{ ...offers[0], eligible: false }] }));
     expect(JSON.stringify(blocks)).not.toMatch(/eligib/i);
