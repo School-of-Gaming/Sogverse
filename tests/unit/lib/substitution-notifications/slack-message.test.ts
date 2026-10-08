@@ -146,17 +146,18 @@ describe("buildSubstitutionSlackMessage", () => {
       }),
     );
     expect(tableRows(blocks)).toEqual([
-      ["Gedu", "Discord", "Answer", "Eligibility"],
-      ["Aino Korhonen", "DM'd", "Offered", "Eligible"],
-      ["Eero Mäki", "DM failed", "Offered", "Eligible"],
-      ["Lumi Example", "not on Discord", "Declined", "No longer eligible"],
-      ["Noora Example", "not DM'd", "—", "Eligible"],
+      ["Gedu", "Discord", "Answer"],
+      ["Aino Korhonen", "DM'd", "Offered"],
+      ["Eero Mäki", "DM failed", "Offered"],
+      ["Lumi Example", "not on Discord", "Declined"],
+      ["Noora Example", "not DM'd", "—"],
     ]);
   });
 
-  it("marks an offer card whose gedu is no longer eligible", () => {
+  it("tags no one as no longer eligible: a card holds only its title, subtitle and actions", () => {
     const { blocks } = render(notificationSnapshot({ candidates: [{ ...offers[0], eligible: false }] }));
-    expect(allText(cards(blocks))).toContain("No longer eligible");
+    expect(JSON.stringify(blocks)).not.toMatch(/eligib/i);
+    expect(cards(blocks)[0]).not.toHaveProperty("body");
   });
 
   it("closed: the cards stay, every button goes, and the first line says how it closed", () => {
@@ -241,7 +242,7 @@ describe("buildSubstitutionSlackMessage", () => {
     const rows = tableRows(blocks);
     expect(rows.length).toBeLessThanOrEqual(201);
     expect(rows.flat().join("").length).toBeLessThanOrEqual(20_000);
-    expect(new Set(rows.map((row) => row.length))).toEqual(new Set([4]));
+    expect(new Set(rows.map((row) => row.length))).toEqual(new Set([3]));
     expect(allText(blocks)).toMatch(/\+\d+ more gedus/);
   });
 
@@ -315,7 +316,7 @@ describe("buildSubstitutionSlackPreviewSet", () => {
     expect(new Set(rows.map((row) => row[1]))).toEqual(
       new Set(["DM'd", "DM failed", "not on Discord", "not DM'd"]),
     );
-    expect(rows.map((row) => row[3])).toContain("No longer eligible");
+    expect(rows.every((row) => row.length === 3)).toBe(true);
   });
 
   it("puts every control on the preview prefix, and the link on a token no row holds", () => {

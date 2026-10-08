@@ -220,7 +220,6 @@ export function buildSubstitutionSlackPreviewSet({
     }),
     candidate(person(IDS.onni, "Onni", "Laine"), {
       discord_user_id: "100000000000000004",
-      eligible: false,
     }),
     candidate(person(IDS.venla, "Venla", "Heikkinen"), {
       discord_user_id: "100000000000000005",

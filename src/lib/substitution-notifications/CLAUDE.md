@@ -70,8 +70,9 @@ request is open. Nothing enqueues a request when a *gedu* changes — a newly ce
 or a new language reaches an open request at its next change, not before. A DM already sent
 is never deleted when its gedu stops being eligible; it follows the request's state like
 any other, and a press on it is answered by the write's own refusal. The Slack message lists
-the eligible together with everyone who answered or was sent a DM, tagging the rest "no
-longer eligible".
+the eligible together with everyone who answered or was sent a DM, and marks no one as
+no longer eligible: an offer from a gedu who has since stopped meeting the session's
+requirements stays approvable, as on the admin page.
 
 **A DM goes only to the Discord account that acts as that gedu** — the account whose most
 recently linked gedu is them. A Discord account linked to two gedu accounts answers as the

@@ -54,7 +54,6 @@ const SECTION_TEXT_MAX = 3000;
 const HEADER_TEXT_MAX = 150;
 const CARD_TITLE_MAX = 150;
 const CARD_SUBTITLE_MAX = 150;
-const CARD_BODY_MAX = 200;
 const CAROUSEL_MAX_CARDS = 10;
 /** A data table holds 200 rows under its header… */
 const TABLE_MAX_ROWS = 200;
@@ -261,7 +260,6 @@ export function buildSubstitutionSlackMessage({
           title: plain(fullName(candidate), CARD_TITLE_MAX),
           subtitle: plain(offeredLine(candidate, facts.timezone), CARD_SUBTITLE_MAX),
         };
-        if (!candidate.eligible) card.body = plain("No longer eligible", CARD_BODY_MAX);
         if (isOpen && candidate.offer_id !== null) {
           card.actions = [
             {
@@ -296,7 +294,7 @@ export function buildSubstitutionSlackMessage({
   if (concerned.length === 0) {
     blocks.push(section("_No gedu can take this session._"));
   } else {
-    const header = ["Gedu", "Discord", "Answer", "Eligibility"];
+    const header = ["Gedu", "Discord", "Answer"];
     const rows: { type: "raw_text"; text: string }[][] = [header.map(cell)];
     let used = header.join("").length;
     for (const candidate of concerned) {
@@ -304,7 +302,6 @@ export function buildSubstitutionSlackMessage({
         clipText(fullName(candidate) || "—", TABLE_NAME_MAX),
         discordStatus(candidate, dmOf.get(candidate.gedu_id)),
         answerLabel(candidate),
-        candidate.eligible ? "Eligible" : "No longer eligible",
       ];
       const size = row.join("").length;
       if (rows.length > TABLE_MAX_ROWS || used + size > TABLE_TEXT_BUDGET) break;
